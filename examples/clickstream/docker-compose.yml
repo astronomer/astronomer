@@ -1,0 +1,113 @@
+---
+version: "3"
+services:
+  zookeeper:
+    image: astronomerio/zookeeper
+    labels:
+      io.astronomer.docker: "true"
+    environment:
+      - ZOOKEEPER_CLIENT_PORT=2181
+      - ZOOKEEPER_TICK_TIME=2000
+      - ZOOKEEPER_SYNC_LIMIT=2
+      - KAFKA_JMX_PORT=9999
+    ports:
+      - "2181:2181"
+      - "2888:2888"
+      - "3888:3888"
+      - "9098:9999"
+
+  kafka:
+    image: astronomerio/kafka
+    labels:
+      io.astronomer.docker: "true"
+    depends_on:
+      - zookeeper
+    environment:
+      - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
+      - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+      - KAFKA_JMX_PORT=9999
+      - KAFKA_JMX_HOSTNAME=kafka
+      - KAFKA_JMX_OPS="-Dcom.sun.management.jmxremote.rmi.port=9999 -Dcom.sun.management.jmxremote=true -Dcom.sun.management.jmxremote.port=9999 -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.local.only=false -Djava.rmi.server.hostname=kafka
+    ports:
+      - "9092:9092"
+      - "9999:9999"
+
+  # kafka-rest:
+  #   image: astronomerio/kafka-api:createtopic
+  #   labels:
+  #     io.astronomer.docker: "true"
+  #   depends_on:
+  #     - zookeeper
+  #     - kafka
+  #   environment:
+  #     - KAFKA_REST_ZOOKEEPER_CONNECT=zookeeper:2181
+  #     - KAFKA_REST_LISTENERS=http://0.0.0.0:8082
+  #     - KAFKA_REST_SCHEMA_REGISTRY_URL=http://localhost:8083
+  #     - KAFKA_REST_HOST_NAME="localhost"
+  #   ports:
+  #     - "8082:8082"
+  #     - "8083:8083"
+
+  event-api:
+    image: astronomerio/clickstream-ingestion-api:ellation
+    labels:
+      io.astronomer.docker: "true"
+    depends_on:
+      - kafka
+    environment:
+      - INGESTION_API_PORT=8080
+      - INGESTION_ADMIN_PORT=8081
+      - INGESTION_DEBUG_MODE=true
+      - INGESTION_P_PROF_ENABLED=true
+      - INGESTION_HEALTH_CHECK_ENABLED=true
+      - INGESTION_PROMETHEUS_ENABLED=true
+      - INGESTION_INGESTION_HANDLER=kafka
+      - INGESTION_KAFKA_BROKERS=kafka:9092
+      - INGESTION_KAFKA_TOPIC=main
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+
+  event-router:
+    image: astronomerio/clickstream-event-router:v0.0.12
+    labels:
+      io.astronomer.docker: "true"
+    entrypoint: event-router mock --disable-sse "S3 Event Logs:s3-event-logs"
+    environment:
+      - ER_KAFKA_INGESTION_TOPIC=main
+      - ER_KAFKA_GROUP_ID=event-router
+      - ER_KAFKA_RETRY_TOPIC=retry
+      - ER_KAFKA_BROKERS=kafka:9092
+      - ER_HOUSTON_API_URL=localhost
+      - ER_HOUSTON_API_KEY=key
+      - ER_DEBUG=true
+      - ER_SERVE_PORT=9091
+      - ER_TOPIC=main
+      - ER_GROUP_ID=moc
+      - ER_SSE_URL=http://localhost
+      - ER_SSE_AUTH=auth
+    depends_on:
+      - kafka
+    ports:
+      - "9091:9091"
+
+  #   jmx-exporter:
+  #       image: "sscaling/jmx-prometheus-exporter"
+  #       ports:
+  #           - "5556:5556"
+  #       volumes:
+  #           - ./configs/jmx-exporter.yml:/opt/jmx_exporter/config.yml
+  #       depends_on:
+  #           - "kafka"
+
+  #   prometheus:
+  #       image: "prom/prometheus"
+  #       ports:
+  #           - "9090:9090"
+  #       volumes:
+  #           - ./configs/prom.yml:/prom.yml
+  #       command:
+  #           - "-config.file=/prom.yml"
+  #       depends_on:
+  #           - "kafka"

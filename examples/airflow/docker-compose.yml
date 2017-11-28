@@ -1,0 +1,83 @@
+---
+version: "3"
+services:
+  postgres:
+    image: postgres:9.6
+    restart: always
+    labels:
+      io.astronomer.docker: "true"
+    env_file:
+      - ../config/postgres.env
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:4.0.2
+    restart: always
+    labels:
+      io.astronomer.docker: "true"
+    ports:
+      - "6379:6379"
+
+  scheduler:
+    image: astronomerio/airflow-saas
+    command: airflow scheduler
+    restart: always
+    labels:
+      io.astronomer.docker: "true"
+    depends_on:
+      - postgres
+      - redis
+    env_file:
+      - ../config/airflow.env
+    volumes:
+      - $AIRFLOW_HOME/dags:/usr/local/airflow/dags:ro
+      - $AIRFLOW_HOME/plugins:/usr/local/airflow/plugins:ro
+
+  webserver:
+    image: astronomerio/airflow-saas
+    command: airflow webserver
+    restart: always
+    labels:
+      io.astronomer.docker: "true"
+    depends_on:
+      - scheduler # Wait for scheduler to avoid race to init db in entrypoint.sh
+      - postgres
+      - redis
+    env_file:
+      - ../config/airflow.env
+    ports:
+      - "8080:8080"
+    volumes:
+      - $AIRFLOW_HOME/dags:/usr/local/airflow/dags:ro
+      - $AIRFLOW_HOME/plugins:/usr/local/airflow/plugins:ro
+
+  worker:
+    image: astronomerio/airflow-saas
+    command: airflow worker
+    restart: always
+    labels:
+      io.astronomer.docker: "true"
+    depends_on:
+      - postgres
+      - redis
+      - scheduler
+    env_file:
+      - ../config/airflow.env
+    volumes:
+      - $AIRFLOW_HOME/dags:/usr/local/airflow/dags:ro
+      - $AIRFLOW_HOME/plugins:/usr/local/airflow/plugins:ro
+
+  flower:
+    image: astronomerio/airflow-saas
+    command: airflow flower
+    restart: always
+    labels:
+      io.astronomer.docker: "true"
+    depends_on:
+      - postgres
+      - redis
+    env_file:
+      - ../config/airflow.env
+    ports:
+      - "5555:5555"
