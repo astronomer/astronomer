@@ -12,5 +12,5 @@ Full documentation for using the images can be found [here](https://astronomerio
 
 # License
 
-The project is licensed under the Apache 2 license. For more information on the licenses for each of the individual Astronomer Platform components packaged in the images, please refer to the respective [Astronomer Platform documentation for each component](http://docs.astronomer.io/current/platform.html).  
+The project is licensed under the Apache 2 license. For more information on the licenses for each of the individual Astronomer Platform components packaged in the images, please refer to the respective [Astronomer Platform documentation for each component](https://astronomerio.github.io/astronomer/).  
 
