@@ -17,7 +17,7 @@ title: Astronomer Platform
 email: humans@astronomer.io
 description: >- # this means to ignore newlines until "baseurl:"
   This site contains documentation for building and running the Astronomer Platform.
-baseurl: "" # the subpath of your site, e.g. /blog
+baseurl: "/astronomer" # the subpath of your site, e.g. /blog
 url: "" # the base hostname & protocol for your site, e.g. http://example.com
 twitter_username: astronomerio
 github_username:  astronomerio
