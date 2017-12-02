@@ -1,4 +1,4 @@
-Docker Images for Astronomer Platform
+Docker Images for the Astronomer Platform
 ===
 
 Docker images for deploying and running the Astronomer Platform.  The images are currently available on [DockerHub](https://hub.docker.com/u/astronomerio/).
