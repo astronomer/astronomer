@@ -1,3 +1,4 @@
 #!/usr/bin/env bash
+
 export AIRFLOW_HOME=$1
 exec docker-compose up --scale worker=2

@@ -1,9 +1,0 @@
-#!/usr/bin/env bash
-
-count=0
-for container in `docker ps -aq -f label=io.astronomer.docker.clickstream` ; do \
-    docker rm -f ${container} > /dev/null 2>&1 ;
-    let count+=1
-done
-
-echo "${count} containers removed"
