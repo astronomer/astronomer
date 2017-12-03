@@ -3,8 +3,9 @@
 for component in ${COMPONENTS} ; do
     echo "Building ${component}..."
 
-    DOCKER_FILE="images/clickstream/${component}/Dockerfile"
+    DOCKER_FILE="alpine/${component}/Dockerfile"
     COMPONENT_NAME=${component}
 
-    docker build -t ${REPOSITORY}/${COMPONENT_NAME}:latest -f ${DOCKER_FILE} images/clickstream/${component} || exit 1
+    docker build -t ${REPOSITORY}/${COMPONENT_NAME}:latest -f ${DOCKER_FILE} alpine/${component} || exit 1
+    docker tag ${REPOSITORY}/${COMPONENT_NAME}:latest ${REPOSITORY}/${COMPONENT_NAME}:${ASTRONOMER_VERSION}
 done

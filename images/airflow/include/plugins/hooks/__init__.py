@@ -1,1 +1,0 @@
-from plugins.hooks.facebook_ads_hook import FacebookAdsHook

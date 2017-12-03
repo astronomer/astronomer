@@ -1,0 +1,2 @@
+-e git+https://github.com/astronomerio/incubator-airflow@astronomer-fixes-182#egg=apache-airflow[s3,postgres,password,celery]
+celery[redis]==3.1.25

@@ -1,18 +1,19 @@
 MAKEFLAGS += --silent
 
-AIRFLOW_IMAGE_NAME ?= astronomerio/airflow-saas
+ASTRONOMER_MAJOR_VERSION ?= 0
+ASTRONOMER_MINOR_VERSION ?= 0
+ASTRONOMER_PATCH_VERSION ?= 1
+ASTRONOMER_VERSION ?= ${ASTRONOMER_MAJOR_VERSION}.${ASTRONOMER_MINOR_VERSION}.${ASTRONOMER_PATCH_VERSION}
 
-COMPONENTS := base cs-event-api cs-event-router
+COMPONENTS := base cs-event-api cs-event-router airflow
 
 REPOSITORY ?= astronomerio
 
 build-alpine:
 	COMPONENTS="${COMPONENTS}" \
 	REPOSITORY=${REPOSITORY} \
+	ASTRONOMER_VERSION=${ASTRONOMER_VERSION} \
 	bin/build-alpine
-
-build-airflow:
-	docker build -f images/airflow/Dockerfile -t $(AIRFLOW_IMAGE_NAME) images/airflow
 
 clean-containers:
 	for container in `docker ps -aq -f label=io.astronomer.docker=true` ; do \

@@ -20,7 +20,7 @@ services:
       - "6379:6379"
 
   scheduler:
-    image: astronomerio/airflow-saas
+    image: astronomerio/airflow
     command: airflow scheduler
     restart: always
     labels:
@@ -35,7 +35,7 @@ services:
       - $AIRFLOW_HOME/plugins:/usr/local/airflow/plugins:ro
 
   webserver:
-    image: astronomerio/airflow-saas
+    image: astronomerio/airflow
     command: airflow webserver
     restart: always
     labels:
@@ -53,7 +53,7 @@ services:
       - $AIRFLOW_HOME/plugins:/usr/local/airflow/plugins:ro
 
   worker:
-    image: astronomerio/airflow-saas
+    image: astronomerio/airflow
     command: airflow worker
     restart: always
     labels:
@@ -69,7 +69,7 @@ services:
       - $AIRFLOW_HOME/plugins:/usr/local/airflow/plugins:ro
 
   flower:
-    image: astronomerio/airflow-saas
+    image: astronomerio/airflow
     command: airflow flower
     restart: always
     labels:
