@@ -13,16 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM astronomerio/alpine-librdkafka-golang:1.9-0.11.0-r0 as builder
+FROM astronomerio/base
 MAINTAINER Astronomer <humans@astronomer.io>
 
-RUN apk update && apk add git
-RUN go get -v github.com/astronomerio/cs-event-router
-WORKDIR /go/src/github.com/astronomerio/cs-event-router
-RUN make build
-
-FROM alpine:3.4
-COPY --from=builder /go/src/github.com/astronomerio/cs-event-router/event-router /event-router
-RUN apk update && apk add ca-certificates curl && update-ca-certificates
+RUN apk add --allow-untrusted "astronomer-cs-event-router=0.0.1-r0"
 EXPOSE 9091
-ENTRYPOINT ["/event-router"]
+ENTRYPOINT ["event-router"]
