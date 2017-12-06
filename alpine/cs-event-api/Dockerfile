@@ -16,7 +16,31 @@
 FROM astronomerio/base
 MAINTAINER Astronomer <humans@astronomer.io>
 
-RUN apk add --allow-untrusted "astronomer-cs-event-api=0.0.1-r0"
+ARG VERSION=v0.0.19-beta
+ARG LIBRESSL_VERSION=2.6
+ARG LIBRDKAFKA_VERSION=0.11.1-r1
+
+ENV REPO="github.com/astronomerio/cs-event-api"
+ENV REPO_URL="https://${REPO}"
+
+WORKDIR /usr/lib/go/src/${REPO}
+RUN apk add --no-cache --virtual .build-deps \
+		build-base \
+		cyrus-sasl-dev \
+		go \
+		git \
+		librdkafka-dev=${LIBRDKAFKA_VERSION} \
+		libressl \
+		openssl-dev \
+		yajl-dev \
+		zlib-dev \
+	&& apk add \
+		openssl \
+	&& git clone -c advice.detachedHead=false --depth 1 --branch ${VERSION} ${REPO_URL} . \
+	&& make DESTDIR=/usr/bin install \
+	&& apk del .build-deps \
+	&& rm -rf /usr/lib/go
+
 ENV GIN_MODE=release
 EXPOSE 8080 8081
 ENTRYPOINT ["event-api"]

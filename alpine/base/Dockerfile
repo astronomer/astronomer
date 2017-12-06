@@ -16,7 +16,6 @@
 FROM alpine:3.7
 MAINTAINER Astronomer <humans@astronomer.io>
 
-RUN echo "http://packages.astronomer.io/alpine/main/" >> /etc/apk/repositories
-RUN apk update --allow-untrusted \
-    && apk add ca-certificates curl \
+RUN apk update \
+    && apk add ca-certificates \
     && update-ca-certificates
