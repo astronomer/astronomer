@@ -21,7 +21,7 @@ ARG VERSION=v1.8.2
 ENV AIRFLOW_HOME="/usr/local/airflow"
 ENV AIRFLOW_REPOSITORY="https://github.com/astronomerio/incubator-airflow"
 ENV AIRFLOW_SUBMODULES="s3, postgres, password, celery"
-ENV AIRFLOW_MODULE="git+${AIRFLOW_REPOSITORY}@${AIRFLOW_VERSION}#egg=apache-airflow[${AIRFLOW_SUBMODULES}]"
+ENV AIRFLOW_MODULE="git+${AIRFLOW_REPOSITORY}@${VERSION}#egg=apache-airflow[${AIRFLOW_SUBMODULES}]"
 
 RUN apk add --no-cache --virtual .build-deps \
 		linux-headers \
