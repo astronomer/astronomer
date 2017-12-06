@@ -8,4 +8,8 @@ for component in ${COMPONENTS} ; do
 
     docker build -t ${REPOSITORY}/${COMPONENT_NAME}:latest -f ${DOCKER_FILE} alpine/${component} || exit 1
     docker tag ${REPOSITORY}/${COMPONENT_NAME}:latest ${REPOSITORY}/${COMPONENT_NAME}:${ASTRONOMER_VERSION}
+
+	if [ -f "${DOCKER_FILE}.onbuild" ]; then
+		docker build -t "${REPOSITORY}/${COMPONENT_NAME}:${ASTRONOMER_VERSION}-onbuild" -f "${DOCKER_FILE}.onbuild" alpine/${component} || exit 1
+	fi
 done
