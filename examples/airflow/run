@@ -15,6 +15,10 @@ if [ ! -z $1 ] && [ -d $1 ]; then
 	if [ ! -f $DOCKERFILE ]; then
 		echo "FROM astronomerio/airflow:latest-onbuild" >> $DOCKERFILE
 	fi
+	if [ ! -f $REQUIREMENTS ]; then
+		# touch $REQUIREMENTS
+		echo "noop==1.0.0" >> $REQUIREMENTS
+	fi
 
 	DIR_NAME=`echo ${1%/} | rev | awk -F \/ '{print $1}' | rev`
 	docker build -t "astronomerio/airflow:${DIR_NAME}" -f ${DOCKERFILE} $1 || exit 1
