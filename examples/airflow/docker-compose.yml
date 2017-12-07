@@ -10,6 +10,8 @@ services:
       - ../config/postgres.env
     ports:
       - "5432:5432"
+    volumes:
+      - $AIRFLOW_HOME/.astro/data/postgres:/var/lib/postgresql/data
 
   redis:
     image: redis:4.0.2
@@ -18,6 +20,8 @@ services:
       io.astronomer.docker: "true"
     ports:
       - "6379:6379"
+    volumes:
+      - $AIRFLOW_HOME/.astro/data/redis:/data
 
   scheduler:
     image: astronomerio/airflow:$AIRFLOW_IMAGE_TAG

@@ -3,14 +3,26 @@
 if [ ! -z $1 ] && [ -d $1 ]; then
 	REQUIREMENTS="$1/requirements.txt"
 	DOCKERFILE="$1/Dockerfile.astro"
+    DOCKERIGNORE="$1/.dockerignore"
+    GITIGNORE="$1/.gitignore"
 
 	if [ ! -f $DOCKERFILE ]; then
 		echo "FROM astronomerio/airflow:latest-onbuild" >> $DOCKERFILE
 	fi
+
 	if [ ! -f $REQUIREMENTS ]; then
-		# touch $REQUIREMENTS
 		echo "noop==1.0.0" >> $REQUIREMENTS
 	fi
+
+	if [ ! -f $DOCKERIGNORE ]; then
+        touch $DOCKERIGNORE
+	fi
+    grep -q -F ".astro" $DOCKERIGNORE || echo ".astro" >> $DOCKERIGNORE
+
+	if [ ! -f $GITIGNORE ]; then
+        touch $GITIGNORE
+	fi
+    grep -q -F ".astro" $GITIGNORE || echo ".astro" >> $GITIGNORE
 
 	DIR_NAME=`echo ${1%/} | rev | awk -F \/ '{print $1}' | rev`
 	docker build -t "astronomerio/airflow:${DIR_NAME}" -f ${DOCKERFILE} $1 || exit 1
