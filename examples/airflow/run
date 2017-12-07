@@ -1,4 +1,35 @@
 #!/bin/sh
 
-export AIRFLOW_HOME=$1
-exec docker-compose up --scale worker=2
+# If user passes a directory in as $1
+# If requirements.txt exists build image using dir name from onbuild parent
+# Run that iamge mapping volume as normal
+
+# If not, just map volume as normal
+
+# Add helper init script to init with Dockerfile and requirements.txt
+
+if [ ! -z $1 ] && [ -d $1 ]; then
+	REQUIREMENTS="$1/requirements.txt"
+	DOCKERFILE="$1/Dockerfile.astro"
+
+	if [ ! -f $DOCKERFILE ]; then
+		echo "FROM astronomerio/airflow:latest-onbuild" >> $DOCKERFILE
+	fi
+
+	DIR_NAME=`echo ${1%/} | rev | awk -F \/ '{print $1}' | rev`
+	docker build -t "astronomerio/airflow:${DIR_NAME}" -f ${DOCKERFILE} $1 || exit 1
+
+	if [ -f $REQUIREMENTS ]; then
+		export AIRFLOW_HOME=$1
+		export AIRFLOW_IMAGE_TAG=${DIR_NAME}
+		exec docker-compose up --scale worker=2
+	else
+		echo "$1 has no requirements, skipping build."
+		export AIRFLOW_HOME=$1
+		exec docker-compose up --scale worker=2
+	fi
+else
+	echo "No valid directory specified, starting an empty Airflow..."
+	exec docker-compose up --scale worker=2
+fi
+

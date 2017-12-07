@@ -20,7 +20,7 @@ services:
       - "6379:6379"
 
   scheduler:
-    image: astronomerio/airflow
+    image: astronomerio/airflow:$AIRFLOW_IMAGE_TAG
     command: airflow scheduler
     restart: always
     labels:
@@ -31,11 +31,11 @@ services:
     env_file:
       - ../config/airflow.env
     volumes:
-      - $AIRFLOW_HOME/dags:/usr/local/airflow/dags:ro
-      - $AIRFLOW_HOME/plugins:/usr/local/airflow/plugins:ro
+      - $AIRFLOW_HOME/dags:/home/airflow/dags:ro
+      - $AIRFLOW_HOME/plugins:/home/airflow/plugins:ro
 
   webserver:
-    image: astronomerio/airflow
+    image: astronomerio/airflow:$AIRFLOW_IMAGE_TAG
     command: airflow webserver
     restart: always
     labels:
@@ -49,11 +49,11 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - $AIRFLOW_HOME/dags:/usr/local/airflow/dags:ro
-      - $AIRFLOW_HOME/plugins:/usr/local/airflow/plugins:ro
+      - $AIRFLOW_HOME/dags:/home/airflow/dags:ro
+      - $AIRFLOW_HOME/plugins:/home/airflow/plugins:ro
 
   worker:
-    image: astronomerio/airflow
+    image: astronomerio/airflow:$AIRFLOW_IMAGE_TAG
     command: airflow worker
     restart: always
     labels:
@@ -65,11 +65,11 @@ services:
     env_file:
       - ../config/airflow.env
     volumes:
-      - $AIRFLOW_HOME/dags:/usr/local/airflow/dags:ro
-      - $AIRFLOW_HOME/plugins:/usr/local/airflow/plugins:ro
+      - $AIRFLOW_HOME/dags:/home/airflow/dags:ro
+      - $AIRFLOW_HOME/plugins:/home/airflow/plugins:ro
 
   flower:
-    image: astronomerio/airflow
+    image: astronomerio/airflow:$AIRFLOW_IMAGE_TAG
     command: airflow flower
     restart: always
     labels:

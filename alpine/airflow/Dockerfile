@@ -18,34 +18,34 @@ MAINTAINER  Astronomer <humans@astronomer.io>
 
 ARG VERSION=v1.8.2
 
-ENV AIRFLOW_HOME="/usr/local/airflow"
+ENV AIRFLOW_HOME="/home/airflow"
 ENV AIRFLOW_REPOSITORY="https://github.com/astronomerio/incubator-airflow"
 ENV AIRFLOW_SUBMODULES="s3, postgres, password, celery"
 ENV AIRFLOW_MODULE="git+${AIRFLOW_REPOSITORY}@${VERSION}#egg=apache-airflow[${AIRFLOW_SUBMODULES}]"
 
 RUN apk add --no-cache --virtual .build-deps \
-		linux-headers \
 		build-base \
+		freetype-dev \
 		git \
 		libffi-dev \
-		freetype-dev \
 		libxml2-dev \
 		libxslt-dev \
+		linux-headers \
+		postgresql-dev \
+		python3-dev \
 	&& apk add \
 		bash \
-		python3-dev \
-		postgresql-dev \
-	&& pip3 install "${AIRFLOW_MODULE}" celery[redis]==3.1.25 \
+		postgresql \
+		python3 \
+	&& pip3 install --no-cache-dir "${AIRFLOW_MODULE}" celery[redis]==3.1.25 \
 	&& apk del .build-deps
 
-ADD include/script ${AIRFLOW_HOME}/script
-ADD include/airflow.cfg ${AIRFLOW_HOME}/airflow.cfg
-
-RUN adduser -D -h ${AIRFLOW_HOME} airflow \
-    && chown -R airflow: ${AIRFLOW_HOME}
-
-ENV PYTHONPATH="${PYTHONPATH}:${AIRFLOW_HOME}"
-EXPOSE 8080 5555 8793
+RUN adduser -D -h ${AIRFLOW_HOME} airflow && chown -R airflow: ${AIRFLOW_HOME}
 USER airflow
+
 WORKDIR ${AIRFLOW_HOME}
+ADD include/script script
+ADD include/airflow.cfg airflow.cfg
+
+EXPOSE 8080 5555 8793
 ENTRYPOINT ["./script/entrypoint"]
