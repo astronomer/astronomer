@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 if [ ! -z $1 ] && [ -d $1 ]; then
 	REQUIREMENTS="$1/requirements.txt"
