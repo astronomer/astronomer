@@ -15,6 +15,7 @@
 
 FROM alpine:3.7
 MAINTAINER Astronomer <humans@astronomer.io>
+LABEL io.astronomer.docker=true
 
 RUN apk update \
     && apk add ca-certificates \
