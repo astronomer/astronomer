@@ -1,13 +1,5 @@
 #!/bin/sh
 
-# If user passes a directory in as $1
-# If requirements.txt exists build image using dir name from onbuild parent
-# Run that iamge mapping volume as normal
-
-# If not, just map volume as normal
-
-# Add helper init script to init with Dockerfile and requirements.txt
-
 if [ ! -z $1 ] && [ -d $1 ]; then
 	REQUIREMENTS="$1/requirements.txt"
 	DOCKERFILE="$1/Dockerfile.astro"
