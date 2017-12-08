@@ -18,12 +18,17 @@ MAINTAINER  Astronomer <humans@astronomer.io>
 
 ARG VERSION=v1.8.2
 
+ENV AIRFLOW_USER="airflow"
 ENV AIRFLOW_HOME="/home/airflow"
 ENV AIRFLOW_REPOSITORY="https://github.com/astronomerio/incubator-airflow"
 ENV AIRFLOW_SUBMODULES="s3, postgres, password, celery"
 ENV AIRFLOW_MODULE="git+${AIRFLOW_REPOSITORY}@${VERSION}#egg=apache-airflow[${AIRFLOW_SUBMODULES}]"
 
-RUN apk add --no-cache --virtual .build-deps \
+RUN apk add --no-cache \
+		bash \
+		postgresql \
+		python3 \
+	&& apk add --no-cache --virtual .build-deps \
 		build-base \
 		freetype-dev \
 		git \
@@ -33,19 +38,17 @@ RUN apk add --no-cache --virtual .build-deps \
 		linux-headers \
 		postgresql-dev \
 		python3-dev \
-	&& apk add \
-		bash \
-		postgresql \
-		python3 \
 	&& pip3 install --no-cache-dir "${AIRFLOW_MODULE}" celery[redis]==3.1.25 \
 	&& apk del .build-deps
 
-RUN adduser -D -h ${AIRFLOW_HOME} airflow && chown -R airflow: ${AIRFLOW_HOME}
-USER airflow
+RUN adduser -D -h ${AIRFLOW_HOME} ${AIRFLOW_USER} && chown -R ${AIRFLOW_USER}: ${AIRFLOW_HOME}
+
+# Allowing for onbuild package installation. We specify user at runtime.
+# USER ${AIRFLOW_USER}
 
 WORKDIR ${AIRFLOW_HOME}
 ADD include/script script
 ADD include/airflow.cfg airflow.cfg
 
 EXPOSE 8080 5555 8793
-ENTRYPOINT ["./script/entrypoint"]
+ENTRYPOINT ["script/entrypoint"]

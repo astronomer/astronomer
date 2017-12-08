@@ -16,5 +16,10 @@
 FROM astronomerio/airflow
 MAINTAINER  Astronomer <humans@astronomer.io>
 
-ONBUILD ADD requirements.txt .
-ONBUILD RUN pip3 install --no-cache-dir --user -r requirements.txt
+ONBUILD ARG BASE_PATH=.
+
+ONBUILD ADD ${BASE_PATH}/packages.txt .
+ONBUILD RUN cat packages.txt | xargs apk add
+
+ONBUILD ADD ${BASE_PATH}/requirements.txt .
+ONBUILD RUN pip3 install --no-cache-dir -r requirements.txt
