@@ -13,8 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM astronomerio/base
+FROM astronomerinc/ap-base
 MAINTAINER Astronomer <humans@astronomer.io>
+
+ARG BUILD_NUMBER=-1
+LABEL io.astronomer.docker=true
+LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
 
 ARG ORG="apache"
 ARG VERSION=1.9.0rc5

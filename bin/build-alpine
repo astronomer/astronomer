@@ -4,14 +4,14 @@ for component in ${COMPONENTS} ; do
     echo "Building ${component}..."
 
     DOCKER_FILE="alpine/${component}/Dockerfile"
-    COMPONENT_NAME=${component}
+    COMPONENT_NAME="ap-${component}"
 
-    docker build -t ${REPOSITORY}/${COMPONENT_NAME}:latest -f ${DOCKER_FILE} alpine/${component} || exit 1
-    docker tag ${REPOSITORY}/${COMPONENT_NAME}:latest ${REPOSITORY}/${COMPONENT_NAME}:${ASTRONOMER_VERSION}
-
-	if [ -f "${DOCKER_FILE}.onbuild" ]; then
-		docker build -t "${REPOSITORY}/${COMPONENT_NAME}:latest-onbuild" -f "${DOCKER_FILE}.onbuild" alpine/${component} || exit 1
-
-		docker tag ${REPOSITORY}/${COMPONENT_NAME}:latest-onbuild ${REPOSITORY}/${COMPONENT_NAME}:${ASTRONOMER_VERSION}-onbuild
-	fi
+    if [ -f "${DOCKER_FILE}" ]; then
+        docker build --build-arg BUILD_NUMBER=${BUILD_NUMBER} -t ${REPOSITORY}/${COMPONENT_NAME}:latest -f ${DOCKER_FILE} alpine/${component} || exit 1
+        docker tag ${REPOSITORY}/${COMPONENT_NAME}:latest ${REPOSITORY}/${COMPONENT_NAME}:${ASTRONOMER_VERSION}
+    fi
+    if [ -f "${DOCKER_FILE}.onbuild" ]; then
+        docker build --build-arg BUILD_NUMBER=${BUILD_NUMBER} -t "${REPOSITORY}/${COMPONENT_NAME}:latest-onbuild" -f "${DOCKER_FILE}.onbuild" alpine/${component} || exit 1
+        docker tag ${REPOSITORY}/${COMPONENT_NAME}:latest-onbuild ${REPOSITORY}/${COMPONENT_NAME}:${ASTRONOMER_VERSION}-onbuild
+    fi
 done

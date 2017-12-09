@@ -15,7 +15,10 @@
 
 FROM alpine:3.7
 MAINTAINER Astronomer <humans@astronomer.io>
+
+ARG BUILD_NUMBER=-1
 LABEL io.astronomer.docker=true
+LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
 
 RUN apk update \
     && apk add ca-certificates \
