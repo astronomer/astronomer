@@ -14,21 +14,21 @@
 # limitations under the License.
 
 FROM astronomerio/base
-MAINTAINER  Astronomer <humans@astronomer.io>
+MAINTAINER Astronomer <humans@astronomer.io>
 
-ARG VERSION=v1.8.2
+ARG ORG="apache"
+ARG VERSION=1.9.0rc5
+ARG SUBMODULES="all, celery, redis"
+
+ENV AIRFLOW_REPOSITORY="https://github.com/${ORG}/incubator-airflow"
+ENV AIRFLOW_MODULE="git+${AIRFLOW_REPOSITORY}@${VERSION}#egg=apache-airflow[${SUBMODULES}]"
 
 ENV AIRFLOW_USER="airflow"
 ENV AIRFLOW_HOME="/home/airflow"
-ENV AIRFLOW_REPOSITORY="https://github.com/astronomerio/incubator-airflow"
-ENV AIRFLOW_SUBMODULES="s3, postgres, password, celery"
-ENV AIRFLOW_MODULE="git+${AIRFLOW_REPOSITORY}@${VERSION}#egg=apache-airflow[${AIRFLOW_SUBMODULES}]"
 
-RUN apk add --no-cache \
-		bash \
-		postgresql \
-		python3 \
-	&& apk add --no-cache --virtual .build-deps \
+ENV PYMSSQL_BUILD_WITH_BUNDLED_FREETDS=1
+
+RUN apk add --no-cache --virtual .build-deps \
 		build-base \
 		freetype-dev \
 		git \
@@ -36,9 +36,15 @@ RUN apk add --no-cache \
 		libxml2-dev \
 		libxslt-dev \
 		linux-headers \
+		mariadb-dev \
 		postgresql-dev \
 		python3-dev \
-	&& pip3 install --no-cache-dir "${AIRFLOW_MODULE}" celery[redis]==3.1.25 \
+	&& apk add --no-cache \
+		bash \
+		mariadb-client-libs \
+		postgresql \
+		python3 \
+	&& pip3 install --no-cache-dir "${AIRFLOW_MODULE}" \
 	&& apk del .build-deps
 
 RUN adduser -D -h ${AIRFLOW_HOME} ${AIRFLOW_USER} && chown -R ${AIRFLOW_USER}: ${AIRFLOW_HOME}
