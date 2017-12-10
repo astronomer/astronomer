@@ -19,9 +19,9 @@ build-alpine:
 	BUILD_NUMBER=${BUILD_NUMBER} \
 	bin/build-alpine
 
-push-public: clean build-alpine
+push-public:
 	for component in ${COMPONENTS} ; do \
-		echo "Pushing cp-$${component} ========"; \
+		echo "Pushing ap-$${component} ========================================"; \
 		docker push ${REPOSITORY}/ap-$${component}:latest || exit 1; \
 		docker push ${REPOSITORY}/ap-$${component}:${ASTRONOMER_VERSION} || exit 1; \
   	done
