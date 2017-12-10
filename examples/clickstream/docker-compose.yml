@@ -29,7 +29,7 @@ services:
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
 
   event-api:
-    image: astronomerio/cs-event-api:latest
+    image: astronomerinc/ap-event-api:latest
     labels:
       io.astronomer.docker: "true"
     depends_on:
@@ -48,7 +48,7 @@ services:
       - "8081:8081"
 
   event-router:
-    image: astronomerio/cs-event-router:latest
+    image: astronomerinc/ap-event-router:latest
     labels:
       io.astronomer.docker: "true"
     entrypoint: event-router mock --disable-sse "S3 Event Logs:s3-event-logs"

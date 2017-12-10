@@ -20,7 +20,7 @@ ARG BUILD_NUMBER=-1
 LABEL io.astronomer.docker=true
 LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
 
-ARG ORG="apache"
+ARG ORG="astronomerio"
 ARG VERSION=1.9.0rc5
 ARG SUBMODULES="all, celery, redis"
 

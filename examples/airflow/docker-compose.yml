@@ -24,7 +24,7 @@ services:
       - $AIRFLOW_HOME/.astro/data/redis:/data
 
   scheduler:
-    image: astronomerio/airflow:$AIRFLOW_IMAGE_TAG
+    image: astronomerinc/ap-airflow:$AIRFLOW_IMAGE_TAG
     command: airflow scheduler
     restart: always
     user: airflow
@@ -40,7 +40,7 @@ services:
       - $AIRFLOW_HOME/plugins:/home/airflow/plugins:ro
 
   webserver:
-    image: astronomerio/airflow:$AIRFLOW_IMAGE_TAG
+    image: astronomerinc/ap-airflow:$AIRFLOW_IMAGE_TAG
     command: airflow webserver
     restart: always
     user: airflow
@@ -59,7 +59,7 @@ services:
       - $AIRFLOW_HOME/plugins:/home/airflow/plugins:ro
 
   worker:
-    image: astronomerio/airflow:$AIRFLOW_IMAGE_TAG
+    image: astronomerinc/ap-airflow:$AIRFLOW_IMAGE_TAG
     command: airflow worker
     restart: always
     user: airflow
@@ -76,7 +76,7 @@ services:
       - $AIRFLOW_HOME/plugins:/home/airflow/plugins:ro
 
   flower:
-    image: astronomerio/airflow:$AIRFLOW_IMAGE_TAG
+    image: astronomerinc/ap-airflow:$AIRFLOW_IMAGE_TAG
     command: airflow flower
     restart: always
     user: airflow
