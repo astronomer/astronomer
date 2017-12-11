@@ -1,13 +1,13 @@
 ---
-# You don't need to edit this file, it's empty on purpose.
-# Edit theme's home layout instead if you wanna make some changes
-# See: https://jekyllrb.com/docs/themes/#overriding-theme-defaults
-layout: home
+layout: page
+title: Docker Images for the Astronomer Platorm
+permalink: /
+order: 1
 ---
 # Docker Images for the Astronomer Platform
 
 ## Overview
-This repository contains everything you need to get up and running with the Astronomer Platform. It is simply made up of Dockerfiles, docker-compose files, and some bash scripts.
+This repository contains everything you need to get up and running with the Astronomer Platform. It is made up of Dockerfiles, docker-compose files, and some bash scripts.
 
 ## Requirements
 The only requirement to get up and running are the Docker Engine and Docker Compose. If you don't have these installed already, visit these links for more information.
