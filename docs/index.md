@@ -10,8 +10,8 @@ This repository contains everything you need to get up and running with the Astr
 
 ## Requirements
 The only requirement to get up and running are the Docker Engine and Docker Compose. If you don't have these installed already, visit these links for more information.
-- Docker Engine - https://docs.docker.com/engine/installation/
-- Docker Compose - https://docs.docker.com/compose/install/
+- [Docker Engine](https://docs.docker.com/engine/installation/)
+- [Docker Compose](https://docs.docker.com/compose/install/)
 
 ## Quickstart
 To get up and running quickly, we have provided a several docker-compose files for quickly spinning up different components of the platform. Simply `cd` into `examples/${component}` and run `docker-compose up`. Some directories will have additional scripts to wrap some useful functionality around `docker-compose up`. These are documented on their respective pages.
