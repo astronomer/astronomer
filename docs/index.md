@@ -21,3 +21,9 @@ Running `docker-compose up` will download our prebuild images (see Makefile for 
 ## Building the Images
 All platform images are built from a minimal [Alpine Linux](https://alpinelinux.org/) base image to keep our footprint minimal and secure.
 To build the images from scratch run `make build-alpine` in your terminal. If you've already downloaded the images from DockerHub, this will replace them. These images will be used when running the platform locally.
+
+## Building the Documentation
+Documentation is built on jekyll and currently hosted on GitHub pages. To run the docs site locally:
+- `cd docs`
+- `bundle install`
+- `bundle exec jekyll serve`
