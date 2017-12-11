@@ -4,7 +4,6 @@ title: Docker Images for the Astronomer Platorm
 permalink: /
 order: 1
 ---
-# Docker Images for the Astronomer Platform
 
 ## Overview
 This repository contains everything you need to get up and running with the Astronomer Platform. It is made up of Dockerfiles, docker-compose files, and some bash scripts.
