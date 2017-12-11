@@ -2,7 +2,7 @@
 version: "2"
 services:
   zookeeper:
-    image: astronomerio/zookeeper:latest
+    image: confluentinc/cp-zookeeper:$CP_IMAGE_TAG
     hostname: zookeeper
     labels:
       io.astronomer.docker: "true"
@@ -13,7 +13,7 @@ services:
       ZOOKEEPER_TICK_TIME: 2000
 
   kafka:
-    image: astronomerio/kafka:latest
+    image: confluentinc/cp-enterprise-kafka:$CP_IMAGE_TAG
     hostname: kafka
     labels:
       io.astronomer.docker: "true"
@@ -29,7 +29,7 @@ services:
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
 
   event-api:
-    image: astronomerinc/ap-event-api:latest
+    image: astronomerinc/ap-event-api:$CLICKSTREAM_IMAGE_TAG
     labels:
       io.astronomer.docker: "true"
     depends_on:
@@ -48,7 +48,7 @@ services:
       - "8081:8081"
 
   event-router:
-    image: astronomerinc/ap-event-router:latest
+    image: astronomerinc/ap-event-router:$CLICKSTREAM_IMAGE_TAG
     labels:
       io.astronomer.docker: "true"
     entrypoint: event-router mock --disable-sse "S3 Event Logs:s3-event-logs"
@@ -69,23 +69,3 @@ services:
       - kafka
     ports:
       - "9091:9091"
-
-  #   jmx-exporter:
-  #       image: "sscaling/jmx-prometheus-exporter"
-  #       ports:
-  #           - "5556:5556"
-  #       volumes:
-  #           - ./configs/jmx-exporter.yml:/opt/jmx_exporter/config.yml
-  #       depends_on:
-  #           - "kafka"
-
-  #   prometheus:
-  #       image: "prom/prometheus"
-  #       ports:
-  #           - "9090:9090"
-  #       volumes:
-  #           - ./configs/prom.yml:/prom.yml
-  #       command:
-  #           - "-config.file=/prom.yml"
-  #       depends_on:
-  #           - "kafka"
