@@ -22,6 +22,10 @@ url: "" # the base hostname & protocol for your site, e.g. http://example.com
 twitter_username: astronomerio
 github_username:  astronomerio
 
+header_pages:
+  - pages/airflow.md
+  - pages/clickstream.md
+
 # Build settings
 markdown: kramdown
 theme: minima
