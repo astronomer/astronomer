@@ -17,7 +17,6 @@ FROM astronomerinc/ap-base
 MAINTAINER Astronomer <humans@astronomer.io>
 
 ARG BUILD_NUMBER=-1
-LABEL io.astronomer.docker=true
 LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
 
 ARG VERSION=v0.0.20-beta
