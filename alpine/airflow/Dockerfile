@@ -52,9 +52,6 @@ RUN apk add --no-cache --virtual .build-deps \
 
 RUN adduser -D -h ${AIRFLOW_HOME} ${AIRFLOW_USER} && chown -R ${AIRFLOW_USER}: ${AIRFLOW_HOME}
 
-# Allowing for onbuild package installation. We specify user at runtime.
-# USER ${AIRFLOW_USER}
-
 WORKDIR ${AIRFLOW_HOME}
 ADD include/script script
 ADD include/airflow.cfg airflow.cfg
