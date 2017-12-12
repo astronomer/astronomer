@@ -6,7 +6,7 @@ BUILD_NUMBER ?= 1
 
 ASTRONOMER_MAJOR_VERSION ?= 0
 ASTRONOMER_MINOR_VERSION ?= 0
-ASTRONOMER_PATCH_VERSION ?= 2
+ASTRONOMER_PATCH_VERSION ?= 3
 ASTRONOMER_VERSION ?= ${ASTRONOMER_MAJOR_VERSION}.${ASTRONOMER_MINOR_VERSION}.${ASTRONOMER_PATCH_VERSION}
 
 COMPONENTS := base event-api event-router airflow
@@ -19,7 +19,7 @@ build-alpine:
 	BUILD_NUMBER=${BUILD_NUMBER} \
 	bin/build-alpine
 
-push-public:
+push-public: clean build-alpine
 	for component in ${COMPONENTS} ; do \
 		echo "Pushing ap-$${component} ========================================"; \
 		docker push ${REPOSITORY}/ap-$${component}:latest || exit 1; \
