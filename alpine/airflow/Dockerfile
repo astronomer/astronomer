@@ -20,7 +20,7 @@ ARG BUILD_NUMBER=-1
 LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
 
 ARG ORG="astronomerio"
-ARG VERSION=1.9.0rc5
+ARG VERSION=1.9.0rc6
 ARG SUBMODULES="all, celery, redis"
 
 ENV AIRFLOW_REPOSITORY="https://github.com/${ORG}/incubator-airflow"
