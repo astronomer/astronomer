@@ -15,8 +15,14 @@ First, we spin up a [Postgres](https://www.postgresql.org/) container for the Ai
 Sweet! You're up and running with Apache Airflow and well on your way to automating all your data pipelines! The following sections will help you get started with your first pipelines, or get your existing pipelines running on the Astronomer Platform.
 
 ## Starting from Nothing
+You need to write your first DAG. Review:
 
-## Starting from an existing Airflow project.
+* [Core Airflow Concepts](https://docs.astronomer.io/v2/apache_airflow/tutorial/core-airflow-concepts.html)
+* [Simple Sample DAG](https://docs.astronomer.io/v2/apache_airflow/tutorial/sample-dag.html)
+
+We recommend managing your DAGs in a Git repo, but for the purposes of getting rolling, just make a directory on your machine with a `dags` directory, and you can copy the sample dag from the link above into the folder inside a file `test_dag.py`.
+
+## Starting from an existing Airflow project
 If you already have an Airflow project (Airflow home directory), getting things running on Astronomer should be pretty straightworard. Within `examples/airflow`, we also provide a `run` script that can wire up a few things to help you develop on Airflow quickly.
 
 You'll also notice a small `.env` file next to the `docker-compose.yml` file. This file is automatically sourced by `docker-compose` and it's variables are interpolated into the service definitions in the `docker-compose.yml` file. If you run `docker-compose up`, like we did above, we mount volumes into your host machine's `/tmp` directory for Postgres and Redis. This will automatically be cleaned up for you.
