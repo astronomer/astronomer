@@ -5,8 +5,6 @@ if [ ! -z $1 ] && [ -d $1 ]; then
 	REQUIREMENTS="$1/.astro/requirements.txt"
 	PACKAGES="$1/.astro/packages.txt"
 	DOCKERFILE="$1/Dockerfile.astro"
-	DOCKERIGNORE="$1/.dockerignore"
-	GITIGNORE="$1/.astro/.gitignore"
 
 	# Create .astro dir
 	mkdir -p "${1}/.astro"
@@ -26,18 +24,6 @@ if [ ! -z $1 ] && [ -d $1 ]; then
 		touch $PACKAGES
 	fi
 
-	# Add .astro to .dockerignore
-	if [ ! -f $DOCKERIGNORE ]; then
-		touch $DOCKERIGNORE
-	fi
-	grep -q -F ".astro/data" $DOCKERIGNORE || echo ".astro/data" >> $DOCKERIGNORE
-
-	# Add .astro to .gitignore
-	if [ ! -f $GITIGNORE ]; then
-		touch $GITIGNORE
-	fi
-	grep -q -F "data" $GITIGNORE || echo "data" >> $GITIGNORE
-
 	# Build astronomerio/airflow:DIR_NAME image
 	DIR_NAME=`echo ${1%/} | rev | awk -F \/ '{print $1}' | rev`
 	BUILD_ARGS="--build-arg BASE_PATH=.astro"
@@ -46,13 +32,11 @@ if [ ! -z $1 ] && [ -d $1 ]; then
 	# If we have an enhanced image built, specify tag here and use it
 	if [ -f $REQUIREMENTS ] || [ -f $PACKAGES ]; then
 		export AIRFLOW_HOME=$1
-		export AIRFLOW_BASE_LOG_FOLDER="${1}/.astro/logs"
 		export AIRFLOW_IMAGE_TAG=${DIR_NAME}
 		exec docker-compose up --scale worker=2
 	else
 		echo "$1 has no packages or requirements, skipping build."
 		export AIRFLOW_HOME=$1
-		export AIRFLOW_BASE_LOG_FOLDER="${1}/.astro/logs"
 		exec docker-compose up --scale worker=2
 	fi
 else
