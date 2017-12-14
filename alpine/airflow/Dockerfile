@@ -21,7 +21,7 @@ LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
 
 ARG ORG="astronomerio"
 ARG VERSION=1.9.0rc6
-ARG SUBMODULES="all, celery, redis"
+ARG SUBMODULES="all, celery, redis, statsd"
 
 ENV AIRFLOW_REPOSITORY="https://github.com/${ORG}/incubator-airflow"
 ENV AIRFLOW_MODULE="git+${AIRFLOW_REPOSITORY}@${VERSION}#egg=apache-airflow[${SUBMODULES}]"
@@ -50,7 +50,7 @@ RUN apk add --no-cache --virtual .build-deps \
 	&& pip3 install --no-cache-dir "${AIRFLOW_MODULE}" \
 	&& apk del .build-deps
 
-RUN adduser -D -h ${AIRFLOW_HOME} ${AIRFLOW_USER} && chown -R ${AIRFLOW_USER}: ${AIRFLOW_HOME}
+RUN adduser -D ${AIRFLOW_USER}
 
 WORKDIR ${AIRFLOW_HOME}
 ADD include/script script
