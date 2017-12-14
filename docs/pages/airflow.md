@@ -6,7 +6,7 @@ order: 1
 ---
 
 ## Quickstart
-First things first. If you have not already, clone the repository by running the following: `git clone https://github.com/astronomerio/astronomer.git` and change into the repository directory.
+If you have not already, clone the repository by running the following: `git clone https://github.com/astronomerio/astronomer.git` and change into the repository directory.
 
 To get up and running quickly and poke around with Apache Airflow on Astronomer, pop open a terminal and run `cd examples/airflow && docker-compose up`. This will spin up a handful of containers to closely mimic a live Astronomer environment.
 
