@@ -9,7 +9,7 @@ Full documentation for using the images can be found [here](https://astronomerio
 
 - The official Dockerfiles that build and install tagged releases of the services composing the Astronomer Platform.
 - Example docker-compose files for running various pieces and configurations of the platform. 
-- Scripts to build, maintain and release new tagged versions of the platform.
+- Scripts to build, maintain and release tagged versions of the platform.
 - Documentation on running the platform locally for testing and hacking.
 
 # Contribute
