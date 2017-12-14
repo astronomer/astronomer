@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 if [ ! -z $1 ] && [ -d $1 ]; then
 	BASE_IMAGE_NAME="astronomerinc/ap-airflow"
