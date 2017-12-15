@@ -5,6 +5,7 @@ if [ ! -z $1 ] && [ -d $1 ]; then
 	REQUIREMENTS="$1/.astro/requirements.txt"
 	PACKAGES="$1/.astro/packages.txt"
 	DOCKERFILE="$1/Dockerfile.astro"
+	WORKERS_COUNT=2
 
 	# Create .astro dir
 	mkdir -p "${1}/.astro"
@@ -33,14 +34,20 @@ if [ ! -z $1 ] && [ -d $1 ]; then
 	if [ -f $REQUIREMENTS ] || [ -f $PACKAGES ]; then
 		export AIRFLOW_HOME=$1
 		export AIRFLOW_IMAGE_TAG=${DIR_NAME}
-		exec docker-compose up --scale worker=2
+		docker-compose up -d --scale worker=${WORKERS_COUNT}
 	else
 		echo "$1 has no packages or requirements, skipping build."
 		export AIRFLOW_HOME=$1
-		exec docker-compose up --scale worker=2
+		docker-compose up -d --scale worker=${WORKERS_COUNT}
 	fi
 else
 	echo "No valid directory specified, starting an empty Airflow..."
-	exec docker-compose up --scale worker=2
+	docker-compose up -d --scale worker=${WORKERS_COUNT}
 fi
 
+printf "
+Airflow webserver running at http://localhost:8080
+Flower (Celery Monitoring) running at http://localhost:5555
+Grafana dashboard running at http://localhost:3000
+Prometheus UI running at http://localhost:9090\n
+"

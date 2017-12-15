@@ -40,6 +40,7 @@ services:
     depends_on:
       - postgres
       - redis
+      - statsd-exporter
     env_file:
       - ../config/airflow.env
     volumes:
@@ -96,3 +97,46 @@ services:
       - ../config/airflow.env
     ports:
       - "5555:5555"
+
+  statsd-exporter:
+    image: prom/statsd-exporter
+    command:
+      - "-statsd.mapping-config=/tmp/statsd-exporter.conf"
+    restart: always
+    depends_on:
+      - prometheus
+    labels:
+      io.astronomer.docker: "true"
+    volumes:
+      - ../config/statsd-exporter.conf:/tmp/statsd-exporter.conf:ro
+    ports:
+      - "9102:9102"
+
+  prometheus:
+    image: prom/prometheus
+    command:
+      - "--config.file=/tmp/prom.yml"
+      - "--storage.tsdb.path=/prometheus"
+    restart: always
+    labels:
+      io.astronomer.docker: "true"
+    ports:
+      - "9090:9090"
+      - "8125:8125"
+    volumes:
+      - ../config/prom.yml:/tmp/prom.yml:ro
+      - prometheus_data:/prometheus
+
+  grafana:
+    image: grafana/grafana:master
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+    depends_on:
+      - prometheus
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ../config/datasource.yml:/usr/share/grafana/conf/provisioning/datasources/datasource.yml
+      - ../config/dashboard.yml:/usr/share/grafana/conf/provisioning/dashboards/dashboard.yml
+      - ../config/dashboard.json:/var/lib/grafana/dashboards/dashboard.json
