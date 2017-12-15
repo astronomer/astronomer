@@ -5,6 +5,18 @@ permalink: /airflow/
 order: 1
 ---
 
+## Architecture
+
+The Astronomer Airflow module consists of seven components, and you must bring
+your own Postgres and Redis database, as well as a container deployment strategy
+for your cloud.
+
+> NOTE: Astronomer, Inc. is working on push-button deployment of Astronomer
+to popular clouds through the cloud marketplaces on those platforms. The
+company also provides full-service deployment of the platform (Astronomer Private Cloud Edition).
+
+![Airflow Module]({{ "/assets/img/airflow_module.png" | absolute_url }})
+
 ## Quickstart
 If you haven't already, clone the repository by running the following: `git clone https://github.com/astronomerio/astronomer.git` and change into the repository directory.
 
