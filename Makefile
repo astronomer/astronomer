@@ -22,8 +22,8 @@ build-alpine:
 push-public: clean build-alpine
 	for component in ${COMPONENTS} ; do \
 		echo "Pushing ap-$${component} ========================================"; \
-		docker push ${REPOSITORY}/ap-$${component}:${ASTRONOMER_VERSION} || exit 1; \
 		docker push ${REPOSITORY}/ap-$${component}:latest || exit 1; \
+		docker push ${REPOSITORY}/ap-$${component}:${ASTRONOMER_VERSION} || exit 1; \
   	done
 
 clean-containers:
