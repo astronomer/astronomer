@@ -11,3 +11,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - Airflow scripts now run docker-compose with -d flag.
+
+## [0.0.5] - 2017-12-15
+### Added
+- Support for Airflow onbuild tags.
