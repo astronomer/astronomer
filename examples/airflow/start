@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 
+WORKERS_COUNT=2
+
 if [ ! -z $1 ] && [ -d $1 ]; then
 	BASE_IMAGE_NAME="astronomerinc/ap-airflow"
 	REQUIREMENTS="$1/.astro/requirements.txt"
 	PACKAGES="$1/.astro/packages.txt"
 	DOCKERFILE="$1/Dockerfile.astro"
-	WORKERS_COUNT=2
 
 	# Create .astro dir
 	mkdir -p "${1}/.astro"
