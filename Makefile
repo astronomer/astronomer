@@ -9,7 +9,9 @@ ASTRONOMER_MINOR_VERSION ?= 0
 ASTRONOMER_PATCH_VERSION ?= 5
 ASTRONOMER_VERSION ?= ${ASTRONOMER_MAJOR_VERSION}.${ASTRONOMER_MINOR_VERSION}.${ASTRONOMER_PATCH_VERSION}
 
+# List of all components and order to build.
 COMPONENTS := base event-api event-router airflow
+ONBUILD_COMPONENTS := airflow
 REPOSITORY ?= astronomerinc
 
 build-alpine:
@@ -24,7 +26,11 @@ push-public: clean build-alpine
 		echo "Pushing ap-$${component} ========================================"; \
 		docker push ${REPOSITORY}/ap-$${component}:latest || exit 1; \
 		docker push ${REPOSITORY}/ap-$${component}:${ASTRONOMER_VERSION} || exit 1; \
-  	done
+	done; \
+	for component in ${ONBUILD_COMPONENTS} ; do \
+		docker push ${REPOSITORY}/ap-$${component}:latest-onbuild || exit 1; \
+		docker push ${REPOSITORY}/ap-$${component}:${ASTRONOMER_VERSION}-onbuild || exit 1; \
+	done
 
 clean-containers:
 	for container in `docker ps -aq -f label=io.astronomer.docker=true` ; do \
