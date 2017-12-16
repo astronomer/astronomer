@@ -133,6 +133,8 @@ services:
       GF_AUTH_ANONYMOUS_ENABLED: "true"
     depends_on:
       - prometheus
+    labels:
+      io.astronomer.docker: "true"
     ports:
       - "3000:3000"
     volumes:
