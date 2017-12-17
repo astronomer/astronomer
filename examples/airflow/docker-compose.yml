@@ -101,14 +101,14 @@ services:
   statsd-exporter:
     image: prom/statsd-exporter
     command:
-      - "-statsd.mapping-config=/tmp/statsd-exporter.conf"
+      - "-statsd.mapping-config=/tmp/statsd-exporter.yml"
     restart: always
     depends_on:
       - prometheus
     labels:
       io.astronomer.docker: "true"
     volumes:
-      - ../config/statsd-exporter.conf:/tmp/statsd-exporter.conf:ro
+      - ../config/statsd-exporter.yml:/tmp/statsd-exporter.yml:ro
     ports:
       - "9102:9102"
 

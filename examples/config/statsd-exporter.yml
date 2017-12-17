@@ -1,0 +1,17 @@
+mappings:
+  - match: airflow.dagrun.dependency-check.*.*
+    name: "airflow_dagrun_dependency_check"
+    labels:
+      dag_id: "$1"
+
+  - match: airflow.operator_successes_(.*)
+    match_type: regex
+    name: "airflow_operator_successes"
+    labels:
+      operator: "$1"
+
+  - match: airflow.operator_failures_(.*)
+    match_type: regex
+    name: "airflow_operator_failures"
+    labels:
+      operator: "$1"
