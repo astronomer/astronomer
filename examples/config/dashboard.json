@@ -213,7 +213,7 @@
           "value": "null"
         }
       ],
-      "valueName": "avg"
+      "valueName": "current"
     },
     {
       "cacheTimeout": null,
@@ -373,7 +373,7 @@
           "value": "null"
         }
       ],
-      "valueName": "avg"
+      "valueName": "current"
     },
     {
       "cacheTimeout": null,
@@ -951,7 +951,7 @@
     "list": []
   },
   "time": {
-    "from": "now-1h",
+    "from": "now-30m",
     "to": "now"
   },
   "timepicker": {
@@ -981,5 +981,5 @@
   },
   "timezone": "",
   "title": "Airflow",
-  "version": 5
+  "version": 1
 }
