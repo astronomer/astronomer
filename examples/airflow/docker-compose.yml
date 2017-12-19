@@ -129,6 +129,7 @@ services:
 
   grafana:
     image: grafana/grafana:master
+    restart: always
     environment:
       GF_AUTH_ANONYMOUS_ENABLED: "true"
     depends_on:
