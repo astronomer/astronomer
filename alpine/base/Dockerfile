@@ -17,9 +17,18 @@ FROM alpine:3.7
 MAINTAINER Astronomer <humans@astronomer.io>
 
 ARG BUILD_NUMBER=-1
+ARG ASTRONOMER_USER=astro
+ARG ASTRONOMER_GROUP=astro
+
+ENV ASTRONOMER_USER=${ASTRONOMER_USER}
+ENV ASTRONOMER_GROUP=${ASTRONOMER_GROUP}
+
 LABEL io.astronomer.docker=true
 LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
 
+RUN addgroup -S ${ASTRONOMER_GROUP} \
+	&& adduser -S -G ${ASTRONOMER_GROUP} ${ASTRONOMER_USER}
+
 RUN apk update \
-    && apk add ca-certificates \
-    && update-ca-certificates
+	&& apk add ca-certificates \
+	&& update-ca-certificates

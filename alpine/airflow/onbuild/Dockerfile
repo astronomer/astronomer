@@ -22,8 +22,8 @@ LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
 
 ONBUILD ARG BASE_PATH=.
 
-ONBUILD ADD ${BASE_PATH}/packages.txt .
+ONBUILD COPY ${BASE_PATH}/packages.txt .
 ONBUILD RUN cat packages.txt | xargs apk add
 
-ONBUILD ADD ${BASE_PATH}/requirements.txt .
+ONBUILD COPY ${BASE_PATH}/requirements.txt .
 ONBUILD RUN pip3 install --no-cache-dir -r requirements.txt

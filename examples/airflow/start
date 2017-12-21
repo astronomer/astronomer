@@ -49,7 +49,7 @@ fi
 printf "
 Airflow webserver running at http://localhost:8080
 Flower (Celery Monitoring) running at http://localhost:5555
-Grafana dashboard running at http://localhost:3000
+Grafana dashboard running at http://localhost:3000/dashboard/db/airflow
 Prometheus UI running at http://localhost:9090\n
 Execute ./pause to stop containers and keep all data.
 Execute ./kill to stop containers and remove all data.\n

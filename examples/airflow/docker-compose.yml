@@ -5,20 +5,20 @@ volumes:
   postgres_data:
   redis_data:
   prometheus_data:
-  grafana_data:
 
 services:
   postgres:
-    image: postgres:9.6
+    image: postgres:10.1-alpine
     restart: always
     labels:
       io.astronomer.docker: "true"
-    env_file:
-      - ../config/postgres.env
+    # env_file:
+      # - ../config/postgres.env
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ../config/initdb.sql:/docker-entrypoint-initdb.d/initdb.sql
 
   redis:
     image: redis:4.0.2
@@ -34,7 +34,7 @@ services:
     image: astronomerinc/ap-airflow:$AIRFLOW_IMAGE_TAG
     command: airflow scheduler
     restart: always
-    user: airflow
+    user: astro
     labels:
       io.astronomer.docker: "true"
     depends_on:
@@ -44,14 +44,14 @@ services:
     env_file:
       - ../config/airflow.env
     volumes:
-      - $AIRFLOW_HOME/dags:/home/airflow/dags:ro
-      - $AIRFLOW_HOME/plugins:/home/airflow/plugins:ro
+      - $AIRFLOW_HOME/dags:/usr/local/airflow/dags:ro
+      - $AIRFLOW_HOME/plugins:/usr/local/airflow/plugins:ro
 
   webserver:
     image: astronomerinc/ap-airflow:$AIRFLOW_IMAGE_TAG
     command: airflow webserver
     restart: always
-    user: airflow
+    user: astro
     labels:
       io.astronomer.docker: "true"
     depends_on:
@@ -63,14 +63,14 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - $AIRFLOW_HOME/dags:/home/airflow/dags:ro
-      - $AIRFLOW_HOME/plugins:/home/airflow/plugins:ro
+      - $AIRFLOW_HOME/dags:/usr/local/airflow/dags:ro
+      - $AIRFLOW_HOME/plugins:/usr/local/airflow/plugins:ro
 
   worker:
     image: astronomerinc/ap-airflow:$AIRFLOW_IMAGE_TAG
     command: airflow worker
     restart: always
-    user: airflow
+    user: astro
     labels:
       io.astronomer.docker: "true"
     depends_on:
@@ -80,14 +80,14 @@ services:
     env_file:
       - ../config/airflow.env
     volumes:
-      - $AIRFLOW_HOME/dags:/home/airflow/dags:ro
-      - $AIRFLOW_HOME/plugins:/home/airflow/plugins:ro
+      - $AIRFLOW_HOME/dags:/usr/local/airflow/dags:ro
+      - $AIRFLOW_HOME/plugins:/usr/local/airflow/plugins:ro
 
   flower:
     image: astronomerinc/ap-airflow:$AIRFLOW_IMAGE_TAG
     command: airflow flower
     restart: always
-    user: airflow
+    user: astro
     labels:
       io.astronomer.docker: "true"
     depends_on:
@@ -132,14 +132,15 @@ services:
     restart: always
     environment:
       GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_DATABASE_URL: postgres://grafana:grafana@postgres:5432/grafana
     depends_on:
+      - postgres
       - prometheus
     labels:
       io.astronomer.docker: "true"
     ports:
       - "3000:3000"
     volumes:
-      - grafana_data:/var/lib/grafana
-      - ../config/datasource.yml:/usr/share/grafana/conf/provisioning/datasources/datasource.yml
-      - ../config/dashboard.yml:/usr/share/grafana/conf/provisioning/dashboards/dashboard.yml
+      - ../config/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml
+      - ../config/dashboard.yml:/etc/grafana/provisioning/dashboards/dashboard.yml
       - ../config/dashboard.json:/var/lib/grafana/dashboards/dashboard.json

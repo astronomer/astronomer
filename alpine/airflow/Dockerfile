@@ -25,10 +25,7 @@ ARG SUBMODULES="all, celery, redis, statsd"
 
 ENV AIRFLOW_REPOSITORY="https://github.com/${ORG}/incubator-airflow"
 ENV AIRFLOW_MODULE="git+${AIRFLOW_REPOSITORY}@${VERSION}#egg=apache-airflow[${SUBMODULES}]"
-
-ENV AIRFLOW_USER="airflow"
-ENV AIRFLOW_HOME="/home/airflow"
-
+ENV AIRFLOW_HOME="/usr/local/airflow"
 ENV PYMSSQL_BUILD_WITH_BUNDLED_FREETDS=1
 
 RUN apk add --no-cache --virtual .build-deps \
@@ -50,11 +47,9 @@ RUN apk add --no-cache --virtual .build-deps \
 	&& pip3 install --no-cache-dir "${AIRFLOW_MODULE}" \
 	&& apk del .build-deps
 
-RUN adduser -D ${AIRFLOW_USER}
-
 WORKDIR ${AIRFLOW_HOME}
-ADD include/script script
-ADD include/airflow.cfg airflow.cfg
+COPY include .
+RUN chown -R ${ASTRONOMER_USER} ${AIRFLOW_HOME}
 
 EXPOSE 8080 5555 8793
 ENTRYPOINT ["script/entrypoint"]
