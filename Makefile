@@ -34,7 +34,7 @@ push-public: clean build-alpine
 
 clean-containers:
 	for container in `docker ps -aq -f label=io.astronomer.docker=true` ; do \
-		docker rm -f $${container} ; \
+		docker rm -f -v $${container} ; \
 	done
 
 clean-images:
