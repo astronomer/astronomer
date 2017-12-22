@@ -49,7 +49,6 @@
     ]
   },
   "editable": true,
-  "folderId": null,
   "gnetId": null,
   "graphTooltip": 0,
   "id": null,
@@ -561,7 +560,7 @@
       "lines": true,
       "linewidth": 1,
       "links": [],
-      "nullPointMode": "null",
+      "nullPointMode": "null as zero",
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -572,7 +571,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "airflow_operator_successes",
+          "expr": "rate(airflow_operator_successes[1m])",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{operator}}",
@@ -582,7 +581,7 @@
       "thresholds": [],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Operator Successes",
+      "title": "Operator Success Rate",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -642,7 +641,7 @@
       "lines": true,
       "linewidth": 1,
       "links": [],
-      "nullPointMode": "null",
+      "nullPointMode": "null as zero",
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -653,7 +652,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "airflow_operator_failures",
+          "expr": "rate(airflow_operator_failures[1m])",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{operator}}",
@@ -663,7 +662,7 @@
       "thresholds": [],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Operator Failures",
+      "title": "Operator Failure Rate",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -722,7 +721,7 @@
       "lines": true,
       "linewidth": 1,
       "links": [],
-      "nullPointMode": "null",
+      "nullPointMode": "null as zero",
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -804,7 +803,7 @@
       "lines": true,
       "linewidth": 1,
       "links": [],
-      "nullPointMode": "null",
+      "nullPointMode": "null as zero",
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -886,7 +885,7 @@
       "lines": true,
       "linewidth": 1,
       "links": [],
-      "nullPointMode": "null",
+      "nullPointMode": "null as zero",
       "percentage": false,
       "pointradius": 5,
       "points": false,

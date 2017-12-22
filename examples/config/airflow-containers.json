@@ -62,6 +62,7 @@
         "y": 0
       },
       "id": 8,
+      "interval": "",
       "legend": {
         "avg": false,
         "current": false,
@@ -85,7 +86,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "rate(container_cpu_user_seconds_total{container_label_com_docker_compose_service=~\"scheduler|webserver|flower\"}[5m]) * 100",
+          "expr": "rate(container_cpu_user_seconds_total{container_label_com_docker_compose_service=~\"scheduler|webserver|flower\"}[1m]) * 100",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{container_label_com_docker_compose_service}}",
@@ -245,7 +246,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "irate(container_network_receive_bytes_total{container_label_com_docker_compose_service=~\"scheduler|webserver|flower\"}[5m])",
+          "expr": "irate(container_network_receive_bytes_total{container_label_com_docker_compose_service=~\"scheduler|webserver|flower\"}[1m])",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{container_label_com_docker_compose_service}}",
@@ -325,7 +326,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "irate(container_network_transmit_bytes_total{container_label_com_docker_compose_service=~\"scheduler|webserver|flower\"}[5m])",
+          "expr": "irate(container_network_transmit_bytes_total{container_label_com_docker_compose_service=~\"scheduler|webserver|flower\"}[1m])",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{container_label_com_docker_compose_service}}",
@@ -405,7 +406,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "rate(container_cpu_user_seconds_total{container_label_com_docker_compose_service=\"worker\"}[5m]) * 100",
+          "expr": "rate(container_cpu_user_seconds_total{container_label_com_docker_compose_service=\"worker\"}[1m]) * 100",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "Worker  {{container_label_com_docker_compose_container_number}}",
@@ -565,7 +566,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "irate(container_network_receive_bytes_total{container_label_com_docker_compose_service=\"worker\"}[5m])",
+          "expr": "irate(container_network_receive_bytes_total{container_label_com_docker_compose_service=\"worker\"}[1m])",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "Worker {{container_label_com_docker_compose_container_number}}",
@@ -645,7 +646,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "irate(container_network_transmit_bytes_total{container_label_com_docker_compose_service=\"worker\"}[5m])",
+          "expr": "irate(container_network_transmit_bytes_total{container_label_com_docker_compose_service=\"worker\"}[1m])",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "Worker {{container_label_com_docker_compose_container_number}}",
@@ -697,7 +698,7 @@
     "list": []
   },
   "time": {
-    "from": "now-30m",
+    "from": "now-1h",
     "to": "now"
   },
   "timepicker": {
