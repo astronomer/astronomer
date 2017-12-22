@@ -6,3 +6,7 @@ scrape_configs:
   - job_name: 'airflow_scheduler'
     static_configs:
       - targets: ['statsd-exporter:9102']
+
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']

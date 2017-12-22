@@ -980,6 +980,6 @@
     ]
   },
   "timezone": "",
-  "title": "Airflow",
+  "title": "Airflow Scheduler",
   "version": 1
 }

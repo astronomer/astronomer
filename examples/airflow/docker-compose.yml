@@ -143,4 +143,18 @@ services:
     volumes:
       - ../config/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml
       - ../config/dashboard.yml:/etc/grafana/provisioning/dashboards/dashboard.yml
-      - ../config/dashboard.json:/var/lib/grafana/dashboards/dashboard.json
+      - ../config/airflow-scheduler.json:/var/lib/grafana/dashboards/airflow-scheduler.json
+      - ../config/airflow-containers.json:/var/lib/grafana/dashboards/airflow-containers.json
+
+  cadvisor:
+    image: google/cadvisor:v0.28.3
+    restart: always
+    labels:
+      io.astronomer.docker: "true"
+    ports:
+      - "8081:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
