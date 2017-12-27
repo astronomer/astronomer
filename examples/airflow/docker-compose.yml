@@ -9,7 +9,7 @@ volumes:
 services:
   postgres:
     image: postgres:10.1-alpine
-    restart: always
+    restart: unless-stopped
     labels:
       io.astronomer.docker: "true"
     ports:
@@ -19,8 +19,8 @@ services:
       - ../config/initdb.sql:/docker-entrypoint-initdb.d/initdb.sql
 
   redis:
-    image: redis:4.0.2
-    restart: always
+    image: redis:4.0.6-alpine
+    restart: unless-stopped
     labels:
       io.astronomer.docker: "true"
     ports:
@@ -31,7 +31,7 @@ services:
   scheduler:
     image: astronomerinc/ap-airflow:$AIRFLOW_IMAGE_TAG
     command: airflow scheduler
-    restart: always
+    restart: unless-stopped
     user: astro
     labels:
       io.astronomer.docker: "true"
@@ -49,7 +49,7 @@ services:
   webserver:
     image: astronomerinc/ap-airflow:$AIRFLOW_IMAGE_TAG
     command: airflow webserver
-    restart: always
+    restart: unless-stopped
     user: astro
     labels:
       io.astronomer.docker: "true"
@@ -69,7 +69,7 @@ services:
   worker:
     image: astronomerinc/ap-airflow:$AIRFLOW_IMAGE_TAG
     command: airflow worker
-    restart: always
+    restart: unless-stopped
     user: astro
     labels:
       io.astronomer.docker: "true"
@@ -87,7 +87,7 @@ services:
   flower:
     image: astronomerinc/ap-airflow:$AIRFLOW_IMAGE_TAG
     command: airflow flower
-    restart: always
+    restart: unless-stopped
     user: astro
     labels:
       io.astronomer.docker: "true"
@@ -104,7 +104,7 @@ services:
     image: prom/statsd-exporter
     command:
       - "-statsd.mapping-config=/tmp/statsd-exporter.yml"
-    restart: always
+    restart: unless-stopped
     depends_on:
       - prometheus
     labels:
@@ -119,7 +119,7 @@ services:
     command:
       - "--config.file=/tmp/prom.yml"
       - "--storage.tsdb.path=/prometheus"
-    restart: always
+    restart: unless-stopped
     labels:
       io.astronomer.docker: "true"
     ports:
@@ -131,7 +131,7 @@ services:
 
   grafana:
     image: grafana/grafana:master
-    restart: always
+    restart: unless-stopped
     environment:
       GF_AUTH_ANONYMOUS_ENABLED: "true"
       GF_DATABASE_URL: postgres://grafana:grafana@postgres:5432/grafana
@@ -150,7 +150,7 @@ services:
 
   cadvisor:
     image: google/cadvisor:v0.28.3
-    restart: always
+    restart: unless-stopped
     labels:
       io.astronomer.docker: "true"
     ports:
