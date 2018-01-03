@@ -15,3 +15,7 @@ All notable changes to this project will be documented in this file.
 ## [0.0.5] - 2017-12-15
 ### Added
 - Support for Airflow onbuild tags.
+
+## [0.0.8] - 2018-01-03
+### Added
+- Tini init system.
