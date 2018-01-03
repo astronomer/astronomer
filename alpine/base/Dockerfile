@@ -30,5 +30,5 @@ RUN addgroup -S ${ASTRONOMER_GROUP} \
 	&& adduser -S -G ${ASTRONOMER_GROUP} ${ASTRONOMER_USER}
 
 RUN apk update \
-	&& apk add ca-certificates \
+	&& apk add --no-cache ca-certificates tini \
 	&& update-ca-certificates

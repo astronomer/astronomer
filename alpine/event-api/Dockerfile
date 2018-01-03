@@ -46,4 +46,4 @@ RUN apk add --no-cache --virtual .build-deps \
 
 ENV GIN_MODE=release
 EXPOSE 8080 8081
-ENTRYPOINT ["event-api"]
+ENTRYPOINT ["tini", "--", "event-api"]

@@ -45,4 +45,4 @@ RUN apk add --no-cache --virtual .build-deps \
 	&& rm -rf /usr/lib/go
 
 EXPOSE 9091
-ENTRYPOINT ["event-router"]
+ENTRYPOINT ["tini", "--", "event-router"]
