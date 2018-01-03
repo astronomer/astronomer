@@ -52,4 +52,4 @@ COPY include .
 RUN chown -R ${ASTRONOMER_USER} ${AIRFLOW_HOME}
 
 EXPOSE 8080 5555 8793
-ENTRYPOINT ["script/entrypoint"]
+ENTRYPOINT ["tini", "--", "script/entrypoint"]
