@@ -26,7 +26,7 @@ build:
 	BUILD_NUMBER=${BUILD_NUMBER} \
 	bin/build-images
 
-push-public: clean build-alpine
+push-public: clean build
 	for component in ${ALL_COMPONENTS} ; do \
 		echo "Pushing ap-$${component} ========================================"; \
 		docker push ${REPOSITORY}/ap-$${component}:latest || exit 1; \
