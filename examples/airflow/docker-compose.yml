@@ -101,23 +101,21 @@ services:
       - "5555:5555"
 
   statsd-exporter:
-    image: prom/statsd-exporter
+    image: astronomerinc/ap-statsd-exporter:latest
     command:
-      - "-statsd.mapping-config=/tmp/statsd-exporter.yml"
+      - "-statsd.mapping-config=/etc/statsd-exporter/mappings.yml"
     restart: unless-stopped
     depends_on:
       - prometheus
     labels:
       io.astronomer.docker: "true"
-    volumes:
-      - ../config/statsd-exporter.yml:/tmp/statsd-exporter.yml:ro
     ports:
       - "9102:9102"
 
   prometheus:
-    image: prom/prometheus
+    image: astronomerinc/ap-prometheus:latest
     command:
-      - "--config.file=/tmp/prom.yml"
+      - "--config.file=/etc/prometheus/docker-compose-config.yml"
       - "--storage.tsdb.path=/prometheus"
     restart: unless-stopped
     labels:
@@ -126,11 +124,10 @@ services:
       - "9090:9090"
       - "8125:8125"
     volumes:
-      - ../config/prom.yml:/tmp/prom.yml:ro
       - prometheus_data:/prometheus
 
   grafana:
-    image: grafana/grafana:master
+    image: astronomerinc/ap-grafana:latest
     restart: unless-stopped
     environment:
       GF_AUTH_ANONYMOUS_ENABLED: "true"
@@ -142,11 +139,6 @@ services:
       io.astronomer.docker: "true"
     ports:
       - "3000:3000"
-    volumes:
-      - ../config/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml
-      - ../config/dashboard.yml:/etc/grafana/provisioning/dashboards/dashboard.yml
-      - ../config/airflow-scheduler.json:/var/lib/grafana/dashboards/airflow-scheduler.json
-      - ../config/airflow-containers.json:/var/lib/grafana/dashboards/airflow-containers.json
 
   cadvisor:
     image: google/cadvisor:v0.28.3

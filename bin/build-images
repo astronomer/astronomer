@@ -1,11 +1,12 @@
 #!/usr/bin/env sh
 
-for component in ${COMPONENTS} ; do
-    echo "Building ${component}..."
+# Build and tag images
+function build_component () {
+    echo "Building ${2}..."
 
-    DOCKER_DIR="alpine/${component}"
+    DOCKER_DIR="docker/${1}/${2}"
     DOCKER_FILE="${DOCKER_DIR}/Dockerfile"
-    COMPONENT_NAME="ap-${component}"
+    COMPONENT_NAME="ap-${2}"
 
     # Build normal components
     if [ -f ${DOCKER_FILE} ]; then
@@ -21,4 +22,14 @@ for component in ${COMPONENTS} ; do
         docker build --build-arg BUILD_NUMBER=${BUILD_NUMBER} -t "${REPOSITORY}/${COMPONENT_NAME}:latest-onbuild" -f "${ONBUILD_DOCKER_FILE}" ${ONBUILD_DOCKER_DIR} || exit 1
         docker tag "${REPOSITORY}/${COMPONENT_NAME}:latest-onbuild" ${REPOSITORY}/${COMPONENT_NAME}:${ASTRONOMER_VERSION}-onbuild
     fi
+}
+
+# Build platform components
+for component in ${PLATFORM_COMPONENTS} ; do
+    build_component "platform" "${component}"
+done
+
+# Build vendor components
+for component in ${VENDOR_COMPONENTS} ; do
+    build_component "vendor" "${component}"
 done
