@@ -19,3 +19,7 @@ All notable changes to this project will be documented in this file.
 ## [0.0.8] - 2018-01-03
 ### Added
 - Tini init system.
+
+## [0.0.9] - 2018-01-04
+### Added
+- Vendor images.
