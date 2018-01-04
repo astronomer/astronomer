@@ -10,24 +10,29 @@ ASTRONOMER_PATCH_VERSION ?= 8
 ASTRONOMER_VERSION ?= ${ASTRONOMER_MAJOR_VERSION}.${ASTRONOMER_MINOR_VERSION}.${ASTRONOMER_PATCH_VERSION}
 
 # List of all components and order to build.
-COMPONENTS := base event-api event-router airflow
-ONBUILD_COMPONENTS := airflow
+PLATFORM_COMPONENTS := base event-api event-router airflow
+PLATFORM_ONBUILD_COMPONENTS := airflow
+VENDOR_COMPONENTS := grafana prometheus statsd-exporter
+ALL_COMPONENTS := ${PLATFORM_COMPONENTS} ${VENDOR_COMPONENTS}
+
+# Public repository for images.
 REPOSITORY ?= astronomerinc
 
-build-alpine:
-	COMPONENTS="${COMPONENTS}" \
+build:
+	PLATFORM_COMPONENTS="${PLATFORM_COMPONENTS}" \
+	VENDOR_COMPONENTS="${VENDOR_COMPONENTS}" \
 	REPOSITORY=${REPOSITORY} \
 	ASTRONOMER_VERSION=${ASTRONOMER_VERSION} \
 	BUILD_NUMBER=${BUILD_NUMBER} \
-	bin/build-alpine
+	bin/build-images
 
 push-public: clean build-alpine
-	for component in ${COMPONENTS} ; do \
+	for component in ${ALL_COMPONENTS} ; do \
 		echo "Pushing ap-$${component} ========================================"; \
 		docker push ${REPOSITORY}/ap-$${component}:latest || exit 1; \
 		docker push ${REPOSITORY}/ap-$${component}:${ASTRONOMER_VERSION} || exit 1; \
 	done; \
-	for component in ${ONBUILD_COMPONENTS} ; do \
+	for component in ${PLATFORM_ONBUILD_COMPONENTS} ; do \
 		docker push ${REPOSITORY}/ap-$${component}:latest-onbuild || exit 1; \
 		docker push ${REPOSITORY}/ap-$${component}:${ASTRONOMER_VERSION}-onbuild || exit 1; \
 	done
