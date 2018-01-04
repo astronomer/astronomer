@@ -12,7 +12,7 @@ ASTRONOMER_VERSION ?= ${ASTRONOMER_MAJOR_VERSION}.${ASTRONOMER_MINOR_VERSION}.${
 # List of all components and order to build.
 PLATFORM_COMPONENTS := base event-api event-router airflow
 PLATFORM_ONBUILD_COMPONENTS := airflow
-VENDOR_COMPONENTS := grafana prometheus statsd-exporter
+VENDOR_COMPONENTS := cadvisor grafana prometheus statsd-exporter
 ALL_COMPONENTS := ${PLATFORM_COMPONENTS} ${VENDOR_COMPONENTS}
 
 # Public repository for images.
