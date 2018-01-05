@@ -29,3 +29,7 @@ All notable changes to this project will be documented in this file.
 - Python and pip symlinks to python3 and pip3.
 ### Removed
 - Usage of .astro directory in start script.
+
+## [0.0.11] - 2018-01-05
+### Added
+- Prometheus Marathon config.
