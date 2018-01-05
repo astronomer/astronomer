@@ -33,6 +33,9 @@ You need to write your first DAG. Review:
 * [Simple Sample DAG](https://docs.astronomer.io/v2/apache_airflow/tutorial/sample-dag.html)
 
 We recommend managing your DAGs in a Git repo, but for the purposes of getting rolling, just make a directory on your machine with a `dags` directory, and you can copy the sample dag from the link above into the folder inside a file `test_dag.py`.
+We typically advise first testing locally on your machine, before pushing changes to your staging environment. Once fully tested you can deploy to your production instance. 
+
+When ready to commit new source or destination hooks/operators, our best practice is to commit these into separate repositories for each plugin.
 
 ## Starting from an existing Airflow project
 If you already have an Airflow project (Airflow home directory), getting things running on Astronomer is straightforward. Within `examples/airflow`, we provide a `run` script that can wire up a few things to help you develop on Airflow quickly.
