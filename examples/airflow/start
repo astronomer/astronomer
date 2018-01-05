@@ -4,12 +4,9 @@ WORKERS_COUNT=2
 
 if [ ! -z $1 ] && [ -d $1 ]; then
 	BASE_IMAGE_NAME="astronomerinc/ap-airflow"
-	REQUIREMENTS="$1/.astro/requirements.txt"
-	PACKAGES="$1/.astro/packages.txt"
-	DOCKERFILE="$1/Dockerfile.astro"
-
-	# Create .astro dir
-	mkdir -p "${1}/.astro"
+	REQUIREMENTS="$1/requirements.txt"
+	PACKAGES="$1/packages.txt"
+	DOCKERFILE="$1/Dockerfile"
 
 	# Create default dockerfile using onbuild image as base
 	if [ ! -f $DOCKERFILE ]; then
@@ -28,8 +25,7 @@ if [ ! -z $1 ] && [ -d $1 ]; then
 
 	# Build astronomerio/airflow:DIR_NAME image
 	DIR_NAME=`echo ${1%/} | rev | awk -F \/ '{print $1}' | rev`
-	BUILD_ARGS="--build-arg BASE_PATH=.astro"
-	docker build ${BUILD_ARGS} -t "${BASE_IMAGE_NAME}:${DIR_NAME}" -f ${DOCKERFILE} $1 || exit 1
+	docker build -t "${BASE_IMAGE_NAME}:${DIR_NAME}" -f ${DOCKERFILE} $1 || exit 1
 
 	# If we have an enhanced image built, specify tag here and use it
 	if [ -f $REQUIREMENTS ] || [ -f $PACKAGES ]; then
