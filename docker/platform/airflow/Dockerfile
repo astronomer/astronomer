@@ -45,7 +45,9 @@ RUN apk add --no-cache --virtual .build-deps \
 		postgresql \
 		python3 \
 	&& pip3 install --no-cache-dir "${AIRFLOW_MODULE}" \
-	&& apk del .build-deps
+	&& apk del .build-deps \
+	&& ln -sf /usr/bin/python3 /usr/bin/python \
+	&& ln -sf /usr/bin/pip3 /usr/bin/pip
 
 WORKDIR ${AIRFLOW_HOME}
 COPY include .

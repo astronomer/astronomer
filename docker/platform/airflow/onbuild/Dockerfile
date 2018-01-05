@@ -26,4 +26,4 @@ ONBUILD COPY ${BASE_PATH}/packages.txt .
 ONBUILD RUN cat packages.txt | xargs apk add
 
 ONBUILD COPY ${BASE_PATH}/requirements.txt .
-ONBUILD RUN pip3 install --no-cache-dir -r requirements.txt
+ONBUILD RUN pip install --no-cache-dir -r requirements.txt
