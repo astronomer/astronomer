@@ -23,3 +23,9 @@ All notable changes to this project will be documented in this file.
 ## [0.0.9] - 2018-01-04
 ### Added
 - Vendor images.
+
+## [0.0.10] - 2018-01-04
+### Added
+- Python and pip symlinks to python3 and pip3.
+### Removed
+- Usage of .astro directory in start script.
