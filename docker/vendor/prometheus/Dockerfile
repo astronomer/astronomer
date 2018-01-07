@@ -21,6 +21,6 @@ ARG BUILD_NUMBER=-1
 LABEL io.astronomer.docker=true
 LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
 
-COPY include/docker-compose-config.yml /etc/prometheus/docker-compose-config.yml
-COPY include/kubernetes-config.yml /etc/prometheus/kubernetes-config.yml
-COPY include/dcos-config.yml /etc/prometheus/dcos-config.yml
+COPY include/docker-compose-config.yml /etc/prometheus/config/docker-compose.yml
+COPY include/kubernetes-config.yml /etc/prometheus/config/kubernetes.yml
+COPY include/dcos-config.yml /etc/prometheus/config/dcos.yml
