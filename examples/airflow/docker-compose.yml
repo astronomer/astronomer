@@ -122,7 +122,6 @@ services:
       io.astronomer.docker: "true"
     ports:
       - "9090:9090"
-      - "8125:8125"
     volumes:
       - prometheus_data:/prometheus
 
