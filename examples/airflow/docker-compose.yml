@@ -115,7 +115,7 @@ services:
   prometheus:
     image: astronomerinc/ap-prometheus:latest
     command:
-      - "--config.file=/etc/prometheus/docker-compose-config.yml"
+      - "--config.file=/etc/prometheus/config/docker-compose.yml"
       - "--storage.tsdb.path=/prometheus"
     restart: unless-stopped
     labels:
