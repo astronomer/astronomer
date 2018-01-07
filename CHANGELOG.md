@@ -33,3 +33,7 @@ All notable changes to this project will be documented in this file.
 ## [0.0.11] - 2018-01-05
 ### Added
 - Prometheus Marathon config.
+
+## [0.0.12] - 2018-01-07
+### Changed
+- Prometheus config file name and paths.
