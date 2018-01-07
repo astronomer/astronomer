@@ -37,3 +37,7 @@ All notable changes to this project will be documented in this file.
 ## [0.0.12] - 2018-01-07
 ### Changed
 - Prometheus config file name and paths.
+
+## [0.0.13] - 2018-01-07
+### Added
+- Support for passing default prometheus host for grafana datasource.
