@@ -131,6 +131,7 @@ services:
     environment:
       GF_AUTH_ANONYMOUS_ENABLED: "true"
       GF_DATABASE_URL: postgres://grafana:grafana@postgres:5432/grafana
+      ASTRO_DEFAULT_PROMETHEUS_HOST: http://prometheus:9090
     depends_on:
       - postgres
       - prometheus

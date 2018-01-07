@@ -2,6 +2,6 @@ datasources:
   - name: Prometheus
     type: prometheus
     org_id: 1
-    url: http://prometheus:9090
+    url: ${ASTRO_DEFAULT_PROMETHEUS_HOST}
     access: proxy
     is_default: true

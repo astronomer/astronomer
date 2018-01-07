@@ -21,7 +21,12 @@ ARG BUILD_NUMBER=-1
 LABEL io.astronomer.docker=true
 LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
 
-COPY include/datasource.yml /etc/grafana/provisioning/datasources/datasource.yml
-COPY include/dashboard.yml /etc/grafana/provisioning/dashboards/dashboard.yml
+RUN apt-get update && apt-get install -yq gettext-base
+
+COPY include/dashboard.yaml /etc/grafana/provisioning/dashboards/dashboard.yaml
 COPY include/airflow-scheduler.json /var/lib/grafana/dashboards/airflow-scheduler.json
 COPY include/airflow-containers.json /var/lib/grafana/dashboards/airflow-containers.json
+COPY include/datasource.yaml /tmp/datasource.yaml
+COPY include/entrypoint /entrypoint
+
+ENTRYPOINT ["/entrypoint"]
