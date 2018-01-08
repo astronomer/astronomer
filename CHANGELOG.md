@@ -41,3 +41,7 @@ All notable changes to this project will be documented in this file.
 ## [0.0.13] - 2018-01-07
 ### Added
 - Support for passing default prometheus host for grafana datasource.
+
+## [0.0.14] - 2018-01-08
+### Changed
+- Fixed busted grafana build
