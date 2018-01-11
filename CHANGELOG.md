@@ -44,4 +44,11 @@ All notable changes to this project will be documented in this file.
 
 ## [0.0.14] - 2018-01-08
 ### Changed
-- Fixed busted grafana build
+- Fixed busted grafana build.
+
+## [0.0.15] - 2018-01-10
+### Added
+- Support for clearing worker logs after x days.
+
+### Removed
+- Snakebite python package due to compatibility issues with python 3.
