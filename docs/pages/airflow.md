@@ -38,11 +38,11 @@ We typically advise first testing locally on your machine, before pushing change
 When ready to commit new source or destination hooks/operators, our best practice is to commit these into separate repositories for each plugin.
 
 ## Starting from an existing Airflow project
-If you already have an Airflow project (Airflow home directory), getting things running on Astronomer is straightforward. Within `examples/airflow`, we provide a `run` script that can wire up a few things to help you develop on Airflow quickly.
+If you already have an Airflow project (Airflow home directory), getting things running on Astronomer is straightforward. Within `examples/airflow`, we provide a `start` script that can wire up a few things to help you develop on Airflow quickly.
 
 You'll also notice a small `.env` file next to the `docker-compose.yml` file. This file is automatically sourced by `docker-compose` and it's variables are interpolated into the service definitions in the `docker-compose.yml` file. If you run `docker-compose up`, like we did above, we mount volumes into your host machine's `/tmp` directory for Postgres and Redis. This will automatically be cleaned up for you.
 
-This will also be the behavior if you run `./run` with no arguments. If you want to load your own Airflow project into this system, just provide the project's path as an argument to run, like this: `./run ~/repos/airflow-project`.
+This will also be the behavior if you run `./start` with no arguments. If you want to load your own Airflow project into this system, just provide the project's path as an argument to run, like this: `./start ~/repos/airflow-project`.
 
 Under the hood, a few things make this work. `Dockerfile.astro` and `.dockerignore` files are written into your project directory. And an `.astro` directory is created.
 - `Dockerfile.astro` just links to a special `onbuild` version of our Airflow image that will automatically add certain files, within the `.astro` directory to the image.
@@ -50,7 +50,7 @@ Under the hood, a few things make this work. `Dockerfile.astro` and `.dockerigno
 - The `.astro` directory will also contain a `requirements.txt` file that you can add python packages to be installed using `pip`. We will automatically build and install them when the containers are restarted.
 - In some cases, python modules will need to compile native modules and/or rely on other package that exist outside of the python ecosystem. In this case, we also provide a `packages.txt` file in the `.astro` directory, where you can add [Alpine packages](https://pkgs.alpinelinux.org/packages). The format is similar to `requirements.txt`, with a package on each line. If you run into a situation where you need more control or further assistance, please reach out to humans@astronomer.io.
 
-With this configuration, you can point the `./run` script at any Airflow home directory and maintain distinct and separate environments for each, allowing you to easily test different Airflow projects in isolation.
+With this configuration, you can point the `./start` script at any Airflow home directory and maintain distinct and separate environments for each, allowing you to easily test different Airflow projects in isolation.
 
 ## Limitations
 
