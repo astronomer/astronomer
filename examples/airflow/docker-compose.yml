@@ -40,7 +40,7 @@ services:
     depends_on:
       - postgres
       - redis
-      # - statsd-exporter
+      - statsd-exporter
     env_file:
       - ../config/airflow.env
     volumes:
