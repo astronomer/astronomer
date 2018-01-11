@@ -27,6 +27,7 @@ ENV AIRFLOW_REPOSITORY="https://github.com/${ORG}/incubator-airflow"
 ENV AIRFLOW_MODULE="git+${AIRFLOW_REPOSITORY}@${VERSION}#egg=apache-airflow[${SUBMODULES}]"
 ENV AIRFLOW_HOME="/usr/local/airflow"
 ENV PYMSSQL_BUILD_WITH_BUNDLED_FREETDS=1
+ENV PYTHONPATH=${PYTHONPATH:+${PYTHONPATH}:}${AIRFLOW_HOME}
 
 # Install packages
 RUN apk add --no-cache --virtual .build-deps \
