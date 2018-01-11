@@ -5,6 +5,7 @@ volumes:
   postgres_data:
   redis_data:
   prometheus_data:
+  worker_data:
 
 services:
   postgres:
@@ -30,7 +31,7 @@ services:
 
   scheduler:
     image: astronomerinc/ap-airflow:$AIRFLOW_IMAGE_TAG
-    command: airflow scheduler
+    command: ["airflow", "scheduler"]
     restart: unless-stopped
     user: astro
     labels:
@@ -39,7 +40,7 @@ services:
     depends_on:
       - postgres
       - redis
-      - statsd-exporter
+      # - statsd-exporter
     env_file:
       - ../config/airflow.env
     volumes:
@@ -48,7 +49,7 @@ services:
 
   webserver:
     image: astronomerinc/ap-airflow:$AIRFLOW_IMAGE_TAG
-    command: airflow webserver
+    command: ["airflow", "webserver"]
     restart: unless-stopped
     user: astro
     labels:
@@ -68,7 +69,7 @@ services:
 
   worker:
     image: astronomerinc/ap-airflow:$AIRFLOW_IMAGE_TAG
-    command: airflow worker
+    command: ["airflow", "worker"]
     restart: unless-stopped
     user: astro
     labels:
@@ -83,10 +84,23 @@ services:
     volumes:
       - $AIRFLOW_HOME/dags:/usr/local/airflow/dags:ro
       - $AIRFLOW_HOME/plugins:/usr/local/airflow/plugins:ro
+      - worker_data:/usr/local/airflow/logs
+
+  worker-gc:
+    image: astronomerinc/ap-airflow:$AIRFLOW_IMAGE_TAG
+    restart: unless-stopped
+    command: ["crond", "-f", "-d", "0"]
+    environment:
+      AIRFLOW_WORKER_LOGS_RETENTION_DAYS: 1
+    labels:
+      io.astronomer.docker: "true"
+      io.astronomer.docker.component: "airflow-worker-gc"
+    volumes:
+      - worker_data:/usr/local/airflow/logs
 
   flower:
     image: astronomerinc/ap-airflow:$AIRFLOW_IMAGE_TAG
-    command: airflow flower
+    command: ["airflow", "flower"]
     restart: unless-stopped
     user: astro
     labels:
