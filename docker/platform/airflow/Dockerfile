@@ -28,6 +28,7 @@ ENV AIRFLOW_MODULE="git+${AIRFLOW_REPOSITORY}@${VERSION}#egg=apache-airflow[${SU
 ENV AIRFLOW_HOME="/usr/local/airflow"
 ENV PYMSSQL_BUILD_WITH_BUNDLED_FREETDS=1
 
+# Install packages
 RUN apk add --no-cache --virtual .build-deps \
 		build-base \
 		freetype-dev \
@@ -49,9 +50,27 @@ RUN apk add --no-cache --virtual .build-deps \
 	&& ln -sf /usr/bin/python3 /usr/bin/python \
 	&& ln -sf /usr/bin/pip3 /usr/bin/pip
 
-WORKDIR ${AIRFLOW_HOME}
-COPY include .
-RUN chown -R ${ASTRONOMER_USER} ${AIRFLOW_HOME}
+# Create logs directory so we can own it when we mount volumes
+RUN mkdir -p ${AIRFLOW_HOME}/logs
 
+# Copy entrypoint to root
+COPY include/entrypoint /
+COPY include/wait-for-command /
+
+# Copy airflow configuration
+COPY include/airflow.cfg ${AIRFLOW_HOME}
+
+# Copy cron scripts
+COPY include/clean-airflow-logs /etc/periodic/15min/clean-airflow-logs
+
+# Ensure our user has ownership to AIRFLOW_HOME
+RUN chown -R ${ASTRONOMER_USER}:${ASTRONOMER_GROUP} ${AIRFLOW_HOME}
+
+# Switch to AIRFLOW_HOME
+WORKDIR ${AIRFLOW_HOME}
+
+# Expose all airflow ports
 EXPOSE 8080 5555 8793
-ENTRYPOINT ["tini", "--", "script/entrypoint"]
+
+# Run airflow with minimal init
+ENTRYPOINT ["tini", "--", "/entrypoint"]

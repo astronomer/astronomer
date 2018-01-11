@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+
+DIRECTORY=${AIRFLOW_HOME:-/usr/local/airflow}
+RETENTION=${AIRFLOW_WORKER_LOG_RETENTION_DAYS:-15}
+find ${DIRECTORY}/logs -mtime +${RETENTION} -name *.log -delete

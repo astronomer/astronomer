@@ -6,7 +6,7 @@ set -e
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 CMD=$2
 
-# Wait for postgres then init the db.
+# Wait for postgres then init the db
 if [[ -n $AIRFLOW__CORE__SQL_ALCHEMY_CONN  ]]; then
   if [[ $CMD == "webserver" ]] || [[ $CMD == "scheduler" ]]; then
     HOST=`echo $AIRFLOW__CORE__SQL_ALCHEMY_CONN | awk -F@ '{print $2}' | awk -F/ '{print $1}'`
@@ -18,5 +18,5 @@ if [[ -n $AIRFLOW__CORE__SQL_ALCHEMY_CONN  ]]; then
   fi
 fi
 
-# Run the `airflow` command.
+# Run the original command
 exec $@
