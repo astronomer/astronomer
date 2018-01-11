@@ -46,6 +46,7 @@ RUN apk add --no-cache --virtual .build-deps \
 		postgresql \
 		python3 \
 	&& pip3 install --no-cache-dir "${AIRFLOW_MODULE}" \
+	&& pip3 uninstall -y snakebite \
 	&& apk del .build-deps \
 	&& ln -sf /usr/bin/python3 /usr/bin/python \
 	&& ln -sf /usr/bin/pip3 /usr/bin/pip
