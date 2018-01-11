@@ -51,3 +51,21 @@ Under the hood, a few things make this work. `Dockerfile.astro` and `.dockerigno
 - In some cases, python modules will need to compile native modules and/or rely on other package that exist outside of the python ecosystem. In this case, we also provide a `packages.txt` file in the `.astro` directory, where you can add [Alpine packages](https://pkgs.alpinelinux.org/packages). The format is similar to `requirements.txt`, with a package on each line. If you run into a situation where you need more control or further assistance, please reach out to humans@astronomer.io.
 
 With this configuration, you can point the `./run` script at any Airflow home directory and maintain distinct and separate environments for each, allowing you to easily test different Airflow projects in isolation.
+
+## Limitations
+
+### HDFS hook not supported
+
+Astronomer is built on the latest stable versions of everything, including Python 3.
+
+**With that said, we currently do not support using Airflow's HDFS hook and operators which use it (we `pip uninstall snakebite` in our dockerfile).**
+
+The `HDFSHook` [depends on](https://github.com/apache/incubator-airflow/blob/b75367bb572e8bbfc1bfd539fbb34a76a5ed484d/setup.py#L129) the package spotify/snakebite which does not support Python 3. If you are interested in that package getting Python 3 support, you can follow and comment on the issue at [snakebite #62](https://github.com/spotify/snakebite/issues/62). In the comments, Spotify engineers have stated that the compatibility issue is due to their library's dependency on protobuf 2.x which doesn't support Python 3.
+
+You can read more info on this issue at:
+
+- https://issues.apache.org/jira/browse/AIRFLOW-1316
+- https://github.com/apache/incubator-airflow/pull/2398
+- https://github.com/puckel/docker-airflow/issues/77
+
+One workaround you may consider to work with HDFS is putting calls inside in a Docker container running Python 2 and using Airflow's `DockerOperator`. If this solution doesn't work for you, please contact us and we'd be happy to discuss further.
