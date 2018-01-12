@@ -52,3 +52,7 @@ All notable changes to this project will be documented in this file.
 
 ### Removed
 - Snakebite python package due to compatibility issues with python 3.
+
+## [0.0.16] - 2018-01-12
+### Changed
+- Airflow worker-gc environment variable name.
