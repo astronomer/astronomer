@@ -91,7 +91,7 @@ services:
     restart: unless-stopped
     command: ["crond", "-f", "-d", "0"]
     environment:
-      AIRFLOW_WORKER_LOGS_RETENTION_DAYS: 1
+      ASTRONOMER__AIRFLOW__WORKER_LOGS_RETENTION_DAYS: 1
     labels:
       io.astronomer.docker: "true"
       io.astronomer.docker.component: "airflow-worker-gc"
