@@ -30,7 +30,7 @@ services:
       - redis_data:/data
 
   scheduler:
-    image: $AIRFLOW_IMAGE
+    image: $AIRFLOW_IMAGE:${AIRFLOW_IMAGE_TAG}
     command: ["airflow", "scheduler"]
     restart: unless-stopped
     user: astro
@@ -48,7 +48,7 @@ services:
       - $AIRFLOW_HOME/plugins:/usr/local/airflow/plugins:ro
 
   webserver:
-    image: $AIRFLOW_IMAGE
+    image: $AIRFLOW_IMAGE:${AIRFLOW_IMAGE_TAG}
     command: ["airflow", "webserver"]
     restart: unless-stopped
     user: astro
@@ -68,7 +68,7 @@ services:
       - $AIRFLOW_HOME/plugins:/usr/local/airflow/plugins:ro
 
   worker:
-    image: $AIRFLOW_IMAGE
+    image: $AIRFLOW_IMAGE:${AIRFLOW_IMAGE_TAG}
     command: ["airflow", "worker"]
     restart: unless-stopped
     user: astro
@@ -87,7 +87,7 @@ services:
       - worker_data:/usr/local/airflow/logs
 
   worker-gc:
-    image: $AIRFLOW_IMAGE
+    image: $AIRFLOW_IMAGE:${AIRFLOW_IMAGE_TAG}
     restart: unless-stopped
     command: ["crond", "-f", "-d", "0"]
     environment:
@@ -99,7 +99,7 @@ services:
       - worker_data:/usr/local/airflow/logs
 
   flower:
-    image: $AIRFLOW_IMAGE
+    image: $AIRFLOW_IMAGE:${AIRFLOW_IMAGE_TAG}
     command: ["airflow", "flower"]
     restart: unless-stopped
     user: astro
