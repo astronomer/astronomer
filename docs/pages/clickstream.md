@@ -7,9 +7,9 @@ order: 2
 
 ## Architecture
 
-The Astronomer Clickstream module consists of nine components, and you must bring
-your own Kafka, Postgres and Redis database, as well as a container deployment
-strategy for your cloud.
+The Astronomer Clickstream module consists of six components, and you must bring
+your own Kafka data store, as well as a container deployment strategy for your
+cloud.
 
 ![Clickstream Module]({{ "/assets/img/clickstream_module.png" | absolute_url }})
 
