@@ -11,10 +11,6 @@ The Astronomer Airflow module consists of seven components, and you must bring
 your own Postgres and Redis database, as well as a container deployment strategy
 for your cloud.
 
-> NOTE: Astronomer, Inc. is working on push-button deployment of Astronomer
-to popular clouds through the cloud marketplaces on those platforms. The
-company also provides full-service deployment of the platform (Astronomer Private Cloud Edition).
-
 ![Airflow Module]({{ "/assets/img/airflow_module.png" | absolute_url }})
 
 ## Quickstart
@@ -33,7 +29,7 @@ You need to write your first DAG. Review:
 * [Simple Sample DAG](https://docs.astronomer.io/v2/apache_airflow/tutorial/sample-dag.html)
 
 We recommend managing your DAGs in a Git repo, but for the purposes of getting rolling, just make a directory on your machine with a `dags` directory, and you can copy the sample dag from the link above into the folder inside a file `test_dag.py`.
-We typically advise first testing locally on your machine, before pushing changes to your staging environment. Once fully tested you can deploy to your production instance. 
+We typically advise first testing locally on your machine, before pushing changes to your staging environment. Once fully tested you can deploy to your production instance.
 
 When ready to commit new source or destination hooks/operators, our best practice is to commit these into separate repositories for each plugin.
 
