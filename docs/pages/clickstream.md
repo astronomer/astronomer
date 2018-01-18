@@ -9,12 +9,12 @@ order: 2
 
 The Astronomer Clickstream module consists of six components:
 
-* Event API is built in Go, and its only job is to drop events into Kafka
-* Apache Kafka is the data store
-* The Event Router republishes events from the main topic to destination-specific topics
-* Serverside workers pull data from destination-specific topics and send them to the destination's API
-* Metrics from all the containers are scraped by Prometheus
-* And the Prometheus metrics are visualized in Grafana
+* **Event API** is built in Go, and its only job is to accept user events from SDKs, and drop those events into Kafka
+* **Apache Kafka** is the data store
+* **Event Router** republishes events from the main topic to destination-specific topics
+* **Serverside workers** pulls user events from the destination-specific topics and route them to destination APIs
+* **Prometheus** scrapes metrics from all the containers
+* **Grafana** visualizes Prometheus metrics
 
 ![Clickstream Module]({{ "/assets/img/clickstream_module.png" | absolute_url }})
 
