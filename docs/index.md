@@ -1,6 +1,6 @@
 ---
 layout: page
-title: Docker Images for the Astronomer Platorm
+title: The Astronomer Platform
 permalink: /
 order: 1
 ---
