@@ -61,7 +61,7 @@ The `HDFSHook` [depends on](https://github.com/apache/incubator-airflow/blob/b75
 You can read more info on this issue at:
 
 - [https://issues.apache.org/jira/browse/AIRFLOW-1316](https://issues.apache.org/jira/browse/AIRFLOW-1316)
-- [https://github.com/apache/incubator-airflow/pull/2398](https://issues.apache.org/jira/browse/AIRFLOW-1316)
-- [https://github.com/puckel/docker-airflow/issues/77](https://issues.apache.org/jira/browse/AIRFLOW-1316)
+- [https://github.com/apache/incubator-airflow/pull/2398](https://github.com/apache/incubator-airflow/pull/2398)
+- [https://github.com/puckel/docker-airflow/issues/77](https://github.com/puckel/docker-airflow/issues/77)
 
 One workaround you may consider to work with HDFS is putting calls inside in a Docker container running Python 2 and using Airflow's `DockerOperator`. If this solution doesn't work for you, please contact us and we'd be happy to discuss further.
