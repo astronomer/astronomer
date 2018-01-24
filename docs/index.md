@@ -18,6 +18,12 @@ To get up and running quickly, we have provided a several docker-compose files f
 
 Running `docker-compose up` will download our prebuild images (see Makefile for details) from our [DockerHub Repository](https://hub.docker.com/u/astronomerinc/) and spin up containers running the various platform systems.
 
+## Modules
+
+1. [Clickstream](/clickstream) — Docker images for an [Analytics.js](https://github.com/segmentio/analytics.js)-based clickstream system with server-side event processing. Includes a Go Event API, Apache Kafka, Go Event Router, and server-side integration workers that push data off to ~50 common APIs.
+
+2. [Airflow](/airflow) — Docker images for [Apache Airflow](https://airflow.apache.org/)-based ETL system that is pre-configured to run Airflow, Celery, Flower, StatsD, Prometheus, and Grafana.
+
 ## Building the Images
 All platform images are built from a minimal [Alpine Linux](https://alpinelinux.org/) base image to keep our footprint minimal and secure.
 To build the images from scratch run `make build-alpine` in your terminal. If you've already downloaded the images from DockerHub, this will replace them. These images will be used when running the platform locally.
