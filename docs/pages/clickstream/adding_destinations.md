@@ -1,5 +1,6 @@
 ---
 layout: page
+hide: true
 title: Add Clickstream Destination
 permalink: /clickstream/add_destination
 order: 1

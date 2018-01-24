@@ -1,5 +1,7 @@
 ---
 layout: page
+homepage: true
+isHome: true
 title: Astronomer Open Edition
 permalink: /
 order: 1

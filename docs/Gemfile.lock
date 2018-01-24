@@ -94,6 +94,8 @@ GEM
       coffee-script-source (~> 1.11.1)
     jekyll-default-layout (0.1.4)
       jekyll (~> 3.0)
+    jekyll-docs-theme (0.1.1)
+      jekyll (~> 3.3)
     jekyll-feed (0.9.2)
       jekyll (~> 3.3)
     jekyll-gist (1.4.1)
@@ -221,8 +223,8 @@ PLATFORMS
 
 DEPENDENCIES
   github-pages
+  jekyll-docs-theme
   jekyll-feed (~> 0.6)
-  minima (~> 2.0)
   tzinfo-data
 
 BUNDLED WITH
