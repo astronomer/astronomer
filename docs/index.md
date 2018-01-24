@@ -1,6 +1,6 @@
 ---
 layout: page
-title: The Astronomer Platform
+title: Astronomer Open Edition
 permalink: /
 order: 1
 ---
