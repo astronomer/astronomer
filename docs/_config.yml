@@ -13,33 +13,66 @@
 # you will see them accessed via {{ site.title }}, {{ site.email }}, and so on.
 # You can create any custom variable you would like, and they will be accessible
 # in the templates via {{ site.myvariable }}.
-title: Astronomer Platform
+title: Astronomer Open Edition
 email: humans@astronomer.io
 description: >- # this means to ignore newlines until "baseurl:"
-  This site contains documentation for building and running the Astronomer Platform.
-baseurl: "/astronomer" # the subpath of your site, e.g. /blog
-url: "" # the base hostname & protocol for your site, e.g. http://example.com
-twitter_username: astronomerio
-github_username:  astronomerio
-
-header_pages:
-  - pages/airflow.md
-  - pages/clickstream.md
+  Documentation for building and running Astronomer Open Edition.
+baseurl: "/" # the subpath of your site, e.g. /blog
+url: "http://open.astronomer.io" # the base hostname & protocol for your site, e.g. http://example.com
 
 # Build settings
 markdown: kramdown
-theme: minima
-plugins:
-  - jekyll-feed
+theme: jekyll-docs-theme
 
-# Exclude from processing.
-# The following items will not be processed, by default. Create a custom list
-# to override the default setting.
-# exclude:
-#   - Gemfile
-#   - Gemfile.lock
-#   - node_modules
-#   - vendor/bundle/
-#   - vendor/cache/
-#   - vendor/gems/
-#   - vendor/ruby/
+
+# name of the software
+name: Astronomer Open Edition
+
+project:
+    version: 0.0.16
+    download_url: https://github.com/astronomerio/astronomer/releases
+
+license:
+    software: Apache License, Version 2.0
+    software_url: https://opensource.org/licenses/Apache-2.0
+
+    docs: CC BY 3.0
+    docs_url: http://creativecommons.org/licenses/by/3.0/
+
+links:
+    header:
+      - title: GitHub
+        url: https://github.com/astronomerio/astronomer
+    footer:
+      - title: GitHub
+        url: https://github.com/astronomerio/astronomer
+      - title: Issues
+        url: https://github.com/astronomerio/astronomer/issues?state=open
+
+ui:
+    header:
+        color1: "#605985"
+        color2: "#232229"
+        trianglify: true
+
+social:
+    github:
+        user: astronomerio
+        repo: astronomer
+    twitter:
+        enabled: false
+        via:
+        hash:
+        account:
+    facebook:
+        enabled: false
+        profileUrl:
+
+analytics:
+    google: UA-54102728-7
+
+# Build settings
+markdown: kramdown
+exclude:
+    - Gemfile
+    - Gemfile.lock
