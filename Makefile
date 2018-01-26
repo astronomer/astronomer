@@ -38,12 +38,12 @@ push-public: clean build
 	done
 
 clean-containers:
-	for container in `docker ps -aq -f label=io.astronomer.docker=true` ; do \
+	for container in `docker ps -aq -f label=io.astronomer.docker.open=true` ; do \
 		docker rm -f -v $${container} ; \
 	done
 
 clean-images:
-	for image in `docker images -q -f label=io.astronomer.docker=true` ; do \
+	for image in `docker images -q -f label=io.astronomer.docker.open=true` ; do \
 		docker rmi -f $${image} ; \
 	done
 

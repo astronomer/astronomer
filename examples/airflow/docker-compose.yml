@@ -13,6 +13,7 @@ services:
     restart: unless-stopped
     labels:
       io.astronomer.docker: "true"
+      io.astronomer.docker.open: "true"
     ports:
       - "5432:5432"
     volumes:
@@ -24,6 +25,7 @@ services:
     restart: unless-stopped
     labels:
       io.astronomer.docker: "true"
+      io.astronomer.docker.open: "true"
     ports:
       - "6379:6379"
     volumes:
@@ -36,6 +38,7 @@ services:
     user: astro
     labels:
       io.astronomer.docker: "true"
+      io.astronomer.docker.open: "true"
       io.astronomer.docker.component: "airflow-scheduler"
     depends_on:
       - postgres
@@ -54,6 +57,7 @@ services:
     user: astro
     labels:
       io.astronomer.docker: "true"
+      io.astronomer.docker.open: "true"
       io.astronomer.docker.component: "airflow-webserver"
     depends_on:
       - scheduler # Wait for scheduler to avoid race to init db in entrypoint.sh
@@ -74,6 +78,7 @@ services:
     user: astro
     labels:
       io.astronomer.docker: "true"
+      io.astronomer.docker.open: "true"
       io.astronomer.docker.component: "airflow-worker"
     depends_on:
       - postgres
@@ -94,6 +99,7 @@ services:
       ASTRONOMER__AIRFLOW__WORKER_LOGS_RETENTION_DAYS: 1
     labels:
       io.astronomer.docker: "true"
+      io.astronomer.docker.open: "true"
       io.astronomer.docker.component: "airflow-worker-gc"
     volumes:
       - worker_data:/usr/local/airflow/logs
@@ -105,6 +111,7 @@ services:
     user: astro
     labels:
       io.astronomer.docker: "true"
+      io.astronomer.docker.open: "true"
       io.astronomer.docker.component: "airflow-flower"
     depends_on:
       - postgres
@@ -123,6 +130,7 @@ services:
       - prometheus
     labels:
       io.astronomer.docker: "true"
+      io.astronomer.docker.open: "true"
     ports:
       - "9102:9102"
 
@@ -151,6 +159,7 @@ services:
       - prometheus
     labels:
       io.astronomer.docker: "true"
+      io.astronomer.docker.open: "true"
     ports:
       - "3000:3000"
 
@@ -159,6 +168,7 @@ services:
     restart: unless-stopped
     labels:
       io.astronomer.docker: "true"
+      io.astronomer.docker.open: "true"
     ports:
       - "8081:8080"
     volumes:

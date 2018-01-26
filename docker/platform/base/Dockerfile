@@ -24,11 +24,12 @@ ENV ASTRONOMER_USER=${ASTRONOMER_USER}
 ENV ASTRONOMER_GROUP=${ASTRONOMER_GROUP}
 
 LABEL io.astronomer.docker=true
+LABEL io.astronomer.docker.open=true
 LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
 
 RUN addgroup -S ${ASTRONOMER_GROUP} \
 	&& adduser -S -G ${ASTRONOMER_GROUP} ${ASTRONOMER_USER}
 
 RUN apk update \
-	&& apk add --no-cache ca-certificates tini \
+	&& apk add --no-cache ca-certificates \
 	&& update-ca-certificates
