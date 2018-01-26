@@ -46,6 +46,7 @@ RUN apk add --no-cache --virtual .build-deps \
 		mariadb-client-libs \
 		postgresql \
 		python3 \
+		tini \
 	&& pip3 install --no-cache-dir "${AIRFLOW_MODULE}" \
 	&& pip3 uninstall -y snakebite \
 	&& apk del .build-deps \

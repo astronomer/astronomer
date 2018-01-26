@@ -6,6 +6,7 @@ services:
     hostname: zookeeper
     labels:
       io.astronomer.docker: "true"
+      io.astronomer.docker.open: "true"
     ports:
       - "2181:2181"
     environment:
@@ -17,6 +18,7 @@ services:
     hostname: kafka
     labels:
       io.astronomer.docker: "true"
+      io.astronomer.docker.open: "true"
     depends_on:
       - zookeeper
     ports:
@@ -32,6 +34,7 @@ services:
     image: astronomerinc/ap-event-api:$CLICKSTREAM_IMAGE_TAG
     labels:
       io.astronomer.docker: "true"
+      io.astronomer.docker.open: "true"
     depends_on:
       - kafka
     environment:
@@ -51,6 +54,7 @@ services:
     image: astronomerinc/ap-event-router:$CLICKSTREAM_IMAGE_TAG
     labels:
       io.astronomer.docker: "true"
+      io.astronomer.docker.open: "true"
     entrypoint: event-router mock --disable-sse "S3 Event Logs:s3-event-logs"
     environment:
       ER_KAFKA_INGESTION_TOPIC: main
