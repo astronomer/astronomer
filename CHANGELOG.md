@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.17] - 2018-01-26
+
+### Added
+
+- Labels for open.
+
 ## [0.0.16] - 2018-01-12
 
 ### Changed
