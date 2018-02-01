@@ -1,0 +1,20 @@
+# Default values for astronomer-ee.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# User in pilot containers
+uid: 100
+
+# Images for pilot
+images:
+  commander: astronomerinc/ap-pce-commander:0.0.8
+  phoenix: astronomerinc/ap-pce-phoenix:0.0.8
+
+# Static IP name for pilot
+staticIpName:
+
+# Secret for generating JWTs
+jwtSecret:
+
+ingress:
+  acme: false
