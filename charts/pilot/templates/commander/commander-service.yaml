@@ -1,0 +1,25 @@
+################################
+## Astronomer Commander Service
+#################################
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ .Release.Name }}-commander
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    component: commander
+    tier: astronomer-pilot
+    release: {{ .Release.Name }}
+    chart: {{ .Chart.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  type: NodePort
+  selector:
+    component: commander
+    tier: astronomer-pilot
+    release: {{ .Release.Name }}
+  ports:
+    - name: commander-http
+      protocol: TCP
+      port: 8880
+      targetPort: 8880

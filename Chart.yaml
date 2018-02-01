@@ -1,0 +1,6 @@
+name: astronomer-core
+version: 0.0.1
+appVersion: 0.0.10
+description: Helm chart to deploy the Astronomer Platform core
+keywords:
+  - astronomer

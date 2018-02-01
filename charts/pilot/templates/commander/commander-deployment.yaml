@@ -1,0 +1,53 @@
+################################
+## Astronomer Commander Deployment
+#################################
+kind: Deployment
+apiVersion: apps/v1beta2
+metadata:
+  name: {{ .Release.Name }}-commander
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    component: commander
+    tier: astronomer-pilot
+    release: {{ .Release.Name }}
+    chart: {{ .Chart.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: commander
+      tier: astronomer-pilot
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        component: commander
+        tier: astronomer-pilot
+        release: {{ .Release.Name }}
+    spec:
+      serviceAccountName: {{ .Release.Name }}-commander
+      restartPolicy: Always
+      securityContext:
+        runAsUser: {{ .Values.uid }}
+      containers:
+        - name: {{ .Release.Name }}-commander
+          image: {{ .Values.images.commander }}
+          ports:
+            - name: commander-http
+              containerPort: 8880
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8880
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8880
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          env:
+            - name: COMMANDER_PORT
+              value: "8880"

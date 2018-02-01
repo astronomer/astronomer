@@ -1,0 +1,25 @@
+################################
+## Airflow Worker Service
+#################################
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ .Release.Name }}-worker
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: {{ .Values.appName }}
+    component: worker
+    tier: airflow-core
+    release: {{ .Release.Name }}
+    chart: {{ .Chart.Name }}
+    heritage: {{ .Release.Service }}
+    {{- include "extra_labels" . }}
+spec:
+  clusterIP: None
+  selector:
+    app: {{ .Values.appName }}
+    component: worker
+    release: {{ .Release.Name }}
+  ports:
+    - name: worker-logs
+      port: 8793

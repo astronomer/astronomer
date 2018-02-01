@@ -1,0 +1,39 @@
+################################
+## Airflow Scheduler Deployment
+#################################
+kind: Deployment
+apiVersion: apps/v1beta2
+metadata:
+  name: {{ .Release.Name }}-scheduler
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: {{ .Values.appName }}
+    component: scheduler
+    tier: airflow-core
+    release: {{ .Release.Name }}
+    chart: {{ .Chart.Name }}
+    heritage: {{ .Release.Service }}
+    {{- include "extra_labels" . }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.appName }}
+      component: scheduler
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.appName }}
+        component: scheduler
+        release: {{ .Release.Name }}
+    spec:
+      restartPolicy: Always
+      securityContext:
+        runAsUser: {{ .Values.uid }}
+      containers:
+        - name: {{ .Release.Name }}-scheduler
+          image: {{ .Values.images.airflow }}
+          args: ["airflow", "scheduler"]
+          env:
+          {{- include "airflow_environment" . | indent 10 }}

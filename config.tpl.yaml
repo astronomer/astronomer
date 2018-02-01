@@ -1,0 +1,41 @@
+################################
+## Chart overrides
+#################################
+
+# Airflow overrides
+airflow:
+
+  # Database connections
+  data:
+
+    # Main Airflow database
+    metadata:
+      host: 
+      port: 5432
+      database:
+      username:
+      password: 
+
+    # Celery results backend
+    results:
+      host: 
+      port: 5432
+      database:
+      username:
+      password: 
+
+    # Celery broker
+    broker:
+      host: 
+      port: 6379
+      database: 0
+      username:
+      password: 
+
+    # Grafana backend
+    grafana:
+      host: 
+      port: 5432
+      database:
+      username:
+      password: 

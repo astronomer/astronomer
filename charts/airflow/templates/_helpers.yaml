@@ -1,0 +1,35 @@
+{{/* Airflow environment variables */}}
+{{- define "airflow_environment" }}
+  # Dynamically create environment variables
+  {{- range $i, $config := .Values.env }}
+  - name: {{ $config.name }}
+    value: {{ $config.value | quote }}
+  {{- end }}
+  # Hard-coded environment variables.
+  # We need to use the release name, so we can't
+  # set it in values.yaml.
+  - name: AIRFLOW__SCHEDULER__STATSD_HOST
+    value: "{{ .Release.Name }}-statsd"
+  - name: AIRFLOW__CORE__SQL_ALCHEMY_CONN
+    valueFrom:
+      secretKeyRef:
+        name: {{ .Release.Name }}-airflow-metadata
+        key: connection
+  - name: AIRFLOW__CELERY__CELERY_RESULT_BACKEND
+    valueFrom:
+      secretKeyRef:
+        name: {{ .Release.Name}}-airflow-results
+        key: connection
+  - name: AIRFLOW__CELERY__BROKER_URL
+    valueFrom:
+      secretKeyRef:
+        name: {{ .Release.Name }}-airflow-broker
+        key: connection
+{{- end }}
+
+{{/* Common component labels */}}
+{{- define "extra_labels" }}
+  {{- if .Values.global.organization }}
+    organization: {{ .Values.global.organization | quote }}
+  {{- end }}
+{{- end }}

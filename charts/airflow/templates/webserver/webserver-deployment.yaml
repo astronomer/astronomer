@@ -1,0 +1,54 @@
+################################
+## Airflow Webserver Deployment
+#################################
+kind: Deployment
+apiVersion: apps/v1beta2
+metadata:
+  name: {{ .Release.Name }}-webserver
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: {{ .Values.appName }}
+    component: webserver
+    tier: airflow-core
+    release: {{ .Release.Name }}
+    chart: {{ .Chart.Name }}
+    heritage: {{ .Release.Service }}
+    {{- include "extra_labels" . }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.appName }}
+      component: webserver
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.appName }}
+        component: webserver
+        release: {{ .Release.Name }}
+    spec:
+      restartPolicy: Always
+      securityContext:
+        runAsUser: {{ .Values.uid }}
+      containers:
+        - name: {{ .Release.Name }}-webserver
+          image: {{ .Values.images.airflow }}
+          args: ["airflow", "webserver"]
+          ports:
+            - name: webserver-ui
+              containerPort: 8080
+          livenessProbe:
+            httpGet:
+              path: /admin/
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /admin/
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          env:
+          {{- include "airflow_environment" . | indent 10 }}

@@ -1,0 +1,71 @@
+################################
+## Astronomer Phoenix Deployment
+#################################
+kind: Deployment
+apiVersion: apps/v1beta2
+metadata:
+  name: {{ .Release.Name }}-phoenix
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    component: phoenix
+    tier: astronomer-pilot
+    release: {{ .Release.Name }}
+    chart: {{ .Chart.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: phoenix
+      tier: astronomer-pilot
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        component: phoenix
+        tier: astronomer-pilot
+        release: {{ .Release.Name }}
+    spec:
+      restartPolicy: Always
+      securityContext:
+        runAsUser: {{ .Values.uid }}
+      containers:
+        - name: {{ .Release.Name }}-phoenix
+          image: {{ .Values.images.phoenix }}
+          ports:
+            - name: phoenix-http
+              containerPort: 8881
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8881
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8881
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          env:
+            - name: PHOENIX_PORT
+              value: "8881"
+            - name: PHOENIX_COMMANDER_HOST
+              value: "{{ .Release.Name }}-commander"
+            - name: PHOENIX_COMMANDER_PORT
+              value: "8880"
+            - name: PHOENIX_DEPLOY_KEY_ORG
+              value: {{ .Values.global.organization | quote }}
+            - name: PHOENIX_DEPLOY_KEY_DEP
+              value: {{ .Release.Name | quote }}
+            - name: PHOENIX_WEBHOOK_DOMAIN
+              value: phoenix.{{ .Values.global.baseDomain }}
+            {{- if .Values.global.baseDomain }}
+            - name: PHOENIX_WEBHOOK_PORT
+              value: "80"
+            {{- end }}
+            - name: PHOENIX_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-jwt-secret
+                  key: secret

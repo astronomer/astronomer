@@ -1,0 +1,25 @@
+#################################
+### Astronomer Registry Service
+##################################
+#kind: Service
+#apiVersion: v1
+#metadata:
+#  name: {{ .Release.Name }}-registry
+#  namespace: {{ .Values.global.namespace }}
+#  labels:
+#    component: registry
+#    tier: astronomer-pilot
+#    release: {{ .Release.Name }}
+#    chart: {{ .Chart.Name }}
+#    heritage: {{ .Release.Service }}
+#spec:
+#  type: NodePort
+#  selector:
+#    component: registry
+#    tier: astronomer-pilot
+#    release: {{ .Release.Name }}
+#  ports:
+#    - name: registry-http
+#      protocol: TCP
+#      port: 5000
+#      targetPort: 5000

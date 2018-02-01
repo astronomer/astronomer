@@ -1,0 +1,10 @@
+dependencies:
+  - name: pilot
+    version: 0.0.1
+    condition: modules.pilot.enabled
+  - name: airflow
+    version: 0.0.1
+    condition: modules.airflow.enabled
+  - name: clickstream
+    version: 0.0.1
+    condition: modules.clickstream.enabled

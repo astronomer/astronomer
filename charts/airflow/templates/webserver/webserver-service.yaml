@@ -1,0 +1,27 @@
+################################
+## Airflow Webserver Service
+#################################
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ .Release.Name }}-webserver
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: {{ .Values.appName }}
+    component: webserver
+    tier: airflow-core
+    release: {{ .Release.Name }}
+    chart: {{ .Chart.Name }}
+    heritage: {{ .Release.Service }}
+    {{- include "extra_labels" . }}
+spec:
+  type: NodePort
+  selector:
+    app: {{ .Values.appName }}
+    component: webserver
+    release: {{ .Release.Name }}
+  ports:
+    - name: webserver-ui
+      protocol: TCP
+      port: 8080
+      targetPort: 8080

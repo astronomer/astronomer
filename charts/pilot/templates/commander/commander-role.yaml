@@ -1,0 +1,26 @@
+################################
+## Astronomer Commander Role
+#################################
+{{- if .Values.global.rbacEnabled }}
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ .Release.Name }}-commander
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    tier: astronomer-pilot
+    release: {{ .Release.Name }}
+    chart: {{ .Chart.Name }}
+    heritage: {{ .Release.Service }}
+rules:
+  - apiGroups:
+      - apps
+    resources:
+      - deployments
+      - statefulsets
+    verbs:
+      - list
+      - get
+      - update
+      - patch
+{{- end }}

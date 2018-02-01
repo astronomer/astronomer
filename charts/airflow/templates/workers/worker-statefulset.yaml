@@ -1,0 +1,67 @@
+################################
+## Airflow Worker StatefulSet
+#################################
+kind: StatefulSet
+apiVersion: apps/v1beta2
+metadata:
+  name: {{ .Release.Name }}-worker
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: {{ .Values.appName }}
+    component: worker
+    tier: airflow-core
+    release: {{ .Release.Name }}
+    chart: {{ .Chart.Name }}
+    heritage: {{ .Release.Service }}
+    {{- include "extra_labels" . }}
+spec:
+  serviceName: {{ .Release.Name }}-worker
+  replicas: {{ .Values.workers.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Values.appName }}
+      component: worker
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.appName }}
+        component: worker
+        release: {{ .Release.Name }}
+    spec:
+      terminationGracePeriodSeconds: {{ .Values.workers.terminationGracePeriodSeconds }}
+      securityContext:
+        runAsUser: {{ .Values.uid }}
+        fsGroup: {{ .Values.gid }}
+      containers:
+        - name: {{ .Release.Name }}-worker
+          image: {{ .Values.images.airflow }}
+          args: ["airflow", "worker"]
+          ports:
+            - name: worker-logs
+              containerPort: 8793
+          volumeMounts:
+            - name: logs
+              mountPath: /usr/local/airflow/logs
+          env:
+          {{- include "airflow_environment" . | indent 10 }}
+        - name: {{ .Release.Name }}-worker-gc
+          image: {{ .Values.images.airflow }}
+          args: ["crond", "-f", "-d", "0"]
+          volumeMounts:
+            - name: logs
+              mountPath: /usr/local/airflow/logs
+{{- if not .Values.workers.persistence.enabled }}
+      volumes:
+        - name: logs
+          emptyDir: {}
+{{- else }}
+  volumeClaimTemplates:
+    - metadata:
+        name: logs
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: {{ .Values.workers.persistence.size }}
+{{- end }}
