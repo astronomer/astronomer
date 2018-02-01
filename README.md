@@ -1,9 +1,3 @@
-# Astronomer Private Cloud Edition
-This repository contains scripts to deploy the [Astronomer Platform](https://github.com/astronomerio/astronomer) to various cluster managers.
+# Helm charts for the Astronomer Platform
 
-Currently supported:
-- Marathon / DC/OS
-- Kubernetes
-
-Planned:
-- Docker Swarm
+This repository contains the helm charts for deploying the Astronomer Platform into a Kubernetes cluster.
