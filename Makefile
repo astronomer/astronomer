@@ -1,6 +1,9 @@
 # You can override vars like REPOSITORY in a local.make file
 -include local.make
 
+# Public repository for images.
+REPOSITORY ?= astronomerinc
+
 # Bump this on subsequent build, reset on new version or public release. Inherit from env for CI builds.
 BUILD_NUMBER ?= 1
 
@@ -10,13 +13,10 @@ ASTRONOMER_PATCH_VERSION ?= 17
 ASTRONOMER_VERSION ?= ${ASTRONOMER_MAJOR_VERSION}.${ASTRONOMER_MINOR_VERSION}.${ASTRONOMER_PATCH_VERSION}
 
 # List of all components and order to build.
-PLATFORM_COMPONENTS := base event-api event-router airflow commander phoenix
+PLATFORM_COMPONENTS := base commander phoenix airflow event-api event-router
 PLATFORM_ONBUILD_COMPONENTS := airflow
 VENDOR_COMPONENTS := cadvisor grafana prometheus statsd-exporter
 ALL_COMPONENTS := ${PLATFORM_COMPONENTS} ${VENDOR_COMPONENTS}
-
-# Public repository for images.
-REPOSITORY ?= astronomerinc
 
 build:
 	PLATFORM_COMPONENTS="${PLATFORM_COMPONENTS}" \
