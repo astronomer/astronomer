@@ -19,7 +19,6 @@ MAINTAINER Astronomer <humans@astronomer.io>
 ARG BUILD_NUMBER=-1
 
 LABEL io.astronomer.docker=true
-LABEL io.astronomer.docker.open=true
 LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
 
 COPY include/mappings.yml /etc/statsd-exporter/mappings.yml

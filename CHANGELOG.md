@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.19] - 2018-02-02
+
+### Added
+
+- Registry.
+
 ## [0.0.18] - 2018-02-01
 
 ### Added
