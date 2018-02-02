@@ -10,7 +10,7 @@ ASTRONOMER_PATCH_VERSION ?= 17
 ASTRONOMER_VERSION ?= ${ASTRONOMER_MAJOR_VERSION}.${ASTRONOMER_MINOR_VERSION}.${ASTRONOMER_PATCH_VERSION}
 
 # List of all components and order to build.
-PLATFORM_COMPONENTS := base event-api event-router airflow
+PLATFORM_COMPONENTS := base event-api event-router airflow commander phoenix
 PLATFORM_ONBUILD_COMPONENTS := airflow
 VENDOR_COMPONENTS := cadvisor grafana prometheus statsd-exporter
 ALL_COMPONENTS := ${PLATFORM_COMPONENTS} ${VENDOR_COMPONENTS}
@@ -38,12 +38,12 @@ push-public: clean build
 	done
 
 clean-containers:
-	for container in `docker ps -aq -f label=io.astronomer.docker.open=true` ; do \
+	for container in `docker ps -aq -f label=io.astronomer.docker=true` ; do \
 		docker rm -f -v $${container} ; \
 	done
 
 clean-images:
-	for image in `docker images -q -f label=io.astronomer.docker.open=true` ; do \
+	for image in `docker images -q -f label=io.astronomer.docker=true` ; do \
 		docker rmi -f $${image} ; \
 	done
 

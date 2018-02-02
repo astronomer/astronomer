@@ -1,5 +1,5 @@
 #
-# Copyright 2016 Astronomer Inc.
+# Copyright 2018 Astronomer Inc.
 #
 # Licensed under the Apache License, Version 3.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ ENV ASTRONOMER_USER=${ASTRONOMER_USER}
 ENV ASTRONOMER_GROUP=${ASTRONOMER_GROUP}
 
 LABEL io.astronomer.docker=true
-LABEL io.astronomer.docker.open=true
 LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
 
 RUN addgroup -S ${ASTRONOMER_GROUP} \

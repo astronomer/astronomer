@@ -19,35 +19,37 @@ MAINTAINER Astronomer <humans@astronomer.io>
 ARG BUILD_NUMBER=-1
 LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
 
-ARG VERSION="v0.0.20-beta"
-ARG LIBRESSL_VERSION="2.6"
-ARG LIBRDKAFKA_VERSION="0.11.1-r1"
-
-ENV REPO="github.com/astronomerio/event-api"
+ARG VERSION="0.0.8"
+ENV REPO="github.com/astronomerio/commander"
 ENV REPO_URL="https://${REPO}"
 
+ENV GCLOUD_VERSION="186.0.0"
+ENV GCLOUD_FILE="google-cloud-sdk-${GCLOUD_VERSION}-linux-x86_64.tar.gz"
+ENV GCLOUD_URL="https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/${GCLOUD_FILE}"
+
+ENV GIN_MODE=release
+
 WORKDIR /usr/lib/go/src/${REPO}
+
 RUN apk add --no-cache --virtual .build-deps \
 		build-base \
-		cyrus-sasl-dev \
-		go \
 		git \
-		librdkafka-dev=${LIBRDKAFKA_VERSION} \
-		libressl \
-		openssl-dev \
-		yajl-dev \
-		zlib-dev \
-	&& apk add \
-		openssl \
+		go \
+	&& apk add --no-cache \
+		python2 \
 	&& git clone \
 		-c advice.detachedHead=false \
 		--depth 1 \
 		--branch ${VERSION} \
 		${REPO_URL} . \
 	&& make DESTDIR=/usr/bin install \
-	&& apk del .build-deps \
-	&& rm -rf /usr/lib/go
+	&& wget ${GCLOUD_URL} \
+	&& tar -xvf ${GCLOUD_FILE} \
+	&& rm ${GCLOUD_FILE} \
+	&& google-cloud-sdk/install.sh \
+	&& mkdir /opt \
+	&& mv google-cloud-sdk /opt \
+	&& rm -rf /usr/lib/go \
+	&& apk del .build-deps
 
-ENV GIN_MODE=release
-EXPOSE 8080 8081
-ENTRYPOINT ["event-api"]
+ENTRYPOINT ["commander"]

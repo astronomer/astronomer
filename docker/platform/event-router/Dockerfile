@@ -1,5 +1,5 @@
 #
-# Copyright 2016 Astronomer Inc.
+# Copyright 2018 Astronomer Inc.
 #
 # Licensed under the Apache License, Version 3.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,9 +19,9 @@ MAINTAINER Astronomer <humans@astronomer.io>
 ARG BUILD_NUMBER=-1
 LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
 
-ARG VERSION=v0.0.14-beta
-ARG LIBRESSL_VERSION=2.6
-ARG LIBRDKAFKA_VERSION=0.11.1-r1
+ARG VERSION="v0.0.14-beta"
+ARG LIBRESSL_VERSION="2.6"
+ARG LIBRDKAFKA_VERSION="0.11.1-r1"
 
 ENV REPO="github.com/astronomerio/event-router"
 ENV REPO_URL="https://${REPO}"
@@ -39,7 +39,11 @@ RUN apk add --no-cache --virtual .build-deps \
 		zlib-dev \
 	&& apk add \
 		openssl \
-	&& git clone -c advice.detachedHead=false --depth 1 --branch ${VERSION} ${REPO_URL} . \
+	&& git clone \
+		-c advice.detachedHead=false \
+		--depth 1 \
+		--branch ${VERSION} \
+		${REPO_URL} . \
 	&& make DESTDIR=/usr/bin install \
 	&& apk del .build-deps \
 	&& rm -rf /usr/lib/go
