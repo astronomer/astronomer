@@ -1,4 +1,4 @@
-# Docker Images for the Astronomer Open Edition
+# Docker Images for the Astronomer Platform
 
 Docker images for deploying and running Astronomer Open Edition.  The images are currently available on [DockerHub](https://hub.docker.com/u/astronomerinc/).
 

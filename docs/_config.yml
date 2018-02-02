@@ -22,8 +22,6 @@ url: "http://open.astronomer.io" # the base hostname & protocol for your site, e
 
 # Build settings
 markdown: kramdown
-theme: jekyll-docs-theme
-
 
 # name of the software
 name: Astronomer Open Edition
