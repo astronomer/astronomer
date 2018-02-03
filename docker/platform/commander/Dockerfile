@@ -18,6 +18,8 @@ MAINTAINER Astronomer <humans@astronomer.io>
 
 ARG BUILD_NUMBER=-1
 LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
+LABEL io.astronomer.docker.module="astronomer"
+LABEL io.astronomer.docker.component="commander"
 
 ARG VERSION="0.0.8"
 ENV REPO="github.com/astronomerio/commander"

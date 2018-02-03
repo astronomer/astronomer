@@ -18,9 +18,11 @@ MAINTAINER Astronomer <humans@astronomer.io>
 
 ARG BUILD_NUMBER=-1
 LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
+LABEL io.astronomer.docker.module="airflow"
+LABEL io.astronomer.docker.component="airflow"
 
 ARG ORG="astronomerio"
-ARG VERSION=1.9.0
+ARG VERSION="1.9.0"
 ARG SUBMODULES="all, celery, redis, statsd"
 
 ENV AIRFLOW_REPOSITORY="https://github.com/${ORG}/incubator-airflow"

@@ -18,14 +18,12 @@ MAINTAINER Astronomer <humans@astronomer.io>
 
 ARG BUILD_NUMBER=-1
 LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
+LABEL io.astronomer.docker.module="astronomer"
+LABEL io.astronomer.docker.component="phoenix"
 
-ARG VERSION="0.0.8"
-ENV REPO="github.com/astronomerio/commander"
+ARG VERSION="0.0.7"
+ENV REPO="github.com/astronomerio/phoenix"
 ENV REPO_URL="https://${REPO}"
-
-ENV GCLOUD_VERSION="186.0.0"
-ENV GCLOUD_FILE="google-cloud-sdk-${GCLOUD_VERSION}-linux-x86_64.tar.gz"
-ENV GCLOUD_URL="https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/${GCLOUD_FILE}"
 
 ENV GIN_MODE=release
 
@@ -35,21 +33,13 @@ RUN apk add --no-cache --virtual .build-deps \
 		build-base \
 		git \
 		go \
-	&& apk add --no-cache \
-		python2 \
 	&& git clone \
 		-c advice.detachedHead=false \
 		--depth 1 \
 		--branch ${VERSION} \
 		${REPO_URL} . \
 	&& make DESTDIR=/usr/bin install \
-	&& wget ${GCLOUD_URL} \
-	&& tar -xvf ${GCLOUD_FILE} \
-	&& rm ${GCLOUD_FILE} \
-	&& google-cloud-sdk/install.sh \
-	&& mkdir /opt \
-	&& mv google-cloud-sdk /opt \
 	&& rm -rf /usr/lib/go \
 	&& apk del .build-deps
 
-ENTRYPOINT ["commander"]
+ENTRYPOINT ["phoenix"]

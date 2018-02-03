@@ -18,6 +18,8 @@ MAINTAINER Astronomer <humans@astronomer.io>
 
 ARG BUILD_NUMBER=-1
 LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
+LABEL io.astronomer.docker.module="clickstream"
+LABEL io.astronomer.docker.component="event-router"
 
 ARG VERSION="v0.0.14-beta"
 ARG LIBRESSL_VERSION="2.6"
