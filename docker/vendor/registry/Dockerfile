@@ -20,3 +20,10 @@ ARG BUILD_NUMBER=-1
 
 LABEL io.astronomer.docker=true
 LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
+
+COPY include/entrypoint /entrypoint
+
+# Wrap normal entrypoint/cmd with our entrypoint
+# https://github.com/docker/distribution/blob/master/Dockerfile
+ENTRYPOINT ["/entrypoint", "registry"]
+CMD ["serve", "/etc/docker/registry/config.yml"]

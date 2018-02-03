@@ -2,7 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.0.22] - 2018-02-02
+## [0.0.23] - 2018-02-03
+
+### Added
+
+- Entrypoint script for docker registry.
+
+## [0.0.22] - 2018-02-03
 
 ### Added
 

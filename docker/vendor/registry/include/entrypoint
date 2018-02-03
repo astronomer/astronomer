@@ -1,0 +1,12 @@
+#!/usr/bin/env sh
+
+# If we have a default username/password create an htpasswd
+# for basic registry auth. This is temporary until we implement our
+# production auth system.
+if [ ! -z "$DEFAULT_USERNAME" ] && [ ! -z "$DEFAULT_PASSWORD" ]; then
+    mkdir /auth
+    htpasswd -Bbn $DEFAULT_USERNAME $DEFAULT_PASSWORD > /auth/htpasswd
+fi
+
+# Run the normal registry command.
+exec $@
