@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.22] - 2018-02-02
+
+### Added
+
+- Module/Component labels.
+
+### Changed
+- Fixed phoenix image.
+
 ## [0.0.19] - 2018-02-02
 
 ### Added
