@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.27] - 2018-02-04
+
+### Changed
+
+- Bump commander and phoenix. Adds support for private docker registry.
+
 ## [0.0.23] - 2018-02-03
 
 ### Added
