@@ -5,11 +5,9 @@ kind: ConfigMap
 apiVersion: v1
 metadata:
   name: {{ .Release.Name }}-prometheus
-  namespace: {{ .Values.global.namespace }}
   labels:
-    app: {{ .Values.appName }}
-    component: prometheus
     tier: airflow-monitoring
+    component: prometheus
     release: {{ .Release.Name }}
     chart: {{ .Chart.Name }}
     heritage: {{ .Release.Service }}

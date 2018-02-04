@@ -1,0 +1,61 @@
+################################
+## Astronomer Registry Deployment
+#################################
+kind: Deployment
+apiVersion: apps/v1beta2
+metadata:
+  name: {{ .Release.Name }}-registry
+  labels:
+    component: registry
+    tier: astronomer
+    release: {{ .Release.Name }}
+    chart: {{ .Chart.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: registry
+      tier: astronomer
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        component: registry
+        tier: astronomer
+        release: {{ .Release.Name }}
+    spec:
+      restartPolicy: Always
+      containers:
+        - name: {{ .Release.Name }}-registry
+          image: {{ .Values.images.registry }}
+          volumeMounts:
+            - name: registry-config-volume
+              mountPath: /etc/docker/registry
+          ports:
+            - name: registry-http
+              containerPort: 5000
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 5000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 5000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          env:
+            - name: DEFAULT_USERNAME
+              value: "admin"
+            - name: DEFAULT_PASSWORD
+              value: "admin"
+      volumes:
+        - name: registry-config-volume
+          configMap:
+            name: {{ .Release.Name }}-registry
+            items:
+              - key: config.yml
+                path: config.yml

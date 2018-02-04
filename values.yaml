@@ -2,26 +2,20 @@
 ## Astronomer global variables
 #################################
 global:
-  # Kubernetes namespace to install into
-  namespace: astronomer
-
   # If RBAC on cluster is enabled
   rbacEnabled: true
 
   # Base domain for all subdomains exposed through ingress
   baseDomain:
 
-  # Temporary until full PCE install available
+  # Temporary until full EE install available
   organization:
 
-
-################################
-## Astronomer modules
-#################################
-modules:
-  pilot:
-    enabled: true
-  airflow:
-    enabled: true
-  clickstream:
-    enabled: false
+  # Astronomer modules
+  modules:
+    astronomer:
+      enabled: true
+    airflow:
+      enabled: true
+    clickstream:
+      enabled: false

@@ -2,22 +2,19 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-# Used in labels
-appName: airflow
-
 # User and group of airflow user
 uid: 100
 gid: 101
 
 ingress:
-  acme: false
+  acme: true
 
 # Astronomer Airflow images
 images:
-  airflow: astronomerinc/ap-airflow:0.0.17
-  statsdExporter: astronomerinc/ap-statsd-exporter:0.0.17
-  prometheus: astronomerinc/ap-prometheus:0.0.17
-  grafana: astronomerinc/ap-grafana:0.0.17
+  airflow: astronomerinc/ap-airflow:0.0.27
+  statsdExporter: astronomerinc/ap-statsd-exporter:0.0.27
+  prometheus: astronomerinc/ap-prometheus:0.0.27
+  grafana: astronomerinc/ap-grafana:0.0.27
 
 # Static IP name for airflow
 staticIpName:

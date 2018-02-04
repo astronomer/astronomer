@@ -1,25 +1,24 @@
 ################################
-## Astronomer Phoenix Service
+## Astronomer Commander Service
 #################################
 kind: Service
 apiVersion: v1
 metadata:
-  name: {{ .Release.Name }}-phoenix
-  namespace: {{ .Values.global.namespace }}
+  name: {{ .Release.Name }}-commander
   labels:
-    component: phoenix
-    tier: astronomer-pilot
+    component: commander
+    tier: astronomer
     release: {{ .Release.Name }}
     chart: {{ .Chart.Name }}
     heritage: {{ .Release.Service }}
 spec:
   type: NodePort
   selector:
-    component: phoenix
-    tier: astronomer-pilot
+    component: commander
+    tier: astronomer
     release: {{ .Release.Name }}
   ports:
-    - name: phoenix-http
+    - name: commander-http
       protocol: TCP
-      port: 8881
-      targetPort: 8881
+      port: 8880
+      targetPort: 8880

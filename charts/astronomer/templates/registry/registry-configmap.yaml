@@ -1,0 +1,46 @@
+################################
+## Astronomer Registry ConfigMap
+#################################
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: {{ .Release.Name }}-registry
+  labels:
+    component: registry
+    tier: astronomer
+    release: {{ .Release.Name }}
+    chart: {{ .Chart.Name }}
+    heritage: {{ .Release.Service }}
+data:
+  config.yml: |-
+    version: 0.1
+    log:
+      fields:
+        service: registry
+    storage:
+      cache:
+        blobdescriptor: inmemory
+      filesystem:
+        rootdirectory: /var/lib/registry
+    auth:
+      htpasswd:
+        realm: basic-realm
+        path: /auth/htpasswd
+    http:
+      addr: :5000
+      headers:
+        X-Content-Type-Options: [nosniff]
+    health:
+      storagedriver:
+        enabled: true
+        interval: 10s
+        threshold: 3
+    notifications:
+      endpoints:
+        - name: "phoenix"
+          url: "http://{{ .Release.Name }}-phoenix:8881/v1/events"
+          timeout: 1s
+          threshold: 10
+          backoff: 1s
+          ignoredmediatypes:
+            - application/octet-stream

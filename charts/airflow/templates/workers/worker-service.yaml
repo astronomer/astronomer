@@ -5,9 +5,8 @@ kind: Service
 apiVersion: v1
 metadata:
   name: {{ .Release.Name }}-worker
-  namespace: {{ .Values.global.namespace }}
   labels:
-    app: {{ .Values.appName }}
+    tier: airflow
     component: worker
     tier: airflow-core
     release: {{ .Release.Name }}
@@ -17,7 +16,7 @@ metadata:
 spec:
   clusterIP: None
   selector:
-    app: {{ .Values.appName }}
+    tier: airflow
     component: worker
     release: {{ .Release.Name }}
   ports:

@@ -5,10 +5,9 @@ kind: Deployment
 apiVersion: apps/v1beta2
 metadata:
   name: {{ .Release.Name }}-phoenix
-  namespace: {{ .Values.global.namespace }}
   labels:
     component: phoenix
-    tier: astronomer-pilot
+    tier: astronomer
     release: {{ .Release.Name }}
     chart: {{ .Chart.Name }}
     heritage: {{ .Release.Service }}
@@ -17,13 +16,13 @@ spec:
   selector:
     matchLabels:
       component: phoenix
-      tier: astronomer-pilot
+      tier: astronomer
       release: {{ .Release.Name }}
   template:
     metadata:
       labels:
         component: phoenix
-        tier: astronomer-pilot
+        tier: astronomer
         release: {{ .Release.Name }}
     spec:
       restartPolicy: Always

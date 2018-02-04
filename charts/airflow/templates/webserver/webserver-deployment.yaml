@@ -5,11 +5,9 @@ kind: Deployment
 apiVersion: apps/v1beta2
 metadata:
   name: {{ .Release.Name }}-webserver
-  namespace: {{ .Values.global.namespace }}
   labels:
-    app: {{ .Values.appName }}
+    tier: airflow
     component: webserver
-    tier: airflow-core
     release: {{ .Release.Name }}
     chart: {{ .Chart.Name }}
     heritage: {{ .Release.Service }}
@@ -18,13 +16,13 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: {{ .Values.appName }}
+      tier: airflow
       component: webserver
       release: {{ .Release.Name }}
   template:
     metadata:
       labels:
-        app: {{ .Values.appName }}
+        tier: airflow
         component: webserver
         release: {{ .Release.Name }}
     spec:

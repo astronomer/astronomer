@@ -6,23 +6,24 @@ kind: Ingress
 apiVersion: extensions/v1beta1
 metadata:
   name: {{ .Release.Name }}-airflow-ingress
-  namespace: {{ .Values.global.namespace }}
   labels:
-    app: {{ .Values.appName }}
-    component: airflow-ingress
     tier: airflow-networking
+    component: airflow-ingress
     release: {{ .Release.Name }}
     chart: {{ .Chart.Name }}
     heritage: {{ .Release.Service }}
     {{- include "extra_labels" . }}
   annotations:
-    kubernetes.io/tls-acme: {{ eq .Values.ingress.acme true | quote }}
-  {{- if .Values.staticIpName }}
-    kubernetes.io/ingress.global-static-ip-name: {{ .Values.staticIpName }}
+  {{- if .Values.ingress.acme }}
+    kubernetes.io/tls-acme: "true"
+    kubernetes.io/ingress.class: "gce"
+  {{- end }}
+  {{- if .Values.ingress.staticIpName }}
+    kubernetes.io/ingress.global-static-ip-name: {{ .Values.ingress.staticIpName }}
   {{- end }}
 spec:
   tls:
-    - secretName: {{ .Release.Name }}-airflow-tls-cert
+    - secretName: {{ .Release.Name }}-airflow-tls
       hosts:
         - airflow.{{ .Values.global.baseDomain }}
         - flower.{{ .Values.global.baseDomain }}

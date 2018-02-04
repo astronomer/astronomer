@@ -1,25 +1,24 @@
 ################################
-## Airflow Flower Service Component
+## Astronomer Registry Service
 #################################
 kind: Service
 apiVersion: v1
 metadata:
-  name: {{ .Release.Name }}-flower
+  name: {{ .Release.Name }}-registry
   labels:
-    tier: airflow
-    component: flower
+    component: registry
+    tier: astronomer
     release: {{ .Release.Name }}
     chart: {{ .Chart.Name }}
     heritage: {{ .Release.Service }}
-    {{- include "extra_labels" . }}
 spec:
   type: NodePort
   selector:
-    tier: airflow
-    component: flower
+    component: registry
+    tier: astronomer
     release: {{ .Release.Name }}
   ports:
-    - name: flower-ui
+    - name: registry-http
       protocol: TCP
-      port: 5555
-      targetPort: 5555
+      port: 5000
+      targetPort: 5000

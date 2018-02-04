@@ -5,11 +5,9 @@ kind: Deployment
 apiVersion: apps/v1beta2
 metadata:
   name: {{ .Release.Name }}-flower
-  namespace: {{ .Values.global.namespace }}
   labels:
-    app: {{ .Values.appName }}
+    tier: airflow
     component: flower
-    tier: airflow-core
     release: {{ .Release.Name }}
     chart: {{ .Chart.Name }}
     heritage: {{ .Release.Service }}
@@ -18,19 +16,23 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: {{ .Values.appName }}
+      tier: airflow
       component: flower
       release: {{ .Release.Name }}
   template:
     metadata:
       labels:
-        app: {{ .Values.appName }}
+        tier: airflow
         component: flower
         release: {{ .Release.Name }}
     spec:
       restartPolicy: Always
       securityContext:
         runAsUser: {{ .Values.uid }}
+    {{- if .Values.global.modules.astronomer.enabled }}
+      imagePullSecrets:
+        - name: {{ .Release.Name }}-registry
+    {{- end }}
       containers:
         - name: {{ .Release.Name }}-flower
           image: {{ .Values.images.airflow }}
