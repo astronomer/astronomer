@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
 DIRECTORY=${AIRFLOW_HOME:-/usr/local/airflow}
 RETENTION=${ASTRONOMER__AIRFLOW__WORKER_LOG_RETENTION_DAYS:-15}
