@@ -1,0 +1,17 @@
+#
+# copy this file to config.yml with a real Google Analytics code
+#
+
+applications:
+  - id: 1234
+    name: 'Foo'
+    platform: 'analytics.js'
+    destinations:
+      - google-analytics:
+          key: 'UA-123456'
+  - id: 5678
+    name: 'Bar'
+    platform: 'server'
+    destinations:
+      - google-analytics:
+          key: 'UA-123456'

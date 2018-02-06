@@ -6,7 +6,6 @@ services:
     hostname: zookeeper
     labels:
       io.astronomer.docker: "true"
-      io.astronomer.docker.open: "true"
     ports:
       - "2181:2181"
     environment:
@@ -18,7 +17,6 @@ services:
     hostname: kafka
     labels:
       io.astronomer.docker: "true"
-      io.astronomer.docker.open: "true"
     depends_on:
       - zookeeper
     ports:
@@ -34,18 +32,17 @@ services:
     image: astronomerinc/ap-event-api:$CLICKSTREAM_IMAGE_TAG
     labels:
       io.astronomer.docker: "true"
-      io.astronomer.docker.open: "true"
     depends_on:
       - kafka
     environment:
-      INGESTION_API_PORT: 8080
-      INGESTION_ADMIN_PORT: 8081
-      INGESTION_DEBUG_MODE: 'true'
-      INGESTION_ENABLE_PPROF: 'true'
-      INGESTION_ENABLE_HEALTH_CHECK: 'true'
-      INGESTION_ENABLE_PROMETHEUS: 'true'
-      INGESTION_KAFKA_BROKERS: 'kafka:9092'
-      INGESTION_KAFKA_TOPIC: 'main'
+      EA_API_PORT: 8080
+      EA_ADMIN_PORT: 8081
+      EA_DEBUG_MODE: 'true'
+      EA_ENABLE_PPROF: 'true'
+      EA_ENABLE_HEALTH_CHECK: 'true'
+      EA_ENABLE_PROMETHEUS: 'true'
+      EA_KAFKA_BROKERS: 'kafka:9092'
+      EA_KAFKA_TOPIC: 'main'
     ports:
       - "8080:8080"
       - "8081:8081"
@@ -54,15 +51,12 @@ services:
     image: astronomerinc/ap-event-router:$CLICKSTREAM_IMAGE_TAG
     labels:
       io.astronomer.docker: "true"
-      io.astronomer.docker.open: "true"
     entrypoint: event-router mock --disable-sse "S3 Event Logs:s3-event-logs"
     environment:
-      ER_KAFKA_INGESTION_TOPIC: main
+      ER_KAFKA_INGESTION_TOPIC: astro-main
       ER_KAFKA_GROUP_ID: event-router
       ER_KAFKA_RETRY_TOPIC: retry
       ER_KAFKA_BROKERS: kafka:9092
-      ER_HOUSTON_API_URL: localhost
-      ER_HOUSTON_API_KEY: key
       ER_DEBUG: 'true'
       ER_SERVE_PORT: 9091
       ER_TOPIC: main
@@ -73,3 +67,28 @@ services:
       - kafka
     ports:
       - "9091:9091"
+    volumes:
+      - config.yml:/etc/astronomer/clickstream/config.yml
+
+  event-forwarder-ga:
+    image: astronomerinc/ap-event-forwarder:$CLICKSTREAM_IMAGE_TAG
+    labels:
+      io.astronomer.docker: "true"
+    environment:
+      EF_INTEGRATION: google-analytics
+      EF_KAFKA_INGESTION_TOPIC: astro-google-analytics
+      EF_KAFKA_GROUP_ID: iw-google-analytics
+      EF_KAFKA_RETRY_TOPIC: retry
+      EF_KAFKA_BROKERS: kafka:9092
+      EF_DEBUG: 'true'
+      EF_SERVE_PORT: 9091
+      EF_TOPIC: main
+      EF_GROUP_ID: moc
+      EF_SSE_URL: http://localhost
+      EF_SSE_AUTH: auth
+    depends_on:
+      - kafka
+    ports:
+      - "9091:9091"
+    volumes:
+      - config.yml:/etc/astronomer/clickstream/config.yml
