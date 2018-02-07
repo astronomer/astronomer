@@ -4,6 +4,7 @@ WORKERS_COUNT=2
 COMPOSEFILE='./docker-compose.yml'
 SCALEWORKER='--scale worker='
 AIRFLOWLITE=false
+
 # Check flags
 while getopts "l" OPTION
 do
@@ -58,22 +59,14 @@ fi
 # Run Docker Compose
 docker-compose -f ${COMPOSEFILE} up -d ${SCALEWORKER}${WORKERS_COUNT}
 
-printf "
-Airflow webserver running at http://localhost:8080\n
-"
-
+printf "\nAirflow webserver running at http://localhost:8080\n"
 if ! $AIRFLOWLITE; then
-	printf "
-	Scheduler dashboard running at http://localhost:3000/dashboard/db/airflow-scheduler
-	Container dashboard running at http://localhost:3000/dashboard/db/airflow-containers
-	Flower (Celery Monitoring) running at http://localhost:5555
-	Prometheus UI running at http://localhost:9090
-	cAdvisor UI running at http://localhost:8081\n
-	"
+	printf "Scheduler dashboard running at http://localhost:3000/dashboard/db/airflow-scheduler\n"
+	printf "Container dashboard running at http://localhost:3000/dashboard/db/airflow-containers\n"
+	printf "Flower (Celery Monitoring) running at http://localhost:5555\n"
+	printf "Prometheus UI running at http://localhost:9090\n"
+	printf "cAdvisor UI running at http://localhost:8081\n"
 fi
 
-printf "
-Execute ./pause to stop containers and keep all data.
-Execute ./kill to stop containers and remove all data.\n
-"
-
+printf "\nExecute ./pause to stop containers and keep all data.\n"
+printf "Execute ./kill to stop containers and remove all data.\n\n"
