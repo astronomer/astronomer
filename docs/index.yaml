@@ -1,0 +1,23 @@
+apiVersion: v1
+entries:
+  airflow:
+  - created: 2018-02-08T16:40:07.570300949-05:00
+    description: Helm chart to deploy the Astronomer Platform Airflow module
+    digest: 09d00dbb66ff84bf19db1651ad57cbe8b8c4490aa9870c17cf170ec843a307b3
+    keywords:
+    - astronomer
+    name: airflow
+    urls:
+    - https://helm.astronomer.io/charts/airflow-0.0.1.tgz
+    version: 0.0.1
+  astronomer:
+  - created: 2018-02-08T16:40:07.570615319-05:00
+    description: A Helm chart to deploy the Astronomer module
+    digest: 2eecfc9a225f54bf130c5f35812a65235a663c41b665a889f98bbf070070c856
+    keywords:
+    - astronomer
+    name: astronomer
+    urls:
+    - https://helm.astronomer.io/charts/astronomer-0.1.0.tgz
+    version: 0.1.0
+generated: 2018-02-08T16:40:07.569755847-05:00
