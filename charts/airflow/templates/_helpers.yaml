@@ -26,10 +26,3 @@
         name: {{ .Release.Name }}-airflow-broker
         key: connection
 {{- end }}
-
-{{/* Common component labels */}}
-{{- define "extra_labels" }}
-  {{- if .Values.global.organization }}
-    organization: {{ .Values.global.organization | quote }}
-  {{- end }}
-{{- end }}

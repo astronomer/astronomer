@@ -7,9 +7,9 @@ uid: 100
 
 # Images for pilot
 images:
-  commander: astronomerinc/ap-commander:0.0.27
-  phoenix: astronomerinc/ap-phoenix:0.0.27
-  registry: astronomerinc/ap-registry:0.0.27
+  commander: astronomerinc/ap-commander:0.0.28
+  phoenix: astronomerinc/ap-phoenix:0.0.28
+  registry: astronomerinc/ap-registry:0.0.28
 
 # Static IP name for pilot
 staticIpName:

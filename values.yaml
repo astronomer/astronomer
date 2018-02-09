@@ -8,9 +8,6 @@ global:
   # Base domain for all subdomains exposed through ingress
   baseDomain:
 
-  # Temporary until full EE install available
-  organization:
-
   # Astronomer modules
   modules:
     astronomer:

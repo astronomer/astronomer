@@ -53,8 +53,6 @@ spec:
               value: "{{ .Release.Name }}-commander"
             - name: PHOENIX_COMMANDER_PORT
               value: "8880"
-            - name: PHOENIX_DEPLOY_KEY_ORG
-              value: {{ .Values.global.organization | quote }}
             - name: PHOENIX_DEPLOY_KEY_DEP
               value: {{ .Release.Name | quote }}
             - name: PHOENIX_WEBHOOK_DOMAIN

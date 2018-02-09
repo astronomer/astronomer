@@ -12,7 +12,6 @@ metadata:
     release: {{ .Release.Name }}
     chart: {{ .Chart.Name }}
     heritage: {{ .Release.Service }}
-    {{- include "extra_labels" . }}
   annotations:
   {{- if .Values.ingress.acme }}
     kubernetes.io/tls-acme: "true"

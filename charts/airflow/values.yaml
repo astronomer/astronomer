@@ -11,10 +11,10 @@ ingress:
 
 # Astronomer Airflow images
 images:
-  airflow: astronomerinc/ap-airflow:0.0.27
-  statsdExporter: astronomerinc/ap-statsd-exporter:0.0.27
-  prometheus: astronomerinc/ap-prometheus:0.0.27
-  grafana: astronomerinc/ap-grafana:0.0.27
+  airflow: astronomerinc/ap-airflow:0.0.28
+  statsdExporter: astronomerinc/ap-statsd-exporter:0.0.28
+  prometheus: astronomerinc/ap-prometheus:0.0.28
+  grafana: astronomerinc/ap-grafana:0.0.28
 
 # Static IP name for airflow
 staticIpName:
