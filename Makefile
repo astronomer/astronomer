@@ -1,5 +1,7 @@
 # Public repository for charts.
-URL ?= http://helm.astronomer.io
+DOMAIN ?= helm.astronomer.io
+URL ?= http://${DOMAIN}
+BUCKET ?= gs://${DOMAIN}
 
 # Version
 ASTRONOMER_MAJOR_VERSION ?= 0
@@ -11,10 +13,19 @@ ASTRONOMER_VERSION ?= ${ASTRONOMER_MAJOR_VERSION}.${ASTRONOMER_MINOR_VERSION}.${
 CHARTS := astronomer airflow clickstream
 
 # Output directory
-OUTPUT := docs
+OUTPUT := repository
 
+.PHONY: build
 build:
+	mkdir -p ${OUTPUT}
 	for chart in ${CHARTS} ; do \
 		helm package --version ${ASTRONOMER_VERSION} -d ${OUTPUT} charts/$${chart} || exit 1; \
 	done; \
-	helm repo index docs --url ${URL}
+	helm repo index ${OUTPUT} --url ${URL}
+
+.PHONY: push-public
+push-public: build
+	for chart in ${CHARTS} ; do \
+		gsutil cp -a public-read ${OUTPUT}/$${chart}-${ASTRONOMER_VERSION}.tgz ${BUCKET} || exit 1; \
+	done; \
+	gsutil cp -a public-read ${OUTPUT}/index.yaml ${BUCKET}
