@@ -20,4 +20,4 @@ The Astronomer Clickstream module consists of six components:
 
 ## How To's
 
-* [Add Clickstream Destination](/astronomer/clickstream/add_destination)
+* [Add Clickstream Destination](/clickstream/add_destination)
