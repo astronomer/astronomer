@@ -1,33 +1,33 @@
 apiVersion: v1
 entries:
   airflow:
-  - created: 2018-02-09T19:29:22.708237148-05:00
+  - created: 2018-02-09T20:06:42.60154142-05:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: 707b85a7339d423701a42be25e52ee61a5b09d5e5c44d727b7372a49e072ff2d
     keywords:
     - astronomer
     name: airflow
     urls:
-    - http://helm.astronomer.io/airflow-0.0.1.tgz
+    - https://helm.astronomer.io/airflow-0.0.1.tgz
     version: 0.0.1
   astronomer:
-  - created: 2018-02-09T19:29:22.708505493-05:00
+  - created: 2018-02-09T20:06:42.601829061-05:00
     description: A Helm chart to deploy the Astronomer module
     digest: 8aca4d4563666f8916101da4a7aad1604fe7e1dc932b4ce0c5c9d58cb490a5c6
     keywords:
     - astronomer
     name: astronomer
     urls:
-    - http://helm.astronomer.io/astronomer-0.0.1.tgz
+    - https://helm.astronomer.io/astronomer-0.0.1.tgz
     version: 0.0.1
   clickstream:
-  - created: 2018-02-09T19:29:22.708616856-05:00
+  - created: 2018-02-09T20:06:42.601948245-05:00
     description: Helm chart to deploy the Astronomer Platform clickstream module
     digest: ebdb8a523fbaa08bd66738288c61fc838e6c2582dde504ef189f7bc81cb35396
     keywords:
     - astronomer
     name: clickstream
     urls:
-    - http://helm.astronomer.io/clickstream-0.0.1.tgz
+    - https://helm.astronomer.io/clickstream-0.0.1.tgz
     version: 0.0.1
-generated: 2018-02-09T19:29:22.707787241-05:00
+generated: 2018-02-09T20:06:42.601083645-05:00

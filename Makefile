@@ -1,6 +1,6 @@
 # Public repository for charts.
 DOMAIN ?= helm.astronomer.io
-URL ?= http://${DOMAIN}
+URL ?= https://${DOMAIN}
 BUCKET ?= gs://${DOMAIN}
 
 # Version
