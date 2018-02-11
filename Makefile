@@ -38,7 +38,7 @@ push-public: clean build
 	done
 
 clean-containers:
-	for container in `docker ps -aq -f label=io.astronomer.docker=true` ; do \
+	for container in `docker ps -aq -f label=io.astronomer.docker.open=true` ; do \
 		docker rm -f -v $${container} ; \
 	done
 
