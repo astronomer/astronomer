@@ -11,6 +11,7 @@ services:
     restart: unless-stopped
     labels:
       io.astronomer.docker: "true"
+      io.astronomer.docker.open: "true"
     ports:
       - "5432:5432"
     volumes:
@@ -24,6 +25,7 @@ services:
     user: astro
     labels:
       io.astronomer.docker: "true"
+      io.astronomer.docker.open: "true"
       io.astronomer.docker.component: "airflow-scheduler"
     depends_on:
       - postgres
@@ -40,6 +42,7 @@ services:
     user: astro
     labels:
       io.astronomer.docker: "true"
+      io.astronomer.docker.open: "true"
       io.astronomer.docker.component: "airflow-webserver"
     depends_on:
       - scheduler # Wait for scheduler to avoid race to init db in entrypoint.sh
