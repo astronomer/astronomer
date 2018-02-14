@@ -18,6 +18,6 @@ The Astronomer Clickstream module consists of six components:
 
 ![Clickstream Module]({{ "/assets/img/clickstream_module.png" | absolute_url }})
 
-## How To's
+## Guides
 
-* [Add Clickstream Destination](/clickstream/add_destination)
+* [Create a Clickstream Destination](/clickstream/destination)
