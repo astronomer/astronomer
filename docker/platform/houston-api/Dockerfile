@@ -29,6 +29,7 @@ RUN apk add --no-cache --virtual .build-deps \
 		git \
 	&& apk add --no-cache \
 		nodejs \
-	&& npm install -g ${REPO_URL}
+	&& npm install -g ${REPO_URL} \
+	&& apk del .build-deps
 
 ENTRYPOINT ["houston-api"]
