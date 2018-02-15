@@ -21,18 +21,14 @@ LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
 LABEL io.astronomer.docker.module="astronomer"
 LABEL io.astronomer.docker.component="houston-api"
 
-ARG VERSION="v0.0.1"
+ARG VERSION="0.0.3"
 ENV REPO="github.com/astronomerio/houston-api"
-ENV REPO_URL="https://${REPO}"
+ENV REPO_URL="https://${REPO}#${VERSION}"
 
 RUN apk add --no-cache --virtual .build-deps \
 		git \
 	&& apk add --no-cache \
 		nodejs \
-	&& git clone \
-		-c advice.detachedHead=false \
-		--depth 1 \
-		--branch ${VERSION} \
-		${REPO_URL} .
+	&& npm install -g ${REPO_URL}
 
 ENTRYPOINT ["houston-api"]
