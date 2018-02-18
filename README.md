@@ -1,5 +1,7 @@
 # Docker Images for the Astronomer Platform
 
+[![Maintainability](https://api.codeclimate.com/v1/badges/d69163d70f7c0c4aeeb1/maintainability)](https://codeclimate.com/github/astronomerio/astronomer/maintainability)
+
 Docker images for deploying and running Astronomer Open Edition.  The images are currently available on [DockerHub](https://hub.docker.com/u/astronomerinc/).
 
 Full documentation for using the images can be found [here](https://astronomerio.github.io/astronomer/).
