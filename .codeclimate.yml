@@ -1,0 +1,9 @@
+engines:
+  # ... CONFIG CONTENT ...
+  markdownlint:
+    enabled: true
+    # ... CONFIG CONTENT ...
+    checks:
+      MD002:
+        enabled: false
+# ... CONFIG CONTENT ...
