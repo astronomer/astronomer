@@ -50,3 +50,5 @@ spec:
           env:
             - name: COMMANDER_PORT
               value: "8880"
+            - name: COMMANDER_KUBE_NAMESPACE
+              value: {{ .Release.Namespace }}
