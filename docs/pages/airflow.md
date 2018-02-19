@@ -79,21 +79,21 @@ Under the hood, a few things make this work. `Dockerfile.astro` and
 `.dockerignore` files are written into your project directory. And an `.astro`
 directory is created.
 
-- `Dockerfile.astro` just links to a special `onbuild` version of our Airflow
-image that will automatically add certain files, within the `.astro` directory
-to the image.
-- The `.astro` file will contain a `data` directory which will be used for
-mapping docker volumes into for Postgres and Redis. This lets you persist
-your current Airflow state between shutdowns. These files are automatically
-ignored by `git`.
-- The `.astro` directory will also contain a `requirements.txt` file that you
-can add python packages to be installed using `pip`. We will automatically build
-and install them when the containers are restarted.
-- In some cases, python modules will need to compile native modules and/or rely
-on other package that exist outside of the python ecosystem. In this case, we
-also provide a `packages.txt` file in the `.astro` directory, where you can add
-[Alpine packages](https://pkgs.alpinelinux.org/packages). The format is similar
-to `requirements.txt`, with a package on each line.
+* `Dockerfile.astro` just links to a special `onbuild` version of our Airflow
+  image that will automatically add certain files, within the `.astro` directory
+  to the image.
+* The `.astro` file will contain a `data` directory which will be used for
+  mapping docker volumes into for Postgres and Redis. This lets you persist
+  your current Airflow state between shutdowns. These files are automatically
+  ignored by `git`.
+* The `.astro` directory will also contain a `requirements.txt` file that you
+  can add python packages to be installed using `pip`. We will automatically build
+  and install them when the containers are restarted.
+* In some cases, python modules will need to compile native modules and/or rely
+  on other package that exist outside of the python ecosystem. In this case, we
+  also provide a `packages.txt` file in the `.astro` directory, where you can add
+  [Alpine packages](https://pkgs.alpinelinux.org/packages). The format is similar
+  to `requirements.txt`, with a package on each line.
 
 With this configuration, you can point the `./start` script at any Airflow home
 directory and maintain distinct and separate environments for each, allowing you
@@ -104,13 +104,12 @@ to easily test different Airflow projects in isolation.
 ### HDFS hook not supported
 
 Astronomer is built on the latest stable versions of everything, including
-Python 3.
-
-**With that said, it doesn't support Airflow's HDFS hook and
-operators (we `pip uninstall snakebite` in our dockerfile).**
+Python 3. With that said, it doesn't support Airflow's HDFS hook and
+operators (we `pip uninstall snakebite` in our dockerfile).
 
 The `HDFSHook`
-[depends on](https://github.com/apache/incubator-airflow/blob/b75367bb572e8bbfc1bfd539fbb34a76a5ed484d/setup.py#L129) the package spotify/snakebite which does not support Python 3. If you are
+[depends on](https://github.com/apache/incubator-airflow/blob/b75367bb572e8bbfc1bfd539fbb34a76a5ed484d/setup.py#L129)
+the package spotify/snakebite which does not support Python 3. If you are
 interested in that package getting Python 3 support, you can follow and
 comment on the issue at
 [snakebite #62](https://github.com/spotify/snakebite/issues/62). In the
@@ -119,9 +118,9 @@ their library's dependency on protobuf 2.x which doesn't support Python 3.
 
 You can read more info on this issue at:
 
-- [https://issues.apache.org/jira/browse/AIRFLOW-1316](https://issues.apache.org/jira/browse/AIRFLOW-1316)
-- [https://github.com/apache/incubator-airflow/pull/2398](https://github.com/apache/incubator-airflow/pull/2398)
-- [https://github.com/puckel/docker-airflow/issues/77](https://github.com/puckel/docker-airflow/issues/77)
+* [https://issues.apache.org/jira/browse/AIRFLOW-1316](https://issues.apache.org/jira/browse/AIRFLOW-1316)
+* [https://github.com/apache/incubator-airflow/pull/2398](https://github.com/apache/incubator-airflow/pull/2398)
+* [https://github.com/puckel/docker-airflow/issues/77](https://github.com/puckel/docker-airflow/issues/77)
 
 One workaround you may consider to work with HDFS is putting calls inside in a
 Docker container running Python 2 and using Airflow's `DockerOperator`.
