@@ -38,6 +38,12 @@ Makefile for details) from our
 [DockerHub Repository](https://hub.docker.com/u/astronomerinc/)
 and spin up containers running the various platform systems.
 
+## Guides
+
+Check out our various setup guides to get started with Astronomer on Kubernetes.
+
+<http://enterprise.astronomer.io/guides/>
+
 ## Modules
 
 1. [Clickstream](/clickstream) — Docker images for an

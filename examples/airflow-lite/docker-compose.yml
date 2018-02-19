@@ -3,7 +3,7 @@ version: "2"
 
 volumes:
   postgres_data:
-
+  airflow_logs:
 
 services:
   postgres:
@@ -11,11 +11,12 @@ services:
     restart: unless-stopped
     labels:
       io.astronomer.docker: "true"
+      io.astronomer.docker.open: "true"
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ../config/initdb.sql:/docker-entrypoint-initdb.d/initdb.sql
+      - ./initdb.sql:/docker-entrypoint-initdb.d/initdb.sql
 
   scheduler:
     image: $AIRFLOW_IMAGE:${AIRFLOW_IMAGE_TAG}
@@ -24,14 +25,16 @@ services:
     user: astro
     labels:
       io.astronomer.docker: "true"
+      io.astronomer.docker.open: "true"
       io.astronomer.docker.component: "airflow-scheduler"
     depends_on:
       - postgres
     env_file:
-      - ../config/airflowlite.env
+      - airflow.env
     volumes:
       - $AIRFLOW_HOME/dags:/usr/local/airflow/dags:ro
       - $AIRFLOW_HOME/plugins:/usr/local/airflow/plugins:ro
+      - airflow_logs:/usr/local/airflow/logs
 
   webserver:
     image: $AIRFLOW_IMAGE:${AIRFLOW_IMAGE_TAG}
@@ -40,14 +43,16 @@ services:
     user: astro
     labels:
       io.astronomer.docker: "true"
+      io.astronomer.docker.open: "true"
       io.astronomer.docker.component: "airflow-webserver"
     depends_on:
       - scheduler # Wait for scheduler to avoid race to init db in entrypoint.sh
       - postgres
     env_file:
-      - ../config/airflowlite.env
+      - airflow.env
     ports:
       - "8080:8080"
     volumes:
       - $AIRFLOW_HOME/dags:/usr/local/airflow/dags:ro
       - $AIRFLOW_HOME/plugins:/usr/local/airflow/plugins:ro
+      - airflow_logs:/usr/local/airflow/logs

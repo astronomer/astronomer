@@ -9,7 +9,7 @@ BUILD_NUMBER ?= 1
 
 ASTRONOMER_MAJOR_VERSION ?= 0
 ASTRONOMER_MINOR_VERSION ?= 0
-ASTRONOMER_PATCH_VERSION ?= 28
+ASTRONOMER_PATCH_VERSION ?= 29
 ASTRONOMER_VERSION ?= ${ASTRONOMER_MAJOR_VERSION}.${ASTRONOMER_MINOR_VERSION}.${ASTRONOMER_PATCH_VERSION}
 
 # List of all components and order to build.
@@ -38,7 +38,7 @@ push-public: clean build
 	done
 
 clean-containers:
-	for container in `docker ps -aq -f label=io.astronomer.docker=true` ; do \
+	for container in `docker ps -aq -f label=io.astronomer.docker.open=true` ; do \
 		docker rm -f -v $${container} ; \
 	done
 
