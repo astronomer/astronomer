@@ -2,7 +2,7 @@ version: "2"
 plugins:
   fixme:
     enabled: true
-  git.legal:
+  git-legal:
     enabled: true
   markdownlint:
     enabled: true
