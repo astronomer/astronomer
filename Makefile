@@ -18,6 +18,9 @@ PLATFORM_ONBUILD_COMPONENTS := airflow
 VENDOR_COMPONENTS := registry cadvisor grafana prometheus statsd-exporter
 ALL_COMPONENTS := ${PLATFORM_COMPONENTS} ${VENDOR_COMPONENTS}
 
+# Set default for make
+.DEFAULT_GOAL := build
+
 build:
 	PLATFORM_COMPONENTS="${PLATFORM_COMPONENTS}" \
 	VENDOR_COMPONENTS="${VENDOR_COMPONENTS}" \
