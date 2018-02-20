@@ -15,7 +15,7 @@ plugins:
     enabled: true
   shellcheck:
     enabled: true
-  SonarPython:
+  sonar-python:
     enabled: true
 exclude_patterns:
   - "config/"
