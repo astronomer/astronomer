@@ -1,0 +1,23 @@
+################################
+## NGINX Default backend service
+#################################
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ .Release.Name }}-nginx-default-backend
+  labels:
+    tier: nginx
+    release: {{ .Release.Name }}
+    chart: {{ .Chart.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  type: NodePort
+  selector:
+    tier: nginx
+    component: default-backend
+    release: {{ .Release.Name }}
+  ports:
+    - port: 80
+      targetPort: 8080
+      protocol: TCP
+      name: default-backend

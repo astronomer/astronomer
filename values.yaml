@@ -11,8 +11,10 @@ global:
   # Astronomer modules
   modules:
     astronomer:
-      enabled: true
+      enabled: false
     airflow:
-      enabled: true
+      enabled: false
     clickstream:
       enabled: false
+    nginx:
+      enabled: true
