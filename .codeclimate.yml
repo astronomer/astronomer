@@ -6,6 +6,9 @@ plugins:
     enabled: true
   markdownlint:
     enabled: true
+    checks:
+      MD002:
+        enabled: false
   pep8:
     enabled: true
   radon:
