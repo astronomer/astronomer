@@ -1,10 +1,10 @@
 dependencies:
   - name: astronomer
-    version: 0.0.1
+    version: 0.0.0
     condition: global.modules.astronomer.enabled
   - name: airflow
-    version: 0.0.1
+    version: 0.0.0
     condition: global.modules.airflow.enabled
   - name: clickstream
-    version: 0.0.1
+    version: 0.0.0
     condition: global.modules.clickstream.enabled
