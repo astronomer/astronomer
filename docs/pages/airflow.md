@@ -31,7 +31,7 @@ queue. Once the storage containers have started, we start the Airflow Scheduler,
 Airflow Webserver, a Celery worker, and the
 [Flower UI](http://flower.readthedocs.io/en/latest/) to monitor the Celery task
 queue. Once everything is up and running, open a browser tab and visit
-http://localhost:8080 for the Airflow UI and http://localhost:5555 for the
+<http://localhost:8080> for the Airflow UI and <http://localhost:5555> for the
 Celery UI.
 
 Sweet! You're up and running with Apache Airflow and well on your way to
