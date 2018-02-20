@@ -19,4 +19,4 @@ if [[ -n $AIRFLOW__CORE__SQL_ALCHEMY_CONN  ]]; then
 fi
 
 # Run the original command
-exec $@
+exec "$@"
