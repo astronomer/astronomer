@@ -3,4 +3,4 @@
 DIRECTORY=${AIRFLOW_HOME:-/usr/local/airflow}
 RETENTION=${ASTRONOMER__AIRFLOW__WORKER_LOG_RETENTION_DAYS:-15}
 echo "Trimming worker logs to ${RETENTION} days."
-find ${DIRECTORY}/logs -mtime +${RETENTION} -name *.log -delete
+find "${DIRECTORY}"/logs -mtime +"${RETENTION}" -name '*.log' -delete
