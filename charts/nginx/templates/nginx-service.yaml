@@ -12,9 +12,9 @@ metadata:
     chart: {{ .Chart.Name }}
     heritage: {{ .Release.Service }}
 spec:
-  type: {{ .Values.service.type }}
-  {{- if .Values.service.loadBalancerIP }}
-  loadBalancerIP: {{ .Values.service.loadBalancerIP }}
+  type: LoadBalancer
+  {{- if .Values.global.ingress.loadBalancerIP }}
+  loadBalancerIP: {{ .Values.global.ingress.loadBalancerIP }}
   {{- end }}
   externalTrafficPolicy: "Local"
   selector:

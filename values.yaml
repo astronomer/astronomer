@@ -2,14 +2,15 @@
 ## Astronomer global variables
 #################################
 global:
+  ingress:
+    # Base domain for all subdomains exposed through ingress
+    baseDomain:
+
+    # Use kube-lego
+    acme: false
+
   # If RBAC on cluster is enabled
   rbacEnabled: true
-
-  # Base domain for all subdomains exposed through ingress
-  baseDomain:
-
-  # Use kube-lego
-  acme: false
 
   # Astronomer modules
   modules:

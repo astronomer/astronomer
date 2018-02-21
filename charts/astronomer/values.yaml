@@ -11,9 +11,6 @@ images:
   phoenix: astronomerinc/ap-phoenix:0.0.28
   registry: astronomerinc/ap-registry:0.0.28
 
-# Static IP name for pilot
-staticIpName:
-
 # Secret for generating JWTs
 jwtSecret:
 

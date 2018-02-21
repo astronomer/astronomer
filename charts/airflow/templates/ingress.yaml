@@ -1,7 +1,7 @@
 ################################
 ## Airflow Ingress
 #################################
-{{- if .Values.global.baseDomain }}
+{{- if .Values.global.ingress.baseDomain }}
 kind: Ingress
 apiVersion: extensions/v1beta1
 metadata:
@@ -14,30 +14,30 @@ metadata:
     heritage: {{ .Release.Service }}
   annotations:
     kubernetes.io/ingress.class: "nginx"
-    kubernetes.io/tls-acme: {{ eq .Values.global.acme true | quote }}
+    kubernetes.io/tls-acme: {{ eq .Values.global.ingress.acme true | quote }}
 spec:
   tls:
     - secretName: {{ .Release.Name }}-airflow-tls
       hosts:
-        - airflow.{{ .Values.global.baseDomain }}
-        - flower.{{ .Values.global.baseDomain }}
-        - grafana.{{ .Values.global.baseDomain }}
+        - airflow.{{ .Values.global.ingress.baseDomain }}
+        - flower.{{ .Values.global.ingress.baseDomain }}
+        - grafana.{{ .Values.global.ingress.baseDomain }}
   rules:
-    - host: airflow.{{ .Values.global.baseDomain }}
+    - host: airflow.{{ .Values.global.ingress.baseDomain }}
       http:
         paths:
           - path: /
             backend:
               serviceName: {{ .Release.Name }}-webserver
               servicePort: webserver-ui
-    - host: flower.{{ .Values.global.baseDomain }}
+    - host: flower.{{ .Values.global.ingress.baseDomain }}
       http:
         paths:
           - path: /
             backend:
               serviceName: {{ .Release.Name }}-flower
               servicePort: flower-ui
-    - host: grafana.{{ .Values.global.baseDomain }}
+    - host: grafana.{{ .Values.global.ingress.baseDomain }}
       http:
         paths:
           - path: /

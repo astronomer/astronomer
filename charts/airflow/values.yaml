@@ -13,9 +13,6 @@ images:
   prometheus: astronomerinc/ap-prometheus:0.0.28
   grafana: astronomerinc/ap-grafana:0.0.28
 
-# Static IP name for airflow
-staticIpName:
-
 # Airflow worker settings
 workers:
   # Number of airflow celery workers in StatefulSet
