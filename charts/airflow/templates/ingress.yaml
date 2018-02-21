@@ -13,13 +13,8 @@ metadata:
     chart: {{ .Chart.Name }}
     heritage: {{ .Release.Service }}
   annotations:
-  {{- if .Values.ingress.acme }}
-    kubernetes.io/tls-acme: "true"
-    kubernetes.io/ingress.class: "gce"
-  {{- end }}
-  {{- if .Values.ingress.staticIpName }}
-    kubernetes.io/ingress.global-static-ip-name: {{ .Values.ingress.staticIpName }}
-  {{- end }}
+    kubernetes.io/ingress.class: "nginx"
+    kubernetes.io/tls-acme: {{ eq .Values.global.acme true | quote }}
 spec:
   tls:
     - secretName: {{ .Release.Name }}-airflow-tls
@@ -31,21 +26,21 @@ spec:
     - host: airflow.{{ .Values.global.baseDomain }}
       http:
         paths:
-          - path: /*
+          - path: /
             backend:
               serviceName: {{ .Release.Name }}-webserver
               servicePort: webserver-ui
     - host: flower.{{ .Values.global.baseDomain }}
       http:
         paths:
-          - path: /*
+          - path: /
             backend:
               serviceName: {{ .Release.Name }}-flower
               servicePort: flower-ui
     - host: grafana.{{ .Values.global.baseDomain }}
       http:
         paths:
-          - path: /*
+          - path: /
             backend:
               serviceName: {{ .Release.Name }}-grafana
               servicePort: grafana-ui

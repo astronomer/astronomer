@@ -17,9 +17,6 @@ staticIpName:
 # Secret for generating JWTs
 jwtSecret:
 
-ingress:
-  acme: false
-
 registry:
   username: admin
   password: admin

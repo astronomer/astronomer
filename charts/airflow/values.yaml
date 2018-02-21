@@ -6,9 +6,6 @@
 uid: 100
 gid: 101
 
-ingress:
-  acme: true
-
 # Astronomer Airflow images
 images:
   airflow: astronomerinc/ap-airflow:0.0.28

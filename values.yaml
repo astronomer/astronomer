@@ -8,12 +8,15 @@ global:
   # Base domain for all subdomains exposed through ingress
   baseDomain:
 
+  # Use kube-lego
+  acme: false
+
   # Astronomer modules
   modules:
     astronomer:
-      enabled: false
+      enabled: true
     airflow:
-      enabled: false
+      enabled: true
     clickstream:
       enabled: false
     nginx:
