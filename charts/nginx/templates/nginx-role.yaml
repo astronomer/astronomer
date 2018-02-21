@@ -16,6 +16,7 @@ rules:
       - ""
     resources:
       - configmaps
+      - namespaces
       - pods
       - secrets
     verbs:
@@ -29,6 +30,12 @@ rules:
     verbs:
       - get
       - update
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+    verbs:
+      - create
   - apiGroups:
       - ""
     resources:

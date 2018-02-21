@@ -18,5 +18,6 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: {{ .Release.Name }}-nginx-ingress-controller
+    namespace: {{ .Release.Namespace }}
 {{- end }}
 

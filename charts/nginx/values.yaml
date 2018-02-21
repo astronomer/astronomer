@@ -1,0 +1,17 @@
+# Default values for nginx.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+images:
+  nginxIngress: gcr.io/google_containers/nginx-ingress-controller:0.9.0-beta.15
+  defaultBackend: gcr.io/google_containers/defaultbackend:1.3
+
+service:
+  type: LoadBalancer
+  # loadBalancerIP (GKE IP)
+
+proxyConnectTimeout: 15
+proxyReadTimeout: 600
+proxySendTimeout: 600
+proxyBodySize: "512m"
+hstsIncludeSubdomains: false
+serverNameHashBucketSize: 256

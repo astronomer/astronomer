@@ -6,7 +6,7 @@ apiVersion: apps/v1beta2
 metadata:
   name: {{ .Release.Name }}-nginx-default-backend
   labels:
-    tier: airflow
+    tier: nginx
     component: default-backend
     release: {{ .Release.Name }}
     chart: {{ .Chart.Name }}
@@ -28,7 +28,7 @@ spec:
       terminationGracePeriodSeconds: 60
       containers:
         - name: {{ .Release.Name }}-default-backend
-          image: gcr.io/google_containers/defaultbackend:1.3
+          image: {{ .Values.images.defaultBackend }}
           livenessProbe:
             httpGet:
               path: /healthz
