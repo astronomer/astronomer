@@ -44,7 +44,7 @@ and spin up containers running the various platform systems.
 ## Guides
 
 Check out our
-[various setup guides](http://enterprise.astronomer.io/guides/)
+[various setup guides](https://enterprise.astronomer.io/guides/)
 to get started with Astronomer on Kubernetes.
 
 ## Modules
