@@ -18,9 +18,16 @@ PLATFORM_ONBUILD_COMPONENTS := airflow
 VENDOR_COMPONENTS := nginx registry cadvisor grafana prometheus statsd-exporter
 ALL_COMPONENTS := ${PLATFORM_COMPONENTS} ${VENDOR_COMPONENTS}
 
-# Set default for make
+# Documentation build vars.
+DOCS_DOMAIN ?= open.astronomer.io
+DOCS_BUCKET ?= gs://${DOCS_DOMAIN}
+DOCS_SRC := docs
+DOCS_DEST := docs/_site
+
+# Set default for make.
 .DEFAULT_GOAL := build
 
+.PHONY: build
 build:
 	PLATFORM_COMPONENTS="${PLATFORM_COMPONENTS}" \
 	VENDOR_COMPONENTS="${VENDOR_COMPONENTS}" \
@@ -29,7 +36,8 @@ build:
 	BUILD_NUMBER=${BUILD_NUMBER} \
 	bin/build-images
 
-push-public: build
+.PHONY: push-images
+push-images: build
 	for component in ${ALL_COMPONENTS} ; do \
 		echo "Pushing ap-$${component} ========================================"; \
 		docker push ${REPOSITORY}/ap-$${component}:latest || exit 1; \
@@ -40,14 +48,25 @@ push-public: build
 		docker push ${REPOSITORY}/ap-$${component}:${ASTRONOMER_VERSION}-onbuild || exit 1; \
 	done
 
+.PHONY: clean-containers
 clean-containers:
 	for container in `docker ps -aq -f label=io.astronomer.docker.open=true` ; do \
 		docker rm -f -v $${container} ; \
 	done
 
+.PHONY: clean-images
 clean-images:
 	for image in `docker images -q -f label=io.astronomer.docker=true` ; do \
 		docker rmi -f $${image} ; \
 	done
 
+.PHONY: clean
 clean: clean-containers clean-images
+
+.PHONY: build-docs
+build-docs:
+	jekyll build --source ${DOCS_SRC} --destination ${DOCS_DEST}
+
+.PHONY: push-docs
+push-docs: build-docs
+	gsutil -m rsync -a public-read -d -r ${DOCS_DEST} ${DOCS_BUCKET}
