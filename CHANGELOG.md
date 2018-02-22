@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.30] - 2018-02-21
+
+* Added nginx image.
+* Removed basic auth via env from registry in favor of nginx.
+
 ## [0.0.27] - 2018-02-04
 
 * Bump commander and phoenix. Adds support for private docker registry.

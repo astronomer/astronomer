@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM registry:2.6.2
+FROM gcr.io/google_containers/nginx-ingress-controller:0.9.0-beta.15
 MAINTAINER Astronomer <humans@astronomer.io>
 
 ARG BUILD_NUMBER=-1
