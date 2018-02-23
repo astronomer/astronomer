@@ -48,20 +48,25 @@ For fast local development, you may want to skip this section for now by startin
 1. **Write the code**
 	- **A. Source**
 		- For a new source, follow the naming conventions of similar integration repos.
+		- Example: [analytics.js-integration-retention-science](https://github.com/astronomer-integrations/analytics.js-integration-retention-science)
 	- **B. Fork**
 		- For a forked integration repo, make code changes if expansion / modifications are required to support our use case.
+		- Example: [analytics.js-integration-adwords](https://github.com/astronomer-integrations/analytics.js-integration-adwords)
 
 1. **Run it**
 	- **A. Client-side integration**
 		- Client-side integrations run in the browser via analytics.js, and are simpler and easier to write but may not fit all use cases, especially if you need to send large payloads to multiple destinations.
 		- Follow the design patterns used in existing integrations.
 		- Enable debug mode in the browser by calling `analytics.debug();` to ease iteration during the development process.  You can also disable debug mode by calling `analytics.debug(false);`.
+		- Example: [analytics.js-integration-google-analytics](https://github.com/astronomer-integrations/analytics.js-integration-google-analytics)
 	- **B. Server-side integration**
 		- Server-side integrations run as a service on the backend server.
 		- Create an integration worker service.  If you're not using about how much CPU or memory to allocate, reference similar existing services.  This is dependent on the load each integration receives and may require some iteration on config in production.
+		- Example: [integration-google-analytics](https://github.com/astronomer-integrations/integration-google-analytics)
 	- **C. Mobile integration**
 		- Mobile integrations run in a native app on iOS, Android, etc.  They are less common than client-side and server-side integrations.
 		- Create an integration worker service.  If you're not using about how much CPU or memory to allocate, reference similar existing services.  This is dependent on the load each integration receives and may require some iteration on config in production.
+		- Example: [analytics-ios-integration-facebook-app-events](https://github.com/astronomer-integrations/analytics-ios-integration-facebook-app-events)
 
 1. **Add the integration to a new or existing app to test it**
 
