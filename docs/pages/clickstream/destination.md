@@ -14,7 +14,7 @@ This document describes the overall process for developing a new clickstream int
 
 The purpose of this document is to provide the definitive checklist for a developer to create any integration whether client-side, server-side, source, fork, etc.
 
-## Setup
+## 1. Setup
 
 1. **Create an Astronomer account**
 	- Access to individual organizations can be granted by a super admin.
@@ -30,7 +30,7 @@ The purpose of this document is to provide the definitive checklist for a develo
 	- Ideally all of this is in place after the scope request phase and before starting the dev work phase to reduce the number of blockers during dev time.
 1. **Test service credentials**
 
-## Configuration
+## 2. Configuration
 
 For fast local development, you may want to skip this section for now by starting with a hardcoded JSON config, then build out the config objects once the schema shape and design have been defined.
 
@@ -43,7 +43,7 @@ For fast local development, you may want to skip this section for now by startin
 1. **Create connection config and clickstream config(s) in staging for testing purposes**
 	- Use the web app over Mongo directly if possible to mirror a customer’s usage.  Not always possible in advanced use cases.
 
-## Development
+## 3. Development
 
 1. **Write the code**
 	- **A. Source**
@@ -70,7 +70,7 @@ For fast local development, you may want to skip this section for now by startin
 
 1. **Add the integration to a new or existing app to test it**
 
-## Testing
+## 4. Testing
 
 1. **Unit testing**
 	- Writing smaller functions makes this easier and eases or avoids having to refactor later.  Use mocking for service unit tests.
@@ -79,21 +79,21 @@ For fast local development, you may want to skip this section for now by startin
 1. **Integration testing**
 	- Integration testing is best performed post-deploy in the cluster environment as opposed to trying to simulate the full setup locally.
 
-## Documentation
+## 5. Documentation
 
 1. **(Internal) Write one-line docstrings on major classes and functions**
 	- We write some internal docs today, mostly code comments.
 1. **(External) Write basic docs**
 	- Ideally external docs describe: (1) how a customer sets up the service, (2) how they configure the service, (3) how they configure our app for the service.  We do some of this today but outside of the dev cycle.  Example from Segment: Amazon Kinesis Destination.
 
-## Code Review
+## 6. Code Review
 
 1. **Open a PR requesting code review**
 	- Include your timeline for the reviewer if urgent or high priority.  Mark the reviewer as both “assigned to” and “reviewer”.
 	- If possible assign to someone who’s knowledgeable on that codebase + has availability.
 	- Clarify in your PR if you're seeking a test of functionality, style, design patterns, or what the goal of your code review is.
 
-## Misc
+## 7. Misc
 
 1. **Migrate any old config data in the config database**
 	- If this integration deprecated a previous version or made config variables obsolete, clean that up by migrating and removing any old configs.  Check Mongo for how many and which customers are impacted.
@@ -103,7 +103,7 @@ For fast local development, you may want to skip this section for now by startin
 	- To add a custom icon, add a .png file to `/src/static/destinations` in Galaxy
 	- Then add an entry in the destinations array in `/src/components/Platform/icons.js`
 
-## Deployment - Dev / Staging
+## 8. Deployment - Dev / Staging
 
 1. **Create the service in DC/OS using JSON config**
 	- Copy the template from a similar service and modify as needed.
@@ -113,7 +113,7 @@ For fast local development, you may want to skip this section for now by startin
 	- Some bugs can be caught on in our dev environment but we do not have a true staging environment that mirrors all services in prod.  Debugging mostly needs to happen in prod today.
 1. **Test that code runs end-to-end**
 
-## Deployment - Prod
+## 9. Deployment - Prod
 
 1. **Create connection config and clickstream config(s) in prod**
 	- Use real creds if we have them; otherwise, copy configs from staging.
