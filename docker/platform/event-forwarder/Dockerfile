@@ -18,18 +18,17 @@ MAINTAINER Astronomer <humans@astronomer.io>
 
 ARG BUILD_NUMBER=-1
 LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
-LABEL io.astronomer.docker.module="astronomer"
-LABEL io.astronomer.docker.component="houston-api"
+LABEL io.astronomer.docker.module="clickstream"
+LABEL io.astronomer.docker.component="event-forwarder"
 
-ARG VERSION="0.0.3"
-ENV REPO="github.com/astronomerio/houston-api"
-ENV REPO_URL="https://${REPO}#${VERSION}"
+ARG VERSION="v3.9.12"
+ENV REPO="github.com/astronomerio/event-forwarder"
+ENV REPO_URL="https://${REPO}"
 
-RUN apk add --no-cache --virtual .build-deps \
-		git \
-	&& apk add --no-cache \
+RUN apk add --no-cache \
 		nodejs \
-	&& npm install -g ${REPO_URL} \
-	&& apk del .build-deps
-
-ENTRYPOINT ["houston-api"]
+	&& git clone \
+		-c advice.detachedHead=false \
+		--depth 1 \
+		--branch ${VERSION} \
+		${REPO_URL} .

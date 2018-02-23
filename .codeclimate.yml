@@ -1,0 +1,32 @@
+version: "2"
+plugins:
+  fixme:
+    enabled: true
+  git-legal:
+    enabled: true
+  markdownlint:
+    enabled: true
+    checks:
+      MD002:
+        enabled: false
+  pep8:
+    enabled: true
+  radon:
+    enabled: true
+  shellcheck:
+    enabled: true
+  sonar-python:
+    enabled: true
+exclude_patterns:
+  - "config/"
+  - "db/"
+  - "dist/"
+  - "features/"
+  - "**/node_modules/"
+  - "script/"
+  - "**/spec/"
+  - "**/test/"
+  - "**/tests/"
+  - "**/vendor/"
+  - "**/*_test.go"
+  - "**/*.d.ts"

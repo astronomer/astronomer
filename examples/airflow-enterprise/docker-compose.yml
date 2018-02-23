@@ -18,7 +18,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ../config/initdb.sql:/docker-entrypoint-initdb.d/initdb.sql
+      - ./initdb.sql:/docker-entrypoint-initdb.d/initdb.sql
 
   redis:
     image: redis:4.0.6-alpine
@@ -45,7 +45,7 @@ services:
       - redis
       - statsd-exporter
     env_file:
-      - ../config/airflow.env
+      - airflow.env
     volumes:
       - $AIRFLOW_HOME/dags:/usr/local/airflow/dags:ro
       - $AIRFLOW_HOME/plugins:/usr/local/airflow/plugins:ro
@@ -64,7 +64,7 @@ services:
       - postgres
       - redis
     env_file:
-      - ../config/airflow.env
+      - airflow.env
     ports:
       - "8080:8080"
     volumes:
@@ -85,7 +85,7 @@ services:
       - redis
       - scheduler
     env_file:
-      - ../config/airflow.env
+      - airflow.env
     volumes:
       - $AIRFLOW_HOME/dags:/usr/local/airflow/dags:ro
       - $AIRFLOW_HOME/plugins:/usr/local/airflow/plugins:ro
@@ -117,7 +117,7 @@ services:
       - postgres
       - redis
     env_file:
-      - ../config/airflow.env
+      - airflow.env
     ports:
       - "5555:5555"
 

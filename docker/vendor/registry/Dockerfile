@@ -1,5 +1,5 @@
 #
-# Copyright 2016 Astronomer Inc.
+# Copyright 2018 Astronomer Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,10 +20,3 @@ ARG BUILD_NUMBER=-1
 
 LABEL io.astronomer.docker=true
 LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
-
-COPY include/entrypoint /entrypoint
-
-# Wrap normal entrypoint/cmd with our entrypoint
-# https://github.com/docker/distribution/blob/master/Dockerfile
-ENTRYPOINT ["/entrypoint", "registry"]
-CMD ["serve", "/etc/docker/registry/config.yml"]

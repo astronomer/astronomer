@@ -9,18 +9,18 @@ function build_component () {
     COMPONENT_NAME="ap-${2}"
 
     # Build normal components
-    if [ -f ${DOCKER_FILE} ]; then
-        docker build --build-arg BUILD_NUMBER=${BUILD_NUMBER} -t ${REPOSITORY}/${COMPONENT_NAME}:latest -f ${DOCKER_FILE} ${DOCKER_DIR} || exit 1
-        docker tag ${REPOSITORY}/${COMPONENT_NAME}:latest ${REPOSITORY}/${COMPONENT_NAME}:${ASTRONOMER_VERSION}
+    if [ -f "${DOCKER_FILE}" ]; then
+        docker build --build-arg BUILD_NUMBER="${BUILD_NUMBER}" -t "${REPOSITORY}/${COMPONENT_NAME}:latest" -f "${DOCKER_FILE}" "${DOCKER_DIR}" || exit 1
+        docker tag "${REPOSITORY}/${COMPONENT_NAME}:latest" "${REPOSITORY}/${COMPONENT_NAME}:${ASTRONOMER_VERSION}"
     fi
 
     ONBUILD_DOCKER_DIR="${DOCKER_DIR}/onbuild"
     ONBUILD_DOCKER_FILE="${ONBUILD_DOCKER_DIR}/Dockerfile"
 
     # Build onbuild components
-    if [ -f ${ONBUILD_DOCKER_FILE} ]; then
-        docker build --build-arg BUILD_NUMBER=${BUILD_NUMBER} -t "${REPOSITORY}/${COMPONENT_NAME}:latest-onbuild" -f "${ONBUILD_DOCKER_FILE}" ${ONBUILD_DOCKER_DIR} || exit 1
-        docker tag "${REPOSITORY}/${COMPONENT_NAME}:latest-onbuild" ${REPOSITORY}/${COMPONENT_NAME}:${ASTRONOMER_VERSION}-onbuild
+    if [ -f "${ONBUILD_DOCKER_FILE}" ]; then
+        docker build --build-arg BUILD_NUMBER="${BUILD_NUMBER}" -t "${REPOSITORY}/${COMPONENT_NAME}:latest-onbuild" -f "${ONBUILD_DOCKER_FILE}" "${ONBUILD_DOCKER_DIR}" || exit 1
+        docker tag "${REPOSITORY}/${COMPONENT_NAME}:latest-onbuild" "${REPOSITORY}/${COMPONENT_NAME}:${ASTRONOMER_VERSION}-onbuild"
     fi
 }
 
