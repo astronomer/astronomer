@@ -85,8 +85,10 @@ TODO
 1. **Migrate any old config data in the config database**
 	- If this integration deprecated a previous version or made config variables obsolete, clean that up by migrating and removing any old configs.  Check Mongo for how many and which customers are impacted.
 	- If you have time, do cleanup tasks during integration dev; otherwise, spin off as separate internal follow up issue to reduce tech debt.
-1. **Create an integration icon**
+1. **Add an integration icon**
 	- By default, integrations will have a generic icon in the Astronomer UI.
+	- To add a custom icon, add a .png file to `/src/static/destinations` in Galaxy
+	- Then add an entry in the destinations array in `/src/components/Platform/icons.js`
 
 ## Deployment - Dev / Staging
 
