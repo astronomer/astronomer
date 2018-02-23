@@ -103,7 +103,9 @@ For fast local development, you may want to skip this section for now by startin
 	- To add a custom icon, add a .png file to `/src/static/destinations` in Galaxy
 	- Then add an entry in the destinations array in `/src/components/Platform/icons.js`
 
-## 8. Deployment - Dev / Staging
+## 8. Deployment
+
+### A. Dev / Staging
 
 1. **Create the service in DC/OS using JSON config**
 	- Copy the template from a similar service and modify as needed.
@@ -113,7 +115,7 @@ For fast local development, you may want to skip this section for now by startin
 	- Some bugs can be caught on in our dev environment but we do not have a true staging environment that mirrors all services in prod.  Debugging mostly needs to happen in prod today.
 1. **Test that code runs end-to-end**
 
-## 9. Deployment - Prod
+### B. Prod
 
 1. **Create connection config and clickstream config(s) in prod**
 	- Use real creds if we have them; otherwise, copy configs from staging.
