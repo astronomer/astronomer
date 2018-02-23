@@ -63,6 +63,8 @@ TODO
 	- Writing smaller functions makes this easier and eases or avoids having to refactor later.  Use mocking for service unit tests.
 	- We don’t do as much automated testing today as we would like.  Most of our components are based around APIs or external services which adds complexity to unit testing.  Typically we do more manual testing.  We could benefit from creating follow up issues for this or committing time to it.
 1. **Lint**
+1. **Integration testing**
+	- Integration testing is best performed post-deploy in the cluster environment as opposed to trying to simulate the full setup locally.
 
 ## Documentation
 
@@ -76,6 +78,7 @@ TODO
 1. **Open a PR requesting code review**
 	- Include your timeline for the reviewer if urgent or high priority.  Mark the reviewer as both “assigned to” and “reviewer”.
 	- If possible assign to someone who’s knowledgeable on that codebase + has availability.
+	- Clarify in your PR if you're seeking a test of functionality, style, design patterns, or what the goal of your code review is.
 
 ## Misc
 
