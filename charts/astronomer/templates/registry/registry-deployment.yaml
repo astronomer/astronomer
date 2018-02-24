@@ -47,11 +47,6 @@ spec:
               port: 5000
             initialDelaySeconds: 10
             periodSeconds: 10
-          env:
-            - name: DEFAULT_USERNAME
-              value: "admin"
-            - name: DEFAULT_PASSWORD
-              value: "admin"
       volumes:
         - name: registry-config-volume
           configMap:

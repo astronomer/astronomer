@@ -48,7 +48,7 @@ spec:
             - name: GF_DATABASE_URL
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Release.Name }}-airflow-grafana
+                  name: {{ .Values.data.grafanaBackendSecret }}
                   key: connection
             - name: GF_AUTH_ANONYMOUS_ENABLED
               value: "true"

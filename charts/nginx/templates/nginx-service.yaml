@@ -13,8 +13,8 @@ metadata:
     heritage: {{ .Release.Service }}
 spec:
   type: LoadBalancer
-  {{- if .Values.global.ingress.loadBalancerIP }}
-  loadBalancerIP: {{ .Values.global.ingress.loadBalancerIP }}
+  {{- if .Values.global.loadBalancerIP }}
+  loadBalancerIP: {{ .Values.global.loadBalancerIP }}
   {{- end }}
   externalTrafficPolicy: "Local"
   selector:

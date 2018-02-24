@@ -1,7 +1,7 @@
 ################################
 ## Astronomer Ingress
 #################################
-{{- if .Values.global.ingress.baseDomain }}
+{{- if .Values.global.baseDomain }}
 kind: Ingress
 apiVersion: extensions/v1beta1
 metadata:
@@ -14,26 +14,27 @@ metadata:
     heritage: {{ .Release.Service }}
   annotations:
     kubernetes.io/ingress.class: "nginx"
-    kubernetes.io/tls-acme: {{ eq .Values.global.ingress.acme true | quote }}
+    kubernetes.io/tls-acme: {{ eq .Values.global.acme true | quote }}
+    {{- if .Values.global.nginxAuthSecret }}
+    ingress.kubernetes.io/auth-type: "basic"
+    ingress.kubernetes.io/auth-secret: {{ .Values.global.nginxAuthSecret }}
+    ingress.kubernetes.io/auth-realm: "Authentication Required"
+    {{- end }}
 spec:
   tls:
+    {{- if .Values.global.tlsSecret }}
+    - secretName: {{ .Values.global.tlsSecret }}
+    {{- else }}
     - secretName: {{ .Release.Name }}-astronomer-tls
+    {{- end }}
       hosts:
-        - registry.{{ .Values.global.ingress.baseDomain }}
-        - phoenix.{{ .Values.global.ingress.baseDomain }}
+        - registry.{{ .Values.global.baseDomain }}
   rules:
-  - host: registry.{{ .Values.global.ingress.baseDomain }}
+  - host: registry.{{ .Values.global.baseDomain }}
     http:
       paths:
         - path: /
           backend:
             serviceName: {{ .Release.Name }}-registry
             servicePort: registry-http
-  - host: phoenix.{{ .Values.global.ingress.baseDomain }}
-    http:
-      paths:
-        - path: /deployments/patch/
-          backend:
-            serviceName: {{ .Release.Name }}-phoenix
-            servicePort: phoenix-http
 {{- end }}

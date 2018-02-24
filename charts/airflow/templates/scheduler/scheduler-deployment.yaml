@@ -28,6 +28,10 @@ spec:
       restartPolicy: Always
       securityContext:
         runAsUser: {{ .Values.uid }}
+      {{- if .Values.global.registryAuthSecret }}
+      imagePullSecrets:
+        - name: {{ .Values.global.registryAuthSecret }}
+      {{- end }}
       containers:
         - name: {{ .Release.Name }}-scheduler
           image: {{ .Values.images.airflow }}

@@ -36,13 +36,13 @@ spec:
               containerPort: 8881
           livenessProbe:
             httpGet:
-              path: /health
+              path: /healthz
               port: 8881
             initialDelaySeconds: 10
             periodSeconds: 10
           readinessProbe:
             httpGet:
-              path: /health
+              path: /healthz
               port: 8881
             initialDelaySeconds: 10
             periodSeconds: 10
@@ -53,16 +53,3 @@ spec:
               value: "{{ .Release.Name }}-commander"
             - name: PHOENIX_COMMANDER_PORT
               value: "8880"
-            - name: PHOENIX_DEPLOY_KEY_DEP
-              value: {{ .Release.Name | quote }}
-            - name: PHOENIX_WEBHOOK_DOMAIN
-              value: phoenix.{{ .Values.global.baseDomain }}
-            {{- if .Values.global.baseDomain }}
-            - name: PHOENIX_WEBHOOK_PORT
-              value: "80"
-            {{- end }}
-            - name: PHOENIX_JWT_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Release.Name }}-jwt-secret
-                  key: secret

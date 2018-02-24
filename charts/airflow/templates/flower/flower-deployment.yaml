@@ -28,10 +28,10 @@ spec:
       restartPolicy: Always
       securityContext:
         runAsUser: {{ .Values.uid }}
-    {{- if .Values.global.modules.astronomer.enabled }}
+      {{- if .Values.global.registryAuthSecret }}
       imagePullSecrets:
-        - name: {{ .Release.Name }}-registry
-    {{- end }}
+        - name: {{ .Values.global.registryAuthSecret }}
+      {{- end }}
       containers:
         - name: {{ .Release.Name }}-flower
           image: {{ .Values.images.airflow }}
