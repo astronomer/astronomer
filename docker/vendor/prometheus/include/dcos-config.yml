@@ -3,23 +3,23 @@ global:
   evaluation_interval: 30s
 
 scrape_configs:
-  - job_name: 'prometheus'
+  - job_name: "prometheus"
     static_configs:
-      - targets: ['0.0.0.0:9090']
+      - targets: ["0.0.0.0:9090"]
 
-  - job_name: 'marathon-apps'
+  - job_name: "marathon-apps"
     marathon_sd_configs:
       - servers:
-        - 'http://leader.mesos:8080'
+        - "http://leader.mesos:8080"
     relabel_configs:
       - source_labels: [__meta_marathon_app_label_monitor]
-        regex: 'prometheus'
+        regex: "prometheus"
         action: keep
       - source_labels: [__meta_marathon_task]
         target_label: task_id
       - source_labels: [__meta_marathon_app]
         target_label: app
 
-  - job_name: 'airflow-statsd'
+  - job_name: "airflow-statsd"
     static_configs:
-      - targets: ['openairflowstatsd.marathon.l4lb.thisdcos.directory:9102']
+      - targets: ["openairflowstatsd.marathon.l4lb.thisdcos.directory:9102"]

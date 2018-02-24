@@ -86,10 +86,10 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "rate(container_cpu_user_seconds_total{container_label_com_docker_compose_service=~\"scheduler|webserver|flower\"}[1m]) * 100",
+          "expr": "rate(container_cpu_user_seconds_total{component_name=~\"scheduler|webserver|flower\"}[1m]) * 100",
           "format": "time_series",
           "intervalFactor": 1,
-          "legendFormat": "{{container_label_com_docker_compose_service}}",
+          "legendFormat": "{{component_name}}",
           "refId": "A"
         }
       ],
@@ -166,10 +166,10 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "container_memory_usage_bytes{container_label_com_docker_compose_service=~\"scheduler|webserver|flower\"}",
+          "expr": "container_memory_usage_bytes{component_name=~\"scheduler|webserver|flower\"}",
           "format": "time_series",
           "intervalFactor": 1,
-          "legendFormat": "{{container_label_com_docker_compose_service}}",
+          "legendFormat": "{{component_name}}",
           "refId": "A"
         }
       ],
@@ -246,10 +246,10 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "irate(container_network_receive_bytes_total{container_label_com_docker_compose_service=~\"scheduler|webserver|flower\"}[1m])",
+          "expr": "irate(container_network_receive_bytes_total{component_name=~\"scheduler|webserver|flower\"}[1m])",
           "format": "time_series",
           "intervalFactor": 1,
-          "legendFormat": "{{container_label_com_docker_compose_service}}",
+          "legendFormat": "{{component_name}}",
           "refId": "A"
         }
       ],
@@ -326,10 +326,10 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "irate(container_network_transmit_bytes_total{container_label_com_docker_compose_service=~\"scheduler|webserver|flower\"}[1m])",
+          "expr": "irate(container_network_transmit_bytes_total{component_name=~\"scheduler|webserver|flower\"}[1m])",
           "format": "time_series",
           "intervalFactor": 1,
-          "legendFormat": "{{container_label_com_docker_compose_service}}",
+          "legendFormat": "{{component_name}}",
           "refId": "A"
         }
       ],
@@ -406,10 +406,10 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "rate(container_cpu_user_seconds_total{container_label_com_docker_compose_service=\"worker\"}[1m]) * 100",
+          "expr": "rate(container_cpu_user_seconds_total{component_name=\"worker\"}[1m]) * 100",
           "format": "time_series",
           "intervalFactor": 1,
-          "legendFormat": "Worker  {{container_label_com_docker_compose_container_number}}",
+          "legendFormat": "Worker  {{component_instance}}",
           "refId": "A"
         }
       ],
@@ -486,10 +486,10 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "container_memory_usage_bytes{container_label_com_docker_compose_service=\"worker\"}",
+          "expr": "container_memory_usage_bytes{component_name=\"worker\"}",
           "format": "time_series",
           "intervalFactor": 1,
-          "legendFormat": "Worker {{container_label_com_docker_compose_container_number}}",
+          "legendFormat": "Worker {{component_instance}}",
           "refId": "A"
         }
       ],
@@ -566,10 +566,10 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "irate(container_network_receive_bytes_total{container_label_com_docker_compose_service=\"worker\"}[1m])",
+          "expr": "irate(container_network_receive_bytes_total{component_name=\"worker\"}[1m])",
           "format": "time_series",
           "intervalFactor": 1,
-          "legendFormat": "Worker {{container_label_com_docker_compose_container_number}}",
+          "legendFormat": "Worker {{component_instance}}",
           "refId": "A"
         }
       ],
@@ -646,10 +646,10 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "irate(container_network_transmit_bytes_total{container_label_com_docker_compose_service=\"worker\"}[1m])",
+          "expr": "irate(container_network_transmit_bytes_total{component_name=\"worker\"}[1m])",
           "format": "time_series",
           "intervalFactor": 1,
-          "legendFormat": "Worker {{container_label_com_docker_compose_container_number}}",
+          "legendFormat": "Worker {{component_instance}}",
           "refId": "A"
         }
       ],

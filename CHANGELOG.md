@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.34] - 2018-02-24
+
+* Add relabelling rules to prometheus and updated metric names in grafana dashboard.
+
 ## [0.0.30] - 2018-02-21
 
 * Added nginx image.
