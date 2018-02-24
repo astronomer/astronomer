@@ -25,7 +25,7 @@ spec:
         tier: astronomer
         release: {{ .Release.Name }}
       annotations:
-        checksum/configmap: {{ .Files.Get "registry-configmap.yaml" | sha256sum }}
+        checksum/configmap: {{ include (print $.Template.BasePath "/registry/registry-configmap.yaml") . | sha256sum }}
     spec:
       restartPolicy: Always
       containers:

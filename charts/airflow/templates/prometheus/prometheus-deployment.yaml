@@ -25,9 +25,10 @@ spec:
         component: prometheus
         release: {{ .Release.Name }}
       annotations:
-        checksum/configmap: {{ .Files.Get "prometheus-configmap.yaml" | sha256sum }}
+        checksum/configmap: {{ include (print $.Template.BasePath "/prometheus/prometheus-configmap.yaml") . | sha256sum }}
     spec:
       restartPolicy: Always
+      serviceAccountName: {{ .Release.Name }}-prometheus
       containers:
         - name: {{ .Release.Name }}-prometheus
           image: {{ .Values.images.prometheus }}
