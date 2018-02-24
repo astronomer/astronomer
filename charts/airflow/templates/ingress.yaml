@@ -31,6 +31,7 @@ spec:
         - airflow.{{ .Values.global.baseDomain }}
         - flower.{{ .Values.global.baseDomain }}
         - grafana.{{ .Values.global.baseDomain }}
+        - prometheus.{{ .Values.global.baseDomain }}
   rules:
     - host: airflow.{{ .Values.global.baseDomain }}
       http:
@@ -53,4 +54,11 @@ spec:
             backend:
               serviceName: {{ .Release.Name }}-grafana
               servicePort: grafana-ui
+    - host: prometheus.{{ .Values.global.baseDomain }}
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: {{ .Release.Name }}-prometheus
+              servicePort: prometheus-data
 {{- end }}
