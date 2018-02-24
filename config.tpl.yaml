@@ -2,40 +2,26 @@
 ## Chart overrides
 #################################
 
+# Global overrides
+global:
+  loadBalancerIP:
+  baseDomain:
+  acme: false
+  tlsSecret:
+  nginxAuthSecret:
+  registryAuthSecret:
+
+
 # Airflow overrides
 airflow:
+  # Worker settings
+  workers:
+    persistence:
+      enabled: true
 
   # Database connections
   data:
-
-    # Main Airflow database
-    metadata:
-      host: 
-      port: 5432
-      database:
-      username:
-      password: 
-
-    # Celery results backend
-    results:
-      host: 
-      port: 5432
-      database:
-      username:
-      password: 
-
-    # Celery broker
-    broker:
-      host: 
-      port: 6379
-      database: 0
-      username:
-      password: 
-
-    # Grafana backend
-    grafana:
-      host: 
-      port: 5432
-      database:
-      username:
-      password: 
+    airflowMetadataSecret:
+    airflowResultBackendSecret:
+    airflowBrokerSecret:
+    grafanaBackendSecret:

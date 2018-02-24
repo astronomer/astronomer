@@ -6,18 +6,12 @@
 uid: 100
 gid: 101
 
-ingress:
-  acme: true
-
 # Astronomer Airflow images
 images:
-  airflow: astronomerinc/ap-airflow:0.0.28
-  statsdExporter: astronomerinc/ap-statsd-exporter:0.0.28
-  prometheus: astronomerinc/ap-prometheus:0.0.28
-  grafana: astronomerinc/ap-grafana:0.0.28
-
-# Static IP name for airflow
-staticIpName:
+  airflow: astronomerinc/ap-airflow:0.0.33
+  statsdExporter: astronomerinc/ap-statsd-exporter:0.0.33
+  prometheus: astronomerinc/ap-prometheus:0.0.33
+  grafana: astronomerinc/ap-grafana:0.0.33
 
 # Airflow worker settings
 workers:

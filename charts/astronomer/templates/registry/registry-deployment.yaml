@@ -24,6 +24,8 @@ spec:
         component: registry
         tier: astronomer
         release: {{ .Release.Name }}
+      annotations:
+        checksum/configmap: {{ .Files.Get "registry-configmap.yaml" | sha256sum }}
     spec:
       restartPolicy: Always
       containers:
@@ -47,11 +49,6 @@ spec:
               port: 5000
             initialDelaySeconds: 10
             periodSeconds: 10
-          env:
-            - name: DEFAULT_USERNAME
-              value: "admin"
-            - name: DEFAULT_PASSWORD
-              value: "admin"
       volumes:
         - name: registry-config-volume
           configMap:

@@ -8,3 +8,6 @@ dependencies:
   - name: clickstream
     version: 0.0.0
     condition: global.modules.clickstream.enabled
+  - name: nginx
+    version: 0.0.0
+    condition: global.modules.nginx.enabled

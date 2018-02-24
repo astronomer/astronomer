@@ -22,10 +22,6 @@ data:
         blobdescriptor: inmemory
       filesystem:
         rootdirectory: /var/lib/registry
-    auth:
-      htpasswd:
-        realm: basic-realm
-        path: /auth/htpasswd
     http:
       addr: :5000
       headers:

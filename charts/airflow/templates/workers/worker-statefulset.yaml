@@ -30,10 +30,10 @@ spec:
       securityContext:
         runAsUser: {{ .Values.uid }}
         fsGroup: {{ .Values.gid }}
-    {{- if .Values.global.modules.astronomer.enabled }}
+      {{- if .Values.global.registryAuthSecret }}
       imagePullSecrets:
-        - name: {{ .Release.Name }}-registry
-    {{- end }}
+        - name: {{ .Values.global.registryAuthSecret }}
+      {{- end }}
       containers:
         - name: {{ .Release.Name }}-worker
           image: {{ .Values.images.airflow }}

@@ -1,0 +1,57 @@
+################################
+## NGINX Deployment
+#################################
+kind: Deployment
+apiVersion: apps/v1beta2
+metadata:
+  name: {{ .Release.Name }}-nginx
+  labels:
+    tier: nginx
+    component: ingress-controller
+    release: {{ .Release.Name }}
+    chart: {{ .Chart.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      tier: nginx
+      component: ingress-controller
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        tier: nginx
+        component: ingress-controller
+        release: {{ .Release.Name }}
+      annotations:
+        checksum/configmap: {{ .Files.Get "nginx-configmap.yaml" | sha256sum }}
+    spec:
+      serviceAccountName: {{ .Release.Name }}-nginx-ingress-controller
+      containers:
+        - name: {{ .Release.Name }}-nginx
+          image: {{ .Values.images.nginxIngress }}
+          args:
+            - /nginx-ingress-controller
+            - --default-backend-service={{ .Release.Namespace }}/{{ .Release.Name }}-nginx-default-backend
+            - --configmap={{ .Release.Namespace }}/{{ .Release.Name }}-nginx-ingress-controller
+          ports:
+            - containerPort: 80
+              name: http
+            - containerPort: 443
+              name: https
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 10254
+            initialDelaySeconds: 30
+            timeoutSeconds: 5
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace

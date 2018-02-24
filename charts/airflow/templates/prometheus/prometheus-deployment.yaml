@@ -24,6 +24,8 @@ spec:
         tier: airflow-monitoring
         component: prometheus
         release: {{ .Release.Name }}
+      annotations:
+        checksum/configmap: {{ .Files.Get "prometheus-configmap.yaml" | sha256sum }}
     spec:
       restartPolicy: Always
       containers:

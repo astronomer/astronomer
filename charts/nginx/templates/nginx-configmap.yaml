@@ -1,0 +1,20 @@
+################################
+## NGINX ConfigMap
+#################################
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: {{ .Release.Name }}-nginx-ingress-controller
+  labels:
+    tier: nginx
+    release: {{ .Release.Name }}
+    chart: {{ .Chart.Name }}
+    heritage: {{ .Release.Service }}
+data:
+  proxy-connect-timeout: {{ .Values.proxyConnectTimeout | quote }}
+  proxy-read-timeout: {{ .Values.proxyReadTimeout | quote }}
+  proxy-send-timeout: {{ .Values.proxySendTimeout | quote }}
+  proxy-body-size: {{ .Values.proxyBodySize | quote }}
+  hsts-include-subdomains: {{ .Values.hstsIncludeSubdomains | quote }}
+  server-name-hash-bucket-size: {{ .Values.serverNameHashBucketSize | quote }}
+  enable-vts-status: "true"

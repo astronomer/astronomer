@@ -6,7 +6,6 @@ kind: Ingress
 apiVersion: extensions/v1beta1
 metadata:
   name: {{ .Release.Name }}-astronomer-ingress
-  namespace: {{ .Values.global.namespace }}
   labels:
     component: astronomer-ingress
     tier: astronomer
@@ -14,32 +13,28 @@ metadata:
     chart: {{ .Chart.Name }}
     heritage: {{ .Release.Service }}
   annotations:
-  {{- if .Values.ingress.acme }}
-    kubernetes.io/tls-acme: "true"
-    kubernetes.io/ingress.class: "gce"
-  {{- end }}
-  {{- if .Values.ingress.staticIpName }}
-    kubernetes.io/ingress.global-static-ip-name: {{ .Values.ingress.staticIpName }}
-  {{- end }}
+    kubernetes.io/ingress.class: "nginx"
+    kubernetes.io/tls-acme: {{ eq .Values.global.acme true | quote }}
+    {{- if .Values.global.nginxAuthSecret }}
+    ingress.kubernetes.io/auth-type: "basic"
+    ingress.kubernetes.io/auth-secret: {{ .Values.global.nginxAuthSecret }}
+    ingress.kubernetes.io/auth-realm: "Authentication Required"
+    {{- end }}
 spec:
   tls:
+    {{- if .Values.global.tlsSecret }}
+    - secretName: {{ .Values.global.tlsSecret }}
+    {{- else }}
     - secretName: {{ .Release.Name }}-astronomer-tls
+    {{- end }}
       hosts:
         - registry.{{ .Values.global.baseDomain }}
-        - phoenix.{{ .Values.global.baseDomain }}
   rules:
   - host: registry.{{ .Values.global.baseDomain }}
     http:
       paths:
-        - path: /*
+        - path: /
           backend:
             serviceName: {{ .Release.Name }}-registry
             servicePort: registry-http
-  - host: phoenix.{{ .Values.global.baseDomain }}
-    http:
-      paths:
-        - path: /deployments/patch/*
-          backend:
-            serviceName: {{ .Release.Name }}-phoenix
-            servicePort: phoenix-http
 {{- end }}
