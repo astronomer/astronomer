@@ -101,10 +101,10 @@ to easily test different Airflow projects in isolation.
 
 ## Limitations
 
-### HDFS hook not supported
+### HDFSHook not supported
 
 Astronomer is built on the latest stable versions of everything, including
-Python 3. With that said, it doesn't support Airflow's HDFS hook and
+Python 3. With that said, it doesn't support Airflow's `HDFSHook` and HDFS
 operators (we `pip uninstall snakebite` in our dockerfile).
 
 The `HDFSHook`
