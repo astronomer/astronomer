@@ -1,7 +1,16 @@
 apiVersion: v1
 entries:
   airflow:
-  - created: 2018-02-09T20:06:42.60154142-05:00
+  - created: 2018-02-26T15:50:03.280347924-05:00
+    description: Helm chart to deploy the Astronomer Platform Airflow module
+    digest: 4522a14cc4b2eb3f3d906f3ac29b8797add0c733e240a1d946e40ba77a69804d
+    keywords:
+    - astronomer
+    name: airflow
+    urls:
+    - https://helm.astronomer.io/airflow-0.1.0.tgz
+    version: 0.1.0
+  - created: 2018-02-26T15:50:03.279926989-05:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: 707b85a7339d423701a42be25e52ee61a5b09d5e5c44d727b7372a49e072ff2d
     keywords:
@@ -11,7 +20,16 @@ entries:
     - https://helm.astronomer.io/airflow-0.0.1.tgz
     version: 0.0.1
   astronomer:
-  - created: 2018-02-09T20:06:42.601829061-05:00
+  - created: 2018-02-26T15:50:03.280854562-05:00
+    description: A Helm chart to deploy the Astronomer module
+    digest: a39934b6607bf3c0fefffd71c34bc0e12528404cc53c32b1f2ee63ae2bfbe12d
+    keywords:
+    - astronomer
+    name: astronomer
+    urls:
+    - https://helm.astronomer.io/astronomer-0.1.0.tgz
+    version: 0.1.0
+  - created: 2018-02-26T15:50:03.280608434-05:00
     description: A Helm chart to deploy the Astronomer module
     digest: 8aca4d4563666f8916101da4a7aad1604fe7e1dc932b4ce0c5c9d58cb490a5c6
     keywords:
@@ -21,7 +39,16 @@ entries:
     - https://helm.astronomer.io/astronomer-0.0.1.tgz
     version: 0.0.1
   clickstream:
-  - created: 2018-02-09T20:06:42.601948245-05:00
+  - created: 2018-02-26T15:50:03.281073439-05:00
+    description: Helm chart to deploy the Astronomer Platform clickstream module
+    digest: ad796cc8d73974cd59784ac91cc56e64700ef7639085d3aa2f5ae139a90322a3
+    keywords:
+    - astronomer
+    name: clickstream
+    urls:
+    - https://helm.astronomer.io/clickstream-0.1.0.tgz
+    version: 0.1.0
+  - created: 2018-02-26T15:50:03.280959924-05:00
     description: Helm chart to deploy the Astronomer Platform clickstream module
     digest: ebdb8a523fbaa08bd66738288c61fc838e6c2582dde504ef189f7bc81cb35396
     keywords:
@@ -30,4 +57,4 @@ entries:
     urls:
     - https://helm.astronomer.io/clickstream-0.0.1.tgz
     version: 0.0.1
-generated: 2018-02-09T20:06:42.601083645-05:00
+generated: 2018-02-26T15:50:03.27948868-05:00
