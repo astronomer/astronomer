@@ -21,7 +21,7 @@ airflow:
 
   # Database connections
   data:
-    airflowMetadataSecret:
-    airflowResultBackendSecret:
-    airflowBrokerSecret:
-    grafanaBackendSecret:
+    airflowMetadataSecret: "airflow-metadata"
+    airflowResultBackendSecret: "airflow-result-backend"
+    airflowBrokerSecret: "airflow-broker"
+    grafanaBackendSecret: "grafana-backend"
