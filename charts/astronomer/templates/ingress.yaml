@@ -24,8 +24,6 @@ spec:
   tls:
     {{- if .Values.global.tlsSecret }}
     - secretName: {{ .Values.global.tlsSecret }}
-    {{- else }}
-    - secretName: {{ .Release.Name }}-astronomer-tls
     {{- end }}
       hosts:
         - registry.{{ .Values.global.baseDomain }}

@@ -1,7 +1,10 @@
 ################################
-## Astronomer global variables
+## Astronomer global configuration
 #################################
 global:
+  # IP address the nginx ingress should bind to
+  loadBalancerIP:
+
   # Base domain for all subdomains exposed through ingress
   baseDomain:
 
@@ -11,13 +14,48 @@ global:
   # If RBAC on cluster is enabled
   rbacEnabled: true
 
+  # Name of secret containing TLS certificate
+  tlsSecret: "astronomer-tls"
+
+  # Name of secret containing basic auth for NGINX
+  nginxAuthSecret: "nginx-auth"
+
+  # Name of secret containing docker registry auth
+  registryAuthSecret: "registry-auth"
+
   # Astronomer modules
   modules:
+
+    # Enable astronomer module
     astronomer:
       enabled: true
+
+    # Enable airflow module
     airflow:
       enabled: true
+
+    # Enable clickstream module
     clickstream:
       enabled: false
+
+    # Enable NGINX ingress module
     nginx:
       enabled: true
+
+
+################################
+## Airflow configuration
+#################################
+airflow:
+  # Worker settings
+  workers:
+    # Enable persistence to keep logs around between deploys
+    persistence:
+      enabled: true
+
+  # Database connection secret names
+  data:
+    airflowMetadataSecret: "airflow-metadata"
+    airflowResultBackendSecret: "airflow-result-backend"
+    airflowBrokerSecret: "airflow-broker"
+    grafanaBackendSecret: "grafana-backend"

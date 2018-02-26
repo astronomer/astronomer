@@ -24,8 +24,6 @@ spec:
   tls:
     {{- if .Values.global.tlsSecret }}
     - secretName: {{ .Values.global.tlsSecret }}
-    {{- else }}
-    - secretName: {{ .Release.Name }}-airflow-tls
     {{- end }}
       hosts:
         - airflow.{{ .Values.global.baseDomain }}

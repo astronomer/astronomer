@@ -6,22 +6,3 @@
 global:
   loadBalancerIP:
   baseDomain:
-  acme: false
-  tlsSecret: "astronomer-tls"
-  nginxAuthSecret: "nginx-auth"
-  registryAuthSecret: "registry-auth"
-
-
-# Airflow overrides
-airflow:
-  # Worker settings
-  workers:
-    persistence:
-      enabled: true
-
-  # Database connections
-  data:
-    airflowMetadataSecret: "airflow-metadata"
-    airflowResultBackendSecret: "airflow-result-backend"
-    airflowBrokerSecret: "airflow-broker"
-    grafanaBackendSecret: "grafana-backend"
