@@ -7,8 +7,8 @@ global:
   loadBalancerIP:
   baseDomain:
   acme: false
-  tlsSecret:
-  nginxAuthSecret:
+  tlsSecret: "astronomer-tls"
+  nginxAuthSecret: "nginx-auth"
   registryAuthSecret:
 
 
