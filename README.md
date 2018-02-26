@@ -7,7 +7,7 @@ The images are currently available on
 [DockerHub](https://hub.docker.com/u/astronomerinc/).
 
 Full documentation for using the images can be found
-[here](https://astronomerio.github.io/astronomer/).
+[here](https://open.astronomer.io).
 
 ## Contents
 
@@ -28,4 +28,4 @@ Full documentation for using the images can be found
 The project is licensed under the Apache 2 license. For more information on the
 licenses for each of the individual Astronomer Platform components packaged in
 the images, please refer to the respective
-[Astronomer Platform documentation for each component](https://astronomerio.github.io/astronomer/).
+[Astronomer Platform documentation for each component](https://open.astronomer.io).
