@@ -9,7 +9,7 @@ global:
   acme: false
   tlsSecret: "astronomer-tls"
   nginxAuthSecret: "nginx-auth"
-  registryAuthSecret:
+  registryAuthSecret: "registry-auth"
 
 
 # Airflow overrides
