@@ -21,3 +21,4 @@ java/.classpath
 java/.project
 java/.settings/
 .vscode/*
+.python-version
