@@ -21,6 +21,7 @@ exclude_patterns:
   - "config/"
   - "db/"
   - "dist/"
+  - "docs/_site"
   - "features/"
   - "**/node_modules/"
   - "script/"
