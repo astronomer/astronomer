@@ -72,9 +72,17 @@ platform locally.
 
 ## Building the Documentation
 
-Documentation is built on jekyll and currently hosted on GitHub
-pages. To run the docs site locally:
+Documentation is built on Jekyll and hosted on Google Cloud Storage.
 
-* `cd docs`
-* `bundle install`
-* `bundle exec jekyll serve`
+Build the docs site locally:
+
+```
+cd docs
+bundle install
+```
+
+Run it:
+
+```
+bundle exec jekyll serve
+```
