@@ -18,6 +18,34 @@ Full documentation for using the images can be found
 * Scripts to build, maintain and release tagged versions of the platform.
 * Documentation on running the platform locally for testing and hacking.
 
+## Deploy Docs Site
+
+### Setup
+
+1. Ask Greg to add GCP IAM permissions for the Astronomer prod project.
+
+	- Storage > Storage Admin - to view deployment artifacts
+	- Storage > Storage Object Admin - to deploy
+
+1. Ensure jekyll is installed.
+
+1. Ensure python2 is in your $PATH for gsutil.
+
+	For example, if using [pyenv](https://github.com/pyenv/pyenv), run in the project root:
+
+	```sh
+	pyenv local 2.7.14
+	```
+
+### Deploy
+
+Run:
+
+```sh
+make build-docs
+make push-docs
+```
+
 ## Contribute
 
 * Source Code: <https://github.com/astronomerio/astronomer>
