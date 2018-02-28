@@ -52,10 +52,3 @@ airflow:
     # Enable persistence to keep logs around between deploys
     persistence:
       enabled: true
-
-  # Database connection secret names
-  data:
-    airflowMetadataSecret: "airflow-metadata"
-    airflowResultBackendSecret: "airflow-result-backend"
-    airflowBrokerSecret: "airflow-broker"
-    grafanaBackendSecret: "grafana-backend"

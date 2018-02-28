@@ -16,7 +16,9 @@ spec:
   {{- if .Values.global.loadBalancerIP }}
   loadBalancerIP: {{ .Values.global.loadBalancerIP }}
   {{- end }}
+  {{- if .Values.preserveSourceIP }}
   externalTrafficPolicy: "Local"
+  {{- end }}
   selector:
     tier: nginx
     component: ingress-controller

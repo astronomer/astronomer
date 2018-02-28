@@ -21,12 +21,12 @@ metadata:
     ingress.kubernetes.io/auth-realm: "Authentication Required"
     {{- end }}
 spec:
+  {{- if .Values.global.tlsSecret }}
   tls:
-    {{- if .Values.global.tlsSecret }}
     - secretName: {{ .Values.global.tlsSecret }}
-    {{- end }}
       hosts:
         - registry.{{ .Values.global.baseDomain }}
+  {{- end }}
   rules:
   - host: registry.{{ .Values.global.baseDomain }}
     http:

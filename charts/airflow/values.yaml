@@ -43,35 +43,7 @@ env:
 
 # Astronomer Airflow database config
 data:
-
-  # Main Airflow database
-  metadata:
-    host:
-    port:
-    database:
-    username:
-    password:
-
-  # Celery results backend
-  results:
-    host:
-    port:
-    database:
-    username:
-    password:
-
-  # Celery broker
-  broker:
-    host:
-    port:
-    database:
-    username:
-    password:
-
-  # Grafana backend
-  grafana:
-    host:
-    port:
-    database:
-    username:
-    password:
+  airflowMetadataSecret: "airflow-metadata"
+  airflowResultBackendSecret: "airflow-result-backend"
+  airflowBrokerSecret: "airflow-broker"
+  grafanaBackendSecret: "grafana-backend"

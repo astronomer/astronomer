@@ -5,6 +5,9 @@ images:
   nginxIngress: astronomerinc/ap-nginx:0.1.0
   defaultBackend: gcr.io/google_containers/defaultbackend:1.3
 
+## Dependent on cloud provider
+preserveSourceIP: false
+
 proxyConnectTimeout: 15
 proxyReadTimeout: 600
 proxySendTimeout: 600

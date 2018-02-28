@@ -21,15 +21,15 @@ metadata:
     ingress.kubernetes.io/auth-realm: "Authentication Required"
     {{- end }}
 spec:
+  {{- if .Values.global.tlsSecret }}
   tls:
-    {{- if .Values.global.tlsSecret }}
     - secretName: {{ .Values.global.tlsSecret }}
-    {{- end }}
       hosts:
         - airflow.{{ .Values.global.baseDomain }}
         - flower.{{ .Values.global.baseDomain }}
         - grafana.{{ .Values.global.baseDomain }}
         - prometheus.{{ .Values.global.baseDomain }}
+  {{- end }}
   rules:
     - host: airflow.{{ .Values.global.baseDomain }}
       http:
