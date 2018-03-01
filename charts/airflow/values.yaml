@@ -8,10 +8,10 @@ gid: 101
 
 # Astronomer Airflow images
 images:
-  airflow: astronomerinc/ap-airflow:0.1.1
-  statsdExporter: astronomerinc/ap-statsd-exporter:0.1.1
-  prometheus: astronomerinc/ap-prometheus:0.1.1
-  grafana: astronomerinc/ap-grafana:0.1.1
+  airflow: astronomerinc/ap-airflow:0.1.2
+  statsdExporter: astronomerinc/ap-statsd-exporter:0.1.2
+  prometheus: astronomerinc/ap-prometheus:0.1.2
+  grafana: astronomerinc/ap-grafana:0.1.2
 
 # Airflow worker settings
 workers:

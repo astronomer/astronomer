@@ -7,6 +7,6 @@ uid: 100
 
 # Images for pilot
 images:
-  commander: astronomerinc/ap-commander:0.1.1
-  phoenix: astronomerinc/ap-phoenix:0.1.1
-  registry: astronomerinc/ap-registry:0.1.1
+  commander: astronomerinc/ap-commander:0.1.2
+  phoenix: astronomerinc/ap-phoenix:0.1.2
+  registry: astronomerinc/ap-registry:0.1.2
