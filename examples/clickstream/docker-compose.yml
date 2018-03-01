@@ -71,29 +71,29 @@ services:
       - kafka
     ports:
       - "9091:9091"
-    volumes:
-      - config.yml:/etc/astronomer/clickstream/config.yml
+    # volumes:
+    #   - config.yml:/etc/astronomer/clickstream/config.yml
 
-  event-forwarder-ga:
-    image: astronomerinc/ap-event-forwarder:$CLICKSTREAM_IMAGE_TAG
-    labels:
-      io.astronomer.docker: "true"
-      io.astronomer.docker.open: "true"
-    environment:
-      EF_INTEGRATION: google-analytics
-      EF_KAFKA_INGESTION_TOPIC: astro-google-analytics
-      EF_KAFKA_GROUP_ID: iw-google-analytics
-      EF_KAFKA_RETRY_TOPIC: retry
-      EF_KAFKA_BROKERS: kafka:9092
-      EF_DEBUG: 'true'
-      EF_SERVE_PORT: 9091
-      EF_TOPIC: main
-      EF_GROUP_ID: moc
-      EF_SSE_URL: http://localhost
-      EF_SSE_AUTH: auth
-    depends_on:
-      - kafka
-    ports:
-      - "9091:9091"
-    volumes:
-      - config.yml:/etc/astronomer/clickstream/config.yml
+  # event-forwarder-ga:
+  #   image: astronomerinc/ap-event-forwarder:$CLICKSTREAM_IMAGE_TAG
+  #   labels:
+  #     io.astronomer.docker: "true"
+  #     io.astronomer.docker.open: "true"
+  #   environment:
+  #     EF_INTEGRATION: google-analytics
+  #     EF_KAFKA_INGESTION_TOPIC: astro-google-analytics
+  #     EF_KAFKA_GROUP_ID: iw-google-analytics
+  #     EF_KAFKA_RETRY_TOPIC: retry
+  #     EF_KAFKA_BROKERS: kafka:9092
+  #     EF_DEBUG: 'true'
+  #     EF_SERVE_PORT: 9091
+  #     EF_TOPIC: main
+  #     EF_GROUP_ID: moc
+  #     EF_SSE_URL: http://localhost
+  #     EF_SSE_AUTH: auth
+  #   depends_on:
+  #     - kafka
+  #   ports:
+  #     - "9091:9091"
+  #   volumes:
+  #     - config.yml:/etc/astronomer/clickstream/config.yml

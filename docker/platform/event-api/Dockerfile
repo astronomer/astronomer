@@ -13,6 +13,32 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+FROM golang:alpine
+
+ARG VERSION="v0.0.20-beta"
+ARG LIBRDKAFKA_VERSION="0.11.1-r1"
+
+ENV REPO="github.com/astronomerio/event-api"
+ENV REPO_URL="https://${REPO}"
+
+WORKDIR /usr/local/go/src/${REPO}
+
+RUN apk add --no-cache \
+		build-base \
+		cyrus-sasl-dev \
+		git \
+		librdkafka-dev=${LIBRDKAFKA_VERSION} \
+		libressl \
+		openssl-dev \
+		yajl-dev \
+		zlib-dev \
+	&& git clone \
+		-c advice.detachedHead=false \
+		--depth 1 \
+		--branch ${VERSION} \
+		${REPO_URL} . \
+	&& make DESTDIR=/tmp install
+
 FROM astronomerinc/ap-base
 MAINTAINER Astronomer <humans@astronomer.io>
 
@@ -21,35 +47,9 @@ LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
 LABEL io.astronomer.docker.module="clickstream"
 LABEL io.astronomer.docker.component="event-api"
 
-ARG VERSION="v0.0.20-beta"
-ARG LIBRESSL_VERSION="2.6"
-ARG LIBRDKAFKA_VERSION="0.11.1-r1"
+RUN apk add --no-cache openssl
+COPY --from=0 /tmp/event-api /usr/bin/event-api
 
-ENV REPO="github.com/astronomerio/event-api"
-ENV REPO_URL="https://${REPO}"
-
-WORKDIR /usr/lib/go/src/${REPO}
-RUN apk add --no-cache --virtual .build-deps \
-		build-base \
-		cyrus-sasl-dev \
-		go \
-		git \
-		librdkafka-dev=${LIBRDKAFKA_VERSION} \
-		libressl \
-		openssl-dev \
-		yajl-dev \
-		zlib-dev \
-	&& apk add \
-		openssl \
-	&& git clone \
-		-c advice.detachedHead=false \
-		--depth 1 \
-		--branch ${VERSION} \
-		${REPO_URL} . \
-	&& make DESTDIR=/usr/bin install \
-	&& apk del .build-deps \
-	&& rm -rf /usr/lib/go
-
-ENV GIN_MODE=release
+ENV GIN_MODE="release"
 EXPOSE 8080 8081
 ENTRYPOINT ["event-api"]
