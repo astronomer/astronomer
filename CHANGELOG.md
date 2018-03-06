@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.3] - ---------
+
+* Fix bug with tlsSecret and acme values.
+
 ## [0.1.2] - 2018-03-01
 
 * Add /healthz to default backend

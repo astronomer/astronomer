@@ -15,7 +15,7 @@ global:
   rbacEnabled: true
 
   # Name of secret containing TLS certificate
-  tlsSecret: "astronomer-tls"
+  tlsSecret:
 
   # Name of secret containing basic auth for NGINX
   nginxAuthSecret: "nginx-auth"

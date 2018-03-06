@@ -6,3 +6,5 @@
 global:
   loadBalancerIP:
   baseDomain:
+  tlsSecret:
+  acme: false
