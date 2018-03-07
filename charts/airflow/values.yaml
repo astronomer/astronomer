@@ -30,16 +30,6 @@ workers:
 
 # Environment variables for all airflow containers
 env:
-  - name: AIRFLOW__CORE__EXECUTOR
-    value: "CeleryExecutor"
-  - name: AIRFLOW__SCHEDULER__STATSD_ON
-    value: "True"
-  - name: AIRFLOW__SCHEDULER__STATSD_PORT
-    value: "9125"
-  - name: AIRFLOW__SCHEDULER__STATSD_PREFIX
-    value: "airflow"
-  - name: ASTRONOMER__AIRFLOW__WORKER_LOG_RETENTION
-    value: "15"
 
 # Astronomer Airflow database config
 data:

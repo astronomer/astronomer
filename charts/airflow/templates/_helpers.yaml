@@ -1,13 +1,30 @@
 {{/* Airflow environment variables */}}
 {{- define "airflow_environment" }}
-  # Dynamically create environment variables
+  # Dynamically created environment variables
   {{- range $i, $config := .Values.env }}
   - name: {{ $config.name }}
     value: {{ $config.value | quote }}
   {{- end }}
-  # Hard-coded environment variables.
-  # We need to use the release name, so we can't
-  # set it in values.yaml.
+  # Hard Coded Airflow Envs
+  - name: AIRFLOW__CORE__EXECUTOR
+    value: "CeleryExecutor"
+  - name: AIRFLOW__SCHEDULER__STATSD_ON
+    value: "True"
+  - name: AIRFLOW__SCHEDULER__STATSD_PORT
+    value: "9125"
+  - name: AIRFLOW__SCHEDULER__STATSD_PREFIX
+    value: "airflow"
+  - name: ASTRONOMER__AIRFLOW__WORKER_LOG_RETENTION
+    value: "15"
+  # Dynamically created secret envs
+  {{- range $i, $config := .Values.secret }}
+  - name: {{ $config.name }}
+    valueFrom:
+      secretKeyRef:
+        name: {{ $config.value }}
+        key:  value
+  {{- end}}
+  # Hard Coded Secret Envs
   - name: AIRFLOW__SCHEDULER__STATSD_HOST
     value: "{{ .Release.Name }}-statsd"
   - name: AIRFLOW__CORE__SQL_ALCHEMY_CONN
