@@ -8,3 +8,8 @@ global:
   baseDomain:
   tlsSecret:
   acme: false
+
+# Airflow config overrides
+airflow:
+  env:
+  secret:
