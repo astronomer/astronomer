@@ -28,18 +28,26 @@ We provide two examples for Apache Airflow.  Each will spin up a handful of cont
 
 Here's a comparison of the components included in Airflow Lite vs Airflow Enterprise:
 
-| Component | Airflow Lite | Airflow Enterprise |
-|--------- |:----:|:----------:|
-| Airflow scheduler | x | x |
-| Airflow webserver | x | x |
-| PostgreSQL | x | x |
-| [Redis](https://redis.io/) |  | x |
-| [Celery](http://www.celeryproject.org/) |  | x |
-| [Flower](http://flower.readthedocs.io/en/latest/) |  | x |
-| [Prometheus](https://prometheus.io) |  | x |
-| [Grafana](https://grafana.com) |  | x |
-| [StatsD exporter](https://github.com/prometheus/statsd_exporter) |  | x |
-| [cAdvisor](https://github.com/google/cadvisor) |  | x |
+| Component                 | Airflow Lite | Airflow Enterprise |
+|---------------------------|:------------:|:------------------:|
+| Airflow scheduler         | x            | x                  |
+| Airflow webserver         | x            | x                  |
+| PostgreSQL                | x            | x                  |
+| [Redis][redis]            |              | x                  |
+| [Celery][celery]          |              | x                  |
+| [Flower][flower]          |              | x                  |
+| [Prometheus][prometheus]  |              | x                  |
+| [Grafana][grafana]        |              | x                  |
+| [StatsD exporter][statsd] |              | x                  |
+| [cAdvisor][cadvisor]      |              | x                  |
+
+[redis]: https://redis.io/
+[celery]: http://www.celeryproject.org/
+[flower]: http://flower.readthedocs.io/en/latest/
+[grafana]: https://grafana.com
+[prometheus]: https://prometheus.io
+[cadvisor]: https://github.com/google/cadvisor
+[statsd]: https://github.com/prometheus/statsd_exporter
 
 ### Airflow Lite
 
