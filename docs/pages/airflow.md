@@ -28,6 +28,7 @@ We provide two examples for Apache Airflow.  Each will spin up a handful of cont
 
 Here's a comparison of the components included in Airflow Lite vs Airflow Enterprise:
 
+{:.table.table-striped.table-bordered.table-hover}
 | Component                 | Airflow Lite | Airflow Enterprise |
 |---------------------------|:------------:|:------------------:|
 | Airflow scheduler         | x            | x                  |
