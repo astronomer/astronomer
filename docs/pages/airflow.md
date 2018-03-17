@@ -15,7 +15,7 @@ for your cloud.
 
 ## Quickstart
 
-Run:
+Clone Astronomer Open:
 
 ```
 git clone https://github.com/astronomerio/astronomer.git
@@ -24,13 +24,24 @@ cd astronomer
 
 We provide two examples for Apache Airflow.  Each will spin up a handful of containers to mimic a live Astronomer environment.
 
+### Airflow Lite vs Airflow Enterprise
+
+Here's a comparison of the components included in Airflow Lite vs Airflow Enterprise:
+
+| Component | Airflow Lite | Airflow Enterprise |
+|--------- |:----:|:----------:|
+| Airflow scheduler | x | x |
+| Airflow webserver | x | x |
+| PostgreSQL | x | x |
+| [Redis](https://redis.io/) |  | x |
+| [Celery](http://www.celeryproject.org/) |  | x |
+| [Flower](http://flower.readthedocs.io/en/latest/) |  | x |
+| Prometheus |  | x |
+| Grafana |  | x |
+| StatsD exporter |  | x |
+| cAdvisor |  | x |
+
 ### Airflow Lite
-
-The simple setup includes:
-
-- Airflow scheduler
-- Airflow webserver
-- PostgreSQL (for the Airflow metadata database)
 
 To start the simple Airflow example:
 
@@ -40,19 +51,6 @@ docker-compose up
 ```
 
 ### Airflow Enterprise
-
-The fancy setup includes:
-
-- Airflow scheduler
-- Airflow webserver
-- PostgreSQL
-- [Redis](https://redis.io/)
-- [Celery](http://www.celeryproject.org/)
-- [Flower](http://flower.readthedocs.io/en/latest/)
-- Prometheus
-- Grafana
-- StatsD exporter
-- cAdvisor
 
 To start the more sophisticated Airflow example:
 
