@@ -36,10 +36,10 @@ Here's a comparison of the components included in Airflow Lite vs Airflow Enterp
 | [Redis](https://redis.io/) |  | x |
 | [Celery](http://www.celeryproject.org/) |  | x |
 | [Flower](http://flower.readthedocs.io/en/latest/) |  | x |
-| Prometheus |  | x |
-| Grafana |  | x |
-| StatsD exporter |  | x |
-| cAdvisor |  | x |
+| [Prometheus](https://prometheus.io) |  | x |
+| [Grafana](https://grafana.com) |  | x |
+| [StatsD exporter](https://github.com/prometheus/statsd_exporter) |  | x |
+| [cAdvisor](https://github.com/google/cadvisor) |  | x |
 
 ### Airflow Lite
 
