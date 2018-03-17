@@ -15,24 +15,53 @@ for your cloud.
 
 ## Quickstart
 
-If you haven't already, clone the repository by running the following:
-`git clone https://github.com/astronomerio/astronomer.git`
-and change into the repository directory.
+Run:
 
-To get up and running quickly and poke around with Apache Airflow on Astronomer,
-pop open a terminal and run `cd examples/airflow && docker-compose up`.
-This will spin up a handful of containers to closely mimic a live Astronomer
-environment.
+```
+git clone https://github.com/astronomerio/astronomer.git
+cd astronomer
+```
 
-First, we spin up a [Postgres](https://www.postgresql.org/) container for the
-Airflow metadata database, and a [Redis](https://redis.io/) container to back
-[Celery](http://www.celeryproject.org/), which Airflow will use for its task
-queue. Once the storage containers have started, we start the Airflow Scheduler,
-Airflow Webserver, a Celery worker, and the
-[Flower UI](http://flower.readthedocs.io/en/latest/) to monitor the Celery task
-queue. Once everything is up and running, open a browser tab and visit
-<http://localhost:8080> for the Airflow UI and <http://localhost:5555> for the
-Celery UI.
+We provide two examples for Apache Airflow.  Each will spin up a handful of containers to mimic a live Astronomer environment.
+
+### Airflow Lite
+
+The simple setup includes:
+
+- Airflow scheduler
+- Airflow webserver
+- PostgreSQL (for the Airflow metadata database)
+
+To start the simple Airflow example:
+
+```
+cd examples/airflow-lite
+docker-compose up
+```
+
+### Airflow Enterprise
+
+The fancy setup includes:
+
+- Airflow scheduler
+- Airflow webserver
+- PostgreSQL
+- [Redis](https://redis.io/)
+- [Celery](http://www.celeryproject.org/)
+- [Flower](http://flower.readthedocs.io/en/latest/)
+- Prometheus
+- Grafana
+- StatsD exporter
+- cAdvisor
+
+To start the more sophisticated Airflow example:
+
+```
+cd examples/airflow-enterprise
+docker-compose up
+```
+
+Once everything is up and running, open a browser and visit <http://localhost:8080> for Airflow and <http://localhost:5555> for Celery.
 
 Sweet! You're up and running with Apache Airflow and well on your way to
 automating all your data pipelines! The following sections will help you get
