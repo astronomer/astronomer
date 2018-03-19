@@ -24,12 +24,12 @@ cd astronomer
 
 We provide two examples for Apache Airflow.  Each will spin up a handful of containers to mimic a live Astronomer environment.
 
-### Airflow Lite vs Airflow Enterprise
+### Airflow Core vs Airflow Enterprise
 
-Here's a comparison of the components included in Airflow Lite vs Airflow Enterprise:
+Here's a comparison of the components included in the Airflow Core vs Airflow Enterprise examples:
 
 {:.table.table-striped.table-bordered.table-hover}
-| Component                 | Airflow Lite | Airflow Enterprise |
+| Component                 | Airflow Core | Airflow Enterprise |
 |---------------------------|:------------:|:------------------:|
 | Airflow scheduler         | x            | x                  |
 | Airflow webserver         | x            | x                  |
@@ -50,12 +50,12 @@ Here's a comparison of the components included in Airflow Lite vs Airflow Enterp
 [cadvisor]: https://github.com/google/cadvisor
 [statsd]: https://github.com/prometheus/statsd_exporter
 
-### Airflow Lite
+### Airflow Core
 
 To start the simple Airflow example:
 
 ```
-cd examples/airflow-lite
+cd examples/airflow-core
 docker-compose up
 ```
 
