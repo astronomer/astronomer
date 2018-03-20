@@ -1,12 +1,12 @@
 ################################
-## Astronomer Phoenix Deployment
+## Astronomer Houston Deployment
 #################################
 kind: Deployment
 apiVersion: apps/v1beta2
 metadata:
-  name: {{ .Release.Name }}-phoenix
+  name: {{ .Release.Name }}-houston
   labels:
-    component: phoenix
+    component: houston
     tier: astronomer
     release: {{ .Release.Name }}
     chart: {{ .Chart.Name }}
@@ -15,13 +15,13 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      component: phoenix
+      component: houston
       tier: astronomer
       release: {{ .Release.Name }}
   template:
     metadata:
       labels:
-        component: phoenix
+        component: houston
         tier: astronomer
         release: {{ .Release.Name }}
     spec:
@@ -29,27 +29,22 @@ spec:
       securityContext:
         runAsUser: {{ .Values.uid }}
       containers:
-        - name: {{ .Release.Name }}-phoenix
-          image: {{ .Values.images.phoenix }}
+        - name: {{ .Release.Name }}-houston
+          image: {{ .Values.images.houston }}
           ports:
-            - name: phoenix-http
-              containerPort: 8881
+            - name: houston-http
+              containerPort: 8870
           livenessProbe:
             httpGet:
               path: /healthz
-              port: 8881
+              port: 8870
             initialDelaySeconds: 10
             periodSeconds: 10
           readinessProbe:
             httpGet:
               path: /healthz
-              port: 8881
+              port: 8870
             initialDelaySeconds: 10
             periodSeconds: 10
           env:
-            - name: PHOENIX_PORT
-              value: "8881"
-            - name: PHOENIX_COMMANDER_HOST
-              value: "{{ .Release.Name }}-commander"
-            - name: PHOENIX_COMMANDER_PORT
-              value: "8880"
+          {{- include "houston_environment" . | indent 10 }}

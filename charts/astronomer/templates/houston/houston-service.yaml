@@ -1,12 +1,12 @@
 ################################
-## Astronomer Phoenix Service
+## Astronomer Houston Service
 #################################
 kind: Service
 apiVersion: v1
 metadata:
-  name: {{ .Release.Name }}-phoenix
+  name: {{ .Release.Name }}-houston
   labels:
-    component: phoenix
+    component: houston
     tier: astronomer
     release: {{ .Release.Name }}
     chart: {{ .Chart.Name }}
@@ -14,11 +14,11 @@ metadata:
 spec:
   type: NodePort
   selector:
-    component: phoenix
+    component: houston
     tier: astronomer
     release: {{ .Release.Name }}
   ports:
-    - name: phoenix-http
+    - name: houston-http
       protocol: TCP
-      port: 8881
-      targetPort: 8881
+      port: 8870
+      targetPort: 8870
