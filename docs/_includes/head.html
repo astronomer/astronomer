@@ -30,15 +30,16 @@
   <script src="{{ '/assets/js/docs.min.js' | relative_url }}"></script>
   <script type="text/javascript">
     $(function(){
-      // dynamically insert copy buttons
-      $('div.highlighter-rouge').after(
-        '<button class="btn btn-default" type="submit">copy</button>'
+      // dynamically insert copy button
+      $('div.highlighter-rouge > .highlight').addClass('clearfix');
+      $('div.highlighter-rouge > .highlight').prepend(
+        '<button class="btn btn-default btn-sm pull-right" type="submit">copy</button>'
       );
 
       // wire up copy buttons to code blocks
       var clipboard = new Clipboard('.btn', {
         target: function(trigger) {
-          return trigger.previousElementSibling;
+          return trigger.nextElementSibling;
         }
       });
     });

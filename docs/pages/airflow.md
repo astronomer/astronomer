@@ -39,7 +39,7 @@ automating all your data pipelines! The following sections will help you get
 started with your first pipelines, or get your existing pipelines running on
 the Astronomer Platform.
 
-## Starting from Nothing
+## Start from Scratch
 
 You need to write your first DAG. Review:
 
@@ -56,7 +56,7 @@ to your production instance.
 When ready to commit new source or destination hooks/operators, our best
 practice is to commit these into separate repositories for each plugin.
 
-## Starting from an existing Airflow project
+## Start from Existing Code
 
 If you already have an Airflow project (Airflow home directory), getting things
 running on Astronomer is straightforward. Within `examples/airflow`, we provide
