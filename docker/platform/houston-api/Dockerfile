@@ -32,6 +32,7 @@ RUN apk add --no-cache --virtual .build-deps \
 	&& apk add --no-cache \
 		nodejs \
 	&& npm install -g ${REPO_URL} --unsafe \
+	&& npm rebuild bcrypt --build-from-source \
 	&& apk del .build-deps
 
 ENTRYPOINT ["houston-api"]
