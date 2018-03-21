@@ -1,0 +1,77 @@
+################################
+## Astronomer Houston Deployment
+#################################
+kind: Deployment
+apiVersion: apps/v1beta2
+metadata:
+  name: {{ .Release.Name }}-houston
+  labels:
+    component: houston
+    tier: astronomer
+    release: {{ .Release.Name }}
+    chart: {{ .Chart.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: houston
+      tier: astronomer
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        component: houston
+        tier: astronomer
+        release: {{ .Release.Name }}
+    spec:
+      restartPolicy: Always
+      securityContext:
+        runAsUser: {{ .Values.uid }}
+      containers:
+        - name: {{ .Release.Name }}-houston
+          image: {{ .Values.images.houston }}
+          ports:
+            - name: houston-http
+              containerPort: 8870
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8870
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8870
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: PORT
+              value: "8870"
+            - name: API_ENDPOINT_URL
+              value: "/v1"
+            - name: WEBSOCKET_ENDPOINT_URL
+              value: "/ws"
+            - name: PLAYGROUND_ENDPOINT_URL
+              value: "/playground"
+            - name: DEBUG_DB
+              value: "false"
+            - name: AUTH_STRATEGY
+              value: "local"
+            - name: COMMANDER_HOST
+              value: "http://{{ .Release.Name }}-commander"
+            - name: COMMANDER_PORT
+              value: "8880"
+            - name: JWT_PASSPHRASE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.houstonJwtPassphraseSecret }}
+                  key: passphrase
+            - name: POSTGRES_URI
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.houstonDatabaseSecret }}
+                  key: connection

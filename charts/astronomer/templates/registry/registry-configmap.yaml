@@ -33,9 +33,9 @@ data:
         threshold: 3
     notifications:
       endpoints:
-        - name: "phoenix"
-          url: "http://{{ .Release.Name }}-phoenix:8881/v1/events"
-          timeout: 1s
+        - name: "houston"
+          url: "http://{{ .Release.Name }}-houston:8870/v1/webhooks/registry_events"
+          timeout: 3s
           threshold: 10
           backoff: 1s
           ignoredmediatypes:

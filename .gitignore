@@ -1,2 +1,6 @@
 config.yaml
 secrets
+
+# IDEs
+.idea/
+.vscode/
