@@ -35,4 +35,5 @@ RUN apk add --no-cache --virtual .build-deps \
 	&& npm rebuild bcrypt --build-from-source \
 	&& apk del .build-deps
 
+EXPOSE 8870
 ENTRYPOINT ["houston-api"]

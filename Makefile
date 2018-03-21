@@ -9,11 +9,11 @@ BUILD_NUMBER ?= 1
 
 ASTRONOMER_MAJOR_VERSION ?= 0
 ASTRONOMER_MINOR_VERSION ?= 1
-ASTRONOMER_PATCH_VERSION ?= 2
+ASTRONOMER_PATCH_VERSION ?= 3
 ASTRONOMER_VERSION ?= "${ASTRONOMER_MAJOR_VERSION}.${ASTRONOMER_MINOR_VERSION}.${ASTRONOMER_PATCH_VERSION}"
 
 # List of all components and order to build.
-PLATFORM_COMPONENTS := base default-backend commander phoenix airflow event-api event-router
+PLATFORM_COMPONENTS := base default-backend commander houston-api airflow event-api event-router
 PLATFORM_ONBUILD_COMPONENTS := airflow
 VENDOR_COMPONENTS := nginx registry cadvisor grafana prometheus statsd-exporter
 ALL_COMPONENTS := ${PLATFORM_COMPONENTS} ${VENDOR_COMPONENTS}
