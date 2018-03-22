@@ -1,0 +1,18 @@
+Thank you for installing {{ .Chart.Name }}.
+
+Your release is named {{ .Release.Name }}.
+
+{{ if and .Values.global.modules.airflow.enabled .Values.global.baseDomain }}
+
+## Astronomer Airflow Install
+
+After allowing a few minutes for the platform to come online, you can accesss resources at the following links...
+
+Webserver:            {{ if .Values.global.acme }}https://{{ else }}http://{{ end }}airflow.{{ .Values.global.baseDomain }}
+Flower:               {{ if .Values.global.acme }}https://{{ else }}http://{{ end }}flower.{{ .Values.global.baseDomain }}
+Container Dashboard:  {{ if .Values.global.acme }}https://{{ else }}http://{{ end }}grafana.{{ .Values.global.baseDomain }}/dashboard/db/airflow-containers
+Scheduler Dashboard:  {{ if .Values.global.acme }}https://{{ else }}http://{{ end }}grafana.{{ .Values.global.baseDomain }}/dashboard/db/airflow-scheduler 
+Prometheus UI:        {{ if .Values.global.acme }}https://{{ else }}http://{{ end }}prometheus.{{ .Values.global.baseDomain }}
+Registry:             {{ if .Values.global.acme }}https://{{ else }}http://{{ end }}registry.{{ .Values.global.baseDomain }}
+
+{{ end }}
