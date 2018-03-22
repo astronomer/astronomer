@@ -13,12 +13,10 @@ Astronomer Open Edition is a convenient way to experience the
 modules of the Astronomer Platform on your own machine. It is
 made up of Dockerfiles, docker-compose files, and bash scripts.
 
-Astronomer Open is both:
+Astronomer Open is:
 
-* a preview of the enterprise edition (that you can run on your
-  own machine) and
-* a demonstration that could be helpful to teams who are seeking
-  to build something similar to our platform
+* a preview of the internal components that Astronomer Enterprise Edition is built on
+* a demonstration that could be helpful to teams who are seeking to build something similar to our platform
 
 <div class="licensing">
 A note on <a href="https://enterprise.astronomer.io">Astronomer
@@ -28,6 +26,12 @@ the wheel that is Enterprise Edition. Better to just grab an
 Enterprise license from us, and then you’ll get support for
 everything from us, while still having full access to all the
 source code.
+
+To see the value we have added with Astronomer Enterprise, we
+suggest you get started with the [astro-cli](https://github.com/astronomerio/astro-cli).
+It can be used to run the platform locally. If you like what you
+see - it can then be used to manager and deploy Astronomer 
+Enterprise Edition on your cluster.
 </div>
 
 Because Astronomer Open Edition modules are licensed Apache 2.0,
