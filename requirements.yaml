@@ -10,4 +10,4 @@ dependencies:
     condition: global.modules.clickstream.enabled
   - name: nginx
     version: 0.0.0
-    condition: global.modules.nginx.enabled
+    condition: global.modules.nginx.enabled,global.baseDomain
