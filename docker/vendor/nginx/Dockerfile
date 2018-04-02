@@ -14,9 +14,8 @@
 # limitations under the License.
 
 FROM gcr.io/google_containers/nginx-ingress-controller:0.9.0-beta.15
-MAINTAINER Astronomer <humans@astronomer.io>
+LABEL maintainer="Astronomer <humans@astronomer.io>"
 
 ARG BUILD_NUMBER=-1
-
 LABEL io.astronomer.docker=true
 LABEL io.astronomer.docker.build.number=$BUILD_NUMBER

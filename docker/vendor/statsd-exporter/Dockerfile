@@ -14,10 +14,9 @@
 # limitations under the License.
 
 FROM prom/statsd-exporter:v0.5.0
-MAINTAINER Astronomer <humans@astronomer.io>
+LABEL maintainer="Astronomer <humans@astronomer.io>"
 
 ARG BUILD_NUMBER=-1
-
 LABEL io.astronomer.docker=true
 LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
 
