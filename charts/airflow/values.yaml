@@ -22,6 +22,9 @@ workers:
     # Enable persistent volumes
     enabled: false
 
+    # If using a custom storageClass, pass name ref to all statefulSets here
+    storageClassName:
+
     # Volume size for worker StatefulSet
     size: 10Gi
 
