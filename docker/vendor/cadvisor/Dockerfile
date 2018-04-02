@@ -14,9 +14,8 @@
 # limitations under the License.
 
 FROM google/cadvisor:v0.28.3
-MAINTAINER Astronomer <humans@astronomer.io>
+LABEL maintainer="Astronomer <humans@astronomer.io>"
 
 ARG BUILD_NUMBER=-1
-
 LABEL io.astronomer.docker=true
 LABEL io.astronomer.docker.build.number=$BUILD_NUMBER

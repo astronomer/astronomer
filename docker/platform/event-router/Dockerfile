@@ -40,7 +40,7 @@ RUN apk add --no-cache \
 	&& make DESTDIR=/tmp install
 
 FROM astronomerinc/ap-base
-MAINTAINER Astronomer <humans@astronomer.io>
+LABEL maintainer="Astronomer <humans@astronomer.io>"
 
 ARG BUILD_NUMBER=-1
 LABEL io.astronomer.docker.build.number=$BUILD_NUMBER

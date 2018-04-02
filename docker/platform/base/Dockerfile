@@ -14,7 +14,7 @@
 # limitations under the License.
 
 FROM alpine:3.7
-MAINTAINER Astronomer <humans@astronomer.io>
+LABEL maintainer="Astronomer <humans@astronomer.io>"
 
 ARG BUILD_NUMBER=-1
 ARG ASTRONOMER_USER=astro
