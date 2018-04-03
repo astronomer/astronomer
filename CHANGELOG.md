@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.4] - 2018-04-03
+
+* Upgrade setuptools in Airflow image
+
 ## [0.1.3] - 2018-03-21
 
 * Replace Phoenix with Houston
