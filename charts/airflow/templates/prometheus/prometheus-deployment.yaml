@@ -1,7 +1,7 @@
 ################################
 ## Airflow Prometheus Deployment
 #################################
-kind: Deployment
+kind: StatefulSet
 apiVersion: apps/v1beta2
 metadata:
   name: {{ .Release.Name }}-prometheus
@@ -38,6 +38,8 @@ spec:
           volumeMounts:
             - name: prometheus-config-volume
               mountPath: /etc/prometheus/config
+            - name: prometheus-data-volume
+              mountPath: /prometheus
           ports:
             - name: prometheus-data
               containerPort: 9090
@@ -60,3 +62,16 @@ spec:
             items:
               - key: kubernetes.yaml
                 path: kubernetes.yaml
+  {{- if not .Values.prometheus.persistence.enabled }}
+        - name: prometheus-data-volume
+          emptyDir: {}
+  {{- else }}
+  volumeClaimTemplates:
+    - metadata:
+        name: prometheus-data-volume
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: {{ .Values.prometheus.persistence.size }}
+  {{- end}}
