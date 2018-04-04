@@ -43,7 +43,7 @@ global:
       enabled: true
 
 
-################################
+#################################
 ## Airflow configuration
 #################################
 airflow:
@@ -52,3 +52,15 @@ airflow:
     # Enable persistence to keep logs around between deploys
     persistence:
       enabled: true
+
+#################################
+## Registry configuration
+#################################
+registry:
+  # Enable persistence to keep registry data between deploys
+  persistence:
+    enabled: true
+    size: 50Gi
+
+    
+
