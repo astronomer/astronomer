@@ -49,6 +49,7 @@ RUN apk add --no-cache --virtual .build-deps \
 		postgresql \
 		python3 \
 		tini \
+	&& pip3 install --no-cache-dir --upgrade pip==9.0.3 \
 	&& pip3 install --no-cache-dir --upgrade setuptools==39.0.1 \
 	&& pip3 install --no-cache-dir "${AIRFLOW_MODULE}" \
 	&& pip3 uninstall -y snakebite \
