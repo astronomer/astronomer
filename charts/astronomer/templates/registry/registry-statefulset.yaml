@@ -34,8 +34,10 @@ spec:
           volumeMounts:
             - name: registry-config-volume
               mountPath: /etc/docker/registry
+            {{- if not .Values.persistence.enabled }}
             - name: registry-data-volume
               mountPath: /var/lib/registry
+            {{- end }}
           ports:
             - name: registry-http
               containerPort: 5000
@@ -70,5 +72,5 @@ spec:
         resources:
           requests:
             storage: {{ .Values.persistence.size }}
-  {{- end}}
+  {{- end }}
     

@@ -38,8 +38,10 @@ spec:
           volumeMounts:
             - name: prometheus-config-volume
               mountPath: /etc/prometheus/config
+          {{- if not .Values.prometheus.persistence.enabled }}
             - name: prometheus-data-volume
               mountPath: /prometheus
+          {{- end }}
           ports:
             - name: prometheus-data
               containerPort: 9090
@@ -74,4 +76,4 @@ spec:
         resources:
           requests:
             storage: {{ .Values.prometheus.persistence.size }}
-  {{- end}}
+  {{- end }}
