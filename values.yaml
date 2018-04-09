@@ -5,7 +5,7 @@ global:
   # IP address the nginx ingress should bind to
   loadBalancerIP:
 
-  # TODO
+  # Used to restrict IPs which can reach the nginx ingress
   loadBalancerSourceRanges:
 
   # Base domain for all subdomains exposed through ingress
