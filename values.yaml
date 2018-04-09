@@ -5,6 +5,9 @@ global:
   # IP address the nginx ingress should bind to
   loadBalancerIP:
 
+  # TODO
+  loadBalancerSourceRanges:
+
   # Base domain for all subdomains exposed through ingress
   baseDomain:
 
