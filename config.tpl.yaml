@@ -4,10 +4,14 @@
 
 # Global overrides
 global:
-  loadBalancerIP:
   baseDomain:
   tlsSecret:
   acme: false
+
+nginx:
+  loadBalancerIP:
+  loadBalancerSourceRanges:
+  - 0.0.0.0/0
 
 # Airflow config overrides
 airflow:
