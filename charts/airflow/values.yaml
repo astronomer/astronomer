@@ -31,8 +31,13 @@ workers:
   # Grace period for tasks to finish after SIGTERM is sent from kubernetes
   terminationGracePeriodSeconds: 600
 
-podDisruptionBudget:
-  maxUnavailable: 1
+# Airflow scheduler settings
+scheduler:
+
+  podDisruptionBudget:
+
+    # Ensure we have one replica always running
+    maxUnavailable: 1
 
 # Environment variables for all airflow containers
 env:
