@@ -14,3 +14,6 @@ proxySendTimeout: 600
 proxyBodySize: "512m"
 hstsIncludeSubdomains: false
 serverNameHashBucketSize: 256
+# Restrict nginx to only watching for ingress on the helm release namespace
+watchReleaseNamespace: true
+forceNamespaceIsolation: true
