@@ -2,12 +2,6 @@
 ## Astronomer global configuration
 #################################
 global:
-  # IP address the nginx ingress should bind to
-  loadBalancerIP:
-
-  # Used to restrict IPs which can reach the nginx ingress
-  loadBalancerSourceRanges:
-
   # Base domain for all subdomains exposed through ingress
   baseDomain:
 
@@ -44,6 +38,12 @@ global:
     # Enable NGINX ingress module
     nginx:
       enabled: true
+
+      # IP address the nginx ingress should bind to
+      loadBalancerIP:
+
+      # Used to restrict IPs which can reach the nginx ingress
+      loadBalancerSourceRanges:
 
 
 ################################
