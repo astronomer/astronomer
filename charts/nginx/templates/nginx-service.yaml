@@ -13,11 +13,11 @@ metadata:
     heritage: {{ .Release.Service }}
 spec:
   type: LoadBalancer
-  {{- if .Values.global.loadBalancerIP }}
-  loadBalancerIP: {{ .Values.global.loadBalancerIP }}
+  {{- if .Values.loadBalancerIP }}
+  loadBalancerIP: {{ .Values.loadBalancerIP }}
   {{- end }}
-  {{- if .Values.global.loadBalancerSourceRanges }}
-  loadBalancerSourceRanges: {{ .Values.global.loadBalancerSourceRanges }}
+  {{- if .Values.loadBalancerSourceRanges }}
+  loadBalancerSourceRanges: {{ .Values.loadBalancerSourceRanges }}
   {{- end }}
   {{- if .Values.preserveSourceIP }}
   externalTrafficPolicy: "Local"
