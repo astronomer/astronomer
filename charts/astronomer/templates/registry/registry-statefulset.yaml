@@ -1,5 +1,5 @@
 ################################
-## Astronomer Registry Deployment
+## Astronomer Registry StatefulSet
 #################################
 kind: StatefulSet
 apiVersion: apps/v1beta2
@@ -34,7 +34,7 @@ spec:
           volumeMounts:
             - name: registry-config-volume
               mountPath: /etc/docker/registry
-            {{- if not .Values.persistence.enabled }}
+            {{- if .Values.persistence.enabled }}
             - name: registry-data-volume
               mountPath: /var/lib/registry
             {{- end }}
@@ -73,4 +73,3 @@ spec:
           requests:
             storage: {{ .Values.persistence.size }}
   {{- end }}
-    

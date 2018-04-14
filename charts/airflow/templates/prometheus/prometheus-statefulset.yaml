@@ -1,5 +1,5 @@
 ################################
-## Airflow Prometheus Deployment
+## Airflow Prometheus StatefulSet
 #################################
 kind: StatefulSet
 apiVersion: apps/v1beta2
@@ -38,9 +38,9 @@ spec:
           volumeMounts:
             - name: prometheus-config-volume
               mountPath: /etc/prometheus/config
-          {{- if not .Values.prometheus.persistence.enabled }}
+          {{- if .Values.prometheus.persistence.enabled }}
             - name: prometheus-data-volume
-              mountPath: /prometheus
+              mountPath: "/prometheus"
           {{- end }}
           ports:
             - name: prometheus-data
@@ -72,7 +72,7 @@ spec:
     - metadata:
         name: prometheus-data-volume
       spec:
-        accessModes: ["ReadWriteOnce"]
+        accessModes: [ "ReadWriteOnce" ]
         resources:
           requests:
             storage: {{ .Values.prometheus.persistence.size }}
