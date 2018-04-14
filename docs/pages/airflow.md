@@ -15,24 +15,60 @@ for your cloud.
 
 ## Quickstart
 
-If you haven't already, clone the repository by running the following:
-`git clone https://github.com/astronomerio/astronomer.git`
-and change into the repository directory.
+Clone Astronomer Open:
 
-To get up and running quickly and poke around with Apache Airflow on Astronomer,
-pop open a terminal and run `cd examples/airflow && docker-compose up`.
-This will spin up a handful of containers to closely mimic a live Astronomer
-environment.
+```
+git clone https://github.com/astronomerio/astronomer.git
+cd astronomer
+```
 
-First, we spin up a [Postgres](https://www.postgresql.org/) container for the
-Airflow metadata database, and a [Redis](https://redis.io/) container to back
-[Celery](http://www.celeryproject.org/), which Airflow will use for its task
-queue. Once the storage containers have started, we start the Airflow Scheduler,
-Airflow Webserver, a Celery worker, and the
-[Flower UI](http://flower.readthedocs.io/en/latest/) to monitor the Celery task
-queue. Once everything is up and running, open a browser tab and visit
-<http://localhost:8080> for the Airflow UI and <http://localhost:5555> for the
-Celery UI.
+We provide two examples for Apache Airflow.  Each will spin up a handful of containers to mimic a live Astronomer environment.
+
+### Airflow Core vs Airflow Enterprise
+
+Here's a comparison of the components included in the Airflow Core vs Airflow Enterprise examples:
+
+{:.table.table-striped.table-bordered.table-hover}
+| Component                 | Airflow Core | Airflow Enterprise |
+|---------------------------|:------------:|:------------------:|
+| Airflow scheduler         | x            | x                  |
+| Airflow webserver         | x            | x                  |
+| PostgreSQL                | x            | x                  |
+| [Redis][redis]            |              | x                  |
+| [Celery][celery]          |              | x                  |
+| [Flower][flower]          |              | x                  |
+| [Prometheus][prometheus]  |              | x                  |
+| [Grafana][grafana]        |              | x                  |
+| [StatsD exporter][statsd] |              | x                  |
+| [cAdvisor][cadvisor]      |              | x                  |
+
+[redis]: https://redis.io/
+[celery]: http://www.celeryproject.org/
+[flower]: http://flower.readthedocs.io/en/latest/
+[grafana]: https://grafana.com
+[prometheus]: https://prometheus.io
+[cadvisor]: https://github.com/google/cadvisor
+[statsd]: https://github.com/prometheus/statsd_exporter
+
+### Airflow Core
+
+To start the simple Airflow example:
+
+```
+cd examples/airflow-core
+docker-compose up
+```
+
+### Airflow Enterprise
+
+To start the more sophisticated Airflow example:
+
+```
+cd examples/airflow-enterprise
+docker-compose up
+```
+
+Once everything is up and running, open a browser and visit <http://localhost:8080> for Airflow and <http://localhost:5555> for Celery.
 
 Sweet! You're up and running with Apache Airflow and well on your way to
 automating all your data pipelines! The following sections will help you get
