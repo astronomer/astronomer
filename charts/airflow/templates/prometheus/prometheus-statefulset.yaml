@@ -29,6 +29,16 @@ spec:
     spec:
       restartPolicy: Always
       serviceAccountName: {{ .Release.Name }}-prometheus
+      {{- if .Values.prometheus.persistence.mountPath }}
+      initContainers:
+      - name: "init-chown-data"
+        image: "busybox"
+        # 65534 is the nobody user that prometheus uses.
+        command: ["chown", "-R", "65534:65534", "{{ .Values.prometheus.persistence.mountPath }}"]
+        volumeMounts:
+        - name: prometheus-data-volume
+          mountPath: "/prometheus"
+      {{- end }}
       containers:
         - name: {{ .Release.Name }}-prometheus
           image: {{ .Values.images.prometheus }}
@@ -38,7 +48,7 @@ spec:
           volumeMounts:
             - name: prometheus-config-volume
               mountPath: /etc/prometheus/config
-          {{- if .Values.prometheus.persistence.enabled }}
+          {{- if .Values.prometheus.persistence.mountPath }}
             - name: prometheus-data-volume
               mountPath: "/prometheus"
           {{- end }}
