@@ -30,11 +30,11 @@ workers:
 
 # Prometheus Configs
 prometheus:
+  mountPath: "/prometheus"
   persistence:
   # Enable persistence for PrometheusDb
     enabled: true
     size: 50Gi
-    mountPath: "/prometheus"
 
 # Environment variables for all airflow containers
 env:
