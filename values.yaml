@@ -2,9 +2,6 @@
 ## Astronomer global configuration
 #################################
 global:
-  # IP address the nginx ingress should bind to
-  loadBalancerIP:
-
   # Base domain for all subdomains exposed through ingress
   baseDomain:
 
@@ -42,6 +39,15 @@ global:
     nginx:
       enabled: true
 
+#################################
+## Nginx configuration
+#################################
+nginx:
+  # IP address the nginx ingress should bind to
+  loadBalancerIP:
+
+  # Used to restrict IPs which can reach the nginx ingress
+  loadBalancerSourceRanges:
 
 #################################
 ## Airflow configuration
@@ -52,6 +58,8 @@ airflow:
     # Enable persistence to keep logs around between deploys
     persistence:
       enabled: true
+      # If using a custom storageClass, pass name ref to all statefulSets here
+      storageClassName:
 
 #################################
 ## Registry configuration

@@ -35,6 +35,12 @@ spec:
             - /nginx-ingress-controller
             - --default-backend-service={{ .Release.Namespace }}/{{ .Release.Name }}-nginx-default-backend
             - --configmap={{ .Release.Namespace }}/{{ .Release.Name }}-nginx-ingress-controller
+            {{- if .Values.forceNamespaceIsolation }}
+            - --force-namespace-isolation
+            {{- end }}
+            {{- if .Values.watchReleaseNamespace }}
+            - --watch-namespace={{ .Release.Namespace }}
+            {{- end }}
           ports:
             - containerPort: 80
               name: http

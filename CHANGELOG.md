@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.4] - 2018-04-03
+
+* Update airflow docker image to pull in latest setuptools
+
 ## [0.1.3] - ---------
 
 * Fix bug with tlsSecret and acme values.

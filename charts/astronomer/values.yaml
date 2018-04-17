@@ -7,9 +7,9 @@ uid: 100
 
 # Images for pilot
 images:
-  commander: astronomerinc/ap-commander:0.1.3
-  registry: astronomerinc/ap-registry:0.1.3
-  houston: astronomerinc/ap-houston-api:0.1.3
+  commander: astronomerinc/ap-commander:0.1.4
+  registry: astronomerinc/ap-registry:0.1.4
+  houston: astronomerinc/ap-houston-api:0.1.4
 
 # Astronomer houston config
 houstonJwtPassphraseSecret: "houston-jwt-passphrase"
