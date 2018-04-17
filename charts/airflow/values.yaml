@@ -30,7 +30,7 @@ workers:
 
 # Prometheus Configs
 prometheus:
-  mountPath: "/prometheus"
+  dataDir: "/prometheus"
   persistence:
   # Enable persistence for PrometheusDb
     enabled: true
