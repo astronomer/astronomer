@@ -59,6 +59,10 @@ spec:
               value: "/playground"
             - name: DEBUG_DB
               value: "false"
+            - name: HELM_ASTRO_REPO
+              value: {{ .Values.global.helmRepo }}
+            - name: HELM_GLOBAL_CONFIG
+              value: "{{ printf "{\\\"baseDomain\\\":\\\"%v\\\",\\\"acme\\\":%v,\\\"rbacEnabled\\\":%v,\\\"tlsSecret\\\":\\\"%v\\\"}" .Values.global.baseDomain (print .Values.global.acme | toString) (print .Values.global.rbacEnabled | toString) (print .Values.global.tlsSecret | toString | replace "<nil>" "") }}"
             - name: AUTH_STRATEGY
               value: "local"
             - name: COMMANDER_HOST
@@ -68,10 +72,20 @@ spec:
             - name: JWT_PASSPHRASE
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.houstonJwtPassphraseSecret }}
+                  name: {{ .Values.data.houstonJwtPassphraseSecret }}
                   key: passphrase
-            - name: POSTGRES_URI
+            - name: HOUSTON_POSTGRES_URI
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.houstonDatabaseSecret }}
+                  name: {{ .Values.data.houstonDatabaseSecret }}
+                  key: connection
+            - name: AIRFLOW_POSTGRES_URI
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.data.airflowDatabaseSecret }}
+                  key: connection
+            - name: AIRFLOW_REDIS_URI
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.data.airflowRedisSecret }}
                   key: connection

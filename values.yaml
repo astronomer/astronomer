@@ -20,6 +20,8 @@ global:
   # Name of secret containing docker registry auth
   registryAuthSecret: "registry-auth"
 
+  helmRepo: "https://helm.astronomer.io"
+
   # Astronomer modules
   modules:
 
