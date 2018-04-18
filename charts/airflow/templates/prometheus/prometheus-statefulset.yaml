@@ -1,7 +1,7 @@
 ################################
-## Airflow Prometheus Deployment
+## Airflow Prometheus StatefulSet
 #################################
-kind: Deployment
+kind: StatefulSet
 apiVersion: apps/v1beta2
 metadata:
   name: {{ .Release.Name }}-prometheus
@@ -29,15 +29,22 @@ spec:
     spec:
       restartPolicy: Always
       serviceAccountName: {{ .Release.Name }}-prometheus
+      securityContext:
+        runAsUser: 2000
+        fsGroup: 1000
       containers:
         - name: {{ .Release.Name }}-prometheus
           image: {{ .Values.images.prometheus }}
           args:
             - "--config.file=/etc/prometheus/config/kubernetes.yaml"
-            - "--storage.tsdb.path=/prometheus"
+            - "--storage.tsdb.path={{ .Values.prometheus.dataDir }}"
           volumeMounts:
             - name: prometheus-config-volume
               mountPath: /etc/prometheus/config
+          {{- if .Values.prometheus.persistence.enabled }}
+            - name: prometheus-data-volume
+              mountPath: "{{ .Values.prometheus.dataDir }}"
+          {{- end }}
           ports:
             - name: prometheus-data
               containerPort: 9090
@@ -60,3 +67,16 @@ spec:
             items:
               - key: kubernetes.yaml
                 path: kubernetes.yaml
+  {{- if not .Values.prometheus.persistence.enabled }}
+        - name: prometheus-data-volume
+          emptyDir: {}
+  {{- else }}
+  volumeClaimTemplates:
+    - metadata:
+        name: prometheus-data-volume
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: {{ .Values.prometheus.persistence.size }}
+  {{- end }}
