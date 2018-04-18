@@ -31,7 +31,7 @@ global:
 
     # Enable airflow module
     airflow:
-      enabled: true
+      enabled: false
 
     # Enable clickstream module
     clickstream:
