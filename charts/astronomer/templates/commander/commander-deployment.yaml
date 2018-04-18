@@ -52,3 +52,5 @@ spec:
               value: "8880"
             - name: COMMANDER_KUBE_NAMESPACE
               value: {{ .Release.Namespace }}
+            - name: COMMANDER_HELM_REPO
+              value: {{ .Values.global.helmRepo }}
