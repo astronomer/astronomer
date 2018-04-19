@@ -31,11 +31,20 @@ workers:
   # Grace period for tasks to finish after SIGTERM is sent from kubernetes
   terminationGracePeriodSeconds: 600
 
+# Airflow scheduler settings
+scheduler:
+
+  podDisruptionBudget:
+
+    # Ensure we have one replica always running
+    maxUnavailable: 1
+
 # Prometheus Configs
 prometheus:
   dataDir: "/prometheus"
+
+  # Enable persistence for Prometheus
   persistence:
-  # Enable persistence for PrometheusDb
     enabled: true
     size: 50Gi
 
