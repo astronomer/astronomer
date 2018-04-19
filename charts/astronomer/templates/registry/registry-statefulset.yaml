@@ -1,7 +1,7 @@
 ################################
-## Astronomer Registry Deployment
+## Astronomer Registry StatefulSet
 #################################
-kind: Deployment
+kind: StatefulSet
 apiVersion: apps/v1beta2
 metadata:
   name: {{ .Release.Name }}-registry
@@ -34,6 +34,10 @@ spec:
           volumeMounts:
             - name: registry-config-volume
               mountPath: /etc/docker/registry
+            {{- if .Values.persistence.enabled }}
+            - name: registry-data-volume
+              mountPath: /var/lib/registry
+            {{- end }}
           ports:
             - name: registry-http
               containerPort: 5000
@@ -56,3 +60,16 @@ spec:
             items:
               - key: config.yml
                 path: config.yml
+  {{- if not .Values.persistence.enabled }}
+        - name: registry-data-volume
+          emptyDir: {}
+  {{- else }}
+  volumeClaimTemplates:
+    - metadata:
+        name: registry-data-volume
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: {{ .Values.persistence.size }}
+  {{- end }}
