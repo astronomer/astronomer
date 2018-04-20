@@ -66,9 +66,9 @@ spec:
             - name: AUTH_STRATEGY
               value: "local"
             - name: COMMANDER_HOST
-              value: "http://{{ .Release.Name }}-commander"
+              value: "{{ .Release.Name }}-commander"
             - name: COMMANDER_PORT
-              value: "8880"
+              value: "50051"
             - name: JWT_PASSPHRASE
               valueFrom:
                 secretKeyRef:
