@@ -63,10 +63,11 @@ airflow:
       # If using a custom storageClass, pass name ref to all statefulSets here
       storageClassName:
 
+
 #################################
-## Registry configuration
+## Astronomer configuration
 #################################
-registry:
+astronomer:
   # Enable persistence to keep registry data between deploys
   persistence:
     enabled: true
