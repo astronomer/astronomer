@@ -17,6 +17,7 @@ data:
   houstonDatabaseSecret: "houston-database"
   airflowDatabaseSecret: "airflow-database"
   airflowRedisSecret: "airflow-redis"
+  deployNamespace: "astronomer"
 
 
 # Enable persistence to keep registry data between deploys
