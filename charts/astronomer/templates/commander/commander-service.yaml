@@ -22,3 +22,7 @@ spec:
       protocol: TCP
       port: 8880
       targetPort: 8880
+    - name: commander-grpc
+      protocol: TCP
+      port: 50051
+      targetPort: 50051
