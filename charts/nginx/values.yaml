@@ -5,6 +5,12 @@ images:
   nginxIngress: astronomerinc/ap-nginx:0.1.4
   defaultBackend: astronomerinc/ap-default-backend:0.1.4
 
+# IP address the nginx ingress should bind to
+loadBalancerIP:
+
+# Used to restrict IPs which can reach the nginx ingress
+loadBalancerSourceRanges:
+
 ## Dependent on cloud provider
 preserveSourceIP: false
 
