@@ -89,3 +89,8 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.data.airflowRedisSecret }}
                   key: connection
+            - name: BASIC_AUTHS
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.nginxAuthSecret }}
+                  key: auth
