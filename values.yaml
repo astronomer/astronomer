@@ -63,7 +63,6 @@ airflow:
       # If using a custom storageClass, pass name ref to all statefulSets here
       storageClassName:
 
-
 #################################
 ## Astronomer configuration
 #################################
@@ -72,6 +71,3 @@ astronomer:
   persistence:
     enabled: true
     size: 50Gi
-
-  data:
-    deployNamespace: astronomer

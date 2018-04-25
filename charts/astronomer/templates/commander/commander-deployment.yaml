@@ -55,6 +55,6 @@ spec:
             - name: COMMANDER_GRPC_PORT
               value: "50051"
             - name: COMMANDER_KUBE_NAMESPACE
-              value: {{ .Values.data.deployNamespace }}
+              value: {{ .Release.Namespace }}
             - name: COMMANDER_HELM_REPO
               value: {{ .Values.global.helmRepo }}
