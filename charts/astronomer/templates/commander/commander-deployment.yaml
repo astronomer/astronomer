@@ -58,3 +58,5 @@ spec:
               value: {{ .Release.Namespace }}
             - name: COMMANDER_HELM_REPO
               value: {{ .Values.global.helmRepo }}
+            - name: HELM_HOST
+              value: {{ .Values.global.helmHost }}
