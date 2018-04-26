@@ -1,6 +1,19 @@
 ---
 ---
 
+@font-face {
+    font-family: 'Filmotype Fashion';
+    src: url("https://cdn.astronomer.io/app/fonts/filmotype/filmotype.eot");
+    src: url("https://cdn.astronomer.io/app/fonts/filmotype/filmotype.eot?#iefix") format('embedded-opentype'),url("https://cdn.astronomer.io/app/fonts/filmotype/filmo.woff2") format('woff2'),url("https://cdn.astronomer.io/app/fonts/filmotype/filmotype.woff") format('woff'),url("https://cdn.astronomer.io/app/fonts/filmotype/filmotype.ttf") format('truetype')
+  }
+
+  @font-face{
+      font-family:"Sofia Regular";
+      src:url("https://cdn.astronomer.io/app/fonts/sofia-pro/941243bb-e692-46f8-91b9-6e621e5c1ff8.eot");
+      src:url("https://cdn.astronomer.io/app/fonts/sofia-pro/941243bb-e692-46f8-91b9-6e621e5c1ff8.eot?#iefix") format("eot"),url("https://cdn.astronomer.io/app/fonts/sofia-pro/sofia-regular.woff2") format("woff2"),url("$https://cdn.astronomer.io/app/fonts/sofia-pro/476fe015-ab32-40a2-8fed-0a5af9a3bba4.woff") format("woff"),url("https://cdn.astronomer.io/app/fonts/sofia-pro/d8bcfa37-4f93-49cf-8dea-c29e894af58e.ttf") format("truetype"),url("https://cdn.astronomer.io/app/fonts/sofia-pro/28fc42bb-8761-4e6a-8c62-65d4a41c9e33.svg#28fc42bb-8761-4e6a-8c62-65d4a41c9e33") format("svg");
+  }
+
+
 .bs-docs-masthead {
   padding-top: 50px;
   padding-bottom: 40px;
@@ -35,17 +48,18 @@
 }
 
 #jumbotron-header {
-    position:relative;
+  position: relative;
+  color: white;
+  font-family: 'Sofia Regular', 'Open Sans', Helvetica, Arial, sans-serif;
+  background-color: #302c43;
+  background-image: url(/assets/img/stars-bg.png);
+  background-size: 20%;
+  background-repeat: repeat;
+  text-align: center;
+}
 
-    &:after {
-        content: "";
-        position: absolute;
-        bottom: 0;
-        right: 0;
-        height: 50px;
-        width: 30%;
-        background: linear-gradient(135deg, transparent 50px, white 50px);
-    }
+#jumbotron-header .container {
+  padding: 6rem 0;
 }
 
 img {
@@ -55,6 +69,20 @@ img {
 .bs-docs-nav .navbar-brand, .bs-docs-nav .navbar-nav>li>a {
     color: #302C43 !important;
 }
+
+.bs-docs-sidenav > li {
+  font-family: 'Filmotype Fashion';
+  text-transform: uppercase;
+}
+
+p, h1, h2, h3, li, a, ul, .licensing, .back-to-top {
+  font-family: 'Sofia Regular', 'Open Sans', Helvetica, Arial, sans-serif;
+}
+
+.bs-docs-sidenav > li > a {
+  font-size: 0.8em !important;
+}
+
 a {
   color: #44959B;
 }
@@ -68,10 +96,6 @@ body {
 code {
   color: #E79637;
 }
-a.btn-outline-inverse {
-  color: #8D83C5;
-  border-color: #8D83C5;
-}
 .bs-docs-masthead .version {
   color: #A398E6;
 }
@@ -83,4 +107,16 @@ a.btn-outline-inverse {
   font-style: italic;
   padding: 20px;
   margin-bottom: 30px;
+}
+
+.home-title {
+  color: #fefcf9;
+}
+
+p, h1, h2, h3, h4, h5, h6 {
+  color: #302c43;
+}
+
+html {
+  background-color: #fefcf9;
 }
