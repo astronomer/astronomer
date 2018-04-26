@@ -18,7 +18,10 @@
   <link rel="stylesheet" href="{{ "/assets/css/docs.css"   | relative_url }}">
   <link rel="stylesheet" href="{{ "/assets/css/styles.css" | relative_url }}">
 
-  <script src="https://code.jquery.com/jquery-1.11.2.min.js"></script>
+  <script
+    src="http://code.jquery.com/jquery-3.3.1.min.js"
+    integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+    crossorigin="anonymous"></script>
   <script src="https://netdna.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/stickyfill/1.1.4/stickyfill.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.7.1/clipboard.min.js"></script>
@@ -37,18 +40,18 @@
           return trigger.nextElementSibling;
         }
       });
-    });
 
-    // make links outside the page open in a new tab
-    $('a').each(function() {
-    var a = new RegExp('/' + window.location.host + '/');
-    if(!a.test(this.href)) {
-      $(this).click(function(event) {
-        event.preventDefault();
-        event.stopPropagation();
-        window.open(this.href, '_blank');
-        });
-      }
+      // make links outside the page open in a new tab
+      $('a').each(function() {
+      var a = new RegExp('/' + window.location.host + '/');
+      if(!a.test(this.href)) {
+        $(this).click(function(event) {
+          event.preventDefault();
+          event.stopPropagation();
+          window.open(this.href, '_blank');
+          });
+        }
+      });
     });
   </script>
 </head>
