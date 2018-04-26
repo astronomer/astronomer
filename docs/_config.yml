@@ -51,7 +51,6 @@ ui:
     header:
         color1: "#605985"
         color2: "#232229"
-        trianglify: true
 
 social:
     github:

@@ -12,16 +12,11 @@
   {% include google-analytics.html %}
   {% endif %}
 
+  <link rel="icon" href="{{ '/assets/img/astro.ico' | absolute_url }}">
+
   <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
   <link rel="stylesheet" href="{{ "/assets/css/docs.css"   | relative_url }}">
   <link rel="stylesheet" href="{{ "/assets/css/styles.css" | relative_url }}">
-
-  <style>
-    #jumbotron-header {
-        background: {{ site.ui.header.color1 }};
-        background: linear-gradient(135deg, {{ site.ui.header.color1 }}, {{ site.ui.header.color2 }});
-    }
-  </style>
 
   <script src="https://code.jquery.com/jquery-1.11.2.min.js"></script>
   <script src="https://netdna.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
@@ -42,6 +37,18 @@
           return trigger.nextElementSibling;
         }
       });
+    });
+
+    // make links outside the page open in a new tab
+    $('a').each(function() {
+    var a = new RegExp('/' + window.location.host + '/');
+    if(!a.test(this.href)) {
+      $(this).click(function(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        window.open(this.href, '_blank');
+        });
+      }
     });
   </script>
 </head>
