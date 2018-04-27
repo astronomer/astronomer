@@ -30,13 +30,14 @@ spec:
     - secretName: {{ .Values.global.tlsSecret }}
   {{- end }}
       hosts:
+        -  {{- include "airflow_url" . }}
         - airflow.{{ .Values.global.baseDomain }}
         - flower.{{ .Values.global.baseDomain }}
         - grafana.{{ .Values.global.baseDomain }}
         - prometheus.{{ .Values.global.baseDomain }}
   {{- end }}
   rules:
-    - host: airflow.{{ .Values.global.baseDomain }}
+    - host:{{- include "airflow_url" . }}
       http:
         paths:
           - path: /
