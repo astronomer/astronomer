@@ -17,8 +17,7 @@
   - name: ASTRONOMER__AIRFLOW__WORKER_LOG_RETENTION
     value: "15"
   - name: AIRFLOW__WEBSERVER__BASE_URL
-    value:{{- include "airflow_url" . }}
-
+    value: {{- include "airflow_url" . | indent 1 }}
   # Dynamically created secret envs
   {{- range $i, $config := .Values.secret }}
   - name: {{ $config.name }}
@@ -47,6 +46,6 @@
         key: connection
 {{- end }}
 
-# On the same line due to whitespace issue
-{{ define "airflow_url" }} airflow.{{ .Values.global.baseDomain }}
+{{ define "airflow_url" -}}
+airflow.{{ .Values.global.baseDomain }}
 {{- end }}
