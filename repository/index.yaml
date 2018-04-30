@@ -1,16 +1,16 @@
 apiVersion: v1
 entries:
   airflow:
-  - created: 2018-04-20T12:50:52.31350574-04:00
+  - created: 2018-04-27T14:33:04.678222525-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
-    digest: f58884c21d6d2f2851def3eb421cef2798fea8534cc82f97ea1df964df898828
+    digest: 41c510997951a1f19c445eeb6bb021f73d2521ec8b3e357354666d6dde8672f0
     keywords:
     - astronomer
     name: airflow
     urls:
     - https://raw.githubusercontent.com/astronomerio/helm.astronomer.io/feature/deploys/repository/airflow-0.1.5.tgz
     version: 0.1.5
-  - created: 2018-04-20T12:50:52.313061038-04:00
+  - created: 2018-04-27T14:33:04.677752492-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: d8bcffda68cb9bf0ed5f460f59cc2b1e6786f025d6cae6f4e5fbfaf377575ee7
     keywords:
@@ -19,7 +19,7 @@ entries:
     urls:
     - https://raw.githubusercontent.com/astronomerio/helm.astronomer.io/feature/deploys/repository/airflow-0.1.4.tgz
     version: 0.1.4
-  - created: 2018-04-20T12:50:52.312118831-04:00
+  - created: 2018-04-27T14:33:04.676970881-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: 874de7fc02b898cdca543c613be31c256b1a2baab5fc399851cbaedd87a44fa4
     keywords:
@@ -28,7 +28,7 @@ entries:
     urls:
     - https://raw.githubusercontent.com/astronomerio/helm.astronomer.io/feature/deploys/repository/airflow-0.1.3.tgz
     version: 0.1.3
-  - created: 2018-04-20T12:50:52.311341491-04:00
+  - created: 2018-04-27T14:33:04.676105505-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: 8fec3cdbbeb08674a7ad85db0437c805cd32cfc4123d677bf430142ef781cb00
     keywords:
@@ -37,7 +37,7 @@ entries:
     urls:
     - https://raw.githubusercontent.com/astronomerio/helm.astronomer.io/feature/deploys/repository/airflow-0.1.2.tgz
     version: 0.1.2
-  - created: 2018-04-20T12:50:52.310511301-04:00
+  - created: 2018-04-27T14:33:04.675270339-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: f7e49ed51624a74d9050610fb453a33a6ec09d42d774a29c5753b6adcce103b9
     keywords:
@@ -46,7 +46,7 @@ entries:
     urls:
     - https://raw.githubusercontent.com/astronomerio/helm.astronomer.io/feature/deploys/repository/airflow-0.1.1.tgz
     version: 0.1.1
-  - created: 2018-04-20T12:50:52.309650106-04:00
+  - created: 2018-04-27T14:33:04.674287505-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: 4522a14cc4b2eb3f3d906f3ac29b8797add0c733e240a1d946e40ba77a69804d
     keywords:
@@ -55,7 +55,7 @@ entries:
     urls:
     - https://raw.githubusercontent.com/astronomerio/helm.astronomer.io/feature/deploys/repository/airflow-0.1.0.tgz
     version: 0.1.0
-  - created: 2018-04-20T12:50:52.308795004-04:00
+  - created: 2018-04-27T14:33:04.673295085-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: 707b85a7339d423701a42be25e52ee61a5b09d5e5c44d727b7372a49e072ff2d
     keywords:
@@ -65,16 +65,16 @@ entries:
     - https://raw.githubusercontent.com/astronomerio/helm.astronomer.io/feature/deploys/repository/airflow-0.0.1.tgz
     version: 0.0.1
   astronomer:
-  - created: 2018-04-20T12:50:52.316882202-04:00
+  - created: 2018-04-27T14:33:04.682086517-04:00
     description: A Helm chart to deploy the Astronomer module
-    digest: 96afbfa21aaff5f6de028820a8691f50c40b92d9ba6774fb6cb972833f26d7a9
+    digest: c588188319f0cf0d686e0a8f56d0f32a6b7e48c5f49fb55e9acccf0b573319f0
     keywords:
     - astronomer
     name: astronomer
     urls:
     - https://raw.githubusercontent.com/astronomerio/helm.astronomer.io/feature/deploys/repository/astronomer-0.1.5.tgz
     version: 0.1.5
-  - created: 2018-04-20T12:50:52.316559721-04:00
+  - created: 2018-04-27T14:33:04.681747284-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: 5ae6ac620ed58fbd3bd83e1c93d74206880a776237a2bb58e8f3eb65da292330
     keywords:
@@ -83,7 +83,7 @@ entries:
     urls:
     - https://raw.githubusercontent.com/astronomerio/helm.astronomer.io/feature/deploys/repository/astronomer-0.1.4.tgz
     version: 0.1.4
-  - created: 2018-04-20T12:50:52.316077076-04:00
+  - created: 2018-04-27T14:33:04.681137505-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: 9ddbf70d71e22340b55ef2a35aeb0f40ff5c710018575ba90ddc2f396d4034d3
     keywords:
@@ -92,7 +92,7 @@ entries:
     urls:
     - https://raw.githubusercontent.com/astronomerio/helm.astronomer.io/feature/deploys/repository/astronomer-0.1.3.tgz
     version: 0.1.3
-  - created: 2018-04-20T12:50:52.315563576-04:00
+  - created: 2018-04-27T14:33:04.68048722-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: d0cab45a03e1f9563e9d2054fa4ca3b1b805dc7641b04c857821b704a84f7298
     keywords:
@@ -101,7 +101,7 @@ entries:
     urls:
     - https://raw.githubusercontent.com/astronomerio/helm.astronomer.io/feature/deploys/repository/astronomer-0.1.2.tgz
     version: 0.1.2
-  - created: 2018-04-20T12:50:52.315074232-04:00
+  - created: 2018-04-27T14:33:04.679895705-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: d092b8f259c95e3443ce7a3f59132e8924c164648f9f01e84934c272b8859c2e
     keywords:
@@ -110,7 +110,7 @@ entries:
     urls:
     - https://raw.githubusercontent.com/astronomerio/helm.astronomer.io/feature/deploys/repository/astronomer-0.1.1.tgz
     version: 0.1.1
-  - created: 2018-04-20T12:50:52.314601782-04:00
+  - created: 2018-04-27T14:33:04.679268597-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: a39934b6607bf3c0fefffd71c34bc0e12528404cc53c32b1f2ee63ae2bfbe12d
     keywords:
@@ -119,7 +119,7 @@ entries:
     urls:
     - https://raw.githubusercontent.com/astronomerio/helm.astronomer.io/feature/deploys/repository/astronomer-0.1.0.tgz
     version: 0.1.0
-  - created: 2018-04-20T12:50:52.314017379-04:00
+  - created: 2018-04-27T14:33:04.678727641-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: 8aca4d4563666f8916101da4a7aad1604fe7e1dc932b4ce0c5c9d58cb490a5c6
     keywords:
@@ -129,7 +129,7 @@ entries:
     - https://raw.githubusercontent.com/astronomerio/helm.astronomer.io/feature/deploys/repository/astronomer-0.0.1.tgz
     version: 0.0.1
   clickstream:
-  - created: 2018-04-20T12:50:52.319653574-04:00
+  - created: 2018-04-27T14:33:04.684752272-04:00
     description: Helm chart to deploy the Astronomer Platform clickstream module
     digest: e499c017390860d08ebf10f1c53390d3eb776833d070303f00cc42bb9291d016
     keywords:
@@ -138,7 +138,7 @@ entries:
     urls:
     - https://raw.githubusercontent.com/astronomerio/helm.astronomer.io/feature/deploys/repository/clickstream-0.1.5.tgz
     version: 0.1.5
-  - created: 2018-04-20T12:50:52.31926541-04:00
+  - created: 2018-04-27T14:33:04.684593631-04:00
     description: Helm chart to deploy the Astronomer Platform clickstream module
     digest: 8278d72deefccfd09e7d4856a39da773dc40c7b606811f1522b355410c344ed8
     keywords:
@@ -147,7 +147,7 @@ entries:
     urls:
     - https://raw.githubusercontent.com/astronomerio/helm.astronomer.io/feature/deploys/repository/clickstream-0.1.4.tgz
     version: 0.1.4
-  - created: 2018-04-20T12:50:52.318664065-04:00
+  - created: 2018-04-27T14:33:04.684288062-04:00
     description: Helm chart to deploy the Astronomer Platform clickstream module
     digest: 91e422baf764f5a857cf82155fbf5cccf3957f30a2ff932578f1d8cf9b3fce53
     keywords:
@@ -156,7 +156,7 @@ entries:
     urls:
     - https://raw.githubusercontent.com/astronomerio/helm.astronomer.io/feature/deploys/repository/clickstream-0.1.3.tgz
     version: 0.1.3
-  - created: 2018-04-20T12:50:52.318302892-04:00
+  - created: 2018-04-27T14:33:04.683702786-04:00
     description: Helm chart to deploy the Astronomer Platform clickstream module
     digest: cc88fd4a1b56aa779f7ab100719e502e00a96b4b030fc2926db7295d8f3398ca
     keywords:
@@ -165,7 +165,7 @@ entries:
     urls:
     - https://raw.githubusercontent.com/astronomerio/helm.astronomer.io/feature/deploys/repository/clickstream-0.1.2.tgz
     version: 0.1.2
-  - created: 2018-04-20T12:50:52.317936448-04:00
+  - created: 2018-04-27T14:33:04.683126586-04:00
     description: Helm chart to deploy the Astronomer Platform clickstream module
     digest: a7b367a7487e01db9d1d357d0e63b50178c1fd0939557e60dffd0ea1dfadb92b
     keywords:
@@ -174,7 +174,7 @@ entries:
     urls:
     - https://raw.githubusercontent.com/astronomerio/helm.astronomer.io/feature/deploys/repository/clickstream-0.1.1.tgz
     version: 0.1.1
-  - created: 2018-04-20T12:50:52.317560245-04:00
+  - created: 2018-04-27T14:33:04.682765396-04:00
     description: Helm chart to deploy the Astronomer Platform clickstream module
     digest: ad796cc8d73974cd59784ac91cc56e64700ef7639085d3aa2f5ae139a90322a3
     keywords:
@@ -183,7 +183,7 @@ entries:
     urls:
     - https://raw.githubusercontent.com/astronomerio/helm.astronomer.io/feature/deploys/repository/clickstream-0.1.0.tgz
     version: 0.1.0
-  - created: 2018-04-20T12:50:52.317225381-04:00
+  - created: 2018-04-27T14:33:04.682401914-04:00
     description: Helm chart to deploy the Astronomer Platform clickstream module
     digest: ebdb8a523fbaa08bd66738288c61fc838e6c2582dde504ef189f7bc81cb35396
     keywords:
@@ -192,4 +192,4 @@ entries:
     urls:
     - https://raw.githubusercontent.com/astronomerio/helm.astronomer.io/feature/deploys/repository/clickstream-0.0.1.tgz
     version: 0.0.1
-generated: 2018-04-20T12:50:52.308028578-04:00
+generated: 2018-04-27T14:33:04.672402121-04:00
