@@ -20,7 +20,7 @@ spec:
   loadBalancerSourceRanges: {{ .Values.loadBalancerSourceRanges }}
   {{- end }}
   {{- if .Values.preserveSourceIP }}
-  externalTrafficPolicy: "Local"
+  externalTrafficPolicy: "Cluster"
   {{- end }}
   selector:
     tier: nginx
