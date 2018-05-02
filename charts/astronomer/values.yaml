@@ -11,9 +11,12 @@ images:
   registry: astronomerinc/ap-registry:0.1.4
   houston: astronomerinc/ap-houston-api:0.1.4
 
-# Astronomer houston config
-houstonJwtPassphraseSecret: "houston-jwt-passphrase"
-houstonDatabaseSecret: "houston-database"
+# Astronomer platform config
+data:
+  houstonJwtPassphraseSecret: "houston-jwt-passphrase"
+  houstonDatabaseSecret: "houston-database"
+  airflowDatabaseSecret: "airflow-database"
+  airflowRedisSecret: "airflow-redis"
 
 # Enable persistence to keep registry data between deploys
 persistence:

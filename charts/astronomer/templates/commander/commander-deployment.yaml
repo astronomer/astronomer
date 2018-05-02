@@ -9,7 +9,7 @@ metadata:
     component: commander
     tier: astronomer
     release: {{ .Release.Name }}
-    chart: {{ .Chart.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
 spec:
   replicas: 1
@@ -35,6 +35,8 @@ spec:
           ports:
             - name: commander-http
               containerPort: 8880
+            - name: commander-grpc
+              containerPort: 50051
           livenessProbe:
             httpGet:
               path: /healthz
@@ -48,7 +50,13 @@ spec:
             initialDelaySeconds: 10
             periodSeconds: 10
           env:
-            - name: COMMANDER_PORT
+            - name: COMMANDER_HTTP_PORT
               value: "8880"
+            - name: COMMANDER_GRPC_PORT
+              value: "50051"
             - name: COMMANDER_KUBE_NAMESPACE
               value: {{ .Release.Namespace }}
+            - name: COMMANDER_HELM_REPO
+              value: {{ .Values.global.helmRepo }}
+            - name: HELM_HOST
+              value: {{ .Values.global.helmHost }}

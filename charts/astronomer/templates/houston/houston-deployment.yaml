@@ -9,7 +9,7 @@ metadata:
     component: houston
     tier: astronomer
     release: {{ .Release.Name }}
-    chart: {{ .Chart.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
 spec:
   replicas: 1
@@ -59,19 +59,38 @@ spec:
               value: "/playground"
             - name: DEBUG_DB
               value: "false"
+            - name: HELM_ASTRO_REPO
+              value: {{ .Values.global.helmRepo }}
+            - name: HELM_GLOBAL_CONFIG
+              value: "{{ printf "{\\\"baseDomain\\\":\\\"%v\\\",\\\"registryAuthSecret\\\":\\\"%v\\\",\\\"acme\\\":%v,\\\"rbacEnabled\\\":%v,\\\"tlsSecret\\\":\\\"%v\\\"}" .Values.global.baseDomain .Values.global.registryAuthSecret (print .Values.global.acme | toString) (print .Values.global.rbacEnabled | toString) (print .Values.global.tlsSecret | toString | replace "<nil>" "") }}"
             - name: AUTH_STRATEGY
               value: "local"
             - name: COMMANDER_HOST
-              value: "http://{{ .Release.Name }}-commander"
+              value: "{{ .Release.Name }}-commander"
             - name: COMMANDER_PORT
-              value: "8880"
+              value: "50051"
             - name: JWT_PASSPHRASE
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.houstonJwtPassphraseSecret }}
+                  name: {{ .Values.data.houstonJwtPassphraseSecret }}
                   key: passphrase
-            - name: POSTGRES_URI
+            - name: HOUSTON_POSTGRES_URI
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.houstonDatabaseSecret }}
+                  name: {{ .Values.data.houstonDatabaseSecret }}
                   key: connection
+            - name: AIRFLOW_POSTGRES_URI
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.data.airflowDatabaseSecret }}
+                  key: connection
+            - name: AIRFLOW_REDIS_URI
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.data.airflowRedisSecret }}
+                  key: connection
+            - name: BASIC_AUTHS
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.nginxAuthSecret }}
+                  key: auth

@@ -9,7 +9,7 @@ metadata:
     tier: airflow-monitoring
     component: prometheus
     release: {{ .Release.Name }}
-    chart: {{ .Chart.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
 data:
   kubernetes.yaml: |-
