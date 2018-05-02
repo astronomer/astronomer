@@ -28,4 +28,5 @@ push-public: build
 	for chart in ${CHARTS} ; do \
 		gsutil cp -a public-read ${OUTPUT}/$${chart}-${ASTRONOMER_VERSION}.tgz ${BUCKET} || exit 1; \
 	done; \
+	gsutil cp -a public-read ${OUTPUT}/configs/airflow-${ASTRONOMER_VERSION}.yaml ${BUCKET}
 	gsutil cp -a public-read ${OUTPUT}/index.yaml ${BUCKET}
