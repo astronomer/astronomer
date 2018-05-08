@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.0] - 2018-05-08
+
+* Set astronomer to be the only chart to install by default
+* Updated houston chart to save global values as an env
+* Updated commander chart to have elevated tiller permissions
+* Updated all chart to include version in the chart label
+
 ## [0.1.4] - 2018-04-03
 
 * Update airflow docker image to pull in latest setuptools
