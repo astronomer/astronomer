@@ -21,9 +21,12 @@ LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
 LABEL io.astronomer.docker.module="astronomer"
 LABEL io.astronomer.docker.component="houston-api"
 
-ARG VERSION="v0.0.1"
+ARG VERSION="v0.2.0"
 ENV REPO="github.com/astronomerio/houston-api"
-ENV REPO_URL="https://${REPO}#${VERSION}"
+ENV REPO_URL="https://${REPO}"
+ENV HOUSTON_PATH=/srv/houston-api
+
+WORKDIR ${HOUSTON_PATH}
 
 RUN apk add --no-cache --virtual .build-deps \
 		build-base \
@@ -31,6 +34,7 @@ RUN apk add --no-cache --virtual .build-deps \
 		python \
 	&& apk add --no-cache \
 		nodejs \
+		openssl \
 	&& npm install -g ${REPO_URL} --unsafe \
 	&& npm rebuild bcrypt --build-from-source \
 	&& apk del .build-deps

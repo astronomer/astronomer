@@ -21,19 +21,22 @@ LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
 LABEL io.astronomer.docker.module="astronomer"
 LABEL io.astronomer.docker.component="commander"
 
-ARG VERSION="v0.0.11"
+ARG VERSION="v0.2.0"
 ENV REPO="github.com/astronomerio/commander"
 ENV REPO_URL="https://${REPO}"
 
 ENV GCLOUD_VERSION="186.0.0"
 ENV GCLOUD_FILE="google-cloud-sdk-${GCLOUD_VERSION}-linux-x86_64.tar.gz"
 ENV GCLOUD_URL="https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/${GCLOUD_FILE}"
+ENV GOPATH=/root/go
+ENV GOBIN=${GOPATH}/bin
+ENV PATH=${PATH}:${GOBIN}
 
-ENV GIN_MODE=release
 
 WORKDIR /usr/lib/go/src/${REPO}
 
-RUN apk add --no-cache --virtual .build-deps \
+RUN apk update && \
+    apk add --no-cache --virtual .build-deps \
 		build-base \
 		git \
 		go \
@@ -51,6 +54,8 @@ RUN apk add --no-cache --virtual .build-deps \
 	&& google-cloud-sdk/install.sh \
 	&& mkdir /opt \
 	&& mv google-cloud-sdk /opt \
+    && mkdir -p "${GOPATH}/src" \
+    && mkdir -p "${GOPATH}/bin" \
 	&& rm -rf /usr/lib/go \
 	&& apk del .build-deps
 
