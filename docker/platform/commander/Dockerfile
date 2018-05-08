@@ -38,7 +38,6 @@ WORKDIR /usr/lib/go/src/${REPO}
 RUN apk update && \
     apk add --no-cache --virtual .build-deps \
 		build-base \
-		ca-certificates \
 		git \
 		go \
 	&& apk add --no-cache \
