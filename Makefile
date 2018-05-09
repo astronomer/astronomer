@@ -10,7 +10,7 @@ ASTRONOMER_PATCH_VERSION ?= 0
 ASTRONOMER_VERSION ?= ${ASTRONOMER_MAJOR_VERSION}.${ASTRONOMER_MINOR_VERSION}.${ASTRONOMER_PATCH_VERSION}
 
 # List of charts to build
-CHARTS := astronomer airflow clickstream
+CHARTS := astronomer airflow
 
 # Output directory
 OUTPUT := repository

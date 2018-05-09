@@ -40,10 +40,6 @@ global:
     airflow:
       enabled: false
 
-    # Enable clickstream module
-    clickstream:
-      enabled: false
-
     # Enable NGINX ingress module
     nginx:
       enabled: true
