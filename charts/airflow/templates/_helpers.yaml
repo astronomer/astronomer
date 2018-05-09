@@ -16,6 +16,8 @@
     value: "airflow"
   - name: ASTRONOMER__AIRFLOW__WORKER_LOG_RETENTION
     value: "15"
+  - name: AIRFLOW__WEBSERVER__BASE_URL
+    value: {{- include "airflow_url" . | indent 1 }}
   # Dynamically created secret envs
   {{- range $i, $config := .Values.secret }}
   - name: {{ $config.name }}
@@ -42,4 +44,20 @@
       secretKeyRef:
         name: {{ .Values.data.airflowBrokerSecret }}
         key: connection
+{{- end }}
+
+{{ define "airflow_url" -}}
+{{ .Release.Name }}-airflow.{{ .Values.global.baseDomain }}
+{{- end }}
+
+{{ define "flower_url" -}}
+{{ .Release.Name }}-flower.{{ .Values.global.baseDomain }}
+{{- end }}
+
+{{ define "grafana_url" -}}
+{{ .Release.Name }}-grafana.{{ .Values.global.baseDomain }}
+{{- end }}
+
+{{ define "prometheus_url" -}}
+{{ .Release.Name }}-prometheus.{{ .Values.global.baseDomain }}
 {{- end }}

@@ -30,34 +30,34 @@ spec:
     - secretName: {{ .Values.global.tlsSecret }}
   {{- end }}
       hosts:
-        - {{ .Release.Name }}-airflow.{{ .Values.global.baseDomain }}
-        - {{ .Release.Name }}-flower.{{ .Values.global.baseDomain }}
-        - {{ .Release.Name }}-grafana.{{ .Values.global.baseDomain }}
-        - {{ .Release.Name }}-prometheus.{{ .Values.global.baseDomain }}
+        - {{- include "airflow_url" . | indent 1 }}
+        - {{- include "flower_url" . | indent 1 }}
+        - {{- include "grafana_url" . | indent 1 }}
+        - {{- include "prometheus_url" . | indent 1 }}
   {{- end }}
   rules:
-    - host: {{ .Release.Name }}-airflow.{{ .Values.global.baseDomain }}
+    - host: {{- include "airflow_url" . | indent 1 }}
       http:
         paths:
           - path: /
             backend:
               serviceName: {{ .Release.Name }}-webserver
               servicePort: webserver-ui
-    - host: {{ .Release.Name }}-flower.{{ .Values.global.baseDomain }}
+    - host: {{- include "flower_url" . | indent 1 }}
       http:
         paths:
           - path: /
             backend:
               serviceName: {{ .Release.Name }}-flower
               servicePort: flower-ui
-    - host: {{ .Release.Name }}-grafana.{{ .Values.global.baseDomain }}
+    - host: {{- include "grafana_url" . | indent 1 }}
       http:
         paths:
           - path: /
             backend:
               serviceName: {{ .Release.Name }}-grafana
               servicePort: grafana-ui
-    - host: {{ .Release.Name }}-prometheus.{{ .Values.global.baseDomain }}
+    - host: {{- include "prometheus_url" . | indent 1 }}
       http:
         paths:
           - path: /
