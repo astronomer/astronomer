@@ -31,9 +31,9 @@ spec:
   {{- end }}
       hosts:
         - {{- include "airflow_url" . | indent 1 }}
-        - flower.{{ .Values.global.baseDomain }}
-        - grafana.{{ .Values.global.baseDomain }}
-        - prometheus.{{ .Values.global.baseDomain }}
+        - {{- include "flower_url" . | indent 1 }}
+        - {{- include "grafana_url" . | indent 1 }}
+        - {{- include "prometheus_url" . | indent 1 }}
   {{- end }}
   rules:
     - host: {{- include "airflow_url" . | indent 1 }}
@@ -43,21 +43,21 @@ spec:
             backend:
               serviceName: {{ .Release.Name }}-webserver
               servicePort: webserver-ui
-    - host: flower.{{ .Values.global.baseDomain }}
+    - host: {{- include "flower_url" . | indent 1 }}
       http:
         paths:
           - path: /
             backend:
               serviceName: {{ .Release.Name }}-flower
               servicePort: flower-ui
-    - host: grafana.{{ .Values.global.baseDomain }}
+    - host: {{- include "grafana_url" . | indent 1 }}
       http:
         paths:
           - path: /
             backend:
               serviceName: {{ .Release.Name }}-grafana
               servicePort: grafana-ui
-    - host: prometheus.{{ .Values.global.baseDomain }}
+    - host: {{- include "prometheus_url" . | indent 1 }}
       http:
         paths:
           - path: /

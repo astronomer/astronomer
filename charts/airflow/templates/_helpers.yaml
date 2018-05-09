@@ -47,5 +47,17 @@
 {{- end }}
 
 {{ define "airflow_url" -}}
-airflow.{{ .Values.global.baseDomain }}
+{{ .Release.Name }}-airflow.{{ .Values.global.baseDomain }}
+{{- end }}
+
+{{ define "flower_url" -}}
+{{ .Release.Name }}-flower.{{ .Values.global.baseDomain }}
+{{- end }}
+
+{{ define "grafana_url" -}}
+{{ .Release.Name }}-grafana.{{ .Values.global.baseDomain }}
+{{- end }}
+
+{{ define "prometheus_url" -}}
+{{ .Release.Name }}-prometheus.{{ .Values.global.baseDomain }}
 {{- end }}
