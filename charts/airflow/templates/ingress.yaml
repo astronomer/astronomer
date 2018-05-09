@@ -36,7 +36,7 @@ spec:
         - prometheus.{{ .Values.global.baseDomain }}
   {{- end }}
   rules:
-    - host:{{- include "airflow_url" . }}
+    - host: {{- include "airflow_url" . | indent 1 }}
       http:
         paths:
           - path: /
