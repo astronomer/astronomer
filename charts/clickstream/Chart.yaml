@@ -1,5 +1,0 @@
-name: clickstream
-version: 0.0.0
-description: Helm chart to deploy the Astronomer Platform clickstream module
-keywords:
-  - astronomer

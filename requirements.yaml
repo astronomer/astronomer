@@ -5,9 +5,6 @@ dependencies:
   - name: airflow
     version: 0.0.0
     condition: global.modules.airflow.enabled
-  - name: clickstream
-    version: 0.0.0
-    condition: global.modules.clickstream.enabled
   - name: nginx
     version: 0.0.0
     condition: global.modules.nginx.enabled,global.baseDomain
