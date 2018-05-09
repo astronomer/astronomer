@@ -7,13 +7,16 @@ uid: 100
 
 # Images for pilot
 images:
-  commander: astronomerinc/ap-commander:0.1.4
-  registry: astronomerinc/ap-registry:0.1.4
-  houston: astronomerinc/ap-houston-api:0.1.4
+  commander: astronomerinc/ap-commander:0.2.0
+  registry: astronomerinc/ap-registry:0.2.0
+  houston: astronomerinc/ap-houston-api:0.2.0
 
-# Astronomer houston config
-houstonJwtPassphraseSecret: "houston-jwt-passphrase"
-houstonDatabaseSecret: "houston-database"
+# Astronomer platform config
+data:
+  houstonJwtPassphraseSecret: "houston-jwt-passphrase"
+  houstonDatabaseSecret: "houston-database"
+  airflowDatabaseSecret: "airflow-database"
+  airflowRedisSecret: "airflow-redis"
 
 # Enable persistence to keep registry data between deploys
 persistence:

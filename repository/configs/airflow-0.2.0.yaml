@@ -1,0 +1,35 @@
+################################
+## Airflow configuration
+#################################
+
+# Worker settings
+workers:
+  # Number of airflow celery workers in StatefulSet
+  replicas: 3
+
+  # Enable persistence to keep logs around between deploys
+  persistence:
+    enabled: true
+
+    # Volume size for worker StatefulSet
+    size: 10Gi
+
+  # Grace period for tasks to finish after SIGTERM is sent from kubernetes
+  terminationGracePeriodSeconds: 600
+
+# Astronomer Airflow images
+images:
+  airflow: astronomerinc/ap-airflow:0.2.0
+  statsdExporter: astronomerinc/ap-statsd-exporter:0.2.0
+  prometheus: astronomerinc/ap-prometheus:0.2.0
+  grafana: astronomerinc/ap-grafana:0.2.0
+
+# Environment variables for all airflow containers
+env:
+
+# Astronomer Airflow database config
+data:
+  airflowMetadataSecret: "airflow-metadata"
+  airflowResultBackendSecret: "airflow-result-backend"
+  airflowBrokerSecret: "airflow-broker"
+  grafanaBackendSecret: "grafana-backend"

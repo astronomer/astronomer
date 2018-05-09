@@ -8,7 +8,7 @@ metadata:
   labels:
     tier: nginx
     release: {{ .Release.Name }}
-    chart: {{ .Chart.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
 data:
   proxy-connect-timeout: {{ .Values.proxyConnectTimeout | quote }}

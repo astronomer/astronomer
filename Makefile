@@ -5,12 +5,12 @@ BUCKET ?= gs://${DOMAIN}
 
 # Version
 ASTRONOMER_MAJOR_VERSION ?= 0
-ASTRONOMER_MINOR_VERSION ?= 1
-ASTRONOMER_PATCH_VERSION ?= 4
+ASTRONOMER_MINOR_VERSION ?= 2
+ASTRONOMER_PATCH_VERSION ?= 0
 ASTRONOMER_VERSION ?= ${ASTRONOMER_MAJOR_VERSION}.${ASTRONOMER_MINOR_VERSION}.${ASTRONOMER_PATCH_VERSION}
 
 # List of charts to build
-CHARTS := astronomer airflow clickstream
+CHARTS := astronomer airflow
 
 # Output directory
 OUTPUT := repository
@@ -28,4 +28,5 @@ push-public: build
 	for chart in ${CHARTS} ; do \
 		gsutil cp -a public-read ${OUTPUT}/$${chart}-${ASTRONOMER_VERSION}.tgz ${BUCKET} || exit 1; \
 	done; \
+	gsutil cp -a public-read ${OUTPUT}/configs/airflow-${ASTRONOMER_VERSION}.yaml ${BUCKET}
 	gsutil cp -a public-read ${OUTPUT}/index.yaml ${BUCKET}
