@@ -1,0 +1,10 @@
+{{ define "helm_globals" -}}
+{{ print "{" -}}
+{{ printf "\"baseDomain\":\"%v\"," .Values.global.baseDomain -}}
+{{ printf "\"registryAuthSecret\":\"%v\"," .Values.global.registryAuthSecret -}}
+{{ printf "\"nginxAuthSecret\":\"%v\"," .Values.global.nginxAuthSecret -}}
+{{ printf "\"acme\":%v," (print .Values.global.acme | toString) -}}
+{{ printf "\"rbacEnabled\":%v," (print .Values.global.rbacEnabled | toString) -}}
+{{ printf "\"tlsSecret\":\"%v\"" (print .Values.global.tlsSecret | toString | replace "<nil>" "") -}}
+{{ print "}" -}}
+{{- end }}

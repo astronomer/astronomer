@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.1] - 2018-05-17
+
+* Added nginx-auth secret to houston, fixing issue with airflow deploys being created unsecured
+
 ## [0.2.0] - 2018-05-08
 
 * Set astronomer to be the only chart to install by default
