@@ -9,38 +9,27 @@ order: 1
 
 ## Overview
 
-Astronomer Open Edition is a convenient way to experience the
-modules of the Astronomer Platform on your own machine. It is
-made up of Dockerfiles, docker-compose files, and bash scripts.
+Astronomer Open Edition is a convenient way to experience the Astronomer
+Platform on your own machine. It is made up of Dockerfiles, docker-compose
+files, and bash scripts.
 
 Astronomer Open is:
 
 * a preview of the internal components that Astronomer Enterprise Edition is built on
 * a demonstration that could be helpful to teams who are seeking to build something similar to our platform
 
-<div class="licensing">
-A note on <a href="https://enterprise.astronomer.io">Astronomer
-Enterprise Edition</a>: You may be tempted to try to run Open
-Edition yourself as a way to save a buck, but you’d be reinventing
-the wheel that is Enterprise Edition. Better to just grab an
-Enterprise license from us, and then you’ll get support for
-everything from us, while still having full access to all the
-source code.
+Because Astronomer Open Edition is licensed Apache 2.0, you can use these
+Docker containers however you'd like (subject to standard Apache 2.0
+restrictions).
 
-To see the value we have added with Astronomer Enterprise, we
-suggest you get started with the [astro-cli](https://github.com/astronomerio/astro-cli).
-It can be used to run the platform locally. If you like what you
-see - it can then be used to manager and deploy Astronomer 
-Enterprise Edition on your cluster.
-</div>
-
-Because Astronomer Open Edition modules are licensed Apache 2.0,
-you can use these Docker containers however you'd like
-(subject to standard Apache 2.0 restrictions).
+You may also be interested to look at
+[Astronomer Enterprise Edition](https://enterprise.astronomer.io) which
+makes it easy to deploy Apache Airflow clusters and deploy Airflow DAGs
+in a multi-team, multi-user environment via Kubernetes.
 
 ## Requirements
 
-The only requirement to get up and running are the Docker Engine
+The only requirement to get up and running is Docker Engine
 and Docker Compose. If you don't have these installed already,
 visit these links for more information.
 
@@ -61,19 +50,6 @@ Running `docker-compose up` will download our prebuild images (see
 Makefile for details) from our
 [DockerHub Repository](https://hub.docker.com/u/astronomerinc/)
 and spin up containers running the various platform systems.
-
-## Guides
-
-Check out our
-[various setup guides](https://enterprise.astronomer.io/guides/)
-to get started with Astronomer on Kubernetes.
-
-## Modules
-
-* [Airflow](/airflow) — Docker images for
-  [Apache Airflow](https://airflow.apache.org/)-based ETL system
-  that is pre-configured to run Airflow, Celery, Flower, StatsD,
-  Prometheus, and Grafana.
 
 ## Building the Images
 
@@ -102,3 +78,133 @@ Run it:
 ```
 bundle exec jekyll serve
 ```
+
+## Architecture
+
+The Astronomer Airflow module consists of seven components, and you must bring
+your own Postgres and Redis database, as well as a container deployment strategy
+for your cloud.
+
+![Airflow Module]({{ "/assets/img/airflow_module.png" | absolute_url }})
+
+## Quickstart
+
+Clone Astronomer Open:
+
+```
+git clone https://github.com/astronomerio/astronomer.git
+cd astronomer
+```
+
+We provide two examples for Apache Airflow.  Each will spin up a handful of containers to mimic a live Astronomer environment.
+
+### Airflow Core vs Airflow Enterprise
+
+Here's a comparison of the components included in the Airflow Core vs Airflow Enterprise examples:
+
+{:.table.table-striped.table-bordered.table-hover}
+| Component                 | Airflow Core | Airflow Enterprise |
+|---------------------------|:------------:|:------------------:|
+| Airflow scheduler         | x            | x                  |
+| Airflow webserver         | x            | x                  |
+| PostgreSQL                | x            | x                  |
+| [Redis][redis]            |              | x                  |
+| [Celery][celery]          |              | x                  |
+| [Flower][flower]          |              | x                  |
+| [Prometheus][prometheus]  |              | x                  |
+| [Grafana][grafana]        |              | x                  |
+| [StatsD exporter][statsd] |              | x                  |
+| [cAdvisor][cadvisor]      |              | x                  |
+
+[redis]: https://redis.io/
+[celery]: http://www.celeryproject.org/
+[flower]: http://flower.readthedocs.io/en/latest/
+[grafana]: https://grafana.com
+[prometheus]: https://prometheus.io
+[cadvisor]: https://github.com/google/cadvisor
+[statsd]: https://github.com/prometheus/statsd_exporter
+
+### Airflow Core
+
+To start the simple Airflow example:
+
+```
+cd examples/airflow-core
+docker-compose up
+```
+
+### Airflow Enterprise
+
+To start the more sophisticated Airflow example:
+
+```
+cd examples/airflow-enterprise
+docker-compose up
+```
+
+Once everything is up and running, open a browser and visit <http://localhost:8080> for Airflow and <http://localhost:5555> for Celery.
+
+Sweet! You're up and running with Apache Airflow and well on your way to
+automating all your data pipelines! The following sections will help you get
+started with your first pipelines, or get your existing pipelines running on
+the Astronomer Platform.
+
+## Start from Scratch
+
+You need to write your first DAG. Review:
+
+* [Core Airflow Concepts](https://docs.astronomer.io/v2/apache_airflow/tutorial/core-airflow-concepts.html)
+* [Simple Sample DAG](https://docs.astronomer.io/v2/apache_airflow/tutorial/sample-dag.html)
+
+We recommend managing your DAGs in a Git repo, but for the purposes of getting
+rolling, just make a directory on your machine with a `dags` directory, and you
+can copy the sample dag from the link above into the folder inside a file
+`test_dag.py`. We typically advise first testing locally on your machine, before
+pushing changes to your staging environment. Once fully tested you can deploy
+to your production instance.
+
+When ready to commit new source or destination hooks/operators, our best
+practice is to commit these into separate repositories for each plugin.
+
+## Start from Existing Code
+
+If you already have an Airflow project (Airflow home directory), getting things
+running on Astronomer is straightforward. Within `examples/airflow`, we provide
+a `start` script that can wire up a few things to help you develop on Airflow
+quickly.
+
+You'll also notice a small `.env` file next to the `docker-compose.yml` file.
+This file is automatically sourced by `docker-compose` and it's variables are
+interpolated into the service definitions in the `docker-compose.yml` file. If
+you run `docker-compose up`, like we did above, we mount volumes into your host
+machine's `/tmp` directory for Postgres and Redis. This will automatically be
+cleaned up for you.
+
+This will also be the behavior if you run `./start` with no arguments. If you
+want to load your own Airflow project into this system, just provide the
+project's path as an argument to run, like this:
+`./start ~/repos/airflow-project`.
+
+Under the hood, a few things make this work. `Dockerfile.astro` and
+`.dockerignore` files are written into your project directory. And an `.astro`
+directory is created.
+
+* `Dockerfile.astro` just links to a special `onbuild` version of our Airflow
+  image that will automatically add certain files, within the `.astro` directory
+  to the image.
+* The `.astro` file will contain a `data` directory which will be used for
+  mapping docker volumes into for Postgres and Redis. This lets you persist
+  your current Airflow state between shutdowns. These files are automatically
+  ignored by `git`.
+* The `.astro` directory will also contain a `requirements.txt` file that you
+  can add python packages to be installed using `pip`. We will automatically build
+  and install them when the containers are restarted.
+* In some cases, python modules will need to compile native modules and/or rely
+  on other package that exist outside of the python ecosystem. In this case, we
+  also provide a `packages.txt` file in the `.astro` directory, where you can add
+  [Alpine packages](https://pkgs.alpinelinux.org/packages). The format is similar
+  to `requirements.txt`, with a package on each line.
+
+With this configuration, you can point the `./start` script at any Airflow home
+directory and maintain distinct and separate environments for each, allowing you
+to easily test different Airflow projects in isolation.
