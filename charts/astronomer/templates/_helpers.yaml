@@ -8,3 +8,7 @@
 {{ printf "\"tlsSecret\":\"%v\"" (print .Values.global.tlsSecret | toString | replace "<nil>" "") -}}
 {{ print "}" -}}
 {{- end }}
+
+{{- define "houston_jwt_passphrase" }}
+  {{- randAlphaNum 32 }}
+{{- end }}

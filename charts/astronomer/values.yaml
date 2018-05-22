@@ -13,9 +13,8 @@ images:
 
 # Astronomer platform config
 data:
-  houstonJwtPassphraseSecret: "houston-jwt-passphrase"
   houstonDatabaseSecret: "houston-database"
-  airflowDatabaseSecret: "airflow-database"
+  airflowDatabaseSecret: "houston-database"
   airflowRedisSecret: "airflow-redis"
 
 # Enable persistence to keep registry data between deploys
