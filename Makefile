@@ -37,7 +37,7 @@ build:
 	bin/build-images
 
 .PHONY: push-images
-push-images: build
+push-images: clean build
 	for component in ${ALL_COMPONENTS} ; do \
 		echo "Pushing ap-$${component} ========================================"; \
 		docker push ${REPOSITORY}/ap-$${component}:latest || exit 1; \
