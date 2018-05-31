@@ -54,8 +54,7 @@ RUN apk update && \
 	&& google-cloud-sdk/install.sh \
 	&& mkdir /opt \
 	&& mv google-cloud-sdk /opt \
-    && mkdir -p "${GOPATH}/src" \
-    && mkdir -p "${GOPATH}/bin" \
+    && mkdir -p "${GOPATH}/{bin,src}" \
 	&& rm -rf /usr/lib/go \
 	&& apk del .build-deps
 
