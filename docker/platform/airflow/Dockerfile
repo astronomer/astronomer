@@ -52,7 +52,7 @@ RUN apk add --no-cache --virtual .build-deps \
 	&& pip3 install --no-cache-dir --upgrade pip==9.0.3 \
 	&& pip3 install --no-cache-dir --upgrade setuptools==39.0.1 \
 	&& pip3 install --no-cache-dir "${AIRFLOW_MODULE}" \
-	&& pip3 uninstall -y snakebite \
+	&& pip3 uninstall --yes snakebite \
 	&& apk del .build-deps \
 	&& ln -sf /usr/bin/python3 /usr/bin/python \
 	&& ln -sf /usr/bin/pip3 /usr/bin/pip
