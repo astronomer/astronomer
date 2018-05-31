@@ -18,7 +18,7 @@ LABEL maintainer="Astronomer <humans@astronomer.io>"
 
 ARG BUILD_NUMBER=-1
 LABEL io.astronomer.docker=true
-LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
+LABEL io.astronomer.docker.build.number=${BUILD_NUMBER}
 
 ONBUILD COPY . .
 ONBUILD RUN cat packages.txt | xargs apk add
