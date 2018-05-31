@@ -13,7 +13,6 @@
       src:url("https://cdn.astronomer.io/app/fonts/sofia-pro/941243bb-e692-46f8-91b9-6e621e5c1ff8.eot?#iefix") format("eot"),url("https://cdn.astronomer.io/app/fonts/sofia-pro/sofia-regular.woff2") format("woff2"),url("$https://cdn.astronomer.io/app/fonts/sofia-pro/476fe015-ab32-40a2-8fed-0a5af9a3bba4.woff") format("woff"),url("https://cdn.astronomer.io/app/fonts/sofia-pro/d8bcfa37-4f93-49cf-8dea-c29e894af58e.ttf") format("truetype"),url("https://cdn.astronomer.io/app/fonts/sofia-pro/28fc42bb-8761-4e6a-8c62-65d4a41c9e33.svg#28fc42bb-8761-4e6a-8c62-65d4a41c9e33") format("svg");
   }
 
-
 .bs-docs-masthead {
   padding-top: 50px;
   padding-bottom: 40px;
@@ -47,15 +46,21 @@
     position: relative;
 }
 
+.bs-docs-section {
+  margin-right: 20px;
+}
+
 #jumbotron-header {
   position: relative;
   color: white;
   font-family: 'Sofia Regular', 'Open Sans', Helvetica, Arial, sans-serif;
   background-color: #302c43;
   background-image: url(/assets/img/stars-bg.png);
-  background-size: 20%;
+  background-size: 80%;
   background-repeat: repeat;
   text-align: center;
+  margin-bottom: 40px;
+
 }
 
 #jumbotron-header .container {
@@ -67,7 +72,7 @@ img {
 }
 
 .bs-docs-nav .navbar-brand, .bs-docs-nav .navbar-nav>li>a {
-    color: #302C43 !important;
+    color: #2F2D41 !important;
 }
 
 .bs-docs-sidenav > li {
@@ -83,21 +88,27 @@ p, h1, h2, h3, li, a, ul, .licensing, .back-to-top {
   font-size: 0.8em !important;
 }
 
+
 a {
   color: #44959B;
 }
-footer a {
-    color: #302C43 !important;
+footer p, .bs-docs-footer-links {
+  margin-top: 5px;
 }
+
 body {
-  font-size: 16px;
-  line-height: 1.8;
+  font-size: 20px;
+  line-height: 1.6;
 }
 code {
   color: #E79637;
 }
-.bs-docs-masthead .version {
-  color: #A398E6;
+a.btn-outline-inverse {
+  color: #FFF;
+  border-color: #FFF;
+}
+.version {
+  color: #FFF !important;
 }
 
 .licensing {
@@ -106,7 +117,15 @@ code {
   color: #2F2D41;
   font-style: italic;
   padding: 20px;
-  margin-bottom: 30px;
+  margin: 20px 0 10px;
+}
+
+.highlighter-rouge > .highlight > button {
+  margin-left: 5px;
+}
+
+.highlighter-rouge > .highlight > .highlight {
+  word-break: keep-all;
 }
 
 .home-title {
@@ -115,8 +134,24 @@ code {
 
 p, h1, h2, h3, h4, h5, h6 {
   color: #302c43;
+  margin-top: 25px;
 }
 
 html {
   background-color: #fefcf9;
+}
+
+.videoWrapper {
+	position: relative;
+	padding-bottom: 56.25%; /* 16:9 */
+	padding-top: 25px;
+	height: 0;
+  margin: 50px 0;
+}
+.videoWrapper iframe {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
 }

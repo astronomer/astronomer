@@ -27,7 +27,7 @@ markdown: kramdown
 name: Astronomer Open Edition
 
 project:
-    version: 0.1.3
+    version: 0.2.1
     download_url: https://github.com/astronomerio/astronomer/releases
 
 license:
