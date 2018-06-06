@@ -21,5 +21,6 @@ LABEL io.astronomer.docker=true
 LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
 
 ONBUILD COPY . .
+ONBUILD RUN apk update
 ONBUILD RUN cat packages.txt | xargs apk add
 ONBUILD RUN pip install --no-cache-dir -q -r requirements.txt
