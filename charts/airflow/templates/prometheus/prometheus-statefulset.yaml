@@ -79,4 +79,7 @@ spec:
         resources:
           requests:
             storage: {{ .Values.prometheus.persistence.size }}
+      {{- if .Values.global.storageClassName }}
+        storageClassName: {{ .Values.global.storageClassName }}
+      {{- end }}
   {{- end }}

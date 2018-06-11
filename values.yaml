@@ -29,6 +29,9 @@ global:
   # Namespace Tiller is installed on
   tillerNamespace: "kube-system"
 
+  # If using a custom storageClass, pass name ref to all statefulSets here
+  storageClassName:
+
   # Astronomer modules
   modules:
 
@@ -63,8 +66,6 @@ airflow:
     # Enable persistence to keep logs around between deploys
     persistence:
       enabled: true
-      # If using a custom storageClass, pass name ref to all statefulSets here
-      storageClassName:
 
 #################################
 ## Astronomer configuration
