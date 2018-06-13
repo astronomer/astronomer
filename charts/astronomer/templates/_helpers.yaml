@@ -10,5 +10,5 @@
 {{- end }}
 
 {{- define "houston_jwt_passphrase" }}
-  {{- randAlphaNum 32 }}
+  {{- randAlphaNum 32 | b64enc }}
 {{- end }}
