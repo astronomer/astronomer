@@ -48,6 +48,10 @@ global:
     grafana:
       enabled: true
 
+    # Enable Prometheus module
+    prometheus:
+      enabled: true
+
 #################################
 ## Nginx configuration
 #################################
