@@ -64,7 +64,7 @@ spec:
             - name: HELM_GLOBAL_CONFIG
               value: {{- include "helm_globals" . | quote | indent 1 }}
             - name: AUTH_STRATEGY
-              value: "local"
+              value: {{- include "auth_strategies" . | trimSuffix "," | quote | indent 1 }}
             - name: COMMANDER_HOST
               value: "{{ .Release.Name }}-commander"
             - name: COMMANDER_PORT

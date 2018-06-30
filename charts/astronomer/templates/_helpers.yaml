@@ -12,3 +12,12 @@
 {{- define "houston_jwt_passphrase" }}
   {{- randAlphaNum 32 | b64enc }}
 {{- end }}
+
+{{ define "auth_strategies" -}}
+  {{- if or .Values.auth.local -}}
+    local,
+  {{- end -}}
+  {{- if or .Values.auth.google_oauth -}}
+    google_oauth,
+  {{- end -}}
+{{- end }}

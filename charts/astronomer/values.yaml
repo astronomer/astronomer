@@ -21,3 +21,7 @@ data:
 persistence:
   enabled: true
   size: 50Gi
+
+auth:
+  local: true
+  google_oauth: true
