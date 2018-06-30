@@ -9,6 +9,7 @@ metadata:
     tier: airflow-monitoring
     component: prometheus
     release: {{ .Release.Name }}
+    workspace: {{ .Values.workspace }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
 spec:
@@ -17,6 +18,7 @@ spec:
     tier: airflow-monitoring
     component: prometheus
     release: {{ .Release.Name }}
+    workspace: {{ .Values.workspace }}
   ports:
     - name: prometheus-data
       protocol: TCP

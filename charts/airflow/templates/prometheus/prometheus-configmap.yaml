@@ -9,6 +9,7 @@ metadata:
     tier: airflow-monitoring
     component: prometheus
     release: {{ .Release.Name }}
+    workspace: {{ .Values.workspace }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
 data:

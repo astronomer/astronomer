@@ -9,6 +9,7 @@ metadata:
     tier: airflow-monitoring
     component: prometheus
     release: {{ .Release.Name }}
+    workspace: {{ .Values.workspace }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
 spec:
@@ -18,12 +19,14 @@ spec:
       tier: airflow-monitoring
       component: prometheus
       release: {{ .Release.Name }}
+      workspace: {{ .Values.workspace }}
   template:
     metadata:
       labels:
         tier: airflow-monitoring
         component: prometheus
         release: {{ .Release.Name }}
+        workspace: {{ .Values.workspace }}
       annotations:
         checksum/configmap: {{ include (print $.Template.BasePath "/prometheus/prometheus-configmap.yaml") . | sha256sum }}
     spec:

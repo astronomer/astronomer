@@ -9,6 +9,7 @@ metadata:
   labels:
     tier: airflow-monitoring
     release: {{ .Release.Name }}
+    workspace: {{ .Values.workspace }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
 roleRef:

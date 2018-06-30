@@ -48,6 +48,8 @@ prometheus:
     enabled: true
     size: 50Gi
 
+workspace: default
+
 # Environment variables for all airflow containers
 env:
 

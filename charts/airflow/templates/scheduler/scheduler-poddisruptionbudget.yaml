@@ -6,6 +6,7 @@ metadata:
     tier: airflow
     component: scheduler
     release: {{ .Release.Name }}
+    workspace: {{ .Values.workspace }}
     chart: {{ .Chart.Name }}
     heritage: {{ .Release.Service }}
 spec:
@@ -14,4 +15,5 @@ spec:
       tier: airflow
       component: scheduler
       release: {{ .Release.Name }}
+      workspace: {{ .Values.workspace }}
 {{ toYaml .Values.scheduler.podDisruptionBudget | indent 2 }}

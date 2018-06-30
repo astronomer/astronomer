@@ -10,6 +10,7 @@ metadata:
     tier: airflow-networking
     component: airflow-ingress
     release: {{ .Release.Name }}
+    workspace: {{ .Values.workspace }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
   annotations:
