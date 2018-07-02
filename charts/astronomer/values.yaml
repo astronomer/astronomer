@@ -23,5 +23,9 @@ persistence:
   size: 50Gi
 
 auth:
-  local: true
-  google_oauth: true
+  local:
+    eanbled: true
+  google:
+    enabled: true
+    client_id:
+    client_secret:

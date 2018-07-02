@@ -69,6 +69,15 @@ spec:
               value: "{{ .Release.Name }}-commander"
             - name: COMMANDER_PORT
               value: "50051"
+            - name: GOOGLE_OAUTH_REDIRECT_URL
+              value: "https://houston.astronomer.win/healthz"
+            - name: GOOGLE_CLIENT_ID
+              value: {{ .Values.auth.google.client_id }}
+            - name: GOOGLE_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-google-client-secret
+                  key: client_id
             - name: JWT_PASSPHRASE
               valueFrom:
                 secretKeyRef:
@@ -89,8 +98,3 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.data.airflowRedisSecret }}
                   key: connection
-            - name: BASIC_AUTHS
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.global.nginxAuthSecret }}
-                  key: auth

@@ -76,6 +76,9 @@ astronomer:
     size: 50Gi
 
   auth:
-    local: true
-    google_oauth: true
-
+    local:
+      enabled: true
+    google:
+      enabled: true
+      client_id: "405410476024-5ij9hem7854f07lo1pvubjuh8ephp5vq.apps.googleusercontent.com"
+      client_secret: "vDsVBypsUFsP-gM4CLOCaIbS"
