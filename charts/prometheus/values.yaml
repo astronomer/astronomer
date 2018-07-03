@@ -10,3 +10,5 @@ dataDir: "/prometheus"
 persistence:
   enabled: true
   size: 50Gi
+
+workspace: default
