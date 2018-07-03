@@ -1,5 +1,5 @@
 ################################
-## Airflow Prometheus ClusterRole
+## Prometheus ClusterRole
 #################################
 {{- if .Values.global.rbacEnabled }}
 kind: ClusterRole

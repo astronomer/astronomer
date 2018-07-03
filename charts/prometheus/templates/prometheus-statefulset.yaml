@@ -1,5 +1,5 @@
 ################################
-## Airflow Prometheus StatefulSet
+## Prometheus StatefulSet
 #################################
 kind: StatefulSet
 apiVersion: apps/v1beta2

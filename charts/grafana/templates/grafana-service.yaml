@@ -1,5 +1,5 @@
 ################################
-## Airflow Grafana Service
+## Grafana Service
 #################################
 kind: Service
 apiVersion: v1

@@ -1,5 +1,5 @@
 ################################
-## Airflow Prometheus Cluster Role Binding
+## Prometheus Cluster Role Binding
 #################################
 {{- if .Values.global.rbacEnabled }}
 kind: ClusterRoleBinding
