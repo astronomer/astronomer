@@ -4,4 +4,4 @@
 
 image: astronomerinc/ap-grafana:0.2.0
 
-grafanaBackendSecret: "grafana-backend"
+grafanaBackendSecret: grafana-backend
