@@ -9,8 +9,8 @@ dependencies:
     version: 0.2.1
     condition: global.modules.nginx.enabled,global.baseDomain
   - name: grafana
-    version: 0.2.1
+    version: 0.2.0
     condition: global.modules.grafana.enabled
   - name: prometheus
-    version: 0.2.1
+    version: 0.2.0
     condition: global.modules.prometheus.enabled

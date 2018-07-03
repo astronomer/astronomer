@@ -6,7 +6,7 @@ apiVersion: apps/v1beta2
 metadata:
   name: {{ .Release.Name }}-statsd
   labels:
-    tier: airflow-monitoring
+    tier: monitoring
     component: statsd
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
@@ -15,13 +15,13 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      tier: airflow-monitoring
+      tier: monitoring
       component: statsd
       release: {{ .Release.Name }}
   template:
     metadata:
       labels:
-        tier: airflow-monitoring
+        tier: monitoring
         component: statsd
         release: {{ .Release.Name }}
     spec:
