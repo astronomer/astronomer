@@ -6,7 +6,7 @@ apiVersion: apps/v1beta2
 metadata:
   name: {{ .Release.Name }}-grafana
   labels:
-    tier: airflow-monitoring
+    tier: monitoring
     component: grafana
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
@@ -15,20 +15,20 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      tier: airflow-monitoring
+      tier: monitoring
       component: grafana
       release: {{ .Release.Name }}
   template:
     metadata:
       labels:
-        tier: airflow-monitoring
+        tier: monitoring
         component: grafana
         release: {{ .Release.Name }}
     spec:
       restartPolicy: Always
       containers:
         - name: {{ .Release.Name }}-grafana
-          image: {{ .Values.images.grafana }}
+          image: {{ .Values.image }}
           ports:
             - name: grafana-ui
               containerPort: 3000
@@ -48,7 +48,7 @@ spec:
             - name: GF_DATABASE_URL
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.data.grafanaBackendSecret }}
+                  name: {{ .Values.grafanaBackendSecret }}
                   key: connection
             - name: GF_AUTH_ANONYMOUS_ENABLED
               value: "true"
