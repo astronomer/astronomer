@@ -10,7 +10,6 @@ gid: 101
 images:
   airflow: astronomerinc/ap-airflow:0.2.0
   statsdExporter: astronomerinc/ap-statsd-exporter:0.2.0
-  prometheus: astronomerinc/ap-prometheus:0.2.0
 
 # Airflow Worker Config
 workers:
@@ -37,15 +36,6 @@ scheduler:
 
     # Ensure we have one replica always running
     maxUnavailable: 1
-
-# Prometheus Configs
-prometheus:
-  dataDir: "/prometheus"
-
-  # Enable persistence for Prometheus
-  persistence:
-    enabled: true
-    size: 50Gi
 
 # Environment variables for all airflow containers
 env:

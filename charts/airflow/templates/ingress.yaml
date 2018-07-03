@@ -32,7 +32,6 @@ spec:
       hosts:
         - {{- include "airflow_url" . | indent 1 }}
         - {{- include "flower_url" . | indent 1 }}
-        - {{- include "prometheus_url" . | indent 1 }}
   {{- end }}
   rules:
     - host: {{- include "airflow_url" . | indent 1 }}
@@ -49,11 +48,4 @@ spec:
             backend:
               serviceName: {{ .Release.Name }}-flower
               servicePort: flower-ui
-    - host: {{- include "prometheus_url" . | indent 1 }}
-      http:
-        paths:
-          - path: /
-            backend:
-              serviceName: {{ .Release.Name }}-prometheus
-              servicePort: prometheus-data
 {{- end }}
