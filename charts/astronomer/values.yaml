@@ -21,3 +21,11 @@ data:
 persistence:
   enabled: true
   size: 50Gi
+
+auth:
+  local:
+    eanbled: true
+  google:
+    enabled: true
+    client_id:
+    client_secret:
