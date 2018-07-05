@@ -33,7 +33,7 @@ data:
     scrape_configs:
       - job_name: 'airflow'
         static_configs:
-          - targets: ["{{ .Release.Name }}-statsd:9102"]
+          - targets: ["hipster-hedgehog-statsd:9102"]
 
       - job_name: kubernetes-nodes-cadvisor
         scrape_interval: 10s
