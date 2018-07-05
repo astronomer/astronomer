@@ -21,4 +21,3 @@ subjects:
     name: {{ .Release.Name }}-prometheus
     namespace: {{ .Release.Namespace }}
 {{- end }}
-

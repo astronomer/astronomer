@@ -11,7 +11,7 @@ After allowing a few minutes for the platform to come online, you can accesss re
 Webserver:            {{ if .Values.global.acme }}https://{{ else }}http://{{ end }}airflow.{{ .Values.global.baseDomain }}
 Flower:               {{ if .Values.global.acme }}https://{{ else }}http://{{ end }}flower.{{ .Values.global.baseDomain }}
 Container Dashboard:  {{ if .Values.global.acme }}https://{{ else }}http://{{ end }}grafana.{{ .Values.global.baseDomain }}/dashboard/db/airflow-containers
-Scheduler Dashboard:  {{ if .Values.global.acme }}https://{{ else }}http://{{ end }}grafana.{{ .Values.global.baseDomain }}/dashboard/db/airflow-scheduler 
+Scheduler Dashboard:  {{ if .Values.global.acme }}https://{{ else }}http://{{ end }}grafana.{{ .Values.global.baseDomain }}/dashboard/db/airflow-scheduler
 Prometheus UI:        {{ if .Values.global.acme }}https://{{ else }}http://{{ end }}prometheus.{{ .Values.global.baseDomain }}
 Registry:             {{ if .Values.global.acme }}https://{{ else }}http://{{ end }}registry.{{ .Values.global.baseDomain }}
 
