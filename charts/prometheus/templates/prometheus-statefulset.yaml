@@ -39,7 +39,7 @@ spec:
         - name: {{ .Release.Name }}-prometheus
           image: {{ .Values.image }}
           args:
-            - "--config.file=/etc/prometheus/config/kubernetes.yaml"
+            - "--config.file=/etc/prometheus/config/prometheus.yaml"
             - "--storage.tsdb.path={{ .Values.dataDir }}"
           volumeMounts:
             - name: prometheus-config-volume
@@ -68,8 +68,8 @@ spec:
           configMap:
             name: {{ .Release.Name }}-prometheus
             items:
-              - key: kubernetes.yaml
-                path: kubernetes.yaml
+              - key: prometheus.yaml
+                path: prometheus.yaml
   {{- if not .Values.persistence.enabled }}
         - name: prometheus-data-volume
           emptyDir: {}
