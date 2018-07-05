@@ -13,6 +13,9 @@ metadata:
     workspace: {{ .Values.workspace }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
+  annotations:
+    prometheus.io/scrape: 'true'
+    prometheus.io/port: '9102'
 spec:
   type: NodePort
   selector:

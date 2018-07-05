@@ -27,9 +27,6 @@ spec:
         component: statsd
         release: {{ .Release.Name }}
         workspace: {{ .Values.workspace }}
-      annotations:
-        prometheus.io/scrape: 'true'
-        prometheus.io/port: '9102'
     spec:
       restartPolicy: Always
       containers:
