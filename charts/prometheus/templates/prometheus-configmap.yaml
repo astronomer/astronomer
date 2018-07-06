@@ -31,9 +31,20 @@ data:
       evaluation_interval: 30s
 
     scrape_configs:
-      - job_name: 'airflow'
-        static_configs:
-          - targets: ["hipster-hedgehog-statsd:9102"]
+      - job_name: airflow
+        scrape_interval: 2s
+        kubernetes_sd_configs:
+          - role: service
+        relabel_configs:
+        #   - source_labels: [__meta_kubernetes_service_label_tier]
+        #     action: keep
+        #     regex: "airflow"
+        #   - source_labels: [__meta_kubernetes_service_label_component]
+        #     action: keep
+        #     regex: "scheduler"
+          - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scrape]
+            action: keep
+            regex: true
 
       - job_name: kubernetes-nodes-cadvisor
         scrape_interval: 10s
