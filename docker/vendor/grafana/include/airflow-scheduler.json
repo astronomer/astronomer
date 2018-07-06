@@ -1,40 +1,4 @@
 {
-  "__inputs": [
-    {
-      "name": "DS_PROMETHEUS",
-      "label": "Prometheus",
-      "description": "",
-      "type": "datasource",
-      "pluginId": "prometheus",
-      "pluginName": "Prometheus"
-    }
-  ],
-  "__requires": [
-    {
-      "type": "grafana",
-      "id": "grafana",
-      "name": "Grafana",
-      "version": "5.0.0-pre1"
-    },
-    {
-      "type": "panel",
-      "id": "graph",
-      "name": "Graph",
-      "version": ""
-    },
-    {
-      "type": "datasource",
-      "id": "prometheus",
-      "name": "Prometheus",
-      "version": "1.0.0"
-    },
-    {
-      "type": "panel",
-      "id": "singlestat",
-      "name": "Singlestat",
-      "version": ""
-    }
-  ],
   "annotations": {
     "list": [
       {
@@ -51,7 +15,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": null,
+  "id": 2,
   "links": [],
   "panels": [
     {
@@ -115,7 +79,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "airflow_scheduler_heartbeat",
+          "expr": "sum(airflow_scheduler_heartbeat)",
           "format": "time_series",
           "intervalFactor": 2,
           "refId": "A"
@@ -195,7 +159,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "airflow_collect_dags",
+          "expr": "sum(airflow_collect_dags)",
           "format": "time_series",
           "intervalFactor": 2,
           "refId": "A"
@@ -275,7 +239,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "airflow_dagbag_size",
+          "expr": "sum(airflow_dagbag_size)",
           "format": "time_series",
           "intervalFactor": 2,
           "refId": "A"
@@ -355,7 +319,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "airflow_localtaskjob_start - airflow_localtaskjob_end",
+          "expr": "sum(airflow_localtaskjob_start - airflow_localtaskjob_end)\n",
           "format": "time_series",
           "intervalFactor": 1,
           "refId": "A"
@@ -435,7 +399,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "airflow_ti_successes",
+          "expr": "sum(airflow_ti_successes)",
           "format": "time_series",
           "intervalFactor": 2,
           "refId": "A"
@@ -515,7 +479,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "airflow_ti_failures",
+          "expr": "sum(airflow_ti_failures)",
           "format": "time_series",
           "intervalFactor": 2,
           "refId": "A"
@@ -980,5 +944,6 @@
   },
   "timezone": "",
   "title": "Airflow Scheduler",
-  "version": 1
+  "uid": "7k1BGXDmz",
+  "version": 2
 }
