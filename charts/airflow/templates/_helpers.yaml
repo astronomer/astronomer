@@ -44,6 +44,11 @@
       secretKeyRef:
         name: {{ .Values.data.airflowBrokerSecret }}
         key: connection
+  - name: AIRFLOW__CORE__FERNET_KEY
+    valueFrom:
+      secretKeyRef:
+        name: {{ .Release.Name }}-fernet-key
+        key: fernet-key
 {{- end }}
 
 {{ define "airflow_url" -}}
@@ -60,4 +65,8 @@
 
 {{ define "prometheus_url" -}}
 {{ .Release.Name }}-prometheus.{{ .Values.global.baseDomain }}
+{{- end }}
+
+{{ define "fernet_key" -}}
+{{ (randAlphaNum 32 | b64enc) | b64enc }}
 {{- end }}
