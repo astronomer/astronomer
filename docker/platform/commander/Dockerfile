@@ -36,7 +36,7 @@ ENV PATH=${PATH}:${GOBIN}
 WORKDIR /usr/lib/go/src/${REPO}
 
 RUN apk update && \
-    apk add --no-cache --virtual .build-deps \
+	apk add --no-cache --virtual .build-deps \
 		build-base \
 		git \
 		go \
@@ -54,8 +54,8 @@ RUN apk update && \
 	&& google-cloud-sdk/install.sh \
 	&& mkdir /opt \
 	&& mv google-cloud-sdk /opt \
-    && mkdir -p "${GOPATH}/src" \
-    && mkdir -p "${GOPATH}/bin" \
+	&& mkdir -p "${GOPATH}/src" \
+	&& mkdir -p "${GOPATH}/bin" \
 	&& rm -rf /usr/lib/go \
 	&& apk del .build-deps
 
