@@ -1,5 +1,5 @@
 ################################
-## Airflow Prometheus Cluster Role Binding
+## Prometheus Cluster Role Binding
 #################################
 {{- if .Values.global.rbacEnabled }}
 kind: ClusterRoleBinding
@@ -7,7 +7,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: {{ .Release.Name }}-prometheus
   labels:
-    tier: airflow-monitoring
+    tier: monitoring
     release: {{ .Release.Name }}
     workspace: {{ .Values.workspace }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
@@ -21,4 +21,3 @@ subjects:
     name: {{ .Release.Name }}-prometheus
     namespace: {{ .Release.Namespace }}
 {{- end }}
-

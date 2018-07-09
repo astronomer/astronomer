@@ -1,14 +1,14 @@
 ################################
-## Astronomer Ingress
+## Grafana Ingress
 #################################
 {{- if .Values.global.baseDomain }}
 kind: Ingress
 apiVersion: extensions/v1beta1
 metadata:
-  name: {{ .Release.Name }}-public-ingress
+  name: {{ .Release.Name }}-grafana-ingress
   labels:
-    component: public-ingress
-    tier: astronomer
+    tier: grafana-networking
+    component: grafana-ingress
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
@@ -19,20 +19,20 @@ spec:
   {{- if or .Values.global.tlsSecret .Values.global.acme }}
   tls:
   {{- if .Values.global.acme }}
-    - secretName: astronomer-public-tls
+    - secretName: grafana-tls
   {{- end }}
   {{- if .Values.global.tlsSecret }}
     - secretName: {{ .Values.global.tlsSecret }}
   {{- end }}
       hosts:
-        - houston.{{ .Values.global.baseDomain }}
+        - {{- include "grafana_url" . | indent 1 }}
   {{- end }}
   rules:
-  - host: houston.{{ .Values.global.baseDomain }}
-    http:
-      paths:
-        - path: /
-          backend:
-            serviceName: {{ .Release.Name }}-houston
-            servicePort: houston-http
+    - host: {{- include "grafana_url" . | indent 1 }}
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: {{ .Release.Name }}-grafana
+              servicePort: grafana-ui
 {{- end }}

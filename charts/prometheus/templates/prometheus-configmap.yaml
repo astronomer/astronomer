@@ -1,27 +1,44 @@
+# TODO: figure out how to change - targets: ["{{ .Release.Name }}-statsd:9102"] to airflow release names
+#   - can we do scrape anything with a certain annotation to match dynamic airflow?
+#   - https://prometheus.io/docs/prometheus/latest/configuration/configuration/#kubernetes_sd_config
+#   - may need to change the airflow chart to stamp a /scrape or .scrape etc
+#
+# read about:
+#   - relabel_configs - mapping service discovery metadata to target labels; happens when figuring out what to scrape.
+#   - metric_relabel_configs - metric relabelling is relabelling applied to time series scraped from a target; happens after scraping has occurred.  actions are: keep, drop, replace, labelmap.
+#
+# test:
+#   - deploy to my local k8s, get the node port of prom to see prom monitoring ui, add the annotation to the statsd container, hopefully deploying with scrape tag will make extra metrics show up
+
 ################################
-## Airflow Prometheus ConfigMap
+## Prometheus ConfigMap
 #################################
 kind: ConfigMap
 apiVersion: v1
 metadata:
   name: {{ .Release.Name }}-prometheus
   labels:
-    tier: airflow-monitoring
+    tier: monitoring
     component: prometheus
     release: {{ .Release.Name }}
     workspace: {{ .Values.workspace }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
 data:
-  kubernetes.yaml: |-
+  prometheus.yaml: |-
     global:
       scrape_interval: 5s
       evaluation_interval: 30s
 
     scrape_configs:
-      - job_name: 'airflow'
-        static_configs:
-          - targets: ["{{ .Release.Name }}-statsd:9102"]
+      - job_name: airflow
+        scrape_interval: 2s
+        kubernetes_sd_configs:
+          - role: service
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scrape]
+            action: keep
+            regex: true
 
       - job_name: kubernetes-nodes-cadvisor
         scrape_interval: 10s

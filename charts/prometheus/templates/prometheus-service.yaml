@@ -1,13 +1,13 @@
 ################################
-## Airflow Grafana Service
+## Prometheus Service
 #################################
 kind: Service
 apiVersion: v1
 metadata:
-  name: {{ .Release.Name }}-grafana
+  name: {{ .Release.Name }}-prometheus
   labels:
-    tier: airflow-monitoring
-    component: grafana
+    tier: monitoring
+    component: prometheus
     release: {{ .Release.Name }}
     workspace: {{ .Values.workspace }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
@@ -15,12 +15,12 @@ metadata:
 spec:
   type: NodePort
   selector:
-    tier: airflow-monitoring
-    component: grafana
+    tier: monitoring
+    component: prometheus
     release: {{ .Release.Name }}
     workspace: {{ .Values.workspace }}
   ports:
-    - name: grafana-ui
+    - name: prometheus-data
       protocol: TCP
-      port: 3000
-      targetPort: 3000
+      port: 9090
+      targetPort: 9090
