@@ -10,6 +10,7 @@ images:
   commander: astronomerinc/ap-commander
   registry: astronomerinc/ap-registry
   houston: astronomerinc/ap-houston-api
+  orbit: astronomerinc/ap-orbit-ui
 
 imageTag: 0.2.0
 

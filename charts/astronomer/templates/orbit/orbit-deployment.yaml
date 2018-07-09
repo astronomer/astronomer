@@ -1,0 +1,53 @@
+################################
+## Astronomer Houston Deployment
+#################################
+kind: Deployment
+apiVersion: apps/v1beta2
+metadata:
+  name: {{ .Release.Name }}-orbit
+  labels:
+    component: orbit
+    tier: astronomer
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: orbit
+      tier: astronomer
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        component: orbit
+        tier: astronomer
+        release: {{ .Release.Name }}
+    spec:
+      restartPolicy: Always
+      securityContext:
+        runAsUser: {{ .Values.uid }}
+      containers:
+        - name: {{ .Release.Name }}-orbit
+          image: {{- include "orbit_image" . | indent 1 }}
+          ports:
+            - name: orbit-http
+              containerPort: 5000
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 5000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 5000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          env:
+            - name: APP_API_LOC_HTTPS
+              value: "{{ .Release.Name }}-houston"
+            - name: APP_API_LOC_WSS
+              value:  "{{ .Release.Name }}-houston-http"
