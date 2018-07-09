@@ -30,7 +30,7 @@ spec:
       serviceAccountName: {{ .Release.Name }}-nginx-ingress-controller
       containers:
         - name: {{ .Release.Name }}-nginx
-          image: {{ .Values.images.nginxIngress }}
+          image: {{- include "nginx_image" . | indent 1 }}
           args:
             - /nginx-ingress-controller
             - --default-backend-service={{ .Release.Namespace }}/{{ .Release.Name }}-nginx-default-backend

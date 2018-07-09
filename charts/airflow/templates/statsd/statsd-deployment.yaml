@@ -28,7 +28,7 @@ spec:
       restartPolicy: Always
       containers:
         - name: {{ .Release.Name }}-statsd
-          image: {{ .Values.images.statsdExporter }}
+          image: {{- include "statsd_image" . | indent 1 }}
           args:
             - "-statsd.mapping-config=/etc/statsd-exporter/mappings.yml"
           ports:

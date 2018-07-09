@@ -12,3 +12,15 @@
 {{- define "houston_jwt_passphrase" }}
   {{- randAlphaNum 32 | b64enc }}
 {{- end }}
+
+{{ define "commander_image" -}}
+{{ .Values.images.commander }}:{{ or .Values.global.imageTag .Values.imageTag }}
+{{- end }}
+
+{{ define "houston_image" -}}
+{{ .Values.images.houston }}:{{ or .Values.global.imageTag .Values.imageTag }}
+{{- end }}
+
+{{ define "registry_image" -}}
+{{ .Values.images.registry }}:{{ or .Values.global.imageTag .Values.imageTag }}
+{{- end }}
