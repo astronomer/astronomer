@@ -2,14 +2,13 @@
 {{ print "{" -}}
 {{ printf "\"baseDomain\":\"%v\"," .Values.global.baseDomain -}}
 {{ printf "\"registryAuthSecret\":\"%v\"," .Values.global.registryAuthSecret -}}
-{{ printf "\"nginxAuthSecret\":\"%v\"," .Values.global.nginxAuthSecret -}}
 {{ printf "\"acme\":%v," (print .Values.global.acme | toString) -}}
 {{ printf "\"rbacEnabled\":%v," (print .Values.global.rbacEnabled | toString) -}}
 {{ printf "\"tlsSecret\":\"%v\"" (print .Values.global.tlsSecret | toString | replace "<nil>" "") -}}
 {{ print "}" -}}
 {{- end }}
 
-{{- define "houston_jwt_passphrase" }}
+{{- define "random_string" }}
   {{- randAlphaNum 32 | b64enc }}
 {{- end }}
 
@@ -23,4 +22,13 @@
 
 {{ define "registry_image" -}}
 {{ .Values.images.registry }}:{{ or .Values.global.imageTag .Values.imageTag }}
+{{- end }}
+
+{{ define "auth_strategies" -}}
+  {{- if or .Values.auth.local.enabled -}}
+    local,
+  {{- end -}}
+  {{- if or .Values.auth.google.enabled -}}
+    google_oauth,
+  {{- end -}}
 {{- end }}

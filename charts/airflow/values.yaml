@@ -14,6 +14,7 @@ images:
   grafana: astronomerinc/ap-grafana
 
 imageTag: 0.2.0
+imageTagStatsD: 0.2.0  # FIXME
 
 # Airflow Worker Config
 workers:
@@ -41,21 +42,11 @@ scheduler:
     # Ensure we have one replica always running
     maxUnavailable: 1
 
-# Prometheus Configs
-prometheus:
-  dataDir: "/prometheus"
-
-  # Enable persistence for Prometheus
-  persistence:
-    enabled: true
-    size: 50Gi
-
 # Environment variables for all airflow containers
 env:
 
 # Astronomer Airflow database config
 data:
-  airflowMetadataSecret: "airflow-metadata"
-  airflowResultBackendSecret: "airflow-result-backend"
-  airflowBrokerSecret: "airflow-broker"
-  grafanaBackendSecret: "grafana-backend"
+  airflowMetadataSecret: airflow-metadata
+  airflowResultBackendSecret: airflow-result-backend
+  airflowBrokerSecret: airflow-broker

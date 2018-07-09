@@ -6,24 +6,27 @@ apiVersion: apps/v1beta2
 metadata:
   name: {{ .Release.Name }}-statsd
   labels:
-    tier: airflow-monitoring
+    tier: monitoring
     component: statsd
     release: {{ .Release.Name }}
+    workspace: {{ .Values.workspace }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      tier: airflow-monitoring
+      tier: monitoring
       component: statsd
       release: {{ .Release.Name }}
+      workspace: {{ .Values.workspace }}
   template:
     metadata:
       labels:
-        tier: airflow-monitoring
+        tier: monitoring
         component: statsd
         release: {{ .Release.Name }}
+        workspace: {{ .Values.workspace }}
     spec:
       restartPolicy: Always
       containers:

@@ -1,33 +1,36 @@
 ################################
-## Airflow Grafana Deployment
+## Grafana Deployment
 #################################
 kind: Deployment
 apiVersion: apps/v1beta2
 metadata:
-  name: {{ .Release.Name }}-grafana
+  name: "{{ .Release.Name }}-grafana"
   labels:
-    tier: airflow-monitoring
+    tier: monitoring
     component: grafana
     release: {{ .Release.Name }}
+    workspace: {{ .Values.workspace }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      tier: airflow-monitoring
+      tier: monitoring
       component: grafana
       release: {{ .Release.Name }}
+      workspace: {{ .Values.workspace }}
   template:
     metadata:
       labels:
-        tier: airflow-monitoring
+        tier: monitoring
         component: grafana
         release: {{ .Release.Name }}
+        workspace: {{ .Values.workspace }}
     spec:
       restartPolicy: Always
       containers:
-        - name: {{ .Release.Name }}-grafana
+        - name: "{{ .Release.Name }}-grafana"
           image: {{- include "grafana_image" . | indent 1 }}
           ports:
             - name: grafana-ui
@@ -48,7 +51,7 @@ spec:
             - name: GF_DATABASE_URL
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.data.grafanaBackendSecret }}
+                  name: {{ .Values.grafanaBackendSecret }}
                   key: connection
             - name: GF_AUTH_ANONYMOUS_ENABLED
               value: "true"

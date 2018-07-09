@@ -1,0 +1,3 @@
+{{ define "prometheus_image" -}}
+{{ .Values.images.prometheus }}:{{ or .Values.global.imageTag .Values.imageTag }}
+{{- end }}

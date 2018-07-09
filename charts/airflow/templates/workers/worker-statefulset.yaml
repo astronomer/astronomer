@@ -9,6 +9,7 @@ metadata:
     tier: airflow
     component: worker
     release: {{ .Release.Name }}
+    workspace: {{ .Values.workspace }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
 spec:
@@ -20,12 +21,14 @@ spec:
       tier: airflow
       component: worker
       release: {{ .Release.Name }}
+      workspace: {{ .Values.workspace }}
   template:
     metadata:
       labels:
         tier: airflow
         component: worker
         release: {{ .Release.Name }}
+        workspace: {{ .Values.workspace }}
     spec:
       terminationGracePeriodSeconds: {{ .Values.workers.terminationGracePeriodSeconds }}
       securityContext:

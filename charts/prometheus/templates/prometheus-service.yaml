@@ -1,22 +1,24 @@
 ################################
-## Airflow Prometheus Service
+## Prometheus Service
 #################################
 kind: Service
 apiVersion: v1
 metadata:
-  name: {{ .Release.Name }}-prometheus
+  name: "{{ .Release.Name }}-prometheus"
   labels:
-    tier: airflow-monitoring
+    tier: monitoring
     component: prometheus
     release: {{ .Release.Name }}
+    workspace: {{ .Values.workspace }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
 spec:
   type: NodePort
   selector:
-    tier: airflow-monitoring
+    tier: monitoring
     component: prometheus
     release: {{ .Release.Name }}
+    workspace: {{ .Values.workspace }}
   ports:
     - name: prometheus-data
       protocol: TCP
