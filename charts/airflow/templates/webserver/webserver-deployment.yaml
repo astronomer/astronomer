@@ -37,7 +37,7 @@ spec:
       {{- end }}
       containers:
         - name: {{ .Release.Name }}-webserver
-          image: {{ .Values.images.airflow }}
+          image: {{- include "airflow_image" . | indent 1 }}
           args: ["airflow", "webserver"]
           ports:
             - name: webserver-ui

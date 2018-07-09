@@ -30,7 +30,7 @@ spec:
         runAsUser: {{ .Values.uid }}
       containers:
         - name: {{ .Release.Name }}-houston
-          image: {{ .Values.images.houston }}
+          image: {{- include "houston_image" . | indent 1 }}
           ports:
             - name: houston-http
               containerPort: 8870

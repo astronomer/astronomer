@@ -2,8 +2,10 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 images:
-  nginxIngress: astronomerinc/ap-nginx:0.2.0
-  defaultBackend: astronomerinc/ap-default-backend:0.2.0
+  nginx: astronomerinc/ap-nginx
+  defaultBackend: astronomerinc/ap-default-backend
+
+imageTag: 0.2.0
 
 # IP address the nginx ingress should bind to
 loadBalancerIP:

@@ -7,9 +7,11 @@ uid: 100
 
 # Images for pilot
 images:
-  commander: astronomerinc/ap-commander:0.2.0
-  registry: astronomerinc/ap-registry:0.2.0
-  houston: astronomerinc/ap-houston-api:0.2.0
+  commander: astronomerinc/ap-commander
+  registry: astronomerinc/ap-registry
+  houston: astronomerinc/ap-houston-api
+
+imageTag: 0.2.0
 
 # Astronomer platform config
 data:

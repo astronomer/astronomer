@@ -31,7 +31,7 @@ spec:
       restartPolicy: Always
       containers:
         - name: {{ .Release.Name }}-grafana
-          image: {{ .Values.image }}
+          image: {{- include "grafana_image" . | indent 1 }}
           ports:
             - name: grafana-ui
               containerPort: 3000
