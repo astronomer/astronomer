@@ -26,8 +26,6 @@ spec:
         release: {{ .Release.Name }}
     spec:
       restartPolicy: Always
-      securityContext:
-        runAsUser: {{ .Values.uid }}
       containers:
         - name: {{ .Release.Name }}-orbit
           image: {{- include "orbit_image" . | indent 1 }}
@@ -37,17 +35,15 @@ spec:
           livenessProbe:
             httpGet:
               path: /
-              port: 5000
+              port: 8080
             initialDelaySeconds: 10
             periodSeconds: 10
           readinessProbe:
             httpGet:
               path: /
-              port: 5000
+              port: 8080
             initialDelaySeconds: 10
             periodSeconds: 10
           env:
             - name: APP_API_LOC_HTTPS
-              value: "{{ .Release.Name }}-houston"
-            - name: APP_API_LOC_WSS
-              value:  "{{ .Release.Name }}-houston-http"
+              value: "https://houston.{{ .Values.global.baseDomain }}/v1"

@@ -27,7 +27,10 @@ persistence:
 
 auth:
   local:
-    eanbled: true
+    enabled: true
+  registry:
+    issuer: houston
+    expireDays: 3650
   google:
     enabled: true
     client_id:
