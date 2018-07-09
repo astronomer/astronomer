@@ -10,7 +10,7 @@ Download the CLI:
 
 Manage the platform with the UI:
 
-https://orbit.{{ .Values.global.baseDomain }}
+https://app.{{ .Values.global.baseDomain }}
 
 We have some guides available at https://enterprise.astronomer.io/guides/ and are always available to help.
 

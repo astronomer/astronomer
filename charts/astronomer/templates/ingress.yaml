@@ -27,6 +27,7 @@ spec:
       hosts:
         - houston.{{ .Values.global.baseDomain }}
         - registry.{{ .Values.global.baseDomain }}
+        - app.{{ .Values.global.baseDomain }}
   {{- end }}
   rules:
   - host: houston.{{ .Values.global.baseDomain }}
@@ -43,4 +44,12 @@ spec:
           backend:
             serviceName: {{ .Release.Name }}-registry
             servicePort: registry-http
+  - host: app.{{ .Values.global.baseDomain }}
+    http:
+      paths:
+        - path: /
+          backend:
+            serviceName: {{ .Release.Name }}-orbit
+            servicePort: orbit-http
+
 {{- end }}
