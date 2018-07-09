@@ -34,6 +34,8 @@ spec:
           volumeMounts:
             - name: registry-config-volume
               mountPath: /etc/docker/registry
+            - name: registry-certificate-volume
+              mountPath: /etc/docker/ssl
             {{- if .Values.persistence.enabled }}
             - name: registry-data-volume
               mountPath: /var/lib/registry
@@ -60,6 +62,9 @@ spec:
             items:
               - key: config.yml
                 path: config.yml
+        - name: registry-certificate-volume
+          secret:
+            secretName: {{ .Release.Name }}-registry-auth-cert
   {{- if not .Values.persistence.enabled }}
         - name: registry-data-volume
           emptyDir: {}
