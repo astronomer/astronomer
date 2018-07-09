@@ -30,7 +30,7 @@ spec:
       restartPolicy: Always
       containers:
         - name: {{ .Release.Name }}-registry
-          image: {{ .Values.images.registry }}
+          image: {{- include "registry_image" . | indent 1 }}
           volumeMounts:
             - name: registry-config-volume
               mountPath: /etc/docker/registry

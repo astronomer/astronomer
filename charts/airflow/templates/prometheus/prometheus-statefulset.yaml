@@ -34,7 +34,7 @@ spec:
         fsGroup: 1000
       containers:
         - name: {{ .Release.Name }}-prometheus
-          image: {{ .Values.images.prometheus }}
+          image: {{- include "prometheus_image" . | indent 1 }}
           args:
             - "--config.file=/etc/prometheus/config/kubernetes.yaml"
             - "--storage.tsdb.path={{ .Values.prometheus.dataDir }}"
