@@ -7,10 +7,18 @@ function build_component () {
     DOCKER_DIR="docker/${1}/${2}"
     DOCKER_FILE="${DOCKER_DIR}/Dockerfile"
     COMPONENT_NAME="ap-${2}"
+    BUILD_ARGS="--build-arg BUILD_NUMBER=${BUILD_NUMBER}"
+
+    # If we're building an RC, build platform components from master
+    if [ -v "ASTRONOMER_RC_VERSION" ] && [[ "${PLATFORM_RC_COMPONENTS}" =~ ${2} ]] ; then
+        BUILD_ARGS="${BUILD_ARGS} --build-arg VERSION=master"
+    fi
+
+    echo ${BUILD_ARGS}
 
     # Build normal components
     if [ -f "${DOCKER_FILE}" ]; then
-        docker build --build-arg BUILD_NUMBER="${BUILD_NUMBER}" -t "${REPOSITORY}/${COMPONENT_NAME}:latest" -f "${DOCKER_FILE}" "${DOCKER_DIR}" || exit 1
+        docker build ${BUILD_ARGS} -t "${REPOSITORY}/${COMPONENT_NAME}:latest" -f "${DOCKER_FILE}" "${DOCKER_DIR}" || exit 1
         docker tag "${REPOSITORY}/${COMPONENT_NAME}:latest" "${REPOSITORY}/${COMPONENT_NAME}:${ASTRONOMER_VERSION}"
     fi
 
@@ -19,7 +27,7 @@ function build_component () {
 
     # Build onbuild components
     if [ -f "${ONBUILD_DOCKER_FILE}" ]; then
-        docker build --build-arg BUILD_NUMBER="${BUILD_NUMBER}" -t "${REPOSITORY}/${COMPONENT_NAME}:latest-onbuild" -f "${ONBUILD_DOCKER_FILE}" "${ONBUILD_DOCKER_DIR}" || exit 1
+        docker build ${BUILD_ARGS} -t "${REPOSITORY}/${COMPONENT_NAME}:latest-onbuild" -f "${ONBUILD_DOCKER_FILE}" "${ONBUILD_DOCKER_DIR}" || exit 1
         docker tag "${REPOSITORY}/${COMPONENT_NAME}:latest-onbuild" "${REPOSITORY}/${COMPONENT_NAME}:${ASTRONOMER_VERSION}-onbuild"
     fi
 }
