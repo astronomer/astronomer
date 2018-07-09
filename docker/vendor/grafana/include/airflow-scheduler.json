@@ -115,7 +115,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "airflow_scheduler_heartbeat",
+          "expr": "sum(airflow_scheduler_heartbeat)",
           "format": "time_series",
           "intervalFactor": 2,
           "refId": "A"
@@ -195,7 +195,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "airflow_collect_dags",
+          "expr": "sum(airflow_collect_dags)",
           "format": "time_series",
           "intervalFactor": 2,
           "refId": "A"
@@ -275,7 +275,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "airflow_dagbag_size",
+          "expr": "sum(airflow_dagbag_size)",
           "format": "time_series",
           "intervalFactor": 2,
           "refId": "A"
@@ -355,7 +355,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "airflow_localtaskjob_start - airflow_localtaskjob_end",
+          "expr": "sum(airflow_localtaskjob_start - airflow_localtaskjob_end)\n",
           "format": "time_series",
           "intervalFactor": 1,
           "refId": "A"
@@ -435,7 +435,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "airflow_ti_successes",
+          "expr": "sum(airflow_ti_successes)",
           "format": "time_series",
           "intervalFactor": 2,
           "refId": "A"
@@ -515,7 +515,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "airflow_ti_failures",
+          "expr": "sum(airflow_ti_failures)",
           "format": "time_series",
           "intervalFactor": 2,
           "refId": "A"
