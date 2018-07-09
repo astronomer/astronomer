@@ -21,10 +21,11 @@ LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
 LABEL io.astronomer.docker.module="astronomer"
 LABEL io.astronomer.docker.component="orbit-ui"
 
-ARG VERSION="v0.0.1"
+ARG VERSION="v0.0.3"
 ENV REPO="github.com/astronomerio/orbit-ui"
 ENV REPO_URL="https://${REPO}"
-ENV ORBIT_PATH=/srv/orbit-ui
+ENV ORBIT_PATH=/tmp/orbit-ui
+ENV SERVER_ROOT=/usr/share/nginx/html
 
 WORKDIR ${ORBIT_PATH}
 
@@ -32,10 +33,29 @@ RUN apk add --no-cache --virtual .build-deps \
 		build-base \
 		git \
 	&& apk add --no-cache \
+		gettext \
+		nginx \
 		nodejs \
 		openssl \
-	&& npm install -g ${REPO_URL} --unsafe \
+	&& git clone \
+		-c advice.detachedHead=false \
+		--depth 1 \
+		--branch ${VERSION} \
+		${REPO_URL} . \
+	&& npm install \
+	&& npm run build-production \
+	&& mkdir -p ${SERVER_ROOT} \
+	&& mv dist/* ${SERVER_ROOT} \
+	&& mv src/favicon.ico ${SERVER_ROOT} \
+	&& rm -rf ${ORBIT_PATH} \
+	&& mkdir -p /run/nginx \
 	&& apk del .build-deps
 
-EXPOSE 5000
-ENTRYPOINT ["orbit-api"]
+# Copy NGINX configuration to default location
+COPY include/nginx.conf /etc/nginx/nginx.conf.tpl
+
+# NGINX is configured to listen on 8080
+EXPOSE 8080
+
+# Run NGINX
+ENTRYPOINT ["/bin/sh", "-c", "envsubst '$APP_API_LOC_HTTPS $ANALYTICS_TRACKING_SNIPPET' < /etc/nginx/nginx.conf.tpl > /etc/nginx/nginx.conf && nginx -g 'daemon off;'"]

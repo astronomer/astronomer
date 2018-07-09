@@ -13,7 +13,7 @@ ASTRONOMER_PATCH_VERSION ?= 1
 ASTRONOMER_VERSION ?= "${ASTRONOMER_MAJOR_VERSION}.${ASTRONOMER_MINOR_VERSION}.${ASTRONOMER_PATCH_VERSION}"
 
 # List of all components and order to build.
-PLATFORM_COMPONENTS := base default-backend commander houston-api airflow
+PLATFORM_COMPONENTS := base default-backend commander houston-api orbit-ui airflow
 PLATFORM_ONBUILD_COMPONENTS := airflow
 VENDOR_COMPONENTS := nginx registry cadvisor grafana prometheus statsd-exporter
 ALL_COMPONENTS := ${PLATFORM_COMPONENTS} ${VENDOR_COMPONENTS}
