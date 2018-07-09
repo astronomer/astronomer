@@ -4,7 +4,7 @@
 kind: Service
 apiVersion: v1
 metadata:
-  name: {{ .Release.Name }}-prometheus
+  name: "{{ .Release.Name }}-prometheus"
   labels:
     tier: monitoring
     component: prometheus

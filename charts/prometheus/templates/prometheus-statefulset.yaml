@@ -4,7 +4,7 @@
 kind: StatefulSet
 apiVersion: apps/v1beta2
 metadata:
-  name: {{ .Release.Name }}-prometheus
+  name: "{{ .Release.Name }}-prometheus"
   labels:
     tier: monitoring
     component: prometheus
@@ -31,12 +31,12 @@ spec:
         checksum/configmap: {{ include (print $.Template.BasePath "/prometheus-configmap.yaml") . | sha256sum }}
     spec:
       restartPolicy: Always
-      serviceAccountName: {{ .Release.Name }}-prometheus
+      serviceAccountName: "{{ .Release.Name }}-prometheus"
       securityContext:
         runAsUser: 2000
         fsGroup: 1000
       containers:
-        - name: {{ .Release.Name }}-prometheus
+        - name: "{{ .Release.Name }}-prometheus"
           image: {{- include "prometheus_image" . | indent 1 }}
           args:
             - "--config.file=/etc/prometheus/config/prometheus.yaml"
@@ -66,7 +66,7 @@ spec:
       volumes:
         - name: prometheus-config-volume
           configMap:
-            name: {{ .Release.Name }}-prometheus
+            name: "{{ .Release.Name }}-prometheus"
             items:
               - key: prometheus.yaml
                 path: prometheus.yaml

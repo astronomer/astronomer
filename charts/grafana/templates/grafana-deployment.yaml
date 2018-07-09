@@ -4,7 +4,7 @@
 kind: Deployment
 apiVersion: apps/v1beta2
 metadata:
-  name: {{ .Release.Name }}-grafana
+  name: "{{ .Release.Name }}-grafana"
   labels:
     tier: monitoring
     component: grafana
@@ -30,7 +30,7 @@ spec:
     spec:
       restartPolicy: Always
       containers:
-        - name: {{ .Release.Name }}-grafana
+        - name: "{{ .Release.Name }}-grafana"
           image: {{- include "grafana_image" . | indent 1 }}
           ports:
             - name: grafana-ui
