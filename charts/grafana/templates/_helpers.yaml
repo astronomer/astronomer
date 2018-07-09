@@ -1,3 +1,7 @@
+{{ define "grafana_image" -}}
+{{ .Values.images.grafana }}:{{ or .Values.global.imageTag .Values.imageTag }}
+{{- end }}
+
 {{ define "grafana_url" -}}
 {{ .Release.Name }}-grafana.{{ .Values.global.baseDomain }}
 {{- end }}
