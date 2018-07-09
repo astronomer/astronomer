@@ -51,6 +51,9 @@ RUN apk add --no-cache --virtual .build-deps \
 	&& mkdir -p /run/nginx \
 	&& apk del .build-deps
 
+# Copy entrypoint to root
+COPY include/entrypoint /
+
 # Copy NGINX configuration to default location
 COPY include/nginx.conf /etc/nginx/nginx.conf.tpl
 
@@ -58,4 +61,4 @@ COPY include/nginx.conf /etc/nginx/nginx.conf.tpl
 EXPOSE 8080
 
 # Run NGINX
-ENTRYPOINT ["/bin/sh", "-c", "envsubst '$APP_API_LOC_HTTPS $ANALYTICS_TRACKING_SNIPPET' < /etc/nginx/nginx.conf.tpl > /etc/nginx/nginx.conf && nginx -g 'daemon off;'"]
+ENTRYPOINT ["/entrypoint"]
