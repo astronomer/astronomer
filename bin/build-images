@@ -14,8 +14,6 @@ function build_component () {
         BUILD_ARGS="${BUILD_ARGS} --build-arg VERSION=master"
     fi
 
-    echo ${BUILD_ARGS}
-
     # Build normal components
     if [ -f "${DOCKER_FILE}" ]; then
         docker build ${BUILD_ARGS} -t "${REPOSITORY}/${COMPONENT_NAME}:latest" -f "${DOCKER_FILE}" "${DOCKER_DIR}" || exit 1
