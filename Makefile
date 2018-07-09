@@ -13,8 +13,8 @@ ASTRONOMER_MINOR_VERSION ?= 3
 ASTRONOMER_PATCH_VERSION ?= 0
 ASTRONOMER_VERSION ?= "${ASTRONOMER_MAJOR_VERSION}.${ASTRONOMER_MINOR_VERSION}.${ASTRONOMER_PATCH_VERSION}"
 
-# Platform components
-PLATFORM_COMPONENTS := base default-backend commander houston-api airflow
+# List of all components and order to build.
+PLATFORM_COMPONENTS := base default-backend commander houston-api orbit-ui airflow
 PLATFORM_RC_COMPONENTS := default-backend commander houston-api
 PLATFORM_ONBUILD_COMPONENTS := airflow
 
