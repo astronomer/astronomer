@@ -62,8 +62,8 @@ spec:
     - metadata:
         name: logs
       spec:
-      {{- if .Values.global.storageClassName }}
-        storageClassName: {{ .Values.global.storageClassName }}
+      {{- if .Values.workers.persistence.storageClassName }}
+        storageClassName: {{ .Values.workers.persistence.storageClassName }}
       {{- end }}
         accessModes: ["ReadWriteOnce"]
         resources:

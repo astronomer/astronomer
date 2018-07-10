@@ -21,9 +21,10 @@ workers:
   persistence:
     # Enable persistent volumes
     enabled: false
-
     # Volume size for worker StatefulSet
     size: 10Gi
+    # If using a custom storageClass, pass name ref to all statefulSets here
+    storageClassName:
 
   # Grace period for tasks to finish after SIGTERM is sent from kubernetes
   terminationGracePeriodSeconds: 600
@@ -44,6 +45,8 @@ prometheus:
   persistence:
     enabled: true
     size: 50Gi
+    # If using a custom storageClass, pass name ref to all statefulSets here
+    storageClassName:
 
 # Environment variables for all airflow containers
 env:

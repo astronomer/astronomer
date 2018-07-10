@@ -34,7 +34,7 @@ spec:
           volumeMounts:
             - name: registry-config-volume
               mountPath: /etc/docker/registry
-            {{- if .Values.persistence.enabled }}
+            {{- if .Values.registry.persistence.enabled }}
             - name: registry-data-volume
               mountPath: /var/lib/registry
             {{- end }}
@@ -60,7 +60,7 @@ spec:
             items:
               - key: config.yml
                 path: config.yml
-  {{- if not .Values.persistence.enabled }}
+  {{- if not .Values.registry.persistence.enabled }}
         - name: registry-data-volume
           emptyDir: {}
   {{- else }}
@@ -71,8 +71,8 @@ spec:
         accessModes: ["ReadWriteOnce"]
         resources:
           requests:
-            storage: {{ .Values.persistence.size }}
-      {{- if .Values.global.storageClassName }}
-        storageClassName: {{ .Values.global.storageClassName }}
+            storage: {{ .Values.registry.persistence.size }}
+      {{- if .Values.registry.persistence.storageClassName }}
+        storageClassName: {{ .Values.registry.persistence.storageClassName }}
       {{- end }}
   {{- end }}
