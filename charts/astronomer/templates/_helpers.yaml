@@ -13,11 +13,11 @@
 {{- end }}
 
 {{ define "commander_image" -}}
-{{ .Values.images.commander }}:{{ or .Values.global.imageTag .Values.imageTag }}
+{{ .Values.images.commander.name }}:{{ or .Values.global.imageTag .Values.images.commander.tag }}
 {{- end }}
 
 {{ define "houston_image" -}}
-{{ .Values.images.houston }}:{{ or .Values.global.imageTag .Values.imageTag }}
+{{ .Values.images.houston.name }}:{{ or .Values.global.imageTag .Values.images.houston.tag }}
 {{- end }}
 
 {{ define "orbit_image" -}}
@@ -25,7 +25,7 @@
 {{- end }}
 
 {{ define "registry_image" -}}
-{{ .Values.images.registry }}:{{ or .Values.global.imageTag .Values.imageTag }}
+{{ .Values.images.registry.name }}:{{ or .Values.global.imageTag .Values.images.registry.tag }}
 {{- end }}
 
 {{ define "auth_strategies" -}}

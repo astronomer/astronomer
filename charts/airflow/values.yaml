@@ -8,13 +8,12 @@ gid: 101
 
 # Astronomer Airflow images
 images:
-  airflow: astronomerinc/ap-airflow
-  statsd: astronomerinc/ap-statsd-exporter
-  prometheus: astronomerinc/ap-prometheus
-  grafana: astronomerinc/ap-grafana
-
-imageTag: 0.2.0
-imageTagStatsD: 0.2.0  # FIXME
+  airflow:
+    name: astronomerinc/ap-airflow
+    tag: 0.2.0
+  statsd:
+    name: astronomerinc/ap-statsd-exporter
+    tag: 0.2.0
 
 # Airflow Worker Config
 workers:
@@ -39,17 +38,6 @@ scheduler:
 
     # Ensure we have one replica always running
     maxUnavailable: 1
-
-# Prometheus Configs
-prometheus:
-  dataDir: "/prometheus"
-
-  # Enable persistence for Prometheus
-  persistence:
-    enabled: true
-    size: 50Gi
-    # If using a custom storageClass, pass name ref to all statefulSets here
-    storageClassName:
 
 # Environment variables for all airflow containers
 env:

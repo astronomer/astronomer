@@ -72,9 +72,9 @@
 {{- end }}
 
 {{ define "airflow_image" -}}
-{{ .Values.images.airflow }}:{{ or .Values.global.imageTag .Values.imageTag }}
+{{ .Values.images.airflow.name }}:{{ or .Values.global.imageTag .Values.images.airflow.tag }}
 {{- end }}
 
 {{ define "statsd_image" -}}
-{{ .Values.images.statsd }}:{{ or .Values.global.imageTag .Values.imageTag }}
+{{ .Values.images.statsd.name }}:{{ or .Values.global.imageTag .Values.images.statsd.tag }}
 {{- end }}
