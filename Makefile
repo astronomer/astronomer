@@ -19,7 +19,7 @@ PLATFORM_RC_COMPONENTS := default-backend commander houston-api
 PLATFORM_ONBUILD_COMPONENTS := airflow
 
 # Vendor components
-VENDOR_COMPONENTS := nginx registry cadvisor grafana prometheus statsd-exporter
+VENDOR_COMPONENTS := nginx registry cadvisor grafana prometheus redis statsd-exporter
 
 # All components
 ALL_COMPONENTS := ${PLATFORM_COMPONENTS} ${VENDOR_COMPONENTS}
