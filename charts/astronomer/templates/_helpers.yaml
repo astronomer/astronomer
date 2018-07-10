@@ -20,6 +20,10 @@
 {{ .Values.images.houston.name }}:{{ or .Values.global.imageTag .Values.images.houston.tag }}
 {{- end }}
 
+{{ define "orbit_image" -}}
+{{ .Values.images.orbit }}:{{ or .Values.global.imageTag .Values.imageTag }}
+{{- end }}
+
 {{ define "registry_image" -}}
 {{ .Values.images.registry.name }}:{{ or .Values.global.imageTag .Values.images.registry.tag }}
 {{- end }}

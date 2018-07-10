@@ -81,5 +81,8 @@ spec:
         accessModes: [ "ReadWriteOnce" ]
         resources:
           requests:
-            storage: {{ .Values.persistence.size }}
+            storage: {{ .Values.prometheus.persistence.size }}
+      {{- if .Values.prometheus.persistence.storageClassName }}
+        storageClassName: {{ .Values.prometheus.persistence.storageClassName }}
+      {{- end }}
   {{- end }}

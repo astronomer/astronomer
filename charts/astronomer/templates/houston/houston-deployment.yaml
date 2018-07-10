@@ -70,7 +70,7 @@ spec:
             - name: COMMANDER_PORT
               value: "50051"
             - name: GOOGLE_OAUTH_REDIRECT_URL
-              value: "https://houston.astronomer.win/healthz"
+              value: "https://app.{{ .Values.global.baseDomain }}/oauth/google"
             - name: GOOGLE_CLIENT_ID
               value: {{ .Values.auth.google.client_id }}
             - name: GOOGLE_CLIENT_SECRET

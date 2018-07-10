@@ -16,6 +16,9 @@ images:
   houston:
     name: astronomerinc/ap-houston-api
     tag: 0.2.0
+  orbit:
+    name: astronomerinc/ap-orbit-ui
+    tag: 0.2.0
 
 # Astronomer platform config
 data:
@@ -23,14 +26,19 @@ data:
   airflowDatabaseSecret: "houston-database"
   airflowRedisSecret: "airflow-redis"
 
-# Enable persistence to keep registry data between deploys
-persistence:
-  enabled: true
-  size: 50Gi
-
+registry:
+  # Enable persistence to keep registry data between deploys
+  persistence:
+    enabled: true
+    size: 50Gi
+    # If using a custom storageClass, pass name ref to all statefulSets here
+    storageClassName:
 auth:
   local:
-    eanbled: true
+    enabled: true
+  registry:
+    issuer: houston
+    expireDays: 3650
   google:
     enabled: true
     client_id:

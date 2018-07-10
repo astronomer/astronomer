@@ -26,6 +26,12 @@ data:
       addr: :5000
       headers:
         X-Content-Type-Options: [nosniff]
+    auth:
+      token:
+        realm: "https://houston.{{ .Values.global.baseDomain }}/authorization"
+        service: docker-registry
+        issuer: {{ .Values.auth.registry.issuer }}
+        rootcertbundle: /etc/docker/ssl/cert
     health:
       storagedriver:
         enabled: true
