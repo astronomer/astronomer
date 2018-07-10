@@ -36,7 +36,7 @@ spec:
               mountPath: /etc/docker/registry
             - name: registry-certificate-volume
               mountPath: /etc/docker/ssl
-            {{- if .Values.persistence.enabled }}
+            {{- if .Values.registry.persistence.enabled }}
             - name: registry-data-volume
               mountPath: /var/lib/registry
             {{- end }}
@@ -65,7 +65,7 @@ spec:
         - name: registry-certificate-volume
           secret:
             secretName: {{ .Release.Name }}-registry-auth-cert
-  {{- if not .Values.persistence.enabled }}
+  {{- if not .Values.registry.persistence.enabled }}
         - name: registry-data-volume
           emptyDir: {}
   {{- else }}
@@ -76,5 +76,8 @@ spec:
         accessModes: ["ReadWriteOnce"]
         resources:
           requests:
-            storage: {{ .Values.persistence.size }}
+            storage: {{ .Values.registry.persistence.size }}
+      {{- if .Values.registry.persistence.storageClassName }}
+        storageClassName: {{ .Values.registry.persistence.storageClassName }}
+      {{- end }}
   {{- end }}
