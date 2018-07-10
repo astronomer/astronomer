@@ -3,9 +3,9 @@
 # Declare variables to be passed into your templates.
 
 images:
-  prometheus: astronomerinc/ap-prometheus
-
-imageTag: 0.2.0
+  prometheus:
+    name: astronomerinc/ap-prometheus
+    tag: 0.2.0
 
 dataDir: "/prometheus"
 

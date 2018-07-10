@@ -1,5 +1,5 @@
 {{ define "grafana_image" -}}
-{{ .Values.images.grafana }}:{{ or .Values.global.imageTag .Values.imageTag }}
+{{ .Values.images.grafana.name }}:{{ or .Values.global.imageTag .Values.images.grafana.tag }}
 {{- end }}
 
 {{ define "grafana_url" -}}
