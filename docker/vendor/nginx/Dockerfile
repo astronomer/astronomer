@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM gcr.io/google_containers/nginx-ingress-controller:0.9.0-beta.15
+FROM quay.io/kubernetes-ingress-controller/nginx-ingress-controller:0.16.2
 LABEL maintainer="Astronomer <humans@astronomer.io>"
 
 ARG BUILD_NUMBER=-1
