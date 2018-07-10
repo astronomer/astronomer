@@ -30,10 +30,11 @@ registry:
 auth:
   local:
     enabled: true
+  google:
+    enabled: false
+    clientId: ~
+    clientSecret: ~
   registry:
     issuer: houston
     expireDays: 3650
-  google:
-    enabled: true
-    client_id:
-    client_secret:
+

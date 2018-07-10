@@ -28,10 +28,10 @@ data:
         X-Content-Type-Options: [nosniff]
     auth:
       token:
-        realm: "https://houston.{{ .Values.global.baseDomain }}/authorization"
+        realm: "https://houston.{{ .Values.global.baseDomain }}/registry"
         service: docker-registry
-        issuer: {{ .Values.auth.registry.issuer }}
-        rootcertbundle: /etc/docker/ssl/cert
+        issuer: {{ .Values.auth.registry.issuer | quote }}
+        rootcertbundle: /etc/docker/ssl/tls.crt
     health:
       storagedriver:
         enabled: true
