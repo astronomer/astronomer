@@ -1,0 +1,10 @@
+# Default values for Grafana.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+images:
+  grafana: astronomerinc/ap-grafana
+
+imageTag: 0.2.0
+
+grafanaBackendSecret: grafana-backend

@@ -31,7 +31,7 @@ spec:
         runAsUser: {{ .Values.uid }}
       containers:
         - name: {{ .Release.Name }}-commander
-          image: {{ .Values.images.commander }}
+          image: {{- include "commander_image" . | indent 1 }}
           ports:
             - name: commander-http
               containerPort: 8880

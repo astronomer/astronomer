@@ -1,26 +1,24 @@
 ################################
-## Airflow Flower Service Component
+## Astronomer Houston Service
 #################################
 kind: Service
 apiVersion: v1
 metadata:
-  name: {{ .Release.Name }}-flower
+  name: {{ .Release.Name }}-orbit
   labels:
-    tier: airflow
-    component: flower
+    component: orbit
+    tier: astronomer
     release: {{ .Release.Name }}
-    workspace: {{ .Values.workspace }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
 spec:
   type: NodePort
   selector:
-    tier: airflow
-    component: flower
+    component: orbit
+    tier: astronomer
     release: {{ .Release.Name }}
-    workspace: {{ .Values.workspace }}
   ports:
-    - name: flower-ui
+    - name: orbit-http
       protocol: TCP
-      port: 5555
-      targetPort: 5555
+      port: 8080
+      targetPort: 8080

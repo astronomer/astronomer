@@ -1,22 +1,24 @@
 ################################
-## Airflow Grafana Service
+## Grafana Service
 #################################
 kind: Service
 apiVersion: v1
 metadata:
   name: {{ .Release.Name }}-grafana
   labels:
-    tier: airflow-monitoring
+    tier: monitoring
     component: grafana
     release: {{ .Release.Name }}
+    workspace: {{ .Values.workspace }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
 spec:
   type: NodePort
   selector:
-    tier: airflow-monitoring
+    tier: monitoring
     component: grafana
     release: {{ .Release.Name }}
+    workspace: {{ .Values.workspace }}
   ports:
     - name: grafana-ui
       protocol: TCP

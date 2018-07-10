@@ -1,0 +1,31 @@
+## Airflow Install
+
+-- old --
+
+Grafana Dashboard:  {{ if .Values.global.acme }}https://{{ else }}http://{{ end }}grafana.{{ .Values.global.baseDomain }}/dashboard/db/airflow-containers
+
+Scheduler Dashboard:  {{ if .Values.global.acme }}https://{{ else }}http://{{ end }}grafana.{{ .Values.global.baseDomain }}/dashboard/db/airflow-scheduler
+
+Prometheus:        {{ if .Values.global.acme }}https://{{ else }}http://{{ end }}prometheus.{{ .Values.global.baseDomain }}
+
+---
+
+-- new --
+
+Grafana - Airflow Schedulers dashboard:
+	http://127.0.0.1:31167/dashboard/db/airflow-scheduler
+
+Grafana - Airflow Containers dashboard:
+	http://127.0.0.1:31167/dashboard/db/airflow-containers
+
+Prometheus dashboard: {{ if .Values.global.acme -}}
+	TODO: handle when acme is on
+{{- else -}}
+	http://127.0.0.1:30937/
+{{- end }}
+
+---
+
+TODO: can I use grafana_url from grafana/_helpers.yaml here?
+
+---

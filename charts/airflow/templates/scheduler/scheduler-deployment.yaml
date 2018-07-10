@@ -9,6 +9,7 @@ metadata:
     tier: airflow
     component: scheduler
     release: {{ .Release.Name }}
+    workspace: {{ .Values.workspace }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
 spec:
@@ -23,12 +24,14 @@ spec:
       tier: airflow
       component: scheduler
       release: {{ .Release.Name }}
+      workspace: {{ .Values.workspace }}
   template:
     metadata:
       labels:
         tier: airflow
         component: scheduler
         release: {{ .Release.Name }}
+        workspace: {{ .Values.workspace }}
     spec:
       restartPolicy: Always
       securityContext:
@@ -39,7 +42,7 @@ spec:
       {{- end }}
       containers:
         - name: {{ .Release.Name }}-scheduler
-          image: {{ .Values.images.airflow }}
+          image: {{- include "airflow_image" . | indent 1 }}
           args: ["airflow", "scheduler"]
           env:
           {{- include "airflow_environment" . | indent 10 }}

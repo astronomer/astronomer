@@ -1,16 +1,15 @@
 ################################
-## Airflow Ingress
+## Grafana Ingress
 #################################
 {{- if .Values.global.baseDomain }}
 kind: Ingress
 apiVersion: extensions/v1beta1
 metadata:
-  name: {{ .Release.Name }}-airflow-ingress
+  name: {{ .Release.Name }}-grafana-ingress
   labels:
-    tier: airflow-networking
-    component: airflow-ingress
+    tier: grafana-networking
+    component: grafana-ingress
     release: {{ .Release.Name }}
-    workspace: {{ .Values.workspace }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
   annotations:
@@ -24,28 +23,20 @@ spec:
   {{- if or .Values.global.tlsSecret .Values.global.acme }}
   tls:
   {{- if .Values.global.acme }}
-    - secretName: {{ .Release.Name }}-airflow-tls
+    - secretName: grafana-tls
   {{- end }}
   {{- if .Values.global.tlsSecret }}
     - secretName: {{ .Values.global.tlsSecret }}
   {{- end }}
       hosts:
-        - {{- include "airflow_url" . | indent 1 }}
-        - {{- include "flower_url" . | indent 1 }}
+        - {{- include "grafana_url" . | indent 1 }}
   {{- end }}
   rules:
-    - host: {{- include "airflow_url" . | indent 1 }}
+    - host: {{- include "grafana_url" . | indent 1 }}
       http:
         paths:
           - path: /
             backend:
-              serviceName: {{ .Release.Name }}-webserver
-              servicePort: webserver-ui
-    - host: {{- include "flower_url" . | indent 1 }}
-      http:
-        paths:
-          - path: /
-            backend:
-              serviceName: {{ .Release.Name }}-flower
-              servicePort: flower-ui
+              serviceName: {{ .Release.Name }}-grafana
+              servicePort: grafana-ui
 {{- end }}

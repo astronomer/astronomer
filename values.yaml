@@ -44,6 +44,14 @@ global:
     nginx:
       enabled: true
 
+    # Enable Grafana module
+    grafana:
+      enabled: true
+
+    # Enable Prometheus module
+    prometheus:
+      enabled: true
+
 #################################
 ## Nginx configuration
 #################################
@@ -84,3 +92,10 @@ astronomer:
       size: 50Gi
       # If using a custom storageClass, pass name ref to all statefulSets here
       storageClassName:
+  auth:
+    local:
+      enabled: true
+    google:
+      enabled: false
+      client_id: ~
+      client_secret: ~

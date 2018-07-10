@@ -7,9 +7,12 @@ uid: 100
 
 # Images for pilot
 images:
-  commander: astronomerinc/ap-commander:0.2.0
-  registry: astronomerinc/ap-registry:0.2.0
-  houston: astronomerinc/ap-houston-api:0.2.0
+  commander: astronomerinc/ap-commander
+  registry: astronomerinc/ap-registry
+  houston: astronomerinc/ap-houston-api
+  orbit: astronomerinc/ap-orbit-ui
+
+imageTag: 0.2.0
 
 # Astronomer platform config
 data:
@@ -17,10 +20,20 @@ data:
   airflowDatabaseSecret: "houston-database"
   airflowRedisSecret: "airflow-redis"
 
-# Enable persistence to keep registry data between deploys
 registry:
+  # Enable persistence to keep registry data between deploys
   persistence:
     enabled: true
     size: 50Gi
     # If using a custom storageClass, pass name ref to all statefulSets here
     storageClassName:
+auth:
+  local:
+    enabled: true
+  registry:
+    issuer: houston
+    expireDays: 3650
+  google:
+    enabled: true
+    client_id:
+    client_secret:

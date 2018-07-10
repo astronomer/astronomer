@@ -30,7 +30,7 @@ spec:
         runAsUser: {{ .Values.uid }}
       containers:
         - name: {{ .Release.Name }}-houston
-          image: {{ .Values.images.houston }}
+          image: {{- include "houston_image" . | indent 1 }}
           ports:
             - name: houston-http
               containerPort: 8870
@@ -64,11 +64,20 @@ spec:
             - name: HELM_GLOBAL_CONFIG
               value: {{- include "helm_globals" . | quote | indent 1 }}
             - name: AUTH_STRATEGY
-              value: "local"
+              value: {{- include "auth_strategies" . | trimSuffix "," | quote | indent 1 }}
             - name: COMMANDER_HOST
               value: "{{ .Release.Name }}-commander"
             - name: COMMANDER_PORT
               value: "50051"
+            - name: GOOGLE_OAUTH_REDIRECT_URL
+              value: "https://app.{{ .Values.global.baseDomain }}/oauth/google"
+            - name: GOOGLE_CLIENT_ID
+              value: {{ .Values.auth.google.client_id }}
+            - name: GOOGLE_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-google-client-secret
+                  key: client_id
             - name: JWT_PASSPHRASE
               valueFrom:
                 secretKeyRef:
@@ -89,8 +98,3 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.data.airflowRedisSecret }}
                   key: connection
-            - name: BASIC_AUTHS
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.global.nginxAuthSecret }}
-                  key: auth

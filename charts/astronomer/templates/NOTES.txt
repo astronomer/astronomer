@@ -1,0 +1,16 @@
+Thank you for installing Astronomer Enterprise!
+
+---
+
+Now that you've installed the platform, you are ready to start using it.  You should:
+
+Download the CLI:
+
+`curl -sL https://install.astronomer.io | sudo bash`
+
+Manage the platform with the UI:
+
+https://app.{{ .Values.global.baseDomain }}
+
+We have some guides available at https://enterprise.astronomer.io/guides/ and are always available to help.
+
