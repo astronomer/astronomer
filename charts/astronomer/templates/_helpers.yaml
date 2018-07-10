@@ -21,7 +21,7 @@
 {{- end }}
 
 {{ define "orbit_image" -}}
-{{ .Values.images.orbit }}:{{ or .Values.global.imageTag .Values.imageTag }}
+{{ .Values.images.orbit.name }}:{{ or .Values.global.imageTag .Values.images.orbit.tag }}
 {{- end }}
 
 {{ define "registry_image" -}}
