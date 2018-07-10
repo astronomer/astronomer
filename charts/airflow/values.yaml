@@ -14,12 +14,6 @@ images:
   statsd:
     name: astronomerinc/ap-statsd-exporter
     tag: 0.2.0
-  prometheus:
-    name: astronomerinc/ap-prometheus
-    tag: 0.2.0
-  grafana:
-    name: astronomerinc/ap-grafana
-    tag: 0.2.0
 
 # Airflow Worker Config
 workers:
@@ -44,17 +38,6 @@ scheduler:
 
     # Ensure we have one replica always running
     maxUnavailable: 1
-
-# Prometheus Configs
-prometheus:
-  dataDir: "/prometheus"
-
-  # Enable persistence for Prometheus
-  persistence:
-    enabled: true
-    size: 50Gi
-    # If using a custom storageClass, pass name ref to all statefulSets here
-    storageClassName:
 
 # Environment variables for all airflow containers
 env:
