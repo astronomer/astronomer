@@ -1,4 +1,4 @@
-Thank you for installing {{ .Chart.Name }}.
+Thank you for installing Astronomer Enterprise!
 
 Your release is named {{ .Release.Name }}.
 
@@ -14,4 +14,17 @@ Container Dashboard:  {{ if .Values.global.acme }}https://{{ else }}http://{{ en
 Scheduler Dashboard:  {{ if .Values.global.acme }}https://{{ else }}http://{{ end }}grafana.{{ .Values.global.baseDomain }}/dashboard/db/airflow-scheduler
 Registry:             {{ if .Values.global.acme }}https://{{ else }}http://{{ end }}registry.{{ .Values.global.baseDomain }}
 
+{{ else }}
+
+Now that you've installed the platform, you are ready to get started and create your first airflow deployment!
+
+Download the CLI:
+
+`curl -sL https://install.astronomer.io | sudo bash`
+
+Manage the platform with the UI:
+
+https://app.{{ .Values.global.baseDomain }}
+
+We have some guides available at https://enterprise.astronomer.io/guides/ and are always available to help.
 {{ end }}

@@ -97,5 +97,5 @@ astronomer:
       enabled: true
     google:
       enabled: false
-      client_id: ~
-      client_secret: ~
+      clientId: ~
+      clientSecret: ~

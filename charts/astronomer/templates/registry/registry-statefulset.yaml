@@ -64,7 +64,7 @@ spec:
                 path: config.yml
         - name: registry-certificate-volume
           secret:
-            secretName: {{ .Release.Name }}-registry-auth-cert
+            secretName: {{ .Values.global.tlsSecret }}
   {{- if not .Values.registry.persistence.enabled }}
         - name: registry-data-volume
           emptyDir: {}
