@@ -51,7 +51,7 @@ spec:
           env:
           {{- include "airflow_environment" . | indent 10 }}
         - name: {{ .Release.Name }}-worker-gc
-          image: {{ .Values.images.airflow }}
+          image: {{- include "airflow_image" . | indent 1 }}
           args: ["crond", "-f", "-d", "0"]
           volumeMounts:
             - name: logs
