@@ -1,0 +1,26 @@
+################################
+## Airflow Redis Service Component
+#################################
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ .Release.Name }}-redis
+  labels:
+    tier: airflow
+    component: redis
+    release: {{ .Release.Name }}
+    workspace: {{ .Values.workspace }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+spec:
+  type: NodePort
+  selector:
+    tier: airflow
+    component: redis
+    release: {{ .Release.Name }}
+    workspace: {{ .Values.workspace }}
+  ports:
+    - name: redis
+      protocol: TCP
+      port: 6379
+      targetPort: 6379

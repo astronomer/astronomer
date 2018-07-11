@@ -1,0 +1,58 @@
+################################
+## Airflow Redis Deployment
+#################################
+kind: Deployment
+apiVersion: apps/v1beta2
+metadata:
+  name: {{ .Release.Name }}-redis
+  labels:
+    tier: airflow
+    component: redis
+    release: {{ .Release.Name }}
+    workspace: {{ .Values.workspace }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      tier: airflow
+      component: redis
+      release: {{ .Release.Name }}
+      workspace: {{ .Values.workspace }}
+  template:
+    metadata:
+      labels:
+        tier: airflow
+        component: redis
+        release: {{ .Release.Name }}
+        workspace: {{ .Values.workspace }}
+    spec:
+      restartPolicy: Always
+      securityContext:
+        runAsUser: {{ .Values.uid }}
+      {{- if .Values.global.registryAuthSecret }}
+      imagePullSecrets:
+        - name: {{ .Values.global.registryAuthSecret }}
+      {{- end }}
+      containers:
+        - name: {{ .Release.Name }}-redis
+          image: {{- include "redis_image" . | indent 1 }}
+          # args: ["airflow", "redis"]
+          ports:
+            - name: redis
+              containerPort: 6379
+          # livenessProbe:
+          #   httpGet:
+          #     path: /
+          #     port: 6379
+          #   initialDelaySeconds: 10
+          #   periodSeconds: 10
+          # readinessProbe:
+          #   httpGet:
+          #     path: /
+          #     port: 6379
+          #   initialDelaySeconds: 10
+          #   periodSeconds: 10
+          # env:
+          # {{- include "airflow_environment" . | indent 10 }}
