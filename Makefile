@@ -47,7 +47,7 @@ build:
 push: clean build push-latest push-versioned
 
 .PHONY: build-rc
-build-rc:
+build-rc: clean-rc
 ifndef ASTRONOMER_RC_VERSION
 	$(error ASTRONOMER_RC_VERSION must be defined)
 endif
@@ -86,6 +86,12 @@ clean-containers:
 .PHONY: clean-images
 clean-images:
 	for image in `docker images -q -f label=io.astronomer.docker=true` ; do \
+		docker rmi -f $${image} ; \
+	done
+
+.PHONY: clean-rc
+clean-rc:
+	for image in `docker images -q -f label=io.astronomer.docker.rc=true` ; do \
 		docker rmi -f $${image} ; \
 	done
 

@@ -4,29 +4,29 @@
 function build_component () {
     echo "Building ${2}..."
 
-    DOCKER_DIR="docker/${1}/${2}"
-    DOCKER_FILE="${DOCKER_DIR}/Dockerfile"
-    COMPONENT_NAME="ap-${2}"
-    BUILD_ARGS="--build-arg BUILD_NUMBER=${BUILD_NUMBER}"
+    local docker_dir="docker/${1}/${2}"
+    local docker_file="${docker_dir}/Dockerfile"
+    local component_name="ap-${2}"
+    local build_opts="--build-arg BUILD_NUMBER=${BUILD_NUMBER}"
 
     # If we're building an RC, build platform components from master
     if [ -v "ASTRONOMER_RC_VERSION" ] && [[ "${PLATFORM_RC_COMPONENTS}" =~ ${2} ]] ; then
-        BUILD_ARGS="${BUILD_ARGS} --build-arg VERSION=master"
+        build_opts="${build_opts} --build-arg VERSION=master --label io.astronomer.docker.rc=true"
     fi
 
     # Build normal components
-    if [ -f "${DOCKER_FILE}" ]; then
-        docker build ${BUILD_ARGS} -t "${REPOSITORY}/${COMPONENT_NAME}:latest" -f "${DOCKER_FILE}" "${DOCKER_DIR}" || exit 1
-        docker tag "${REPOSITORY}/${COMPONENT_NAME}:latest" "${REPOSITORY}/${COMPONENT_NAME}:${ASTRONOMER_VERSION}"
+    if [ -f "${docker_file}" ]; then
+        docker build ${build_opts} -t "${REPOSITORY}/${component_name}:latest" -f "${docker_file}" "${docker_dir}" || exit 1
+        docker tag "${REPOSITORY}/${component_name}:latest" "${REPOSITORY}/${component_name}:${ASTRONOMER_VERSION}"
     fi
 
-    ONBUILD_DOCKER_DIR="${DOCKER_DIR}/onbuild"
-    ONBUILD_DOCKER_FILE="${ONBUILD_DOCKER_DIR}/Dockerfile"
+    local onbuild_docker_dir="${docker_dir}/onbuild"
+    local onbuild_docker_file="${onbuild_docker_dir}/Dockerfile"
 
     # Build onbuild components
-    if [ -f "${ONBUILD_DOCKER_FILE}" ]; then
-        docker build ${BUILD_ARGS} -t "${REPOSITORY}/${COMPONENT_NAME}:latest-onbuild" -f "${ONBUILD_DOCKER_FILE}" "${ONBUILD_DOCKER_DIR}" || exit 1
-        docker tag "${REPOSITORY}/${COMPONENT_NAME}:latest-onbuild" "${REPOSITORY}/${COMPONENT_NAME}:${ASTRONOMER_VERSION}-onbuild"
+    if [ -f "${onbuild_docker_file}" ]; then
+        docker build ${build_opts} -t "${REPOSITORY}/${component_name}:latest-onbuild" -f "${onbuild_docker_file}" "${onbuild_docker_dir}" || exit 1
+        docker tag "${REPOSITORY}/${component_name}:latest-onbuild" "${REPOSITORY}/${component_name}:${ASTRONOMER_VERSION}-onbuild"
     fi
 }
 
