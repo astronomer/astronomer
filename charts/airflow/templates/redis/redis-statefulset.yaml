@@ -44,7 +44,7 @@ spec:
             - name: redis-db
               containerPort: 6379
           volumeMounts:
-            - name: 
+            - name:
               mountPath: /data
           env:
 {{- if not .Values.redis.persistence.enabled }}
