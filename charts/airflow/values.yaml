@@ -50,7 +50,7 @@ env:
 data:
   airflowMetadataSecret: airflow-metadata
   airflowResultBackendSecret: airflow-result-backend
-  airflowBrokerSecret: airflow-broker
+  # airflowBrokerSecret: airflow-broker
 
 redis:
   terminationGracePeriodSeconds: 600
