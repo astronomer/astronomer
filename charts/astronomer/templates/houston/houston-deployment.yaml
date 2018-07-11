@@ -105,11 +105,6 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.data.airflowDatabaseSecret }}
                   key: connection
-            - name: AIRFLOW_REDIS_URI
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.data.airflowRedisSecret }}
-                  key: connection
       volumes:
         - name: registry-tls-volume
           secret:
