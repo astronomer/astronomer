@@ -1,0 +1,66 @@
+################################
+## Airflow Worker StatefulSet
+#################################
+kind: StatefulSet
+apiVersion: apps/v1beta2
+metadata:
+  name: {{ .Release.Name }}-redis
+  labels:
+    tier: airflow
+    component: redis
+    release: {{ .Release.Name }}
+    workspace: {{ .Values.workspace }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+spec:
+  serviceName: {{ .Release.Name }}-redis
+  podManagementPolicy: Parallel
+  selector:
+    matchLabels:
+      tier: airflow
+      component: redis
+      release: {{ .Release.Name }}
+      workspace: {{ .Values.workspace }}
+  template:
+    metadata:
+      labels:
+        tier: airflow
+        component: redis
+        release: {{ .Release.Name }}
+        workspace: {{ .Values.workspace }}
+    spec:
+      terminationGracePeriodSeconds: {{ .Values.redis.terminationGracePeriodSeconds }}
+      securityContext:
+        runAsUser: {{ .Values.uid }}
+        fsGroup: {{ .Values.gid }}
+      {{- if .Values.global.registryAuthSecret }}
+      imagePullSecrets:
+        - name: {{ .Values.global.registryAuthSecret }}
+      {{- end }}
+      containers:
+        - name: {{ .Release.Name }}-redis
+          image: {{- include "airflow_image" . | indent 1 }}
+          ports:
+            - name: redis-db
+              containerPort: 6379
+          volumeMounts:
+            - name: 
+              mountPath: /data
+          env:
+{{- if not .Values.redis.persistence.enabled }}
+      volumes:
+        - name: redis-db
+          emptyDir: {}
+{{- else }}
+  volumeClaimTemplates:
+    - metadata:
+        name: redis-db
+      spec:
+      {{- if .Values.redis.persistence.storageClassName }}
+        storageClassName: {{ .Values.redis.persistence.storageClassName }}
+      {{- end }}
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: {{ .Values.redis.persistence.size }}
+{{- end }}
