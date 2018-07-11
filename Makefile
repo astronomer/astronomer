@@ -15,7 +15,7 @@ ASTRONOMER_VERSION ?= "${ASTRONOMER_MAJOR_VERSION}.${ASTRONOMER_MINOR_VERSION}.$
 
 # List of all components and order to build.
 PLATFORM_COMPONENTS := base default-backend commander houston-api orbit-ui airflow
-PLATFORM_RC_COMPONENTS := default-backend commander houston-api
+PLATFORM_RC_COMPONENTS := default-backend commander houston-api orbit-ui
 PLATFORM_ONBUILD_COMPONENTS := airflow
 
 # Vendor components
