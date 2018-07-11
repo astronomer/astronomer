@@ -3,5 +3,5 @@
 {{- end }}
 
 {{ define "grafana_url" -}}
-{{ .Release.Name }}-grafana.{{ .Values.global.baseDomain }}
+grafana.{{ .Values.global.baseDomain }}
 {{- end }}
