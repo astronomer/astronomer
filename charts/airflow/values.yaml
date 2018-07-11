@@ -14,6 +14,10 @@ images:
   statsd:
     name: astronomerinc/ap-statsd-exporter
     tag: 0.2.0
+  redis:
+    name:  astronomerinc/ap-redis
+    # tag: 0.2.0
+    tag: "0.3.0-rc.5"  # TODO: remove this temporary workaround with final release
 
 # Airflow Worker Config
 workers:
@@ -47,3 +51,14 @@ data:
   airflowMetadataSecret: airflow-metadata
   airflowResultBackendSecret: airflow-result-backend
   airflowBrokerSecret: airflow-broker
+
+redis:
+  terminationGracePeriodSeconds: 600
+  
+  persistence:
+    # Enable persistent volumes
+    enabled: false
+    # Volume size for worker StatefulSet
+    size: 1Gi
+    # If using a custom storageClass, pass name ref to all statefulSets here
+    storageClassName:

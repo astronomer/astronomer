@@ -8,6 +8,8 @@
   # Hard Coded Airflow Envs
   - name: AIRFLOW__CORE__EXECUTOR
     value: "CeleryExecutor"
+    name: AIRFLOW__CELERY__DEFAULT_QUEUE
+    value: "celery"
   - name: AIRFLOW__SCHEDULER__STATSD_ON
     value: "True"
   - name: AIRFLOW__SCHEDULER__STATSD_PORT
@@ -42,7 +44,7 @@
   - name: AIRFLOW__CELERY__BROKER_URL
     valueFrom:
       secretKeyRef:
-        name: {{ .Values.data.airflowBrokerSecret }}
+        name: {{ .Release.Name }}-celery-backend-url
         key: connection
   - name: AIRFLOW__CORE__FERNET_KEY
     valueFrom:
@@ -63,10 +65,21 @@
 {{ (randAlphaNum 32 | b64enc) | b64enc }}
 {{- end }}
 
+
+
+{{ define "celery_backend_uri" -}}
+{{ $redis_password := randAlphaNum 10 | b64enc | quote }}
+redis://:{{ $redis_password }}@{{ .Release.Name }}-redis:6379/0
+{{- end }}
+
 {{ define "airflow_image" -}}
 {{ .Values.images.airflow.name }}:{{ or .Values.global.imageTag .Values.images.airflow.tag }}
 {{- end }}
 
 {{ define "statsd_image" -}}
 {{ .Values.images.statsd.name }}:{{ or .Values.global.imageTag .Values.images.statsd.tag }}
+{{- end }}
+
+{{ define "redis_image" -}}
+{{ .Values.images.redis.name }}:{{ or .Values.global.imageTag .Values.images.redis.tag }}
 {{- end }}
