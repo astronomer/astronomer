@@ -54,7 +54,7 @@ data:
 
 redis:
   terminationGracePeriodSeconds: 600
-  
+
   persistence:
     # Enable persistent volumes
     enabled: false
