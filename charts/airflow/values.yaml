@@ -54,7 +54,9 @@ data:
 
 redis:
   terminationGracePeriodSeconds: 600
-      # Enable persistent volumes
+  
+  persistence:
+    # Enable persistent volumes
     enabled: false
     # Volume size for worker StatefulSet
     size: 1Gi
