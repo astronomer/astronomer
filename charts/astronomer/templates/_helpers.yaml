@@ -1,11 +1,11 @@
 {{ define "helm_globals" -}}
-{{ print "{" -}}
-{{ printf "\"baseDomain\":\"%v\"," .Values.global.baseDomain -}}
-{{ printf "\"registryAuthSecret\":\"%v\"," .Values.global.registryAuthSecret -}}
-{{ printf "\"acme\":%v," (print .Values.global.acme | toString) -}}
-{{ printf "\"rbacEnabled\":%v," (print .Values.global.rbacEnabled | toString) -}}
-{{ printf "\"tlsSecret\":\"%v\"" (print .Values.global.tlsSecret | toString | replace "<nil>" "") -}}
-{{ print "}" -}}
+  {{- $globals := dict -}}
+  {{- $_ := set $globals "baseDomain" .Values.global.baseDomain -}}
+  {{- $_ := set $globals "registryAuthSecret" .Values.global.registryAuthSecret -}}
+  {{- $_ := set $globals "acme" (.Values.global.acme) -}}
+  {{- $_ := set $globals "rbacEnabled" .Values.global.rbacEnabled -}}
+  {{- $_ := set $globals "tlsSecret" (print .Values.global.tlsSecret | toString | replace "<nil>" "") -}}
+  {{ $globals | toJson | print }}
 {{- end }}
 
 {{- define "random_string" }}
@@ -26,6 +26,24 @@
 
 {{ define "registry_image" -}}
 {{ .Values.images.registry.name }}:{{ or .Values.global.imageTag .Values.images.registry.tag }}
+{{- end }}
+
+{{ define "registry_docker_config" -}}
+  {{- $domain := printf "registry.%v" .Values.global.baseDomain }}
+  {{- $email := printf "admin@%v" .Values.global.baseDomain }}
+  {{- $user := randAlphaNum 16 -}}
+  {{- $pass := randAlphaNum 32 -}}
+
+  {{- $config := dict "auths" -}}
+  {{- $auth := dict -}}
+  {{- $data := dict -}}
+  {{- $_ := set $data "username" $user -}}
+  {{- $_ := set $data "password" $pass -}}
+  {{- $_ := set $data "email" $email -}}
+  {{- $_ := set $data "auth" ("{{ .user }}:{{ .pass }}" | b64enc) -}}
+  {{- $_ := set $auth $domain $data -}}
+  {{- $_ := set $config "auths" $auth -}}
+  {{ $config | toJson | print }}
 {{- end }}
 
 {{ define "auth_strategies" -}}
