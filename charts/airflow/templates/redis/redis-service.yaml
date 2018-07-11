@@ -1,5 +1,5 @@
 ################################
-## Airflow Worker Service
+## Airflow Redis Service
 #################################
 kind: Service
 apiVersion: v1

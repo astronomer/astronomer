@@ -1,5 +1,5 @@
 ################################
-## Airflow Worker StatefulSet
+## Airflow Redis StatefulSet
 #################################
 kind: StatefulSet
 apiVersion: apps/v1beta2
