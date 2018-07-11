@@ -39,12 +39,12 @@ spec:
       {{- end }}
       containers:
         - name: {{ .Release.Name }}-redis
-          image: {{- include "redis-image" . | indent 1 }}
+          image: {{- include "redis_image" . | indent 1 }}
           ports:
             - name: redis-db
               containerPort: 6379
           volumeMounts:
-            - name: 
+            - name:
               mountPath: /data
           env:
 {{- if not .Values.redis.persistence.enabled }}

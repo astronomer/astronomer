@@ -16,8 +16,8 @@ images:
     tag: 0.2.0
   redis:
     name:  astronomerinc/ap-redis
-    tag: "0.3.0-rc.5"
-  
+    # tag: 0.2.0
+    tag: "0.3.0-rc.5"  # TODO: remove this temporary workaround with final release
 
 # Airflow Worker Config
 workers:
