@@ -47,6 +47,11 @@ spec:
             - name:
               mountPath: /data
           env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.existingSecret }}
+                  key: password
 {{- if not .Values.redis.persistence.enabled }}
       volumes:
         - name: redis-db
