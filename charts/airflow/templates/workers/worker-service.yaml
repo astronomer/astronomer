@@ -8,7 +8,6 @@ metadata:
   labels:
     tier: airflow
     component: worker
-    tier: airflow-core
     release: {{ .Release.Name }}
     workspace: {{ .Values.workspace }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
