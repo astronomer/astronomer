@@ -16,7 +16,7 @@ images:
     tag: 0.2.0
   redis:
     name:  astronomerinc/ap-redis
-    tag: 0.2.0
+    tag: "0.3.0-rc.5"
   
 
 # Airflow Worker Config
