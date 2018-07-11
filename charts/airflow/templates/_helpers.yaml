@@ -8,7 +8,7 @@
   # Hard Coded Airflow Envs
   - name: AIRFLOW__CORE__EXECUTOR
     value: "CeleryExecutor"
-    name: AIRFLOW__CELERY__DEFAULT_QUEUE
+  - name: AIRFLOW__CELERY__DEFAULT_QUEUE
     value: "celery"
   - name: AIRFLOW__SCHEDULER__STATSD_ON
     value: "True"
