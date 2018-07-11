@@ -31,6 +31,9 @@ spec:
       containers:
         - name: {{ .Release.Name }}-houston
           image: {{- include "houston_image" . | indent 1 }}
+          volumeMounts:
+            - name: registry-tls-volume
+              mountPath: "/etc/houston/tls/"
           ports:
             - name: houston-http
               containerPort: 8870
@@ -69,6 +72,10 @@ spec:
               value: "{{ .Release.Name }}-commander"
             - name: COMMANDER_PORT
               value: "50051"
+            - name: DOCKER_CERT_PATH
+              value: "/etc/houston/tls/"
+            - name: DOCKER_ISSUER
+              value: {{ .Values.auth.registry.issuer }}
             - name: GOOGLE_OAUTH_REDIRECT_URL
               value: "https://app.{{ .Values.global.baseDomain }}/oauth/google"
             - name: GOOGLE_CLIENT_ID
@@ -78,6 +85,11 @@ spec:
                 secretKeyRef:
                   name: {{ .Release.Name }}-google-client-secret
                   key: clientSecret
+            - name: REGISTRY_AUTH
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-registry-auth
+                  key: .dockerconfig
             - name: JWT_PASSPHRASE
               valueFrom:
                 secretKeyRef:
@@ -98,3 +110,7 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.data.airflowRedisSecret }}
                   key: connection
+      volumes:
+        - name: registry-tls-volume
+          secret:
+            secretName: {{ .Values.global.tlsSecret }}
