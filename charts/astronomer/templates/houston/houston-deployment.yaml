@@ -89,7 +89,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: {{ .Release.Name }}-registry-auth
-                  key: .dockerconfig
+                  key: .dockerconfigjson
             - name: JWT_PASSPHRASE
               valueFrom:
                 secretKeyRef:
