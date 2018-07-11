@@ -1,7 +1,25 @@
 apiVersion: v1
 entries:
   airflow:
-  - created: 2018-05-17T12:50:34.30121373-04:00
+  - created: 2018-07-11T15:56:28.242537507-04:00
+    description: Helm chart to deploy the Astronomer Platform Airflow module
+    digest: 133e854195fc5c629646bd1ee23bb2868b456d058fe3faba63e4be6cd56abdfc
+    keywords:
+    - astronomer
+    name: airflow
+    urls:
+    - https://helm.astronomer.io/airflow-0.3.0-rc.8.tgz
+    version: 0.3.0-rc.8
+  - created: 2018-07-11T15:56:28.242160404-04:00
+    description: Helm chart to deploy the Astronomer Platform Airflow module
+    digest: 1036eafc3145569c106fe3fa0fdfd2c58bdaf4ce59b448fea28d14f3e0b6334b
+    keywords:
+    - astronomer
+    name: airflow
+    urls:
+    - https://helm.astronomer.io/airflow-0.3.0-rc.6.tgz
+    version: 0.3.0-rc.6
+  - created: 2018-07-11T15:56:28.241774795-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: ff60a2ea039b9de65560a7a66f9f638a1e909dbc8db75fc4a523351a3cc00cd7
     keywords:
@@ -10,7 +28,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.2.1.tgz
     version: 0.2.1
-  - created: 2018-05-17T12:50:34.300658288-04:00
+  - created: 2018-07-11T15:56:28.241348421-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: 421fe81ede5bb7fbb7e606695c404024e393eacb80ada1220b9330a82332c2c5
     keywords:
@@ -19,7 +37,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.2.0.tgz
     version: 0.2.0
-  - created: 2018-05-17T12:50:34.29981611-04:00
+  - created: 2018-07-11T15:56:28.240928665-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: a9c38f81ea6a40fe2d07e1ed859a1c4b040b85b3d19d2cf84bac33b403c286bb
     keywords:
@@ -28,7 +46,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.2.0-rc.1.tgz
     version: 0.2.0-rc.1
-  - created: 2018-05-17T12:50:34.298983076-04:00
+  - created: 2018-07-11T15:56:28.240483965-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: d8bcffda68cb9bf0ed5f460f59cc2b1e6786f025d6cae6f4e5fbfaf377575ee7
     keywords:
@@ -37,7 +55,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.1.4.tgz
     version: 0.1.4
-  - created: 2018-05-17T12:50:34.298015111-04:00
+  - created: 2018-07-11T15:56:28.240065455-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: 874de7fc02b898cdca543c613be31c256b1a2baab5fc399851cbaedd87a44fa4
     keywords:
@@ -46,7 +64,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.1.3.tgz
     version: 0.1.3
-  - created: 2018-05-17T12:50:34.297126985-04:00
+  - created: 2018-07-11T15:56:28.239657473-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: 8fec3cdbbeb08674a7ad85db0437c805cd32cfc4123d677bf430142ef781cb00
     keywords:
@@ -55,7 +73,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.1.2.tgz
     version: 0.1.2
-  - created: 2018-05-17T12:50:34.296073575-04:00
+  - created: 2018-07-11T15:56:28.239208356-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: f7e49ed51624a74d9050610fb453a33a6ec09d42d774a29c5753b6adcce103b9
     keywords:
@@ -64,7 +82,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.1.1.tgz
     version: 0.1.1
-  - created: 2018-05-17T12:50:34.295086078-04:00
+  - created: 2018-07-11T15:56:28.23878181-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: 4522a14cc4b2eb3f3d906f3ac29b8797add0c733e240a1d946e40ba77a69804d
     keywords:
@@ -73,7 +91,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.1.0.tgz
     version: 0.1.0
-  - created: 2018-05-17T12:50:34.294066436-04:00
+  - created: 2018-07-11T15:56:28.238363173-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: 707b85a7339d423701a42be25e52ee61a5b09d5e5c44d727b7372a49e072ff2d
     keywords:
@@ -83,7 +101,25 @@ entries:
     - https://helm.astronomer.io/airflow-0.0.1.tgz
     version: 0.0.1
   astronomer:
-  - created: 2018-05-17T12:50:34.305596398-04:00
+  - created: 2018-07-11T15:56:28.246794012-04:00
+    description: A Helm chart to deploy the Astronomer module
+    digest: 736e9c106b4eb9608508f6b298836e1523ea5b30138b43ed2301186c8c2c701c
+    keywords:
+    - astronomer
+    name: astronomer
+    urls:
+    - https://helm.astronomer.io/astronomer-0.3.0-rc.8.tgz
+    version: 0.3.0-rc.8
+  - created: 2018-07-11T15:56:28.246417984-04:00
+    description: A Helm chart to deploy the Astronomer module
+    digest: ebb1fd9409fbccdf00439094c9e9b273c3100d7b7c7eb761c39f10807c38913c
+    keywords:
+    - astronomer
+    name: astronomer
+    urls:
+    - https://helm.astronomer.io/astronomer-0.3.0-rc.6.tgz
+    version: 0.3.0-rc.6
+  - created: 2018-07-11T15:56:28.246044603-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: ee40b8b72b0678a3289aed7a1546d560a69d7ed7647d2ab30bfc84616c452444
     keywords:
@@ -92,7 +128,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.2.1.tgz
     version: 0.2.1
-  - created: 2018-05-17T12:50:34.305248993-04:00
+  - created: 2018-07-11T15:56:28.245727869-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: 0b0ec44a510a4d69c531d3f7d9088da1a0f65b0ebe2c75f5a0290a75ba7e7dde
     keywords:
@@ -101,7 +137,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.2.0.tgz
     version: 0.2.0
-  - created: 2018-05-17T12:50:34.304711036-04:00
+  - created: 2018-07-11T15:56:28.245391288-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: 87f9c09c84888330029796b40346f224b6ed98df9da6bdaa52cbd9cca91a0539
     keywords:
@@ -110,7 +146,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.2.0-rc.1.tgz
     version: 0.2.0-rc.1
-  - created: 2018-05-17T12:50:34.304111232-04:00
+  - created: 2018-07-11T15:56:28.244497391-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: 5ae6ac620ed58fbd3bd83e1c93d74206880a776237a2bb58e8f3eb65da292330
     keywords:
@@ -119,7 +155,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.1.4.tgz
     version: 0.1.4
-  - created: 2018-05-17T12:50:34.303564664-04:00
+  - created: 2018-07-11T15:56:28.243948532-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: 9ddbf70d71e22340b55ef2a35aeb0f40ff5c710018575ba90ddc2f396d4034d3
     keywords:
@@ -128,7 +164,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.1.3.tgz
     version: 0.1.3
-  - created: 2018-05-17T12:50:34.30303948-04:00
+  - created: 2018-07-11T15:56:28.243635578-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: d0cab45a03e1f9563e9d2054fa4ca3b1b805dc7641b04c857821b704a84f7298
     keywords:
@@ -137,7 +173,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.1.2.tgz
     version: 0.1.2
-  - created: 2018-05-17T12:50:34.302621185-04:00
+  - created: 2018-07-11T15:56:28.243364494-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: d092b8f259c95e3443ce7a3f59132e8924c164648f9f01e84934c272b8859c2e
     keywords:
@@ -146,7 +182,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.1.1.tgz
     version: 0.1.1
-  - created: 2018-05-17T12:50:34.302147529-04:00
+  - created: 2018-07-11T15:56:28.243098561-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: a39934b6607bf3c0fefffd71c34bc0e12528404cc53c32b1f2ee63ae2bfbe12d
     keywords:
@@ -155,7 +191,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.1.0.tgz
     version: 0.1.0
-  - created: 2018-05-17T12:50:34.301730334-04:00
+  - created: 2018-07-11T15:56:28.242827867-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: 8aca4d4563666f8916101da4a7aad1604fe7e1dc932b4ce0c5c9d58cb490a5c6
     keywords:
@@ -164,4 +200,4 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.0.1.tgz
     version: 0.0.1
-generated: 2018-05-17T12:50:34.29236033-04:00
+generated: 2018-07-11T15:56:28.237883929-04:00
