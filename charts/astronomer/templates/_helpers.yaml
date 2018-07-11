@@ -28,9 +28,6 @@
 {{ .Values.images.registry.name }}:{{ or .Values.global.imageTag .Values.images.registry.tag }}
 {{- end }}
 
-
-# {"auths":{"registry.peter-dev.astronomer.io":{"username":"peter","password":"peterpassword","email":"peter@astronomer.io","auth":"cGV0ZXI6cGV0ZXJwYXNzd29yZA=="}}}
-
 {{ define "registry_docker_config" -}}
   {{- $domain := printf "registry.%v" .Values.global.baseDomain }}
   {{- $email := printf "admin@%v" .Values.global.baseDomain }}
