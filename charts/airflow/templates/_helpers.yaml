@@ -44,7 +44,7 @@
   - name: AIRFLOW__CELERY__BROKER_URL
     valueFrom:
       secretKeyRef:
-        name: {{ .Values.data.airflowBrokerSecret }}
+        name: {{ .Release.Name }}-celery-backend-uri
         key: connection
   - name: AIRFLOW__CORE__FERNET_KEY
     valueFrom:
