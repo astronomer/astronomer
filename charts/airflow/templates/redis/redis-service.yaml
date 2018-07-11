@@ -12,8 +12,18 @@ metadata:
     workspace: {{ .Values.workspace }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
+# spec:
+#   clusterIP: None
+#   selector:
+#     tier: airflow
+#     component: redis
+#     release: {{ .Release.Name }}
+#     workspace: {{ .Values.workspace }}
+#   ports:
+#     - name: redis-db
+#       port: 6379
 spec:
-  clusterIP: None
+  type: NodePort
   selector:
     tier: airflow
     component: redis
@@ -21,4 +31,6 @@ spec:
     workspace: {{ .Values.workspace }}
   ports:
     - name: redis-db
+      protocol: TCP
       port: 6379
+      targetPort: 6379
