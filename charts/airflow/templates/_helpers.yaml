@@ -72,3 +72,7 @@
 {{ define "statsd_image" -}}
 {{ .Values.images.statsd.name }}:{{ or .Values.global.imageTag .Values.images.statsd.tag }}
 {{- end }}
+
+{{ define "redis_image -"}}
+{{ .Values.images.redis.name }}:{{ or .Values.global.imageTag .Values.images.redis.tag }}
+{{- end }}
