@@ -92,7 +92,7 @@ spec:
             - name: REGISTRY_AUTH
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Release.Name }}-registry-auth
+                  name: {{ .Values.global.registryAuthSecret }}
                   key: .dockerconfigjson
             - name: JWT_PASSPHRASE
               valueFrom:

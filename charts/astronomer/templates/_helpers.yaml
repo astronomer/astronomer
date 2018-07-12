@@ -40,7 +40,7 @@
   {{- $_ := set $data "username" $user -}}
   {{- $_ := set $data "password" $pass -}}
   {{- $_ := set $data "email" $email -}}
-  {{- $_ := set $data "auth" ("{{ .user }}:{{ .pass }}" | b64enc) -}}
+  {{- $_ := set $data "auth" (printf "%v:%v" $user $pass | b64enc) -}}
   {{- $_ := set $auth $domain $data -}}
   {{- $_ := set $config "auths" $auth -}}
   {{ $config | toJson | print }}
