@@ -2,7 +2,7 @@ Thank you for installing Astronomer Enterprise!
 
 Your release is named {{ .Release.Name }}.
 
-{{ if .Values.global.baseDomain }}
+{{- if .Values.global.baseDomain }}
 
 ## Astronomer Airflow Install
 
@@ -20,8 +20,8 @@ Download the CLI:
 
 We have guides available at https://enterprise.astronomer.io/guides/ and are always available to help.
 
-{{ else }}
+{{- else -}}
 
 To see dashboard URLs here, provide baseDomain in your config.
 
-{{ end }}
+{{- end }}
