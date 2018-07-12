@@ -2,29 +2,26 @@ Thank you for installing Astronomer Enterprise!
 
 Your release is named {{ .Release.Name }}.
 
-{{ if and .Values.global.modules.airflow.enabled .Values.global.baseDomain }}
+{{- if .Values.global.baseDomain }}
 
 ## Astronomer Airflow Install
 
-After allowing a few minutes for the platform to come online, you can accesss resources at the following links...
+You can access the platform at:
 
-Webserver:            {{ if .Values.global.acme }}https://{{ else }}http://{{ end }}airflow.{{ .Values.global.baseDomain }}
-Flower:               {{ if .Values.global.acme }}https://{{ else }}http://{{ end }}flower.{{ .Values.global.baseDomain }}
-Container Dashboard:  {{ if .Values.global.acme }}https://{{ else }}http://{{ end }}grafana.{{ .Values.global.baseDomain }}/dashboard/db/airflow-containers
-Scheduler Dashboard:  {{ if .Values.global.acme }}https://{{ else }}http://{{ end }}grafana.{{ .Values.global.baseDomain }}/dashboard/db/airflow-scheduler
-Registry:             {{ if .Values.global.acme }}https://{{ else }}http://{{ end }}registry.{{ .Values.global.baseDomain }}
+- Astronomer app:        https://app.{{ .Values.global.baseDomain }}
+- Containers dashboard:  {{ if .Values.global.acme }}https://{{ else }}http://{{ end }}grafana.{{ .Values.global.baseDomain }}/dashboard/db/airflow-containers
+- Scheduler dashboard:   {{ if .Values.global.acme }}https://{{ else }}http://{{ end }}grafana.{{ .Values.global.baseDomain }}/dashboard/db/airflow-scheduler
 
-{{ else }}
-
-Now that you've installed the platform, you are ready to get started and create your first airflow deployment!
+Now that you've installed the platform, you are ready to get started and create your first airflow deployment.
 
 Download the CLI:
 
-`curl -sL https://install.astronomer.io | sudo bash`
+	curl -sL https://install.astronomer.io | sudo bash
 
-Manage the platform with the UI:
+We have guides available at https://enterprise.astronomer.io/guides/ and are always available to help.
 
-https://app.{{ .Values.global.baseDomain }}
+{{- else -}}
 
-We have some guides available at https://enterprise.astronomer.io/guides/ and are always available to help.
-{{ end }}
+To see dashboard URLs here, provide baseDomain in your config.
+
+{{- end }}
