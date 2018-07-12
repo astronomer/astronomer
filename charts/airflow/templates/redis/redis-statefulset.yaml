@@ -14,7 +14,6 @@ metadata:
     heritage: {{ .Release.Service }}
 spec:
   serviceName: {{ .Release.Name }}-redis
-  podManagementPolicy: Parallel
   selector:
     matchLabels:
       tier: airflow
@@ -29,17 +28,11 @@ spec:
         release: {{ .Release.Name }}
         workspace: {{ .Values.workspace }}
     spec:
-      terminationGracePeriodSeconds: {{ .Values.redis.terminationGracePeriodSeconds }}
-      securityContext:
-        runAsUser: {{ .Values.uid }}
-        fsGroup: {{ .Values.gid }}
-      {{- if .Values.global.registryAuthSecret }}
-      imagePullSecrets:
-        - name: {{ .Values.global.registryAuthSecret }}
-      {{- end }}
       containers:
         - name: {{ .Release.Name }}-redis
           image: {{- include "redis_image" . | indent 1 }}
+          command: ["/bin/sh"]
+          args: ["-c", "redis-server --requirepass ${REDIS_PASSWORD}"]
           ports:
             - name: redis-db
               containerPort: 6379
