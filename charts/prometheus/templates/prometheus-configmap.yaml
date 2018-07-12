@@ -1,15 +1,3 @@
-# TODO: figure out how to change - targets: ["{{ .Release.Name }}-statsd:9102"] to airflow release names
-#   - can we do scrape anything with a certain annotation to match dynamic airflow?
-#   - https://prometheus.io/docs/prometheus/latest/configuration/configuration/#kubernetes_sd_config
-#   - may need to change the airflow chart to stamp a /scrape or .scrape etc
-#
-# read about:
-#   - relabel_configs - mapping service discovery metadata to target labels; happens when figuring out what to scrape.
-#   - metric_relabel_configs - metric relabelling is relabelling applied to time series scraped from a target; happens after scraping has occurred.  actions are: keep, drop, replace, labelmap.
-#
-# test:
-#   - deploy to my local k8s, get the node port of prom to see prom monitoring ui, add the annotation to the statsd container, hopefully deploying with scrape tag will make extra metrics show up
-
 ################################
 ## Prometheus ConfigMap
 #################################
