@@ -50,6 +50,10 @@ spec:
             initialDelaySeconds: 10
             periodSeconds: 10
           env:
+            # {{- range $i, $config := .Values.commander.env }}
+            # - name: {{ $config.name }}
+            #   value: {{ $config.value | quote }}
+            # {{- end }}
             - name: COMMANDER_HTTP_PORT
               value: "8880"
             - name: COMMANDER_GRPC_PORT

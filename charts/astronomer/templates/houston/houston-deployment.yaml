@@ -50,6 +50,10 @@ spec:
             initialDelaySeconds: 10
             periodSeconds: 10
           env:
+            {{- range $i, $config := .Values.houston.env }}
+            - name: {{ $config.name }}
+              value: {{ $config.value | quote }}
+            {{- end }}
             - name: NODE_ENV
               value: "production"
             - name: PORT

@@ -1,5 +1,5 @@
 ################################
-## Astronomer Houston Service
+## Astronomer Orbit Service
 #################################
 kind: Service
 apiVersion: v1

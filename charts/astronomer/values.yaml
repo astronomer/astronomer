@@ -26,13 +26,6 @@ data:
   airflowDatabaseSecret: "houston-database"
   airflowRedisSecret: "airflow-redis"
 
-registry:
-  # Enable persistence to keep registry data between deploys
-  persistence:
-    enabled: true
-    size: 50Gi
-    # If using a custom storageClass, pass name ref to all statefulSets here
-    storageClassName:
 auth:
   local:
     enabled: true
@@ -44,3 +37,16 @@ auth:
     issuer: houston
     expireDays: 3650
 
+houston:
+  env:
+
+commander:
+  env:
+
+registry:
+  # Enable persistence to keep registry data between deploys
+  persistence:
+    enabled: true
+    size: 50Gi
+    # If using a custom storageClass, pass name ref to all statefulSets here
+    storageClassName:
