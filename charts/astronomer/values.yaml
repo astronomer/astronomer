@@ -9,16 +9,16 @@ uid: 100
 images:
   commander:
     name: astronomerinc/ap-commander
-    tag: 0.2.0
+    tag: 0.3.0-rc.10
   registry:
     name: astronomerinc/ap-registry
-    tag: 0.2.0
+    tag: 0.3.0-rc.10
   houston:
     name: astronomerinc/ap-houston-api
-    tag: 0.2.0
+    tag: 0.3.0-rc.10
   orbit:
     name: astronomerinc/ap-orbit-ui
-    tag: 0.2.0
+    tag: 0.3.0-rc.10
 
 # Astronomer platform config
 data:

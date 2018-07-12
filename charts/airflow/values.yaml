@@ -10,14 +10,13 @@ gid: 101
 images:
   airflow:
     name: astronomerinc/ap-airflow
-    tag: 0.2.0
+    tag: 0.3.0-rc.10
   statsd:
     name: astronomerinc/ap-statsd-exporter
-    tag: 0.2.0
+    tag: 0.3.0-rc.10
   redis:
     name:  astronomerinc/ap-redis
-    # tag: 0.2.0
-    tag: "0.3.0-rc.5"  # TODO: remove this temporary workaround with final release
+    tag: 0.3.0-rc.10
 
 # Airflow Worker Config
 workers:
