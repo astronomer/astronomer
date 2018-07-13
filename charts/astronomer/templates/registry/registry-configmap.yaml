@@ -29,8 +29,8 @@ data:
     auth:
       token:
         realm: "https://houston.{{ .Values.global.baseDomain }}/registry"
-        service: docker-registry
-        issuer: {{ .Values.auth.registry.issuer | quote }}
+        service: {{ .Values.registry.auth.service | quote }}
+        issuer: {{ .Values.registry.auth.issuer | quote }}
         rootcertbundle: /etc/docker/ssl/tls.crt
     health:
       storagedriver:

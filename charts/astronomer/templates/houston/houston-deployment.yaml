@@ -98,10 +98,6 @@ spec:
               value: "{{ .Release.Name }}-commander"
             - name: COMMANDER_PORT
               value: "50051"
-            - name: DOCKER_CERT_PATH
-              value: "/etc/houston/tls/"
-            - name: DOCKER_ISSUER
-              value: {{ .Values.auth.registry.issuer }}
             - name: GOOGLE_OAUTH_REDIRECT_URL
               value: "https://app.{{ .Values.global.baseDomain }}/oauth/google"
             - name: GOOGLE_CLIENT_ID
@@ -111,6 +107,12 @@ spec:
                 secretKeyRef:
                   name: {{ .Release.Name }}-google-client-secret
                   key: clientSecret
+            - name: REGISTRY_CERT_PATH
+              value: "/etc/houston/tls/"
+            - name: REGISTRY_ISSUER
+              value: {{ .Values.registry.auth.issuer }}
+            - name: REGISTRY_SERVICE
+              value: {{ .Values.registry.auth.service }}
             - name: REGISTRY_AUTH
               valueFrom:
                 secretKeyRef:
