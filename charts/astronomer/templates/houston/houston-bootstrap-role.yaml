@@ -1,0 +1,24 @@
+################################
+## Houston Role
+#################################
+{{- if and .Values.global.rbacEnabled .Values.bootstrapDatabase }}
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: houston-bootstrapper-role
+  labels:
+    tier: houston
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    verbs:
+      - list
+      - get
+      - create
+      - patch
+{{- end }}

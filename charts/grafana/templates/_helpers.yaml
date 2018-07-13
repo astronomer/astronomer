@@ -5,3 +5,7 @@
 {{ define "grafana_url" -}}
 grafana.{{ .Values.global.baseDomain }}
 {{- end }}
+
+{{ define "db_bootstrapper_image" -}}
+{{ .Values.images.bootstrapper.name }}:{{ or .Values.global.imageTag .Values.images.bootstrapper.tag }}
+{{- end }}
