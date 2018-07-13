@@ -33,9 +33,6 @@ auth:
     enabled: false
     clientId: ~
     clientSecret: ~
-  registry:
-    issuer: houston
-    expireDays: 3650
 
 houston:
   env:
@@ -50,3 +47,7 @@ registry:
     size: 50Gi
     # If using a custom storageClass, pass name ref to all statefulSets here
     storageClassName:
+  auth:
+    service: "docker-registry"
+    issuer: "houston"
+
