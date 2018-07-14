@@ -1,6 +1,7 @@
 ################################
 ## Astronomer Registry Service
 #################################
+{{ if .Values.global.baseDomain }}
 kind: Service
 apiVersion: v1
 metadata:
@@ -22,3 +23,4 @@ spec:
       protocol: TCP
       port: 5000
       targetPort: 5000
+{{- end }}

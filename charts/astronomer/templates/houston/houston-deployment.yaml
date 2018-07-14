@@ -27,7 +27,7 @@ spec:
     spec:
       restartPolicy: Always
       {{- if .Values.bootstrapDatabase }}
-      serviceAccountName: grafana-bootstrapper-serviceaccount
+      serviceAccountName: houston-bootstrapper-serviceaccount
       initContainers:
         - name: "{{ .Release.Name }}-houston-bootstrapper"
           image: {{- include "db_bootstrapper_image" . | indent 1 }}
@@ -35,7 +35,7 @@ spec:
             - name: BOOTSTRAP_DB
               valueFrom:
                 secretKeyRef:
-                  name: astronomer-database
+                  name: astronomer-bootstrap
                   key: connection
             - name: DB_NAME
               value: houston
@@ -107,6 +107,7 @@ spec:
                 secretKeyRef:
                   name: {{ .Release.Name }}-google-client-secret
                   key: clientSecret
+            {{- if .Values.global.baseDomain }}
             - name: REGISTRY_CERT_PATH
               value: "/etc/houston/tls/"
             - name: REGISTRY_ISSUER
@@ -118,6 +119,7 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.global.registryAuthSecret }}
                   key: .dockerconfigjson
+            {{- end }}
             - name: JWT_PASSPHRASE
               valueFrom:
                 secretKeyRef:

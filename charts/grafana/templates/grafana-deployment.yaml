@@ -38,7 +38,7 @@ spec:
             - name: BOOTSTRAP_DB
               valueFrom:
                 secretKeyRef:
-                  name: astronomer-database
+                  name: astronomer-bootstrap
                   key: connection
             - name: DB_NAME
               value: grafana

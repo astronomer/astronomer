@@ -1,5 +1,5 @@
 ################################
-## Houston Role
+## Houston Bootstrap Role
 #################################
 {{- if and .Values.global.rbacEnabled .Values.bootstrapDatabase }}
 kind: Role

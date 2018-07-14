@@ -1,5 +1,5 @@
 ################################
-## Grafana Role
+## Grafana Bootstrap Role
 #################################
 {{- if and .Values.global.rbacEnabled .Values.bootstrapDatabase }}
 kind: Role

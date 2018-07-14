@@ -3,7 +3,7 @@
 #################################
 global:
   # Base domain for all subdomains exposed through ingress
-  baseDomain:
+  baseDomain: false
 
   # Use kube-lego
   acme: false
@@ -40,9 +40,9 @@ global:
     airflow:
       enabled: false
 
-    # Enable NGINX ingress module
-    nginx:
-      enabled: true
+    # Enable NGINX ingress module (controlled by baseDomain currently)
+    # nginx:
+    #   enabled: true
 
     # Enable Grafana module
     grafana:

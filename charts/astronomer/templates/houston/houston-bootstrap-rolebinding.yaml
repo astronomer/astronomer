@@ -1,5 +1,5 @@
 ################################
-## Houston Role Binding
+## Houston Bootstrap Role Binding
 #################################
 {{- if and .Values.global.rbacEnabled .Values.bootstrapDatabase }}
 kind: RoleBinding
