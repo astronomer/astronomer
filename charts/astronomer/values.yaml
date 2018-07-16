@@ -28,6 +28,8 @@ data:
   houstonDatabaseSecret: "houston-database"
   airflowDatabaseSecret: "houston-database"
 
+bootstrapDatabase: true
+
 auth:
   local:
     enabled: true

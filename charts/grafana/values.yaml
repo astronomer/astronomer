@@ -11,3 +11,5 @@ images:
     tag: 0.3.0-rc.10
 
 grafanaBackendSecret: grafana-backend
+
+bootstrapDatabase: true
