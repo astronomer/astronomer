@@ -51,7 +51,7 @@ spec:
       containers:
         - name: {{ .Release.Name }}-houston
           image: {{- include "houston_image" . | indent 1 }}
-          {{ if .Values.global.baseDomain }}
+          {{ if .Values.global.tlsSecret }}
           volumeMounts:
             - name: registry-tls-volume
               mountPath: "/etc/houston/tls/"
@@ -107,13 +107,13 @@ spec:
                 secretKeyRef:
                   name: {{ .Release.Name }}-google-client-secret
                   key: clientSecret
-            {{- if .Values.global.baseDomain }}
             - name: REGISTRY_CERT_PATH
               value: "/etc/houston/tls/"
             - name: REGISTRY_ISSUER
               value: {{ .Values.registry.auth.issuer }}
             - name: REGISTRY_SERVICE
               value: {{ .Values.registry.auth.service }}
+            {{- if .Values.global.baseDomain }}
             - name: REGISTRY_AUTH
               valueFrom:
                 secretKeyRef:
@@ -135,7 +135,7 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.data.airflowDatabaseSecret }}
                   key: connection
-    {{ if .Values.global.baseDomain }}
+    {{ if .Values.global.tlsSecret }}
       volumes:
         - name: registry-tls-volume
           secret:
