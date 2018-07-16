@@ -25,7 +25,7 @@ workers:
 
   persistence:
     # Enable persistent volumes
-    enabled: false
+    enabled: true
     # Volume size for worker StatefulSet
     size: 10Gi
     # If using a custom storageClass, pass name ref to all statefulSets here
@@ -56,7 +56,7 @@ redis:
 
   persistence:
     # Enable persistent volumes
-    enabled: false
+    enabled: true
     # Volume size for worker StatefulSet
     size: 1Gi
     # If using a custom storageClass, pass name ref to all statefulSets here

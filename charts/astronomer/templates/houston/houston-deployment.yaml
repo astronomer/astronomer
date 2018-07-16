@@ -26,14 +26,36 @@ spec:
         release: {{ .Release.Name }}
     spec:
       restartPolicy: Always
+      {{- if .Values.bootstrapDatabase }}
+      serviceAccountName: houston-bootstrapper-serviceaccount
+      initContainers:
+        - name: "{{ .Release.Name }}-houston-bootstrapper"
+          image: {{- include "db_bootstrapper_image" . | indent 1 }}
+          env:
+            - name: BOOTSTRAP_DB
+              valueFrom:
+                secretKeyRef:
+                  name: astronomer-bootstrap
+                  key: connection
+            - name: DB_NAME
+              value: houston
+            - name: SECRET_NAME
+              value: {{ .Values.data.houstonDatabaseSecret }}
+            - name: NAMESPACE
+              value: {{ .Release.Namespace }}
+            - name: IN_CLUSTER
+              value: "true"
+      {{- end }}
       securityContext:
         runAsUser: {{ .Values.uid }}
       containers:
         - name: {{ .Release.Name }}-houston
           image: {{- include "houston_image" . | indent 1 }}
+          {{ if .Values.global.tlsSecret }}
           volumeMounts:
             - name: registry-tls-volume
               mountPath: "/etc/houston/tls/"
+          {{- end }}
           ports:
             - name: houston-http
               containerPort: 8870
@@ -91,11 +113,13 @@ spec:
               value: {{ .Values.registry.auth.issuer }}
             - name: REGISTRY_SERVICE
               value: {{ .Values.registry.auth.service }}
+            {{- if .Values.global.baseDomain }}
             - name: REGISTRY_AUTH
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.global.registryAuthSecret }}
                   key: .dockerconfigjson
+            {{- end }}
             - name: JWT_PASSPHRASE
               valueFrom:
                 secretKeyRef:
@@ -111,7 +135,9 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.data.airflowDatabaseSecret }}
                   key: connection
+    {{ if .Values.global.tlsSecret }}
       volumes:
         - name: registry-tls-volume
           secret:
             secretName: {{ .Values.global.tlsSecret }}
+    {{- end }}

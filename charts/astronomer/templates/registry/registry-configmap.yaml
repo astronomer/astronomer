@@ -1,6 +1,7 @@
 ################################
 ## Astronomer Registry ConfigMap
 #################################
+{{ if .Values.global.baseDomain }}
 kind: ConfigMap
 apiVersion: v1
 metadata:
@@ -46,3 +47,4 @@ data:
           backoff: 1s
           ignoredmediatypes:
             - application/octet-stream
+{{- end }}

@@ -19,12 +19,16 @@ images:
   orbit:
     name: astronomerinc/ap-orbit-ui
     tag: 0.3.0-rc.10
+  bootstrapper:
+    name: astronomerinc/ap-db-bootstrapper
+    tag: 0.3.0-rc.10
 
 # Astronomer platform config
 data:
   houstonDatabaseSecret: "houston-database"
   airflowDatabaseSecret: "houston-database"
-  airflowRedisSecret: "airflow-redis"
+
+bootstrapDatabase: true
 
 auth:
   local:
