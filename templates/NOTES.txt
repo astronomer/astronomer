@@ -9,8 +9,8 @@ Your release is named {{ .Release.Name }}.
 You can access the platform at:
 
 - Astronomer app:        https://app.{{ .Values.global.baseDomain }}
-- Containers dashboard:  {{ if .Values.global.acme }}https://{{ else }}http://{{ end }}grafana.{{ .Values.global.baseDomain }}/dashboard/db/airflow-containers
-- Scheduler dashboard:   {{ if .Values.global.acme }}https://{{ else }}http://{{ end }}grafana.{{ .Values.global.baseDomain }}/dashboard/db/airflow-scheduler
+- Containers dashboard:  {{ if .Values.global.acme }}https://{{ else }}http://{{ end }}grafana.{{ .Values.global.baseDomain }}/d/oVAdRWdiz/airflow-containers
+- Scheduler dashboard:   {{ if .Values.global.acme }}https://{{ else }}http://{{ end }}grafana.{{ .Values.global.baseDomain }}/d/7rY_RWdik/airflow-scheduler
 
 Now that you've installed the platform, you are ready to get started and create your first airflow deployment.
 
