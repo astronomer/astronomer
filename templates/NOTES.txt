@@ -20,7 +20,7 @@ Download the CLI:
 
 We have guides available at https://enterprise.astronomer.io/guides/ and are always available to help.
 
-{{- else -}}
+{{- else }}
 
 To see dashboard URLs here, provide baseDomain in your config.
 
