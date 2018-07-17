@@ -21,7 +21,7 @@ LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
 LABEL io.astronomer.docker.module="astronomer"
 LABEL io.astronomer.docker.component="commander"
 
-ARG VERSION="v0.2.0"
+ARG VERSION="v0.3.0"
 ENV REPO="github.com/astronomerio/commander"
 ENV REPO_URL="https://${REPO}"
 
