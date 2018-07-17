@@ -1,8 +1,0 @@
-################################
-## Airflow configuration
-#################################
-
-# Astronomer Airflow database config
-data:
-  airflowMetadataSecret: "airflow-metadata"
-  airflowResultBackendSecret: "airflow-result-backend"
