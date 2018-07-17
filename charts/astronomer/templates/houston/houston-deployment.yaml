@@ -38,7 +38,7 @@ spec:
                   name: astronomer-bootstrap
                   key: connection
             - name: DB_NAME
-              value: houston
+              value: {{ .Release.Name }}-houston
             - name: SECRET_NAME
               value: {{ .Values.data.houstonDatabaseSecret }}
             - name: NAMESPACE
