@@ -23,10 +23,36 @@ build:
 	done; \
 	helm repo index ${OUTPUT} --url ${URL}
 
-.PHONY: push-public
-push-public: build
+.PHONY: push
+push: build
 	for chart in ${CHARTS} ; do \
 		gsutil cp -a public-read ${OUTPUT}/$${chart}-${ASTRONOMER_VERSION}.tgz ${BUCKET} || exit 1; \
 	done; \
 	gsutil cp -a public-read ${OUTPUT}/configs/airflow-${ASTRONOMER_VERSION}.yaml ${BUCKET}/configs
 	gsutil cp -a public-read ${OUTPUT}/index.yaml ${BUCKET}
+
+.PHONY: clean
+clean:
+	for chart in ${CHARTS} ; do \
+		rm ${OUTPUT}/$${chart}-${ASTRONOMER_VERSION}.tgz || exit 1; \
+	done; \
+
+.PHONY: build-rc
+build-rc:
+ifndef ASTRONOMER_RC_VERSION
+	$(error ASTRONOMER_RC_VERSION must be defined)
+endif
+	$(MAKE) ASTRONOMER_VERSION=${ASTRONOMER_VERSION}-rc.${ASTRONOMER_RC_VERSION} build
+
+.PHONY: push-rc
+push-rc: build-rc
+	$(MAKE) ASTRONOMER_VERSION=${ASTRONOMER_VERSION}-rc.${ASTRONOMER_RC_VERSION} push
+
+.PHONY: clean-rc
+clean-rc:
+ifndef ASTRONOMER_RC_VERSION
+	$(error ASTRONOMER_RC_VERSION must be defined)
+endif
+	for chart in ${CHARTS} ; do \
+		rm ${OUTPUT}/$${chart}-${ASTRONOMER_VERSION}-rc.${ASTRONOMER_RC_VERSION}.tgz || exit 1; \
+	done; \
