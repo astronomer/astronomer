@@ -10,13 +10,13 @@ gid: 101
 images:
   airflow:
     name: astronomerinc/ap-airflow
-    tag: 0.3.0-rc.13
+    tag: 0.3.0
   statsd:
     name: astronomerinc/ap-statsd-exporter
-    tag: 0.3.0-rc.13
+    tag: 0.3.0
   redis:
     name:  astronomerinc/ap-redis
-    tag: 0.3.0-rc.13
+    tag: 0.3.0
 
 # Airflow Worker Config
 workers:

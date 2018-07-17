@@ -4,10 +4,10 @@
 images:
   nginx:
     name: astronomerinc/ap-nginx
-    tag: 0.3.0-rc.13
+    tag: 0.3.0
   defaultBackend:
     name: astronomerinc/ap-default-backend
-    tag: 0.3.0-rc.13
+    tag: 0.3.0
 
 # IP address the nginx ingress should bind to
 loadBalancerIP:
