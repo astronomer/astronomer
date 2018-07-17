@@ -6,6 +6,8 @@ Your release is named {{ .Release.Name }}.
 
 ## Astronomer Airflow Install
 
+The platform components may take a few minutes to spin up.
+
 You can access the platform at:
 
 - Astronomer app:        https://app.{{ .Values.global.baseDomain }}
