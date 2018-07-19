@@ -5,7 +5,7 @@
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRoleBinding
 metadata:
-  name: commander-tiller
+  name: {{ .Release.Name }}-commander-tiller
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
