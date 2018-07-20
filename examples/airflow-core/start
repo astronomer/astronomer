@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+
+if [ ! -z $1 ] && [ -d $1 ]; then
+	BASE_IMAGE_NAME="astronomerinc/ap-airflow"
+	REQUIREMENTS="$1/requirements.txt"
+	PACKAGES="$1/packages.txt"
+	DOCKERFILE="$1/Dockerfile"
+	export AIRFLOW_HOME=$1
+	echo ${DOCKERFILE}
+
+	# Create default dockerfile using onbuild image as base
+	if [ ! -f $DOCKERFILE ]; then
+		echo "FROM ${BASE_IMAGE_NAME}:latest-onbuild" >> $DOCKERFILE
+	fi
+
+	# Create default requirements.txt
+	if [ ! -f $REQUIREMENTS ]; then
+		echo "noop==1.0.0" >> $REQUIREMENTS
+	fi
+	echo ${REQUIREMENTS}
+
+	# Create default packages.txt
+	if [ ! -f $PACKAGES ]; then
+		touch $PACKAGES
+	fi
+
+	# Build astronomerio/airflow:DIR_NAME image
+	DIR_NAME=`echo ${1%/} | rev | awk -F \/ '{print $1}' | rev`
+	docker build -t "${BASE_IMAGE_NAME}:${DIR_NAME}" -f ${DOCKERFILE} $1 || exit 1
+
+	# If we have an enhanced image built, specify tag here and use it
+	if [ -f $REQUIREMENTS ] || [ -f $PACKAGES ]; then
+		export AIRFLOW_IMAGE_TAG=${DIR_NAME}
+	else
+		echo "$1 has no packages or requirements, skipping build."
+	fi
+
+else
+    echo "No valid directory specified, starting an empty Airflow..."
+fi
+
+# Run Docker Compose
+docker-compose up
+
+printf "\nAirflow Core Started\n"
+printf "\nAirflow Webserver running at http://localhost:8080\n"
+printf "\nExecute ./pause to stop containers and keep all data."
+printf "\nExecute ./kill to stop containers and remove all data.\n\n"
