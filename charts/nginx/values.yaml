@@ -4,10 +4,10 @@
 images:
   nginx:
     name: astronomerinc/ap-nginx
-    tag: 0.3.0
+    tag: 0.3.1
   defaultBackend:
     name: astronomerinc/ap-default-backend
-    tag: 0.3.0
+    tag: 0.3.1
 
 # AntiAffinity can be "hard" or "soft"
 antiAffinity: "soft"
