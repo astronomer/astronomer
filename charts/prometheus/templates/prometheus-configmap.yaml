@@ -23,6 +23,9 @@ data:
         scrape_interval: 2s
         kubernetes_sd_configs:
           - role: service
+            namespaces:
+              names:
+                - {{ .Release.Namespace }}
         relabel_configs:
           - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scrape]
             action: keep
@@ -60,33 +63,41 @@ data:
             target_label: systemd_service_name
             replacement: '${1}'
 
+            # Only keep metrics from the platforms namespace
+          - action: keep
+            source_labels: [namespace]
+            regex: "{{ .Release.Namespace }}"
+
             # This will patch up most metrics
           - source_labels: [container_name]
-            regex: ".*-(.*)$"
-            replacement: "$1"
+            regex: "^(.*)-(.*)$"
+            replacement: "$1 $2"
             target_label: component_name
+
           - source_labels: [pod_name]
-            regex: ".*-.*-(.*)$"
+            regex: "^.*-.*-(.*)$"
             replacement: "$1"
             target_label: component_instance
 
-          # Network level metrics are exposed at the POD level
-          # Deployment (others) format
+            # Network level metrics are exposed at the POD level
+            # Deployment (others) format
           - source_labels: [__name__, container_name, pod_name]
-            regex: "container_network_.*-[0-9a-z]{10}-[0-9a-z]{5}$"
-            replacement: "$1"
+            regex: "container_network_.*;(.*)-(.*)-([0-9a-z]{10}-[0-9a-z]{5})$"
+            replacement: "$1 $2"
             target_label: component_name
+
           - source_labels: [__name__, container_name, pod_name]
-            regex: "container_network_.*;{{ .Release.Name }}-(.*)-[0-9a-z]{10}-[0-9a-z]{5}$"
-            replacement: "$1"
-            target_label: component_name
+            regex: "container_network_.*;(.*)-(.*)-([0-9a-z]{10}-[0-9a-z]{5})$"
+            replacement: "$3"
+            target_label: component_instance
 
             # StatefulSet (workers) format
           - source_labels: [__name__, pod_name]
-            regex: "^container_network_.*;{{ .Release.Name }}-(.*)-[0-9]+$"
-            replacement: "$1"
+            regex: "^container_network_.*;(.*)-(.*)-([0-9]+)$"
+            replacement: "$1 $2"
             target_label: component_name
+
           - source_labels: [__name__, pod_name]
-            regex: "^container_network_.*;{{ .Release.Name }}-.*-([0-9]+)$"
-            replacement: "$1"
+            regex: "^container_network_.*;(.*)-(.*)-([0-9]+)$"
+            replacement: "$3"
             target_label: component_instance
