@@ -24,12 +24,6 @@ VENDOR_COMPONENTS := nginx registry cadvisor grafana prometheus redis statsd-exp
 # All components
 ALL_COMPONENTS := ${PLATFORM_COMPONENTS} ${VENDOR_COMPONENTS}
 
-# Documentation build vars.
-DOCS_DOMAIN ?= open.astronomer.io
-DOCS_BUCKET ?= gs://${DOCS_DOMAIN}
-DOCS_SRC := docs
-DOCS_DEST := docs/_site
-
 # Set default for make.
 .DEFAULT_GOAL := build
 
@@ -97,13 +91,3 @@ clean-rc:
 
 .PHONY: clean
 clean: clean-containers clean-images
-
-.PHONY: build-docs
-build-docs:
-	jekyll build --source ${DOCS_SRC} --destination ${DOCS_DEST}
-
-.PHONY: push-docs
-push-docs: build-docs
-	gsutil \
-		-h "Cache-Control:public, max-age=300" \
-		-m rsync -a public-read -d -r ${DOCS_DEST} ${DOCS_BUCKET}
