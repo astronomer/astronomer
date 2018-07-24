@@ -91,6 +91,8 @@ TODO: do we need to change versions in [requirements.yaml](https://github.com/as
 	- `ASTRONOMER_PATCH_VERSION`
 	- `ASTRONOMER_RC_VERSION` (optional)
 
+1. Bump the version in https://github.com/astronomerio/helm.astronomer.io/blob/master/Chart.yaml
+
 ## 6. Build and publish the Helm charts
 
 ```shell
