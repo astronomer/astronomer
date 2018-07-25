@@ -1,13 +1,13 @@
 ################################
-## Airflow Webserver NetworkPolicy
+## Airflow Worker NetworkPolicy
 #################################
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: {{ .Release.Name }}-webserver-policy
+  name: {{ .Release.Name }}-worker-policy
   labels:
-    tier: airflow
-    component: airflow-webserver-policy
+    tier: airflow-networking
+    component: airflow-worker-policy
     release: {{ .Release.Name }}
     workspace: {{ .Values.workspace }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
@@ -16,16 +16,7 @@ spec:
   podSelector:
     matchLabels:
       tier: airflow
-      component: webserver
+      component: worker
       release: {{ .Release.Name }}
   policyTypes:
   - Ingress
-  ingress:
-  - from:
-    - podSelector:
-        matchLabels:
-          tier: nginx
-          component: ingress-controller
-    ports:
-    - protocol: TCP
-      port: {{ .Values.ports.airflowUI }}

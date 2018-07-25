@@ -1,13 +1,13 @@
 ################################
-## Airflow Webserver NetworkPolicy
+## Redis NetworkPolicy
 #################################
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: {{ .Release.Name }}-webserver-policy
+  name: {{ .Release.Name }}-redis-policy
   labels:
     tier: airflow
-    component: airflow-webserver-policy
+    component: redis-policy
     release: {{ .Release.Name }}
     workspace: {{ .Values.workspace }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
@@ -16,7 +16,7 @@ spec:
   podSelector:
     matchLabels:
       tier: airflow
-      component: webserver
+      component: redis
       release: {{ .Release.Name }}
   policyTypes:
   - Ingress
@@ -24,8 +24,19 @@ spec:
   - from:
     - podSelector:
         matchLabels:
-          tier: nginx
-          component: ingress-controller
+          tier: airflow
+          release: {{ .Release.Name }}
+          component: worker
+    - podSelector:
+        matchLabels:
+          tier: airflow
+          release: {{ .Release.Name }}
+          component: scheduler
+    - podSelector:
+        matchLabels:
+          tier: airflow
+          release: {{ .Release.Name }}
+          component: flower
     ports:
     - protocol: TCP
-      port: {{ .Values.ports.airflowUI }}
+      port: {{ .Values.ports.redisDB }}

@@ -18,6 +18,10 @@ images:
     name:  astronomerinc/ap-redis
     tag: 0.3.1
 
+# Enable platform authentication
+auth:
+  enabled: true
+
 # Airflow Worker Config
 workers:
   # Number of airflow celery workers in StatefulSet
@@ -61,3 +65,11 @@ redis:
     size: 1Gi
     # If using a custom storageClass, pass name ref to all statefulSets here
     storageClassName:
+
+ports:
+  flowerUI: 5555
+  airflowUI: 8080
+  workerLogs: 8793
+  redisDB: 6379
+  statsdIngest: 9125
+  statsdScrape: 9102

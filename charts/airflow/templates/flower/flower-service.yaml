@@ -22,5 +22,5 @@ spec:
   ports:
     - name: flower-ui
       protocol: TCP
-      port: 5555
-      targetPort: 5555
+      port: {{ .Values.ports.flowerUI }}
+      targetPort: {{ .Values.ports.flowerUI }}

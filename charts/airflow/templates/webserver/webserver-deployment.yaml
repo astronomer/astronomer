@@ -41,17 +41,17 @@ spec:
           args: ["airflow", "webserver"]
           ports:
             - name: webserver-ui
-              containerPort: 8080
+              containerPort: {{ .Values.ports.airflowUI }}
           livenessProbe:
             httpGet:
               path: /admin/
-              port: 8080
+              port: {{ .Values.ports.airflowUI }}
             initialDelaySeconds: 10
             periodSeconds: 10
           readinessProbe:
             httpGet:
               path: /admin/
-              port: 8080
+              port: {{ .Values.ports.airflowUI }}
             initialDelaySeconds: 10
             periodSeconds: 10
           env:

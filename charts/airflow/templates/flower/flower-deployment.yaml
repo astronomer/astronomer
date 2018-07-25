@@ -41,17 +41,17 @@ spec:
           args: ["airflow", "flower"]
           ports:
             - name: flower-ui
-              containerPort: 5555
+              containerPort: {{ .Values.ports.flowerUI }}
           livenessProbe:
             httpGet:
               path: /
-              port: 5555
+              port: {{ .Values.ports.flowerUI }}
             initialDelaySeconds: 10
             periodSeconds: 10
           readinessProbe:
             httpGet:
               path: /
-              port: 5555
+              port: {{ .Values.ports.flowerUI }}
             initialDelaySeconds: 10
             periodSeconds: 10
           env:

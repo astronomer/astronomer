@@ -6,7 +6,7 @@ apiVersion: v1
 metadata:
   name: {{ .Release.Name }}-statsd
   labels:
-    tier: monitoring
+    tier: airflow
     component: statsd
     release: {{ .Release.Name }}
     workspace: {{ .Values.workspace }}
@@ -18,16 +18,16 @@ metadata:
 spec:
   type: NodePort
   selector:
-    tier: monitoring
+    tier: airflow
     component: statsd
     release: {{ .Release.Name }}
     workspace: {{ .Values.workspace }}
   ports:
     - name: statsd-ingest
       protocol: UDP
-      port: 9125
-      targetPort: 9125
+      port: {{ .Values.ports.statsdIngest }}
+      targetPort: {{ .Values.ports.statsdIngest }}
     - name: statsd-scrape
       protocol: TCP
-      port: 9102
-      targetPort: 9102
+      port: {{ .Values.ports.statsdScrape }}
+      targetPort: {{ .Values.ports.statsdScrape }}

@@ -7,7 +7,7 @@ apiVersion: extensions/v1beta1
 metadata:
   name: {{ .Release.Name }}-airflow-ingress
   labels:
-    tier: airflow-networking
+    tier: airflow
     component: airflow-ingress
     release: {{ .Release.Name }}
     workspace: {{ .Values.workspace }}
@@ -16,10 +16,11 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: "nginx"
     kubernetes.io/tls-acme: {{ eq .Values.global.acme true | quote }}
+  {{- if .Values.auth.enabled }}
     nginx.ingress.kubernetes.io/auth-url: https://houston.{{ .Values.global.baseDomain }}/authorization
     nginx.ingress.kubernetes.io/auth-signin: https://app.{{ .Values.global.baseDomain }}/login
     nginx.ingress.kubernetes.io/auth-response-headers: authorization, username, email
-
+  {{- end }}
 spec:
   {{- if or .Values.global.tlsSecret .Values.global.acme }}
   tls:
@@ -40,7 +41,7 @@ spec:
           - path: /
             backend:
               serviceName: {{ .Release.Name }}-webserver
-              servicePort: webserver-ui
+              servicePort: airflow-ui
     - host: {{- include "flower_url" . | indent 1 }}
       http:
         paths:

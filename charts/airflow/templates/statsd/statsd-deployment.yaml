@@ -6,7 +6,7 @@ apiVersion: apps/v1beta2
 metadata:
   name: {{ .Release.Name }}-statsd
   labels:
-    tier: monitoring
+    tier: airflow
     component: statsd
     release: {{ .Release.Name }}
     workspace: {{ .Values.workspace }}
@@ -16,14 +16,14 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      tier: monitoring
+      tier: airflow
       component: statsd
       release: {{ .Release.Name }}
       workspace: {{ .Values.workspace }}
   template:
     metadata:
       labels:
-        tier: monitoring
+        tier: airflow
         component: statsd
         release: {{ .Release.Name }}
         workspace: {{ .Values.workspace }}
@@ -37,18 +37,18 @@ spec:
           ports:
             - name: statsd-ingest
               protocol: UDP
-              containerPort: 9125
+              containerPort: {{ .Values.ports.statsdIngest }}
             - name: statsd-scrape
-              containerPort: 9102
+              containerPort: {{ .Values.ports.statsdScrape }}
           livenessProbe:
             httpGet:
               path: /metrics
-              port: 9102
+              port: {{ .Values.ports.statsdScrape }}
             initialDelaySeconds: 10
             periodSeconds: 10
           readinessProbe:
             httpGet:
               path: /metrics
-              port: 9102
+              port: {{ .Values.ports.statsdScrape }}
             initialDelaySeconds: 10
             periodSeconds: 10

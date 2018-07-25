@@ -22,5 +22,5 @@ spec:
   ports:
     - name: redis-db
       protocol: TCP
-      port: 6379
-      targetPort: 6379
+      port: {{ .Values.ports.redisDB }}
+      targetPort: {{ .Values.ports.redisDB }}

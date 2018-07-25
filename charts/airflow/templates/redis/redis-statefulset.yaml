@@ -35,7 +35,7 @@ spec:
           args: ["-c", "redis-server --requirepass ${REDIS_PASSWORD}"]
           ports:
             - name: redis-db
-              containerPort: 6379
+              containerPort: {{ .Values.ports.redisDB }}
           volumeMounts:
             - name: redis-db
               mountPath: /data

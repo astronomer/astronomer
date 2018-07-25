@@ -44,7 +44,7 @@ spec:
           args: ["airflow", "worker"]
           ports:
             - name: worker-logs
-              containerPort: 8793
+              containerPort: {{ .Values.ports.workerLogs }}
           volumeMounts:
             - name: logs
               mountPath: /usr/local/airflow/logs

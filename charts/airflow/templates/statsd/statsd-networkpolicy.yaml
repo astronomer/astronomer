@@ -1,13 +1,13 @@
 ################################
-## Airflow Webserver NetworkPolicy
+## Airflow StatsD NetworkPolicy
 #################################
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: {{ .Release.Name }}-webserver-policy
+  name: {{ .Release.Name }}-statsd-policy
   labels:
     tier: airflow
-    component: airflow-webserver-policy
+    component: statsd-policy
     release: {{ .Release.Name }}
     workspace: {{ .Values.workspace }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
@@ -16,7 +16,7 @@ spec:
   podSelector:
     matchLabels:
       tier: airflow
-      component: webserver
+      component: statsd
       release: {{ .Release.Name }}
   policyTypes:
   - Ingress
@@ -24,8 +24,14 @@ spec:
   - from:
     - podSelector:
         matchLabels:
-          tier: nginx
-          component: ingress-controller
+          tier: airflow
+          release: {{ .Release.Name }}
+    - podSelector:
+        matchLabels:
+          tier: monitoring
+          component: prometheus
     ports:
+    - protocol: UDP
+      port: {{ .Values.ports.statsdIngest }}
     - protocol: TCP
-      port: {{ .Values.ports.airflowUI }}
+      port: {{ .Values.ports.statsdScrape }}

@@ -21,4 +21,4 @@ spec:
     workspace: {{ .Values.workspace }}
   ports:
     - name: worker-logs
-      port: 8793
+      port: {{ .Values.ports.workerLogs }}

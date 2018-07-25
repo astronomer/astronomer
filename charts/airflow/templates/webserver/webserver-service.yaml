@@ -20,7 +20,7 @@ spec:
     release: {{ .Release.Name }}
     workspace: {{ .Values.workspace }}
   ports:
-    - name: webserver-ui
+    - name: airflow-ui
       protocol: TCP
-      port: 8080
-      targetPort: 8080
+      port: {{ .Values.ports.airflowUI }}
+      targetPort: {{ .Values.ports.airflowUI }}
