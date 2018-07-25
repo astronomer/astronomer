@@ -20,12 +20,9 @@ ARG BUILD_NUMBER=-1
 LABEL io.astronomer.docker=true
 LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
 
-# Update repositories
-ONBUILD RUN apk update
-
 # Install alpine packages
 ONBUILD COPY packages.txt .
-ONBUILD RUN cat packages.txt | xargs apk add
+ONBUILD RUN cat packages.txt | xargs apk add --no-cache
 
 # Install python packages
 ONBUILD COPY requirements.txt .
