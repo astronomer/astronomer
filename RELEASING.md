@@ -80,8 +80,6 @@ Creating a release will automatically create the `v0.3.0` tag as well.
 	- https://github.com/astronomerio/helm.astronomer.io/blob/master/charts/nginx/values.yaml
 	- https://github.com/astronomerio/helm.astronomer.io/blob/master/charts/prometheus/values.yaml
 
-TODO: do we need to change versions in [requirements.yaml](https://github.com/astronomerio/helm.astronomer.io/blob/master/requirements.yaml) too?
-
 1. Bump the platform version
 
 	Adjust the version variables in the helm.astronomer.io Makefile as needed:
