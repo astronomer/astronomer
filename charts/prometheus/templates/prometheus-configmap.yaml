@@ -82,12 +82,12 @@ data:
             # Network level metrics are exposed at the POD level
             # Deployment (others) format
           - source_labels: [__name__, container_name, pod_name]
-            regex: "container_network_.*;(.*)-(.*)-([0-9a-z]{8,10}-[0-9a-z]{5})$"
+            regex: "container_network_.*;(.*)-(.*)-([0-9a-z]{5,10}-[0-9a-z]{5})$"
             replacement: "$1 $2"
             target_label: component_name
 
           - source_labels: [__name__, container_name, pod_name]
-            regex: "container_network_.*;(.*)-(.*)-([0-9a-z]{8,10}-[0-9a-z]{5})$"
+            regex: "container_network_.*;(.*)-(.*)-([0-9a-z]{5,10}-[0-9a-z]{5})$"
             replacement: "$3"
             target_label: component_instance
 
