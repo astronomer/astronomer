@@ -25,6 +25,7 @@ build:
 
 .PHONY: push
 push: build
+	@read -p "Are you sure you want to push a production release? Ctrl+c to abort." ans;
 	for chart in ${CHARTS} ; do \
 		gsutil cp -a public-read ${OUTPUT}/$${chart}-${ASTRONOMER_VERSION}.tgz ${BUCKET} || exit 1; \
 	done; \
