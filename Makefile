@@ -21,6 +21,9 @@ build:
 	for chart in ${CHARTS} ; do \
 		helm package --version ${ASTRONOMER_VERSION} -d ${OUTPUT} charts/$${chart} || exit 1; \
 	done; \
+	$(MAKE) build-repo
+
+build-repo:
 	helm repo index ${OUTPUT} --url ${URL}
 
 .PHONY: push
