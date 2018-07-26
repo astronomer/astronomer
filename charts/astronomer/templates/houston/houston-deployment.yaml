@@ -102,13 +102,13 @@ spec:
               value: "https://app.{{ .Values.global.baseDomain }}/oauth/google"
             - name: GOOGLE_CLIENT_ID
               value: {{ .Values.auth.google.clientId }}
-            {{ if .Values.auth.google.enabled }}
+            {{- if .Values.auth.google.enabled }}
             - name: GOOGLE_CLIENT_SECRET
               valueFrom:
                 secretKeyRef:
                   name: {{ .Release.Name }}-google-client-secret
                   key: clientSecret
-            {{ end }}
+            {{- end }}
             - name: REGISTRY_CERT_PATH
               value: "/etc/houston/tls/"
             - name: REGISTRY_ISSUER
