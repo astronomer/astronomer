@@ -1,7 +1,7 @@
 ################################
 ## Astronomer Registry StatefulSet
 #################################
-{{ if .Values.global.baseDomain }}
+{{- if .Values.global.baseDomain }}
 kind: StatefulSet
 apiVersion: apps/v1beta2
 metadata:

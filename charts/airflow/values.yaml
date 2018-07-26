@@ -11,6 +11,9 @@ images:
   airflow:
     name: astronomerinc/ap-airflow
     tag: 0.3.1
+  flower:
+    name: astronomerinc/ap-airflow
+    tag: 0.3.1
   statsd:
     name: astronomerinc/ap-statsd-exporter
     tag: 0.3.1

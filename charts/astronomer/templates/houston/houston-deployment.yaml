@@ -51,7 +51,7 @@ spec:
       containers:
         - name: {{ .Release.Name }}-houston
           image: {{- include "houston_image" . | indent 1 }}
-          {{ if .Values.global.tlsSecret }}
+          {{- if .Values.global.tlsSecret }}
           volumeMounts:
             - name: registry-tls-volume
               mountPath: "/etc/houston/tls/"

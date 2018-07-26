@@ -74,6 +74,10 @@ redis://:{{ $redis_password }}@{{ .Release.Name }}-redis:6379/0
 {{ .Values.images.airflow.name }}:{{ or .Values.global.imageTag .Values.images.airflow.tag }}
 {{- end }}
 
+{{ define "flower_image" -}}
+{{ .Values.images.flower.name }}:{{ or .Values.global.imageTag .Values.images.flower.tag }}
+{{- end }}
+
 {{ define "statsd_image" -}}
 {{ .Values.images.statsd.name }}:{{ or .Values.global.imageTag .Values.images.statsd.tag }}
 {{- end }}
