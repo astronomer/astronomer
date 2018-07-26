@@ -20,9 +20,9 @@ spec:
   ports:
     - name: commander-http
       protocol: TCP
-      port: 8880
-      targetPort: 8880
+      port: {{ .Values.ports.commanderHTTP }}
+      targetPort: {{ .Values.ports.commanderHTTP }}
     - name: commander-grpc
       protocol: TCP
-      port: 50051
-      targetPort: 50051
+      port: {{ .Values.ports.commanderGRPC }}
+      targetPort: {{ .Values.ports.commanderGRPC }}

@@ -31,17 +31,17 @@ spec:
           image: {{- include "orbit_image" . | indent 1 }}
           ports:
             - name: orbit-http
-              containerPort: 5000
+              containerPort: {{ .Values.ports.orbitHTTP }}
           livenessProbe:
             httpGet:
               path: /
-              port: 8080
+              port: {{ .Values.ports.orbitHTTP }}
             initialDelaySeconds: 10
             periodSeconds: 10
           readinessProbe:
             httpGet:
               path: /
-              port: 8080
+              port: {{ .Values.ports.orbitHTTP }}
             initialDelaySeconds: 10
             periodSeconds: 10
           env:

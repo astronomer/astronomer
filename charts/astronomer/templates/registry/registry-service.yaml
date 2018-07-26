@@ -21,6 +21,6 @@ spec:
   ports:
     - name: registry-http
       protocol: TCP
-      port: 5000
-      targetPort: 5000
+      port: {{ .Values.ports.registryHTTP }}
+      targetPort: {{ .Values.ports.registryHTTP }}
 {{- end }}

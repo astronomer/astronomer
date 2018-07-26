@@ -54,3 +54,10 @@ registry:
   auth:
     service: "docker-registry"
     issuer: "houston"
+
+ports:
+  houstonHTTP: 8870
+  commanderHTTP: 8880
+  commanderGRPC: 50051
+  orbitHTTP: 8080
+  registryHTTP: 5000

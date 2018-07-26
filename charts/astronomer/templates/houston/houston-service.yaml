@@ -20,5 +20,5 @@ spec:
   ports:
     - name: houston-http
       protocol: TCP
-      port: 8870
-      targetPort: 8870
+      port: {{ .Values.ports.houstonHTTP }}
+      targetPort: {{ .Values.ports.houstonHTTP }}
