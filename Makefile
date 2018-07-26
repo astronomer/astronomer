@@ -21,9 +21,10 @@ build:
 	for chart in ${CHARTS} ; do \
 		helm package --version ${ASTRONOMER_VERSION} -d ${OUTPUT} charts/$${chart} || exit 1; \
 	done; \
-	$(MAKE) build-repo
+	$(MAKE) build-index
 
-build-repo:
+.PHONY: build-index
+build-index:
 	helm repo index ${OUTPUT} --url ${URL}
 
 .PHONY: push
@@ -31,10 +32,15 @@ push: build
 	@read -p "Are you sure you want to push a production release? Ctrl+c to abort." ans;
 	$(MAKE) push-repo
 
+.PHONY: push-repo
 push-repo:
 	for chart in ${CHARTS} ; do \
 		gsutil cp -a public-read ${OUTPUT}/$${chart}-${ASTRONOMER_VERSION}.tgz ${BUCKET} || exit 1; \
 	done; \
+	$(MAKE) push-index
+
+.PHONY: push-index
+push-index: build-index
 	gsutil cp -a public-read ${OUTPUT}/index.yaml ${BUCKET}
 
 .PHONY: clean
