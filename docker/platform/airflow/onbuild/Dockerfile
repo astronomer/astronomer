@@ -20,7 +20,13 @@ ARG BUILD_NUMBER=-1
 LABEL io.astronomer.docker=true
 LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
 
-ONBUILD COPY . .
-ONBUILD RUN apk update
-ONBUILD RUN cat packages.txt | xargs apk add
+# Install alpine packages
+ONBUILD COPY packages.txt .
+ONBUILD RUN cat packages.txt | xargs apk add --no-cache
+
+# Install python packages
+ONBUILD COPY requirements.txt .
 ONBUILD RUN pip install --no-cache-dir -q -r requirements.txt
+
+# Copy entire project directory
+ONBUILD COPY . .
