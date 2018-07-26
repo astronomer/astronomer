@@ -6,7 +6,7 @@ kind: NetworkPolicy
 metadata:
   name: {{ .Release.Name }}-scheduler-policy
   labels:
-    tier: airflow-networking
+    tier: airflow
     component: airflow-scheduler-policy
     release: {{ .Release.Name }}
     workspace: {{ .Values.workspace }}

@@ -6,7 +6,7 @@ kind: NetworkPolicy
 metadata:
   name: {{ .Release.Name }}-worker-policy
   labels:
-    tier: airflow-networking
+    tier: airflow
     component: airflow-worker-policy
     release: {{ .Release.Name }}
     workspace: {{ .Values.workspace }}
