@@ -54,4 +54,3 @@ registry:
   auth:
     service: "docker-registry"
     issuer: "houston"
-
