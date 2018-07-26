@@ -6,7 +6,7 @@ BUCKET ?= gs://${DOMAIN}
 # Version
 ASTRONOMER_MAJOR_VERSION ?= 0
 ASTRONOMER_MINOR_VERSION ?= 3
-ASTRONOMER_PATCH_VERSION ?= 1
+ASTRONOMER_PATCH_VERSION ?= 2
 ASTRONOMER_VERSION ?= ${ASTRONOMER_MAJOR_VERSION}.${ASTRONOMER_MINOR_VERSION}.${ASTRONOMER_PATCH_VERSION}
 
 # List of charts to build
@@ -26,6 +26,9 @@ build:
 .PHONY: push
 push: build
 	@read -p "Are you sure you want to push a production release? Ctrl+c to abort." ans;
+	$(MAKE) push-repo
+
+push-repo:
 	for chart in ${CHARTS} ; do \
 		gsutil cp -a public-read ${OUTPUT}/$${chart}-${ASTRONOMER_VERSION}.tgz ${BUCKET} || exit 1; \
 	done; \
@@ -46,7 +49,7 @@ endif
 
 .PHONY: push-rc
 push-rc: build-rc
-	$(MAKE) ASTRONOMER_VERSION=${ASTRONOMER_VERSION}-rc.${ASTRONOMER_RC_VERSION} push
+	$(MAKE) ASTRONOMER_VERSION=${ASTRONOMER_VERSION}-rc.${ASTRONOMER_RC_VERSION} push-repo
 
 .PHONY: clean-rc
 clean-rc:
