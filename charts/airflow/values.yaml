@@ -77,6 +77,9 @@ redis:
   # else generate a new one on install
   password: ~
 
+fernetKey: ~
+fernetKeySecretName: ~
+
 ports:
   flowerUI: 5555
   airflowUI: 8080

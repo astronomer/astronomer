@@ -61,10 +61,6 @@
 {{ .Release.Name }}-flower.{{ .Values.global.baseDomain }}
 {{- end }}
 
-{{ define "fernet_key" -}}
-{{ (randAlphaNum 32 | b64enc) | b64enc }}
-{{- end }}
-
 {{ define "airflow_image" -}}
 {{ .Values.images.airflow.name }}:{{ or .Values.global.imageTag .Values.images.airflow.tag }}
 {{- end }}
@@ -75,6 +71,10 @@
 
 {{ define "statsd_image" -}}
 {{ .Values.images.statsd.name }}:{{ or .Values.global.imageTag .Values.images.statsd.tag }}
+{{- end }}
+
+{{ define "fernet_key_secret" -}}
+{{ default (printf "%s-fernet-key" .Release.Name) .Values.fernetKeySecretName }}
 {{- end }}
 
 {{ define "redis_image" -}}
