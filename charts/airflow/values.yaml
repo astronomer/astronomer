@@ -69,6 +69,14 @@ redis:
     # If using a custom storageClass, pass name ref to all statefulSets here
     storageClassName:
 
+  # If set use as redis secret
+  passwordSecretName: ~
+  brokerURLSecretName: ~
+
+  # Else, if password is set, create secret with it,
+  # else generate a new one on install
+  password: ~
+
 ports:
   flowerUI: 5555
   airflowUI: 8080

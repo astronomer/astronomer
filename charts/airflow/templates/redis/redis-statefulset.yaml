@@ -43,7 +43,7 @@ spec:
             - name: REDIS_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: "{{ .Release.Name }}-redis-password"
+                  name: {{ template "redis_password_secret" . }}
                   key: password
 {{- if not .Values.redis.persistence.enabled }}
       volumes:
