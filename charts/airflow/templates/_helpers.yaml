@@ -49,7 +49,7 @@
   - name: AIRFLOW__CORE__FERNET_KEY
     valueFrom:
       secretKeyRef:
-        name: {{ .Release.Name }}-fernet-key
+        name: {{ template "fernet_key_secret" . }}
         key: fernet-key
 {{- end }}
 
