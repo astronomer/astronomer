@@ -54,17 +54,17 @@ spec:
           image: {{- include "grafana_image" . | indent 1 }}
           ports:
             - name: grafana-ui
-              containerPort: 3000
+              containerPort: {{ .Values.port }}
           livenessProbe:
             httpGet:
               path: /
-              port: 3000
+              port: {{ .Values.port }}
             initialDelaySeconds: 10
             periodSeconds: 10
           readinessProbe:
             httpGet:
               path: /
-              port: 3000
+              port: {{ .Values.port }}
             initialDelaySeconds: 10
             periodSeconds: 10
           env:

@@ -13,3 +13,5 @@ images:
 grafanaBackendSecret: grafana-backend
 
 bootstrapDatabase: true
+
+port: 3000

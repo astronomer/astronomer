@@ -1,0 +1,32 @@
+################################
+## Grafana NetworkPolicy
+#################################
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ .Release.Name }}-grafana-policy
+  labels:
+    tier: monitoring
+    component: airflow-grafana-policy
+    release: {{ .Release.Name }}
+    workspace: {{ .Values.workspace }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+spec:
+  podSelector:
+    matchLabels:
+      tier: airflow
+      component: grafana
+      release: {{ .Release.Name }}
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          tier: nginx
+          component: ingress-controller
+          release: {{ .Release.Name }}
+    ports:
+    - protocol: TCP
+      port: {{ .Values.port }}

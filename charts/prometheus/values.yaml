@@ -17,3 +17,5 @@ persistence:
   storageClassName:
 
 workspace: default
+
+port: 9090

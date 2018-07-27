@@ -22,5 +22,5 @@ spec:
   ports:
     - name: prometheus-data
       protocol: TCP
-      port: 9090
-      targetPort: 9090
+      port: {{ .Values.port }}
+      targetPort: {{ .Values.port }}
