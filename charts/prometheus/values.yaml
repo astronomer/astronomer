@@ -5,7 +5,7 @@
 images:
   prometheus:
     name: astronomerinc/ap-prometheus
-    tag: 0.3.1
+    tag: 0.3.2-rc.3
 
 dataDir: "/prometheus"
 
