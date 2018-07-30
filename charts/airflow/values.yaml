@@ -10,16 +10,16 @@ gid: 101
 images:
   airflow:
     name: astronomerinc/ap-airflow
-    tag: 0.3.2-rc.3
+    tag: 0.3.2
   flower:
     name: astronomerinc/ap-airflow
-    tag: 0.3.2-rc.3
+    tag: 0.3.2
   statsd:
     name: astronomerinc/ap-statsd-exporter
-    tag: 0.3.2-rc.3
+    tag: 0.3.2
   redis:
     name:  astronomerinc/ap-redis
-    tag: 0.3.2-rc.3
+    tag: 0.3.2
 
 # Enable platform authentication
 auth:
