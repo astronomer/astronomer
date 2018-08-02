@@ -20,7 +20,6 @@ data:
 
     scrape_configs:
       - job_name: airflow
-        scrape_interval: 2s
         kubernetes_sd_configs:
           - role: service
             namespaces:
@@ -30,6 +29,11 @@ data:
           - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scrape]
             action: keep
             regex: true
+          - source_labels: [__address__, __meta_kubernetes_service_annotation_prometheus_io_port]
+            action: replace
+            regex: ([^:]+)(?::\d+)?;(\d+)
+            replacement: $1:$2
+            target_label: __address__
 
       - job_name: kubernetes-nodes-cadvisor
         scrape_interval: 10s

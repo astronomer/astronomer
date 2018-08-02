@@ -14,7 +14,7 @@ metadata:
     heritage: {{ .Release.Service }}
   annotations:
     prometheus.io/scrape: 'true'
-    prometheus.io/port: '9102'
+    prometheus.io/port: {{ .Values.ports.statsdScrape }}
 spec:
   type: NodePort
   selector:
