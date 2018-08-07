@@ -36,7 +36,6 @@ RUN apk add --no-cache --virtual .build-deps \
 		nodejs \
 		openssl \
 	&& npm install -g ${REPO_URL} --unsafe \
-	&& npm rebuild bcrypt --build-from-source \
 	&& apk del .build-deps
 
 EXPOSE 8870
