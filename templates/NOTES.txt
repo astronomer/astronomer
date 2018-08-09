@@ -19,7 +19,7 @@ Download the CLI:
 
 	curl -sL https://install.astronomer.io | sudo bash
 
-We have guides available at https://enterprise.astronomer.io/guides/ and are always available to help.
+We have guides available at https://www.astronomer.io/guides/ and are always available to help.
 
 {{- else }}
 
