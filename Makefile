@@ -19,7 +19,7 @@ PLATFORM_RC_COMPONENTS := db-bootstrapper default-backend commander houston-api 
 PLATFORM_ONBUILD_COMPONENTS := airflow
 
 # Vendor components
-VENDOR_COMPONENTS := nginx registry cadvisor grafana prometheus redis statsd-exporter elasticsearch curator fluentd
+VENDOR_COMPONENTS := nginx registry cadvisor grafana prometheus redis statsd-exporter elasticsearch kibana curator fluentd
 
 # All components
 ALL_COMPONENTS := ${PLATFORM_COMPONENTS} ${VENDOR_COMPONENTS}
