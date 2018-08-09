@@ -57,13 +57,13 @@ spec:
               containerPort: {{ .Values.port }}
           livenessProbe:
             httpGet:
-              path: /
+              path: /api/health
               port: {{ .Values.port }}
             initialDelaySeconds: 10
             periodSeconds: 10
           readinessProbe:
             httpGet:
-              path: /
+              path: /api/health
               port: {{ .Values.port }}
             initialDelaySeconds: 10
             periodSeconds: 10
