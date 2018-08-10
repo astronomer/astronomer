@@ -9,8 +9,8 @@ BUILD_NUMBER ?= 1
 
 # Build version
 ASTRONOMER_MAJOR_VERSION ?= 0
-ASTRONOMER_MINOR_VERSION ?= 3
-ASTRONOMER_PATCH_VERSION ?= 2
+ASTRONOMER_MINOR_VERSION ?= 4
+ASTRONOMER_PATCH_VERSION ?= 0
 ASTRONOMER_VERSION ?= "${ASTRONOMER_MAJOR_VERSION}.${ASTRONOMER_MINOR_VERSION}.${ASTRONOMER_PATCH_VERSION}"
 
 # List of all components and order to build.
@@ -19,7 +19,7 @@ PLATFORM_RC_COMPONENTS := db-bootstrapper default-backend commander houston-api 
 PLATFORM_ONBUILD_COMPONENTS := airflow
 
 # Vendor components
-VENDOR_COMPONENTS := nginx registry cadvisor grafana prometheus redis statsd-exporter
+VENDOR_COMPONENTS := nginx registry cadvisor grafana prometheus redis statsd-exporter elasticsearch kibana curator fluentd
 
 # All components
 ALL_COMPONENTS := ${PLATFORM_COMPONENTS} ${VENDOR_COMPONENTS}
@@ -41,14 +41,14 @@ build:
 push: clean build push-latest push-versioned
 
 .PHONY: build-rc
-build-rc: clean-rc
+build-rc:
 ifndef ASTRONOMER_RC_VERSION
 	$(error ASTRONOMER_RC_VERSION must be defined)
 endif
 	$(MAKE) ASTRONOMER_VERSION=${ASTRONOMER_VERSION}-rc.${ASTRONOMER_RC_VERSION} build
 
 .PHONY: push-rc
-push-rc: build-rc
+push-rc: clean-rc build-rc
 	$(MAKE) ASTRONOMER_VERSION=${ASTRONOMER_VERSION}-rc.${ASTRONOMER_RC_VERSION} push-versioned
 
 .PHONY: push-latest
