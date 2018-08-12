@@ -20,23 +20,7 @@ ARG BUILD_NUMBER=-1
 LABEL io.astronomer.docker=true
 LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
 
-# Base image switches to grafana user, so we switch back to install software
-USER root
-
-# Install envsubst and grafana plugins
-RUN apt-get update \
-	&& apt-get install -yq gettext-base \
-	&& grafana-cli plugins install grafana-kubernetes-app
-
 # Copy default dashboards and datasource configuration
 COPY include/dashboard.yaml /etc/grafana/provisioning/dashboards/dashboard.yaml
 COPY include/airflow-scheduler.json /var/lib/grafana/dashboards/airflow-scheduler.json
 COPY include/airflow-containers.json /var/lib/grafana/dashboards/airflow-containers.json
-COPY include/datasource.yaml /tmp/datasource.yaml
-COPY include/entrypoint /entrypoint
-
-# Switch back to grafana user
-USER grafana
-
-# Run envsububst before calling base entrypoint
-ENTRYPOINT ["/entrypoint"]
