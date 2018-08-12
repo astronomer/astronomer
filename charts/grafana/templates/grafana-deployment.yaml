@@ -67,6 +67,9 @@ spec:
               port: {{ .Values.port }}
             initialDelaySeconds: 10
             periodSeconds: 10
+          volumeMounts:
+            - name: grafana-datasource-volume
+              mountPath: /etc/grafana/provisioning/datasources
           env:
             - name: GF_DATABASE_URL
               valueFrom:
@@ -75,5 +78,10 @@ spec:
                   key: connection
             - name: GF_AUTH_ANONYMOUS_ENABLED
               value: "true"
-            - name: ASTRO_DEFAULT_PROMETHEUS_HOST
-              value: "http://{{ .Release.Name }}-prometheus:9090"
+      volumes:
+        - name: grafana-datasource-volume
+          configMap:
+            name: "{{ .Release.Name }}-grafana-datasource"
+            items:
+              - key: datasource.yaml
+                path: datasource.yaml

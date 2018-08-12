@@ -1,0 +1,23 @@
+################################
+## Grafana ConfigMap
+#################################
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: "{{ .Release.Name }}-grafana-datasource"
+  labels:
+    tier: monitoring
+    component: grafana
+    release: {{ .Release.Name }}
+    workspace: {{ .Values.workspace }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+data:
+  datasource.yaml: |-
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        org_id: 1
+        url: "http://{{ .Release.Name }}-prometheus:9090"
+        access: proxy
+        is_default: true
