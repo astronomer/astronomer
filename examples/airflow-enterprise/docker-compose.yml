@@ -153,7 +153,6 @@ services:
     environment:
       GF_AUTH_ANONYMOUS_ENABLED: "true"
       GF_DATABASE_URL: postgres://grafana:grafana@postgres:5432/grafana
-      ASTRO_DEFAULT_PROMETHEUS_HOST: http://prometheus:9090
     depends_on:
       - postgres
       - prometheus
@@ -162,6 +161,8 @@ services:
       io.astronomer.docker.open: "true"
     ports:
       - "3000:3000"
+    volumes:
+      - ./datasource.yaml:/etc/grafana/provisioning/datasources/datasource.yaml
 
   cadvisor:
     image: astronomerinc/ap-cadvisor:latest
