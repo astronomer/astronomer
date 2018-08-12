@@ -1,5 +1,5 @@
 name: astronomer-platform
-version: 0.3.1
+version: 0.3.2
 description: Helm chart to deploy the Astronomer Platform
 keywords:
   - astronomer
