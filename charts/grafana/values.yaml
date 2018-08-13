@@ -15,3 +15,11 @@ grafanaBackendSecret: grafana-backend
 bootstrapDatabase: true
 
 port: 3000
+
+resources: {}
+#  limits:
+#   cpu: 100m
+#   memory: 128Mi
+#  requests:
+#   cpu: 100m
+#   memory: 128Mi

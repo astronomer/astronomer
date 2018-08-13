@@ -32,6 +32,8 @@ spec:
         - name: {{ .Release.Name }}-redis
           image: {{- include "redis_image" . | indent 1 }}
           command: ["/bin/sh"]
+          resources:
+{{ toYaml .Values.redis.resources | indent 12 }}
           args: ["-c", "redis-server --requirepass ${REDIS_PASSWORD}"]
           ports:
             - name: redis-db

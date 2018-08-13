@@ -51,6 +51,8 @@ spec:
       containers:
         - name: {{ .Release.Name }}-houston
           image: {{- include "houston_image" . | indent 1 }}
+          resources:
+{{ toYaml .Values.commander.resources | indent 12 }}
           {{- if .Values.global.tlsSecret }}
           volumeMounts:
             - name: registry-tls-volume

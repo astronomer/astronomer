@@ -39,6 +39,8 @@ spec:
         - name: {{ .Release.Name }}-flower
           image: {{- include "flower_image" . | indent 1 }}
           args: ["airflow", "flower"]
+          resources:
+{{ toYaml .Values.flower.resources | indent 12 }}
           ports:
             - name: flower-ui
               containerPort: {{ .Values.ports.flowerUI }}

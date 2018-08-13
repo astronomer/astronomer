@@ -42,6 +42,8 @@ spec:
         - name: {{ .Release.Name }}-worker
           image: {{- include "airflow_image" . | indent 1 }}
           args: ["airflow", "worker"]
+          resources:
+{{ toYaml .Values.workers.resources | indent 12 }}
           ports:
             - name: worker-logs
               containerPort: {{ .Values.ports.workerLogs }}

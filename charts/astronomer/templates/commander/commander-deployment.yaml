@@ -32,6 +32,8 @@ spec:
       containers:
         - name: {{ .Release.Name }}-commander
           image: {{- include "commander_image" . | indent 1 }}
+          resources:
+{{ toYaml .Values.commander.resources | indent 12 }}
           ports:
             - name: commander-http
               containerPort: {{ .Values.ports.commanderHTTP }}

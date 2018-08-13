@@ -8,7 +8,26 @@ global:
   tlsSecret:
   acme: false
 
+astronomer:
+  orbit:
+    resources: {}
+
+  houston:
+    resources: {}
+
+  commander:
+    resources: {}
+
+  registry:
+    resources: {}
+
 nginx:
+  resources: {}
   loadBalancerIP:
   loadBalancerSourceRanges:
-  - 0.0.0.0/0
+
+grafana:
+  resources: {}
+
+prometheus:
+  resources: {}

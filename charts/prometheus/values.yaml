@@ -7,6 +7,14 @@ images:
     name: astronomerinc/ap-prometheus
     tag: 0.3.2
 
+resources: {}
+#  limits:
+#   cpu: 100m
+#   memory: 128Mi
+#  requests:
+#   cpu: 100m
+#   memory: 128Mi
+
 dataDir: "/prometheus"
 
 # Enable persistence for Prometheus

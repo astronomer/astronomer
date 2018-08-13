@@ -38,19 +38,53 @@ auth:
     clientId: ~
     clientSecret: ~
 
+orbit:
+  env: {}
+  resources: {}
+  #  limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  #  requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
 houston:
-  env:
+  env: {}
+  resources: {}
+  #  limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  #  requests:
+  #   cpu: 100m
+  #   memory: 128Mi
 
 commander:
-  env:
+  env: {}
+  resources: {}
+   # limits:
+   #  cpu: 100m
+   #  memory: 128Mi
+   # requests:
+   #  cpu: 100m
+   #  memory: 128Mi
 
 registry:
-  # Enable persistence to keep registry data between deploys
+  resources: {}
+  #  limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  #  requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
   persistence:
+    # Enable persistent storage
     enabled: true
+    # Size of volume to provision
     size: 50Gi
     # If using a custom storageClass, pass name ref to all statefulSets here
     storageClassName:
+
   auth:
     service: "docker-registry"
     issuer: "houston"

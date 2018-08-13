@@ -21,6 +21,18 @@ images:
     name:  astronomerinc/ap-redis
     tag: 0.3.2
 
+# Environment variables for all airflow containers
+env:
+
+# Astronomer Airflow database config
+data:
+  airflowMetadataSecret: airflow-metadata
+  airflowResultBackendSecret: airflow-result-backend
+
+# Fernet key settings
+fernetKey: ~
+fernetKeySecretName: ~
+
 # Enable platform authentication
 auth:
   enabled: true
@@ -38,25 +50,60 @@ workers:
     # If using a custom storageClass, pass name ref to all statefulSets here
     storageClassName:
 
+  resources: {}
+  #  limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  #  requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
   # Grace period for tasks to finish after SIGTERM is sent from kubernetes
   terminationGracePeriodSeconds: 600
 
 # Airflow scheduler settings
 scheduler:
-
+  # Ensure we have one replica always running
   podDisruptionBudget:
-
-    # Ensure we have one replica always running
     maxUnavailable: 1
 
-# Environment variables for all airflow containers
-env:
+  resources: {}
+  #  limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  #  requests:
+  #   cpu: 100m
+  #   memory: 128Mi
 
-# Astronomer Airflow database config
-data:
-  airflowMetadataSecret: airflow-metadata
-  airflowResultBackendSecret: airflow-result-backend
-  # airflowBrokerSecret: airflow-broker
+# Airflow webserver settings
+webserver:
+  resources: {}
+    # limits:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
+
+# Flower settings
+flower:
+  resources: {}
+    # limits:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
+
+# Statsd settings
+statsd:
+  resources: {}
+    # limits:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
 
 redis:
   terminationGracePeriodSeconds: 600
@@ -69,6 +116,14 @@ redis:
     # If using a custom storageClass, pass name ref to all statefulSets here
     storageClassName:
 
+  resources: {}
+  #  limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  #  requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
   # If set use as redis secret
   passwordSecretName: ~
   brokerURLSecretName: ~
@@ -76,9 +131,6 @@ redis:
   # Else, if password is set, create secret with it,
   # else generate a new one on install
   password: ~
-
-fernetKey: ~
-fernetKeySecretName: ~
 
 ports:
   flowerUI: 5555

@@ -38,6 +38,8 @@ spec:
       containers:
         - name: "{{ .Release.Name }}-prometheus"
           image: {{- include "prometheus_image" . | indent 1 }}
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
           args:
             - "--config.file=/etc/prometheus/config/prometheus.yaml"
             - "--storage.tsdb.path={{ .Values.dataDir }}"

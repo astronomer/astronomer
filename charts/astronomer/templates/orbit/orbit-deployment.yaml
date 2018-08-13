@@ -29,6 +29,8 @@ spec:
       containers:
         - name: {{ .Release.Name }}-orbit
           image: {{- include "orbit_image" . | indent 1 }}
+          resources:
+{{ toYaml .Values.orbit.resources | indent 12 }}
           ports:
             - name: orbit-http
               containerPort: {{ .Values.ports.orbitHTTP }}
@@ -45,5 +47,9 @@ spec:
             initialDelaySeconds: 10
             periodSeconds: 10
           env:
+            {{- range $i, $config := .Values.orbit.env }}
+            - name: {{ $config.name }}
+              value: {{ $config.value | quote }}
+            {{- end }}
             - name: APP_API_LOC_HTTPS
               value: "https://houston.{{ .Values.global.baseDomain }}/v1"

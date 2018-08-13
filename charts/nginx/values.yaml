@@ -9,6 +9,14 @@ images:
     name: astronomerinc/ap-default-backend
     tag: 0.3.2
 
+resources: {}
+#  limits:
+#   cpu: 100m
+#   memory: 128Mi
+#  requests:
+#   cpu: 100m
+#   memory: 128Mi
+
 # AntiAffinity can be "hard" or "soft"
 antiAffinity: "soft"
 

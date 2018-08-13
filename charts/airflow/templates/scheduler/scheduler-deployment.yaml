@@ -44,5 +44,7 @@ spec:
         - name: {{ .Release.Name }}-scheduler
           image: {{- include "airflow_image" . | indent 1 }}
           args: ["airflow", "scheduler"]
+          resources:
+{{ toYaml .Values.scheduler.resources | indent 12 }}
           env:
           {{- include "airflow_environment" . | indent 10 }}

@@ -31,6 +31,8 @@ spec:
       containers:
         - name: {{ .Release.Name }}-nginx
           image: {{- include "nginx_image" . | indent 1 }}
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
           args:
             - /nginx-ingress-controller
             - --default-backend-service={{ .Release.Namespace }}/{{ .Release.Name }}-nginx-default-backend

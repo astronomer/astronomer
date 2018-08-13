@@ -53,49 +53,42 @@ global:
       enabled: true
 
 #################################
+## Astronomer configuration
+#################################
+astronomer:
+  orbit:
+    resources: {}
+
+  houston:
+    resources: {}
+
+  commander:
+    resources: {}
+
+  registry:
+    resources: {}
+
+#################################
 ## Nginx configuration
 #################################
 nginx:
+  resources: {}
+
   # IP address the nginx ingress should bind to
   loadBalancerIP:
 
   # Used to restrict IPs which can reach the nginx ingress
   loadBalancerSourceRanges:
 
-#################################
-## Airflow configuration
-#################################
-airflow:
-  # Worker settings
-  workers:
-    # Enable persistence to keep logs around between deploys
-    persistence:
-      enabled: true
-      size: 10Gi
-      # If using a custom storageClass, pass name ref to all statefulSets here
-      storageClassName:
-  prometheus:
-    persistence:
-      enabled: true
-      size: 50Gi
-      # If using a custom storageClass, pass name ref to all statefulSets here
-      storageClassName:
 
 #################################
-## Astronomer configuration
+## Grafana configuration
 #################################
-astronomer:
-  registry:
-    # Enable persistence to keep registry data between deploys
-    persistence:
-      enabled: true
-      size: 50Gi
-      # If using a custom storageClass, pass name ref to all statefulSets here
-      storageClassName:
-  auth:
-    local:
-      enabled: true
-    google:
-      enabled: false
-      clientId: ~
-      clientSecret: ~
+grafana:
+  resources: {}
+
+#################################
+## Prometheus configuration
+#################################
+prometheus:
+  resources: {}

@@ -32,6 +32,8 @@ spec:
       containers:
         - name: {{ .Release.Name }}-registry
           image: {{- include "registry_image" . | indent 1 }}
+          resources:
+{{ toYaml .Values.registry.resources | indent 12 }}
           volumeMounts:
             - name: registry-config-volume
               mountPath: /etc/docker/registry
