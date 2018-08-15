@@ -100,17 +100,16 @@ spec:
               value: "{{ .Release.Name }}-commander"
             - name: COMMANDER_PORT
               value: "50051"
-            - name: GOOGLE_OAUTH_REDIRECT_URL
-              value: "https://app.{{ .Values.global.baseDomain }}/oauth/google"
             - name: GOOGLE_CLIENT_ID
               value: {{ .Values.auth.google.clientId }}
-            {{- if .Values.auth.google.enabled }}
-            - name: GOOGLE_CLIENT_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Release.Name }}-google-client-secret
-                  key: clientSecret
-            {{- end }}
+            - name: AUTH0_CLIENT_ID
+              value: {{ .Values.auth.auth0.clientId }}
+            - name: AUTH0_BASE_DOMAIN
+              value: {{ .Values.auth.auth0.baseDomain }}
+            - name: AUTH0_EXTERNAL_AUTH
+              value: {{ .Values.auth.auth0.externalLogin }}
+            - name: ORBIT_BASE_URL
+              value: "https://app.{{ .Values.global.baseDomain }}"
             - name: REGISTRY_CERT_PATH
               value: "/etc/houston/tls/"
             - name: REGISTRY_ISSUER
@@ -139,6 +138,13 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.data.airflowDatabaseSecret }}
                   key: connection
+            {{- if.Values.data.houstonSMTPSecret }}
+            - name: SMTP_URI:
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.data.houstonSMTPSecret }}
+                  key: connection
+            {{- end}}
     {{ if .Values.global.tlsSecret }}
       volumes:
         - name: registry-tls-volume
