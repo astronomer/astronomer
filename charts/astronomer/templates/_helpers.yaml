@@ -57,4 +57,10 @@
   {{- if or .Values.auth.google.enabled -}}
     google_oauth,
   {{- end -}}
+  {{- if or .Values.auth.auth0.enabled -}}
+    auth0_oauth,
+  {{- end -}}
+  {{- if or .Values.auth.github.enabled -}}
+    github_oauth,
+  {{- end -}}
 {{- end }}

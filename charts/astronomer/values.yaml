@@ -27,16 +27,26 @@ images:
 data:
   houstonDatabaseSecret: "houston-database"
   airflowDatabaseSecret: "houston-database"
+  houstonSMTPSecret: ~
 
 bootstrapDatabase: true
+
+smtp:
+  uri: ~
 
 auth:
   local:
     enabled: true
   google:
-    enabled: false
+    enabled: true
     clientId: ~
-    clientSecret: ~
+  auth0:
+    enabled: true
+    clientId: "rH2L4yKctlepniTyJW3MkuXuTreOHHn1"
+    baseDomain: "astronomerio.auth0.com"
+    externalLogin: false
+  github:
+    enabled: true
 
 orbit:
   env: {}
