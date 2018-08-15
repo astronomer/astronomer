@@ -107,7 +107,7 @@ spec:
             - name: AUTH0_BASE_DOMAIN
               value: {{ .Values.auth.auth0.baseDomain }}
             - name: AUTH0_EXTERNAL_AUTH
-              value: {{ .Values.auth.auth0.externalLogin }}
+              value: {{ .Values.auth.auth0.externalLogin | quote }}
             - name: ORBIT_BASE_URL
               value: "https://app.{{ .Values.global.baseDomain }}"
             - name: REGISTRY_CERT_PATH
