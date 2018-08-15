@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+# Build and tag images
+function build_image() {
+    docker_dir="docker/${1}"
+    docker_file="${docker_dir}/Dockerfile"
+    component_name="ap-${2}"
+    build_opts="--build-arg BUILD_NUMBER=${BUILD_NUMBER} ${3}"
+    version="${ASTRONOMER_VERSION}"
+
+    # Build component
+    if [ -f "${docker_file}" ]; then
+        docker build ${build_opts} -t "${REPOSITORY}/${component_name}:${version}" -f "${docker_file}" "${docker_dir}" || exit 1
+    fi
+}
+
+# Build platform images
+for component in ${PLATFORM_COMPONENTS} ; do
+    # If we're building an RC, build platform components from master
+    if [ -v "ASTRONOMER_RC_VERSION" ] ; then
+        build_opts="${build_opts} --build-arg VERSION=master --label io.astronomer.docker.rc=true"
+    fi
+    build_image "platform/${component}" "${component}" "${build_opts}"
+done
+
+# Build vendor images
+for component in ${VENDOR_COMPONENTS} ; do
+    build_image "vendor/${component}" "${component}"
+done

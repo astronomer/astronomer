@@ -7,70 +7,94 @@ REPOSITORY ?= astronomerinc
 # Bump this on subsequent build, reset on new version or public release. Inherit from env for CI builds.
 BUILD_NUMBER ?= 1
 
-# Build version
+# Astronomer build version
 ASTRONOMER_MAJOR_VERSION ?= 0
 ASTRONOMER_MINOR_VERSION ?= 3
 ASTRONOMER_PATCH_VERSION ?= 3
 ASTRONOMER_VERSION ?= "${ASTRONOMER_MAJOR_VERSION}.${ASTRONOMER_MINOR_VERSION}.${ASTRONOMER_PATCH_VERSION}"
 
 # List of all components and order to build.
-PLATFORM_COMPONENTS := base db-bootstrapper default-backend commander houston-api orbit-ui airflow
-PLATFORM_RC_COMPONENTS := db-bootstrapper default-backend commander houston-api orbit-ui
-PLATFORM_ONBUILD_COMPONENTS := airflow
+PLATFORM_COMPONENTS := base db-bootstrapper default-backend commander houston-api orbit-ui
+
+# Airflow versions
+AIRFLOW_VERSIONS := 1.9.0
 
 # Vendor components
 VENDOR_COMPONENTS := nginx registry cadvisor grafana prometheus redis statsd-exporter
 
-# All components
-ALL_COMPONENTS := ${PLATFORM_COMPONENTS} ${VENDOR_COMPONENTS}
-
 # Set default for make.
 .DEFAULT_GOAL := build
 
+#
+# Main build/push
+#
 .PHONY: build
 build:
+	$(MAKE) build-platform
+	$(MAKE) build-airflow
+
+.PHONY: push
+push: clean-images build
+	$(MAKE) push-platform
+	$(MAKE) push-airflow
+
+#
+# RC build/push
+#
+.PHONY: build-rc
+build-rc: clean-rc-images
+ifndef ASTRONOMER_RC_VERSION
+	$(error ASTRONOMER_RC_VERSION must be defined)
+endif
+	$(MAKE) ASTRONOMER_VERSION=${ASTRONOMER_VERSION}-rc.${ASTRONOMER_RC_VERSION} build-platform
+	$(MAKE) ASTRONOMER_VERSION=${ASTRONOMER_VERSION}-rc.${ASTRONOMER_RC_VERSION} build-airflow
+
+.PHONY: push-rc
+push-rc: build-rc
+	$(MAKE) ASTRONOMER_VERSION=${ASTRONOMER_VERSION}-rc.${ASTRONOMER_RC_VERSION} push-platform
+	$(MAKE) ASTRONOMER_VERSION=${ASTRONOMER_VERSION}-rc.${ASTRONOMER_RC_VERSION} push-airflow
+
+#
+# Platform build/push
+#
+.PHONY: build-platform
+build-platform:
 	PLATFORM_COMPONENTS="${PLATFORM_COMPONENTS}" \
-	PLATFORM_RC_COMPONENTS="${PLATFORM_RC_COMPONENTS}" \
 	VENDOR_COMPONENTS="${VENDOR_COMPONENTS}" \
 	REPOSITORY=${REPOSITORY} \
 	ASTRONOMER_VERSION=${ASTRONOMER_VERSION} \
 	BUILD_NUMBER=${BUILD_NUMBER} \
-	bin/build-images
+	bin/build-platform
 
-.PHONY: push
-push: clean build push-latest push-versioned
-
-.PHONY: build-rc
-build-rc: clean-rc
-ifndef ASTRONOMER_RC_VERSION
-	$(error ASTRONOMER_RC_VERSION must be defined)
-endif
-	$(MAKE) ASTRONOMER_VERSION=${ASTRONOMER_VERSION}-rc.${ASTRONOMER_RC_VERSION} build
-
-.PHONY: push-rc
-push-rc: build-rc
-	$(MAKE) ASTRONOMER_VERSION=${ASTRONOMER_VERSION}-rc.${ASTRONOMER_RC_VERSION} push-versioned
-
-.PHONY: push-latest
-push-latest:
-	for component in ${ALL_COMPONENTS} ; do \
-		echo "Pushing ap-$${component}:latest =================================="; \
-		docker push ${REPOSITORY}/ap-$${component}:latest || exit 1; \
-	done; \
-	for component in ${PLATFORM_ONBUILD_COMPONENTS} ; do \
-		docker push ${REPOSITORY}/ap-$${component}:latest-onbuild || exit 1; \
-	done
-
-.PHONY: push-versioned
-push-versioned:
-	for component in ${ALL_COMPONENTS} ; do \
-		echo "Pushing ap-$${component}:${ASTRONOMER_VERSION} =================================="; \
+.PHONY: push-platform
+push-platform:
+	for component in ${PLATFORM_COMPONENTS} ; do \
+		echo "Pushing ap-$${component}:${ASTRONOMER_VERSION} ======================"; \
 		docker push ${REPOSITORY}/ap-$${component}:${ASTRONOMER_VERSION} || exit 1; \
-	done; \
-	for component in ${PLATFORM_ONBUILD_COMPONENTS} ; do \
-		docker push ${REPOSITORY}/ap-$${component}:${ASTRONOMER_VERSION}-onbuild || exit 1; \
-	done
+	done; 
 
+#
+# Airflow build/push
+#
+.PHONY: build-airflow
+build-airflow:
+	AIRFLOW_VERSIONS="${AIRFLOW_VERSIONS}" \
+	REPOSITORY=${REPOSITORY} \
+	ASTRONOMER_VERSION=${ASTRONOMER_VERSION} \
+	BUILD_NUMBER=${BUILD_NUMBER} \
+	bin/build-airflow
+
+.PHONY: push-airflow
+push-airflow: build-airflow
+	for version in "${AIRFLOW_VERSIONS}" ; do \
+		echo "Pushing ap-$${component}:${AIRFLOW_VERSION}-${AIRFLOW_BUILD} ======================"; \
+		docker push ${REPOSITORY}/ap-$${component}:${AIRFLOW_VERSION}-${version} || exit 1; \
+		docker push ${REPOSITORY}/ap-$${component}:${AIRFLOW_VERSION}-${version}-onbuild || exit 1; \
+	done; 
+
+#
+# Clean
+#
 .PHONY: clean-containers
 clean-containers:
 	for container in `docker ps -aq -f label=io.astronomer.docker.open=true` ; do \
@@ -83,11 +107,11 @@ clean-images:
 		docker rmi -f $${image} ; \
 	done
 
-.PHONY: clean-rc
-clean-rc:
+.PHONY: clean-rc-images
+clean-rc-images:
 	for image in `docker images -q -f label=io.astronomer.docker.rc=true` ; do \
 		docker rmi -f $${image} ; \
 	done
 
 .PHONY: clean
-clean: clean-containers clean-images
+clean: clean-containers clean-images clean-rc-images
