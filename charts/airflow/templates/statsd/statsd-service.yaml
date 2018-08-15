@@ -13,8 +13,8 @@ metadata:
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
   annotations:
-    prometheus.io/scrape: 'true'
-    prometheus.io/port: {{ .Values.ports.statsdScrape }}
+    prometheus.io/scrape: "true"
+    prometheus.io/port: {{ .Values.ports.statsdScrape | quote }}
 spec:
   type: NodePort
   selector:
