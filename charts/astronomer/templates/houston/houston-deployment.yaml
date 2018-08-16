@@ -102,14 +102,18 @@ spec:
               value: "50051"
             - name: GOOGLE_CLIENT_ID
               value: {{ .Values.auth.google.clientId }}
+            - name: AUTH0_CUSTOM
+            - value: {{ ne .Values.auth.auth0.baseDomain "astronomerio.auth0.com" | quote }}
             - name: AUTH0_CLIENT_ID
               value: {{ .Values.auth.auth0.clientId }}
             - name: AUTH0_BASE_DOMAIN
               value: {{ .Values.auth.auth0.baseDomain }}
             - name: AUTH0_EXTERNAL_AUTH
               value: {{ .Values.auth.auth0.externalLogin | quote }}
-            - name: ORBIT_BASE_URL
+            - name: BASE_URL_ORBIT
               value: "https://app.{{ .Values.global.baseDomain }}"
+            - name: BASE_URL_HOUSTON
+              value: "https://houston.{{ .Values.global.baseDomain }}"
             - name: REGISTRY_CERT_PATH
               value: "/etc/houston/tls/"
             - name: REGISTRY_ISSUER
