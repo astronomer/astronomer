@@ -21,7 +21,7 @@ LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
 LABEL io.astronomer.docker.module="astronomer"
 LABEL io.astronomer.docker.component="houston-api"
 
-ARG VERSION="v0.4.0"
+ARG VERSION="v0.4.1"
 ENV REPO="github.com/astronomerio/houston-api"
 ENV REPO_URL="https://${REPO}#${VERSION}"
 ENV HOUSTON_PATH=/srv/houston-api
