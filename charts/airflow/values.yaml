@@ -10,16 +10,16 @@ gid: 101
 images:
   airflow:
     name: astronomerinc/ap-airflow
-    tag: 0.3.3-rc.3
+    tag: 0.4.0
   flower:
     name: astronomerinc/ap-airflow
-    tag: 0.3.3-rc.3
+    tag: 0.4.0
   statsd:
     name: astronomerinc/ap-statsd-exporter
-    tag: 0.3.3-rc.3
+    tag: 0.4.0
   redis:
     name:  astronomerinc/ap-redis
-    tag: 0.3.3-rc.3
+    tag: 0.4.0
 
 # Environment variables for all airflow containers
 env:
