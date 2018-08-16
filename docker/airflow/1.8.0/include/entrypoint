@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+set -e
+
+# Get path of this script
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+CMD=$2
+
+# Wait for postgres then init the db
+if [[ -n $AIRFLOW__CORE__SQL_ALCHEMY_CONN  ]]; then
+  if [[ $CMD == "webserver" ]] || [[ $CMD == "scheduler" ]]; then
+    HOST=$(echo "${AIRFLOW__CORE__SQL_ALCHEMY_CONN}" | awk -F@ '{print $2}' | awk -F/ '{print $1}')
+    echo "Waiting for host: ${HOST}"
+    "${DIR}"/wait-for-command -c "nc -z ${HOST}" -s 0 -t 20
+
+    echo "Initializing airflow database..."
+    airflow initdb
+  fi
+fi
+
+# Run the original command
+exec "$@"
