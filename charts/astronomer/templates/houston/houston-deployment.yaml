@@ -142,11 +142,11 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.data.airflowDatabaseSecret }}
                   key: connection
-            {{- if.Values.data.houstonSMTPSecret }}
+            {{- if.Values.smtp.uri }}
             - name: SMTP_URI:
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.data.houstonSMTPSecret }}
+                  name: {{ .Release.Name }}-houston-smtp-uri
                   key: connection
             {{- end}}
     {{ if .Values.global.tlsSecret }}

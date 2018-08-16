@@ -27,7 +27,6 @@ images:
 data:
   houstonDatabaseSecret: "houston-database"
   airflowDatabaseSecret: "houston-database"
-  houstonSMTPSecret: ~
 
 bootstrapDatabase: true
 
