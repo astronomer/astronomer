@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.1] - 2018-08-17
+* Added local email/password authentication option
+* Integration with Auth0
+* Default installation can now use local, Google, or Github as auth providers
+* Fixed some Airflow webserver stability issues with a better healthcheck
+* Fixed Grafana healthcheck
+* Updated Grafana to v5.2.2
+* Removed unused Prometheus target
+* Larger default volume size on airflow workers
+
 ## [0.3.2] - 2018-07-29
 
 * Prevent redis and flower from restarting during deployments.
