@@ -21,7 +21,7 @@ LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
 LABEL io.astronomer.docker.module="astronomer"
 LABEL io.astronomer.docker.component="db-bootstrapper"
 
-ARG VERSION="v0.3.2"
+ARG VERSION="v0.4.1"
 ENV REPO="github.com/astronomerio/db-bootstrapper"
 ENV REPO_URL="git+https://${REPO}@${VERSION}"
 
