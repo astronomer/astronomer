@@ -29,7 +29,11 @@
 {{- end }}
 
 {{ define "db_bootstrapper_image" -}}
-{{ .Values.images.bootstrapper.name }}:{{ or .Values.global.imageTag .Values.images.bootstrapper.tag }}
+{{ .Values.images.dbBootstrapper.name }}:{{ or .Values.global.imageTag .Values.images.dbBootstrapper.tag }}
+{{- end }}
+
+{{ define "cli_install_image" -}}
+{{ .Values.images.cliInstall.name }}:{{ or .Values.global.imageTag .Values.images.cliInstall.tag }}
 {{- end }}
 
 {{ define "registry_docker_config" -}}

@@ -1,0 +1,24 @@
+################################
+## Install service
+#################################
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ .Release.Name }}-cli-install
+  labels:
+    tier: astronomer
+    component: cli-install
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+spec:
+  type: NodePort
+  selector:
+    tier: astronomer
+    component: cli-install
+    release: {{ .Release.Name }}
+  ports:
+    - port: {{ .Values.ports.installHTTP }}
+      targetPort: {{ .Values.ports.installHTTP }}
+      protocol: TCP
+      name: install-http

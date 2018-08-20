@@ -6,7 +6,7 @@ images:
   grafana:
     name: astronomerinc/ap-grafana
     tag: 0.4.1
-  bootstrapper:
+  dbBootstrapper:
     name: astronomerinc/ap-db-bootstrapper
     tag: 0.4.1
 

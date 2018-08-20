@@ -19,8 +19,11 @@ images:
   orbit:
     name: astronomerinc/ap-orbit-ui
     tag: 0.4.1
-  bootstrapper:
+  dbBootstrapper:
     name: astronomerinc/ap-db-bootstrapper
+    tag: 0.4.1
+  cliInstall:
+    name: astronomerinc/ap-cli-install
     tag: 0.4.1
 
 # Astronomer platform config
@@ -98,9 +101,19 @@ registry:
     service: "docker-registry"
     issuer: "houston"
 
+install:
+  resources: {}
+  #  limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  #  requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
 ports:
   houstonHTTP: 8870
   commanderHTTP: 8880
   commanderGRPC: 50051
   orbitHTTP: 8080
   registryHTTP: 5000
+  installHTTP: 80

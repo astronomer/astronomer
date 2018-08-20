@@ -51,5 +51,11 @@ spec:
           backend:
             serviceName: {{ .Release.Name }}-orbit
             servicePort: orbit-http
-
+  - host: install.{{ .Values.global.baseDomain }}
+    http:
+      paths:
+        - path: /
+          backend:
+            serviceName: {{ .Release.Name }}-cli-install
+            servicePort: install-http
 {{- end }}

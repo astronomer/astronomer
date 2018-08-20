@@ -1,0 +1,26 @@
+################################
+## Install ConfigMap
+#################################
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: {{ .Release.Name }}-cli-install
+  labels:
+    tier: astronomer
+    component: cli-install
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+data:
+  install.sh: |-
+    #! /usr/bin/env bash
+
+    TAG=${1:-v{{ .Chart.Version }}}
+
+    if (( EUID != 0 )); then
+        echo "Please run command as root."
+        exit
+    fi
+
+    DOWNLOADER="https://raw.githubusercontent.com/astronomerio/astro-cli/master/godownloader.sh"
+    curl -sL -o- "${DOWNLOADER}" | bash -s -- -b /usr/local/bin "$TAG"

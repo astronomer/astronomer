@@ -1,0 +1,54 @@
+################################
+## Install deployment
+#################################
+kind: Deployment
+apiVersion: apps/v1beta2
+metadata:
+  name: {{ .Release.Name }}-cli-install
+  labels:
+    tier: astronomer
+    component: cli-install
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      tier: astronomer
+      component: cli-install
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        tier: astronomer
+        component: cli-install
+        release: {{ .Release.Name }}
+      annotations:
+        checksum/configmap: {{ include (print $.Template.BasePath "/cli-install/cli-install-configmap.yaml") . | sha256sum }}
+    spec:
+      terminationGracePeriodSeconds: 60
+      containers:
+        - name: {{ .Release.Name }}-install
+          image: {{- include "cli_install_image" . | indent 1 }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.ports.installHTTP }}
+              scheme: HTTP
+            initialDelaySeconds: 30
+            timeoutSeconds: 5
+          ports:
+            - containerPort: {{ .Values.ports.installHTTP }}
+          resources:
+{{ toYaml .Values.install.resources | indent 12 }}
+          volumeMounts:
+            - name: cli-install-config-volume
+              mountPath: /usr/share/nginx/html
+      volumes:
+        - name: cli-install-config-volume
+          configMap:
+            name: {{ .Release.Name }}-cli-install
+            items:
+              - key: install.sh
+                path: install.sh
