@@ -9,8 +9,8 @@ function build_component () {
     local component_name="ap-${2}"
     local build_opts="--build-arg BUILD_NUMBER=${BUILD_NUMBER}"
 
-    # If we're building an RC, build platform components from master
-    if [ -v "ASTRONOMER_RC_VERSION" ] && [[ "${PLATFORM_RC_COMPONENTS}" =~ ${2} ]] ; then
+    # Build from master branches if set
+    if [ -v "ASTRONOMER_USE_MASTER" ] && [ -v "ASTRONOMER_RC_VERSION" ] && [[ "${PLATFORM_RC_COMPONENTS}" =~ ${2} ]] ; then
         build_opts="${build_opts} --build-arg VERSION=master --label io.astronomer.docker.rc=true"
     fi
 

@@ -10,7 +10,7 @@ BUILD_NUMBER ?= 1
 # Build version
 ASTRONOMER_MAJOR_VERSION ?= 0
 ASTRONOMER_MINOR_VERSION ?= 4
-ASTRONOMER_PATCH_VERSION ?= 1
+ASTRONOMER_PATCH_VERSION ?= 2
 ASTRONOMER_VERSION ?= "${ASTRONOMER_MAJOR_VERSION}.${ASTRONOMER_MINOR_VERSION}.${ASTRONOMER_PATCH_VERSION}"
 
 # List of all components and order to build.
@@ -19,7 +19,7 @@ PLATFORM_RC_COMPONENTS := cli-install commander db-bootstrapper default-backend 
 PLATFORM_ONBUILD_COMPONENTS := airflow
 
 # Vendor components
-VENDOR_COMPONENTS := nginx registry cadvisor grafana prometheus redis statsd-exporter
+VENDOR_COMPONENTS := cadvisor grafana nginx prometheus redis registry statsd-exporter
 
 # All components
 ALL_COMPONENTS := ${PLATFORM_COMPONENTS} ${VENDOR_COMPONENTS}
@@ -40,15 +40,26 @@ build:
 .PHONY: push
 push: clean build push-latest push-versioned
 
-.PHONY: build-rc
-build-rc: clean-rc
+.PHONY: build-rc-stable
+build-rc-stable:
 ifndef ASTRONOMER_RC_VERSION
 	$(error ASTRONOMER_RC_VERSION must be defined)
 endif
 	$(MAKE) ASTRONOMER_VERSION=${ASTRONOMER_VERSION}-rc.${ASTRONOMER_RC_VERSION} build
 
-.PHONY: push-rc
-push-rc: build-rc
+.PHONY: push-rc-stable
+push-rc-stable: build-rc-stable
+	$(MAKE) ASTRONOMER_VERSION=${ASTRONOMER_VERSION}-rc.${ASTRONOMER_RC_VERSION} push-versioned
+
+.PHONY: build-rc-master
+build-rc-master: clean-rc-master
+ifndef ASTRONOMER_RC_VERSION
+	$(error ASTRONOMER_RC_VERSION must be defined)
+endif
+	$(MAKE) ASTRONOMER_VERSION=${ASTRONOMER_VERSION}-rc.${ASTRONOMER_RC_VERSION} ASTRONOMER_USE_MASTER=1 build
+
+.PHONY: push-rc-master
+push-rc-master: build-rc-master
 	$(MAKE) ASTRONOMER_VERSION=${ASTRONOMER_VERSION}-rc.${ASTRONOMER_RC_VERSION} push-versioned
 
 .PHONY: push-latest
@@ -83,8 +94,8 @@ clean-images:
 		docker rmi -f $${image} ; \
 	done
 
-.PHONY: clean-rc
-clean-rc:
+.PHONY: clean-rc-master
+clean-rc-master:
 	for image in `docker images -q -f label=io.astronomer.docker.rc=true` ; do \
 		docker rmi -f $${image} ; \
 	done
