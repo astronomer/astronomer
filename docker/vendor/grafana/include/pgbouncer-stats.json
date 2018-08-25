@@ -140,9 +140,9 @@
       "colorBackground": false,
       "colorValue": false,
       "colors": [
-        "#d44a3a",
+        "#299c46",
         "rgba(237, 129, 40, 0.89)",
-        "#299c46"
+        "#d44a3a"
       ],
       "datasource": null,
       "format": "none",
@@ -203,7 +203,7 @@
           "refId": "A"
         }
       ],
-      "thresholds": "",
+      "thresholds": "25,40",
       "title": "Total Waiting Clients",
       "type": "singlestat",
       "valueFontSize": "80%",
