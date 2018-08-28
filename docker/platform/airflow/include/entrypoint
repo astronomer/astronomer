@@ -15,10 +15,8 @@ if [[ -n $AIRFLOW__CORE__SQL_ALCHEMY_CONN  ]] && [[ $CMD =~ ^(webserver|schedule
     sleep 0.001
   done
 
-  if [[ $CMD == "scheduler" ]]; then
-    echo "Initializing airflow database..."
-    airflow initdb
-  fi
+  echo "Initializing airflow database..."
+  airflow initdb || true
 fi
 
 if [[ -n $AIRFLOW__CELERY__BROKER_URL ]] && [[ $CMD =~ ^(scheduler|worker|flower)$ ]]; then
