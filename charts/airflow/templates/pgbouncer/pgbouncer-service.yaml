@@ -1,0 +1,38 @@
+################################
+## Airflow Pgbouncer Service
+#################################
+{{- if .Values.pgbouncer.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-pgbouncer
+  labels:
+    tier: airflow
+    component: pgbouncer
+    release: {{ .Release.Name }}
+    workspace: {{ .Values.platform.workspace | quote }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+  annotations:
+    {{- if .Values.platform.release }}
+    astronomer.io/platform-release: {{ .Values.platform.release }}
+    {{- end }}
+    prometheus.io/scrape: "true"
+    prometheus.io/port: {{ .Values.ports.pgbouncerScrape | quote }}
+spec:
+  type: NodePort
+  selector:
+    tier: airflow
+    component: pgbouncer
+    release: {{ .Release.Name }}
+    workspace: {{ .Values.platform.workspace | quote }}
+  ports:
+    - name: pgbouncer
+      protocol: TCP
+      port: {{ .Values.ports.pgbouncer }}
+      targetPort: {{ .Values.ports.pgbouncer }}
+    - name: pgbouncer-metrics
+      protocol: TCP
+      port: {{ .Values.ports.pgbouncerScrape }}
+      targetPort: {{ .Values.ports.pgbouncerScrape }}
+{{- end }}

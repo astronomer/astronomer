@@ -4,7 +4,9 @@
   {{- $_ := set $globals "registryAuthSecret" .Values.global.registryAuthSecret -}}
   {{- $_ := set $globals "acme" (.Values.global.acme) -}}
   {{- $_ := set $globals "rbacEnabled" .Values.global.rbacEnabled -}}
-  {{- $_ := set $globals "tlsSecret" (print .Values.global.tlsSecret | toString | replace "<nil>" "") -}}
+  {{- $_ := set $globals "releaseName" (print .Release.Name | toString) -}}
+  {{- $_ := set $globals "releaseNamespace" (print .Release.Namespace | toString) -}}
+  {{- $_ := set $globals "releaseVersion" (print .Chart.Version | toString) -}}
   {{ $globals | toJson | print }}
 {{- end }}
 

@@ -1,0 +1,103 @@
+################################
+## Airflow Pgbouncer Deployment
+#################################
+{{- if .Values.pgbouncer.enabled }}
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: {{ .Release.Name }}-pgbouncer
+  labels:
+    tier: airflow
+    component: pgbouncer
+    release: {{ .Release.Name }}
+    workspace: {{ .Values.platform.workspace | quote }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      tier: airflow
+      component: pgbouncer
+      release: {{ .Release.Name }}
+      workspace: {{ .Values.platform.workspace | quote }}
+  template:
+    metadata:
+      labels:
+        tier: airflow
+        component: pgbouncer
+        release: {{ .Release.Name }}
+        workspace: {{ .Values.platform.workspace | quote }}
+      annotations:
+        checksum/pgbouncer-config-secret: {{ include (print $.Template.BasePath "/secrets/pgbouncer-config-secret.yaml") . | sha256sum }} 
+    spec:
+      restartPolicy: Always
+      containers:
+      containers:
+        - name: {{ .Release.Name }}-pgbouncer
+          image: {{ template "pgbouncer_image" . }}
+          command:
+            - pgbouncer
+            - -u
+            - pgbouncer
+            - /etc/pgbouncer/pgbouncer.ini
+          resources:
+{{ toYaml .Values.pgbouncer.resources | indent 12 }}
+          ports:
+            - name: pgbouncer
+              containerPort: {{ .Values.ports.pgbouncer }}
+          livenessProbe:
+            tcpSocket:
+              port: {{ .Values.ports.pgbouncer }}
+          readinessProbe:
+            tcpSocket:
+              port: {{ .Values.ports.pgbouncer }}
+          volumeMounts:
+            - name: pgbouncer-config
+              subPath: pgbouncer.ini
+              mountPath: /etc/pgbouncer/pgbouncer.ini
+              readOnly: true
+            - name: pgbouncer-config
+              subPath: users.txt
+              mountPath: /etc/pgbouncer/users.txt
+              readOnly: true
+          lifecycle:
+            preStop:
+              exec:
+                # Allow existing queries clients to complete within 120 seconds
+                command: ["/bin/sh", "-c", "killall -INT pgbouncer && sleep 120"]
+        - name: pgbouncer-metrics
+          image: {{ template "pgbouncer_exporter_image" . }}
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "pgbouncer_stats_secret" . }}
+                  key: connection
+          ports:
+            - name: metrics
+              containerPort: {{ .Values.ports.pgbouncerScrape }}
+          livenessProbe:
+            exec:
+              command:
+                - pgbouncer_exporter
+                - health
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            exec:
+              command:
+                - pgbouncer_exporter
+                - health
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+{{- toYaml .Values.pgbouncer.resources | indent 12 }}
+      volumes:
+        - name: pgbouncer-config
+          secret:
+            secretName: {{ template "pgbouncer_config_secret" . }}
+{{- end }}

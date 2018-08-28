@@ -1,6 +1,7 @@
 ################################
 ## Airflow Redis StatefulSet
 #################################
+{{- if eq .Values.executor "CeleryExecutor" }}
 kind: StatefulSet
 apiVersion: apps/v1beta2
 metadata:
@@ -9,7 +10,7 @@ metadata:
     tier: airflow
     component: redis
     release: {{ .Release.Name }}
-    workspace: {{ .Values.workspace }}
+    workspace: {{ .Values.platform.workspace | quote }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
 spec:
@@ -19,14 +20,14 @@ spec:
       tier: airflow
       component: redis
       release: {{ .Release.Name }}
-      workspace: {{ .Values.workspace }}
+      workspace: {{ .Values.platform.workspace | quote }}
   template:
     metadata:
       labels:
         tier: airflow
         component: redis
         release: {{ .Release.Name }}
-        workspace: {{ .Values.workspace }}
+        workspace: {{ .Values.platform.workspace | quote }}
     spec:
       containers:
         - name: {{ .Release.Name }}-redis
@@ -63,4 +64,5 @@ spec:
         resources:
           requests:
             storage: {{ .Values.redis.persistence.size }}
+{{- end }}
 {{- end }}

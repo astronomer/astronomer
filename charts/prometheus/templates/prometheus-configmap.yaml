@@ -22,10 +22,11 @@ data:
       - job_name: airflow
         kubernetes_sd_configs:
           - role: service
-            namespaces:
-              names:
-                - {{ .Release.Namespace }}
         relabel_configs:
+          - source_labels: [__meta_kubernetes_service_annotation_astronomer_io_platform_release]
+            action: keep
+            regex: true
+            regex: ^{{ .Release.Name }}$
           - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scrape]
             action: keep
             regex: true
@@ -67,10 +68,14 @@ data:
             target_label: systemd_service_name
             replacement: '${1}'
 
-            # Only keep metrics from the platforms namespace
+            # Only keep metrics that start with platforms namespace (includes airflow children)
           - action: keep
             source_labels: [namespace]
-            regex: "{{ .Release.Namespace }}"
+            regex: "^{{ .Release.Namespace }}.*"
+
+            # Drop some unnecessary labels
+          - regex: "^(id|name)"
+            action: labeldrop
 
             # This will patch up most metrics
           - source_labels: [container_name]

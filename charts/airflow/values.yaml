@@ -6,36 +6,97 @@
 uid: 100
 gid: 101
 
+# Ingress configuration
+ingress:
+  # Enable ingress resource
+  enabled: false
+
+  # Enable for cert-manager or kube-lego
+  acme: false
+
+  # Name of tls secret to use on ingress
+  tlsSecretName: ~
+
+  # Base domain for ingress vhosts
+  baseDomain: ~
+
+  # If deployed from the Astronomer platform, this will be overridden
+  # to a class that matches the platform release name. This lets us run
+  # multiple platforms in one cluster and have deployments from one platform
+  # use the corresponding platform ingress controller.
+  class: "nginx"
+
+  # Enable platform authentication
+  auth:
+    enabled: true
+
+# Network policy configuration
+networkPolicies:
+  # Enabled network policies
+  enabled: false
+
+# Airflow home directory
+# Used for mount paths
+airflowHome: "/usr/local/airflow"
+
+# Auth secret for a private registry
+# This is used if pulling airflow images from a private registry
+registryAuthSecretName: ~
+
+# Enable RBAC (default on most clusters these days)
+rbacEnabled: true
+
+# Airflow executor
+# Options: SequentialExecutor, LocalExecutor, CeleryExecutor, KubernetesExecutor
+executor: "CeleryExecutor"
+
 # Astronomer Airflow images
 images:
   airflow:
     name: astronomerinc/ap-airflow
-    tag: 0.4.1
+    tag: 0.4.2-rc.25
   flower:
     name: astronomerinc/ap-airflow
-    tag: 0.4.1
+    tag: 0.4.2-rc.25
   statsd:
     name: astronomerinc/ap-statsd-exporter
-    tag: 0.4.1
+    tag: 0.4.2-rc.25
   redis:
-    name:  astronomerinc/ap-redis
-    tag: 0.4.1
+    name: astronomerinc/ap-redis
+    tag: 0.4.2-rc.25
+  pgbouncer:
+    name: astronomerinc/ap-pgbouncer
+    tag: 0.4.2-rc.25
+  pgbouncerExporter:
+    name: astronomerinc/ap-pgbouncer-exporter
+    tag: 0.4.2-rc.25
 
 # Environment variables for all airflow containers
 env:
 
 # Astronomer Airflow database config
 data:
-  airflowMetadataSecret: airflow-metadata
-  airflowResultBackendSecret: airflow-result-backend
+  # If secret names are provided, use those secrets
+  metadataSecretName: ~
+  resultBackendSecretName: ~
+
+  # Otherwise pass connection values in
+  metadataConnection: {}
+    # user: ~
+    # pass: ~
+    # host: ~
+    # port: ~
+    # db: ~
+  resultBackendConnection: {}
+    # user: ~
+    # pass: ~
+    # host: ~
+    # port: ~
+    # db: ~
 
 # Fernet key settings
 fernetKey: ~
 fernetKeySecretName: ~
-
-# Enable platform authentication
-auth:
-  enabled: true
 
 # Airflow Worker Config
 workers:
@@ -60,6 +121,14 @@ workers:
 
   # Grace period for tasks to finish after SIGTERM is sent from kubernetes
   terminationGracePeriodSeconds: 600
+
+  # Apply a HorizontalPodAutoscaler
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 10
+    targetCPUUtilization: 80
+    targetMemoryUtilization: 80
 
 # Airflow scheduler settings
 scheduler:
@@ -105,6 +174,23 @@ statsd:
     #   cpu: 100m
     #   memory: 128Mi
 
+# Pgbouncer settings
+pgbouncer:
+  # Enable pgbouncer
+  enabled: false
+
+  # Pool sizes
+  metadataPoolSize: 3
+  resultBackendPoolSize: 2
+
+  resources: {}
+    # limits:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
+
 redis:
   terminationGracePeriodSeconds: 600
 
@@ -132,6 +218,7 @@ redis:
   # else generate a new one on install
   password: ~
 
+# All ports used by chart
 ports:
   flowerUI: 5555
   airflowUI: 8080
@@ -139,3 +226,18 @@ ports:
   redisDB: 6379
   statsdIngest: 9125
   statsdScrape: 9102
+  pgbouncer: 6543
+  pgbouncerScrape: 9127
+
+# Define any ResourceQuotas for namespace
+quotas: {}
+
+# Define default/max/min values for pods and containers in namespace
+limits: {}
+
+# This block contains settings strictly used to integrate into the Astronomer platform.
+# This is what allows for integration into platform ingress, network policies, metrics collection, etc.
+# This chart is completely deployable without specifying these values.
+platform:
+  release: ~
+  workspace: ""

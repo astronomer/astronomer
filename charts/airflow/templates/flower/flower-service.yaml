@@ -1,6 +1,7 @@
 ################################
 ## Airflow Flower Service Component
 #################################
+{{- if eq .Values.executor "CeleryExecutor" }}
 kind: Service
 apiVersion: v1
 metadata:
@@ -9,7 +10,7 @@ metadata:
     tier: airflow
     component: flower
     release: {{ .Release.Name }}
-    workspace: {{ .Values.workspace }}
+    workspace: {{ .Values.platform.workspace | quote }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
 spec:
@@ -18,9 +19,10 @@ spec:
     tier: airflow
     component: flower
     release: {{ .Release.Name }}
-    workspace: {{ .Values.workspace }}
+    workspace: {{ .Values.platform.workspace | quote }}
   ports:
     - name: flower-ui
       protocol: TCP
       port: {{ .Values.ports.flowerUI }}
       targetPort: {{ .Values.ports.flowerUI }}
+{{- end }}

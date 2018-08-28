@@ -6,20 +6,24 @@
     value: {{ $config.value | quote }}
   {{- end }}
   # Hard Coded Airflow Envs
-  - name: AIRFLOW__CORE__EXECUTOR
-    value: "CeleryExecutor"
-  - name: AIRFLOW__CELERY__DEFAULT_QUEUE
-    value: "celery"
   - name: AIRFLOW__SCHEDULER__STATSD_ON
     value: "True"
   - name: AIRFLOW__SCHEDULER__STATSD_PORT
     value: "9125"
   - name: AIRFLOW__SCHEDULER__STATSD_PREFIX
     value: "airflow"
+  - name: AIRFLOW__WEBSERVER__BASE_URL
+    value: {{ include "airflow_url" . }}
+  - name: AIRFLOW__KUBERNETES__NAMESPACE
+    value: {{ .Release.Namespace }}
   - name: ASTRONOMER__AIRFLOW__WORKER_LOG_RETENTION
     value: "15"
-  - name: AIRFLOW__WEBSERVER__BASE_URL
-    value: {{- include "airflow_url" . | indent 1 }}
+  - name: AIRFLOW__CORE__EXECUTOR
+    value: {{ .Values.executor | quote }}
+  {{- if eq .Values.executor "CeleryExecutor" }}
+  - name: AIRFLOW__CELERY__DEFAULT_QUEUE
+    value: "celery"
+  {{- end }}
   # Dynamically created secret envs
   {{- range $i, $config := .Values.secret }}
   - name: {{ $config.name }}
@@ -31,56 +35,106 @@
   # Hard Coded Secret Envs
   - name: AIRFLOW__SCHEDULER__STATSD_HOST
     value: "{{ .Release.Name }}-statsd"
+  - name: AIRFLOW__CORE__FERNET_KEY
+    valueFrom:
+      secretKeyRef:
+        name: {{ template "fernet_key_secret" . }}
+        key: fernet-key
   - name: AIRFLOW__CORE__SQL_ALCHEMY_CONN
     valueFrom:
       secretKeyRef:
-        name: {{ .Values.data.airflowMetadataSecret }}
+        name: {{ template "airflow_metadata_secret" . }}
         key: connection
+  {{- if eq .Values.executor "CeleryExecutor" }}
   - name: AIRFLOW__CELERY__CELERY_RESULT_BACKEND
     valueFrom:
       secretKeyRef:
-        name: {{ .Values.data.airflowResultBackendSecret }}
+        name: {{ template "airflow_result_backend_secret" . }}
         key: connection
   - name: AIRFLOW__CELERY__BROKER_URL
     valueFrom:
       secretKeyRef:
         name: {{ .Release.Name }}-broker-url
         key: connection
-  - name: AIRFLOW__CORE__FERNET_KEY
-    valueFrom:
-      secretKeyRef:
-        name: {{ template "fernet_key_secret" . }}
-        key: fernet-key
+  {{- end }}
 {{- end }}
 
 {{ define "airflow_url" -}}
-{{ .Release.Name }}-airflow.{{ .Values.global.baseDomain }}
+{{ .Release.Name }}-airflow.{{ .Values.ingress.baseDomain }}
 {{- end }}
 
 {{ define "flower_url" -}}
-{{ .Release.Name }}-flower.{{ .Values.global.baseDomain }}
+{{ .Release.Name }}-flower.{{ .Values.ingress.baseDomain }}
 {{- end }}
 
 {{ define "airflow_image" -}}
-{{ .Values.images.airflow.name }}:{{ or .Values.global.imageTag .Values.images.airflow.tag }}
+{{ .Values.images.airflow.name }}:{{ .Values.images.airflow.tag }}
 {{- end }}
 
 {{ define "flower_image" -}}
-{{ .Values.images.flower.name }}:{{ or .Values.global.imageTag .Values.images.flower.tag }}
+{{ .Values.images.flower.name }}:{{ .Values.images.flower.tag }}
 {{- end }}
 
 {{ define "statsd_image" -}}
-{{ .Values.images.statsd.name }}:{{ or .Values.global.imageTag .Values.images.statsd.tag }}
+{{ .Values.images.statsd.name }}:{{ .Values.images.statsd.tag }}
+{{- end }}
+
+{{ define "redis_image" -}}
+{{ .Values.images.redis.name }}:{{ .Values.images.redis.tag }}
+{{- end }}
+
+{{ define "pgbouncer_image" -}}
+{{ .Values.images.pgbouncer.name }}:{{ .Values.images.pgbouncer.tag }}
+{{- end }}
+
+{{ define "pgbouncer_exporter_image" -}}
+{{ .Values.images.pgbouncerExporter.name }}:{{ .Values.images.pgbouncerExporter.tag }}
 {{- end }}
 
 {{ define "fernet_key_secret" -}}
 {{ default (printf "%s-fernet-key" .Release.Name) .Values.fernetKeySecretName }}
 {{- end }}
 
-{{ define "redis_image" -}}
-{{ .Values.images.redis.name }}:{{ or .Values.global.imageTag .Values.images.redis.tag }}
-{{- end }}
-
 {{ define "redis_password_secret" -}}
 {{ default (printf "%s-redis-password" .Release.Name) .Values.redis.passwordSecretName }}
+{{- end }}
+
+{{ define "airflow_metadata_secret" -}}
+{{ default (printf "%s-airflow-metadata" .Release.Name) .Values.data.metadataSecretName }}
+{{- end }}
+
+{{ define "airflow_result_backend_secret" -}}
+{{ default (printf "%s-airflow-result-backend" .Release.Name) .Values.data.resultBackendSecretName }}
+{{- end }}
+
+{{ define "pgbouncer_config_secret" -}}
+{{ .Release.Name }}-pgbouncer-config
+{{- end }}
+
+{{ define "pgbouncer_stats_secret" -}}
+{{ .Release.Name }}-pgbouncer-stats
+{{- end }}
+
+{{ define "pgbouncer_config" }}
+[databases]
+{{ .Release.Name }}-metadata = host={{ .Values.data.metadataConnection.host }} dbname={{ .Values.data.metadataConnection.db }} port={{ .Values.data.metadataConnection.port }} pool_size={{ .Values.pgbouncer.metadataPoolSize }}
+{{ .Release.Name }}-result-backend = host={{ .Values.data.resultBackendConnection.host }} dbname={{ .Values.data.resultBackendConnection.db }} port={{ .Values.data.resultBackendConnection.port }} pool_size={{ .Values.pgbouncer.resultBackendPoolSize }}
+
+[pgbouncer]
+pool_mode = transaction
+listen_port = {{ .Values.ports.pgbouncer }}
+listen_addr = *
+auth_type = md5
+auth_file = /etc/pgbouncer/users.txt
+stats_users = {{ .Values.data.metadataConnection.user }}
+ignore_startup_parameters = extra_float_digits
+{{- end }}
+
+{{ define "pgbouncer_users" }}
+{{ .Values.data.metadataConnection.user | quote }} {{ .Values.data.metadataConnection.pass | quote }}
+{{ .Values.data.resultBackendConnection.user | quote }} {{ .Values.data.resultBackendConnection.pass | quote }}
+{{- end }}
+
+{{ define "airflow_logs" -}}
+{{ (printf "%s/logs" .Values.airflowHome) | quote }}
 {{- end }}

@@ -1,7 +1,7 @@
 ################################
 ## Airflow Ingress
 #################################
-{{- if .Values.global.baseDomain }}
+{{- if .Values.ingress.enabled }}
 kind: Ingress
 apiVersion: extensions/v1beta1
 metadata:
@@ -10,30 +10,29 @@ metadata:
     tier: airflow
     component: airflow-ingress
     release: {{ .Release.Name }}
-    workspace: {{ .Values.workspace }}
+    workspace: {{ .Values.platform.workspace | quote }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
   annotations:
-    kubernetes.io/ingress.class: "nginx"
-    kubernetes.io/tls-acme: {{ eq .Values.global.acme true | quote }}
-  {{- if .Values.auth.enabled }}
-    nginx.ingress.kubernetes.io/auth-url: https://houston.{{ .Values.global.baseDomain }}/authorization
-    nginx.ingress.kubernetes.io/auth-signin: https://app.{{ .Values.global.baseDomain }}/login
+    kubernetes.io/ingress.class: {{ .Values.ingress.class }}
+    kubernetes.io/tls-acme: {{ eq .Values.ingress.acme true | quote }}
+  {{- if .Values.ingress.auth.enabled }}
+    nginx.ingress.kubernetes.io/auth-url: https://houston.{{ .Values.ingress.baseDomain }}/authorization
+    nginx.ingress.kubernetes.io/auth-signin: https://app.{{ .Values.ingress.baseDomain }}/login
     nginx.ingress.kubernetes.io/auth-response-headers: authorization, username, email
   {{- end }}
 spec:
-  {{- if or .Values.global.tlsSecret .Values.global.acme }}
   tls:
-  {{- if .Values.global.acme }}
+  {{- if .Values.ingress.acme }}
     - secretName: {{ .Release.Name }}-airflow-tls
-  {{- end }}
-  {{- if .Values.global.tlsSecret }}
-    - secretName: {{ .Values.global.tlsSecret }}
+  {{- else if .Values.ingress.tlsSecretName }}
+    - secretName: {{ .Values.ingress.tlsSecretName }}
+  {{ else }}
+    - secretName: ~
   {{- end }}
       hosts:
         - {{- include "airflow_url" . | indent 1 }}
         - {{- include "flower_url" . | indent 1 }}
-  {{- end }}
   rules:
     - host: {{- include "airflow_url" . | indent 1 }}
       http:

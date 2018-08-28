@@ -1,50 +1,106 @@
 ################################
-## Airflow Scheduler Deployment
+## Airflow Scheduler Deployment/StatefulSet
 #################################
-kind: Deployment
-apiVersion: apps/v1beta2
+{{- $local := or (eq .Values.executor "LocalExecutor") (eq .Values.executor "SequentialExecutor") }}
+kind: {{ if $local }}StatefulSet{{ else }}Deployment{{ end }}
+apiVersion: apps/v1
 metadata:
   name: {{ .Release.Name }}-scheduler
   labels:
     tier: airflow
     component: scheduler
     release: {{ .Release.Name }}
-    workspace: {{ .Values.workspace }}
+    workspace: {{ .Values.platform.workspace | quote }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
+    local: {{ $local | quote }}
 spec:
+{{- if $local }}
+  serviceName: {{ .Release.Name }}-scheduler
+{{- end }}
   replicas: 1
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 1
   selector:
     matchLabels:
       tier: airflow
       component: scheduler
       release: {{ .Release.Name }}
-      workspace: {{ .Values.workspace }}
+      workspace: {{ .Values.platform.workspace | quote }}
+      local: {{ $local | quote }}
   template:
     metadata:
       labels:
         tier: airflow
         component: scheduler
         release: {{ .Release.Name }}
-        workspace: {{ .Values.workspace }}
+        workspace: {{ .Values.platform.workspace | quote }}
+        local: {{ $local | quote }}
+      annotations:
+        checksum/metadata-secret: {{ include (print $.Template.BasePath "/secrets/metadata-connection-secret.yaml") . | sha256sum }}
+        checksum/result-backend-secret: {{ include (print $.Template.BasePath "/secrets/result-backend-connection-secret.yaml") . | sha256sum }}
+        checksum/pgbouncer-config-secret: {{ include (print $.Template.BasePath "/secrets/pgbouncer-config-secret.yaml") . | sha256sum }}
     spec:
       restartPolicy: Always
+    {{- if $local }}
+      # terminationGracePeriodSeconds: {{ .Values.workers.terminationGracePeriodSeconds }}
+      # Airflow scheduler with LocalExecutor doesn't handle SIGINT well. Hard-coding low 
+      # number for now.
+      terminationGracePeriodSeconds: 10
+      serviceAccountName: {{ .Release.Name }}-worker-serviceaccount
+    {{- end }}
       securityContext:
         runAsUser: {{ .Values.uid }}
-      {{- if .Values.global.registryAuthSecret }}
+        fsGroup: {{ .Values.gid }}
+      {{- if .Values.registryAuthSecret }}
       imagePullSecrets:
-        - name: {{ .Values.global.registryAuthSecret }}
+        - name: {{ .Values.registryAuthSecret }}
       {{- end }}
       containers:
         - name: {{ .Release.Name }}-scheduler
-          image: {{- include "airflow_image" . | indent 1 }}
+          image: {{ include "airflow_image" . }}
           args: ["airflow", "scheduler"]
           resources:
 {{ toYaml .Values.scheduler.resources | indent 12 }}
+        {{- if $local }}
+          volumeMounts:
+            - name: logs
+              mountPath: {{ template "airflow_logs" . }}
+        {{- end }}
           env:
           {{- include "airflow_environment" . | indent 10 }}
+      {{- if $local }}
+        - name: {{ .Release.Name }}-scheduler-logs
+          image: {{ template "airflow_image" . }}
+          args: ["airflow", "serve_logs"]
+          ports:
+            - name: worker-logs
+              containerPort: {{ .Values.ports.workerLogs }}
+          volumeMounts:
+            - name: logs
+              mountPath: {{ template "airflow_logs" . }}
+          env:
+          {{- include "airflow_environment" . | indent 10 }}
+        - name: {{ .Release.Name }}-worker-gc
+          image: {{ template "airflow_image" . }}
+          args: ["crond", "-f", "-d", "0"]
+          volumeMounts:
+            - name: logs
+              mountPath: {{ template "airflow_logs" . }}
+      {{- end }}
+{{- if not $local }}
+      volumes:
+        - name: logs
+          emptyDir: {}
+          sizeLimit: {{ .Values.workers.persistence.size }}
+{{- else }}
+  volumeClaimTemplates:
+    - metadata:
+        name: logs
+      spec:
+      {{- if .Values.workers.persistence.storageClassName }}
+        storageClassName: {{ .Values.workers.persistence.storageClassName }}
+      {{- end }}
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: {{ .Values.workers.persistence.size }}
+{{- end }}

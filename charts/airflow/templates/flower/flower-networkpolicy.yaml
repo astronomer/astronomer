@@ -1,6 +1,7 @@
 ################################
 ## Airflow Flower NetworkPolicy
 #################################
+{{- if (and .Values.networkPolicies.enabled (eq .Values.executor "CeleryExecutor")) }}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -9,7 +10,7 @@ metadata:
     tier: airflow
     component: airflow-flower-policy
     release: {{ .Release.Name }}
-    workspace: {{ .Values.workspace }}
+    workspace: {{ .Values.platform.workspace | quote }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
 spec:
@@ -18,14 +19,20 @@ spec:
       tier: airflow
       component: flower
       release: {{ .Release.Name }}
+      workspace: {{ .Values.platform.workspace | quote }}
   policyTypes:
   - Ingress
+{{- if .Values.platform.release }}
   ingress:
   - from:
+    - namespaceSelector: {}
     - podSelector:
         matchLabels:
           tier: nginx
           component: ingress-controller
+          release: {{ .Values.platform.release }}
     ports:
     - protocol: TCP
       port: {{ .Values.ports.flowerUI }}
+{{- end }}
+{{- end }}

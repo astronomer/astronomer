@@ -30,11 +30,11 @@ spec:
     component: ingress-controller
     release: {{ .Release.Name }}
   ports:
-    - port: 80
-      targetPort: 80
+    - port: {{ .Values.ports.http }}
+      targetPort: {{ .Values.ports.http }}
       protocol: TCP
       name: http
-    - port: 443
-      targetPort: 443
+    - port: {{ .Values.ports.https }}
+      targetPort: {{ .Values.ports.https }}
       protocol: TCP
       name: https

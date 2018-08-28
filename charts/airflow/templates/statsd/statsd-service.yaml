@@ -9,10 +9,13 @@ metadata:
     tier: airflow
     component: statsd
     release: {{ .Release.Name }}
-    workspace: {{ .Values.workspace }}
+    workspace: {{ .Values.platform.workspace | quote }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
   annotations:
+    {{- if .Values.platform.release }}
+    astronomer.io/platform-release: {{ .Values.platform.release }}
+    {{- end }}
     prometheus.io/scrape: "true"
     prometheus.io/port: {{ .Values.ports.statsdScrape | quote }}
 spec:
@@ -21,7 +24,7 @@ spec:
     tier: airflow
     component: statsd
     release: {{ .Release.Name }}
-    workspace: {{ .Values.workspace }}
+    workspace: {{ .Values.platform.workspace | quote }}
   ports:
     - name: statsd-ingest
       protocol: UDP

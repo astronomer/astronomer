@@ -1,6 +1,7 @@
 ################################
 ## Airflow StatsD NetworkPolicy
 #################################
+{{- if .Values.networkPolicies.enabled }}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -9,7 +10,7 @@ metadata:
     tier: airflow
     component: statsd-policy
     release: {{ .Release.Name }}
-    workspace: {{ .Values.workspace }}
+    workspace: {{ .Values.platform.workspace | quote }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
 spec:
@@ -18,20 +19,29 @@ spec:
       tier: airflow
       component: statsd
       release: {{ .Release.Name }}
+      workspace: {{ .Values.platform.workspace | quote }}
   policyTypes:
   - Ingress
   ingress:
   - from:
+    - namespaceSelector: {}
     - podSelector:
         matchLabels:
           tier: airflow
           release: {{ .Release.Name }}
+          workspace: {{ .Values.platform.workspace | quote }}
+    {{- if .Values.platform.release }}
     - podSelector:
         matchLabels:
           tier: monitoring
           component: prometheus
+          release: {{ .Values.platform.release }}
+    {{- end }}
     ports:
     - protocol: UDP
       port: {{ .Values.ports.statsdIngest }}
+  {{- if .Values.platform.release }}
     - protocol: TCP
       port: {{ .Values.ports.statsdScrape }}
+  {{- end }}
+{{- end }}

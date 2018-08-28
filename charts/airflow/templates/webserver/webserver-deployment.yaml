@@ -2,14 +2,14 @@
 ## Airflow Webserver Deployment
 #################################
 kind: Deployment
-apiVersion: apps/v1beta2
+apiVersion: apps/v1
 metadata:
   name: {{ .Release.Name }}-webserver
   labels:
     tier: airflow
     component: webserver
     release: {{ .Release.Name }}
-    workspace: {{ .Values.workspace }}
+    workspace: {{ .Values.platform.workspace | quote }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
 spec:
@@ -19,21 +19,24 @@ spec:
       tier: airflow
       component: webserver
       release: {{ .Release.Name }}
-      workspace: {{ .Values.workspace }}
+      workspace: {{ .Values.platform.workspace | quote }}
   template:
     metadata:
       labels:
         tier: airflow
         component: webserver
         release: {{ .Release.Name }}
-        workspace: {{ .Values.workspace }}
+        workspace: {{ .Values.platform.workspace | quote }}
+      annotations:
+        checksum/metadata-secret: {{ include (print $.Template.BasePath "/secrets/metadata-connection-secret.yaml") . | sha256sum }} 
+        checksum/pgbouncer-config-secret: {{ include (print $.Template.BasePath "/secrets/pgbouncer-config-secret.yaml") . | sha256sum }} 
     spec:
       restartPolicy: Always
       securityContext:
         runAsUser: {{ .Values.uid }}
-      {{- if .Values.global.registryAuthSecret }}
+      {{- if .Values.registryAuthSecret }}
       imagePullSecrets:
-        - name: {{ .Values.global.registryAuthSecret }}
+        - name: {{ .Values.registryAuthSecret }}
       {{- end }}
       containers:
         - name: {{ .Release.Name }}-webserver
@@ -45,16 +48,18 @@ spec:
             - name: webserver-ui
               containerPort: {{ .Values.ports.airflowUI }}
           livenessProbe:
+            failureThreshold: 10
             httpGet:
               path: /health
               port: {{ .Values.ports.airflowUI }}
             initialDelaySeconds: 10
-            periodSeconds: 10
+            periodSeconds: 5
           readinessProbe:
+            failureThreshold: 10
             httpGet:
               path: /health
               port: {{ .Values.ports.airflowUI }}
             initialDelaySeconds: 10
-            periodSeconds: 10
+            periodSeconds: 5
           env:
           {{- include "airflow_environment" . | indent 10 }}

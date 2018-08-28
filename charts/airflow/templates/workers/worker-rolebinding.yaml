@@ -1,0 +1,23 @@
+################################
+## Airflow Worker Role Binding
+#################################
+{{- if .Values.rbacEnabled }}
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ .Release.Name }}-worker-rolebinding
+  labels:
+    tier: airflow
+    release: {{ .Release.Name }}
+    workspace: {{ .Values.platform.workspace | quote }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ .Release.Name }}-worker-role
+subjects:
+  - kind: ServiceAccount
+    name: {{ .Release.Name }}-worker-serviceaccount
+    namespace: {{ .Release.Namespace }}
+{{- end }}

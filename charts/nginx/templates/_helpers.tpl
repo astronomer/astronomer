@@ -38,3 +38,11 @@ Create chart name and version as used by the chart label.
 {{ define "default_backend_image" -}}
 {{ .Values.images.defaultBackend.name }}:{{ or .Values.global.imageTag .Values.images.defaultBackend.tag }}
 {{- end }}
+
+{{ define "ingress_class" -}}
+{{- if .Values.ingressClass -}}
+{{- .Values.ingressClass -}}
+{{- else }}
+{{- template "fullname" . -}}
+{{- end -}}
+{{- end -}}

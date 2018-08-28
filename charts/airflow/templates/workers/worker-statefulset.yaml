@@ -1,15 +1,16 @@
 ################################
 ## Airflow Worker StatefulSet
 #################################
+{{- if eq .Values.executor "CeleryExecutor" }}
 kind: StatefulSet
-apiVersion: apps/v1beta2
+apiVersion: apps/v1
 metadata:
   name: {{ .Release.Name }}-worker
   labels:
     tier: airflow
     component: worker
     release: {{ .Release.Name }}
-    workspace: {{ .Values.workspace }}
+    workspace: {{ .Values.platform.workspace | quote }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
 spec:
@@ -21,26 +22,32 @@ spec:
       tier: airflow
       component: worker
       release: {{ .Release.Name }}
-      workspace: {{ .Values.workspace }}
+      workspace: {{ .Values.platform.workspace | quote }}
   template:
     metadata:
       labels:
         tier: airflow
         component: worker
         release: {{ .Release.Name }}
-        workspace: {{ .Values.workspace }}
+        workspace: {{ .Values.platform.workspace | quote }}
+      annotations:
+        checksum/metadata-secret: {{ include (print $.Template.BasePath "/secrets/metadata-connection-secret.yaml") . | sha256sum }}
+        checksum/result-backend-secret: {{ include (print $.Template.BasePath "/secrets/result-backend-connection-secret.yaml") . | sha256sum }}
+        checksum/pgbouncer-config-secret: {{ include (print $.Template.BasePath "/secrets/pgbouncer-config-secret.yaml") . | sha256sum }}
     spec:
       terminationGracePeriodSeconds: {{ .Values.workers.terminationGracePeriodSeconds }}
+      restartPolicy: Always
+      serviceAccountName: {{ .Release.Name }}-worker-serviceaccount
       securityContext:
         runAsUser: {{ .Values.uid }}
         fsGroup: {{ .Values.gid }}
-      {{- if .Values.global.registryAuthSecret }}
+      {{- if .Values.registryAuthSecretName }}
       imagePullSecrets:
-        - name: {{ .Values.global.registryAuthSecret }}
+        - name: {{ .Values.registryAuthSecretName }}
       {{- end }}
       containers:
         - name: {{ .Release.Name }}-worker
-          image: {{- include "airflow_image" . | indent 1 }}
+          image: {{ template "airflow_image" . }}
           args: ["airflow", "worker"]
           resources:
 {{ toYaml .Values.workers.resources | indent 12 }}
@@ -49,15 +56,15 @@ spec:
               containerPort: {{ .Values.ports.workerLogs }}
           volumeMounts:
             - name: logs
-              mountPath: /usr/local/airflow/logs
+              mountPath: {{ template "airflow_logs" . }}
           env:
           {{- include "airflow_environment" . | indent 10 }}
         - name: {{ .Release.Name }}-worker-gc
-          image: {{- include "airflow_image" . | indent 1 }}
+          image: {{ template "airflow_image" . }}
           args: ["crond", "-f", "-d", "0"]
           volumeMounts:
             - name: logs
-              mountPath: /usr/local/airflow/logs
+              mountPath: {{ template "airflow_logs" . }}
 {{- if not .Values.workers.persistence.enabled }}
       volumes:
         - name: logs
@@ -74,4 +81,5 @@ spec:
         resources:
           requests:
             storage: {{ .Values.workers.persistence.size }}
+{{- end }}
 {{- end }}

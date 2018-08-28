@@ -1,6 +1,7 @@
 ################################
 ## Airflow Scheduler NetworkPolicy
 #################################
+{{- if .Values.networkPolicies.enabled }}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -9,7 +10,7 @@ metadata:
     tier: airflow
     component: airflow-scheduler-policy
     release: {{ .Release.Name }}
-    workspace: {{ .Values.workspace }}
+    workspace: {{ .Values.platform.workspace | quote }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
 spec:
@@ -18,5 +19,20 @@ spec:
       tier: airflow
       component: scheduler
       release: {{ .Release.Name }}
+      workspace: {{ .Values.platform.workspace | quote }}
   policyTypes:
   - Ingress
+{{- if (or (eq .Values.executor "LocalExecutor") (eq .Values.executor "SequentialExecutor")) }}
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          tier: airflow
+          component: webserver
+          release: {{ .Release.Name }}
+          workspace: {{ .Values.platform.workspace | quote }}
+    ports:
+    - protocol: TCP
+      port: {{ .Values.ports.workerLogs }}
+{{- end }}
+{{- end }}

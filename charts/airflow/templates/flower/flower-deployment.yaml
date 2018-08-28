@@ -1,15 +1,16 @@
 ################################
 ## Airflow Flower Deployment
 #################################
+{{- if eq .Values.executor "CeleryExecutor" }}
 kind: Deployment
-apiVersion: apps/v1beta2
+apiVersion: apps/v1
 metadata:
   name: {{ .Release.Name }}-flower
   labels:
     tier: airflow
     component: flower
     release: {{ .Release.Name }}
-    workspace: {{ .Values.workspace }}
+    workspace: {{ .Values.platform.workspace | quote }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
 spec:
@@ -19,21 +20,21 @@ spec:
       tier: airflow
       component: flower
       release: {{ .Release.Name }}
-      workspace: {{ .Values.workspace }}
+      workspace: {{ .Values.platform.workspace | quote }}
   template:
     metadata:
       labels:
         tier: airflow
         component: flower
         release: {{ .Release.Name }}
-        workspace: {{ .Values.workspace }}
+        workspace: {{ .Values.platform.workspace | quote }}
     spec:
       restartPolicy: Always
       securityContext:
         runAsUser: {{ .Values.uid }}
-      {{- if .Values.global.registryAuthSecret }}
+      {{- if .Values.registryAuthSecret }}
       imagePullSecrets:
-        - name: {{ .Values.global.registryAuthSecret }}
+        - name: {{ .Values.registryAuthSecret }}
       {{- end }}
       containers:
         - name: {{ .Release.Name }}-flower
@@ -45,16 +46,19 @@ spec:
             - name: flower-ui
               containerPort: {{ .Values.ports.flowerUI }}
           livenessProbe:
+            failureThreshold: 10
             httpGet:
               path: /
               port: {{ .Values.ports.flowerUI }}
             initialDelaySeconds: 10
-            periodSeconds: 10
+            periodSeconds: 5
           readinessProbe:
+            failureThreshold: 10
             httpGet:
               path: /
               port: {{ .Values.ports.flowerUI }}
             initialDelaySeconds: 10
-            periodSeconds: 10
+            periodSeconds: 5
           env:
           {{- include "airflow_environment" . | indent 10 }}
+{{- end }}

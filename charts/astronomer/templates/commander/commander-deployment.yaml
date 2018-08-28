@@ -60,8 +60,10 @@ spec:
               value: "8880"
             - name: COMMANDER_GRPC_PORT
               value: "50051"
-            - name: COMMANDER_KUBE_NAMESPACE
+            - name: COMMANDER_PLATFORM_NAMESPACE
               value: {{ .Release.Namespace }}
+            - name: COMMANDER_PLATFORM_RELEASE
+              value: {{ .Release.Name }}
             - name: COMMANDER_HELM_REPO
               value: {{ .Values.global.helmRepo }}
             - name: HELM_HOST

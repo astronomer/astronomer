@@ -9,7 +9,7 @@ metadata:
     tier: airflow
     component: webserver
     release: {{ .Release.Name }}
-    workspace: {{ .Values.workspace }}
+    workspace: {{ .Values.platform.workspace | quote }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
 spec:
@@ -18,7 +18,7 @@ spec:
     tier: airflow
     component: webserver
     release: {{ .Release.Name }}
-    workspace: {{ .Values.workspace }}
+    workspace: {{ .Values.platform.workspace | quote }}
   ports:
     - name: airflow-ui
       protocol: TCP

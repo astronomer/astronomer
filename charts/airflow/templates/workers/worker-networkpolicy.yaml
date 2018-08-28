@@ -1,6 +1,7 @@
 ################################
 ## Airflow Worker NetworkPolicy
 #################################
+{{- if (and .Values.networkPolicies.enabled (eq .Values.executor "CeleryExecutor")) }}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -9,7 +10,7 @@ metadata:
     tier: airflow
     component: airflow-worker-policy
     release: {{ .Release.Name }}
-    workspace: {{ .Values.workspace }}
+    workspace: {{ .Values.platform.workspace | quote }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
 spec:
@@ -18,6 +19,7 @@ spec:
       tier: airflow
       component: worker
       release: {{ .Release.Name }}
+      workspace: {{ .Values.platform.workspace | quote }}
   policyTypes:
   - Ingress
   ingress:
@@ -27,6 +29,8 @@ spec:
           tier: airflow
           release: {{ .Release.Name }}
           component: webserver
+          workspace: {{ .Values.platform.workspace | quote }}
     ports:
     - protocol: TCP
       port: {{ .Values.ports.workerLogs }}
+{{- end }}

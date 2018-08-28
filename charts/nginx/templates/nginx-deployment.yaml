@@ -40,18 +40,17 @@ spec:
             {{- if .Values.forceNamespaceIsolation }}
             - --force-namespace-isolation
             {{- end }}
-            {{- if .Values.watchReleaseNamespace }}
-            - --watch-namespace={{ .Release.Namespace }}
-            {{- end }}
+            - --ingress-class={{ template "ingress_class" . }}
+            - --default-ssl-certificate={{ .Release.Namespace }}/{{ .Values.global.tlsSecret }}
           ports:
-            - containerPort: 80
+            - containerPort: {{ .Values.ports.http }}
               name: http
-            - containerPort: 443
+            - containerPort: {{ .Values.ports.https }}
               name: https
           livenessProbe:
             httpGet:
               path: /healthz
-              port: 10254
+              port: {{ .Values.ports.healthz }}
             initialDelaySeconds: 30
             timeoutSeconds: 5
           env:

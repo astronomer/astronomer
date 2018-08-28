@@ -1,6 +1,7 @@
 ################################
 ## Airflow Worker Service
 #################################
+{{- if eq .Values.executor "CeleryExecutor" }}
 kind: Service
 apiVersion: v1
 metadata:
@@ -9,7 +10,7 @@ metadata:
     tier: airflow
     component: worker
     release: {{ .Release.Name }}
-    workspace: {{ .Values.workspace }}
+    workspace: {{ .Values.platform.workspace | quote }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
 spec:
@@ -18,7 +19,10 @@ spec:
     tier: airflow
     component: worker
     release: {{ .Release.Name }}
-    workspace: {{ .Values.workspace }}
+    workspace: {{ .Values.platform.workspace | quote }}
   ports:
     - name: worker-logs
+      protocol: TCP
       port: {{ .Values.ports.workerLogs }}
+      targetPort: {{ .Values.ports.workerLogs }}
+{{- end }}
