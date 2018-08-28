@@ -62,7 +62,6 @@ RUN mkdir -p ${AIRFLOW_HOME}/logs
 
 # Copy entrypoint to root
 COPY include/entrypoint /
-COPY include/wait-for-command /
 
 # Copy airflow configuration
 COPY include/airflow.cfg ${AIRFLOW_HOME}

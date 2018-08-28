@@ -19,7 +19,7 @@ PLATFORM_RC_COMPONENTS := cli-install commander db-bootstrapper default-backend 
 PLATFORM_ONBUILD_COMPONENTS := airflow
 
 # Vendor components
-VENDOR_COMPONENTS := cadvisor grafana nginx prometheus redis registry statsd-exporter
+VENDOR_COMPONENTS := cadvisor grafana nginx pgbouncer pgbouncer-exporter prometheus redis registry statsd-exporter
 
 # All components
 ALL_COMPONENTS := ${PLATFORM_COMPONENTS} ${VENDOR_COMPONENTS}
