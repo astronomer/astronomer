@@ -9,7 +9,6 @@ metadata:
   labels:
     tier: monitoring
     release: {{ .Release.Name }}
-    workspace: {{ .Values.workspace }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
 roleRef:
