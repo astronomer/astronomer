@@ -74,7 +74,6 @@ RUN mkdir -p ${AIRFLOW_HOME}/logs
 
 # Copy entrypoint to root
 COPY include/entrypoint /
-COPY include/wait-for-command /
 
 # Copy cron scripts
 COPY include/clean-airflow-logs /etc/periodic/15min/clean-airflow-logs

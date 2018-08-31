@@ -13,15 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM grafana/grafana:5.2.2
+FROM jbub/pgbouncer_exporter:v0.2.2
 LABEL maintainer="Astronomer <humans@astronomer.io>"
 
 ARG BUILD_NUMBER=-1
 LABEL io.astronomer.docker=true
 LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
-
-# Copy default dashboards and datasource configuration
-COPY include/dashboard.yaml /etc/grafana/provisioning/dashboards/dashboard.yaml
-COPY include/airflow-scheduler.json /var/lib/grafana/dashboards/airflow-scheduler.json
-COPY include/airflow-containers.json /var/lib/grafana/dashboards/airflow-containers.json
-COPY include/pgbouncer-stats.json /var/lib/grafana/dashboards/pgbouncer-stats.json

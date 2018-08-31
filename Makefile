@@ -9,18 +9,18 @@ BUILD_NUMBER ?= 1
 
 # Astronomer build version
 ASTRONOMER_MAJOR_VERSION ?= 0
-ASTRONOMER_MINOR_VERSION ?= 4
-ASTRONOMER_PATCH_VERSION ?= 1
+ASTRONOMER_MINOR_VERSION ?= 5
+ASTRONOMER_PATCH_VERSION ?= 0
 ASTRONOMER_VERSION ?= "${ASTRONOMER_MAJOR_VERSION}.${ASTRONOMER_MINOR_VERSION}.${ASTRONOMER_PATCH_VERSION}"
 
 # List of all components and order to build.
-PLATFORM_COMPONENTS := base db-bootstrapper default-backend commander houston-api orbit-ui
+PLATFORM_COMPONENTS := base airflow cli-install commander db-bootstrapper default-backend houston-api orbit-ui
 
 # Airflow versions
 AIRFLOW_VERSIONS := 1.9.0
 
 # Vendor components
-VENDOR_COMPONENTS := nginx registry cadvisor grafana prometheus redis statsd-exporter
+VENDOR_COMPONENTS := cadvisor grafana nginx pgbouncer pgbouncer-exporter prometheus redis registry statsd-exporter
 
 # Set default for make.
 .DEFAULT_GOAL := build
@@ -31,7 +31,7 @@ VENDOR_COMPONENTS := nginx registry cadvisor grafana prometheus redis statsd-exp
 .PHONY: build
 build:
 	$(MAKE) build-platform
-	$(MAKE) build-airflow
+	# $(MAKE) build-airflow
 
 .PHONY: push
 push: clean-images build
@@ -46,8 +46,10 @@ build-rc: clean-rc-images
 ifndef ASTRONOMER_RC_VERSION
 	$(error ASTRONOMER_RC_VERSION must be defined)
 endif
-	$(MAKE) ASTRONOMER_VERSION=${ASTRONOMER_VERSION}-rc.${ASTRONOMER_RC_VERSION} build-platform
-	$(MAKE) ASTRONOMER_VERSION=${ASTRONOMER_VERSION}-rc.${ASTRONOMER_RC_VERSION} build-airflow
+ifndef ASTRONOMER_EDGE_COMPONENTS
+	$(error ASTRONOMER_EDGE_COMPONENTS must be defined)
+endif
+	$(MAKE) ASTRONOMER_VERSION=${ASTRONOMER_VERSION}-rc.${ASTRONOMER_RC_VERSION} ASTRONOMER_EDGE_COMPONENTS=${ASTRONOMER_EDGE_COMPONENTS} build-platform
 
 .PHONY: push-rc
 push-rc: build-rc
@@ -71,7 +73,7 @@ push-platform:
 	for component in ${PLATFORM_COMPONENTS} ; do \
 		echo "Pushing ap-$${component}:${ASTRONOMER_VERSION} ======================"; \
 		docker push ${REPOSITORY}/ap-$${component}:${ASTRONOMER_VERSION} || exit 1; \
-	done; 
+	done;
 
 #
 # Airflow build/push
