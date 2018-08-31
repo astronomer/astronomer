@@ -10,6 +10,7 @@ metadata:
     tier: airflow
     component: scheduler
     release: {{ .Release.Name }}
+    platform: {{ .Values.platform.release }}
     workspace: {{ .Values.platform.workspace | quote }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
@@ -24,6 +25,7 @@ spec:
       tier: airflow
       component: scheduler
       release: {{ .Release.Name }}
+      platform: {{ .Values.platform.release }}
       workspace: {{ .Values.platform.workspace | quote }}
       local: {{ $local | quote }}
   template:
@@ -32,6 +34,7 @@ spec:
         tier: airflow
         component: scheduler
         release: {{ .Release.Name }}
+        platform: {{ .Values.platform.release }}
         workspace: {{ .Values.platform.workspace | quote }}
         local: {{ $local | quote }}
       annotations:

@@ -9,6 +9,7 @@ metadata:
     tier: airflow
     component: statsd
     release: {{ .Release.Name }}
+    platform: {{ .Values.platform.release }}
     workspace: {{ .Values.platform.workspace | quote }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
@@ -19,6 +20,7 @@ spec:
       tier: airflow
       component: statsd
       release: {{ .Release.Name }}
+      platform: {{ .Values.platform.release }}
       workspace: {{ .Values.platform.workspace | quote }}
   template:
     metadata:
@@ -26,6 +28,7 @@ spec:
         tier: airflow
         component: statsd
         release: {{ .Release.Name }}
+        platform: {{ .Values.platform.release }}
         workspace: {{ .Values.platform.workspace | quote }}
     spec:
       restartPolicy: Always
