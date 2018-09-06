@@ -51,5 +51,7 @@ spec:
             - name: {{ $config.name }}
               value: {{ $config.value | quote }}
             {{- end }}
+            {{- if .Values.global.baseDomain }}
             - name: APP_API_LOC_HTTPS
               value: "https://houston.{{ .Values.global.baseDomain }}/v1"
+            {{- end }}

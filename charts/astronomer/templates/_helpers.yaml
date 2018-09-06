@@ -1,6 +1,6 @@
 {{ define "helm_globals" -}}
   {{- $globals := dict -}}
-  {{- $_ := set $globals "baseDomain" .Values.global.baseDomain -}}
+  {{- $_ := set $globals "baseDomain" (default "" .Values.global.baseDomain) -}}
   {{- $_ := set $globals "registryAuthSecret" .Values.global.registryAuthSecret -}}
   {{- $_ := set $globals "acme" (.Values.global.acme) -}}
   {{- $_ := set $globals "rbacEnabled" .Values.global.rbacEnabled -}}

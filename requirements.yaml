@@ -4,7 +4,7 @@ dependencies:
   - name: airflow
     condition: global.modules.airflow.enabled
   - name: nginx
-    condition: global.baseDomain
+    condition: global.modules.nginx.enabled
   - name: grafana
     condition: global.modules.grafana.enabled
   - name: prometheus
