@@ -35,9 +35,9 @@ spec:
       restartPolicy: Always
       securityContext:
         runAsUser: {{ .Values.uid }}
-      {{- if .Values.registryAuthSecret }}
+      {{- if .Values.registryAuthSecretName }}
       imagePullSecrets:
-        - name: {{ .Values.registryAuthSecret }}
+        - name: {{ .Values.registryAuthSecretName }}
       {{- end }}
       containers:
         - name: {{ .Release.Name }}-flower

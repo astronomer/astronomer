@@ -138,3 +138,21 @@ ignore_startup_parameters = extra_float_digits
 {{ define "airflow_logs" -}}
 {{ (printf "%s/logs" .Values.airflowHome) | quote }}
 {{- end }}
+
+{{ define "registry_docker_config" -}}
+  {{- $domain := printf "registry.%v" .Values.ingress.baseDomain }}
+  {{- $email := printf "admin@%v" .Values.ingress.baseDomain }}
+  {{- $user := .Release.Name -}}
+  {{- $pass := .Values.registryAuthPassword -}}
+
+  {{- $config := dict "auths" -}}
+  {{- $auth := dict -}}
+  {{- $data := dict -}}
+  {{- $_ := set $data "username" $user -}}
+  {{- $_ := set $data "password" $pass -}}
+  {{- $_ := set $data "email" $email -}}
+  {{- $_ := set $data "auth" (printf "%v:%v" $user $pass | b64enc) -}}
+  {{- $_ := set $auth $domain $data -}}
+  {{- $_ := set $config "auths" $auth -}}
+  {{ $config | toJson | print }}
+{{- end }}
