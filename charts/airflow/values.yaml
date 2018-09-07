@@ -42,7 +42,7 @@ airflowHome: "/usr/local/airflow"
 # Auth secret for a private registry
 # This is used if pulling airflow images from a private registry
 registryAuthSecretName: ~
-
+registryAuthPassword: ~
 # Enable RBAC (default on most clusters these days)
 rbacEnabled: true
 
