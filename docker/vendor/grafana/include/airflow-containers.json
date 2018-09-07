@@ -91,7 +91,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "rate(container_cpu_user_seconds_total{component_name=~\".*(scheduler|webserver|flower)\"}[1m]) * 100",
+          "expr": "rate(container_cpu_user_seconds_total{component_name=~\".*(scheduler|webserver|flower)\", deployment=~\"$deployment\"}[1m]) * 100",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{component_name}}",
@@ -132,7 +132,11 @@
           "min": null,
           "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
@@ -171,7 +175,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "container_memory_usage_bytes{component_name=~\".*(scheduler|webserver|flower)\"}",
+          "expr": "container_memory_usage_bytes{component_name=~\".*(scheduler|webserver|flower)\", deployment=~\"$deployment\"}",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{component_name}}",
@@ -212,7 +216,11 @@
           "min": null,
           "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
@@ -251,7 +259,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "rate(container_network_receive_bytes_total{component_name=~\".*(scheduler|webserver|flower)\"}[1m])",
+          "expr": "rate(container_network_receive_bytes_total{component_name=~\".*(scheduler|webserver|flower)\", deployment=~\"$deployment\"}[1m])",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{component_name}}",
@@ -292,7 +300,11 @@
           "min": null,
           "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
@@ -331,7 +343,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "rate(container_network_transmit_bytes_total{component_name=~\".*(scheduler|webserver|flower)\"}[1m])",
+          "expr": "rate(container_network_transmit_bytes_total{component_name=~\".*(scheduler|webserver|flower)\", deployment=~\"$deployment\"}[1m])",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{component_name}}",
@@ -372,7 +384,11 @@
           "min": null,
           "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
@@ -411,7 +427,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "rate(container_cpu_user_seconds_total{component_name=~\".*(worker)\"}[1m]) * 100",
+          "expr": "rate(container_cpu_user_seconds_total{component_name=~\".*(worker)\", deployment=~\"$deployment\"}[1m]) * 100",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{component_name}} {{component_instance}}",
@@ -452,7 +468,11 @@
           "min": null,
           "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
@@ -491,7 +511,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "container_memory_usage_bytes{component_name=~\".*(worker)\"}",
+          "expr": "container_memory_usage_bytes{component_name=~\".*(worker)\", deployment=~\"$deployment\"}",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{component_name}} {{component_instance}}",
@@ -532,7 +552,11 @@
           "min": null,
           "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
@@ -571,7 +595,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "rate(container_network_receive_bytes_total{interface=\"eth0\", component_name=~\".*(worker)\"}[1m])",
+          "expr": "rate(container_network_receive_bytes_total{interface=\"eth0\", component_name=~\".*(worker)\", deployment=~\"$deployment\"}[1m])",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{component_name}} {{component_instance}}",
@@ -612,7 +636,11 @@
           "min": null,
           "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
@@ -651,7 +679,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "rate(container_network_transmit_bytes_total{interface=\"eth0\", component_name=~\".*(worker)\"}[1m])",
+          "expr": "rate(container_network_transmit_bytes_total{interface=\"eth0\", component_name=~\".*(worker)\", deployment=~\"$deployment\"}[1m])",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{component_name}} {{component_instance}}",
@@ -692,7 +720,11 @@
           "min": null,
           "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     }
   ],
   "refresh": "5s",
@@ -700,7 +732,34 @@
   "style": "dark",
   "tags": [],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "allValue": null,
+        "current": {
+          "tags": [],
+          "text": "All",
+          "value": [
+            "$__all"
+          ]
+        },
+        "datasource": "Prometheus",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Deployment",
+        "multi": true,
+        "name": "deployment",
+        "options": [],
+        "query": "label_values(container_cpu_usage_seconds_total, deployment)",
+        "refresh": 1,
+        "regex": "",
+        "sort": 5,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      }
+    ]
   },
   "time": {
     "from": "now-30m",
@@ -733,6 +792,6 @@
   },
   "timezone": "",
   "title": "Airflow Containers",
-  "uid": "CNgp9IKmk",
+  "uid": "Jt1S1Chmk",
   "version": 1
 }

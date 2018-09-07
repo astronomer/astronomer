@@ -114,7 +114,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(airflow_scheduler_heartbeat)",
+          "expr": "sum(airflow_scheduler_heartbeat{deployment=~\"$deployment\"})",
           "format": "time_series",
           "intervalFactor": 2,
           "refId": "A"
@@ -194,7 +194,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(airflow_collect_dags)",
+          "expr": "sum(airflow_collect_dags{deployment=~\"$deployment\"})",
           "format": "time_series",
           "intervalFactor": 2,
           "refId": "A"
@@ -274,7 +274,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(airflow_dagbag_size)",
+          "expr": "sum(airflow_dagbag_size{deployment=~\"$deployment\"})",
           "format": "time_series",
           "intervalFactor": 2,
           "refId": "A"
@@ -354,7 +354,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(airflow_localtaskjob_start - airflow_localtaskjob_end)\n",
+          "expr": "sum(airflow_localtaskjob_start{deployment=~\"$deployment\"} - airflow_localtaskjob_end{deployment=~\"$deployment\"})",
           "format": "time_series",
           "intervalFactor": 1,
           "refId": "A"
@@ -434,7 +434,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(airflow_ti_successes)",
+          "expr": "sum(airflow_ti_successes{deployment=~\"$deployment\"})",
           "format": "time_series",
           "intervalFactor": 2,
           "refId": "A"
@@ -514,7 +514,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(airflow_ti_failures)",
+          "expr": "sum(airflow_ti_failures{deployment=~\"$deployment\"})",
           "format": "time_series",
           "intervalFactor": 2,
           "refId": "A"
@@ -570,7 +570,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "rate(airflow_operator_successes[1m])",
+          "expr": "rate(airflow_operator_successes{deployment=~\"$deployment\"}[1m])",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{operator}}",
@@ -611,7 +611,11 @@
           "min": null,
           "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
@@ -651,7 +655,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "rate(airflow_operator_failures[1m])",
+          "expr": "rate(airflow_operator_failures{deployment=~\"$deployment\"}[1m])",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{operator}}",
@@ -692,7 +696,11 @@
           "min": null,
           "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
@@ -731,7 +739,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "airflow_dagrun_dependency_check{quantile=\"0.5\"}",
+          "expr": "airflow_dagrun_dependency_check{quantile=\"0.5\", deployment=~\"$deployment\"}",
           "format": "time_series",
           "instant": false,
           "intervalFactor": 1,
@@ -774,7 +782,11 @@
           "min": null,
           "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
@@ -813,7 +825,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "airflow_dagrun_dependency_check{quantile=\"0.9\"}",
+          "expr": "airflow_dagrun_dependency_check{quantile=\"0.9\", deployment=~\"$deployment\"}",
           "format": "time_series",
           "instant": false,
           "intervalFactor": 1,
@@ -856,7 +868,11 @@
           "min": null,
           "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
@@ -895,7 +911,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "airflow_dagrun_dependency_check{quantile=\"0.99\"}",
+          "expr": "airflow_dagrun_dependency_check{quantile=\"0.99\", deployment=~\"$deployment\"}",
           "format": "time_series",
           "instant": false,
           "intervalFactor": 1,
@@ -938,7 +954,11 @@
           "min": null,
           "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     }
   ],
   "refresh": "5s",
@@ -946,7 +966,33 @@
   "style": "dark",
   "tags": [],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "allValue": null,
+        "current": {
+          "text": "All",
+          "value": [
+            "$__all"
+          ]
+        },
+        "datasource": "Prometheus",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Deployment",
+        "multi": true,
+        "name": "deployment",
+        "options": [],
+        "query": "label_values(airflow_scheduler_heartbeat, deployment)",
+        "refresh": 1,
+        "regex": "",
+        "sort": 5,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      }
+    ]
   },
   "time": {
     "from": "now-30m",
@@ -978,7 +1024,7 @@
     ]
   },
   "timezone": "",
-  "title": "Airflow Scheduler",
-  "uid": "DKiGzDFmk",
+  "title": "Airflow Components",
+  "uid": "YbTz0j2mk",
   "version": 1
 }
