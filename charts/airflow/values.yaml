@@ -39,11 +39,6 @@ networkPolicies:
 # Used for mount paths
 airflowHome: "/usr/local/airflow"
 
-# Auth secret for a private registry
-# This is used if pulling airflow images from a private registry
-registryAuthSecretName: ~
-registryAuthPassword: ~
-
 # Enable RBAC (default on most clusters these days)
 rbacEnabled: true
 
@@ -218,6 +213,17 @@ redis:
   # Else, if password is set, create secret with it,
   # else generate a new one on install
   password: ~
+
+# Auth secret for a private registry
+# This is used if pulling airflow images from a private registry
+registry:
+  secretName: ~
+
+  connection: {}
+    # user: ~
+    # pass: ~
+    # host: ~
+    # email: ~
 
 # All ports used by chart
 ports:

@@ -115,6 +115,10 @@
 {{ .Release.Name }}-pgbouncer-stats
 {{- end }}
 
+{{ define "registry_secret" -}}
+{{ default (printf "%s-registry" .Release.Name) .Values.registry.secretName }}
+{{- end }}
+
 {{ define "pgbouncer_config" }}
 [databases]
 {{ .Release.Name }}-metadata = host={{ .Values.data.metadataConnection.host }} dbname={{ .Values.data.metadataConnection.db }} port={{ .Values.data.metadataConnection.port }} pool_size={{ .Values.pgbouncer.metadataPoolSize }}
@@ -140,10 +144,10 @@ ignore_startup_parameters = extra_float_digits
 {{- end }}
 
 {{ define "registry_docker_config" -}}
-  {{- $domain := printf "registry.%v" .Values.ingress.baseDomain }}
-  {{- $email := printf "admin@%v" .Values.ingress.baseDomain }}
-  {{- $user := .Release.Name -}}
-  {{- $pass := .Values.registryAuthPassword -}}
+  {{- $host := .Values.registry.connection.host }}
+  {{- $email := .Values.registry.connection.email }}
+  {{- $user := .Values.registry.connection.user -}}
+  {{- $pass := .Values.registry.connection.pass -}}
 
   {{- $config := dict "auths" -}}
   {{- $auth := dict -}}
@@ -152,7 +156,7 @@ ignore_startup_parameters = extra_float_digits
   {{- $_ := set $data "password" $pass -}}
   {{- $_ := set $data "email" $email -}}
   {{- $_ := set $data "auth" (printf "%v:%v" $user $pass | b64enc) -}}
-  {{- $_ := set $auth $domain $data -}}
+  {{- $_ := set $auth $host $data -}}
   {{- $_ := set $config "auths" $auth -}}
   {{ $config | toJson | print }}
 {{- end }}
