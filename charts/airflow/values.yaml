@@ -43,6 +43,7 @@ airflowHome: "/usr/local/airflow"
 # This is used if pulling airflow images from a private registry
 registryAuthSecretName: ~
 registryAuthPassword: ~
+
 # Enable RBAC (default on most clusters these days)
 rbacEnabled: true
 
