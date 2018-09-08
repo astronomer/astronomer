@@ -9,22 +9,22 @@ uid: 100
 images:
   commander:
     name: astronomerinc/ap-commander
-    tag: 0.5.0-rc.8
+    tag: 0.5.0-rc.11
   registry:
     name: astronomerinc/ap-registry
-    tag: 0.5.0-rc.8
+    tag: 0.5.0-rc.11
   houston:
     name: astronomerinc/ap-houston-api
-    tag: 0.5.0-rc.8
+    tag: 0.5.0-rc.11
   orbit:
     name: astronomerinc/ap-orbit-ui
-    tag: 0.5.0-rc.8
+    tag: 0.5.0-rc.11
   dbBootstrapper:
     name: astronomerinc/ap-db-bootstrapper
-    tag: 0.5.0-rc.8
+    tag: 0.5.0-rc.11
   cliInstall:
     name: astronomerinc/ap-cli-install
-    tag: 0.5.0-rc.8
+    tag: 0.5.0-rc.11
 
 # Astronomer platform config
 data:
@@ -93,7 +93,7 @@ registry:
     # Enable persistent storage
     enabled: true
     # Size of volume to provision
-    size: 50Gi
+    size: 100Gi
     # If using a custom storageClass, pass name ref to all statefulSets here
     storageClassName:
 
