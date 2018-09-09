@@ -61,7 +61,7 @@
       "datasource": "Prometheus",
       "fill": 1,
       "gridPos": {
-        "h": 5,
+        "h": 6,
         "w": 12,
         "x": 0,
         "y": 0
@@ -91,7 +91,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "rate(container_cpu_user_seconds_total{component_name=~\".*(scheduler|webserver|flower)\", deployment=~\"$deployment\"}[1m]) * 100",
+          "expr": "rate(container_cpu_user_seconds_total{component_name=~\".*(scheduler|webserver|flower)\", deployment=~\"$deployment\"}[3m]) * 100",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{component_name}}",
@@ -146,7 +146,7 @@
       "datasource": "Prometheus",
       "fill": 1,
       "gridPos": {
-        "h": 5,
+        "h": 6,
         "w": 12,
         "x": 12,
         "y": 0
@@ -230,10 +230,10 @@
       "datasource": "Prometheus",
       "fill": 1,
       "gridPos": {
-        "h": 5,
+        "h": 6,
         "w": 12,
         "x": 0,
-        "y": 5
+        "y": 6
       },
       "id": 12,
       "legend": {
@@ -259,7 +259,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "rate(container_network_receive_bytes_total{component_name=~\".*(scheduler|webserver|flower)\", deployment=~\"$deployment\"}[1m])",
+          "expr": "rate(container_network_receive_bytes_total{component_name=~\".*(scheduler|webserver|flower)\", deployment=~\"$deployment\"}[3m])",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{component_name}}",
@@ -314,10 +314,10 @@
       "datasource": "Prometheus",
       "fill": 1,
       "gridPos": {
-        "h": 5,
+        "h": 6,
         "w": 12,
         "x": 12,
-        "y": 5
+        "y": 6
       },
       "id": 13,
       "legend": {
@@ -343,7 +343,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "rate(container_network_transmit_bytes_total{component_name=~\".*(scheduler|webserver|flower)\", deployment=~\"$deployment\"}[1m])",
+          "expr": "rate(container_network_transmit_bytes_total{component_name=~\".*(scheduler|webserver|flower)\", deployment=~\"$deployment\"}[3m])",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{component_name}}",
@@ -398,10 +398,10 @@
       "datasource": "Prometheus",
       "fill": 1,
       "gridPos": {
-        "h": 5,
+        "h": 6,
         "w": 12,
         "x": 0,
-        "y": 10
+        "y": 12
       },
       "id": 2,
       "legend": {
@@ -427,7 +427,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "rate(container_cpu_user_seconds_total{component_name=~\".*(worker)\", deployment=~\"$deployment\"}[1m]) * 100",
+          "expr": "rate(container_cpu_user_seconds_total{component_name=~\".*(worker)\", deployment=~\"$deployment\"}[3m]) * 100",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{component_name}} {{component_instance}}",
@@ -482,10 +482,10 @@
       "datasource": "Prometheus",
       "fill": 1,
       "gridPos": {
-        "h": 5,
+        "h": 6,
         "w": 12,
         "x": 12,
-        "y": 10
+        "y": 12
       },
       "id": 9,
       "legend": {
@@ -566,10 +566,10 @@
       "datasource": "Prometheus",
       "fill": 1,
       "gridPos": {
-        "h": 5,
+        "h": 6,
         "w": 12,
         "x": 0,
-        "y": 15
+        "y": 18
       },
       "id": 6,
       "legend": {
@@ -595,7 +595,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "rate(container_network_receive_bytes_total{interface=\"eth0\", component_name=~\".*(worker)\", deployment=~\"$deployment\"}[1m])",
+          "expr": "rate(container_network_receive_bytes_total{interface=\"eth0\", component_name=~\".*(worker)\", deployment=~\"$deployment\"}[3m])",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{component_name}} {{component_instance}}",
@@ -650,10 +650,10 @@
       "datasource": "Prometheus",
       "fill": 1,
       "gridPos": {
-        "h": 5,
+        "h": 6,
         "w": 12,
         "x": 12,
-        "y": 15
+        "y": 18
       },
       "id": 7,
       "legend": {
@@ -679,7 +679,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "rate(container_network_transmit_bytes_total{interface=\"eth0\", component_name=~\".*(worker)\", deployment=~\"$deployment\"}[1m])",
+          "expr": "rate(container_network_transmit_bytes_total{interface=\"eth0\", component_name=~\".*(worker)\", deployment=~\"$deployment\"}[3m])",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{component_name}} {{component_instance}}",
@@ -792,6 +792,6 @@
   },
   "timezone": "",
   "title": "Airflow Containers",
-  "uid": "Jt1S1Chmk",
+  "uid": "kIoxSgTmk",
   "version": 1
 }
