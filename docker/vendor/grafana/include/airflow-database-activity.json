@@ -133,7 +133,7 @@
           "value": "null"
         }
       ],
-      "valueName": "avg"
+      "valueName": "current"
     },
     {
       "cacheTimeout": null,
@@ -214,7 +214,7 @@
           "value": "null"
         }
       ],
-      "valueName": "avg"
+      "valueName": "current"
     },
     {
       "aliasColors": {},
@@ -792,7 +792,7 @@
     ]
   },
   "timezone": "",
-  "title": "Database Activity",
+  "title": "Airflow Database Activity",
   "uid": "I-vY1Chik",
   "version": 1
 }
