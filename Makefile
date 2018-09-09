@@ -16,7 +16,7 @@ CHARTS := astronomer airflow grafana prometheus nginx
 OUTPUT := repository
 
 .PHONY: build
-build:
+build: update-image-tags
 	mkdir -p ${OUTPUT}
 	for chart in ${CHARTS} ; do \
 		helm package --version ${ASTRONOMER_VERSION} -d ${OUTPUT} charts/$${chart} || exit 1; \
@@ -68,3 +68,7 @@ endif
 	for chart in ${CHARTS} ; do \
 		rm ${OUTPUT}/$${chart}-${ASTRONOMER_VERSION}-rc.${ASTRONOMER_RC_VERSION}.tgz || exit 1; \
 	done; \
+
+.PHONY: update-image-tags
+update-image-tags:
+	find charts -name 'values.yaml' -exec sed -i -E 's/tag: (0|[1-9][[:digit:]]*)\.(0|[1-9][[:digit:]]*)\.(0|[1-9][[:digit:]]*)(-(0|[1-9][[:digit:]]*|[[:digit:]]*[a-zA-Z-][0-9a-zA-Z-]*)(\.(0|[1-9][[:digit:]]*|[[:digit:]]*[a-zA-Z-][0-9a-zA-Z-]*))*)?(\+[0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*)?/tag: ${ASTRONOMER_VERSION}/g' {} \;
