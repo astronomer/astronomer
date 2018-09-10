@@ -4,10 +4,10 @@
 images:
   nginx:
     name: astronomerinc/ap-nginx
-    tag: 0.5.0-rc.16
+    tag: 0.5.0-rc.21
   defaultBackend:
     name: astronomerinc/ap-default-backend
-    tag: 0.5.0-rc.16
+    tag: 0.5.0-rc.21
 
 forceNamespaceIsolation: true
 ingressClass: ~
@@ -43,3 +43,4 @@ ports:
   http: 80
   https: 443
   healthz: 10254
+  metrics: 10254
