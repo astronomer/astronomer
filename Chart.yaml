@@ -1,6 +1,6 @@
 name: astronomer
-version: 0.5.0-rc.21
-appVersion: 0.5.0-rc.21
+version: 0.5.0
+appVersion: 0.5.0
 description: Helm chart to deploy the Astronomer Platform
 keywords:
   - astronomer
