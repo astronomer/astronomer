@@ -57,22 +57,61 @@ global:
 #################################
 astronomer:
   orbit:
-    resources: {}
+    resources:
+      limits:
+        cpu: "500m"
+        memory: "1024Mi"
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
 
   houston:
-    resources: {}
+    resources:
+      limits:
+        cpu: "500m"
+        memory: "1024Mi"
+      requests:
+        cpu: "250m"
+        memory: "512Mi"
 
   commander:
-    resources: {}
+    resources:
+      limits:
+        cpu: "500m"
+        memory: "1024Mi"
+      requests:
+        cpu: "250m"
+        memory: "512Mi"
 
   registry:
-    resources: {}
+    resources:
+      limits:
+        cpu: "500m"
+        memory: "1024Mi"
+      requests:
+        cpu: "250m"
+        memory: "512Mi"
+
+  install:
+    resources:
+      limits:
+        cpu: "500m"
+        memory: "1024Mi"
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
 
 #################################
 ## Nginx configuration
 #################################
 nginx:
-  resources: {}
+  resources:
+    limits:
+      cpu: "1"
+      memory: "2048Mi"
+    requests:
+      cpu: "500m"
+      memory: "1024Mi"
 
   # IP address the nginx ingress should bind to
   loadBalancerIP:
@@ -85,10 +124,22 @@ nginx:
 ## Grafana configuration
 #################################
 grafana:
-  resources: {}
+  resources:
+    limits:
+      cpu: "500m"
+      memory: "1024Mi"
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
 
 #################################
 ## Prometheus configuration
 #################################
 prometheus:
-  resources: {}
+  resources:
+    limits:
+      cpu: "500m"
+      memory: "1024Mi"
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
