@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.0] - 2018-09-10
+* Support for the KubernetesPodOperator. Every deployment goes into its own namespace with resource quotas, limits and defaults.
+* Support node auto-scaling. All containers are now assigned resource requests/limits.
+* Support for database connection pooling. pgbouncer is now deployed with every deployment to pool connections to postgres for all airflow pods (webserver/scheduler/workers/kubepodoperators/etc)
+* Grafana enhancements. New pgbouncer and nginx dashboards, fixed some queries (smooth out container metric graphs), and added deployment dropdowns to all dashboards to drill down into specific deployments.
+* Fixed worker logs garbage collector
+* Faster deploys. Fixed containers from restarting on initial boot, especially noticeable with flower.
+* Larger default volume size for workers/prometheus/registry.
+* Updated NGINX ingress controller.
+* Some new options and configurations in the airflow chart (choosing executor, horizontal pod autoscaling, connection pooling, etc) that will make their way into the deployment configuration in the future.
+* Other minor bug fixes and backend enhancements
+
 ## [0.4.1] - 2018-08-17
 * Added local email/password authentication option
 * Integration with Auth0
