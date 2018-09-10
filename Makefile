@@ -62,6 +62,17 @@ endif
 push-rc-master: build-rc-master
 	$(MAKE) ASTRONOMER_VERSION=${ASTRONOMER_VERSION}-rc.${ASTRONOMER_RC_VERSION} push-versioned
 
+.PHONY: build-rc-master-cached
+build-rc-master-cached:
+ifndef ASTRONOMER_RC_VERSION
+	$(error ASTRONOMER_RC_VERSION must be defined)
+endif
+	$(MAKE) ASTRONOMER_VERSION=${ASTRONOMER_VERSION}-rc.${ASTRONOMER_RC_VERSION} ASTRONOMER_USE_MASTER=1 build
+
+.PHONY: push-rc-master-cached
+push-rc-master-cached: build-rc-master-cached
+	$(MAKE) ASTRONOMER_VERSION=${ASTRONOMER_VERSION}-rc.${ASTRONOMER_RC_VERSION} push-versioned
+
 .PHONY: push-latest
 push-latest:
 	for component in ${ALL_COMPONENTS} ; do \
