@@ -43,10 +43,12 @@ spec:
             - --ingress-class={{ template "ingress_class" . }}
             - --default-ssl-certificate={{ .Release.Namespace }}/{{ .Values.global.tlsSecret }}
           ports:
-            - containerPort: {{ .Values.ports.http }}
-              name: http
-            - containerPort: {{ .Values.ports.https }}
-              name: https
+            - name: http
+              containerPort: {{ .Values.ports.http }}
+            - name: https
+              containerPort: {{ .Values.ports.https }}
+            - name: metrics
+              containerPort: {{ .Values.ports.metrics }}
           livenessProbe:
             httpGet:
               path: /healthz

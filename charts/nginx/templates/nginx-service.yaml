@@ -14,6 +14,10 @@ metadata:
   annotations:
     # AWS annotations
     service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+
+    # Metrics annotations
+    prometheus.io/scrape: "true"
+    prometheus.io/port: {{ .Values.ports.metrics | quote }}
 spec:
   type: LoadBalancer
   {{- if .Values.loadBalancerIP }}
@@ -38,3 +42,7 @@ spec:
       targetPort: {{ .Values.ports.https }}
       protocol: TCP
       name: https
+    - port: {{ .Values.ports.metrics }}
+      targetPort: {{ .Values.ports.metrics }}
+      protocol: TCP
+      name: metrics
