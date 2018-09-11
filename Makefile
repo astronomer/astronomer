@@ -92,7 +92,7 @@ push-airflow: build-airflow
 		echo "Pushing ap-$${component}:${AIRFLOW_VERSION}-${AIRFLOW_BUILD} ======================"; \
 		docker push ${REPOSITORY}/ap-$${component}:${AIRFLOW_VERSION}-${version} || exit 1; \
 		docker push ${REPOSITORY}/ap-$${component}:${AIRFLOW_VERSION}-${version}-onbuild || exit 1; \
-	done; 
+	done;
 
 #
 # Clean
