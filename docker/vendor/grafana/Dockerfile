@@ -22,6 +22,7 @@ LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
 
 # Copy default dashboards and datasource configuration
 COPY include/dashboard.yaml /etc/grafana/provisioning/dashboards/dashboard.yaml
+COPY include/nginx-ingress.json /var/lib/grafana/dashboards/nginx-ingress.json
 COPY include/airflow-scheduler.json /var/lib/grafana/dashboards/airflow-scheduler.json
 COPY include/airflow-containers.json /var/lib/grafana/dashboards/airflow-containers.json
-COPY include/pgbouncer-stats.json /var/lib/grafana/dashboards/pgbouncer-stats.json
+COPY include/airflow-database-activity.json /var/lib/grafana/dashboards/airflow-database-activity.json

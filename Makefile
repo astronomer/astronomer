@@ -31,7 +31,7 @@ VENDOR_COMPONENTS := cadvisor grafana nginx pgbouncer pgbouncer-exporter prometh
 .PHONY: build
 build:
 	$(MAKE) build-platform
-	# $(MAKE) build-airflow
+	$(MAKE) build-airflow
 
 .PHONY: push
 push: clean-images build

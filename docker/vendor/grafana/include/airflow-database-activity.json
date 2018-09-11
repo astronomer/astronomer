@@ -114,7 +114,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(pgbouncer_exporter_database_current_connections{name!=\"pgbouncer\"})",
+          "expr": "sum(pgbouncer_exporter_database_current_connections{name!=\"pgbouncer\", deployment=~\"$deployment\"})",
           "format": "time_series",
           "instant": true,
           "intervalFactor": 1,
@@ -133,7 +133,7 @@
           "value": "null"
         }
       ],
-      "valueName": "avg"
+      "valueName": "current"
     },
     {
       "cacheTimeout": null,
@@ -196,7 +196,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(pgbouncer_exporter_pools_waiting_clients{database!=\"pgbouncer\"})",
+          "expr": "sum(pgbouncer_exporter_pools_waiting_clients{database!=\"pgbouncer\", deployment=~\"$deployment\"})",
           "format": "time_series",
           "instant": true,
           "intervalFactor": 1,
@@ -214,7 +214,7 @@
           "value": "null"
         }
       ],
-      "valueName": "avg"
+      "valueName": "current"
     },
     {
       "aliasColors": {},
@@ -222,6 +222,7 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": null,
+      "decimals": null,
       "fill": 1,
       "gridPos": {
         "h": 6,
@@ -255,17 +256,11 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "pgbouncer_exporter_database_current_connections{name!=\"pgbouncer\"}",
+          "expr": "pgbouncer_exporter_database_current_connections{name!=\"pgbouncer\", deployment=~\"$deployment\"}",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{ name }}",
           "refId": "A"
-        },
-        {
-          "expr": "",
-          "format": "time_series",
-          "intervalFactor": 1,
-          "refId": "B"
         }
       ],
       "thresholds": [],
@@ -287,11 +282,12 @@
       },
       "yaxes": [
         {
+          "decimals": 0,
           "format": "short",
           "label": null,
           "logBase": 1,
           "max": null,
-          "min": null,
+          "min": "0",
           "show": true
         },
         {
@@ -345,7 +341,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "pgbouncer_exporter_pools_waiting_clients{database!=\"pgbouncer\"}",
+          "expr": "pgbouncer_exporter_pools_waiting_clients{database!=\"pgbouncer\", deployment=~\"$deployment\"}",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{ database }}",
@@ -371,11 +367,12 @@
       },
       "yaxes": [
         {
+          "decimals": 0,
           "format": "short",
           "label": null,
           "logBase": 1,
           "max": null,
-          "min": null,
+          "min": "0",
           "show": true
         },
         {
@@ -429,7 +426,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "pgbouncer_exporter_pools_active_clients{database!=\"pgbouncer\"}",
+          "expr": "pgbouncer_exporter_pools_active_clients{database!=\"pgbouncer\", deployment=~\"$deployment\"}",
           "format": "time_series",
           "instant": false,
           "intervalFactor": 1,
@@ -456,11 +453,12 @@
       },
       "yaxes": [
         {
+          "decimals": 0,
           "format": "short",
           "label": null,
           "logBase": 1,
           "max": null,
-          "min": null,
+          "min": "0",
           "show": true
         },
         {
@@ -514,7 +512,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "rate(pgbouncer_exporter_stats_total_query_time{database!=\"pgbouncer\"}[1m])",
+          "expr": "rate(pgbouncer_exporter_stats_total_query_time{database!=\"pgbouncer\", deployment=~\"$deployment\"}[1m])",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{ database }}",
@@ -540,11 +538,11 @@
       },
       "yaxes": [
         {
-          "format": "short",
+          "format": "µs",
           "label": null,
           "logBase": 1,
           "max": null,
-          "min": null,
+          "min": "0",
           "show": true
         },
         {
@@ -600,7 +598,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "rate(pgbouncer_exporter_stats_total_received{database!=\"pgbouncer\"}[1m])",
+          "expr": "rate(pgbouncer_exporter_stats_total_received{database!=\"pgbouncer\", deployment=~\"$deployment\"}[1m])",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{ database }}",
@@ -630,7 +628,7 @@
           "label": null,
           "logBase": 1,
           "max": null,
-          "min": null,
+          "min": "0",
           "show": true
         },
         {
@@ -684,7 +682,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "rate(pgbouncer_exporter_stats_total_sent{database!=\"pgbouncer\"}[1m])",
+          "expr": "rate(pgbouncer_exporter_stats_total_sent{database!=\"pgbouncer\", deployment=~\"$deployment\"}[1m])",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{ database }}",
@@ -714,7 +712,7 @@
           "label": null,
           "logBase": 1,
           "max": null,
-          "min": null,
+          "min": "0",
           "show": true
         },
         {
@@ -735,9 +733,36 @@
   "refresh": "5s",
   "schemaVersion": 16,
   "style": "dark",
-  "tags": [],
+  "tags": [
+    "airflow"
+  ],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "allValue": null,
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": "Prometheus",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Deployment",
+        "multi": true,
+        "name": "deployment",
+        "options": [],
+        "query": "label_values(pgbouncer_exporter_pools_active_clients, deployment)",
+        "refresh": 1,
+        "regex": "",
+        "sort": 5,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      }
+    ]
   },
   "time": {
     "from": "now-30m",
@@ -769,7 +794,7 @@
     ]
   },
   "timezone": "",
-  "title": "Database Activity",
-  "uid": "E9kNEupik",
+  "title": "Airflow Database Activity",
+  "uid": "I-vY1Chik",
   "version": 1
 }

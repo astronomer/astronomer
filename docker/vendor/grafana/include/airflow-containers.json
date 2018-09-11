@@ -61,7 +61,7 @@
       "datasource": "Prometheus",
       "fill": 1,
       "gridPos": {
-        "h": 5,
+        "h": 6,
         "w": 12,
         "x": 0,
         "y": 0
@@ -91,7 +91,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "rate(container_cpu_user_seconds_total{component_name=~\".*(scheduler|webserver|flower)\"}[1m]) * 100",
+          "expr": "rate(container_cpu_user_seconds_total{component_name=~\".*(scheduler|webserver|flower)\", deployment=~\"$deployment\"}[3m]) * 100",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{component_name}}",
@@ -132,7 +132,11 @@
           "min": null,
           "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
@@ -142,7 +146,7 @@
       "datasource": "Prometheus",
       "fill": 1,
       "gridPos": {
-        "h": 5,
+        "h": 6,
         "w": 12,
         "x": 12,
         "y": 0
@@ -171,7 +175,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "container_memory_usage_bytes{component_name=~\".*(scheduler|webserver|flower)\"}",
+          "expr": "container_memory_usage_bytes{component_name=~\".*(scheduler|webserver|flower)\", deployment=~\"$deployment\"}",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{component_name}}",
@@ -212,7 +216,11 @@
           "min": null,
           "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
@@ -222,10 +230,10 @@
       "datasource": "Prometheus",
       "fill": 1,
       "gridPos": {
-        "h": 5,
+        "h": 6,
         "w": 12,
         "x": 0,
-        "y": 5
+        "y": 6
       },
       "id": 12,
       "legend": {
@@ -251,7 +259,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "rate(container_network_receive_bytes_total{component_name=~\".*(scheduler|webserver|flower)\"}[1m])",
+          "expr": "rate(container_network_receive_bytes_total{component_name=~\".*(scheduler|webserver|flower)\", deployment=~\"$deployment\"}[3m])",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{component_name}}",
@@ -292,7 +300,11 @@
           "min": null,
           "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
@@ -302,10 +314,10 @@
       "datasource": "Prometheus",
       "fill": 1,
       "gridPos": {
-        "h": 5,
+        "h": 6,
         "w": 12,
         "x": 12,
-        "y": 5
+        "y": 6
       },
       "id": 13,
       "legend": {
@@ -331,7 +343,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "rate(container_network_transmit_bytes_total{component_name=~\".*(scheduler|webserver|flower)\"}[1m])",
+          "expr": "rate(container_network_transmit_bytes_total{component_name=~\".*(scheduler|webserver|flower)\", deployment=~\"$deployment\"}[3m])",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{component_name}}",
@@ -372,7 +384,11 @@
           "min": null,
           "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
@@ -382,10 +398,10 @@
       "datasource": "Prometheus",
       "fill": 1,
       "gridPos": {
-        "h": 5,
+        "h": 6,
         "w": 12,
         "x": 0,
-        "y": 10
+        "y": 12
       },
       "id": 2,
       "legend": {
@@ -411,7 +427,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "rate(container_cpu_user_seconds_total{component_name=~\".*(worker)\"}[1m]) * 100",
+          "expr": "rate(container_cpu_user_seconds_total{component_name=~\".*(worker)\", deployment=~\"$deployment\"}[3m]) * 100",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{component_name}} {{component_instance}}",
@@ -452,7 +468,11 @@
           "min": null,
           "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
@@ -462,10 +482,10 @@
       "datasource": "Prometheus",
       "fill": 1,
       "gridPos": {
-        "h": 5,
+        "h": 6,
         "w": 12,
         "x": 12,
-        "y": 10
+        "y": 12
       },
       "id": 9,
       "legend": {
@@ -491,7 +511,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "container_memory_usage_bytes{component_name=~\".*(worker)\"}",
+          "expr": "container_memory_usage_bytes{component_name=~\".*(worker)\", deployment=~\"$deployment\"}",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{component_name}} {{component_instance}}",
@@ -532,7 +552,11 @@
           "min": null,
           "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
@@ -542,10 +566,10 @@
       "datasource": "Prometheus",
       "fill": 1,
       "gridPos": {
-        "h": 5,
+        "h": 6,
         "w": 12,
         "x": 0,
-        "y": 15
+        "y": 18
       },
       "id": 6,
       "legend": {
@@ -571,7 +595,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "rate(container_network_receive_bytes_total{interface=\"eth0\", component_name=~\".*(worker)\"}[1m])",
+          "expr": "rate(container_network_receive_bytes_total{interface=\"eth0\", component_name=~\".*(worker)\", deployment=~\"$deployment\"}[3m])",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{component_name}} {{component_instance}}",
@@ -612,7 +636,11 @@
           "min": null,
           "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
@@ -622,10 +650,10 @@
       "datasource": "Prometheus",
       "fill": 1,
       "gridPos": {
-        "h": 5,
+        "h": 6,
         "w": 12,
         "x": 12,
-        "y": 15
+        "y": 18
       },
       "id": 7,
       "legend": {
@@ -651,7 +679,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "rate(container_network_transmit_bytes_total{interface=\"eth0\", component_name=~\".*(worker)\"}[1m])",
+          "expr": "rate(container_network_transmit_bytes_total{interface=\"eth0\", component_name=~\".*(worker)\", deployment=~\"$deployment\"}[3m])",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{component_name}} {{component_instance}}",
@@ -692,15 +720,48 @@
           "min": null,
           "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     }
   ],
   "refresh": "5s",
   "schemaVersion": 16,
   "style": "dark",
-  "tags": [],
+  "tags": [
+    "airflow"
+  ],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "allValue": null,
+        "current": {
+          "tags": [],
+          "text": "All",
+          "value": [
+            "$__all"
+          ]
+        },
+        "datasource": "Prometheus",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Deployment",
+        "multi": true,
+        "name": "deployment",
+        "options": [],
+        "query": "label_values(container_cpu_usage_seconds_total, deployment)",
+        "refresh": 1,
+        "regex": "",
+        "sort": 5,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      }
+    ]
   },
   "time": {
     "from": "now-30m",
@@ -733,6 +794,6 @@
   },
   "timezone": "",
   "title": "Airflow Containers",
-  "uid": "CNgp9IKmk",
+  "uid": "kIoxSgTmk",
   "version": 1
 }

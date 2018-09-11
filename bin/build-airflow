@@ -8,9 +8,12 @@ function build_image() {
     build_opts="--build-arg BUILD_NUMBER=${BUILD_NUMBER}"
     version="${1}-${ASTRONOMER_VERSION}"
 
+    echo "HEY"
+    echo ${build_opts}
+
     # Build normal components
     if [ -f "${docker_file}" ]; then
-        docker build "${build_opts}" -t "${REPOSITORY}/${component_name}:${version}" -f "${docker_file}" "${docker_dir}" || exit 1
+        docker build ${build_opts} -t "${REPOSITORY}/${component_name}:${version}" -f "${docker_file}" "${docker_dir}" || exit 1
     else
         echo "No Dockerfile for ${AIRFLOW_VERSION}" && exit 1
     fi
