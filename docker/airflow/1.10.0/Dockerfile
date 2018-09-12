@@ -23,7 +23,7 @@ LABEL io.astronomer.docker.module="airflow"
 LABEL io.astronomer.docker.component="airflow"
 
 ARG ORG="astronomerio"
-ARG VERSION="master"
+ARG VERSION="v1-10-stable"
 ARG SUBMODULES="all, statsd"
 
 ENV AIRFLOW_REPOSITORY="https://github.com/${ORG}/incubator-airflow"
@@ -46,6 +46,7 @@ RUN apk update \
 	&& apk add --no-cache --virtual .build-deps \
 		build-base \
 		cyrus-sasl-dev \
+		freetds-dev \
 		freetype-dev \
 		git \
 		krb5-dev \
@@ -66,8 +67,9 @@ RUN apk update \
 		python3 \
 		tini \
 	&& update-ca-certificates \
-	&& pip3 install --no-cache-dir --upgrade pip==9.0.3 \
+	&& pip3 install --no-cache-dir --upgrade pip==18.0 \
 	&& pip3 install --no-cache-dir --upgrade setuptools==39.0.1 \
+	&& pip3 install --no-cache-dir cython \
 	&& pip3 install --no-cache-dir "${AIRFLOW_MODULE}" \
 	&& apk del .build-deps \
 	&& ln -sf /usr/bin/python3 /usr/bin/python \
@@ -78,7 +80,6 @@ RUN mkdir -p ${AIRFLOW_HOME}/logs
 
 # Copy entrypoint to root
 COPY include/entrypoint /
-COPY include/wait-for-command /
 
 # Copy cron scripts
 COPY include/clean-airflow-logs /etc/periodic/15min/clean-airflow-logs

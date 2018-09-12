@@ -8,8 +8,6 @@ function build_image() {
     local build_opts="--build-arg BUILD_NUMBER=${BUILD_NUMBER} ${3}"
     local version="${ASTRONOMER_VERSION}"
 
-    echo ${build_opts}
-
     # Build component
     if [ -f "${docker_file}" ]; then
         docker build ${build_opts} -t "${REPOSITORY}/${component_name}:${version}" -f "${docker_file}" "${docker_dir}" || exit 1

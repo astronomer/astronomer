@@ -9,7 +9,7 @@ BUILD_NUMBER ?= 1
 
 # Astronomer build version
 ASTRONOMER_MAJOR_VERSION ?= 0
-ASTRONOMER_MINOR_VERSION ?= 5
+ASTRONOMER_MINOR_VERSION ?= 6
 ASTRONOMER_PATCH_VERSION ?= 0
 ASTRONOMER_VERSION ?= "${ASTRONOMER_MAJOR_VERSION}.${ASTRONOMER_MINOR_VERSION}.${ASTRONOMER_PATCH_VERSION}"
 
@@ -17,7 +17,7 @@ ASTRONOMER_VERSION ?= "${ASTRONOMER_MAJOR_VERSION}.${ASTRONOMER_MINOR_VERSION}.$
 PLATFORM_COMPONENTS := base airflow cli-install commander db-bootstrapper default-backend houston-api orbit-ui
 
 # Airflow versions
-AIRFLOW_VERSIONS := 1.9.0
+AIRFLOW_VERSIONS := 1.9.0 1.10.0
 
 # Vendor components
 VENDOR_COMPONENTS := cadvisor grafana nginx pgbouncer pgbouncer-exporter prometheus redis registry statsd-exporter
