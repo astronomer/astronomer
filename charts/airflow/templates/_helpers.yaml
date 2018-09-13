@@ -13,7 +13,7 @@
   - name: AIRFLOW__SCHEDULER__STATSD_PREFIX
     value: "airflow"
   - name: AIRFLOW__WEBSERVER__BASE_URL
-    value: {{ include "airflow_url" . }}
+    value: {{ printf "https://%s" (include "airflow_url" .) | quote }}
   - name: AIRFLOW__KUBERNETES__NAMESPACE
     value: {{ .Release.Namespace }}
   - name: ASTRONOMER__AIRFLOW__WORKER_LOG_RETENTION
