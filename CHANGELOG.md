@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.1] - 2018-09-13
+* Support for upgrading individual airflow deployments to latest chart.
+* Fix for airflow task logs link on taskinstances page.
+
 ## [0.5.0] - 2018-09-10
 * Support for the KubernetesPodOperator. Every deployment goes into its own namespace with resource quotas, limits and defaults.
 * Support node auto-scaling. All containers are now assigned resource requests/limits.
