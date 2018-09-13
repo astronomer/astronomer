@@ -38,7 +38,7 @@ build:
 	bin/build-images
 
 .PHONY: push
-push: clean build push-latest push-versioned
+push: build push-latest push-versioned
 
 .PHONY: build-rc-stable
 build-rc-stable:
