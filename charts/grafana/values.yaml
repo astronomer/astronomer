@@ -5,10 +5,10 @@
 images:
   grafana:
     name: astronomerinc/ap-grafana
-    tag: 0.5.1-rc.8
+    tag: 0.5.1-rc.9
   dbBootstrapper:
     name: astronomerinc/ap-db-bootstrapper
-    tag: 0.5.1-rc.8
+    tag: 0.5.1-rc.9
 
 grafanaBackendSecret: grafana-backend
 
