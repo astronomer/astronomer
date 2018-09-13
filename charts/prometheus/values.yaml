@@ -5,7 +5,7 @@
 images:
   prometheus:
     name: astronomerinc/ap-prometheus
-    tag: 0.5.1-rc.6
+    tag: 0.5.1-rc.7
 
 resources: {}
 #  limits:
