@@ -1,10 +1,10 @@
 # You can override vars like REPOSITORY in a local.make file
 -include local.make
 
-# Public repository for images.
+# Public repository for images
 REPOSITORY ?= astronomerinc
 
-# Bump this on subsequent build, reset on new version or public release. Inherit from env for CI builds.
+# Bump this on subsequent build, reset on new version or public release. Inherit from env for CI builds
 BUILD_NUMBER ?= 1
 
 # Build version
@@ -13,7 +13,7 @@ ASTRONOMER_MINOR_VERSION ?= 5
 ASTRONOMER_PATCH_VERSION ?= 1
 ASTRONOMER_VERSION ?= "${ASTRONOMER_MAJOR_VERSION}.${ASTRONOMER_MINOR_VERSION}.${ASTRONOMER_PATCH_VERSION}"
 
-# List of all components and order to build.
+# List of all components and order to build
 PLATFORM_COMPONENTS := base airflow cli-install commander db-bootstrapper default-backend houston-api orbit-ui
 PLATFORM_RC_COMPONENTS := cli-install commander db-bootstrapper default-backend houston-api orbit-ui
 PLATFORM_ONBUILD_COMPONENTS := airflow
@@ -24,7 +24,7 @@ VENDOR_COMPONENTS := cadvisor grafana nginx pgbouncer pgbouncer-exporter prometh
 # All components
 ALL_COMPONENTS := ${PLATFORM_COMPONENTS} ${VENDOR_COMPONENTS}
 
-# Set default for make.
+# Set default for make
 .DEFAULT_GOAL := build
 
 .PHONY: build
