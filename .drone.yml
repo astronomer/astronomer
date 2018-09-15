@@ -3,7 +3,7 @@ pipeline:
     image: plugins/downstream
     server: http://drone.astronomer.io
     fork: true
-    secrets: [ downstream_token ]
+    token: "$$DRONE_TOKEN"
     repositories:
       - astronomerio/commander
       - astronomerio/db-bootstrapper
