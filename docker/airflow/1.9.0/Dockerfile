@@ -61,8 +61,9 @@ RUN apk update \
 		python3 \
 		tini \
 	&& update-ca-certificates \
-	&& pip3 install --no-cache-dir --upgrade pip==9.0.3 \
+	&& pip3 install --no-cache-dir --upgrade pip==18.0 \
 	&& pip3 install --no-cache-dir --upgrade setuptools==39.0.1 \
+	&& pip3 install --no-cache-dir cython \
 	&& pip3 install --no-cache-dir "${AIRFLOW_MODULE}" \
 	&& pip3 uninstall -y snakebite \
 	&& apk del .build-deps \
