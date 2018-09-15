@@ -1,0 +1,4 @@
+pipeline:
+  build:
+    image: ubuntu
+    commands: make build
