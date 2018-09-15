@@ -1,7 +1,7 @@
 pipeline:
   trigger:
     image: plugins/downstream
-    server: https://drone.astronomer.io
+    server: http://drone.astronomer.io
     fork: true
     secrets: [ downstream_token ]
     repositories:
