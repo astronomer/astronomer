@@ -1,4 +1,6 @@
 pipeline:
   build:
-    image: astronomerio/ap-build:0.0.1
+    image: astronomerio/ap-build:0.0.2
     commands: make build
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
