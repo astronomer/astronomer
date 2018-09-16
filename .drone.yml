@@ -4,7 +4,7 @@ pipeline:
     image: astronomerio/ap-build:0.0.2
     commands: make build-platform
     environment:
-      - ASTRONOMER_VERSION=${DRONE_COMMIT_SHA}-${DRONE_BUILD_NUMBER}
+      - ASTRONOMER_VERSION=${DRONE_COMMIT_SHA:0.8}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
 
@@ -13,6 +13,6 @@ pipeline:
     image: astronomerio/ap-build:0.0.2
     commands: make build-airflow
     environment:
-      - ASTRONOMER_VERSION=${DRONE_COMMIT_SHA}-${DRONE_BUILD_NUMBER}
+      - ASTRONOMER_VERSION=${DRONE_COMMIT_SHA:0:8}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
