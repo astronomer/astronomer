@@ -1,16 +1,4 @@
 pipeline:
-  trigger:
-    image: plugins/downstream
-    server: http://drone.astronomer.io
-    fork: true
-    token: "$$DRONE_TOKEN"
-    repositories:
-      - astronomerio/commander
-      - astronomerio/db-bootstrapper
-      - astronomerio/default-backend
-      - astronomerio/houston-api
-      - astronomerio/orbit-ui
-
   build-platform:
     group: build
     image: astronomerio/ap-build:0.0.2
