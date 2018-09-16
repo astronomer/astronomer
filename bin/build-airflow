@@ -6,7 +6,7 @@ function build_image() {
     docker_file="${docker_dir}/Dockerfile"
     component_name="ap-airflow"
     build_opts="--build-arg BUILD_NUMBER=${BUILD_NUMBER}"
-    version="${1}-${ASTRONOMER_VERSION}"
+    version="${ASTRONOMER_VERSION}-${1}"
 
     # Build normal components
     if [ -f "${docker_file}" ]; then

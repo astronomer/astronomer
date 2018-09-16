@@ -38,23 +38,23 @@ push: clean-images build
 	$(MAKE) push-platform
 	$(MAKE) push-airflow
 
-#
-# RC build/push
-#
-.PHONY: build-rc
-build-rc: clean-rc-images
-ifndef ASTRONOMER_RC_VERSION
-	$(error ASTRONOMER_RC_VERSION must be defined)
-endif
-ifndef ASTRONOMER_EDGE_COMPONENTS
-	$(error ASTRONOMER_EDGE_COMPONENTS must be defined)
-endif
-	$(MAKE) ASTRONOMER_VERSION=${ASTRONOMER_VERSION}-rc.${ASTRONOMER_RC_VERSION} ASTRONOMER_EDGE_COMPONENTS=${ASTRONOMER_EDGE_COMPONENTS} build-platform
+##
+## RC build/push
+##
+#.PHONY: build-rc
+#build-rc: clean-rc-images
+#ifndef ASTRONOMER_RC_VERSION
+#	$(error ASTRONOMER_RC_VERSION must be defined)
+#endif
+#ifndef ASTRONOMER_EDGE_COMPONENTS
+#	$(error ASTRONOMER_EDGE_COMPONENTS must be defined)
+#endif
+#	$(MAKE) ASTRONOMER_VERSION=${ASTRONOMER_VERSION}-rc.${ASTRONOMER_RC_VERSION} ASTRONOMER_EDGE_COMPONENTS=${ASTRONOMER_EDGE_COMPONENTS} build-platform
 
-.PHONY: push-rc
-push-rc: build-rc
-	$(MAKE) ASTRONOMER_VERSION=${ASTRONOMER_VERSION}-rc.${ASTRONOMER_RC_VERSION} push-platform
-	$(MAKE) ASTRONOMER_VERSION=${ASTRONOMER_VERSION}-rc.${ASTRONOMER_RC_VERSION} push-airflow
+#.PHONY: push-rc
+#push-rc: build-rc
+#	$(MAKE) ASTRONOMER_VERSION=${ASTRONOMER_VERSION}-rc.${ASTRONOMER_RC_VERSION} push-platform
+#	$(MAKE) ASTRONOMER_VERSION=${ASTRONOMER_VERSION}-rc.${ASTRONOMER_RC_VERSION} push-airflow
 
 #
 # Platform build/push
@@ -117,3 +117,7 @@ clean-rc-images:
 
 .PHONY: clean
 clean: clean-containers clean-images clean-rc-images
+
+.PHONY: update-version
+update-version:
+	find docker/platform -name 'Dockerfile' -exec sed -i -E 's/tag: (0|[1-9][[:digit:]]*)\.(0|[1-9][[:digit:]]*)\.(0|[1-9][[:digit:]]*)(-(0|[1-9][[:digit:]]*|[[:digit:]]*[a-zA-Z-][0-9a-zA-Z-]*)(\.(0|[1-9][[:digit:]]*|[[:digit:]]*[a-zA-Z-][0-9a-zA-Z-]*))*)?(\+[0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*)?/tag: ${ASTRONOMER_VERSION}/g' {} \;
