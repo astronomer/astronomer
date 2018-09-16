@@ -11,7 +11,7 @@ BUILD_NUMBER ?= 1
 ASTRONOMER_MAJOR_VERSION ?= 0
 ASTRONOMER_MINOR_VERSION ?= 5
 ASTRONOMER_PATCH_VERSION ?= 1
-ASTRONOMER_VERSION ?= "${ASTRONOMER_MAJOR_VERSION}.${ASTRONOMER_MINOR_VERSION}.${ASTRONOMER_PATCH_VERSION}"
+ASTRONOMER_VERSION ?= ${ASTRONOMER_MAJOR_VERSION}.${ASTRONOMER_MINOR_VERSION}.${ASTRONOMER_PATCH_VERSION}
 
 # List of all components and order to build
 PLATFORM_COMPONENTS := base airflow cli-install commander db-bootstrapper default-backend houston-api orbit-ui
@@ -60,7 +60,7 @@ push: clean-images build
 # Platform build/push
 #
 .PHONY: build-platform
-build-platform:
+build-platform: update-version
 	PLATFORM_COMPONENTS="${PLATFORM_COMPONENTS}" \
 	VENDOR_COMPONENTS="${VENDOR_COMPONENTS}" \
 	REPOSITORY=${REPOSITORY} \
@@ -120,4 +120,4 @@ clean: clean-containers clean-images clean-rc-images
 
 .PHONY: update-version
 update-version:
-	find docker/platform -name 'Dockerfile' -exec sed -i -E 's/tag: (0|[1-9][[:digit:]]*)\.(0|[1-9][[:digit:]]*)\.(0|[1-9][[:digit:]]*)(-(0|[1-9][[:digit:]]*|[[:digit:]]*[a-zA-Z-][0-9a-zA-Z-]*)(\.(0|[1-9][[:digit:]]*|[[:digit:]]*[a-zA-Z-][0-9a-zA-Z-]*))*)?(\+[0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*)?/tag: ${ASTRONOMER_VERSION}/g' {} \;
+	find docker/platform -name 'Dockerfile' -exec sed -i -E 's/FROM astronomerinc\/ap-base:(.*)/FROM astronomerinc\/ap-base:${ASTRONOMER_VERSION}/g' {} \;
