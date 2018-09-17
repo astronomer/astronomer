@@ -87,7 +87,7 @@ build-airflow:
 	bin/build-airflow
 
 .PHONY: push-airflow
-push-airflow: build-airflow
+push-airflow:
 	for version in "${AIRFLOW_VERSIONS}" ; do \
 		echo "Pushing ap-$${component}:${AIRFLOW_VERSION}-${AIRFLOW_BUILD} ======================"; \
 		docker push ${REPOSITORY}/ap-$${component}:${AIRFLOW_VERSION}-${version} || exit 1; \
@@ -109,11 +109,11 @@ clean-images:
 		docker rmi -f $${image} ; \
 	done
 
-.PHONY: clean-rc-images
-clean-rc-images:
-	for image in `docker images -q -f label=io.astronomer.docker.rc=true` ; do \
-		docker rmi -f $${image} ; \
-	done
+# .PHONY: clean-rc-images
+# clean-rc-images:
+# 	for image in `docker images -q -f label=io.astronomer.docker.rc=true` ; do \
+# 		docker rmi -f $${image} ; \
+# 	done
 
 .PHONY: clean
 clean: clean-containers clean-images clean-rc-images
