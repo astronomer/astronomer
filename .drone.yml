@@ -1,6 +1,5 @@
 pipeline:
-  build-platform:
-    group: build
+  build:
     image: astronomerio/ap-build:0.0.2
     commands:
       - make build
