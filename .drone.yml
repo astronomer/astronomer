@@ -1,0 +1,9 @@
+pipeline:
+  build-platform:
+    group: build
+    image: astronomerio/ap-build:0.0.2
+    commands:
+      - make build
+    environment:
+      - ASTRONOMER_VERSION=${DRONE_COMMIT_SHA:0:8}-b${DRONE_BUILD_NUMBER}
+      - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
