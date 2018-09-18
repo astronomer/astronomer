@@ -43,7 +43,7 @@ pipeline:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     when:
-      event: [push, deployment]
+      event: [ push, deployment ]
       branch: master
 
   # Push platform images to dockerhub
@@ -51,12 +51,14 @@ pipeline:
     group: push
     image: astronomerio/ap-build:0.0.2
     commands:
+      - docker login -u $${DOCKER_USERNAME} -p $${DOCKER_PASSWORD}
       - make push-platform
     environment:
       - ASTRONOMER_VERSION=${DRONE_COMMIT_SHA:0:8}
       - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+    secrets: [ docker_username, docker_password ]
     when:
       event: deployment
       environment: production
@@ -66,12 +68,14 @@ pipeline:
     group: push
     image: astronomerio/ap-build:0.0.2
     commands:
+      - docker login -u $${DOCKER_USERNAME} -p $${DOCKER_PASSWORD}
       - make push-airflow
     environment:
       - ASTRONOMER_VERSION=${DRONE_COMMIT_SHA:0:8}
       - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+    secrets: [ docker_username, docker_password ]
     when:
       event: deployment
       environment: production
