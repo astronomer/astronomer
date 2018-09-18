@@ -17,7 +17,7 @@ ASTRONOMER_VERSION ?= ${ASTRONOMER_MAJOR_VERSION}.${ASTRONOMER_MINOR_VERSION}.${
 PLATFORM_COMPONENTS := base airflow cli-install commander db-bootstrapper default-backend houston-api orbit-ui
 
 # Airflow versions
-AIRFLOW_VERSIONS := 1.9.0 1.10.0
+AIRFLOW_VERSIONS := 1.9.0 #1.10.0
 
 # Vendor components
 VENDOR_COMPONENTS := cadvisor grafana nginx pgbouncer pgbouncer-exporter prometheus redis registry statsd-exporter
@@ -38,29 +38,11 @@ push: clean-images build
 	$(MAKE) push-platform
 	$(MAKE) push-airflow
 
-##
-## RC build/push
-##
-#.PHONY: build-rc
-#build-rc: clean-rc-images
-#ifndef ASTRONOMER_RC_VERSION
-#	$(error ASTRONOMER_RC_VERSION must be defined)
-#endif
-#ifndef ASTRONOMER_EDGE_COMPONENTS
-#	$(error ASTRONOMER_EDGE_COMPONENTS must be defined)
-#endif
-#	$(MAKE) ASTRONOMER_VERSION=${ASTRONOMER_VERSION}-rc.${ASTRONOMER_RC_VERSION} ASTRONOMER_EDGE_COMPONENTS=${ASTRONOMER_EDGE_COMPONENTS} build-platform
-
-#.PHONY: push-rc
-#push-rc: build-rc
-#	$(MAKE) ASTRONOMER_VERSION=${ASTRONOMER_VERSION}-rc.${ASTRONOMER_RC_VERSION} push-platform
-#	$(MAKE) ASTRONOMER_VERSION=${ASTRONOMER_VERSION}-rc.${ASTRONOMER_RC_VERSION} push-airflow
-
 #
 # Platform build/push
 #
 .PHONY: build-platform
-build-platform: update-version
+build-platform: clean-master-images update-base-tag
 	PLATFORM_COMPONENTS="${PLATFORM_COMPONENTS}" \
 	VENDOR_COMPONENTS="${VENDOR_COMPONENTS}" \
 	REPOSITORY=${REPOSITORY} \
@@ -109,15 +91,15 @@ clean-images:
 		docker rmi -f $${image} ; \
 	done
 
-# .PHONY: clean-rc-images
-# clean-rc-images:
-# 	for image in `docker images -q -f label=io.astronomer.docker.rc=true` ; do \
-# 		docker rmi -f $${image} ; \
-# 	done
+.PHONY: clean-master-images
+clean-master-images:
+	for image in `docker images -q -f label=io.astronomer.docker.master=true` ; do \
+		docker rmi -f $${image} ; \
+	done
 
 .PHONY: clean
-clean: clean-containers clean-images clean-rc-images
+clean: clean-containers clean-images clean-master-images
 
-.PHONY: update-version
-update-version:
+.PHONY: update-base-tag
+update-base-tag:
 	find docker/platform -name 'Dockerfile' -exec sed -i -E 's/FROM astronomerinc\/ap-base:(.*)/FROM astronomerinc\/ap-base:${ASTRONOMER_VERSION}/g' {} \;

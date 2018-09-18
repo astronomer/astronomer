@@ -17,8 +17,8 @@ function build_image() {
 # Build platform images
 for component in ${PLATFORM_COMPONENTS} ; do
     # If we're building an RC, build platform components from master
-    if [ -v "ASTRONOMER_RC_VERSION" ] && [[ ${ASTRONOMER_EDGE_COMPONENTS} =~ ${component} ]]; then
-        build_opts="--build-arg VERSION=master --label io.astronomer.docker.rc=true"
+    if [ "${ASTRONOMER_USE_MASTER}" = true ]; then
+        build_opts="--build-arg VERSION=master --label io.astronomer.docker.master=true"
     fi
     build_image "platform/${component}" "${component}" "${build_opts}"
 done
