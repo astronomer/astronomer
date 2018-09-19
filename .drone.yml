@@ -15,7 +15,7 @@ pipeline:
       event: [ push, tag ]
       branch: master
       tag:
-        include: *rc*
+        include: "v[0-9].[0-9].[0-9]-rc.[0-9]"
 
   # Build platform from stable releases if production deployment
   build-platform:
@@ -32,7 +32,7 @@ pipeline:
     when:
       event: tag
       tag:
-        exclude: *rc*
+        include: "v[0-9].[0-9].[0-9]"
 
   # Always build airflow from stable releases
   build-airflow:
