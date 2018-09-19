@@ -100,6 +100,12 @@ clean-master-images:
 .PHONY: clean
 clean: clean-containers clean-images clean-master-images
 
+# Update the base image version
 .PHONY: update-base-tag
 update-base-tag:
 	find docker/platform -name 'Dockerfile' -exec sed -i -E 's/FROM astronomerinc\/ap-base:(.*)/FROM astronomerinc\/ap-base:${ASTRONOMER_VERSION}/g' {} \;
+
+# Update the version (tag) that we grab from github from the platform repos
+.PHONY: update-version
+update-version:
+	find docker/platform -name 'Dockerfile' -exec sed -i -E 's/ARG VERSION=(*)/ARG VERSION=${ASTRONOMER_VERSION}/g' {} \;
