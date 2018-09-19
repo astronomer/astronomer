@@ -12,8 +12,10 @@ pipeline:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     when:
-      event: push
+      event: [ push, tag ]
       branch: master
+      tag:
+        include: *rc*
 
   # Build platform from stable releases if production deployment
   build-platform:
@@ -28,8 +30,9 @@ pipeline:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     when:
-      event: deployment
-      environment: production
+      event: tag
+      tag:
+        exclude: *rc*
 
   # Always build airflow from stable releases
   build-airflow:
@@ -43,7 +46,7 @@ pipeline:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     when:
-      event: [ push, deployment ]
+      event: [ push, tag ]
       branch: master
 
   # Push platform images to dockerhub
@@ -61,7 +64,7 @@ pipeline:
     secrets: [ docker_username, docker_password ]
     when:
       event: deployment
-      environment: production
+      environment: [ staging, production ]
 
   # Push airflow images to dockerhub
   push-airflow:
@@ -78,4 +81,4 @@ pipeline:
     secrets: [ docker_username, docker_password ]
     when:
       event: deployment
-      environment: production
+      environment: [ staging, production ]
