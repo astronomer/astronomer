@@ -15,7 +15,7 @@ pipeline:
       event: [ push, tag ]
       branch: master
       tag:
-        include: "v[0-9].[0-9].[0-9]-rc.[0-9]"
+        include: "*rc*"
 
   # Build platform from stable releases if production deployment
   build-platform:
