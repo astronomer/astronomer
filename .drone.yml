@@ -1,23 +1,5 @@
 pipeline:
-  push-airflow:
-    group: push
-    image: astronomerio/ap-build:0.0.2
-    commands:
-      - echo $${DOCKER_USERNAME} $${DOCKER_PASSWORD}
-      - docker login -u $${DOCKER_USERNAME} -p $${DOCKER_PASSWORD}
-      - docker images
-      # - make push-airflow
-    environment:
-      - ASTRONOMER_VERSION=${DRONE_COMMIT_SHA:0:8}
-      - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    secrets: [ docker_username, docker_password ]
-    # when:
-    #   event: deployment
-    #   environment: production
-
-  # # Build platform from master branches if pushed to master or triggered
+  # Build platform from master branches if pushed to master or triggered
   # build-platform:
   #   group: build
   #   image: astronomerio/ap-build:0.0.2
@@ -64,36 +46,36 @@ pipeline:
   #     event: [ push, deployment ]
   #     branch: master
 
-  # # Push platform images to dockerhub
-  # push-platform:
-  #   group: push
-  #   image: astronomerio/ap-build:0.0.2
-  #   commands:
-  #     - docker login -u $${DOCKER_USERNAME} -p $${DOCKER_PASSWORD}
-  #     - make push-platform
-  #   environment:
-  #     - ASTRONOMER_VERSION=${DRONE_COMMIT_SHA:0:8}
-  #     - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
-  #   volumes:
-  #     - /var/run/docker.sock:/var/run/docker.sock
-  #   secrets: [ docker_username, docker_password ]
-  #   when:
-  #     event: deployment
-  #     environment: production
+  # Push platform images to dockerhub
+  push-platform:
+    group: push
+    image: astronomerio/ap-build:0.0.2
+    commands:
+      - docker login -u $${DOCKER_USERNAME} -p $${DOCKER_PASSWORD}
+      - make push-platform
+    environment:
+      - ASTRONOMER_VERSION=${DRONE_COMMIT_SHA:0:8}
+      - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    secrets: [ docker_username, docker_password ]
+    when:
+      event: deployment
+      environment: production
 
-  # # Push airflow images to dockerhub
-  # push-airflow:
-  #   group: push
-  #   image: astronomerio/ap-build:0.0.2
-  #   commands:
-  #     - docker login -u $${DOCKER_USERNAME} -p $${DOCKER_PASSWORD}
-  #     - make push-airflow
-  #   environment:
-  #     - ASTRONOMER_VERSION=${DRONE_COMMIT_SHA:0:8}
-  #     - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
-  #   volumes:
-  #     - /var/run/docker.sock:/var/run/docker.sock
-  #   secrets: [ docker_username, docker_password ]
-  #   when:
-  #     event: deployment
-  #     environment: production
+  # Push airflow images to dockerhub
+  push-airflow:
+    group: push
+    image: astronomerio/ap-build:0.0.2
+    commands:
+      - docker login -u $${DOCKER_USERNAME} -p $${DOCKER_PASSWORD}
+      - make push-airflow
+    environment:
+      - ASTRONOMER_VERSION=${DRONE_COMMIT_SHA:0:8}
+      - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    secrets: [ docker_username, docker_password ]
+    when:
+      event: deployment
+      environment: production
