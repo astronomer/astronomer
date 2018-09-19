@@ -13,9 +13,9 @@ pipeline:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     secrets: [ docker_username, docker_password ]
-    when:
-      event: deployment
-      environment: production
+    # when:
+    #   event: deployment
+    #   environment: production
 
   # # Build platform from master branches if pushed to master or triggered
   # build-platform:
