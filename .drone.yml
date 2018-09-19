@@ -69,7 +69,10 @@ pipeline:
     group: push
     image: astronomerio/ap-build:0.0.2
     commands:
-      - docker login -u $${DOCKER_USERNAME} -p $${DOCKER_PASSWORD} && docker images && make push-airflow
+      - docker login -u $${DOCKER_USERNAME} -p $${DOCKER_PASSWORD}
+      - docker info
+      - docker images
+      - make push-airflow
     environment:
       - ASTRONOMER_VERSION=${DRONE_COMMIT_SHA:0:8}
       - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
