@@ -108,4 +108,4 @@ update-base-tag:
 # Update the version (tag) that we grab from github from the platform repos
 .PHONY: update-version
 update-version:
-	find docker/platform -name 'Dockerfile' -exec sed -i -E 's/ARG VERSION=(*)/ARG VERSION=${ASTRONOMER_VERSION}/g' {} \;
+	find docker/platform -name 'Dockerfile' -exec sed -i -E 's/ARG VERSION=(.*)/ARG VERSION="v${ASTRONOMER_VERSION}"/g' {} \;
