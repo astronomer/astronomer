@@ -14,6 +14,7 @@ pipeline:
   push:
     image: astronomerio/ap-build:0.0.3
     commands:
+      - helm init
       - make push
     environment:
       - ASTRONOMER_VERSION=${DRONE_TAG##v}
