@@ -13,8 +13,7 @@ pipeline:
       - /var/run/docker.sock:/var/run/docker.sock
     when:
       event: [ push, tag ]
-      branch:
-        include: [ master ]
+      branch: master
 
   # Build platform from stable releases if production deployment
   build-platform-stable:
@@ -29,9 +28,8 @@ pipeline:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     when:
-      event: [ tag ]
-      branch:
-        include: [ refs/tags/v* ]
+      event: tag
+      branch: stable/*
 
   # # Always build airflow from stable releases
   # build-airflow:
