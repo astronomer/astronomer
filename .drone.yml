@@ -29,9 +29,9 @@ pipeline:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     when:
-      event: tag
+      event: [ tag ]
       branch:
-        exclude: [ master ]
+        include: [ 0.5-stable ]
 
   # # Always build airflow from stable releases
   # build-airflow:
