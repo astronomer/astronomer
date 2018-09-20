@@ -1,4 +1,5 @@
 pipeline:
+  # Just build when we push to master
   build:
     image: astronomerio/ap-build:0.0.3
     commands:
