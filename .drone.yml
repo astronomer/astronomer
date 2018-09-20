@@ -14,8 +14,6 @@ pipeline:
     when:
       event: [ push, tag ]
       branch: master
-      tag:
-        include: "\v[0-9]\.[0-9]\.[0-9]\-\r\c\.[0-9]"
 
   # Build platform from stable releases if production deployment
   build-platform:
