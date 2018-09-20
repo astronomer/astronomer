@@ -1,6 +1,6 @@
 pipeline:
-  # Build platform from master branches if pushed to master or triggered.
-  build-platform:
+  # Build platform from master branches if pushed to master or tagged from master
+  build-platform-master:
     group: build
     image: astronomerio/ap-build:0.0.2
     commands:
@@ -12,25 +12,24 @@ pipeline:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     when:
-      event: tag
+      event: [ push, tag ]
       branch: master
 
-  # # Build platform from stable releases if production deployment
-  # build-platform:
-  #   group: build
-  #   image: astronomerio/ap-build:0.0.2
-  #   commands:
-  #     - make build-platform
-  #   environment:
-  #     - ASTRONOMER_VERSION=${DRONE_COMMIT_SHA:0:8}
-  #     - ASTRONOMER_USE_MASTER=false
-  #     - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
-  #   volumes:
-  #     - /var/run/docker.sock:/var/run/docker.sock
-  #   when:
-  #     event: tag
-  #     tag:
-  #       include: "v[0-9].[0-9].[0-9]"
+  # Build platform from stable releases if production deployment
+  build-platform-stable:
+    group: build
+    image: astronomerio/ap-build:0.0.2
+    commands:
+      - make build-platform
+    environment:
+      - ASTRONOMER_VERSION=${DRONE_COMMIT_SHA:0:8}
+      - ASTRONOMER_USE_MASTER=false
+      - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    when:
+      event: tag
+      branch: v*
 
   # # Always build airflow from stable releases
   # build-airflow:
