@@ -12,8 +12,8 @@ pipeline:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     when:
-      # event: [ push, tag ]
-      # branch: master
+      event: [ push, tag ]
+      branch: master
       tag: v*.*.*-rc.*
 
   # # Build platform from stable releases if production deployment
