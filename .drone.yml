@@ -29,7 +29,8 @@ pipeline:
       - /var/run/docker.sock:/var/run/docker.sock
     when:
       event: tag
-      branch: v*
+      branch:
+        include: [ v* ]
 
   # # Always build airflow from stable releases
   # build-airflow:
