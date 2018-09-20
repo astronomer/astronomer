@@ -28,9 +28,9 @@ pipeline:
       - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-    when:
-      event: tag
-      branch: v*
+    # when:
+    #   event: tag
+    #   branch: v*
 
   # # Always build airflow from stable releases
   # build-airflow:
