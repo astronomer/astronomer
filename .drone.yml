@@ -14,7 +14,7 @@ pipeline:
     when:
       event: [ push, tag ]
       branch: master
-      tag: adlfajds
+      tag: v*
 
   # # Build platform from stable releases if production deployment
   # build-platform:
