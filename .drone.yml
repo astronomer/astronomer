@@ -20,3 +20,14 @@ pipeline:
     when:
       event: tag
       branch: [ master, release-* ]
+
+  commit:
+    image: appleboy/drone-git-push
+    remote_name: origin
+    branch: master
+    commit: true
+    commit_message: "Bump to version ${DRONE_TAG##v}"
+    key: $${GIT_PUSH_SSH_KEY}
+    when:
+      event: tag
+      branch: [ master, release-* ]
