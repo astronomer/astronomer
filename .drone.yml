@@ -14,6 +14,7 @@ pipeline:
     when:
       event: [ push, tag ]
       branch: master
+      tag: "v*"
 
   # Build platform from stable releases if production deployment
   build-platform:
