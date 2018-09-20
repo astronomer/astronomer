@@ -4,5 +4,17 @@ pipeline:
     commands:
       - make build
     environment:
-      - ASTRONOMER_VERSION=${DRONE_COMMIT_SHA:0:8}-b${DRONE_BUILD_NUMBER}
-      - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
+      - ASTRONOMER_VERSION=${DRONE_COMMIT_SHA:0:8}
+    when:
+      event: push
+      branch: master
+
+  push:
+    image: astronomerio/ap-build:0.0.2
+    commands:
+      - make push
+    environment:
+      - ASTRONOMER_VERSION=${DRONE_TAG##v}
+    when:
+      event: tag
+      branch: [ master, release-* ]
