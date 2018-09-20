@@ -31,7 +31,7 @@ pipeline:
     when:
       event: [ tag ]
       branch:
-        include: [ 0.5-stable ]
+        include: [ refs/tags/v* ]
 
   # # Always build airflow from stable releases
   # build-airflow:
