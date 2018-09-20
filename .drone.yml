@@ -30,7 +30,7 @@ pipeline:
     when:
       event: tag
       branch:
-        include: [ *-stable ]
+        include: [ "*-stable" ]
 
   # # Always build airflow from stable releases
   # build-airflow:
