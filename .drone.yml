@@ -1,6 +1,6 @@
 pipeline:
   build:
-    image: astronomerio/ap-build:0.0.2
+    image: astronomerio/ap-build:0.0.3
     commands:
       - make build
     environment:
@@ -10,7 +10,7 @@ pipeline:
       branch: master
 
   push:
-    image: astronomerio/ap-build:0.0.2
+    image: astronomerio/ap-build:0.0.3
     commands:
       - make push
     environment:
