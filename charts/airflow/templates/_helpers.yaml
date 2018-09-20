@@ -132,6 +132,7 @@ auth_type = md5
 auth_file = /etc/pgbouncer/users.txt
 stats_users = {{ .Values.data.metadataConnection.user }}
 ignore_startup_parameters = extra_float_digits
+max_client_conn = {{ .Values.pgbouncer.maxClientConn }}
 {{- end }}
 
 {{ define "pgbouncer_users" }}

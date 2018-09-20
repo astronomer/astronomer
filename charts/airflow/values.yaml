@@ -179,6 +179,9 @@ pgbouncer:
   metadataPoolSize: 3
   resultBackendPoolSize: 2
 
+  # Maximum clients that can connect to pgbouncer (higher = more file descriptors)
+  maxClientConn: 100
+
   resources: {}
     # limits:
     #   cpu: 100m
