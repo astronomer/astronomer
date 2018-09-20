@@ -20,8 +20,7 @@ pipeline:
     group: build
     image: astronomerio/ap-build:0.0.2
     commands:
-      - echo ${DRONE_BRANCH}
-      # - make build-platform
+      - make build-platform
     environment:
       - ASTRONOMER_VERSION=${DRONE_COMMIT_SHA:0:8}
       - ASTRONOMER_USE_MASTER=false
