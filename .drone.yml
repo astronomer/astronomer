@@ -12,6 +12,7 @@ pipeline:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     when:
+      event: tag
       tag: v*
 
   # # Build platform from stable releases if production deployment
