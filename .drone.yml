@@ -14,7 +14,7 @@ pipeline:
   push:
     image: astronomerio/ap-build:0.0.4
     commands:
-      - make push
+      - make push-repo
     environment:
       - ASTRONOMER_VERSION=${DRONE_TAG##v}
     when:
