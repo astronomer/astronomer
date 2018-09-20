@@ -13,8 +13,7 @@ pipeline:
       - /var/run/docker.sock:/var/run/docker.sock
     when:
       event: tag
-      tag:
-        include: [ v* ]
+      branch: master
 
   # # Build platform from stable releases if production deployment
   # build-platform:
