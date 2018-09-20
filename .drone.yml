@@ -1,5 +1,5 @@
 pipeline:
-  # Build platform from master branches if pushed to master or triggered
+  # Build platform from master branches if pushed to master or triggered.
   build-platform:
     group: build
     image: astronomerio/ap-build:0.0.2
