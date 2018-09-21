@@ -24,7 +24,7 @@ pipeline:
     image: astronomerio/ap-build:0.0.5
     commands:
       # - echo $${GCP_TOKEN} >> /tmp/gcs_token.json
-      - echo $${GCP_TOKEN}
+      - echo ${GCP_TOKEN}
       # - cat /tmp/gcs_token.json
       - gcloud auth activate-service-account --key-file=/tmp/gcs_token.json
       # - make push-repo
