@@ -5,7 +5,18 @@ pipeline:
     commands:
       - make build
     when:
-      event: [ push, tag ]
+      event: push
+      branch: master
+
+  # Build when we tag
+  build:
+    image: astronomerio/ap-build:0.0.5
+    commands:
+      - make build
+    environment:
+      - ASTRONOMER_VERSION=${DRONE_TAG##v}
+    when:
+      event: tag
       branch: [ master, release-* ]
 
   # Push to helm.astronomer.io
