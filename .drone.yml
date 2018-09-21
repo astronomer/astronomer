@@ -29,7 +29,7 @@ pipeline:
       # - make push-repo
     environment:
       - ASTRONOMER_VERSION=${DRONE_TAG##v}
-      - GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcs_token.json
+      # - GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcs_token.json
     secrets: [ gcp_token ]
     when:
       event: tag
