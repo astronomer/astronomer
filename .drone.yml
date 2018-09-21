@@ -23,7 +23,7 @@ pipeline:
   push:
     image: astronomerio/ap-build:0.0.5
     commands:
-      - echo $${GCP_TOKEN}
+      - echo $${GCP_TOKEN} | tr -d '\n'
       - echo "========================="
       - printf "%s" $${GCP_TOKEN}
       # - printf "%s\n" $${GCP_TOKEN} > /tmp/gcs_token.json
