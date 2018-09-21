@@ -44,7 +44,7 @@ pipeline:
       # - git init
       # - git remote add origin git@github.com:astronomerio/helm.astronomer.io.git
       # - git add .
-      - git status
+      - git diff
     environment:
       - ASTRONOMER_VERSION=${DRONE_TAG##v}
     secrets: [ git_push_ssh_key ]
