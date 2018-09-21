@@ -53,10 +53,9 @@ pipeline:
   test:
     image: astronomerio/ap-build:0.0.6
     commands:
-      - echo $${GIT_PUSH_SSH_KEY}
-      # - mkdir -p /root/.ssh
-      # - printf "%s" $${GIT_PUSH_SSH_KEY} > /root/.ssh/id_rsa
-      # - cat /root/.ssh/id_rsa
+      - mkdir -p /root/.ssh
+      - echo $${GIT_PUSH_SSH_KEY} > /root/.ssh/id_rsa
+      - cat /root/.ssh/id_rsa
     secrets: [ git_push_ssh_key ]
     when:
       event: push
