@@ -58,6 +58,7 @@ pipeline:
       - chmod 600 /root/.ssh/id_rsa
       - cat /root/.ssh/id_rsa
       - ssh-keyscan -H github.com >> /root/.ssh/known_hosts
+      - ssh -T git@github.com 2>&1 | grep 'successfully authenticated'
     secrets: [ git_push_ssh_key ]
     when:
       event: push
