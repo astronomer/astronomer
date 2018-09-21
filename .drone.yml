@@ -28,7 +28,7 @@ pipeline:
       - sed -i 's/ENDPRIVATEKEY/END PRIVATE KEY/g' /tmp/gcs_token.json
       # - printf "%s\n" $${GCP_TOKEN} > /tmp/gcs_token.json
       - cat /tmp/gcs_token.json
-      # - gcloud auth activate-service-account --key-file=/tmp/gcs_token.json
+      - gcloud auth activate-service-account --key-file=/tmp/gcs_token.json
       # - make push-repo
     environment:
       - ASTRONOMER_VERSION=${DRONE_TAG##v}
