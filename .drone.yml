@@ -43,7 +43,8 @@ pipeline:
       - echo "$${GIT_PUSH_SSH_KEY}" > /root/.ssh/id_rsa
       - chmod 600 /root/.ssh/id_rsa
       - ssh-keyscan -H github.com >> /root/.ssh/known_hosts
-      - git status
+      - git add .
+      - git commit -m "Bump to $${DRONE_TAG##v}"
     environment:
       - ASTRONOMER_VERSION=${DRONE_TAG##v}
     secrets: [ git_push_ssh_key ]
