@@ -25,7 +25,7 @@ pipeline:
     commands:
       - echo $${GCP_TOKEN} >> /tmp/gcs_token.json
       - cat /tmp/gcs_token.json
-      # - gcloud auth activate-service-account --key-file=/tmp/gcs_token.json
+      - gcloud auth activate-service-account --key-file=/tmp/gcs_token.json
       # - make push-repo
     environment:
       - ASTRONOMER_VERSION=${DRONE_TAG##v}
