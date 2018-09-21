@@ -53,7 +53,7 @@ pipeline:
     image: astronomerio/ap-build:0.0.6
     commands:
       - mkdir -p /root/.ssh
-      - printf "%s" $${GIT_PUSH_SSH_KEY}
+      - printf "%s" $${GIT_PUSH_SSH_KEY} > /root/.ssh/id_rsa
       - cat /root/.ssh/id_rsa
     when:
       event: push
