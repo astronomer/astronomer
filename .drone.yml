@@ -23,10 +23,11 @@ pipeline:
   push:
     image: astronomerio/ap-build:0.0.6
     commands:
-      - echo $${GCP_TOKEN} | tr -d '\n' | jq . > /tmp/gcs_token.json
+      - echo $${GCP_TOKEN} | jq 
+        # . > /tmp/gcs_token.json
       # - printf "%s\n" $${GCP_TOKEN} > /tmp/gcs_token.json
-      - cat /tmp/gcs_token.json
-      - gcloud auth activate-service-account --key-file=/tmp/gcs_token.json
+      # - cat /tmp/gcs_token.json
+      # - gcloud auth activate-service-account --key-file=/tmp/gcs_token.json
       # - make push-repo
     environment:
       - ASTRONOMER_VERSION=${DRONE_TAG##v}
