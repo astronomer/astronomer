@@ -37,12 +37,25 @@ pipeline:
 
   # Push new versions back to github
   commit:
-    image: appleboy/drone-git-push
-    remote: git@github.com:astronomerio/helm.astronomer.io.git
-    branch: master
-    commit: true
-    commit_message: "Bump to version ${DRONE_TAG##v}"
-    key: $${GIT_PUSH_SSH_KEY}
+    image: astronomerio/ap-build:0.0.6
+    commands:
+      - pwd
+      - ls
+    environment:
+      - ASTRONOMER_VERSION=${DRONE_TAG##v}
+    secrets: [ git_push_ssh_key ]
     when:
       event: tag
       branch: [ master, release-* ]
+
+
+
+
+    # remote: git@github.com:astronomerio/helm.astronomer.io.git
+    # branch: master
+    # commit: true
+    # commit_message: "Bump to version ${DRONE_TAG##v}"
+    # key: $${GIT_PUSH_SSH_KEY}
+    # when:
+    #   event: tag
+    #   branch: [ master, release-* ]
