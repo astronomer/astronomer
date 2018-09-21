@@ -2,6 +2,7 @@
 config.yaml
 certs
 configs
+repository
 
 # IDEs
 .idea/

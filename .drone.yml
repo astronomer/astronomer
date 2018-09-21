@@ -36,46 +36,19 @@ pipeline:
       branch: [ master, release-* ]
 
   # Push new versions back to github
-  commit:
-    image: astronomerio/ap-build:0.0.6
-    commands:
-      - mkdir -p /root/.ssh
-      - echo "$${GIT_PUSH_SSH_KEY}" > /root/.ssh/id_rsa
-      - chmod 600 /root/.ssh/id_rsa
-      - ssh-keyscan -H github.com >> /root/.ssh/known_hosts
-      - git add .
-      - git -c user.email='bot@astronomer.io' -c user.name='bot' commit -m "Bump to $${DRONE_TAG##v}"
-      - git push HEAD:${DRONE_BRANCH}
-    environment:
-      - ASTRONOMER_VERSION=${DRONE_TAG##v}
-    secrets: [ git_push_ssh_key ]
-    when:
-      event: tag
-      branch: [ master, release-* ]
-
-  # test:
+  # commit:
   #   image: astronomerio/ap-build:0.0.6
   #   commands:
   #     - mkdir -p /root/.ssh
   #     - echo "$${GIT_PUSH_SSH_KEY}" > /root/.ssh/id_rsa
   #     - chmod 600 /root/.ssh/id_rsa
-  #     - cat /root/.ssh/id_rsa
   #     - ssh-keyscan -H github.com >> /root/.ssh/known_hosts
-  #     # - ssh -T git@github.com 2>&1 | grep 'successfully authenticated'
+  #     - git add .
+  #     - git -c user.email='bot@astronomer.io' -c user.name='bot' commit -m "Bump to $${DRONE_TAG##v}"
+  #     - git push HEAD:${DRONE_BRANCH}
+  #   environment:
+  #     - ASTRONOMER_VERSION=${DRONE_TAG##v}
   #   secrets: [ git_push_ssh_key ]
   #   when:
-  #     event: push
-  #     branch: master
-
-
-
-
-
-    # remote: git@github.com:astronomerio/helm.astronomer.io.git
-    # branch: master
-    # commit: true
-    # commit_message: "Bump to version ${DRONE_TAG##v}"
-    # key: $${GIT_PUSH_SSH_KEY}
-    # when:
-    #   event: tag
-    #   branch: [ master, release-* ]
+  #     event: tag
+  #     branch: [ master, release-* ]
