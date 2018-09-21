@@ -45,6 +45,7 @@ pipeline:
       - ssh-keyscan -H github.com >> /root/.ssh/known_hosts
       - git add .
       - git -c user.email='bot@astronomer.io' -c user.name='bot' commit -m "Bump to $${DRONE_TAG##v}"
+      - git push
     environment:
       - ASTRONOMER_VERSION=${DRONE_TAG##v}
     secrets: [ git_push_ssh_key ]
