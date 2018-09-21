@@ -33,8 +33,11 @@ pipeline:
       # - GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcs_token.json
     secrets: [ gcp_token ]
     when:
-      event: tag
-      branch: [ master, release-* ]
+      event: push
+      branch: master
+    # when:
+    #   event: tag
+    #   branch: [ master, release-* ]
 
   # Push new versions back to github
   # commit:
