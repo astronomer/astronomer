@@ -1,7 +1,7 @@
 pipeline:
   # Just build when we push to master
   build:
-    image: astronomerio/ap-build:0.0.5
+    image: astronomerio/ap-build:0.0.6
     commands:
       - make build
     when:
@@ -10,7 +10,7 @@ pipeline:
 
   # Build when we tag
   build:
-    image: astronomerio/ap-build:0.0.5
+    image: astronomerio/ap-build:0.0.6
     commands:
       - make build
     environment:
@@ -21,7 +21,7 @@ pipeline:
 
   # Push to helm.astronomer.io
   push:
-    image: astronomerio/ap-build:0.0.5
+    image: astronomerio/ap-build:0.0.6
     commands:
       - echo $${GCP_TOKEN} | tr -d '\n' | jq .
       - echo "========================="
