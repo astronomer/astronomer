@@ -4,20 +4,16 @@ pipeline:
     image: astronomerio/ap-build:0.0.5
     commands:
       - make build
-      - ls repository
-    # environment:
-    #   - ASTRONOMER_VERSION=${DRONE_COMMIT_SHA:0:8}
     when:
-      event: push
-      branch: master
+      event: [ push, tag ]
+      branch: [ master, release-* ]
 
   # Push to helm.astronomer.io
   push:
     image: astronomerio/ap-build:0.0.5
     commands:
       - echo ${GCP_TOKEN} >> /tmp/gcs_token.json
-      - ls repository
-      # - make push-repo
+      - make push-repo
     environment:
       - ASTRONOMER_VERSION=${DRONE_TAG##v}
       - GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcs_token.json
