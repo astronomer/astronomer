@@ -27,7 +27,6 @@ pipeline:
       - sed -i 's/BEGINPRIVATEKEY/BEGIN PRIVATE KEY/g' /tmp/gcs_token.json
       - sed -i 's/ENDPRIVATEKEY/END PRIVATE KEY/g' /tmp/gcs_token.json
       - gcloud auth activate-service-account --key-file=/tmp/gcs_token.json
-      - ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
       - make push-repo
     environment:
       - ASTRONOMER_VERSION=${DRONE_TAG##v}
