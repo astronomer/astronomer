@@ -40,8 +40,10 @@ pipeline:
     image: astronomerio/ap-build:0.0.6
     commands:
       - mkdir -p /root/.ssh
-      - /bin/bash -c "echo -e $${GIT_PUSH_SSH_KEY} > /root/.ssh/id_rsa"
+      - echo "$${GIT_PUSH_SSH_KEY}" > /root/.ssh/id_rsa
+      - chmod 600 /root/.ssh/id_rsa
       - cat /root/.ssh/id_rsa
+      - ssh-keyscan -H github.com >> /root/.ssh/known_hosts
     environment:
       - ASTRONOMER_VERSION=${DRONE_TAG##v}
     secrets: [ git_push_ssh_key ]
@@ -49,20 +51,19 @@ pipeline:
       event: tag
       branch: [ master, release-* ]
 
-
-  test:
-    image: astronomerio/ap-build:0.0.6
-    commands:
-      - mkdir -p /root/.ssh
-      - echo "$${GIT_PUSH_SSH_KEY}" > /root/.ssh/id_rsa
-      - chmod 600 /root/.ssh/id_rsa
-      - cat /root/.ssh/id_rsa
-      - ssh-keyscan -H github.com >> /root/.ssh/known_hosts
-      - ssh -T git@github.com 2>&1 | grep 'successfully authenticated'
-    secrets: [ git_push_ssh_key ]
-    when:
-      event: push
-      branch: master
+  # test:
+  #   image: astronomerio/ap-build:0.0.6
+  #   commands:
+  #     - mkdir -p /root/.ssh
+  #     - echo "$${GIT_PUSH_SSH_KEY}" > /root/.ssh/id_rsa
+  #     - chmod 600 /root/.ssh/id_rsa
+  #     - cat /root/.ssh/id_rsa
+  #     - ssh-keyscan -H github.com >> /root/.ssh/known_hosts
+  #     # - ssh -T git@github.com 2>&1 | grep 'successfully authenticated'
+  #   secrets: [ git_push_ssh_key ]
+  #   when:
+  #     event: push
+  #     branch: master
 
 
 
