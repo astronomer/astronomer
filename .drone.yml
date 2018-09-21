@@ -30,20 +30,19 @@ pipeline:
       - make push-repo
     environment:
       - ASTRONOMER_VERSION=${DRONE_TAG##v}
-      # - GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcs_token.json
     secrets: [ gcp_token ]
     when:
       event: tag
       branch: [ master, release-* ]
 
   # Push new versions back to github
-  # commit:
-  #   image: appleboy/drone-git-push
-  #   remote_name: origin
-  #   branch: master
-  #   commit: true
-  #   commit_message: "Bump to version ${DRONE_TAG##v}"
-  #   key: $${GIT_PUSH_SSH_KEY}
-  #   when:
-  #     event: tag
-  #     branch: [ master, release-* ]
+  commit:
+    image: appleboy/drone-git-push
+    remote_name: origin
+    branch: master
+    commit: true
+    commit_message: "Bump to version ${DRONE_TAG##v}"
+    key: $${GIT_PUSH_SSH_KEY}
+    when:
+      event: tag
+      branch: [ master, release-* ]
