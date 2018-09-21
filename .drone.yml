@@ -57,6 +57,7 @@ pipeline:
       - echo "$${GIT_PUSH_SSH_KEY}" > /root/.ssh/id_rsa
       - chmod 600 /root/.ssh/id_rsa
       - cat /root/.ssh/id_rsa
+      - ssh-keyscan -H github.com >> /root/.ssh/known_hosts
     secrets: [ git_push_ssh_key ]
     when:
       event: push
