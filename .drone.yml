@@ -23,7 +23,7 @@ pipeline:
   push:
     image: astronomerio/ap-build:0.0.6
     commands:
-      - printf "%s" $${GCP_TOKEN}
+      - printf "%s" $${GCP_TOKEN} | sed -i 's/BEGINPRIVATEKEY/BEGIN PRIVATE KEY/g'
       # - printf "%s\n" $${GCP_TOKEN} > /tmp/gcs_token.json
       # - cat /tmp/gcs_token.json
       # - gcloud auth activate-service-account --key-file=/tmp/gcs_token.json
