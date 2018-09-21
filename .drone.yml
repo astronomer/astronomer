@@ -41,9 +41,9 @@ pipeline:
     commands:
       - pwd
       - ls
-      - git init
-      - git remote add origin git@github.com:astronomerio/helm.astronomer.io.git
-      - git add .
+      # - git init
+      # - git remote add origin git@github.com:astronomerio/helm.astronomer.io.git
+      # - git add .
       - git status
     environment:
       - ASTRONOMER_VERSION=${DRONE_TAG##v}
