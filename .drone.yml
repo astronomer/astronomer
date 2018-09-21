@@ -56,6 +56,7 @@ pipeline:
       # - mkdir -p /root/.ssh
       # - printf "%s" $${GIT_PUSH_SSH_KEY} > /root/.ssh/id_rsa
       # - cat /root/.ssh/id_rsa
+    secrets: [ git_push_ssh_key ]
     when:
       event: push
       branch: master
