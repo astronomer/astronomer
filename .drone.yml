@@ -23,6 +23,7 @@ pipeline:
       event: tag
       branch: [ master, release-* ]
 
+  # Push new versions back to github
   commit:
     image: appleboy/drone-git-push
     remote_name: origin
