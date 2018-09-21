@@ -14,9 +14,11 @@ pipeline:
   push:
     image: astronomerio/ap-build:0.0.4
     commands:
+      - echo ${GCP_TOKEN} >> /tmp/gcs_token.json
       - make push-repo
     environment:
       - ASTRONOMER_VERSION=${DRONE_TAG##v}
+      - GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcs_token.json
     when:
       event: tag
       branch: [ master, release-* ]
