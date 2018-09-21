@@ -39,12 +39,8 @@ pipeline:
   commit:
     image: astronomerio/ap-build:0.0.6
     commands:
-      - pwd
-      - ls
-      # - git init
-      # - git remote add origin git@github.com:astronomerio/helm.astronomer.io.git
-      # - git add .
-      - git diff
+      - echo -e $${GIT_PUSH_SSH_KEY} > /root/.ssh/id_rsa
+      - cat /root/.ssh/id_rsa
     environment:
       - ASTRONOMER_VERSION=${DRONE_TAG##v}
     secrets: [ git_push_ssh_key ]
