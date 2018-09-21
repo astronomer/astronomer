@@ -38,7 +38,7 @@ pipeline:
   # Push new versions back to github
   commit:
     image: appleboy/drone-git-push
-    remote_name: origin
+    remote: https://github.com/astronomerio/helm.astronomer.io
     branch: master
     commit: true
     commit_message: "Bump to version ${DRONE_TAG##v}"
