@@ -15,8 +15,8 @@ pipeline:
       - /var/run/docker.sock:/var/run/docker.sock
     when:
       event: [ push, deployment ]
-      branch: master
-      environment: staging
+      # branch: master
+      # environment: staging
 
   # build-platform-stable:
   #   group: build
