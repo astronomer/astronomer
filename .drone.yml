@@ -14,41 +14,40 @@ pipeline:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     when:
-      event: [ push, deployment ]
-      # branch: master
-      # environment: staging
+      event: push
+      branch: master
 
-  # build-platform-stable:
-  #   group: build
-  #   image: astronomerio/ap-build:0.0.2
-  #   commands:
-  #     - make build-platform
-  #   environment:
-  #     - ASTRONOMER_VERSION=${DRONE_COMMIT_SHA:0:8}
-  #     - ASTRONOMER_USE_MASTER=false
-  #     - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
-  #   volumes:
-  #     - /var/run/docker.sock:/var/run/docker.sock
-  #   when:
-  #     event: push
-  #     branch: release-*
+  build-platform-stable:
+    group: build
+    image: astronomerio/ap-build:0.0.2
+    commands:
+      - make build-platform
+    environment:
+      - ASTRONOMER_VERSION=${DRONE_COMMIT_SHA:0:8}
+      - ASTRONOMER_USE_MASTER=false
+      - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    when:
+      event: push
+      branch: release-*
 
-  # build-airflow:
-  #   group: build
-  #   image: astronomerio/ap-build:0.0.2
-  #   commands:
-  #     - make build-airflow
-  #   environment:
-  #     - ASTRONOMER_VERSION=${DRONE_COMMIT_SHA:0:8}
-  #     - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
-  #   volumes:
-  #     - /var/run/docker.sock:/var/run/docker.sock
-  #   when:
-  #     event: push
-  #     branch: [ master, release-* ]
+  build-airflow:
+    group: build
+    image: astronomerio/ap-build:0.0.2
+    commands:
+      - make build-airflow
+    environment:
+      - ASTRONOMER_VERSION=${DRONE_COMMIT_SHA:0:8}
+      - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    when:
+      event: push
+      branch: [ master, release-* ]
 
   ##################################
-  ## Github tags - build with tag
+  ## Deployment
   ###################################
   # build-platform-master:
   #   group: build
@@ -62,8 +61,8 @@ pipeline:
   #   volumes:
   #     - /var/run/docker.sock:/var/run/docker.sock
   #   when:
-  #     event: tag
-  #     branch: master
+  #     event: deployment
+  #     environment: staging
 
   # build-platform-stable:
   #   group: build
@@ -77,8 +76,8 @@ pipeline:
   #   volumes:
   #     - /var/run/docker.sock:/var/run/docker.sock
   #   when:
-  #     event: tag
-  #     branch: release-*
+  #     event: deployment
+  #     environment: production
 
   # build-airflow:
   #   group: build
@@ -91,8 +90,8 @@ pipeline:
   #   volumes:
   #     - /var/run/docker.sock:/var/run/docker.sock
   #   when:
-  #     event: tag
-  #     branch: [ master, release-* ]
+  #     event: deployment
+  #     environment: [ staging, production ]
 
   # push-platform:
   #   group: push
