@@ -8,10 +8,10 @@ REPOSITORY ?= astronomerinc
 BUILD_NUMBER ?= 1
 
 # Astronomer build version
-ASTRONOMER_MAJOR_VERSION ?= 0
-ASTRONOMER_MINOR_VERSION ?= 5
-ASTRONOMER_PATCH_VERSION ?= 1
-ASTRONOMER_VERSION ?= ${ASTRONOMER_MAJOR_VERSION}.${ASTRONOMER_MINOR_VERSION}.${ASTRONOMER_PATCH_VERSION}
+# ASTRONOMER_MAJOR_VERSION ?= 0
+# ASTRONOMER_MINOR_VERSION ?= 5
+# ASTRONOMER_PATCH_VERSION ?= 1
+# ASTRONOMER_VERSION ?= ${ASTRONOMER_MAJOR_VERSION}.${ASTRONOMER_MINOR_VERSION}.${ASTRONOMER_PATCH_VERSION}
 
 # List of all components and order to build
 PLATFORM_COMPONENTS := base airflow cli-install commander db-bootstrapper default-backend houston-api orbit-ui
@@ -29,12 +29,12 @@ VENDOR_COMPONENTS := cadvisor grafana nginx pgbouncer pgbouncer-exporter prometh
 # Main build/push
 #
 .PHONY: build
-build:
+build: check-env
 	$(MAKE) build-platform
 	$(MAKE) build-airflow
 
 .PHONY: push
-push: clean-images build
+push: check-env clean-images build
 	$(MAKE) push-platform
 	$(MAKE) push-airflow
 
@@ -42,7 +42,7 @@ push: clean-images build
 # Platform build/push
 #
 .PHONY: build-platform
-build-platform: clean-master-images update-base-tag
+build-platform: check-env clean-master-images update-base-tag
 	PLATFORM_COMPONENTS="${PLATFORM_COMPONENTS}" \
 	VENDOR_COMPONENTS="${VENDOR_COMPONENTS}" \
 	REPOSITORY=${REPOSITORY} \
@@ -51,7 +51,7 @@ build-platform: clean-master-images update-base-tag
 	bin/build-platform
 
 .PHONY: push-platform
-push-platform:
+push-platform: check-env
 	for component in ${PLATFORM_COMPONENTS} ; do \
 		echo "Pushing ap-$${component}:${ASTRONOMER_VERSION} ======================"; \
 		docker push ${REPOSITORY}/ap-$${component}:${ASTRONOMER_VERSION} || exit 1; \
@@ -61,7 +61,7 @@ push-platform:
 # Airflow build/push
 #
 .PHONY: build-airflow
-build-airflow:
+build-airflow: check-env
 	AIRFLOW_VERSIONS="${AIRFLOW_VERSIONS}" \
 	REPOSITORY=${REPOSITORY} \
 	ASTRONOMER_VERSION=${ASTRONOMER_VERSION} \
@@ -69,7 +69,7 @@ build-airflow:
 	bin/build-airflow
 
 .PHONY: push-airflow
-push-airflow:
+push-airflow: check-env
 	for version in "${AIRFLOW_VERSIONS}" ; do \
 		echo "Pushing ap-$${component}:${AIRFLOW_VERSION}-${AIRFLOW_BUILD} ======================"; \
 		docker push ${REPOSITORY}/ap-$${component}:${AIRFLOW_VERSION}-${version} || exit 1; \
@@ -102,10 +102,16 @@ clean: clean-containers clean-images clean-master-images
 
 # Update the base image version
 .PHONY: update-base-tag
-update-base-tag:
+update-base-tag: check-env
 	find docker/platform -name 'Dockerfile' -exec sed -i -E 's/FROM astronomerinc\/ap-base:(.*)/FROM astronomerinc\/ap-base:${ASTRONOMER_VERSION}/g' {} \;
 
 # Update the version (tag) that we grab from github from the platform repos
 .PHONY: update-version
-update-version:
+update-version: check-env
 	find docker/platform -name 'Dockerfile' -exec sed -i -E 's/ARG VERSION=(.*)/ARG VERSION="v${ASTRONOMER_VERSION}"/g' {} \;
+
+.PHONY: check-env
+check-env:
+ifndef ASTRONMER_VERSION
+	$(error ASTRONOMER_VERSION is not set)
+endif
