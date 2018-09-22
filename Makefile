@@ -112,6 +112,6 @@ update-version: check-env
 
 .PHONY: check-env
 check-env:
-ifndef ASTRONMER_VERSION
+ifndef ASTRONOMER_VERSION
 	$(error ASTRONOMER_VERSION is not set)
 endif
