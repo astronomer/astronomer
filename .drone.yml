@@ -2,35 +2,20 @@ pipeline:
   ##################################
   ## Github pushes - build with SHA
   ###################################
-  build-platform-master:
+  build-platform:
     group: build
     image: astronomerio/ap-build:0.0.6
     commands:
       - make build-platform
     environment:
       - ASTRONOMER_VERSION=${DRONE_COMMIT_SHA:0:8}
-      - ASTRONOMER_USE_MASTER=true
+      - ASTRONOMER_REF=${DRONE_BRANCH}
       - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     when:
       event: push
-      branch: master
-
-  build-platform-stable:
-    group: build
-    image: astronomerio/ap-build:0.0.6
-    commands:
-      - make build-platform
-    environment:
-      - ASTRONOMER_VERSION=${DRONE_COMMIT_SHA:0:8}
-      - ASTRONOMER_USE_MASTER=false
-      - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    when:
-      event: push
-      branch: release-*
+      branch: [ master, release-* ]
 
   build-airflow:
     group: build
@@ -49,34 +34,19 @@ pipeline:
   ##################################
   ## Deployment
   ###################################
-  build-platform-master:
+  build-platform:
     group: build
     image: astronomerio/ap-build:0.0.6
     commands:
+      - make update-version
       - make build-platform
     environment:
-      - ASTRONOMER_USE_MASTER=true
       - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     when:
       event: deployment
-      branch: master
-      environment: production
-
-  build-platform-stable:
-    group: build
-    image: astronomerio/ap-build:0.0.6
-    commands:
-      - make build-platform
-    environment:
-      - ASTRONOMER_USE_MASTER=false
-      - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    when:
-      event: deployment
-      branch: release-*
+      branch: [ master, release-* ]
       environment: production
 
   build-airflow:
