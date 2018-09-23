@@ -71,9 +71,9 @@ build-airflow: check-env
 .PHONY: push-airflow
 push-airflow: check-env
 	for version in "${AIRFLOW_VERSIONS}" ; do \
-		echo "Pushing ap-airflow:${ASTRONOMER_VERSION}-${version} ======================"; \
-		docker push ${REPOSITORY}/ap-airflow:${ASTRONOMER_VERSION}-${version} || exit 1; \
-		docker push ${REPOSITORY}/ap-airflow:${ASTRONOMER_VERSION}-${version}-onbuild || exit 1; \
+		echo "Pushing ap-airflow:${ASTRONOMER_VERSION}-$${version} ======================"; \
+		docker push ${REPOSITORY}/ap-airflow:${ASTRONOMER_VERSION}-$${version} || exit 1; \
+		docker push ${REPOSITORY}/ap-airflow:${ASTRONOMER_VERSION}-$${version}-onbuild || exit 1; \
 	done;
 
 #
