@@ -38,7 +38,6 @@ pipeline:
     image: astronomerio/ap-build:0.0.7
     secrets: [ github_api_key ]
     commands:
-      - env
       - release ${DRONE_REPO_NAME} $${GITHUB_API_KEY} ${ASTRONOMER_VERSION} ${DRONE_COMMIT_BRANCH}
     when:
       event: deployment
