@@ -42,7 +42,7 @@ push: check-env clean-images build
 # Platform build/push
 #
 .PHONY: build-platform
-build-platform: check-env clean-master-images update-base-tag
+build-platform: check-env clean-pre-release-images update-base-tag
 	PLATFORM_COMPONENTS="${PLATFORM_COMPONENTS}" \
 	VENDOR_COMPONENTS="${VENDOR_COMPONENTS}" \
 	REPOSITORY=${REPOSITORY} \
@@ -91,14 +91,14 @@ clean-images:
 		docker rmi -f $${image} ; \
 	done
 
-.PHONY: clean-master-images
-clean-master-images:
-	for image in `docker images -q -f label=io.astronomer.docker.master=true` ; do \
+.PHONY: clean-pre-release-images
+clean-pre-release-images:
+	for image in `docker images -q -f label=io.astronomer.docker.pre-release=true` ; do \
 		docker rmi -f $${image} ; \
 	done
 
 .PHONY: clean
-clean: clean-containers clean-images clean-master-images
+clean: clean-containers clean-images clean-pre-release-images
 
 # Update the base image version
 .PHONY: update-base-tag
