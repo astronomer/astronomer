@@ -38,7 +38,11 @@ pipeline:
     image: astronomerio/ap-build:0.0.6
     secrets: [ github_api_key ]
     commands:
-      - curl https://api.github.com/repos/astronomerio/astronomer/releases -f -H 'Authorization: token ${GITHUB_API_KEY}' -d '{"tag_name":"${ASTRONOMER_VERSION}","target_commitish":"${DRONE_SHA}","name":"${ASTRONOMER_VERSION}","body":"","draft":false,"prerelease":false'
+      - |
+        curl https://api.github.com/repos/astronomerio/astronomer/releases -f -H 'Authorization: token ${GITHUB_API_KEY}' -d '{"tag_name":"${ASTRONOMER_VERSION}","target_commitish":"${DRONE_SHA}","name":"${ASTRONOMER_VERSION}","body":"","draft":false,"prerelease":false}'
+    when:
+      event: deployment
+      environment: production
 
   # build-platform:
   #   group: build
