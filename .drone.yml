@@ -2,46 +2,43 @@ pipeline:
   ##################################
   ## Github pushes - build with SHA
   ###################################
-  build-platform:
-    group: build
-    image: astronomerio/ap-build:0.0.6
-    commands:
-      - make build-platform
-    environment:
-      - ASTRONOMER_VERSION=${DRONE_COMMIT_SHA:0:8}
-      - ASTRONOMER_REF=${DRONE_BRANCH}
-      - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    when:
-      event: push
-      branch: [ master, release-* ]
+  # build-platform:
+  #   group: build
+  #   image: astronomerio/ap-build:0.0.6
+  #   commands:
+  #     - make build-platform
+  #   environment:
+  #     - ASTRONOMER_VERSION=${DRONE_COMMIT_SHA:0:8}
+  #     - ASTRONOMER_REF=${DRONE_BRANCH}
+  #     - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #   when:
+  #     event: push
+  #     branch: [ master, release-* ]
 
-  build-airflow:
-    group: build
-    image: astronomerio/ap-build:0.0.6
-    commands:
-      - make build-airflow
-    environment:
-      - ASTRONOMER_VERSION=${DRONE_COMMIT_SHA:0:8}
-      - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    when:
-      event: push
-      branch: [ master, release-* ]
+  # build-airflow:
+  #   group: build
+  #   image: astronomerio/ap-build:0.0.6
+  #   commands:
+  #     - make build-airflow
+  #   environment:
+  #     - ASTRONOMER_VERSION=${DRONE_COMMIT_SHA:0:8}
+  #     - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #   when:
+  #     event: push
+  #     branch: [ master, release-* ]
 
   ##################################
   ## Deployment
   ###################################
   release-platform:
-    image: astronomerio/ap-build:0.0.6
+    image: astronomerio/ap-build:0.0.7
     secrets: [ github_api_key ]
     commands:
-      - |
-        echo 'Authorization: token $${GITHUB_API_KEY}'
-      - |
-        curl https://api.github.com/repos/astronomerio/astronomer/releases -f -H 'Authorization: token $${GITHUB_API_KEY}' -d '{"tag_name":"$${ASTRONOMER_VERSION}","target_commitish":"$${DRONE_SHA}","name":"$${ASTRONOMER_VERSION}","body":"","draft":false,"prerelease":false}'
+      - release ${DRONE_REPO_NAME} $${GITHUB_API_KEY} ${ASTRONOMER_VERSION} ${DRONE_COMMIT_BRANCH}
     when:
       event: deployment
       environment: production
