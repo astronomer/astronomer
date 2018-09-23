@@ -38,7 +38,7 @@ pipeline:
     image: astronomerio/ap-build:0.0.7
     secrets: [ github_api_key ]
     environment:
-      - TAG_NAME=v0.6.0-rc.1
+      - TAG_NAME="v0.6.0-rc.1"
     commands:
       - echo "${DRONE_SHA}"
       - release ${DRONE_REPO_NAME} $${GITHUB_API_KEY} ${TAG_NAME} ${DRONE_COMMIT_SHA}
