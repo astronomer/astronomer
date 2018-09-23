@@ -62,7 +62,7 @@ RUN apk update \
 		ca-certificates \
 		cyrus-sasl \
 		krb5-libs \
-		mariadb-client-libs \
+		mariadb-connector-c \
 		postgresql \
 		python3 \
 		tini \

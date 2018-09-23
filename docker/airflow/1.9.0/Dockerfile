@@ -56,7 +56,7 @@ RUN apk update \
 	&& apk add --no-cache \
 		bash \
 		ca-certificates \
-		mariadb-client-libs \
+		mariadb-connector-c \
 		postgresql \
 		python3 \
 		tini \
