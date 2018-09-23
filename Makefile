@@ -14,7 +14,7 @@ BUILD_NUMBER ?= 1
 # ASTRONOMER_VERSION ?= ${ASTRONOMER_MAJOR_VERSION}.${ASTRONOMER_MINOR_VERSION}.${ASTRONOMER_PATCH_VERSION}
 
 # List of all components and order to build
-PLATFORM_COMPONENTS := base airflow cli-install commander db-bootstrapper default-backend houston-api orbit-ui
+PLATFORM_COMPONENTS := base cli-install commander db-bootstrapper default-backend houston-api orbit-ui
 
 # Airflow versions
 AIRFLOW_VERSIONS := 1.9.0 #1.10.0
