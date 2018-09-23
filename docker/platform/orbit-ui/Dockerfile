@@ -36,6 +36,7 @@ RUN apk add --no-cache --virtual .build-deps \
 		gettext \
 		nginx \
 		nodejs \
+		nodejs-npm \
 		openssl \
 	&& git clone \
 		-c advice.detachedHead=false \

@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM alpine:3.7
+FROM alpine:3.8
 LABEL maintainer="Astronomer <humans@astronomer.io>"
 
 ARG BUILD_NUMBER=-1
@@ -56,7 +56,7 @@ RUN apk update \
 	&& apk add --no-cache \
 		bash \
 		ca-certificates \
-		mariadb-client-libs \
+		mariadb-connector-c \
 		postgresql \
 		python3 \
 		tini \

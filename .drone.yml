@@ -49,20 +49,38 @@ pipeline:
   ##################################
   ## Deployment
   ###################################
-  # build-platform-master:
-  #   group: build
-  #   image: astronomerio/ap-build:0.0.2
-  #   commands:
-  #     - make build-platform
-  #   environment:
-  #     - ASTRONOMER_VERSION=${DRONE_TAG##v}
-  #     - ASTRONOMER_USE_MASTER=true
-  #     - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
-  #   volumes:
-  #     - /var/run/docker.sock:/var/run/docker.sock
-  #   when:
-  #     event: deployment
-  #     environment: staging
+  build-platform-master:
+    group: build
+    image: astronomerio/ap-build:0.0.2
+    commands:
+      - echo "MASTER"
+      # - make build-platform
+    environment:
+      - ASTRONOMER_VERSION=${DRONE_TAG##v}
+      - ASTRONOMER_USE_MASTER=true
+      - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    when:
+      event: deployment
+      branch: master
+      # environment: staging
+
+  build-platform-stable:
+    group: build
+    image: astronomerio/ap-build:0.0.2
+    commands:
+      - echo "STABLE"
+    environment:
+      - ASTRONOMER_VERSION=${DRONE_TAG##v}
+      - ASTRONOMER_USE_MASTER=true
+      - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    when:
+      event: deployment
+      branch: release-*
+      # environment: staging
 
   # build-platform-stable:
   #   group: build

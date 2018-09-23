@@ -34,6 +34,7 @@ RUN apk add --no-cache --virtual .build-deps \
 		python \
 	&& apk add --no-cache \
 		nodejs \
+		nodejs-npm \
 		openssl \
 	&& npm install -g ${REPO_URL} --unsafe \
 	&& apk del .build-deps
