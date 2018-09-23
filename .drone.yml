@@ -35,15 +35,12 @@ pipeline:
   ## Deployment
   ###################################
   release-platform:
-    image: astronomerio/ap-build:0.0.6
+    image: astronomerio/ap-build:0.0.7
     secrets: [ github_api_key ]
     environment:
       - TAG_NAME=0.6.0-rc.1
     commands:
-      - echo "$${GITHUB_API_KEY}"
-      # - "curl https://api.github.com/repos/astronomerio/astronomer/releases -f -H 'Authorization: token $GITHUB_API_KEY'"
-      - curl https://api.github.com/repos/astronomerio/${DRONE_REPO_NAME}/releases -f -H "Authorization: token ${GITHUB_API_KEY}" -d "{\"tag_name\":\"${TAG_NAME}\",\"target_commitish\":\"${DRONE_SHA}\",\"name\":\"${TAG_NAME}\",\"body\":\"\",\"draft\":false,\"prerelease\":false}"
-        # -d '{"tag_name":"$${ASTRONOMER_VERSION}","target_commitish":"$${DRONE_SHA}","name":"$${ASTRONOMER_VERSION}","body":"","draft":false,"prerelease":false}'
+      - release ${DRONE_REPO_NAME} $${GITHUB_API_KEY} ${TAG_NAME} ${DRONE_SHA}
     # when:
     #   event: deployment
     #   environment: production
