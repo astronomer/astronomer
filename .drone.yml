@@ -38,11 +38,11 @@ pipeline:
     image: astronomerio/ap-build:0.0.7
     secrets: [ github_api_key ]
     commands:
-      - release commander $${GITHUB_API_KEY} $${ASTRONOMER_VERSION} $${DRONE_COMMIT_BRANCH}
-      - release db-bootstrapper $${GITHUB_API_KEY} $${ASTRONOMER_VERSION} $${DRONE_COMMIT_BRANCH}
-      - release default-backend $${GITHUB_API_KEY} $${ASTRONOMER_VERSION} $${DRONE_COMMIT_BRANCH}
-      - release houston-api $${GITHUB_API_KEY} $${ASTRONOMER_VERSION} $${DRONE_COMMIT_BRANCH}
-      - release orbit-ui $${GITHUB_API_KEY} $${ASTRONOMER_VERSION} $${DRONE_COMMIT_BRANCH}
+      - release commander $${GITHUB_API_KEY} v$${ASTRONOMER_VERSION} $${DRONE_COMMIT_BRANCH}
+      - release db-bootstrapper $${GITHUB_API_KEY} v$${ASTRONOMER_VERSION} $${DRONE_COMMIT_BRANCH}
+      - release default-backend $${GITHUB_API_KEY} v$${ASTRONOMER_VERSION} $${DRONE_COMMIT_BRANCH}
+      - release houston-api $${GITHUB_API_KEY} v$${ASTRONOMER_VERSION} $${DRONE_COMMIT_BRANCH}
+      - release orbit-ui $${GITHUB_API_KEY} v$${ASTRONOMER_VERSION} $${DRONE_COMMIT_BRANCH}
     when:
       event: deployment
       branch: [ master, release-* ]
@@ -77,6 +77,38 @@ pipeline:
       branch: [ master, release-* ]
       environment: production
 
+  push-platform:
+    group: push
+    image: astronomerio/ap-build:0.0.7
+    commands:
+      - docker login -u $${DOCKER_USERNAME} -p $${DOCKER_PASSWORD}
+      - make push-platform
+    environment:
+      - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    secrets: [ docker_username, docker_password ]
+    when:
+      event: deployment
+      branch: [ master, release-* ]
+      environment: production
+
+  push-airflow:
+    group: push
+    image: astronomerio/ap-build:0.0.7
+    commands:
+      - docker login -u $${DOCKER_USERNAME} -p $${DOCKER_PASSWORD}
+      - make push-airflow
+    environment:
+      - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    secrets: [ docker_username, docker_password ]
+    when:
+      event: deployment
+      branch: [ master, release-* ]
+      environment: production
+
   # Push new versions back to github
   commit:
     image: astronomerio/ap-build:0.0.7
@@ -98,41 +130,8 @@ pipeline:
     image: astronomerio/ap-build:0.0.7
     secrets: [ github_api_key ]
     commands:
-      - release $${DRONE_REPO_NAME} $${GITHUB_API_KEY} $${ASTRONOMER_VERSION} $${DRONE_COMMIT_BRANCH}
+      - release $${DRONE_REPO_NAME} $${GITHUB_API_KEY} v$${ASTRONOMER_VERSION} $${DRONE_COMMIT_BRANCH}
     when:
       event: deployment
       branch: [ master, release-* ]
       environment: production
-
-
-  # push-platform:
-  #   group: push
-  #   image: astronomerio/ap-build:0.0.7
-  #   commands:
-  #     - docker login -u $${DOCKER_USERNAME} -p $${DOCKER_PASSWORD}
-  #     - make push-platform
-  #   environment:
-  #     - ASTRONOMER_VERSION=${DRONE_TAG##v}
-  #     - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
-  #   volumes:
-  #     - /var/run/docker.sock:/var/run/docker.sock
-  #   secrets: [ docker_username, docker_password ]
-  #   when:
-  #     event: tag
-  #     branch: [ master, release-* ]
-
-  # push-airflow:
-  #   group: push
-  #   image: astronomerio/ap-build:0.0.7
-  #   commands:
-  #     - docker login -u $${DOCKER_USERNAME} -p $${DOCKER_PASSWORD}
-  #     - make push-airflow
-  #   environment:
-  #     - ASTRONOMER_VERSION=${DRONE_TAG##v}
-  #     - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
-  #   volumes:
-  #     - /var/run/docker.sock:/var/run/docker.sock
-  #   secrets: [ docker_username, docker_password ]
-  #   when:
-  #     event: tag
-  #     branch: [ master, release-* ]
