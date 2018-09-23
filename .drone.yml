@@ -39,6 +39,8 @@ pipeline:
     secrets: [ github_api_key ]
     commands:
       - release ${DRONE_REPO_NAME} $${GITHUB_API_KEY} ${ASTRONOMER_VERSION} ${DRONE_COMMIT_BRANCH}
+    environment:
+      - ASTRONOMER_VERSION=${ASTRONOMER_VERSION}
     when:
       event: deployment
       environment: production
