@@ -39,7 +39,7 @@ pipeline:
     secrets: [ github_api_key ]
     commands:
       - echo "$${GITHUB_API_KEY}"
-      - bash -c "curl https://api.github.com/repos/astronomerio/astronomer/releases -f -H 'Authorization: token ${GITHUB_API_KEY}'"
+      - curl https://api.github.com/repos/astronomerio/astronomer/releases -f -H 'Authorization: token $GITHUB_API_KEY'
         # -d '{"tag_name":"$${ASTRONOMER_VERSION}","target_commitish":"$${DRONE_SHA}","name":"$${ASTRONOMER_VERSION}","body":"","draft":false,"prerelease":false}'
     # when:
     #   event: deployment
