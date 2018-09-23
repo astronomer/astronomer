@@ -40,7 +40,7 @@ pipeline:
     environment:
       - TAG_NAME=0.6.0-rc.1
     commands:
-      - release "${DRONE_REPO_NAME}" "${GITHUB_API_KEY}" ${TAG_NAME} ${DRONE_SHA}
+      - release "${DRONE_REPO_NAME}" "$${GITHUB_API_KEY}" ${TAG_NAME} ${DRONE_SHA}
     # when:
     #   event: deployment
     #   environment: production
