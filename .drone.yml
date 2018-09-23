@@ -34,34 +34,57 @@ pipeline:
   ##################################
   ## Deployment
   ###################################
-  build-platform:
-    group: build
+  release-platform:
     image: astronomerio/ap-build:0.0.6
+    secrets: [ github_api_key ]
     commands:
-      - make update-version
-      - make build-platform
-    environment:
-      - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    when:
-      event: deployment
-      branch: [ master, release-* ]
-      environment: production
+      - curl https://api.github.com/repos/astronomerio/astronomer/releases -f -H 'Authorization: token ${GITHUB_API_KEY}' -d '{"tag_name":"${ASTRONOMER_VERSION}","target_commitish":"${DRONE_SHA}","name":"${ASTRONOMER_VERSION}","body":"","draft":false,"prerelease":false'
 
-  build-airflow:
-    group: build
-    image: astronomerio/ap-build:0.0.6
-    commands:
-      - make build-airflow
-    environment:
-      - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    when:
-      event: deployment
-      branch: [ master, release-* ]
-      environment: production
+  # build-platform:
+  #   group: build
+  #   image: astronomerio/ap-build:0.0.6
+  #   commands:
+  #     - make update-version
+  #     - make build-platform
+  #   environment:
+  #     - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #   when:
+  #     event: deployment
+  #     branch: [ master, release-* ]
+  #     environment: production
+
+  # build-airflow:
+  #   group: build
+  #   image: astronomerio/ap-build:0.0.6
+  #   commands:
+  #     - make build-airflow
+  #   environment:
+  #     - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #   when:
+  #     event: deployment
+  #     branch: [ master, release-* ]
+  #     environment: production
+
+  # Push new versions back to github
+  # commit:
+  #   image: astronomerio/ap-build:0.0.6
+  #   commands:
+  #     - mkdir -p /root/.ssh
+  #     - echo "$${GIT_PUSH_SSH_KEY}" > /root/.ssh/id_rsa
+  #     - chmod 600 /root/.ssh/id_rsa
+  #     - ssh-keyscan -H github.com >> /root/.ssh/known_hosts
+  #     - git add .
+  #     - git -c user.email='bot@astronomer.io' -c user.name='bot' commit -m "[skip ci] Bump to ${ASTRONOMER_VERSION}"
+  #     - git push HEAD:${DRONE_BRANCH}
+  #   secrets: [ git_push_ssh_key ]
+  #   when:
+  #     event: deployment
+  #     branch: [ master, release-* ]
+  #     environment: production
 
   # push-platform:
   #   group: push
