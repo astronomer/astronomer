@@ -16,7 +16,7 @@ pipeline:
       - git config --global user.name "schnie"
       - git config --global user.email "schnie@astronomer.io"
       - git add .
-      - git commit -m "[skip ci] Bump to ${ASTRONOMER_VERSION}"
+      - git commit -m "[skip ci] Bump to $${ASTRONOMER_VERSION}"
       - git push -u origin ${DRONE_COMMIT_BRANCH}
     secrets: [ git_push_ssh_key ]
     when:
