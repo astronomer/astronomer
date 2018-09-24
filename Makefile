@@ -25,7 +25,7 @@ build: update-version
 
 .PHONY: build-index
 build-index:
-	helm repo index ${OUTPUT} --url ${URL}
+	helm repo index ${OUTPUT} --url ${URL} --merge ${OUTPUT}/index.yaml
 
 .PHONY: push
 push: build
