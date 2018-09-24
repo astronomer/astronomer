@@ -21,7 +21,7 @@ LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
 LABEL io.astronomer.docker.module="default-backend"
 LABEL io.astronomer.docker.component="default-backend"
 
-ARG VERSION="v0.5.1"
+ARG VERSION="v"0.6.0-rc.1""
 ENV REPO="github.com/astronomerio/default-backend"
 ENV REPO_URL="https://${REPO}"
 
