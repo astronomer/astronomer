@@ -2,27 +2,6 @@ pipeline:
   ##################################
   ## Github pushes - build with SHA
   ###################################
-  commit:
-    image: astronomerio/ap-build:0.0.7
-    environment:
-      - ASTRONOMER_VERSION=0.6.0-rc.1
-    commands:
-      - make update-version
-      - mkdir -p /root/.ssh
-      - echo "$${GIT_PUSH_SSH_KEY}" > /root/.ssh/id_rsa
-      - chmod 600 /root/.ssh/id_rsa
-      - ssh-keyscan -H github.com >> /root/.ssh/known_hosts
-      - git remote set-url origin git@github.com:${DRONE_REPO_OWNER}/${DRONE_REPO_NAME}.git
-      - git config --global user.name "schnie"
-      - git config --global user.email "schnie@astronomer.io"
-      - git add .
-      - git commit -m "[skip ci] Bump to $${ASTRONOMER_VERSION}"
-      - git push -u origin ${DRONE_COMMIT_BRANCH}
-    secrets: [ git_push_ssh_key ]
-    when:
-      event: push
-      branch: [ master, release-* ]
-
   build-platform:
     group: build
     image: astronomerio/ap-build:0.0.7
@@ -131,16 +110,20 @@ pipeline:
       environment: production
 
   # Push new versions back to github
-  commit:
+  commit-push:
     image: astronomerio/ap-build:0.0.7
     commands:
+      - make update-version
       - mkdir -p /root/.ssh
       - echo "$${GIT_PUSH_SSH_KEY}" > /root/.ssh/id_rsa
       - chmod 600 /root/.ssh/id_rsa
       - ssh-keyscan -H github.com >> /root/.ssh/known_hosts
+      - git remote set-url origin git@github.com:${DRONE_REPO_OWNER}/${DRONE_REPO_NAME}.git
+      - git config --global user.name "schnie"
+      - git config --global user.email "schnie@astronomer.io"
       - git add .
-      - git -c user.email='bot@astronomer.io' -c user.name='bot' commit -m "[skip ci] Bump to ${ASTRONOMER_VERSION}"
-      - git push HEAD:${DRONE_COMMIT_BRANCH}
+      - git commit -m "[skip ci] Bump to $${ASTRONOMER_VERSION}"
+      - git push -u origin ${DRONE_COMMIT_BRANCH}
     secrets: [ git_push_ssh_key ]
     when:
       event: deployment
