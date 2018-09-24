@@ -8,17 +8,19 @@ pipeline:
       - ASTRONOMER_VERSION="0.6.0-rc.1"
     commands:
       - make update-version
-      - git config --global url.https://github.com/.insteadOf git://github.com/
       - mkdir -p /root/.ssh
       - echo "$${GIT_PUSH_SSH_KEY}" > /root/.ssh/id_rsa
       - chmod 600 /root/.ssh/id_rsa
       - ssh-keyscan -H github.com >> /root/.ssh/known_hosts
+      - git remote set-url git@github.com:${DRONE_REPO_OWNER}/${DRONE_REPO_NAME}.git
+      - git config --global user.name "bot"
+      - git config --global user.email "bot@astronomer.io"
       - git add .
-      - git -c user.email='bot@astronomer.io' -c user.name='bot' commit -m "[skip ci] Bump to ${ASTRONOMER_VERSION}"
+      - git commit -m "[skip ci] Bump to ${ASTRONOMER_VERSION}"
       # - git push HEAD:${DRONE_COMMIT_BRANCH}
       - git status
       - git remote -v
-      - git -c user.email='bot@astronomer.io' -c user.name='bot' push -u origin ${DRONE_COMMIT_BRANCH}
+      - git push -u origin ${DRONE_COMMIT_BRANCH}
     secrets: [ git_push_ssh_key ]
     when:
       event: push
