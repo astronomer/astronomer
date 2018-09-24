@@ -6,7 +6,7 @@ pipeline:
     image: astronomerio/ap-build:0.0.7
     environment:
       - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
-      - ASTRONOMER_VERSION=${DRONE_COMMIT_SHA:0:8}
+      - ASTRONOMER_VERSION=0.0.0
     commands:
       - make build
     when:
