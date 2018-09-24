@@ -12,6 +12,7 @@ pipeline:
       # - git add .
       # - git -c user.email='bot@astronomer.io' -c user.name='bot' commit -m "[skip ci] Bump to ${ASTRONOMER_VERSION}"
       # - git push HEAD:${DRONE_COMMIT_BRANCH}
+      - git status
       - git remote -v
     secrets: [ git_push_ssh_key ]
     when:
