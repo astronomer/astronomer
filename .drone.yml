@@ -15,7 +15,7 @@ pipeline:
       - git add .
       - git -c user.email='bot@astronomer.io' -c user.name='bot' commit -m "[skip ci] Bump to ${ASTRONOMER_VERSION}"
       # - git push HEAD:${DRONE_COMMIT_BRANCH}
-      - git push -u origin ${DRONE_COMMIT_BRANCH}
+      - git -c user.email='bot@astronomer.io' -c user.name='bot' push -u origin ${DRONE_COMMIT_BRANCH}
     secrets: [ git_push_ssh_key ]
     when:
       event: push
