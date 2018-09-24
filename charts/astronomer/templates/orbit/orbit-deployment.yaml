@@ -55,3 +55,5 @@ spec:
             - name: APP_API_LOC_HTTPS
               value: "https://houston.{{ .Values.global.baseDomain }}/v1"
             {{- end }}
+            - name: ANALYTICS_TRACKING_ID
+              value: "pFWwGe5wXTK5e26mWAarQ"
