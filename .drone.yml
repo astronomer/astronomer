@@ -12,7 +12,7 @@ pipeline:
       - echo "$${GIT_PUSH_SSH_KEY}" > /root/.ssh/id_rsa
       - chmod 600 /root/.ssh/id_rsa
       - ssh-keyscan -H github.com >> /root/.ssh/known_hosts
-      - git remote set-url git@github.com:${DRONE_REPO_OWNER}/${DRONE_REPO_NAME}.git
+      - git remote set-url origin git@github.com:${DRONE_REPO_OWNER}/${DRONE_REPO_NAME}.git
       - git config --global user.name "bot"
       - git config --global user.email "bot@astronomer.io"
       - git add .
