@@ -56,6 +56,10 @@ push-platform: check-env
 		echo "Pushing ap-$${component}:${ASTRONOMER_VERSION} ======================"; \
 		docker push ${REPOSITORY}/ap-$${component}:${ASTRONOMER_VERSION} || exit 1; \
 	done;
+	for component in ${VENDOR_COMPONENTS} ; do \
+		echo "Pushing ap-$${component}:${ASTRONOMER_VERSION} ======================"; \
+		docker push ${REPOSITORY}/ap-$${component}:${ASTRONOMER_VERSION} || exit 1; \
+	done;
 
 #
 # Airflow build/push
