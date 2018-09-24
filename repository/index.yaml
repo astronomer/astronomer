@@ -1,7 +1,25 @@
 apiVersion: v1
 entries:
   airflow:
-  - created: 2018-09-24T09:29:04.633138943-04:00
+  - created: 2018-09-24T13:45:58.312569894-04:00
+    description: Helm chart to deploy the Astronomer Platform Airflow module
+    digest: a87c7448a5650d002cc948326d0755de3548d8704abb36c07aa30eccde55ac42
+    keywords:
+    - astronomer
+    name: airflow
+    urls:
+    - https://helm.astronomer.io/airflow-0.6.0-rc.2.tgz
+    version: 0.6.0-rc.2
+  - created: 2018-09-24T13:45:58.311965303-04:00
+    description: Helm chart to deploy the Astronomer Platform Airflow module
+    digest: 4527c3bf4e88e489f9543602410a609260c05503c7838fde424dc012486373f6
+    keywords:
+    - astronomer
+    name: airflow
+    urls:
+    - https://helm.astronomer.io/airflow-0.6.0-rc.1.tgz
+    version: 0.6.0-rc.1
+  - created: 2018-09-24T13:45:58.311372013-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: 301dcc9759697b0a1712c900d8ac99687628ab0096673d9b9e8100d29705e044
     keywords:
@@ -10,7 +28,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.5.1.tgz
     version: 0.5.1
-  - created: 2018-09-24T09:29:04.632341957-04:00
+  - created: 2018-09-24T13:45:58.310740258-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: 3a0afe56b5367b2898f1e3adf55beb4cfaea562e21c188d4f8e0302a30d6767a
     keywords:
@@ -19,7 +37,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.5.1-rc.9.tgz
     version: 0.5.1-rc.9
-  - created: 2018-09-24T09:29:04.631541911-04:00
+  - created: 2018-09-24T13:45:58.310117296-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: e44b07202e45ac9b6306e576d4b13fe92e2e13bc2e355a620283dc329c088cf3
     keywords:
@@ -28,7 +46,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.5.1-rc.8.tgz
     version: 0.5.1-rc.8
-  - created: 2018-09-24T09:29:04.630760855-04:00
+  - created: 2018-09-24T13:45:58.309489368-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: f4146b6bb4b1bcf61848c12f424b19cefc9d0b533284d92c971e27296222a96c
     keywords:
@@ -37,7 +55,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.5.1-rc.7.tgz
     version: 0.5.1-rc.7
-  - created: 2018-09-24T09:29:04.630034587-04:00
+  - created: 2018-09-24T13:45:58.308877443-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: f11af28b3b5ae45fd45b4cde727b22b74a524ce61da5a7325914c30f5253abc3
     keywords:
@@ -46,7 +64,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.5.1-rc.6.tgz
     version: 0.5.1-rc.6
-  - created: 2018-09-24T09:29:04.629338116-04:00
+  - created: 2018-09-24T13:45:58.30825542-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: 435f7845235741c2b91676611b30700f82fe234a82fd22eb8a7ada877d7d1b22
     keywords:
@@ -55,7 +73,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.5.1-rc.5.tgz
     version: 0.5.1-rc.5
-  - created: 2018-09-24T09:29:04.628626167-04:00
+  - created: 2018-09-24T13:45:58.307632346-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: 1154ad5980a4a987beb77b8962bebe5f7eba96d7fa6a096dadffcb59db5a433b
     keywords:
@@ -64,7 +82,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.5.1-rc.4.tgz
     version: 0.5.1-rc.4
-  - created: 2018-09-24T09:29:04.627875034-04:00
+  - created: 2018-09-24T13:45:58.306998014-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: 29a36c24736b9be1ebdedfb455ccfe310a69a566fb278283b9f607e59a3ff5a0
     keywords:
@@ -73,7 +91,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.5.1-rc.3.tgz
     version: 0.5.1-rc.3
-  - created: 2018-09-24T09:29:04.627169638-04:00
+  - created: 2018-09-24T13:45:58.306373751-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: 25842e4c51a32167b167b3685eb84ee3bfe4127ca90aa9a4b86d396c941ea186
     keywords:
@@ -82,7 +100,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.5.1-rc.2.tgz
     version: 0.5.1-rc.2
-  - created: 2018-09-24T09:29:04.62646534-04:00
+  - created: 2018-09-24T13:45:58.305752484-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: 5ae9007a29247478d779935728e7229c8fb29b2cec24dbaf996b36923868733c
     keywords:
@@ -91,7 +109,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.5.1-rc.1.tgz
     version: 0.5.1-rc.1
-  - created: 2018-09-24T09:29:04.625743227-04:00
+  - created: 2018-09-24T13:45:58.304830979-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: f5b0ad4511da99f2642a5cbe41eefafada7d2f5e3f8bc5b1b6da7168dfb4aacc
     keywords:
@@ -100,7 +118,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.5.0.tgz
     version: 0.5.0
-  - created: 2018-09-24T09:29:04.619948708-04:00
+  - created: 2018-09-24T13:45:58.299906623-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: c0f8f3f66629a450bd4b109d9e4e6250669a4789b267359cc36964511a0346f7
     keywords:
@@ -109,7 +127,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.5.0-rc.21.tgz
     version: 0.5.0-rc.21
-  - created: 2018-09-24T09:29:04.619201558-04:00
+  - created: 2018-09-24T13:45:58.299280235-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: ade7ab018ec927a1df2bd285996feeaea38f445fe55606a41755a5f24f9758e8
     keywords:
@@ -118,7 +136,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.5.0-rc.20.tgz
     version: 0.5.0-rc.20
-  - created: 2018-09-24T09:29:04.617500799-04:00
+  - created: 2018-09-24T13:45:58.298042447-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: 8396cfab6b9346a6907179db0b09df8bde5537f7a366f31d7843d2e875ad045d
     keywords:
@@ -127,7 +145,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.5.0-rc.19.tgz
     version: 0.5.0-rc.19
-  - created: 2018-09-24T09:29:04.616611265-04:00
+  - created: 2018-09-24T13:45:58.297403828-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: 8e5f5f0c661ec68654db93c61faeb6cae5d5a43e8aaa15d9166958c22c300d1d
     keywords:
@@ -136,7 +154,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.5.0-rc.18.tgz
     version: 0.5.0-rc.18
-  - created: 2018-09-24T09:29:04.615743807-04:00
+  - created: 2018-09-24T13:45:58.296736941-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: 1b9ecaaf087583253b4d492ba25dd0a0955a25249c56ef9ac323b88f2053e671
     keywords:
@@ -145,7 +163,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.5.0-rc.17.tgz
     version: 0.5.0-rc.17
-  - created: 2018-09-24T09:29:04.614944322-04:00
+  - created: 2018-09-24T13:45:58.296116473-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: 5dffde3bf74709ccab708adcd7c6d1cba2f768c97090e5c1ae07a5af776d40ca
     keywords:
@@ -154,7 +172,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.5.0-rc.16.tgz
     version: 0.5.0-rc.16
-  - created: 2018-09-24T09:29:04.614161759-04:00
+  - created: 2018-09-24T13:45:58.295496016-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: 91dcd5bc3282dd8ed485941fdfcede90f01a956ea79644beaf03c12ebfb23b9f
     keywords:
@@ -163,7 +181,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.5.0-rc.15.tgz
     version: 0.5.0-rc.15
-  - created: 2018-09-24T09:29:04.613420697-04:00
+  - created: 2018-09-24T13:45:58.294839971-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: 5977051e13f95328d8795591a5f1b17245c4d21c75cc7ecb99b93a3c957d25a1
     keywords:
@@ -172,7 +190,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.5.0-rc.14.tgz
     version: 0.5.0-rc.14
-  - created: 2018-09-24T09:29:04.612701777-04:00
+  - created: 2018-09-24T13:45:58.294165315-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: ff06b15d56af18e476c1144e6fc891f9440e78206927ebf87446b1028f53d82a
     keywords:
@@ -181,7 +199,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.5.0-rc.13.tgz
     version: 0.5.0-rc.13
-  - created: 2018-09-24T09:29:04.611946128-04:00
+  - created: 2018-09-24T13:45:58.293496121-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: 3ddb2c0ed6f63b92a2e4e73eb14e8230eb1bfabbef16db5b09672e8ce9b5bc2f
     keywords:
@@ -190,7 +208,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.5.0-rc.12.tgz
     version: 0.5.0-rc.12
-  - created: 2018-09-24T09:29:04.610727608-04:00
+  - created: 2018-09-24T13:45:58.292326989-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: c67acec1a71ac131c8831c75704d885b10e5900952a9fdab241b28f68a1bd3f9
     keywords:
@@ -199,7 +217,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.5.0-rc.10.tgz
     version: 0.5.0-rc.10
-  - created: 2018-09-24T09:29:04.624520525-04:00
+  - created: 2018-09-24T13:45:58.303571647-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: cc4ad46bac01d741645c155827f95190143eed0ceb65f0b0a65afaad517401bd
     keywords:
@@ -208,7 +226,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.5.0-rc.9.tgz
     version: 0.5.0-rc.9
-  - created: 2018-09-24T09:29:04.62349303-04:00
+  - created: 2018-09-24T13:45:58.30294479-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: e44a7658b9d7b83f35a1b815c71c6afda294cce70fced37f4865d6573ce904f0
     keywords:
@@ -217,7 +235,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.5.0-rc.7.tgz
     version: 0.5.0-rc.7
-  - created: 2018-09-24T09:29:04.622781201-04:00
+  - created: 2018-09-24T13:45:58.302330939-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: 4551a4b70d59aeb897b2e6d58e25118767e9e4748b9ce65548f08babf42e7be3
     keywords:
@@ -226,7 +244,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.5.0-rc.6.tgz
     version: 0.5.0-rc.6
-  - created: 2018-09-24T09:29:04.622125515-04:00
+  - created: 2018-09-24T13:45:58.301736726-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: ab0ada5c1a81156e2ba8d4ccfce49aaea25e871510fc92e7a80be8a54654657a
     keywords:
@@ -235,7 +253,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.5.0-rc.5.tgz
     version: 0.5.0-rc.5
-  - created: 2018-09-24T09:29:04.621386901-04:00
+  - created: 2018-09-24T13:45:58.301148647-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: 027a8c595b48cb35faae4ca8db94bb719591385f2fa4b925b2c988f53b28d232
     keywords:
@@ -244,7 +262,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.5.0-rc.4.tgz
     version: 0.5.0-rc.4
-  - created: 2018-09-24T09:29:04.620670345-04:00
+  - created: 2018-09-24T13:45:58.300536733-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: a74a291d2adb3226c65cbe9f97aa74e0b61cfb72586c030f6099c198daf40270
     keywords:
@@ -253,7 +271,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.5.0-rc.3.tgz
     version: 0.5.0-rc.3
-  - created: 2018-09-24T09:29:04.618371446-04:00
+  - created: 2018-09-24T13:45:58.298662307-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: 92f302f1eb808c958cc8dca7ec063b5ab3262a3ed24ea90f9b14d073c29b3a5b
     keywords:
@@ -262,7 +280,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.5.0-rc.2.tgz
     version: 0.5.0-rc.2
-  - created: 2018-09-24T09:29:04.609511066-04:00
+  - created: 2018-09-24T13:45:58.291491773-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: 8c97c51b87651d607722114531cef28edabc9c70c455d389321a825858dac2b6
     keywords:
@@ -271,7 +289,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.5.0-rc.1.tgz
     version: 0.5.0-rc.1
-  - created: 2018-09-24T09:29:04.608754534-04:00
+  - created: 2018-09-24T13:45:58.29082333-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: 8a718e239faf2f9a9f3697233ca2f723b7c4f4a8fe5b5c61a5d3ff4d41b11818
     keywords:
@@ -280,7 +298,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.4.2-rc.6.tgz
     version: 0.4.2-rc.6
-  - created: 2018-09-24T09:29:04.608138722-04:00
+  - created: 2018-09-24T13:45:58.290288804-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: bc24eddcce2302fa6ed00d55161f5553bb7b3735b2b9104f1ef3d8f35d6f7fc0
     keywords:
@@ -289,7 +307,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.4.2-rc.5.tgz
     version: 0.4.2-rc.5
-  - created: 2018-09-24T09:29:04.607576803-04:00
+  - created: 2018-09-24T13:45:58.289791885-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: 771dd67cdae55213670b729648776af0c41af876d5806746d0125e2e93ead11d
     keywords:
@@ -298,7 +316,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.4.2-rc.4.tgz
     version: 0.4.2-rc.4
-  - created: 2018-09-24T09:29:04.607043661-04:00
+  - created: 2018-09-24T13:45:58.289336299-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: 3103bc3fead6826e5701027302cc1e36eece57ec707dd3de9387c207dd63d2ce
     keywords:
@@ -307,7 +325,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.4.2-rc.3.tgz
     version: 0.4.2-rc.3
-  - created: 2018-09-24T09:29:04.606530842-04:00
+  - created: 2018-09-24T13:45:58.288871426-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: 9dd4e70c81be57417c9634d1a07b6ceab51b54204399725e94520255eb960981
     keywords:
@@ -316,7 +334,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.4.2-rc.2.tgz
     version: 0.4.2-rc.2
-  - created: 2018-09-24T09:29:04.606014473-04:00
+  - created: 2018-09-24T13:45:58.288453987-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: cebdd9fee0f0354ae07b332cc9bfdcdc22ca0393ae54b9942ea5f219f6fbd01c
     keywords:
@@ -325,7 +343,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.4.2-rc.1.tgz
     version: 0.4.2-rc.1
-  - created: 2018-09-24T09:29:04.605494789-04:00
+  - created: 2018-09-24T13:45:58.288019635-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: ea65bb1f122ca128e7e8694bf549b8557c1ca6f6f215f8722bc8e9172cc24923
     keywords:
@@ -334,7 +352,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.4.1.tgz
     version: 0.4.1
-  - created: 2018-09-24T09:29:04.605066044-04:00
+  - created: 2018-09-24T13:45:58.28763209-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: 20bfffbe3e893200e5eaf2bc955a15846356aee017eae9c188aa90e3a58fb215
     keywords:
@@ -343,7 +361,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.4.0.tgz
     version: 0.4.0
-  - created: 2018-09-24T09:29:04.60458338-04:00
+  - created: 2018-09-24T13:45:58.287231117-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: efd0c845ce5dcbd099d29f5753d85ce366ea24ff8c03e51ed3684f096b5e3a4c
     keywords:
@@ -352,7 +370,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.4.0-rc.5.tgz
     version: 0.4.0-rc.5
-  - created: 2018-09-24T09:29:04.604143695-04:00
+  - created: 2018-09-24T13:45:58.286835708-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: 437aef263212185e82825da16cd0f04e65b8460129ff780d7abcb780e2125ce8
     keywords:
@@ -361,7 +379,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.4.0-rc.2.tgz
     version: 0.4.0-rc.2
-  - created: 2018-09-24T09:29:04.603685996-04:00
+  - created: 2018-09-24T13:45:58.286450279-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: da93f4f5033947b1881abff07a25a3e569bc2573a2158a878d50b4c6406bee92
     keywords:
@@ -370,7 +388,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.3.3-rc.3.tgz
     version: 0.3.3-rc.3
-  - created: 2018-09-24T09:29:04.603200164-04:00
+  - created: 2018-09-24T13:45:58.286064832-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: 146f24e2da930ad726d7ded4e715bea8ade2bbc60a3b569897b19a71f5d707c2
     keywords:
@@ -379,7 +397,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.3.3-rc.2.tgz
     version: 0.3.3-rc.2
-  - created: 2018-09-24T09:29:04.602755914-04:00
+  - created: 2018-09-24T13:45:58.28567979-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: 03718e37c884745ce37d09295c17a67b2382d2767f3598a98ef3d410d58bbd5f
     keywords:
@@ -388,7 +406,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.3.2.tgz
     version: 0.3.2
-  - created: 2018-09-24T09:29:04.602284333-04:00
+  - created: 2018-09-24T13:45:58.285299465-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: 0abc820cf49e6aff72c6000e1ad1fdaaba224a489be7fcfc5706822dec824f27
     keywords:
@@ -397,7 +415,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.3.2-rc.3.tgz
     version: 0.3.2-rc.3
-  - created: 2018-09-24T09:29:04.601766274-04:00
+  - created: 2018-09-24T13:45:58.284912246-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: 86bbbd0c149055280d3faa9a441a4a389934d97d4275275e32cc9860ad63f6ba
     keywords:
@@ -406,7 +424,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.3.2-rc.2.tgz
     version: 0.3.2-rc.2
-  - created: 2018-09-24T09:29:04.601210067-04:00
+  - created: 2018-09-24T13:45:58.284503154-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: 1c644fac8ab9d22634e938c240338ee7959c94034e3039e3761a3d8005121919
     keywords:
@@ -415,7 +433,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.3.2-rc.1.tgz
     version: 0.3.2-rc.1
-  - created: 2018-09-24T09:29:04.60068205-04:00
+  - created: 2018-09-24T13:45:58.284107389-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: 58029d1fe6edc59c27a594824f9d926d919c1311e173fcdc22af85de9489a894
     keywords:
@@ -424,7 +442,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.3.1.tgz
     version: 0.3.1
-  - created: 2018-09-24T09:29:04.600253193-04:00
+  - created: 2018-09-24T13:45:58.28377558-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: f1199c542e378f497824c81360b0ac725febd3b7c38357efa25200e09ac91700
     keywords:
@@ -433,7 +451,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.3.0.tgz
     version: 0.3.0
-  - created: 2018-09-24T09:29:04.598464609-04:00
+  - created: 2018-09-24T13:45:58.281732583-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: 3e7c2b591cb8d379f7110e48ba0909ad8dec30a30b6b658636eb429323f4f7a3
     keywords:
@@ -442,7 +460,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.3.0-rc.14.tgz
     version: 0.3.0-rc.14
-  - created: 2018-09-24T09:29:04.597462611-04:00
+  - created: 2018-09-24T13:45:58.281196769-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: 1242b1093c8cc47eeb4a7c7b59a6727cbb1b3d3e9ae137eac499fb47423573b7
     keywords:
@@ -451,7 +469,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.3.0-rc.13.tgz
     version: 0.3.0-rc.13
-  - created: 2018-09-24T09:29:04.596838389-04:00
+  - created: 2018-09-24T13:45:58.280815226-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: bce128672dfd5da2c9b200885c99d6c312342845db887e6370674f84491cfa1c
     keywords:
@@ -460,7 +478,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.3.0-rc.12.tgz
     version: 0.3.0-rc.12
-  - created: 2018-09-24T09:29:04.596409424-04:00
+  - created: 2018-09-24T13:45:58.280418035-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: 68f2bd2c4d6f9ec62344678e28b8242a06c43fa4e066e2c716c4fa6f5da00481
     keywords:
@@ -469,7 +487,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.3.0-rc.10.tgz
     version: 0.3.0-rc.10
-  - created: 2018-09-24T09:29:04.599832241-04:00
+  - created: 2018-09-24T13:45:58.283436965-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: ec7efb154f2ff28ef9dab012e395c3af8f53ea04f5445d9c55e068c4c67a1474
     keywords:
@@ -478,7 +496,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.3.0-rc.9.tgz
     version: 0.3.0-rc.9
-  - created: 2018-09-24T09:29:04.599416669-04:00
+  - created: 2018-09-24T13:45:58.283102507-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: 133e854195fc5c629646bd1ee23bb2868b456d058fe3faba63e4be6cd56abdfc
     keywords:
@@ -487,7 +505,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.3.0-rc.8.tgz
     version: 0.3.0-rc.8
-  - created: 2018-09-24T09:29:04.599001545-04:00
+  - created: 2018-09-24T13:45:58.282671602-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: 1036eafc3145569c106fe3fa0fdfd2c58bdaf4ce59b448fea28d14f3e0b6334b
     keywords:
@@ -496,7 +514,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.3.0-rc.6.tgz
     version: 0.3.0-rc.6
-  - created: 2018-09-24T09:29:04.595950986-04:00
+  - created: 2018-09-24T13:45:58.280059435-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: ff60a2ea039b9de65560a7a66f9f638a1e909dbc8db75fc4a523351a3cc00cd7
     keywords:
@@ -505,7 +523,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.2.1.tgz
     version: 0.2.1
-  - created: 2018-09-24T09:29:04.595491869-04:00
+  - created: 2018-09-24T13:45:58.2796582-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: 421fe81ede5bb7fbb7e606695c404024e393eacb80ada1220b9330a82332c2c5
     keywords:
@@ -514,7 +532,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.2.0.tgz
     version: 0.2.0
-  - created: 2018-09-24T09:29:04.595050323-04:00
+  - created: 2018-09-24T13:45:58.279272972-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: a9c38f81ea6a40fe2d07e1ed859a1c4b040b85b3d19d2cf84bac33b403c286bb
     keywords:
@@ -523,7 +541,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.2.0-rc.1.tgz
     version: 0.2.0-rc.1
-  - created: 2018-09-24T09:29:04.594631743-04:00
+  - created: 2018-09-24T13:45:58.27889481-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: d8bcffda68cb9bf0ed5f460f59cc2b1e6786f025d6cae6f4e5fbfaf377575ee7
     keywords:
@@ -532,7 +550,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.1.4.tgz
     version: 0.1.4
-  - created: 2018-09-24T09:29:04.594231594-04:00
+  - created: 2018-09-24T13:45:58.278521525-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: 874de7fc02b898cdca543c613be31c256b1a2baab5fc399851cbaedd87a44fa4
     keywords:
@@ -541,7 +559,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.1.3.tgz
     version: 0.1.3
-  - created: 2018-09-24T09:29:04.59382022-04:00
+  - created: 2018-09-24T13:45:58.278142539-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: 8fec3cdbbeb08674a7ad85db0437c805cd32cfc4123d677bf430142ef781cb00
     keywords:
@@ -550,7 +568,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.1.2.tgz
     version: 0.1.2
-  - created: 2018-09-24T09:29:04.593406056-04:00
+  - created: 2018-09-24T13:45:58.277746372-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: f7e49ed51624a74d9050610fb453a33a6ec09d42d774a29c5753b6adcce103b9
     keywords:
@@ -559,7 +577,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.1.1.tgz
     version: 0.1.1
-  - created: 2018-09-24T09:29:04.593001595-04:00
+  - created: 2018-09-24T13:45:58.277323053-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: 4522a14cc4b2eb3f3d906f3ac29b8797add0c733e240a1d946e40ba77a69804d
     keywords:
@@ -568,7 +586,7 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.1.0.tgz
     version: 0.1.0
-  - created: 2018-09-24T09:29:04.592586471-04:00
+  - created: 2018-09-24T13:45:58.276919324-04:00
     description: Helm chart to deploy the Astronomer Platform Airflow module
     digest: 707b85a7339d423701a42be25e52ee61a5b09d5e5c44d727b7372a49e072ff2d
     keywords:
@@ -577,17 +595,26 @@ entries:
     urls:
     - https://helm.astronomer.io/airflow-0.0.1.tgz
     version: 0.0.1
-  - created: 2018-09-24T09:29:04.592207237-04:00
-    description: Helm chart to deploy the Astronomer Platform Airflow module
-    digest: b72011142cc0b3d5fb0f2a17eda074772edcbff2b832a59194e0dcc5d1d7207e
+  astronomer:
+  - created: 2018-09-24T13:45:58.339794237-04:00
+    description: A Helm chart to deploy the Astronomer module
+    digest: 765144050883e353eeae29512af3e00be8c8b6b697299197a8696459db9ff9fc
     keywords:
     - astronomer
-    name: airflow
+    name: astronomer
     urls:
-    - https://helm.astronomer.io/airflow-0.0.0.tgz
-    version: 0.0.0
-  astronomer:
-  - created: 2018-09-24T09:29:04.665491067-04:00
+    - https://helm.astronomer.io/astronomer-0.6.0-rc.2.tgz
+    version: 0.6.0-rc.2
+  - created: 2018-09-24T13:45:58.339382176-04:00
+    description: A Helm chart to deploy the Astronomer module
+    digest: 31bd8ee360f2cab8a3e6ad08eab3006999076740d07cc2b9d842a41546a0abcb
+    keywords:
+    - astronomer
+    name: astronomer
+    urls:
+    - https://helm.astronomer.io/astronomer-0.6.0-rc.1.tgz
+    version: 0.6.0-rc.1
+  - created: 2018-09-24T13:45:58.338971107-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: 482c5bb09529ece11617766198191f772c6e26aa32a416136d677ed09dbf3b7a
     keywords:
@@ -596,7 +623,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.5.1.tgz
     version: 0.5.1
-  - created: 2018-09-24T09:29:04.664977045-04:00
+  - created: 2018-09-24T13:45:58.338564391-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: c6ff3f4c786b7a3eb30dd69ed7b1f17f3c9ba2b05a909ebb2fe6d517d9784ea8
     keywords:
@@ -605,7 +632,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.5.1-rc.9.tgz
     version: 0.5.1-rc.9
-  - created: 2018-09-24T09:29:04.664460106-04:00
+  - created: 2018-09-24T13:45:58.33815937-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: 12d5dd503ee34400f47a087a1b7d24afe47b7bd93fc2722620372e624239baa3
     keywords:
@@ -614,7 +641,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.5.1-rc.8.tgz
     version: 0.5.1-rc.8
-  - created: 2018-09-24T09:29:04.663929057-04:00
+  - created: 2018-09-24T13:45:58.337750867-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: 33e0a076146ac468d33bbd6510bb0e2cacadce134a114dcc1e897f0d078eb846
     keywords:
@@ -623,7 +650,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.5.1-rc.7.tgz
     version: 0.5.1-rc.7
-  - created: 2018-09-24T09:29:04.663375136-04:00
+  - created: 2018-09-24T13:45:58.337341002-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: cfbd8a06362ff34ee2afde1f69113c36dde810b47cc941856b951a3c45880e09
     keywords:
@@ -632,7 +659,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.5.1-rc.6.tgz
     version: 0.5.1-rc.6
-  - created: 2018-09-24T09:29:04.662394007-04:00
+  - created: 2018-09-24T13:45:58.336932049-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: 70229147e6e9e40b6794489fe1dd78efd36145b32daf4d4b3b41ef0b416b17c6
     keywords:
@@ -641,7 +668,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.5.1-rc.5.tgz
     version: 0.5.1-rc.5
-  - created: 2018-09-24T09:29:04.661613344-04:00
+  - created: 2018-09-24T13:45:58.336133372-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: 113d83c0ed5150740a5b410b908b3f1d6a6764408b4a88a1fc85c0b322185c87
     keywords:
@@ -650,7 +677,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.5.1-rc.4.tgz
     version: 0.5.1-rc.4
-  - created: 2018-09-24T09:29:04.661135921-04:00
+  - created: 2018-09-24T13:45:58.335326202-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: 8e63be57f3a8c070a43a0ffb35f53086b5f60f0092674f5f95e07c10ef4eab69
     keywords:
@@ -659,7 +686,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.5.1-rc.3.tgz
     version: 0.5.1-rc.3
-  - created: 2018-09-24T09:29:04.660627558-04:00
+  - created: 2018-09-24T13:45:58.33491163-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: dd4a5ca36c370186f28f645b1a105f8a0c70a53ac56fc8fad73f59d6235cdb6a
     keywords:
@@ -668,7 +695,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.5.1-rc.2.tgz
     version: 0.5.1-rc.2
-  - created: 2018-09-24T09:29:04.660150681-04:00
+  - created: 2018-09-24T13:45:58.334479514-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: 6bb2d75faaddb05549dcc59210c76eea1b0cb024a3e733b1001246daaeabfdd9
     keywords:
@@ -677,7 +704,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.5.1-rc.1.tgz
     version: 0.5.1-rc.1
-  - created: 2018-09-24T09:29:04.659663258-04:00
+  - created: 2018-09-24T13:45:58.334064899-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: e0481d3b2641ac8314614bcfd98976f59d05882d76874d5fd5b42fcafc05968a
     keywords:
@@ -686,7 +713,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.5.0.tgz
     version: 0.5.0
-  - created: 2018-09-24T09:29:04.656264042-04:00
+  - created: 2018-09-24T13:45:58.331162604-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: 54a655d906842c80eba3e5a330991e7c398d200d9c8ad3b3261e01f95d06d517
     keywords:
@@ -695,7 +722,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.5.0-rc.21.tgz
     version: 0.5.0-rc.21
-  - created: 2018-09-24T09:29:04.655791074-04:00
+  - created: 2018-09-24T13:45:58.330748864-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: c66471bf063ee8ebcf1dad2a689c12dfe9e68bddd6b3f62a4c4f42ef1c73f138
     keywords:
@@ -704,7 +731,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.5.0-rc.20.tgz
     version: 0.5.0-rc.20
-  - created: 2018-09-24T09:29:04.654828008-04:00
+  - created: 2018-09-24T13:45:58.329920793-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: a0e3b9f5c30bc9582459a13badf4e21fd5aa604d78ed8ca5c298e5a4adcc645c
     keywords:
@@ -713,7 +740,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.5.0-rc.19.tgz
     version: 0.5.0-rc.19
-  - created: 2018-09-24T09:29:04.654353122-04:00
+  - created: 2018-09-24T13:45:58.329506292-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: 75939e26dc0e8057bd14766fe146edeaacf6bfe6ae5411a3a9c02e2db1279764
     keywords:
@@ -722,7 +749,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.5.0-rc.18.tgz
     version: 0.5.0-rc.18
-  - created: 2018-09-24T09:29:04.653867798-04:00
+  - created: 2018-09-24T13:45:58.329096923-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: 3ebad1290f3ae0ab4959d7d6298d7731f6e92941d87c0c86a4f9077d90fbc5ce
     keywords:
@@ -731,7 +758,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.5.0-rc.17.tgz
     version: 0.5.0-rc.17
-  - created: 2018-09-24T09:29:04.653373547-04:00
+  - created: 2018-09-24T13:45:58.328674525-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: e7948bad12b1b9e0ee961af29be3ad3086de0fc5336190e2e47bac7465216a81
     keywords:
@@ -740,7 +767,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.5.0-rc.16.tgz
     version: 0.5.0-rc.16
-  - created: 2018-09-24T09:29:04.652887716-04:00
+  - created: 2018-09-24T13:45:58.328260227-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: 9054e5edaaabfd4097ad746e28fbb6328ea390ab45c100516ba66e69f3aa778d
     keywords:
@@ -749,7 +776,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.5.0-rc.15.tgz
     version: 0.5.0-rc.15
-  - created: 2018-09-24T09:29:04.652392398-04:00
+  - created: 2018-09-24T13:45:58.327843873-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: 4ce30c110c295c9cbc195db4f07b5ade8b12d4ae03a7c2e7e21e7b3d550847bb
     keywords:
@@ -758,7 +785,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.5.0-rc.14.tgz
     version: 0.5.0-rc.14
-  - created: 2018-09-24T09:29:04.651891254-04:00
+  - created: 2018-09-24T13:45:58.327401271-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: 209d16ffd5b7edf37c97d1828ce5a6bbca8747dc6a60ee17a0ddbb0df8a3e3d0
     keywords:
@@ -767,7 +794,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.5.0-rc.13.tgz
     version: 0.5.0-rc.13
-  - created: 2018-09-24T09:29:04.651308137-04:00
+  - created: 2018-09-24T13:45:58.326977222-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: c57b7b49d3985328a3245b64e522dd5f4879fe83ec2576744d3bf6d6b5ff363a
     keywords:
@@ -776,7 +803,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.5.0-rc.12.tgz
     version: 0.5.0-rc.12
-  - created: 2018-09-24T09:29:04.650499985-04:00
+  - created: 2018-09-24T13:45:58.326553269-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: 1a95d85863a07da00cc20f245ecf51b7e81b3ce8e3c3c1b08feeb57ebaede91e
     keywords:
@@ -785,7 +812,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.5.0-rc.10.tgz
     version: 0.5.0-rc.10
-  - created: 2018-09-24T09:29:04.659185765-04:00
+  - created: 2018-09-24T13:45:58.33364713-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: d825a3944510d6cd4449d8424833e044e7b45d10b3c24c2b55e297c8a3dd9fa7
     keywords:
@@ -794,7 +821,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.5.0-rc.9.tgz
     version: 0.5.0-rc.9
-  - created: 2018-09-24T09:29:04.658710188-04:00
+  - created: 2018-09-24T13:45:58.333225773-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: b5fc9c4bd2791a7e320204eaef41923f3b1508b9bb6652765b84a4d4ff16f7e6
     keywords:
@@ -803,7 +830,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.5.0-rc.7.tgz
     version: 0.5.0-rc.7
-  - created: 2018-09-24T09:29:04.658218514-04:00
+  - created: 2018-09-24T13:45:58.332809436-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: a9c4b882942a18c1f3fcf39c0985edea09de50e6c421540ddbef82f22b497389
     keywords:
@@ -812,7 +839,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.5.0-rc.6.tgz
     version: 0.5.0-rc.6
-  - created: 2018-09-24T09:29:04.65773962-04:00
+  - created: 2018-09-24T13:45:58.332400686-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: 3e724dace5106d1d7b9fa8f223d6c27b633f41782a64e6122cf20c60832972d0
     keywords:
@@ -821,7 +848,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.5.0-rc.5.tgz
     version: 0.5.0-rc.5
-  - created: 2018-09-24T09:29:04.65725478-04:00
+  - created: 2018-09-24T13:45:58.33198591-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: 1a8f9463c7ec489d5f0ba7dbe8ac85a5e7af587ac78c9699da26e6fe6a76db89
     keywords:
@@ -830,7 +857,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.5.0-rc.4.tgz
     version: 0.5.0-rc.4
-  - created: 2018-09-24T09:29:04.656739557-04:00
+  - created: 2018-09-24T13:45:58.331575158-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: 5ac2e4b404e56c3bc951eaa100fd227ec458c6bc2d31bfbfb5098fd5ef500f4e
     keywords:
@@ -839,7 +866,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.5.0-rc.3.tgz
     version: 0.5.0-rc.3
-  - created: 2018-09-24T09:29:04.655317461-04:00
+  - created: 2018-09-24T13:45:58.330330109-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: f02c6fcae34a77c54057172c923db91158765ac7270a45c0d3f6397bb7a81742
     keywords:
@@ -848,7 +875,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.5.0-rc.2.tgz
     version: 0.5.0-rc.2
-  - created: 2018-09-24T09:29:04.649340183-04:00
+  - created: 2018-09-24T13:45:58.325822517-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: af841dc7542d63401642b1d8794afa2fbcda84c6dd1914ddf69304c3859531f3
     keywords:
@@ -857,7 +884,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.5.0-rc.1.tgz
     version: 0.5.0-rc.1
-  - created: 2018-09-24T09:29:04.648801737-04:00
+  - created: 2018-09-24T13:45:58.325005221-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: 329d147d1d728464876c3abf59f12406267aef29f1769ff0eb2f203234ce41a3
     keywords:
@@ -866,7 +893,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.4.2-rc.6.tgz
     version: 0.4.2-rc.6
-  - created: 2018-09-24T09:29:04.648010149-04:00
+  - created: 2018-09-24T13:45:58.324584866-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: 3621074e395af050a106158e418a63679bffc0a7e365380ec3757b1fffa1ca99
     keywords:
@@ -875,7 +902,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.4.2-rc.5.tgz
     version: 0.4.2-rc.5
-  - created: 2018-09-24T09:29:04.647250296-04:00
+  - created: 2018-09-24T13:45:58.32416821-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: 94be6e415acab5623363429735f8cdce12b185c104bc810c4d66272686a9540b
     keywords:
@@ -884,7 +911,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.4.2-rc.4.tgz
     version: 0.4.2-rc.4
-  - created: 2018-09-24T09:29:04.646655407-04:00
+  - created: 2018-09-24T13:45:58.323746183-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: 2e289136cf0c0b20bb3101914ad45b054748ba446c847825999261f591983f06
     keywords:
@@ -893,7 +920,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.4.2-rc.3.tgz
     version: 0.4.2-rc.3
-  - created: 2018-09-24T09:29:04.646084974-04:00
+  - created: 2018-09-24T13:45:58.323323234-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: a8bdd9fb0f823ceea2fb15b070ba22cddbd263c1ce194e2a368ca58765a17671
     keywords:
@@ -902,7 +929,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.4.2-rc.2.tgz
     version: 0.4.2-rc.2
-  - created: 2018-09-24T09:29:04.645605559-04:00
+  - created: 2018-09-24T13:45:58.322910021-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: 0e696be0c236ac887c60bebd772a4310a04c82e03c4f47aed5161b4dbfdf64d9
     keywords:
@@ -911,7 +938,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.4.2-rc.1.tgz
     version: 0.4.2-rc.1
-  - created: 2018-09-24T09:29:04.645114991-04:00
+  - created: 2018-09-24T13:45:58.322493721-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: 773abf0710a800dffe3cd9038da863a5ca5497891250a579a36d209384fb214e
     keywords:
@@ -920,7 +947,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.4.1.tgz
     version: 0.4.1
-  - created: 2018-09-24T09:29:04.644674137-04:00
+  - created: 2018-09-24T13:45:58.322113418-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: 00433e7007ffc4de601608f31da29b5f0387891d0c911e1ce6e7f97aac7b479a
     keywords:
@@ -929,7 +956,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.4.0.tgz
     version: 0.4.0
-  - created: 2018-09-24T09:29:04.644241189-04:00
+  - created: 2018-09-24T13:45:58.321736165-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: 6607cdf22b03a8f46c23e51151a8765d4e581debc3cdcddc2f5f68286c0b6f4e
     keywords:
@@ -938,7 +965,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.4.0-rc.5.tgz
     version: 0.4.0-rc.5
-  - created: 2018-09-24T09:29:04.643798795-04:00
+  - created: 2018-09-24T13:45:58.32135343-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: 74866f28a9e42921dd505d2ad4841a071e87b5e3f88671b7338f629de45df063
     keywords:
@@ -947,7 +974,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.4.0-rc.2.tgz
     version: 0.4.0-rc.2
-  - created: 2018-09-24T09:29:04.643354886-04:00
+  - created: 2018-09-24T13:45:58.320969602-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: 446d80be8c8bf194f4ef2d2f86803294ec6463c062ee2bb36cf7f52dc2324bed
     keywords:
@@ -956,7 +983,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.3.3-rc.3.tgz
     version: 0.3.3-rc.3
-  - created: 2018-09-24T09:29:04.642921234-04:00
+  - created: 2018-09-24T13:45:58.320575584-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: 9a6b76fcd547936acb89130529d5d6f8a8f4687584bc2788c7f90150503831c2
     keywords:
@@ -965,7 +992,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.3.3-rc.2.tgz
     version: 0.3.3-rc.2
-  - created: 2018-09-24T09:29:04.642489536-04:00
+  - created: 2018-09-24T13:45:58.320183917-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: 51574f74f5251f326c4c0c48116dd166d54ae2e88bdc68e80d1f72773d9598fd
     keywords:
@@ -974,7 +1001,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.3.2.tgz
     version: 0.3.2
-  - created: 2018-09-24T09:29:04.642065387-04:00
+  - created: 2018-09-24T13:45:58.319803311-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: d07443b829921a8ed07d7db86dbd7aeca9b0c50ab093aca832a8b6a886304b53
     keywords:
@@ -983,7 +1010,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.3.2-rc.3.tgz
     version: 0.3.2-rc.3
-  - created: 2018-09-24T09:29:04.641615656-04:00
+  - created: 2018-09-24T13:45:58.319431863-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: 2c1123cd169705e48895b93cdeb7d64a931741738b9fd2f2713a7292f8a01ad9
     keywords:
@@ -992,7 +1019,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.3.2-rc.2.tgz
     version: 0.3.2-rc.2
-  - created: 2018-09-24T09:29:04.641176022-04:00
+  - created: 2018-09-24T13:45:58.319059273-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: 465e1d5f90b7028111d8265aff5eb034a727a452bff9c298a03b2f118cd17385
     keywords:
@@ -1001,7 +1028,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.3.2-rc.1.tgz
     version: 0.3.2-rc.1
-  - created: 2018-09-24T09:29:04.640743261-04:00
+  - created: 2018-09-24T13:45:58.318686915-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: 4dbae1c70943625d5826d2c343d60da4dcd28cb137cbaea63dd0ff4a881a77b8
     keywords:
@@ -1010,7 +1037,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.3.1.tgz
     version: 0.3.1
-  - created: 2018-09-24T09:29:04.640358146-04:00
+  - created: 2018-09-24T13:45:58.318341794-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: 08eb0d32cf3982b737b33d7b99d6a6ca2f39cdae852cecc5035272d521a7dd75
     keywords:
@@ -1019,7 +1046,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.3.0.tgz
     version: 0.3.0
-  - created: 2018-09-24T09:29:04.638916506-04:00
+  - created: 2018-09-24T13:45:58.317030862-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: b43d02ffcd056d29a669ba1e52a7cff66c8796c2be179026dddfee3d02000664
     keywords:
@@ -1028,7 +1055,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.3.0-rc.14.tgz
     version: 0.3.0-rc.14
-  - created: 2018-09-24T09:29:04.638503099-04:00
+  - created: 2018-09-24T13:45:58.316679848-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: f5e00f7563cd0c0c055e62b7cdc7a41f3b3612334ddfc650ed478a3af30fd15a
     keywords:
@@ -1037,7 +1064,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.3.0-rc.13.tgz
     version: 0.3.0-rc.13
-  - created: 2018-09-24T09:29:04.637608731-04:00
+  - created: 2018-09-24T13:45:58.316327567-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: b2f1fcd214bb80a04748a4ff110860a21b65df3fe8f228ecc08bfbd9589e8608
     keywords:
@@ -1046,7 +1073,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.3.0-rc.12.tgz
     version: 0.3.0-rc.12
-  - created: 2018-09-24T09:29:04.636821448-04:00
+  - created: 2018-09-24T13:45:58.315398693-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: 9070d3040e54310d403d423dcc671c0aa09741cb627a261fca2731f757ddac6a
     keywords:
@@ -1055,7 +1082,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.3.0-rc.10.tgz
     version: 0.3.0-rc.10
-  - created: 2018-09-24T09:29:04.639971376-04:00
+  - created: 2018-09-24T13:45:58.317988046-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: 9055d7dac5cb737ea553f77eb626916526d6dd60b7db8f9754c6044d0955d5a3
     keywords:
@@ -1064,7 +1091,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.3.0-rc.9.tgz
     version: 0.3.0-rc.9
-  - created: 2018-09-24T09:29:04.639625422-04:00
+  - created: 2018-09-24T13:45:58.317660644-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: 736e9c106b4eb9608508f6b298836e1523ea5b30138b43ed2301186c8c2c701c
     keywords:
@@ -1073,7 +1100,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.3.0-rc.8.tgz
     version: 0.3.0-rc.8
-  - created: 2018-09-24T09:29:04.639283116-04:00
+  - created: 2018-09-24T13:45:58.317342318-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: ebb1fd9409fbccdf00439094c9e9b273c3100d7b7c7eb761c39f10807c38913c
     keywords:
@@ -1082,7 +1109,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.3.0-rc.6.tgz
     version: 0.3.0-rc.6
-  - created: 2018-09-24T09:29:04.636451136-04:00
+  - created: 2018-09-24T13:45:58.314737379-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: ee40b8b72b0678a3289aed7a1546d560a69d7ed7647d2ab30bfc84616c452444
     keywords:
@@ -1091,7 +1118,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.2.1.tgz
     version: 0.2.1
-  - created: 2018-09-24T09:29:04.636150778-04:00
+  - created: 2018-09-24T13:45:58.314473539-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: 0b0ec44a510a4d69c531d3f7d9088da1a0f65b0ebe2c75f5a0290a75ba7e7dde
     keywords:
@@ -1100,7 +1127,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.2.0.tgz
     version: 0.2.0
-  - created: 2018-09-24T09:29:04.635857189-04:00
+  - created: 2018-09-24T13:45:58.314221926-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: 87f9c09c84888330029796b40346f224b6ed98df9da6bdaa52cbd9cca91a0539
     keywords:
@@ -1109,7 +1136,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.2.0-rc.1.tgz
     version: 0.2.0-rc.1
-  - created: 2018-09-24T09:29:04.63554542-04:00
+  - created: 2018-09-24T13:45:58.313961572-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: 5ae6ac620ed58fbd3bd83e1c93d74206880a776237a2bb58e8f3eb65da292330
     keywords:
@@ -1118,7 +1145,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.1.4.tgz
     version: 0.1.4
-  - created: 2018-09-24T09:29:04.635255297-04:00
+  - created: 2018-09-24T13:45:58.313722494-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: 9ddbf70d71e22340b55ef2a35aeb0f40ff5c710018575ba90ddc2f396d4034d3
     keywords:
@@ -1127,7 +1154,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.1.3.tgz
     version: 0.1.3
-  - created: 2018-09-24T09:29:04.634965241-04:00
+  - created: 2018-09-24T13:45:58.313477967-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: d0cab45a03e1f9563e9d2054fa4ca3b1b805dc7641b04c857821b704a84f7298
     keywords:
@@ -1136,7 +1163,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.1.2.tgz
     version: 0.1.2
-  - created: 2018-09-24T09:29:04.634665139-04:00
+  - created: 2018-09-24T13:45:58.313261492-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: d092b8f259c95e3443ce7a3f59132e8924c164648f9f01e84934c272b8859c2e
     keywords:
@@ -1145,7 +1172,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.1.1.tgz
     version: 0.1.1
-  - created: 2018-09-24T09:29:04.634383537-04:00
+  - created: 2018-09-24T13:45:58.313041072-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: a39934b6607bf3c0fefffd71c34bc0e12528404cc53c32b1f2ee63ae2bfbe12d
     keywords:
@@ -1154,7 +1181,7 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.1.0.tgz
     version: 0.1.0
-  - created: 2018-09-24T09:29:04.63406704-04:00
+  - created: 2018-09-24T13:45:58.312823364-04:00
     description: A Helm chart to deploy the Astronomer module
     digest: 8aca4d4563666f8916101da4a7aad1604fe7e1dc932b4ce0c5c9d58cb490a5c6
     keywords:
@@ -1163,17 +1190,28 @@ entries:
     urls:
     - https://helm.astronomer.io/astronomer-0.0.1.tgz
     version: 0.0.1
-  - created: 2018-09-24T09:29:04.633751171-04:00
-    description: A Helm chart to deploy the Astronomer module
-    digest: cb8ad32b9f7b61d66941bbc1dbc6b0d4c5e9d2292cd908a3f9822ef87b52cf55
+  grafana:
+  - created: 2018-09-24T13:45:58.350867154-04:00
+    description: Helm chart to deploy the Astronomer Platform Grafana module
+    digest: 43d3bf6ba0808847f7fe75ae7c89d12a74c488e2ffcc56c69ff6de132844d2cb
     keywords:
     - astronomer
-    name: astronomer
+    - grafana
+    name: grafana
     urls:
-    - https://helm.astronomer.io/astronomer-0.0.0.tgz
-    version: 0.0.0
-  grafana:
-  - created: 2018-09-24T09:29:04.678449304-04:00
+    - https://helm.astronomer.io/grafana-0.6.0-rc.2.tgz
+    version: 0.6.0-rc.2
+  - created: 2018-09-24T13:45:58.350610702-04:00
+    description: Helm chart to deploy the Astronomer Platform Grafana module
+    digest: 60e40f4c90046163839c02de23a44baca2daa940e144b72e1df751cb647e3271
+    keywords:
+    - astronomer
+    - grafana
+    name: grafana
+    urls:
+    - https://helm.astronomer.io/grafana-0.6.0-rc.1.tgz
+    version: 0.6.0-rc.1
+  - created: 2018-09-24T13:45:58.350408123-04:00
     description: Helm chart to deploy the Astronomer Platform Grafana module
     digest: bbdfae424eb3820a2d8f92607e6ed00b63340fee6f046b6b20a6c5ad0ff0d8ab
     keywords:
@@ -1183,7 +1221,7 @@ entries:
     urls:
     - https://helm.astronomer.io/grafana-0.5.1.tgz
     version: 0.5.1
-  - created: 2018-09-24T09:29:04.678196273-04:00
+  - created: 2018-09-24T13:45:58.350205575-04:00
     description: Helm chart to deploy the Astronomer Platform Grafana module
     digest: 36e71c96947e17e33ac2299f65ff5823371638499c369c8c0888f2fa3ccdf110
     keywords:
@@ -1193,7 +1231,7 @@ entries:
     urls:
     - https://helm.astronomer.io/grafana-0.5.1-rc.9.tgz
     version: 0.5.1-rc.9
-  - created: 2018-09-24T09:29:04.677951725-04:00
+  - created: 2018-09-24T13:45:58.350001134-04:00
     description: Helm chart to deploy the Astronomer Platform Grafana module
     digest: 8b4edc4ff7044c52dc383b674adea5e3fa39c4c0d2a638d2cc8342e2a447cbfa
     keywords:
@@ -1203,7 +1241,7 @@ entries:
     urls:
     - https://helm.astronomer.io/grafana-0.5.1-rc.8.tgz
     version: 0.5.1-rc.8
-  - created: 2018-09-24T09:29:04.677706321-04:00
+  - created: 2018-09-24T13:45:58.349797175-04:00
     description: Helm chart to deploy the Astronomer Platform Grafana module
     digest: b9b0fdf5eb659e5bcc264f54e8413c9cefe3c53c8a4e8d3c68188600a3cd46ad
     keywords:
@@ -1213,7 +1251,7 @@ entries:
     urls:
     - https://helm.astronomer.io/grafana-0.5.1-rc.7.tgz
     version: 0.5.1-rc.7
-  - created: 2018-09-24T09:29:04.677461983-04:00
+  - created: 2018-09-24T13:45:58.349593929-04:00
     description: Helm chart to deploy the Astronomer Platform Grafana module
     digest: e8d86ec3876c95349684a495d7250089170cfd09921a9a5ce3de943eac7d3d00
     keywords:
@@ -1223,7 +1261,7 @@ entries:
     urls:
     - https://helm.astronomer.io/grafana-0.5.1-rc.6.tgz
     version: 0.5.1-rc.6
-  - created: 2018-09-24T09:29:04.677218699-04:00
+  - created: 2018-09-24T13:45:58.349394221-04:00
     description: Helm chart to deploy the Astronomer Platform Grafana module
     digest: f1e8fb0fc2daf51bec7be809c4f48fd6c301883ee2788cb9bfdec963c8693cb2
     keywords:
@@ -1233,7 +1271,7 @@ entries:
     urls:
     - https://helm.astronomer.io/grafana-0.5.1-rc.5.tgz
     version: 0.5.1-rc.5
-  - created: 2018-09-24T09:29:04.676969475-04:00
+  - created: 2018-09-24T13:45:58.349185415-04:00
     description: Helm chart to deploy the Astronomer Platform Grafana module
     digest: e2423da997a95429eca33160b331977870149f2ac4b8c2bf95d7068f3eb41a48
     keywords:
@@ -1243,7 +1281,7 @@ entries:
     urls:
     - https://helm.astronomer.io/grafana-0.5.1-rc.4.tgz
     version: 0.5.1-rc.4
-  - created: 2018-09-24T09:29:04.676723671-04:00
+  - created: 2018-09-24T13:45:58.348982694-04:00
     description: Helm chart to deploy the Astronomer Platform Grafana module
     digest: 802564d82b2537cde6bad8470303e81e9c9eba04d1ffbef4227383d62b3a13a0
     keywords:
@@ -1253,7 +1291,7 @@ entries:
     urls:
     - https://helm.astronomer.io/grafana-0.5.1-rc.3.tgz
     version: 0.5.1-rc.3
-  - created: 2018-09-24T09:29:04.676475712-04:00
+  - created: 2018-09-24T13:45:58.348779599-04:00
     description: Helm chart to deploy the Astronomer Platform Grafana module
     digest: 8cdde56ffd5a59123a042fd4f184b9af14a701c5695d3bb6798cdbaa5d8bff44
     keywords:
@@ -1263,7 +1301,7 @@ entries:
     urls:
     - https://helm.astronomer.io/grafana-0.5.1-rc.2.tgz
     version: 0.5.1-rc.2
-  - created: 2018-09-24T09:29:04.676223493-04:00
+  - created: 2018-09-24T13:45:58.348576616-04:00
     description: Helm chart to deploy the Astronomer Platform Grafana module
     digest: a9d5ecb1d2641a5da2877300489950e970582fcaf8f4a2708b785746250a29a4
     keywords:
@@ -1273,7 +1311,7 @@ entries:
     urls:
     - https://helm.astronomer.io/grafana-0.5.1-rc.1.tgz
     version: 0.5.1-rc.1
-  - created: 2018-09-24T09:29:04.67597958-04:00
+  - created: 2018-09-24T13:45:58.348375242-04:00
     description: Helm chart to deploy the Astronomer Platform Grafana module
     digest: 360b029e418c5556f8ee235a0cc1eb607f5362b9e4667bfaeb8c55cc27faa911
     keywords:
@@ -1283,7 +1321,7 @@ entries:
     urls:
     - https://helm.astronomer.io/grafana-0.5.0.tgz
     version: 0.5.0
-  - created: 2018-09-24T09:29:04.673342729-04:00
+  - created: 2018-09-24T13:45:58.346884426-04:00
     description: Helm chart to deploy the Astronomer Platform Grafana module
     digest: 88a2aa1c291cb19ca048094dc53d58ee8c6fa8a6623d170a369d32dde1a4dfb9
     keywords:
@@ -1293,7 +1331,7 @@ entries:
     urls:
     - https://helm.astronomer.io/grafana-0.5.0-rc.21.tgz
     version: 0.5.0-rc.21
-  - created: 2018-09-24T09:29:04.673100082-04:00
+  - created: 2018-09-24T13:45:58.346680077-04:00
     description: Helm chart to deploy the Astronomer Platform Grafana module
     digest: 827a6373e26f02f20ca27e64ff73a080016221364b3d3c18ddd18ba9ea1b9fe7
     keywords:
@@ -1303,7 +1341,7 @@ entries:
     urls:
     - https://helm.astronomer.io/grafana-0.5.0-rc.20.tgz
     version: 0.5.0-rc.20
-  - created: 2018-09-24T09:29:04.672614422-04:00
+  - created: 2018-09-24T13:45:58.346256139-04:00
     description: Helm chart to deploy the Astronomer Platform Grafana module
     digest: 5507390cccb71f0c1f4366e9a80693f8830ed13f301a69e847ed16f0e87f599a
     keywords:
@@ -1313,7 +1351,7 @@ entries:
     urls:
     - https://helm.astronomer.io/grafana-0.5.0-rc.19.tgz
     version: 0.5.0-rc.19
-  - created: 2018-09-24T09:29:04.672367955-04:00
+  - created: 2018-09-24T13:45:58.346006112-04:00
     description: Helm chart to deploy the Astronomer Platform Grafana module
     digest: 62b673a1219445b6cb92eb39ae9887a2208c92d0ff542ab3cdb36f7d1c1a048f
     keywords:
@@ -1323,7 +1361,7 @@ entries:
     urls:
     - https://helm.astronomer.io/grafana-0.5.0-rc.18.tgz
     version: 0.5.0-rc.18
-  - created: 2018-09-24T09:29:04.672122689-04:00
+  - created: 2018-09-24T13:45:58.34500902-04:00
     description: Helm chart to deploy the Astronomer Platform Grafana module
     digest: 506171aed4b27617696eca8d8b267494ea8eefd6e082bacfa629772518bad1fe
     keywords:
@@ -1333,7 +1371,7 @@ entries:
     urls:
     - https://helm.astronomer.io/grafana-0.5.0-rc.17.tgz
     version: 0.5.0-rc.17
-  - created: 2018-09-24T09:29:04.671880728-04:00
+  - created: 2018-09-24T13:45:58.344726322-04:00
     description: Helm chart to deploy the Astronomer Platform Grafana module
     digest: 6a7b174a8f437760414f0fa31c455b71770bb49f08ec7a5d6abc624b4b01e816
     keywords:
@@ -1343,7 +1381,7 @@ entries:
     urls:
     - https://helm.astronomer.io/grafana-0.5.0-rc.16.tgz
     version: 0.5.0-rc.16
-  - created: 2018-09-24T09:29:04.671634079-04:00
+  - created: 2018-09-24T13:45:58.344523538-04:00
     description: Helm chart to deploy the Astronomer Platform Grafana module
     digest: d12e709e55ae037f3d0da4b80edf730621cd139afea4a378471c5e26f3cd2ea9
     keywords:
@@ -1353,7 +1391,7 @@ entries:
     urls:
     - https://helm.astronomer.io/grafana-0.5.0-rc.15.tgz
     version: 0.5.0-rc.15
-  - created: 2018-09-24T09:29:04.671365572-04:00
+  - created: 2018-09-24T13:45:58.34431751-04:00
     description: Helm chart to deploy the Astronomer Platform Grafana module
     digest: 6981f59543f5a6b669bc04c82f8f89f5c60a24de87af79ee4ef4bf2f4d9d1a7b
     keywords:
@@ -1363,7 +1401,7 @@ entries:
     urls:
     - https://helm.astronomer.io/grafana-0.5.0-rc.14.tgz
     version: 0.5.0-rc.14
-  - created: 2018-09-24T09:29:04.671122623-04:00
+  - created: 2018-09-24T13:45:58.344113291-04:00
     description: Helm chart to deploy the Astronomer Platform Grafana module
     digest: b97898b6b86300b145f300601aa0d9fb8e34dffebc4527c8c481f4e496c35603
     keywords:
@@ -1373,7 +1411,7 @@ entries:
     urls:
     - https://helm.astronomer.io/grafana-0.5.0-rc.13.tgz
     version: 0.5.0-rc.13
-  - created: 2018-09-24T09:29:04.670876843-04:00
+  - created: 2018-09-24T13:45:58.343889573-04:00
     description: Helm chart to deploy the Astronomer Platform Grafana module
     digest: 87b72f4591a570fc490917148089f330356e962012241c217a20a738cfab0b74
     keywords:
@@ -1383,7 +1421,7 @@ entries:
     urls:
     - https://helm.astronomer.io/grafana-0.5.0-rc.12.tgz
     version: 0.5.0-rc.12
-  - created: 2018-09-24T09:29:04.670624751-04:00
+  - created: 2018-09-24T13:45:58.343685571-04:00
     description: Helm chart to deploy the Astronomer Platform Grafana module
     digest: 736a93288977d216f22ea0da608cfa5c6647b62c5db990f76ebee91b4b1d1478
     keywords:
@@ -1393,7 +1431,7 @@ entries:
     urls:
     - https://helm.astronomer.io/grafana-0.5.0-rc.10.tgz
     version: 0.5.0-rc.10
-  - created: 2018-09-24T09:29:04.67573074-04:00
+  - created: 2018-09-24T13:45:58.34817176-04:00
     description: Helm chart to deploy the Astronomer Platform Grafana module
     digest: d6ebe08aa193e8b9de7088ce847be9525d09863eab08a69ce32d9255a6f3209c
     keywords:
@@ -1403,7 +1441,7 @@ entries:
     urls:
     - https://helm.astronomer.io/grafana-0.5.0-rc.9.tgz
     version: 0.5.0-rc.9
-  - created: 2018-09-24T09:29:04.675484425-04:00
+  - created: 2018-09-24T13:45:58.347967213-04:00
     description: Helm chart to deploy the Astronomer Platform Grafana module
     digest: b3fb6c01639b266ee7d6f20a4420193fb6df894d7541273910cdbe28e70afca3
     keywords:
@@ -1413,7 +1451,7 @@ entries:
     urls:
     - https://helm.astronomer.io/grafana-0.5.0-rc.7.tgz
     version: 0.5.0-rc.7
-  - created: 2018-09-24T09:29:04.675233252-04:00
+  - created: 2018-09-24T13:45:58.347758789-04:00
     description: Helm chart to deploy the Astronomer Platform Grafana module
     digest: 44461b3d4dc30c61034966b4fdfdfac19d2a6bc5d0069aa465be9c09810983b8
     keywords:
@@ -1423,7 +1461,7 @@ entries:
     urls:
     - https://helm.astronomer.io/grafana-0.5.0-rc.6.tgz
     version: 0.5.0-rc.6
-  - created: 2018-09-24T09:29:04.674979844-04:00
+  - created: 2018-09-24T13:45:58.347549208-04:00
     description: Helm chart to deploy the Astronomer Platform Grafana module
     digest: fd084b7a898ac82c7ed703b342eec3504229e7e518089441b099e5224cab2528
     keywords:
@@ -1433,7 +1471,7 @@ entries:
     urls:
     - https://helm.astronomer.io/grafana-0.5.0-rc.5.tgz
     version: 0.5.0-rc.5
-  - created: 2018-09-24T09:29:04.674699788-04:00
+  - created: 2018-09-24T13:45:58.347294779-04:00
     description: Helm chart to deploy the Astronomer Platform Grafana module
     digest: 78925638610c54dfca0e84a1953add3b95e4d4b678974676e0d74d6e3c97fef1
     keywords:
@@ -1443,7 +1481,7 @@ entries:
     urls:
     - https://helm.astronomer.io/grafana-0.5.0-rc.4.tgz
     version: 0.5.0-rc.4
-  - created: 2018-09-24T09:29:04.674150035-04:00
+  - created: 2018-09-24T13:45:58.347089339-04:00
     description: Helm chart to deploy the Astronomer Platform Grafana module
     digest: 030ca6701e7cac1979302c7d3f864511a3861b0fb5ba0cd0e0645214df47971f
     keywords:
@@ -1453,7 +1491,7 @@ entries:
     urls:
     - https://helm.astronomer.io/grafana-0.5.0-rc.3.tgz
     version: 0.5.0-rc.3
-  - created: 2018-09-24T09:29:04.672857137-04:00
+  - created: 2018-09-24T13:45:58.346471329-04:00
     description: Helm chart to deploy the Astronomer Platform Grafana module
     digest: f50ba85030d5039292dd65ea86324958e21c2bed6be69e4eb5760bbc6b647924
     keywords:
@@ -1463,7 +1501,7 @@ entries:
     urls:
     - https://helm.astronomer.io/grafana-0.5.0-rc.2.tgz
     version: 0.5.0-rc.2
-  - created: 2018-09-24T09:29:04.670364611-04:00
+  - created: 2018-09-24T13:45:58.343482401-04:00
     description: Helm chart to deploy the Astronomer Platform Grafana module
     digest: f4365d678456414c7b557824e7ca45ad8c4368577b7c8fb6cbc0f97c81a19d94
     keywords:
@@ -1473,7 +1511,7 @@ entries:
     urls:
     - https://helm.astronomer.io/grafana-0.5.0-rc.1.tgz
     version: 0.5.0-rc.1
-  - created: 2018-09-24T09:29:04.670112934-04:00
+  - created: 2018-09-24T13:45:58.343273487-04:00
     description: Helm chart to deploy the Astronomer Platform Grafana module
     digest: 1d3a9edcbc2e4ab5ccbb4c6aee580adbe8056bb27f43c3bc314d3a27dd150510
     keywords:
@@ -1483,7 +1521,7 @@ entries:
     urls:
     - https://helm.astronomer.io/grafana-0.4.2-rc.6.tgz
     version: 0.4.2-rc.6
-  - created: 2018-09-24T09:29:04.669867001-04:00
+  - created: 2018-09-24T13:45:58.343072408-04:00
     description: Helm chart to deploy the Astronomer Platform Grafana module
     digest: 0948292e9a117e6d8fcb4db550a95890000c5d53c0aa6b90bf50663c93a42ef0
     keywords:
@@ -1493,7 +1531,7 @@ entries:
     urls:
     - https://helm.astronomer.io/grafana-0.4.2-rc.5.tgz
     version: 0.4.2-rc.5
-  - created: 2018-09-24T09:29:04.66961792-04:00
+  - created: 2018-09-24T13:45:58.342869153-04:00
     description: Helm chart to deploy the Astronomer Platform Grafana module
     digest: c772004e68233c4c32daa6e2874f7307709c177faab932e471122c13333b419f
     keywords:
@@ -1503,7 +1541,7 @@ entries:
     urls:
     - https://helm.astronomer.io/grafana-0.4.2-rc.4.tgz
     version: 0.4.2-rc.4
-  - created: 2018-09-24T09:29:04.669367388-04:00
+  - created: 2018-09-24T13:45:58.342667088-04:00
     description: Helm chart to deploy the Astronomer Platform Grafana module
     digest: 9df069e9248b35d8f8dbdb510db9a8d54d4110a56323b07cadae007efae92b69
     keywords:
@@ -1513,7 +1551,7 @@ entries:
     urls:
     - https://helm.astronomer.io/grafana-0.4.2-rc.3.tgz
     version: 0.4.2-rc.3
-  - created: 2018-09-24T09:29:04.669118877-04:00
+  - created: 2018-09-24T13:45:58.342463161-04:00
     description: Helm chart to deploy the Astronomer Platform Grafana module
     digest: 9ce6e6b25225b20d49c6363f98fd1e4f07182ff5930d49a052105f235e437ef3
     keywords:
@@ -1523,7 +1561,7 @@ entries:
     urls:
     - https://helm.astronomer.io/grafana-0.4.2-rc.2.tgz
     version: 0.4.2-rc.2
-  - created: 2018-09-24T09:29:04.66886542-04:00
+  - created: 2018-09-24T13:45:58.342260014-04:00
     description: Helm chart to deploy the Astronomer Platform Grafana module
     digest: 7329bb257c1555e5d5059a6a88d4b192aa0673633b882a7772983848b8dadb00
     keywords:
@@ -1533,7 +1571,7 @@ entries:
     urls:
     - https://helm.astronomer.io/grafana-0.4.2-rc.1.tgz
     version: 0.4.2-rc.1
-  - created: 2018-09-24T09:29:04.668609929-04:00
+  - created: 2018-09-24T13:45:58.342054894-04:00
     description: Helm chart to deploy the Astronomer Platform Grafana module
     digest: 9b6e558a6fe33d71deaa5e03430d33c9f950f177a9e3ec1aaa7083e58b5d1bb0
     keywords:
@@ -1543,7 +1581,7 @@ entries:
     urls:
     - https://helm.astronomer.io/grafana-0.4.1.tgz
     version: 0.4.1
-  - created: 2018-09-24T09:29:04.668350177-04:00
+  - created: 2018-09-24T13:45:58.341850337-04:00
     description: Helm chart to deploy the Astronomer Platform Grafana module
     digest: 81db5d4c9a1a4fb77f613d977c508dd2d3684b977a4c997c85ac1d41bdbc367a
     keywords:
@@ -1553,7 +1591,7 @@ entries:
     urls:
     - https://helm.astronomer.io/grafana-0.4.0.tgz
     version: 0.4.0
-  - created: 2018-09-24T09:29:04.668072139-04:00
+  - created: 2018-09-24T13:45:58.34163566-04:00
     description: Helm chart to deploy the Astronomer Platform Grafana module
     digest: e4375d5a07e6276005be79a7608e2f1d74837dd79688f94e274227639e0d44b7
     keywords:
@@ -1563,7 +1601,7 @@ entries:
     urls:
     - https://helm.astronomer.io/grafana-0.4.0-rc.5.tgz
     version: 0.4.0-rc.5
-  - created: 2018-09-24T09:29:04.667813353-04:00
+  - created: 2018-09-24T13:45:58.341434153-04:00
     description: Helm chart to deploy the Astronomer Platform Grafana module
     digest: 2dafd814bed313a058d3c525328635a932c153d2a5216aea9b708d5e1e2f3fbf
     keywords:
@@ -1573,7 +1611,7 @@ entries:
     urls:
     - https://helm.astronomer.io/grafana-0.4.0-rc.2.tgz
     version: 0.4.0-rc.2
-  - created: 2018-09-24T09:29:04.667549544-04:00
+  - created: 2018-09-24T13:45:58.341232589-04:00
     description: Helm chart to deploy the Astronomer Platform Grafana module
     digest: f4facd131e9fcfbae531a85f04b735e8c752875ab8d666e61606ed574201ef84
     keywords:
@@ -1583,7 +1621,7 @@ entries:
     urls:
     - https://helm.astronomer.io/grafana-0.3.3-rc.3.tgz
     version: 0.3.3-rc.3
-  - created: 2018-09-24T09:29:04.667275242-04:00
+  - created: 2018-09-24T13:45:58.341022164-04:00
     description: Helm chart to deploy the Astronomer Platform Grafana module
     digest: 37f6e320d18a4b2ef745c5f9bd492291166b109bee86bf49c53e0b1a556302cd
     keywords:
@@ -1593,7 +1631,7 @@ entries:
     urls:
     - https://helm.astronomer.io/grafana-0.3.3-rc.2.tgz
     version: 0.3.3-rc.2
-  - created: 2018-09-24T09:29:04.667015427-04:00
+  - created: 2018-09-24T13:45:58.340816263-04:00
     description: Helm chart to deploy the Astronomer Platform Grafana module
     digest: 399ce8671313419e1152ea25a6d031e556f24dfa38022a3aca89ae7b177c35de
     keywords:
@@ -1603,7 +1641,7 @@ entries:
     urls:
     - https://helm.astronomer.io/grafana-0.3.2.tgz
     version: 0.3.2
-  - created: 2018-09-24T09:29:04.666750418-04:00
+  - created: 2018-09-24T13:45:58.340578657-04:00
     description: Helm chart to deploy the Astronomer Platform Grafana module
     digest: 06771655ac863cc5c2f754973b700f0d890ce767b3b42ccf3498633873ca7349
     keywords:
@@ -1613,7 +1651,7 @@ entries:
     urls:
     - https://helm.astronomer.io/grafana-0.3.2-rc.3.tgz
     version: 0.3.2-rc.3
-  - created: 2018-09-24T09:29:04.666505249-04:00
+  - created: 2018-09-24T13:45:58.340383092-04:00
     description: Helm chart to deploy the Astronomer Platform Grafana module
     digest: 579b484c4353e7e2bb87dd426f290ee568c8ea587e2be6f39a41adb2a636ebe9
     keywords:
@@ -1623,7 +1661,7 @@ entries:
     urls:
     - https://helm.astronomer.io/grafana-0.3.2-rc.2.tgz
     version: 0.3.2-rc.2
-  - created: 2018-09-24T09:29:04.66626382-04:00
+  - created: 2018-09-24T13:45:58.340193067-04:00
     description: Helm chart to deploy the Astronomer Platform Grafana module
     digest: 0ebb5017472dfb312349ee60ed489e8348e3a021f26ed4b8604c26553eb6726f
     keywords:
@@ -1633,7 +1671,7 @@ entries:
     urls:
     - https://helm.astronomer.io/grafana-0.3.2-rc.1.tgz
     version: 0.3.2-rc.1
-  - created: 2018-09-24T09:29:04.666022643-04:00
+  - created: 2018-09-24T13:45:58.339984948-04:00
     description: Helm chart to deploy the Astronomer Platform Grafana module
     digest: d1edcdfa8bcc3063a4999f4922f5edf4cf7af919e510273efa33082abcd89e96
     keywords:
@@ -1643,18 +1681,26 @@ entries:
     urls:
     - https://helm.astronomer.io/grafana-0.3.1.tgz
     version: 0.3.1
-  - created: 2018-09-24T09:29:04.665777461-04:00
-    description: Helm chart to deploy the Astronomer Platform Grafana module
-    digest: 2db2d02d2fe9bafacbb3a531f24ad8cfebd44ce21ddd301003054cf797711e2a
+  nginx:
+  - created: 2018-09-24T13:45:58.362747398-04:00
+    description: Helm chart to deploy the Astronomer Platform NGINX module
+    digest: b448330373dbdba77f37d4ca4b23816ffc48bf6d557b280e7a4a88c8ff031fdc
     keywords:
     - astronomer
-    - grafana
-    name: grafana
+    name: nginx
     urls:
-    - https://helm.astronomer.io/grafana-0.0.0.tgz
-    version: 0.0.0
-  nginx:
-  - created: 2018-09-24T09:29:04.692919757-04:00
+    - https://helm.astronomer.io/nginx-0.6.0-rc.2.tgz
+    version: 0.6.0-rc.2
+  - created: 2018-09-24T13:45:58.362514382-04:00
+    description: Helm chart to deploy the Astronomer Platform NGINX module
+    digest: 5af8d089f9bade77ccc74953b33f38a046b8f5886a0862e5350b12ea1be5490d
+    keywords:
+    - astronomer
+    name: nginx
+    urls:
+    - https://helm.astronomer.io/nginx-0.6.0-rc.1.tgz
+    version: 0.6.0-rc.1
+  - created: 2018-09-24T13:45:58.362283836-04:00
     description: Helm chart to deploy the Astronomer Platform NGINX module
     digest: cf519e821d2444e7e9ae60f8fcce74fdab3f607f5288f5ca146dbef061ee3800
     keywords:
@@ -1663,7 +1709,7 @@ entries:
     urls:
     - https://helm.astronomer.io/nginx-0.5.1.tgz
     version: 0.5.1
-  - created: 2018-09-24T09:29:04.692646873-04:00
+  - created: 2018-09-24T13:45:58.362055462-04:00
     description: Helm chart to deploy the Astronomer Platform NGINX module
     digest: 69d4f06cf8124724282ee69435a2b99dcca1f1a4d38f8aab6b5a710f005b75cc
     keywords:
@@ -1672,7 +1718,7 @@ entries:
     urls:
     - https://helm.astronomer.io/nginx-0.5.1-rc.9.tgz
     version: 0.5.1-rc.9
-  - created: 2018-09-24T09:29:04.692373023-04:00
+  - created: 2018-09-24T13:45:58.361823625-04:00
     description: Helm chart to deploy the Astronomer Platform NGINX module
     digest: e512ab12bd974df4ef67f706e5c50605dfcaeb9fe1ce3927f95557edcd3f9f1d
     keywords:
@@ -1681,7 +1727,7 @@ entries:
     urls:
     - https://helm.astronomer.io/nginx-0.5.1-rc.8.tgz
     version: 0.5.1-rc.8
-  - created: 2018-09-24T09:29:04.692087877-04:00
+  - created: 2018-09-24T13:45:58.361592785-04:00
     description: Helm chart to deploy the Astronomer Platform NGINX module
     digest: 17d3219721ba47bbcc0e6a836cabc9ea855b6fee734de69ee8475014b8f253fb
     keywords:
@@ -1690,7 +1736,7 @@ entries:
     urls:
     - https://helm.astronomer.io/nginx-0.5.1-rc.7.tgz
     version: 0.5.1-rc.7
-  - created: 2018-09-24T09:29:04.691812717-04:00
+  - created: 2018-09-24T13:45:58.361354588-04:00
     description: Helm chart to deploy the Astronomer Platform NGINX module
     digest: 5614e398a863aed87eb86a1dcebc85a69de7ff246e939601af4a38e5c5396f27
     keywords:
@@ -1699,7 +1745,7 @@ entries:
     urls:
     - https://helm.astronomer.io/nginx-0.5.1-rc.6.tgz
     version: 0.5.1-rc.6
-  - created: 2018-09-24T09:29:04.691521065-04:00
+  - created: 2018-09-24T13:45:58.361128776-04:00
     description: Helm chart to deploy the Astronomer Platform NGINX module
     digest: 162b737e72de9bea3fb2ece94c63c7f288633869de942a74a11dda2d1fd4ae94
     keywords:
@@ -1708,7 +1754,7 @@ entries:
     urls:
     - https://helm.astronomer.io/nginx-0.5.1-rc.5.tgz
     version: 0.5.1-rc.5
-  - created: 2018-09-24T09:29:04.691246884-04:00
+  - created: 2018-09-24T13:45:58.360902529-04:00
     description: Helm chart to deploy the Astronomer Platform NGINX module
     digest: e5b1eda23eeb16ff492f902a48877dc172734a66fcfeefbf4a97edad59aa36a6
     keywords:
@@ -1717,7 +1763,7 @@ entries:
     urls:
     - https://helm.astronomer.io/nginx-0.5.1-rc.4.tgz
     version: 0.5.1-rc.4
-  - created: 2018-09-24T09:29:04.690970854-04:00
+  - created: 2018-09-24T13:45:58.360630404-04:00
     description: Helm chart to deploy the Astronomer Platform NGINX module
     digest: 13d53ab85330108b65c23660eb3d0902ef151e2806b871310dacd81239c120ce
     keywords:
@@ -1726,7 +1772,7 @@ entries:
     urls:
     - https://helm.astronomer.io/nginx-0.5.1-rc.3.tgz
     version: 0.5.1-rc.3
-  - created: 2018-09-24T09:29:04.69069503-04:00
+  - created: 2018-09-24T13:45:58.360391609-04:00
     description: Helm chart to deploy the Astronomer Platform NGINX module
     digest: 093c0f4dc452ab5c796c0c914e9b4d3314a862265d9440454358824d4cd6553c
     keywords:
@@ -1735,7 +1781,7 @@ entries:
     urls:
     - https://helm.astronomer.io/nginx-0.5.1-rc.2.tgz
     version: 0.5.1-rc.2
-  - created: 2018-09-24T09:29:04.690421326-04:00
+  - created: 2018-09-24T13:45:58.360163768-04:00
     description: Helm chart to deploy the Astronomer Platform NGINX module
     digest: 3fcf2ed6691d29b2ada92a5255e9df830f90fe675358d870356b8d886dc9e7a1
     keywords:
@@ -1744,7 +1790,7 @@ entries:
     urls:
     - https://helm.astronomer.io/nginx-0.5.1-rc.1.tgz
     version: 0.5.1-rc.1
-  - created: 2018-09-24T09:29:04.690146032-04:00
+  - created: 2018-09-24T13:45:58.359933574-04:00
     description: Helm chart to deploy the Astronomer Platform NGINX module
     digest: d9cc2eb3884bebc1e21dd14ce7395c95ab94a123e1413343efca4136779f4dfa
     keywords:
@@ -1753,7 +1799,7 @@ entries:
     urls:
     - https://helm.astronomer.io/nginx-0.5.0.tgz
     version: 0.5.0
-  - created: 2018-09-24T09:29:04.688176589-04:00
+  - created: 2018-09-24T13:45:58.358347707-04:00
     description: Helm chart to deploy the Astronomer Platform NGINX module
     digest: efc58b9ebd6ade668e827150c98afeffbd82f12d600c5d2aa4047acde0e005e9
     keywords:
@@ -1762,7 +1808,7 @@ entries:
     urls:
     - https://helm.astronomer.io/nginx-0.5.0-rc.21.tgz
     version: 0.5.0-rc.21
-  - created: 2018-09-24T09:29:04.687898264-04:00
+  - created: 2018-09-24T13:45:58.358120976-04:00
     description: Helm chart to deploy the Astronomer Platform NGINX module
     digest: c3d9f117443e179efc7bd6034cc6b386ab3381bc1673faf3fc0d3511d86ac007
     keywords:
@@ -1771,7 +1817,7 @@ entries:
     urls:
     - https://helm.astronomer.io/nginx-0.5.0-rc.20.tgz
     version: 0.5.0-rc.20
-  - created: 2018-09-24T09:29:04.687346704-04:00
+  - created: 2018-09-24T13:45:58.357671356-04:00
     description: Helm chart to deploy the Astronomer Platform NGINX module
     digest: b430134f615789b3198806c0c305af14ff1fd3a7d0e1ce9e404c00355f5881e1
     keywords:
@@ -1780,7 +1826,7 @@ entries:
     urls:
     - https://helm.astronomer.io/nginx-0.5.0-rc.19.tgz
     version: 0.5.0-rc.19
-  - created: 2018-09-24T09:29:04.687062775-04:00
+  - created: 2018-09-24T13:45:58.357438949-04:00
     description: Helm chart to deploy the Astronomer Platform NGINX module
     digest: de42240b2857f2d003031c4296027b81abb136c7f58fbff689ba34e9df2f6633
     keywords:
@@ -1789,7 +1835,7 @@ entries:
     urls:
     - https://helm.astronomer.io/nginx-0.5.0-rc.18.tgz
     version: 0.5.0-rc.18
-  - created: 2018-09-24T09:29:04.686770838-04:00
+  - created: 2018-09-24T13:45:58.357202596-04:00
     description: Helm chart to deploy the Astronomer Platform NGINX module
     digest: 142cefa232609b4d5b3734b38f8794343126a301462cd902035406786a020fa9
     keywords:
@@ -1798,7 +1844,7 @@ entries:
     urls:
     - https://helm.astronomer.io/nginx-0.5.0-rc.17.tgz
     version: 0.5.0-rc.17
-  - created: 2018-09-24T09:29:04.686485292-04:00
+  - created: 2018-09-24T13:45:58.356976459-04:00
     description: Helm chart to deploy the Astronomer Platform NGINX module
     digest: 75aa9c24c6e5220e0c71179d9c2afa1fa11cf809b1cf87340404f1c21555a77b
     keywords:
@@ -1807,7 +1853,7 @@ entries:
     urls:
     - https://helm.astronomer.io/nginx-0.5.0-rc.16.tgz
     version: 0.5.0-rc.16
-  - created: 2018-09-24T09:29:04.686202475-04:00
+  - created: 2018-09-24T13:45:58.356751357-04:00
     description: Helm chart to deploy the Astronomer Platform NGINX module
     digest: b18f02f3bfc1022f7d4e22411062560270928915bcc0210f3fca2e0c63f3b657
     keywords:
@@ -1816,7 +1862,7 @@ entries:
     urls:
     - https://helm.astronomer.io/nginx-0.5.0-rc.15.tgz
     version: 0.5.0-rc.15
-  - created: 2018-09-24T09:29:04.685909192-04:00
+  - created: 2018-09-24T13:45:58.356526765-04:00
     description: Helm chart to deploy the Astronomer Platform NGINX module
     digest: 1f118263ac7161e9ed9bfacd1d7552a8bb44870f0c135be6debc029c8f77e324
     keywords:
@@ -1825,7 +1871,7 @@ entries:
     urls:
     - https://helm.astronomer.io/nginx-0.5.0-rc.14.tgz
     version: 0.5.0-rc.14
-  - created: 2018-09-24T09:29:04.685569107-04:00
+  - created: 2018-09-24T13:45:58.356299638-04:00
     description: Helm chart to deploy the Astronomer Platform NGINX module
     digest: 9a316a78f96abda3a9aa5b98b2c695af0aff8f8b3f5e3a72eeddf246a1428212
     keywords:
@@ -1834,7 +1880,7 @@ entries:
     urls:
     - https://helm.astronomer.io/nginx-0.5.0-rc.13.tgz
     version: 0.5.0-rc.13
-  - created: 2018-09-24T09:29:04.684815474-04:00
+  - created: 2018-09-24T13:45:58.356067422-04:00
     description: Helm chart to deploy the Astronomer Platform NGINX module
     digest: 5cccf700739d47dd0eb805e89f6ee1ad8b73ee7d992d55ca6715cc0b2d002b79
     keywords:
@@ -1843,7 +1889,7 @@ entries:
     urls:
     - https://helm.astronomer.io/nginx-0.5.0-rc.12.tgz
     version: 0.5.0-rc.12
-  - created: 2018-09-24T09:29:04.684283019-04:00
+  - created: 2018-09-24T13:45:58.355839894-04:00
     description: Helm chart to deploy the Astronomer Platform NGINX module
     digest: 8b8e9d94c715b9da0d9136cf9de7e72044089c9ff1d4bbd5c0828ac1aadd8816
     keywords:
@@ -1852,7 +1898,7 @@ entries:
     urls:
     - https://helm.astronomer.io/nginx-0.5.0-rc.10.tgz
     version: 0.5.0-rc.10
-  - created: 2018-09-24T09:29:04.689871354-04:00
+  - created: 2018-09-24T13:45:58.359708433-04:00
     description: Helm chart to deploy the Astronomer Platform NGINX module
     digest: e3549000c855b1770dfcb2947abc44c7f56a74cc5cebd5a89503216ed89d3683
     keywords:
@@ -1861,7 +1907,7 @@ entries:
     urls:
     - https://helm.astronomer.io/nginx-0.5.0-rc.9.tgz
     version: 0.5.0-rc.9
-  - created: 2018-09-24T09:29:04.68959305-04:00
+  - created: 2018-09-24T13:45:58.359479894-04:00
     description: Helm chart to deploy the Astronomer Platform NGINX module
     digest: 5818c1323280f3ea75f061cc9b5e5cf5a9005d2a21453bbf46756cb9a67172e1
     keywords:
@@ -1870,7 +1916,7 @@ entries:
     urls:
     - https://helm.astronomer.io/nginx-0.5.0-rc.7.tgz
     version: 0.5.0-rc.7
-  - created: 2018-09-24T09:29:04.68931837-04:00
+  - created: 2018-09-24T13:45:58.359249402-04:00
     description: Helm chart to deploy the Astronomer Platform NGINX module
     digest: 861beffed5d7e00fe0251a1d2f1166c215981bdfa37c23b362b398ae7a03e2b4
     keywords:
@@ -1879,7 +1925,7 @@ entries:
     urls:
     - https://helm.astronomer.io/nginx-0.5.0-rc.6.tgz
     version: 0.5.0-rc.6
-  - created: 2018-09-24T09:29:04.689046867-04:00
+  - created: 2018-09-24T13:45:58.359025071-04:00
     description: Helm chart to deploy the Astronomer Platform NGINX module
     digest: 611987f476bd1c0a8f8106354af3cc0d0a39313ea6efdab3ecc308edeb7c57b2
     keywords:
@@ -1888,7 +1934,7 @@ entries:
     urls:
     - https://helm.astronomer.io/nginx-0.5.0-rc.5.tgz
     version: 0.5.0-rc.5
-  - created: 2018-09-24T09:29:04.688770463-04:00
+  - created: 2018-09-24T13:45:58.358801824-04:00
     description: Helm chart to deploy the Astronomer Platform NGINX module
     digest: 10ffb7a8a2a6b52145fc9fd62d126e7028a5010c18d45018e4e9693fe9f1dfb8
     keywords:
@@ -1897,7 +1943,7 @@ entries:
     urls:
     - https://helm.astronomer.io/nginx-0.5.0-rc.4.tgz
     version: 0.5.0-rc.4
-  - created: 2018-09-24T09:29:04.688470782-04:00
+  - created: 2018-09-24T13:45:58.358570567-04:00
     description: Helm chart to deploy the Astronomer Platform NGINX module
     digest: 87b31fd22b6d2680536e9b25df2022d56d3a7f193125ef04ab8a7ee86d578c00
     keywords:
@@ -1906,7 +1952,7 @@ entries:
     urls:
     - https://helm.astronomer.io/nginx-0.5.0-rc.3.tgz
     version: 0.5.0-rc.3
-  - created: 2018-09-24T09:29:04.687622606-04:00
+  - created: 2018-09-24T13:45:58.357894987-04:00
     description: Helm chart to deploy the Astronomer Platform NGINX module
     digest: 6f3e56eb0a716b15134785b9955a748add3b43ba370b486502fa0d5f2ac7de4b
     keywords:
@@ -1915,7 +1961,7 @@ entries:
     urls:
     - https://helm.astronomer.io/nginx-0.5.0-rc.2.tgz
     version: 0.5.0-rc.2
-  - created: 2018-09-24T09:29:04.683994264-04:00
+  - created: 2018-09-24T13:45:58.355615022-04:00
     description: Helm chart to deploy the Astronomer Platform NGINX module
     digest: 35d0dadb91bd6bf2e69515e9c0b6266dd6afffd92abedb878861a5aca1c367c9
     keywords:
@@ -1924,7 +1970,7 @@ entries:
     urls:
     - https://helm.astronomer.io/nginx-0.5.0-rc.1.tgz
     version: 0.5.0-rc.1
-  - created: 2018-09-24T09:29:04.683693844-04:00
+  - created: 2018-09-24T13:45:58.355376255-04:00
     description: Helm chart to deploy the Astronomer Platform NGINX module
     digest: fe880a23432ce657f54c8618998ebabd01760cb6de224e414bae46d7cb768cf2
     keywords:
@@ -1933,7 +1979,7 @@ entries:
     urls:
     - https://helm.astronomer.io/nginx-0.4.2-rc.6.tgz
     version: 0.4.2-rc.6
-  - created: 2018-09-24T09:29:04.683392064-04:00
+  - created: 2018-09-24T13:45:58.355137049-04:00
     description: Helm chart to deploy the Astronomer Platform NGINX module
     digest: bdd9d7384ce49d3d5e55dad9a14efdc2a27784e14c4078f194ebf35dd553cad9
     keywords:
@@ -1942,7 +1988,7 @@ entries:
     urls:
     - https://helm.astronomer.io/nginx-0.4.2-rc.5.tgz
     version: 0.4.2-rc.5
-  - created: 2018-09-24T09:29:04.683098676-04:00
+  - created: 2018-09-24T13:45:58.354654621-04:00
     description: Helm chart to deploy the Astronomer Platform NGINX module
     digest: 1c145e4a51e484bb7acbb77d05ee06829beade6b2f49ee70cc873f7b4650aca5
     keywords:
@@ -1951,7 +1997,7 @@ entries:
     urls:
     - https://helm.astronomer.io/nginx-0.4.2-rc.4.tgz
     version: 0.4.2-rc.4
-  - created: 2018-09-24T09:29:04.68281295-04:00
+  - created: 2018-09-24T13:45:58.354103919-04:00
     description: Helm chart to deploy the Astronomer Platform NGINX module
     digest: 7c4116ac425603128d0e456d7c7b3d9d02daff199925a12d58557319d4589de8
     keywords:
@@ -1960,7 +2006,7 @@ entries:
     urls:
     - https://helm.astronomer.io/nginx-0.4.2-rc.3.tgz
     version: 0.4.2-rc.3
-  - created: 2018-09-24T09:29:04.682530541-04:00
+  - created: 2018-09-24T13:45:58.353773483-04:00
     description: Helm chart to deploy the Astronomer Platform NGINX module
     digest: a1d568d5ba23414f81ea8f570fc512beb4c363cec3523b3754b70990ba8fd6cc
     keywords:
@@ -1969,7 +2015,7 @@ entries:
     urls:
     - https://helm.astronomer.io/nginx-0.4.2-rc.2.tgz
     version: 0.4.2-rc.2
-  - created: 2018-09-24T09:29:04.682254591-04:00
+  - created: 2018-09-24T13:45:58.353552902-04:00
     description: Helm chart to deploy the Astronomer Platform NGINX module
     digest: 13f98c53ded0c76886d56cea5acc3bf57a04d237f14c6e4282fe6543ad7e1176
     keywords:
@@ -1978,7 +2024,7 @@ entries:
     urls:
     - https://helm.astronomer.io/nginx-0.4.2-rc.1.tgz
     version: 0.4.2-rc.1
-  - created: 2018-09-24T09:29:04.681971309-04:00
+  - created: 2018-09-24T13:45:58.35333224-04:00
     description: Helm chart to deploy the Astronomer Platform NGINX module
     digest: 2d0cdd4dc54b14296203d12e4d5a09145cd306d91087b5a89483d9fae31a0baf
     keywords:
@@ -1987,7 +2033,7 @@ entries:
     urls:
     - https://helm.astronomer.io/nginx-0.4.1.tgz
     version: 0.4.1
-  - created: 2018-09-24T09:29:04.681690743-04:00
+  - created: 2018-09-24T13:45:58.353109453-04:00
     description: Helm chart to deploy the Astronomer Platform NGINX module
     digest: c4b767d9b10648d4b103d15c10bdda94c14bf690bf6845cf83ed0081654f7e40
     keywords:
@@ -1996,7 +2042,7 @@ entries:
     urls:
     - https://helm.astronomer.io/nginx-0.4.0.tgz
     version: 0.4.0
-  - created: 2018-09-24T09:29:04.681372442-04:00
+  - created: 2018-09-24T13:45:58.352886371-04:00
     description: Helm chart to deploy the Astronomer Platform NGINX module
     digest: 22614a1db0df6b7587efd49d7cc3e0fb6a992d5eca9e4a4cd5ccba617abdffaa
     keywords:
@@ -2005,7 +2051,7 @@ entries:
     urls:
     - https://helm.astronomer.io/nginx-0.4.0-rc.5.tgz
     version: 0.4.0-rc.5
-  - created: 2018-09-24T09:29:04.681038211-04:00
+  - created: 2018-09-24T13:45:58.352662196-04:00
     description: Helm chart to deploy the Astronomer Platform NGINX module
     digest: 512c57e581cd8137942d6dd4745490ece723d9483cd0d0ff99ed9370633e8d73
     keywords:
@@ -2014,7 +2060,7 @@ entries:
     urls:
     - https://helm.astronomer.io/nginx-0.4.0-rc.2.tgz
     version: 0.4.0-rc.2
-  - created: 2018-09-24T09:29:04.680720221-04:00
+  - created: 2018-09-24T13:45:58.352440054-04:00
     description: Helm chart to deploy the Astronomer Platform NGINX module
     digest: c66135cc5337044ba08b5de48f312b3b5ad36738e935b230d3282d100e686b16
     keywords:
@@ -2023,7 +2069,7 @@ entries:
     urls:
     - https://helm.astronomer.io/nginx-0.3.3-rc.3.tgz
     version: 0.3.3-rc.3
-  - created: 2018-09-24T09:29:04.680446224-04:00
+  - created: 2018-09-24T13:45:58.352219017-04:00
     description: Helm chart to deploy the Astronomer Platform NGINX module
     digest: 2f6a6f3125910abc345575cb9810745153751c71b871ffcee898729e6dbe420b
     keywords:
@@ -2032,7 +2078,7 @@ entries:
     urls:
     - https://helm.astronomer.io/nginx-0.3.3-rc.2.tgz
     version: 0.3.3-rc.2
-  - created: 2018-09-24T09:29:04.680149494-04:00
+  - created: 2018-09-24T13:45:58.35197594-04:00
     description: Helm chart to deploy the Astronomer Platform NGINX module
     digest: d9dab1d4d4a0a26f163db294aed9370aa2394fbe40dc57ebb3d4dcfc82031a10
     keywords:
@@ -2041,7 +2087,7 @@ entries:
     urls:
     - https://helm.astronomer.io/nginx-0.3.2.tgz
     version: 0.3.2
-  - created: 2018-09-24T09:29:04.67988225-04:00
+  - created: 2018-09-24T13:45:58.351755844-04:00
     description: Helm chart to deploy the Astronomer Platform NGINX module
     digest: 096676f778c47359c228c1ed86e321ee4d15cc0b1fad8781e4d4b62db99b3b42
     keywords:
@@ -2050,7 +2096,7 @@ entries:
     urls:
     - https://helm.astronomer.io/nginx-0.3.2-rc.3.tgz
     version: 0.3.2-rc.3
-  - created: 2018-09-24T09:29:04.679609625-04:00
+  - created: 2018-09-24T13:45:58.351535585-04:00
     description: Helm chart to deploy the Astronomer Platform NGINX module
     digest: bc243d658fb79bc63e1aa705be495d4c86158af2fe4c9d42defd3b8c065d4379
     keywords:
@@ -2059,7 +2105,7 @@ entries:
     urls:
     - https://helm.astronomer.io/nginx-0.3.2-rc.2.tgz
     version: 0.3.2-rc.2
-  - created: 2018-09-24T09:29:04.679290445-04:00
+  - created: 2018-09-24T13:45:58.351315325-04:00
     description: Helm chart to deploy the Astronomer Platform NGINX module
     digest: b56f93476102af38513b88ec990ce71f8add8e3de5a85ac69056803722888326
     keywords:
@@ -2068,7 +2114,7 @@ entries:
     urls:
     - https://helm.astronomer.io/nginx-0.3.2-rc.1.tgz
     version: 0.3.2-rc.1
-  - created: 2018-09-24T09:29:04.679022169-04:00
+  - created: 2018-09-24T13:45:58.351091875-04:00
     description: Helm chart to deploy the Astronomer Platform NGINX module
     digest: 2f8f06f7568f5eae55bb5262ee924b6746322d2a68c6ed0ceb7603f93edc48be
     keywords:
@@ -2077,17 +2123,28 @@ entries:
     urls:
     - https://helm.astronomer.io/nginx-0.3.1.tgz
     version: 0.3.1
-  - created: 2018-09-24T09:29:04.678754443-04:00
-    description: Helm chart to deploy the Astronomer Platform NGINX module
-    digest: 31ba39dad13283b5aba8bacad7c7a0cce6bc77f73305ef3ea2cd7ea88bfc93c0
+  prometheus:
+  - created: 2018-09-24T13:45:58.374741527-04:00
+    description: Helm chart to deploy the Astronomer Platform Prometheus module
+    digest: 774142374a41f1117a6f27842256a88f2d41710971b365cac569e71fdc7d6e05
     keywords:
     - astronomer
-    name: nginx
+    - prometheus
+    name: prometheus
     urls:
-    - https://helm.astronomer.io/nginx-0.0.0.tgz
-    version: 0.0.0
-  prometheus:
-  - created: 2018-09-24T09:29:04.707807572-04:00
+    - https://helm.astronomer.io/prometheus-0.6.0-rc.2.tgz
+    version: 0.6.0-rc.2
+  - created: 2018-09-24T13:45:58.374523204-04:00
+    description: Helm chart to deploy the Astronomer Platform Prometheus module
+    digest: 078ca8d2ff2c1fc981bfdc3d8d09420cf62c8d44b4deb0ab1037893ccd93d9cd
+    keywords:
+    - astronomer
+    - prometheus
+    name: prometheus
+    urls:
+    - https://helm.astronomer.io/prometheus-0.6.0-rc.1.tgz
+    version: 0.6.0-rc.1
+  - created: 2018-09-24T13:45:58.374312314-04:00
     description: Helm chart to deploy the Astronomer Platform Prometheus module
     digest: 9a44710003c082c76484f085a81c1edbf28b4f6b3c96e42744c79bcce27dbb7b
     keywords:
@@ -2097,7 +2154,7 @@ entries:
     urls:
     - https://helm.astronomer.io/prometheus-0.5.1.tgz
     version: 0.5.1
-  - created: 2018-09-24T09:29:04.707350224-04:00
+  - created: 2018-09-24T13:45:58.374046786-04:00
     description: Helm chart to deploy the Astronomer Platform Prometheus module
     digest: 1651357dda50f81024fe5825cdfa08ec82b30ecf59c70d0a79c46dded0b353af
     keywords:
@@ -2107,7 +2164,7 @@ entries:
     urls:
     - https://helm.astronomer.io/prometheus-0.5.1-rc.9.tgz
     version: 0.5.1-rc.9
-  - created: 2018-09-24T09:29:04.706964614-04:00
+  - created: 2018-09-24T13:45:58.373827428-04:00
     description: Helm chart to deploy the Astronomer Platform Prometheus module
     digest: 9c88018a1ed6f53f96f4bae5a1a4093be27434b2eca52697a3c8da802c94e4fc
     keywords:
@@ -2117,7 +2174,7 @@ entries:
     urls:
     - https://helm.astronomer.io/prometheus-0.5.1-rc.8.tgz
     version: 0.5.1-rc.8
-  - created: 2018-09-24T09:29:04.706244246-04:00
+  - created: 2018-09-24T13:45:58.373614979-04:00
     description: Helm chart to deploy the Astronomer Platform Prometheus module
     digest: 5b6c4f10c29d9a0c0d3da65eb3f09173cbb2173ae881cfdd38598dfcaeef155f
     keywords:
@@ -2127,7 +2184,7 @@ entries:
     urls:
     - https://helm.astronomer.io/prometheus-0.5.1-rc.7.tgz
     version: 0.5.1-rc.7
-  - created: 2018-09-24T09:29:04.70600582-04:00
+  - created: 2018-09-24T13:45:58.373400936-04:00
     description: Helm chart to deploy the Astronomer Platform Prometheus module
     digest: b4cea7d714bd1d4124075016699ca87ccf2f4f70402f9a77de2635d321660e35
     keywords:
@@ -2137,7 +2194,7 @@ entries:
     urls:
     - https://helm.astronomer.io/prometheus-0.5.1-rc.6.tgz
     version: 0.5.1-rc.6
-  - created: 2018-09-24T09:29:04.705767616-04:00
+  - created: 2018-09-24T13:45:58.373186219-04:00
     description: Helm chart to deploy the Astronomer Platform Prometheus module
     digest: 68b0fd79b709a2f05ef401369cf74fa7f9b0dced6b8995ec0302c00a253ddcda
     keywords:
@@ -2147,7 +2204,7 @@ entries:
     urls:
     - https://helm.astronomer.io/prometheus-0.5.1-rc.5.tgz
     version: 0.5.1-rc.5
-  - created: 2018-09-24T09:29:04.705526725-04:00
+  - created: 2018-09-24T13:45:58.372880056-04:00
     description: Helm chart to deploy the Astronomer Platform Prometheus module
     digest: 252963dd3f7aceb17bfd6af4b608fe17c0a19091394593701c4e3cbc41a9cf7b
     keywords:
@@ -2157,7 +2214,7 @@ entries:
     urls:
     - https://helm.astronomer.io/prometheus-0.5.1-rc.4.tgz
     version: 0.5.1-rc.4
-  - created: 2018-09-24T09:29:04.70528971-04:00
+  - created: 2018-09-24T13:45:58.372329998-04:00
     description: Helm chart to deploy the Astronomer Platform Prometheus module
     digest: c7cb5aab5205ee92fcce5f81ab5baaea1fc0fb7cd053cd70036a3b8f5f090751
     keywords:
@@ -2167,7 +2224,7 @@ entries:
     urls:
     - https://helm.astronomer.io/prometheus-0.5.1-rc.3.tgz
     version: 0.5.1-rc.3
-  - created: 2018-09-24T09:29:04.705030806-04:00
+  - created: 2018-09-24T13:45:58.371735109-04:00
     description: Helm chart to deploy the Astronomer Platform Prometheus module
     digest: 9c856cef0f048f2579247a653ac4a1957a0e29b0382046fe8de1279dc165135a
     keywords:
@@ -2177,7 +2234,7 @@ entries:
     urls:
     - https://helm.astronomer.io/prometheus-0.5.1-rc.2.tgz
     version: 0.5.1-rc.2
-  - created: 2018-09-24T09:29:04.70475506-04:00
+  - created: 2018-09-24T13:45:58.371527274-04:00
     description: Helm chart to deploy the Astronomer Platform Prometheus module
     digest: 56f4868ca1b3c73c343dabd546685e13f9f4173abc1b991bff221bd737d4c340
     keywords:
@@ -2187,7 +2244,7 @@ entries:
     urls:
     - https://helm.astronomer.io/prometheus-0.5.1-rc.1.tgz
     version: 0.5.1-rc.1
-  - created: 2018-09-24T09:29:04.704495437-04:00
+  - created: 2018-09-24T13:45:58.371312809-04:00
     description: Helm chart to deploy the Astronomer Platform Prometheus module
     digest: 1d4d5e1be5d685000b4966f640d4a6eb60cf7925de4141ceccafff7e108fe779
     keywords:
@@ -2197,7 +2254,7 @@ entries:
     urls:
     - https://helm.astronomer.io/prometheus-0.5.0.tgz
     version: 0.5.0
-  - created: 2018-09-24T09:29:04.70261039-04:00
+  - created: 2018-09-24T13:45:58.369822023-04:00
     description: Helm chart to deploy the Astronomer Platform Prometheus module
     digest: 37c27c7454a413d0806f889c373d189d3916ad9f72c8cf4b678224187a7db67e
     keywords:
@@ -2207,7 +2264,7 @@ entries:
     urls:
     - https://helm.astronomer.io/prometheus-0.5.0-rc.21.tgz
     version: 0.5.0-rc.21
-  - created: 2018-09-24T09:29:04.702347585-04:00
+  - created: 2018-09-24T13:45:58.369611841-04:00
     description: Helm chart to deploy the Astronomer Platform Prometheus module
     digest: 75f945c688c281dba1f9d8652e770c4529956bd1e3f901fc3ac3f25381e63c9e
     keywords:
@@ -2217,7 +2274,7 @@ entries:
     urls:
     - https://helm.astronomer.io/prometheus-0.5.0-rc.20.tgz
     version: 0.5.0-rc.20
-  - created: 2018-09-24T09:29:04.70181352-04:00
+  - created: 2018-09-24T13:45:58.369193772-04:00
     description: Helm chart to deploy the Astronomer Platform Prometheus module
     digest: c6dc1e57ae3a5516b173c7a80d2ac5dc00f68e95daaccc5435cd8c34faf025dc
     keywords:
@@ -2227,7 +2284,7 @@ entries:
     urls:
     - https://helm.astronomer.io/prometheus-0.5.0-rc.19.tgz
     version: 0.5.0-rc.19
-  - created: 2018-09-24T09:29:04.701506859-04:00
+  - created: 2018-09-24T13:45:58.368976294-04:00
     description: Helm chart to deploy the Astronomer Platform Prometheus module
     digest: 1c82cd2f17d1820a29fc70df67e2c9ff9b7038ec28674a997bdb21c4586b3e95
     keywords:
@@ -2237,7 +2294,7 @@ entries:
     urls:
     - https://helm.astronomer.io/prometheus-0.5.0-rc.18.tgz
     version: 0.5.0-rc.18
-  - created: 2018-09-24T09:29:04.701228164-04:00
+  - created: 2018-09-24T13:45:58.368761164-04:00
     description: Helm chart to deploy the Astronomer Platform Prometheus module
     digest: 70f348a506c0a223fbc6b0287f61fdb6a36994089229eada640987cd1bfe1d73
     keywords:
@@ -2247,7 +2304,7 @@ entries:
     urls:
     - https://helm.astronomer.io/prometheus-0.5.0-rc.17.tgz
     version: 0.5.0-rc.17
-  - created: 2018-09-24T09:29:04.700960165-04:00
+  - created: 2018-09-24T13:45:58.368497785-04:00
     description: Helm chart to deploy the Astronomer Platform Prometheus module
     digest: 6a7dee1ee99d1830ab374da7c46e8b5dd4b6e85d3d7f21d742b65b248f4fe59c
     keywords:
@@ -2257,7 +2314,7 @@ entries:
     urls:
     - https://helm.astronomer.io/prometheus-0.5.0-rc.16.tgz
     version: 0.5.0-rc.16
-  - created: 2018-09-24T09:29:04.700691425-04:00
+  - created: 2018-09-24T13:45:58.368286366-04:00
     description: Helm chart to deploy the Astronomer Platform Prometheus module
     digest: 29f9484afdb02cca2e4158d1c85478917816eb4b0db575482486a9f75e9f8ba5
     keywords:
@@ -2267,7 +2324,7 @@ entries:
     urls:
     - https://helm.astronomer.io/prometheus-0.5.0-rc.15.tgz
     version: 0.5.0-rc.15
-  - created: 2018-09-24T09:29:04.700415455-04:00
+  - created: 2018-09-24T13:45:58.368074219-04:00
     description: Helm chart to deploy the Astronomer Platform Prometheus module
     digest: 69c79859cc3f35866dd2fb6b8d9f4655f048e41b64adfd89311080b3d4409f48
     keywords:
@@ -2277,7 +2334,7 @@ entries:
     urls:
     - https://helm.astronomer.io/prometheus-0.5.0-rc.14.tgz
     version: 0.5.0-rc.14
-  - created: 2018-09-24T09:29:04.700150423-04:00
+  - created: 2018-09-24T13:45:58.367862407-04:00
     description: Helm chart to deploy the Astronomer Platform Prometheus module
     digest: 91ad179d06a75e6a3e7aac10c16a89509877f7dc8574102a2d970c16fe960cbd
     keywords:
@@ -2287,7 +2344,7 @@ entries:
     urls:
     - https://helm.astronomer.io/prometheus-0.5.0-rc.13.tgz
     version: 0.5.0-rc.13
-  - created: 2018-09-24T09:29:04.69987607-04:00
+  - created: 2018-09-24T13:45:58.367651919-04:00
     description: Helm chart to deploy the Astronomer Platform Prometheus module
     digest: 1e4f5b7243f65a77a4df05623e5c5e058ba9b72b773dd725c5778a8f0d25b5d2
     keywords:
@@ -2297,7 +2354,7 @@ entries:
     urls:
     - https://helm.astronomer.io/prometheus-0.5.0-rc.12.tgz
     version: 0.5.0-rc.12
-  - created: 2018-09-24T09:29:04.699608863-04:00
+  - created: 2018-09-24T13:45:58.367439613-04:00
     description: Helm chart to deploy the Astronomer Platform Prometheus module
     digest: 23df5e7ea83d00a26855265aede9b82e8d3d237aad496d986dd2a5d82c2678b0
     keywords:
@@ -2307,7 +2364,7 @@ entries:
     urls:
     - https://helm.astronomer.io/prometheus-0.5.0-rc.10.tgz
     version: 0.5.0-rc.10
-  - created: 2018-09-24T09:29:04.704239755-04:00
+  - created: 2018-09-24T13:45:58.371102509-04:00
     description: Helm chart to deploy the Astronomer Platform Prometheus module
     digest: 991a80e711d21857b43ebf9b346537d326df453b133ca3d5c24e5c973e773fd1
     keywords:
@@ -2317,7 +2374,7 @@ entries:
     urls:
     - https://helm.astronomer.io/prometheus-0.5.0-rc.9.tgz
     version: 0.5.0-rc.9
-  - created: 2018-09-24T09:29:04.703986331-04:00
+  - created: 2018-09-24T13:45:58.370892792-04:00
     description: Helm chart to deploy the Astronomer Platform Prometheus module
     digest: b2728cf7cab358b89b4d738423643b6ee6a8aebfae23c32ba5f32474b47cff4d
     keywords:
@@ -2327,7 +2384,7 @@ entries:
     urls:
     - https://helm.astronomer.io/prometheus-0.5.0-rc.7.tgz
     version: 0.5.0-rc.7
-  - created: 2018-09-24T09:29:04.703702273-04:00
+  - created: 2018-09-24T13:45:58.370676009-04:00
     description: Helm chart to deploy the Astronomer Platform Prometheus module
     digest: 9a7ea0b822f40c7539dc25cf5d635a8fb16694c1121f7e24453e3e5e565d4159
     keywords:
@@ -2337,7 +2394,7 @@ entries:
     urls:
     - https://helm.astronomer.io/prometheus-0.5.0-rc.6.tgz
     version: 0.5.0-rc.6
-  - created: 2018-09-24T09:29:04.703411453-04:00
+  - created: 2018-09-24T13:45:58.370450638-04:00
     description: Helm chart to deploy the Astronomer Platform Prometheus module
     digest: baa6027dea92e37c0406cb07ac2aec3ebdf2842958e9725b802c222daff3c9da
     keywords:
@@ -2347,7 +2404,7 @@ entries:
     urls:
     - https://helm.astronomer.io/prometheus-0.5.0-rc.5.tgz
     version: 0.5.0-rc.5
-  - created: 2018-09-24T09:29:04.7031395-04:00
+  - created: 2018-09-24T13:45:58.370238974-04:00
     description: Helm chart to deploy the Astronomer Platform Prometheus module
     digest: fb21e84c435bceb0465a3653301f740da5511573164c47ff3b2ac05a31846707
     keywords:
@@ -2357,7 +2414,7 @@ entries:
     urls:
     - https://helm.astronomer.io/prometheus-0.5.0-rc.4.tgz
     version: 0.5.0-rc.4
-  - created: 2018-09-24T09:29:04.702877782-04:00
+  - created: 2018-09-24T13:45:58.370028255-04:00
     description: Helm chart to deploy the Astronomer Platform Prometheus module
     digest: d91a7ad0808836188538925da06ba4848ef21847c630aa5b17fa913eeedcf2d5
     keywords:
@@ -2367,7 +2424,7 @@ entries:
     urls:
     - https://helm.astronomer.io/prometheus-0.5.0-rc.3.tgz
     version: 0.5.0-rc.3
-  - created: 2018-09-24T09:29:04.702087807-04:00
+  - created: 2018-09-24T13:45:58.36940229-04:00
     description: Helm chart to deploy the Astronomer Platform Prometheus module
     digest: 1c12b5837562cebbb2e0973d7c111b72794fa55bf11a0a2cd07e38a1edf435f3
     keywords:
@@ -2377,7 +2434,7 @@ entries:
     urls:
     - https://helm.astronomer.io/prometheus-0.5.0-rc.2.tgz
     version: 0.5.0-rc.2
-  - created: 2018-09-24T09:29:04.699344591-04:00
+  - created: 2018-09-24T13:45:58.367216032-04:00
     description: Helm chart to deploy the Astronomer Platform Prometheus module
     digest: e3628ff4c563b226e185143618483dba0024c94829595cb7f1967205a3c0aaf1
     keywords:
@@ -2387,7 +2444,7 @@ entries:
     urls:
     - https://helm.astronomer.io/prometheus-0.5.0-rc.1.tgz
     version: 0.5.0-rc.1
-  - created: 2018-09-24T09:29:04.699076016-04:00
+  - created: 2018-09-24T13:45:58.367005854-04:00
     description: Helm chart to deploy the Astronomer Platform Prometheus module
     digest: 60bac636675dd7b849b6fb42e6207e2fe2cf4e5d4f98ee72bcaf343b3e02a51a
     keywords:
@@ -2397,7 +2454,7 @@ entries:
     urls:
     - https://helm.astronomer.io/prometheus-0.4.2-rc.6.tgz
     version: 0.4.2-rc.6
-  - created: 2018-09-24T09:29:04.698813777-04:00
+  - created: 2018-09-24T13:45:58.36678927-04:00
     description: Helm chart to deploy the Astronomer Platform Prometheus module
     digest: 1d165a27a3f91762f36288415017a0090fa789476fa8bed546939b89bb123eb2
     keywords:
@@ -2407,7 +2464,7 @@ entries:
     urls:
     - https://helm.astronomer.io/prometheus-0.4.2-rc.5.tgz
     version: 0.4.2-rc.5
-  - created: 2018-09-24T09:29:04.698554874-04:00
+  - created: 2018-09-24T13:45:58.366584785-04:00
     description: Helm chart to deploy the Astronomer Platform Prometheus module
     digest: bf1a7705228b61b5d88c0e3f72e5e8ef0e7a5b1b7172650282d2548a02e6ce4d
     keywords:
@@ -2417,7 +2474,7 @@ entries:
     urls:
     - https://helm.astronomer.io/prometheus-0.4.2-rc.4.tgz
     version: 0.4.2-rc.4
-  - created: 2018-09-24T09:29:04.69826978-04:00
+  - created: 2018-09-24T13:45:58.366373984-04:00
     description: Helm chart to deploy the Astronomer Platform Prometheus module
     digest: e74bd9a17b98ac1ad6ab5b45efc424f69391247234b201f8b5f06148b0cc207e
     keywords:
@@ -2427,7 +2484,7 @@ entries:
     urls:
     - https://helm.astronomer.io/prometheus-0.4.2-rc.3.tgz
     version: 0.4.2-rc.3
-  - created: 2018-09-24T09:29:04.697987322-04:00
+  - created: 2018-09-24T13:45:58.366169036-04:00
     description: Helm chart to deploy the Astronomer Platform Prometheus module
     digest: dda7447e8c20258e1ba54930e24c79951ec6e5e83e4702e6b33c58d8f14cdcf0
     keywords:
@@ -2437,7 +2494,7 @@ entries:
     urls:
     - https://helm.astronomer.io/prometheus-0.4.2-rc.2.tgz
     version: 0.4.2-rc.2
-  - created: 2018-09-24T09:29:04.697723663-04:00
+  - created: 2018-09-24T13:45:58.365961957-04:00
     description: Helm chart to deploy the Astronomer Platform Prometheus module
     digest: 73acc03c3c78928cb15fe229325a90950db9d05797d20b43f171f4dde2de903e
     keywords:
@@ -2447,7 +2504,7 @@ entries:
     urls:
     - https://helm.astronomer.io/prometheus-0.4.2-rc.1.tgz
     version: 0.4.2-rc.1
-  - created: 2018-09-24T09:29:04.697455621-04:00
+  - created: 2018-09-24T13:45:58.365751608-04:00
     description: Helm chart to deploy the Astronomer Platform Prometheus module
     digest: 512a0a466fd467527fb3ed332f51d3af75bdd3bfa5197fab989cfd8687fbe5b5
     keywords:
@@ -2457,7 +2514,7 @@ entries:
     urls:
     - https://helm.astronomer.io/prometheus-0.4.1.tgz
     version: 0.4.1
-  - created: 2018-09-24T09:29:04.697162041-04:00
+  - created: 2018-09-24T13:45:58.365543075-04:00
     description: Helm chart to deploy the Astronomer Platform Prometheus module
     digest: d1d3d9af934848b0f6db76a99356fa731095f6bef0c365637885c831bfc231c6
     keywords:
@@ -2467,7 +2524,7 @@ entries:
     urls:
     - https://helm.astronomer.io/prometheus-0.4.0.tgz
     version: 0.4.0
-  - created: 2018-09-24T09:29:04.696621023-04:00
+  - created: 2018-09-24T13:45:58.36533203-04:00
     description: Helm chart to deploy the Astronomer Platform Prometheus module
     digest: 5c699ec596fe5dbb5cfcb17a4e06e4822d83d249edb681c3b460f7fe93e18f2d
     keywords:
@@ -2477,7 +2534,7 @@ entries:
     urls:
     - https://helm.astronomer.io/prometheus-0.4.0-rc.5.tgz
     version: 0.4.0-rc.5
-  - created: 2018-09-24T09:29:04.695188111-04:00
+  - created: 2018-09-24T13:45:58.365119542-04:00
     description: Helm chart to deploy the Astronomer Platform Prometheus module
     digest: 4162e51fda2f0c2da110793875f4af8b8e26bd57009c899442051be4be6d1150
     keywords:
@@ -2487,7 +2544,7 @@ entries:
     urls:
     - https://helm.astronomer.io/prometheus-0.4.0-rc.2.tgz
     version: 0.4.0-rc.2
-  - created: 2018-09-24T09:29:04.694936484-04:00
+  - created: 2018-09-24T13:45:58.364910567-04:00
     description: Helm chart to deploy the Astronomer Platform Prometheus module
     digest: 3ad6d116edef9273b330148e44c58ba6fffda85a8eeb795036e74794d52c32b1
     keywords:
@@ -2497,7 +2554,7 @@ entries:
     urls:
     - https://helm.astronomer.io/prometheus-0.3.3-rc.3.tgz
     version: 0.3.3-rc.3
-  - created: 2018-09-24T09:29:04.694679961-04:00
+  - created: 2018-09-24T13:45:58.364698132-04:00
     description: Helm chart to deploy the Astronomer Platform Prometheus module
     digest: d2df0db589faf7639a97887e8bc5c6918a8d01d469522636d4b3b377c0197987
     keywords:
@@ -2507,7 +2564,7 @@ entries:
     urls:
     - https://helm.astronomer.io/prometheus-0.3.3-rc.2.tgz
     version: 0.3.3-rc.2
-  - created: 2018-09-24T09:29:04.69442618-04:00
+  - created: 2018-09-24T13:45:58.364475573-04:00
     description: Helm chart to deploy the Astronomer Platform Prometheus module
     digest: 3a3baa6d3075d92f4bf72e830946465f0e5c64b0ada244312748fa288696ac5e
     keywords:
@@ -2517,7 +2574,7 @@ entries:
     urls:
     - https://helm.astronomer.io/prometheus-0.3.2.tgz
     version: 0.3.2
-  - created: 2018-09-24T09:29:04.694183824-04:00
+  - created: 2018-09-24T13:45:58.364230476-04:00
     description: Helm chart to deploy the Astronomer Platform Prometheus module
     digest: 340171b92d657d2222e1fae8c0eed2c5792ffe6b758d309cc39af86eadd67c6e
     keywords:
@@ -2527,7 +2584,7 @@ entries:
     urls:
     - https://helm.astronomer.io/prometheus-0.3.2-rc.3.tgz
     version: 0.3.2-rc.3
-  - created: 2018-09-24T09:29:04.693939343-04:00
+  - created: 2018-09-24T13:45:58.363731131-04:00
     description: Helm chart to deploy the Astronomer Platform Prometheus module
     digest: d9ea0387f34013d2b2b47b1de0707bcf69358dce0530135392b0550cf2594296
     keywords:
@@ -2537,7 +2594,7 @@ entries:
     urls:
     - https://helm.astronomer.io/prometheus-0.3.2-rc.2.tgz
     version: 0.3.2-rc.2
-  - created: 2018-09-24T09:29:04.693689561-04:00
+  - created: 2018-09-24T13:45:58.363155532-04:00
     description: Helm chart to deploy the Astronomer Platform Prometheus module
     digest: d173d7128802a7bcae9b842e3cb963608838ac0d271269cab1db497796bb6198
     keywords:
@@ -2547,7 +2604,7 @@ entries:
     urls:
     - https://helm.astronomer.io/prometheus-0.3.2-rc.1.tgz
     version: 0.3.2-rc.1
-  - created: 2018-09-24T09:29:04.693434604-04:00
+  - created: 2018-09-24T13:45:58.362950054-04:00
     description: Helm chart to deploy the Astronomer Platform Prometheus module
     digest: a6f14653559e8ed512befabe2526ffa87a549b137d1f56c16256484c20502747
     keywords:
@@ -2557,14 +2614,4 @@ entries:
     urls:
     - https://helm.astronomer.io/prometheus-0.3.1.tgz
     version: 0.3.1
-  - created: 2018-09-24T09:29:04.693192746-04:00
-    description: Helm chart to deploy the Astronomer Platform Prometheus module
-    digest: a60472ec5123de772073c9d512eb7201192432cf06f6bdfff84d5377f27261fc
-    keywords:
-    - astronomer
-    - prometheus
-    name: prometheus
-    urls:
-    - https://helm.astronomer.io/prometheus-0.0.0.tgz
-    version: 0.0.0
-generated: 2018-09-24T09:29:04.591313698-04:00
+generated: 2018-09-24T13:45:58.27645652-04:00
