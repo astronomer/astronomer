@@ -5,6 +5,7 @@ pipeline:
   commit:
     image: astronomerio/ap-build:0.0.7
     commands:
+      - make update-version
       - mkdir -p /root/.ssh
       - echo "$${GIT_PUSH_SSH_KEY}" > /root/.ssh/id_rsa
       - chmod 600 /root/.ssh/id_rsa
