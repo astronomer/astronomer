@@ -63,3 +63,13 @@ pipeline:
       event: deployment
       branch: [ master, release-* ]
       environment: production
+
+  release:
+    image: astronomerio/ap-build:0.0.7
+    secrets: [ github_api_key ]
+    commands:
+      - release $${DRONE_REPO_NAME} $${GITHUB_API_KEY} v$${ASTRONOMER_VERSION} $${DRONE_COMMIT_BRANCH}
+    when:
+      event: deployment
+      branch: [ master, release-* ]
+      environment: production
