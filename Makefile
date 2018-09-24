@@ -17,7 +17,7 @@ BUILD_NUMBER ?= 1
 PLATFORM_COMPONENTS := base cli-install commander db-bootstrapper default-backend houston-api orbit-ui
 
 # Airflow versions
-AIRFLOW_VERSIONS := 1.9.0 #1.10.0
+AIRFLOW_VERSIONS := 1.9.0
 
 # Vendor components
 VENDOR_COMPONENTS := cadvisor grafana nginx pgbouncer pgbouncer-exporter prometheus redis registry statsd-exporter
@@ -73,6 +73,7 @@ push-airflow: check-env
 	for version in "${AIRFLOW_VERSIONS}" ; do \
 		echo "Pushing ap-airflow:${ASTRONOMER_VERSION}-$${version} ======================"; \
 		docker push ${REPOSITORY}/ap-airflow:${ASTRONOMER_VERSION}-$${version} || exit 1; \
+		echo "Pushing ap-airflow:${ASTRONOMER_VERSION}-$${version}-onbuild ======================"; \
 		docker push ${REPOSITORY}/ap-airflow:${ASTRONOMER_VERSION}-$${version}-onbuild || exit 1; \
 	done;
 
