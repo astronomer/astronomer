@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+set -x
+
+ASTRONOMER_BUILD=$(drone build ls astronomerio/astronomer --event push --branch $1 --format "{{ .Number }}" --limit 1)
+# HELM_BUILD=$(drone build ls astronomerio/helm.astronomer.io --event push --branch $1 --format "{{ .Number }}" --limit 1)
+
+drone deploy astronomerio/astronomer $ASTRONOMER_BUILD production -p ASTRONOMER_VERSION=$2
+# drone deploy astronomerio/helm.astronomer.io $ASTRONOMER_BUILD production -p ASTRONOMER_VERSION=$2
