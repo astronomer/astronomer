@@ -1,54 +1,65 @@
 pipeline:
-  # Just build when we push to master
+  ##################################
+  ## Github pushes - build with SHA
+  ###################################
   build:
-    image: astronomerio/ap-build:0.0.6
+    image: astronomerio/ap-build:0.0.7
+    environment:
+      - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
+      - ASTRONOMER_VERSION=${DRONE_COMMIT_SHA:0:8}
     commands:
       - make build
     when:
       event: push
-      branch: master
+      branch: [ master, release-* ]
 
-  # Build when we tag
+  ##################################
+  ## Deployment
+  ###################################
   build:
-    image: astronomerio/ap-build:0.0.6
+    image: astronomerio/ap-build:0.0.7
+    environment:
+      - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
     commands:
       - make build
-    environment:
-      - ASTRONOMER_VERSION=${DRONE_TAG##v}
     when:
-      event: tag
+      event: deployment
       branch: [ master, release-* ]
+      environment: production
 
   # Push to helm.astronomer.io
   push:
-    image: astronomerio/ap-build:0.0.6
+    image: astronomerio/ap-build:0.0.7
+    environment:
+      - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
     commands:
       - printf "%s" $${GCP_TOKEN} > /tmp/gcs_token.json
       - sed -i 's/BEGINPRIVATEKEY/BEGIN PRIVATE KEY/g' /tmp/gcs_token.json
       - sed -i 's/ENDPRIVATEKEY/END PRIVATE KEY/g' /tmp/gcs_token.json
       - gcloud auth activate-service-account --key-file=/tmp/gcs_token.json
       - make push-repo
-    environment:
-      - ASTRONOMER_VERSION=${DRONE_TAG##v}
     secrets: [ gcp_token ]
     when:
-      event: tag
+      event: deployment
       branch: [ master, release-* ]
+      environment: production
 
   # Push new versions back to github
-  # commit:
-  #   image: astronomerio/ap-build:0.0.6
-  #   commands:
-  #     - mkdir -p /root/.ssh
-  #     - echo "$${GIT_PUSH_SSH_KEY}" > /root/.ssh/id_rsa
-  #     - chmod 600 /root/.ssh/id_rsa
-  #     - ssh-keyscan -H github.com >> /root/.ssh/known_hosts
-  #     - git add .
-  #     - git -c user.email='bot@astronomer.io' -c user.name='bot' commit -m "Bump to $${DRONE_TAG##v}"
-  #     - git push HEAD:${DRONE_BRANCH}
-  #   environment:
-  #     - ASTRONOMER_VERSION=${DRONE_TAG##v}
-  #   secrets: [ git_push_ssh_key ]
-  #   when:
-  #     event: tag
-  #     branch: [ master, release-* ]
+  commit-push-tags:
+    image: astronomerio/ap-build:0.0.7
+    commands:
+      - mkdir -p /root/.ssh
+      - echo "$${GIT_PUSH_SSH_KEY}" > /root/.ssh/id_rsa
+      - chmod 600 /root/.ssh/id_rsa
+      - ssh-keyscan -H github.com >> /root/.ssh/known_hosts
+      - git remote set-url origin git@github.com:${DRONE_REPO_OWNER}/${DRONE_REPO_NAME}.git
+      - git config --global user.name "schnie"
+      - git config --global user.email "schnie@astronomer.io"
+      - git add .
+      - git commit -m "[skip ci] Bump to $${ASTRONOMER_VERSION}"
+      - git push -u origin ${DRONE_COMMIT_BRANCH}
+    secrets: [ git_push_ssh_key ]
+    when:
+      event: deployment
+      branch: [ master, release-* ]
+      environment: production

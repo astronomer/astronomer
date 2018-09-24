@@ -4,10 +4,10 @@ URL ?= https://${DOMAIN}
 BUCKET ?= gs://${DOMAIN}
 
 # Version
-ASTRONOMER_MAJOR_VERSION ?= 0
-ASTRONOMER_MINOR_VERSION ?= 5
-ASTRONOMER_PATCH_VERSION ?= 1
-ASTRONOMER_VERSION ?= ${ASTRONOMER_MAJOR_VERSION}.${ASTRONOMER_MINOR_VERSION}.${ASTRONOMER_PATCH_VERSION}
+# ASTRONOMER_MAJOR_VERSION ?= 0
+# ASTRONOMER_MINOR_VERSION ?= 5
+# ASTRONOMER_PATCH_VERSION ?= 1
+# ASTRONOMER_VERSION ?= ${ASTRONOMER_MAJOR_VERSION}.${ASTRONOMER_MINOR_VERSION}.${ASTRONOMER_PATCH_VERSION}
 
 # List of charts to build
 CHARTS := astronomer airflow grafana prometheus nginx
@@ -49,27 +49,19 @@ clean:
 		rm ${OUTPUT}/$${chart}-${ASTRONOMER_VERSION}.tgz || exit 1; \
 	done; \
 
-.PHONY: build-rc
-build-rc:
-ifndef ASTRONOMER_RC_VERSION
-	$(error ASTRONOMER_RC_VERSION must be defined)
-endif
-	$(MAKE) ASTRONOMER_VERSION=${ASTRONOMER_VERSION}-rc.${ASTRONOMER_RC_VERSION} build
+.PHONY: update-image-tags
+update-image-tags: check-env
+	find charts -name 'values.yaml' -exec sed -i -E 's/tag: (0|[1-9][[:digit:]]*)\.(0|[1-9][[:digit:]]*)\.(0|[1-9][[:digit:]]*)(-(0|[1-9][[:digit:]]*|[[:digit:]]*[a-zA-Z-][0-9a-zA-Z-]*)(\.(0|[1-9][[:digit:]]*|[[:digit:]]*[a-zA-Z-][0-9a-zA-Z-]*))*)?(\+[0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*)?/tag: ${ASTRONOMER_VERSION}/g' {} \;
 
-.PHONY: push-rc
-push-rc: build-rc
-	$(MAKE) ASTRONOMER_VERSION=${ASTRONOMER_VERSION}-rc.${ASTRONOMER_RC_VERSION} push-repo
-
-.PHONY: clean-rc
-clean-rc:
-ifndef ASTRONOMER_RC_VERSION
-	$(error ASTRONOMER_RC_VERSION must be defined)
-endif
-	for chart in ${CHARTS} ; do \
-		rm ${OUTPUT}/$${chart}-${ASTRONOMER_VERSION}-rc.${ASTRONOMER_RC_VERSION}.tgz || exit 1; \
-	done; \
+.PHONY: update-chart-versions
+update-chart-versions: check-env
+	find . -name Chart.yaml -exec sed -i -E 's/(0|[1-9][[:digit:]]*)\.(0|[1-9][[:digit:]]*)\.(0|[1-9][[:digit:]]*)(-(0|[1-9][[:digit:]]*|[[:digit:]]*[a-zA-Z-][0-9a-zA-Z-]*)(\.(0|[1-9][[:digit:]]*|[[:digit:]]*[a-zA-Z-][0-9a-zA-Z-]*))*)?(\+[0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*)?/${ASTRONOMER_VERSION}/g' {} \;
 
 .PHONY: update-version
-update-version:
-	find charts -name 'values.yaml' -exec sed -i -E 's/tag: (0|[1-9][[:digit:]]*)\.(0|[1-9][[:digit:]]*)\.(0|[1-9][[:digit:]]*)(-(0|[1-9][[:digit:]]*|[[:digit:]]*[a-zA-Z-][0-9a-zA-Z-]*)(\.(0|[1-9][[:digit:]]*|[[:digit:]]*[a-zA-Z-][0-9a-zA-Z-]*))*)?(\+[0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*)?/tag: ${ASTRONOMER_VERSION}/g' {} \;
-	find . -name Chart.yaml -exec sed -i -E 's/(0|[1-9][[:digit:]]*)\.(0|[1-9][[:digit:]]*)\.(0|[1-9][[:digit:]]*)(-(0|[1-9][[:digit:]]*|[[:digit:]]*[a-zA-Z-][0-9a-zA-Z-]*)(\.(0|[1-9][[:digit:]]*|[[:digit:]]*[a-zA-Z-][0-9a-zA-Z-]*))*)?(\+[0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*)?/${ASTRONOMER_VERSION}/g' {} \;
+update-version: check-env update-image-tags update-chart-versions
+
+.PHONY: check-env
+check-env:
+ifndef ASTRONOMER_VERSION
+	$(error ASTRONOMER_VERSION is not set)
+endif
