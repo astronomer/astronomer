@@ -4,6 +4,8 @@ pipeline:
   ###################################
   commit:
     image: astronomerio/ap-build:0.0.7
+    environment:
+      - ASTRONOMER_VERSION="something"
     commands:
       - make update-version
       - mkdir -p /root/.ssh
