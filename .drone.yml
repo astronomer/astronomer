@@ -8,7 +8,7 @@ pipeline:
     commands:
       - make build-platform
     environment:
-      - ASTRONOMER_VERSION=${DRONE_COMMIT_SHA:0:8}
+      - ASTRONOMER_VERSION=0.0.0
       - ASTRONOMER_REF=${DRONE_BRANCH}
       # - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
     volumes:
@@ -23,7 +23,7 @@ pipeline:
     commands:
       - make build-airflow
     environment:
-      - ASTRONOMER_VERSION=${DRONE_COMMIT_SHA:0:8}
+      - ASTRONOMER_VERSION=0.0.0
       # - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
@@ -110,10 +110,9 @@ pipeline:
       environment: production
 
   # Push new versions back to github
-  commit-push:
+  commit-push-tags:
     image: astronomerio/ap-build:0.0.7
     commands:
-      - make update-version
       - mkdir -p /root/.ssh
       - echo "$${GIT_PUSH_SSH_KEY}" > /root/.ssh/id_rsa
       - chmod 600 /root/.ssh/id_rsa
