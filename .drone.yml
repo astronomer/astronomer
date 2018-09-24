@@ -8,7 +8,6 @@ pipeline:
       - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
       - ASTRONOMER_VERSION=0.0.0
     commands:
-      - echo $ASTRONOMER_VERSION
       - make build
     when:
       event: push
