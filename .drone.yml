@@ -18,8 +18,6 @@ pipeline:
       - git config --global user.email "bot@astronomer.io"
       - git add .
       - git commit -m "[skip ci] Bump to ${ASTRONOMER_VERSION}"
-      - git status
-      - git remote -v
       - git push -u origin ${DRONE_COMMIT_BRANCH}
     secrets: [ git_push_ssh_key ]
     when:
