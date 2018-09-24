@@ -9,8 +9,8 @@ pipeline:
       - echo "$${GIT_PUSH_SSH_KEY}" > /root/.ssh/id_rsa
       - chmod 600 /root/.ssh/id_rsa
       - ssh-keyscan -H github.com >> /root/.ssh/known_hosts
-      - git add .
-      - git -c user.email='bot@astronomer.io' -c user.name='bot' commit -m "[skip ci] Bump to ${ASTRONOMER_VERSION}"
+      # - git add .
+      # - git -c user.email='bot@astronomer.io' -c user.name='bot' commit -m "[skip ci] Bump to ${ASTRONOMER_VERSION}"
       # - git push HEAD:${DRONE_COMMIT_BRANCH}
       - git remote -v
     secrets: [ git_push_ssh_key ]
