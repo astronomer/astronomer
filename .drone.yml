@@ -38,6 +38,9 @@ pipeline:
     image: astronomerio/ap-build:0.0.7
     secrets: [ github_api_key ]
     commands:
+      - echo $${GITHUB_API_KEY}
+      - echo $${ASTRONOMER_VERSION}
+      - echo $${DRONE_COMMIT_BRANCH}
       - release commander $${GITHUB_API_KEY} v$${ASTRONOMER_VERSION} $${DRONE_COMMIT_BRANCH}
       - release db-bootstrapper $${GITHUB_API_KEY} v$${ASTRONOMER_VERSION} $${DRONE_COMMIT_BRANCH}
       - release default-backend $${GITHUB_API_KEY} v$${ASTRONOMER_VERSION} $${DRONE_COMMIT_BRANCH}
