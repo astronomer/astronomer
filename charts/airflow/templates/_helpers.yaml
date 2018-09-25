@@ -16,6 +16,8 @@
     value: {{ printf "https://%s" (include "airflow_url" .) | quote }}
   - name: AIRFLOW__KUBERNETES__NAMESPACE
     value: {{ .Release.Namespace }}
+  - name: AIRFLOW__CORE__LOAD_EXAMPLES
+    value: "False"
   - name: ASTRONOMER__AIRFLOW__WORKER_LOG_RETENTION
     value: "15"
   - name: AIRFLOW__CORE__EXECUTOR
