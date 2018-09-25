@@ -19,7 +19,8 @@ pipeline:
   update-version:
     image: astronomerio/ap-build:0.0.7
     commands:
-      - make update-version
+      - make update-image-tags
+      - make update-chart-versions
     when:
       event: deployment
       branch: [ master, release-* ]
