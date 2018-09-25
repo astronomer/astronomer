@@ -48,62 +48,11 @@ pipeline:
       branch: [ master, release-* ]
       environment: production
 
-  build-platform:
+  update-version:
     group: build
     image: astronomerio/ap-build:0.0.7
     commands:
       - make update-version
-      - make build-platform
-    environment:
-      - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    when:
-      event: deployment
-      branch: [ master, release-* ]
-      environment: production
-
-  build-airflow:
-    group: build
-    image: astronomerio/ap-build:0.0.7
-    commands:
-      - make build-airflow
-    environment:
-      - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    when:
-      event: deployment
-      branch: [ master, release-* ]
-      environment: production
-
-  push-platform:
-    group: push
-    image: astronomerio/ap-build:0.0.7
-    commands:
-      - docker login -u $${DOCKER_USERNAME} -p $${DOCKER_PASSWORD}
-      - make push-platform
-    environment:
-      - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    secrets: [ docker_username, docker_password ]
-    when:
-      event: deployment
-      branch: [ master, release-* ]
-      environment: production
-
-  push-airflow:
-    group: push
-    image: astronomerio/ap-build:0.0.7
-    commands:
-      - docker login -u $${DOCKER_USERNAME} -p $${DOCKER_PASSWORD}
-      - make push-airflow
-    environment:
-      - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    secrets: [ docker_username, docker_password ]
     when:
       event: deployment
       branch: [ master, release-* ]
@@ -138,3 +87,66 @@ pipeline:
       event: deployment
       branch: [ master, release-* ]
       environment: production
+
+  ##################################
+  ## Tag
+  ###################################
+  build-platform:
+    group: build
+    image: astronomerio/ap-build:0.0.7
+    commands:
+      - make build-platform
+    environment:
+      - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
+      - ASTRONOMER_VERSION=${DRONE_TAG}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    when:
+      event: tag
+      branch: [ master, release-* ]
+
+  build-airflow:
+    group: build
+    image: astronomerio/ap-build:0.0.7
+    commands:
+      - make build-airflow
+    environment:
+      - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
+      - ASTRONOMER_VERSION=${DRONE_TAG}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    when:
+      event: tag
+      branch: [ master, release-* ]
+
+  push-platform:
+    group: push
+    image: astronomerio/ap-build:0.0.7
+    commands:
+      - docker login -u $${DOCKER_USERNAME} -p $${DOCKER_PASSWORD}
+      - make push-platform
+    environment:
+      - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
+      - ASTRONOMER_VERSION=${DRONE_TAG}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    secrets: [ docker_username, docker_password ]
+    when:
+      event: tag
+      branch: [ master, release-* ]
+
+  push-airflow:
+    group: push
+    image: astronomerio/ap-build:0.0.7
+    commands:
+      - docker login -u $${DOCKER_USERNAME} -p $${DOCKER_PASSWORD}
+      - make push-airflow
+    environment:
+      - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
+      - ASTRONOMER_VERSION=${DRONE_TAG}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    secrets: [ docker_username, docker_password ]
+    when:
+      event: tag
+      branch: [ master, release-* ]

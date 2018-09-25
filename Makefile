@@ -42,7 +42,7 @@ push: check-env clean-images build
 # Platform build/push
 #
 .PHONY: build-platform
-build-platform: check-env clean-pre-release-images update-base-tag
+build-platform: check-env update-base-tag
 	PLATFORM_COMPONENTS="${PLATFORM_COMPONENTS}" \
 	VENDOR_COMPONENTS="${VENDOR_COMPONENTS}" \
 	REPOSITORY=${REPOSITORY} \
