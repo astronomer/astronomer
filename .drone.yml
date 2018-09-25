@@ -16,7 +16,7 @@ pipeline:
   ##################################
   ## Deployment
   ###################################
-  build:
+  update-version:
     image: astronomerio/ap-build:0.0.7
     commands:
       - make update-version
