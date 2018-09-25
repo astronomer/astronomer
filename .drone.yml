@@ -18,33 +18,13 @@ pipeline:
   ###################################
   build:
     image: astronomerio/ap-build:0.0.7
-    environment:
-      - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
     commands:
-      - make build
+      - make update-version
     when:
       event: deployment
       branch: [ master, release-* ]
       environment: production
 
-  # Push to helm.astronomer.io
-  push:
-    image: astronomerio/ap-build:0.0.7
-    environment:
-      - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
-    commands:
-      - printf "%s" $${GCP_TOKEN} > /tmp/gcs_token.json
-      - sed -i 's/BEGINPRIVATEKEY/BEGIN PRIVATE KEY/g' /tmp/gcs_token.json
-      - sed -i 's/ENDPRIVATEKEY/END PRIVATE KEY/g' /tmp/gcs_token.json
-      - gcloud auth activate-service-account --key-file=/tmp/gcs_token.json
-      - make push-repo
-    secrets: [ gcp_token ]
-    when:
-      event: deployment
-      branch: [ master, release-* ]
-      environment: production
-
-  # Push new versions back to github
   commit-push-tags:
     image: astronomerio/ap-build:0.0.7
     commands:
@@ -56,7 +36,7 @@ pipeline:
       - git config --global user.name "schnie"
       - git config --global user.email "schnie@astronomer.io"
       - git add -A
-      - git diff-index --quiet HEAD || git commit -m "[skip ci] Bump to $${ASTRONOMER_VERSION}"
+      - git diff-index --quiet HEAD || git commit -m "Bump to $${ASTRONOMER_VERSION}"
       - git push -u origin ${DRONE_COMMIT_BRANCH}
     secrets: [ git_push_ssh_key ]
     when:
@@ -73,3 +53,35 @@ pipeline:
       event: deployment
       branch: [ master, release-* ]
       environment: production
+
+  ##################################
+  ## Tag
+  ###################################
+  build:
+    image: astronomerio/ap-build:0.0.7
+    environment:
+      - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
+      - ASTRONOMER_VERSION=${DRONE_TAG}
+    commands:
+      - make build
+    when:
+      event: tag
+      branch: [ master, release-* ]
+
+  # Push to helm.astronomer.io
+  push:
+    image: astronomerio/ap-build:0.0.7
+    environment:
+      - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
+      - ASTRONOMER_VERSION=${DRONE_TAG}
+    commands:
+      - printf "%s" $${GCP_TOKEN} > /tmp/gcs_token.json
+      - sed -i 's/BEGINPRIVATEKEY/BEGIN PRIVATE KEY/g' /tmp/gcs_token.json
+      - sed -i 's/ENDPRIVATEKEY/END PRIVATE KEY/g' /tmp/gcs_token.json
+      - gcloud auth activate-service-account --key-file=/tmp/gcs_token.json
+      - make push-repo
+    secrets: [ gcp_token ]
+    when:
+      event: tag
+      branch: [ master, release-* ]
+
