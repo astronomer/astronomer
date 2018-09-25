@@ -62,7 +62,7 @@ pipeline:
     image: astronomerio/ap-build:0.0.7
     environment:
       - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
-      - ASTRONOMER_VERSION=${DRONE_TAG}
+      - ASTRONOMER_VERSION=${DRONE_TAG##v}
     commands:
       - make build
     when:
@@ -74,7 +74,7 @@ pipeline:
     image: astronomerio/ap-build:0.0.7
     environment:
       - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
-      - ASTRONOMER_VERSION=${DRONE_TAG}
+      - ASTRONOMER_VERSION=${DRONE_TAG##v}
     commands:
       - printf "%s" $${GCP_TOKEN} > /tmp/gcs_token.json
       - sed -i 's/BEGINPRIVATEKEY/BEGIN PRIVATE KEY/g' /tmp/gcs_token.json
