@@ -38,9 +38,6 @@ pipeline:
     image: astronomerio/ap-build:0.0.7
     secrets: [ github_api_key ]
     commands:
-      - echo $${GITHUB_API_KEY}
-      - echo $${ASTRONOMER_VERSION}
-      - echo $${DRONE_COMMIT_BRANCH}
       - release commander $${GITHUB_API_KEY} v$${ASTRONOMER_VERSION} $${DRONE_COMMIT_BRANCH}
       - release db-bootstrapper $${GITHUB_API_KEY} v$${ASTRONOMER_VERSION} $${DRONE_COMMIT_BRANCH}
       - release default-backend $${GITHUB_API_KEY} v$${ASTRONOMER_VERSION} $${DRONE_COMMIT_BRANCH}
@@ -52,10 +49,10 @@ pipeline:
       environment: production
 
   update-version:
-    group: build
     image: astronomerio/ap-build:0.0.7
     commands:
       - make update-version
+      - make update-base-tag
     when:
       event: deployment
       branch: [ master, release-* ]
@@ -101,7 +98,7 @@ pipeline:
       - make build-platform
     environment:
       - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
-      - ASTRONOMER_VERSION=${DRONE_TAG}
+      - ASTRONOMER_VERSION=${DRONE_TAG##v}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     when:
@@ -115,7 +112,7 @@ pipeline:
       - make build-airflow
     environment:
       - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
-      - ASTRONOMER_VERSION=${DRONE_TAG}
+      - ASTRONOMER_VERSION=${DRONE_TAG##v}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     when:
@@ -130,7 +127,7 @@ pipeline:
       - make push-platform
     environment:
       - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
-      - ASTRONOMER_VERSION=${DRONE_TAG}
+      - ASTRONOMER_VERSION=${DRONE_TAG##v}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     secrets: [ docker_username, docker_password ]
@@ -146,7 +143,7 @@ pipeline:
       - make push-airflow
     environment:
       - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
-      - ASTRONOMER_VERSION=${DRONE_TAG}
+      - ASTRONOMER_VERSION=${DRONE_TAG##v}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     secrets: [ docker_username, docker_password ]
