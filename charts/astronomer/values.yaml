@@ -9,22 +9,22 @@ uid: 100
 images:
   commander:
     name: astronomerinc/ap-commander
-    tag: 0.6.0-rc.3
+    tag: 0.6.0-rc.4
   registry:
     name: astronomerinc/ap-registry
-    tag: 0.6.0-rc.3
+    tag: 0.6.0-rc.4
   houston:
     name: astronomerinc/ap-houston-api
-    tag: 0.6.0-rc.3
+    tag: 0.6.0-rc.4
   orbit:
     name: astronomerinc/ap-orbit-ui
-    tag: 0.6.0-rc.3
+    tag: 0.6.0-rc.4
   dbBootstrapper:
     name: astronomerinc/ap-db-bootstrapper
-    tag: 0.6.0-rc.3
+    tag: 0.6.0-rc.4
   cliInstall:
     name: astronomerinc/ap-cli-install
-    tag: 0.6.0-rc.3
+    tag: 0.6.0-rc.4
 
 # Astronomer platform config
 data:
