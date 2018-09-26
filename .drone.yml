@@ -38,8 +38,7 @@ pipeline:
       - git config --global user.email "schnie@astronomer.io"
       - git add -A
       - git diff-index --quiet HEAD || git commit -m "Bump to $${ASTRONOMER_VERSION}"
-      - git show-ref
-      - git push -u origin ${DRONE_COMMIT_BRANCH}
+      - git push -u origin HEAD:${DRONE_COMMIT_BRANCH}
     secrets: [ git_push_ssh_key ]
     when:
       event: deployment
