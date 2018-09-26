@@ -17,7 +17,7 @@ BUILD_NUMBER ?= 1
 PLATFORM_COMPONENTS := base cli-install commander db-bootstrapper default-backend houston-api orbit-ui
 
 # Airflow versions
-AIRFLOW_VERSIONS := 1.9.0 #1.10.0
+AIRFLOW_VERSIONS := 1.9.0
 
 # Vendor components
 VENDOR_COMPONENTS := cadvisor grafana nginx pgbouncer pgbouncer-exporter prometheus redis registry statsd-exporter
@@ -42,7 +42,7 @@ push: check-env clean-images build
 # Platform build/push
 #
 .PHONY: build-platform
-build-platform: check-env clean-pre-release-images update-base-tag
+build-platform: check-env update-base-tag
 	PLATFORM_COMPONENTS="${PLATFORM_COMPONENTS}" \
 	VENDOR_COMPONENTS="${VENDOR_COMPONENTS}" \
 	REPOSITORY=${REPOSITORY} \
@@ -53,6 +53,10 @@ build-platform: check-env clean-pre-release-images update-base-tag
 .PHONY: push-platform
 push-platform: check-env
 	for component in ${PLATFORM_COMPONENTS} ; do \
+		echo "Pushing ap-$${component}:${ASTRONOMER_VERSION} ======================"; \
+		docker push ${REPOSITORY}/ap-$${component}:${ASTRONOMER_VERSION} || exit 1; \
+	done;
+	for component in ${VENDOR_COMPONENTS} ; do \
 		echo "Pushing ap-$${component}:${ASTRONOMER_VERSION} ======================"; \
 		docker push ${REPOSITORY}/ap-$${component}:${ASTRONOMER_VERSION} || exit 1; \
 	done;
@@ -68,12 +72,16 @@ build-airflow: check-env
 	BUILD_NUMBER=${BUILD_NUMBER} \
 	bin/build-airflow
 
+# TODO: Fix me for multiple airflow version support
+# docker push ${REPOSITORY}/ap-airflow:${ASTRONOMER_VERSION}-$${version} || exit 1; \
+# docker push ${REPOSITORY}/ap-airflow:${ASTRONOMER_VERSION}-$${version}-onbuild || exit 1; \
 .PHONY: push-airflow
 push-airflow: check-env
 	for version in "${AIRFLOW_VERSIONS}" ; do \
-		echo "Pushing ap-$${component}:${AIRFLOW_VERSION}-${AIRFLOW_BUILD} ======================"; \
-		docker push ${REPOSITORY}/ap-$${component}:${AIRFLOW_VERSION}-${version} || exit 1; \
-		docker push ${REPOSITORY}/ap-$${component}:${AIRFLOW_VERSION}-${version}-onbuild || exit 1; \
+		echo "Pushing ap-airflow:${ASTRONOMER_VERSION} ======================"; \
+		docker push ${REPOSITORY}/ap-airflow:${ASTRONOMER_VERSION} || exit 1; \
+		echo "Pushing ap-airflow:${ASTRONOMER_VERSION}-onbuild ======================"; \
+		docker push ${REPOSITORY}/ap-airflow:${ASTRONOMER_VERSION}-onbuild || exit 1; \
 	done;
 
 #

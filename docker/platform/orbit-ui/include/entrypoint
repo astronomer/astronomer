@@ -3,7 +3,7 @@
 set -e
 
 # Substitue env vars
-envsubst '$APP_API_LOC_HTTPS $ANALYTICS_TRACKING_SNIPPET' < /etc/nginx/nginx.conf.tpl > /etc/nginx/nginx.conf
+envsubst '$APP_API_LOC_HTTPS $ANALYTICS_TRACKING_ID' < /etc/nginx/nginx.conf.tpl > /etc/nginx/nginx.conf
 
 # Run the original command
 exec nginx -g 'daemon off;'

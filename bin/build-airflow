@@ -6,7 +6,9 @@ function build_image() {
     docker_file="${docker_dir}/Dockerfile"
     component_name="ap-airflow"
     build_opts="--build-arg BUILD_NUMBER=${BUILD_NUMBER}"
-    version="${ASTRONOMER_VERSION}-${1}"
+    version="${ASTRONOMER_VERSION}"
+    # TODO: Fix me for multiple airflow version support
+    # version="${ASTRONOMER_VERSION}-${1}"
 
     # Build normal components
     if [ -f "${docker_file}" ]; then
