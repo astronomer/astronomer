@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.0] - 2018-09-26
+* Support for Service Accounts and deploying from CI/CD pipelines
+* Fixed ingress redirect issue
+* Updated to Alpine 3.8 for all images including Airflow
+* New automated build pipeline
+
 ## [0.5.1] - 2018-09-13
 * Support for upgrading individual airflow deployments to latest chart.
 * Fix for airflow task logs link on taskinstances page.
