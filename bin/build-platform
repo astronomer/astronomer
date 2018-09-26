@@ -10,7 +10,8 @@ function build_image() {
 
     # Build component
     if [ -f "${docker_file}" ]; then
-        docker build ${build_opts} -t "${REPOSITORY}/${component_name}:${version}" -f "${docker_file}" "${docker_dir}" || exit 1
+        docker build ${build_opts} -t "${REPOSITORY}/${component_name}:latest" -f "${docker_file}" "${docker_dir}" || exit 1
+        docker tag "${REPOSITORY}/${component_name}:latest" "${REPOSITORY}/${component_name}:${version}"
     fi
 }
 
