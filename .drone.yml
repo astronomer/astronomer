@@ -53,6 +53,7 @@ pipeline:
     commands:
       - make update-version
       - make update-base-tag
+      - make update-airflow-tag
     when:
       event: deployment
       branch: [ master, release-* ]
