@@ -58,8 +58,7 @@ pipeline:
       branch: [ master, release-* ]
       environment: production
 
-  # Push new versions back to github
-  commit-push-tags:
+  commit-tags:
     image: astronomerio/ap-build:0.0.7
     commands:
       - mkdir -p /root/.ssh
@@ -71,22 +70,40 @@ pipeline:
       - git config --global user.email "schnie@astronomer.io"
       - git add -A
       - git diff-index --quiet HEAD || git commit -m "Bump to $${ASTRONOMER_VERSION}"
-      - git push -u origin HEAD:${DRONE_COMMIT_BRANCH}
+      # - git push -u origin HEAD:${DRONE_COMMIT_BRANCH}
     secrets: [ git_push_ssh_key ]
     when:
       event: deployment
       branch: [ master, release-* ]
       environment: production
 
-  release:
+  push-tags:
     image: astronomerio/ap-build:0.0.7
-    secrets: [ github_api_key ]
     commands:
-      - release $${DRONE_REPO_NAME} $${GITHUB_API_KEY} v$${ASTRONOMER_VERSION} $${DRONE_COMMIT_BRANCH}
+      - git push -u origin HEAD:${DRONE_COMMIT_BRANCH}
     when:
       event: deployment
       branch: [ master, release-* ]
       environment: production
+
+  push-tags:
+    image: astronomerio/ap-build:0.0.7
+    commands:
+      - git push -u origin HEAD:master
+    when:
+      event: deployment
+      branch: [ release-* ]
+      environment: production
+
+  # release:
+  #   image: astronomerio/ap-build:0.0.7
+  #   secrets: [ github_api_key ]
+  #   commands:
+  #     - release $${DRONE_REPO_NAME} $${GITHUB_API_KEY} v$${ASTRONOMER_VERSION} $${DRONE_COMMIT_BRANCH}
+  #   when:
+  #     event: deployment
+  #     branch: [ master, release-* ]
+  #     environment: production
 
   ##################################
   ## Tag
