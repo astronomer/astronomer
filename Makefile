@@ -65,7 +65,7 @@ push-platform: check-env
 # Airflow build/push
 #
 .PHONY: build-airflow
-build-airflow: check-env
+build-airflow: check-env update-airflow-tag
 	AIRFLOW_VERSIONS="${AIRFLOW_VERSIONS}" \
 	REPOSITORY=${REPOSITORY} \
 	ASTRONOMER_VERSION=${ASTRONOMER_VERSION} \
@@ -108,10 +108,18 @@ clean-pre-release-images:
 .PHONY: clean
 clean: clean-containers clean-images clean-pre-release-images
 
+.PHONY: update-tags
+update-tags: check-env update-base-tag update-airflow-tag
+
 # Update the base image version
 .PHONY: update-base-tag
 update-base-tag: check-env
 	find docker/platform -name 'Dockerfile' -exec sed -i -E 's/FROM astronomerinc\/ap-base:(.*)/FROM astronomerinc\/ap-base:${ASTRONOMER_VERSION}/g' {} \;
+
+# Update the base image version
+.PHONY: update-airflow-tag
+update-airflow-tag: check-env
+	find docker/airflow -name 'Dockerfile' -exec sed -i -E 's/FROM astronomerinc\/ap-airflow:(.*)/FROM astronomerinc\/ap-airflow:${ASTRONOMER_VERSION}/g' {} \;
 
 # Update the version (tag) that we grab from github from the platform repos
 .PHONY: update-version
