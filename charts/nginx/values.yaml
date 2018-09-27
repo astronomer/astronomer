@@ -4,10 +4,10 @@
 images:
   nginx:
     name: astronomerinc/ap-nginx
-    tag: 0.6.0
+    tag: 0.6.1-rc.1
   defaultBackend:
     name: astronomerinc/ap-default-backend
-    tag: 0.6.0
+    tag: 0.6.1-rc.1
 
 forceNamespaceIsolation: true
 ingressClass: ~
