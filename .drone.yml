@@ -85,14 +85,14 @@ pipeline:
       branch: [ master, release-* ]
       environment: production
 
-  push-tags-master:
-    image: astronomerio/ap-build:0.0.7
-    commands:
-      - git push -u origin HEAD:master
-    when:
-      event: deployment
-      branch: [ release-* ]
-      environment: production
+  # push-tags-master:
+  #   image: astronomerio/ap-build:0.0.7
+  #   commands:
+  #     - git push -u origin HEAD:master
+  #   when:
+  #     event: deployment
+  #     branch: [ release-* ]
+  #     environment: production
 
   release:
     image: astronomerio/ap-build:0.0.7
