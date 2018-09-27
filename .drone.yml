@@ -76,7 +76,7 @@ pipeline:
       branch: [ master, release-* ]
       environment: production
 
-  push-tags:
+  push-tags-release:
     image: astronomerio/ap-build:0.0.7
     commands:
       - git push -u origin HEAD:${DRONE_COMMIT_BRANCH}
@@ -85,7 +85,7 @@ pipeline:
       branch: [ master, release-* ]
       environment: production
 
-  push-tags:
+  push-tags-master:
     image: astronomerio/ap-build:0.0.7
     commands:
       - git push -u origin HEAD:master
