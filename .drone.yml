@@ -88,7 +88,7 @@ pipeline:
   push-tags:
     image: astronomerio/ap-build:0.0.7
     commands:
-      - git push origin HEAD:master
+      - git push -u origin HEAD:master
     when:
       event: deployment
       branch: [ release-* ]
