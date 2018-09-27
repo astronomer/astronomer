@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.0] - 2018-09-27
+* Bug fixes
+
 ## [0.6.0] - 2018-09-26
 * Support for Service Accounts and deploying from CI/CD pipelines
 * Fixed ingress redirect issue
