@@ -74,7 +74,7 @@ build-airflow: check-env update-airflow-tag
 
 # TODO: Fix me for multiple airflow version support
 # docker push ${REPOSITORY}/ap-airflow:${ASTRONOMER_VERSION}-$${version} || exit 1; \
-# docker push ${REPOSITORY}/ap-airflow:${ASTRONOMER_VERSION}-$${version}-onbuild || exit 1; \
+# docker push ${REPOSITORY}/ap-airflow:${ASTRONOMER_VERSION}-$${version}-onbuild || exit 1;
 .PHONY: push-airflow
 push-airflow: check-env
 	for version in "${AIRFLOW_VERSIONS}" ; do \
@@ -82,6 +82,10 @@ push-airflow: check-env
 		docker push ${REPOSITORY}/ap-airflow:${ASTRONOMER_VERSION} || exit 1; \
 		echo "Pushing ap-airflow:${ASTRONOMER_VERSION}-onbuild ======================"; \
 		docker push ${REPOSITORY}/ap-airflow:${ASTRONOMER_VERSION}-onbuild || exit 1; \
+		echo "Pushing ap-airflow:latest ======================"; \
+		docker push ${REPOSITORY}/ap-airflow:latest || exit 1; \
+		echo "Pushing ap-airflow:latest-onbuild ======================"; \
+		docker push ${REPOSITORY}/ap-airflow:latest-onbuild || exit 1; \
 	done;
 
 #
