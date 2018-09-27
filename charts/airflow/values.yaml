@@ -50,22 +50,22 @@ executor: "CeleryExecutor"
 images:
   airflow:
     name: astronomerinc/ap-airflow
-    tag: 0.6.1-rc.3
+    tag: 0.6.1-rc.4
   flower:
     name: astronomerinc/ap-airflow
-    tag: 0.6.1-rc.3
+    tag: 0.6.1-rc.4
   statsd:
     name: astronomerinc/ap-statsd-exporter
-    tag: 0.6.1-rc.3
+    tag: 0.6.1-rc.4
   redis:
     name: astronomerinc/ap-redis
-    tag: 0.6.1-rc.3
+    tag: 0.6.1-rc.4
   pgbouncer:
     name: astronomerinc/ap-pgbouncer
-    tag: 0.6.1-rc.3
+    tag: 0.6.1-rc.4
   pgbouncerExporter:
     name: astronomerinc/ap-pgbouncer-exporter
-    tag: 0.6.1-rc.3
+    tag: 0.6.1-rc.4
 
 # Environment variables for all airflow containers
 env:
