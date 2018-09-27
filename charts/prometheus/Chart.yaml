@@ -1,5 +1,5 @@
 name: prometheus
-version: 0.6.1-rc.1
+version: 0.6.1-rc.3
 description: Helm chart to deploy the Astronomer Platform Prometheus module
 keywords:
   - astronomer
