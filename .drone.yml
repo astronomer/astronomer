@@ -98,7 +98,7 @@ pipeline:
       - git config --global user.name "schnie"
       - git config --global user.email "schnie@astronomer.io"
       - git add -A
-      - git diff-index --quiet HEAD || git commit -m "Bump to $${ASTRONOMER_VERSION}"
+      - git diff-index --quiet HEAD || git commit -m "[skip ci] Add $${DRONE_TAG} chart packages"
       - git push -u origin HEAD:${DRONE_COMMIT_BRANCH}
     secrets: [ git_push_ssh_key ]
     when:
