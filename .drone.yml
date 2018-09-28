@@ -87,6 +87,24 @@ pipeline:
       event: tag
       branch: [ master, release-* ]
 
+  commit-push-tags:
+    image: astronomerio/ap-build:0.0.7
+    commands:
+      - mkdir -p /root/.ssh
+      - echo "$${GIT_PUSH_SSH_KEY}" > /root/.ssh/id_rsa
+      - chmod 600 /root/.ssh/id_rsa
+      - ssh-keyscan -H github.com >> /root/.ssh/known_hosts
+      - git remote set-url origin git@github.com:${DRONE_REPO_OWNER}/${DRONE_REPO_NAME}.git
+      - git config --global user.name "schnie"
+      - git config --global user.email "schnie@astronomer.io"
+      - git add -A
+      - git diff-index --quiet HEAD || git commit -m "Bump to $${ASTRONOMER_VERSION}"
+      - git push -u origin HEAD:${DRONE_COMMIT_BRANCH}
+    secrets: [ git_push_ssh_key ]
+    when:
+      event: tag
+      branch: [ master, release-* ]
+
   # Push to helm.astronomer.io
   push:
     image: astronomerio/ap-build:0.0.7
