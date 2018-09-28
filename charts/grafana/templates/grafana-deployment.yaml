@@ -58,17 +58,17 @@ spec:
 {{ toYaml .Values.resources | indent 12 }}
           ports:
             - name: grafana-ui
-              containerPort: {{ .Values.port }}
+              containerPort: {{ .Values.ports.http }}
           livenessProbe:
             httpGet:
               path: /api/health
-              port: {{ .Values.port }}
+              port: {{ .Values.ports.http }}
             initialDelaySeconds: 10
             periodSeconds: 10
           readinessProbe:
             httpGet:
               path: /api/health
-              port: {{ .Values.port }}
+              port: {{ .Values.ports.http }}
             initialDelaySeconds: 10
             periodSeconds: 10
           volumeMounts:

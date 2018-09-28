@@ -25,4 +25,5 @@ persistence:
   # If using a custom storageClass, pass name ref to all statefulSets here
   storageClassName:
 
-port: 9090
+ports:
+  http: 9090

@@ -28,4 +28,4 @@ spec:
           release: {{ .Release.Name }}
     ports:
     - protocol: TCP
-      port: {{ .Values.port }}
+      port: {{ .Values.ports.http }}

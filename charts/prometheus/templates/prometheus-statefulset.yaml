@@ -50,17 +50,17 @@ spec:
           {{- end }}
           ports:
             - name: prometheus-data
-              containerPort: {{ .Values.port }}
+              containerPort: {{ .Values.ports.http }}
           livenessProbe:
             httpGet:
               path: /graph
-              port: {{ .Values.port }}
+              port: {{ .Values.ports.http }}
             initialDelaySeconds: 10
             periodSeconds: 10
           readinessProbe:
             httpGet:
               path: /graph
-              port: {{ .Values.port }}
+              port: {{ .Values.ports.http }}
             initialDelaySeconds: 10
             periodSeconds: 10
       volumes:

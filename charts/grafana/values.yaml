@@ -16,7 +16,8 @@ grafanaBackendSecret: grafana-backend
 
 bootstrapDatabase: true
 
-port: 3000
+ports:
+  http: 3000
 
 resources: {}
 #  limits:

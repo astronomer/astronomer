@@ -22,5 +22,5 @@ spec:
   ports:
     - name: grafana-ui
       protocol: TCP
-      port: {{ .Values.port }}
-      targetPort: {{ .Values.port }}
+      port: {{ .Values.ports.http }}
+      targetPort: {{ .Values.ports.http }}
