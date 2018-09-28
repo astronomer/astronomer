@@ -3,11 +3,13 @@
 # Declare variables to be passed into your templates.
 images:
   nginx:
-    name: astronomerinc/ap-nginx
+    repository: astronomerinc/ap-nginx
     tag: 0.6.1
+    pullPolicy: IfNotPresent
   defaultBackend:
-    name: astronomerinc/ap-default-backend
+    repository: astronomerinc/ap-default-backend
     tag: 0.6.1
+    pullPolicy: IfNotPresent
 
 forceNamespaceIsolation: true
 ingressClass: ~

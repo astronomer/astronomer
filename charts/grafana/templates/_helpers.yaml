@@ -1,5 +1,5 @@
 {{ define "grafana_image" -}}
-{{ .Values.images.grafana.name }}:{{ or .Values.global.imageTag .Values.images.grafana.tag }}
+{{ .Values.images.grafana.repository }}:{{ .Values.images.grafana.tag }}
 {{- end }}
 
 {{ define "grafana_url" -}}
@@ -7,5 +7,5 @@ grafana.{{ .Values.global.baseDomain }}
 {{- end }}
 
 {{ define "db_bootstrapper_image" -}}
-{{ .Values.images.dbBootstrapper.name }}:{{ or .Values.global.imageTag .Values.images.dbBootstrapper.tag }}
+{{ .Values.images.dbBootstrapper.repository }}:{{ .Values.images.dbBootstrapper.tag }}
 {{- end }}

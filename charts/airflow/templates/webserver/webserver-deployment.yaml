@@ -44,6 +44,7 @@ spec:
       containers:
         - name: {{ .Release.Name }}-webserver
           image: {{- include "airflow_image" . | indent 1 }}
+          imagePullPolicy: {{ .Values.images.airflow.pullPolicy }}
           args: ["airflow", "webserver"]
           resources:
 {{ toYaml .Values.webserver.resources | indent 12 }}

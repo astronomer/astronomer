@@ -15,27 +15,27 @@
 {{- end }}
 
 {{ define "commander_image" -}}
-{{ .Values.images.commander.name }}:{{ or .Values.global.imageTag .Values.images.commander.tag }}
+{{ .Values.images.commander.repository }}:{{ .Values.images.commander.tag }}
 {{- end }}
 
 {{ define "houston_image" -}}
-{{ .Values.images.houston.name }}:{{ or .Values.global.imageTag .Values.images.houston.tag }}
+{{ .Values.images.houston.repository }}:{{ .Values.images.houston.tag }}
 {{- end }}
 
 {{ define "orbit_image" -}}
-{{ .Values.images.orbit.name }}:{{ or .Values.global.imageTag .Values.images.orbit.tag }}
+{{ .Values.images.orbit.repository }}:{{ .Values.images.orbit.tag }}
 {{- end }}
 
 {{ define "registry_image" -}}
-{{ .Values.images.registry.name }}:{{ or .Values.global.imageTag .Values.images.registry.tag }}
+{{ .Values.images.registry.repository }}:{{ .Values.images.registry.tag }}
 {{- end }}
 
 {{ define "db_bootstrapper_image" -}}
-{{ .Values.images.dbBootstrapper.name }}:{{ or .Values.global.imageTag .Values.images.dbBootstrapper.tag }}
+{{ .Values.images.dbBootstrapper.repository }}:{{ .Values.images.dbBootstrapper.tag }}
 {{- end }}
 
 {{ define "cli_install_image" -}}
-{{ .Values.images.cliInstall.name }}:{{ or .Values.global.imageTag .Values.images.cliInstall.tag }}
+{{ .Values.images.cliInstall.repository }}:{{ .Values.images.cliInstall.tag }}
 {{- end }}
 
 {{ define "registry_docker_config" -}}

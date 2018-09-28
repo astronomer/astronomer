@@ -4,11 +4,13 @@
 
 images:
   grafana:
-    name: astronomerinc/ap-grafana
+    repository: astronomerinc/ap-grafana
     tag: 0.6.1
+    pullPolicy: IfNotPresent
   dbBootstrapper:
-    name: astronomerinc/ap-db-bootstrapper
+    repository: astronomerinc/ap-db-bootstrapper
     tag: 0.6.1
+    pullPolicy: IfNotPresent
 
 grafanaBackendSecret: grafana-backend
 

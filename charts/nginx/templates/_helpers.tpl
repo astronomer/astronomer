@@ -32,11 +32,11 @@ Create chart name and version as used by the chart label.
 {{- end -}}
 
 {{ define "nginx_image" -}}
-{{ .Values.images.nginx.name }}:{{ or .Values.global.imageTag .Values.images.nginx.tag }}
+{{ .Values.images.nginx.repository }}:{{ .Values.images.nginx.tag }}
 {{- end }}
 
 {{ define "default_backend_image" -}}
-{{ .Values.images.defaultBackend.name }}:{{ or .Values.global.imageTag .Values.images.defaultBackend.tag }}
+{{ .Values.images.defaultBackend.repository }}:{{ .Values.images.defaultBackend.tag }}
 {{- end }}
 
 {{ define "ingress_class" -}}

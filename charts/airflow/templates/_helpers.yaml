@@ -70,27 +70,27 @@
 {{- end }}
 
 {{ define "airflow_image" -}}
-{{ .Values.images.airflow.name }}:{{ .Values.images.airflow.tag }}
+{{ .Values.images.airflow.repository }}:{{ .Values.images.airflow.tag }}
 {{- end }}
 
 {{ define "flower_image" -}}
-{{ .Values.images.flower.name }}:{{ .Values.images.flower.tag }}
+{{ .Values.images.flower.repository }}:{{ .Values.images.flower.tag }}
 {{- end }}
 
 {{ define "statsd_image" -}}
-{{ .Values.images.statsd.name }}:{{ .Values.images.statsd.tag }}
+{{ .Values.images.statsd.repository }}:{{ .Values.images.statsd.tag }}
 {{- end }}
 
 {{ define "redis_image" -}}
-{{ .Values.images.redis.name }}:{{ .Values.images.redis.tag }}
+{{ .Values.images.redis.repository }}:{{ .Values.images.redis.tag }}
 {{- end }}
 
 {{ define "pgbouncer_image" -}}
-{{ .Values.images.pgbouncer.name }}:{{ .Values.images.pgbouncer.tag }}
+{{ .Values.images.pgbouncer.repository }}:{{ .Values.images.pgbouncer.tag }}
 {{- end }}
 
 {{ define "pgbouncer_exporter_image" -}}
-{{ .Values.images.pgbouncerExporter.name }}:{{ .Values.images.pgbouncerExporter.tag }}
+{{ .Values.images.pgbouncerExporter.repository }}:{{ .Values.images.pgbouncerExporter.tag }}
 {{- end }}
 
 {{ define "fernet_key_secret" -}}

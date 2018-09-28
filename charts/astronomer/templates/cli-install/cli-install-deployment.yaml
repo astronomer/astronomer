@@ -31,6 +31,7 @@ spec:
       containers:
         - name: {{ .Release.Name }}-install
           image: {{- include "cli_install_image" . | indent 1 }}
+          imagePullPolicy: {{ .Values.images.cliInstall.pullPolicy }}
           livenessProbe:
             httpGet:
               path: /healthz

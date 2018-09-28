@@ -32,6 +32,7 @@ spec:
       containers:
         - name: {{ .Release.Name }}-registry
           image: {{- include "registry_image" . | indent 1 }}
+          imagePullPolicy: {{ .Values.images.registry.pullPolicy }}
           resources:
 {{ toYaml .Values.registry.resources | indent 12 }}
           volumeMounts:

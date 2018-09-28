@@ -31,6 +31,7 @@ spec:
       initContainers:
         - name: "{{ .Release.Name }}-houston-bootstrapper"
           image: {{- include "db_bootstrapper_image" . | indent 1 }}
+          imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
           env:
             - name: BOOTSTRAP_DB
               valueFrom:
@@ -51,6 +52,7 @@ spec:
       containers:
         - name: {{ .Release.Name }}-houston
           image: {{- include "houston_image" . | indent 1 }}
+          imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
           resources:
 {{ toYaml .Values.commander.resources | indent 12 }}
           {{- if .Values.global.tlsSecret }}

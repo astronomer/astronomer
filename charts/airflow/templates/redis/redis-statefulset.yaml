@@ -35,6 +35,7 @@ spec:
       containers:
         - name: {{ .Release.Name }}-redis
           image: {{- include "redis_image" . | indent 1 }}
+          imagePullPolicy: {{ .Values.images.redis.pullPolicy }}
           command: ["/bin/sh"]
           resources:
 {{ toYaml .Values.redis.resources | indent 12 }}

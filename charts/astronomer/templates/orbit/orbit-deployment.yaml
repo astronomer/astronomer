@@ -29,6 +29,7 @@ spec:
       containers:
         - name: {{ .Release.Name }}-orbit
           image: {{- include "orbit_image" . | indent 1 }}
+          imagePullPolicy: {{ .Values.images.orbit.pullPolicy }}
           resources:
 {{ toYaml .Values.orbit.resources | indent 12 }}
           ports:

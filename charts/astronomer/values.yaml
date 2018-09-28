@@ -8,23 +8,29 @@ uid: 100
 # Images for pilot
 images:
   commander:
-    name: astronomerinc/ap-commander
+    repository: astronomerinc/ap-commander
     tag: 0.6.1
+    pullPolicy: IfNotPresent
   registry:
-    name: astronomerinc/ap-registry
+    repository: astronomerinc/ap-registry
     tag: 0.6.1
+    pullPolicy: IfNotPresent
   houston:
-    name: astronomerinc/ap-houston-api
+    repository: astronomerinc/ap-houston-api
     tag: 0.6.1
+    pullPolicy: IfNotPresent
   orbit:
-    name: astronomerinc/ap-orbit-ui
+    repository: astronomerinc/ap-orbit-ui
     tag: 0.6.1
+    pullPolicy: IfNotPresent
   dbBootstrapper:
-    name: astronomerinc/ap-db-bootstrapper
+    repository: astronomerinc/ap-db-bootstrapper
     tag: 0.6.1
+    pullPolicy: IfNotPresent
   cliInstall:
-    name: astronomerinc/ap-cli-install
+    repository: astronomerinc/ap-cli-install
     tag: 0.6.1
+    pullPolicy: IfNotPresent
 
 # Astronomer platform config
 data:

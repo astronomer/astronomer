@@ -32,6 +32,7 @@ spec:
       containers:
         - name: {{ .Release.Name }}-commander
           image: {{- include "commander_image" . | indent 1 }}
+          imagePullPolicy: {{ .Values.images.commander.pullPolicy }}
           resources:
 {{ toYaml .Values.commander.resources | indent 12 }}
           ports:

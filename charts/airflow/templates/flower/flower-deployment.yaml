@@ -42,6 +42,7 @@ spec:
       containers:
         - name: {{ .Release.Name }}-flower
           image: {{- include "flower_image" . | indent 1 }}
+          imagePullPolicy: {{ .Values.images.flower.pullPolicy }}
           args: ["airflow", "flower"]
           resources:
 {{ toYaml .Values.flower.resources | indent 12 }}

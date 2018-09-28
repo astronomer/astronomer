@@ -42,6 +42,7 @@ spec:
       containers:
         - name: {{ .Release.Name }}-pgbouncer
           image: {{ template "pgbouncer_image" . }}
+          imagePullPolicy: {{ .Values.images.pgbouncer.pullPolicy }}
           command:
             - pgbouncer
             - -u

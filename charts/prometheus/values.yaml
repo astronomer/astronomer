@@ -4,8 +4,9 @@
 
 images:
   prometheus:
-    name: astronomerinc/ap-prometheus
+    repository: astronomerinc/ap-prometheus
     tag: 0.6.1
+    pullPolicy: IfNotPresent
 
 resources: {}
 #  limits:

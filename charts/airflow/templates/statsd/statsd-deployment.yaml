@@ -35,6 +35,7 @@ spec:
       containers:
         - name: {{ .Release.Name }}-statsd
           image: {{- include "statsd_image" . | indent 1 }}
+          imagePullPolicy: {{ .Values.images.statsd.pullPolicy }}
           args:
             - "-statsd.mapping-config=/etc/statsd-exporter/mappings.yml"
           resources:

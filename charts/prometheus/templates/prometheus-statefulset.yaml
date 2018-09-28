@@ -35,6 +35,7 @@ spec:
       containers:
         - name: "{{ .Release.Name }}-prometheus"
           image: {{- include "prometheus_image" . | indent 1 }}
+          imagePullPolicy: {{ .Values.images.prometheus.pullPolicy }}
           resources:
 {{ toYaml .Values.resources | indent 12 }}
           args:
