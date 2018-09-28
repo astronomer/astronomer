@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+
+# Build and tag images
+function build_image() {
+    docker_dir="docker/airflow/${1}"
+    docker_file="${docker_dir}/Dockerfile"
+    component_name="ap-airflow"
+    build_opts="--build-arg BUILD_NUMBER=${BUILD_NUMBER}"
+    version="${ASTRONOMER_VERSION}"
+    # TODO: Fix me for multiple airflow version support
+    # version="${ASTRONOMER_VERSION}-${1}"
+
+    # Build normal components
+    if [ -f "${docker_file}" ]; then
+        docker build ${build_opts} -t "${REPOSITORY}/${component_name}:latest" -f "${docker_file}" "${docker_dir}" || exit 1
+        docker tag "${REPOSITORY}/${component_name}:latest" "${REPOSITORY}/${component_name}:${version}"
+    else
+        echo "No Dockerfile for ${AIRFLOW_VERSION}" && exit 1
+    fi
+
+    onbuild_docker_dir="${docker_dir}/onbuild"
+    onbuild_docker_file="${onbuild_docker_dir}/Dockerfile"
+
+    # Build onbuild components
+    if [ -f "${onbuild_docker_file}" ]; then
+        docker build ${build_opts} -t "${REPOSITORY}/${component_name}:latest-onbuild" -f "${onbuild_docker_file}" "${onbuild_docker_dir}" || exit 1
+        docker tag "${REPOSITORY}/${component_name}:latest-onbuild" "${REPOSITORY}/${component_name}:${version}-onbuild"
+    fi
+}
+
+# Build airflow images
+for version in ${AIRFLOW_VERSIONS} ; do
+    build_image "${version}"
+done

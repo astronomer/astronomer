@@ -1,5 +1,5 @@
 #
-# Copyright 2018 Astronomer Inc.
+# Copyright 2016 Astronomer Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM quay.io/kubernetes-ingress-controller/nginx-ingress-controller:0.18.0
+FROM quay.io/centerforopenscience/pgbouncer:1.8.1
 LABEL maintainer="Astronomer <humans@astronomer.io>"
 
 ARG BUILD_NUMBER=-1

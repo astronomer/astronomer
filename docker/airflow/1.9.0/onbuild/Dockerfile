@@ -1,5 +1,5 @@
 #
-# Copyright 2018 Astronomer Inc.
+# Copyright 2016 Astronomer Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,9 +13,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM quay.io/kubernetes-ingress-controller/nginx-ingress-controller:0.18.0
+FROM astronomerinc/ap-airflow:0.6.1
 LABEL maintainer="Astronomer <humans@astronomer.io>"
 
 ARG BUILD_NUMBER=-1
 LABEL io.astronomer.docker=true
 LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
+
+# Install alpine packages
+ONBUILD COPY packages.txt .
+ONBUILD RUN cat packages.txt | xargs apk add --no-cache
+
+# Install python packages
+ONBUILD COPY requirements.txt .
+ONBUILD RUN pip install --no-cache-dir -q -r requirements.txt
+
+# Copy entire project directory
+ONBUILD COPY . .

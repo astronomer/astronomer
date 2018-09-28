@@ -1,0 +1,170 @@
+pipeline:
+  ##################################
+  ## Github pushes - build with SHA
+  ###################################
+  build-platform:
+    group: build
+    image: astronomerio/ap-build:0.0.7
+    commands:
+      - make build-platform
+    environment:
+      - ASTRONOMER_VERSION=0.0.0
+      - ASTRONOMER_REF=${DRONE_BRANCH}
+      # - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    when:
+      event: push
+      branch: [ master, release-* ]
+
+  build-airflow:
+    group: build
+    image: astronomerio/ap-build:0.0.7
+    commands:
+      - make build-airflow
+    environment:
+      - ASTRONOMER_VERSION=0.0.0
+      # - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    when:
+      event: push
+      branch: [ master, release-* ]
+
+  ##################################
+  ## Deployment
+  ###################################
+  release-platform-components:
+    image: astronomerio/ap-build:0.0.7
+    secrets: [ github_api_key ]
+    commands:
+      - release commander $${GITHUB_API_KEY} v$${ASTRONOMER_VERSION} $${DRONE_COMMIT_BRANCH}
+      - release db-bootstrapper $${GITHUB_API_KEY} v$${ASTRONOMER_VERSION} $${DRONE_COMMIT_BRANCH}
+      - release default-backend $${GITHUB_API_KEY} v$${ASTRONOMER_VERSION} $${DRONE_COMMIT_BRANCH}
+      - release houston-api $${GITHUB_API_KEY} v$${ASTRONOMER_VERSION} $${DRONE_COMMIT_BRANCH}
+      - release orbit-ui $${GITHUB_API_KEY} v$${ASTRONOMER_VERSION} $${DRONE_COMMIT_BRANCH}
+    when:
+      event: deployment
+      branch: [ master, release-* ]
+      environment: production
+
+  update-version:
+    image: astronomerio/ap-build:0.0.7
+    commands:
+      - make update-version
+      - make update-base-tag
+      - make update-airflow-tag
+    when:
+      event: deployment
+      branch: [ master, release-* ]
+      environment: production
+
+  commit-push-tags:
+    image: astronomerio/ap-build:0.0.7
+    commands:
+      - mkdir -p /root/.ssh
+      - echo "$${GIT_PUSH_SSH_KEY}" > /root/.ssh/id_rsa
+      - chmod 600 /root/.ssh/id_rsa
+      - ssh-keyscan -H github.com >> /root/.ssh/known_hosts
+      - git remote set-url origin git@github.com:${DRONE_REPO_OWNER}/${DRONE_REPO_NAME}.git
+      - git config --global user.name "schnie"
+      - git config --global user.email "schnie@astronomer.io"
+      - git add -A
+      - git diff-index --quiet HEAD || git commit -m "Bump to $${ASTRONOMER_VERSION}"
+      - git push -u origin HEAD:${DRONE_COMMIT_BRANCH}
+    secrets: [ git_push_ssh_key ]
+    when:
+      event: deployment
+      branch: [ master, release-* ]
+      environment: production
+
+  # push-tags-release:
+  #   image: astronomerio/ap-build:0.0.7
+  #   commands:
+  #     - git push -u origin HEAD:${DRONE_COMMIT_BRANCH}
+  #   when:
+  #     event: deployment
+  #     branch: [ master, release-* ]
+  #     environment: production
+
+  # push-tags-master:
+  #   image: astronomerio/ap-build:0.0.7
+  #   commands:
+  #     - git push -u origin HEAD:master
+  #   when:
+  #     event: deployment
+  #     branch: [ release-* ]
+  #     environment: production
+
+  release:
+    image: astronomerio/ap-build:0.0.7
+    secrets: [ github_api_key ]
+    commands:
+      - release $${DRONE_REPO_NAME} $${GITHUB_API_KEY} v$${ASTRONOMER_VERSION} $${DRONE_COMMIT_BRANCH}
+    when:
+      event: deployment
+      branch: [ master, release-* ]
+      environment: production
+
+  ##################################
+  ## Tag
+  ###################################
+  build-platform:
+    group: build
+    image: astronomerio/ap-build:0.0.7
+    commands:
+      - make build-platform
+    environment:
+      - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
+      - ASTRONOMER_VERSION=${DRONE_TAG##v}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    when:
+      event: tag
+      branch: [ master, release-* ]
+
+  build-airflow:
+    group: build
+    image: astronomerio/ap-build:0.0.7
+    commands:
+      - make build-airflow
+    environment:
+      - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
+      - ASTRONOMER_VERSION=${DRONE_TAG##v}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    when:
+      event: tag
+      branch: [ master, release-* ]
+
+  push-platform:
+    group: push
+    image: astronomerio/ap-build:0.0.7
+    commands:
+      - docker login -u $${DOCKER_USERNAME} -p $${DOCKER_PASSWORD}
+      - make push-platform
+    environment:
+      - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
+      - ASTRONOMER_VERSION=${DRONE_TAG##v}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    secrets: [ docker_username, docker_password ]
+    when:
+      event: tag
+      branch: [ master, release-* ]
+
+  push-airflow:
+    group: push
+    image: astronomerio/ap-build:0.0.7
+    commands:
+      - docker login -u $${DOCKER_USERNAME} -p $${DOCKER_PASSWORD}
+      - make push-airflow
+    environment:
+      - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
+      - ASTRONOMER_VERSION=${DRONE_TAG##v}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    secrets: [ docker_username, docker_password ]
+    when:
+      event: tag
+      branch: [ master, release-* ]

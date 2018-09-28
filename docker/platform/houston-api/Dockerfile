@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM astronomerinc/ap-base
+FROM astronomerinc/ap-base:0.6.1
 LABEL maintainer="Astronomer <humans@astronomer.io>"
 
 ARG BUILD_NUMBER=-1
@@ -21,7 +21,7 @@ LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
 LABEL io.astronomer.docker.module="astronomer"
 LABEL io.astronomer.docker.component="houston-api"
 
-ARG VERSION="v0.3.2"
+ARG VERSION="v0.6.1"
 ENV REPO="github.com/astronomerio/houston-api"
 ENV REPO_URL="https://${REPO}#${VERSION}"
 ENV HOUSTON_PATH=/srv/houston-api
@@ -34,9 +34,9 @@ RUN apk add --no-cache --virtual .build-deps \
 		python \
 	&& apk add --no-cache \
 		nodejs \
+		nodejs-npm \
 		openssl \
 	&& npm install -g ${REPO_URL} --unsafe \
-	&& npm rebuild bcrypt --build-from-source \
 	&& apk del .build-deps
 
 EXPOSE 8870

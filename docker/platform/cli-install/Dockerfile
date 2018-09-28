@@ -19,47 +19,22 @@ LABEL maintainer="Astronomer <humans@astronomer.io>"
 ARG BUILD_NUMBER=-1
 LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
 LABEL io.astronomer.docker.module="astronomer"
-LABEL io.astronomer.docker.component="orbit-ui"
+LABEL io.astronomer.docker.component="install"
 
-ARG VERSION="v0.6.1"
-ENV REPO="github.com/astronomerio/orbit-ui"
-ENV REPO_URL="https://${REPO}"
-ENV ORBIT_PATH=/tmp/orbit-ui
-ENV SERVER_ROOT=/usr/share/nginx/html
-
-WORKDIR ${ORBIT_PATH}
-
-RUN apk add --no-cache --virtual .build-deps \
-		build-base \
-		git \
+# Install packages
+RUN apk update \
 	&& apk add --no-cache \
-		gettext \
 		nginx \
-		nodejs \
-		nodejs-npm \
-		openssl \
-	&& git clone \
-		-c advice.detachedHead=false \
-		--depth 1 \
-		--branch ${VERSION} \
-		${REPO_URL} . \
-	&& npm install \
-	&& npm run build-production \
-	&& mkdir -p ${SERVER_ROOT} \
-	&& mv dist/* ${SERVER_ROOT} \
-	&& mv src/favicon.ico ${SERVER_ROOT} \
-	&& rm -rf ${ORBIT_PATH} \
-	&& mkdir -p /run/nginx \
-	&& apk del .build-deps
-
-# Copy entrypoint to root
-COPY include/entrypoint /
+	&& mkdir -p /run/nginx
 
 # Copy NGINX configuration to default location
-COPY include/nginx.conf /etc/nginx/nginx.conf.tpl
+COPY include/nginx.conf /etc/nginx/nginx.conf
 
-# NGINX is configured to listen on 8080
-EXPOSE 8080
+# Copy install.sh to server root
+COPY include/install.sh /usr/share/nginx/html/
+
+# Expose HTTP
+EXPOSE 80 443
 
 # Run NGINX
-ENTRYPOINT ["/entrypoint"]
+ENTRYPOINT ["nginx", "-g", "daemon off;"]

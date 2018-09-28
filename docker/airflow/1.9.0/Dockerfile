@@ -13,11 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM astronomerinc/ap-base
+FROM alpine:3.8
 LABEL maintainer="Astronomer <humans@astronomer.io>"
 
 ARG BUILD_NUMBER=-1
 LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
+LABEL io.astronomer.docker=true
 LABEL io.astronomer.docker.module="airflow"
 LABEL io.astronomer.docker.component="airflow"
 
@@ -28,12 +29,21 @@ ARG SUBMODULES="all, celery, redis, statsd"
 ENV AIRFLOW_REPOSITORY="https://github.com/${ORG}/incubator-airflow"
 ENV AIRFLOW_MODULE="git+${AIRFLOW_REPOSITORY}@${VERSION}#egg=apache-airflow[${SUBMODULES}]"
 ENV AIRFLOW_HOME="/usr/local/airflow"
-ENV PYMSSQL_BUILD_WITH_BUNDLED_FREETDS=1
 ENV PYTHONPATH=${PYTHONPATH:+${PYTHONPATH}:}${AIRFLOW_HOME}
 
+ARG ASTRONOMER_USER="astro"
+ARG ASTRONOMER_GROUP="astro"
+ENV ASTRONOMER_USER=${ASTRONOMER_USER}
+ENV ASTRONOMER_GROUP=${ASTRONOMER_GROUP}
+
+RUN addgroup -S ${ASTRONOMER_GROUP} \
+	&& adduser -S -G ${ASTRONOMER_GROUP} ${ASTRONOMER_USER}
+
 # Install packages
-RUN apk add --no-cache --virtual .build-deps \
+RUN apk update \
+	&& apk add --no-cache --virtual .build-deps \
 		build-base \
+		freetds-dev \
 		freetype-dev \
 		git \
 		libffi-dev \
@@ -45,12 +55,15 @@ RUN apk add --no-cache --virtual .build-deps \
 		python3-dev \
 	&& apk add --no-cache \
 		bash \
-		mariadb-client-libs \
+		ca-certificates \
+		mariadb-connector-c \
 		postgresql \
 		python3 \
 		tini \
-	&& pip3 install --no-cache-dir --upgrade pip==9.0.3 \
+	&& update-ca-certificates \
+	&& pip3 install --no-cache-dir --upgrade pip==18.0 \
 	&& pip3 install --no-cache-dir --upgrade setuptools==39.0.1 \
+	&& pip3 install --no-cache-dir cython \
 	&& pip3 install --no-cache-dir "${AIRFLOW_MODULE}" \
 	&& pip3 uninstall -y snakebite \
 	&& apk del .build-deps \
@@ -62,10 +75,6 @@ RUN mkdir -p ${AIRFLOW_HOME}/logs
 
 # Copy entrypoint to root
 COPY include/entrypoint /
-COPY include/wait-for-command /
-
-# Copy airflow configuration
-COPY include/airflow.cfg ${AIRFLOW_HOME}
 
 # Copy cron scripts
 COPY include/clean-airflow-logs /etc/periodic/15min/clean-airflow-logs
