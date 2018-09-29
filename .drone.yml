@@ -44,7 +44,7 @@ pipeline:
       - /var/run/docker.sock:/var/run/docker.sock
     secrets: [ docker_username, docker_password ]
     when:
-      event: tag
+      event: push
       branch: [ master, release-* ]
 
   push-airflow:
@@ -60,7 +60,7 @@ pipeline:
       - /var/run/docker.sock:/var/run/docker.sock
     secrets: [ docker_username, docker_password ]
     when:
-      event: tag
+      event: push
       branch: [ master, release-* ]
 
   ##################################
