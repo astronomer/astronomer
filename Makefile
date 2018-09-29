@@ -52,6 +52,11 @@ build-platform: check-env update-base-tag
 
 .PHONY: push-platform
 push-platform: check-env
+	$(MAKE) push-platform-versioned
+	$(MAKE) push-platform-latest
+
+.PHONY: push-platform-versioned
+push-platform-versioned: check-env
 	for component in ${PLATFORM_COMPONENTS} ; do \
 		echo "Pushing ap-$${component}:${ASTRONOMER_VERSION} ======================"; \
 		docker push ${REPOSITORY}/ap-$${component}:${ASTRONOMER_VERSION} || exit 1; \
@@ -59,6 +64,17 @@ push-platform: check-env
 	for component in ${VENDOR_COMPONENTS} ; do \
 		echo "Pushing ap-$${component}:${ASTRONOMER_VERSION} ======================"; \
 		docker push ${REPOSITORY}/ap-$${component}:${ASTRONOMER_VERSION} || exit 1; \
+	done;
+
+.PHONY: push-platform-latest
+push-platform-latest:
+	for component in ${PLATFORM_COMPONENTS} ; do \
+		echo "Pushing ap-$${component}:latest ======================"; \
+		docker push ${REPOSITORY}/ap-$${component}:latest || exit 1; \
+	done;
+	for component in ${VENDOR_COMPONENTS} ; do \
+		echo "Pushing ap-$${component}:latest ======================"; \
+		docker push ${REPOSITORY}/ap-$${component}:latest || exit 1; \
 	done;
 
 #
@@ -77,11 +93,21 @@ build-airflow: check-env update-airflow-tag
 # docker push ${REPOSITORY}/ap-airflow:${ASTRONOMER_VERSION}-$${version}-onbuild || exit 1;
 .PHONY: push-airflow
 push-airflow: check-env
+	$(MAKE) push-airflow-versioned
+	$(MAKE) push-airflow-latest
+
+.PHONY: push-airflow-versioned
+push-airflow-versioned: check-env
 	for version in "${AIRFLOW_VERSIONS}" ; do \
 		echo "Pushing ap-airflow:${ASTRONOMER_VERSION} ======================"; \
 		docker push ${REPOSITORY}/ap-airflow:${ASTRONOMER_VERSION} || exit 1; \
 		echo "Pushing ap-airflow:${ASTRONOMER_VERSION}-onbuild ======================"; \
 		docker push ${REPOSITORY}/ap-airflow:${ASTRONOMER_VERSION}-onbuild || exit 1; \
+	done;
+
+.PHONY: push-airflow-latest
+push-airflow-latest:
+	for version in "${AIRFLOW_VERSIONS}" ; do \
 		echo "Pushing ap-airflow:latest ======================"; \
 		docker push ${REPOSITORY}/ap-airflow:latest || exit 1; \
 		echo "Pushing ap-airflow:latest-onbuild ======================"; \
