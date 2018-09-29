@@ -46,17 +46,17 @@ spec:
             {{- end }}
           ports:
             - name: registry-http
-              containerPort: 5000
+              containerPort: {{ .Values.ports.registryHTTP }}
           livenessProbe:
             httpGet:
               path: /
-              port: 5000
+              port: {{ .Values.ports.registryHTTP }}
             initialDelaySeconds: 10
             periodSeconds: 10
           readinessProbe:
             httpGet:
               path: /
-              port: 5000
+              port: {{ .Values.ports.registryHTTP }}
             initialDelaySeconds: 10
             periodSeconds: 10
       volumes:
