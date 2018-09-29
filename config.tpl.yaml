@@ -1,33 +1,17 @@
 #################################
-## Chart overrides
+## Astronomer global configuration
 #################################
-
-# Global overrides
 global:
-  baseDomain:
-  tlsSecret:
-  acme: false
+  # Base domain for all subdomains exposed through ingress
+  baseDomain: ~
 
-astronomer:
-  orbit:
-    resources: {}
+  # Name of secret containing TLS certificate
+  tlsSecret: ~
 
-  houston:
-    resources: {}
 
-  commander:
-    resources: {}
-
-  registry:
-    resources: {}
-
+#################################
+## Nginx configuration
+#################################
 nginx:
-  resources: {}
-  loadBalancerIP:
-  loadBalancerSourceRanges:
-
-grafana:
-  resources: {}
-
-prometheus:
-  resources: {}
+  # IP address the nginx ingress should bind to
+  loadBalancerIP: ~

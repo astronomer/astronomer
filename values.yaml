@@ -12,7 +12,7 @@ global:
   rbacEnabled: true
 
   # Name of secret containing TLS certificate
-  tlsSecret:
+  tlsSecret: ~
 
   # Name of secret containing basic auth for NGINX
   nginxAuthSecret: "nginx-auth"
@@ -29,89 +29,75 @@ global:
   # Namespace Tiller is installed on
   tillerNamespace: "kube-system"
 
-  # Astronomer modules
-  modules:
-
-    # Enable airflow module
-    airflow:
-      enabled: false
-
-    # Enable astronomer module
-    astronomer:
-      enabled: true
-
-    # Enable NGINX ingress module
-    nginx:
-      enabled: true
-
-    # Enable Grafana module
-    grafana:
-      enabled: true
-
-    # Enable Prometheus module
-    prometheus:
-      enabled: true
 
 #################################
 ## Astronomer configuration
 #################################
 astronomer:
+  # Enable astronomer chart
+  enabled: true
+
   orbit:
     resources:
-      limits:
-        cpu: "500m"
-        memory: "1024Mi"
       requests:
         cpu: "100m"
         memory: "256Mi"
+      limits:
+        cpu: "500m"
+        memory: "1024Mi"
 
   houston:
     resources:
-      limits:
-        cpu: "500m"
-        memory: "1024Mi"
       requests:
         cpu: "250m"
         memory: "512Mi"
+      limits:
+        cpu: "500m"
+        memory: "1024Mi"
 
   commander:
     resources:
-      limits:
-        cpu: "500m"
-        memory: "1024Mi"
       requests:
         cpu: "250m"
         memory: "512Mi"
+      limits:
+        cpu: "500m"
+        memory: "1024Mi"
 
   registry:
     resources:
-      limits:
-        cpu: "500m"
-        memory: "1024Mi"
       requests:
         cpu: "250m"
         memory: "512Mi"
-
-  install:
-    resources:
       limits:
         cpu: "500m"
         memory: "1024Mi"
+
+  install:
+    resources:
       requests:
         cpu: "100m"
         memory: "256Mi"
+      limits:
+        cpu: "500m"
+        memory: "1024Mi"
+
 
 #################################
 ## Nginx configuration
 #################################
 nginx:
+  # Enable nginx chart
+  enabled: true
+
+  # Configure resources
   resources:
-    limits:
-      cpu: "1"
-      memory: "2048Mi"
     requests:
       cpu: "500m"
       memory: "1024Mi"
+    limits:
+      cpu: "1"
+      memory: "2048Mi"
 
   # IP address the nginx ingress should bind to
   loadBalancerIP:
@@ -124,22 +110,40 @@ nginx:
 ## Grafana configuration
 #################################
 grafana:
+  # Enable grafana chart
+  enabled: true
+
+  # Configure resources
   resources:
-    limits:
-      cpu: "500m"
-      memory: "1024Mi"
     requests:
       cpu: "250m"
       memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "1024Mi"
+
 
 #################################
 ## Prometheus configuration
 #################################
 prometheus:
+  # Enable prometheus chart
+  enabled: true
+
+  # Configure resources
   resources:
-    limits:
-      cpu: "500m"
-      memory: "1024Mi"
     requests:
       cpu: "250m"
       memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "1024Mi"
+
+
+#################################
+## Airflow configuration
+#################################
+airflow:
+  # This is just to disable installation of the airflow chart during
+  # a platform install.
+  enabled: false
