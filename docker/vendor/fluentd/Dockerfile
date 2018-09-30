@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM quay.io/pires/docker-elasticsearch-kubernetes:6.2.3
+FROM gcr.io/google-containers/fluentd-elasticsearch
 LABEL maintainer="Astronomer <humans@astronomer.io>"
 
 ARG BUILD_NUMBER=-1
