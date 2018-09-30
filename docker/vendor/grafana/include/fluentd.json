@@ -565,7 +565,8 @@
   "schemaVersion": 16,
   "style": "dark",
   "tags": [
-    "fluentd"
+    "fluentd",
+    "platform"
   ],
   "templating": {
     "list": []

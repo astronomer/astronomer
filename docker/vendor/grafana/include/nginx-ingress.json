@@ -1325,7 +1325,8 @@
   "schemaVersion": 16,
   "style": "dark",
   "tags": [
-    "nginx"
+    "nginx",
+    "platform"
   ],
   "templating": {
     "list": [
