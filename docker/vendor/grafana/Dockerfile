@@ -26,4 +26,5 @@ COPY include/nginx-ingress.json /var/lib/grafana/dashboards/nginx-ingress.json
 COPY include/airflow-scheduler.json /var/lib/grafana/dashboards/airflow-scheduler.json
 COPY include/airflow-containers.json /var/lib/grafana/dashboards/airflow-containers.json
 COPY include/fluentd.json /var/lib/grafana/dashboards/fluentd.json
+COPY include/elasticsearch.json /var/lib/grafana/dashboards/elasticsearch.json
 COPY include/airflow-database-activity.json /var/lib/grafana/dashboards/airflow-database-activity.json
