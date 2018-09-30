@@ -53,12 +53,27 @@ build-platform: check-env update-base-tag
 .PHONY: push-platform
 push-platform: check-env
 	for component in ${PLATFORM_COMPONENTS} ; do \
-		echo "Pushing ap-$${component}:${ASTRONOMER_VERSION} ======================"; \
-		docker push ${REPOSITORY}/ap-$${component}:${ASTRONOMER_VERSION} || exit 1; \
+		PUSH_IMAGE=${REPOSITORY}/ap-$${component} \
+		PUSH_TAGS="${ASTRONOMER_VERSION} latest" \
+		bin/push-image; \
 	done;
 	for component in ${VENDOR_COMPONENTS} ; do \
-		echo "Pushing ap-$${component}:${ASTRONOMER_VERSION} ======================"; \
-		docker push ${REPOSITORY}/ap-$${component}:${ASTRONOMER_VERSION} || exit 1; \
+		PUSH_IMAGE=${REPOSITORY}/ap-$${component} \
+		PUSH_TAGS="${ASTRONOMER_VERSION} latest" \
+		bin/push-image; \
+	done;
+
+.PHONY: push-platform-ref
+push-platform-ref:
+	for component in ${PLATFORM_COMPONENTS} ; do \
+		PUSH_IMAGE="${REPOSITORY}/ap-$${component}" \
+		PUSH_TAGS="${ASTRONOMER_REF}" \
+		bin/push-image; \
+	done;
+	for component in ${VENDOR_COMPONENTS} ; do \
+		PUSH_IMAGE="${REPOSITORY}/ap-$${component}" \
+		PUSH_TAGS="${ASTRONOMER_REF}" \
+		bin/push-image; \
 	done;
 
 #
@@ -78,14 +93,17 @@ build-airflow: check-env update-airflow-tag
 .PHONY: push-airflow
 push-airflow: check-env
 	for version in "${AIRFLOW_VERSIONS}" ; do \
-		echo "Pushing ap-airflow:${ASTRONOMER_VERSION} ======================"; \
-		docker push ${REPOSITORY}/ap-airflow:${ASTRONOMER_VERSION} || exit 1; \
-		echo "Pushing ap-airflow:${ASTRONOMER_VERSION}-onbuild ======================"; \
-		docker push ${REPOSITORY}/ap-airflow:${ASTRONOMER_VERSION}-onbuild || exit 1; \
-		echo "Pushing ap-airflow:latest ======================"; \
-		docker push ${REPOSITORY}/ap-airflow:latest || exit 1; \
-		echo "Pushing ap-airflow:latest-onbuild ======================"; \
-		docker push ${REPOSITORY}/ap-airflow:latest-onbuild || exit 1; \
+		PUSH_IMAGE=${REPOSITORY}/ap-airflow \
+		PUSH_TAGS="${ASTRONOMER_VERSION} ${ASTRONOMER_VERSION}-onbuild latest latest-onbuild" \
+		bin/push-image; \
+	done;
+
+.PHONY: push-airflow-ref
+push-airflow-ref:
+	for version in "${AIRFLOW_VERSIONS}" ; do \
+		PUSH_IMAGE=${REPOSITORY}/ap-airflow \
+		PUSH_TAGS="${ASTRONOMER_REF}" \
+		bin/push-image; \
 	done;
 
 #

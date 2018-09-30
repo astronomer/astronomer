@@ -24,9 +24,44 @@ pipeline:
       - make build-airflow
     environment:
       - ASTRONOMER_VERSION=0.0.0
+      - ASTRONOMER_REF=${DRONE_BRANCH}
       # - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+    when:
+      event: push
+      branch: [ master, release-* ]
+
+  push-platform:
+    group: push
+    image: astronomerio/ap-build:0.0.7
+    commands:
+      - docker login -u $${DOCKER_USERNAME} -p $${DOCKER_PASSWORD}
+      - make push-platform-ref
+    environment:
+      - ASTRONOMER_VERSION=0.0.0
+      - ASTRONOMER_REF=${DRONE_BRANCH}
+      # - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    secrets: [ docker_username, docker_password ]
+    when:
+      event: push
+      branch: [ master, release-* ]
+
+  push-airflow:
+    group: push
+    image: astronomerio/ap-build:0.0.7
+    commands:
+      - docker login -u $${DOCKER_USERNAME} -p $${DOCKER_PASSWORD}
+      - make push-airflow-ref
+    environment:
+      - ASTRONOMER_VERSION=0.0.0
+      - ASTRONOMER_REF=${DRONE_BRANCH}
+      # - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    secrets: [ docker_username, docker_password ]
     when:
       event: push
       branch: [ master, release-* ]

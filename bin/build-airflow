@@ -12,8 +12,19 @@ function build_image() {
 
     # Build normal components
     if [ -f "${docker_file}" ]; then
+        # If we're building with and ASTRONOMER_REF, add pre-release label
+        if [ -v ASTRONOMER_REF ]; then
+            build_opts="${build_opts} --label io.astronomer.docker.pre-release=true"
+        fi
+
         docker build ${build_opts} -t "${REPOSITORY}/${component_name}:latest" -f "${docker_file}" "${docker_dir}" || exit 1
         docker tag "${REPOSITORY}/${component_name}:latest" "${REPOSITORY}/${component_name}:${version}"
+
+        # If we're building with and ASTRONOMER_REF, also tag image with that branch name (master, release-*)
+        if [ -v ASTRONOMER_REF ]; then
+            docker tag "${REPOSITORY}/${component_name}:latest" "${REPOSITORY}/${component_name}:${ASTRONOMER_REF}"
+        fi
+
     else
         echo "No Dockerfile for ${AIRFLOW_VERSION}" && exit 1
     fi

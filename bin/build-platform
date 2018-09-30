@@ -5,23 +5,29 @@ function build_image() {
     local docker_dir="docker/${1}"
     local docker_file="${docker_dir}/Dockerfile"
     local component_name="ap-${2}"
-    local build_opts="--build-arg BUILD_NUMBER=${BUILD_NUMBER} ${3}"
+    local build_opts="--build-arg BUILD_NUMBER=${BUILD_NUMBER}"
     local version="${ASTRONOMER_VERSION}"
 
     # Build component
     if [ -f "${docker_file}" ]; then
+        # If we're building with and ASTRONOMER_REF, add pre-release label
+        if [ -v ASTRONOMER_REF ]; then
+            build_opts="${build_opts} --build-arg VERSION=${ASTRONOMER_REF} --label io.astronomer.docker.pre-release=true"
+        fi
+
         docker build ${build_opts} -t "${REPOSITORY}/${component_name}:latest" -f "${docker_file}" "${docker_dir}" || exit 1
         docker tag "${REPOSITORY}/${component_name}:latest" "${REPOSITORY}/${component_name}:${version}"
+
+        # If we're building with and ASTRONOMER_REF, also tag image with that branch name (master, release-*)
+        if [ -v ASTRONOMER_REF ]; then
+            docker tag "${REPOSITORY}/${component_name}:latest" "${REPOSITORY}/${component_name}:${ASTRONOMER_REF}"
+        fi
     fi
 }
 
 # Build platform images
 for component in ${PLATFORM_COMPONENTS} ; do
-    # If we set a ref build from it and set it as pre-release
-    if [ -v ASTRONOMER_REF ]; then
-        build_opts="--build-arg VERSION=${ASTRONOMER_REF} --label io.astronomer.docker.pre-release=true"
-    fi
-    build_image "platform/${component}" "${component}" "${build_opts}"
+    build_image "platform/${component}" "${component}"
 done
 
 # Build vendor images
