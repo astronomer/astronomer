@@ -5,17 +5,14 @@ global:
   # Base domain for all subdomains exposed through ingress
   baseDomain: ~
 
+  # Name of secret containing TLS certificate
+  tlsSecret: ~
+
   # Use kube-lego
   acme: false
 
   # If RBAC on cluster is enabled
   rbacEnabled: true
-
-  # Name of secret containing TLS certificate
-  tlsSecret: ~
-
-  # Name of secret containing basic auth for NGINX
-  nginxAuthSecret: "nginx-auth"
 
   # Name of secret containing docker registry auth
   registryAuthSecret: "registry-auth"
