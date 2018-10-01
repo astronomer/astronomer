@@ -40,10 +40,8 @@ spec:
               mountPath: /etc/docker/registry
             - name: registry-certificate-volume
               mountPath: /etc/docker/ssl
-            {{- if .Values.registry.persistence.enabled }}
             - name: registry-data-volume
               mountPath: /var/lib/registry
-            {{- end }}
           ports:
             - name: registry-http
               containerPort: {{ .Values.ports.registryHTTP }}

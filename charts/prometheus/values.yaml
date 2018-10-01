@@ -3,6 +3,10 @@
 # Declare variables to be passed into your templates.
 
 images:
+  init:
+    repository: astronomerinc/ap-base
+    tag: 0.6.1
+    pullPolicy: IfNotPresent
   prometheus:
     repository: astronomerinc/ap-prometheus
     tag: 0.6.1

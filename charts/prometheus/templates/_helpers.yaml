@@ -1,3 +1,7 @@
+{{ define "init_image" -}}
+{{ .Values.images.init.repository }}:{{ .Values.images.init.tag }}
+{{- end }}
+
 {{ define "prometheus_image" -}}
 {{ .Values.images.prometheus.repository }}:{{ .Values.images.prometheus.tag }}
 {{- end }}

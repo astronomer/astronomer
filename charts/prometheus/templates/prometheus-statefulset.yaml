@@ -29,12 +29,17 @@ spec:
     spec:
       restartPolicy: Always
       serviceAccountName: "{{ .Release.Name }}-prometheus"
-      securityContext:
-        runAsUser: 2000
-        fsGroup: 1000
+      initContainers:
+        - name: "{{ .Release.Name }}-prometheus-init"
+          image: {{ include "init_image" . }}
+          imagePullPolicy: {{ .Values.images.init.pullPolicy }}
+          command: ["chown", "-R", "65534:65534", "{{ .Values.dataDir }}"]
+          volumeMounts:
+            - name: prometheus-data-volume
+              mountPath: "{{ .Values.dataDir }}"
       containers:
         - name: "{{ .Release.Name }}-prometheus"
-          image: {{- include "prometheus_image" . | indent 1 }}
+          image: {{ include "prometheus_image" . }}
           imagePullPolicy: {{ .Values.images.prometheus.pullPolicy }}
           resources:
 {{ toYaml .Values.resources | indent 12 }}
@@ -44,10 +49,8 @@ spec:
           volumeMounts:
             - name: prometheus-config-volume
               mountPath: /etc/prometheus/config
-          {{- if .Values.persistence.enabled }}
             - name: prometheus-data-volume
               mountPath: "{{ .Values.dataDir }}"
-          {{- end }}
           ports:
             - name: prometheus-data
               containerPort: {{ .Values.ports.http }}
