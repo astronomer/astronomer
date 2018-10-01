@@ -20,7 +20,7 @@ PLATFORM_COMPONENTS := base cli-install commander db-bootstrapper default-backen
 AIRFLOW_VERSIONS := 1.9.0
 
 # Vendor components
-VENDOR_COMPONENTS := cadvisor curator elasticsearch fluentd grafana kibana nginx pgbouncer pgbouncer-exporter prometheus redis registry statsd-exporter
+VENDOR_COMPONENTS := cadvisor curator elasticsearch elasticsearch-exporter fluentd grafana kibana nginx pgbouncer pgbouncer-exporter prometheus redis registry statsd-exporter
 
 # Set default for make
 .DEFAULT_GOAL := build
