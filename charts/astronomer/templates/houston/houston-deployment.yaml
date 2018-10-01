@@ -126,7 +126,7 @@ spec:
             - name: REGISTRY_AUTH
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.global.registryAuthSecret }}
+                  name: {{ template "registry_auth_secret" . }}
                   key: .dockerconfigjson
             {{- end }}
             - name: JWT_PASSPHRASE

@@ -1,7 +1,7 @@
 {{ define "helm_globals" -}}
   {{- $globals := dict -}}
   {{- $_ := set $globals "baseDomain" (default "" .Values.global.baseDomain) -}}
-  {{- $_ := set $globals "registryAuthSecret" .Values.global.registryAuthSecret -}}
+  {{- $_ := set $globals "registryAuthSecret" .Values.registry.auth.secretName -}}
   {{- $_ := set $globals "acme" (.Values.global.acme) -}}
   {{- $_ := set $globals "rbacEnabled" .Values.global.rbacEnabled -}}
   {{- $_ := set $globals "releaseName" (print .Release.Name | toString) -}}
@@ -81,4 +81,8 @@
 
 {{ define "houston_bootstrapper_serviceaccount" -}}
 {{ printf "%s-houston-bootstrapper-serviceaccount" .Release.Name }}
+{{- end }}
+
+{{ define "registry_auth_secret" -}}
+{{ default (printf "%s-registry-auth" .Release.Name) .Values.registry.auth.secretName }}
 {{- end }}

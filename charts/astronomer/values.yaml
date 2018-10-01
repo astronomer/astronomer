@@ -32,11 +32,6 @@ images:
     tag: 0.6.1
     pullPolicy: IfNotPresent
 
-# Astronomer platform config
-data:
-  houstonDatabaseSecret: "houston-database"
-  airflowDatabaseSecret: "houston-database"
-
 smtp:
   uri: ~
 
@@ -119,8 +114,11 @@ registry:
     storageClassName:
 
   auth:
+    secretName: ~
+    connection: ~
     service: "docker-registry"
     issuer: "houston"
+
 
 install:
   resources: {}
