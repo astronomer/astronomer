@@ -26,11 +26,11 @@ spec:
         release: {{ .Release.Name }}
     spec:
       restartPolicy: Always
-      {{- if .Values.bootstrapDatabase }}
-      serviceAccountName: houston-bootstrapper-serviceaccount
+      {{- if and (not .Values.houston.backendSecretName) (not .Values.houston.backendConnection) }}
+      serviceAccountName: {{ template "houston_bootstrapper_serviceaccount" . }}
       initContainers:
         - name: "{{ .Release.Name }}-houston-bootstrapper"
-          image: {{- include "db_bootstrapper_image" . | indent 1 }}
+          image: {{ template "db_bootstrapper_image" . }}
           imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
           env:
             - name: BOOTSTRAP_DB
@@ -41,7 +41,7 @@ spec:
             - name: DB_NAME
               value: {{ .Release.Name }}-houston
             - name: SECRET_NAME
-              value: {{ .Values.data.houstonDatabaseSecret }}
+              value: {{ template "houston_backend_secret" . }}
             - name: NAMESPACE
               value: {{ .Release.Namespace }}
             - name: IN_CLUSTER
@@ -51,7 +51,7 @@ spec:
         runAsUser: {{ .Values.uid }}
       containers:
         - name: {{ .Release.Name }}-houston
-          image: {{- include "houston_image" . | indent 1 }}
+          image: {{ template "houston_image" . }}
           imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
           resources:
 {{ toYaml .Values.commander.resources | indent 12 }}
@@ -137,12 +137,12 @@ spec:
             - name: HOUSTON_POSTGRES_URI
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.data.houstonDatabaseSecret }}
+                  name: {{ template "houston_backend_secret" . }}
                   key: connection
             - name: AIRFLOW_POSTGRES_URI
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.data.airflowDatabaseSecret }}
+                  name: {{ template "airflow_backend_secret" . }}
                   key: connection
             {{- if .Values.smtp.uri }}
             - name: SMTP_URI

@@ -70,3 +70,15 @@
     github_oauth,
   {{- end -}}
 {{- end }}
+
+{{ define "houston_backend_secret" -}}
+{{ default (printf "%s-houston-backend" .Release.Name) .Values.houston.backendSecretName }}
+{{- end }}
+
+{{ define "airflow_backend_secret" -}}
+{{ default (printf "%s-houston-backend" .Release.Name) .Values.houston.airflowBackendSecretName }}
+{{- end }}
+
+{{ define "houston_bootstrapper_serviceaccount" -}}
+{{ printf "%s-houston-bootstrapper-serviceaccount" .Release.Name }}
+{{- end }}

@@ -29,8 +29,8 @@ spec:
         workspace: {{ .Values.workspace }}
     spec:
       restartPolicy: Always
-      {{- if not .Values.backendSecretName }}
-      serviceAccountName: {{ template "bootstrapper_service_account" . }}
+      {{- if and (not .Values.backendSecretName) (not .Values.backendConnection) }}
+      serviceAccountName: {{ template "grafana_bootstrapper_serviceaccount" . }}
       initContainers:
         - name: "{{ .Release.Name }}-grafana-bootstrapper"
           image: {{ template "db_bootstrapper_image" . }}
@@ -44,7 +44,7 @@ spec:
             - name: DB_NAME
               value: {{ .Release.Name }}-grafana
             - name: SECRET_NAME
-              value: {{ template "backend_secret" . }}
+              value: {{ template "grafana_backend_secret" . }}
             - name: NAMESPACE
               value: {{ .Release.Namespace }}
             - name: IN_CLUSTER
@@ -78,7 +78,7 @@ spec:
             - name: GF_DATABASE_URL
               valueFrom:
                 secretKeyRef:
-                  name: {{ template "backend_secret" . }}
+                  name: {{ template "grafana_backend_secret" . }}
                   key: connection
             - name: GF_AUTH_ANONYMOUS_ENABLED
               value: "true"

@@ -10,10 +10,10 @@ grafana.{{ .Values.global.baseDomain }}
 {{ .Values.images.dbBootstrapper.repository }}:{{ .Values.images.dbBootstrapper.tag }}
 {{- end }}
 
-{{ define "backend_secret" -}}
+{{ define "grafana_backend_secret" -}}
 {{ default (printf "%s-grafana-backend" .Release.Name) .Values.backendSecretName }}
 {{- end }}
 
-{{ define "bootstrapper_service_account" -}}
+{{ define "grafana_bootstrapper_serviceaccount" -}}
 {{ printf "%s-grafana-bootstrapper-serviceaccount" .Release.Name }}
 {{- end }}
