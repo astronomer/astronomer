@@ -12,9 +12,13 @@ images:
     tag: 0.6.1
     pullPolicy: IfNotPresent
 
-grafanaBackendSecret: grafana-backend
-
-bootstrapDatabase: true
+backendSecretName: ~
+backendConnection: {}
+  # user: ~
+  # pass: ~
+  # host: ~
+  # port: ~
+  # db: ~
 
 ports:
   http: 3000
