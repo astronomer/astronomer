@@ -73,6 +73,10 @@ astronomer:
         cpu: "500m"
         memory: "1024Mi"
 
+    persistence:
+      enabled: true
+      size: "100Gi"
+
   install:
     resources:
       requests:
@@ -129,6 +133,11 @@ grafana:
 prometheus:
   # Enable prometheus chart
   enabled: true
+
+  # Persistence configuration
+  persistence:
+    enabled: true
+    size: "100Gi"
 
   # Configure resources
   resources:
