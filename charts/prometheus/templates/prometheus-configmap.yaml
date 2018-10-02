@@ -47,7 +47,7 @@ data:
           - source_labels: [__meta_kubernetes_service_name]
             action: keep
             regex: "^{{ .Release.Name }}-elasticsearch-exporter"
-          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+          - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scrape]
             action: keep
             regex: true
           - source_labels: [__address__, __meta_kubernetes_service_annotation_prometheus_io_port]
