@@ -1,0 +1,33 @@
+################################
+## Elasticsearch Exporter NetworkPolicy
+#################################
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ template "fullname" . }}-exporter-policy
+  labels:
+    tier: logging
+    component: {{ template "name" . }}-exporter-policy
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+    role: exporter
+spec:
+  podSelector:
+    matchLabels:
+      tier: logging
+      component: {{ template "name" . }}-exporter
+      release: {{ .Release.Name }}
+      role: exporter
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          tier: monitoring
+          component: prometheus
+          release: {{ .Release.Name }}
+    ports:
+    - protocol: TCP
+      port: {{ .Values.exporter.service.httpPort }}

@@ -1,0 +1,55 @@
+################################
+## Elasticsearch Client NetworkPolicy
+#################################
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ template "fullname" . }}-client-policy
+  labels:
+    tier: logging
+    component: {{ template "name" . }}-client-policy
+    release: {{ .Release.Name }}
+    workspace: {{ .Values.workspace }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+spec:
+  podSelector:
+    matchLabels:
+      tier: logging
+      component: {{ template "name" . }}
+      release: {{ .Release.Name }}
+      role: client
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          tier: astronomer
+          component: houston
+          release: {{ .Release.Name }}
+    - podSelector:
+        matchLabels:
+          tier: logging
+          component: fluentd
+          release: {{ .Release.Name }}
+    - podSelector:
+        matchLabels:
+          tier: logging
+          component: kibana
+          release: {{ .Release.Name }}
+    - podSelector:
+        matchLabels:
+          tier: logging
+          component: {{ template "name" . }}
+          release: {{ .Release.Name }}
+    - podSelector:
+        matchLabels:
+          tier: logging
+          component: {{ template "name" . }}-exporter
+          release: {{ .Release.Name }}
+    ports:
+    - protocol: TCP
+      port: {{ .Values.common.ports.http }}
+    - protocol: TCP
+      port: {{ .Values.common.ports.transport }}

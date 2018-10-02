@@ -1,0 +1,27 @@
+################################
+## Elasticsearch Exporter Service
+#################################
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ template "fullname" . }}-exporter
+  labels:
+    tier: logging
+    component: {{ template "name" . }}-exporter
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+    role: exporter
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: {{ .Values.exporter.service.httpPort | quote }}
+spec:
+  type: {{ .Values.exporter.service.type }}
+  ports:
+    - name: http
+      port: {{ .Values.exporter.service.httpPort }}
+      protocol: TCP
+  selector:
+    component: {{ template "name" . }}-exporter
+    release: {{ .Release.Name }}
+    role: exporter

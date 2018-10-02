@@ -1,0 +1,22 @@
+# Default values for kube-state.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+images:
+  kubeState:
+    repository: astronomerinc/ap-kube-state
+    tag: 0.6.1
+    pullPolicy: IfNotPresent
+
+env: {}
+resources: {}
+# limits:
+#  cpu: 100m
+#  memory: 128Mi
+# requests:
+#  cpu: 100m
+#  memory: 128Mi
+
+ports:
+  scrape: 8080
+  telemetry: 8081

@@ -1,0 +1,41 @@
+################################
+## Kibana Ingress
+#################################
+{{- if .Values.global.baseDomain }}
+kind: Ingress
+apiVersion: extensions/v1beta1
+metadata:
+  name: {{ template "kibana.fullname" . }}-ingress
+  labels:
+    tier: kibana-networking
+    component: kibana-ingress
+    release: {{ .Release.Name }}
+    chart: {{ template "kibana.chart" . }}
+    heritage: {{ .Release.Service }}
+  annotations:
+    kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
+    kubernetes.io/tls-acme: {{ eq .Values.global.acme true | quote }}
+    nginx.ingress.kubernetes.io/auth-url: https://houston.{{ .Values.global.baseDomain }}/authorization
+    nginx.ingress.kubernetes.io/auth-signin: https://app.{{ .Values.global.baseDomain }}/login
+    nginx.ingress.kubernetes.io/auth-response-headers: authorization, username, email
+spec:
+  {{- if or .Values.global.tlsSecret .Values.global.acme }}
+  tls:
+  {{- if .Values.global.acme }}
+    - secretName: kibana-tls
+  {{- end }}
+  {{- if .Values.global.tlsSecret }}
+    - secretName: {{ .Values.global.tlsSecret }}
+  {{- end }}
+      hosts:
+        - {{- include "kibana.url" . | indent 1 }}
+  {{- end }}
+  rules:
+    - host: {{- include "kibana.url" . | indent 1 }}
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: {{ template "kibana.fullname" . }}
+              servicePort: kibana-ui
+{{- end }}

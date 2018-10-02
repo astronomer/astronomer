@@ -1,22 +1,22 @@
 ################################
-## Grafana NetworkPolicy
+## Kibana NetworkPolicy
 #################################
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: {{ .Release.Name }}-grafana-policy
+  name: {{ .Release.Name }}-kibana-policy
   labels:
-    tier: monitoring
-    component: grafana-policy
+    tier: logging
+    component: kibana-policy
     release: {{ .Release.Name }}
     workspace: {{ .Values.workspace }}
-    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    chart: {{ template "kibana.chart" . }}
     heritage: {{ .Release.Service }}
 spec:
   podSelector:
     matchLabels:
-      tier: monitoring
-      component: grafana
+      tier: logging
+      component: {{ template "kibana.name" . }}
       release: {{ .Release.Name }}
   policyTypes:
   - Ingress

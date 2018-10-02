@@ -1,0 +1,29 @@
+################################
+## Elasticsearch Client Service
+#################################
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "fullname" . }}
+  labels:
+    tier: logging
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+    component: {{ template "name" . }}
+    role: client
+spec:
+  type: {{ .Values.common.serviceType }}
+  selector:
+    component: {{ template "name" . }}
+    release: {{ .Release.Name }}
+    role: client
+  ports:
+  - name: http
+    port: {{ .Values.common.ports.http }}
+    targetPort: {{ .Values.common.ports.http }}
+    protocol: TCP
+  - name: transport
+    port: {{ .Values.common.ports.transport }}
+    targetPort: {{ .Values.common.ports.transport }}
+    protocol: TCP

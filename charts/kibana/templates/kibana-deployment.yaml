@@ -1,0 +1,46 @@
+################################
+## Kibana Deployment
+#################################
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: {{ template "kibana.fullname" . }}
+  labels:
+    tier: logging
+    component: {{ template "kibana.name" . }}
+    chart: {{ template "kibana.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      tier: logging
+      component: {{ template "kibana.name" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        tier: logging
+        component: {{ template "kibana.name" . }}
+        release: {{ .Release.Name }}
+    spec:
+      containers:
+      - name: kibana
+        image: "{{ .Values.images.kibana.repository }}:{{ .Values.images.kibana.tag }}"
+        imagePullPolicy: {{ .Values.images.kibana.pullPolicy }}
+        env:
+        {{- range $key, $value :=  .Values.env }}
+        - name: {{ $key }}
+          value: {{ $value | quote }}
+        {{- end }}
+        - name: CLUSTER_NAME
+          value: {{ .Values.clusterName }}
+        - name: ELASTICSEARCH_URL
+          value: "http://{{ .Release.Name }}-elasticsearch:9200"
+        resources:
+{{ toYaml .Values.resources | indent 12 }}
+        ports:
+        - containerPort: {{ .Values.ports.http }}
+          name: kibana-ui
+          protocol: TCP

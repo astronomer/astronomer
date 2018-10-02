@@ -1,0 +1,16 @@
+#########################
+## Astronomer KubeState RoleBinding
+#########################
+apiVersion: rbac.authorization.k8s.io/v1
+# kubernetes versions before 1.8.0 should use rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ template "kube-state.fullname" . }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ template "kube-state.fullname" . }}
+subjects:
+- kind: ServiceAccount
+  name: {{ template "kube-state.fullname" . }}
+  namespace: {{ .Release.Namespace }}

@@ -1,0 +1,189 @@
+images:
+  es:
+    repository: astronomerinc/ap-elasticsearch
+    tag: 0.6.1
+    pullPolicy: IfNotPresent
+  init:
+    repository: astronomerinc/ap-base
+    tag: 0.6.1
+    pullPolicy: IfNotPresent
+  curator:
+    repository: astronomerinc/ap-curator
+    tag: 0.6.1
+    pullPolicy: IfNotPresent
+  exporter:
+    repository: astronomerinc/ap-elasticsearch-exporter
+    tag: 0.6.1
+    pullPolicy: IfNotPresent
+
+common:
+  # Defines the service type for all outward-facing (non-discovery) services.
+  # For minikube use NodePort otherwise use LoadBalancer
+  # serviceType: LoadBalancer
+  serviceType: NodePort
+
+  env:
+    CLUSTER_NAME: "astronomer"
+
+    # Uncomment this if you get the "No up-and-running site-local (private)
+    # addresses" error.
+    # NETWORK_HOST: "_eth0_"
+
+  # If enabled, then the data and master nodes will be StatefulSets with
+  # associated persistent volume claims.
+  persistence:
+    enabled: true
+
+    # The PVC storage class that backs the persistent volume claims. On AWS
+    # "gp2" would be appropriate.
+    # storageClassName: "standard"
+
+  ports:
+    http: 9200
+    transport: 9300
+
+# Client/ingest nodes can execute pre-processing pipelines, composed of
+# one or more ingest processors. Depending on the type of operations performed
+# by the ingest processors and the required resources, it may make sense to
+# have dedicated ingest nodes, that will only perform this specific task.
+client:
+  # It isn't common to need more than 2 client nodes.
+  replicas: 2
+  antiAffinity: "soft"
+
+  # The amount of RAM allocated to the JVM heap. This should be set to the
+  # same value as client.resources.requests.memory, or you may see
+  # OutOfMemoryErrors on startup.
+  heapMemory: 256m
+
+  resources:
+    requests:
+      memory: 256Mi
+
+  env:
+    NODE_DATA: "false"
+    NODE_MASTER: "false"
+    NODE_INGEST: "true"
+    HTTP_ENABLE: "true"
+
+# Data nodes hold the shards that contain the documents you have indexed. Data
+# nodes handle data related operations like CRUD, search, and aggregations.
+# These operations are I/O-, memory-, and CPU-intensive. It is important to
+# monitor these resources and to add more data nodes if they are overloaded.
+#
+# The main benefit of having dedicated data nodes is the separation of the
+# master and data roles.
+data:
+  # This count will depend on your data and computation needs.
+  replicas: 2
+  antiAffinity: "soft"
+
+  # The amount of RAM allocated to the JVM heap. This should be set to the
+  # same value as data.resources.requests.memory, or you may see
+  # OutOfMemoryErrors on startup.
+  heapMemory: 256m
+
+  resources:
+    requests:
+      memory: 256Mi
+
+  env:
+    NODE_DATA: "true"
+    NODE_MASTER: "false"
+    NODE_INGEST: "false"
+    HTTP_ENABLE: "false"
+
+  # Determines the properties of the persistent volume claim associated with a
+  # data node StatefulSet that is created when the common.persistence.enabled
+  # attribute is true.
+  persistence:
+    # This is a default value, and will not be sufficient in a production
+    # system. You'll probably want to increase it.
+    size: 50Gi
+
+# The master node is responsible for lightweight cluster-wide actions such as
+# creating or deleting an index, tracking which nodes are part of the
+# cluster, and deciding which shards to allocate to which nodes. It is
+# important for cluster health to have a stable master node.
+master:
+  # Master replica count should be (#clients / 2) + 1, and generally at least 3.
+  replicas: 3
+  antiAffinity: "soft"
+
+  # The amount of RAM allocated to the JVM heap. This should be set to the
+  # same value as master.resources.requests.memory, or you may see
+  # OutOfMemoryErrors on startup.
+  heapMemory: 256m
+
+  resources:
+    requests:
+      memory: 256Mi
+
+  env:
+    NODE_DATA: "false"
+    NODE_MASTER: "true"
+    NODE_INGEST: "false"
+    HTTP_ENABLE: "false"
+
+    # The default value for this environment variable is 2, meaning a cluster
+    # will need a minimum of 2 master nodes to operate. If you have 3 masters
+    # and one dies, the cluster still works.
+    NUMBER_OF_MASTERS: "2"
+
+  # Determines the properties of the persistent volume claim associated with a
+  # data node StatefulSet that is created when the common.stateful.enabled
+  # attribute is true.
+  persistence:
+    # This is a default value, and will not be sufficient in a production
+    # system. You'll probably want to increase it.
+    size: 20Gi
+
+curator:
+  enabled: true
+  schedule: "0 1 * * *"
+
+  # Allows modification of the default age-based filter. If you require more
+  # sophisticated filtering, modify the action file specified in
+  # templates/es-curator-config.yaml.
+  age:
+    timestring: "%Y.%m.%d"
+    unit: "days"
+    unit_count: 15
+
+exporter:
+  # Number of exporter instances
+  replicas: 1
+
+  # Restart policy for all containers
+  restartPolicy: Always
+
+  resources: {}
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+  service:
+    type: ClusterIP
+    httpPort: 9108
+    annotations: {}
+
+  es:
+    # Address (host and port) of the Elasticsearch node we should connect to.
+    # uri: localhost:9200
+
+    # If true, query stats for all nodes in the cluster, rather than just the
+    # node we connect to.
+    all: true
+
+    # If true, query stats for all indices in the cluster.
+    indices: true
+
+    # Timeout for trying to get stats from Elasticsearch. (ex: 20s)
+    timeout: 30s
+
+  web:
+    # Path under which to expose metrics.
+    path: /metrics

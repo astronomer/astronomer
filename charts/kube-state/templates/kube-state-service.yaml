@@ -1,0 +1,31 @@
+########################################
+## Airflow Kube-State Service
+########################################
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ template "kube-state.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    tier: {{ template "kube-state.name" . }}
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: {{ .Values.ports.scrape | quote }}
+spec:
+  type: NodePort
+  ports:
+  - name: scrape
+    port: {{ .Values.ports.scrape }}
+    targetPort: scrape
+    protrocol: TCP
+  - name: telemetry
+    port: {{ .Values.ports.telemetry }}
+    targetPort: telemetry
+    protocol: TCP
+  selector:
+    tier: {{ template "kube-state.name" . }}
+    component: kube-state
+    release: {{ .Release.Name }}

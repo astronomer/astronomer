@@ -142,6 +142,118 @@ prometheus:
       cpu: "500m"
       memory: "1024Mi"
 
+  persistence:
+    enabled: true
+    size: "100Gi"
+
+#################################
+## Elasticsearch configuration
+#################################
+elasticsearch:
+  # Enable elasticsearch chart
+  enabled: true
+
+  # Common configuration
+  common:
+    persistence:
+      enabled: false
+
+  # Configure client nodes
+  client:
+    # Match resources.requests.memory
+    heapMemory: "2g"
+
+    resources:
+      requests:
+        cpu: "1"
+        memory: "2Gi"
+      limits:
+        cpu: "2"
+        memory: "4Gi"
+
+  # Configure data nodes
+  data:
+    # Match resources.requests.memory
+    heapMemory: "2g"
+
+    resources:
+      requests:
+        cpu: "1"
+        memory: "2Gi"
+      limits:
+        cpu: "2"
+        memory: "4Gi"
+
+    persistence:
+      size: "100Gi"
+
+  # Configure master nodes
+  master:
+    # Match resources.requests.memory
+    heapMemory: "2g"
+
+    resources:
+      requests:
+        cpu: "1"
+        memory: "2Gi"
+      limits:
+        cpu: "2"
+        memory: "4Gi"
+
+    persistence:
+      size: "20Gi"
+
+
+#################################
+## Kibana configuration
+#################################
+kibana:
+  # Enable kibana chart
+  enabled: true
+
+  # Configure resources
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "1024Mi"
+
+
+#################################
+## Fluentd configuration
+#################################
+fluentd:
+  # Enable fluentd chart
+  enabled: true
+
+  # Configure resources
+  # resources:
+  #   requests:
+  #     cpu: "250m"
+  #     memory: "512Mi"
+  #   limits:
+  #     cpu: "500m"
+  #     memory: "1024Mi"
+
+
+#################################
+## Kube State configuration
+#################################
+kubeState:
+  # Enable fluentd chart
+  enabled: true
+
+  # Configure resources
+  # resources:
+  #   requests:
+  #     cpu: "250m"
+  #     memory: "512Mi"
+  #   limits:
+  #     cpu: "500m"
+  #     memory: "1024Mi"
+
 
 #################################
 ## Airflow configuration

@@ -1,0 +1,44 @@
+##############################################
+## Airflow Kube-State Deployment
+##############################################
+kind: Deployment
+apiVersion: apps/v1beta2
+metadata:
+  name: {{ template "kube-state.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    tier: {{ template "kube-state.name" . }}
+    component: kube-state
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      tier: {{ template "kube-state.name" . }}
+      component: kube-state
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        tier: {{ template "kube-state.name" . }}
+        component: kube-state
+        release: {{ .Release.Name }}
+    spec:
+      serviceAccountName: {{ template "kube-state.fullname" . }}
+      containers:
+      - name: {{ template "kube-state.fullname" . }}
+        image: {{ include "kube-state.image" . }}
+        imagePullPolicy: {{ .Values.images.kubeState.pullPolicy }}
+        ports:
+        - name: scrape
+          containerPort: {{ .Values.ports.scrape }}
+        - name: telemetry
+          containerPort: {{ .Values.ports.telemetry }}
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: {{ .Values.ports.scrape }}
+          initialDelaySeconds: 5
+          timeoutSeconds: 5

@@ -1,0 +1,125 @@
+################################
+## Elasticsearch Master StatefulSet
+#################################
+kind: StatefulSet
+apiVersion: apps/v1beta2
+metadata:
+  name: {{ template "fullname" . }}-master
+  labels:
+    tier: logging
+    component: {{ template "name" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+    role: master
+spec:
+  serviceName: {{ template "fullname" . }}-master
+  replicas: {{ .Values.master.replicas }}
+  selector:
+    matchLabels:
+      tier: logging
+      component: {{ template "name" . }}
+      release: {{ .Release.Name }}
+      role: master
+  template:
+    metadata:
+      labels:
+        tier: logging
+        component: {{ template "name" . }}
+        release: {{ .Release.Name }}
+        role: master
+    spec:
+      {{- if eq .Values.master.antiAffinity "hard" }}
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - topologyKey: "kubernetes.io/hostname"
+              labelSelector:
+                matchLabels:
+                  component: {{ template "name" . }}
+                  release: {{ .Release.Name }}
+                  role: master
+      {{- else if eq .Values.master.antiAffinity "soft" }}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 1
+            podAffinityTerm:
+              topologyKey: "kubernetes.io/hostname"
+              labelSelector:
+                matchLabels:
+                  component: {{ template "name" . }}
+                  release: {{ .Release.Name }}
+                  role: master
+      {{- end }}
+      initContainers:
+      - name: init-sysctl
+        image: {{ template "init.image" . }}
+        imagePullPolicy: {{ .Values.images.init.pullPolicy }}
+        command: ["sysctl", "-w", "vm.max_map_count=262144"]
+        securityContext:
+          privileged: true
+      containers:
+      - name: es-master
+        securityContext:
+          privileged: {{ .Values.common.persistence.enabled }}
+          capabilities:
+            add:
+              {{- if .Values.common.persistence.enabled }}
+              - IPC_LOCK
+              {{- else }}
+              - IPC_LOCK
+              - SYS_RESOURCE
+              {{- end }}
+        image: {{ template "elasticsearch.image" . }}
+        imagePullPolicy: {{ .Values.images.es.pullPolicy }}
+        env:
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: DISCOVERY_SERVICE
+          value: {{ template "fullname" . }}-discovery
+        - name: ES_JAVA_OPTS
+          value: "-Xms{{ .Values.master.heapMemory }} -Xmx{{ .Values.master.heapMemory }}"
+        {{- range $key, $value :=  .Values.common.env }}
+        - name: {{ $key | upper | replace "-" "_" }}
+          value: {{ $value | quote }}
+        {{- end }}
+        {{- range $key, $value :=  .Values.master.env }}
+        - name: {{ $key | upper | replace "-" "_" }}
+          value: {{ $value | quote }}
+        {{- end }}
+        resources:
+{{ toYaml .Values.master.resources | indent 10 }}
+        ports:
+        - containerPort: {{ .Values.common.ports.transport }}
+          name: transport
+          protocol: TCP
+        livenessProbe:
+          tcpSocket:
+            port: {{ .Values.common.ports.transport }}
+        volumeMounts:
+        - name: es-master-volume
+          mountPath: /data
+  {{- if not .Values.common.persistence.enabled }}
+      volumes:
+        - name: es-master-volume
+          emptyDir: {}
+  {{- else }}
+  volumeClaimTemplates:
+  - metadata:
+      name: es-master-volume
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: {{ .Values.master.persistence.size }}
+    {{- if .Values.common.persistence.storageClassName }}
+      storageClassName: {{ .Values.common.persistence.storageClassName }}
+    {{- end }}
+  {{- end }}

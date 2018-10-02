@@ -1,0 +1,23 @@
+################################
+## Elasticsearch Master Service
+#################################
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "fullname" . }}-discovery
+  labels:
+    tier: logging
+    component: {{ template "name" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+    role: master
+spec:
+  selector:
+    component: {{ template "name" . }}
+    release: {{ .Release.Name }}
+    role: master
+  ports:
+  - name: transport
+    port: {{ .Values.common.ports.transport }}
+    protocol: TCP

@@ -1,17 +1,16 @@
-Thank you for installing Astronomer Enterprise!
+Thank you for installing Astronomer!
 
 Your release is named {{ .Release.Name }}.
 
 {{- if .Values.global.baseDomain }}
 
-## Astronomer Airflow Install
-
 The platform components may take a few minutes to spin up.
 
 You can access the platform at:
 
-- Astronomer app:        https://app.{{ .Values.global.baseDomain }}
-- Grafana dashboard:     https://grafana.{{ .Values.global.baseDomain }}
+- Astronomer dashboard:        {{ if .Values.astronomer.enabled}}https://app.{{ .Values.global.baseDomain }}{{ else }}Disabled{{ end }}
+- Grafana dashboard:           {{ if .Values.grafana.enabled }}https://grafana.{{ .Values.global.baseDomain }}{{ else }}Disabled{{ end }}
+- Kibana dashboard:            {{ if .Values.kibana.enabled }}https://kibana.{{ .Values.global.baseDomain }}{{ else }}Disabled{{ end }}
 
 Now that you've installed the platform, you are ready to get started and create your first airflow deployment.
 
