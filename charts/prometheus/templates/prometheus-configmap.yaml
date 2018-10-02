@@ -14,7 +14,7 @@ metadata:
 data:
   prometheus.yaml: |-
     global:
-      scrape_interval: 5s
+      scrape_interval: 10s
       evaluation_interval: 30s
 
     scrape_configs:
@@ -121,8 +121,6 @@ data:
             target_label: deployment
 
       - job_name: kubernetes-nodes-cadvisor
-        scrape_interval: 10s
-        scrape_timeout: 10s
         scheme: https  # remove if you want to scrape metrics on insecure port
         tls_config:
           ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
