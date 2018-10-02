@@ -109,12 +109,12 @@ data:
     # Send off to elasticsearch
     <match **>
       @id elasticsearch
-      @type elasticsearch
+      @type elasticsearch_dynamic
       @log_level info
-      include_tag_key true
+      include_timestamp true
       host "#{ENV['OUTPUT_HOST']}"
       port "#{ENV['OUTPUT_PORT']}"
-      logstash_format true
+      index_name fluentd.${record["release"]}.${Time.at(time).getutc.strftime(@logstash_dateformat)}
       <buffer>
         @type file
         path /var/log/fluentd-buffers/kubernetes.system.buffer
