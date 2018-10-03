@@ -73,11 +73,15 @@ pipeline:
     image: astronomerio/ap-build:0.0.7
     secrets: [ github_api_key ]
     commands:
+      # Release platform components
       - release commander $${GITHUB_API_KEY} v$${ASTRONOMER_VERSION} $${DRONE_COMMIT_BRANCH}
       - release db-bootstrapper $${GITHUB_API_KEY} v$${ASTRONOMER_VERSION} $${DRONE_COMMIT_BRANCH}
       - release default-backend $${GITHUB_API_KEY} v$${ASTRONOMER_VERSION} $${DRONE_COMMIT_BRANCH}
       - release houston-api $${GITHUB_API_KEY} v$${ASTRONOMER_VERSION} $${DRONE_COMMIT_BRANCH}
       - release orbit-ui $${GITHUB_API_KEY} v$${ASTRONOMER_VERSION} $${DRONE_COMMIT_BRANCH}
+
+      # Also cut the astro-cli release, which will trigger goreleaser to push release
+      - release astro-cli $${GITHUB_API_KEY} v$${ASTRONOMER_VERSION} $${DRONE_COMMIT_BRANCH}
     when:
       event: deployment
       branch: [ master, release-* ]
