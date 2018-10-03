@@ -148,6 +148,18 @@ scheduler:
 
 # Airflow webserver settings
 webserver:
+  livenessProbe:
+    initialDelaySeconds: 10
+    timeoutSeconds: 30
+    failureThreshold: 10
+    periodSeconds: 5
+
+  readinessProbe:
+    initialDelaySeconds: 10
+    timeoutSeconds: 30
+    failureThreshold: 10
+    periodSeconds: 5
+
   resources: {}
     # limits:
     #   cpu: 100m

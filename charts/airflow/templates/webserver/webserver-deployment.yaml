@@ -52,18 +52,14 @@ spec:
             - name: webserver-ui
               containerPort: {{ .Values.ports.airflowUI }}
           livenessProbe:
-            failureThreshold: 10
             httpGet:
               path: /health
               port: {{ .Values.ports.airflowUI }}
-            initialDelaySeconds: 10
-            periodSeconds: 5
+{{ toYaml .Values.webserver.livenessProbe | indent 12 }}
           readinessProbe:
-            failureThreshold: 10
             httpGet:
               path: /health
               port: {{ .Values.ports.airflowUI }}
-            initialDelaySeconds: 10
-            periodSeconds: 5
+{{ toYaml .Values.webserver.readinessProbe | indent 12 }}
           env:
           {{- include "airflow_environment" . | indent 10 }}
