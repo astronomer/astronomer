@@ -91,7 +91,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "rate(fluentd_output_status_emit_count{type=~\"(elasticsearch)\"}[3m])",
+          "expr": "rate(fluentd_output_status_emit_count{type=~\"(elasticsearch|elasticsearch_dynamic)\"}[3m])",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{ host }}",
@@ -175,7 +175,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "rate(fluentd_output_status_emit_records{type=~\"(elasticsearch)\"}[3m])",
+          "expr": "rate(fluentd_output_status_emit_records{type=~\"(elasticsearch|elasticsearch_dynamic)\"}[3m])",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{ host }}",
@@ -259,7 +259,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "fluentd_output_status_buffer_total_bytes{type=~\"(elasticsearch)\"}",
+          "expr": "fluentd_output_status_buffer_total_bytes{type=~\"(elasticsearch|elasticsearch_dynamic)\"}",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{ host }}",
@@ -343,7 +343,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "fluentd_output_status_buffer_queue_length{type=~\"(elasticsearch)\"}",
+          "expr": "fluentd_output_status_buffer_queue_length{type=~\"(elasticsearch|elasticsearch_dynamic)\"}",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{ host }}",
@@ -428,7 +428,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "rate(fluentd_output_status_num_errors{type=~\"(elasticsearch)\"}[3m])",
+          "expr": "rate(fluentd_output_status_num_errors{type=~\"(elasticsearch|elasticsearch_dynamic)\"}[3m])",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{ host }}",
@@ -512,7 +512,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "fluentd_output_status_retry_wait{type=~\"(elasticsearch)\"}",
+          "expr": "fluentd_output_status_retry_wait{type=~\"(elasticsearch|elasticsearch_dynamic)\"}",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{ host }}",
