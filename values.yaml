@@ -156,7 +156,7 @@ elasticsearch:
   # Common configuration
   common:
     persistence:
-      enabled: false
+      enabled: true
 
   # Configure client nodes
   client:
