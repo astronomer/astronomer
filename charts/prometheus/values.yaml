@@ -20,7 +20,11 @@ resources: {}
 #   cpu: 100m
 #   memory: 128Mi
 
+# Which directory prometheus data should be stored
 dataDir: "/prometheus"
+
+# How long prometheus should keep data before removing
+retention: 15d
 
 # Enable persistence for Prometheus
 persistence:

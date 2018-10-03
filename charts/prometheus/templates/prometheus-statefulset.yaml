@@ -46,6 +46,7 @@ spec:
           args:
             - "--config.file=/etc/prometheus/config/prometheus.yaml"
             - "--storage.tsdb.path={{ .Values.dataDir }}"
+            - "--storage.tsdb.retention={{ .Values.retention }}"
           volumeMounts:
             - name: prometheus-config-volume
               mountPath: /etc/prometheus/config
