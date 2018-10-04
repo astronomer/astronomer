@@ -16,7 +16,7 @@ Now that you've installed the platform, you are ready to get started and create 
 
 Download the CLI:
 
-	curl -sL https://install.{{ .Values.global.baseDomain }} | sudo bash
+	curl -sSL https://install.{{ .Values.global.baseDomain }} | sudo bash
 
 We have guides available at https://www.astronomer.io/guides/ and are always available to help.
 
