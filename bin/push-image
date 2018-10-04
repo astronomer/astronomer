@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-for tag in "${PUSH_TAGS}" ; do
+for tag in ${PUSH_TAGS} ; do
     echo "Pushing ${PUSH_IMAGE}:${tag} ===================="
     docker push ${PUSH_IMAGE}:${tag} || exit 1
 done
