@@ -52,7 +52,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 7,
-  "iteration": 1538676804617,
+  "iteration": 1538767251670,
   "links": [],
   "panels": [
     {
@@ -130,7 +130,7 @@
       "valueMaps": [
         {
           "op": "=",
-          "text": "N/A",
+          "text": "0",
           "value": "null"
         }
       ],
@@ -197,7 +197,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "count(count by (container) (kube_pod_container_status_ready{deployment=~\"$deployment\"}==1))",
+          "expr": "count(count by (container) (kube_pod_container_status_ready{namespace=~\".*-.*-.*-.*-[0-9]{4}\", deployment=~\"$deployment\"}==1))",
           "format": "time_series",
           "hide": false,
           "instant": true,
@@ -212,7 +212,7 @@
       "valueMaps": [
         {
           "op": "=",
-          "text": "N/A",
+          "text": "0",
           "value": "null"
         }
       ],
@@ -279,7 +279,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "count(count by (pod) (kube_pod_status_ready{deployment=~\"$deployment\"}==1))",
+          "expr": "count(count by (pod) (kube_pod_status_ready{namespace=~\".*-.*-.*-.*-[0-9]{4}\", deployment=~\"$deployment\"}==1))",
           "format": "time_series",
           "instant": true,
           "intervalFactor": 1,
@@ -293,7 +293,7 @@
       "valueMaps": [
         {
           "op": "=",
-          "text": "N/A",
+          "text": "0",
           "value": "null"
         }
       ],
@@ -360,7 +360,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(count(kube_replicaset_created{deployment=~\"$deployment\"}))",
+          "expr": "sum(count(kube_replicaset_created{namespace=~\".*-.*-.*-.*-[0-9]{4}\", deployment=~\"$deployment\"}))",
           "format": "time_series",
           "instant": true,
           "intervalFactor": 1,
@@ -374,12 +374,7 @@
       "valueMaps": [
         {
           "op": "=",
-          "text": "Error",
-          "value": "0"
-        },
-        {
-          "op": "=",
-          "text": "No active airflows!",
+          "text": "0",
           "value": "null"
         }
       ],
@@ -462,7 +457,7 @@
       "valueMaps": [
         {
           "op": "=",
-          "text": "N/A",
+          "text": "0",
           "value": "null"
         }
       ],
@@ -530,7 +525,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "count(count by (container) (kube_pod_container_status_terminated{deployment=~\"$deployment\"} > 0))",
+          "expr": "count(count by (container) (kube_pod_container_status_terminated{namespace=~\".*-.*-.*-.*-[0-9]{4}\", deployment=~\"$deployment\"} > 0))",
           "format": "time_series",
           "instant": true,
           "intervalFactor": 1,
@@ -612,7 +607,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "count(count by (pod) (kube_pod_status_scheduled{deployment=~\"$deployment\"}==1))",
+          "expr": "count(count by (pod) (kube_pod_status_scheduled{namespace=~\".*-.*-.*-.*-[0-9]{4}\", deployment=~\"$deployment\"}==1))",
           "format": "time_series",
           "instant": true,
           "intervalFactor": 1,
@@ -626,7 +621,7 @@
       "valueMaps": [
         {
           "op": "=",
-          "text": "N/A",
+          "text": "0",
           "value": "null"
         }
       ],
@@ -693,7 +688,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "count(kube_statefulset_created{deployment=~\"[[deployment]]\"})",
+          "expr": "count(kube_statefulset_created{namespace=~\".*-.*-.*-.*-[0-9]{4}\", deployment=~\"[[deployment]]\"})",
           "format": "time_series",
           "instant": true,
           "intervalFactor": 1,
@@ -707,12 +702,7 @@
       "valueMaps": [
         {
           "op": "=",
-          "text": "Error",
-          "value": "0"
-        },
-        {
-          "op": "=",
-          "text": "No active airflows!",
+          "text": "0",
           "value": "null"
         }
       ],
@@ -779,7 +769,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "count(kube_pod_created{deployment=~\"$deployment\"})",
+          "expr": "count(kube_pod_created{namespace=~\".*-.*-.*-.*-[0-9]{4}\", deployment=~\"$deployment\"})",
           "format": "time_series",
           "instant": true,
           "intervalFactor": 1,
@@ -793,7 +783,7 @@
       "valueMaps": [
         {
           "op": "=",
-          "text": "N/A",
+          "text": "0",
           "value": "null"
         }
       ],
@@ -861,7 +851,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(kube_pod_container_resource_requests_cpu_cores{deployment=~\"$deployment\"})",
+          "expr": "sum(kube_pod_container_resource_requests_cpu_cores{namespace=~\".*-.*-.*-.*-[0-9]{4}\", deployment=~\"$deployment\"})",
           "format": "time_series",
           "instant": true,
           "intervalFactor": 1,
@@ -875,7 +865,7 @@
       "valueMaps": [
         {
           "op": "=",
-          "text": "N/A",
+          "text": "0%",
           "value": "null"
         }
       ],
@@ -943,7 +933,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(kube_pod_container_resource_limits_cpu_cores{deployment=~\"$deployment\"})",
+          "expr": "sum(kube_pod_container_resource_limits_cpu_cores{namespace=~\".*-.*-.*-.*-[0-9]{4}\", deployment=~\"$deployment\"})",
           "format": "time_series",
           "instant": true,
           "intervalFactor": 1,
@@ -957,7 +947,7 @@
       "valueMaps": [
         {
           "op": "=",
-          "text": "N/A",
+          "text": "0%",
           "value": "null"
         }
       ],
@@ -998,12 +988,12 @@
           "rangeMaps": [
             {
               "from": "0",
-              "text": "Ready",
+              "text": "Healthy",
               "to": "0"
             },
             {
               "from": "-100000",
-              "text": "Waiting/Terminating",
+              "text": "Unhealthy",
               "to": "-1"
             },
             {
@@ -1093,7 +1083,7 @@
       "showHeader": true,
       "sort": {
         "col": 2,
-        "desc": false
+        "desc": true
       },
       "styles": [
         {
@@ -1111,13 +1101,13 @@
           "rangeMaps": [
             {
               "from": "0",
-              "text": "Ready",
+              "text": "Healthy",
               "to": "0"
             },
             {
               "from": "1",
-              "text": "Waiting/Terminating",
-              "to": "2"
+              "text": "Unhealthy",
+              "to": "10000"
             }
           ],
           "thresholds": [
@@ -1204,14 +1194,14 @@
       ],
       "targets": [
         {
-          "expr": "sort_desc(max by (container, pod, reason) (\n  max by (container, pod) (\n    sort_desc(kube_pod_container_status_waiting{deployment=~\"$deployment\"})\n  ) or\n  max by (container, reason) (\n    sort_desc(kube_pod_container_status_waiting_reason{deployment=~\"$deployment\"}==1)\n  ) or\n  max by (container, reason) (\n    sort_desc(kube_pod_container_status_terminated_reason{deployment=~\"$deployment\"}==1)\n  )\n))\n",
+          "expr": "sort_desc(max by (container, pod, reason) (\n  max by (container, pod) (\n    sort_desc(kube_pod_container_status_waiting{namespace=~\".*-.*-.*-.*-[0-9]{4}\", deployment=~\"$deployment\"})\n  ) or\n  max by (container, reason) (\n    sort_desc(kube_pod_container_status_waiting_reason{namespace=~\".*-.*-.*-.*-[0-9]{4}\", deployment=~\"$deployment\"}==1)\n  ) or\n  max by (container, reason) (\n    sort_desc(kube_pod_container_status_terminated_reason{namespace=~\".*-.*-.*-.*-[0-9]{4}\", deployment=~\"$deployment\"}==1)\n  )\n))\n",
           "format": "table",
           "instant": true,
           "intervalFactor": 1,
           "refId": "A"
         }
       ],
-      "title": "Container Schedule Queue",
+      "title": "Container Statuses",
       "transform": "table",
       "type": "table"
     }
