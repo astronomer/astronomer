@@ -1210,8 +1210,7 @@
   "schemaVersion": 16,
   "style": "dark",
   "tags": [
-    "airflow",
-    "kubernetes"
+    "airflow"
   ],
   "templating": {
     "list": [
