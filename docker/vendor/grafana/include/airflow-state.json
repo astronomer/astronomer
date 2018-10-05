@@ -52,7 +52,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 7,
-  "iteration": 1538707785057,
+  "iteration": 1538767251670,
   "links": [],
   "panels": [
     {
@@ -374,12 +374,7 @@
       "valueMaps": [
         {
           "op": "=",
-          "text": "Error",
-          "value": "0"
-        },
-        {
-          "op": "=",
-          "text": "No active airflows!",
+          "text": "0",
           "value": "null"
         }
       ],
@@ -707,12 +702,7 @@
       "valueMaps": [
         {
           "op": "=",
-          "text": "Error",
-          "value": "0"
-        },
-        {
-          "op": "=",
-          "text": "No active airflows!",
+          "text": "0",
           "value": "null"
         }
       ],
@@ -998,12 +988,12 @@
           "rangeMaps": [
             {
               "from": "0",
-              "text": "Ready",
+              "text": "Healthy",
               "to": "0"
             },
             {
               "from": "-100000",
-              "text": "Waiting/Terminating",
+              "text": "Unhealthy",
               "to": "-1"
             },
             {
@@ -1093,7 +1083,7 @@
       "showHeader": true,
       "sort": {
         "col": 2,
-        "desc": false
+        "desc": true
       },
       "styles": [
         {
@@ -1111,13 +1101,13 @@
           "rangeMaps": [
             {
               "from": "0",
-              "text": "Ready",
+              "text": "Healthy",
               "to": "0"
             },
             {
               "from": "1",
-              "text": "Waiting/Terminating",
-              "to": "2"
+              "text": "Unhealthy",
+              "to": "10000"
             }
           ],
           "thresholds": [
@@ -1211,7 +1201,7 @@
           "refId": "A"
         }
       ],
-      "title": "Container Schedule Queue",
+      "title": "Container Statuses",
       "transform": "table",
       "type": "table"
     }
@@ -1282,5 +1272,5 @@
   "timezone": "",
   "title": "Airflow State",
   "uid": "nQLvjCAmz",
-  "version": 1
+  "version": 54
 }
