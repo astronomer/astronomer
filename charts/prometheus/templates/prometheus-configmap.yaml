@@ -79,6 +79,35 @@ data:
           - action: keep
             source_labels: [namespace]
             regex: "^{{ .Release.Namespace }}.*"
+          # Relabel pod to become label for airflow deployment
+          - source_labels: [pod]
+            regex: "^(.*-.*-[0-9]{4})-.*$"
+            replacement: "$1"
+            target_label: deployment
+          # Relabel services to become deployment label
+          - source_labels: [service]
+            regex: "^(.*-.*-[0-9]{4})-.*$"
+            replacement: "$1"
+            target_label: deployment
+          # Relabel replicaset to become deployment label
+          - source_labels: [replicaset]
+            regex: "^(.*-.*-[0-9]{4})-.*$"
+            replacement: "$1"
+            target_label: deployment
+          # Relabel statefulset to become deployment label
+          - source_labels: [statefulset]
+            regex: "^(.*-.*-[0-9]{4})-.*$"
+            replacement: "$1"
+            target_label: deployment
+          # Relabel pod to become deployment label
+          - source_labels: [pod]
+            regex: "^(.*-.*-[0-9]{4})-.*$"
+            replacement: "$1"
+            target_label: deployment
+          - source_labels: [deployment]
+            regex: "^(.*-.*-[0-9]{4})-.*$"
+            replacement: "$1"
+            target_label: deployment
 
       - job_name: fluentd
         kubernetes_sd_configs:
