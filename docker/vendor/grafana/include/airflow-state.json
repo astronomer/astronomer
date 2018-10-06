@@ -51,20 +51,20 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 7,
-  "iteration": 1538676804617,
+  "id": 8,
+  "iteration": 1538853247679,
   "links": [],
   "panels": [
     {
       "cacheTimeout": null,
-      "colorBackground": true,
+      "colorBackground": false,
       "colorValue": false,
       "colors": [
         "#299c46",
         "#299c46",
         "#d44a3a"
       ],
-      "datasource": null,
+      "datasource": "Prometheus",
       "format": "none",
       "gauge": {
         "maxValue": 100,
@@ -75,7 +75,7 @@
       },
       "gridPos": {
         "h": 2,
-        "w": 6,
+        "w": 4,
         "x": 0,
         "y": 0
       },
@@ -116,7 +116,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(kube_namespace_status_phase{namespace=~\".*-.*-.*-.*-[0-9]{4}\", phase=\"Active\"})",
+          "expr": "sum(kube_namespace_status_phase{namespace=~\".*-.*-.*-[0-9]{4}\", phase=\"Active\"})",
           "format": "time_series",
           "instant": true,
           "intervalFactor": 1,
@@ -126,11 +126,11 @@
       "thresholds": "",
       "title": "Active Namespaces",
       "type": "singlestat",
-      "valueFontSize": "80%",
+      "valueFontSize": "70%",
       "valueMaps": [
         {
           "op": "=",
-          "text": "N/A",
+          "text": "0",
           "value": "null"
         }
       ],
@@ -138,15 +138,16 @@
     },
     {
       "cacheTimeout": null,
-      "colorBackground": true,
+      "colorBackground": false,
       "colorValue": false,
       "colors": [
         "#299c46",
-        "#299c46",
+        "#d44a3a",
         "#d44a3a"
       ],
-      "datasource": null,
-      "format": "none",
+      "datasource": "Prometheus",
+      "decimals": 0,
+      "format": "short",
       "gauge": {
         "maxValue": 100,
         "minValue": 0,
@@ -156,11 +157,11 @@
       },
       "gridPos": {
         "h": 2,
-        "w": 6,
-        "x": 6,
+        "w": 4,
+        "x": 4,
         "y": 0
       },
-      "id": 24,
+      "id": 34,
       "interval": null,
       "links": [],
       "mappingType": 1,
@@ -197,16 +198,96 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "count(count by (container) (kube_pod_container_status_ready{deployment=~\"$deployment\"}==1))",
+          "expr": "sum(delta(kube_namespace_status_phase{namespace=~\".*-.*-.*-[0-9]{4}\", phase=\"Terminating\"}[1m]))",
           "format": "time_series",
-          "hide": false,
           "instant": true,
+          "interval": "",
           "intervalFactor": 1,
           "refId": "A"
         }
       ],
       "thresholds": "",
-      "title": "Active Containers",
+      "title": "Terminating Namespaces",
+      "type": "singlestat",
+      "valueFontSize": "70%",
+      "valueMaps": [
+        {
+          "op": "=",
+          "text": "0",
+          "value": "null"
+        }
+      ],
+      "valueName": "current"
+    },
+    {
+      "cacheTimeout": null,
+      "colorBackground": false,
+      "colorValue": false,
+      "colors": [
+        "#299c46",
+        "rgba(237, 129, 40, 0.89)",
+        "#d44a3a"
+      ],
+      "datasource": "Prometheus",
+      "format": "none",
+      "gauge": {
+        "maxValue": 100,
+        "minValue": 0,
+        "show": false,
+        "thresholdLabels": false,
+        "thresholdMarkers": true
+      },
+      "gridPos": {
+        "h": 2,
+        "w": 8,
+        "x": 8,
+        "y": 0
+      },
+      "id": 60,
+      "interval": null,
+      "links": [],
+      "mappingType": 1,
+      "mappingTypes": [
+        {
+          "name": "value to text",
+          "value": 1
+        },
+        {
+          "name": "range to text",
+          "value": 2
+        }
+      ],
+      "maxDataPoints": 100,
+      "nullPointMode": "connected",
+      "nullText": null,
+      "postfix": "",
+      "postfixFontSize": "50%",
+      "prefix": "",
+      "prefixFontSize": "50%",
+      "rangeMaps": [
+        {
+          "from": "null",
+          "text": "N/A",
+          "to": "null"
+        }
+      ],
+      "sparkline": {
+        "fillColor": "rgba(31, 118, 189, 0.18)",
+        "full": false,
+        "lineColor": "rgb(31, 120, 193)",
+        "show": false
+      },
+      "tableColumn": "",
+      "targets": [
+        {
+          "expr": "sum(kube_deployment_status_observed_generation{deployment=~\".*-scheduler\", namespace=~\".*-.*-.*-[0-9]{4}\", release=~\"$deployment\"})",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "refId": "A"
+        }
+      ],
+      "thresholds": "",
+      "title": "Scheduler Generations (Deploy Count)",
       "type": "singlestat",
       "valueFontSize": "80%",
       "valueMaps": [
@@ -220,95 +301,14 @@
     },
     {
       "cacheTimeout": null,
-      "colorBackground": true,
-      "colorValue": false,
-      "colors": [
-        "#299c46",
-        "#299c46",
-        "#d44a3a"
-      ],
-      "datasource": null,
-      "format": "none",
-      "gauge": {
-        "maxValue": 100,
-        "minValue": 0,
-        "show": false,
-        "thresholdLabels": false,
-        "thresholdMarkers": true
-      },
-      "gridPos": {
-        "h": 2,
-        "w": 6,
-        "x": 12,
-        "y": 0
-      },
-      "id": 28,
-      "interval": null,
-      "links": [],
-      "mappingType": 1,
-      "mappingTypes": [
-        {
-          "name": "value to text",
-          "value": 1
-        },
-        {
-          "name": "range to text",
-          "value": 2
-        }
-      ],
-      "maxDataPoints": 100,
-      "nullPointMode": "connected",
-      "nullText": null,
-      "postfix": "",
-      "postfixFontSize": "50%",
-      "prefix": "",
-      "prefixFontSize": "50%",
-      "rangeMaps": [
-        {
-          "from": "null",
-          "text": "N/A",
-          "to": "null"
-        }
-      ],
-      "sparkline": {
-        "fillColor": "rgba(31, 118, 189, 0.18)",
-        "full": false,
-        "lineColor": "rgb(31, 120, 193)",
-        "show": false
-      },
-      "tableColumn": "",
-      "targets": [
-        {
-          "expr": "count(count by (pod) (kube_pod_status_ready{deployment=~\"$deployment\"}==1))",
-          "format": "time_series",
-          "instant": true,
-          "intervalFactor": 1,
-          "refId": "A"
-        }
-      ],
-      "thresholds": "",
-      "title": "Ready Pods",
-      "type": "singlestat",
-      "valueFontSize": "80%",
-      "valueMaps": [
-        {
-          "op": "=",
-          "text": "N/A",
-          "value": "null"
-        }
-      ],
-      "valueName": "current"
-    },
-    {
-      "cacheTimeout": null,
-      "colorBackground": true,
+      "colorBackground": false,
       "colorValue": false,
       "colors": [
         "#d44a3a",
         "rgba(237, 129, 40, 0.89)",
         "#299c46"
       ],
-      "datasource": null,
+      "datasource": "Prometheus",
       "format": "none",
       "gauge": {
         "maxValue": 100,
@@ -319,8 +319,8 @@
       },
       "gridPos": {
         "h": 2,
-        "w": 6,
-        "x": 18,
+        "w": 4,
+        "x": 16,
         "y": 0
       },
       "id": 12,
@@ -360,188 +360,17 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(count(kube_replicaset_created{deployment=~\"$deployment\"}))",
+          "expr": "sum(count(kube_deployment_spec_replicas{namespace=~\".*-.*-.*-[0-9]{4}\", release=~\"$deployment\"}))",
           "format": "time_series",
           "instant": true,
-          "intervalFactor": 1,
-          "refId": "A"
-        }
-      ],
-      "thresholds": "0,1",
-      "title": "Number of Replica Sets",
-      "type": "singlestat",
-      "valueFontSize": "80%",
-      "valueMaps": [
-        {
-          "op": "=",
-          "text": "Error",
-          "value": "0"
-        },
-        {
-          "op": "=",
-          "text": "No active airflows!",
-          "value": "null"
-        }
-      ],
-      "valueName": "current"
-    },
-    {
-      "cacheTimeout": null,
-      "colorBackground": true,
-      "colorValue": false,
-      "colors": [
-        "#299c46",
-        "#d44a3a",
-        "#d44a3a"
-      ],
-      "datasource": null,
-      "decimals": 0,
-      "format": "short",
-      "gauge": {
-        "maxValue": 100,
-        "minValue": 0,
-        "show": false,
-        "thresholdLabels": false,
-        "thresholdMarkers": true
-      },
-      "gridPos": {
-        "h": 2,
-        "w": 6,
-        "x": 0,
-        "y": 2
-      },
-      "id": 34,
-      "interval": null,
-      "links": [],
-      "mappingType": 1,
-      "mappingTypes": [
-        {
-          "name": "value to text",
-          "value": 1
-        },
-        {
-          "name": "range to text",
-          "value": 2
-        }
-      ],
-      "maxDataPoints": 100,
-      "nullPointMode": "connected",
-      "nullText": null,
-      "postfix": "",
-      "postfixFontSize": "50%",
-      "prefix": "",
-      "prefixFontSize": "50%",
-      "rangeMaps": [
-        {
-          "from": "null",
-          "text": "N/A",
-          "to": "null"
-        }
-      ],
-      "sparkline": {
-        "fillColor": "rgba(31, 118, 189, 0.18)",
-        "full": false,
-        "lineColor": "rgb(31, 120, 193)",
-        "show": false
-      },
-      "tableColumn": "",
-      "targets": [
-        {
-          "expr": "sum(delta(kube_namespace_status_phase{namespace=~\".*-.*-.*-.*-[0-9]{4}\", phase=\"Terminating\"}[1m]))",
-          "format": "time_series",
-          "instant": true,
-          "interval": "",
           "intervalFactor": 1,
           "refId": "A"
         }
       ],
       "thresholds": "",
-      "title": "Terminating Namespaces",
+      "title": "Active Deployments",
       "type": "singlestat",
-      "valueFontSize": "80%",
-      "valueMaps": [
-        {
-          "op": "=",
-          "text": "N/A",
-          "value": "null"
-        }
-      ],
-      "valueName": "current"
-    },
-    {
-      "cacheTimeout": null,
-      "colorBackground": true,
-      "colorValue": false,
-      "colors": [
-        "#d44a3a",
-        "#d44a3a",
-        "#d44a3a"
-      ],
-      "datasource": null,
-      "decimals": 0,
-      "format": "short",
-      "gauge": {
-        "maxValue": 100,
-        "minValue": 0,
-        "show": false,
-        "thresholdLabels": false,
-        "thresholdMarkers": true
-      },
-      "gridPos": {
-        "h": 2,
-        "w": 6,
-        "x": 6,
-        "y": 2
-      },
-      "id": 26,
-      "interval": null,
-      "links": [],
-      "mappingType": 1,
-      "mappingTypes": [
-        {
-          "name": "value to text",
-          "value": 1
-        },
-        {
-          "name": "range to text",
-          "value": 2
-        }
-      ],
-      "maxDataPoints": 100,
-      "nullPointMode": "connected",
-      "nullText": null,
-      "postfix": "",
-      "postfixFontSize": "50%",
-      "prefix": "",
-      "prefixFontSize": "50%",
-      "rangeMaps": [
-        {
-          "from": "null",
-          "text": "N/A",
-          "to": "null"
-        }
-      ],
-      "sparkline": {
-        "fillColor": "rgba(31, 118, 189, 0.18)",
-        "full": false,
-        "lineColor": "rgb(31, 120, 193)",
-        "show": false
-      },
-      "tableColumn": "",
-      "targets": [
-        {
-          "expr": "count(count by (container) (kube_pod_container_status_terminated{deployment=~\"$deployment\"} > 0))",
-          "format": "time_series",
-          "instant": true,
-          "intervalFactor": 1,
-          "legendFormat": "",
-          "refId": "A"
-        }
-      ],
-      "thresholds": "1",
-      "title": "Terminating Containers",
-      "type": "singlestat",
-      "valueFontSize": "80%",
+      "valueFontSize": "70%",
       "valueMaps": [
         {
           "op": "=",
@@ -553,95 +382,14 @@
     },
     {
       "cacheTimeout": null,
-      "colorBackground": true,
-      "colorValue": false,
-      "colors": [
-        "#299c46",
-        "rgba(237, 129, 40, 0.89)",
-        "#d44a3a"
-      ],
-      "datasource": null,
-      "format": "none",
-      "gauge": {
-        "maxValue": 100,
-        "minValue": 0,
-        "show": false,
-        "thresholdLabels": false,
-        "thresholdMarkers": true
-      },
-      "gridPos": {
-        "h": 2,
-        "w": 6,
-        "x": 12,
-        "y": 2
-      },
-      "id": 30,
-      "interval": null,
-      "links": [],
-      "mappingType": 1,
-      "mappingTypes": [
-        {
-          "name": "value to text",
-          "value": 1
-        },
-        {
-          "name": "range to text",
-          "value": 2
-        }
-      ],
-      "maxDataPoints": 100,
-      "nullPointMode": "connected",
-      "nullText": null,
-      "postfix": "",
-      "postfixFontSize": "50%",
-      "prefix": "",
-      "prefixFontSize": "50%",
-      "rangeMaps": [
-        {
-          "from": "null",
-          "text": "N/A",
-          "to": "null"
-        }
-      ],
-      "sparkline": {
-        "fillColor": "rgba(31, 118, 189, 0.18)",
-        "full": false,
-        "lineColor": "rgb(31, 120, 193)",
-        "show": false
-      },
-      "tableColumn": "",
-      "targets": [
-        {
-          "expr": "count(count by (pod) (kube_pod_status_scheduled{deployment=~\"$deployment\"}==1))",
-          "format": "time_series",
-          "instant": true,
-          "intervalFactor": 1,
-          "refId": "A"
-        }
-      ],
-      "thresholds": "",
-      "title": "Scheduled Pods",
-      "type": "singlestat",
-      "valueFontSize": "80%",
-      "valueMaps": [
-        {
-          "op": "=",
-          "text": "N/A",
-          "value": "null"
-        }
-      ],
-      "valueName": "current"
-    },
-    {
-      "cacheTimeout": null,
-      "colorBackground": true,
+      "colorBackground": false,
       "colorValue": false,
       "colors": [
         "#d44a3a",
         "rgba(237, 129, 40, 0.89)",
         "#299c46"
       ],
-      "datasource": null,
+      "datasource": "Prometheus",
       "format": "none",
       "gauge": {
         "maxValue": 100,
@@ -652,9 +400,9 @@
       },
       "gridPos": {
         "h": 2,
-        "w": 6,
-        "x": 18,
-        "y": 2
+        "w": 4,
+        "x": 20,
+        "y": 0
       },
       "id": 16,
       "interval": null,
@@ -693,7 +441,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "count(kube_statefulset_created{deployment=~\"[[deployment]]\"})",
+          "expr": "sum(count(kube_statefulset_status_replicas{namespace=~\".*-.*-.*-[0-9]{4}\", release=~\"[[deployment]]\"}))",
           "format": "time_series",
           "instant": true,
           "intervalFactor": 1,
@@ -701,22 +449,17 @@
         }
       ],
       "thresholds": "0, 1",
-      "title": "Number of Stateful Sets",
+      "title": "Active Stateful Sets",
       "type": "singlestat",
-      "valueFontSize": "80%",
+      "valueFontSize": "70%",
       "valueMaps": [
         {
           "op": "=",
-          "text": "Error",
-          "value": "0"
-        },
-        {
-          "op": "=",
-          "text": "No active airflows!",
+          "text": "0",
           "value": "null"
         }
       ],
-      "valueName": "avg"
+      "valueName": "current"
     },
     {
       "cacheTimeout": null,
@@ -727,22 +470,262 @@
         "rgba(237, 129, 40, 0.89)",
         "#d44a3a"
       ],
-      "datasource": null,
+      "datasource": "Prometheus",
       "format": "none",
       "gauge": {
         "maxValue": 100,
         "minValue": 0,
-        "show": true,
+        "show": false,
         "thresholdLabels": false,
         "thresholdMarkers": true
       },
       "gridPos": {
-        "h": 7,
-        "w": 8,
+        "h": 2,
+        "w": 4,
         "x": 0,
-        "y": 4
+        "y": 2
       },
-      "id": 22,
+      "id": 53,
+      "interval": null,
+      "links": [],
+      "mappingType": 1,
+      "mappingTypes": [
+        {
+          "name": "value to text",
+          "value": 1
+        },
+        {
+          "name": "range to text",
+          "value": 2
+        }
+      ],
+      "maxDataPoints": 100,
+      "nullPointMode": "connected",
+      "nullText": null,
+      "postfix": " cores",
+      "postfixFontSize": "50%",
+      "prefix": "",
+      "prefixFontSize": "50%",
+      "rangeMaps": [
+        {
+          "from": "null",
+          "text": "N/A",
+          "to": "null"
+        }
+      ],
+      "sparkline": {
+        "fillColor": "rgba(31, 118, 189, 0.18)",
+        "full": false,
+        "lineColor": "rgb(31, 120, 193)",
+        "show": false
+      },
+      "tableColumn": "",
+      "targets": [
+        {
+          "expr": "sum(kube_resourcequota{resource=\"requests.cpu\", type=\"hard\", namespace=~\".*-.*-.*-[0-9]{4}\", release=~\"$deployment\"})",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "refId": "A"
+        }
+      ],
+      "thresholds": "",
+      "title": "Max CPU Requests",
+      "type": "singlestat",
+      "valueFontSize": "70%",
+      "valueMaps": [
+        {
+          "op": "=",
+          "text": "N/A",
+          "value": "null"
+        }
+      ],
+      "valueName": "current"
+    },
+    {
+      "cacheTimeout": null,
+      "colorBackground": false,
+      "colorValue": false,
+      "colors": [
+        "#299c46",
+        "rgba(237, 129, 40, 0.89)",
+        "#d44a3a"
+      ],
+      "datasource": "Prometheus",
+      "format": "none",
+      "gauge": {
+        "maxValue": 100,
+        "minValue": 0,
+        "show": false,
+        "thresholdLabels": false,
+        "thresholdMarkers": true
+      },
+      "gridPos": {
+        "h": 2,
+        "w": 4,
+        "x": 4,
+        "y": 2
+      },
+      "id": 54,
+      "interval": null,
+      "links": [],
+      "mappingType": 1,
+      "mappingTypes": [
+        {
+          "name": "value to text",
+          "value": 1
+        },
+        {
+          "name": "range to text",
+          "value": 2
+        }
+      ],
+      "maxDataPoints": 100,
+      "nullPointMode": "connected",
+      "nullText": null,
+      "postfix": " cores",
+      "postfixFontSize": "50%",
+      "prefix": "",
+      "prefixFontSize": "50%",
+      "rangeMaps": [
+        {
+          "from": "null",
+          "text": "N/A",
+          "to": "null"
+        }
+      ],
+      "sparkline": {
+        "fillColor": "rgba(31, 118, 189, 0.18)",
+        "full": false,
+        "lineColor": "rgb(31, 120, 193)",
+        "show": false
+      },
+      "tableColumn": "",
+      "targets": [
+        {
+          "expr": "sum(kube_resourcequota{resource=\"limits.cpu\", type=\"hard\", namespace=~\".*-.*-.*-[0-9]{4}\", release=~\"$deployment\"})",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "refId": "A"
+        }
+      ],
+      "thresholds": "",
+      "title": "Max CPU Limits",
+      "type": "singlestat",
+      "valueFontSize": "70%",
+      "valueMaps": [
+        {
+          "op": "=",
+          "text": "N/A",
+          "value": "null"
+        }
+      ],
+      "valueName": "current"
+    },
+    {
+      "cacheTimeout": null,
+      "colorBackground": false,
+      "colorValue": false,
+      "colors": [
+        "#299c46",
+        "rgba(237, 129, 40, 0.89)",
+        "#d44a3a"
+      ],
+      "datasource": "Prometheus",
+      "format": "none",
+      "gauge": {
+        "maxValue": 100,
+        "minValue": 0,
+        "show": false,
+        "thresholdLabels": false,
+        "thresholdMarkers": true
+      },
+      "gridPos": {
+        "h": 2,
+        "w": 8,
+        "x": 8,
+        "y": 2
+      },
+      "id": 61,
+      "interval": null,
+      "links": [],
+      "mappingType": 1,
+      "mappingTypes": [
+        {
+          "name": "value to text",
+          "value": 1
+        },
+        {
+          "name": "range to text",
+          "value": 2
+        }
+      ],
+      "maxDataPoints": 100,
+      "nullPointMode": "connected",
+      "nullText": null,
+      "postfix": " pods",
+      "postfixFontSize": "50%",
+      "prefix": "",
+      "prefixFontSize": "50%",
+      "rangeMaps": [
+        {
+          "from": "null",
+          "text": "N/A",
+          "to": "null"
+        }
+      ],
+      "sparkline": {
+        "fillColor": "rgba(31, 118, 189, 0.18)",
+        "full": false,
+        "lineColor": "rgb(31, 120, 193)",
+        "show": false
+      },
+      "tableColumn": "",
+      "targets": [
+        {
+          "expr": "sum(kube_resourcequota{resource=\"pods\", type=\"hard\", namespace=~\".*-.*-.*-[0-9]{4}\", release=~\"$deployment\"})",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "refId": "A"
+        }
+      ],
+      "thresholds": "",
+      "title": "Max Pods",
+      "type": "singlestat",
+      "valueFontSize": "70%",
+      "valueMaps": [
+        {
+          "op": "=",
+          "text": "N/A",
+          "value": "null"
+        }
+      ],
+      "valueName": "current"
+    },
+    {
+      "cacheTimeout": null,
+      "colorBackground": false,
+      "colorValue": false,
+      "colors": [
+        "#299c46",
+        "rgba(237, 129, 40, 0.89)",
+        "#d44a3a"
+      ],
+      "datasource": "Prometheus",
+      "format": "decbytes",
+      "gauge": {
+        "maxValue": 100,
+        "minValue": 0,
+        "show": false,
+        "thresholdLabels": false,
+        "thresholdMarkers": true
+      },
+      "gridPos": {
+        "h": 2,
+        "w": 4,
+        "x": 16,
+        "y": 2
+      },
+      "id": 55,
       "interval": null,
       "links": [],
       "mappingType": 1,
@@ -779,17 +762,16 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "count(kube_pod_created{deployment=~\"$deployment\"})",
+          "expr": "sum(kube_resourcequota{resource=\"requests.memory\", type=\"hard\", namespace=~\".*-.*-.*-[0-9]{4}\", release=~\"$deployment\"})",
           "format": "time_series",
-          "instant": true,
           "intervalFactor": 1,
           "refId": "A"
         }
       ],
-      "thresholds": "50,80",
-      "title": "Airflow Pods in Use",
+      "thresholds": "",
+      "title": "Max Mem Requests",
       "type": "singlestat",
-      "valueFontSize": "50%",
+      "valueFontSize": "70%",
       "valueMaps": [
         {
           "op": "=",
@@ -802,14 +784,94 @@
     {
       "cacheTimeout": null,
       "colorBackground": false,
-      "colorValue": true,
+      "colorValue": false,
       "colors": [
         "#299c46",
         "rgba(237, 129, 40, 0.89)",
         "#d44a3a"
       ],
-      "datasource": null,
-      "decimals": 2,
+      "datasource": "Prometheus",
+      "format": "decbytes",
+      "gauge": {
+        "maxValue": 100,
+        "minValue": 0,
+        "show": false,
+        "thresholdLabels": false,
+        "thresholdMarkers": true
+      },
+      "gridPos": {
+        "h": 2,
+        "w": 4,
+        "x": 20,
+        "y": 2
+      },
+      "id": 56,
+      "interval": null,
+      "links": [],
+      "mappingType": 1,
+      "mappingTypes": [
+        {
+          "name": "value to text",
+          "value": 1
+        },
+        {
+          "name": "range to text",
+          "value": 2
+        }
+      ],
+      "maxDataPoints": 100,
+      "nullPointMode": "connected",
+      "nullText": null,
+      "postfix": "",
+      "postfixFontSize": "50%",
+      "prefix": "",
+      "prefixFontSize": "50%",
+      "rangeMaps": [
+        {
+          "from": "null",
+          "text": "N/A",
+          "to": "null"
+        }
+      ],
+      "sparkline": {
+        "fillColor": "rgba(31, 118, 189, 0.18)",
+        "full": false,
+        "lineColor": "rgb(31, 120, 193)",
+        "show": false
+      },
+      "tableColumn": "",
+      "targets": [
+        {
+          "expr": "sum(kube_resourcequota{resource=\"limits.memory\", type=\"hard\", namespace=~\".*-.*-.*-[0-9]{4}\", release=~\"$deployment\"})",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "refId": "A"
+        }
+      ],
+      "thresholds": "",
+      "title": "Max Mem Limits",
+      "type": "singlestat",
+      "valueFontSize": "70%",
+      "valueMaps": [
+        {
+          "op": "=",
+          "text": "N/A",
+          "value": "null"
+        }
+      ],
+      "valueName": "current"
+    },
+    {
+      "cacheTimeout": null,
+      "colorBackground": false,
+      "colorValue": false,
+      "colors": [
+        "#299c46",
+        "rgba(237, 129, 40, 0.89)",
+        "#d44a3a"
+      ],
+      "datasource": "Prometheus",
+      "decimals": null,
       "format": "percent",
       "gauge": {
         "maxValue": 100,
@@ -819,12 +881,175 @@
         "thresholdMarkers": true
       },
       "gridPos": {
-        "h": 7,
+        "h": 5,
+        "w": 4,
+        "x": 0,
+        "y": 4
+      },
+      "id": 46,
+      "interval": null,
+      "links": [],
+      "mappingType": 1,
+      "mappingTypes": [
+        {
+          "name": "value to text",
+          "value": 1
+        },
+        {
+          "name": "range to text",
+          "value": 2
+        }
+      ],
+      "maxDataPoints": 100,
+      "nullPointMode": "connected",
+      "nullText": null,
+      "postfix": "",
+      "postfixFontSize": "50%",
+      "prefix": "",
+      "prefixFontSize": "50%",
+      "rangeMaps": [
+        {
+          "from": "null",
+          "text": "N/A",
+          "to": "null"
+        }
+      ],
+      "sparkline": {
+        "fillColor": "rgba(31, 118, 189, 0.18)",
+        "full": false,
+        "lineColor": "rgb(31, 120, 193)",
+        "show": false
+      },
+      "tableColumn": "",
+      "targets": [
+        {
+          "expr": "sum(kube_resourcequota{resource=\"requests.cpu\", type=\"used\", namespace=~\".*-.*-.*-[0-9]{4}\", release=~\"$deployment\"})\n/\nsum(kube_resourcequota{resource=\"requests.cpu\", type=\"hard\", namespace=~\".*-.*-.*-[0-9]{4}\", release=~\"$deployment\"})*100",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "thresholds": "50,80",
+      "title": "CPU Requests",
+      "type": "singlestat",
+      "valueFontSize": "80%",
+      "valueMaps": [
+        {
+          "op": "=",
+          "text": "N/A",
+          "value": "null"
+        }
+      ],
+      "valueName": "current"
+    },
+    {
+      "cacheTimeout": null,
+      "colorBackground": false,
+      "colorValue": false,
+      "colors": [
+        "#299c46",
+        "rgba(237, 129, 40, 0.89)",
+        "#d44a3a"
+      ],
+      "datasource": "Prometheus",
+      "decimals": null,
+      "format": "percent",
+      "gauge": {
+        "maxValue": 100,
+        "minValue": 0,
+        "show": true,
+        "thresholdLabels": false,
+        "thresholdMarkers": true
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 4,
+        "y": 4
+      },
+      "id": 47,
+      "interval": null,
+      "links": [],
+      "mappingType": 1,
+      "mappingTypes": [
+        {
+          "name": "value to text",
+          "value": 1
+        },
+        {
+          "name": "range to text",
+          "value": 2
+        }
+      ],
+      "maxDataPoints": 100,
+      "nullPointMode": "connected",
+      "nullText": null,
+      "postfix": "",
+      "postfixFontSize": "50%",
+      "prefix": "",
+      "prefixFontSize": "50%",
+      "rangeMaps": [
+        {
+          "from": "null",
+          "text": "N/A",
+          "to": "null"
+        }
+      ],
+      "sparkline": {
+        "fillColor": "rgba(31, 118, 189, 0.18)",
+        "full": false,
+        "lineColor": "rgb(31, 120, 193)",
+        "show": false
+      },
+      "tableColumn": "",
+      "targets": [
+        {
+          "expr": "sum(kube_resourcequota{resource=\"limits.cpu\", type=\"used\", namespace=~\".*-.*-.*-[0-9]{4}\", release=~\"$deployment\"})\n/\nsum(kube_resourcequota{resource=\"limits.cpu\", type=\"hard\", namespace=~\".*-.*-.*-[0-9]{4}\", release=~\"$deployment\"})*100",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "refId": "A"
+        }
+      ],
+      "thresholds": "50,80",
+      "title": "CPU Limits",
+      "type": "singlestat",
+      "valueFontSize": "80%",
+      "valueMaps": [
+        {
+          "op": "=",
+          "text": "N/A",
+          "value": "null"
+        }
+      ],
+      "valueName": "current"
+    },
+    {
+      "cacheTimeout": null,
+      "colorBackground": false,
+      "colorValue": false,
+      "colors": [
+        "#299c46",
+        "rgba(237, 129, 40, 0.89)",
+        "#d44a3a"
+      ],
+      "datasource": "Prometheus",
+      "decimals": null,
+      "format": "percent",
+      "gauge": {
+        "maxValue": 100,
+        "minValue": 0,
+        "show": true,
+        "thresholdLabels": false,
+        "thresholdMarkers": true
+      },
+      "gridPos": {
+        "h": 5,
         "w": 8,
         "x": 8,
         "y": 4
       },
-      "id": 36,
+      "id": 62,
       "interval": null,
       "links": [],
       "mappingType": 1,
@@ -861,17 +1086,17 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(kube_pod_container_resource_requests_cpu_cores{deployment=~\"$deployment\"})",
+          "expr": "sum(kube_resourcequota{resource=\"pods\", type=\"used\", namespace=~\".*-.*-.*-[0-9]{4}\", release=~\"$deployment\"})\n/\nsum(kube_resourcequota{resource=\"pods\", type=\"hard\", namespace=~\".*-.*-.*-[0-9]{4}\", release=~\"$deployment\"})*100",
           "format": "time_series",
-          "instant": true,
           "intervalFactor": 1,
+          "legendFormat": "",
           "refId": "A"
         }
       ],
       "thresholds": "50,80",
-      "title": "Percent Total CPU Usage",
+      "title": "Running Pods",
       "type": "singlestat",
-      "valueFontSize": "50%",
+      "valueFontSize": "80%",
       "valueMaps": [
         {
           "op": "=",
@@ -884,14 +1109,14 @@
     {
       "cacheTimeout": null,
       "colorBackground": false,
-      "colorValue": true,
+      "colorValue": false,
       "colors": [
         "#299c46",
         "rgba(237, 129, 40, 0.89)",
         "#d44a3a"
       ],
-      "datasource": null,
-      "decimals": 2,
+      "datasource": "Prometheus",
+      "decimals": null,
       "format": "percent",
       "gauge": {
         "maxValue": 100,
@@ -901,12 +1126,12 @@
         "thresholdMarkers": true
       },
       "gridPos": {
-        "h": 7,
-        "w": 8,
+        "h": 5,
+        "w": 4,
         "x": 16,
         "y": 4
       },
-      "id": 38,
+      "id": 48,
       "interval": null,
       "links": [],
       "mappingType": 1,
@@ -943,17 +1168,16 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(kube_pod_container_resource_limits_cpu_cores{deployment=~\"$deployment\"})",
+          "expr": "sum(kube_resourcequota{resource=\"requests.memory\", type=\"used\", namespace=~\".*-.*-.*-[0-9]{4}\", release=~\"$deployment\"})\n/\nsum(kube_resourcequota{resource=\"requests.memory\", type=\"hard\", namespace=~\".*-.*-.*-[0-9]{4}\", release=~\"$deployment\"})*100",
           "format": "time_series",
-          "instant": true,
           "intervalFactor": 1,
           "refId": "A"
         }
       ],
       "thresholds": "50,80",
-      "title": "CPU Limit",
+      "title": "Memory Requests",
       "type": "singlestat",
-      "valueFontSize": "50%",
+      "valueFontSize": "80%",
       "valueMaps": [
         {
           "op": "=",
@@ -964,14 +1188,352 @@
       "valueName": "current"
     },
     {
+      "cacheTimeout": null,
+      "colorBackground": false,
+      "colorValue": false,
+      "colors": [
+        "#299c46",
+        "rgba(237, 129, 40, 0.89)",
+        "#d44a3a"
+      ],
+      "datasource": "Prometheus",
+      "decimals": null,
+      "format": "percent",
+      "gauge": {
+        "maxValue": 100,
+        "minValue": 0,
+        "show": true,
+        "thresholdLabels": false,
+        "thresholdMarkers": true
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 20,
+        "y": 4
+      },
+      "id": 49,
+      "interval": null,
+      "links": [],
+      "mappingType": 1,
+      "mappingTypes": [
+        {
+          "name": "value to text",
+          "value": 1
+        },
+        {
+          "name": "range to text",
+          "value": 2
+        }
+      ],
+      "maxDataPoints": 100,
+      "nullPointMode": "connected",
+      "nullText": null,
+      "postfix": "",
+      "postfixFontSize": "50%",
+      "prefix": "",
+      "prefixFontSize": "50%",
+      "rangeMaps": [
+        {
+          "from": "null",
+          "text": "N/A",
+          "to": "null"
+        }
+      ],
+      "sparkline": {
+        "fillColor": "rgba(31, 118, 189, 0.18)",
+        "full": false,
+        "lineColor": "rgb(31, 120, 193)",
+        "show": false
+      },
+      "tableColumn": "",
+      "targets": [
+        {
+          "expr": "sum(kube_resourcequota{resource=\"limits.memory\", type=\"used\", namespace=~\".*-.*-.*-[0-9]{4}\", release=~\"$deployment\"})\n/\nsum(kube_resourcequota{resource=\"limits.memory\", type=\"hard\", namespace=~\".*-.*-.*-[0-9]{4}\", release=~\"$deployment\"})*100",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "refId": "A"
+        }
+      ],
+      "thresholds": "50,80",
+      "title": "Memory Limits",
+      "type": "singlestat",
+      "valueFontSize": "80%",
+      "valueMaps": [
+        {
+          "op": "=",
+          "text": "N/A",
+          "value": "null"
+        }
+      ],
+      "valueName": "current"
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "Prometheus",
+      "decimals": 0,
+      "fill": 1,
+      "gridPos": {
+        "h": 5,
+        "w": 8,
+        "x": 0,
+        "y": 9
+      },
+      "id": 63,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": true,
+        "max": true,
+        "min": true,
+        "show": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "sum(kube_pod_status_phase{namespace=~\".*-.*-.*-[0-9]{4}\", release=~\"$deployment\", phase=\"Running\"})",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "pods",
+          "refId": "B"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Running Pods",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": false,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "decimals": 0,
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "decimals": null,
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "cacheTimeout": null,
+      "colorBackground": false,
+      "colorValue": false,
+      "colors": [
+        "#d44a3a",
+        "rgba(237, 129, 40, 0.89)",
+        "#299c46"
+      ],
+      "datasource": "Prometheus",
+      "format": "percent",
+      "gauge": {
+        "maxValue": 100,
+        "minValue": 0,
+        "show": true,
+        "thresholdLabels": false,
+        "thresholdMarkers": true
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 8,
+        "x": 8,
+        "y": 9
+      },
+      "id": 51,
+      "interval": null,
+      "links": [],
+      "mappingType": 1,
+      "mappingTypes": [
+        {
+          "name": "value to text",
+          "value": 1
+        },
+        {
+          "name": "range to text",
+          "value": 2
+        }
+      ],
+      "maxDataPoints": 100,
+      "nullPointMode": "connected",
+      "nullText": null,
+      "postfix": "",
+      "postfixFontSize": "50%",
+      "prefix": "",
+      "prefixFontSize": "50%",
+      "rangeMaps": [
+        {
+          "from": "null",
+          "text": "N/A",
+          "to": "null"
+        }
+      ],
+      "sparkline": {
+        "fillColor": "rgba(31, 118, 189, 0.18)",
+        "full": false,
+        "lineColor": "rgb(31, 120, 193)",
+        "show": false
+      },
+      "tableColumn": "",
+      "targets": [
+        {
+          "expr": "sum(kube_pod_status_scheduled{condition=\"true\", namespace=~\".*-.*-.*-[0-9]{4}\", release=~\"$deployment\"})\n/\nsum(kube_pod_status_ready{condition=\"true\", namespace=~\".*-.*-.*-[0-9]{4}\", release=~\"$deployment\"})*100",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "refId": "A"
+        }
+      ],
+      "thresholds": "80,100",
+      "title": "Pods Ready",
+      "type": "singlestat",
+      "valueFontSize": "80%",
+      "valueMaps": [
+        {
+          "op": "=",
+          "text": "N/A",
+          "value": "null"
+        }
+      ],
+      "valueName": "current"
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "Prometheus",
+      "decimals": 0,
+      "fill": 1,
+      "gridPos": {
+        "h": 5,
+        "w": 8,
+        "x": 16,
+        "y": 9
+      },
+      "id": 58,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": true,
+        "max": true,
+        "min": true,
+        "rightSide": false,
+        "show": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "sum(kube_pod_container_status_running{namespace=~\".*-.*-.*-[0-9]{4}\", release=~\"$deployment\"})",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "containers",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Running Containers",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": false,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "decimals": 0,
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "decimals": null,
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
       "columns": [],
-      "datasource": null,
+      "datasource": "Prometheus",
       "fontSize": "100%",
       "gridPos": {
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 11
+        "y": 14
       },
       "id": 44,
       "links": [],
@@ -985,7 +1547,7 @@
       "styles": [
         {
           "alias": "Status",
-          "colorMode": "row",
+          "colorMode": "cell",
           "colors": [
             "#bf1b00",
             "#bf1b00",
@@ -998,12 +1560,12 @@
           "rangeMaps": [
             {
               "from": "0",
-              "text": "Ready",
+              "text": "Healthy",
               "to": "0"
             },
             {
               "from": "-100000",
-              "text": "Waiting/Terminating",
+              "text": "Unhealthy",
               "to": "-1"
             },
             {
@@ -1065,7 +1627,7 @@
       ],
       "targets": [
         {
-          "expr": "sort(\n  sum by (deployment) (\n    sum by (deployment) (\n      kube_pod_container_status_running{namespace=~\".*-.*-.*-.*-[0-9]{4}\", deployment=~\"$deployment\"}\n    ) - \n    count by (deployment) (\n      kube_pod_container_status_running{namespace=~\".*-.*-.*-.*-[0-9]{4}\", deployment=~\"$deployment\"}\n    )\n  )\n)",
+          "expr": "sort(\n  sum by (release) (\n    sum by (release) (\n      kube_pod_container_status_running{namespace=~\".*-.*-.*-[0-9]{4}\", release=~\"$deployment\"}\n    ) - \n    count by (release) (\n      kube_pod_container_status_running{namespace=~\".*-.*-.*-[0-9]{4}\", release=~\"$deployment\"}\n    )\n  )\n)",
           "format": "table",
           "instant": true,
           "intervalFactor": 1,
@@ -1078,13 +1640,13 @@
     },
     {
       "columns": [],
-      "datasource": null,
+      "datasource": "Prometheus",
       "fontSize": "100%",
       "gridPos": {
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 20
+        "y": 23
       },
       "id": 20,
       "links": [],
@@ -1092,8 +1654,8 @@
       "scroll": true,
       "showHeader": true,
       "sort": {
-        "col": 2,
-        "desc": false
+        "col": 4,
+        "desc": true
       },
       "styles": [
         {
@@ -1106,20 +1668,23 @@
           ],
           "dateFormat": "YYYY-MM-DD HH:mm:ss",
           "decimals": 2,
+          "link": false,
           "mappingType": 2,
           "pattern": "Value",
+          "preserveFormat": false,
           "rangeMaps": [
             {
               "from": "0",
-              "text": "Ready",
+              "text": "Healthy",
               "to": "0"
             },
             {
               "from": "1",
-              "text": "Waiting/Terminating",
-              "to": "2"
+              "text": "Unhealthy",
+              "to": "10000"
             }
           ],
+          "sanitize": false,
           "thresholds": [
             "0",
             "1"
@@ -1204,14 +1769,14 @@
       ],
       "targets": [
         {
-          "expr": "sort_desc(max by (container, pod, reason) (\n  max by (container, pod) (\n    sort_desc(kube_pod_container_status_waiting{deployment=~\"$deployment\"})\n  ) or\n  max by (container, reason) (\n    sort_desc(kube_pod_container_status_waiting_reason{deployment=~\"$deployment\"}==1)\n  ) or\n  max by (container, reason) (\n    sort_desc(kube_pod_container_status_terminated_reason{deployment=~\"$deployment\"}==1)\n  )\n))\n",
+          "expr": "sort_desc(max by (container, pod, reason) (\n  max by (container, pod) (\n    sort_desc(kube_pod_container_status_waiting{namespace=~\".*-.*-.*-[0-9]{4}\", release=~\"$deployment\"})\n  ) or\n  max by (container, reason) (\n    sort_desc(kube_pod_container_status_waiting_reason{namespace=~\".*-.*-.*-[0-9]{4}\", release=~\"$deployment\"}==1)\n  ) or\n  max by (container, reason) (\n    sort_desc(kube_pod_container_status_terminated_reason{namespace=~\".*-.*-.*-[0-9]{4}\", release=~\"$deployment\"}==1)\n  )\n))\n",
           "format": "table",
           "instant": true,
           "intervalFactor": 1,
           "refId": "A"
         }
       ],
-      "title": "Container Schedule Queue",
+      "title": "Container Status",
       "transform": "table",
       "type": "table"
     }
@@ -1227,8 +1792,12 @@
       {
         "allValue": null,
         "current": {
+          "selected": false,
+          "tags": [],
           "text": "All",
-          "value": "$__all"
+          "value": [
+            "$__all"
+          ]
         },
         "datasource": "Prometheus",
         "hide": 0,
@@ -1237,7 +1806,7 @@
         "multi": true,
         "name": "deployment",
         "options": [],
-        "query": "label_values(kube_pod_info, deployment)",
+        "query": "label_values(kube_pod_info, release)",
         "refresh": 1,
         "regex": "",
         "sort": 1,
@@ -1250,7 +1819,7 @@
     ]
   },
   "time": {
-    "from": "now-1m",
+    "from": "now-30m",
     "to": "now"
   },
   "timepicker": {
@@ -1280,6 +1849,6 @@
   },
   "timezone": "",
   "title": "Airflow State",
-  "uid": "nQLvjCAmz",
+  "uid": "h7dUiVJmz",
   "version": 1
 }
