@@ -82,7 +82,7 @@ data:
           - source_labels: [namespace]
             regex: "^.*-(.*-.*-[0-9]{4})$"
             replacement: "$1"
-            target_label: deployment
+            target_label: release # Use release here since deployment conflicts with metric labels
 
       - job_name: fluentd
         kubernetes_sd_configs:
