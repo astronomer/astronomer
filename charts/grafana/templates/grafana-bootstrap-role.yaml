@@ -5,7 +5,7 @@
 kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: grafana-bootstrapper-role
+  name: {{ .Release.Name }}-grafana-bootstrapper-role
   labels:
     tier: grafana
     release: {{ .Release.Name }}
