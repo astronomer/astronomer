@@ -1,19 +1,43 @@
-{{ define "grafana_image" -}}
+{{/* vim: set filetype=mustache: */}}
+{{/*
+Expand the name of the chart.
+*/}}
+{{- define "grafana.name" -}}
+{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{/*
+Create a default fully qualified app name.
+We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+*/}}
+{{- define "grafana.fullname" -}}
+{{- $name := default .Chart.Name .Values.nameOverride -}}
+{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{/*
+Create chart name and version as used by the chart label.
+*/}}
+{{- define "grafana.chart" -}}
+{{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{ define "grafana.image" -}}
 {{ .Values.images.grafana.repository }}:{{ .Values.images.grafana.tag }}
 {{- end }}
 
-{{ define "grafana_url" -}}
+{{ define "grafana.url" -}}
 grafana.{{ .Values.global.baseDomain }}
 {{- end }}
 
-{{ define "db_bootstrapper_image" -}}
+{{ define "grafana.bootstrapper.image" -}}
 {{ .Values.images.dbBootstrapper.repository }}:{{ .Values.images.dbBootstrapper.tag }}
 {{- end }}
 
-{{ define "grafana_backend_secret" -}}
+{{ define "grafana.backend.secret" -}}
 {{ default (printf "%s-grafana-backend" .Release.Name) .Values.backendSecretName }}
 {{- end }}
 
-{{ define "grafana_bootstrapper_serviceaccount" -}}
+{{ define "grafana.bootstrapper.serviceaccount" -}}
 {{ printf "%s-grafana-bootstrapper-serviceaccount" .Release.Name }}
 {{- end }}

@@ -4,13 +4,12 @@
 kind: Service
 apiVersion: v1
 metadata:
-  name: {{ .Release.Name }}-grafana
+  name: {{ template "grafana.fullname" . }}
   labels:
     tier: monitoring
     component: grafana
+    chart: {{ template "grafana.chart" . }}
     release: {{ .Release.Name }}
-    workspace: {{ .Values.workspace }}
-    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
 spec:
   type: NodePort
@@ -18,7 +17,6 @@ spec:
     tier: monitoring
     component: grafana
     release: {{ .Release.Name }}
-    workspace: {{ .Values.workspace }}
   ports:
     - name: grafana-ui
       protocol: TCP

@@ -4,13 +4,12 @@
 kind: Deployment
 apiVersion: apps/v1beta2
 metadata:
-  name: "{{ .Release.Name }}-grafana"
+  name: {{ template "grafana.fullname" . }}
   labels:
     tier: monitoring
     component: grafana
+    chart: {{ template "grafana.chart" . }}
     release: {{ .Release.Name }}
-    workspace: {{ .Values.workspace }}
-    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
 spec:
   replicas: 1
@@ -19,21 +18,19 @@ spec:
       tier: monitoring
       component: grafana
       release: {{ .Release.Name }}
-      workspace: {{ .Values.workspace }}
   template:
     metadata:
       labels:
         tier: monitoring
         component: grafana
         release: {{ .Release.Name }}
-        workspace: {{ .Values.workspace }}
     spec:
       restartPolicy: Always
       {{- if and (not .Values.backendSecretName) (not .Values.backendConnection) }}
-      serviceAccountName: {{ template "grafana_bootstrapper_serviceaccount" . }}
+      serviceAccountName: {{ template "grafana.bootstrapper.serviceaccount" . }}
       initContainers:
-        - name: "{{ .Release.Name }}-grafana-bootstrapper"
-          image: {{ template "db_bootstrapper_image" . }}
+        - name: {{ template "grafana.fullname" . }}-bootstrapper
+          image: {{ template "grafana.bootstrapper.image" . }}
           imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
           env:
             - name: BOOTSTRAP_DB
@@ -44,15 +41,15 @@ spec:
             - name: DB_NAME
               value: {{ .Release.Name }}-grafana
             - name: SECRET_NAME
-              value: {{ template "grafana_backend_secret" . }}
+              value: {{ template "grafana.backend.secret" . }}
             - name: NAMESPACE
               value: {{ .Release.Namespace }}
             - name: IN_CLUSTER
               value: "true"
       {{- end }}
       containers:
-        - name: "{{ .Release.Name }}-grafana"
-          image: {{ template "grafana_image" . }}
+        - name: {{ template "grafana.fullname" . }}
+          image: {{ template "grafana.image" . }}
           imagePullPolicy: {{ .Values.images.grafana.pullPolicy }}
           resources:
 {{ toYaml .Values.resources | indent 12 }}
@@ -78,14 +75,14 @@ spec:
             - name: GF_DATABASE_URL
               valueFrom:
                 secretKeyRef:
-                  name: {{ template "grafana_backend_secret" . }}
+                  name: {{ template "grafana.backend.secret" . }}
                   key: connection
             - name: GF_AUTH_ANONYMOUS_ENABLED
               value: "true"
       volumes:
         - name: grafana-datasource-volume
           configMap:
-            name: "{{ .Release.Name }}-grafana-datasource"
+            name: {{ template "grafana.fullname" . }}-datasource
             items:
               - key: datasource.yaml
                 path: datasource.yaml

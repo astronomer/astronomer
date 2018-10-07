@@ -5,12 +5,12 @@
 kind: Ingress
 apiVersion: extensions/v1beta1
 metadata:
-  name: {{ .Release.Name }}-grafana-ingress
+  name: {{ template "grafana.fullname" . }}-ingress
   labels:
     tier: grafana-networking
     component: grafana-ingress
+    chart: {{ template "grafana.chart" . }}
     release: {{ .Release.Name }}
-    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
   annotations:
     kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
@@ -28,14 +28,14 @@ spec:
     - secretName: {{ .Values.global.tlsSecret }}
   {{- end }}
       hosts:
-        - {{- include "grafana_url" . | indent 1 }}
+        - {{ template "grafana.url" . }}
   {{- end }}
   rules:
-    - host: {{- include "grafana_url" . | indent 1 }}
+    - host: {{ template "grafana.url" . }}
       http:
         paths:
           - path: /
             backend:
-              serviceName: {{ .Release.Name }}-grafana
+              serviceName: {{ template "grafana.fullname" . }}
               servicePort: grafana-ui
 {{- end }}

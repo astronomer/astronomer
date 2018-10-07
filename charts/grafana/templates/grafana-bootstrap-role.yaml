@@ -5,11 +5,11 @@
 kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: {{ .Release.Name }}-grafana-bootstrapper-role
+  name: {{ template "grafana.fullname" . }}-bootstrapper-role
   labels:
     tier: grafana
+    chart: {{ template "grafana.chart" . }}
     release: {{ .Release.Name }}
-    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
 rules:
   - apiGroups:
