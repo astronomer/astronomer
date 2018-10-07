@@ -5,13 +5,13 @@
 apiVersion: {{ template "curator.cronJob.apiVersion" . }}
 kind: CronJob
 metadata:
-  name: {{ template "fullname" . }}-curator
+  name: {{ template "elasticsearch.fullname" . }}-curator
   labels:
     tier: logging
-    component: {{ template "name" . }}
-    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
-    release: "{{ .Release.Name }}"
-    heritage: "{{ .Release.Service }}"
+    component: {{ template "elasticsearch.name" . }}
+    chart: {{ template "elasticsearch.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
 spec:
   schedule: {{ .Values.curator.schedule }}
   jobTemplate:
@@ -29,6 +29,6 @@ spec:
           volumes:
             - name: config-volume
               configMap:
-                name: {{ template "fullname" . }}-curator-config
+                name: {{ template "elasticsearch.fullname" . }}-curator-config
           restartPolicy: OnFailure
 {{- end }}

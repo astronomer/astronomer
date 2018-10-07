@@ -4,20 +4,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ template "fullname" . }}-exporter
+  name: {{ template "elasticsearch.fullname" . }}-exporter
   labels:
     tier: logging
     component: {{ template "name" . }}-exporter
-    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
-    release: "{{ .Release.Name }}"
-    heritage: "{{ .Release.Service }}"
+    chart: {{ template "elasticsearch.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
     role: exporter
 spec:
   replicas: {{ .Values.exporter.replicas }}
   selector:
     matchLabels:
       tier: logging
-      component: {{ template "name" . }}-exporter
+      component: {{ template "elasticsearch.name" . }}-exporter
       release: {{ .Release.Name }}
       role: exporter
   strategy:
@@ -29,7 +29,7 @@ spec:
     metadata:
       labels:
         tier: logging
-        component: {{ template "name" . }}-exporter
+        component: {{ template "elasticsearch.name" . }}-exporter
         release: {{ .Release.Name }}
         role: exporter
     spec:

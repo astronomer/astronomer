@@ -5,13 +5,13 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ template "fullname" . }}-data
+  name: {{ template "elasticsearch.fullname" . }}-data
   labels:
     tier: logging
-    component: {{ template "name" . }}
-    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
-    release: "{{ .Release.Name }}"
-    heritage: "{{ .Release.Service }}"
+    component: {{ template "elasticsearch.name" . }}
+    chart: {{ template "elasticsearch.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
     role: data
 spec:
   ports:
@@ -19,7 +19,7 @@ spec:
     name: transport
   clusterIP: None
   selector:
-    component: {{ template "name" . }}
+    component: {{ template "elasticsearch.name" . }}
     release: {{ .Release.Name }}
     role: data
 {{- end }}

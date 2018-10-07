@@ -4,27 +4,27 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ template "fullname" . }}-client
+  name: {{ template "elasticsearch.fullname" . }}-client
   labels:
     tier: logging
-    component: {{ template "name" . }}
-    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
-    release: "{{ .Release.Name }}"
-    heritage: "{{ .Release.Service }}"
+    component: {{ template "elasticsearch.name" . }}
+    chart: {{ template "elasticsearch.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
     role: client
 spec:
   replicas: {{ .Values.client.replicas }}
   selector:
     matchLabels:
       tier: logging
-      component: {{ template "name" . }}
+      component: {{ template "elasticsearch.name" . }}
       release: {{ .Release.Name }}
       role: client
   template:
     metadata:
       labels:
         tier: logging
-        component: {{ template "name" . }}
+        component: {{ template "elasticsearch.name" . }}
         release: {{ .Release.Name }}
         role: client
     spec:
@@ -35,7 +35,7 @@ spec:
             - topologyKey: "kubernetes.io/hostname"
               labelSelector:
                 matchLabels:
-                  component: {{ template "name" . }}
+                  component: {{ template "elasticsearch.name" . }}
                   release: {{ .Release.Name }}
                   role: client
       {{- else if eq .Values.client.antiAffinity "soft" }}
@@ -47,7 +47,7 @@ spec:
               topologyKey: "kubernetes.io/hostname"
               labelSelector:
                 matchLabels:
-                  component: {{ template "name" . }}
+                  component: {{ template "elasticsearch.name" . }}
                   release: {{ .Release.Name }}
                   role: client
       {{- end }}
@@ -78,7 +78,7 @@ spec:
             fieldRef:
               fieldPath: metadata.name
         - name: DISCOVERY_SERVICE
-          value: {{ template "fullname" . }}-discovery
+          value: {{ template "elasticsearch.fullname" . }}-discovery
         {{- range $key, $value :=  .Values.common.env }}
         - name: {{ $key | upper | replace "-" "_" }}
           value: {{ $value | quote }}

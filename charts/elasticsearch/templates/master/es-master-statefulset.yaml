@@ -4,28 +4,28 @@
 kind: StatefulSet
 apiVersion: apps/v1beta2
 metadata:
-  name: {{ template "fullname" . }}-master
+  name: {{ template "elasticsearch.fullname" . }}-master
   labels:
     tier: logging
-    component: {{ template "name" . }}
+    component: {{ template "elasticsearch.name" . }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"
     role: master
 spec:
-  serviceName: {{ template "fullname" . }}-master
+  serviceName: {{ template "elasticsearch.fullname" . }}-master
   replicas: {{ .Values.master.replicas }}
   selector:
     matchLabels:
       tier: logging
-      component: {{ template "name" . }}
+      component: {{ template "elasticsearch.name" . }}
       release: {{ .Release.Name }}
       role: master
   template:
     metadata:
       labels:
         tier: logging
-        component: {{ template "name" . }}
+        component: {{ template "elasticsearch.name" . }}
         release: {{ .Release.Name }}
         role: master
     spec:
@@ -36,7 +36,7 @@ spec:
             - topologyKey: "kubernetes.io/hostname"
               labelSelector:
                 matchLabels:
-                  component: {{ template "name" . }}
+                  component: {{ template "elasticsearch.name" . }}
                   release: {{ .Release.Name }}
                   role: master
       {{- else if eq .Values.master.antiAffinity "soft" }}
@@ -48,7 +48,7 @@ spec:
               topologyKey: "kubernetes.io/hostname"
               labelSelector:
                 matchLabels:
-                  component: {{ template "name" . }}
+                  component: {{ template "elasticsearch.name" . }}
                   release: {{ .Release.Name }}
                   role: master
       {{- end }}
@@ -83,7 +83,7 @@ spec:
             fieldRef:
               fieldPath: metadata.name
         - name: DISCOVERY_SERVICE
-          value: {{ template "fullname" . }}-discovery
+          value: {{ template "elasticsearch.fullname" . }}-discovery
         - name: ES_JAVA_OPTS
           value: "-Xms{{ .Values.master.heapMemory }} -Xmx{{ .Values.master.heapMemory }}"
         {{- range $key, $value :=  .Values.common.env }}

@@ -4,19 +4,19 @@
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: {{ template "fullname" . }}-data-policy
+  name: {{ template "elasticsearch.fullname" . }}-data-policy
   labels:
     tier: logging
-    component: {{ template "name" . }}-data-policy
+    component: {{ template "elasticsearch.name" . }}-data-policy
+    chart: {{ template "elasticsearch.chart" . }}
     release: {{ .Release.Name }}
-    workspace: {{ .Values.workspace }}
-    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
+    role: data
 spec:
   podSelector:
     matchLabels:
       tier: logging
-      component: {{ template "name" . }}
+      component: {{ template "elasticsearch.name" . }}
       release: {{ .Release.Name }}
       role: data
   policyTypes:
@@ -26,7 +26,7 @@ spec:
     - podSelector:
         matchLabels:
           tier: logging
-          component: {{ template "name" . }}
+          component: {{ template "elasticsearch.name" . }}
           release: {{ .Release.Name }}
     ports:
     - protocol: TCP

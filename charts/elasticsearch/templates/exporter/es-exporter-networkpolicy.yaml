@@ -4,19 +4,19 @@
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: {{ template "fullname" . }}-exporter-policy
+  name: {{ template "elasticsearch.fullname" . }}-exporter-policy
   labels:
     tier: logging
-    component: {{ template "name" . }}-exporter-policy
-    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
-    release: "{{ .Release.Name }}"
-    heritage: "{{ .Release.Service }}"
+    component: {{ template "elasticsearch.name" . }}-exporter-policy
+    chart: {{ template "elasticsearch.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
     role: exporter
 spec:
   podSelector:
     matchLabels:
       tier: logging
-      component: {{ template "name" . }}-exporter
+      component: {{ template "elasticsearch.name" . }}-exporter
       release: {{ .Release.Name }}
       role: exporter
   policyTypes:

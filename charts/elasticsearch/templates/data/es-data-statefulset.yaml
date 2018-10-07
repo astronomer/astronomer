@@ -4,28 +4,28 @@
 kind: StatefulSet
 apiVersion: apps/v1beta2
 metadata:
-  name: {{ template "fullname" . }}-data
+  name: {{ template "elasticsearch.fullname" . }}-data
   labels:
     tier: logging
-    component: {{ template "name" . }}
-    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
-    release: "{{ .Release.Name }}"
-    heritage: "{{ .Release.Service }}"
+    component: {{ template "elasticsearch.name" . }}
+    chart: {{ template "elasticsearch.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
     role: data
 spec:
-  serviceName: {{ template "fullname" . }}-data
+  serviceName: {{ template "elasticsearch.fullname" . }}-data
   replicas: {{ .Values.data.replicas }}
   selector:
     matchLabels:
       tier: logging
-      component: {{ template "name" . }}
+      component: {{ template "elasticsearch.name" . }}
       release: {{ .Release.Name }}
       role: data
   template:
     metadata:
       labels:
         tier: logging
-        component: {{ template "name" . }}
+        component: {{ template "elasticsearch.name" . }}
         release: {{ .Release.Name }}
         role: data
     spec:
@@ -36,7 +36,7 @@ spec:
             - topologyKey: "kubernetes.io/hostname"
               labelSelector:
                 matchLabels:
-                  component: {{ template "name" . }}
+                  component: {{ template "elasticsearch.name" . }}
                   release: {{ .Release.Name }}
                   role: data
       {{- else if eq .Values.data.antiAffinity "soft" }}
@@ -48,7 +48,7 @@ spec:
               topologyKey: "kubernetes.io/hostname"
               labelSelector:
                 matchLabels:
-                  component: {{ template "name" . }}
+                  component: {{ template "elasticsearch.name" . }}
                   release: {{ .Release.Name }}
                   role: data
       {{- end }}
@@ -83,7 +83,7 @@ spec:
             fieldRef:
               fieldPath: metadata.name
         - name: DISCOVERY_SERVICE
-          value: {{ template "fullname" . }}-discovery
+          value: {{ template "elasticsearch.fullname" . }}-discovery
         - name: ES_JAVA_OPTS
           value: "-Xms{{ .Values.data.heapMemory }} -Xmx{{ .Values.data.heapMemory }}"
         {{- range $key, $value :=  .Values.common.env }}

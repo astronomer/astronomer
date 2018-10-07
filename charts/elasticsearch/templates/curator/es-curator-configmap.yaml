@@ -5,13 +5,13 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ template "fullname" . }}-curator-config
+  name: {{ template "elasticsearch.fullname" . }}-curator-config
   labels:
     tier: logging
-    component: {{ template "name" . }}
-    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
-    release: "{{ .Release.Name }}"
-    heritage: "{{ .Release.Service }}"
+    component: {{ template "elasticsearch.name" . }}
+    chart: {{ template "elasticsearch.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
 data:
   action_file.yml: |-
     ---
@@ -47,7 +47,7 @@ data:
     # not a Python "NoneType"
     client:
       hosts:
-        - {{ template "fullname" . }}
+        - {{ template "elasticsearch.fullname" . }}
       port: {{ .Values.common.ports.http }}
       url_prefix:
       use_ssl: False

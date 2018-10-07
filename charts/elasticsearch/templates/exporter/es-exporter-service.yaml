@@ -4,13 +4,13 @@
 kind: Service
 apiVersion: v1
 metadata:
-  name: {{ template "fullname" . }}-exporter
+  name: {{ template "elasticsearch.fullname" . }}-exporter
   labels:
     tier: logging
-    component: {{ template "name" . }}-exporter
-    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
-    release: "{{ .Release.Name }}"
-    heritage: "{{ .Release.Service }}"
+    component: {{ template "elasticsearch.name" . }}-exporter
+    chart: {{ template "elasticsearch.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
     role: exporter
   annotations:
     prometheus.io/scrape: "true"
@@ -22,6 +22,6 @@ spec:
       port: {{ .Values.exporter.service.httpPort }}
       protocol: TCP
   selector:
-    component: {{ template "name" . }}-exporter
+    component: {{ template "elasticsearch.name" . }}-exporter
     release: {{ .Release.Name }}
     role: exporter
