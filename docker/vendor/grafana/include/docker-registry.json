@@ -200,7 +200,7 @@
       "thresholds": [],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Persistent Volume Usage",
+      "title": "Persistent Volume Available",
       "tooltip": {
         "shared": true,
         "sort": 0,
