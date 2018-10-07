@@ -30,3 +30,4 @@ COPY include/airflow-database-activity.json /var/lib/grafana/dashboards/airflow-
 COPY include/fluentd.json /var/lib/grafana/dashboards/fluentd.json
 COPY include/elasticsearch.json /var/lib/grafana/dashboards/elasticsearch.json
 COPY include/prometheus.json /var/lib/grafana/dashboards/prometheus.json
+COPY include/docker-registry.json /var/lib/grafana/dashboards/docker-registry.json
