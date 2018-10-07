@@ -46,8 +46,10 @@ spec:
           value: {{ .Values.elasticsearch.buffer_chunk_limit | quote }}
         - name: OUTPUT_BUFFER_QUEUE_LIMIT
           value: {{ .Values.elasticsearch.buffer_queue_limit | quote }}
-        - name: K8S_NAMESPACE
-          value: "{{ .Release.Namespace }}"
+        - name: NAMESPACE
+          value: {{ .Release.Namespace | quote }}
+        - name: RELEASE
+          value: {{ .Release.Name | quote }}
         volumeMounts:
         - name: varlog
           mountPath: /var/log

@@ -22,7 +22,7 @@ data:
       @id fluentd-containers.log
       @type tail
       path /var/log/containers/*.log
-      pos_file /var/log/fluentd-containers.log.pos
+      pos_file "/var/log/#{ENV['RELEASE']}-fluentd-containers.log.pos"
       time_format %Y-%m-%dT%H:%M:%S.%NZ
       tag raw.kubernetes.*
       format json
@@ -85,7 +85,7 @@ data:
       @type grep
       <regexp>
         key $.kubernetes.namespace_name
-        pattern "^#{ENV['K8S_NAMESPACE']}-.*$"
+        pattern "^#{ENV['NAMESPACE']}-.*$"
       </regexp>
       <regexp>
         key $.kubernetes.labels.component
@@ -107,7 +107,7 @@ data:
     </filter>
 
     # Send off to elasticsearch
-    <match **>
+    <match kubernetes.**>
       @id elasticsearch
       @type elasticsearch_dynamic
       @log_level info
@@ -117,7 +117,7 @@ data:
       index_name fluentd.${record["release"]}.${Time.at(time).getutc.strftime(@logstash_dateformat)}
       <buffer>
         @type file
-        path /var/log/fluentd-buffers/kubernetes.system.buffer
+        path "/var/log/fluentd-buffers/#{ENV['RELEASE']}-kubernetes.system.buffer"
         flush_mode interval
         retry_type exponential_backoff
         flush_thread_count 2
