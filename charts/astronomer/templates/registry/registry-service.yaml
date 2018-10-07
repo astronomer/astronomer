@@ -12,6 +12,10 @@ metadata:
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
+  # annotations:
+  #   # Metrics annotations
+  #   prometheus.io/scrape: "true"
+  #   prometheus.io/port: {{ .Values.ports.registryScrape | quote }}
 spec:
   type: NodePort
   selector:
@@ -23,4 +27,8 @@ spec:
       protocol: TCP
       port: {{ .Values.ports.registryHTTP }}
       targetPort: {{ .Values.ports.registryHTTP }}
+    # - name: registry-scrape
+    #   protocol: TCP
+    #   port: {{ .Values.ports.registryScrape }}
+    #   targetPort: {{ .Values.ports.registryScrape }}
 {{- end }}

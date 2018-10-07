@@ -31,7 +31,7 @@ spec:
       restartPolicy: Always
       containers:
         - name: {{ .Release.Name }}-registry
-          image: {{- include "registry_image" . | indent 1 }}
+          image: {{ template  "registry_image" . }}
           imagePullPolicy: {{ .Values.images.registry.pullPolicy }}
           resources:
 {{ toYaml .Values.registry.resources | indent 12 }}
@@ -45,6 +45,8 @@ spec:
           ports:
             - name: registry-http
               containerPort: {{ .Values.ports.registryHTTP }}
+            # - name: registry-scrape
+            #   containerPort: {{ .Values.ports.registryScrape }}
           livenessProbe:
             httpGet:
               path: /
