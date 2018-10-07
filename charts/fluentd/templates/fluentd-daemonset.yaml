@@ -4,42 +4,40 @@
 apiVersion: apps/v1beta2
 kind: DaemonSet
 metadata:
-  name: {{ template "fullname" . }}
+  name: {{ template "fluentd.fullname" . }}
   labels:
     tier: logging
-    component: {{ template "name" . }}
-    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
-    heritage: "{{ .Release.Service }}"
-    release: "{{ .Release.Name }}"
+    component: {{ template "fluentd.name" . }}
+    chart: {{ template "fluentd.chart" . }}
+    heritage: {{ .Release.Service }}
+    release: {{ .Release.Name }}
 spec:
   selector:
     matchLabels:
       tier: logging
-      component: {{ template "name" . }}
+      component: {{ template "fluentd.name" . }}
       release: {{ .Release.Name }}
-      chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
   template:
     metadata:
       labels:
         tier: logging
-        component: {{ template "name" . }}
+        component: {{ template "fluentd.name" . }}
         release: {{ .Release.Name }}
-        chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/fluentd-configmap.yaml") . | sha256sum }}
         prometheus.io/scrape: "true"
         prometheus.io/port: {{ .Values.ports.promScrape | quote }}
     spec:
-      serviceAccountName: {{ template "fullname" . }}
+      serviceAccountName: {{ template "fluentd.fullname" . }}
       containers:
-      - name: {{ template "fullname" . }}
-        image: {{ template "fluentd_image" . }}
+      - name: {{ template "fluentd.fullname" . }}
+        image: {{ template "fluentd.image" . }}
         imagePullPolicy: {{ .Values.images.fluentd.pullPolicy }}
         env:
         - name: FLUENTD_ARGS
           value: --no-supervisor -q
         - name: OUTPUT_HOST
-          value: {{ template "elasticsearch_host" . }}
+          value: {{ template "elasticsearch.host" . }}
         - name: OUTPUT_PORT
           value: {{ .Values.elasticsearch.port | quote }}
         - name: OUTPUT_BUFFER_CHUNK_LIMIT
@@ -59,7 +57,7 @@ spec:
         - name: libsystemddir
           mountPath: /host/lib
           readOnly: true
-        - name: config-volume-{{ template "fullname" . }}
+        - name: config-volume-{{ template "fluentd.fullname" . }}
           mountPath: /etc/fluent/config.d
         resources:
 {{ toYaml .Values.resources | indent 12 }}
@@ -77,6 +75,6 @@ spec:
       - name: libsystemddir
         hostPath:
           path: /usr/lib64
-      - name: config-volume-{{ template "fullname" . }}
+      - name: config-volume-{{ template "fluentd.fullname" . }}
         configMap:
-          name: {{ template "fullname" . }}
+          name: {{ template "fluentd.fullname" . }}

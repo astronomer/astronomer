@@ -5,20 +5,20 @@
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: {{ template "fullname" . }}
+  name: {{ template "fluentd.fullname" . }}
   labels:
     tier: logging
-    component: {{ template "name" . }}
-    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
-    heritage: {{ .Release.Service }}
+    component: {{ template "fluentd.name" . }}
+    chart: {{ template "fluentd.chart" . }}
     release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
 subjects:
 - kind: ServiceAccount
-  name: {{ template "fullname" . }}
+  name: {{ template "fluentd.fullname" . }}
   apiGroup: ""
   namespace: {{ .Release.Namespace }}
 roleRef:
   kind: ClusterRole
-  name: {{ template "fullname" . }}
+  name: {{ template "fluentd.fullname" . }}
   apiGroup: ""
 {{- end -}}

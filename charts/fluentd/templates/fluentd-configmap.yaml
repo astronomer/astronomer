@@ -4,13 +4,13 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ template "fullname" . }}
+  name: {{ template "fluentd.fullname" . }}
   labels:
     tier: logging
-    component: {{ template "name" . }}
-    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
-    heritage: {{ .Release.Service | quote }}
-    release: {{ .Release.Name | quote }}
+    component: {{ template "fluentd.name" . }}
+    chart: {{ template "fluentd.chart" . }}
+    heritage: {{ .Release.Service }}
+    release: {{ .Release.Name }}
 data:
   system.conf: |-
     <system>
