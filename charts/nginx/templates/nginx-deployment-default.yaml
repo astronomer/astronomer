@@ -4,40 +4,40 @@
 kind: Deployment
 apiVersion: apps/v1beta2
 metadata:
-  name: {{ .Release.Name }}-nginx-default-backend
+  name: {{ template "nginx.fullname" . }}-default-backend
   labels:
-    tier: nginx
+    tier: {{ template "nginx.name" . }}
     component: default-backend
+    chart: {{ template "nginx.chart" . }}
     release: {{ .Release.Name }}
-    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      tier: nginx
+      tier: {{ template "nginx.name" . }}
       component: default-backend
       release: {{ .Release.Name }}
   template:
     metadata:
       labels:
-        tier: nginx
+        tier: {{ template "nginx.name" . }}
         component: default-backend
         release: {{ .Release.Name }}
     spec:
       terminationGracePeriodSeconds: 60
       containers:
         - name: {{ .Release.Name }}-default-backend
-          image: {{- include "default_backend_image" . | indent 1 }}
+          image: {{ template "nginx.defaultBackend.image" . }}
           livenessProbe:
             httpGet:
               path: /healthz
-              port: 8080
+              port: {{ .Values.ports.defaultBackendHTTP }}
               scheme: HTTP
             initialDelaySeconds: 30
             timeoutSeconds: 5
           ports:
-            - containerPort: 8080
+            - containerPort: {{ .Values.ports.defaultBackendHTTP }}
           resources:
             limits:
               cpu: 10m

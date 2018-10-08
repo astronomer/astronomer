@@ -7,7 +7,7 @@ metadata:
   name: {{ template "elasticsearch.fullname" . }}-exporter
   labels:
     tier: logging
-    component: {{ template "name" . }}-exporter
+    component: {{ template "elasticsearch.name" . }}-exporter
     chart: {{ template "elasticsearch.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}

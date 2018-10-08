@@ -2,7 +2,7 @@
 {{/*
 Expand the name of the chart.
 */}}
-{{- define "name" -}}
+{{- define "nginx.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
@@ -11,7 +11,7 @@ Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 If release name contains chart name it will be used as a full name.
 */}}
-{{- define "fullname" -}}
+{{- define "nginx.fullname" -}}
 {{- if .Values.fullnameOverride -}}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
 {{- else -}}
@@ -27,22 +27,22 @@ If release name contains chart name it will be used as a full name.
 {{/*
 Create chart name and version as used by the chart label.
 */}}
-{{- define "chart" -}}
+{{- define "nginx.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
-{{ define "nginx_image" -}}
+{{ define "nginx.image" -}}
 {{ .Values.images.nginx.repository }}:{{ .Values.images.nginx.tag }}
 {{- end }}
 
-{{ define "default_backend_image" -}}
+{{ define "nginx.defaultBackend.image" -}}
 {{ .Values.images.defaultBackend.repository }}:{{ .Values.images.defaultBackend.tag }}
 {{- end }}
 
-{{ define "ingress_class" -}}
+{{ define "nginx.ingress.class" -}}
 {{- if .Values.ingressClass -}}
 {{- .Values.ingressClass -}}
 {{- else }}
-{{- template "fullname" . -}}
+{{- template "nginx.fullname" . -}}
 {{- end -}}
 {{- end -}}

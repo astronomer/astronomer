@@ -5,18 +5,18 @@
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: {{ .Release.Name }}-nginx-ingress-controller
+  name: {{ template "nginx.fullname" . }}-ingress-controller
   labels:
-    tier: nginx
+    tier: {{ template "nginx.name" . }}
+    chart: {{ template "nginx.chart" . }}
     release: {{ .Release.Name }}
-    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: {{ .Release.Name }}-nginx-ingress-controller
+  name: {{ template "nginx.fullname" . }}-ingress-controller
 subjects:
   - kind: ServiceAccount
-    name: {{ .Release.Name }}-nginx-ingress-controller
+    name: {{ template "nginx.fullname" . }}-ingress-controller
     namespace: {{ .Release.Namespace }}
 {{- end }}

@@ -4,11 +4,11 @@
 kind: ConfigMap
 apiVersion: v1
 metadata:
-  name: {{ .Release.Name }}-nginx-ingress-controller
+  name: {{ template "nginx.fullname" . }}-ingress-controller
   labels:
-    tier: nginx
+    tier: {{ template "nginx.name" . }}
+    chart: {{ template "nginx.chart" . }}
     release: {{ .Release.Name }}
-    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
 data:
   proxy-connect-timeout: {{ .Values.proxyConnectTimeout | quote }}

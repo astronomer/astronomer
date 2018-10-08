@@ -4,21 +4,21 @@
 kind: Service
 apiVersion: v1
 metadata:
-  name: {{ .Release.Name }}-nginx-default-backend
+  name: {{ template "nginx.fullname" . }}-default-backend
   labels:
-    tier: nginx
+    tier: {{ template "nginx.name" . }}
     component: default-backend
+    chart: {{ template "nginx.chart" . }}
     release: {{ .Release.Name }}
-    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
 spec:
   type: NodePort
   selector:
-    tier: nginx
+    tier: {{ template "nginx.name" . }}
     component: default-backend
     release: {{ .Release.Name }}
   ports:
-    - port: 80
-      targetPort: 8080
+    - port: {{ .Values.ports.defaultBackendHTTP }}
+      targetPort: {{ .Values.ports.defaultBackendHTTP }}
       protocol: TCP
       name: default-backend

@@ -4,12 +4,12 @@
 kind: Service
 apiVersion: v1
 metadata:
-  name: {{ .Release.Name }}-nginx
+  name: {{ template "nginx.fullname" . }}
   labels:
-    tier: nginx
+    tier: {{ template "nginx.name" . }}
     component: ingress-controller
+    chart: {{ template "nginx.chart" . }}
     release: {{ .Release.Name }}
-    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
   annotations:
     # AWS annotations
@@ -30,7 +30,7 @@ spec:
   externalTrafficPolicy: "Cluster"
   {{- end }}
   selector:
-    tier: nginx
+    tier: {{ template "nginx.name" . }}
     component: ingress-controller
     release: {{ .Release.Name }}
   ports:
