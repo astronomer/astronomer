@@ -128,6 +128,9 @@ prometheus:
   # Enable prometheus chart
   enabled: true
 
+  # Data retention
+  retention: 15d
+
   # Persistence configuration
   persistence:
     enabled: true
@@ -142,9 +145,6 @@ prometheus:
       cpu: "500m"
       memory: "1024Mi"
 
-  persistence:
-    enabled: true
-    size: "100Gi"
 
 #################################
 ## Elasticsearch configuration
