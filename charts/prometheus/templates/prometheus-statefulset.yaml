@@ -4,25 +4,25 @@
 kind: StatefulSet
 apiVersion: apps/v1beta2
 metadata:
-  name: "{{ .Release.Name }}-prometheus"
+  name: {{ template "prometheus.fullname" . }}
   labels:
     tier: monitoring
-    component: prometheus
+    component: {{ template "prometheus.name" . }}
+    chart: {{ template "prometheus.chart" . }}
     release: {{ .Release.Name }}
-    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
 spec:
   replicas: 1
   selector:
     matchLabels:
       tier: monitoring
-      component: prometheus
+      component: {{ template "prometheus.name" . }}
       release: {{ .Release.Name }}
   template:
     metadata:
       labels:
         tier: monitoring
-        component: prometheus
+        component: {{ template "prometheus.name" . }}
         release: {{ .Release.Name }}
       annotations:
         checksum/configmap: {{ include (print $.Template.BasePath "/prometheus-configmap.yaml") . | sha256sum }}
@@ -30,16 +30,16 @@ spec:
       restartPolicy: Always
       serviceAccountName: "{{ .Release.Name }}-prometheus"
       initContainers:
-        - name: "{{ .Release.Name }}-prometheus-init"
-          image: {{ include "init_image" . }}
+        - name: {{ template "prometheus.fullname" . }}-init
+          image: {{ include "prometheus.init.image" . }}
           imagePullPolicy: {{ .Values.images.init.pullPolicy }}
           command: ["chown", "-R", "65534:65534", "{{ .Values.dataDir }}"]
           volumeMounts:
             - name: prometheus-data-volume
               mountPath: "{{ .Values.dataDir }}"
       containers:
-        - name: "{{ .Release.Name }}-prometheus"
-          image: {{ include "prometheus_image" . }}
+        - name: {{ template "prometheus.fullname" . }}
+          image: {{ include "prometheus.image" . }}
           imagePullPolicy: {{ .Values.images.prometheus.pullPolicy }}
           resources:
 {{ toYaml .Values.resources | indent 12 }}
@@ -70,7 +70,7 @@ spec:
       volumes:
         - name: prometheus-config-volume
           configMap:
-            name: "{{ .Release.Name }}-prometheus"
+            name: {{ template "prometheus.fullname" . }}
             items:
               - key: prometheus.yaml
                 path: prometheus.yaml

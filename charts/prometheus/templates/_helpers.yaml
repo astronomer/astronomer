@@ -1,7 +1,31 @@
-{{ define "init_image" -}}
-{{ .Values.images.init.repository }}:{{ .Values.images.init.tag }}
+{{/* vim: set filetype=mustache: */}}
+{{/*
+Expand the name of the chart.
+*/}}
+{{- define "prometheus.name" -}}
+{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{/*
+Create a default fully qualified app name.
+We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+*/}}
+{{- define "prometheus.fullname" -}}
+{{- $name := default .Chart.Name .Values.nameOverride -}}
+{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{/*
+Create chart name and version as used by the chart label.
+*/}}
+{{- define "prometheus.chart" -}}
+{{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{ define "prometheus.image" -}}
+{{ .Values.images.prometheus.repository }}:{{ .Values.images.prometheus.tag }}
 {{- end }}
 
-{{ define "prometheus_image" -}}
-{{ .Values.images.prometheus.repository }}:{{ .Values.images.prometheus.tag }}
+{{ define "prometheus.init.image" -}}
+{{ .Values.images.init.repository }}:{{ .Values.images.init.tag }}
 {{- end }}

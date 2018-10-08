@@ -4,18 +4,18 @@
 kind: Service
 apiVersion: v1
 metadata:
-  name: "{{ .Release.Name }}-prometheus"
+  name: {{ template "prometheus.fullname" . }}
   labels:
     tier: monitoring
-    component: prometheus
+    component: {{ template "prometheus.name" . }}
+    chart: {{ template "prometheus.chart" . }}
     release: {{ .Release.Name }}
-    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
 spec:
   type: NodePort
   selector:
     tier: monitoring
-    component: prometheus
+    component: {{ template "prometheus.name" . }}
     release: {{ .Release.Name }}
   ports:
     - name: prometheus-data

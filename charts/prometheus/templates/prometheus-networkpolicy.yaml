@@ -4,18 +4,18 @@
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: {{ .Release.Name }}-prometheus-policy
+  name: {{ template "prometheus.fullname" . }}-policy
   labels:
     tier: monitoring
-    component: airflow-prometheus-policy
+    component: {{ template "prometheus.name" . }}
+    chart: {{ template "prometheus.chart" . }}
     release: {{ .Release.Name }}
-    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
 spec:
   podSelector:
     matchLabels:
-      tier: airflow
-      component: prometheus
+      tier: monitoring
+      component: {{ template "prometheus.name" . }}
       release: {{ .Release.Name }}
   policyTypes:
   - Ingress
