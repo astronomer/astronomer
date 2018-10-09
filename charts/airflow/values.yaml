@@ -160,6 +160,9 @@ webserver:
     failureThreshold: 10
     periodSeconds: 5
 
+  # Number of webservers
+  replicas: 1
+
   resources: {}
     # limits:
     #   cpu: 100m
