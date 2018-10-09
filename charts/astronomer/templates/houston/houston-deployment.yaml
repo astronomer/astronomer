@@ -110,7 +110,7 @@ spec:
               value: {{ .Values.auth.auth0.clientId }}
             - name: AUTH0_BASE_DOMAIN
               value: {{ .Values.auth.auth0.baseDomain }}
-            - name: AUTH0_EXTERNAL_AUTH
+            - name: AUTH0_EXTERNAL_LOGIN
               value: {{ .Values.auth.auth0.externalLogin | quote }}
             - name: BASE_URL_ORBIT
               value: "app.{{ .Values.global.baseDomain }}"
