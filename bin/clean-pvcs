@@ -3,6 +3,4 @@
 # Deletes PVCs from current namespace
 # TODO: Namespace option
 
-kubectl get pvc | grep -v postgresql | awk '{if (NR!=1) print $1}' | while read -r pv ; do
-  kubectl delete pvc ${pv}
-done
+ kubectl delete pvc $(kubectl get pvc | grep -v postgresql | awk '{if (NR!=1) print $1}')
