@@ -261,7 +261,7 @@ ports:
 quotas: {}
 
 # Define default/max/min values for pods and containers in namespace
-limits: {}
+limits: []
 
 # This block contains settings strictly used to integrate into the Astronomer platform.
 # This is what allows for integration into platform ingress, network policies, metrics collection, etc.
