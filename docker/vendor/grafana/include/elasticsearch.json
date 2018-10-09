@@ -51,9 +51,21 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 1,
-  "id": 8,
   "links": [],
   "panels": [
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 71,
+      "panels": [],
+      "title": "Quick Numbers",
+      "type": "row"
+    },
     {
       "cacheTimeout": null,
       "colorBackground": false,
@@ -64,6 +76,7 @@
         "rgba(50, 172, 45, 0.97)"
       ],
       "datasource": "Prometheus",
+      "description": "Total Elasticsearch Pods. Masters, Clients, Data.",
       "editable": true,
       "error": false,
       "format": "none",
@@ -78,7 +91,7 @@
         "h": 3,
         "w": 8,
         "x": 0,
-        "y": 0
+        "y": 1
       },
       "id": 8,
       "interval": null,
@@ -152,6 +165,7 @@
         "rgba(50, 172, 45, 0.97)"
       ],
       "datasource": "Prometheus",
+      "description": "Total memory limits of all Elasticsearch pods.",
       "editable": true,
       "error": false,
       "format": "bytes",
@@ -166,7 +180,7 @@
         "h": 3,
         "w": 8,
         "x": 8,
-        "y": 0
+        "y": 1
       },
       "height": "",
       "id": 12,
@@ -235,6 +249,7 @@
         "rgba(50, 172, 45, 0.97)"
       ],
       "datasource": "Prometheus",
+      "description": "Total memory free on all Elasticsearch pods.",
       "editable": true,
       "error": false,
       "format": "bytes",
@@ -249,7 +264,7 @@
         "h": 3,
         "w": 8,
         "x": 16,
-        "y": 0
+        "y": 1
       },
       "height": "",
       "id": 13,
@@ -314,12 +329,13 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": "Prometheus",
+      "description": "CPU usage of all Elasticsearch pods.",
       "fill": 1,
       "gridPos": {
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 3
+        "y": 4
       },
       "id": 57,
       "legend": {
@@ -355,7 +371,7 @@
       "thresholds": [],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Avg. CPU Usage",
+      "title": "CPU Usage",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -393,11 +409,25 @@
       }
     },
     {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 10
+      },
+      "id": 73,
+      "panels": [],
+      "title": "Storage",
+      "type": "row"
+    },
+    {
       "aliasColors": {},
       "bars": false,
       "dashLength": 10,
       "dashes": false,
       "datasource": "Prometheus",
+      "description": "Total documents indexed.",
       "editable": true,
       "error": false,
       "fill": 1,
@@ -406,7 +436,7 @@
         "h": 6,
         "w": 12,
         "x": 0,
-        "y": 9
+        "y": 11
       },
       "id": 3,
       "legend": {
@@ -485,6 +515,7 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": "Prometheus",
+      "description": "Total size of Elasticsearch index.",
       "editable": true,
       "error": false,
       "fill": 1,
@@ -493,7 +524,7 @@
         "h": 6,
         "w": 12,
         "x": 12,
-        "y": 9
+        "y": 11
       },
       "id": 4,
       "legend": {
@@ -572,12 +603,13 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": "Prometheus",
+      "description": "Data volume usage across all Elasticsearch pods.",
       "fill": 1,
       "gridPos": {
         "h": 6,
         "w": 12,
         "x": 0,
-        "y": 15
+        "y": 17
       },
       "id": 68,
       "legend": {
@@ -657,12 +689,13 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": "Prometheus",
+      "description": "Data volume space available across all Elasticsearch pods.",
       "fill": 1,
       "gridPos": {
         "h": 6,
         "w": 12,
         "x": 12,
-        "y": 15
+        "y": 17
       },
       "id": 69,
       "legend": {
@@ -737,6 +770,19 @@
       }
     },
     {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 23
+      },
+      "id": 75,
+      "panels": [],
+      "title": "Internals",
+      "type": "row"
+    },
+    {
       "aliasColors": {},
       "bars": false,
       "dashLength": 10,
@@ -750,7 +796,7 @@
         "h": 6,
         "w": 12,
         "x": 0,
-        "y": 21
+        "y": 24
       },
       "id": 1,
       "legend": {
@@ -838,7 +884,7 @@
         "h": 6,
         "w": 12,
         "x": 12,
-        "y": 21
+        "y": 24
       },
       "id": 28,
       "legend": {
@@ -930,7 +976,7 @@
         "h": 6,
         "w": 12,
         "x": 0,
-        "y": 27
+        "y": 30
       },
       "id": 5,
       "legend": {
@@ -1025,7 +1071,7 @@
         "h": 6,
         "w": 12,
         "x": 12,
-        "y": 27
+        "y": 30
       },
       "id": 65,
       "legend": {
@@ -1113,7 +1159,7 @@
         "h": 6,
         "w": 12,
         "x": 0,
-        "y": 33
+        "y": 36
       },
       "height": "",
       "id": 64,
@@ -1202,7 +1248,7 @@
         "h": 6,
         "w": 12,
         "x": 12,
-        "y": 33
+        "y": 36
       },
       "id": 66,
       "legend": {
