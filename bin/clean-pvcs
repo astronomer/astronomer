@@ -4,6 +4,5 @@
 # TODO: Namespace option
 
 kubectl get pvc | grep -v postgresql | awk '{if (NR!=1) print $1}' | while read -r pv ; do
-  VOL=$(kubectl describe pvc ${pv} | awk '$1 ~ /Volume/ {print $2}')
   kubectl delete pvc ${pv}
 done
