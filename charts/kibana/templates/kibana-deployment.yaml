@@ -38,6 +38,8 @@ spec:
           value: {{ .Values.clusterName }}
         - name: ELASTICSEARCH_URL
           value: "http://{{ .Release.Name }}-elasticsearch:9200"
+        - name: ELASTICSEARCH_REQUESTTIMEOUT
+          value: "60000"
         resources:
 {{ toYaml .Values.resources | indent 12 }}
         ports:
