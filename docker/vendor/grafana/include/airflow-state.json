@@ -212,7 +212,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(delta(kube_namespace_status_phase{namespace=~\".*-.*-.*-[0-9]{4}\", phase=\"Terminating\"}[1m]))",
+          "expr": "sum(kube_namespace_status_phase{namespace=~\".*-.*-.*-[0-9]{4}\", phase=\"Terminating\"})",
           "format": "time_series",
           "instant": true,
           "interval": "",
