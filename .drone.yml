@@ -10,7 +10,7 @@ pipeline:
     environment:
       - ASTRONOMER_VERSION=0.0.0
       - ASTRONOMER_REF=${DRONE_BRANCH}
-      # - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
+      - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     when:
