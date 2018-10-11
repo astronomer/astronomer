@@ -950,7 +950,7 @@
         "rgba(237, 129, 40, 0.89)",
         "#d44a3a"
       ],
-      "datasource": null,
+      "datasource": "Prometheus",
       "description": "Tasks that have not sent a heartbeat in a while.",
       "format": "none",
       "gauge": {
@@ -1461,7 +1461,7 @@
         "rgba(237, 129, 40, 0.89)",
         "#d44a3a"
       ],
-      "datasource": null,
+      "datasource": "Prometheus",
       "description": "Number of airflow clients waiting for a connection to the backend database.",
       "format": "none",
       "gauge": {
