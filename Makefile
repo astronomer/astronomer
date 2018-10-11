@@ -102,7 +102,7 @@ push-airflow: check-env
 push-airflow-ref:
 	for version in "${AIRFLOW_VERSIONS}" ; do \
 		PUSH_IMAGE=${REPOSITORY}/ap-airflow \
-		PUSH_TAGS="${ASTRONOMER_REF}" \
+		PUSH_TAGS="${ASTRONOMER_REF} ${ASTRONOMER_REF}-onbuild" \
 		bin/push-image; \
 	done;
 

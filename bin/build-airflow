@@ -36,6 +36,10 @@ function build_image() {
     if [ -f "${onbuild_docker_file}" ]; then
         docker build ${build_opts} -t "${REPOSITORY}/${component_name}:latest-onbuild" -f "${onbuild_docker_file}" "${onbuild_docker_dir}" || exit 1
         docker tag "${REPOSITORY}/${component_name}:latest-onbuild" "${REPOSITORY}/${component_name}:${version}-onbuild"
+
+        if [ -v ASTRONOMER_REF ]; then
+            docker tag "${REPOSITORY}/${component_name}:latest-onbuild" "${REPOSITORY}/${component_name}:${ASTRONOMER_REF}-onbuild"
+        fi
     fi
 }
 
