@@ -22,6 +22,8 @@
     value: "15"
   - name: AIRFLOW__CORE__EXECUTOR
     value: {{ .Values.executor | quote }}
+  - name: AIRFLOW__SCHEDULER__SCHEDULER_HEARTBEAT_SEC
+    value: "5"
   {{- if eq .Values.executor "CeleryExecutor" }}
   - name: AIRFLOW__CELERY__DEFAULT_QUEUE
     value: "celery"
