@@ -1,5 +1,5 @@
 ################################
-## Install service
+## Install Service
 #################################
 kind: Service
 apiVersion: v1
