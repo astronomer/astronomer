@@ -104,7 +104,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "kubelet_volume_stats_used_bytes{persistentvolumeclaim=~\"registry-.*\"}",
+          "expr": "kubelet_volume_stats_used_bytes{persistentvolumeclaim=~\"registry-data-volume-.*\"}",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 1,
@@ -189,7 +189,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "kubelet_volume_stats_available_bytes{persistentvolumeclaim=~\"registry-.*\"}",
+          "expr": "kubelet_volume_stats_available_bytes{persistentvolumeclaim=~\"registry-data-volume-.*\"}",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 1,

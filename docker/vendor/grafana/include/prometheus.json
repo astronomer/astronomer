@@ -893,7 +893,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "kubelet_volume_stats_used_bytes{namespace=~\"datarouter.*\", persistentvolumeclaim=~\"prometheus-.*\"}",
+          "expr": "kubelet_volume_stats_used_bytes{persistentvolumeclaim=~\"prometheus-data-volume-.*\"}",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "usage",
@@ -977,7 +977,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "kubelet_volume_stats_available_bytes{namespace=~\"datarouter.*\", persistentvolumeclaim=~\"prometheus-.*\"}",
+          "expr": "kubelet_volume_stats_available_bytes{persistentvolumeclaim=~\"prometheus-data-volume-.*\"}",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "available",
