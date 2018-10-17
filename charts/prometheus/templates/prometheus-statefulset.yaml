@@ -25,10 +25,11 @@ spec:
         component: {{ template "prometheus.name" . }}
         release: {{ .Release.Name }}
       annotations:
-        checksum/configmap: {{ include (print $.Template.BasePath "/prometheus-configmap.yaml") . | sha256sum }}
+        checksum/config: {{ include (print $.Template.BasePath "/prometheus-config-configmap.yaml") . | sha256sum }}
+        checksum/alerts: {{ include (print $.Template.BasePath "/prometheus-alerts-configmap.yaml") . | sha256sum }}
     spec:
       restartPolicy: Always
-      serviceAccountName: "{{ .Release.Name }}-prometheus"
+      serviceAccountName: {{ template "prometheus.fullname" . }}
       initContainers:
         - name: {{ template "prometheus.fullname" . }}-init
           image: {{ include "prometheus.init.image" . }}
@@ -50,8 +51,10 @@ spec:
           volumeMounts:
             - name: prometheus-config-volume
               mountPath: /etc/prometheus/config
+            - name: alert-volume
+              mountPath: /etc/prometheus/alerts.d
             - name: prometheus-data-volume
-              mountPath: "{{ .Values.dataDir }}"
+              mountPath: {{ .Values.dataDir }}
           ports:
             - name: prometheus-data
               containerPort: {{ .Values.ports.http }}
@@ -70,10 +73,16 @@ spec:
       volumes:
         - name: prometheus-config-volume
           configMap:
-            name: {{ template "prometheus.fullname" . }}
+            name: {{ template "prometheus.fullname" . }}-config
             items:
               - key: prometheus.yaml
                 path: prometheus.yaml
+        - name: alert-volume
+          configMap:
+            name: {{ template "prometheus.fullname" . }}-alerts
+            items:
+              - key: alerts.yaml
+                path: alerts.yaml
   {{- if not .Values.persistence.enabled }}
         - name: prometheus-data-volume
           emptyDir: {}

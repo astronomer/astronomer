@@ -23,14 +23,41 @@ global:
   # Namespace Tiller is installed on
   tillerNamespace: "kube-system"
 
+  # Enable/Disable components.
+  # Full platform is enabled by default.
+  # Airflow chart is disabled is should be deployed via the platform using the API/CLI/UI.
+  astronomer:
+    enabled: true
+
+  nginx:
+    enabled: true
+
+  grafana:
+    enabled: true
+
+  prometehus:
+    enabled: true
+
+  elasticsearch:
+    enabled: true
+
+  kibana:
+    enabled: true
+
+  fluentd:
+    enabled: true
+
+  kubeState:
+    enabled: true
+
+  airflow:
+    enabled: false
+
 
 #################################
 ## Astronomer configuration
 #################################
 astronomer:
-  # Enable astronomer chart
-  enabled: true
-
   orbit:
     resources:
       requests:
@@ -85,9 +112,6 @@ astronomer:
 ## Nginx configuration
 #################################
 nginx:
-  # Enable nginx chart
-  enabled: true
-
   # Configure resources
   resources:
     requests:
@@ -108,9 +132,6 @@ nginx:
 ## Grafana configuration
 #################################
 grafana:
-  # Enable grafana chart
-  enabled: true
-
   # Configure resources
   resources:
     requests:
@@ -125,9 +146,6 @@ grafana:
 ## Prometheus configuration
 #################################
 prometheus:
-  # Enable prometheus chart
-  enabled: true
-
   # Data retention
   retention: 15d
 
@@ -150,9 +168,6 @@ prometheus:
 ## Elasticsearch configuration
 #################################
 elasticsearch:
-  # Enable elasticsearch chart
-  enabled: true
-
   # Common configuration
   common:
     persistence:
@@ -208,9 +223,6 @@ elasticsearch:
 ## Kibana configuration
 #################################
 kibana:
-  # Enable kibana chart
-  enabled: true
-
   # Configure resources
   resources:
     requests:
@@ -224,41 +236,26 @@ kibana:
 #################################
 ## Fluentd configuration
 #################################
-fluentd:
-  # Enable fluentd chart
-  enabled: true
-
-  # Configure resources
-  # resources:
-  #   requests:
-  #     cpu: "250m"
-  #     memory: "512Mi"
-  #   limits:
-  #     cpu: "500m"
-  #     memory: "1024Mi"
+# fluentd:
+#   # Configure resources
+#   resources:
+#     requests:
+#       cpu: "250m"
+#       memory: "512Mi"
+#     limits:
+#       cpu: "500m"
+#       memory: "1024Mi"
 
 
 #################################
 ## Kube State configuration
 #################################
-kubeState:
-  # Enable fluentd chart
-  enabled: true
-
-  # Configure resources
-  # resources:
-  #   requests:
-  #     cpu: "250m"
-  #     memory: "512Mi"
-  #   limits:
-  #     cpu: "500m"
-  #     memory: "1024Mi"
-
-
-#################################
-## Airflow configuration
-#################################
-airflow:
-  # This is just to disable installation of the airflow chart during
-  # a platform install.
-  enabled: false
+# kubeState:
+#   # Configure resources
+#   resources:
+#     requests:
+#       cpu: "250m"
+#       memory: "512Mi"
+#     limits:
+#       cpu: "500m"
+#       memory: "1024Mi"

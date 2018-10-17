@@ -1,0 +1,6 @@
+name: alertmanager
+version: 0.6.1
+description: A Helm chart to deploy the Astronomer Platform Alertmanager module
+keywords:
+  - astronomer
+  - alertmanager

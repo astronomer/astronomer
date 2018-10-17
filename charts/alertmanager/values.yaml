@@ -1,0 +1,40 @@
+# Default values for alertmanager.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+images:
+  alertmanager:
+    repository: astronomerinc/ap-alertmanager
+    tag: master
+    pullPolicy: IfNotPresent
+
+resources: {}
+  # limits:
+  #  cpu: 100m
+  #  memory: 128Mi
+  # requests:
+  #  cpu: 100m
+  #  memory: 128Mi
+
+replicas: 1
+
+dataDir: "/data"
+
+prefixURL: ""
+
+persistence:
+  enabled: true
+  size: 2Gi
+  storageClassName: ~
+
+env: {}
+
+ports:
+  http: 9093
+
+receivers:
+  # Configs for platform alerts
+  platform: {}
+
+  # Configs for airflow alerts
+  airflow: {}

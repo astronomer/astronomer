@@ -1,0 +1,24 @@
+################################
+## Alertmanager Service
+#################################
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ template "alertmanager.fullname" . }}
+  labels:
+    tier: monitoring
+    component: {{ template "alertmanager.name" . }}
+    chart: {{ template "alertmanager.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  type: ClusterIP
+  selector:
+    tier: monitoring
+    component: {{ template "alertmanager.name" . }}
+    release: {{ .Release.Name }}
+  ports:
+    - name: http
+      protocol: TCP
+      port: {{ .Values.ports.http }}
+      targetPort: {{ .Values.ports.http }}

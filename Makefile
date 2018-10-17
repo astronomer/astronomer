@@ -10,7 +10,7 @@ BUCKET ?= gs://${DOMAIN}
 # ASTRONOMER_VERSION ?= ${ASTRONOMER_MAJOR_VERSION}.${ASTRONOMER_MINOR_VERSION}.${ASTRONOMER_PATCH_VERSION}
 
 # List of charts to build
-CHARTS := astronomer airflow grafana prometheus nginx
+CHARTS := airflow astronomer nginx grafana prometheus alertmanager elasticsearch kibana fluentd kube-state
 
 # Output directory
 OUTPUT := repository

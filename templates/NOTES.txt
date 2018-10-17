@@ -8,9 +8,9 @@ The platform components may take a few minutes to spin up.
 
 You can access the platform at:
 
-- Astronomer dashboard:        {{ if .Values.astronomer.enabled}}https://app.{{ .Values.global.baseDomain }}{{ else }}Disabled{{ end }}
-- Grafana dashboard:           {{ if .Values.grafana.enabled }}https://grafana.{{ .Values.global.baseDomain }}{{ else }}Disabled{{ end }}
-- Kibana dashboard:            {{ if .Values.kibana.enabled }}https://kibana.{{ .Values.global.baseDomain }}{{ else }}Disabled{{ end }}
+- Astronomer dashboard:        {{ if .Values.global.astronomer.enabled}}https://app.{{ .Values.global.baseDomain }}{{ else }}Disabled{{ end }}
+- Grafana dashboard:           {{ if .Values.global.grafana.enabled }}https://grafana.{{ .Values.global.baseDomain }}{{ else }}Disabled{{ end }}
+- Kibana dashboard:            {{ if .Values.global.kibana.enabled }}https://kibana.{{ .Values.global.baseDomain }}{{ else }}Disabled{{ end }}
 
 Now that you've installed the platform, you are ready to get started and create your first airflow deployment.
 

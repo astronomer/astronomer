@@ -1,0 +1,44 @@
+################################
+## Alertmanager ConfigMap
+#################################
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: {{ template "alertmanager.fullname" . }}
+  labels:
+    tier: monitoring
+    component: {{ template "alertmanager.name" . }}
+    chart: {{ template "alertmanager.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+data:
+  alertmanager.yaml: |-
+    route:
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 3h
+      receiver: default-receiver
+      routes:
+{{- if .Values.receivers.platform }}
+      - receiver: platform-receiver
+        match_re:
+          tier: platform
+{{- end }}
+{{- if .Values.receivers.airflow }}
+      - receiver: airflow-receiver
+        match_re:
+          tier: airflow
+{{- end }}
+    receivers:
+    - name: default-receiver
+      webhook_configs:
+      - url: "http://{{ .Release.Name }}-houston:8870/v1/webhooks/alerts"
+        send_resolved: true
+{{- if .Values.receivers.platform }}
+    - name: platform-receiver
+{{ toYaml .Values.receivers.platform | trim | indent 6 }}
+{{- end }}
+{{- if .Values.receivers.airflow }}
+    - name: airflow-receiver
+{{ toYaml .Values.receivers.airflow | trim | indent 6 }}
+{{- end }}

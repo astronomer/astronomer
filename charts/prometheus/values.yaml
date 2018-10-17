@@ -30,8 +30,106 @@ retention: 15d
 persistence:
   enabled: true
   size: 100Gi
-  # If using a custom storageClass, pass name ref to all statefulSets here
-  storageClassName:
+  storageClassName: ~
 
 ports:
   http: 9090
+
+# Define alerts as values. This map gets toYaml'ed into the
+# prometheus alerts configmap. This is required because the template strings here
+# get parsed by helm, causing errors.
+alerts:
+  groups:
+  - name: platform
+    rules:
+    - alert: PrometheusDiskUsage
+      expr: (kubelet_volume_stats_available_bytes{persistentvolumeclaim=~"prometheus-data-volume-.*"} / kubelet_volume_stats_capacity_bytes{persistentvolumeclaim=~"prometheus-data-volume-.*"} * 100) < 10
+      for: 5m
+      labels:
+        tier: platform
+        component: prometheus
+      annotations:
+        summary: "Prometheus High Disk Usage"
+        description: "Prometheus has less than 10% disk space available."
+
+    - alert: RegistryDiskUsage
+      expr: (kubelet_volume_stats_available_bytes{persistentvolumeclaim=~"registry-data-volume-.*"} / kubelet_volume_stats_capacity_bytes{persistentvolumeclaim=~"registry-data-volume-.*"} * 100) < 10
+      for: 5m
+      labels:
+        tier: platform
+        component: registry
+      annotations:
+        summary: "Docker Registry High Disk Usage"
+        description: "Docker Registry has less than 10% disk space available."
+
+    - alert: ElasticsearchDiskUsage
+      expr: (sum(kubelet_volume_stats_available_bytes{persistentvolumeclaim=~"es-data-volume-.*"}) / sum(kubelet_volume_stats_capacity_bytes{persistentvolumeclaim=~"es-data-volume-.*"}) * 100) < 10
+      for: 5m
+      labels:
+        tier: platform
+        component: elasticsearch
+      annotations:
+        summary: "Elasticsearch High Disk Usage"
+        description: "Elasticsearch has less than 10% disk space available."
+
+  - name: airflow
+    rules:
+    - alert: AirflowDeploymentUnhealthy
+      expr: sum by (release) (kube_pod_container_status_running{namespace=~".*-.*-.*-[0-9]{4}"}) - count by (release) (kube_pod_container_status_running{namespace=~".*-.*-.*-[0-9]{4}"}) < 0
+      for: 15m # Rough number but should be enough to clear deployments with a reasonable amount of workers
+      labels:
+        tier: airflow
+        component: deployment
+      annotations:
+        summary: "{{ $labels.release }} deployment is unhealthy"
+        description: "The {{ $labels.release }} deployment is not completely available"
+
+    - alert: AirflowFailureRate
+      expr: rate(airflow_operator_failures[1h]) > rate(airflow_operator_failures[2d])
+      for: 5m
+      labels:
+        tier: airflow
+        component: scheduler
+      annotations:
+        summary: "{{ $labels.deployment }} tasks are failing"
+        description: "The {{ $labels.deployment }} deployment has a high task failure rate"
+
+    - alert: AirflowSchedulerUnhealthy
+      expr: round(rate(airflow_scheduler_heartbeat[1m]) * 5) == 0
+      for: 3m # Scheduler should reboot quick
+      labels:
+        tier: airflow
+        component: scheduler
+      annotations:
+        summary: "{{ $labels.deployment }} scheduler is unhealthy"
+        description: "The {{ $labels.deployment }} scheduler's heartbeat has dropped below the acceptable rate"
+
+    - alert: AirflowPodQuota
+      expr: (sum(kube_resourcequota{resource="pods", type="used", namespace=~".*-.*-.*-[0-9]{4}"}) / sum(kube_resourcequota{resource="pods", type="hard", namespace=~".*-.*-.*-[0-9]{4}"})*100) > 95
+      for: 10m
+      labels:
+        tier: airflow
+        component: deployment
+      annotations:
+        summary: "{{ $labels.deployment }} is near its pod quota"
+        description: "{{ $labels.deployment }} has been using over 95% of it's pod quota for over 10 minutes"
+
+    - alert: AirflowCPUQuota
+      expr: (sum(kube_resourcequota{resource="limits.cpu", type="used", namespace=~".*-.*-.*-[0-9]{4}"}) / sum(kube_resourcequota{resource="limits.cpu", type="hard", namespace=~".*-.*-.*-[0-9]{4}"})*100) > 95
+      for: 10m
+      labels:
+        tier: airflow
+        component: deployment
+      annotations:
+        summary: "{{ $labels.deployment }} is near its cpu quota"
+        description: "{{ $labels.deployment }} has been using over 95% of it's cpu quota for over 10 minutes"
+
+    - alert: AirflowMemoryQuota
+      expr: (sum(kube_resourcequota{resource="limits.memory", type="used", namespace=~".*-.*-.*-[0-9]{4}"}) / sum(kube_resourcequota{resource="limits.memory", type="hard", namespace=~".*-.*-.*-[0-9]{4}"})*100) > 95
+      for: 10m
+      labels:
+        tier: airflow
+        component: deployment
+      annotations:
+        summary: "{{ $labels.deployment }} is near its memory quota"
+        description: "{{ $labels.deployment }} has been using over 95% of it's memory quota for over 10 minutes"

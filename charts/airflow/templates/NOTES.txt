@@ -1,0 +1,14 @@
+Thank you for installing Airflow!
+
+Your release is named {{ .Release.Name }}.
+
+{{- if .Values.ingress.baseDomain }}
+
+The platform components may take a few minutes to spin up.
+
+You can access the platform at:
+
+- Airflow dashboard:        https://{{ .Release.Name }}-airflow.{{ .Values.ingress.baseDomain }}
+- Flower dashboard:         {{ if eq .Values.executor "CeleryExecutor"}}https://{{ .Release.Name }}-flower.{{ .Values.ingress.baseDomain }}{{ else }}Disabled{{ end }}
+
+{{- end }}

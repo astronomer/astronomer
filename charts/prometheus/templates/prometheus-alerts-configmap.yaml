@@ -1,0 +1,17 @@
+################################
+## Prometheus Alerts ConfigMap
+#################################
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: {{ template "prometheus.fullname" . }}-alerts
+  labels:
+    tier: monitoring
+    component: {{ template "prometheus.name" . }}
+    chart: {{ template "prometheus.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+data:
+  alerts.yaml: |-
+    groups:
+{{ toYaml .Values.alerts.groups | indent 6 }}
