@@ -30,6 +30,7 @@ RUN apk update && \
 	apk add --no-cache --virtual .build-deps \
 		build-base \
 		git \
+		libffi-dev \
 		postgresql-dev \
 		python3-dev \
 	&& apk add --no-cache \
