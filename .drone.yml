@@ -87,7 +87,7 @@ pipeline:
       event: tag
       branch: [ master, release-* ]
 
-  commit-push-tags:
+  commit-push-charts:
     image: astronomerio/ap-build:0.0.7
     commands:
       - mkdir -p /root/.ssh
