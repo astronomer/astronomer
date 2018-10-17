@@ -15,6 +15,9 @@ CHARTS := airflow astronomer nginx grafana prometheus alertmanager elasticsearch
 # Output directory
 OUTPUT := repository
 
+# Temp directory
+TEMP := /tmp/${DOMAIN}
+
 .PHONY: build
 build: update-version
 	mkdir -p ${OUTPUT}
@@ -25,7 +28,8 @@ build: update-version
 
 .PHONY: build-index
 build-index:
-	helm repo index ${OUTPUT} --url ${URL} # --merge ${OUTPUT}/index.yaml
+	wget ${DOMAIN}/index.yaml -O ${TEMP}
+	helm repo index ${OUTPUT} --url ${URL} --merge ${TEMP}
 
 .PHONY: push
 push: build

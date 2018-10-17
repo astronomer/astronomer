@@ -3,7 +3,7 @@ pipeline:
   ## Github pushes - build with SHA
   ###################################
   build:
-    image: astronomerio/ap-build:0.0.7
+    image: astronomerio/ap-build:0.0.8
     environment:
       - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
       - ASTRONOMER_VERSION=0.0.0
@@ -17,7 +17,7 @@ pipeline:
   ## Deployment
   ###################################
   update-version:
-    image: astronomerio/ap-build:0.0.7
+    image: astronomerio/ap-build:0.0.8
     commands:
       - make update-image-tags
       - make update-chart-versions
@@ -27,7 +27,7 @@ pipeline:
       environment: production
 
   commit-push-tags:
-    image: astronomerio/ap-build:0.0.7
+    image: astronomerio/ap-build:0.0.8
     commands:
       - mkdir -p /root/.ssh
       - echo "$${GIT_PUSH_SSH_KEY}" > /root/.ssh/id_rsa
@@ -45,26 +45,8 @@ pipeline:
       branch: [ master, release-* ]
       environment: production
 
-  # push-tags-release:
-  #   image: astronomerio/ap-build:0.0.7
-  #   commands:
-  #     - git push -u origin HEAD:${DRONE_COMMIT_BRANCH}
-  #   when:
-  #     event: deployment
-  #     branch: [ master, release-* ]
-  #     environment: production
-
-  # push-tags-master:
-  #   image: astronomerio/ap-build:0.0.7
-  #   commands:
-  #     - git push -u origin HEAD:master
-  #   when:
-  #     event: deployment
-  #     branch: [ release-* ]
-  #     environment: production
-
   release:
-    image: astronomerio/ap-build:0.0.7
+    image: astronomerio/ap-build:0.0.8
     secrets: [ github_api_key ]
     commands:
       - release $${DRONE_REPO_NAME} $${GITHUB_API_KEY} v$${ASTRONOMER_VERSION} $${DRONE_COMMIT_BRANCH}
@@ -77,7 +59,7 @@ pipeline:
   ## Tag
   ###################################
   build:
-    image: astronomerio/ap-build:0.0.7
+    image: astronomerio/ap-build:0.0.8
     environment:
       - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
       - ASTRONOMER_VERSION=${DRONE_TAG##v}
@@ -87,27 +69,9 @@ pipeline:
       event: tag
       branch: [ master, release-* ]
 
-  commit-push-charts:
-    image: astronomerio/ap-build:0.0.7
-    commands:
-      - mkdir -p /root/.ssh
-      - echo "$${GIT_PUSH_SSH_KEY}" > /root/.ssh/id_rsa
-      - chmod 600 /root/.ssh/id_rsa
-      - ssh-keyscan -H github.com >> /root/.ssh/known_hosts
-      - git remote set-url origin git@github.com:${DRONE_REPO_OWNER}/${DRONE_REPO_NAME}.git
-      - git config --global user.name "schnie"
-      - git config --global user.email "greg@astronomer.io"
-      - git add -A
-      - git diff-index --quiet HEAD || git commit -m "[skip ci] Add $${DRONE_TAG} chart packages to repository"
-      - git push -u origin HEAD:${DRONE_COMMIT_BRANCH}
-    secrets: [ git_push_ssh_key ]
-    when:
-      event: tag
-      branch: [ master, release-* ]
-
   # Push to helm.astronomer.io
   push:
-    image: astronomerio/ap-build:0.0.7
+    image: astronomerio/ap-build:0.0.8
     environment:
       - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
       - ASTRONOMER_VERSION=${DRONE_TAG##v}
@@ -121,4 +85,3 @@ pipeline:
     when:
       event: tag
       branch: [ master, release-* ]
-
