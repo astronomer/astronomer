@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+# Usage: bin/release-platform <branch> <version>
 # set -x
 
 ASTRONOMER_BUILD=$(drone build ls astronomerio/astronomer --event push --branch $1 --format "{{ .Number }}" --limit 1)
