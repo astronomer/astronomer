@@ -50,27 +50,27 @@ executor: "CeleryExecutor"
 images:
   airflow:
     repository: astronomerinc/ap-airflow
-    tag: 0.7.0-alpha.2
+    tag: 0.7.0-alpha.3
     pullPolicy: IfNotPresent
   flower:
     repository: astronomerinc/ap-airflow
-    tag: 0.7.0-alpha.2
+    tag: 0.7.0-alpha.3
     pullPolicy: IfNotPresent
   statsd:
     repository: astronomerinc/ap-statsd-exporter
-    tag: 0.7.0-alpha.2
+    tag: 0.7.0-alpha.3
     pullPolicy: IfNotPresent
   redis:
     repository: astronomerinc/ap-redis
-    tag: 0.7.0-alpha.2
+    tag: 0.7.0-alpha.3
     pullPolicy: IfNotPresent
   pgbouncer:
     repository: astronomerinc/ap-pgbouncer
-    tag: 0.7.0-alpha.2
+    tag: 0.7.0-alpha.3
     pullPolicy: IfNotPresent
   pgbouncerExporter:
     repository: astronomerinc/ap-pgbouncer-exporter
-    tag: 0.7.0-alpha.2
+    tag: 0.7.0-alpha.3
     pullPolicy: IfNotPresent
 
 # Environment variables for all airflow containers
