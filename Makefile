@@ -7,12 +7,6 @@ REPOSITORY ?= astronomerinc
 # Bump this on subsequent build, reset on new version or public release. Inherit from env for CI builds
 BUILD_NUMBER ?= 1
 
-# Astronomer build version
-# ASTRONOMER_MAJOR_VERSION ?= 0
-# ASTRONOMER_MINOR_VERSION ?= 5
-# ASTRONOMER_PATCH_VERSION ?= 1
-# ASTRONOMER_VERSION ?= ${ASTRONOMER_MAJOR_VERSION}.${ASTRONOMER_MINOR_VERSION}.${ASTRONOMER_PATCH_VERSION}
-
 # List of all components and order to build
 PLATFORM_COMPONENTS := base cli-install commander db-bootstrapper default-backend houston-api orbit-ui
 
