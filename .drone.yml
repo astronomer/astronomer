@@ -1,6 +1,6 @@
 pipeline:
   ##################################
-  ## Github pushes - build with SHA
+  ## Github pushes
   ###################################
   build-platform:
     group: build
