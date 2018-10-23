@@ -32,6 +32,11 @@ spec:
           tier: nginx
           component: ingress-controller
           release: {{ .Release.Name }}
+    - podSelector:
+        matchLabels:
+          tier: monitoring
+          component: alertmanager
+          release: {{ .Release.Name }}
     ports:
     - protocol: TCP
       port: {{ .Values.ports.houstonHTTP }}
