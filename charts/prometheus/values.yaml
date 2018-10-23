@@ -72,6 +72,16 @@ alerts:
         summary: "Elasticsearch High Disk Usage"
         description: "Elasticsearch has less than 10% disk space available."
 
+    - alert: IngessCertificateExpiration
+      expr: avg(nginx_ingress_controller_ssl_expire_time_seconds) by (host) - time() < 604800
+      for: 10s
+      labels:
+        tier: platform
+        component: ingress
+      annotations:
+        summary: "TLS Certificate Expiring Soon"
+        description: "The TLS Certificate for {{ $labels.host }} is expiring in less than a week."
+
   - name: airflow
     rules:
     - alert: AirflowDeploymentUnhealthy
@@ -82,7 +92,7 @@ alerts:
         component: deployment
       annotations:
         summary: "{{ $labels.release }} deployment is unhealthy"
-        description: "The {{ $labels.release }} deployment is not completely available"
+        description: "The {{ $labels.release }} deployment is not completely available."
 
     - alert: AirflowFailureRate
       expr: rate(airflow_operator_failures[1h]) > rate(airflow_operator_failures[2d])
@@ -92,7 +102,7 @@ alerts:
         component: scheduler
       annotations:
         summary: "{{ $labels.deployment }} tasks are failing"
-        description: "The {{ $labels.deployment }} deployment has a high task failure rate"
+        description: "The {{ $labels.deployment }} deployment has a high task failure rate."
 
     - alert: AirflowSchedulerUnhealthy
       expr: round(rate(airflow_scheduler_heartbeat[1m]) * 5) == 0
@@ -102,7 +112,7 @@ alerts:
         component: scheduler
       annotations:
         summary: "{{ $labels.deployment }} scheduler is unhealthy"
-        description: "The {{ $labels.deployment }} scheduler's heartbeat has dropped below the acceptable rate"
+        description: "The {{ $labels.deployment }} scheduler's heartbeat has dropped below the acceptable rate."
 
     - alert: AirflowPodQuota
       expr: (sum(kube_resourcequota{resource="pods", type="used", namespace=~".*-.*-.*-[0-9]{4}"}) / sum(kube_resourcequota{resource="pods", type="hard", namespace=~".*-.*-.*-[0-9]{4}"})*100) > 95
@@ -112,7 +122,7 @@ alerts:
         component: deployment
       annotations:
         summary: "{{ $labels.deployment }} is near its pod quota"
-        description: "{{ $labels.deployment }} has been using over 95% of it's pod quota for over 10 minutes"
+        description: "{{ $labels.deployment }} has been using over 95% of it's pod quota for over 10 minutes."
 
     - alert: AirflowCPUQuota
       expr: (sum(kube_resourcequota{resource="limits.cpu", type="used", namespace=~".*-.*-.*-[0-9]{4}"}) / sum(kube_resourcequota{resource="limits.cpu", type="hard", namespace=~".*-.*-.*-[0-9]{4}"})*100) > 95
@@ -122,7 +132,7 @@ alerts:
         component: deployment
       annotations:
         summary: "{{ $labels.deployment }} is near its cpu quota"
-        description: "{{ $labels.deployment }} has been using over 95% of it's cpu quota for over 10 minutes"
+        description: "{{ $labels.deployment }} has been using over 95% of it's cpu quota for over 10 minutes."
 
     - alert: AirflowMemoryQuota
       expr: (sum(kube_resourcequota{resource="limits.memory", type="used", namespace=~".*-.*-.*-[0-9]{4}"}) / sum(kube_resourcequota{resource="limits.memory", type="hard", namespace=~".*-.*-.*-[0-9]{4}"})*100) > 95
@@ -132,4 +142,4 @@ alerts:
         component: deployment
       annotations:
         summary: "{{ $labels.deployment }} is near its memory quota"
-        description: "{{ $labels.deployment }} has been using over 95% of it's memory quota for over 10 minutes"
+        description: "{{ $labels.deployment }} has been using over 95% of it's memory quota for over 10 minutes."
