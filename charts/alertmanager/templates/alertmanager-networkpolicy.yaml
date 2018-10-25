@@ -1,0 +1,32 @@
+################################
+## Alertmanager NetworkPolicy
+#################################
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ template "alertmanager.fullname" . }}-policy
+  labels:
+    tier: monitoring
+    component: {{ template "alertmanager.name" . }}-policy
+    chart: {{ template "alertmanager.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  podSelector:
+    matchLabels:
+      tier: monitoring
+      component: {{ template "alertmanager.name" . }}
+      release: {{ .Release.Name }}
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          tier: monitoring
+          component: prometheus
+          release: {{ .Release.Name }}
+    ports:
+    - protocol: TCP
+      port: {{ .Values.ports.http }}
+
