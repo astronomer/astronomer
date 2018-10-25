@@ -2057,12 +2057,7 @@
     "list": [
       {
         "allValue": null,
-        "current": {
-          "selected": true,
-          "tags": [],
-          "text": "planetary-nebula-2345",
-          "value": "planetary-nebula-2345"
-        },
+        "current": {},
         "datasource": "Prometheus",
         "hide": 0,
         "includeAll": false,
@@ -2070,7 +2065,7 @@
         "multi": false,
         "name": "deployment",
         "options": [],
-        "query": "label_values(airflow_scheduler_heartbeat, deployment)",
+        "query": "label_values(kube_pod_info, release)",
         "refresh": 1,
         "regex": "",
         "sort": 5,
