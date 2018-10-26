@@ -21,7 +21,7 @@ pipeline:
     values_files: configs/master.yaml
     skip_tls_verify: true
     prefix: DEV
-    debug: true
+    # debug: true
     client_only: true
     wait: true
     namespace: datarouter
