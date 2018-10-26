@@ -3,7 +3,7 @@ pipeline:
   ## Github pushes - build with SHA
   ###################################
   build:
-    image: astronomerio/ap-build:0.0.8
+    image: astronomerio/ap-build:0.1.0
     environment:
       - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
       - ASTRONOMER_VERSION=0.0.0
@@ -17,7 +17,7 @@ pipeline:
   ## Deployment
   ###################################
   update-version:
-    image: astronomerio/ap-build:0.0.8
+    image: astronomerio/ap-build:0.1.0
     commands:
       - make update-image-tags
       - make update-chart-versions
@@ -27,7 +27,7 @@ pipeline:
       environment: production
 
   commit-push-tags:
-    image: astronomerio/ap-build:0.0.8
+    image: astronomerio/ap-build:0.1.0
     commands:
       - mkdir -p /root/.ssh
       - echo "$${GIT_PUSH_SSH_KEY}" > /root/.ssh/id_rsa
@@ -46,7 +46,7 @@ pipeline:
       environment: production
 
   release:
-    image: astronomerio/ap-build:0.0.8
+    image: astronomerio/ap-build:0.1.0
     secrets: [ github_api_key ]
     commands:
       - release $${DRONE_REPO_NAME} $${GITHUB_API_KEY} v$${ASTRONOMER_VERSION} $${DRONE_COMMIT_BRANCH}
@@ -59,7 +59,7 @@ pipeline:
   ## Tag
   ###################################
   build:
-    image: astronomerio/ap-build:0.0.8
+    image: astronomerio/ap-build:0.1.0
     environment:
       - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
       - ASTRONOMER_VERSION=${DRONE_TAG##v}
@@ -71,7 +71,7 @@ pipeline:
 
   # Push to helm.astronomer.io
   push:
-    image: astronomerio/ap-build:0.0.8
+    image: astronomerio/ap-build:0.1.0
     environment:
       - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
       - ASTRONOMER_VERSION=${DRONE_TAG##v}
