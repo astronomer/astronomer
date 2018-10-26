@@ -13,7 +13,7 @@ pipeline:
       event: push
       branch: [ master, release-* ]
 
-  build:
+  install:
     image: astronomerio/ap-build:0.1.0
     environment:
       - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
