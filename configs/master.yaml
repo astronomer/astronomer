@@ -110,7 +110,7 @@ fluentd:
 #################################
 ## Kubestate configuration
 #################################
-kubeState:
+kube-state:
   images:
     kubeState:
       repository: astronomerinc/ap-kube-state
