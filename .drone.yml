@@ -22,7 +22,7 @@ pipeline:
     skip_tls_verify: true
     prefix: DEV
     debug: true
-    tiller_ns: kube-system
+    tiller_ns: datarouter
     secrets: [ dev_api_server, dev_kubernetes_token, astro_smtp, astro_base_domain, astro_tls_secret]
     when:
       event: push
