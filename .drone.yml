@@ -25,7 +25,7 @@ pipeline:
     client_only: true
     wait: true
     namespace: datarouter
-    secrets: [ dev_api_server, dev_kubernetes_token, astro_smtp, astro_base_domain, astro_tls_secret]
+    secrets: [ dev_api_server, dev_kubernetes_token, astro_smtp, astro_base_domain, astro_tls_secret, astro_loadbalancer_ip]
     when:
       event: push
       branch: [ master, release-* ]
