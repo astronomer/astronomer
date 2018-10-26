@@ -23,6 +23,7 @@ pipeline:
     prefix: DEV
     debug: true
     client_only: true
+    namespace: datarouter
     secrets: [ dev_api_server, dev_kubernetes_token, astro_smtp, astro_base_domain, astro_tls_secret]
     when:
       event: push
