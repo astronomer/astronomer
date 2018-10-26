@@ -21,11 +21,9 @@ pipeline:
     values_files: configs/master.yaml
     skip_tls_verify: true
     prefix: DEV
-    debug: true
+    # debug: true
     client_only: true
     wait: true
-    force: true
-    purge: true
     namespace: datarouter
     secrets: [ dev_api_server, dev_kubernetes_token, astro_smtp, astro_base_domain, astro_tls_secret, astro_loadbalancer_ip]
     when:
