@@ -13,13 +13,15 @@ pipeline:
       event: push
       branch: [ master, release-* ]
 
-  install:
-    image: astronomerio/ap-build:0.1.0
-    environment:
-      - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
-      - ASTRONOMER_VERSION=0.0.0
-    commands:
-      - helm init -c
+  deploy:
+    image: quay.io/ipedrazas/drone-helm
+    chart: .
+    release: astronomer-${DRONE_BRANCH}
+    values: global.baseDomain=$${astro_base_domain},global.tlsSecret=$${astro_tls_secret},astronomer.smtp.uri=$${ASTRO_SMTP},nginx.loadBalancerIP=$${astro_loadbalancer_ip}
+    values_files: configs/master.yaml
+    skip_tls_verify: true
+    prefix: DEV
+    secrets: [ dev_kube_api, dev_kube_token, astro_smtp, astro_base_domain, astro_tls_secret]
     when:
       event: push
       branch: [ master, release-* ]
