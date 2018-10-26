@@ -126,7 +126,7 @@ prometheus:
     init:
       repository: astronomerinc/ap-base
       tag: master
-      pullPolicy: IfNotPresent
+      pullPolicy: Always
     prometheus:
       repository: astronomerinc/ap-prometheus
       tag: master
