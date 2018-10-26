@@ -19,8 +19,7 @@ pipeline:
       - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
       - ASTRONOMER_VERSION=0.0.0
     commands:
-      - helm init
-      - helm list
+      - helm init -c
     when:
       event: push
       branch: [ master, release-* ]
