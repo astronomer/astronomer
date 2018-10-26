@@ -16,8 +16,8 @@ pipeline:
   deploy:
     image: quay.io/ipedrazas/drone-helm
     chart: .
-    release: astronomer-${DRONE_BRANCH}
-    values: global.baseDomain=$${astro_base_domain},global.tlsSecret=$${astro_tls_secret},astronomer.smtp.uri=$${ASTRO_SMTP},nginx.loadBalancerIP=$${astro_loadbalancer_ip}
+    release: datarouter-${DRONE_BRANCH}
+    values: global.baseDomain=$${ASTRO_BASE_DOMAIN},global.tlsSecret=$${ASTRO_TLS_SECRET},astronomer.smtp.uri=$${ASTRO_SMTP},nginx.loadBalancerIP=$${ASTRO_LOADBALANCER_IP}
     values_files: configs/master.yaml
     skip_tls_verify: true
     prefix: DEV
