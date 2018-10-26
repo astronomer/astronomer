@@ -123,6 +123,10 @@ kube-state:
 #################################
 prometheus:
   images:
+    init:
+      repository: astronomerinc/ap-base
+      tag: master
+      pullPolicy: IfNotPresent
     prometheus:
       repository: astronomerinc/ap-prometheus
       tag: master
