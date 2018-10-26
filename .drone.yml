@@ -66,6 +66,16 @@ pipeline:
       event: push
       branch: [ master, release-* ]
 
+  trigger:
+    image: plugins/downstream
+    server: http://drone.astronomer.io
+    fork: true
+    secrets: [ downstream_token ]
+    repositories:
+      - astronomerio/helm.astronomer.io
+    when:
+      branch: master
+
   ##################################
   ## Deployment
   ###################################
