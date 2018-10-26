@@ -4,7 +4,7 @@ pipeline:
   ###################################
   build-platform:
     group: build
-    image: astronomerio/ap-build:0.0.8
+    image: astronomerio/ap-build:0.1.0
     commands:
       - make build-platform
     environment:
@@ -19,7 +19,7 @@ pipeline:
 
   build-airflow:
     group: build
-    image: astronomerio/ap-build:0.0.8
+    image: astronomerio/ap-build:0.1.0
     commands:
       - make build-airflow
     environment:
@@ -34,7 +34,7 @@ pipeline:
 
   push-platform:
     group: push
-    image: astronomerio/ap-build:0.0.8
+    image: astronomerio/ap-build:0.1.0
     commands:
       - docker login -u $${DOCKER_USERNAME} -p $${DOCKER_PASSWORD}
       - make push-platform-ref
@@ -51,7 +51,7 @@ pipeline:
 
   push-airflow:
     group: push
-    image: astronomerio/ap-build:0.0.8
+    image: astronomerio/ap-build:0.1.0
     commands:
       - docker login -u $${DOCKER_USERNAME} -p $${DOCKER_PASSWORD}
       - make push-airflow-ref
@@ -70,7 +70,7 @@ pipeline:
   ## Deployment
   ###################################
   release-platform-components:
-    image: astronomerio/ap-build:0.0.8
+    image: astronomerio/ap-build:0.1.0
     secrets: [ github_api_key ]
     commands:
       # Release platform components
@@ -88,7 +88,7 @@ pipeline:
       environment: production
 
   update-version:
-    image: astronomerio/ap-build:0.0.8
+    image: astronomerio/ap-build:0.1.0
     commands:
       - make update-version
       - make update-base-tag
@@ -99,7 +99,7 @@ pipeline:
       environment: production
 
   commit-push-tags:
-    image: astronomerio/ap-build:0.0.8
+    image: astronomerio/ap-build:0.1.0
     commands:
       - mkdir -p /root/.ssh
       - echo "$${GIT_PUSH_SSH_KEY}" > /root/.ssh/id_rsa
@@ -118,7 +118,7 @@ pipeline:
       environment: production
 
   release:
-    image: astronomerio/ap-build:0.0.8
+    image: astronomerio/ap-build:0.1.0
     secrets: [ github_api_key ]
     commands:
       - release $${DRONE_REPO_NAME} $${GITHUB_API_KEY} v$${ASTRONOMER_VERSION} $${DRONE_COMMIT_BRANCH}
@@ -132,7 +132,7 @@ pipeline:
   ###################################
   build-platform:
     group: build
-    image: astronomerio/ap-build:0.0.8
+    image: astronomerio/ap-build:0.1.0
     commands:
       - make build-platform
     environment:
@@ -146,7 +146,7 @@ pipeline:
 
   build-airflow:
     group: build
-    image: astronomerio/ap-build:0.0.8
+    image: astronomerio/ap-build:0.1.0
     commands:
       - make build-airflow
     environment:
@@ -160,7 +160,7 @@ pipeline:
 
   push-platform:
     group: push
-    image: astronomerio/ap-build:0.0.8
+    image: astronomerio/ap-build:0.1.0
     commands:
       - docker login -u $${DOCKER_USERNAME} -p $${DOCKER_PASSWORD}
       - make push-platform
@@ -176,7 +176,7 @@ pipeline:
 
   push-airflow:
     group: push
-    image: astronomerio/ap-build:0.0.8
+    image: astronomerio/ap-build:0.1.0
     commands:
       - docker login -u $${DOCKER_USERNAME} -p $${DOCKER_PASSWORD}
       - make push-airflow
