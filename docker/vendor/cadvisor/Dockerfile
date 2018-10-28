@@ -13,6 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# This image is only used in the docker compose files in this repository.
+# The kubelet exposes these metrics out of the box in a production kubernetes deployment.
+
 FROM google/cadvisor:v0.28.3
 LABEL maintainer="Astronomer <humans@astronomer.io>"
 
