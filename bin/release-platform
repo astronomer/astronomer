@@ -6,11 +6,12 @@
 # Trigger deployment for astronomerio/astronomer
 printf "Getting last build number for astronomer/astronomer $1 branch...\n"
 ASTRONOMER_BUILD=$(drone build last astronomerio/astronomer --branch $1 --format "{{ .Number }}")
-read -p "Are you sure you want to deploy astronomerio/astronomer #${ASTRONOMER_BUILD} as v$2? [y/n] " -n 1 -r
+read -p "***ATTENTION*** Deploy astronomerio/astronomer #${ASTRONOMER_BUILD} as v$2? [y/n] " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
-    printf "Deploying #${ASTRONOMER_BUILD} as $2...\n\n"
+    printf "Deploying #${ASTRONOMER_BUILD} as $2...\n"
     drone deploy astronomerio/astronomer ${ASTRONOMER_BUILD} production -p ASTRONOMER_VERSION=$2
+    printf "\n"
 else
     printf "Skipped deployment.\n\n"
 fi
@@ -18,11 +19,11 @@ fi
 # Trigger deployment for astronomer/helm.astronomer.io
 printf "Getting last build number for astronomer/helm.astronomer.io $1 branch...\n"
 HELM_BUILD=$(drone build last astronomerio/helm.astronomer.io --branch $1 --format "{{ .Number }}")
-read -p "Are you sure you want to deploy astronomerio/helm.astronomer.io #${HELM_BUILD} as v$2? [y/n] " -n 1 -r
+read -p "***ATTENTION*** Deploy astronomerio/helm.astronomer.io #${HELM_BUILD} as v$2? [y/n] " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
-    printf "Deploying #${HELM_BUILD} as $2...\n\n"
+    printf "Deploying #${HELM_BUILD} as $2...\n"
     drone deploy astronomerio/helm.astronomer.io ${HELM_BUILD} production -p ASTRONOMER_VERSION=$2
 else
-    printf "Skipped deployment.\n\n"
+    printf "Skipped deployment.\n"
 fi
