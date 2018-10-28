@@ -100,9 +100,7 @@ pipeline:
   update-version:
     image: astronomerio/ap-build:0.1.0
     commands:
-      - make update-version
-      - make update-base-tag
-      - make update-airflow-tag
+      - make update-platform-tags
     when:
       event: deployment
       branch: [ master, release-* ]

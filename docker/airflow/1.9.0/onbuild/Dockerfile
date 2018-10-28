@@ -13,12 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM astronomerinc/ap-airflow:0.7.0-alpha.5
+FROM astronomerinc/ap-airflow:0.7.0-alpha.5-1.9.0
 LABEL maintainer="Astronomer <humans@astronomer.io>"
 
 ARG BUILD_NUMBER=-1
 LABEL io.astronomer.docker=true
 LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
+LABEL io.astronomer.docker.airflow.onbuild=true
 
 # Install alpine packages
 ONBUILD COPY packages.txt .

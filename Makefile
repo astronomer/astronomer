@@ -11,7 +11,7 @@ BUILD_NUMBER ?= 1
 PLATFORM_COMPONENTS := base cli-install commander db-bootstrapper default-backend houston-api orbit-ui
 
 # Airflow versions
-AIRFLOW_VERSIONS := 1.9.0
+AIRFLOW_VERSIONS := 1.9.0 1.10.0
 
 # Vendor components
 VENDOR_COMPONENTS := alertmanager cadvisor curator elasticsearch elasticsearch-exporter fluentd grafana kibana kube-state nginx pgbouncer pgbouncer-exporter prometheus redis registry statsd-exporter
@@ -36,7 +36,7 @@ push: check-env clean-images build
 # Platform build/push
 #
 .PHONY: build-platform
-build-platform: check-env update-base-tag
+build-platform: check-env
 	PLATFORM_COMPONENTS="${PLATFORM_COMPONENTS}" \
 	VENDOR_COMPONENTS="${VENDOR_COMPONENTS}" \
 	REPOSITORY=${REPOSITORY} \
@@ -74,7 +74,7 @@ push-platform-ref:
 # Airflow build/push
 #
 .PHONY: build-airflow
-build-airflow: check-env update-airflow-tag
+build-airflow: check-env
 	AIRFLOW_VERSIONS="${AIRFLOW_VERSIONS}" \
 	REPOSITORY=${REPOSITORY} \
 	ASTRONOMER_VERSION=${ASTRONOMER_VERSION} \
@@ -86,7 +86,7 @@ build-airflow: check-env update-airflow-tag
 push-airflow: check-env
 	for version in "${AIRFLOW_VERSIONS}" ; do \
 		PUSH_IMAGE=${REPOSITORY}/ap-airflow \
-		PUSH_TAGS="${ASTRONOMER_VERSION} ${ASTRONOMER_VERSION}-onbuild latest latest-onbuild" \
+		PUSH_TAGS="${ASTRONOMER_VERSION} ${ASTRONOMER_VERSION}-onbuild" \
 		bin/push-image; \
 	done;
 
@@ -122,22 +122,9 @@ clean-pre-release-images:
 .PHONY: clean
 clean: clean-containers clean-images clean-pre-release-images
 
-.PHONY: update-tags
-update-tags: check-env update-base-tag update-airflow-tag
-
-# Update the base image version
-.PHONY: update-base-tag
-update-base-tag: check-env
-	find docker/platform -name 'Dockerfile' -exec sed -i -E 's/FROM astronomerinc\/ap-base:(.*)/FROM astronomerinc\/ap-base:${ASTRONOMER_VERSION}/g' {} \;
-
-# Update the base image version
-.PHONY: update-airflow-tag
-update-airflow-tag: check-env
-	find docker/airflow -name 'Dockerfile' -exec sed -i -E 's/FROM astronomerinc\/ap-airflow:(.*)/FROM astronomerinc\/ap-airflow:${ASTRONOMER_VERSION}/g' {} \;
-
 # Update the version (tag) that we grab from github from the platform repos
-.PHONY: update-version
-update-version: check-env
+.PHONY: update-platform-tags
+update-platform-tags: check-env
 	find docker/platform -name 'Dockerfile' -exec sed -i -E 's/ARG VERSION=(.*)/ARG VERSION="v${ASTRONOMER_VERSION}"/g' {} \;
 
 .PHONY: check-env

@@ -25,6 +25,9 @@ function build_image() {
     fi
 }
 
+# Update the base image tags in platform images to point at this builds version
+find docker/platform -name "Dockerfile" -exec sed -i -E "s/FROM astronomerinc\/ap-base:(.*)/FROM astronomerinc\/ap-base:${ASTRONOMER_VERSION}/g" {} \;
+
 # Build platform images
 for component in ${PLATFORM_COMPONENTS} ; do
     build_image "platform/${component}" "${component}"

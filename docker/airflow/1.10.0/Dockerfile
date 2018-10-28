@@ -21,9 +21,10 @@ LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
 LABEL io.astronomer.docker=true
 LABEL io.astronomer.docker.module="airflow"
 LABEL io.astronomer.docker.component="airflow"
+LABEL io.astronomer.docker.airflow.version="1.10.0"
 
 ARG ORG="astronomerio"
-ARG VERSION="v1-10-stable"
+ARG VERSION="v1-10-astro"
 ARG SUBMODULES="all, statsd"
 
 ENV AIRFLOW_REPOSITORY="https://github.com/${ORG}/incubator-airflow"
@@ -71,6 +72,7 @@ RUN apk update \
 	&& pip3 install --no-cache-dir --upgrade setuptools==39.0.1 \
 	&& pip3 install --no-cache-dir cython \
 	&& pip3 install --no-cache-dir "${AIRFLOW_MODULE}" \
+	&& pip3 install --no-cache-dir flask-appbuilder==1.11.1 \
 	&& apk del .build-deps \
 	&& ln -sf /usr/bin/python3 /usr/bin/python \
 	&& ln -sf /usr/bin/pip3 /usr/bin/pip
