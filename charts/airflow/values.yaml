@@ -42,6 +42,10 @@ airflowHome: "/usr/local/airflow"
 # Enable RBAC (default on most clusters these days)
 rbacEnabled: true
 
+# Airflow version
+# Options: 1.9.0, 1.10.0
+airflowVersion: "1.9.0"
+
 # Airflow executor
 # Options: SequentialExecutor, LocalExecutor, CeleryExecutor, KubernetesExecutor
 executor: "CeleryExecutor"
@@ -49,8 +53,10 @@ executor: "CeleryExecutor"
 # Astronomer Airflow images
 images:
   airflow:
+    # If tag is specified here or overridden, that value is used, otherwise
+    # it is build using {{ .Chart.Version }}-{{ .Values.airflowVersion }}
     repository: astronomerinc/ap-airflow
-    tag: 0.7.0-alpha.5
+    tag: ~
     pullPolicy: IfNotPresent
   flower:
     repository: astronomerinc/ap-airflow
