@@ -79,6 +79,8 @@ pipeline:
   ##################################
   ## Deployment
   ###################################
+
+  # Cut releases of upstream platform components
   release-platform-components:
     image: astronomerio/ap-build:0.1.0
     secrets: [ github_api_key ]
@@ -97,10 +99,15 @@ pipeline:
       branch: [ master, release-* ]
       environment: production
 
+  # Update VERSIONs in Dockerfiles to point at newly created git tags
+  # Update platform Dockerfiles to point to extend ap-base image
+  # Update airflow onbuild images to extend the corresponding base image
   update-version:
     image: astronomerio/ap-build:0.1.0
     commands:
-      - make update-platform-tags
+      - make update-platform-git-tags
+      - make update-platform-docker-tags
+      - make update-airflow-onbuild-docker-tags
     when:
       event: deployment
       branch: [ master, release-* ]
@@ -194,24 +201,6 @@ pipeline:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     secrets: [ docker_username, docker_password ]
-    when:
-      event: tag
-      branch: [ master, release-* ]
-
-  commit-push:
-    image: astronomerio/ap-build:0.1.0
-    commands:
-      - mkdir -p /root/.ssh
-      - echo "$${GIT_PUSH_SSH_KEY}" > /root/.ssh/id_rsa
-      - chmod 600 /root/.ssh/id_rsa
-      - ssh-keyscan -H github.com >> /root/.ssh/known_hosts
-      - git remote set-url origin git@github.com:${DRONE_REPO_OWNER}/${DRONE_REPO_NAME}.git
-      - git config --global user.name "schnie"
-      - git config --global user.email "greg@astronomer.io"
-      - git add -A
-      - git diff-index --quiet HEAD || git commit -m "Bump docker tags to $${ASTRONOMER_VERSION}"
-      - git push -u origin HEAD:${DRONE_COMMIT_BRANCH}
-    secrets: [ git_push_ssh_key ]
     when:
       event: tag
       branch: [ master, release-* ]

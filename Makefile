@@ -122,10 +122,26 @@ clean-pre-release-images:
 .PHONY: clean
 clean: clean-containers clean-images clean-pre-release-images
 
+# Update all tags
+.PHONY: update-tags
+update-tags: update-platform-git-tags update-platform-docker-tags update-airflow-onbuild-docker-tags
+
 # Update the version (tag) that we grab from github from the platform repos
-.PHONY: update-platform-tags
-update-platform-tags: check-env
-	find docker/platform -name 'Dockerfile' -exec sed -i -E 's/ARG VERSION=(.*)/ARG VERSION="v${ASTRONOMER_VERSION}"/g' {} \;
+.PHONY: update-platform-git-tags
+update-platform-git-tags: check-env
+	find docker/platform -name 'Dockerfile' -exec sed -i -E 's/ARG VERSION=(.*)/ARG VERSION="v${ASTRONOMER_VERSION}"/g' {} +
+
+# Update the base image version
+.PHONY: update-platform-docker-tags
+update-platform-docker-tags: check-env
+	find docker/platform -name 'Dockerfile' -exec sed -i -E 's/FROM astronomerinc\/ap-base:(.*)/FROM astronomerinc\/ap-base:${ASTRONOMER_VERSION}/g' {} +
+
+# Update the base image version
+.PHONY: update-airflow-onbuild-docker-tags
+update-airflow-onbuild-docker-tags: check-env
+	for version in ${AIRFLOW_VERSIONS} ; do \
+		find docker/airflow/$${version} -name 'Dockerfile' -exec sed -i -E "s/FROM astronomerinc\/ap-airflow:(.*)/FROM astronomerinc\/ap-airflow:${ASTRONOMER_VERSION}-$${version}/g" {} + ;\
+	done;
 
 .PHONY: check-env
 check-env:

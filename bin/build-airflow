@@ -31,8 +31,6 @@ function build_image() {
 
     # Build onbuild components
     if [ -f "${onbuild_docker_file}" ]; then
-        find "${onbuild_docker_file}" -exec sed -i -E "s/FROM astronomerinc\/ap-airflow:(.*)/FROM astronomerinc\/ap-airflow:${version}/g" {} \;
-
         docker build ${build_opts} -t "${REPOSITORY}/${component_name}:${version}-onbuild" -f "${onbuild_docker_file}" "${onbuild_docker_dir}" || exit 1
 
         if [ -v ASTRONOMER_REF ]; then
