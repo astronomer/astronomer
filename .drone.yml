@@ -2,6 +2,21 @@ pipeline:
   ##################################
   ## Github pushes
   ###################################
+  # Update VERSIONs in Dockerfiles to point at newly created git tags
+  # Update platform Dockerfiles to point to extend ap-base image
+  # Update airflow onbuild images to extend the corresponding base image
+  # XXX: On pushes, docker tags are just set to 0.0.0
+  update-tags:
+    image: astronomerio/ap-build:0.1.0
+    commands:
+      - make update-platform-docker-tags
+      - make update-airflow-onbuild-docker-tags
+    environment:
+      - ASTRONOMER_VERSION=0.0.0
+    when:
+      event: push
+      branch: [ master, release-* ]
+
   build-platform:
     group: build
     image: astronomerio/ap-build:0.1.0
@@ -102,7 +117,10 @@ pipeline:
   # Update VERSIONs in Dockerfiles to point at newly created git tags
   # Update platform Dockerfiles to point to extend ap-base image
   # Update airflow onbuild images to extend the corresponding base image
-  update-version:
+  # XXX: Update all tags. These get commited back to git so they need
+  # to be updated before cutting the release, even though the images are built
+  # in the next pipeline (tag).
+  update-tags:
     image: astronomerio/ap-build:0.1.0
     commands:
       - make update-platform-git-tags
