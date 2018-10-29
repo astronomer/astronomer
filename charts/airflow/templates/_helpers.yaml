@@ -4,7 +4,7 @@
   {{- range $i, $config := .Values.env }}
   - name: {{ $config.name }}
     value: {{ $config.value | quote }}
-    {{- if eq .Values.executor "KubernetesExecutor" }}
+    {{- if eq $.Values.executor "KubernetesExecutor" }}
   - name: AIRFLOW__KUBERNETES_SECRETS__{{ $config.name }}
     value: {{ $config.value | quote }}
     {{- end }}
@@ -85,14 +85,19 @@
 {{- end }}
 
 {{ define "airflow_image" -}}
-{{- if .Values.images.airflow.tag }}
+{{- if .Values.images.airflow.tag -}}
 {{ printf "%s:%s" .Values.images.airflow.repository .Values.images.airflow.tag }}
-{{- else }}
+{{- else -}}
 {{ printf "%s:%s-%s" .Values.images.airflow.repository .Chart.Version .Values.airflowVersion }}
+{{- end }}
 {{- end }}
 
 {{ define "flower_image" -}}
-{{ .Values.images.flower.repository }}:{{ .Values.images.flower.tag }}
+{{- if .Values.images.flower.tag -}}
+{{ printf "%s:%s" .Values.images.flower.repository .Values.images.flower.tag }}
+{{- else -}}
+{{ printf "%s:%s-%s" .Values.images.flower.repository .Chart.Version .Values.airflowVersion }}
+{{- end }}
 {{- end }}
 
 {{ define "statsd_image" -}}

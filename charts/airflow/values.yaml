@@ -60,7 +60,7 @@ images:
     pullPolicy: IfNotPresent
   flower:
     repository: astronomerinc/ap-airflow
-    tag: 0.7.0-alpha.10
+    tag: ~
     pullPolicy: IfNotPresent
   statsd:
     repository: astronomerinc/ap-statsd-exporter
