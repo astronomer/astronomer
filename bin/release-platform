@@ -6,6 +6,7 @@
 # Trigger deployment for astronomerio/astronomer
 printf "Getting last build number for astronomer/astronomer $1 branch...\n"
 ASTRONOMER_BUILD=$(drone build last astronomerio/astronomer --branch $1 --format "{{ .Number }}")
+[[ -z "$ASTRONOMER_BUILD" ]] && echo "Failed to get build number, exiting." && exit 1;
 read -p "***ATTENTION*** Deploy astronomerio/astronomer #${ASTRONOMER_BUILD} as v$2? [y/n] " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
@@ -19,6 +20,7 @@ fi
 # Trigger deployment for astronomer/helm.astronomer.io
 printf "Getting last build number for astronomer/helm.astronomer.io $1 branch...\n"
 HELM_BUILD=$(drone build last astronomerio/helm.astronomer.io --branch $1 --format "{{ .Number }}")
+[[ -z "$HELM_BUILD" ]] && echo "Failed to get build number, exiting." && exit 1;
 read -p "***ATTENTION*** Deploy astronomerio/helm.astronomer.io #${HELM_BUILD} as v$2? [y/n] " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
