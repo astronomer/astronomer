@@ -84,7 +84,7 @@ build-airflow: check-env
 # TODO: Fix me for multiple airflow version support
 .PHONY: push-airflow
 push-airflow: check-env
-	for version in "${AIRFLOW_VERSIONS}" ; do \
+	for version in ${AIRFLOW_VERSIONS} ; do \
 		PUSH_IMAGE=${REPOSITORY}/ap-airflow \
 		PUSH_TAGS="${ASTRONOMER_VERSION}-$${version} ${ASTRONOMER_VERSION}-$${version}-onbuild" \
 		bin/push-image; \
@@ -92,7 +92,7 @@ push-airflow: check-env
 
 .PHONY: push-airflow-ref
 push-airflow-ref:
-	for version in "${AIRFLOW_VERSIONS}" ; do \
+	for version in ${AIRFLOW_VERSIONS} ; do \
 		PUSH_IMAGE=${REPOSITORY}/ap-airflow \
 		PUSH_TAGS="${ASTRONOMER_REF} ${ASTRONOMER_REF}-onbuild" \
 		bin/push-image; \
