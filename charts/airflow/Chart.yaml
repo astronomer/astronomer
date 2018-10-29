@@ -1,5 +1,5 @@
 name: airflow
-version: 0.7.0-alpha.8
+version: 0.7.0-alpha.9
 description: Helm chart to deploy the Astronomer Platform Airflow module
 keywords:
   - astronomer
