@@ -15,3 +15,9 @@ mappings:
     name: "airflow_operator_failures"
     labels:
       operator: "$1"
+
+  - match: airflow.scheduler_heartbeat
+    match_type: regex
+    name: "airflow_scheduler_heartbeat"
+    labels:
+      type: counter
