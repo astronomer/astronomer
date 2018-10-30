@@ -104,8 +104,11 @@ alerts:
         summary: "{{ $labels.deployment }} tasks are failing"
         description: "The {{ $labels.deployment }} deployment has a high task failure rate."
 
+    # This alert depends on the scheduler_heartbeat metric being a counter.
+    # The type filter here was introduced in 0.7.0, so we don't trigger alerts for
+    # older deployments.
     - alert: AirflowSchedulerUnhealthy
-      expr: round(rate(airflow_scheduler_heartbeat[1m]) * 5) == 0
+      expr: round(rate(airflow_scheduler_heartbeat{type="counter"}[1m]) * 5) == 0
       for: 3m # Scheduler should reboot quick
       labels:
         tier: airflow
