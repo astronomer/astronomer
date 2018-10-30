@@ -1,21 +1,24 @@
 mappings:
+  # Map dot separated stats to labels
   - match: airflow.dagrun.dependency-check.*.*
     name: "airflow_dagrun_dependency_check"
     labels:
       dag_id: "$1"
-
   - match: airflow.operator_successes_(.*)
     match_type: regex
     name: "airflow_operator_successes"
     labels:
       operator: "$1"
-
   - match: airflow.operator_failures_(.*)
     match_type: regex
     name: "airflow_operator_failures"
     labels:
       operator: "$1"
 
+  # As of version 0.7.0, we deploy an image that exposes this metric
+  # as a counter instead of a gauge. (https://github.com/apache/incubator-airflow/pull/4027).
+  # As a result we need to account for this as we transition already running
+  # deployments to the latest docker iamge. This additional label lets us fix up our alerts and dashboards.
   - match: airflow.scheduler_heartbeat
     match_type: regex
     name: "airflow_scheduler_heartbeat"
