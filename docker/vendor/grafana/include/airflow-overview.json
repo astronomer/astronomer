@@ -35,6 +35,7 @@
       "version": ""
     }
   ],
+{
   "annotations": {
     "list": [
       {
@@ -52,7 +53,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 10,
-  "iteration": 1539221223472,
+  "iteration": 1540920965912,
   "links": [],
   "panels": [
     {
@@ -180,7 +181,7 @@
         "#299c46"
       ],
       "datasource": "Prometheus",
-      "description": "Indication of whether the scheduler is up and running its loop.",
+      "description": "Indication of whether the scheduler is up and running its loop. An value of \"Unknown\" means that the airflow image is running an older version.",
       "format": "none",
       "gauge": {
         "maxValue": 100,
@@ -232,7 +233,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "round(rate(airflow_scheduler_heartbeat{deployment=~\"$deployment\"}[1m]) * 5)",
+          "expr": "round(rate(airflow_scheduler_heartbeat{deployment=~\"$deployment\", type=\"counter\"}[1m]) * 5)",
           "format": "time_series",
           "instant": true,
           "intervalFactor": 2,
@@ -246,7 +247,7 @@
       "valueMaps": [
         {
           "op": "=",
-          "text": "N/A",
+          "text": "Unknown",
           "value": "null"
         },
         {
@@ -2108,6 +2109,6 @@
   },
   "timezone": "",
   "title": "Airflow Deployment Overview",
-  "uid": "M4eODb1mz",
+  "uid": "y6_j57amk",
   "version": 1
 }
