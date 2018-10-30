@@ -64,19 +64,19 @@ images:
     pullPolicy: IfNotPresent
   statsd:
     repository: astronomerinc/ap-statsd-exporter
-    tag: 0.7.0-alpha.10
+    tag: 0.7.0-alpha.11
     pullPolicy: IfNotPresent
   redis:
     repository: astronomerinc/ap-redis
-    tag: 0.7.0-alpha.10
+    tag: 0.7.0-alpha.11
     pullPolicy: IfNotPresent
   pgbouncer:
     repository: astronomerinc/ap-pgbouncer
-    tag: 0.7.0-alpha.10
+    tag: 0.7.0-alpha.11
     pullPolicy: IfNotPresent
   pgbouncerExporter:
     repository: astronomerinc/ap-pgbouncer-exporter
-    tag: 0.7.0-alpha.10
+    tag: 0.7.0-alpha.11
     pullPolicy: IfNotPresent
 
 # Environment variables for all airflow containers
