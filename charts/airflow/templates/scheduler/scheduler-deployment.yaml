@@ -45,7 +45,7 @@ spec:
       restartPolicy: Always
     {{- if $local }}
       # terminationGracePeriodSeconds: {{ .Values.workers.terminationGracePeriodSeconds }}
-      # Airflow scheduler with LocalExecutor doesn't handle SIGINT well. Hard-coding low 
+      # Airflow scheduler with LocalExecutor doesn't handle SIGINT well. Hard-coding low
       # number for now.
       terminationGracePeriodSeconds: 10
       serviceAccountName: {{ .Release.Name }}-worker-serviceaccount
