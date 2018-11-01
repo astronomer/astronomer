@@ -63,7 +63,7 @@
         name: {{ template "airflow_metadata_secret" . }}
         key: connection
   {{- if eq .Values.executor "CeleryExecutor" }}
-  - name: AIRFLOW__CELERY__CELERY_RESULT_BACKEND
+  - name: {{if eq .Values.airflowVersion "1.9.0" }} AIRFLOW__CELERY__CELERY_RESULT_BACKEND {{ else }} AIRFLOW__CELERY__RESULT_BACKEND {{ end }}
     valueFrom:
       secretKeyRef:
         name: {{ template "airflow_result_backend_secret" . }}
