@@ -588,7 +588,7 @@
           "refId": "A"
         }
       ],
-      "thresholds": "80,90",
+      "thresholds": "80,95",
       "title": "Running Pods",
       "type": "singlestat",
       "valueFontSize": "80%",
