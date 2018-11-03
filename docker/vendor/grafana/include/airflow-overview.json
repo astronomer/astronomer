@@ -52,7 +52,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 10,
-  "iteration": 1540920965912,
+  "iteration": 1541259425884,
   "links": [],
   "panels": [
     {
@@ -588,7 +588,7 @@
           "refId": "A"
         }
       ],
-      "thresholds": "50,80",
+      "thresholds": "80,90",
       "title": "Running Pods",
       "type": "singlestat",
       "valueFontSize": "80%",
@@ -607,8 +607,8 @@
       "colorValue": false,
       "colors": [
         "#299c46",
-        "rgba(237, 129, 40, 0.89)",
-        "#d44a3a"
+        "#299c46",
+        "rgba(237, 129, 40, 0.89)"
       ],
       "datasource": "Prometheus",
       "decimals": null,
@@ -670,7 +670,7 @@
           "refId": "A"
         }
       ],
-      "thresholds": "50,80",
+      "thresholds": "50,95",
       "title": "Reserved CPU",
       "type": "singlestat",
       "valueFontSize": "80%",
@@ -689,8 +689,8 @@
       "colorValue": false,
       "colors": [
         "#299c46",
-        "rgba(237, 129, 40, 0.89)",
-        "#d44a3a"
+        "#299c46",
+        "rgba(237, 129, 40, 0.89)"
       ],
       "datasource": "Prometheus",
       "decimals": null,
@@ -752,7 +752,7 @@
           "refId": "A"
         }
       ],
-      "thresholds": "50,80",
+      "thresholds": "50,95",
       "title": "Reserved Memory",
       "type": "singlestat",
       "valueFontSize": "80%",
@@ -2057,7 +2057,10 @@
     "list": [
       {
         "allValue": null,
-        "current": {},
+        "current": {
+          "text": "glowing-galaxy-1406",
+          "value": "glowing-galaxy-1406"
+        },
         "datasource": "Prometheus",
         "hide": 0,
         "includeAll": false,
@@ -2108,6 +2111,6 @@
   },
   "timezone": "",
   "title": "Airflow Deployment Overview",
-  "uid": "y6_j57amk",
+  "uid": "E5LsXoamz",
   "version": 1
 }
