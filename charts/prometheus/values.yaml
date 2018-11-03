@@ -101,8 +101,8 @@ alerts:
         tier: airflow
         component: scheduler
       annotations:
-        summary: "{{ $labels.deployment }} tasks are failing"
-        description: "The {{ $labels.deployment }} deployment has a high task failure rate."
+        summary: "{{ $labels.release }} tasks are failing"
+        description: "The {{ $labels.release }} deployment has a high task failure rate."
 
     # This alert depends on the scheduler_heartbeat metric being a counter.
     # The type filter here was introduced in 0.7.0, so we don't trigger alerts for
@@ -114,8 +114,8 @@ alerts:
         tier: airflow
         component: scheduler
       annotations:
-        summary: "{{ $labels.deployment }} scheduler is unhealthy"
-        description: "The {{ $labels.deployment }} scheduler's heartbeat has dropped below the acceptable rate."
+        summary: "{{ $labels.release }} scheduler is unhealthy"
+        description: "The {{ $labels.release }} scheduler's heartbeat has dropped below the acceptable rate."
 
     - alert: AirflowPodQuota
       expr: (sum(kube_resourcequota{resource="pods", type="used", namespace=~".*-.*-.*-[0-9]{4}"}) / sum(kube_resourcequota{resource="pods", type="hard", namespace=~".*-.*-.*-[0-9]{4}"})*100) > 95
@@ -124,8 +124,8 @@ alerts:
         tier: airflow
         component: deployment
       annotations:
-        summary: "{{ $labels.deployment }} is near its pod quota"
-        description: "{{ $labels.deployment }} has been using over 95% of it's pod quota for over 10 minutes."
+        summary: "{{ $labels.release }} is near its pod quota"
+        description: "{{ $labels.release }} has been using over 95% of it's pod quota for over 10 minutes."
 
     - alert: AirflowCPUQuota
       expr: (sum(kube_resourcequota{resource="limits.cpu", type="used", namespace=~".*-.*-.*-[0-9]{4}"}) / sum(kube_resourcequota{resource="limits.cpu", type="hard", namespace=~".*-.*-.*-[0-9]{4}"})*100) > 95
@@ -134,8 +134,8 @@ alerts:
         tier: airflow
         component: deployment
       annotations:
-        summary: "{{ $labels.deployment }} is near its cpu quota"
-        description: "{{ $labels.deployment }} has been using over 95% of it's cpu quota for over 10 minutes."
+        summary: "{{ $labels.release }} is near its cpu quota"
+        description: "{{ $labels.release }} has been using over 95% of it's cpu quota for over 10 minutes."
 
     - alert: AirflowMemoryQuota
       expr: (sum(kube_resourcequota{resource="limits.memory", type="used", namespace=~".*-.*-.*-[0-9]{4}"}) / sum(kube_resourcequota{resource="limits.memory", type="hard", namespace=~".*-.*-.*-[0-9]{4}"})*100) > 95
@@ -144,5 +144,5 @@ alerts:
         tier: airflow
         component: deployment
       annotations:
-        summary: "{{ $labels.deployment }} is near its memory quota"
-        description: "{{ $labels.deployment }} has been using over 95% of it's memory quota for over 10 minutes."
+        summary: "{{ $labels.release }} is near its memory quota"
+        description: "{{ $labels.release }} has been using over 95% of it's memory quota for over 10 minutes."
