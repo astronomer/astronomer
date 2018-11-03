@@ -1,5 +1,5 @@
 name: grafana
-version: 0.7.0-alpha.11
+version: 0.7.0-alpha.12
 description: Helm chart to deploy the Astronomer Platform Grafana module
 keywords:
   - astronomer

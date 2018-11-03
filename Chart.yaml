@@ -1,6 +1,6 @@
 name: astronomer
-version: 0.7.0-alpha.11
-appVersion: 0.7.0-alpha.11
+version: 0.7.0-alpha.12
+appVersion: 0.7.0-alpha.12
 description: Helm chart to deploy the Astronomer Platform
 keywords:
   - astronomer
