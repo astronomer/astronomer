@@ -90,6 +90,7 @@ alerts:
       labels:
         tier: airflow
         component: deployment
+        deployment: "{{ $labels.release }}"
       annotations:
         summary: "{{ $labels.release }} deployment is unhealthy"
         description: "The {{ $labels.release }} deployment is not completely available."
@@ -100,9 +101,10 @@ alerts:
       labels:
         tier: airflow
         component: scheduler
+        deployment: "{{ $labels.deployment }}"
       annotations:
-        summary: "{{ $labels.release }} tasks are failing"
-        description: "The {{ $labels.release }} deployment has a high task failure rate."
+        summary: "{{ $labels.deployment }} tasks are failing"
+        description: "The {{ $labels.deployment }} deployment has a high task failure rate."
 
     # This alert depends on the scheduler_heartbeat metric being a counter.
     # The type filter here was introduced in 0.7.0, so we don't trigger alerts for
@@ -113,36 +115,40 @@ alerts:
       labels:
         tier: airflow
         component: scheduler
+        deployment: "{{ $labels.deployment }}"
       annotations:
-        summary: "{{ $labels.release }} scheduler is unhealthy"
-        description: "The {{ $labels.release }} scheduler's heartbeat has dropped below the acceptable rate."
+        summary: "{{ $labels.deployment }} scheduler is unhealthy"
+        description: "The {{ $labels.deployment }} scheduler's heartbeat has dropped below the acceptable rate."
 
     - alert: AirflowPodQuota
-      expr: (sum(kube_resourcequota{resource="pods", type="used", namespace=~".*-.*-.*-[0-9]{4}"}) / sum(kube_resourcequota{resource="pods", type="hard", namespace=~".*-.*-.*-[0-9]{4}"})*100) > 95
+      expr: (sum by (release) (kube_resourcequota{resource="pods", type="used", namespace=~".*-.*-.*-[0-9]{4}"}) / sum by (release) (kube_resourcequota{resource="pods", type="hard", namespace=~".*-.*-.*-[0-9]{4}"})*100) > 95
       for: 10m
       labels:
         tier: airflow
         component: deployment
+        deployment: "{{ $labels.release }}"
       annotations:
         summary: "{{ $labels.release }} is near its pod quota"
-        description: "{{ $labels.release }} has been using over 95% of it's pod quota for over 10 minutes."
+        description: "{{ $labels.release }} has been using over 95% of its pod quota for over 10 minutes."
 
-    - alert: AirflowCPUQuota
-      expr: (sum(kube_resourcequota{resource="limits.cpu", type="used", namespace=~".*-.*-.*-[0-9]{4}"}) / sum(kube_resourcequota{resource="limits.cpu", type="hard", namespace=~".*-.*-.*-[0-9]{4}"})*100) > 95
-      for: 10m
-      labels:
-        tier: airflow
-        component: deployment
-      annotations:
-        summary: "{{ $labels.release }} is near its cpu quota"
-        description: "{{ $labels.release }} has been using over 95% of it's cpu quota for over 10 minutes."
+    # - alert: AirflowCPUQuota
+    #   expr: (sum by (release) (kube_resourcequota{resource="limits.cpu", type="used", namespace=~".*-.*-.*-[0-9]{4}"}) / sum by (release) (kube_resourcequota{resource="limits.cpu", type="hard", namespace=~".*-.*-.*-[0-9]{4}"})*100) > 95
+    #   for: 10m
+    #   labels:
+    #     tier: airflow
+    #     component: deployment
+    #     deployment: "{{ $labels.release }}"
+    #   annotations:
+    #     summary: "{{ $labels.release }} is near its cpu quota"
+    #     description: "{{ $labels.release }} has been using over 95% of its cpu quota for over 10 minutes."
 
-    - alert: AirflowMemoryQuota
-      expr: (sum(kube_resourcequota{resource="limits.memory", type="used", namespace=~".*-.*-.*-[0-9]{4}"}) / sum(kube_resourcequota{resource="limits.memory", type="hard", namespace=~".*-.*-.*-[0-9]{4}"})*100) > 95
-      for: 10m
-      labels:
-        tier: airflow
-        component: deployment
-      annotations:
-        summary: "{{ $labels.release }} is near its memory quota"
-        description: "{{ $labels.release }} has been using over 95% of it's memory quota for over 10 minutes."
+    # - alert: AirflowMemoryQuota
+    #   expr: (sum by (release) (kube_resourcequota{resource="limits.memory", type="used", namespace=~".*-.*-.*-[0-9]{4}"}) / sum by (release) (kube_resourcequota{resource="limits.memory", type="hard", namespace=~".*-.*-.*-[0-9]{4}"})*100) > 95
+    #   for: 10m
+    #   labels:
+    #     tier: airflow
+    #     component: deployment
+    #     deployment: "{{ $labels.release }}"
+    #   annotations:
+    #     summary: "{{ $labels.release }} is near its memory quota"
+    #     description: "{{ $labels.release }} has been using over 95% of its memory quota for over 10 minutes."

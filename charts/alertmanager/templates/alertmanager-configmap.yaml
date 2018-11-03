@@ -19,16 +19,13 @@ data:
       repeat_interval: 3h
       receiver: default-receiver
       routes:
-{{- if .Values.receivers.platform }}
-      - receiver: platform-receiver
+      - receiver: {{ if .Values.receivers.platform }} platform-receiver {{ else }} default-receiver {{ end }}
         match_re:
           tier: platform
-{{- end }}
-{{- if .Values.receivers.airflow }}
-      - receiver: airflow-receiver
+      - receiver: {{ if .Values.receivers.airflow }} airflow-receiver {{ else }} default-receiver {{ end }}
+        group_by: [deployment, alertname]
         match_re:
           tier: airflow
-{{- end }}
     receivers:
     - name: default-receiver
       webhook_configs:
