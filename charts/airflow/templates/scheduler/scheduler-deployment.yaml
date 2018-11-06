@@ -48,8 +48,8 @@ spec:
       # Airflow scheduler with LocalExecutor doesn't handle SIGINT well. Hard-coding low
       # number for now.
       terminationGracePeriodSeconds: 10
-      serviceAccountName: {{ .Release.Name }}-worker-serviceaccount
     {{- end }}
+      serviceAccountName: {{ .Release.Name }}-scheduler-serviceaccount
       securityContext:
         runAsUser: {{ .Values.uid }}
         fsGroup: {{ .Values.gid }}
