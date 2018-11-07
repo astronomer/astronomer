@@ -38,17 +38,17 @@ global:
   prometehus:
     enabled: true
 
-  elasticsearch:
-    enabled: true
-
-  kibana:
-    enabled: true
-
-  fluentd:
-    enabled: true
-
   kubeState:
     enabled: true
+
+  elasticsearch:
+    enabled: false
+
+  kibana:
+    enabled: false
+
+  fluentd:
+    enabled: false
 
   airflow:
     enabled: false
@@ -157,11 +157,11 @@ prometheus:
   # Configure resources
   resources:
     requests:
-      cpu: "250m"
-      memory: "512Mi"
+      cpu: "1000m"
+      memory: "4Gi"
     limits:
-      cpu: "500m"
-      memory: "1024Mi"
+      cpu: "1000m"
+      memory: "4Gi"
 
 
 #################################
