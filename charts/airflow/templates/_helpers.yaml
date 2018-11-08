@@ -9,6 +9,23 @@
     value: {{ $config.value | quote }}
     {{- end }}
   {{- end }}
+  # Dynamically created secret envs
+  {{- range $i, $config := .Values.secret }}
+  - name: {{ $config.envName }}
+    valueFrom:
+      secretKeyRef:
+        name: {{ $config.secretName }}
+        key: {{ default "value" $config.secretKey }}
+  {{- end }}
+  {{- if eq .Values.executor "KubernetesExecutor" }}
+    {{- range $i, $config := .Values.secret }}
+  - name: AIRFLOW__KUBERNETES_SECRETS__{{ $config.envName }}
+    valueFrom:
+      secretKeyRef:
+        name: {{ $config.secretName }}
+        key: {{ default "value" $config.secretKey }}
+    {{- end }}
+  {{ end }}
   # Hard Coded Airflow Envs
   - name: AIRFLOW__SCHEDULER__STATSD_ON
     value: "True"
@@ -32,23 +49,6 @@
   - name: AIRFLOW__CELERY__DEFAULT_QUEUE
     value: "celery"
   {{- end }}
-  # Dynamically created secret envs
-  {{- range $i, $config := .Values.secret }}
-  - name: {{ $config.name }}
-    valueFrom:
-      secretKeyRef:
-        name: {{ $config.value }}
-        key: {{ default "value" $config.key }}
-  {{- end }}
-  {{- if eq .Values.executor "KubernetesExecutor" }}
-    {{- range $i, $config := .Values.secret }}
-  - name: AIRFLOW__KUBERNETES_SECRETS__{{ $config.name }}
-    valueFrom:
-      secretKeyRef:
-        name: {{ $config.value }}
-        key: {{ default "value" $config.key }}
-    {{- end }}
-  {{ end }}
   # Hard Coded Secret Envs
   - name: AIRFLOW__SCHEDULER__STATSD_HOST
     value: "{{ .Release.Name }}-statsd"

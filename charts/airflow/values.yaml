@@ -85,7 +85,13 @@ images:
     pullPolicy: IfNotPresent
 
 # Environment variables for all airflow containers
-env:
+env: []
+
+# Secrets for all airflow containers
+secret: []
+# - envName: ""
+#   secretName: ""
+#   secretKey: ""
 
 # Astronomer Airflow database config
 data:
