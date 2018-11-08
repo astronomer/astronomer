@@ -1,31 +1,5 @@
-{{/* Airflow environment variables */}}
-{{- define "airflow_environment" }}
-  # Dynamically created environment variables
-  {{- range $i, $config := .Values.env }}
-  - name: {{ $config.name }}
-    value: {{ $config.value | quote }}
-    {{- if eq $.Values.executor "KubernetesExecutor" }}
-  - name: AIRFLOW__KUBERNETES_SECRETS__{{ $config.name }}
-    value: {{ $config.value | quote }}
-    {{- end }}
-  {{- end }}
-  # Dynamically created secret envs
-  {{- range $i, $config := .Values.secret }}
-  - name: {{ $config.envName }}
-    valueFrom:
-      secretKeyRef:
-        name: {{ $config.secretName }}
-        key: {{ default "value" $config.secretKey }}
-  {{- end }}
-  {{- if eq .Values.executor "KubernetesExecutor" }}
-    {{- range $i, $config := .Values.secret }}
-  - name: AIRFLOW__KUBERNETES_SECRETS__{{ $config.envName }}
-    valueFrom:
-      secretKeyRef:
-        name: {{ $config.secretName }}
-        key: {{ default "value" $config.secretKey }}
-    {{- end }}
-  {{ end }}
+{{/* Standard Airflow environment variables */}}
+{{- define "standard_airflow_environment" }}
   # Hard Coded Airflow Envs
   - name: AIRFLOW__SCHEDULER__STATSD_ON
     value: "True"
@@ -74,6 +48,36 @@
         name: {{ .Release.Name }}-broker-url
         key: connection
   {{- end }}
+{{- end }}
+
+{{/* User defined Airflow environment variables */}}
+{{- define "custom_airflow_environment" }}
+  # Dynamically created environment variables
+  {{- range $i, $config := .Values.env }}
+  - name: {{ $config.name }}
+    value: {{ $config.value | quote }}
+    {{- if eq $.Values.executor "KubernetesExecutor" }}
+  - name: AIRFLOW__KUBERNETES_SECRETS__{{ $config.name }}
+    value: {{ $config.value | quote }}
+    {{- end }}
+  {{- end }}
+  # Dynamically created secret envs
+  {{- range $i, $config := .Values.secret }}
+  - name: {{ $config.envName }}
+    valueFrom:
+      secretKeyRef:
+        name: {{ $config.secretName }}
+        key: {{ default "value" $config.secretKey }}
+  {{- end }}
+  {{- if eq .Values.executor "KubernetesExecutor" }}
+    {{- range $i, $config := .Values.secret }}
+  - name: AIRFLOW__KUBERNETES_SECRETS__{{ $config.envName }}
+    valueFrom:
+      secretKeyRef:
+        name: {{ $config.secretName }}
+        key: {{ default "value" $config.secretKey }}
+    {{- end }}
+  {{ end }}
 {{- end }}
 
 {{ define "airflow_url" -}}

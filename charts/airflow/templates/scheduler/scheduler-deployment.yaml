@@ -70,7 +70,8 @@ spec:
               mountPath: {{ template "airflow_logs" . }}
         {{- end }}
           env:
-          {{- include "airflow_environment" . | indent 10 }}
+          {{- include "custom_airflow_environment" . | indent 10 }}
+          {{- include "standard_airflow_environment" . | indent 10 }}
       {{- if $local }}
         - name: {{ .Release.Name }}-scheduler-logs
           image: {{ template "airflow_image" . }}
@@ -82,7 +83,8 @@ spec:
             - name: logs
               mountPath: {{ template "airflow_logs" . }}
           env:
-          {{- include "airflow_environment" . | indent 10 }}
+          {{- include "custom_airflow_environment" . | indent 10 }}
+          {{- include "standard_airflow_environment" . | indent 10 }}
         - name: {{ .Release.Name }}-worker-gc
           image: {{ template "airflow_image" . }}
           args: ["crond", "-f", "-d", "0"]
