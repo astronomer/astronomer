@@ -7,14 +7,14 @@
     value: "9125"
   - name: AIRFLOW__SCHEDULER__STATSD_PREFIX
     value: "airflow"
+  - name: AIRFLOW__SCHEDULER__STATSD_HOST
+    value: "{{ .Release.Name }}-statsd"
   - name: AIRFLOW__WEBSERVER__BASE_URL
     value: {{ printf "https://%s" (include "airflow_url" .) | quote }}
   - name: AIRFLOW__KUBERNETES__NAMESPACE
     value: {{ .Release.Namespace }}
   - name: AIRFLOW__CORE__LOAD_EXAMPLES
     value: "False"
-  - name: ASTRONOMER__AIRFLOW__WORKER_LOG_RETENTION
-    value: "15"
   - name: AIRFLOW__CORE__EXECUTOR
     value: {{ .Values.executor | quote }}
   - name: AIRFLOW__SCHEDULER__SCHEDULER_HEARTBEAT_SEC
@@ -23,9 +23,9 @@
   - name: AIRFLOW__CELERY__DEFAULT_QUEUE
     value: "celery"
   {{- end }}
+  - name: ASTRONOMER__AIRFLOW__WORKER_LOG_RETENTION
+    value: "15"
   # Hard Coded Secret Envs
-  - name: AIRFLOW__SCHEDULER__STATSD_HOST
-    value: "{{ .Release.Name }}-statsd"
   - name: AIRFLOW__CORE__FERNET_KEY
     valueFrom:
       secretKeyRef:
