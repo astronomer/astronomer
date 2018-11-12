@@ -1,0 +1,19 @@
+{
+  "name": "astronomer_docs",
+  "version": "1.0.0",
+  "description": "Documentation for Astronomer",
+  "main": "index.js",
+  "scripts": {
+    "start": "npm start"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/astronomerio/astronomer.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/astronomerio/astronomer/issues"
+  },
+  "homepage": "https://github.com/astronomerio/astronomer#readme"
+}
