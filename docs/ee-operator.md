@@ -1,16 +1,15 @@
 ---
-title: "Astronomer EE DevOps"
-description: "Logging in Astronomer Enterprise."
+title: "DevOps"
+description: "Dealing with Kubernetes Pods and Grafana in Astronomer Enterprise."
 date: 2018-10-12T00:00:00.000Z
 slug: "ee-operator"
-menu: ["Enterprise Edition"]
-position: [8]
+menu: ["Administration"]
+position: [5]
 ---
-
 
 *Note*: This doc assumes `kubectl` access to the dedicated cluster that is running Astronomer Enterprise edition.
 
-## Astronomer Pods.
+## Astronomer Pods
 
 Running `kubectl get pods --all-namepsaces` will return the Astronomer core platform pods, along with pods specific to each Airflow deployment.
 
@@ -70,7 +69,7 @@ kubectl delete po/lunar-nuclear-3725-worker-0 --force --grace-period=0 -n astron
 
 ### Deleting Volumes
 
-Data that persists across deploys (e.g. logs, grafana metrics, etc.) are stored in persistent volumes. If pods that push data to those volumes are stuck in a `CrashLoopBackff` state, deleting the volumes might fix them.
+Data that persists across deploys (e.g. logs, Grafana metrics, etc.) are stored in persistent volumes. If pods that push data to those volumes are stuck in a `CrashLoopBackff` state, deleting the volumes might fix them.
 ```
 kubectl get pvc --all-namespaces
 
@@ -114,7 +113,7 @@ When a pod's status is `Unscheduleable` it means Kubernetes is having trouble al
 
 Resource quotas determine how many resources (CPU and RAM) are reserved for a particular namespace on a Kubernetes cluster. Since each airflow deployment runs in its own namespace, quotas can be modified for _each_ Airflow instance.
 
-The first thing to try when a pod is unscheduleable is to make sure the resource quoata for that namespace lines up with what is being requested.
+The first thing to try when a pod is unscheduleable is to make sure the resource quota for that namespace lines up with what is being requested.
 
 ```
 `kubectl get resourcequotas`
