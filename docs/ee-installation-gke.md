@@ -30,7 +30,7 @@ Before running the Astronomer install command you must:
 5. [Obtain SSL](/docs/ee-installation-ssl)
 6. [Setup DNS](/docs/ee-installation-dns)
 7. [Install Helm and Tiller](/docs/ee-installation-helm)
-8. [Set a few Kubernetes secrets](/docs/installation-k8s-secrets)
+8. [Set a few Kubernetes secrets](/docs/ee-installation-k8s-secrets)
 9. [Create Google OAuth Creds ](/docs/ee-installation-google-oauth)
 10.[Build your config.yaml](/docs/ee-installation-config)
 
