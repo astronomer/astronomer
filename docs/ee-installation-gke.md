@@ -23,7 +23,7 @@ You will need to be able to:
 
 Before running the Astronomer install command you must:
 
-1. [Select a base domain](/guides/ee-installation-base-domain)
+1. [Select a base domain](/docs/ee-installation-base-domain)
 2. [Get your machine setup with needed dev tools](/docs/ee-installation-dev-env)
 3. [Setup GCP](/docs/ee-installation-gcp-setup)
 4. [Get a Postgres server running](/docs/ee-installation-postgres)
