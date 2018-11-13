@@ -21,14 +21,14 @@ You will need to be able to:
 
 Before running the Astronomer install command you must:
 
-1. [Select a base domain](/guides/install-base-domain)
-1. [Get your machine setup with needed dev tools](/guides/install-dev-env)
-1. [Get a Postgres server running](/guides/install-postgres)
-1. [Obtain SSL](/guides/install-ssl)
-1. [Setup DNS](/guides/install-dns)
-1. [Install Helm and Tiller](/guides/install-helm)
-1. [Set a few Kubernetes secrets](/guides/install-k8s-secrets)
-1. [Build your config.yaml](/guides/install-config)
+1. [Select a base domain](/docs/ee-installation-base-domain)
+1. [Get your machine setup with needed dev tools](/docs/ee-installation-dev-env)
+1. [Get a Postgres server running](/docs/ee-installation-postgres)
+1. [Obtain SSL](/docs/ee-installation-ssl)
+1. [Setup DNS](/docs/ee-installation-dns)
+1. [Install Helm and Tiller](/docs/ee-installation-helm)
+1. [Set a few Kubernetes secrets](/docs/ee-installation-k8s-secrets)
+1. [Build your config.yaml](/docs/ee-installation-config)
 
 ## Install Astronomer
 
