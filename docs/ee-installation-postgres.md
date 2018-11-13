@@ -20,6 +20,8 @@ If using Cloud SQL to host your postgres DB in Google Cloud, you can use the SQL
 ### RDS
 If using RDS to host your postgres instance, ensure your kubernetes cluster can communicate with your RDS postgres instance. This may require modyfying your security groups and VPC rules to ensure access. More information about setting up your RDS Postgres can be found [here](https://aws.amazon.com/rds/postgresql/)
 
+
+### Stable Postgres
 For testing purposes, you can quickly get started using the PostgreSQL helm chart.
 
 Run:
