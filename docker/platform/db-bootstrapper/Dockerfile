@@ -35,6 +35,7 @@ RUN apk update && \
 		python3-dev \
 	&& apk add --no-cache \
 		python3 \
+	&& pip3 install --no-cache-dir --upgrade pip==18.1 \
 	&& pip3 install "${REPO_URL}"
 
 # Run the bootstrapper
