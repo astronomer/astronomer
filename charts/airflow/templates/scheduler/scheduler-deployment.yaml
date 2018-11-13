@@ -59,7 +59,7 @@ spec:
       {{- end }}
       containers:
         - name: {{ .Release.Name }}-scheduler
-          image: {{ include "airflow_image" . }}
+          image: {{ template "airflow_image" . }}
           imagePullPolicy: {{ .Values.images.airflow.pullPolicy }}
           args: ["airflow", "scheduler"]
           resources:
