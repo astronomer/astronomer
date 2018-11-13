@@ -27,6 +27,8 @@ echo $PGPASSWORD
 PGPASSWORD=$(kubectl get secret --namespace astronomer pod-name-postgresql -o jsonpath="{.data.postgresql-password}" | base64 --decode; echo)
 ```
 
+**Note:** If your postgres password contains special characters, these may cause issues when the full postgres connection is parsed. To avoid these issues, you may update the password to include only alpha-numeric characters, or escape your special characters. More about URL escape characters can be found [here](https://www.werockyourweb.com/url-escape-characters/).
+
 To set the secret, run:
 
 ```shell
