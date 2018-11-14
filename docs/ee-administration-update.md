@@ -51,4 +51,4 @@ There are some cases where Helm cannot do an automatic upgrade which can be reso
 
 ## Astronomer Roadmap
 
-For more about future updates, check out our [Astronomer Platform Roadmap](https://www.astronomer.io/docs/roadmap)
+For more about future updates, check out our [Astronomer Platform Roadmap](https://www.astronomer.io/docs/roadmap/).
