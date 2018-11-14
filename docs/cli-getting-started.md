@@ -7,7 +7,7 @@ menu: ["Astro CLI"]
 position: [2]
 ---
 
-If you've gotten the Astronomer CLI installed and want to know what's next, you're in teh right place.
+If you've gotten the Astronomer CLI installed and want to know what's next, you're in the right place.
 
 Here are some next steps:
 
@@ -66,7 +66,7 @@ This will generate a skeleton project directory:
 Once you've run `astro airflow init` and start developing your DAGs, you can run `astro airflow start` to build your image.
 
 - This will build a base image using Alpine Linux and from Astronomer's fork of Apache-Airflow.
-- The build process will include [everything in your project directory](https://github.com/astronomerio/astronomer/blob/master/docker/platform/airflow/onbuild/Dockerfile#L32). This makes it easy to include any shell scripts, static files, or anything else you want to include in your code.
+- The build process will include everything in your project directory. This makes it easy to include any shell scripts, static files, or anything else you want to include in your code.
 
 ### For WSL (Windows Subsystem for Linux) Users
 
