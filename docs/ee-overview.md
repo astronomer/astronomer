@@ -18,15 +18,14 @@ centralized Prometheus and Grafana.
 
 ## Easy Installation
 
-You can self-install Asstronomer onto Kubernetes by following our
-[install guides](https://www.astronomer.io/docs/ee-getting-started/).
+You can self-install Asstronomer onto Kubernetes by following our [install guides](https://www.astronomer.io/docs/ee-getting-started/).
 
 When you install the Astronomer platform, a number of components
 are deployed including NGINX, Prometheus, Grafana, a GraphQL API
 (Houston), a React UI (Orbit), and a private Docker Registry (used
 in the DAG deployment process).
 
-Helm charts here: https://github.com/astronomerio/helm.astronomer.io
+[Helm charts here](https://github.com/astronomerio/helm.astronomer.io)
 
 ## Easy DAG Deployment
 

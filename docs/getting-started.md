@@ -45,6 +45,7 @@ Via `curl`:
 If you'd like to install a previous version of our CLI, the following command should do the trick:
 
 Via `curl`:
+
    ```
     curl -sSL https://install.astronomer.io | sudo bash -s -- [TAGNAME]
    ```
@@ -115,7 +116,7 @@ This will generate some skeleton files:
 └── requirements.txt #For any python packages
 ```
 
-For more specific guidance on working with our CLI, go [here](https://github.com/astronomerio/airflow-guides/blob/master/guides/astro-cli.md) or [here](https://github.com/astronomerio/astro-cli/blob/master/README.md).
+For more specific guidance on working with our CLI, go [here](https://astronomer.io/docs/cli-getting-started).
 
 ## Customizing your image
 
@@ -146,7 +147,7 @@ To verify that you're set, you can run: `docker ps`
 
 If you're a previous user of Astronomer Cloud or have a pre-existing Airflow instance, migrating your DAGs should be straightforward.
 
-__Tips & Gotchas:__
+## Tips & Gotchas:
 
 - Astronomer Cloud runs Python 3.6.6. If you're running a different version, don't sweat it. Our CLI spins up a containerized environment, so you don't need to change anything on your machine if you don't want to.
 
@@ -225,7 +226,7 @@ If you do happen to be behind, you can run `astro upgrade` or the curl command l
 
 ### When will Astronomer run Airflow 1.10?
 
-We're excited about Airflow 1.10, and we have it slated to go live in Astronomer v0.9 (check out our roadmap [here](https://www.astronomer.io/guides/astronomer-roadmap/)).
+We're excited about Airflow 1.10, and we have it slated to go live in Astronomer v0.9 (check out our roadmap [here](https://www.astronomer.io/docs/roadmap/).
 
 To be notified, sign up for our mailing list (for now, you can find it at the footer on our [blog](https://www.astronomer.io/blog/)).
 

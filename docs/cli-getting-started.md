@@ -11,11 +11,11 @@ If you've gotten the Astronomer CLI installed and want to know what's next, you'
 
 Here are some next steps:
 
-**1. Confirm the install worked. Open a terminal and run:**
+## 1. Confirm the install worked. Open a terminal and run:
 
  ```
-  $ astro
-  ```
+astro
+```
 
 You should see something like this:
 
@@ -41,11 +41,11 @@ Flags:
   -h, --help   help for astro
 ```
 
-**2. Create a project:**
+## 2. Create a project:**
 
  ```
-$ mkdir hello-astro && cd hello-astro
-$ astro airflow init
+mkdir hello-astro && cd hello-astro
+astro airflow init
  ```
 
 This will generate a skeleton project directory:
@@ -61,7 +61,7 @@ This will generate a skeleton project directory:
 └── requirements.txt #For any python packages
 ```
 
-**3. Start Airflow**
+## *3. Start Airflow**
 
 Once you've run `astro airflow init` and start developing your DAGs, you can run `astro airflow start` to build your image.
 
@@ -144,17 +144,17 @@ The CLI includes a help command, descriptions, as well as usage info for subcomm
 To see the help overview:
 
 ```
-$ astro help
+astro help
 ```
 
 Or for subcommands:
 
 ```
-$ astro airflow --help
+astro airflow --help
 ```
 
 ```
-$ astro airflow deploy --help
+astro airflow deploy --help
 ```
 
 ## Using Airflow CLI Commands

@@ -32,6 +32,7 @@ The bottom of the Query Editor (left half) panel has another smaller panel with 
 On the far right, you will find a small tab with the label "SCHEMA". Clicking this tab will bring up the schema explorer which can allow you to discover various queries and mutations available to the user. This is a great place to start when first becoming acquainted with the Houston API as it allows you to explore what is possible.
 
 ## Authenticating Against The API
+
 This guide assumes you have already created a user (via the CLI or UI) and have basic familiarity with [querying a graphql API](https://graphql.org/learn/queries/). Once you have done that, the first step is to generate an authentication token. You can use the following query as a template to get started.
 
 ```graphql
@@ -60,13 +61,11 @@ If your user and account have been setup properly, you can expect to receive an 
 
 We now need to pass this authentication token through Playground to the houston-api in order to prove to houston that we have the proper authorization to perform various actions. You can pass this token into the Query Headers panel on the bottom left. Click "HEADERS" and copy and paste your token into the header so that it looks like the example below.
 
-
 ```json
 {"authorization": "PASTE_TOKEN_HERE"}
 ```
 
 You are now able to perform actions against the API which require authentication.
-
 
 ## Example Queries
 
@@ -96,7 +95,6 @@ query GetWorkspaces2 {
   }
 }
 ```
-
 
 ### Listing A Workspace's Deployments
 
@@ -128,9 +126,7 @@ query GetDeployments {
 }
 ```
 
-
 ### Modifying Objects with A Mutation
-
 
 In this example we create a new Airflow deployment.
 
@@ -159,7 +155,6 @@ mutation UpdateDeployment {
   }
 }
 ```
-
 
 ## Queries
 

@@ -69,7 +69,6 @@ Here’s our version of an EKS getting started guide: http://enterprise.astronom
 
 Yes, you could! Currently, we have the domain setup with a wildcard CNAME record that points to the ELB DNS route. Swapping out domains would just require adding that CNAME record to your DNS, and recreating the `astronomer-tls` secret to use the updated wildcard certificate for your domain.
 
-
 ### How does Astronomer command the cluster? (Add and remove pods, etc.)
 
 You'll need a role for EKS to manage the cluster, which will be done through Kubectl. Kubectl is the command line interface that can manipulate the cluster as needed, and setup helm/tiller services to deploy the astronomer platform. [Our Kubectl guide](https://www.astronomer.io/guides/kubectl/) might help.

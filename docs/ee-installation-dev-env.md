@@ -31,7 +31,7 @@ to switch context between clusters.
 * [Install Helm CLI](https://docs.helm.sh/using_helm/#installing-helm), `helm` (On Mac: `brew install kubernetes-helm`)
   You may need to run `helm repo update` and/or `helm init --client-only`
   
-  * Note: follow these instructions: https://docs.helm.sh/using_helm/#tiller-and-role-based-access-control if you run into this error: `User "system:serviceaccount:kube-system:default" cannot get namespaces in the namespace "<your-namespace>"`
+**Note**: follow these instructions: https://docs.helm.sh/using_helm/#tiller-and-role-based-access-control if you run into this error: `User "system:serviceaccount:kube-system:default" cannot get namespaces in the namespace "<your-namespace>"`
   
 * Download Astronomer helm charts locally
 

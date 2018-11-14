@@ -90,7 +90,7 @@ centralized Prometheus and Grafana.
 ## Easy Installation
 
 You can self-install Asstronomer onto Kubernetes by following our
-[install guides](https://www.astronomer.io/guides/install/).
+[install guides](https://www.astronomer.io/docs/ee-overview/).
 
 When you install the Astronomer platform, a number of components
 are deployed including NGINX, Prometheus, Grafana, a GraphQL API
@@ -117,10 +117,10 @@ added to [ENV](https://docs.docker.com/engine/reference/builder/#env).
 
 ## Authentication Options
 
-* Local (username/password)
-* Auth0 (supports SAML, Active Directory, other SSO)
-* Google
-* Github
+- Local (username/password)
+- Auth0 (supports SAML, Active Directory, other SSO)
+- Google
+- Github
 
 ## Astro CLI
 
