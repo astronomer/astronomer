@@ -25,13 +25,13 @@ In your docker settings, under general, enable the `Expose daemon on tcp://local
 
 In your WSL termninal, follow the Docker CE for Ubuntu install guide here: [Install Docker CE for Ubuntu](https://docs.docker.com/install/linux/docker-ce/ubuntu/)
 
-Docker wil lnot run in the WSL instance, however this will give us access to the docker cli through our linux environment. 
+Docker wil lnot run in the WSL instance, however this will give us access to the docker cli through our linux environment.
 
 ## Step 4. Connect your WSL instance to Docker on Windows
 
 We now need to point our docker host route to the remote docker daemon running in Windows. To do this we need to add an export path to our `~/.bashrc` file.
 
-Run: `echo "export DOCKER_HOST=tcp://0.0.0.0:2375" >> ~/.bashrc && source ~/.bashrc` to add a new line to your bashrc file pointing the docker host to your exposed  daemon and re-source your bashrc file. 
+Run: `echo "export DOCKER_HOST=tcp://0.0.0.0:2375" >> ~/.bashrc && source ~/.bashrc` to add a new line to your bashrc file pointing the docker host to your exposed  daemon and re-source your bashrc file.
 
 ## Step 5. Custom mount points
 
@@ -47,7 +47,7 @@ Then bind this mount point:
 
 `sudo  mount --bind /mnt/c /c`
 
-You're all set. You can now run `docker run hello-world` through your WSL instance to ensure everything works as expected. Keep in mind you will need to bind your mount point each time you start up a new WSL instance. 
+You're all set. You can now run `docker run hello-world` through your WSL instance to ensure everything works as expected. Keep in mind you will need to bind your mount point each time you start up a new WSL instance.
 
 You can now setup the Astronomer CLI and begin deploying DAGs following our guide here: [Astronomer CLI](/guides/cli)
 
@@ -71,7 +71,7 @@ INFO[0000] [0/3] [postgres]: Starting
 Pulling postgres (postgres:10.1-alpine)...
 panic: runtime error: index out of range
 goroutine 52 [running]:
-github.com/astronomerio/astro-cli/vendor/github.com/Nvveen/Gotty.readTermInfo(0xc4202e0760, 0x1e, 0x0, 0x0, 0x0)
+github.com/astronomer/astro-cli/vendor/github.com/Nvveen/Gotty.readTermInfo(0xc4202e0760, 0x1e, 0x0, 0x0, 0x0)
 ....
 ```
 

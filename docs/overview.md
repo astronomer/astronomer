@@ -97,7 +97,7 @@ are deployed including NGINX, Prometheus, Grafana, a GraphQL API
 (Houston), a React UI (Orbit), and a private Docker Registry (used
 in the DAG deployment process).
 
-Helm charts here: https://github.com/astronomerio/helm.astronomer.io
+Helm charts here: https://github.com/astronomer/helm.astronomer.io
 
 ## Easy DAG Deployment
 
@@ -124,29 +124,29 @@ added to [ENV](https://docs.docker.com/engine/reference/builder/#env).
 
 ## Astro CLI
 
-The [Astro CLI](https://github.com/astronomerio/astro-cli)
+The [Astro CLI](https://github.com/astronomer/astro-cli)
 helps you develop and deploy Airflow projects.
 
 ## Houston
 
-[Houston](https://github.com/astronomerio/houston-api) is a GraphQL
+[Houston](https://github.com/astronomer/houston-api) is a GraphQL
 API that serves as the source of truth for the Astronomer Platform.
 
 ## Commander
 
-[Commander](https://github.com/astronomerio/commander) is a  GRPC
+[Commander](https://github.com/astronomer/commander) is a  GRPC
 provisioning component of the Astronomer Platform. It is
 responsible for interacting with the underlying Kubernetes
 infrastructure layer.
 
 ## Orbit
 
-[Orbit](https://github.com/astronomerio/orbit-ui) is a GraphQL UI
+[Orbit](https://github.com/astronomer/orbit-ui) is a GraphQL UI
 that provides easy access to the capabilities of the Astronomer
 platform.
 
 ## dbBootstrapper
 
-[dbBootstrapper](https://github.com/astronomerio/db-bootstrapper)
+[dbBootstrapper](https://github.com/astronomer/db-bootstrapper)
 is a utility that initializes databases and create Kubernetes
 secrets, and runs automatically when an Airflow cluster is created.

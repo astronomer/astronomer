@@ -6,9 +6,6 @@ Docker images for deploying and running Astronomer Open Edition.
 The images are currently available on
 [DockerHub](https://hub.docker.com/u/astronomerinc/).
 
-Full documentation for using the images can be found
-[here](https://open.astronomer.io).
-
 ## Contents
 
 * The official Dockerfiles that build and install tagged releases of the
@@ -20,12 +17,9 @@ Full documentation for using the images can be found
 
 ## Contribute
 
-* Source Code: <https://github.com/astronomerio/astronomer>
-* Issue Tracker: <https://github.com/astronomerio/astronomer>
+* Source Code: <https://github.com/astronomer/astronomer>
+* Issue Tracker: <https://github.com/astronomer/astronomer>
 
 ## License
 
-The project is licensed under the Apache 2 license. For more information on the
-licenses for each of the individual Astronomer Platform components packaged in
-the images, please refer to the respective
-[Astronomer Platform documentation for each component](https://open.astronomer.io).
+The project is licensed under the Apache 2 license.

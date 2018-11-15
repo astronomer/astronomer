@@ -15,7 +15,7 @@ slug: "ee-installation-dev-env"
 * Ensure you have `helm` installed and updated. On mac it's `brew install kubernetes-helm`.
   You may need to run `helm repo update` and/or `helm init --client-only`.
 * Get `kubernetes admin` permission on your Google Cloud account
-* Download Astronomer helm charts locally `git clone git@github.com:astronomerio/helm.astronomer.io.git`
+* Download Astronomer helm charts locally `git clone git@github.com:astronomer/helm.astronomer.io.git`
 
 > Note: if you work with multiple Kubernetes clusters, `kubectx` is a nice utility
 to switch context between clusters.
@@ -30,13 +30,13 @@ to switch context between clusters.
 * [Install Kubernetes CLI](https://kubernetes.io/docs/tasks/tools/install-kubectl/), `kubectl` (On Mac: `brew install kubernetes-cli`)
 * [Install Helm CLI](https://docs.helm.sh/using_helm/#installing-helm), `helm` (On Mac: `brew install kubernetes-helm`)
   You may need to run `helm repo update` and/or `helm init --client-only`
-  
+
 **Note**: follow these instructions: https://docs.helm.sh/using_helm/#tiller-and-role-based-access-control if you run into this error: `User "system:serviceaccount:kube-system:default" cannot get namespaces in the namespace "<your-namespace>"`
-  
+
 * Download Astronomer helm charts locally
 
 	```shell
-	git clone git@github.com:astronomerio/helm.astronomer.io.git
+	git clone git@github.com:astronomer/helm.astronomer.io.git
 	cd helm.astronomer.io
 	git checkout <latest tag>
 	```

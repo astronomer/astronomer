@@ -88,7 +88,7 @@ INFO[0000] [0/3] [postgres]: Starting
 Pulling postgres (postgres:10.1-alpine)...
 panic: runtime error: index out of range
 goroutine 52 [running]:
-github.com/astronomerio/astro-cli/vendor/github.com/Nvveen/Gotty.readTermInfo(0xc4202e0760, 0x1e, 0x0, 0x0, 0x0)
+github.com/astronomer/astro-cli/vendor/github.com/Nvveen/Gotty.readTermInfo(0xc4202e0760, 0x1e, 0x0, 0x0, 0x0)
 ....
 ```
 
@@ -108,8 +108,8 @@ Is your image failing to build after running `astro airflow start`?
 
 Not sure what `packages` and `requirements` you need for your use case? Check out these examples.
 
-- [Snowflake](https://github.com/astronomerio/airflow-guides/tree/master/example_code/snowflake)
-- [Google Cloud](https://github.com/astronomerio/airflow-guides/tree/master/example_code/gcp)
+- [Snowflake](https://github.com/astronomer/airflow-guides/tree/master/example_code/snowflake)
+- [Google Cloud](https://github.com/astronomer/airflow-guides/tree/master/example_code/gcp)
 
 If image size isn't a concern, feel free to "throw the kitchen sink at it" with this list of packages:
 

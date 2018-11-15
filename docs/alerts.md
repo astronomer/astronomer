@@ -29,4 +29,4 @@ Available in Astronomer v0.7 and higher.
 | `ElasticsearchDiskUsage` | Elasticsearch high disk usage, has less than 10% disk space available. |
 | `IngessCertificateExpiration` | TLS Certificate expiring soon, expiring in less than a week. |
 
-View [full source code](https://github.com/astronomerio/helm.astronomer.io/blob/master/charts/prometheus/values.yaml#L41-L148) for alerts.
+View [full source code](https://github.com/astronomer/helm.astronomer.io/blob/master/charts/prometheus/values.yaml#L41-L148) for alerts.

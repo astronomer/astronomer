@@ -8,12 +8,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/astronomerio/astronomer.git"
+    "url": "git+https://github.com/astronomer/astronomer.git"
   },
   "author": "",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/astronomerio/astronomer/issues"
+    "url": "https://github.com/astronomer/astronomer/issues"
   },
-  "homepage": "https://github.com/astronomerio/astronomer#readme"
+  "homepage": "https://github.com/astronomer/astronomer#readme"
 }

@@ -6,7 +6,7 @@ slug: "release-notes"
 menu: ["Resources"]
 position: [1]
 ---
-We regularly publish all of our product release notes on [the Astronomer blog](http://astronomer.io/blog). See below for links to all of our historical product update blog post, but for a running and up-to-date list of changes to Astronomer, check out the [Chagelog on Github](https://github.com/astronomerio/astronomer/blob/master/CHANGELOG.md).
+We regularly publish all of our product release notes on [the Astronomer blog](http://astronomer.io/blog). See below for links to all of our historical product update blog post, but for a running and up-to-date list of changes to Astronomer, check out the [Chagelog on Github](https://github.com/astronomer/astronomer/blob/master/CHANGELOG.md).
 
 Initial product releases:
  - [Astronomer v0.2.0 Release](https://www.astronomer.io/blog/announcing-astronomer-enterprise-edition-0-2-0/)

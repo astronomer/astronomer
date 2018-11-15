@@ -27,11 +27,11 @@ To download the CLI, you'll need the following installed on your machine:
 - [Docker](https://www.docker.com/get-started)
 - [Go](https://golang.org/)
 
-### CLI Version Control 
+### CLI Version Control
 
 If you're ready to install our CLI, you're most likely looking for our latest version. If for any reason you need to run an earlier version, you can find the command below.
 
-#### Latest Version 
+#### Latest Version
 
 To download the latest version of our CLI, run the following command:
 
@@ -40,7 +40,7 @@ Via `curl`:
    curl -sSL https://install.astronomer.io | sudo bash
    ```
 
-#### Previous Version 
+#### Previous Version
 
 If you'd like to install a previous version of our CLI, the following command should do the trick:
 
@@ -87,7 +87,7 @@ INFO[0000] [0/3] [postgres]: Starting
 Pulling postgres (postgres:10.1-alpine)...
 panic: runtime error: index out of range
 goroutine 52 [running]:
-github.com/astronomerio/astro-cli/vendor/github.com/Nvveen/Gotty.readTermInfo(0xc4202e0760, 0x1e, 0x0, 0x0, 0x0)
+github.com/astronomer/astro-cli/vendor/github.com/Nvveen/Gotty.readTermInfo(0xc4202e0760, 0x1e, 0x0, 0x0, 0x0)
 ....
 ```
 
@@ -131,8 +131,8 @@ Our base image runs Alpine Linux, so it is very slim by default.
 If you are unfamiliar with Alpine Linux, look here for some examples of what
 you will need to add based on your use-case:
 
-- [GCP](https://github.com/astronomerio/airflow-guides/tree/master/example_code/gcp/example_code)
-- [Snowflake](https://github.com/astronomerio/airflow-guides/tree/master/example_code/snowflake/example_code)
+- [GCP](https://github.com/astronomer/airflow-guides/tree/master/example_code/gcp/example_code)
+- [Snowflake](https://github.com/astronomer/airflow-guides/tree/master/example_code/snowflake/example_code)
 - More coming soon!
 
 ## Run Apache Airflow Locally
@@ -234,7 +234,7 @@ To be notified, sign up for our mailing list (for now, you can find it at the fo
 
 Astronomer v0.7.0 (coming out soon!) will allow you to adjust these directly in the UI, but the default for workers is: `1GB RAM, .5 CPU`
 
-To put in a request to change them for your use case in the meantime, reach out to paola@astronomer.io. 
+To put in a request to change them for your use case in the meantime, reach out to paola@astronomer.io.
 
 ### Can we SSO with Google or will I need to setup and maintain a list of users?
 

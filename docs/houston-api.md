@@ -7,21 +7,21 @@ menu: ["root"]
 position: [7]
 ---
 
-The [houston-api](https://github.com/astronomerio/houston-api) is the source of truth across the entire Astronomer Enterprise platform. Playground is a web portal which allows you to write graphql queries directly against the API. This guide will walk you through authenticating and writing queries against the Houston API playground.
+The [houston-api](https://github.com/astronomer/houston-api) is the source of truth across the entire Astronomer Enterprise platform. Playground is a web portal which allows you to write graphql queries directly against the API. This guide will walk you through authenticating and writing queries against the Houston API playground.
 
 Once authenticated, you can access the API @ https://houston.astronomer.cloud/playground or at whatever URL your Enterprise installation of Astronomer is installed to.
 
 ### Getting Acquainted with Playground
 
-Before we get started there are some core components of the Playground that you will want to be familiar with. 
+Before we get started there are some core components of the Playground that you will want to be familiar with.
 
 #### Query Editor
 
-The main screen of Playground is divided into two halves. The left half is where you can write queries against the Houston API. There is some basic intellisense and code formatting to make your query writing easier. Once you have written a query, and corrected any mistakes picked up by Playground's intellisense, you can run the query by pressing the play/execution button which is located near the top of your screen aligned center horizontally. 
+The main screen of Playground is divided into two halves. The left half is where you can write queries against the Houston API. There is some basic intellisense and code formatting to make your query writing easier. Once you have written a query, and corrected any mistakes picked up by Playground's intellisense, you can run the query by pressing the play/execution button which is located near the top of your screen aligned center horizontally.
 
 #### Results Viewer
 
-The right half of the screen is for displaying the results of a query. After pressing the play/execution your results will appear in this right half of the screen. 
+The right half of the screen is for displaying the results of a query. After pressing the play/execution your results will appear in this right half of the screen.
 
 #### Query Variables and Headers
 
@@ -197,5 +197,3 @@ deploymentConfig — Fetches config needed to create a module deployment
 ## Subscriptions
 
 * `deploymentLogStream` — Streams deployment logs from a start time, at specified interval, optionally scoped to a component
-
-

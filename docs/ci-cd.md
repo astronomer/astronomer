@@ -14,7 +14,7 @@ For background information and best practices on CI/CD, we recommend reading the
 
 ## Steps for Setting up CI/CD with Your Astronomer EE Airflow Project
 
-Before we get started, this guide assumed you have installed Astronomer Enterprise Edition or are using Astronomer Cloud Edition, have the [astro-cli](https://github.com/astronomerio/astro-cli) v0.6.0 or newer installed locally and are familiar with your CI/CD tool of choice. You can check your astro-cli version with the `astro version` command.
+Before we get started, this guide assumed you have installed Astronomer Enterprise Edition or are using Astronomer Cloud Edition, have the [astro-cli](https://github.com/astronomer/astro-cli) v0.6.0 or newer installed locally and are familiar with your CI/CD tool of choice. You can check your astro-cli version with the `astro version` command.
 
 ### Create a Service Account
 
