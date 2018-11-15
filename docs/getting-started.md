@@ -36,9 +36,10 @@ If you're ready to install our CLI, you're most likely looking for our latest ve
 To download the latest version of our CLI, run the following command:
 
 Via `curl`:
-  ```
-   curl -sSL https://install.astronomer.io | sudo bash
-   ```
+
+```
+curl -sSL https://install.astronomer.io | sudo bash
+```
 
 #### Previous Version
 
@@ -46,21 +47,19 @@ If you'd like to install a previous version of our CLI, the following command sh
 
 Via `curl`:
 
-   ```
-    curl -sSL https://install.astronomer.io | sudo bash -s -- [TAGNAME]
-   ```
+```
+curl -sSL https://install.astronomer.io | sudo bash -s -- [TAGNAME]
+```
 
 ### Confirm CLI Install
 
-To confirm the install worked, do two things:
-
-1. **Run the following**:
+To confirm the install worked:
 
 ```bash
 astro
 ```
 
-2. **Create a project**:
+Create a project:
 
 ```bash
 mkdir hello-astro && cd hello-astro
@@ -147,44 +146,38 @@ To verify that you're set, you can run: `docker ps`
 
 If you're a previous user of Astronomer Cloud or have a pre-existing Airflow instance, migrating your DAGs should be straightforward.
 
-## Tips & Gotchas:
+## Tips
 
-- Astronomer Cloud runs Python 3.6.6. If you're running a different version, don't sweat it. Our CLI spins up a containerized environment, so you don't need to change anything on your machine if you don't want to.
+Astronomer Cloud runs Python 3.6.6. If you're running a different version, don't sweat it. Our CLI spins up a containerized environment, so you don't need to change anything on your machine if you don't want to.
 
-- Old Cloud Edition runs Airflow 1.9. Refer to the Airflow [updating guide](https://github.com/apache/incubator-airflow/blob/master/UPDATING.md#airflow-19) for differences between 1.8 and 1.9
+For the sake of not over-exposing data and credentials, there's no current functionality that allows you to automatically port over connections and variables from a prior Apache Airflow instance. You'll have to do this manually as you complete the migration.
 
-- For the sake of not over-exposing data and credentials, there's no current functionality that allows you to automatically port over connections and variables from a prior Apache Airflow instance. You'll have to do this manually as you complete the migration.
-
-- The Airflow UI doesn't always show the full stacktrace. To get some more information while you're developing locally, you can run:
+The Airflow UI doesn't always show the full stacktrace. To get some more information while you're developing locally, you can run:
 
 ```bash
 docker logs $(docker ps | grep scheduler | awk '{print $1}')
 ```
-- Before you deploy a new DAG, verify that everything runs as expected locally.
+Before you deploy a new DAG, verify that everything runs as expected locally.
 
-- As you add DAGs to your new project's `dags` directory, check the UI for any error messages that come up.
-
+As you add DAGs to your new project's `dags` directory, check the UI for any error messages that come up.
 
 ## DAG Deployment
 
 Once you can get your DAGs working locally, you are ready to deploy them.
 
-### **Step 1: CLI Login + Auth**
+### Step 1: CLI Login + Auth
 
 To log in and pass our authorization flow via the CLI, you'll have to run the following command:
 
-  ```
-  astro auth login astronomer.cloud
-  ```
+```
+astro auth login astronomer.cloud
+```
 
-  Two notes:
+If you don't already have an account on our platform, running this command will automatically create one for you (and a default workspace as well) based on the name associated with your Google email address.
 
-  1. If you don't already have an account on our platform, running this command will automatically create one for you (and a default workspace as well) based on the name associated with your Google email address.
+You _can_ login via app.cloud.astronomer directly but our UI currently does not display the workspace ID you'll need to complete a deployment.
 
-  2. You _can_ login via app.cloud.astronomer directly but our UI currently does not display the workspace ID you'll need to complete a deployment.
-
-
-### **Step 2: Pull your list of workspaces**
+### Step 2: Pull your list of workspaces
 
 In order to deploy, you'll first need to verify your default workspace by pulling a list of all workspaces associated with your account.
 
@@ -192,13 +185,13 @@ To do so, run:
 
   `astro workspace list`
 
-### **Step 3: Create a new deployment**
+### Step 3: Create a new deployment
 
   If you're a new user, you can create a new deployment by running:
 
   `astro deployment create <deployment name>`
 
-### **Step 4: View Deployments**
+### Step 4: View Deployments
 
   Once you've run your first deploy and you've made sure you're in the right workspace, all you'll have to do moving forward is list your active deployments by running:
 
@@ -206,7 +199,7 @@ To do so, run:
 
   This commnand will return a list of Airflow instances you're authorized to deploy to.
 
-### **Step 5: Deploy!**
+### Step 5: Deploy
 
 When you're ready to deploy, run:
 
@@ -216,7 +209,7 @@ This command will return a list of deployments available in that workspace, and 
 
 ## Frequently Asked Questions
 
-### How do I know when there's a new version of the CLI I have to download?
+**How do I know when there's a new version of the CLI I have to download?**
 
 We're constantly building more functionality to our CLI and will shoot you an email for major releases (think 0.5.0 to 0.6.0).
 
@@ -224,23 +217,23 @@ We don't have an automated way to do so for minor relases, so we'd recommend run
 
 If you do happen to be behind, you can run `astro upgrade` or the curl command listed above to install the latest.
 
-### When will Astronomer run Airflow 1.10?
+**When will Astronomer have Airflow 1.10?**
 
 We're excited about Airflow 1.10, and we have it slated to go live in Astronomer v0.9 (check out our roadmap [here](https://www.astronomer.io/docs/roadmap/).
 
 To be notified, sign up for our mailing list (for now, you can find it at the footer on our [blog](https://www.astronomer.io/blog/)).
 
-### What are the specs of the workers?
+**What are the specs of the workers?**
 
 Astronomer v0.7.0 (coming out soon!) will allow you to adjust these directly in the UI, but the default for workers is: `1GB RAM, .5 CPU`
 
 To put in a request to change them for your use case in the meantime, reach out to paola@astronomer.io.
 
-### Can we SSO with Google or will I need to setup and maintain a list of users?
+**Can we SSO with Google or will I need to setup and maintain a list of users?**
 
 You can use Google right out of the box for auth. The only list of users you'll need to maintain is the users who have access to a workspace (or a set of Airflow instances).
 
-### What part of the authorization process ties my deployment to my org?
+**What part of the authorization process ties my deployment to my org?**
 
 The first time you authenticated (via our UI or directly through our CLI), you had to have created an initial workspace. Once that happened, you were associated to your organization.
 
@@ -248,21 +241,22 @@ If you set up an additional workspace, you'll effectively have to specify that y
 
 By default, you're authenticated against the last workspace you deployed to.
 
-### How do I get rid of any `example_dag`'s that initially show up in my deployment's DAG list?
+**How do I get rid of any `example_dag`'s that initially show up in my deployment's DAG list?**
 
 For now, this is unfortunately something someone on the Astronomer team has to do directly. If you'd like us to remove any `example_dag`'s, let us know and we'll be quick to remove them.
 
 Airflow 1.10's functionality actually does allow users to do this directly, so you can expect to be able to do so in the future. Stay peeled!
 
-### Can I have a NAT or single IP for each deployment?
+**Can I have a NAT or single IP for each deployment?**
 
 Not at the moment.
 
-### How is SSL handled?
+**How is SSL handled?**
+
 We handle ssl termination at the ssl layer, and the proxy request back to the SSL server is HTTP - so you don't need to do any SSL stuff from your end!
 
 You might be wondering whether or not we're able to dedicate an Internet gateway / NAT to your org and pin it to your Kubernetes workers so that other customers aren’t able to send traffic to you.
 
 In cloud, we run a single NAT that all internet bound traffic flows through, but unfortunately not at a customer level. We pretty much run solely at the Kubernetes layer, and Kubernetes doesn't have a NAT resource of any nature. For now, this is something you'll have to run in your own cloud.
 
-We're increasingly getting this request and are looking into solutions, so if you'd like to dive into this deeper with our engineers shoot us an email at support@astronomer.io
+We're increasingly getting this request and are looking into solutions, so if you'd like to dive into this deeper with our engineers send us an email at [support@astronomer.io](mailto:support@astronomer.io).
