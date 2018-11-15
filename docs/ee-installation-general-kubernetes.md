@@ -21,21 +21,21 @@ You will need to be able to:
 
 Before running the Astronomer install command you must:
 
-1. [Select a base domain](/guides/install-base-domain)
-1. [Get your machine setup with needed dev tools](/guides/install-dev-env)
-1. [Get a Postgres server running](/guides/install-postgres)
-1. [Obtain SSL](/guides/install-ssl)
-1. [Setup DNS](/guides/install-dns)
-1. [Install Helm and Tiller](/guides/install-helm)
-1. [Set a few Kubernetes secrets](/guides/install-k8s-secrets)
-1. [Build your config.yaml](/guides/install-config)
+1. [Select a base domain](https://astronomer.io/docs/ee-installation-base-domain)
+1. [Get your machine setup with needed dev tools](https://astronomer.io/docs/ee-installation-dev-env)
+1. [Get a Postgres server running](https://astronomer.io/docs/ee-installation-postgres)
+1. [Obtain SSL](https://astronomer.io/docs/ee-installation-ssl)
+1. [Setup DNS](https://astronomer.io/docs/ee-installation-dns)
+1. [Install Helm and Tiller](https://astronomer.io/docs/ee-installation-helm)
+1. [Set a few Kubernetes secrets](https://astronomer.io/docs/ee-installation-k8s-secrets)
+1. [Build your config.yaml](https://astronomer.io/docs/ee-installation-config)
 
 ## Install Astronomer
 
 You're ready to go!
 
 ```shell
-$ helm install -f config.yaml . --namespace astronomer
+helm install -f config.yaml . --namespace astronomer
 ```
 
 Click the link in the output notes to log in to the Astronomer app.

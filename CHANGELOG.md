@@ -3,19 +3,23 @@
 All notable changes to this project will be documented in this file.
 
 ## [0.6.1] - 2018-09-27
+
 * Bug fixes
 
 ## [0.6.0] - 2018-09-26
+
 * Support for Service Accounts and deploying from CI/CD pipelines
 * Fixed ingress redirect issue
 * Updated to Alpine 3.8 for all images including Airflow
 * New automated build pipeline
 
 ## [0.5.1] - 2018-09-13
+
 * Support for upgrading individual airflow deployments to latest chart.
 * Fix for airflow task logs link on taskinstances page.
 
 ## [0.5.0] - 2018-09-10
+
 * Support for the KubernetesPodOperator. Every deployment goes into its own namespace with resource quotas, limits and defaults.
 * Support node auto-scaling. All containers are now assigned resource requests/limits.
 * Support for database connection pooling. pgbouncer is now deployed with every deployment to pool connections to postgres for all airflow pods (webserver/scheduler/workers/kubepodoperators/etc)
@@ -28,6 +32,7 @@ All notable changes to this project will be documented in this file.
 * Other minor bug fixes and backend enhancements
 
 ## [0.4.1] - 2018-08-17
+
 * Added local email/password authentication option
 * Integration with Auth0
 * Default installation can now use local, Google, or Github as auth providers

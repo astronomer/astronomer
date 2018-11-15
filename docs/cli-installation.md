@@ -16,7 +16,7 @@ To install the CLI, make sure you have the following on your machine:
 - [Docker](https://www.docker.com/)
 - [Go](https://golang.org/)
 
-## Install 
+## Install
 
 For the most recent version of our CLI, run the following command.
 
@@ -41,9 +41,9 @@ curl -sSL https://install.astronomer.io | sudo bash -s -- v0.3.1
    ```
 
 
-**Note:** If you get a mkdir error while going through the install, please download and run the [godownloader](https://raw.githubusercontent.com/astronomerio/astro-cli/master/godownloader.sh) script locally.
+**Note:** If you get a mkdir error while going through the install, please download and run the [godownloader](https://raw.githubusercontent.com/astronomer/astro-cli/master/godownloader.sh) script locally.
 
-    $ cat godownloader.sh | bash -s -- -b /usr/local/bin
+    cat godownloader.sh | bash -s -- -b /usr/local/bin
 
 
 ## Windows 10

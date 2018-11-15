@@ -38,8 +38,7 @@ management solution should support the installation, and management of the
 Astronomer platform. To ensure the platform can be effectively installed and
 managed, ensure your team can meet the following requirements.
 
-* A Kubernetes cluster managed by one of these solutions:
-  https://kubernetes.io/docs/setup/pick-right-solution/
+* A Kubernetes cluster managed by [one of these solutions]( https://kubernetes.io/docs/setup/pick-right-solution/)
 * Admin level access to the Kubernetes cluster
 * Ability to provision a Tiller service account for use with Helm
 * A base domain

@@ -8,7 +8,7 @@ Here, we'll set the configuration values for the Astronomer Helm chart.
 
 `cd` to where you cloned `helm.astronomer.io`
 
-Create a `config.yaml` for your domain setting overrides by copying [config.tpl.yaml](https://github.com/astronomerio/helm.astronomer.io/blob/master/config.tpl.yaml) if you don't already have one.
+Create a `config.yaml` for your domain setting overrides by copying [config.tpl.yaml](https://github.com/astronomer/helm.astronomer.io/blob/master/config.tpl.yaml) if you don't already have one.
 
 ```
 cp config.tpl.yaml config.yaml

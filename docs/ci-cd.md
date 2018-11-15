@@ -13,9 +13,8 @@ With Service accounts, you can deploy your DAGs with the continuous integration/
 For background information and best practices on CI/CD, we recommend reading the article [An Introduction to CI/CD Best Practices](https://www.digitalocean.com/community/tutorials/an-introduction-to-ci-cd-best-practices) from DigitalOcean.
 
 ## Steps for Setting up CI/CD with Your Astronomer EE Airflow Project
-Before we get started, this guide assumed you have installed Astronomer Enterprise Edition or are using Astronomer Cloud Edition, have the [astro-cli](https://github.com/astronomerio/astro-cli) v0.6.0 or newer installed locally and are familiar with your CI/CD tool of choice. You can check your astro-cli version with the `astro version` command.
 
-
+Before we get started, this guide assumed you have installed Astronomer Enterprise Edition or are using Astronomer Cloud Edition, have the [astro-cli](https://github.com/astronomer/astro-cli) v0.6.0 or newer installed locally and are familiar with your CI/CD tool of choice. You can check your astro-cli version with the `astro version` command.
 
 ### Create a Service Account
 
@@ -81,6 +80,7 @@ pipeline:
 Breaking this down:
 
 #### Authenticating to Docker
+
 After you have created a service account, you will want to store the generated API key in an environment variable, or your secret management tool of choice.'
 
 The first step of this pipeline is to authenticate against the registry:
@@ -91,10 +91,9 @@ docker login registry.$${BASE_DOMAIN} -u _ -p $${API_KEY_SECRET}
 ```
 In this example, the BASE_DOMAIN is `astronomer.cloud` (for Astronomer Cloud). The `API_KEY_SECRET` is the API Key that you got from the CLI or the UI stored in your secret manager
 
-
 #### Building and Pushing an Image
-Once you are authenticated you can build, tag and push your Airflow image to the private registry, where a webhook will trigger an update of your Airflow deployment on the platform.
 
+Once you are authenticated you can build, tag and push your Airflow image to the private registry, where a webhook will trigger an update of your Airflow deployment on the platform.
 
 __Registry Address__
 The registry address tells Docker where to push images to. In this case it will be the private registry installed with Astronomer EE, which will be located at registry.${BASE_DOMAIN}.
@@ -104,7 +103,6 @@ For example, if you are using Astronomer's cloud platform, you will use:
 
 __Release Name__
 Release name refers to the release name of your Airflow Deployment. It will follow the pattern of [SPACE THEMED ADJ.]-[SPACE THEMED NOUN]-[4-DIGITS] (in this example, `infrared-photon-7780`).
-
 
 __Tag Name__
 Tag name allows you to track all Airflow deployments made for that cluster over time. While the tag name can be whatever you want, we recommend denoting the source and the build number in the name.
@@ -116,7 +114,6 @@ Example
 ```bash
 docker build -t registry.${BASE_DOMAIN}/${RELEASE_NAME}/airflow:ci-${DRONE_BUILD_NUMBER} .
 ```
-
 
 If you would like to see a more complete working example please visit our [full example using Drone-CI](https://github.com/astronomerio/example-dags/blob/master/.drone.yml).
 

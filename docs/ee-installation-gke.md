@@ -23,16 +23,16 @@ You will need to be able to:
 
 Before running the Astronomer install command you must:
 
-1. [Select a base domain](/guides/ee-installation-base-domain)
-2. [Get your machine setup with needed dev tools](/docs/ee-installation-dev-env)
-3. [Setup GCP](/docs/ee-installation-gcp-setup)
-4. [Get a Postgres server running](/docs/ee-installation-postgres)
-5. [Obtain SSL](/docs/ee-installation-ssl)
-6. [Setup DNS](/docs/ee-installation-dns)
-7. [Install Helm and Tiller](/docs/ee-installation-helm)
-8. [Set a few Kubernetes secrets](/docs/installation-k8s-secrets)
-9. [Create Google OAuth Creds ](/docs/ee-installation-google-oauth)
-10.[Build your config.yaml](/docs/ee-installation-config)
+1. [Select a base domain](https://astronomer.io/docs/ee-installation-base-domain)
+2. [Get your machine setup with needed dev tools](https://astronomer.io/docs/ee-installation-dev-env)
+3. [Setup GCP](https://astronomer.io/docs/ee-installation-gcp-setup)
+4. [Get a Postgres server running](https://astronomer.io/docs/ee-installation-postgres)
+5. [Obtain SSL](https://astronomer.io/docs/ee-installation-ssl)
+6. [Setup DNS](https://astronomer.io/docs/ee-installation-dns)
+7. [Install Helm and Tiller](https://astronomer.io/docs/ee-installation-helm)
+8. [Set a few Kubernetes secrets](https://astronomer.io/docs/ee-installation-k8s-secrets)
+9. [Create Google OAuth Creds ](https://astronomer.io/docs/ee-installation-google-oauth)
+10. [Build your config.yaml](https://astronomer.io/docs/ee-installation-config)
 
 ## Install Astronomer
 

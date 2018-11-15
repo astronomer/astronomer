@@ -30,4 +30,5 @@ On Enterprise Edition, go to `grafana.{your namespace here}.astronomer.io` to ac
 - **Airflow State**: Monitor all of your deployments from the Kubernetes level, including a birds-eye view of resource usage and system stress levels.
 
 - **Platform Overview**: Overall platform memory and disk usage.
+
 - **Prometheus**: Status and resource usage of the Prometheus database backend.

@@ -47,11 +47,8 @@ helm upgrade -f config.yaml quiet-moose .
 
 You should see a successful helm upgrade message in your terminal. You're Astronomer EE instance is now up to date.
 
-
 There are some cases where Helm cannot do an automatic upgrade which can be resolved by doing a fresh install.
 
 ## Astronomer Roadmap
 
-For more about future updates, check out our [Astronomer Platform Road Map](/guides/astronomer-roadmap)
-
----
+For more about future updates, check out our [Astronomer Platform Roadmap](https://www.astronomer.io/docs/roadmap/).

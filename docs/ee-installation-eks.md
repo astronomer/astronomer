@@ -21,14 +21,14 @@ You will need to be able to:
 
 Before running the Astronomer install command you must:
 
-1. [Select a base domain](/guides/ee-installation-base-domain)
-2. [Get your machine setup with needed dev tools](/docs/ee-installation-dev-env)
-3. [Create a stateful storage set](/docs/ee-installation-aws-stateful-set)
-4. [Get a Postgres server running](/docs/ee-installation-postgres)
-5. [Obtain SSL](/docs/ee-installation-ssl)
-6. [Install Helm and Tiller](/docs/ee-installation-helm)
-7. [Set a few Kubernetes secrets](/docs/ee-installation-k8s-secrets)
-8. [Build your config.yaml](/docs/ee-installation-config)
+1. [Select a base domain](https://astronomer.io/docs/ee-installation-base-domain)
+2. [Get your machine setup with needed dev tools](https://astronomer.io/docs/ee-installation-dev-env)
+3. [Create a stateful storage set](https://astronomer.io/docs/ee-installation-aws-stateful-set)
+4. [Get a Postgres server running](https://astronomer.io/docs/ee-installation-postgres)
+5. [Obtain SSL](https://astronomer.io/docs/ee-installation-ssl)
+6. [Install Helm and Tiller](https://astronomer.io/docs/ee-installation-helm)
+7. [Set a few Kubernetes secrets](https://astronomer.io/docs/ee-installation-k8s-secrets)
+8. [Build your config.yaml](https://astronomer.io/docs/ee-installation-config)
 
 
 ## Install Astronomer
@@ -41,7 +41,7 @@ helm install -f config.yaml . --namespace astronomer
 
 ## DNS routing
 
-Your final step is to setup your DNS to route traffic to your airflow resources following [these steps](/docs/ee-installation-aws-dns).
+Your final step is to setup your DNS to route traffic to your airflow resources following [these steps](https://astronomer.io/docs/ee-installation-aws-dns).
 
 Click the link in the output notes to log in to the Astronomer app.
 
@@ -68,7 +68,6 @@ Here’s our version of an EKS getting started guide: http://enterprise.astronom
 ### How is the DNS configured? If I wanted to change or replace my base domain, could I?
 
 Yes, you could! Currently, we have the domain setup with a wildcard CNAME record that points to the ELB DNS route. Swapping out domains would just require adding that CNAME record to your DNS, and recreating the `astronomer-tls` secret to use the updated wildcard certificate for your domain.
-
 
 ### How does Astronomer command the cluster? (Add and remove pods, etc.)
 
@@ -98,7 +97,7 @@ The EC2 instance is what you’ll use to deploy the Astronomer platform into tha
 
 To run a local version of Airflow, you’re free to download and use our CLI, which comes built with local testing functionality. You can scale from there as needed.
 
-Here's a guide to our CLI: https://www.astronomer.io/guides/cli/
+[Here's a guide to our CLI](https://www.astronomer.io/guides/cli/)
 
 Whatever machine you’re going to use, apply it to the kubectl CLI, and make sure to create a storage class.
 

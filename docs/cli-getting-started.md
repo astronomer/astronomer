@@ -7,15 +7,15 @@ menu: ["Astro CLI"]
 position: [2]
 ---
 
-If you've gotten the Astronomer CLI installed and want to know what's next, you're in teh right place.
+If you've gotten the Astronomer CLI installed and want to know what's next, you're in the right place.
 
 Here are some next steps:
 
-**1. Confirm the install worked. Open a terminal and run:**
+## 1. Confirm the install worked. Open a terminal and run:
 
  ```
-  $ astro
-  ```
+astro
+```
 
 You should see something like this:
 
@@ -41,11 +41,11 @@ Flags:
   -h, --help   help for astro
 ```
 
-**2. Create a project:**
+## 2. Create a project:**
 
  ```
-$ mkdir hello-astro && cd hello-astro
-$ astro airflow init
+mkdir hello-astro && cd hello-astro
+astro airflow init
  ```
 
 This will generate a skeleton project directory:
@@ -61,12 +61,12 @@ This will generate a skeleton project directory:
 └── requirements.txt #For any python packages
 ```
 
-**3. Start Airflow**
+## *3. Start Airflow**
 
 Once you've run `astro airflow init` and start developing your DAGs, you can run `astro airflow start` to build your image.
 
 - This will build a base image using Alpine Linux and from Astronomer's fork of Apache-Airflow.
-- The build process will include [everything in your project directory](https://github.com/astronomerio/astronomer/blob/master/docker/platform/airflow/onbuild/Dockerfile#L32). This makes it easy to include any shell scripts, static files, or anything else you want to include in your code.
+- The build process will include everything in your project directory. This makes it easy to include any shell scripts, static files, or anything else you want to include in your code.
 
 ### For WSL (Windows Subsystem for Linux) Users
 
@@ -88,7 +88,7 @@ INFO[0000] [0/3] [postgres]: Starting
 Pulling postgres (postgres:10.1-alpine)...
 panic: runtime error: index out of range
 goroutine 52 [running]:
-github.com/astronomerio/astro-cli/vendor/github.com/Nvveen/Gotty.readTermInfo(0xc4202e0760, 0x1e, 0x0, 0x0, 0x0)
+github.com/astronomer/astro-cli/vendor/github.com/Nvveen/Gotty.readTermInfo(0xc4202e0760, 0x1e, 0x0, 0x0, 0x0)
 ....
 ```
 
@@ -108,8 +108,8 @@ Is your image failing to build after running `astro airflow start`?
 
 Not sure what `packages` and `requirements` you need for your use case? Check out these examples.
 
-- [Snowflake](https://github.com/astronomerio/airflow-guides/tree/master/example_code/snowflake)
-- [Google Cloud](https://github.com/astronomerio/airflow-guides/tree/master/example_code/gcp)
+- [Snowflake](https://github.com/astronomer/airflow-guides/tree/master/example_code/snowflake)
+- [Google Cloud](https://github.com/astronomer/airflow-guides/tree/master/example_code/gcp)
 
 If image size isn't a concern, feel free to "throw the kitchen sink at it" with this list of packages:
 
@@ -144,17 +144,17 @@ The CLI includes a help command, descriptions, as well as usage info for subcomm
 To see the help overview:
 
 ```
-$ astro help
+astro help
 ```
 
 Or for subcommands:
 
 ```
-$ astro airflow --help
+astro airflow --help
 ```
 
 ```
-$ astro airflow deploy --help
+astro airflow deploy --help
 ```
 
 ## Using Airflow CLI Commands

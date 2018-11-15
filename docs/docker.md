@@ -7,7 +7,7 @@ menu: ["root"]
 position: [3]
 ---
 
-You can use [our Docker images](https://github.com/astronomerio/astronomer)
+You can use [our Docker images](https://github.com/astronomer/astronomer)
 however you'd like, subject to standard Apache 2.0 restrictions.
 
 You may also be interested to use our product which comes as both a
@@ -77,10 +77,10 @@ as a container deployment strategy for your cloud.
 
 ## Quickstart
 
-Clone Astronomer Open:
+Clone Astronomer:
 
 ```
-git clone https://github.com/astronomerio/astronomer.git
+git clone https://github.com/astronomer/astronomer.git
 cd astronomer
 ```
 
