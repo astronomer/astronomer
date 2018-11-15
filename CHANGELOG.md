@@ -2,6 +2,8 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.0] - 2018-11-15
+
 ## [0.6.1] - 2018-09-27
 
 * Bug fixes
