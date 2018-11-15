@@ -6,46 +6,26 @@ menu: ["root"]
 position: [2]
 ---
 
-This is your guide to Astronomer Cloud Edition. Whether you're at a Proof-of-Concept stage or are a well-versed Apache Airflow user itching to implement our managed solution, you're in the right place.
+## Sign up
 
-## Sign up for Astronomer
+First step, [create an account](https://app.astronomer.cloud/).
 
-The first step is to create a workspace on our platform.
-
-- If this is your first time on Astronomer, make sure you're signed up here: https://app.astronomer.cloud/ (_Note_: If you get an error the first time you click that link, try a refresh).
-
-- You'll be able to create a workspace (*think: team*), and go straight to the CLI Install from there.
-
-- If you're new to Astronomer but someone else on your team has an existing workspace you want to join, you still have to create your own account with a default workspace of your own.
-
-- Once there, they can invite you as a user.
+If you're new to Astronomer but someone else on your team has an existing workspace you want to join, you still have to create your own account. Once you're signed up, they can invite you to their workspace.
 
 ## Download the CLI
 
-To download the CLI, you'll need the following installed on your machine:
+To use the CLI, you'll need the following installed on your machine:
 
 - [Docker](https://www.docker.com/get-started)
 - [Go](https://golang.org/)
 
-### CLI Version Control
-
-If you're ready to install our CLI, you're most likely looking for our latest version. If for any reason you need to run an earlier version, you can find the command below.
-
-#### Latest Version
-
-To download the latest version of our CLI, run the following command:
-
-Via `curl`:
+Run the following command:
 
 ```
 curl -sSL https://install.astronomer.io | sudo bash
 ```
 
-#### Previous Version
-
-If you'd like to install a previous version of our CLI, the following command should do the trick:
-
-Via `curl`:
+If you need to install an older version of our CLI:
 
 ```
 curl -sSL https://install.astronomer.io | sudo bash -s -- [TAGNAME]
@@ -59,7 +39,7 @@ To confirm the install worked:
 astro
 ```
 
-Create a project:
+Then create a project:
 
 ```bash
 mkdir hello-astro && cd hello-astro
@@ -98,7 +78,7 @@ Docker pull postgres:10.1-alpine
 
 ## Get started with the new CLI
 
-For a breakdown of subcommands and corresponding descriptions, you can run: `$ astro help`
+For a breakdown of subcommands and corresponding descriptions, you can run: `astro help`
 
 When you're ready, run the following in a project directory: `astro airflow init`
 
