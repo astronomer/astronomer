@@ -10,6 +10,11 @@ BUILD_NUMBER ?= 1
 # List of all components and order to build
 PLATFORM_COMPONENTS := base cli-install commander db-bootstrapper default-backend houston-api orbit-ui
 
+# List of drone repositories to create secrets for
+DRONE_REPOSITORIES := astronomer commander db-bootstrapper default-backend houston-api orbit-ui
+# HELM_REPOSITORY := helm.astronomer.io
+GITHUB_ORG := astronomer
+
 # Airflow versions
 AIRFLOW_VERSIONS := 1.9.0 1.10.0
 
@@ -148,3 +153,31 @@ check-env:
 ifndef ASTRONOMER_VERSION
 	$(error ASTRONOMER_VERSION is not set)
 endif
+
+# Configure common drone secrets.
+# TODO: Automate gcp_token and git_push_ssh_keys
+.PHONY: drone
+drone:
+ifndef DOCKER_USERNAME
+	$(error DOCKER_USERNAME is not set)
+endif
+ifndef DOCKER_PASSWORD
+	$(error DOCKER_PASSWORD is not set)
+endif
+ifndef GITHUB_TOKEN
+	$(error GITHUB_TOKEN is not set)
+endif
+ifndef DRONE_TOKEN
+	$(error DRONE_TOKEN is not set)
+endif
+ifndef GCP_TOKEN
+	$(error GCP_TOKEN is not set)
+endif
+	for repo in ${DRONE_REPOSITORIES} ; do \
+		drone secret add --repository "${GITHUB_ORG}/$${repo}" --name docker_username --value ${DOCKER_USERNAME}; \
+		drone secret add --repository "${GITHUB_ORG}/$${repo}" --name docker_password --value ${DOCKER_PASSWORD}; \
+		drone secret add --repository "${GITHUB_ORG}/$${repo}" --name github_api_key --value ${GITHUB_TOKEN}; \
+		drone secret add --repository "${GITHUB_ORG}/$${repo}" --name downstream_token --value ${DRONE_TOKEN}; \
+	done;
+	# $(eval TOKEN := $(shell cat $(GCP_TOKEN))); \
+	# drone secret add --repository ${HELM_REPOSITORY} --name gcp_token --value ${TOKEN}
