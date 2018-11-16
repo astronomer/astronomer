@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM astronomerinc/ap-base:0.7.0-alpha.18
+FROM astronomerinc/ap-base:0.7.0-alpha.19
 LABEL maintainer="Astronomer <humans@astronomer.io>"
 
 ARG BUILD_NUMBER=-1
@@ -21,7 +21,7 @@ LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
 LABEL io.astronomer.docker.module="astronomer"
 LABEL io.astronomer.docker.component="db-bootstrapper"
 
-ARG VERSION="v0.7.0-alpha.18"
+ARG VERSION="v0.7.0-alpha.19"
 ENV REPO="github.com/astronomerio/db-bootstrapper"
 ENV REPO_URL="git+https://${REPO}@${VERSION}"
 
