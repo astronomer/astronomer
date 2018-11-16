@@ -1,7 +1,7 @@
 images:
   fluentd:
     repository: astronomerinc/ap-fluentd
-    tag: 0.7.0-alpha.19
+    tag: 0.7.0-alpha.20
     pullPolicy: IfNotPresent
 
 elasticsearch:
