@@ -11,7 +11,7 @@ read -p "***ATTENTION*** Deploy astronomerio/astronomer #${ASTRONOMER_BUILD} as 
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
     printf "Deploying #${ASTRONOMER_BUILD} as $2...\n"
-    drone deploy astronomerio/astronomer ${ASTRONOMER_BUILD} production -p ASTRONOMER_VERSION=$2
+    drone deploy astronomer/astronomer ${ASTRONOMER_BUILD} production -p ASTRONOMER_VERSION=$2
     printf "\n"
 else
     printf "Skipped deployment.\n\n"
@@ -25,7 +25,7 @@ read -p "***ATTENTION*** Deploy astronomerio/helm.astronomer.io #${HELM_BUILD} a
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
     printf "Deploying #${HELM_BUILD} as $2...\n"
-    drone deploy astronomerio/helm.astronomer.io ${HELM_BUILD} production -p ASTRONOMER_VERSION=$2
+    drone deploy astronomer/helm.astronomer.io ${HELM_BUILD} production -p ASTRONOMER_VERSION=$2
 else
     printf "Skipped deployment.\n"
 fi
