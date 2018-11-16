@@ -7,7 +7,7 @@ pipeline:
   # Update airflow onbuild images to extend the corresponding base image
   # XXX: On pushes, docker tags are just set to 0.0.0
   update-tags:
-    image: astronomerio/ap-build:0.1.0
+    image: astronomerio/ap-build:0.1.1
     commands:
       - make update-platform-docker-tags
       - make update-airflow-onbuild-docker-tags
@@ -19,7 +19,7 @@ pipeline:
 
   build-platform:
     group: build
-    image: astronomerio/ap-build:0.1.0
+    image: astronomerio/ap-build:0.1.1
     commands:
       - make build-platform
     environment:
@@ -34,7 +34,7 @@ pipeline:
 
   build-airflow:
     group: build
-    image: astronomerio/ap-build:0.1.0
+    image: astronomerio/ap-build:0.1.1
     commands:
       - make build-airflow
     environment:
@@ -49,7 +49,7 @@ pipeline:
 
   push-platform:
     group: push
-    image: astronomerio/ap-build:0.1.0
+    image: astronomerio/ap-build:0.1.1
     commands:
       - docker login -u $${DOCKER_USERNAME} -p $${DOCKER_PASSWORD}
       - make push-platform-ref
@@ -66,7 +66,7 @@ pipeline:
 
   push-airflow:
     group: push
-    image: astronomerio/ap-build:0.1.0
+    image: astronomerio/ap-build:0.1.1
     commands:
       - docker login -u $${DOCKER_USERNAME} -p $${DOCKER_PASSWORD}
       - make push-airflow-ref
@@ -97,7 +97,25 @@ pipeline:
 
   # Cut releases of upstream platform components
   release-platform-components:
-    image: astronomerio/ap-build:0.1.0
+    image: astronomerio/ap-build:0.1.1
+    secrets: [ github_api_key ]
+    commands:
+      # Release platform components
+      - release commander $${GITHUB_API_KEY} v$${ASTRONOMER_VERSION} $${DRONE_COMMIT_BRANCH} true
+      - release db-bootstrapper $${GITHUB_API_KEY} v$${ASTRONOMER_VERSION} $${DRONE_COMMIT_BRANCH} true
+      - release default-backend $${GITHUB_API_KEY} v$${ASTRONOMER_VERSION} $${DRONE_COMMIT_BRANCH} true
+      - release houston-api $${GITHUB_API_KEY} v$${ASTRONOMER_VERSION} $${DRONE_COMMIT_BRANCH} true
+      - release orbit-ui $${GITHUB_API_KEY} v$${ASTRONOMER_VERSION} $${DRONE_COMMIT_BRANCH} true
+
+      # Also cut the astro-cli release, which will trigger goreleaser to push release
+      - release astro-cli $${GITHUB_API_KEY} v$${ASTRONOMER_VERSION} $${DRONE_COMMIT_BRANCH} true
+    when:
+      event: deployment
+      branch: [ master, release-* ]
+      environment: development
+
+  release-platform-components:
+    image: astronomerio/ap-build:0.1.1
     secrets: [ github_api_key ]
     commands:
       # Release platform components
@@ -114,6 +132,7 @@ pipeline:
       branch: [ master, release-* ]
       environment: production
 
+
   # Update VERSIONs in Dockerfiles to point at newly created git tags
   # Update platform Dockerfiles to point to extend ap-base image
   # Update airflow onbuild images to extend the corresponding base image
@@ -121,7 +140,7 @@ pipeline:
   # to be updated before cutting the release, even though the images are built
   # in the next pipeline (tag).
   update-tags:
-    image: astronomerio/ap-build:0.1.0
+    image: astronomerio/ap-build:0.1.1
     commands:
       - make update-platform-git-tags
       - make update-platform-docker-tags
@@ -129,10 +148,10 @@ pipeline:
     when:
       event: deployment
       branch: [ master, release-* ]
-      environment: production
+      environment: [ development, production ]
 
   commit-push:
-    image: astronomerio/ap-build:0.1.0
+    image: astronomerio/ap-build:0.1.1
     commands:
       - mkdir -p /root/.ssh
       - echo "$${GIT_PUSH_SSH_KEY}" > /root/.ssh/id_rsa
@@ -148,24 +167,24 @@ pipeline:
     when:
       event: deployment
       branch: [ master, release-* ]
-      environment: production
+      environment: [ development, production ]
 
   release:
-    image: astronomerio/ap-build:0.1.0
+    image: astronomerio/ap-build:0.1.1
     secrets: [ github_api_key ]
     commands:
       - release $${DRONE_REPO_NAME} $${GITHUB_API_KEY} v$${ASTRONOMER_VERSION} $${DRONE_COMMIT_BRANCH}
     when:
       event: deployment
       branch: [ master, release-* ]
-      environment: production
+      environment: [ development, production ]
 
   ##################################
   ## Tag
   ###################################
   build-platform:
     group: build
-    image: astronomerio/ap-build:0.1.0
+    image: astronomerio/ap-build:0.1.1
     commands:
       - make build-platform
     environment:
@@ -179,7 +198,7 @@ pipeline:
 
   build-airflow:
     group: build
-    image: astronomerio/ap-build:0.1.0
+    image: astronomerio/ap-build:0.1.1
     commands:
       - make build-airflow
     environment:
@@ -193,7 +212,7 @@ pipeline:
 
   push-platform:
     group: push
-    image: astronomerio/ap-build:0.1.0
+    image: astronomerio/ap-build:0.1.1
     commands:
       - docker login -u $${DOCKER_USERNAME} -p $${DOCKER_PASSWORD}
       - make push-platform
@@ -209,7 +228,7 @@ pipeline:
 
   push-airflow:
     group: push
-    image: astronomerio/ap-build:0.1.0
+    image: astronomerio/ap-build:0.1.1
     commands:
       - docker login -u $${DOCKER_USERNAME} -p $${DOCKER_PASSWORD}
       - make push-airflow
