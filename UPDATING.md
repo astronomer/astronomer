@@ -64,6 +64,3 @@ You will now be able to safely upgrade the deployment by navigating to the deplo
 
 #### Setting Deployment Configuration
 Now that you have captured the deployment configuration and upgraded the deployment, you can adjust the sliders in the deployment configuration/settings panel to match the settings you recorded above. Once you are satisfied with the configuration, press `update` to allow the new configuration to take place.
-
-### Downgrading
-In some instances, you may want to perform a downgrade of the platform back to the previous version.
