@@ -24,9 +24,6 @@ LABEL io.astronomer.docker.component="houston-api"
 ARG VERSION="v0.7.0-rc.1"
 ENV REPO="github.com/astronomerio/houston-api"
 ENV REPO_URL="https://${REPO}#${VERSION}"
-ENV HOUSTON_PATH=/srv/houston-api
-
-WORKDIR ${HOUSTON_PATH}
 
 RUN apk add --no-cache --virtual .build-deps \
 		build-base \
