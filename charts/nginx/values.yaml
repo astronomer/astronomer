@@ -4,11 +4,11 @@
 images:
   nginx:
     repository: astronomerinc/ap-nginx
-    tag: 0.7.0-alpha.20
+    tag: 0.7.0-rc.1
     pullPolicy: IfNotPresent
   defaultBackend:
     repository: astronomerinc/ap-default-backend
-    tag: 0.7.0-alpha.20
+    tag: 0.7.0-rc.1
     pullPolicy: IfNotPresent
 
 forceNamespaceIsolation: true
