@@ -1,5 +1,5 @@
 # Updating Astronomer
-This guide contains information about upgrading and downgrading between Astronomer platform versions starting with v0.6.2 -> v0.7.0.
+This guide contains information about upgrading and downgrading between Astronomer platform versions starting with `v0.6.2` -> `v0.7.0`.
 
 ## Prerequisites
 
@@ -11,7 +11,7 @@ Checkout the desired from our [helm.astronomer.io](https://github.com/astronomer
 Ex.
 
 ```bash
-git checkout -t v0.7.0 -b v0.7.0
+git checkout v0.7.0
 ```
 
 ## Astronomer v0.7.0
@@ -40,7 +40,7 @@ helm install -f config.yaml . --namespace [PLATFORM NAMESPACE]
 
 ### Upgrading Deployments
 
-With v0.7.x, we have released some major changes in deployment configurability via the UI. For this release, there are some additional steps you should follow carefully to ensure your deployment configurations remain through the upgrade.
+With `v0.7.x`, we have released some major changes in deployment configurability via the UI. For this release, there are some additional steps you should follow carefully to ensure your deployment configurations remain through the upgrade.
 
 #### Capturing Deployment Configuration
 
@@ -53,7 +53,7 @@ For each of the following deployment components you will need to take note of th
 Ex.
 
 ```bash
-kbl describe deploy/nebular-gegenschein-4079-webserver
+kubectl describe deploy/nebular-gegenschein-4079-webserver
 ```
 
 #### Standard Sizes vs Custom Configuration TODO
