@@ -1,17 +1,19 @@
 #!/usr/bin/env bash
 
-# Usage: bin/release-platform <branch> <version>
+# Usage: bin/release-platform <branch> <version> <environment>
 # set -x
+
+: ${ENV:=development}
 
 # Trigger deployment for astronomer/astronomer
 printf "Getting last build number for astronomer/astronomer $1 branch...\n"
 ASTRONOMER_BUILD=$(drone build last astronomer/astronomer --branch $1 --format "{{ .Number }}")
 [[ -z "$ASTRONOMER_BUILD" ]] && echo "Failed to get build number, exiting." && exit 1;
-read -p "***ATTENTION*** Deploy astronomer/astronomer #${ASTRONOMER_BUILD} as v$2? [y/n] " -n 1 -r
+read -p "***ATTENTION*** Deploy astronomer/astronomer #${ASTRONOMER_BUILD} as v$2 to ${ENV}? [y/n] " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
-    printf "Deploying #${ASTRONOMER_BUILD} as $2...\n"
-    drone deploy astronomer/astronomer ${ASTRONOMER_BUILD} production -p ASTRONOMER_VERSION=$2
+    printf "Deploying #${ASTRONOMER_BUILD} as $2 to ${ENV}...\n"
+    drone deploy astronomer/astronomer ${ASTRONOMER_BUILD} ${ENV} -p ASTRONOMER_VERSION=$2
     printf "\n"
 else
     printf "Skipped deployment.\n\n"
@@ -21,11 +23,11 @@ fi
 printf "Getting last build number for astronomer/helm.astronomer.io $1 branch...\n"
 HELM_BUILD=$(drone build last astronomer/helm.astronomer.io --branch $1 --format "{{ .Number }}")
 [[ -z "$HELM_BUILD" ]] && echo "Failed to get build number, exiting." && exit 1;
-read -p "***ATTENTION*** Deploy astronomer/helm.astronomer.io #${HELM_BUILD} as v$2? [y/n] " -n 1 -r
+read -p "***ATTENTION*** Deploy astronomer/helm.astronomer.io #${HELM_BUILD} as v$2 to ${ENV}? [y/n] " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
-    printf "Deploying #${HELM_BUILD} as $2...\n"
-    drone deploy astronomer/helm.astronomer.io ${HELM_BUILD} production -p ASTRONOMER_VERSION=$2
+    printf "Deploying #${HELM_BUILD} as $2 to ${ENV}...\n"
+    drone deploy astronomer/helm.astronomer.io ${HELM_BUILD} ${ENV} -p ASTRONOMER_VERSION=$2
 else
     printf "Skipped deployment.\n"
 fi
