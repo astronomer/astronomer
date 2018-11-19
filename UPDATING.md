@@ -65,22 +65,5 @@ You will now be able to safely upgrade the deployment by navigating to the deplo
 #### Setting Deployment Configuration
 Now that you have captured the deployment configuration and upgraded the deployment, you can adjust the sliders in the deployment configuration/settings panel to match the settings you recorded above. Once you are satisfied with the configuration, press `update` to allow the new configuration to take place.
 
-#### Standard Sizes vs Custom Configuration
- 
-TODO
-
 ### Downgrading
 In some instances, you may want to perform a downgrade of the platform back to the previous version.
-
-#### Capture Houston Backend Secret
-
-`export HOUSTON_POSTGRES_URI=$(kbl get secret {PLATFORM RELEASE NAME}-houston-backend -o json | jq ".data.connection" -r | base64 --decode)`
-
-#### Launch Pod to Perform Downgrade
-
-```bash
-kubectl run houston-command-zombie -it --image=astronomerinc/ap-houston-api \
-  --stdin=true --restart=OnFailure --rm \
-  --env "HOUSTON_POSTGRES_URI=$(echo $HOUSTON_POSTGRES_URI)" \
-  --command -- env
-```
