@@ -9,7 +9,7 @@ position: [6]
 
 We've built out a robust monitoring stack for Airflow that helps you keep track of your Airflow deployments.
 
-On Enterprise Edition, go to `grafana.{your namespace here}.astronomer.io` to access the monitoring overview.
+On Enterprise Edition, go to `grafana.{your basedomain here}` to access the monitoring overview.
 
 - All of our dashboards provide live, up-to-date information on the status of Airflow, from the Kubernetes level right to the container level.
 
