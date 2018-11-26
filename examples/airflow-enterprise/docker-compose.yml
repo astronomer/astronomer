@@ -21,8 +21,9 @@ services:
       - ./initdb.sql:/docker-entrypoint-initdb.d/initdb.sql
 
   redis:
-    image: redis:4.0.6-alpine
+    image: astronomerinc/ap-redis:latest
     restart: unless-stopped
+    command: ["/bin/sh", "-c", "redis-server --requirepass redis"]
     labels:
       io.astronomer.docker: "true"
       io.astronomer.docker.open: "true"
