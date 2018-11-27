@@ -16,7 +16,7 @@ Before interacting directly with the pods that are created with each Airflow dep
 - [Configuring EKS (Amazon) Access for kubectl](https://docs.aws.amazon.com/eks/latest/userguide/configure-kubectl.html)
 - [Configuring AKS (Microsoft) Access for kubectl](https://docs.microsoft.com/en-us/azure/aks/tutorial-kubernetes-deploy-cluster#connect-to-cluster-using-kubectl)
 
-### Switching to the correct context 
+### Switching to the correct context
 
 Once connected to your cluster, you will need to set the appropriate context.
 ```
