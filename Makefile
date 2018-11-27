@@ -16,7 +16,7 @@ DRONE_REPOSITORIES := astronomer commander db-bootstrapper default-backend houst
 GITHUB_ORG := astronomer
 
 # Airflow versions
-AIRFLOW_VERSIONS := 1.9.0 1.10.0
+AIRFLOW_VERSIONS := 1.9.0 1.10.1
 
 # Vendor components
 VENDOR_COMPONENTS := alertmanager cadvisor curator elasticsearch elasticsearch-exporter fluentd grafana kibana kube-state nginx pgbouncer pgbouncer-exporter prometheus redis registry statsd-exporter
