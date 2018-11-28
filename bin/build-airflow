@@ -19,7 +19,7 @@ function build_image() {
 
         # If we're building with and ASTRONOMER_REF, also tag image with that branch name (master, release-*)
         if [ -v ASTRONOMER_REF ]; then
-            docker tag "${REPOSITORY}/${component_name}:${version}" "${REPOSITORY}/${component_name}:${1}-${ASTRONOMER_REF}"
+            docker tag "${REPOSITORY}/${component_name}:${version}" "${REPOSITORY}/${component_name}:${ASTRONOMER_REF}-${1}"
         fi
 
     else
@@ -34,7 +34,7 @@ function build_image() {
         docker build ${build_opts} -t "${REPOSITORY}/${component_name}:${version}-onbuild" -f "${onbuild_docker_file}" "${onbuild_docker_dir}" || exit 1
 
         if [ -v ASTRONOMER_REF ]; then
-            docker tag "${REPOSITORY}/${component_name}:${version}-onbuild" "${REPOSITORY}/${component_name}:${1}-${ASTRONOMER_REF}-onbuild"
+            docker tag "${REPOSITORY}/${component_name}:${version}-onbuild" "${REPOSITORY}/${component_name}:${ASTRONOMER_REF}-${1}-onbuild"
         fi
     fi
 }
