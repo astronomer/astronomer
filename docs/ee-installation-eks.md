@@ -55,7 +55,7 @@ Yes. There is unfortunately no work-around to the base domain requirement. In or
 
 For example, if companyx.com was your base domain, we’d create houston.companyx.com (our API), or astronomer.companyx.cloud.io etc. for you to access all parts of your deployment, and there’s unfortunately no way to abstract that.
 
-Once you have a base domain set up, you can use a cert manager to generate a short-lived wildcard, which should be relatively easy. (Check out a blog from LetsEncrypt that might help [here](https://www.bennadel.com/blog/3420-obtaining-a-wildcard-ssl-certificate-from-letsencrypt-using-the-dns-challenge.htm])). 
+Once you have a base domain set up, you can use a cert manager to generate a short-lived wildcard, which should be relatively easy. (Check out a blog from LetsEncrypt that might help [here](https://www.bennadel.com/blog/3420-obtaining-a-wildcard-ssl-certificate-from-letsencrypt-using-the-dns-challenge.htm])).
 
 ### What about EKS?
 

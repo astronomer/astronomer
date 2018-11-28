@@ -7,9 +7,10 @@ menu: ["Astro CLI"]
 position: [4]
 ---
 
-# Available Commands:
+# Available Commands
 
 At the highest level running `astro` will give you the following options:
+
 ```
 
   airflow     Manage airflow projects and deployments
@@ -25,6 +26,7 @@ At the highest level running `astro` will give you the following options:
 ```
 
 Running `astro airflow`:
+
 ```
   deploy      Deploy an airflow project
   init        Scaffold a new airflow project
@@ -35,25 +37,29 @@ Running `astro airflow`:
   stop        Stop a development airflow cluster
 ```
 
-Running `astro auth`
+Running `astro auth`:
+
 ```
   login       Login to Astronomer services
   logout      Logout of Astronomer services
   ```
 
 Running `astro cluster`:
+
 ```
     list        List known Astronomer Enterprise clusters
     switch      Switch to a different cluster context
 ```
 
 Running `astro config`:
+
 ```
   get         Get astro project configuration
   set         Set astro project configuration
 ```
 
 Running `astro deployment`:
+
 ```
   create      Create a new Astronomer Deployment
   delete      Delete an airflow deployment
@@ -62,11 +68,13 @@ Running `astro deployment`:
 ```
 
 Running `astro user`:
+
 ```
   create      Create a user in the astronomer platform
 ```
 
 Running `astro workspace`:
+
 ```
   create      Create an astronomer workspaces
   delete      Delete an astronomer workspace

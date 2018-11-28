@@ -40,11 +40,9 @@ For example:
 curl -sSL https://install.astronomer.io | sudo bash -s -- v0.3.1
    ```
 
-
 **Note:** If you get a mkdir error while going through the install, please download and run the [godownloader](https://raw.githubusercontent.com/astronomer/astro-cli/master/godownloader.sh) script locally.
 
     cat godownloader.sh | bash -s -- -b /usr/local/bin
-
 
 ## Windows 10
 

@@ -12,9 +12,9 @@ Initial product releases:
  - [Astronomer v0.2.0 Release](https://www.astronomer.io/blog/announcing-astronomer-enterprise-edition-0-2-0/)
  - [Astronomer v0.3.0 Release](https://www.astronomer.io/blog/announcing-astronomer-v0-3-0/)
  - [Astronomer v0.3.2 Release](https://www.astronomer.io/blog/astronomer-v0-3-2-release/)
-- [Astronomer v0.4.1 Release](https://www.astronomer.io/blog/astronomer-v0-4-1-release/)
-- [Astronomer v0.5.0 Release](https://www.astronomer.io/blog/astronomer-v0-5-0-release/)
-- [Astronomer v0.6.0 Release](https://www.astronomer.io/blog/astronomer-v0-6-0-release/)
+ - [Astronomer v0.4.1 Release](https://www.astronomer.io/blog/astronomer-v0-4-1-release/)
+ - [Astronomer v0.5.0 Release](https://www.astronomer.io/blog/astronomer-v0-5-0-release/)
+ - [Astronomer v0.6.0 Release](https://www.astronomer.io/blog/astronomer-v0-6-0-release/)
 
 
 Interested in seeing what's next for us? Check out our [Roadmap doc](https://astronomer.io/docs/resources-roadmap).

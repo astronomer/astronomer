@@ -13,7 +13,6 @@ position: [5]
 
 Running `kubectl get pods --all-namepsaces` will return the Astronomer core platform pods, along with pods specific to each Airflow deployment.
 
-
 ```bash
 kubectl get pods --all-namespaces
 
@@ -63,6 +62,7 @@ kubectl delete po/zodiac-cosmo-1172-scheduler-5bf6db96c4-f5c2z -n astronomer-ee-
 Most pods will restart within 2 minutes of being deleted. However, worker pods will wait until they finish all tasks that are being run are complete or until the configured `flush period`. In general, since Celery workers have to attached to a stateful set to push logs, they will take the longest to restart.
 
 Restarts can be forced by adding additional flags
+
 ```
 kubectl delete po/lunar-nuclear-3725-worker-0 --force --grace-period=0 -n astronomer-ee-lunar-nuclear-3725
 ```
@@ -70,6 +70,7 @@ kubectl delete po/lunar-nuclear-3725-worker-0 --force --grace-period=0 -n astron
 ### Deleting Volumes
 
 Data that persists across deploys (e.g. logs, Grafana metrics, etc.) are stored in persistent volumes. If pods that push data to those volumes are stuck in a `CrashLoopBackff` state, deleting the volumes might fix them.
+
 ```
 kubectl get pvc --all-namespaces
 
@@ -118,6 +119,7 @@ The first thing to try when a pod is unscheduleable is to make sure the resource
 ```
 `kubectl get resourcequotas`
 ```
+
 ```
 kubectl edit resourcequotas/<quota_name>
 ```
@@ -150,6 +152,7 @@ Users can be added via graphql:
 3) Under `HTTP HEADERS` on the bottom, enter the token as `{"authorization": "TOKEN"}`
 
 4) Once the user as signed up, they can be added to the admin group for Grafana access:
+
 ```
 # Returns user UUID
 
@@ -158,6 +161,7 @@ query GetUser {
     uuid
   }
 ```
+
 ```
 # Returns default-admin UUID
 
@@ -168,6 +172,7 @@ query GetAdminGroup {
   }
 }
 ```
+
 ```
 # Gives user Grafana access
 mutation AddAdmin {
@@ -191,7 +196,9 @@ The default Grafana user/password is `admin/admin`. It can be modified by jumpin
 ```
 kubectl exec -it solitary-lightningbug-grafana-6cb476584f-fcwz7 /bin/bash -n astronomer-ee
 ```
+
 To reset the password to `admin321`:
+
 ```
 cd /usr/share/grafana && grafana-cli admin reset-admin-password admin321 --config=/etc/grafana/grafana.ini
 ```

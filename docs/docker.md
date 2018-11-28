@@ -75,7 +75,7 @@ as a container deployment strategy for your cloud.
 
 ![Airflow Module](https://s3.amazonaws.com/astronomer-cdn/website/img/guides/airflow_module.png)
 
-## Quickstart
+## Get Started
 
 Clone Astronomer:
 

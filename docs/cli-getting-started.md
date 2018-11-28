@@ -108,8 +108,8 @@ Is your image failing to build after running `astro airflow start`?
 
 Not sure what `packages` and `requirements` you need for your use case? Check out these examples.
 
-- [Snowflake](https://github.com/astronomer/airflow-guides/tree/master/example_code/snowflake)
-- [Google Cloud](https://github.com/astronomer/airflow-guides/tree/master/example_code/gcp)
+ - [Snowflake](https://github.com/astronomer/airflow-guides/tree/master/example_code/snowflake)
+ - [Google Cloud](https://github.com/astronomer/airflow-guides/tree/master/example_code/gcp)
 
 If image size isn't a concern, feel free to "throw the kitchen sink at it" with this list of packages:
 
@@ -133,9 +133,9 @@ musl-dev
 
 **Notes to consider**:
 
-- The image will take some time to build the first time. Right now, you have to rebuild the image each time you want to add an additional package or requirement.
+ - The image will take some time to build the first time. Right now, you have to rebuild the image each time you want to add an additional package or requirement.
 
-- By default, there won't be webserver or scheduler logs in the terminal since everything is hidden away in Docker containers. You can see these logs by running: `docker logs $(docker ps | grep scheduler | awk '{print $1}')`
+ - By default, there won't be webserver or scheduler logs in the terminal since everything is hidden away in Docker containers. You can see these logs by running: `docker logs $(docker ps | grep scheduler | awk '{print $1}')`
 
 ### CLI Help
 
@@ -176,9 +176,9 @@ Refer to the native [Airflow CLI](https://airflow.apache.org/cli.html) for a lis
 
 Future releases of the Astronomer CLI will have cleaner ways of overwriting environment variables. Until then, any overrides can go in the `Dockerfile`.
 
-- Any bash scripts you want to run as `sudo` when the image builds can be added as such:
+ - Any bash scripts you want to run as `sudo` when the image builds can be added as such:
 `RUN COMMAND_HERE`
-- Airflow configuration variables can be found in [`airflow.cfg`](https://github.com/apache/incubator-airflow/blob/master/airflow/config_templates/default_airflow.cfg) can be overwritten with the following format:
+ - Airflow configuration variables can be found in [`airflow.cfg`](https://github.com/apache/incubator-airflow/blob/master/airflow/config_templates/default_airflow.cfg) can be overwritten with the following format:
 
 ```
  ENV AIRFLOW__SECTION__PARAMETER VALUE

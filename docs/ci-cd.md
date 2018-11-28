@@ -29,11 +29,13 @@ astro service-account create -d [DEPLOYMENTUUID] --label [SERVICEACCOUNTLABEL]
 ```
 
 __Workspace Level Service Account__
+
 ```sa
 astro service-account create -w [WORKSPACEUUID] -l [SERVICEACCOUNTLABEL]
 ```
 
 __System Level Service Account__
+
 ```sa
 astro service-account create -s --label [SERVICEACCOUNTLABEL]
 ```
@@ -85,10 +87,10 @@ After you have created a service account, you will want to store the generated A
 
 The first step of this pipeline is to authenticate against the registry:
 
-ex
 ```bash
 docker login registry.$${BASE_DOMAIN} -u _ -p $${API_KEY_SECRET}
 ```
+
 In this example, the BASE_DOMAIN is `astronomer.cloud` (for Astronomer Cloud). The `API_KEY_SECRET` is the API Key that you got from the CLI or the UI stored in your secret manager
 
 #### Building and Pushing an Image

@@ -11,7 +11,7 @@ As of Astronomer v0.3, it uses Google OAuth to authenticate users. In order to g
 
 ## Create OAuth Credentials
 
-### Prerequisites:
+### Prerequisites
 
 - A Google Account for accessing the GCP console
 - Know the `baseDomain` you are installing Astronomer EE to.  (ie. astro.yourdomain.com)

@@ -73,7 +73,6 @@ Now that you have authenticated to the API, you can begin to perform queries. Be
 
 ### Listing Your Available Workspaces
 
-
 ```graphql
 query GetWorkspaces {
   workspaces {
@@ -160,7 +159,7 @@ mutation UpdateDeployment {
 
 * `authConfig` — Fetch configuration information about available authentication methods ('state' is deprecated)
 * `deployments` — Fetches one or more deployments based on input. If a deploymentUuid is return, it will return at most one deployment Fetches all deployments by users UUID if no parameters are specified.
-deploymentConfig — Fetches config needed to create a module deployment
+* `deploymentConfig` — Fetches config needed to create a module deployment
 * `groups` — Fetch groups by groupUuid or workspaceUuid
 * `invites` — Fetch a list of invites
 * `self` — Fetches info about the authenticated requesting user

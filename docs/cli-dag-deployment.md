@@ -47,12 +47,9 @@ Now that you've configured the astro-cli to point at your Astronomer EE deployme
 
 To push your DAG, you'll need the release name of your Astronomer EE deployment. A few notes:
 
-- This release name was created by the Helm package manager during your Astronomer EE deploy
-
-- If you are unsure of what release
-name was created for your deploy, you can run `helm ls` to get a list of all Helm releases and find the one that has an "Updated" timestamp corresponding to the time at which you deployed Astronomer EE.
-
-- If you're still not sure which Helm release you should deploy to, reach out to your cluster Administrator.
+ - This release name was created by the Helm package manager during your Astronomer EE deploy
+ - If you are unsure of what release name was created for your deploy, you can run `helm ls` to get a list of all Helm releases and find the one that has an "Updated" timestamp corresponding to the time at which you deployed Astronomer EE.
+ - If you're still not sure which Helm release you should deploy to, reach out to your cluster Administrator.
 
 ### 2. Run our deploy command
 

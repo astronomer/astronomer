@@ -76,7 +76,6 @@ If you're interested in integrating your deployment process into your CI/CD syst
 
 Note that you're able to create Service Accounts at both the Workspace and Deployment level. Creating them at the Workspace level allows you to customize how your deployment pipeline works and allows you to deploy to multiple Airflow instances with one push, while creating them at the Deployment level ensures that your CI/CD pipeline will only deploy to that specific cluster. Check out [this video](https://www.youtube.com/watch?time_continue=2&v=8h9lXzGa4sQ) for a more detailed walkthrough of Service Accounts and CI/CD with Astronomer.
 
-
 # Astronomer Features
 
 ## Airflow Clusters

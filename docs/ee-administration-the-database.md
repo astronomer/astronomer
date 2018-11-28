@@ -12,6 +12,7 @@ Sometimes it is necessary to access the database that backs the Astronomer platf
 ### Retrieving "astronomer-bootstrap" secret
 
 To get the connection information for the Postgres instance included in your Astronomer install, you will need to retrieve "astronomer-bootstrap" secret. The namespace here is the global namespace found at the beginning of all your pods.
+
 ```
 $ kubectl get secret astronomer-bootstrap --namespace astronomer-demo -o yaml
 apiVersion: v1
@@ -37,7 +38,6 @@ postgres://example-user:P@SSWORD@example-postgres.astronomer-demo
 ```
 
 If accessing the database often, it is recommended that you create a new user with scoped permissions so you are not logging in with superuser credentials.
-
 
 ## Examples
 
