@@ -18,4 +18,4 @@ Product release blog posts:
 * [v0.3 Release](https://www.astronomer.io/blog/announcing-astronomer-v0-3-0/)
 * [v0.2 Release](https://www.astronomer.io/blog/announcing-astronomer-enterprise-edition-0-2-0/)
 
-Interested in seeing what's next? Check out our [roadmap](https://www.astronomer.io/docs/roadmap).
+Interested in seeing what's next? Check out our [Roadmap](https://www.astronomer.io/docs/roadmap).
