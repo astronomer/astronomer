@@ -17,4 +17,4 @@ Initial product releases:
  - [Astronomer v0.6.0 Release](https://www.astronomer.io/blog/astronomer-v0-6-0-release/)
 
 
-Interested in seeing what's next for us? Check out our [Roadmap doc](https://astronomer.io/docs/resources-roadmap).
+Interested in seeing what's next for us? Check out our [Roadmap doc](https://www.astronomer.io/docs/roadmap).
