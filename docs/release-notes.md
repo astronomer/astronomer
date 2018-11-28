@@ -6,15 +6,16 @@ slug: "release-notes"
 menu: ["Resources"]
 position: [1]
 ---
-We regularly publish all of our product release notes on [the Astronomer blog](http://astronomer.io/blog). See below for links to all of our historical product update blog post, but for a running and up-to-date list of changes to Astronomer, check out the [Chagelog on Github](https://github.com/astronomer/astronomer/blob/master/CHANGELOG.md).
 
-Initial product releases:
- - [Astronomer v0.2.0 Release](https://www.astronomer.io/blog/announcing-astronomer-enterprise-edition-0-2-0/)
- - [Astronomer v0.3.0 Release](https://www.astronomer.io/blog/announcing-astronomer-v0-3-0/)
- - [Astronomer v0.3.2 Release](https://www.astronomer.io/blog/astronomer-v0-3-2-release/)
- - [Astronomer v0.4.1 Release](https://www.astronomer.io/blog/astronomer-v0-4-1-release/)
- - [Astronomer v0.5.0 Release](https://www.astronomer.io/blog/astronomer-v0-5-0-release/)
- - [Astronomer v0.6.0 Release](https://www.astronomer.io/blog/astronomer-v0-6-0-release/)
+We publish release notes on [our blog](https://www.astronomer.io/blog). You can also view the [changelog](https://github.com/astronomer/astronomer/blob/master/CHANGELOG.md) on Github.
 
+Product release blog posts:
 
-Interested in seeing what's next for us? Check out our [Roadmap doc](https://www.astronomer.io/docs/roadmap).
+* [v0.6 Release](https://www.astronomer.io/blog/astronomer-v0-6-0-release/)
+* [v0.5 Release](https://www.astronomer.io/blog/astronomer-v0-5-0-release/)
+* [v0.4.1 Release](https://www.astronomer.io/blog/astronomer-v0-4-1-release/)
+* [v0.3.2 Release](https://www.astronomer.io/blog/astronomer-v0-3-2-release/)
+* [v0.3 Release](https://www.astronomer.io/blog/announcing-astronomer-v0-3-0/)
+* [v0.2 Release](https://www.astronomer.io/blog/announcing-astronomer-enterprise-edition-0-2-0/)
+
+Interested in seeing what's next? Check out our [roadmap](https://www.astronomer.io/docs/roadmap).
