@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.7.0] - 2018-11-15
+## [0.7.0] - 2018-11-28
 * Added support for platform and airflow deployment alerts on prometheus data.
 * Added support for injecting airflow environment variables at runtime through the UI.
 * Added support for different airflow executors.
@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 * Added airflow chart upgrade functionality.
 * Added lots of new grafana dashboards for persistent storage, prometheus, registry, elastic, fluentd, airflow container state and more.
 * Updated prometheus chart to fix healthcheck.
+* Initial airflow 1.10.1 support.
 
 ## [0.6.1] - 2018-09-27
 
