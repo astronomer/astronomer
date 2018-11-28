@@ -26,7 +26,7 @@ We've written installation docs for various Kubernetes distributions:
 
 * [Astronomer on Kubernetes](/docs/ee-installation-general-kubernetes)
 * [Amazon Web Services - EKS](/docs/ee-installation-eks)
-* [Google Cloud Platform - GKE](/docs/installation-ee-gke)
+* [Google Cloud Platform - GKE](/docs/ee-installation-gke)
 
 Coming Soon: Guides for Azure AKS, Pivotal PKE, Redhat OpenShift, and
 Digital Ocean Kubernetes.
