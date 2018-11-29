@@ -11,7 +11,7 @@ Checkout the desired from our [helm.astronomer.io](https://github.com/astronomer
 Ex.
 
 ```bash
-git checkout v0.7.0
+git fetch && git checkout v0.7.0
 ```
 
 ## Astronomer v0.7.0
