@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.0] - 2018-11-29
+* Fixed a migration issue in houston when upgrading.
+
 ## [0.7.0] - 2018-11-28
 * Added support for platform and airflow deployment alerts on prometheus data.
 * Added support for injecting airflow environment variables at runtime through the UI.
