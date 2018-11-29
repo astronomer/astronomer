@@ -1,5 +1,5 @@
 # Updating Astronomer
-This guide contains information about upgrading and downgrading between Astronomer platform versions starting with `v0.6.2` -> `v0.7.0`.
+This guide contains information about upgrading and downgrading between Astronomer platform versions starting with `v0.6.2` -> `v0.7.1`.
 
 ## Prerequisites
 
@@ -11,14 +11,14 @@ Checkout the desired from our [helm.astronomer.io](https://github.com/astronomer
 Ex.
 
 ```bash
-git checkout v0.7.0
+git fetch && git checkout v0.7.1
 ```
 
-## Astronomer v0.7.0
+## Astronomer v0.7.1
 
 ### Upgrading the Platform
 
-Once you have pulled the `v0.7.0` release and recovered the `config.yaml` from your previous install/upgrade, you can delete and reinstall the latest version using the following commands.
+Once you have pulled the `v0.7.1` release and recovered the `config.yaml` from your previous install/upgrade, you can delete and reinstall the latest version using the following commands.
 
 **Note** You must specify the same platform release name that was used previously. If you do not see your deployments after an upgrade, it is likely due to failure to specify the `-n` arg on the install. If you see this, attempt to do another `helm delete` and `install`, this time specifying the release name.
 
@@ -34,7 +34,7 @@ __Delete Platform Release__
 helm delete --purge [PLATFORM RELEASE NAME]
 ```
 
-__Install v0.7.0 from your helm.astronomer.io directory__
+__Install v0.7.1 from your helm.astronomer.io directory__
 
 ```bash
 helm install -f config.yaml . -n [PLATFORM RELEASE NAME] --namespace [PLATFORM NAMESPACE]
