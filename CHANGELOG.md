@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.7.0] - 2018-11-29
+## [0.7.1] - 2018-11-29
 * Fixed a migration issue in houston when upgrading.
 
 ## [0.7.0] - 2018-11-28
