@@ -23,7 +23,7 @@ LABEL io.astronomer.docker.module="airflow"
 LABEL io.astronomer.docker.component="airflow"
 LABEL io.astronomer.docker.airflow.version="1.10.1"
 
-ARG ORG="astronomerio"
+ARG ORG="astronomer"
 ARG VERSION="v1-10-stable"
 ARG SUBMODULES="all, statsd"
 
