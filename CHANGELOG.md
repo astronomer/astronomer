@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.2] - 2018-12-02
+* Fixed a deployment upgrade issue.
+
 ## [0.7.1] - 2018-11-29
 * Fixed a migration issue in houston when upgrading.
 
