@@ -46,17 +46,14 @@ With v0.7.x, we have released some major changes in deployment configurability v
 
 #### Capturing Deployment Configuration
 
-For each of the following deployment components you will need to take note of the memory and CPU allocations, we suggest writing them down in a separate file. For the worker component, you will also need to take note of the # of replicas.
+For each of the following deployment components you will need to take note of the memory and CPU allocations, we suggest writing them down in a separate file. For the worker component, you will also need to take note of the # of replicas. In the below command worker replicas will be shown by multiple components with 'worker' in the name.
 
-- webserver
-- scheduler
-- workers
-    - **Note** Be sure to capture the number of replicas
+Here is a kubectl command to output resources of all pods in a namespace.
 
-Ex. 
-
-```bash
-kubectl describe deploy/nebular-gegenschein-4079-webserver
+```
+kubectl get pods \
+     -o=jsonpath='{"NAME"}{"\t\t\t\t\t\tLIMITS"}{"\t\t\t\t\tREQUESTS\n"}{range .items[*]}{ range .spec.containers[*]}{.name}{"\t\t"}{.resources.limits}{"\t\t"}{.resources.requests}{"\n"}{end}{end}' \
+    --namespace andscoop-dev-scientific-telescope-8205
 ```
 
 #### Perform Deployment Upgrade
