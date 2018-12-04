@@ -1,7 +1,7 @@
 images:
   kibana:
     repository: astronomerinc/ap-kibana
-    tag: 0.7.2-rc.2
+    tag: 0.7.2
     pullPolicy: IfNotPresent
 
 clusterName: "astronomer"
