@@ -53,7 +53,7 @@ Here is a kubectl command to output resources of all pods in a namespace.
 ```
 kubectl get pods \
      -o=jsonpath='{"NAME"}{"\t\t\t\t\t\tLIMITS"}{"\t\t\t\t\tREQUESTS\n"}{range .items[*]}{ range .spec.containers[*]}{.name}{"\t\t"}{.resources.limits}{"\t\t"}{.resources.requests}{"\n"}{end}{end}' \
-    --namespace andscoop-dev-scientific-telescope-8205
+    --namespace [DEPLOYMENT NAMESPACE]
 ```
 
 #### Perform Deployment Upgrade
