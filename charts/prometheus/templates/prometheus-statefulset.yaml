@@ -60,16 +60,16 @@ spec:
               containerPort: {{ .Values.ports.http }}
           livenessProbe:
             httpGet:
-              path: /api/v1/status/config
+              path: /-/healthy
               port: {{ .Values.ports.http }}
-            initialDelaySeconds: 90
-            periodSeconds: 10
+            initialDelaySeconds: 10
+            periodSeconds: 5
           readinessProbe:
             httpGet:
-              path: /api/v1/status/config
+              path: /-/ready
               port: {{ .Values.ports.http }}
-            initialDelaySeconds: 90
-            periodSeconds: 10
+            initialDelaySeconds: 10
+            periodSeconds: 5
       volumes:
         - name: prometheus-config-volume
           configMap:
