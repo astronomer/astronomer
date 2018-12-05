@@ -73,6 +73,7 @@ RUN apk update \
 	&& pip3 install --no-cache-dir cython \
 	&& pip3 install --no-cache-dir "${AIRFLOW_MODULE}" \
 	&& pip3 install --no-cache-dir flask-appbuilder==1.11.1 \
+	&& pip3 install --no-cache-dir "redis>=2.10.5,<3" \
 	&& apk del .build-deps \
 	&& ln -sf /usr/bin/python3 /usr/bin/python \
 	&& ln -sf /usr/bin/pip3 /usr/bin/pip
