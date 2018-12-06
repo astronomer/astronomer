@@ -37,7 +37,13 @@
         name: {{ template "airflow_metadata_secret" . }}
         key: connection
   {{- if eq .Values.executor "CeleryExecutor" }}
-  - name: {{if eq .Values.airflowVersion "1.9.0" }} AIRFLOW__CELERY__CELERY_RESULT_BACKEND {{ else }} AIRFLOW__CELERY__RESULT_BACKEND {{ end }}
+  # - name: {{if eq .Values.airflowVersion "1.9.0" }} AIRFLOW__CELERY__CELERY_RESULT_BACKEND {{ else }} AIRFLOW__CELERY__RESULT_BACKEND {{ end }}
+  - name: AIRFLOW__CELERY__CELERY_RESULT_BACKEND 
+    valueFrom:
+      secretKeyRef:
+        name: {{ template "airflow_result_backend_secret" . }}
+        key: connection
+  - name: AIRFLOW__CELERY__RESULT_BACKEND
     valueFrom:
       secretKeyRef:
         name: {{ template "airflow_result_backend_secret" . }}
