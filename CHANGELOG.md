@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.4] - 2018-12-06
+* Support airflow 1.10.1 environment variables.
+
 ## [0.7.3] - 2018-12-05
 * Fixed prometheus healthchecks.
 
