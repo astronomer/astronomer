@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.3] - 2018-12-05
+* Fixed prometheus healthchecks.
+
 ## [0.7.2] - 2018-12-02
 * Fixed a deployment upgrade issue.
 
