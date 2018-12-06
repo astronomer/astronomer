@@ -61,3 +61,6 @@ You will now be able to safely upgrade the deployment by navigating to the deplo
 
 #### Setting Deployment Configuration
 Now that you have captured the deployment configuration and upgraded the deployment, you can adjust the sliders in the deployment configuration/settings panel to match the settings you recorded above. Once you are satisfied with the configuration, press `update` to allow the new configuration to take place.
+
+#### Rebooting Statsd-exporter
+Since helm doesn't give us much control over ordering of deployments, a race condition exists between the scheduler and statsd pod boot order. If a deployment is showing "Scheduler Heartbeat" as "Unhealthy" on the "Airflow Deployment Overview" dashboard in Grafana, just delete the statsd exporter pod and let kubernetes recreate it. The scheduler heartbeat should start to rise and report "Healthy".
