@@ -56,6 +56,13 @@ kubectl get pods \
     --namespace [DEPLOYMENT NAMESPACE]
 ```
 
+#### Scale Workers Down To 0
+To help improve the speed of the upgrade process, scale your workers down to zero by editing the worker statefuleset.
+
+Run `kubectl get statefulsets` to get the name of your worker statefulset and `kubectl edit statefulset [STATEFUL SET NAME]` to edit the configuration.
+
+You can then modify the `spec.replicas` attribute to be 0. Save and close. Please wait until all workers are spun down before continuing to the next step. You can monitor the spindown process with `kubectl get pods`.
+
 #### Perform Deployment Upgrade
 You will now be able to safely upgrade the deployment by navigating to the deployment settings and configuration view in the web UI and clicking the upgrade button. Behind the scenes we will now run a `helm upgrade` against your deployment in order to enable the v0.7.x features.
 
