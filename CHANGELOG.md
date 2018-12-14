@@ -1,6 +1,8 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+## [0.7.5] - 2018-12-13
+* Support upgrades from 0.5.x charts.
 
 ## [0.7.4] - 2018-12-06
 * Support airflow 1.10.1 environment variables.
