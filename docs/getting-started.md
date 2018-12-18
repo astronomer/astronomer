@@ -8,9 +8,9 @@ position: [2]
 
 ## Sign up
 
-First step, [create an account](https://app.astronomer.cloud/).
+First step, [start your trial here](https://trial.astronomer.io).
 
-If you're new to Astronomer but someone else on your team has an existing workspace you want to join, you still have to create your own account. Once you're signed up, they can invite you to their workspace.
+If you're new to Astronomer but someone else on your team has an existing workspace you want to join, you can create your own account [here](https://app.astronomer.cloud). Once you're signed up, they can invite you to their workspace.
 
 ## Download the CLI
 
