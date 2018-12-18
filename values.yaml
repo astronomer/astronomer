@@ -42,13 +42,13 @@ global:
     enabled: true
 
   elasticsearch:
-    enabled: false
+    enabled: true
 
   kibana:
-    enabled: false
+    enabled: true
 
   fluentd:
-    enabled: false
+    enabled: true
 
   airflow:
     enabled: false
