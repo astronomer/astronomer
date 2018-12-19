@@ -6,11 +6,9 @@ menu: ["root"]
 position: [2]
 ---
 
-Welcome to Astronomer Cloud Edition. 
+Welcome to Astronomer Cloud Edition. We're excited to be with you on your Airflow journey.
 
-Whether you're here because you're our newest customer, or because you're wondering what working with Astronomer would look like for your team, we're excited to be with you on your Airflow journey.
-
-To help you hit the ground running, this guide will walk you through what you need to know (and do) to get started with Astro Cloud.
+To help you hit the ground running, this guide will walk you through what you need to know (and do) to get started on our platform.
 
 ## Create a Workspace
 
@@ -18,7 +16,7 @@ Your first step is to [start a trial here](https://trial.astronomer.io).
 
 From there, you'll be redirected to our app to create an account and workspace.
 
-**Note:** If you're new to Astronomer but someone else on your team has an existing workspace you want to join, you'll still need to sign up. A personal workspace for you will be generated regardless, but they'll be able to add you as a user to a shared workspace directly from their account.
+**Note:** If you're new to Astronomer but someone else on your team has an existing workspace you want to join, you'll still need to sign up. A personal workspace for you will be generated regardless, and that team member will be able to add you as a user to a shared workspace directly from their account.
 
 ## Develop with the Astronomer CLI
 
