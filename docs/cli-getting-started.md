@@ -71,7 +71,7 @@ Once that command is run, you'll see the following skeleton project generated:
 └── requirements.txt #For any python packages
 ```
 
-_Note_: The image will take some time to build the first time. Right now, you have to rebuild the image each time you want to add an additional package or requirement.
+**Note:** The image will take some time to build the first time. Right now, you have to rebuild the image each time you want to add an additional package or requirement.
 
 ## II. Getting Started
 
@@ -85,7 +85,7 @@ To make sure you're authenticated, run the following:
 astro auth login astronomer.cloud
 ```
 
-(_Note_: If you don't already have an account on our platform, running this command will automatically create one for you (and a default workspace as well) based on the name associated with your Google email address).
+**Note:** If you don't already have an account on our platform, running this command will automatically create one for you (and a default workspace as well) based on the name associated with your Google email address).
 
 If do already have an account on our app (app.astronomer.cloud), then press enter when you see something like:
 
@@ -130,7 +130,7 @@ To create a deployment directly from our CLI, run:
 
 `astro deployment create <deployment name>`
 
-*Note:* This is a bit misleading. `deployment name` here is your workspace ID (that you pulled above), NOT the name of your new deployment (which doesn’t exist yet).
+**Note:** This is a bit misleading. `deployment name` here is your workspace ID (that you pulled above), NOT the name of your new deployment (which doesn’t exist yet).
 
 Once your webserver, scheduler, and celery flower are up, you should see the following success message and URLs:
 
@@ -162,14 +162,18 @@ This command will return a list of deployments available in that workspace, and 
  1    false-wavelength-5456         Paola Peraza Calderon's Workspace90b3dc76-2022-4e0f-9bac-74a03d0dffa7
  ````
 
-## CLI Debugging
+## III. CLI Debugging
 
-### Is your image failing to build after running `astro airflow start`?
+### Error on Building Image
+
+If your image  is failing to build after running `astro airflow start`?
 
  - You might be getting an error message in your console, or finding that Airflow is not accessible on `localhost:8080/admin`
  - If so, you're likely missing OS-level packages in `packages.txt` that are needed for any python packages specified in `requirements.text`
 
-### Not sure what `packages` and `requirements` you need for your use case? Check out these examples.
+### Adding Packages & Requirements
+
+If you're not sure what `packages` and `requirements` you need for your use case, check out these examples:
 
  - [Snowflake](https://github.com/astronomer/airflow-guides/tree/master/example_code/snowflake)
  - [Google Cloud](https://github.com/astronomer/airflow-guides/tree/master/example_code/gcp)
@@ -194,15 +198,15 @@ make
 musl-dev
 ```
 
-**Note to consider**:
+**Note**: By default, there won't be webserver or scheduler logs in the terminal since everything is hidden away in Docker containers.
 
-- By default, there won't be webserver or scheduler logs in the terminal since everything is hidden away in Docker containers. You can see these logs by running: 
+You can see these logs by running: 
 
- ```
- docker logs $(docker ps | grep scheduler | awk '{print $1}')
- ```
+```
+docker logs $(docker ps | grep scheduler | awk '{print $1}')
+```
 
-## CLI Help Commands
+## IV. CLI Help Commands
 
 The CLI includes a help command, descriptions, as well as usage info for subcommands.
 
@@ -222,7 +226,7 @@ astro airflow --help
 astro airflow deploy --help
 ```
 
-## Using Airflow CLI Commands
+## V. Using Airflow CLI Commands
 
 You can still use all native Airflow CLI commands with the astro cli when developing DAGs locally -  they'll just need to be wrapped around docker commands.
 
@@ -238,7 +242,7 @@ Refer to the native [Airflow CLI](https://airflow.apache.org/cli.html) for a lis
 
 **Note**: This will only work for the local dev environment.
 
-## Overriding Environment Variables
+## VI. Overriding Environment Variables
 
 Astronomer v0.7 comes with the ability to inject Environment Variables directly through the UI.
 
