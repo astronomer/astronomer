@@ -7,17 +7,21 @@ menu: ["Astro CLI"]
 position: [2]
 ---
 
-If you've gotten the Astronomer CLI installed and want to know what's next, you're in the right place.
+If you've gotten the Astronomer CLI installed and want to get ready to start pushing DAGs, you're in the right place. Read below for some starter guidelines.
 
-Here are some next steps:
+## I. Confirm the Install & Create a Project
 
-## 1. Confirm the install worked. Open a terminal and run:
+Let's make sure you have the Astronomer CLI installed on your machine, and that you have a project to work from.
 
- ```
+### Confirm the Install worked
+
+Open a terminal and run:
+
+```bash
 astro
 ```
 
-You should see something like this:
+If you're set up properly, you should see the following:
 
 ```
 astro is a command line interface for working with the Astronomer Platform.
@@ -41,14 +45,20 @@ Flags:
   -h, --help   help for astro
 ```
 
-## 2. Create a project:**
+For a breakdown of subcommands and corresponding descriptions, you can run: `astro help`
+
+### Create a project
+
+Your first step is to create a project to work from that lives in a folder on your local machine. The command you'll need is listed below, with an example `hello-astro` project.
 
  ```
 mkdir hello-astro && cd hello-astro
 astro airflow init
  ```
 
-This will generate a skeleton project directory:
+This will build a base image from Astronomer's fork of Apache-Airflow using Alpine Linux. The build process will include everything in your project directory, which makes it easy to include any shell scripts, static files, or anything else you want to include in your code.
+
+Once that command is run, you'll see the following skeleton project generated:
 
 ```py
 .
@@ -61,52 +71,105 @@ This will generate a skeleton project directory:
 └── requirements.txt #For any python packages
 ```
 
-## *3. Start Airflow**
+_Note_: The image will take some time to build the first time. Right now, you have to rebuild the image each time you want to add an additional package or requirement.
 
-Once you've run `astro airflow init` and start developing your DAGs, you can run `astro airflow start` to build your image.
+## II. Getting Started
 
-- This will build a base image using Alpine Linux and from Astronomer's fork of Apache-Airflow.
-- The build process will include everything in your project directory. This makes it easy to include any shell scripts, static files, or anything else you want to include in your code.
+Now that you have a project up, we'll need to make sure you're properly authenticated to your Astronomer workspace and deployment. To do so, follow the steps below.
 
-### For WSL (Windows Subsystem for Linux) Users
+### Logging in from the CLI
 
-- If you're running WSL, you might see the following error when trying to call `astro airflow start`:
-
-```
-Sending build context to Docker daemon  8.192kB
-Step 1/1 : FROM astronomerinc/ap-airflow:latest-onbuild
-# Executing 5 build triggers
- ---> Using cache
- ---> Using cache
- ---> Using cache
- ---> Using cache
- ---> Using cache
- ---> f28abf18b331
-Successfully built f28abf18b331
-Successfully tagged hello-astro/airflow:latest
-INFO[0000] [0/3] [postgres]: Starting
-Pulling postgres (postgres:10.1-alpine)...
-panic: runtime error: index out of range
-goroutine 52 [running]:
-github.com/astronomer/astro-cli/vendor/github.com/Nvveen/Gotty.readTermInfo(0xc4202e0760, 0x1e, 0x0, 0x0, 0x0)
-....
-```
-
-This is an issue pulling Postgres that should be fixed by running the following:
+To make sure you're authenticated, run the following:
 
 ```
-Docker pull postgres:10.1-alpine
+astro auth login astronomer.cloud
 ```
 
-### Debugging
+(_Note_: If you don't already have an account on our platform, running this command will automatically create one for you (and a default workspace as well) based on the name associated with your Google email address).
 
-Is your image failing to build after running `astro airflow start`?
+If do already have an account on our app (app.astronomer.cloud), then press enter when you see something like:
 
- - You might be getting an error message in your console, or finding that Airflow is not accessible on `localhost:8080/admin`)
+```
+ "Paolas-MBP-2:hello-astro paola$ astro auth login astronomer.cloud
+ CLUSTER                             WORKSPACE                           
+ astronomer.cloud                    4a6cb370-c361-440d-b02b-c90b07ef15f6
+
+ Switched cluster
+Username (leave blank for oAuth): 
+```
+
+Once you press enter, you’ll be prompted to go back into our UI to this link: https://app.astronomer.cloud/token
+
+Grab that token, paste it back into your command line, and you’re good to go. Your success message should read:
+
+```
+Successfully authenticated to registry.astronomer.cloud
+```
+
+### Navigating Workspaces
+
+Once logged in, you'll want to know how to navigate your existing workspaces. To pull a list of workspaces you're a part of, run:
+
+```
+astro workspace list
+```
+
+You should see a list of 1 or more workspaces in the output. To “pick” one, run our switch command followed by the corresponding ID (no syntax needed around the ID):
+
+```
+astro workspace switch <workspace UUID>
+```
+
+### Navigating Deployments
+
+If you haven't created a deployment via the UI (recommended), you _can_ do so via the Astronomer CLI.
+
+#### Creating a deployment via the Astronomer CLI
+
+To create a deployment directly from our CLI, run:
+
+`astro deployment create <deployment name>`
+
+*Note:* This is a bit misleading. `deployment name` here is your workspace ID (that you pulled above), NOT the name of your new deployment (which doesn’t exist yet).
+
+Once your webserver, scheduler, and celery flower are up, you should see the following success message and URLs:
+
+```
+Successfully created deployment. Deployment can be accessed at the following URLs 
+
+ Airflow Dashboard: https://popular-orbit-2745-airflow.astronomer.cloud
+ Flower Dashboard: https://popular-orbit-2745-flower.astronomer.cloud
+```
+
+#### Listing your Deployments
+
+To pull a list of deployments you're authorized to push to, run:
+
+```
+astro deployment list
+```
+
+To “pick” a deployment to push up a DAG to (a bit different than picking a workspace), just run:
+
+```
+astro airflow deploy
+```
+
+This command will return a list of deployments available in that workspace, and prompt you to pick one.
+
+```
+ #    RELEASE NAME                  WORKSPACE                     DEPLOYMENT UUID                                   
+ 1    false-wavelength-5456         Paola Peraza Calderon's Workspace90b3dc76-2022-4e0f-9bac-74a03d0dffa7
+ ````
+
+## CLI Debugging
+
+### Is your image failing to build after running `astro airflow start`?
+
+ - You might be getting an error message in your console, or finding that Airflow is not accessible on `localhost:8080/admin`
  - If so, you're likely missing OS-level packages in `packages.txt` that are needed for any python packages specified in `requirements.text`
 
-
-Not sure what `packages` and `requirements` you need for your use case? Check out these examples.
+### Not sure what `packages` and `requirements` you need for your use case? Check out these examples.
 
  - [Snowflake](https://github.com/astronomer/airflow-guides/tree/master/example_code/snowflake)
  - [Google Cloud](https://github.com/astronomer/airflow-guides/tree/master/example_code/gcp)
@@ -131,13 +194,15 @@ make
 musl-dev
 ```
 
-**Notes to consider**:
+**Note to consider**:
 
- - The image will take some time to build the first time. Right now, you have to rebuild the image each time you want to add an additional package or requirement.
+- By default, there won't be webserver or scheduler logs in the terminal since everything is hidden away in Docker containers. You can see these logs by running: 
 
- - By default, there won't be webserver or scheduler logs in the terminal since everything is hidden away in Docker containers. You can see these logs by running: `docker logs $(docker ps | grep scheduler | awk '{print $1}')`
+ ```
+ docker logs $(docker ps | grep scheduler | awk '{print $1}')
+ ```
 
-### CLI Help
+## CLI Help Commands
 
 The CLI includes a help command, descriptions, as well as usage info for subcommands.
 
@@ -159,11 +224,12 @@ astro airflow deploy --help
 
 ## Using Airflow CLI Commands
 
-You can still use all native Airflow CLI commands with the astro cli when developing DAGs locally, they just need to be wrapped around docker commands.
+You can still use all native Airflow CLI commands with the astro cli when developing DAGs locally -  they'll just need to be wrapped around docker commands.
 
 Run `docker ps` after your image has been built to see a list of containers running. You should see one for the scheduler, webserver, and Postgres.
 
 For example, a connection can be added with:
+
 ```bash
 docker exec -it SCHEDULER_CONTAINER bash -c "airflow connections -a --conn_id test_three  --conn_type ' ' --conn_login etl --conn_password pw --conn_extra {"account":"blah"}"
 ```
@@ -174,7 +240,9 @@ Refer to the native [Airflow CLI](https://airflow.apache.org/cli.html) for a lis
 
 ## Overriding Environment Variables
 
-Future releases of the Astronomer CLI will have cleaner ways of overwriting environment variables. Until then, any overrides can go in the `Dockerfile`.
+Astronomer v0.7 comes with the ability to inject Environment Variables directly through the UI.
+
+With that said, you can also throw any overrides in the `Dockerfile` if you want to make sure those variables get version controlled. To do so, follow these guidlines:
 
  - Any bash scripts you want to run as `sudo` when the image builds can be added as such:
 `RUN COMMAND_HERE`
