@@ -12,7 +12,7 @@ Whether you're here because you're our newest customer, or because you're wonder
 
 To help you hit the ground running, this guide will walk you through what you need to know (and do) to get started with Astro Cloud.
 
-## Sign up & Create a Workspace
+## Create a Workspace
 
 Your first step is to [start a trial here](https://trial.astronomer.io).
 
@@ -20,13 +20,15 @@ From there, you'll be redirected to our app to create an account and workspace.
 
 **Note:** If you're new to Astronomer but someone else on your team has an existing workspace you want to join, you'll still need to sign up. A personal workspace for you will be generated regardless, but they'll be able to add you as a user to a shared workspace directly from their account.
 
-## Install the Astronomer CLI
+## Develop with the Astronomer CLI
+
+### Install
 
 Once you have a workspace, your next step is to get set up with our CLI and start developing locally.
 
 Follow our [CLI Install guide](https://www.astronomer.io/docs/cli-installation/) to get set up.
 
-## Get Started with the CLI
+### Get Started
 
 Once installed, head over to our [CLI Getting Started Guide](https://astronomer.io/docs/cli-getting-started) for guidelines on how to create your first project, navigate both your workspace and deployments, and debug errors if needed.
 
@@ -47,7 +49,7 @@ This will generate some skeleton files:
 └── requirements.txt #For any python packages
 ```
 
-## Customizing your image
+## Customize your image
 
 Our base image runs Alpine Linux, so it is very slim by default.
 
