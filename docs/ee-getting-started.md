@@ -20,9 +20,9 @@ It includes:
 Read [here](/docs/ee-overview) for more details on
 each of these components.
 
-*_Note_: Astronomer EE supports Auth0, which allows you to to integrate with auth service providers like Okta, LDAP, Google Suite, etc.
+**Note:** Astronomer EE supports Auth0, which allows you to to integrate with auth service providers like Okta, LDAP, Google Suite, etc.
 
-## Installing
+## Install
 
 We've written installation docs for various Kubernetes distributions:
 
