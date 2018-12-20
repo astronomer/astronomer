@@ -46,21 +46,28 @@ With v0.7.x, we have released some major changes in deployment configurability v
 
 #### Capturing Deployment Configuration
 
-For each of the following deployment components you will need to take note of the memory and CPU allocations, we suggest writing them down in a separate file. For the worker component, you will also need to take note of the # of replicas.
+For each of the following deployment components you will need to take note of the memory and CPU allocations, we suggest writing them down in a separate file. For the worker component, you will also need to take note of the # of replicas. In the below command worker replicas will be shown by multiple components with 'worker' in the name.
 
-- webserver
-- scheduler
-- workers
-    - **Note** Be sure to capture the number of replicas
+Here is a kubectl command to output resources of all pods in a namespace.
 
-Ex. 
-
-```bash
-kubectl describe deploy/nebular-gegenschein-4079-webserver
 ```
+kubectl get pods \
+     -o=jsonpath='{"NAME"}{"\t\t\t\t\t\tLIMITS"}{"\t\t\t\t\tREQUESTS\n"}{range .items[*]}{ range .spec.containers[*]}{.name}{"\t\t"}{.resources.limits}{"\t\t"}{.resources.requests}{"\n"}{end}{end}' \
+    --namespace [DEPLOYMENT NAMESPACE]
+```
+
+#### Scale Workers Down To 0
+To help improve the speed of the upgrade process, scale your workers down to zero by editing the worker statefuleset.
+
+Run `kubectl get statefulsets` to get the name of your worker statefulset and `kubectl edit statefulset [STATEFUL SET NAME]` to edit the configuration.
+
+You can then modify the `spec.replicas` attribute to be 0. Save and close. Please wait until all workers are spun down before continuing to the next step. You can monitor the spindown process with `kubectl get pods`.
 
 #### Perform Deployment Upgrade
 You will now be able to safely upgrade the deployment by navigating to the deployment settings and configuration view in the web UI and clicking the upgrade button. Behind the scenes we will now run a `helm upgrade` against your deployment in order to enable the v0.7.x features.
 
 #### Setting Deployment Configuration
 Now that you have captured the deployment configuration and upgraded the deployment, you can adjust the sliders in the deployment configuration/settings panel to match the settings you recorded above. Once you are satisfied with the configuration, press `update` to allow the new configuration to take place.
+
+#### Rebooting Statsd-exporter
+Since helm doesn't give us much control over ordering of deployments, a race condition exists between the scheduler and statsd pod boot order. If a deployment is showing "Scheduler Heartbeat" as "Unhealthy" on the "Airflow Deployment Overview" dashboard in Grafana, just delete the statsd exporter pod and let kubernetes recreate it. The scheduler heartbeat should start to rise and report "Healthy".

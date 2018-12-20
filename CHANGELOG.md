@@ -1,8 +1,19 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+## [0.7.5] - 2018-12-13
+* Support upgrades from 0.5.x charts.
 
-## [0.7.0] - 2018-11-29
+## [0.7.4] - 2018-12-06
+* Support airflow 1.10.1 environment variables.
+
+## [0.7.3] - 2018-12-05
+* Fixed prometheus healthchecks.
+
+## [0.7.2] - 2018-12-02
+* Fixed a deployment upgrade issue.
+
+## [0.7.1] - 2018-11-29
 * Fixed a migration issue in houston when upgrading.
 
 ## [0.7.0] - 2018-11-28

@@ -58,7 +58,7 @@ Here, you have a high-level overview of all of the active Airflow deployments yo
 
 If you click into one of your Airflow deployments, you'll land on a page that looks like this:
 
-![Depoloyments](https://s3.amazonaws.com/astronomer-cdn/website/img/guides/deployment_dashboard.png)
+![Deployments](https://s3.amazonaws.com/astronomer-cdn/website/img/guides/deployment_dashboard.png)
 
 From here, you'll be able to access the Airflow and Flower dashboards for that specific deployment. In Astronomer's 0.7 release, you will be able to scale up Celery workers directly from the UI here as well.
 
@@ -88,8 +88,7 @@ centralized Prometheus and Grafana.
 
 ## Easy Installation
 
-You can self-install Asstronomer onto Kubernetes by following our
-[install guides](https://www.astronomer.io/docs/ee-overview/).
+You can self-install Astronomer onto Kubernetes by following our [install guides](https://www.astronomer.io/docs/ee-overview/).
 
 When you install the Astronomer platform, a number of components
 are deployed including NGINX, Prometheus, Grafana, a GraphQL API

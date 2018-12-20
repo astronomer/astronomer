@@ -23,7 +23,7 @@ LABEL io.astronomer.docker.module="airflow"
 LABEL io.astronomer.docker.component="airflow"
 LABEL io.astronomer.docker.airflow.version="1.9.0"
 
-ARG ORG="astronomerio"
+ARG ORG="astronomer"
 ARG VERSION="1.9.0-1"
 ARG SUBMODULES="all, celery, redis, statsd"
 
@@ -67,6 +67,7 @@ RUN apk update \
 	&& pip3 install --no-cache-dir cython \
 	&& pip3 install --no-cache-dir "${AIRFLOW_MODULE}" \
 	&& pip3 install --no-cache-dir "sqlalchemy>=1.1.15,<1.2.0" \
+	&& pip3 install --no-cache-dir "redis>=2.10.5,<3" \
 	&& pip3 uninstall -y snakebite \
 	&& apk del .build-deps \
 	&& ln -sf /usr/bin/python3 /usr/bin/python \
