@@ -14,13 +14,15 @@ It includes:
 * Astronomer Command Center that includes an Astronomer-built UI, CLI, and a
   GraphQL API for easy cluster and deployment management on Kubernetes
 * Access to our Prometheus and Grafana monitoring stack
-* Enterprise Authentication that supports Google Suite, SAML, Office 365, Active Directory, and more
+* Enterprise Authentication that supports Google Suite, SAML, Office 365, Active Directory, and more*
 * Enterprise-grade business day or business critical support
 
 Read [here](/docs/ee-overview) for more details on
 each of these components.
 
-## Installing
+**Note:** Astronomer EE supports Auth0, which allows you to to integrate with auth service providers like Okta, LDAP, Google Suite, etc.
+
+## Install
 
 We've written installation docs for various Kubernetes distributions:
 
