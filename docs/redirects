@@ -22,7 +22,6 @@
 /guides/install-aws-stateful-set /docs/ee-installation-aws-stateful-set
 /guides/disaster-recovery-guide /docs/ee-administration-recovery-guide
 /guides/install-aws-dns /docs/ee-installation-aws-dns
-/guides/enterprise-accessing-database /docs/ee-installation-accessing-database
 /guides/install /docs/ee-getting-started
 /guides/enterprise-ready /docs/ee-getting-started
 /guides/enterprise-using-airflow-cli /docs/ee-administration-airflow-cli
