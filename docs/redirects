@@ -30,3 +30,5 @@
 /guides/install-gcp-prep /docs/ee-installation-dev-env
 /guides/update-astronomer /docs/ee-administration-update
 /guides/using-houston-playground /docs/houston-api
+/guides/enterprise-airflow-cli /docs/ee-administration-airflow-cli
+/guides/enterprise-accessing-database /docs/ee-administration-the-database
