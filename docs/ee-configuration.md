@@ -22,7 +22,8 @@ https://github.com/astronomer/helm.astronomer.io/blob/master/charts/astronomer/v
 enabled: true
 clientId: "rH2L4yKctlepniTyJW3MkuXuTreOHHn1"
 baseDomain: "astronomerio.auth0.com"
-externalLogin: false```
+externalLogin: false
+```
 
 ### Do you support MFA Authentication?
 
