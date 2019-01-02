@@ -20,4 +20,4 @@ Docker images for deploying and running Astronomer are currently available on
 
 ## License
 
-The project is licensed under the Apache 2 license.
+This repo of Dockerfiles and docs are licensed under the Apache 2 license, as well as our CLI and helm charts. Some components of the platform including Orbit (React UI), Houston (GraphQL API), and Commander (our Kubernetes interface) require an Astronomer Platform Enterprise Edition license.
