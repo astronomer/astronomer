@@ -7,7 +7,7 @@ menu: ["Enterprise Edition"]
 position: [3]
 ---
 
-# Deploying to Astronomer Ecod
+# Deploying to Astronomer Enterprise
 
 If you've created and tested your Airflow DAG locally via the [astro-cli](https://github.com/astronomer/astro-cli), you're ready to deploy that DAG to your Astronomer EE cluster.
 
