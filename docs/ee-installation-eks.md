@@ -103,7 +103,7 @@ Whatever machine you’re going to use, apply it to the kubectl CLI, and make su
 
 ### Does the size of my EC2 instance matter?
 
-Not much, we just need as much power from a virtual machine as your standard laptop. You can stick to a standard or small machine type for the EC2.
+We recommend using the t2.xlarge as the minimum instance size. For a standard Astronomer Platform install, and 2-3 Airflow deployments, an auto scaling range of 2-5 should be sufficient for most cases. 
 
 A low base machine type should be fine for that, and you’ll just need to be able to run : (1) Heptio authenticator (2) Astronomer CLI and (3) Kubectl.
 
