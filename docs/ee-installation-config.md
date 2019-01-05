@@ -32,3 +32,16 @@ astronomer:
 ```
 
 Replace `<your-client-id>` and `<your-client-secret>` with the values from the previous step.
+
+## Set up SMTP
+
+You'll need to set up SMTP to use email invites with Astronomer.
+
+In your Helm config, nested under `astronomer.smtp.uri` add something like:
+
+```yaml
+astronomer:
+  smtp:
+    uri: "smtp://user:pass@email-smtp.us-east-1.amazonaws.com/?requireTLS=true"
+    uri: "smtps://user:pass@smtp.mailgun.org/?pool=true"
+```
