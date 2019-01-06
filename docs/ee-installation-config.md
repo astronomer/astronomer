@@ -8,10 +8,12 @@ Here, we'll set the configuration values for the Astronomer Helm chart.
 
 `cd` to where you cloned `helm.astronomer.io`
 
-Create a `config.yaml` for your domain setting overrides by copying [config.tpl.yaml](https://github.com/astronomer/helm.astronomer.io/blob/master/config.tpl.yaml) if you don't already have one.
+Create a `config.yaml` for your domain setting overrides by copying [master.yaml](https://github.com/astronomer/helm.astronomer.io/blob/master/configs/master.yaml) if you don't already have one.
+
+(If you are on GKE, you can use the GKE one).
 
 ```
-cp config.tpl.yaml config.yaml
+cp master.yaml config.yaml
 ```
 
 Change the branch on GitHub to match your desired Astronomer Platform version.
@@ -26,9 +28,22 @@ global:
 astronomer:
   auth:
     google:
-      enabled: true
+      enabled: true   
       clientId: <your-client-id>
       clientSecret: <your-client-secret>
 ```
 
 Replace `<your-client-id>` and `<your-client-secret>` with the values from the previous step.
+
+## Set up SMTP
+
+You'll need to set up SMTP to use email invites with Astronomer.
+
+In your Helm config, nested under `astronomer.smtp.uri` add something like:
+
+```yaml
+astronomer:
+  smtp:
+    uri: "smtp://user:pass@email-smtp.us-east-1.amazonaws.com/?requireTLS=true"
+    uri: "smtps://user:pass@smtp.mailgun.org/?pool=true"
+```
