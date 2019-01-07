@@ -45,5 +45,5 @@ In your Helm config, nested under `astronomer.smtp.uri` add something like:
 astronomer:
   smtp:
     uri: "smtp://user:pass@email-smtp.us-east-1.amazonaws.com/?requireTLS=true"
-    uri: "smtps://user:pass@smtp.mailgun.org/?pool=true"
 ```
+**Note**: We send emails using [nodemailer](https://nodemailer.com/smtp/).
