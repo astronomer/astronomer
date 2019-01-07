@@ -6,47 +6,34 @@ menu: ["Enterprise Edition"]
 position: [3]
 ---
 
-Astronomer Enterprise Edition allows you to run a private version of Astronomer
-on your own Kubernetes.
+Astronomer Enterprise is designed to be a cloud agnostic solution for running Apache Airflow at scale.
 
-It includes:
-
-* Astronomer Command Center that includes an Astronomer-built UI, CLI, and a
-  GraphQL API for easy cluster and deployment management on Kubernetes
-* Access to our Prometheus and Grafana monitoring stack
-* Enterprise Authentication that supports Google Suite, SAML, Office 365, Active Directory, and more*
-* Enterprise-grade business day or business critical support
-
-Read [here](/docs/ee-overview) for more details on
-each of these components.
-
-**Note:** Astronomer EE supports Auth0, which allows you to to integrate with auth service providers like Okta, LDAP, Google Suite, etc.
 
 ## Install
-
 We've written installation docs for various Kubernetes distributions:
 
-* [Astronomer on Kubernetes](/docs/ee-installation-general-kubernetes)
-* [Amazon Web Services - EKS](/docs/ee-installation-eks)
-* [Google Cloud Platform - GKE](/docs/ee-installation-gke)
+- [Astronomer on Kubernetes](https://www.astronomer.io/docs/ee-installation-general-kubernetes/)
+- [Amazon Web Services - EKS](https://www.astronomer.io/docs/ee-installation-eks/)
+- [Google Cloud Platform - GKE](https://www.astronomer.io/docs/ee-installation-gke/)
 
-Coming Soon: Guides for Azure AKS, Pivotal PKE, Redhat OpenShift, and
-Digital Ocean Kubernetes.
+## Trying it out
 
-## Prerequisites
+If you want to get a sense of what using Astronomer Enterprise is like, we have a few options:
 
-The Astronomer platform is Kubernetes agnostic. This means that any Kubernetes
-management solution should support the installation, and management of the
-Astronomer platform. To ensure the platform can be effectively installed and
-managed, ensure your team can meet the following requirements.
+- Astronomer Cloud.
 
-* A Kubernetes cluster managed by [one of these solutions]( https://kubernetes.io/docs/setup/pick-right-solution/)
-* Admin level access to the Kubernetes cluster
-* Ability to provision a Tiller service account for use with Helm
-* A base domain
-* A CA signed wildcard for your base domain. This cannot be a self-signed certificate
-* A postgres database
-* A wildcard DNS A record
+At its core, Astronomer Cloud is a large scale deployment of Astronomer Enterprise, fully managed by Astronomer's team.
+Astronomer Cloud is a SaaS version of Astronomer Enterprise so you'll be able to deploy DAGs and manage Airflow environments the same way as Enterprise, but:
 
-Need help installing the Astronomer platform?
-[Reach out](https://www.astronomer.io/contact/?from=/) to discuss install solutions.
+1. Astronomer Cloud runs in Astronomer's Cloud, whereas Astronomer Enterprise will run in **your** cloud.
+2. Astronomer Cloud is billed by usage, whereas Enterprise is billed through an annual license.
+3. Astronomer Cloud does **not** give users access to the back-end Prometheus/Grafana monitoring stack.
+4. Astronomer Cloud does **not** give users access to the Kibana interface for logs (coming soon as an Enterprise feature).
+5. Astronomer Cloud does **not** give you `kubectl` access to your environment.
+
+If this seems like it could be a good way for you to test the platform out, head over to our [cloud sign up page](https://trial.astronomer.io) to start a free 1 month trial!
+
+
+- Try it yourself.
+
+If you have Kubernetes experience, you are welcome to kick the tires on our platform. Check out our [helm charts](https://github.com/astronomer/helm.astronomer.io) and our install section below to get started. If you are going down this route, contact us at humans@astronomer.io so we can guide you along the way.
