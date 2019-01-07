@@ -8,52 +8,25 @@ position: [1]
 
 ![Astronomer Overview](https://cdn-images-1.medium.com/max/2000/1*NOdESVh32nq5mbs_Nj46pA.png)
 
-## Airflow Clusters
 
-When you create a new Airflow deployment on Astronomer, the
-platform will deploy Kubernetes pods for an Airflow Webserver,
-Airflow Scheduler, pool of Celery workers, a small Redis instance
-(that backs Celery), and a statsd pod that streams metrics to a
-centralized Prometheus and Grafana.
+Astronomer Enterprise Edition allows you to run a private version of Astronomer
+on your own Kubernetes.
 
-## Easy Installation
+It includes:
 
-You can self-install Astronomer onto Kubernetes by following our [install guides](https://www.astronomer.io/docs/ee-getting-started/).
+* Astronomer Command Center that includes an Astronomer-built UI, CLI, and a
+  GraphQL API for easy cluster and deployment management on Kubernetes
+* Access to our Prometheus and Grafana monitoring stack
+* Enterprise Authentication that supports Google Suite, SAML, Office 365, Active Directory, and more*
+* Enterprise-grade business day or business critical support
 
-When you install the Astronomer platform, a number of components
-are deployed including NGINX, Prometheus, Grafana, a GraphQL API
-(Houston), a React UI (Orbit), and a private Docker Registry (used
-in the DAG deployment process).
 
-[Helm charts here](https://github.com/astronomer/helm.astronomer.io)
-
-## Easy DAG Deployment
-
-Astronomer makes it easy to deploy these containers
-to Kubernetes - but more importantly, to give Airflow developers a
-CLI to deploy DAGs through a private Docker registry that interacts
-with the Kubernetes API.
-
-Remember to run `astro airflow init` after creating a new project directory.
-
-Any Python packages can be added to `requirements.txt` and all OS level packages
-can be added to `packages.txt` in the project directory.
-
-Additional [RUN](https://docs.docker.com/engine/reference/builder/#run)
-commands can be added to the `Dockerfile`. Environment variables can also be
-added to [ENV](https://docs.docker.com/engine/reference/builder/#env).
-
-## Authentication Options
-
-* Local (username/password)
-* Auth0 (supports SAML, Active Directory, other SSO)
-* Google
-* Github
+**Note:** Astronomer EE supports Auth0, which allows you to to integrate with auth service providers like Okta, LDAP, Google Suite, etc.
 
 ## Astro CLI
 
 The [Astro CLI](https://github.com/astronomer/astro-cli)
-helps you develop and deploy Airflow projects.
+helps you develop and deploy Airflow projects. Even if you are not interested in running Astronomer Enterprise, our CLI can be used to to run a containerized Airflow environment on your local machine.
 
 ## Houston
 
@@ -70,8 +43,11 @@ infrastructure layer.
 ## Orbit
 
 [Orbit](https://github.com/astronomer/orbit-ui) is a GraphQL UI
-that provides easy access to the capabilities of the Astronomer
-platform.
+that provides a clean interface to manage and scale Airflow environments.
+
+## Monitoring
+
+Astronomer Enterprise comes built in with a series of [Grafana charts](https://github.com/astronomer/astronomer/tree/master/docker/vendor/grafana/include) that give you real time metrics on each part of the Astronomer stack.
 
 ## dbBootstrapper
 
