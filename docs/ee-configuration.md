@@ -6,8 +6,19 @@ slug: "ee-configuration"
 menu: ["Installation"]
 position: [2]
 ---
-This guide describes different ways of configuring your EE installation (AWS).
+This guide describes different ways of configuring your EE installation.
 
+## Cluster Sizing
+
+### Does the size of my cluster matter?
+
+We recommend starting off with a cluster with around 48GBs of memory and 12CPUs.
+
+Note that we recommend using a few larger nodes than many smaller nodes for most workloads.
+
+### What limits and quotas do you default to on our instance?
+
+You can confgure the default settings on your installation [here](https://github.com/astronomer/helm.astronomer.io/tree/master/charts).
 
 ## Auth
 
@@ -83,22 +94,3 @@ Unfortunately, that is not something we currently support. We use a private regi
 
 If you've looked into private/public zones in your cluster, the cluster should in theory have one nodepool on the VPN and one nodepool publickly available.
 If you're trying to reach the private registry from something like circle-ci, that might solve your problem.
-
-
-## Cluster Sizing
-
-### Does the size of my cluster matter?
-
-It depends on your workload. At the lowest end we just need as much power from a virtual machine as your standard laptop.
-
-You can stick to a standard or small machine type for the EC2.
-A low base machine type should be fine for that, and you’ll just need to be able to run:
-(1) Heptio authenticator
-(2) Astronomer CLI
-(3) Kubectl.
-
-Note that we recommend using a few larger nodes than many smaller nodes for most workloads.
-
-### What limits and quotas do you default to on our instance?
-
-You can confgure the default settings on your installation [here](https://github.com/astronomer/helm.astronomer.io/tree/master/charts).
