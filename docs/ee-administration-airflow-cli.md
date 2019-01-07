@@ -16,6 +16,10 @@ Before interacting directly with the pods that are created with each Airflow dep
 - [Configuring EKS (Amazon) Access for kubectl](https://docs.aws.amazon.com/eks/latest/userguide/configure-kubectl.html)
 - [Configuring AKS (Microsoft) Access for kubectl](https://docs.microsoft.com/en-us/azure/aks/tutorial-kubernetes-deploy-cluster#connect-to-cluster-using-kubectl)
 
+## Setting up kubectx
+
+We recommend using [kubectx](https://github.com/ahmetb/kubectx) as an add on to `kubectl`. The rest of this doc will assume use of `kubectx`.  
+
 ### Switching to the correct context
 
 Once connected to your cluster, you will need to set the appropriate context.
