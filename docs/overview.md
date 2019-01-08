@@ -27,7 +27,7 @@ Astronomer Enterprise allows you to run a private version of our platform on you
 
 - Access to a Prometheus and Grafana monitoring stack for metrics on your Airflow activity
 
-- Enterprise Authentication that supports Google Suite, SAML, Office 365, Active Directory, and more
+- Enterprise Authentication that supports Google Suite, SAML, Office 365, Active Directory, and more through auth0.
 
 - Enterprise-grade business day or business critical support
 

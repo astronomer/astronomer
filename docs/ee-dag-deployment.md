@@ -9,23 +9,29 @@ position: [3]
 
 # Deploying to Astronomer Enterprise
 
-If you've created and tested your Airflow DAG locally via the [astro-cli](https://github.com/astronomer/astro-cli), you're ready to deploy that DAG to your Astronomer EE cluster.
+Once you've finished up the installation, you are ready to deploy DAGs. We'll walk through deploying  Airflow DAG via the [astro-cli](https://github.com/astronomer/astro-cli), but you can also check out our CI/CD guide for deploying through another system.
+
+We'll walk through deploying a sample DAG to make sure your installation works as expected.
 
 (**Note:** If you're looking for steps on how to deploy to your Astronomer Cloud account, check out our [Getting Started with Cloud](https://www.astronomer.io/guides/getting-started-with-new-cloud/) guide).
 
-## Authenticating With Your Registry
+### 1. Initialize and Authenticate
 
-### 1) Configure the location of your Private Docker Registry
+Run:
+```bash
+astro airflow init
+```
 
-The first setting we need to configure is the location of your private Docker registry.
+This will generate a project structure, as well as a sample DAG and plugin. You can read more about how our CLI works [here](https://github.com/astronomer/astro-cli).
 
-This houses all Docker images pushed to your Astronomer EE deploy. By default, it's located at `registry.[baseDomain]`.
+You can run
 
-- If you're not sure which domain you deployed Astronomer EE to, you can refer back to the `baseDomain` in your [`config.yaml`](http://enterprise.astronomer.io/guides/google-cloud/index.html#configuration-file).
+```bash
+astro airflow start
+```
+to spin up a local Airflow environment.
 
-### 2) Authenticate
-
-Run the following command from your project root directory:
+Finally, authenticate with:
 
 ```bash
 astro auth login [baseDomain]
@@ -33,25 +39,27 @@ astro auth login [baseDomain]
 
 *Note:* Depending on the type of authentication you're using, the process will be a little different. If you are using the default Google OAuth, leave the Username field blank and continue follow the instructions on the terminal.
 
-### 3) List your Workspaces
+### 2. Configure and spin up a deployment
 
-Run `astro workspace list` to see a list of all the workspaces you have access to.
+Once you've authenticated, head over to `app.BASEDOMAIN` and spin up and configure a new deployment.
+
+![Deployment Page](https://assets2.astronomer.io/guides/docs/ee/deployment_page.png)
+
+Click `New Deployment`
+
+![Configure Deployment](https://assets2.astronomer.io/guides/docs/ee/configure_deployment.png)
+
+You'll be able to further configure your deployment after your initialize it. Wait a few minutes and it should be ready!
+
+![Deployment Ready](https://assets2.astronomer.io/guides/docs/ee/deployment_ready.png)
+
+### 3. List your workspaces
+
+Run `astro workspace list` from the CLI to see a list of all the workspaces you have access to.
 
 To switch between workspaces, run: `astro workspace switch [UUID]`
 
-## DAG Deployment
-
-Now that you've configured the astro-cli to point at your Astronomer EE deployment, you're ready to push your first DAG.
-
-### 1. Find your Release Name
-
-To push your DAG, you'll need the release name of your Astronomer EE deployment. A few notes:
-
- - This release name was created by the Helm package manager during your Astronomer EE deploy
- - If you are unsure of what release name was created for your deploy, you can run `helm ls` to get a list of all Helm releases and find the one that has an "Updated" timestamp corresponding to the time at which you deployed Astronomer EE.
- - If you're still not sure which Helm release you should deploy to, reach out to your cluster Administrator.
-
-### 2. Run our deploy command
+### 4. Run our deploy command
 
 ```bash
 astro airflow deploy [release-name]
@@ -61,10 +69,6 @@ If you do NOT include a release name, you will be prompted to choose from a depl
 
 After deploying, you'll see some stdout as the CLI builds and pushes images to your private registry.
 
-### 3. Check your Instance
+### 5. Check your Instance
 
-After a deploy, you should see your updated instance.
-
-If you're running our Enterprise Edition, go to `app.[baseDomain]` to view your list of deployments and workspace.
-
-If you're running our Cloud Edition, go to: https://app.astronomer.cloud/deployments
+Once you push your code, jump over to your deployment and you'll see the code you had locally running in your Astronomer environment!
