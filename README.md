@@ -29,7 +29,7 @@ Docker images for deploying and running Astronomer are currently available on
 
 ## Contribute
 
-* Source Code: <https://github.com/astronomer/astronomer>
+* Source Code: <https://github.com/astronomer>
 * Issue Tracker: <https://github.com/astronomer/astronomer/issues>
 
 ## License
