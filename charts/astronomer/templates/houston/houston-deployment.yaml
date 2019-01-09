@@ -54,7 +54,7 @@ spec:
           image: {{ template "houston_image" . }}
           imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
           resources:
-{{ toYaml .Values.commander.resources | indent 12 }}
+{{ toYaml .Values.houston.resources | indent 12 }}
           {{- if .Values.global.tlsSecret }}
           volumeMounts:
             - name: registry-tls-volume
