@@ -14,6 +14,10 @@ Astronomer is a commercial "Airflow as a Service" platform that runs on Kubernet
 * [astro-cli](https://github.com/astronomer/astro-cli) - Go-based CLI for the platform
 * [db-bootstrapper](https://github.com/astronomer/db-bootstrapper) - used to setup database for new Airflow deployments
 
+## Is it any good?
+
+[Yes](https://news.ycombinator.com/item?id=3067434).
+
 ## Docker images
 
 Docker images for deploying and running Astronomer are currently available on
