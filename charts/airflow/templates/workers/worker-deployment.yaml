@@ -1,8 +1,9 @@
 ################################
-## Airflow Worker StatefulSet
+## Airflow Worker Deployment
 #################################
+{{- $persistence := .Values.workers.persistence.enabled }}
 {{- if eq .Values.executor "CeleryExecutor" }}
-kind: StatefulSet
+kind: {{ if $persistence }}StatefulSet{{ else }}Deployment{{ end }}
 apiVersion: apps/v1
 metadata:
   name: {{ .Release.Name }}-worker
@@ -17,7 +18,6 @@ metadata:
 spec:
   serviceName: {{ .Release.Name }}-worker
   replicas: {{ .Values.workers.replicas }}
-  podManagementPolicy: Parallel
   selector:
     matchLabels:
       tier: airflow
@@ -58,12 +58,10 @@ spec:
           ports:
             - name: worker-logs
               containerPort: {{ .Values.ports.workerLogs }}
-          volumeMounts:
-            - name: logs
-              mountPath: {{ template "airflow_logs" . }}
           env:
           {{- include "custom_airflow_environment" . | indent 10 }}
           {{- include "standard_airflow_environment" . | indent 10 }}
+{{- if $persistence }}
         - name: {{ .Release.Name }}-worker-gc
           image: {{ template "airflow_image" . }}
           args: ["crond", "-f", "-d", "0"]
@@ -72,7 +70,8 @@ spec:
           volumeMounts:
             - name: logs
               mountPath: {{ template "airflow_logs" . }}
-{{- if not .Values.workers.persistence.enabled }}
+{{- end }}
+{{- if not $persistence }}
       volumes:
         - name: logs
           emptyDir: {}

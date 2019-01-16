@@ -2,6 +2,7 @@
 ## Airflow Scheduler Deployment/StatefulSet
 #################################
 {{- $local := or (eq .Values.executor "LocalExecutor") (eq .Values.executor "SequentialExecutor") }}
+{{- $persistence := .Values.workers.persistence.enabled }}
 kind: {{ if $local }}StatefulSet{{ else }}Deployment{{ end }}
 apiVersion: apps/v1
 metadata:
@@ -85,19 +86,18 @@ spec:
           env:
           {{- include "custom_airflow_environment" . | indent 10 }}
           {{- include "standard_airflow_environment" . | indent 10 }}
+        {{- if $persistence }}
         - name: {{ .Release.Name }}-worker-gc
           image: {{ template "airflow_image" . }}
           args: ["crond", "-f", "-d", "0"]
-          volumeMounts:
-            - name: logs
-              mountPath: {{ template "airflow_logs" . }}
+        {{- end }}
       {{- end }}
 {{- if not $local }}
       volumes:
         - name: logs
           emptyDir: {}
           sizeLimit: {{ .Values.workers.persistence.size }}
-{{- else }}
+{{- else if $persistence }}
   volumeClaimTemplates:
     - metadata:
         name: logs
