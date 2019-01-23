@@ -19,7 +19,7 @@ GITHUB_ORG := astronomer
 AIRFLOW_VERSIONS := 1.9.0 1.10.1
 
 # Vendor components
-VENDOR_COMPONENTS := alertmanager cadvisor curator elasticsearch elasticsearch-exporter fluentd grafana kibana kube-state nginx pgbouncer pgbouncer-exporter prometheus redis registry statsd-exporter
+VENDOR_COMPONENTS := alertmanager cadvisor curator elasticsearch elasticsearch-exporter fluentd grafana kibana kube-state nginx pgbouncer pgbouncer-exporter prisma prometheus redis registry statsd-exporter
 
 # Set default for make
 .DEFAULT_GOAL := build
