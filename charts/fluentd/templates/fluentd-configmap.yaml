@@ -84,7 +84,7 @@ data:
       @type grep
       <regexp>
         key $.kubernetes.namespace_name
-        pattern "^#{ENV['NAMESPACE']}-.*$"
+        pattern "^#{ENV['NAMESPACE']}(?:-.*)?$"
       </regexp>
       <regexp>
         key $.kubernetes.labels.component
