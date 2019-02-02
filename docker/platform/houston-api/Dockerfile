@@ -1,5 +1,5 @@
 #
-# Copyright 2018 Astronomer Inc.
+# Copyright 2019 Astronomer Inc.
 #
 # Licensed under the Apache License, Version 3.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,8 +22,11 @@ LABEL io.astronomer.docker.module="astronomer"
 LABEL io.astronomer.docker.component="houston-api"
 
 ARG VERSION="v0.7.5"
-ENV REPO="github.com/astronomerio/houston-api"
-ENV REPO_URL="https://${REPO}#${VERSION}"
+ENV REPO="github.com/astronomer/houston-api-2"
+ENV REPO_URL="https://${REPO}"
+
+
+WORKDIR /houston
 
 RUN apk add --no-cache --virtual .build-deps \
 		build-base \
@@ -33,8 +36,17 @@ RUN apk add --no-cache --virtual .build-deps \
 		nodejs \
 		nodejs-npm \
 		openssl \
-	&& npm install -g ${REPO_URL} --unsafe \
+	&& git clone \
+		-c advice.detachedHead=false \
+		--depth 1 \
+		--branch ${VERSION} \
+		${REPO_URL} . \
+	&& npm install \
+	&& npm run build \
 	&& apk del .build-deps
 
-EXPOSE 8870
-ENTRYPOINT ["houston-api"]
+EXPOSE 8871
+
+# Wrap with entrypoint
+ENTRYPOINT ["/houston/bin/entrypoint"]
+CMD ["npm", "run", "serve"]
