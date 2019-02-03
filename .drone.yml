@@ -106,6 +106,6 @@ pipeline:
   notify:
     image: plugins/slack
     secrets: [ slack_webhook ]
-    channel: engineering
+    channel: platform
     when:
       status: [ failure ]
