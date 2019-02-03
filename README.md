@@ -4,7 +4,7 @@ Astronomer is a commercial "Airflow as a Service" platform that runs on Kubernet
 
 ## Components
 
-* [airflow](https://github.com/apache/airflow) - Airflow is the star of the show
+* [apache airflow](https://github.com/apache/airflow) - Platform to programmatically author, schedule and monitor workflows.
 * [astronomer](https://github.com/astronomer/astronomer) - This repo, Docker images for the platform
 * [helm.astronomer.io](https://github.com/astronomer/helm.astronomer.io) - Helm charts for the platform
 * [orbit-ui](https://github.com/astronomer/orbit-ui) - React UI for the platform
@@ -12,7 +12,7 @@ Astronomer is a commercial "Airflow as a Service" platform that runs on Kubernet
 * [houston-api-2](https://github.com/astronomer/houston-api-2) - Prisma-based GraphQL API for the platform (coming soon)
 * [commander](https://github.com/astronomer/commander)	- gRPC service to communicate between our API and Kubernetes
 * [astro-cli](https://github.com/astronomer/astro-cli) - Go-based CLI for the platform
-* [db-bootstrapper](https://github.com/astronomer/db-bootstrapper) - used to setup database for new Airflow deployments
+* [db-bootstrapper](https://github.com/astronomer/db-bootstrapper) - Init container for bootstrapping system databases
 
 ## Is it any good?
 
