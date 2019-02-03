@@ -13,7 +13,7 @@ metadata:
     heritage: {{ .Release.Service }}
 data:
   # These are system-specified config overrides.
-  local.yaml: |
+  production.yaml: |
     webserver:
       port: {{ .Values.ports.houstonHTTP }}
 
@@ -23,8 +23,6 @@ data:
 
     orbit:
       port: 80
-
-    registry: {}
 
     helm:
       baseDomain: {{ .Values.global.baseDomain }}

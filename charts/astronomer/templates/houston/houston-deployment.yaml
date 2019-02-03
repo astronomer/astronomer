@@ -37,8 +37,8 @@ spec:
           {{- if .Values.global.tlsSecret }}
           volumeMounts:
             - name: houston-config-volume
-              mountPath: /houston/config/local.yaml
-              subPath: local.yaml
+              mountPath: /houston/config/production.yaml
+              subPath: production.yaml
             - name: houston-config-volume
               mountPath: /houston/config/local-production.yaml
               subPath: local-production.yaml
@@ -109,8 +109,8 @@ spec:
           configMap:
             name: {{ .Release.Name }}-houston-config
             items:
-              - key: local.yaml
-                path: local.yaml
+              - key: production.yaml
+                path: production.yaml
               - key: local-production.yaml
                 path: local-production.yaml
     {{ if .Values.global.tlsSecret }}

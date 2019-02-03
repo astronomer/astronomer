@@ -80,13 +80,12 @@ houston:
       google:
         enabled: true
         clientId: ~
-      auth0:
-        enabled: true
-        clientId: "rH2L4yKctlepniTyJW3MkuXuTreOHHn1"
-        baseDomain: "astronomerio.auth0.com"
-        externalLogin: false
       github:
         enabled: true
+      auth0:
+        enabled: false
+        clientId: "rH2L4yKctlepniTyJW3MkuXuTreOHHn1"
+        baseDomain: "astronomerio.auth0.com"
 
 prisma:
   env: {}
