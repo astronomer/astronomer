@@ -1,0 +1,22 @@
+################################
+## Astronomer Prisma ConfigMap
+#################################
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-prisma-config
+  labels:
+    component: prisma
+    tier: astronomer
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+data:
+  config.yml: |
+    port: {{ .Values.ports.prismaHTTP }}
+    managementApiSecret: $PRISMA_MANAGEMENT_API_SECRET
+    databases:
+      default:
+        connector: postgres
+        uri: $PRISMA_DB_URI
+        migrations: true

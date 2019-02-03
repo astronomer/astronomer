@@ -2,10 +2,7 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-# User in pilot containers
-uid: 100
-
-# Images for pilot
+# Images for Astronomer
 images:
   commander:
     repository: astronomerinc/ap-commander
@@ -31,23 +28,10 @@ images:
     repository: astronomerinc/ap-cli-install
     tag: 0.7.5
     pullPolicy: IfNotPresent
-
-smtp:
-  uri: ~
-
-auth:
-  local:
-    enabled: true
-  google:
-    enabled: true
-    clientId: ~
-  auth0:
-    enabled: true
-    clientId: "rH2L4yKctlepniTyJW3MkuXuTreOHHn1"
-    baseDomain: "astronomerio.auth0.com"
-    externalLogin: false
-  github:
-    enabled: true
+  prisma:
+    repository: astronomerinc/ap-prisma
+    tag: 0.7.5
+    pullPolicy: IfNotPresent
 
 orbit:
   env: {}
@@ -85,6 +69,35 @@ houston:
   #  requests:
   #   cpu: 100m
   #   memory: 128Mi
+
+  config:
+    email:
+      smtpUrl: ~
+
+    auth:
+      local:
+        enabled: true
+      google:
+        enabled: true
+        clientId: ~
+      auth0:
+        enabled: true
+        clientId: "rH2L4yKctlepniTyJW3MkuXuTreOHHn1"
+        baseDomain: "astronomerio.auth0.com"
+        externalLogin: false
+      github:
+        enabled: true
+
+prisma:
+  env: {}
+  resources: {}
+  #  limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  #  requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
 
 commander:
   env: {}
@@ -130,10 +143,11 @@ install:
   #   memory: 128Mi
 
 ports:
-  houstonHTTP: 8870
+  houstonHTTP: 8871
   commanderHTTP: 8880
   commanderGRPC: 50051
   orbitHTTP: 8080
   registryHTTP: 5000
   registryScrape: 5001
   installHTTP: 80
+  prismaHTTP: 4466

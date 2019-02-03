@@ -34,7 +34,7 @@ data:
         X-Content-Type-Options: [nosniff]
     auth:
       token:
-        realm: "https://houston.{{ .Values.global.baseDomain }}/registry"
+        realm: "https://houston.{{ .Values.global.baseDomain }}/v1/registry"
         service: {{ .Values.registry.auth.service | quote }}
         issuer: {{ .Values.registry.auth.issuer | quote }}
         rootcertbundle: /etc/docker/ssl/tls.crt
@@ -46,7 +46,7 @@ data:
     notifications:
       endpoints:
         - name: "houston"
-          url: "http://{{ .Release.Name }}-houston:8870/v1/webhooks/registry_events"
+          url: "http://{{ .Release.Name }}-houston:{{ .Values.ports.houstonHTTP }}/v1/registry-events"
           timeout: 3s
           threshold: 10
           backoff: 1s

@@ -1,0 +1,38 @@
+################################
+## Astronomer Houston ConfigMap
+#################################
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-houston-config
+  labels:
+    component: houston
+    tier: astronomer
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+data:
+  # These are system-specified config overrides.
+  local.yaml: |
+    webserver:
+      port: {{ .Values.ports.houstonHTTP }}
+
+    commander:
+      enabled: true
+      host: {{ .Release.Name }}-commander
+
+    orbit:
+      port: 80
+
+    registry: {}
+
+    helm:
+      baseDomain: {{ .Values.global.baseDomain }}
+      registryAuthSecret: {{ .Values.registry.auth.secretName }}
+      releaseName: {{ .Release.Name }}
+      releaseNamespace: {{ .Release.Namespace }}
+      releaseVersion: {{ .Chart.Version }}
+
+  # These are any user-specified config overrides.
+  local-production.yaml: |
+{{ toYaml .Values.houston.config | indent 4 }}

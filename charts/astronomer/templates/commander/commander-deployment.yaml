@@ -31,7 +31,7 @@ spec:
         runAsUser: {{ .Values.uid }}
       containers:
         - name: {{ .Release.Name }}-commander
-          image: {{- include "commander_image" . | indent 1 }}
+          image: {{ template "commander.image" . }}
           imagePullPolicy: {{ .Values.images.commander.pullPolicy }}
           resources:
 {{ toYaml .Values.commander.resources | indent 12 }}

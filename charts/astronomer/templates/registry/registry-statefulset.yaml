@@ -31,7 +31,7 @@ spec:
       restartPolicy: Always
       containers:
         - name: {{ .Release.Name }}-registry
-          image: {{ template  "registry_image" . }}
+          image: {{ template  "registry.image" . }}
           imagePullPolicy: {{ .Values.images.registry.pullPolicy }}
           resources:
 {{ toYaml .Values.registry.resources | indent 12 }}

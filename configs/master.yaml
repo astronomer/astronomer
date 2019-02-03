@@ -30,6 +30,10 @@ astronomer:
       repository: astronomerinc/ap-cli-install
       tag: master
       pullPolicy: Always
+    prisma:
+      repository: astronomerinc/ap-prisma
+      tag: master
+      pullPolicy: Always
 
 
 #################################

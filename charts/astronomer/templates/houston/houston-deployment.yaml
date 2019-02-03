@@ -15,109 +15,62 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      component: houston
       tier: astronomer
+      component: houston
       release: {{ .Release.Name }}
   template:
     metadata:
       labels:
-        component: houston
         tier: astronomer
+        component: houston
         release: {{ .Release.Name }}
+      annotations:
+        checksum/houston-config: {{ include (print $.Template.BasePath "/houston/houston-configmap.yaml") . | sha256sum }}
     spec:
       restartPolicy: Always
-      {{- if and (not .Values.houston.backendSecretName) (not .Values.houston.backendConnection) }}
-      serviceAccountName: {{ template "houston_bootstrapper_serviceaccount" . }}
-      initContainers:
-        - name: "{{ .Release.Name }}-houston-bootstrapper"
-          image: {{ template "db_bootstrapper_image" . }}
-          imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
-          env:
-            - name: BOOTSTRAP_DB
-              valueFrom:
-                secretKeyRef:
-                  name: astronomer-bootstrap
-                  key: connection
-            - name: DB_NAME
-              value: {{ .Release.Name }}-houston
-            - name: SECRET_NAME
-              value: {{ template "houston_backend_secret" . }}
-            - name: NAMESPACE
-              value: {{ .Release.Namespace }}
-            - name: IN_CLUSTER
-              value: "true"
-      {{- end }}
-      securityContext:
-        runAsUser: {{ .Values.uid }}
       containers:
         - name: {{ .Release.Name }}-houston
-          image: {{ template "houston_image" . }}
+          image: {{ template "houston.image" . }}
           imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
           resources:
 {{ toYaml .Values.houston.resources | indent 12 }}
           {{- if .Values.global.tlsSecret }}
           volumeMounts:
+            - name: houston-config-volume
+              mountPath: /houston/config/local.yaml
+              subPath: local.yaml
+            - name: houston-config-volume
+              mountPath: /houston/config/local-production.yaml
+              subPath: local-production.yaml
             - name: registry-tls-volume
-              mountPath: "/etc/houston/tls/"
+              mountPath: /etc/houston/tls
           {{- end }}
           ports:
             - name: houston-http
-              containerPort: 8870
+              containerPort: {{ .Values.ports.houstonHTTP }}
           livenessProbe:
             httpGet:
-              path: /healthz
-              port: 8870
+              path: /v1/healthz
+              port: {{ .Values.ports.houstonHTTP }}
             initialDelaySeconds: 10
             periodSeconds: 10
+            failureThreshold: 10
           readinessProbe:
             httpGet:
-              path: /healthz
-              port: 8870
+              path: /v1/healthz
+              port: {{ .Values.ports.houstonHTTP }}
             initialDelaySeconds: 10
             periodSeconds: 10
+            failureThreshold: 10
           env:
             {{- range $i, $config := .Values.houston.env }}
             - name: {{ $config.name }}
               value: {{ $config.value | quote }}
-            {{- end }}
+              {{- end }}
             - name: NODE_ENV
               value: "production"
-            - name: PORT
-              value: "8870"
-            - name: API_ENDPOINT_URL
-              value: "/v1"
-            - name: WEBSOCKET_ENDPOINT_URL
-              value: "/ws"
-            - name: PLAYGROUND_ENDPOINT_URL
-              value: "/playground"
-            - name: DEBUG_DB
-              value: "false"
-            - name: HELM_ASTRO_REPO
-              value: {{ .Values.global.helmRepo }}
-            - name: HELM_GLOBAL_CONFIG
-              value: {{- include "helm_globals" . | quote | indent 1 }}
-            - name: AUTH_STRATEGY
-              value: {{- include "auth_strategies" . | trimSuffix "," | quote | indent 1 }}
-            - name: COMMANDER_HOST
-              value: "{{ .Release.Name }}-commander"
-            - name: COMMANDER_PORT
-              value: "50051"
-            - name: GOOGLE_CLIENT_ID
-              value: {{ .Values.auth.google.clientId }}
-            - name: AUTH0_CUSTOM
-              value: {{ ne .Values.auth.auth0.baseDomain "astronomerio.auth0.com" | quote }}
-            - name: AUTH0_CLIENT_ID
-              value: {{ .Values.auth.auth0.clientId }}
-            - name: AUTH0_BASE_DOMAIN
-              value: {{ .Values.auth.auth0.baseDomain }}
-            - name: AUTH0_EXTERNAL_LOGIN
-              value: {{ .Values.auth.auth0.externalLogin | quote }}
-            - name: BASE_URL_ORBIT
-              value: "app.{{ .Values.global.baseDomain }}"
-            - name: BASE_URL_HOUSTON
-              value: "houston.{{ .Values.global.baseDomain }}"
             - name: REGISTRY_CERT_PATH
-              value: "/etc/houston/tls/"
+              value: /etc/houston/tls/
             - name: REGISTRY_ISSUER
               value: {{ .Values.registry.auth.issuer }}
             - name: REGISTRY_SERVICE
@@ -126,7 +79,7 @@ spec:
             - name: REGISTRY_AUTH
               valueFrom:
                 secretKeyRef:
-                  name: {{ template "registry_auth_secret" . }}
+                  name: {{ template "registry.authSecret" . }}
                   key: .dockerconfigjson
             {{- end }}
             - name: JWT_PASSPHRASE
@@ -134,25 +87,33 @@ spec:
                 secretKeyRef:
                   name: {{ .Release.Name }}-houston-jwt-passphrase
                   key: passphrase
-            - name: HOUSTON_POSTGRES_URI
+            - name: PRISMA_MANAGEMENT_API_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: {{ template "houston_backend_secret" . }}
-                  key: connection
-            - name: AIRFLOW_POSTGRES_URI
+                  name: {{ .Release.Name }}-prisma-secret
+                  key: api-secret
+            - name: PRISMA_ENDPOINT
+              value: {{ template "prisma.endpoint" . }}
+            - name: PRISMA_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: {{ template "airflow_backend_secret" . }}
-                  key: connection
-            {{- if .Values.smtp.uri }}
-            - name: SMTP_URI
+                  name: {{ .Release.Name }}-prisma-secret
+                  key: service-secret
+            - name: DEPLOYMENTS_DATABASE_CONNECTION
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Release.Name }}-houston-smtp-uri
+                  name: {{ template "houston.airflowBackendSecret" . }}
                   key: connection
-            {{- end }}
-    {{ if .Values.global.tlsSecret }}
       volumes:
+        - name: houston-config-volume
+          configMap:
+            name: {{ .Release.Name }}-houston-config
+            items:
+              - key: local.yaml
+                path: local.yaml
+              - key: local-production.yaml
+                path: local-production.yaml
+    {{ if .Values.global.tlsSecret }}
         - name: registry-tls-volume
           secret:
             secretName: {{ .Values.global.tlsSecret }}

@@ -17,7 +17,7 @@ metadata:
     kubernetes.io/ingress.class: {{ .Values.ingress.class }}
     kubernetes.io/tls-acme: {{ eq .Values.ingress.acme true | quote }}
   {{- if .Values.ingress.auth.enabled }}
-    nginx.ingress.kubernetes.io/auth-url: https://houston.{{ .Values.ingress.baseDomain }}/authorization
+    nginx.ingress.kubernetes.io/auth-url: https://houston.{{ .Values.ingress.baseDomain }}/v1/authorization
     nginx.ingress.kubernetes.io/auth-signin: https://app.{{ .Values.ingress.baseDomain }}/login
     nginx.ingress.kubernetes.io/auth-response-headers: authorization, username, email
   {{- end }}

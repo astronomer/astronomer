@@ -73,6 +73,15 @@ astronomer:
         cpu: "250m"
         memory: "512Mi"
       limits:
+        cpu: "800m"
+        memory: "1024Mi"
+
+  prisma:
+    resources:
+      requests:
+        cpu: "250m"
+        memory: "512Mi"
+      limits:
         cpu: "500m"
         memory: "1024Mi"
 

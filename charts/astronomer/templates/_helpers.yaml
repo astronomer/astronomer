@@ -1,4 +1,4 @@
-{{ define "helm_globals" -}}
+{{ define "helm.globals" -}}
   {{- $globals := dict -}}
   {{- $_ := set $globals "baseDomain" (default "" .Values.global.baseDomain) -}}
   {{- $_ := set $globals "registryAuthSecret" .Values.registry.auth.secretName -}}
@@ -10,35 +10,35 @@
   {{ $globals | toJson | print }}
 {{- end }}
 
-{{- define "random_string" }}
-  {{- randAlphaNum 32 | b64enc }}
-{{- end }}
-
-{{ define "commander_image" -}}
+{{ define "commander.image" -}}
 {{ .Values.images.commander.repository }}:{{ .Values.images.commander.tag }}
 {{- end }}
 
-{{ define "houston_image" -}}
+{{ define "prisma.image" -}}
+{{ .Values.images.prisma.repository }}:{{ .Values.images.prisma.tag }}
+{{- end }}
+
+{{ define "houston.image" -}}
 {{ .Values.images.houston.repository }}:{{ .Values.images.houston.tag }}
 {{- end }}
 
-{{ define "orbit_image" -}}
+{{ define "orbit.image" -}}
 {{ .Values.images.orbit.repository }}:{{ .Values.images.orbit.tag }}
 {{- end }}
 
-{{ define "registry_image" -}}
+{{ define "registry.image" -}}
 {{ .Values.images.registry.repository }}:{{ .Values.images.registry.tag }}
 {{- end }}
 
-{{ define "db_bootstrapper_image" -}}
+{{ define "dbBootstrapper.image" -}}
 {{ .Values.images.dbBootstrapper.repository }}:{{ .Values.images.dbBootstrapper.tag }}
 {{- end }}
 
-{{ define "cli_install_image" -}}
+{{ define "cliInstall.image" -}}
 {{ .Values.images.cliInstall.repository }}:{{ .Values.images.cliInstall.tag }}
 {{- end }}
 
-{{ define "registry_docker_config" -}}
+{{ define "registry.docker.config" -}}
   {{- $domain := printf "registry.%v" .Values.global.baseDomain }}
   {{- $email := printf "admin@%v" .Values.global.baseDomain }}
   {{- $user := randAlphaNum 16 -}}
@@ -56,33 +56,22 @@
   {{ $config | toJson | print }}
 {{- end }}
 
-{{ define "auth_strategies" -}}
-  {{- if or .Values.auth.local.enabled -}}
-    local,
-  {{- end -}}
-  {{- if or .Values.auth.google.enabled -}}
-    google_oauth,
-  {{- end -}}
-  {{- if or .Values.auth.auth0.enabled -}}
-    auth0_oauth,
-  {{- end -}}
-  {{- if or .Values.auth.github.enabled -}}
-    github_oauth,
-  {{- end -}}
-{{- end }}
-
-{{ define "houston_backend_secret" -}}
+{{ define "houston.backendSecret" -}}
 {{ default (printf "%s-houston-backend" .Release.Name) .Values.houston.backendSecretName }}
 {{- end }}
 
-{{ define "airflow_backend_secret" -}}
+{{ define "houston.airflowBackendSecret" -}}
 {{ default (printf "%s-houston-backend" .Release.Name) .Values.houston.airflowBackendSecretName }}
 {{- end }}
 
-{{ define "houston_bootstrapper_serviceaccount" -}}
-{{ printf "%s-houston-bootstrapper-serviceaccount" .Release.Name }}
+{{ define "registry.authSecret" -}}
+{{ default (printf "%s-registry-auth" .Release.Name) .Values.registry.auth.secretName }}
 {{- end }}
 
-{{ define "registry_auth_secret" -}}
-{{ default (printf "%s-registry-auth" .Release.Name) .Values.registry.auth.secretName }}
+{{ define "prisma.bootstrapperServiceAccount" -}}
+{{ printf "%s-prisma-bootstrapper-serviceaccount" .Release.Name }}
+{{- end }}
+
+{{ define "prisma.endpoint" -}}
+{{ printf "http://%s-prisma:%s/houston" .Release.Name (.Values.ports.prismaHTTP | toString) }}
 {{- end }}
