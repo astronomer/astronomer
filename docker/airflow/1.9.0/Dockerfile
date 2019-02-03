@@ -27,7 +27,7 @@ ARG ORG="astronomer"
 ARG VERSION="1.9.0-1"
 ARG SUBMODULES="all, celery, redis, statsd"
 
-ENV AIRFLOW_REPOSITORY="https://github.com/${ORG}/incubator-airflow"
+ENV AIRFLOW_REPOSITORY="https://github.com/${ORG}/airflow"
 ENV AIRFLOW_MODULE="git+${AIRFLOW_REPOSITORY}@${VERSION}#egg=apache-airflow[${SUBMODULES}]"
 ENV AIRFLOW_HOME="/usr/local/airflow"
 ENV PYTHONPATH=${PYTHONPATH:+${PYTHONPATH}:}${AIRFLOW_HOME}
@@ -62,10 +62,11 @@ RUN apk update \
 		python3 \
 		tini \
 	&& update-ca-certificates \
-	&& pip3 install --no-cache-dir --upgrade pip==18.1 \
+	&& pip3 install --no-cache-dir --upgrade pip==19.0.1 \
 	&& pip3 install --no-cache-dir --upgrade setuptools==39.0.1 \
 	&& pip3 install --no-cache-dir cython \
-	&& pip3 install --no-cache-dir "${AIRFLOW_MODULE}" \
+	&& pip3 install --no-cache-dir numpy \
+	&& pip3 install --no-cache-dir --no-use-pep517 "${AIRFLOW_MODULE}" \
 	&& pip3 install --no-cache-dir "sqlalchemy>=1.1.15,<1.2.0" \
 	&& pip3 install --no-cache-dir "redis>=2.10.5,<3" \
 	&& pip3 uninstall -y snakebite \
