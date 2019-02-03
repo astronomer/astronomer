@@ -22,7 +22,7 @@ LABEL io.astronomer.docker.module="astronomer"
 LABEL io.astronomer.docker.component="houston-api"
 
 ARG VERSION="v0.7.5"
-ENV REPO="github.com/astronomer/houston-api-2"
+ENV REPO="github.com/astronomer/houston-api"
 ENV REPO_URL="https://${REPO}"
 
 
