@@ -69,14 +69,14 @@ spec:
               {{- end }}
             - name: NODE_ENV
               value: "production"
-            - name: REGISTRY_CERT_PATH
+            - name: REGISTRY__CERT_PATH
               value: /etc/houston/tls/
-            - name: REGISTRY_ISSUER
+            - name: REGISTRY__ISSUER
               value: {{ .Values.registry.auth.issuer }}
-            - name: REGISTRY_SERVICE
+            - name: REGISTRY__SERVICE
               value: {{ .Values.registry.auth.service }}
             {{- if .Values.global.baseDomain }}
-            - name: REGISTRY_AUTH
+            - name: REGISTRY__AUTH
               valueFrom:
                 secretKeyRef:
                   name: {{ template "registry.authSecret" . }}
@@ -92,14 +92,14 @@ spec:
                 secretKeyRef:
                   name: {{ .Release.Name }}-prisma-secret
                   key: api-secret
-            - name: PRISMA_ENDPOINT
+            - name: PRISMA__ENDPOINT
               value: {{ template "prisma.endpoint" . }}
-            - name: PRISMA_SECRET
+            - name: PRISMA__SECRET
               valueFrom:
                 secretKeyRef:
                   name: {{ .Release.Name }}-prisma-secret
                   key: service-secret
-            - name: DEPLOYMENTS_DATABASE_CONNECTION
+            - name: DEPLOYMENTS__DATABASE__CONNECTION
               valueFrom:
                 secretKeyRef:
                   name: {{ template "houston.airflowBackendSecret" . }}
