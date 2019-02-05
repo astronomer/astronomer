@@ -68,6 +68,10 @@
 {{ default (printf "%s-registry-auth" .Release.Name) .Values.registry.auth.secretName }}
 {{- end }}
 
+{{ define "houston.bootstrapperServiceAccount" -}}
+{{ printf "%s-houston-bootstrapper-serviceaccount" .Release.Name }}
+{{- end }}
+
 {{ define "prisma.bootstrapperServiceAccount" -}}
 {{ printf "%s-prisma-bootstrapper-serviceaccount" .Release.Name }}
 {{- end }}

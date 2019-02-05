@@ -28,6 +28,27 @@ spec:
         checksum/houston-config: {{ include (print $.Template.BasePath "/houston/houston-configmap.yaml") . | sha256sum }}
     spec:
       restartPolicy: Always
+      {{- if and (not .Values.houston.airflowBackendSecretName) (not .Values.houston.airflowBackendConnection) }}
+      serviceAccountName: {{ template "houston.bootstrapperServiceAccount" . }}
+      initContainers:
+        - name: "{{ .Release.Name }}-houston-bootstrapper"
+          image: {{ template "dbBootstrapper.image" . }}
+          imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
+          env:
+            - name: BOOTSTRAP_DB
+              valueFrom:
+                secretKeyRef:
+                  name: astronomer-bootstrap
+                  key: connection
+            - name: DB_NAME
+              value: {{ .Release.Name }}-houston
+            - name: SECRET_NAME
+              value: {{ template "houston.airflowBackendSecret" . }}
+            - name: NAMESPACE
+              value: {{ .Release.Namespace }}
+            - name: IN_CLUSTER
+              value: "true"
+      {{- end }}
       containers:
         - name: {{ .Release.Name }}-houston
           image: {{ template "houston.image" . }}
