@@ -87,6 +87,7 @@ spec:
                 secretKeyRef:
                   name: {{ .Release.Name }}-houston-jwt-passphrase
                   key: passphrase
+            # Used by prisma cli for deploys to a protected prisma service.
             - name: PRISMA_MANAGEMENT_API_SECRET
               valueFrom:
                 secretKeyRef:
