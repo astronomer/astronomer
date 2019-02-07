@@ -27,7 +27,7 @@ ARG ORG="astronomer"
 ARG VERSION="v1-10-2"
 ARG SUBMODULES="all, statsd"
 
-ENV AIRFLOW_REPOSITORY="https://github.com/${ORG}/incubator-airflow"
+ENV AIRFLOW_REPOSITORY="https://github.com/${ORG}/airflow"
 ENV AIRFLOW_MODULE="git+${AIRFLOW_REPOSITORY}@${VERSION}#egg=apache-airflow[${SUBMODULES}]"
 ENV AIRFLOW_HOME="/usr/local/airflow"
 ENV PYMSSQL_BUILD_WITH_BUNDLED_FREETDS=1
@@ -68,10 +68,11 @@ RUN apk update \
 		python3 \
 		tini \
 	&& update-ca-certificates \
-	&& pip3 install --no-cache-dir --upgrade pip==18.0 \
+	&& pip3 install --no-cache-dir --upgrade pip==19.0.1 \
 	&& pip3 install --no-cache-dir --upgrade setuptools==39.0.1 \
 	&& pip3 install --no-cache-dir cython \
-	&& pip3 install --no-cache-dir "${AIRFLOW_MODULE}" \
+	&& pip3 install --no-cache-dir numpy \
+	&& pip3 install --no-cache-dir --no-use-pep517 "${AIRFLOW_MODULE}" \
 	&& pip3 install --no-cache-dir flask-appbuilder==1.11.1 \
 	&& pip3 install --no-cache-dir "redis>=2.10.5,<3" \
 	&& apk del .build-deps \
@@ -83,6 +84,8 @@ RUN mkdir -p ${AIRFLOW_HOME}/logs
 
 # Copy entrypoint to root
 COPY include/entrypoint /
+
+RUN chmod +x /entrypoint
 
 # Copy cron scripts
 COPY include/clean-airflow-logs /etc/periodic/15min/clean-airflow-logs
