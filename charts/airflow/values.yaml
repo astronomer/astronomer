@@ -266,7 +266,7 @@ registry:
     # host: ~
     # email: ~
 
-# Auth secret for elasticsearch
+# Elasticsearch logging configuration
 elasticsearch:
   secretName: ~
 
