@@ -20,7 +20,7 @@ metadata:
     prometheus.io/scrape: "true"
     prometheus.io/port: {{ .Values.ports.pgbouncerScrape | quote }}
 spec:
-  type: NodePort
+  type: ClusterIP
   selector:
     tier: airflow
     component: pgbouncer

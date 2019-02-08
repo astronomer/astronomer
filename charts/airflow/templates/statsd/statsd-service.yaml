@@ -19,7 +19,7 @@ metadata:
     prometheus.io/scrape: "true"
     prometheus.io/port: {{ .Values.ports.statsdScrape | quote }}
 spec:
-  type: NodePort
+  type: ClusterIP
   selector:
     tier: airflow
     component: statsd

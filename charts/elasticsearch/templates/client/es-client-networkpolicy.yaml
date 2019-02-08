@@ -49,10 +49,6 @@ spec:
           tier: logging
           component: {{ template "elasticsearch.name" . }}-exporter
           release: {{ .Release.Name }}
-    - podSelector:
-        matchLabels:
-          tier: airflow
-          component: webserver
     ports:
     - protocol: TCP
       port: {{ .Values.common.ports.http }}

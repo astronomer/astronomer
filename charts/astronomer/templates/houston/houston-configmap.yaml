@@ -31,6 +31,11 @@ data:
       releaseNamespace: {{ .Release.Namespace }}
       releaseVersion: {{ .Chart.Version }}
 
+    deployments:
+      elasticsearch:
+        host: {{ printf "%s-elasticsearch-nginx.%s" .Release.Name .Release.Namespace }}
+        port: 9200
+
   # These are any user-specified config overrides.
   local-production.yaml: |
 {{ toYaml .Values.houston.config | indent 4 }}

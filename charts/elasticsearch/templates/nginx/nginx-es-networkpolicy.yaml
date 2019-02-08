@@ -1,0 +1,33 @@
+################################
+## Elasticsearch NGiNX NetworkPolicy
+#################################
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ template "elasticsearch.fullname" . }}-nginx-policy
+  labels:
+    tier: logging
+    component: {{ template "elasticsearch.name" . }}
+    chart: {{ template "elasticsearch.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    role: nginx
+spec:
+  podSelector:
+    matchLabels:
+      tier: logging
+      component: {{ template "elasticsearch.name" . }}
+      release: {{ .Release.Name }}
+      role: nginx
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector: {}
+    - podSelector:
+        matchLabels:
+          tier: airflow
+          component: webserver
+    ports:
+    - protocol: TCP
+      port: {{ .Values.common.ports.http }}

@@ -16,14 +16,11 @@ images:
     tag: 0.8.0-alpha.2
     pullPolicy: IfNotPresent
   nginx:
-    repository: astronomerio/ap-nginx-es
-    tag: latest
+    repository: astronomerinc/ap-nginx-es
+    tag: 0.8.0-alpha.2
     pullPolicy: Always
 
 common:
-  # Defines the service type for all outward-facing (non-discovery) services.
-  # For minikube use NodePort otherwise use LoadBalancer
-  # serviceType: LoadBalancer
   serviceType: ClusterIP
 
   env:
@@ -45,7 +42,6 @@ common:
   ports:
     http: 9200
     transport: 9300
-    metrics: 10254
 
 # Client/ingest nodes can execute pre-processing pipelines, composed of
 # one or more ingest processors. Depending on the type of operations performed

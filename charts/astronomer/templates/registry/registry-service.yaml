@@ -17,7 +17,7 @@ metadata:
   #   prometheus.io/scrape: "true"
   #   prometheus.io/port: {{ .Values.ports.registryScrape | quote }}
 spec:
-  type: NodePort
+  type: ClusterIP
   selector:
     component: registry
     tier: astronomer

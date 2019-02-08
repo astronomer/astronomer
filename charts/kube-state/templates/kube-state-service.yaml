@@ -15,7 +15,7 @@ metadata:
     prometheus.io/scrape: "true"
     prometheus.io/port: {{ .Values.ports.scrape | quote }}
 spec:
-  type: NodePort
+  type: ClusterIP
   ports:
   - name: scrape
     port: {{ .Values.ports.scrape }}

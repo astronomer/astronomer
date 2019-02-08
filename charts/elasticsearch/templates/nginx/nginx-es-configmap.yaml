@@ -18,7 +18,6 @@ data:
     error_log /dev/stdout info;
 
     http {
-
       access_log /dev/stdout;
 
       upstream elasticsearch {

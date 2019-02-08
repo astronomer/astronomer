@@ -86,11 +86,3 @@ Elasticsearch NGINX variable definitions
 {{ define "nginx-es.image" -}}
 {{ .Values.images.nginx.repository }}:{{ .Values.images.nginx.tag }}
 {{- end }}
-
-{{ define "nginx-es.ingress.class" -}}
-{{- if .Values.nginx.ingressClass -}}
-{{- .Values.nginx.ingressClass -}}
-{{- else }}
-{{- template "nginx-es.fullname" . -}}
-{{- end -}}
-{{- end -}}

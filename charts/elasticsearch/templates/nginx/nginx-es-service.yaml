@@ -11,9 +11,6 @@ metadata:
     chart: {{ template "nginx-es.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
-  annotations:
-    prometheus.io/scrape: "true"
-    prometheus.io/port: {{ .Values.common.ports.metrics | quote }}
 spec:
   type: ClusterIP
   selector:

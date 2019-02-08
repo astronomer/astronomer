@@ -98,6 +98,10 @@ elasticsearch:
       repository: astronomerinc/ap-elasticsearch-exporter
       tag: master
       pullPolicy: Always
+    nginx:
+      repository: astronomerinc/ap-nginx-es
+      tag: master
+      pullPolicy: Always
 
 
 #################################

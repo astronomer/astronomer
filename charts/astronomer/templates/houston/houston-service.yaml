@@ -12,7 +12,7 @@ metadata:
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
 spec:
-  type: NodePort
+  type: ClusterIP
   selector:
     component: houston
     tier: astronomer

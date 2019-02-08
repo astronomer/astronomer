@@ -22,7 +22,7 @@ env:
   # XPACK_REPORTING_ENABLED: "false"
   # XPACK_SECURITY_ENABLED: "false"
 
-serviceType: NodePort
+serviceType: ClusterIP
 
 ports:
   http: 5601
