@@ -1,0 +1,48 @@
+################################
+## NGINX Elasticsearch ConfigMap
+#################################
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: {{ .Release.Name }}-nginx-es
+  labels:
+    component: nginx
+    tier: {{ template "nginx-es.name" . }}
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+data:
+  nginx.conf: |-
+    worker_processes 1;
+    events { worker_connections 1024; }
+    error_log /dev/stdout info;
+
+    http {
+
+      access_log /dev/stdout;
+
+      upstream elasticsearch {
+        server {{ .Release.Name }}-elasticsearch.{{ .Release.Namespace }}:{{ .Values.common.ports.http }};
+        keepalive 15;
+      }
+
+      server {
+        listen {{ .Values.common.ports.http }};
+
+        location ~ ^/ {
+          auth_request /auth;
+          proxy_pass http://elasticsearch;
+          proxy_http_version 1.1;
+          proxy_set_header Host $host;
+          proxy_set_header Connection "Keep-Alive";
+          proxy_set_header Proxy-Connection "Keep-Alive";
+        }
+
+        location = /auth {
+          internal;
+          proxy_pass http://{{ .Release.Name }}-houston.{{ .Release.Namespace }}:8871/v1/elasticsearch;
+          proxy_set_header Content-Length "";
+          proxy_set_header X-Original-URI $request_uri;
+        }
+      }
+    }

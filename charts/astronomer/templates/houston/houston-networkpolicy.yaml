@@ -37,6 +37,11 @@ spec:
           tier: monitoring
           component: alertmanager
           release: {{ .Release.Name }}
+    - podSelector:
+        matchLabels:
+          tier: elasticsearch
+          component: es-ingress-controller
+          release: {{ .Release.Name }}
     ports:
     - protocol: TCP
       port: {{ .Values.ports.houstonHTTP }}

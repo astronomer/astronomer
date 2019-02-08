@@ -266,6 +266,16 @@ registry:
     # host: ~
     # email: ~
 
+# Auth secret for elasticsearch
+elasticsearch:
+  secretName: ~
+
+  connection: {}
+    # user: ~
+    # pass: ~
+    # host: ~
+    # port: ~
+
 # All ports used by chart
 ports:
   flowerUI: 5555

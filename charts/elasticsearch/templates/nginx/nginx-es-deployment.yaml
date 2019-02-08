@@ -1,0 +1,60 @@
+################################
+## NGINX Elasticsearch Deployment
+#################################
+kind: Deployment
+apiVersion: apps/v1beta2
+metadata:
+  name: {{ template "nginx-es.fullname" . }}-nginx
+  labels:
+    tier: {{ template "nginx-es.name" . }}
+    component: es-ingress-controller
+    chart: {{ template "nginx-es.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      tier: {{ template "nginx-es.name" . }}
+      component: es-ingress-controller
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        tier: {{ template "nginx-es.name" . }}
+        component: es-ingress-controller
+        release: {{ .Release.Name }}
+      annotations:
+        checksum/configmap: {{ include (print $.Template.BasePath "/nginx/nginx-es-configmap.yaml") . | sha256sum }}
+    spec:
+      restartPolicy: Always
+      containers:
+        - name: {{ .Release.Name }}-nginx-es
+          image: {{ template "nginx-es.image" . }}
+          imagePullPolicy: {{ .Values.images.nginx.pullPolicy }}
+          resources: {{ toYaml .Values.nginx.resources | indent 12 }}
+          volumeMounts:
+            - name: nginx-config-volume
+              mountPath: /etc/nginx
+          ports:
+            - name: http
+              containerPort: {{ .Values.common.ports.http }}
+          # livenessProbe:
+          #   httpGet:
+          #     path: /healthz
+          #     port: 8080
+          #   initialDelaySeconds: 10
+          #   periodSeconds: 10
+          # readinessProbe:
+          #   httpGet:
+          #     path: /healthz
+          #     port: 8080
+          #   initialDelaySeconds: 10
+          #   periodSeconds: 10
+      volumes:
+        - name: nginx-config-volume
+          configMap:
+            name: {{ .Release.Name }}-nginx-es
+            items:
+              - key: nginx.conf
+                path: nginx.conf

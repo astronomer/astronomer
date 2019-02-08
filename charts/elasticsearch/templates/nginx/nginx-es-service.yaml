@@ -1,0 +1,27 @@
+################################
+## NGINX Elasticsearch Service
+#################################
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ template "nginx-es.fullname" . }}-nginx
+  labels:
+    tier: logging
+    component: es-ingress-controller
+    chart: {{ template "nginx-es.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: {{ .Values.common.ports.metrics | quote }}
+spec:
+  type: ClusterIP
+  selector:
+    tier: {{ template "nginx-es.name" . }}
+    component: es-ingress-controller
+    release: {{ .Release.Name }}
+  ports:
+    - port: {{ .Values.common.ports.http }}
+      targetPort: {{ .Values.common.ports.http }}
+      protocol: TCP
+      name: http

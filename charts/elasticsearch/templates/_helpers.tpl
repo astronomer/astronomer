@@ -57,3 +57,40 @@ Exporter image name.
 {{- define "exporter.image" -}}
 {{ .Values.images.exporter.repository }}:{{ .Values.images.exporter.tag }}
 {{- end -}}
+
+{{/*
+Elasticsearch NGINX variable definitions
+*/}}
+
+{{- define "nginx-es.name" -}}
+{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{- define "nginx-es.fullname" -}}
+{{- if .Values.nginx.fullnameOverride -}}
+{{- .Values.nginx.fullnameOverride | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- $name := default .Chart.Name .Values.nameOverride -}}
+{{- if contains $name .Release.Name -}}
+{{- .Release.Name | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "nginx-es.chart" -}}
+{{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{ define "nginx-es.image" -}}
+{{ .Values.images.nginx.repository }}:{{ .Values.images.nginx.tag }}
+{{- end }}
+
+{{ define "nginx-es.ingress.class" -}}
+{{- if .Values.nginx.ingressClass -}}
+{{- .Values.nginx.ingressClass -}}
+{{- else }}
+{{- template "nginx-es.fullname" . -}}
+{{- end -}}
+{{- end -}}

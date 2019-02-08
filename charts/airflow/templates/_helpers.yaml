@@ -38,7 +38,7 @@
         key: connection
   {{- if eq .Values.executor "CeleryExecutor" }}
   # - name: {{if eq .Values.airflowVersion "1.9.0" }} AIRFLOW__CELERY__CELERY_RESULT_BACKEND {{ else }} AIRFLOW__CELERY__RESULT_BACKEND {{ end }}
-  - name: AIRFLOW__CELERY__CELERY_RESULT_BACKEND 
+  - name: AIRFLOW__CELERY__CELERY_RESULT_BACKEND
     valueFrom:
       secretKeyRef:
         name: {{ template "airflow_result_backend_secret" . }}
@@ -53,6 +53,25 @@
       secretKeyRef:
         name: {{ .Release.Name }}-broker-url
         key: connection
+  {{- end }}
+  {{- if or .Values.elasticsearch.connection .Values.elasticsearch.secretName }}
+  - name: AIRFLOW__ELASTICSEARCH__ELASTICSEARCH_HOST
+    valueFrom:
+      secretKeyRef:
+        name: {{ template "elasticsearch_secret" . }}
+        key: connection
+  - name: AIRFLOW__CORE__TASK_LOG_READER
+    value: elasticsearch
+  - name: AIRFLOW__CORE__LOGGING_CONFIG_CLASS
+    value: airflow.config.log_config.LOGGING_CONFIG
+  - name: AIRFLOW__ELASTICSEARCH__ELASTICSEARCH_WRITE_STDOUT
+    value: True
+  - name: AIRFLOW__ELASTICSEARCH__END_OF_LOG_MARK
+    value: end_of_log
+  - name: AIRFLOW__ELASTICSEARCH__ELASTICSEARCH_JSON_FORMAT
+    value: True
+  - name: AIRFLOW__ELASTICSEARCH__ELASTICSEARCH_RECORD_LABELS
+    value: 'asctime, levelname, filename, lineno, message'
   {{- end }}
 {{- end }}
 
@@ -152,6 +171,10 @@
 
 {{ define "registry_secret" -}}
 {{ default (printf "%s-registry" .Release.Name) .Values.registry.secretName }}
+{{- end }}
+
+{{ define "elasticsearch_secret" -}}
+{{ default (printf "%s-elasticsearch" .Release.Name) .Values.elasticsearch.secretName }}
 {{- end }}
 
 {{ define "pgbouncer_config" }}
