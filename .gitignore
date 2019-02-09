@@ -1,7 +1,7 @@
 .DS_Store
 config.yaml
 certs
-secrets
+/secrets
 
 # IDEs
 .idea/
