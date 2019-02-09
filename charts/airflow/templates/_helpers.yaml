@@ -61,17 +61,17 @@
         name: {{ template "elasticsearch_secret" . }}
         key: connection
   - name: AIRFLOW__CORE__TASK_LOG_READER
-    value: elasticsearch
+    value: "elasticsearch"
   - name: AIRFLOW__CORE__LOGGING_CONFIG_CLASS
-    value: airflow.config.log_config.LOGGING_CONFIG
+    value: "airflow.config.log_config.LOGGING_CONFIG"
   - name: AIRFLOW__ELASTICSEARCH__ELASTICSEARCH_WRITE_STDOUT
-    value: True
+    value: "True"
   - name: AIRFLOW__ELASTICSEARCH__END_OF_LOG_MARK
-    value: end_of_log
+    value: "end_of_log"
   - name: AIRFLOW__ELASTICSEARCH__ELASTICSEARCH_JSON_FORMAT
-    value: True
+    value: "True"
   - name: AIRFLOW__ELASTICSEARCH__ELASTICSEARCH_RECORD_LABELS
-    value: 'asctime, levelname, filename, lineno, message'
+    value: "asctime, levelname, filename, lineno, message"
   {{- end }}
 {{- end }}
 
