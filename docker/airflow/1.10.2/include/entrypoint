@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+set -e
+
+# Airflow subcommand
+CMD=$2
+
+# Wait for postgres then init the db
+if [[ -n $AIRFLOW__CORE__SQL_ALCHEMY_CONN  ]] && [[ $CMD =~ ^(webserver|scheduler|worker)$ ]]; then
+  # Wait for database port to open up
+  HOST=$(echo "${AIRFLOW__CORE__SQL_ALCHEMY_CONN}" | awk -F: '{print $3}' | awk -F@ '{print $2}')
+  PORT=$(echo "${AIRFLOW__CORE__SQL_ALCHEMY_CONN}" | awk -F: '{print $4}' | awk -F/ '{print $1}')
+  echo "Waiting for host: ${HOST} ${PORT}"
+  while ! nc -w 1 -z "${HOST}" "${PORT}"; do
+    sleep 0.001
+  done
+
+  echo "Initializing airflow database..."
+  airflow initdb || true
+fi
+
+if [[ -n $AIRFLOW__CELERY__BROKER_URL ]] && [[ $CMD =~ ^(scheduler|worker|flower)$ ]]; then
+  # Wait for database port to open up
+  HOST=$(echo "${AIRFLOW__CELERY__BROKER_URL}" | awk -F: '{print $3}' | awk -F@ '{print $2}')
+  PORT=$(echo "${AIRFLOW__CELERY__BROKER_URL}" | awk -F: '{print $4}' | awk -F/ '{print $1}')
+  echo "Waiting for host: ${HOST} ${PORT}"
+  while ! nc -w 1 -z "${HOST}" "${PORT}"; do
+    sleep 0.001
+  done
+fi
+
+# Run the original command
+exec "$@"
