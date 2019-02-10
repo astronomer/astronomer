@@ -60,10 +60,8 @@
       secretKeyRef:
         name: {{ template "elasticsearch_secret" . }}
         key: connection
-  - name: AIRFLOW__CORE__TASK_LOG_READER
-    value: "elasticsearch"
-  - name: AIRFLOW__CORE__LOGGING_CONFIG_CLASS
-    value: "airflow.config.log_config.LOGGING_CONFIG"
+  - name: AIRFLOW__CORE__REMOTE_LOGGING
+    value: "True"
   - name: AIRFLOW__ELASTICSEARCH__ELASTICSEARCH_WRITE_STDOUT
     value: "True"
   - name: AIRFLOW__ELASTICSEARCH__END_OF_LOG_MARK
