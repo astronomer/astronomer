@@ -62,6 +62,8 @@
         key: connection
   - name: AIRFLOW__CORE__REMOTE_LOGGING
     value: "True"
+  # - name: AIRFLOW__CORE__TASK_LOG_READER
+  #   value: "elasticsearch"
   - name: AIRFLOW__ELASTICSEARCH__ELASTICSEARCH_WRITE_STDOUT
     value: "True"
   - name: AIRFLOW__ELASTICSEARCH__END_OF_LOG_MARK
