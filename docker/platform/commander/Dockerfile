@@ -52,7 +52,6 @@ RUN apk update && \
 	&& tar -xvf ${GCLOUD_FILE} \
 	&& rm ${GCLOUD_FILE} \
 	&& google-cloud-sdk/install.sh \
-	&& mkdir /opt \
 	&& mv google-cloud-sdk /opt \
 	&& mkdir -p "${GOPATH}/src" \
 	&& mkdir -p "${GOPATH}/bin" \
