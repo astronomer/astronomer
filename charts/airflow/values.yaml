@@ -43,8 +43,8 @@ airflowHome: "/usr/local/airflow"
 rbacEnabled: true
 
 # Airflow version
-# Options: 1.9.0, 1.10.0
-airflowVersion: "1.9.0"
+# Options: 1.9.0, 1.10.2, etc
+airflowVersion: "1.10.2"
 
 # Airflow executor
 # Options: SequentialExecutor, LocalExecutor, CeleryExecutor, KubernetesExecutor
