@@ -27,6 +27,8 @@ spec:
         component: {{ template "elasticsearch.name" . }}
         release: {{ .Release.Name }}
         role: client
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/es-configmap.yaml") . | sha256sum }}
     spec:
       {{- if eq .Values.client.antiAffinity "hard" }}
       affinity:
