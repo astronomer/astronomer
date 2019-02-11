@@ -1,5 +1,5 @@
 #
-# Copyright 2018 Astronomer Inc.
+# Copyright 2019 Astronomer Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ LABEL io.astronomer.docker.component="airflow"
 LABEL io.astronomer.docker.airflow.version="1.10.2"
 
 ARG ORG="astronomer"
-ARG VERSION="v1-10-2"
+ARG VERSION="v1-10-2-mods"
 ARG SUBMODULES="all, statsd"
 
 ENV AIRFLOW_REPOSITORY="https://github.com/${ORG}/airflow"
@@ -84,8 +84,6 @@ RUN mkdir -p ${AIRFLOW_HOME}/logs
 
 # Copy entrypoint to root
 COPY include/entrypoint /
-
-RUN chmod +x /entrypoint
 
 # Copy cron scripts
 COPY include/clean-airflow-logs /etc/periodic/15min/clean-airflow-logs
