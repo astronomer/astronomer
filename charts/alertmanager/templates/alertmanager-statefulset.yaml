@@ -56,7 +56,7 @@ spec:
           volumeMounts:
             - name: config-volume
               mountPath: /etc/config
-            - name: storage-volume
+            - name: data
               mountPath: {{ .Values.dataDir }}
       volumes:
         - name: config-volume
@@ -66,12 +66,12 @@ spec:
               - key: alertmanager.yaml
                 path: alertmanager.yaml
   {{- if not .Values.persistence.enabled }}
-        - name: storage-volume
+        - name: data
           emptyDir: {}
   {{- else }}
   volumeClaimTemplates:
     - metadata:
-        name: storage-volume
+        name: data
       spec:
         accessModes: [ "ReadWriteOnce" ]
         resources:

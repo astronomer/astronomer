@@ -36,7 +36,7 @@ spec:
           imagePullPolicy: {{ .Values.images.init.pullPolicy }}
           command: ["chown", "-R", "65534:65534", "{{ .Values.dataDir }}"]
           volumeMounts:
-            - name: prometheus-data-volume
+            - name: data
               mountPath: "{{ .Values.dataDir }}"
       containers:
         - name: {{ template "prometheus.fullname" . }}
@@ -53,7 +53,7 @@ spec:
               mountPath: /etc/prometheus/config
             - name: alert-volume
               mountPath: /etc/prometheus/alerts.d
-            - name: prometheus-data-volume
+            - name: data
               mountPath: {{ .Values.dataDir }}
           ports:
             - name: prometheus-data
@@ -84,12 +84,12 @@ spec:
               - key: alerts.yaml
                 path: alerts.yaml
   {{- if not .Values.persistence.enabled }}
-        - name: prometheus-data-volume
+        - name: data
           emptyDir: {}
   {{- else }}
   volumeClaimTemplates:
     - metadata:
-        name: prometheus-data-volume
+        name: data
       spec:
         accessModes: [ "ReadWriteOnce" ]
         resources:

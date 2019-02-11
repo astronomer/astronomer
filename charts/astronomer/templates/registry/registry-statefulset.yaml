@@ -36,11 +36,11 @@ spec:
           resources:
 {{ toYaml .Values.registry.resources | indent 12 }}
           volumeMounts:
-            - name: registry-config-volume
+            - name: config
               mountPath: /etc/docker/registry
-            - name: registry-certificate-volume
+            - name: certificate
               mountPath: /etc/docker/ssl
-            - name: registry-data-volume
+            - name: data
               mountPath: /var/lib/registry
           ports:
             - name: registry-http
@@ -60,22 +60,22 @@ spec:
             initialDelaySeconds: 10
             periodSeconds: 10
       volumes:
-        - name: registry-config-volume
+        - name: config
           configMap:
             name: {{ .Release.Name }}-registry
             items:
               - key: config.yml
                 path: config.yml
-        - name: registry-certificate-volume
+        - name: certificate
           secret:
             secretName: {{ .Values.global.tlsSecret }}
   {{- if not .Values.registry.persistence.enabled }}
-        - name: registry-data-volume
+        - name: data
           emptyDir: {}
   {{- else }}
   volumeClaimTemplates:
     - metadata:
-        name: registry-data-volume
+        name: data
       spec:
         accessModes: ["ReadWriteOnce"]
         resources:

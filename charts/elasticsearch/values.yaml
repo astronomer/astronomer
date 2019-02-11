@@ -18,13 +18,19 @@ images:
   nginx:
     repository: astronomerinc/ap-nginx-es
     tag: 0.8.0-alpha.3
-    pullPolicy: Always
+    pullPolicy: IfNotPresent
 
 common:
   serviceType: ClusterIP
 
   env:
     CLUSTER_NAME: "astronomer"
+    HTTP_CORS_ENABLE: "true"
+    HTTP_CORS_ALLOW_ORIGIN: "*"
+    NUMBER_OF_MASTERS: "1"
+    MAX_LOCAL_STORAGE_NODES: "1"
+    SHARD_ALLOCATION_AWARENESS: ""
+    SHARD_ALLOCATION_AWARENESS_ATTR: ""
 
     # Uncomment this if you get the "No up-and-running site-local (private)
     # addresses" error.

@@ -1,0 +1,48 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "elasticsearch.fullname" . }}-config
+  labels:
+    tier: logging
+    component: {{ template "elasticsearch.name" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+data:
+  elasticsearch.yml: |-
+    cluster:
+      name: ${CLUSTER_NAME}
+
+    node:
+      master: ${NODE_MASTER}
+      name: ${NODE_NAME}
+      data: ${NODE_DATA}
+      ingest: ${NODE_INGEST}
+      max_local_storage_nodes: ${MAX_LOCAL_STORAGE_NODES}
+
+    processors: ${PROCESSORS:1}
+
+    network.host: 0.0.0.0
+
+    bootstrap:
+      memory_lock: ${MEMORY_LOCK:false}
+
+    http:
+      enabled: ${HTTP_ENABLE}
+      compression: true
+      cors:
+        enabled: ${HTTP_CORS_ENABLE}
+        allow-origin: ${HTTP_CORS_ALLOW_ORIGIN}
+
+    discovery:
+      zen:
+        ping.unicast.hosts: ${DISCOVERY_SERVICE}
+        minimum_master_nodes: ${NUMBER_OF_MASTERS:2}
+
+    # Disable scripting for security.
+    script.allowed_types: none
+
+    # Prevent a user from overriding an index in the body of a request.
+    # We force the index pattern at the NGINX layer, and this prevents anybody
+    # from overriding it.
+    rest.action.multi.allow_explicit_index: false
