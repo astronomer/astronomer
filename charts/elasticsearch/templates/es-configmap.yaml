@@ -45,4 +45,4 @@ data:
     # Prevent a user from overriding an index in the body of a request.
     # We force the index pattern at the NGINX layer, and this prevents anybody
     # from overriding it.
-    rest.action.multi.allow_explicit_index: false
+    # rest.action.multi.allow_explicit_index: false
