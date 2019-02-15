@@ -135,7 +135,6 @@ data:
     <filter airflow.task.**>
       @type record_transformer
       enable_ruby
-      remove_keys log
       <record>
         log_id ${record["dag_id"]}_${record["task_id"]}_${record["execution_date"]&.gsub("+", "_")&.gsub(" ", "T")&.gsub("-", "_")&.gsub(":", "_")}_${record["try_number"]}
         offset ${time = Time.now; time.to_i * (10 ** 9) + time.nsec}
