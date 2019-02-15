@@ -100,7 +100,7 @@ data:
         component ${record["kubernetes"]["labels"]["component"]}
         workspace ${record["kubernetes"]["labels"]["workspace"]}
         release ${record["kubernetes"]["labels"]["release"]}
-        log ${record["log"]}
+        message ${record["log"]}
       </record>
     </filter>
 
@@ -128,7 +128,7 @@ data:
       format json
       replace_invalid_sequence true
       emit_invalid_record_to_error false
-      key_name log
+      key_name message
       reserve_data true
     </filter>
 
