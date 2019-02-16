@@ -90,24 +90,12 @@ spec:
               {{- end }}
             - name: NODE_ENV
               value: "production"
-            - name: REGISTRY__CERT_PATH
+            - name: JWT__CERT_PATH
               value: /etc/houston/tls/
-            - name: REGISTRY__ISSUER
+            - name: JWT__REGISTRY__ISSUER
               value: {{ .Values.registry.auth.issuer }}
-            - name: REGISTRY__SERVICE
+            - name: JWT__REGISTRY__SERVICE
               value: {{ .Values.registry.auth.service }}
-            {{- if .Values.global.baseDomain }}
-            - name: REGISTRY__AUTH
-              valueFrom:
-                secretKeyRef:
-                  name: {{ template "registry.authSecret" . }}
-                  key: .dockerconfigjson
-            {{- end }}
-            - name: JWT_PASSPHRASE
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Release.Name }}-houston-jwt-passphrase
-                  key: passphrase
             # Used by prisma cli for deploys to a protected prisma service.
             - name: PRISMA_MANAGEMENT_API_SECRET
               valueFrom:
