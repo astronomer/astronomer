@@ -76,8 +76,7 @@
   "editable": true,
   "gnetId": 3662,
   "graphTooltip": 0,
-  "id": 10,
-  "iteration": 1538891373224,
+  "iteration": 1550363166304,
   "links": [],
   "panels": [
     {
@@ -893,7 +892,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "kubelet_volume_stats_used_bytes{persistentvolumeclaim=~\"prometheus-data-volume-.*\"}",
+          "expr": "kubelet_volume_stats_used_bytes{persistentvolumeclaim=~\"data-.*-prometheus-.*\"}",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "usage",
@@ -977,7 +976,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "kubelet_volume_stats_available_bytes{persistentvolumeclaim=~\"prometheus-data-volume-.*\"}",
+          "expr": "kubelet_volume_stats_available_bytes{persistentvolumeclaim=~\"data-.*-prometheus-.*\"}",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "available",

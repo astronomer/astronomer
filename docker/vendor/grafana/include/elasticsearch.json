@@ -635,7 +635,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "kubelet_volume_stats_used_bytes{persistentvolumeclaim=~\"es-.*\"}",
+          "expr": "kubelet_volume_stats_used_bytes{persistentvolumeclaim=~\"data-.*-elasticsearch-.*\"}",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 1,
@@ -721,7 +721,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "kubelet_volume_stats_available_bytes{persistentvolumeclaim=~\"es-.*\"}",
+          "expr": "kubelet_volume_stats_available_bytes{persistentvolumeclaim=~\"data-.*-elasticsearch-.*\"}",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 1,
