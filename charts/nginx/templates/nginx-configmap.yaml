@@ -11,6 +11,7 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 data:
+  add-headers: {{ .Release.Namespace }}/{{ template "nginx.fullname" . }}-ingress-controller-headers
   proxy-connect-timeout: {{ .Values.proxyConnectTimeout | quote }}
   proxy-read-timeout: {{ .Values.proxyReadTimeout | quote }}
   proxy-send-timeout: {{ .Values.proxySendTimeout | quote }}
@@ -18,3 +19,4 @@ data:
   hsts-include-subdomains: {{ .Values.hstsIncludeSubdomains | quote }}
   server-name-hash-bucket-size: {{ .Values.serverNameHashBucketSize | quote }}
   enable-vts-status: "true"
+  server-tokens: "false"

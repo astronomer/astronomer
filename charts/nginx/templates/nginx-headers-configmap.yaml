@@ -1,0 +1,20 @@
+################################
+## NGINX ConfigMap
+#################################
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: {{ template "nginx.fullname" . }}-ingress-controller-headers
+  labels:
+    tier: {{ template "nginx.name" . }}
+    chart: {{ template "nginx.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+data:
+  # Policy was generated using https://report-uri.com/home/generate
+  Content-Security-Policy: "default-src 'self' *.{{ .Values.global.baseDomain }}; script-src 'unsafe-inline' *.{{ .Values.global.baseDomain }} cdn.astronomer.io cdn.metarouter.io www.google-analytics.com; img-src 'self' data: *; connect-src *.{{ .Values.global.baseDomain }} e.metarouter.io"
+  Referrer-Policy: "no-referrer"
+  X-Frame-Options: "deny"
+  X-XSS-Protection: "1; mode=block"
+  X-Content-Type-Options: "nosniff"
+  Feature-Policy: "autoplay 'none'; camera 'none'; encrypted-media 'none'; fullscreen 'none'; geolocation 'none'; microphone 'none'; midi 'none'; payment 'none'; vr 'none'"
