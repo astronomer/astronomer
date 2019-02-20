@@ -1,9 +1,16 @@
 ################################
 ## Airflow Scheduler Deployment/StatefulSet
 #################################
+
+# Are we using a local/sequenial executor?
 {{- $local := or (eq .Values.executor "LocalExecutor") (eq .Values.executor "SequentialExecutor") }}
+# Is persistence enabled on the _workers_?
+# This is important because in $local mode, the scheduler assumes the role of the worker
 {{- $persistence := .Values.workers.persistence.enabled }}
-kind: {{ if $local }}StatefulSet{{ else }}Deployment{{ end }}
+# If we're using a StatefulSet
+{{- $stateful := and $local $persistence }}
+
+kind: {{ if $stateful }}StatefulSet{{ else }}Deployment{{ end }}
 apiVersion: apps/v1
 metadata:
   name: {{ .Release.Name }}-scheduler
@@ -15,9 +22,8 @@ metadata:
     workspace: {{ .Values.platform.workspace | quote }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
-    local: {{ $local | quote }}
 spec:
-{{- if $local }}
+{{- if $stateful }}
   serviceName: {{ .Release.Name }}-scheduler
 {{- end }}
   replicas: 1
@@ -28,7 +34,6 @@ spec:
       release: {{ .Release.Name }}
       platform: {{ .Values.platform.release }}
       workspace: {{ .Values.platform.workspace | quote }}
-      local: {{ $local | quote }}
   template:
     metadata:
       labels:
@@ -37,19 +42,13 @@ spec:
         release: {{ .Release.Name }}
         platform: {{ .Values.platform.release }}
         workspace: {{ .Values.platform.workspace | quote }}
-        local: {{ $local | quote }}
       annotations:
         checksum/metadata-secret: {{ include (print $.Template.BasePath "/secrets/metadata-connection-secret.yaml") . | sha256sum }}
         checksum/result-backend-secret: {{ include (print $.Template.BasePath "/secrets/result-backend-connection-secret.yaml") . | sha256sum }}
         checksum/pgbouncer-config-secret: {{ include (print $.Template.BasePath "/secrets/pgbouncer-config-secret.yaml") . | sha256sum }}
     spec:
       restartPolicy: Always
-    {{- if $local }}
-      # terminationGracePeriodSeconds: {{ .Values.workers.terminationGracePeriodSeconds }}
-      # Airflow scheduler with LocalExecutor doesn't handle SIGINT well. Hard-coding low
-      # number for now.
-      terminationGracePeriodSeconds: 10
-    {{- end }}
+      terminationGracePeriodSeconds: {{ if $local }}10{{ else }}{{ .Values.workers.terminationGracePeriodSeconds }}{{ end }}
       serviceAccountName: {{ .Release.Name }}-scheduler-serviceaccount
       securityContext:
         runAsUser: {{ .Values.uid }}
@@ -63,17 +62,16 @@ spec:
           image: {{ template "airflow_image" . }}
           imagePullPolicy: {{ .Values.images.airflow.pullPolicy }}
           args: ["airflow", "scheduler"]
-          resources:
-{{ toYaml .Values.scheduler.resources | indent 12 }}
-        {{- if $local }}
-          volumeMounts:
-            - name: logs
-              mountPath: {{ template "airflow_logs" . }}
-        {{- end }}
           env:
           {{- include "custom_airflow_environment" . | indent 10 }}
           {{- include "standard_airflow_environment" . | indent 10 }}
-      {{- if $local }}
+          resources:
+{{ toYaml .Values.scheduler.resources | indent 12 }}
+{{- if $local }}
+          volumeMounts:
+            - name: logs
+              mountPath: {{ template "airflow_logs" . }}
+
         - name: {{ .Release.Name }}-scheduler-logs
           image: {{ template "airflow_image" . }}
           args: ["airflow", "serve_logs"]
@@ -86,18 +84,20 @@ spec:
           env:
           {{- include "custom_airflow_environment" . | indent 10 }}
           {{- include "standard_airflow_environment" . | indent 10 }}
-        {{- if $persistence }}
+
         - name: {{ .Release.Name }}-worker-gc
           image: {{ template "airflow_image" . }}
           args: ["crond", "-f", "-d", "0"]
-        {{- end }}
-      {{- end }}
-{{- if not $local }}
+          volumeMounts:
+            - name: logs
+              mountPath: {{ template "airflow_logs" . }}
+{{- end }}
+{{- if not $stateful }}
       volumes:
         - name: logs
           emptyDir: {}
           sizeLimit: {{ .Values.workers.persistence.size }}
-{{- else if $persistence }}
+{{- else }}
   volumeClaimTemplates:
     - metadata:
         name: logs
