@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM astronomerinc/ap-airflow:0.8.0-alpha.4-1.10.2
+FROM astronomerinc/ap-airflow:0.8.0-alpha.5-1.10.2
 LABEL maintainer="Astronomer <humans@astronomer.io>"
 
 ARG BUILD_NUMBER=-1
