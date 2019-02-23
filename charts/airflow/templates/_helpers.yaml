@@ -55,23 +55,21 @@
         key: connection
   {{- end }}
   {{- if or .Values.elasticsearch.connection .Values.elasticsearch.secretName }}
+  - name: AIRFLOW__CORE__REMOTE_LOGGING
+    value: "True"
+  - name: AIRFLOW__ELASTICSEARCH__ELASTICSEARCH_WRITE_STDOUT
+    value: "True"
+  - name: AIRFLOW__ELASTICSEARCH__ELASTICSEARCH_JSON_FORMAT
+    value: "True"
+  - name: AIRFLOW__ELASTICSEARCH__ELASTICSEARCH_RECORD_LABELS
+    value: "asctime, levelname, filename, lineno, message"
+  - name: AIRFLOW__ELASTICSEARCH__ELASTICSEARCH_LOG_ID_TEMPLATE
+    value: "{dag_id}_{task_id}_{execution_date}_{try_number}"
   - name: AIRFLOW__ELASTICSEARCH__ELASTICSEARCH_HOST
     valueFrom:
       secretKeyRef:
         name: {{ template "elasticsearch_secret" . }}
         key: connection
-  - name: AIRFLOW__CORE__REMOTE_LOGGING
-    value: "True"
-  # - name: AIRFLOW__CORE__TASK_LOG_READER
-  #   value: "elasticsearch"
-  - name: AIRFLOW__ELASTICSEARCH__ELASTICSEARCH_WRITE_STDOUT
-    value: "True"
-  - name: AIRFLOW__ELASTICSEARCH__END_OF_LOG_MARK
-    value: "end_of_log"
-  - name: AIRFLOW__ELASTICSEARCH__ELASTICSEARCH_JSON_FORMAT
-    value: "True"
-  - name: AIRFLOW__ELASTICSEARCH__ELASTICSEARCH_RECORD_LABELS
-    value: "asctime, levelname, filename, lineno, message"
   {{- end }}
 {{- end }}
 
