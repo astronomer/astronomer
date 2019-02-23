@@ -24,8 +24,8 @@ LABEL io.astronomer.docker.component="airflow"
 LABEL io.astronomer.docker.airflow.version="1.10.2"
 
 ARG ORG="astronomer"
-ARG VERSION="v1-10-2-mods"
-ARG SUBMODULES="all, statsd"
+ARG VERSION="feature/es-logging"
+ARG SUBMODULES="all, statsd, elasticsearch"
 
 ENV AIRFLOW_REPOSITORY="https://github.com/${ORG}/airflow"
 ENV AIRFLOW_MODULE="git+${AIRFLOW_REPOSITORY}@${VERSION}#egg=apache-airflow[${SUBMODULES}]"
