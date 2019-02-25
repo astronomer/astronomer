@@ -68,12 +68,11 @@ RUN apk update \
 		python3 \
 		tini \
 	&& update-ca-certificates \
-	&& pip3 install --no-cache-dir --upgrade pip==19.0.1 \
+	&& pip3 install --no-cache-dir --upgrade pip==19.0.3 \
 	&& pip3 install --no-cache-dir --upgrade setuptools==39.0.1 \
 	&& pip3 install --no-cache-dir cython \
 	&& pip3 install --no-cache-dir numpy \
 	&& pip3 install --no-cache-dir --no-use-pep517 "${AIRFLOW_MODULE}" \
-	&& pip3 install --no-cache-dir flask-appbuilder==1.11.1 \
 	&& pip3 install --no-cache-dir "redis>=2.10.5,<3" \
 	&& apk del .build-deps \
 	&& ln -sf /usr/bin/python3 /usr/bin/python \
