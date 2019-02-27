@@ -61,8 +61,6 @@
     value: "True"
   - name: AIRFLOW__ELASTICSEARCH__ELASTICSEARCH_JSON_FORMAT
     value: "True"
-  - name: AIRFLOW__ELASTICSEARCH__ELASTICSEARCH_RECORD_LABELS
-    value: "asctime, levelname, filename, lineno, message"
   - name: AIRFLOW__ELASTICSEARCH__ELASTICSEARCH_LOG_ID_TEMPLATE
     value: "{dag_id}_{task_id}_{execution_date}_{try_number}"
   - name: AIRFLOW__ELASTICSEARCH__ELASTICSEARCH_HOST
