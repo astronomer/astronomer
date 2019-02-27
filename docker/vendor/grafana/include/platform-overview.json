@@ -127,7 +127,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "kubelet_volume_stats_capacity_bytes{persistentvolumeclaim=~\"data-.*-prometheus-.*\"}",
+          "expr": "sum(kubelet_volume_stats_capacity_bytes{persistentvolumeclaim=~\"data-.*-prometheus-.*\"})",
           "format": "time_series",
           "instant": true,
           "intervalFactor": 1,
@@ -208,7 +208,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "kubelet_volume_stats_capacity_bytes{persistentvolumeclaim=~\"data-.*-registry-.*\"}",
+          "expr": "sum(kubelet_volume_stats_capacity_bytes{persistentvolumeclaim=~\"data-.*-registry-.*\"})",
           "format": "time_series",
           "instant": true,
           "intervalFactor": 1,
@@ -370,7 +370,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "kubelet_volume_stats_available_bytes{persistentvolumeclaim=~\"data-.*-prometheus-.*\"} / kubelet_volume_stats_capacity_bytes{persistentvolumeclaim=~\"data-.*-prometheus-.*\"} * 100",
+          "expr": "sum(kubelet_volume_stats_available_bytes{persistentvolumeclaim=~\"data-.*-prometheus-.*\"}) / sum(kubelet_volume_stats_capacity_bytes{persistentvolumeclaim=~\"data-.*-prometheus-.*\"}) * 100",
           "format": "time_series",
           "instant": true,
           "intervalFactor": 1,
@@ -451,7 +451,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "kubelet_volume_stats_available_bytes{persistentvolumeclaim=~\"data-.*-registry-.*\"} / kubelet_volume_stats_capacity_bytes{persistentvolumeclaim=~\"data-.*-registry-.*\"} * 100",
+          "expr": "sum(kubelet_volume_stats_available_bytes{persistentvolumeclaim=~\"data-.*-registry-.*\"}) / sum(kubelet_volume_stats_capacity_bytes{persistentvolumeclaim=~\"data-.*-registry-.*\"}) * 100",
           "format": "time_series",
           "instant": true,
           "intervalFactor": 1,
@@ -704,12 +704,11 @@
       ],
       "title": "Alerts",
       "transform": "table",
-      "transparent": false,
       "type": "table"
     }
   ],
   "refresh": "10s",
-  "schemaVersion": 16,
+  "schemaVersion": 18,
   "style": "dark",
   "tags": [
     "platform"
