@@ -1,17 +1,17 @@
 ################################
-## Astronomer Commander RoleBinding
+## Astronomer Commander ClusterRoleBinding
 #################################
-{{- if .Values.global.rbacEnabled }}
-apiVersion: rbac.authorization.k8s.io/v1beta1
-kind: ClusterRoleBinding
-metadata:
-  name: {{ .Release.Name }}-commander-tiller
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: cluster-admin
-subjects:
-  - kind: ServiceAccount
-    name: {{ .Release.Name }}-commander
-    namespace: {{ .Release.Namespace }}
-{{- end }}
+# {{- if not (and .Values.global.rbacEnabled .Values.global.singleNamespace) }}
+# apiVersion: rbac.authorization.k8s.io/v1beta1
+# kind: ClusterRoleBinding
+# metadata:
+#   name: {{ .Release.Name }}-commander-rolebinding
+# roleRef:
+#   apiGroup: rbac.authorization.k8s.io
+#   kind: ClusterRole
+#   name: cluster-admin
+# subjects:
+#   - kind: ServiceAccount
+#     name: {{ .Release.Name }}-commander
+#     namespace: {{ .Release.Namespace }}
+# {{- end }}

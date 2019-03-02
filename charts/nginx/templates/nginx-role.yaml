@@ -1,11 +1,12 @@
 ################################
-## NGINX Role
+## NGINX Role/ClusterRole
 #################################
+{{- $singleNamespace := .Values.global.singleNamespace }}
 {{- if .Values.global.rbacEnabled }}
-kind: Role
+kind: {{ if $singleNamespace }}Role{{ else }}ClusterRole{{ end }}
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: {{ template "nginx.fullname" . }}-ingress-controller
+  name: {{ template "nginx.fullname" . }}
   labels:
     tier: {{ template "nginx.name" . }}
     chart: {{ template "nginx.chart" . }}
@@ -16,32 +17,47 @@ rules:
       - ""
     resources:
       - configmaps
-      - namespaces
+      - endpoints
+      - nodes
       - pods
       - secrets
     verbs:
+      - list
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - nodes
+    verbs:
       - get
   - apiGroups:
       - ""
     resources:
-      - configmaps
-    resourceNames:
-      - ingress-controller-leader-{{ template "nginx.fullname" . }}
+      - services
     verbs:
       - get
+      - list
       - update
+      - watch
   - apiGroups:
-      - ""
+      - extensions
     resources:
-      - configmaps
-    verbs:
-      - create
-  - apiGroups:
-      - ""
-    resources:
-      - endpoints
+      - ingresses
     verbs:
       - get
+      - list
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
       - create
+      - patch
+  - apiGroups:
+      - extensions
+    resources:
+      - ingresses/status
+    verbs:
       - update
 {{- end }}

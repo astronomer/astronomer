@@ -1,8 +1,9 @@
 ################################
 ## Prometheus ClusterRole
 #################################
+{{- $singleNamespace := .Values.global.singleNamespace }}
 {{- if .Values.global.rbacEnabled }}
-kind: ClusterRole
+kind: {{ if $singleNamespace }}Role{{ else }}ClusterRole{{ end }}
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: {{ template "prometheus.fullname" . }}
@@ -25,8 +26,10 @@ rules:
       - "get"
       - "list"
       - "watch"
+  {{- if not .Values.global.singleNamespace }}
   - nonResourceURLs:
       - "/metrics"
     verbs:
       - "get"
+  {{- end }}
 {{- end }}

@@ -29,6 +29,10 @@ spec:
       serviceAccountName: {{ template "kube-state.fullname" . }}
       containers:
       - name: {{ template "kube-state.fullname" . }}
+      {{- if .Values.global.singleNamespace }}
+        args:
+          - --namespace={{ .Release.Namespace }}
+      {{- end }}
         image: {{ include "kube-state.image" . }}
         imagePullPolicy: {{ .Values.images.kubeState.pullPolicy }}
         ports:

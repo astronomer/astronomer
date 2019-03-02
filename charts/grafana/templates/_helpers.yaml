@@ -39,5 +39,5 @@ grafana.{{ .Values.global.baseDomain }}
 {{- end }}
 
 {{ define "grafana.bootstrapper.serviceaccount" -}}
-{{ printf "%s-grafana-bootstrapper-serviceaccount" .Release.Name }}
+{{ printf "%s-grafana-bootstrapper" .Release.Name }}
 {{- end }}

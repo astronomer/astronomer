@@ -1,11 +1,11 @@
 ################################
-## NGINX Cluster Role
+## NGINX Config Role
 #################################
 {{- if .Values.global.rbacEnabled }}
-kind: ClusterRole
+kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: {{ template "nginx.fullname" . }}-ingress-controller
+  name: {{ template "nginx.fullname" . }}-config
   labels:
     tier: {{ template "nginx.name" . }}
     chart: {{ template "nginx.chart" . }}
@@ -16,47 +16,32 @@ rules:
       - ""
     resources:
       - configmaps
-      - endpoints
-      - nodes
+      - namespaces
       - pods
       - secrets
     verbs:
-      - list
-      - watch
-  - apiGroups:
-      - ""
-    resources:
-      - nodes
-    verbs:
       - get
   - apiGroups:
       - ""
     resources:
-      - services
+      - configmaps
+    resourceNames:
+      - ingress-controller-leader-{{ template "nginx.fullname" . }}
     verbs:
       - get
-      - list
       - update
-      - watch
-  - apiGroups:
-      - extensions
-    resources:
-      - ingresses
-    verbs:
-      - get
-      - list
-      - watch
   - apiGroups:
       - ""
     resources:
-      - events
+      - configmaps
     verbs:
       - create
-      - patch
   - apiGroups:
-      - extensions
+      - ""
     resources:
-      - ingresses/status
+      - endpoints
     verbs:
+      - get
+      - create
       - update
 {{- end }}

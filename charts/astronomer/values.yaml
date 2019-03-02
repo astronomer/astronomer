@@ -70,22 +70,9 @@ houston:
   #   cpu: 100m
   #   memory: 128Mi
 
-  config:
-    email:
-      smtpUrl: ~
-
-    auth:
-      local:
-        enabled: true
-      google:
-        enabled: true
-        clientId: ~
-      github:
-        enabled: true
-      auth0:
-        enabled: false
-        clientId: "rH2L4yKctlepniTyJW3MkuXuTreOHHn1"
-        baseDomain: "astronomerio.auth0.com"
+  # Any Houston configuration. Reference here:
+  # https://github.com/astronomer/houston-api/blob/master/config/default.yaml
+  config: {}
 
 prisma:
   env: {}

@@ -1,24 +1,46 @@
 dependencies:
   # Platform components
   - name: astronomer
-    condition: global.astronomer.enabled
+    condition: global.astronomerEnabled
+    tags:
+      - platform
   - name: nginx
-    condition: global.nginx.enabled
+    condition: global.nginxEnabled
+    tags:
+      - platform
+
+  # Monitoring stack
   - name: grafana
-    condition: global.grafana.enabled
+    condition: global.grafanaEnabled
+    tags:
+      - monitoring
   - name: prometheus
-    condition: global.prometheus.enabled
+    condition: global.prometheusEnabled
+    tags:
+      - monitoring
   - name: alertmanager
-    condition: global.alertmanager.enabled
-  - name: elasticsearch
-    condition: global.elasticsearch.enabled
-  - name: kibana
-    condition: global.kibana.enabled
-  - name: fluentd
-    condition: global.fluentd.enabled
+    condition: global.alertmanagerEnabled
+    tags:
+      - monitoring
   - name: kube-state
-    condition: global.kubeState.enabled
+    condition: global.kubeStateEnabled
+    tags:
+      - monitoring
+
+  # Logging stack
+  - name: elasticsearch
+    condition: global.elasticsearchEnabled
+    tags:
+      - logging
+  - name: kibana
+    condition: global.kibanaEnabled
+    tags:
+      - logging
+  - name: fluentd
+    condition: global.fluentdEnabled
+    tags:
+      - logging
 
   # Airflow chart is deployed by the platform
   - name: airflow
-    condition: global.airflow.enabled
+    condition: global.airflowEnabled

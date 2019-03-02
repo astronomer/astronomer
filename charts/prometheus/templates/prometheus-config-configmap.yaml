@@ -22,6 +22,9 @@ data:
       alertmanagers:
         - kubernetes_sd_configs:
             - role: pod
+              namespaces:
+                names:
+                  - {{ .Release.Namespace }}
           tls_config:
             ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
           bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
@@ -126,11 +129,21 @@ data:
           # Only keep metrics that start with platforms namespace (includes airflow children)
           - action: keep
             source_labels: [namespace]
-            regex: "^{{ .Release.Namespace }}-.*"
-          - source_labels: [namespace]
-            regex: "^.*-(.*-.*-[0-9]{4})$"
+            regex: "^{{ .Release.Namespace }}.*"
+          - source_labels: [deployment]
+            regex: "^(.*-.*-[0-9]{4})-.*"
             replacement: "$1"
-            target_label: release # Use release here since deployment conflicts with metric labels
+            target_label: release
+          # Required for multi-namespace mode
+          - source_labels: [namespace]
+            regex: "^{{ .Release.Namespace }}-(.*-.*-[0-9]{4})$"
+            replacement: "$1"
+            target_label: release
+          # Required for single-namespace mode
+          - source_labels: [pod]
+            regex: "^(.*-.*-[0-9]{4})-.*"
+            replacement: "$1"
+            target_label: release
 
       - job_name: fluentd
         kubernetes_sd_configs:
@@ -154,6 +167,11 @@ data:
       - job_name: airflow
         kubernetes_sd_configs:
           - role: service
+          {{- if .Values.global.singleNamespace }}
+            namespaces:
+              names:
+                - {{ .Release.Namespace }}
+          {{- end }}
         relabel_configs:
           - source_labels: [__meta_kubernetes_service_annotation_astronomer_io_platform_release]
             action: keep
@@ -172,6 +190,7 @@ data:
             replacement: "$1"
             target_label: deployment
 
+      {{- if not .Values.global.singleNamespace }}
       - job_name: kubernetes-nodes
         scheme: https
         tls_config:
@@ -231,15 +250,15 @@ data:
           - regex: "^(id|name)"
             action: labeldrop
 
-            # Add deployment name
-          - source_labels: [namespace]
-            regex: "^.*-(.*-.*-[0-9]{4})$"
+            # Add deployment name via container_name
+          - source_labels: [container_name]
+            regex: "^(.*-.*-[0-9]{4})-.*"
             replacement: "$1"
             target_label: deployment
 
             # This will patch up most metrics
           - source_labels: [container_name]
-            regex: "^(.*)-(.*)$"
+            regex: "^(.*-.*-[0-9]{4})-(.*)$"
             replacement: "$1 $2"
             target_label: component_name
 
@@ -250,6 +269,11 @@ data:
 
             # Network level metrics are exposed at the POD level
             # Deployment (others) format
+          - source_labels: [__name__, container_name, pod_name]
+            regex: "container_network_.*;(.*)-(.*)-([0-9a-z]{5,10}-[0-9a-z]{5})$"
+            replacement: "$1"
+            target_label: deployment
+
           - source_labels: [__name__, container_name, pod_name]
             regex: "container_network_.*;(.*)-(.*)-([0-9a-z]{5,10}-[0-9a-z]{5})$"
             replacement: "$1 $2"
@@ -270,3 +294,4 @@ data:
             regex: "^container_network_.*;(.*)-(.*)-([0-9]+)$"
             replacement: "$3"
             target_label: component_instance
+      {{- end }}

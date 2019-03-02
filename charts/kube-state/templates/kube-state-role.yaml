@@ -1,11 +1,18 @@
 ################################
-## Kube State ClusterRole
+## Kube State Role/ClusterRole
 #################################
+{{- $singleNamespace := .Values.global.singleNamespace }}
+{{- if .Values.global.rbacEnabled }}
 apiVersion: rbac.authorization.k8s.io/v1
-# kubernetes versions before 1.8.0 should use rbac.authorization.k8s.io/v1beta1
-kind: ClusterRole
+kind: {{ if $singleNamespace }}Role{{ else }}ClusterRole{{ end }}
 metadata:
   name: {{ template "kube-state.fullname" . }}
+  labels:
+    tier: monitoring
+    component: {{ template "kube-state.name" . }}
+    chart: {{ template "kube-state.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
 rules:
 - apiGroups: [""]
   resources:
@@ -41,3 +48,4 @@ rules:
   resources:
   - horizontalpodautoscalers
   verbs: ["list", "watch"]
+{{- end }}

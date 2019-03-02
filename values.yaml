@@ -20,38 +20,27 @@ global:
   # Host and port of where tiller is running in Kubernetes
   helmHost: "tiller-deploy.kube-system.svc.cluster.local:44134"
 
-  # Namespace Tiller is installed on
-  tillerNamespace: "kube-system"
+  # Single namespace mode
+  singleNamespace: false
 
   # Enable/Disable components.
   # Full platform is enabled by default.
   # Airflow chart is disabled is should be deployed via the platform using the API/CLI/UI.
-  astronomer:
-    enabled: true
+  airflowEnabled: false
 
-  nginx:
-    enabled: true
 
-  grafana:
-    enabled: true
+#################################
+## Default tagged groups enabled
+#################################
+tags:
+  # Enable platform components by default (nginx, astronomer)
+  platform: true
 
-  prometheus:
-    enabled: true
+  # Enable monitoring stack (prometheus, kube-state, grafana)
+  monitoring: true
 
-  kubeState:
-    enabled: true
-
-  elasticsearch:
-    enabled: true
-
-  kibana:
-    enabled: true
-
-  fluentd:
-    enabled: true
-
-  airflow:
-    enabled: false
+  # Enable logging stack (elasticsearch, fluentd, kibana)
+  logging: true
 
 
 #################################

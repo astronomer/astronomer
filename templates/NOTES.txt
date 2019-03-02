@@ -8,9 +8,18 @@ The platform components may take a few minutes to spin up.
 
 You can access the platform at:
 
-- Astronomer dashboard:        {{ if .Values.global.astronomer.enabled}}https://app.{{ .Values.global.baseDomain }}{{ else }}Disabled{{ end }}
-- Grafana dashboard:           {{ if .Values.global.grafana.enabled }}https://grafana.{{ .Values.global.baseDomain }}{{ else }}Disabled{{ end }}
-- Kibana dashboard:            {{ if .Values.global.kibana.enabled }}https://kibana.{{ .Values.global.baseDomain }}{{ else }}Disabled{{ end }}
+{{- $astronomerEnabled := hasKey .Values.global "astronomerEnabled" | ternary .Values.global.astronomerEnabled true }}
+{{- $platformEnabled := hasKey .Values.tags "platform" | ternary .Values.tags.platform true }}
+
+{{- $grafanaEnabled := hasKey .Values.global "grafanaEnabled" | ternary .Values.global.grafanaEnabled true }}
+{{- $monitoringEnabled := hasKey .Values.tags "monitoring" | ternary .Values.tags.monitoring true }}
+
+{{- $kibanaEnabled := hasKey .Values.global "kibanaEnabled" | ternary .Values.global.kibanaEnabled true }}
+{{- $loggingEnabled := hasKey .Values.tags "logging" | ternary .Values.tags.logging true }}
+
+- Astronomer dashboard:        {{ if and $astronomerEnabled $platformEnabled }}https://app.{{ .Values.global.baseDomain }}{{ else }}Disabled{{ end }}
+- Grafana dashboard:           {{ if and $grafanaEnabled $monitoringEnabled }}https://grafana.{{ .Values.global.baseDomain }}{{ else }}Disabled{{ end }}
+- Kibana dashboard:            {{ if and $kibanaEnabled $loggingEnabled }}https://kibana.{{ .Values.global.baseDomain }}{{ else }}Disabled{{ end }}
 
 Now that you've installed the platform, you are ready to get started and create your first airflow deployment.
 

@@ -1,23 +1,18 @@
 ################################
-## NGINX RoleBinding/ClusterRoleBinding
+## Astronomer Commander RoleBinding
 #################################
 {{- $singleNamespace := .Values.global.singleNamespace }}
-{{- if .Values.global.rbacEnabled }}
+{{- if and .Values.global.rbacEnabled }}
+apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: {{ if $singleNamespace }}RoleBinding{{ else }}ClusterRoleBinding{{ end }}
-apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: {{ template "nginx.fullname" . }}
-  labels:
-    tier: {{ template "nginx.name" . }}
-    chart: {{ template "nginx.chart" . }}
-    release: {{ .Release.Name }}
-    heritage: {{ .Release.Service }}
+  name: {{ .Release.Name }}-commander
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: {{ if $singleNamespace }}Role{{ else }}ClusterRole{{ end }}
-  name: {{ template "nginx.fullname" . }}
+  name: {{ .Release.Name }}-commander
 subjects:
   - kind: ServiceAccount
-    name: {{ template "nginx.fullname" . }}
+    name: {{ .Release.Name }}-commander
     namespace: {{ .Release.Namespace }}
 {{- end }}

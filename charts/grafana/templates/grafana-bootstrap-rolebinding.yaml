@@ -5,7 +5,7 @@
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: {{ template "grafana.fullname" . }}-bootstrapper-rolebinding
+  name: {{ template "grafana.fullname" . }}-bootstrapper
   labels:
     tier: grafana
     chart: {{ template "grafana.chart" . }}
@@ -14,7 +14,7 @@ metadata:
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: {{ template "grafana.fullname" . }}-bootstrapper-role
+  name: {{ template "grafana.fullname" . }}-bootstrapper
 subjects:
   - kind: ServiceAccount
     name: {{ template "grafana.bootstrapper.serviceaccount" . }}

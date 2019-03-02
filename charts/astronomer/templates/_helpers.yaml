@@ -68,11 +68,11 @@
 {{- end }}
 
 {{ define "houston.bootstrapperServiceAccount" -}}
-{{ printf "%s-houston-bootstrapper-serviceaccount" .Release.Name }}
+{{ printf "%s-houston-bootstrapper" .Release.Name }}
 {{- end }}
 
 {{ define "prisma.bootstrapperServiceAccount" -}}
-{{ printf "%s-prisma-bootstrapper-serviceaccount" .Release.Name }}
+{{ printf "%s-prisma-bootstrapper" .Release.Name }}
 {{- end }}
 
 {{ define "prisma.endpoint" -}}

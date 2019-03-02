@@ -268,8 +268,11 @@ registry:
 
 # Elasticsearch logging configuration
 elasticsearch:
+  # Enable elasticsearch task logging
+  enabled: false
+  # A secret containing the connection
   secretName: ~
-
+  # Or an object representing the connection
   connection: {}
     # user: ~
     # pass: ~

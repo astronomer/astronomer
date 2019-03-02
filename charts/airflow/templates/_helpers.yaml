@@ -54,7 +54,7 @@
         name: {{ .Release.Name }}-broker-url
         key: connection
   {{- end }}
-  {{- if or .Values.elasticsearch.connection .Values.elasticsearch.secretName }}
+  {{- if or .Values.elasticsearch.enabled }}
   - name: AIRFLOW__CORE__REMOTE_LOGGING
     value: "True"
   - name: AIRFLOW__ELASTICSEARCH__ELASTICSEARCH_WRITE_STDOUT
