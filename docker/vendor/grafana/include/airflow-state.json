@@ -51,7 +51,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "iteration": 1539016570818,
+  "iteration": 1551321394162,
   "links": [],
   "panels": [
     {
@@ -77,7 +77,7 @@
         "#d44a3a"
       ],
       "datasource": "Prometheus",
-      "description": "Namespaces that are up and hosting an airflow deployment.",
+      "description": "Namespaces that are up and hosting an airflow deployment. This will be 0 in single namespace mode.",
       "format": "none",
       "gauge": {
         "maxValue": 100,
@@ -160,7 +160,7 @@
       ],
       "datasource": "Prometheus",
       "decimals": 0,
-      "description": "Namespaces that are in terminating state. Most likely because a deployment has been shut down.",
+      "description": "Namespaces that are in terminating state. Most likely because a deployment has been shut down. This will be 0 in single namespace mode.",
       "format": "short",
       "gauge": {
         "maxValue": 100,
@@ -295,7 +295,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(kube_deployment_status_observed_generation{deployment=~\".*-scheduler\", namespace=~\".*-.*-.*-[0-9]{4}\", release=~\"$deployment\"})",
+          "expr": "sum(kube_deployment_status_observed_generation{deployment=~\".*-scheduler\", release=~\"$deployment\"})",
           "format": "time_series",
           "intervalFactor": 1,
           "refId": "A"
@@ -376,7 +376,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(count(kube_deployment_spec_replicas{namespace=~\".*-.*-.*-[0-9]{4}\", release=~\"$deployment\"}))",
+          "expr": "sum(count(kube_deployment_spec_replicas{release=~\"$deployment\"}))",
           "format": "time_series",
           "instant": true,
           "intervalFactor": 1,
@@ -385,7 +385,6 @@
       ],
       "thresholds": "",
       "title": "Active Deployments",
-      "transparent": false,
       "type": "singlestat",
       "valueFontSize": "70%",
       "valueMaps": [
@@ -459,7 +458,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(count(kube_statefulset_status_replicas{namespace=~\".*-.*-.*-[0-9]{4}\", release=~\"[[deployment]]\"}))",
+          "expr": "sum(count(kube_statefulset_status_replicas{release=~\"[[deployment]]\"}))",
           "format": "time_series",
           "instant": true,
           "intervalFactor": 1,
@@ -509,6 +508,7 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
+      "paceLength": 10,
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -519,7 +519,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(kube_pod_status_phase{namespace=~\".*-.*-.*-[0-9]{4}\", release=~\"$deployment\", phase=\"Running\"})",
+          "expr": "sum(kube_pod_status_phase{release=~\"$deployment\", phase=\"Running\"})",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "pods",
@@ -528,6 +528,7 @@
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Running Pods",
       "tooltip": {
@@ -585,7 +586,7 @@
         "minValue": 0,
         "show": true,
         "thresholdLabels": false,
-        "thresholdMarkers": true
+        "thresholdMarkers": false
       },
       "gridPos": {
         "h": 5,
@@ -630,7 +631,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(kube_pod_status_scheduled{condition=\"true\", namespace=~\".*-.*-.*-[0-9]{4}\", release=~\"$deployment\"})\n/\nsum(kube_pod_status_ready{condition=\"true\", namespace=~\".*-.*-.*-[0-9]{4}\", release=~\"$deployment\"})*100",
+          "expr": "sum(kube_pod_status_scheduled{condition=\"true\", release=~\"$deployment\"})\n/\nsum(kube_pod_status_ready{condition=\"true\", release=~\"$deployment\"})*100",
           "format": "time_series",
           "intervalFactor": 1,
           "refId": "A"
@@ -680,6 +681,7 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
+      "paceLength": 10,
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -690,7 +692,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(kube_pod_container_status_running{namespace=~\".*-.*-.*-[0-9]{4}\", release=~\"$deployment\"})",
+          "expr": "sum(kube_pod_container_status_running{release=~\"$deployment\"})",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "containers",
@@ -699,6 +701,7 @@
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Running Containers",
       "tooltip": {
@@ -814,7 +817,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(kube_resourcequota{resource=\"requests.cpu\", type=\"hard\", namespace=~\".*-.*-.*-[0-9]{4}\", release=~\"$deployment\"})",
+          "expr": "sum(kube_resourcequota{resource=\"requests.cpu\", type=\"hard\", release=~\"$deployment\"})",
           "format": "time_series",
           "intervalFactor": 1,
           "refId": "A"
@@ -895,7 +898,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(kube_resourcequota{resource=\"limits.cpu\", type=\"hard\", namespace=~\".*-.*-.*-[0-9]{4}\", release=~\"$deployment\"})",
+          "expr": "sum(kube_resourcequota{resource=\"limits.cpu\", type=\"hard\", release=~\"$deployment\"})",
           "format": "time_series",
           "intervalFactor": 1,
           "refId": "A"
@@ -976,7 +979,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(kube_resourcequota{resource=\"pods\", type=\"hard\", namespace=~\".*-.*-.*-[0-9]{4}\", release=~\"$deployment\"})",
+          "expr": "sum(kube_resourcequota{resource=\"pods\", type=\"hard\", release=~\"$deployment\"})",
           "format": "time_series",
           "intervalFactor": 1,
           "refId": "A"
@@ -1057,7 +1060,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(kube_resourcequota{resource=\"requests.memory\", type=\"hard\", namespace=~\".*-.*-.*-[0-9]{4}\", release=~\"$deployment\"})",
+          "expr": "sum(kube_resourcequota{resource=\"requests.memory\", type=\"hard\", release=~\"$deployment\"})",
           "format": "time_series",
           "intervalFactor": 1,
           "refId": "A"
@@ -1138,7 +1141,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(kube_resourcequota{resource=\"limits.memory\", type=\"hard\", namespace=~\".*-.*-.*-[0-9]{4}\", release=~\"$deployment\"})",
+          "expr": "sum(kube_resourcequota{resource=\"limits.memory\", type=\"hard\", release=~\"$deployment\"})",
           "format": "time_series",
           "intervalFactor": 1,
           "refId": "A"
@@ -1220,14 +1223,14 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(kube_resourcequota{resource=\"requests.cpu\", type=\"used\", namespace=~\".*-.*-.*-[0-9]{4}\", release=~\"$deployment\"})\n/\nsum(kube_resourcequota{resource=\"requests.cpu\", type=\"hard\", namespace=~\".*-.*-.*-[0-9]{4}\", release=~\"$deployment\"})*100",
+          "expr": "sum(kube_resourcequota{resource=\"requests.cpu\", type=\"used\", release=~\"$deployment\"})\n/\nsum(kube_resourcequota{resource=\"requests.cpu\", type=\"hard\", release=~\"$deployment\"})*100",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "",
           "refId": "A"
         }
       ],
-      "thresholds": "50,80",
+      "thresholds": "51,80",
       "title": "CPU Requests",
       "type": "singlestat",
       "valueFontSize": "80%",
@@ -1303,13 +1306,13 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(kube_resourcequota{resource=\"limits.cpu\", type=\"used\", namespace=~\".*-.*-.*-[0-9]{4}\", release=~\"$deployment\"})\n/\nsum(kube_resourcequota{resource=\"limits.cpu\", type=\"hard\", namespace=~\".*-.*-.*-[0-9]{4}\", release=~\"$deployment\"})*100",
+          "expr": "sum(kube_resourcequota{resource=\"limits.cpu\", type=\"used\", release=~\"$deployment\"})\n/\nsum(kube_resourcequota{resource=\"limits.cpu\", type=\"hard\", release=~\"$deployment\"})*100",
           "format": "time_series",
           "intervalFactor": 1,
           "refId": "A"
         }
       ],
-      "thresholds": "50,80",
+      "thresholds": "51,80",
       "title": "CPU Limits",
       "type": "singlestat",
       "valueFontSize": "80%",
@@ -1385,14 +1388,14 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(kube_resourcequota{resource=\"pods\", type=\"used\", namespace=~\".*-.*-.*-[0-9]{4}\", release=~\"$deployment\"})\n/\nsum(kube_resourcequota{resource=\"pods\", type=\"hard\", namespace=~\".*-.*-.*-[0-9]{4}\", release=~\"$deployment\"})*100",
+          "expr": "sum(kube_resourcequota{resource=\"pods\", type=\"used\", release=~\"$deployment\"})\n/\nsum(kube_resourcequota{resource=\"pods\", type=\"hard\", release=~\"$deployment\"})*100",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "",
           "refId": "A"
         }
       ],
-      "thresholds": "50,80",
+      "thresholds": "51,80",
       "title": "Running Pods",
       "type": "singlestat",
       "valueFontSize": "80%",
@@ -1468,13 +1471,13 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(kube_resourcequota{resource=\"requests.memory\", type=\"used\", namespace=~\".*-.*-.*-[0-9]{4}\", release=~\"$deployment\"})\n/\nsum(kube_resourcequota{resource=\"requests.memory\", type=\"hard\", namespace=~\".*-.*-.*-[0-9]{4}\", release=~\"$deployment\"})*100",
+          "expr": "sum(kube_resourcequota{resource=\"requests.memory\", type=\"used\", release=~\"$deployment\"})\n/\nsum(kube_resourcequota{resource=\"requests.memory\", type=\"hard\", release=~\"$deployment\"})*100",
           "format": "time_series",
           "intervalFactor": 1,
           "refId": "A"
         }
       ],
-      "thresholds": "50,80",
+      "thresholds": "51,80",
       "title": "Memory Requests",
       "type": "singlestat",
       "valueFontSize": "80%",
@@ -1550,13 +1553,13 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(kube_resourcequota{resource=\"limits.memory\", type=\"used\", namespace=~\".*-.*-.*-[0-9]{4}\", release=~\"$deployment\"})\n/\nsum(kube_resourcequota{resource=\"limits.memory\", type=\"hard\", namespace=~\".*-.*-.*-[0-9]{4}\", release=~\"$deployment\"})*100",
+          "expr": "sum(kube_resourcequota{resource=\"limits.memory\", type=\"used\", release=~\"$deployment\"})\n/\nsum(kube_resourcequota{resource=\"limits.memory\", type=\"hard\", release=~\"$deployment\"})*100",
           "format": "time_series",
           "intervalFactor": 1,
           "refId": "A"
         }
       ],
-      "thresholds": "50,80",
+      "thresholds": "51,80",
       "title": "Memory Limits",
       "type": "singlestat",
       "valueFontSize": "80%",
@@ -1667,7 +1670,7 @@
           "unit": "short"
         },
         {
-          "alias": "Deployment",
+          "alias": "Release",
           "colorMode": null,
           "colors": [
             "rgba(245, 54, 54, 0.9)",
@@ -1677,15 +1680,16 @@
           "dateFormat": "YYYY-MM-DD HH:mm:ss",
           "decimals": 2,
           "mappingType": 1,
-          "pattern": "deployment",
+          "pattern": "release",
+          "preserveFormat": false,
           "thresholds": [],
-          "type": "number",
+          "type": "string",
           "unit": "short"
         }
       ],
       "targets": [
         {
-          "expr": "sort(\n  sum by (release) (\n    sum by (release) (\n      kube_pod_container_status_running{namespace=~\".*-.*-.*-[0-9]{4}\", release=~\"$deployment\"}\n    ) - \n    count by (release) (\n      kube_pod_container_status_running{namespace=~\".*-.*-.*-[0-9]{4}\", release=~\"$deployment\"}\n    )\n  )\n)",
+          "expr": "sort(\n  sum by (release) (\n    sum by (release) (\n      kube_pod_container_status_running{release=~\"$deployment\"}\n    ) - \n    count by (release) (\n      kube_pod_container_status_running{release=~\"$deployment\"}\n    )\n  )\n)",
           "format": "table",
           "instant": true,
           "intervalFactor": 1,
@@ -1828,7 +1832,7 @@
       ],
       "targets": [
         {
-          "expr": "sort_desc(max by (container, pod, reason) (\n  max by (container, pod) (\n    sort_desc(kube_pod_container_status_waiting{namespace=~\".*-.*-.*-[0-9]{4}\", release=~\"$deployment\"})\n  ) or\n  max by (container, reason) (\n    sort_desc(kube_pod_container_status_waiting_reason{namespace=~\".*-.*-.*-[0-9]{4}\", release=~\"$deployment\"}==1)\n  ) or\n  max by (container, reason) (\n    sort_desc(kube_pod_container_status_terminated_reason{namespace=~\".*-.*-.*-[0-9]{4}\", release=~\"$deployment\"}==1)\n  )\n))\n",
+          "expr": "sort_desc(max by (container, pod, reason) (\n  max by (container, pod) (\n    sort_desc(kube_pod_container_status_waiting{release=~\"$deployment\"})\n  ) or\n  max by (container, reason) (\n    sort_desc(kube_pod_container_status_waiting_reason{release=~\"$deployment\"}==1)\n  ) or\n  max by (container, reason) (\n    sort_desc(kube_pod_container_status_terminated_reason{release=~\"$deployment\"}==1)\n  )\n))\n",
           "format": "table",
           "instant": true,
           "intervalFactor": 1,
@@ -1841,7 +1845,7 @@
     }
   ],
   "refresh": "10s",
-  "schemaVersion": 16,
+  "schemaVersion": 18,
   "style": "dark",
   "tags": [
     "airflow"
@@ -1857,6 +1861,7 @@
           ]
         },
         "datasource": "Prometheus",
+        "definition": "",
         "hide": 0,
         "includeAll": true,
         "label": "Deployment",
@@ -1866,6 +1871,7 @@
         "query": "label_values(kube_pod_info, release)",
         "refresh": 1,
         "regex": "",
+        "skipUrlSync": false,
         "sort": 1,
         "tagValuesQuery": "",
         "tags": [],
