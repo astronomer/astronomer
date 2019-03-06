@@ -3,17 +3,17 @@
 All notable changes to this project will be documented in this file.
 
 ## [0.8.0] - 2019-03-06
-* Replace Houston1 with Houston2, with logs of new configuration available
-* Add Prisma as backend on top of Postgres
-* Adds Elasticsearch, Fluentd and Kibana (EFK) to base platform
-* Implemented elasticsearch task handler
-* Streaming webserver/scheduler/worker logs from API, available in the UI
-* Default deployments are now Deployments and not StatefulSets, meaning faster deploys
-* Upgraded Grafana
-* Grafana dashboard improvements
-* Security patches for NGINX ingress
-* Single namespace mode
-* Airflow 1.10.2
+* Replace Houston1 with Houston2, with lots of new configuration available.
+* Add Prisma as backend on top of Postgres.
+* Adds Elasticsearch, Fluentd and Kibana (EFK) to base platform.
+* Implemented elasticsearch task handler in Airflow.
+* Streaming webserver/scheduler/worker logs from API, available in the UI.
+* Default deployments are now Deployments and not StatefulSets, meaning faster deploys.
+* Upgraded Grafana.
+* Grafana dashboard improvements.
+* Security patches for NGINX ingress.
+* Single namespace mode.
+* Airflow 1.10.2.
 
 ## [0.7.5] - 2018-12-13
 * Support upgrades from 0.5.x charts.
