@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## [0.8.0] - 2019-03-06
 * Replace Houston1 with Houston2, with logs of new configuration available
+* Add Prisma as backend on top of Postgres
 * Adds Elasticsearch, Fluentd and Kibana (EFK) to base platform
 * Implemented elasticsearch task handler
 * Streaming webserver/scheduler/worker logs from API, available in the UI
