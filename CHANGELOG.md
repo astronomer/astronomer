@@ -8,7 +8,7 @@ All notable changes to this project will be documented in this file.
 * Adds Elasticsearch, Fluentd and Kibana (EFK) to base platform.
 * Implemented elasticsearch task handler in Airflow.
 * Streaming webserver/scheduler/worker logs from API, available in the UI.
-* Default deployments are now Deployments and not StatefulSets, meaning faster deploys.
+* Default deployments are now Deployments and not StatefulSets, meaning faster code deploys.
 * Upgraded Grafana.
 * Grafana dashboard improvements.
 * Security patches for NGINX ingress.
