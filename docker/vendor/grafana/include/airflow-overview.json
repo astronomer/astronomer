@@ -51,7 +51,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "iteration": 1551325060624,
+  "iteration": 1552258856226,
   "links": [],
   "panels": [
     {
@@ -587,7 +587,7 @@
           "refId": "A"
         }
       ],
-      "thresholds": "80,95",
+      "thresholds": "51,80",
       "title": "Running Pods",
       "type": "singlestat",
       "valueFontSize": "80%",
@@ -606,8 +606,8 @@
       "colorValue": false,
       "colors": [
         "#299c46",
-        "#299c46",
-        "rgba(237, 129, 40, 0.89)"
+        "rgba(237, 129, 40, 0.89)",
+        "#d44a3a"
       ],
       "datasource": "Prometheus",
       "decimals": null,
@@ -669,7 +669,7 @@
           "refId": "A"
         }
       ],
-      "thresholds": "50,95",
+      "thresholds": "51,80",
       "title": "Reserved CPU",
       "type": "singlestat",
       "valueFontSize": "80%",
@@ -688,8 +688,8 @@
       "colorValue": false,
       "colors": [
         "#299c46",
-        "#299c46",
-        "rgba(237, 129, 40, 0.89)"
+        "rgba(237, 129, 40, 0.89)",
+        "#d44a3a"
       ],
       "datasource": "Prometheus",
       "decimals": null,
@@ -751,7 +751,7 @@
           "refId": "A"
         }
       ],
-      "thresholds": "50,95",
+      "thresholds": "51,80",
       "title": "Reserved Memory",
       "type": "singlestat",
       "valueFontSize": "80%",
