@@ -9,6 +9,8 @@
 {{- $persistence := .Values.workers.persistence.enabled }}
 # If we're using a StatefulSet
 {{- $stateful := and $local $persistence }}
+# If we're using elasticsearch logging
+{{- $elasticsearch := .Values.elasticsearch.enabled }}
 
 kind: {{ if $stateful }}StatefulSet{{ else }}Deployment{{ end }}
 apiVersion: apps/v1
@@ -58,6 +60,7 @@ spec:
         - name: {{ template "registry_secret" . }}
       {{- end }}
       containers:
+        # Always run the main scheduler container.
         - name: {{ .Release.Name }}-scheduler
           image: {{ template "airflow_image" . }}
           imagePullPolicy: {{ .Values.images.airflow.pullPolicy }}
@@ -67,11 +70,19 @@ spec:
           {{- include "standard_airflow_environment" . | indent 10 }}
           resources:
 {{ toYaml .Values.scheduler.resources | indent 12 }}
-{{- if $local }}
           volumeMounts:
             - name: logs
               mountPath: {{ template "airflow_logs" . }}
-
+        # Always start the garbage collector sidecar.
+        - name: {{ .Release.Name }}-scheduler-gc
+          image: {{ template "airflow_image" . }}
+          args: ["crond", "-f", "-d", "0"]
+          volumeMounts:
+            - name: logs
+              mountPath: {{ template "airflow_logs" . }}
+{{- if and $local (not $elasticsearch) }}
+        # Start the sidecar log server if we're in local mode and
+        # we don't have elasticsearch enabled.
         - name: {{ .Release.Name }}-scheduler-logs
           image: {{ template "airflow_image" . }}
           args: ["airflow", "serve_logs"]
@@ -84,13 +95,6 @@ spec:
           env:
           {{- include "custom_airflow_environment" . | indent 10 }}
           {{- include "standard_airflow_environment" . | indent 10 }}
-
-        - name: {{ .Release.Name }}-worker-gc
-          image: {{ template "airflow_image" . }}
-          args: ["crond", "-f", "-d", "0"]
-          volumeMounts:
-            - name: logs
-              mountPath: {{ template "airflow_logs" . }}
 {{- end }}
 {{- if not $stateful }}
       volumes:
