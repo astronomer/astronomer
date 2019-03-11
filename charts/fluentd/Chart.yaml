@@ -1,5 +1,5 @@
 name: fluentd
-version: 0.8.0-rc.2
+version: 0.8.0-rc.3
 description: A Helm chart to deploy the Astronomer Platform Fluentd module
 keywords:
   - astronomer
