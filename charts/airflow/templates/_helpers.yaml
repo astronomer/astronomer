@@ -118,10 +118,10 @@
 {{- end }}
 
 {{ define "flower_image" -}}
-{{- if .Values.images.airflow.tag -}}
-{{ printf "%s:%s" .Values.images.airflow.repository .Values.images.airflow.tag }}
+{{- if .Values.images.flower.tag -}}
+{{ printf "%s:%s" .Values.images.flower.repository .Values.images.flower.tag }}
 {{- else -}}
-{{ printf "%s:%s-%s" .Values.images.airflow.repository .Chart.Version .Values.airflowVersion }}
+{{ printf "%s:%s-%s" .Values.images.flower.repository .Chart.Version .Values.airflowVersion }}
 {{- end }}
 {{- end }}
 

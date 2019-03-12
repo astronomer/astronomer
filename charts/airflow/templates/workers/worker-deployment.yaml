@@ -3,7 +3,7 @@
 #################################
 {{- $persistence := .Values.workers.persistence.enabled }}
 {{- if eq .Values.executor "CeleryExecutor" }}
-kind: {{ if $persistence }}StatefulSet{{ else }}Deployment{{ end }}
+kind: StatefulSet
 apiVersion: apps/v1
 metadata:
   name: {{ .Release.Name }}-worker
