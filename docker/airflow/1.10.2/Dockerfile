@@ -75,7 +75,7 @@ RUN apk update \
 	&& pip3 install --no-cache-dir --no-use-pep517 "${AIRFLOW_MODULE}" \
 	&& pip3 install --no-cache-dir "redis>=2.10.5,<3" \
 	&& pip3 install --no-cache-dir "kombu==4.3.0" \
-	&& pip3 install --no-cache-dir "billboard==3.5.0.4" \
+	&& pip3 install --no-cache-dir "billiard==3.5.0.4" \
 	&& pip3 install --no-cache-dir "tornado>=4.2.0,<6.0.0" \
 	&& apk del .build-deps \
 	&& ln -sf /usr/bin/python3 /usr/bin/python \
