@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.8.0] - 2019-03-13
+* CLI bug fixes.
+* Houston bug fixes.
+* Fixed warm shutdown issue in Airflow image.
+
 ## [0.8.0] - 2019-03-06
 * Replace Houston1 with Houston2, with lots of new configuration available.
 * Add Prisma as backend on top of Postgres.
