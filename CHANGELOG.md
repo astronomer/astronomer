@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.8.0] - 2019-03-13
+## [0.8.1] - 2019-03-13
 * CLI bug fixes.
 * Houston bug fixes.
 * Fixed warm shutdown issue in Airflow image.
