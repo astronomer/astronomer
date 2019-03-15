@@ -5,7 +5,7 @@
 images:
   kubeState:
     repository: astronomerinc/ap-kube-state
-    tag: 0.8.1
+    tag: 0.8.2
     pullPolicy: IfNotPresent
 
 env: {}
