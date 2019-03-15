@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.8.2] - 2019-03-15
+* Fix bug where custom env vars are not synced to pods.
+
 ## [0.8.1] - 2019-03-13
 * CLI bug fixes.
 * Houston bug fixes.
