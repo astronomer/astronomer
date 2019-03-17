@@ -24,7 +24,8 @@ LABEL io.astronomer.docker.component="airflow"
 LABEL io.astronomer.docker.airflow.version="1.10.2"
 
 ARG ORG="astronomer"
-ARG VERSION="1.10.2-1"
+# ARG VERSION="1.10.2-1"
+ARG VERSION="feature/kube-labels"
 ARG SUBMODULES="all, statsd, elasticsearch"
 
 ENV AIRFLOW_REPOSITORY="https://github.com/${ORG}/airflow"
