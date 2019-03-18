@@ -14,6 +14,8 @@ metadata:
     workspace: {{ .Values.platform.workspace | quote }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
+      annotations:
+        checksum/airflow-config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
 spec:
   replicas: 1
   selector:
@@ -46,6 +48,11 @@ spec:
           args: ["airflow", "flower"]
           resources:
 {{ toYaml .Values.flower.resources | indent 12 }}
+          volumeMounts:
+            - name: config
+              subPath: airflow.cfg
+              mountPath: {{ .Values.airflowHome }}
+              readOnly: true
           ports:
             - name: flower-ui
               containerPort: {{ .Values.ports.flowerUI }}
@@ -65,4 +72,8 @@ spec:
             periodSeconds: 5
           env:
           {{- include "standard_airflow_environment" . | indent 10 }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ .Release.Name }}-airflow-config
 {{- end }}

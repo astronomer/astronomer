@@ -33,6 +33,7 @@ spec:
       annotations:
         checksum/metadata-secret: {{ include (print $.Template.BasePath "/secrets/metadata-connection-secret.yaml") . | sha256sum }}
         checksum/pgbouncer-config-secret: {{ include (print $.Template.BasePath "/secrets/pgbouncer-config-secret.yaml") . | sha256sum }}
+        checksum/airflow-config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
     spec:
       restartPolicy: Always
       securityContext:
@@ -48,6 +49,11 @@ spec:
           args: ["airflow", "webserver"]
           resources:
 {{ toYaml .Values.webserver.resources | indent 12 }}
+          volumeMounts:
+            - name: config
+              mountPath: {{ template "airflow_config_path" . }}
+              subPath: airflow.cfg
+              readOnly: true
           ports:
             - name: webserver-ui
               containerPort: {{ .Values.ports.airflowUI }}
@@ -70,3 +76,7 @@ spec:
           env:
           {{- include "custom_airflow_environment" . | indent 10 }}
           {{- include "standard_airflow_environment" . | indent 10 }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ template "airflow_config" . }}

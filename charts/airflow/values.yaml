@@ -86,6 +86,8 @@ images:
 
 # Environment variables for all airflow containers
 env: []
+# - name: ""
+#   value: ""
 
 # Secrets for all airflow containers
 secret: []

@@ -19,8 +19,10 @@ rules:
       - "pods"
     verbs:
       - "create"
+      - "list"
       - "get"
       - "watch"
+      - "delete"
   - apiGroups:
       - ""
     resources:
