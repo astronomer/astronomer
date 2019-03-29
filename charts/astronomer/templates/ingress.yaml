@@ -15,6 +15,7 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
     kubernetes.io/tls-acme: {{ eq .Values.global.acme true | quote }}
+    nginx.ingress.kubernetes.io/custom-http-errors: "404"
     nginx.ingress.kubernetes.io/configuration-snippet: |
       if ($host = '{{ .Values.global.baseDomain }}' ) {
         rewrite ^ https://app.{{ .Values.global.baseDomain }}$request_uri permanent;
