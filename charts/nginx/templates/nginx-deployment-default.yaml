@@ -29,6 +29,7 @@ spec:
       containers:
         - name: {{ .Release.Name }}-default-backend
           image: {{ template "nginx.defaultBackend.image" . }}
+          imagePullPolicy: {{ .Values.images.defaultBackend.pullPolicy }}
           livenessProbe:
             httpGet:
               path: /healthz
@@ -38,10 +39,3 @@ spec:
             timeoutSeconds: 5
           ports:
             - containerPort: {{ .Values.ports.defaultBackendHTTP }}
-          resources:
-            limits:
-              cpu: 10m
-              memory: 20Mi
-            requests:
-              cpu: 10m
-              memory: 20Mi
