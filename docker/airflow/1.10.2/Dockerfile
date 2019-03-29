@@ -78,6 +78,7 @@ RUN apk update \
 	&& pip3 install --no-cache-dir "kombu==4.3.0" \
 	&& pip3 install --no-cache-dir "billiard==3.5.0.4" \
 	&& pip3 install --no-cache-dir "tornado>=4.2.0,<6.0.0" \
+	&& pip3 install --no-cache-dir "https://github.com/astronomer/astronomer-fab-securitymanager/releases/download/v1.0.0/astronomer_fab_security_manager-1.0.0-py3-none-any.whl" \
 	&& apk del .build-deps \
 	&& ln -sf /usr/bin/python3 /usr/bin/python \
 	&& ln -sf /usr/bin/pip3 /usr/bin/pip
