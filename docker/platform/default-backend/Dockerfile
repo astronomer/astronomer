@@ -1,5 +1,5 @@
 #
-# Copyright 2018 Astronomer Inc.
+# Copyright 2019 Astronomer Inc.
 #
 # Licensed under the Apache License, Version 3.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,34 +18,33 @@ LABEL maintainer="Astronomer <humans@astronomer.io>"
 
 ARG BUILD_NUMBER=-1
 LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
-LABEL io.astronomer.docker.module="default-backend"
+LABEL io.astronomer.docker.module="astronomer"
 LABEL io.astronomer.docker.component="default-backend"
 
-ARG VERSION="v0.9.0-alpha.1"
-ENV REPO="github.com/astronomerio/default-backend"
+ARG VERSION="master"
+ENV REPO="github.com/astronomer/default-backend"
 ENV REPO_URL="https://${REPO}"
 
-ENV SERVER_ROOT="/usr/share/nginx/html"
 
-# Install NGINX
+WORKDIR /backend
+
 RUN apk add --no-cache --virtual .build-deps \
+		build-base \
 		git \
+		python \
 	&& apk add --no-cache \
-		nginx \
+		nodejs \
+		nodejs-npm \
+		openssl \
 	&& git clone \
 		-c advice.detachedHead=false \
 		--depth 1 \
 		--branch ${VERSION} \
-		${REPO_URL} ${SERVER_ROOT} \
-	&& rm -rf ${SERVER_ROOT}/.git \
-	&& mkdir -p /run/nginx \
+		${REPO_URL} . \
+	&& npm install \
+	&& npm run build \
 	&& apk del .build-deps
 
-# Copy NGINX configuration to default location
-COPY include/nginx.conf /etc/nginx/nginx.conf
-
-# NGINX is configured to listen on 8080
 EXPOSE 8080
 
-# Run NGINX
-ENTRYPOINT ["nginx", "-g", "daemon off;"]
+CMD ["npm", "run", "serve"]
