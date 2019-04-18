@@ -104,7 +104,7 @@ pipeline:
       - release commander $${GITHUB_API_KEY} v$${ASTRONOMER_VERSION} $${DRONE_COMMIT_BRANCH} true
       - release db-bootstrapper $${GITHUB_API_KEY} v$${ASTRONOMER_VERSION} $${DRONE_COMMIT_BRANCH} true
       - release default-backend $${GITHUB_API_KEY} v$${ASTRONOMER_VERSION} $${DRONE_COMMIT_BRANCH} true
-      - release houston-api $${GITHUB_API_KEY} v$${ASTRONOMER_VERSION} $${DRONE_COMMIT_BRANCH} true
+      - release houston-api-legacy $${GITHUB_API_KEY} v$${ASTRONOMER_VERSION} $${DRONE_COMMIT_BRANCH} true
       - release orbit-ui $${GITHUB_API_KEY} v$${ASTRONOMER_VERSION} $${DRONE_COMMIT_BRANCH} true
 
       # Also cut the astro-cli release, which will trigger goreleaser to push release
@@ -122,7 +122,7 @@ pipeline:
       - release commander $${GITHUB_API_KEY} v$${ASTRONOMER_VERSION} $${DRONE_COMMIT_BRANCH}
       - release db-bootstrapper $${GITHUB_API_KEY} v$${ASTRONOMER_VERSION} $${DRONE_COMMIT_BRANCH}
       - release default-backend $${GITHUB_API_KEY} v$${ASTRONOMER_VERSION} $${DRONE_COMMIT_BRANCH}
-      - release houston-api $${GITHUB_API_KEY} v$${ASTRONOMER_VERSION} $${DRONE_COMMIT_BRANCH}
+      - release houston-api-legacy $${GITHUB_API_KEY} v$${ASTRONOMER_VERSION} $${DRONE_COMMIT_BRANCH}
       - release orbit-ui $${GITHUB_API_KEY} v$${ASTRONOMER_VERSION} $${DRONE_COMMIT_BRANCH}
 
       # Also cut the astro-cli release, which will trigger goreleaser to push release
