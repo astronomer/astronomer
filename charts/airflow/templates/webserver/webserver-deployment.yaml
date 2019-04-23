@@ -71,7 +71,7 @@ spec:
               port: {{ .Values.ports.airflowUI }}
             initialDelaySeconds: {{ .Values.webserver.initialDelaySeconds | default 10 }}
             timeoutSeconds: {{ .Values.webserver.timeoutSeconds | default 30 }}
-            failureThreshold: {{ .Values.webserver.failureThreshold | default 10 }}
+            failureThreshold: {{ .Values.webserver.failureThreshold | default 30 }}
             periodSeconds: {{ .Values.webserver.periodSeconds | default 5 }}
           env:
           {{- include "custom_airflow_environment" . | indent 10 }}
