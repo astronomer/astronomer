@@ -245,4 +245,4 @@ pipeline:
     secrets: [ slack_webhook ]
     channel: platform
     when:
-      status: [ failure ]
+      status: [ failure, changed ]
