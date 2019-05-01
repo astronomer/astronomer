@@ -166,6 +166,10 @@ max_client_conn = {{ .Values.pgbouncer.maxClientConn }}
 {{ define "airflow_config_path" -}}
 {{ (printf "%s/airflow.cfg" .Values.airflowHome) | quote }}
 {{- end }}
+{{ define "airflow_webserver_config_path" -}}
+{{ (printf "%s/webserver_config.py" .Values.airflowHome) | quote }}
+{{- end }}
+
 
 {{ define "airflow_config" -}}
 {{ (printf "%s-airflow-config" .Release.Name) }}

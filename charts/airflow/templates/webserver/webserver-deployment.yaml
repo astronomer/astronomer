@@ -54,6 +54,14 @@ spec:
               mountPath: {{ template "airflow_config_path" . }}
               subPath: airflow.cfg
               readOnly: true
+            - name: config
+              mountPath: {{ template "airflow_webserver_config_path" . }}
+              subPath: webserver_config.py
+              readOnly: true
+            - name: signing-certificate
+              mountPath: /etc/airflow/ssl
+              subPath: tls.crt
+              readOnly: true
           ports:
             - name: webserver-ui
               containerPort: {{ .Values.ports.airflowUI }}
@@ -80,3 +88,6 @@ spec:
         - name: config
           configMap:
             name: {{ template "airflow_config" . }}
+        - name: signing-certificate
+          secret:
+            secretName: {{ .Values.global.tlsSecret }}

@@ -26,6 +26,7 @@ data:
     [webserver]
     base_url = {{ printf "https://%s" (include "airflow_url" .) }}
     expose_config = True
+    rbac = True
 
     [celery]
     default_queue = celery
@@ -63,3 +64,27 @@ data:
     release = {{ .Release.Name }}
     platform = {{ .Values.platform.release }}
     workspace = {{ .Values.platform.workspace }}
+
+    [astronomer]
+    jwt_signing_cert = /etc/airflow/ssl/tls.crt
+    jwt_audience = {{ include "airflow_url" . }}
+
+  webserver_config.py: |
+    import os
+    from airflow import configuration as conf
+    from flask_appbuilder.security.manager import AUTH_REMOTE_USER
+    basedir = os.path.abspath(os.path.dirname(__file__))
+
+    # The SQLAlchemy connection string.
+    SQLALCHEMY_DATABASE_URI = conf.get('core', 'SQL_ALCHEMY_CONN')
+
+    # Flask-WTF flag for CSRF
+    CSRF_ENABLED = True
+
+    # ----------------------------------------------------
+    # AUTHENTICATION CONFIG
+    # ----------------------------------------------------
+    AUTH_TYPE = AUTH_REMOTE_USER
+
+    from astronomer.flask_appbuilder.security import AirflowAstroSecurityManager
+    SECURITY_MANAGER_CLASS = AirflowAstroSecurityManager
