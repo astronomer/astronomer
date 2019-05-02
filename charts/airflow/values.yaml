@@ -190,6 +190,9 @@ webserver:
     #   cpu: 100m
     #   memory: 128Mi
 
+  # Secret that contains the cert to verify JWTs
+  jwtSigningCertificateSecretName: ~
+
 # Flower settings
 flower:
   resources: {}
