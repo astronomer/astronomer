@@ -44,7 +44,7 @@ rbacEnabled: true
 
 # Airflow version
 # Options: 1.9.0, 1.10.2, etc
-airflowVersion: "1.10.2"
+airflowVersion: "1.10.3"
 
 # Airflow executor
 # Options: SequentialExecutor, LocalExecutor, CeleryExecutor, KubernetesExecutor
