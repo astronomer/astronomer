@@ -60,7 +60,7 @@ spec:
               readOnly: true
 {{- if .Values.webserver.jwtSigningCertificateSecretName }}
             - name: signing-certificate
-              mountPath: /etc/airflow/ssl
+              mountPath: {{ template "airflow_webserver_jwt_cert_path" . }}
               subPath: tls.crt
               readOnly: true
 {{- end }}
