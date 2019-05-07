@@ -53,7 +53,7 @@ data:
       helm:
         # These values get passed directly into the airflow helm deployments
         webserver:
-          jwtSigningCertificateSecretName: {{ .Release.Namespace }}/{{ .Values.global.tlsSecret }}
+          jwtSigningCertificateSecretName: {{ .Values.global.tlsSecret }}
 
     # If we're in single namespace mode, we will also
     # skip the configuration for elasticsearch. Houston will fallback
