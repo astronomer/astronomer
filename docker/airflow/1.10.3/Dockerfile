@@ -56,6 +56,8 @@ RUN apk update \
 		libxslt-dev \
 		linux-headers \
 		mariadb-dev \
+		nodejs \
+		nodejs-npm \
 		postgresql-dev \
 		python3-dev \
 	&& apk add --no-cache \
@@ -68,12 +70,16 @@ RUN apk update \
 		python3 \
 		tini \
 	&& update-ca-certificates \
-	&& pip3 install --no-cache-dir --upgrade pip==19.0.3 \
+	&& pip3 install --no-cache-dir --upgrade pip==19.1.1 \
 	&& pip3 install --no-cache-dir --upgrade setuptools==39.0.1 \
 	&& pip3 install --no-cache-dir cython \
 	&& pip3 install --no-cache-dir numpy \
 	&& pip3 install --no-cache-dir --no-use-pep517 "${AIRFLOW_MODULE}" \
 	&& pip3 install --no-cache-dir "https://github.com/astronomer/astronomer-fab-securitymanager/releases/download/v1.0.0/astronomer_fab_security_manager-1.0.0-py3-none-any.whl" \
+	&& cd /usr/lib/python3.6/site-packages/airflow/www_rbac \
+	&& npm install \
+	&& npm run build \
+	&& rm -rf node_modules \
 	&& apk del .build-deps \
 	&& ln -sf /usr/bin/python3 /usr/bin/python \
 	&& ln -sf /usr/bin/pip3 /usr/bin/pip
