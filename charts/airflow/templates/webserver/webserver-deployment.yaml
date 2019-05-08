@@ -71,17 +71,17 @@ spec:
             httpGet:
               path: /health
               port: {{ .Values.ports.airflowUI }}
-            initialDelaySeconds: {{ .Values.webserver.initialDelaySeconds | default 10 }}
+            initialDelaySeconds: {{ .Values.webserver.initialDelaySeconds | default 15 }}
             timeoutSeconds: {{ .Values.webserver.timeoutSeconds | default 30 }}
-            failureThreshold: {{ .Values.webserver.failureThreshold | default 10 }}
+            failureThreshold: {{ .Values.webserver.failureThreshold | default 20 }}
             periodSeconds: {{ .Values.webserver.periodSeconds | default 5 }}
           readinessProbe:
             httpGet:
               path: /health
               port: {{ .Values.ports.airflowUI }}
-            initialDelaySeconds: {{ .Values.webserver.initialDelaySeconds | default 10 }}
+            initialDelaySeconds: {{ .Values.webserver.initialDelaySeconds | default 15 }}
             timeoutSeconds: {{ .Values.webserver.timeoutSeconds | default 30 }}
-            failureThreshold: {{ .Values.webserver.failureThreshold | default 30 }}
+            failureThreshold: {{ .Values.webserver.failureThreshold | default 20 }}
             periodSeconds: {{ .Values.webserver.periodSeconds | default 5 }}
           env:
           {{- include "custom_airflow_environment" . | indent 10 }}
