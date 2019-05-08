@@ -6,31 +6,31 @@
 images:
   commander:
     repository: astronomerinc/ap-commander
-    tag: 0.9.0-alpha.5
+    tag: 0.9.0-alpha.6
     pullPolicy: IfNotPresent
   registry:
     repository: astronomerinc/ap-registry
-    tag: 0.9.0-alpha.5
+    tag: 0.9.0-alpha.6
     pullPolicy: IfNotPresent
   houston:
     repository: astronomerinc/ap-houston-api
-    tag: 0.9.0-alpha.5
+    tag: 0.9.0-alpha.6
     pullPolicy: IfNotPresent
   orbit:
     repository: astronomerinc/ap-orbit-ui
-    tag: 0.9.0-alpha.5
+    tag: 0.9.0-alpha.6
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: astronomerinc/ap-db-bootstrapper
-    tag: 0.9.0-alpha.5
+    tag: 0.9.0-alpha.6
     pullPolicy: IfNotPresent
   cliInstall:
     repository: astronomerinc/ap-cli-install
-    tag: 0.9.0-alpha.5
+    tag: 0.9.0-alpha.6
     pullPolicy: IfNotPresent
   prisma:
     repository: astronomerinc/ap-prisma
-    tag: 0.9.0-alpha.5
+    tag: 0.9.0-alpha.6
     pullPolicy: IfNotPresent
 
 orbit:

@@ -5,11 +5,11 @@
 images:
   grafana:
     repository: astronomerinc/ap-grafana
-    tag: 0.9.0-alpha.5
+    tag: 0.9.0-alpha.6
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: astronomerinc/ap-db-bootstrapper
-    tag: 0.9.0-alpha.5
+    tag: 0.9.0-alpha.6
     pullPolicy: IfNotPresent
 
 backendSecretName: ~
