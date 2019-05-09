@@ -3,4 +3,4 @@
 # Deletes PVCs from current namespace
 # TODO: Namespace option
 
- kubectl delete pvc $(kubectl get pvc | grep -v postgresql | awk '{if (NR!=1) print $1}')
+ kubectl get pvc | grep -E 'alertmanager|elasticsearch|prometheus|registry' | awk '{print $1}' | xargs kubectl delete pvc
