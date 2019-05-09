@@ -5,7 +5,7 @@
 images:
   kubed:
     repository: astronomerinc/ap-kubed
-    tag: 0.9.0-alpha.6
+    tag: 0.9.0-alpha.7
     pullPolicy: IfNotPresent
 
 # Declare variables to be passed into your templates.
