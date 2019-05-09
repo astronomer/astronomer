@@ -104,14 +104,14 @@ spec:
             - name: PRISMA_MANAGEMENT_API_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Release.Name }}-prisma-secret
+                  name: {{ .Release.Name }}-prisma-api-secret
                   key: api-secret
             - name: PRISMA__ENDPOINT
               value: {{ template "prisma.endpoint" . }}
             - name: PRISMA__SECRET
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Release.Name }}-prisma-secret
+                  name: {{ .Release.Name }}-prisma-api-secret
                   key: service-secret
             - name: DEPLOYMENTS__DATABASE__CONNECTION
               valueFrom:

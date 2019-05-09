@@ -76,5 +76,5 @@ spec:
             - name: PRISMA_MANAGEMENT_API_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Release.Name }}-prisma-secret
+                  name: {{ .Release.Name }}-prisma-api-secret
                   key: api-secret
