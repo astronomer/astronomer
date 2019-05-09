@@ -27,7 +27,6 @@ spec:
   caBundle: {{ b64enc $ca.Cert }}
   groupPriorityMinimum: {{ .Values.apiserver.groupPriorityMinimum }}
   versionPriority: {{ .Values.apiserver.versionPriority }}
-{{ end }}
 ---
 apiVersion: v1
 kind: Secret
@@ -43,6 +42,7 @@ type: Opaque
 data:
   tls.crt: {{ b64enc $cert.Cert }}
   tls.key: {{ b64enc $cert.Key }}
+{{ end }}
 ---
 {{- if .Values.global.rbacEnabled }}
 # To read the config for terminating authentication

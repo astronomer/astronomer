@@ -54,12 +54,6 @@ persistence:
   # subPath: ""
   # existingClaim:
 
-
-## Install Default RBAC roles and bindings
-rbac:
-  # Specifies whether RBAC resources should be created
-  create: true
-
 serviceAccount:
   # Specifies whether a ServiceAccount should be created
   create: true
@@ -68,7 +62,7 @@ serviceAccount:
   name:
 
 apiserver:
-  enabled: true
+  enabled: false
   # groupPriorityMinimum is the minimum priority the group should have. Please see
   # https://github.com/kubernetes/kube-aggregator/blob/release-1.9/pkg/apis/apiregistration/v1beta1/types.go#L58-L64
   # for more information on proper values of this field.
@@ -84,15 +78,15 @@ apiserver:
     enabled: true
 
 # Send usage events to Google Analytics
-enableAnalytics: true
+enableAnalytics: false
 
 config:
   # set cluster-name to something meaningful to you, say, prod, prod-us-east, qa, etc.
   # so that you can distinguish notifications sent by kubed
-  clusterName: unicorn
+  clusterName: astronomer
   enableConfigSyncer: true
   enableEventForwarder: false
-  enableRecycleBin: true
+  enableRecycleBin: false
 
   # so you can include any other config required for kubed directly
 #  include:
