@@ -42,6 +42,9 @@ tags:
   # Enable logging stack (elasticsearch, fluentd, kibana)
   logging: true
 
+  # Kubed
+  kubed: true
+
 
 #################################
 ## Astronomer configuration
