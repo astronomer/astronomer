@@ -60,6 +60,7 @@ RUN apk update \
 		nodejs-npm \
 		postgresql-dev \
 		python3-dev \
+		tzdata \
 	&& apk add --no-cache \
 		bash \
 		ca-certificates \
@@ -70,6 +71,7 @@ RUN apk update \
 		python3 \
 		tini \
 	&& update-ca-certificates \
+	&& cp /usr/share/zoneinfo/UTC /etc/localtime \
 	&& pip3 install --no-cache-dir --upgrade pip==19.1.1 \
 	&& pip3 install --no-cache-dir --upgrade setuptools==39.0.1 \
 	&& pip3 install --no-cache-dir cython \
