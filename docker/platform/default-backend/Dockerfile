@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM astronomerinc/ap-base:0.9.0-alpha.6
+FROM astronomerinc/ap-base:0.9.0-alpha.7
 LABEL maintainer="Astronomer <humans@astronomer.io>"
 
 ARG BUILD_NUMBER=-1
@@ -21,7 +21,7 @@ LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
 LABEL io.astronomer.docker.module="astronomer"
 LABEL io.astronomer.docker.component="default-backend"
 
-ARG VERSION="v0.9.0-alpha.6"
+ARG VERSION="v0.9.0-alpha.7"
 ENV REPO="github.com/astronomer/default-backend"
 ENV REPO_URL="https://${REPO}"
 
