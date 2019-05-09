@@ -63,8 +63,10 @@ spec:
             - name: houston-config-volume
               mountPath: /houston/config/local-production.yaml
               subPath: local-production.yaml
+            - name: houston-jwt-certificate-volume
+              mountPath: {{ template "houston.jwtCertificatePath" . }}
             - name: registry-tls-volume
-              mountPath: /etc/houston/tls
+              mountPath: {{ template "houston.jwtRegistryCertificatePath" . }}
           {{- end }}
           ports:
             - name: houston-http
@@ -91,7 +93,9 @@ spec:
             - name: NODE_ENV
               value: "production"
             - name: JWT__CERT_PATH
-              value: /etc/houston/tls/
+              value: {{ template "houston.jwtCertificatePath" . }}
+            - name: JWT__REGISTRY__CERT_PATH
+              value: {{ template "houston.jwtRegistryCertificatePath" . }}
             - name: JWT__REGISTRY__ISSUER
               value: {{ .Values.registry.auth.issuer }}
             - name: JWT__REGISTRY__SERVICE
@@ -123,6 +127,9 @@ spec:
                 path: production.yaml
               - key: local-production.yaml
                 path: local-production.yaml
+        - name: houston-jwt-certificate-volume
+          secret:
+            secretName: {{ template "houston.jwtCertificateSecret" . }}
     {{ if .Values.global.tlsSecret }}
         - name: registry-tls-volume
           secret:

@@ -61,6 +61,10 @@ houston:
     # port: ~
     # db: ~
 
+  # This specifies an optional secret name to use to sign JWTs.
+  # If not specified, we use an auto-generated, self-signed certificate.
+  jwtSigningCertificateSecretName: ~
+
   env: {}
   resources: {}
   #  limits:

@@ -53,7 +53,9 @@ data:
       helm:
         # These values get passed directly into the airflow helm deployments
         webserver:
-          jwtSigningCertificateSecretName: {{ .Values.global.tlsSecret }}
+          # This is the name of the secret that gets copied from the platform namespace
+          # to the airflow namespaces.
+          jwtSigningCertificateSecretName: {{ template "houston.jwtCertificateSecret" . }}
 
     # If we're in single namespace mode, we will also
     # skip the configuration for elasticsearch. Houston will fallback
