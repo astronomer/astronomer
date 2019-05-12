@@ -1,0 +1,22 @@
+################################
+## Replicator Role Binding
+#################################
+{{- if not .Values.global.singleNamespace }}
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ .Release.Name }}-replicator
+  labels:
+    tier: houston
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ .Release.Name }}-replicator
+subjects:
+  - kind: ServiceAccount
+    name: {{ template "replicator.serviceAccount" . }}
+    namespace: {{ .Release.Namespace }}
+{{- end }}

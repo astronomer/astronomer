@@ -173,7 +173,6 @@ max_client_conn = {{ .Values.pgbouncer.maxClientConn }}
 /etc/airflow/tls/tls.crt
 {{- end }}
 
-
 {{ define "airflow_config" -}}
 {{ (printf "%s-airflow-config" .Release.Name) }}
 {{- end }}
@@ -195,3 +194,8 @@ max_client_conn = {{ .Values.pgbouncer.maxClientConn }}
   {{- $_ := set $config "auths" $auth -}}
   {{ $config | toJson | print }}
 {{- end }}
+
+{{ define "replicator.replicateFrom" -}}
+{{ printf "%s/%s" .Values.platform.namespace .Values.webserver.jwtSigningCertificateSecretName }}
+{{- end }}
+

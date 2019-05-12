@@ -1,0 +1,26 @@
+################################
+## Replicator Cluster Role
+#################################
+{{- if not .Values.global.singleNamespace }}
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ .Release.Name }}-replicator
+  labels:
+    tier: replicator
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+      - configmaps
+    verbs:
+      - list
+      - get
+      - update
+      - patch
+      - watch
+{{- end }}

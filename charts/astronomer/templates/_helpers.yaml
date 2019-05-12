@@ -87,6 +87,10 @@
 {{ printf "%s-prisma-bootstrapper" .Release.Name }}
 {{- end }}
 
+{{ define "replicator.serviceAccount" -}}
+{{ printf "%s-replicator" .Release.Name }}
+{{- end }}
+
 {{ define "prisma.endpoint" -}}
 {{ printf "http://%s-prisma:%s/houston" .Release.Name (.Values.ports.prismaHTTP | toString) }}
 {{- end }}

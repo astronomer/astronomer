@@ -1,0 +1,34 @@
+################################
+## Replicator Deployment
+#################################
+{{- if not .Values.global.singleNamespace }}
+kind: Deployment
+apiVersion: apps/v1beta2
+metadata:
+  name: {{ .Release.Name }}-replicator
+  labels:
+    component: replicator
+    tier: astronomer
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      tier: astronomer
+      component: replicator
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        tier: astronomer
+        component: replicator
+        release: {{ .Release.Name }}
+    spec:
+      restartPolicy: Always
+      serviceAccountName: {{ template "replicator.serviceAccount" . }}
+      containers:
+        - name: replicator
+          image: quay.io/mittwald/kubernetes-replicator:latest
+{{- end }}

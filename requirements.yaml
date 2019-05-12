@@ -41,12 +41,6 @@ dependencies:
     tags:
       - logging
 
-  # KubeD
-  - name: kubed
-    condition: global.kubedEnabled
-    tags:
-      - kubed
-
   # Airflow chart is deployed by the platform
   - name: airflow
     condition: global.airflowEnabled
