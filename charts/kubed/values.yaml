@@ -88,6 +88,10 @@ config:
   enableEventForwarder: false
   enableRecycleBin: false
 
+service:
+  port: 443
+  targetPort: 8443
+
   # so you can include any other config required for kubed directly
 #  include:
 #    snapshotter:

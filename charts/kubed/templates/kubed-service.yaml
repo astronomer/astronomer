@@ -12,12 +12,16 @@ metadata:
     chart: {{ template "kubed.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: {{ .Values.service.port | quote }}
 spec:
+  type: ClusterIP
   ports:
   # Port used to expose admission webhook apiserver
-  - name: api
-    port: 443
-    targetPort: 8443
+  - name: kubed-api
+    port: {{ .Values.service.port }}
+    targetPort: {{ .Values.service.targetPort }}
   selector:
     tier: {{ template "kubed.name" . }}
     component: {{ template "kubed.name" . }}

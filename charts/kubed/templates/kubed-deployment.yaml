@@ -56,7 +56,8 @@ spec:
         - --use-kubeapiserver-fqdn-for-aks={{ .Values.apiserver.useKubeapiserverFqdnForAks }}
         - --enable-analytics={{ .Values.enableAnalytics }}
         ports:
-        - containerPort: 8443
+        - name: kubed-api
+          containerPort: 8443
 {{- if .Values.apiserver.healthcheck.enabled }}
         readinessProbe:
           httpGet:
