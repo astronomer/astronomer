@@ -34,6 +34,10 @@ astronomer:
       repository: astronomerinc/ap-prisma
       tag: master
       pullPolicy: Always
+    kubeReplicator:
+      repository: astronomerinc/ap-kube-replicator
+      tag: master
+      pullPolicy: Always
 
 
 #################################

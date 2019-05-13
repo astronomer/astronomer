@@ -32,6 +32,10 @@ images:
     repository: astronomerinc/ap-prisma
     tag: 0.9.0-alpha.8
     pullPolicy: IfNotPresent
+  kubeReplicator:
+    repository: astronomerinc/ap-kube-replicator
+    tag: 0.9.0-alpha.8
+    pullPolicy: IfNotPresent
 
 orbit:
   env: {}
@@ -131,6 +135,16 @@ install:
   #  requests:
   #   cpu: 100m
   #   memory: 128Mi
+
+kubeReplicator:
+  resources: {}
+  #  limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  #  requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
 
 ports:
   houstonHTTP: 8871
