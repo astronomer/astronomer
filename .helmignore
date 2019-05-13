@@ -22,3 +22,7 @@
 
 # Astronomer helm repository directory
 repository
+bin
+configs
+certs
+secrets
