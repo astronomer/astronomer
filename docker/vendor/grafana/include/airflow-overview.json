@@ -2045,14 +2045,14 @@
       ],
       "targets": [
         {
-          "expr": "sort_desc(max by (container, pod, reason) (\n  max by (container, pod) (\n    sort_desc(kube_pod_container_status_waiting{release=~\"$deployment\"})\n  ) or\n  max by (container, reason) (\n    sort_desc(kube_pod_container_status_waiting_reason{release=~\"$deployment\"}==1)\n  ) or\n  max by (container, reason) (\n    sort_desc(kube_pod_container_status_terminated_reason{release=~\"$deployment\"}==1)\n  )\n))\n",
+          "expr": "sort_desc(max by (container, pod, reason) (\n  max by (container, pod) (    \n  sort_desc(kube_pod_container_status_waiting{release=~\"$deployment\"} and on(pod,namespace) kube_pod_labels{label_dag_id=\"\"})  ) \n  or  max by (container, reason) (    \n  sort_desc(kube_pod_container_status_waiting_reason{release=~\"$deployment\"}==1)  and on(pod,namespace) kube_pod_labels{label_dag_id=\"\"} ) \n  or  max by (container, reason) (    sort_desc(kube_pod_container_status_terminated_reason{release=~\"$deployment\"}==1)  and on(pod,namespace) kube_pod_labels{label_dag_id=\"\"} )))",
           "format": "table",
           "instant": true,
           "intervalFactor": 1,
           "refId": "A"
         }
       ],
-      "title": "Container Status",
+      "title": "Core Container Status",
       "transform": "table",
       "type": "table"
     },
@@ -2188,14 +2188,14 @@
       ],
       "targets": [
         {
-          "expr": "sort_desc(max by (container, pod, reason) (\n  max by (container, pod) (    \n  sort_desc(kube_pod_container_status_waiting{release=~\"$deployment\"} and on(pod,namespace) kube_pod_labels{label_dag_id=\"\"})  ) \n  or  max by (container, reason) (    \n  sort_desc(kube_pod_container_status_waiting_reason{release=~\"$deployment\"}==1)  and on(pod,namespace) kube_pod_labels{label_dag_id=\"\"} ) \n  or  max by (container, reason) (    sort_desc(kube_pod_container_status_terminated_reason{release=~\"$deployment\"}==1)  and on(pod,namespace) kube_pod_labels{label_dag_id=\"\"} )))",
+          "expr": "sort_desc(max by (container, pod, reason) (\n  max by (container, pod) (    \n  sort_desc(kube_pod_container_status_waiting{release=~\"$deployment\"} and on(pod,namespace) kube_pod_labels{label_dag_id!=\"\"})  ) \n  or  max by (container, reason) (    \n  sort_desc(kube_pod_container_status_waiting_reason{release=~\"$deployment\"}==1)  and on(pod,namespace) kube_pod_labels{label_dag_id!=\"\"} ) \n  or  max by (container, reason) (    sort_desc(kube_pod_container_status_terminated_reason{release=~\"$deployment\"}==1)  and on(pod,namespace) kube_pod_labels{label_dag_id!=\"\"} )))",
           "format": "table",
           "instant": true,
           "intervalFactor": 1,
           "refId": "A"
         }
       ],
-      "title": "Core Container Status",
+      "title": "Task Container Status",
       "transform": "table",
       "type": "table"
     }
