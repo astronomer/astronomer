@@ -21,8 +21,12 @@ data:
     storage:
       cache:
         blobdescriptor: inmemory
+    {{- if .Values.registry.gcs.enabled }}
+    {{- include "registry.gcsConfig" . | indent 6 }}
+    {{- else }}
       filesystem:
         rootdirectory: /var/lib/registry
+    {{- end }}
       delete:
         enabled: true
     http:

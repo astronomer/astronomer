@@ -2,7 +2,7 @@
 ## Astronomer Registry StatefulSet
 #################################
 {{- if .Values.global.baseDomain }}
-kind: StatefulSet
+kind: {{ if .Values.registry.gcs.enabled }}Deployment{{ else }}StatefulSet{{ end }}
 apiVersion: apps/v1beta2
 metadata:
   name: {{ .Release.Name }}-registry
@@ -42,6 +42,9 @@ spec:
               mountPath: /etc/docker/ssl
             - name: data
               mountPath: /var/lib/registry
+            {{- if .Values.registry.gcs.enabled }}
+            {{- include "registry.gcsVolumeMount" . | indent 12 }}
+            {{- end }}
           ports:
             - name: registry-http
               containerPort: {{ .Values.ports.registryHTTP }}
@@ -69,7 +72,10 @@ spec:
         - name: certificate
           secret:
             secretName: {{ .Values.global.tlsSecret }}
-  {{- if not .Values.registry.persistence.enabled }}
+        {{- if .Values.registry.gcs.enabled }}
+        {{- include "registry.gcsVolume" . | indent 8 }}
+        {{- end }}
+  {{- if or (not .Values.registry.persistence.enabled) (.Values.registry.gcs.enabled) }}
         - name: data
           emptyDir: {}
   {{- else }}

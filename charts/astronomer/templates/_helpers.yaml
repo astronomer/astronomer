@@ -98,3 +98,22 @@
 {{ define "prisma.endpoint" -}}
 {{ printf "http://%s-prisma:%s/houston" .Release.Name (.Values.ports.prismaHTTP | toString) }}
 {{- end }}
+
+{{- define "registry.gcsVolume" }}
+- name: gcs-keyfile
+  secret:
+    secretName: astronomer-gcs-keyfile
+{{- end }}
+
+{{- define "registry.gcsVolumeMount" }}
+- name: gcs-keyfile
+  mountPath: /var/gcs-keyfile
+{{- end }}
+
+{{- define "registry.gcsConfig" }}
+gcs:
+  bucket: {{ .Values.registry.gcs.bucket }}
+  keyfile: {{ .Values.registry.gcs.keyfile }}
+  rootdirectory: {{ .Values.registry.gcs.rootdirectory }}
+  chunksize: {{ .Values.registry.gcs.chunksize }}
+{{- end }}

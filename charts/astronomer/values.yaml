@@ -126,6 +126,12 @@ registry:
     service: "docker-registry"
     issuer: "houston"
 
+  gcs:
+    enabled: false
+    bucket: ~
+    keyfile: /var/gcs-keyfile/astronomer-gcs-keyfile
+    rootdirectory: /
+    chunksize: '5242880'
 
 install:
   resources: {}
