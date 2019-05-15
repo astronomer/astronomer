@@ -1910,7 +1910,7 @@
       },
       "id": 62,
       "panels": [],
-      "title": "Container Status",
+      "title": "Task Container Status",
       "type": "row"
     },
     {
@@ -2195,7 +2195,7 @@
           "refId": "A"
         }
       ],
-      "title": "Container Status",
+      "title": "Core Container Status",
       "transform": "table",
       "type": "table"
     }
