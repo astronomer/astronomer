@@ -144,7 +144,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum by (release) (\n  kube_pod_container_status_running{release=~\"$deployment\"}\n) -\ncount by (release) (\n  kube_pod_container_status_running{release=~\"$deployment\"}\n)",
+          "expr": "\nsum by (release) (\n  kube_pod_container_status_running{release=~\"$deployment\"} and on(pod,namespace) kube_pod_labels{label_dag_id=\"\"}\n) -\ncount by (release) (\n  kube_pod_container_status_running{release=~\"$deployment\"} and on(pod,namespace) kube_pod_labels{label_dag_id=\"\"}\n)\n",
           "format": "time_series",
           "instant": true,
           "intervalFactor": 1,
