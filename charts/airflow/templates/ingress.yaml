@@ -16,7 +16,7 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: {{ .Values.ingress.class }}
     kubernetes.io/tls-acme: {{ eq .Values.ingress.acme true | quote }}
-    nginx.ingress.kubernetes.io/custom-http-errors: "404,502,503"
+    nginx.ingress.kubernetes.io/custom-http-errors: "403,404,502,503"
   {{- if .Values.ingress.auth.enabled }}
     nginx.ingress.kubernetes.io/auth-url: https://houston.{{ .Values.ingress.baseDomain }}/v1/authorization
     nginx.ingress.kubernetes.io/auth-signin: https://app.{{ .Values.ingress.baseDomain }}/login
