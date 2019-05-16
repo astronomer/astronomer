@@ -24,7 +24,7 @@ LABEL io.astronomer.docker.component="airflow"
 LABEL io.astronomer.docker.airflow.version="1.10.3"
 
 ARG ORG="astronomer"
-ARG VERSION="v1-10-3"
+ARG VERSION="1.10.3-1"
 ARG SUBMODULES="all, statsd, elasticsearch"
 
 ENV AIRFLOW_REPOSITORY="https://github.com/${ORG}/airflow"
@@ -77,7 +77,7 @@ RUN apk update \
 	&& pip3 install --no-cache-dir cython \
 	&& pip3 install --no-cache-dir numpy \
 	&& pip3 install --no-cache-dir --no-use-pep517 "${AIRFLOW_MODULE}" \
-	&& pip3 install --no-cache-dir "https://github.com/astronomer/astronomer-fab-securitymanager/releases/download/v1.0.1/astronomer_fab_security_manager-1.0.1-py3-none-any.whl" \
+	&& pip3 install --no-cache-dir "https://github.com/astronomer/astronomer-fab-securitymanager/releases/download/v1.0.2/astronomer_fab_security_manager-1.0.2-py3-none-any.whl" \
 	&& cd /usr/lib/python3.6/site-packages/airflow/www_rbac \
 	&& npm install \
 	&& npm run build \
