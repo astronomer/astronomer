@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.9.0] - 2019-05-17
+- Full support for the KubernetesExecutor (beta).
+- Switched to Airflow RBAC dashboard by default, and integrated with Astronomer RBAC.
+- Support for configurable registry backend.
+- Fixed createServiceAccount and updateServiceAccount mutations.
+- Fix orbit caching bug.
+- Fix for cascading deletes of Astronomer RoleBindings.
+- Fix to prevent logs being truncated in the UI.
+- Add streaming logs support to CLI.
+- Smarter default backend for NGINX to show custom error pages.
+- Fix CLI workflow around switching workspaces.
+- Other bug fixes.
+
 ## [0.8.2] - 2019-03-15
 * Fix bug where custom env vars are not synced to pods.
 
