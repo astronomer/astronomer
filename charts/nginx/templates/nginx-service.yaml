@@ -16,6 +16,12 @@ metadata:
     # XXX: Currently NLB has issues in EKS
     # service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
 
+    {{- if .Values.privateLoadBalancer }}
+    # This annotation is detected by EKS to indicate that
+    # it should provision a private ("internal") load balancer
+    service.beta.kubernetes.io/aws-load-balancer-internal: 0.0.0.0/0
+    {{- end }}
+
     # Metrics annotations
     prometheus.io/scrape: "true"
     prometheus.io/port: {{ .Values.ports.metrics | quote }}
