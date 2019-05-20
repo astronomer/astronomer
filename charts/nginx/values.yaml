@@ -31,7 +31,10 @@ loadBalancerIP:
 # Used to restrict IPs which can reach the nginx ingress
 loadBalancerSourceRanges:
 
-## Dependent on cloud provider
+# Set to 'true' when deploying to a private EKS cluster
+privateLoadBalancer: false
+
+# Dependent on cloud provider
 preserveSourceIP: false
 
 proxyConnectTimeout: 15
