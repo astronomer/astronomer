@@ -20,7 +20,7 @@ spec:
   - name: scrape
     port: {{ .Values.ports.scrape }}
     targetPort: scrape
-    protrocol: TCP
+    protocol: TCP
   - name: telemetry
     port: {{ .Values.ports.telemetry }}
     targetPort: telemetry
