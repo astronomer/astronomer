@@ -19,6 +19,9 @@ spec:
       component: registry
       tier: astronomer
       release: {{ .Release.Name }}
+{{- if not .Values.registry.gcs.enabled }}
+  serviceName: {{ .Release.Name }}-registry
+{{- end }}
   template:
     metadata:
       labels:

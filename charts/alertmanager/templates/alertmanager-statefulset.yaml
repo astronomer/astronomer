@@ -13,11 +13,12 @@ metadata:
     heritage: {{ .Release.Service }}
 spec:
   replicas: {{ .Values.replicas }}
+  serviceName: {{ template "alertmanager.fullname" . }}
   selector:
     matchLabels:
-        tier: monitoring
-        component: {{ template "alertmanager.name" . }}
-        release: {{ .Release.Name }}
+      tier: monitoring
+      component: {{ template "alertmanager.name" . }}
+      release: {{ .Release.Name }}
   template:
     metadata:
       labels:

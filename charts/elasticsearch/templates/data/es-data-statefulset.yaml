@@ -31,6 +31,7 @@ spec:
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/es-configmap.yaml") . | sha256sum }}
     spec:
+      terminationGracePeriodSeconds: 3600
       {{- if eq .Values.data.antiAffinity "hard" }}
       affinity:
         podAntiAffinity:
@@ -124,7 +125,6 @@ spec:
         - containerPort: {{ .Values.common.ports.transport }}
           name: transport
           protocol: TCP
-        terminationGracePeriodSeconds: 3600
         # readinessProbe:
         #   httpGet:
         #     path: /_cluster/health?local=true

@@ -9,7 +9,6 @@ metadata:
     tier: logging
     component: kibana-policy
     release: {{ .Release.Name }}
-    workspace: {{ .Values.workspace }}
     chart: {{ template "kibana.chart" . }}
     heritage: {{ .Release.Service }}
 spec:
