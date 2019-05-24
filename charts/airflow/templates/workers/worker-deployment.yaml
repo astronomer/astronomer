@@ -16,7 +16,9 @@ metadata:
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
 spec:
+{{- if $persistence }}
   serviceName: {{ .Release.Name }}-worker
+{{- end }}
   replicas: {{ .Values.workers.replicas }}
   selector:
     matchLabels:

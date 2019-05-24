@@ -114,7 +114,6 @@ spec:
 {{- if not $stateful }}
         - name: logs
           emptyDir: {}
-          sizeLimit: {{ .Values.workers.persistence.size }}
 {{- else }}
   volumeClaimTemplates:
     - metadata:
