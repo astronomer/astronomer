@@ -2,9 +2,9 @@
 
 The purpose of this guide is to describe the Astronomer Platform release process for platform maintainers.
 
-In the examples below, the desired version is `v0.3.0`.  Replace this anywhere with the version you're releasing.
+In the examples below, the desired version is `v0.9.0`.  Replace this anywhere with the version you're releasing.
 
-## 1. Create a `v0.3-stable` branch off of master for each platform component
+## 1. Create a `release-0.9` branch off of master for each platform component
 
 The [platform component repos](https://github.com/astronomerio/astronomer/tree/master/docker/platform) are:
 
@@ -28,11 +28,11 @@ Note: Keep [airflow](https://github.com/astronomerio/astronomer/blob/master/dock
 
 ## 3. Create a GitHub Release for each platform component repo
 
-- Tag version: `v0.3.0`
+- Tag version: `v0.9.0`
 - Target: `v0.3-stable` (branch)
-- Release title: `v0.3.0`
+- Release title: `v0.9.0`
 
-Creating a release will automatically create the `v0.3.0` tag as well.
+Creating a release will automatically create the `v0.9.0` tag as well.
 
 \*Note: Wait to tag the `astronomer` and `helm.astronomer.io` repos until the last step of this guide.
 
@@ -103,6 +103,6 @@ make push
 
 Create tags/releases for `astronomer` and `helm.astronomer.io`.
 
-- Tag version: `v0.3.0`
+- Tag version: `v0.9.0`
 - Target: `v0.3-stable` (branch)
-- Release title: `v0.3.0`
+- Release title: `v0.9.0`
