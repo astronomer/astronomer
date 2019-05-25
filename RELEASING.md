@@ -13,8 +13,8 @@ The [platform component repos](https://github.com/astronomerio/astronomer/tree/m
 1. [default-backend](https://github.com/astronomerio/default-backend)
 1. [houston-api](https://github.com/astronomerio/houston-api)
 1. [orbit-ui](https://github.com/astronomerio/orbit-ui)
-1. [astronomer](https://github.com/astronomerio/astronomer) (second to last)
-1. [helm.astronomer.io](https://github.com/astronomerio/helm.astronomer.io) (last)
+1. [astronomer](https://github.com/astronomerio/astronomer)
+1. [helm.astronomer.io](https://github.com/astronomerio/helm.astronomer.io)
 
 ## 2. Update `ARG VERSION` tag in each platform component Dockerfile
 
