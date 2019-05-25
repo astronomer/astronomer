@@ -79,6 +79,10 @@
 /etc/houston/tls/registry
 {{- end }}
 
+{{ define "houston.tlsRegistryCertificatePath" -}}
+/usr/local/share/ca-certificates/registry.crt
+{{- end }}
+
 {{ define "registry.authSecret" -}}
 {{ default (printf "%s-registry-auth" .Release.Name) .Values.registry.auth.secretName }}
 {{- end }}

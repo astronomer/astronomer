@@ -67,6 +67,9 @@ spec:
               mountPath: {{ template "houston.jwtCertificatePath" . }}
             - name: registry-tls-volume
               mountPath: {{ template "houston.jwtRegistryCertificatePath" . }}
+            - name: registry-tls-volume
+              mountPath: {{ template "houston.tlsRegistryCertificatePath" . }}
+              subPath: tls.crt
           {{- end }}
           ports:
             - name: houston-http
