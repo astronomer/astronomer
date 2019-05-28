@@ -92,7 +92,7 @@ spec:
             {{- range $i, $config := .Values.houston.env }}
             - name: {{ $config.name }}
               value: {{ $config.value | quote }}
-              {{- end }}
+            {{- end }}
             - name: NODE_ENV
               value: "production"
             - name: JWT__CERT_PATH
