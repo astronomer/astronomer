@@ -1,0 +1,157 @@
+# This is an example configuration that will deploy the umbrella chart
+# with master tags for all images.
+
+#################################
+## Astronomer configuration
+#################################
+astronomer:
+  images:
+    commander:
+      repository: astronomerinc/ap-commander
+      tag: dev
+      pullPolicy: Always
+    registry:
+      repository: astronomerinc/ap-registry
+      tag: master
+      pullPolicy: Always
+    houston:
+      repository: astronomerinc/ap-houston-api
+      tag: dev
+      pullPolicy: Always
+    orbit:
+      repository: astronomerinc/ap-orbit-ui
+      tag: dev
+      pullPolicy: Always
+    dbBootstrapper:
+      repository: astronomerinc/ap-db-bootstrapper
+      tag: master
+      pullPolicy: Always
+    cliInstall:
+      repository: astronomerinc/ap-cli-install
+      tag: master
+      pullPolicy: Always
+    prisma:
+      repository: astronomerinc/ap-prisma
+      tag: master
+      pullPolicy: Always
+    kubeReplicator:
+      repository: astronomerinc/ap-kube-replicator
+      tag: master
+      pullPolicy: Always
+
+
+#################################
+## Nginx configuration
+#################################
+nginx:
+  images:
+    nginx:
+      repository: astronomerinc/ap-nginx
+      tag: master
+      pullPolicy: Always
+    defaultBackend:
+      repository: astronomerinc/ap-default-backend
+      tag: master
+      pullPolicy: Always
+
+
+#################################
+## Grafana configuration
+#################################
+grafana:
+  images:
+    grafana:
+      repository: astronomerinc/ap-grafana
+      tag: master
+      pullPolicy: Always
+    dbBootstrapper:
+      repository: astronomerinc/ap-db-bootstrapper
+      tag: master
+      pullPolicy: IfNotPresent
+
+
+#################################
+## Kibana configuration
+#################################
+kibana:
+  images:
+    kibana:
+      repository: astronomerinc/ap-kibana
+      tag: master
+      pullPolicy: Always
+
+
+#################################
+## Elasticsearch configuration
+#################################
+elasticsearch:
+  images:
+    es:
+      repository: astronomerinc/ap-elasticsearch
+      tag: master
+      pullPolicy: Always
+    init:
+      repository: astronomerinc/ap-base
+      tag: master
+      pullPolicy: Always
+    curator:
+      repository: astronomerinc/ap-curator
+      tag: master
+      pullPolicy: Always
+    exporter:
+      repository: astronomerinc/ap-elasticsearch-exporter
+      tag: master
+      pullPolicy: Always
+    nginx:
+      repository: astronomerinc/ap-nginx-es
+      tag: master
+      pullPolicy: Always
+
+
+#################################
+## Fluentd configuration
+#################################
+fluentd:
+  images:
+    fluentd:
+      repository: astronomerinc/ap-fluentd
+      tag: master
+      pullPolicy: Always
+
+
+#################################
+## Kubestate configuration
+#################################
+kube-state:
+  images:
+    kubeState:
+      repository: astronomerinc/ap-kube-state
+      tag: master
+      pullPolicy: Always
+
+
+#################################
+## Prometheus configuration
+#################################
+prometheus:
+  images:
+    init:
+      repository: astronomerinc/ap-base
+      tag: master
+      pullPolicy: Always
+    prometheus:
+      repository: astronomerinc/ap-prometheus
+      tag: master
+      pullPolicy: Always
+
+
+#################################
+## Alertmanager configuration
+#################################
+alertmanager:
+  images:
+    alertmanager:
+      repository: astronomerinc/ap-alertmanager
+      tag: master
+      pullPolicy: IfNotPresent
+
