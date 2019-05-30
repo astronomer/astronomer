@@ -46,6 +46,7 @@ spec:
             {{- if .Values.global.singleNamespace }}
             - --watch-namespace={{ .Release.Namespace }}
             {{- end }}
+            - --publish-service={{ .Release.Namespace }}/{{ template "nginx.fullname" . }}
           ports:
             - name: http
               containerPort: {{ .Values.ports.http }}
