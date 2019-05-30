@@ -35,8 +35,7 @@ spec:
     spec:
       restartPolicy: {{ .Values.exporter.restartPolicy }}
       securityContext:
-        runAsNonRoot: true
-        runAsUser: 1000
+        runAsUser: 0
       containers:
         - name: {{ .Chart.Name }}
           image: {{ template "exporter.image" . }}
