@@ -29,7 +29,7 @@ data:
 
     auth:
       local:
-        enabled: true
+        enabled: false
       google:
         enabled: true
         clientId: ~
