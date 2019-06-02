@@ -76,7 +76,7 @@ RUN apk update \
 	&& pip3 install --no-cache-dir --upgrade setuptools==39.0.1 \
 	&& pip3 install --no-cache-dir cython \
 	&& pip3 install --no-cache-dir numpy \
-	&& pip3 install --no-cache-dir --no-use-pep517 "${AIRFLOW_MODULE}" \
+	&& pip3 install --no-cache-dir "${AIRFLOW_MODULE}" \
 	&& pip3 install --no-cache-dir "https://github.com/astronomer/astronomer-fab-securitymanager/releases/download/v1.0.2/astronomer_fab_security_manager-1.0.2-py3-none-any.whl" \
 	&& cd /usr/lib/python3.6/site-packages/airflow/www_rbac \
 	&& npm install \
