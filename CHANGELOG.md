@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.9.1] - 2019-06-05
+- Support for Okta as oauth integration
+- CLI compatibility fixes
+- RBAC enabled locally
+- Bug fixes
+
 ## [0.9.0] - 2019-05-17
 - Full support for the KubernetesExecutor (beta).
 - Switched to Airflow RBAC dashboard by default, and integrated with Astronomer RBAC.
