@@ -25,9 +25,11 @@ global:
 
   # Enable/Disable components.
   # Full platform is enabled by default.
-  # Airflow chart is disabled is should be deployed via the platform using the API/CLI/UI.
+  # Airflow chart is disabled and should be deployed via the platform using the API/CLI/UI.
   airflowEnabled: false
 
+  # Enables necessary components for compatibility with Istio Service Mesh
+  istioEnabled: false
 
 #################################
 ## Default tagged groups enabled
