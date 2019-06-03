@@ -1,23 +1,23 @@
 images:
   es:
     repository: astronomerinc/ap-elasticsearch
-    tag: 0.9.1-alpha.2
+    tag: 0.9.1-alpha.3
     pullPolicy: IfNotPresent
   init:
     repository: astronomerinc/ap-base
-    tag: 0.9.1-alpha.2
+    tag: 0.9.1-alpha.3
     pullPolicy: IfNotPresent
   curator:
     repository: astronomerinc/ap-curator
-    tag: 0.9.1-alpha.2
+    tag: 0.9.1-alpha.3
     pullPolicy: IfNotPresent
   exporter:
     repository: astronomerinc/ap-elasticsearch-exporter
-    tag: 0.9.1-alpha.2
+    tag: 0.9.1-alpha.3
     pullPolicy: IfNotPresent
   nginx:
     repository: astronomerinc/ap-nginx-es
-    tag: 0.9.1-alpha.2
+    tag: 0.9.1-alpha.3
     pullPolicy: IfNotPresent
 
 common:

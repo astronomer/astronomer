@@ -5,11 +5,11 @@
 images:
   init:
     repository: astronomerinc/ap-base
-    tag: 0.9.1-alpha.2
+    tag: 0.9.1-alpha.3
     pullPolicy: IfNotPresent
   prometheus:
     repository: astronomerinc/ap-prometheus
-    tag: 0.9.1-alpha.2
+    tag: 0.9.1-alpha.3
     pullPolicy: IfNotPresent
 
 resources: {}
