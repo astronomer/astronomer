@@ -12,7 +12,7 @@ metadata:
     heritage: {{ .Release.Service }}
 data:
   # Policy was generated using https://report-uri.com/home/generate
-  Content-Security-Policy: "default-src 'self' *.{{ .Values.global.baseDomain }}; script-src 'unsafe-inline' 'unsafe-eval' *.{{ .Values.global.baseDomain }} cdn.jsdelivr.net cdn.astronomer.io cdn.metarouter.io www.google-analytics.com; img-src 'self' data: *; connect-src *.{{ .Values.global.baseDomain }} wss://*.{{ .Values.global.baseDomain }} e.metarouter.io; style-src 'unsafe-inline' *.{{ .Values.global.baseDomain }} cdn.jsdelivr.net"
+  Content-Security-Policy: "default-src 'self' *.{{ .Values.global.baseDomain }}; script-src 'unsafe-inline' 'unsafe-eval' *.{{ .Values.global.baseDomain }} cdn.jsdelivr.net cdn.astronomer.io cdn.metarouter.io www.google-analytics.com js.stripe.com; img-src 'self' data: *; connect-src *.{{ .Values.global.baseDomain }} wss://*.{{ .Values.global.baseDomain }} e.metarouter.io; style-src 'unsafe-inline' *.{{ .Values.global.baseDomain }} cdn.jsdelivr.net; frame-src js.stripe.com"
   Referrer-Policy: "no-referrer"
   X-Frame-Options: "deny"
   X-XSS-Protection: "1; mode=block"
