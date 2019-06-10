@@ -1,4 +1,4 @@
-name: astronomer
+name: "helm.astronomer.io"
 version: 0.9.1-alpha.4
 appVersion: 0.9.1-alpha.4
 description: Helm chart to deploy the Astronomer Platform

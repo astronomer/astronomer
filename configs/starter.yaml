@@ -18,6 +18,5 @@ global:
 nginx:
   # IP address the nginx ingress should bind to
   loadBalancerIP: ~
-
-  # Set to 'true' when deploying to a private EKS cluster
+  # set to 'true' when deploying to a private EKS cluster
   privateLoadBalancer: false
