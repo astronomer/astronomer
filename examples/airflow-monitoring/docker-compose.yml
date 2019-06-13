@@ -1,0 +1,79 @@
+---
+version: "2"
+
+volumes:
+  postgres_data:
+  redis_data:
+  prometheus_data:
+  worker_data:
+
+services:
+  postgres:
+    image: postgres:10.1-alpine
+    restart: unless-stopped
+    labels:
+      io.astronomer.docker: "true"
+      io.astronomer.docker.open: "true"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./initdb.sql:/docker-entrypoint-initdb.d/initdb.sql
+
+  statsd-exporter:
+    image: astronomerinc/ap-statsd-exporter:latest
+    command:
+      - "-statsd.mapping-config=/etc/statsd-exporter/mappings.yml"
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+    labels:
+      io.astronomer.docker: "true"
+      io.astronomer.docker.open: "true"
+    ports:
+      - "9102:9102"
+      - "9125:9125/udp"
+
+  prometheus:
+    image: astronomerinc/ap-prometheus:latest
+    command:
+      - "--config.file=/etc/prometheus/config/docker-compose.yml"
+      - "--storage.tsdb.path=/prometheus"
+    restart: unless-stopped
+    labels:
+      io.astronomer.docker: "true"
+    ports:
+      - "9090:9090"
+    volumes:
+      - prometheus_data:/prometheus
+
+  grafana:
+    image: astronomerinc/ap-grafana:latest
+    restart: unless-stopped
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_DATABASE_URL: postgres://grafana:grafana@postgres:5432/grafana
+    depends_on:
+      - postgres
+      - prometheus
+    labels:
+      io.astronomer.docker: "true"
+      io.astronomer.docker.open: "true"
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./datasource.yaml:/etc/grafana/provisioning/datasources/datasource.yaml
+
+  cadvisor:
+    image: astronomerinc/ap-cadvisor:latest
+    restart: unless-stopped
+    labels:
+      io.astronomer.docker: "true"
+      io.astronomer.docker.open: "true"
+    ports:
+      - "8081:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
