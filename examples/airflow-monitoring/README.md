@@ -39,20 +39,37 @@ Run Airflow yourself using `virtualenv` and `virtualenvwrapper`. This lets you r
 Switch to your locally checked out Airflow source directory and
 
 ```
+# if using virtualenvwrapper
 workon airflow
+
+# if using virtualenv
+source {virtualenv_install_dir}/bin/activate
 ```
 
-Install python packages:
+Install python packages in editable mode:
 
 ```
 pip install -e ".[statsd,postgres]"
 ```
+
+if you are installing from apache/master, you will need to setup the node environment described [here](https://github.com/apache/airflow/blob/master/CONTRIBUTING.md#setting-up-the-node--npm-javascript-environment)
+
 
 From there you can run Airflow commands such as:
 
 ```
 airflow initdb
 airflow version
+
+# at this point, if you want to use postgres instead of sqllite, you can modify you airflow.cfg to point to 
+# postgres running in your docker-compose stack.
+executor = LocalExecutor
+sql_alchemy_conn = postgres://postgres:postgres@localhost:5432
+
+#then init the db again
+airflow initdb
+
+# depending on airlfow version, create a user one of the two following ways
 airflow users --create --username admin --password admin --role Admin --email me@example.org --firstname admin --lastname admin
 airflow create_user --username admin --password admin --role Admin --email me@example.org --firstname admin --lastname admin
 ```
