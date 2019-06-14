@@ -95,6 +95,11 @@ spec:
             {{- end }}
             - name: NODE_ENV
               value: "production"
+            - name: DATABASE_CONNECTION
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "houston.backendSecret" . }}
+                  key: connection
             - name: JWT__CERT_PATH
               value: {{ template "houston.jwtCertificatePath" . }}
             - name: JWT__REGISTRY__CERT_PATH
