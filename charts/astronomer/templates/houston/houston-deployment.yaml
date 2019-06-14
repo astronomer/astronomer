@@ -95,7 +95,7 @@ spec:
             {{- end }}
             - name: NODE_ENV
               value: "production"
-            - name: DATABASE_CONNECTION
+            - name: DATABASE__CONNECTION
               valueFrom:
                 secretKeyRef:
                   name: {{ template "houston.backendSecret" . }}
