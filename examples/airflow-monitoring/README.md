@@ -54,6 +54,12 @@ pip install -e ".[statsd,postgres]"
 
 if you are installing from apache/master, you will need to setup the node environment described [here](https://github.com/apache/airflow/blob/master/CONTRIBUTING.md#setting-up-the-node--npm-javascript-environment)
 
+In particular, be sure to run these commands:
+
+```
+cd airflow/www/
+npm install
+```
 
 From there you can run Airflow commands such as:
 
