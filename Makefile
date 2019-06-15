@@ -18,7 +18,6 @@ build: update-version
 	for chart in ${CHARTS} ; do \
 		helm package --version ${ASTRONOMER_VERSION} -d ${OUTPUT} charts/$${chart} || exit 1; \
 	done; \
-	helm package --version ${ASTRONOMER_VERSION} -d ${OUTPUT} . || exit 1; \
 	$(MAKE) build-index
 
 .PHONY: build-index
@@ -36,7 +35,6 @@ push-repo:
 	for chart in ${CHARTS} ; do \
 		gsutil cp -a public-read ${OUTPUT}/$${chart}-${ASTRONOMER_VERSION}.tgz ${BUCKET} || exit 1; \
 	done; \
-	gsutil cp -a public-read ${OUTPUT}/helm.astronomer.io-${ASTRONOMER_VERSION}.tgz ${BUCKET} || exit 1; \
 	$(MAKE) push-index
 
 .PHONY: push-index
@@ -48,7 +46,6 @@ clean:
 	for chart in ${CHARTS} ; do \
 		rm ${OUTPUT}/$${chart}-${ASTRONOMER_VERSION}.tgz || exit 1; \
 	done; \
-	rm ${OUTPUT}/helm.astronomer.io-${ASTRONOMER_VERSION}.tgz || exit 1; \
 
 .PHONY: update-image-tags
 update-image-tags: check-env
