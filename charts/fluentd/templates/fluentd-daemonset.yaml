@@ -31,6 +31,12 @@ spec:
         sidecar.istio.io/inject: "false"
         {{- end }}
     spec:
+      nodeSelector:
+{{ toYaml (default .Values.global.deploymentNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
+      affinity:
+{{ toYaml (default .Values.global.deploymentNodePool.affinity .Values.affinity) | indent 8 }}
+      tolerations:
+{{ toYaml (default .Values.global.deploymentNodePool.tolerations .Values.tolerations) | indent 8 }}
       serviceAccountName: {{ template "fluentd.fullname" . }}
       containers:
       - name: {{ template "fluentd.fullname" . }}

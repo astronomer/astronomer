@@ -1,3 +1,7 @@
+nodeSelector: {}
+affinity: {}
+tolerations: []
+
 images:
   fluentd:
     repository: astronomerinc/ap-fluentd

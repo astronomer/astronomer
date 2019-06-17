@@ -1,3 +1,7 @@
+nodeSelector: {}
+affinity: {}
+tolerations: []
+
 images:
   kibana:
     repository: astronomerinc/ap-kibana

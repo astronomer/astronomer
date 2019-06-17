@@ -30,6 +30,23 @@ global:
 
   # Enables necessary components for compatibility with Istio Service Mesh
   istioEnabled: false
+  
+  # Set nodeSelector, affinity, and tolerations values for platform and deployment related pods.
+  # This allows for separation of platform and airflow pods between kubernetes node pools.
+  # Pods in the platformNodePool include alertmanager, cli-install, commander, houston, kube-replicator, orbit, prisma, 
+  # registry, es-client, es-data, es-exporter, es-master, nginx-es, grafana, kibana, kube-state, nginx, nginx-default, prometheus.
+  # Pods in the deploymentNodePool include fluentd.
+  # nodeSelector, affinity, and tolerations values for airflow deployment pods are assigned via houston config.
+  # See more information on pod / node assignment here: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
+  platformNodePool:
+    nodeSelector: {}
+    affinity: {}
+    tolerations: []
+  
+  deploymentNodePool:
+    nodeSelector: {}
+    affinity: {}
+    tolerations: []
 
 #################################
 ## Default tagged groups enabled

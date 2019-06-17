@@ -26,6 +26,12 @@ spec:
         component: kube-state
         release: {{ .Release.Name }}
     spec:
+      nodeSelector:
+{{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
+      affinity:
+{{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 8 }}
+      tolerations:
+{{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       serviceAccountName: {{ template "kube-state.fullname" . }}
       containers:
       - name: {{ template "kube-state.fullname" . }}

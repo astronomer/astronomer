@@ -6,6 +6,10 @@
 uid: 100
 gid: 101
 
+nodeSelector: {}
+affinity: {}
+tolerations: []
+
 # Ingress configuration
 ingress:
   # Enable ingress resource

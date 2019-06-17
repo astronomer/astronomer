@@ -52,6 +52,12 @@ spec:
         checksum/pgbouncer-config-secret: {{ include (print $.Template.BasePath "/secrets/pgbouncer-config-secret.yaml") . | sha256sum }}
         checksum/airflow-config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
     spec:
+      nodeSelector:
+{{ toYaml .Values.nodeSelector | indent 8 }}
+      affinity:
+{{ toYaml .Values.affinity | indent 8 }}
+      tolerations:
+{{ toYaml .Values.tolerations | indent 8 }}
       restartPolicy: Always
       terminationGracePeriodSeconds: {{ if (or $local $kube)}}10{{ else }}{{ .Values.workers.terminationGracePeriodSeconds }}{{ end }}
       serviceAccountName: {{ .Release.Name }}-scheduler-serviceaccount

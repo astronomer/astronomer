@@ -72,8 +72,10 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
-    {{- if eq (default .Values.global.antiAffinity .Values.antiAffinity) "hard" }}
+      nodeSelector:
+{{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
       affinity:
+    {{- if eq .Values.antiAffinity "hard" }}
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
             - topologyKey: "kubernetes.io/hostname"
@@ -82,16 +84,20 @@ spec:
                   tier: {{ template "nginx.name" . }}
                   component: ingress-controller
                   release: {{ .Release.Name }}
-    {{- else if eq (default .Values.global.antiAffinity .Values.antiAffinity) "soft" }}
-      affinity:
+    {{- else if eq .Values.antiAffinity "soft" }}
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
           - weight: 1
             podAffinityTerm:
-              topologyKey: kubernetes.io/hostname
+              topologyKey: "kubernetes.io/hostname"
               labelSelector:
                 matchLabels:
                   tier: {{ template "nginx.name" . }}
                   component: ingress-controller
                   release: {{ .Release.Name }}
+    {{- if .Values.global.platformNodePool.affinity }}
+{{ toYaml .Values.global.platformNodePool.affinity | indent 8 }}
+    {{- end }} 
+      tolerations:
+{{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
     {{- end }}

@@ -27,6 +27,12 @@ spec:
       annotations:
         checksum/configmap: {{ include (print $.Template.BasePath "/cli-install/cli-install-configmap.yaml") . | sha256sum }}
     spec:
+      nodeSelector:
+{{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
+      affinity:
+{{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 8 }}
+      tolerations:
+{{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       terminationGracePeriodSeconds: 60
       containers:
         - name: {{ .Release.Name }}-install

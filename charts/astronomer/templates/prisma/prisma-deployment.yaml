@@ -25,6 +25,12 @@ spec:
         tier: astronomer
         release: {{ .Release.Name }}
     spec:
+      nodeSelector:
+{{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
+      affinity:
+{{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 8 }}
+      tolerations:
+{{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       restartPolicy: Always
       {{- if and (not .Values.houston.backendSecretName) (not .Values.houston.backendConnection) }}
       serviceAccountName: {{ template "prisma.bootstrapperServiceAccount" . }}

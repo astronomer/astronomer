@@ -29,6 +29,12 @@ spec:
         checksum/config: {{ include (print $.Template.BasePath "/prometheus-config-configmap.yaml") . | sha256sum }}
         checksum/alerts: {{ include (print $.Template.BasePath "/prometheus-alerts-configmap.yaml") . | sha256sum }}
     spec:
+      nodeSelector:
+{{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
+      affinity:
+{{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 8 }}
+      tolerations:
+{{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       restartPolicy: Always
       serviceAccountName: {{ template "prometheus.fullname" . }}
       initContainers:

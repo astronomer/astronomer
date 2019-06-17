@@ -30,6 +30,8 @@ spec:
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/es-configmap.yaml") . | sha256sum }}
     spec:
+      nodeSelector:
+{{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
       {{- if eq .Values.client.antiAffinity "hard" }}
       affinity:
         podAntiAffinity:
@@ -53,6 +55,11 @@ spec:
                   release: {{ .Release.Name }}
                   role: client
       {{- end }}
+    {{- if .Values.global.platformNodePool.affinity }}
+{{ toYaml .Values.global.platformNodePool.affinity | indent 8 }}
+    {{- end }}
+      tolerations:
+{{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       initContainers:
       - name: sysctl
         image: {{ template "init.image" . }}
