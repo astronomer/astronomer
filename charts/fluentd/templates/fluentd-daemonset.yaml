@@ -27,6 +27,9 @@ spec:
         checksum/config: {{ include (print $.Template.BasePath "/fluentd-configmap.yaml") . | sha256sum }}
         prometheus.io/scrape: "true"
         prometheus.io/port: {{ .Values.ports.promScrape | quote }}
+        {{- if .Values.global.istioEnabled }}
+        sidecar.istio.io/inject: "false"
+        {{- end }}
     spec:
       serviceAccountName: {{ template "fluentd.fullname" . }}
       containers:
