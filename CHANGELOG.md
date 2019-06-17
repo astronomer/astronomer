@@ -2,10 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.9.1] - 2019-06-05
+## [0.9.1] - 2019-06-17
 - Support for Okta as oauth integration
 - CLI compatibility fixes
 - RBAC enabled locally
+- Workspace level billing
+- Stopped creation of default workspace
+- Support for helm 2.14
+- Disable email/password auth by default
 - Bug fixes
 
 ## [0.9.0] - 2019-05-17
