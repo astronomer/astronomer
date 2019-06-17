@@ -78,14 +78,14 @@ spec:
             httpGet:
               path: /v1/healthz
               port: {{ .Values.ports.houstonHTTP }}
-            initialDelaySeconds: 10
+            initialDelaySeconds: 30
             periodSeconds: 10
             failureThreshold: 10
           readinessProbe:
             httpGet:
               path: /v1/healthz
               port: {{ .Values.ports.houstonHTTP }}
-            initialDelaySeconds: 10
+            initialDelaySeconds: 30
             periodSeconds: 10
             failureThreshold: 10
           env:
