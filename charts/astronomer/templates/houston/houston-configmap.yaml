@@ -84,6 +84,9 @@ data:
         log: error
     {{- end }}
 
+    prometheus:
+      host: {{ printf "%s-prometheus" .Release.Name }}
+
   # These are any user-specified config overrides.
   local-production.yaml: |
 {{ toYaml .Values.houston.config | indent 4 }}

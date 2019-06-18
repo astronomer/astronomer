@@ -23,6 +23,11 @@ spec:
   - from:
     - podSelector:
         matchLabels:
+          tier: astronomer
+          component: houston
+          release: {{ .Release.Name }}
+    - podSelector:
+        matchLabels:
           tier: monitoring
           component: grafana
           release: {{ .Release.Name }}
