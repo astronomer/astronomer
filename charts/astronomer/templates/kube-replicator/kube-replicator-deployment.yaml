@@ -37,7 +37,7 @@ spec:
       containers:
         - name: {{ .Release.Name }}-kube-replicator
           image: {{ template "kubeReplicator.image" . }}
-          imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
+          imagePullPolicy: {{ .Values.images.kubeReplicator.pullPolicy }}
           resources:
 {{ toYaml .Values.kubeReplicator.resources | indent 12 }}
 {{- end }}
