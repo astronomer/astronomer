@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM prismagraphql/prisma:1.32.2-heroku
+FROM prismagraphql/prisma:1.34.0-heroku
 LABEL maintainer="Astronomer <humans@astronomer.io>"
 
 ARG BUILD_NUMBER=-1
