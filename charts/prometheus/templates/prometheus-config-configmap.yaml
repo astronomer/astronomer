@@ -165,6 +165,7 @@ data:
             target_label: __address__
 
       - job_name: airflow
+        scrape_interval: 5s # Faster scrape to power dashboards
         kubernetes_sd_configs:
           - role: service
           {{- if .Values.global.singleNamespace }}

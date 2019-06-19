@@ -178,7 +178,7 @@ prometheus:
   # Persistence configuration
   persistence:
     enabled: true
-    size: "100Gi"
+    size: "150Gi"
 
   # Configure resources
   resources:
@@ -186,8 +186,8 @@ prometheus:
       cpu: "1000m"
       memory: "4Gi"
     limits:
-      cpu: "1000m"
-      memory: "4Gi"
+      cpu: "2000m"
+      memory: "8Gi"
 
 
 #################################
