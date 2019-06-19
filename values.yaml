@@ -78,11 +78,11 @@ astronomer:
   houston:
     resources:
       requests:
-        cpu: "250m"
-        memory: "512Mi"
-      limits:
-        cpu: "800m"
+        cpu: "500m"
         memory: "1024Mi"
+      limits:
+        cpu: "1000m"
+        memory: "2048Mi"
 
   prisma:
     resources:
