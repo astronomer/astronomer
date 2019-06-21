@@ -5,7 +5,7 @@ tolerations: []
 images:
   kibana:
     repository: astronomerinc/ap-kibana
-    tag: 0.9.1
+    tag: 0.9.2-rc.1
     pullPolicy: IfNotPresent
 
 clusterName: "astronomer"
