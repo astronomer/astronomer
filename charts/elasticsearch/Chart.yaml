@@ -1,5 +1,5 @@
 name: elasticsearch
-version: 0.9.2-rc.1
+version: 0.9.2-rc.2
 description: A Helm chart to deploy the Astronomer Platform Elasticsearch module
 keywords:
   - astronomer
