@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.9.2] - 2019-06-24
+- Fix local env link and user/password in CLI
+- Fix early data load issue in orbit metrics
+- Fix deployment listing issue in orbit
+
 ## [0.9.1] - 2019-06-17
 - Support for Okta as oauth integration
 - CLI compatibility fixes
