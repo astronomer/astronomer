@@ -12,6 +12,7 @@ data:
   elasticsearch.yml: |-
     cluster:
       name: ${CLUSTER_NAME}
+      initial_master_nodes: ${NODE_NAME}
 
     node:
       master: ${NODE_MASTER}
@@ -28,7 +29,6 @@ data:
       memory_lock: ${MEMORY_LOCK:false}
 
     http:
-      enabled: ${HTTP_ENABLE}
       compression: true
       cors:
         enabled: ${HTTP_CORS_ENABLE}

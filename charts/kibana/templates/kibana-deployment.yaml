@@ -42,7 +42,7 @@ spec:
         {{- end }}
         - name: CLUSTER_NAME
           value: {{ .Values.clusterName }}
-        - name: ELASTICSEARCH_URL
+        - name: ELASTICSEARCH_HOSTS
           value: "http://{{ .Release.Name }}-elasticsearch:9200"
         - name: ELASTICSEARCH_REQUESTTIMEOUT
           value: "60000"
