@@ -42,7 +42,7 @@ images:
     pullPolicy: IfNotPresent
 
 orbit:
-  env: {}
+  env: []
   resources: {}
   #  limits:
   #   cpu: 100m
@@ -73,7 +73,7 @@ houston:
   # If not specified, we use an auto-generated, self-signed certificate.
   jwtSigningCertificateSecretName: ~
 
-  env: {}
+  env: []
   resources: {}
   #  limits:
   #   cpu: 100m
@@ -87,7 +87,7 @@ houston:
   config: {}
 
 prisma:
-  env: {}
+  env: []
   resources: {}
   #  limits:
   #   cpu: 100m
@@ -98,7 +98,7 @@ prisma:
 
 
 commander:
-  env: {}
+  env: []
   resources: {}
    # limits:
    #  cpu: 100m
