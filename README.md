@@ -1,6 +1,8 @@
 # The Astronomer Platform
 
-Astronomer is a commercial "Airflow as a Service" platform that runs on Kubernetes. Source code is made available for the benefit of our customers, if you'd like to use the platform [reach out for a license](https://www.astronomer.io/enterprise/) or try out [Astronomer Cloud](https://www.astronomer.io/cloud/).
+Astronomer makes it easy to run, monitor, and scale [Apache Airflow](https://github.com/apache/airflow) deployments in our cloud or yours. Source code is made available for the benefit of our customer base.
+
+If you'd like to explore our offerings, [start a 14-Day Trial on Astronomer Cloud](https://astronomer.io/trial/) and take a look at our [Getting Started Guide](https://www.astronomer.io/docs/getting-started/) to get spun up. If you're interested in hosting Astronomer in your own environment, you'll have a chance to indicate interest when filling out the trial form above.
 
 ## Architecture
 
@@ -10,6 +12,7 @@ Astronomer is a commercial "Airflow as a Service" platform that runs on Kubernet
 
 * [Amazon Web Services EKS](https://www.astronomer.io/docs/ee-installation-eks/)
 * [Google Cloud Platform GKE](https://www.astronomer.io/docs/ee-installation-gke/)
+* [Digital Ocean Kubernetes](https://preview.astronomer.io/docs/ee-installation-do/)
 
 ## Components
 
