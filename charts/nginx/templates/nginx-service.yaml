@@ -20,6 +20,7 @@ metadata:
     # it should provision a private ("internal") load balancer
     service.beta.kubernetes.io/aws-load-balancer-internal: 0.0.0.0/0
     cloud.google.com/load-balancer-type: "Internal"
+    service.beta.kubernetes.io/azure-load-balancer-internal: "true"
     {{- end }}
 
     # Metrics annotations
