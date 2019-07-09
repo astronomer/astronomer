@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.9.3] - 2019-07-09
+- CLI bug fixes
+- Azure internal loadbalancer support
+- Houston migration from 0.9.x
+
 ## [0.9.2] - 2019-06-24
 - Fix local env link and user/password in CLI
 - Fix early data load issue in orbit metrics
