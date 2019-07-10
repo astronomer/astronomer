@@ -3,7 +3,7 @@
 #################################
 {{- if and .Values.rbacEnabled .Values.allowPodLaunching }}
 {{- $grantScheduler := or (eq .Values.executor "LocalExecutor") (eq .Values.executor "SequentialExecutor") (eq .Values.executor "KubernetesExecutor") }}
-{{- $grantWorker := eq .Values.executor "CeleryExecutor" }}
+{{- $grantWorker := or (eq .Values.executor "CeleryExecutor") (eq .Values.executor "KubernetesExecutor") }}
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
