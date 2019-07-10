@@ -12,8 +12,11 @@ data:
   elasticsearch.yml: |-
     cluster:
       name: ${CLUSTER_NAME}
-      initial_master_nodes: ${NODE_NAME}
-
+      initial_master_nodes:
+        {{ $releaseName := .Release.Name }}
+        {{ range $i, $e := until (int .Values.master.replicas) }}
+        - {{ $releaseName }}-elasticsearch-master-{{ $i }}
+        {{ end }}
     node:
       master: ${NODE_MASTER}
       name: ${NODE_NAME}
