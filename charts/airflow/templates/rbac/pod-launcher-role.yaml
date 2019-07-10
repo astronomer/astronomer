@@ -1,7 +1,7 @@
 ################################
 ## Airflow Pod Launcher Role
 #################################
-{{- if and .Values.rbacEnabled }}
+{{- if and .Values.rbacEnabled .Values.allowPodLaunching }}
 kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
