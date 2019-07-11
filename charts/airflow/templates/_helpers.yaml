@@ -13,6 +13,11 @@
       secretKeyRef:
         name: {{ template "airflow_metadata_secret" . }}
         key: connection
+  - name: ARIFLOW_CONN_AIRFLOW_DB
+    valueFrom:
+      secretKeyRef:
+        name: {{ template "airflow_metadata_secret" . }}
+        key: connection
   {{- if eq .Values.executor "CeleryExecutor" }}
   - name: AIRFLOW__CELERY__CELERY_RESULT_BACKEND
     valueFrom:
