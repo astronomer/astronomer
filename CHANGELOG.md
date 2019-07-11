@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.9.4] - 2019-07-11
+- Pin werkzeug dependency in Airflow image
+
 ## [0.9.3] - 2019-07-09
 - CLI bug fixes
 - Azure internal loadbalancer support
