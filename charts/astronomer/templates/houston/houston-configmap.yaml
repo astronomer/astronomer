@@ -30,15 +30,19 @@ data:
     auth:
       local:
         enabled: false
-      google:
-        enabled: true
-        clientId: ~
-      github:
-        enabled: true
-      auth0:
-        enabled: false
-        clientId: "rH2L4yKctlepniTyJW3MkuXuTreOHHn1"
-        baseDomain: "astronomerio.auth0.com"
+
+      openidConnect:
+        auth0:
+          enabled: false
+          clientId: "rH2L4yKctlepniTyJW3MkuXuTreOHHn1"
+          baseDomain: "astronomerio.auth0.com"
+
+        google:
+          enabled: true
+          clientId: ~
+
+    github:
+      enabled: true
 
     helm:
       baseDomain: {{ .Values.global.baseDomain }}
