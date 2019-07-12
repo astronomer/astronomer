@@ -8,11 +8,11 @@ tolerations: []
 images:
   nginx:
     repository: astronomerinc/ap-nginx
-    tag: 0.10.0-alpha.2
+    tag: 0.10.0-alpha.3
     pullPolicy: IfNotPresent
   defaultBackend:
     repository: astronomerinc/ap-default-backend
-    tag: 0.10.0-alpha.2
+    tag: 0.10.0-alpha.3
     pullPolicy: IfNotPresent
 
 forceNamespaceIsolation: true
