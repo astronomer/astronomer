@@ -1,0 +1,6 @@
+# Our astro platform currentl forces RunAs uid 100. As a temporary workaround
+# we give that user (`_apt`) permission to switch to astro.
+astro ALL=(ALL) NOPASSWD: ALL
+_apt ALL=(astro) SETENV:NOPASSWD: /entrypoint *
+
+Defaults>astro !env_reset
