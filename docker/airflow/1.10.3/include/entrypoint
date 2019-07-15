@@ -29,5 +29,9 @@ if [[ -n $AIRFLOW__CELERY__BROKER_URL ]] && [[ $CMD =~ ^(scheduler|worker|flower
   done
 fi
 
+if [[ $CMD == "webserver" ]]; then
+  airflow sync_perm
+fi
+
 # Run the original command
 exec "$@"
