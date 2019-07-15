@@ -41,8 +41,8 @@ data:
           enabled: true
           clientId: ~
 
-    github:
-      enabled: true
+      github:
+        enabled: true
 
     helm:
       baseDomain: {{ .Values.global.baseDomain }}
