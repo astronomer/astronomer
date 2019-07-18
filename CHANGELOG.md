@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.9.5] - 2019-07-18
+- Update Houston to use OpenId Connect instead of individual providers
+- Fix KubernetesExecutor pod-launching RBAC issue
+- Pass fernet key to KubernesExecutor pods
+- Fix the Astronomer SecurityManager permissions
+
 ## [0.9.4] - 2019-07-11
 - Pin werkzeug dependency in Airflow image
 
