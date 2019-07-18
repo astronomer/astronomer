@@ -12,8 +12,6 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
   annotations:
-    # AWS annotations
-    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
 
     {{- if .Values.privateLoadBalancer }}
     # This annotation is detected by EKS to indicate that
