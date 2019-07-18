@@ -78,7 +78,7 @@ RUN apk update \
 	&& pip3 install --no-cache-dir numpy \
 	&& pip3 install --no-cache-dir flask==1.0.0 \
 	&& pip3 install --no-cache-dir "${AIRFLOW_MODULE}" \
-	&& pip3 install --no-cache-dir "https://github.com/astronomer/astronomer-fab-securitymanager/releases/download/v1.1.0/astronomer_fab_security_manager-1.1.0-py3-none-any.whl" \
+	&& pip3 install --no-cache-dir "https://github.com/astronomer/astronomer-fab-securitymanager/releases/download/v1.1.0/astronomer_fab_security_manager-1.1.1-py3-none-any.whl" \
 	&& cd /usr/lib/python3.6/site-packages/airflow/www_rbac \
 	&& npm install \
 	&& npm run build \
