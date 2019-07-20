@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.9.6] - 2019-07-19
+- Enable in HTTP(S) proxy support for OpenId Connect providers via GLOBAL_AGENT_HTTPS_PROXY environment variable
+
 ## [0.9.5] - 2019-07-18
 - Update Houston to use OpenId Connect instead of individual providers
 - Fix KubernetesExecutor pod-launching RBAC issue
