@@ -2,7 +2,7 @@
 ## Astronomer Registry StatefulSet
 #################################
 {{- if .Values.global.baseDomain }}
-kind: {{ if .Values.registry.gcs.enabled }}Deployment{{ else }}StatefulSet{{ end }}
+kind: {{ if or .Values.registry.gcs.enabled .Values.registry.azure.enabled }}Deployment{{ else }}StatefulSet{{ end }}
 apiVersion: apps/v1beta2
 metadata:
   name: {{ .Release.Name }}-registry
@@ -19,7 +19,7 @@ spec:
       component: registry
       tier: astronomer
       release: {{ .Release.Name }}
-{{- if not .Values.registry.gcs.enabled }}
+{{- if or (not .Values.registry.gcs.enabled) (not .Values.registry.azure.enabled) }}
   serviceName: {{ .Release.Name }}-registry
 {{- end }}
   template:
@@ -84,7 +84,7 @@ spec:
         {{- if .Values.registry.gcs.enabled }}
         {{- include "registry.gcsVolume" . | indent 8 }}
         {{- end }}
-  {{- if or (not .Values.registry.persistence.enabled) (.Values.registry.gcs.enabled) }}
+  {{- if or (not .Values.registry.persistence.enabled) (.Values.registry.gcs.enabled) (.Values.registry.azure.enabled) }}
         - name: data
           emptyDir: {}
   {{- else }}

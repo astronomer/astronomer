@@ -23,6 +23,8 @@ data:
         blobdescriptor: inmemory
     {{- if .Values.registry.gcs.enabled }}
     {{- include "registry.gcsConfig" . | indent 6 }}
+    {{- else if .Values.registry.azure.enabled }}
+    {{- include "registry.azureConfig" . | indent 6 }}
     {{- else }}
       filesystem:
         rootdirectory: /var/lib/registry

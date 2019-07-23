@@ -121,3 +121,11 @@ gcs:
   rootdirectory: {{ .Values.registry.gcs.rootdirectory }}
   chunksize: {{ .Values.registry.gcs.chunksize }}
 {{- end }}
+
+{{- define "registry.azureConfig" }}
+azure:
+  accountname: {{ .Values.registry.azure.accountname }}
+  accountkey: {{ .Values.registry.azure.accountkey }}
+  container: {{ .Values.registry.azure.container }}
+  realm: {{ .Values.registry.azure.realm }}
+{{- end }}
