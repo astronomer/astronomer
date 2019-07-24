@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM jbub/pgbouncer_exporter:v0.2.2
+FROM jbub/pgbouncer_exporter:v0.4.0
 LABEL maintainer="Astronomer <humans@astronomer.io>"
 
 ARG BUILD_NUMBER=-1
