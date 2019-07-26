@@ -35,5 +35,9 @@ Create chart name and version as used by the chart label.
 Image name.
 */}}
 {{- define "alertmanager.image" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-alertmanager:{{ .Values.images.alertmanager.tag }}
+{{- else -}}
 {{ .Values.images.alertmanager.repository }}:{{ .Values.images.alertmanager.tag }}
+{{- end -}}
 {{- end -}}

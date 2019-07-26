@@ -33,7 +33,7 @@ spec:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       containers:
       - name: kibana
-        image: "{{ .Values.images.kibana.repository }}:{{ .Values.images.kibana.tag }}"
+        image: {{ template "kibana.image" . }}
         imagePullPolicy: {{ .Values.images.kibana.pullPolicy }}
         env:
         {{- range $key, $value :=  .Values.env }}

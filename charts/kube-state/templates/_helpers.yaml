@@ -32,5 +32,9 @@ Create chart name and version as used by the chart label.
 {{- end -}}
 
 {{ define "kube-state.image" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-kube-state:{{ .Values.images.kubeState.tag }}
+{{- else -}}
 {{ .Values.images.kubeState.repository }}:{{ .Values.images.kubeState.tag }}
+{{- end }}
 {{- end }}

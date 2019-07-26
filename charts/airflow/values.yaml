@@ -10,6 +10,10 @@ nodeSelector: {}
 affinity: {}
 tolerations: []
 
+privateRegistry:
+  enabled: false
+  repository: ~
+
 # Ingress configuration
 ingress:
   # Enable ingress resource

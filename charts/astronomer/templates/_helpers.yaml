@@ -10,35 +10,67 @@
 {{- end }}
 
 {{ define "commander.image" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-commander:{{ .Values.images.commander.tag }}
+{{- else -}}
 {{ .Values.images.commander.repository }}:{{ .Values.images.commander.tag }}
+{{- end }}
 {{- end }}
 
 {{ define "prisma.image" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-prisma:{{ .Values.images.prisma.tag }}
+{{- else -}}
 {{ .Values.images.prisma.repository }}:{{ .Values.images.prisma.tag }}
+{{- end }}
 {{- end }}
 
 {{ define "houston.image" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-houston-api:{{ .Values.images.houston.tag }}
+{{- else -}}
 {{ .Values.images.houston.repository }}:{{ .Values.images.houston.tag }}
+{{- end }}
 {{- end }}
 
 {{ define "orbit.image" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-orbit-ui:{{ .Values.images.orbit.tag }}
+{{- else -}}
 {{ .Values.images.orbit.repository }}:{{ .Values.images.orbit.tag }}
+{{- end }}
 {{- end }}
 
 {{ define "registry.image" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-registry:{{ .Values.images.registry.tag }}
+{{- else -}}
 {{ .Values.images.registry.repository }}:{{ .Values.images.registry.tag }}
+{{- end }}
 {{- end }}
 
 {{ define "dbBootstrapper.image" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-db-bootstrapper:{{ .Values.images.dbBootstrapper.tag }}
+{{- else -}}
 {{ .Values.images.dbBootstrapper.repository }}:{{ .Values.images.dbBootstrapper.tag }}
+{{- end }}
 {{- end }}
 
 {{ define "cliInstall.image" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-cli-install:{{ .Values.images.cliInstall.tag }}
+{{- else -}}
 {{ .Values.images.cliInstall.repository }}:{{ .Values.images.cliInstall.tag }}
+{{- end }}
 {{- end }}
 
 {{ define "kubeReplicator.image" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-kube-replicator:{{ .Values.images.kubeReplicator.tag }}
+{{- else -}}
 {{ .Values.images.kubeReplicator.repository }}:{{ .Values.images.kubeReplicator.tag }}
+{{- end }}
 {{- end }}
 
 {{ define "registry.docker.config" -}}

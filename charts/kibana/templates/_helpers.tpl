@@ -37,3 +37,11 @@ Create kibana url.
 {{ define "kibana.url" -}}
 kibana.{{ .Values.global.baseDomain }}
 {{- end }}
+
+{{ define "kibana.image" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-kibana:{{ .Values.images.kibana.tag }}
+{{- else -}}
+{{ .Values.images.kibana.repository }}:{{ .Values.images.kibana.tag }}
+{{- end }}
+{{- end }}

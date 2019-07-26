@@ -23,15 +23,23 @@ Create chart name and version as used by the chart label.
 {{- end -}}
 
 {{ define "grafana.image" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-grafana:{{ .Values.images.grafana.tag }}
+{{- else -}}
 {{ .Values.images.grafana.repository }}:{{ .Values.images.grafana.tag }}
+{{- end }}
+{{- end }}
+
+{{ define "grafana.bootstrapper.image" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-db-bootstrapper:{{ .Values.images.dbBootstrapper.tag }}
+{{- else -}}
+{{ .Values.images.dbBootstrapper.repository }}:{{ .Values.images.dbBootstrapper.tag }}
+{{- end }}
 {{- end }}
 
 {{ define "grafana.url" -}}
 grafana.{{ .Values.global.baseDomain }}
-{{- end }}
-
-{{ define "grafana.bootstrapper.image" -}}
-{{ .Values.images.dbBootstrapper.repository }}:{{ .Values.images.dbBootstrapper.tag }}
 {{- end }}
 
 {{ define "grafana.backend.secret" -}}

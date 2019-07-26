@@ -33,5 +33,9 @@ Return the elasticsearch hostname
 Full image name.
 */}}
 {{- define "fluentd.image" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-fluentd:{{ .Values.images.fluentd.tag }}
+{{- else -}}
 {{ .Values.images.fluentd.repository }}:{{ .Values.images.fluentd.tag }}
+{{- end -}}
 {{- end -}}

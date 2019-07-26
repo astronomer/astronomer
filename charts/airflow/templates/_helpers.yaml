@@ -80,7 +80,9 @@
 {{- end }}
 
 {{ define "airflow_image" -}}
-{{- if .Values.images.airflow.tag -}}
+{{- if .Values.privateRegistry.enabled -}}
+{{ .Values.privateRegistry.repository }}/ap-airflow:{{ .Chart.Version }}-{{ .Values.airflowVersion }}
+{{- else if .Values.images.airflow.tag -}}
 {{ printf "%s:%s" .Values.images.airflow.repository .Values.images.airflow.tag }}
 {{- else -}}
 {{ printf "%s:%s-%s" .Values.images.airflow.repository .Chart.Version .Values.airflowVersion }}
@@ -88,7 +90,9 @@
 {{- end }}
 
 {{ define "flower_image" -}}
-{{- if .Values.images.airflow.tag -}}
+{{- if .Values.privateRegistry.enabled -}}
+{{ .Values.privateRegistry.repository }}/ap-airflow:{{ .Chart.Version }}-{{ .Values.airflowVersion }}
+{{- else if .Values.images.airflow.tag -}}
 {{ printf "%s:%s" .Values.images.airflow.repository .Values.images.airflow.tag }}
 {{- else -}}
 {{ printf "%s:%s-%s" .Values.images.airflow.repository .Chart.Version .Values.airflowVersion }}
@@ -96,19 +100,35 @@
 {{- end }}
 
 {{ define "statsd_image" -}}
+{{- if .Values.privateRegistry.enabled -}}
+{{ .Values.privateRegistry.repository }}/ap-statsd-exporter:{{ .Values.images.statsd.tag }}
+{{- else -}}
 {{ .Values.images.statsd.repository }}:{{ .Values.images.statsd.tag }}
+{{- end }}
 {{- end }}
 
 {{ define "redis_image" -}}
+{{- if .Values.privateRegistry.enabled -}}
+{{ .Values.privateRegistry.repository }}/ap-redis:{{ .Values.images.redis.tag }}
+{{- else -}}
 {{ .Values.images.redis.repository }}:{{ .Values.images.redis.tag }}
+{{- end }}
 {{- end }}
 
 {{ define "pgbouncer_image" -}}
+{{- if .Values.privateRegistry.enabled -}}
+{{ .Values.privateRegistry.repository }}/ap-pgbouncer:{{ .Values.images.pgbouncer.tag }}
+{{- else -}}
 {{ .Values.images.pgbouncer.repository }}:{{ .Values.images.pgbouncer.tag }}
+{{- end }}
 {{- end }}
 
 {{ define "pgbouncer_exporter_image" -}}
+{{- if .Values.privateRegistry.enabled -}}
+{{ .Values.privateRegistry.repository }}/ap-pgbouncer-exporter:{{ .Values.images.pgbouncerExporter.tag }}
+{{- else -}}
 {{ .Values.images.pgbouncerExporter.repository }}:{{ .Values.images.pgbouncerExporter.tag }}
+{{- end }}
 {{- end }}
 
 {{ define "fernet_key_secret" -}}

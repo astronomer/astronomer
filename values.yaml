@@ -47,7 +47,11 @@ global:
     nodeSelector: {}
     affinity: {}
     tolerations: []
-
+  
+  privateRegistry:
+    enabled: false
+    repository: ~
+  
 #################################
 ## Default tagged groups enabled
 #################################

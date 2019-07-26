@@ -32,11 +32,19 @@ Create chart name and version as used by the chart label.
 {{- end -}}
 
 {{ define "nginx.image" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-nginx:{{ .Values.images.nginx.tag }}
+{{- else -}}
 {{ .Values.images.nginx.repository }}:{{ .Values.images.nginx.tag }}
+{{- end }}
 {{- end }}
 
 {{ define "nginx.defaultBackend.image" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-default-backend:{{ .Values.images.defaultBackend.tag }}
+{{- else -}}
 {{ .Values.images.defaultBackend.repository }}:{{ .Values.images.defaultBackend.tag }}
+{{- end }}
 {{- end }}
 
 {{ define "nginx.ingress.class" -}}
