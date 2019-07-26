@@ -60,7 +60,26 @@ data:
           # This is the name of the secret that gets copied from the platform namespace
           # to the airflow namespaces.
           jwtSigningCertificateSecretName: {{ template "houston.jwtCertificateSecret" . }}
-
+          resources:
+            limits:
+              ephemeral-storage: "10Gi"
+            requests:
+              ephemeral-storage: "5Gi"
+        workers:
+          resources:
+            limits:
+              ephemeral-storage: "10Gi"
+            requests:
+              ephemeral-storage: "5Gi"
+        scheduler:
+          resources:
+            limits:
+              ephemeral-storage: "10Gi"
+            requests:
+              ephemeral-storage: "5Gi"
+        quotas:
+          requests.ephemeral-storage: "50Gi"
+          limits.ephemeral-storage: "50Gi"
         platform:
           namespace: {{ .Release.Namespace }}
           singleNamespace: {{ .Values.global.singleNamespace }}
