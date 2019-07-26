@@ -19,3 +19,7 @@ LABEL maintainer="Astronomer <humans@astronomer.io>"
 ARG BUILD_NUMBER=-1
 LABEL io.astronomer.docker=true
 LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
+# Fix security issues
+USER root
+RUN yum update -y python vim-minimal
+USER kibana
