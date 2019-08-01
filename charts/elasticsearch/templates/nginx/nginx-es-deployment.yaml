@@ -26,9 +26,6 @@ spec:
         release: {{ .Release.Name }}
       annotations:
         checksum/configmap: {{ include (print $.Template.BasePath "/nginx/nginx-es-configmap.yaml") . | sha256sum }}
-        {{- if .Values.global.istioEnabled }}
-        sidecar.istio.io/inject: "false"
-        {{- end }}
     spec:
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}

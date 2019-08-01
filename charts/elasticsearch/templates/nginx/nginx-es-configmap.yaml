@@ -29,7 +29,9 @@ data:
         listen {{ .Values.common.ports.http }};
         auth_request /auth;
         proxy_http_version 1.1;
+        {{- if not .Values.global.istioEnabled }}
         proxy_set_header Host $host;
+        {{- end }}
         proxy_set_header Connection "Keep-Alive";
         proxy_set_header Proxy-Connection "Keep-Alive";
 
