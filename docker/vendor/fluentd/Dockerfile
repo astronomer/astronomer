@@ -59,7 +59,8 @@ ENV LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libjemalloc.so.2
 
 # Start Fluentd to pick up our config that watches Docker container logs.
 RUN mkdir -p /var/log/journal
-CMD ["exec", "/usr/local/bin/fluentd", "$FLUENTD_ARGS"]
+
+CMD exec /usr/local/bin/fluentd ${FLUENTD_ARGS}
 
 LABEL maintainer="Astronomer <humans@astronomer.io>"
 
