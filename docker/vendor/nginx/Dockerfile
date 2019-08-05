@@ -21,5 +21,6 @@ LABEL io.astronomer.docker=true
 LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
 
 USER root
-RUN apt-get update && apt-get dist-upgrade -y && apt-get autoremove -y
+RUN apt-get update && apt-get dist-upgrade -y && apt-get clean && apt-get autoremove -y && apt-get --purge remove -y gdb
+# respect original Dockerfile https://github.com/kubernetes/ingress-nginx/blob/master/rootfs/Dockerfile
 USER www-data
