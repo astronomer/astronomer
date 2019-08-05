@@ -13,9 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM quay.io/kubernetes-ingress-controller/nginx-ingress-controller:0.22.0
+FROM quay.io/kubernetes-ingress-controller/nginx-ingress-controller:0.25.0
 LABEL maintainer="Astronomer <humans@astronomer.io>"
 
 ARG BUILD_NUMBER=-1
 LABEL io.astronomer.docker=true
 LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
+
+USER root
+RUN apt-get update && apt-get dist-upgrade -y && apt-get clean && apt-get autoremove -y && apt-get --purge remove -y gdb
+# respect original Dockerfile https://github.com/kubernetes/ingress-nginx/blob/master/rootfs/Dockerfile
+USER www-data
