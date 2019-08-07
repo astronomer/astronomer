@@ -60,7 +60,7 @@
       },
       {
         "datasource": "Prometheus",
-        "enable": false,
+        "enable": true,
         "expr": "count(sum(up{instance=\"$instance\"}) by (instance) < 1)",
         "hide": false,
         "iconColor": "rgba(255, 96, 96, 1)",
