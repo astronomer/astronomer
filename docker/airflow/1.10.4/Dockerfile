@@ -21,7 +21,7 @@ LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
 LABEL io.astronomer.docker=true
 LABEL io.astronomer.docker.module="airflow"
 LABEL io.astronomer.docker.component="airflow"
-LABEL io.astronomer.docker.airflow.version="1.10.3"
+LABEL io.astronomer.docker.airflow.version="1.10.4"
 
 ARG ORG="astronomer"
 ARG VERSION="1.10.4"
