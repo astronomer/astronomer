@@ -24,7 +24,7 @@ LABEL io.astronomer.docker.component="airflow"
 LABEL io.astronomer.docker.airflow.version="1.10.4"
 
 ARG ORG="astronomer"
-ARG VERSION="1.10.4"
+ARG VERSION="v1-10-4"
 ARG SUBMODULES="all, statsd, elasticsearch"
 
 ENV AIRFLOW_REPOSITORY="https://github.com/${ORG}/airflow"
@@ -61,6 +61,8 @@ RUN apk update \
 		postgresql-dev \
 		python3-dev \
 		tzdata \
+        libsodium \
+        libsodium-dev \
 	&& apk add --no-cache \
 		bash \
 		ca-certificates \
@@ -73,13 +75,15 @@ RUN apk update \
 	&& update-ca-certificates \
 	&& cp /usr/share/zoneinfo/UTC /etc/localtime \
 	&& pip3 install --no-cache-dir --upgrade pip==19.2.1 \
-	&& pip3 install --no-cache-dir --upgrade setuptools==39.0.1 \
+	&& pip3 install --no-cache-dir --upgrade setuptools==41.0.1 \
 	&& pip3 install --no-cache-dir cython \
 	&& pip3 install --no-cache-dir numpy \
 	&& pip3 install --no-cache-dir flask==1.0.0 \
+	# https://pynacl.readthedocs.io/en/stable/install/
+	&& SODIUM_INSTALL=system pip3 install --no-cache-dir pynacl==1.3.0 \
 	&& pip3 install --no-cache-dir "${AIRFLOW_MODULE}" \
 	&& pip3 install --no-cache-dir "https://github.com/astronomer/astronomer-fab-securitymanager/releases/download/v1.1.2/astronomer_fab_security_manager-1.1.2-py3-none-any.whl" \
-	&& cd /usr/lib/python3.7/site-packages/airflow/www_rbac \
+	&& cd /usr/lib/python3.7/site-packages/airflow/www \
 	&& npm install \
 	&& npm run build \
 	&& rm -rf node_modules \
