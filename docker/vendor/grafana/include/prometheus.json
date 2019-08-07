@@ -48,7 +48,7 @@
       },
       {
         "datasource": "Prometheus",
-        "enable": true,
+        "enable": false,
         "expr": "sum(changes(prometheus_config_last_reload_success_timestamp_seconds{instance=~\"$instance\"}[10m])) by (instance)",
         "hide": false,
         "iconColor": "rgb(0, 96, 19)",
@@ -60,7 +60,7 @@
       },
       {
         "datasource": "Prometheus",
-        "enable": true,
+        "enable": false,
         "expr": "count(sum(up{instance=\"$instance\"}) by (instance) < 1)",
         "hide": false,
         "iconColor": "rgba(255, 96, 96, 1)",
