@@ -24,7 +24,7 @@ LABEL io.astronomer.docker.component="airflow"
 LABEL io.astronomer.docker.airflow.version="1.10.3"
 
 ARG ORG="astronomer"
-ARG VERSION="1.10.3-1"
+ARG VERSION="1.10.4"
 ARG SUBMODULES="all, statsd, elasticsearch"
 
 ENV AIRFLOW_REPOSITORY="https://github.com/${ORG}/airflow"
@@ -72,7 +72,7 @@ RUN apk update \
 		tini \
 	&& update-ca-certificates \
 	&& cp /usr/share/zoneinfo/UTC /etc/localtime \
-	&& pip3 install --no-cache-dir --upgrade pip==19.1.1 \
+	&& pip3 install --no-cache-dir --upgrade pip==19.2.1 \
 	&& pip3 install --no-cache-dir --upgrade setuptools==39.0.1 \
 	&& pip3 install --no-cache-dir cython \
 	&& pip3 install --no-cache-dir numpy \
