@@ -61,8 +61,8 @@ RUN apk update \
 		postgresql-dev \
 		python3-dev \
 		tzdata \
-        libsodium \
-        libsodium-dev \
+		libsodium \
+		libsodium-dev \
 	&& apk add --no-cache \
 		bash \
 		ca-certificates \
