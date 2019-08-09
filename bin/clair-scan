@@ -5,7 +5,7 @@
 # and
 # docker run -p 6060:6060 --link db:postgres -d --name clair arminc/clair-local-scan:latest
 
-RELEASE_TAG=master
+RELEASE_TAG=0.10.0-rc.1
 declare -a TARGET_IMAGES=("ap-base"
                           "ap-airflow"
                           "ap-alertmanager"
@@ -32,7 +32,6 @@ declare -a TARGET_IMAGES=("ap-base"
 for i in "${TARGET_IMAGES[@]}"
 do
    image="astronomerinc/$i:$RELEASE_TAG"
-   echo "scanning: $image"
    docker pull $image > results.log
    clair-scanner --ip=192.168.1.199 $image &> "${i}_results.txt"
    high_count=`grep High ${i}_results.txt | wc -l`
@@ -40,5 +39,5 @@ do
    low_count=`grep Low ${i}_results.txt | wc -l`
    negligible_count=`grep Negligible ${i}_results.txt | wc -l`
    unknown_count=`grep Unknown ${i}_results.txt | wc -l`
-   echo "Docker image \"$image\" have: ${high_count//[[:space:]]/} High / ${medium_count//[[:space:]]/} Medium / ${low_count//[[:space:]]/} Low"
+   printf "Docker image %55s have %10s High | %10s Medium | %10s Low |\n" $image ${high_count//[[:space:]]/} ${medium_count//[[:space:]]/} ${low_count//[[:space:]]/}
 done
