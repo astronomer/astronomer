@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.9.7] - 2019-08-09
+- Fix incorrect image tag deployment bug
+- Fix KubernetesExecutor + custom environment variables bug
+
 ## [0.9.6] - 2019-07-19
 - Enable in HTTP(S) proxy support for OpenId Connect providers via GLOBAL_AGENT_HTTPS_PROXY environment variable
 
