@@ -54,8 +54,9 @@ data:
 
     # Airflow deployment configuration
     deployments:
+      # These values get passed directly into the airflow helm deployments
       helm:
-        # These values get passed directly into the airflow helm deployments
+        # Webserver configuration.
         webserver:
           # This is the name of the secret that gets copied from the platform namespace
           # to the airflow namespaces.
@@ -65,24 +66,39 @@ data:
               ephemeral-storage: "10Gi"
             requests:
               ephemeral-storage: "5Gi"
+
+        # Worker configuration (applies to Celery and Kubernetes task pods).
         workers:
           resources:
             limits:
               ephemeral-storage: "10Gi"
             requests:
               ephemeral-storage: "5Gi"
+
+        # Scheduler configuration.
         scheduler:
           resources:
             limits:
               ephemeral-storage: "10Gi"
             requests:
               ephemeral-storage: "5Gi"
+
+        # Default quotas for airflow deployments.
         quotas:
           requests.ephemeral-storage: "50Gi"
           limits.ephemeral-storage: "50Gi"
+
+        # If a private registry configuration is specified, we also pass this through
+        # to the airflow deployments.
+        {{- if .Values.global.privateRegistry }}
+        privateRegistry:
+          enabled: {{ .Values.global.privateRegistry.enabled | default false }}
+          repository: {{ .Values.global.privateRegistry.repository | default "" }}
+        {{- end }}
+
         platform:
           namespace: {{ .Release.Namespace }}
-          singleNamespace: {{ .Values.global.singleNamespace }}
+          singleNamespace: {{ .Values.global.singleNamespace | default false }}
 
     # If we're in single namespace mode, we will also
     # skip the configuration for elasticsearch. Houston will fallback
