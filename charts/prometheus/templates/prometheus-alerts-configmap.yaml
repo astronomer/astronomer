@@ -15,3 +15,45 @@ data:
   alerts.yaml: |-
     groups:
 {{ toYaml .Values.alerts.groups | indent 6 }}
+      - name: platform
+        rules:
+        - alert: PrometheusDiskUsage
+          expr: (kubelet_volume_stats_available_bytes{persistentvolumeclaim=~"data-{{ template "prometheus.fullname" . }}-.*"} / kubelet_volume_stats_capacity_bytes{persistentvolumeclaim=~"data-{{ template "prometheus.fullname" . }}-.*"} * 100) < 10
+          for: 5m
+          labels:
+            tier: platform
+            component: prometheus
+          annotations:
+            summary: "Prometheus High Disk Usage"
+            description: "Prometheus has less than 10% disk space available."
+
+        - alert: RegistryDiskUsage
+          expr: (kubelet_volume_stats_available_bytes{persistentvolumeclaim=~"data-{{ .Release.Name }}-registry-.*"} / kubelet_volume_stats_capacity_bytes{persistentvolumeclaim=~"data-{{ .Release.Name }}-registry-.*"} * 100) < 10
+          for: 5m
+          labels:
+            tier: platform
+            component: registry
+          annotations:
+            summary: "Docker Registry High Disk Usage"
+            description: "Docker Registry has less than 10% disk space available."
+
+        - alert: ElasticsearchDiskUsage
+          expr: (sum(kubelet_volume_stats_available_bytes{persistentvolumeclaim=~"data-{{ .Release.Name }}-elasticsearch-data-.*"}) / sum(kubelet_volume_stats_capacity_bytes{persistentvolumeclaim=~"data-{{ .Release.Name }}-elasticsearch-data-.*"}) * 100) < 10
+          for: 5m
+          labels:
+            tier: platform
+            component: elasticsearch
+          annotations:
+            summary: "Elasticsearch High Disk Usage"
+            description: "Elasticsearch has less than 10% disk space available."
+
+        - alert: IngessCertificateExpiration
+          expr: avg(nginx_ingress_controller_ssl_expire_time_seconds) by (host) - time() < 604800
+          for: 10s
+          labels:
+            tier: platform
+            component: ingress
+          annotations:
+            summary: "TLS Certificate Expiring Soon"
+            {{/* We want '{{ $labels.host }}' to be evaluted by prometheus, not helm, so we have to escape it once */ -}}
+            description: {{ printf "%q" "The TLS Certificate for {{ $labels.host }} is expiring in less than a week." }}
