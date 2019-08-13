@@ -52,6 +52,7 @@ spec:
           {{- end }}
           ports:
             - containerPort: {{ .Values.ports.http }}
+              name: alertmanager
           readinessProbe:
             httpGet:
               path: {{ .Values.prefixURL }}/#/status

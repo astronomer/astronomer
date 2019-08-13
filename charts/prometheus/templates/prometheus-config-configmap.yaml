@@ -35,9 +35,9 @@ data:
           - source_labels: [__meta_kubernetes_namespace]
             regex: {{ .Release.Namespace }}
             action: keep
-          - source_labels: [__meta_kubernetes_pod_container_port_number]
-            regex:
-            action: drop
+          - source_labels: [__meta_kubernetes_pod_container_port_name]
+            regex: alertmanager
+            action: keep
 
     # Configure built in alerting rules
     rule_files:
