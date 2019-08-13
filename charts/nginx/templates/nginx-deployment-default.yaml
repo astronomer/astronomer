@@ -33,7 +33,7 @@ spec:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       terminationGracePeriodSeconds: 60
       containers:
-        - name: {{ .Release.Name }}-default-backend
+        - name: default-backend
           image: {{ template "nginx.defaultBackend.image" . }}
           imagePullPolicy: {{ .Values.images.defaultBackend.pullPolicy }}
           livenessProbe:

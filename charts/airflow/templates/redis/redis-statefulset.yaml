@@ -39,7 +39,7 @@ spec:
       tolerations:
 {{ toYaml .Values.tolerations | indent 8 }}
       containers:
-        - name: {{ .Release.Name }}-redis
+        - name: redis
           image: {{- include "redis_image" . | indent 1 }}
           imagePullPolicy: {{ .Values.images.redis.pullPolicy }}
           command: ["/bin/sh"]

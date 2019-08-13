@@ -33,7 +33,7 @@ spec:
     spec:
       serviceAccountName: {{ template "nginx.fullname" . }}
       containers:
-        - name: {{ .Release.Name }}-nginx
+        - name: nginx
           image: {{ template "nginx.image" . }}
           resources:
 {{ toYaml .Values.resources | indent 12 }}

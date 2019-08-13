@@ -35,7 +35,7 @@ spec:
       {{- if and (not .Values.backendSecretName) (not .Values.backendConnection) }}
       serviceAccountName: {{ template "grafana.bootstrapper.serviceaccount" . }}
       initContainers:
-        - name: {{ template "grafana.fullname" . }}-bootstrapper
+        - name: bootstrapper
           image: {{ template "grafana.bootstrapper.image" . }}
           imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
           env:
@@ -54,7 +54,7 @@ spec:
               value: "true"
       {{- end }}
       containers:
-        - name: {{ template "grafana.fullname" . }}
+        - name: grafana
           image: {{ template "grafana.image" . }}
           imagePullPolicy: {{ .Values.images.grafana.pullPolicy }}
           resources:

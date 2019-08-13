@@ -35,7 +35,7 @@ spec:
       {{- if and (not .Values.houston.backendSecretName) (not .Values.houston.backendConnection) }}
       serviceAccountName: {{ template "prisma.bootstrapperServiceAccount" . }}
       initContainers:
-        - name: "{{ .Release.Name }}-prisma-bootstrapper"
+        - name: bootstrapper
           image: {{ template "dbBootstrapper.image" . }}
           imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
           env:
@@ -54,7 +54,7 @@ spec:
               value: "true"
       {{- end }}
       containers:
-        - name: {{ .Release.Name }}-prisma
+        - name: prisma
           image: {{ template "prisma.image" . }}
           imagePullPolicy: {{ .Values.images.prisma.pullPolicy }}
           resources:

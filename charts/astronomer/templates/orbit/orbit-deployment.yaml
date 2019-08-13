@@ -33,7 +33,7 @@ spec:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       restartPolicy: Always
       containers:
-        - name: {{ .Release.Name }}-orbit
+        - name: orbit
           image: {{- include "orbit.image" . | indent 1 }}
           imagePullPolicy: {{ .Values.images.orbit.pullPolicy }}
           resources:

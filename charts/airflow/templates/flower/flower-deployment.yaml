@@ -48,7 +48,7 @@ spec:
         - name: {{ template "registry_secret" . }}
       {{- end }}
       containers:
-        - name: {{ .Release.Name }}-flower
+        - name: flower
           image: {{ template "flower_image" . }}
           imagePullPolicy: {{ .Values.images.flower.pullPolicy }}
           args: ["airflow", "flower"]

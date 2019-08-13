@@ -34,7 +34,7 @@ spec:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       serviceAccountName: {{ template "kube-state.fullname" . }}
       containers:
-      - name: {{ template "kube-state.fullname" . }}
+      - name: kube-state
       {{- if .Values.global.singleNamespace }}
         args:
           - --namespace={{ .Release.Namespace }}

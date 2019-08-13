@@ -39,7 +39,7 @@ spec:
 {{ toYaml .Values.tolerations | indent 8 }}
       restartPolicy: Always
       containers:
-        - name: {{ .Release.Name }}-statsd
+        - name: statsd
           image: {{- include "statsd_image" . | indent 1 }}
           imagePullPolicy: {{ .Values.images.statsd.pullPolicy }}
           args:

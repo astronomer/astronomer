@@ -38,7 +38,7 @@ spec:
       restartPolicy: Always
       serviceAccountName: {{ template "prometheus.fullname" . }}
       initContainers:
-        - name: {{ template "prometheus.fullname" . }}-init
+        - name: init
           image: {{ include "prometheus.init.image" . }}
           imagePullPolicy: {{ .Values.images.init.pullPolicy }}
           command: ["chown", "-R", "65534:65534", "{{ .Values.dataDir }}"]
@@ -46,7 +46,7 @@ spec:
             - name: data
               mountPath: "{{ .Values.dataDir }}"
       containers:
-        - name: {{ template "prometheus.fullname" . }}
+        - name: prometheus
           image: {{ include "prometheus.image" . }}
           imagePullPolicy: {{ .Values.images.prometheus.pullPolicy }}
           resources:
