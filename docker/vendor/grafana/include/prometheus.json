@@ -48,7 +48,7 @@
       },
       {
         "datasource": "Prometheus",
-        "enable": false,
+        "enable": true,
         "expr": "sum(changes(prometheus_config_last_reload_success_timestamp_seconds{instance=~\"$instance\"}[10m])) by (instance)",
         "hide": false,
         "iconColor": "rgb(0, 96, 19)",
