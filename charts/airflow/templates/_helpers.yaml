@@ -36,6 +36,13 @@
         key: connection
   {{- end }}
   {{- if .Values.elasticsearch.enabled }}
+  # The elasticsearch variables were updated to the shorter names in v1.10.4
+  - name: AIRFLOW__ELASTICSEARCH__HOST
+    valueFrom:
+      secretKeyRef:
+        name: {{ template "elasticsearch_secret" . }}
+        key: connection
+  # This is the older format for these variable names, kept here for backward compatibility
   - name: AIRFLOW__ELASTICSEARCH__ELASTICSEARCH_HOST
     valueFrom:
       secretKeyRef:
