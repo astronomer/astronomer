@@ -6,7 +6,7 @@ If you'd like to explore our offerings, [start a 14-Day Trial on Astronomer Clou
 
 ## Architecture
 
-![Astronomer Architecture](https://assets2.astronomer.io/main/docs/ee/astronomer_architecture_v0.8.png "Astronomer Architecture")
+![Astronomer Architecture](https://assets2.astronomer.io/main/enterpriseArchitecture.svg "Astronomer Architecture")
 
 ## Installation Guides
 
