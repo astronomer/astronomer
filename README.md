@@ -1,12 +1,12 @@
 # The Astronomer Platform
 
-Astronomer makes it easy to run, monitor, and scale [Apache Airflow](https://github.com/apache/airflow) deployments in our cloud or yours. Source code is made available for the benefit of our customer base.
+Astronomer makes it easy to run, monitor, and scale [Apache Airflow](https://github.com/apache/airflow) deployments in our cloud or yours. Source code is made available for the benefit of customers.
 
-If you'd like to explore our offerings, [start a 14-Day Trial on Astronomer Cloud](https://astronomer.io/trial/) and take a look at our [Getting Started Guide](https://www.astronomer.io/docs/getting-started/) to get spun up. If you're interested in hosting Astronomer in your own environment, you'll have a chance to indicate interest when filling out the trial form above.
+If you'd like to see the platform in action, [start a free trial on our SaaS service, Astronomer Cloud](https://astronomer.io/trial) and run through our [getting started guide](https://www.astronomer.io/docs/getting-started/). This is a good first step, even if you're ultimately interested in running Astronomer in your own Kubernetes cluster.
 
 ## Architecture
 
-![Astronomer Architecture](https://assets2.astronomer.io/main/docs/ee/astronomer_architecture_v0.8.png "Astronomer Architecture")
+![Astronomer Architecture](https://assets2.astronomer.io/main/enterpriseArchitecture.svg "Astronomer Architecture")
 
 ## Installation Guides
 
