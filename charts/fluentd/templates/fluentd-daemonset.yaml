@@ -39,7 +39,7 @@ spec:
 {{ toYaml (default .Values.global.deploymentNodePool.tolerations .Values.tolerations) | indent 8 }}
       serviceAccountName: {{ template "fluentd.fullname" . }}
       containers:
-      - name: {{ template "fluentd.fullname" . }}
+      - name: fluentd
         image: {{ template "fluentd.image" . }}
         imagePullPolicy: {{ .Values.images.fluentd.pullPolicy }}
         env:

@@ -45,8 +45,7 @@ spec:
 {{ toYaml .Values.tolerations | indent 8 }}
       restartPolicy: Always
       containers:
-      containers:
-        - name: {{ .Release.Name }}-pgbouncer
+        - name: pgbouncer
           image: {{ template "pgbouncer_image" . }}
           imagePullPolicy: {{ .Values.images.pgbouncer.pullPolicy }}
           command:
@@ -79,7 +78,7 @@ spec:
               exec:
                 # Allow existing queries clients to complete within 120 seconds
                 command: ["/bin/sh", "-c", "killall -INT pgbouncer && sleep 120"]
-        - name: {{ .Release.Name }}-pgbouncer-metrics
+        - name: metrics-exporter
           image: {{ template "pgbouncer_exporter_image" . }}
           env:
             - name: DATABASE_URL

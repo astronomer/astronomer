@@ -43,7 +43,7 @@ spec:
       securityContext:
         runAsUser: 0
       containers:
-        - name: {{ .Chart.Name }}
+        - name: metrics-exporter
           image: {{ template "exporter.image" . }}
           imagePullPolicy: {{ .Values.images.exporter.pullPolicy }}
           command: ["elasticsearch_exporter",

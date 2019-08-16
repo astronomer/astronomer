@@ -35,7 +35,7 @@ spec:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       restartPolicy: Always
       containers:
-        - name: {{ .Release.Name }}-nginx-es
+        - name: nginx
           image: {{ template "nginx-es.image" . }}
           imagePullPolicy: {{ .Values.images.nginx.pullPolicy }}
           resources: {{ toYaml .Values.nginx.resources | indent 12 }}

@@ -35,7 +35,7 @@ spec:
       restartPolicy: Always
       serviceAccountName: {{ template "kubeReplicator.serviceAccount" . }}
       containers:
-        - name: {{ .Release.Name }}-kube-replicator
+        - name: kube-replicator
           image: {{ template "kubeReplicator.image" . }}
           imagePullPolicy: {{ .Values.images.kubeReplicator.pullPolicy }}
           resources:

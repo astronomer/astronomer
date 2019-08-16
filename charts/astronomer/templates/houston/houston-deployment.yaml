@@ -37,7 +37,7 @@ spec:
       {{- if and (not .Values.houston.airflowBackendSecretName) (not .Values.houston.airflowBackendConnection) }}
       serviceAccountName: {{ template "houston.bootstrapperServiceAccount" . }}
       initContainers:
-        - name: "{{ .Release.Name }}-houston-bootstrapper"
+        - name: houston-bootstrapper
           image: {{ template "dbBootstrapper.image" . }}
           imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
           env:
@@ -56,7 +56,7 @@ spec:
               value: "true"
       {{- end }}
       containers:
-        - name: {{ .Release.Name }}-houston
+        - name: houston
           image: {{ template "houston.image" . }}
           imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
           resources:

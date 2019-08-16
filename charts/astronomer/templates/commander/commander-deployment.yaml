@@ -36,7 +36,7 @@ spec:
       securityContext:
         runAsUser: {{ .Values.uid }}
       containers:
-        - name: {{ .Release.Name }}-commander
+        - name: commander
           image: {{ template "commander.image" . }}
           imagePullPolicy: {{ .Values.images.commander.pullPolicy }}
           resources:

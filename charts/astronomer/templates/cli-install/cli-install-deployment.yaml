@@ -35,7 +35,7 @@ spec:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       terminationGracePeriodSeconds: 60
       containers:
-        - name: {{ .Release.Name }}-install
+        - name: cli-install
           image: {{ template "cliInstall.image" . }}
           imagePullPolicy: {{ .Values.images.cliInstall.pullPolicy }}
           livenessProbe:

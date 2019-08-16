@@ -70,7 +70,7 @@ spec:
       {{- end }}
       containers:
         # Always run the main scheduler container.
-        - name: {{ .Release.Name }}-scheduler
+        - name: scheduler
           image: {{ template "airflow_image" . }}
           imagePullPolicy: {{ .Values.images.airflow.pullPolicy }}
           args: ["airflow", "scheduler"]
@@ -87,7 +87,7 @@ spec:
               subPath: airflow.cfg
               readOnly: true
         # Always start the garbage collector sidecar.
-        - name: {{ .Release.Name }}-scheduler-gc
+        - name: scheduler-gc
           image: {{ template "airflow_image" . }}
           args: ["crond", "-f", "-d", "0"]
           volumeMounts:
@@ -96,7 +96,7 @@ spec:
 {{- if and $local (not $elasticsearch) }}
         # Start the sidecar log server if we're in local mode and
         # we don't have elasticsearch enabled.
-        - name: {{ .Release.Name }}-scheduler-logs
+        - name: scheduler-logs
           image: {{ template "airflow_image" . }}
           args: ["airflow", "serve_logs"]
           ports:

@@ -49,7 +49,7 @@ spec:
         - name: {{ template "registry_secret" . }}
       {{- end }}
       containers:
-        - name: {{ .Release.Name }}-webserver
+        - name: webserver
           image: {{ template "airflow_image" . }}
           imagePullPolicy: {{ .Values.images.airflow.pullPolicy }}
           args: ["airflow", "webserver"]
