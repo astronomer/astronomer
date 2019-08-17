@@ -66,17 +66,24 @@ From there you can run Airflow commands such as:
 ```
 airflow initdb
 airflow version
+```
 
-# at this point, if you want to use postgres instead of sqllite, you can modify you airflow.cfg to point to 
-# postgres running in your docker-compose stack.
+At this point, if you want to use postgres instead of sqllite, you can modify you airflow.cfg to point to postgres running in your docker-compose stack:
+
+```
 executor = LocalExecutor
 sql_alchemy_conn = postgres://postgres:postgres@localhost:5432
+```
 
-#then init the db again
-airflow initdb
+Then init the db again
+
+```airflow initdb```
 
 # create a user
+
+```
 airflow users create --username admin --password admin --role Admin --email me@example.org --firstname admin --lastname admin
+```
 
 ## Airflow project
 
