@@ -75,10 +75,8 @@ sql_alchemy_conn = postgres://postgres:postgres@localhost:5432
 #then init the db again
 airflow initdb
 
-# depending on airlfow version, create a user one of the two following ways
-airflow users --create --username admin --password admin --role Admin --email me@example.org --firstname admin --lastname admin
-airflow create_user --username admin --password admin --role Admin --email me@example.org --firstname admin --lastname admin
-```
+# create a user
+airflow users create --username admin --password admin --role Admin --email me@example.org --firstname admin --lastname admin
 
 ## Airflow project
 
