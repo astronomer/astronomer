@@ -30,7 +30,7 @@ spec:
   loadBalancerIP: {{ .Values.loadBalancerIP }}
   {{- end }}
   {{- if .Values.loadBalancerSourceRanges }}
-  loadBalancerSourceRanges: {{ .Values.loadBalancerSourceRanges }}
+  loadBalancerSourceRanges: {{ .Values.loadBalancerSourceRanges | toJson }}
   {{- end }}
   {{- if .Values.preserveSourceIP }}
   externalTrafficPolicy: "Cluster"
