@@ -1,0 +1,150 @@
+############################
+## Astronomer configuration
+## For local Kubernetes development
+## There should be an A record on *.local.astronomer-development.com
+## with the value 127.0.0.1 and you should set up
+## the secrets and TLS cert normally.
+## It's working on Steven's laptop with 32GB mem
+############################
+
+global:
+  # Base domain for all subdomains exposed through ingress
+  baseDomain: local.astronomer-development.com
+
+  # Name of secret containing TLS certificate
+  tlsSecret: astronomer-tls
+
+############################
+## Astronomer configuration
+## Omit resouce requests
+############################
+
+astronomer:
+  orbit:
+    resources:
+      requests:
+        cpu: "0m"
+        memory: "0Mi"
+  houston:
+    resources:
+      requests:
+        cpu: "0m"
+        memory: "0Mi"
+  prisma:
+    resources:
+      requests:
+        cpu: "0m"
+        memory: "0Mi"
+  commander:
+    resources:
+      requests:
+        cpu: "0m"
+        memory: "0Mi"
+  registry:
+    resources:
+      requests:
+        cpu: "0m"
+        memory: "0Mi"
+  install:
+    resources:
+      requests:
+        cpu: "0m"
+        memory: "0Mi"
+  kubeReplicator:
+    resources:
+      requests:
+        cpu: "0m"
+        memory: "0Mi"
+
+
+#################################
+## Nginx configuration
+#################################
+nginx:
+  # Configure resources
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "1024Mi"
+    limits:
+      cpu: "1"
+      memory: "2048Mi"
+
+#################################
+## Grafana configuration
+#################################
+grafana:
+  # Configure resources
+  resources:
+    requests:
+      cpu: "0m"
+      memory: "0Mi"
+
+
+#################################
+## Prometheus configuration
+#################################
+prometheus:
+  # Configure resources
+  resources:
+    requests:
+      cpu: "0m"
+      memory: "0Gi"
+
+#################################
+## Elasticsearch configuration
+#################################
+elasticsearch:
+  # Configure client nodes
+  client:
+    resources:
+      requests:
+        cpu: "0"
+        memory: "0Gi"
+
+  # Configure data nodes
+  data:
+    resources:
+      requests:
+        cpu: "0"
+        memory: "0"
+
+  master:
+
+    resources:
+      requests:
+        cpu: "0"
+        memory: "0Gi"
+
+
+#################################
+## Kibana configuration
+#################################
+kibana:
+  # Configure resources
+  resources:
+    requests:
+      cpu: "0m"
+      memory: "0Mi"
+
+
+#################################
+## Fluentd configuration
+#################################
+fluentd:
+  # Configure resources
+  resources:
+    requests:
+      cpu: "0m"
+      memory: "0Mi"
+
+
+#################################
+## Kube State configuration
+#################################
+kubeState:
+  # Configure resources
+  resources:
+    requests:
+      cpu: "0m"
+      memory: "0Mi"
