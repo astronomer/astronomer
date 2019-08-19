@@ -18,6 +18,7 @@ data:
   airflow.cfg: |
     [core]
     load_examples = False
+    colored_console_log = False
     executor = {{ .Values.executor }}
   {{- if .Values.elasticsearch.enabled }}
     remote_logging = True
