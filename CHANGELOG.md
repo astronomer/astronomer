@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.10.0] - 2019-08-16
+## [0.10.0] - 2019-08-21
 - Upgrade to Airflow 1.10.4
 - Refactored astro subcommands
 - Fixes to log viewer in UI
@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - Can now set roles for Service Accounts
 - Login to CLI with service account
 - API standardiztaion and stablilization
+- Fix airflow access after reinstalling the platform
 
 ## [0.9.7] - 2019-08-09
 - Fix incorrect image tag deployment bug
