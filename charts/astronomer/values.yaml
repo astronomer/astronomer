@@ -36,10 +36,6 @@ images:
     repository: astronomerinc/ap-prisma
     tag: 0.10.0-rc.9
     pullPolicy: IfNotPresent
-  kubeReplicator:
-    repository: astronomerinc/ap-kube-replicator
-    tag: 0.10.0-rc.9
-    pullPolicy: IfNotPresent
 
 orbit:
   env: []

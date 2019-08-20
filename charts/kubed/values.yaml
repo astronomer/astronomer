@@ -4,15 +4,13 @@
 
 images:
   kubed:
-    repository: appscode/kubed
+    repository: astronomerinc/ap-kubed
     tag: 0.10.0-rc.9
+    pullPolicy: IfNotPresent
 
 # Declare variables to be passed into your templates.
 replicaCount: 1
 
-## Installs Kubed operator as critical addon
-## https://kubernetes.io/docs/tasks/administer-cluster/guaranteed-scheduling-critical-addon-pods/
-criticalAddon: false
 ## Log level for kubed
 logLevel: 3
 

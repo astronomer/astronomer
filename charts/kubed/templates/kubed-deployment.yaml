@@ -35,6 +35,12 @@ spec:
 {{- end }}
 {{- end }}
     spec:
+      nodeSelector:
+{{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
+      affinity:
+{{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 8 }}
+      tolerations:
+{{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       serviceAccountName: {{ template "kubed.serviceAccountName" . }}
       {{- if .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -100,24 +106,3 @@ spec:
         persistentVolumeClaim:
           claimName: {{ if .Values.persistence.existingClaim }}{{ .Values.persistence.existingClaim }}{{- else }}{{ template "kubed.fullname" . }}{{- end }}
       {{- end }}
-{{- if or .Values.tolerations (and .Values.criticalAddon (eq .Release.Namespace "kube-system")) }}
-      tolerations:
-{{- if .Values.tolerations }}
-{{ toYaml .Values.tolerations | indent 8 }}
-{{- end -}}
-{{- if and .Values.criticalAddon (eq .Release.Namespace "kube-system") }}
-      - key: CriticalAddonsOnly
-        operator: Exists
-{{- end -}}
-{{- end -}}
-{{- if .Values.affinity }}
-      affinity:
-{{ toYaml .Values.affinity | indent 8 }}
-{{- end -}}
-{{- if .Values.nodeSelector }}
-      nodeSelector:
-{{ toYaml .Values.nodeSelector | indent 8 }}
-{{- end -}}
-{{- if and .Values.criticalAddon (eq .Release.Namespace "kube-system") }}
-      priorityClassName: system-cluster-critical
-{{- end -}}

@@ -42,5 +42,9 @@ Create the name of the service account to use
 {{- end -}}
 
 {{ define "kubed.image" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-kube-state:{{ .Values.images.kubed.tag }}
+{{- else -}}
 {{ .Values.images.kubed.repository }}:{{ .Values.images.kubed.tag }}
+{{- end }}
 {{- end }}

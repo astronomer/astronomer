@@ -65,14 +65,6 @@
 {{- end }}
 {{- end }}
 
-{{ define "kubeReplicator.image" -}}
-{{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/ap-kube-replicator:{{ .Values.images.kubeReplicator.tag }}
-{{- else -}}
-{{ .Values.images.kubeReplicator.repository }}:{{ .Values.images.kubeReplicator.tag }}
-{{- end }}
-{{- end }}
-
 {{ define "registry.docker.config" -}}
   {{- $domain := printf "registry.%v" .Values.global.baseDomain }}
   {{- $email := printf "admin@%v" .Values.global.baseDomain }}
@@ -137,10 +129,6 @@
 
 {{ define "prisma.bootstrapperServiceAccount" -}}
 {{ printf "%s-prisma-bootstrapper" .Release.Name }}
-{{- end }}
-
-{{ define "kubeReplicator.serviceAccount" -}}
-{{ printf "%s-kube-replicator" .Release.Name }}
 {{- end }}
 
 {{ define "prisma.endpoint" -}}
