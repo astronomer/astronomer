@@ -99,12 +99,24 @@
 {{ default (printf "%s-houston-backend" .Release.Name) .Values.houston.airflowBackendSecretName }}
 {{- end }}
 
+{{ define "houston.jwtKeySecret" -}}
+{{ default (printf "%s-houston-jwt-key" .Release.Name) .Values.houston.jwtSigningKeySecretName }}
+{{- end }}
+
 {{ define "houston.jwtCertificateSecret" -}}
 {{ default (printf "%s-houston-jwt-certificate" .Release.Name) .Values.houston.jwtSigningCertificateSecretName }}
 {{- end }}
 
-{{ define "houston.jwtCertificatePath" -}}
+{{ define "houston.jwtCertificateDir" -}}
 /etc/houston/tls/self
+{{- end }}
+
+{{ define "houston.jwtKeyPath" -}}
+{{ printf "%s/tls.key" (include "houston.jwtCertificateDir" .) }}
+{{- end }}
+
+{{ define "houston.jwtCertificatePath" -}}
+{{ printf "%s/tls.crt" (include "houston.jwtCertificateDir" .) }}
 {{- end }}
 
 {{ define "houston.jwtRegistryCertificatePath" -}}

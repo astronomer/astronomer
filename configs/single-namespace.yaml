@@ -4,6 +4,7 @@
 # Disable EFK stack which requires a CluterRole
 tags:
   logging: false
+  kubed: false
 
 # Put the rest of platform in single namespace mode.
 # This will only provision Roles, instead of ClusterRoles.
