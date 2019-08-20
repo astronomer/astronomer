@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM quay.io/mittwald/kubernetes-replicator:v1.0.0
+FROM quay.io/mittwald/kubernetes-replicator:v2.0.2
 LABEL maintainer="Astronomer <humans@astronomer.io>"
 
 ARG BUILD_NUMBER=-1
