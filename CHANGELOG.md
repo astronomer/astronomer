@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file.
 - Login to CLI with service account
 - API standardiztaion and stablilization
 - Fix airflow access after reinstalling the platform
+- Addressed security issues flagged by clair
 
 ## [0.9.7] - 2019-08-09
 - Fix incorrect image tag deployment bug
