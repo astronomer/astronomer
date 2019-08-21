@@ -34,10 +34,6 @@ astronomer:
       repository: astronomerinc/ap-prisma
       tag: master
       pullPolicy: Always
-    kubeReplicator:
-      repository: astronomerinc/ap-kube-replicator
-      tag: master
-      pullPolicy: Always
 
 
 #################################
@@ -126,6 +122,17 @@ kube-state:
   images:
     kubeState:
       repository: astronomerinc/ap-kube-state
+      tag: master
+      pullPolicy: Always
+
+
+#################################
+## Kubed configuration
+#################################
+kubed:
+  images:
+    kubed:
+      repository: astronomerinc/ap-kubed
       tag: master
       pullPolicy: Always
 
