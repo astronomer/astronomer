@@ -82,7 +82,7 @@ RUN apk update \
 	# https://pynacl.readthedocs.io/en/stable/install/
 	&& SODIUM_INSTALL=system pip3 install --no-cache-dir pynacl==1.3.0 \
 	&& pip3 install --no-cache-dir "${AIRFLOW_MODULE}" \
-	&& pip3 install --no-cache-dir "https://github.com/astronomer/astronomer-fab-securitymanager/releases/download/v1.2.0/astronomer_fab_security_manager-1.2.0-py3-none-any.whl" \
+	&& pip3 install --no-cache-dir "https://github.com/astronomer/astronomer-fab-securitymanager/releases/download/v1.2.1/astronomer_fab_security_manager-1.2.1-py3-none-any.whl" \
 	&& cd /usr/lib/python3.7/site-packages/airflow/www_rbac \
 	&& npm install \
 	&& npm run build \
