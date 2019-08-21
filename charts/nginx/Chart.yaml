@@ -1,5 +1,5 @@
 name: nginx
-version: 0.10.0-rc.10
+version: 0.10.0-rc.11
 description: Helm chart to deploy the Astronomer Platform NGINX module
 keywords:
   - astronomer
