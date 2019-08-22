@@ -56,6 +56,9 @@ data:
     deployments:
       # These values get passed directly into the airflow helm deployments
       helm:
+        # Default airflow version to deploy. This is templated into the default image tag.
+        airflowVersion: "1.10.4"
+
         # Webserver configuration.
         webserver:
           # This is the name of the secret that gets copied from the platform namespace
