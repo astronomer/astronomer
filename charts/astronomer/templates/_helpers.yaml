@@ -92,11 +92,11 @@
 {{- end }}
 
 {{ define "houston.jwtKeySecret" -}}
-{{ default (printf "%s-houston-jwt-key" .Release.Name) .Values.houston.jwtSigningKeySecretName }}
+{{ default (printf "%s-houston-jwt-signing-key" .Release.Name) .Values.houston.jwtSigningKeySecretName }}
 {{- end }}
 
 {{ define "houston.jwtCertificateSecret" -}}
-{{ default (printf "%s-houston-jwt-certificate" .Release.Name) .Values.houston.jwtSigningCertificateSecretName }}
+{{ default (printf "%s-houston-jwt-signing-certificate" .Release.Name) .Values.houston.jwtSigningCertificateSecretName }}
 {{- end }}
 
 {{ define "houston.jwtCertificateDir" -}}
