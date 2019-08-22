@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.10.0] - 2019-08-21
+## [0.10.0] - 2019-08-22
 - Upgrade to Airflow 1.10.4
 - Refactored astro subcommands
 - Fixes to log viewer in UI
