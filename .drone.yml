@@ -1,4 +1,14 @@
 pipeline:
+  # wait for clair db up and running
+  wait_for_db:
+    image: astronomerio/ap-build:0.1.1
+    commands:
+      - while ! nc -w 1 -z postgres 5432; do sleep 1; done
+
+  # Start the Clair api locally
+  clair_api:
+    image: arminc/clair-local-scan
+    detach: true
   ##################################
   ## Github pushes
   ###################################
@@ -75,6 +85,21 @@ pipeline:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     secrets: [ docker_username, docker_password ]
+    when:
+      event: push
+      branch: [ master, release-* ]
+
+  scan-platform:
+    group: push
+    image: astronomerio/ap-build:0.1.2
+    commands:
+      - make scan-platform
+    environment:
+      - ASTRONOMER_VERSION=0.0.0
+      - ASTRONOMER_REF=${DRONE_BRANCH}
+      - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
     when:
       event: push
       branch: [ master, release-* ]
@@ -246,3 +271,10 @@ pipeline:
     channel: platform
     when:
       status: [ failure, changed ]
+
+# Start the Clair database
+services:
+  postgres:
+    image: arminc/clair-db
+    detach: true
+    pull: true
