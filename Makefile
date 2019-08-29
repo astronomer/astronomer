@@ -108,12 +108,12 @@ scan-platform: check-env
 	for component in ${PLATFORM_COMPONENTS} ; do \
 		PUSH_IMAGE=${REPOSITORY}/ap-$${component} \
 		PUSH_TAGS="${ASTRONOMER_VERSION}" \
-		bin/clair-scan; \
+		bin/clair-scan || exit 1 ; \
 	done;
 	for component in ${VENDOR_COMPONENTS} ; do \
 		PUSH_IMAGE=${REPOSITORY}/ap-$${component} \
 		PUSH_TAGS="${ASTRONOMER_VERSION}" \
-		bin/clair-scan; \
+		bin/clair-scan || exit 1 ; \
 	done;
 
 #
