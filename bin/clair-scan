@@ -1,43 +1,43 @@
 #!/usr/bin/env bash
 
-# Make sure you installed and run
-# docker run -p 5432:5432 -d --name db arminc/clair-db:latest
-# and
-# docker run -p 6060:6060 --link db:postgres -d --name clair arminc/clair-local-scan:latest
+# script expect clair-scanner have been installed in advance
+if [[ ! -f $(command -v clair-scanner) ]]; then
+    echo "Please install https://github.com/arminc/clair-scanner"
+    exit 1
+fi
 
-RELEASE_TAG=0.10.0-rc.1
-declare -a TARGET_IMAGES=("ap-base"
-                          "ap-airflow"
-                          "ap-alertmanager"
-                          "ap-cadvisor"
-                          "ap-curator"
-                          "ap-elasticsearch"
-                          "ap-elasticsearch-exporter"
-                          "ap-fluentd"
-                          "ap-grafana"
-                          "ap-kibana"
-                          "ap-kube-replicator"
-                          "ap-kube-state"
-                          "ap-nginx"
-                          "ap-nginx-es"
-                          "ap-pgbouncer"
-                          "ap-pgbouncer-exporter"
-                          "ap-prisma"
-                          "ap-prometheus"
-                          "ap-redis"
-                          "ap-registry"
-                          "ap-statsd-exporter")
+IMAGE=${PUSH_IMAGE}:${PUSH_TAGS}
+RESULTS_FILE="${IMAGE//[\/\-:\.]/_}_results.txt"
+HOST_IP="$(hostname -I | awk '{print $1}')" || true
+CLAIR_HOST_IP=${CLAIR_HOST:-clair_api}
 
+docker pull "${IMAGE}" &> /dev/null
 
-for i in "${TARGET_IMAGES[@]}"
-do
-   image="astronomerinc/$i:$RELEASE_TAG"
-   docker pull $image > results.log
-   clair-scanner --ip=192.168.1.199 $image &> "${i}_results.txt"
-   high_count=`grep High ${i}_results.txt | wc -l`
-   medium_count=`grep Medium ${i}_results.txt | wc -l`
-   low_count=`grep Low ${i}_results.txt | wc -l`
-   negligible_count=`grep Negligible ${i}_results.txt | wc -l`
-   unknown_count=`grep Unknown ${i}_results.txt | wc -l`
-   printf "Docker image %55s have %10s High | %10s Medium | %10s Low |\n" $image ${high_count//[[:space:]]/} ${medium_count//[[:space:]]/} ${low_count//[[:space:]]/}
-done
+function print_high_severity
+{
+    count=$(jq '.vulnerabilities[] | select( .severity == "High") | .severity' "${RESULTS_FILE}" | wc -l)
+    if [[ $count -eq 0 ]]; then
+        echo "No high severity issues found"
+    else
+        echo "${count} high severity issues found"
+        jq '.vulnerabilities[] | select( .severity == "High" )' "${RESULTS_FILE}"
+    fi
+
+}
+
+function main
+{
+    echo "-----------------------------------------------------------------------------------------"
+    echo "Scanning of ${IMAGE}"
+    clair-scanner --report="${RESULTS_FILE}" --ip="${HOST_IP:-192.168.1.200}" --clair="http://${CLAIR_HOST_IP}:6060" "${IMAGE}" &>/dev/null
+    errcode=$?
+    if [[ -f ${RESULTS_FILE} ]]; then
+        print_high_severity
+        exit $errcode
+    else
+        echo "No high severity issues found"
+    fi
+
+}
+
+main
