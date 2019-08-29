@@ -20,7 +20,7 @@ function print_high_severity
         echo "No high severity issues found"
     else
         echo "${count} high severity issues found"
-        jq '.vulnerabilities[] | select( .severity == "High" ) | .link' "${RESULTS_FILE}"
+        jq '.vulnerabilities[] | select( .severity == "High" )' "${RESULTS_FILE}"
     fi
 
 }

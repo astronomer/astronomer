@@ -90,7 +90,7 @@ pipeline:
       branch: [ master, release-* ]
 
   scan-platform:
-#    group: push
+    group: push
     image: astronomerio/ap-build:0.1.2
     commands:
       - make scan-platform
@@ -100,9 +100,9 @@ pipeline:
       - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-#    when:
-#      event: push
-#      branch: [ master, release-* ]
+    when:
+      event: push
+      branch: [ master, release-* ]
 
   # trigger:
   #   image: plugins/downstream
