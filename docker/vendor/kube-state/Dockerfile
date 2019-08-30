@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM quay.io/coreos/kube-state-metrics:v1.4.0
+FROM quay.io/coreos/kube-state-metrics:v1.7.2
 LABEL maintainer="Astronomer <humans@astronomer.io>"
 
 ARG BUILD_NUMBER=-1
