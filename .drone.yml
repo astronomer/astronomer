@@ -102,7 +102,6 @@ pipeline:
       - /var/run/docker.sock:/var/run/docker.sock
     when:
       event: push
-      branch: [ master, release-* ]
 
   # trigger:
   #   image: plugins/downstream
