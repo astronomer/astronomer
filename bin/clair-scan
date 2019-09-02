@@ -30,7 +30,7 @@ function main
 {
     echo "-----------------------------------------------------------------------------------------"
     echo "Scanning of ${IMAGE}"
-    clair-scanner --report="${RESULTS_FILE}" --ip="${HOST_IP:-192.168.1.200}" --clair="http://${CLAIR_HOST_IP}:6060" "${IMAGE}" &>/dev/null
+    clair-scanner --whitelist=whitelist.yml --report="${RESULTS_FILE}" --ip="${HOST_IP:-192.168.1.200}" --clair="http://${CLAIR_HOST_IP}:6060" "${IMAGE}" &>/dev/null
     if [[ -f ${RESULTS_FILE} ]]; then
         print_high_severity
     else

@@ -1,0 +1,5 @@
+images:
+  ubuntu:
+    # Approve CVE only for ubuntu image, regardless of the version
+    CVE-2019-9511: nghttp2
+    CVE-2019-9513: nghttp2
