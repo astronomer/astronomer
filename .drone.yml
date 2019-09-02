@@ -25,7 +25,6 @@ pipeline:
       - ASTRONOMER_VERSION=0.0.0
     when:
       event: push
-      branch: [ master, release-* ]
 
   build-platform:
     group: build
@@ -40,7 +39,6 @@ pipeline:
       - /var/run/docker.sock:/var/run/docker.sock
     when:
       event: push
-      branch: [ master, release-* ]
 
   build-airflow:
     group: build
@@ -55,7 +53,6 @@ pipeline:
       - /var/run/docker.sock:/var/run/docker.sock
     when:
       event: push
-      branch: [ master, release-* ]
 
   push-platform:
     group: push
