@@ -11,7 +11,7 @@ RESULTS_FILE="${IMAGE//[\/\-:\.]/_}_results.txt"
 HOST_IP="$(hostname -I | awk '{print $1}')" || true
 CLAIR_HOST_IP=${CLAIR_HOST:-clair_api}
 
-docker pull "${IMAGE}" &> /dev/null
+docker pull "${IMAGE}"
 
 function print_high_severity
 {
