@@ -11,7 +11,7 @@ RESULTS_FILE="${IMAGE//[\/\-:\.]/_}_results.txt"
 HOST_IP="$(hostname -I | awk '{print $1}')" || true
 CLAIR_HOST_IP=${CLAIR_HOST:-clair_api}
 
-docker pull "${IMAGE}" &> /dev/null
+docker pull "${IMAGE}"
 
 function print_high_severity
 {
@@ -30,7 +30,7 @@ function main
 {
     echo "-----------------------------------------------------------------------------------------"
     echo "Scanning of ${IMAGE}"
-    clair-scanner --report="${RESULTS_FILE}" --ip="${HOST_IP:-192.168.1.200}" --clair="http://${CLAIR_HOST_IP}:6060" "${IMAGE}" &>/dev/null
+    clair-scanner --whitelist=../.clair/whitelist.yml --report="${RESULTS_FILE}" --ip="${HOST_IP:-192.168.1.200}" --clair="http://${CLAIR_HOST_IP}:6060" "${IMAGE}" &>/dev/null
     if [[ -f ${RESULTS_FILE} ]]; then
         print_high_severity
     else
