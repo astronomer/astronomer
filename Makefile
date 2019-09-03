@@ -112,7 +112,7 @@ scan-platform: check-env
 	done;
 	for component in ${VENDOR_COMPONENTS} ; do \
 		PUSH_IMAGE=${REPOSITORY}/ap-$${component} \
-		PUSH_TAGS="${ASTRONOMER_VERSION}" \
+		PUSH_TAGS="${ASTRONOMER_REF}" \
 		bin/clair-scan || exit 1 ; \
 	done;
 
