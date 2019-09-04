@@ -42,9 +42,10 @@ ENV ASTRONOMER_GROUP=${ASTRONOMER_GROUP}
 RUN addgroup -S ${ASTRONOMER_GROUP} \
 	&& adduser -S -G ${ASTRONOMER_GROUP} ${ASTRONOMER_USER}
 
-RUN echo @edge-community http://dl-cdn.alpinelinux.org/alpine/edge/community >> /etc/apk/repositories && \
-    echo @edge-testing http://dl-cdn.alpinelinux.org/alpine/edge/testing >> /etc/apk/repositories && \
-    echo @edge http://dl-cdn.alpinelinux.org/alpine/edge/main >> /etc/apk/repositories
+RUN echo @edge-community http://dl-cdn.alpinelinux.org/alpine/edge/community >> /etc/apk/repositories \
+	&& echo @edge-testing http://dl-cdn.alpinelinux.org/alpine/edge/testing >> /etc/apk/repositories \
+	&& echo @edge http://dl-cdn.alpinelinux.org/alpine/edge/main >> /etc/apk/repositories
+
 # Install packages
 RUN apk update \
 	&& apk add --no-cache --virtual .build-deps \
