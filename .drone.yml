@@ -1,12 +1,12 @@
 pipeline:
   # wait for clair db up and running
-  wait_for_db:
+  wait-for-db:
     image: astronomerio/ap-build:0.1.2
     commands:
       - while ! nc -w 1 -z postgres 5432; do sleep 1; done
 
   # Start the Clair api locally
-  clair_api:
+  clair-api:
     image: arminc/clair-local-scan
     detach: true
   ##################################
