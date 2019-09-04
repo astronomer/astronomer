@@ -54,6 +54,10 @@ data:
 
     # Airflow deployment configuration
     deployments:
+      # Kubernetes labels to add on each airflow deployment namespace
+      namespaceLabels:
+        platform-release: {{ .Release.Name }}
+
       # These values get passed directly into the airflow helm deployments
       helm:
         # Default airflow version to deploy. This is templated into the default image tag.
