@@ -2,7 +2,7 @@
 {{- define "standard_airflow_environment" }}
   # Hard Coded Airflow Envs
   - name: ASTRONOMER__AIRFLOW__WORKER_LOG_RETENTION
-    value: "5"
+    value: "3"
   - name: AIRFLOW__CORE__FERNET_KEY
     valueFrom:
       secretKeyRef:
