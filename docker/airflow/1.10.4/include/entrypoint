@@ -2,6 +2,11 @@
 
 set -e
 
+# Compatibility with older helm charts that used to run crond.
+if [[ "$1" == "crond" ]]; then
+  exec /usr/local/bin/clean-airflow-logs
+fi
+
 # Airflow subcommand
 CMD=$2
 
