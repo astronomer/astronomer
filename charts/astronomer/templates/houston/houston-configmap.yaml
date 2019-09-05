@@ -70,25 +70,25 @@ data:
           jwtSigningCertificateSecretName: {{ template "houston.jwtCertificateSecret" . }}
           resources:
             limits:
-              ephemeral-storage: "10Gi"
+              ephemeral-storage: "2Gi"
             requests:
-              ephemeral-storage: "5Gi"
+              ephemeral-storage: "1Gi"
 
         # Worker configuration (applies to Celery and Kubernetes task pods).
         workers:
           resources:
             limits:
-              ephemeral-storage: "10Gi"
+              ephemeral-storage: "2Gi"
             requests:
-              ephemeral-storage: "5Gi"
+              ephemeral-storage: "1Gi"
 
         # Scheduler configuration.
         scheduler:
           resources:
             limits:
-              ephemeral-storage: "10Gi"
+              ephemeral-storage: "2Gi"
             requests:
-              ephemeral-storage: "5Gi"
+              ephemeral-storage: "1Gi"
 
         # Default quotas for airflow deployments.
         quotas:
