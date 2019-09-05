@@ -47,26 +47,26 @@ mappings:
       dag_id: "$1"
 
   - match: airflow.dag_processing.last_runtime.*
-      name: "airflow_dag_processing_last_runtime"
-      labels:
-        dag_file: "$1"
+    name: "airflow_dag_processing_last_runtime"
+    labels:
+      dag_file: "$1"
 
   - match: airflow.dag_processing.last_run.seconds_ago.*
-      name: "airflow_dag_processing_last_run_seconds_ago"
-      labels:
-        dag_file: "$1"
+    name: "airflow_dag_processing_last_run_seconds_ago"
+    labels:
+      dag_file: "$1"
 
   - match: airflow.pool.open_slots.*
-      name: "airflow_pool_open_slots"
-      labels:
-        pool: "$1"
+    name: "airflow_pool_open_slots"
+    labels:
+      pool: "$1"
 
   - match: airflow.pool.used_slots.*
-      name: "airflow_pool_used_slots"
-      labels:
-        pool: "$1"
+    name: "airflow_pool_used_slots"
+    labels:
+      pool: "$1"
 
   - match: airflow.pool.starving_tasks.*
-      name: "airflow_pool_starving_tasks"
-      labels:
-        pool: "$1"
+    name: "airflow_pool_starving_tasks"
+    labels:
+      pool: "$1"
