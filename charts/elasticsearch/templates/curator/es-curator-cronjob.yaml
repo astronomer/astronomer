@@ -6,6 +6,11 @@ apiVersion: {{ template "curator.cronJob.apiVersion" . }}
 kind: CronJob
 metadata:
   name: {{ template "elasticsearch.fullname" . }}-curator
+  annotations:
+    # https://github.com/istio/istio/issues/6324
+    # TODO: turn back on after upgrading to istio 1.3
+    # and implementing call to pilot-agent's /quitquitquit
+    sidecar.istio.io/inject: "false"
   labels:
     tier: logging
     component: {{ template "elasticsearch.name" . }}
