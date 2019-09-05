@@ -105,8 +105,8 @@ RUN mkdir -p ${AIRFLOW_HOME}/logs
 # Copy entrypoint to root
 COPY include/entrypoint /
 
-# Copy cron scripts
-COPY include/clean-airflow-logs /etc/periodic/15min/clean-airflow-logs
+# Copy "cron" scripts
+COPY include/clean-airflow-logs /usr/local/bin/clean-airflow-logs
 
 # Ensure our user has ownership to AIRFLOW_HOME
 RUN chown -R ${ASTRONOMER_USER}:${ASTRONOMER_GROUP} ${AIRFLOW_HOME}

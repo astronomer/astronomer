@@ -1,6 +1,20 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
+
+set -e
 
 DIRECTORY=${AIRFLOW_HOME:-/usr/local/airflow}
 RETENTION=${ASTRONOMER__AIRFLOW__WORKER_LOG_RETENTION_DAYS:-15}
-echo "Trimming worker logs to ${RETENTION} days."
-find "${DIRECTORY}"/logs -mtime +"${RETENTION}" -name '*.log' -delete
+
+trap "exit" INT TERM
+
+EVERY=$((15*60))
+
+echo "Cleaning logs every $EVERY seconds"
+
+while true; do
+  seconds=$(( $(date -u +%s) % EVERY))
+  [[ $seconds -lt 1 ]] || sleep $((EVERY - seconds))
+
+  echo "Trimming airflow logs to ${RETENTION} days."
+  find "${DIRECTORY}"/logs -mtime +"${RETENTION}" -name '*.log' -delete
+done
