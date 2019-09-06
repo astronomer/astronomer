@@ -89,7 +89,7 @@ spec:
         # Always start the garbage collector sidecar.
         - name: scheduler-gc
           image: {{ template "airflow_image" . }}
-          args: ["crond", "-f", "-d", "0"]
+          args: ["/usr/local/bin/clean-airflow-logs"]
           volumeMounts:
             - name: logs
               mountPath: {{ template "airflow_logs" . }}

@@ -80,16 +80,10 @@ spec:
 {{- if $persistence }}
         - name: worker-gc
           image: {{ template "airflow_image" . }}
-          args: ["crond", "-f", "-d", "0"]
-          securityContext:
-            runAsUser: 0
+          args: ["/usr/local/bin/clean-airflow-logs"]
           volumeMounts:
             - name: logs
               mountPath: {{ template "airflow_logs" . }}
-            - name: config
-              mountPath: {{ template "airflow_config_path" . }}
-              subPath: airflow.cfg
-              readOnly: true
 {{- end }}
       volumes:
         - name: config
