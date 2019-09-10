@@ -21,10 +21,10 @@ LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
 LABEL io.astronomer.docker=true
 LABEL io.astronomer.docker.module="airflow"
 LABEL io.astronomer.docker.component="airflow"
-LABEL io.astronomer.docker.airflow.version="1.10.4"
+LABEL io.astronomer.docker.airflow.version="1.10.5"
 
 ARG ORG="astronomer"
-ARG VERSION="1.10.4-1"
+ARG VERSION="v1-10-5"
 ARG SUBMODULES="all, statsd, elasticsearch"
 
 ENV AIRFLOW_REPOSITORY="https://github.com/${ORG}/airflow"
