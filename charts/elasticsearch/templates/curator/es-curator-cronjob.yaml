@@ -27,7 +27,8 @@ spec:
           - name: curator
             image: {{ template "curator.image" . }}
             imagePullPolicy: {{ .Values.images.curator.pullPolicy }}
-            args: ["--config", "/etc/config/config.yml", "/etc/config/action_file.yml"]
+            command: ["/bin/sh", "-c"]
+            args: ["/usr/bin/curator --config /etc/config/config.yml /etc/config/action_file.yml; exit_code=$?; wget --post-data='not=used' http://127.0.0.1:15020/quitquitquit; exit $exit_code;"]
             volumeMounts:
               - name: config-volume
                 mountPath: /etc/config
