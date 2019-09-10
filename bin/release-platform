@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Usage: bin/release-platform <branch> <version> <environment>
+# Usage: ENV=production bin/release-platform <branch> <version>
 # set -x
 
 : ${ENV:=development}
