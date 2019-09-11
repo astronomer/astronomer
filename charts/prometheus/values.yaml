@@ -93,6 +93,17 @@ alerts:
         summary: "{{ $labels.release }} is near its pod quota"
         description: "{{ $labels.release }} has been using over 95% of its pod quota for over 10 minutes."
 
+    - alert: AirflowEphemeralStorageLimit
+      expr: (container_fs_usage_bytes{pod_name=~".*(scheduler|webserver|worker).*"}) >= 1800000000
+      for: 5m
+      labels:
+        tier: airflow
+        component: "{{ $labels.component_name }}"
+        deployment: "{{ $labels.deployment }}"
+      annotations:
+        summary: "{{ $labels.deployment }} {{ $labels.component_name }} is near its ephemeral storage limit"
+        description: "{{ $labels.deployment }} {{ $labels.component_name }} has been using 90% of its ephemeral storage for over 5 minutes."
+
     # - alert: AirflowCPUQuota
     #   expr: (sum by (release) (kube_resourcequota{resource="limits.cpu", type="used", namespace=~".*-.*-.*-[0-9]{4}"}) / sum by (release) (kube_resourcequota{resource="limits.cpu", type="hard", namespace=~".*-.*-.*-[0-9]{4}"})*100) > 95
     #   for: 10m

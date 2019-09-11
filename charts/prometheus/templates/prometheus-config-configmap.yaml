@@ -252,15 +252,15 @@ data:
             action: labeldrop
 
             # Add deployment name via container_name
-          - source_labels: [container_name]
+          - source_labels: [pod_name]
             regex: "^(.*-.*-[0-9]{4})-.*"
             replacement: "$1"
             target_label: deployment
 
             # This will patch up most metrics
           - source_labels: [container_name]
-            regex: "^(.*-.*-[0-9]{4})-(.*)$"
-            replacement: "$1 $2"
+            regex: "^(.*)$"
+            replacement: "$1"
             target_label: component_name
 
           - source_labels: [pod_name]
@@ -277,7 +277,7 @@ data:
 
           - source_labels: [__name__, container_name, pod_name]
             regex: "container_network_.*;(.*)-(.*)-([0-9a-z]{5,10}-[0-9a-z]{5})$"
-            replacement: "$1 $2"
+            replacement: "$2"
             target_label: component_name
 
           - source_labels: [__name__, container_name, pod_name]
@@ -288,7 +288,7 @@ data:
             # StatefulSet (workers) format
           - source_labels: [__name__, pod_name]
             regex: "^container_network_.*;(.*)-(.*)-([0-9]+)$"
-            replacement: "$1 $2"
+            replacement: "$2"
             target_label: component_name
 
           - source_labels: [__name__, pod_name]
