@@ -64,5 +64,3 @@ spec:
             - name: APP_API_LOC_WSS
               value: "wss://houston.{{ .Values.global.baseDomain }}/ws"
             {{- end }}
-            - name: ANALYTICS_TRACKING_ID
-              value: "pFWwGe5wXTK5e26mWAarQ"
