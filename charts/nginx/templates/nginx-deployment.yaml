@@ -25,11 +25,9 @@ spec:
         component: ingress-controller
         release: {{ .Release.Name }}
       annotations:
+        traffic.sidecar.istio.io/includeInboundPorts: ""
         checksum/configmap: {{ include (print $.Template.BasePath "/nginx-configmap.yaml") . | sha256sum }}
         checksum/headers-configmap: {{ include (print $.Template.BasePath "/nginx-headers-configmap.yaml") . | sha256sum }}
-        {{- if .Values.global.istioEnabled }}
-        sidecar.istio.io/inject: "false"
-        {{- end }}
     spec:
       serviceAccountName: {{ template "nginx.fullname" . }}
       containers:
@@ -97,7 +95,7 @@ spec:
                   release: {{ .Release.Name }}
     {{- if .Values.global.platformNodePool.affinity }}
 {{ toYaml .Values.global.platformNodePool.affinity | indent 8 }}
-    {{- end }} 
+    {{- end }}
       tolerations:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
     {{- end }}
