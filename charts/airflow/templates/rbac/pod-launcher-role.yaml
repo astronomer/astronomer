@@ -29,4 +29,11 @@ rules:
       - "pods/log"
     verbs:
       - "get"
+  - apiGroups:
+      - ""
+    resources:
+      - "pods/exec"
+    verbs:
+      - "create"
+      - "get"
 {{- end }}
