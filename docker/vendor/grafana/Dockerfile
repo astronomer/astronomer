@@ -32,3 +32,4 @@ COPY include/elasticsearch.json /var/lib/grafana/dashboards/elasticsearch.json
 COPY include/prometheus.json /var/lib/grafana/dashboards/prometheus.json
 COPY include/docker-registry.json /var/lib/grafana/dashboards/docker-registry.json
 COPY include/platform-overview.json /var/lib/grafana/dashboards/platform-overview.json
+COPY include/velero.json /var/lib/grafana/dashboards/velero.json
