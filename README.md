@@ -25,10 +25,6 @@ If you'd like to see the platform in action, [start a free trial on our SaaS ser
 * [astro-cli](https://github.com/astronomer/astro-cli) - Go-based CLI for the platform
 * [db-bootstrapper](https://github.com/astronomer/db-bootstrapper) - Init container for bootstrapping system databases
 
-## Is it any good?
-
-[Yes](https://news.ycombinator.com/item?id=3067434).
-
 ## Docker images
 
 Docker images for deploying and running Astronomer are currently available on
