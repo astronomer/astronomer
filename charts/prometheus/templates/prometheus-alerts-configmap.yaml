@@ -57,3 +57,66 @@ data:
             summary: "TLS Certificate Expiring Soon"
             {{/* We want '{{ $labels.host }}' to be evaluted by prometheus, not helm, so we have to escape it once */ -}}
             description: {{ printf "%q" "The TLS Certificate for {{ $labels.host }} is expiring in less than a week." }}
+
+        - alert: PrometheusNotConnectedToAlertmanagers
+          expr: prometheus_notifications_alertmanagers_discovered{job="prometheus"} < 1
+          for: 10m
+          labels:
+            tier: platform
+            component: prometheus
+          annotations:
+            summary: "Prometheus is not connected to any Alertmanagers"
+            description: "Prometheus is not connected to any Alertmanagers"
+
+        - alert: NginxIngressHighFailureRate
+          expr: |
+            (sum by (ingress) (rate(nginx_ingress_controller_requests{ingress!="", status=~"[4-5][0-9][0-9]"}[2m]))
+              /
+            sum by (ingress) (rate(nginx_ingress_controller_requests{ingress!=""}[2m]))) * 100 > 10
+          for: 10m
+          labels:
+            tier: platform
+            component: nginx
+          annotations:
+            summary: 'NGINX Ingress {{ $labels.ingress }} failure rate is {{ printf
+              "%.2f" $value }}%.'
+            description: "This alert fires if the failure rate (the rate of 4xx or 5xx reponses)
+              measured on a time window of 2 minutes was higher than 10% in the last
+              10 minutes."
+
+        - alert: PodMemoryAtTheLimit
+          expr: |
+            sum(label_join(container_memory_usage_bytes{namespace!="kube-system",
+            container_name!=""}, "pod", ",", "pod_name")) by (pod) /
+            sum(kube_pod_container_resource_limits_memory_bytes{namespace!="kube-system"}) by (pod) > 0.8
+          for: 1h
+          labels:
+            tier: platform
+            component: pod
+          annotations:
+            summary: "Memory usage for {{ $labels.pod }} Pod is almost at the limit"
+            description: "Pod uses more than 80% of the reserved memory"
+
+      - alert: KubePodNotReady
+        expr: |
+          sum by (namespace, pod) (kube_pod_status_phase{job="kube-state", phase=~"Pending|Unknown"}) > 0
+        for: 1h
+        labels:
+          tier: platform
+          component: pod
+        annotations:
+          summary: "Pod in non-ready state for more than 1 hour"
+          description: "Pod {{ $labels.namespace }}/{{ $labels.pod }} has been in a non-ready"
+            state for longer than an hour.
+
+      - alert: NginxIngressDown
+        expr: |
+          absent(up{job="nginx"} == 1)
+        for: 15m
+        labels:
+          tier: platform
+          component: nginx
+        annotations:
+          summary: "Nginx Ingress Controller has disappeared from Prometheus target discovery"
+          description: "This alert fires if Promethes target discovery was not able to
+            reach ingress-nginx-metrics in the last 15 minutes."
