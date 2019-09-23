@@ -12,6 +12,26 @@ OUTPUT := repository
 # Temp directory
 TEMP := /tmp/${DOMAIN}
 
+.PHONY: lint
+.ONESHELL:
+lint:
+	set -xe
+	rm -rf ${TEMP}/astronomer-platform || true
+	mkdir -p ${TEMP}
+	cp -R ../helm.astronomer.io ${TEMP}/astronomer-platform
+	mv ${TEMP}/astronomer-platform/charts/airflow ${TEMP}/airflow
+	helm lint ${TEMP}/astronomer-platform
+	# Airflow chart is linted separately
+	mv ${TEMP}/airflow ${TEMP}/astronomer-platform/charts/airflow
+	helm lint ${TEMP}/astronomer-platform/charts/airflow
+	# Lint the Prometheus alerts configuration
+	helm template -x ${TEMP}/astronomer-platform/charts/prometheus/templates/prometheus-alerts-configmap.yaml ${TEMP}/astronomer-platform > ${TEMP}/prometheus_alerts.yaml
+	# Parse the alerts.yaml data from the config map resource
+	python3 -c "import yaml; from pathlib import Path; alerts = yaml.safe_load(Path('${TEMP}/prometheus_alerts.yaml').read_text())['data']['alerts.yaml']; Path('${TEMP}/prometheus_alerts.yaml').write_text(alerts)"
+	promtool check rules  ${TEMP}/prometheus_alerts.yaml
+	rm -rf ${TEMP}/astronomer-platform
+	rm ${TEMP}/prometheus_alerts.yaml
+
 .PHONY: build
 build: update-version
 	mkdir -p ${OUTPUT}
