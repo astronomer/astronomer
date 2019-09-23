@@ -106,6 +106,28 @@ data:
       #       replacement: $1:$2
       #       target_label: __address__
 
+      {{- if .Values.global.veleroEnabled }}
+      - job_name: velero
+        scrape_interval: 30s
+        kubernetes_sd_configs:
+          - role: service
+            namespaces:
+              names:
+                - velero
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_service_name]
+            action: keep
+            regex: "^{{ .Release.Name }}-velero"
+          - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scrape]
+            action: keep
+            regex: true
+          - source_labels: [__address__, __meta_kubernetes_service_annotation_prometheus_io_port]
+            action: replace
+            regex: ([^:]+)(?::\d+)?;(\d+)
+            replacement: $1:$2
+            target_label: __address__
+      {{- end }}
+
       - job_name: kube-state
         scrape_interval: 5s # Faster scrape to power dashboards
         kubernetes_sd_configs:
