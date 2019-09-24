@@ -62,8 +62,8 @@ RUN apk update \
 		nodejs \
 		nodejs-npm \
 		python3-dev \
-		tzdata \
-	&& apk add --no-cache \
+		tzdata
+RUN apk add --no-cache \
 		bash \
 		ca-certificates \
 		cyrus-sasl \
@@ -75,7 +75,8 @@ RUN apk update \
 		py3-cryptography@edge \
 		py3-fastavro@edge-testing \
 		py3-grpcio@edge-testing \
-		py3-mysqlclient \
+		py3-mysqlclient
+RUN apk add --no-cache \
 		py3-numpy-dev@edge-community \
 		py3-numpy@edge-community \
 		py3-pandas@edge-testing \
@@ -85,13 +86,13 @@ RUN apk update \
 		py3-typed-ast@edge-testing \
 		python3 \
 		tini \
-	&& update-ca-certificates \
-	&& cp /usr/share/zoneinfo/UTC /etc/localtime \
+	&& update-ca-certificates
+RUN cp /usr/share/zoneinfo/UTC /etc/localtime \
 	&& pip3 install --no-cache-dir --upgrade pip==19.2.1 \
 	&& pip3 install --no-cache-dir --upgrade setuptools==41.0.1 \
 	&& pip3 install --no-cache-dir "${AIRFLOW_MODULE}" \
-	&& pip3 install --no-cache-dir "https://github.com/astronomer/astronomer-fab-securitymanager/releases/download/v1.2.1/astronomer_fab_security_manager-1.2.1-py3-none-any.whl" \
-	&& cd /usr/lib/python3.7/site-packages/airflow/www_rbac \
+	&& pip3 install --no-cache-dir "https://github.com/astronomer/astronomer-fab-securitymanager/releases/download/v1.2.1/astronomer_fab_security_manager-1.2.1-py3-none-any.whl"
+RUN cd /usr/lib/python3.7/site-packages/airflow/www_rbac \
 	&& npm install \
 	&& npm run build \
 	&& rm -rf node_modules \
