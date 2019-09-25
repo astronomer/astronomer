@@ -126,7 +126,6 @@
       "valueFontSize": "80%",
       "valueMaps": [
         {
-        {
           "op": "=",
           "text": "N/A",
           "value": "null"
