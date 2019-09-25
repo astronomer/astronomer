@@ -51,7 +51,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "iteration": 1552258856226,
+  "iteration": 1569418312464,
   "links": [],
   "panels": [
     {
@@ -109,6 +109,7 @@
       "maxDataPoints": 100,
       "nullPointMode": "connected",
       "nullText": null,
+      "options": {},
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "",
@@ -175,7 +176,7 @@
       "colorValue": true,
       "colors": [
         "#d44a3a",
-        "#d44a3a",
+        "#299c46",
         "#299c46"
       ],
       "datasource": "Prometheus",
@@ -197,7 +198,7 @@
       "id": 65,
       "interval": null,
       "links": [],
-      "mappingType": 1,
+      "mappingType": 2,
       "mappingTypes": [
         {
           "name": "value to text",
@@ -211,15 +212,21 @@
       "maxDataPoints": 100,
       "nullPointMode": "connected",
       "nullText": null,
+      "options": {},
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "",
       "prefixFontSize": "50%",
       "rangeMaps": [
         {
-          "from": "null",
-          "text": "N/A",
-          "to": "null"
+          "from": "0",
+          "text": "Unhealthy",
+          "to": "0.00001"
+        },
+        {
+          "from": "0.00001",
+          "text": "Healthy",
+          "to": "9999999"
         }
       ],
       "sparkline": {
@@ -231,32 +238,22 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "round(rate(airflow_scheduler_heartbeat{deployment=~\"$deployment\", type=\"counter\"}[1m]) / 0.08)",
+          "expr": "rate(airflow_scheduler_heartbeat{deployment=~\"$deployment\", type=\"counter\"}[1m])",
           "format": "time_series",
           "instant": true,
           "intervalFactor": 2,
           "refId": "A"
         }
       ],
-      "thresholds": "0,1",
+      "thresholds": "0.00001,999999",
       "title": "Scheduler Heartbeat",
       "type": "singlestat",
       "valueFontSize": "80%",
       "valueMaps": [
         {
           "op": "=",
-          "text": "Unknown",
-          "value": "null"
-        },
-        {
-          "op": "=",
-          "text": "Unhealthy",
-          "value": "0"
-        },
-        {
-          "op": "=",
-          "text": "Healthy",
-          "value": "1"
+          "text": "",
+          "value": ""
         }
       ],
       "valueName": "current"
@@ -316,6 +313,7 @@
       "maxDataPoints": 100,
       "nullPointMode": "connected",
       "nullText": null,
+      "options": {},
       "postfix": " pods",
       "postfixFontSize": "50%",
       "prefix": "",
@@ -397,6 +395,7 @@
       "maxDataPoints": 100,
       "nullPointMode": "connected",
       "nullText": null,
+      "options": {},
       "postfix": " cores",
       "postfixFontSize": "50%",
       "prefix": "",
@@ -478,6 +477,7 @@
       "maxDataPoints": 100,
       "nullPointMode": "connected",
       "nullText": null,
+      "options": {},
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "",
@@ -560,6 +560,7 @@
       "maxDataPoints": 100,
       "nullPointMode": "connected",
       "nullText": null,
+      "options": {},
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "",
@@ -643,6 +644,7 @@
       "maxDataPoints": 100,
       "nullPointMode": "connected",
       "nullText": null,
+      "options": {},
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "",
@@ -725,6 +727,7 @@
       "maxDataPoints": 100,
       "nullPointMode": "connected",
       "nullText": null,
+      "options": {},
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "",
@@ -819,6 +822,7 @@
       "maxDataPoints": 100,
       "nullPointMode": "connected",
       "nullText": null,
+      "options": {},
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "",
@@ -900,6 +904,7 @@
       "maxDataPoints": 100,
       "nullPointMode": "connected",
       "nullText": null,
+      "options": {},
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "",
@@ -982,6 +987,7 @@
       "maxDataPoints": 100,
       "nullPointMode": "connected",
       "nullText": null,
+      "options": {},
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "",
@@ -1063,6 +1069,7 @@
       "maxDataPoints": 100,
       "nullPointMode": "connected",
       "nullText": null,
+      "options": {},
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "",
@@ -1110,6 +1117,7 @@
       "datasource": "Prometheus",
       "description": "Rate of task successes.",
       "fill": 1,
+      "fillGradient": 0,
       "gridPos": {
         "h": 6,
         "w": 9,
@@ -1130,6 +1138,9 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null as zero",
+      "options": {
+        "dataLinks": []
+      },
       "paceLength": 10,
       "percentage": false,
       "pointradius": 5,
@@ -1198,6 +1209,7 @@
       "datasource": "Prometheus",
       "description": "Rate of task failures.",
       "fill": 1,
+      "fillGradient": 0,
       "gridPos": {
         "h": 6,
         "w": 9,
@@ -1219,6 +1231,9 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null as zero",
+      "options": {
+        "dataLinks": []
+      },
       "paceLength": 10,
       "percentage": false,
       "pointradius": 5,
@@ -1320,6 +1335,7 @@
       "maxDataPoints": 100,
       "nullPointMode": "connected",
       "nullText": null,
+      "options": {},
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "",
@@ -1414,6 +1430,7 @@
       "maxDataPoints": 100,
       "nullPointMode": "connected",
       "nullText": null,
+      "options": {},
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "",
@@ -1496,6 +1513,7 @@
       "maxDataPoints": 100,
       "nullPointMode": "connected",
       "nullText": null,
+      "options": {},
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "",
@@ -1557,6 +1575,7 @@
       "datasource": "Prometheus",
       "description": "Actual CPU utilization across deployment containers.",
       "fill": 1,
+      "fillGradient": 0,
       "gridPos": {
         "h": 6,
         "w": 12,
@@ -1580,6 +1599,9 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
       "paceLength": 10,
       "percentage": false,
       "pointradius": 5,
@@ -1647,6 +1669,7 @@
       "datasource": "Prometheus",
       "description": "Actual memory utilization across deployment containers.",
       "fill": 1,
+      "fillGradient": 0,
       "gridPos": {
         "h": 6,
         "w": 12,
@@ -1667,6 +1690,9 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
       "paceLength": 10,
       "percentage": false,
       "pointradius": 5,
@@ -1734,6 +1760,7 @@
       "datasource": "Prometheus",
       "description": "Received data across deployment containers.",
       "fill": 1,
+      "fillGradient": 0,
       "gridPos": {
         "h": 6,
         "w": 12,
@@ -1754,6 +1781,9 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
       "paceLength": 10,
       "percentage": false,
       "pointradius": 5,
@@ -1821,6 +1851,7 @@
       "datasource": "Prometheus",
       "description": "Transmitted data across deployment containers.",
       "fill": 1,
+      "fillGradient": 0,
       "gridPos": {
         "h": 6,
         "w": 12,
@@ -1841,6 +1872,9 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
       "paceLength": 10,
       "percentage": false,
       "pointradius": 5,
@@ -1926,6 +1960,7 @@
       },
       "id": 60,
       "links": [],
+      "options": {},
       "pageSize": null,
       "scroll": true,
       "showHeader": true,
@@ -2065,10 +2100,11 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 39
+        "y": 48
       },
       "id": 70,
       "links": [],
+      "options": {},
       "pageSize": null,
       "scroll": true,
       "showHeader": true,
@@ -2201,7 +2237,7 @@
     }
   ],
   "refresh": "10s",
-  "schemaVersion": 18,
+  "schemaVersion": 19,
   "style": "dark",
   "tags": [
     "airflow"
@@ -2233,7 +2269,7 @@
     ]
   },
   "time": {
-    "from": "now-30m",
+    "from": "now-5m",
     "to": "now"
   },
   "timepicker": {
