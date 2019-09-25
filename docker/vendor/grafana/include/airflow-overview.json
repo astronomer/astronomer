@@ -231,7 +231,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "round(rate(airflow_scheduler_heartbeat{deployment=~\"$deployment\", type=\"counter\"}[1m]) * 5)",
+          "expr": "round(rate(airflow_scheduler_heartbeat{deployment=~\"$deployment\", type=\"counter\"}[1m]) / 0.08)",
           "format": "time_series",
           "instant": true,
           "intervalFactor": 2,
