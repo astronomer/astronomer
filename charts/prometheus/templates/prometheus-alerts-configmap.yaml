@@ -78,8 +78,7 @@ data:
             tier: platform
             component: nginx
           annotations:
-            summary: 'NGINX Ingress {{ $labels.ingress }} failure rate is {{ printf
-              "%.2f" $value }}%.'
+            summary: {{ printf "%q" "NGINX Ingress {{ $labels.ingress }} failure rate is {{ printf \"%.2f\" $value }}%." }}
             description: "This alert fires if the failure rate (the rate of 4xx or 5xx reponses)
               measured on a time window of 2 minutes was higher than 10% in the last
               10 minutes."
@@ -94,29 +93,29 @@ data:
             tier: platform
             component: pod
           annotations:
-            summary: "Memory usage for {{ $labels.pod }} Pod is almost at the limit"
+            summary: {{ printf "%q" "Memory usage for {{ $labels.pod }} Pod is almost at the limit" }}
             description: "Pod uses more than 80% of the reserved memory"
 
-      - alert: KubePodNotReady
-        expr: |
-          sum by (namespace, pod) (kube_pod_status_phase{job="kube-state", phase=~"Pending|Unknown"}) > 0
-        for: 1h
-        labels:
-          tier: platform
-          component: pod
-        annotations:
-          summary: "Pod in non-ready state for more than 1 hour"
-          description: "Pod {{ $labels.namespace }}/{{ $labels.pod }} has been in a non-ready"
-            state for longer than an hour.
+        - alert: KubePodNotReady
+          expr: |
+            sum by (namespace, pod) (kube_pod_status_phase{job="kube-state", phase=~"Pending|Unknown"}) > 0
+          for: 1h
+          labels:
+            tier: platform
+            component: pod
+          annotations:
+            summary: "Pod in non-ready state for more than 1 hour"
+            description: {{ printf "%q" "Pod {{ $labels.namespace }}/{{ $labels.pod }} has been in a non-ready state for longer than an hour." }}
 
-      - alert: NginxIngressDown
-        expr: |
-          absent(up{job="nginx"} == 1)
-        for: 15m
-        labels:
-          tier: platform
-          component: nginx
-        annotations:
-          summary: "Nginx Ingress Controller has disappeared from Prometheus target discovery"
-          description: "This alert fires if Promethes target discovery was not able to
-            reach ingress-nginx-metrics in the last 15 minutes."
+
+        - alert: NginxIngressDown
+          expr: |
+            absent(up{job="nginx"} == 1)
+          for: 15m
+          labels:
+            tier: platform
+            component: nginx
+          annotations:
+            summary: "Nginx Ingress Controller has disappeared from Prometheus target discovery"
+            description: "This alert fires if Promethes target discovery was not able to
+              reach ingress-nginx-metrics in the last 15 minutes."
