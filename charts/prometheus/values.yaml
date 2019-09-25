@@ -72,7 +72,7 @@ alerts:
     # The type filter here was introduced in 0.7.0, so we don't trigger alerts for
     # older deployments.
     - alert: AirflowSchedulerUnhealthy
-      expr: round(rate(airflow_scheduler_heartbeat{type="counter"}[1m]) * 5) == 0
+      expr: round(rate(airflow_scheduler_heartbeat{type="counter"}[1m]) / 0.08) == 0
       for: 3m # Scheduler should reboot quick
       labels:
         tier: airflow
