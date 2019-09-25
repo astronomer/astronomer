@@ -77,6 +77,25 @@ spec:
           env:
           {{- include "custom_airflow_environment" . | indent 10 }}
           {{- include "standard_airflow_environment" . | indent 10 }}
+          # If the scheduler stops heartbeating for 5 minutes (10*30s) kill the
+          # scheduler and let Kubernetes restart it
+          livenessProbe:
+            failureThreshold: 10
+            periodSeconds: 30
+            exec:
+              command:
+              - /usr/bin/env
+              - AIRFLOW__CORE__LOGGING_LEVEL=ERROR
+              - python3
+              - -Wignore
+              - -c
+              - |
+                from airflow.jobs.scheduler_job import SchedulerJob
+                from airflow.utils.net import get_hostname
+                import sys
+
+                job = SchedulerJob.most_recent_job()
+                sys.exit(0 if job.is_alive() and job.hostname == get_hostname() else 1)
           resources:
 {{ toYaml .Values.scheduler.resources | indent 12 }}
           volumeMounts:
