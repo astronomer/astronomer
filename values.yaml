@@ -177,6 +177,10 @@ grafana:
       cpu: "500m"
       memory: "1024Mi"
 
+  dashboards: {}
+   # default:
+   #   velero:
+   #     file: dashboards/velero.json
 
 #################################
 ## Prometheus configuration
