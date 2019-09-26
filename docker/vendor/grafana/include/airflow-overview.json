@@ -51,7 +51,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "iteration": 1569530073903,
+  "iteration": 1569541789860,
   "links": [],
   "panels": [
     {
@@ -1636,7 +1636,7 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "CPU Usage, % of limit",
+      "title": "CPU Usage",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -1727,7 +1727,7 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Memory Usage, % of limit",
+      "title": "Memory Usage",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -2312,5 +2312,5 @@
   "timezone": "",
   "title": "Airflow Deployment Overview",
   "uid": "E5LsXoamz",
-  "version": 3
+  "version": 1
 }

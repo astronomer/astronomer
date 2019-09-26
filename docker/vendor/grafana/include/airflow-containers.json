@@ -51,8 +51,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 22,
-  "iteration": 1569529540082,
+  "iteration": 1569541299804,
   "links": [],
   "panels": [
     {
@@ -112,7 +111,7 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Container CPU, % of limit",
+      "title": "Container CPU Usage",
       "tooltip": {
         "shared": true,
         "sort": 2,
@@ -200,7 +199,7 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Workers CPU, % of limit",
+      "title": "Workers CPU Usage",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -290,7 +289,7 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Container Memory, % of limit",
+      "title": "Container Memory Usage",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -379,7 +378,7 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Worker Memory, % of limit",
+      "title": "Worker Memory Usage",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -824,7 +823,7 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Ephemeral Storage, % of limit",
+      "title": "Ephemeral Storage Usage",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -840,6 +839,7 @@
       },
       "yaxes": [
         {
+          "decimals": 2,
           "format": "percent",
           "label": null,
           "logBase": 1,
@@ -873,7 +873,6 @@
       {
         "allValue": null,
         "current": {
-          "tags": [],
           "text": "All",
           "value": [
             "$__all"
@@ -932,5 +931,5 @@
   "timezone": "",
   "title": "Airflow Resource Utilization",
   "uid": "2NM8RltWz",
-  "version": 21
+  "version": 1
 }
