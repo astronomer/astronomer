@@ -59,7 +59,7 @@ spec:
       tolerations:
 {{ toYaml .Values.tolerations | indent 8 }}
       restartPolicy: Always
-      terminationGracePeriodSeconds: {{ if (or $local $kube)}}10{{ else }}{{ .Values.workers.terminationGracePeriodSeconds }}{{ end }}
+      terminationGracePeriodSeconds: 10
       serviceAccountName: {{ .Release.Name }}-scheduler-serviceaccount
       securityContext:
         runAsUser: {{ .Values.uid }}
