@@ -51,7 +51,8 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "iteration": 1567787873616,
+  "id": 22,
+  "iteration": 1569529540082,
   "links": [],
   "panels": [
     {
@@ -60,6 +61,7 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": "Prometheus",
+      "description": "CPU as per container expressed as percentage of given CPU limit.",
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {
@@ -68,14 +70,18 @@
         "x": 0,
         "y": 0
       },
-      "id": 8,
+      "id": 16,
       "interval": "",
       "legend": {
+        "alignAsTable": false,
         "avg": false,
         "current": false,
         "max": false,
         "min": false,
+        "rightSide": false,
         "show": true,
+        "sort": "current",
+        "sortDesc": true,
         "total": false,
         "values": false
       },
@@ -96,21 +102,20 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "rate(container_cpu_user_seconds_total{component_name=~\".*(scheduler|webserver|flower)\", deployment=~\"$deployment\"}[3m]) * 100",
-          "format": "time_series",
-          "intervalFactor": 1,
-          "legendFormat": "{{component_name}}",
-          "refId": "A"
+          "expr": "label_replace(\n  sum(rate(container_cpu_usage_seconds_total{deployment=~\"$deployment\", pod_name!~\".*-worker-.*\",component_name != \"POD\",image!=\"\"}[3m])) by (pod_name, container_name, component_name, namespace, short_name)/\n  sum(container_spec_cpu_quota{deployment=~\"$deployment\", pod_name!~\".*-worker-.*\", component_name != \"POD\",image!=\"\"}/container_spec_cpu_period{deployment=~\"$deployment\", pod_name!~\".*-worker-.*\", component_name != \"POD\",image!=\"\"}) by (pod_name, container_name, component_name, namespace, short_name)*100,\n  \"short_name\",\n  \"$1\",\n  \"pod_name\",\n  \"^[[deployment]]-(.*)$\"\n)",
+          "hide": false,
+          "legendFormat": "{{pod_name}} ({{container_name}})",
+          "refId": "C"
         }
       ],
       "thresholds": [],
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "System CPU Usage",
+      "title": "Container CPU, % of limit",
       "tooltip": {
         "shared": true,
-        "sort": 0,
+        "sort": 2,
         "value_type": "individual"
       },
       "type": "graph",
@@ -126,7 +131,7 @@
           "format": "percent",
           "label": null,
           "logBase": 1,
-          "max": null,
+          "max": "100",
           "min": null,
           "show": true
         },
@@ -150,6 +155,7 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": "Prometheus",
+      "description": "",
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {
@@ -157,273 +163,6 @@
         "w": 12,
         "x": 12,
         "y": 0
-      },
-      "id": 11,
-      "legend": {
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": false
-      },
-      "lines": true,
-      "linewidth": 1,
-      "links": [],
-      "nullPointMode": "null",
-      "options": {
-        "dataLinks": []
-      },
-      "percentage": false,
-      "pointradius": 5,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
-      "targets": [
-        {
-          "expr": "container_memory_usage_bytes{component_name=~\".*(scheduler|webserver|flower)\", deployment=~\"$deployment\"}",
-          "format": "time_series",
-          "intervalFactor": 1,
-          "legendFormat": "{{component_name}}",
-          "refId": "A"
-        }
-      ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
-      "title": "System Memory Usage",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "format": "decbytes",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
-    },
-    {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "Prometheus",
-      "fill": 1,
-      "fillGradient": 0,
-      "gridPos": {
-        "h": 6,
-        "w": 12,
-        "x": 0,
-        "y": 6
-      },
-      "id": 12,
-      "legend": {
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": false
-      },
-      "lines": true,
-      "linewidth": 1,
-      "links": [],
-      "nullPointMode": "null",
-      "options": {
-        "dataLinks": []
-      },
-      "percentage": false,
-      "pointradius": 5,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
-      "targets": [
-        {
-          "expr": "rate(container_network_receive_bytes_total{component_name=~\".*(scheduler|webserver|flower)\", deployment=~\"$deployment\"}[3m])",
-          "format": "time_series",
-          "intervalFactor": 1,
-          "legendFormat": "{{component_name}}",
-          "refId": "A"
-        }
-      ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
-      "title": "System Network Rx",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "format": "Bps",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
-    },
-    {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "Prometheus",
-      "fill": 1,
-      "fillGradient": 0,
-      "gridPos": {
-        "h": 6,
-        "w": 12,
-        "x": 12,
-        "y": 6
-      },
-      "id": 13,
-      "legend": {
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": false
-      },
-      "lines": true,
-      "linewidth": 1,
-      "links": [],
-      "nullPointMode": "null",
-      "options": {
-        "dataLinks": []
-      },
-      "percentage": false,
-      "pointradius": 5,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
-      "targets": [
-        {
-          "expr": "rate(container_network_transmit_bytes_total{component_name=~\".*(scheduler|webserver|flower)\", deployment=~\"$deployment\"}[3m])",
-          "format": "time_series",
-          "intervalFactor": 1,
-          "legendFormat": "{{component_name}}",
-          "refId": "A"
-        }
-      ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
-      "title": "System Network Tx",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "format": "Bps",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
-    },
-    {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "Prometheus",
-      "fill": 1,
-      "fillGradient": 0,
-      "gridPos": {
-        "h": 6,
-        "w": 12,
-        "x": 0,
-        "y": 12
       },
       "id": 2,
       "legend": {
@@ -452,10 +191,98 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "rate(container_cpu_user_seconds_total{component_name=~\".*(worker)\", deployment=~\"$deployment\"}[3m]) * 100",
+          "expr": "sum(rate(container_cpu_usage_seconds_total{deployment=~\"$deployment\", pod_name=~\".*-worker-.*\",component_name != \"POD\",image!=\"\", container_name != \"istio-proxy\"}[3m]))\n  by (pod_name, container_name, short_name, namespace)\n/\nsum(container_spec_cpu_quota{deployment=~\"$deployment\", pod_name=~\".*-worker-.*\", component_name != \"POD\",image!=\"\", container_name != \"istio-proxy\"} / container_spec_cpu_period{deployment=~\"$deployment\", pod_name=~\".*-worker-.*\", component_name != \"POD\",image!=\"\", container_name != \"istio-proxy\" }) by (pod_name, container_name, short_name, namespace) * 100",
+          "legendFormat": "{{pod_name}}",
+          "refId": "B"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Workers CPU, % of limit",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "percent",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "Prometheus",
+      "description": "Memory as per container expressed as percentage of given Memory limit.",
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 0,
+        "y": 6
+      },
+      "id": 11,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "container_memory_usage_bytes{component_name=~\".*(scheduler|webserver|flower|istio-proxy)\", deployment=~\"$deployment\"} / \ncontainer_spec_memory_limit_bytes{component_name=~\".*(scheduler|webserver|flower|istio-proxy)\", deployment=~\"$deployment\"} * 100",
           "format": "time_series",
           "intervalFactor": 1,
-          "legendFormat": "{{component_name}} {{component_instance}}",
+          "legendFormat": "{{pod_name}} ({{container_name}})",
           "refId": "A"
         }
       ],
@@ -463,7 +290,7 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Worker CPU Usage",
+      "title": "Container Memory, % of limit",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -512,7 +339,7 @@
         "h": 6,
         "w": 12,
         "x": 12,
-        "y": 12
+        "y": 6
       },
       "id": 9,
       "legend": {
@@ -541,10 +368,10 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "container_memory_usage_bytes{component_name=~\".*(worker)\", deployment=~\"$deployment\"}",
+          "expr": "container_memory_usage_bytes{component_name=\"worker\", deployment=~\"$deployment\"} / container_spec_memory_limit_bytes{component_name=\"worker\", deployment=~\"$deployment\"} * 100",
           "format": "time_series",
           "intervalFactor": 1,
-          "legendFormat": "{{component_name}} {{component_instance}}",
+          "legendFormat": "{{pod_name}}",
           "refId": "A"
         }
       ],
@@ -552,7 +379,7 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Worker Memory Usage",
+      "title": "Worker Memory, % of limit",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -568,7 +395,7 @@
       },
       "yaxes": [
         {
-          "format": "decbytes",
+          "format": "percent",
           "label": null,
           "logBase": 1,
           "max": null,
@@ -595,15 +422,16 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": "Prometheus",
+      "description": "Sum of network bytes received by deployment",
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {
         "h": 6,
         "w": 12,
         "x": 0,
-        "y": 18
+        "y": 12
       },
-      "id": 6,
+      "id": 12,
       "legend": {
         "avg": false,
         "current": false,
@@ -630,10 +458,10 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "rate(container_network_receive_bytes_total{interface=\"eth0\", component_name=~\".*(worker)\", deployment=~\"$deployment\"}[3m])",
+          "expr": "sum(rate(container_network_receive_bytes_total{component_name=\"worker\", deployment=~\"$deployment\"}[3m])) by (deployment)",
           "format": "time_series",
           "intervalFactor": 1,
-          "legendFormat": "{{component_name}} {{component_instance}}",
+          "legendFormat": "{{deployment}} ",
           "refId": "A"
         }
       ],
@@ -641,7 +469,7 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Worker Network Rx",
+      "title": "Workers Network Bytes Received",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -690,9 +518,9 @@
         "h": 6,
         "w": 12,
         "x": 12,
-        "y": 18
+        "y": 12
       },
-      "id": 7,
+      "id": 18,
       "legend": {
         "avg": false,
         "current": false,
@@ -719,10 +547,10 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "rate(container_network_transmit_bytes_total{interface=\"eth0\", component_name=~\".*(worker)\", deployment=~\"$deployment\"}[3m])",
+          "expr": "sum(rate(container_network_transmit_bytes_total{component_name=\"worker\", deployment=~\"$deployment\"}[3m])) by (deployment)",
           "format": "time_series",
           "intervalFactor": 1,
-          "legendFormat": "{{component_name}} {{component_instance}}",
+          "legendFormat": "{{deployment}}",
           "refId": "A"
         }
       ],
@@ -730,7 +558,187 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Worker Network Tx",
+      "title": "Workers Network Bytes Sent",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "Bps",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "Prometheus",
+      "description": "Airflow Pod Bytes Received, not including workers",
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 0,
+        "y": 18
+      },
+      "id": 17,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "rate(container_network_receive_bytes_total{component_name!~\"istio-proxy|worker\", deployment=~\"$deployment\"}[3m])",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "{{deployment}} {{component_name}}",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Component Network Bytes Received",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "Bps",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "Prometheus",
+      "description": "Airflow components network bytes sent, not including the workers",
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 12,
+        "y": 18
+      },
+      "id": 13,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "rate(container_network_transmit_bytes_total{component_name!~\"istio-proxy|worker\", deployment=~\"$deployment\"}[3m])",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "{{deployment}} {{component_name}}",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Component Network Bytes Sent",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -807,8 +815,8 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "container_fs_usage_bytes{pod_name=~\".*(scheduler|webserver|worker).*\", deployment=~\"$deployment\"}",
-          "legendFormat": "{{ component_name }} {{ component_instance }}",
+          "expr": "container_fs_usage_bytes{deployment=~\"$deployment\"} * 100 / container_fs_limit_bytes{deployment=~\"$deployment\"}",
+          "legendFormat": "{{ pod_name }} ({{ component_name }})",
           "refId": "A"
         }
       ],
@@ -816,7 +824,7 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Ephemeral Storage",
+      "title": "Ephemeral Storage, % of limit",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -832,7 +840,7 @@
       },
       "yaxes": [
         {
-          "format": "bytes",
+          "format": "percent",
           "label": null,
           "logBase": 1,
           "max": null,
@@ -854,7 +862,7 @@
       }
     }
   ],
-  "refresh": "10s",
+  "refresh": false,
   "schemaVersion": 19,
   "style": "dark",
   "tags": [
@@ -865,6 +873,7 @@
       {
         "allValue": null,
         "current": {
+          "tags": [],
           "text": "All",
           "value": [
             "$__all"
@@ -921,7 +930,7 @@
     ]
   },
   "timezone": "",
-  "title": "Airflow Containers",
-  "uid": "kIoxSgTmk",
-  "version": 1
+  "title": "Airflow Resource Utilization",
+  "uid": "2NM8RltWz",
+  "version": 21
 }

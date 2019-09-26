@@ -51,7 +51,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "iteration": 1569418312464,
+  "iteration": 1569530073903,
   "links": [],
   "panels": [
     {
@@ -1393,7 +1393,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 21
+        "y": 28
       },
       "id": 71,
       "panels": [],
@@ -1423,7 +1423,7 @@
         "h": 3,
         "w": 12,
         "x": 0,
-        "y": 22
+        "y": 29
       },
       "id": 73,
       "interval": null,
@@ -1506,7 +1506,7 @@
         "h": 3,
         "w": 12,
         "x": 12,
-        "y": 22
+        "y": 29
       },
       "id": 75,
       "interval": null,
@@ -1572,7 +1572,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 25
+        "y": 32
       },
       "id": 22,
       "panels": [],
@@ -1592,7 +1592,7 @@
         "h": 6,
         "w": 12,
         "x": 0,
-        "y": 26
+        "y": 33
       },
       "id": 24,
       "interval": "",
@@ -1625,7 +1625,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "rate(container_cpu_user_seconds_total{component_name=~\".*(scheduler|webserver|worker|flower|redis|pgbouncer|statsd).*\", deployment=~\"$deployment\"}[3m]) * 100",
+          "expr": "label_replace(  sum(rate(container_cpu_usage_seconds_total{deployment=~\"$deployment\", pod_name!~\".*-worker-.*\",component_name != \"POD\",image!=\"\", container_name!=\"istio-proxy\"}[3m])) by (pod_name, container_name, component_name, namespace, short_name)/  sum(container_spec_cpu_quota{deployment=~\"$deployment\", pod_name!~\".*-worker-.*\", component_name != \"POD\",image!=\"\", container_name!=\"istio-proxy\"}/container_spec_cpu_period{deployment=~\"$deployment\", pod_name!~\".*-worker-.*\", component_name != \"POD\",image!=\"\", container_name!=\"istio-proxy\"}) by (pod_name, container_name, component_name, namespace, short_name)*100,  \"short_name\",  \"$1\",  \"pod_name\",  \"^[[deployment]]-(.*)$\")",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{component_name}}",
@@ -1636,7 +1636,7 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "CPU Usage",
+      "title": "CPU Usage, % of limit",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -1686,7 +1686,7 @@
         "h": 6,
         "w": 12,
         "x": 12,
-        "y": 26
+        "y": 33
       },
       "id": 26,
       "legend": {
@@ -1716,10 +1716,10 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "container_memory_usage_bytes{component_name=~\".*(scheduler|webserver|worker|flower|redis|pgbouncer|statsd).*\", deployment=~\"$deployment\"}",
+          "expr": "container_memory_usage_bytes{deployment=~\"$deployment\", pod_name!~\".*-worker-.*\",component_name != \"POD\",image!=\"\", container_name!=\"istio-proxy\"} * 100 / container_spec_memory_limit_bytes{deployment=~\"$deployment\", pod_name!~\".*-worker-.*\",component_name != \"POD\",image!=\"\", container_name!=\"istio-proxy\"}",
           "format": "time_series",
           "intervalFactor": 1,
-          "legendFormat": "{{component_name}}",
+          "legendFormat": "{{container_name}}",
           "refId": "A"
         }
       ],
@@ -1727,7 +1727,7 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Memory Usage",
+      "title": "Memory Usage, % of limit",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -1743,7 +1743,7 @@
       },
       "yaxes": [
         {
-          "format": "decbytes",
+          "format": "percent",
           "label": null,
           "logBase": 1,
           "max": null,
@@ -1777,7 +1777,7 @@
         "h": 6,
         "w": 12,
         "x": 0,
-        "y": 32
+        "y": 39
       },
       "id": 28,
       "legend": {
@@ -1868,7 +1868,7 @@
         "h": 6,
         "w": 12,
         "x": 12,
-        "y": 32
+        "y": 39
       },
       "id": 30,
       "legend": {
@@ -1952,7 +1952,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 38
+        "y": 45
       },
       "id": 62,
       "panels": [],
@@ -1968,7 +1968,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 39
+        "y": 46
       },
       "id": 60,
       "links": [],
@@ -2112,7 +2112,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 48
+        "y": 55
       },
       "id": 70,
       "links": [],
@@ -2312,5 +2312,5 @@
   "timezone": "",
   "title": "Airflow Deployment Overview",
   "uid": "E5LsXoamz",
-  "version": 1
+  "version": 3
 }
