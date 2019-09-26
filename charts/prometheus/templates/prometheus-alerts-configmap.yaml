@@ -107,7 +107,6 @@ data:
             summary: "Pod in non-ready state for more than 1 hour"
             description: {{ printf "%q" "Pod {{ $labels.namespace }}/{{ $labels.pod }} has been in a non-ready state for longer than an hour." }}
 
-
         - alert: NginxIngressDown
           expr: |
             absent(up{job="nginx"} == 1)
@@ -117,5 +116,48 @@ data:
             component: nginx
           annotations:
             summary: "Nginx Ingress Controller has disappeared from Prometheus target discovery"
-            description: "This alert fires if Promethes target discovery was not able to
+            description: "This alert fires if Prometheus target discovery was not able to
               reach ingress-nginx-metrics in the last 15 minutes."
+
+        {{- if .Values.global.veleroEnabled }}
+        - alert: VeleroMetricsAbsent
+          expr: absent(up{job="velero"} == 1)
+          for: 15m
+          labels:
+            tier: platform
+            component: velero
+          annotations:
+            summary: "Velero has disappeared from Prometheus target discovery"
+            description: "This alert fires if Prometheus target discovery was not able to
+              scrape Velero metrics in the last 15 minutes."
+
+        - alert: FailedVeleroBackup
+          expr: increase(velero_backup_failure_total{job="velero"}[1d]) > 0
+          for: 5m
+          labels:
+            tier: platform
+            component: velero
+          annotations:
+            summary: "Velero failed to backup"
+            description: {{ printf "%q" "Backup attempt failed in Velero past 1 day \n LABELS - {{ $labels }}." }}
+
+        - alert: PartialFailedVeleroBackup
+          expr: increase(velero_backup_partial_failure_total{job="velero"}[1d]) > 0
+          for: 5m
+          labels:
+            tier: platform
+            component: velero
+          annotations:
+            summary: "Velero partially failed to backup"
+            description: {{ printf "%q" "Backup attempt partially failed in Velero past 1 day \n LABELS - {{ $labels }}." }}
+
+        - alert: VeleroNoBackupForLong
+          expr: time() - velero_backup_last_successful_timestamp > 172800
+          for: 5m
+          labels:
+            tier: platform
+            component: velero
+          annotations:
+            summary: "2 days since last successful Backup for a Velero Schedule"
+            description: {{ printf "%q" "Time since last successful backup for {{ $labels.schedule }} :\n  VALUE = {{ $value }}\n  LABELS - {{ $labels }}" }}
+        {{- end }}
