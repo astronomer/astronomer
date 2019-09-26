@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM astronomerinc/ap-base:0.10.1-alpha.17
+FROM astronomerinc/ap-base:0.10.1-alpha.18
 LABEL maintainer="Astronomer <humans@astronomer.io>"
 
 ARG BUILD_NUMBER=-1
@@ -21,7 +21,7 @@ LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
 LABEL io.astronomer.docker.module="astronomer"
 LABEL io.astronomer.docker.component="orbit-ui"
 
-ARG VERSION="v0.10.1-alpha.17"
+ARG VERSION="v0.10.1-alpha.18"
 ENV REPO="github.com/astronomerio/orbit-ui"
 ENV REPO_URL="https://${REPO}"
 ENV ORBIT_PATH=/tmp/orbit-ui
