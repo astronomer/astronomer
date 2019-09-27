@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.10.1] - 2019-08-26
+- Upgrade to Airflow 1.10.5
+- Kubernetes 1.14+ support
+- Improved metrics in Grafana and Orbit
+- Support for Istio
+- Scheduler hangup mitigations
+- Admin Panel deployment list
+- Fixes for ephemeral storage in Airflow pods
+- Added security scans on platform images
+- Added multiple integration test suites
+
 ## [0.10.0] - 2019-08-22
 - Upgrade to Airflow 1.10.4
 - Refactored astro subcommands
