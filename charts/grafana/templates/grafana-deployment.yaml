@@ -77,8 +77,9 @@ spec:
           volumeMounts:
             - name: grafana-datasource-volume
               mountPath: /etc/grafana/provisioning/datasources
-            {{- if .Values.dashboards }}
-            {{- range $provider, $dashboards := .Values.dashboards }}
+            {{- $grafanadashboards :=  fromYaml (include "grafana.dashboards" .) }}
+            {{- if $grafanadashboards }}
+            {{- range $provider, $dashboards := $grafanadashboards }}
             {{- range $key, $value := $dashboards }}
             {{- if (or (hasKey $value "json") (hasKey $value "file")) }}
             - name: dashboards-{{ $provider }}
@@ -103,8 +104,9 @@ spec:
             items:
               - key: datasource.yaml
                 path: datasource.yaml
-        {{- if .Values.dashboards }}
-          {{- range keys .Values.dashboards }}
+        {{- $grafanadashboards :=  fromYaml (include "grafana.dashboards" .) }}
+        {{- if $grafanadashboards }}
+          {{- range keys $grafanadashboards }}
         - name: dashboards-{{ . }}
           configMap:
             name: {{ template "grafana.fullname" $ }}-dashboards-{{ . }}

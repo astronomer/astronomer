@@ -24,9 +24,10 @@ data:
 #################################
 ## Grafana Dashboards ConfigMap
 #################################
-{{- if .Values.dashboards }}
+{{- $grafanadashboards :=  fromYaml (include "grafana.dashboards" .) }}
+{{- if $grafanadashboards }}
 {{ $files := .Files }}
-{{- range $provider, $dashboards := .Values.dashboards }}
+{{- range $provider, $dashboards := $grafanadashboards }}
 ---
 apiVersion: v1
 kind: ConfigMap

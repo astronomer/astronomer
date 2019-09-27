@@ -49,3 +49,19 @@ grafana.{{ .Values.global.baseDomain }}
 {{ define "grafana.bootstrapper.serviceaccount" -}}
 {{ printf "%s-grafana-bootstrapper" .Release.Name }}
 {{- end }}
+
+{{ define "velero.dashboard" -}}
+{{- if .Values.global.veleroEnabled -}}
+default:
+  velero:
+    file: dashboards/velero.json
+{{- end }}
+{{- end }}
+
+{{ define "grafana.dashboards" -}}
+{{- if .Values.dashboards -}}
+{{merge .Values.dashboards (fromYaml (include "velero.dashboard" .))  | toYaml}}
+{{- else -}}
+{{ template "velero.dashboard" . }}
+{{- end }}
+{{- end }}
