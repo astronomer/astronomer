@@ -1,5 +1,5 @@
 name: kibana
-version: 0.10.1-rc.4
+version: 0.10.1-rc.5
 description: Helm chart to deploy the Astronomer Kibana module
 keywords:
   - astronomer
