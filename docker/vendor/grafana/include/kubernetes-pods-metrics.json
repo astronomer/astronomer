@@ -704,7 +704,10 @@
   "refresh": false,
   "schemaVersion": 19,
   "style": "dark",
-  "tags": [],
+  "tags": [
+    "airflow",
+    "platform"
+  ],
   "templating": {
     "list": [
       {
@@ -829,5 +832,5 @@
   "timezone": "browser",
   "title": "Kubernetes Pods",
   "uid": "txEmY8kik1",
-  "version": 2
+  "version": 1
 }
