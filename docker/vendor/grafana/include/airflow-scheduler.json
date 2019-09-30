@@ -1858,7 +1858,9 @@
   "refresh": "10s",
   "schemaVersion": 19,
   "style": "dark",
-  "tags": [],
+  "tags": [
+    "airflow"
+  ],
   "templating": {
     "list": [
       {
