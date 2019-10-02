@@ -76,7 +76,7 @@
   "editable": true,
   "gnetId": 3662,
   "graphTooltip": 0,
-  "iteration": 1550363166304,
+  "iteration": 1570049880553,
   "links": [],
   "panels": [
     {
@@ -136,6 +136,7 @@
       "maxDataPoints": 100,
       "nullPointMode": "connected",
       "nullText": null,
+      "options": {},
       "postfix": "%",
       "postfixFontSize": "100%",
       "prefix": "",
@@ -191,6 +192,7 @@
       "hideTimeOverride": true,
       "id": 25,
       "links": [],
+      "options": {},
       "pageSize": null,
       "scroll": true,
       "showHeader": true,
@@ -297,6 +299,7 @@
       "maxDataPoints": 100,
       "nullPointMode": "connected",
       "nullText": null,
+      "options": {},
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "",
@@ -378,6 +381,7 @@
       "maxDataPoints": 100,
       "nullPointMode": "connected",
       "nullText": null,
+      "options": {},
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "",
@@ -474,6 +478,7 @@
       "maxDataPoints": 100,
       "nullPointMode": "connected",
       "nullText": null,
+      "options": {},
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "",
@@ -556,6 +561,7 @@
       "maxDataPoints": 100,
       "nullPointMode": "connected",
       "nullText": null,
+      "options": {},
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "",
@@ -638,6 +644,7 @@
       "maxDataPoints": 100,
       "nullPointMode": "connected",
       "nullText": null,
+      "options": {},
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "",
@@ -720,6 +727,7 @@
       "maxDataPoints": 100,
       "nullPointMode": "connected",
       "nullText": null,
+      "options": {},
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "",
@@ -802,6 +810,7 @@
       "maxDataPoints": 100,
       "nullPointMode": "connected",
       "nullText": null,
+      "options": {},
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "",
@@ -862,6 +871,7 @@
       "dashes": false,
       "datasource": "Prometheus",
       "fill": 1,
+      "fillGradient": 0,
       "gridPos": {
         "h": 6,
         "w": 12,
@@ -882,6 +892,9 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -901,6 +914,7 @@
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Persistent Volume Usage",
       "tooltip": {
@@ -946,6 +960,7 @@
       "dashes": false,
       "datasource": "Prometheus",
       "fill": 1,
+      "fillGradient": 0,
       "gridPos": {
         "h": 6,
         "w": 12,
@@ -966,6 +981,9 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -985,6 +1003,7 @@
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Persistent Volume Available",
       "tooltip": {
@@ -1024,12 +1043,103 @@
       }
     },
     {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "Prometheus",
+      "description": "",
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 15
+      },
+      "id": 51,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "container_memory_usage_bytes{component_name=\"prometheus\"} / container_spec_memory_limit_bytes{component_name=\"prometheus\"} * 100",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "legendFormat": "{{pod_name}}",
+          "refId": "A",
+          "step": 2
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Memory, % of limit",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "percent",
+          "label": "",
+          "logBase": 1,
+          "max": null,
+          "min": "0",
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
       "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 15
+        "y": 22
       },
       "id": 36,
       "panels": [],
@@ -1045,11 +1155,12 @@
       "datasource": "Prometheus",
       "description": "All non-zero failures and errors",
       "fill": 1,
+      "fillGradient": 0,
       "gridPos": {
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 16
+        "y": 23
       },
       "id": 33,
       "legend": {
@@ -1065,6 +1176,9 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -1237,6 +1351,7 @@
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Failures and Errors",
       "tooltip": {
@@ -1281,7 +1396,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 23
+        "y": 30
       },
       "id": 37,
       "panels": [],
@@ -1296,11 +1411,12 @@
       "dashes": false,
       "datasource": "Prometheus",
       "fill": 1,
+      "fillGradient": 0,
       "gridPos": {
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 24
+        "y": 31
       },
       "id": 1,
       "legend": {
@@ -1316,6 +1432,9 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -1337,6 +1456,7 @@
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Upness (stacked)",
       "tooltip": {
@@ -1383,11 +1503,12 @@
       "dashes": false,
       "datasource": "Prometheus",
       "fill": 1,
+      "fillGradient": 0,
       "gridPos": {
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 24
+        "y": 31
       },
       "id": 5,
       "legend": {
@@ -1403,6 +1524,9 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -1423,6 +1547,7 @@
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Storage Memory Chunks",
       "tooltip": {
@@ -1467,7 +1592,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 31
+        "y": 38
       },
       "id": 38,
       "panels": [],
@@ -1482,11 +1607,12 @@
       "dashes": false,
       "datasource": "Prometheus",
       "fill": 1,
+      "fillGradient": 0,
       "gridPos": {
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 32
+        "y": 39
       },
       "id": 3,
       "legend": {
@@ -1502,6 +1628,9 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -1522,6 +1651,7 @@
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Series Count",
       "tooltip": {
@@ -1567,11 +1697,12 @@
       "dashes": false,
       "datasource": "Prometheus",
       "fill": 1,
+      "fillGradient": 0,
       "gridPos": {
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 32
+        "y": 39
       },
       "id": 32,
       "legend": {
@@ -1587,6 +1718,9 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -1620,6 +1754,7 @@
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Series Created / Removed",
       "tooltip": {
@@ -1664,7 +1799,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 39
+        "y": 46
       },
       "id": 39,
       "panels": [],
@@ -1682,11 +1817,12 @@
       "datasource": "Prometheus",
       "description": "Rate of total number of appended samples",
       "fill": 1,
+      "fillGradient": 0,
       "gridPos": {
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 40
+        "y": 47
       },
       "id": 4,
       "legend": {
@@ -1702,6 +1838,9 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -1722,6 +1861,7 @@
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Appended Samples per Second",
       "tooltip": {
@@ -1766,7 +1906,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 47
+        "y": 54
       },
       "id": 40,
       "panels": [],
@@ -1782,11 +1922,12 @@
       "datasource": "Prometheus",
       "description": "Total number of syncs that were executed on a scrape pool.",
       "fill": 1,
+      "fillGradient": 0,
       "gridPos": {
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 48
+        "y": 55
       },
       "id": 6,
       "legend": {
@@ -1802,6 +1943,9 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -1823,6 +1967,7 @@
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Scrape Sync Total",
       "tooltip": {
@@ -1869,11 +2014,12 @@
       "datasource": "Prometheus",
       "description": "Actual interval to sync the scrape pool.",
       "fill": 1,
+      "fillGradient": 0,
       "gridPos": {
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 48
+        "y": 55
       },
       "id": 21,
       "legend": {
@@ -1889,6 +2035,9 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -1909,6 +2058,7 @@
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Target Sync",
       "tooltip": {
@@ -1953,7 +2103,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 55
+        "y": 62
       },
       "id": 41,
       "panels": [],
@@ -1972,7 +2122,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 56
+        "y": 63
       },
       "id": 29,
       "legend": {
@@ -1988,6 +2138,7 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
+      "options": {},
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -2058,7 +2209,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 56
+        "y": 63
       },
       "id": 30,
       "legend": {
@@ -2074,6 +2225,7 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
+      "options": {},
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -2166,7 +2318,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 63
+        "y": 70
       },
       "id": 42,
       "panels": [],
@@ -2186,7 +2338,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 64
+        "y": 71
       },
       "id": 10,
       "legend": {
@@ -2202,6 +2354,7 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
+      "options": {},
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -2271,7 +2424,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 64
+        "y": 71
       },
       "id": 11,
       "legend": {
@@ -2287,6 +2440,7 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
+      "options": {},
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -2356,7 +2510,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 71
+        "y": 78
       },
       "id": 15,
       "legend": {
@@ -2372,6 +2526,7 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
+      "options": {},
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -2442,7 +2597,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 71
+        "y": 78
       },
       "id": 31,
       "legend": {
@@ -2458,6 +2613,7 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
+      "options": {},
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -2538,7 +2694,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 78
+        "y": 85
       },
       "id": 43,
       "panels": [],
@@ -2557,7 +2713,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 79
+        "y": 86
       },
       "id": 22,
       "legend": {
@@ -2573,6 +2729,7 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
+      "options": {},
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -2637,7 +2794,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 86
+        "y": 93
       },
       "id": 44,
       "panels": [],
@@ -2656,7 +2813,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 87
+        "y": 94
       },
       "id": 23,
       "legend": {
@@ -2672,6 +2829,7 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
+      "options": {},
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -2741,7 +2899,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 87
+        "y": 94
       },
       "id": 24,
       "legend": {
@@ -2757,6 +2915,7 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
+      "options": {},
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -2822,7 +2981,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 94
+        "y": 101
       },
       "id": 45,
       "panels": [],
@@ -2842,7 +3001,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 95
+        "y": 102
       },
       "id": 28,
       "legend": {
@@ -2858,6 +3017,7 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
+      "options": {},
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -2918,7 +3078,7 @@
     }
   ],
   "refresh": "10s",
-  "schemaVersion": 16,
+  "schemaVersion": 19,
   "style": "dark",
   "tags": [
     "prometheus",
@@ -2933,6 +3093,7 @@
           "value": "$__all"
         },
         "datasource": "Prometheus",
+        "definition": "",
         "hide": 0,
         "includeAll": true,
         "label": "Job",
@@ -2942,6 +3103,7 @@
         "query": "query_result(prometheus_tsdb_head_samples_appended_total)",
         "refresh": 2,
         "regex": "/.*job=\"([^\"]+)/",
+        "skipUrlSync": false,
         "sort": 1,
         "tagValuesQuery": "",
         "tags": [],
@@ -2956,6 +3118,7 @@
           "value": "$__all"
         },
         "datasource": "Prometheus",
+        "definition": "",
         "hide": 0,
         "includeAll": true,
         "label": "Instance",
@@ -2965,6 +3128,7 @@
         "query": "query_result(up{job=~\"$job\"})",
         "refresh": 2,
         "regex": "/.*instance=\"([^\"]+).*/",
+        "skipUrlSync": false,
         "sort": 0,
         "tagValuesQuery": "",
         "tags": [],
@@ -3037,6 +3201,7 @@
           }
         ],
         "query": "1h, 3h, 6h, 12h, 1d, 2d, 7d, 30d, 90d, 180d",
+        "skipUrlSync": false,
         "type": "custom"
       }
     ]
