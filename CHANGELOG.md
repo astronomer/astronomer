@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.10.2] - 2019-09-02
+## [0.10.2] - 2019-10-02
 - Upgrade commander to pass optional namespace labels (eg: istio)
 - Service account query bug fix
 - Upgraded / new platform alerts
