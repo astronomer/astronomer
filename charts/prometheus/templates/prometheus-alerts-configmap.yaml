@@ -83,6 +83,17 @@ data:
               measured on a time window of 2 minutes was higher than 10% in the last
               10 minutes."
 
+        - alert: KubeNamespaceStuckAtTerminating
+          expr: |
+            kube_namespace_status_phase{namespace=~".*-.*-.*-[0-9]{4}", phase="Terminating"} == 1
+          for: 1h
+          labels:
+            tier: platform
+            component: namespace
+          annotations:
+            summary: "Namespace in TERMINATING state for more than 1 hour"
+            description: {{ printf "%q" "Namespace {{ $labels.namespace }} has been in a TERMINATING state for longer than an hour." }}
+
         - alert: PodMemoryAtTheLimit
           expr: |
             sum(label_join(container_memory_usage_bytes{namespace!="kube-system",
@@ -93,8 +104,8 @@ data:
             tier: platform
             component: pod
           annotations:
-            summary: {{ printf "%q" "Memory usage for {{ $labels.pod }} Pod is almost at the limit" }}
-            description: "Pod uses more than 80% of the reserved memory"
+            summary: "Pod uses more than 80% of the reserved memory"
+            description: {{ printf "%q" "Memory usage for {{ $labels.pod }} Pod is almost at the limit" }}
 
         - alert: KubePodNotReady
           expr: |
