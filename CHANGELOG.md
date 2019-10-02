@@ -2,7 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.10.1] - 2019-08-26
+## [0.10.2] - 2019-09-02
+- Upgrade commander to pass optional namespace labels (eg: istio)
+- Service account query bug fix
+- Upgraded / new platform alerts
+
+## [0.10.1] - 2019-09-30
 - Upgrade to Airflow 1.10.5
 - Kubernetes 1.14+ support
 - Improved metrics in Grafana and Orbit
