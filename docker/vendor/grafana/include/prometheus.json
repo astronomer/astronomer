@@ -1096,7 +1096,7 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Memory, % of limit",
+      "title": "Memory Usage",
       "tooltip": {
         "shared": true,
         "sort": 0,
