@@ -19,7 +19,7 @@ data:
       repeat_interval: 3h
       receiver: default-receiver
       routes:
-      - receiver: {{ if .Values.receivers.platform }} platform-receiver {{ else }} default-receiver {{ end }}
+      - receiver: {{ if .Values.receivers.platform }} platform-receiver {{ else }} blackhole-receiver {{ end }}
         match_re:
           tier: platform
       - receiver: {{ if .Values.receivers.airflow }} airflow-receiver {{ else }} default-receiver {{ end }}
@@ -27,6 +27,8 @@ data:
         match_re:
           tier: airflow
     receivers:
+    - name: blackhole-receiver
+    # Deliberately left empty to not deliver anywhere.
     - name: default-receiver
       webhook_configs:
       - url: "http://{{ .Release.Name }}-houston:8871/v1/alerts"
