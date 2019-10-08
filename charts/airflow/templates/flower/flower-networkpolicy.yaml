@@ -26,7 +26,7 @@ spec:
   ingress:
   - from:
     - namespaceSelector: {}
-    - podSelector:
+      podSelector:
         matchLabels:
           tier: nginx
           component: ingress-controller

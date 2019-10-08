@@ -24,14 +24,14 @@ spec:
   - Ingress
   ingress:
   - from:
-    - namespaceSelector: {}
     - podSelector:
         matchLabels:
           tier: airflow
           release: {{ .Release.Name }}
           workspace: {{ .Values.platform.workspace | quote }}
     {{- if .Values.platform.release }}
-    - podSelector:
+    - namespaceSelector: {}
+      podSelector:
         matchLabels:
           tier: monitoring
           component: prometheus

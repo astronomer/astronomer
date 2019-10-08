@@ -24,7 +24,7 @@ spec:
   ingress:
   - from:
     - namespaceSelector: {}
-    - podSelector:
+      podSelector:
         matchLabels:
           tier: airflow
           component: webserver

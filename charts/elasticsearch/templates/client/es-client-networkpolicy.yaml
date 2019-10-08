@@ -23,7 +23,6 @@ spec:
   - Ingress
   ingress:
   - from:
-    - namespaceSelector: {}
     - podSelector:
         matchLabels:
           tier: astronomer
@@ -48,6 +47,11 @@ spec:
         matchLabels:
           tier: logging
           component: {{ template "elasticsearch.name" . }}-exporter
+          release: {{ .Release.Name }}
+    - podSelector:
+        matchLabels:
+          tier: elasticsearch
+          component: es-ingress-controller
           release: {{ .Release.Name }}
     ports:
     - protocol: TCP
