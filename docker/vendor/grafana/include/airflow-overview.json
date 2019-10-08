@@ -1716,7 +1716,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "container_memory_usage_bytes{deployment=~\"$deployment\", pod_name!~\".*-worker-.*\",component_name != \"POD\",image!=\"\", container_name!=\"istio-proxy\"} * 100 / container_spec_memory_limit_bytes{deployment=~\"$deployment\", pod_name!~\".*-worker-.*\",component_name != \"POD\",image!=\"\", container_name!=\"istio-proxy\"}",
+          "expr": "container_memory_working_set_bytes{deployment=~\"$deployment\", pod_name!~\".*-worker-.*\",component_name != \"POD\",image!=\"\", container_name!=\"istio-proxy\"} * 100 / container_spec_memory_limit_bytes{deployment=~\"$deployment\", pod_name!~\".*-worker-.*\",component_name != \"POD\",image!=\"\", container_name!=\"istio-proxy\"}",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{container_name}}",
