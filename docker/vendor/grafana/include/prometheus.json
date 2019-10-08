@@ -1084,7 +1084,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "container_memory_usage_bytes{component_name=\"prometheus\"} / container_spec_memory_limit_bytes{component_name=\"prometheus\"} * 100",
+          "expr": "container_memory_working_set_bytes{component_name=\"prometheus\"} / container_spec_memory_limit_bytes{component_name=\"prometheus\"} * 100",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "{{pod_name}}",
