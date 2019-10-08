@@ -94,18 +94,17 @@ data:
             summary: "Namespace in TERMINATING state for more than 1 hour"
             description: {{ printf "%q" "Namespace {{ $labels.namespace }} has been in a TERMINATING state for longer than an hour." }}
 
-        - alert: PodMemoryAtTheLimit
+        - alert: ContainerMemoryAtTheLimit
           expr: |
-            sum(label_join(container_memory_usage_bytes{namespace!="kube-system",
-            container_name!=""}, "pod", ",", "pod_name")) by (pod) /
-            sum(kube_pod_container_resource_limits_memory_bytes{namespace!="kube-system"}) by (pod) > 0.8
+            container_memory_working_set_bytes{container_name!="POD"} /
+            container_spec_memory_limit_bytes{container_name!="POD"} > 0.8 < +Inf
           for: 1h
           labels:
             tier: platform
-            component: pod
+            component: container
           annotations:
-            summary: "Pod uses more than 80% of the reserved memory"
-            description: {{ printf "%q" "Memory usage for {{ $labels.pod }} Pod is almost at the limit" }}
+            summary: "Container uses more than 80% of the memory limit"
+            description: {{ printf "%q" "Memory usage for the {{ $labels.container }} Container in the {{ $labels.pod }} Pod is almost at the limit" }}
 
         - alert: KubePodNotReady
           expr: |
