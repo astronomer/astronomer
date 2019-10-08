@@ -1048,7 +1048,7 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": "Prometheus",
-      "description": "",
+      "description": "Percent of memory limit used by Prometheus. Hitting 100% will cause termination.",
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {

@@ -278,7 +278,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "container_memory_usage_bytes{component_name=~\".*(scheduler|webserver|flower|istio-proxy)\", deployment=~\"$deployment\"} / \ncontainer_spec_memory_limit_bytes{component_name=~\".*(scheduler|webserver|flower|istio-proxy)\", deployment=~\"$deployment\"} * 100",
+          "expr": "container_memory_working_set_bytes{component_name=~\".*(scheduler|webserver|flower|istio-proxy)\", deployment=~\"$deployment\"} / \ncontainer_spec_memory_limit_bytes{component_name=~\".*(scheduler|webserver|flower|istio-proxy)\", deployment=~\"$deployment\"} * 100",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{pod_name}} ({{container_name}})",
@@ -367,7 +367,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "container_memory_usage_bytes{component_name=\"worker\", deployment=~\"$deployment\"} / container_spec_memory_limit_bytes{component_name=\"worker\", deployment=~\"$deployment\"} * 100",
+          "expr": "container_memory_working_set_bytes{component_name=\"worker\", deployment=~\"$deployment\"} / container_spec_memory_limit_bytes{component_name=\"worker\", deployment=~\"$deployment\"} * 100",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{pod_name}}",
