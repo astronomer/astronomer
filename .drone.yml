@@ -81,6 +81,16 @@ pipeline:
       branch: [ master, release-* ]
       environment: [ development, production ]
 
+  update-cloud-module:
+    image: docker:git
+    secrets: [ deploy_key_cloud_module ]
+    commands:
+      - bin/update_cloud_module
+    when:
+      event: deployment
+      branch: [ master, release-* ]
+      environment: [ development, production ]
+
   ##################################
   ## Tag
   ###################################
