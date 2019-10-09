@@ -85,7 +85,7 @@ pipeline:
     image: docker:git
     secrets: [ deploy_key_cloud_module ]
     commands:
-      - bin/update_cloud_module
+      - bin/update-cloud-module
     when:
       event: deployment
       branch: [ master, release-* ]
