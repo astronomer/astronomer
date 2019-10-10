@@ -106,6 +106,27 @@ data:
             summary: "Container uses more than 80% of the memory limit"
             description: {{ printf "%q" "Memory usage for the {{ $labels.container }} Container in the {{ $labels.pod }} Pod is almost at the limit" }}
 
+        - alert: PlatformContainerRestarting
+          expr: |
+            rate(kube_pod_container_status_restarts_total{namespace="astronomer"}[90s]) * 60 > 0
+          labels:
+            tier: platform
+            severity: warning
+          annotations:
+            summary: "A container has restarted in the Astronomer platform namespace"
+            description: {{ printf "%q" "The container {{ $labels.container }} in pod {{ $labels.pod }} has restarted at least once" }}
+
+        - alert: PlatformContainerRestartingContinuously
+          expr: |
+            rate(kube_pod_container_status_restarts_total{namespace="astronomer"}[90s]) * 60 > 0
+          for: 10m
+          labels:
+            tier: platform
+            severity: urgent
+          annotations:
+            summary: "A container in the Astronomer platform namespace is stuck crash looping"
+            description: {{ printf "%q" "The container {{ $labels.container }} in pod {{ $labels.pod }} is stuck crash looping" }}
+
         - alert: KubePodNotReady
           expr: |
             sum by (namespace, pod) (kube_pod_status_phase{job="kube-state", phase=~"Pending|Unknown"}) > 0
