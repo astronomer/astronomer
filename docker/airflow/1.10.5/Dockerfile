@@ -89,7 +89,7 @@ RUN apk update \
 	&& cp /usr/share/zoneinfo/UTC /etc/localtime \
 	&& pip3 install --no-cache-dir --upgrade pip==19.2.3 \
 	&& pip3 install --no-cache-dir --upgrade setuptools==41.0.1 \
-	&& pip3 install --no-cache-dir --upgrade snowflake-connector-python==1.9.0 \
+	&& pip3 install --no-cache-dir --upgrade snowflake-connector-python==1.9.1 \
 	&& pip3 install --no-cache-dir "${AIRFLOW_MODULE}" \
 	&& pip3 install --no-cache-dir "https://github.com/astronomer/astronomer-fab-securitymanager/releases/download/v1.2.1/astronomer_fab_security_manager-1.2.1-py3-none-any.whl" \
 	&& cd /usr/lib/python3.7/site-packages/airflow/www_rbac \
