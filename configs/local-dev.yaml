@@ -50,11 +50,6 @@ astronomer:
       requests:
         cpu: "0m"
         memory: "0Mi"
-  kubeReplicator:
-    resources:
-      requests:
-        cpu: "0m"
-        memory: "0Mi"
 
 
 #################################
@@ -79,7 +74,6 @@ grafana:
     requests:
       cpu: "0m"
       memory: "0Mi"
-
 
 #################################
 ## Prometheus configuration
@@ -109,8 +103,8 @@ elasticsearch:
         cpu: "0"
         memory: "0"
 
+  # Configure master nodes
   master:
-
     resources:
       requests:
         cpu: "0"

@@ -150,15 +150,6 @@ install:
   #   cpu: 100m
   #   memory: 128Mi
 
-kubeReplicator:
-  resources: {}
-  #  limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  #  requests:
-  #   cpu: 100m
-  #   memory: 128Mi
-
 
 ports:
   houstonHTTP: 8871
