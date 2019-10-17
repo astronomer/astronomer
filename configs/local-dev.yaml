@@ -4,7 +4,6 @@
 ## There should be an A record on *.local.astronomer-development.com
 ## with the value 127.0.0.1 and you should set up
 ## the secrets and TLS cert normally.
-## It's working on Steven's laptop with 32GB mem
 ############################
 
 global:
