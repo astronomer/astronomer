@@ -208,6 +208,10 @@ max_client_conn = {{ .Values.pgbouncer.maxClientConn }}
 {{ printf "%s/tls.crt" (include "airflow_webserver_jwt_cert_dir" . ) }}
 {{- end }}
 
+{{ define "airflow_local_setting_path" -}}
+{{ (printf "%s/config/airflow_local_settings.py" .Values.airflowHome) | quote }}
+{{- end }}
+
 {{ define "airflow_config" -}}
 {{ (printf "%s-airflow-config" .Release.Name) }}
 {{- end }}

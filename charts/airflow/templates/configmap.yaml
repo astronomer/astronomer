@@ -99,3 +99,23 @@ data:
 
     from astronomer.flask_appbuilder.security import AirflowAstroSecurityManager
     SECURITY_MANAGER_CLASS = AirflowAstroSecurityManager
+
+  airflow_local_settings.py: |
+    from airflow.contrib.kubernetes.pod import Pod
+    from airflow.configuration import conf
+
+
+    def pod_mutation_hook(pod: Pod):
+
+        extra_labels = {
+            "kubernetes-executor": "False",
+            "kubernetes-pod-operator": "False"
+        }
+
+        if 'airflow-worker' in pod.labels.keys() or \
+                conf.get('core', 'EXECUTOR') == "KubernetesExecutor":
+            extra_labels["kubernetes-executor"] = "True"
+        else:
+            extra_labels["kubernetes-pod-operator"] = "True"
+
+        pod.labels.update(extra_labels)
