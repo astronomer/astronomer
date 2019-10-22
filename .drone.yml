@@ -82,7 +82,7 @@ pipeline:
       environment: [ development, production ]
 
   update-cloud-module:
-    image: docker:git
+    image: astronomerio/ap-build:0.1.1
     secrets: [ deploy_key_cloud_module ]
     commands:
       - bin/update-cloud-module
