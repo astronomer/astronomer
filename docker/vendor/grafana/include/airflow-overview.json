@@ -51,7 +51,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "iteration": 1569541789860,
+  "iteration": 1571838876460,
   "links": [],
   "panels": [
     {
@@ -334,10 +334,8 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(kube_resourcequota{resource=\"pods\", type=\"hard\", release=~\"$deployment\"})",
-          "format": "time_series",
-          "intervalFactor": 1,
-          "refId": "A"
+          "expr": "sum(kube_resourcequota{resource=\"pods\", type=\"hard\", release=~\"$deployment\", resourcequota=~\"$deployment-resource-quota\"})",
+          "refId": "B"
         }
       ],
       "thresholds": "",
@@ -416,7 +414,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(kube_resourcequota{resource=\"limits.cpu\", type=\"hard\", release=~\"$deployment\"})",
+          "expr": "sum(kube_resourcequota{resource=\"limits.cpu\", type=\"hard\", release=~\"$deployment\", resourcequota=~\"$deployment-resource-quota\"})",
           "format": "time_series",
           "intervalFactor": 1,
           "refId": "A"
@@ -498,7 +496,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(kube_resourcequota{resource=\"limits.memory\", type=\"hard\", release=~\"$deployment\"})",
+          "expr": "sum(kube_resourcequota{resource=\"limits.memory\", type=\"hard\", release=~\"$deployment\", resourcequota=~\"$deployment-resource-quota\"})",
           "format": "time_series",
           "intervalFactor": 1,
           "refId": "A"
@@ -581,7 +579,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(kube_resourcequota{resource=\"pods\", type=\"used\", release=~\"$deployment\"})\n/\nsum(kube_resourcequota{resource=\"pods\", type=\"hard\", release=~\"$deployment\"})*100",
+          "expr": "sum(kube_resourcequota{resource=\"pods\", type=\"used\", release=~\"$deployment\", resourcequota=~\"$deployment-resource-quota\"})\n/\nsum(kube_resourcequota{resource=\"pods\", type=\"hard\", release=~\"$deployment\", resourcequota=~\"$deployment-resource-quota\"})*100",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "",
@@ -665,7 +663,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(kube_resourcequota{resource=\"limits.cpu\", type=\"used\", release=~\"$deployment\"})\n/\nsum(kube_resourcequota{resource=\"limits.cpu\", type=\"hard\", release=~\"$deployment\"})*100",
+          "expr": "sum(kube_resourcequota{resource=\"limits.cpu\", type=\"used\", release=~\"$deployment\", resourcequota=~\"$deployment-resource-quota\"})\n/\nsum(kube_resourcequota{resource=\"limits.cpu\", type=\"hard\", release=~\"$deployment\", resourcequota=~\"$deployment-resource-quota\"})*100",
           "format": "time_series",
           "intervalFactor": 1,
           "refId": "A"
@@ -748,7 +746,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(kube_resourcequota{resource=\"limits.memory\", type=\"used\", release=~\"$deployment\"})\n/\nsum(kube_resourcequota{resource=\"limits.memory\", type=\"hard\", release=~\"$deployment\"})*100",
+          "expr": "sum(kube_resourcequota{resource=\"limits.memory\", type=\"used\", release=~\"$deployment\", resourcequota=~\"$deployment-resource-quota\"})\n/\nsum(kube_resourcequota{resource=\"limits.memory\", type=\"hard\", release=~\"$deployment\", resourcequota=~\"$deployment-resource-quota\"})*100",
           "format": "time_series",
           "intervalFactor": 1,
           "refId": "A"
@@ -1625,7 +1623,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "label_replace(  sum(rate(container_cpu_usage_seconds_total{deployment=~\"$deployment\", pod_name!~\".*-worker-.*\",component_name != \"POD\",image!=\"\", container_name!=\"istio-proxy\"}[3m])) by (pod_name, container_name, component_name, namespace, short_name)/  sum(container_spec_cpu_quota{deployment=~\"$deployment\", pod_name!~\".*-worker-.*\", component_name != \"POD\",image!=\"\", container_name!=\"istio-proxy\"}/container_spec_cpu_period{deployment=~\"$deployment\", pod_name!~\".*-worker-.*\", component_name != \"POD\",image!=\"\", container_name!=\"istio-proxy\"}) by (pod_name, container_name, component_name, namespace, short_name)*100,  \"short_name\",  \"$1\",  \"pod_name\",  \"^[[deployment]]-(.*)$\")",
+          "expr": "label_replace(  sum(rate(container_cpu_usage_seconds_total{deployment=~\"$deployment\", component_name != \"POD\",image!=\"\", container_name!=\"istio-proxy\"}[3m])) by (pod_name, container_name, component_name, namespace, short_name)/  sum(container_spec_cpu_quota{deployment=~\"$deployment\",  component_name != \"POD\",image!=\"\", container_name!=\"istio-proxy\"}/container_spec_cpu_period{deployment=~\"$deployment\",  component_name != \"POD\",image!=\"\", container_name!=\"istio-proxy\"}) by (pod_name, container_name, component_name, namespace, short_name)*100,  \"short_name\",  \"$1\",  \"pod_name\",  \"^[[deployment]]-(.*)$\")",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{component_name}}",
@@ -1716,7 +1714,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "container_memory_working_set_bytes{deployment=~\"$deployment\", pod_name!~\".*-worker-.*\",component_name != \"POD\",image!=\"\", container_name!=\"istio-proxy\"} * 100 / container_spec_memory_limit_bytes{deployment=~\"$deployment\", pod_name!~\".*-worker-.*\",component_name != \"POD\",image!=\"\", container_name!=\"istio-proxy\"}",
+          "expr": "container_memory_working_set_bytes{deployment=~\"$deployment\", component_name != \"POD\",image!=\"\", container_name!=\"istio-proxy\"} * 100 / container_spec_memory_limit_bytes{deployment=~\"$deployment\", component_name != \"POD\",image!=\"\", container_name!=\"istio-proxy\"}",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{container_name}}",
