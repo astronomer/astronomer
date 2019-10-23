@@ -35,6 +35,7 @@
       "version": ""
     }
   ],
+{
   "annotations": {
     "list": [
       {
@@ -51,7 +52,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "iteration": 1569541789860,
+  "iteration": 1571838876460,
   "links": [],
   "panels": [
     {
@@ -334,10 +335,8 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(kube_resourcequota{resource=\"pods\", type=\"hard\", release=~\"$deployment\"})",
-          "format": "time_series",
-          "intervalFactor": 1,
-          "refId": "A"
+          "expr": "sum(kube_resourcequota{resource=\"pods\", type=\"hard\", release=~\"$deployment\", resourcequota=~\"$deployment-resource-quota\"})",
+          "refId": "B"
         }
       ],
       "thresholds": "",
@@ -416,7 +415,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(kube_resourcequota{resource=\"limits.cpu\", type=\"hard\", release=~\"$deployment\"})",
+          "expr": "sum(kube_resourcequota{resource=\"limits.cpu\", type=\"hard\", release=~\"$deployment\", resourcequota=~\"$deployment-resource-quota\"})",
           "format": "time_series",
           "intervalFactor": 1,
           "refId": "A"
@@ -498,7 +497,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(kube_resourcequota{resource=\"limits.memory\", type=\"hard\", release=~\"$deployment\"})",
+          "expr": "sum(kube_resourcequota{resource=\"limits.memory\", type=\"hard\", release=~\"$deployment\", resourcequota=~\"$deployment-resource-quota\"})",
           "format": "time_series",
           "intervalFactor": 1,
           "refId": "A"
@@ -581,7 +580,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(kube_resourcequota{resource=\"pods\", type=\"used\", release=~\"$deployment\"})\n/\nsum(kube_resourcequota{resource=\"pods\", type=\"hard\", release=~\"$deployment\"})*100",
+          "expr": "sum(kube_resourcequota{resource=\"pods\", type=\"used\", release=~\"$deployment\", resourcequota=~\"$deployment-resource-quota\"})\n/\nsum(kube_resourcequota{resource=\"pods\", type=\"hard\", release=~\"$deployment\", resourcequota=~\"$deployment-resource-quota\"})*100",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "",
@@ -665,7 +664,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(kube_resourcequota{resource=\"limits.cpu\", type=\"used\", release=~\"$deployment\"})\n/\nsum(kube_resourcequota{resource=\"limits.cpu\", type=\"hard\", release=~\"$deployment\"})*100",
+          "expr": "sum(kube_resourcequota{resource=\"limits.cpu\", type=\"used\", release=~\"$deployment\", resourcequota=~\"$deployment-resource-quota\"})\n/\nsum(kube_resourcequota{resource=\"limits.cpu\", type=\"hard\", release=~\"$deployment\", resourcequota=~\"$deployment-resource-quota\"})*100",
           "format": "time_series",
           "intervalFactor": 1,
           "refId": "A"
@@ -748,7 +747,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(kube_resourcequota{resource=\"limits.memory\", type=\"used\", release=~\"$deployment\"})\n/\nsum(kube_resourcequota{resource=\"limits.memory\", type=\"hard\", release=~\"$deployment\"})*100",
+          "expr": "sum(kube_resourcequota{resource=\"limits.memory\", type=\"used\", release=~\"$deployment\", resourcequota=~\"$deployment-resource-quota\"})\n/\nsum(kube_resourcequota{resource=\"limits.memory\", type=\"hard\", release=~\"$deployment\", resourcequota=~\"$deployment-resource-quota\"})*100",
           "format": "time_series",
           "intervalFactor": 1,
           "refId": "A"
