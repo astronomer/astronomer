@@ -304,7 +304,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(container_spec_memory_limit_bytes{container_name=~\"(es-master|es-data|es-client)\"})\n-\nsum(container_memory_usage_bytes{container_name=~\"(es-master|es-data|es-client)\"})",
+          "expr": "sum(container_spec_memory_limit_bytes{container_name=~\"(es-master|es-data|es-client)\"})\n-\nsum(container_memory_working_set_bytes{container_name=~\"(es-master|es-data|es-client)\"})",
           "format": "time_series",
           "intervalFactor": 1,
           "refId": "B"
