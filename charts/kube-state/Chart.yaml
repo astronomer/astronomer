@@ -1,5 +1,5 @@
 name: kube-state
-version: 0.10.3-alpha.4
+version: 0.10.3-alpha.5
 description: A Helm chart to deploy the Astronomer Platform kube-state module
 keywords:
   - astronomer
