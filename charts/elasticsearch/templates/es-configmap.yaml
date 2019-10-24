@@ -13,10 +13,11 @@ data:
     cluster:
       name: ${CLUSTER_NAME}
       initial_master_nodes:
-        {{ $releaseName := .Release.Name }}
-        {{ range $i, $e := until (int .Values.master.replicas) }}
+        {{- $releaseName := $.Release.Name }}
+        {{- $replicas := printf "%s" .Values.master.replicas }}
+        {{- range $i, $e := until (int $replicas) }}
         - {{ $releaseName }}-elasticsearch-master-{{ $i }}
-        {{ end }}
+        {{- end }}
     node:
       master: ${NODE_MASTER}
       name: ${NODE_NAME}
