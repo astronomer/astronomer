@@ -1,6 +1,6 @@
 #! /usr/bin/env bash
 
-apk add sed
+apt-get install sed
 
 # Install Terraform so we can do 'terraform fmt'
 TERRAFORM_VERSION=0.12.9
