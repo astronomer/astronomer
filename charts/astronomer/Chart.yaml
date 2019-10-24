@@ -1,5 +1,5 @@
 name: astronomer
-version: 0.10.3-alpha.3
+version: 0.10.3-alpha.4
 description: A Helm chart to deploy the Astronomer module
 keywords:
   - astronomer
