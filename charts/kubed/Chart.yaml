@@ -1,5 +1,5 @@
 name: kubed
-version: 0.10.3-alpha.6
+version: 0.10.3-rc.1
 description: Helm chart to deploy the Astronomer Platform KubeD module
 keywords:
   - astronomer
