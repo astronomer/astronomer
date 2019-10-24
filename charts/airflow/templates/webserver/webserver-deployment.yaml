@@ -84,18 +84,18 @@ spec:
             httpGet:
               path: /health
               port: {{ .Values.ports.airflowUI }}
-            initialDelaySeconds: {{ .Values.webserver.initialDelaySeconds | default 15 }}
-            timeoutSeconds: {{ .Values.webserver.timeoutSeconds | default 30 }}
-            failureThreshold: {{ .Values.webserver.failureThreshold | default 20 }}
-            periodSeconds: {{ .Values.webserver.periodSeconds | default 5 }}
+            initialDelaySeconds: {{ .Values.webserver.livenessProbe.initialDelaySeconds | default 15 }}
+            timeoutSeconds: {{ .Values.webserver.livenessProbe.timeoutSeconds | default 30 }}
+            failureThreshold: {{ .Values.webserver.livenessProbe.failureThreshold | default 20 }}
+            periodSeconds: {{ .Values.webserver.livenessProbe.periodSeconds | default 5 }}
           readinessProbe:
             httpGet:
               path: /health
               port: {{ .Values.ports.airflowUI }}
-            initialDelaySeconds: {{ .Values.webserver.initialDelaySeconds | default 15 }}
-            timeoutSeconds: {{ .Values.webserver.timeoutSeconds | default 30 }}
-            failureThreshold: {{ .Values.webserver.failureThreshold | default 20 }}
-            periodSeconds: {{ .Values.webserver.periodSeconds | default 5 }}
+            initialDelaySeconds: {{ .Values.webserver.readinessProbe.initialDelaySeconds | default 15 }}
+            timeoutSeconds: {{ .Values.webserver.readinessProbe.timeoutSeconds | default 30 }}
+            failureThreshold: {{ .Values.webserver.readinessProbe.failureThreshold | default 20 }}
+            periodSeconds: {{ .Values.webserver.readinessProbe.periodSeconds | default 5 }}
           env:
           {{- include "custom_airflow_environment" . | indent 10 }}
           {{- include "standard_airflow_environment" . | indent 10 }}
