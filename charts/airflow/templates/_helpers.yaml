@@ -58,7 +58,7 @@
   - name: {{ $config.name }}
     value: {{ $config.value | quote }}
     {{- if eq $.Values.executor "KubernetesExecutor" }}
-  - name: AIRFLOW__KUBERNETES_SECRETS__{{ $config.name }}
+  - name: AIRFLOW__KUBERNETES_ENVIRONMENT_VARIABLES__{{ $config.name }}
     value: {{ $config.value | quote }}
     {{- end }}
   {{- end }}
