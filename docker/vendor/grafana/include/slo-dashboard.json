@@ -361,7 +361,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "description": "The average task success rate, categorized by percentile. For example, p50 means the success rate of the healthier half of the deployments, sorted by success rate. p100 means just the healthiest deployment. The SLO is on p25 - we want 75% of deployments to have a 95% or better success rate.",
+      "description": "The average task success rate, categorized by percentile. For example, p50 means the success rate of the healthier half of the deployments, sorted by success rate. p100 means just the healthiest deployment. p0 means the average of all deployments.",
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {
@@ -420,8 +420,9 @@
           "refId": "E"
         },
         {
-          "expr": ".95",
-          "legendFormat": "p25 SLO",
+          "expr": "avg((airflow_ti_successes) / (airflow_ti_failures + airflow_ti_successes))",
+          "hide": false,
+          "legendFormat": "p0",
           "refId": "D"
         }
       ],
@@ -562,6 +563,178 @@
       }
     },
     {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "description": "The percent of Airflow schedulers that have received a heartbeat in the past 1 minute",
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 17
+      },
+      "id": 97,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "(count(rate(airflow_scheduler_heartbeat{}[1m]) > 0) / count(rate(airflow_scheduler_heartbeat{}[1m])))",
+          "legendFormat": "healthy",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Airflow Scheduler Health",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "percentunit",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": true,
+      "dashLength": 10,
+      "dashes": false,
+      "description": "The deployments which do not have healthy schedulers.",
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 17
+      },
+      "id": 103,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": false,
+      "linewidth": 1,
+      "nullPointMode": "null as zero",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": true,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "clamp_min(rate(airflow_scheduler_heartbeat{}[1m]) <= 0, 1)",
+          "legendFormat": "{{ deployment }}",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Unhealthy Schedulers",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "none",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
       "aliasColors": {
         "p99 < 1s": "dark-yellow",
         "p99 < 500ms": "dark-green",
@@ -571,14 +744,14 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": "Prometheus",
-      "description": "The 99th percentile of response times for the past 30 days should be less than 1 second",
+      "description": "The 99th percentile of response times should be less than 1 second. The line shows the average over the past 30 days.",
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 17
+        "y": 25
       },
       "hideTimeOverride": false,
       "id": 93,
@@ -681,7 +854,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 17
+        "y": 25
       },
       "id": 95,
       "legend": {
@@ -775,7 +948,7 @@
         "h": 10,
         "w": 12,
         "x": 0,
-        "y": 24
+        "y": 32
       },
       "id": 89,
       "interval": "",
@@ -864,14 +1037,14 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": "Prometheus",
-      "description": "How many requests have been handled in the past 30 days. This is the sample size for 30 day SLOs based on ingress metrics.",
+      "description": "How many requests have been handled in the past 24 hours. This is useful to monitor platform growth.",
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {
         "h": 10,
         "w": 12,
         "x": 12,
-        "y": 24
+        "y": 32
       },
       "id": 90,
       "interval": "",
@@ -901,7 +1074,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(increase(nginx_ingress_controller_requests{}[30d]))",
+          "expr": "sum(increase(nginx_ingress_controller_requests{}[1d]))",
           "hide": false,
           "legendFormat": "1 hour",
           "refId": "A"
@@ -911,7 +1084,7 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "30-day Request volume",
+      "title": "1-day Request volume",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -953,16 +1126,16 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "description": "The percent of Airflow schedulers that have received a heartbeat in the past 1 minute",
+      "description": "The number of currently active connections to the database",
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 34
+        "y": 42
       },
-      "id": 97,
+      "id": 107,
       "legend": {
         "avg": false,
         "current": false,
@@ -988,16 +1161,21 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "(count(rate(airflow_scheduler_heartbeat{}[1m]) > 0) / count(rate(airflow_scheduler_heartbeat{}[1m])))",
-          "legendFormat": "healthy",
+          "expr": "sum (pgbouncer_exporter_database_current_connections)",
+          "legendFormat": "connections",
           "refId": "A"
+        },
+        {
+          "expr": "600",
+          "legendFormat": "limit of current DB size",
+          "refId": "B"
         }
       ],
       "thresholds": [],
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Airflow Scheduler Health",
+      "title": "Database Connections",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -1013,7 +1191,7 @@
       },
       "yaxes": [
         {
-          "format": "percentunit",
+          "format": "short",
           "label": null,
           "logBase": 1,
           "max": null,
@@ -1039,16 +1217,16 @@
       "bars": true,
       "dashLength": 10,
       "dashes": false,
-      "description": "The deployments which do not have healthy schedulers.",
+      "description": "The number of Airflow webservers that have restarted in the past five minutes, categorized by namespace",
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 34
+        "y": 42
       },
-      "id": 103,
+      "id": 112,
       "legend": {
         "avg": false,
         "current": false,
@@ -1074,8 +1252,8 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "clamp_min(rate(airflow_scheduler_heartbeat{}[1m]) <= 0, 1)",
-          "legendFormat": "{{ deployment }}",
+          "expr": "sum by (namespace) (increase(kube_pod_container_status_restarts_total{pod=~\".*webserver.*\"}[5m])) > 0",
+          "legendFormat": "{{ namespace }}",
           "refId": "A"
         }
       ],
@@ -1083,7 +1261,7 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Unhealthy Schedulers",
+      "title": "Airflow Webserver Restarts",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -1099,7 +1277,457 @@
       },
       "yaxes": [
         {
-          "format": "none",
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "description": "The number of waiting clients, by deployment",
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 50
+      },
+      "id": 105,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "sum by (deployment) (pgbouncer_exporter_pools_waiting_clients)",
+          "legendFormat": "{{ deployment }}",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "PG Bouncer Waiting Clients",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "description": "The number of active clients, by deployment",
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 50
+      },
+      "id": 106,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "sum by (deployment) (pgbouncer_exporter_pools_active_clients)",
+          "legendFormat": "{{ deployment }}",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "PG Bouncer Active Clients",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "description": "The average time to parse a DAG, categorized by percentile. For example, p50 means the top half of the deployments, sorted by parsing duration. p100 means just the deployment with the longest average DAG parsing time. p0 means the average of all DAG parsing times. It is normalized across deployments, so each deployment has the same impact on the average, regardless of the number of DAGs a deployment has.",
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 12,
+        "w": 12,
+        "x": 0,
+        "y": 58
+      },
+      "id": 110,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "avg(topk(1, (airflow_dag_processing_total_parse_time / airflow_dagbag_size) > 0 < +Inf))",
+          "hide": false,
+          "legendFormat": "p100",
+          "refId": "B"
+        },
+        {
+          "expr": "avg(topk(scalar(count(airflow_dagbag_size > 0)) / 4, (airflow_dag_processing_total_parse_time / airflow_dagbag_size) > 0 < +Inf))",
+          "hide": false,
+          "legendFormat": "p75",
+          "refId": "C"
+        },
+        {
+          "expr": "avg(topk(scalar(count(airflow_dagbag_size > 0)) / 2, (airflow_dag_processing_total_parse_time / airflow_dagbag_size) > 0 < +Inf))",
+          "hide": false,
+          "legendFormat": "p50",
+          "refId": "A"
+        },
+        {
+          "expr": "avg((airflow_dag_processing_total_parse_time / airflow_dagbag_size) > 0 < +Inf)",
+          "hide": false,
+          "legendFormat": "p0",
+          "refId": "D"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "DAG Parsing Time",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "description": "At any given time, list the 5 deployments with the slowest average DAG parsing time",
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 58
+      },
+      "id": 114,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "topk(5, (airflow_dag_processing_total_parse_time / airflow_dagbag_size) > 0 < +Inf)",
+          "hide": false,
+          "legendFormat": "{{ deployment }}",
+          "refId": "C"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "5 Slowest DAG Parsing Deployments",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "description": "The number of DAG parsing timeouts in the past 5 minutes",
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 5,
+        "w": 12,
+        "x": 12,
+        "y": 65
+      },
+      "id": 109,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "increase(airflow_dag_processing_processor_timeouts[5m])",
+          "legendFormat": "{{ deployment }}",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "DAG Parsing timeouts",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
           "label": null,
           "logBase": 1,
           "max": null,
@@ -1160,5 +1788,5 @@
   "timezone": "browser",
   "title": "SLO Dashboard",
   "uid": "Mh_HjSoZz",
-  "version": 9
+  "version": 12
 }
