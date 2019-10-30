@@ -191,4 +191,16 @@ data:
           annotations:
             summary: "2 days since last successful Backup for a Velero Schedule"
             description: {{ printf "%q" "Time since last successful backup for {{ $labels.schedule }} :\n  VALUE = {{ $value }}\n  LABELS - {{ $labels }}" }}
+
+        - alert: SchedulersNotHealthy
+          expr: (count(rate(airflow_scheduler_heartbeat{}[1m]) > 0) / count(rate(airflow_scheduler_heartbeat{}[1m]))) < 0.5
+          for: 5m
+          labels:
+            tier: platform
+            component: airflow
+            severity: urgent
+          annotations:
+            summary: "Half or more of schedulers do not have a heartbeat"
+            description: "Half or more of schedulers do not have a heartbeat in the last five minutes"
+
         {{- end }}
