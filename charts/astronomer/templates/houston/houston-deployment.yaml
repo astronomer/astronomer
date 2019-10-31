@@ -136,6 +136,14 @@ spec:
                 secretKeyRef:
                   name: {{ template "houston.airflowBackendSecret" . }}
                   key: connection
+            {{- /* Dynamically created secret envs */ -}}
+            {{- range $i, $config := .Values.houston.secret }}
+            - name: {{ $config.envName }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $config.secretName }}
+                  key: {{ default "value" $config.secretKey }}
+            {{- end }}
       volumes:
         - name: houston-config-volume
           configMap:

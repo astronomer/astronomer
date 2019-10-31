@@ -71,6 +71,17 @@ houston:
   jwtSigningCertificateSecretName: ~
 
   env: []
+
+  # For example
+  #   `kubectl create secret generic my-secret --from-literal=connection=smtps://USERNAME:PW@HOST/?pool=true`
+  # and then set:
+  #
+  # secret:
+  # - envName: "EMAIL__SMTP_URL"
+  #   secretName: "my-scret"
+  #   secretKey: "connection"
+  secret: []
+
   resources: {}
   #  limits:
   #   cpu: 100m
