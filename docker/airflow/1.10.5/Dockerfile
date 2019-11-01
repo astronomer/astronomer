@@ -48,7 +48,7 @@ RUN echo @edge-community http://dl-cdn.alpinelinux.org/alpine/edge/community >> 
 
 # Force pip to install these specific versions when ever it installs a module
 ENV PIP_CONSTRAINT=/usr/local/share/astronomer-pip-constraints.txt
-COPY include/pip-constriants.txt /usr/local/share/astronomer-pip-constraints.txt
+COPY include/pip-constraints.txt /usr/local/share/astronomer-pip-constraints.txt
 
 # Install packages
 RUN apk update \
