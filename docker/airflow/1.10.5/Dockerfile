@@ -46,6 +46,10 @@ RUN echo @edge-community http://dl-cdn.alpinelinux.org/alpine/edge/community >> 
 	&& echo @edge-testing http://dl-cdn.alpinelinux.org/alpine/edge/testing >> /etc/apk/repositories \
 	&& echo @edge http://dl-cdn.alpinelinux.org/alpine/edge/main >> /etc/apk/repositories
 
+# Force pip to install these specific versions when ever it installs a module
+ENV PIP_CONSTRAINT=/usr/local/share/astronomer-pip-constraints.txt
+COPY include/pip-constriants.txt /usr/local/share/astronomer-pip-constraints.txt
+
 # Install packages
 RUN apk update \
 	&& apk add --no-cache --virtual .build-deps \
