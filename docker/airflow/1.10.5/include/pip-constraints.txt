@@ -1,0 +1,2 @@
+# Constraint the version pip will install, if it ever needs to install a module
+azure-storage-blob<12.0
