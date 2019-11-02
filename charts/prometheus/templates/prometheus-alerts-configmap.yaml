@@ -17,6 +17,17 @@ data:
 {{ toYaml .Values.alerts.groups | indent 6 }}
       - name: platform
         rules:
+        - alert: FluentdQueueLarge
+          expr: sum(fluentd_status_buffer_queue_length) > 10
+          for: 5m
+          labels:
+            tier: platform
+            component: fluentd
+            severity: urgent
+          annotations:
+            summary: "Fluentd unwrittten log queue is geting large"
+            description: "Check on Elastic Search client and try restarting Fluentd pods"
+
         - alert: PrometheusDiskUsage
           expr: (kubelet_volume_stats_available_bytes{persistentvolumeclaim=~"data-{{ template "prometheus.fullname" . }}-.*"} / kubelet_volume_stats_capacity_bytes{persistentvolumeclaim=~"data-{{ template "prometheus.fullname" . }}-.*"} * 100) < 10
           for: 5m
