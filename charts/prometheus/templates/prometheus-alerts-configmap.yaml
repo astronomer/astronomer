@@ -14,9 +14,107 @@ metadata:
 data:
   alerts.yaml: |-
     groups:
-{{ toYaml .Values.alerts.groups | indent 6 }}
+      - name: airflow
+        rules:
+        - alert: AirflowDeploymentUnhealthy
+          expr: sum by(release) (kube_pod_container_status_running{namespace=~".*-.*-.*-[0-9]{4}", pod=~".*-.*-[0-9]{4}-.*"}) - count by(release) (kube_pod_container_status_running{namespace=~".*-.*-.*-[0-9]{4}", pod=~".*-.*-[0-9]{4}-.*"}) < 0
+          for: 15m # Rough number but should be enough to clear deployments with a reasonable amount of workers
+          labels:
+            tier: airflow
+            component: deployment
+            deployment: {{ printf "%q" "{{ $labels.release }}" }}
+          annotations:
+            summary: {{ printf "%q" "{{ $labels.release }} deployment is unhealthy" }}
+            description: {{ printf "%q" "The {{ $labels.release }} deployment is not completely available." }}
+
+        - alert: AirflowFailureRate
+          expr: rate(airflow_operator_failures[1h]) > rate(airflow_operator_failures[2d])
+          for: 5m
+          labels:
+            tier: airflow
+            component: scheduler
+            deployment: {{ printf "%q" "{{ $labels.deployment }}" }}
+          annotations:
+            summary: {{ printf "%q" "{{ $labels.deployment }} tasks are failing" }}
+            description: {{ printf "%q" "The {{ $labels.deployment }} deployment has a high task failure rate." }}
+
+        # This alert depends on the scheduler_heartbeat metric being a counter.
+        # The type filter here was introduced in 0.7.0, so we don't trigger alerts for
+        # older deployments.
+        - alert: AirflowSchedulerUnhealthy
+          expr: rate(airflow_scheduler_heartbeat{type="counter"}[1m]) == 0
+          for: 3m # Scheduler should reboot quick
+          labels:
+            tier: airflow
+            component: scheduler
+            deployment: {{ printf "%q" "{{ $labels.deployment }}" }}
+          annotations:
+            summary: {{ printf "%q" "{{ $labels.deployment }} scheduler is unhealthy" }}
+            description: {{ printf "%q" "The {{ $labels.deployment }} scheduler's heartbeat has dropped below the acceptable rate." }}
+
+        - alert: AirflowPodQuota
+          expr: (sum by (release) (kube_resourcequota{resource="pods", type="used", namespace=~".*-.*-.*-[0-9]{4}"}) / sum by (release) (kube_resourcequota{resource="pods", type="hard", namespace=~".*-.*-.*-[0-9]{4}"})*100) > 95
+          for: 10m
+          labels:
+            tier: airflow
+            component: deployment
+            deployment: {{ printf "%q" "{{ $labels.release }}" }}
+          annotations:
+            summary: {{ printf "%q" "{{ $labels.release }} is near its pod quota" }}
+            description: {{ printf "%q" "{{ $labels.release }} has been using over 95% of its pod quota for over 10 minutes." }}
+
+        - alert: AirflowEphemeralStorageLimit
+          expr: (container_fs_usage_bytes{pod_name=~".*(scheduler|webserver|worker).*"}) >= 1800000000
+          for: 5m
+          labels:
+            tier: airflow
+            component: {{ printf "%q" "{{ $labels.component_name }}" }}
+            deployment: {{ printf "%q" "{{ $labels.deployment }}" }}
+          annotations:
+            summary: {{ printf "%q" "{{ $labels.deployment }} {{ $labels.component_name }} is near its ephemeral storage limit" }}
+            description: {{ printf "%q" "{{ $labels.deployment }} {{ $labels.component_name }} has been using 90% of its ephemeral storage for over 5 minutes." }}
+
+        - alert: AirflowTasksPendingIncreasing
+          expr: (max_over_time(airflow_scheduler_tasks_pending[5m]) - max_over_time(airflow_scheduler_tasks_pending[5m] offset 5m)) > 0
+          for: 30m
+          labels:
+            tier: airflow
+            deployment: {{ printf "%q" "{{ $labels.deployment }}" }}
+          annotations:
+            summary: {{ printf "%q" "{{ $labels.deployment }} is creating tasks faster than it's clearing them." }}
+            description: {{ printf "%q" "{{ $labels.deployment }}: the number of pending tasks has been increasing for 30 minutes" }}
+
+        - alert: CpuThrottlingInDeployment
+          expr: 100 * (increase(container_cpu_cfs_throttled_periods_total{namespace!="{{ .Release.Name }}", container_name!~".*worker.*|()"}[5m]) / increase(container_cpu_cfs_periods_total{namespace!="{{ .Release.Name }}", container_name!~".*worker.*|()"}[5m])) > 75
+          for: 5m
+          labels:
+            tier: airflow
+            severity: warning
+          annotations:
+            summary: {{ printf "%q" "{{ $labels.pod_name }} ({{ $labels.container_name }}) in namespace {{ $labels.namespace }} is getting throttled {{ $value }}% of the time" }}
+            description: "In the past 5 minutes, one or more components in the deployment are experiencing CPU throttling."
+
       - name: platform
         rules:
+        - alert: CpuThrottlingWarning
+          expr: 100 * (increase(container_cpu_cfs_throttled_periods_total{namespace="{{ .Release.Name }}", container_name=~".{1,1000}"}[5m]) / increase(container_cpu_cfs_periods_total{namespace="{{ .Release.Name }}", container_name=~".{1,1000}"}[5m])) > 50
+          for: 5m
+          labels:
+            tier: platform
+            severity: warning
+          annotations:
+            summary: {{ printf "%q" "{{ $labels.pod_name }} ({{ $labels.container_name }}) is getting throttled {{ $value }}% of the time, should check next business day" }}
+            description: "Half or more of the time in the past 5 minutes, one or more platform components are experiencing some CPU throttling."
+
+        - alert: CpuThrottlingSevere
+          expr: 100 * (increase(container_cpu_cfs_throttled_periods_total{namespace="{{ .Release.Name }}", container_name=~".{1,1000}"}[5m]) / increase(container_cpu_cfs_periods_total{namespace="{{ .Release.Name }}", container_name=~".{1,1000}"}[5m])) > 80
+          for: 5m
+          labels:
+            tier: platform
+            severity: urgent
+          annotations:
+            summary: {{ printf "%q" "{{ $labels.pod_name }} ({{ $labels.container_name }}) is getting throttled {{ $value }}% of the time" }}
+            description: "In the past 5 minutes, one or more components in the platform namespace are experiencing throttling 80% or more of the time"
         - alert: FluentdQueueLarge
           expr: sum(fluentd_status_buffer_queue_length) > 10
           for: 5m
