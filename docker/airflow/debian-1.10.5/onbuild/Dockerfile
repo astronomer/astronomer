@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM test_debian_reg:latest
+FROM astronomerinc/ap-airflow:0.10.3-alpha.6-debian-1.10.5
 LABEL maintainer="Astronomer <humans@astronomer.io>"
 
 ARG BUILD_NUMBER=-1
