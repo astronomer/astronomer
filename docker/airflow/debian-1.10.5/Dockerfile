@@ -112,6 +112,10 @@ ARG VERSION="1.10.5-1"
 ARG SUBMODULES="async,azure_blob_storage,azure_cosmos,azure_container_instances,celery,crypto,elasticsearch,gcp,kubernetes,mysql,postgres,s3,emr,redis,slack,ssh,statsd,virtualenv"
 ENV AIRFLOW_MODULE="git+${AIRFLOW_REPOSITORY}@${VERSION}#egg=apache-airflow[${SUBMODULES}]"
 
+# Force pip to install these specific versions when ever it installs a module
+ENV PIP_CONSTRAINT=/usr/local/share/astronomer-pip-constraints.txt
+COPY include/pip-constraints.txt /usr/local/share/astronomer-pip-constraints.txt
+
 # Pip install airflow and astro security manager
 RUN pip install "${AIRFLOW_MODULE}" \
   && pip install "https://github.com/astronomer/astronomer-fab-securitymanager/releases/download/v1.2.1/astronomer_fab_security_manager-1.2.1-py3-none-any.whl"
