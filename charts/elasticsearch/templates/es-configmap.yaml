@@ -14,7 +14,7 @@ data:
       name: ${CLUSTER_NAME}
       initial_master_nodes:
         {{- $releaseName := $.Release.Name }}
-        {{- $replicas := printf "%s" .Values.master.replicas }}
+        {{- $replicas := .Values.master.replicas }}
         {{- range $i, $e := until (int $replicas) }}
         - {{ $releaseName }}-elasticsearch-master-{{ $i }}
         {{- end }}

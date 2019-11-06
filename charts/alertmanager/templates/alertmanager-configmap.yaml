@@ -31,7 +31,7 @@ data:
     # Deliberately left empty to not deliver anywhere.
     - name: default-receiver
       webhook_configs:
-      - url: "http://{{ .Release.Name }}-houston:8871/v1/alerts"
+      - url: http://{{ .Release.Name }}-houston:8871/v1/alerts
         send_resolved: true
 {{- if .Values.receivers.platform }}
     - name: platform-receiver
