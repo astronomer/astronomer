@@ -92,7 +92,7 @@ RUN apk update \
 		tini \
 	&& update-ca-certificates \
 	&& cp /usr/share/zoneinfo/UTC /etc/localtime \
-	&& pip3 install --no-cache-dir --upgrade pip==19.2.3 \
+	&& pip3 install --no-cache-dir --upgrade pip==19.3.1 \
 	&& pip3 install --no-cache-dir --upgrade setuptools==41.0.1 \
 	&& pip3 install --no-cache-dir --upgrade snowflake-connector-python==1.9.1 \
 	&& pip3 install --no-cache-dir "${AIRFLOW_MODULE}" \

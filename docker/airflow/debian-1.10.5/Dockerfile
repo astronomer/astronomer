@@ -79,7 +79,7 @@ RUN apt-get update \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --upgrade pip==19.2.3
+RUN pip install --upgrade pip==19.3.1
 
 RUN useradd --uid $ASTRONOMER_UID --create-home ${ASTRONOMER_USER}
 
