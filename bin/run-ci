@@ -19,6 +19,15 @@ source $REPO_DIR/bin/setup-kind
 
 echo "Deploying Astronomer..."
 
+platform=false
+logging=false
+monitoring=false
+kubed=false
+for component in $@
+do
+  export $component=true
+done
+
 set +ex
 
 kubectl get pods -n astronomer -w &
@@ -30,10 +39,10 @@ helm install \
   --namespace astronomer \
   -n astronomer \
   -f configs/local-dev.yaml \
-  --set tags.platform=true \
-  --set tags.logging=false \
-  --set tags.monitoring=false \
-  --set tags.kubed=false \
+  --set tags.platform=${platform} \
+  --set tags.logging=${logging} \
+  --set tags.monitoring=${monitoring} \
+  --set tags.kubed=${kubed} \
   $REPO_DIR
 
 sleep 5
@@ -47,7 +56,7 @@ while [ $RC -eq 0 ]; do
   echo "${DURATION} seconds have elapsed, timeout at 800 seconds"
   if [ $DURATION -gt 800 ];then
     HELM_CODE=1
-    RC=0
+    RC=1
     echo "Error (timeout): giving up after 800 seconds"
   else
     sleep 10
@@ -56,7 +65,11 @@ while [ $RC -eq 0 ]; do
       echo "kubectl get pods timed out. retrying."
       continue
     fi
-    cat /tmp/pods | grep -v 1/1 | grep -v NAME >/dev/null 2>&1
+    # Ignore elasticsearch-nginx in order to allow for testing the deployment
+    # of logging tag without the platform. This is the only logging component
+    # that will not start without the platform. The benefit of allowing us to
+    # test the logging tag outweighs the downside of ignoring one pod.
+    cat /tmp/pods | grep -v 1/1 | grep -v NAME | grep -v 'elasticsearch-nginx' >/dev/null 2>&1
     RC=$?
   fi
 done

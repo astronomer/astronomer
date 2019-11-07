@@ -1,10 +1,44 @@
 version: 2
+
 jobs:
-  build:
+  platform:
     machine:
       image: ubuntu-1604:201903-01
     steps:
       - checkout
       - run:
-          name: Dry Run
-          command: bin/run-ci
+          name: Platform
+          command: bin/run-ci platform
+  monitoring:
+    machine:
+      image: ubuntu-1604:201903-01
+    steps:
+      - checkout
+      - run:
+          name: Monitoring
+          command: bin/run-ci monitoring
+  # logging:
+  #   machine:
+  #     image: ubuntu-1604:201903-01
+  #   steps:
+  #     - checkout
+  #     - run:
+  #         name: Logging
+  #         command: bin/run-ci logging
+  kubed:
+    machine:
+      image: ubuntu-1604:201903-01
+    steps:
+      - checkout
+      - run:
+          name: Kubed
+          command: bin/run-ci kubed
+
+workflows:
+  version: 2
+  install-helm-tags:
+    jobs:
+      - platform
+      - monitoring
+      # - logging
+      - kubed
