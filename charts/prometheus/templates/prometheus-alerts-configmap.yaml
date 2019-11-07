@@ -43,7 +43,7 @@ data:
         # older deployments.
         - alert: AirflowSchedulerUnhealthy
           expr: rate(airflow_scheduler_heartbeat{type="counter"}[1m]) == 0
-          for: 3m # Scheduler should reboot quick
+          for: 6m
           labels:
             tier: airflow
             component: scheduler
