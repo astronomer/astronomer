@@ -1,5 +1,7 @@
 .DS_Store
 config.yaml
+config.yml
+!.circleci/config.yml
 certs
 /secrets
 
@@ -10,3 +12,5 @@ certs
 repository
 letsencrypt*
 backup
+dev-account.json
+*.swp

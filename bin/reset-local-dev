@@ -5,81 +5,12 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 # The path to the working directory - the root of the repo
 REPO_DIR=$DIR/../
 
-# Check required tools are installed
-for executable in gsutil kind helm kubectl docker; do
-  which $executable > /dev/null 2>&1
-  if [ $? -eq 0 ]; then
-    echo "$executable is in PATH"
-  else
-    echo "Please ensure $executable is installed and in PATH"
-    exit 1
-  fi
-done
-
-echo "Downloading development TLS cert chain and private key"
-gsutil cp gs://astronomer-development-certificates/fullchain.pem /tmp/fullchain.pem && \
-gsutil cp gs://astronomer-development-certificates/privkey.pem /tmp/privkey.pem
-if [ $? -eq 0 ]; then
-  echo "Downloaded TLS secrets to /tmp/fullchain.pem and /tmp/privkey.pem"
-else
-  echo "Please ensure you have authorization in GCP development project to download the development certificates"
-  exit 1
-fi
-
-# Fail if anything has non-zero exit code
-set -xe
-
-# Delete the old cluster, if it exists
-kind delete cluster || true
-
-# Start a cluster
-kind create cluster
-set +x
-
-
-# Set up cluster access via kubectl
-export KUBECONFIG="$(kind get kubeconfig-path --name="kind")"
-
-kubectl get nodes
-
-# Install the Tiller service account
-echo "Creating Tiller service account..."
-kubectl apply -f ${REPO_DIR}.circleci/tiller-rbac.yaml
-
-# Install Tiller, set up Helm
-echo "Installing tiller in the KinD cluster..."
-helm init --service-account tiller --wait > /dev/null 2>&1
-echo "Tiller installed."
-
-echo "Creating namespace 'astronomer'"
-kubectl create namespace astronomer
-
-echo "Installing TLS cert and private key"
-kubectl create secret tls astronomer-tls \
-  --key /tmp/privkey.pem \
-  --cert /tmp/fullchain.pem \
-  --namespace astronomer
-
-echo "Deploying postgresql..."
-helm install -n postgresql --namespace astronomer --wait \
-  --set image.tag=9.6.15-centos-7-r34 \
-  --set postgresqlPassword=notactuallysecret \
-  stable/postgresql > /dev/null 2>&1
-
-export POSTGRES_PASSWORD=$(kubectl get secret --namespace astronomer postgresql -o jsonpath="{.data.postgresql-password}" | base64 --decode)
-export DB_CONNECTION_STRING="postgres://postgres:${POSTGRES_PASSWORD}@postgresql.astronomer:5432"
-kubectl create secret generic astronomer-bootstrap \
-  --from-literal connection=$DB_CONNECTION_STRING \
-  --namespace astronomer
-
-echo "Postgresql deployed."
+source $REPO_DIR/bin/setup-kind
 
 echo "Deploying Astronomer..."
 helm install -f configs/local-dev.yaml \
   --namespace astronomer -n astronomer \
   $REPO_DIR
-
-cd $CURRENT_DIR
 
 echo ''
 echo '######################################################'

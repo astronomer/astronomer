@@ -1,0 +1,86 @@
+#!/bin/bash
+
+set -xe
+
+# Bit of common bash magic that sets DIR to the directory of this script
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+# The path to the working directory - the root of the repo
+REPO_DIR=$DIR/../
+
+if [ -n "$GOOGLE_APPLICATION_CREDENTIALS_CONTENT" ]; then
+  echo $GOOGLE_APPLICATION_CREDENTIALS_CONTENT > /tmp/account.json
+  export GOOGLE_APPLICATION_CREDENTIALS=/tmp/account.json
+fi
+
+source $REPO_DIR/bin/install-ci-tools
+
+gcloud auth activate-service-account --key-file=$GOOGLE_APPLICATION_CREDENTIALS
+source $REPO_DIR/bin/setup-kind
+
+echo "Deploying Astronomer..."
+
+set +ex
+
+kubectl get pods -n astronomer -w &
+WATCH_PID=$!
+
+START=$(date +%s)
+
+helm install \
+  --namespace astronomer \
+  -n astronomer \
+  -f configs/local-dev.yaml \
+  --set tags.platform=true \
+  --set tags.logging=false \
+  --set tags.monitoring=false \
+  --set tags.kubed=false \
+  $REPO_DIR
+
+sleep 5
+
+# Wait for Astronomer to deploy
+RC=0
+HELM_CODE=0
+while [ $RC -eq 0 ]; do
+  NOW=$(date +%s)
+  DURATION="$(($NOW-$START))"
+  echo "${DURATION} seconds have elapsed, timeout at 800 seconds"
+  if [ $DURATION -gt 800 ];then
+    HELM_CODE=1
+    RC=0
+    echo "Error (timeout): giving up after 800 seconds"
+  else
+    sleep 10
+    kubectl get pods -n astronomer > /tmp/pods
+    if [ ! $? -eq 0 ];then
+      echo "kubectl get pods timed out. retrying."
+      continue
+    fi
+    cat /tmp/pods | grep -v 1/1 | grep -v NAME >/dev/null 2>&1
+    RC=$?
+  fi
+done
+
+kill $WATCH_PID
+
+# Output debugging information
+if [ $HELM_CODE -eq 0 ]; then
+  echo "Astronomer deployed!"
+else
+  echo "Failed to deploy Astronomer!"
+  echo "Printing description and logs where containers in pod are not 1/1..."
+  for pod in $(kubectl get pods -n astronomer | grep -v NAME | grep -v 1/1 | awk '{ print $1 }'); do
+    echo "======================="
+    set -x
+    kubectl describe pod -n astronomer $pod
+    kubectl logs -n astronomer $pod | tail -n 30
+    set +x
+    echo "======================="
+  done
+fi
+
+set -x
+kubectl get pods --all-namespaces
+helm list
+
+exit $HELM_CODE

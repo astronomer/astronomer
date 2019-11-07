@@ -1,0 +1,43 @@
+#!/bin/bash
+
+# Fail script if anything fails,
+# and output all commands
+set -xe
+
+KIND_VERSION="0.5.1"
+HELM_VERSION="2.15.2"
+GCLOUD_VERSION="270.0.0"
+OS=$(uname | tr '[:upper:]' '[:lower:]')
+
+# Set up a bin location
+mkdir -p /tmp/bin
+PATH=/tmp/bin:$PATH
+# Bit of common bash magic that sets DIR to the directory of this script
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+# The path to the working directory - the root of the repo
+REPO_DIR=$DIR/../
+cd /tmp
+
+# Install KinD
+cd /tmp
+curl -Lo ./kind https://github.com/kubernetes-sigs/kind/releases/download/v${KIND_VERSION}/kind-${OS}-amd64
+chmod +x ./kind
+mv ./kind /tmp/bin/
+
+# Install helm
+wget https://get.helm.sh/helm-v${HELM_VERSION}-${OS}-amd64.tar.gz
+tar -zxvf ./helm-v${HELM_VERSION}-${OS}-amd64.tar.gz
+mv ${OS}-amd64/helm /tmp/bin/
+
+# Install kubectl
+cd /tmp/bin
+curl -LO https://storage.googleapis.com/kubernetes-release/release/`curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt`/bin/${OS}/amd64/kubectl
+chmod +x ./kubectl
+
+# Install gcloud SDK
+cd /tmp
+wget https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-${GCLOUD_VERSION}-${OS}-x86_64.tar.gz
+tar xvzf ./google-cloud-sdk-${GCLOUD_VERSION}-${OS}-x86_64.tar.gz >/dev/null 2>&1
+export PATH=$(pwd)/google-cloud-sdk/bin/:$PATH
+
+cd $REPO_DIR
