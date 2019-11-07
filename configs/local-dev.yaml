@@ -21,8 +21,7 @@ global:
 
 ############################
 ## Astronomer configuration
-## Configure resouce requests
-## as small as possible
+## Omit resouce requests
 ############################
 
 astronomer:
@@ -31,15 +30,11 @@ astronomer:
       requests:
         cpu: "0m"
         memory: "0Mi"
-    limits:
-      cpu: "100m"
   houston:
     resources:
       requests:
         cpu: "0m"
         memory: "0Mi"
-      limits:
-        cpu: "500m"
 
     config:
       auth:
@@ -55,8 +50,6 @@ astronomer:
       requests:
         cpu: "0m"
         memory: "0Mi"
-      limits:
-        cpu: "100m"
   registry:
     resources:
       requests:
@@ -76,10 +69,10 @@ nginx:
   # Configure resources
   resources:
     requests:
-      cpu: "0m"
-      memory: "0Mi"
+      cpu: "500m"
+      memory: "1024Mi"
     limits:
-      cpu: "100m"
+      cpu: "1"
       memory: "2048Mi"
 
 #################################
@@ -91,8 +84,6 @@ grafana:
     requests:
       cpu: "0m"
       memory: "0Mi"
-    limits:
-      cpu: "100m"
 
 #################################
 ## Prometheus configuration
@@ -103,9 +94,6 @@ prometheus:
     requests:
       cpu: "0m"
       memory: "0Gi"
-    limits:
-      cpu: "100m"
-      memory: "2Gi"
 
 #################################
 ## Elasticsearch configuration
@@ -115,41 +103,26 @@ elasticsearch:
   client:
     replicas: 1
     resources:
-      heapMemory: 256
       requests:
         cpu: "0"
-        memory: "256Mi"
+        memory: "0Gi"
 
   # Configure data nodes
   data:
     replicas: 1
     resources:
-      heapMemory: 128
       requests:
         cpu: "0"
-        memory: "128Mi"
-      limits:
-        cpu: "100m"
-    persistence:
-      size: 1Gi
+        memory: "0"
 
   # Configure master nodes
   master:
     replicas: 1
     resources:
-      heapMemory: 128
       requests:
         cpu: "0"
-        memory: "128Mi"
-      limits:
-        cpu: "100m"
-    env:
-      NUMBER_OF_MASTERS: "1"
-    persistence:
-      size: 1Gi
+        memory: "0Gi"
 
-  curator:
-    enabled: false
 
 #################################
 ## Kibana configuration
@@ -160,8 +133,6 @@ kibana:
     requests:
       cpu: "0m"
       memory: "0Mi"
-    limits:
-      cpu: "100m"
 
 
 #################################
@@ -173,8 +144,7 @@ fluentd:
     requests:
       cpu: "0m"
       memory: "0Mi"
-    limits:
-      cpu: "100m"
+
 
 #################################
 ## Kube State configuration
@@ -185,5 +155,3 @@ kubeState:
     requests:
       cpu: "0m"
       memory: "0Mi"
-    limits:
-      cpu: "100m"
