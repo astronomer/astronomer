@@ -1,26 +1,44 @@
 version: 2
 
 jobs:
-  install-platform:
+  platform:
     machine:
       image: ubuntu-1604:201903-01
     steps:
       - checkout
       - run:
-          name: Install Platform and Logging
-          command: bin/run-ci platform logging
-  install-monitoring:
+          name: Platform
+          command: bin/run-ci platform
+  monitoring:
     machine:
       image: ubuntu-1604:201903-01
     steps:
       - checkout
       - run:
-          name: Install Monitoring and Kubed
-          command: bin/run-ci monitoring kubed
+          name: Monitoring
+          command: bin/run-ci monitoring
+  logging:
+    machine:
+      image: ubuntu-1604:201903-01
+    steps:
+      - checkout
+      - run:
+          name: Logging
+          command: bin/run-ci logging
+  kubed:
+    machine:
+      image: ubuntu-1604:201903-01
+    steps:
+      - checkout
+      - run:
+          name: Kubed
+          command: bin/run-ci kubed
 
 workflows:
   version: 2
   build:
     jobs:
-      - install-platform
-      - install-monitoring
+      - platform
+      - monitoring
+      - logging
+      - kubed

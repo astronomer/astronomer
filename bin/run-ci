@@ -65,7 +65,11 @@ while [ $RC -eq 0 ]; do
       echo "kubectl get pods timed out. retrying."
       continue
     fi
-    cat /tmp/pods | grep -v 1/1 | grep -v NAME >/dev/null 2>&1
+    # Ignore elasticsearch-nginx in order to allow for testing the deployment
+    # of logging tag without the platform. This is the only logging component
+    # that will not start without the platform. The benefit of allowing us to
+    # test the logging tag outweighs the downside of ignoring one pod.
+    cat /tmp/pods | grep -v 1/1 | grep -v NAME | grep -v 'elasticsearch-nginx' >/dev/null 2>&1
     RC=$?
   fi
 done
