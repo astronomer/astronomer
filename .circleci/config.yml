@@ -1,10 +1,26 @@
 version: 2
+
 jobs:
-  build:
+  install-platform:
     machine:
       image: ubuntu-1604:201903-01
     steps:
       - checkout
       - run:
-          name: Dry Run
-          command: bin/run-ci
+          name: Install Platform and Logging
+          command: bin/run-ci platform logging
+  install-monitoring:
+    machine:
+      image: ubuntu-1604:201903-01
+    steps:
+      - checkout
+      - run:
+          name: Install Monitoring and Kubed
+          command: bin/run-ci monitoring kubed
+
+workflows:
+  version: 2
+  build:
+    jobs:
+      - install-platform
+      - install-monitoring

@@ -19,6 +19,15 @@ source $REPO_DIR/bin/setup-kind
 
 echo "Deploying Astronomer..."
 
+platform=false
+logging=false
+monitoring=false
+kubed=false
+for component in $@
+do
+  export $component=true
+done
+
 set +ex
 
 kubectl get pods -n astronomer -w &
@@ -30,10 +39,10 @@ helm install \
   --namespace astronomer \
   -n astronomer \
   -f configs/local-dev.yaml \
-  --set tags.platform=true \
-  --set tags.logging=false \
-  --set tags.monitoring=false \
-  --set tags.kubed=false \
+  --set tags.platform=${platform} \
+  --set tags.logging=${logging} \
+  --set tags.monitoring=${monitoring} \
+  --set tags.kubed=${kubed} \
   $REPO_DIR
 
 sleep 5
