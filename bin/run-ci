@@ -56,7 +56,7 @@ while [ $RC -eq 0 ]; do
   echo "${DURATION} seconds have elapsed, timeout at 800 seconds"
   if [ $DURATION -gt 800 ];then
     HELM_CODE=1
-    RC=0
+    RC=1
     echo "Error (timeout): giving up after 800 seconds"
   else
     sleep 10
