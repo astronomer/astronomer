@@ -1,21 +1,29 @@
 #!/usr/bin/env bash
 
+set -e
+
+# Validate parameters
+: "${REPOSITORY?}"
+: "${AIRFLOW_VERSIONS?}"
+: "${ASTRONOMER_VERSION?}"
+: "${BUILD_NUMBER?}"
+
 # Build and tag images
 function build_image() {
     docker_dir="docker/airflow/${1}"
     docker_file="${docker_dir}/Dockerfile"
     component_name="ap-airflow"
-    build_opts="--build-arg BUILD_NUMBER=${BUILD_NUMBER}"
+    build_opts=(--label "io.astronomer.docker.build.number=$BUILD_NUMBER")
     version="${ASTRONOMER_VERSION}-${1}"
 
     # Build normal components
     if [ -f "${docker_file}" ]; then
         # If we're building with and ASTRONOMER_REF, add pre-release label
         if [ -v ASTRONOMER_REF ]; then
-            build_opts="${build_opts} --label io.astronomer.docker.pre-release=true"
+            build_opts+=(-label io.astronomer.docker.pre-release=true)
         fi
 
-        docker build ${build_opts} -t "${REPOSITORY}/${component_name}:${version}" -f "${docker_file}" "${docker_dir}" || exit 1
+        docker build "${build_opts[@]}" -t "${REPOSITORY}/${component_name}:${version}" -f "${docker_file}" "${docker_dir}" || exit 1
 
         # If we're building with and ASTRONOMER_REF, also tag image with that branch name (master, release-*)
         if [ -v ASTRONOMER_REF ]; then
@@ -31,7 +39,7 @@ function build_image() {
 
     # Build onbuild components
     if [ -f "${onbuild_docker_file}" ]; then
-        docker build ${build_opts} -t "${REPOSITORY}/${component_name}:${version}-onbuild" -f "${onbuild_docker_file}" "${onbuild_docker_dir}" || exit 1
+        docker build "${build_opts[@]}" -t "${REPOSITORY}/${component_name}:${version}-onbuild" -f "${onbuild_docker_file}" "${onbuild_docker_dir}" || exit 1
 
         if [ -v ASTRONOMER_REF ]; then
             docker tag "${REPOSITORY}/${component_name}:${version}-onbuild" "${REPOSITORY}/${component_name}:${ASTRONOMER_REF}-${1}-onbuild"
