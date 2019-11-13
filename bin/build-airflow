@@ -20,7 +20,7 @@ function build_image() {
     if [ -f "${docker_file}" ]; then
         # If we're building with and ASTRONOMER_REF, add pre-release label
         if [ -v ASTRONOMER_REF ]; then
-            build_opts+=(-label io.astronomer.docker.pre-release=true)
+            build_opts+=(--label io.astronomer.docker.pre-release=true)
         fi
 
         docker build "${build_opts[@]}" -t "${REPOSITORY}/${component_name}:${version}" -f "${docker_file}" "${docker_dir}" || exit 1
