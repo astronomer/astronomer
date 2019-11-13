@@ -21,9 +21,7 @@ LABEL maintainer="Astronomer <humans@astronomer.io>"
 
 ARG ASTRONOMER_USER="astro"
 ARG ASTRONOMER_UID="50000"
-ARG BUILD_NUMBER=-1
 
-LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
 LABEL io.astronomer.docker=true
 LABEL io.astronomer.docker.distro="debian"
 LABEL io.astronomer.docker.module="airflow"

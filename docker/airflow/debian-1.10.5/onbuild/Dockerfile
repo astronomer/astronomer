@@ -16,9 +16,7 @@
 FROM astronomerinc/ap-airflow:0.10.3-alpha.6-debian-1.10.5
 LABEL maintainer="Astronomer <humans@astronomer.io>"
 
-ARG BUILD_NUMBER=-1
 LABEL io.astronomer.docker=true
-LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
 LABEL io.astronomer.docker.airflow.onbuild=true
 
 ONBUILD COPY packages.txt .
