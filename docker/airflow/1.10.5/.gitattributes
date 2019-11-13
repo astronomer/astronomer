@@ -1,0 +1,2 @@
+apks/repo/x86_64/APKINDEX.tar.gz filter=lfs diff=lfs merge=lfs -text
+apks/repo/x86_64/*.apk filter=lfs diff=lfs merge=lfs -text
