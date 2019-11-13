@@ -317,3 +317,11 @@ platform:
   release: ~
   workspace: ""
   singleNamespace: true
+
+# Tolerations provided here would be applied using pod_mutation_hook
+# So any pods spun up using KubenetesExecutor or KubernetesPodOperator will contain these tolerations.
+podMutatationTolerations: []
+#  - key: "dynamic-pods"
+#    operator: "Equal"
+#    value: "true"
+#    effect: "NoSchedule"
