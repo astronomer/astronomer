@@ -309,6 +309,14 @@ quotas: {}
 # Define default/max/min values for pods and containers in namespace
 limits: []
 
+# Tolerations provided here would be applied using pod_mutation_hook
+# So any pods spun up using KubenetesExecutor or KubernetesPodOperator will contain these tolerations.
+podMutatationTolerations: []
+#  - key: "dynamic-pods"
+#    operator: "Equal"
+#    value: "true"
+#    effect: "NoSchedule"
+
 # This block contains settings strictly used to integrate into the Astronomer platform.
 # This is what allows for integration into platform ingress, network policies, metrics collection, etc.
 # This chart is completely deployable without specifying these values.
@@ -317,11 +325,3 @@ platform:
   release: ~
   workspace: ""
   singleNamespace: true
-
-# Tolerations provided here would be applied using pod_mutation_hook
-# So any pods spun up using KubenetesExecutor or KubernetesPodOperator will contain these tolerations.
-podMutatationTolerations: []
-#  - key: "dynamic-pods"
-#    operator: "Equal"
-#    value: "true"
-#    effect: "NoSchedule"
