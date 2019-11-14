@@ -19,9 +19,6 @@ if [[ -n $AIRFLOW__CORE__SQL_ALCHEMY_CONN  ]] && [[ $CMD =~ ^(webserver|schedule
   while ! nc -w 1 -z "${HOST}" "${PORT}"; do
     sleep 0.001
   done
-
-  echo "Initializing airflow database..."
-  airflow initdb || true
 fi
 
 if [[ -n $AIRFLOW__CELERY__BROKER_URL ]] && [[ $CMD =~ ^(scheduler|worker|flower)$ ]]; then
