@@ -227,7 +227,7 @@ data:
 
         - alert: PlatformContainerRestartingContinuously
           expr: |
-            rate(kube_pod_container_status_restarts_total{namespace="astronomer"}[90s]) * 60 > 0
+            rate(kube_pod_container_status_restarts_total{namespace="astronomer"}[600s]) * 60 > 0
           for: 10m
           labels:
             tier: platform
