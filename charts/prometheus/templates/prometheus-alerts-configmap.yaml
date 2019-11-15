@@ -27,16 +27,6 @@ data:
             summary: {{ printf "%q" "{{ $labels.release }} deployment is unhealthy" }}
             description: {{ printf "%q" "The {{ $labels.release }} deployment is not completely available." }}
 
-        - alert: AirflowFailureRate
-          expr: rate(airflow_operator_failures[1h]) > rate(airflow_operator_failures[2d])
-          for: 5m
-          labels:
-            tier: airflow
-            component: scheduler
-            deployment: {{ printf "%q" "{{ $labels.deployment }}" }}
-          annotations:
-            summary: {{ printf "%q" "{{ $labels.deployment }} tasks are failing" }}
-            description: {{ printf "%q" "The {{ $labels.deployment }} deployment has a high task failure rate." }}
 
         # This alert depends on the scheduler_heartbeat metric being a counter.
         # The type filter here was introduced in 0.7.0, so we don't trigger alerts for
@@ -96,6 +86,18 @@ data:
 
       - name: platform
         rules:
+
+        - alert: AirflowOperatorFailureRate
+          expr: 100 * (sum by (operator) (increase(airflow_operator_failures{operator=~"([A-Z][a-z0-9]+)(([0-9])|([A-Z0-9][a-z0-9]+))*([A-Z])?Operator"}[1h])) / (sum by (operator) (increase(airflow_operator_successes{operator=~"([A-Z][a-z0-9]+)(([0-9])|([A-Z0-9][a-z0-9]+))*([A-Z])?Operator"}[1h])) + sum by (operator) (increase(airflow_operator_failures{operator=~"([A-Z][a-z0-9]+)(([0-9])|([A-Z0-9][a-z0-9]+))*([A-Z])?Operator"}[1h])))) > 50
+          for: 2h
+          labels:
+            tier: platform
+            severity: info
+            operator: {{ printf "%q" "{{ $labels.operator }}" }}
+          annotations:
+            summary: {{ printf "%q" "Across all deployments, {{ $labels.operator }} is failing {{ $value }}% of the time" }}
+            description: "This alarm is used to notify support if an external data source may be inoperational, but the query is subject to be incorrect for small sample sizes where a single deployment uses an operator more than the rest of deployments combined over the course of two hours"
+
         - alert: CpuThrottlingWarning
           expr: 100 * (increase(container_cpu_cfs_throttled_periods_total{namespace="{{ .Release.Name }}", container_name=~".{1,1000}"}[5m]) / increase(container_cpu_cfs_periods_total{namespace="{{ .Release.Name }}", container_name=~".{1,1000}"}[5m])) > 50
           for: 5m
