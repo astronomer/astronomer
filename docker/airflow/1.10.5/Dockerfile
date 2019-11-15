@@ -25,6 +25,7 @@ LABEL io.astronomer.docker.airflow.version="1.10.5"
 ARG ORG="astronomer"
 ARG VERSION="1.10.5-2"
 ARG SUBMODULES="all, statsd, elasticsearch"
+ARG REPO_BRANCH=master
 
 ENV AIRFLOW_REPOSITORY="https://github.com/${ORG}/airflow"
 ENV AIRFLOW_MODULE="git+${AIRFLOW_REPOSITORY}@${VERSION}#egg=apache-airflow[${SUBMODULES}]"
@@ -41,16 +42,15 @@ ENV ASTRONOMER_GROUP=${ASTRONOMER_GROUP}
 RUN addgroup -S ${ASTRONOMER_GROUP} \
 	&& adduser -S -G ${ASTRONOMER_GROUP} ${ASTRONOMER_USER}
 
-RUN echo @edge-community http://dl-cdn.alpinelinux.org/alpine/edge/community >> /etc/apk/repositories \
-	&& echo @edge-testing http://dl-cdn.alpinelinux.org/alpine/edge/testing >> /etc/apk/repositories \
-	&& echo @edge http://dl-cdn.alpinelinux.org/alpine/edge/main >> /etc/apk/repositories
+COPY apks/keys/humans@astronomer.io.rsa.pub /etc/apk/keys
 
 # Force pip to install these specific versions when ever it installs a module
 ENV PIP_CONSTRAINT=/usr/local/share/astronomer-pip-constraints.txt
 COPY include/pip-constraints.txt /usr/local/share/astronomer-pip-constraints.txt
 
 # Install packages
-RUN apk update \
+RUN echo https://github.com/astronomer/astronomer/raw/${REPO_BRANCH}/docker/airflow/1.10.5/apks/repo >> /etc/apk/repositories \
+	&& apk update \
 	&& apk add --no-cache --virtual .build-deps \
 		build-base \
 		cyrus-sasl-dev \
@@ -70,22 +70,22 @@ RUN apk update \
 		bash \
 		ca-certificates \
 		cyrus-sasl \
-		cython3@edge \
+		cython3 \
 		freetds \
 		krb5-libs \
-		py3-bcrypt@edge \
-		py3-cassandra-driver@edge-testing'>='3 \
-		py3-cryptography@edge \
-		py3-fastavro@edge-testing \
-		py3-grpcio@edge-testing \
+		py3-bcrypt \
+		py3-cassandra-driver'>='3 \
+		py3-cryptography \
+		py3-fastavro \
+		py3-grpcio \
 		py3-mysqlclient \
-		py3-numpy-dev@edge-community \
-		py3-numpy@edge-community \
-		py3-pandas@edge-testing \
+		py3-numpy-dev \
+		py3-numpy \
+		py3-pandas \
 		py3-psycopg2 \
-		py3-pycryptodome@edge-community \
-		py3-pynacl@edge \
-		py3-typed-ast@edge-testing \
+		py3-pycryptodome \
+		py3-pynacl \
+		py3-typed-ast \
 		python3 \
 		tini \
 	&& update-ca-certificates \
@@ -101,7 +101,8 @@ RUN apk update \
 	&& rm -rf node_modules \
 	&& apk del .build-deps py3-numpy-dev \
 	&& ln -sf /usr/bin/python3 /usr/bin/python \
-	&& ln -sf /usr/bin/pip3 /usr/bin/pip
+	&& ln -sf /usr/bin/pip3 /usr/bin/pip \
+	&& sed -i -e '\#https://github.com/astronomer/astronomer/#d' /etc/apk/repositories
 
 # Create logs directory so we can own it when we mount volumes
 RUN mkdir -p ${AIRFLOW_HOME}/logs

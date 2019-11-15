@@ -23,6 +23,12 @@ function build_image() {
             build_opts+=(--label io.astronomer.docker.pre-release=true)
         fi
 
+        if [ -n "$DRONE_BRANCH" ] && grep -q REPO_BRANCH "${docker_file}"; then
+            # Only specify the --build-arg if it looks like the Dockerfile asks
+            # for it (otherwise we get a warning from docker build)
+            build_opts+=(--build-arg REPO_BRANCH="$DRONE_BRANCH")
+        fi
+
         docker build "${build_opts[@]}" -t "${REPOSITORY}/${component_name}:${version}" -f "${docker_file}" "${docker_dir}" || exit 1
 
         # If we're building with and ASTRONOMER_REF, also tag image with that branch name (master, release-*)

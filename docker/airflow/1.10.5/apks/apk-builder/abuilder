@@ -1,0 +1,16 @@
+#!/usr/bin/env sh
+
+set -e
+
+main() {
+  mkdir -p "$REPODEST" /home/builder/.abuild
+  abuild-apk update
+  [ "$RSA_PRIVATE_KEY" ] && {
+    echo -e "$RSA_PRIVATE_KEY" > "/home/builder/.abuild/$RSA_PRIVATE_KEY_NAME"
+    export PACKAGER_PRIVKEY="/home/builder/.abuild/$RSA_PRIVATE_KEY_NAME"
+  }
+
+  exec abuild -D "Astronomer.io Airflow packages" "$@"
+}
+
+main "$@"
