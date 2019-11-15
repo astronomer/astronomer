@@ -29,11 +29,11 @@ spec:
         prometheus.io/port: {{ .Values.ports.promScrape | quote }}
     spec:
       nodeSelector:
-{{ toYaml (default .Values.global.deploymentNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
+{{ toYaml (.Values.nodeSelector) | indent 8 }}
       affinity:
-{{ toYaml (default .Values.global.deploymentNodePool.affinity .Values.affinity) | indent 8 }}
+{{ toYaml (.Values.affinity) | indent 8 }}
       tolerations:
-{{ toYaml (default .Values.global.deploymentNodePool.tolerations .Values.tolerations) | indent 8 }}
+{{ toYaml (.Values.tolerations) | indent 8 }}
       serviceAccountName: {{ template "fluentd.fullname" . }}
       containers:
       - name: fluentd
