@@ -215,9 +215,11 @@ azure:
 - name: houston-jwt-certificate-volume
   mountPath: {{ template "houston.jwtCertificatePath" . }}
   subPath: tls.crt
+{{ if .Values.global.tlsSecret }}
 - name: registry-tls-volume
   mountPath: {{ template "houston.jwtRegistryCertificatePath" . }}
 - name: registry-tls-volume
   mountPath: {{ template "houston.tlsRegistryCertificatePath" . }}
   subPath: tls.crt
+{{- end }}
 {{- end }}

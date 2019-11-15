@@ -1,5 +1,5 @@
 ################################
-## Houston cleanup CronJob
+## Houston Cleanup CronJob
 #################################
 {{- if .Values.houston.cleanup.enabled }}
 apiVersion: apps/v1beta2

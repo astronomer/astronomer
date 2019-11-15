@@ -61,10 +61,8 @@ spec:
           imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
           resources:
 {{ toYaml .Values.houston.resources | indent 12 }}
-          {{- if .Values.global.tlsSecret }}
           volumeMounts:
             {{- include "houston_volume_mounts" . | indent 12 }}
-          {{- end }}
           ports:
             - name: houston-http
               containerPort: {{ .Values.ports.houstonHTTP }}
