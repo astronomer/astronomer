@@ -22,7 +22,7 @@ spec:
             - name: cleanup
               image: {{ template "houston.image" . }}
               imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
-              command: ["/bin/sh", "-c"]
+              command: ["npm", "run", "deployment-cleanup", "--older-than=14"]
               volumeMounts:
                 {{- include "houston_volume_mounts" . | indent 16 }}
               env:
