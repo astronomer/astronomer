@@ -63,23 +63,7 @@ spec:
 {{ toYaml .Values.houston.resources | indent 12 }}
           {{- if .Values.global.tlsSecret }}
           volumeMounts:
-            - name: houston-config-volume
-              mountPath: /houston/config/production.yaml
-              subPath: production.yaml
-            - name: houston-config-volume
-              mountPath: /houston/config/local-production.yaml
-              subPath: local-production.yaml
-            - name: houston-jwt-key-volume
-              mountPath: {{ template "houston.jwtKeyPath" . }}
-              subPath: tls.key
-            - name: houston-jwt-certificate-volume
-              mountPath: {{ template "houston.jwtCertificatePath" . }}
-              subPath: tls.crt
-            - name: registry-tls-volume
-              mountPath: {{ template "houston.jwtRegistryCertificatePath" . }}
-            - name: registry-tls-volume
-              mountPath: {{ template "houston.tlsRegistryCertificatePath" . }}
-              subPath: tls.crt
+            {{- include "houston_volume_mounts" . | indent 12 }}
           {{- end }}
           ports:
             - name: houston-http
@@ -99,51 +83,7 @@ spec:
             periodSeconds: 10
             failureThreshold: 10
           env:
-            {{- range $i, $config := .Values.houston.env }}
-            - name: {{ $config.name }}
-              value: {{ $config.value | quote }}
-            {{- end }}
-            - name: NODE_ENV
-              value: "production"
-            - name: DATABASE__CONNECTION
-              valueFrom:
-                secretKeyRef:
-                  name: {{ template "houston.backendSecret" . }}
-                  key: connection
-            - name: JWT__CERT_PATH
-              value: {{ template "houston.jwtCertificateDir" . }}
-            - name: JWT__REGISTRY__CERT_PATH
-              value: {{ template "houston.jwtRegistryCertificatePath" . }}
-            - name: JWT__REGISTRY__ISSUER
-              value: {{ .Values.registry.auth.issuer }}
-            - name: JWT__REGISTRY__SERVICE
-              value: {{ .Values.registry.auth.service }}
-            # Used by prisma cli for deploys to a protected prisma service.
-            - name: PRISMA_MANAGEMENT_API_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Release.Name }}-prisma-api-secret
-                  key: api-secret
-            - name: PRISMA__ENDPOINT
-              value: {{ template "prisma.endpoint" . }}
-            - name: PRISMA__SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Release.Name }}-prisma-api-secret
-                  key: service-secret
-            - name: DEPLOYMENTS__DATABASE__CONNECTION
-              valueFrom:
-                secretKeyRef:
-                  name: {{ template "houston.airflowBackendSecret" . }}
-                  key: connection
-            {{- /* Dynamically created secret envs */ -}}
-            {{- range $i, $config := .Values.houston.secret }}
-            - name: {{ $config.envName }}
-              valueFrom:
-                secretKeyRef:
-                  name: {{ $config.secretName }}
-                  key: {{ default "value" $config.secretKey }}
-            {{- end }}
+            {{- include "houston_environment" . | indent 12 }}
       volumes:
         - name: houston-config-volume
           configMap:

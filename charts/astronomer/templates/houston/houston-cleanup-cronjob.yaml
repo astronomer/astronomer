@@ -1,0 +1,30 @@
+################################
+## Houston cleanup CronJob
+#################################
+{{- if .Values.houston.cleanup.enabled }}
+apiVersion: apps/v1beta2
+kind: CronJob
+metadata:
+  name: {{ .Release.Name }}-cleanup
+  labels:
+    tier: astronomer
+    component: houston
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  schedule: {{ .Values.houston.cleanup.schedule }}
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: cleanup
+              image: {{ template "houston.image" . }}
+              imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
+              command: ["/bin/sh", "-c"]
+              volumeMounts:
+                {{- include "houston_volume_mounts" . | indent 16 }}
+              env:
+                {{- include "houston_environment" . | indent 16 }}
+{{- end }}

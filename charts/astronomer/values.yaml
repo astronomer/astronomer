@@ -94,6 +94,11 @@ houston:
   # https://github.com/astronomer/houston-api/blob/master/config/default.yaml
   config: {}
 
+  cleanup:
+    enabled: true
+    # run at midnight every 15 days
+    schedule: "0 0 */15 * *"
+
 prisma:
   env: []
   resources: {}
