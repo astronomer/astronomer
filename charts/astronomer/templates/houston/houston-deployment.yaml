@@ -83,22 +83,4 @@ spec:
           env:
             {{- include "houston_environment" . | indent 12 }}
       volumes:
-        - name: houston-config-volume
-          configMap:
-            name: {{ .Release.Name }}-houston-config
-            items:
-              - key: production.yaml
-                path: production.yaml
-              - key: local-production.yaml
-                path: local-production.yaml
-        - name: houston-jwt-key-volume
-          secret:
-            secretName: {{ template "houston.jwtKeySecret" . }}
-        - name: houston-jwt-certificate-volume
-          secret:
-            secretName: {{ template "houston.jwtCertificateSecret" . }}
-    {{ if .Values.global.tlsSecret }}
-        - name: registry-tls-volume
-          secret:
-            secretName: {{ .Values.global.tlsSecret }}
-    {{- end }}
+        {{- include "houston_volumes" . | indent 8 }}

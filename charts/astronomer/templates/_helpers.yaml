@@ -223,3 +223,25 @@ azure:
   subPath: tls.crt
 {{- end }}
 {{- end }}
+
+{{- define "houston_volumes" }}
+- name: houston-config-volume
+  configMap:
+    name: {{ .Release.Name }}-houston-config
+    items:
+      - key: production.yaml
+        path: production.yaml
+      - key: local-production.yaml
+        path: local-production.yaml
+- name: houston-jwt-key-volume
+  secret:
+    secretName: {{ template "houston.jwtKeySecret" . }}
+- name: houston-jwt-certificate-volume
+  secret:
+    secretName: {{ template "houston.jwtCertificateSecret" . }}
+{{ if .Values.global.tlsSecret }}
+- name: registry-tls-volume
+  secret:
+    secretName: {{ .Values.global.tlsSecret }}
+{{- end }}
+{{- end }}

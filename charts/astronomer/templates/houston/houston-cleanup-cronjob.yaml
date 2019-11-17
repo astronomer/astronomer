@@ -18,6 +18,7 @@ spec:
     spec:
       template:
         spec:
+          restartPolicy: Never
           containers:
             - name: cleanup
               image: {{ template "houston.image" . }}
@@ -27,4 +28,6 @@ spec:
                 {{- include "houston_volume_mounts" . | indent 16 }}
               env:
                 {{- include "houston_environment" . | indent 16 }}
+          volumes:
+            {{- include "houston_volumes" . | indent 12 }}
 {{- end }}
