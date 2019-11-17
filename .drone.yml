@@ -89,7 +89,7 @@ pipeline:
     when:
       event: deployment
       branch: [ master, release-* ]
-      environment: [ development, production ]
+      environment: [ production ]
 
   ##################################
   ## Tag
