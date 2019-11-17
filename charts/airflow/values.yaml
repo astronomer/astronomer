@@ -10,10 +10,6 @@ nodeSelector: {}
 affinity: {}
 tolerations: []
 
-privateRegistry:
-  enabled: false
-  repository: ~
-
 # Ingress configuration
 ingress:
   # Enable ingress resource
@@ -50,10 +46,6 @@ airflowHome: "/usr/local/airflow"
 # Enable RBAC (default on most clusters these days)
 rbacEnabled: true
 
-# Airflow version
-# Options: 1.9.0, 1.10.2, etc
-airflowVersion: "1.10.5"
-
 # Airflow executor
 # Options: SequentialExecutor, LocalExecutor, CeleryExecutor, KubernetesExecutor
 executor: "CeleryExecutor"
@@ -63,11 +55,12 @@ executor: "CeleryExecutor"
 # If this is true and using the CeleryExecutor, the workers will be able to launch pods.
 allowPodLaunching: false
 
+# Default airflow tag to deploy
+defaultAirflowTag: 1.10.5-alpine3.10
+
 # Astronomer Airflow images
 images:
   airflow:
-    # If tag is specified here or overridden, that value is used, otherwise
-    # it is build using {{ .Chart.Version }}-{{ .Values.airflowVersion }}
     repository: astronomerinc/ap-airflow
     tag: ~
     pullPolicy: IfNotPresent
