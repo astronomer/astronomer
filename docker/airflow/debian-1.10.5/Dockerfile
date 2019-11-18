@@ -116,6 +116,7 @@ COPY include/pip-constraints.txt /usr/local/share/astronomer-pip-constraints.txt
 
 # Pip install airflow and astro security manager
 RUN pip install "${AIRFLOW_MODULE}" \
+  && pip install "https://github.com/astronomer/airflow-migration-spinner/releases/download/v0.0.1/airflow-migration-spinner-0.0.1-py3-none-any.whl" \
   && pip install "https://github.com/astronomer/astronomer-fab-securitymanager/releases/download/v1.2.1/astronomer_fab_security_manager-1.2.1-py3-none-any.whl"
 
 RUN cd usr/local/lib/python3.7/site-packages/airflow/www_rbac \
