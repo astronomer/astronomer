@@ -100,6 +100,7 @@ pipeline:
       - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
       - ASTRONOMER_VERSION=${DRONE_TAG##v}
     commands:
+      - (cd charts/airflow ; helm dep update)
       - make build
     when:
       event: tag
