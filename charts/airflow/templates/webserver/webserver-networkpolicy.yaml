@@ -10,16 +10,17 @@ metadata:
     tier: airflow
     component: airflow-webserver-policy
     release: {{ .Release.Name }}
-    workspace: {{ .Values.platform.workspace | quote }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
+{{- with .Values.labels }}
+{{ toYaml . | indent 4 }}
+{{- end }}
 spec:
   podSelector:
     matchLabels:
       tier: airflow
       component: webserver
       release: {{ .Release.Name }}
-      workspace: {{ .Values.platform.workspace | quote }}
   policyTypes:
   - Ingress
 {{- if .Values.platform.release }}

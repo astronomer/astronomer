@@ -10,16 +10,17 @@ metadata:
     tier: airflow
     component: scheduler
     release: {{ .Release.Name }}
-    workspace: {{ .Values.platform.workspace | quote }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
+{{- with .Values.labels }}
+{{ toYaml . | indent 4 }}
+{{- end }}
 spec:
   clusterIP: None
   selector:
     tier: airflow
     component: scheduler
     release: {{ .Release.Name }}
-    workspace: {{ .Values.platform.workspace | quote }}
   ports:
     - name: task-logs
       protocol: TCP

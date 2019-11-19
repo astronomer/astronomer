@@ -10,10 +10,11 @@ metadata:
     tier: airflow
     component: redis
     release: {{ .Release.Name }}
-    platform: {{ .Values.platform.release }}
-    workspace: {{ .Values.platform.workspace | quote }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
+{{- with .Values.labels }}
+{{ toYaml . | indent 4 }}
+{{- end }}
 spec:
   serviceName: {{ .Release.Name }}-redis
   selector:
@@ -21,16 +22,15 @@ spec:
       tier: airflow
       component: redis
       release: {{ .Release.Name }}
-      platform: {{ .Values.platform.release }}
-      workspace: {{ .Values.platform.workspace | quote }}
   template:
     metadata:
       labels:
         tier: airflow
         component: redis
         release: {{ .Release.Name }}
-        platform: {{ .Values.platform.release }}
-        workspace: {{ .Values.platform.workspace | quote }}
+{{- with .Values.labels }}
+{{ toYaml . | indent 8 }}
+{{- end }}
     spec:
       nodeSelector:
 {{ toYaml .Values.nodeSelector | indent 8 }}

@@ -22,10 +22,11 @@ metadata:
     tier: airflow
     component: scheduler
     release: {{ .Release.Name }}
-    platform: {{ .Values.platform.release }}
-    workspace: {{ .Values.platform.workspace | quote }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
+{{- with .Values.labels }}
+{{ toYaml . | indent 4 }}
+{{- end }}
 spec:
 {{- if $stateful }}
   serviceName: {{ .Release.Name }}-scheduler
@@ -36,16 +37,15 @@ spec:
       tier: airflow
       component: scheduler
       release: {{ .Release.Name }}
-      platform: {{ .Values.platform.release }}
-      workspace: {{ .Values.platform.workspace | quote }}
   template:
     metadata:
       labels:
         tier: airflow
         component: scheduler
         release: {{ .Release.Name }}
-        platform: {{ .Values.platform.release }}
-        workspace: {{ .Values.platform.workspace | quote }}
+{{- with .Values.labels }}
+{{ toYaml . | indent 8 }}
+{{- end }}
       annotations:
         checksum/metadata-secret: {{ include (print $.Template.BasePath "/secrets/metadata-connection-secret.yaml") . | sha256sum }}
         checksum/result-backend-secret: {{ include (print $.Template.BasePath "/secrets/result-backend-connection-secret.yaml") . | sha256sum }}

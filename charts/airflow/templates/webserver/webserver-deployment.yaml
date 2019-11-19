@@ -9,10 +9,11 @@ metadata:
     tier: airflow
     component: webserver
     release: {{ .Release.Name }}
-    platform: {{ .Values.platform.release }}
-    workspace: {{ .Values.platform.workspace | quote }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
+{{- with .Values.labels }}
+{{ toYaml . | indent 4 }}
+{{- end }}
 spec:
   replicas: {{ .Values.webserver.replicas }}
   strategy:
@@ -24,16 +25,15 @@ spec:
       tier: airflow
       component: webserver
       release: {{ .Release.Name }}
-      platform: {{ .Values.platform.release }}
-      workspace: {{ .Values.platform.workspace | quote }}
   template:
     metadata:
       labels:
         tier: airflow
         component: webserver
         release: {{ .Release.Name }}
-        platform: {{ .Values.platform.release }}
-        workspace: {{ .Values.platform.workspace | quote }}
+{{- with .Values.labels }}
+{{ toYaml . | indent 8 }}
+{{- end }}
       annotations:
         checksum/metadata-secret: {{ include (print $.Template.BasePath "/secrets/metadata-connection-secret.yaml") . | sha256sum }}
         checksum/pgbouncer-config-secret: {{ include (print $.Template.BasePath "/secrets/pgbouncer-config-secret.yaml") . | sha256sum }}

@@ -70,12 +70,15 @@ data:
           jwtSigningCertificateSecretName: {{ template "houston.jwtCertificateSecret" . }}
           resources:
             limits:
-              # XXX: There is an alert configured to trigger when ephemeral storage reaches 
+              # XXX: There is an alert configured to trigger when ephemeral storage reaches
               # 1800000000 bytes (90% of the 2Gi limit). Be aware of this when modifying
               # ephemeral-storage limits.
               ephemeral-storage: "2Gi"
             requests:
               ephemeral-storage: "1Gi"
+
+          defaultUser:
+            enabled: false
 
         # Worker configuration (applies to Celery and Kubernetes task pods).
         workers:
@@ -98,17 +101,10 @@ data:
           requests.ephemeral-storage: "50Gi"
           limits.ephemeral-storage: "50Gi"
 
-        # If a private registry configuration is specified, we also pass this through
-        # to the airflow deployments.
-        {{- if .Values.global.privateRegistry }}
-        privateRegistry:
-          enabled: {{ .Values.global.privateRegistry.enabled | default false }}
-          repository: {{ .Values.global.privateRegistry.repository | default "" }}
-        {{- end }}
-
-        platform:
-          namespace: {{ .Release.Namespace }}
-          singleNamespace: {{ .Values.global.singleNamespace | default false }}
+        # Disable the postgres subchart. The platform pass credentials down
+        # from the platform configuration.
+        postgresql:
+          enabled: false
 
     # If we're in single namespace mode, we will also
     # skip the configuration for elasticsearch. Houston will fallback

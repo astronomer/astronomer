@@ -11,15 +11,16 @@ metadata:
     tier: airflow
     component: pgbouncer
     release: {{ .Release.Name }}
-    workspace: {{ .Values.platform.workspace | quote }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
+{{- with .Values.labels }}
+{{ toYaml . | indent 4 }}
+{{- end }}
 spec:
   selector:
     matchLabels:
       tier: airflow
       component: pgbouncer
       release: {{ .Release.Name }}
-      workspace: {{ .Values.platform.workspace | quote }}
 {{ toYaml .Values.scheduler.podDisruptionBudget | indent 2 }}
 {{- end }}

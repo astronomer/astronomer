@@ -10,16 +10,17 @@ metadata:
     tier: airflow
     component: redis-policy
     release: {{ .Release.Name }}
-    workspace: {{ .Values.platform.workspace }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
+{{- with .Values.labels }}
+{{ toYaml . | indent 4 }}
+{{- end }}
 spec:
   podSelector:
     matchLabels:
       tier: airflow
       component: redis
       release: {{ .Release.Name }}
-      workspace: {{ .Values.platform.workspace | quote }}
   policyTypes:
   - Ingress
   ingress:
@@ -29,19 +30,16 @@ spec:
           tier: airflow
           component: worker
           release: {{ .Release.Name }}
-          workspace: {{ .Values.platform.workspace | quote }}
     - podSelector:
         matchLabels:
           tier: airflow
           component: scheduler
           release: {{ .Release.Name }}
-          workspace: {{ .Values.platform.workspace | quote }}
     - podSelector:
         matchLabels:
           tier: airflow
           component: flower
           release: {{ .Release.Name }}
-          workspace: {{ .Values.platform.workspace | quote }}
     ports:
     - protocol: TCP
       port: {{ .Values.ports.redisDB }}

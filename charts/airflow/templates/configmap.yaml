@@ -9,10 +9,11 @@ metadata:
     tier: airflow
     component: config
     release: {{ .Release.Name }}
-    platform: {{ .Values.platform.release }}
-    workspace: {{ .Values.platform.workspace | quote }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
+{{- with .Values.labels }}
+{{ toYaml . | indent 4 }}
+{{- end }}
 data:
   # These are system-specified config overrides.
   airflow.cfg: |
@@ -20,17 +21,19 @@ data:
     load_examples = False
     colored_console_log = False
     executor = {{ .Values.executor }}
-  {{- if .Values.elasticsearch.enabled }}
+{{- if .Values.elasticsearch.enabled }}
     remote_logging = True
-  {{- end }}
+{{- end }}
 
     [webserver]
     base_url = {{ printf "https://%s" (include "airflow_url" .) }}
     expose_config = True
     rbac = True
 
+{{- if eq .Values.executor "CeleryExecutor" }}
     [celery]
     default_queue = celery
+{{- end }}
 
     [scheduler]
     scheduler_heartbeat_sec = 5
@@ -42,6 +45,7 @@ data:
     # The odd time is chosen so it is not always restarting on the same "hour" boundary
     run_duration = 41460
 
+{{- if .Values.elasticsearch.enabled }}
     [elasticsearch]
     # The elasticsearch variables were updated to the shorter names in v1.10.4
     write_stdout = True
@@ -52,7 +56,9 @@ data:
     elasticsearch_write_stdout = True
     elasticsearch_json_format = True
     elasticsearch_log_id_template = {dag_id}_{task_id}_{execution_date}_{try_number}
+{{- end }}
 
+{{- if eq .Values.executor "KubernetesExecutor" }}
     [kubernetes]
     namespace = {{ .Release.Namespace }}
     airflow_configmap = {{ include "airflow_config" . }}
@@ -67,7 +73,9 @@ data:
     [kubernetes_secrets]
     AIRFLOW__CORE__SQL_ALCHEMY_CONN = {{ printf "%s=connection" (include "airflow_metadata_secret" .) }}
     AIRFLOW__CORE__FERNET_KEY = {{ printf "%s=fernet-key" (include "fernet_key_secret" .) }}
+{{- if .Values.elasticsearch.enabled }}
     AIRFLOW__ELASTICSEARCH__ELASTICSEARCH_HOST = {{ printf "%s=connection" (include "elasticsearch_secret" .) }}
+{{- end }}
 
     [kubernetes_labels]
     tier = airflow
@@ -75,10 +83,13 @@ data:
     release = {{ .Release.Name }}
     platform = {{ .Values.platform.release }}
     workspace = {{ .Values.platform.workspace }}
+{{- end }}
 
     [astronomer]
+{{- if .Values.webserver.jwtSigningCertificateSecretName }}
     jwt_signing_cert = {{ template "airflow_webserver_jwt_cert_path" . }}
     jwt_audience = {{ include "airflow_url" . }}
+{{- end }}
 
   webserver_config.py: |
     import os
@@ -95,10 +106,12 @@ data:
     # ----------------------------------------------------
     # AUTHENTICATION CONFIG
     # ----------------------------------------------------
+{{- if .Values.webserver.jwtSigningCertificateSecretName }}
     AUTH_TYPE = AUTH_REMOTE_USER
 
     from astronomer.flask_appbuilder.security import AirflowAstroSecurityManager
     SECURITY_MANAGER_CLASS = AirflowAstroSecurityManager
+{{- end }}
 
   airflow_local_settings.py: |
     from airflow.contrib.kubernetes.pod import Pod

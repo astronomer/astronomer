@@ -10,9 +10,11 @@ metadata:
     tier: resources
     component: limitrange
     release: {{ .Release.Name }}
-    workspace: {{ .Values.platform.workspace | quote }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
+{{- with .Values.labels }}
+{{ toYaml . | indent 4 }}
+{{- end }}
 spec:
   limits:
 {{ toYaml .Values.limits | indent 4 }}

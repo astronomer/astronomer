@@ -10,10 +10,11 @@ metadata:
     tier: airflow
     component: flower
     release: {{ .Release.Name }}
-    platform: {{ .Values.platform.release }}
-    workspace: {{ .Values.platform.workspace | quote }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
+{{- with .Values.labels }}
+{{ toYaml . | indent 4 }}
+{{- end }}
   annotations:
     checksum/airflow-config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
 spec:
@@ -23,16 +24,15 @@ spec:
       tier: airflow
       component: flower
       release: {{ .Release.Name }}
-      platform: {{ .Values.platform.release }}
-      workspace: {{ .Values.platform.workspace | quote }}
   template:
     metadata:
       labels:
         tier: airflow
         component: flower
         release: {{ .Release.Name }}
-        platform: {{ .Values.platform.release }}
-        workspace: {{ .Values.platform.workspace | quote }}
+{{- with .Values.labels }}
+{{ toYaml . | indent 8 }}
+{{- end }}
     spec:
       nodeSelector:
 {{ toYaml .Values.nodeSelector | indent 8 }}

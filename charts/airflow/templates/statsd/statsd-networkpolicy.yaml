@@ -10,16 +10,17 @@ metadata:
     tier: airflow
     component: statsd-policy
     release: {{ .Release.Name }}
-    workspace: {{ .Values.platform.workspace | quote }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
+{{- with .Values.labels }}
+{{ toYaml . | indent 4 }}
+{{- end }}
 spec:
   podSelector:
     matchLabels:
       tier: airflow
       component: statsd
       release: {{ .Release.Name }}
-      workspace: {{ .Values.platform.workspace | quote }}
   policyTypes:
   - Ingress
   ingress:
@@ -28,7 +29,6 @@ spec:
         matchLabels:
           tier: airflow
           release: {{ .Release.Name }}
-          workspace: {{ .Values.platform.workspace | quote }}
     {{- if .Values.platform.release }}
     - namespaceSelector: {}
       podSelector:

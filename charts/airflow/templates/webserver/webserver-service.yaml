@@ -9,16 +9,17 @@ metadata:
     tier: airflow
     component: webserver
     release: {{ .Release.Name }}
-    workspace: {{ .Values.platform.workspace | quote }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
+{{- with .Values.labels }}
+{{ toYaml . | indent 4 }}
+{{- end }}
 spec:
   type: ClusterIP
   selector:
     tier: airflow
     component: webserver
     release: {{ .Release.Name }}
-    workspace: {{ .Values.platform.workspace | quote }}
   ports:
     - name: airflow-ui
       protocol: TCP

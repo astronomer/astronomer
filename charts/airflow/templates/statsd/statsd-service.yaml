@@ -9,9 +9,11 @@ metadata:
     tier: airflow
     component: statsd
     release: {{ .Release.Name }}
-    workspace: {{ .Values.platform.workspace | quote }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
+{{- with .Values.labels }}
+{{ toYaml . | indent 4 }}
+{{- end }}
   annotations:
     {{- if .Values.platform.release }}
     astronomer.io/platform-release: {{ .Values.platform.release }}
@@ -24,7 +26,6 @@ spec:
     tier: airflow
     component: statsd
     release: {{ .Release.Name }}
-    workspace: {{ .Values.platform.workspace | quote }}
   ports:
     - name: statsd-ingest
       protocol: UDP

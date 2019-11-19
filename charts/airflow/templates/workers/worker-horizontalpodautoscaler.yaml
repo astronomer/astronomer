@@ -6,6 +6,15 @@ apiVersion: autoscaling/v2beta1
 kind: HorizontalPodAutoscaler
 metadata:
   name: {{ .Release.Name }}-worker
+  labels:
+    tier: airflow
+    component: worker-horizontalpodautoscaler
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+{{- with .Values.labels }}
+{{ toYaml . | indent 8 }}
+{{- end }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1

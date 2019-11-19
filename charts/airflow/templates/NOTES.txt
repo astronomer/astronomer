@@ -4,11 +4,20 @@ Your release is named {{ .Release.Name }}.
 
 {{- if .Values.ingress.baseDomain }}
 
-The platform components may take a few minutes to spin up.
+You can access your dashboard(s) in your browser here:
 
-You can access the platform at:
+Airflow dashboard:        https://{{ .Release.Name }}-airflow.{{ .Values.ingress.baseDomain }}
+{{- if eq .Values.executor "CeleryExecutor"}}
+Flower dashboard:         https://{{ .Release.Name }}-flower.{{ .Values.ingress.baseDomain }}
+{{- end }}
 
-- Airflow dashboard:        https://{{ .Release.Name }}-airflow.{{ .Values.ingress.baseDomain }}
-- Flower dashboard:         {{ if eq .Values.executor "CeleryExecutor"}}https://{{ .Release.Name }}-flower.{{ .Values.ingress.baseDomain }}{{ else }}Disabled{{ end }}
+{{- else }}
+
+You can now access your dashboard(s) by executing the following command(s) and visiting the corresponding port at localhost in your browser:
+
+Airflow dashboard:        kubectl port-forward svc/{{ .Release.Name }}-webserver {{ .Values.ports.airflowUI }}:{{ .Values.ports.airflowUI }}
+{{- if eq .Values.executor "CeleryExecutor"}}
+Flower dashboard:         kubectl port-forward svc/{{ .Release.Name }}-flower {{ .Values.ports.flowerUI }}:{{ .Values.ports.flowerUI }}
+{{- end }}
 
 {{- end }}

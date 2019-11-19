@@ -1,0 +1,16 @@
+#! /usr/bin/env bash
+
+# Create a kind cluster
+kind create cluster
+
+# Point kubectl at the kind cluster.
+export KUBECONFIG="$(kind get kubeconfig-path --name="kind")"
+
+# Install tiller into the fresh cluster.
+helm init --upgrade
+
+# Update the service account for tiller to work.
+kubectl create serviceaccount --namespace kube-system tiller
+kubectl create clusterrolebinding tiller-cluster-rule --clusterrole=cluster-admin --serviceaccount=kube-system:tiller
+kubectl patch deploy --namespace kube-system tiller-deploy -p '{"spec":{"template":{"spec":{"serviceAccount":"tiller"}}}}'
+helm init --service-account tiller --upgrade

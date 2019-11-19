@@ -6,9 +6,13 @@
 uid: 100
 gid: 101
 
+# Select certain nodes for airflow pods.
 nodeSelector: {}
 affinity: {}
 tolerations: []
+
+# Add common labels to all objects and pods defined in this chart.
+labels: {}
 
 # Ingress configuration
 ingress:
@@ -24,10 +28,7 @@ ingress:
   # Base domain for ingress vhosts
   baseDomain: ~
 
-  # If deployed from the Astronomer platform, this will be overridden
-  # to a class that matches the platform release name. This lets us run
-  # multiple platforms in one cluster and have deployments from one platform
-  # use the corresponding platform ingress controller.
+  # NGINX ingress class to associate Airflow ingress with.
   class: "nginx"
 
   # Enable platform authentication
@@ -48,12 +49,12 @@ rbacEnabled: true
 
 # Airflow executor
 # Options: SequentialExecutor, LocalExecutor, CeleryExecutor, KubernetesExecutor
-executor: "CeleryExecutor"
+executor: "KubernetesExecutor"
 
 # If this is true and using LocalExecutor/SequentialExecutor/KubernetesExecutor, the scheudler's
 # service account will have access to communicate with the api-server and launch pods.
 # If this is true and using the CeleryExecutor, the workers will be able to launch pods.
-allowPodLaunching: false
+allowPodLaunching: true
 
 # Default airflow tag to deploy
 defaultAirflowTag: 1.10.5-alpine3.10
@@ -103,18 +104,18 @@ data:
   resultBackendSecretName: ~
 
   # Otherwise pass connection values in
-  metadataConnection: {}
-    # user: ~
-    # pass: ~
-    # host: ~
-    # port: ~
-    # db: ~
-  resultBackendConnection: {}
-    # user: ~
-    # pass: ~
-    # host: ~
-    # port: ~
-    # db: ~
+  metadataConnection:
+    user: postgres
+    pass: postgres
+    host: ~
+    port: 5432
+    db: postgres
+  resultBackendConnection:
+    user: postgres
+    pass: postgres
+    host: ~
+    port: 5432
+    db: postgres
 
 # Fernet key settings
 fernetKey: ~
@@ -193,6 +194,16 @@ webserver:
 
   # Secret that contains the cert to verify JWTs
   jwtSigningCertificateSecretName: ~
+
+  # Create initial user.
+  defaultUser:
+    enabled: true
+    role: Admin
+    username: admin
+    email: admin@example.com
+    firstName: admin
+    lastName: user
+    password: admin
 
 # Flower settings
 flower:
@@ -327,7 +338,11 @@ podMutation:
 # This is what allows for integration into platform ingress, network policies, metrics collection, etc.
 # This chart is completely deployable without specifying these values.
 platform:
-  namespace: ~
   release: ~
   workspace: ""
-  singleNamespace: true
+
+# Configuration for postgresql subchart
+postgresql:
+  enabled: true
+  postgresqlPassword: postgres
+  postgresqlUsername: postgres

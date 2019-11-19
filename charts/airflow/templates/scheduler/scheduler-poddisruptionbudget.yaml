@@ -9,14 +9,15 @@ metadata:
     tier: airflow
     component: scheduler
     release: {{ .Release.Name }}
-    workspace: {{ .Values.platform.workspace | quote }}
     chart: {{ .Chart.Name }}
     heritage: {{ .Release.Service }}
+{{- with .Values.labels }}
+{{ toYaml . | indent 4 }}
+{{- end }}
 spec:
   selector:
     matchLabels:
       tier: airflow
       component: scheduler
       release: {{ .Release.Name }}
-      workspace: {{ .Values.platform.workspace | quote }}
 {{ toYaml .Values.scheduler.podDisruptionBudget | indent 2 }}
