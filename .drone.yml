@@ -17,6 +17,7 @@ pipeline:
       - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
       - ASTRONOMER_VERSION=0.0.0
     commands:
+      - (cd charts/airflow ; helm dep update)
       - make build
     when:
       event: push
