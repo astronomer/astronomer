@@ -68,6 +68,14 @@ spec:
       imagePullSecrets:
         - name: {{ template "registry_secret" . }}
       {{- end }}
+      initContainers:
+        - name: run-airflow-migrations
+          image: {{ template "airflow_image" . }}
+          imagePullPolicy: {{ .Values.images.airflow.pullPolicy }}
+          args: ["airflow", "upgradedb"]
+          env:
+          {{- include "custom_airflow_environment" . | indent 10 }}
+          {{- include "standard_airflow_environment" . | indent 10 }}
       containers:
         # Always run the main scheduler container.
         - name: scheduler
