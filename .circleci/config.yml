@@ -17,14 +17,15 @@ jobs:
       - run:
           name: Monitoring
           command: bin/run-ci monitoring
-  # logging:
-  #   machine:
-  #     image: ubuntu-1604:201903-01
-  #   steps:
-  #     - checkout
-  #     - run:
-  #         name: Logging
-  #         command: bin/run-ci logging
+  logging:
+    machine:
+      image: ubuntu-1604:201903-01
+      resource_class: large
+    steps:
+      - checkout
+      - run:
+          name: Logging
+          command: bin/run-ci logging
   kubed:
     machine:
       image: ubuntu-1604:201903-01
@@ -40,5 +41,5 @@ workflows:
     jobs:
       - platform
       - monitoring
-      # - logging
+      - logging
       - kubed
