@@ -14,6 +14,14 @@ elasticsearch:
   buffer_chunk_limit: 2M
   buffer_queue_limit: 8
 
+livenessProbeConfig:
+  bufferSizeUnhealthy: 8
+  failureThreshold: 3
+  initialDelaySeconds: 30
+  periodSeconds: 15
+  successThreshold: 1
+  timeoutSeconds: 5
+
 ports:
   promScrape: 24231
 

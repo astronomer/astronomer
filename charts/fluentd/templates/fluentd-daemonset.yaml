@@ -38,6 +38,19 @@ spec:
       containers:
       - name: fluentd
         image: {{ template "fluentd.image" . }}
+        livenessProbe:
+          exec:
+            command:
+            - /bin/bash
+            - -c
+            - if (( $(ruby -e "require 'net/http';require 'uri';uri = URI.parse('http://127.0.0.1:{{ .Values.ports.promScrape }}/metrics');response
+              = Net::HTTP.get_response(uri);puts response.body" | grep 'fluentd_output_status_buffer_queue_length{'
+              | awk '{ print ($NF > {{ .Values.livenessProbeConfig.bufferSizeUnhealthy }}) }') )); then exit 1; fi; exit 0
+          failureThreshold: {{ .Values.livenessProbeConfig.failureThreshold }}
+          initialDelaySeconds: {{ .Values.livenessProbeConfig.initialDelaySeconds5 }}
+          periodSeconds: {{ .Values.livenessProbeConfig.periodSeconds5 }}
+          successThreshold: {{ .Values.livenessProbeConfig.successThreshold }}
+          timeoutSeconds: {{ .Values.livenessProbeConfig.timeoutSeconds }}
         imagePullPolicy: {{ .Values.images.fluentd.pullPolicy }}
         env:
         - name: FLUENTD_ARGS
