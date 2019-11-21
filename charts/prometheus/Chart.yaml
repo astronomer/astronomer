@@ -1,5 +1,5 @@
 name: prometheus
-version: 0.11.0-alpha.3
+version: 0.11.0-alpha.4
 description: Helm chart to deploy the Astronomer Platform Prometheus module
 keywords:
   - astronomer
