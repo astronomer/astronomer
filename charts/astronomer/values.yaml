@@ -95,9 +95,14 @@ houston:
   config: {}
 
   cleanup:
+    # Enable cleanup CronJob
     enabled: true
-    # run at midnight every 15 days
+
+    # Run at midnight every 15 days
     schedule: "0 0 */15 * *"
+
+    # Cleanup deployments older than this many days
+    olderThan: 14
 
 prisma:
   env: []
