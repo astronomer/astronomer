@@ -13,7 +13,7 @@
       secretKeyRef:
         name: {{ template "airflow_metadata_secret" . }}
         key: connection
-  - name: ARIFLOW_CONN_AIRFLOW_DB
+  - name: AIRFLOW_CONN_AIRFLOW_DB
     valueFrom:
       secretKeyRef:
         name: {{ template "airflow_metadata_secret" . }}
