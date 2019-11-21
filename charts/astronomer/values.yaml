@@ -154,7 +154,7 @@ registry:
     keyfile: /var/gcs-keyfile/astronomer-gcs-keyfile
     rootdirectory: /
     chunksize: '5242880'
-  
+
   azure:
     enabled: false
     accountname: ~
