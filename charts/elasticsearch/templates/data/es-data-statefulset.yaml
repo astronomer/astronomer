@@ -30,6 +30,12 @@ spec:
         role: data
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/es-configmap.yaml") . | sha256sum }}
+{{- if .Values.common.podAnnotations }}
+{{ toYaml .Values.common.podAnnotations | indent 8 }}
+{{- end }}
+{{- if .Values.data.podAnnotations }}
+{{ toYaml .Values.data.podAnnotations | indent 8 }}
+{{- end }}
     spec:
       terminationGracePeriodSeconds: 3600
       nodeSelector:

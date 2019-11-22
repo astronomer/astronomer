@@ -29,6 +29,12 @@ spec:
         role: client
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/es-configmap.yaml") . | sha256sum }}
+{{- if .Values.common.podAnnotations }}
+{{ toYaml .Values.common.podAnnotations | indent 8 }}
+{{- end }}
+{{- if .Values.client.podAnnotations }}
+{{ toYaml .Values.client.podAnnotations | indent 8 }}
+{{- end }}
     spec:
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}

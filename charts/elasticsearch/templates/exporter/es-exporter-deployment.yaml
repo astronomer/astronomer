@@ -32,6 +32,15 @@ spec:
         component: {{ template "elasticsearch.name" . }}-exporter
         release: {{ .Release.Name }}
         role: exporter
+{{- if or .Values.common.podAnnotations .Values.exporter.podAnnotations }}
+      annotations:
+{{- end }}
+{{- if .Values.common.podAnnotations }}
+{{ toYaml .Values.common.podAnnotations | indent 8 }}
+{{- end }}
+{{- if .Values.exporter.podAnnotations }}
+{{ toYaml .Values.exporter.podAnnotations | indent 8 }}
+{{- end }}
     spec:
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}

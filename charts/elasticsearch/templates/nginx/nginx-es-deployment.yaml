@@ -26,6 +26,12 @@ spec:
         release: {{ .Release.Name }}
       annotations:
         checksum/configmap: {{ include (print $.Template.BasePath "/nginx/nginx-es-configmap.yaml") . | sha256sum }}
+{{- if .Values.common.podAnnotations }}
+{{ toYaml .Values.common.podAnnotations | indent 8 }}
+{{- end }}
+{{- if .Values.nginx.podAnnotations }}
+{{ toYaml .Values.nginx.podAnnotations | indent 8 }}
+{{- end }}
     spec:
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}

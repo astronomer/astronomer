@@ -22,6 +22,16 @@ spec:
   jobTemplate:
     spec:
       template:
+{{- if or .Values.common.podAnnotations .Values.curator.podAnnotations }}
+        metadata:
+          annotations:
+{{- end }}
+{{- if .Values.common.podAnnotations }}
+{{ toYaml .Values.common.podAnnotations | indent 12 }}
+{{- end }}
+{{- if .Values.curator.podAnnotations }}
+{{ toYaml .Values.curator.podAnnotations | indent 12 }}
+{{- end }}
         spec:
           containers:
           - name: curator

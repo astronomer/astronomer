@@ -25,6 +25,7 @@ images:
     pullPolicy: IfNotPresent
 
 common:
+  podAnnotations: {}
   serviceType: ClusterIP
 
   env:
@@ -58,6 +59,7 @@ common:
 # by the ingest processors and the required resources, it may make sense to
 # have dedicated ingest nodes, that will only perform this specific task.
 client:
+  podAnnotations: {}
   # It isn't common to need more than 2 client nodes.
   replicas: 2
   antiAffinity: "soft"
@@ -85,6 +87,7 @@ client:
 # The main benefit of having dedicated data nodes is the separation of the
 # master and data roles.
 data:
+  podAnnotations: {}
   # This count will depend on your data and computation needs.
   replicas: 2
   antiAffinity: "soft"
@@ -117,6 +120,7 @@ data:
 # cluster, and deciding which shards to allocate to which nodes. It is
 # important for cluster health to have a stable master node.
 master:
+  podAnnotations: {}
   # Master replica count should be (#clients / 2) + 1, and generally at least 3.
   replicas: 3
   antiAffinity: "soft"
@@ -150,6 +154,7 @@ master:
     size: 20Gi
 
 curator:
+  podAnnotations: {}
   enabled: true
   schedule: "0 1 * * *"
 
@@ -162,6 +167,7 @@ curator:
     unit_count: 10
 
 exporter:
+  podAnnotations: {}
   # Number of exporter instances
   replicas: 1
 
@@ -201,6 +207,7 @@ exporter:
 
 # NGINX Elasticsearch values
 nginx:
+  podAnnotations: {}
   fullnameOverride: ~
   ingressClass: ~
   resources: {}

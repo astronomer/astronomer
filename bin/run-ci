@@ -45,6 +45,11 @@ helm install \
   --set tags.kubed=${kubed} \
   $REPO_DIR
 
+if [ ! $? -eq 0 ]; then
+  echo "Helm chart failed to install"
+  exit 1
+fi
+
 sleep 5
 
 # Wait for Astronomer to deploy
