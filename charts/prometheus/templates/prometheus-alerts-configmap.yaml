@@ -240,14 +240,14 @@ data:
 
         - alert: KubePodNotReady
           expr: |
-            sum by (namespace, pod) (kube_pod_status_phase{job="kube-state", phase=~"Pending|Unknown"}) > 0
-          for: 1h
+            sum by (namespace, pod) (kube_pod_status_phase{job="kube-state", phase!~"Running|Succeeded"}) > 0
+          for: 15m
           labels:
             tier: platform
             component: pod
           annotations:
-            summary: "Pod in non-ready state for more than 1 hour"
-            description: {{ printf "%q" "Pod {{ $labels.namespace }}/{{ $labels.pod }} has been in a non-ready state for longer than an hour." }}
+            summary: "Pod in non-ready state for more than 15 minutes"
+            description: {{ printf "%q" "Pod {{ $labels.namespace }}/{{ $labels.pod }} has been in a non-ready state for longer than 15 minutes." }}
 
         - alert: NginxIngressDown
           expr: |
