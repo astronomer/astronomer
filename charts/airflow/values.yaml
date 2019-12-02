@@ -346,3 +346,8 @@ postgresql:
   enabled: true
   postgresqlPassword: postgres
   postgresqlUsername: postgres
+
+cleanup:
+  enabled: true
+  # run every 15 minutes
+  schedule: "*/15 * * * *"
