@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.11.0] - 2019-12-x
+- Automated Airflow Deployment Updates
+- Alert for Pods Failing to Schedule at Platform Level
+- Official Debian Image
+- Report current image tag to users
+- Improved user search
+- Platform-level support for multiple Airflow images
+- Cleanup Airflow Deployment pods that have been evicted/failed/succeeded
+- Control Airflow Deployment migrations
+- Clean up deleted Airflow Deployment data (database, images)
+- Allow Service Accounts access to Airflow Webserver / API
+- Support for custom node pool for dynamic pods
+- Support for Helm 2.15.1+
+- Support for Global Service Accounts
+- Support for customizing what permissions normal users have in platform
+- Bugfix: Missing role on Users tab
+- Bugfix: Liveness probe for Fluentd
+- Bugfix: Exclude curator from restart alarm
+- Bugfix: VerifyEmail mutation
+
 ## [0.10.3] - 2019-10-28
 - Bug fixes
 
