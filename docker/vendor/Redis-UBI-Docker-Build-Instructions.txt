@@ -1,0 +1,42 @@
+
+1. Build the redis-base 4.0.14 UBI 7 Image (Use the Dockerfile from redis-base-4.0.14-ubi7 folder)
+
+	$ docker build -t redis-base:4.0.14-ubi7.7 .
+	....
+	$
+
+2. Build ap-redis image using redis-base 4.0.14 UBI 7 Image (Use the Dockerfile from redis-4.0.14-ubi7 folder)
+	
+	$ docker build -t ap-redis:test .
+	....
+	$
+
+
+3. Test run the ap-redis-test UBI image
+
+	a) Start Redis test server and verify the container running in the docker
+
+		$ docker run --name ap-redis-test -d ap-redis:test
+		1df818b9fc10788956dc16c153acfc9c341375cc1507e7ae083ccecdb44df76d
+		$ 
+
+		$ docker container ls
+		CONTAINER ID        IMAGE                     COMMAND                  CREATED             STATUS              PORTS               NAMES
+		1df818b9fc10        ap-redis:test            "docker-entrypoint.s…"   7 seconds ago       Up 6 seconds        6379/tcp            ap-redis-test
+		$ 
+
+	b) Get the IP Address of the redis server container.
+
+		$ docker inspect --format '{{ .NetworkSettings.IPAddress }}' ap-redis-test
+		172.17.0.4
+		$ 
+
+	c) Start Redis CLI to connect to the Redis server. 
+
+		$ docker run -it --rm ap-redis:test redis-cli -h 172.17.0.4
+		172.17.0.4:6379> set name Jay
+		OK
+		172.17.0.4:6379> get name
+		"Jay"
+		172.17.0.4:6379> exit
+		$ 
