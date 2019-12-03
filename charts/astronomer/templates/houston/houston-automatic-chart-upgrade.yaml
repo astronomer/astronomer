@@ -1,0 +1,36 @@
+#######################################
+## Airflow Post Deployment Upgrade Hook
+#######################################
+{{- if .Values.houston.automaticUpgrades.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: "{{ .Release.Name }}-deployment-post-upgrade-hook"
+  labels:
+    tier: astronomer
+    component: houston
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  annotations:
+    # This is what defines this resource as a hook. Without this line, the
+    # job is considered part of the release.
+    "helm.sh/hook": post-upgrade
+    "helm.sh/hook-weight": "1"
+    "helm.sh/hook-delete-policy": hook-succeeded,hook-failed
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: post-upgrade-job
+          image: {{ template "houston.image" . }}
+          imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
+          command: ["npm", "run", "upgrade-deployments"]
+          volumeMounts:
+            {{- include "houston_volume_mounts" . | indent 12 }}
+          env:
+            {{- include "houston_environment" . | indent 12 }}
+      volumes:
+        {{- include "houston_volumes" . | indent 8 }}
+{{- end }}

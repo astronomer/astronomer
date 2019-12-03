@@ -104,6 +104,9 @@ houston:
     # Cleanup deployments older than this many days
     olderThan: 14
 
+  automaticUpgrades:
+    enabled: true
+
 prisma:
   env: []
   resources: {}
