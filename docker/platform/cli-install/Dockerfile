@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM astronomerinc/ap-base:0.11.0-alpha.5
+FROM ap-base-ubi:test-ubi-1
 LABEL maintainer="Astronomer <humans@astronomer.io>"
 
 ARG BUILD_NUMBER=-1
@@ -22,9 +22,12 @@ LABEL io.astronomer.docker.module="astronomer"
 LABEL io.astronomer.docker.component="install"
 
 # Install packages
-RUN apk update \
-	&& apk add --no-cache \
-		nginx \
+RUN yum --disableplugin=subscription-manager -y update \
+    && yum --disableplugin=subscription-manager -y install \
+        https://buildlogs.centos.org/centos/7/sclo/x86_64/rh/nginx16/nginx16-nginx-1.6.2-3.el7.x86_64.rpm \
+        https://buildlogs.centos.org/centos/7/sclo/x86_64/rh/nginx16/nginx16-runtime-1.2-2.el7.x86_64.rpm \
+        https://buildlogs.centos.org/centos/7/sclo/x86_64/rh/nginx16/nginx16-1.2-2.el7.x86_64.rpm \
+	&& yum --disableplugin=subscription-manager clean all \
 	&& mkdir -p /run/nginx
 
 # Copy NGINX configuration to default location
