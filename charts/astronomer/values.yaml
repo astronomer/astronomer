@@ -107,6 +107,13 @@ houston:
   automaticUpgrades:
     enabled: true
 
+  expireDeployments:
+    # Enable expire deployments CronJob
+    enabled: true
+
+    # Run at midnight every 15 days
+    schedule: "0 0 */10 * *"
+
 prisma:
   env: []
   resources: {}
