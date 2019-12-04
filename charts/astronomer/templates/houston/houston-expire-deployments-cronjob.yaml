@@ -5,7 +5,7 @@
 apiVersion: batch/v1beta1
 kind: CronJob
 metadata:
-  name: {{ .Release.Name }}-expireDeployments
+  name: {{ .Release.Name }}-expire-deployments
   labels:
     tier: astronomer
     component: houston
@@ -20,7 +20,7 @@ spec:
         spec:
           restartPolicy: Never
           containers:
-            - name: expireDeployments
+            - name: expire-deployments
               image: {{ template "houston.image" . }}
               imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
               command: ["npm", "run", "expire-deployments"]
