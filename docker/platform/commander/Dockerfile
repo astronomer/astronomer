@@ -49,7 +49,7 @@ RUN apk update && \
 		${REPO_URL} . \
 	&& make DESTDIR=/usr/bin install \
 	&& wget ${GCLOUD_URL} \
-	&& tar -xzf ${GCLOUD_FILE} \
+	&& tar -xvf ${GCLOUD_FILE} \
 	&& rm ${GCLOUD_FILE} \
 	&& google-cloud-sdk/install.sh \
 	&& mv google-cloud-sdk /opt \
