@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM registry.access.redhat.com/ubi7/ubi:7.7
+FROM alpine:3.10.2
 LABEL maintainer="Astronomer <humans@astronomer.io>"
 
 ARG BUILD_NUMBER=-1
@@ -26,10 +26,9 @@ ENV ASTRONOMER_GROUP=${ASTRONOMER_GROUP}
 LABEL io.astronomer.docker=true
 LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
 
-RUN groupadd -g 1000 ${ASTRONOMER_GROUP} \
-	&& useradd -u 1000 -g 1000 ${ASTRONOMER_USER}
+RUN addgroup -S ${ASTRONOMER_GROUP} \
+	&& adduser -S -G ${ASTRONOMER_GROUP} ${ASTRONOMER_USER}
 
-RUN yum --disableplugin=subscription-manager -y update \
-	&& yum --disableplugin=subscription-manager -y install ca-certificates \
-	&& yum --disableplugin=subscription-manager -y clean all \
-	&& update-ca-trust enable
+RUN apk update \
+	&& apk add --no-cache ca-certificates \
+	&& update-ca-certificates

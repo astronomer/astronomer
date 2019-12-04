@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM ap-base-ubi:test-ubi-1
+FROM astronomerinc/ap-base:0.11.0-alpha.5
 LABEL maintainer="Astronomer <humans@astronomer.io>"
 
 ARG BUILD_NUMBER=-1
@@ -32,33 +32,30 @@ ENV GOPATH=/root/go
 ENV GOBIN=${GOPATH}/bin
 ENV PATH=${PATH}:${GOBIN}
 
-WORKDIR /opt/rh/go-toolset-7/root/usr/lib/go-toolset-7-golang/src/${REPO}
 
-RUN yum  --disableplugin=subscription-manager -y update \
-	&& yum --disableplugin=subscription-manager -y install python2 \
-	&& yum --disableplugin=subscription-manager --setopt=group_package_types=mandatory,default,optional -y install git coreutils gcc kernel-headers make \
-		https://buildlogs.centos.org/centos/7/sclo/x86_64/rh/go-toolset-7/go-toolset-7-golang-1.10.2-4.el7.x86_64.rpm \
-		https://buildlogs.centos.org/centos/7/sclo/x86_64/rh/go-toolset-7/go-toolset-7-runtime-1.10.2-4.el7.x86_64.rpm \
-		https://buildlogs.centos.org/centos/7/sclo/x86_64/rh/go-toolset-7/go-toolset-7-golang-bin-1.10.2-4.el7.x86_64.rpm \
-		https://buildlogs.centos.org/centos/7/sclo/x86_64/rh/go-toolset-7/go-toolset-7-golang-src-1.10.2-4.el7.noarch.rpm \
-		https://buildlogs.centos.org/centos/7/sclo/x86_64/rh/go-toolset-7/go-toolset-7-1.10.2-4.el7.x86_64.rpm \
+WORKDIR /usr/lib/go/src/${REPO}
+
+RUN apk update && \
+	apk add --no-cache --virtual .build-deps \
+		build-base \
+		git \
+		go \
+	&& apk add --no-cache \
+		python2 \
 	&& git clone \
 		-c advice.detachedHead=false \
 		--depth 1 \
 		--branch ${VERSION} \
 		${REPO_URL} . \
-	&& scl enable go-toolset-7 'make DESTDIR=/usr/bin install' \
-	&& curl -O ${GCLOUD_URL} \
+	&& make DESTDIR=/usr/bin install \
+	&& wget ${GCLOUD_URL} \
 	&& tar -xzf ${GCLOUD_FILE} \
 	&& rm ${GCLOUD_FILE} \
 	&& google-cloud-sdk/install.sh \
 	&& mv google-cloud-sdk /opt \
 	&& mkdir -p "${GOPATH}/src" \
 	&& mkdir -p "${GOPATH}/bin" \
-	&& yum  --disableplugin=subscription-manager -y history undo last \
-	&& yum  --disableplugin=subscription-manager -y clean all \
-#	&& yum  --disableplugin=subscription-manager -y remove git gcc make cpp \
-#		scl-utils go-toolset-7 go-toolset-7-golang go-toolset-7-golang-bin go-toolset-7-golang-src go-toolset-7-runtime \
-	&& rm -rf /opt/rh/go-toolset-7
+	&& rm -rf /usr/lib/go \
+	&& apk del .build-deps
 
 ENTRYPOINT ["commander"]
