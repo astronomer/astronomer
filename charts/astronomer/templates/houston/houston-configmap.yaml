@@ -99,6 +99,17 @@ data:
           requests.ephemeral-storage: "50Gi"
           limits.ephemeral-storage: "50Gi"
 
+        # This is here for backward compatability.
+        # 0.11+ versions of Airflow have this defined
+        # so this needs to be passed through to all upgrades.
+        podMutation:
+          tolerations: []
+
+        # Enable cleanup CronJob in Airflow deployents
+        # to cleanup evicted/failed/succeeded pods.
+        cleanup:
+          enabled: true
+
         # Disable the postgres subchart. The platform pass credentials down
         # from the platform configuration.
         postgresql:
