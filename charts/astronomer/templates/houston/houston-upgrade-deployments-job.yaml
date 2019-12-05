@@ -1,11 +1,11 @@
 #######################################
 ## Airflow Post Deployment Upgrade Hook
 #######################################
-{{- if .Values.houston.automaticUpgrades.enabled }}
+{{- if .Values.houston.upgradeDeployments.enabled }}
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: "{{ .Release.Name }}-deployment-post-upgrade-hook"
+  name: {{ .Release.Name }}-upgrade-deployments
   labels:
     tier: astronomer
     component: houston
@@ -20,7 +20,18 @@ metadata:
     "helm.sh/hook-delete-policy": hook-succeeded,hook-failed
 spec:
   template:
+    metadata:
+      labels:
+        tier: astronomer
+        component: houston
+        release: {{ .Release.Name }}
     spec:
+      nodeSelector:
+{{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
+      affinity:
+{{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 8 }}
+      tolerations:
+{{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       restartPolicy: Never
       containers:
         - name: post-upgrade-job

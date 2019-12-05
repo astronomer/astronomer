@@ -1,11 +1,11 @@
 ################################
 ## Houston Cleanup CronJob
 #################################
-{{- if .Values.houston.cleanup.enabled }}
+{{- if .Values.houston.cleanupDeployments.enabled }}
 apiVersion: batch/v1beta1
 kind: CronJob
 metadata:
-  name: {{ .Release.Name }}-cleanup
+  name: {{ .Release.Name }}-cleanup-deployments
   labels:
     tier: astronomer
     component: houston
@@ -13,17 +13,28 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 spec:
-  schedule: {{ .Values.houston.cleanup.schedule }}
+  schedule: {{ .Values.houston.cleanupDeployments.schedule }}
   jobTemplate:
     spec:
       template:
+        metadata:
+          labels:
+            tier: astronomer
+            component: houston
+            release: {{ .Release.Name }}
         spec:
+          nodeSelector:
+{{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 12 }}
+          affinity:
+{{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 12 }}
+          tolerations:
+{{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 12 }}
           restartPolicy: Never
           containers:
             - name: cleanup
               image: {{ template "houston.image" . }}
               imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
-              command: ["npm", "run", "cleanup-deployments", "--older-than={{ .Values.houston.cleanup.olderThan }}"]
+              command: ["npm", "run", "cleanup-deployments", "--older-than={{ .Values.houston.cleanupDeployments.olderThan }}"]
               volumeMounts:
                 {{- include "houston_volume_mounts" . | indent 16 }}
               env:

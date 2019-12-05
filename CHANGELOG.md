@@ -3,18 +3,19 @@
 All notable changes to this project will be documented in this file.
 
 ## [0.11.0] - 2019-12-x
+- Official Debian Image
+- Platform-level support for multiple Airflow images
 - Automated Airflow Deployment Updates
 - Alert for Pods Failing to Schedule at Platform Level
-- Official Debian Image
 - Report current image tag to users
 - Improved user search
-- Platform-level support for multiple Airflow images
-- Cleanup Airflow Deployment pods that have been evicted/failed/succeeded
+- Cleanup Airflow Deployment pods that have been evicted/failed/succeeded (adjust config)
 - Control Airflow Deployment migrations
+- Auto delete deployments that have expired
 - Clean up deleted Airflow Deployment data (database, images)
 - Allow Service Accounts access to Airflow Webserver / API
 - Support for custom node pool for dynamic pods
-- Support for Helm 2.15.1+
+- Support for Helm 2.15.2
 - Support for Global Service Accounts
 - Support for customizing what permissions normal users have in platform
 - Bugfix: Missing role on Users tab

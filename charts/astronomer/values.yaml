@@ -94,25 +94,33 @@ houston:
   # https://github.com/astronomer/houston-api/blob/master/config/default.yaml
   config: {}
 
-  cleanup:
-    # Enable cleanup CronJob
+  # Automatically upgrade Airflow deployments to the latest
+  # version specified by Houston configuration.
+  # This runs as a Job after helm upgrades.
+  upgradeDeployments:
     enabled: true
 
-    # Run at midnight every 15 days
-    schedule: "0 0 */15 * *"
-
-    # Cleanup deployments older than this many days
-    olderThan: 14
-
-  automaticUpgrades:
-    enabled: true
-
+  # Expire deployments that have gone past trial date in Houston
+  # This runs as a CronJob
   expireDeployments:
     # Enable expire deployments CronJob
     enabled: true
 
-    # Run at midnight every 15 days
-    schedule: "0 0 */10 * *"
+    # Default here is to run at midnight every night
+    schedule: "0 0 * * *"
+
+  # Cleanup deployments that have been soft-deleted in Houston
+  # This runs as a CronJob
+  cleanupDeployments:
+    # Enable cleanup CronJob
+    enabled: true
+
+    # Default here is to run at midnight every night
+    schedule: "0 0 * * *"
+
+    # Cleanup deployments older than this many days
+    olderThan: 14
+
 
 prisma:
   env: []

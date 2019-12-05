@@ -1,5 +1,5 @@
 ########################################
-## Houston Expire Deployments CronJob ##
+## Houston Expire Deployments CronJob
 ########################################
 {{- if .Values.houston.expireDeployments.enabled }}
 apiVersion: batch/v1beta1
@@ -17,7 +17,18 @@ spec:
   jobTemplate:
     spec:
       template:
+        metadata:
+          labels:
+            tier: astronomer
+            component: houston
+            release: {{ .Release.Name }}
         spec:
+          nodeSelector:
+{{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 12 }}
+          affinity:
+{{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 12 }}
+          tolerations:
+{{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 12 }}
           restartPolicy: Never
           containers:
             - name: expire-deployments
