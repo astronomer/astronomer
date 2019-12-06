@@ -34,7 +34,8 @@ spec:
             - name: cleanup
               image: {{ template "houston.image" . }}
               imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
-              command: ["npm", "run", "cleanup-deployments", "--older-than={{ .Values.houston.cleanupDeployments.olderThan }}"]
+              # If you supply only args for a Container, the default Entrypoint defined in the Docker image is run with the args that you supplied.
+              args: ["npm", "run", "cleanup-deployments", "--older-than={{ .Values.houston.cleanupDeployments.olderThan }}"]
               volumeMounts:
                 {{- include "houston_volume_mounts" . | indent 16 }}
               env:
