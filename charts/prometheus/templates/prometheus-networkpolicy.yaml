@@ -31,6 +31,12 @@ spec:
           tier: monitoring
           component: grafana
           release: {{ .Release.Name }}
+    # It is sometimes useful to whitelist other pods,
+    # for example admin Airflow tasks.
+    {{- range .Values.ingressNetworkPolicyExtraSelectors }}
+    -
+    {{- toYaml . | nindent 6 }}
+    {{- end }}
     ports:
     - protocol: TCP
       port: {{ .Values.ports.http }}

@@ -38,3 +38,5 @@ persistence:
 
 ports:
   http: 9090
+
+ingressNetworkPolicyExtraSelectors: []
