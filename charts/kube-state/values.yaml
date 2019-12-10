@@ -9,7 +9,7 @@ tolerations: []
 images:
   kubeState:
     repository: astronomerinc/ap-kube-state
-    tag: 0.11.0-alpha.9
+    tag: 0.11.0-alpha.10
     pullPolicy: IfNotPresent
 
 env: {}
