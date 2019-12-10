@@ -1,0 +1,9 @@
+#!/usr/bin/env sh
+
+set -e
+
+# Substitue env vars
+envsubst '$APP_API_LOC_HTTPS $APP_API_LOC_WSS $ANALYTICS_TRACKING_ID $STRIPE_PK' < /etc/nginx/nginx.conf.tpl > /etc/nginx/nginx.conf
+
+# Run the original command
+exec nginx -g 'daemon off;'
