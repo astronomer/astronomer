@@ -19,6 +19,7 @@ spec:
       template:
         spec:
           restartPolicy: Never
+          serviceAccountName: {{ .Release.Name }}-cleanup-serviceaccount
           containers:
             - name: airflow-cleanup-pods
               image: {{ template "airflow_image" . }}
