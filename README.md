@@ -62,22 +62,36 @@ Modify the "tags:" in configs/local-dev.yaml
 - monitoring: Prometheus
 - kubed: leave on
 
-#### Swap a component with a local image
+#### Add a Docker image into KinD's nodes (so it's available for pods):
+```
+kind load docker-image <your local image tag>
+```
 
-- Build new image locally
+#### Make use of that image:
+
+Make note of your pod name
 ```
-docker build -t my-custom-image:unique-tag ./my-image-dir
-kind load docker-image my-custom-image:unique-tag
+kubectl get pods -n astronomer
 ```
-- List deployments
+
+Find the corresponding deployment, daemonset, or statefulset
 ```
-kubectl get deployments -n astronomer
+kubectl get deployment -n astronomer
 ```
-- Edit the deployment
+
+Replace the pod with the new image
+Look for "image" on the appropriate container and replace with the local tag,
+and set the pull policy to never.
 ```
-kubectl edit deployment -n astronomer <deployment name>
+kubectl edit deployment -n astronomer <your deployment>
 ```
-- Search for "image" and replace the appropriate image with the local image name.
+
+#### Change Kubernetes version:
+```
+export KUBE_VERSION='v1.16.3'
+bin/reset-local-dev
+```
+
 
 ## Releasing
 
