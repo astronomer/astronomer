@@ -51,7 +51,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "iteration": 1571838876460,
+  "iteration": 1576089749041,
   "links": [],
   "panels": [
     {
@@ -145,7 +145,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum by (release) (\n  kube_pod_container_status_running{release=~\"$deployment\"} and on(pod,namespace) kube_pod_labels{label_dag_id=\"\"}\n) -\ncount by (release) (\n  kube_pod_container_status_running{release=~\"$deployment\"} and on(pod,namespace) kube_pod_labels{label_dag_id=\"\"}\n)",
+          "expr": "sum by (release) (\n  kube_pod_container_status_running{release=~\"$deployment\", container=~\".*(scheduler|scheduler-gc|webserver|worker|statsd|pgbouncer|metrics-exporter|redis|flower)\"} and on(pod,namespace) kube_pod_labels{label_dag_id=\"\"}\n) -\ncount by (release) (\n  kube_pod_container_status_running{release=~\"$deployment\", container=~\".*(scheduler|scheduler-gc|webserver|worker|statsd|pgbouncer|metrics-exporter|redis|flower)\"} and on(pod,namespace) kube_pod_labels{label_dag_id=\"\"}\n)",
           "format": "time_series",
           "instant": true,
           "intervalFactor": 1,
@@ -2090,7 +2090,7 @@
       ],
       "targets": [
         {
-          "expr": "sort_desc(max by (container, pod, reason) (  \nmax by (container, pod) ( \nsort_desc(kube_pod_container_status_waiting{release=~\"$deployment\"} \nand on(pod,namespace) kube_pod_labels{label_dag_id=\"\"})  )   \nor  max by (container, reason) (      sort_desc(kube_pod_container_status_waiting_reason{release=~\"$deployment\"}==1 and on(pod,namespace) kube_pod_labels{label_dag_id=\"\"}) )   \nor  max by (container, reason) (    sort_desc(kube_pod_container_status_terminated_reason{release=~\"$deployment\"}==1 and on(pod,namespace) kube_pod_labels{label_dag_id=\"\"}) )))",
+          "expr": "sort_desc(max by (container, pod, reason) (  \nmax by (container, pod) ( \nsort_desc(kube_pod_container_status_waiting{release=~\"$deployment\", container=~\".*(scheduler|scheduler-gc|webserver|worker|statsd|pgbouncer|metrics-exporter|redis|flower)\"} \nand on(pod,namespace) kube_pod_labels{label_dag_id=\"\"})  )   \nor  max by (container, reason) (      sort_desc(kube_pod_container_status_waiting_reason{release=~\"$deployment\", container=~\".*(scheduler|scheduler-gc|webserver|worker|statsd|pgbouncer|metrics-exporter|redis|flower)\"}==1 and on(pod,namespace) kube_pod_labels{label_dag_id=\"\"}) )   \nor  max by (container, reason) (    sort_desc(kube_pod_container_status_terminated_reason{release=~\"$deployment\", container=~\".*(scheduler|scheduler-gc|webserver|worker|statsd|pgbouncer|metrics-exporter|redis|flower)\"}==1 and on(pod,namespace) kube_pod_labels{label_dag_id=\"\"}) )))",
           "format": "table",
           "instant": true,
           "intervalFactor": 1,
