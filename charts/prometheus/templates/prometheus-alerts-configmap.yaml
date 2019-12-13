@@ -74,16 +74,6 @@ data:
             summary: {{ printf "%q" "{{ $labels.deployment }} is creating tasks faster than it's clearing them." }}
             description: {{ printf "%q" "{{ $labels.deployment }}: the number of pending tasks has been increasing for 30 minutes" }}
 
-        - alert: CpuThrottlingInDeployment
-          expr: 100 * (increase(container_cpu_cfs_throttled_periods_total{namespace!="{{ .Release.Name }}", container_name!~".*worker.*|()"}[5m]) / increase(container_cpu_cfs_periods_total{namespace!="{{ .Release.Name }}", container_name!~".*worker.*|()"}[5m])) > 75
-          for: 5m
-          labels:
-            tier: airflow
-            severity: warning
-          annotations:
-            summary: {{ printf "%q" "{{ $labels.pod_name }} ({{ $labels.container_name }}) in namespace {{ $labels.namespace }} is getting throttled {{ $value }}% of the time" }}
-            description: "In the past 5 minutes, one or more components in the deployment are experiencing CPU throttling."
-
       - name: platform
         rules:
 

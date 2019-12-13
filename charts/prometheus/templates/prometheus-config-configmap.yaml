@@ -165,6 +165,7 @@ data:
             target_label: release
 
       - job_name: fluentd
+        scrape_interval: 30s
         kubernetes_sd_configs:
           - role: pod
             namespaces:
@@ -182,6 +183,10 @@ data:
             regex: ([^:]+)(?::\d+)?;(\d+)
             replacement: $1:$2
             target_label: __address__
+        metric_relabel_configs:
+          - source_labels: [__name__]
+            regex: 'fluentd_tail_file_.*'
+            action: drop
 
       - job_name: airflow
         scrape_interval: 5s # Faster scrape to power dashboards
@@ -209,6 +214,43 @@ data:
             regex: "^(.*-.*-[0-9]{4})-.*$"
             replacement: "$1"
             target_label: deployment
+            # Drop metrics that are task or dag specific
+          - source_labels: [__name__]
+            regex: 'airflow_task_instance_created_.*'
+            action: drop
+          - source_labels: [__name__]
+            regex: 'airflow_task_removed_from_dag_.*'
+            action: drop
+          - source_labels: [__name__]
+            regex: 'airflow_task_restored_to_dag_.*'
+            action: drop
+          - source_labels: [__name__]
+            regex: 'airflow_dagrun_duration_success_.*'
+            action: drop
+          - source_labels: [__name__]
+            regex: 'airflow_dagrun_duration_failed_.*'
+            action: drop
+          - source_labels: [__name__]
+            regex: 'airflow_dagrun_dependency_check_.*_count'
+            action: drop
+          - source_labels: [__name__]
+            regex: 'airflow_dagrun_dependency_check_.*_sum'
+            action: drop
+          - source_labels: [__name__]
+            regex: 'airflow_dagrun_schedule_delay_.*'
+            action: drop
+          - source_labels: [__name__]
+            regex: 'airflow_dagrun_duration_success_.*'
+            action: drop
+          - source_labels: [__name__]
+            regex: 'airflow_dagrun_duration_failed_.*'
+            action: drop
+          - source_labels: [__name__]
+            regex: 'airflow_dag_processing_last_duration_.*_count'
+            action: drop
+          - source_labels: [__name__]
+            regex: 'airflow_dag_processing_last_duration_.*_sum'
+            action: drop
 
       {{- if not .Values.global.singleNamespace }}
       - job_name: kubernetes-nodes
