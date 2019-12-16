@@ -27,6 +27,12 @@ spec:
         release: {{ .Release.Name }}
     spec:
       restartPolicy: OnFailure
+      nodeSelector:
+{{ toYaml .Values.nodeSelector | indent 8 }}
+      affinity:
+{{ toYaml .Values.affinity | indent 8 }}
+      tolerations:
+{{ toYaml .Values.tolerations | indent 8 }}
       containers:
         - name: create-user
           image: {{ template "airflow_image" . }}
