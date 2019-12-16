@@ -28,6 +28,10 @@ spec:
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/prometheus-config-configmap.yaml") . | sha256sum }}
         checksum/alerts: {{ include (print $.Template.BasePath "/prometheus-alerts-configmap.yaml") . | sha256sum }}
+{{- if .Values.global.istioEnabled }}
+        sidecar.istio.io/proxyCPU: "500m"
+        sidecar.istio.io/proxyMemory: "400Mi"
+{{- end }}
     spec:
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
