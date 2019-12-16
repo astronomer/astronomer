@@ -19,6 +19,12 @@ spec:
       template:
         spec:
           restartPolicy: Never
+          nodeSelector:
+{{ toYaml .Values.nodeSelector | indent 12 }}
+          affinity:
+{{ toYaml .Values.affinity | indent 12 }}
+          tolerations:
+{{ toYaml .Values.tolerations | indent 12 }}
           serviceAccountName: {{ .Release.Name }}-cleanup-serviceaccount
           containers:
             - name: airflow-cleanup-pods
