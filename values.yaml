@@ -45,11 +45,6 @@ global:
     affinity: {}
     tolerations: []
 
-  deploymentNodePool:
-    nodeSelector: {}
-    affinity: {}
-    tolerations: []
-
   privateRegistry:
     enabled: false
     repository: ~
