@@ -43,11 +43,10 @@ RUN apk add --no-cache --virtual .build-deps \
 		--depth 1 \
 		--branch ${VERSION} \
 		${REPO_URL} . \
-	&& npm install \
-	&& npm run build-production \
+	&& yarn install \
+	&& yarn build \
 	&& mkdir -p ${SERVER_ROOT} \
-	&& mv dist/* ${SERVER_ROOT} \
-	&& mv src/favicon.ico ${SERVER_ROOT} \
+	&& mv build/* ${SERVER_ROOT} \
 	&& rm -rf ${ORBIT_PATH} \
 	&& mkdir -p /run/nginx \
 	&& apk del .build-deps
