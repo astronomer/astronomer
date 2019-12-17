@@ -60,7 +60,7 @@ data:
         # This version number controls the default Airflow chart version that will be installed
         # when creating a new deployment in the system. This is also used to ensure all
         # child airflow deployments are kept up to date and on the latest version.
-        version: 1.10.3
+        version: 0.10.3
 
       # Airflow image settings
       # This is a list of supported airflow versions and corresponding docker tag
