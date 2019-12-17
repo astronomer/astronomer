@@ -23,7 +23,7 @@ data:
       @type tail
       path /var/log/containers/*.log
       pos_file "/var/log/#{ENV['RELEASE']}-fluentd-containers.log.pos"
-      exclude_path ["/var/log/containers/#{ENV['RELEASE']}-fluentd*"]
+      exclude_path ["/var/log/containers/*fluentd*"]
       <parse>
         @type regexp
         expression /^(?<time>.+) (?<stream>stdout|stderr)( (?<logtag>.))? (?<log>.*)$/
