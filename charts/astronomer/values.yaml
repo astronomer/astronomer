@@ -24,6 +24,10 @@ images:
     repository: astronomerinc/ap-orbit-ui
     tag: 0.11.0-alpha.12
     pullPolicy: IfNotPresent
+  norbit:
+    repository: astronomerinc/ap-norbit-ui
+    tag: latest
+    pullPolicy: Always
   dbBootstrapper:
     repository: astronomerinc/ap-db-bootstrapper
     tag: 0.11.0-alpha.12
@@ -38,6 +42,17 @@ images:
     pullPolicy: IfNotPresent
 
 orbit:
+  env: []
+  resources: {}
+  #  limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  #  requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+norbit:
+  enabled: false
   env: []
   resources: {}
   #  limits:
@@ -195,6 +210,7 @@ ports:
   commanderHTTP: 8880
   commanderGRPC: 50051
   orbitHTTP: 8080
+  norbitHTTP: 8080
   registryHTTP: 5000
   registryScrape: 5001
   installHTTP: 80

@@ -1,0 +1,26 @@
+################################
+## Astronomer Norbit Service
+#################################
+{{- if .Values.norbit.enabled }}
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ .Release.Name }}-norbit
+  labels:
+    component: norbit
+    tier: astronomer
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+spec:
+  type: ClusterIP
+  selector:
+    component: norbit
+    tier: astronomer
+    release: {{ .Release.Name }}
+  ports:
+    - name: norbit-http
+      protocol: TCP
+      port: {{ .Values.ports.norbitHTTP }}
+      targetPort: {{ .Values.ports.norbitHTTP }}
+{{- end }}

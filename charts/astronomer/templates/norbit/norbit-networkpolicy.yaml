@@ -1,13 +1,14 @@
 ################################
-## Astronomer Orbit NetworkPolicy
+## Astronomer Norbit NetworkPolicy
 #################################
+{{- if .Values.norbit.enabled }}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: {{ .Release.Name }}-orbit-policy
+  name: {{ .Release.Name }}-norbit-policy
   labels:
     tier: astronomer
-    component: orbit-policy
+    component: norbit-policy
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
@@ -15,7 +16,7 @@ spec:
   podSelector:
     matchLabels:
       tier: astronomer
-      component: orbit
+      component: norbit
       release: {{ .Release.Name }}
   policyTypes:
   - Ingress
@@ -27,4 +28,5 @@ spec:
           component: ingress-controller
     ports:
     - protocol: TCP
-      port: {{ .Values.ports.orbitHTTP }}
+      port: {{ .Values.ports.norbitHTTP }}
+{{- end }}

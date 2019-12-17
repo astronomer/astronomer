@@ -41,6 +41,14 @@
 {{- end }}
 {{- end }}
 
+{{ define "norbit.image" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-norbit-ui:{{ .Values.images.norbit.tag }}
+{{- else -}}
+{{ .Values.images.norbit.repository }}:{{ .Values.images.norbit.tag }}
+{{- end }}
+{{- end }}
+
 {{ define "registry.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
 {{ .Values.global.privateRegistry.repository }}/ap-registry:{{ .Values.images.registry.tag }}
