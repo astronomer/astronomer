@@ -5,7 +5,7 @@
 apiVersion: batch/v1beta1
 kind: CronJob
 metadata:
-  name: {{ .Release.Name }}-expire-deployments
+  name: {{ .Release.Name }}-houston-expire-deployments
   labels:
     tier: astronomer
     component: houston

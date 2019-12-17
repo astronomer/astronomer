@@ -5,7 +5,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ .Release.Name }}-upgrade-deployments
+  name: {{ .Release.Name }}-houston-upgrade-deployments
   labels:
     tier: astronomer
     component: houston

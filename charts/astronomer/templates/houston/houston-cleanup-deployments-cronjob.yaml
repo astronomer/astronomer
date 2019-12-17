@@ -5,7 +5,7 @@
 apiVersion: batch/v1beta1
 kind: CronJob
 metadata:
-  name: {{ .Release.Name }}-cleanup-deployments
+  name: {{ .Release.Name }}-houston-cleanup-deployments
   labels:
     tier: astronomer
     component: houston
