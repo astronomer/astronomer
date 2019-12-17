@@ -22,7 +22,7 @@ LABEL io.astronomer.docker.module="astronomer"
 LABEL io.astronomer.docker.component="norbit-ui"
 
 ARG VERSION="v0.11.0-alpha.12"
-ENV REPO="github.com/astronomerio/new-orbit"
+ENV REPO="github.com/astronomer/new-orbit"
 ENV REPO_URL="https://${REPO}"
 ENV ORBIT_PATH=/tmp/norbit-ui
 ENV SERVER_ROOT=/usr/share/nginx/html
