@@ -23,11 +23,17 @@ data:
       @type tail
       path /var/log/containers/*.log
       pos_file "/var/log/#{ENV['RELEASE']}-fluentd-containers.log.pos"
-      exclude_path ["/var/log/containers/*fluentd*"]
+      exclude_path ["/var/log/*fluentd*", "/var/log/containers/*fluentd*"]
       <parse>
-        @type regexp
-        expression /^(?<time>.+) (?<stream>stdout|stderr)( (?<logtag>.))? (?<log>.*)$/
-        time_format %Y-%m-%dT%H:%M:%S.%NZ
+        @type multi_format
+        <pattern>
+          format json
+          time_format %Y-%m-%dT%H:%M:%S.%NZ
+        </pattern>
+        <pattern>
+          format /^(?<time>.+) (?<stream>stdout|stderr)( (?<logtag>.))? (?<log>.*)$/
+          time_format %Y-%m-%dT%H:%M:%S.%NZ
+        </pattern>
       </parse>
       tag raw.kubernetes.*
       format json
