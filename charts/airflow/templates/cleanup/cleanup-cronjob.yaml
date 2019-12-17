@@ -26,6 +26,10 @@ spec:
           tolerations:
 {{ toYaml .Values.tolerations | indent 12 }}
           serviceAccountName: {{ .Release.Name }}-cleanup-serviceaccount
+          {{- if or .Values.registry.secretName .Values.registry.connection }}
+          imagePullSecrets:
+            - name: {{ template "registry_secret" . }}
+          {{- end }}
           containers:
             - name: airflow-cleanup-pods
               image: {{ template "airflow_image" . }}
