@@ -18,6 +18,7 @@ images:
 forceNamespaceIsolation: true
 ingressClass: ~
 
+replicas: 1
 resources: {}
 #  limits:
 #   cpu: 100m

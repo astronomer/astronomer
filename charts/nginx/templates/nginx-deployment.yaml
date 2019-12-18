@@ -12,7 +12,7 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 spec:
-  replicas: 1
+  replicas: {{ .Values.replicas }}
   selector:
     matchLabels:
       tier: {{ template "nginx.name" . }}
@@ -28,8 +28,8 @@ spec:
         traffic.sidecar.istio.io/includeInboundPorts: ""
         checksum/configmap: {{ include (print $.Template.BasePath "/nginx-configmap.yaml") . | sha256sum }}
         checksum/headers-configmap: {{ include (print $.Template.BasePath "/nginx-headers-configmap.yaml") . | sha256sum }}
-        {{- if .Values.global.istioEnabled }}	
-        sidecar.istio.io/inject: "false"	
+        {{- if .Values.global.istioEnabled }}
+        sidecar.istio.io/inject: "false"
         {{- end }}
     spec:
       serviceAccountName: {{ template "nginx.fullname" . }}
