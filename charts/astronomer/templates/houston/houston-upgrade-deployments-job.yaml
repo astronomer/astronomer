@@ -19,6 +19,7 @@ metadata:
     "helm.sh/hook-weight": "1"
     "helm.sh/hook-delete-policy": before-hook-creation
 spec:
+  backoffLimit: 1
   template:
     metadata:
       labels:

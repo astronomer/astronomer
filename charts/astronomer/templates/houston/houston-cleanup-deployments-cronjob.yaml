@@ -16,6 +16,7 @@ spec:
   schedule: {{ .Values.houston.cleanupDeployments.schedule }}
   jobTemplate:
     spec:
+      backoffLimit: 1
       template:
         metadata:
           labels:
