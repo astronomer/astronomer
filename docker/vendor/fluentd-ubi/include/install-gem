@@ -1,0 +1,8 @@
+cd /usr/local
+wget https://cache.ruby-lang.org/pub/ruby/2.6/ruby-2.6.5.tar.gz
+tar xzf ruby-2.6.5.tar.gz
+cd /usr/local/ruby-2.6.5
+./configure
+cd /usr/local/ruby-2.6.5
+make && make install
+
