@@ -7,7 +7,7 @@ kind: CronJob
 metadata:
   name: {{ .Release.Name }}-cleanup
   labels:
-    tier: airflow-cleanup-pods
+    tier: airflow
     component: airflow-cleanup-pods
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: {{ .Release.Name }}
@@ -37,7 +37,8 @@ spec:
             - name: airflow-cleanup-pods
               image: {{ template "default_airflow_image" . }}
               imagePullPolicy: {{ .Values.images.airflow.pullPolicy }}
-              args: ["airflow-cleanup-pods", "--namespace={{ .Release.Namespace }}"]
+              # Don't use entry point here, we don't need to wait on pg-bouncer etc being available.
+              command: ["airflow-cleanup-pods", "--namespace={{ .Release.Namespace }}"]
               env:
               {{- include "custom_airflow_environment" . | indent 12 }}
               {{- include "standard_airflow_environment" . | indent 12 }}
