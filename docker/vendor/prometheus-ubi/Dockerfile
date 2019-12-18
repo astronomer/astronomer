@@ -14,7 +14,7 @@
 # limitations under the License.
 
 
-### STAGE 1 - Creation of busybox and alertmanager binaries in UBI
+### STAGE 1 - Creation of busybox and prometheus binaries in UBI
 
 FROM registry.access.redhat.com/ubi7/ubi:7.7 AS builder
 
@@ -39,13 +39,14 @@ RUN set -eux; \
 		git \
 		coreutils \
 		kernel-headers \
-		https://buildlogs.centos.org/centos/7/sclo/x86_64/rh/go-toolset-7/go-toolset-7-golang-1.10.2-4.el7.x86_64.rpm \
-		https://buildlogs.centos.org/centos/7/sclo/x86_64/rh/go-toolset-7/go-toolset-7-runtime-1.10.2-4.el7.x86_64.rpm \
-		https://buildlogs.centos.org/centos/7/sclo/x86_64/rh/go-toolset-7/go-toolset-7-golang-bin-1.10.2-4.el7.x86_64.rpm \
-		https://buildlogs.centos.org/centos/7/sclo/x86_64/rh/go-toolset-7/go-toolset-7-golang-src-1.10.2-4.el7.noarch.rpm \
-		https://buildlogs.centos.org/centos/7/sclo/x86_64/rh/go-toolset-7/go-toolset-7-1.10.2-4.el7.x86_64.rpm \
 	; \
-	rm -rf /var/lib/apt/lists/*
+	rm -rf /var/lib/apt/lists/* ; \
+    curl -O https://storage.googleapis.com/golang/go1.13.5.linux-amd64.tar.gz; \
+    tar -xf go1.13.5.linux-amd64.tar.gz ; \
+    mv go /usr/local;
+
+ENV PATH=$PATH:/usr/local/go/bin:${GOBIN}
+
 
 # pub   1024D/ACC9965B 2006-12-12
 #       Key fingerprint = C9E9 416F 76E6 10DB D09D  040F 47B7 0C55 ACC9 965B
@@ -58,7 +59,7 @@ RUN set -eux; \
 	curl -fL -o busybox.tar.bz2 "https://busybox.net/downloads/$tarball"; \
 	curl -fL -o busybox.tar.bz2.sig "https://busybox.net/downloads/$tarball.sig"; \
 	gpg --batch --verify busybox.tar.bz2.sig busybox.tar.bz2; \
-	mkdir -p /usr/src/busybox; \
+	mkdir -p /usr/src/busybox /go/src/github.com/prometheus/alertmanager; \
 	tar -xf busybox.tar.bz2 -C /usr/src/busybox --strip-components 1; \
 	rm busybox.tar.bz2*
 
@@ -231,21 +232,21 @@ RUN cp -L /etc/resolv.conf rootfs/etc/; \
 	rm rootfs/etc/resolv.conf
 
 
-ARG VERSION="v0.15.2"
-ENV REPO="github.com/prometheus/alertmanager"
+ARG VERSION="v2.10.0"
+ENV REPO="github.com/prometheus/prometheus"
 ENV REPO_URL="https://${REPO}"
 
-WORKDIR /root/go/src/github.com/prometheus/alertmanager
+WORKDIR /root/go/src/github.com/prometheus/prometheus
 
 RUN git clone \
 		-c advice.detachedHead=false \
 		--depth 1 \
 		--branch ${VERSION} \
 		${REPO_URL} . \
-    && scl enable go-toolset-7 'make build'
+    && make build
 
 
-### STAGE 2 - Copying busybox and alertmanager binaries into a separate image
+### STAGE 2 - Copying busybox and prometheus binaries into a separate image
 
 FROM scratch
 LABEL maintainer="Astronomer <humans@astronomer.io>"
@@ -255,13 +256,26 @@ LABEL io.astronomer.docker=true
 LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
 
 COPY --from=builder /usr/src/busybox/rootfs /
-COPY --from=builder /root/go/src/github.com/prometheus/alertmanager/amtool /bin/amtool
-COPY --from=builder /root/go/src/github.com/prometheus/alertmanager/alertmanager /bin/alertmanager
-COPY --from=builder /root/go/src/github.com/prometheus/alertmanager/examples/ha/alertmanager.yml /etc/alertmanager/alertmanager.yml
+COPY --from=builder /root/go/src/github.com/prometheus/prometheus/prometheus        /bin/prometheus
+COPY --from=builder /root/go/src/github.com/prometheus/prometheus/promtool          /bin/promtool
+COPY --from=builder /root/go/src/github.com/prometheus/prometheus/documentation/examples/prometheus.yml  /etc/prometheus/prometheus.yml
+COPY --from=builder /root/go/src/github.com/prometheus/prometheus/console_libraries/                     /usr/share/prometheus/console_libraries/
+COPY --from=builder /root/go/src/github.com/prometheus/prometheus/consoles/                              /usr/share/prometheus/consoles/
 
+COPY include/docker-compose-config.yml /etc/prometheus/config/docker-compose.yml
+COPY include/kubernetes-config.yml /etc/prometheus/config/kubernetes.yml
+COPY include/dcos-config.yml /etc/prometheus/config/dcos.yml
 
-EXPOSE     9093
-VOLUME     [ "/alertmanager" ]
-WORKDIR    /etc/alertmanager
-ENTRYPOINT [ "/bin/alertmanager" ]
-CMD        [ "--storage.path=/alertmanager" ]
+RUN ln -s /usr/share/prometheus/console_libraries /usr/share/prometheus/consoles/ /etc/prometheus/
+RUN mkdir -p /prometheus && \
+    chown -R nobody:nogroup etc/prometheus /prometheus
+
+USER       nobody
+EXPOSE     9090
+VOLUME     [ "/prometheus" ]
+WORKDIR    /prometheus
+ENTRYPOINT [ "/bin/prometheus" ]
+CMD        [ "--config.file=/etc/prometheus/prometheus.yml", \
+             "--storage.tsdb.path=/prometheus", \
+             "--web.console.libraries=/usr/share/prometheus/console_libraries", \
+             "--web.console.templates=/usr/share/prometheus/consoles" ]

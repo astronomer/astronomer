@@ -1,0 +1,2 @@
+# Currently using Kubernetes ConfigMap to template release name into hostname.
+# Rather than scraping an entire cluster, we can target just our containers.
