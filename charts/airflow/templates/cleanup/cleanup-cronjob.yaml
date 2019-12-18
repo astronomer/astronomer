@@ -33,7 +33,7 @@ spec:
           {{- end }}
           containers:
             - name: airflow-cleanup-pods
-              image: {{ template "airflow_image" . }}
+              image: {{ template "default_airflow_image" . }}
               imagePullPolicy: {{ .Values.images.airflow.pullPolicy }}
               args: ["airflow-cleanup-pods", "--namespace={{ .Release.Namespace }}"]
               env:

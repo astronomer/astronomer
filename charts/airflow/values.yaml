@@ -56,6 +56,9 @@ executor: "KubernetesExecutor"
 # If this is true and using the CeleryExecutor, the workers will be able to launch pods.
 allowPodLaunching: true
 
+# Default airflow repository
+defaultAirflowRepository: astronomerinc/ap-airflow
+
 # Default airflow tag to deploy
 defaultAirflowTag: 1.10.5-alpine3.10
 
