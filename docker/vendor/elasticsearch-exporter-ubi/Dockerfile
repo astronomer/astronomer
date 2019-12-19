@@ -14,7 +14,7 @@
 # limitations under the License.
 
 
-### STAGE 1 - Creation of busybox and statsd_exporter binaries in UBI
+### STAGE 1 - Creation of busybox and elasticsearch_exporter binaries in UBI
 
 FROM registry.access.redhat.com/ubi7/ubi:7.7 AS builder
 
@@ -246,7 +246,7 @@ RUN git clone \
     && make build
 
 
-### STAGE 2 - Copying busybox and statsd_exporter binaries into a separate image
+### STAGE 2 - Copying busybox and elasticsearch_exporter binaries into a separate image
 
 FROM scratch
 LABEL maintainer="Astronomer <humans@astronomer.io>"
