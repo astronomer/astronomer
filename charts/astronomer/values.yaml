@@ -119,7 +119,7 @@ houston:
   # This runs as a CronJob
   expireDeployments:
     # Enable expire deployments CronJob
-    enabled: true
+    enabled: false
 
     # Default here is to run at midnight every night
     schedule: "0 0 * * *"
