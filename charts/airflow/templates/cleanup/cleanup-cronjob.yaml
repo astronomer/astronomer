@@ -12,6 +12,9 @@ metadata:
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+{{- with .Values.labels }}
+{{ toYaml . | indent 4 }}
+{{- end }}
 spec:
   schedule: "{{ .Values.cleanup.schedule }}"
   jobTemplate:
