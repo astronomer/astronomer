@@ -17,10 +17,10 @@ metadata:
 {{- end }}
 spec:
   schedule: "{{ .Values.cleanup.schedule }}"
+  # The cron job does not allow concurrent runs; if it is time for a new job run and the previous job run hasn’t finished yet, the cron job skips the new job run
+  concurrencyPolicy: Forbid
   jobTemplate:
     spec:
-      # The cron job does not allow concurrent runs; if it is time for a new job run and the previous job run hasn’t finished yet, the cron job skips the new job run
-      concurrencyPolicy: Forbid
       backoffLimit: 1
       template:
         spec:
