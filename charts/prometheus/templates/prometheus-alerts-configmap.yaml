@@ -107,15 +107,16 @@ data:
           annotations:
             summary: {{ printf "%q" "{{ $labels.pod_name }} ({{ $labels.container_name }}) is getting throttled {{ $value }}% of the time" }}
             description: "In the past 5 minutes, one or more components in the platform namespace are experiencing throttling 80% or more of the time"
+
         - alert: FluentdQueueLarge
-          expr: sum(fluentd_status_buffer_queue_length) > 10
-          for: 5m
+          expr: avg(fluentd_status_buffer_queue_length) > 2
+          for: 15m
           labels:
             tier: platform
             component: fluentd
             severity: urgent
           annotations:
-            summary: "Fluentd unwrittten log queue is geting large"
+            summary: {{ printf "%q" "Average Fluentd buffer queue length is {{ $value }}" }}
             description: "Check on Elastic Search client and try restarting Fluentd pods"
 
         - alert: PrometheusDiskUsage
