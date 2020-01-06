@@ -1,4 +1,5 @@
 #!/bin/bash
+
 if [[ -z "${KUBE_VERSION}" ]]; then
   export KUBE_VERSION='v1.15.6'
 fi

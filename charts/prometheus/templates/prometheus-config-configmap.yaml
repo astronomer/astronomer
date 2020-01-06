@@ -356,4 +356,5 @@ data:
             regex: "^container_network_.*;(.*)-(.*)-([0-9]+)$"
             replacement: "$3"
             target_label: component_instance
+
       {{- end }}

@@ -74,6 +74,19 @@ data:
             summary: {{ printf "%q" "{{ $labels.deployment }} is creating tasks faster than it's clearing them." }}
             description: {{ printf "%q" "{{ $labels.deployment }}: the number of pending tasks has been increasing for 30 minutes" }}
 
+        - alert: ContainerMemoryNearTheLimit
+          expr: |
+            (container_memory_working_set_bytes{namespace=~".*-.*-.*-[0-9]{4}", deployment=~".*-.*-[0-9]{4}", container_name!~"POD|istio-proxy"} /
+            container_spec_memory_limit_bytes{namespace=~".*-.*-.*-[0-9]{4}", deployment=~".*-.*-[0-9]{4}", container_name!~"POD|istio-proxy"}) * 100 > 80 < +Inf
+          for: 1h
+          labels:
+            tier: airflow
+            component: container
+            severity: warning
+          annotations:
+            summary: "A container is using more than 80% of the memory limit"
+            description: {{ printf "%q" "container {{ $labels.container }} in pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is using {{ printf \"%.2f\" $value }}% of available memory." }}
+
       - name: platform
         rules:
 
@@ -196,17 +209,18 @@ data:
             summary: "Namespace in TERMINATING state for more than 1 hour"
             description: {{ printf "%q" "Namespace {{ $labels.namespace }} has been in a TERMINATING state for longer than an hour." }}
 
-        - alert: ContainerMemoryAtTheLimit
+        - alert: ContainerMemoryNearTheLimitPlatform
           expr: |
-            container_memory_working_set_bytes{container_name!="POD"} /
-            container_spec_memory_limit_bytes{container_name!="POD"} > 0.8 < +Inf
+            (container_memory_working_set_bytes{namespace="{{ .Release.Name }}", container_name!="POD"} /
+            container_spec_memory_limit_bytes{namespace="{{ .Release.Name }}", container_name!="POD"}) * 100 > 80 < +Inf
           for: 1h
           labels:
             tier: platform
             component: container
+            severity: warning
           annotations:
-            summary: "Container uses more than 80% of the memory limit"
-            description: {{ printf "%q" "Memory usage for the {{ $labels.container }} Container in the {{ $labels.pod }} Pod is almost at the limit" }}
+            summary: "A container in the platform namespace uses more than 80% of the memory limit"
+            description: {{ printf "%q" "{{ $labels.container }} in {{ $labels.pod }} is using {{ printf \"%.2f\" $value }}% of available memory." }}
 
         - alert: PlatformContainerRestarting
           expr: |
@@ -229,16 +243,29 @@ data:
             summary: "A container in the Astronomer platform namespace is stuck crash looping"
             description: {{ printf "%q" "The container {{ $labels.container }} in pod {{ $labels.pod }} is stuck crash looping" }}
 
-        - alert: KubePodNotReady
+        - alert: KubePodNotReadyInDeployment
           expr: |
-            sum by (namespace, pod) (kube_pod_status_phase{job="kube-state", phase!~"Running|Succeeded"}) > 0
-          for: 15m
+            sum by (namespace, pod) (kube_pod_status_phase{namespace=~".*-.*-.*-[0-9]{4}", job="kube-state", phase=~"Pending|Unknown"}) > 0
+          for: 1h
           labels:
             tier: platform
             component: pod
+            severity: warning
           annotations:
-            summary: "Pod in non-ready state for more than 15 minutes"
-            description: {{ printf "%q" "Pod {{ $labels.namespace }}/{{ $labels.pod }} has been in a non-ready state for longer than 15 minutes." }}
+            summary: "Deployment pod in non-ready state for more than 1 hour. Check on it next buisness day."
+            description: {{ printf "%q" "{{ $labels.pod }} in namespace {{ $labels.namespace }} has been in a non-ready state for longer than an hour." }}
+
+        - alert: KubePodNotReadyInPlatform
+          expr: |
+            sum by (namespace, pod) (kube_pod_status_phase{namespace="{{ .Release.Name }}", job="kube-state", phase=~"Pending|Unknown"}) > 0
+          for: 1h
+          labels:
+            tier: platform
+            component: pod
+            severity: urgent
+          annotations:
+            summary: "Pod in non-ready state for more than 1 hour"
+            description: {{ printf "%q" "{{ $labels.pod }} has been in a non-ready state for longer than an hour." }}
 
         - alert: NginxIngressDown
           expr: |

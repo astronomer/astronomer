@@ -1,9 +1,14 @@
 #!/bin/bash
 
+set -e
+
 # Bit of common bash magic that sets DIR to the directory of this script
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 # The path to the working directory - the root of the repo
 REPO_DIR=$DIR/../
+
+# Fail fast for helm syntax errors
+helm template -f $REPO_DIR/configs/local-dev.yaml $REPO_DIR
 
 source $REPO_DIR/bin/setup-kind
 

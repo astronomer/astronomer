@@ -1,24 +1,43 @@
 ################################
-## Prometheus Service
+## Prometheus Service(s)
 #################################
+{{ range $i, $e := until (int .Values.replicas) }}
+{{- if gt $i 0 }}
+---
+{{- end }}
 kind: Service
 apiVersion: v1
 metadata:
-  name: {{ template "prometheus.fullname" . }}
+  # The fist service is named without a xxx-0
+  # Then the rest are named xxx-1, xxx-2, etc.
+  # This is in order to protect backwards
+  # compatibility
+  {{- if eq $i 0 }}
+  name: {{ template "prometheus.fullname" $ }}
+  {{- else }}
+  name: {{ template "prometheus.fullname" $ }}-{{ $i }}
+  {{- end }}
   labels:
     tier: monitoring
-    component: {{ template "prometheus.name" . }}
-    chart: {{ template "prometheus.chart" . }}
-    release: {{ .Release.Name }}
-    heritage: {{ .Release.Service }}
+    component: {{ template "prometheus.name" $ }}
+    chart: {{ template "prometheus.chart" $ }}
+    release: {{ $.Release.Name }}
+    heritage: {{ $.Release.Service }}
 spec:
   type: ClusterIP
   selector:
     tier: monitoring
-    component: {{ template "prometheus.name" . }}
-    release: {{ .Release.Name }}
+    component: {{ template "prometheus.name" $ }}
+    release: {{ $.Release.Name }}
+    # Prometheus is not designed to be horizontally scalable behind a load balancer.
+    # Instead, replicas are assumed to used in an active/passive configuration
+    # where a component querying prometheus may have application-layer logic
+    # to retry for missing data on the next Service. With this configuration,
+    # each Service will point to a different Pod.
+    statefulset.kubernetes.io/pod-name: {{ template "prometheus.fullname" $ }}-{{ $i }}
   ports:
     - name: prometheus-data
       protocol: TCP
-      port: {{ .Values.ports.http }}
-      targetPort: {{ .Values.ports.http }}
+      port: {{ $.Values.ports.http }}
+      targetPort: {{ $.Values.ports.http }}
+{{ end }}
