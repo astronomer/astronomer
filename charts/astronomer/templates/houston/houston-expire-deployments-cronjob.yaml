@@ -22,6 +22,10 @@ spec:
             tier: astronomer
             component: houston
             release: {{ .Release.Name }}
+          {{- if .Values.global.istioEnabled }}
+          annotations:
+            sidecar.istio.io/inject: "false"
+          {{- end }}
         spec:
           nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 12 }}
