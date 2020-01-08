@@ -207,6 +207,7 @@ exporter:
 
 # NGINX Elasticsearch values
 nginx:
+  replicas: 1
   podAnnotations: {}
   fullnameOverride: ~
   ingressClass: ~
