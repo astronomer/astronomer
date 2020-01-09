@@ -39,7 +39,7 @@ spec:
               image: {{ template "houston.image" . }}
               imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
               # If you supply only args for a Container, the default Entrypoint defined in the Docker image is run with the args that you supplied.
-              args: ["npm", "run", "expire-deployments"]
+              args: ["npm", "run", "expire-deployments", "--", "--dry-run={{ .Values.houston.expireDeployments.dryRun }}"]
               volumeMounts:
                 {{- include "houston_volume_mounts" . | indent 16 }}
               env:
