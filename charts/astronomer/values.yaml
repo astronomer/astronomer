@@ -124,6 +124,9 @@ houston:
     # Default here is to run at midnight every night
     schedule: "0 0 * * *"
 
+    # Print out the deployments that should be expired and skip actual deletion
+    dryRun: false
+
   # Cleanup deployments that have been soft-deleted in Houston
   # This runs as a CronJob
   cleanupDeployments:
@@ -135,6 +138,9 @@ houston:
 
     # Cleanup deployments older than this many days
     olderThan: 14
+
+    # Print out the deployments that should be cleaned up and skip actual cleanup
+    dryRun: false
 
 
 prisma:
