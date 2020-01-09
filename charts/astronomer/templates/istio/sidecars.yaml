@@ -1,0 +1,57 @@
+{{- if .Values.global.istioEnabled }}
+# The default side configuration will apply
+# to the Airflow namespaces.
+apiVersion: networking.istio.io/v1alpha3
+kind: Sidecar
+metadata:
+  name: default-sidecar-config
+  # A Sidecar resource in the istio 'root namespace' will act
+  # as a default for any Istio namespace without a Sidecar resource.
+  namespace: {{ .Values.istio.rootNamespace }}
+spec:
+  # Egress will also be allowed to any public IP:
+  # https://github.com/astronomer/terraform-google-astronomer-cloud/pull/91/files
+  egress:
+  - hosts:
+    # allow egress traffic to pods in the same namespace
+    - "./*"
+    # allow egress traffic to pods in istio-system
+    - "istio-system/*"
+    # allow egress to pods in the nginx-elasticsearch service
+    - "{{ .Release.Namespace }}/{{ .Release.Name }}-elasticsearch-nginx.{{ .Release.Namespace }}.svc.cluster.local"
+    # allow egress to sql proxy
+    - "{{ .Release.Namespace }}/pg-sqlproxy-gcloud-sqlproxy.{{ .Release.Namespace }}.svc.cluster.local"
+---
+# This is used to overwrite the default configuration
+# for the platform namespace. This is the defaults
+# for sidecars in the platform namespace.
+apiVersion: networking.istio.io/v1alpha3
+kind: Sidecar
+metadata:
+  name: {{ .Release.Namespace }}-sidecar-config
+  namespace: {{ .Release.Namespace }}
+spec:
+  egress:
+  - hosts:
+    # allow egress traffic to pods in the same namespace
+    - "./*"
+    # allow egress traffic to pods in istio-system
+    - "istio-system/*"
+    # allow egress traffic to kube-system pods
+    - "kube-system/*"
+---
+# This overwrites the defaults in the platform namespace.
+apiVersion: networking.istio.io/v1alpha3
+kind: Sidecar
+metadata:
+  name: {{ .Release.Namespace }}-prometheus-sidecar-config
+  namespace: {{ .Release.Namespace }}
+spec:
+  workloadSelector:
+    labels:
+      component: prometheus
+  egress:
+  - hosts:
+    # allow egress traffic everywhere
+    - "*/*"
+{{- end }}
