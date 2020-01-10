@@ -65,9 +65,9 @@ data:
       # Airflow image settings
       # This is a list of supported airflow versions and corresponding docker tag
       images:
-        - version: 1.10.5
+        - version: 1.10.7
           channel: stable
-          tag: 1.10.5-alpine3.10-onbuild
+          tag: 1.10.7-alpine3.10-onbuild
         # - version: 1.10.6
         #   channel: edge
         #   tag: 1.10.6-alpine3.10-onbuild
@@ -122,6 +122,9 @@ data:
         # so this needs to be passed through to all upgrades.
         podMutation:
           tolerations: []
+
+        # This is here for upgrading to 0.11+ of Airflow.
+        defaultAirflowRepository: astronomerinc/ap-airflow
 
     {{- if not .Values.global.singleNamespace }}
         # Enable cleanup CronJob in Airflow deployents
