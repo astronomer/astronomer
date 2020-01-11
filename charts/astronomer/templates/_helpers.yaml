@@ -212,11 +212,11 @@ azure:
 - name: COMMANDER__HOST
   value: {{ .Release.Name }}-commander
 - name: COMMANDER__PORT
-  value: {{ .Values.ports.commanderGRPC }}
+  value: {{ .Values.ports.commanderGRPC | quote }}
 - name: REGISTRY__HOST
   value: {{ .Release.Name }}-registry
 - name: REGISTRY__PORT
-  value: {{ .Values.ports.registryHTTP }}
+  value: {{ .Values.ports.registryHTTP | quote }}
 {{- end }}
 
 {{- define "houston_volume_mounts" }}
