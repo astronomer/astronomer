@@ -19,7 +19,6 @@ data:
 
     commander:
       enabled: true
-      host: {{ .Release.Name }}-commander
 
     orbit:
       port: 80
