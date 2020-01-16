@@ -113,7 +113,11 @@ houston:
   # version specified by Houston configuration.
   # This runs as a Job after helm upgrades.
   upgradeDeployments:
+    # Enable this helm hook on upgrade
     enabled: true
+
+    # Only run on deployments marked as canary
+    canary: false
 
   # Expire deployments that have gone past trial date in Houston
   # This runs as a CronJob
@@ -126,6 +130,9 @@ houston:
 
     # Print out the deployments that should be expired and skip actual deletion
     dryRun: false
+
+    # Only run on deployments marked as canary
+    canary: false
 
   # Cleanup deployments that have been soft-deleted in Houston
   # This runs as a CronJob
@@ -142,6 +149,8 @@ houston:
     # Print out the deployments that should be cleaned up and skip actual cleanup
     dryRun: false
 
+    # Only run on deployments marked as canary
+    canary: false
 
 prisma:
   env: []
