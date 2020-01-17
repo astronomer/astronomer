@@ -12,6 +12,8 @@ metadata:
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+  annotations:
+    sidecar.istio.io/inject: "false"
 {{- with .Values.labels }}
 {{ toYaml . | indent 4 }}
 {{- end }}

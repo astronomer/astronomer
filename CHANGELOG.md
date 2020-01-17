@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [0.11.0] - 2019-12-x
 - Official Debian Image
 - Platform-level support for multiple Airflow images
+- Support for pre-pushing shared image layers to the platform for faster deploys
 - Automated Airflow Deployment Updates
 - Alert for Pods Failing to Schedule at Platform Level
 - Report current image tag to users
