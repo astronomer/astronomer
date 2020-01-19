@@ -179,6 +179,10 @@ data:
       @type elasticsearch_dynamic
       @log_level info
       include_timestamp true
+      reconnect_on_error true
+      reload_on_failure true
+      reload_connections false
+      request_timeout 120s
       host "#{ENV['OUTPUT_HOST']}"
       port "#{ENV['OUTPUT_PORT']}"
       index_name fluentd.${record["release"]}.${Time.at(time).getutc.strftime(@logstash_dateformat)}
