@@ -101,6 +101,16 @@ data:
             summary: {{ printf "%q" "Across all deployments, {{ $labels.operator }} is failing {{ $value }}% of the time" }}
             description: "This alarm is used to notify support if an external data source may be inoperational, but the query is subject to be incorrect for small sample sizes where a single deployment uses an operator more than the rest of deployments combined over the course of two hours"
 
+        - alert: ManyUnhealthySchedulers
+          expr: count(rate(airflow_scheduler_heartbeat{}[1m]) <= 0) > 5
+          for: 5m
+          labels:
+            tier: platform
+            severity: urgent
+          annotations:
+            summary: {{ printf "%q" "{{ $value }} airflow schedulers are not heartbeating" }}
+            description: "If more than 5 Airflow Schedulers are not heartbeating for more than 5 minutes, this alarm fires."
+
         - alert: CpuThrottlingWarning
           expr: 100 * (increase(container_cpu_cfs_throttled_periods_total{namespace="{{ .Release.Name }}", container_name=~".{1,1000}"}[5m]) / increase(container_cpu_cfs_periods_total{namespace="{{ .Release.Name }}", container_name=~".{1,1000}"}[5m])) > 50
           for: 5m
