@@ -4,7 +4,7 @@ URL ?= https://${DOMAIN}
 BUCKET ?= gs://${DOMAIN}
 
 # List of charts to build
-CHARTS := airflow astronomer nginx grafana prometheus alertmanager elasticsearch kibana fluentd kube-state
+CHARTS := astronomer nginx grafana prometheus alertmanager elasticsearch kibana fluentd kube-state
 
 # Output directory
 OUTPUT := repository
@@ -18,12 +18,8 @@ lint:
 	set -xe
 	rm -rf ${TEMP}/astronomer-platform || true
 	mkdir -p ${TEMP}
-	cp -R ../helm.astronomer.io ${TEMP}/astronomer-platform
-	mv ${TEMP}/astronomer-platform/charts/airflow ${TEMP}/airflow
+	cp -R ../astronomer ${TEMP}/astronomer-platform
 	helm lint ${TEMP}/astronomer-platform
-	# Airflow chart is linted separately
-	mv ${TEMP}/airflow ${TEMP}/astronomer-platform/charts/airflow
-	helm lint ${TEMP}/astronomer-platform/charts/airflow
 	# Lint the Prometheus alerts configuration
 	helm template -x ${TEMP}/astronomer-platform/charts/prometheus/templates/prometheus-alerts-configmap.yaml ${TEMP}/astronomer-platform > ${TEMP}/prometheus_alerts.yaml
 	# Parse the alerts.yaml data from the config map resource
