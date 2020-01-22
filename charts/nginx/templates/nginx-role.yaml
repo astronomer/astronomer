@@ -18,18 +18,22 @@ rules:
     resources:
       - configmaps
       - endpoints
-      - nodes
       - pods
       - secrets
+      {{- if not $singleNamespace }}
+      - nodes
+      {{- end }}
     verbs:
       - list
       - watch
+  {{- if not $singleNamespace }}
   - apiGroups:
       - ""
     resources:
       - nodes
     verbs:
       - get
+  {{- end }}
   - apiGroups:
       - ""
     resources:
@@ -55,6 +59,7 @@ rules:
       - get
       - list
       - watch
+  {{- if not $singleNamespace }}
   - apiGroups:
       - ""
     resources:
@@ -74,4 +79,5 @@ rules:
       - ingresses/status
     verbs:
       - update
+  {{- end }}
 {{- end }}

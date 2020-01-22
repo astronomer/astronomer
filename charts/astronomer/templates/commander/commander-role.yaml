@@ -18,11 +18,21 @@ rules:
   resources:
   - secrets
   - persistentvolumeclaims
+  {{- if not $singleNamespace }}
   - namespaces
+  {{- end }}
   verbs:
   - create
   - get
   - update
   - delete
   - deletecollection
+{{- if $singleNamespace }}
+- apiGroups:
+    - ""
+  resources:
+  - namespaces
+  verbs:
+  - get
+{{- end }}
 {{- end }}
