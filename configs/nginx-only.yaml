@@ -1,0 +1,10 @@
+# This is an example configuration that will only deploy the NGINX ingress controller.
+# This configuration is typically used when configuring ingress for the Airflow chart.
+
+global:
+  nginxEnabled: true
+tags:
+  logging: false
+  monitoring: false
+  platform: false
+  kubed: false

@@ -1,0 +1,11 @@
+# This is an example configuration that will install Airflow using an ingress controller
+# such as NGINX. This configuration is typically used with a running NGINX ingress 
+# controller. Add values for your baseDomain, tlsSecretName and ingress class.
+
+ingress:
+  enabled: true
+  auth:
+    enabled: false
+  baseDomain: ~
+  tlsSecretName: ~
+  class: ~
