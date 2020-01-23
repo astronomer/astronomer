@@ -41,6 +41,6 @@ additionalVolumes: []
 s3:
   enabled: false
   role_arn: ~
-  role_session: ~
+  role_session_name: ~
   s3_bucket: ~
   s3_region: ~
