@@ -301,3 +301,11 @@ kubed:
     limits:
       cpu: "2"
       memory: "1024Mi"
+
+#################################
+## Postgresql Config
+#################################
+# Not recommended to use an in-cluster
+# database for production.
+postgresql:
+  enabled: true
