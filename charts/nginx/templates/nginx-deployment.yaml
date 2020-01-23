@@ -33,6 +33,10 @@ spec:
         {{- end }}
     spec:
       serviceAccountName: {{ template "nginx.fullname" . }}
+      # See https://github.com/kubernetes/ingress-nginx/blob/master/Changelog.md
+      # Version 0.27.0
+      securityContext:
+        runAsUser: 101
       containers:
         - name: nginx
           image: {{ template "nginx.image" . }}

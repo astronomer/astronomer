@@ -38,6 +38,13 @@ spec:
       containers:
       - name: fluentd
         image: {{ template "fluentd.image" . }}
+        {{- if .Values.global.istioEnabled }}
+        command:
+          - "/bin/bash"
+          - "-c"
+        args:
+          - "ruby /wait-for-istio-proxy.rb && /usr/local/bin/fluentd ${FLUENTD_ARGS}"
+        {{- end }}
         livenessProbe:
           exec:
             command:
