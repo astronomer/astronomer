@@ -15,10 +15,9 @@ elasticsearch:
   buffer_queue_limit: 8
 
 livenessProbeConfig:
-  bufferSizeUnhealthy: 8
   failureThreshold: 3
-  initialDelaySeconds: 30
-  periodSeconds: 15
+  initialDelaySeconds: 600
+  periodSeconds: 60
   successThreshold: 1
   timeoutSeconds: 5
 

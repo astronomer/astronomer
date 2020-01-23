@@ -45,14 +45,21 @@ spec:
         args:
           - "ruby /wait-for-istio-proxy.rb && /usr/local/bin/fluentd ${FLUENTD_ARGS}"
         {{- end }}
+        # This liveness probe is an imitation of how it's done by GCP
         livenessProbe:
           exec:
             command:
-            - /bin/bash
+            - /bin/sh
             - -c
-            - if (( $(ruby -e "require 'net/http';require 'uri';uri = URI.parse('http://127.0.0.1:{{ .Values.ports.promScrape }}/metrics');response
-              = Net::HTTP.get_response(uri);puts response.body" | grep 'fluentd_output_status_buffer_queue_length{'
-              | awk '{ print ($NF > {{ .Values.livenessProbeConfig.bufferSizeUnhealthy }}) }') )); then exit 1; fi; exit 0
+            - |
+              LIVENESS_THRESHOLD_SECONDS=${LIVENESS_THRESHOLD_SECONDS:-300}; STUCK_THRESHOLD_SECONDS=${STUCK_THRESHOLD_SECONDS:-900}; if [ ! -e /var/log/fluentd-    buffers ]; then
+                exit 1;
+              fi; touch -d "${STUCK_THRESHOLD_SECONDS} seconds ago" /tmp/marker-stuck; if [ -z "$(find /var/log/fluentd-buffers -type d -newer /tmp/marker-stuck     -print -quit)" ]; then
+                rm -rf /var/log/fluentd-buffers;
+                exit 1;
+              fi; touch -d "${LIVENESS_THRESHOLD_SECONDS} seconds ago" /tmp/marker-liveness; if [ -z "$(find /var/log/fluentd-buffers -type d -newer /tmp/marker-    liveness -print -quit)" ]; then
+                exit 1;
+              fi;
           failureThreshold: {{ .Values.livenessProbeConfig.failureThreshold }}
           initialDelaySeconds: {{ .Values.livenessProbeConfig.initialDelaySeconds5 }}
           periodSeconds: {{ .Values.livenessProbeConfig.periodSeconds5 }}
