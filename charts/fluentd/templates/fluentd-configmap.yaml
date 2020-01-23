@@ -175,24 +175,48 @@ data:
 
     # Send off to elasticsearch
     <match airflow.**>
-      @id elasticsearch
-      @type elasticsearch_dynamic
-      @log_level info
-      include_timestamp true
-      host "#{ENV['OUTPUT_HOST']}"
-      port "#{ENV['OUTPUT_PORT']}"
-      index_name fluentd.${record["release"]}.${Time.at(time).getutc.strftime(@logstash_dateformat)}
-      <buffer>
-        @type file
-        path "/var/log/fluentd-buffers/#{ENV['RELEASE']}-kubernetes.system.buffer"
-        flush_mode interval
-        retry_type exponential_backoff
-        flush_thread_count 2
-        flush_interval 5s
-        retry_forever
-        retry_max_interval 30
-        chunk_limit_size "#{ENV['OUTPUT_BUFFER_CHUNK_LIMIT']}"
-        queue_limit_length "#{ENV['OUTPUT_BUFFER_QUEUE_LIMIT']}"
-        overflow_action block
-      </buffer>
+      @type copy
+      <store>
+        @type elasticsearch_dynamic
+        @id elasticsearch
+        @log_level info
+        include_timestamp true
+        host "#{ENV['OUTPUT_HOST']}"
+        port "#{ENV['OUTPUT_PORT']}"
+        index_name fluentd.${record["release"]}.${Time.at(time).getutc.strftime(@logstash_dateformat)}
+        <buffer>
+          @type file
+          path "/var/log/fluentd-buffers/#{ENV['RELEASE']}-kubernetes.system.buffer"
+          flush_mode interval
+          retry_type exponential_backoff
+          flush_thread_count 2
+          flush_interval 5s
+          retry_forever
+          retry_max_interval 30
+          chunk_limit_size "#{ENV['OUTPUT_BUFFER_CHUNK_LIMIT']}"
+          queue_limit_length "#{ENV['OUTPUT_BUFFER_QUEUE_LIMIT']}"
+          overflow_action block
+        </buffer>
+      </store>
+      {{- if .Values.s3.enabled }}
+      <store>
+        @type s3
+        @id s3
+        @log_level info
+        {{- include "fluentd.s3Config" . | indent 8 }}
+        <buffer>
+          @type file
+          path "/var/log/fluentd-buffers/#{ENV['RELEASE']}-s3-kubernetes.system.buffer"
+          flush_mode interval
+          retry_type exponential_backoff
+          flush_thread_count 2
+          flush_interval 5s
+          retry_forever
+          retry_max_interval 30
+          chunk_limit_size "#{ENV['OUTPUT_BUFFER_CHUNK_LIMIT']}"
+          queue_limit_length "#{ENV['OUTPUT_BUFFER_QUEUE_LIMIT']}"
+          overflow_action block
+        </buffer>
+      </store>
+      {{- end }}
     </match>
