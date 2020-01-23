@@ -73,6 +73,7 @@ spec:
             path: /healthz
             port: 8443
             scheme: HTTPS
+          timeoutSeconds: 5
           initialDelaySeconds: 5
 {{- end }}
         resources:
