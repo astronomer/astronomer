@@ -18,8 +18,8 @@ images:
     pullPolicy: IfNotPresent
   houston:
     repository: astronomerinc/ap-houston-api
-    tag: 0.11.2
-    pullPolicy: Always
+    tag: 0.11.3
+    pullPolicy: IfNotPresent
   orbit:
     repository: astronomerinc/ap-orbit-ui
     tag: 0.11.0
