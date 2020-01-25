@@ -40,4 +40,9 @@ wget https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk
 tar xvzf ./google-cloud-sdk-${GCLOUD_VERSION}-${OS}-x86_64.tar.gz >/dev/null 2>&1
 export PATH=$(pwd)/google-cloud-sdk/bin/:$PATH
 
+# Install mkcert
+cd /tmp/
+curl -Lo /tmp/bin/mkcert https://github.com/FiloSottile/mkcert/releases/download/v1.4.1/mkcert-v1.4.1-${OS}-amd64
+chmod +x /tmp/bin/mkcert
+
 cd $REPO_DIR
