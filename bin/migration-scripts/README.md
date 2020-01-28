@@ -56,6 +56,7 @@ helm get values <release name> > astronomer.yaml
 ```
 helm delete --purge <release name>
 helm install -f ./astronomer.yaml --version "v0.11.1" --namespace <the namespace> --name <the current release name> .
+helm upgrade --reuse-values --version="v0.11.1" --namespace <the namespace> <the current release name> .
 ```
 
 - Check that your DNS record points to the right place
