@@ -47,6 +47,7 @@ cd migration-script
 - Perform the upgrade using Helm
 ```
 git clone https://github.com/astronomer/astronomer.git
+cd astronomer
 git checkout v0.11.1
 cd astronomer
 helm dep update
