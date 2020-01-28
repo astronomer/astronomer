@@ -58,6 +58,12 @@ helm delete --purge <release name>
 helm install -f ./astronomer.yaml --version "v0.11.1" --namespace <the namespace> --name <the current release name> .
 ```
 
+- Check that your DNS record points to the right place
+```
+kubectl get svc -n <the namespace>
+```
+- Find the name of the LoadBalancer (e.g. a2a1d2730421911eab3e102ea6916f09-2139587190.us-east-1.elb.amazonaws.com), and make sure your domain name has a CNAME record pointing to this load balancer.
+
 ## Check that it worked
 
 Here are a few things we can do to make sure everything worked as expected:
