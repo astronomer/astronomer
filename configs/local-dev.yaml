@@ -155,3 +155,7 @@ kubeState:
     requests:
       cpu: "0m"
       memory: "0Mi"
+
+# Configuration for postgresql subchart
+postgresql:
+  enabled: true

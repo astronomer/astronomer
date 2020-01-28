@@ -1,0 +1,8 @@
+# Configuration for postgres subchart
+enabled: true
+
+postgresql:
+  postgresqlUsername: postgres
+  postgresqlPassword: postgres
+  servicePort: 5432
+

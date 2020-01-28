@@ -8,7 +8,7 @@ jobs:
       - checkout
       - run:
           name: Platform
-          command: bin/run-ci platform
+          command: bin/run-ci platform postgresql
   monitoring:
     machine:
       image: ubuntu-1604:201903-01
@@ -16,7 +16,7 @@ jobs:
       - checkout
       - run:
           name: Monitoring
-          command: bin/run-ci monitoring
+          command: bin/run-ci monitoring postgresql
   logging:
     machine:
       image: ubuntu-1604:201903-01
