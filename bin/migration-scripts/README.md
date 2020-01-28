@@ -42,15 +42,20 @@ cd migration-script
 - If there is a failure, copy the output and report to Astronomer support
 - The point of this script is to persist helm configuration data
 
-## Helm upgrade
+## Platform upgrade
 
-- Perform the upgrade using Helm
+- Back up the platform configuration
 ```
 git clone https://github.com/astronomer/astronomer.git
 cd astronomer
 git checkout v0.11.1
-helm dep update
-helm upgrade --reuse-values --version "v0.11.1" --namespace <the current namespace> <the current release name> .
+helm get values <release name> > astronomer.yaml
+```
+- Confirm values are in astronomer.yaml
+- Delete then re-install the platform
+```
+helm delete --purge <release name>
+helm install -f ./astronomer.yaml --version "v0.11.1" --namespace <the namespace> --name <the current release name> .
 ```
 
 ## Check that it worked
