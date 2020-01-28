@@ -176,4 +176,4 @@ function main {
   ensure_fernet_key_for_all_deployments
 }
 
-main 'astronomer' 'astronomer'
+main $1 $2
