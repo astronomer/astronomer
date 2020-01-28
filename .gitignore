@@ -16,3 +16,6 @@ dev-account.json
 *.swp
 # Chart dependencies
 **/charts/*.tgz
+
+# ignore local ssl files
+*.pem
