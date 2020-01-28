@@ -1,7 +1,7 @@
 #!/bin/bash
 # https://github.com/FiloSottile/mkcert
 mkcert -install
-mkcert app.local.astronomer-development.com "*.local.astronomer-development.com"
-cat app.local.astronomer-development.com+1.pem > /tmp/fullchain.pem
+mkcert app.local.astronomer-development.com local.astronomer-development.com "*.local.astronomer-development.com"
+cat app.local.astronomer-development.com+2.pem > /tmp/fullchain.pem
 cat "$(mkcert -CAROOT)/rootCA.pem" >> /tmp/fullchain.pem
-mv app.local.astronomer-development.com+1-key.pem /tmp/privkey.pem
+mv app.local.astronomer-development.com+2-key.pem /tmp/privkey.pem
