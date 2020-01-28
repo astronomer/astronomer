@@ -38,7 +38,7 @@ git clone https://github.com/astronomer/migration-script.git
 cd migration-script
 ./pre-0-11-upgrade.sh <release name> <namespace>
 ```
-- This script will write some .yaml files to your local directory. These are very important to back up, and can be used to restore deployments in the event that something goes wrong.
+- This script will write some .yaml files to your local directory. These are very important to back up, and can be used to restore deployments in the event that something goes wrong. These files include secrets.
 - If there is a failure, copy the output and report to Astronomer support
 - The point of this script is to persist helm configuration data
 

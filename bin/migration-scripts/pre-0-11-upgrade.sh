@@ -116,6 +116,7 @@ function ensure_fernet_key_for_all_deployments {
     # Get the namespace
     get_namespace_of_release $release
     echo "  Determined namespace is : $namespace_of_release_result"
+    helm get $release_name > $release_name-full-backup.yaml
     # Find the secret's actual value
     fernet=$(kubectl get secret -n $namespace_of_release_result \
       ${release}-fernet-key -o jsonpath="{.data.fernet-key}" | base64 --decode)
@@ -145,7 +146,6 @@ function add_fernet_to_values {
   set -e
   get_chart_version $release_name
   echo "    Begin fernet key persistence procedure for $release_name, airflow chart version $version_result"
-  helm get $release_name > $release_name-full-backup.yaml
   helm get values $release_name > $release_name.yaml
   echo "    Upgrading helm chart."
   set -x
