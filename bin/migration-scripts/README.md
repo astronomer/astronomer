@@ -49,7 +49,6 @@ cd migration-script
 git clone https://github.com/astronomer/astronomer.git
 cd astronomer
 git checkout v0.11.1
-cd astronomer
 helm dep update
 helm upgrade --reuse-values --version "v0.11.1" --namespace <the current namespace> <the current release name> .
 ```
