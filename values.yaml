@@ -6,7 +6,7 @@ global:
   baseDomain: ~
 
   # Name of secret containing TLS certificate
-  tlsSecret: ~
+  tlsSecret: "astronomer-tls"
 
   # Use kube-lego
   acme: false
