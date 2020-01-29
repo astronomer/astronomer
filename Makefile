@@ -16,16 +16,16 @@ TEMP := /tmp/${DOMAIN}
 .ONESHELL:
 lint:
 	set -xe
-	rm -rf ${TEMP}/astronomer-platform || true
+	rm -rf ${TEMP}/astronomer || true
 	mkdir -p ${TEMP}
-	cp -R ../astronomer ${TEMP}/astronomer-platform
-	helm lint ${TEMP}/astronomer-platform
+	cp -R ../astronomer ${TEMP}/astronomer || cp -R ../project ${TEMP}/astronomer
+	helm lint ${TEMP}/astronomer
 	# Lint the Prometheus alerts configuration
-	helm template -x ${TEMP}/astronomer-platform/charts/prometheus/templates/prometheus-alerts-configmap.yaml ${TEMP}/astronomer-platform > ${TEMP}/prometheus_alerts.yaml
+	helm template -x ${TEMP}/astronomer/charts/prometheus/templates/prometheus-alerts-configmap.yaml ${TEMP}/astronomer > ${TEMP}/prometheus_alerts.yaml
 	# Parse the alerts.yaml data from the config map resource
 	python3 -c "import yaml; from pathlib import Path; alerts = yaml.safe_load(Path('${TEMP}/prometheus_alerts.yaml').read_text())['data']['alerts.yaml']; Path('${TEMP}/prometheus_alerts.yaml').write_text(alerts)"
 	promtool check rules  ${TEMP}/prometheus_alerts.yaml
-	rm -rf ${TEMP}/astronomer-platform
+	rm -rf ${TEMP}/astronomer
 	rm ${TEMP}/prometheus_alerts.yaml
 
 .PHONY: build
