@@ -118,6 +118,7 @@ houston:
   upgradeDeployments:
     # Enable this helm hook on upgrade
     enabled: true
+
     # Only run on deployments marked as canary
     canary: false
 
