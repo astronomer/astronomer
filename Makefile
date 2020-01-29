@@ -29,12 +29,12 @@ lint:
 	rm ${TEMP}/prometheus_alerts.yaml
 
 .PHONY: build
-build: update-version
-	mkdir -p ${OUTPUT}
-	for chart in ${CHARTS} ; do \
-		helm package --version ${ASTRONOMER_VERSION} -d ${OUTPUT} charts/$${chart} || exit 1; \
-	done; \
-	$(MAKE) build-index
+build:
+	set -xe
+	rm -rf ${TEMP}/astronomer || true
+	mkdir -p ${TEMP}
+	cp -R ../astronomer ${TEMP}/astronomer || cp -R ../project ${TEMP}/astronomer
+	helm package ${TEMP}/astronomer
 
 .PHONY: build-index
 build-index:
