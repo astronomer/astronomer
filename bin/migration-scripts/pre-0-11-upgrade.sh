@@ -116,7 +116,7 @@ function ensure_fernet_key_for_all_deployments {
     # Get the namespace
     get_namespace_of_release $release
     echo "  Determined namespace is : $namespace_of_release_result"
-    helm get $release_name > $release_name-full-backup.yaml
+    helm get $release > $release-full-backup.yaml
     # Find the secret's actual value
     fernet=$(kubectl get secret -n $namespace_of_release_result \
       ${release}-fernet-key -o jsonpath="{.data.fernet-key}" | base64 --decode)
