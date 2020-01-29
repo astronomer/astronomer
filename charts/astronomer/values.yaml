@@ -107,10 +107,7 @@ houston:
 
   # Any Houston configuration. Reference here:
   # https://github.com/astronomer/houston-api/blob/master/config/default.yaml
-  config:
-    deployments:
-      chart:
-        version: 0.11.0
+  config: {}
 
   # Automatically upgrade Airflow deployments to the latest
   # version specified by Houston configuration.
