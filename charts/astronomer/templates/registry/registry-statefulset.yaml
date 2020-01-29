@@ -65,12 +65,14 @@ spec:
               port: {{ .Values.ports.registryHTTP }}
             initialDelaySeconds: 10
             periodSeconds: 10
+            timeoutSeconds: 5
           readinessProbe:
             httpGet:
               path: /
               port: {{ .Values.ports.registryHTTP }}
             initialDelaySeconds: 10
             periodSeconds: 10
+            timeoutSeconds: 5
       volumes:
         - name: config
           configMap:
