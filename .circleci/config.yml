@@ -1,45 +1,84 @@
 version: 2
 
 jobs:
+  lint:
+    docker:
+      - image: alpine/helm:2.16.1
+    steps:
+      - checkout
+      - run:
+          name: Lint the Airflow chart
+          command: helm lint .
+  build-artifact:
+    docker:
+      - image: alpine/helm:2.16.1
+    steps:
+      - checkout
+      - run:
+          name: Package the Airflow chart
+          command: helm package .
+      - persist_to_workspace:
+          root: '.'
+          paths:
+            - './*.tgz'
   platform:
     machine:
       image: ubuntu-1604:201903-01
     steps:
-      - checkout
-      - run:
-          name: Platform
-          command: bin/run-ci platform postgresql
+      - helm-install:
+          tags: "platform postgresql"
   monitoring:
     machine:
       image: ubuntu-1604:201903-01
     steps:
-      - checkout
-      - run:
-          name: Monitoring
-          command: bin/run-ci monitoring postgresql
+      - helm-install:
+          tags: "monitoring postgresql"
   logging:
     machine:
       image: ubuntu-1604:201903-01
-      resource_class: large
     steps:
-      - checkout
-      - run:
-          name: Logging
-          command: bin/run-ci logging
+      - helm-install:
+          tags: "logging"
   kubed:
     machine:
       image: ubuntu-1604:201903-01
     steps:
-      - checkout
-      - run:
-          name: Kubed
-          command: bin/run-ci kubed
+      - helm-install:
+          tags: "kubed"
 
 workflows:
   version: 2
   install-helm-tags:
     jobs:
-      - platform
-      - monitoring
-      - logging
-      - kubed
+      - lint
+      - build-artifact:
+          requires:
+            - lint
+      - platform:
+          requires:
+            - build-artifact
+      - monitoring:
+          requires:
+            - build-artifact
+      - logging:
+          requires:
+            - build-artifact
+      - kubed:
+          requires:
+            - build-artifact
+
+commands:
+  helm-install:
+    description: "Install Helm chart from artifact"
+    parameters:
+      tags:
+        type: string
+        default:  "platform"
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - run:
+          name: Install Airflow chart
+          command: |
+            HELM_CHART_PATH='/tmp/workspace/astronomer-*.tgz' bin/run-ci << parameters.tags >>
