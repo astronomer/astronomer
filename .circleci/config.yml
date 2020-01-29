@@ -1,4 +1,4 @@
-version: 2
+version: 2.1
 
 jobs:
   lint:
@@ -26,28 +26,29 @@ jobs:
       image: ubuntu-1604:201903-01
     steps:
       - helm-install:
-          tags: "platform postgresql"
+          astronomer-tags: "platform postgresql"
   monitoring:
     machine:
       image: ubuntu-1604:201903-01
     steps:
       - helm-install:
-          tags: "monitoring postgresql"
+          astronomer-tags: "monitoring postgresql"
   logging:
     machine:
       image: ubuntu-1604:201903-01
     steps:
       - helm-install:
-          tags: "logging"
+          astronomer-tags: "logging"
+
   kubed:
     machine:
       image: ubuntu-1604:201903-01
     steps:
       - helm-install:
-          tags: "kubed"
+          astronomer-tags: "kubed"
 
 workflows:
-  version: 2
+  version: 2.1
   install-helm-tags:
     jobs:
       - lint
@@ -71,7 +72,7 @@ commands:
   helm-install:
     description: "Install Helm chart from artifact"
     parameters:
-      tags:
+      astronomer-tags:
         type: string
         default:  "platform"
     steps:
@@ -81,4 +82,4 @@ commands:
       - run:
           name: Install Airflow chart
           command: |
-            HELM_CHART_PATH='/tmp/workspace/astronomer-*.tgz' bin/run-ci << parameters.tags >>
+            HELM_CHART_PATH='/tmp/workspace/astronomer-*.tgz' bin/run-ci << parameters.astronomer-tags >>
