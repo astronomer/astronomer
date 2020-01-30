@@ -38,6 +38,76 @@ jobs:
             gcloud auth activate-service-account --key-file=/tmp/gcs_token.json
             HELM_CHART_PATH='/tmp/workspace/astronomer-*.tgz' bin/release
 
+  platform-1-12-10:
+    machine:
+      image: ubuntu-1604:201903-01
+      resource_class: large
+    environment:
+      KUBE_VERSION: v1.12.10
+    steps:
+      - helm-install:
+          astronomer-tags: "platform postgresql"
+  monitoring-1-12-10:
+    machine:
+      image: ubuntu-1604:201903-01
+    environment:
+      KUBE_VERSION: v1.12.10
+    steps:
+      - helm-install:
+          astronomer-tags: "monitoring postgresql"
+  logging-1-12-10:
+    machine:
+      image: ubuntu-1604:201903-01
+      resource_class: large
+    environment:
+      KUBE_VERSION: v1.12.10
+    steps:
+      - helm-install:
+          astronomer-tags: "logging"
+  kubed-1-12-10:
+    machine:
+      image: ubuntu-1604:201903-01
+    environment:
+      KUBE_VERSION: v1.12.10
+    steps:
+      - helm-install:
+          astronomer-tags: "kubed"
+
+  platform-1-13-12:
+    machine:
+      image: ubuntu-1604:201903-01
+      resource_class: large
+    environment:
+      KUBE_VERSION: v1.13.12
+    steps:
+      - helm-install:
+          astronomer-tags: "platform postgresql"
+  monitoring-1-13-12:
+    machine:
+      image: ubuntu-1604:201903-01
+    environment:
+      KUBE_VERSION: v1.13.12
+    steps:
+      - helm-install:
+          astronomer-tags: "monitoring postgresql"
+  logging-1-13-12:
+    machine:
+      image: ubuntu-1604:201903-01
+      resource_class: large
+    environment:
+      KUBE_VERSION: v1.13.12
+    steps:
+      - helm-install:
+          astronomer-tags: "logging"
+  kubed-1-13-12:
+    machine:
+      image: ubuntu-1604:201903-01
+    environment:
+      KUBE_VERSION: v1.13.12
+    steps:
+      - helm-install:
+          astronomer-tags: "kubed"
+
   platform-1-14-10:
     machine:
       image: ubuntu-1604:201903-01
@@ -188,6 +258,32 @@ workflows:
           requires:
             - lint
 
+      - platform-1-12-10:
+          requires:
+            - build-artifact
+      - monitoring-1-12-10:
+          requires:
+            - build-artifact
+      - logging-1-12-10:
+          requires:
+            - build-artifact
+      - kubed-1-12-10:
+          requires:
+            - build-artifact
+
+      - platform-1-13-12:
+          requires:
+            - build-artifact
+      - monitoring-1-13-12:
+          requires:
+            - build-artifact
+      - logging-1-13-12:
+          requires:
+            - build-artifact
+      - kubed-1-13-12:
+          requires:
+            - build-artifact
+
       - platform-1-14-10:
           requires:
             - build-artifact
@@ -243,6 +339,16 @@ workflows:
       - approve-release:
           type: approval
           requires:
+
+            - platform-1-12-10
+            - monitoring-1-12-10
+            - logging-1-12-10
+            - kubed-1-12-10
+
+            - platform-1-13-12
+            - monitoring-1-13-12
+            - logging-1-13-12
+            - kubed-1-13-12
 
             - platform-1-14-10
             - monitoring-1-14-10

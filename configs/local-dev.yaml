@@ -11,6 +11,7 @@ tags:
   logging: false
   monitoring: false
   kubed: true
+  postgresql: true
 
 global:
   # Base domain for all subdomains exposed through ingress

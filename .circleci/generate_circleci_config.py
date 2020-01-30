@@ -7,7 +7,14 @@ so that we can stay DRY.
 import os
 from jinja2 import Template
 
-KUBE_VERSIONS = ['1.14.10', '1.15.7', '1.16.4', '1.17.0']
+# When adding a new version, look up the most
+# recent patch version on Dockerhub
+KUBE_VERSIONS = ['1.12.10',
+                 '1.13.12',
+                 '1.14.10',
+                 '1.15.7',
+                 '1.16.4',
+                 '1.17.0']
 
 def main():
     """ Render the Jinja2 template file
