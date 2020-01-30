@@ -45,8 +45,8 @@ set -xe
 wget https://helm.astronomer.io/index.yaml -O /tmp/index.yaml.current
 helm repo index ./astronomer --url https://helm.astronomer.io --merge /tmp/index.yaml.current
 
-# gsutil cp -a public-read $HELM_CHART_PATH gs://helm.astronomer.io
-# gsutil cp -a public-read ./astronomer/index.yaml gs://helm.astronomer.io
+gsutil cp -a public-read $HELM_CHART_PATH gs://helm.astronomer.io
+gsutil cp -a public-read ./astronomer/index.yaml gs://helm.astronomer.io
 
 set +x
 echo ""
