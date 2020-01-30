@@ -4,8 +4,8 @@
 # and output all commands
 set -xe
 
-KIND_VERSION="0.5.1"
-HELM_VERSION="2.15.2"
+KIND_VERSION="0.7.0"
+HELM_VERSION="2.16.1"
 GCLOUD_VERSION="270.0.0"
 OS=$(uname | tr '[:upper:]' '[:lower:]')
 

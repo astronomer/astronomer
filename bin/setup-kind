@@ -41,9 +41,6 @@ kind create cluster --image kindest/node:${KUBE_VERSION}
 
 set +x
 
-# Set up cluster access via kubectl
-export KUBECONFIG="$(kind get kubeconfig-path --name="kind")"
-
 kubectl get nodes
 
 # Install the Tiller service account
