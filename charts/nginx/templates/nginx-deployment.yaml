@@ -28,7 +28,7 @@ spec:
         traffic.sidecar.istio.io/includeInboundPorts: ""
         checksum/configmap: {{ include (print $.Template.BasePath "/nginx-configmap.yaml") . | sha256sum }}
         checksum/headers-configmap: {{ include (print $.Template.BasePath "/nginx-headers-configmap.yaml") . | sha256sum }}
-        {{- if .Values.global.istioEnabled }}
+        {{- if .Values.global.istio.enabled }}
         sidecar.istio.io/inject: "false"
         {{- end }}
     spec:

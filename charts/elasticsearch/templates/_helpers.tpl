@@ -109,5 +109,3 @@ Elasticsearch NGINX variable definitions
 {{- define "nginx-es.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
-
-
