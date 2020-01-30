@@ -43,7 +43,7 @@ helm install \
   --set tags.logging=${logging} \
   --set tags.monitoring=${monitoring} \
   --set tags.kubed=${kubed} \
-  $REPO_DIR
+  $HELM_CHART_PATH
 
 if [ ! $? -eq 0 ]; then
   echo "Helm chart failed to install"
