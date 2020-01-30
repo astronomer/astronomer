@@ -31,14 +31,14 @@ Install the following tools:
 - docker (make sure your user has permissions - try 'docker ps')
 - kubectl
 - [kind](https://github.com/kubernetes-sigs/kind#installation-and-usage)
-- gcloud cli (make sure gsutil in PATH)
+- [mkcert](https://github.com/FiloSottile/mkcert) (make sure mkcert in PATH)
 - helm
 
 Make sure you have access to the GCP development account
 
 ```
-# Check that you can download the development TLS cert:
-gsutil cat gs://astronomer-development-certificates/fullchain.pem
+# Check that you can generate development TLS cert:
+./bin/generate_ssl_keys
 ```
 If this does not work, anyone with 'Owner' in the development project can grant you 'Owner' via IAM.
 

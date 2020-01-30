@@ -46,3 +46,10 @@ dependencies:
     condition: global.kubedEnabled
     tags:
       - kubed
+
+  # In-cluster DB, not recommended
+  # for production
+  - name: postgresql
+    condition: postgresql.enabled
+    tags:
+      - postgresql
