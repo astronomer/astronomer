@@ -18,31 +18,54 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 REPO_DIR=$DIR/../
 cd /tmp
 
-# Install KinD
-cd /tmp
-curl -Lo ./kind https://github.com/kubernetes-sigs/kind/releases/download/v${KIND_VERSION}/kind-${OS}-amd64
-chmod +x ./kind
-mv ./kind /tmp/bin/
+if [[ -f /tmp/bin/kind ]]; then
+  echo "kind already installed."
+else
+  # Install KinD
+  cd /tmp
+  curl -Lo ./kind https://github.com/kubernetes-sigs/kind/releases/download/v${KIND_VERSION}/kind-${OS}-amd64
+  chmod +x ./kind
+  mv ./kind /tmp/bin/
+fi
 
-# Install helm
-wget https://get.helm.sh/helm-v${HELM_VERSION}-${OS}-amd64.tar.gz
-tar -zxvf ./helm-v${HELM_VERSION}-${OS}-amd64.tar.gz
-mv ${OS}-amd64/helm /tmp/bin/
+if [[ -f /tmp/bin/helm ]]; then
+  echo "helm is already installed."
+else
+  # Install helm
+  wget https://get.helm.sh/helm-v${HELM_VERSION}-${OS}-amd64.tar.gz
+  tar -zxvf ./helm-v${HELM_VERSION}-${OS}-amd64.tar.gz
+  mv ${OS}-amd64/helm /tmp/bin/
+fi
 
-# Install kubectl
-cd /tmp/bin
-curl -LO https://storage.googleapis.com/kubernetes-release/release/`curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt`/bin/${OS}/amd64/kubectl
-chmod +x ./kubectl
+if [[ -f /tmp/bin/kubectl ]]; then
+  echo "kubectl is already installed."
+else
+  # Install kubectl
+  cd /tmp/bin
+  curl -LO https://storage.googleapis.com/kubernetes-release/release/`curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt`/bin/${OS}/amd64/kubectl
+  chmod +x ./kubectl
+fi
 
-# Install gcloud SDK
-cd /tmp
-wget https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-${GCLOUD_VERSION}-${OS}-x86_64.tar.gz
-tar xvzf ./google-cloud-sdk-${GCLOUD_VERSION}-${OS}-x86_64.tar.gz >/dev/null 2>&1
-export PATH=$(pwd)/google-cloud-sdk/bin/:$PATH
+set +e
+which gsutil && which gcloud
+if [ ! $? -eq 0 ]; then
+  # Install gcloud SDK
+  cd /tmp
+  wget https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-${GCLOUD_VERSION}-${OS}-x86_64.tar.gz
+  tar xvzf ./google-cloud-sdk-${GCLOUD_VERSION}-${OS}-x86_64.tar.gz >/dev/null 2>&1
+  export PATH=$(pwd)/google-cloud-sdk/bin/:$PATH
+else
+  echo "gcloud CLI is already installed"
+fi
+set -e
 
 # Install mkcert
-cd /tmp/
-curl -Lo /tmp/bin/mkcert https://github.com/FiloSottile/mkcert/releases/download/v1.4.1/mkcert-v1.4.1-${OS}-amd64
-chmod +x /tmp/bin/mkcert
+if [[ -f /tmp/bin/mkcert ]]; then
+  echo "mkcert is already installed."
+else
+  cd /tmp/
+  curl -Lo /tmp/bin/mkcert https://github.com/FiloSottile/mkcert/releases/download/v1.4.1/mkcert-v1.4.1-${OS}-amd64
+  chmod +x /tmp/bin/mkcert
+fi
 
 cd $REPO_DIR

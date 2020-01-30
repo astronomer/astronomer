@@ -7,14 +7,8 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 # The path to the working directory - the root of the repo
 REPO_DIR=$DIR/../
 
-if [ -n "$GOOGLE_APPLICATION_CREDENTIALS_CONTENT" ]; then
-  echo $GOOGLE_APPLICATION_CREDENTIALS_CONTENT > /tmp/account.json
-  export GOOGLE_APPLICATION_CREDENTIALS=/tmp/account.json
-fi
-
 source $REPO_DIR/bin/install-ci-tools
 
-gcloud auth activate-service-account --key-file=$GOOGLE_APPLICATION_CREDENTIALS
 source $REPO_DIR/bin/setup-kind
 
 echo "Deploying Astronomer..."
