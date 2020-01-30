@@ -1,0 +1,53 @@
+#!/bin/bash
+
+set -e
+
+if [[ -z "${HELM_CHART_PATH}" ]]; then
+  echo "ERROR: must provide HELM_CHART_PATH pointing to astronomer-*.tgz, will not release without an artifact."
+  exit 1
+fi
+
+# Common bash line that sets DIR to the directory of this script
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+REPO_DIR=$DIR/../
+
+source $DIR/install-ci-tools
+sudo apt-get update > /dev/null
+sudo apt-get install -y tree > /dev/null
+
+
+# Ensure we have a new directory
+rm -rf /tmp/astronomer-chart-release || true
+mkdir -p /tmp/astronomer-chart-release
+cd /tmp/astronomer-chart-release
+
+# Copy the artifact
+cp $HELM_CHART_PATH .
+
+# Unzip the artifact
+tar -xvzf $HELM_CHART_PATH -C .
+
+echo ""
+echo "========================="
+echo ""
+
+# show all the files that are in the unzipped artifact
+echo "Artifact contents:"
+tree ./astronomer
+
+echo ""
+echo "========================="
+echo ""
+
+echo "Releasing chart..."
+set -xe
+# Set up the index.html file
+wget https://helm.astronomer.io/index.yaml -O /tmp/index.yaml.current
+helm repo index ./astronomer --url https://helm.astronomer.io --merge /tmp/index.yaml.current
+
+# gsutil cp -a public-read $HELM_CHART_PATH gs://helm.astronomer.io
+# gsutil cp -a public-read ./astronomer/index.yaml gs://helm.astronomer.io
+
+set +x
+echo ""
+echo "Chart released!"

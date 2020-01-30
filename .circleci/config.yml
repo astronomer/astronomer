@@ -21,9 +21,25 @@ jobs:
           root: '.'
           paths:
             - './*.tgz'
+  release:
+    machine:
+      image: ubuntu-1604:201903-01
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - publish-github-release
+      - run:
+          name: Release the Astronomer chart
+          command: |
+            printf "%s" $${GCP_TOKEN} > /tmp/gcs_token.json
+            gcloud auth activate-service-account --key-file=/tmp/gcs_token.json
+            HELM_CHART_PATH='/tmp/workspace/astronomer-*.tgz' bin/release
+
   platform:
     machine:
       image: ubuntu-1604:201903-01
+      resource_class: large
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql"
@@ -36,6 +52,7 @@ jobs:
   logging:
     machine:
       image: ubuntu-1604:201903-01
+      resource_class: large
     steps:
       - helm-install:
           astronomer-tags: "logging"
@@ -67,7 +84,24 @@ workflows:
       - kubed:
           requires:
             - build-artifact
-
+      - approve-release:
+          type: approval
+          requires:
+            - platform
+            - monitoring
+            - logging
+            - kubed
+          filters:
+            branches:
+              only:
+                - '/release-.*/'
+      - release:
+          requires:
+            - approve-release
+          filters:
+            branches:
+              only:
+                - '/release-.*/'
 commands:
   helm-install:
     description: "Install Helm chart from artifact"
@@ -82,4 +116,19 @@ commands:
       - run:
           name: Install Airflow chart
           command: |
+            set -e
             HELM_CHART_PATH='/tmp/workspace/astronomer-*.tgz' bin/run-ci << parameters.astronomer-tags >>
+  publish-github-release:
+    description: "Create a release on GitHub"
+    parameters:
+      tag:
+        type: string
+        default:  "$NEXT_TAG"
+    steps:
+      - run:
+          name: Create a release on GitHub
+          command: |
+            set -xe
+            pip3 install --user astronomer_e2e_test
+            # We can remove --debug after we are happy with it
+            astronomer-ci --debug publish-github-release --github-repository $CIRCLE_PROJECT_REPONAME --github-organization $CIRCLE_PROJECT_USERNAME --commitish $CIRCLE_SHA1
