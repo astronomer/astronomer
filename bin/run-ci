@@ -52,11 +52,11 @@ HELM_CODE=0
 while [ $RC -eq 0 ]; do
   NOW=$(date +%s)
   DURATION="$(($NOW-$START))"
-  echo "${DURATION} seconds have elapsed, timeout at 800 seconds"
-  if [ $DURATION -gt 800 ];then
+  echo "${DURATION} seconds have elapsed, timeout at 400 seconds"
+  if [ $DURATION -gt 400 ];then
     HELM_CODE=1
     RC=1
-    echo "Error (timeout): giving up after 800 seconds"
+    echo "Error (timeout): giving up after 400 seconds"
   else
     sleep 10
     kubectl get pods -n astronomer > /tmp/pods
