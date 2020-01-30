@@ -20,6 +20,9 @@ lint:
 	mkdir -p ${TEMP}
 	cp -R ../astronomer ${TEMP}/astronomer || cp -R ../project ${TEMP}/astronomer
 	helm lint ${TEMP}/astronomer
+	for chart in $$(ls ${TEMP}/astronomer/charts); do
+	helm lint ${TEMP}/astronomer/charts/$$chart
+	done
 	# Lint the Prometheus alerts configuration
 	helm template -x ${TEMP}/astronomer/charts/prometheus/templates/prometheus-alerts-configmap.yaml ${TEMP}/astronomer > ${TEMP}/prometheus_alerts.yaml
 	# Parse the alerts.yaml data from the config map resource

@@ -1,3 +1,13 @@
+global:
+  baseDomain: ~
+  platformNodePool:
+    nodeSelector: {}
+    affinity: {}
+    tolerations: []
+  privateRegistry:
+    enabled: false
+    repository: ~
+
 nodeSelector: {}
 affinity: {}
 tolerations: []

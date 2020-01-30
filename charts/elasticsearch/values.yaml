@@ -2,6 +2,17 @@ nodeSelector: {}
 affinity: {}
 tolerations: []
 
+global:
+  istio:
+    enabled: false
+  platformNodePool:
+    nodeSelector: {}
+    affinity: {}
+    tolerations: []
+  privateRegistry:
+    enabled: false
+    repository: ~
+
 images:
   es:
     repository: astronomerinc/ap-elasticsearch
