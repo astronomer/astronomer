@@ -80,18 +80,20 @@ workflows:
       - build-artifact:
           requires:
             - lint
-      - platform:
+{% for version in kube_versions %}
+      - platform-{{ version | replace(".", "-") }}:
           requires:
             - build-artifact
-      - monitoring:
+      - monitoring-{{ version | replace(".", "-") }}:
           requires:
             - build-artifact
-      - logging:
+      - logging-{{ version | replace(".", "-") }}:
           requires:
             - build-artifact
-      - kubed:
+      - kubed-{{ version | replace(".", "-") }}:
           requires:
             - build-artifact
+{% endfor %}
       - approve-release:
           type: approval
           requires:

@@ -187,18 +187,59 @@ workflows:
       - build-artifact:
           requires:
             - lint
-      - platform:
+
+      - platform-1-14-10:
           requires:
             - build-artifact
-      - monitoring:
+      - monitoring-1-14-10:
           requires:
             - build-artifact
-      - logging:
+      - logging-1-14-10:
           requires:
             - build-artifact
-      - kubed:
+      - kubed-1-14-10:
           requires:
             - build-artifact
+
+      - platform-1-15-7:
+          requires:
+            - build-artifact
+      - monitoring-1-15-7:
+          requires:
+            - build-artifact
+      - logging-1-15-7:
+          requires:
+            - build-artifact
+      - kubed-1-15-7:
+          requires:
+            - build-artifact
+
+      - platform-1-16-4:
+          requires:
+            - build-artifact
+      - monitoring-1-16-4:
+          requires:
+            - build-artifact
+      - logging-1-16-4:
+          requires:
+            - build-artifact
+      - kubed-1-16-4:
+          requires:
+            - build-artifact
+
+      - platform-1-17-0:
+          requires:
+            - build-artifact
+      - monitoring-1-17-0:
+          requires:
+            - build-artifact
+      - logging-1-17-0:
+          requires:
+            - build-artifact
+      - kubed-1-17-0:
+          requires:
+            - build-artifact
+
       - approve-release:
           type: approval
           requires:
