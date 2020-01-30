@@ -24,7 +24,9 @@ global:
   singleNamespace: false
 
   # Enables necessary components for compatibility with Istio Service Mesh
-  istioEnabled: false
+  istio:
+    enabled: false
+    rootNamespace: "istio-config"
 
   # Enables necessary components for Velero (Velero, Grafana Dashboard, Prometheus Alerts)
   veleroEnabled: false

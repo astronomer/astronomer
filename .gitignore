@@ -16,3 +16,4 @@ dev-account.json
 *.swp
 # Chart dependencies
 **/charts/*.tgz
+*.tgz

@@ -1,4 +1,4 @@
-{{- if .Values.global.istioEnabled }}
+{{- if .Values.global.istio.enabled }}
 # The default side configuration will apply
 # to the Airflow namespaces.
 apiVersion: networking.istio.io/v1alpha3
@@ -7,7 +7,7 @@ metadata:
   name: default-sidecar-config
   # A Sidecar resource in the istio 'root namespace' will act
   # as a default for any Istio namespace without a Sidecar resource.
-  namespace: {{ .Values.istio.rootNamespace }}
+  namespace: {{ .Values.global.istio.rootNamespace }}
 spec:
   # Egress will also be allowed to any public IP:
   # https://github.com/astronomer/terraform-google-astronomer-cloud/pull/91/files
