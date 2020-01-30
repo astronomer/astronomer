@@ -2,6 +2,26 @@
 
 set -e
 
+function get_debugging_info {
+  echo "Failed to deploy Astronomer!"
+  echo "Printing description and logs where containers in pod are not 1/1..."
+  for pod in $(kubectl get pods -n astronomer | grep -v NAME | grep -v 1/1 | grep -v Completed | awk '{ print $1 }'); do
+    echo "======================="
+    set -x
+    kubectl describe pod -n astronomer $pod
+    kubectl logs -n astronomer $pod | tail -n 30
+    set +x
+    echo "======================="
+  done
+  kubectl get pods --all-namespaces
+  echo "======================="
+  kubectl get ds --all-namespaces
+  echo "======================="
+  kubectl get sts --all-namespaces
+  echo "======================="
+  kubectl get deployments --all-namespaces
+}
+
 # Bit of common bash magic that sets DIR to the directory of this script
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 # The path to the working directory - the root of the repo
@@ -41,6 +61,7 @@ helm install \
 
 if [ ! $? -eq 0 ]; then
   echo "Helm chart failed to install"
+  get_debugging_info
   exit 1
 fi
 
@@ -79,16 +100,7 @@ kill $WATCH_PID
 if [ $HELM_CODE -eq 0 ]; then
   echo "Astronomer deployed!"
 else
-  echo "Failed to deploy Astronomer!"
-  echo "Printing description and logs where containers in pod are not 1/1..."
-  for pod in $(kubectl get pods -n astronomer | grep -v NAME | grep -v 1/1 | grep -v Completed | awk '{ print $1 }'); do
-    echo "======================="
-    set -x
-    kubectl describe pod -n astronomer $pod
-    kubectl logs -n astronomer $pod | tail -n 30
-    set +x
-    echo "======================="
-  done
+  get_debugging_info
 fi
 
 set -x
