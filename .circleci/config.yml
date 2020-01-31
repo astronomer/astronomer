@@ -393,7 +393,7 @@ commands:
           at: /tmp/workspace
       - checkout
       - run:
-          name: Install Astronomerirflow chart
+          name: Install Astronomer chart
           command: |
             set -e
             HELM_CHART_PATH='/tmp/workspace/astronomer-*.tgz' bin/run-ci << parameters.astronomer-tags >>
