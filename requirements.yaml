@@ -53,3 +53,10 @@ dependencies:
     condition: postgresql.enabled
     tags:
       - postgresql
+
+  # In-cluster DB, not recommended
+  # for production
+  - name: keda
+    condition: keda.enabled
+    tags:
+      - keda

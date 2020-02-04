@@ -1,0 +1,7 @@
+enabled: true
+
+keda:
+  image:
+    # Enable KEDA POC in cloud
+    keda: "dimberman/keda:master"
+    metricsAdapter: "dimberman/keda-metrics-adapter:master"

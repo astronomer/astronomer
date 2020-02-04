@@ -62,7 +62,7 @@ jobs:
       image: ubuntu-1604:201903-01
     steps:
       - helm-install:
-          astronomer-tags: "kubed"
+          astronomer-tags: "kubed keda"
 
 workflows:
   version: 2.1

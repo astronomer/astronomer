@@ -311,3 +311,10 @@ kubed:
 # database for production.
 postgresql:
   enabled: true
+
+#################################
+## KEDA Config
+#################################
+# Used to enable Celery autoscaling
+keda:
+  enabled: true
