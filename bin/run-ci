@@ -23,6 +23,8 @@ platform=false
 logging=false
 monitoring=false
 kubed=false
+postgresql=false
+keda=false
 for component in $@
 do
   export $component=true
@@ -43,6 +45,8 @@ helm install \
   --set tags.logging=${logging} \
   --set tags.monitoring=${monitoring} \
   --set tags.kubed=${kubed} \
+  --set tags.postgresql=${postgresql} \
+  --set tags.keda=${keda} \
   $HELM_CHART_PATH
 
 if [ ! $? -eq 0 ]; then
