@@ -2,16 +2,6 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
  
-global:
-  baseDomain: ~
-  platformNodePool:
-    nodeSelector: {}
-    affinity: {}
-    tolerations: []
-  privateRegistry:
-    enabled: false
-    repository: ~
-
 nodeSelector: {}
 affinity: {}
 tolerations: []

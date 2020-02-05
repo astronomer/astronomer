@@ -20,8 +20,9 @@ lint:
 	mkdir -p ${TEMP}
 	cp -R ../astronomer ${TEMP}/astronomer || cp -R ../project ${TEMP}/astronomer
 	helm lint ${TEMP}/astronomer
+	python3 -c "import yaml; from pathlib import Path; globals = {'global': yaml.safe_load(Path('${TEMP}/astronomer/values.yaml').read_text())['global']}; Path('${TEMP}/globals.yaml').write_text(yaml.dump(globals))"
 	for chart in $$(ls ${TEMP}/astronomer/charts); do
-	helm lint ${TEMP}/astronomer/charts/$$chart
+	helm lint -f ${TEMP}/globals.yaml ${TEMP}/astronomer/charts/$$chart
 	done
 	# Lint the Prometheus alerts configuration
 	helm template -x ${TEMP}/astronomer/charts/prometheus/templates/prometheus-alerts-configmap.yaml ${TEMP}/astronomer > ${TEMP}/prometheus_alerts.yaml

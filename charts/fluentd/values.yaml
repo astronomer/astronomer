@@ -2,14 +2,6 @@ nodeSelector: {}
 affinity: {}
 tolerations: []
 
-global:
-  rbacEnabled: true
-  istio:
-    enabled: false
-  privateRegistry:
-    enabled: false
-    repository: ~
-
 images:
   fluentd:
     repository: astronomerinc/ap-fluentd
