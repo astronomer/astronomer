@@ -41,6 +41,10 @@ echo ""
 
 echo "Releasing chart..."
 
+# This is needed to avoid using the CI's built-in
+# gcloud configurations.
+export BOTO_CONFIG=/dev/null
+
 echo ${GCP_TOKEN} > /tmp/gcs_token.json
 gcloud auth activate-service-account --key-file=/tmp/gcs_token.json
 
