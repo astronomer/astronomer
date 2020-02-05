@@ -78,7 +78,7 @@ while [ $RC -eq 0 ]; do
     # of logging tag without the platform. This is the only logging component
     # that will not start without the platform. The benefit of allowing us to
     # test the logging tag outweighs the downside of ignoring one pod.
-    cat /tmp/pods | grep -v 1/1 | grep -v NAME | grep -v Completed | grep -v 'elasticsearch-nginx' >/dev/null 2>&1
+    cat /tmp/pods | grep -v 1/1 | grep -v 2/2 | grep -v NAME | grep -v Completed | grep -v 'elasticsearch-nginx' >/dev/null 2>&1
     RC=$?
   fi
 done
@@ -91,7 +91,7 @@ if [ $HELM_CODE -eq 0 ]; then
 else
   echo "Failed to deploy Astronomer!"
   echo "Printing description and logs where containers in pod are not 1/1..."
-  for pod in $(kubectl get pods -n astronomer | grep -v NAME | grep -v 1/1 | grep -v Completed | awk '{ print $1 }'); do
+  for pod in $(kubectl get pods -n astronomer | grep -v NAME | grep -v 1/1 | grep -v 2/2 | grep -v Completed | awk '{ print $1 }'); do
     echo "======================="
     set -x
     kubectl describe pod -n astronomer $pod
