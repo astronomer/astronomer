@@ -40,6 +40,10 @@ echo "========================="
 echo ""
 
 echo "Releasing chart..."
+
+echo ${GCP_TOKEN} > /tmp/gcs_token.json
+gcloud auth activate-service-account --key-file=/tmp/gcs_token.json
+
 set -xe
 # Set up the index.html file
 wget https://helm.astronomer.io/index.yaml -O /tmp/index.yaml.current
