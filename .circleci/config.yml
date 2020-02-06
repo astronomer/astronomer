@@ -1,45 +1,134 @@
-version: 2
+version: 2.1
 
 jobs:
-  platform:
-    machine:
-      image: ubuntu-1604:201903-01
+  lint:
+    docker:
+      - image: astronomerio/ap-build:0.1.3
     steps:
       - checkout
       - run:
-          name: Platform
-          command: bin/run-ci platform postgresql
+          name: Lint the Airflow chart
+          command: make lint
+  build-artifact:
+    docker:
+      - image: astronomerio/ap-build:0.1.3
+    steps:
+      - checkout
+      - run:
+          name: Package the Airflow chart
+          command: make build
+      - persist_to_workspace:
+          root: '.'
+          paths:
+            - './*.tgz'
+  release:
+    machine:
+      image: ubuntu-1604:201903-01
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - publish-github-release
+      - run:
+          name: Release the Astronomer chart
+          command: |
+            set -e
+            pyenv global 2.7.12
+            HELM_CHART_PATH='/tmp/workspace/astronomer-*.tgz' bin/release
+
+  platform:
+    machine:
+      image: ubuntu-1604:201903-01
+      resource_class: large
+    steps:
+      - helm-install:
+          astronomer-tags: "platform postgresql"
   monitoring:
     machine:
       image: ubuntu-1604:201903-01
     steps:
-      - checkout
-      - run:
-          name: Monitoring
-          command: bin/run-ci monitoring postgresql
+      - helm-install:
+          astronomer-tags: "monitoring postgresql"
   logging:
     machine:
       image: ubuntu-1604:201903-01
       resource_class: large
     steps:
-      - checkout
-      - run:
-          name: Logging
-          command: bin/run-ci logging
+      - helm-install:
+          astronomer-tags: "logging"
+
   kubed:
     machine:
       image: ubuntu-1604:201903-01
     steps:
-      - checkout
-      - run:
-          name: Kubed
-          command: bin/run-ci kubed
+      - helm-install:
+          astronomer-tags: "kubed"
 
 workflows:
-  version: 2
+  version: 2.1
   install-helm-tags:
     jobs:
-      - platform
-      - monitoring
-      - logging
-      - kubed
+      - lint
+      - build-artifact:
+          requires:
+            - lint
+      - platform:
+          requires:
+            - build-artifact
+      - monitoring:
+          requires:
+            - build-artifact
+      - logging:
+          requires:
+            - build-artifact
+      - kubed:
+          requires:
+            - build-artifact
+      - approve-release:
+          type: approval
+          requires:
+            - platform
+            - monitoring
+            - logging
+            - kubed
+          filters:
+            branches:
+              only:
+                - '/release-.*/'
+      - release:
+          requires:
+            - approve-release
+          filters:
+            branches:
+              only:
+                - '/release-.*/'
+commands:
+  helm-install:
+    description: "Install Helm chart from artifact"
+    parameters:
+      astronomer-tags:
+        type: string
+        default:  "platform"
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - run:
+          name: Install Airflow chart
+          command: |
+            set -e
+            HELM_CHART_PATH='/tmp/workspace/astronomer-*.tgz' bin/run-ci << parameters.astronomer-tags >>
+  publish-github-release:
+    description: "Create a release on GitHub"
+    parameters:
+      tag:
+        type: string
+        default:  "$NEXT_TAG"
+    steps:
+      - run:
+          name: Create a release on GitHub
+          command: |
+            set -xe
+            pyenv global 3.7.0
+            pip install astronomer_e2e_test
+            astronomer-ci publish-github-release --github-repository $CIRCLE_PROJECT_REPONAME --github-organization $CIRCLE_PROJECT_USERNAME --commitish $CIRCLE_SHA1

@@ -1,4 +1,5 @@
-name: astronomer-platform
+apiVersion: v1
+name: astronomer
 version: 0.11.2
 appVersion: 0.11.2
 description: Helm chart to deploy the Astronomer Platform

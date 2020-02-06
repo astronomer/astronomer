@@ -35,7 +35,7 @@ All notable changes to this project will be documented in this file.
 ## [0.10.1] - 2019-09-30
 - Upgrade to Airflow 1.10.5
 - Kubernetes 1.14+ support
-- Improved metrics in Grafana and Orbit
+- Improved metrics in Grafana and the UI
 - Support for Istio
 - Scheduler hangup mitigations
 - Admin Panel deployment list
@@ -81,8 +81,8 @@ All notable changes to this project will be documented in this file.
 
 ## [0.9.2] - 2019-06-24
 - Fix local env link and user/password in CLI
-- Fix early data load issue in orbit metrics
-- Fix deployment listing issue in orbit
+- Fix early data load issue in UI metrics
+- Fix deployment listing issue in the UI
 
 ## [0.9.1] - 2019-06-17
 - Support for Okta as oauth integration
@@ -100,7 +100,7 @@ All notable changes to this project will be documented in this file.
 - Switched to Airflow RBAC dashboard by default, and integrated with Astronomer RBAC.
 - Support for configurable registry backend.
 - Fixed createServiceAccount and updateServiceAccount mutations.
-- Fix orbit caching bug.
+- Fix UI caching bug.
 - Fix for cascading deletes of Astronomer RoleBindings.
 - Fix to prevent logs being truncated in the UI.
 - Add streaming logs support to CLI.

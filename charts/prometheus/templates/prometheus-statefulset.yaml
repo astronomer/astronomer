@@ -28,7 +28,7 @@ spec:
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/prometheus-config-configmap.yaml") . | sha256sum }}
         checksum/alerts: {{ include (print $.Template.BasePath "/prometheus-alerts-configmap.yaml") . | sha256sum }}
-{{- if .Values.global.istioEnabled }}
+{{- if .Values.global.istio.enabled }}
         sidecar.istio.io/proxyCPU: "500m"
         sidecar.istio.io/proxyMemory: "400Mi"
 {{- end }}

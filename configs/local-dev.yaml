@@ -24,9 +24,8 @@ global:
 ## Astronomer configuration
 ## Omit resouce requests
 ############################
-
 astronomer:
-  orbit:
+  astroUI:
     resources:
       requests:
         cpu: "0m"

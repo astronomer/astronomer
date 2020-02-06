@@ -20,7 +20,7 @@ data:
     commander:
       enabled: true
 
-    orbit:
+    ui:
       port: 80
 
     email:

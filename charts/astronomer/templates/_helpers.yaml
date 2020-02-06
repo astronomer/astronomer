@@ -33,19 +33,11 @@
 {{- end }}
 {{- end }}
 
-{{ define "orbit.image" -}}
+{{ define "astroUI.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/ap-orbit-ui:{{ .Values.images.orbit.tag }}
+{{ .Values.global.privateRegistry.repository }}/ap-astro-ui:{{ .Values.images.astroUI.tag }}
 {{- else -}}
-{{ .Values.images.orbit.repository }}:{{ .Values.images.orbit.tag }}
-{{- end }}
-{{- end }}
-
-{{ define "norbit.image" -}}
-{{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/ap-norbit-ui:{{ .Values.images.norbit.tag }}
-{{- else -}}
-{{ .Values.images.norbit.repository }}:{{ .Values.images.norbit.tag }}
+{{ .Values.images.astroUI.repository }}:{{ .Values.images.astroUI.tag }}
 {{- end }}
 {{- end }}
 

@@ -15,7 +15,7 @@ metadata:
   annotations:
     # This is what defines this resource as a hook. Without this line, the
     # job is considered part of the release.
-    "helm.sh/hook": post-upgrade
+    "helm.sh/hook": post-upgrade,post-install
     "helm.sh/hook-weight": "1"
     "helm.sh/hook-delete-policy": before-hook-creation
 spec:
@@ -28,7 +28,7 @@ spec:
         tier: astronomer
         component: houston
         release: {{ .Release.Name }}
-      {{- if .Values.global.istioEnabled }}
+      {{- if .Values.global.istio.enabled }}
       annotations:
         sidecar.istio.io/inject: "false"
       {{- end }}
