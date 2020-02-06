@@ -105,10 +105,13 @@ data:
 
         # Scheduler configuration.
         scheduler:
+
+          # Airflow Local Settings.
           airflowLocalSettings: |
             from airflow.contrib.kubernetes.pod import Pod
             from airflow.configuration import conf
             def pod_mutation_hook(pod: Pod):
+
               # This is the default airflow-chart pod mutation hook
               extra_labels = {
                   "kubernetes-executor": "False",
@@ -122,11 +125,13 @@ data:
               pod.labels.update(extra_labels)
               pod.tolerations += []
               pod.affinity.update({})
+
               # Ensure our entrypoint is respected
               if not pod.args:
                 pod.args = []
               pod.args = pod.cmds + pod.args
               pod.cmds = ["tini", "--", "/entrypoint"]
+
           resources:
             limits:
               ephemeral-storage: "2Gi"
