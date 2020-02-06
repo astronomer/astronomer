@@ -152,6 +152,15 @@ houston:
     # Only run on deployments marked as canary
     canary: false
 
+  # Check airflow updates
+  # This runs as a CronJob
+  checkDeployments:
+    # Enable check updates CronJob
+    enabled: true
+
+    # Default here is to run at midnight every night
+    schedule: "0 0 * * *"
+
 prisma:
   env: []
   resources: {}
