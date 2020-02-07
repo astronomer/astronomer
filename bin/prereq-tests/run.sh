@@ -80,7 +80,7 @@ if [[ $T_AWS ]]; then
   echo
   echo
 
-  echo "AWS Perms:"
+  echo "AWS Permsissions:"
   $DIR/aws/perms.bats
   echo
   echo
@@ -105,8 +105,8 @@ if [[ $T_K8S ]]; then
   $DIR/k8s/base.bats
   echo
   echo
-  echo "Tiller:"
-  $DIR/k8s/base.bats
+  echo "Kubernetes Permissions:"
+  $DIR/k8s/perms.bats
   echo
   echo
 fi
