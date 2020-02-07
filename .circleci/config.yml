@@ -1,3 +1,5 @@
+# Warning: automatically generated file
+# Please edit config.yml.j2, and use the script generate_circleci_config.py
 version: 2.1
 
 jobs:
@@ -7,7 +9,7 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Lint the Airflow chart
+          name: Lint the Astronomer chart
           command: make lint
   build-artifact:
     docker:
@@ -15,7 +17,7 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Package the Airflow chart
+          name: Package the Astronomer chart
           command: make build
       - persist_to_workspace:
           root: '.'
@@ -36,33 +38,216 @@ jobs:
             pyenv global 2.7.12
             HELM_CHART_PATH='/tmp/workspace/astronomer-*.tgz' bin/release
 
-  platform:
+  platform-1-12-10:
     machine:
       image: ubuntu-1604:201903-01
       resource_class: large
+    environment:
+      KUBE_VERSION: v1.12.10
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql"
-  monitoring:
+  monitoring-1-12-10:
     machine:
       image: ubuntu-1604:201903-01
+    environment:
+      KUBE_VERSION: v1.12.10
     steps:
       - helm-install:
           astronomer-tags: "monitoring postgresql"
-  logging:
+  logging-1-12-10:
     machine:
       image: ubuntu-1604:201903-01
       resource_class: large
+    environment:
+      KUBE_VERSION: v1.12.10
     steps:
       - helm-install:
           astronomer-tags: "logging"
-
-  kubed:
+  kubed-1-12-10:
     machine:
       image: ubuntu-1604:201903-01
+    environment:
+      KUBE_VERSION: v1.12.10
     steps:
       - helm-install:
           astronomer-tags: "kubed"
+
+  platform-1-13-12:
+    machine:
+      image: ubuntu-1604:201903-01
+      resource_class: large
+    environment:
+      KUBE_VERSION: v1.13.12
+    steps:
+      - helm-install:
+          astronomer-tags: "platform postgresql"
+  monitoring-1-13-12:
+    machine:
+      image: ubuntu-1604:201903-01
+    environment:
+      KUBE_VERSION: v1.13.12
+    steps:
+      - helm-install:
+          astronomer-tags: "monitoring postgresql"
+  logging-1-13-12:
+    machine:
+      image: ubuntu-1604:201903-01
+      resource_class: large
+    environment:
+      KUBE_VERSION: v1.13.12
+    steps:
+      - helm-install:
+          astronomer-tags: "logging"
+  kubed-1-13-12:
+    machine:
+      image: ubuntu-1604:201903-01
+    environment:
+      KUBE_VERSION: v1.13.12
+    steps:
+      - helm-install:
+          astronomer-tags: "kubed"
+
+  platform-1-14-10:
+    machine:
+      image: ubuntu-1604:201903-01
+      resource_class: large
+    environment:
+      KUBE_VERSION: v1.14.10
+    steps:
+      - helm-install:
+          astronomer-tags: "platform postgresql"
+  monitoring-1-14-10:
+    machine:
+      image: ubuntu-1604:201903-01
+    environment:
+      KUBE_VERSION: v1.14.10
+    steps:
+      - helm-install:
+          astronomer-tags: "monitoring postgresql"
+  logging-1-14-10:
+    machine:
+      image: ubuntu-1604:201903-01
+      resource_class: large
+    environment:
+      KUBE_VERSION: v1.14.10
+    steps:
+      - helm-install:
+          astronomer-tags: "logging"
+  kubed-1-14-10:
+    machine:
+      image: ubuntu-1604:201903-01
+    environment:
+      KUBE_VERSION: v1.14.10
+    steps:
+      - helm-install:
+          astronomer-tags: "kubed"
+
+  platform-1-15-7:
+    machine:
+      image: ubuntu-1604:201903-01
+      resource_class: large
+    environment:
+      KUBE_VERSION: v1.15.7
+    steps:
+      - helm-install:
+          astronomer-tags: "platform postgresql"
+  monitoring-1-15-7:
+    machine:
+      image: ubuntu-1604:201903-01
+    environment:
+      KUBE_VERSION: v1.15.7
+    steps:
+      - helm-install:
+          astronomer-tags: "monitoring postgresql"
+  logging-1-15-7:
+    machine:
+      image: ubuntu-1604:201903-01
+      resource_class: large
+    environment:
+      KUBE_VERSION: v1.15.7
+    steps:
+      - helm-install:
+          astronomer-tags: "logging"
+  kubed-1-15-7:
+    machine:
+      image: ubuntu-1604:201903-01
+    environment:
+      KUBE_VERSION: v1.15.7
+    steps:
+      - helm-install:
+          astronomer-tags: "kubed"
+
+  platform-1-16-4:
+    machine:
+      image: ubuntu-1604:201903-01
+      resource_class: large
+    environment:
+      KUBE_VERSION: v1.16.4
+    steps:
+      - helm-install:
+          astronomer-tags: "platform postgresql"
+  monitoring-1-16-4:
+    machine:
+      image: ubuntu-1604:201903-01
+    environment:
+      KUBE_VERSION: v1.16.4
+    steps:
+      - helm-install:
+          astronomer-tags: "monitoring postgresql"
+  logging-1-16-4:
+    machine:
+      image: ubuntu-1604:201903-01
+      resource_class: large
+    environment:
+      KUBE_VERSION: v1.16.4
+    steps:
+      - helm-install:
+          astronomer-tags: "logging"
+  kubed-1-16-4:
+    machine:
+      image: ubuntu-1604:201903-01
+    environment:
+      KUBE_VERSION: v1.16.4
+    steps:
+      - helm-install:
+          astronomer-tags: "kubed"
+
+  platform-1-17-0:
+    machine:
+      image: ubuntu-1604:201903-01
+      resource_class: large
+    environment:
+      KUBE_VERSION: v1.17.0
+    steps:
+      - helm-install:
+          astronomer-tags: "platform postgresql"
+  monitoring-1-17-0:
+    machine:
+      image: ubuntu-1604:201903-01
+    environment:
+      KUBE_VERSION: v1.17.0
+    steps:
+      - helm-install:
+          astronomer-tags: "monitoring postgresql"
+  logging-1-17-0:
+    machine:
+      image: ubuntu-1604:201903-01
+      resource_class: large
+    environment:
+      KUBE_VERSION: v1.17.0
+    steps:
+      - helm-install:
+          astronomer-tags: "logging"
+  kubed-1-17-0:
+    machine:
+      image: ubuntu-1604:201903-01
+    environment:
+      KUBE_VERSION: v1.17.0
+    steps:
+      - helm-install:
+          astronomer-tags: "kubed"
+
 
 workflows:
   version: 2.1
@@ -72,25 +257,119 @@ workflows:
       - build-artifact:
           requires:
             - lint
-      - platform:
+
+      - platform-1-12-10:
           requires:
             - build-artifact
-      - monitoring:
+      - monitoring-1-12-10:
           requires:
             - build-artifact
-      - logging:
+      - logging-1-12-10:
           requires:
             - build-artifact
-      - kubed:
+      - kubed-1-12-10:
           requires:
             - build-artifact
+
+      - platform-1-13-12:
+          requires:
+            - build-artifact
+      - monitoring-1-13-12:
+          requires:
+            - build-artifact
+      - logging-1-13-12:
+          requires:
+            - build-artifact
+      - kubed-1-13-12:
+          requires:
+            - build-artifact
+
+      - platform-1-14-10:
+          requires:
+            - build-artifact
+      - monitoring-1-14-10:
+          requires:
+            - build-artifact
+      - logging-1-14-10:
+          requires:
+            - build-artifact
+      - kubed-1-14-10:
+          requires:
+            - build-artifact
+
+      - platform-1-15-7:
+          requires:
+            - build-artifact
+      - monitoring-1-15-7:
+          requires:
+            - build-artifact
+      - logging-1-15-7:
+          requires:
+            - build-artifact
+      - kubed-1-15-7:
+          requires:
+            - build-artifact
+
+      - platform-1-16-4:
+          requires:
+            - build-artifact
+      - monitoring-1-16-4:
+          requires:
+            - build-artifact
+      - logging-1-16-4:
+          requires:
+            - build-artifact
+      - kubed-1-16-4:
+          requires:
+            - build-artifact
+
+      - platform-1-17-0:
+          requires:
+            - build-artifact
+      - monitoring-1-17-0:
+          requires:
+            - build-artifact
+      - logging-1-17-0:
+          requires:
+            - build-artifact
+      - kubed-1-17-0:
+          requires:
+            - build-artifact
+
       - approve-release:
           type: approval
           requires:
-            - platform
-            - monitoring
-            - logging
-            - kubed
+
+            - platform-1-12-10
+            - monitoring-1-12-10
+            - logging-1-12-10
+            - kubed-1-12-10
+
+            - platform-1-13-12
+            - monitoring-1-13-12
+            - logging-1-13-12
+            - kubed-1-13-12
+
+            - platform-1-14-10
+            - monitoring-1-14-10
+            - logging-1-14-10
+            - kubed-1-14-10
+
+            - platform-1-15-7
+            - monitoring-1-15-7
+            - logging-1-15-7
+            - kubed-1-15-7
+
+            - platform-1-16-4
+            - monitoring-1-16-4
+            - logging-1-16-4
+            - kubed-1-16-4
+
+            - platform-1-17-0
+            - monitoring-1-17-0
+            - logging-1-17-0
+            - kubed-1-17-0
+
           filters:
             branches:
               only:
@@ -114,7 +393,7 @@ commands:
           at: /tmp/workspace
       - checkout
       - run:
-          name: Install Airflow chart
+          name: Install Astronomer chart
           command: |
             set -e
             HELM_CHART_PATH='/tmp/workspace/astronomer-*.tgz' bin/run-ci << parameters.astronomer-tags >>

@@ -2,19 +2,33 @@
 
 set -e
 
+function get_debugging_info {
+  echo "Failed to deploy Astronomer!"
+  echo "Printing description and logs where containers in pod are not 1/1..."
+  for pod in $(kubectl get pods -n astronomer | grep -v NAME | grep -v 1/1 | grep -v Completed | awk '{ print $1 }'); do
+    echo "======================="
+    set -x
+    kubectl describe pod -n astronomer $pod
+    kubectl logs -n astronomer $pod | tail -n 30
+    set +x
+    echo "======================="
+  done
+  kubectl get pods --all-namespaces
+  echo "======================="
+  kubectl get ds --all-namespaces
+  echo "======================="
+  kubectl get sts --all-namespaces
+  echo "======================="
+  kubectl get deployments --all-namespaces
+}
+
 # Bit of common bash magic that sets DIR to the directory of this script
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 # The path to the working directory - the root of the repo
 REPO_DIR=$DIR/../
 
-if [ -n "$GOOGLE_APPLICATION_CREDENTIALS_CONTENT" ]; then
-  echo $GOOGLE_APPLICATION_CREDENTIALS_CONTENT > /tmp/account.json
-  export GOOGLE_APPLICATION_CREDENTIALS=/tmp/account.json
-fi
-
 source $REPO_DIR/bin/install-ci-tools
 
-gcloud auth activate-service-account --key-file=$GOOGLE_APPLICATION_CREDENTIALS
 source $REPO_DIR/bin/setup-kind
 
 echo "Deploying Astronomer..."
@@ -47,6 +61,7 @@ helm install \
 
 if [ ! $? -eq 0 ]; then
   echo "Helm chart failed to install"
+  get_debugging_info
   exit 1
 fi
 
@@ -58,11 +73,11 @@ HELM_CODE=0
 while [ $RC -eq 0 ]; do
   NOW=$(date +%s)
   DURATION="$(($NOW-$START))"
-  echo "${DURATION} seconds have elapsed, timeout at 800 seconds"
-  if [ $DURATION -gt 800 ];then
+  echo "${DURATION} seconds have elapsed, timeout at 400 seconds"
+  if [ $DURATION -gt 400 ];then
     HELM_CODE=1
     RC=1
-    echo "Error (timeout): giving up after 800 seconds"
+    echo "Error (timeout): giving up after 400 seconds"
   else
     sleep 10
     kubectl get pods -n astronomer > /tmp/pods
@@ -85,16 +100,7 @@ kill $WATCH_PID
 if [ $HELM_CODE -eq 0 ]; then
   echo "Astronomer deployed!"
 else
-  echo "Failed to deploy Astronomer!"
-  echo "Printing description and logs where containers in pod are not 1/1..."
-  for pod in $(kubectl get pods -n astronomer | grep -v NAME | grep -v 1/1 | grep -v Completed | awk '{ print $1 }'); do
-    echo "======================="
-    set -x
-    kubectl describe pod -n astronomer $pod
-    kubectl logs -n astronomer $pod | tail -n 30
-    set +x
-    echo "======================="
-  done
+  get_debugging_info
 fi
 
 set -x
