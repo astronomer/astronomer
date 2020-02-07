@@ -103,6 +103,10 @@ data:
             requests:
               ephemeral-storage: "1Gi"
 
+          # This is here for upgrading to 0.11.1+ of Airflow.
+          keda:
+            enabled: false
+
         # Scheduler configuration.
         scheduler:
 
@@ -149,8 +153,15 @@ data:
         podMutation:
           tolerations: []
 
-        # This is here for upgrading to 0.11+ of Airflow.
+        # This is here for upgrading to 0.11.0+ of Airflow.
         defaultAirflowRepository: astronomerinc/ap-airflow
+
+        # This is here for upgrading to 0.11.1+ of Airflow.
+        data:
+          metadataConnection:
+            sslmode: disable
+          resultBackendConnection:
+            sslmode: disable
 
     {{- if not .Values.global.singleNamespace }}
         # Enable cleanup CronJob in Airflow deployents
