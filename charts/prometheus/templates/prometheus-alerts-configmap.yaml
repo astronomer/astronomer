@@ -150,7 +150,7 @@ data:
             component: prometheus
           annotations:
             summary: "Prometheus High Disk Usage"
-            description: "Prometheus has less than 10% disk space available."
+            description: {{ printf "%q" "Prometheus has {{ $value }}% of disk space available" }}
 
         - alert: RegistryDiskUsage
           expr: (kubelet_volume_stats_available_bytes{persistentvolumeclaim=~"data-{{ .Release.Name }}-registry-.*"} / kubelet_volume_stats_capacity_bytes{persistentvolumeclaim=~"data-{{ .Release.Name }}-registry-.*"} * 100) < 10
