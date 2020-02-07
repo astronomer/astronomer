@@ -1,6 +1,6 @@
 #!/usr/bin/env bats
 
-load semver
+load ../helpers/semver
 
 @test "AWS CLI" {
   run aws --version

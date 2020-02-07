@@ -1,6 +1,6 @@
 #!/usr/bin/env bats
 
-load semver
+load ../helpers/semver
 
 @test "Terraform" {
   run terraform version --client --short
