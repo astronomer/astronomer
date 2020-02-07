@@ -9,7 +9,7 @@ load ../helpers/semver
 
   version=$(echo "${lines[1]}" | awk '{ print $2 }')
 
-  run semver_compare $version "18.09.0"
+  run semver_compare $version "$DOCKER_MIN"
   [ "$output" -ne -1 ]
 }
 

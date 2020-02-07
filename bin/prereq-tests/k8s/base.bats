@@ -1,5 +1,6 @@
 #!/usr/bin/env bats
 
+load ../config
 load ../helpers/semver
 
 @test "API access" {
@@ -8,10 +9,10 @@ load ../helpers/semver
 
   version=$(echo "$output" | tail -n 1 | tr '-' ' ' | awk '{ print $3 }' | tr -d 'v')
 
-  run semver_compare $version "1.12.0"
+  run semver_compare $version "$KUBERNETES_MIN"
   [ "$output" -ne -1 ]
 
-  run semver_compare $version "1.18.0"
+  run semver_compare $version "$KUBERNETES_LESSTHAN"
   [ "$output" -eq -1 ]
 }
 
@@ -21,10 +22,10 @@ load ../helpers/semver
 
   version=$(echo "$output" | tr '+' ' ' | awk '{ print $2 }' | tr -d 'v')
 
-  run semver_compare $version "2.14.0"
+  run semver_compare $version "$HELM_MIN"
   [ "$output" -ne -1 ]
 
-  run semver_compare $version "3.0.0"
+  run semver_compare $version "$HELM_LESSTHAN"
   [ "$output" -eq -1 ]
 }
 

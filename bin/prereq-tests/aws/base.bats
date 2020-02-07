@@ -1,5 +1,6 @@
 #!/usr/bin/env bats
 
+load ../config
 load ../helpers/semver
 
 @test "AWS CLI" {
@@ -7,7 +8,7 @@ load ../helpers/semver
   [ "$status" -eq 0 ]
   version=$(echo "$output" | tr '/' ' ' | awk '{ print $2 }')
 
-  run semver_compare $version "1.0.0"
+  run semver_compare $version "$AWSCLI_MIN"
   [ "$output" -ne -1 ]
 }
 
@@ -21,7 +22,7 @@ load ../helpers/semver
   [ "$status" -eq 0 ]
   version=$(echo "${lines[0]}" | awk '{ print $2 }' | tr -d 'v')
 
-  run semver_compare $version "0.4.0"
+  run semver_compare $version "$AWSIAM_MIN"
   [ "$output" -ne -1 ]
 }
 
