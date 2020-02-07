@@ -71,7 +71,12 @@ fi
 
 if [[ $T_AWS ]]; then
   echo "AWS Tests:"
-  $DIR/aws.bats
+  $DIR/aws-base.bats
+  echo
+  echo
+
+  echo "AWS Perms:"
+  $DIR/aws-perms.bats
   echo
   echo
 fi
