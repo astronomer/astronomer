@@ -7,7 +7,6 @@ load ../helpers/semver
   # check in path
   run which docker
   if [ "$status" -ne 0 ]; then
-    echo "Docker tool missing"
     echo "$output"
   fi
   [ "$status" -eq 0 ]
@@ -15,7 +14,6 @@ load ../helpers/semver
   # check command can run
   run docker version
   if [ "$status" -ne 0 ]; then
-    echo "Docker tool error"
     echo "$output"
   fi
   [ "$status" -eq 0 ]
@@ -33,6 +31,7 @@ load ../helpers/semver
   run astro version
   if [ "$status" -ne 0 ]; then
     echo "Astro CLI missing"
+    echo "$output"
   fi
   [ "$status" -eq 0 ]
 
