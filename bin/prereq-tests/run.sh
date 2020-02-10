@@ -105,11 +105,11 @@ fi
 
 if [[ $T_K8S ]]; then
   echo "Kubernetes Base:"
-  # $DIR/k8s/base.bats
+  $DIR/k8s/base.bats
   echo
   echo
   echo "Kubernetes Permissions:"
-  # $DIR/k8s/perms.bats
+  $DIR/k8s/perms.bats
   echo
   echo
   echo "Kubernetes Features:"
