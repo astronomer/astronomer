@@ -50,6 +50,9 @@ if ! [[ $? -eq 0 ]]; then
   kind create cluster --image kindest/node:${KUBE_VERSION}
 fi
 
+# Set KUBECONFIG to point at the new kind cluster
+export KUBECONFIG="$(kind get kubeconfig-path --name="kind")"
+
 set -e
 set +x
 
