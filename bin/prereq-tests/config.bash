@@ -1,7 +1,7 @@
 #!/bin/usr/env bash
 
 ASTRONOMER_VERSION="0.11.0"
-ASTRONOMER_DOMAIN=""
+ASTRONOMER_BASEDOMAIN="staging.astronomer.io"
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 

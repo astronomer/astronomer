@@ -23,6 +23,7 @@ USAGE () {
   echo "  -G    GCP tests"
   echo "  -K    Kubernetes tests"
   echo "  -D    Database tests"
+  echo "  -E    Other External resource tests"
   echo ""
   echo "  -h    Print this help message"
   echo ""
@@ -34,14 +35,16 @@ T_AWS=
 T_GCP=
 T_K8S=
 T_DB=
+T_EXT=
 
-while getopts "TAGKDh" OPTION; do
+while getopts "TAGKDEh" OPTION; do
   case "${OPTION}" in
     T) T_TOOLS=1 ;;
     A) T_AWS=1 ;;
     G) T_GCP=1 ;;
     K) T_K8S=1 ;;
     D) T_DB=1 ;;
+    E) T_EXT=1 ;;
 
     h)
       USAGE
@@ -102,11 +105,22 @@ fi
 
 if [[ $T_K8S ]]; then
   echo "Kubernetes Base:"
-  $DIR/k8s/base.bats
+  # $DIR/k8s/base.bats
   echo
   echo
   echo "Kubernetes Permissions:"
-  $DIR/k8s/perms.bats
+  # $DIR/k8s/perms.bats
+  echo
+  echo
+  echo "Kubernetes Features:"
+  $DIR/k8s/features.bats
+  echo
+  echo
+fi
+
+if [[ $T_EXT ]]; then
+  echo "DNS and TLS:"
+  $DIR/extern/domain.bats
   echo
   echo
 fi
