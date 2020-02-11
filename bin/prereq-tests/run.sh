@@ -21,8 +21,9 @@ USAGE () {
   echo "  -T    Tools tests"
   echo "  -A    AWS tests"
   echo "  -G    GCP tests"
-  echo "  -K    Kubernetes tests"
   echo "  -D    Database tests"
+  echo "  -K    Kubernetes tests"
+  echo "  -P    Astronomer Platform tests"
   echo "  -E    Other External resource tests"
   echo ""
   echo "  -h    Print this help message"
@@ -33,17 +34,19 @@ USAGE () {
 T_TOOLS=
 T_AWS=
 T_GCP=
-T_K8S=
 T_DB=
+T_K8S=
+T_AP=
 T_EXT=
 
-while getopts "TAGKDEh" OPTION; do
+while getopts "TAGDKPEh" OPTION; do
   case "${OPTION}" in
     T) T_TOOLS=1 ;;
     A) T_AWS=1 ;;
     G) T_GCP=1 ;;
-    K) T_K8S=1 ;;
     D) T_DB=1 ;;
+    K) T_K8S=1 ;;
+    P) T_AP=1 ;;
     E) T_EXT=1 ;;
 
     h)
@@ -60,6 +63,17 @@ done
 shift $((OPTIND - 1))
 
 
+run_test () {
+  BATS=$1
+  TITLE=$2
+
+  # The echoes help with output separation
+  echo "$TITLE"
+  $BATS
+  echo
+  echo
+}
+
 # Run the enabled tests
 echo
 echo "Starting Astronomer prereqs tests"
@@ -67,62 +81,38 @@ echo
 echo
 
 if [[ $T_TOOLS ]]; then
-  echo "User Tools:"
-  $DIR/tools/user.bats
-  echo
-  echo
-  echo "Admin Tools:"
-  $DIR/tools/admin.bats
-  echo
-  echo
+  run_test $DIR/tools/user.bats "User Tools:"
+  run_test $DIR/tools/admin.bats "Admin Tools:"
 fi
 
 if [[ $T_AWS ]]; then
-  echo "AWS Base:"
-  $DIR/aws/base.bats
-  echo
-  echo
-
-  echo "AWS Permsissions:"
-  $DIR/aws/perms.bats
-  echo
-  echo
+  run_test $DIR/aws/base.bats "AWS Base:"
+  run_test $DIR/aws/perms.bats "AWS Permsissions:"
 fi
 
 if [[ $T_GCP ]]; then
-  echo "GCP Base:"
-  $DIR/gcp/base.bats
-  echo
-  echo
+  run_test $DIR/gcp/base.bats "GCP Base:"
 fi
 
 if [[ $T_DB ]]; then
-  echo "Database:"
-  $DIR/db/base.bats
-  echo
-  echo
+  run_test $DIR/db/base.bats "Database:"
 fi
 
 if [[ $T_K8S ]]; then
-  echo "Kubernetes Base:"
-  $DIR/k8s/base.bats
-  echo
-  echo
-  echo "Kubernetes Permissions:"
-  $DIR/k8s/perms.bats
-  echo
-  echo
-  echo "Kubernetes Features:"
-  $DIR/k8s/features.bats
-  echo
-  echo
+  run_test $DIR/k8s/base.bats "Kubernetes Base:"
+  run_test $DIR/k8s/perms.bats "Kubernetes Permissions:"
+  run_test $DIR/k8s/features.bats "Kubernetes Features:"
+  run_test $DIR/k8s/astro.bats "Astronomer Prep:"
+fi
+
+if [[ $T_AP ]]; then
+  run_test $DIR/platform/system.bats "Astronomer System Components:"
+  run_test $DIR/platform/astro.bats "Astronomer Platform Components:"
+  run_test $DIR/platform/access.bats "Astronomer Platform Access:"
 fi
 
 if [[ $T_EXT ]]; then
-  echo "DNS and TLS:"
-  $DIR/extern/domain.bats
-  echo
-  echo
+  run_test $DIR/extern/domain.bats "DNS and TLS:"
 fi
 
 echo "Done checking Astronomer prereqs"

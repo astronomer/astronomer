@@ -1,5 +1,6 @@
 #!/bin/usr/env bash
 
+NAMESPACE="astronomer"
 ASTRONOMER_VERSION="0.11.0"
 ASTRONOMER_BASEDOMAIN="staging.astronomer.io"
 
