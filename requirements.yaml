@@ -50,6 +50,6 @@ dependencies:
   # In-cluster DB, not recommended
   # for production
   - name: postgresql
-    condition: postgresql.enabled
+    condition: global.postgresqlEnabled
     tags:
       - postgresql
