@@ -11,7 +11,7 @@ tags:
   logging: false
   monitoring: false
   kubed: true
-  postgresql: true
+  # postgresql: true
 
 global:
   # Base domain for all subdomains exposed through ingress
@@ -155,7 +155,3 @@ kubeState:
     requests:
       cpu: "0m"
       memory: "0Mi"
-
-# Configuration for postgresql subchart
-postgresql:
-  enabled: true
