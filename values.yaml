@@ -301,5 +301,3 @@ kubed:
     limits:
       cpu: "2"
       memory: "1024Mi"
-
-=======
