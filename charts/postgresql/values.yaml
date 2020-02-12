@@ -1,6 +1,8 @@
 # Configuration for postgres subchart
 enabled: true
 
+verify_ssl: false
+
 postgresql:
   postgresqlUsername: postgres
   postgresqlPassword: postgres

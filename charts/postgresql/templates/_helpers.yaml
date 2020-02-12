@@ -1,0 +1,7 @@
+{{- define "astronomer_bootstrap_url" -}}
+{{- if .Values.verify_ssl }}
+postgres://{{ .Values.postgresql.postgresqlUsername }}:{{ .Values.postgresql.postgresqlPassword }}@{{ .Release.Name }}-postgresql.{{ .Release.Namespace }}.svc.cluster.local:{{.Values.postgresql.servicePort}}?sslmode=verify-ca"
+{{- else }}
+postgres://{{ .Values.postgresql.postgresqlUsername }}:{{ .Values.postgresql.postgresqlPassword }}@{{ .Release.Name }}-postgresql.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.postgresql.servicePort }}"
+{{- end }}
+{{- end -}}
