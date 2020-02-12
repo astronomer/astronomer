@@ -40,13 +40,21 @@ echo "========================="
 echo ""
 
 echo "Releasing chart..."
+
+# This is needed to avoid using the CI's built-in
+# gcloud configurations.
+export BOTO_CONFIG=/dev/null
+
+echo ${GCP_TOKEN} > /tmp/gcs_token.json
+gcloud auth activate-service-account --key-file=/tmp/gcs_token.json
+
 set -xe
 # Set up the index.html file
 wget https://helm.astronomer.io/index.yaml -O /tmp/index.yaml.current
-helm repo index ./astronomer --url https://helm.astronomer.io --merge /tmp/index.yaml.current
+helm repo index . --url https://helm.astronomer.io --merge /tmp/index.yaml.current
 
 gsutil cp -a public-read $HELM_CHART_PATH gs://helm.astronomer.io
-gsutil cp -a public-read ./astronomer/index.yaml gs://helm.astronomer.io
+gsutil cp -a public-read ./index.yaml gs://helm.astronomer.io
 
 set +x
 echo ""

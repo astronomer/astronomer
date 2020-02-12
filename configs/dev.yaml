@@ -18,8 +18,8 @@ astronomer:
       repository: astronomerinc/ap-houston-api
       tag: dev
       pullPolicy: Always
-    orbit:
-      repository: astronomerinc/ap-orbit-ui
+    astroUI:
+      repository: astronomerinc/ap-astro-ui
       tag: dev
       pullPolicy: Always
     dbBootstrapper:

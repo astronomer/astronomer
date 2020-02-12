@@ -1,11 +1,11 @@
 ###################################
-## Houston Check Updates CronJob ##
+## Houston Update Check CronJob
 ###################################
-{{- if .Values.houston.upgradeCheck.enabled }}
+{{- if .Values.houston.checkDeployments.enabled }}
 apiVersion: batch/v1beta1
 kind: CronJob
 metadata:
-  name: {{ .Release.Name }}-houston-check-updates
+  name: {{ .Release.Name }}-houston-update-check
   labels:
     tier: astronomer
     component: houston
@@ -13,7 +13,7 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 spec:
-  schedule: {{ .Values.houston.upgradeCheck.schedule }}
+  schedule: {{ .Values.houston.checkDeployments.schedule }}
   # The cron job does not allow concurrent runs; if it is time for a new job run and the previous job run hasn’t finished yet, the cron job skips the new job run
   concurrencyPolicy: Forbid
   jobTemplate:
@@ -38,11 +38,11 @@ spec:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 12 }}
           restartPolicy: Never
           containers:
-            - name: check-updates
+            - name: update-check
               image: {{ template "houston.image" . }}
               imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
               # If you supply only args for a Container, the default Entrypoint defined in the Docker image is run with the args that you supplied.
-              args: ["npm", "run", "check-platfrom-updates", "--", " --url={{ .Values.houston.upgradeCheck.url }}"]
+              args: ["npm", "run", "check-platfrom-updates", "--", " --url={{ .Values.houston.checkDeployments.url }}"]
               volumeMounts:
                 {{- include "houston_volume_mounts" . | indent 16 }}
               env:
