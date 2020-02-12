@@ -1,7 +1,7 @@
 ###################################
 ## Houston Update Check CronJob
 ###################################
-{{- if .Values.houston.checkDeployments.enabled }}
+{{- if .Values.houston.upgradeCheck.enabled }}
 apiVersion: batch/v1beta1
 kind: CronJob
 metadata:
