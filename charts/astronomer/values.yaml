@@ -152,9 +152,9 @@ houston:
     # Only run on deployments marked as canary
     canary: false
 
-  # Check airflow updates
+  # Check for Astronomer Platform Updates
   # This runs as a CronJob
-  checkDeployments:
+  upgradeCheck:
     # Enable check updates CronJob
     enabled: true
 
