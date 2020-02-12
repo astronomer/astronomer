@@ -34,9 +34,10 @@ helm list <release name>
 - You will want to perform this step, then the following 'Helm upgrade' step one after the other while users are not changing anything such as new deployments or deployment configuration changes
 - Clone this repository, change directory into it, and run the script
 ```
-git clone https://github.com/astronomer/migration-script.git
-cd migration-script
-./pre-0-11-upgrade.sh <release name> <namespace>
+git clone https://github.com/astronomer/astronomer.git
+cd astronomer
+git checkout v0.11.1
+./bin/migration-script/pre-0-11-upgrade.sh <release name> <namespace>
 ```
 - This script will write some .yaml files to your local directory. These are very important to back up, and can be used to restore deployments in the event that something goes wrong. These files include secrets.
 - If there is a failure, copy the output and report to Astronomer support
@@ -46,9 +47,6 @@ cd migration-script
 
 - Back up the platform configuration
 ```
-git clone https://github.com/astronomer/astronomer.git
-cd astronomer
-git checkout v0.11.1
 helm get values <release name> > astronomer.yaml
 ```
 - Confirm values are in astronomer.yaml
