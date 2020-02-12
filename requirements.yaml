@@ -54,8 +54,8 @@ dependencies:
     tags:
       - postgresql
 
-  # In-cluster DB, not recommended
-  # for production
+  # Used to enable Celery autoscaling
   - name: keda
+    condition: global.kedaEnabled
     tags:
       - keda

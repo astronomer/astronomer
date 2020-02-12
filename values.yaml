@@ -35,6 +35,9 @@ global:
   # This is not recommended for production.
   postgresqlEnabled: true
 
+  # Used to enable Celery autoscaling
+  kedaEnabled: true
+
   # Set nodeSelector, affinity, and tolerations values for platform and deployment related pods.
   # This allows for separation of platform and airflow pods between kubernetes node pools.
   # Pods in the platformNodePool include alertmanager, cli-install, commander, houston, kube-replicator, astro-ui, prisma,
@@ -298,11 +301,5 @@ kubed:
     limits:
       cpu: "2"
       memory: "1024Mi"
-      
-#################################
-## KEDA Config
-#################################
-# Used to enable Celery autoscaling
-keda:
-  enabled: true
+
 =======
