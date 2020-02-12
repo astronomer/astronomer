@@ -137,6 +137,18 @@ houston:
     # Only run on deployments marked as canary
     canary: false
 
+  # Check for Astronomer Platform Updates
+  # This runs as a CronJob
+  updateCheck:
+    # Enable check updates CronJob
+    enabled: true
+
+    # url for update service
+    url: https://updates.astronomer.io/astronomer-platform
+
+    # Default here is to run at midnight every night
+    schedule: "0 0 * * *"
+
 prisma:
   env: []
   resources: {}
