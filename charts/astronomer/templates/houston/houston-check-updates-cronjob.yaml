@@ -1,5 +1,5 @@
 ###################################
-## Houston Check Updates CronJob ##
+## Houston Check Updates CronJob
 ###################################
 {{- if .Values.houston.checkDeployments.enabled }}
 apiVersion: batch/v1beta1
