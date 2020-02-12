@@ -139,7 +139,7 @@ houston:
 
   # Check for Astronomer Platform Updates
   # This runs as a CronJob
-  upgradeCheck:
+  updateCheck:
     # Enable check updates CronJob
     enabled: true
 
