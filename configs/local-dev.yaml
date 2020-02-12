@@ -11,6 +11,7 @@ tags:
   logging: false
   monitoring: false
   kubed: true
+  postgresql: true
 
 global:
   # Base domain for all subdomains exposed through ingress
@@ -23,9 +24,8 @@ global:
 ## Astronomer configuration
 ## Omit resouce requests
 ############################
-
 astronomer:
-  orbit:
+  astroUI:
     resources:
       requests:
         cpu: "0m"

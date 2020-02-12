@@ -20,7 +20,7 @@ data:
     commander:
       enabled: true
 
-    orbit:
+    ui:
       port: 80
 
     email:
@@ -59,7 +59,7 @@ data:
         # This version number controls the default Airflow chart version that will be installed
         # when creating a new deployment in the system. This is also used to ensure all
         # child airflow deployments are kept up to date and on the latest version.
-        version: 0.11.0
+        version: 0.11.1
 
       # Airflow image settings
       # This is a list of supported airflow versions and corresponding docker tag
@@ -103,13 +103,73 @@ data:
             requests:
               ephemeral-storage: "1Gi"
 
+          # This is here for upgrading to 0.11.1+ of Airflow.
+          keda:
+            enabled: false
+
+          # This is here for upgrading to 0.11.2+ of Airflow.
+          safeToEvict: true
+
         # Scheduler configuration.
         scheduler:
+
+          # Scheduler pod disruption budget
+          podDisruptionBudget:
+            enabled: false
+
+            # PDB configuration
+            config:
+              maxUnavailable: 1
+
+          # This is here for upgrading to 0.11.2+ of Airflow.
+          safeToEvict: true
+
+          # Airflow Local Settings.
+          airflowLocalSettings: |
+            from airflow.contrib.kubernetes.pod import Pod
+            from airflow.configuration import conf
+            def pod_mutation_hook(pod: Pod):
+
+              # This is the default airflow-chart pod mutation hook
+              extra_labels = {
+                  "kubernetes-executor": "False",
+                  "kubernetes-pod-operator": "False"
+              }
+              if 'airflow-worker' in pod.labels.keys() or \
+                      conf.get('core', 'EXECUTOR') == "KubernetesExecutor":
+                  extra_labels["kubernetes-executor"] = "True"
+              else:
+                  extra_labels["kubernetes-pod-operator"] = "True"
+              pod.labels.update(extra_labels)
+              pod.tolerations += []
+              pod.affinity.update({})
+
+              # Ensure our entrypoint is respected
+              if not pod.args:
+                pod.args = []
+              pod.args = pod.cmds + pod.args
+              pod.cmds = ["tini", "--", "/entrypoint"]
+
           resources:
             limits:
               ephemeral-storage: "2Gi"
             requests:
               ephemeral-storage: "1Gi"
+
+        # Redis settings
+        redis:
+          # This is here for upgrading to 0.11.2+ of Airflow.
+          safeToEvict: true
+
+        # Pgbouncer settings
+        pgbouncer:
+          # Pgbouner pod disruption budget
+          podDisruptionBudget:
+            enabled: false
+
+            # PDB configuration
+            config:
+              maxUnavailable: 1
 
         # Default quotas for airflow deployments.
         quotas:
@@ -122,8 +182,15 @@ data:
         podMutation:
           tolerations: []
 
-        # This is here for upgrading to 0.11+ of Airflow.
+        # This is here for upgrading to 0.11.0+ of Airflow.
         defaultAirflowRepository: astronomerinc/ap-airflow
+
+        # This is here for upgrading to 0.11.1+ of Airflow.
+        data:
+          metadataConnection:
+            sslmode: disable
+          resultBackendConnection:
+            sslmode: disable
 
     {{- if not .Values.global.singleNamespace }}
         # Enable cleanup CronJob in Airflow deployents
