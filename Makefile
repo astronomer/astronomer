@@ -35,11 +35,13 @@ lint:
 .PHONY: build
 build:
 	set -xe
+	helm repo add kedacore https://kedacore.github.io/charts
 	rm -rf ${TEMP}/astronomer || true
 	mkdir -p ${TEMP}
 	cp -R ../astronomer ${TEMP}/astronomer || cp -R ../project ${TEMP}/astronomer
 	# Install the external chart
 	helm dependency update ${TEMP}/astronomer/charts/postgresql
+	helm dependency update ${TEMP}/astronomer/charts/keda
 	helm package ${TEMP}/astronomer
 
 .PHONY: build-index

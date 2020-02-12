@@ -246,7 +246,7 @@ jobs:
       KUBE_VERSION: v1.17.0
     steps:
       - helm-install:
-          astronomer-tags: "kubed"
+          astronomer-tags: "kubed keda"
 
 
 workflows:

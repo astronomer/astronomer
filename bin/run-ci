@@ -37,6 +37,8 @@ platform=false
 logging=false
 monitoring=false
 kubed=false
+postgresql=false
+keda=false
 for component in $@
 do
   export $component=true
@@ -57,6 +59,8 @@ helm install \
   --set tags.logging=${logging} \
   --set tags.monitoring=${monitoring} \
   --set tags.kubed=${kubed} \
+  --set tags.postgresql=${postgresql} \
+  --set tags.keda=${keda} \
   $HELM_CHART_PATH
 
 if [ ! $? -eq 0 ]; then
@@ -89,7 +93,7 @@ while [ $RC -eq 0 ]; do
     # of logging tag without the platform. This is the only logging component
     # that will not start without the platform. The benefit of allowing us to
     # test the logging tag outweighs the downside of ignoring one pod.
-    cat /tmp/pods | grep -v 1/1 | grep -v NAME | grep -v Completed | grep -v 'elasticsearch-nginx' >/dev/null 2>&1
+    cat /tmp/pods | grep -v 1/1 | grep -v 2/2 | grep -v NAME | grep -v Completed | grep -v 'elasticsearch-nginx' >/dev/null 2>&1
     RC=$?
   fi
 done
