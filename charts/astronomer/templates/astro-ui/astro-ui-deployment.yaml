@@ -1,12 +1,12 @@
 ################################
-## Astronomer Orbit Deployment
+## Astronomer UI Deployment
 #################################
 kind: Deployment
-apiVersion: apps/v1beta2
+apiVersion: apps/v1
 metadata:
-  name: {{ .Release.Name }}-orbit
+  name: {{ .Release.Name }}-astro-ui
   labels:
-    component: orbit
+    component: astro-ui
     tier: astronomer
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
@@ -15,13 +15,13 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      component: orbit
+      component: astro-ui
       tier: astronomer
       release: {{ .Release.Name }}
   template:
     metadata:
       labels:
-        component: orbit
+        component: astro-ui
         tier: astronomer
         release: {{ .Release.Name }}
     spec:
@@ -33,28 +33,28 @@ spec:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       restartPolicy: Always
       containers:
-        - name: orbit
-          image: {{- include "orbit.image" . | indent 1 }}
-          imagePullPolicy: {{ .Values.images.orbit.pullPolicy }}
+        - name: astro-ui
+          image: {{- include "astroUI.image" . | indent 1 }}
+          imagePullPolicy: {{ .Values.images.astroUI.pullPolicy }}
           resources:
-{{ toYaml .Values.orbit.resources | indent 12 }}
+{{ toYaml .Values.astroUI.resources | indent 12 }}
           ports:
-            - name: orbit-http
-              containerPort: {{ .Values.ports.orbitHTTP }}
+            - name: astro-ui-http
+              containerPort: {{ .Values.ports.astroUIHTTP }}
           livenessProbe:
             httpGet:
               path: /
-              port: {{ .Values.ports.orbitHTTP }}
+              port: {{ .Values.ports.astroUIHTTP }}
             initialDelaySeconds: 10
             periodSeconds: 10
           readinessProbe:
             httpGet:
               path: /
-              port: {{ .Values.ports.orbitHTTP }}
+              port: {{ .Values.ports.astroUIHTTP }}
             initialDelaySeconds: 10
             periodSeconds: 10
           env:
-            {{- range $i, $config := .Values.orbit.env }}
+            {{- range $i, $config := .Values.astroUI.env }}
             - name: {{ $config.name }}
               value: {{ $config.value | quote }}
             {{- end }}
@@ -64,3 +64,9 @@ spec:
             - name: APP_API_LOC_WSS
               value: "wss://houston.{{ .Values.global.baseDomain }}/ws"
             {{- end }}
+            - name: APP_ENABLE_ERROR_REPORTING
+              value: "false"
+            - name: APP_SENTRY_DSN
+              value: "https://5c7da1dadf834cd9b8d212b20cd53d47@sentry.io/1773523"
+            - name: APP_LOGROCKET
+              value: "1hv1sf/orbit"

@@ -20,12 +20,8 @@ images:
     repository: astronomerinc/ap-houston-api
     tag: 0.11.3
     pullPolicy: IfNotPresent
-  orbit:
-    repository: astronomerinc/ap-orbit-ui
-    tag: 0.11.0
-    pullPolicy: IfNotPresent
-  norbit:
-    repository: astronomerinc/ap-norbit-ui
+  astroUI:
+    repository: astronomerinc/ap-astro-ui
     tag: latest
     pullPolicy: Always
   dbBootstrapper:
@@ -41,18 +37,7 @@ images:
     tag: 0.11.0
     pullPolicy: IfNotPresent
 
-orbit:
-  env: []
-  resources: {}
-  #  limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  #  requests:
-  #   cpu: 100m
-  #   memory: 128Mi
-
-norbit:
-  enabled: false
+astroUI:
   env: []
   resources: {}
   #  limits:
@@ -224,8 +209,7 @@ ports:
   houstonHTTP: 8871
   commanderHTTP: 8880
   commanderGRPC: 50051
-  orbitHTTP: 8080
-  norbitHTTP: 8080
+  astroUIHTTP: 8080
   registryHTTP: 5000
   registryScrape: 5001
   installHTTP: 80

@@ -1,12 +1,12 @@
 ################################
-## Astronomer Orbit Service
+## Astronomer UI Service
 #################################
 kind: Service
 apiVersion: v1
 metadata:
-  name: {{ .Release.Name }}-orbit
+  name: {{ .Release.Name }}-astro-ui
   labels:
-    component: orbit
+    component: astro-ui
     tier: astronomer
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
@@ -14,11 +14,11 @@ metadata:
 spec:
   type: ClusterIP
   selector:
-    component: orbit
+    component: astro-ui
     tier: astronomer
     release: {{ .Release.Name }}
   ports:
-    - name: orbit-http
+    - name: astro-ui-http
       protocol: TCP
-      port: {{ .Values.ports.orbitHTTP }}
-      targetPort: {{ .Values.ports.orbitHTTP }}
+      port: {{ .Values.ports.astroUIHTTP }}
+      targetPort: {{ .Values.ports.astroUIHTTP }}

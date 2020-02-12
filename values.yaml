@@ -31,9 +31,13 @@ global:
   # Enables necessary components for Velero (Velero, Grafana Dashboard, Prometheus Alerts)
   veleroEnabled: false
 
+  # Enable default postgresql database.
+  # This is not recommended for production.
+  postgresqlEnabled: true
+
   # Set nodeSelector, affinity, and tolerations values for platform and deployment related pods.
   # This allows for separation of platform and airflow pods between kubernetes node pools.
-  # Pods in the platformNodePool include alertmanager, cli-install, commander, houston, kube-replicator, orbit, prisma,
+  # Pods in the platformNodePool include alertmanager, cli-install, commander, houston, kube-replicator, astro-ui, prisma,
   # registry, es-client, es-data, es-exporter, es-master, nginx-es, grafana, kibana, kube-state, nginx, nginx-default, prometheus.
   # nodeSelector, affinity, and tolerations values for airflow deployment pods are assigned via houston config.
   # See more information on pod / node assignment here: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
@@ -67,16 +71,7 @@ tags:
 ## Astronomer configuration
 #################################
 astronomer:
-  orbit:
-    resources:
-      requests:
-        cpu: "100m"
-        memory: "256Mi"
-      limits:
-        cpu: "500m"
-        memory: "1024Mi"
-
-  norbit:
+  astroUI:
     resources:
       requests:
         cpu: "100m"
@@ -303,18 +298,11 @@ kubed:
     limits:
       cpu: "2"
       memory: "1024Mi"
-
-#################################
-## Postgresql Config
-#################################
-# Not recommended to use an in-cluster
-# database for production.
-postgresql:
-  enabled: true
-
+      
 #################################
 ## KEDA Config
 #################################
 # Used to enable Celery autoscaling
 keda:
   enabled: true
+=======

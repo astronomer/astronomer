@@ -10,8 +10,9 @@ tags:
   platform: true
   logging: false
   monitoring: false
-  kubed: false
   keda: true
+  kubed: true
+  # postgresql: true
 
 global:
   # Base domain for all subdomains exposed through ingress
@@ -24,9 +25,8 @@ global:
 ## Astronomer configuration
 ## Omit resouce requests
 ############################
-
 astronomer:
-  orbit:
+  astroUI:
     resources:
       requests:
         cpu: "0m"
@@ -156,7 +156,3 @@ kubeState:
     requests:
       cpu: "0m"
       memory: "0Mi"
-
-# Configuration for postgresql subchart
-postgresql:
-  enabled: true
