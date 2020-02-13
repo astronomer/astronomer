@@ -82,8 +82,8 @@ load ../config
   [ "$badpods" == "" ]
 }
 
-@test "Orbit" {
-  run kubectl get --namespace $NAMESPACE pods --no-headers -l tier=astronomer,component=orbit
+@test "Astro UI" {
+  run kubectl get --namespace $NAMESPACE pods --no-headers -l tier=astronomer,component=astro-ui
   if [ "$status" -ne 0 ]; then
     echo "$output"
   fi
