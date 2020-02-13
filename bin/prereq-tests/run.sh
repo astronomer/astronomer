@@ -39,6 +39,13 @@ T_K8S=
 T_AP=
 T_EXT=
 
+if [[ -z $@ ]]; then
+  echo "error: no flags provided"
+  echo
+  USAGE
+  exit 1
+fi
+
 while getopts "TAGDKPEh" OPTION; do
   case "${OPTION}" in
     T) T_TOOLS=1 ;;
@@ -55,7 +62,9 @@ while getopts "TAGDKPEh" OPTION; do
       ;;
 
     *)
-      echo "unknown flag '$OPTION'"
+      echo "error: unknown flag '$OPTION'"
+      echo
+      USAGE
       exit 1
       ;;
   esac
