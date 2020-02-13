@@ -50,7 +50,7 @@ data:
           labels:
             tier: airflow
             component: deployment
-            workspace: {{ $labels.workspace }}
+            workspace: {{ printf "%q" "{{ $labels.workspace }}" }}
             deployment: {{ printf "%q" "{{ $labels.release }}" }}
           annotations:
             summary: {{ printf "%q" "{{ $labels.release }} is near its pod quota" }}
