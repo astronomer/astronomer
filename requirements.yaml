@@ -26,6 +26,10 @@ dependencies:
     condition: global.kubeStateEnabled
     tags:
       - monitoring
+  - name: node-exporter
+    condition: global.nodeExporterEnabled
+    tags:
+      - monitoring
 
   # Logging stack
   - name: elasticsearch

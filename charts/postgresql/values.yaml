@@ -5,4 +5,3 @@ postgresql:
   postgresqlUsername: postgres
   postgresqlPassword: postgres
   servicePort: 5432
-

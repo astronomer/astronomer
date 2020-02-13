@@ -35,6 +35,8 @@ global:
   # This is not recommended for production.
   postgresqlEnabled: true
 
+  nodeExporterEnabled: true
+
   # Used to enable Celery autoscaling
   kedaEnabled: true
 
