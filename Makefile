@@ -41,9 +41,11 @@ build:
 	mkdir -p ${TEMP}
 	cp -R ../astronomer ${TEMP}/astronomer || cp -R ../project ${TEMP}/astronomer
 	# Install external charts
-	helm dep update ${TEMP}/astronomer/charts/postgresql
-	helm dep update ${TEMP}/astronomer/charts/keda
-	helm dep update ${TEMP}/astronomer/charts/node-exporter
+	for chart in $$(ls ${TEMP}/astronomer/charts); do
+	if test -f ${TEMP}/astronomer/charts/$$chart/requirements.yaml; then
+	helm dep update ${TEMP}/astronomer/charts/$$chart
+	fi
+	done
 	helm package ${TEMP}/astronomer
 
 .PHONY: build-index
