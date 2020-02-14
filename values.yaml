@@ -36,7 +36,7 @@ global:
   postgresqlEnabled: true
 
   # Used to enable Celery autoscaling
-  kedaEnabled: true
+  kedaEnabled: false
 
   # Set nodeSelector, affinity, and tolerations values for platform and deployment related pods.
   # This allows for separation of platform and airflow pods between kubernetes node pools.
