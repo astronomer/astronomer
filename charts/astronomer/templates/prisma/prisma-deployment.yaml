@@ -92,3 +92,26 @@ spec:
                 secretKeyRef:
                   name: {{ .Release.Name }}-prisma-api-secret
                   key: api-secret
+            {{ if .Values.prisma.azureDb }}
+            - name: PRISMA_AZUREDB_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: azure-db-connection
+                  key: host
+            - name: PRISMA_AZUREDB_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: azure-db-connection
+                  key: port
+            - name: PRISMA_AZUREDB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: azure-db-connection
+                  key: user
+            - name: PRISMA_AZUREDB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: azure-db-connection
+                  key: password
+            {{ end }}
+

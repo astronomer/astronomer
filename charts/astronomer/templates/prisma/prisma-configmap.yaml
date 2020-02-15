@@ -18,7 +18,15 @@ data:
     databases:
       default:
         connector: postgres
+        {{ if .Values.prisma.azureDb }}
+        host: $PRISMA_AZUREDB_HOST
+        port: $PRISMA_AZUREDB_PORT
+        user: $PRISMA_AZUREDB_USER
+        password: $PRISMA_AZUREDB_PASSWORD
+        database: {{ printf "%s_houston" (.Release.Name | replace "-" "_")  }}
+        {{ else }}
         uri: $PRISMA_DB_URI
+        {{ end }}
         migrations: true
         # 2 is the minimum allowed value
         # There is one connection reserved

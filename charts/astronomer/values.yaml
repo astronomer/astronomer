@@ -158,6 +158,7 @@ prisma:
   #  requests:
   #   cpu: 100m
   #   memory: 128Mi
+  azureDb: false
 
 
 commander:
