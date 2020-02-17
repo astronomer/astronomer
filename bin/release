@@ -45,6 +45,7 @@ echo "Releasing chart..."
 # gcloud configurations.
 export BOTO_CONFIG=/dev/null
 
+set +x
 echo ${GCP_TOKEN} > /tmp/gcs_token.json
 gcloud auth activate-service-account --key-file=/tmp/gcs_token.json
 
