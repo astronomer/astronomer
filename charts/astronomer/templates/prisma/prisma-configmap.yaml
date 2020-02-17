@@ -18,11 +18,17 @@ data:
     databases:
       default:
         connector: postgres
-        {{ if .Values.prisma.azureDb }}
-        host: $PRISMA_AZUREDB_HOST
-        port: $PRISMA_AZUREDB_PORT
-        user: $PRISMA_AZUREDB_USER
-        password: $PRISMA_AZUREDB_PASSWORD
+        {{ if and (.Values.prisma.backendSecretName) (not .Values.prisma.backendConnection) }}
+        host: $PRISMA_DB_HOST
+        port: $PRISMA_DB_PORT
+        user: $PRISMA_DB_USER
+        password: $PRISMA_DB_PASSWORD
+        database: {{ printf "%s_houston" (.Release.Name | replace "-" "_")  }}
+        {{ else if and (.Values.prisma.backendConnection) (not .Values.prisma.backendSecretName) }}
+        host: {{ .Values.prisma.backendConnection.host }}
+        port: {{ .Values.prisma.backendConnection.port }}
+        user: {{ .Values.prisma.backendConnection.user }}
+        password: {{ .Values.prisma.backendConnection.pass }}
         database: {{ printf "%s_houston" (.Release.Name | replace "-" "_")  }}
         {{ else }}
         uri: $PRISMA_DB_URI

@@ -92,26 +92,26 @@ spec:
                 secretKeyRef:
                   name: {{ .Release.Name }}-prisma-api-secret
                   key: api-secret
-            {{ if .Values.prisma.azureDb }}
-            - name: PRISMA_AZUREDB_HOST
+            {{ if .Values.prisma.backendSecretName }}
+            - name: PRISMA_DB_HOST
               valueFrom:
                 secretKeyRef:
-                  name: azure-db-connection
+                  name: {{ .Values.prisma.backendSecretName }}
                   key: host
-            - name: PRISMA_AZUREDB_PORT
+            - name: PRISMA_DB_PORT
               valueFrom:
                 secretKeyRef:
-                  name: azure-db-connection
+                  name: {{ .Values.prisma.backendSecretName }}
                   key: port
-            - name: PRISMA_AZUREDB_USER
+            - name: PRISMA_DB_USER
               valueFrom:
                 secretKeyRef:
-                  name: azure-db-connection
+                  name: {{ .Values.prisma.backendSecretName }}
                   key: user
-            - name: PRISMA_AZUREDB_PASSWORD
+            - name: PRISMA_DB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: azure-db-connection
+                  name: {{ .Values.prisma.backendSecretName }}
                   key: password
             {{ end }}
 

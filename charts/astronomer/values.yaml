@@ -158,8 +158,12 @@ prisma:
   #  requests:
   #   cpu: 100m
   #   memory: 128Mi
-  azureDb: false
-
+  backendSecretName: ~
+  backendConnection: {}
+    # user: ~
+    # pass: ~
+    # host: ~
+    # port: ~
 
 commander:
   env: []
