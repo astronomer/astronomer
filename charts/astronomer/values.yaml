@@ -36,6 +36,11 @@ images:
     repository: astronomerinc/ap-prisma
     tag: 0.11.0
     pullPolicy: IfNotPresent
+  pgbouncer:
+    repository: astronomerinc/ap-pgbouncer
+    tag: 0.11.0
+    pullPolicy: IfNotPresent
+
 
 astroUI:
   env: []
@@ -159,6 +164,31 @@ prisma:
   #   cpu: 100m
   #   memory: 128Mi
 
+pgbouncer:
+  # Enable pgbouncer
+  enabled: false
+
+  # Pool sizes
+  metadataPoolSize: 3
+  resultBackendPoolSize: 2
+
+  # Maximum clients that can connect to pgbouncer (higher = more file descriptors)
+  maxClientConn: 100
+
+  # Pgbouner pod disruption budget
+  podDisruptionBudget:
+    enabled: false
+
+    # PDB configuration
+    config:
+      maxUnavailable: 1
+
+  resources: {}
+    # limits:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # requests:
+    #   cpu: 100m
 
 commander:
   env: []
