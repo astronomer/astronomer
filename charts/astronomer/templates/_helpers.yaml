@@ -254,3 +254,32 @@ azure:
     secretName: {{ .Values.global.tlsSecret }}
 {{- end }}
 {{- end }}
+
+{{ define "pgbouncer_config_secret" -}}
+{{ .Release.Name }}-pgbouncer-config
+{{- end }}
+
+{{ define "pgbouncer_stats_secret" -}}
+{{ .Release.Name }}-pgbouncer-stats
+{{- end }}
+
+{{ define "pgbouncer_config" }}
+[databases]
+{{ .Release.Name }}-metadata = host={{ .Values.data.metadataConnection.host }} dbname={{ .Values.data.metadataConnection.db }} port={{ .Values.data.metadataConnection.port }} pool_size={{ .Values.pgbouncer.metadataPoolSize }}
+{{ .Release.Name }}-result-backend = host={{ .Values.data.resultBackendConnection.host }} dbname={{ .Values.data.resultBackendConnection.db }} port={{ .Values.data.resultBackendConnection.port }} pool_size={{ .Values.pgbouncer.resultBackendPoolSize }}
+
+[pgbouncer]
+pool_mode = transaction
+listen_port = {{ .Values.ports.pgbouncer }}
+listen_addr = *
+auth_type = md5
+auth_file = /etc/pgbouncer/users.txt
+stats_users = {{ .Values.data.metadataConnection.user }}
+ignore_startup_parameters = extra_float_digits
+max_client_conn = {{ .Values.pgbouncer.maxClientConn }}
+{{- end }}
+
+{{ define "pgbouncer_users" }}
+{{ .Values.data.metadataConnection.user | quote }} {{ .Values.data.metadataConnection.pass | quote }}
+{{ .Values.data.resultBackendConnection.user | quote }} {{ .Values.data.resultBackendConnection.pass | quote }}
+{{- end }}
