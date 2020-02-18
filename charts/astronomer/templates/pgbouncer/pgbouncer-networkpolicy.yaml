@@ -1,7 +1,7 @@
 #############################
 ## Pgbouncer NetworkPolicy ##
 #############################
-{{- if .Values.networkPolicies.enabled }}
+{{- if .Values.pgbouncer.networkPolicies.enabled }}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -12,9 +12,6 @@ metadata:
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
-{{- with .Values.labels }}
-{{ toYaml . | indent 4 }}
-{{- end }}
 spec:
   podSelector:
     matchLabels:
@@ -29,19 +26,7 @@ spec:
         matchLabels:
           tier: astronomer
           release: {{ .Release.Name }}
-    {{- if .Values.platform.release }}
-    - namespaceSelector: {}
-      podSelector:
-        matchLabels:
-          tier: monitoring
-          component: prometheus
-          release: {{ .Values.platform.release }}
-    {{- end }}
     ports:
     - protocol: TCP
       port: {{ .Values.ports.pgbouncer }}
-  {{- if .Values.platform.release }}
-    - protocol: TCP
-      port: {{ .Values.ports.pgbouncerScrape }}
-  {{- end }}
 {{- end }}

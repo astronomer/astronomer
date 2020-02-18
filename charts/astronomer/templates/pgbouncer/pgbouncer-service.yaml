@@ -1,6 +1,6 @@
-###############################
+##################################
 ## Astronomer Pgbouncer Service ##
-###############################
+##################################
 {{- if .Values.pgbouncer.enabled }}
 apiVersion: v1
 kind: Service
@@ -12,9 +12,6 @@ metadata:
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
-{{- with .Values.labels }}
-{{ toYaml . | indent 4 }}
-{{- end }}
   annotations:
     {{- if .Values.platform.release }}
     astronomer.io/platform-release: {{ .Values.platform.release }}
@@ -32,8 +29,4 @@ spec:
       protocol: TCP
       port: {{ .Values.ports.pgbouncer }}
       targetPort: {{ .Values.ports.pgbouncer }}
-    - name: pgbouncer-metrics
-      protocol: TCP
-      port: {{ .Values.ports.pgbouncerScrape }}
-      targetPort: {{ .Values.ports.pgbouncerScrape }}
 {{- end }}

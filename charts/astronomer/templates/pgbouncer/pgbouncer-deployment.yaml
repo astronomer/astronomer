@@ -1,6 +1,6 @@
-##################################
+#####################################
 ## Astronomer Pgbouncer Deployment ##
-##################################
+#####################################
 {{- if .Values.pgbouncer.enabled }}
 kind: Deployment
 apiVersion: apps/v1
@@ -12,9 +12,6 @@ metadata:
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
-{{- with .Values.labels }}
-{{ toYaml . | indent 4 }}
-{{- end }}
 spec:
   replicas: 1
   strategy:
@@ -32,9 +29,6 @@ spec:
         tier: astronomer
         component: pgbouncer
         release: {{ .Release.Name }}
-{{- with .Values.labels }}
-{{ toYaml . | indent 8 }}
-{{- end }}
       annotations:
         checksum/pgbouncer-config-secret: {{ include (print $.Template.BasePath "/secrets/pgbouncer-config-secret.yaml") . | sha256sum }}
     spec:
@@ -79,31 +73,6 @@ spec:
               exec:
                 # Allow existing queries clients to complete within 120 seconds
                 command: ["/bin/sh", "-c", "killall -INT pgbouncer && sleep 120"]
-        - name: metrics-exporter
-          image: {{ template "pgbouncer_exporter_image" . }}
-          env:
-            - name: DATABASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: {{ template "pgbouncer_stats_secret" . }}
-                  key: connection
-          ports:
-            - name: metrics
-              containerPort: {{ .Values.ports.pgbouncerScrape }}
-          livenessProbe:
-            exec:
-              command:
-                - pgbouncer_exporter
-                - health
-            initialDelaySeconds: 10
-            periodSeconds: 10
-          readinessProbe:
-            exec:
-              command:
-                - pgbouncer_exporter
-                - health
-            initialDelaySeconds: 10
-            periodSeconds: 10
       volumes:
         - name: pgbouncer-config
           secret:

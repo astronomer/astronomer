@@ -190,6 +190,10 @@ pgbouncer:
     # requests:
     #   cpu: 100m
 
+  networkPolicies:
+    # Enabled network policies
+    enabled: false
+
 commander:
   env: []
   resources: {}
@@ -256,3 +260,4 @@ ports:
   registryScrape: 5001
   installHTTP: 80
   prismaHTTP: 4466
+  pgbouncer: 6543

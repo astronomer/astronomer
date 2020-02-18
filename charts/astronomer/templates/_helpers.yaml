@@ -255,6 +255,10 @@ azure:
 {{- end }}
 {{- end }}
 
+{{ define "pgbouncer_image" -}}
+{{ printf "%s:%s" .Values.images.pgbouncer.repository .Values.images.pgbouncer.tag }}
+{{- end }}
+
 {{ define "pgbouncer_config_secret" -}}
 {{ .Release.Name }}-pgbouncer-config
 {{- end }}
