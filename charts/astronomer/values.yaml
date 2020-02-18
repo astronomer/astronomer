@@ -194,6 +194,14 @@ pgbouncer:
     # Enabled network policies
     enabled: false
 
+  connection:
+    user: postgres
+    pass: postgres
+    host: ~
+    port: 5432
+    db: postgres
+    sslmode: verify-ca
+
 commander:
   env: []
   resources: {}

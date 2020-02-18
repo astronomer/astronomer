@@ -1,5 +1,5 @@
-################################
-## Astronomer Prisma ConfigMap
+#################################
+## Astronomer Prisma ConfigMap ##
 #################################
 apiVersion: v1
 kind: ConfigMap
