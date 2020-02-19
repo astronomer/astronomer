@@ -1,5 +1,7 @@
 ################################
 ## Prometheus Service(s)
+## each one pointing to a different
+## Prometheus pod
 #################################
 {{ range $i, $e := until (int .Values.replicas) }}
 {{- if gt $i 0 }}
@@ -8,15 +10,7 @@
 kind: Service
 apiVersion: v1
 metadata:
-  # The fist service is named without a xxx-0
-  # Then the rest are named xxx-1, xxx-2, etc.
-  # This is in order to protect backwards
-  # compatibility
-  {{- if eq $i 0 }}
-  name: {{ template "prometheus.fullname" $ }}
-  {{- else }}
   name: {{ template "prometheus.fullname" $ }}-{{ $i }}
-  {{- end }}
   labels:
     tier: monitoring
     component: {{ template "prometheus.name" $ }}
@@ -41,3 +35,29 @@ spec:
       port: {{ $.Values.ports.http }}
       targetPort: {{ $.Values.ports.http }}
 {{ end }}
+################################
+## Prometheus Service
+## load balancing between all pods
+#################################
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ template "prometheus.fullname" $ }}
+  labels:
+    tier: monitoring
+    component: {{ template "prometheus.name" $ }}
+    chart: {{ template "prometheus.chart" $ }}
+    release: {{ $.Release.Name }}
+    heritage: {{ $.Release.Service }}
+spec:
+  type: ClusterIP
+  selector:
+    tier: monitoring
+    component: {{ template "prometheus.name" $ }}
+    release: {{ $.Release.Name }}
+  ports:
+    - name: prometheus-data
+      protocol: TCP
+      port: {{ $.Values.ports.http }}
+      targetPort: {{ $.Values.ports.http }}
