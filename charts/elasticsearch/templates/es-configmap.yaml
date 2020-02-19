@@ -38,6 +38,12 @@ data:
         enabled: ${HTTP_CORS_ENABLE}
         allow-origin: ${HTTP_CORS_ALLOW_ORIGIN}
 
+    # Setting the ping schedule explictly ensures that
+    # tcp_keep_alive configuration does not cause components
+    # to have their connections terminated.
+    transport:
+      ping_schedule: "5s"
+
     discovery:
       zen:
         ping.unicast.hosts: ${DISCOVERY_SERVICE}
