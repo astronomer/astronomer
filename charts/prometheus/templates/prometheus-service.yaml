@@ -35,11 +35,11 @@ spec:
       port: {{ $.Values.ports.http }}
       targetPort: {{ $.Values.ports.http }}
 {{ end }}
+---
 ################################
 ## Prometheus Service
 ## load balancing between all pods
 #################################
----
 kind: Service
 apiVersion: v1
 metadata:
