@@ -260,7 +260,7 @@ azure:
 {{- end }}
 
 {{ define "pgbouncer_config_secret" -}}
-{{ .Release.Name }}-pgbouncer-config
+{{ printf "%s-pgbouncer-config" .Release.Name }}
 {{- end }}
 
 {{ define "pgbouncer_stats_secret" -}}
