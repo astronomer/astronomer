@@ -46,11 +46,7 @@ data:
 
     discovery:
       seed_hosts:
-        {{- $releaseName := $.Release.Name }}
-        {{- $replicas := .Values.master.replicas }}
-        {{- range $i, $e := until (int $replicas) }}
-        - {{ $releaseName }}-elasticsearch-master-{{ $i }}
-        {{- end }}
+        - {{ template "elasticsearch.fullname" . }}-headless-discovery
 
     # Disable scripting for security.
     script.allowed_types: none

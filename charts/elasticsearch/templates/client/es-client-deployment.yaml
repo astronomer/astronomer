@@ -125,6 +125,17 @@ spec:
             path: /_cluster/health?local=true
             port: {{ .Values.common.ports.http }}
           initialDelaySeconds: 90
+        {{- if gt (.Capabilities.KubeVersion.Minor | atoi) 15 }}
+        # This feature is available in Kubernetes 1.16+
+        startupProbe:
+          httpGet:
+            # without local=true, we are waiting for this pod's
+            # es-master to report that the cluster is ready.
+            path: /_cluster/health
+            port: {{ .Values.common.ports.http }}
+          failureThreshold: 30
+          periodSeconds: 10
+        {{- end }}
         volumeMounts:
         - mountPath: /usr/share/elasticsearch/config/elasticsearch.yml
           name: config
