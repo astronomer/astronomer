@@ -13,6 +13,7 @@ metadata:
     heritage: "{{ .Release.Service }}"
     role: master
 spec:
+  clusterIP: None
   selector:
     component: {{ template "elasticsearch.name" . }}
     release: {{ .Release.Name }}
