@@ -12,12 +12,6 @@ metadata:
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
-  annotations:
-    {{- if .Values.platform.release }}
-    astronomer.io/platform-release: {{ .Values.platform.release }}
-    {{- end }}
-    prometheus.io/scrape: "true"
-    prometheus.io/port: {{ .Values.ports.pgbouncerScrape | quote }}
 spec:
   type: ClusterIP
   selector:

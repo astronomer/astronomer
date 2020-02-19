@@ -267,24 +267,6 @@ azure:
 {{ .Release.Name }}-pgbouncer-stats
 {{- end }}
 
-{{ define "pgbouncer_config" }}
-[databases]
-{{ .Release.Name }}-pgbouncer = host={{ .Values.pgbouncer.connection.host }} dbname={{ .Values.pgbouncer.connection.db }} port={{ .Values.pgbouncer.connection.port }} pool_size={{ .Values.pgbouncer.metadataPoolSize }}
-
-[pgbouncer]
-pool_mode = transaction
-listen_port = {{ .Values.ports.pgbouncer }}
-listen_addr = *
-auth_type = md5
-auth_file = /etc/pgbouncer/users.txt
-stats_users = {{ .Values.pgbouncer.connection.user }}
-ignore_startup_parameters = extra_float_digits
-max_client_conn = {{ .Values.pgbouncer.maxClientConn }}
-{{- if .Values.pgbouncer.connection.sslmode -}}
-server_tls_sslmode = .Values.pgbouncer.connection.sslmode
-{{- end }}
-{{- end }}
-
 {{ define "pgbouncer_users" }}
 {{ .Values.pgbouncer.connection.user | quote }} {{ .Values.pgbouncer.connection.pass | quote }}
 {{- end }}

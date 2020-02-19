@@ -169,8 +169,7 @@ pgbouncer:
   enabled: false
 
   # Pool sizes
-  metadataPoolSize: 3
-  resultBackendPoolSize: 2
+  poolSize: 3
 
   # Maximum clients that can connect to pgbouncer (higher = more file descriptors)
   maxClientConn: 100
@@ -197,11 +196,10 @@ pgbouncer:
   connection:
     user: postgres
     pass: postgres
-    host: ~
+    host: astronomer-postgresql
     port: 5432
     db: postgres
     sslmode: verify-ca
-
 commander:
   env: []
   resources: {}

@@ -29,8 +29,6 @@ spec:
         tier: astronomer
         component: pgbouncer
         release: {{ .Release.Name }}
-      annotations:
-        checksum/pgbouncer-config-secret: {{ include (print $.Template.BasePath "/secrets/pgbouncer-config-secret.yaml") . | sha256sum }}
     spec:
       nodeSelector:
 {{ toYaml .Values.nodeSelector | indent 8 }}
@@ -39,6 +37,29 @@ spec:
       tolerations:
 {{ toYaml .Values.tolerations | indent 8 }}
       restartPolicy: Always
+      initContainers:
+        - name: houston-bootstrapper
+          image: {{ template "dbBootstrapper.image" . }}
+          imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
+          args: ["pgbouncer-bootstrapper"]
+          env:
+            - name: BOOTSTRAP_DB
+              valueFrom:
+                secretKeyRef:
+                  name: astronomer-bootstrap
+                  key: connection
+            - name: RELEASE_NAME
+              value: {{ .Release.Name }}
+            - name: PGBOUNCER_POOL_SIZE
+              value: {{ .Values.pgbouncer.poolSize}}
+            - name: PGBOUNCER_PORT
+              value: {{ .Values.ports.pgbouncer}}
+            - name: SECRET_NAME
+              value: {{ template "pgbouncer_config_secret" . }}
+            - name: NAMESPACE
+              value: {{ .Release.Namespace }}
+            - name: IN_CLUSTER
+              value: "true"
       containers:
         - name: pgbouncer
           image: {{ template "pgbouncer_image" . }}
