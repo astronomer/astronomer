@@ -115,7 +115,9 @@ spec:
           protocol: TCP
         readinessProbe:
           httpGet:
-            path: /_cluster/health
+            # local: If true, the request retrieves information from the local node only.
+            # Defaults to false, which means information is retrieved from the master node.
+            path: /_cluster/health?local=true
             port: {{ .Values.common.ports.http }}
           initialDelaySeconds: 5
         livenessProbe:
