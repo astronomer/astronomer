@@ -51,6 +51,7 @@ metadata:
     release: {{ $.Release.Name }}
     heritage: {{ $.Release.Service }}
 spec:
+  sessionAffinity: ClientIP
   type: ClusterIP
   selector:
     tier: monitoring
