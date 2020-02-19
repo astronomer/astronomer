@@ -82,36 +82,37 @@ spec:
                   key: config.yml
             - name: PRISMA_CONFIG_PATH
               value: /app/config.yml
-            - name: PRISMA_DB_URI
-              valueFrom:
-                secretKeyRef:
-                  name: {{ template "houston.backendSecret" . }}
-                  key: connection
             - name: PRISMA_MANAGEMENT_API_SECRET
               valueFrom:
                 secretKeyRef:
                   name: {{ .Release.Name }}-prisma-api-secret
                   key: api-secret
-            {{ if .Values.prisma.backendSecretName }}
+            {{ if .Values.houston.backendSecretIsConnString }}
+            - name: PRISMA_DB_URI
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "houston.backendSecret" . }}
+                  key: connection
+            {{ else }}
             - name: PRISMA_DB_HOST
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.prisma.backendSecretName }}
+                  name: {{ template "houston.backendSecret" . }}
                   key: host
             - name: PRISMA_DB_PORT
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.prisma.backendSecretName }}
+                  name: {{ template "houston.backendSecret" . }}
                   key: port
             - name: PRISMA_DB_USER
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.prisma.backendSecretName }}
+                  name: {{ template "houston.backendSecret" . }}
                   key: user
             - name: PRISMA_DB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.prisma.backendSecretName }}
+                  name: {{ template "houston.backendSecret" . }}
                   key: password
             {{ end }}
 

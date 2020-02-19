@@ -50,6 +50,7 @@ astroUI:
 houston:
   # Houston datastore
   backendSecretName: ~
+  backendSecretIsConnString: true
   backendConnection: {}
     # user: ~
     # pass: ~
@@ -158,12 +159,6 @@ prisma:
   #  requests:
   #   cpu: 100m
   #   memory: 128Mi
-  backendSecretName: ~
-  backendConnection: {}
-    # user: ~
-    # pass: ~
-    # host: ~
-    # port: ~
 
 commander:
   env: []

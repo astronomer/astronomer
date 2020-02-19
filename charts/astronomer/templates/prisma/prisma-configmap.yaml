@@ -18,18 +18,12 @@ data:
     databases:
       default:
         connector: postgres
-        {{ if and (.Values.prisma.backendSecretName) (not .Values.prisma.backendConnection) }}
+        {{ if not .Values.houston.backendSecretIsConnString }}
         host: $PRISMA_DB_HOST
         port: $PRISMA_DB_PORT
         user: $PRISMA_DB_USER
         password: $PRISMA_DB_PASSWORD
-        database: {{ printf "%s_houston" (.Release.Name | replace "-" "_")  }}
-        {{ else if and (.Values.prisma.backendConnection) (not .Values.prisma.backendSecretName) }}
-        host: {{ .Values.prisma.backendConnection.host }}
-        port: {{ .Values.prisma.backendConnection.port }}
-        user: {{ .Values.prisma.backendConnection.user }}
-        password: {{ .Values.prisma.backendConnection.pass }}
-        database: {{ printf "%s_houston" (.Release.Name | replace "-" "_")  }}
+        database: {{ printf "%s_houston" (.Release.Name | replace "-" "_") }}
         {{ else }}
         uri: $PRISMA_DB_URI
         {{ end }}
