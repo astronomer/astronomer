@@ -93,7 +93,7 @@ spec:
             fieldRef:
               fieldPath: metadata.name
         - name: DISCOVERY_SERVICE
-          value: {{ template "elasticsearch.fullname" . }}-discovery
+          value: {{ template "elasticsearch.fullname" . }}-headless-discovery
         {{- range $key, $value :=  .Values.common.env }}
         - name: {{ $key | upper | replace "-" "_" }}
           value: {{ $value | quote }}
