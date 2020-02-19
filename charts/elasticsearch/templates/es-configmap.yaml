@@ -45,9 +45,12 @@ data:
       ping_schedule: "5s"
 
     discovery:
-      zen:
-        ping.unicast.hosts: ${DISCOVERY_SERVICE}
-        minimum_master_nodes: ${NUMBER_OF_MASTERS:2}
+      seed_hosts:
+        {{- $releaseName := $.Release.Name }}
+        {{- $replicas := .Values.master.replicas }}
+        {{- range $i, $e := until (int $replicas) }}
+        - {{ $releaseName }}-elasticsearch-master-{{ $i }}
+        {{- end }}
 
     # Disable scripting for security.
     script.allowed_types: none
