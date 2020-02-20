@@ -92,7 +92,10 @@ spec:
             # wait_for_db.sh in prisma entrypoint depend on PRISMA_DB_URI
             # that's why we can fake it with user/password and correct pgbouncer host
             - name: PRISMA_DB_URI
-              value: {{ printf "postgres://postgres:postgres@%s-pgbouncer:%s" .Release.Name (.Values.ports.pgbouncer | toString) }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "pgbouncer_config_secret" . }}
+                  key: connection
             - name: PGBOUNCER_DB_USER
               valueFrom:
                 secretKeyRef:

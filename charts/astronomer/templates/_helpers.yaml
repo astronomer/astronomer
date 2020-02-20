@@ -176,20 +176,11 @@ azure:
       name: {{ template "houston.backendSecret" . }}
       key: connection
 {{- else }}
-- name: DATABASE__CONNECTION__USER
+- name: DATABASE__CONNECTION
   valueFrom:
     secretKeyRef:
       name: {{ template "pgbouncer_config_secret" . }}
-      key: user
-- name: DATABASE__CONNECTION__PASSWORD
-  valueFrom:
-    secretKeyRef:
-      name: {{ template "pgbouncer_config_secret" . }}
-      key: password
-- name: DATABASE__CONNECTION__PORT
-  value: "{{ .Values.ports.pgbouncer }}"
-- name: DATABASE__CONNECTION__HOST
-  value: {{ .Release.Name }}-pgbouncer
+      key: connection
 {{- end}}
 - name: JWT__CERT_PATH
   value: {{ template "houston.jwtCertificateDir" . }}
