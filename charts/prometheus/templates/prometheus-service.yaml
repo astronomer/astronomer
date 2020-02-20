@@ -1,3 +1,4 @@
+{{- if gt (int .Values.replicas) 1 }}
 ################################
 ## Prometheus Service(s)
 ## each one pointing to a different
@@ -35,6 +36,7 @@ spec:
       port: {{ $.Values.ports.http }}
       targetPort: {{ $.Values.ports.http }}
 {{ end }}
+{{- end }}
 ---
 ################################
 ## Prometheus Service
