@@ -44,7 +44,7 @@ spec:
           imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
           command: ["pgbouncer-bootstrapper"]
           env:
-            - name: BOOTSTRAP_DB
+            - name: DB_CONNECTION_STRING
               valueFrom:
                 secretKeyRef:
                   name: astronomer-bootstrap

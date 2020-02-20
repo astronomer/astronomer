@@ -32,7 +32,7 @@ spec:
       tolerations:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       restartPolicy: Always
-      {{- if and (not .Values.houston.backendSecretName) (not .Values.houston.backendConnection) }}
+      {{- if and (not .Values.pgbouncer.enabled) (not .Values.houston.backendSecretName) (not .Values.houston.backendConnection) }}
       serviceAccountName: {{ template "prisma.bootstrapperServiceAccount" . }}
       initContainers:
         - name: bootstrapper
@@ -82,11 +82,29 @@ spec:
                   key: config.yml
             - name: PRISMA_CONFIG_PATH
               value: /app/config.yml
+            {{- if not .Values.pgbouncer.enabled }}
             - name: PRISMA_DB_URI
               valueFrom:
                 secretKeyRef:
                   name: {{ template "houston.backendSecret" . }}
                   key: connection
+            {{- else }}
+            - name: PGBOUNCER_DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "pgbouncer_config_secret" . }}
+                  key: user
+            - name: PGBOUNCER_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "pgbouncer_config_secret" . }}
+                  key: password
+            - name: PGBOUNCER_DB_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "pgbouncer_config_secret" . }}
+                  key: database
+            {{- end }}
             - name: PRISMA_MANAGEMENT_API_SECRET
               valueFrom:
                 secretKeyRef:
