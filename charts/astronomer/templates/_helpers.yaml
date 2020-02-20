@@ -84,7 +84,7 @@
 {{- end }}
 
 {{ define "houston.backendSecret" -}}
-{{ default (printf "%s-houston-backend" .Release.Name) .Values.houston.backendSecretName }}
+  {{ default (printf "%s-houston-backend" .Release.Name) .Values.houston.backendSecretName }}
 {{- end }}
 
 {{ define "houston.airflowBackendSecret" -}}
@@ -169,11 +169,28 @@ azure:
   {{- end }}
 - name: NODE_ENV
   value: "production"
+{{- if not .Values.pgbouncer.enabled }}
 - name: DATABASE__CONNECTION
   valueFrom:
     secretKeyRef:
       name: {{ template "houston.backendSecret" . }}
       key: connection
+{{- else }}
+- name: DATABASE__CONNECTION__USER
+  valueFrom:
+    secretKeyRef:
+      name: {{ template "pgbouncer_config_secret" . }}
+      key: user
+- name: DATABASE__CONNECTION__PASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: {{ template "pgbouncer_config_secret" . }}
+      key: password
+- name: DATABASE__CONNECTION__PORT
+  value: "{{ .Values.ports.pgbouncer }}"
+- name: DATABASE__CONNECTION__HOST
+  value: {{ .Release.Name }}-pgbouncer
+{{- end}}
 - name: JWT__CERT_PATH
   value: {{ template "houston.jwtCertificateDir" . }}
 - name: JWT__REGISTRY__CERT_PATH
@@ -212,11 +229,6 @@ azure:
     secretKeyRef:
       name: {{ template "pgbouncer_config_secret" . }}
       key: password
-- name: DEPLOYMENTS__DATABASE__CONNECTION__DATABASE
-  valueFrom:
-    secretKeyRef:
-      name: {{ template "pgbouncer_config_secret" . }}
-      key: database
 - name: DEPLOYMENTS__DATABASE__CONNECTION__PORT
   value: "{{ .Values.ports.pgbouncer }}"
 - name: DEPLOYMENTS__DATABASE__CONNECTION__HOST
