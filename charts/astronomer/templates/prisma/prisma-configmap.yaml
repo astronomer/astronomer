@@ -24,9 +24,9 @@ data:
         # we need this format to support users like: astro@astro-azure
         host: {{ template "pgbouncer_host" . }}
         port: {{ .Values.ports.pgbouncer }}
-        user: postgres
-        password: postgres
-        database: postgres
+        user: $PGBOUNCER_DB_USER
+        password: $PGBOUNCER_DB_PASSWORD
+        database: $PGBOUNCER_DB_DATABASE
         {{- end }}
         migrations: true
         # 2 is the minimum allowed value

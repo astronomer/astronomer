@@ -200,6 +200,7 @@ pgbouncer:
     port: 5432
     db: postgres
     sslmode: verify-ca
+
 commander:
   env: []
   resources: {}
