@@ -218,7 +218,7 @@ azure:
       name: {{ template "pgbouncer_config_secret" . }}
       key: database
 - name: DEPLOYMENTS__DATABASE__CONNECTION__PORT
-  value: {{ .Values.ports.pgbouncer }}
+  value: "{{ .Values.ports.pgbouncer }}"
 - name: DEPLOYMENTS__DATABASE__CONNECTION__HOST
   value: {{ .Release.Name }}-pgbouncer
 {{- end }}
