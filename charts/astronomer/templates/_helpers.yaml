@@ -169,11 +169,14 @@ azure:
   {{- end }}
 - name: NODE_ENV
   value: "production"
+{{ }}
 - name: DATABASE__CONNECTION
   valueFrom:
     secretKeyRef:
       name: {{ template "houston.backendSecret" . }}
       key: connection
+{{ else }}
+
 - name: JWT__CERT_PATH
   value: {{ template "houston.jwtCertificateDir" . }}
 - name: JWT__REGISTRY__CERT_PATH
@@ -195,11 +198,28 @@ azure:
     secretKeyRef:
       name: {{ .Release.Name }}-prisma-api-secret
       key: service-secret
+{{ if .Values.houston.backendSecretIsConnString }}
 - name: DEPLOYMENTS__DATABASE__CONNECTION
   valueFrom:
     secretKeyRef:
       name: {{ template "houston.airflowBackendSecret" . }}
       key: connection
+{{ else }}
+- name: DEPLOYMENTS__DATABASE__CONNECTION__USER
+  valueFrom:
+    secretKeyRef:
+      name: {{ template "pgbouncer_config_secret" . }}
+      key: user
+- name: DEPLOYMENTS__DATABASE__CONNECTION__PASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: {{ template "pgbouncer_config_secret" . }}
+      key: password
+- name: DEPLOYMENTS__DATABASE__CONNECTION__PORT
+  value: "{{ .Values.ports.pgbouncer }}"
+- name: DEPLOYMENTS__DATABASE__CONNECTION__HOST
+  value: {{ .Release.Name }}-pgbouncer
+{{ end }}
   # These are set here for Houston's entrypoint script
 - name: COMMANDER__HOST
   value: {{ .Release.Name }}-commander
