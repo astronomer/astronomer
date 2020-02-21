@@ -232,9 +232,8 @@ data:
             summary: "Half or more of schedulers do not have a heartbeat"
             description: "Half or more of schedulers do not have a heartbeat in the last five minutes"
 
-
         ## JPW added
-      - name: node-exporter.rules ## Recording rules
+      - name: node-exporter-recording.rules 
         rules:
         - expr: |
             count without (cpu) (
@@ -292,7 +291,7 @@ data:
             )
           record: instance:node_network_transmit_drop_excluding_lo:rate1m
 
-      - name: k8s.rules ## Recording rules
+      - name: k8s-recording.rules 
         rules:
         - expr: |
             sum(rate(container_cpu_usage_seconds_total{job="kubelet", metrics_path="/metrics/cadvisor", image!="", container!="POD"}[5m])) by (namespace)
@@ -376,7 +375,7 @@ data:
           labels:
             workload_type: statefulset
           record: mixin_pod_workload
-      - name: kube-scheduler.rules ## Recording Rules
+      - name: kube-scheduler-recording.rules 
         rules:
         - expr: |
             histogram_quantile(0.99, sum(rate(scheduler_e2e_scheduling_duration_seconds_bucket{job="kube-scheduler"}[5m])) without(instance, pod))
@@ -423,7 +422,7 @@ data:
           labels:
             quantile: "0.5"
           record: cluster_quantile:scheduler_binding_duration_seconds:histogram_quantile
-      - name: node.rules ## Recording Rules
+      - name: node-recording.rules 
         rules:
         - expr: |
             sum(min(kube_pod_info) by (cluster, node))
@@ -449,7 +448,7 @@ data:
               )
             ) by (cluster)
           record: :node_memory_MemAvailable_bytes:sum
-      - name: kube-prometheus-node-recording.rules ## Recording Rules
+      - name: kube-prometheus-node-recording.rules 
         rules:
         - expr: sum(rate(node_cpu_seconds_total{mode!="idle",mode!="iowait"}[3m])) BY
             (instance)
@@ -470,7 +469,7 @@ data:
         - expr: cluster:node_cpu_seconds_total:rate5m / count(sum(node_cpu_seconds_total)
             BY (instance, cpu))
           record: cluster:node_cpu:ratio
-      - name: kube-prometheus-general.rules ## Recording Rules
+      - name: kube-prometheus-general-recording.rules 
         rules:
         - expr: count without(instance, pod, node) (up == 1)
           record: count:up1
@@ -1286,7 +1285,6 @@ data:
           for: 2m
           labels:
             severity: warning
-
 
 
         {{- end }}
