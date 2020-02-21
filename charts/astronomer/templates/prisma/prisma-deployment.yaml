@@ -94,6 +94,12 @@ spec:
                   name: {{ template "houston.backendSecret" . }}
                   key: connection
             {{ else }}
+            # we need this to wait-for-db script
+            - name: PRISMA_DB_URI
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "houston.backendSecret" . }}
+                  key: connection
             - name: PRISMA_DB_HOST
               valueFrom:
                 secretKeyRef:
