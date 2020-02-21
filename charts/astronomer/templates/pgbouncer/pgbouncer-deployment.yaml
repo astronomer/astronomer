@@ -42,7 +42,7 @@ spec:
         - name: pgbouncer-bootstrapper
           image: {{ template "dbBootstrapper.image" . }}
           imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
-          command: ["pgbouncer-bootstrapper"]
+          args: ["pgbouncer-bootstrapper"]
           env:
             - name: DB_CONNECTION_STRING
               valueFrom:
