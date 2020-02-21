@@ -207,7 +207,7 @@ azure:
   valueFrom:
     secretKeyRef:
       name: {{ template "houston.backendSecret" . }}
-      key: user
+      key: username
 - name: DEPLOYMENTS__DATABASE__CONNECTION__PASSWORD
   valueFrom:
     secretKeyRef:

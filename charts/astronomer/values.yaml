@@ -49,8 +49,8 @@ astroUI:
 
 houston:
   # Houston datastore
-  backendSecretName: ~
-  backendSecretIsConnString: true
+  backendSecretName: my-secret
+  backendSecretIsConnString: false
   backendConnection: {}
     # user: ~
     # pass: ~
