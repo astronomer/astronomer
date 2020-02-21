@@ -32,6 +32,9 @@ data:
     bootstrap:
       memory_lock: ${MEMORY_LOCK:false}
 
+    transport:
+      ping_schedule: "5s"
+
     http:
       compression: true
       cors:
