@@ -220,6 +220,7 @@ data:
           annotations:
             summary: "2 days since last successful Backup for a Velero Schedule"
             description: {{ printf "%q" "Time since last successful backup for {{ $labels.schedule }} :\n  VALUE = {{ $value }}\n  LABELS - {{ $labels }}" }}
+        {{- end }}
 
         - alert: SchedulersNotHealthy
           expr: (count(rate(airflow_scheduler_heartbeat{}[1m]) > 0) / count(rate(airflow_scheduler_heartbeat{}[1m]))) < 0.5
@@ -232,7 +233,6 @@ data:
             summary: "Half or more of schedulers do not have a heartbeat"
             description: "Half or more of schedulers do not have a heartbeat in the last five minutes"
 
-        ## JPW added
       - name: node-exporter-recording.rules 
         rules:
         - expr: |
@@ -509,8 +509,8 @@ data:
         rules:
         - alert: NodeFilesystemSpaceFillingUp
           annotations:
-            description: Filesystem on {{ $labels.device }} at {{ $labels.instance }}
-              has only {{ printf "%.2f" $value }}% available space left and is filling
+            description: Filesystem on {{`{{ $labels.device }}`}} at {{`{{ $labels.instance }}`}}
+              has only {{`{{ printf "%.2f" $value }}`}}% available space left and is filling
               up.
             runbook_url: 
             summary: Filesystem is predicted to run out of space within the next 24 hours.
@@ -527,8 +527,8 @@ data:
             severity: warning
         - alert: NodeFilesystemSpaceFillingUp
           annotations:
-            description: Filesystem on {{ $labels.device }} at {{ $labels.instance }}
-              has only {{ printf "%.2f" $value }}% available space left and is filling
+            description: Filesystem on {{`{{ $labels.device }}`}} at {{`{{ $labels.instance }}`}}
+              has only {{`{{ printf "%.2f" $value }}`}}% available space left and is filling
               up fast.
             runbook_url: 
             summary: Filesystem is predicted to run out of space within the next 4 hours.
@@ -545,8 +545,8 @@ data:
             severity: critical
         - alert: NodeFilesystemAlmostOutOfSpace
           annotations:
-            description: Filesystem on {{ $labels.device }} at {{ $labels.instance }}
-              has only {{ printf "%.2f" $value }}% available space left.
+            description: Filesystem on {{`{{ $labels.device }}`}} at {{`{{ $labels.instance }}`}}
+              has only {{`{{ printf "%.2f" $value }}`}}% available space left.
             runbook_url: 
             summary: Filesystem has less than 5% space left.
           expr: |
@@ -560,8 +560,8 @@ data:
             severity: warning
         - alert: NodeFilesystemAlmostOutOfSpace
           annotations:
-            description: Filesystem on {{ $labels.device }} at {{ $labels.instance }}
-              has only {{ printf "%.2f" $value }}% available space left.
+            description: Filesystem on {{`{{ $labels.device }}`}} at {{`{{ $labels.instance }}`}}
+              has only {{`{{ printf "%.2f" $value }}`}}% available space left.
             runbook_url: 
             summary: Filesystem has less than 3% space left.
           expr: |
@@ -575,8 +575,8 @@ data:
             severity: critical
         - alert: NodeFilesystemFilesFillingUp
           annotations:
-            description: Filesystem on {{ $labels.device }} at {{ $labels.instance }}
-              has only {{ printf "%.2f" $value }}% available inodes left and is filling
+            description: Filesystem on {{`{{ $labels.device }}`}} at {{`{{ $labels.instance }}`}}
+              has only {{`{{ printf "%.2f" $value }}`}}% available inodes left and is filling
               up.
             runbook_url: 
             summary: Filesystem is predicted to run out of inodes within the next 24 hours.
@@ -593,8 +593,8 @@ data:
             severity: warning
         - alert: NodeFilesystemFilesFillingUp
           annotations:
-            description: Filesystem on {{ $labels.device }} at {{ $labels.instance }}
-              has only {{ printf "%.2f" $value }}% available inodes left and is filling
+            description: Filesystem on {{`{{ $labels.device }}`}} at {{`{{ $labels.instance }}`}}
+              has only {{`{{ printf "%.2f" $value }}`}}% available inodes left and is filling
               up fast.
             runbook_url: 
             summary: Filesystem is predicted to run out of inodes within the next 4 hours.
@@ -611,8 +611,8 @@ data:
             severity: critical
         - alert: NodeFilesystemAlmostOutOfFiles
           annotations:
-            description: Filesystem on {{ $labels.device }} at {{ $labels.instance }}
-              has only {{ printf "%.2f" $value }}% available inodes left.
+            description: Filesystem on {{`{{ $labels.device }}`}} at {{`{{ $labels.instance }}`}}
+              has only {{`{{ printf "%.2f" $value }}`}}% available inodes left.
             runbook_url: 
             summary: Filesystem has less than 5% inodes left.
           expr: |
@@ -626,8 +626,8 @@ data:
             severity: warning
         - alert: NodeFilesystemAlmostOutOfFiles
           annotations:
-            description: Filesystem on {{ $labels.device }} at {{ $labels.instance }}
-              has only {{ printf "%.2f" $value }}% available inodes left.
+            description: Filesystem on {{`{{ $labels.device }}`}} at {{`{{ $labels.instance }}`}}
+              has only {{`{{ printf "%.2f" $value }}`}}% available inodes left.
             runbook_url: 
             summary: Filesystem has less than 3% inodes left.
           expr: |
@@ -641,8 +641,8 @@ data:
             severity: critical
         - alert: NodeNetworkReceiveErrs
           annotations:
-            description: '{{ $labels.instance }} interface {{ $labels.device }} has encountered
-              {{ printf "%.0f" $value }} receive errors in the last two minutes.'
+            description: '{{`{{ $labels.instance }}`}} interface {{`{{ $labels.device }}`}} has encountered
+              {{`{{ printf "%.0f" $value }}`}} receive errors in the last two minutes.'
             runbook_url: 
             summary: Network interface is reporting many receive errors.
           expr: |
@@ -652,8 +652,8 @@ data:
             severity: warning
         - alert: NodeNetworkTransmitErrs
           annotations:
-            description: '{{ $labels.instance }} interface {{ $labels.device }} has encountered
-              {{ printf "%.0f" $value }} transmit errors in the last two minutes.'
+            description: '{{`{{ $labels.instance }}`}} interface {{`{{ $labels.device }}`}} has encountered
+              {{`{{ printf "%.0f" $value }}`}} transmit errors in the last two minutes.'
             runbook_url: 
             summary: Network interface is reporting many transmit errors.
           expr: |
@@ -661,12 +661,13 @@ data:
           for: 1h
           labels:
             severity: warning
+     
       - name: kubernetes-apps
         rules:
         - alert: KubePodCrashLooping
           annotations:
-            message: Pod {{ $labels.namespace }}/{{ $labels.pod }} ({{ $labels.container
-              }}) is restarting {{ printf "%.2f" $value }} times / 5 minutes.
+            message: Pod {{`{{ $labels.namespace }}`}}/{{`{{ $labels.pod }}`}} ({{`{{ $labels.container
+              }}`}}) is restarting {{`{{ printf "%.2f" $value }}`}} times / 5 minutes.
             runbook_url: 
           expr: |
             rate(kube_pod_container_status_restarts_total{job="kube-state-metrics"}[15m]) * 60 * 5 > 0
@@ -675,7 +676,7 @@ data:
             severity: critical
         - alert: KubePodNotReady
           annotations:
-            message: Pod {{ $labels.namespace }}/{{ $labels.pod }} has been in a non-ready
+            message: Pod {{`{{ $labels.namespace }}`}}/{{`{{ $labels.pod }}`}} has been in a non-ready
               state for longer than 15 minutes.
             runbook_url: 
           expr: |
@@ -685,8 +686,8 @@ data:
             severity: critical
         - alert: KubeDeploymentGenerationMismatch
           annotations:
-            message: Deployment generation for {{ $labels.namespace }}/{{ $labels.deployment
-              }} does not match, this indicates that the Deployment has failed but has
+            message: Deployment generation for {{`{{ $labels.namespace }}`}}/{{`{{ $labels.deployment
+              }}`}} does not match, this indicates that the Deployment has failed but has
               not been rolled back.
             runbook_url:
           expr: |
@@ -698,7 +699,7 @@ data:
             severity: critical
         - alert: KubeDeploymentReplicasMismatch
           annotations:
-            message: Deployment {{ $labels.namespace }}/{{ $labels.deployment }} has not
+            message: Deployment {{`{{ $labels.namespace }}`}}/{{`{{ $labels.deployment }}`}} has not
               matched the expected number of replicas for longer than 15 minutes.
             runbook_url: 
           expr: |
@@ -710,7 +711,7 @@ data:
             severity: critical
         - alert: KubeStatefulSetReplicasMismatch
           annotations:
-            message: StatefulSet {{ $labels.namespace }}/{{ $labels.statefulset }} has
+            message: StatefulSet {{`{{ $labels.namespace }}`}}/{{`{{ $labels.statefulset }}`}} has
               not matched the expected number of replicas for longer than 15 minutes.
             runbook_url: 
           expr: |
@@ -722,8 +723,8 @@ data:
             severity: critical
         - alert: KubeStatefulSetGenerationMismatch
           annotations:
-            message: StatefulSet generation for {{ $labels.namespace }}/{{ $labels.statefulset
-              }} does not match, this indicates that the StatefulSet has failed but has
+            message: StatefulSet generation for {{`{{ $labels.namespace }}`}}/{{`{{ $labels.statefulset
+              }}`}} does not match, this indicates that the StatefulSet has failed but has
               not been rolled back.
             runbook_url:
           expr: |
@@ -735,7 +736,7 @@ data:
             severity: critical
         - alert: KubeStatefulSetUpdateNotRolledOut
           annotations:
-            message: StatefulSet {{ $labels.namespace }}/{{ $labels.statefulset }} update
+            message: StatefulSet {{`{{ $labels.namespace }}`}}/{{`{{ $labels.statefulset }}`}} update
               has not been rolled out.
             runbook_url:
           expr: |
@@ -755,8 +756,8 @@ data:
             severity: critical
         - alert: KubeDaemonSetRolloutStuck
           annotations:
-            message: Only {{ $value | humanizePercentage }} of the desired Pods of DaemonSet
-              {{ $labels.namespace }}/{{ $labels.daemonset }} are scheduled and ready.
+            message: Only {{`{{ $value | humanizePercentage }}`}} of the desired Pods of DaemonSet
+              {{`{{ $labels.namespace }}`}}/{{`{{ $labels.daemonset }}`}} are scheduled and ready.
             runbook_url: 
           expr: |
             kube_daemonset_status_number_ready{job="kube-state-metrics"}
@@ -767,7 +768,7 @@ data:
             severity: critical
         - alert: KubeContainerWaiting
           annotations:
-            message: Pod {{ $labels.namespace }}/{{ $labels.pod }} container {{ $labels.container}}
+            message: Pod {{`{{ $labels.namespace }}`}}/{{`{{ $labels.pod }}`}} container {{`{{ $labels.container}}`}}
               has been in waiting state for longer than 1 hour.
             runbook_url: 
           expr: |
@@ -777,8 +778,8 @@ data:
             severity: warning
         - alert: KubeDaemonSetNotScheduled
           annotations:
-            message: '{{ $value }} Pods of DaemonSet {{ $labels.namespace }}/{{ $labels.daemonset
-              }} are not scheduled.'
+            message: '{{`{{ $value }}`}} Pods of DaemonSet {{`{{ $labels.namespace }}`}}/{{`{{ $labels.daemonset
+              }}`}} are not scheduled.'
             runbook_url: 
           expr: |
             kube_daemonset_status_desired_number_scheduled{job="kube-state-metrics"}
@@ -789,8 +790,8 @@ data:
             severity: warning
         - alert: KubeDaemonSetMisScheduled
           annotations:
-            message: '{{ $value }} Pods of DaemonSet {{ $labels.namespace }}/{{ $labels.daemonset
-              }} are running where they are not supposed to run.'
+            message: '{{`{{ $value }}`}} Pods of DaemonSet {{`{{ $labels.namespace }}`}}/{{`{{ $labels.daemonset
+              }}`}} are running where they are not supposed to run.'
             runbook_url: 
           expr: |
             kube_daemonset_status_number_misscheduled{job="kube-state-metrics"} > 0
@@ -799,7 +800,7 @@ data:
             severity: warning
         - alert: KubeCronJobRunning
           annotations:
-            message: CronJob {{ $labels.namespace }}/{{ $labels.cronjob }} is taking more
+            message: CronJob {{`{{ $labels.namespace }}`}}/{{`{{ $labels.cronjob }}`}} is taking more
               than 1h to complete.
             runbook_url: 
           expr: |
@@ -809,7 +810,7 @@ data:
             severity: warning
         - alert: KubeJobCompletion
           annotations:
-            message: Job {{ $labels.namespace }}/{{ $labels.job_name }} is taking more
+            message: Job {{`{{ $labels.namespace }}`}}/{{`{{ $labels.job_name }}`}} is taking more
               than one hour to complete.
             runbook_url: 
           expr: |
@@ -819,7 +820,7 @@ data:
             severity: warning
         - alert: KubeJobFailed
           annotations:
-            message: Job {{ $labels.namespace }}/{{ $labels.job_name }} failed to complete.
+            message: Job {{`{{ $labels.namespace }}`}}/{{`{{ $labels.job_name }}`}} failed to complete.
             runbook_url: 
           expr: |
             kube_job_failed{job="kube-state-metrics"}  > 0
@@ -884,8 +885,8 @@ data:
             severity: warning
         - alert: KubeQuotaExceeded
           annotations:
-            message: Namespace {{ $labels.namespace }} is using {{ $value | humanizePercentage
-              }} of its {{ $labels.resource }} quota.
+            message: Namespace {{`{{ $labels.namespace }}`}} is using {{`{{ $value | humanizePercentage
+              }}`}} of its {{`{{ $labels.resource }}`}} quota.
             runbook_url: 
           expr: |
             kube_resourcequota{job="kube-state-metrics", type="used"}
@@ -897,9 +898,9 @@ data:
             severity: warning
         - alert: CPUThrottlingHigh
           annotations:
-            message: '{{ $value | humanizePercentage }} throttling of CPU in namespace
-              {{ $labels.namespace }} for container {{ $labels.container }} in pod {{
-              $labels.pod }}.'
+            message: '{{`{{ $value | humanizePercentage }}`}} throttling of CPU in namespace
+              {{`{{ $labels.namespace }}`}} for container {{`{{ $labels.container }}`}} in pod {{`{{
+              $labels.pod }}`}}.'
             runbook_url: 
           expr: |
             sum(increase(container_cpu_cfs_throttled_periods_total{container!="", }[5m])) by (container, pod, namespace)
@@ -913,9 +914,9 @@ data:
         rules:
         - alert: KubePersistentVolumeUsageCritical
           annotations:
-            message: The PersistentVolume claimed by {{ $labels.persistentvolumeclaim
-              }} in Namespace {{ $labels.namespace }} is only {{ $value | humanizePercentage
-              }} free.
+            message: The PersistentVolume claimed by {{`{{ $labels.persistentvolumeclaim
+              }}`}} in Namespace {{`{{ $labels.namespace }}`}} is only {{`{{ $value | humanizePercentage
+              }}`}} free.
             runbook_url:
           expr: |
             kubelet_volume_stats_available_bytes{job="kubelet", metrics_path="/metrics"}
@@ -927,9 +928,9 @@ data:
             severity: critical
         - alert: KubePersistentVolumeFullInFourDays
           annotations:
-            message: Based on recent sampling, the PersistentVolume claimed by {{ $labels.persistentvolumeclaim
-              }} in Namespace {{ $labels.namespace }} is expected to fill up within four
-              days. Currently {{ $value | humanizePercentage }} is available.
+            message: Based on recent sampling, the PersistentVolume claimed by {{`{{ $labels.persistentvolumeclaim
+              }}`}} in Namespace {{`{{ $labels.namespace }}`}} is expected to fill up within four
+              days. Currently {{`{{ $value | humanizePercentage }}`}} is available.
             runbook_url:
           expr: |
             (
@@ -944,8 +945,8 @@ data:
             severity: critical
         - alert: KubePersistentVolumeErrors
           annotations:
-            message: The persistent volume {{ $labels.persistentvolume }} has status {{
-              $labels.phase }}.
+            message: The persistent volume {{`{{ $labels.persistentvolume }}`}} has status {{`{{
+              $labels.phase }}`}}.
             runbook_url:
           expr: |
             kube_persistentvolume_status_phase{phase=~"Failed|Pending",job="kube-state-metrics"} > 0
@@ -956,7 +957,7 @@ data:
         rules:
         - alert: KubeVersionMismatch
           annotations:
-            message: There are {{ $value }} different semantic versions of Kubernetes
+            message: There are {{`{{ $value }}`}} different semantic versions of Kubernetes
               components running.
             runbook_url: 
           expr: |
@@ -970,7 +971,7 @@ data:
         rules:
         - alert: KubeNodeNotReady
           annotations:
-            message: '{{ $labels.node }} has been unready for more than 15 minutes.'
+            message: '{{`{{ $labels.node }}`}} has been unready for more than 15 minutes.'
             runbook_url: 
           expr: |
             kube_node_status_condition{job="kube-state-metrics",condition="Ready",status="true"} == 0
@@ -979,7 +980,7 @@ data:
             severity: warning
         - alert: KubeNodeUnreachable
           annotations:
-            message: '{{ $labels.node }} is unreachable and some workloads may be rescheduled.'
+            message: '{{`{{ $labels.node }}`}} is unreachable and some workloads may be rescheduled.'
             runbook_url: 
           expr: |
             kube_node_spec_taint{job="kube-state-metrics",key="node.kubernetes.io/unreachable",effect="NoSchedule"} == 1
@@ -988,8 +989,8 @@ data:
             severity: warning
         - alert: KubeletTooManyPods
           annotations:
-            message: Kubelet '{{ $labels.node }}' is running at {{ $value | humanizePercentage
-              }} of its Pod capacity.
+            message: Kubelet '{{`{{ $labels.node }}`}}' is running at {{`{{ $value | humanizePercentage
+              }}`}} of its Pod capacity.
             runbook_url: 
           expr: |
             max(max(kubelet_running_pod_count{job="kubelet", metrics_path="/metrics"}) by(instance) * on(instance) group_left(node) kubelet_node_name{job="kubelet", metrics_path="/metrics"}) by(node) / max(kube_node_status_capacity_pods{job="kube-state-metrics"}) by(node) > 0.95
@@ -1012,7 +1013,7 @@ data:
         rules:
         - alert: PrometheusBadConfig
           annotations:
-            description: Prometheus {{$labels.namespace}}/{{$labels.pod}} has failed to
+            description: Prometheus {{`{{$labels.namespace}}`}}/{{`{{$labels.pod}}`}} has failed to
               reload its configuration.
             summary: Failed Prometheus configuration reload.
           expr: |
@@ -1024,7 +1025,7 @@ data:
             severity: critical
         - alert: PrometheusNotificationQueueRunningFull
           annotations:
-            description: Alert notification queue of Prometheus {{$labels.namespace}}/{{$labels.pod}}
+            description: Alert notification queue of Prometheus {{`{{$labels.namespace}}`}}/{{`{{$labels.pod}}`}}
               is running full.
             summary: Prometheus alert notification queue predicted to run full in less
               than 30m.
@@ -1041,8 +1042,8 @@ data:
             severity: warning
         - alert: PrometheusErrorSendingAlertsToSomeAlertmanagers
           annotations:
-            description: '{{ printf "%.1f" $value }}% errors while sending alerts from
-              Prometheus {{$labels.namespace}}/{{$labels.pod}} to Alertmanager {{$labels.alertmanager}}.'
+            description: '{{`{{ printf "%.1f" $value }}`}}% errors while sending alerts from
+              Prometheus {{`{{$labels.namespace}}`}}/{{`{{$labels.pod}}`}} to Alertmanager {{`{{$labels.alertmanager}}`}}.'
             summary: Prometheus has encountered more than 1% errors sending alerts to
               a specific Alertmanager.
           expr: |
@@ -1058,8 +1059,8 @@ data:
             severity: warning
         - alert: PrometheusErrorSendingAlertsToAnyAlertmanager
           annotations:
-            description: '{{ printf "%.1f" $value }}% minimum errors while sending alerts
-              from Prometheus {{$labels.namespace}}/{{$labels.pod}} to any Alertmanager.'
+            description: '{{`{{ printf "%.1f" $value }}`}}% minimum errors while sending alerts
+              from Prometheus {{`{{$labels.namespace}}`}}/{{`{{$labels.pod}}`}} to any Alertmanager.'
             summary: Prometheus encounters more than 3% errors sending alerts to any Alertmanager.
           expr: |
             min without(alertmanager) (
@@ -1074,7 +1075,7 @@ data:
             severity: critical
         - alert: PrometheusNotConnectedToAlertmanagers
           annotations:
-            description: Prometheus {{$labels.namespace}}/{{$labels.pod}} is not connected
+            description: Prometheus {{`{{$labels.namespace}}`}}/{{`{{$labels.pod}}`}} is not connected
               to any Alertmanagers.
             summary: Prometheus is not connected to any Alertmanagers.
           expr: |
@@ -1086,8 +1087,8 @@ data:
             severity: warning
         - alert: PrometheusTSDBReloadsFailing
           annotations:
-            description: Prometheus {{$labels.namespace}}/{{$labels.pod}} has detected
-              {{$value | humanize}} reload failures over the last 3h.
+            description: Prometheus {{`{{$labels.namespace}}`}}/{{`{{$labels.pod}}`}} has detected
+              {{`{{$value | humanize}}`}} reload failures over the last 3h.
             summary: Prometheus has issues reloading blocks from disk.
           expr: |
             increase(prometheus_tsdb_reloads_failures_total{job="prometheus-k8s",namespace="monitoring"}[3h]) > 0
@@ -1096,8 +1097,8 @@ data:
             severity: warning
         - alert: PrometheusTSDBCompactionsFailing
           annotations:
-            description: Prometheus {{$labels.namespace}}/{{$labels.pod}} has detected
-              {{$value | humanize}} compaction failures over the last 3h.
+            description: Prometheus {{`{{$labels.namespace}}`}}/{{`{{$labels.pod}}`}} has detected
+              {{`{{$value | humanize}}`}} compaction failures over the last 3h.
             summary: Prometheus has issues compacting blocks.
           expr: |
             increase(prometheus_tsdb_compactions_failed_total{job="prometheus-k8s",namespace="monitoring"}[3h]) > 0
@@ -1106,7 +1107,7 @@ data:
             severity: warning
         - alert: PrometheusNotIngestingSamples
           annotations:
-            description: Prometheus {{$labels.namespace}}/{{$labels.pod}} is not ingesting
+            description: Prometheus {{`{{$labels.namespace}}`}}/{{`{{$labels.pod}}`}} is not ingesting
               samples.
             summary: Prometheus is not ingesting samples.
           expr: |
@@ -1116,8 +1117,8 @@ data:
             severity: warning
         - alert: PrometheusDuplicateTimestamps
           annotations:
-            description: Prometheus {{$labels.namespace}}/{{$labels.pod}} is dropping
-              {{ printf "%.4g" $value  }} samples/s with different values but duplicated
+            description: Prometheus {{`{{$labels.namespace}}`}}/{{`{{$labels.pod}}`}} is dropping
+              {{`{{ printf "%.4g" $value  }}`}} samples/s with different values but duplicated
               timestamp.
             summary: Prometheus is dropping samples with duplicate timestamps.
           expr: |
@@ -1127,8 +1128,8 @@ data:
             severity: warning
         - alert: PrometheusOutOfOrderTimestamps
           annotations:
-            description: Prometheus {{$labels.namespace}}/{{$labels.pod}} is dropping
-              {{ printf "%.4g" $value  }} samples/s with timestamps arriving out of order.
+            description: Prometheus {{`{{$labels.namespace}}`}}/{{`{{$labels.pod}}`}} is dropping
+              {{`{{ printf "%.4g" $value  }}`}} samples/s with timestamps arriving out of order.
             summary: Prometheus drops samples with out-of-order timestamps.
           expr: |
             rate(prometheus_target_scrapes_sample_out_of_order_total{job="prometheus-k8s",namespace="monitoring"}[5m]) > 0
@@ -1137,8 +1138,8 @@ data:
             severity: warning
         - alert: PrometheusRemoteStorageFailures
           annotations:
-            description: Prometheus {{$labels.namespace}}/{{$labels.pod}} failed to send
-              {{ printf "%.1f" $value }}% of the samples to queue {{$labels.queue}}.
+            description: Prometheus {{`{{$labels.namespace}}`}}/{{`{{$labels.pod}}`}} failed to send
+              {{`{{ printf "%.1f" $value }}`}}% of the samples to queue {{`{{$labels.queue}}`}}.
             summary: Prometheus fails to send samples to remote storage.
           expr: |
             (
@@ -1157,8 +1158,8 @@ data:
             severity: critical
         - alert: PrometheusRemoteWriteBehind
           annotations:
-            description: Prometheus {{$labels.namespace}}/{{$labels.pod}} remote write
-              is {{ printf "%.1f" $value }}s behind for queue {{$labels.queue}}.
+            description: Prometheus {{`{{$labels.namespace}}`}}/{{`{{$labels.pod}}`}} remote write
+              is {{`{{ printf "%.1f" $value }}`}}s behind for queue {{`{{$labels.queue}}`}}.
             summary: Prometheus remote write is behind.
           expr: |
             # Without max_over_time, failed scrapes could create false negatives, see
@@ -1172,29 +1173,10 @@ data:
           for: 15m
           labels:
             severity: critical
-        - alert: PrometheusRemoteWriteDesiredShards
-          annotations:
-            description: Prometheus {{$labels.namespace}}/{{$labels.pod}} remote write
-              desired shards calculation wants to run {{ $value }} shards, which is more
-              than the max of {{ printf `prometheus_remote_storage_shards_max{instance="%s",job="prometheus-k8s",namespace="monitoring"}`
-              $labels.instance | query | first | value }}.
-            summary: Prometheus remote write desired shards calculation wants to run more
-              than configured max shards.
-          expr: |
-            # Without max_over_time, failed scrapes could create false negatives, see
-            # https://www.robustperception.io/alerting-on-gauges-in-prometheus-2-0 for details.
-            (
-              max_over_time(prometheus_remote_storage_shards_desired{job="prometheus-k8s",namespace="monitoring"}[5m])
-            >
-              max_over_time(prometheus_remote_storage_shards_max{job="prometheus-k8s",namespace="monitoring"}[5m])
-            )
-          for: 15m
-          labels:
-            severity: warning
         - alert: PrometheusRuleFailures
           annotations:
-            description: Prometheus {{$labels.namespace}}/{{$labels.pod}} has failed to
-              evaluate {{ printf "%.0f" $value }} rules in the last 5m.
+            description: Prometheus {{`{{$labels.namespace}}`}}/{{`{{$labels.pod}}`}} has failed to
+              evaluate {{`{{ printf "%.0f" $value }}`}} rules in the last 5m.
             summary: Prometheus is failing rule evaluations.
           expr: |
             increase(prometheus_rule_evaluation_failures_total{job="prometheus-k8s",namespace="monitoring"}[5m]) > 0
@@ -1203,8 +1185,8 @@ data:
             severity: critical
         - alert: PrometheusMissingRuleEvaluations
           annotations:
-            description: Prometheus {{$labels.namespace}}/{{$labels.pod}} has missed {{
-              printf "%.0f" $value }} rule group evaluations in the last 5m.
+            description: Prometheus {{`{{$labels.namespace}}`}}/{{`{{$labels.pod}}`}} has missed {{`{{
+              printf "%.0f" $value }}`}} rule group evaluations in the last 5m.
             summary: Prometheus is missing rule evaluations due to slow rule group evaluation.
           expr: |
             increase(prometheus_rule_group_iterations_missed_total{job="prometheus-k8s",namespace="monitoring"}[5m]) > 0
@@ -1215,7 +1197,7 @@ data:
         rules:
         - alert: AlertmanagerConfigInconsistent
           annotations:
-            message: The configuration of the instances of the Alertmanager cluster `{{$labels.service}}`
+            message: The configuration of the instances of the Alertmanager cluster {{`{{$labels.service}}`}}
               are out of sync.
           expr: |
             count_values("config_hash", alertmanager_config_hash{job="alertmanager-main",namespace="monitoring"}) BY (service) / ON(service) GROUP_LEFT() label_replace(max(prometheus_operator_spec_replicas{job="prometheus-operator",namespace="monitoring",controller="alertmanager"}) by (name, job, namespace, controller), "service", "alertmanager-$1", "name", "(.*)") != 1
@@ -1224,8 +1206,8 @@ data:
             severity: critical
         - alert: AlertmanagerFailedReload
           annotations:
-            message: Reloading Alertmanager's configuration has failed for {{ $labels.namespace
-              }}/{{ $labels.pod}}.
+            message: Reloading Alertmanager's configuration has failed for {{`{{ $labels.namespace
+              }}`}}/{{`{{ $labels.pod}}`}}.
           expr: |
             alertmanager_config_last_reload_successful{job="alertmanager-main",namespace="monitoring"} == 0
           for: 10m
@@ -1245,8 +1227,8 @@ data:
         rules:
         - alert: TargetDown
           annotations:
-            message: '{{ printf "%.4g" $value }}% of the {{ $labels.job }}/{{ $labels.service
-              }} targets in {{ $labels.namespace }} namespace are down.'
+            message: '{{`{{ printf "%.4g" $value }}`}} % of the {{`{{ $labels.job }}`}}/{{`{{ $labels.service
+              }}`}} targets in {{`{{ $labels.namespace }}`}} namespace are down.'
           expr: 100 * (count(up == 0) BY (job, namespace, service) / count(up) BY (job,
             namespace, service)) > 10
           for: 10m
@@ -1267,8 +1249,8 @@ data:
         rules:
         - alert: ClockSkewDetected
           annotations:
-            message: Clock skew detected on node-exporter {{ $labels.namespace }}/{{ $labels.pod
-              }}. Ensure NTP is configured correctly on this host.
+            message: Clock skew detected on node-exporter {{`{{ $labels.namespace }}`}}/{{`{{ $labels.pod
+              }}`}}`. Ensure NTP is configured correctly on this host.
           expr: |
             abs(node_timex_offset_seconds{job="node-exporter"}) > 0.05
           for: 2m
@@ -1278,8 +1260,8 @@ data:
         rules:
         - alert: NodeNetworkInterfaceFlapping
           annotations:
-            message: Network interface "{{ $labels.device }}" changing it's up status
-              often on node-exporter {{ $labels.namespace }}/{{ $labels.pod }}"
+            message: Network interface "{{`{{ $labels.device }}`}}" changing it's up status
+              often on node-exporter {{`{{ $labels.namespace }}`}}/{{`{{ $labels.pod }}`}}"
           expr: |
             changes(node_network_up{job="node-exporter",device!~"veth.+"}[2m]) > 2
           for: 2m
@@ -1287,4 +1269,4 @@ data:
             severity: warning
 
 
-        {{- end }}
+
