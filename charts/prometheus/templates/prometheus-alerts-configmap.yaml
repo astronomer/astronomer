@@ -324,7 +324,7 @@ data:
             sum by (namespace) (
                 sum by (namespace, pod) (
                     max by (namespace, pod, container) (
-                        kube_pod_container_resource_requests_memory_bytes{job="kube-state-metrics"}
+                        kube_pod_container_resource_requests_memory_bytes{job="kube-state"}
                     ) * on(namespace, pod) group_left() max by (namespace, pod) (
                         kube_pod_status_phase{phase=~"Pending|Running"} == 1
                     )
@@ -335,7 +335,7 @@ data:
             sum by (namespace) (
                 sum by (namespace, pod) (
                     max by (namespace, pod, container) (
-                        kube_pod_container_resource_requests_cpu_cores{job="kube-state-metrics"}
+                        kube_pod_container_resource_requests_cpu_cores{job="kube-state"}
                     ) * on(namespace, pod) group_left() max by (namespace, pod) (
                       kube_pod_status_phase{phase=~"Pending|Running"} == 1
                     )
@@ -346,9 +346,9 @@ data:
             sum(
               label_replace(
                 label_replace(
-                  kube_pod_owner{job="kube-state-metrics", owner_kind="ReplicaSet"},
+                  kube_pod_owner{job="kube-state", owner_kind="ReplicaSet"},
                   "replicaset", "$1", "owner_name", "(.*)"
-                ) * on(replicaset, namespace) group_left(owner_name) kube_replicaset_owner{job="kube-state-metrics"},
+                ) * on(replicaset, namespace) group_left(owner_name) kube_replicaset_owner{job="kube-state"},
                 "workload", "$1", "owner_name", "(.*)"
               )
             ) by (cluster, namespace, workload, pod)
@@ -358,7 +358,7 @@ data:
         - expr: |
             sum(
               label_replace(
-                kube_pod_owner{job="kube-state-metrics", owner_kind="DaemonSet"},
+                kube_pod_owner{job="kube-state", owner_kind="DaemonSet"},
                 "workload", "$1", "owner_name", "(.*)"
               )
             ) by (cluster, namespace, workload, pod)
@@ -368,7 +368,7 @@ data:
         - expr: |
             sum(
               label_replace(
-                kube_pod_owner{job="kube-state-metrics", owner_kind="StatefulSet"},
+                kube_pod_owner{job="kube-state", owner_kind="StatefulSet"},
                 "workload", "$1", "owner_name", "(.*)"
               )
             ) by (cluster, namespace, workload, pod)
@@ -428,7 +428,7 @@ data:
             sum(min(kube_pod_info) by (cluster, node))
           record: ':kube_pod_info_node_count:'
         - expr: |
-            max(label_replace(kube_pod_info{job="kube-state-metrics"}, "pod", "$1", "pod", "(.*)")) by (node, namespace, pod)
+            max(label_replace(kube_pod_info{job="kube-state"}, "pod", "$1", "pod", "(.*)")) by (node, namespace, pod)
           record: 'node_namespace_pod:kube_pod_info:'
         - expr: |
             count by (cluster, node) (sum by (node, cpu) (
@@ -484,9 +484,9 @@ data:
               about Kubernetes objects correctly or at all.
             runbook_url: 
           expr: |
-            (sum(rate(kube_state_metrics_list_total{job="kube-state-metrics",result="error"}[5m]))
+            (sum(rate(kube_state_metrics_list_total{job="kube-state",result="error"}[5m]))
               /
-            sum(rate(kube_state_metrics_list_total{job="kube-state-metrics"}[5m])))
+            sum(rate(kube_state_metrics_list_total{job="kube-state"}[5m])))
             > 0.01
           for: 15m
           labels:
@@ -498,9 +498,9 @@ data:
               about Kubernetes objects correctly or at all.
             runbook_url: 
           expr: |
-            (sum(rate(kube_state_metrics_watch_total{job="kube-state-metrics",result="error"}[5m]))
+            (sum(rate(kube_state_metrics_watch_total{job="kube-state",result="error"}[5m]))
               /
-            sum(rate(kube_state_metrics_watch_total{job="kube-state-metrics"}[5m])))
+            sum(rate(kube_state_metrics_watch_total{job="kube-state"}[5m])))
             > 0.01
           for: 15m
           labels:
@@ -670,7 +670,7 @@ data:
               }}`}}) is restarting {{`{{ printf "%.2f" $value }}`}} times / 5 minutes.
             runbook_url: 
           expr: |
-            rate(kube_pod_container_status_restarts_total{job="kube-state-metrics"}[15m]) * 60 * 5 > 0
+            rate(kube_pod_container_status_restarts_total{job="kube-state"}[15m]) * 60 * 5 > 0
           for: 15m
           labels:
             severity: critical
@@ -680,7 +680,7 @@ data:
               state for longer than 15 minutes.
             runbook_url: 
           expr: |
-            sum by (namespace, pod) (max by(namespace, pod) (kube_pod_status_phase{job="kube-state-metrics", phase=~"Pending|Unknown"}) * on(namespace, pod) group_left(owner_kind) max by(namespace, pod, owner_kind) (kube_pod_owner{owner_kind!="Job"})) > 0
+            sum by (namespace, pod) (max by(namespace, pod) (kube_pod_status_phase{job="kube-state", phase=~"Pending|Unknown"}) * on(namespace, pod) group_left(owner_kind) max by(namespace, pod, owner_kind) (kube_pod_owner{owner_kind!="Job"})) > 0
           for: 15m
           labels:
             severity: critical
@@ -691,9 +691,9 @@ data:
               not been rolled back.
             runbook_url:
           expr: |
-            kube_deployment_status_observed_generation{job="kube-state-metrics"}
+            kube_deployment_status_observed_generation{job="kube-state"}
               !=
-            kube_deployment_metadata_generation{job="kube-state-metrics"}
+            kube_deployment_metadata_generation{job="kube-state"}
           for: 15m
           labels:
             severity: critical
@@ -703,9 +703,9 @@ data:
               matched the expected number of replicas for longer than 15 minutes.
             runbook_url: 
           expr: |
-            kube_deployment_spec_replicas{job="kube-state-metrics"}
+            kube_deployment_spec_replicas{job="kube-state"}
               !=
-            kube_deployment_status_replicas_available{job="kube-state-metrics"}
+            kube_deployment_status_replicas_available{job="kube-state"}
           for: 15m
           labels:
             severity: critical
@@ -715,9 +715,9 @@ data:
               not matched the expected number of replicas for longer than 15 minutes.
             runbook_url: 
           expr: |
-            kube_statefulset_status_replicas_ready{job="kube-state-metrics"}
+            kube_statefulset_status_replicas_ready{job="kube-state"}
               !=
-            kube_statefulset_status_replicas{job="kube-state-metrics"}
+            kube_statefulset_status_replicas{job="kube-state"}
           for: 15m
           labels:
             severity: critical
@@ -728,9 +728,9 @@ data:
               not been rolled back.
             runbook_url:
           expr: |
-            kube_statefulset_status_observed_generation{job="kube-state-metrics"}
+            kube_statefulset_status_observed_generation{job="kube-state"}
               !=
-            kube_statefulset_metadata_generation{job="kube-state-metrics"}
+            kube_statefulset_metadata_generation{job="kube-state"}
           for: 15m
           labels:
             severity: critical
@@ -741,15 +741,15 @@ data:
             runbook_url:
           expr: |
             max without (revision) (
-              kube_statefulset_status_current_revision{job="kube-state-metrics"}
+              kube_statefulset_status_current_revision{job="kube-state"}
                 unless
-              kube_statefulset_status_update_revision{job="kube-state-metrics"}
+              kube_statefulset_status_update_revision{job="kube-state"}
             )
               *
             (
-              kube_statefulset_replicas{job="kube-state-metrics"}
+              kube_statefulset_replicas{job="kube-state"}
                 !=
-              kube_statefulset_status_replicas_updated{job="kube-state-metrics"}
+              kube_statefulset_status_replicas_updated{job="kube-state"}
             )
           for: 15m
           labels:
@@ -760,9 +760,9 @@ data:
               {{`{{ $labels.namespace }}`}}/{{`{{ $labels.daemonset }}`}} are scheduled and ready.
             runbook_url: 
           expr: |
-            kube_daemonset_status_number_ready{job="kube-state-metrics"}
+            kube_daemonset_status_number_ready{job="kube-state"}
               /
-            kube_daemonset_status_desired_number_scheduled{job="kube-state-metrics"} < 1.00
+            kube_daemonset_status_desired_number_scheduled{job="kube-state"} < 1.00
           for: 15m
           labels:
             severity: critical
@@ -772,7 +772,7 @@ data:
               has been in waiting state for longer than 1 hour.
             runbook_url: 
           expr: |
-            sum by (namespace, pod, container) (kube_pod_container_status_waiting_reason{job="kube-state-metrics"}) > 0
+            sum by (namespace, pod, container) (kube_pod_container_status_waiting_reason{job="kube-state"}) > 0
           for: 1h
           labels:
             severity: warning
@@ -782,9 +782,9 @@ data:
               }}`}} are not scheduled.'
             runbook_url: 
           expr: |
-            kube_daemonset_status_desired_number_scheduled{job="kube-state-metrics"}
+            kube_daemonset_status_desired_number_scheduled{job="kube-state"}
               -
-            kube_daemonset_status_current_number_scheduled{job="kube-state-metrics"} > 0
+            kube_daemonset_status_current_number_scheduled{job="kube-state"} > 0
           for: 10m
           labels:
             severity: warning
@@ -794,7 +794,7 @@ data:
               }}`}} are running where they are not supposed to run.'
             runbook_url: 
           expr: |
-            kube_daemonset_status_number_misscheduled{job="kube-state-metrics"} > 0
+            kube_daemonset_status_number_misscheduled{job="kube-state"} > 0
           for: 10m
           labels:
             severity: warning
@@ -804,7 +804,7 @@ data:
               than 1h to complete.
             runbook_url: 
           expr: |
-            time() - kube_cronjob_next_schedule_time{job="kube-state-metrics"} > 3600
+            time() - kube_cronjob_next_schedule_time{job="kube-state"} > 3600
           for: 1h
           labels:
             severity: warning
@@ -814,7 +814,7 @@ data:
               than one hour to complete.
             runbook_url: 
           expr: |
-            kube_job_spec_completions{job="kube-state-metrics"} - kube_job_status_succeeded{job="kube-state-metrics"}  > 0
+            kube_job_spec_completions{job="kube-state"} - kube_job_status_succeeded{job="kube-state"}  > 0
           for: 1h
           labels:
             severity: warning
@@ -823,7 +823,7 @@ data:
             message: Job {{`{{ $labels.namespace }}`}}/{{`{{ $labels.job_name }}`}} failed to complete.
             runbook_url: 
           expr: |
-            kube_job_failed{job="kube-state-metrics"}  > 0
+            kube_job_failed{job="kube-state"}  > 0
           for: 15m
           labels:
             severity: warning
@@ -864,7 +864,7 @@ data:
             message: Cluster has overcommitted CPU resource requests for Namespaces.
             runbook_url:
           expr: |
-            sum(kube_resourcequota{job="kube-state-metrics", type="hard", resource="cpu"})
+            sum(kube_resourcequota{job="kube-state", type="hard", resource="cpu"})
               /
             sum(kube_node_status_allocatable_cpu_cores)
               > 1.5
@@ -876,7 +876,7 @@ data:
             message: Cluster has overcommitted memory resource requests for Namespaces.
             runbook_url:
           expr: |
-            sum(kube_resourcequota{job="kube-state-metrics", type="hard", resource="memory"})
+            sum(kube_resourcequota{job="kube-state", type="hard", resource="memory"})
               /
             sum(kube_node_status_allocatable_memory_bytes{job="node-exporter"})
               > 1.5
@@ -889,9 +889,9 @@ data:
               }}`}} of its {{`{{ $labels.resource }}`}} quota.
             runbook_url: 
           expr: |
-            kube_resourcequota{job="kube-state-metrics", type="used"}
+            kube_resourcequota{job="kube-state", type="used"}
               / ignoring(instance, job, type)
-            (kube_resourcequota{job="kube-state-metrics", type="hard"} > 0)
+            (kube_resourcequota{job="kube-state", type="hard"} > 0)
               > 0.90
           for: 15m
           labels:
@@ -949,7 +949,7 @@ data:
               $labels.phase }}`}}.
             runbook_url:
           expr: |
-            kube_persistentvolume_status_phase{phase=~"Failed|Pending",job="kube-state-metrics"} > 0
+            kube_persistentvolume_status_phase{phase=~"Failed|Pending",job="kube-state"} > 0
           for: 5m
           labels:
             severity: critical
@@ -974,7 +974,7 @@ data:
             message: '{{`{{ $labels.node }}`}} has been unready for more than 15 minutes.'
             runbook_url: 
           expr: |
-            kube_node_status_condition{job="kube-state-metrics",condition="Ready",status="true"} == 0
+            kube_node_status_condition{job="kube-state",condition="Ready",status="true"} == 0
           for: 15m
           labels:
             severity: warning
@@ -983,7 +983,7 @@ data:
             message: '{{`{{ $labels.node }}`}} is unreachable and some workloads may be rescheduled.'
             runbook_url: 
           expr: |
-            kube_node_spec_taint{job="kube-state-metrics",key="node.kubernetes.io/unreachable",effect="NoSchedule"} == 1
+            kube_node_spec_taint{job="kube-state",key="node.kubernetes.io/unreachable",effect="NoSchedule"} == 1
           for: 2m
           labels:
             severity: warning
@@ -993,7 +993,7 @@ data:
               }}`}} of its Pod capacity.
             runbook_url: 
           expr: |
-            max(max(kubelet_running_pod_count{job="kubelet", metrics_path="/metrics"}) by(instance) * on(instance) group_left(node) kubelet_node_name{job="kubelet", metrics_path="/metrics"}) by(node) / max(kube_node_status_capacity_pods{job="kube-state-metrics"}) by(node) > 0.95
+            max(max(kubelet_running_pod_count{job="kubelet", metrics_path="/metrics"}) by(instance) * on(instance) group_left(node) kubelet_node_name{job="kubelet", metrics_path="/metrics"}) by(node) / max(kube_node_status_capacity_pods{job="kube-state"}) by(node) > 0.95
           for: 15m
           labels:
             severity: warning
