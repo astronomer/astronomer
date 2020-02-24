@@ -203,26 +203,11 @@ azure:
       name: {{ template "houston.airflowBackendSecret" . }}
       key: connection
 {{ else }}
-- name: DEPLOYMENTS__DATABASE__CONNECTION__USER
+- name: DEPLOYMENTS__DATABASE__CONNECTION
   valueFrom:
     secretKeyRef:
       name: {{ template "houston.backendSecret" . }}
-      key: username
-- name: DEPLOYMENTS__DATABASE__CONNECTION__PASSWORD
-  valueFrom:
-    secretKeyRef:
-      name: {{ template "houston.backendSecret" . }}
-      key: password
-- name: DEPLOYMENTS__DATABASE__CONNECTION__PORT
-  valueFrom:
-    secretKeyRef:
-      name: {{ template "houston.backendSecret" . }}
-      key: port
-- name: DEPLOYMENTS__DATABASE__CONNECTION__HOST
-  valueFrom:
-    secretKeyRef:
-      name: {{ template "houston.backendSecret" . }}
-      key: host
+      key: connection
 {{ end }}
   # These are set here for Houston's entrypoint script
 - name: COMMANDER__HOST
