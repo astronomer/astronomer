@@ -17,8 +17,8 @@ images:
     tag: 0.11.0
     pullPolicy: IfNotPresent
   houston:
-    repository: astronomerinc/ap-houston-api
-    tag: 0.11.3
+    repository: ap-houston-api
+    tag: 0.12.1
     pullPolicy: IfNotPresent
   astroUI:
     repository: astronomerinc/ap-astro-ui
@@ -49,8 +49,8 @@ astroUI:
 
 houston:
   # Houston datastore
-  backendSecretName: my-secret
-  backendSecretIsConnString: false
+  backendSecretName: ~
+  backendSecretIsConnString: true
   backendConnection: {}
     # user: ~
     # pass: ~
