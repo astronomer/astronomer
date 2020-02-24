@@ -59,6 +59,7 @@ houston:
     # db: ~
   # Airflow backends
   airflowBackendSecretName: ~
+  airflowBackendSecretIsConnString: true
   airflowBackendConnection: {}
     # user: ~
     # pass: ~

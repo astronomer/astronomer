@@ -54,6 +54,8 @@ spec:
               value: {{ .Release.Namespace }}
             - name: IN_CLUSTER
               value: "true"
+            - name: IS_CONNECTION_STRING
+              value: {{ .Values.houston.airflowBackendSecretIsConnString }}
       {{- end }}
       containers:
         - name: houston

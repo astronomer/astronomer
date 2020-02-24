@@ -52,6 +52,8 @@ spec:
               value: {{ .Release.Namespace }}
             - name: IN_CLUSTER
               value: "true"
+            - name: IS_CONNECTION_STRING
+              value: {{ .Values.houston.backendSecretIsConnString }}
       {{- end }}
       containers:
         - name: prisma
