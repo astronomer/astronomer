@@ -1007,8 +1007,6 @@ data:
           labels:
             severity: critical
 
-            severity: critical
-
       - name: prometheus
         rules:
         - alert: PrometheusBadConfig

@@ -45,6 +45,7 @@ spec:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       restartPolicy: Always
       serviceAccountName: {{ template "prometheus.fullname" . }}
+      {{- if .Values.persistence.enabled }}
       initContainers:
         - name: init
           image: {{ include "prometheus.init.image" . }}
@@ -53,6 +54,7 @@ spec:
           volumeMounts:
             - name: data
               mountPath: "{{ .Values.dataDir }}"
+      {{- end }}
       containers:
         - name: prometheus
           image: {{ include "prometheus.image" . }}
@@ -68,8 +70,10 @@ spec:
               mountPath: /etc/prometheus/config
             - name: alert-volume
               mountPath: /etc/prometheus/alerts.d
+            {{- if .Values.persistence.enabled }}
             - name: data
               mountPath: {{ .Values.dataDir }}
+            {{- end }}
           ports:
             - name: prometheus-data
               containerPort: {{ .Values.ports.http }}
