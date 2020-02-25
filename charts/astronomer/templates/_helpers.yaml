@@ -174,7 +174,6 @@ azure:
     secretKeyRef:
       name: {{ template "houston.backendSecret" . }}
       key: connection
-
 - name: JWT__CERT_PATH
   value: {{ template "houston.jwtCertificateDir" . }}
 - name: JWT__REGISTRY__CERT_PATH
@@ -201,7 +200,6 @@ azure:
     secretKeyRef:
       name: {{ template "houston.airflowBackendSecret" . }}
       key: connection
-{{ end }}
   # These are set here for Houston's entrypoint script
 - name: COMMANDER__HOST
   value: {{ .Release.Name }}-commander
