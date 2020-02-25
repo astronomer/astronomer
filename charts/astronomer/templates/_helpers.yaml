@@ -196,17 +196,10 @@ azure:
     secretKeyRef:
       name: {{ .Release.Name }}-prisma-api-secret
       key: service-secret
-{{- if .Values.houston.backendSecretIsConnString }}
 - name: DEPLOYMENTS__DATABASE__CONNECTION
   valueFrom:
     secretKeyRef:
       name: {{ template "houston.airflowBackendSecret" . }}
-      key: connection
-{{ else }}
-- name: DEPLOYMENTS__DATABASE__CONNECTION
-  valueFrom:
-    secretKeyRef:
-      name: {{ template "houston.backendSecret" . }}
       key: connection
 {{ end }}
   # These are set here for Houston's entrypoint script
