@@ -125,7 +125,7 @@ spec:
             fieldRef:
               fieldPath: metadata.name
         - name: DISCOVERY_SERVICE
-          value: {{ template "elasticsearch.fullname" . }}-discovery
+          value: {{ template "elasticsearch.fullname" . }}-headless-discovery
         - name: ES_JAVA_OPTS
           value: "-Xms{{ .Values.data.heapMemory }} -Xmx{{ .Values.data.heapMemory }}"
         {{- range $key, $value :=  .Values.common.env }}
