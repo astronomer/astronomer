@@ -18,11 +18,11 @@ images:
     pullPolicy: IfNotPresent
   houston:
     repository: astronomerinc/ap-houston-api
-    tag: 0.11.3
-    pullPolicy: IfNotPresent
+    tag: release-0.12
+    pullPolicy: Always
   astroUI:
     repository: astronomerinc/ap-astro-ui
-    tag: latest
+    tag: release-0.12
     pullPolicy: Always
   dbBootstrapper:
     repository: astronomerinc/ap-db-bootstrapper
