@@ -1,6 +1,16 @@
 ################################
 ## Prometheus Alerts ConfigMap
 #################################
+
+## Severity Definitions
+# Info - goes to an info channel specific to the group that is interested. This should be very little
+# Warning - goes to warning channel
+#   things we want to know about but are not always actionable. Get a pulse of potential future issues
+# High - Goes to slack prod alerts channel
+#   Things that are actionable and should be taken care of but do not need to wake someone up 
+# Critical - goes to slack prod alerts channel and pager duty
+#	   Things that would impact uptime or customer experience and are worth waking up in the middle of the night
+    
 kind: ConfigMap
 apiVersion: v1
 metadata:
