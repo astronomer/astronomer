@@ -105,13 +105,12 @@ data:
 
       - name: platform
         rules:
-
         - alert: AirflowOperatorFailureRate
           expr: 100 * (sum by (operator) (increase(airflow_operator_failures{operator=~"([A-Z][a-z0-9]+)(([0-9])|([A-Z0-9][a-z0-9]+))*([A-Z])?Operator"}[1h])) / (sum by (operator) (increase(airflow_operator_successes{operator=~"([A-Z][a-z0-9]+)(([0-9])|([A-Z0-9][a-z0-9]+))*([A-Z])?Operator"}[1h])) + sum by (operator) (increase(airflow_operator_failures{operator=~"([A-Z][a-z0-9]+)(([0-9])|([A-Z0-9][a-z0-9]+))*([A-Z])?Operator"}[1h])))) > 50
           for: 2h
           labels:
             tier: platform
-            severity: info
+            severity: warn
             operator: {{ printf "%q" "{{ $labels.operator }}" }}
           annotations:
             summary: {{ printf "%q" "Across all deployments, {{ $labels.operator }} is failing {{ $value }}% of the time" }}
@@ -126,99 +125,6 @@ data:
           annotations:
             summary: {{ printf "%q" "{{ $value }} airflow schedulers are not heartbeating" }}
             description: "If more than 5 Airflow Schedulers are not heartbeating for more than 5 minutes, this alarm fires."
-
-        - alert: FluentdQueueLarge
-          expr: avg(fluentd_status_buffer_queue_length) > 2
-          for: 15m
-          labels:
-            tier: platform
-            component: fluentd
-            severity: critical
-          annotations:
-            summary: {{ printf "%q" "Average Fluentd buffer queue length is {{ $value }}" }}
-            description: "Check on Elastic Search client and try restarting Fluentd pods"
-
-        - alert: NginxIngressHighFailureRate
-          expr: |
-            (sum by (ingress) (rate(nginx_ingress_controller_requests{ingress!="", status=~"[4-5][0-9][0-9]"}[2m]))
-              /
-            sum by (ingress) (rate(nginx_ingress_controller_requests{ingress!=""}[2m]))) * 100 > 10
-          for: 10m
-          labels:
-            tier: platform
-            component: nginx
-          annotations:
-            summary: {{ printf "%q" "NGINX Ingress {{ $labels.ingress }} failure rate is {{ printf \"%.2f\" $value }}%." }}
-            description: "This alert fires if the failure rate (the rate of 4xx or 5xx reponses)
-              measured on a time window of 2 minutes was higher than 10% in the last
-              10 minutes."
-
-        - alert: KubeNamespaceStuckAtTerminating
-          expr: |
-            kube_namespace_status_phase{namespace=~".*-.*-.*-[0-9]{4}", phase="Terminating"} == 1
-          for: 1h
-          labels:
-            tier: platform
-            component: namespace
-          annotations:
-            summary: "Namespace in TERMINATING state for more than 1 hour"
-            description: {{ printf "%q" "Namespace {{ $labels.namespace }} has been in a TERMINATING state for longer than an hour." }}
-
-        - alert: ContainerMemoryNearTheLimitPlatform
-          expr: |
-            (container_memory_working_set_bytes{namespace="{{ .Release.Name }}", container_name!="POD"} /
-            container_spec_memory_limit_bytes{namespace="{{ .Release.Name }}", container_name!="POD"}) * 100 > 80 < +Inf
-          for: 1h
-          labels:
-            tier: platform
-            component: container
-            severity: warning
-          annotations:
-            summary: "A container in the platform namespace uses more than 80% of the memory limit"
-            description: {{ printf "%q" "{{ $labels.container }} in {{ $labels.pod }} is using {{ printf \"%.2f\" $value }}% of available memory." }}
-
-        {{- if .Values.global.veleroEnabled }}
-        - alert: VeleroMetricsAbsent
-          expr: absent(up{job="velero"} == 1)
-          for: 15m
-          labels:
-            tier: platform
-            component: velero
-          annotations:
-            summary: "Velero has disappeared from Prometheus target discovery"
-            description: "This alert fires if Prometheus target discovery was not able to
-              scrape Velero metrics in the last 15 minutes."
-
-        - alert: FailedVeleroBackup
-          expr: increase(velero_backup_failure_total{job="velero"}[1d]) > 0
-          for: 5m
-          labels:
-            tier: platform
-            component: velero
-          annotations:
-            summary: "Velero failed to backup"
-            description: {{ printf "%q" "Backup attempt failed in Velero past 1 day \n LABELS - {{ $labels }}." }}
-
-        - alert: PartialFailedVeleroBackup
-          expr: increase(velero_backup_partial_failure_total{job="velero"}[1d]) > 0
-          for: 5m
-          labels:
-            tier: platform
-            component: velero
-          annotations:
-            summary: "Velero partially failed to backup"
-            description: {{ printf "%q" "Backup attempt partially failed in Velero past 1 day \n LABELS - {{ $labels }}." }}
-
-        - alert: VeleroNoBackupForLong
-          expr: time() - velero_backup_last_successful_timestamp > 172800
-          for: 5m
-          labels:
-            tier: platform
-            component: velero
-          annotations:
-            summary: "2 days since last successful Backup for a Velero Schedule"
-            description: {{ printf "%q" "Time since last successful backup for {{ $labels.schedule }} :\n  VALUE = {{ $value }}\n  LABELS - {{ $labels }}" }}
-        {{- end }}
 
         - alert: SchedulersNotHealthy
           expr: (count(rate(airflow_scheduler_heartbeat{}[1m]) > 0) / count(rate(airflow_scheduler_heartbeat{}[1m]))) < 0.5
@@ -503,6 +409,7 @@ data:
           for: 15m
           labels:
             severity: critical
+
       - name: node-exporter
         rules:
         - alert: NodeFilesystemSpaceFillingUp
@@ -908,6 +815,20 @@ data:
           for: 15m
           labels:
             severity: warning
+
+        - alert: ContainerMemoryNearTheLimitPlatform
+          expr: |
+            (container_memory_working_set_bytes{namespace="{{ .Release.Name }}", container_name!="POD"} /
+            container_spec_memory_limit_bytes{namespace="{{ .Release.Name }}", container_name!="POD"}) * 100 > 80 < +Inf
+          for: 1h
+          labels:
+            tier: platform
+            component: container
+            severity: warning
+          annotations:
+            summary: "A container in the platform namespace uses more than 80% of the memory limit"
+            description: {{ printf "%q" "{{ $labels.container }} in {{ $labels.pod }} is using {{ printf \"%.2f\" $value }}% of available memory." }}
+
       - name: kubernetes-storage
         rules:
         - alert: KubePersistentVolumeUsageCritical
@@ -963,6 +884,17 @@ data:
           for: 15m
           labels:
             severity: warning
+
+        - alert: KubeNamespaceStuckAtTerminating
+          expr: |
+            kube_namespace_status_phase{namespace=~".*-.*-.*-[0-9]{4}", phase="Terminating"} == 1
+          for: 1h
+          labels:
+            tier: platform
+            component: namespace
+          annotations:
+            summary: "Namespace in TERMINATING state for more than 1 hour"
+            description: {{ printf "%q" "Namespace {{ $labels.namespace }} has been in a TERMINATING state for longer than an hour." }}
   
       - name: kubernetes-system-kubelet
         rules:
@@ -1226,5 +1158,97 @@ data:
           labels:
             severity: warning
 
+ 
+      {{- if .Values.global.veleroEnabled }}
+      - name: velero
+        rules: 
+        - alert: VeleroMetricsAbsent
+          expr: absent(up{job="velero"} == 1)
+          for: 15m
+          labels:
+            tier: platform
+            component: velero
+          annotations:
+            summary: "Velero has disappeared from Prometheus target discovery"
+            description: "This alert fires if Prometheus target discovery was not able to
+              scrape Velero metrics in the last 15 minutes."
 
+        - alert: FailedVeleroBackup
+          expr: increase(velero_backup_failure_total{job="velero"}[1d]) > 0
+          for: 5m
+          labels:
+            tier: platform
+            component: velero
+          annotations:
+            summary: "Velero failed to backup"
+            description: {{ printf "%q" "Backup attempt failed in Velero past 1 day \n LABELS - {{ $labels }}." }}
 
+        - alert: PartialFailedVeleroBackup
+          expr: increase(velero_backup_partial_failure_total{job="velero"}[1d]) > 0
+          for: 5m
+          labels:
+            tier: platform
+            component: velero
+          annotations:
+            summary: "Velero partially failed to backup"
+            description: {{ printf "%q" "Backup attempt partially failed in Velero past 1 day \n LABELS - {{ $labels }}." }}
+
+        - alert: VeleroNoBackupForLong
+          expr: time() - velero_backup_last_successful_timestamp > 172800
+          for: 5m
+          labels:
+            tier: platform
+            component: velero
+          annotations:
+            summary: "2 days since last successful Backup for a Velero Schedule"
+            description: {{ printf "%q" "Time since last successful backup for {{ $labels.schedule }} :\n  VALUE = {{ $value }}\n  LABELS - {{ $labels }}" }}
+        {{- end }}
+
+      - name: Ingress
+        rules:
+        - alert: NginxIngressHigh4XXRate
+          expr: sum by (ingress) (rate(nginx_ingress_controller_requests{status=~"^4.."}[2m])) / sum by (ingress) (rate(nginx_ingress_controller_requests{ingress!=""}[2m])) * 100 > 5
+          for: 10m
+          labels:
+            tier: platform
+            component: nginx
+          annotations:
+            summary: {{ printf "%q" "NGINX Ingress {{ $labels.ingress }} failure rate is {{ printf \"%.2f\" $value }}%." }}
+            description: "This alert fires if the failure rate (the rate of 4xx)
+              measured on a time window of 2 minutes was higher than 5% in the last
+              10 minutes."
+
+        - alert: NginxIngressHigh5XXRate
+          expr: sum by (ingress) (rate(nginx_ingress_controller_requests{status=~"^4.."}[2m])) / sum by (ingress) (rate(nginx_ingress_controller_requests{ingress!=""}[2m])) * 100 > 1
+          for: 5m
+          labels:
+            tier: platform
+            component: nginx
+          annotations:
+            summary: {{ printf "%q" "NGINX Ingress {{ $labels.ingress }} failure rate is {{ printf \"%.2f\" $value }}%." }}
+            description: "This alert fires if the failure rate (the rate of 5xx reponses)
+              measured on a time window of 2 minutes was higher than 1% in the last
+              5 minutes."
+
+      - name: logging
+        rules: 
+        - alert: FluentdQueueLarge
+          expr: sum by (host)( fluentd_status_buffer_queue_length) > 2
+          for: 15m
+          labels:
+            tier: platform
+            component: fluentd
+            severity: critical
+          annotations:
+            summary: {{ printf "%q" "Fluentd buffer queue length is {{ $value }} For {{ $labels.host }} " }}
+            description: "Check on Elastic Search client and try restarting Fluentd pods"
+
+        - alert: ElasticSeachUnassignedShards
+          expr: elasticsearch_cluster_health_unassigned_shards > 0
+          for: 10m
+          labels:
+            severity: High
+          annotations:
+            summary: {{ printf "%q" "Elastic Search has {{ $value }} unassigned shards" }}
+            description: "Unassigned shards in Elastic Search cluster"
+    
