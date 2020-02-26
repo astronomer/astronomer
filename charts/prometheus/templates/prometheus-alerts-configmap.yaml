@@ -112,7 +112,7 @@ data:
           for: 5m
           labels:
             tier: platform
-            severity: urgent
+            severity: critical
           annotations:
             summary: {{ printf "%q" "{{ $value }} airflow schedulers are not heartbeating" }}
             description: "If more than 5 Airflow Schedulers are not heartbeating for more than 5 minutes, this alarm fires."
@@ -123,7 +123,7 @@ data:
           labels:
             tier: platform
             component: fluentd
-            severity: urgent
+            severity: critical
           annotations:
             summary: {{ printf "%q" "Average Fluentd buffer queue length is {{ $value }}" }}
             description: "Check on Elastic Search client and try restarting Fluentd pods"
@@ -166,18 +166,6 @@ data:
           annotations:
             summary: "A container in the platform namespace uses more than 80% of the memory limit"
             description: {{ printf "%q" "{{ $labels.container }} in {{ $labels.pod }} is using {{ printf \"%.2f\" $value }}% of available memory." }}
-
-        - alert: NginxIngressDown
-          expr: |
-            absent(up{job="nginx"} == 1)
-          for: 15m
-          labels:
-            tier: platform
-            component: nginx
-          annotations:
-            summary: "Nginx Ingress Controller has disappeared from Prometheus target discovery"
-            description: "This alert fires if Prometheus target discovery was not able to
-              reach ingress-nginx-metrics in the last 15 minutes."
 
         {{- if .Values.global.veleroEnabled }}
         - alert: VeleroMetricsAbsent
@@ -228,7 +216,7 @@ data:
           labels:
             tier: platform
             component: airflow
-            severity: urgent
+            severity: critical
           annotations:
             summary: "Half or more of schedulers do not have a heartbeat"
             description: "Half or more of schedulers do not have a heartbeat in the last five minutes"
