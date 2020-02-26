@@ -661,7 +661,7 @@ data:
             rate(kube_pod_container_status_restarts_total{job="kube-state"}[15m]) * 60 * 5 > 0
           for: 15m
           labels:
-            severity: critical
+            severity: high
         - alert: KubePodNotReady
           annotations:
             message: Pod {{`{{ $labels.namespace }}`}}/{{`{{ $labels.pod }}`}} has been in a non-ready
@@ -671,7 +671,7 @@ data:
             sum by (namespace, pod) (max by(namespace, pod) (kube_pod_status_phase{job="kube-state", phase=~"Pending|Unknown"}) * on(namespace, pod) group_left(owner_kind) max by(namespace, pod, owner_kind) (kube_pod_owner{owner_kind!="Job"})) > 0
           for: 15m
           labels:
-            severity: critical
+            severity: high
         - alert: KubeDeploymentGenerationMismatch
           annotations:
             message: Deployment generation for {{`{{ $labels.namespace }}`}}/{{`{{ $labels.deployment
@@ -684,7 +684,7 @@ data:
             kube_deployment_metadata_generation{job="kube-state"}
           for: 15m
           labels:
-            severity: critical
+            severity: high
         - alert: KubeDeploymentReplicasMismatch
           annotations:
             message: Deployment {{`{{ $labels.namespace }}`}}/{{`{{ $labels.deployment }}`}} has not
@@ -696,7 +696,7 @@ data:
             kube_deployment_status_replicas_available{job="kube-state"}
           for: 15m
           labels:
-            severity: critical
+            severity: high
         - alert: KubeStatefulSetReplicasMismatch
           annotations:
             message: StatefulSet {{`{{ $labels.namespace }}`}}/{{`{{ $labels.statefulset }}`}} has
@@ -708,7 +708,7 @@ data:
             kube_statefulset_status_replicas{job="kube-state"}
           for: 15m
           labels:
-            severity: critical
+            severity: high
         - alert: KubeStatefulSetGenerationMismatch
           annotations:
             message: StatefulSet generation for {{`{{ $labels.namespace }}`}}/{{`{{ $labels.statefulset
@@ -721,7 +721,7 @@ data:
             kube_statefulset_metadata_generation{job="kube-state"}
           for: 15m
           labels:
-            severity: critical
+            severity: high
         - alert: KubeStatefulSetUpdateNotRolledOut
           annotations:
             message: StatefulSet {{`{{ $labels.namespace }}`}}/{{`{{ $labels.statefulset }}`}} update
@@ -741,7 +741,7 @@ data:
             )
           for: 15m
           labels:
-            severity: critical
+            severity: high
         - alert: KubeDaemonSetRolloutStuck
           annotations:
             message: Only {{`{{ $value | humanizePercentage }}`}} of the desired Pods of DaemonSet
@@ -763,7 +763,7 @@ data:
             sum by (namespace, pod, container) (kube_pod_container_status_waiting_reason{job="kube-state"}) > 0
           for: 1h
           labels:
-            severity: warning
+            severity: high
         - alert: KubeDaemonSetNotScheduled
           annotations:
             message: '{{`{{ $value }}`}} Pods of DaemonSet {{`{{ $labels.namespace }}`}}/{{`{{ $labels.daemonset
@@ -775,7 +775,7 @@ data:
             kube_daemonset_status_current_number_scheduled{job="kube-state"} > 0
           for: 10m
           labels:
-            severity: warning
+            severity: critical
         - alert: KubeDaemonSetMisScheduled
           annotations:
             message: '{{`{{ $value }}`}} Pods of DaemonSet {{`{{ $labels.namespace }}`}}/{{`{{ $labels.daemonset
@@ -930,7 +930,7 @@ data:
             predict_linear(kubelet_volume_stats_available_bytes{job="kubelet", metrics_path="/metrics"}[6h], 4 * 24 * 3600) < 0
           for: 1h
           labels:
-            severity: critical
+            severity: high
         - alert: KubePersistentVolumeErrors
           annotations:
             message: The persistent volume {{`{{ $labels.persistentvolume }}`}} has status {{`{{
@@ -953,8 +953,7 @@ data:
           for: 15m
           labels:
             severity: warning
-      
-
+  
       - name: kubernetes-system-kubelet
         rules:
         - alert: KubeNodeNotReady
@@ -965,7 +964,7 @@ data:
             kube_node_status_condition{job="kube-state",condition="Ready",status="true"} == 0
           for: 15m
           labels:
-            severity: warning
+            severity: high
         - alert: KubeNodeUnreachable
           annotations:
             message: '{{`{{ $labels.node }}`}} is unreachable and some workloads may be rescheduled.'
@@ -974,7 +973,7 @@ data:
             kube_node_spec_taint{job="kube-state",key="node.kubernetes.io/unreachable",effect="NoSchedule"} == 1
           for: 2m
           labels:
-            severity: warning
+            severity: high
         - alert: KubeletTooManyPods
           annotations:
             message: Kubelet '{{`{{ $labels.node }}`}}' is running at {{`{{ $value | humanizePercentage
@@ -993,7 +992,7 @@ data:
             absent(up{job="kubelet", metrics_path="/metrics"} == 1)
           for: 15m
           labels:
-            severity: critical
+            severity: high
 
       - name: prometheus
         rules:
@@ -1070,7 +1069,7 @@ data:
             max_over_time(prometheus_notifications_alertmanagers_discovered{job="prometheus-k8s",namespace="monitoring"}[5m]) < 1
           for: 10m
           labels:
-            severity: warning
+            severity: high
         - alert: PrometheusTSDBReloadsFailing
           annotations:
             description: Prometheus {{`{{$labels.namespace}}`}}/{{`{{$labels.pod}}`}} has detected
@@ -1080,7 +1079,7 @@ data:
             increase(prometheus_tsdb_reloads_failures_total{job="prometheus-k8s",namespace="monitoring"}[3h]) > 0
           for: 4h
           labels:
-            severity: warning
+            severity: high
         - alert: PrometheusTSDBCompactionsFailing
           annotations:
             description: Prometheus {{`{{$labels.namespace}}`}}/{{`{{$labels.pod}}`}} has detected
@@ -1100,7 +1099,7 @@ data:
             rate(prometheus_tsdb_head_samples_appended_total{job="prometheus-k8s",namespace="monitoring"}[5m]) <= 0
           for: 10m
           labels:
-            severity: warning
+            severity: hight
         - alert: PrometheusDuplicateTimestamps
           annotations:
             description: Prometheus {{`{{$labels.namespace}}`}}/{{`{{$labels.pod}}`}} is dropping
@@ -1122,43 +1121,6 @@ data:
           for: 10m
           labels:
             severity: warning
-        - alert: PrometheusRemoteStorageFailures
-          annotations:
-            description: Prometheus {{`{{$labels.namespace}}`}}/{{`{{$labels.pod}}`}} failed to send
-              {{`{{ printf "%.1f" $value }}`}}% of the samples to queue {{`{{$labels.queue}}`}}.
-            summary: Prometheus fails to send samples to remote storage.
-          expr: |
-            (
-              rate(prometheus_remote_storage_failed_samples_total{job="prometheus-k8s",namespace="monitoring"}[5m])
-            /
-              (
-                rate(prometheus_remote_storage_failed_samples_total{job="prometheus-k8s",namespace="monitoring"}[5m])
-              +
-                rate(prometheus_remote_storage_succeeded_samples_total{job="prometheus-k8s",namespace="monitoring"}[5m])
-              )
-            )
-            * 100
-            > 1
-          for: 15m
-          labels:
-            severity: critical
-        - alert: PrometheusRemoteWriteBehind
-          annotations:
-            description: Prometheus {{`{{$labels.namespace}}`}}/{{`{{$labels.pod}}`}} remote write
-              is {{`{{ printf "%.1f" $value }}`}}s behind for queue {{`{{$labels.queue}}`}}.
-            summary: Prometheus remote write is behind.
-          expr: |
-            # Without max_over_time, failed scrapes could create false negatives, see
-            # https://www.robustperception.io/alerting-on-gauges-in-prometheus-2-0 for details.
-            (
-              max_over_time(prometheus_remote_storage_highest_timestamp_in_seconds{job="prometheus-k8s",namespace="monitoring"}[5m])
-            - on(job, instance) group_right
-              max_over_time(prometheus_remote_storage_queue_highest_sent_timestamp_seconds{job="prometheus-k8s",namespace="monitoring"}[5m])
-            )
-            > 120
-          for: 15m
-          labels:
-            severity: critical
         - alert: PrometheusRuleFailures
           annotations:
             description: Prometheus {{`{{$labels.namespace}}`}}/{{`{{$labels.pod}}`}} has failed to
@@ -1198,7 +1160,7 @@ data:
             alertmanager_config_last_reload_successful{job="alertmanager-main",namespace="monitoring"} == 0
           for: 10m
           labels:
-            severity: warning
+            severity: high
         - alert: AlertmanagerMembersInconsistent
           annotations:
             message: Alertmanager has not found all other members of the cluster.
@@ -1219,7 +1181,7 @@ data:
             namespace, service)) > 10
           for: 10m
           labels:
-            severity: warning
+            severity: critical
         - alert: Watchdog
           annotations:
             message: |
@@ -1241,7 +1203,7 @@ data:
             abs(node_timex_offset_seconds{job="node-exporter"}) > 0.05
           for: 2m
           labels:
-            severity: warning
+            severity: high
       - name: node-network
         rules:
         - alert: NodeNetworkInterfaceFlapping
