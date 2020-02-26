@@ -374,3 +374,24 @@ data:
             target_label: component_instance
 
       {{- end }}
+
+      - job_name: 'blackbox'
+        metrics_path: /probe
+        params:
+          module: [http_2xx]  # Look for a HTTP 200 response.
+        static_configs:
+          - targets:
+            - http://astronomer-commander.astronomer:8880/healthz
+            - http://astronomer-grafana.astronomer:3000/api/health
+            - http://astronomer-houston.astronomer:8871/v1/healthz
+            # astronomer-kibana.astronomer
+            # astronomer-registry.astronomer
+            # pg-sqlproxy-gcloud-sqlproxy.astronomer
+            # tiller-deploy.kube-system
+        relabel_configs:
+          - source_labels: [__address__]
+            target_label: __param_target
+          - source_labels: [__param_target]
+            target_label: instance
+          - target_label: __address__
+            replacement: jpwtest-prometheus-blackbox-exporter:9115  # The blackbox exporter's real hostname:port.
