@@ -135,7 +135,7 @@ data:
             severity: critical
           annotations:
             summary: "Half or more of schedulers do not have a heartbeat"
-            description: "Half or more of schedulers do not have a heartbeat in the last five minutes"
+            description: "{{ printf "%q" {{ $value }} }} schedulers do not have a heartbeat in the last five minutes"
 
       - name: node-exporter-recording.rules 
         rules:
