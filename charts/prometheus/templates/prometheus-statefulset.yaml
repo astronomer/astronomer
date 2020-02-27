@@ -45,7 +45,7 @@ spec:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       restartPolicy: Always
       serviceAccountName: {{ template "prometheus.fullname" . }}
-      {{- if .Values.persistence.enabled }}
+      # {{- if .Values.persistence.enabled }}
       initContainers:
         - name: init
           image: {{ include "prometheus.init.image" . }}
@@ -54,7 +54,7 @@ spec:
           volumeMounts:
             - name: data
               mountPath: "{{ .Values.dataDir }}"
-      {{- end }}
+      # {{- end }}
       containers:
         - name: prometheus
           image: {{ include "prometheus.image" . }}
@@ -102,10 +102,10 @@ spec:
             items:
               - key: alerts.yaml
                 path: alerts.yaml
-  {{- if not .Values.persistence.enabled }}
+  # {{- if not .Values.persistence.enabled }}
         - name: data
           emptyDir: {}
-  {{- else }}
+  # {{- else }}
   volumeClaimTemplates:
     - metadata:
         name: data
