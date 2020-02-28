@@ -110,6 +110,34 @@ data:
           # This is here for upgrading to 0.11.2+ of Airflow.
           safeToEvict: true
 
+        # Ingress configuration
+        ingress:
+          # Enable ingress resource
+          enabled: false
+
+          # Enable for cert-manager or kube-lego
+          acme: false
+
+          # Name of tls secret to use on ingress
+          tlsSecretName: ~
+
+          # Annotations always injected when configuring Ingress ojbect
+          annotations: |-
+            kubernetes.io/ingress.class: {{ .Values.ingress.class }}
+            kubernetes.io/tls-acme: {{ eq .Values.ingress.acme true | quote }}
+            nginx.ingress.kubernetes.io/custom-http-errors: "403,404,502,503"
+
+          # These Annotations will only be injected into the Ingress object if ingress.auth.enabled=true
+          authAnnotations: |-
+            nginx.ingress.kubernetes.io/auth-url: https://houston.{{ .Values.ingress.baseDomain }}/v1/authorization
+            nginx.ingress.kubernetes.io/auth-signin: https://app.{{ .Values.ingress.baseDomain }}/login
+            nginx.ingress.kubernetes.io/auth-response-headers: authorization, username, email
+            nginx.ingress.kubernetes.io/proxy-cookie-path: / /{{ .Release.Name }}/
+            nginx.ingress.kubernetes.io/configuration-snippet: |
+              if ($host = '{{- include "airflow_subdomain" . }}' ) {
+                rewrite ^ {{ printf "https://%s/%s/airflow"  ( include "deployments_subdomain" .) .Release.Name }} permanent;
+              }
+
         # Scheduler configuration.
         scheduler:
 
