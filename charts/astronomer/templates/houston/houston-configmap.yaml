@@ -112,15 +112,6 @@ data:
 
         # Ingress configuration
         ingress:
-          # Enable ingress resource
-          enabled: false
-
-          # Enable for cert-manager or kube-lego
-          acme: false
-
-          # Name of tls secret to use on ingress
-          tlsSecretName: ~
-
           # Annotations always injected when configuring Ingress ojbect
           annotations: |-
             kubernetes.io/ingress.class: {{ .Values.ingress.class }}
