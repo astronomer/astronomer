@@ -926,16 +926,6 @@ data:
           for: 15m
           labels:
             severity: warning
-        - alert: KubeletDown
-          annotations:
-            message: Kubelet has disappeared from Prometheus target discovery.
-            runbook_url: 
-          expr: |
-            absent(up{job="kubelet", metrics_path="/metrics"} == 1)
-          for: 15m
-          labels:
-            severity: high
-
       - name: prometheus
         rules:
         - alert: PrometheusBadConfig
