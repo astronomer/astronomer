@@ -375,23 +375,40 @@ data:
 
       {{- end }}
 
-      - job_name: 'blackbox'
+      - job_name: 'blackbox HTTP'
         metrics_path: /probe
         params:
           module: [http_2xx]  # Look for a HTTP 200 response.
+        # TODO: don't love static configs but it works for a POC until I come up with something better
+        # or we move to the operator and ServiceMonitors
         static_configs:
           - targets:
             - http://astronomer-commander.astronomer:8880/healthz
             - http://astronomer-grafana.astronomer:3000/api/health
             - http://astronomer-houston.astronomer:8871/v1/healthz
-            # astronomer-kibana.astronomer
-            # astronomer-registry.astronomer
-            # pg-sqlproxy-gcloud-sqlproxy.astronomer
-            # tiller-deploy.kube-system
+            - http://astronomer-kibana.astronomer:5601
+            - http://astronomer-registry.astronomer:5000
         relabel_configs:
           - source_labels: [__address__]
             target_label: __param_target
           - source_labels: [__param_target]
             target_label: instance
           - target_label: __address__
-            replacement: jpwtest-prometheus-blackbox-exporter:9115  # The blackbox exporter's real hostname:port.
+            replacement: jpwtest-prometheus-blackbox-exporter.astronomer:9115  # The blackbox exporter's real hostname:port.
+
+
+      - job_name: 'blackbox TCP'
+        metrics_path: /probe
+        params:
+          module: [tcp_connect]  # Try tcp handshake on a port
+        static_configs:
+          - targets:
+            - pg-sqlproxy-gcloud-sqlproxy.astronomer:5432 # TCP Probe
+            - tiller-deploy.kube-system:44134 # TCP Probe 
+        relabel_configs:
+          - source_labels: [__address__]
+            target_label: __param_target
+          - source_labels: [__param_target]
+            target_label: instance
+          - target_label: __address__
+            replacement: jpwtest-prometheus-blackbox-exporter.astronomer:9115  # The blackbox exporter's real hostname:port.
