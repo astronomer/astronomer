@@ -412,3 +412,18 @@ data:
             target_label: instance
           - target_label: __address__
             replacement: jpwtest-prometheus-blackbox-exporter.astronomer:9115  # The blackbox exporter's real hostname:port.
+
+      - job_name: 'blackbox DNS'
+        metrics_path: /probe
+        params:
+          module: [dns_int]
+        static_configs:
+          - targets:
+            - 10.98.0.10
+        relabel_configs:
+          - source_labels: [__address__]
+            target_label: __param_target
+          - source_labels: [__param_target]
+            target_label: instance
+          - target_label: __address__
+            replacement: jpwtest-prometheus-blackbox-exporter.astronomer:9115    
