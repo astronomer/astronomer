@@ -8,7 +8,7 @@ podDisruptionBudget: {}
 strategy:
   rollingUpdate:
     maxSurge: 1
-    maxUnavailable: 0
+    maxUnavailable: 1
   type: RollingUpdate
 
 image:
@@ -28,9 +28,10 @@ runAsUser: 1000
 readOnlyRootFilesystem: true
 runAsNonRoot: true
 
-nodeSelector: {}
-tolerations: []
-affinity: {}
+# These are set in the global values. 
+# nodeSelector: {}
+# tolerations: {}
+# affinity: {}
 
 secretConfig: false
 config:
@@ -42,6 +43,16 @@ config:
         valid_http_versions: ["HTTP/1.1", "HTTP/2"]
         no_follow_redirects: false
         preferred_ip_protocol: "ip4"
+    tcp_connect:
+      prober: tcp
+      timeout: 5s
+    dns_int:
+      prober: dns
+      dns:
+        preferred_ip_protocol: "ip4"  # can be ip4 or ip6
+        query_name: gcr.io # host you wish to look up as a DNS test
+        transport_protocol: udp # can be udp or tcp
+
 
 extraConfigmapMounts: []
   # - name: certs-configmap
@@ -62,6 +73,7 @@ extraSecretMounts: []
 
 allowIcmp: false
 
+# These are specified in the global values file
 resources: {}
   # limits:
   #   memory: 300Mi
@@ -75,29 +87,12 @@ service:
   type: ClusterIP
   port: 9115
 
-## An Ingress resource can provide name-based virtual hosting and TLS
-## termination among other things for CouchDB deployments which are accessed
-## from outside the Kubernetes cluster.
-## ref: https://kubernetes.io/docs/concepts/services-networking/ingress/
-ingress:
-  enabled: false
-  hosts: []
-     # - chart-example.local
-  annotations: {}
-    # kubernetes.io/ingress.class: nginx
-    # kubernetes.io/tls-acme: "true"
-  tls: []
-    # Secrets must be manually created in the namespace.
-    # - secretName: chart-example-tls
-    #   hosts:
-    #     - chart-example.local
-
 podAnnotations: {}
 
 extraArgs: []
 #  --history.limit=1000
 
-replicas: 1
+replicas: 2
 
 serviceMonitor:
   ## If true, a ServiceMonitor CRD is created for a prometheus operator

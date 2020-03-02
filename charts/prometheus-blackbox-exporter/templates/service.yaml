@@ -7,10 +7,9 @@ metadata:
 {{ toYaml .Values.service.annotations | indent 4 }}
 {{- end }}
   labels:
-    app.kubernetes.io/name: {{ include "prometheus-blackbox-exporter.name" . }}
-    app.kubernetes.io/instance: {{ .Release.Name }}
-    app.kubernetes.io/managed-by: {{ .Release.Service }}
-    helm.sh/chart: {{ include "prometheus-blackbox-exporter.chart" . }}
+    component: blackbox-exporter
+    release: {{ .Release.Name }}
+    tier: monitoring
 {{- if .Values.service.labels }}
 {{ toYaml .Values.service.labels | indent 4 }}
 {{- end }}
@@ -25,5 +24,5 @@ spec:
 {{ toYaml .Values.service.externalIPs | indent 4 }}
 {{- end }}
   selector:
-    app.kubernetes.io/name: {{ include "prometheus-blackbox-exporter.name" . }}
-    app.kubernetes.io/instance: {{ .Release.Name }}
+    component: blackbox-exporter
+    release: {{ .Release.Name }}

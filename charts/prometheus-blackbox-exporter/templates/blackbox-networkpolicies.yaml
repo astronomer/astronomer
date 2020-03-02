@@ -1,0 +1,31 @@
+# Generates the final network policy files that allow blackbox exporter to scrape the defined service
+# Using this method it allows us to selectively include a policy
+# or Not based on other variables. The templates with the actualy policies 
+# start with "_" and are named bb-<service it is affecting>-policy.yaml
+
+
+---
+{{- include "blackbox.commanderNetPol" .}}
+
+---
+{{- include "blackbox.houstonNetPol" . }}
+
+---
+{{- include "blackbox.registryNetPol" . }}
+
+
+# Only include the grafana policy
+# if monitoring is enabled
+{{- if .Values.global.monitoring}}
+---
+{{- include "blackbox.grafanaNetPol" . }}
+{{- end}}
+
+# Only include elastic seach client and
+# kibana policy if logging is enabled.
+{{- if .Values.global.logging}}
+---
+{{- include "blackbox.esClientNetPol" . }}
+---
+{{- include "blackbox.kibanaNetPol" . }}
+{{- end}}

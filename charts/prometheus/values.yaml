@@ -48,3 +48,26 @@ ports:
   http: 9090
 
 ingressNetworkPolicyExtraSelectors: []
+
+# additional HTTP endpoints to use as targets
+#  for the blackbox exporter HTTP tests
+# astronomer platform targets are already include in the template
+httpTargets: {}
+
+# list of 1 or more DNS servers to use as targets
+# for the blackbox exporter DNS tests
+dnsTargets:
+  - 10.98.0.10
+
+# Blackbox exporter tcp probe configuration
+# Currently is only configured to scape two targets 
+# listed below. To disable the probe and all of the targets
+# set tcpProbe.enabled to false.
+tcpProbe:
+  enabled: false
+  # Enable Blackbox TCP Probe for pg sql proxy in cloud
+  probePGProxy: true
+  # Enable Blackbox TCP Probe for tiller in cloud
+  probeTiller: true
+
+

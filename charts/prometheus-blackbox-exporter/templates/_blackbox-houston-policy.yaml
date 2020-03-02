@@ -1,0 +1,33 @@
+{{- define "blackbox.houstonNetPol" }}
+{{- if gt (.Capabilities.KubeVersion.Minor | atoi) 15 }}
+apiVersion: networking.k8s.io/v1
+{{- else }}
+apiVersion: extensions/v1beta1
+{{- end }}
+# apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  labels:
+    release: {{ .Release.Name}}
+    tier: monitoring
+  name: bb-houston-policy
+  namespace: {{ .Release.Namespace}}
+spec:
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          component: blackbox-exporter
+          release: {{ .Release.Name}}
+          tier: monitoring
+    ports:
+    - port: 8871
+      protocol: TCP
+  podSelector:
+    matchLabels:
+      component: houston
+      release: {{ .Release.Name}}
+      tier: astronomer
+  policyTypes:
+  - Ingress
+{{- end }}
