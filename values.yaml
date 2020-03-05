@@ -35,6 +35,9 @@ global:
   # This is not recommended for production.
   postgresqlEnabled: true
 
+  # Enables a node exporter DaemonSet for node-level metrics
+  nodeExporterEnabled: true
+
   # Used to enable Celery autoscaling
   kedaEnabled: false
 

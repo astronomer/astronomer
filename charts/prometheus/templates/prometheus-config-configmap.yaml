@@ -188,6 +188,20 @@ data:
             regex: 'fluentd_tail_file_.*'
             action: drop
 
+      {{- if .Values.global.nodeExporterEnabled }}
+      - job_name: node-exporter
+        scrape_interval: 30s
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names:
+                - {{ .Release.Namespace }}
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_name]
+            action: keep
+            regex: "^{{ .Release.Name }}-prometheus-node-exporter-.*"
+      {{- end }}
+
       - job_name: airflow
         scrape_interval: 5s # Faster scrape to power dashboards
         kubernetes_sd_configs:
