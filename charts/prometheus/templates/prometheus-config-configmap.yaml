@@ -383,18 +383,18 @@ data:
         # or we move to the operator and ServiceMonitors
         static_configs:
           - targets:
-            - http://astronomer-commander.astronomer:8880/healthz
-            - http://astronomer-grafana.astronomer:3000/api/health
-            - http://astronomer-houston.astronomer:8871/v1/healthz
-            - http://astronomer-kibana.astronomer:5601
-            - http://astronomer-registry.astronomer:5000
+            - http://astronomer-commander.{{.Release.Name}}:8880/healthz
+            - http://astronomer-grafana.{{.Release.Name}}:3000/api/health
+            - http://astronomer-houston.{{.Release.Name}}:8871/v1/healthz
+            - http://astronomer-kibana.{{.Release.Name}}:5601
+            - http://astronomer-registry.{{.Release.Name}}:5000
         relabel_configs:
           - source_labels: [__address__]
             target_label: __param_target
           - source_labels: [__param_target]
             target_label: instance
           - target_label: __address__
-            replacement: jpwtest-prometheus-blackbox-exporter.astronomer:9115  # The blackbox exporter's real hostname:port.
+            replacement: jpwtest-prometheus-blackbox-exporter.{{.Release.Name}}:9115  # The blackbox exporter's real hostname:port.
 
 
       - job_name: 'blackbox TCP'
@@ -403,7 +403,7 @@ data:
           module: [tcp_connect]  # Try tcp handshake on a port
         static_configs:
           - targets:
-            - pg-sqlproxy-gcloud-sqlproxy.astronomer:5432 # TCP Probe
+            - pg-sqlproxy-gcloud-sqlproxy.{{.Release.Name}}:5432 # TCP Probe
             - tiller-deploy.kube-system:44134 # TCP Probe 
         relabel_configs:
           - source_labels: [__address__]
@@ -411,7 +411,7 @@ data:
           - source_labels: [__param_target]
             target_label: instance
           - target_label: __address__
-            replacement: jpwtest-prometheus-blackbox-exporter.astronomer:9115  # The blackbox exporter's real hostname:port.
+            replacement: jpwtest-prometheus-blackbox-exporter.{{.Release.Name}}:9115  # The blackbox exporter's real hostname:port.
 
       - job_name: 'blackbox DNS'
         metrics_path: /probe
@@ -426,4 +426,4 @@ data:
           - source_labels: [__param_target]
             target_label: instance
           - target_label: __address__
-            replacement: jpwtest-prometheus-blackbox-exporter.astronomer:9115    
+            replacement: jpwtest-prometheus-blackbox-exporter.{{.Release.Name}}:9115    
