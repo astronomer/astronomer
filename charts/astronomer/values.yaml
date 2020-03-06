@@ -48,6 +48,7 @@ astroUI:
   #   memory: 128Mi
 
 houston:
+  replicas: 1
   # Houston datastore
   backendSecretName: ~
   backendConnection: {}
@@ -161,6 +162,7 @@ prisma:
 
 
 commander:
+  replicas: 1
   env: []
   resources: {}
    # limits:
