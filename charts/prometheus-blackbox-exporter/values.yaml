@@ -8,7 +8,7 @@ podDisruptionBudget: {}
 strategy:
   rollingUpdate:
     maxSurge: 1
-    maxUnavailable: 0
+    maxUnavailable: 1
   type: RollingUpdate
 
 image:
@@ -48,7 +48,9 @@ config:
     dns_int:
       prober: dns
       dns:
-        query_name: kubernetes.default.svc.cluster.local
+        preferred_ip_protocol: "ip4"
+        query_name: gcr.io
+        transport_protocol: udp #tcp
 
 
 extraConfigmapMounts: []
