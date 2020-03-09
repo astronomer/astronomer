@@ -8,6 +8,9 @@ metadata:
     app.kubernetes.io/instance: {{ .Release.Name }}
     app.kubernetes.io/managed-by: {{ .Release.Service }}
     helm.sh/chart: {{ include "prometheus-blackbox-exporter.chart" . }}
+    component: blackbox
+    release: {{ .Release.Name }}
+    tier: monitoring
 spec:
   replicas: {{ .Values.replicas }}
   selector:
@@ -23,6 +26,9 @@ spec:
         app.kubernetes.io/instance: {{ .Release.Name }}
         app.kubernetes.io/managed-by: {{ .Release.Service }}
         helm.sh/chart: {{ include "prometheus-blackbox-exporter.chart" . }}
+        component: blackbox
+        release: {{ .Release.Name }}
+        tier: monitoring
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
         {{- if .Values.podAnnotations }}
