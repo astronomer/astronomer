@@ -379,8 +379,7 @@ data:
         metrics_path: /probe
         params:
           module: [http_2xx]  # Look for a HTTP 200 response.
-        # TODO: don't love static configs but it works for a POC until I come up with something better
-        # or we move to the operator and ServiceMonitors
+        # TODO: don't love static configs but it works until we move to the operator and ServiceMonitors
         static_configs:
           - targets:
             - http://astronomer-commander.{{.Release.Name}}:8880/healthz
@@ -394,7 +393,7 @@ data:
           - source_labels: [__param_target]
             target_label: instance
           - target_label: __address__
-            replacement: jpwtest-prometheus-blackbox-exporter.{{.Release.Name}}:9115  # The blackbox exporter's real hostname:port.
+            replacement: {{.Release.Name}}-prometheus-blackbox-exporter.{{.Release.Name}}:9115  # The blackbox exporter's real hostname:port.
 
 
       - job_name: 'blackbox TCP'
@@ -411,7 +410,7 @@ data:
           - source_labels: [__param_target]
             target_label: instance
           - target_label: __address__
-            replacement: jpwtest-prometheus-blackbox-exporter.{{.Release.Name}}:9115  # The blackbox exporter's real hostname:port.
+            replacement: {{.Release.Name}}-prometheus-blackbox-exporter.{{.Release.Name}}:9115  # The blackbox exporter's real hostname:port.
 
       - job_name: 'blackbox DNS'
         metrics_path: /probe
@@ -426,4 +425,4 @@ data:
           - source_labels: [__param_target]
             target_label: instance
           - target_label: __address__
-            replacement: jpwtest-prometheus-blackbox-exporter.{{.Release.Name}}:9115    
+            replacement: {{.Release.Name}}-prometheus-blackbox-exporter.{{.Release.Name}}:9115    
