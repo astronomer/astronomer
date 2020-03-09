@@ -42,6 +42,14 @@ config:
         valid_http_versions: ["HTTP/1.1", "HTTP/2"]
         no_follow_redirects: false
         preferred_ip_protocol: "ip4"
+    tcp_connect:
+      prober: tcp
+      timeout: 5s
+    dns_int:
+      prober: dns
+      dns:
+        query_name: kubernetes.default.svc.cluster.local
+
 
 extraConfigmapMounts: []
   # - name: certs-configmap
