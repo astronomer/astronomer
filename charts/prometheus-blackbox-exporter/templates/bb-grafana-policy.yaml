@@ -1,0 +1,26 @@
+apiVersion: extensions/v1beta1
+kind: NetworkPolicy
+metadata:
+  labels:
+    release: astronomer
+    tier: monitoring
+  name: bb-grafana-policy
+  namespace: astronomer
+spec:
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          component: blackbox
+          release: astronomer
+          tier: monitoring
+    ports:
+    - port: 3000
+      protocol: TCP
+  podSelector:
+    matchLabels:
+      component: grafana
+      release: astronomer
+      tier: monitoring
+  policyTypes:
+  - Ingress

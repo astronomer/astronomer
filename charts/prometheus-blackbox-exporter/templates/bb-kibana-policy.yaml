@@ -1,0 +1,26 @@
+apiVersion: extensions/v1beta1
+kind: NetworkPolicy
+metadata:
+  labels:
+    release: astronomer
+    tier: monitoring
+  name: bb-kibana-policy
+  namespace: astronomer
+spec:
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          component: blackbox
+          release: astronomer
+          tier: monitoring
+    ports:
+    - port: 5601 
+      protocol: TCP
+  podSelector:
+    matchLabels:
+      component: kibana
+      release: astronomer
+      tier: logging
+  policyTypes:
+  - Ingress

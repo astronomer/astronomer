@@ -1,0 +1,26 @@
+apiVersion: extensions/v1beta1
+kind: NetworkPolicy
+metadata:
+  labels:
+    release: astronomer
+    tier: monitoring
+  name: bb-commander-policy
+  namespace: astronomer
+spec:
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          component: blackbox
+          release: astronomer
+          tier: monitoring
+    ports:
+    - port: 8880 
+      protocol: TCP
+  podSelector:
+    matchLabels:
+      component: commander
+      release: astronomer
+      tier: astronomer
+  policyTypes:
+  - Ingress
