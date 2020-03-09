@@ -9,7 +9,7 @@ tolerations: []
 images:
   alertmanager:
     repository: astronomerinc/ap-alertmanager
-    tag: master
+    tag: 0.11.0
     pullPolicy: IfNotPresent
 
 resources: {}
