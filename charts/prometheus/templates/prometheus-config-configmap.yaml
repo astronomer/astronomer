@@ -375,18 +375,23 @@ data:
 
       {{- end }}
 
+      {{- if .Values.global.blackboxExporterEnabled }}
+      # Will probe the endpoints listed under targets looking for a 2XX HTTP response
       - job_name: 'blackbox HTTP'
         metrics_path: /probe
         params:
           module: [http_2xx]  # Look for a HTTP 200 response.
-        # TODO: don't love static configs but it works until we move to the operator and ServiceMonitors
         static_configs:
           - targets:
-            - http://astronomer-commander.{{.Release.Name}}:8880/healthz
-            - http://astronomer-grafana.{{.Release.Name}}:3000/api/health
-            - http://astronomer-houston.{{.Release.Name}}:8871/v1/healthz
-            - http://astronomer-kibana.{{.Release.Name}}:5601
-            - http://astronomer-registry.{{.Release.Name}}:5000
+            - http://{{.Release.Name}}-commander.{{.Release.Namespace}}:8880/healthz
+            - http://{{.Release.Name}}-grafana.{{.Release.Namespace}}:3000/api/health
+            - http://{{.Release.Name}}-houston.{{.Release.Namespace}}:8871/v1/healthz
+            - http://{{.Release.Name}}-kibana.{{.Release.Namespace}}:5601
+            - http://{{.Release.Name}}-registry.{{.Release.Namespace}}:5000
+            - http://{{.Release.Name}}-elasticsearch.{{.Release.Namespace}}:9200/_cluster/health?local=true
+          {{- range .Values.httpTargets }}
+            - {{ . }}
+          {{- end }}
         relabel_configs:
           - source_labels: [__address__]
             target_label: __param_target
@@ -396,13 +401,15 @@ data:
             replacement: {{.Release.Name}}-prometheus-blackbox-exporter.{{.Release.Name}}:9115  # The blackbox exporter's real hostname:port.
 
 
+      # TODO Need to include this for only cloud deployments
+      # Only testing for ability to open a TCP connection. 
       - job_name: 'blackbox TCP'
         metrics_path: /probe
         params:
           module: [tcp_connect]  # Try tcp handshake on a port
         static_configs:
           - targets:
-            - pg-sqlproxy-gcloud-sqlproxy.{{.Release.Name}}:5432 # TCP Probe
+            - pg-sqlproxy-gcloud-sqlproxy.{{.Release.Namespace}}:5432 # TCP Probe. only in cloud
             - tiller-deploy.kube-system:44134 # TCP Probe 
         relabel_configs:
           - source_labels: [__address__]
@@ -410,19 +417,24 @@ data:
           - source_labels: [__param_target]
             target_label: instance
           - target_label: __address__
-            replacement: {{.Release.Name}}-prometheus-blackbox-exporter.{{.Release.Name}}:9115  # The blackbox exporter's real hostname:port.
+            replacement: {{.Release.Name}}-prometheus-blackbox-exporter.{{.Release.Namespace}}:9115  # The blackbox exporter's real hostname:port.
 
+      # Tests that DNS in cluster is working. 
+      # target should be your cluster DNS service IP
       - job_name: 'blackbox DNS'
         metrics_path: /probe
         params:
           module: [dns_int]
         static_configs:
           - targets:
-            - 10.98.0.10
+            {{- range .Values.dnsTargets }}
+            - {{ . }}
+            {{- end }}
         relabel_configs:
           - source_labels: [__address__]
             target_label: __param_target
           - source_labels: [__param_target]
             target_label: instance
           - target_label: __address__
-            replacement: {{.Release.Name}}-prometheus-blackbox-exporter.{{.Release.Name}}:9115    
+            replacement: {{.Release.Name}}-prometheus-blackbox-exporter.{{.Release.Namespace}}:9115
+        {{- end }}
