@@ -1,19 +1,10 @@
 apiVersion: v1
 appVersion: 0.15.1
-description: Prometheus Blackbox Exporter
-home: https://github.com/prometheus/blackbox_exporter
+description: Helm chart to deploy the Astronomer Platform Prometheus Blackbox Exporter
 keywords:
 - prometheus
 - blackbox
 - monitoring
-maintainers:
-- email: cedric@desaintmartin.fr
-  name: desaintmartin
-- email: gianrubio@gmail.com
-  name: gianrubio
-- email: me@sota.sh
-  name: rsotnychenko
+- astronomer
 name: prometheus-blackbox-exporter
-sources:
-- https://github.com/prometheus/blackbox_exporter
-version: 3.2.0
+version: 0.12.1
