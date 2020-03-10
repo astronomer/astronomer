@@ -48,3 +48,13 @@ ports:
   http: 9090
 
 ingressNetworkPolicyExtraSelectors: []
+
+# additional HTTP endpoints to use as targets
+#  for the blackbox exporter HTTP tests
+# astronomer platform targets are already include in the templated
+httpTargets: {}
+
+# list of 1 or more DNS servers to use as targets
+# for the blackbox exporter DNS tests
+dnsTargets:
+  - 10.98.0.10
