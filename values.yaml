@@ -38,6 +38,9 @@ global:
   # Enables a node exporter DaemonSet for node-level metrics
   nodeExporterEnabled: true
 
+  # Enables blackbox exporter
+  blackboxExporterEnabled: true
+
   # Used to enable Celery autoscaling
   kedaEnabled: false
 
@@ -194,6 +197,12 @@ prometheus:
     limits:
       cpu: "2000m"
       memory: "8Gi"
+
+
+# TODO:
+#################################
+## Blackbox Exporter configuration
+#################################
 
 
 #################################
