@@ -6,10 +6,9 @@ kind: ServiceMonitor
 metadata:
   name: {{ template "prometheus-blackbox-exporter.fullname" $ }}-{{ .name }}
   labels:
-    app.kubernetes.io/name: {{ include "prometheus-blackbox-exporter.name" $ }}
-    app.kubernetes.io/instance: {{ $.Release.Name }}
-    app.kubernetes.io/managed-by: {{ $.Release.Service }}
-    helm.sh/chart: {{ include "prometheus-blackbox-exporter.chart" $ }}
+    component: blackbox-exporter
+    release: {{ .Release.Name }}
+    tier: monitoring
     {{- if or $.Values.serviceMonitor.defaults.labels .labels }}
     {{- toYaml (.labels | default $.Values.serviceMonitor.defaults.labels) | nindent 4 }}
     {{- end }}
