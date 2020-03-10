@@ -53,6 +53,7 @@ START=$(date +%s)
 
 helm install \
   --namespace astronomer \
+  --timeout 600 \
   -n astronomer \
   -f configs/local-dev.yaml \
   --set tags.platform=${platform} \
@@ -74,11 +75,12 @@ sleep 5
 # Wait for Astronomer to deploy
 RC=0
 HELM_CODE=0
+MAX_SECONDS=600
 while [ $RC -eq 0 ]; do
   NOW=$(date +%s)
   DURATION="$(($NOW-$START))"
-  echo "${DURATION} seconds have elapsed, timeout at 400 seconds"
-  if [ $DURATION -gt 400 ];then
+  echo "${DURATION} seconds have elapsed, timeout at $MAX_SECONDS seconds"
+  if [ $DURATION -gt $MAX_SECONDS ];then
     HELM_CODE=1
     RC=1
     echo "Error (timeout): giving up after 400 seconds"
