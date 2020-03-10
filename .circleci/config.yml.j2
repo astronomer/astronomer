@@ -39,37 +39,12 @@ jobs:
   platform-{{ version | replace(".", "-") }}:
     machine:
       image: ubuntu-1604:201903-01
-      resource_class: large
+      resource_class: 2xlarge
     environment:
       KUBE_VERSION: v{{ version }}
     steps:
       - helm-install:
-          astronomer-tags: "platform postgresql"
-  monitoring-{{ version | replace(".", "-") }}:
-    machine:
-      image: ubuntu-1604:201903-01
-    environment:
-      KUBE_VERSION: v{{ version }}
-    steps:
-      - helm-install:
-          astronomer-tags: "monitoring postgresql"
-  logging-{{ version | replace(".", "-") }}:
-    machine:
-      image: ubuntu-1604:201903-01
-      resource_class: large
-    environment:
-      KUBE_VERSION: v{{ version }}
-    steps:
-      - helm-install:
-          astronomer-tags: "logging"
-  kubed-{{ version | replace(".", "-") }}:
-    machine:
-      image: ubuntu-1604:201903-01
-    environment:
-      KUBE_VERSION: v{{ version }}
-    steps:
-      - helm-install:
-          astronomer-tags: "kubed"
+          astronomer-tags: "platform postgresql monitoring logging kubed keda"
 {% endfor %}
 
 workflows:
@@ -84,24 +59,12 @@ workflows:
       - platform-{{ version | replace(".", "-") }}:
           requires:
             - build-artifact
-      - monitoring-{{ version | replace(".", "-") }}:
-          requires:
-            - build-artifact
-      - logging-{{ version | replace(".", "-") }}:
-          requires:
-            - build-artifact
-      - kubed-{{ version | replace(".", "-") }}:
-          requires:
-            - build-artifact
 {% endfor %}
       - approve-release:
           type: approval
           requires:
 {% for version in kube_versions %}
             - platform-{{ version | replace(".", "-") }}
-            - monitoring-{{ version | replace(".", "-") }}
-            - logging-{{ version | replace(".", "-") }}
-            - kubed-{{ version | replace(".", "-") }}
 {% endfor %}
           filters:
             branches:
