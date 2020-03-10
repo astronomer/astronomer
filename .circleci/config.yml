@@ -34,8 +34,8 @@ jobs:
       - run:
           name: Release the Astronomer chart
           command: |
-            printf "%s" $${GCP_TOKEN} > /tmp/gcs_token.json
-            gcloud auth activate-service-account --key-file=/tmp/gcs_token.json
+            set -e
+            pyenv global 2.7.12
             HELM_CHART_PATH='/tmp/workspace/astronomer-*.tgz' bin/release
 
   platform-1-12-10:
@@ -186,6 +186,6 @@ commands:
           name: Create a release on GitHub
           command: |
             set -xe
-            pip3 install --user astronomer_e2e_test
-            # We can remove --debug after we are happy with it
-            astronomer-ci --debug publish-github-release --github-repository $CIRCLE_PROJECT_REPONAME --github-organization $CIRCLE_PROJECT_USERNAME --commitish $CIRCLE_SHA1
+            pyenv global 3.7.0
+            pip install astronomer_e2e_test
+            astronomer-ci publish-github-release --github-repository $CIRCLE_PROJECT_REPONAME --github-organization $CIRCLE_PROJECT_USERNAME --commitish $CIRCLE_SHA1
