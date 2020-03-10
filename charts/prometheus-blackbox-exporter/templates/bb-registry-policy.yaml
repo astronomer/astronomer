@@ -2,7 +2,7 @@ apiVersion: extensions/v1beta1
 kind: NetworkPolicy
 metadata:
   labels:
-    release: astronomer
+    release: {{ .Release.Name}}
     tier: monitoring
   name: bb-registry-policy
   namespace: astronomer
