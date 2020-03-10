@@ -28,8 +28,13 @@ runAsUser: 1000
 readOnlyRootFilesystem: true
 runAsNonRoot: true
 
-nodeSelector: {}
-tolerations: []
+nodeSelector:
+  astronomer.io/multi-tenant: "false"
+tolerations: 
+  - effect: NoSchedule
+    key: platform
+    value: "true"
+
 affinity: {}
 
 secretConfig: false
