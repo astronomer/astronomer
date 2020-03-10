@@ -11,7 +11,7 @@ spec:
   - from:
     - podSelector:
         matchLabels:
-          component: blackbox
+          component: blackbox-exporter
           release: astronomer
           tier: monitoring
     ports:

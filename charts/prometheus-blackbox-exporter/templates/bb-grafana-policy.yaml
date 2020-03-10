@@ -1,3 +1,5 @@
+# TODO how do we easily handle not applying this if an enterprise
+# customer disable the monitoring stack? 
 apiVersion: extensions/v1beta1
 kind: NetworkPolicy
 metadata:
@@ -11,7 +13,7 @@ spec:
   - from:
     - podSelector:
         matchLabels:
-          component: blackbox
+          component: blackbox-exporter
           release: astronomer
           tier: monitoring
     ports:
