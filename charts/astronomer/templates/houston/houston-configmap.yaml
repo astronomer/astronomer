@@ -129,6 +129,26 @@ data:
                 rewrite ^ {{ printf "https://%s/%s/airflow"  ( include "deployments_subdomain" .) .Release.Name }} permanent;
               }
 
+          flowerAnnotations:
+            kubernetes.io/ingress.class: {{ .Values.ingress.class }}
+            kubernetes.io/tls-acme: {{ eq .Values.ingress.acme true | quote }}
+            nginx.ingress.kubernetes.io/custom-http-errors: "403,404,502,503"
+
+          flowerAuthAnnotations:
+            nginx.ingress.kubernetes.io/auth-url: https://houston.{{ .Values.ingress.baseDomain }}/v1/authorization
+            nginx.ingress.kubernetes.io/auth-signin: https://app.{{ .Values.ingress.baseDomain }}/login
+            nginx.ingress.kubernetes.io/rewrite-target: /$2;
+            nginx.ingress.kubernetes.io/auth-response-headers: authorization, username, email
+            nginx.ingress.kubernetes.io/proxy-cookie-path: / /{{ .Release.Name }}/
+            nginx.ingress.kubernetes.io/configuration-snippet: |
+              if ($host = '{{- include "flower_subdomain" . }}' ) {
+                rewrite ^ {{ printf "https://%s/%s/flower"  ( include "deployments_subdomain" .) .Release.Name }} permanent;
+              }
+              subs_filter_types text/css text/xml text/css;
+              sub_filter '="/' '="/{{ .Release.Name }}/flower/';
+              sub_filter_last_modified on;
+              sub_filter_once off;
+
         # Scheduler configuration.
         scheduler:
 
