@@ -30,6 +30,10 @@ dependencies:
     condition: global.nodeExporterEnabled
     tags:
       - monitoring
+  - name: prometheus-blackbox-exporter
+    condition: global.blackboxExporterEnabled
+    tags:
+      - monitoring
 
   # Logging stack
   - name: elasticsearch
