@@ -375,6 +375,7 @@ data:
 
       {{- end }}
 
+
       {{- if .Values.global.blackboxExporterEnabled }}
       # Will probe the endpoints listed under targets looking for a 2XX HTTP response
       - job_name: 'blackbox HTTP'
@@ -401,7 +402,7 @@ data:
             replacement: {{.Release.Name}}-prometheus-blackbox-exporter.{{.Release.Name}}:9115  # The blackbox exporter's real hostname:port.
 
 
-      # TODO Need to include this for only cloud deployments
+      {{- if .Values.tcpProbe.enabled}}
       # Only testing for ability to open a TCP connection. 
       - job_name: 'blackbox TCP'
         metrics_path: /probe
@@ -409,8 +410,12 @@ data:
           module: [tcp_connect]  # Try tcp handshake on a port
         static_configs:
           - targets:
-            - pg-sqlproxy-gcloud-sqlproxy.{{.Release.Namespace}}:5432 # TCP Probe. only in cloud
+            {{- if .Values.tcpProbe.probePGProxy}}
+            - pg-sqlproxy-gcloud-sqlproxy.{{.Release.Namespace}}:5432
+            {{- end }}
+            {{- if .Values.tcpProbe.probeTiller}}
             - tiller-deploy.kube-system:44134 # TCP Probe 
+            {{- end }}
         relabel_configs:
           - source_labels: [__address__]
             target_label: __param_target
@@ -418,6 +423,7 @@ data:
             target_label: instance
           - target_label: __address__
             replacement: {{.Release.Name}}-prometheus-blackbox-exporter.{{.Release.Namespace}}:9115  # The blackbox exporter's real hostname:port.
+        {{- end }}
 
       # Tests that DNS in cluster is working. 
       # target should be your cluster DNS service IP
