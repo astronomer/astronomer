@@ -113,4 +113,3 @@ spec:
       {{- if .Values.persistence.storageClassName }}
         storageClassName: {{ .Values.persistence.storageClassName }}
       {{- end }}
-  {{- end }}
