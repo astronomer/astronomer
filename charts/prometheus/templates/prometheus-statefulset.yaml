@@ -68,10 +68,8 @@ spec:
               mountPath: /etc/prometheus/config
             - name: alert-volume
               mountPath: /etc/prometheus/alerts.d
-            {{- if .Values.persistence.enabled }}
             - name: data
               mountPath: {{ .Values.dataDir }}
-            {{- end }}
           ports:
             - name: prometheus-data
               containerPort: {{ .Values.ports.http }}
@@ -100,8 +98,10 @@ spec:
             items:
               - key: alerts.yaml
                 path: alerts.yaml
+  {{- if not .Values.persistence.enabled }}
         - name: data
           emptyDir: {}
+  {{- else }}
   volumeClaimTemplates:
     - metadata:
         name: data
@@ -113,3 +113,4 @@ spec:
       {{- if .Values.persistence.storageClassName }}
         storageClassName: {{ .Values.persistence.storageClassName }}
       {{- end }}
+  {{- end }}
