@@ -1,0 +1,45 @@
+kind: Pod
+apiVersion: v1
+metadata:
+  name: {{ .Release.Name }}-ap-e2e-test
+  labels:
+    tier: astronomer
+    component: ap-e2e-test
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+  # Helm Test hook
+  annotations:
+    "helm.sh/hook": test-success
+spec:
+  nodeSelector:
+{{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
+  affinity:
+{{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 8 }}
+  tolerations:
+{{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
+  terminationGracePeriodSeconds: 60
+  containers:
+    - name: ap-e2e-test
+      image: {{ template "e2eTest.image" . }}
+      imagePullPolicy: {{ .Values.images.e2eTest.pullPolicy }}
+      resources:
+      env:
+        - name: ASTRO_USER
+          valueFrom:
+            secretKeyRef:
+              name: ap-e2e-test-config-volume
+              key: ASTRO_USER
+        - name: ASTRO_PASS
+          valueFrom:
+            secretKeyRef:
+              name: ap-e2e-test-config-volume
+              key: ASTRO_PASS
+        - name: ASTRO_DOMAIN
+          value: "local.astronomer-development.com"
+  volumes:
+    - name: ap-e2e-test-config-volume
+      secret:
+        secretName: ap-e2e-test-config-volume
+
+
