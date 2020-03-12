@@ -1,0 +1,43 @@
+#!/bin/bash
+set -e
+
+# Bit of common bash magic that sets DIR to the directory of this script
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+source $DIR/helpers.sh
+
+
+# The path to the working directory - the root of the repo
+REPO_DIR=$DIR/../
+HELM_CHART_PATH=${HELM_CHART_PATH:-$REPO_DIR}
+
+echo "Deploying Astronomer..."
+
+platform=true
+logging=true
+monitoring=true
+kubed=true
+postgresql=true
+keda=true
+
+set +ex
+
+START=$(date +%s)
+
+helm upgrade --install \
+  --namespace astronomer \
+  -f configs/local-dev.yaml \
+  --set tags.platform=${platform} \
+  --set tags.logging=${logging} \
+  --set tags.monitoring=${monitoring} \
+  --set tags.kubed=${kubed} \
+  --set tags.postgresql=${postgresql} \
+  --set tags.keda=${keda} \
+  astronomer \
+  $HELM_CHART_PATH
+
+if [ ! $? -eq 0 ]; then
+  echo "Helm chart failed to install"
+  get_debugging_info
+  exit 1
+fi
+

@@ -2,26 +2,6 @@
 
 set -e
 
-function get_debugging_info {
-  echo "Failed to deploy Astronomer!"
-  echo "Printing description and logs where containers in pod are not 1/1..."
-  for pod in $(kubectl get pods -n astronomer | grep -v NAME | grep -v 1/1 | grep -v Completed | awk '{ print $1 }'); do
-    echo "======================="
-    set -x
-    kubectl describe pod -n astronomer $pod
-    kubectl logs -n astronomer $pod | tail -n 30
-    set +x
-    echo "======================="
-  done
-  kubectl get pods --all-namespaces
-  echo "======================="
-  kubectl get ds --all-namespaces
-  echo "======================="
-  kubectl get sts --all-namespaces
-  echo "======================="
-  kubectl get deployments --all-namespaces
-}
-
 # Bit of common bash magic that sets DIR to the directory of this script
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 # The path to the working directory - the root of the repo
@@ -33,84 +13,9 @@ source $REPO_DIR/bin/setup-kind
 
 echo "Deploying Astronomer..."
 
-platform=false
-logging=false
-monitoring=false
-kubed=false
-postgresql=false
-keda=false
-for component in $@
-do
-  export $component=true
-done
-
-set +ex
-
-kubectl get pods -n astronomer -w &
-WATCH_PID=$!
-
-START=$(date +%s)
-
-helm install \
-  --namespace astronomer \
-  --timeout 600 \
-  -n astronomer \
-  -f configs/local-dev.yaml \
-  --set tags.platform=${platform} \
-  --set tags.logging=${logging} \
-  --set tags.monitoring=${monitoring} \
-  --set tags.kubed=${kubed} \
-  --set tags.postgresql=${postgresql} \
-  --set tags.keda=${keda} \
-  $HELM_CHART_PATH
-
-if [ ! $? -eq 0 ]; then
-  echo "Helm chart failed to install"
-  get_debugging_info
-  exit 1
-fi
+$DIR/bin/install-platform
 
 sleep 5
 
-# Wait for Astronomer to deploy
-RC=0
-HELM_CODE=0
-MAX_SECONDS=1200
-while [ $RC -eq 0 ]; do
-  NOW=$(date +%s)
-  DURATION="$(($NOW-$START))"
-  echo "${DURATION} seconds have elapsed, timeout at $MAX_SECONDS seconds"
-  if [ $DURATION -gt $MAX_SECONDS ];then
-    HELM_CODE=1
-    RC=1
-    echo "Error (timeout): giving up after $MAX_SECONDS seconds"
-  else
-    sleep 10
-    kubectl get pods -n astronomer > /tmp/pods
-    if [ ! $? -eq 0 ];then
-      echo "kubectl get pods timed out. retrying."
-      continue
-    fi
-    # Ignore elasticsearch-nginx in order to allow for testing the deployment
-    # of logging tag without the platform. This is the only logging component
-    # that will not start without the platform. The benefit of allowing us to
-    # test the logging tag outweighs the downside of ignoring one pod.
-    cat /tmp/pods | grep -v 1/1 | grep -v 2/2 | grep -v NAME | grep -v Completed | grep -v 'elasticsearch-nginx' >/dev/null 2>&1
-    RC=$?
-  fi
-done
+$DIR/bin/waitfor-platform
 
-kill $WATCH_PID
-
-# Output debugging information
-if [ $HELM_CODE -eq 0 ]; then
-  echo "Astronomer deployed!"
-else
-  get_debugging_info
-fi
-
-set -x
-kubectl get pods --all-namespaces
-helm list
-
-exit $HELM_CODE
