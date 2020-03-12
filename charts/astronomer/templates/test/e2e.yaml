@@ -28,18 +28,18 @@ spec:
         - name: ASTRO_USER
           valueFrom:
             secretKeyRef:
-              name: ap-e2e-test-config-volume
+              name: ap-e2e-test-creds
               key: ASTRO_USER
         - name: ASTRO_PASS
           valueFrom:
             secretKeyRef:
-              name: ap-e2e-test-config-volume
+              name: ap-e2e-test-creds
               key: ASTRO_PASS
-        - name: ASTRO_DOMAIN
-          value: "local.astronomer-development.com"
+        - name: HOUSTON_URL
+          value: "http://houston.astronomer.svc.cluster.local"
   volumes:
-    - name: ap-e2e-test-config-volume
+    - name: ap-e2e-test-creds
       secret:
-        secretName: ap-e2e-test-config-volume
+        secretName: ap-e2e-test-creds
 
 

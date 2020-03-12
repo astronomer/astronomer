@@ -17,7 +17,7 @@ VM Lifecycle
 gcloud compute ssh kind-dev-$(USER)
 
 # Cleanup VM
-gcloud compute ssh kind-dev-$(USER)
+gcloud compute instances delete --quiet kind-dev-$(USER) --zone us-east4-a
 ```
 
 Simulating CircleCI (assumes you are logged into the VM)
@@ -27,14 +27,37 @@ Simulating CircleCI (assumes you are logged into the VM)
 git clone https://github.com/astronomer/astronomer
 cd astronomer
 
+# (OPTIONAL) git checkout a branch for chart development
+
 # Prep and start Kind
+./bin/kind/install-docker.sh
 ./bin/install-ci-tools
-./bin/setup-kind
+echo "PATH=$PATH:/tmp/bin >> $HOME/.profile"
+exit
+
+# Log back in to get updated user profile
+gcloud compute ssh kind-dev-$(USER)
+cd astronomer
 
 # Astronomer Install
+./bin/setup-kind
 ./bin/install-platform
 ./bin/waitfor-platform
 
+# Expose platform Nginx, run in background
+echo "172.17.0.1 local.astronomer-development.com" | sudo tee -a /etc/hosts
+sudo /tmp/bin/kubectl port-forward -n astronomer svc/astronomer-nginx 80 443 &
+
+# Create Initial User
+./bin/create-initial-user <username> <password>
+
 # Run Platform Tests
 helm test astronomer
+
+# Debug
+kubectl -n astronomer describe po/astronomer-ap-e2e-test
+kubectl -n astronomer logs astronomer-ap-e2e-test
+
+# Cleanup VM
+gcloud compute instances delete --quiet kind-dev-$(USER) --zone us-east4-a
 ```

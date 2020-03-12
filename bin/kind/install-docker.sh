@@ -5,8 +5,8 @@ set -euo pipefail
 # https://docs.docker.com/install/linux/docker-ce/ubuntu/
 
 # Dependencies
-sudo apt-get update
-sudo apt-get install \
+sudo apt-get update -y
+sudo apt-get install -y \
     apt-transport-https \
     ca-certificates \
     curl \
@@ -22,8 +22,11 @@ sudo add-apt-repository \
 	stable"
 
 # Install Docker
-sudo apt-get update
-sudo apt-get install docker-ce docker-ce-cli containerd.io
+sudo apt-get update -y
+sudo apt-get install -y \
+  docker-ce \
+  docker-ce-cli \
+  containerd.io
 
 # Test Deocker
 sudo docker run hello-world
@@ -31,5 +34,4 @@ sudo docker run hello-world
 # Non-sudo
 # sudo groupadd docker (already added during install)
 sudo usermod -aG docker $USER
-newgrp docker 
 
