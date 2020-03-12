@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+HOST="https://houston.local.astronomer-development.com/v1"
+
+curl -v -X POST \
+  -H "content-type: application/json" \
+  -d @$DIR/create-initial-user.json \
+  "$HOST" 

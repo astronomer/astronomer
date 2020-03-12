@@ -1,0 +1,23 @@
+{
+  "operationName": "createUser",
+  "variables": {},
+  "query": "
+mutation createUser {
+  createUser(email:\"tony@astronomer.io\", password: \"njthesis\", duration:360000){
+    user {
+      id
+      emails {
+        address
+      }
+    }
+    token {
+      value
+      payload {
+        uuid
+      }
+    }
+    isAdmin
+  }
+}
+"
+}
