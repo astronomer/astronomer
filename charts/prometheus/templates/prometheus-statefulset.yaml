@@ -45,7 +45,6 @@ spec:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       restartPolicy: Always
       serviceAccountName: {{ template "prometheus.fullname" . }}
-      # {{- if .Values.persistence.enabled }}
       initContainers:
         - name: init
           image: {{ include "prometheus.init.image" . }}
