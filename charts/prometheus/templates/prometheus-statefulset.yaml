@@ -100,7 +100,6 @@ spec:
             items:
               - key: alerts.yaml
                 path: alerts.yaml
-  # {{- if not .Values.persistence.enabled }}
         - name: data
           emptyDir: {}
   # {{- else }}
