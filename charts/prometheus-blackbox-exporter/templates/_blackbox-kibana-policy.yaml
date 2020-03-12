@@ -1,5 +1,4 @@
-# TODO how do we easily handle not applying this if an enterprise
-# customer disable the logging stack? 
+{{- define "blackbox.kibanaNetPol" }}
 {{- if gt (.Capabilities.KubeVersion.Minor | atoi) 15 }}
 apiVersion: networking.k8s.io/v1
 {{- else }}
@@ -12,14 +11,14 @@ metadata:
     release: {{ .Release.Name}}
     tier: monitoring
   name: bb-kibana-policy
-  namespace: astronomer
+  namespace: {{ .Release.Namespace}}
 spec:
   ingress:
   - from:
     - podSelector:
         matchLabels:
           component: blackbox-exporter
-          release: astronomer
+          release: {{ .Release.Name}}
           tier: monitoring
     ports:
     - port: 5601 
@@ -27,7 +26,8 @@ spec:
   podSelector:
     matchLabels:
       component: kibana
-      release: astronomer
+      release: {{ .Release.Name}}
       tier: logging
   policyTypes:
   - Ingress
+{{- end }}

@@ -1,3 +1,4 @@
+{{- define "blackbox.houstonNetPol" }}
 {{- if gt (.Capabilities.KubeVersion.Minor | atoi) 15 }}
 apiVersion: networking.k8s.io/v1
 {{- else }}
@@ -9,23 +10,24 @@ metadata:
   labels:
     release: {{ .Release.Name}}
     tier: monitoring
-  name: bb-registry-policy
-  namespace: astronomer
+  name: bb-houston-policy
+  namespace: {{ .Release.Namespace}}
 spec:
   ingress:
   - from:
     - podSelector:
         matchLabels:
           component: blackbox-exporter
-          release: astronomer
+          release: {{ .Release.Name}}
           tier: monitoring
     ports:
-    - port: 5000 
+    - port: 8871
       protocol: TCP
   podSelector:
     matchLabels:
-      component: registry
-      release: astronomer
+      component: houston
+      release: {{ .Release.Name}}
       tier: astronomer
   policyTypes:
   - Ingress
+{{- end }}
