@@ -28,9 +28,6 @@ sudo apt-get install -y \
   docker-ce-cli \
   containerd.io
 
-# Test Deocker
-sudo docker run hello-world
-
 # Non-sudo
 # sudo groupadd docker (already added during install)
 sudo usermod -aG docker $USER

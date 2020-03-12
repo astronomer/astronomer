@@ -1,6 +1,5 @@
-#!/bin/bash
-
-set -e
+#!/usr/bin/env bash
+set -euo pipefail
 
 if [[ -z "${HELM_CHART_PATH}" ]]; then
   echo "ERROR: must provide HELM_CHART_PATH pointing to astronomer-*.tgz, will not release without an artifact."

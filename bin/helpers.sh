@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
 function get_debugging_info {
   echo "Failed to deploy Astronomer!"
