@@ -56,14 +56,22 @@ echo "172.17.0.1 local.astronomer-development.com" | sudo tee -a /etc/hosts
 sudo /tmp/bin/kubectl port-forward -n astronomer svc/astronomer-nginx 80 443 &
 
 # Create Initial User
-./bin/create-initial-user <username> <password>
+./bin/create-initial-user "<username>" "<password>"
+
+# Stop background port-foward
+fg
+<CTRL>-C
 
 # Run Platform Tests
 helm test astronomer
 
-# Debug
+# Debug: Check Logs
 kubectl -n astronomer describe po/astronomer-ap-e2e-test
 kubectl -n astronomer logs astronomer-ap-e2e-test
+
+# Debug: Run Manulally
+kubectl apply -n astronomer -f bin/e2e-test/e2e-pod.yaml
+kubectl exec -it -n astronomer manual-ap-e2e-test bash
 
 # Cleanup VM
 gcloud compute instances delete --quiet kind-dev-$(USER) --zone us-east4-a

@@ -10,7 +10,6 @@ spec:
     - name: ap-e2e-test
       image: astronomerinc/ap-e2e-test:latest
       imagePullPolicy: Always
-      cmd: "sleep 36000"
       env:
         - name: ASTRO_USER
           valueFrom:
@@ -23,7 +22,7 @@ spec:
               name: ap-e2e-test-creds
               key: ASTRO_PASS
         - name: HOUSTON_URL
-          value: "http://houston.astronomer.svc.cluster.local"
+          value: "http://astronomer-houston.astronomer.svc.cluster.local:8871/v1"
   volumes:
     - name: ap-e2e-test-creds
       secret:

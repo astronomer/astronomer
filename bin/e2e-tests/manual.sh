@@ -6,7 +6,8 @@ REPO_DIR=$DIR/../..
 
 echo "Creating E2E pod..."
 
-kubectl create pod -n astronomer \
+kubectl apply -n astronomer \
   -f $DIR/e2e-pod.yaml
 
-helm test astronomer
+kubectl exec -it -n astronomer \
+  manual-ap-e2e-test bash
