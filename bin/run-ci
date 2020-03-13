@@ -12,9 +12,14 @@ source $REPO_DIR/bin/setup-kind
 
 echo "Deploying Astronomer..."
 
+# This is so CI does not timeout on "no input in 10 minutes"
+kubectl get pods -n astronomer -w &
+WATCH_PID=$!
+
 $DIR/install-platform
 
 sleep 5
 
 $DIR/waitfor-platform
 
+kill $WATCH_PID

@@ -10,9 +10,6 @@ REPO_DIR=$DIR/../
 
 set +ex
 
-kubectl get pods -n astronomer -w &
-WATCH_PID=$!
-
 START=$(date +%s)
 
 # Wait for Astronomer to deploy
@@ -42,8 +39,6 @@ while [ $RC -eq 0 ]; do
     RC=$?
   fi
 done
-
-kill $WATCH_PID
 
 # Output debugging information
 if [ $HELM_CODE -eq 0 ]; then
