@@ -12,6 +12,8 @@ function get_debugging_info {
     set +x
     echo "======================="
   done
+  kubectl get secrets --all-namespaces
+  echo "======================="
   kubectl get pods --all-namespaces
   echo "======================="
   kubectl get ds --all-namespaces

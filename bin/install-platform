@@ -37,7 +37,7 @@ fi
 
 set +ex
 
-HELM_TIMEOUT=${HELM_TIMEOUT:-1200}
+HELM_TIMEOUT=${HELM_TIMEOUT:-600}
 
 helm upgrade --install \
   --namespace astronomer \
