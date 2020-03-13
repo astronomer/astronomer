@@ -61,6 +61,7 @@ helm install \
   --set tags.monitoring=${monitoring} \
   --set tags.kubed=${kubed} \
   --set tags.postgresql=${postgresql} \
+  --set globals.postgresqlEnabled=${postgresql} \
   --set tags.keda=${keda} \
   $HELM_CHART_PATH
 
