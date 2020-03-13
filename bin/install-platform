@@ -37,8 +37,11 @@ fi
 
 set +ex
 
+HELM_TIMEOUT=${HELM_TIMEOUT:-600}
+
 helm upgrade --install \
   --namespace astronomer \
+  --timeout $HELM_TIMEOUT \
   -f configs/local-dev.yaml \
   --set tags.platform=${platform} \
   --set tags.logging=${logging} \

@@ -3,6 +3,8 @@ set -eou pipefail
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
+VM_NAME=${1:-kind-dev-$USER}
+
 # Basic config
 ZONE="us-east4-a"
 MACHINE_TYPE="n1-standard-8"
@@ -14,12 +16,8 @@ IMAGE_PROJECT="ubuntu-os-cloud"
 # This is actually port 22 in astronomer-cloud-dev
 NETWORK_TAGS="http-server"
 
-# just the file name, not contents
-STARTUP=$DIR/startup-script.sh
-METADATA="--metadata-from-file=startup-script=$STARTUP"
 
-VM_NAME=${1:-kind-dev-$USER}
-
+# Boot VM
 gcloud compute instances create $VM_NAME \
   --zone $ZONE \
   --machine-type $MACHINE_TYPE \
@@ -27,6 +25,5 @@ gcloud compute instances create $VM_NAME \
   --boot-disk-size=$DISK_SIZE \
   --image-project ${IMAGE_PROJECT} \
   --image-family  ${IMAGE_FAMILY} \
-  --tags $NETWORK_TAGS \
-  $METADATA
+  --tags $NETWORK_TAGS
 

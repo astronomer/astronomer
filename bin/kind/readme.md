@@ -32,12 +32,18 @@ cd astronomer
 # Prep and start Kind
 ./bin/kind/install-docker.sh
 ./bin/install-ci-tools
-echo "PATH=$PATH:/tmp/bin >> $HOME/.profile"
+echo "PATH=$PATH:/tmp/bin" >> $HOME/.profile
 exit
 
 # Log back in to get updated user profile
 gcloud compute ssh kind-dev-$(USER)
 cd astronomer
+
+# Set Kubernetes Version
+# Look in .circleci/config.yml for the latest CI versions
+#   or set to any version supported by Kind
+#   this value is normally exported by CircleCI
+export KUBE_VERSION="v1.14.10"
 
 # Astronomer Install
 ./bin/setup-kind
