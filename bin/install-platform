@@ -13,7 +13,6 @@ HELM_CHART_PATH=${HELM_CHART_PATH:-$REPO_DIR}
 echo "Deploying Astronomer..."
 
 # No args means all
-postgres=true
 platform=true
 logging=true
 monitoring=true
@@ -23,7 +22,6 @@ keda=true
 
 # Any args means be selective
 if [ $# -ne 0 ]; then
-  postgres=false
   platform=false
   logging=false
   monitoring=false
@@ -39,13 +37,13 @@ fi
 
 set +ex
 
-HELM_TIMEOUT=${HELM_TIMEOUT:-600}
+HELM_TIMEOUT=${HELM_TIMEOUT:-1200}
 
 helm upgrade --install \
   --namespace astronomer \
   --timeout $HELM_TIMEOUT \
   -f configs/local-dev.yaml \
-  --set global.postgresEnabled=${platform} \
+  --set global.postgresEnabled=${postgresql} \
   --set tags.platform=${platform} \
   --set tags.logging=${logging} \
   --set tags.monitoring=${monitoring} \
