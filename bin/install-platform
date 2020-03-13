@@ -43,12 +43,12 @@ helm upgrade --install \
   --namespace astronomer \
   --timeout $HELM_TIMEOUT \
   -f configs/local-dev.yaml \
-  --set global.postgresEnabled=${postgresql} \
   --set tags.platform=${platform} \
   --set tags.logging=${logging} \
   --set tags.monitoring=${monitoring} \
   --set tags.kubed=${kubed} \
   --set tags.postgresql=${postgresql} \
+  --set global.postgresqlEnabled=${postgresql} \
   --set tags.keda=${keda} \
   astronomer \
   $HELM_CHART_PATH

@@ -38,7 +38,7 @@ images:
     pullPolicy: IfNotPresent
   e2eTest:
     repository: astronomerinc/ap-e2e-test
-    tag: 0.0.3
+    tag: 0.0.4
     pullPolicy: IfNotPresent
 
 astroUI:
