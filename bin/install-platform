@@ -12,6 +12,7 @@ HELM_CHART_PATH=${HELM_CHART_PATH:-$REPO_DIR}
 
 echo "Deploying Astronomer..."
 
+# No args means all
 platform=true
 logging=true
 monitoring=true
@@ -19,9 +20,22 @@ kubed=true
 postgresql=true
 keda=true
 
-set +ex
+# Any args means be selective
+if [ $# -ne 0 ]; then
+  platform=false
+  logging=false
+  monitoring=false
+  kubed=false
+  postgresql=false
+  keda=false
+  for component in $@
+  do
+    export $component=true
+  done
+fi
 
-START=$(date +%s)
+
+set +ex
 
 helm upgrade --install \
   --namespace astronomer \

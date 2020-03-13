@@ -12,9 +12,9 @@ source $REPO_DIR/bin/setup-kind
 
 echo "Deploying Astronomer..."
 
-$DIR/bin/install-platform
+$DIR/install-platform
 
 sleep 5
 
-$DIR/bin/waitfor-platform
+$DIR/waitfor-platform
 
