@@ -39,11 +39,12 @@ exit
 gcloud compute ssh kind-dev-$(USER)
 cd astronomer
 
-# Set Kubernetes Version
+# (OPTIONAL) Set Kubernetes Version
 # Look in .circleci/config.yml for the latest CI versions
 #   or set to any version supported by Kind
-#   this value is normally exported by CircleCI
-export KUBE_VERSION="v1.14.10"
+#   this value is exported by CircleCI
+#   the default otherwise is in bin/setup-kind
+export KUBE_VERSION="v1.15.6"
 
 # Astronomer Install
 ./bin/setup-kind
