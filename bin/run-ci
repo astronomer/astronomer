@@ -33,9 +33,9 @@ FORWARD_PID=$!
 # kill $FORWARD_PID
 
 # Run tests
-+e
+set +e
 helm test astronomer
--e
+set -e
 
 kubectl get pods -n astronomer
 
