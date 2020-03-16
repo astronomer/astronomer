@@ -390,6 +390,12 @@ data:
             - http://{{.Release.Name}}-kibana.{{.Release.Namespace}}:5601
             - http://{{.Release.Name}}-registry.{{.Release.Namespace}}:5000
             - http://{{.Release.Name}}-elasticsearch.{{.Release.Namespace}}:9200/_cluster/health?local=true
+            {{- if .Values.global.baseDomain }}
+            - https://app.{{ .Values.global.baseDomain }}
+            - https://houston.{{ .Values.global.baseDomain }}
+            - https://registry.{{ .Values.global.baseDomain }}
+            - https://install.{{ .Values.global.baseDomain }}
+            {{- end}}
           {{- range .Values.httpTargets }}
             - {{ . }}
           {{- end }}
