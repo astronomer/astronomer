@@ -7,6 +7,8 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 REPO_DIR=$DIR/../
 
 source $REPO_DIR/bin/install-ci-tools
+echo "PATH=$PATH:/tmp/bin" >> $HOME/.profile
+source $HOME/.profile
 
 source $REPO_DIR/bin/setup-kind
 
@@ -21,5 +23,18 @@ $DIR/install-platform
 sleep 5
 
 $DIR/waitfor-platform
+
+
+### Test Prep
+echo "172.17.0.1 local.astronomer-development.com" | sudo tee -a /etc/hosts
+sudo /tmp/bin/kubectl port-forward -n astronomer svc/astronomer-nginx 80 443 &
+FORWARD_PID=$!
+
+./bin/create-initial-user "tester@astronomer.io" "password"
+kill $FORWARD_PID
+
+# Run tests
+helm test astronomer
+
 
 kill $WATCH_PID

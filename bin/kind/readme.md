@@ -54,6 +54,7 @@ export KUBE_VERSION="v1.15.6"
 # Expose platform Nginx, run in background
 echo "172.17.0.1 local.astronomer-development.com" | sudo tee -a /etc/hosts
 sudo /tmp/bin/kubectl port-forward -n astronomer svc/astronomer-nginx 80 443 &
+<enter> # To see prompt again, output will be interlaced
 
 # Create Initial User
 ./bin/create-initial-user "<username>" "<password>"

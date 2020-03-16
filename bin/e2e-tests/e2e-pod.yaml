@@ -22,7 +22,7 @@ spec:
               name: ap-e2e-test-creds
               key: ASTRO_PASS
         - name: HOUSTON_URL
-          value: "http://astronomer-houston.astronomer.svc.cluster.local:8871/v1"
+          value: "http://houston.tester.astronomer-development.com:8871/v1"
   volumes:
     - name: ap-e2e-test-creds
       secret:
