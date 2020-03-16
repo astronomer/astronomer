@@ -33,7 +33,12 @@ FORWARD_PID=$!
 # kill $FORWARD_PID
 
 # Run tests
++e
 helm test astronomer
+-e
 
+kubectl get pods -n astronomer
+
+kubectl logs -n astronomer astronomer-ap-e2e-test
 
 # kill $WATCH_PID
