@@ -221,7 +221,7 @@ prometheus-blackbox-exporter:
     kibana:
       enabled: true
     cliInstall:
-    enabled: true
+      enabled: true
 
 #################################
 ## Elasticsearch configuration
