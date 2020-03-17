@@ -94,23 +94,19 @@ extraArgs: []
 
 replicas: 2
 
-serviceMonitor:
-  ## If true, a ServiceMonitor CRD is created for a prometheus operator
-  ## https://github.com/coreos/prometheus-operator
-  ##
-  enabled: false
-
-  # Default values that will be used for all ServiceMonitors created by `targets`
-  defaults:
-    labels: {}
-    interval: 30s
-    scrapeTimeout: 30s
-    module: http_2xx
-
-  targets:
-#    - name: example                    # Human readable URL that will appear in Prometheus / AlertManager
-#      url: http://example.com/healthz  # The URL that blackbox will scrape
-#      labels: {}                       # List of labels for ServiceMonitor. Overrides value set in `defaults`
-#      interval: 60s                    # Scraping interval. Overrides value set in `defaults`
-#      scrapeTimeout: 60s               # Scrape timeout. Overrides value set in `defaults`
-#      module: http_2xx                 # Module used for scraping. Overrides value set in `defaults`
+# these can all be overriden via the umbrella chart values file
+astroServices:
+  commander:
+    enabled: true
+  houston:
+    enabled: true
+  registry:
+    enabled: true
+  grafana:
+    enabled: true
+  elasticsearch:
+    enabled: true
+  kibana:
+    enabled: true
+  cliInstall:
+    enabled: true
