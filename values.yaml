@@ -204,6 +204,15 @@ prometheus:
 ## Blackbox Exporter configuration
 #################################
 prometheus-blackbox-exporter:
+  # Configure resources
+  resources:
+    requests:
+      cpu: "5m"
+      memory: "7Mi"
+    limits:
+      cpu: "15m"
+      memory: "20Mi"
+
 # define what astronomer platform services will be checked
 # for up/down status. Enable this will also include
 # the required network policies

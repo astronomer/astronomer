@@ -73,12 +73,14 @@ extraSecretMounts: []
 
 allowIcmp: false
 
-# These are specified in the global values file
-resources: {}
-  # limits:
-  #   memory: 300Mi
-  # requests:
-  #   memory: 50Mi
+# These are overriden by what is  in the global values file
+resources:
+  requests:
+    cpu: "5m"
+    memory: "7Mi"
+  limits:
+    cpu: "15m"
+    memory: "20Mi"
 
 priorityClassName: ""
 
