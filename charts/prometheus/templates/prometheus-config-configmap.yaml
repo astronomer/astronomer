@@ -480,17 +480,20 @@ data:
         metrics_path: /probe
         params:
           module: [http_2xx]  # Look for a HTTP 200 response.
+        # TODO: change this static config to be driving by service annotations. This works for now
         static_configs:
           - targets:
             - http://{{.Release.Name}}-commander.{{.Release.Namespace}}:8880/healthz
-            - http://{{.Release.Name}}-grafana.{{.Release.Namespace}}:3000/api/health
             - http://{{.Release.Name}}-houston.{{.Release.Namespace}}:8871/v1/healthz
-            - http://{{.Release.Name}}-kibana.{{.Release.Namespace}}:5601
             - http://{{.Release.Name}}-registry.{{.Release.Namespace}}:5000
+            - http://{{.Release.Name}}-cli-install.{{.Release.Namespace}}
+            - http://{{.Release.Name}}-grafana.{{.Release.Namespace}}:3000/api/health
+            - http://{{.Release.Name}}-kibana.{{.Release.Namespace}}:5601
             - http://{{.Release.Name}}-elasticsearch.{{.Release.Namespace}}:9200/_cluster/health?local=true
+
             {{- if .Values.global.baseDomain }}
             - https://app.{{ .Values.global.baseDomain }}
-            - https://houston.{{ .Values.global.baseDomain }}
+            - https://houston.{{ .Values.global.baseDomain }}/v1/healthz
             - https://registry.{{ .Values.global.baseDomain }}
             - https://install.{{ .Values.global.baseDomain }}
             {{- end}}
