@@ -3,29 +3,37 @@
 # or Not based on other variables. The templates with the actualy policies 
 # start with "_" and are named bb-<service it is affecting>-policy.yaml
 
-
+{{- if .Values.astroServices.commander.enabled}}
 ---
 {{- include "blackbox.commanderNetPol" .}}
+{{- end}}
 
+{{- if .Values.astroServices.houston.enabled}}
 ---
 {{- include "blackbox.houstonNetPol" . }}
+{{- end}}
 
+{{- if .Values.astroServices.registry.enabled}}
 ---
 {{- include "blackbox.registryNetPol" . }}
+{{- end}}
 
-
-# Only include the grafana policy
-# if monitoring is enabled
-{{- if .Values.global.monitoring}}
+{{- if .Values.astroServices.grafana.enabled}}
 ---
 {{- include "blackbox.grafanaNetPol" . }}
 {{- end}}
 
-# Only include elastic seach client and
-# kibana policy if logging is enabled.
-{{- if .Values.global.logging}}
+{{- if .Values.astroServices.elasticsearch.enabled}}
 ---
 {{- include "blackbox.esClientNetPol" . }}
+{{- end}}
+
+{{- if .Values.astroServices.kibana.enabled}}
 ---
 {{- include "blackbox.kibanaNetPol" . }}
+{{- end}}
+
+{{- if .Values.astroServices.cliInstall.enabled}}
+---
+{{- include "blackbox.cliInstallNetPol" . }}
 {{- end}}
