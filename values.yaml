@@ -199,11 +199,29 @@ prometheus:
       memory: "8Gi"
 
 
-# TODO:
+
 #################################
 ## Blackbox Exporter configuration
 #################################
-
+prometheus-blackbox-exporter:
+# define what astronomer platform services will be checked
+# for up/down status. Enable this will also include
+# the required network policies
+  astroServices:
+    commander:
+      enabled: true
+    houston:
+      enabled: true
+    registry:
+      enabled: true
+    grafana:
+      enabled: true
+    elasticsearch:
+      enabled: true
+    kibana:
+      enabled: true
+    cliInstall:
+    enabled: true
 
 #################################
 ## Elasticsearch configuration
