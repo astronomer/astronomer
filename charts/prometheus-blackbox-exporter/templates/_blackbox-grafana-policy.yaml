@@ -10,7 +10,7 @@ metadata:
   labels:
     release: {{ .Release.Name}}
     tier: monitoring
-  name: bb-grafana-policy
+  name: blackbox-grafana-policy
   namespace: {{ .Release.Namespace}}
 spec:
   ingress:

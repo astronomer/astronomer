@@ -10,7 +10,7 @@ metadata:
   labels:
     release: {{ .Release.Name}}
     tier: monitoring
-  name: bb-kibana-policy
+  name: blackbox-kibana-policy
   namespace: {{ .Release.Namespace}}
 spec:
   ingress:

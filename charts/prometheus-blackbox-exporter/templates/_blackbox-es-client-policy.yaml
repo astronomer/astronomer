@@ -9,7 +9,7 @@ metadata:
   labels:
     release: {{ .Release.Name}}
     tier: monitoring
-  name: bb-es-client-policy
+  name: blackbox-es-client-policy
   namespace: {{ .Release.Namespace}}
 spec:
   ingress:

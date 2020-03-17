@@ -10,7 +10,7 @@ metadata:
   labels:
     release: {{ .Release.Name}}
     tier: monitoring
-  name: bb-registry-policy
+  name: blackbox-registry-policy
   namespace: {{ .Release.Namespace}}
 spec:
   ingress:

@@ -9,7 +9,7 @@ metadata:
   labels:
     release: {{ .Release.Name}}
     tier: monitoring
-  name: bb-commander-policy
+  name: blackbox-commander-policy
   namespace: {{ .Release.Namespace}}
 spec:
   ingress:

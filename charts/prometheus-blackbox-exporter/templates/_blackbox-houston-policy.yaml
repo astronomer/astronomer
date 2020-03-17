@@ -10,7 +10,7 @@ metadata:
   labels:
     release: {{ .Release.Name}}
     tier: monitoring
-  name: bb-houston-policy
+  name: blackbox-houston-policy
   namespace: {{ .Release.Namespace}}
 spec:
   ingress:
