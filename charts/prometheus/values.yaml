@@ -49,6 +49,16 @@ ports:
 
 ingressNetworkPolicyExtraSelectors: []
 
+
+astroHTTPTargets:
+  commander: false
+  houston: true
+  registry: true
+  cliInstall: true
+  grafana: true
+  kibana: true
+  elasticsearch: true
+
 # additional HTTP endpoints to use as targets
 #  for the blackbox exporter HTTP tests
 # astronomer platform targets are already include in the template

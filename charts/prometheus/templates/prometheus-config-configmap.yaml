@@ -483,13 +483,28 @@ data:
         # TODO: change this static config to be driving by service annotations. This works for now
         static_configs:
           - targets:
+          {{- if .Values.astroHTTPTargets.commander}}
             - http://{{.Release.Name}}-commander.{{.Release.Namespace}}:8880/healthz
+          {{- end }}
+          {{- if .Values.astroHTTPTargets.houston}}
             - http://{{.Release.Name}}-houston.{{.Release.Namespace}}:8871/v1/healthz
+          {{- end }}
+          {{- if .Values.astroHTTPTargets.registry}}
             - http://{{.Release.Name}}-registry.{{.Release.Namespace}}:5000
+          {{- end }}
+          {{- if .Values.astroHTTPTargets.cliInstall}}
             - http://{{.Release.Name}}-cli-install.{{.Release.Namespace}}
+          {{- end }}
+          {{- if .Values.astroHTTPTargets.grafana}}
             - http://{{.Release.Name}}-grafana.{{.Release.Namespace}}:3000/api/health
+          {{- end }}
+          {{- if .Values.astroHTTPTargets.kibana}}
             - http://{{.Release.Name}}-kibana.{{.Release.Namespace}}:5601
+          {{- end }}
+          {{- if .Values.astroHTTPTargets.elasticsearch}}
             - http://{{.Release.Name}}-elasticsearch.{{.Release.Namespace}}:9200/_cluster/health?local=true
+          {{- end }}
+
 
             {{- if .Values.global.baseDomain }}
             - https://app.{{ .Values.global.baseDomain }}
