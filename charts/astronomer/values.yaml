@@ -36,6 +36,10 @@ images:
     repository: astronomerinc/ap-prisma
     tag: 0.11.0
     pullPolicy: IfNotPresent
+  e2eTest:
+    repository: astronomerinc/ap-e2e-test
+    tag: 0.0.7
+    pullPolicy: IfNotPresent
 
 astroUI:
   env: []
@@ -216,6 +220,9 @@ install:
   #   cpu: 100m
   #   memory: 128Mi
 
+e2eTest:
+  env: []
+  resources: {}
 
 ports:
   houstonHTTP: 8871

@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+HOST="https://houston.local.astronomer-development.com/v1"
+
+USER=$1
+PASS=$2
+
+kubectl -n astronomer \
+  create secret generic ap-e2e-test-creds \
+  --from-literal=ASTRO_USER="$USER" \
+  --from-literal=ASTRO_PASS="$PASS"
+
+sed -i \
+  -e "s/__USER__/$USER/" \
+  -e "s/__PASS__/$PASS/" \
+  $DIR/create-initial-user.json
+
+curl -v -X POST \
+  -H "content-type: application/json" \
+  -d @$DIR/create-initial-user.json \
+  "$HOST" 
