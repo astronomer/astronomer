@@ -426,8 +426,8 @@ data:
             target_label: systemd_service_name
             replacement: '${1}'
 
-            # Drop some unnecessary labels
-          - regex: "^(id|name)"
+            # Drop some unnecessary labels.
+          - regex: "^name"
             action: labeldrop
 
             # Add deployment name via container_name
