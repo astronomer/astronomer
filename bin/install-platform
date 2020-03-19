@@ -37,10 +37,12 @@ fi
 
 set +ex
 
-HELM_TIMEOUT=${HELM_TIMEOUT:-600}
+HELM_TIMEOUT=${HELM_TIMEOUT:-800}
 
-helm upgrade --install \
+set -x
+helm install \
   --namespace astronomer \
+  --name astronomer \
   --timeout $HELM_TIMEOUT \
   -f configs/local-dev.yaml \
   --set tags.platform=${platform} \
@@ -49,12 +51,11 @@ helm upgrade --install \
   --set tags.kubed=${kubed} \
   --set global.postgresqlEnabled=true \
   --set tags.keda=${keda} \
-  astronomer \
   $HELM_CHART_PATH
 
 if [ ! $? -eq 0 ]; then
+  set +x
   echo "Helm chart failed to install"
   get_debugging_info
   exit 1
 fi
-
