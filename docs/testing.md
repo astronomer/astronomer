@@ -1,0 +1,130 @@
+# Testing and the Astronomer Platform
+
+
+### Tests
+
+Overview:
+
+- __prereq-tests__ - testing steps used during installation to ensure readiness
+- __platform-tests__ - tests run post installation to verify the platform
+
+
+#### prereq-tests
+
+Located in `astronomer/bin/prereq-tests`, these tests use
+BATS (a bash testing framework) to ensure you are ready
+for the next step of installation.
+
+
+__0.__ Prepare for running the tests
+
+In `astronomer/bin/prereq-tests/config.sh`, there are some
+top-level parameters for things like version, domain, and database.
+
+
+__1.__ Do I have the right tools?
+
+```shell
+./bin/prereq-tests/run.sh -T
+```
+
+This test for tools needed for both user and admin tasks.
+
+
+__2.__ Am I ready to install Kubernetes?
+
+You will need to use the flag that coorisponds to the cloud provider.
+
+```shell
+# AWS
+./bin/prereq-tests/run.sh -A
+
+# GCP
+./bin/prereq-tests/run.sh -G
+```
+
+This will check that you have the cloud procider tools and permissions.
+
+
+__3.__ Is my database available?
+
+If you are using an existing database, this will check that the installation
+process will be able to access it. This will use the configuration set in
+`./bin/prereq-tests/config.sh`. You can also choose to have installation
+create a database for you, in which case, this test is not needed.
+
+```shell
+./bin/prereq-tests/run.sh -D
+```
+
+
+__4.__ I've installed Kubernetes, is it ready for Astronomer?
+
+You have now installed Kubernetes, but have you configured
+all of the requirements for Astronomer properly?
+These tests will let you know.
+
+
+__5.__ I've installed Astronomer, is it running and accessible?
+
+There are two test suites to make some basic sanity checks.
+
+```shell
+# Are all of the Astronomer components running?
+./bin/prereq-tests/run.sh -P
+
+# Can I access from the external domain securely?
+./bin/prereq-tests/run.sh -E
+```
+
+The first does a simple check to see if the components are
+running and not restarting in Kubernetes.
+The next section will cover the advanced tests
+for ensuring the platform is working as expected.
+
+The second test here tries to use the DNS record you setup
+and ensures the TLS certificate is in place and correct.
+
+
+#### platform-tests
+
+The platform tests are run against an installed Astronomer platform.
+They run a series of suites to ensure that the system and features
+are operating correctly from both the CLI and API.
+
+The platform tests exist in https://github.com/astronomer/astronomer_e2e_tests
+where you can find more specfic documentation.
+For most installations, the first step is to run these with Helm.
+
+```shell
+# Previously, you installed Astronomer with
+helm install ....
+
+# To run the full test suite in cluster...
+helm test astronomer
+```
+
+You can inspect the pod and logs to see that it completed,
+or if it failed, where and why.
+
+You can also run these tests manually, either from your local machine
+or from a container in-cluster. To run in-cluster:
+
+```shell
+# Create the same pod as using in “helm test”
+kubectl apply -f bin/e2e_test/e2e-pod.yaml
+
+# Log into the container to run tests
+kubectl exec -it -n astronomer manual-ap-e2e-test bash
+```
+
+For more information about what you can do with these
+tests, whether you are in-cluster or local,
+please see the documenation at
+https://github.com/astronomer/astronomer_e2e_tests
+.
+
+
+
+
+
