@@ -1,15 +1,15 @@
 # Testing and the Astronomer Platform
 
-
-### Tests
-
-Overview:
+Astronomer has a couple of test suites to help you
+determine if you are ready for the next installation step
+or help you debug issues during this process.
+The test suites are:
 
 - __prereq-tests__ - testing steps used during installation to ensure readiness
 - __platform-tests__ - tests run post installation to verify the platform
 
 
-#### prereq-tests
+### prereq-tests
 
 Located in `astronomer/bin/prereq-tests`, these tests use
 BATS (a bash testing framework) to ensure you are ready
@@ -86,14 +86,20 @@ The second test here tries to use the DNS record you setup
 and ensures the TLS certificate is in place and correct.
 
 
-#### platform-tests
+### platform-tests
 
 The platform tests are run against an installed Astronomer platform.
 They run a series of suites to ensure that the system and features
 are operating correctly from both the CLI and API.
+Astronomer runs thes tests against the full platform
+for each commit and pull request across five versions of Kubernetes.
+(see .circleci/config.yml for details.)
 
 The platform tests exist in https://github.com/astronomer/astronomer_e2e_tests
 where you can find more specfic documentation.
+They are bundled into a docker image to make it easy to run them
+in cluster, but you can also run them directly from that repository.
+
 For most installations, the first step is to run these with Helm.
 
 ```shell
