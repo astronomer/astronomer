@@ -41,7 +41,7 @@ jobs:
   platform-1-14-10:
     machine:
       image: ubuntu-1604:201903-01
-      resource_class: 2xlarge
+      resource_class: xlarge
     environment:
       KUBE_VERSION: v1.14.10
     steps:
@@ -51,7 +51,7 @@ jobs:
   platform-1-15-7:
     machine:
       image: ubuntu-1604:201903-01
-      resource_class: 2xlarge
+      resource_class: xlarge
     environment:
       KUBE_VERSION: v1.15.7
     steps:
@@ -61,7 +61,7 @@ jobs:
   platform-1-16-4:
     machine:
       image: ubuntu-1604:201903-01
-      resource_class: 2xlarge
+      resource_class: xlarge
     environment:
       KUBE_VERSION: v1.16.4
     steps:
@@ -71,7 +71,7 @@ jobs:
   platform-1-17-2:
     machine:
       image: ubuntu-1604:201903-01
-      resource_class: 2xlarge
+      resource_class: xlarge
     environment:
       KUBE_VERSION: v1.17.2
     steps:
