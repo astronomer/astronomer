@@ -33,7 +33,7 @@ This test for tools needed for both user and admin tasks.
 
 __2. Am I ready to install Kubernetes?__
 
-You will need to use the flag that cooresponds to the cloud provider.
+You will need to use the flag that corresponds to the cloud provider.
 
 ```shell
 # AWS
