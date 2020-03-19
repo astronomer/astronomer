@@ -48,3 +48,6 @@ ports:
   http: 9090
 
 ingressNetworkPolicyExtraSelectors: []
+
+# Enable prometheus lifecycle api
+enableLifecycle: true
