@@ -9,7 +9,7 @@ The current test suites are:
 - __platform-tests__ - tests run post installation to verify the platform
 
 
-### prereq-tests
+## prereq-tests
 
 Located in `astronomer/bin/prereq-tests`, these tests use
 BATS (a bash testing framework) to ensure you are ready
@@ -96,7 +96,7 @@ The next section will tell you how to
 run the E2E test for a final verification.
 
 
-### platform-tests
+## platform-tests
 
 The platform tests are run against an installed Astronomer platform.
 They run a series of suites to ensure that the system and features
