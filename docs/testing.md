@@ -1,9 +1,9 @@
 # Testing and the Astronomer Platform
 
-Astronomer has a couple of test suites to help you
+Astronomer has a set of test suites to help you
 determine if you are ready for the next installation step
-or help you debug issues during this process.
-The test suites are:
+or to help you debug issues during this process.
+The current test suites are:
 
 - __prereq-tests__ - testing steps used during installation to ensure readiness
 - __platform-tests__ - tests run post installation to verify the platform
@@ -16,13 +16,13 @@ BATS (a bash testing framework) to ensure you are ready
 for the next step of installation.
 
 
-__0.__ Prepare for running the tests
+__0. Prepare for running the tests__
 
 In `astronomer/bin/prereq-tests/config.sh`, there are some
 top-level parameters for things like version, domain, and database.
 
 
-__1.__ Do I have the right tools?
+__1. Do I have the right tools?__
 
 ```shell
 ./bin/prereq-tests/run.sh -T
@@ -31,9 +31,9 @@ __1.__ Do I have the right tools?
 This test for tools needed for both user and admin tasks.
 
 
-__2.__ Am I ready to install Kubernetes?
+__2. Am I ready to install Kubernetes?__
 
-You will need to use the flag that coorisponds to the cloud provider.
+You will need to use the flag that cooresponds to the cloud provider.
 
 ```shell
 # AWS
@@ -46,7 +46,7 @@ You will need to use the flag that coorisponds to the cloud provider.
 This will check that you have the cloud procider tools and permissions.
 
 
-__3.__ Is my database available?
+__3. Is my database available?__
 
 If you are using an existing database, this will check that the installation
 process will be able to access it. This will use the configuration set in
@@ -58,14 +58,19 @@ create a database for you, in which case, this test is not needed.
 ```
 
 
-__4.__ I've installed Kubernetes, is it ready for Astronomer?
+__4. I've installed Kubernetes, is it ready for Astronomer?__
 
 You have now installed Kubernetes, but have you configured
-all of the requirements for Astronomer properly?
+all of the permissions and requirements for Astronomer to install properly?
 These tests will let you know.
 
+```shell
+# Is my Kubernetes setup correctly??
+./bin/prereq-tests/run.sh -K
+```
 
-__5.__ I've installed Astronomer, is it running and accessible?
+
+__5. I've installed Astronomer, is it running and accessible?__
 
 There are two test suites to make some basic sanity checks.
 
@@ -84,6 +89,11 @@ for ensuring the platform is working as expected.
 
 The second test here tries to use the DNS record you setup
 and ensures the TLS certificate is in place and correct.
+
+If you have made it this far, great!
+Your Astronomer platform is ready to go.
+The next section will tell you how to
+run the E2E test for a final verification.
 
 
 ### platform-tests
