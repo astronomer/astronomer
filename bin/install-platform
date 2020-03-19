@@ -47,8 +47,7 @@ helm upgrade --install \
   --set tags.logging=${logging} \
   --set tags.monitoring=${monitoring} \
   --set tags.kubed=${kubed} \
-  --set tags.postgresql=${postgresql} \
-  --set global.postgresqlEnabled=${postgresql} \
+  --set global.postgresqlEnabled=true \
   --set tags.keda=${keda} \
   astronomer \
   $HELM_CHART_PATH
