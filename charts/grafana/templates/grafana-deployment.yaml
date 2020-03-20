@@ -34,6 +34,7 @@ spec:
       restartPolicy: Always
       {{- if and (not .Values.backendSecretName) (not .Values.backendConnection) }}
       serviceAccountName: {{ template "grafana.bootstrapper.serviceaccount" . }}
+      {{- end }}
       initContainers:
         - name: wait-for-db
           command:
@@ -49,6 +50,7 @@ spec:
                 secretKeyRef:
                   name: {{ template "grafana.backend.secret" . }}
                   key: connection
+      {{- if and (not .Values.backendSecretName) (not .Values.backendConnection) }}
         - name: bootstrapper
           image: {{ template "grafana.bootstrapper.image" . }}
           imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
