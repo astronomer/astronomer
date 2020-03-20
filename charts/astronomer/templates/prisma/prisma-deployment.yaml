@@ -36,7 +36,7 @@ spec:
       serviceAccountName: {{ template "prisma.bootstrapperServiceAccount" . }}
       {{- end }}
       initContainers:
-        - name: prisma-wait-for-db
+        - name: wait-for-db
           command:
             - "/wait-for-db.sh"
           args:

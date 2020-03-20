@@ -35,21 +35,19 @@ spec:
       {{- if and (not .Values.backendSecretName) (not .Values.backendConnection) }}
       serviceAccountName: {{ template "grafana.bootstrapper.serviceaccount" . }}
       initContainers:
-        # TODO: add wait-for-db or similar to grafana container
-        # and remove the prisma dependency from this subchart
-        - name: prisma-wait-for-db
+        - name: wait-for-db
           command:
             - "/wait-for-db.sh"
           args:
             - "echo"
             - "DB ready"
-          image: astronomerinc/ap-prisma:0.11.1
+          image: {{ template "grafana.image" . }}
           imagePullPolicy: IfNotPresent
           env:
-            - name: PRISMA_DB_URI
+            - name: GF_DATABASE_URL
               valueFrom:
                 secretKeyRef:
-                  name: astronomer-bootstrap
+                  name: {{ template "grafana.backend.secret" . }}
                   key: connection
         - name: bootstrapper
           image: {{ template "grafana.bootstrapper.image" . }}
