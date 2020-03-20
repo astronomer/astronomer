@@ -10,7 +10,7 @@ load ../helpers/semver
   fi
   [ "$status" -eq 0 ]
 
-  version=$(echo "$output" | awk '{ print $2 }' | tr -d 'v')
+  version=$(echo "$output" | head -n 1 | awk '{ print $2 }' | tr -d 'v')
 
   run semver_compare $version "$TERRAFORM_MIN"
   if [[ "$output" -eq -1 ]]; then

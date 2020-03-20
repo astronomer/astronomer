@@ -96,6 +96,66 @@ The next section will tell you how to
 run the E2E test for a final verification.
 
 
+#### Example output for prereq-tests
+
+Passing the tools tests:
+
+```shell
+$ ./bin/prereq-tests/run.sh -T
+
+Starting Astronomer prereqs tests
+
+
+User Tools:
+ ✓ Docker
+ ✓ Astronomer CLI
+
+2 tests, 0 failures
+
+
+Admin Tools:
+ ✓ Terraform
+ ✓ Kubectl
+ ✓ Helm
+
+3 tests, 0 failures
+
+
+Done checking Astronomer prereqs
+```
+
+Failing the tools tests:
+
+```shell
+$ ./bin/prereq-tests/run.sh -T
+
+Starting Astronomer prereqs tests
+
+
+User Tools:
+ ✓ Docker
+ ✓ Astronomer CLI
+
+2 tests, 0 failures
+
+
+Admin Tools:
+ ✗ Terraform
+   (in test file bin/prereq-tests/tools/admin.bats, line 19)
+     `[ "$output" -ne -1 ]' failed
+   Terraform version '0.11.13' does not meet minimum of '0.12.0'
+ ✓ Kubectl
+ ✓ Helm
+
+3 tests, 1 failure
+
+
+Done checking Astronomer prereqs
+```
+
+In the terminal, failing tests are colored red.
+
+
 ## platform-tests
 
 The platform tests are run against an installed Astronomer platform.
