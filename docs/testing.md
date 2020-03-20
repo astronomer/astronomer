@@ -165,7 +165,7 @@ Astronomer runs thes tests against the full platform
 for each commit and pull request across five versions of Kubernetes.
 (see .circleci/config.yml for details.)
 
-The platform tests exist in https://github.com/astronomer/astronomer_e2e_tests
+The platform tests exist in https://github.com/astronomer/astronomer_e2e_test
 where you can find more specfic documentation.
 They are bundled into a docker image to make it easy to run them
 in cluster, but you can also run them directly from that repository.
@@ -197,7 +197,7 @@ kubectl exec -it -n astronomer manual-ap-e2e-test bash
 For more information about what you can do with these
 tests, whether you are in-cluster or local,
 please see the documenation at
-https://github.com/astronomer/astronomer_e2e_tests
+https://github.com/astronomer/astronomer_e2e_test
 .
 
 
