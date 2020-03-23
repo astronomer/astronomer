@@ -1,8 +1,26 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+All notable changes to this project will be documented in this file. For more detail on notable features and changes, refer to our [Release Notes](https://www.astronomer.io/docs/release-notes/).
 
-## [0.11.0] - 2019-12-x
+## [0.12.1] - 2020-03-19
+- New banner in the Deployment Config page that tells trial users they can't touch configs until they upgrade (Cloud only)
+- Limit resource allocation for trials (Cloud only)
+- Bugfix: Environment variable key input loses focus on change
+- Bugfix: Deployment settings changes not saved
+- Bugfix: Allow POST requests to Airflow's REST API
+- Bugfix: Recurring /houston-down page
+- Bugfix: Auth check redirecting users when it shouldn't (e.g. on reset-password, etc.)
+- Bugfix: Airflow version and config links broken
+
+## [0.12.0] - 2020-03-09
+- New Astronomer UI
+- Zero config platform DB support for initial installation (Enterprise Only)
+- Updater service that alerts users when a new version of the platform is available (Enterprise Only)
+- Remove Wildcart SSL Certificate Requirement for Astronomer Installation (Enterprise Only)
+- Improve SingleNamespace Mode role definitions
+- Add `conn:schema` param and update link provided in default airflow_settings.yaml file
+
+## [0.11.0] - 2020-01-24
 - Official Debian Image
 - Platform-level support for multiple Airflow images
 - Support for pre-pushing shared image layers to the platform for faster deploys
