@@ -48,7 +48,7 @@ spec:
             - name: GF_DATABASE_URL
               valueFrom:
                 secretKeyRef:
-                  name: {{ template "grafana.backend.secret" . }}
+                  name: astronomer-bootstrap
                   key: connection
       {{- if and (not .Values.backendSecretName) (not .Values.backendConnection) }}
         - name: bootstrapper
