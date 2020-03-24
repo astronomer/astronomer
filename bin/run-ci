@@ -23,6 +23,7 @@ sleep 5
 
 $DIR/waitfor-platform
 
+sleep 20
 
 ### Test Prep
 echo "172.17.0.1 local.astronomer-development.com" | sudo tee -a /etc/hosts
