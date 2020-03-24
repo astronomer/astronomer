@@ -2,6 +2,8 @@
 set -euo pipefail
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+REPO_DIR=$DIR/../..
 
-source $DIR/clean-pvcs
-source $DIR/clean-secrets
+echo "Running E2E Tests..."
+
+helm test astronomer

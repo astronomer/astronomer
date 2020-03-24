@@ -36,12 +36,18 @@ rules:
   - deployments
   - replicasets
   {{- if not $singleNamespace }}
+  - ingresses
   - daemonsets
   {{- end }}
   verbs: ["list", "watch"]
 - apiGroups: ["apps"]
   resources:
   - statefulsets
+  - deployments
+  - replicasets
+  {{- if not $singleNamespace }}
+  - daemonsets
+  {{- end }}
   verbs: ["list", "watch"]
 - apiGroups: ["batch"]
   resources:
@@ -52,4 +58,48 @@ rules:
   resources:
   - horizontalpodautoscalers
   verbs: ["list", "watch"]
+- apiGroups:
+  - policy
+  resources:
+  - poddisruptionbudgets
+  verbs:
+  - list
+  - watch
+- apiGroups:
+  - certificates.k8s.io
+  resources:
+  - certificatesigningrequests
+  verbs:
+  - list
+  - watch
+- apiGroups:
+  - storage.k8s.io
+  resources:
+  - storageclasses
+  - volumeattachments
+  verbs:
+  - list
+  - watch
+- apiGroups:
+  - admissionregistration.k8s.io
+  resources:
+  - mutatingwebhookconfigurations
+  - validatingwebhookconfigurations
+  verbs:
+  - list
+  - watch
+- apiGroups:
+  - networking.k8s.io
+  resources:
+  - networkpolicies
+  verbs:
+  - list
+  - watch
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - list
+  - watch
 {{- end }}

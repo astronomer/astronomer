@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Bit of common bash magic that sets DIR to the directory of this script
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+source $DIR/helpers.sh
+
+
+# The path to the working directory - the root of the repo
+REPO_DIR=$DIR/../
+HELM_CHART_PATH=${HELM_CHART_PATH:-$REPO_DIR}
+
+echo "Deploying Astronomer..."
+
+# No args means all
+platform=true
+logging=true
+monitoring=true
+kubed=true
+postgresql=true
+keda=true
+
+# Any args means be selective
+if [ $# -ne 0 ]; then
+  platform=false
+  logging=false
+  monitoring=false
+  kubed=false
+  postgresql=false
+  keda=false
+  for component in $@
+  do
+    export $component=true
+  done
+fi
+
+
+set +ex
+
+HELM_TIMEOUT=${HELM_TIMEOUT:-800}
+
+set -x
+helm install \
+  --namespace astronomer \
+  --name astronomer \
+  --timeout $HELM_TIMEOUT \
+  -f configs/local-dev.yaml \
+  --set tags.platform=${platform} \
+  --set tags.logging=${logging} \
+  --set tags.monitoring=${monitoring} \
+  --set tags.kubed=${kubed} \
+  --set global.postgresqlEnabled=true \
+  --set tags.keda=${keda} \
+  $HELM_CHART_PATH
+
+if [ ! $? -eq 0 ]; then
+  set +x
+  echo "Helm chart failed to install"
+  get_debugging_info
+  exit 1
+fi

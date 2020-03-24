@@ -1,4 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
+
 # https://github.com/FiloSottile/mkcert
 mkcert -install
 mkcert -cert-file /tmp/fullchain.pem -key-file /tmp/privkey.pem app.local.astronomer-development.com local.astronomer-development.com "*.local.astronomer-development.com"
