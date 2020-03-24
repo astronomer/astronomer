@@ -34,7 +34,25 @@ spec:
       restartPolicy: Always
       {{- if and (not .Values.houston.backendSecretName) (not .Values.houston.backendConnection) }}
       serviceAccountName: {{ template "prisma.bootstrapperServiceAccount" . }}
+      {{- end }}
       initContainers:
+        - name: wait-for-db
+          command:
+            - "/wait-for-db.sh"
+          args:
+            - "echo"
+            - "DB ready"
+          image: {{ template "prisma.image" . }}
+          imagePullPolicy: {{ .Values.images.prisma.pullPolicy }}
+          env:
+            - name: PRISMA_DB_URI
+              valueFrom:
+                secretKeyRef:
+                  name: astronomer-bootstrap
+                  key: connection
+          resources:
+{{ toYaml .Values.prisma.resources | indent 12 }}
+      {{- if and (not .Values.houston.backendSecretName) (not .Values.houston.backendConnection) }}
         - name: bootstrapper
           image: {{ template "dbBootstrapper.image" . }}
           imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
@@ -55,6 +73,12 @@ spec:
       {{- end }}
       containers:
         - name: prisma
+          command:
+            - "/wait-for-db.sh"
+          args:
+            - "/bin/sh"
+            - "-c"
+            - "/app/start.sh"
           image: {{ template "prisma.image" . }}
           imagePullPolicy: {{ .Values.images.prisma.pullPolicy }}
           resources:

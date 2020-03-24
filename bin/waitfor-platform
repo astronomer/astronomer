@@ -15,7 +15,7 @@ START=$(date +%s)
 # Wait for Astronomer to deploy
 RC=0
 HELM_CODE=0
-MAX_SECONDS=1200
+MAX_SECONDS=800
 while [ $RC -eq 0 ]; do
   NOW=$(date +%s)
   DURATION="$(($NOW-$START))"
