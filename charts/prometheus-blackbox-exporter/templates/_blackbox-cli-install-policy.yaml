@@ -7,17 +7,17 @@ apiVersion: extensions/v1beta1
 kind: NetworkPolicy
 metadata:
   labels:
-    release: {{ .Release.Name}}
+    release: {{ .Release.Name }}
     tier: monitoring
   name: blackbox-cli-install-policy
-  namespace: {{ .Release.Namespace}}
+  namespace: {{ .Release.Namespace }}
 spec:
   ingress:
   - from:
     - podSelector:
         matchLabels:
           component: blackbox-exporter
-          release: {{ .Release.Name}}
+          release: {{ .Release.Name }}
           tier: monitoring
     ports:
     - port: 80
@@ -25,8 +25,8 @@ spec:
   podSelector:
     matchLabels:
       component: cli-install
-      release: {{ .Release.Name}}
+      release: {{ .Release.Name }}
       tier: astronomer
   policyTypes:
   - Ingress
-{{- end}}
+{{- end }}

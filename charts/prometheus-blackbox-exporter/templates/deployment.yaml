@@ -4,7 +4,6 @@ apiVersion: apps/v1
 {{- else }}
 apiVersion: apps/v1beta2
 {{- end }}
-# apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ template "prometheus-blackbox-exporter.fullname" . }}

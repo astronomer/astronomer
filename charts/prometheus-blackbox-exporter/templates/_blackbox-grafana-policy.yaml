@@ -4,21 +4,20 @@ apiVersion: networking.k8s.io/v1
 {{- else }}
 apiVersion: extensions/v1beta1
 {{- end }}
-# apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   labels:
-    release: {{ .Release.Name}}
+    release: {{ .Release.Name }}
     tier: monitoring
   name: blackbox-grafana-policy
-  namespace: {{ .Release.Namespace}}
+  namespace: {{ .Release.Namespace }}
 spec:
   ingress:
   - from:
     - podSelector:
         matchLabels:
           component: blackbox-exporter
-          release: {{ .Release.Name}}
+          release: {{ .Release.Name }}
           tier: monitoring
     ports:
     - port: 3000
@@ -26,8 +25,8 @@ spec:
   podSelector:
     matchLabels:
       component: grafana
-      release: {{ .Release.Name}}
+      release: {{ .Release.Name }}
       tier: monitoring
   policyTypes:
   - Ingress
-{{- end}}
+{{- end }}

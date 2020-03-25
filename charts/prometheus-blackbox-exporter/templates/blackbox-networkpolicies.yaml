@@ -18,22 +18,22 @@
 {{- include "blackbox.registryNetPol" . }}
 {{- end}}
 
-{{- if .Values.astroServices.grafana.enabled}}
+{{- if .Values.astroServices.grafana.enabled }}
 ---
 {{- include "blackbox.grafanaNetPol" . }}
 {{- end}}
 
-{{- if .Values.astroServices.elasticsearch.enabled}}
+{{- if .Values.astroServices.elasticsearch.enabled }}
 ---
 {{- include "blackbox.esClientNetPol" . }}
 {{- end}}
 
-{{- if .Values.astroServices.kibana.enabled}}
+{{- if .Values.astroServices.kibana.enabled }}
 ---
 {{- include "blackbox.kibanaNetPol" . }}
 {{- end}}
 
-{{- if .Values.astroServices.cliInstall.enabled}}
+{{- if .Values.astroServices.cliInstall.enabled }}
 ---
 {{- include "blackbox.cliInstallNetPol" . }}
 {{- end}}

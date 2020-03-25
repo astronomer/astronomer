@@ -7,17 +7,17 @@ apiVersion: extensions/v1beta1
 kind: NetworkPolicy
 metadata:
   labels:
-    release: {{ .Release.Name}}
+    release: {{ .Release.Name }}
     tier: monitoring
   name: blackbox-es-client-policy
-  namespace: {{ .Release.Namespace}}
+  namespace: {{ .Release.Namespace }}
 spec:
   ingress:
   - from:
     - podSelector:
         matchLabels:
           component: blackbox-exporter
-          release: {{ .Release.Name}}
+          release: {{ .Release.Name }}
           tier: monitoring
     ports:
     - port: 9200
@@ -25,8 +25,8 @@ spec:
   podSelector:
     matchLabels:
       component: elasticsearch
-      release: {{ .Release.Name}}
+      release: {{ .Release.Name }}
       tier: logging
   policyTypes:
   - Ingress
-{{- end}}
+{{- end }}
