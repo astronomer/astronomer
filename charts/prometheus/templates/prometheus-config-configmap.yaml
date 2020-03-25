@@ -194,6 +194,12 @@ data:
             replacement: $1
             action: labeldrop            
             # end jpw new
+        metric_relabel_configs:
+          # Required for multi-namespace mode
+          - source_labels: [namespace]
+            regex: "^{{ .Release.Namespace }}-(.*-.*-[0-9]{4})$"
+            replacement: "$1"
+            target_label: release
         {{- else}}
         # this drops node metrics that we want in the cloud, but maybe shouldn't be scraping
         # if we are in a shared cluster in enterprise
@@ -204,11 +210,6 @@ data:
             regex: "^{{ .Release.Namespace }}.*"
           - source_labels: [deployment]
             regex: "^(.*-.*-[0-9]{4})-.*"
-            replacement: "$1"
-            target_label: release
-          # Required for multi-namespace mode
-          - source_labels: [namespace]
-            regex: "^{{ .Release.Namespace }}-(.*-.*-[0-9]{4})$"
             replacement: "$1"
             target_label: release
           # Required for single-namespace mode
