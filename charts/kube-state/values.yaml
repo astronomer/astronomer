@@ -24,3 +24,5 @@ resources: {}
 ports:
   scrape: 8080
   telemetry: 8081
+
+replicas: 1
