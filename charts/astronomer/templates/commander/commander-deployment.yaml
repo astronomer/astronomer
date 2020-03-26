@@ -12,7 +12,7 @@ metadata:
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
 spec:
-  replicas: 1
+  replicas: {{ .Values.commander.replicas }}
   selector:
     matchLabels:
       component: commander
@@ -47,11 +47,15 @@ spec:
             - name: commander-grpc
               containerPort: {{ .Values.ports.commanderGRPC }}
           livenessProbe:
+            failureThreshold: 5
             httpGet:
               path: /healthz
               port: {{ .Values.ports.commanderHTTP }}
+              scheme: HTTP
             initialDelaySeconds: 10
             periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
           readinessProbe:
             httpGet:
               path: /healthz
