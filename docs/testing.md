@@ -198,9 +198,3 @@ For more information about what you can do with these
 tests, whether you are in-cluster or local,
 please see the documenation at
 https://github.com/astronomer/astronomer_e2e_test
-.
-
-
-
-
-
