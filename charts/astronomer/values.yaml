@@ -42,6 +42,7 @@ images:
     pullPolicy: IfNotPresent
 
 astroUI:
+  replicas: 2
   env: []
   resources: {}
   #  limits:
@@ -52,7 +53,7 @@ astroUI:
   #   memory: 128Mi
 
 houston:
-  replicas: 1
+  replicas: 2
   # Houston datastore
   backendSecretName: ~
   backendConnection: {}
@@ -166,7 +167,7 @@ prisma:
 
 
 commander:
-  replicas: 1
+  replicas: 2
   env: []
   resources: {}
    # limits:

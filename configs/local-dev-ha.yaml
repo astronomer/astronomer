@@ -27,13 +27,13 @@ global:
 ############################
 astronomer:
   astroUI:
-    replicas: 1
+    replicas: 2
     resources:
       requests:
         cpu: "0m"
         memory: "0Mi"
   houston:
-    replicas: 1
+    replicas: 2
     resources:
       requests:
         cpu: "0m"
@@ -50,7 +50,7 @@ astronomer:
         cpu: "0m"
         memory: "0Mi"
   commander:
-    replicas: 1
+    replicas: 2
     resources:
       requests:
         cpu: "0m"
@@ -71,8 +71,8 @@ astronomer:
 ## Nginx configuration
 #################################
 nginx:
-  replicas: 1
-  replicasDefaultBackend: 1
+  replicas: 2
+  replicasDefaultBackend: 2
   # Configure resources
   resources:
     requests:
@@ -96,7 +96,7 @@ grafana:
 ## Prometheus configuration
 #################################
 prometheus:
-  replicas: 1
+  replicas: 2
   # Configure resources
   resources:
     requests:
@@ -109,7 +109,7 @@ prometheus:
 elasticsearch:
   # Configure client nodes
   client:
-    replicas: 1
+    replicas: 2
     resources:
       requests:
         cpu: "0"
@@ -117,7 +117,7 @@ elasticsearch:
 
   # Configure data nodes
   data:
-    replicas: 1
+    replicas: 2
     resources:
       requests:
         cpu: "0"
@@ -125,7 +125,7 @@ elasticsearch:
 
   # Configure master nodes
   master:
-    replicas: 1
+    replicas: 3
     resources:
       requests:
         cpu: "0"

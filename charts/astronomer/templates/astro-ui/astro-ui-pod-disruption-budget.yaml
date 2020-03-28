@@ -1,0 +1,18 @@
+################################
+## Astronomer UI Pod Disruption Budget
+#################################
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ .Release.Name }}-astro-ui-pdb
+spec:
+  {{- if lt ( .Values.astroUI.replicas | int ) 4 }}
+  maxUnavailable: 1
+  {{- else }}
+  maxUnavailable: 25%
+  {{- end }}
+  selector:
+    matchLabels:
+      tier: astronomer
+      component: astro-ui
+      release: {{ .Release.Name }}

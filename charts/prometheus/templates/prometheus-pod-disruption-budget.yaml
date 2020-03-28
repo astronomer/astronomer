@@ -1,0 +1,14 @@
+################################
+## Astronomer Prometheus Pod Disruption Budget
+#################################
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ .Release.Name }}-prometheus-pdb
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      tier: monitoring
+      component: {{ template "prometheus.name" . }}
+      release: {{ .Release.Name }}

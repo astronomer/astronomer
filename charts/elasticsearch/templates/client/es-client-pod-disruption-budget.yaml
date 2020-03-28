@@ -1,0 +1,19 @@
+################################
+## Astronomer Elasticsearch Client Pod Disruption Budget
+#################################
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ .Release.Name }}-es-client-pdb
+spec:
+  {{- if lt ( .Values.client.replicas | int ) 4 }}
+  maxUnavailable: 1
+  {{- else }}
+  maxUnavailable: 25%
+  {{- end }}
+  selector:
+    matchLabels:
+      tier: logging
+      component: {{ template "elasticsearch.name" . }}
+      release: {{ .Release.Name }}
+      role: client

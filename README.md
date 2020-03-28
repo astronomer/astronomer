@@ -90,6 +90,34 @@ export KUBE_VERSION='v1.16.3'
 bin/reset-local-dev
 ```
 
+#### Locally test HA configurations:
+
+You need a powerful computer to run the HA testing locally. 28 GB or more of memory should be available to Docker.
+
+Environment variables:
+
+- USE_HA: when set, will deploy using HA configurations
+- CORDON_NODE: when set, will cordon this node after kind create cluster
+- MULTI_NODE: when set, will deploy kind with two worker nodes
+
+Scripts:
+
+- Use bin/run-ci to start the cluster
+- Modify / use bin/drain.sh to test draining
+
+Example:
+
+```
+export USE_HA=1
+export CORDON_NODE=kind-worker
+export MULTI_NODE=1
+bin/run-ci
+```
+
+After the platform is up, then do
+```
+bin/drain.sh
+```
 
 ## Releasing
 

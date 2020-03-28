@@ -1,0 +1,18 @@
+################################
+## Astronomer Nginx Default Backend Pod Disruption Budget
+#################################
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ .Release.Name }}-nginx-default-backend-pdb
+spec:
+  {{- if lt ( .Values.replicasDefaultBackend | int ) 4 }}
+  maxUnavailable: 1
+  {{- else }}
+  maxUnavailable: 25%
+  {{- end }}
+  selector:
+    matchLabels:
+      tier: {{ template "nginx.name" . }}
+      component: default-backend
+      release: {{ .Release.Name }}

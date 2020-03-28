@@ -6,13 +6,19 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 # The path to the working directory - the root of the repo
 REPO_DIR=$DIR/../
 
+if [[ -z "${USE_HA+x}" ]]; then
+  CONFIG_FILE=$REPO_DIR/configs/local-dev.yaml
+else
+  CONFIG_FILE=$REPO_DIR/configs/local-dev-ha.yaml
+fi
+
 # Fail fast for helm syntax errors
-helm template -f $REPO_DIR/configs/local-dev.yaml $REPO_DIR
+helm template -f $CONFIG_FILE $REPO_DIR
 
 source $REPO_DIR/bin/setup-kind
 
 echo "Deploying Astronomer..."
-helm install -f configs/local-dev.yaml \
+helm install -f $CONFIG_FILE \
   --namespace astronomer -n astronomer \
   --set global.postgresqlEnabled=true \
   $REPO_DIR

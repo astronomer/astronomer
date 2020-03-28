@@ -39,9 +39,15 @@ set -xe
 # Delete the old cluster, if it exists
 kind delete cluster || true
 
+if [[ -z "${MULTI_NODE+x}" ]]; then
+  CONFIG_OPTION=""
+else
+  CONFIG_OPTION="--config $REPO_DIR/bin/kind/multi-node.yaml"
+fi
+
 # Start a cluster
 set +e
-kind create cluster --image kindest/node:${KUBE_VERSION}
+kind create cluster $CONFIG_OPTION --image kindest/node:${KUBE_VERSION}
 # I have found kind create cluster
 # fails rarely, but since we are running
 # so many in parallel, that it happens
@@ -50,11 +56,15 @@ if ! [[ $? -eq 0 ]]; then
   set -e
   echo "Failed to create Kind cluster, trying one more time"
   kind delete cluster || true
-  kind create cluster --image kindest/node:${KUBE_VERSION}
+  kind create cluster $CONFIG_OPTION --image kindest/node:${KUBE_VERSION}
 fi
 
 set -e
 set +x
+
+if ! [[ -z "${CORDON_NODE+x}" ]]; then
+  kubectl cordon $CORDON_NODE
+fi
 
 kubectl get nodes
 
