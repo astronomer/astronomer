@@ -19,6 +19,7 @@ metadata:
     service.beta.kubernetes.io/aws-load-balancer-internal: "true"
     cloud.google.com/load-balancer-type: "Internal"
     service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+    service.kubernetes.io/ibm-load-balancer-cloud-provider-ip-type: "private"
     {{- end }}
 
     # Metrics annotations
