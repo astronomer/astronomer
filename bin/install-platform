@@ -39,12 +39,18 @@ set +ex
 
 HELM_TIMEOUT=${HELM_TIMEOUT:-800}
 
+if [[ -z "${USE_HA+x}" ]]; then
+  CONFIG_FILE=$REPO_DIR/configs/local-dev.yaml
+else
+  CONFIG_FILE=$REPO_DIR/configs/local-dev-ha.yaml
+fi
+
 set -x
 helm install \
   --namespace astronomer \
   --name astronomer \
   --timeout $HELM_TIMEOUT \
-  -f configs/local-dev.yaml \
+  -f $CONFIG_FILE \
   --set tags.platform=${platform} \
   --set tags.logging=${logging} \
   --set tags.monitoring=${monitoring} \

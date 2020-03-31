@@ -18,12 +18,12 @@ images:
     pullPolicy: IfNotPresent
   houston:
     repository: astronomerinc/ap-houston-api
-    tag: 0.11.3
+    tag: 0.12.2
     pullPolicy: IfNotPresent
   astroUI:
     repository: astronomerinc/ap-astro-ui
-    tag: latest
-    pullPolicy: Always
+    tag: 0.12.4
+    pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: astronomerinc/ap-db-bootstrapper
     tag: 0.11.0
@@ -42,7 +42,10 @@ images:
     pullPolicy: IfNotPresent
 
 astroUI:
+  replicas: 2
   env: []
+  # This only applies when replicas > 3
+  maxUnavailable: 25%
   resources: {}
   #  limits:
   #   cpu: 100m
@@ -52,6 +55,9 @@ astroUI:
   #   memory: 128Mi
 
 houston:
+  replicas: 2
+  # This only applies when replicas > 3
+  maxUnavailable: 25%
   # Houston datastore
   backendSecretName: ~
   backendConnection: {}
@@ -165,7 +171,10 @@ prisma:
 
 
 commander:
+  replicas: 2
   env: []
+  # This only applies when replicas > 3
+  maxUnavailable: 25%
   resources: {}
    # limits:
    #  cpu: 100m

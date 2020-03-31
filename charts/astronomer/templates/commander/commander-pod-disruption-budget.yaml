@@ -1,0 +1,18 @@
+################################
+## Astronomer Commander Pod Disruption Budget
+#################################
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ .Release.Name }}-commander-pdb
+spec:
+  {{- if lt ( .Values.commander.replicas | int ) 4 }}
+  maxUnavailable: 1
+  {{- else }}
+  maxUnavailable: {{ .Values.commander.maxUnavailable }}
+  {{- end }}
+  selector:
+    matchLabels:
+      component: commander
+      tier: astronomer
+      release: {{ .Release.Name }}

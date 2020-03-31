@@ -1,0 +1,15 @@
+################################
+## Astronomer Elasticsearch Master Pod Disruption Budget
+#################################
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ .Release.Name }}-es-master-pdb
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      tier: logging
+      component: {{ template "elasticsearch.name" . }}
+      release: {{ .Release.Name }}
+      role: master

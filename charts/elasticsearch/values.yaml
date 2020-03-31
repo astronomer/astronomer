@@ -62,6 +62,8 @@ client:
   podAnnotations: {}
   # It isn't common to need more than 2 client nodes.
   replicas: 2
+  # This only applies when replicas > 3
+  maxUnavailable: 25%
   antiAffinity: "soft"
 
   # The amount of RAM allocated to the JVM heap. This should be set to the

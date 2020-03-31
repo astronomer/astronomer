@@ -19,7 +19,12 @@ images:
 forceNamespaceIsolation: true
 ingressClass: ~
 
-replicas: 1
+replicas: 2
+replicasDefaultBackend: 2
+# These are only applicable when respective replicas > 3
+maxUnavailable: 25%
+maxUnavailableDefaultBackend: 25%
+
 resources: {}
 #  limits:
 #   cpu: 100m
