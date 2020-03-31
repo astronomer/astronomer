@@ -42,7 +42,10 @@ images:
     pullPolicy: IfNotPresent
 
 astroUI:
+  replicas: 2
   env: []
+  # This only applies when replicas > 3
+  maxUnavailable: 25%
   resources: {}
   #  limits:
   #   cpu: 100m
@@ -52,7 +55,9 @@ astroUI:
   #   memory: 128Mi
 
 houston:
-  replicas: 1
+  replicas: 2
+  # This only applies when replicas > 3
+  maxUnavailable: 25%
   # Houston datastore
   backendSecretName: ~
   backendConnection: {}
@@ -166,8 +171,10 @@ prisma:
 
 
 commander:
-  replicas: 1
+  replicas: 2
   env: []
+  # This only applies when replicas > 3
+  maxUnavailable: 25%
   resources: {}
    # limits:
    #  cpu: 100m
