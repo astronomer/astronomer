@@ -10,6 +10,7 @@ tags:
   platform: true
   logging: false
   monitoring: false
+  keda: true
   kubed: true
   # postgresql: true
 
@@ -37,6 +38,7 @@ astronomer:
         memory: "0Mi"
 
     config:
+      emailConfirmation: false
       auth:
         local:
           enabled: true

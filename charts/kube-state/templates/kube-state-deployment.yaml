@@ -13,7 +13,7 @@ metadata:
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
 spec:
-  replicas: 1
+  replicas: {{ .Values.replicas }}
   selector:
     matchLabels:
       tier: {{ template "kube-state.name" . }}

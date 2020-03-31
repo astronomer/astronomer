@@ -20,3 +20,14 @@ nginx:
   loadBalancerIP: ~
   # set to 'true' when deploying to a private EKS cluster
   privateLoadBalancer: false
+
+#################################
+## SMTP Setup
+#################################
+astronomer:
+    houston:
+      config:
+        email:
+          enabled: true
+          smtpUrl: # smtp://USERNAME:PW@HOST/?requireTLS=true
+          from: # address email will arrive from

@@ -38,10 +38,15 @@ data:
         enabled: ${HTTP_CORS_ENABLE}
         allow-origin: ${HTTP_CORS_ALLOW_ORIGIN}
 
+    # Setting the ping schedule explictly ensures that
+    # tcp_keep_alive configuration does not cause components
+    # to have their connections terminated.
+    transport:
+      ping_schedule: "5s"
+
     discovery:
-      zen:
-        ping.unicast.hosts: ${DISCOVERY_SERVICE}
-        minimum_master_nodes: ${NUMBER_OF_MASTERS:2}
+      seed_hosts:
+        - {{ template "elasticsearch.fullname" . }}-headless-discovery
 
     # Disable scripting for security.
     script.allowed_types: none

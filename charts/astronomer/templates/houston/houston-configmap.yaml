@@ -59,8 +59,7 @@ data:
         # This version number controls the default Airflow chart version that will be installed
         # when creating a new deployment in the system. This is also used to ensure all
         # child airflow deployments are kept up to date and on the latest version.
-        version: 0.11.1
-
+        version: 0.13.0-alpha.2
       # Airflow image settings
       # This is a list of supported airflow versions and corresponding docker tag
       images:
@@ -128,9 +127,15 @@ data:
           airflowLocalSettings: |
             from airflow.contrib.kubernetes.pod import Pod
             from airflow.configuration import conf
+            # This pod mutation hook runs for all pods dynamically created by Airflow
+            # in Kubernetes (K8s). This includes K8s executor Airflow-workers, which is
+            # an alternative executor to Celery, and K8s Pod Operator (KPO) pods, which is
+            # an Airflow operator that launches a task in a K8s cluster.
+            #
+            # This function is responsible for two things. It assigns labels to disambiguate
+            # between KPO and K8s executor pods. Also, it handles writing the entrypoint for
+            # K8s executor pods. Why we do this second part, you can read below.
             def pod_mutation_hook(pod: Pod):
-
-              # This is the default airflow-chart pod mutation hook
               extra_labels = {
                   "kubernetes-executor": "False",
                   "kubernetes-pod-operator": "False"
@@ -138,18 +143,24 @@ data:
               if 'airflow-worker' in pod.labels.keys() or \
                       conf.get('core', 'EXECUTOR') == "KubernetesExecutor":
                   extra_labels["kubernetes-executor"] = "True"
+                  # By default, Airflow overwrites the entrypoint
+                  # of KPO and K8s executor Airflow-worker pods.
+                  # K8s worker pods are Airflow containers, and we can assume these
+                  # Airflow containers are vendored by Astronomer. Astronomer provides
+                  # an entrypoint in these containers to handle waiting for the network
+                  # and the database to be ready, so we do not want this entrypoint
+                  # to be overwritten. This helps with the stability of the K8s executor.
+                  if not pod.args:
+                    pod.args = []
+                  pod.args = pod.cmds + pod.args
+                  pod.cmds = ["tini", "--", "/entrypoint"]
               else:
                   extra_labels["kubernetes-pod-operator"] = "True"
+                  # In the case of KPO, we allow Airflow to overwrite the entrypoint
+                  # because we do not know what the container will be (and it's probably
+                  # not a container vendored by Astronomer, and it's definately not
+                  # an Airflow container).
               pod.labels.update(extra_labels)
-              pod.tolerations += []
-              pod.affinity.update({})
-
-              # Ensure our entrypoint is respected
-              if not pod.args:
-                pod.args = []
-              pod.args = pod.cmds + pod.args
-              pod.cmds = ["tini", "--", "/entrypoint"]
-
           resources:
             limits:
               ephemeral-storage: "2Gi"

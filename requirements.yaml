@@ -26,6 +26,10 @@ dependencies:
     condition: global.kubeStateEnabled
     tags:
       - monitoring
+  - name: node-exporter
+    condition: global.nodeExporterEnabled
+    tags:
+      - monitoring
 
   # Logging stack
   - name: elasticsearch
@@ -53,3 +57,9 @@ dependencies:
     condition: global.postgresqlEnabled
     tags:
       - postgresql
+
+  # Used to enable Celery autoscaling
+  - name: keda
+    condition: global.kedaEnabled
+    tags:
+      - keda

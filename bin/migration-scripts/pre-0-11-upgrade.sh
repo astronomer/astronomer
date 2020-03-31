@@ -87,7 +87,7 @@ function get_helm_values_of_release {
 function get_deployments {
   set +e
   echo "Looking for Astronomer deployments..."
-  export RELEASE_NAMES=$(helm list | grep airflow | grep astronomer | awk '{ print $1 }')
+  export RELEASE_NAMES=$(helm list | grep airflow | grep $NAMESPACE | awk '{ print $1 }')
   if ! [[ $? -eq 0 ]]; then
     echo "Did not find any Astronomer deployments"
     exit 1

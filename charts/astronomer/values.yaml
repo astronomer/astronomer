@@ -18,12 +18,12 @@ images:
     pullPolicy: IfNotPresent
   houston:
     repository: astronomerinc/ap-houston-api
-    tag: 0.11.3
+    tag: 0.12.2
     pullPolicy: IfNotPresent
   astroUI:
     repository: astronomerinc/ap-astro-ui
-    tag: latest
-    pullPolicy: Always
+    tag: 0.12.4
+    pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: astronomerinc/ap-db-bootstrapper
     tag: 0.11.0
@@ -34,7 +34,11 @@ images:
     pullPolicy: IfNotPresent
   prisma:
     repository: astronomerinc/ap-prisma
-    tag: 0.11.0
+    tag: 0.11.1
+    pullPolicy: IfNotPresent
+  e2eTest:
+    repository: astronomerinc/ap-e2e-test
+    tag: 0.0.7
     pullPolicy: IfNotPresent
 
 astroUI:
@@ -48,6 +52,7 @@ astroUI:
   #   memory: 128Mi
 
 houston:
+  replicas: 1
   # Houston datastore
   backendSecretName: ~
   backendConnection: {}
@@ -137,6 +142,18 @@ houston:
     # Only run on deployments marked as canary
     canary: false
 
+  # Check for Astronomer Platform Updates
+  # This runs as a CronJob
+  updateCheck:
+    # Enable check updates CronJob
+    enabled: true
+
+    # url for update service
+    url: https://updates.astronomer.io/astronomer-platform
+
+    # Default here is to run at midnight every night
+    schedule: "0 0 * * *"
+
 prisma:
   env: []
   resources: {}
@@ -149,6 +166,7 @@ prisma:
 
 
 commander:
+  replicas: 1
   env: []
   resources: {}
    # limits:
@@ -204,6 +222,9 @@ install:
   #   cpu: 100m
   #   memory: 128Mi
 
+e2eTest:
+  env: []
+  resources: {}
 
 ports:
   houstonHTTP: 8871

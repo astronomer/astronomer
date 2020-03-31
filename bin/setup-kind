@@ -1,13 +1,16 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
-if [[ -z "${KUBE_VERSION}" ]]; then
-  export KUBE_VERSION='v1.15.6'
-fi
+export KUBE_VERSION="${KUBE_VERSION:-v1.15.6}"
 
 # Bit of common bash magic that sets DIR to the directory of this script
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 # The path to the working directory - the root of the repo
 REPO_DIR=$DIR/../
+
+echo "Checking tools are installed"
+
+set +e
 
 # Check required tools are installed
 for executable in mkcert kind helm kubectl docker; do

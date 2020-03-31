@@ -33,7 +33,13 @@ global:
 
   # Enable default postgresql database.
   # This is not recommended for production.
-  postgresqlEnabled: true
+  postgresqlEnabled: false
+
+  # Enables a node exporter DaemonSet for node-level metrics
+  nodeExporterEnabled: true
+
+  # Used to enable Celery autoscaling
+  kedaEnabled: false
 
   # Set nodeSelector, affinity, and tolerations values for platform and deployment related pods.
   # This allows for separation of platform and airflow pods between kubernetes node pools.

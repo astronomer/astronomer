@@ -63,6 +63,9 @@ spec:
             - "--config.file=/etc/prometheus/config/prometheus.yaml"
             - "--storage.tsdb.path={{ .Values.dataDir }}"
             - "--storage.tsdb.retention={{ .Values.retention }}"
+            {{- if .Values.enableLifecycle }}
+            - "--web.enable-lifecycle"
+            {{- end }}
           volumeMounts:
             - name: prometheus-config-volume
               mountPath: /etc/prometheus/config

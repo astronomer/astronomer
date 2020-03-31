@@ -1,6 +1,5 @@
-#!/bin/bash
-
-set -e
+#!/usr/bin/env bash
+set -euo pipefail
 
 if [[ -z "${HELM_CHART_PATH}" ]]; then
   echo "ERROR: must provide HELM_CHART_PATH pointing to astronomer-*.tgz, will not release without an artifact."
@@ -45,6 +44,7 @@ echo "Releasing chart..."
 # gcloud configurations.
 export BOTO_CONFIG=/dev/null
 
+set +x
 echo ${GCP_TOKEN} > /tmp/gcs_token.json
 gcloud auth activate-service-account --key-file=/tmp/gcs_token.json
 
@@ -54,7 +54,7 @@ wget https://helm.astronomer.io/index.yaml -O /tmp/index.yaml.current
 helm repo index . --url https://helm.astronomer.io --merge /tmp/index.yaml.current
 
 gsutil cp -a public-read $HELM_CHART_PATH gs://helm.astronomer.io
-gsutil cp -a public-read ./index.yaml gs://helm.astronomer.io
+gsutil cp -a public-read -h "Cache-Control:no-cache,max-age=0" ./index.yaml gs://helm.astronomer.io
 
 set +x
 echo ""
