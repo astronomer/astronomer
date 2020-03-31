@@ -473,3 +473,97 @@ data:
             target_label: component_instance
 
       {{- end }}
+
+
+      {{- if .Values.global.blackboxExporterEnabled }}
+      # Will probe the endpoints listed under targets looking for a 2XX HTTP response
+      - job_name: 'blackbox HTTP'
+        metrics_path: /probe
+        params:
+          module: [http_2xx]  # Look for a HTTP 200 response.
+        # TODO: change this static config to be driving by service annotations. This works for now
+        static_configs:
+          - targets:
+          {{- if .Values.astroHTTPTargets.commander}}
+            - http://{{.Release.Name}}-commander.{{.Release.Namespace}}:8880/healthz
+          {{- end }}
+          {{- if .Values.astroHTTPTargets.houston}}
+            - http://{{.Release.Name}}-houston.{{.Release.Namespace}}:8871/v1/healthz
+          {{- end }}
+          {{- if .Values.astroHTTPTargets.registry}}
+            - http://{{.Release.Name}}-registry.{{.Release.Namespace}}:5000
+          {{- end }}
+          {{- if .Values.astroHTTPTargets.cliInstall}}
+            - http://{{.Release.Name}}-cli-install.{{.Release.Namespace}}
+          {{- end }}
+          {{- if .Values.astroHTTPTargets.grafana}}
+            - http://{{.Release.Name}}-grafana.{{.Release.Namespace}}:3000/api/health
+          {{- end }}
+          {{- if .Values.astroHTTPTargets.kibana}}
+            - http://{{.Release.Name}}-kibana.{{.Release.Namespace}}:5601
+          {{- end }}
+          {{- if .Values.astroHTTPTargets.elasticsearch}}
+            - http://{{.Release.Name}}-elasticsearch.{{.Release.Namespace}}:9200/_cluster/health?local=true
+          {{- end }}
+
+
+            {{- if .Values.global.baseDomain }}
+            - https://app.{{ .Values.global.baseDomain }}
+            - https://houston.{{ .Values.global.baseDomain }}/v1/healthz
+            - https://registry.{{ .Values.global.baseDomain }}
+            - https://install.{{ .Values.global.baseDomain }}
+            {{- end}}
+          {{- range .Values.httpTargets }}
+            - {{ . }}
+          {{- end }}
+        relabel_configs:
+          - source_labels: [__address__]
+            target_label: __param_target
+          - source_labels: [__param_target]
+            target_label: instance
+          - target_label: __address__
+            replacement: {{.Release.Name}}-prometheus-blackbox-exporter.{{.Release.Name}}:9115  # The blackbox exporter's real hostname:port.
+
+
+      {{- if .Values.tcpProbe.enabled}}
+      # Only testing for ability to open a TCP connection. 
+      - job_name: 'blackbox TCP'
+        metrics_path: /probe
+        params:
+          module: [tcp_connect]  # Try tcp handshake on a port
+        static_configs:
+          - targets:
+            {{- if .Values.tcpProbe.probePGProxy}}
+            - pg-sqlproxy-gcloud-sqlproxy.{{.Release.Namespace}}:5432
+            {{- end }}
+            {{- if .Values.tcpProbe.probeTiller}}
+            - tiller-deploy.kube-system:44134 # TCP Probe 
+            {{- end }}
+        relabel_configs:
+          - source_labels: [__address__]
+            target_label: __param_target
+          - source_labels: [__param_target]
+            target_label: instance
+          - target_label: __address__
+            replacement: {{.Release.Name}}-prometheus-blackbox-exporter.{{.Release.Namespace}}:9115  # The blackbox exporter's real hostname:port.
+        {{- end }}
+
+      # Tests that DNS in cluster is working. 
+      # target should be your cluster DNS service IP
+      - job_name: 'blackbox DNS'
+        metrics_path: /probe
+        params:
+          module: [dns_int]
+        static_configs:
+          - targets:
+            {{- range .Values.dnsTargets }}
+            - {{ . }}
+            {{- end }}
+        relabel_configs:
+          - source_labels: [__address__]
+            target_label: __param_target
+          - source_labels: [__param_target]
+            target_label: instance
+          - target_label: __address__
+            replacement: {{.Release.Name}}-prometheus-blackbox-exporter.{{.Release.Namespace}}:9115
+        {{- end }}

@@ -1,0 +1,32 @@
+{{- define "blackbox.cliInstallNetPol" }}
+{{- if gt (.Capabilities.KubeVersion.Minor | atoi) 15 }}
+apiVersion: networking.k8s.io/v1
+{{- else }}
+apiVersion: extensions/v1beta1
+{{- end }}
+kind: NetworkPolicy
+metadata:
+  labels:
+    release: {{ .Release.Name }}
+    tier: monitoring
+  name: blackbox-cli-install-policy
+  namespace: {{ .Release.Namespace }}
+spec:
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          component: blackbox-exporter
+          release: {{ .Release.Name }}
+          tier: monitoring
+    ports:
+    - port: 80
+      protocol: TCP
+  podSelector:
+    matchLabels:
+      component: cli-install
+      release: {{ .Release.Name }}
+      tier: astronomer
+  policyTypes:
+  - Ingress
+{{- end }}
