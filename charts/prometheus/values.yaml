@@ -21,7 +21,7 @@ images:
     pullPolicy: IfNotPresent
   prometheus:
     repository: astronomerinc/ap-prometheus
-    tag: 0.11.0
+    tag: 0.12.0
     pullPolicy: IfNotPresent
 
 resources: {}
@@ -48,3 +48,6 @@ ports:
   http: 9090
 
 ingressNetworkPolicyExtraSelectors: []
+
+# Enable prometheus lifecycle api
+enableLifecycle: true

@@ -1,8 +1,5 @@
-#!/bin/bash
-
-# Fail script if anything fails,
-# and output all commands
-set -xe
+#!/usr/bin/env bash
+set -xeuo pipefail
 
 KIND_VERSION="0.7.0"
 HELM_VERSION="2.16.1"

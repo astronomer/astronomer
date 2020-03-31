@@ -33,15 +33,19 @@ lint:
 	rm ${TEMP}/prometheus_alerts.yaml
 
 .PHONY: build
+.ONESHELL:
 build:
 	set -xe
 	helm repo add kedacore https://kedacore.github.io/charts
 	rm -rf ${TEMP}/astronomer || true
 	mkdir -p ${TEMP}
 	cp -R ../astronomer ${TEMP}/astronomer || cp -R ../project ${TEMP}/astronomer
-	# Install the external chart
-	helm dependency update ${TEMP}/astronomer/charts/postgresql
-	helm dependency update ${TEMP}/astronomer/charts/keda
+	# Install external charts
+	for chart in $$(ls ${TEMP}/astronomer/charts); do
+	if test -f ${TEMP}/astronomer/charts/$$chart/requirements.yaml; then
+	helm dep update ${TEMP}/astronomer/charts/$$chart
+	fi
+	done
 	helm package ${TEMP}/astronomer
 
 .PHONY: build-index

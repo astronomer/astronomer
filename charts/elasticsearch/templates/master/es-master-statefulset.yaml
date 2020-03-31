@@ -124,7 +124,7 @@ spec:
             fieldRef:
               fieldPath: metadata.name
         - name: DISCOVERY_SERVICE
-          value: {{ template "elasticsearch.fullname" . }}-discovery
+          value: {{ template "elasticsearch.fullname" . }}-headless-discovery
         - name: ES_JAVA_OPTS
           value: "-Xms{{ .Values.master.heapMemory }} -Xmx{{ .Values.master.heapMemory }}"
         {{- range $key, $value :=  .Values.common.env }}
@@ -141,11 +141,13 @@ spec:
         - containerPort: {{ .Values.common.ports.transport }}
           name: transport
           protocol: TCP
-        # readinessProbe:
-        #   httpGet:
-        #     path: /_cluster/health?local=true
-        #     port: {{ .Values.common.ports.http }}
-        #   initialDelaySeconds: 5
+        readinessProbe:
+          httpGet:
+            # local: If true, the request retrieves information from the local node only.
+            # Defaults to false, which means information is retrieved from the master node.
+            path: /_cluster/health?local=true
+            port: {{ .Values.common.ports.http }}
+          initialDelaySeconds: 5
         livenessProbe:
           tcpSocket:
             port: {{ .Values.common.ports.transport }}
