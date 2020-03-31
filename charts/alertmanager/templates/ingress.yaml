@@ -1,0 +1,41 @@
+################################
+## alertmanager Ingress
+#################################
+{{- if .Values.global.baseDomain }}
+kind: Ingress
+apiVersion: extensions/v1beta1
+metadata:
+  name: {{ template "alertmanager.fullname" . }}-ingress
+  labels:
+    tier: alertmanager-networking
+    component: alertmanager-ingress
+    chart: {{ template "alertmanager.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  annotations:
+    kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
+    kubernetes.io/tls-acme: {{ eq .Values.global.acme true | quote }}
+    nginx.ingress.kubernetes.io/auth-url: https://houston.{{ .Values.global.baseDomain }}/v1/authorization
+    nginx.ingress.kubernetes.io/auth-signin: https://app.{{ .Values.global.baseDomain }}/login
+    nginx.ingress.kubernetes.io/auth-response-headers: authorization, username, email
+spec:
+  {{- if or .Values.global.tlsSecret .Values.global.acme }}
+  tls:
+  {{- if .Values.global.acme }}
+    - secretName: alertmanager-tls
+  {{- end }}
+  {{- if .Values.global.tlsSecret }}
+    - secretName: {{ .Values.global.tlsSecret }}
+  {{- end }}
+      hosts:
+        - {{ template "alertmanager.url" . }}
+  {{- end }}
+  rules:
+    - host: {{ template "alertmanager.url" . }}
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: {{ template "alertmanager.fullname" . }}
+              servicePort: http
+{{- end }}

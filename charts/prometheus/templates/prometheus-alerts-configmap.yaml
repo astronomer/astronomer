@@ -198,37 +198,37 @@ data:
       - name: k8s-recording.rules 
         rules:
         - expr: |
-            sum(rate(container_cpu_usage_seconds_total{job="kubelet", metrics_path="/metrics/cadvisor", image!="", container!="POD"}[5m])) by (namespace)
+            sum(rate(container_cpu_usage_seconds_total{job="kubernetes-nodes-cadvisor", image!="", container!="POD"}[5m])) by (namespace)
           record: namespace:container_cpu_usage_seconds_total:sum_rate
         - expr: |
             sum by (cluster, namespace, pod, container) (
-              rate(container_cpu_usage_seconds_total{job="kubelet", metrics_path="/metrics/cadvisor", image!="", container!="POD"}[5m])
+              rate(container_cpu_usage_seconds_total{job="kubernetes-nodes-cadvisor", image!="", container!="POD"}[5m])
             ) * on (cluster, namespace, pod) group_left(node) max by(cluster, namespace, pod, node) (kube_pod_info)
           record: node_namespace_pod_container:container_cpu_usage_seconds_total:sum_rate
         - expr: |
-            container_memory_working_set_bytes{job="kubelet", metrics_path="/metrics/cadvisor", image!=""}
+            container_memory_working_set_bytes{job="kubernetes-nodes-cadvisor", image!=""}
             * on (namespace, pod) group_left(node) max by(namespace, pod, node) (kube_pod_info)
           record: node_namespace_pod_container:container_memory_working_set_bytes
         - expr: |
-            container_memory_rss{job="kubelet", metrics_path="/metrics/cadvisor", image!=""}
+            container_memory_rss{job="kubernetes-nodes-cadvisor", image!=""}
             * on (namespace, pod) group_left(node) max by(namespace, pod, node) (kube_pod_info)
           record: node_namespace_pod_container:container_memory_rss
         - expr: |
-            container_memory_cache{job="kubelet", metrics_path="/metrics/cadvisor", image!=""}
+            container_memory_cache{job="kubernetes-nodes-cadvisor", image!=""}
             * on (namespace, pod) group_left(node) max by(namespace, pod, node) (kube_pod_info)
           record: node_namespace_pod_container:container_memory_cache
         - expr: |
-            container_memory_swap{job="kubelet", metrics_path="/metrics/cadvisor", image!=""}
+            container_memory_swap{job="kubernetes-nodes-cadvisor", image!=""}
             * on (namespace, pod) group_left(node) max by(namespace, pod, node) (kube_pod_info)
           record: node_namespace_pod_container:container_memory_swap
         - expr: |
-            sum(container_memory_usage_bytes{job="kubelet", metrics_path="/metrics/cadvisor", image!="", container!="POD"}) by (namespace)
+            sum(container_memory_usage_bytes{job="kubernetes-nodes-cadvisor", image!="", container!="POD"}) by (namespace)
           record: namespace:container_memory_usage_bytes:sum
         - expr: |
             sum by (namespace) (
                 sum by (namespace, pod) (
                     max by (namespace, pod, container) (
-                        kube_pod_container_resource_requests_memory_bytes{job="kube-state"}
+                        kube_pod_container_resource_requests_memory_bytes{job="{{.Release.Name}}-kube-state"}
                     ) * on(namespace, pod) group_left() max by (namespace, pod) (
                         kube_pod_status_phase{phase=~"Pending|Running"} == 1
                     )
@@ -239,7 +239,7 @@ data:
             sum by (namespace) (
                 sum by (namespace, pod) (
                     max by (namespace, pod, container) (
-                        kube_pod_container_resource_requests_cpu_cores{job="kube-state"}
+                        kube_pod_container_resource_requests_cpu_cores{job="{{.Release.Name}}-kube-state"}
                     ) * on(namespace, pod) group_left() max by (namespace, pod) (
                       kube_pod_status_phase{phase=~"Pending|Running"} == 1
                     )
@@ -250,9 +250,9 @@ data:
             sum(
               label_replace(
                 label_replace(
-                  kube_pod_owner{job="kube-state", owner_kind="ReplicaSet"},
+                  kube_pod_owner{job="{{.Release.Name}}-kube-state", owner_kind="ReplicaSet"},
                   "replicaset", "$1", "owner_name", "(.*)"
-                ) * on(replicaset, namespace) group_left(owner_name) kube_replicaset_owner{job="kube-state"},
+                ) * on(replicaset, namespace) group_left(owner_name) kube_replicaset_owner{job="{{.Release.Name}}-kube-state"},
                 "workload", "$1", "owner_name", "(.*)"
               )
             ) by (cluster, namespace, workload, pod)
@@ -262,7 +262,7 @@ data:
         - expr: |
             sum(
               label_replace(
-                kube_pod_owner{job="kube-state", owner_kind="DaemonSet"},
+                kube_pod_owner{job="{{.Release.Name}}-kube-state", owner_kind="DaemonSet"},
                 "workload", "$1", "owner_name", "(.*)"
               )
             ) by (cluster, namespace, workload, pod)
@@ -272,7 +272,7 @@ data:
         - expr: |
             sum(
               label_replace(
-                kube_pod_owner{job="kube-state", owner_kind="StatefulSet"},
+                kube_pod_owner{job="{{.Release.Name}}-kube-state", owner_kind="StatefulSet"},
                 "workload", "$1", "owner_name", "(.*)"
               )
             ) by (cluster, namespace, workload, pod)
@@ -332,7 +332,7 @@ data:
             sum(min(kube_pod_info) by (cluster, node))
           record: ':kube_pod_info_node_count:'
         - expr: |
-            max(label_replace(kube_pod_info{job="kube-state"}, "pod", "$1", "pod", "(.*)")) by (node, namespace, pod)
+            max(label_replace(kube_pod_info{job="{{.Release.Name}}-kube-state"}, "pod", "$1", "pod", "(.*)")) by (node, namespace, pod)
           record: 'node_namespace_pod:kube_pod_info:'
         - expr: |
             count by (cluster, node) (sum by (node, cpu) (
@@ -383,14 +383,15 @@ data:
         rules:
         - alert: KubeStateMetricsListErrors
           annotations:
-            message: kube-state-metrics is experiencing errors at an elevated rate in
+            description: kube-state-metrics is experiencing errors at an elevated rate in
               list operations. This is likely causing it to not be able to expose metrics
               about Kubernetes objects correctly or at all.
+            summary: Errors with kube-state-metrics list operations
             runbook_url: 
           expr: |
-            (sum(rate(kube_state_metrics_list_total{job="kube-state",result="error"}[5m]))
+            (sum(rate(kube_state_metrics_list_total{job="{{.Release.Name}}-kube-state",result="error"}[5m]))
               /
-            sum(rate(kube_state_metrics_list_total{job="kube-state"}[5m])))
+            sum(rate(kube_state_metrics_list_total{job="{{.Release.Name}}-kube-state"}[5m])))
             > 0.01
           for: 15m
           labels:
@@ -398,14 +399,15 @@ data:
             tier: platform
         - alert: KubeStateMetricsWatchErrors
           annotations:
-            message: kube-state-metrics is experiencing errors at an elevated rate in
+            description: kube-state-metrics is experiencing errors at an elevated rate in
               watch operations. This is likely causing it to not be able to expose metrics
               about Kubernetes objects correctly or at all.
             runbook_url: 
+            summary: Errors with kube-state-metrics watch operations
           expr: |
-            (sum(rate(kube_state_metrics_watch_total{job="kube-state",result="error"}[5m]))
+            (sum(rate(kube_state_metrics_watch_total{job="{{.Release.Name}}-kube-state",result="error"}[5m]))
               /
-            sum(rate(kube_state_metrics_watch_total{job="kube-state"}[5m])))
+            sum(rate(kube_state_metrics_watch_total{job="{{.Release.Name}}-kube-state"}[5m])))
             > 0.01
           for: 15m
           labels:
@@ -581,96 +583,103 @@ data:
         rules:
         - alert: KubePodCrashLooping
           annotations:
-            message: Pod {{`{{ $labels.namespace }}`}}/{{`{{ $labels.pod }}`}} ({{`{{ $labels.container
+            description: Pod {{`{{ $labels.namespace }}`}}/{{`{{ $labels.pod }}`}} ({{`{{ $labels.container
               }}`}}) is restarting {{`{{ printf "%.2f" $value }}`}} times / 5 minutes.
             runbook_url: 
+            summary: '{{`{{ $labels.pod }}`}} Pod is CrashLooping'
           expr: |
-            rate(kube_pod_container_status_restarts_total{job="kube-state"}[15m]) * 60 * 5 > 0
+            rate(kube_pod_container_status_restarts_total{job="{{.Release.Name}}-kube-state"}[15m]) * 60 * 5 > 0
           for: 15m
           labels:
             severity: high
             tier: platform
         - alert: KubePodNotReady
           annotations:
-            message: Pod {{`{{ $labels.namespace }}`}}/{{`{{ $labels.pod }}`}} has been in a non-ready
+            description: Pod {{`{{ $labels.namespace }}`}}/{{`{{ $labels.pod }}`}} has been in a non-ready
               state for longer than 15 minutes.
-            runbook_url: 
+            runbook_url:
+            summary: '{{`{{ $labels.pod }}`}} Pod in a non-ready state'
           expr: |
-            sum by (namespace, pod) (max by(namespace, pod) (kube_pod_status_phase{job="kube-state", phase=~"Pending|Unknown"}) * on(namespace, pod) group_left(owner_kind) max by(namespace, pod, owner_kind) (kube_pod_owner{owner_kind!="Job"})) > 0
+            sum by (namespace, pod) (max by(namespace, pod) (kube_pod_status_phase{job="{{.Release.Name}}-kube-state", phase=~"Pending|Unknown"}) * on(namespace, pod) group_left(owner_kind) max by(namespace, pod, owner_kind) (kube_pod_owner{owner_kind!="Job"})) > 0
           for: 15m
           labels:
             severity: high
             tier: platform
         - alert: KubeDeploymentGenerationMismatch
           annotations:
-            message: Deployment generation for {{`{{ $labels.namespace }}`}}/{{`{{ $labels.deployment
+            description: Deployment generation for {{`{{ $labels.namespace }}`}}/{{`{{ $labels.deployment
               }}`}} does not match, this indicates that the Deployment has failed but has
               not been rolled back.
             runbook_url:
+            summary: Deployment version mismatch
           expr: |
-            kube_deployment_status_observed_generation{job="kube-state"}
+            kube_deployment_status_observed_generation{job="{{.Release.Name}}-kube-state"}
               !=
-            kube_deployment_metadata_generation{job="kube-state"}
+            kube_deployment_metadata_generation{job="{{.Release.Name}}-kube-state"}
           for: 15m
           labels:
             severity: high
             tier: platform
         - alert: KubeDeploymentReplicasMismatch
           annotations:
-            message: Deployment {{`{{ $labels.namespace }}`}}/{{`{{ $labels.deployment }}`}} has not
+            description: Deployment {{`{{ $labels.namespace }}`}}/{{`{{ $labels.deployment }}`}} has not
               matched the expected number of replicas for longer than 15 minutes.
             runbook_url: 
+            summary: '{{`{{ $labels.deployment }}`}} Replica count mismatch'
           expr: |
-            kube_deployment_spec_replicas{job="kube-state"}
+            kube_deployment_spec_replicas{job="{{.Release.Name}}-kube-state"}
               !=
-            kube_deployment_status_replicas_available{job="kube-state"}
+            kube_deployment_status_replicas_available{job="{{.Release.Name}}-kube-state"}
           for: 15m
           labels:
             severity: high
             tier: platform
         - alert: KubeStatefulSetReplicasMismatch
           annotations:
-            message: StatefulSet {{`{{ $labels.namespace }}`}}/{{`{{ $labels.statefulset }}`}} has
+            description: StatefulSet {{`{{ $labels.namespace }}`}}/{{`{{ $labels.statefulset }}`}} has
               not matched the expected number of replicas for longer than 15 minutes.
             runbook_url: 
+            summary: '{{`{{ $labels.statefulset }}`}} StatefulSet replica mismatch'
           expr: |
-            kube_statefulset_status_replicas_ready{job="kube-state"}
+            kube_statefulset_status_replicas_ready{job="{{.Release.Name}}-kube-state"}
               !=
-            kube_statefulset_status_replicas{job="kube-state"}
+            kube_statefulset_status_replicas{job="{{.Release.Name}}-kube-state"}
           for: 15m
           labels:
             severity: high
             tier: platform
         - alert: KubeStatefulSetGenerationMismatch
           annotations:
-            message: StatefulSet generation for {{`{{ $labels.namespace }}`}}/{{`{{ $labels.statefulset
+            description: StatefulSet generation for {{`{{ $labels.namespace }}`}}/{{`{{ $labels.statefulset
               }}`}} does not match, this indicates that the StatefulSet has failed but has
               not been rolled back.
             runbook_url:
+            summary: '{{`{{ $labels.statefulset}}`}} Version mismatch'
           expr: |
-            kube_statefulset_status_observed_generation{job="kube-state"}
+            kube_statefulset_status_observed_generation{job="{{.Release.Name}}-kube-state"}
               !=
-            kube_statefulset_metadata_generation{job="kube-state"}
+            kube_statefulset_metadata_generation{job="{{.Release.Name}}-kube-state"}
           for: 15m
           labels:
             severity: high
             tier: platform
         - alert: KubeStatefulSetUpdateNotRolledOut
           annotations:
-            message: StatefulSet {{`{{ $labels.namespace }}`}}/{{`{{ $labels.statefulset }}`}} update
+            description: StatefulSet {{`{{ $labels.namespace }}`}}/{{`{{ $labels.statefulset }}`}} update
               has not been rolled out.
             runbook_url:
+            summary: StatefulSet Rollout Error
           expr: |
             max without (revision) (
-              kube_statefulset_status_current_revision{job="kube-state"}
+              kube_statefulset_status_current_revision{job="{{.Release.Name}}-kube-state"}
                 unless
-              kube_statefulset_status_update_revision{job="kube-state"}
+              kube_statefulset_status_update_revision{job="{{.Release.Name}}-kube-state"}
             )
               *
             (
-              kube_statefulset_replicas{job="kube-state"}
+              kube_statefulset_replicas{job="{{.Release.Name}}-kube-state"}
                 !=
-              kube_statefulset_status_replicas_updated{job="kube-state"}
+              kube_statefulset_status_replicas_updated{job="{{.Release.Name}}-kube-state"}
             )
           for: 15m
           labels:
@@ -678,80 +687,87 @@ data:
             tier: platform
         - alert: KubeDaemonSetRolloutStuck
           annotations:
-            message: Only {{`{{ $value | humanizePercentage }}`}} of the desired Pods of DaemonSet
+            description: Only {{`{{ $value | humanizePercentage }}`}} of the desired Pods of DaemonSet
               {{`{{ $labels.namespace }}`}}/{{`{{ $labels.daemonset }}`}} are scheduled and ready.
             runbook_url: 
+            summary: DaemonSet not deployed on all exptected nodes.
           expr: |
-            kube_daemonset_status_number_ready{job="kube-state"}
+            kube_daemonset_status_number_ready{job="{{.Release.Name}}-kube-state"}
               /
-            kube_daemonset_status_desired_number_scheduled{job="kube-state"} < 1.00
+            kube_daemonset_status_desired_number_scheduled{job="{{.Release.Name}}-kube-state"} < 1.00
           for: 15m
           labels:
             severity: critical
             tier: platform
         - alert: KubeContainerWaiting
           annotations:
-            message: Pod {{`{{ $labels.namespace }}`}}/{{`{{ $labels.pod }}`}} container {{`{{ $labels.container}}`}}
+            description: Pod {{`{{ $labels.namespace }}`}}/{{`{{ $labels.pod }}`}} container {{`{{ $labels.container}}`}}
               has been in waiting state for longer than 1 hour.
             runbook_url: 
+            summary: '{{`{{ $labels.container}}`}} Container is stucket in waiting state'
           expr: |
-            sum by (namespace, pod, container) (kube_pod_container_status_waiting_reason{job="kube-state"}) > 0
+            sum by (namespace, pod, container) (kube_pod_container_status_waiting_reason{job="{{.Release.Name}}-kube-state"}) > 0
           for: 1h
           labels:
             severity: high
             tier: platform
         - alert: KubeDaemonSetNotScheduled
           annotations:
-            message: '{{`{{ $value }}`}} Pods of DaemonSet {{`{{ $labels.namespace }}`}}/{{`{{ $labels.daemonset
+            description: '{{`{{ $value }}`}} Pods of DaemonSet {{`{{ $labels.namespace }}`}}/{{`{{ $labels.daemonset
               }}`}} are not scheduled.'
             runbook_url: 
+            summary: Not all pods of daemonset are scheduled
           expr: |
-            kube_daemonset_status_desired_number_scheduled{job="kube-state"}
+            kube_daemonset_status_desired_number_scheduled{job="{{.Release.Name}}-kube-state"}
               -
-            kube_daemonset_status_current_number_scheduled{job="kube-state"} > 0
+            kube_daemonset_status_current_number_scheduled{job="{{.Release.Name}}-kube-state"} > 0
           for: 10m
           labels:
             severity: critical
             tier: platform
         - alert: KubeDaemonSetMisScheduled
           annotations:
-            message: '{{`{{ $value }}`}} Pods of DaemonSet {{`{{ $labels.namespace }}`}}/{{`{{ $labels.daemonset
+            description: '{{`{{ $value }}`}} Pods of DaemonSet {{`{{ $labels.namespace }}`}}/{{`{{ $labels.daemonset
               }}`}} are running where they are not supposed to run.'
             runbook_url: 
+            summary: Daemonset pods are scheduled on wrong nodes
           expr: |
-            kube_daemonset_status_number_misscheduled{job="kube-state"} > 0
+            kube_daemonset_status_number_misscheduled{job="{{.Release.Name}}-kube-state"} > 0
           for: 10m
           labels:
             severity: warning
             tier: platform
         - alert: KubeCronJobRunning
           annotations:
-            message: CronJob {{`{{ $labels.namespace }}`}}/{{`{{ $labels.cronjob }}`}} is taking more
+            description: CronJob {{`{{ $labels.namespace }}`}}/{{`{{ $labels.cronjob }}`}} is taking more
               than 1h to complete.
-            runbook_url: 
+            runbook_url:
+            summary: Cronjob is taking a long time to complete 
           expr: |
-            time() - kube_cronjob_next_schedule_time{job="kube-state"} > 3600
+            time() - kube_cronjob_next_schedule_time{job="{{.Release.Name}}-kube-state"} > 3600
           for: 1h
           labels:
             severity: warning
             tier: platform
         - alert: KubeJobCompletion
           annotations:
-            message: Job {{`{{ $labels.namespace }}`}}/{{`{{ $labels.job_name }}`}} is taking more
+            description: Job {{`{{ $labels.namespace }}`}}/{{`{{ $labels.job_name }}`}} is taking more
               than one hour to complete.
             runbook_url: 
+            summary: Cronjob took a look time to complete
           expr: |
-            kube_job_spec_completions{job="kube-state"} - kube_job_status_succeeded{job="kube-state"}  > 0
+            kube_job_spec_completions{job="{{.Release.Name}}-kube-state"} - kube_job_status_succeeded{job="{{.Release.Name}}-kube-state"}  > 0
           for: 1h
           labels:
             severity: warning
             tier: platform
         - alert: KubeJobFailed
           annotations:
-            message: Job {{`{{ $labels.namespace }}`}}/{{`{{ $labels.job_name }}`}} failed to complete.
+            description: Job {{`{{ $labels.namespace }}`}}/{{`{{ $labels.job_name }}`}} failed to complete.
             runbook_url: 
+            summary: Kube Job failed
           expr: |
-            kube_job_failed{job="kube-state"}  > 0
+            kube_job_failed{job="{{.Release.Name}}-kube-state"}  > 0
           for: 15m
           labels:
             severity: warning
@@ -760,9 +776,10 @@ data:
         rules:
         - alert: KubeCPUOvercommit
           annotations:
-            message: Cluster has overcommitted CPU resource requests for Pods and cannot
+            description: Cluster has overcommitted CPU resource requests for Pods and cannot
               tolerate node failure.
             runbook_url:
+            summary: Cluster CPU resources are overcommitted
           expr: |
             sum(namespace:kube_pod_container_resource_requests_cpu_cores:sum)
               /
@@ -775,9 +792,10 @@ data:
             tier: platform
         - alert: KubeMemOvercommit
           annotations:
-            message: Cluster has overcommitted memory resource requests for Pods and cannot
+            description: Cluster has overcommitted memory resource requests for Pods and cannot
               tolerate node failure.
             runbook_url:
+            summary: Cluster Memory resources are overcommitted
           expr: |
             sum(namespace:kube_pod_container_resource_requests_memory_bytes:sum)
               /
@@ -792,10 +810,11 @@ data:
             tier: platform
         - alert: KubeCPUOvercommit
           annotations:
-            message: Cluster has overcommitted CPU resource requests for Namespaces.
+            description: Cluster has overcommitted CPU resource requests for Namespaces.
             runbook_url:
+            summary: Cluster has overcommitted CPU resource requests for Namespaces.
           expr: |
-            sum(kube_resourcequota{job="kube-state", type="hard", resource="cpu"})
+            sum(kube_resourcequota{job="{{.Release.Name}}-kube-state", type="hard", resource="cpu"})
               /
             sum(kube_node_status_allocatable_cpu_cores)
               > 1.5
@@ -805,10 +824,11 @@ data:
             tier: platform
         - alert: KubeMemOvercommit
           annotations:
-            message: Cluster has overcommitted memory resource requests for Namespaces.
-            runbook_url:
+            description: Cluster has overcommitted memory resource requests for Namespaces.
+            runbook_url: 
+            summary: Cluster has overcommitted Memory resource requests for Namespaces.
           expr: |
-            sum(kube_resourcequota{job="kube-state", type="hard", resource="memory"})
+            sum(kube_resourcequota{job="{{.Release.Name}}-kube-state", type="hard", resource="memory"})
               /
             sum(kube_node_status_allocatable_memory_bytes{job="node-exporter"})
               > 1.5
@@ -818,13 +838,14 @@ data:
             tier: platform
         - alert: KubeQuotaExceeded
           annotations:
-            message: Namespace {{`{{ $labels.namespace }}`}} is using {{`{{ $value | humanizePercentage
+            description: Namespace {{`{{ $labels.namespace }}`}} is using {{`{{ $value | humanizePercentage
               }}`}} of its {{`{{ $labels.resource }}`}} quota.
             runbook_url: 
+            summary: '{{`{{ $labels.namespace }}`}} Kube Quota Exceeded'
           expr: |
-            kube_resourcequota{job="kube-state", type="used"}
+            kube_resourcequota{job="{{.Release.Name}}-kube-state", type="used"}
               / ignoring(instance, job, type)
-            (kube_resourcequota{job="kube-state", type="hard"} > 0)
+            (kube_resourcequota{job="{{.Release.Name}}-kube-state", type="hard"} > 0)
               > 0.90
           for: 15m
           labels:
@@ -832,9 +853,10 @@ data:
             tier: platform
         - alert: CPUThrottlingHigh
           annotations:
-            message: '{{`{{ $value | humanizePercentage }}`}} throttling of CPU in namespace
+            description: '{{`{{ $value | humanizePercentage }}`}} throttling of CPU in namespace
               {{`{{ $labels.namespace }}`}} for container {{`{{ $labels.container }}`}} in pod {{`{{
               $labels.pod }}`}}.'
+            summary: 'CPU Throttling high in pod {{`{{$labels.pod }}`}}'
             runbook_url: 
           expr: |
             sum(increase(container_cpu_cfs_throttled_periods_total{container!="", namespace!~"^astronomer-.*-[0-9]{4}$"}[5m])) by (container, pod, namespace)
@@ -863,14 +885,15 @@ data:
         rules:
         - alert: KubePersistentVolumeUsageCritical
           annotations:
-            message: The PersistentVolume claimed by {{`{{ $labels.persistentvolumeclaim
+            description: The PersistentVolume claimed by {{`{{ $labels.persistentvolumeclaim
               }}`}} in Namespace {{`{{ $labels.namespace }}`}} is only {{`{{ $value | humanizePercentage
               }}`}} free.
             runbook_url:
+            summary: '{{`{{ $labels.persistentvolumeclaim}}`}} Is running out of storage capacity'
           expr: |
-            kubelet_volume_stats_available_bytes{job="kubelet", metrics_path="/metrics"}
+            kubelet_volume_stats_available_bytes{job="kubernetes-nodes"}
               /
-            kubelet_volume_stats_capacity_bytes{job="kubelet", metrics_path="/metrics"}
+            kubelet_volume_stats_capacity_bytes{job="kubernetes-nodes"}
               < 0.03
           for: 1m
           labels:
@@ -878,29 +901,31 @@ data:
             tier: platform
         - alert: KubePersistentVolumeFullInFourDays
           annotations:
-            message: Based on recent sampling, the PersistentVolume claimed by {{`{{ $labels.persistentvolumeclaim
+            description: Based on recent sampling, the PersistentVolume claimed by {{`{{ $labels.persistentvolumeclaim
               }}`}} in Namespace {{`{{ $labels.namespace }}`}} is expected to fill up within four
               days. Currently {{`{{ $value | humanizePercentage }}`}} is available.
             runbook_url:
+            summary: '{{`{{ $labels.persistentvolumeclaim}}`}} Will fill up in 4 days'
           expr: |
             (
-              kubelet_volume_stats_available_bytes{job="kubelet", metrics_path="/metrics"}
+              kubelet_volume_stats_available_bytes{job="kubernetes-nodes"}
                 /
-              kubelet_volume_stats_capacity_bytes{job="kubelet", metrics_path="/metrics"}
+              kubelet_volume_stats_capacity_bytes{job="kubernetes-nodes"}
             ) < 0.15
             and
-            predict_linear(kubelet_volume_stats_available_bytes{job="kubelet", metrics_path="/metrics"}[6h], 4 * 24 * 3600) < 0
+            predict_linear(kubelet_volume_stats_available_bytes{job="kubernetes-nodes"}[6h], 4 * 24 * 3600) < 0
           for: 1h
           labels:
             severity: high
             tier: platform
         - alert: KubePersistentVolumeErrors
           annotations:
-            message: The persistent volume {{`{{ $labels.persistentvolume }}`}} has status {{`{{
+            description: The persistent volume {{`{{ $labels.persistentvolume }}`}} has status {{`{{
               $labels.phase }}`}}.
             runbook_url:
+            summary: 'Persistent Volume {{`{{ $labels.persistentvolume }}`}} Is not ready'
           expr: |
-            kube_persistentvolume_status_phase{phase=~"Failed|Pending",job="kube-state"} > 0
+            kube_persistentvolume_status_phase{phase=~"Failed|Pending",job="{{.Release.Name}}-kube-state"} > 0
           for: 5m
           labels:
             severity: critical
@@ -909,9 +934,10 @@ data:
         rules:
         - alert: KubeVersionMismatch
           annotations:
-            message: There are {{`{{ $value }}`}} different semantic versions of Kubernetes
+            description: There are {{`{{ $value }}`}} different semantic versions of Kubernetes
               components running.
             runbook_url: 
+            summary: Different versions of kuernetes detected across nodes
           expr: |
             count(count by (gitVersion) (label_replace(kubernetes_build_info{job!~"kube-dns|coredns"},"gitVersion","$1","gitVersion","(v[0-9]*.[0-9]*.[0-9]*).*"))) > 1
           for: 15m
@@ -934,31 +960,34 @@ data:
         rules:
         - alert: KubeNodeNotReady
           annotations:
-            message: '{{`{{ $labels.node }}`}} has been unready for more than 15 minutes.'
+            description: '{{`{{ $labels.node }}`}} has been unready for more than 15 minutes.'
             runbook_url: 
+            summary: 'Node {{`{{ $labels.node }}`}} is not ready'
           expr: |
-            kube_node_status_condition{job="kube-state",condition="Ready",status="true"} == 0
+            kube_node_status_condition{job="{{.Release.Name}}-kube-state",condition="Ready",status="true"} == 0
           for: 15m
           labels:
             severity: high
             tier: platform
         - alert: KubeNodeUnreachable
           annotations:
-            message: '{{`{{ $labels.node }}`}} is unreachable and some workloads may be rescheduled.'
+            description: '{{`{{ $labels.node }}`}} is unreachable and some workloads may be rescheduled.'
             runbook_url: 
+            summary: '{{`{{ $labels.node }}`}} is unreachable'
           expr: |
-            kube_node_spec_taint{job="kube-state",key="node.kubernetes.io/unreachable",effect="NoSchedule"} == 1
+            kube_node_spec_taint{job="{{.Release.Name}}-kube-state",key="node.kubernetes.io/unreachable",effect="NoSchedule"} == 1
           for: 2m
           labels:
             severity: high
             tier: platform
         - alert: KubeletTooManyPods
           annotations:
-            message: Kubelet '{{`{{ $labels.node }}`}}' is running at {{`{{ $value | humanizePercentage
+            description: Kubelet '{{`{{ $labels.node }}`}}' is running at {{`{{ $value | humanizePercentage
               }}`}} of its Pod capacity.
             runbook_url: 
+            summary: Too many pods on '{{`{{ $labels.node }}`}}'
           expr: |
-            max(max(kubelet_running_pod_count{job="kubelet", metrics_path="/metrics"}) by(instance) * on(instance) group_left(node) kubelet_node_name{job="kubelet", metrics_path="/metrics"}) by(node) / max(kube_node_status_capacity_pods{job="kube-state"}) by(node) > 0.95
+            max(max(kubelet_running_pod_count{job="kubernetes-nodes"}) by(instance) * on(instance) group_left(node) kubelet_node_name{job="kubernetes-nodes"}) by(node) / max(kube_node_status_capacity_pods{job="{{.Release.Name}}-kube-state"}) by(node) > 0.95
           for: 15m
           labels:
             severity: warning
@@ -1126,8 +1155,9 @@ data:
         rules:
         - alert: AlertmanagerConfigInconsistent
           annotations:
-            message: The configuration of the instances of the Alertmanager cluster {{`{{$labels.service}}`}}
+            description: The configuration of the instances of the Alertmanager cluster {{`{{$labels.service}}`}}
               are out of sync.
+            summary: Alert manager config is out if sync
           expr: |
             count_values("config_hash", alertmanager_config_hash{job="alertmanager-main",namespace="monitoring"}) BY (service) / ON(service) GROUP_LEFT() label_replace(max(prometheus_operator_spec_replicas{job="prometheus-operator",namespace="monitoring",controller="alertmanager"}) by (name, job, namespace, controller), "service", "alertmanager-$1", "name", "(.*)") != 1
           for: 5m
@@ -1136,8 +1166,9 @@ data:
             tier: platform
         - alert: AlertmanagerFailedReload
           annotations:
-            message: Reloading Alertmanager's configuration has failed for {{`{{ $labels.namespace
+            description: Reloading Alertmanager's configuration has failed for {{`{{ $labels.namespace
               }}`}}/{{`{{ $labels.pod}}`}}.
+            summary: Alertmanager config reload failed
           expr: |
             alertmanager_config_last_reload_successful{job="alertmanager-main",namespace="monitoring"} == 0
           for: 10m
@@ -1146,7 +1177,8 @@ data:
             tier: platform
         - alert: AlertmanagerMembersInconsistent
           annotations:
-            message: Alertmanager has not found all other members of the cluster.
+            description: Alertmanager has not found all other members of the cluster.
+            summary: Alertmanager has not found all other members of the cluster.
           expr: |
             alertmanager_cluster_members{job="alertmanager-main",namespace="monitoring"}
               != on (service) GROUP_LEFT()
@@ -1159,17 +1191,17 @@ data:
         rules:
         - alert: TargetDown
           annotations:
-            message: '{{`{{ printf "%.4g" $value }}`}} % of the {{`{{ $labels.job }}`}}/{{`{{ $labels.service
+            description: '{{`{{ printf "%.4g" $value }}`}} % of the {{`{{ $labels.job }}`}}/{{`{{ $labels.service
               }}`}} targets in {{`{{ $labels.namespace }}`}} namespace are down.'
-          expr: 100 * (count(up == 0) BY (job, namespace, service) / count(up) BY (job,
-            namespace, service)) > 10
+            summary: '{{`{{ $labels.job }}`}} Target Down'
+          expr: 100 * (count(up == 0) BY (job, namespace, service) / count(up) BY (job,namespace, service)) > 10
           for: 10m
           labels:
             severity: critical
             tier: platform
         - alert: Watchdog
           annotations:
-            message: |
+            description: |
               This is an alert meant to ensure that the entire alerting pipeline is functional.
               This alert is always firing, therefore it should always be firing in Alertmanager
               and always fire against a receiver. There are integrations with various notification
@@ -1178,13 +1210,14 @@ data:
           expr: vector(1)
           labels:
             severity: none
-            tier: platform
+            tier: none
       - name: node-time
         rules:
         - alert: ClockSkewDetected
           annotations:
-            message: Clock skew detected on node-exporter {{`{{ $labels.namespace }}`}}/{{`{{ $labels.pod
+            description: Clock skew detected on node-exporter {{`{{ $labels.namespace }}`}}/{{`{{ $labels.pod
               }}`}}`. Ensure NTP is configured correctly on this host.
+            summary: Time is slipping on a node
           expr: |
             abs(node_timex_offset_seconds{job="node-exporter"}) > 0.05
           for: 2m
@@ -1195,8 +1228,9 @@ data:
         rules:
         - alert: NodeNetworkInterfaceFlapping
           annotations:
-            message: Network interface "{{`{{ $labels.device }}`}}" changing it's up status
+            description: Network interface "{{`{{ $labels.device }}`}}" changing it's up status
               often on node-exporter {{`{{ $labels.namespace }}`}}/{{`{{ $labels.pod }}`}}"
+            summary: Network Interface Flapping
           expr: |
             changes(node_network_up{job="node-exporter",device!~"veth.+"}[2m]) > 2
           for: 2m
