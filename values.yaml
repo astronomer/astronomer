@@ -33,7 +33,7 @@ global:
 
   # Enable default postgresql database.
   # This is not recommended for production.
-  postgresqlEnabled: true
+  postgresqlEnabled: false
 
   # Enables a node exporter DaemonSet for node-level metrics
   nodeExporterEnabled: true

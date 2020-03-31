@@ -8,7 +8,7 @@ metadata:
   name: {{ .Release.Name }}-houston-cleanup-deployments
   labels:
     tier: astronomer
-    component: houston
+    component: houston-cleanup
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
@@ -23,7 +23,7 @@ spec:
         metadata:
           labels:
             tier: astronomer
-            component: houston
+            component: houston-cleanup
             release: {{ .Release.Name }}
           {{- if .Values.global.istio.enabled }}
           annotations:
