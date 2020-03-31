@@ -9,7 +9,7 @@ spec:
   {{- if lt ( .Values.client.replicas | int ) 4 }}
   maxUnavailable: 1
   {{- else }}
-  maxUnavailable: 25%
+  maxUnavailable: {{ .Values.client.maxUnavailable }}
   {{- end }}
   selector:
     matchLabels:

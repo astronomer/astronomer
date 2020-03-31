@@ -9,7 +9,7 @@ spec:
   {{- if lt ( .Values.houston.replicas | int ) 4 }}
   maxUnavailable: 1
   {{- else }}
-  maxUnavailable: 25%
+  maxUnavailable: {{ .Values.houston.maxUnavailable }}
   {{- end }}
   selector:
     matchLabels:
