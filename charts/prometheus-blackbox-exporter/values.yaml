@@ -12,8 +12,8 @@ strategy:
   type: RollingUpdate
 
 image:
-  repository: prom/blackbox-exporter
-  tag: v0.16.0
+  repository: astronomerinc/ap-prometheus
+  tag: 0.16.0
   pullPolicy: IfNotPresent
 
   ## Optionally specify an array of imagePullSecrets.
