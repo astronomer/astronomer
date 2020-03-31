@@ -1,0 +1,41 @@
+################################
+## Prometheus Ingress
+#################################
+{{- if .Values.global.baseDomain }}
+kind: Ingress
+apiVersion: extensions/v1beta1
+metadata:
+  name: {{ template "prometheus.fullname" . }}-ingress
+  labels:
+    tier: prometheus-networking
+    component: prometheus-ingress
+    chart: {{ template "prometheus.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  annotations:
+    kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
+    kubernetes.io/tls-acme: {{ eq .Values.global.acme true | quote }}
+    nginx.ingress.kubernetes.io/auth-url: https://houston.{{ .Values.global.baseDomain }}/v1/authorization
+    nginx.ingress.kubernetes.io/auth-signin: https://app.{{ .Values.global.baseDomain }}/login
+    nginx.ingress.kubernetes.io/auth-response-headers: authorization, username, email
+spec:
+  {{- if or .Values.global.tlsSecret .Values.global.acme }}
+  tls:
+  {{- if .Values.global.acme }}
+    - secretName: prometheus-tls
+  {{- end }}
+  {{- if .Values.global.tlsSecret }}
+    - secretName: {{ .Values.global.tlsSecret }}
+  {{- end }}
+      hosts:
+        - {{ template "prometheus.url" . }}
+  {{- end }}
+  rules:
+    - host: {{ template "prometheus.url" . }}
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: {{ template "prometheus.fullname" . }}
+              servicePort: prometheus-data
+{{- end }}

@@ -34,6 +34,13 @@ sleep 10
 ./bin/create-initial-user "tester@astronomer.io" "password"
 # kill $FORWARD_PID
 
+# Test monitoring/alerting ingress - This is a stopgap until it can move in to full testing suite
+echo "Testing alertmanager ingress"
+curl -f -s -o /dev/null -H "Host: alertmanager.local.astronomer-development.com"  http://127.0.0.1/
+echo "Testing prometheus ingress"
+curl -f -s -o /dev/null -H "Host: prometheus.local.astronomer-development.com"  http://127.0.0.1/
+
+
 # Run tests
 set +e
 helm test astronomer
