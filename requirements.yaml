@@ -18,6 +18,10 @@ dependencies:
     condition: global.prometheusEnabled
     tags:
       - monitoring
+  - name: prometheus-postgres-exporter
+    condition: global.prometheusPostgresExporterEnabled
+    tags:
+      - monitoring
   - name: alertmanager
     condition: global.alertmanagerEnabled
     tags:
