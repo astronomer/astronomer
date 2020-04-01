@@ -79,7 +79,7 @@ kubectl get deployment -n astronomer
 
 Replace the pod with the new image
 Look for "image" on the appropriate container and replace with the local tag,
-and set the pull policy to never.
+and set the pull policy to "Never".
 ```
 kubectl edit deployment -n astronomer <your deployment>
 ```

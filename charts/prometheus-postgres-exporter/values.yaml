@@ -8,8 +8,8 @@
 replicaCount: 2
 
 image:
-  repository: wrouesnel/postgres_exporter
-  tag: v0.8.0
+  repository: astronomerinc/ap-postgres-exporter
+  tag: 0.8.0
   pullPolicy: IfNotPresent
 
 service:

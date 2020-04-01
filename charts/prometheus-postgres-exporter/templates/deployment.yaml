@@ -52,8 +52,12 @@ spec:
           {{- end }}
           {{- end }}
           env:
+          {{- if eq .Values.config.datasource.sslmode "disable" }}
+          - name: SSL_MODE_OFF
+            value: "1"
+          {{- end }}
           {{- if .Values.config.datasource.connectionSecret }}
-          - name: DATA_SOURCE_URI
+          - name: DATA_SOURCE_NAME
             valueFrom:
               secretKeyRef:
                 name: {{ .Values.config.datasource.connectionSecret.name }}
@@ -81,13 +85,15 @@ spec:
               containerPort: {{ .Values.service.targetPort }}
               protocol: TCP
           livenessProbe:
-            httpGet:
-              path: /
-              port: http
+            exec:
+              command:
+              - /healthcheck
+              - {{ .Values.service.targetPort }}
           readinessProbe:
-            httpGet:
-              path: /
-              port: http
+            exec:
+              command:
+              - /healthcheck
+              - {{ .Values.service.targetPort }}
           resources:
 {{ toYaml .Values.resources | indent 12 }}
           volumeMounts:

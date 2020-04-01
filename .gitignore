@@ -3,6 +3,7 @@ config.yaml
 config.yml
 dev-config.yaml
 !.circleci/config.yml
+**kubeconfig**
 certs
 /secrets
 
@@ -20,3 +21,4 @@ dev-account.json
 *.tgz
 # ignore local ssl files
 *.pem
+temp.sh
