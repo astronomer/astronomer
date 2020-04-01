@@ -2,7 +2,10 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-replicaCount: 1
+# 1 or 2 is recommended
+# 1 when HA is not required for postgres metrics
+# more than 2 is typically unnecessary
+replicaCount: 2
 
 image:
   repository: wrouesnel/postgres_exporter

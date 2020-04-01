@@ -103,6 +103,14 @@ prometheus:
       cpu: "0m"
       memory: "0Gi"
 
+prometheus-postgresql-exporter:
+  replicaCount: 1
+  # Configure resources
+  resources:
+    requests:
+      cpu: "0m"
+      memory: "0Gi"
+
 #################################
 ## Elasticsearch configuration
 #################################
