@@ -57,11 +57,6 @@ astronomer:
       auth:
         local:
           enabled: true
-  prisma:
-    resources:
-      requests:
-        cpu: "0m"
-        memory: "0Mi"
   commander:
     replicas: 1
     resources:
