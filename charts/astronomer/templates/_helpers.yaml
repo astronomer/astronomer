@@ -181,11 +181,6 @@ s3:
 {{- end }}
 - name: NODE_ENV
   value: "production"
-- name: DATABASE_URL
-  valueFrom:
-    secretKeyRef:
-      name: {{ template "houston.backendSecret" . }}
-      key: connection
 - name: DATABASE__CONNECTION
   valueFrom:
     secretKeyRef:
