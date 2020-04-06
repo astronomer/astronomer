@@ -14,7 +14,7 @@ metadata:
 data:
   prometheus.yaml: |-
     global:
-      scrape_interval: 10s
+      scrape_interval: 30s
       evaluation_interval: 30s
 
     # Configure Alertmanager
@@ -126,7 +126,7 @@ data:
       {{- end }}
 
       - job_name: kube-state
-        scrape_interval: 5s # Faster scrape to power dashboards
+        scrape_interval: 10s # Faster scrape to power dashboards
         kubernetes_sd_configs:
           - role: service
             namespaces:
@@ -276,7 +276,7 @@ data:
       {{- end }}
 
       - job_name: airflow
-        scrape_interval: 5s # Faster scrape to power dashboards
+        scrape_interval: 10s # Faster scrape to power dashboards
         kubernetes_sd_configs:
           - role: service
           {{- if .Values.global.singleNamespace }}
