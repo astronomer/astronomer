@@ -58,6 +58,12 @@ houston:
   replicas: 2
   # This only applies when replicas > 3
   maxUnavailable: 25%
+  # Houston can regenerate its certificate authority on each 'helm upgrade'
+  # or leave it alone. If this is set to 'true', then all users are logged
+  # out on each helm upgrade. This is usually preferred 'true' for the case of
+  # enterprise, and 'false' for the case of SaaS, where upgrades should be
+  # without user interruption.
+  regenerateCaEachUpgrade: false
   # Houston datastore
   backendSecretName: ~
   backendConnection: {}
