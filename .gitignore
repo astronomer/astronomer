@@ -4,6 +4,7 @@ config.yml
 !.circleci/config.yml
 certs
 /secrets
+**kubeconfig**
 
 # IDEs
 .idea/
