@@ -1,0 +1,14 @@
+# This is an example configuration that overrides values
+# required for logging funcitonality when using IBM Cloud Kubernetes Service (IKS)
+
+#################################
+## Fluentd configuration
+#################################
+fluentd:
+  additionalVolumeMounts:
+    - name: varlibdockercontainers
+      mountPath: /var/data/kubeletlogs
+  additionalVolumes:
+    - name: varlibdockercontainers
+      hostPath:
+        path: /var/data/kubeletlogs
