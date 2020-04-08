@@ -10,7 +10,7 @@ images:
 
 clusterName: "astronomer"
 
-replicas: 2
+replicas: 1
 
 resources: {}
   # limits:
