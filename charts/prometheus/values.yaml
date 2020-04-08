@@ -21,7 +21,7 @@ images:
     pullPolicy: IfNotPresent
   prometheus:
     repository: astronomerinc/ap-prometheus
-    tag: 0.12.0
+    tag: 2.15.2
     pullPolicy: IfNotPresent
 
 resources: {}

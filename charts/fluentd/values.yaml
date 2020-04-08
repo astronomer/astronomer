@@ -5,7 +5,7 @@ tolerations: []
 images:
   fluentd:
     repository: astronomerinc/ap-fluentd
-    tag: 0.11.1
+    tag: 1.8.0
     pullPolicy: IfNotPresent
 
 elasticsearch:
