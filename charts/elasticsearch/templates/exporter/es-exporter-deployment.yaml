@@ -56,12 +56,12 @@ spec:
           image: {{ template "exporter.image" . }}
           imagePullPolicy: {{ .Values.images.exporter.pullPolicy }}
           command: ["elasticsearch_exporter",
-                    "-es.uri=http://{{ .Release.Name }}-elasticsearch:{{ .Values.common.ports.http }}",
-                    "-es.all={{ .Values.exporter.es.all }}",
-                    "-es.indices={{ .Values.exporter.es.indices }}",
-                    "-es.timeout={{ .Values.exporter.es.timeout }}",
-                    "-web.listen-address=:{{ .Values.exporter.service.httpPort }}",
-                    "-web.telemetry-path={{ .Values.exporter.web.path }}"]
+                    "--es.uri=http://{{ .Release.Name }}-elasticsearch:{{ .Values.common.ports.http }}",
+                    "--es.all",
+                    "--es.indices",
+                    "--es.timeout={{ .Values.exporter.es.timeout }}",
+                    "--web.listen-address=:{{ .Values.exporter.service.httpPort }}",
+                    "--web.telemetry-path={{ .Values.exporter.web.path }}"]
           securityContext:
             capabilities:
               drop:
