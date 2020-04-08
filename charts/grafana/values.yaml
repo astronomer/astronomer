@@ -9,7 +9,7 @@ tolerations: []
 images:
   grafana:
     repository: astronomerinc/ap-grafana
-    tag: 0.11.1
+    tag: 6.6.2
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: astronomerinc/ap-db-bootstrapper

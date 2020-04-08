@@ -12,4 +12,4 @@ prometheus-node-exporter:
     prometheus.io/port: "9100"
   image:
     repository: astronomerinc/ap-node-exporter
-    tag: 0.0.1
+    tag: 0.18.1

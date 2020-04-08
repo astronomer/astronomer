@@ -5,7 +5,7 @@ tolerations: []
 images:
   es:
     repository: astronomerinc/ap-elasticsearch
-    tag: 0.11.2
+    tag: 7.6.1
     pullPolicy: IfNotPresent
   init:
     repository: astronomerinc/ap-base
@@ -13,15 +13,15 @@ images:
     pullPolicy: IfNotPresent
   curator:
     repository: astronomerinc/ap-curator
-    tag: 0.11.0
+    tag: 5.8.1
     pullPolicy: IfNotPresent
   exporter:
     repository: astronomerinc/ap-elasticsearch-exporter
-    tag: 0.11.0
+    tag: 1.1.0
     pullPolicy: IfNotPresent
   nginx:
     repository: astronomerinc/ap-nginx-es
-    tag: 0.11.0
+    tag: 3.11.3
     pullPolicy: IfNotPresent
 
 common:

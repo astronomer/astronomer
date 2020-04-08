@@ -14,7 +14,7 @@ images:
     pullPolicy: IfNotPresent
   registry:
     repository: astronomerinc/ap-registry
-    tag: 0.11.0
+    tag: 2.7.1
     pullPolicy: IfNotPresent
   houston:
     repository: astronomerinc/ap-houston-api
@@ -34,7 +34,7 @@ images:
     pullPolicy: IfNotPresent
   prisma:
     repository: astronomerinc/ap-prisma
-    tag: 0.11.1
+    tag: 1.34.8
     pullPolicy: IfNotPresent
   e2eTest:
     repository: astronomerinc/ap-e2e-test
