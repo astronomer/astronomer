@@ -48,6 +48,15 @@ astroUI:
   #   memory: 128Mi
 
 houston:
+  livenessProbe:
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    failureThreshold: 10
+  readinessProbe:
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    failureThreshold: 10
+
   # Houston can regenerate its certificate authority on each 'helm upgrade'
   # or leave it alone. If this is set to 'true', then all users are logged
   # out on each helm upgrade. This is usually preferred 'true' for the case of
