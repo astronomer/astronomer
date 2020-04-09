@@ -82,16 +82,16 @@ spec:
             httpGet:
               path: /v1/healthz
               port: {{ .Values.ports.houstonHTTP }}
-            initialDelaySeconds: 30
-            periodSeconds: 10
-            failureThreshold: 10
+            initialDelaySeconds: {{ .Values.houston.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.houston.livenessProbe.periodSeconds }}
+            failureThreshold: {{ .Values.houston.livenessProbe.failureThreshold }}
           readinessProbe:
             httpGet:
               path: /v1/healthz
               port: {{ .Values.ports.houstonHTTP }}
-            initialDelaySeconds: 30
-            periodSeconds: 10
-            failureThreshold: 10
+            initialDelaySeconds: {{ .Values.houston.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.houston.readinessProbe.periodSeconds }}
+            failureThreshold: {{ .Values.houston.readinessProbe.failureThreshold }}
           env:
             {{- include "houston_environment" . | indent 12 }}
       volumes:
