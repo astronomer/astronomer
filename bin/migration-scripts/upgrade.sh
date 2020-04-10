@@ -19,11 +19,11 @@ function upgrade_version_in_astro_db {
   PRISMA=$(kubectl get pods -n $NAMESPACE | grep prisma | head -n1 | awk '{ print $1}')
   fail_with 'failed to find prisma pod'
   QUERY="UPDATE houston\$default.\"Deployment\" SET version = '${UPGRADE_TO_VERSION_AIRFLOW}';"
-  PRISMA_DB_URI=`kubectl exec -n astronomer $PRISMA env | grep 'PRISMA_DB_URI=' | cut -c15-`
+  PRISMA_DB_URI=`kubectl exec -n $NAMESPACE $PRISMA env | grep 'PRISMA_DB_URI=' | cut -c15-`
   echo "prisma pod: $PRISMA"
-  kubectl exec -n astronomer $PRISMA -- apk add postgresql-client
+  kubectl exec -n $NAMESPACE $PRISMA -- apk add postgresql-client
   fail_with 'failed install postgresql client in prisma pod'
-  kubectl exec -n astronomer $PRISMA -- psql -Atx "$PRISMA_DB_URI" -c "$QUERY"
+  kubectl exec -n $NAMESPACE $PRISMA -- psql -Atx "$PRISMA_DB_URI" -c "$QUERY"
   fail_with 'failed upgrade airflow version in astro DB'
 }
 
