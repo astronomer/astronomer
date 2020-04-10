@@ -88,12 +88,12 @@ spec:
             exec:
               command:
               - /healthcheck
-              - {{ .Values.service.targetPort }}
+              - "{{ .Values.service.targetPort }}"
           readinessProbe:
             exec:
               command:
               - /healthcheck
-              - {{ .Values.service.targetPort }}
+              - "{{ .Values.service.targetPort }}"
           resources:
 {{ toYaml .Values.resources | indent 12 }}
           volumeMounts:
