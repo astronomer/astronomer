@@ -254,6 +254,7 @@ function main {
     helm install --namespace $NAMESPACE-$release \
                  --name $release \
                  --set webserver.defaultUser.enabled=false \
+                 --set webserver.jwtSigningCertificateSecretName=$RELEASE_NAME-houston-jwt-signing-certificate \
                  -f $backup_dir/$release-user-values.yaml \
                  --version $UPGRADE_TO_VERSION_AIRFLOW \
                  astronomer/airflow
