@@ -22,10 +22,9 @@ brew install jq
 
 ## Airflow deployment preparation
 
-Ensure that all your airflow deployments are running on one of these Docker images
+Ensure that all your airflow deployments are running FROM this Docker image
 ```
 astronomerinc/ap-airflow:1.10.7-alpine3.10-onbuild
-astronomerinc/ap-airflow:1.10.5-alpine3.10-onbuild
 ```
 
 ## Kubernetes preparation
