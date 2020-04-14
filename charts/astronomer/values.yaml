@@ -18,7 +18,7 @@ images:
     pullPolicy: IfNotPresent
   houston:
     repository: astronomerinc/ap-houston-api
-    tag: 0.12.2
+    tag: 0.13.3
     pullPolicy: IfNotPresent
   astroUI:
     repository: astronomerinc/ap-astro-ui

@@ -77,10 +77,10 @@ allowIcmp: false
 resources:
   requests:
     cpu: "5m"
-    memory: "7Mi"
+    memory: "75Mi"
   limits:
     cpu: "15m"
-    memory: "20Mi"
+    memory: "100Mi"
 
 priorityClassName: ""
 
