@@ -56,7 +56,7 @@ data:
       # Airflow chart settings
       # Static helm configurations for this chart are found below.
       chart:
-        version: 0.12.3
+        version: 0.12.4
       # Airflow image settings
       # This is a list of supported airflow versions and corresponding docker tag
       images:
