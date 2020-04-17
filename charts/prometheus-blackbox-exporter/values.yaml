@@ -79,7 +79,7 @@ resources:
     cpu: "5m"
     memory: "75Mi"
   limits:
-    cpu: "15m"
+    cpu: "150m"
     memory: "100Mi"
 
 priorityClassName: ""
