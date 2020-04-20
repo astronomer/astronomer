@@ -195,6 +195,9 @@ data:
             action: labeldrop            
             # end jpw new
         metric_relabel_configs:
+          # Pods have this label twice
+          - regex: 'label_kubernetes_executor'
+            action: labeldrop
           # Required for multi-namespace mode
           - source_labels: [namespace]
             regex: "^{{ .Release.Namespace }}-(.*-.*-[0-9]{4})$"
