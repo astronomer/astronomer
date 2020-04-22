@@ -2,8 +2,29 @@
 
 All notable changes to this project will be documented in this file. For more detail on notable features and changes, refer to our [Release Notes](https://www.astronomer.io/docs/release-notes/).
 
+## [0.13.0] - 2020-04-16
+- Ability to set a Kubernetes Secret as an Env Var in global config.yaml
+- Improved Error Handling on user signup when publicSignups are disabled
+- Enhancements to in-app alert functionality
+- Stability improvements to the Astronomer UI
+- API mutation to remove SysAdmin permissions introduced to Houston's schema as `deleteSystemRoleBinding`
+- Ability to designate or remove existing users as SysAdmins via the 'System Admin' tab within Astronomer UI
+- Copy improvements to all tooltips in the 'Deployment Settings' Page
+- Add "AIRFLOW__KUBERNETES__PRESTOP_WAIT_TIME" to list of Environment Variables in the Astro UI (based on [this file](https://github.com/astronomer/astro-ui/blob/staging/src/components/DeploymentUpdateForm/variableNames.js)
+- SysAdmins can now override their Workspace 'Viewer' or 'Editor' role to delete or edit another user's role
+- Set `postgresqlEnabled: false` by default at the root of our helm chart
+- Correct CLI command listed in Service Account creation page in the Astronomer UI
+- BugFix: Accurate calculation of 'Usage Quotas' value in 'Metrics' Tab
+- BugFix: Tooltip hover duration in 'Metrics' tab changed from 5s to 30s
+- BugFix: Intermittent issue with Airflow Pods looking for non-existing secret after Environment Variable removed
+- BugFix: Allow removing "Self" when another Workspace Admin exists
+- BugFix: 'Invalid Payload' network error after deleting an Environment Variable in the Astro UI (fixed by filtering out all variables that don't have a key or value from updateDeployment mutation)
+- BugFix: Changes to resource sliders in the Astro UI resetting
+- BugFix: Users unable to deploy DAGs when using Azure Blob Storage as registry storage backend (Azure only)
+- BugFix: Some users unable to create an account when invited and publicSignups disabled (Azure only)
+
 ## [0.12.1] - 2020-03-19
-- New banner in the Deployment Config page that tells trial users they can't touch configs until they upgrade (Cloud only)
+- New "Trial Mode" banner in Deployment Config page to clarify limits on config changes (Cloud only)
 - Limit resource allocation for trials (Cloud only)
 - Bugfix: Environment variable key input loses focus on change
 - Bugfix: Deployment settings changes not saved
