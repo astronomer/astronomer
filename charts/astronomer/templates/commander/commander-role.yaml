@@ -20,6 +20,31 @@ rules:
   - persistentvolumeclaims
   {{- if not $singleNamespace }}
   - namespaces
+  - configmaps
+  - serviceaccounts
+  - clusterroles
+  - roles
+  - persistentvolumeclaims
+  - pods
+  - endpoints
+  - limitranges
+  - nodes
+  - nodes
+  - persistentvolumes
+  - replicationcontrollers
+  - resourcequotas
+  - services
+  - statefulsets
+  - daemonsets
+  - deployments
+  - horizontalpodautoscalers
+  - jobs
+  - cronjobs
+  - daemonsets
+  - deployments
+  - events
+  - ingresses
+  - networkpolicies
   {{- end }}
   verbs:
   - create

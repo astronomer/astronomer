@@ -72,11 +72,6 @@ kubectl get nodes
 echo "Creating Tiller service account..."
 kubectl apply -f ${REPO_DIR}.circleci/tiller-rbac.yaml
 
-# Install Tiller, set up Helm
-echo "Installing tiller in the KinD cluster..."
-helm init --service-account tiller --wait > /dev/null 2>&1
-echo "Tiller installed."
-
 echo "Install requirements"
 cd $REPO_DIR/charts/postgresql
 helm dependency update .

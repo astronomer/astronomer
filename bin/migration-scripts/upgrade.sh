@@ -252,7 +252,7 @@ function main {
     sleep 10
     echo "Installing airflow release $release"
     helm install --namespace $NAMESPACE-$release \
-                 --name $release \
+                 $release \
                  --set webserver.defaultUser.enabled=false \
                  --set webserver.jwtSigningCertificateSecretName=$RELEASE_NAME-houston-jwt-signing-certificate \
                  -f $backup_dir/$release-user-values.yaml \
