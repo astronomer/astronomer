@@ -34,14 +34,6 @@ Install the following tools:
 - [mkcert](https://github.com/FiloSottile/mkcert) (make sure mkcert in PATH)
 - helm
 
-Make sure you have access to the GCP development account
-
-```
-# Check that you can generate development TLS cert:
-./bin/generate_ssl_keys
-```
-If this does not work, anyone with 'Owner' in the development project can grant you 'Owner' via IAM.
-
 Run this script from the root of this repository:
 
 ```
