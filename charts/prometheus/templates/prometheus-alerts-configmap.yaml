@@ -1287,7 +1287,7 @@ data:
       - name: Ingress
         rules:
         - alert: NginxIngressHigh4XXRate
-          expr: sum by (ingress) (rate(nginx_ingress_controller_requests{status=~"^4..", namespace="{{.Release.Name}}"}[2m])) / sum by (ingress) (rate(nginx_ingress_controller_requests{ingress!=""}[2m])) * 100 > 5
+          expr: sum by (ingress) (rate(nginx_ingress_controller_requests{status=~"^4..", namespace="{{.Release.Namespace}}"}[2m])) / sum by (ingress) (rate(nginx_ingress_controller_requests{ingress!=""}[2m])) * 100 > 5
           for: 10m
           labels:
             tier: platform
