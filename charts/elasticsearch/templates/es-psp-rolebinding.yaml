@@ -1,0 +1,18 @@
+{{- if .Values.global.rbacEnabled }}
+################################
+## Elasticsearch PSP Rolebinding
+#################################
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ .Release.Name }}-psp-elasticsearch
+  namespace: {{ .Release.Name }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ .Release.Name }}-psp-elasticsearch
+subjects:
+- kind: ServiceAccount
+  name: {{ template "elasticsearch.fullname" . }}
+  namespace: {{ .Release.Name }}
+{{- end -}}

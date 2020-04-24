@@ -101,6 +101,7 @@ spec:
         volumeMounts:
         - mountPath: /usr/share/elasticsearch/data
           name: data
+      serviceAccountName: {{ template "elasticsearch.fullname" . }}
       containers:
       - name: es-data
         securityContext:
