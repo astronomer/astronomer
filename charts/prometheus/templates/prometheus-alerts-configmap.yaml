@@ -861,7 +861,7 @@ data:
           expr: |
             sum(increase(container_cpu_cfs_throttled_periods_total{container!="", namespace!~"^astronomer-.*-[0-9]{4}$", namespace != "kube-system"}[5m])) by (container, pod, namespace)
               /
-            sum(increase(container_cpu_cfs_periods_total{container!="", namespace!~"^astronomer-.*-[0-9]{4}$", namespace != "kube-system"}[5m])) by (container, pod, namespace)
+            sum(increase(container_cpu_cfs_periods_total{container!="", namespace!~"^{{ .Release.Namespace }}-.*-[0-9]{4}$", namespace != "kube-system"}[5m])) by (container, pod, namespace)
               > ( 51 / 100 )
           for: 15m
           labels:
