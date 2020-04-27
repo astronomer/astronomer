@@ -68,10 +68,6 @@ fi
 
 kubectl get nodes
 
-# Install the Tiller service account
-echo "Creating Tiller service account..."
-kubectl apply -f ${REPO_DIR}.circleci/tiller-rbac.yaml
-
 echo "Install requirements"
 cd $REPO_DIR/charts/postgresql
 helm dependency update .
