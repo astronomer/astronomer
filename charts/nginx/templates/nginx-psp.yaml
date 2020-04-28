@@ -1,3 +1,4 @@
+{{- if .Values.global.pspEnabled }}
 ################################
 ## Nginx PSP
 #################################
@@ -41,3 +42,4 @@ spec:
   - 'emptyDir'
   - 'projected'
   - 'secret'
+{{- end -}}

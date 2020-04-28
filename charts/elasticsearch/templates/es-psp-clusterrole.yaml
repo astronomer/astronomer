@@ -1,4 +1,4 @@
-{{- if .Values.global.rbacEnabled }}
+{{- if .Values.global.pspEnabled }}
 ################################
 ## Elasticsearch PSP ClusterRole
 #################################
