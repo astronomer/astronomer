@@ -6,4 +6,4 @@ REPO_DIR=$DIR/../..
 
 echo "Running E2E Tests..."
 
-helm test -n astronomer
+helm test astronomer
