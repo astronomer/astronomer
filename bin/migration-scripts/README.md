@@ -96,3 +96,138 @@ FROM astronomerinc/ap-airflow:1.10.7-alpine3.10-onbuild
 ```
 - Tasks should resume normal success rate within a few minutes
 - Check that you can deploy changes to Airflow, and check that the chart version remains the same after deploying an update to an Airflow (helm list | grep airflow)
+
+
+### Migrate to helm version 3
+
+#### Scenario 1: you already installed platform v0.13 and would like to upgrade to 0.14 and helm 3:
+
+Check if you have all tools/plugins:
+- helm (helm2)
+- helm3 (helm3)
+
+> Note: How to install helm2/helm3 and the same time:
+
+```
+which helm3
+/Users/andrii/workspace/bin/helm3
+which helm
+/usr/local/bin/helm
+```
+
+Install helm-2to3 plugin:
+
+```
+$ helm3 plugin install https://github.com/helm/helm-2to3.git
+```
+
+Check plugins installation:
+
+```
+$ helm3 plugin list
+NAME    VERSION DESCRIPTION
+2to3    0.5.1   migrate and cleanup Helm v2 configuration and releases in-place to Helm v3
+```
+
+
+Check you have access to platform via helm 2:
+
+```
+$ helm list
+NAME                    REVISION        UPDATED                         STATUS          CHART                           APP VERSION     NAMESPACE
+astronomer              1               Mon Apr 27 20:14:43 2020        DEPLOYED        astronomer-0.13.0-alpha.3       0.13.0-alpha.3  astronomer
+descriptive-galaxy-3178 1               Mon Apr 27 20:48:59 2020        DEPLOYED        airflow-0.13.0-alpha.2                          astronomer-descriptive-gal
+```
+
+
+> We must stop/ all releases from users (may be by disabling UI/registry/houston or so)
+
+
+Perform Helm v2 release migration as a batch operation:
+
+```
+$ kubectl get configmap -n kube-system -l "OWNER=TILLER" \
+ | awk '{print $1}' | grep -v NAME | cut -d '.' -f1 | uniq | xargs -n1 helm3 2to3 convert
+
+# example of output:
+2020/04/27 21:08:18 Release "astronomer" will be converted from Helm v2 to Helm v3.
+2020/04/27 21:08:18 [Helm 3] Release "astronomer" will be created.
+2020/04/27 21:08:18 [Helm 3] ReleaseVersion "astronomer.v1" will be created.
+2020/04/27 21:08:18 [Helm 3] ReleaseVersion "astronomer.v1" created.
+2020/04/27 21:08:18 [Helm 3] Release "astronomer" created.
+2020/04/27 21:08:18 Release "astronomer" was converted successfully from Helm v2 to Helm v3.
+2020/04/27 21:08:18 Note: The v2 release information still remains and should be removed to avoid conflicts with the migrated v3 release.
+2020/04/27 21:08:18 v2 release information should only be removed using `helm 2to3` cleanup and when all releases have been migrated over.
+2020/04/27 21:08:18 Release "descriptive-galaxy-3178" will be converted from Helm v2 to Helm v3.
+2020/04/27 21:08:18 [Helm 3] Release "descriptive-galaxy-3178" will be created.
+2020/04/27 21:08:18 [Helm 3] ReleaseVersion "descriptive-galaxy-3178.v1" will be created.
+2020/04/27 21:08:18 [Helm 3] ReleaseVersion "descriptive-galaxy-3178.v1" created.
+2020/04/27 21:08:18 [Helm 3] Release "descriptive-galaxy-3178" created.
+2020/04/27 21:08:18 Release "descriptive-galaxy-3178" was converted successfully from Helm v2 to Helm v3.
+2020/04/27 21:08:18 Note: The v2 release information still remains and should be removed to avoid conflicts with the migrated v3 release.
+2020/04/27 21:08:18 v2 release information should only be removed using `helm 2to3` cleanup and when all releases have been migrated over.
+```
+
+Make sure now all releases helm3:
+```
+$ helm3 list -A
+NAME                    NAMESPACE                               REVISION        UPDATED                                 STATUS          CHART                           APP VERSION
+astronomer              astronomer                              1               2020-04-27 17:14:43.1608753 +0000 UTC   deployed        astronomer-0.13.0-alpha.3       0.13.0-alpha.3
+descriptive-galaxy-3178 astronomer-descriptive-galaxy-3178      1               2020-04-27 17:48:59.7537798 +0000 UTC   deployed        airflow-0.13.0-alpha.2
+```
+
+Redeploy commander:
+```
+helm3 upgrade -n astronomer astronomer -f ./configs/local-dev.yaml --set global.postgresqlEnabled=true .
+```
+
+
+New commander roles:
+
+
+#### Scenario 2: fresh installation of platform 0.14 using helm 3:
+
+Assuming you have already installed helm version 3:
+```
+$ helm version
+helm version
+version.BuildInfo{Version:"v3.1.2", GitCommit:"d878d4d45863e42fd5cff6743294a11d28a9abce", GitTreeState:"clean", GoVersion:"go1.14"}
+```
+
+Installing platform:
+
+```
+$ helm install -f ./configs/local-dev.yaml --namespace astronomer -n astronomer --set global.postgresqlEnabled=true .
+
+helm list -A
+NAME            NAMESPACE       REVISION        UPDATED                                 STATUS          CHART                           APP VERSION
+astronomer      astronomer      1               2020-04-27 23:54:25.700019 +0300 EEST   deployed        astronomer-0.13.0-alpha.3       0.13.0-alpha.3
+```
+
+
+
+```
+$ kubectl get pods -A
+NAMESPACE     NAME                                                       READY   STATUS      RESTARTS   AGE
+astronomer    astronomer-astro-ui-7df8ddf49d-kdqsn                       1/1     Running     0          4m27s
+astronomer    astronomer-cli-install-568897bfd8-sckxp                    1/1     Running     0          4m27s
+astronomer    astronomer-commander-bcf79fd54-s4zs4                       1/1     Running     0          4m27s
+astronomer    astronomer-houston-7868bbc766-99lpp                        1/1     Running     0          4m27s
+astronomer    astronomer-houston-upgrade-deployments-4q6tj               0/1     Completed   0          4m26s
+astronomer    astronomer-kubed-6cc48c5767-hj5sp                          1/1     Running     0          4m27s
+astronomer    astronomer-nginx-765b6bfb9b-954ch                          1/1     Running     0          4m27s
+astronomer    astronomer-nginx-default-backend-7956f565dd-9r76j          1/1     Running     0          4m27s
+astronomer    astronomer-postgresql-0                                    1/1     Running     0          4m26s
+astronomer    astronomer-prisma-7d9d7f9cc6-xsp45                         1/1     Running     0          4m27s
+astronomer    astronomer-prometheus-blackbox-exporter-65f6c5f456-vpv5q   1/1     Running     0          4m27s
+astronomer    astronomer-prometheus-blackbox-exporter-65f6c5f456-wt7s4   1/1     Running     0          4m27s
+astronomer    astronomer-registry-0                                      1/1     Running     0          4m26s
+kube-system   coredns-5c98db65d4-gjsq2                                   1/1     Running     0          4m27s
+kube-system   coredns-5c98db65d4-n5j4b                                   1/1     Running     0          4m27s
+kube-system   etcd-kind-control-plane                                    1/1     Running     0          3m30s
+kube-system   kindnet-t4zll                                              1/1     Running     0          4m27s
+kube-system   kube-apiserver-kind-control-plane                          1/1     Running     0          3m32s
+kube-system   kube-controller-manager-kind-control-plane                 1/1     Running     0          3m39s
+kube-system   kube-proxy-6qj2h                                           1/1     Running     0          4m27s
+kube-system   kube-scheduler-kind-control-plane                          1/1     Running     0          3m30s
+```
