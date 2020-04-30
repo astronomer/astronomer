@@ -140,7 +140,7 @@ descriptive-galaxy-3178 1               Mon Apr 27 20:48:59 2020        DEPLOYED
 ```
 
 
-> We must stop/ all releases from users (may be by disabling UI/registry/houston or so)
+> We must stop/ all releases from users, by disabling UI/registry/houston.
 
 
 Perform Helm v2 release migration as a batch operation:
