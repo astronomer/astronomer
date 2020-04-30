@@ -12,7 +12,8 @@ from jinja2 import Template
 KUBE_VERSIONS = ['1.14.10',
                  '1.15.7',
                  '1.16.4',
-                 '1.17.2']
+                 '1.17.2',
+                 '1.18.2']
 
 def main():
     """ Render the Jinja2 template file
