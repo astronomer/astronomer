@@ -9,7 +9,7 @@ tolerations: []
 # Images for Astronomer
 images:
   commander:
-    repository: asoldatenko/ap-commander
+    repository: astronomerinc/ap-commander
     tag: 0.14.0
     pullPolicy: IfNotPresent
   registry:
