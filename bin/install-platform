@@ -48,8 +48,8 @@ fi
 set -x
 helm install \
   --namespace astronomer \
-  --name astronomer \
-  --timeout $HELM_TIMEOUT \
+  astronomer \
+  --timeout ${HELM_TIMEOUT}s \
   -f $CONFIG_FILE \
   --set tags.platform=${platform} \
   --set tags.logging=${logging} \
