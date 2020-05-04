@@ -7,10 +7,10 @@
 # Warning - goes to warning channel
 #   things we want to know about but are not always actionable. Get a pulse of potential future issues
 # High - Goes to slack prod alerts channel
-#   Things that are actionable and should be taken care of but do not need to wake someone up 
+#   Things that are actionable and should be taken care of but do not need to wake someone up
 # Critical - goes to slack prod alerts channel and pager duty
 #	   Things that would impact uptime or customer experience and are worth waking up in the middle of the night
-    
+
 kind: ConfigMap
 apiVersion: v1
 metadata:
@@ -137,7 +137,7 @@ data:
             summary: "Half or more of schedulers do not have a heartbeat"
             description: {{ printf "%q" "{{ $value }} }} schedulers do not have a heartbeat in the last five minutes" }}
 
-      - name: node-exporter-recording.rules 
+      - name: node-exporter-recording.rules
         rules:
         - expr: |
             count without (cpu) (
@@ -195,7 +195,7 @@ data:
             )
           record: instance:node_network_transmit_drop_excluding_lo:rate1m
 
-      - name: k8s-recording.rules 
+      - name: k8s-recording.rules
         rules:
         - expr: |
             sum(rate(container_cpu_usage_seconds_total{job="kubernetes-nodes-cadvisor", image!="", container!="POD"}[5m])) by (namespace)
@@ -279,7 +279,7 @@ data:
           labels:
             workload_type: statefulset
           record: mixin_pod_workload
-      - name: kube-scheduler-recording.rules 
+      - name: kube-scheduler-recording.rules
         rules:
         - expr: |
             histogram_quantile(0.99, sum(rate(scheduler_e2e_scheduling_duration_seconds_bucket{job="kube-scheduler"}[5m])) without(instance, pod))
@@ -326,7 +326,7 @@ data:
           labels:
             quantile: "0.5"
           record: cluster_quantile:scheduler_binding_duration_seconds:histogram_quantile
-      - name: node-recording.rules 
+      - name: node-recording.rules
         rules:
         - expr: |
             sum(min(kube_pod_info) by (cluster, node))
@@ -352,7 +352,7 @@ data:
               )
             ) by (cluster)
           record: :node_memory_MemAvailable_bytes:sum
-      - name: kube-prometheus-node-recording.rules 
+      - name: kube-prometheus-node-recording.rules
         rules:
         - expr: sum(rate(node_cpu_seconds_total{mode!="idle",mode!="iowait"}[3m])) BY
             (instance)
@@ -373,7 +373,7 @@ data:
         - expr: cluster:node_cpu_seconds_total:rate5m / count(sum(node_cpu_seconds_total)
             BY (instance, cpu))
           record: cluster:node_cpu:ratio
-      - name: kube-prometheus-general-recording.rules 
+      - name: kube-prometheus-general-recording.rules
         rules:
         - expr: count without(instance, pod, node) (up == 1)
           record: count:up1
@@ -387,7 +387,7 @@ data:
               list operations. This is likely causing it to not be able to expose metrics
               about Kubernetes objects correctly or at all.
             summary: Errors with kube-state-metrics list operations
-            runbook_url: 
+            runbook_url:
           expr: |
             (sum(rate(kube_state_metrics_list_total{job="{{.Release.Name}}-kube-state",result="error"}[5m]))
               /
@@ -402,7 +402,7 @@ data:
             description: kube-state-metrics is experiencing errors at an elevated rate in
               watch operations. This is likely causing it to not be able to expose metrics
               about Kubernetes objects correctly or at all.
-            runbook_url: 
+            runbook_url:
             summary: Errors with kube-state-metrics watch operations
           expr: |
             (sum(rate(kube_state_metrics_watch_total{job="{{.Release.Name}}-kube-state",result="error"}[5m]))
@@ -421,7 +421,7 @@ data:
             description: Filesystem on {{`{{ $labels.device }}`}} at {{`{{ $labels.instance }}`}}
               has only {{`{{ printf "%.2f" $value }}`}}% available space left and is filling
               up.
-            runbook_url: 
+            runbook_url:
             summary: Filesystem is predicted to run out of space within the next 24 hours.
           expr: |
             (
@@ -440,7 +440,7 @@ data:
             description: Filesystem on {{`{{ $labels.device }}`}} at {{`{{ $labels.instance }}`}}
               has only {{`{{ printf "%.2f" $value }}`}}% available space left and is filling
               up fast.
-            runbook_url: 
+            runbook_url:
             summary: Filesystem is predicted to run out of space within the next 4 hours.
           expr: |
             (
@@ -458,7 +458,7 @@ data:
           annotations:
             description: Filesystem on {{`{{ $labels.device }}`}} at {{`{{ $labels.instance }}`}}
               has only {{`{{ printf "%.2f" $value }}`}}% available space left.
-            runbook_url: 
+            runbook_url:
             summary: Filesystem has less than 5% space left.
           expr: |
             (
@@ -474,7 +474,7 @@ data:
           annotations:
             description: Filesystem on {{`{{ $labels.device }}`}} at {{`{{ $labels.instance }}`}}
               has only {{`{{ printf "%.2f" $value }}`}}% available space left.
-            runbook_url: 
+            runbook_url:
             summary: Filesystem has less than 3% space left.
           expr: |
             (
@@ -491,7 +491,7 @@ data:
             description: Filesystem on {{`{{ $labels.device }}`}} at {{`{{ $labels.instance }}`}}
               has only {{`{{ printf "%.2f" $value }}`}}% available inodes left and is filling
               up.
-            runbook_url: 
+            runbook_url:
             summary: Filesystem is predicted to run out of inodes within the next 24 hours.
           expr: |
             (
@@ -510,7 +510,7 @@ data:
             description: Filesystem on {{`{{ $labels.device }}`}} at {{`{{ $labels.instance }}`}}
               has only {{`{{ printf "%.2f" $value }}`}}% available inodes left and is filling
               up fast.
-            runbook_url: 
+            runbook_url:
             summary: Filesystem is predicted to run out of inodes within the next 4 hours.
           expr: |
             (
@@ -527,7 +527,7 @@ data:
           annotations:
             description: Filesystem on {{`{{ $labels.device }}`}} at {{`{{ $labels.instance }}`}}
               has only {{`{{ printf "%.2f" $value }}`}}% available inodes left.
-            runbook_url: 
+            runbook_url:
             summary: Filesystem has less than 5% inodes left.
           expr: |
             (
@@ -543,7 +543,7 @@ data:
           annotations:
             description: Filesystem on {{`{{ $labels.device }}`}} at {{`{{ $labels.instance }}`}}
               has only {{`{{ printf "%.2f" $value }}`}}% available inodes left.
-            runbook_url: 
+            runbook_url:
             summary: Filesystem has less than 3% inodes left.
           expr: |
             (
@@ -558,7 +558,7 @@ data:
           annotations:
             description: '{{`{{ $labels.instance }}`}} interface {{`{{ $labels.device }}`}} has encountered
               {{`{{ printf "%.0f" $value }}`}} receive errors in the last two minutes.'
-            runbook_url: 
+            runbook_url:
             summary: Network interface is reporting many receive errors.
           expr: |
             increase(node_network_receive_errs_total[2m]) > 10
@@ -570,7 +570,7 @@ data:
           annotations:
             description: '{{`{{ $labels.instance }}`}} interface {{`{{ $labels.device }}`}} has encountered
               {{`{{ printf "%.0f" $value }}`}} transmit errors in the last two minutes.'
-            runbook_url: 
+            runbook_url:
             summary: Network interface is reporting many transmit errors.
           expr: |
             increase(node_network_transmit_errs_total[2m]) > 10
@@ -578,14 +578,14 @@ data:
           labels:
             severity: warning
             tier: platform
-     
+
       - name: kubernetes-apps
         rules:
         - alert: KubePodCrashLooping
           annotations:
             description: Pod {{`{{ $labels.namespace }}`}}/{{`{{ $labels.pod }}`}} ({{`{{ $labels.container
               }}`}}) is restarting {{`{{ printf "%.2f" $value }}`}} times / 5 minutes.
-            runbook_url: 
+            runbook_url:
             summary: '{{`{{ $labels.pod }}`}} Pod is CrashLooping'
           expr: |
             rate(kube_pod_container_status_restarts_total{job="{{.Release.Name}}-kube-state"}[15m]) * 60 * 5 > 0
@@ -624,7 +624,7 @@ data:
           annotations:
             description: Deployment {{`{{ $labels.namespace }}`}}/{{`{{ $labels.deployment }}`}} has not
               matched the expected number of replicas for longer than 15 minutes.
-            runbook_url: 
+            runbook_url:
             summary: '{{`{{ $labels.deployment }}`}} Replica count mismatch'
           expr: |
             kube_deployment_spec_replicas{job="{{.Release.Name}}-kube-state"}
@@ -638,7 +638,7 @@ data:
           annotations:
             description: StatefulSet {{`{{ $labels.namespace }}`}}/{{`{{ $labels.statefulset }}`}} has
               not matched the expected number of replicas for longer than 15 minutes.
-            runbook_url: 
+            runbook_url:
             summary: '{{`{{ $labels.statefulset }}`}} StatefulSet replica mismatch'
           expr: |
             kube_statefulset_status_replicas_ready{job="{{.Release.Name}}-kube-state"}
@@ -689,7 +689,7 @@ data:
           annotations:
             description: Only {{`{{ $value | humanizePercentage }}`}} of the desired Pods of DaemonSet
               {{`{{ $labels.namespace }}`}}/{{`{{ $labels.daemonset }}`}} are scheduled and ready.
-            runbook_url: 
+            runbook_url:
             summary: DaemonSet not deployed on all exptected nodes.
           expr: |
             kube_daemonset_status_number_ready{job="{{.Release.Name}}-kube-state"}
@@ -703,7 +703,7 @@ data:
           annotations:
             description: Pod {{`{{ $labels.namespace }}`}}/{{`{{ $labels.pod }}`}} container {{`{{ $labels.container}}`}}
               has been in waiting state for longer than 1 hour.
-            runbook_url: 
+            runbook_url:
             summary: '{{`{{ $labels.container}}`}} Container is stucket in waiting state'
           expr: |
             sum by (namespace, pod, container) (kube_pod_container_status_waiting_reason{job="{{.Release.Name}}-kube-state"}) > 0
@@ -715,7 +715,7 @@ data:
           annotations:
             description: '{{`{{ $value }}`}} Pods of DaemonSet {{`{{ $labels.namespace }}`}}/{{`{{ $labels.daemonset
               }}`}} are not scheduled.'
-            runbook_url: 
+            runbook_url:
             summary: Not all pods of daemonset are scheduled
           expr: |
             kube_daemonset_status_desired_number_scheduled{job="{{.Release.Name}}-kube-state"}
@@ -729,7 +729,7 @@ data:
           annotations:
             description: '{{`{{ $value }}`}} Pods of DaemonSet {{`{{ $labels.namespace }}`}}/{{`{{ $labels.daemonset
               }}`}} are running where they are not supposed to run.'
-            runbook_url: 
+            runbook_url:
             summary: Daemonset pods are scheduled on wrong nodes
           expr: |
             kube_daemonset_status_number_misscheduled{job="{{.Release.Name}}-kube-state"} > 0
@@ -742,7 +742,7 @@ data:
             description: CronJob {{`{{ $labels.namespace }}`}}/{{`{{ $labels.cronjob }}`}} is taking more
               than 1h to complete.
             runbook_url:
-            summary: Cronjob is taking a long time to complete 
+            summary: Cronjob is taking a long time to complete
           expr: |
             time() - kube_cronjob_next_schedule_time{job="{{.Release.Name}}-kube-state"} > 3600
           for: 1h
@@ -753,7 +753,7 @@ data:
           annotations:
             description: Job {{`{{ $labels.namespace }}`}}/{{`{{ $labels.job_name }}`}} is taking more
               than one hour to complete.
-            runbook_url: 
+            runbook_url:
             summary: Cronjob took a look time to complete
           expr: |
             kube_job_spec_completions{job="{{.Release.Name}}-kube-state"} - kube_job_status_succeeded{job="{{.Release.Name}}-kube-state"}  > 0
@@ -764,7 +764,7 @@ data:
         - alert: KubeJobFailed
           annotations:
             description: Job {{`{{ $labels.namespace }}`}}/{{`{{ $labels.job_name }}`}} failed to complete.
-            runbook_url: 
+            runbook_url:
             summary: Kube Job failed
           expr: |
             kube_job_failed{job="{{.Release.Name}}-kube-state"}  > 0
@@ -825,7 +825,7 @@ data:
         - alert: KubeMemOvercommit
           annotations:
             description: Cluster has overcommitted memory resource requests for Namespaces.
-            runbook_url: 
+            runbook_url:
             summary: Cluster has overcommitted Memory resource requests for Namespaces.
           expr: |
             sum(kube_resourcequota{job="{{.Release.Name}}-kube-state", type="hard", resource="memory"})
@@ -840,7 +840,7 @@ data:
           annotations:
             description: Namespace {{`{{ $labels.namespace }}`}} is using {{`{{ $value | humanizePercentage
               }}`}} of its {{`{{ $labels.resource }}`}} quota.
-            runbook_url: 
+            runbook_url:
             summary: '{{`{{ $labels.namespace }}`}} Kube Quota Exceeded'
           expr: |
             kube_resourcequota{job="{{.Release.Name}}-kube-state", type="used"}
@@ -857,7 +857,7 @@ data:
               {{`{{ $labels.namespace }}`}} for container {{`{{ $labels.container }}`}} in pod {{`{{
               $labels.pod }}`}}.'
             summary: 'CPU Throttling high in pod {{`{{$labels.pod }}`}}'
-            runbook_url: 
+            runbook_url:
           expr: |
             sum(increase(container_cpu_cfs_throttled_periods_total{container!="", namespace!~"^astronomer-.*-[0-9]{4}$", namespace != "kube-system"}[5m])) by (container, pod, namespace)
               /
@@ -936,7 +936,7 @@ data:
           annotations:
             description: There are {{`{{ $value }}`}} different semantic versions of Kubernetes
               components running.
-            runbook_url: 
+            runbook_url:
             summary: Different versions of kuernetes detected across nodes
           expr: |
             count(count by (gitVersion) (label_replace(kubernetes_build_info{job!~"kube-dns|coredns"},"gitVersion","$1","gitVersion","(v[0-9]*.[0-9]*.[0-9]*).*"))) > 1
@@ -955,13 +955,13 @@ data:
           annotations:
             summary: "Namespace in TERMINATING state for more than 1 hour"
             description: {{ printf "%q" "Namespace {{ $labels.namespace }} has been in a TERMINATING state for longer than an hour." }}
-  
+
       - name: kubernetes-system-kubelet
         rules:
         - alert: KubeNodeNotReady
           annotations:
             description: '{{`{{ $labels.node }}`}} has been unready for more than 15 minutes.'
-            runbook_url: 
+            runbook_url:
             summary: 'Node {{`{{ $labels.node }}`}} is not ready'
           expr: |
             kube_node_status_condition{job="{{.Release.Name}}-kube-state",condition="Ready",status="true"} == 0
@@ -972,7 +972,7 @@ data:
         - alert: KubeNodeUnreachable
           annotations:
             description: '{{`{{ $labels.node }}`}} is unreachable and some workloads may be rescheduled.'
-            runbook_url: 
+            runbook_url:
             summary: '{{`{{ $labels.node }}`}} is unreachable'
           expr: |
             kube_node_spec_taint{job="{{.Release.Name}}-kube-state",key="node.kubernetes.io/unreachable",effect="NoSchedule"} == 1
@@ -984,7 +984,7 @@ data:
           annotations:
             description: Kubelet '{{`{{ $labels.node }}`}}' is running at {{`{{ $value | humanizePercentage
               }}`}} of its Pod capacity.
-            runbook_url: 
+            runbook_url:
             summary: Too many pods on '{{`{{ $labels.node }}`}}'
           expr: |
             max(max(kubelet_running_pod_count{job="kubernetes-nodes"}) by(instance) * on(instance) group_left(node) kubelet_node_name{job="kubernetes-nodes"}) by(node) / max(kube_node_status_capacity_pods{job="{{.Release.Name}}-kube-state"}) by(node) > 0.95
@@ -1238,10 +1238,10 @@ data:
             severity: warning
             tier: platform
 
- 
+
       {{- if .Values.global.veleroEnabled }}
       - name: velero
-        rules: 
+        rules:
         - alert: VeleroMetricsAbsent
           expr: absent(up{job="velero"} == 1)
           for: 15m
@@ -1311,7 +1311,7 @@ data:
               5 minutes."
 
       - name: logging
-        rules: 
+        rules:
         - alert: FluentdQueueLarge
           expr: sum by (host)( fluentd_status_buffer_queue_length) > 2
           for: 15m
@@ -1343,5 +1343,52 @@ data:
           annotations:
             summary: "TLS Certificate Expiring Soon"
             {{/* We want '{{ $labels.host }}' to be evaluted by prometheus, not helm, so we have to escape it once */ -}}
-            description: {{ printf "%q" "The TLS Certificate for {{ $labels.host }} is expiring in less than a week." }}            
-    
+            description: {{ printf "%q" "The TLS Certificate for {{ $labels.host }} is expiring in less than a week." }}
+
+      {{- if .Values.global.prometheusPostgresExporterEnabled }}
+      - name: PostgreSQL
+        rules:
+        - alert: PostgreSQLMaxConnectionsReached
+          expr: sum(pg_stat_activity_count) by (instance) >= sum(pg_settings_max_connections) by (instance) - sum(pg_settings_superuser_reserved_connections) by (instance)
+          for: 1m
+          labels:
+            severity: critical
+            tier: platform
+            component: postgresql
+          annotations:
+            summary: {{ printf "%q" "{{ $labels.instance }} has maxed out Postgres connections." }}
+            description: {{ printf "%q" "{{ $labels.instance }} is exceeding the currently configured maximum Postgres connection limit (current value: {{ $value }}s). Services may be degraded - please take immediate action (you probably need to increase max_connections in the Docker image and re-deploy." }}
+
+        - alert: PostgreSQLHighConnections
+          expr: sum(pg_stat_activity_count) by (instance) > (sum(pg_settings_max_connections) by (instance) - sum(pg_settings_superuser_reserved_connections) by (instance)) * 0.8
+          for: 10m
+          labels:
+            severity: critical
+            tier: platform
+            component: postgresql
+          annotations:
+            summary: {{ printf "%q" "{{ $labels.instance }} is over 80% of max Postgres connections." }}
+            description: {{ printf "%q" "{{ $labels.instance }} is exceeding 80% of the currently configured maximum Postgres connection limit (current value: {{ $value }}s). Please check utilization graphs and confirm if this is normal service growth, abuse or an otherwise temporary condition or if new resources need to be provisioned (or the limits increased, which is mostly likely)." }}
+
+        - alert: PostgreSQLDown
+          expr: pg_up != 1
+          for: 1m
+          labels:
+            severity: critical
+            tier: platform
+            component: postgresql
+          annotations:
+            summary: {{ printf "%q" "PostgreSQL is not processing queries: {{ $labels.instance }}" }}
+            description: {{ printf "%q" "{{ $labels.instance }} is rejecting query requests from the exporter, and thus probably not allowing DNS requests to work either. User services should not be effected provided at least 1 node is still alive." }}
+
+        - alert: PostgreSQLSlowQueries
+          expr: avg(rate(pg_stat_activity_max_tx_duration{datname!~"template.*"}[2m])) by (datname) > 2 * 60
+          for: 2m
+          labels:
+            severity: warning
+            tier: platform
+            component: postgresql
+          annotations:
+            summary: {{ printf "%q" "PostgreSQL high number of slow on {{ $labels.cluster }} for database {{ $labels.datname }} " }}
+            description: {{ printf "%q" "PostgreSQL high number of slow queries {{ $labels.cluster }} for database {{ $labels.datname }} with a value of {{ $value }} " }}
+      {{- end }}
