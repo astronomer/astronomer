@@ -33,10 +33,10 @@ data:
             tier: airflow
             component: deployment
             workspace: {{ printf "%q" "{{ $labels.workspace }}" }}
-            deployment: {{ printf "%q" "{{ $labels.release }}" }}
+            deployment: {{ printf "%q" "{{ $labels.deployment }}" }}
           annotations:
-            summary: {{ printf "%q" "{{ $labels.release }} deployment is unhealthy" }}
-            description: {{ printf "%q" "The {{ $labels.release }} deployment is not completely available." }}
+            summary: {{ printf "%q" "{{ $labels.deployment }} deployment is unhealthy" }}
+            description: {{ printf "%q" "The {{ $labels.deployment }} deployment is not completely available." }}
 
 
         # This alert depends on the scheduler_heartbeat metric being a counter.
@@ -61,10 +61,10 @@ data:
             tier: airflow
             component: deployment
             workspace: {{ printf "%q" "{{ $labels.workspace }}" }}
-            deployment: {{ printf "%q" "{{ $labels.release }}" }}
+            deployment: {{ printf "%q" "{{ $labels.deployment }}" }}
           annotations:
-            summary: {{ printf "%q" "{{ $labels.release }} is near its pod quota" }}
-            description: {{ printf "%q" "{{ $labels.release }} has been using over 95% of its pod quota for over 10 minutes." }}
+            summary: {{ printf "%q" "{{ $labels.deployment }} is near its pod quota" }}
+            description: {{ printf "%q" "{{ $labels.deployment }} has been using over 95% of its pod quota for over 10 minutes." }}
 
         - alert: AirflowEphemeralStorageLimit
           expr: (container_fs_usage_bytes{pod_name=~".*(scheduler|webserver|worker).*"}) >= 1800000000
@@ -859,10 +859,10 @@ data:
             summary: 'CPU Throttling high in pod {{`{{$labels.pod }}`}}'
             runbook_url: 
           expr: |
-            sum(increase(container_cpu_cfs_throttled_periods_total{container!="", namespace!~"^astronomer-.*-[0-9]{4}$"}[5m])) by (container, pod, namespace)
+            sum(increase(container_cpu_cfs_throttled_periods_total{container!="", namespace!~"^astronomer-.*-[0-9]{4}$", namespace != "kube-system"}[5m])) by (container, pod, namespace)
               /
-            sum(increase(container_cpu_cfs_periods_total{}[5m])) by (container, pod, namespace)
-              > ( 25 / 100 )
+            sum(increase(container_cpu_cfs_periods_total{container!="", namespace!~"^{{ .Release.Namespace }}-.*-[0-9]{4}$", namespace != "kube-system"}[5m])) by (container, pod, namespace)
+              > ( 51 / 100 )
           for: 15m
           labels:
             severity: warning
@@ -1287,7 +1287,7 @@ data:
       - name: Ingress
         rules:
         - alert: NginxIngressHigh4XXRate
-          expr: sum by (ingress) (rate(nginx_ingress_controller_requests{status=~"^4.."}[2m])) / sum by (ingress) (rate(nginx_ingress_controller_requests{ingress!=""}[2m])) * 100 > 5
+          expr: sum by (ingress) (rate(nginx_ingress_controller_requests{status=~"^4..", namespace="{{.Release.Namespace}}"}[2m])) / sum by (ingress) (rate(nginx_ingress_controller_requests{ingress!=""}[2m])) * 100 > 5
           for: 10m
           labels:
             tier: platform
@@ -1299,7 +1299,7 @@ data:
               10 minutes."
 
         - alert: NginxIngressHigh5XXRate
-          expr: sum by (ingress) (rate(nginx_ingress_controller_requests{status=~"^4.."}[2m])) / sum by (ingress) (rate(nginx_ingress_controller_requests{ingress!=""}[2m])) * 100 > 1
+          expr: sum by (ingress) (rate(nginx_ingress_controller_requests{status=~"^5..",  namespace="{{.Release.Namespace}}" }[2m])) / sum by (ingress) (rate(nginx_ingress_controller_requests{ingress!=""}[2m])) * 100 > 1
           for: 5m
           labels:
             tier: platform
@@ -1332,4 +1332,16 @@ data:
           annotations:
             summary: {{ printf "%q" "Elastic Search has {{ $value }} unassigned shards" }}
             description: "Unassigned shards in Elastic Search cluster"
+
+        - alert: IngessCertificateExpiration
+          expr: avg(nginx_ingress_controller_ssl_expire_time_seconds) by (host) - time() < 604800
+          for: 10s
+          labels:
+            severity: High
+            tier: platform
+            component: ingress
+          annotations:
+            summary: "TLS Certificate Expiring Soon"
+            {{/* We want '{{ $labels.host }}' to be evaluted by prometheus, not helm, so we have to escape it once */ -}}
+            description: {{ printf "%q" "The TLS Certificate for {{ $labels.host }} is expiring in less than a week." }}            
     

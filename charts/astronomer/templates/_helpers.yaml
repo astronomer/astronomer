@@ -171,10 +171,19 @@ azure:
 {{- end }}
 
 {{- define "houston_environment" }}
+{{- /* Dynamically created envs */ -}}
 {{- range $i, $config := .Values.houston.env }}
 - name: {{ $config.name }}
   value: {{ $config.value | quote }}
-  {{- end }}
+{{- end }}
+{{- /* Dynamically created secret envs */ -}}
+{{- range $i, $config := .Values.houston.secret }}
+- name: {{ $config.envName }}
+  valueFrom:
+    secretKeyRef:
+      name: {{ $config.secretName }}
+      key: {{ default "value" $config.secretKey }}
+{{- end }}
 - name: NODE_ENV
   value: "production"
 - name: DATABASE__CONNECTION

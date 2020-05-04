@@ -19,7 +19,7 @@ source $REPO_DIR/bin/setup-kind
 
 echo "Deploying Astronomer..."
 helm install -f $CONFIG_FILE \
-  --namespace astronomer -n astronomer \
+  --namespace astronomer astronomer \
   --set global.postgresqlEnabled=true \
   $REPO_DIR
 

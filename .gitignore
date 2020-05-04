@@ -6,6 +6,7 @@ dev-config.yaml
 **kubeconfig**
 certs
 /secrets
+**kubeconfig**
 
 # IDEs
 .idea/

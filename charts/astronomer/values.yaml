@@ -10,7 +10,7 @@ tolerations: []
 images:
   commander:
     repository: astronomerinc/ap-commander
-    tag: 0.11.0
+    tag: 0.14.0
     pullPolicy: IfNotPresent
   registry:
     repository: astronomerinc/ap-registry
@@ -18,11 +18,11 @@ images:
     pullPolicy: IfNotPresent
   houston:
     repository: astronomerinc/ap-houston-api
-    tag: 0.12.2
+    tag: 0.13.4
     pullPolicy: IfNotPresent
   astroUI:
     repository: astronomerinc/ap-astro-ui
-    tag: 0.12.4
+    tag: 0.13.3
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: astronomerinc/ap-db-bootstrapper
@@ -58,6 +58,21 @@ houston:
   replicas: 2
   # This only applies when replicas > 3
   maxUnavailable: 25%
+  livenessProbe:
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    failureThreshold: 10
+  readinessProbe:
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    failureThreshold: 10
+
+  # Houston can regenerate its certificate authority on each 'helm upgrade'
+  # or leave it alone. If this is set to 'true', then all users are logged
+  # out on each helm upgrade. This is usually preferred 'true' for the case of
+  # enterprise, and 'false' for the case of SaaS, where upgrades should be
+  # without user interruption.
+  regenerateCaEachUpgrade: false
   # Houston datastore
   backendSecretName: ~
   backendConnection: {}
