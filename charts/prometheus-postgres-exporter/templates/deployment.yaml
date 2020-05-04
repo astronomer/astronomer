@@ -22,6 +22,7 @@ spec:
   template:
     metadata:
       labels:
+        tier: monitoring
         app: {{ template "prometheus-postgres-exporter.name" . }}
         release: {{ .Release.Name }}
 {{- if .Values.podLabels }}
