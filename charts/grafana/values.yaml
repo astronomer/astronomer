@@ -9,11 +9,11 @@ tolerations: []
 images:
   grafana:
     repository: astronomerinc/ap-grafana
-    tag: 0.11.1
+    tag: 6.7.3
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: astronomerinc/ap-db-bootstrapper
-    tag: 0.12.0
+    tag: 0.13.2
     pullPolicy: IfNotPresent
 
 backendSecretName: ~
