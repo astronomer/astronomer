@@ -14,7 +14,7 @@ images:
     pullPolicy: IfNotPresent
   registry:
     repository: astronomerinc/ap-registry
-    tag: 3.11.5-3
+    tag: 3.11.5-4
     pullPolicy: IfNotPresent
   houston:
     repository: astronomerinc/ap-houston-api
