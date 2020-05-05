@@ -26,7 +26,7 @@ images:
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: astronomerinc/ap-db-bootstrapper
-    tag: 0.13.0
+    tag: 0.13.2
     pullPolicy: IfNotPresent
   cliInstall:
     repository: astronomerinc/ap-cli-install
