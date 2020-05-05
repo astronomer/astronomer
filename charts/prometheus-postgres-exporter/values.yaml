@@ -85,7 +85,7 @@ config:
       query: |
         SET search_path TO houston$default, public; select count(*) from "Deployment" where version != (select mode() within group (order by version) as version_group FROM "Deployment")
       master: false
-      cache_seconds: 60
+      cache_seconds: 30
       metrics:
         - unconverged:
             usage: "GAUGE"

@@ -1348,6 +1348,17 @@ data:
       {{- if .Values.global.prometheusPostgresExporterEnabled }}
       - name: PostgreSQL
         rules:
+        - alert: AirflowChartVersionInconsistent
+          expr: airflow_chart_version_unconverged > 0
+          for: 5m
+          labels:
+            severity: warning
+            tier: platform
+            component: postgresql
+          annotations:
+            summary: {{ printf "%q" "{{ $value }} rows in the 'version' column of the 'Deployments' table do not match the rest" }}
+            description: "This alert is used to detect if all Airflow deployments have the same 'version' configuration in the database"
+
         - alert: PostgreSQLMaxConnectionsReached
           expr: sum(pg_stat_activity_count) by (instance) >= sum(pg_settings_max_connections) by (instance) - sum(pg_settings_superuser_reserved_connections) by (instance)
           for: 1m
