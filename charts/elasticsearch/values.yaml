@@ -9,7 +9,7 @@ images:
     pullPolicy: IfNotPresent
   init:
     repository: astronomerinc/ap-base
-    tag: 0.11.0
+    tag: 3.11.5-3
     pullPolicy: IfNotPresent
   curator:
     repository: astronomerinc/ap-curator
