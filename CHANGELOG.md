@@ -1,6 +1,10 @@
 # Changelog
 
-All notable changes to this project will be documented in this file. For more detail on notable features and changes, refer to our [Release Notes](https://www.astronomer.io/docs/release-notes/).
+All changes to this project will be documented in this file. For more detail on notable features and changes, refer to our [Release Notes](https://www.astronomer.io/docs/release-notes/)).
+
+## [0.13.1] - 2020-05-07
+- Updates to Platform Image Versions (`db-bootstrapper`, `houston-api`, `commander`, `cli-install`, `base`, `default-backend` ) ([CVE Patch](https://github.com/astronomer/astronomer/pull/669))
+- Updates to Vendor Image Versions (`alertmanager`, `elasticsearch`, `fluentd`, `grafana`,`prometheus`, `redis` etc.) ([CVE Patch](https://github.com/astronomer/astronomer/pull/669))
 
 ## [0.13.0] - 2020-04-16
 - Ability to set a Kubernetes Secret as an Env Var in global config.yaml

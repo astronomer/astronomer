@@ -10,31 +10,31 @@ tolerations: []
 images:
   commander:
     repository: astronomerinc/ap-commander
-    tag: 0.14.0
+    tag: 0.13.1
     pullPolicy: IfNotPresent
   registry:
     repository: astronomerinc/ap-registry
-    tag: 0.11.0
+    tag: 3.11.5-4
     pullPolicy: IfNotPresent
   houston:
     repository: astronomerinc/ap-houston-api
-    tag: 0.13.4
+    tag: 0.13.6
     pullPolicy: IfNotPresent
   astroUI:
     repository: astronomerinc/ap-astro-ui
-    tag: 0.13.3
+    tag: 0.13.4
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: astronomerinc/ap-db-bootstrapper
-    tag: 0.11.0
+    tag: 0.13.2
     pullPolicy: IfNotPresent
   cliInstall:
     repository: astronomerinc/ap-cli-install
-    tag: 0.11.0
+    tag: 0.13.1
     pullPolicy: IfNotPresent
   prisma:
     repository: astronomerinc/ap-prisma
-    tag: 0.11.1
+    tag: 1.34.8
     pullPolicy: IfNotPresent
   e2eTest:
     repository: astronomerinc/ap-e2e-test

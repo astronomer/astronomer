@@ -17,11 +17,11 @@ replicas: 1
 images:
   init:
     repository: astronomerinc/ap-base
-    tag: 0.11.0
+    tag: 3.11.5-3
     pullPolicy: IfNotPresent
   prometheus:
     repository: astronomerinc/ap-prometheus
-    tag: 0.12.0
+    tag: 2.17.1
     pullPolicy: IfNotPresent
 
 resources: {}
