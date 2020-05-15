@@ -10,7 +10,7 @@ tolerations: []
 images:
   commander:
     repository: astronomerinc/ap-commander
-    tag: 0.13.1
+    tag: 0.14.0
     pullPolicy: IfNotPresent
   registry:
     repository: astronomerinc/ap-registry
