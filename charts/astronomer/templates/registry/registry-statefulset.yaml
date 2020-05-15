@@ -28,7 +28,7 @@ spec:
       component: registry
       tier: astronomer
       release: {{ .Release.Name }}
-{{- if or (not .Values.registry.gcs.enabled) (not .Values.registry.azure.enabled) }}
+{{- if and (not .Values.registry.gcs.enabled) (not .Values.registry.azure.enabled) }}
   serviceName: {{ .Release.Name }}-registry
 {{- end }}
   template:
