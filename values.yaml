@@ -51,9 +51,12 @@ global:
   # nodeSelector, affinity, and tolerations values for airflow deployment pods are assigned via houston config.
   # See more information on pod / node assignment here: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
   platformNodePool:
-    nodeSelector: {}
-    affinity: {}
-    tolerations: []
+    nodeSelector: &platformNodeSelector
+      {}
+    affinity: &platformAffinity
+      {}
+    tolerations: &platformTolerations
+      []
 
   privateRegistry:
     enabled: false
@@ -198,8 +201,18 @@ prometheus:
       cpu: "2000m"
       memory: "8Gi"
 
+#################################
+## KEDA configuration
+#################################
 
-
+keda:
+  keda:
+    nodeSelector:
+      <<: *platformNodeSelector
+    affinity:
+      <<: *platformAffinity
+    tolerations:
+      *platformTolerations
 #################################
 ## Blackbox Exporter configuration
 #################################
