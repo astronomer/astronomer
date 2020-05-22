@@ -25,6 +25,8 @@ data:
     {{- include "registry.gcsConfig" . | indent 6 }}
     {{- else if .Values.registry.azure.enabled }}
     {{- include "registry.azureConfig" . | indent 6 }}
+    {{- else if .Values.registry.s3.enabled }}
+    {{- include "registry.s3Config" . | indent 6 }}
     {{- else }}
       filesystem:
         rootdirectory: /var/lib/registry
