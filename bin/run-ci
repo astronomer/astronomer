@@ -41,9 +41,7 @@ curl -f -s -o /dev/null -H "Host: prometheus.local.astronomer-development.com"  
 
 
 # Run tests
-set +e
 helm test astronomer -n astronomer
-set -e
 
 kubectl get pods -n astronomer
 
