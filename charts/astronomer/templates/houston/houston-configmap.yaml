@@ -109,7 +109,6 @@ data:
           - name: ASTRONOMER__JWT_SIGNING_CERT
             value: "/etc/airflow/tls/tls.crt"
           - name: ASTRONOMER__JWT_AUDIENCE
-            value: "deployments.baseDomain"
             value: {{ printf "deployments.%s" .Values.global.baseDomain }}
 
         # Webserver configuration.
