@@ -170,6 +170,17 @@ azure:
   realm: {{ .Values.registry.azure.realm }}
 {{- end }}
 
+{{- define "registry.s3Config" }}
+s3:
+  accesskey: {{ .Values.registry.s3.accesskey }}
+  secretkey: {{ .Values.registry.s3.secretkey }}
+  region: {{ .Values.registry.s3.region }}
+  bucket: {{ .Values.registry.s3.bucket }}
+  encrypt: {{ .Values.registry.s3.encrypt }}
+  keyid: {{ .Values.registry.s3.keyid }}
+  rootdirectory: {{ .Values.registry.s3.rootdirectory }}
+{{- end }}
+
 {{- define "houston_environment" }}
 {{- /* Dynamically created envs */ -}}
 {{- range $i, $config := .Values.houston.env }}

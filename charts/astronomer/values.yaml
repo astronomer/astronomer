@@ -235,6 +235,16 @@ registry:
     container: ~
     realm: ~
 
+  s3:
+    enabled: false
+    accesskey: ~
+    secretkey: ~
+    region: ~
+    bucket: ~
+    encrypt: false
+    keyid: ~
+    rootdirectory: ~
+
 install:
   resources: {}
   #  limits:
