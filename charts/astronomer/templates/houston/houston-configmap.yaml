@@ -109,6 +109,14 @@ data:
 
       # These values get passed directly into the airflow helm deployments
       helm:
+        env:
+          - name: ASTRONOMER__AIRFLOW__WORKER_LOG_RETENTION
+            value: "3"
+          - name: ASTRONOMER__JWT_SIGNING_CERT
+            value: "/etc/airflow/tls/tls.crt"
+          - name: ASTRONOMER__JWT_AUDIENCE
+            value: {{ printf "deployments.%s" .Values.global.baseDomain }}
+
         # Webserver configuration.
         webserver:
           # This is the name of the secret that gets copied from the platform namespace
@@ -126,6 +134,54 @@ data:
           # Disable creation of initial user.
           defaultUser:
             enabled: false
+
+          extraNetworkPolicies:
+          - namespaceSelector: {}
+            podSelector:
+              matchLabels:
+                tier: nginx
+                component: ingress-controller
+                release: {{ .Release.Name }}
+
+          webserverConfig: |
+            import os
+            from airflow import configuration as conf
+            from flask_appbuilder.security.manager import AUTH_REMOTE_USER
+            basedir = os.path.abspath(os.path.dirname(__file__))
+
+            # The SQLAlchemy connection string.
+            SQLALCHEMY_DATABASE_URI = conf.get('core', 'SQL_ALCHEMY_CONN')
+
+            # Flask-WTF flag for CSRF
+            CSRF_ENABLED = True
+
+            # ----------------------------------------------------
+            # AUTHENTICATION CONFIG
+            # ----------------------------------------------------
+            AUTH_TYPE = AUTH_REMOTE_USER
+
+            from astronomer.flask_appbuilder.security import AirflowAstroSecurityManager
+            SECURITY_MANAGER_CLASS = AirflowAstroSecurityManager
+
+          extraVolumes:
+          - name: signing-certificate
+            secret:
+              secretName: "jwtSigningCertificateSecretName"
+
+          extraVolumeMounts:
+          - name: signing-certificate
+            mountPath: "/etc/airflow/tls"
+            readOnly: true
+
+        # Flower configuration
+        flower:
+          extraNetworkPolicies:
+          - namespaceSelector: {}
+            podSelector:
+              matchLabels:
+                tier: nginx
+                component: ingress-controller
+                release: {{ .Release.Name }}
 
         # Worker configuration (applies to Celery and Kubernetes task pods).
         workers:
@@ -205,6 +261,20 @@ data:
           # This is here for upgrading to 0.11.2+ of Airflow.
           safeToEvict: true
 
+        # Statsd settings
+        statsd:
+          service:
+            extraAnnotations:
+              astronomer.io/platform-release: {{ .Release.Name }}
+
+          extraNetworkPolicies:
+          - namespaceSelector: {}
+            podSelector:
+              matchLabels:
+                tier: monitoring
+                component: prometheus
+                release: {{ .Release.Name }}
+
         # Pgbouncer settings
         pgbouncer:
           # Pgbouner pod disruption budget
@@ -214,6 +284,18 @@ data:
             # PDB configuration
             config:
               maxUnavailable: 1
+
+          service:
+            extraAnnotations:
+              astronomer.io/platform-release: {{ .Release.Name }}
+
+          extraNetworkPolicies:
+          - namespaceSelector: {}
+            podSelector:
+              matchLabels:
+                tier: monitoring
+                component: prometheus
+                release: {{ .Release.Name }}
 
         # Default quotas for airflow deployments.
         quotas:
