@@ -12,7 +12,7 @@ tags:
   monitoring: false
   keda: true
   kubed: true
-  # postgresql: true
+  postgresql: true
 
 global:
   # Base domain for all subdomains exposed through ingress
@@ -20,6 +20,7 @@ global:
 
   # Name of secret containing TLS certificate
   tlsSecret: astronomer-tls
+  postgresqlEnabled: true
 
 ############################
 ## Astronomer configuration
@@ -97,6 +98,14 @@ grafana:
 #################################
 prometheus:
   replicas: 1
+  # Configure resources
+  resources:
+    requests:
+      cpu: "0m"
+      memory: "0Gi"
+
+prometheus-postgresql-exporter:
+  replicaCount: 1
   # Configure resources
   resources:
     requests:

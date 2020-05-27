@@ -48,11 +48,11 @@ data:
       - job_name: prometheus
         static_configs:
           - targets: ["localhost:9090"]
-      
+
       - job_name: 'kubernetes-apiservers'
         kubernetes_sd_configs:
           - role: endpoints
-        scheme: https 
+        scheme: https
         tls_config:
           ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
         bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
@@ -137,6 +137,20 @@ data:
             target_label: __address__
       {{- end }}
 
+      {{- if .Values.global.prometheusPostgresExporterEnabled }}
+      - job_name: postgresql-exporter
+        kubernetes_sd_configs:
+          - role: service
+            namespaces:
+              names:
+                - {{ .Release.Namespace }}
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_service_name]
+            action: keep
+            regex: "^{{ .Release.Name }}-postgresql-exporter"
+      {{- end }}
+
+
       - job_name: kube-state
         scrape_interval: 10s # Faster scrape to power dashboards
         kubernetes_sd_configs:
@@ -204,7 +218,7 @@ data:
           - separator: ;
             regex: (pod|service|endpoint|namespace)
             replacement: $1
-            action: labeldrop            
+            action: labeldrop
             # end jpw new
         metric_relabel_configs:
           # Pods have this label twice
@@ -435,7 +449,7 @@ data:
             separator: ;
             regex: container_(network_tcp_usage_total|network_udp_usage_total|tasks_state|cpu_load_average_10s)
             replacement: $1
-            action: drop            
+            action: drop
             #end jpw
 
           - action: replace
@@ -543,7 +557,7 @@ data:
 
 
       {{- if .Values.tcpProbe.enabled}}
-      # Only testing for ability to open a TCP connection. 
+      # Only testing for ability to open a TCP connection.
       - job_name: 'blackbox TCP'
         metrics_path: /probe
         params:
@@ -554,7 +568,7 @@ data:
             - pg-sqlproxy-gcloud-sqlproxy.{{.Release.Namespace}}:5432
             {{- end }}
             {{- if .Values.tcpProbe.probeTiller}}
-            - tiller-deploy.kube-system:44134 # TCP Probe 
+            - tiller-deploy.kube-system:44134 # TCP Probe
             {{- end }}
         relabel_configs:
           - source_labels: [__address__]
@@ -565,7 +579,7 @@ data:
             replacement: {{.Release.Name}}-prometheus-blackbox-exporter.{{.Release.Namespace}}:9115  # The blackbox exporter's real hostname:port.
         {{- end }}
 
-      # Tests that DNS in cluster is working. 
+      # Tests that DNS in cluster is working.
       # target should be your cluster DNS service IP
       - job_name: 'blackbox DNS'
         metrics_path: /probe
