@@ -23,6 +23,8 @@ sleep 5
 
 $DIR/waitfor-platform
 
+exit 0
+
 ### Test Prep
 echo "172.17.0.1 local.astronomer-development.com" | sudo tee -a /etc/hosts
 sudo /tmp/bin/kubectl port-forward -n astronomer svc/astronomer-nginx 80 443 &
