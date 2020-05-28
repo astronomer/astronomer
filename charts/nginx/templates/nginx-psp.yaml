@@ -1,0 +1,45 @@
+{{- if .Values.global.pspEnabled }}
+################################
+## Nginx PSP
+#################################
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: {{ .Release.Name }}-ingress-nginx
+spec:
+  allowedCapabilities:
+  - NET_BIND_SERVICE
+  allowPrivilegeEscalation: true
+  fsGroup:
+    rule: 'MustRunAs'
+    ranges:
+    - min: 1
+      max: 65535
+  hostIPC: false
+  hostNetwork: false
+  hostPID: false
+  hostPorts:
+  - min: 80
+    max: 65535
+  privileged: false
+  readOnlyRootFilesystem: false
+  runAsUser:
+    rule: 'MustRunAsNonRoot'
+    ranges:
+    - min: 101
+      max: 65535
+  seLinux:
+    rule: 'RunAsAny'
+  supplementalGroups:
+    rule: 'MustRunAs'
+    ranges:
+    # Forbid adding the root group.
+    - min: 1
+      max: 65535
+  volumes:
+  - 'configMap'
+  - 'downwardAPI'
+  - 'emptyDir'
+  - 'projected'
+  - 'secret'
+{{- end -}}

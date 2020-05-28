@@ -1,0 +1,40 @@
+{{- if .Values.global.pspEnabled }}
+################################
+## Elasticsearch PSP
+#################################
+apiVersion: policy/v1beta1 
+kind: PodSecurityPolicy
+metadata:
+  name: {{ .Release.Name }}-elasticsearch
+spec:
+  privileged: true
+  #requiredDropCapabilities:
+  allowedCapabilities:
+    - IPC_LOCK
+    - SYS_RESOURCE
+  volumes:
+    - 'configMap'
+    - 'emptyDir'
+    - 'projected'
+    - 'secret'
+    - 'downwardAPI'
+    - 'persistentVolumeClaim'
+  hostNetwork: false
+  hostIPC: true
+  hostPID: false
+  runAsUser:
+    rule: 'RunAsAny'
+  seLinux:
+    rule: 'RunAsAny'
+  supplementalGroups:
+    rule: 'MustRunAs'
+    ranges:
+      - min: 1
+        max: 65535
+  fsGroup:
+    rule: 'MustRunAs'
+    ranges:
+      - min: 1
+        max: 65535
+  readOnlyRootFilesystem: false
+{{- end -}}
