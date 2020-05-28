@@ -41,7 +41,6 @@ curl -f -s -o /dev/null -H "Host: alertmanager.local.astronomer-development.com"
 echo "Testing prometheus ingress"
 curl -f -s -o /dev/null -H "Host: prometheus.local.astronomer-development.com"  http://127.0.0.1/
 
-
 # Run tests
 set +e
 helm test astronomer -n astronomer
