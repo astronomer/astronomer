@@ -32,7 +32,7 @@ common:
     CLUSTER_NAME: "astronomer"
     HTTP_CORS_ENABLE: "true"
     HTTP_CORS_ALLOW_ORIGIN: "*"
-    NUMBER_OF_MASTERS: "1"
+    NUMBER_OF_MASTERS: "2"
     MAX_LOCAL_STORAGE_NODES: "1"
     SHARD_ALLOCATION_AWARENESS: ""
     SHARD_ALLOCATION_AWARENESS_ATTR: ""
@@ -141,11 +141,6 @@ master:
     NODE_MASTER: "true"
     NODE_INGEST: "false"
     HTTP_ENABLE: "false"
-
-    # The default value for this environment variable is 2, meaning a cluster
-    # will need a minimum of 2 master nodes to operate. If you have 3 masters
-    # and one dies, the cluster still works.
-    NUMBER_OF_MASTERS: "2"
 
   # Determines the properties of the persistent volume claim associated with a
   # data node StatefulSet that is created when the common.stateful.enabled
