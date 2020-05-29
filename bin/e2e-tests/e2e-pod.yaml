@@ -6,6 +6,7 @@ metadata:
     tier: astronomer
     component: manual-ap-e2e-test
 spec:
+  restartPolicy: Never
   containers:
     - name: ap-e2e-test
       image: astronomerinc/ap-e2e-test:latest
