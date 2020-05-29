@@ -43,10 +43,13 @@ curl -f -s -o /dev/null -H "Host: prometheus.local.astronomer-development.com"  
 # Run tests
 set +e
 helm test astronomer -n astronomer
+TESTS_FAILED=$?
 set -e
 
 kubectl get pods -n astronomer
 
 kubectl logs -n astronomer astronomer-ap-e2e-test
+
+exit $TESTS_FAILED
 
 # kill $WATCH_PID
