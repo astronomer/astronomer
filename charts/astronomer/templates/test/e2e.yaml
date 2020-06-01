@@ -10,7 +10,7 @@ metadata:
     heritage: {{ .Release.Service }}
   # Helm Test hook
   annotations:
-    "helm.sh/hook": test-success
+    "helm.sh/hook": test
 spec:
   nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
