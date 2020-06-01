@@ -46,9 +46,12 @@ helm test astronomer -n astronomer
 TESTS_FAILED=$?
 set -e
 
+echo "HELM TEST RETURN CODE: $TESTS_FAILED"
+
 kubectl get pods -n astronomer
 
 kubectl logs -n astronomer astronomer-ap-e2e-test
+kubectl describe -n astronomer astronomer-ap-e2e-test
 
 exit $TESTS_FAILED
 
