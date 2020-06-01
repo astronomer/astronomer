@@ -58,7 +58,7 @@ echo
 kubectl logs -n astronomer astronomer-ap-e2e-test
 echo
 echo
-kubectl get -n astronomer po/astronomer-ap-e2e-test jobs -o yaml
+kubectl get -n astronomer po/astronomer-ap-e2e-test -o yaml
 echo
 echo
 kubectl descibe -n astronomer po/astronomer-ap-e2e-test -o yaml
