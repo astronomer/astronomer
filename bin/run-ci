@@ -61,7 +61,7 @@ echo
 kubectl get -n astronomer po/astronomer-ap-e2e-test -o yaml
 echo
 echo
-kubectl descibe -n astronomer po/astronomer-ap-e2e-test -o yaml
+kubectl describe -n astronomer po/astronomer-ap-e2e-test -o yaml
 
 exit $TESTS_FAILED
 
