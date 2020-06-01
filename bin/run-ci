@@ -61,7 +61,7 @@ echo
 kubectl get -n astronomer po/astronomer-ap-e2e-test -o yaml
 echo
 echo
-kubectl describe -n astronomer po/astronomer-ap-e2e-test -o yaml
+echo "HELM TEST RETURN CODE: $TESTS_FAILED"
 
 exit $TESTS_FAILED
 
