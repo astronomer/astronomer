@@ -56,10 +56,7 @@ data:
       # Airflow chart settings
       # Static helm configurations for this chart are found below.
       chart:
-        # This version number controls the default Airflow chart version that will be installed
-        # when creating a new deployment in the system. This is also used to ensure all
-        # child airflow deployments are kept up to date and on the latest version.
-        version: 0.13.0-alpha.2
+        version: {{ .Values.airflowChartVersion }}
       # Airflow image settings
       # This is a list of supported airflow versions and corresponding docker tag
       images:

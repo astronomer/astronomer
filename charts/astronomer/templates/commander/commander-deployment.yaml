@@ -24,6 +24,8 @@ spec:
         component: commander
         tier: astronomer
         release: {{ .Release.Name }}
+      annotations:
+        checksum/airflow-chart-version: {{ .Values.airflowChartVersion | sha256sum }}
     spec:
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}

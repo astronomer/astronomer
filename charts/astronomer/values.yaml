@@ -2,6 +2,11 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
+# This version number controls the default Airflow chart version that will be installed
+# when creating a new deployment in the system. This is also used to ensure all
+# child airflow deployments are kept up to date and on the latest version.
+airflowChartVersion: 0.15.0
+
 nodeSelector: {}
 affinity: {}
 tolerations: []
