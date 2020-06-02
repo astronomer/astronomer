@@ -33,7 +33,7 @@ jobs:
           name: Release the Astronomer chart
           command: |
             set -e
-            apt-get update && apt-get install -y ca-certificates curl
+            sudo apt-get update && sudo apt-get install -y ca-certificates curl
             pyenv global 2.7.12
             HELM_CHART_PATH='/tmp/workspace/astronomer-*.tgz' bin/release
 {% for version in kube_versions %}
