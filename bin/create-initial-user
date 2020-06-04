@@ -8,17 +8,38 @@ HOST="https://houston.local.astronomer-development.com/v1"
 USER=$1
 PASS=$2
 
+### Make sure we have the same kube creds
+KUBEDIR=$HOME/.kube
+sudo rm -rf /root/.kube
+sudo cp -r $KUBEDIR /root/.kube
+
+# Make sure that we 
+echo "172.17.0.1 local.astronomer-development.com" | sudo tee -a /etc/hosts
+sudo /tmp/bin/kubectl port-forward -n astronomer svc/astronomer-nginx 80 443 &
+FORWARD_PID=$!
+
+sleep 10
+
+# create k8s secret
 kubectl -n astronomer \
   create secret generic ap-e2e-test-creds \
   --from-literal=ASTRO_USER="$USER" \
   --from-literal=ASTRO_PASS="$PASS"
 
+# Fill in file for houston post
 sed -i \
   -e "s/__USER__/$USER/" \
   -e "s/__PASS__/$PASS/" \
   $DIR/create-initial-user.json
 
+# Create new user by posting to houston
 curl -v -X POST \
   -H "content-type: application/json" \
   -d @$DIR/create-initial-user.json \
   "$HOST" 
+
+# restore the JSON file
+git checkout $DIR/create-initial-user.json
+
+# TODO, trap so that this is always run
+sudo kill -9 $FORWARD_PID
