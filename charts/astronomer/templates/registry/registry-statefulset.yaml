@@ -7,7 +7,7 @@ kind: Deployment
 apiVersion: apps/v1
 {{- else }}
 kind: StatefulSet
-{{- if gt (.Capabilities.KubeVersion.Minor | atoi) 15 }}
+{{- if semverCompare "^1.16-0" .Capabilities.KubeVersion.Version }}
 apiVersion: apps/v1
 {{- else }}
 apiVersion: apps/v1beta2
