@@ -18,6 +18,7 @@ All changes to this project will be documented in this file. For more detail on 
 - SysAdmins can now override their Workspace 'Viewer' or 'Editor' role to delete or edit another user's role
 - Set `postgresqlEnabled: false` by default at the root of our helm chart
 - Correct CLI command listed in Service Account creation page in the Astronomer UI
+- Introduced Prometheus and AlertManager sudomains and URL access
 - BugFix: Accurate calculation of 'Usage Quotas' value in 'Metrics' Tab
 - BugFix: Tooltip hover duration in 'Metrics' tab changed from 5s to 30s
 - BugFix: Intermittent issue with Airflow Pods looking for non-existing secret after Environment Variable removed
