@@ -60,54 +60,82 @@ data:
       # Airflow image settings
       # This is a list of supported airflow versions and corresponding docker tag
       images:
+
+        - version: 1.10.5
+          channel: stable
+          tag: 1.10.5-alpine3.10-onbuild
+        - version: 1.10.5
+          channel: stable
+          tag: 1.10.5-buster-onbuild
+        - version: 1.10.5
+          channel: stable
+          tag: 1.10.5-7-alpine3.10-onbuild
+        - version: 1.10.5
+          channel: stable
+          tag: 1.10.5-7-buster-onbuild
+        - version: 1.10.5
+          channel: stable
+          tag: 1.10.5-8-alpine3.10-onbuild
+        - version: 1.10.5
+          channel: stable
+          tag: 1.10.5-8-buster-onbuild
+
         - version: 1.10.7
           channel: stable
           tag: 1.10.7-alpine3.10-onbuild
         - version: 1.10.7
           channel: stable
-          tag: 1.10.7-7-alpine3.10-onbuild
-        - version: 1.10.7
-          channel: stable
-          tag: 1.10.7-8-alpine3.10-onbuild
-        - version: 1.10.7
-          channel: stable
-          tag: 1.10.7-10-alpine3.10-onbuild
-        - version: 1.10.7
-          channel: stable
-          tag: 1.10.7-11-alpine3.10-onbuild
-        - version: 1.10.7
-          channel: stable
-          tag: 1.10.7-12-alpine3.10-onbuild
-        - version: 1.10.7
-          channel: stable
           tag: 1.10.7-buster-onbuild
+        - version: 1.10.7
+          channel: stable
+          tag: 1.10.7-7-alpine3.10-onbuild
         - version: 1.10.7
           channel: stable
           tag: 1.10.7-7-buster-onbuild
         - version: 1.10.7
           channel: stable
+          tag: 1.10.7-8-alpine3.10-onbuild
+        - version: 1.10.7
+          channel: stable
           tag: 1.10.7-8-buster-onbuild
+        - version: 1.10.7
+          channel: stable
+          tag: 1.10.7-10-alpine3.10-onbuild
         - version: 1.10.7
           channel: stable
           tag: 1.10.7-10-buster-onbuild
         - version: 1.10.7
           channel: stable
+          tag: 1.10.7-11-alpine3.10-onbuild
+        - version: 1.10.7
+          channel: stable
           tag: 1.10.7-11-buster-onbuild
         - version: 1.10.7
           channel: stable
-          tag: 1.10.7-12-buster-onbuild
-        - version: 1.10.10
+          tag: 1.10.7-12-alpine3.10-onbuild
+        - version: 1.10.7
           channel: stable
-          tag: 1.10.10-buster-onbuild
+          tag: 1.10.7-12-buster-onbuild
+
         - version: 1.10.10
           channel: stable
           tag: 1.10.10-alpine3.10-onbuild
         - version: 1.10.10
           channel: stable
-          tag: 1.10.10-1-buster-onbuild
+          tag: 1.10.10-buster-onbuild
         - version: 1.10.10
           channel: stable
           tag: 1.10.10-1-alpine3.10-onbuild
+        - version: 1.10.10
+          channel: stable
+          tag: 1.10.10-1-buster-onbuild
+        - version: 1.10.10
+          channel: stable
+          tag: 1.10.10-2-alpine3.10-onbuild
+        - version: 1.10.10
+          channel: stable
+          tag: 1.10.10-2-buster-onbuild
+
         # - version: 1.10.6
         #   channel: edge
         #   tag: 1.10.6-alpine3.10-onbuild
