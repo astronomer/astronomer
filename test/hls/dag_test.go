@@ -20,6 +20,7 @@ var (
 )
 
 func envSetup(env *script.Env) error {
+
 	// ENV vars in your shell you want added to the tests env
 	var keys = []string{
 		"USER",

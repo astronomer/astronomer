@@ -1,0 +1,30 @@
+### E2E test with cluster, platform, airflow -> up/deploy/down
+
+env PATH=/tmp/bin:$PATH
+exec 'env'
+
+
+
+# Deploy GKE
+env HOME=/home/$USER
+exec bash -c 'source /home/$USER/.profile && adev start'
+
+# Deploy Astro
+cd $HOME/astro/astronomer
+exec ./bin/prep-kube
+exec ./bin/create-initial-user
+exec ./bin/install-platform
+
+
+
+# Run the deployment e2e test
+cd test/hls
+env HOME=/no-home
+exec go test -v -glob 'deployment.hls'
+
+
+
+# Cleanup after ourselves
+env HOME=/home/$USER
+exec bash -c 'source /home/$USER/.profile && adev stop'
+
