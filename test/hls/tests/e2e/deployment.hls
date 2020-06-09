@@ -1,0 +1,112 @@
+### basic deployment life cycle test
+
+env WORKSPACE_NAME=tony-test
+env DEPLOYMENT_NAME=default
+
+
+
+## Setup section
+
+# ensure we have connectivity
+exec gcloud container clusters list
+exec kubectl get pods -n astronomer
+? exec kubectl port-forward -n astronomer svc/astronomer-nginx 80 443 &
+http http://app.local.astronomer-development.com
+
+
+# login using bash expect
+exec chmod +x login.sh
+exec ./login.sh $ASTRO_USER $ASTRO_PASS
+
+# test list workspaces
+exec astro workspace list
+stdout ' NAME[[:blank:]]+ID[[:space:]]+'
+
+# create a workspace
+exec astro workspace create $WORKSPACE_NAME
+stdout '.*Successfully created workspace.*'
+! stderr '.+'
+cp stdout workspace-list.txt
+
+# add workspace id to env
+exec bash -c 'cat workspace-list.txt | grep test | awk ''{ print $2 }'' | tr -d ''\n'''
+env WORKSPACE_ID=@stdout
+
+# list and set the current workspaces
+exec astro workspace list
+exec astro workspace switch $WORKSPACE_ID
+
+
+
+
+
+
+## Deployment section
+
+exec astro deployment create $DEPLOYMENT_NAME -e local
+stdout '.*Successfully created deployment.*'
+! stderr '.+'
+cp stdout deployment-list.txt
+
+# add workspace id to env
+exec bash -c 'cat deployment-list.txt | grep default | awk ''{ print $2 }'' | tr -d ''\n'''
+env ASTRO_DEPLOY_NAME=@stdout
+exec bash -c 'cat deployment-list.txt | grep default | awk ''{ print $4 }'' | tr -d ''\n'''
+env ASTRO_DEPLOY_ID=@stdout
+
+
+# clone and deploy a dag
+rm -rf qa-scenario-dags
+exec git clone git@github.com:astronomer/qa-scenario-dags
+cd qa-scenario-dags
+exec git checkout behave-tests
+
+? exec astro deploy $ASTRO_DEPLOY_NAME
+
+exec sleep 10
+exec kubectl get pods -n $ASTRO_DEPLOY_NAME
+exec sleep 10
+exec kubectl get pods -n $ASTRO_DEPLOY_NAME
+exec sleep 10
+exec kubectl get pods -n $ASTRO_DEPLOY_NAME
+exec sleep 10
+exec kubectl get pods -n $ASTRO_DEPLOY_NAME
+exec sleep 10
+exec kubectl get pods -n $ASTRO_DEPLOY_NAME
+exec sleep 10
+exec kubectl get pods -n $ASTRO_DEPLOY_NAME
+
+
+exec astro deployment delete $ASTRO_DEPLOY_ID
+stdout '.*Successfully deleted deployment.*'
+! stderr '.+'
+
+
+
+# cleanup workspace
+exec astro workspace delete $WORKSPACE_ID
+stdout '.*Successfully deleted workspace.*'
+! stderr '.+'
+
+
+
+## Files used above
+
+-- login.sh --
+#!/usr/bin/expect -f
+
+set timeout 5
+set username [lindex $argv 0]
+set password [lindex $argv 1]
+
+# Start the login process
+spawn astro auth login local.astronomer-development.com
+
+# handle input/output
+expect "*oAuth*"
+send "$username\r"
+expect "Password*"
+send "$password\r"
+
+# Expect the end
+expect eof

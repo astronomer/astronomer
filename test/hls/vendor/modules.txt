@@ -1,0 +1,179 @@
+# github.com/aymerick/raymond v2.0.2+incompatible
+github.com/aymerick/raymond
+github.com/aymerick/raymond/ast
+github.com/aymerick/raymond/lexer
+github.com/aymerick/raymond/parser
+# github.com/bmatcuk/doublestar v1.3.0
+github.com/bmatcuk/doublestar
+# github.com/emirpasic/gods v1.12.0
+github.com/emirpasic/gods/containers
+github.com/emirpasic/gods/lists
+github.com/emirpasic/gods/lists/arraylist
+github.com/emirpasic/gods/trees
+github.com/emirpasic/gods/trees/binaryheap
+github.com/emirpasic/gods/utils
+# github.com/fsnotify/fsnotify v1.4.7
+github.com/fsnotify/fsnotify
+# github.com/go-git/gcfg v1.5.0
+github.com/go-git/gcfg
+github.com/go-git/gcfg/scanner
+github.com/go-git/gcfg/token
+github.com/go-git/gcfg/types
+# github.com/go-git/go-billy/v5 v5.0.0
+github.com/go-git/go-billy/v5
+github.com/go-git/go-billy/v5/helper/chroot
+github.com/go-git/go-billy/v5/helper/polyfill
+github.com/go-git/go-billy/v5/osfs
+github.com/go-git/go-billy/v5/util
+# github.com/go-git/go-git/v5 v5.0.0
+github.com/go-git/go-git/v5
+github.com/go-git/go-git/v5/config
+github.com/go-git/go-git/v5/internal/revision
+github.com/go-git/go-git/v5/internal/url
+github.com/go-git/go-git/v5/plumbing
+github.com/go-git/go-git/v5/plumbing/cache
+github.com/go-git/go-git/v5/plumbing/filemode
+github.com/go-git/go-git/v5/plumbing/format/config
+github.com/go-git/go-git/v5/plumbing/format/diff
+github.com/go-git/go-git/v5/plumbing/format/gitignore
+github.com/go-git/go-git/v5/plumbing/format/idxfile
+github.com/go-git/go-git/v5/plumbing/format/index
+github.com/go-git/go-git/v5/plumbing/format/objfile
+github.com/go-git/go-git/v5/plumbing/format/packfile
+github.com/go-git/go-git/v5/plumbing/format/pktline
+github.com/go-git/go-git/v5/plumbing/object
+github.com/go-git/go-git/v5/plumbing/protocol/packp
+github.com/go-git/go-git/v5/plumbing/protocol/packp/capability
+github.com/go-git/go-git/v5/plumbing/protocol/packp/sideband
+github.com/go-git/go-git/v5/plumbing/revlist
+github.com/go-git/go-git/v5/plumbing/storer
+github.com/go-git/go-git/v5/plumbing/transport
+github.com/go-git/go-git/v5/plumbing/transport/client
+github.com/go-git/go-git/v5/plumbing/transport/file
+github.com/go-git/go-git/v5/plumbing/transport/git
+github.com/go-git/go-git/v5/plumbing/transport/http
+github.com/go-git/go-git/v5/plumbing/transport/internal/common
+github.com/go-git/go-git/v5/plumbing/transport/server
+github.com/go-git/go-git/v5/plumbing/transport/ssh
+github.com/go-git/go-git/v5/storage
+github.com/go-git/go-git/v5/storage/filesystem
+github.com/go-git/go-git/v5/storage/filesystem/dotgit
+github.com/go-git/go-git/v5/storage/memory
+github.com/go-git/go-git/v5/utils/binary
+github.com/go-git/go-git/v5/utils/diff
+github.com/go-git/go-git/v5/utils/ioutil
+github.com/go-git/go-git/v5/utils/merkletrie
+github.com/go-git/go-git/v5/utils/merkletrie/filesystem
+github.com/go-git/go-git/v5/utils/merkletrie/index
+github.com/go-git/go-git/v5/utils/merkletrie/internal/frame
+github.com/go-git/go-git/v5/utils/merkletrie/noder
+# github.com/go-stack/stack v1.8.0
+github.com/go-stack/stack
+# github.com/hashicorp/hcl v1.0.0
+github.com/hashicorp/hcl
+github.com/hashicorp/hcl/hcl/ast
+github.com/hashicorp/hcl/hcl/parser
+github.com/hashicorp/hcl/hcl/printer
+github.com/hashicorp/hcl/hcl/scanner
+github.com/hashicorp/hcl/hcl/strconv
+github.com/hashicorp/hcl/hcl/token
+github.com/hashicorp/hcl/json/parser
+github.com/hashicorp/hcl/json/scanner
+github.com/hashicorp/hcl/json/token
+# github.com/hofstadter-io/dotpath v0.0.0-20191027071558-52e2819b7d2d
+github.com/hofstadter-io/dotpath
+# github.com/hofstadter-io/hof v0.5.7 => ../../../../hof/hof
+## explicit
+github.com/hofstadter-io/hof/lib/gotils/imports
+github.com/hofstadter-io/hof/lib/gotils/intern/os/execpath
+github.com/hofstadter-io/hof/lib/gotils/intern/textutil
+github.com/hofstadter-io/hof/lib/gotils/par
+github.com/hofstadter-io/hof/lib/gotils/testenv
+github.com/hofstadter-io/hof/lib/gotils/txtar
+github.com/hofstadter-io/hof/lib/yagu
+github.com/hofstadter-io/hof/script
+# github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99
+github.com/jbenet/go-context/io
+# github.com/kevinburke/ssh_config v0.0.0-20190725054713-01f96b0aa0cd
+github.com/kevinburke/ssh_config
+# github.com/magiconair/properties v1.8.1
+github.com/magiconair/properties
+# github.com/mattn/go-colorable v0.1.4
+github.com/mattn/go-colorable
+# github.com/mattn/go-isatty v0.0.11
+github.com/mattn/go-isatty
+# github.com/mitchellh/go-homedir v1.1.0
+github.com/mitchellh/go-homedir
+# github.com/mitchellh/mapstructure v1.1.2
+github.com/mitchellh/mapstructure
+# github.com/parnurzeal/gorequest v0.2.16
+github.com/parnurzeal/gorequest
+# github.com/pelletier/go-toml v1.2.0
+github.com/pelletier/go-toml
+# github.com/pkg/errors v0.8.1
+github.com/pkg/errors
+# github.com/sergi/go-diff v1.1.0
+github.com/sergi/go-diff/diffmatchpatch
+# github.com/spf13/afero v1.1.2
+github.com/spf13/afero
+github.com/spf13/afero/mem
+# github.com/spf13/cast v1.3.0
+github.com/spf13/cast
+# github.com/spf13/jwalterweatherman v1.0.0
+github.com/spf13/jwalterweatherman
+# github.com/spf13/pflag v1.0.3
+github.com/spf13/pflag
+# github.com/spf13/viper v1.6.2
+github.com/spf13/viper
+# github.com/subosito/gotenv v1.2.0
+github.com/subosito/gotenv
+# github.com/xanzy/ssh-agent v0.2.1
+github.com/xanzy/ssh-agent
+# golang.org/x/crypto v0.0.0-20200427165652-729f1e841bcc
+golang.org/x/crypto/blowfish
+golang.org/x/crypto/cast5
+golang.org/x/crypto/chacha20
+golang.org/x/crypto/curve25519
+golang.org/x/crypto/ed25519
+golang.org/x/crypto/ed25519/internal/edwards25519
+golang.org/x/crypto/internal/subtle
+golang.org/x/crypto/openpgp
+golang.org/x/crypto/openpgp/armor
+golang.org/x/crypto/openpgp/elgamal
+golang.org/x/crypto/openpgp/errors
+golang.org/x/crypto/openpgp/packet
+golang.org/x/crypto/openpgp/s2k
+golang.org/x/crypto/poly1305
+golang.org/x/crypto/ssh
+golang.org/x/crypto/ssh/agent
+golang.org/x/crypto/ssh/internal/bcrypt_pbkdf
+golang.org/x/crypto/ssh/knownhosts
+# golang.org/x/mod v0.2.0
+golang.org/x/mod/sumdb/dirhash
+# golang.org/x/net v0.0.0-20200301022130-244492dfa37a
+golang.org/x/net/context
+golang.org/x/net/internal/socks
+golang.org/x/net/proxy
+golang.org/x/net/publicsuffix
+# golang.org/x/sys v0.0.0-20200428200454-593003d681fa
+golang.org/x/sys/cpu
+golang.org/x/sys/unix
+golang.org/x/sys/windows
+# golang.org/x/text v0.3.2
+golang.org/x/text/transform
+golang.org/x/text/unicode/norm
+# gopkg.in/errgo.v2 v2.1.0
+gopkg.in/errgo.v2/errors
+gopkg.in/errgo.v2/fmt/errors
+# gopkg.in/inconshreveable/log15.v2 v2.0.0-20180818164646-67afb5ed74ec
+gopkg.in/inconshreveable/log15.v2
+# gopkg.in/ini.v1 v1.51.0
+gopkg.in/ini.v1
+# gopkg.in/warnings.v0 v0.1.2
+gopkg.in/warnings.v0
+# gopkg.in/yaml.v2 v2.2.8
+gopkg.in/yaml.v2
+# moul.io/http2curl v1.0.0
+## explicit
+moul.io/http2curl
+# github.com/hofstadter-io/hof => ../../../../hof/hof
