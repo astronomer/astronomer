@@ -239,12 +239,12 @@ data:
             source_labels: [namespace]
             regex: "^{{ .Release.Namespace }}.*"
           - source_labels: [deployment]
-            regex: "^((?![0-9]+$)(?!.*-$)(?!-)[a-zA-Z0-9-]{1,63})-.*"
+            regex: "([-a-z0-9]*[a-z0-9])-.*?"
             replacement: "$1"
             target_label: release
           # Required for single-namespace mode
           - source_labels: [pod]
-            regex: "^((?![0-9]+$)(?!.*-$)(?!-)[a-zA-Z0-9-]{1,63})-.*"
+            regex: "([-a-z0-9]*[a-z0-9])-.*?"
             replacement: "$1"
             target_label: release
           {{- end}}
@@ -330,7 +330,7 @@ data:
             target_label: __address__
         metric_relabel_configs:
           - source_labels: [instance]
-            regex: "^((?![0-9]+$)(?!.*-$)(?!-)[a-zA-Z0-9-]{1,63})-.*$"
+            regex: "([-a-z0-9]*[a-z0-9])-.*?"
             replacement: "$1"
             target_label: deployment
             # Drop metrics that are task or dag specific
@@ -462,7 +462,7 @@ data:
 
             # Add deployment name via container_name
           - source_labels: [pod_name]
-            regex: "^((?![0-9]+$)(?!.*-$)(?!-)[a-zA-Z0-9-]{1,63})-.*"
+            regex: "([-a-z0-9]*[a-z0-9])-.*?"
             replacement: "$1"
             target_label: deployment
 
