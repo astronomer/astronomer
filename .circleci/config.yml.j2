@@ -30,7 +30,7 @@ jobs:
             - './*.tgz'
   release:
     machine:
-      image: ubuntu-1604:201903-01
+      image: ubuntu-1604:202004-01
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -46,7 +46,7 @@ jobs:
 {% for version in kube_versions %}
   platform-{{ version | replace(".", "-") }}:
     machine:
-      image: ubuntu-1604:201903-01
+      image: ubuntu-1604:202004-01
       resource_class: xlarge
     environment:
       KUBE_VERSION: v{{ version }}
