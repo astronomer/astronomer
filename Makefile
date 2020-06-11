@@ -13,7 +13,16 @@ OUTPUT := repository
 TEMP := /tmp/${DOMAIN}
 
 .PHONY: lint
-lint: lint-prep lint-astro lint-charts lint-prom
+lint: lint-prep lint-astro lint-charts 
+#lint-prom (omitted)
+
+.PHONY: lint-venv
+.ONESHELL:
+lint-venv:
+	set -eu
+	python3 -m venv venv
+	. venv/bin/activate
+	pip install pyyaml
 
 .PHONY: lint-prep
 .ONESHELL:
@@ -27,8 +36,7 @@ lint-prep:
 .ONESHELL:
 lint-astro:
 	set -eu
-	# helm2 lint
-	helm lint
+	helm lint ${TEMP}/astronomer
 
 .PHONY: lint-charts
 .ONESHELL:
@@ -45,13 +53,15 @@ lint-charts:
 lint-prom:
 	set -eu
 	# Lint the Prometheus alerts configuration
-	helm template -x ${TEMP}/astronomer/charts/prometheus/templates/prometheus-alerts-configmap.yaml ${TEMP}/astronomer > ${TEMP}/prometheus_alerts.yaml
+	helm template -s ${TEMP}/astronomer/charts/prometheus/templates/prometheus-alerts-configmap.yaml ${TEMP}/astronomer > ${TEMP}/prometheus_alerts.yaml
 	# Parse the alerts.yaml data from the config map resource
 	python3 -c "import yaml; from pathlib import Path; alerts = yaml.safe_load(Path('${TEMP}/prometheus_alerts.yaml').read_text())['data']['alerts.yaml']; Path('${TEMP}/prometheus_alerts.yaml').write_text(alerts)"
 	promtool check rules  ${TEMP}/prometheus_alerts.yaml
-	rm -rf ${TEMP}/astronomer
-	rm ${TEMP}/prometheus_alerts.yaml
 
+.PHONY: lint-clean
+.ONESHELL:
+lint-clean:
+	rm -rf ${TEMP}
 
 
 .PHONY: build
