@@ -2,11 +2,7 @@
 ## Elasticsearch Master StatefulSet
 #################################
 kind: StatefulSet
-{{- if semverCompare "^1.16-0" .Capabilities.KubeVersion.Version }}
-apiVersion: apps/v1
-{{- else }}
-apiVersion: apps/v1beta2
-{{- end }}
+apiVersion: {{ template "apiVersion.StatefulSet" . }}
 metadata:
   name: {{ template "elasticsearch.fullname" . }}-master
   labels:

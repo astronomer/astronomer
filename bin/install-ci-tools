@@ -2,8 +2,9 @@
 set -xeuo pipefail
 
 KIND_VERSION="8.1.0"
-HELM_VERSION="3.1.3"
-GCLOUD_VERSION="270.0.0"
+HELM2_VERSION="2.16.8"
+HELM3_VERSION="3.2.3"
+GCLOUD_VERSION="292.0.0"
 OS=$(uname | tr '[:upper:]' '[:lower:]')
 
 # Set up a bin location
@@ -25,13 +26,23 @@ else
   mv ./kind /tmp/bin/
 fi
 
+if [[ -f /tmp/bin/helm2 ]]; then
+  echo "helm2 is already installed."
+else
+  # Install helm
+  wget https://get.helm.sh/helm-v${HELM2_VERSION}-${OS}-amd64.tar.gz
+  tar -zxvf ./helm-v${HELM2_VERSION}-${OS}-amd64.tar.gz
+  mv ${OS}-amd64/helm /tmp/bin/helm2
+fi
+
 if [[ -f /tmp/bin/helm ]]; then
   echo "helm is already installed."
 else
   # Install helm
-  wget https://get.helm.sh/helm-v${HELM_VERSION}-${OS}-amd64.tar.gz
-  tar -zxvf ./helm-v${HELM_VERSION}-${OS}-amd64.tar.gz
-  mv ${OS}-amd64/helm /tmp/bin/
+  wget https://get.helm.sh/helm-v${HELM3_VERSION}-${OS}-amd64.tar.gz
+  tar -zxvf ./helm-v${HELM3_VERSION}-${OS}-amd64.tar.gz
+  mv ${OS}-amd64/helm /tmp/bin/helm3
+  cp /tmp/bin/helm3 /tmp/bin/helm
 fi
 
 # Add stable helm repo

@@ -4,7 +4,7 @@ URL ?= https://${DOMAIN}
 BUCKET ?= gs://${DOMAIN}
 
 # List of charts to build
-CHARTS := astronomer nginx grafana prometheus alertmanager elasticsearch kibana fluentd kube-state
+CHARTS := astronomer nginx grafana prometheus alertmanager elasticsearch kibana fluentd kube-state postgresql
 
 # Output directory
 OUTPUT := repository
@@ -13,17 +13,37 @@ OUTPUT := repository
 TEMP := /tmp/${DOMAIN}
 
 .PHONY: lint
+lint: lint-prep lint-astro lint-charts lint-prom
+
+.PHONY: lint-prep
 .ONESHELL:
-lint:
-	set -xe
+lint-prep:
+	set -eu
 	rm -rf ${TEMP}/astronomer || true
 	mkdir -p ${TEMP}
 	cp -R ../astronomer ${TEMP}/astronomer || cp -R ../project ${TEMP}/astronomer
-	helm lint ${TEMP}/astronomer
+
+.PHONY: lint-astro
+.ONESHELL:
+lint-astro:
+	set -eu
+	# helm2 lint
+	helm lint
+
+.PHONY: lint-charts
+.ONESHELL:
+lint-charts:
+	set -eu
+	# get a copy of the global values for helm lint'n the dependent charts
 	python3 -c "import yaml; from pathlib import Path; globals = {'global': yaml.safe_load(Path('${TEMP}/astronomer/values.yaml').read_text())['global']}; Path('${TEMP}/globals.yaml').write_text(yaml.dump(globals))"
 	for chart in $$(ls ${TEMP}/astronomer/charts); do
 	helm lint -f ${TEMP}/globals.yaml ${TEMP}/astronomer/charts/$$chart
 	done
+
+.PHONY: lint-prom
+.ONESHELL:
+lint-prom:
+	set -eu
 	# Lint the Prometheus alerts configuration
 	helm template -x ${TEMP}/astronomer/charts/prometheus/templates/prometheus-alerts-configmap.yaml ${TEMP}/astronomer > ${TEMP}/prometheus_alerts.yaml
 	# Parse the alerts.yaml data from the config map resource
@@ -31,6 +51,8 @@ lint:
 	promtool check rules  ${TEMP}/prometheus_alerts.yaml
 	rm -rf ${TEMP}/astronomer
 	rm ${TEMP}/prometheus_alerts.yaml
+
+
 
 .PHONY: build
 .ONESHELL:

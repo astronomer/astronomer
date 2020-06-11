@@ -1,5 +1,5 @@
-apiVersion: apps/v1
 kind: StatefulSet
+apiVersion: {{ template "apiVersion.StatefulSet" . }}
 metadata:
   name: {{ template "postgresql.master.fullname" . }}
   labels:

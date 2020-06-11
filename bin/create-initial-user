@@ -8,13 +8,20 @@ HOST="https://houston.local.astronomer-development.com/v1"
 USER=$1
 PASS=$2
 
-### Make sure we have the same kube creds
+### Make sure we have the same kube creds when needing to be root
 KUBEDIR=$HOME/.kube
 sudo rm -rf /root/.kube
 sudo cp -r $KUBEDIR /root/.kube
 
-# Make sure that we 
-echo "172.17.0.1 local.astronomer-development.com" | sudo tee -a /etc/hosts
+set +e
+grep "local.astronomer-development.com" /etc/hosts
+FOUND=$?
+set -e
+if [[ $FOUND -ne 0 ]]; then
+    echo "127.0.0.1 local.astronomer-development.com" | sudo tee -a /etc/hosts
+fi
+
+# So we can talk to houston
 sudo kubectl port-forward -n astronomer svc/astronomer-nginx 80 443 &
 FORWARD_PID=$!
 
