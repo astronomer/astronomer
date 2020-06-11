@@ -227,7 +227,7 @@ data:
             action: labeldrop
           # Required for multi-namespace mode
           - source_labels: [namespace]
-            regex: "^{{ .Release.Namespace }}-.*$"
+            regex: "^{{ .Release.Namespace }}-(.*$)"
             replacement: "$1"
             target_label: release
         {{- else}}
