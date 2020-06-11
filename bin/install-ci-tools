@@ -1,32 +1,35 @@
 #!/usr/bin/env bash
 set -xeuo pipefail
 
-KIND_VERSION="8.1.0"
+KIND_VERSION="0.8.1"
 HELM2_VERSION="2.16.8"
 HELM3_VERSION="3.2.3"
 GCLOUD_VERSION="292.0.0"
+MKCERT_VERSION="1.4.1"
+
 OS=$(uname | tr '[:upper:]' '[:lower:]')
+
+FORCE=${1:-0}
 
 # Set up a bin location
 mkdir -p /tmp/bin
-PATH=/tmp/bin:$PATH
+export PATH=/tmp/bin:$PATH
 # Bit of common bash magic that sets DIR to the directory of this script
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 # The path to the working directory - the root of the repo
 REPO_DIR=$DIR/../
-cd /tmp
+pushd /tmp
 
-if [[ -f /tmp/bin/kind ]]; then
+if [[ $FORCE -eq 0 && -f /tmp/bin/kind ]]; then
   echo "kind already installed."
 else
   # Install KinD
-  cd /tmp
-  curl -Lo ./kind https://github.com/kubernetes-sigs/kind/releases/download/v${KIND_VERSION}/kind-${OS}-amd64
-  chmod +x ./kind
-  mv ./kind /tmp/bin/
+  curl -LO https://github.com/kubernetes-sigs/kind/releases/download/v${KIND_VERSION}/kind-${OS}-amd64
+  chmod +x ./kind-${OS}-amd64
+  mv ./kind-${OS}-amd64 /tmp/bin/kind
 fi
 
-if [[ -f /tmp/bin/helm2 ]]; then
+if [[ $FORCE -eq 0 && -f /tmp/bin/helm2 ]]; then
   echo "helm2 is already installed."
 else
   # Install helm
@@ -35,7 +38,7 @@ else
   mv ${OS}-amd64/helm /tmp/bin/helm2
 fi
 
-if [[ -f /tmp/bin/helm ]]; then
+if [[ $FORCE -eq 0 && -f /tmp/bin/helm ]]; then
   echo "helm is already installed."
 else
   # Install helm
@@ -48,20 +51,19 @@ fi
 # Add stable helm repo
 helm repo add stable https://kubernetes-charts.storage.googleapis.com
 
-if [[ -f /tmp/bin/kubectl ]]; then
+if [[ $FORCE -eq 0 && -f /tmp/bin/kubectl ]]; then
   echo "kubectl is already installed."
 else
   # Install kubectl
-  cd /tmp/bin
   curl -LO https://storage.googleapis.com/kubernetes-release/release/`curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt`/bin/${OS}/amd64/kubectl
   chmod +x ./kubectl
+  mv kubectl /tmp/bin/kubectl
 fi
 
 set +e
 which gsutil && which gcloud
-if [ ! $? -eq 0 ]; then
+if [[ $FORCE -ne 0 || ! $? -eq 0 ]]; then
   # Install gcloud SDK
-  cd /tmp
   wget https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-${GCLOUD_VERSION}-${OS}-x86_64.tar.gz
   tar xvzf ./google-cloud-sdk-${GCLOUD_VERSION}-${OS}-x86_64.tar.gz >/dev/null 2>&1
   export PATH=$(pwd)/google-cloud-sdk/bin/:$PATH
@@ -71,12 +73,25 @@ fi
 set -e
 
 # Install mkcert
-if [[ -f /tmp/bin/mkcert ]]; then
+if [[ $FORCE -eq 0 && -f /tmp/bin/mkcert ]]; then
   echo "mkcert is already installed."
 else
-  cd /tmp/
-  curl -Lo /tmp/bin/mkcert https://github.com/FiloSottile/mkcert/releases/download/v1.4.1/mkcert-v1.4.1-${OS}-amd64
-  chmod +x /tmp/bin/mkcert
+  curl -LO https://github.com/FiloSottile/mkcert/releases/download/v${MKCERT_VERSION}/mkcert-v${MKCERT_VERSION}-${OS}-amd64
+  chmod +x ./mkcert-v${MKCERT_VERSION}-${OS}-amd64
+  mv ./mkcert-v${MKCERT_VERSION}-${OS}-amd64 /tmp/bin/mkcert
 fi
 
-cd $REPO_DIR
+echo "--------- versions -------------"
+
+
+# kind 
+set +e
+kind version
+helm2 version --client
+helm3 version --client
+kubectl version --client
+gcloud version
+mkcert --version
+set -e
+
+popd

@@ -6,12 +6,16 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 # The path to the working directory - the root of the repo
 REPO_DIR=$DIR/../
 
-# source $REPO_DIR/bin/install-ci-tools
+source $REPO_DIR/bin/install-ci-tools 1
 export PATH=$PATH:/tmp/bin
+ls -lh /tmp/bin
 
 source $REPO_DIR/bin/setup-kind
 
 echo "Deploying Astronomer..."
+
+# Lint the platform while helm can talk to Kubernetes
+# make lint
 
 # This is so CI does not timeout on "no input in 10 minutes"
 kubectl get pods -n astronomer -w &

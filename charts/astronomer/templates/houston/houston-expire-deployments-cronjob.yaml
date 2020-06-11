@@ -2,7 +2,7 @@
 ## Houston Expire Deployments CronJob
 ########################################
 {{- if .Values.houston.expireDeployments.enabled }}
-apiVersion: {{ template "apiVersion.batch.v1beta1" . }}
+apiVersion: batch/v1beta1
 kind: CronJob
 metadata:
   name: {{ .Release.Name }}-houston-expire-deployments
