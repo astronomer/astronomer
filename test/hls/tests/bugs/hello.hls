@@ -1,5 +1,0 @@
-# It's a bug's life...
-
-exec ls
-
-exec echo "buzz buzz"
