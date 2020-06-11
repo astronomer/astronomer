@@ -13,13 +13,8 @@ OUTPUT := repository
 TEMP := /tmp/${DOMAIN}
 
 
-.PHONE: helm-helpers
-.ONESHELL:
-helm-helpers:
-	for d in `ls -1 charts/`; do cp _apivers.tpl charts/$d/templates/_apivers.tpl; done
-
 .PHONY: lint
-lint: helm-helpers lint-prep lint-astro lint-charts 
+lint: lint-prep lint-astro lint-charts 
 #lint-prom (omitted)
 
 .PHONY: lint-venv
