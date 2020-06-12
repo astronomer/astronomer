@@ -13,7 +13,7 @@ images:
     pullPolicy: IfNotPresent
   defaultBackend:
     repository: astronomerinc/ap-default-backend
-    tag: 0.14.0
+    tag: 0.16.0
     pullPolicy: IfNotPresent
 
 forceNamespaceIsolation: true
