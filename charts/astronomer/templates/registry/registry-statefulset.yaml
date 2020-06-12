@@ -7,11 +7,7 @@ kind: Deployment
 apiVersion: apps/v1
 {{- else }}
 kind: StatefulSet
-{{- if gt (.Capabilities.KubeVersion.Minor | atoi) 15 }}
-apiVersion: apps/v1
-{{- else }}
-apiVersion: apps/v1beta2
-{{- end }}
+apiVersion: {{ template "apiVersion.StatefulSet" . }}
 {{- end }}
 metadata:
   name: {{ .Release.Name }}-registry

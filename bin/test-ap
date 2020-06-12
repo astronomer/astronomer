@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Bit of common bash magic that sets DIR to the directory of this script
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+# The path to the working directory - the root of the repo
+REPO_DIR=$DIR/../
+
+# Run tests
+set +e
+helm test astronomer -n astronomer
+EC=$?
+set -e
+
+kubectl get pods -n astronomer
+
+kubectl logs -n astronomer astronomer-ap-e2e-test
+
+exit $EC

@@ -125,7 +125,7 @@ spec:
             path: /_cluster/health?local=true
             port: {{ .Values.common.ports.http }}
           initialDelaySeconds: 90
-        {{- if gt (.Capabilities.KubeVersion.Minor | atoi) 15 }}
+        {{- if semverCompare "^1.16-0" .Capabilities.KubeVersion.Version }}
         # This feature is available in Kubernetes 1.16+
         startupProbe:
           httpGet:

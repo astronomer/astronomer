@@ -10,10 +10,10 @@ from jinja2 import Template
 # When adding a new version, look up the most
 # recent patch version on Dockerhub
 KUBE_VERSIONS = ['1.14.10',
-                 '1.15.7',
-                 '1.16.4',
-                 '1.17.2',
-                 '1.18.2']
+        '1.15.11',
+        '1.16.9',
+        '1.17.5',
+        '1.18.2']
 
 def main():
     """ Render the Jinja2 template file
@@ -26,10 +26,10 @@ def main():
         templated_file_content = circle_ci_config_template.read()
     template = Template(templated_file_content)
     config = template.render(
-        kube_versions=KUBE_VERSIONS
-    )
+            kube_versions=KUBE_VERSIONS
+            )
     warning_header = "# Warning: automatically generated file\n" + \
-                     "# Please edit config.yml.j2, and use the script generate_circleci_config.py\n"
+            "# Please edit config.yml.j2, and use the script generate_circleci_config.py\n"
     with open(config_path, "w") as circle_ci_config_file:
         circle_ci_config_file.write(warning_header)
         circle_ci_config_file.write(config)

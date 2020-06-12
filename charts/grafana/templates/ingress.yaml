@@ -3,7 +3,7 @@
 #################################
 {{- if .Values.global.baseDomain }}
 kind: Ingress
-apiVersion: extensions/v1beta1
+apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:
   name: {{ template "grafana.fullname" . }}-ingress
   labels:
