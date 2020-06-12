@@ -27,6 +27,10 @@ sleep 5
 
 $DIR/waitfor-platform
 
+# TODO: turn on e2e tests
+
+exit 0
+
 ### Create initial user
 $DIR/create-initial-user "tester@astronomer.io" "password"-
 
