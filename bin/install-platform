@@ -90,7 +90,6 @@ helm ${ACTION} \
   --set tags.keda=${keda} \
   $HELM_CHART_PATH
 
-exit
 
 if [ ! $? -eq 0 ]; then
   set +x
