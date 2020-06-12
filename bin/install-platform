@@ -91,6 +91,7 @@ helm ${ACTION} \
   --set astronomer.houston.upgradeDeployments.enabled=true \
   $HELM_CHART_PATH
 
+
 if [ ! $? -eq 0 ]; then
   set +x
   echo "Helm chart failed to install"
