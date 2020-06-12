@@ -4,7 +4,7 @@ URL ?= https://${DOMAIN}
 BUCKET ?= gs://${DOMAIN}
 
 # List of charts to build
-CHARTS := astronomer nginx grafana prometheus alertmanager elasticsearch kibana fluentd kube-state
+CHARTS := astronomer nginx grafana prometheus alertmanager elasticsearch kibana fluentd kube-state postgresql
 
 # Output directory
 OUTPUT := repository
@@ -12,25 +12,58 @@ OUTPUT := repository
 # Temp directory
 TEMP := /tmp/${DOMAIN}
 
+
 .PHONY: lint
+lint: lint-prep lint-astro lint-charts 
+#lint-prom (omitted)
+
+.PHONY: lint-venv
 .ONESHELL:
-lint:
-	set -xe
+lint-venv:
+	set -eu
+	python3 -m venv venv
+	. venv/bin/activate
+	pip install pyyaml
+
+.PHONY: lint-prep
+.ONESHELL:
+lint-prep:
+	set -eu
 	rm -rf ${TEMP}/astronomer || true
 	mkdir -p ${TEMP}
 	cp -R ../astronomer ${TEMP}/astronomer || cp -R ../project ${TEMP}/astronomer
+
+.PHONY: lint-astro
+.ONESHELL:
+lint-astro:
+	set -eu
 	helm lint ${TEMP}/astronomer
+
+.PHONY: lint-charts
+.ONESHELL:
+lint-charts:
+	set -eu
+	# get a copy of the global values for helm lint'n the dependent charts
 	python3 -c "import yaml; from pathlib import Path; globals = {'global': yaml.safe_load(Path('${TEMP}/astronomer/values.yaml').read_text())['global']}; Path('${TEMP}/globals.yaml').write_text(yaml.dump(globals))"
 	for chart in $$(ls ${TEMP}/astronomer/charts); do
 	helm lint -f ${TEMP}/globals.yaml ${TEMP}/astronomer/charts/$$chart
 	done
+
+.PHONY: lint-prom
+.ONESHELL:
+lint-prom:
+	set -eu
 	# Lint the Prometheus alerts configuration
-	helm template -x ${TEMP}/astronomer/charts/prometheus/templates/prometheus-alerts-configmap.yaml ${TEMP}/astronomer > ${TEMP}/prometheus_alerts.yaml
+	helm template -s ${TEMP}/astronomer/charts/prometheus/templates/prometheus-alerts-configmap.yaml ${TEMP}/astronomer > ${TEMP}/prometheus_alerts.yaml
 	# Parse the alerts.yaml data from the config map resource
 	python3 -c "import yaml; from pathlib import Path; alerts = yaml.safe_load(Path('${TEMP}/prometheus_alerts.yaml').read_text())['data']['alerts.yaml']; Path('${TEMP}/prometheus_alerts.yaml').write_text(alerts)"
 	promtool check rules  ${TEMP}/prometheus_alerts.yaml
-	rm -rf ${TEMP}/astronomer
-	rm ${TEMP}/prometheus_alerts.yaml
+
+.PHONY: lint-clean
+.ONESHELL:
+lint-clean:
+	rm -rf ${TEMP}
+
 
 .PHONY: build
 .ONESHELL:

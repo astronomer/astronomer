@@ -22,8 +22,12 @@
 
 # Astronomer helm repository directory
 repository
-bin
-configs
 certs
-secrets
 tiller-rbac
+
+/bin/
+/configs/
+/docs/
+/secrets/
+/test/
+/venv/

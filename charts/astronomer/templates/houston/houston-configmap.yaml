@@ -57,6 +57,7 @@ data:
       # Static helm configurations for this chart are found below.
       chart:
         version: {{ .Values.airflowChartVersion }}
+
       # Airflow image settings
       # This is a list of supported airflow versions and corresponding docker tag
       images:
@@ -132,6 +133,7 @@ data:
         - version: 1.10.10
           channel: stable
           tag: 1.10.10-2-buster-onbuild
+
       # Kubernetes labels to add on each airflow deployment namespace
       namespaceLabels:
         platform-release: {{ .Release.Name }}

@@ -23,3 +23,5 @@ dev-account.json
 # ignore local ssl files
 *.pem
 temp.sh
+
+/venv/

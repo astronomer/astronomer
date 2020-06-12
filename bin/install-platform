@@ -19,6 +19,8 @@ monitoring=true
 kubed=true
 postgresql=true
 keda=true
+ACTION="install"
+dryrun=""
 
 # Any args means be selective
 if [ $# -ne 0 ]; then
@@ -30,7 +32,35 @@ if [ $# -ne 0 ]; then
   keda=false
   for component in $@
   do
-    export $component=true
+    case $component in
+
+    install)
+      ACTION="install"
+      ;;
+
+    template)
+      ACTION="template"
+      ;;
+
+    dryrun)
+      dryrun="--dry-run"
+      ;;
+
+    all)
+        platform=true
+        logging=true
+        monitoring=true
+        kubed=true
+        postgresql=true
+        keda=true
+      ;;
+
+    *)
+      export $component=true
+      ;;
+
+    esac
+
   done
 fi
 
@@ -46,18 +76,20 @@ else
 fi
 
 set -x
-helm install \
+helm ${ACTION} \
   --namespace astronomer \
   astronomer \
+  ${dryrun} \
   --timeout ${HELM_TIMEOUT}s \
   -f $CONFIG_FILE \
   --set tags.platform=${platform} \
   --set tags.logging=${logging} \
   --set tags.monitoring=${monitoring} \
   --set tags.kubed=${kubed} \
-  --set global.postgresqlEnabled=true \
+  --set global.postgresqlEnabled=${postgresql} \
   --set tags.keda=${keda} \
   $HELM_CHART_PATH
+
 
 if [ ! $? -eq 0 ]; then
   set +x

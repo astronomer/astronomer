@@ -1,9 +1,5 @@
 {{- define "blackbox.cliInstallNetPol" }}
-{{- if gt (.Capabilities.KubeVersion.Minor | atoi) 15 }}
 apiVersion: networking.k8s.io/v1
-{{- else }}
-apiVersion: extensions/v1beta1
-{{- end }}
 kind: NetworkPolicy
 metadata:
   labels:

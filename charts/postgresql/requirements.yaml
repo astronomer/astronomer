@@ -1,7 +1,0 @@
-dependencies:
-# This is not recommended for production. Please create an `astronomer-bootstrap` secret with the connection string for a proper production database.
-- name: postgresql
-  version: 6.3.12
-  repository: "@stable"
-  condition: enabled
-  
