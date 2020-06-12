@@ -62,6 +62,9 @@ spec:
             {{- if .Values.enableLifecycle }}
             - "--web.enable-lifecycle"
             {{- end }}
+            {{- if .Values.global.baseDomain }}
+            - "--web.external-url=https://prometheus.{{ .Values.global.baseDomain }}"
+            {{- end }}
           volumeMounts:
             - name: prometheus-config-volume
               mountPath: /etc/prometheus/config
