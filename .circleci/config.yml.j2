@@ -30,7 +30,7 @@ jobs:
             - './*.tgz'
   release:
     machine:
-      image: ubuntu-1604:202004-01
+      image: ubuntu-1604:201903-01
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -71,9 +71,7 @@ workflows:
       - approve-release:
           type: approval
           requires:
-{% for version in kube_versions %}
-            - platform-{{ version | replace(".", "-") }}
-{% endfor %}
+            - build-artifact
           filters:
             branches:
               only:
