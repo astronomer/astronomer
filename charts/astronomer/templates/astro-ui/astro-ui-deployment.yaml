@@ -64,9 +64,3 @@ spec:
             - name: APP_API_LOC_WSS
               value: "wss://houston.{{ .Values.global.baseDomain }}/ws"
             {{- end }}
-            - name: APP_ENABLE_ERROR_REPORTING
-              value: "false"
-            - name: APP_SENTRY_DSN
-              value: "https://5c7da1dadf834cd9b8d212b20cd53d47@sentry.io/1773523"
-            - name: APP_LOGROCKET
-              value: "1hv1sf/orbit"
