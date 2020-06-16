@@ -219,7 +219,6 @@ data:
             regex: (pod|service|endpoint|namespace)
             replacement: $1
             action: labeldrop
-            # end jpw new
         metric_relabel_configs:
           # Pods have this label twice
           - regex: 'label_kubernetes_executor'
@@ -228,7 +227,7 @@ data:
             action: labeldrop
           # Required for multi-namespace mode
           - source_labels: [namespace]
-            regex: "^{{ .Release.Namespace }}-(.*-.*-[0-9]{4})$"
+            regex: "^{{ .Release.Namespace }}-(.*$)"
             replacement: "$1"
             target_label: release
         {{- else}}
@@ -240,12 +239,12 @@ data:
             source_labels: [namespace]
             regex: "^{{ .Release.Namespace }}.*"
           - source_labels: [deployment]
-            regex: "^(.*-.*-[0-9]{4})-.*"
+            regex: "([-a-z0-9]*[a-z0-9])-.*?"
             replacement: "$1"
             target_label: release
           # Required for single-namespace mode
           - source_labels: [pod]
-            regex: "^(.*-.*-[0-9]{4})-.*"
+            regex: "([-a-z0-9]*[a-z0-9])-.*?"
             replacement: "$1"
             target_label: release
           {{- end}}
@@ -331,7 +330,7 @@ data:
             target_label: __address__
         metric_relabel_configs:
           - source_labels: [instance]
-            regex: "^(.*-.*-[0-9]{4})-.*$"
+            regex: "([-a-z0-9]*[a-z0-9])-.*?"
             replacement: "$1"
             target_label: deployment
             # Drop metrics that are task or dag specific
@@ -413,7 +412,6 @@ data:
             replacement: $1
             action: replace
 
-            #jpw added
           - source_labels: [__meta_kubernetes_endpoint_address_target_kind, __meta_kubernetes_endpoint_address_target_name]
             separator: ;
             regex: Pod;(.*)
@@ -450,7 +448,7 @@ data:
             regex: container_(network_tcp_usage_total|network_udp_usage_total|tasks_state|cpu_load_average_10s)
             replacement: $1
             action: drop
-            #end jpw
+
 
           - action: replace
             source_labels: [id]
@@ -464,7 +462,7 @@ data:
 
             # Add deployment name via container_name
           - source_labels: [pod_name]
-            regex: "^(.*-.*-[0-9]{4})-.*"
+            regex: "([-a-z0-9]*[a-z0-9])-.*?"
             replacement: "$1"
             target_label: deployment
 

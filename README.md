@@ -113,7 +113,7 @@ bin/drain.sh
 
 ## Releasing
 
-[Releasing Guide](https://github.com/astronomerio/helm.astronomer.io/blob/master/RELEASING.md)
+[Releasing Guide](https://github.com/astronomer/astronomer/blob/master/RELEASING.md)
 
 ## License
 

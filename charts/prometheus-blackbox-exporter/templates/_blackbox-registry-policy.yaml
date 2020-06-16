@@ -1,9 +1,5 @@
 {{- define "blackbox.registryNetPol" }}
-{{- if gt (.Capabilities.KubeVersion.Minor | atoi) 15 }}
 apiVersion: networking.k8s.io/v1
-{{- else }}
-apiVersion: extensions/v1beta1
-{{- end }}
 kind: NetworkPolicy
 metadata:
   labels:
@@ -20,7 +16,7 @@ spec:
           release: {{ .Release.Name }}
           tier: monitoring
     ports:
-    - port: 5000 
+    - port: 5000
       protocol: TCP
   podSelector:
     matchLabels:

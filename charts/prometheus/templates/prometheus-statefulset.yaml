@@ -2,11 +2,7 @@
 ## Prometheus StatefulSet
 #################################
 kind: StatefulSet
-{{- if gt (.Capabilities.KubeVersion.Minor | atoi) 15 }}
-apiVersion: apps/v1
-{{- else }}
-apiVersion: apps/v1beta2
-{{- end }}
+apiVersion: {{ template "apiVersion.StatefulSet" . }}
 metadata:
   name: {{ template "prometheus.fullname" . }}
   labels:
@@ -65,6 +61,9 @@ spec:
             - "--storage.tsdb.retention={{ .Values.retention }}"
             {{- if .Values.enableLifecycle }}
             - "--web.enable-lifecycle"
+            {{- end }}
+            {{- if .Values.global.baseDomain }}
+            - "--web.external-url=https://prometheus.{{ .Values.global.baseDomain }}"
             {{- end }}
           volumeMounts:
             - name: prometheus-config-volume
