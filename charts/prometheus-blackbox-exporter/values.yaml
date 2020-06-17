@@ -76,10 +76,10 @@ allowIcmp: false
 # These are overriden by what is  in the global values file
 resources:
   requests:
-    cpu: "5m"
+    cpu: "60m"
     memory: "75Mi"
   limits:
-    cpu: "15m"
+    cpu: "100m"
     memory: "100Mi"
 
 priorityClassName: ""
