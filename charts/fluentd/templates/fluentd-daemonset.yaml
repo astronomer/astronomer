@@ -54,7 +54,7 @@ spec:
               = Net::HTTP.get_response(uri);puts response.body" | grep 'fluentd_output_status_buffer_queue_length{'
               | awk '{ print ($NF > {{ .Values.livenessProbeConfig.bufferSizeUnhealthy }}) }') )); then exit 1; fi; exit 0
           failureThreshold: {{ .Values.livenessProbeConfig.failureThreshold }}
-          initialDelaySeconds: {{ .Values.livenessProbeConfig.initialDelaySeconds5 }}
+          initialDelaySeconds: {{ .Values.livenessProbeConfig.initialDelaySeconds }}
           periodSeconds: {{ .Values.livenessProbeConfig.periodSeconds5 }}
           successThreshold: {{ .Values.livenessProbeConfig.successThreshold }}
           timeoutSeconds: {{ .Values.livenessProbeConfig.timeoutSeconds }}
