@@ -13,6 +13,7 @@ metadata:
 data:
   add-headers: {{ .Release.Namespace }}/{{ template "nginx.fullname" . }}-ingress-controller-headers
   proxy-add-original-uri-header: "true"
+  send-timeout: {{ .Values.sendTimeout | quote }}
   proxy-connect-timeout: {{ .Values.proxyConnectTimeout | quote }}
   proxy-read-timeout: {{ .Values.proxyReadTimeout | quote }}
   proxy-send-timeout: {{ .Values.proxySendTimeout | quote }}

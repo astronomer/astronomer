@@ -48,7 +48,8 @@ privateLoadBalancer: false
 # Dependent on cloud provider
 preserveSourceIP: false
 
-proxyConnectTimeout: 15
+sendTimeout: 600
+proxyConnectTimeout: 600
 proxyReadTimeout: 600
 proxySendTimeout: 600
 proxyBodySize: "512m"
