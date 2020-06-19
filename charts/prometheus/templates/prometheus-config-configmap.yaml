@@ -462,7 +462,7 @@ data:
 
             # Add deployment name via container_name
           - source_labels: [pod_name]
-            regex: "([-a-z0-9]*[a-z0-9])-.*?"
+            regex: "(^[-a-z0-9-]*)-[^-]*-[^-]*-[^-]*?"
             replacement: "$1"
             target_label: deployment
 
