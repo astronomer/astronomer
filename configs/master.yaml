@@ -16,11 +16,11 @@ astronomer:
       pullPolicy: Always
     houston:
       repository: astronomerinc/ap-houston-api
-      tag: master
+      tag: main
       pullPolicy: Always
     astroUI:
       repository: astronomerinc/ap-astro-ui
-      tag: master
+      tag: main
       pullPolicy: Always
     dbBootstrapper:
       repository: astronomerinc/ap-db-bootstrapper
