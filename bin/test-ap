@@ -12,6 +12,8 @@ helm test astronomer -n astronomer
 EC=$?
 set -e
 
+echo "TEST EXIT CODE: $EC"
+
 kubectl get pods -n astronomer
 
 kubectl logs -n astronomer astronomer-ap-e2e-test
