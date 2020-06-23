@@ -15,7 +15,7 @@ tolerations: []
 images:
   commander:
     repository: astronomerinc/ap-commander
-    tag: 0.15.2
+    tag: 0.16.0
     pullPolicy: IfNotPresent
   registry:
     repository: astronomerinc/ap-registry
@@ -23,7 +23,7 @@ images:
     pullPolicy: IfNotPresent
   houston:
     repository: astronomerinc/ap-houston-api
-    tag: master
+    tag: 0.16.0
     pullPolicy: IfNotPresent
   astroUI:
     repository: astronomerinc/ap-astro-ui
