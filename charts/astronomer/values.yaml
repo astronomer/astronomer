@@ -23,7 +23,7 @@ images:
     pullPolicy: IfNotPresent
   houston:
     repository: astronomerinc/ap-houston-api
-    tag: master
+    tag: main
     pullPolicy: IfNotPresent
   astroUI:
     repository: astronomerinc/ap-astro-ui
@@ -121,7 +121,7 @@ houston:
   #   memory: 128Mi
 
   # Any Houston configuration. Reference here:
-  # https://github.com/astronomer/houston-api/blob/master/config/default.yaml
+  # https://github.com/astronomer/houston-api/blob/main/config/default.yaml
   config: {}
 
   # Automatically upgrade Airflow deployments to the latest
