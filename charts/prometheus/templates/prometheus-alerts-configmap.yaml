@@ -606,7 +606,7 @@ data:
             severity: high
             tier: platform
 
-          - alert: CricalComponentPodCrashLooping
+          - alert: CriticalComponentPodCrashLooping
           annotations:
             description: Pod {{`{{ $labels.namespace }}`}}/{{`{{ $labels.pod }}`}} ({{`{{ $labels.container
               }}`}}) is restarting {{`{{ printf "%.2f" $value }}`}} times / 5 minutes.
@@ -618,7 +618,7 @@ data:
           labels:
             severity: critical
             tier: platform
-        - alert: CricalComponentPodNotReady
+        - alert: CriticalComponentPodNotReady
           annotations:
             description: Pod {{`{{ $labels.namespace }}`}}/{{`{{ $labels.pod }}`}} has been in a non-ready
               state for longer than 15 minutes.
