@@ -71,9 +71,7 @@ workflows:
       - approve-release:
           type: approval
           requires:
-{% for version in kube_versions %}
-            - platform-{{ version | replace(".", "-") }}
-{% endfor %}
+            - build-artifact
           filters:
             branches:
               only:
