@@ -15,54 +15,12 @@ data:
   install.sh: |-
     #! /usr/bin/env bash
 
-    TAG=${1:-v{{ .Chart.Version }}}
-        
+    TAG=${1:-v{{ .Values.Install.CliVersion }}}
+
     if (( EUID != 0 )); then
         echo "Please run command as root."
         exit
     fi
 
     DOWNLOADER="https://raw.githubusercontent.com/astronomerio/astro-cli/master/godownloader.sh"
-    MAX_ATTEMPT=2
-    ATTEMPT=0
-    HTTP_STATUS=500
-
-    # If we haven't retried more than once then curl to see if the particular tag exists before trying to download 
-    check_version_exists() {
-      if [[ $ATTEMPT < $MAX_ATTEMPT ]] ; then
-        HTTP_STATUS=$(curl --head --write-out %{http_code} --silent --output /dev/null https://github.com/astronomer/astro-cli/releases/tag/$TAG)
-        download_version $HTTP_STATUS
-      else
-        echo "We couldn't download astro-cli version $TAG. Please check https://github.com/astronomer/astro-cli/releases/ for more information on to resolve this issue."
-        exit 0
-      fi
-    }
-
-    # If the HTTP_STATUS from checking the version tag return a 200 then try to download it, otherwise try to parse the next previous minor version 
-    download_version() {
-      if [[ "$HTTP_STATUS" == 200 ]] ; then
-        echo "Installing version $TAG. Please wait..."
-        curl -sL -o- "${DOWNLOADER}" | bash -s -- -b /usr/local/bin "$TAG"
-      else
-        ((ATTEMPT+=1))
-        release=$(get_latest_minor_release)
-        TAG=$(echo $release)
-
-        check_version_exists
-      fi
-    }
-
-    # Remove the patch number from $TAG to locate the most recent minor version from Github Releases
-    # i.e. $TAG=v0.16.1 => $VER=v0.16 then grab the tags from Github
-    get_latest_minor_release() {
-      VER=$(echo $TAG | rev | cut -d"." -f2-  | rev)
-      query=$(echo '/.*'${VER}'.*/!d')
-      curl --silent "https://api.github.com/repos/astronomer/astro-cli/releases" | # Get 30 most recent releases from GitHub API
-        grep '"tag_name":' | # Locate the tag_name key for each release
-        sed -E $query | # Only look at releases that match the minor version provided
-        sed -E 's/.*"([^"]+)".*/\1/' | # Parse out only the version from the key, value pair
-        awk 'NR==1' # Return the first (most recent) minor version from the list
-    }
-
-    # Check the initial version provided by $TAG
-    check_version_exists
+    curl -sL -o- "${DOWNLOADER}" | bash -s -- -b /usr/local/bin "$TAG"
