@@ -21,6 +21,9 @@ spec:
   template:
     metadata:
       labels:
+{{- with .Values.podLabels }}
+{{ toYaml . | indent 8 }}
+{{- end }}
         component: prisma
         tier: astronomer
         release: {{ .Release.Name }}
