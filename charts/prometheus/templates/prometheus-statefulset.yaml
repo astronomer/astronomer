@@ -22,9 +22,9 @@ spec:
   template:
     metadata:
       labels:
-        # https://help.spot.io/container-management/kubernetes/kubernetes-concepts/spotinst-labels/
-        # Prometheus to run on on-demand nodes instead of pre-emptible VMs
-        spotinst.io/node-lifecycle: od
+{{- with .Values.podLabels }}
+{{ toYaml . | indent 8 }}
+{{- end }}
         tier: monitoring
         component: {{ template "prometheus.name" . }}
         release: {{ .Release.Name }}

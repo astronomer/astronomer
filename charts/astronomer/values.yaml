@@ -180,6 +180,7 @@ houston:
     schedule: "0 0 * * *"
 
 prisma:
+  podLabels: {}
   env: []
   resources: {}
   #  limits:
@@ -204,6 +205,7 @@ commander:
    #  memory: 128Mi
 
 registry:
+  podLabels: {}
   resources: {}
   #  limits:
   #   cpu: 100m

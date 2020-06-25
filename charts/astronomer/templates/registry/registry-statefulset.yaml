@@ -30,9 +30,9 @@ spec:
   template:
     metadata:
       labels:
-        # https://help.spot.io/container-management/kubernetes/kubernetes-concepts/spotinst-labels/
-        # Registry to run on on-demand nodes instead of pre-emptible VMs
-        spotinst.io/node-lifecycle: od
+{{- with .Values.podLabels }}
+{{ toYaml . | indent 8 }}
+{{- end }}
         component: registry
         tier: astronomer
         release: {{ .Release.Name }}
