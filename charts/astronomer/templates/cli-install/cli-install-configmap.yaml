@@ -15,7 +15,7 @@ data:
   install.sh: |-
     #! /usr/bin/env bash
 
-    TAG=${1:-v{{ .Chart.Version }}}
+    TAG=${1:-v{{ .Values.install.cliVersion }}}
 
     if (( EUID != 0 )); then
         echo "Please run command as root."
