@@ -5,6 +5,7 @@
 nodeSelector: {}
 affinity: {}
 tolerations: []
+podLabels: {}
 
 # Prometheus is not designed to be horizontally scalable behind a single load
 # balancer. This configuration will increase the replicas in the Prometheus

@@ -22,6 +22,9 @@ spec:
   template:
     metadata:
       labels:
+{{- with .Values.podLabels }}
+{{ toYaml . | indent 8 }}
+{{- end }}
         tier: monitoring
         component: {{ template "prometheus.name" . }}
         release: {{ .Release.Name }}

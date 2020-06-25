@@ -30,6 +30,9 @@ spec:
   template:
     metadata:
       labels:
+{{- with .Values.podLabels }}
+{{ toYaml . | indent 8 }}
+{{- end }}
         component: registry
         tier: astronomer
         release: {{ .Release.Name }}
