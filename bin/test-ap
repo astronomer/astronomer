@@ -6,6 +6,9 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 # The path to the working directory - the root of the repo
 REPO_DIR=$DIR/../
 
+
+git clone git@github.com:astronomer/astro-testing
+
 # Run tests
 set +e
 helm test astronomer -n astronomer
