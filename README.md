@@ -40,7 +40,7 @@ Run this script from the root of this repository:
 bin/reset-local-dev
 ```
 
-For kind version >=0.8.1, use the following command
+For OSX, if kind version >=0.8.1, use the following command
 ```
 KIND_EXPERIMENTAL_DOCKER_NETWORK=bridge ./bin/reset-local-dev
 ```
