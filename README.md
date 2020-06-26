@@ -40,6 +40,11 @@ Run this script from the root of this repository:
 bin/reset-local-dev
 ```
 
+For kind version >=0.8.1, use the following command
+```
+KIND_EXPERIMENTAL_DOCKER_NETWORK=bridge ./bin/reset-local-dev
+```
+
 Each time you run the script, the platform will be fully reset to the current helm chart.
 
 ### Customizing the local deployment
@@ -54,7 +59,7 @@ Modify the "tags:" in configs/local-dev.yaml
 
 #### Add a Docker image into KinD's nodes (so it's available for pods):
 ```
-kind load docker-image <your local image tag>
+kind load docker-image <your local image name with tag>
 ```
 
 #### Make use of that image:
