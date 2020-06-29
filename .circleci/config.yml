@@ -164,7 +164,7 @@ commands:
       - checkout
       - add_ssh_keys:
           fingerprints:
-            - "40:db:b2:eb:3f:55:63:ad:58:a0:f1:1f:32:12:a9:6c"
+            - "fb:bd:3c:2f:ef:af:e9:5b:fe:33:0e:e1:01:80:9f:cf"
       - run:
           name: Install Astronomer chart
           command: |
