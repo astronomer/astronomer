@@ -96,6 +96,9 @@ commands:
       - attach_workspace:
           at: /tmp/workspace
       - checkout
+      - add_ssh_keys:
+          fingerprints:
+            - "40:db:b2:eb:3f:55:63:ad:58:a0:f1:1f:32:12:a9:6c"
       - run:
           name: Install Astronomer chart
           command: |
