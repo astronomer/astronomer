@@ -10,11 +10,6 @@ source $REPO_DIR/bin/install-ci-tools 1
 export PATH=$PATH:/tmp/bin
 ls -lh /tmp/bin
 
-# TEMP: for testing
-# TODO: delete
-ssh-agent bash -c 'ssh-add ~/.ssh/id_rsa_fbbd3c2fefafe95bfe330ee101809fcf; git clone git@github.com:astronomer/astro-testing.git'
-rm -rf astro-testing
-
 source $REPO_DIR/bin/setup-kind
 
 echo "Deploying Astronomer..."
