@@ -49,7 +49,7 @@ privateLoadBalancer: false
 preserveSourceIP: false
 
 sendTimeout: 600
-proxyConnectTimeout: 600
+proxyConnectTimeout: 15
 proxyReadTimeout: 600
 proxySendTimeout: 600
 proxyBodySize: "512m"
