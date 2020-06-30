@@ -8,8 +8,8 @@ metadata:
 spec:
   privileged: false
   hostNetwork: false
-  allowPrivilegeEscalation: false
-  defaultAllowPrivilegeEscalation: false
+  allowPrivilegeEscalation: true
+  defaultAllowPrivilegeEscalation: true
   hostPID: false
   hostIPC: false
   runAsUser:
