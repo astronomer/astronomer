@@ -94,5 +94,13 @@ spec:
             failureThreshold: {{ .Values.houston.readinessProbe.failureThreshold }}
           env:
             {{- include "houston_environment" . | indent 12 }}
+            - name: APOLLO_SERVER_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: APOLLO_SERVER_USER_VERSION
+              value: {{ template "houston.image" . }}
+            - name: APOLLO_SERVER_PLATFORM
+              value: "kubernetes/deployment"
       volumes:
         {{- include "houston_volumes" . | indent 8 }}
