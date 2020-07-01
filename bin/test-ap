@@ -31,7 +31,7 @@ EC=$?
 set -e
 
 # Print debug info
-kubectl get pods -n astronomer
+kubectl get pods --all-namespaces
 echo "TEST EXIT CODE: $EC"
 
 # exit with same code as tests
