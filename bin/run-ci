@@ -31,7 +31,7 @@ sleep 5
 $DIR/waitfor-platform
 
 ### Create initial user
-$DIR/create-initial-user "tester@astronomer.io" "password"-
+$DIR/create-initial-user "tester@astronomer.io" "password"
 
 ### Test Platform
 $DIR/test-ap

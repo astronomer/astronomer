@@ -6,19 +6,34 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 # The path to the working directory - the root of the repo
 REPO_DIR=$DIR/../
 
-
+# get testing repo
 git clone git@github.com:astronomer/astro-testing
 
-# Run tests
+# build testing tools container, this should be removed when private docker build/usage is available
+cd astro-testing
+docker build -t astro/testing .
+
+# Setup /etc/hosts for docker
+sudo "172.17.0.1 local.astronomer-development.com" | sudo tee -a /etc/hosts
+sudo /tmp/bin/kubectl port-forward -n astronomer svc/astronomer-nginx 80 443 &
+
+# Setup cert trust, this will get mounted into the container
+cat `mkcert -CAROOT`/rootCA.pem > root-ca.crt
+
+# Setup .env file
+cp env-template .env
+echo "ASTRO_DOMAIN=local.astronomer-development.com" >> .env
+
+# Run tests and capture exit code
 set +e
-helm test astronomer -n astronomer
+./scripts/run-in-ci.sh
 EC=$?
 set -e
 
+# Print debug info
 echo "TEST EXIT CODE: $EC"
-
 kubectl get pods -n astronomer
-
 kubectl logs -n astronomer astronomer-ap-e2e-test
 
+# exit with same code as tests
 exit $EC
