@@ -63,6 +63,9 @@ spec:
                 secretKeyRef:
                   name: astronomer-bootstrap
                   key: connection
+            # we need to hardcode it to be able to upgrade from prisma1 to prisma2
+            - name: SCHEMA_NAME
+                value: houston$default
             - name: DB_NAME
               value: {{ .Release.Name }}-houston
             - name: SECRET_NAME
