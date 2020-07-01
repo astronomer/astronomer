@@ -21,7 +21,7 @@ sudo /tmp/bin/kubectl port-forward -n astronomer svc/astronomer-nginx 80 443 &
 cat `mkcert -CAROOT`/rootCA.pem > root-ca.crt
 
 # Setup .env file
-cp env-template .env
+cp env-example .env
 echo "ASTRO_DOMAIN=local.astronomer-development.com" >> .env
 
 # Run tests and capture exit code
