@@ -5,28 +5,50 @@ apiVersion: policy/v1beta1
 kind: PodSecurityPolicy
 metadata:
   name: {{ .Release.Name }}-restrictive
+# This is the "real" restrictive policy. 
+# Temporarily replaced by the the spec of the permissive policy
+# spec:
+#   privileged: false
+#   hostNetwork: false
+#   allowPrivilegeEscalation: false
+#   defaultAllowPrivilegeEscalation: false
+#   hostPID: false
+#   hostIPC: false
+#   runAsUser:
+#     rule: RunAsAny
+#   fsGroup:
+#     rule: RunAsAny
+#   seLinux:
+#     rule: RunAsAny
+#   supplementalGroups:
+#     rule: RunAsAny
+#   volumes:
+#   - 'configMap'
+#   - 'downwardAPI'
+#   - 'emptyDir'
+#   - 'persistentVolumeClaim'
+#   - 'secret'
+#   - 'projected'
+#   allowedCapabilities:
+#   - '*'
+
+# Temporary permissive rules
 spec:
-  privileged: false
-  hostNetwork: false
-  allowPrivilegeEscalation: false
-  defaultAllowPrivilegeEscalation: false
-  hostPID: false
-  hostIPC: false
-  runAsUser:
-    rule: RunAsAny
-  fsGroup:
-    rule: RunAsAny
+  privileged: true
+  hostNetwork: true
+  hostIPC: true
+  hostPID: true
   seLinux:
     rule: RunAsAny
   supplementalGroups:
     rule: RunAsAny
+  runAsUser:
+    rule: RunAsAny
+  fsGroup:
+    rule: RunAsAny
+  hostPorts:
+  - min: 0
+    max: 65535
   volumes:
-  - 'configMap'
-  - 'downwardAPI'
-  - 'emptyDir'
-  - 'persistentVolumeClaim'
-  - 'secret'
-  - 'projected'
-  allowedCapabilities:
   - '*'
 {{- end -}}
