@@ -13,10 +13,6 @@ ssh-agent bash -c 'ssh-add ~/.ssh/id_rsa_fbbd3c2fefafe95bfe330ee101809fcf; git c
 cd astro-testing
 docker build -t astro/testing .
 
-# Setup /etc/hosts for docker
-sudo echo "172.17.0.1 local.astronomer-development.com" | sudo tee -a /etc/hosts
-sudo /tmp/bin/kubectl port-forward -n astronomer svc/astronomer-nginx 80 443 &
-
 # Setup cert trust, this will get mounted into the container
 cat `mkcert -CAROOT`/rootCA.pem > root-ca.crt
 

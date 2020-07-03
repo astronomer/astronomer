@@ -27,6 +27,8 @@ sleep 5
 
 $DIR/waitfor-platform
 
+$DIR/setup-hosts
+
 ### Create initial user
 $DIR/create-initial-user "tester@astronomer.io" "password"
 
