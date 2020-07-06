@@ -1241,7 +1241,7 @@ data:
       - alert: NodeDown
           annotations:
             runbook_url:
-            description: "{{`{{ $labels.instance }}`}} is not reachable. Prometheus could not contact node-exporter on this node. This is usually a sign of an issue on the node."
+            description: '{{`{{ $labels.instance }}`}} is not reachable. Prometheus could not contact node-exporter on this node. This is usually a sign of an issue on the node.'
             summary: '{{`{{ $labels.instance }}`}} is not reachable'
           expr: up{job="node-exporter"} == 0
           for: 10m
