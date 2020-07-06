@@ -1,0 +1,55 @@
+#######################################
+## Airflow Post Deployment Upgrade Hook
+#######################################
+{{- if .Values.houston.upgradeDeployments.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-houston-upgrade-deployments
+  labels:
+    tier: astronomer
+    component: houston
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  annotations:
+    # This is what defines this resource as a hook. Without this line, the
+    # job is considered part of the release.
+    "helm.sh/hook": post-upgrade,post-install
+    "helm.sh/hook-weight": "1"
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  completions: 1
+  parallelism: 1
+  backoffLimit: 1
+  template:
+    metadata:
+      labels:
+        tier: astronomer
+        component: houston
+        release: {{ .Release.Name }}
+      {{- if .Values.global.istio.enabled }}
+      annotations:
+        sidecar.istio.io/inject: "false"
+      {{- end }}
+    spec:
+      nodeSelector:
+{{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
+      affinity:
+{{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 8 }}
+      tolerations:
+{{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
+      restartPolicy: Never
+      containers:
+        - name: post-upgrade-job
+          image: {{ template "houston.image" . }}
+          imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
+          # If you supply only args for a Container, the default Entrypoint defined in the Docker image is run with the args that you supplied.
+          args: ["yarn", "upgrade-deployments", "--", "--canary={{ .Values.houston.upgradeDeployments.canary }}"]
+          volumeMounts:
+            {{- include "houston_volume_mounts" . | indent 12 }}
+          env:
+            {{- include "houston_environment" . | indent 12 }}
+      volumes:
+        {{- include "houston_volumes" . | indent 8 }}
+{{- end }}

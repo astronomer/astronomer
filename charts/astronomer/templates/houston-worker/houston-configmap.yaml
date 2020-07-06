@@ -1,0 +1,330 @@
+################################
+## Astronomer Houston ConfigMap
+#################################
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-houston-config
+  labels:
+    component: houston
+    tier: astronomer
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+data:
+  # These are system-specified config overrides.
+  production.yaml: |
+    webserver:
+      port: {{ .Values.ports.houstonHTTP }}
+
+    commander:
+      enabled: true
+
+    ui:
+      port: 80
+
+    email:
+      smtpUrl: ~
+
+    auth:
+      local:
+        enabled: false
+
+      openidConnect:
+        auth0:
+          enabled: false
+          clientId: "rH2L4yKctlepniTyJW3MkuXuTreOHHn1"
+          baseDomain: "astronomerio.auth0.com"
+
+        google:
+          enabled: true
+          clientId: ~
+
+      github:
+        enabled: true
+
+    helm:
+      baseDomain: {{ .Values.global.baseDomain }}
+      registryAuthSecret: {{ .Values.registry.auth.secretName }}
+      releaseName: {{ .Release.Name }}
+      releaseNamespace: {{ .Release.Namespace }}
+      releaseVersion: {{ .Chart.Version }}
+      singleNamespace: {{ .Values.global.singleNamespace }}
+
+    # Airflow deployment configuration
+    deployments:
+      # Airflow chart settings
+      # Static helm configurations for this chart are found below.
+      chart:
+        version: {{ .Values.airflowChartVersion }}
+
+      # Airflow image settings
+      # This is a list of supported airflow versions and corresponding docker tag
+      images:
+        - version: 1.10.5
+          channel: stable
+          tag: 1.10.5-alpine3.10-onbuild
+        - version: 1.10.5
+          channel: stable
+          tag: 1.10.5-buster-onbuild
+        - version: 1.10.5
+          channel: stable
+          tag: 1.10.5-7-alpine3.10-onbuild
+        - version: 1.10.5
+          channel: stable
+          tag: 1.10.5-7-buster-onbuild
+        - version: 1.10.5
+          channel: stable
+          tag: 1.10.5-8-alpine3.10-onbuild
+        - version: 1.10.5
+          channel: stable
+          tag: 1.10.5-8-buster-onbuild
+        - version: 1.10.5
+          channel: stable
+          tag: 1.10.5-9-alpine3.10-onbuild
+        - version: 1.10.5
+          channel: stable
+          tag: 1.10.5-9-buster-onbuild
+        - version: 1.10.7
+          channel: stable
+          tag: 1.10.7-alpine3.10-onbuild
+        - version: 1.10.7
+          channel: stable
+          tag: 1.10.7-buster-onbuild
+        - version: 1.10.7
+          channel: stable
+          tag: 1.10.7-7-alpine3.10-onbuild
+        - version: 1.10.7
+          channel: stable
+          tag: 1.10.7-7-buster-onbuild
+        - version: 1.10.7
+          channel: stable
+          tag: 1.10.7-8-alpine3.10-onbuild
+        - version: 1.10.7
+          channel: stable
+          tag: 1.10.7-8-buster-onbuild
+        - version: 1.10.7
+          channel: stable
+          tag: 1.10.7-10-alpine3.10-onbuild
+        - version: 1.10.7
+          channel: stable
+          tag: 1.10.7-10-buster-onbuild
+        - version: 1.10.7
+          channel: stable
+          tag: 1.10.7-11-alpine3.10-onbuild
+        - version: 1.10.7
+          channel: stable
+          tag: 1.10.7-11-buster-onbuild
+        - version: 1.10.7
+          channel: stable
+          tag: 1.10.7-12-alpine3.10-onbuild
+        - version: 1.10.7
+          channel: stable
+          tag: 1.10.7-12-buster-onbuild
+        - version: 1.10.7
+          channel: stable
+          tag: 1.10.7-13-alpine3.10-onbuild
+        - version: 1.10.7
+          channel: stable
+          tag: 1.10.7-13-buster-onbuild
+        - version: 1.10.10
+          channel: stable
+          tag: 1.10.10-alpine3.10-onbuild
+        - version: 1.10.10
+          channel: stable
+          tag: 1.10.10-buster-onbuild
+        - version: 1.10.10
+          channel: stable
+          tag: 1.10.10-1-alpine3.10-onbuild
+        - version: 1.10.10
+          channel: stable
+          tag: 1.10.10-1-buster-onbuild
+        - version: 1.10.10
+          channel: stable
+          tag: 1.10.10-2-alpine3.10-onbuild
+        - version: 1.10.10
+          channel: stable
+          tag: 1.10.10-2-buster-onbuild
+        - version: 1.10.10
+          channel: stable
+          tag: 1.10.10-3-alpine3.10-onbuild
+        - version: 1.10.10
+          channel: stable
+          tag: 1.10.10-3-buster-onbuild
+
+      # Kubernetes labels to add on each airflow deployment namespace
+      namespaceLabels:
+        platform-release: {{ .Release.Name }}
+
+      # These values get passed directly into the airflow helm deployments
+      helm:
+        # Webserver configuration.
+        webserver:
+          # This is the name of the secret that gets copied from the platform namespace
+          # to the airflow namespaces.
+          jwtSigningCertificateSecretName: {{ template "houston.jwtCertificateSecret" . }}
+          resources:
+            limits:
+              # XXX: There is an alert configured to trigger when ephemeral storage reaches
+              # 1800000000 bytes (90% of the 2Gi limit). Be aware of this when modifying
+              # ephemeral-storage limits.
+              ephemeral-storage: "2Gi"
+            requests:
+              ephemeral-storage: "1Gi"
+
+          # Disable creation of initial user.
+          defaultUser:
+            enabled: false
+
+        # Worker configuration (applies to Celery and Kubernetes task pods).
+        workers:
+          resources:
+            limits:
+              ephemeral-storage: "2Gi"
+            requests:
+              ephemeral-storage: "1Gi"
+
+          # This is here for upgrading to 0.11.1+ of Airflow.
+          keda:
+            enabled: false
+
+          # This is here for upgrading to 0.11.2+ of Airflow.
+          safeToEvict: true
+
+        # Scheduler configuration.
+        scheduler:
+
+          # Scheduler pod disruption budget
+          podDisruptionBudget:
+            enabled: false
+
+            # PDB configuration
+            config:
+              maxUnavailable: 1
+
+          # This is here for upgrading to 0.11.2+ of Airflow.
+          safeToEvict: true
+
+          # Airflow Local Settings.
+          airflowLocalSettings: |
+            from airflow.contrib.kubernetes.pod import Pod
+            from airflow.configuration import conf
+            # This pod mutation hook runs for all pods dynamically created by Airflow
+            # in Kubernetes (K8s). This includes K8s executor Airflow-workers, which is
+            # an alternative executor to Celery, and K8s Pod Operator (KPO) pods, which is
+            # an Airflow operator that launches a task in a K8s cluster.
+            #
+            # This function is responsible for two things. It assigns labels to disambiguate
+            # between KPO and K8s executor pods. Also, it handles writing the entrypoint for
+            # K8s executor pods. Why we do this second part, you can read below.
+            def pod_mutation_hook(pod: Pod):
+              extra_labels = {
+                  "kubernetes-executor": "False",
+                  "kubernetes-pod-operator": "False"
+              }
+              if 'airflow-worker' in pod.labels.keys() or \
+                      conf.get('core', 'EXECUTOR') == "KubernetesExecutor":
+                  extra_labels["kubernetes-executor"] = "True"
+                  # By default, Airflow overwrites the entrypoint
+                  # of KPO and K8s executor Airflow-worker pods.
+                  # K8s worker pods are Airflow containers, and we can assume these
+                  # Airflow containers are vendored by Astronomer. Astronomer provides
+                  # an entrypoint in these containers to handle waiting for the network
+                  # and the database to be ready, so we do not want this entrypoint
+                  # to be overwritten. This helps with the stability of the K8s executor.
+                  if not pod.args:
+                    pod.args = []
+                  pod.args = pod.cmds + pod.args
+                  pod.cmds = ["tini", "--", "/entrypoint"]
+              else:
+                  extra_labels["kubernetes-pod-operator"] = "True"
+                  # In the case of KPO, we allow Airflow to overwrite the entrypoint
+                  # because we do not know what the container will be (and it's probably
+                  # not a container vendored by Astronomer, and it's definately not
+                  # an Airflow container).
+              pod.labels.update(extra_labels)
+          resources:
+            limits:
+              ephemeral-storage: "2Gi"
+            requests:
+              ephemeral-storage: "1Gi"
+
+        # Redis settings
+        redis:
+          # This is here for upgrading to 0.11.2+ of Airflow.
+          safeToEvict: true
+
+        # Pgbouncer settings
+        pgbouncer:
+          # Pgbouner pod disruption budget
+          podDisruptionBudget:
+            enabled: false
+
+            # PDB configuration
+            config:
+              maxUnavailable: 1
+
+        # Default quotas for airflow deployments.
+        quotas:
+          requests.ephemeral-storage: "50Gi"
+          limits.ephemeral-storage: "50Gi"
+
+        # This is here for backward compatability.
+        # 0.11+ versions of Airflow have this defined
+        # so this needs to be passed through to all upgrades.
+        podMutation:
+          tolerations: []
+
+        # This is here for upgrading to 0.11.0+ of Airflow.
+        defaultAirflowRepository: astronomerinc/ap-airflow
+
+        # This is here for upgrading to 0.11.1+ of Airflow.
+        data:
+          metadataConnection:
+            sslmode: disable
+          resultBackendConnection:
+            sslmode: disable
+
+    {{- if not .Values.global.singleNamespace }}
+        # Enable cleanup CronJob in Airflow deployents
+        # to cleanup evicted/failed/succeeded pods.
+        cleanup:
+          enabled: true
+          schedule: "*/15 * * * *"
+    {{- end }}
+
+        # Disable the postgres subchart. The platform pass credentials down
+        # from the platform configuration.
+        postgresql:
+          enabled: false
+
+    # If we're in single namespace mode, we will also
+    # skip the configuration for elasticsearch. Houston will fallback
+    # to its default modes, which are false/disabled.
+    # XXX: We may want to decouple these configurations from the
+    # singleNamespace config. At the moment, this is a convenient
+    # helper to require a minimal config change to run the platform in
+    # single namespace mode. Fluentd requires a ClusterRole to
+    # enrich logs with kubernetes metadata. In a single namespace environment,
+    # we're likely not going to get a ClusterRole from admins.
+    {{- if not .Values.global.singleNamespace }}
+      elasticsearch:
+        enabled: true
+        connection:
+          host: {{ printf "%s-elasticsearch-nginx.%s" .Release.Name .Release.Namespace }}
+          port: 9200
+
+    elasticsearch:
+      enabled: true
+      client:
+        host: {{ printf "%s-elasticsearch:9200" .Release.Name }}
+        log: error
+    {{- end }}
+
+    prometheus:
+      enabled: true
+      host: {{ printf "%s-prometheus" .Release.Name }}
+
+  # These are any user-specified config overrides.
+  local-production.yaml: |
+{{ toYaml .Values.houston.config | indent 4 }}
