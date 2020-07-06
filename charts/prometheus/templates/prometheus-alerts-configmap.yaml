@@ -9,7 +9,7 @@
 # High - Goes to slack prod alerts channel
 #   Things that are actionable and should be taken care of but do not need to wake someone up
 # Critical - goes to slack prod alerts channel and pager duty
-#	   Things that would impact uptime or customer experience and are worth waking up in the middle of the night
+# Things that would impact uptime or customer experience and are worth waking up in the middle of the night
 
 kind: ConfigMap
 apiVersion: v1
@@ -605,6 +605,44 @@ data:
           labels:
             severity: high
             tier: platform
+
+        - alert: HighNumberOfPodsNotReady
+          expr: count(kube_pod_status_phase{phase=~"Pending|Unknown"} > 0) > 25
+          for: 20m
+          labels:
+            severity: critical
+            tier: platform
+          annotations:
+            runbook_url:
+            summary: "A high number of pods are not ready. A wide spread issue is likely"
+            description: "A high number of pods are not ready. This is a signal that there might be a wide spread issue going on in the cluster or on a node."
+
+        - alert: CriticalComponentPodCrashLooping
+          annotations:
+            description: Pod {{`{{ $labels.namespace }}`}}/{{`{{ $labels.pod }}`}} ({{`{{ $labels.container
+              }}`}}) is restarting {{`{{ printf "%.2f" $value }}`}} times / 5 minutes.
+            runbook_url:
+            summary: '{{`{{ $labels.pod }}`}} Pod is CrashLooping'
+          expr: |
+            rate(kube_pod_container_status_restarts_total{container=~"astro-ui|commander|registry|houston|prisma|prometheus|sqlproxy"}[15m]) * 60 * 5 > 0
+          for: 15m
+          labels:
+            severity: critical
+            tier: platform
+
+        - alert: CriticalComponentPodNotReady
+          annotations:
+            description: Pod {{`{{ $labels.namespace }}`}}/{{`{{ $labels.pod }}`}} has been in a non-ready
+              state for longer than 15 minutes.
+            runbook_url:
+            summary: '{{`{{ $labels.pod }}`}} Pod in a non-ready state'
+          expr: |
+            sum by (namespace, pod) (max by(namespace, pod) (kube_pod_status_phase{namespace="{{.Release.Namespace}}", phase=~"Pending|Unknown"}) * on(namespace, pod) group_left(owner_kind) max by(namespace, pod, owner_kind) (kube_pod_owner{owner_kind!="Job"})) > 0
+          for: 15m
+          labels:
+            severity: critical
+            tier: platform
+
         - alert: KubeDeploymentGenerationMismatch
           annotations:
             description: Deployment generation for {{`{{ $labels.namespace }}`}}/{{`{{ $labels.deployment
@@ -1199,6 +1237,18 @@ data:
           labels:
             severity: critical
             tier: platform
+
+        - alert: NodeDown
+          annotations:
+            runbook_url:
+            description: '{{`{{ $labels.instance }}`}} is not reachable. Prometheus could not contact node-exporter on this node. This is usually a sign of an issue on the node.'
+            summary: '{{`{{ $labels.instance }}`}} is not reachable'
+          expr: up{job="node-exporter"} == 0
+          for: 10m
+          labels:
+            severity: critical
+            tier: platform
+
         - alert: Watchdog
           annotations:
             description: |
@@ -1402,4 +1452,15 @@ data:
           annotations:
             summary: {{ printf "%q" "PostgreSQL high number of slow on {{ $labels.cluster }} for database {{ $labels.datname }} " }}
             description: {{ printf "%q" "PostgreSQL high number of slow queries {{ $labels.cluster }} for database {{ $labels.datname }} with a value of {{ $value }} " }}
+
+        - alert: NumberOfNodesHigh
+          expr: count(kube_node_info) >= 60
+          for: 10m
+          labels: 
+            severity: critical
+            tier: platform
+          annotations:
+            runbook_url:
+            summary: "Number of nodes is critically close to the NAT Gateway Limit of 64"
+            description: "Cluster has {{`{{ $value }}`}} nodes, or NAT gateway Limit ofo nodes is 64, we need to reduce the node count."
       {{- end }}
