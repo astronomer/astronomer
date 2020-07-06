@@ -6,11 +6,14 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 # The path to the working directory - the root of the repo
 REPO_DIR=$DIR/../
 
+IP=172.17.0.1
+# IP=127.0.0.1
+
 set +e
 grep "local.astronomer-development.com" /etc/hosts
 FOUND=$?
 set -e
 if [[ $FOUND -ne 0 ]]; then
-    echo "172.17.0.1 local.astronomer-development.com" | sudo tee -a /etc/hosts
+    echo "$IP local.astronomer-development.com" | sudo tee -a /etc/hosts
 fi
 

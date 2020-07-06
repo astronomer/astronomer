@@ -6,11 +6,18 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 # The path to the working directory - the root of the repo
 REPO_DIR=$DIR/../
 
+TESTING_VERSION="v0.0.1"
+
 # get testing repo
 ssh-agent bash -c 'ssh-add ~/.ssh/id_rsa_fbbd3c2fefafe95bfe330ee101809fcf; git clone git@github.com:astronomer/astro-testing.git'
 
-# build testing tools container, this should be removed when private docker build/usage is available
+# everything else happens from withing the testing repo
 cd astro-testing
+
+# Checkout the version we want
+git checkout $TESTING_VERSION
+
+# build testing tools container, this should be removed when private docker build/usage is available
 docker build -t astro/testing .
 
 # Setup cert trust, this will get mounted into the container
