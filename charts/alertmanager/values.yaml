@@ -40,7 +40,7 @@ receivers:
   # Configs for platform alerts
   platform: {}
 
-  platform-critical: {}
+  platformCritical: {}
   # example config for pager duty
   # - routing_key: XXXXXXXXXX
   #   send_resolved: true
