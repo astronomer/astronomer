@@ -40,5 +40,10 @@ receivers:
   # Configs for platform alerts
   platform: {}
 
+  platform-critical: {}
+  # example config for pager duty
+  # - routing_key: XXXXXXXXXX
+  #   send_resolved: true
+
   # Configs for airflow alerts
   airflow: {}
