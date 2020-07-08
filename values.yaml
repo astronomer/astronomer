@@ -46,6 +46,9 @@ global:
   # Used to enable Celery autoscaling
   kedaEnabled: false
 
+  # Used to enable nats-streaming
+  stanEnabled: false
+
   # If PodSecurityPolicies (PSP) should be enabled
   pspEnabled: false
 

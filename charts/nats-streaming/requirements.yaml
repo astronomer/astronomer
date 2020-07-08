@@ -1,5 +1,5 @@
 dependencies:
-- name: keda
-  version: 1.2.0
-  repository: "@kedacore"
+- name: stan
+  version: "0.4.2"
+  repository: "@nats"
   condition: enabled

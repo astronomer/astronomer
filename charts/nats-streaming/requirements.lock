@@ -1,6 +1,6 @@
 dependencies:
-- name: keda
-  repository: https://kedacore.github.io/charts
-  version: 1.2.0
-digest: sha256:b52be8faa2b6b9f69a43b6b7eb6b5854d1e5ce0686c45bea3e380da5b36dc650
-generated: "2020-02-13T11:16:09.680773-08:00"
+- name: stan
+  repository: https://nats-io.github.io/k8s/helm/charts/
+  version: 0.4.2
+digest: sha256:07d30df68dbdda2c380f487e6491d61457be59cdc85098a510de68fbb5569b88
+generated: "2020-07-08T16:57:43.301136+03:00"
