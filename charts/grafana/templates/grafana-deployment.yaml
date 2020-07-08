@@ -2,7 +2,7 @@
 ## Grafana Deployment
 #################################
 kind: Deployment
-apiVersion: apps/v1beta2
+apiVersion: apps/v1
 metadata:
   name: {{ template "grafana.fullname" . }}
   labels:
@@ -34,7 +34,23 @@ spec:
       restartPolicy: Always
       {{- if and (not .Values.backendSecretName) (not .Values.backendConnection) }}
       serviceAccountName: {{ template "grafana.bootstrapper.serviceaccount" . }}
+      {{- end }}
       initContainers:
+        - name: wait-for-db
+          command:
+            - "/wait-for-db.sh"
+          args:
+            - "echo"
+            - "DB ready"
+          image: {{ template "grafana.image" . }}
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: GF_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: astronomer-bootstrap
+                  key: connection
+      {{- if and (not .Values.backendSecretName) (not .Values.backendConnection) }}
         - name: bootstrapper
           image: {{ template "grafana.bootstrapper.image" . }}
           imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}

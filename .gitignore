@@ -1,9 +1,12 @@
 .DS_Store
 config.yaml
 config.yml
+dev-config.yaml
 !.circleci/config.yml
+**kubeconfig**
 certs
 /secrets
+**kubeconfig**
 
 # IDEs
 .idea/
@@ -16,3 +19,9 @@ dev-account.json
 *.swp
 # Chart dependencies
 **/charts/*.tgz
+*.tgz
+# ignore local ssl files
+*.pem
+temp.sh
+
+/venv/

@@ -2,7 +2,7 @@
 ## Prometheus StatefulSet
 #################################
 kind: StatefulSet
-apiVersion: apps/v1beta2
+apiVersion: {{ template "apiVersion.StatefulSet" . }}
 metadata:
   name: {{ template "prometheus.fullname" . }}
   labels:
@@ -22,13 +22,16 @@ spec:
   template:
     metadata:
       labels:
+{{- with .Values.podLabels }}
+{{ toYaml . | indent 8 }}
+{{- end }}
         tier: monitoring
         component: {{ template "prometheus.name" . }}
         release: {{ .Release.Name }}
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/prometheus-config-configmap.yaml") . | sha256sum }}
         checksum/alerts: {{ include (print $.Template.BasePath "/prometheus-alerts-configmap.yaml") . | sha256sum }}
-{{- if .Values.global.istioEnabled }}
+{{- if .Values.global.istio.enabled }}
         sidecar.istio.io/proxyCPU: "500m"
         sidecar.istio.io/proxyMemory: "400Mi"
 {{- end }}
@@ -59,6 +62,12 @@ spec:
             - "--config.file=/etc/prometheus/config/prometheus.yaml"
             - "--storage.tsdb.path={{ .Values.dataDir }}"
             - "--storage.tsdb.retention={{ .Values.retention }}"
+            {{- if .Values.enableLifecycle }}
+            - "--web.enable-lifecycle"
+            {{- end }}
+            {{- if .Values.global.baseDomain }}
+            - "--web.external-url=https://prometheus.{{ .Values.global.baseDomain }}"
+            {{- end }}
           volumeMounts:
             - name: prometheus-config-volume
               mountPath: /etc/prometheus/config

@@ -2,7 +2,7 @@
 ## NGINX Deployment
 #################################
 kind: Deployment
-apiVersion: apps/v1beta2
+apiVersion: apps/v1
 metadata:
   name: {{ template "nginx.fullname" . }}
   labels:
@@ -28,13 +28,21 @@ spec:
         traffic.sidecar.istio.io/includeInboundPorts: ""
         checksum/configmap: {{ include (print $.Template.BasePath "/nginx-configmap.yaml") . | sha256sum }}
         checksum/headers-configmap: {{ include (print $.Template.BasePath "/nginx-headers-configmap.yaml") . | sha256sum }}
-        {{- if .Values.global.istioEnabled }}
+        {{- if .Values.global.istio.enabled }}
         sidecar.istio.io/inject: "false"
         {{- end }}
     spec:
       serviceAccountName: {{ template "nginx.fullname" . }}
       containers:
         - name: nginx
+          securityContext:
+            allowPrivilegeEscalation: true
+            capabilities:
+              add:
+                - NET_BIND_SERVICE
+              drop:
+                - ALL
+            runAsUser: 101
           image: {{ template "nginx.image" . }}
           resources:
 {{ toYaml .Values.resources | indent 12 }}

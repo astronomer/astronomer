@@ -73,6 +73,7 @@ spec:
         command: ["sysctl", "-w", "vm.max_map_count=262144"]
         securityContext:
           privileged: true
+      serviceAccountName: {{ template "elasticsearch.fullname" . }}          
       containers:
       - name: es-client
         securityContext:
@@ -93,7 +94,7 @@ spec:
             fieldRef:
               fieldPath: metadata.name
         - name: DISCOVERY_SERVICE
-          value: {{ template "elasticsearch.fullname" . }}-discovery
+          value: {{ template "elasticsearch.fullname" . }}-headless-discovery
         {{- range $key, $value :=  .Values.common.env }}
         - name: {{ $key | upper | replace "-" "_" }}
           value: {{ $value | quote }}
@@ -115,7 +116,9 @@ spec:
           protocol: TCP
         readinessProbe:
           httpGet:
-            path: /_cluster/health
+            # local: If true, the request retrieves information from the local node only.
+            # Defaults to false, which means information is retrieved from the master node.
+            path: /_cluster/health?local=true
             port: {{ .Values.common.ports.http }}
           initialDelaySeconds: 5
         livenessProbe:
@@ -123,6 +126,17 @@ spec:
             path: /_cluster/health?local=true
             port: {{ .Values.common.ports.http }}
           initialDelaySeconds: 90
+        {{- if semverCompare "^1.16-0" .Capabilities.KubeVersion.Version }}
+        # This feature is available in Kubernetes 1.16+
+        startupProbe:
+          httpGet:
+            # without local=true, we are waiting for this pod's
+            # es-master to report that the cluster is ready.
+            path: /_cluster/health
+            port: {{ .Values.common.ports.http }}
+          failureThreshold: 30
+          periodSeconds: 10
+        {{- end }}
         volumeMounts:
         - mountPath: /usr/share/elasticsearch/config/elasticsearch.yml
           name: config

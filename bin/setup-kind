@@ -1,16 +1,19 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
-if [[ -z "${KUBE_VERSION}" ]]; then
-  export KUBE_VERSION='v1.15.6'
-fi
+export KUBE_VERSION="${KUBE_VERSION:-v1.15.6}"
 
 # Bit of common bash magic that sets DIR to the directory of this script
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 # The path to the working directory - the root of the repo
 REPO_DIR=$DIR/../
 
+echo "Checking tools are installed"
+
+set +e
+
 # Check required tools are installed
-for executable in gsutil kind helm kubectl docker; do
+for executable in mkcert kind helm kubectl docker; do
   which $executable > /dev/null 2>&1
   if [ $? -eq 0 ]; then
     echo "$executable is in PATH"
@@ -20,13 +23,13 @@ for executable in gsutil kind helm kubectl docker; do
   fi
 done
 
-echo "Downloading development TLS cert chain and private key"
-BOTO_CONFIG=/dev/null gsutil cp gs://astronomer-development-certificates/fullchain.pem /tmp/fullchain.pem && \
-BOTO_CONFIG=/dev/null gsutil cp gs://astronomer-development-certificates/privkey.pem /tmp/privkey.pem
-if [ $? -eq 0 ]; then
-  echo "Downloaded TLS secrets to /tmp/fullchain.pem and /tmp/privkey.pem"
+echo "Generating SSL keys..."
+source ${REPO_DIR}/bin/generate_ssl_keys
+
+if [[ $? -eq 0 ]]; then
+  echo "Installed TLS secrets to /tmp/fullchain.pem and /tmp/privkey.pem"
 else
-  echo "Please ensure you have authorization in GCP development project to download the development certificates"
+  echo "Something goes wrong... :("
   exit 1
 fi
 
@@ -36,24 +39,39 @@ set -xe
 # Delete the old cluster, if it exists
 kind delete cluster || true
 
-# Start a cluster
-kind create cluster --image kindest/node:${KUBE_VERSION}
+if [[ -z "${MULTI_NODE+x}" ]]; then
+  CONFIG_OPTION=""
+else
+  CONFIG_OPTION="--config $REPO_DIR/bin/kind/multi-node.yaml"
+fi
 
+# Start a cluster
+set +e
+kind create cluster $CONFIG_OPTION --image kindest/node:${KUBE_VERSION}
+# I have found kind create cluster
+# fails rarely, but since we are running
+# so many in parallel, that it happens
+# enough to justify a retry
+if ! [[ $? -eq 0 ]]; then
+  set -e
+  echo "Failed to create Kind cluster, trying one more time"
+  kind delete cluster || true
+  kind create cluster $CONFIG_OPTION --image kindest/node:${KUBE_VERSION}
+fi
+
+set -e
 set +x
 
-# Set up cluster access via kubectl
-export KUBECONFIG="$(kind get kubeconfig-path --name="kind")"
+if ! [[ -z "${CORDON_NODE+x}" ]]; then
+  kubectl cordon $CORDON_NODE
+fi
 
 kubectl get nodes
 
-# Install the Tiller service account
-echo "Creating Tiller service account..."
-kubectl apply -f ${REPO_DIR}.circleci/tiller-rbac.yaml
-
-# Install Tiller, set up Helm
-echo "Installing tiller in the KinD cluster..."
-helm init --service-account tiller --wait > /dev/null 2>&1
-echo "Tiller installed."
+echo "Install requirements"
+cd $REPO_DIR/charts/postgresql
+helm dependency update .
+cd $REPO_DIR
 
 echo "Creating namespace 'astronomer'"
 kubectl create namespace astronomer
@@ -63,17 +81,3 @@ kubectl create secret tls astronomer-tls \
   --key /tmp/privkey.pem \
   --cert /tmp/fullchain.pem \
   --namespace astronomer
-
-echo "Deploying postgresql..."
-helm install -n postgresql --namespace astronomer --wait \
-  --set image.tag=9.6.15-centos-7-r34 \
-  --set postgresqlPassword=notactuallysecret \
-  stable/postgresql > /dev/null 2>&1
-
-export POSTGRES_PASSWORD=$(kubectl get secret --namespace astronomer postgresql -o jsonpath="{.data.postgresql-password}" | base64 --decode)
-export DB_CONNECTION_STRING="postgres://postgres:${POSTGRES_PASSWORD}@postgresql.astronomer:5432"
-kubectl create secret generic astronomer-bootstrap \
-  --from-literal connection=$DB_CONNECTION_STRING \
-  --namespace astronomer
-
-echo "Postgresql deployed."

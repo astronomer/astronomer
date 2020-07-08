@@ -41,3 +41,7 @@ Image name.
 {{ .Values.images.alertmanager.repository }}:{{ .Values.images.alertmanager.tag }}
 {{- end -}}
 {{- end -}}
+
+{{ define "alertmanager.url" -}}
+alertmanager.{{ .Values.global.baseDomain }}
+{{- end }}

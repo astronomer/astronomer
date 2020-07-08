@@ -1,8 +1,52 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+All changes to this project will be documented in this file. For more detail on notable features and changes, refer to our [Release Notes](https://www.astronomer.io/docs/release-notes/)).
 
-## [0.11.0] - 2019-12-x
+## [0.13.1] - 2020-05-07
+- Updates to Platform Image Versions (`db-bootstrapper`, `houston-api`, `commander`, `cli-install`, `base`, `default-backend` ) ([CVE Patch](https://github.com/astronomer/astronomer/pull/669))
+- Updates to Vendor Image Versions (`alertmanager`, `elasticsearch`, `fluentd`, `grafana`,`prometheus`, `redis` etc.) ([CVE Patch](https://github.com/astronomer/astronomer/pull/669))
+
+## [0.13.0] - 2020-04-16
+- Ability to set a Kubernetes Secret as an Env Var in global config.yaml
+- Improved Error Handling on user signup when publicSignups are disabled
+- Enhancements to in-app alert functionality
+- Stability improvements to the Astronomer UI
+- API mutation to remove SysAdmin permissions introduced to Houston's schema as `deleteSystemRoleBinding`
+- Ability to designate or remove existing users as SysAdmins via the 'System Admin' tab within Astronomer UI
+- Copy improvements to all tooltips in the 'Deployment Settings' Page
+- Add "AIRFLOW__KUBERNETES__PRESTOP_WAIT_TIME" to list of Environment Variables in the Astro UI (based on [this file](https://github.com/astronomer/astro-ui/blob/staging/src/components/DeploymentUpdateForm/variableNames.js)
+- SysAdmins can now override their Workspace 'Viewer' or 'Editor' role to delete or edit another user's role
+- Set `postgresqlEnabled: false` by default at the root of our helm chart
+- Correct CLI command listed in Service Account creation page in the Astronomer UI
+- Introduced Prometheus and AlertManager sudomains and URL access
+- BugFix: Accurate calculation of 'Usage Quotas' value in 'Metrics' Tab
+- BugFix: Tooltip hover duration in 'Metrics' tab changed from 5s to 30s
+- BugFix: Intermittent issue with Airflow Pods looking for non-existing secret after Environment Variable removed
+- BugFix: Allow removing "Self" when another Workspace Admin exists
+- BugFix: 'Invalid Payload' network error after deleting an Environment Variable in the Astro UI (fixed by filtering out all variables that don't have a key or value from updateDeployment mutation)
+- BugFix: Changes to resource sliders in the Astro UI resetting
+- BugFix: Users unable to deploy DAGs when using Azure Blob Storage as registry storage backend (Azure only)
+- BugFix: Some users unable to create an account when invited and publicSignups disabled (Azure only)
+
+## [0.12.1] - 2020-03-19
+- New "Trial Mode" banner in Deployment Config page to clarify limits on config changes (Cloud only)
+- Limit resource allocation for trials (Cloud only)
+- Bugfix: Environment variable key input loses focus on change
+- Bugfix: Deployment settings changes not saved
+- Bugfix: Allow POST requests to Airflow's REST API
+- Bugfix: Recurring /houston-down page
+- Bugfix: Auth check redirecting users when it shouldn't (e.g. on reset-password, etc.)
+- Bugfix: Airflow version and config links broken
+
+## [0.12.0] - 2020-03-09
+- New Astronomer UI
+- Zero config platform DB support for initial installation (Enterprise Only)
+- Updater service that alerts users when a new version of the platform is available (Enterprise Only)
+- Remove Wildcart SSL Certificate Requirement for Astronomer Installation (Enterprise Only)
+- Improve SingleNamespace Mode role definitions
+- Add `conn:schema` param and update link provided in default airflow_settings.yaml file
+
+## [0.11.0] - 2020-01-24
 - Official Debian Image
 - Platform-level support for multiple Airflow images
 - Support for pre-pushing shared image layers to the platform for faster deploys
@@ -35,7 +79,7 @@ All notable changes to this project will be documented in this file.
 ## [0.10.1] - 2019-09-30
 - Upgrade to Airflow 1.10.5
 - Kubernetes 1.14+ support
-- Improved metrics in Grafana and Orbit
+- Improved metrics in Grafana and the UI
 - Support for Istio
 - Scheduler hangup mitigations
 - Admin Panel deployment list
@@ -81,8 +125,8 @@ All notable changes to this project will be documented in this file.
 
 ## [0.9.2] - 2019-06-24
 - Fix local env link and user/password in CLI
-- Fix early data load issue in orbit metrics
-- Fix deployment listing issue in orbit
+- Fix early data load issue in UI metrics
+- Fix deployment listing issue in the UI
 
 ## [0.9.1] - 2019-06-17
 - Support for Okta as oauth integration
@@ -100,7 +144,7 @@ All notable changes to this project will be documented in this file.
 - Switched to Airflow RBAC dashboard by default, and integrated with Astronomer RBAC.
 - Support for configurable registry backend.
 - Fixed createServiceAccount and updateServiceAccount mutations.
-- Fix orbit caching bug.
+- Fix UI caching bug.
 - Fix for cascading deletes of Astronomer RoleBindings.
 - Fix to prevent logs being truncated in the UI.
 - Add streaming logs support to CLI.

@@ -1,0 +1,24 @@
+################################
+## Astronomer UI Service
+#################################
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ .Release.Name }}-astro-ui
+  labels:
+    component: astro-ui
+    tier: astronomer
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+spec:
+  type: ClusterIP
+  selector:
+    component: astro-ui
+    tier: astronomer
+    release: {{ .Release.Name }}
+  ports:
+    - name: astro-ui-http
+      protocol: TCP
+      port: {{ .Values.ports.astroUIHTTP }}
+      targetPort: {{ .Values.ports.astroUIHTTP }}

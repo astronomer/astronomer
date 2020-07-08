@@ -3,7 +3,7 @@
 #################################
 {{- if .Values.global.baseDomain }}
 kind: Ingress
-apiVersion: extensions/v1beta1
+apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:
   name: {{ .Release.Name }}-public-ingress
   labels:
@@ -42,24 +42,15 @@ spec:
       paths:
         - path: /
           backend:
-            serviceName: {{ .Release.Name }}-orbit
-            servicePort: orbit-http
+            serviceName: {{ .Release.Name }}-astro-ui
+            servicePort: astro-ui-http
   - host: app.{{ .Values.global.baseDomain }}
     http:
       paths:
         - path: /
           backend:
-            serviceName: {{ .Release.Name }}-orbit
-            servicePort: orbit-http
-{{- if .Values.norbit.enabled }}
-  - host: beta.{{ .Values.global.baseDomain }}
-    http:
-      paths:
-        - path: /
-          backend:
-            serviceName: {{ .Release.Name }}-norbit
-            servicePort: norbit-http
-{{- end }}
+            serviceName: {{ .Release.Name }}-astro-ui
+            servicePort: astro-ui-http
   - host: houston.{{ .Values.global.baseDomain }}
     http:
       paths:

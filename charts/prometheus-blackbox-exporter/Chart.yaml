@@ -1,0 +1,10 @@
+apiVersion: v1
+appVersion: 0.15.1
+description: Helm chart to deploy the Astronomer Platform Prometheus Blackbox Exporter
+keywords:
+- prometheus
+- blackbox
+- monitoring
+- astronomer
+name: prometheus-blackbox-exporter
+version: 0.12.1

@@ -31,21 +31,18 @@ Install the following tools:
 - docker (make sure your user has permissions - try 'docker ps')
 - kubectl
 - [kind](https://github.com/kubernetes-sigs/kind#installation-and-usage)
-- gcloud cli (make sure gsutil in PATH)
+- [mkcert](https://github.com/FiloSottile/mkcert) (make sure mkcert in PATH)
 - helm
-
-Make sure you have access to the GCP development account
-
-```
-# Check that you can download the development TLS cert:
-gsutil cat gs://astronomer-development-certificates/fullchain.pem
-```
-If this does not work, anyone with 'Owner' in the development project can grant you 'Owner' via IAM.
 
 Run this script from the root of this repository:
 
 ```
 bin/reset-local-dev
+```
+
+For OSX, if kind version >=0.8.1, use the following command
+```
+KIND_EXPERIMENTAL_DOCKER_NETWORK=bridge ./bin/reset-local-dev
 ```
 
 Each time you run the script, the platform will be fully reset to the current helm chart.
@@ -62,7 +59,7 @@ Modify the "tags:" in configs/local-dev.yaml
 
 #### Add a Docker image into KinD's nodes (so it's available for pods):
 ```
-kind load docker-image <your local image tag>
+kind load docker-image <your local image name with tag>
 ```
 
 #### Make use of that image:
@@ -79,7 +76,7 @@ kubectl get deployment -n astronomer
 
 Replace the pod with the new image
 Look for "image" on the appropriate container and replace with the local tag,
-and set the pull policy to never.
+and set the pull policy to "Never".
 ```
 kubectl edit deployment -n astronomer <your deployment>
 ```
@@ -90,10 +87,38 @@ export KUBE_VERSION='v1.16.3'
 bin/reset-local-dev
 ```
 
+#### Locally test HA configurations:
+
+You need a powerful computer to run the HA testing locally. 28 GB or more of memory should be available to Docker.
+
+Environment variables:
+
+- USE_HA: when set, will deploy using HA configurations
+- CORDON_NODE: when set, will cordon this node after kind create cluster
+- MULTI_NODE: when set, will deploy kind with two worker nodes
+
+Scripts:
+
+- Use bin/run-ci to start the cluster
+- Modify / use bin/drain.sh to test draining
+
+Example:
+
+```
+export USE_HA=1
+export CORDON_NODE=kind-worker
+export MULTI_NODE=1
+bin/run-ci
+```
+
+After the platform is up, then do
+```
+bin/drain.sh
+```
 
 ## Releasing
 
-[Releasing Guide](https://github.com/astronomerio/helm.astronomer.io/blob/master/RELEASING.md)
+[Releasing Guide](https://github.com/astronomer/astronomer/blob/master/RELEASING.md)
 
 ## License
 

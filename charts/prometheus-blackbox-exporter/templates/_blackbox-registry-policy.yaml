@@ -1,0 +1,28 @@
+{{- define "blackbox.registryNetPol" }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  labels:
+    release: {{ .Release.Name }}
+    tier: monitoring
+  name: blackbox-registry-policy
+  namespace: {{ .Release.Namespace }}
+spec:
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          component: blackbox-exporter
+          release: {{ .Release.Name }}
+          tier: monitoring
+    ports:
+    - port: 5000
+      protocol: TCP
+  podSelector:
+    matchLabels:
+      component: registry
+      release: {{ .Release.Name }}
+      tier: astronomer
+  policyTypes:
+  - Ingress
+{{- end }}

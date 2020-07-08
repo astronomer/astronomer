@@ -14,7 +14,7 @@ metadata:
 data:
   prometheus.yaml: |-
     global:
-      scrape_interval: 10s
+      scrape_interval: 30s
       evaluation_interval: 30s
 
     # Configure Alertmanager
@@ -48,6 +48,18 @@ data:
       - job_name: prometheus
         static_configs:
           - targets: ["localhost:9090"]
+
+      - job_name: 'kubernetes-apiservers'
+        kubernetes_sd_configs:
+          - role: endpoints
+        scheme: https
+        tls_config:
+          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
+            action: keep
+            regex: default;kubernetes;https
 
       - job_name: nginx
         kubernetes_sd_configs:
@@ -125,8 +137,22 @@ data:
             target_label: __address__
       {{- end }}
 
+      {{- if .Values.global.prometheusPostgresExporterEnabled }}
+      - job_name: postgresql-exporter
+        kubernetes_sd_configs:
+          - role: service
+            namespaces:
+              names:
+                - {{ .Release.Namespace }}
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_service_name]
+            action: keep
+            regex: "^{{ .Release.Name }}-postgresql-exporter"
+      {{- end }}
+
+
       - job_name: kube-state
-        scrape_interval: 5s # Faster scrape to power dashboards
+        scrape_interval: 10s # Faster scrape to power dashboards
         kubernetes_sd_configs:
           - role: service
             namespaces:
@@ -144,25 +170,84 @@ data:
             regex: ([^:]+)(?::\d+)?;(\d+)
             replacement: $1:$2
             target_label: __address__
+
+          {{- if not .Values.global.singleNamespace }}
+            # This allows us to collect all the metrics we want in the cloud environment
+            # does not limit to just the astronomer release namespace
+          - source_labels: [__meta_kubernetes_endpoint_address_target_kind, __meta_kubernetes_endpoint_address_target_name]
+            separator: ;
+            regex: Node;(.*)
+            target_label: node
+            replacement: ${1}
+            action: replace
+          - source_labels: [__meta_kubernetes_endpoint_address_target_kind, __meta_kubernetes_endpoint_address_target_name]
+            separator: ;
+            regex: Pod;(.*)
+            target_label: pod
+            replacement: ${1}
+            action: replace
+          - source_labels: [__meta_kubernetes_namespace]
+            separator: ;
+            regex: (.*)
+            target_label: namespace
+            replacement: $1
+            action: replace
+          - source_labels: [__meta_kubernetes_service_name]
+            separator: ;
+            regex: (.*)
+            target_label: service
+            replacement: $1
+            action: replace
+          - source_labels: [__meta_kubernetes_pod_name]
+            separator: ;
+            regex: (.*)
+            target_label: pod
+            replacement: $1
+            action: replace
+          - source_labels: [__meta_kubernetes_service_name]
+            separator: ;
+            regex: (.*)
+            target_label: job
+            replacement: ${1}
+            action: replace
+          - separator: ;
+            regex: (.*)
+            target_label: endpoint
+            replacement: http-metrics
+            action: replace
+          - separator: ;
+            regex: (pod|service|endpoint|namespace)
+            replacement: $1
+            action: labeldrop
+        metric_relabel_configs:
+          # Pods have this label twice
+          - regex: 'label_kubernetes_executor'
+            action: labeldrop
+          - regex: 'label_kubernetes_pod_operator'
+            action: labeldrop
+          # Required for multi-namespace mode
+          - source_labels: [namespace]
+            regex: "^{{ .Release.Namespace }}-(.*$)"
+            replacement: "$1"
+            target_label: release
+        {{- else}}
+        # this drops node metrics that we want in the cloud, but maybe shouldn't be scraping
+        # if we are in a shared cluster in enterprise
         metric_relabel_configs:
           # Only keep metrics that start with platforms namespace (includes airflow children)
           - action: keep
             source_labels: [namespace]
             regex: "^{{ .Release.Namespace }}.*"
           - source_labels: [deployment]
-            regex: "^(.*-.*-[0-9]{4})-.*"
-            replacement: "$1"
-            target_label: release
-          # Required for multi-namespace mode
-          - source_labels: [namespace]
-            regex: "^{{ .Release.Namespace }}-(.*-.*-[0-9]{4})$"
+            regex: "([-a-z0-9]*[a-z0-9])-.*?"
             replacement: "$1"
             target_label: release
           # Required for single-namespace mode
           - source_labels: [pod]
-            regex: "^(.*-.*-[0-9]{4})-.*"
+            regex: "([-a-z0-9]*[a-z0-9])-.*?"
             replacement: "$1"
             target_label: release
+          {{- end}}
 
       - job_name: fluentd
         scrape_interval: 30s
@@ -178,7 +263,7 @@ data:
           - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
             action: keep
             regex: true
-          - source_labels: [__address__, __meta_kubernetes_service_annotation_prometheus_io_port]
+          - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
             action: replace
             regex: ([^:]+)(?::\d+)?;(\d+)
             replacement: $1:$2
@@ -188,8 +273,40 @@ data:
             regex: 'fluentd_tail_file_.*'
             action: drop
 
+      {{- if .Values.global.nodeExporterEnabled }}
+      - job_name: node-exporter
+        scrape_interval: 30s
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names:
+                - {{ .Release.Namespace }}
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_name]
+            action: keep
+            regex: "^{{ .Release.Name }}-prometheus-node-exporter-.*"
+          - source_labels: [__meta_kubernetes_namespace]
+            separator: ;
+            regex: (.*)
+            target_label: namespace
+            replacement: $1
+            action: replace
+          - source_labels: [__meta_kubernetes_pod_name]
+            separator: ;
+            regex: (.*)
+            target_label: pod
+            replacement: $1
+            action: replace
+          - source_labels: [__meta_kubernetes_pod_node_name]
+            separator: ;
+            regex: (.*)
+            target_label: instance
+            replacement: $1
+            action: replace
+      {{- end }}
+
       - job_name: airflow
-        scrape_interval: 5s # Faster scrape to power dashboards
+        scrape_interval: 10s # Faster scrape to power dashboards
         kubernetes_sd_configs:
           - role: service
           {{- if .Values.global.singleNamespace }}
@@ -198,6 +315,8 @@ data:
                 - {{ .Release.Namespace }}
           {{- end }}
         relabel_configs:
+          - action: labelmap
+            regex: __meta_kubernetes_service_label_(.+)
           - source_labels: [__meta_kubernetes_service_annotation_astronomer_io_platform_release]
             action: keep
             regex: ^{{ .Release.Name }}$
@@ -211,7 +330,7 @@ data:
             target_label: __address__
         metric_relabel_configs:
           - source_labels: [instance]
-            regex: "^(.*-.*-[0-9]{4})-.*$"
+            regex: "([-a-z0-9]*[a-z0-9])-.*?"
             replacement: "$1"
             target_label: deployment
             # Drop metrics that are task or dag specific
@@ -269,11 +388,6 @@ data:
             regex: (.+)
             target_label: __metrics_path__
             replacement: /api/v1/nodes/${1}/proxy/metrics
-        metric_relabel_configs:
-            # Only keep metrics that start with platforms namespace (includes airflow children)
-          - action: keep
-            source_labels: [namespace]
-            regex: "^{{ .Release.Namespace }}.*"
 
       - job_name: kubernetes-nodes-cadvisor
         scheme: https
@@ -291,30 +405,77 @@ data:
             regex: (.+)
             target_label: __metrics_path__
             replacement: /api/v1/nodes/${1}/proxy/metrics/cadvisor
+          - source_labels: [__metrics_path__]
+            separator: ;
+            regex: (.*)
+            target_label: metrics_path
+            replacement: $1
+            action: replace
+
+          - source_labels: [__meta_kubernetes_endpoint_address_target_kind, __meta_kubernetes_endpoint_address_target_name]
+            separator: ;
+            regex: Pod;(.*)
+            target_label: pod
+            replacement: ${1}
+            action: replace
+          - source_labels: [__meta_kubernetes_namespace]
+            separator: ;
+            regex: (.*)
+            target_label: namespace
+            replacement: $1
+            action: replace
+          - source_labels: [__meta_kubernetes_service_name]
+            separator: ;
+            regex: (.*)
+            target_label: service
+            replacement: $1
+            action: replace
+          - source_labels: [__meta_kubernetes_pod_name]
+            separator: ;
+            regex: (.*)
+            target_label: pod
+            replacement: $1
+            action: replace
+          - source_labels: [__metrics_path__]
+            separator: ;
+            regex: (.*)
+            target_label: metrics_path
+            replacement: $1
+            action: replace
         metric_relabel_configs:
-          - action: replace
-            source_labels: [id]
-            regex: '^/machine\.slice/machine-rkt\\x2d([^\\]+)\\.+/([^/]+)\.service$'
-            target_label: rkt_container_name
-            replacement: '${2}-${1}'
+          - source_labels: [__name__]
+            separator: ;
+            regex: container_(network_tcp_usage_total|network_udp_usage_total|tasks_state|cpu_load_average_10s)
+            replacement: $1
+            action: drop
+
+            # For versions of cAdvisor that no longer include label pod_name
+          - source_labels: [pod]
+            regex: (.*)
+            target_label: pod_name
+            replacement: $1
+            action: replace
+
+            # For versions of cAdvisor that no longer include label container_name
+          - source_labels: [container]
+            regex: "^(.*)$"
+            replacement: "$1"
+            target_label: container_name
+            action: replace
+
           - action: replace
             source_labels: [id]
             regex: '^/system\.slice/(.+)\.service$'
             target_label: systemd_service_name
             replacement: '${1}'
 
-            # Only keep metrics that start with platforms namespace (includes airflow children)
-          - action: keep
-            source_labels: [namespace]
-            regex: "^{{ .Release.Namespace }}.*"
-
-            # Drop some unnecessary labels
-          - regex: "^(id|name)"
+            # Drop some unnecessary labels.
+          - regex: "^name"
             action: labeldrop
 
             # Add deployment name via container_name
           - source_labels: [pod_name]
-            regex: "^(.*-.*-[0-9]{4})-.*"
+            regex: "(^[-a-z0-9-]*)-[^-]*-[^-]*-[^-]*?"
             replacement: "$1"
             target_label: deployment
 
@@ -335,26 +496,116 @@ data:
             regex: "container_network_.*;(.*)-(.*)-([0-9a-z]{5,10}-[0-9a-z]{5})$"
             replacement: "$1"
             target_label: deployment
-
           - source_labels: [__name__, container_name, pod_name]
             regex: "container_network_.*;(.*)-(.*)-([0-9a-z]{5,10}-[0-9a-z]{5})$"
             replacement: "$2"
             target_label: component_name
-
           - source_labels: [__name__, container_name, pod_name]
             regex: "container_network_.*;(.*)-(.*)-([0-9a-z]{5,10}-[0-9a-z]{5})$"
             replacement: "$3"
             target_label: component_instance
-
             # StatefulSet (workers) format
           - source_labels: [__name__, pod_name]
             regex: "^container_network_.*;(.*)-(.*)-([0-9]+)$"
             replacement: "$2"
             target_label: component_name
-
           - source_labels: [__name__, pod_name]
             regex: "^container_network_.*;(.*)-(.*)-([0-9]+)$"
             replacement: "$3"
             target_label: component_instance
 
       {{- end }}
+
+
+      {{- if .Values.global.blackboxExporterEnabled }}
+      # Will probe the endpoints listed under targets looking for a 2XX HTTP response
+      - job_name: 'blackbox HTTP'
+        metrics_path: /probe
+        params:
+          module: [http_2xx]  # Look for a HTTP 200 response.
+        # TODO: change this static config to be driving by service annotations. This works for now
+        static_configs:
+          - targets:
+          {{- if .Values.astroHTTPTargets.commander}}
+            - http://{{.Release.Name}}-commander.{{.Release.Namespace}}:8880/healthz
+          {{- end }}
+          {{- if .Values.astroHTTPTargets.houston}}
+            - http://{{.Release.Name}}-houston.{{.Release.Namespace}}:8871/v1/healthz
+          {{- end }}
+          {{- if .Values.astroHTTPTargets.registry}}
+            - http://{{.Release.Name}}-registry.{{.Release.Namespace}}:5000
+          {{- end }}
+          {{- if .Values.astroHTTPTargets.cliInstall}}
+            - http://{{.Release.Name}}-cli-install.{{.Release.Namespace}}
+          {{- end }}
+          {{- if .Values.astroHTTPTargets.grafana}}
+            - http://{{.Release.Name}}-grafana.{{.Release.Namespace}}:3000/api/health
+          {{- end }}
+          {{- if .Values.astroHTTPTargets.kibana}}
+            - http://{{.Release.Name}}-kibana.{{.Release.Namespace}}:5601
+          {{- end }}
+          {{- if .Values.astroHTTPTargets.elasticsearch}}
+            - http://{{.Release.Name}}-elasticsearch.{{.Release.Namespace}}:9200/_cluster/health?local=true
+          {{- end }}
+
+
+            {{- if .Values.global.baseDomain }}
+            - https://app.{{ .Values.global.baseDomain }}
+            - https://houston.{{ .Values.global.baseDomain }}/v1/healthz
+            - https://registry.{{ .Values.global.baseDomain }}
+            - https://install.{{ .Values.global.baseDomain }}
+            {{- end}}
+          {{- range .Values.httpTargets }}
+            - {{ . }}
+          {{- end }}
+        relabel_configs:
+          - source_labels: [__address__]
+            target_label: __param_target
+          - source_labels: [__param_target]
+            target_label: instance
+          - target_label: __address__
+            replacement: {{.Release.Name}}-prometheus-blackbox-exporter.{{.Release.Name}}:9115  # The blackbox exporter's real hostname:port.
+
+
+      {{- if .Values.tcpProbe.enabled}}
+      # Only testing for ability to open a TCP connection.
+      - job_name: 'blackbox TCP'
+        metrics_path: /probe
+        params:
+          module: [tcp_connect]  # Try tcp handshake on a port
+        static_configs:
+          - targets:
+            {{- if .Values.tcpProbe.probePGProxy}}
+            - pg-sqlproxy-gcloud-sqlproxy.{{.Release.Namespace}}:5432
+            {{- end }}
+            {{- if .Values.tcpProbe.probeTiller}}
+            - tiller-deploy.kube-system:44134 # TCP Probe
+            {{- end }}
+        relabel_configs:
+          - source_labels: [__address__]
+            target_label: __param_target
+          - source_labels: [__param_target]
+            target_label: instance
+          - target_label: __address__
+            replacement: {{.Release.Name}}-prometheus-blackbox-exporter.{{.Release.Namespace}}:9115  # The blackbox exporter's real hostname:port.
+        {{- end }}
+
+      # Tests that DNS in cluster is working.
+      # target should be your cluster DNS service IP
+      - job_name: 'blackbox DNS'
+        metrics_path: /probe
+        params:
+          module: [dns_int]
+        static_configs:
+          - targets:
+            {{- range .Values.dnsTargets }}
+            - {{ . }}
+            {{- end }}
+        relabel_configs:
+          - source_labels: [__address__]
+            target_label: __param_target
+          - source_labels: [__param_target]
+            target_label: instance
+          - target_label: __address__
+            replacement: {{.Release.Name}}-prometheus-blackbox-exporter.{{.Release.Namespace}}:9115
+        {{- end }}

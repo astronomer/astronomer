@@ -2,7 +2,7 @@
 ## Astronomer Commander Deployment
 #################################
 kind: Deployment
-apiVersion: apps/v1beta2
+apiVersion: apps/v1
 metadata:
   name: {{ .Release.Name }}-commander
   labels:
@@ -12,7 +12,7 @@ metadata:
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
 spec:
-  replicas: 1
+  replicas: {{ .Values.commander.replicas }}
   selector:
     matchLabels:
       component: commander
@@ -24,6 +24,8 @@ spec:
         component: commander
         tier: astronomer
         release: {{ .Release.Name }}
+      annotations:
+        checksum/airflow-chart-version: {{ .Values.airflowChartVersion | sha256sum }}
     spec:
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
@@ -47,11 +49,15 @@ spec:
             - name: commander-grpc
               containerPort: {{ .Values.ports.commanderGRPC }}
           livenessProbe:
+            failureThreshold: 5
             httpGet:
               path: /healthz
               port: {{ .Values.ports.commanderHTTP }}
+              scheme: HTTP
             initialDelaySeconds: 10
             periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
           readinessProbe:
             httpGet:
               path: /healthz

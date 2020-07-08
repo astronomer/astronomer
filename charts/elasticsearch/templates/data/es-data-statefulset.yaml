@@ -2,7 +2,7 @@
 ## Elasticsearch Data StatefulSet
 #################################
 kind: StatefulSet
-apiVersion: apps/v1beta2
+apiVersion: {{ template "apiVersion.StatefulSet" . }}
 metadata:
   name: {{ template "elasticsearch.fullname" . }}-data
   labels:
@@ -97,6 +97,7 @@ spec:
         volumeMounts:
         - mountPath: /usr/share/elasticsearch/data
           name: data
+      serviceAccountName: {{ template "elasticsearch.fullname" . }}
       containers:
       - name: es-data
         securityContext:
@@ -121,7 +122,7 @@ spec:
             fieldRef:
               fieldPath: metadata.name
         - name: DISCOVERY_SERVICE
-          value: {{ template "elasticsearch.fullname" . }}-discovery
+          value: {{ template "elasticsearch.fullname" . }}-headless-discovery
         - name: ES_JAVA_OPTS
           value: "-Xms{{ .Values.data.heapMemory }} -Xmx{{ .Values.data.heapMemory }}"
         {{- range $key, $value :=  .Values.common.env }}

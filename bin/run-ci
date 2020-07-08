@@ -1,104 +1,48 @@
-#!/bin/bash
-
-set -e
+#!/usr/bin/env bash
+set -euo pipefail
 
 # Bit of common bash magic that sets DIR to the directory of this script
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 # The path to the working directory - the root of the repo
 REPO_DIR=$DIR/../
 
-if [ -n "$GOOGLE_APPLICATION_CREDENTIALS_CONTENT" ]; then
-  echo $GOOGLE_APPLICATION_CREDENTIALS_CONTENT > /tmp/account.json
-  export GOOGLE_APPLICATION_CREDENTIALS=/tmp/account.json
-fi
+source $REPO_DIR/bin/install-ci-tools 1
+export PATH=$PATH:/tmp/bin
+ls -lh /tmp/bin
 
-source $REPO_DIR/bin/install-ci-tools
-
-gcloud auth activate-service-account --key-file=$GOOGLE_APPLICATION_CREDENTIALS
 source $REPO_DIR/bin/setup-kind
 
 echo "Deploying Astronomer..."
 
-platform=false
-logging=false
-monitoring=false
-kubed=false
-for component in $@
-do
-  export $component=true
-done
+# Lint the platform while helm can talk to Kubernetes
+# make lint
 
-set +ex
-
+# This is so CI does not timeout on "no input in 10 minutes"
 kubectl get pods -n astronomer -w &
 WATCH_PID=$!
 
-START=$(date +%s)
-
-helm install \
-  --namespace astronomer \
-  -n astronomer \
-  -f configs/local-dev.yaml \
-  --set tags.platform=${platform} \
-  --set tags.logging=${logging} \
-  --set tags.monitoring=${monitoring} \
-  --set tags.kubed=${kubed} \
-  $REPO_DIR
-
-if [ ! $? -eq 0 ]; then
-  echo "Helm chart failed to install"
-  exit 1
-fi
+$DIR/install-platform
 
 sleep 5
 
-# Wait for Astronomer to deploy
-RC=0
-HELM_CODE=0
-while [ $RC -eq 0 ]; do
-  NOW=$(date +%s)
-  DURATION="$(($NOW-$START))"
-  echo "${DURATION} seconds have elapsed, timeout at 800 seconds"
-  if [ $DURATION -gt 800 ];then
-    HELM_CODE=1
-    RC=1
-    echo "Error (timeout): giving up after 800 seconds"
-  else
-    sleep 10
-    kubectl get pods -n astronomer > /tmp/pods
-    if [ ! $? -eq 0 ];then
-      echo "kubectl get pods timed out. retrying."
-      continue
-    fi
-    # Ignore elasticsearch-nginx in order to allow for testing the deployment
-    # of logging tag without the platform. This is the only logging component
-    # that will not start without the platform. The benefit of allowing us to
-    # test the logging tag outweighs the downside of ignoring one pod.
-    cat /tmp/pods | grep -v 1/1 | grep -v NAME | grep -v 'elasticsearch-nginx' >/dev/null 2>&1
-    RC=$?
-  fi
-done
+$DIR/waitfor-platform
 
-kill $WATCH_PID
+# TODO: turn on e2e tests
 
-# Output debugging information
-if [ $HELM_CODE -eq 0 ]; then
-  echo "Astronomer deployed!"
-else
-  echo "Failed to deploy Astronomer!"
-  echo "Printing description and logs where containers in pod are not 1/1..."
-  for pod in $(kubectl get pods -n astronomer | grep -v NAME | grep -v 1/1 | awk '{ print $1 }'); do
-    echo "======================="
-    set -x
-    kubectl describe pod -n astronomer $pod
-    kubectl logs -n astronomer $pod | tail -n 30
-    set +x
-    echo "======================="
-  done
-fi
+exit 0
 
-set -x
-kubectl get pods --all-namespaces
-helm list
+### Create initial user
+$DIR/create-initial-user "tester@astronomer.io" "password"-
 
-exit $HELM_CODE
+### Test Platform
+$DIR/test-ap
+
+exit $?
+
+# Test monitoring/alerting ingress - This is a stopgap until it can move in to full testing suite
+echo "Testing alertmanager ingress"
+curl -f -s -o /dev/null -H "Host: alertmanager.local.astronomer-development.com"  http://127.0.0.1/
+echo "Testing prometheus ingress"
+curl -f -s -o /dev/null -H "Host: prometheus.local.astronomer-development.com"  http://127.0.0.1/
+
+sudo kill -9 $WATCH_PID

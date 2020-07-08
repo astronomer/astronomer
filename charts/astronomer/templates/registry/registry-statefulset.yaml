@@ -2,8 +2,13 @@
 ## Astronomer Registry StatefulSet
 #################################
 {{- if .Values.global.baseDomain }}
-kind: {{ if or .Values.registry.gcs.enabled .Values.registry.azure.enabled }}Deployment{{ else }}StatefulSet{{ end }}
-apiVersion: apps/v1beta2
+{{- if or .Values.registry.gcs.enabled .Values.registry.azure.enabled .Values.registry.s3.enabled }}
+kind: Deployment
+apiVersion: apps/v1
+{{- else }}
+kind: StatefulSet
+apiVersion: {{ template "apiVersion.StatefulSet" . }}
+{{- end }}
 metadata:
   name: {{ .Release.Name }}-registry
   labels:
@@ -19,12 +24,15 @@ spec:
       component: registry
       tier: astronomer
       release: {{ .Release.Name }}
-{{- if or (not .Values.registry.gcs.enabled) (not .Values.registry.azure.enabled) }}
+{{- if and (not .Values.registry.gcs.enabled) (not .Values.registry.azure.enabled) (not .Values.registry.s3.enabled)}}
   serviceName: {{ .Release.Name }}-registry
 {{- end }}
   template:
     metadata:
       labels:
+{{- with .Values.podLabels }}
+{{ toYaml . | indent 8 }}
+{{- end }}
         component: registry
         tier: astronomer
         release: {{ .Release.Name }}
@@ -65,12 +73,14 @@ spec:
               port: {{ .Values.ports.registryHTTP }}
             initialDelaySeconds: 10
             periodSeconds: 10
+            timeoutSeconds: 5
           readinessProbe:
             httpGet:
               path: /
               port: {{ .Values.ports.registryHTTP }}
             initialDelaySeconds: 10
             periodSeconds: 10
+            timeoutSeconds: 5
       volumes:
         - name: config
           configMap:
@@ -84,7 +94,7 @@ spec:
         {{- if .Values.registry.gcs.enabled }}
         {{- include "registry.gcsVolume" . | indent 8 }}
         {{- end }}
-  {{- if or (not .Values.registry.persistence.enabled) (.Values.registry.gcs.enabled) (.Values.registry.azure.enabled) }}
+  {{- if or (not .Values.registry.persistence.enabled) (.Values.registry.gcs.enabled) (.Values.registry.azure.enabled) (.Values.registry.s3.enabled)}}
         - name: data
           emptyDir: {}
   {{- else }}

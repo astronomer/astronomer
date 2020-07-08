@@ -1,45 +1,183 @@
-version: 2
+# Warning: automatically generated file
+# Please edit config.yml.j2, and use the script generate_circleci_config.py
+version: 2.1
 
 jobs:
-  platform:
-    machine:
-      image: ubuntu-1604:201903-01
+  lint:
+    docker:
+      - image: astronomerio/ap-build:0.1.3
     steps:
       - checkout
       - run:
-          name: Platform
-          command: bin/run-ci platform
-  monitoring:
-    machine:
-      image: ubuntu-1604:201903-01
+          name: Install ci tools
+          command: ./bin/install-ci-tools 1
+      - run:
+          name: Lint the Astronomer chart
+          command: export PATH=/tmp/bin:$PATH make lint
+  build-artifact:
+    docker:
+      - image: astronomerio/ap-build:0.1.3
     steps:
       - checkout
       - run:
-          name: Monitoring
-          command: bin/run-ci monitoring
-  logging:
-    machine:
-      image: ubuntu-1604:201903-01
-      resource_class: large
-    steps:
-      - checkout
+          name: Install ci tools
+          command: ./bin/install-ci-tools 1
       - run:
-          name: Logging
-          command: bin/run-ci logging
-  kubed:
+          name: Package the Astronomer chart
+          #command: export PATH=/tmp/bin:$PATH make build
+          command: make build
+      - persist_to_workspace:
+          root: '.'
+          paths:
+            - './*.tgz'
+  release:
     machine:
-      image: ubuntu-1604:201903-01
+      image: ubuntu-1604:202004-01
     steps:
+      - attach_workspace:
+          at: /tmp/workspace
       - checkout
+      - publish-github-release
       - run:
-          name: Kubed
-          command: bin/run-ci kubed
+          name: Release the Astronomer chart
+          command: |
+            set -e
+            sudo apt-get update && sudo apt-get install -y ca-certificates curl
+            pyenv global 2.7.12
+            HELM_CHART_PATH='/tmp/workspace/astronomer-*.tgz' bin/release
+
+  platform-1-14-10:
+    machine:
+      image: ubuntu-1604:202004-01
+      resource_class: xlarge
+    environment:
+      KUBE_VERSION: v1.14.10
+    steps:
+      - helm-install:
+          astronomer-tags: "platform postgresql monitoring logging kubed keda"
+
+  platform-1-15-11:
+    machine:
+      image: ubuntu-1604:202004-01
+      resource_class: xlarge
+    environment:
+      KUBE_VERSION: v1.15.11
+    steps:
+      - helm-install:
+          astronomer-tags: "platform postgresql monitoring logging kubed keda"
+
+  platform-1-16-9:
+    machine:
+      image: ubuntu-1604:202004-01
+      resource_class: xlarge
+    environment:
+      KUBE_VERSION: v1.16.9
+    steps:
+      - helm-install:
+          astronomer-tags: "platform postgresql monitoring logging kubed keda"
+
+  platform-1-17-5:
+    machine:
+      image: ubuntu-1604:202004-01
+      resource_class: xlarge
+    environment:
+      KUBE_VERSION: v1.17.5
+    steps:
+      - helm-install:
+          astronomer-tags: "platform postgresql monitoring logging kubed keda"
+
+  platform-1-18-2:
+    machine:
+      image: ubuntu-1604:202004-01
+      resource_class: xlarge
+    environment:
+      KUBE_VERSION: v1.18.2
+    steps:
+      - helm-install:
+          astronomer-tags: "platform postgresql monitoring logging kubed keda"
+
 
 workflows:
-  version: 2
+  version: 2.1
   install-helm-tags:
     jobs:
-      - platform
-      - monitoring
-      - logging
-      - kubed
+      - lint
+      - build-artifact:
+          requires:
+            - lint
+
+      - platform-1-14-10:
+          requires:
+            - build-artifact
+
+      - platform-1-15-11:
+          requires:
+            - build-artifact
+
+      - platform-1-16-9:
+          requires:
+            - build-artifact
+
+      - platform-1-17-5:
+          requires:
+            - build-artifact
+
+      - platform-1-18-2:
+          requires:
+            - build-artifact
+
+      - approve-release:
+          type: approval
+          requires:
+
+            - platform-1-14-10
+
+            - platform-1-15-11
+
+            - platform-1-16-9
+
+            - platform-1-17-5
+
+            - platform-1-18-2
+
+          filters:
+            branches:
+              only:
+                - '/release-.*/'
+      - release:
+          requires:
+            - approve-release
+          filters:
+            branches:
+              only:
+                - '/release-.*/'
+commands:
+  helm-install:
+    description: "Install Helm chart from artifact"
+    parameters:
+      astronomer-tags:
+        type: string
+        default:  "platform"
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - run:
+          name: Install Astronomer chart
+          command: |
+            set -e
+            HELM_CHART_PATH='/tmp/workspace/astronomer-*.tgz' bin/run-ci << parameters.astronomer-tags >>
+  publish-github-release:
+    description: "Create a release on GitHub"
+    parameters:
+      tag:
+        type: string
+        default:  "$NEXT_TAG"
+    steps:
+      - run:
+          name: Create a release on GitHub
+          command: |
+            set -xe
+            pyenv global 3.7.0
+            pip install astronomer_e2e_test
+            astronomer-ci publish-github-release --github-repository $CIRCLE_PROJECT_REPONAME --github-organization $CIRCLE_PROJECT_USERNAME --commitish $CIRCLE_SHA1

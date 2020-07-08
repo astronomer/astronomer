@@ -5,23 +5,23 @@ tolerations: []
 images:
   es:
     repository: astronomerinc/ap-elasticsearch
-    tag: 0.11.0
+    tag: 7.7.1
     pullPolicy: IfNotPresent
   init:
     repository: astronomerinc/ap-base
-    tag: 0.11.0
+    tag: 3.11.5-3
     pullPolicy: IfNotPresent
   curator:
     repository: astronomerinc/ap-curator
-    tag: 0.11.0
+    tag: 3.11.5-4
     pullPolicy: IfNotPresent
   exporter:
     repository: astronomerinc/ap-elasticsearch-exporter
-    tag: 0.11.0
+    tag: 1.1.0
     pullPolicy: IfNotPresent
   nginx:
     repository: astronomerinc/ap-nginx-es
-    tag: 0.11.0
+    tag: 3.11.5-3
     pullPolicy: IfNotPresent
 
 common:
@@ -32,7 +32,7 @@ common:
     CLUSTER_NAME: "astronomer"
     HTTP_CORS_ENABLE: "true"
     HTTP_CORS_ALLOW_ORIGIN: "*"
-    NUMBER_OF_MASTERS: "1"
+    NUMBER_OF_MASTERS: "2"
     MAX_LOCAL_STORAGE_NODES: "1"
     SHARD_ALLOCATION_AWARENESS: ""
     SHARD_ALLOCATION_AWARENESS_ATTR: ""
@@ -62,6 +62,8 @@ client:
   podAnnotations: {}
   # It isn't common to need more than 2 client nodes.
   replicas: 2
+  # This only applies when replicas > 3
+  maxUnavailable: 25%
   antiAffinity: "soft"
 
   # The amount of RAM allocated to the JVM heap. This should be set to the
@@ -140,11 +142,6 @@ master:
     NODE_INGEST: "false"
     HTTP_ENABLE: "false"
 
-    # The default value for this environment variable is 2, meaning a cluster
-    # will need a minimum of 2 master nodes to operate. If you have 3 masters
-    # and one dies, the cluster still works.
-    NUMBER_OF_MASTERS: "2"
-
   # Determines the properties of the persistent volume claim associated with a
   # data node StatefulSet that is created when the common.stateful.enabled
   # attribute is true.
@@ -190,13 +187,6 @@ exporter:
   es:
     # Address (host and port) of the Elasticsearch node we should connect to.
     # uri: localhost:9200
-
-    # If true, query stats for all nodes in the cluster, rather than just the
-    # node we connect to.
-    all: true
-
-    # If true, query stats for all indices in the cluster.
-    indices: true
 
     # Timeout for trying to get stats from Elasticsearch. (ex: 20s)
     timeout: 30s

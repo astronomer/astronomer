@@ -2,7 +2,7 @@
 ## Astronomer Houston Deployment
 #################################
 kind: Deployment
-apiVersion: apps/v1beta2
+apiVersion: apps/v1
 metadata:
   name: {{ .Release.Name }}-houston
   labels:
@@ -12,7 +12,7 @@ metadata:
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
 spec:
-  replicas: 1
+  replicas: {{ .Values.houston.replicas }}
   selector:
     matchLabels:
       tier: astronomer
@@ -37,6 +37,18 @@ spec:
       {{- if and (not .Values.houston.airflowBackendSecretName) (not .Values.houston.airflowBackendConnection) }}
       serviceAccountName: {{ template "houston.bootstrapperServiceAccount" . }}
       initContainers:
+        - name: wait-for-db
+          image: {{ template "houston.image" . }}
+          imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
+          command:
+            - "/houston/bin/entrypoint"
+          args:
+            - "echo"
+            - "DB ready"
+          resources:
+{{ toYaml .Values.houston.resources | indent 12 }}
+          env:
+            {{- include "houston_environment" . | indent 12 }}
         - name: houston-bootstrapper
           image: {{ template "dbBootstrapper.image" . }}
           imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
@@ -70,17 +82,25 @@ spec:
             httpGet:
               path: /v1/healthz
               port: {{ .Values.ports.houstonHTTP }}
-            initialDelaySeconds: 30
-            periodSeconds: 10
-            failureThreshold: 10
+            initialDelaySeconds: {{ .Values.houston.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.houston.livenessProbe.periodSeconds }}
+            failureThreshold: {{ .Values.houston.livenessProbe.failureThreshold }}
           readinessProbe:
             httpGet:
               path: /v1/healthz
               port: {{ .Values.ports.houstonHTTP }}
-            initialDelaySeconds: 30
-            periodSeconds: 10
-            failureThreshold: 10
+            initialDelaySeconds: {{ .Values.houston.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.houston.readinessProbe.periodSeconds }}
+            failureThreshold: {{ .Values.houston.readinessProbe.failureThreshold }}
           env:
             {{- include "houston_environment" . | indent 12 }}
+            - name: APOLLO_SERVER_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: APOLLO_SERVER_USER_VERSION
+              value: {{ template "houston.image" . }}
+            - name: APOLLO_SERVER_PLATFORM
+              value: "kubernetes/deployment"
       volumes:
         {{- include "houston_volumes" . | indent 8 }}

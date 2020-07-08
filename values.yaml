@@ -24,21 +24,44 @@ global:
   singleNamespace: false
 
   # Enables necessary components for compatibility with Istio Service Mesh
-  istioEnabled: false
+  istio:
+    enabled: false
+    rootNamespace: "istio-config"
 
   # Enables necessary components for Velero (Velero, Grafana Dashboard, Prometheus Alerts)
   veleroEnabled: false
 
+  # Enable default postgresql database.
+  # This is not recommended for production.
+  postgresqlEnabled: false
+
+  # Enables a node exporter DaemonSet for node-level metrics
+  nodeExporterEnabled: true
+
+  prometheusPostgresExporterEnabled: false
+
+  # Enables blackbox exporter
+  blackboxExporterEnabled: true
+
+  # Used to enable Celery autoscaling
+  kedaEnabled: false
+
+  # If PodSecurityPolicies (PSP) should be enabled
+  pspEnabled: false
+
   # Set nodeSelector, affinity, and tolerations values for platform and deployment related pods.
   # This allows for separation of platform and airflow pods between kubernetes node pools.
-  # Pods in the platformNodePool include alertmanager, cli-install, commander, houston, kube-replicator, orbit, prisma,
+  # Pods in the platformNodePool include alertmanager, cli-install, commander, houston, kube-replicator, astro-ui, prisma,
   # registry, es-client, es-data, es-exporter, es-master, nginx-es, grafana, kibana, kube-state, nginx, nginx-default, prometheus.
   # nodeSelector, affinity, and tolerations values for airflow deployment pods are assigned via houston config.
   # See more information on pod / node assignment here: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
   platformNodePool:
-    nodeSelector: {}
-    affinity: {}
-    tolerations: []
+    nodeSelector: &platformNodeSelector
+      {}
+    affinity: &platformAffinity
+      {}
+    tolerations: &platformTolerations
+      []
 
   privateRegistry:
     enabled: false
@@ -65,16 +88,7 @@ tags:
 ## Astronomer configuration
 #################################
 astronomer:
-  orbit:
-    resources:
-      requests:
-        cpu: "100m"
-        memory: "256Mi"
-      limits:
-        cpu: "500m"
-        memory: "1024Mi"
-
-  norbit:
+  astroUI:
     resources:
       requests:
         cpu: "100m"
@@ -175,6 +189,7 @@ grafana:
 ## Prometheus configuration
 #################################
 prometheus:
+  podLabels: {}
   # Data retention
   retention: 15d
 
@@ -192,6 +207,49 @@ prometheus:
       cpu: "2000m"
       memory: "8Gi"
 
+#################################
+## KEDA configuration
+#################################
+
+keda:
+  keda:
+    nodeSelector:
+      <<: *platformNodeSelector
+    affinity:
+      <<: *platformAffinity
+    tolerations:
+      *platformTolerations
+#################################
+## Blackbox Exporter configuration
+#################################
+prometheus-blackbox-exporter:
+  # Configure resources
+  resources:
+    requests:
+      cpu: "5m"
+      memory: "7Mi"
+    limits:
+      cpu: "15m"
+      memory: "20Mi"
+
+# define what astronomer platform services will be checked
+# for up/down status. Enable this will also include
+# the required network policies
+  astroServices:
+    commander:
+      enabled: true
+    houston:
+      enabled: true
+    registry:
+      enabled: true
+    grafana:
+      enabled: true
+    elasticsearch:
+      enabled: true
+    kibana:
+      enabled: true
+    cliInstall:
+      enabled: true
 
 #################################
 ## Elasticsearch configuration

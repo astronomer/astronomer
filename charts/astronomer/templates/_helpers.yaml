@@ -33,19 +33,11 @@
 {{- end }}
 {{- end }}
 
-{{ define "orbit.image" -}}
+{{ define "astroUI.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/ap-orbit-ui:{{ .Values.images.orbit.tag }}
+{{ .Values.global.privateRegistry.repository }}/ap-astro-ui:{{ .Values.images.astroUI.tag }}
 {{- else -}}
-{{ .Values.images.orbit.repository }}:{{ .Values.images.orbit.tag }}
-{{- end }}
-{{- end }}
-
-{{ define "norbit.image" -}}
-{{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/ap-norbit-ui:{{ .Values.images.norbit.tag }}
-{{- else -}}
-{{ .Values.images.norbit.repository }}:{{ .Values.images.norbit.tag }}
+{{ .Values.images.astroUI.repository }}:{{ .Values.images.astroUI.tag }}
 {{- end }}
 {{- end }}
 
@@ -70,6 +62,14 @@
 {{ .Values.global.privateRegistry.repository }}/ap-cli-install:{{ .Values.images.cliInstall.tag }}
 {{- else -}}
 {{ .Values.images.cliInstall.repository }}:{{ .Values.images.cliInstall.tag }}
+{{- end }}
+{{- end }}
+
+{{ define "e2eTest.image" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-e2e-test:{{ .Values.images.e2eTest.tag }}
+{{- else -}}
+{{ .Values.images.e2eTest.repository }}:{{ .Values.images.e2eTest.tag }}
 {{- end }}
 {{- end }}
 
@@ -170,11 +170,31 @@ azure:
   realm: {{ .Values.registry.azure.realm }}
 {{- end }}
 
+{{- define "registry.s3Config" }}
+s3:
+  accesskey: {{ .Values.registry.s3.accesskey }}
+  secretkey: {{ .Values.registry.s3.secretkey }}
+  region: {{ .Values.registry.s3.region }}
+  bucket: {{ .Values.registry.s3.bucket }}
+  encrypt: {{ .Values.registry.s3.encrypt }}
+  keyid: {{ .Values.registry.s3.keyid }}
+  rootdirectory: {{ .Values.registry.s3.rootdirectory }}
+{{- end }}
+
 {{- define "houston_environment" }}
+{{- /* Dynamically created envs */ -}}
 {{- range $i, $config := .Values.houston.env }}
 - name: {{ $config.name }}
   value: {{ $config.value | quote }}
-  {{- end }}
+{{- end }}
+{{- /* Dynamically created secret envs */ -}}
+{{- range $i, $config := .Values.houston.secret }}
+- name: {{ $config.envName }}
+  valueFrom:
+    secretKeyRef:
+      name: {{ $config.secretName }}
+      key: {{ default "value" $config.secretKey }}
+{{- end }}
 - name: NODE_ENV
   value: "production"
 - name: DATABASE__CONNECTION

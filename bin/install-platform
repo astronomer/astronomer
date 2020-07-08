@@ -1,0 +1,99 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Bit of common bash magic that sets DIR to the directory of this script
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+source $DIR/helpers.sh
+
+
+# The path to the working directory - the root of the repo
+REPO_DIR=$DIR/../
+HELM_CHART_PATH=${HELM_CHART_PATH:-$REPO_DIR}
+
+echo "Deploying Astronomer..."
+
+# No args means all
+platform=true
+logging=true
+monitoring=true
+kubed=true
+postgresql=true
+keda=true
+ACTION="install"
+dryrun=""
+
+# Any args means be selective
+if [ $# -ne 0 ]; then
+  platform=false
+  logging=false
+  monitoring=false
+  kubed=false
+  postgresql=false
+  keda=false
+  for component in $@
+  do
+    case $component in
+
+    install)
+      ACTION="install"
+      ;;
+
+    template)
+      ACTION="template"
+      ;;
+
+    dryrun)
+      dryrun="--dry-run"
+      ;;
+
+    all)
+        platform=true
+        logging=true
+        monitoring=true
+        kubed=true
+        postgresql=true
+        keda=true
+      ;;
+
+    *)
+      export $component=true
+      ;;
+
+    esac
+
+  done
+fi
+
+
+set +ex
+
+HELM_TIMEOUT=${HELM_TIMEOUT:-800}
+
+if [[ -z "${USE_HA+x}" ]]; then
+  CONFIG_FILE=$REPO_DIR/configs/local-dev.yaml
+else
+  CONFIG_FILE=$REPO_DIR/configs/local-dev-ha.yaml
+fi
+
+set -x
+helm ${ACTION} \
+  --namespace astronomer \
+  astronomer \
+  ${dryrun} \
+  --timeout ${HELM_TIMEOUT}s \
+  -f $CONFIG_FILE \
+  --set tags.platform=${platform} \
+  --set tags.logging=${logging} \
+  --set tags.monitoring=${monitoring} \
+  --set tags.kubed=${kubed} \
+  --set global.postgresqlEnabled=${postgresql} \
+  --set tags.keda=${keda} \
+  $HELM_CHART_PATH
+
+
+if [ ! $? -eq 0 ]; then
+  set +x
+  echo "Helm chart failed to install"
+  get_debugging_info
+  exit 1
+fi

@@ -10,7 +10,9 @@ tags:
   platform: true
   logging: false
   monitoring: false
+  keda: true
   kubed: true
+  postgresql: true
 
 global:
   # Base domain for all subdomains exposed through ingress
@@ -18,25 +20,28 @@ global:
 
   # Name of secret containing TLS certificate
   tlsSecret: astronomer-tls
+  postgresqlEnabled: true
 
 ############################
 ## Astronomer configuration
 ## Omit resouce requests
 ############################
-
 astronomer:
-  orbit:
+  astroUI:
+    replicas: 1
     resources:
       requests:
         cpu: "0m"
         memory: "0Mi"
   houston:
+    replicas: 1
     resources:
       requests:
         cpu: "0m"
         memory: "0Mi"
 
     config:
+      emailConfirmation: false
       auth:
         local:
           enabled: true
@@ -46,6 +51,7 @@ astronomer:
         cpu: "0m"
         memory: "0Mi"
   commander:
+    replicas: 1
     resources:
       requests:
         cpu: "0m"
@@ -66,6 +72,8 @@ astronomer:
 ## Nginx configuration
 #################################
 nginx:
+  replicas: 1
+  replicasDefaultBackend: 1
   # Configure resources
   resources:
     requests:
@@ -89,6 +97,15 @@ grafana:
 ## Prometheus configuration
 #################################
 prometheus:
+  replicas: 1
+  # Configure resources
+  resources:
+    requests:
+      cpu: "0m"
+      memory: "0Gi"
+
+prometheus-postgresql-exporter:
+  replicaCount: 1
   # Configure resources
   resources:
     requests:

@@ -1,0 +1,28 @@
+{{- define "blackbox.commanderNetPol" }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  labels:
+    release: {{ .Release.Name }}
+    tier: monitoring
+  name: blackbox-commander-policy
+  namespace: {{ .Release.Namespace }}
+spec:
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          component: blackbox-exporter
+          release: {{ .Release.Name }}
+          tier: monitoring
+    ports:
+    - port: 8880
+      protocol: TCP
+  podSelector:
+    matchLabels:
+      component: commander
+      release: {{ .Release.Name }}
+      tier: astronomer
+  policyTypes:
+  - Ingress
+{{- end }}

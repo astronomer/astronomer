@@ -2,7 +2,7 @@
 ## Kube State Deployment
 #################################
 kind: Deployment
-apiVersion: apps/v1beta2
+apiVersion: apps/v1
 metadata:
   name: {{ template "kube-state.fullname" . }}
   namespace: {{ .Release.Namespace }}
@@ -13,7 +13,7 @@ metadata:
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
 spec:
-  replicas: 1
+  replicas: {{ .Values.replicas }}
   selector:
     matchLabels:
       tier: {{ template "kube-state.name" . }}

@@ -1,6 +1,7 @@
 # Default values for nginx.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
+
 nodeSelector: {}
 affinity: {}
 tolerations: []
@@ -8,17 +9,22 @@ tolerations: []
 images:
   nginx:
     repository: astronomerinc/ap-nginx
-    tag: 0.11.0
+    tag: 0.30.0
     pullPolicy: IfNotPresent
   defaultBackend:
     repository: astronomerinc/ap-default-backend
-    tag: 0.11.0
+    tag: 0.16.1
     pullPolicy: IfNotPresent
 
 forceNamespaceIsolation: true
 ingressClass: ~
 
-replicas: 1
+replicas: 2
+replicasDefaultBackend: 2
+# These are only applicable when respective replicas > 3
+maxUnavailable: 25%
+maxUnavailableDefaultBackend: 25%
+
 resources: {}
 #  limits:
 #   cpu: 100m

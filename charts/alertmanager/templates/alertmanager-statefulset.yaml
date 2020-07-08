@@ -2,7 +2,7 @@
 ## Alertmanager StatefulSet
 #################################
 kind: StatefulSet
-apiVersion: apps/v1beta2
+apiVersion: {{ template "apiVersion.StatefulSet" . }}
 metadata:
   name: {{ template "alertmanager.fullname" . }}
   labels:
@@ -47,8 +47,8 @@ spec:
           args:
             - --config.file=/etc/config/alertmanager.yaml
             - --storage.path={{ .Values.dataDir }}
-          {{- if .Values.baseURL }}
-            - --web.external-url={{ .Values.baseURL }}
+          {{- if .Values.global.baseDomain }}
+            - --web.external-url=https://alertmanager.{{ .Values.global.baseDomain }}
           {{- end }}
           ports:
             - containerPort: {{ .Values.ports.http }}

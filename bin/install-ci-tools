@@ -1,43 +1,97 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -xeuo pipefail
 
-# Fail script if anything fails,
-# and output all commands
-set -xe
+KIND_VERSION="0.8.1"
+HELM2_VERSION="2.16.8"
+HELM3_VERSION="3.2.3"
+GCLOUD_VERSION="292.0.0"
+MKCERT_VERSION="1.4.1"
 
-KIND_VERSION="0.5.1"
-HELM_VERSION="2.15.2"
-GCLOUD_VERSION="270.0.0"
 OS=$(uname | tr '[:upper:]' '[:lower:]')
+
+FORCE=${1:-0}
 
 # Set up a bin location
 mkdir -p /tmp/bin
-PATH=/tmp/bin:$PATH
+export PATH=/tmp/bin:$PATH
 # Bit of common bash magic that sets DIR to the directory of this script
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 # The path to the working directory - the root of the repo
 REPO_DIR=$DIR/../
-cd /tmp
+pushd /tmp
 
-# Install KinD
-cd /tmp
-curl -Lo ./kind https://github.com/kubernetes-sigs/kind/releases/download/v${KIND_VERSION}/kind-${OS}-amd64
-chmod +x ./kind
-mv ./kind /tmp/bin/
+if [[ $FORCE -eq 0 && -f /tmp/bin/kind ]]; then
+  echo "kind already installed."
+else
+  # Install KinD
+  curl -LO https://github.com/kubernetes-sigs/kind/releases/download/v${KIND_VERSION}/kind-${OS}-amd64
+  chmod +x ./kind-${OS}-amd64
+  mv ./kind-${OS}-amd64 /tmp/bin/kind
+fi
 
-# Install helm
-wget https://get.helm.sh/helm-v${HELM_VERSION}-${OS}-amd64.tar.gz
-tar -zxvf ./helm-v${HELM_VERSION}-${OS}-amd64.tar.gz
-mv ${OS}-amd64/helm /tmp/bin/
+if [[ $FORCE -eq 0 && -f /tmp/bin/helm2 ]]; then
+  echo "helm2 is already installed."
+else
+  # Install helm
+  wget https://get.helm.sh/helm-v${HELM2_VERSION}-${OS}-amd64.tar.gz
+  tar -zxvf ./helm-v${HELM2_VERSION}-${OS}-amd64.tar.gz
+  mv ${OS}-amd64/helm /tmp/bin/helm2
+fi
 
-# Install kubectl
-cd /tmp/bin
-curl -LO https://storage.googleapis.com/kubernetes-release/release/`curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt`/bin/${OS}/amd64/kubectl
-chmod +x ./kubectl
+if [[ $FORCE -eq 0 && -f /tmp/bin/helm ]]; then
+  echo "helm is already installed."
+else
+  # Install helm
+  wget https://get.helm.sh/helm-v${HELM3_VERSION}-${OS}-amd64.tar.gz
+  tar -zxvf ./helm-v${HELM3_VERSION}-${OS}-amd64.tar.gz
+  mv ${OS}-amd64/helm /tmp/bin/helm3
+  cp /tmp/bin/helm3 /tmp/bin/helm
+fi
 
-# Install gcloud SDK
-cd /tmp
-wget https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-${GCLOUD_VERSION}-${OS}-x86_64.tar.gz
-tar xvzf ./google-cloud-sdk-${GCLOUD_VERSION}-${OS}-x86_64.tar.gz >/dev/null 2>&1
-export PATH=$(pwd)/google-cloud-sdk/bin/:$PATH
+# Add stable helm repo
+helm repo add stable https://kubernetes-charts.storage.googleapis.com
 
-cd $REPO_DIR
+if [[ $FORCE -eq 0 && -f /tmp/bin/kubectl ]]; then
+  echo "kubectl is already installed."
+else
+  # Install kubectl
+  curl -LO https://storage.googleapis.com/kubernetes-release/release/`curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt`/bin/${OS}/amd64/kubectl
+  chmod +x ./kubectl
+  mv kubectl /tmp/bin/kubectl
+fi
+
+set +e
+which gsutil && which gcloud
+if [[ $FORCE -ne 0 || ! $? -eq 0 ]]; then
+  # Install gcloud SDK
+  wget https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-${GCLOUD_VERSION}-${OS}-x86_64.tar.gz
+  tar xvzf ./google-cloud-sdk-${GCLOUD_VERSION}-${OS}-x86_64.tar.gz >/dev/null 2>&1
+  export PATH=$(pwd)/google-cloud-sdk/bin/:$PATH
+else
+  echo "gcloud CLI is already installed"
+fi
+set -e
+
+# Install mkcert
+if [[ $FORCE -eq 0 && -f /tmp/bin/mkcert ]]; then
+  echo "mkcert is already installed."
+else
+  curl -LO https://github.com/FiloSottile/mkcert/releases/download/v${MKCERT_VERSION}/mkcert-v${MKCERT_VERSION}-${OS}-amd64
+  chmod +x ./mkcert-v${MKCERT_VERSION}-${OS}-amd64
+  mv ./mkcert-v${MKCERT_VERSION}-${OS}-amd64 /tmp/bin/mkcert
+fi
+
+echo "--------- versions -------------"
+
+
+# kind 
+set +e
+kind version
+helm2 version --client
+helm3 version --client
+kubectl version --client
+gcloud version
+mkcert --version
+set -e
+
+popd
