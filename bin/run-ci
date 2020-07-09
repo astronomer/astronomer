@@ -27,12 +27,10 @@ sleep 5
 
 $DIR/waitfor-platform
 
-# TODO: turn on e2e tests
-
-exit 0
+$DIR/setup-hosts
 
 ### Create initial user
-$DIR/create-initial-user "tester@astronomer.io" "password"-
+$DIR/create-initial-user "tester@astronomer.io" "password"
 
 ### Test Platform
 $DIR/test-ap
