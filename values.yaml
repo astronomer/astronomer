@@ -86,6 +86,7 @@ tags:
   # Kubed
   kubed: true
 
+  # NATS Streaming
   stan: true
 
 #################################
