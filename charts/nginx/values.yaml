@@ -48,7 +48,7 @@ privateLoadBalancer: false
 # Dependent on cloud provider
 preserveSourceIP: false
 
-sendTimeout: 600
+proxySendTimeout: 600
 proxyConnectTimeout: 15
 proxyReadTimeout: 600
 proxySendTimeout: 600
