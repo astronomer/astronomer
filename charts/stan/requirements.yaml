@@ -1,5 +1,0 @@
-dependencies:
-- name: stan
-  version: "0.4.2"
-  repository: "@nats"
-  condition: enabled

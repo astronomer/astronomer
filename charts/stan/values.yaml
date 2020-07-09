@@ -1,9 +1,132 @@
+##################################
+#                                #
+#  NATS Streaming Configuration  #
+#                                #
+##################################
 stan:
-  stan:
-    image: nats-streaming:0.17.0
+  image: nats-streaming:0.17.0
+  pullPolicy: IfNotPresent
+  replicas: 1
 
-  nameOverride: {{ .Release.Name }}-stan
+  # Cluster name, generated into a name from the
+  # release name by default.
+  clusterID: 
 
-  exporter:
+  logging:
+    debug: 
+    trace: 
+
+  # In case of NATS not being embedded then
+  # an URL for NATS is required.
+  nats:
+    url:
+    serviceRoleAuth:
+      enabled: false
+      natsClusterName:
+
+nameOverride: ""
+imagePullSecrets: {}
+
+# Toggle whether to use setup a Pod Security Context
+# ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+securityContext: null
+# securityContext:
+#   fsGroup: 1000
+#   runAsUser: 1000
+#   runAsNonRoot: true       
+
+# Affinity for pod assignment
+# ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+affinity: {}
+
+###########################
+#                         #
+#  Storage configuration  #
+#                         #
+###########################
+store:
+  # One value possible out of: "file" | "sql" | "memory"
+  type: file
+
+  # 
+  # Fault tolerance group
+  # 
+  ft:
+    group:
+
+  # Configures streaming/store_limits as is.
+  # 
+  # NOTE: Section in snake case since they will become
+  # the same objects.
+  # 
+  # Look at the NATS Streaming configuration for this:
+  # 
+  # https://docs.nats.io/nats-streaming-server/configuring/cfgfile#store-limits-configuration
+  # 
+  limits: {}
+
+  #
+  # Volume claim configuration. Required if the store type is `file` or if
+  # cluster is enabled.
+  #
+  volume:
     enabled: true
-    image: synadia/prometheus-nats-exporter:0.6.0
+    mount: /data/stan
+    storageSize: 1Gi
+    accessModes: ReadWriteOnce
+    storageClass: 
+
+  # 
+  # File storage settings.
+  # 
+  file:
+    path: /data/stan/store
+
+  # In case of using file or sql storage, sets up a 3 node cluster.
+  cluster:
+    enabled: false
+    logPath: /data/stan/log
+
+  # 
+  # SQL storage settings
+  # 
+  sql:
+    driver: postgres
+
+    # TODO: Use secret reference and include instead for the password.
+    # 
+    # e.g.
+    # source: "dbname=postgres user=postgres password=stan host=stan-db sslmode=disable"
+    # 
+    source: ""
+
+    # Initialize the database.
+    initdb:
+      enabled: false
+
+      # Client to use to init the db.
+      image: postgres:11
+
+    dbName: postgres
+    dbUser: postgres
+    dbPassword: stan
+    dbHost: ""
+    dbPort: 5432
+
+#######################################
+#                                     #
+# Prometheus Exporter configuration   #
+#                                     #
+#######################################
+exporter:
+  enabled: false
+  image: synadia/prometheus-nats-exporter:0.6.0
+  pullPolicy: IfNotPresent
+
+##################################
+#                                #
+#  Embedded NATS Configuration   #
+#                                #
+##################################
+# TODO: Support NATS embedded mode by including
+# nats chart values.

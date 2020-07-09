@@ -1,6 +1,0 @@
-dependencies:
-- name: stan
-  repository: https://nats-io.github.io/k8s/helm/charts/
-  version: 0.4.2
-digest: sha256:07d30df68dbdda2c380f487e6491d61457be59cdc85098a510de68fbb5569b88
-generated: "2020-07-08T16:57:43.301136+03:00"
