@@ -47,7 +47,7 @@ global:
   kedaEnabled: false
 
   # Used to enable nats-streaming
-  stanEnabled: false
+  stanEnabled: true
 
   # If PodSecurityPolicies (PSP) should be enabled
   pspEnabled: false
@@ -86,6 +86,7 @@ tags:
   # Kubed
   kubed: true
 
+  stan: true
 
 #################################
 ## Astronomer configuration
@@ -222,6 +223,16 @@ keda:
       <<: *platformAffinity
     tolerations:
       *platformTolerations
+
+nats:
+  resources:
+    requests:
+      cpu: "5m"
+      memory: "7Mi"
+    limits:
+      cpu: "15m"
+      memory: "20Mi"
+
 #################################
 ## Blackbox Exporter configuration
 #################################

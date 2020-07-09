@@ -71,3 +71,9 @@ dependencies:
     condition: global.kedaEnabled
     tags:
       - keda
+
+  # Nats-streaming
+  - name: stan
+    condition: global.stanEnabled
+    tags:
+      - stan

@@ -1,6 +1,0 @@
-enabled: true
-
-stan:
-  image: astronomerinc/ap-nats-streaming:0.18.0
-exporter:
-  image: synadia/prometheus-nats-exporter:0.6.0

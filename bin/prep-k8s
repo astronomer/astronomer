@@ -23,6 +23,12 @@ cd $REPO_DIR/charts/postgresql
 helm dependency update .
 cd $REPO_DIR
 
+echo "Install requirements"
+cd $REPO_DIR/charts/stan
+helm dependency update .
+cd $REPO_DIR
+
+
 echo "Creating namespace 'astronomer'"
 kubectl create namespace astronomer
 
