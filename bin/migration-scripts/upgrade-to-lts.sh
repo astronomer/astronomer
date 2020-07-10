@@ -10,8 +10,7 @@ function fail_with {
 }
 
 function get_chart_version {
-  version_result=$(helm list $1 | grep $1 | awk '{ print $9 }' | cut -d '-' -f2)
-  fail_with 'failed to list chart'
+  version_result=$(helm list $1 | grep $1 | awk '{ print $9 }' | awk -F'-' '{ print $NF }')
 }
 
 # this is a temporary workaround
@@ -59,6 +58,22 @@ function check_cli_tools_installed {
   done
 }
 
+function check_helm3_version_client {
+  echo "Checking the version of Helm 3 installed on the client (where this script is executed)..."
+  helm3 version | grep $1 > /dev/null
+  if ! [[ $? -eq 0 ]]; then
+    echo ""
+    echo "==============="
+    echo "Action required:"
+    echo "Helm $1 is the version that this script was tested with."
+    echo "Please install Helm $1 in your PATH as 'helm3'"
+    echo "Link: https://github.com/helm/helm/releases/tag/v$1"
+    exit 1
+  else
+    echo "Confirmed Helm $1 is installed."
+  fi
+}
+
 function check_helm_version_client {
   echo "Checking the version of Helm installed on the client (where this script is executed)..."
   helm version | grep Client | grep $1 > /dev/null
@@ -66,12 +81,12 @@ function check_helm_version_client {
     echo ""
     echo "==============="
     echo "Action required:"
-    echo "Helm 2.16.1 is the version that this script was tested with."
-    echo "Please install Helm 2.16.1."
-    echo "Link: https://github.com/helm/helm/releases/tag/v2.16.1"
+    echo "Helm $1 is the version that this script was tested with."
+    echo "Please install Helm $1."
+    echo "Link: https://github.com/helm/helm/releases/tag/v$1"
     exit 1
   else
-    echo "Confirmed Helm 2.16.1 is installed."
+    echo "Confirmed Helm $1 is installed."
   fi
 }
 
@@ -179,32 +194,32 @@ function save_helm_values {
   echo $RELEASE_NAMES > $backup_dir/release_names.txt
 }
 
-function main {
-  if [ -z "$1" ] || [ -z "$2" ]; then
-    echo "Please provide two arguments: helm release name (check with 'helm list'), and kubernetes namespace"
-    exit 1
+function helm2_to_3 {
+  HELM2_RELEASES=$(kubectl get secret,configmap -n kube-system -l "OWNER=TILLER" \
+  | awk '{print $1}' | grep -v NAME | grep -v 'No resources' | cut -d '.' -f1 | cut -d '/' -f2 | uniq)
+  fail_with "Failed to find helm 2 releases"
+  RELEASES_TO_UPGRADE=""
+  set +e
+  for release in $HELM2_RELEASES; do
+    helm list $release | tail -n 1 | grep -E "astronomer|airflow" > /dev/null
+    if [ $? -eq 0 ]; then
+      RELEASES_TO_UPGRADE="$release $RELEASES_TO_UPGRADE"
+    fi
+  done
+  if ! [ -z "$RELEASES_TO_UPGRADE" ]; then
+    echo "Non zero Airflow and Astronomer releases on Helm 2. Performing Helm 2 to Helm 3 upgrade procedure"
+    echo "Scaling down ingress so nobody can access Astronomer, this avoids race conditions of the upgrade process against customer activity"
+    kubectl scale --replicas=0 -n astronomer deployment/astronomer-nginx
+    echo "Scaling down commander, this ensures that old commander can't be used during the upgrade procedure"
+    kubectl scale --replicas=0 -n astronomer deployment/astronomer-commander
+    echo "Upgrading releases"
+    # Upgrade the releases
+    echo $RELEASES_TO_UPGRADE | xargs -n1 helm3 2to3 convert --delete-v2-releases
+  fail_with "Failed to convert helm 2 to helm 3"
   fi
-  export RELEASE_NAME=$1
-  export NAMESPACE=$2
+}
 
-  # Pre-flight checks
-  check_helm_version_client '2.16.1'
-  check_cli_tools_installed helm kubectl jq head tail grep awk base64 cut wc
-  kube_checks
-
-  # Initialize helm
-  helm init --client-only
-  # Install astronomer and airflow chart
-  helm repo add astronomer https://helm.astronomer.io
-  helm repo update
-
-  get_chart_version $RELEASE_NAME
-  CURRENT_CHART_VERSION=$version_result
-
-  export UPGRADE_TO_VERSION=$(helm search -l astronomer/astronomer | head -n2 | tail -n1 | awk '{ print $2 }')
-  fail_with "Failed to search helm repositories for astronomer/astronomer"
-  export UPGRADE_TO_VERSION_AIRFLOW=$(helm search -l astronomer/airflow | head -n2 | tail -n1 | awk '{ print $2 }')
-  fail_with "Failed to search helm repositories for astronomer/airflow"
+function interactive_confirmation {
   echo ""
   echo ""
   read -p "Are you using single-namespace mode (where airflow and astronomer all in same namespace? (y/n)" CONT
@@ -217,41 +232,120 @@ function main {
   if ! [ "$CONT" = "y" ]; then
     exit 1
   fi
-  echo "Upgrading Astronomer to version $UPGRADE_TO_VERSION, and Airflow helm charts to version $UPGRADE_TO_VERSION_AIRFLOW"
+  echo "Upgrading Astronomer to version $UPGRADE_TO_VERSION from version $CURRENT_CHART_VERSION, and Airflow helm charts to version $UPGRADE_TO_VERSION_AIRFLOW"
   read -p "Continue? (y/n)" CONT
   if ! [ "$CONT" = "y" ]; then
     exit 1
   fi
+}
+
+function setup_helm {
+  # Initialize helm
+  helm init --client-only
+  helm3 plugin install https://github.com/helm/helm-2to3.git
+  # Install astronomer and airflow chart
+  helm repo add astronomer https://helm.astronomer.io
+  helm3 repo add astronomer https://helm.astronomer.io
+  helm repo update
+  helm3 repo update
+}
+
+function collect_current_version_info {
+  get_chart_version $RELEASE_NAME
+  CURRENT_CHART_VERSION=$version_result
+  CURRENT_MINOR_VERSION=$(echo $version | cut -d'.' -f)
+  SHOULD_USE_GIT_CLONE=0
+  if [[ "$CURRENT_MINOR_VERSION" -lt 12 ]]; then
+    SHOULD_USE_GIT_CLONE=1
+  fi
+}
+
+function git_clone_if_necessary {
+  # condition if CURRENT_CHART_VERSION is less than 0.12, do clone
+  CHART="astronomer/astronomer"
+  set -e
+  if [[ "$SHOULD_USE_GIT_CLONE" -eq "1" ]]; then
+    CHART="./astronomer-${CURRENT_CHART_VERSION}"
+    git clone https://github.com/astronomer/helm.astronomer.io.git astronomer
+    cd astronomer
+    git checkout v$CURRENT_CHART_VERSION
+    cd ..
+    mv astronomer astronomer-$CURRENT_CHART_VERSION
+  fi
+  set +e
+}
+
+function main {
+  if [ -z "$1" ] || [ -z "$2" ]; then
+    echo "Please provide two arguments: helm release name (check with 'helm list'), and kubernetes namespace"
+    exit 1
+  fi
+  export RELEASE_NAME=$1
+  export NAMESPACE=$2
+  export UPGRADE_TO_VERSION=0.16.0
+  export UPGRADE_TO_VERSION_AIRFLOW=0.15.2
+
+  # Pre-flight checks
+  check_helm_version_client '2.16.1'
+  check_helm3_version_client '3.2.3'
+  check_cli_tools_installed helm kubectl jq head tail grep awk base64 cut wc
+  kube_checks
+
+  setup_helm
+
+  collect_current_version_info
+
+  interactive_confirmation
 
   save_helm_values
 
-  RELEASE_NAMES=$(cat $backup_dir/release_names.txt)
-  fail_with "Failed to find release names"
+  helm2_to_3
 
-  echo "Updating Astronomer..."
-  echo "Updating Astronomer... (1/3) Updating Astronomer platform, please allow up to 10 minutes"
-  helm upgrade --namespace $NAMESPACE \
+  git_clone_if_necessary
+
+  echo "Upgrading Astronomer... (1/4) converge Helm 3 labels"
+  helm3 upgrade --namespace $NAMESPACE \
                -f $backup_dir/$RELEASE_NAME-user-values.yaml \
-               --version $UPGRADE_TO_VERSION \
-               --force \
-               --timeout 600 \
+               --version $CURRENT_CHART_VERSION \
+               --timeout 1200s \
                --set global.postgresqlEnabled=false \
                --set astronomer.houston.expireDeployments.enabled=false \
                --set astronomer.houston.cleanupDeployments.enabled=false \
                --set astronomer.houston.upgradeDeployments.enabled=false \
-               --set astronomer.houston.config.deployments.chart.version=$UPGRADE_TO_VERSION_AIRFLOW \
+               --set astronomer.airflowChartVersion=$UPGRADE_TO_VERSION_AIRFLOW \
+               --set astronomer.houston.regenerateCaEachUpgrade=true \
+              $RELEASE_NAME \
+              $CHART
+  fail_with "Failed to upgrade Astronomer"
+  sleep 5
+  echo "Upgrading Astronomer... (2/4) upgrade Astronomer"
+  helm3 upgrade --namespace $NAMESPACE \
+               -f $backup_dir/$RELEASE_NAME-user-values.yaml \
+               --version $UPGRADE_TO_VERSION \
+               --timeout 1200s \
+               --set global.postgresqlEnabled=false \
+               --set astronomer.houston.expireDeployments.enabled=false \
+               --set astronomer.houston.cleanupDeployments.enabled=false \
+               --set astronomer.houston.upgradeDeployments.enabled=false \
+               --set astronomer.airflowChartVersion=$UPGRADE_TO_VERSION_AIRFLOW \
                --set astronomer.houston.regenerateCaEachUpgrade=true \
               $RELEASE_NAME \
               astronomer/astronomer
   fail_with "Failed to upgrade Astronomer"
-  echo "Updating Astronomer... (2/3) Reinstalling Airflow deployments"
+
+  # Since the upgrade was not performed by houston, inform houston by
+  # upgrading the 'version' field in the database
+  echo "Updating Astronomer... (3/4) Upgrading Airflow deployments version"
+  upgrade_version_in_astro_db
+
+  echo "Reinstall all Airflow releases with new version"
   for release in $RELEASE_NAMES; do
-    echo "Removing airflow release $release"
-    helm delete --purge $release
+    echo "Removing Airflow release $release"
+    helm3 delete --namespace $NAMESPACE-$release $release
     fail_with "Failed to purge $release"
-    sleep 10
+    sleep 5
     echo "Installing airflow release $release"
-    helm install --namespace $NAMESPACE-$release \
+    helm3 install --namespace $NAMESPACE-$release \
                  $release \
                  --set webserver.defaultUser.enabled=false \
                  --set webserver.jwtSigningCertificateSecretName=$RELEASE_NAME-houston-jwt-signing-certificate \
@@ -260,18 +354,30 @@ function main {
                  astronomer/airflow
     fail_with "Failed to install $release"
   done
-  # Since the upgrade was not performed by houston, inform houston by
-  # upgrading the 'version' field in the database
-  echo "Updating Astronomer... (3/3) Syncing Airflow deployments version in Astro DB"
-  upgrade_version_in_astro_db
+
+  echo "Upgrading Astronomer... (4/4) Ensure Helm upgrade works to reconfigure platform"
+  helm3 upgrade --namespace $NAMESPACE \
+               -f $backup_dir/$RELEASE_NAME-user-values.yaml \
+               --version $UPGRADE_TO_VERSION \
+               --timeout 1200s \
+               --set global.postgresqlEnabled=false \
+               --set astronomer.houston.expireDeployments.enabled=false \
+               --set astronomer.houston.cleanupDeployments.enabled=false \
+               --set astronomer.houston.upgradeDeployments.enabled=true \
+               --set astronomer.airflowChartVersion=$UPGRADE_TO_VERSION_AIRFLOW \
+               --set astronomer.houston.regenerateCaEachUpgrade=false \
+              $RELEASE_NAME \
+              astronomer/astronomer
+  fail_with "Failed to upgrade Astronomer"
+
 
   echo "Done! Please contact Astronomer support if any issues are detected."
   echo ""
   echo "Please install the new CLI:"
-  echo "curl -sSL https://install.astronomer.io | sudo bash -s -- v0.12.0"
+  echo "curl -sSL https://install.astronomer.io | sudo bash -s -- v$UPGRADE_TO_VERSION"
   echo ""
-  echo "Please Upgrade your Airflow version by changing your Dockerfile:"
-  echo "FROM astronomerinc/ap-airflow:1.10.7-alpine3.10-onbuild"
+  echo "Please Upgrade your Airflow version by changing your Dockerfile, for example:"
+  echo "FROM astronomerinc/ap-airflow:1.10.10-alpine3.10-onbuild"
 }
 
 main $1 $2
