@@ -179,7 +179,7 @@ helm3 repo update
 # then you may set this value to "true" instead. When it is "true", then each Airflow chart will
 # restart.
 helm3 upgrade --namespace $NAMESPACE \
-             -f ./config.yaml
+             -f ./config.yaml \
              --version $ASTRO_VERSION \
              --set astronomer.houston.upgradeDeployments.enabled=false \
             $RELEASE_NAME \
