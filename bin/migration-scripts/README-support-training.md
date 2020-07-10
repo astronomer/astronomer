@@ -62,6 +62,7 @@ module "astronomer_aws_from_scratch" {
   tags = {
     "OWNER" = var.deployment_id
   }
+}
 ```
 
 Then, you can use the old Astronomer version by setting up deployments and so forth. Then follow the directions in the README of this repository to run the upgrade script.
