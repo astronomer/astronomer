@@ -1,6 +1,6 @@
 # Astronomer upgrade guide
 
-If you are already on an LTS version and you are seeking a patch version update, skip to the bottom section "patch version updates"
+If you are already on an LTS version and you are seeking a patch version update or to just reconfigure the software, please skip to the bottom section "patch version updates"
 
 ## Astronomer versioning: moving to the long-term-support (LTS) software versioning model
 
@@ -161,7 +161,7 @@ helm3 get values -n <namespace> <release name of astronomer> > config.yaml
 ```
 helm3 list --all-namespaces | grep astronomer
 ```
-- Use a script like this to update Astronomer patch versions, please review this script to understand what it is doing and substitute the variables with your own values
+- Use a script like this to update Astronomer patch versions or reconfigurations, please review this script to understand what it is doing and substitute the variables with your own values
 
 ```
 #!/bin/bash
