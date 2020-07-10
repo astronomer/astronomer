@@ -14,6 +14,7 @@ If you are in one of these categories, please contact Astronomer support to help
 
 - More than 25 Helm releases
 - Cluster shared with other Helm releases that are not Astronomer-related
+- You are using the in-cluster DB option in the helm chart
 
 ## Schedule a change window with your Airflow users
 
