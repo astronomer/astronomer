@@ -116,10 +116,6 @@ After the platform is up, then do
 bin/drain.sh
 ```
 
-## Releasing
-
-[Releasing Guide](https://github.com/astronomer/astronomer/blob/master/RELEASING.md)
-
 ## License
 
 Usage of Astronomer code requires an [Astronomer Platform Enterprise Edition license](https://github.com/astronomer/astronomer/blob/master/LICENSE).
