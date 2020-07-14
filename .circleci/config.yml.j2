@@ -12,6 +12,7 @@ jobs:
       - run:
           name: Lint the Astronomer chart
           command: export PATH=/tmp/bin:$PATH make lint
+
   build-artifact:
     docker:
       - image: astronomerio/ap-build:0.1.3
@@ -22,27 +23,42 @@ jobs:
           command: ./bin/install-ci-tools 1
       - run:
           name: Package the Astronomer chart
-          #command: export PATH=/tmp/bin:$PATH make build
           command: make build
       - persist_to_workspace:
           root: '.'
           paths:
             - './*.tgz'
-  release:
+
+  release-to-internal:
     machine:
       image: ubuntu-1604:202004-01
     steps:
       - attach_workspace:
           at: /tmp/workspace
       - checkout
-      - publish-github-release
       - run:
-          name: Release the Astronomer chart
+          name: Release the Astronomer chart to internal
           command: |
             set -e
             sudo apt-get update && sudo apt-get install -y ca-certificates curl
-            pyenv global 2.7.12
-            HELM_CHART_PATH='/tmp/workspace/astronomer-*.tgz' bin/release
+            pyenv global 2.7.17
+            bin/release-helm-chart /tmp/workspace/astronomer-*.tgz
+
+  release-to-prod:
+    machine:
+      image: ubuntu-1604:202004-01
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - run:
+          name: Release the Astronomer chart to prod
+          command: |
+            set -e
+            sudo apt-get update && sudo apt-get install -y ca-certificates curl
+            pyenv global 2.7.17
+            bin/release-helm-chart -p /tmp/workspace/astronomer-*.tgz
+      - publish-github-release
 {% for version in kube_versions %}
   platform-{{ version | replace(".", "-") }}:
     machine:
@@ -68,30 +84,46 @@ workflows:
           requires:
             - build-artifact
 {% endfor %}
-      - approve-release:
+      - approve-internal-release:
           type: approval
           requires:
 {% for version in kube_versions %}
-            - platform-{{ version | replace(".", "-") }}
-{% endfor %}
+            - platform-{{ version | replace(".", "-") }}{% endfor %}
+
           filters:
             branches:
               only:
                 - '/release-.*/'
-      - release:
+
+      - release-to-internal:
           requires:
-            - approve-release
+            - approve-internal-release
+
+      - approve-prod-release:
+          type: approval
+          requires:
+            - release-to-internal
+
           filters:
             branches:
               only:
                 - '/release-.*/'
+
+      - release-to-prod:
+          requires:
+            - approve-prod-release
+          filters:
+            branches:
+              only:
+                - '/release-.*/'
+
 commands:
   helm-install:
     description: "Install Helm chart from artifact"
     parameters:
       astronomer-tags:
         type: string
-        default:  "platform"
+        default: "platform"
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -104,17 +136,18 @@ commands:
           command: |
             set -e
             HELM_CHART_PATH='/tmp/workspace/astronomer-*.tgz' bin/run-ci << parameters.astronomer-tags >>
+
   publish-github-release:
     description: "Create a release on GitHub"
     parameters:
       tag:
         type: string
-        default:  "$NEXT_TAG"
+        default: "$NEXT_TAG"
     steps:
       - run:
           name: Create a release on GitHub
           command: |
             set -xe
-            pyenv global 3.7.0
+            pyenv global 3.8.2
             pip install astronomer_e2e_test
             astronomer-ci publish-github-release --github-repository $CIRCLE_PROJECT_REPONAME --github-organization $CIRCLE_PROJECT_USERNAME --commitish $CIRCLE_SHA1
