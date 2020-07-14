@@ -62,6 +62,8 @@ spec:
                   key: connection
             - name: DB_NAME
               value: {{ .Release.Name }}-grafana
+            - name: SSLMODE
+              value: "require"
             - name: SECRET_NAME
               value: {{ template "grafana.backend.secret" . }}
             - name: NAMESPACE
