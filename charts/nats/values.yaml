@@ -163,7 +163,7 @@ bootconfig:
 # https://github.com/nats-io/nats-box
 # 
 natsbox:
-  enabled: true
+  enabled: false
   image: synadia/nats-box:0.3.0
   pullPolicy: IfNotPresent
 
