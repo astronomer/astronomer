@@ -119,7 +119,7 @@ store:
 #                                     #
 #######################################
 exporter:
-  enabled: false
+  enabled: true
   image: synadia/prometheus-nats-exporter:0.6.0
   pullPolicy: IfNotPresent
 

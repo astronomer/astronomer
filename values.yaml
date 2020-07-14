@@ -226,13 +226,19 @@ keda:
       *platformTolerations
 
 nats:
+  nodeSelector:
+    <<: *platformNodeSelector
+    affinity:
+      <<: *platformAffinity
+    tolerations:
+      *platformTolerations
   resources:
     requests:
-      cpu: "5m"
-      memory: "7Mi"
+      cpu: "75m"
+      memory: "30Mi"
     limits:
-      cpu: "15m"
-      memory: "20Mi"
+      cpu: "250m"
+      memory: "100Mi"
 
 #################################
 ## Blackbox Exporter configuration
