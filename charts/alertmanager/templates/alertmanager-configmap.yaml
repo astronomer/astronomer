@@ -43,7 +43,7 @@ data:
         send_resolved: true
 {{- if .Values.receivers.platformCritical }}
     - name: platform-critical-receiver
-{{ toYaml .Values.receivers.platform | trim | indent 6 }}
+{{ toYaml .Values.receivers.platformCritical | trim | indent 6 }}
 {{- end }}
 {{- if .Values.receivers.platform }}
     - name: platform-receiver
