@@ -42,7 +42,7 @@ jobs:
             set -e
             sudo apt-get update && sudo apt-get install -y ca-certificates curl
             pyenv global 2.7.17
-            bin/release-helm-chart -x /tmp/workspace/astronomer-*.tgz
+            bin/release-helm-chart /tmp/workspace/astronomer-*.tgz
 
   release-to-prod:
     machine:
@@ -57,7 +57,7 @@ jobs:
             set -e
             sudo apt-get update && sudo apt-get install -y ca-certificates curl
             pyenv global 2.7.17
-            bin/release-helm-chart -x -p /tmp/workspace/astronomer-*.tgz
+            bin/release-helm-chart -p /tmp/workspace/astronomer-*.tgz
       - publish-github-release
 {% for version in kube_versions %}
   platform-{{ version | replace(".", "-") }}:
@@ -90,36 +90,36 @@ workflows:
 {% for version in kube_versions %}
             - platform-{{ version | replace(".", "-") }}{% endfor %}
 
-          # filters:
-          #   branches:
-          #     only:
-          #       - '/release-.*/'
+          filters:
+            branches:
+              only:
+                - '/release-.*/'
 
       - release-to-internal:
           requires:
             - approve-internal-release
-          # filters:
-          #   branches:
-          #     only:
-          #       - '/release-.*/'
+          filters:
+            branches:
+              only:
+                - '/release-.*/'
 
       - approve-prod-release:
           type: approval
           requires:
             - release-to-internal
 
-          # filters:
-          #   branches:
-          #     only:
-          #       - '/release-.*/'
+          filters:
+            branches:
+              only:
+                - '/release-.*/'
 
       - release-to-prod:
           requires:
             - approve-prod-release
-          # filters:
-          #   branches:
-          #     only:
-          #       - '/release-.*/'
+          filters:
+            branches:
+              only:
+                - '/release-.*/'
 
 commands:
   helm-install:
@@ -139,7 +139,7 @@ commands:
           name: Install Astronomer chart
           command: |
             set -e
-            echo HELM_CHART_PATH='/tmp/workspace/astronomer-*.tgz' bin/run-ci << parameters.astronomer-tags >>
+            HELM_CHART_PATH='/tmp/workspace/astronomer-*.tgz' bin/run-ci << parameters.astronomer-tags >>
 
   publish-github-release:
     description: "Create a release on GitHub"
@@ -153,5 +153,5 @@ commands:
           command: |
             set -xe
             pyenv global 3.8.2
-            echo pip install astronomer_e2e_test
-            echo astronomer-ci publish-github-release --github-repository $CIRCLE_PROJECT_REPONAME --github-organization $CIRCLE_PROJECT_USERNAME --commitish $CIRCLE_SHA1
+            pip install astronomer_e2e_test
+            astronomer-ci publish-github-release --github-repository $CIRCLE_PROJECT_REPONAME --github-organization $CIRCLE_PROJECT_USERNAME --commitish $CIRCLE_SHA1

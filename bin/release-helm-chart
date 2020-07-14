@@ -103,8 +103,8 @@ process_and_release_chart_file() {
   wget "https://${target_repo}/index.yaml" -O /tmp/index.yaml.current
   helm repo index . --url "https://${target_repo}" --merge /tmp/index.yaml.current
 
-  echo gsutil cp -a public-read "$helm_chart_path" "gs://${target_repo}"
-  echo gsutil cp -a public-read ./index.yaml "gs://${target_repo}"
+  gsutil cp -a public-read "$helm_chart_path" "gs://${target_repo}"
+  gsutil cp -a public-read ./index.yaml "gs://${target_repo}"
 
   set +x
   hr
