@@ -113,6 +113,8 @@ spec:
                 secretKeyRef:
                   name: {{ template "grafana.backend.secret" . }}
                   key: connection
+            - name: GF_DATABASE_SSL_MODE
+              value: "require"
             - name: GF_AUTH_ANONYMOUS_ENABLED
               value: "true"
       volumes:
