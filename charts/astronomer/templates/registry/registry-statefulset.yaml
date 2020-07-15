@@ -50,6 +50,9 @@ spec:
         - name: registry
           image: {{ template  "registry.image" . }}
           imagePullPolicy: {{ .Values.images.registry.pullPolicy }}
+          env: 
+          - name: REGISTRY_HTTP_SECRET
+            value: {{ randAlphaNum 32 }}
           resources:
 {{ toYaml .Values.registry.resources | indent 12 }}
           volumeMounts:
