@@ -205,6 +205,7 @@ commander:
    #  memory: 128Mi
 
 registry:
+  replicas: 1
   podLabels: {}
   resources: {}
   #  limits:
