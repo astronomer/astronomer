@@ -39,3 +39,12 @@ Full image name.
 {{ .Values.images.fluentd.repository }}:{{ .Values.images.fluentd.tag }}
 {{- end -}}
 {{- end -}}
+
+{{- define "fluentd.s3Config" }}
+<assume_role_credentials>
+  role_arn {{ .Values.s3.role_arn }}
+  role_session_name {{ .Values.s3.role_session_name }}
+</assume_role_credentials>
+s3_bucket {{ .Values.s3.s3_bucket }}
+s3_region {{ .Values.s3.s3_region }}
+{{- end }}
