@@ -369,7 +369,7 @@ function main {
   # Pre-flight checks
   check_helm_version_client '2.16.1'
   check_helm3_version_client '3.2.3'
-  check_cli_tools_installed helm kubectl jq head tail grep awk base64 cut wc
+  check_cli_tools_installed helm kubectl jq head tail grep awk base64 cut wc git
 
   determine_helm_version
 
