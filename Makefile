@@ -94,13 +94,13 @@ push: build
 .PHONY: push-repo
 push-repo:
 	for chart in ${CHARTS} ; do \
-		gsutil cp -a public-read ${OUTPUT}/$${chart}-${ASTRONOMER_VERSION}.tgz ${BUCKET} || exit 1; \
+		gsutil cp ${OUTPUT}/$${chart}-${ASTRONOMER_VERSION}.tgz ${BUCKET} || exit 1; \
 	done; \
 	$(MAKE) push-index
 
 .PHONY: push-index
 push-index: build-index
-	gsutil cp -a public-read ${OUTPUT}/index.yaml ${BUCKET}
+	gsutil cp ${OUTPUT}/index.yaml ${BUCKET}
 
 .PHONY: clean
 clean:
