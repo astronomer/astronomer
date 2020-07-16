@@ -363,7 +363,6 @@ function main {
   fi
   export RELEASE_NAME=$1
   export NAMESPACE=$2
-  export UPGRADE_TO_VERSION=0.16.0
   export UPGRADE_TO_VERSION_AIRFLOW=0.15.2
 
   # Pre-flight checks
@@ -377,6 +376,8 @@ function main {
 
   setup_helm
 
+  export UPGRADE_TO_VERSION=$(helm3 search repo astronomer/astronomer --version 0.16 | head -n2 | tail -n1 | awk '{ print $2 }')
+
   collect_current_version_info
 
   interactive_confirmation
@@ -389,6 +390,7 @@ function main {
 
   echo "Upgrading Astronomer... (1/4) converge Helm 3 labels"
   helm3 upgrade --namespace $NAMESPACE \
+               --reset-values \
                -f $backup_dir/$RELEASE_NAME-user-values.yaml \
                --version $CURRENT_CHART_VERSION \
                --timeout 1200s \
