@@ -87,8 +87,8 @@ function get_namespace_of_release {
 }
 
 function check_cli_tools_installed {
-  for executable in $@; do
-    which "$executable" > /dev/null 2>&1
+  for executable in "$@" ; do
+    command -v "$executable" > /dev/null 2>&1
     fail_with "Please ensure $executable is installed in PATH"
     echo "$executable is in PATH"
   done
@@ -146,7 +146,7 @@ function kube_checks {
     fi
   elif [ "$HELM_VERSION" -eq "3" ]; then
     echo "Using Helm 3 to confirm that release name $RELEASE_NAME is in namespace $NAMESPACE"
-    helm3 status -n "$NAMESPACE" "$RELEASE"_NAME > /dev/null
+    helm3 status -n "$NAMESPACE" "$RELEASE_NAME" > /dev/null
     fail_with "ERROR did not find the namespace of helm release $RELEASE_NAME to be $NAMESPACE"
   else
     echo "ERROR: HELM_VERSION is supposed to be 2 or 3, but it's '$HELM_VERSION'"
@@ -271,7 +271,7 @@ function helm2_to_3 {
       RELEASES_TO_UPGRADE="$release $RELEASES_TO_UPGRADE"
     fi
   done
-  if ! [ -z "$RELEASES_TO_UPGRADE" ]; then
+  if [ -n "$RELEASES_TO_UPGRADE" ]; then
     echo "Non zero Airflow and Astronomer releases on Helm 2. Performing Helm 2 to Helm 3 upgrade procedure"
     echo "Scaling down ingress so nobody can access Astronomer, this avoids race conditions of the upgrade process against customer activity"
     kubectl scale --replicas=0 -n astronomer deployment/astronomer-nginx
@@ -288,18 +288,18 @@ function helm2_to_3 {
 function interactive_confirmation {
   echo ""
   echo ""
-  read -p "Are you using single-namespace mode (where airflow and astronomer all in same namespace? (y/n)" CONT
+  read -r -p "Are you using single-namespace mode (where airflow and astronomer all in same namespace? (y/n)" CONT
   if [ "$CONT" = "y" ]; then
     echo "This script does not work with single namespace mode. Please contact Astronomer support"
     exit 1
   fi
   echo "Please create a backup of your database."
-  read -p "Did you create a backup/snapshot of your database? (y/n)" CONT
+  read -r -p "Did you create a backup/snapshot of your database? (y/n)" CONT
   if ! [ "$CONT" = "y" ]; then
     exit 1
   fi
   echo "Upgrading Astronomer to version $UPGRADE_TO_VERSION from version $CURRENT_CHART_VERSION, and Airflow helm charts to version $UPGRADE_TO_VERSION_AIRFLOW"
-  read -p "Continue? (y/n)" CONT
+  read -r -p "Continue? (y/n)" CONT
   if ! [ "$CONT" = "y" ]; then
     exit 1
   fi
