@@ -33,7 +33,8 @@ Install some command line tools:
 - [jq](https://stedolan.github.io/jq/download/)
 
 On Mac, if you have brew, you can install 'jq' with:
-```
+
+```sh
 brew install jq
 ```
 
@@ -48,20 +49,25 @@ To perform the Kubernetes upgrade, please contact your cloud provider's support 
 - Namespace in which the Astronomer platform is installed (example: 'astronomer')
 - Helm release name of the Astronomer platform (example: 'astronomer')
 - You can confirm the namespace with
-```
+```sh
 kubectl get pods -n <namespace here>
 ```
+
 - In the above output, you should see the Astronomer platform's Pods, such as a pod with name including 'houston' and also elasticsearch pods
 - You can confirm the release name with
-```
+
+```sh
 # helm 2
 helm list <release name>
 ```
+
 Or
-```
+
+```sh
 # helm 3
 helm3 list <release name> -n <namespace>
 ```
+
 - Above, you should have found "astronomer" or "astronomer-platform" somewhere in the result line
 
 ## Upgrade script
@@ -75,6 +81,7 @@ helm3 list <release name> -n <namespace>
 - The script is interactive, so pay attention for a few questions
 - If there is a failure, copy the output and report to Astronomer support
 - There is one error message that might show up that can be ignored, this is a network hiccup error reported by Helm that automatically resolves itself:
+
 ```
 E0401 22:10:07.041224   11330 portforward.go:372] error copying from remote stream to local connection: readfrom tcp4 127.0.0.1:45835->127.0.0.1:36720: write tcp4 127.0.0.1:45835->127.0.0.1:36720: write: broken pipe
 ```
@@ -90,23 +97,30 @@ Here are a few things we can do to make sure everything worked as expected:
 ### 1) Check pods are ready
 
 - Watch the pods stabilize, there should be zero crashlooping pods, and all should show 'Running' with full readiness "N/N" (not N-1 / N) or 'Completed' with 0/1 readiness
-```
+
+```sh
 watch kubectl get pods -n <release namespace>
 ```
+
 - If you find a pod crashlooping or some other kind of error right after the upgrade, first try deleting it (any pod in Astronomer is safe to delete)
-```
+
+```sh
 kubectl delete pod -n <namespace> <pod name>
 ```
+
 - Above: Astronomer has found a few pods (prometheus) sometimes need a delete after upgrading from an older version directly to 0.16
 - If a pod is stuck "Terminating" (occaisionally seen in old versions of Elasticsearch), then forcefully delete it
-```
+
+```sh
 kubectl delete pod -n <namespace> <pod name> --grace-period 0 --force
 ```
 
 - Check all the pods in your airflow namespaces
-```
+
+```sh
 kubectl get pods --all-namespaces
 ```
+
 - If you have crashlooping pods in the Airflow namespaces, contact Astronomer support.
 
 ### 2) Check on Astronomer features
@@ -118,33 +132,44 @@ kubectl get pods --all-namespaces
 ### 3) Check that Airflow upgrades will work
 
 - Find the houston pods
-```
+
+```sh
 kubectl get pods -n astronomer | grep houston
 ```
+
 - An example output is:
+
 ```
 astronomer-houston-84945966d8-jc54j                       1/1     Running     0          3d
 astronomer-houston-cleanup-deployments-1580083200-p8dk5   0/1     Completed   0          21h
 astronomer-houston-expire-deployments-1580083200-jxsxj    0/1     Completed   0          21h
 astronomer-houston-upgrade-deployments-lw9kc              0/1     Completed   0          3d21h
 ```
+
 - Note: you may not have all these 0/1 pods above, depending on your configuration.
 - Ensure that the Airflow chart upgrades are working my looking for errors in the pod that includes "upgrade-deployments"
-```
+
+```sh
 # Use the pod name corresponding to your result of finding the houston pods
 kubectl logs -n <release namespace> astronomer-houston-upgrade-deployments-lw9kc
 ```
+
 - Check the airflow chart version, it should be the same and 0.15 for all airflow Helm releases
-```
+
+```sh
 helm3 list --all-namespaces | grep -i airflow
 ```
+
 - In the UI, check that you can deploy changes to Airflow by adding a new environment variable and deploying the change with the UI button while watching the pods in the corresponding namespace. You should see the Airflow components restart to get the new environment variable.
-```
+
+```sh
 kubectl get pods -n <airflow namespace you are changing> -w
 # then click the button in UI
 ```
+
 - Now, again check your Airflow releases to make sure the Airflow chart version did not change - it should be the same result as before.
-```
+
+```sh
 helm3 list --all-namespaces | grep -i airflow
 ```
 
@@ -153,17 +178,21 @@ helm3 list --all-namespaces | grep -i airflow
 If you are already on an LTS version, then you can update yourself much more simply. You can use normal helm3 commands to update your configuration or patch version, a sample script is provided below.
 
 - First, ensure you have a copy of your Astronomer configuration if you don't already have one
-```
+
+```sh
 helm3 get values -n <namespace> <release name of astronomer> > config.yaml
 ```
+
 - review this configuration, and you can delete the line "USER-SUPPLIED VALUES:"
 - check your current version
-```
+
+```sh
 helm3 list --all-namespaces | grep astronomer
 ```
+
 - Use a script like this to update Astronomer patch versions or reconfigurations, please review this script to understand what it is doing and substitute the variables with your own values
 
-```
+```sh
 #!/bin/bash
 set -xe
 
@@ -179,9 +208,9 @@ helm3 repo update
 # then you may set this value to "true" instead. When it is "true", then each Airflow chart will
 # restart.
 helm3 upgrade --namespace $NAMESPACE \
-             -f ./config.yaml \
-             --version $ASTRO_VERSION \
-             --set astronomer.houston.upgradeDeployments.enabled=false \
+            -f ./config.yaml \
+            --version $ASTRO_VERSION \
+            --set astronomer.houston.upgradeDeployments.enabled=false \
             $RELEASE_NAME \
             astronomer/astronomer
 ```

@@ -2,7 +2,7 @@
 
 First, you can deploy an old verison of Astronomer on our AWS development account using an old version of the Astronomer Enterprise Terraform module.
 
-```
+```ruby
 provider "aws" {
   region = "us-east-1"
 }
