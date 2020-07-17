@@ -68,8 +68,10 @@ function check_get_deployments_safe {
 
 function get_deployments {
   echo "Looking for Astronomer Airflow helm releases..."
-  export RELEASE_NAMES=$(helm list --max 1000 | grep airflow | grep "$NAMESPACE" | awk '{ print $1 }')
-  export RELEASE_NAMES_HELM3=$(helm3 list --all-namespaces --max 1000 | grep airflow | grep "$NAMESPACE" | awk '{ print $1 }')
+  RELEASE_NAMES=$(helm list --max 1000 | grep airflow | grep "$NAMESPACE" | awk '{ print $1 }')
+  export RELEASE_NAMES
+  RELEASE_NAMES_HELM3=$(helm3 list --all-namespaces --max 1000 | grep airflow | grep "$NAMESPACE" | awk '{ print $1 }')
+  export RELEASE_NAMES_HELM3
   fail_with "Did not find any Astronomer Airflow helm releases. What does 'helm list | grep airflow' show?"
   check_get_deployments_safe
 }
@@ -153,7 +155,8 @@ function kube_checks {
 }
 
 function get_helm_values_of_release {
-  export values_result=$(helm get values --output json "$1")
+  values_result=$(helm get values --output json "$1")
+  export values_result
   fail_with "Did not find a Helm release $1"
 }
 
@@ -372,7 +375,8 @@ function main {
 
   setup_helm
 
-  export UPGRADE_TO_VERSION=$(helm3 search repo astronomer/astronomer --version 0.16 | head -n2 | tail -n1 | awk '{ print $2 }')
+  UPGRADE_TO_VERSION=$(helm3 search repo astronomer/astronomer --version 0.16 | head -n2 | tail -n1 | awk '{ print $2 }')
+  export UPGRADE_TO_VERSION
 
   collect_current_version_info
 
