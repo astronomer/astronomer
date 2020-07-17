@@ -3,6 +3,7 @@
 backup_dir=helm-values-backup
 
 function fail_with {
+  # shellcheck disable=SC2181
   if [ $? -ne 0 ]; then
     echo "$1"
     exit 1
@@ -12,14 +13,12 @@ function fail_with {
 function determine_helm_version {
   echo "Determining which version of Helm is being used for Astronomer"
   HELM_VERSION="2"
-  helm status "$RELEASE_NAME" > /dev/null 2>&1
-  if [ $? -ne 0 ]; then
+  if ! helm status "$RELEASE_NAME" > /dev/null 2>&1 ; then
     HELM_VERSION="3"
     helm3 status -n "$NAMESPACE" "$RELEASE_NAME" > /dev/null 2>&1
     fail_with "Failed to determine Helm version being used for Astronomer"
   else
-    helm3 status -n "$NAMESPACE" "$RELEASE_NAME" > /dev/null 2>&1
-    if [ $? -eq 0 ]; then
+    if helm3 status -n "$NAMESPACE" "$RELEASE_NAME" > /dev/null 2>&1 ; then
       echo "ERROR: found Astronomer to be installed in both Helm 2 and Helm 3"
       exit 1
     fi
@@ -40,8 +39,7 @@ function upgrade_version_in_astro_db {
   echo "prisma pod: $PRISMA"
   kubectl exec -n "$NAMESPACE" "$PRISMA" -- apk add postgresql-client
   fail_with 'failed install postgresql client in prisma pod'
-  kubectl exec -n "$NAMESPACE" "$PRISMA" -- psql -Atx "$PRISMA_DB_URI" -c "$QUERY"
-  if [ $? -ne 0 ]; then
+  if ! kubectl exec -n "$NAMESPACE" "$PRISMA" -- psql -Atx "$PRISMA_DB_URI" -c "$QUERY" ; then
     echo "Failed to update Airflow chart version in DB. Retrying in 60 seconds..."
     sleep 60
     PRISMA=$(kubectl get pods -n "$NAMESPACE" | grep prisma | head -n1 | awk '{ print $1}')
@@ -96,8 +94,7 @@ function check_cli_tools_installed {
 
 function check_helm3_version_client {
   echo "Checking the version of Helm 3 installed on the client (where this script is executed)..."
-  helm3 version | grep "$1" > /dev/null
-  if ! [[ $? -eq 0 ]]; then
+  if ! helm3 version | grep "$1" > /dev/null ; then
     echo ""
     echo "==============="
     echo "Action required:"
@@ -112,8 +109,7 @@ function check_helm3_version_client {
 
 function check_helm_version_client {
   echo "Checking the version of Helm installed on the client (where this script is executed)..."
-  helm version | grep Client | grep "$1" > /dev/null
-  if ! [[ $? -eq 0 ]]; then
+  if ! helm version | grep Client | grep "$1" > /dev/null ; then
     echo ""
     echo "==============="
     echo "Action required:"
@@ -268,8 +264,7 @@ function helm2_to_3 {
   RELEASES_TO_UPGRADE=""
   set +e
   for release in $HELM2_RELEASES; do
-    helm list "$release" | tail -n 1 | grep -E "astronomer|airflow" > /dev/null
-    if [ $? -eq 0 ]; then
+    if helm list "$release" | tail -n 1 | grep -E "astronomer|airflow" > /dev/null ; then
       RELEASES_TO_UPGRADE="$release $RELEASES_TO_UPGRADE"
     fi
   done
