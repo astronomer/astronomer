@@ -208,7 +208,7 @@ function save_helm_values {
       echo "  This fernet key is already configured in Helm"
     else
       echo "  Detected that the fernet key needs to be added to the Helm values."
-      add_fernet_to_values "$release $namespace_of_release_result" "$fernet"
+      add_fernet_to_values "$release" "$namespace_of_release_result" "$fernet"
       echo "backing up the helm values again after adding the fernet key"
       mv "$backup_dir/$release-all-values.yaml" "$backup_dir/$release-all-values.yaml.before-fernet"
       mv "$backup_dir/$release-user-values.yaml" "$backup_dir/$release-user-values.yaml.before-fernet"
@@ -291,18 +291,18 @@ function helm2_to_3 {
 function interactive_confirmation {
   echo
   echo
-  read -r -p "Are you using single-namespace mode (where airflow and astronomer all in same namespace? (y/n)" CONT
+  read -r -p "Are you using single-namespace mode (where airflow and astronomer all in same namespace? (y/n) " CONT
   if [ "$CONT" = "y" ]; then
     echo "This script does not work with single namespace mode. Please contact Astronomer support"
     exit 1
   fi
   echo "Please create a backup of your database."
-  read -r -p "Did you create a backup/snapshot of your database? (y/n)" CONT
+  read -r -p "Did you create a backup/snapshot of your database? (y/n) " CONT
   if ! [ "$CONT" = "y" ]; then
     exit 1
   fi
   echo "Upgrading Astronomer to version $UPGRADE_TO_VERSION from version $CURRENT_CHART_VERSION, and Airflow helm charts to version $UPGRADE_TO_VERSION_AIRFLOW"
-  read -r -p "Continue? (y/n)" CONT
+  read -r -p "Continue? (y/n) " CONT
   if ! [ "$CONT" = "y" ]; then
     exit 1
   fi
