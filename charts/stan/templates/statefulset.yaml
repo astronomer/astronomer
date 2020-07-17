@@ -63,6 +63,17 @@ spec:
 {{- with .Values.affinity }}
 {{ toYaml . | indent 8 }}
 {{- end }}
+      initContainers:
+        - name: wait-for-nats-server
+          command:
+            - "dockerize"
+          args:
+            - "-wait"
+            - "tcp://astronomer-nats:4222"
+            - "-timeout"
+            - "1m"
+          image: jwilder/dockerize
+          imagePullPolicy: IfNotPresent
       containers:
         - name: stan
           image: {{ .Values.stan.image }}
