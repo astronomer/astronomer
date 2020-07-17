@@ -71,8 +71,8 @@ function get_deployments {
   RELEASE_NAMES=$(helm list --max 1000 | grep airflow | grep "$NAMESPACE" | awk '{ print $1 }')
   export RELEASE_NAMES
   RELEASE_NAMES_HELM3=$(helm3 list --all-namespaces --max 1000 | grep airflow | grep "$NAMESPACE" | awk '{ print $1 }')
-  export RELEASE_NAMES_HELM3
   fail_with "Did not find any Astronomer Airflow helm releases. What does 'helm list | grep airflow' show?"
+  export RELEASE_NAMES_HELM3
   check_get_deployments_safe
 }
 
@@ -95,9 +95,9 @@ function check_cli_tools_installed {
 }
 
 function check_helm3_version_client {
-  echo "Checking the version of Helm 3 installed on the client (where this script is executed)..."
+  echo "Checking that Helm $1 is installed on the client (where this script is executed)..."
   if ! helm3 version | grep "$1" > /dev/null ; then
-    echo ""
+    echo
     echo "==============="
     echo "Action required:"
     echo "Helm $1 is the version that this script was tested with."
@@ -110,9 +110,9 @@ function check_helm3_version_client {
 }
 
 function check_helm_version_client {
-  echo "Checking the version of Helm installed on the client (where this script is executed)..."
+  echo "Checking that Helm $1 is installed on the client (where this script is executed)..."
   if ! helm version | grep Client | grep "$1" > /dev/null ; then
-    echo ""
+    echo
     echo "==============="
     echo "Action required:"
     echo "Helm $1 is the version that this script was tested with."
@@ -128,10 +128,10 @@ function check_helm_version_client {
 # about the environment
 function kube_checks {
   echo "Checking kube authentication..."
-  namespaces=$(kubectl get namespaces)
+  kubectl get namespace > /dev/null
   fail_with "Failed to run 'kubectl get namespaces'. Please check kubectl configuration."
   echo "kubectl is installed and we can access a kube cluster."
-  echo "$namespaces" | grep "$NAMESPACE" > /dev/null
+  kubectl get namespace "$NAMESPACE" > /dev/null
   fail_with "Failed find the namespace $NAMESPACE"
   echo "Confirmed the presence of the namespace $NAMESPACE"
   echo "Checking that the release $RELEASE_NAME corresponds to the namespace $NAMESPACE"
@@ -156,8 +156,8 @@ function kube_checks {
 
 function get_helm_values_of_release {
   values_result=$(helm get values --output json "$1")
-  export values_result
   fail_with "Did not find a Helm release $1"
+  export values_result
 }
 
 function add_fernet_to_values {
@@ -204,7 +204,7 @@ function save_helm_values {
     # Check if this matches the helm config
     get_helm_values_of_release "$release"
     configured_fernet=$(echo "$values_result" | jq '.fernetKey' --raw-output)
-    if [[ "$configured_fernet" = "$fernet" ]]; then
+    if [[ "$configured_fernet" == "$fernet" ]]; then
       echo "  This fernet key is already configured in Helm"
     else
       echo "  Detected that the fernet key needs to be added to the Helm values."
@@ -261,8 +261,11 @@ function save_helm_values {
 }
 
 function helm2_to_3 {
-  HELM2_RELEASES=$(kubectl get secret,configmap -n kube-system -l "OWNER=TILLER" \
-  | awk '{print $1}' | grep -v NAME | grep -v 'No resources' | cut -d '.' -f1 | cut -d '/' -f2 | uniq)
+  HELM2_RELEASES=$(kubectl get secret,configmap -n kube-system -l "OWNER=TILLER" -o name |
+    grep -v 'No resources' |
+    cut -d '.' -f1 |
+    cut -d '/' -f2 |
+    uniq)
   fail_with "Failed to find helm 2 releases"
   RELEASES_TO_UPGRADE=""
   set +e
@@ -286,8 +289,8 @@ function helm2_to_3 {
 }
 
 function interactive_confirmation {
-  echo ""
-  echo ""
+  echo
+  echo
   read -r -p "Are you using single-namespace mode (where airflow and astronomer all in same namespace? (y/n)" CONT
   if [ "$CONT" = "y" ]; then
     echo "This script does not work with single namespace mode. Please contact Astronomer support"
