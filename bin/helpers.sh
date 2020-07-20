@@ -4,7 +4,7 @@ set -euo pipefail
 function get_debugging_info {
   echo "Failed to deploy Astronomer!"
   echo "Printing description and logs where containers in pod are not 1/1..."
-  for pod in $(kubectl get pods -n astronomer | grep -v NAME | grep -v 1/1 | grep -v Completed | awk '{ print $1 }'); do
+  for pod in $(kubectl get pods -n astronomer --all-containers=true | grep -v NAME | grep -v 1/1 | grep -v Completed | awk '{ print $1 }'); do
     echo "======================="
     set -x
     kubectl describe pod -n astronomer $pod

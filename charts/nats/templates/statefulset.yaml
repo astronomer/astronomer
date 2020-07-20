@@ -329,7 +329,7 @@ spec:
         - -routez
         - -subz
         - -varz
-        - -prefix=nats
+        - -prefix=gnatsd
         - -use_internal_server_id
         - http://localhost:8222/
         ports:
