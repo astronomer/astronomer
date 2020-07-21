@@ -164,19 +164,11 @@ bootconfig:
 # 
 natsbox:
   enabled: false
-  image: synadia/nats-box:0.3.0
-  pullPolicy: IfNotPresent
 
-  # credentials:
-  #   secret:
-  #     name: nats-sys-creds
-  #     key: sys.creds
 
 # The NATS config reloader image to use.
 reloader:
-  enabled: true
-  image: connecteverything/nats-server-config-reloader:0.6.0
-  pullPolicy: IfNotPresent
+  enabled: false
 
 # Prometheus NATS Exporter configuration.
 exporter:

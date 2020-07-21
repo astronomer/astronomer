@@ -4,7 +4,7 @@
 #                                #
 ##################################
 stan:
-  image: nats-streaming:0.17.0
+  image: astronomerinc/ap-nats-streaming:0.18.0
   pullPolicy: IfNotPresent
   replicas: 1
 
@@ -120,7 +120,7 @@ store:
 #######################################
 exporter:
   enabled: true
-  image: synadia/prometheus-nats-exporter:0.6.0
+  image: astronomerinc/ap-nats-exporter:0.6.2
   pullPolicy: IfNotPresent
 
 ##################################
