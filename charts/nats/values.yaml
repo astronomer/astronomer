@@ -26,37 +26,37 @@ nats:
 
   # How many seconds should pass before sending a PING
   # to a client that has no activity.
-  pingInterval: 
+  pingInterval:
 
   # Server settings.
   limits:
-    maxConnections: 
-    maxSubscriptions: 
-    maxControlLine: 
-    maxPayload: 
+    maxConnections:
+    maxSubscriptions:
+    maxControlLine:
+    maxPayload:
 
-    writeDeadline: 
-    maxPending: 
-    maxPings: 
-    lameDuckDuration: 
+    writeDeadline:
+    maxPending:
+    maxPings:
+    lameDuckDuration:
 
   logging:
-    debug: 
-    trace: 
-    logtime: 
-    connectErrorReports: 
-    reconnectErrorReports: 
+    debug:
+    trace:
+    logtime:
+    connectErrorReports:
+    reconnectErrorReports:
 
   #######################
   #                     #
   #  TLS Configuration  #
   #                     #
   #######################
-  # 
+  #
   #  # You can find more on how to setup and trouble shoot TLS connnections at:
-  # 
+  #
   #  # https://docs.nats.io/nats-server/configuration/securing_nats/tls
-  # 
+  #
 
   # tls:
   #   secret:
@@ -173,7 +173,7 @@ reloader:
 # Prometheus NATS Exporter configuration.
 exporter:
   enabled: true
-  image: synadia/prometheus-nats-exporter:0.5.0
+  image: astronomerinc/ap-nats-exporter:0.6.2
   pullPolicy: IfNotPresent
 
 # Authentication setup
