@@ -1,49 +1,91 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2016,SC1090
 set -euo pipefail
 
-# Bit of common bash magic that sets DIR to the directory of this script
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+usage() {
+  echo "
+Description:
+  Sets up a kind cluster running Astronomer
+
+Usage:
+  ${0##*/} [OPTIONS]
+
+Options:
+  -h    Print this help text
+  -H    Use HA
+  -k    List recent kubernetes versions to use with -K (not all will be available to KIND)
+  -K    Kubernetes version to use (eg: 1.15.11) https://github.com/kubernetes/kubernetes/releases/
+  -M    Enable multi-node kind cluster
+
+"
+}
+
+get_kube_versions() {
+  curl -s https://api.github.com/repos/kubernetes/kubernetes/releases |
+    jq -r -c '.[] | .tag_name + " " + .created_at' |
+    grep -vE 'alpha|beta|rc' |
+    column -t |
+    sort
+}
+
+while getopts ':hHkK:x' option ; do
+  case "${option}" in
+    h) usage ; exit 0 ;;
+    H) USE_HA=1 ;;
+    k) get_kube_versions ; exit 0 ;;
+    K) export KUBE_VERSION="${OPTARG/v/}" ;;
+    x) set -x ;;
+    *) echo "ERROR: Unknown option: -${OPTARG}" ; usage ; exit 1 ;;
+  esac
+done
+shift $((OPTIND - 1))
+
 # The path to the working directory - the root of the repo
-REPO_DIR=$DIR/../
+REPO_DIR="$(git rev-parse --show-toplevel)"
 
 if [[ -z "${USE_HA+x}" ]]; then
-  CONFIG_FILE=$REPO_DIR/configs/local-dev.yaml
+  CONFIG_FILE="$REPO_DIR/configs/local-dev.yaml"
+  echo "Using non-HA config file ${CONFIG_FILE##*/}"
 else
-  CONFIG_FILE=$REPO_DIR/configs/local-dev-ha.yaml
+  CONFIG_FILE="$REPO_DIR/configs/local-dev-ha.yaml"
+  echo "Using HA config file ${CONFIG_FILE##*/}"
 fi
 
 # Fail fast for helm syntax errors
-helm template -f $CONFIG_FILE $REPO_DIR
+helm template -f "$CONFIG_FILE" "$REPO_DIR" >/dev/null && echo "Helm template parsed successfully"
 
-source $REPO_DIR/bin/setup-kind
+source "$REPO_DIR/bin/setup-kind"
 
 echo "Deploying Astronomer..."
-helm install -f $CONFIG_FILE \
+helm install -f "$CONFIG_FILE" \
   --namespace astronomer astronomer \
   --set global.postgresqlEnabled=true \
-  $REPO_DIR
+  "$REPO_DIR"
 
-echo ''
-echo '######################################################'
-echo '######################################################'
-echo ''
-echo "Please run the following command to configure kubectl:"
-echo ''
-echo 'export KUBECONFIG="$(kind get kubeconfig-path --name="kind")"'
-echo ''
-echo 'Astronomer is launching. You can check the status with:'
-echo ''
-echo 'kubectl get pods -n astronomer'
-echo ''
-echo 'After Astronomer is up (all pods running, all containers up), do this to start a connection to the service:'
-echo ''
-echo 'sudo -E kubectl port-forward -n astronomer svc/astronomer-nginx 443'
-echo ''
-echo 'Then you can access the service here:'
-echo 'https://app.local.astronomer-development.com'
-echo ''
-echo 'You can clean up like this:'
-echo 'kind delete cluster'
-echo ''
-echo '######################################################'
-echo '######################################################'
+
+echo '
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ Please run the following command to configure kubectl:
+
+     export KUBECONFIG="$(kind get kubeconfig-path --name=kind)"
+
+
+ Astronomer is launching. You can check the status with:
+
+     kubectl get pods -n astronomer
+
+
+ After Astronomer is up (all pods running, all containers up), do this to start a connection to the service:
+
+     sudo -E kubectl port-forward -n astronomer svc/astronomer-nginx 443
+
+
+ Then you can access the service here: https://app.local.astronomer-development.com
+
+ You can clean up like this:
+
+     kind delete cluster
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+'
