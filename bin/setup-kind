@@ -1,21 +1,20 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC1090
 set -euo pipefail
 
 export KUBE_VERSION="${KUBE_VERSION:-v1.15.11}"
 
-# Bit of common bash magic that sets DIR to the directory of this script
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 # The path to the working directory - the root of the repo
-REPO_DIR=$DIR/../
+REPO_DIR="$(git rev-parse --show-toplevel)"
 
+echo "Beginning KIND setup with KUBE_VERSION=${KUBE_VERSION}"
 echo "Checking tools are installed"
 
 set +e
 
 # Check required tools are installed
 for executable in mkcert kind helm kubectl docker; do
-  which $executable > /dev/null 2>&1
-  if [ $? -eq 0 ]; then
+  if command -v "$executable" > /dev/null 2>&1 ; then
     echo "$executable is in PATH"
   else
     echo "Please ensure $executable is installed and in PATH"
@@ -24,12 +23,10 @@ for executable in mkcert kind helm kubectl docker; do
 done
 
 echo "Generating SSL keys..."
-source ${REPO_DIR}/bin/generate_ssl_keys
-
-if [[ $? -eq 0 ]]; then
+if "${REPO_DIR}/bin/generate_ssl_keys" ; then
   echo "Installed TLS secrets to /tmp/fullchain.pem and /tmp/privkey.pem"
 else
-  echo "Something goes wrong... :("
+  echo "Something went wrong... 😭"
   exit 1
 fi
 
@@ -39,39 +36,39 @@ set -xe
 # Delete the old cluster, if it exists
 kind delete cluster || true
 
-if [[ -z "${MULTI_NODE+x}" ]]; then
-  CONFIG_OPTION=""
-else
-  CONFIG_OPTION="--config $REPO_DIR/bin/kind/multi-node.yaml"
+KIND_OPTIONS=( --image "kindest/node:${KUBE_VERSION}" )
+if [[ -n "${MULTI_NODE+x}" ]]; then
+  KIND_OPTIONS+=( --config "$REPO_DIR/bin/kind/multi-node.yaml" )
 fi
 
 # Start a cluster
+create_kind_cluster() {
+  kind create cluster "${KIND_OPTIONS[@]}"
+}
 set +e
-kind create cluster $CONFIG_OPTION --image kindest/node:${KUBE_VERSION}
 # I have found kind create cluster
 # fails rarely, but since we are running
 # so many in parallel, that it happens
 # enough to justify a retry
-if ! [[ $? -eq 0 ]]; then
+if ! create_kind_cluster ; then
   set -e
   echo "Failed to create Kind cluster, trying one more time"
   kind delete cluster || true
-  kind create cluster $CONFIG_OPTION --image kindest/node:${KUBE_VERSION}
+  create_kind_cluster
 fi
-
 set -e
-set +x
 
-if ! [[ -z "${CORDON_NODE+x}" ]]; then
-  kubectl cordon $CORDON_NODE
+set +x
+if [[ -n "${CORDON_NODE+x}" ]]; then
+  kubectl cordon "$CORDON_NODE"
 fi
 
 kubectl get nodes
 
 echo "Install requirements"
-cd $REPO_DIR/charts/postgresql
+cd "$REPO_DIR/charts/postgresql"
 helm dependency update .
-cd $REPO_DIR
+cd "$REPO_DIR"
 
 echo "Creating namespace 'astronomer'"
 kubectl create namespace astronomer

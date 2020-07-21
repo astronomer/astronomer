@@ -36,12 +36,13 @@ Install the following tools:
 
 Run this script from the root of this repository:
 
-```
+```sh
 bin/reset-local-dev
 ```
 
-For OSX, if kind version >=0.8.1, use the following command
-```
+For MacOS, if kind version >=0.8.1, use the following command
+
+```sh
 KIND_EXPERIMENTAL_DOCKER_NETWORK=bridge ./bin/reset-local-dev
 ```
 
@@ -58,33 +59,37 @@ Modify the "tags:" in configs/local-dev.yaml
 - kubed: leave on
 
 #### Add a Docker image into KinD's nodes (so it's available for pods):
-```
-kind load docker-image <your local image name with tag>
+
+```sh
+kind load docker-image $your_local_image_name_with_tag
 ```
 
 #### Make use of that image:
 
 Make note of your pod name
-```
+
+```sh
 kubectl get pods -n astronomer
 ```
 
 Find the corresponding deployment, daemonset, or statefulset
-```
+
+```sh
 kubectl get deployment -n astronomer
 ```
 
 Replace the pod with the new image
 Look for "image" on the appropriate container and replace with the local tag,
 and set the pull policy to "Never".
-```
+
+```sh
 kubectl edit deployment -n astronomer <your deployment>
 ```
 
 #### Change Kubernetes version:
-```
-export KUBE_VERSION='v1.16.3'
-bin/reset-local-dev
+
+```sh
+bin/reset-local-dev -K 1.16.3
 ```
 
 #### Locally test HA configurations:
@@ -104,7 +109,7 @@ Scripts:
 
 Example:
 
-```
+```sh
 export USE_HA=1
 export CORDON_NODE=kind-worker
 export MULTI_NODE=1
@@ -112,7 +117,8 @@ bin/run-ci
 ```
 
 After the platform is up, then do
-```
+
+```sh
 bin/drain.sh
 ```
 
