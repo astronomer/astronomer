@@ -277,9 +277,9 @@ function helm2_to_3 {
   if [ -n "$RELEASES_TO_UPGRADE" ]; then
     echo "Non zero Airflow and Astronomer releases on Helm 2. Performing Helm 2 to Helm 3 upgrade procedure"
     echo "Scaling down ingress so nobody can access Astronomer, this avoids race conditions of the upgrade process against customer activity"
-    kubectl scale --replicas=0 -n astronomer deployment/astronomer-nginx
+    kubectl scale --replicas=0 -n astronomer deployment/$RELEASE_NAME-nginx
     echo "Scaling down commander, this ensures that old commander can't be used during the upgrade procedure"
-    kubectl scale --replicas=0 -n astronomer deployment/astronomer-commander
+    kubectl scale --replicas=0 -n astronomer deployment/$RELEASE_NAME-commander
     echo "Upgrading releases"
     # Upgrade the releases
     # shellcheck disable=SC2086 (in order to fix this, RELEASES_TO_UPGRADE needs to be an array)
