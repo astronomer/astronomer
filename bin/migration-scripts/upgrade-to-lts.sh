@@ -27,7 +27,7 @@ function determine_helm_version {
 }
 
 function get_chart_version {
-  version_result=$(helm list "$1" | grep "$1" | awk '{ print $9 }' | awk -F'-' '{ print $NF }')
+  version_result=$(helm list "^${1}$" | grep "^${1}\b" | awk '{ print $(NF-2) }' | awk -F'-' '{ print $NF }')
 }
 
 # this is a temporary workaround
@@ -270,7 +270,7 @@ function helm2_to_3 {
   RELEASES_TO_UPGRADE=""
   set +e
   for release in $HELM2_RELEASES; do
-    if helm list "$release" | tail -n 1 | grep -E "astronomer|airflow" > /dev/null ; then
+    if helm list "^${release}$" | tail -n 1 | grep -E "astronomer|airflow" > /dev/null ; then
       RELEASES_TO_UPGRADE="$release $RELEASES_TO_UPGRADE"
     fi
   done
@@ -321,7 +321,7 @@ function setup_helm {
 
 function collect_current_version_info {
   if [ "$HELM_VERSION" -eq "2" ]; then
-    version_result=$(helm list "$RELEASE_NAME" | grep "$RELEASE_NAME" | awk '{ print $9 }' | awk -F'-' '{ print $NF }')
+    version_result=$(helm list "^${RELEASE_NAME}$" | grep "$RELEASE_NAME" | awk '{ print $9 }' | awk -F'-' '{ print $NF }')
     fail_with "Failed to find chart version"
   elif [ "$HELM_VERSION" -eq "3" ]; then
     version_result=$(helm3 list --all-namespaces --filter "$RELEASE_NAME" | grep "$RELEASE_NAME" | awk '{ print $9 }' | awk -F'-' '{ print $NF }')
@@ -446,17 +446,17 @@ function main {
 
   echo "Upgrading Astronomer... (4/4) Ensure Helm upgrade works to reconfigure platform"
   helm3 upgrade --namespace "$NAMESPACE" \
-               -f "$backup_dir/$RELEASE_NAME-user-values.yaml" \
-               --version "$UPGRADE_TO_VERSION" \
-               --timeout 1200s \
-               --set global.postgresqlEnabled=false \
-               --set astronomer.houston.expireDeployments.enabled=false \
-               --set astronomer.houston.cleanupDeployments.enabled=false \
-               --set astronomer.houston.upgradeDeployments.enabled=true \
-               --set astronomer.airflowChartVersion="$UPGRADE_TO_VERSION_AIRFLOW" \
-               --set astronomer.houston.regenerateCaEachUpgrade=false \
-              "$RELEASE_NAME" \
-              astronomer/astronomer
+                -f "$backup_dir/$RELEASE_NAME-user-values.yaml" \
+                --version "$UPGRADE_TO_VERSION" \
+                --timeout 1200s \
+                --set global.postgresqlEnabled=false \
+                --set astronomer.houston.expireDeployments.enabled=false \
+                --set astronomer.houston.cleanupDeployments.enabled=false \
+                --set astronomer.houston.upgradeDeployments.enabled=true \
+                --set astronomer.airflowChartVersion="$UPGRADE_TO_VERSION_AIRFLOW" \
+                --set astronomer.houston.regenerateCaEachUpgrade=false \
+                "$RELEASE_NAME" \
+                astronomer/astronomer
   fail_with "Failed to upgrade Astronomer"
 
 
