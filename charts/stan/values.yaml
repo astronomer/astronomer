@@ -6,15 +6,15 @@
 stan:
   image: astronomerinc/ap-nats-streaming:0.18.0
   pullPolicy: IfNotPresent
-  replicas: 1
+  replicas: 3
 
   # Cluster name, generated into a name from the
   # release name by default.
-  clusterID: 
+  clusterID:
 
   logging:
-    debug: 
-    trace: 
+    debug: true
+    trace:
 
   # In case of NATS not being embedded then
   # an URL for NATS is required.
@@ -23,6 +23,20 @@ stan:
     serviceRoleAuth:
       enabled: false
       natsClusterName:
+
+  # TLS
+  # Enabled must be true, and a secret name specified for this to work
+  tls:
+    enabled: false
+    # the secret containing the client ca.crt, tls.crt, and tls.key for STAN
+    secretName:
+    # Reference
+    # https://docs.nats.io/nats-streaming-server/configuring/cfgfile#tls-configuration
+    settings:
+      client_cert: "/etc/nats/certs/tls.crt"
+      client_key: "/etc/nats/certs/tls.key"
+      client_ca: "/etc/nats/certs/ca.crt"
+      timeout: 3
 
 nameOverride: ""
 imagePullSecrets: {}
@@ -73,7 +87,7 @@ store:
     enabled: true
     mount: /data/stan
     storageSize: 1Gi
-    accessModes: ReadWriteOnce
+    accessModes: ReadWriteMany
     storageClass: 
 
   # 
@@ -84,7 +98,7 @@ store:
 
   # In case of using file or sql storage, sets up a 3 node cluster.
   cluster:
-    enabled: false
+    enabled: true
     logPath: /data/stan/log
 
   # 

@@ -11,24 +11,23 @@ spec:
     matchLabels:
       app: {{ template "stan.name" . }}
 
-  {{- if .Values.store.cluster.enabled }}
-  replicas: 3
-  {{- else }}
-  {{- with .Values.stan.replicas }}
-  replicas: {{ . }}
-  {{- end }}
-  {{- end }}
+  replicas: {{ include "stan.replicaCount" .  | required ".Values.stan.replicas should be greater or equal to 3 in clustered mode" }}
 
   # NATS Streaming service name
   serviceName: {{ template "stan.name" . }}
 
   template:
     metadata:
-      {{- if .Values.exporter.enabled }}
+      {{- if or .Values.podAnnotations .Values.exporter.enabled }}
       annotations:
+      {{- if .Values.exporter.enabled }}
         prometheus.io/path: /metrics
         prometheus.io/port: "7777"
         prometheus.io/scrape: "true"
+      {{- end }}
+      {{- range $key, $value := .Values.podAnnotations }}
+        {{ $key }}: {{ $value | quote }}
+      {{- end }}
       {{- end }}
       labels:
         app: {{ template "stan.name" . }}
@@ -50,6 +49,11 @@ spec:
       - configMap:
           name: {{ template "stan.name".  }}-config
         name: config-volume
+      {{- if and .Values.stan.tls.enabled .Values.stan.tls.secretName }}
+      - name: stan-client-tls-volume
+        secret:
+          secretName: {{ .Values.stan.tls.secretName }}
+      {{- end }}
       affinity:
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -63,17 +67,6 @@ spec:
 {{- with .Values.affinity }}
 {{ toYaml . | indent 8 }}
 {{- end }}
-      initContainers:
-        - name: wait-for-nats-server
-          command:
-            - "dockerize"
-          args:
-            - "-wait"
-            - "tcp://astronomer-nats:4222"
-            - "-timeout"
-            - "1m"
-          image: jwilder/dockerize
-          imagePullPolicy: IfNotPresent
       containers:
         - name: stan
           image: {{ .Values.stan.image }}
@@ -117,6 +110,10 @@ spec:
           - name: {{ template "stan.name" . }}-pvc
             mountPath: {{ .Values.store.volume.mount }}
           {{- end }}
+          {{- end }}
+          {{- if and .Values.stan.tls.enabled .Values.stan.tls.secretName }}
+          - name: stan-client-tls-volume
+            mountPath: /etc/nats/certs
           {{- end }}
         {{ if .Values.exporter.enabled }}
         - name: metrics
