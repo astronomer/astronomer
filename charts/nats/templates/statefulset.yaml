@@ -70,12 +70,6 @@ spec:
       {{- end }}
       {{- end }}
 
-      {{ if and .Values.nats.externalAccess .Values.nats.advertise }}
-      # Local volume shared with the advertise config initializer.
-      - name: advertiseconfig
-        emptyDir: {}
-      {{ end }}
-
       #################
       #               #
       #  TLS Volumes  #
@@ -119,41 +113,9 @@ spec:
       {{- end }}
       {{- end }}
 
-      {{ if and .Values.nats.externalAccess .Values.nats.advertise }}
-      # Assume that we only use the service account in case we want to
-      # figure out what is the current external public IP from the server
-      # in order to be able to advertise correctly.
-      serviceAccountName: {{ .Values.nats.serviceAccount }}
-      {{ end }}
-
       # Required to be able to HUP signal and apply config
       # reload to the server without restarting the pod.
       shareProcessNamespace: true
-
-      {{- if and .Values.nats.externalAccess .Values.nats.advertise }}
-      # Initializer container required to be able to lookup
-      # the external ip on which this node is running.
-      initContainers:
-      - name: bootconfig
-        command:
-        - nats-pod-bootconfig
-        - -f
-        - /etc/nats-config/advertise/client_advertise.conf
-        - -gf
-        - /etc/nats-config/advertise/gateway_advertise.conf
-        env:
-        - name: KUBERNETES_NODE_NAME
-          valueFrom:
-            fieldRef:
-              apiVersion: v1
-              fieldPath: spec.nodeName
-        image: {{ .Values.bootconfig.image }}
-        imagePullPolicy: {{ .Values.bootconfig.pullPolicy }}
-        volumeMounts:
-        - mountPath: /etc/nats-config/advertise
-          name: advertiseconfig
-          subPath: advertise
-      {{- end }}
 
       #################
       #               #
@@ -168,19 +130,10 @@ spec:
         ports:
         - containerPort: 4222
           name: client
-          {{- if .Values.nats.externalAccess }}
-          hostPort: 4222
-          {{- end }}
         - containerPort: 7422
           name: leafnodes
-          {{- if .Values.nats.externalAccess }}
-          hostPort: 7422
-          {{- end }}
         - containerPort: 7522
           name: gateways
-          {{- if .Values.nats.externalAccess }}
-          hostPort: 7522
-          {{- end }}
         - containerPort: 6222
           name: cluster
         - containerPort: 8222
@@ -211,11 +164,6 @@ spec:
             mountPath: /etc/nats-config
           - name: pid
             mountPath: /var/run/nats
-          {{- if and .Values.nats.externalAccess .Values.nats.advertise }}
-          - mountPath: /etc/nats-config/advertise
-            name: advertiseconfig
-            subPath: advertise
-          {{- end }}
 
           {{- if .Values.auth.enabled }}
           {{- if eq .Values.auth.resolver.type "memory" }}

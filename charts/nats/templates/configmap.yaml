@@ -118,11 +118,7 @@ data:
     }
     {{ end }}
 
-    {{- if and .Values.nats.advertise .Values.nats.externalAccess }}
-    include "advertise/client_advertise.conf"
-    {{- end }}
-
-    ################# 
+    #################
     #               #
     # NATS Leafnode #
     #               #
@@ -130,9 +126,6 @@ data:
     {{- if .Values.leafnodes.enabled }}
     leafnodes {
       listen: "0.0.0.0:7422"
-      {{ if and .Values.nats.advertise .Values.nats.externalAccess }}
-      include "advertise/gateway_advertise.conf"
-      {{ end }}
 
       {{- with .Values.leafnodes.tls }}
       {{ $secretName := .secret.name }}
@@ -196,10 +189,6 @@ data:
     gateway {
       name: {{ .Values.gateway.name }}
       port: 7522
-
-      {{ if and .Values.nats.advertise .Values.nats.externalAccess }}
-      include "advertise/gateway_advertise.conf"
-      {{ end }}
 
       {{- with .Values.gateway.tls }}
       {{ $secretName := .secret.name }}

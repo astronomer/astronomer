@@ -22,8 +22,8 @@ images:
     tag: 3.11.5-4
     pullPolicy: IfNotPresent
   houston:
-    repository: astronomerinc/ap-houston-api
-    tag: 0.16.4
+    repository: asoldatenko/ap-houston-api
+    tag: 0.17.0
     pullPolicy: IfNotPresent
   astroUI:
     repository: astronomerinc/ap-astro-ui
@@ -123,6 +123,11 @@ houston:
   # Any Houston configuration. Reference here:
   # https://github.com/astronomer/houston-api/blob/master/config/default.yaml
   config: {}
+
+  # Worker to connect to NATS
+  worker:
+    enabled: false
+    replicas: 2
 
   # Automatically upgrade Airflow deployments to the latest
   # version specified by Houston configuration.

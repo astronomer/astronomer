@@ -7,15 +7,6 @@ nats:
   image: astronomerinc/ap-nats-server:2.1.7
   pullPolicy: IfNotPresent
 
-  # Toggle whether to enable external access.
-  # This binds a host port for clients, gateways and leafnodes.
-  externalAccess: false
-
-  # Toggle to disable client advertisements (connect_urls),
-  # in case of running behind a load balancer (which is not recommended)
-  # it might be required to disable advertisements.
-  advertise: true
-
   # In case both external access and advertise are enabled
   # then a service account would be required to be able to
   # gather the public ip from a node.
@@ -151,13 +142,6 @@ gateway:
   #   cert: "tls.crt"
   #   key: "tls.key"
   
-# In case of both external access and advertisements being
-# enabled, an initializer container will be used to gather
-# the public ips.
-bootconfig:
-  image: connecteverything/nats-boot-config:0.5.2
-  pullPolicy: IfNotPresent
-
 # NATS Box
 #
 # https://github.com/nats-io/nats-box
