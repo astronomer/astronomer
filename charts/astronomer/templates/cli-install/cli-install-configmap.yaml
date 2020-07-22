@@ -22,5 +22,5 @@ data:
         exit
     fi
 
-    DOWNLOADER="https://raw.githubusercontent.com/astronomerio/astro-cli/master/godownloader.sh"
+    DOWNLOADER="https://raw.githubusercontent.com/astronomer/astro-cli/main/godownloader.sh"
     curl -sL -o- "${DOWNLOADER}" | bash -s -- -b /usr/local/bin "$TAG"
