@@ -24,7 +24,7 @@ data:
       - receiver: platform-critical-receiver
         continue: true  # allows alert to continue down the tree matching any additional child routes
         match:
-          serverity: critical
+          severity: critical
           tier: platform
       {{ end }}
       - receiver: {{ if .Values.receivers.platform }} platform-receiver {{ else }} blackhole-receiver {{ end }}
