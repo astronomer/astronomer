@@ -261,20 +261,24 @@ function save_helm_values {
 }
 
 function helm2_to_3 {
-  HELM2_RELEASES=$(kubectl get secret,configmap -n kube-system -l "OWNER=TILLER" -o name |
+  HELM2_RELEASES=()
+  while IFS='' read -r line ; do
+    HELM2_RELEASES+=("$line")
+  done < <(kubectl get secret,configmap -n kube-system -l "OWNER=TILLER" -o name |
     grep -v 'No resources' |
     cut -d '.' -f1 |
     cut -d '/' -f2 |
     uniq)
+  [ "${#HELM2_RELEASES}" -gt 0 ]
   fail_with "Failed to find helm 2 releases"
-  RELEASES_TO_UPGRADE=""
+  RELEASES_TO_UPGRADE=()
   set +e
-  for release in $HELM2_RELEASES; do
+  for release in "${HELM2_RELEASES[@]}" ; do
     if helm list "^${release}$" | tail -n 1 | grep -E "astronomer|airflow" > /dev/null ; then
-      RELEASES_TO_UPGRADE="$release $RELEASES_TO_UPGRADE"
+      RELEASES_TO_UPGRADE+=( "$release" )
     fi
   done
-  if [ -n "$RELEASES_TO_UPGRADE" ]; then
+  if [ "${#RELEASES_TO_UPGRADE[@]}" -gt 0 ]; then
     echo "Non zero Airflow and Astronomer releases on Helm 2. Performing Helm 2 to Helm 3 upgrade procedure"
     echo "Scaling down ingress so nobody can access Astronomer, this avoids race conditions of the upgrade process against customer activity"
     kubectl scale --replicas=0 -n astronomer deployment/astronomer-nginx
@@ -282,9 +286,10 @@ function helm2_to_3 {
     kubectl scale --replicas=0 -n astronomer deployment/astronomer-commander
     echo "Upgrading releases"
     # Upgrade the releases
-    # shellcheck disable=SC2086 (in order to fix this, RELEASES_TO_UPGRADE needs to be an array)
-    echo $RELEASES_TO_UPGRADE | xargs -n1 helm3 2to3 convert --delete-v2-releases
-  fail_with "Failed to convert helm 2 to helm 3"
+    for release in "${RELEASES_TO_UPGRADE[@]}" ; do
+      helm3 2to3 convert --delete-v2-releases
+      fail_with "Failed to convert helm 2 to helm 3"
+    done
   fi
 }
 
