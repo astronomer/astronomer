@@ -19,7 +19,7 @@ stan:
   # In case of NATS not being embedded then
   # an URL for NATS is required.
   nats:
-    url: nats://astronomer-nats:4222
+    port: 4222
     serviceRoleAuth:
       enabled: false
       natsClusterName:
