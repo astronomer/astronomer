@@ -14,7 +14,7 @@ data:
       {{- if .Values.stan.nats.serviceRoleAuth.enabled }}
       ns: $NATS_URL
       {{ else }}
-      ns: nats://{{ .Release.Name }}-nats:{{ .Values.nats.port }}
+      ns: nats://{{ .Release.Name }}-nats:{{ .Values.stan.nats.port }}
       {{- end }}
 
       {{- if .Values.stan.clusterID }}
