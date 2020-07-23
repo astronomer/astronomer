@@ -58,7 +58,7 @@ spec:
             - "tcp://astronomer-nats:4222"
             - "-timeout"
             - "1m"
-          image: jwilder/dockerize
+          image: astronomerinc/ap-base:3.12-1
           imagePullPolicy: IfNotPresent
           resources:
 {{ toYaml .Values.houston.resources | indent 12 }}
