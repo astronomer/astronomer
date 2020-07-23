@@ -45,7 +45,10 @@ spec:
 {{ toYaml . | indent 8 }}
 {{- end }}
       terminationGracePeriodSeconds: 90
-      affinity: {}
+{{- with .Values.affinity }}
+      affinity:
+{{- toYaml  . | nindent 8 }}
+{{- end }}
       volumes:
       - configMap:
           name: {{ template "stan.name".  }}-config
