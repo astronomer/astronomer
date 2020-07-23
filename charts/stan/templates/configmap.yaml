@@ -22,7 +22,6 @@ data:
       {{- else }}
       id: {{ template "stan.name" . }}
       {{- end }}
-      ft_group_name: "test-cluster"
       {{- if eq .Values.store.type "sql" }}
       store: "sql"
       sql_options {
@@ -38,6 +37,17 @@ data:
       sd: true
       sv: true
       {{- if .Values.store.cluster.enabled }}
+      cluster {
+        node_id: $POD_NAME
+        {{- with .Values.store.cluster.logPath }}
+        log_path: {{ . }}
+        {{- end }}
+
+        # Explicit names of resulting peers
+        peers: [
+          {{ template "stan.clusterPeers" . }}
+        ]
+      }
       {{- end }}
 
       {{- with .Values.store.limits }}

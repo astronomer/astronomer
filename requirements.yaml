@@ -72,6 +72,12 @@ dependencies:
     tags:
       - keda
 
+  # Nats-server
+  - name: nats
+    condition: global.natsEnabled
+    tags:
+      - nats
+
   # Nats-streaming
   - name: stan
     condition: global.stanEnabled

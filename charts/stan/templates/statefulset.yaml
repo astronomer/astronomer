@@ -44,7 +44,8 @@ spec:
       securityContext:
 {{ toYaml . | indent 8 }}
 {{- end }}
-      terminationGracePeriodSeconds: 30
+      terminationGracePeriodSeconds: 90
+      affinity: {}
       volumes:
       - configMap:
           name: {{ template "stan.name".  }}-config
@@ -54,19 +55,20 @@ spec:
         secret:
           secretName: {{ .Values.stan.tls.secretName }}
       {{- end }}
-      affinity:
-        podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchExpressions:
-              - key: app
-                operator: In
-                values:
-                - {{ template "stan.name" . }}
-            topologyKey: kubernetes.io/hostname
-{{- with .Values.affinity }}
-{{ toYaml . | indent 8 }}
-{{- end }}
+      initContainers:
+        - name: wait-for-nats-server
+          command:
+            - "dockerize"
+          args:
+            - "-wait"
+            - "tcp://astronomer-nats:4222"
+            - "-timeout"
+            - "1m"
+          image: jwilder/dockerize
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: NATS__URL
+              value: nats://astronomer-nats:4222
       containers:
         - name: stan
           image: {{ .Values.stan.image }}

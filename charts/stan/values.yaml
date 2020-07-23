@@ -87,7 +87,7 @@ store:
     enabled: true
     mount: /data/stan
     storageSize: 1Gi
-    accessModes: ReadWriteMany
+    accessModes: ReadWriteOnce
     storageClass: 
 
   # 

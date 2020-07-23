@@ -78,7 +78,7 @@ podAnnotations: {}
 
 cluster:
   enabled: true
-  replicas: 1
+  replicas: 3
 
 # Leafnode connections to extend a cluster:
 #
