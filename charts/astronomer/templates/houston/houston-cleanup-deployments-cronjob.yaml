@@ -45,8 +45,10 @@ spec:
               args: ["yarn", "cleanup-deployments", "--", "--older-than={{ .Values.houston.cleanupDeployments.olderThan }}", "--dry-run={{ .Values.houston.cleanupDeployments.dryRun }}", "--canary={{ .Values.houston.cleanupDeployments.canary }}"]
               volumeMounts:
                 {{- include "houston_volume_mounts" . | indent 16 }}
+                {{- include "custom_ca_volume_mounts" . | indent 16 }}
               env:
                 {{- include "houston_environment" . | indent 16 }}
           volumes:
             {{- include "houston_volumes" . | indent 12 }}
+            {{- include "custom_ca_volumes" . | indent 12 }}
 {{- end }}

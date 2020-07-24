@@ -73,6 +73,12 @@ cd "$REPO_DIR"
 echo "Creating namespace 'astronomer'"
 kubectl create namespace astronomer
 
+(
+  cd "${REPO_DIR}"
+  mkcert -cert-file=private-ca.pem -key-file=private-ca.key private-ca.example.org
+  kubectl --namespace astronomer create secret generic "private-ca" --from-file="cert.pem"="private-ca.pem"
+)
+
 echo "Installing TLS cert and private key"
 kubectl create secret tls astronomer-tls \
   --key /tmp/privkey.pem \
