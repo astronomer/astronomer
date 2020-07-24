@@ -1,0 +1,111 @@
+####################
+## Houston Worker ##
+####################
+{{- if .Values.houston.worker.enabled }}
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: {{ .Release.Name }}-houston-worker
+  labels:
+    component: houston-worker
+    tier: astronomer
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.houston.worker.replicas }}
+  selector:
+    matchLabels:
+      tier: astronomer
+      component: houston-worker
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        tier: astronomer
+        component: houston-worker
+        release: {{ .Release.Name }}
+      annotations:
+        checksum/houston-config: {{ include (print $.Template.BasePath "/houston/api/houston-configmap.yaml") . | sha256sum }}
+    spec:
+      nodeSelector:
+{{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
+      affinity:
+{{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 8 }}
+      tolerations:
+{{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
+      restartPolicy: Always
+      {{- if and (not .Values.houston.airflowBackendSecretName) (not .Values.houston.airflowBackendConnection) }}
+      serviceAccountName: {{ template "houston.bootstrapperServiceAccount" . }}
+      initContainers:
+        - name: wait-for-db
+          image: {{ template "houston.image" . }}
+          imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
+          command:
+            - "/houston/bin/entrypoint"
+          args:
+            - "echo"
+            - "DB ready"
+          resources:
+{{ toYaml .Values.houston.resources | indent 12 }}
+          env:
+            {{- include "houston_environment" . | indent 12 }}
+        - name: wait-for-nats-server
+          command:
+            - "dockerize"
+          args:
+            - "-wait"
+            - "tcp://astronomer-nats:4222"
+            - "-timeout"
+            - "1m"
+          image: astronomerinc/ap-base:3.12-1
+          imagePullPolicy: IfNotPresent
+          resources:
+{{ toYaml .Values.houston.resources | indent 12 }}
+          env:
+            - name: NATS__URL
+              value: nats://astronomer-nats:4222
+        - name: houston-bootstrapper
+          image: {{ template "dbBootstrapper.image" . }}
+          imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
+          env:
+            - name: BOOTSTRAP_DB
+              valueFrom:
+                secretKeyRef:
+                  name: astronomer-bootstrap
+                  key: connection
+            - name: DB_NAME
+              value: {{ .Release.Name }}-houston
+            - name: SECRET_NAME
+              value: {{ template "houston.airflowBackendSecret" . }}
+            - name: NAMESPACE
+              value: {{ .Release.Namespace }}
+            - name: IN_CLUSTER
+              value: "true"
+        {{- end }}
+      containers:
+        - name: houston
+          image: {{ template "houston.image" . }}
+          imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
+          args: ["yarn", "worker"]
+          resources:
+{{ toYaml .Values.houston.resources | indent 12 }}
+          volumeMounts:
+            {{- include "houston_volume_mounts" . | indent 12 }}
+          env:
+            {{- include "houston_environment" . | indent 12 }}
+            - name: NATS__URL
+              value: nats://astronomer-nats:4222
+            - name: NATS__CLUSTER_ID
+              value: astronomer-stan
+            - name: APOLLO_SERVER_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: APOLLO_SERVER_USER_VERSION
+              value: {{ template "houston.image" . }}
+            - name: APOLLO_SERVER_PLATFORM
+              value: "kubernetes/deployment"
+      volumes:
+        {{- include "houston_volumes" . | indent 8 }}
+{{- end }}

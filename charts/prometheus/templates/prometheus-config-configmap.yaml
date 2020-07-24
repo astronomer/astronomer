@@ -609,3 +609,10 @@ data:
           - target_label: __address__
             replacement: {{.Release.Name}}-prometheus-blackbox-exporter.{{.Release.Namespace}}:9115
         {{- end }}
+
+      - job_name: nats_server
+        kubernetes_sd_configs:
+          - role: endpoints
+            namespaces:
+              names:
+                - {{ .Release.Namespace }}
