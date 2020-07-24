@@ -1,0 +1,20 @@
+################################
+## Houston Worker NetworkPolicy
+#################################
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ .Release.Name }}-houston-worker-policy
+  labels:
+    tier: astronomer
+    component: houston-worker-policy
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+spec:
+  podSelector:
+    matchLabels:
+      tier: astronomer
+      component: houston-worker
+      release: {{ .Release.Name }}
+  ingress: []

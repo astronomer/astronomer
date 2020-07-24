@@ -49,6 +49,12 @@ global:
   # Used to enable Celery autoscaling
   kedaEnabled: false
 
+  # Used to enable nats-server
+  natsEnabled: true
+
+  # Used to enable nats-streaming
+  stanEnabled: true
+
   # If PodSecurityPolicies (PSP) should be enabled
   pspEnabled: false
 
@@ -86,6 +92,8 @@ tags:
   # Kubed
   kubed: true
 
+  # NATS Streaming
+  stan: true
 
 #################################
 ## Astronomer configuration
@@ -222,6 +230,37 @@ keda:
       <<: *platformAffinity
     tolerations:
       *platformTolerations
+
+nats:
+  nodeSelector:
+    <<: *platformNodeSelector
+    affinity:
+      <<: *platformAffinity
+    tolerations:
+      *platformTolerations
+  resources:
+    requests:
+      cpu: "75m"
+      memory: "30Mi"
+    limits:
+      cpu: "250m"
+      memory: "100Mi"
+
+stan:
+  nodeSelector:
+    <<: *platformNodeSelector
+    affinity:
+      <<: *platformAffinity
+    tolerations:
+      *platformTolerations
+  resources:
+    requests:
+      cpu: "75m"
+      memory: "30Mi"
+    limits:
+      cpu: "250m"
+      memory: "100Mi"
+
 #################################
 ## Blackbox Exporter configuration
 #################################

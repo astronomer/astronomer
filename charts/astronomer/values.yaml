@@ -124,6 +124,11 @@ houston:
   # https://github.com/astronomer/houston-api/blob/main/config/default.yaml
   config: {}
 
+  # Worker to connect to NATS
+  worker:
+    enabled: false
+    replicas: 2
+
   # Automatically upgrade Airflow deployments to the latest
   # version specified by Houston configuration.
   # This runs as a Job after helm upgrades.

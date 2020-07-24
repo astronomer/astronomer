@@ -1,31 +1,32 @@
-################################
-## Astronomer Houston Deployment
-#################################
+####################
+## Houston Worker ##
+####################
+{{- if .Values.houston.worker.enabled }}
 kind: Deployment
 apiVersion: apps/v1
 metadata:
-  name: {{ .Release.Name }}-houston
+  name: {{ .Release.Name }}-houston-worker
   labels:
-    component: houston
+    component: houston-worker
     tier: astronomer
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
 spec:
-  replicas: {{ .Values.houston.replicas }}
+  replicas: {{ .Values.houston.worker.replicas }}
   selector:
     matchLabels:
       tier: astronomer
-      component: houston
+      component: houston-worker
       release: {{ .Release.Name }}
   template:
     metadata:
       labels:
         tier: astronomer
-        component: houston
+        component: houston-worker
         release: {{ .Release.Name }}
       annotations:
-        checksum/houston-config: {{ include (print $.Template.BasePath "/houston/houston-configmap.yaml") . | sha256sum }}
+        checksum/houston-config: {{ include (print $.Template.BasePath "/houston/api/houston-configmap.yaml") . | sha256sum }}
     spec:
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
@@ -49,6 +50,21 @@ spec:
 {{ toYaml .Values.houston.resources | indent 12 }}
           env:
             {{- include "houston_environment" . | indent 12 }}
+        - name: wait-for-nats-server
+          command:
+            - "dockerize"
+          args:
+            - "-wait"
+            - "tcp://astronomer-nats:4222"
+            - "-timeout"
+            - "1m"
+          image: astronomerinc/ap-base:3.12-1
+          imagePullPolicy: IfNotPresent
+          resources:
+{{ toYaml .Values.houston.resources | indent 12 }}
+          env:
+            - name: NATS__URL
+              value: nats://astronomer-nats:4222
         - name: houston-bootstrapper
           image: {{ template "dbBootstrapper.image" . }}
           imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
@@ -66,35 +82,22 @@ spec:
               value: {{ .Release.Namespace }}
             - name: IN_CLUSTER
               value: "true"
-      {{- end }}
+        {{- end }}
       containers:
         - name: houston
           image: {{ template "houston.image" . }}
           imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
+          args: ["yarn", "worker"]
           resources:
 {{ toYaml .Values.houston.resources | indent 12 }}
           volumeMounts:
             {{- include "houston_volume_mounts" . | indent 12 }}
-            {{- include "custom_ca_volume_mounts" . | indent 12 }}
-          ports:
-            - name: houston-http
-              containerPort: {{ .Values.ports.houstonHTTP }}
-          livenessProbe:
-            httpGet:
-              path: /v1/healthz
-              port: {{ .Values.ports.houstonHTTP }}
-            initialDelaySeconds: {{ .Values.houston.livenessProbe.initialDelaySeconds }}
-            periodSeconds: {{ .Values.houston.livenessProbe.periodSeconds }}
-            failureThreshold: {{ .Values.houston.livenessProbe.failureThreshold }}
-          readinessProbe:
-            httpGet:
-              path: /v1/healthz
-              port: {{ .Values.ports.houstonHTTP }}
-            initialDelaySeconds: {{ .Values.houston.readinessProbe.initialDelaySeconds }}
-            periodSeconds: {{ .Values.houston.readinessProbe.periodSeconds }}
-            failureThreshold: {{ .Values.houston.readinessProbe.failureThreshold }}
           env:
             {{- include "houston_environment" . | indent 12 }}
+            - name: NATS__URL
+              value: nats://astronomer-nats:4222
+            - name: NATS__CLUSTER_ID
+              value: astronomer-stan
             - name: APOLLO_SERVER_ID
               valueFrom:
                 fieldRef:
@@ -105,4 +108,4 @@ spec:
               value: "kubernetes/deployment"
       volumes:
         {{- include "houston_volumes" . | indent 8 }}
-        {{- include "custom_ca_volumes" . | indent 8 }}
+{{- end }}

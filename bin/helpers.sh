@@ -8,7 +8,7 @@ function get_debugging_info {
     echo "======================="
     set -x
     kubectl describe pod -n astronomer $pod
-    kubectl logs -n astronomer $pod | tail -n 30
+    kubectl logs -n astronomer $pod --all-containers=true | tail -n 30
     set +x
     echo "======================="
   done

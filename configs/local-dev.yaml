@@ -13,6 +13,7 @@ tags:
   keda: true
   kubed: true
   postgresql: true
+  nats: true
 
 global:
   # Base domain for all subdomains exposed through ingress
@@ -21,6 +22,7 @@ global:
   # Name of secret containing TLS certificate
   tlsSecret: astronomer-tls
   postgresqlEnabled: true
+  stanEnabled: true
 
   # Custom CA TLS certificates
   # Each secret must have one data entry 'cert.pem'
