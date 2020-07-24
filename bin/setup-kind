@@ -76,7 +76,7 @@ kubectl create namespace astronomer
 (
   cd "${REPO_DIR}"
   mkcert -cert-file=private-ca.pem -key-file=private-ca.key private-ca.example.org
-  kubectl --namespace astronomer create secret generic "private-ca" --from-file="cert.pem"="private-ca.pem"
+  kubectl --namespace astronomer create secret generic "private-ca" --from-file="cert.pem"="$(mkcert -CAROOT)/rootCA.pem"
 )
 
 echo "Installing TLS cert and private key"
