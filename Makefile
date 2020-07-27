@@ -100,7 +100,7 @@ push-repo:
 
 .PHONY: push-index
 push-index: build-index
-	gsutil cp ${OUTPUT}/index.yaml ${BUCKET}
+	gsutil -h "Cache-Control: public, max-age=300" cp ${OUTPUT}/index.yaml ${BUCKET}
 
 .PHONY: clean
 clean:
