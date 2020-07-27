@@ -104,7 +104,7 @@ process_and_release_chart_file() {
   helm repo index . --url "https://${target_repo}" --merge /tmp/index.yaml.current
 
   gsutil cp "$helm_chart_path" "gs://${target_repo}"
-  gsutil cp ./index.yaml "gs://${target_repo}"
+  gsutil -h "Cache-Control: public, max-age=300" cp ./index.yaml "gs://${target_repo}"
 
   set +x
   hr
