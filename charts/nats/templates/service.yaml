@@ -3,6 +3,12 @@ apiVersion: v1
 kind: Service
 metadata:
   name: {{ template "nats.name" . }}
+  annotations:
+  {{- if .Values.exporter.enabled }}
+    prometheus.io/path: "/metrics"
+    prometheus.io/port: "7777"
+    prometheus.io/scrape: "true"
+  {{- end }}
   labels:
     app: {{ template "nats.name" . }}
     chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
