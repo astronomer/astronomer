@@ -396,6 +396,8 @@ function main {
 
   git_clone_if_necessary
 
+  kubectl delete sts --cascade=false --namespace "$NAMESPACE" "${RELEASE}-es-master" "${RELEASE}-es-data" || true
+  sleep 5
   echo "Upgrading Astronomer... (1/4) converge Helm 3 labels"
   helm3 upgrade --namespace "$NAMESPACE" \
                --reset-values \
