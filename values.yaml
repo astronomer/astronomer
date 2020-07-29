@@ -8,6 +8,9 @@ global:
   # Name of secret containing TLS certificate
   tlsSecret: ~
 
+  # List of secrets containing private CA certificates
+  privateCaCerts: []
+
   # Use kube-lego
   acme: false
 

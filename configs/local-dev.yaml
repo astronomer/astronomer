@@ -24,6 +24,11 @@ global:
   postgresqlEnabled: true
   stanEnabled: true
 
+  # Custom CA TLS certificates
+  # Each secret must have one data entry 'cert.pem'
+  privateCaCerts:
+  - private-ca
+
 ############################
 ## Astronomer configuration
 ## Omit resouce requests
