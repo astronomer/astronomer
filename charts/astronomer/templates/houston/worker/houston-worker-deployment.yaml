@@ -55,7 +55,7 @@ spec:
             - "dockerize"
           args:
             - "-wait"
-            - "tcp://astronomer-nats:4222"
+            - "tcp://{{ .Release.Name }}-nats:4222"
             - "-timeout"
             - "1m"
           image: astronomerinc/ap-base:3.12-1
@@ -64,7 +64,7 @@ spec:
 {{ toYaml .Values.houston.resources | indent 12 }}
           env:
             - name: NATS__URL
-              value: nats://astronomer-nats:4222
+              value: nats://{{ .Release.Name }}-nats:4222
         - name: houston-bootstrapper
           image: {{ template "dbBootstrapper.image" . }}
           imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
@@ -95,9 +95,9 @@ spec:
           env:
             {{- include "houston_environment" . | indent 12 }}
             - name: NATS__URL
-              value: nats://astronomer-nats:4222
+              value: nats://{{ .Release.Name }}-nats:4222
             - name: NATS__CLUSTER_ID
-              value: astronomer-stan
+              value: {{ .Release.Name }}-stan
             - name: APOLLO_SERVER_ID
               valueFrom:
                 fieldRef:
