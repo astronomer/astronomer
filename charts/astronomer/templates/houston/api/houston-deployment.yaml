@@ -110,6 +110,10 @@ spec:
             failureThreshold: {{ .Values.houston.readinessProbe.failureThreshold }}
           env:
             {{- include "houston_environment" . | indent 12 }}
+            - name: NATS__URL
+              value: nats://{{ .Release.Name }}-nats:4222
+            - name: NATS__CLUSTER_ID
+              value: {{ .Release.Name }}-stan
             - name: APOLLO_SERVER_ID
               valueFrom:
                 fieldRef:
