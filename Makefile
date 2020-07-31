@@ -56,7 +56,7 @@ build:
 	rm -rf ${TEMP}/astronomer || true
 	mkdir -p ${TEMP}
 	cp -R ../astronomer ${TEMP}/astronomer || cp -R ../project ${TEMP}/astronomer
-	find ${TEMP}/astronomer/charts -name requirements.yaml -type f -printf '%h\n' | xargs -r -n1 helm dep update
+	find "${TEMP}/astronomer/charts" -name requirements.yaml -type f -printf '%h\0' | xargs -0 -r -n1 helm dep update
 	helm package ${TEMP}/astronomer
 
 .PHONY: build-index
