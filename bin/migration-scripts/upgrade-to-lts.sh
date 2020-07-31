@@ -27,7 +27,7 @@ function determine_helm_version {
 }
 
 function get_chart_version {
-  version_result=$(helm list "^${1}$" | grep "^${1}\b" | awk '{ print $(NF-2) }' | awk -F'-' '{ print $NF }')
+  version_result=$(helm list "^${1}$" | grep "^${1}\b" | awk '{ print $(9) }' | awk -F'-' '{ print $NF }')
 }
 
 # this is a temporary workaround
@@ -396,7 +396,7 @@ function main {
 
   git_clone_if_necessary
 
-  kubectl delete sts --cascade=false --namespace "$NAMESPACE" "${RELEASE}-es-master" "${RELEASE}-es-data" || true
+  kubectl delete sts --cascade=false --namespace "$NAMESPACE" "${RELEASE_NAME}-elasticsearch-master" "${RELEASE_NAME}-elasticsearch-data" || true
   sleep 5
   echo "Upgrading Astronomer... (1/4) converge Helm 3 labels"
   helm3 upgrade --namespace "$NAMESPACE" \
