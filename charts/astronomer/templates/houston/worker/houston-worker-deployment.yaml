@@ -98,6 +98,8 @@ spec:
               value: nats://{{ .Release.Name }}-nats:4222
             - name: NATS__CLUSTER_ID
               value: {{ .Release.Name }}-stan
+            - name: COMMANDER__ENABLED
+              value: "false"
             - name: APOLLO_SERVER_ID
               valueFrom:
                 fieldRef:
