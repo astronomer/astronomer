@@ -5,8 +5,6 @@ apiVersion: policy/v1beta1
 kind: PodSecurityPolicy
 metadata:
   name: {{ .Release.Name }}-restrictive
-# This is the "real" restrictive policy. 
-# Temporarily replaced by the the spec of the permissive policy
 spec:
   privileged: true # this should be false but pending changes in debian airflow image
   hostNetwork: false 
