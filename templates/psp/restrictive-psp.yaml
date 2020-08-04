@@ -9,7 +9,7 @@ spec:
   privileged: true # this should be false but pending changes in debian airflow image
   hostNetwork: false 
   allowPrivilegeEscalation: true # this should be false but pending changes in debian airflow image
-  defaultAllowPrivilegeEscalation: false
+  defaultAllowPrivilegeEscalation: true # this should be false but pending changes in debian airflow image
   hostPID: false
   hostIPC: false
   runAsUser:
