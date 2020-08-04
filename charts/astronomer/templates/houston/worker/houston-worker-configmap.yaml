@@ -1,0 +1,18 @@
+######################################
+## Astronomer Houston Worker ConfigMap
+######################################
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-houston-worker-config
+  labels:
+    component: houston-worker
+    tier: astronomer
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+data:
+  # These are system-specified config overrides.
+  production.yaml: |
+    commander:
+      enabled: false

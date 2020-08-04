@@ -126,7 +126,7 @@ houston:
 
   # Worker to connect to NATS
   worker:
-    enabled: false
+    enabled: true
     replicas: 2
 
   # Automatically upgrade Airflow deployments to the latest
