@@ -1,0 +1,40 @@
+---
+suite: Test blackbox-networkpolicies
+templates:
+  - blackbox-networkpolicies.yaml
+tests:
+  - it: should work
+    documentIndex: 0
+    asserts:
+      - isKind:
+          of: NetworkPolicy
+  - it: should work
+    documentIndex: 1
+    asserts:
+      - isKind:
+          of: NetworkPolicy
+  - it: should work
+    documentIndex: 2
+    asserts:
+      - isKind:
+          of: NetworkPolicy
+  - it: should work
+    documentIndex: 3
+    asserts:
+      - isKind:
+          of: NetworkPolicy
+  - it: should work
+    documentIndex: 4
+    asserts:
+      - isKind:
+          of: NetworkPolicy
+  - it: should work
+    documentIndex: 5
+    asserts:
+      - isKind:
+          of: NetworkPolicy
+  - it: should work
+    documentIndex: 6
+    asserts:
+      - isKind:
+          of: NetworkPolicy

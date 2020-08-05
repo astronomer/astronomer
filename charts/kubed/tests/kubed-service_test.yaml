@@ -1,0 +1,9 @@
+---
+suite: Test kubed-service
+templates:
+  - kubed-service.yaml
+tests:
+  - it: should work
+    asserts:
+      - isKind:
+          of: Service

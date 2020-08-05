@@ -1,0 +1,9 @@
+---
+suite: Test grafana-bootstrap-rolebinding
+templates:
+  - grafana-bootstrap-rolebinding.yaml
+tests:
+  - it: should work
+    asserts:
+      - isKind:
+          of: RoleBinding

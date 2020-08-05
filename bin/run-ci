@@ -1,16 +1,15 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC1090
 set -euo pipefail
 
-# Bit of common bash magic that sets DIR to the directory of this script
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-# The path to the working directory - the root of the repo
-REPO_DIR=$DIR/../
+BIN_DIR="${0%/*}"
+REPO_DIR="$(git rev-parse --show-toplevel)"
 
-source $REPO_DIR/bin/install-ci-tools 1
-export PATH=$PATH:/tmp/bin
+source "$REPO_DIR/bin/install-ci-tools" 1
+export PATH="$PATH:/tmp/bin"
 ls -lh /tmp/bin
 
-source $REPO_DIR/bin/setup-kind
+source "$REPO_DIR/bin/setup-kind"
 
 echo "Deploying Astronomer..."
 
@@ -21,26 +20,23 @@ echo "Deploying Astronomer..."
 kubectl get pods -n astronomer -w &
 WATCH_PID=$!
 
-$DIR/install-platform
+"$BIN_DIR/install-platform"
 
 sleep 5
 
-$DIR/waitfor-platform
+"$BIN_DIR/waitfor-platform"
 
-$DIR/setup-hosts
+"$BIN_DIR/setup-hosts"
 
-### Create initial user
-$DIR/create-initial-user "tester@astronomer.io" "password"
+"$BIN_DIR/create-initial-user" "tester@astronomer.io" "password"
 
 ### Test Platform
-$DIR/test-ap
-
-exit $?
+"$BIN_DIR/test-ap"
 
 # Test monitoring/alerting ingress - This is a stopgap until it can move in to full testing suite
 echo "Testing alertmanager ingress"
-curl -f -s -o /dev/null -H "Host: alertmanager.local.astronomer-development.com"  http://127.0.0.1/
+curl -f -s -o /dev/null -H "Host: alertmanager.local.astronomer-development.com" http://127.0.0.1/
 echo "Testing prometheus ingress"
-curl -f -s -o /dev/null -H "Host: prometheus.local.astronomer-development.com"  http://127.0.0.1/
+curl -f -s -o /dev/null -H "Host: prometheus.local.astronomer-development.com" http://127.0.0.1/
 
 sudo kill -9 $WATCH_PID

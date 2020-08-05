@@ -1,0 +1,9 @@
+---
+suite: Test alertmanager-service
+templates:
+  - alertmanager-service.yaml
+tests:
+  - it: should work
+    asserts:
+      - isKind:
+          of: Service

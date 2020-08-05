@@ -1,0 +1,9 @@
+---
+suite: Test kibana-deployment
+templates:
+  - kibana-deployment.yaml
+tests:
+  - it: should work
+    asserts:
+      - isKind:
+          of: Deployment

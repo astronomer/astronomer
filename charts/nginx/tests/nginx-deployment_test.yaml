@@ -1,0 +1,9 @@
+---
+suite: Test nginx-deployment
+templates:
+  - nginx-deployment.yaml
+tests:
+  - it: should work
+    asserts:
+      - isKind:
+          of: Deployment

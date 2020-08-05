@@ -1,0 +1,9 @@
+---
+suite: Test alertmanager-networkpolicy
+templates:
+  - alertmanager-networkpolicy.yaml
+tests:
+  - it: should work
+    asserts:
+      - isKind:
+          of: NetworkPolicy

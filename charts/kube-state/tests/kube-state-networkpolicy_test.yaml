@@ -1,0 +1,9 @@
+---
+suite: Test kube-state-networkpolicy
+templates:
+  - kube-state-networkpolicy.yaml
+tests:
+  - it: should work
+    asserts:
+      - isKind:
+          of: NetworkPolicy

@@ -1,0 +1,9 @@
+---
+suite: Test nginx-service
+templates:
+  - nginx-service.yaml
+tests:
+  - it: should work
+    asserts:
+      - isKind:
+          of: Service

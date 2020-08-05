@@ -1,0 +1,9 @@
+---
+suite: Test grafana-deployment
+templates:
+  - grafana-deployment.yaml
+tests:
+  - it: should work
+    asserts:
+      - isKind:
+          of: Deployment

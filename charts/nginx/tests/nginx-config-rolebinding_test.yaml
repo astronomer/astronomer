@@ -1,0 +1,9 @@
+---
+suite: Test nginx-config-rolebinding
+templates:
+  - nginx-config-rolebinding.yaml
+tests:
+  - it: should work
+    asserts:
+      - isKind:
+          of: RoleBinding
