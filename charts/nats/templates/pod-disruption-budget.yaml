@@ -9,6 +9,6 @@ spec:
   maxUnavailable: 1
   selector:
     matchLabels:
-      tier: logging
+      tier: astronomer
       component: {{ template "nats.name" . }}
       release: {{ .Release.Name }}
