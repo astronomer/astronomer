@@ -9,6 +9,6 @@ spec:
   maxUnavailable: 1
   selector:
     matchLabels:
-      tier: astronomer
+      tier: nats
       component: {{ template "stan.name" . }}
       release: {{ .Release.Name }}
