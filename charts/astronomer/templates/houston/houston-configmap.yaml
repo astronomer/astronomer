@@ -85,6 +85,12 @@ data:
         - version: 1.10.5
           channel: stable
           tag: 1.10.5-9-buster-onbuild
+        - version: 1.10.5
+          channel: stable
+          tag: 1.10.5-10-alpine3.10-onbuild
+        - version: 1.10.5
+          channel: stable
+          tag: 1.10.5-10-buster-onbuild
         - version: 1.10.7
           channel: stable
           tag: 1.10.7-alpine3.10-onbuild
@@ -127,6 +133,12 @@ data:
         - version: 1.10.7
           channel: stable
           tag: 1.10.7-13-buster-onbuild
+        - version: 1.10.7
+          channel: stable
+          tag: 1.10.7-14-alpine3.10-onbuild
+        - version: 1.10.7
+          channel: stable
+          tag: 1.10.7-14-buster-onbuild
         - version: 1.10.10
           channel: stable
           tag: 1.10.10-alpine3.10-onbuild
@@ -151,6 +163,12 @@ data:
         - version: 1.10.10
           channel: stable
           tag: 1.10.10-3-buster-onbuild
+        - version: 1.10.10
+          channel: stable
+          tag: 1.10.10-4-alpine3.10-onbuild
+        - version: 1.10.10
+          channel: stable
+          tag: 1.10.10-4-buster-onbuild
 
       # Kubernetes labels to add on each airflow deployment namespace
       namespaceLabels:
