@@ -1,0 +1,9 @@
+---
+suite: Test es-configmap
+templates:
+  - es-configmap.yaml
+tests:
+  - it: should work
+    asserts:
+      - isKind:
+          of: ConfigMap

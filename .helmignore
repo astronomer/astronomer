@@ -31,3 +31,5 @@ tiller-rbac
 /secrets/
 /test/
 /venv/
+tests
+charts/*/tests

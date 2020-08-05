@@ -1,0 +1,9 @@
+---
+suite: Test prometheus-statefulset
+templates:
+  - prometheus-statefulset.yaml
+tests:
+  - it: should work
+    asserts:
+      - isKind:
+          of: StatefulSet

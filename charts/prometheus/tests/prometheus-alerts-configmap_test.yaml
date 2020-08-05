@@ -1,0 +1,9 @@
+---
+suite: Test prometheus-alerts-configmap
+templates:
+  - prometheus-alerts-configmap.yaml
+tests:
+  - it: should work
+    asserts:
+      - isKind:
+          of: ConfigMap

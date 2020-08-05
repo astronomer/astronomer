@@ -1,0 +1,11 @@
+suite: Test commander-deployment
+templates:
+- commander/commander-deployment.yaml
+tests:
+- it: should work
+  asserts:
+    - isKind:
+        of: Deployment
+    - equal:
+        path: spec.template.spec.containers[0].image
+        value: astronomerinc/ap-commander:0.16.0

@@ -1,0 +1,9 @@
+---
+suite: Test fluentd-networkpolicy
+templates:
+  - fluentd-networkpolicy.yaml
+tests:
+  - it: should work
+    asserts:
+      - isKind:
+          of: NetworkPolicy
