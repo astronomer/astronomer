@@ -6,10 +6,12 @@ kind: PodDisruptionBudget
 metadata:
   name: {{ .Release.Name }}-houston-worker-pdb
 spec:
-  {{- if lt ( .Values.houston.worker.replicas | int ) 4 }}
-  maxUnavailable: 1
+  {{- if lt ( .Values.houston.worker.replicas | int ) 2 }}
+  minAvailable: 0
+  {{- else if lt ( .Values.houston.worker.replicas | int ) 4 }}
+  minAvailable: 1
   {{- else }}
-  maxUnavailable: {{ .Values.houston.worker.replicas.maxUnavailable }}
+  minAvailable: "25%"
   {{- end }}
   selector:
     matchLabels:
