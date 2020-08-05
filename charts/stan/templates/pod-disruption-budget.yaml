@@ -1,0 +1,14 @@
+##############################
+## STAN Pod Disruption Budget
+##############################
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ .Release.Name }}-stan-pdb
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      tier: astronomer
+      app: {{ template "stan.name" . }}
+      release: {{ .Release.Name }}
