@@ -30,7 +30,9 @@ spec:
       {{- end }}
       {{- end }}
       labels:
+        tier: astronomer
         app: {{ template "nats.name" . }}
+        release: {{ .Release.Name }}
         chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
     spec:
 {{- with .Values.imagePullSecrets }}

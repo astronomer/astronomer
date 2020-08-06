@@ -1,0 +1,14 @@
+##############################
+## NATS Pod Disruption Budget
+##############################
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ .Release.Name }}-nats-pdb
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      tier: astronomer
+      app: {{ template "nats.name" . }}
+      release: {{ .Release.Name }}

@@ -1,0 +1,9 @@
+---
+suite: Test kube-state-deployment
+templates:
+  - kube-state-deployment.yaml
+tests:
+  - it: should work
+    asserts:
+      - isKind:
+          of: Deployment

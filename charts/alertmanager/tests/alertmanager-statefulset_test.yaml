@@ -1,0 +1,9 @@
+---
+suite: Test alertmanager-statefulset
+templates:
+  - alertmanager-statefulset.yaml
+tests:
+  - it: should work
+    asserts:
+      - isKind:
+          of: StatefulSet

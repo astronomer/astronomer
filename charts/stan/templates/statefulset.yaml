@@ -30,7 +30,9 @@ spec:
       {{- end }}
       {{- end }}
       labels:
+        tier: astronomer
         app: {{ template "stan.name" . }}
+        release: {{ .Release.Name }}
         chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
     spec:
       {{- if .Values.stan.nats.serviceRoleAuth.enabled }}

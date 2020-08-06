@@ -1,0 +1,9 @@
+---
+suite: Test alertmanager-configmap
+templates:
+  - alertmanager-configmap.yaml
+tests:
+  - it: should work
+    asserts:
+      - isKind:
+          of: ConfigMap

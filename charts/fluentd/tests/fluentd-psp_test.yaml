@@ -1,0 +1,9 @@
+---
+suite: Test fluentd-psp
+templates:
+  - fluentd-psp.yaml
+tests:
+  - it: should work
+    asserts:
+      - isKind:
+          of: PodSecurityPolicy

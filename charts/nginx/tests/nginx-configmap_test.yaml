@@ -1,0 +1,9 @@
+---
+suite: Test nginx-configmap
+templates:
+  - nginx-configmap.yaml
+tests:
+  - it: should work
+    asserts:
+      - isKind:
+          of: ConfigMap

@@ -1,0 +1,9 @@
+---
+suite: Test kibana-pdb
+templates:
+  - kibana-pdb.yaml
+tests:
+  - it: should work
+    asserts:
+      - isKind:
+          of: PodDisruptionBudget

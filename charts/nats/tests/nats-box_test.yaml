@@ -1,0 +1,9 @@
+---
+suite: Test nats-box
+templates:
+  - nats-box.yaml
+tests:
+  - it: should work
+    asserts:
+      - isKind:
+          of: Service

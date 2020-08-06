@@ -1,0 +1,9 @@
+---
+suite: Test fluentd-psp-rolebinding
+templates:
+  - fluentd-psp-rolebinding.yaml
+tests:
+  - it: should work
+    asserts:
+      - isKind:
+          of: RoleBinding
