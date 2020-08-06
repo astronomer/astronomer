@@ -34,6 +34,9 @@ class ScanResult():
     def add_finding(self, finding):
         self.findings.append(finding)
 
+    def remove_finding(self, finding):
+        self.findings.remove(finding)
+
 class ScanTarget():
 
     def __init__(self, name, ip_address, _type, ports=[], namespace=None):
@@ -215,4 +218,11 @@ def test_network():
     network_assessment.collect_scan_targets()
     logging.info(f"Collected {len(network_assessment.targets)} scan targets")
     scan_result = network_assessment.scan_all_targets()
-    assert len(scan_result.findings) == 0
+    allow_list = ["pod/coredns-", "service/kube-dns", "service/kubernetes"]
+    for finding in scan_result.findings:
+        allowed = False
+        for allow in allow_list:
+            if allow in finding.name:
+                allowed = True
+        if not allowed:
+            raise Exception(f"Found {finding.name} has ports {finding.ports} open")
