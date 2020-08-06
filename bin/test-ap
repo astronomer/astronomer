@@ -6,6 +6,9 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 # The path to the working directory - the root of the repo
 REPO_DIR=$DIR/../
 
+kubectl create namespace astronomer-scan-test
+pytest $REPO_DIR/bin/network-security-test.py
+
 TESTING_VERSION="v0.0.1"
 
 # get testing repo

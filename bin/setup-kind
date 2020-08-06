@@ -36,7 +36,7 @@ set -xe
 # Delete the old cluster, if it exists
 kind delete cluster || true
 
-KIND_OPTIONS=( --image "kindest/node:${KUBE_VERSION}" )
+KIND_OPTIONS=( --config "${REPO_DIR}/bin/kind/calico.yaml" --image "kindest/node:${KUBE_VERSION}" )
 if [[ -n "${MULTI_NODE+x}" ]]; then
   KIND_OPTIONS+=( --config "$REPO_DIR/bin/kind/multi-node.yaml" )
 fi
@@ -64,6 +64,11 @@ if [[ -n "${CORDON_NODE+x}" ]]; then
 fi
 
 kubectl get nodes
+
+echo "Installing Calico into Kind so that network policies work"
+# https://github.com/kubernetes-sigs/kind/issues/842#issuecomment-554775260
+kubectl apply -f https://docs.projectcalico.org/v3.8/manifests/calico.yaml
+kubectl -n kube-system set env daemonset/calico-node FELIX_IGNORELOOSERPF=true
 
 echo "Install requirements"
 cd "$REPO_DIR/charts/postgresql"

@@ -108,6 +108,7 @@ class KubernetesNetworkChecker():
                              metadata=v1objectmeta)
         logging.info(
             f"Creating {pod_name} pod in namespace {namespace}")
+        # --as=system:serviceaccount:astronomer:default
         pod = self.v1.create_namespaced_pod(namespace, v1pod)
         # allow pod to become 'Pending'
         sleep(2)
@@ -133,7 +134,7 @@ class KubernetesNetworkChecker():
         finally:
             logging.info(
                 f"Cleaning up network-scanner pod from namespace {namespace}")
-            # self.v1.delete_namespaced_pod(v1pod.metadata.name, namespace)
+            self.v1.delete_namespaced_pod(v1pod.metadata.name, namespace)
 
     def scan_all_targets(self):
         # Configure API key authorization: BearerToken

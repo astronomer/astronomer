@@ -1,4 +1,5 @@
 .DS_Store
+*.key
 config.yaml
 config.yml
 dev-config.yaml
