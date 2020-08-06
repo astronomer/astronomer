@@ -23,7 +23,14 @@ spec:
           matchLabels:
             release: {{ .Release.Name }}
             tier: astronomer
-            component: prisma
+      - podSelector:
+          matchLabels:
+            release: {{ .Release.Name }}
+            component: grafana
+      - podSelector:
+          matchLabels:
+            release: {{ .Release.Name }}
+            app: prometheus-postgres-exporter
       - podSelector:
           matchLabels:
             {{ template "postgresql.fullname" . }}-client: "true"

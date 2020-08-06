@@ -56,6 +56,8 @@ astronomer:
         memory: "0Mi"
   houston:
     replicas: 1
+    worker:
+      replicas: 1
     resources:
       requests:
         cpu: "0m"
