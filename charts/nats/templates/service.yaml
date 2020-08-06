@@ -17,7 +17,11 @@ spec:
     tier: astronomer
     app: {{ template "nats.name" . }}
     release: {{ .Release.Name }}
+  # Only use headless service in the case
+  # of clustered mode
+  {{- if .Values.cluster.enabled }}
   clusterIP: None
+  {{- end }}
   ports:
   - name: client
     port: 4222

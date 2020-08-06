@@ -1,0 +1,49 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ .Release.Name }}-nats-policy
+  labels:
+    tier: astronomer
+    component: nats-policy
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+spec:
+  podSelector:
+    matchLabels:
+      tier: astronomer
+      app: {{ template "nats.name" . }}
+      release: {{ .Release.Name }}
+  policyTypes:
+  - Ingress
+  ingress:
+  # We allow ingress to all NATs ports
+  # from the Astronomer tier.
+  # This is not the minimum required access.
+  - from:
+    - podSelector:
+        matchLabels:
+          tier: astronomer
+          release: {{ .Release.Name }}
+    ports:
+    - protocol: TCP
+      port: 4222
+    - protocol: TCP
+      port: 6222
+    - protocol: TCP
+      port: 7422
+    - protocol: TCP
+      port: 7522
+    - protocol: TCP
+      port: 8222
+    - protocol: TCP
+      port: 7777
+  # We allow ingress to metrics
+  # from monitoring
+  - from:
+    - podSelector:
+        matchLabels:
+          tier: monitoring
+          release: {{ .Release.Name }}
+    ports:
+    - protocol: TCP
+      port: 7777
