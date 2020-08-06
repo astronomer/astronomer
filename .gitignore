@@ -7,6 +7,7 @@ dev-config.yaml
 certs
 /secrets
 test-*
+*__pycache__*
 
 # IDEs
 .idea/
