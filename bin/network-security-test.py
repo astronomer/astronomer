@@ -218,7 +218,11 @@ def test_network():
     network_assessment.collect_scan_targets()
     logging.info(f"Collected {len(network_assessment.targets)} scan targets")
     scan_result = network_assessment.scan_all_targets()
-    allow_list = ["pod/coredns-", "service/kube-dns", "service/kubernetes"]
+    allow_list = ["pod/coredns-",
+                  "service/kube-dns",
+                  "service/kubernetes",
+                  "service/astronomer-prometheus-node-exporter",
+                  "pod/astronomer-prometheus-node-exporter"]
     for finding in scan_result.findings:
         allowed = False
         for allow in allow_list:
