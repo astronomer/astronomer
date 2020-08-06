@@ -26,7 +26,7 @@ while [ $RC -eq 0 ]; do
     echo "Error (timeout): giving up after $MAX_SECONDS seconds"
   else
     sleep 10
-    kubectl get pods -n astronomer > /tmp/pods
+    kubectl get pods --all-namespaces > /tmp/pods
     if [ ! $? -eq 0 ];then
       echo "kubectl get pods timed out. retrying."
       continue
@@ -42,7 +42,7 @@ done
 
 # Output debugging information
 if [ $HELM_CODE -eq 0 ]; then
-  echo "Astronomer deployed!"
+  echo "pods are all ready!"
 else
   get_debugging_info
 fi

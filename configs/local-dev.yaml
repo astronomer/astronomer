@@ -29,6 +29,20 @@ global:
   privateCaCerts:
   - private-ca
 
+nats:
+  cluster:
+    enabled: false
+    replicas: 1
+  resources: {}
+
+stan:
+  stan:
+    replicas: 1
+  store:
+    cluster:
+      enabled: false
+  resources: {}
+
 ############################
 ## Astronomer configuration
 ## Omit resouce requests
