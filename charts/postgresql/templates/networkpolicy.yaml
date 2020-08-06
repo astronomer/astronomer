@@ -21,6 +21,11 @@ spec:
       from:
       - podSelector:
           matchLabels:
+            release: {{ .Release.Name }}
+            tier: astronomer
+            component: prisma
+      - podSelector:
+          matchLabels:
             {{ template "postgresql.fullname" . }}-client: "true"
       - podSelector:
           matchLabels:
