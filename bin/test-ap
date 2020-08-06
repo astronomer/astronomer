@@ -8,6 +8,7 @@ REPO_DIR=$DIR/../
 
 pyenv global 3.8.2
 pip install --user pytest testinfra kubernetes
+export PATH=/home/circleci/.local/bin:$PATH
 kubectl create namespace astronomer-scan-test
 pytest $REPO_DIR/bin/network-security-test.py
 
