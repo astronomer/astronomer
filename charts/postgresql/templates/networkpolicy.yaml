@@ -29,6 +29,9 @@ spec:
             component: grafana
       - podSelector:
           matchLabels:
+            component: pgbouncer
+      - podSelector:
+          matchLabels:
             release: {{ .Release.Name }}
             app: prometheus-postgres-exporter
       - podSelector:
