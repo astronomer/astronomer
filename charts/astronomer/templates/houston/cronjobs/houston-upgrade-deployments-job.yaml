@@ -8,7 +8,7 @@ metadata:
   name: {{ .Release.Name }}-houston-upgrade-deployments
   labels:
     tier: astronomer
-    component: houston
+    component: houston-upgrader
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
