@@ -18,7 +18,6 @@ echo "Deploying Astronomer..."
 
 # This is so CI does not timeout on "no input in 10 minutes"
 kubectl get pods -n astronomer -w &
-WATCH_PID=$!
 
 "$BIN_DIR/install-platform"
 
@@ -39,4 +38,4 @@ curl -f -s -o /dev/null -H "Host: alertmanager.local.astronomer-development.com"
 echo "Testing prometheus ingress"
 curl -f -s -o /dev/null -H "Host: prometheus.local.astronomer-development.com" http://127.0.0.1/
 
-sudo kill -9 $WATCH_PID
+kill %1
