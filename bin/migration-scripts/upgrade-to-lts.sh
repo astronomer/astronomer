@@ -283,13 +283,13 @@ function helm2_to_3 {
   if [ "${#RELEASES_TO_UPGRADE[@]}" -gt 0 ]; then
     echo "Non zero Airflow and Astronomer releases on Helm 2. Performing Helm 2 to Helm 3 upgrade procedure"
     echo "Scaling down ingress so nobody can access Astronomer, this avoids race conditions of the upgrade process against customer activity"
-    kubectl scale --replicas=0 -n $NAMESPACE deployment/$RELEASE_NAME-nginx
+    kubectl scale --replicas=0 -n "$NAMESPACE" "deployment/${RELEASE_NAME}-nginx"
     echo "Scaling down commander, this ensures that old commander can't be used during the upgrade procedure"
-    kubectl scale --replicas=0 -n $NAMESPACE deployment/$RELEASE_NAME-commander
+    kubectl scale --replicas=0 -n "$NAMESPACE" "deployment/${RELEASE_NAME}-commander"
     echo "Upgrading releases"
     # Upgrade the releases
     for release in "${RELEASES_TO_UPGRADE[@]}" ; do
-      helm3 2to3 convert --tiller-ns "$TILLER_NAMESPACE" --delete-v2-releases $release
+      helm3 2to3 convert --tiller-ns "$TILLER_NAMESPACE" --delete-v2-releases "$release"
       fail_with "Failed to convert $release from helm 2 to helm 3, please read the above helm log"
     done
   fi
