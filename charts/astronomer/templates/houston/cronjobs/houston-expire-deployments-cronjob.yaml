@@ -20,7 +20,7 @@ spec:
         metadata:
           labels:
             tier: astronomer
-            component: houston
+            component: houston-expire-deployments
             release: {{ .Release.Name }}
           {{- if .Values.global.istio.enabled }}
           annotations:
