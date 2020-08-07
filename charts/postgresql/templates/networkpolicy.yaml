@@ -30,6 +30,7 @@ spec:
       - podSelector:
           matchLabels:
             component: pgbouncer
+        namespaceSelector: {}
       - podSelector:
           matchLabels:
             release: {{ .Release.Name }}
