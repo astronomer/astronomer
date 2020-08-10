@@ -21,7 +21,7 @@ rules:
   verbs: ["create", "delete", "get", "list", "patch", "update", "watch"]
 - apiGroups: ["keda.k8s.io"]
   resources: ["scaledobjects"]
-  verbs: ["get", "create"]
+  verbs: ["get", "create", "delete"]
 - apiGroups: [""]
   resources: ["secrets"]
   verbs: ["create", "delete", "deletecollection", "get", "list", "patch", "update", "watch"]
