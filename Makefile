@@ -26,7 +26,7 @@ lint-venv:
 lint-prep:
 	rm -rf ${TEMP}/astronomer || true
 	mkdir -p ${TEMP}
-	cp -R ../astronomer ${TEMP}/astronomer || cp -R ../project ${TEMP}/astronomer
+	cp -R . ${TEMP}/astronomer
 
 .PHONY: lint-astro
 lint-astro:
@@ -60,8 +60,8 @@ build:
 	helm repo add kedacore https://kedacore.github.io/charts
 	rm -rf ${TEMP}/astronomer || true
 	mkdir -p ${TEMP}
-	cp -R ../astronomer ${TEMP}/astronomer || cp -R ../project ${TEMP}/astronomer
-	find "${TEMP}/astronomer/charts" -name requirements.yaml -type f -printf '%h\0' | xargs -0 -r -n1 helm dep update
+	cp -R . ${TEMP}/astronomer
+	find "${TEMP}/astronomer/charts" -name requirements.yaml -type f -print | while read -r FILE ; do ( set -x ; cd `dirname $$FILE` && helm dep update ; ) ; done ;
 	helm package ${TEMP}/astronomer
 
 .PHONY: build-index
