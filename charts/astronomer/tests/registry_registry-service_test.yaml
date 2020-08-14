@@ -1,0 +1,8 @@
+suite: Test registry/registry-service.yaml
+templates:
+- registry/registry-service.yaml
+tests:
+- it: should work
+  asserts:
+    - isKind:
+        of: Service

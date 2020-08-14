@@ -1,0 +1,8 @@
+suite: Test houston/api/houston-pod-disruption-budget.yaml
+templates:
+- houston/api/houston-pod-disruption-budget.yaml
+tests:
+- it: should work
+  asserts:
+    - isKind:
+        of: PodDisruptionBudget

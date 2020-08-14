@@ -1,0 +1,8 @@
+suite: Test prisma/prisma-bootstrap-rolebinding.yaml
+templates:
+- prisma/prisma-bootstrap-rolebinding.yaml
+tests:
+- it: should work
+  asserts:
+    - isKind:
+        of: RoleBinding

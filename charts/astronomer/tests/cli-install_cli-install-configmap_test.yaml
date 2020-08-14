@@ -1,0 +1,8 @@
+suite: Test cli-install/cli-install-configmap.yaml
+templates:
+- cli-install/cli-install-configmap.yaml
+tests:
+- it: should work
+  asserts:
+    - isKind:
+        of: ConfigMap

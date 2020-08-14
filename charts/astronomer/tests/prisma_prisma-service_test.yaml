@@ -1,0 +1,8 @@
+suite: Test prisma/prisma-service.yaml
+templates:
+- prisma/prisma-service.yaml
+tests:
+- it: should work
+  asserts:
+    - isKind:
+        of: Service

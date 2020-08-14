@@ -1,0 +1,8 @@
+suite: Test cli-install/cli-install-service.yaml
+templates:
+- cli-install/cli-install-service.yaml
+tests:
+- it: should work
+  asserts:
+    - isKind:
+        of: Service

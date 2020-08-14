@@ -1,0 +1,8 @@
+suite: Test houston/api/houston-deployment.yaml
+templates:
+- houston/api/houston-deployment.yaml
+tests:
+- it: should work
+  asserts:
+    - isKind:
+        of: Deployment

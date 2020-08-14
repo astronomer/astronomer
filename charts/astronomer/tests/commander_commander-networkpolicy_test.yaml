@@ -1,0 +1,8 @@
+suite: Test commander/commander-networkpolicy.yaml
+templates:
+- commander/commander-networkpolicy.yaml
+tests:
+- it: should work
+  asserts:
+    - isKind:
+        of: NetworkPolicy

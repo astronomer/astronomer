@@ -1,0 +1,8 @@
+suite: Test commander/commander-rolebinding.yaml
+templates:
+- commander/commander-rolebinding.yaml
+tests:
+- it: should work
+  asserts:
+    - isKind:
+        of: ClusterRoleBinding
