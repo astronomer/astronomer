@@ -1,6 +1,6 @@
 #!/bin/bash
 
-TILLER_NAMESPACE=kube-system
+: "${TILLER_NAMESPACE:=kube-system}"
 
 backup_dir=helm-values-backup
 
