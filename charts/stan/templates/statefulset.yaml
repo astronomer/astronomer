@@ -80,6 +80,8 @@ spec:
           args:
           - -sc
           - /etc/stan-config/stan.conf
+          resources:
+{{ toYaml .Values.stan.resources | indent 12 }}
           env:
           - name: POD_NAME
             valueFrom:

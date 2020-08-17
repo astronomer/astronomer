@@ -1,0 +1,17 @@
+---
+suite: Test container resources
+templates:
+  - statefulset.yaml
+tests:
+  - it: is only one resource
+    asserts:
+      - hasDocuments:
+          count: 1
+  - it: should have resources specified on the container
+    asserts:
+      - isNotEmpty:
+          path: spec.template.spec.containers[0].resources
+  - it: if another container is added, a test should also be added
+    asserts:
+      - isNull:
+          path: spec.template.spec.containers[1]

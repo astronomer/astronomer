@@ -8,6 +8,15 @@ stan:
   pullPolicy: IfNotPresent
   replicas: 3
 
+  resources: {}
+  #  limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  #  requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+
   # Cluster name, generated into a name from the
   # release name by default.
   clusterID:

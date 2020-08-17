@@ -103,9 +103,9 @@ spec:
       {{- end }}
 
       {{- if .Values.leafnodes.enabled }}
-      # 
+      #
       # Leafnode credential volumes
-      # 
+      #
       {{- range .Values.leafnodes.remotes }}
       {{- with .credentials }}
       - name: {{ .secret.name }}-volume
@@ -206,9 +206,9 @@ spec:
           {{- end }}
 
           {{- if .Values.leafnodes.enabled }}
-          # 
+          #
           # Leafnode credential volumes
-          # 
+          #
           {{- range .Values.leafnodes.remotes }}
           {{- with .credentials }}
           - name: {{ .secret.name }}-volume
@@ -216,7 +216,8 @@ spec:
           {{- end }}
           {{- end }}
           {{- end }}
-
+        resources:
+{{ toYaml .Values.nats.resources | indent 10 }}
         # Liveness/Readiness probes against the monitoring.
         #
         livenessProbe:

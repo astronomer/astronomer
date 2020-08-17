@@ -19,6 +19,14 @@ nats:
   # to a client that has no activity.
   pingInterval:
 
+  resources: {}
+  #  limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  #  requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
   # Server settings.
   limits:
     maxConnections:
@@ -94,11 +102,11 @@ leafnodes:
   #  TLS Configuration  #
   #                     #
   #######################
-  # 
+  #
   #  # You can find more on how to setup and trouble shoot TLS connnections at:
-  # 
+  #
   #  # https://docs.nats.io/nats-server/configuration/securing_nats/tls
-  # 
+  #
 
   #
   # tls:
@@ -130,9 +138,9 @@ gateway:
   #  TLS Configuration  #
   #                     #
   #######################
-  # 
+  #
   #  # You can find more on how to setup and trouble shoot TLS connnections at:
-  # 
+  #
   #  # https://docs.nats.io/nats-server/configuration/securing_nats/tls
   #
   # tls:
@@ -141,11 +149,11 @@ gateway:
   #   ca: "ca.crt"
   #   cert: "tls.crt"
   #   key: "tls.key"
-  
+
 # NATS Box
 #
 # https://github.com/nats-io/nats-box
-# 
+#
 natsbox:
   enabled: false
 
@@ -180,14 +188,14 @@ auth:
   #   #                          #
   #   ##############################
   #   # type: memory
-  #   # 
+  #   #
   #   # Use a configmap reference which will be mounted
   #   # into the container.
-  #   # 
+  #   #
   #   # configMap:
   #   #   name: nats-accounts
   #   #   key: resolver.conf
-  #  
+  #
   #   ##########################
   #   #                        #
   #   #  URL resolver settings #
