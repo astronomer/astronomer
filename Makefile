@@ -43,6 +43,8 @@ lint-astro:
 .ONESHELL:
 lint-charts:
 	set -eu
+	# Check that nothing accidentally is using release name instead of namespace for metadata.namespace
+	! helm template --namespace samplenamespace samplerelease . | grep 'namespace: samplerelease'
 	# get a copy of the global values for helm lint'n the dependent charts
 	python3 -c "import yaml; from pathlib import Path; globals = {'global': yaml.safe_load(Path('${TEMP}/astronomer/values.yaml').read_text())['global']}; Path('${TEMP}/globals.yaml').write_text(yaml.dump(globals))"
 	for chart in $$(ls ${TEMP}/astronomer/charts); do

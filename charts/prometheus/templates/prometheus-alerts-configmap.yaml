@@ -908,8 +908,8 @@ data:
 
         - alert: ContainerMemoryNearTheLimit
           expr: |
-            (container_memory_working_set_bytes{namespace="{{ .Release.Name }}", container_name!="POD"} /
-            container_spec_memory_limit_bytes{namespace="{{ .Release.Name }}", container_name!="POD"}) * 100 > 80 < +Inf
+            (container_memory_working_set_bytes{namespace="{{ .Release.Namespace }}", container_name!="POD"} /
+            container_spec_memory_limit_bytes{namespace="{{ .Release.Namespace }}", container_name!="POD"}) * 100 > 80 < +Inf
           for: 1h
           labels:
             tier: platform
