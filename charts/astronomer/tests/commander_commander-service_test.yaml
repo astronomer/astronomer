@@ -1,0 +1,8 @@
+suite: Test commander/commander-service.yaml
+templates:
+- commander/commander-service.yaml
+tests:
+- it: should work
+  asserts:
+    - isKind:
+        of: Service

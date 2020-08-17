@@ -207,6 +207,8 @@ data:
           # This is here for upgrading to 0.11.1+ of Airflow.
           keda:
             enabled: false
+            namespaceLabels:
+              name: {{ .Release.Name }}
 
           # This is here for upgrading to 0.11.2+ of Airflow.
           safeToEvict: true

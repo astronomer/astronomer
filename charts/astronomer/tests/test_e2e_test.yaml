@@ -1,0 +1,8 @@
+suite: Test test/e2e.yaml
+templates:
+- test/e2e.yaml
+tests:
+- it: should work
+  asserts:
+    - isKind:
+        of: Pod

@@ -1,0 +1,8 @@
+suite: Test houston/cronjobs/houston-cleanup-deployments-cronjob.yaml
+templates:
+- houston/cronjobs/houston-cleanup-deployments-cronjob.yaml
+tests:
+- it: should work
+  asserts:
+    - isKind:
+        of: CronJob
