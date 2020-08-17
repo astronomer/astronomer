@@ -264,6 +264,8 @@ spec:
             mountPath: /etc/nats-config
           - name: pid
             mountPath: /var/run/nats
+        resources:
+{{ toYaml .Values.reloader.resources | indent 10 }}
       {{ end }}
 
       ##############################
@@ -286,4 +288,6 @@ spec:
         ports:
         - containerPort: 7777
           name: metrics
+        resources:
+{{ toYaml .Values.exporter.resources | indent 10 }}
       {{ end }}

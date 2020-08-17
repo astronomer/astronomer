@@ -127,6 +127,8 @@ spec:
         {{ if .Values.exporter.enabled }}
         - name: metrics
           image: {{ .Values.exporter.image }}
+          resources:
+{{ toYaml .Values.exporter.resources | indent 12 }}
           args:
           - -connz
           - -routez
