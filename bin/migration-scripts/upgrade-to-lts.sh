@@ -301,7 +301,7 @@ function interactive_confirmation {
   echo "Is tiller in the namespace $TILLER_NAMESPACE ?"
   read -r -p "(y/n) " CONT
   if ! [ "$CONT" = "y" ]; then
-    echo "Please modify the TILLER_NAMESPACE environment variable at the top of the script."
+    echo "Please modify the TILLER_NAMESPACE environment variable"
     exit 1
   fi
   read -r -p "Are you using single-namespace mode (where airflow and astronomer all in same namespace? (y/n) " CONT
