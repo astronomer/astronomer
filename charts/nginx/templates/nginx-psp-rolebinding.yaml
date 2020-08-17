@@ -6,7 +6,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: {{ .Release.Name }}-psp-ingress-nginx
-  namespace: {{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -14,5 +14,5 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: {{ template "nginx.fullname" . }}
-  namespace: {{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
 {{- end -}}
