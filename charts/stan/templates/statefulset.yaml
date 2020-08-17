@@ -80,6 +80,8 @@ spec:
           args:
           - -sc
           - /etc/stan-config/stan.conf
+          resources:
+{{ toYaml .Values.stan.resources | indent 12 }}
           env:
           - name: POD_NAME
             valueFrom:
@@ -125,6 +127,8 @@ spec:
         {{ if .Values.exporter.enabled }}
         - name: metrics
           image: {{ .Values.exporter.image }}
+          resources:
+{{ toYaml .Values.exporter.resources | indent 12 }}
           args:
           - -connz
           - -routez
