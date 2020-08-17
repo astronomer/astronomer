@@ -1,0 +1,8 @@
+suite: Test astro-ui/astro-ui-service.yaml
+templates:
+- astro-ui/astro-ui-service.yaml
+tests:
+- it: should work
+  asserts:
+    - isKind:
+        of: Service
