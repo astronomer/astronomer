@@ -27,4 +27,7 @@ tests:
           pattern: '.*\.my-release\..*'
       - notMatchRegex:
           path: data.config
+          pattern: '.*\.my-release:.*'
+      - notMatchRegex:
+          path: data.config
           pattern: '[^\^]+my-namespace-.*'
