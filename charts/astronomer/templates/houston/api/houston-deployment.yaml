@@ -49,8 +49,6 @@ spec:
 {{ toYaml .Values.houston.resources | indent 12 }}
           env:
             {{- include "houston_environment" . | indent 12 }}
-            - name: NATS__URL
-              value: nats://{{ .Release.Name }}-nats:4222
         - name: houston-bootstrapper
           image: {{ template "dbBootstrapper.image" . }}
           imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
