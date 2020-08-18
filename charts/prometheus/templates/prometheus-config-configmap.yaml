@@ -12,7 +12,7 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 data:
-  prometheus.yaml: |-
+  config: |-
     global:
       scrape_interval: 30s
       evaluation_interval: 30s
