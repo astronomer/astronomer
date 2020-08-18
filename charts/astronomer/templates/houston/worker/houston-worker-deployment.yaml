@@ -50,21 +50,6 @@ spec:
 {{ toYaml .Values.houston.resources | indent 12 }}
           env:
             {{- include "houston_environment" . | indent 12 }}
-        - name: wait-for-nats-server
-          command:
-            - "dockerize"
-          args:
-            - "-wait"
-            - "tcp://{{ .Release.Name }}-nats:4222"
-            - "-timeout"
-            - "1m"
-          image: astronomerinc/ap-base:3.12-1
-          imagePullPolicy: IfNotPresent
-          resources:
-{{ toYaml .Values.houston.resources | indent 12 }}
-          env:
-            - name: NATS__URL
-              value: nats://{{ .Release.Name }}-nats:4222
         - name: houston-bootstrapper
           image: {{ template "dbBootstrapper.image" . }}
           imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
