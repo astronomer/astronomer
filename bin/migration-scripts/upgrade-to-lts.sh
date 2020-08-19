@@ -1,5 +1,7 @@
 #!/bin/bash
 
+: "${TILLER_NAMESPACE:=kube-system}"
+
 backup_dir=helm-values-backup
 
 function fail_with {
@@ -264,7 +266,7 @@ function helm2_to_3 {
   HELM2_RELEASES=()
   while IFS='' read -r line ; do
     HELM2_RELEASES+=("$line")
-  done < <(kubectl get secret,configmap -n kube-system -l "OWNER=TILLER" -o name |
+  done < <(kubectl get secret,configmap -n "$TILLER_NAMESPACE" -l "OWNER=TILLER" -o name |
     grep -v 'No resources' |
     cut -d '.' -f1 |
     cut -d '/' -f2 |
@@ -281,13 +283,13 @@ function helm2_to_3 {
   if [ "${#RELEASES_TO_UPGRADE[@]}" -gt 0 ]; then
     echo "Non zero Airflow and Astronomer releases on Helm 2. Performing Helm 2 to Helm 3 upgrade procedure"
     echo "Scaling down ingress so nobody can access Astronomer, this avoids race conditions of the upgrade process against customer activity"
-    kubectl scale --replicas=0 -n $NAMESPACE deployment/$RELEASE_NAME-nginx
+    kubectl scale --replicas=0 -n "$NAMESPACE" "deployment/${RELEASE_NAME}-nginx"
     echo "Scaling down commander, this ensures that old commander can't be used during the upgrade procedure"
-    kubectl scale --replicas=0 -n $NAMESPACE deployment/$RELEASE_NAME-commander
+    kubectl scale --replicas=0 -n "$NAMESPACE" "deployment/${RELEASE_NAME}-commander"
     echo "Upgrading releases"
     # Upgrade the releases
     for release in "${RELEASES_TO_UPGRADE[@]}" ; do
-      helm3 2to3 convert --delete-v2-releases $release
+      helm3 2to3 convert --tiller-ns "$TILLER_NAMESPACE" --delete-v2-releases "$release"
       fail_with "Failed to convert $release from helm 2 to helm 3, please read the above helm log"
     done
   fi
@@ -296,6 +298,12 @@ function helm2_to_3 {
 function interactive_confirmation {
   echo
   echo
+  echo "Is tiller in the namespace $TILLER_NAMESPACE ?"
+  read -r -p "(y/n) " CONT
+  if ! [ "$CONT" = "y" ]; then
+    echo "Please modify the TILLER_NAMESPACE environment variable"
+    exit 1
+  fi
   read -r -p "Are you using single-namespace mode (where airflow and astronomer all in same namespace? (y/n) " CONT
   if [ "$CONT" = "y" ]; then
     echo "This script does not work with single namespace mode. Please contact Astronomer support"
@@ -424,6 +432,7 @@ function main {
                --set astronomer.houston.cleanupDeployments.enabled=false \
                --set astronomer.houston.upgradeDeployments.enabled=false \
                --set astronomer.airflowChartVersion="$UPGRADE_TO_VERSION_AIRFLOW" \
+               --set astronomer.houston.config.deployments.chart.version="$UPGRADE_TO_VERSION_AIRFLOW" \
                --set astronomer.houston.regenerateCaEachUpgrade=true \
               "$RELEASE_NAME" \
               astronomer/astronomer
@@ -461,6 +470,7 @@ function main {
                 --set astronomer.houston.cleanupDeployments.enabled=false \
                 --set astronomer.houston.upgradeDeployments.enabled=true \
                 --set astronomer.airflowChartVersion="$UPGRADE_TO_VERSION_AIRFLOW" \
+                --set astronomer.houston.config.deployments.chart.version="$UPGRADE_TO_VERSION_AIRFLOW" \
                 --set astronomer.houston.regenerateCaEachUpgrade=false \
                 "$RELEASE_NAME" \
                 astronomer/astronomer
@@ -470,7 +480,7 @@ function main {
   echo "Done! Please contact Astronomer support if any issues are detected."
   echo
   echo "Please install the new CLI:"
-  echo "curl -sSL https://install.astronomer.io | sudo bash -s -- v$UPGRADE_TO_VERSION"
+  echo "curl -sSL https://install.astronomer.io | sudo bash -s -- v0.16.1"
   echo
   echo "You may choose to upgrade Airflow versions by changing your Dockerfile, for example:"
   echo "FROM astronomerinc/ap-airflow:1.10.10-alpine3.10-onbuild"
