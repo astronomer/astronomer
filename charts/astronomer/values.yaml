@@ -5,7 +5,7 @@
 # This version number controls the default Airflow chart version that will be installed
 # when creating a new deployment in the system. This is also used to ensure all
 # child airflow deployments are kept up to date and on the latest version.
-airflowChartVersion: 0.15.4
+airflowChartVersion: 0.17.0-rc.1
 
 nodeSelector: {}
 affinity: {}
@@ -15,7 +15,7 @@ tolerations: []
 images:
   commander:
     repository: astronomerinc/ap-commander
-    tag: 0.16.0
+    tag: 0.18.0
     pullPolicy: IfNotPresent
   registry:
     repository: astronomerinc/ap-registry
@@ -23,11 +23,11 @@ images:
     pullPolicy: IfNotPresent
   houston:
     repository: astronomerinc/ap-houston-api
-    tag: 0.17.0
+    tag: 0.18.1
     pullPolicy: IfNotPresent
   astroUI:
     repository: astronomerinc/ap-astro-ui
-    tag: 0.17.1
+    tag: 0.18.0
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: astronomerinc/ap-db-bootstrapper
@@ -126,7 +126,7 @@ houston:
 
   # Worker to connect to NATS
   worker:
-    enabled: false
+    enabled: true
     replicas: 2
 
   # Automatically upgrade Airflow deployments to the latest
@@ -260,7 +260,7 @@ registry:
 
 install:
   resources: {}
-  cliVersion: 0.16.1
+  cliVersion: 0.18.0
   #  limits:
   #   cpu: 100m
   #   memory: 128Mi

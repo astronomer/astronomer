@@ -1,0 +1,8 @@
+suite: Test houston/api/houston-bootstrap-role.yaml
+templates:
+- houston/api/houston-bootstrap-role.yaml
+tests:
+- it: should work
+  asserts:
+    - isKind:
+        of: Role

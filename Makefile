@@ -14,7 +14,7 @@ TEMP := /tmp/${DOMAIN}
 
 
 .PHONY: lint
-lint: lint-prep lint-astro lint-charts 
+lint: lint-prep lint-astro lint-charts
 #lint-prom (omitted)
 
 .PHONY: lint-venv
@@ -26,14 +26,21 @@ lint-venv:
 lint-prep:
 	rm -rf ${TEMP}/astronomer || true
 	mkdir -p ${TEMP}
-	cp -R ../astronomer ${TEMP}/astronomer || cp -R ../project ${TEMP}/astronomer
+	cp -R . ${TEMP}/astronomer
 
 .PHONY: lint-astro
 lint-astro:
 	helm lint ${TEMP}/astronomer
 
+.PHONY: unittest-charts
+unittest-charts:
+	helm plugin install https://github.com/quintush/helm-unittest >/dev/null || true
+	helm unittest -3 .
+
 .PHONY: lint-charts
 lint-charts:
+	# Check that nothing accidentally is using release name instead of namespace for metadata.namespace
+	! helm template --namespace samplenamespace samplerelease . | grep 'namespace: samplerelease'
 	# get a copy of the global values for helm lint'n the dependent charts
 	python3 -c "import yaml; from pathlib import Path; globals = {'global': yaml.safe_load(Path('${TEMP}/astronomer/values.yaml').read_text())['global']}; Path('${TEMP}/globals.yaml').write_text(yaml.dump(globals))"
 	find "${TEMP}/astronomer/charts" -mindepth 1 -maxdepth 1 -print0 | xargs -0 -n1 helm lint -f ${TEMP}/globals.yaml
@@ -44,7 +51,7 @@ lint-prom:
 	helm template -s ${TEMP}/astronomer/charts/prometheus/templates/prometheus-alerts-configmap.yaml ${TEMP}/astronomer > ${TEMP}/prometheus_alerts.yaml
 	# Parse the alerts.yaml data from the config map resource
 	python3 -c "import yaml; from pathlib import Path; alerts = yaml.safe_load(Path('${TEMP}/prometheus_alerts.yaml').read_text())['data']['alerts.yaml']; Path('${TEMP}/prometheus_alerts.yaml').write_text(alerts)"
-	promtool check rules  ${TEMP}/prometheus_alerts.yaml
+	promtool check rules ${TEMP}/prometheus_alerts.yaml
 
 .PHONY: lint-clean
 lint-clean:
@@ -55,8 +62,8 @@ build:
 	helm repo add kedacore https://kedacore.github.io/charts
 	rm -rf ${TEMP}/astronomer || true
 	mkdir -p ${TEMP}
-	cp -R ../astronomer ${TEMP}/astronomer || cp -R ../project ${TEMP}/astronomer
-	find "${TEMP}/astronomer/charts" -name requirements.yaml -type f -printf '%h\0' | xargs -0 -r -n1 helm dep update
+	cp -R . ${TEMP}/astronomer
+	find "${TEMP}/astronomer/charts" -name requirements.yaml -type f -print | while read -r FILE ; do ( set -x ; cd `dirname $$FILE` && helm dep update ; ) ; done ;
 	helm package ${TEMP}/astronomer
 
 .PHONY: build-index

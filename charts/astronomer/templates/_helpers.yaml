@@ -237,6 +237,8 @@ s3:
   value: {{ .Release.Name }}-registry
 - name: REGISTRY__PORT
   value: {{ .Values.ports.registryHTTP | quote }}
+- name: NATS__URL
+  value: nats://{{ .Release.Name }}-nats:4222
 {{- end }}
 
 {{- define "houston_volume_mounts" }}

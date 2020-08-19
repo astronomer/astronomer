@@ -1,0 +1,9 @@
+---
+suite: Test es-psp-clusterrole
+templates:
+  - es-psp-clusterrole.yaml
+tests:
+  - it: should work
+    asserts:
+      - isKind:
+        of: ClusterRole

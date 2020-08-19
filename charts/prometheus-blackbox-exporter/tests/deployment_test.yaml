@@ -1,0 +1,9 @@
+---
+suite: Test deployment
+templates:
+  - deployment.yaml
+tests:
+  - it: should work
+    asserts:
+      - isKind:
+          of: Deployment

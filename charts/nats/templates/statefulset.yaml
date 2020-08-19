@@ -30,7 +30,9 @@ spec:
       {{- end }}
       {{- end }}
       labels:
+        tier: astronomer
         app: {{ template "nats.name" . }}
+        release: {{ .Release.Name }}
         chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
     spec:
 {{- with .Values.imagePullSecrets }}
@@ -101,9 +103,9 @@ spec:
       {{- end }}
 
       {{- if .Values.leafnodes.enabled }}
-      # 
+      #
       # Leafnode credential volumes
-      # 
+      #
       {{- range .Values.leafnodes.remotes }}
       {{- with .credentials }}
       - name: {{ .secret.name }}-volume
@@ -204,9 +206,9 @@ spec:
           {{- end }}
 
           {{- if .Values.leafnodes.enabled }}
-          # 
+          #
           # Leafnode credential volumes
-          # 
+          #
           {{- range .Values.leafnodes.remotes }}
           {{- with .credentials }}
           - name: {{ .secret.name }}-volume
@@ -214,7 +216,8 @@ spec:
           {{- end }}
           {{- end }}
           {{- end }}
-
+        resources:
+{{ toYaml .Values.nats.resources | indent 10 }}
         # Liveness/Readiness probes against the monitoring.
         #
         livenessProbe:
@@ -261,6 +264,8 @@ spec:
             mountPath: /etc/nats-config
           - name: pid
             mountPath: /var/run/nats
+        resources:
+{{ toYaml .Values.reloader.resources | indent 10 }}
       {{ end }}
 
       ##############################
@@ -283,4 +288,6 @@ spec:
         ports:
         - containerPort: 7777
           name: metrics
+        resources:
+{{ toYaml .Values.exporter.resources | indent 10 }}
       {{ end }}

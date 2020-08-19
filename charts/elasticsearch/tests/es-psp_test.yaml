@@ -1,0 +1,9 @@
+---
+suite: Test es-psp
+templates:
+  - es-psp.yaml
+tests:
+  - it: should work
+    asserts:
+      - isKind:
+          of: PodSecurityPolicy

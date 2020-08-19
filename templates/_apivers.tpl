@@ -10,9 +10,9 @@ apps/v1
 
 {{- define "apiVersion.Deployment.16" -}}
 {{- if semverCompare "^1.16-0" .Capabilities.KubeVersion.Version }}
- apps/v1
+apps/v1
 {{- else }}
- apps/v1beta2
+apps/v1beta2
 {{- end }}
 {{- end -}}
 

@@ -1,0 +1,9 @@
+---
+suite: Test nginx-role
+templates:
+  - nginx-role.yaml
+tests:
+  - it: should work
+    asserts:
+      - isKind:
+          of: ClusterRole

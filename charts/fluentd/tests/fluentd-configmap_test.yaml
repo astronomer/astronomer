@@ -1,0 +1,9 @@
+---
+suite: Test fluentd-configmap
+templates:
+  - fluentd-configmap.yaml
+tests:
+  - it: should work
+    asserts:
+      - isKind:
+          of: ConfigMap

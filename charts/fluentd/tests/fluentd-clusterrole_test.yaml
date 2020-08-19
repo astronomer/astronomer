@@ -1,0 +1,9 @@
+---
+suite: Test fluentd-clusterrole
+templates:
+  - fluentd-clusterrole.yaml
+tests:
+  - it: should work
+    asserts:
+      - isKind:
+          of: ClusterRole

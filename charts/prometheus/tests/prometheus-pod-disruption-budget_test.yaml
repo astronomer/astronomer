@@ -1,0 +1,9 @@
+---
+suite: Test prometheus-pod-disruption-budget
+templates:
+  - prometheus-pod-disruption-budget.yaml
+tests:
+  - it: should work
+    asserts:
+      - isKind:
+          of: PodDisruptionBudget

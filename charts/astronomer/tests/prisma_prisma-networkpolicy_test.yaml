@@ -1,0 +1,8 @@
+suite: Test prisma/prisma-networkpolicy.yaml
+templates:
+- prisma/prisma-networkpolicy.yaml
+tests:
+- it: should work
+  asserts:
+    - isKind:
+        of: NetworkPolicy

@@ -1,0 +1,8 @@
+suite: Test cli-install/cli-install-networkpolicy.yaml
+templates:
+- cli-install/cli-install-networkpolicy.yaml
+tests:
+- it: should work
+  asserts:
+    - isKind:
+        of: NetworkPolicy

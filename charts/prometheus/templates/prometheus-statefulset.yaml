@@ -95,7 +95,7 @@ spec:
           configMap:
             name: {{ template "prometheus.fullname" . }}-config
             items:
-              - key: prometheus.yaml
+              - key: config
                 path: prometheus.yaml
         - name: alert-volume
           configMap:
