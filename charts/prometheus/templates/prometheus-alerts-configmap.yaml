@@ -108,6 +108,9 @@ data:
 
       - name: platform
         rules:
+        {{- if .Values.additionalAlerts.platform }}
+        {{- tpl .Values.additionalAlerts.platform $ | nindent 8 }}
+        {{- end }}
         - alert: AirflowOperatorFailureRate
           expr: 100 * (sum by (operator) (increase(airflow_operator_failures{operator=~"([A-Z][a-z0-9]+)(([0-9])|([A-Z0-9][a-z0-9]+))*([A-Z])?Operator"}[1h])) / (sum by (operator) (increase(airflow_operator_successes{operator=~"([A-Z][a-z0-9]+)(([0-9])|([A-Z0-9][a-z0-9]+))*([A-Z])?Operator"}[1h])) + sum by (operator) (increase(airflow_operator_failures{operator=~"([A-Z][a-z0-9]+)(([0-9])|([A-Z0-9][a-z0-9]+))*([A-Z])?Operator"}[1h])))) > 50
           for: 2h
