@@ -18,3 +18,7 @@ Resolves astronomer/issues#XXXX
 ## 📸 Screenshots
 
 > Add screenshots to illustrate the changes, if applicable
+
+## 📋 Checklist
+
+- [ ] The PR title is informative to the user experience
