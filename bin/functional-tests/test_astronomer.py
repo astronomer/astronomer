@@ -15,14 +15,14 @@ import testinfra
 import docker
 
 def test_prometheus_user(prometheus):
-    """ Ensure Airflow is in PATH
+    """ Ensure user is 'nobody'
     """
     user = prometheus.check_output('whoami')
     assert user == "nobody", \
         f"Expected prometheus to be running as 'nobody', not '{user}'"
 
 def test_prometheus_targets(prometheus):
-    """ Ensure Airflow is in PATH
+    """ Ensure all Prometheus targets are healthy
     """
     data = prometheus.check_output("wget -qO- http://localhost:9090/api/v1/targets")
     targets = json.loads(data)['data']['activeTargets']
@@ -31,7 +31,7 @@ def test_prometheus_targets(prometheus):
             'Expected all prometheus targets to be up. ' + \
             'Please check the "targets" view in the Prometheus UI'
 
-# Create a test fixture for the promtheus pod
+# Create a test fixture for the prometheus pod
 @pytest.fixture(scope='session')
 def prometheus(request):
     """ This is the host fixture for testinfra. To read more, please see
