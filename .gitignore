@@ -25,3 +25,4 @@ dev-account.json
 temp.sh
 
 /venv/
+**pycache**
