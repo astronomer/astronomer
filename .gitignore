@@ -6,7 +6,6 @@ dev-config.yaml
 **kubeconfig**
 certs
 /secrets
-test-*
 
 # IDEs
 .idea/
@@ -25,3 +24,4 @@ dev-account.json
 temp.sh
 
 /venv/
+**pycache**

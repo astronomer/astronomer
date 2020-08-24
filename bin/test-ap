@@ -6,6 +6,17 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 # The path to the working directory - the root of the repo
 REPO_DIR=$DIR/../
 
+pip3 install virtualenv
+virtualenv --python=python3 /tmp/venv
+source /tmp/venv/bin/activate
+pip install -r $REPO_DIR/bin/functional-tests/requirements.txt
+export NAMESPACE=astronomer
+export RELEASE_NAME=astronomer
+pytest $REPO_DIR/bin/functional-tests/
+deactivate
+
+# TODO: below this is legacy e2e tests that will be replaced
+
 TESTING_VERSION="v0.0.1"
 
 # get testing repo
