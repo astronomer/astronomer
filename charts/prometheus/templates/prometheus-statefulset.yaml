@@ -101,7 +101,7 @@ spec:
           configMap:
             name: {{ template "prometheus.fullname" . }}-alerts
             items:
-              - key: alerts.yaml
+              - key: alerts
                 path: alerts.yaml
   {{- if not .Values.persistence.enabled }}
         - name: data

@@ -70,7 +70,7 @@ dnsTargets:
   - 10.98.0.10
 
 # Blackbox exporter tcp probe configuration
-# Currently is only configured to scape two targets 
+# Currently is only configured to scape two targets
 # listed below. To disable the probe and all of the targets
 # set tcpProbe.enabled to false.
 tcpProbe:
@@ -83,3 +83,21 @@ tcpProbe:
 # Enable prometheus lifecycle api
 enableLifecycle: true
 
+additionalAlerts:
+  # Additional rules for the 'platform' alert group
+  # Provide as a block string in yaml list form
+  platform: ~
+  # Additional rules for the 'airflow' alert group
+  # Provide as a block string in yaml list form
+  airflow: ~
+# Example:
+# airflow: |
+#   - alert: MyExampleAlert
+#     # If greater than 10% task failure
+#     expr: 100 * sum(increase(airflow_ti_failures[30m])) /  (sum(increase(airflow_ti_failures[30m])) + sum(increase(airflow_ti_successes[30m]))) > 10
+#     for: 15m
+#     labels:
+#       tier: airflow
+#     annotations:
+#       summary: "The Astronomer Helm release {{ .Release.Name }} is failing task instances {{ printf \"%.2f\" $value }}% of the time over the past 30 minutes"
+#       description: Task instances failing above threshold

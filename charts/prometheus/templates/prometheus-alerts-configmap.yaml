@@ -22,10 +22,13 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 data:
-  alerts.yaml: |-
+  alerts: |-
     groups:
       - name: airflow
         rules:
+        {{- if .Values.additionalAlerts.airflow }}
+        {{- tpl .Values.additionalAlerts.airflow $ | nindent 8 }}
+        {{- end }}
         - alert: AirflowDeploymentUnhealthy
           expr: sum by(release) (kube_pod_container_status_running{container=~".*(scheduler|scheduler-gc|webserver|worker|statsd|pgbouncer|metrics-exporter|redis|flower)"}) - count by(release) (kube_pod_container_status_running{container=~".*(scheduler|scheduler-gc|webserver|worker|statsd|pgbouncer|metrics-exporter|redis|flower)"}) < 0
           for: 15m # Rough number but should be enough to clear deployments with a reasonable amount of workers
@@ -105,6 +108,9 @@ data:
 
       - name: platform
         rules:
+        {{- if .Values.additionalAlerts.platform }}
+        {{- tpl .Values.additionalAlerts.platform $ | nindent 8 }}
+        {{- end }}
         - alert: AirflowOperatorFailureRate
           expr: 100 * (sum by (operator) (increase(airflow_operator_failures{operator=~"([A-Z][a-z0-9]+)(([0-9])|([A-Z0-9][a-z0-9]+))*([A-Z])?Operator"}[1h])) / (sum by (operator) (increase(airflow_operator_successes{operator=~"([A-Z][a-z0-9]+)(([0-9])|([A-Z0-9][a-z0-9]+))*([A-Z])?Operator"}[1h])) + sum by (operator) (increase(airflow_operator_failures{operator=~"([A-Z][a-z0-9]+)(([0-9])|([A-Z0-9][a-z0-9]+))*([A-Z])?Operator"}[1h])))) > 50
           for: 2h
@@ -1456,7 +1462,7 @@ data:
         - alert: NumberOfNodesHigh
           expr: count(kube_node_info) >= 60
           for: 10m
-          labels: 
+          labels:
             severity: critical
             tier: platform
           annotations:

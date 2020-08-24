@@ -58,8 +58,8 @@ lint-prom:
 	# Lint the Prometheus alerts configuration
 	helm template -s ${TEMP}/astronomer/charts/prometheus/templates/prometheus-alerts-configmap.yaml ${TEMP}/astronomer > ${TEMP}/prometheus_alerts.yaml
 	# Parse the alerts.yaml data from the config map resource
-	python3 -c "import yaml; from pathlib import Path; alerts = yaml.safe_load(Path('${TEMP}/prometheus_alerts.yaml').read_text())['data']['alerts.yaml']; Path('${TEMP}/prometheus_alerts.yaml').write_text(alerts)"
-	promtool check rules  ${TEMP}/prometheus_alerts.yaml
+	python3 -c "import yaml; from pathlib import Path; alerts = yaml.safe_load(Path('${TEMP}/prometheus_alerts.yaml').read_text())['data']['alerts']; Path('${TEMP}/prometheus_alerts.yaml').write_text(alerts)"
+	promtool check rules ${TEMP}/prometheus_alerts.yaml
 
 .PHONY: lint-clean
 .ONESHELL:
