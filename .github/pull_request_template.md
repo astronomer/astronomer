@@ -15,6 +15,8 @@ Resolves astronomer/issues#XXXX
 
 > Please add helm unit testing if possible
 
+> You also have the option to add system / config testing [here](../bin/functional-tests)
+
 ## 📸 Screenshots
 
 > Add screenshots to illustrate the changes, if applicable
