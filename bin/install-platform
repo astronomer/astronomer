@@ -88,8 +88,8 @@ helm ${ACTION} \
   --set tags.kubed=${kubed} \
   --set global.postgresqlEnabled=${postgresql} \
   --set tags.keda=${keda} \
+  --set astronomer.houston.upgradeDeployments.enabled=true \
   $HELM_CHART_PATH
-
 
 if [ ! $? -eq 0 ]; then
   set +x

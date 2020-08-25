@@ -25,6 +25,15 @@ spec:
         matchLabels:
           tier: astronomer
           release: {{ .Release.Name }}
+          component: houston-upgrader
+    ports:
+    - protocol: TCP
+      port: {{ .Values.ports.commanderGRPC }}
+  - from:
+    - podSelector:
+        matchLabels:
+          tier: astronomer
+          release: {{ .Release.Name }}
           component: houston
     ports:
     - protocol: TCP
@@ -37,7 +46,7 @@ spec:
           component: houston-worker
     ports:
     - protocol: TCP
-      port: {{ .Values.ports.commanderGRPC }}      
+      port: {{ .Values.ports.commanderGRPC }}
   - from:
     - podSelector:
         matchLabels:
