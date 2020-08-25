@@ -33,6 +33,15 @@ spec:
     - podSelector:
         matchLabels:
           tier: astronomer
+          component: houston-upgrader
+          release: {{ .Release.Name }}
+    ports:
+    - protocol: TCP
+      port: {{ .Values.ports.prismaHTTP }}
+  - from:
+    - podSelector:
+        matchLabels:
+          tier: astronomer
           component: houston-worker
           release: {{ .Release.Name }}
     ports:
