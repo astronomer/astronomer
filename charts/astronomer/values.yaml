@@ -27,7 +27,7 @@ images:
     pullPolicy: IfNotPresent
   astroUI:
     repository: astronomerinc/ap-astro-ui
-    tag: 0.19.1
+    tag: 0.19.2
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: astronomerinc/ap-db-bootstrapper
