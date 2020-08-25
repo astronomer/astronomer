@@ -79,10 +79,6 @@ spec:
             {{- include "houston_volume_mounts" . | indent 12 }}
           env:
             {{- include "houston_environment" . | indent 12 }}
-            - name: NATS__SERVERS
-              value: {{ template "houston.nats.servers" . }}
-            - name: NATS__CLUSTER_ID
-              value: {{ .Release.Name }}-stan
             - name: APOLLO_SERVER_ID
               valueFrom:
                 fieldRef:
