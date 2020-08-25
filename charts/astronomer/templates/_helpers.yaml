@@ -239,6 +239,8 @@ s3:
   value: {{ .Values.ports.registryHTTP | quote }}
 - name: NATS__SERVERS
   value: {{ template "houston.nats.servers" . }}
+- name: NATS__CLUSTER_ID
+  value: {{ .Release.Name }}-stan
 {{- end }}
 
 {{- define "houston_volume_mounts" }}
