@@ -304,3 +304,12 @@ s3:
 {{- end }}
 {{- end }}
 {{- end }}
+
+{{- define "houston.nats.servers"}}
+{{- $ns := dict "servers" (list) -}}
+{{- $name := printf "%s-nats" .Release.Name -}}
+{{- range $i, $e := until (.Values.global.natsReplicas | int) -}}
+{{- $noop := printf "\"%s-%d.%s.%s.svc:4222\"" $name $i $name $.Release.Namespace | append $ns.servers | set $ns "servers" -}}
+{{- end }}
+{{- printf "'[%s]'" (join "," $ns.servers) -}}
+{{- end }}
