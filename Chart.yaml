@@ -84,12 +84,12 @@ dependencies:
 
   # Nats-server
   - name: nats
-    condition: global.natsEnabled
+    condition: global.nats.enabled
     tags:
       - nats
 
   # Nats-streaming
   - name: stan
-    condition: global.stanEnabled
+    condition: global.stan.enabled
     tags:
       - stan

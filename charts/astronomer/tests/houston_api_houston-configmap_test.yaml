@@ -1,6 +1,6 @@
 suite: Test houston/api/houston-configmap.yaml
 templates:
-- houston/api/houston-configmap.yaml
+- houston/houston-configmap.yaml
 tests:
 - it: should work
   asserts:

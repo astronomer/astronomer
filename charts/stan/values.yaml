@@ -6,7 +6,6 @@
 stan:
   image: astronomerinc/ap-nats-streaming:0.18.0
   pullPolicy: IfNotPresent
-  replicas: 3
 
   resources: {}
   #  limits:

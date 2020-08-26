@@ -22,7 +22,8 @@ global:
   # Name of secret containing TLS certificate
   tlsSecret: astronomer-tls
   postgresqlEnabled: true
-  stanEnabled: true
+  stan:
+    enabled: true
 
   # Custom CA TLS certificates
   # Each secret must have one data entry 'cert.pem'
