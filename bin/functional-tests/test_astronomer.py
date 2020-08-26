@@ -45,6 +45,10 @@ def test_houston_config(houston_api):
         f"Did not expect to find 'url' configured for 'nats'. Found:\n\n{houston_config['nats']}"
     assert len(houston_config['nats']['servers']), \
         f"Expected to find 'servers' configured for 'nats'. Found:\n\n{houston_config['nats']}"
+    for server in houston_config['nats']:
+        assert 'localhost' not in server, \
+            f"Expected not to find 'localhost' in the 'servers' configuration. Found:\n\n{houston_config['nats']}"
+
 
 def test_prometheus_targets(prometheus):
     """ Ensure all Prometheus targets are healthy
