@@ -6,3 +6,33 @@ tests:
   asserts:
     - isKind:
         of: Deployment
+- it: should work with 0 nats servers
+  set:
+    houston.nats.servers: {}
+  not: true
+  assert:
+    contains:
+      path: containers.env.name
+      content:
+        name: NATS__SERVERS
+- it: should work with 1 nats server
+  set:
+    houston.nats.servers:
+      - nats://foo1
+  assert:
+    contains:
+      path: containers.env.name
+      content:
+        name: NATS__SERVERS
+        value: '["nats://foo1"]'
+- it: should work with 2 nats servers
+  set:
+    houston.nats.servers:
+      - nats://foo1
+      - nast://foo2
+  assert:
+    contains:
+      path: containers.env.name
+      content:
+        name: NATS__SERVERS
+        value: '["nats://foo1","nats://foo2"]'

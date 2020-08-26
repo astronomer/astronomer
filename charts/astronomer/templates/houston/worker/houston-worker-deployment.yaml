@@ -26,7 +26,7 @@ spec:
         component: houston-worker
         release: {{ .Release.Name }}
       annotations:
-        checksum/houston-config: {{ include (print $.Template.BasePath "/houston/worker/houston-worker-configmap.yaml") . | sha256sum }}
+        checksum/houston-config: {{ include (print $.Template.BasePath "/houston/houston-configmap.yaml") . | sha256sum }}
     spec:
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
@@ -79,10 +79,6 @@ spec:
             {{- include "houston_volume_mounts" . | indent 12 }}
           env:
             {{- include "houston_environment" . | indent 12 }}
-            - name: NATS__URL
-              value: nats://{{ .Release.Name }}-nats:4222
-            - name: NATS__CLUSTER_ID
-              value: {{ .Release.Name }}-stan
             - name: APOLLO_SERVER_ID
               valueFrom:
                 fieldRef:

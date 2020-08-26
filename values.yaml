@@ -50,10 +50,14 @@ global:
   kedaEnabled: false
 
   # Used to enable nats-server
-  natsEnabled: true
+  nats:
+    enabled: true
+    replicas: 3
 
   # Used to enable nats-streaming
-  stanEnabled: true
+  stan:
+    enabled: true
+    replicas: 3
 
   # If PodSecurityPolicies (PSP) should be enabled
   pspEnabled: false
