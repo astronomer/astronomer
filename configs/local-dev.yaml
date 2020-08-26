@@ -22,7 +22,11 @@ global:
   # Name of secret containing TLS certificate
   tlsSecret: astronomer-tls
   postgresqlEnabled: true
+  nats:
+    replicas: 3
+    enabled: true
   stan:
+    replicas: 3
     enabled: true
 
   # Custom CA TLS certificates
