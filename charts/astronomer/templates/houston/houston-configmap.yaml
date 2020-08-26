@@ -15,7 +15,7 @@ data:
   # These are system-specified config overrides.
   production.yaml: |
     nats:
-      url: nats://{{ .Release.Name }}-nats:4222
+      servers: {{ template "houston.nats.servers" . }}
     webserver:
       port: {{ .Values.ports.houstonHTTP }}
 
