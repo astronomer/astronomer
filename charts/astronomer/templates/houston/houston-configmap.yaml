@@ -14,8 +14,6 @@ metadata:
 data:
   # These are system-specified config overrides.
   production.yaml: |
-    nats:
-      url: nats://{{ .Release.Name }}-nats:4222
     webserver:
       port: {{ .Values.ports.houstonHTTP }}
 

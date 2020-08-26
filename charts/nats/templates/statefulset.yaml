@@ -11,7 +11,7 @@ spec:
     matchLabels:
       app: {{ template "nats.name" . }}
   {{- if .Values.cluster.enabled }}
-  replicas: {{ .Values.cluster.replicas }}
+  replicas: {{ .Values.global.nats.replicas }}
   {{- else }}
   replicas: 1
   {{- end }}

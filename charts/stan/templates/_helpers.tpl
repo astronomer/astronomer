@@ -9,13 +9,13 @@ Expand the name of the chart.
 Return the list of peers in a NATS Streaming cluster.
 */}}
 {{- define "stan.clusterPeers" -}}
-{{- range $i, $e := until (int $.Values.stan.replicas) -}}
+{{- range $i, $e := until (int $.Values.global.stan.replicas) -}}
 {{- printf "'%s-%d'," (include "stan.name" $) $i -}}
 {{- end -}}
 {{- end }}
 
 {{- define "stan.replicaCount" -}}
-{{- $replicas := (int $.Values.stan.replicas) -}}
+{{- $replicas := (int $.Values.global.stan.replicas) -}}
 {{- if and $.Values.store.cluster.enabled (lt $replicas 3) -}}
 {{- $replicas = "" -}}
 {{- end -}}

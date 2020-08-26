@@ -237,8 +237,10 @@ s3:
   value: {{ .Release.Name }}-registry
 - name: REGISTRY__PORT
   value: {{ .Values.ports.registryHTTP | quote }}
-- name: NATS__URL
-  value: nats://{{ .Release.Name }}-nats:4222
+- name: NATS__SERVERS
+  value: {{ template "houston.nats.servers" . }}
+- name: NATS__CLUSTER_ID
+  value: {{ .Release.Name }}-stan
 {{- end }}
 
 {{- define "houston_volume_mounts" }}
@@ -303,4 +305,13 @@ s3:
     secretName: {{ . }}
 {{- end }}
 {{- end }}
+{{- end }}
+
+{{- define "houston.nats.servers"}}
+{{- $ns := dict "servers" (list) -}}
+{{- $name := printf "%s-nats" .Release.Name -}}
+{{- range $i, $e := until (.Values.global.nats.replicas | int) -}}
+{{- $noop := printf "\"%s-%d.%s.%s.svc:4222\"" $name $i $name $.Release.Namespace | append $ns.servers | set $ns "servers" -}}
+{{- end }}
+{{- printf "'[%s]'" (join "," $ns.servers) -}}
 {{- end }}
