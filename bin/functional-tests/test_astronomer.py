@@ -60,6 +60,32 @@ def test_prometheus_targets(prometheus):
             'Expected all prometheus targets to be up. ' + \
             'Please check the "targets" view in the Prometheus UI'
 
+def test_houston_upgrader_commander_connection(houston_upgrader):
+    """ Test that the houston upgrader can connect to commander
+    """
+    houston_upgrader.check_output("nc -zv ${ASTRONOMER_COMMANDER_SERVICE_HOST}:${COMMANDER__PORT}")
+
+@pytest.fixture(scope='session')
+def houston_upgrader(request):
+    """ This is the host fixture for testinfra. To read more, please see
+    the testinfra documentation:
+    https://testinfra.readthedocs.io/en/latest/examples.html#test-docker-images
+    """
+    namespace = os.environ.get('NAMESPACE')
+    release_name = os.environ.get('RELEASE_NAME')
+    if not namespace:
+        print("NAMESPACE env var is not present, using 'astronomer' namespace")
+        namespace = 'astronomer'
+    if not release_name:
+        print("RELEASE_NAME env var is not present, assuming 'astronomer' is the release name")
+        release_name = 'astronomer'
+    kube = create_kube_client()
+    pods = kube.list_namespaced_pod(namespace, label_selector=f"component=houston-upgrader")
+    pods = pods.items
+    assert len(pods) > 0, "Expected to find at least one pod with label 'component: houston-upgrader'"
+    pod = pods[0]
+    yield testinfra.get_host(f'kubectl://{pod.metadata.name}?container=post-upgrade-job&namespace={namespace}')
+
 # Create a test fixture for the prometheus pod
 @pytest.fixture(scope='session')
 def houston_api(request):
@@ -70,8 +96,8 @@ def houston_api(request):
     namespace = os.environ.get('NAMESPACE')
     release_name = os.environ.get('RELEASE_NAME')
     if not namespace:
-        print("NAMESPACE env var is not present, using 'default' namespace")
-        namespace = 'default'
+        print("NAMESPACE env var is not present, using 'astronomer' namespace")
+        namespace = 'astronomer'
     if not release_name:
         print("RELEASE_NAME env var is not present, assuming 'astronomer' is the release name")
         release_name = 'astronomer'
@@ -92,8 +118,8 @@ def prometheus(request):
     namespace = os.environ.get('NAMESPACE')
     release_name = os.environ.get('RELEASE_NAME')
     if not namespace:
-        print("NAMESPACE env var is not present, using 'default' namespace")
-        namespace = 'default'
+        print("NAMESPACE env var is not present, using 'astronomer' namespace")
+        namespace = 'astronomer'
     if not release_name:
         print("RELEASE_NAME env var is not present, assuming 'astronomer' is the release name")
         release_name = 'astronomer'

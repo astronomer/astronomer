@@ -139,6 +139,14 @@ houston:
     # Only run on deployments marked as canary
     canary: false
 
+    # This configuration is available to set the entrypoint
+    # in the upgrader to 'sleep infinity', such that the pod
+    # will hang around during integration testing instead of
+    # finishing and cleaning itself up. This will help out
+    # in testing so we can connect into the pod and make
+    # various assertions about the environment.
+    sleepForeverNoUpgrade: false
+
   # Expire deployments that have gone past trial date in Houston
   # This runs as a CronJob
   expireDeployments:

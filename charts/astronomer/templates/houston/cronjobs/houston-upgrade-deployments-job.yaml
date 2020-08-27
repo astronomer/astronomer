@@ -12,12 +12,16 @@ metadata:
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+  {{- if not .Values.houston.upgradeDeployments.sleepForeverNoUpgrade }}
+  # In the case of test mode, we do not want to wait on this as a hook,
+  # but just create it and move on.
   annotations:
     # This is what defines this resource as a hook. Without this line, the
     # job is considered part of the release.
     "helm.sh/hook": post-upgrade,post-install
     "helm.sh/hook-weight": "1"
     "helm.sh/hook-delete-policy": before-hook-creation
+  {{- end }}
 spec:
   completions: 1
   parallelism: 1
@@ -45,7 +49,11 @@ spec:
           image: {{ template "houston.image" . }}
           imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
           # If you supply only args for a Container, the default Entrypoint defined in the Docker image is run with the args that you supplied.
+          {{- if .Values.houston.upgradeDeployments.sleepForeverNoUpgrade }}
+          args: ["sleep", "infinity"]
+          {{- else }}
           args: ["yarn", "upgrade-deployments", "--", "--canary={{ .Values.houston.upgradeDeployments.canary }}"]
+          {{- end }}
           volumeMounts:
             {{- include "houston_volume_mounts" . | indent 12 }}
             {{- include "custom_ca_volume_mounts" . | indent 12 }}

@@ -89,6 +89,7 @@ helm ${ACTION} \
   --set global.postgresqlEnabled=${postgresql} \
   --set tags.keda=${keda} \
   --set astronomer.houston.upgradeDeployments.enabled=true \
+  --set astronomer.houston.upgradeDeployments.sleepForeverNoUpgrade=true \
   $HELM_CHART_PATH
 
 if [ ! $? -eq 0 ]; then
