@@ -71,6 +71,9 @@ data:
           - source_labels: [__meta_kubernetes_pod_container_name]
             action: keep
             regex: "^kubedns"
+          - source_labels: [__meta_kubernetes_endpoint_ready]
+            action: keep
+            regex: "^true"
           - source_labels: [__meta_kubernetes_pod_container_port_number]
             action: keep
             regex: "^10055"
@@ -623,3 +626,24 @@ data:
           - target_label: __address__
             replacement: {{.Release.Name}}-prometheus-blackbox-exporter.{{.Release.Namespace}}:9115
         {{- end }}
+
+      - job_name: houston-api
+        metrics_path: /v1/metrics
+        kubernetes_sd_configs:
+          - role: endpoints
+            namespaces:
+              names:
+                - {{ .Release.Namespace }}
+        # Prefix all houston metrics with 'houston_'
+        metric_relabel_configs:
+          - source_labels: [__name__]
+            target_label: __name__
+            replacement: "houston_${1}"
+        # Select only ready endpoints for collecting houston metrics
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_service_name]
+            action: keep
+            regex: "^{{ .Release.Name }}-houston"
+          - source_labels: [__meta_kubernetes_endpoint_ready]
+            action: keep
+            regex: "^true"
