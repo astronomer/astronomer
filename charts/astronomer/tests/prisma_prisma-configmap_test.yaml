@@ -1,8 +1,0 @@
-suite: Test prisma/prisma-configmap.yaml
-templates:
-- prisma/prisma-configmap.yaml
-tests:
-- it: should work
-  asserts:
-    - isKind:
-        of: ConfigMap

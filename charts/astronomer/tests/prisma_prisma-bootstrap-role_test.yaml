@@ -1,8 +1,0 @@
-suite: Test prisma/prisma-bootstrap-role.yaml
-templates:
-- prisma/prisma-bootstrap-role.yaml
-tests:
-- it: should work
-  asserts:
-    - isKind:
-        of: Role

@@ -6,9 +6,6 @@ All changes to this project will be documented in this file. For more detail on 
 - Updates to Platform Image Versions (`db-bootstrapper`, `houston-api`, `commander`, `cli-install`, `base`, `default-backend` ) ([CVE Patch](https://github.com/astronomer/astronomer/pull/669))
 - Updates to Vendor Image Versions (`alertmanager`, `elasticsearch`, `fluentd`, `grafana`,`prometheus`, `redis` etc.) ([CVE Patch](https://github.com/astronomer/astronomer/pull/669))
 
-## [0.14.0] - 2020-04-XX
-- Migrate to prisma2 (Note: old prisma now prisma1 and new prisma 2 has name prisma)
-
 ## [0.13.0] - 2020-04-16
 - Ability to set a Kubernetes Secret as an Env Var in global config.yaml
 - Improved Error Handling on user signup when publicSignups are disabled
@@ -32,7 +29,7 @@ All changes to this project will be documented in this file. For more detail on 
 - BugFix: Some users unable to create an account when invited and publicSignups disabled (Azure only)
 
 ## [0.12.1] - 2020-03-19
-- New banner in the Deployment Config page that tells trial users they can't touch configs until they upgrade (Cloud only)
+- New "Trial Mode" banner in Deployment Config page to clarify limits on config changes (Cloud only)
 - Limit resource allocation for trials (Cloud only)
 - Bugfix: Environment variable key input loses focus on change
 - Bugfix: Deployment settings changes not saved

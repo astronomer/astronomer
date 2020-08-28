@@ -1,8 +1,0 @@
-suite: Test prisma/prisma-deployment.yaml
-templates:
-- prisma/prisma-deployment.yaml
-tests:
-- it: should work
-  asserts:
-    - isKind:
-        of: Deployment
