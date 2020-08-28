@@ -272,11 +272,11 @@ prometheus-blackbox-exporter:
   # Configure resources
   resources:
     requests:
-      cpu: "5m"
-      memory: "7Mi"
+      cpu: "50m"
+      memory: "70Mi"
     limits:
-      cpu: "15m"
-      memory: "20Mi"
+      cpu: "100m"
+      memory: "200Mi"
 
 # define what astronomer platform services will be checked
 # for up/down status. Enable this will also include
