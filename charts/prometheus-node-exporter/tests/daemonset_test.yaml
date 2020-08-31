@@ -1,0 +1,9 @@
+---
+suite: Test DaemonSet
+templates:
+  - daemonset.yaml
+tests:
+  - it: should work
+    asserts:
+      - isKind:
+          of: DaemonSet

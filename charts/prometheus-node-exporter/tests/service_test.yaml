@@ -1,0 +1,9 @@
+---
+suite: Test Service
+templates:
+  - service.yaml
+tests:
+  - it: should work
+    asserts:
+      - isKind:
+          of: Service
