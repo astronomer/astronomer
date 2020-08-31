@@ -80,6 +80,9 @@ global:
     enabled: false
     repository: ~
 
+  # SSL support for using SSL connections to encrypt client/server communication between database and Astronomer platform
+  sslmodeEnabled: false
+
 #################################
 ## Default tagged groups enabled
 #################################
