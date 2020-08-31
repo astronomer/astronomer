@@ -1,0 +1,15 @@
+---
+suite: Test DaemonSet
+templates:
+  - daemonset.yaml
+tests:
+  - it: should work
+    asserts:
+      - isKind:
+          of: DaemonSet
+      - equal: 
+          path: spec.selector.matchLabels.component
+          value: prometheus-node-exporter
+      - equal: 
+          path: spec.template.metadata.labels.component
+          value: prometheus-node-exporter

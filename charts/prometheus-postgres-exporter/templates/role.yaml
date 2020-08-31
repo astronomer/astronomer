@@ -8,7 +8,7 @@ metadata:
     chart: {{ template "prometheus-postgres-exporter.chart" . }}
     heritage: {{ .Release.Service }}
     release: {{ .Release.Name }}
-{{- if .Values.rbac.pspEnabled }}
+{{- if .Values.global.pspEnabled }}
 rules:
 - apiGroups:      ['extensions']
   resources:      ['podsecuritypolicies']
