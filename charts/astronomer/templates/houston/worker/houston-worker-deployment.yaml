@@ -59,6 +59,12 @@ spec:
                 secretKeyRef:
                   name: astronomer-bootstrap
                   key: connection
+            - name: SCHEMA_NAME
+              value: "houston$default"
+            {{ if .Values.global.sslmodeEnabled }}
+            - name: SSLMODE
+              value: "require"
+            {{- end }}
             - name: DB_NAME
               value: {{ .Release.Name }}-houston
             - name: SECRET_NAME
@@ -78,6 +84,11 @@ spec:
           volumeMounts:
             {{- include "houston_volume_mounts" . | indent 12 }}
           env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "houston.backendSecret" . }}
+                  key: connection
             {{- include "houston_environment" . | indent 12 }}
             - name: APOLLO_SERVER_ID
               valueFrom:
