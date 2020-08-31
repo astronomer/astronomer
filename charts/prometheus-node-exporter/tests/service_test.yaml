@@ -7,3 +7,12 @@ tests:
     asserts:
       - isKind:
           of: Service
+      - equal: 
+          path: spec.selector.component
+          value: prometheus-node-exporter
+      - equal:
+          path: spec.type
+          value: ClusterIP
+      - equal:
+          path: spec.ports[0].port
+          value: 9100
