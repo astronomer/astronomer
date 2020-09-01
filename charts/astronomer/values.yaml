@@ -31,15 +31,11 @@ images:
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: asoldatenko/ap-db-bootstrapper
-    tag: 0.20.0-prisma2
+    tag: 0.20.1-prisma2
     pullPolicy: IfNotPresent
   cliInstall:
     repository: astronomerinc/ap-cli-install
     tag: 0.13.1
-    pullPolicy: IfNotPresent
-  prisma:
-    repository: astronomerinc/ap-prisma
-    tag: 1.34.8
     pullPolicy: IfNotPresent
   e2eTest:
     repository: astronomerinc/ap-e2e-test
