@@ -12,12 +12,12 @@
       }
     ]
   },
-  "description": "A dashboard for the CoreDNS DNS server. If this is blank, check kube-dns, which you might be using instead",
+  "description": "A dashboard for the CoreDNS DNS server. If this is blank, check the kube-dns dashboard.",
   "editable": true,
   "gnetId": 5926,
   "graphTooltip": 0,
   "id": 14,
-  "iteration": 1599079535602,
+  "iteration": 1599080384489,
   "links": [],
   "panels": [
     {
@@ -89,16 +89,6 @@
           "intervalFactor": 2,
           "legendFormat": "total",
           "refId": "B",
-          "step": 60
-        },
-        {
-          "expr": "coredns_dns_request_count_total",
-          "format": "time_series",
-          "hide": true,
-          "interval": "",
-          "intervalFactor": 2,
-          "legendFormat": "",
-          "refId": "C",
           "step": 60
         }
       ],
@@ -861,21 +851,24 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "histogram_quantile(0.99, sum(rate(coredns_dns_request_duration_milliseconds_bucket{instance=~\"$instance\"}[5m])) by (le, job))",
+          "expr": "histogram_quantile(0.99, sum(rate(coredns_dns_request_duration_seconds_bucket{instance=~\"$instance\"}[5m])) by (le, job))",
+          "interval": "",
           "intervalFactor": 2,
           "legendFormat": "99%",
           "refId": "A",
           "step": 40
         },
         {
-          "expr": "histogram_quantile(0.90, sum(rate(coredns_dns_request_duration_milliseconds_bucket{instance=~\"$instance\"}[5m])) by (le))",
+          "expr": "histogram_quantile(0.90, sum(rate(coredns_dns_request_duration_seconds_bucket{instance=~\"$instance\"}[5m])) by (le))",
+          "interval": "",
           "intervalFactor": 2,
           "legendFormat": "90%",
           "refId": "B",
           "step": 40
         },
         {
-          "expr": "histogram_quantile(0.50, sum(rate(coredns_dns_request_duration_milliseconds_bucket{instance=~\"$instance\"}[5m])) by (le))",
+          "expr": "histogram_quantile(0.50, sum(rate(coredns_dns_request_duration_seconds_bucket{instance=~\"$instance\"}[5m])) by (le))",
+          "interval": "",
           "intervalFactor": 2,
           "legendFormat": "50%",
           "refId": "C",
@@ -902,7 +895,7 @@
       },
       "yaxes": [
         {
-          "format": "ms",
+          "format": "s",
           "logBase": 1,
           "max": null,
           "min": 0,
@@ -1454,5 +1447,5 @@
   "timezone": "utc",
   "title": "CoreDNS",
   "uid": "oRLSzKvMz",
-  "version": 1
+  "version": 2
 }
