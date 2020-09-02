@@ -254,7 +254,7 @@ registry:
 
 install:
   resources: {}
-  cliVersion: 0.16.1
+  cliVersion: 0.16.4
   #  limits:
   #   cpu: 100m
   #   memory: 128Mi
