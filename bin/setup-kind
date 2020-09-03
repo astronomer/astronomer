@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC1090
+# This contents of this file must be compatible with CI and local dev workflows
 set -euo pipefail
 
-export KUBE_VERSION="${KUBE_VERSION:-v1.15.11}"
+KUBE_VERSION="${KUBE_VERSION:-v1.15.11}"
 
 # The path to the working directory - the root of the repo
 REPO_DIR="$(git rev-parse --show-toplevel)"
@@ -76,7 +77,7 @@ kubectl create namespace astronomer
 (
   cd "${REPO_DIR}"
   mkcert -cert-file=server.pem -key-file=server.key server.example.org
-  kubectl --namespace astronomer create secret generic "private-ca" --from-file="cert.pem"="$(mkcert -CAROOT)/rootCA.pem"
+  kubectl --namespace astronomer create secret generic "private-ca" --from-file="cert.pem=$(mkcert -CAROOT)/rootCA.pem"
 )
 
 echo "Installing TLS cert and private key"

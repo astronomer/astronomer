@@ -1,15 +1,18 @@
 #!/usr/bin/env bash
+# Perform a CI test run. This must be functional in CircleCI and on a local dev workstation. (IE: does not delete any user settings.)
+# Usage: run-ci [component ... component]
+# Example: run-ci platform postgresql kubed keda
 # shellcheck disable=SC1090
 set -euo pipefail
 
-BIN_DIR="${0%/*}"
 REPO_DIR="$(git rev-parse --show-toplevel)"
+BIN_DIR="${REPO_DIR}/bin"
 
-source "$REPO_DIR/bin/install-ci-tools" 1
-export PATH="$PATH:/tmp/bin"
-ls -lh /tmp/bin
+"$REPO_DIR/bin/install-ci-tools"
+export PATH="/tmp/bin:/tmp/google-cloud-sdk/bin/:$PATH"
+find /tmp/bin /tmp/google-cloud-sdk/bin/ -maxdepth 1 -type f -print0 | xargs -0 ls -lh
 
-source "$REPO_DIR/bin/setup-kind"
+"$BIN_DIR/setup-kind"
 
 echo "Deploying Astronomer..."
 
@@ -20,7 +23,7 @@ echo "Deploying Astronomer..."
 kubectl get pods -n astronomer -w &
 WATCH_PID=$!
 
-"$BIN_DIR/install-platform"
+"$BIN_DIR/install-platform" "$@"
 
 sleep 5
 

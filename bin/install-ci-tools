@@ -1,19 +1,19 @@
 #!/usr/bin/env bash
-set -xeuo pipefail
+# This contents of this file must be compatible with CI and local dev workflows
+set -euo pipefail
 
-KIND_VERSION="0.8.1"
-HELM2_VERSION="2.16.8"
-HELM3_VERSION="3.2.3"
-GCLOUD_VERSION="292.0.0"
-MKCERT_VERSION="1.4.1"
+KIND_VERSION="${KIND_VERSION:-0.8.1}"
+HELM2_VERSION="${HELM2_VERSION:-2.16.8}"
+HELM3_VERSION="${HELM3_VERSION:-3.2.3}"
+GCLOUD_VERSION="${GCLOUD_VERSION:-292.0.0}"
+MKCERT_VERSION="${MKCERT_VERSION:-1.4.1}"
 
 OS=$(uname | tr '[:upper:]' '[:lower:]')
 
-FORCE=${1:-0}
+FORCE="${1:-0}"
 
-# Set up a bin location
 mkdir -p /tmp/bin
-export PATH=/tmp/bin:$PATH
+export PATH="/tmp/bin/:$PATH"
 
 pushd /tmp
 
@@ -59,11 +59,11 @@ else
 fi
 
 set +e
-if [[ $FORCE -ne 0 ]] || ! which gcloud gsutil ; then
+if [[ $FORCE -ne 0 ]] && command -v gcloud gsutil >/dev/null 2>&1 ; then
   # Install gcloud SDK
   wget "https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-${GCLOUD_VERSION}-${OS}-x86_64.tar.gz"
   tar xvzf "./google-cloud-sdk-${GCLOUD_VERSION}-${OS}-x86_64.tar.gz" >/dev/null 2>&1
-  export PATH="${PWD}/google-cloud-sdk/bin/:$PATH"
+  export PATH="/tmp/google-cloud-sdk/bin/:$PATH"
 else
   echo "gcloud CLI is already installed"
 fi
@@ -80,7 +80,7 @@ fi
 
 echo "--------- versions -------------"
 
-# kind 
+# kind
 set +e
 kind version
 helm2 version --client

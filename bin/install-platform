@@ -1,14 +1,20 @@
 #!/usr/bin/env bash
+# Perform a CI test run. This must be functional in CircleCI and on a local dev workstation. (IE: does not delete any user settings.)
+# Usage: install-platform [component ... component]
+# Example: install-platform platform postgresql kubed keda
 set -euo pipefail
 
-# Bit of common bash magic that sets DIR to the directory of this script
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-source $DIR/helpers.sh
+REPO_DIR="$(git rev-parse --show-toplevel)"
+BIN_DIR="${REPO_DIR}/bin"
+# shellcheck disable=SC1090
+source "$BIN_DIR/helpers.sh"
+HELM_CHART_PATH="${HELM_CHART_PATH:-$REPO_DIR}"
 
+if [ ! -d "${HELM_CHART_PATH}" ] ; then
+  HELM_CHART_PATH=$(find "${HELM_CHART_PATH}" -print -quit)
+fi
 
-# The path to the working directory - the root of the repo
-REPO_DIR=$DIR/../
-HELM_CHART_PATH=${HELM_CHART_PATH:-$REPO_DIR}
+helm_args=()
 
 echo "Deploying Astronomer..."
 
@@ -20,7 +26,6 @@ kubed=true
 postgresql=true
 keda=true
 ACTION="install"
-dryrun=""
 
 # Any args means be selective
 if [ $# -ne 0 ]; then
@@ -30,68 +35,54 @@ if [ $# -ne 0 ]; then
   kubed=false
   postgresql=false
   keda=false
-  for component in $@
-  do
-    case $component in
-
+  for component in "$@" ; do
+    case "$component" in
     install)
-      ACTION="install"
-      ;;
-
+      ACTION="install" ;;
     template)
-      ACTION="template"
-      ;;
-
+      ACTION="template" ;;
     dryrun)
-      dryrun="--dry-run"
-      ;;
-
+      helm_args+=( "--dry-run" ) ;;
     all)
-        platform=true
-        logging=true
-        monitoring=true
-        kubed=true
-        postgresql=true
-        keda=true
+      platform=true
+      logging=true
+      monitoring=true
+      kubed=true
+      postgresql=true
+      keda=true
       ;;
-
     *)
-      export $component=true
-      ;;
-
+      export $component=true ;;
     esac
-
   done
 fi
 
-
 set +ex
 
-HELM_TIMEOUT=${HELM_TIMEOUT:-800}
+helm_args+=( --timeout "${HELM_TIMEOUT:-800}s" )
 
 if [[ -z "${USE_HA+x}" ]]; then
-  CONFIG_FILE=$REPO_DIR/configs/local-dev.yaml
+  helm_args+=( -f "$REPO_DIR/configs/local-dev.yaml" )
 else
-  CONFIG_FILE=$REPO_DIR/configs/local-dev-ha.yaml
+  helm_args+=( -f "$REPO_DIR/configs/local-dev-ha.yaml" )
 fi
 
 set -x
-helm ${ACTION} \
+helm "${ACTION}" \
   --namespace astronomer \
   astronomer \
-  ${dryrun} \
-  --timeout ${HELM_TIMEOUT}s \
-  -f $CONFIG_FILE \
-  --set tags.platform=${platform} \
-  --set tags.logging=${logging} \
-  --set tags.monitoring=${monitoring} \
-  --set tags.kubed=${kubed} \
-  --set global.postgresqlEnabled=${postgresql} \
-  --set tags.keda=${keda} \
+  "${helm_args[@]}" \
+  --set tags.platform="${platform}" \
+  --set tags.logging="${logging}" \
+  --set tags.monitoring="${monitoring}" \
+  --set tags.kubed="${kubed}" \
+  --set global.postgresqlEnabled="${postgresql}" \
+  --set tags.keda="${keda}" \
   --set astronomer.houston.upgradeDeployments.enabled=true \
-  $HELM_CHART_PATH
+  "${HELM_CHART_PATH}"
 
-if [ ! $? -eq 0 ]; then
+# shellcheck disable=SC2181
+if [ $? -ne 0 ] ; then
   set +x
   echo "Helm chart failed to install"
   get_debugging_info

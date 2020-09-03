@@ -1,18 +1,19 @@
 #!/usr/bin/env bash
+# This contents of this file must be compatible with CI and local dev workflows
 set -euo pipefail
 
-# Bit of common bash magic that sets DIR to the directory of this script
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-# The path to the working directory - the root of the repo
-REPO_DIR=$DIR/../
+cd "$(mktemp)"
+
+REPO_DIR="$(git rev-parse --show-toplevel)"
 
 pip3 install virtualenv
 virtualenv --python=python3 /tmp/venv
+# shellcheck disable=SC1091
 source /tmp/venv/bin/activate
-pip install -r $REPO_DIR/bin/functional-tests/requirements.txt
+pip install -r "$REPO_DIR/bin/functional-tests/requirements.txt"
 export NAMESPACE=astronomer
 export RELEASE_NAME=astronomer
-pytest $REPO_DIR/bin/functional-tests/
+pytest "$REPO_DIR/bin/functional-tests/"
 deactivate
 
 # TODO: below this is legacy e2e tests that will be replaced
@@ -22,7 +23,7 @@ TESTING_VERSION="v0.0.1"
 # get testing repo
 ssh-agent bash -c 'ssh-add ~/.ssh/id_rsa_fbbd3c2fefafe95bfe330ee101809fcf; git clone git@github.com:astronomer/astro-testing.git'
 
-# everything else happens from withing the testing repo
+# everything else happens from within the testing repo
 cd astro-testing
 
 # Checkout the version we want
@@ -32,7 +33,7 @@ git checkout $TESTING_VERSION
 docker build -t astro/testing .
 
 # Setup cert trust, this will get mounted into the container
-cat `mkcert -CAROOT`/rootCA.pem > root-ca.crt
+cat "$(mkcert -CAROOT)/rootCA.pem" > root-ca.crt
 
 # Setup .env file
 cp env-example .env
@@ -41,12 +42,12 @@ echo "ASTRO_DOMAIN=local.astronomer-development.com" >> .env
 # Run tests and capture exit code
 set +e
 ./scripts/run-in-ci.sh
-EC=$?
+test_exit_code=$?
 set -e
 
 # Print debug info
 kubectl get pods --all-namespaces
-echo "TEST EXIT CODE: $EC"
+echo
+echo "TEST EXIT CODE: $test_exit_code"
 
-# exit with same code as tests
-exit $EC
+exit $test_exit_code

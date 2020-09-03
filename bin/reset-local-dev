@@ -34,7 +34,7 @@ while getopts ':hHkK:Mx' option ; do
     H) USE_HA=1 ;;
     k) get_kube_versions ; exit 0 ;;
     K) export KUBE_VERSION="${OPTARG}" ;;
-    M) MULTI_NODE=1 ;;
+    M) export MULTI_NODE=1 ;;
     x) set -x ;;
     *) echo "ERROR: Unknown option: -${OPTARG}" ; usage ; exit 1 ;;
   esac
@@ -55,7 +55,7 @@ fi
 # Fail fast for helm syntax errors
 helm template -f "$CONFIG_FILE" "$REPO_DIR" >/dev/null && echo "Helm template parsed successfully"
 
-source "$REPO_DIR/bin/setup-kind"
+"$REPO_DIR/bin/setup-kind"
 
 echo "Deploying Astronomer..."
 helm install -f "$CONFIG_FILE" \

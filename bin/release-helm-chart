@@ -57,8 +57,8 @@ pre-flight-setup() {
   # Set script_path to the path of this script
   script_path="${0%/*}"
 
-  # we need to source this file because it modifies PATH
-  source "$script_path/install-ci-tools"
+  "$script_path/install-ci-tools"
+  export PATH="/tmp/bin:$PATH"
 
   command -v sudo >/dev/null 2>&1
   command -v apt-get >/dev/null 2>&1
