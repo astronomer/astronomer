@@ -10,10 +10,6 @@ BIN_DIR="${REPO_DIR}/bin"
 source "$BIN_DIR/helpers.sh"
 HELM_CHART_PATH="${HELM_CHART_PATH:-$REPO_DIR}"
 
-if [ ! -d "${HELM_CHART_PATH}" ] ; then
-  HELM_CHART_PATH=$(find "${HELM_CHART_PATH}" -print -quit)
-fi
-
 helm_args=()
 
 echo "Deploying Astronomer..."
@@ -68,6 +64,7 @@ else
 fi
 
 set -x
+# shellcheck disable=SC2086
 helm "${ACTION}" \
   --namespace astronomer \
   astronomer \
@@ -79,7 +76,7 @@ helm "${ACTION}" \
   --set global.postgresqlEnabled="${postgresql}" \
   --set tags.keda="${keda}" \
   --set astronomer.houston.upgradeDeployments.enabled=true \
-  "${HELM_CHART_PATH}"
+  ${HELM_CHART_PATH} # This must not be quoted because it can be a dir or a file glob
 
 # shellcheck disable=SC2181
 if [ $? -ne 0 ] ; then
