@@ -8,8 +8,8 @@ tests:
       - isKind:
           of: DaemonSet
       - equal: 
-          path: spec.selector.matchLabels.component
+          path: spec.selector.matchLabels.app
           value: prometheus-node-exporter
       - equal: 
-          path: spec.template.metadata.labels.component
+          path: spec.template.metadata.labels.app
           value: prometheus-node-exporter

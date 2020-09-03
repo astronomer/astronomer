@@ -8,7 +8,7 @@ tests:
       - isKind:
           of: Service
       - equal: 
-          path: spec.selector.component
+          path: spec.selector.app
           value: prometheus-node-exporter
       - equal:
           path: spec.type

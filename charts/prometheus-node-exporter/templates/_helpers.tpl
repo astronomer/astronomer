@@ -26,7 +26,7 @@ If release name contains chart name it will be used as a full name.
 
 {{/* Generate basic labels */}}
 {{- define "prometheus-node-exporter.labels" }}
-component: {{ template "prometheus-node-exporter.name" . }}
+app: {{ template "prometheus-node-exporter.name" . }}
 heritage: {{.Release.Service }}
 release: {{.Release.Name }}
 chart: {{ template "prometheus-node-exporter.chart" . }}
