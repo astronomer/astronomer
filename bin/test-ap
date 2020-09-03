@@ -2,7 +2,7 @@
 # This contents of this file must be compatible with CI and local dev workflows
 set -euo pipefail
 
-cd "$(mktemp)"
+cd "$(mktemp -d)"
 
 REPO_DIR="$(git rev-parse --show-toplevel)"
 
