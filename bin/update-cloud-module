@@ -1,4 +1,7 @@
-#! /usr/bin/env bash
+#!/usr/bin/env bash
+
+grep -qi debian /etc/os-release || { echo "ERROR: This is intended for a debian-like system." ; exit 1 ; }
+[ -z "$ASTRONOMER_VERSION" ] && { echo "ERROR: ASTRONOMER_VERSION is empty" ; exit 1 ; }
 
 apt-get install sed unzip -y
 
@@ -9,16 +12,17 @@ mkdir /opt/terraform_install && cd /opt/terraform_install && \
   wget https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip && \
   unzip terraform_${TERRAFORM_VERSION}_linux_amd64.zip && \
   mv terraform /usr/local/bin/
-cd $dir
+cd "$dir"
 
 cd /tmp
-eval `ssh-agent`
+# shellcheck disable=SC1090
+source <(ssh-agent)
 echo "$DEPLOY_KEY_CLOUD_MODULE" | ssh-add -
-mkdir -p $HOME/.ssh
+mkdir -p "$HOME/.ssh"
 
 set -xe
 
-ssh-keyscan -t rsa github.com >> $HOME/.ssh/known_hosts
+ssh-keyscan -t rsa github.com >> "$HOME/.ssh/known_hosts"
 git clone git@github.com:astronomer/terraform-google-astronomer-cloud.git
 cd terraform-google-astronomer-cloud
 ls

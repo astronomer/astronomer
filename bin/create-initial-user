@@ -33,7 +33,7 @@ kubectl -n astronomer \
   --from-literal=ASTRO_PASS="$PASS"
 
 # Fill in file for houston post
-sed -i \
+sed -i='' \
   -e "s/__USER__/$USER/" \
   -e "s/__PASS__/$PASS/" \
   "$BIN_DIR/create-initial-user.json"
@@ -45,7 +45,7 @@ curl -v \
   "$HOST"
 
 # restore the JSON file
-git checkout "$BIN_DIR/create-initial-user.json"
+( cd "$BIN_DIR" && git checkout "create-initial-user.json" )
 
 # TODO, trap so that this is always run
 sudo kill -9 "$FORWARD_PID"
