@@ -5,7 +5,7 @@
 # This version number controls the default Airflow chart version that will be installed
 # when creating a new deployment in the system. This is also used to ensure all
 # child airflow deployments are kept up to date and on the latest version.
-airflowChartVersion: 0.15.5
+airflowChartVersion: 0.15.6
 
 nodeSelector: {}
 affinity: {}
@@ -23,7 +23,7 @@ images:
     pullPolicy: IfNotPresent
   houston:
     repository: astronomerinc/ap-houston-api
-    tag: 0.16.10
+    tag: 0.16.12
     pullPolicy: IfNotPresent
   astroUI:
     repository: astronomerinc/ap-astro-ui
