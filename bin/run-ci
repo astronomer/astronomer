@@ -10,7 +10,7 @@ BIN_DIR="${REPO_DIR}/bin"
 
 "$REPO_DIR/bin/install-ci-tools"
 export PATH="/tmp/bin:/tmp/google-cloud-sdk/bin/:$PATH"
-find /tmp/bin /tmp/google-cloud-sdk/bin/ -maxdepth 1 -type f -print0 | xargs -0 ls -lh
+find /tmp/bin -maxdepth 1 -type f -print0 | xargs -0 ls -lh
 
 "$BIN_DIR/setup-kind"
 
