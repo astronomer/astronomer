@@ -23,7 +23,7 @@ images:
     pullPolicy: IfNotPresent
   houston:
     repository: asoldatenko/ap-houston-api
-    tag: 0.20.6-prisma2
+    tag: 0.20.8-prisma2
     pullPolicy: IfNotPresent
   astroUI:
     repository: astronomerinc/ap-astro-ui
@@ -31,7 +31,7 @@ images:
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: asoldatenko/ap-db-bootstrapper
-    tag: 0.20.1-prisma2
+    tag: 0.20.4-prisma2
     pullPolicy: IfNotPresent
   cliInstall:
     repository: astronomerinc/ap-cli-install
