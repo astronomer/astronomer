@@ -45,7 +45,7 @@ scheduling.k8s.io/v1beta1
 {{- end -}}
 
 {{- define "apiVersion.StatefulSet" -}}
-{{- if semverCompare "^1.16-0" .Capabilities.KubeVersion.Version -}}
+{{- if semverCompare "^1.15-0" .Capabilities.KubeVersion.Version -}}
 apps/v1
 {{- else -}}
 apps/v1beta2
