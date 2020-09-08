@@ -2,7 +2,7 @@
 ## Elasticsearch Master StatefulSet
 #################################
 kind: StatefulSet
-apiVersion: {{ template "apiVersion.StatefulSet" . }}
+apiVersion: apps/v1
 metadata:
   name: {{ template "elasticsearch.fullname" . }}-master
   labels:
