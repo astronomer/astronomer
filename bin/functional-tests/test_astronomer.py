@@ -71,14 +71,6 @@ def test_core_dns_metrics_are_collected(prometheus):
     assert len(parsed['data']['result']) > 0, \
         f"Expected to find a metric coredns_dns_request_count_total, but we got this response:\n\n{parsed}"
 
-def test_houston_metrics_are_collected(prometheus):
-    """ Ensure Houston metrics are collected and prefixed with 'houston_'
-    """
-    data = prometheus.check_output("wget -qO- http://localhost:9090/api/v1/query?query=houston_up")
-    parsed = json.loads(data)
-    assert len(parsed['data']['result']) > 0, \
-        f"Expected to find a metric houston_up, but we got this response:\n\n{parsed}"
-
 # Create a test fixture for the prometheus pod
 @pytest.fixture(scope='session')
 def houston_api(request):
