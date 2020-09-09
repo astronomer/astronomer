@@ -19,3 +19,26 @@ alter table "houston$default"."InviteToken" ALTER COLUMN role TYPE "houston$defa
 alter table "houston$default"."RoleBinding" ALTER COLUMN role TYPE "houston$default"."Role" using role::"Role";
 CREATE UNIQUE INDEX "RoleBinding_serviceAccountId_unique" ON "RoleBinding"("serviceAccountId");
 CREATE UNIQUE INDEX "User_localCredentialId_unique" ON "User"("localCredentialId");
+
+-- migrate varchar(25) => varchar(30)
+ALTER TABLE "houston$default"."User" ALTER COLUMN "id" SET DATA TYPE varchar(30);
+ALTER TABLE "houston$default"."User" ALTER COLUMN "localCredentialId" SET DATA TYPE varchar(30);
+ALTER TABLE "houston$default"."RoleBinding" ALTER COLUMN "id" SET DATA TYPE varchar(30);
+ALTER TABLE "houston$default"."RoleBinding" ALTER COLUMN "userId" SET DATA TYPE varchar(30);
+ALTER TABLE "houston$default"."RoleBinding" ALTER COLUMN "serviceAccountId" SET DATA TYPE varchar(30);
+ALTER TABLE "houston$default"."RoleBinding" ALTER COLUMN "workspaceId" SET DATA TYPE varchar(30);
+ALTER TABLE "houston$default"."RoleBinding" ALTER COLUMN "deploymentId" SET DATA TYPE varchar(30);
+ALTER TABLE "houston$default"."Email" ALTER COLUMN "id" SET DATA TYPE varchar(30);
+ALTER TABLE "houston$default"."Email" ALTER COLUMN "userId" SET DATA TYPE varchar(30);
+ALTER TABLE "houston$default"."LocalCredential" ALTER COLUMN "id" SET DATA TYPE varchar(30);
+ALTER TABLE "houston$default"."OAuthCredential" ALTER COLUMN "id" SET DATA TYPE varchar(30);
+ALTER TABLE "houston$default"."OAuthCredential" ALTER COLUMN "userId" SET DATA TYPE varchar(30);
+ALTER TABLE "houston$default"."InviteToken" ALTER COLUMN "id" SET DATA TYPE varchar(30);
+ALTER TABLE "houston$default"."InviteToken" ALTER COLUMN "workspaceId" SET DATA TYPE varchar(30);
+ALTER TABLE "houston$default"."ServiceAccount" ALTER COLUMN "id" SET DATA TYPE varchar(30);
+ALTER TABLE "houston$default"."Workspace" ALTER COLUMN "id" SET DATA TYPE varchar(30);
+ALTER TABLE "houston$default"."Deployment" ALTER COLUMN "id" SET DATA TYPE varchar(30);
+ALTER TABLE "houston$default"."Deployment" ALTER COLUMN "workspaceId" SET DATA TYPE varchar(30);
+ALTER TABLE "houston$default"."DockerImage" ALTER COLUMN "id" SET DATA TYPE varchar(30);
+ALTER TABLE "houston$default"."DockerImage" ALTER COLUMN "deploymentId" SET DATA TYPE varchar(30);
+ALTER TABLE "houston$default"."PlatformRelease" ALTER COLUMN "id" SET DATA TYPE varchar(30);
