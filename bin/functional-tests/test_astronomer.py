@@ -58,7 +58,18 @@ def test_prometheus_targets(prometheus):
     for target in targets:
         assert target['health'] == 'up', \
             'Expected all prometheus targets to be up. ' + \
-            'Please check the "targets" view in the Prometheus UI'
+            'Please check the "targets" view in the Prometheus UI' + \
+            f" Target data from the one that is not up:\n\n{target}"
+
+def test_core_dns_metrics_are_collected(prometheus):
+    """ Ensure CoreDNS metrics are collected.
+
+    This test should work in CI and locally because Kind uses CoreDNS
+    """
+    data = prometheus.check_output("wget -qO- http://localhost:9090/api/v1/query?query=coredns_dns_request_count_total")
+    parsed = json.loads(data)
+    assert len(parsed['data']['result']) > 0, \
+        f"Expected to find a metric coredns_dns_request_count_total, but we got this response:\n\n{parsed}"
 
 # Create a test fixture for the prometheus pod
 @pytest.fixture(scope='session')
