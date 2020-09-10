@@ -61,7 +61,6 @@ def prometheus(request):
     pod = f'{release_name}-prometheus-0'
     yield testinfra.get_host(f'kubectl://{pod}?container=prometheus&namespace={namespace}')
 
-
 @pytest.fixture(scope='session')
 def docker_client(request):
     """ This is a text fixture for the docker client,
