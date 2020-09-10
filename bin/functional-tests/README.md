@@ -40,7 +40,7 @@ def prometheus(request):
     yield testinfra.get_host(f'kubectl://astronomer-prometheus-0?container=prometheus&namespace=astronomer')
 ```
 
-This test fixture is making use of both 'pytest' and 'testinfra'. The pytest.fixture decorator indicate to pytest that this is a fixture. testinfra is used to simplify the connection logic. We can see that the test function above makes use of the testinfra host object (the result of the get_host call that is provided by this fixture) with the 'check_output' function:
+This test fixture is making use of both 'pytest' and 'testinfra'. The `@pytest.fixture` decorator indicate to pytest that this is a fixture. testinfra is used to simplify the connection logic. We can see that the test function above makes use of the testinfra host object (the result of the get_host call that is provided by this fixture) with the `check_output` function:
 
 This line:
 ```
