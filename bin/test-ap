@@ -18,6 +18,8 @@ export RELEASE_NAME=astronomer
 pytest -s $REPO_DIR/bin/functional-tests/
 deactivate
 
+exit 0
+
 # TODO: below this is legacy e2e tests that will be replaced
 
 TESTING_VERSION="v0.0.1"
