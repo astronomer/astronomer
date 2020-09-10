@@ -95,7 +95,7 @@ def test_downgrade_then_upgrade():
         "helm3 upgrade --reset-values " + \
         f"-f {config_path} " + \
         f"-n {namespace} " + \
-        f"--version={major}.{minor}.{patch - 1} " + \
+        f"--version={major}.{minor}.{patch} " + \
         f"{release_name} " + \
         helm_chart_path
     print(command)
