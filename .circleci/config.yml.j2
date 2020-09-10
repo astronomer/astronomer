@@ -104,7 +104,7 @@ workflows:
           filters:
             branches:
               only:
-                - '/release-.*/'
+                - '/release-0\.\d+'
 
       - release-to-internal:
           requires:
@@ -118,7 +118,7 @@ workflows:
           filters:
             branches:
               only:
-                - '/release-.*/'
+                - '/release-0\.(12|13|14|15|16)'
 
       - release-to-prod:
           requires:
@@ -126,7 +126,7 @@ workflows:
           filters:
             branches:
               only:
-                - '/release-.*/'
+                - '/release-0\.(12|13|14|15|16)'
 
 commands:
   helm-install:
