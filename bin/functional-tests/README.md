@@ -25,7 +25,7 @@ For connections to pods, we are using the [testinfra](https://testinfra.readthed
 
 Let's consider this simple test:
 
-```
+```python
 def test_prometheus_user(prometheus):
     user = prometheus.check_output('whoami')
     assert user == "nobody", \
@@ -34,7 +34,7 @@ def test_prometheus_user(prometheus):
 
 This function name starts with "test_", a pytest convention to indicate this is a pytest function. Pytest function parameters are test fixtures. Since this test has a parameter 'prometheus', pytest will match this name to a pytest fixture of the same name, and provide it as an argument in this function. In this case, it will consume the following test fixture:
 
-```
+```python
 @pytest.fixture(scope='session')
 def prometheus(request):
     yield testinfra.get_host(f'kubectl://astronomer-prometheus-0?container=prometheus&namespace=astronomer')
@@ -43,7 +43,7 @@ def prometheus(request):
 This test fixture is making use of both 'pytest' and 'testinfra'. The `@pytest.fixture` decorator indicate to pytest that this is a fixture. testinfra is used to simplify the connection logic. We can see that the test function above makes use of the testinfra host object (the result of the get_host call that is provided by this fixture) with the `check_output` function:
 
 This line:
-```
+```python
 user = prometheus.check_output("whoami")
 ```
 
