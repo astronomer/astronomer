@@ -89,11 +89,11 @@ workflows:
       - build-artifact:
           requires:
             - lint
-            - unittest-charts
 {% for version in kube_versions %}
       - platform-{{ version | replace(".", "-") }}:
           requires:
             - build-artifact
+            - unittest-charts
 {% endfor %}
       - approve-internal-release:
           type: approval
