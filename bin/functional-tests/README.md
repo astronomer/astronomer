@@ -4,6 +4,7 @@
 
 - Kubernetes cluster, with Astronomer installed
 - Helm 3 installed as 'helm3'
+- Astronomer-internal is added to Helm 3 repositories and up-to-date
 
 ## How does it work?
 
