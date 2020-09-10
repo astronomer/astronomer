@@ -12,7 +12,7 @@ source /tmp/venv/bin/activate
 pip install -r $REPO_DIR/bin/functional-tests/requirements.txt
 export NAMESPACE=astronomer
 export RELEASE_NAME=astronomer
-pytest $REPO_DIR/bin/functional-tests/
+pytest -s $REPO_DIR/bin/functional-tests/
 deactivate
 
 # TODO: below this is legacy e2e tests that will be replaced
