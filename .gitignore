@@ -26,3 +26,4 @@ temp.sh
 /venv/
 **pycache**
 server.key
+upgrade_test_config.yaml

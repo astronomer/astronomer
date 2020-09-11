@@ -1,7 +1,0 @@
-dependencies:
-- name: prometheus-node-exporter
-  # When updating this version, check the default image version in
-  # the prometheus-node-exporter's Helm values. Ensure that ap-node-exporter
-  # in ap-vendor FROMs that image.
-  version: 1.8.1
-  repository: "@stable"

@@ -61,6 +61,20 @@ data:
             action: keep
             regex: default;kubernetes;https
 
+      - job_name: core-dns
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names:
+                - kube-system
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_container_name]
+            action: keep
+            regex: "^coredns"
+          - source_labels: [__meta_kubernetes_pod_container_port_number]
+            action: keep
+            regex: "^9153"
+
       - job_name: kube-dns
         kubernetes_sd_configs:
           - role: pod
@@ -70,13 +84,10 @@ data:
         relabel_configs:
           - source_labels: [__meta_kubernetes_pod_container_name]
             action: keep
-            regex: "^kubedns"
-          - source_labels: [__meta_kubernetes_endpoint_ready]
-            action: keep
-            regex: "^true"
+            regex: "^sidecar|^kubedns"
           - source_labels: [__meta_kubernetes_pod_container_port_number]
             action: keep
-            regex: "^10055"
+            regex: "^1005[45]"
 
       - job_name: nginx
         kubernetes_sd_configs:
