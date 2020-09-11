@@ -22,16 +22,16 @@ images:
     tag: 3.11.5-4
     pullPolicy: IfNotPresent
   houston:
-    repository: asoldatenko/ap-houston-api
-    tag: 0.20.14-prisma2
+    repository: astronomerinc/ap-houston-api
+    tag: main
     pullPolicy: IfNotPresent
   astroUI:
     repository: astronomerinc/ap-astro-ui
     tag: 0.19.3
     pullPolicy: IfNotPresent
   dbBootstrapper:
-    repository: asoldatenko/ap-db-bootstrapper
-    tag: 0.20.25-prisma2
+    repository: astronomerinc/ap-db-bootstrapper
+    tag: master
     pullPolicy: IfNotPresent
   cliInstall:
     repository: astronomerinc/ap-cli-install
