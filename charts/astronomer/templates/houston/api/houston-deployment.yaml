@@ -83,6 +83,11 @@ spec:
           imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
           command: ['yarn', 'migrate']
           env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: astronomer-bootstrap
+                  key: connection
             {{- include "houston_environment" . | indent 12 }}
 
       {{- end }}
