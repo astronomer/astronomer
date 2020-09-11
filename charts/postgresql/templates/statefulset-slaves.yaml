@@ -1,6 +1,6 @@
 {{- if .Values.replication.enabled }}
 kind: StatefulSet
-apiVersion: {{ template "apiVersion.StatefulSet" . }}
+apiVersion: apps/v1
 metadata:
   name: "{{ template "postgresql.fullname" . }}-slave"
   labels:

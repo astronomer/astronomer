@@ -7,7 +7,7 @@ kind: Deployment
 apiVersion: apps/v1
 {{- else }}
 kind: StatefulSet
-apiVersion: {{ template "apiVersion.StatefulSet" . }}
+apiVersion: apps/v1
 {{- end }}
 metadata:
   name: {{ .Release.Name }}-registry
@@ -50,7 +50,7 @@ spec:
         - name: registry
           image: {{ template  "registry.image" . }}
           imagePullPolicy: {{ .Values.images.registry.pullPolicy }}
-          env: 
+          env:
           - name: REGISTRY_HTTP_SECRET
             value: {{ randAlphaNum 32 }}
           resources:

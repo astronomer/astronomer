@@ -78,6 +78,13 @@ spec:
               value: {{ .Release.Namespace }}
             - name: IN_CLUSTER
               value: "true"
+        - name: init-migrations
+          image: {{ template "houston.image" . }}
+          imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
+          command: ['yarn', 'migrate']
+          env:
+            {{- include "houston_environment" . | indent 12 }}
+
       {{- end }}
       containers:
         - name: houston

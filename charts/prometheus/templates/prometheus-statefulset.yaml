@@ -2,7 +2,7 @@
 ## Prometheus StatefulSet
 #################################
 kind: StatefulSet
-apiVersion: {{ template "apiVersion.StatefulSet" . }}
+apiVersion: apps/v1
 metadata:
   name: {{ template "prometheus.fullname" . }}
   labels:
