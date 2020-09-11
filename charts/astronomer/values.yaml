@@ -56,7 +56,7 @@ astroUI:
   #   memory: 128Mi
 
 houston:
-  replicas: 4
+  replicas: 2
   # This only applies when replicas > 3
   maxUnavailable: 25%
   livenessProbe:
