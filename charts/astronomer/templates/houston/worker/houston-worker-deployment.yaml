@@ -73,17 +73,6 @@ spec:
               value: {{ .Release.Namespace }}
             - name: IN_CLUSTER
               value: "true"
-        - name: init-migrations
-          image: {{ template "houston.image" . }}
-          imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
-          args: ["yarn", "migrate"]
-          env:
-            - name: DATABASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: {{ template "houston.backendSecret" . }}
-                  key: connection
-            {{- include "houston_environment" . | indent 12 }}
         {{- end }}
       containers:
         - name: houston
