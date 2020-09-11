@@ -76,7 +76,7 @@ spec:
         - name: init-migrations
           image: {{ template "houston.image" . }}
           imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
-          command: ['yarn', 'migrate']
+          args: ["yarn", "migrate"]
           env:
             - name: DATABASE_URL
               valueFrom:
