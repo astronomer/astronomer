@@ -6,22 +6,18 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 # The path to the working directory - the root of the repo
 REPO_DIR=$DIR/../
 
+helm3 repo add astronomer-internal https://internal-helm.astronomer.io
+helm3 repo update
+
+sleep 20
+
 pip3 install virtualenv
 virtualenv --python=python3 /tmp/venv
 source /tmp/venv/bin/activate
 pip install -r $REPO_DIR/bin/functional-tests/requirements.txt
 export NAMESPACE=astronomer
 export RELEASE_NAME=astronomer
-pytest $REPO_DIR/bin/functional-tests/
+pytest -s $REPO_DIR/bin/functional-tests/
 deactivate
 
-set +e
-helm test astronomer -n astronomer
-EC=$?
-set -e
-
-kubectl get pods -n astronomer
-
-kubectl logs -n astronomer astronomer-ap-e2e-test
-
-exit $EC
+exit 0
