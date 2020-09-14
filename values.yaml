@@ -80,6 +80,9 @@ global:
     enabled: false
     repository: ~
 
+  # SSL support for using SSL connections to encrypt client/server communication between database and Astronomer platform
+  sslmodeEnabled: false
+
 #################################
 ## Default tagged groups enabled
 #################################
@@ -120,15 +123,6 @@ astronomer:
       limits:
         cpu: "1000m"
         memory: "2048Mi"
-
-  prisma:
-    resources:
-      requests:
-        cpu: "250m"
-        memory: "512Mi"
-      limits:
-        cpu: "500m"
-        memory: "1024Mi"
 
   commander:
     resources:
