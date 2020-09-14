@@ -21,7 +21,7 @@ spec:
     metadata:
       labels:
         tier: astronomer
-        component: houston
+        component: houston-db-migrations
         release: {{ .Release.Name }}
     spec:
       nodeSelector:
