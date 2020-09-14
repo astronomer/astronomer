@@ -1,31 +1,28 @@
-################################
-## Astronomer Houston Deployment
-#################################
-kind: Deployment
-apiVersion: apps/v1
+##########################################
+## Db migration Pre install/update Hook ##
+##########################################
+apiVersion: batch/v1
+kind: Job
 metadata:
-  name: {{ .Release.Name }}-houston
+  name: {{ .Release.Name }}-houston-db-migrations
   labels:
-    component: houston
     tier: astronomer
-    release: {{ .Release.Name }}
+    component: houston-db-migrations
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+  annotations:
+    # This is what defines this resource as a hook. Without this line, the
+    # job is considered part of the release.
+    "helm.sh/hook": pre-upgrade,post-install
+    "helm.sh/hook-delete-policy": before-hook-creation
 spec:
-  replicas: {{ .Values.houston.replicas }}
-  selector:
-    matchLabels:
-      tier: astronomer
-      component: houston
-      release: {{ .Release.Name }}
   template:
     metadata:
       labels:
         tier: astronomer
         component: houston
         release: {{ .Release.Name }}
-      annotations:
-        checksum/houston-config: {{ include (print $.Template.BasePath "/houston/houston-configmap.yaml") . | sha256sum }}
     spec:
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
@@ -33,7 +30,7 @@ spec:
 {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 8 }}
       tolerations:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
-      restartPolicy: Always
+      restartPolicy: Never
       {{- if and (not .Values.houston.airflowBackendSecretName) (not .Values.houston.airflowBackendConnection) }}
       serviceAccountName: {{ template "houston.bootstrapperServiceAccount" . }}
       initContainers:
@@ -80,31 +77,14 @@ spec:
               value: "true"
       {{- end }}
       containers:
-        - name: houston
+        - name: houston-db-migrations-job
           image: {{ template "houston.image" . }}
           imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
-          resources:
-{{ toYaml .Values.houston.resources | indent 12 }}
+          # If you supply only args for a Container, the default Entrypoint defined in the Docker image is run with the args that you supplied.
+          args: ["yarn", "migrate"]
           volumeMounts:
-            {{- include "houston_volume_mounts" . | indent 12 }}
-            {{- include "custom_ca_volume_mounts" . | indent 12 }}
-          ports:
-            - name: houston-http
-              containerPort: {{ .Values.ports.houstonHTTP }}
-          livenessProbe:
-            httpGet:
-              path: /v1/healthz
-              port: {{ .Values.ports.houstonHTTP }}
-            initialDelaySeconds: {{ .Values.houston.livenessProbe.initialDelaySeconds }}
-            periodSeconds: {{ .Values.houston.livenessProbe.periodSeconds }}
-            failureThreshold: {{ .Values.houston.livenessProbe.failureThreshold }}
-          readinessProbe:
-            httpGet:
-              path: /v1/healthz
-              port: {{ .Values.ports.houstonHTTP }}
-            initialDelaySeconds: {{ .Values.houston.readinessProbe.initialDelaySeconds }}
-            periodSeconds: {{ .Values.houston.readinessProbe.periodSeconds }}
-            failureThreshold: {{ .Values.houston.readinessProbe.failureThreshold }}
+          {{- include "houston_volume_mounts" . | indent 12 }}
+          {{- include "custom_ca_volume_mounts" . | indent 12 }}
           env:
             - name: DATABASE_URL
               valueFrom:
@@ -112,14 +92,5 @@ spec:
                   name: {{ template "houston.backendSecret" . }}
                   key: connection
             {{- include "houston_environment" . | indent 12 }}
-            - name: APOLLO_SERVER_ID
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.name
-            - name: APOLLO_SERVER_USER_VERSION
-              value: {{ template "houston.image" . }}
-            - name: APOLLO_SERVER_PLATFORM
-              value: "kubernetes/deployment"
       volumes:
         {{- include "houston_volumes" . | indent 8 }}
-        {{- include "custom_ca_volumes" . | indent 8 }}
