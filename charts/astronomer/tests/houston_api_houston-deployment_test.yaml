@@ -62,22 +62,3 @@ tests:
     - equal:
         path: spec.template.spec.initContainers[1].name
         value: houston-bootstrapper
-
-  - it: Should have init-migrations init container
-    asserts:
-    - equal:
-        path: spec.template.spec.initContainers[2].name
-        value: init-migrations
-
-# array index hacks because the contains doesn't work well with arrays
-  - it: Init-migration should have the correct command
-    asserts:
-    - equal:
-        path: spec.template.spec.initContainers[2].args[0]
-        value: yarn
-
-  - it: Init-migration should have the correct command argument
-    asserts:
-    - equal:
-        path: spec.template.spec.initContainers[2].args[1]
-        value: migrate
