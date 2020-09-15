@@ -71,42 +71,42 @@ jobs:
             bin/release-helm-chart -p /tmp/workspace/astronomer-*.tgz
       - publish-github-release
 
-  platform-1-15-11:
+  platform-1-15-12:
     machine:
       image: ubuntu-1604:202004-01
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.15.11
+      KUBE_VERSION: v1.15.12
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging kubed keda"
 
-  platform-1-16-9:
+  platform-1-16-15:
     machine:
       image: ubuntu-1604:202004-01
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.16.9
+      KUBE_VERSION: v1.16.15
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging kubed keda"
 
-  platform-1-17-5:
+  platform-1-17-11:
     machine:
       image: ubuntu-1604:202004-01
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.17.5
+      KUBE_VERSION: v1.17.11
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging kubed keda"
 
-  platform-1-18-2:
+  platform-1-18-8:
     machine:
       image: ubuntu-1604:202004-01
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.18.2
+      KUBE_VERSION: v1.18.8
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging kubed keda"
@@ -132,22 +132,22 @@ workflows:
           requires:
             - lint
 
-      - platform-1-15-11:
+      - platform-1-15-12:
           requires:
             - build-artifact
             - unittest-charts
 
-      - platform-1-16-9:
+      - platform-1-16-15:
           requires:
             - build-artifact
             - unittest-charts
 
-      - platform-1-17-5:
+      - platform-1-17-11:
           requires:
             - build-artifact
             - unittest-charts
 
-      - platform-1-18-2:
+      - platform-1-18-8:
           requires:
             - build-artifact
             - unittest-charts
@@ -161,10 +161,10 @@ workflows:
           type: approval
           requires:
 
-            - platform-1-15-11
-            - platform-1-16-9
-            - platform-1-17-5
-            - platform-1-18-2
+            - platform-1-15-12
+            - platform-1-16-15
+            - platform-1-17-11
+            - platform-1-18-8
             - platform-1-19-1
 
           filters:
