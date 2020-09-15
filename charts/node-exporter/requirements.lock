@@ -1,6 +1,0 @@
-dependencies:
-- name: prometheus-node-exporter
-  repository: https://kubernetes-charts.storage.googleapis.com/
-  version: 1.8.1
-digest: sha256:5a70012eb5ace19b86d4e1838a4f58b1cf9987c041d1149ce1160ad8bc1cb9f4
-generated: "2020-02-13T10:42:14.184845-05:00"

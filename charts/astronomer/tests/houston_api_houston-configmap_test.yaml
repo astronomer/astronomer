@@ -1,0 +1,8 @@
+suite: Test houston/api/houston-configmap.yaml
+templates:
+- houston/houston-configmap.yaml
+tests:
+- it: should work
+  asserts:
+    - isKind:
+        of: ConfigMap

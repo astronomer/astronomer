@@ -3,7 +3,44 @@ suite: Test prometheus-alerts-configmap
 templates:
   - prometheus-alerts-configmap.yaml
 tests:
-  - it: should work
+  - it: is the right type of resource
     asserts:
       - isKind:
           of: ConfigMap
+  - it: contains exactly one document
+    asserts:
+      - hasDocuments:
+          count: 1
+  - it: renders the additional alerts configuration correctly
+    release:
+      name: my-release
+      namespace: my-namespace
+    set:
+      additionalAlerts:
+        airflow: |
+          - alert: ExampleAirflowAlert
+            # If greater than 10% task failure
+            expr: 100 * sum(increase(airflow_ti_failures[30m])) /  (sum(increase(airflow_ti_failures[30m])) + sum(increase(airflow_ti_successes[30m]))) > 10
+            for: 15m
+            labels:
+              tier: airflow
+            annotations:
+              summary: The Astronomer Helm release {{ .Release.Name }} is failing task instances {{ printf "%q" "{{ printf \"%.2f\" $value }}%" }} of the time over the past 30 minutes
+              description: Task instances failing above threshold
+        platform: |
+          - alert: ExamplePlatformAlert
+            expr: count(rate(airflow_scheduler_heartbeat{}[1m]) <= 0) > 2
+            for: 5m
+            labels:
+              tier: platform
+              severity: critical
+            annotations:
+              summary: {{ printf "%q" "{{ $value }} airflow schedulers are not heartbeating" }}
+              description: "If more than 2 Airflow Schedulers are not heartbeating for more than 5 minutes, this alarm fires."
+    asserts:
+      - matchRegex:
+          path: data.alerts
+          pattern: '.*The Astronomer Helm release my-release is failing task instances "{{ printf \\"%.2f\\" \$value }}\%" of the time over the past 30 minutes.*'
+      - matchRegex:
+          path: data.alerts
+          pattern: '.*If more than 2 Airflow Schedulers are not heartbeating for more than 5 minutes, this alarm fires..*'

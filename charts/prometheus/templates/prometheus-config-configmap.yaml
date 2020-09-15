@@ -12,7 +12,7 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 data:
-  prometheus.yaml: |-
+  config: |-
     global:
       scrape_interval: 30s
       evaluation_interval: 30s
@@ -60,6 +60,34 @@ data:
           - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
             action: keep
             regex: default;kubernetes;https
+
+      - job_name: core-dns
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names:
+                - kube-system
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_container_name]
+            action: keep
+            regex: "^coredns"
+          - source_labels: [__meta_kubernetes_pod_container_port_number]
+            action: keep
+            regex: "^9153"
+
+      - job_name: kube-dns
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names:
+                - kube-system
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_container_name]
+            action: keep
+            regex: "^sidecar|^kubedns"
+          - source_labels: [__meta_kubernetes_pod_container_port_number]
+            action: keep
+            regex: "^1005[45]"
 
       - job_name: nginx
         kubernetes_sd_configs:
@@ -564,7 +592,7 @@ data:
           - source_labels: [__param_target]
             target_label: instance
           - target_label: __address__
-            replacement: {{.Release.Name}}-prometheus-blackbox-exporter.{{.Release.Name}}:9115  # The blackbox exporter's real hostname:port.
+            replacement: {{.Release.Name}}-prometheus-blackbox-exporter.{{.Release.Namespace}}:9115  # The blackbox exporter's real hostname:port.
 
 
       {{- if .Values.tcpProbe.enabled}}
@@ -609,6 +637,27 @@ data:
           - target_label: __address__
             replacement: {{.Release.Name}}-prometheus-blackbox-exporter.{{.Release.Namespace}}:9115
         {{- end }}
+
+      - job_name: houston-api
+        metrics_path: /v1/metrics
+        kubernetes_sd_configs:
+          - role: endpoints
+            namespaces:
+              names:
+                - {{ .Release.Namespace }}
+        # Prefix all houston metrics with 'houston_'
+        metric_relabel_configs:
+          - source_labels: [__name__]
+            target_label: __name__
+            replacement: "houston_${1}"
+        # Select only ready endpoints for collecting houston metrics
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_service_name]
+            action: keep
+            regex: "^{{ .Release.Name }}-houston"
+          - source_labels: [__meta_kubernetes_endpoint_ready]
+            action: keep
+            regex: "^true"
 
       - job_name: nats_server
         kubernetes_sd_configs:

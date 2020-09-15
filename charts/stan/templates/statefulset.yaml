@@ -66,20 +66,22 @@ spec:
             - "dockerize"
           args:
             - "-wait"
-            - "tcp://astronomer-nats:4222"
+            - "tcp://{{ .Release.Name }}-nats:4222"
             - "-timeout"
             - "1m"
           image: astronomerinc/ap-base:3.12-1
           imagePullPolicy: IfNotPresent
           env:
             - name: NATS__URL
-              value: nats://astronomer-nats:4222
+              value: "nats://{{ .Release.Name }}-nats:4222"
       containers:
         - name: stan
           image: {{ .Values.stan.image }}
           args:
           - -sc
           - /etc/stan-config/stan.conf
+          resources:
+{{ toYaml .Values.stan.resources | indent 12 }}
           env:
           - name: POD_NAME
             valueFrom:
@@ -125,6 +127,8 @@ spec:
         {{ if .Values.exporter.enabled }}
         - name: metrics
           image: {{ .Values.exporter.image }}
+          resources:
+{{ toYaml .Values.exporter.resources | indent 12 }}
           args:
           - -connz
           - -routez

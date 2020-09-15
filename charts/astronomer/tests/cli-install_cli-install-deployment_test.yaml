@@ -1,0 +1,8 @@
+suite: Test cli-install/cli-install-deployment.yaml
+templates:
+- cli-install/cli-install-deployment.yaml
+tests:
+- it: should work
+  asserts:
+    - isKind:
+        of: Deployment

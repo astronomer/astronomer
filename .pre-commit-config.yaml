@@ -2,7 +2,7 @@
 exclude: '(venv|.vscode)'  # regex
 repos:
   - repo: https://github.com/psf/black
-    rev: 19.10b0
+    rev: 20.8b1
     hooks:
       - id: black
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -16,7 +16,7 @@ repos:
       - id: check-xml
       - id: check-yaml
         args: ['--allow-multiple-documents']
-        exclude: 'templates/'
+        exclude: charts
       - id: debug-statements
       - id: detect-private-key
       - id: end-of-file-fixer

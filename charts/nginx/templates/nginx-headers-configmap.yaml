@@ -17,4 +17,4 @@ data:
   X-Frame-Options: "deny"
   X-XSS-Protection: "1; mode=block"
   X-Content-Type-Options: "nosniff"
-  Feature-Policy: "autoplay 'none'; camera 'none'; encrypted-media 'none'; fullscreen 'none'; geolocation 'none'; microphone 'none'; midi 'none'; payment 'none'; vr 'none'"
+  Feature-Policy: "autoplay 'none'; camera 'none'; encrypted-media 'none'; fullscreen 'none'; geolocation 'none'; microphone 'none'; midi 'none'; payment 'none'; xr-spatial-tracking 'none'"

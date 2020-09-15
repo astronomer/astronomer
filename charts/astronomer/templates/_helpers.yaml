@@ -17,14 +17,6 @@
 {{- end }}
 {{- end }}
 
-{{ define "prisma.image" -}}
-{{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/ap-prisma:{{ .Values.images.prisma.tag }}
-{{- else -}}
-{{ .Values.images.prisma.repository }}:{{ .Values.images.prisma.tag }}
-{{- end }}
-{{- end }}
-
 {{ define "houston.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
 {{ .Values.global.privateRegistry.repository }}/ap-houston-api:{{ .Values.images.houston.tag }}
@@ -135,14 +127,6 @@
 {{ printf "%s-houston-bootstrapper" .Release.Name }}
 {{- end }}
 
-{{ define "prisma.bootstrapperServiceAccount" -}}
-{{ printf "%s-prisma-bootstrapper" .Release.Name }}
-{{- end }}
-
-{{ define "prisma.endpoint" -}}
-{{ printf "http://%s-prisma:%s/houston" .Release.Name (.Values.ports.prismaHTTP | toString) }}
-{{- end }}
-
 {{- define "registry.gcsVolume" }}
 - name: gcs-keyfile
   secret:
@@ -210,19 +194,6 @@ s3:
   value: {{ .Values.registry.auth.issuer }}
 - name: JWT__REGISTRY__SERVICE
   value: {{ .Values.registry.auth.service }}
-  # Used by prisma cli for deploys to a protected prisma service.
-- name: PRISMA_MANAGEMENT_API_SECRET
-  valueFrom:
-    secretKeyRef:
-      name: {{ .Release.Name }}-prisma-api-secret
-      key: api-secret
-- name: PRISMA__ENDPOINT
-  value: {{ template "prisma.endpoint" . }}
-- name: PRISMA__SECRET
-  valueFrom:
-    secretKeyRef:
-      name: {{ .Release.Name }}-prisma-api-secret
-      key: service-secret
 - name: DEPLOYMENTS__DATABASE__CONNECTION
   valueFrom:
     secretKeyRef:
@@ -237,6 +208,10 @@ s3:
   value: {{ .Release.Name }}-registry
 - name: REGISTRY__PORT
   value: {{ .Values.ports.registryHTTP | quote }}
+- name: NATS__SERVERS
+  value: {{ template "houston.nats.servers" . }}
+- name: NATS__CLUSTER_ID
+  value: {{ .Release.Name }}-stan
 {{- end }}
 
 {{- define "houston_volume_mounts" }}
@@ -301,4 +276,13 @@ s3:
     secretName: {{ . }}
 {{- end }}
 {{- end }}
+{{- end }}
+
+{{- define "houston.nats.servers"}}
+{{- $ns := dict "servers" (list) -}}
+{{- $name := printf "%s-nats" .Release.Name -}}
+{{- range $i, $e := until (.Values.global.nats.replicas | int) -}}
+{{- $noop := printf "\"%s-%d.%s.%s.svc:4222\"" $name $i $name $.Release.Namespace | append $ns.servers | set $ns "servers" -}}
+{{- end }}
+{{- printf "'[%s]'" (join "," $ns.servers) -}}
 {{- end }}

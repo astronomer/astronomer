@@ -8,7 +8,7 @@ metadata:
   name: {{ .Release.Name }}-houston-expire-deployments
   labels:
     tier: astronomer
-    component: houston
+    component: houston-expire-deployments
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
@@ -20,7 +20,7 @@ spec:
         metadata:
           labels:
             tier: astronomer
-            component: houston
+            component: houston-expire-deployments
             release: {{ .Release.Name }}
           {{- if .Values.global.istio.enabled }}
           annotations:

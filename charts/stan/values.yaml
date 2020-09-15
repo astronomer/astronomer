@@ -6,7 +6,15 @@
 stan:
   image: astronomerinc/ap-nats-streaming:0.18.0
   pullPolicy: IfNotPresent
-  replicas: 3
+
+  resources: {}
+  #  limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  #  requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
 
   # Cluster name, generated into a name from the
   # release name by default.
@@ -47,7 +55,7 @@ securityContext: null
 # securityContext:
 #   fsGroup: 1000
 #   runAsUser: 1000
-#   runAsNonRoot: true       
+#   runAsNonRoot: true
 
 # Affinity for pod assignment
 # ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
@@ -62,21 +70,21 @@ store:
   # One value possible out of: "file" | "sql" | "memory"
   type: file
 
-  # 
+  #
   # Fault tolerance group
-  # 
+  #
   ft:
     group:
 
   # Configures streaming/store_limits as is.
-  # 
+  #
   # NOTE: Section in snake case since they will become
   # the same objects.
-  # 
+  #
   # Look at the NATS Streaming configuration for this:
-  # 
+  #
   # https://docs.nats.io/nats-streaming-server/configuring/cfgfile#store-limits-configuration
-  # 
+  #
   limits: {}
 
   #
@@ -88,11 +96,11 @@ store:
     mount: /data/stan
     storageSize: 1Gi
     accessModes: ReadWriteOnce
-    storageClass: 
+    storageClass:
 
-  # 
+  #
   # File storage settings.
-  # 
+  #
   file:
     path: /data/stan/store
 
@@ -101,17 +109,17 @@ store:
     enabled: true
     logPath: /data/stan/log
 
-  # 
+  #
   # SQL storage settings
-  # 
+  #
   sql:
     driver: postgres
 
     # TODO: Use secret reference and include instead for the password.
-    # 
+    #
     # e.g.
     # source: "dbname=postgres user=postgres password=stan host=stan-db sslmode=disable"
-    # 
+    #
     source: ""
 
     # Initialize the database.
@@ -136,6 +144,13 @@ exporter:
   enabled: true
   image: astronomerinc/ap-nats-exporter:0.6.2
   pullPolicy: IfNotPresent
+  resources: {}
+  #  limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  #  requests:
+  #   cpu: 100m
+  #   memory: 128Mi
 
 ##################################
 #                                #

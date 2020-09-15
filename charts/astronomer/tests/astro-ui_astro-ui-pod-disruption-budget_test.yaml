@@ -1,0 +1,8 @@
+suite: Test astro-ui/astro-ui-pod-disruption-budget.yaml
+templates:
+- astro-ui/astro-ui-pod-disruption-budget.yaml
+tests:
+- it: should work
+  asserts:
+    - isKind:
+        of: PodDisruptionBudget

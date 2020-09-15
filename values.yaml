@@ -50,10 +50,14 @@ global:
   kedaEnabled: false
 
   # Used to enable nats-server
-  natsEnabled: true
+  nats:
+    enabled: true
+    replicas: 3
 
   # Used to enable nats-streaming
-  stanEnabled: true
+  stan:
+    enabled: true
+    replicas: 3
 
   # If PodSecurityPolicies (PSP) should be enabled
   pspEnabled: false
@@ -78,6 +82,9 @@ global:
   privateRegistry:
     enabled: false
     repository: ~
+
+  # SSL support for using SSL connections to encrypt client/server communication between database and Astronomer platform
+  sslmodeEnabled: false
 
 #################################
 ## Default tagged groups enabled
@@ -119,15 +126,6 @@ astronomer:
       limits:
         cpu: "1000m"
         memory: "2048Mi"
-
-  prisma:
-    resources:
-      requests:
-        cpu: "250m"
-        memory: "512Mi"
-      limits:
-        cpu: "500m"
-        memory: "1024Mi"
 
   commander:
     resources:
@@ -271,11 +269,11 @@ prometheus-blackbox-exporter:
   # Configure resources
   resources:
     requests:
-      cpu: "5m"
-      memory: "7Mi"
+      cpu: "50m"
+      memory: "70Mi"
     limits:
-      cpu: "15m"
-      memory: "20Mi"
+      cpu: "100m"
+      memory: "200Mi"
 
 # define what astronomer platform services will be checked
 # for up/down status. Enable this will also include

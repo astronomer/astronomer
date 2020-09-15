@@ -2,7 +2,7 @@
 ## Prometheus StatefulSet
 #################################
 kind: StatefulSet
-apiVersion: {{ template "apiVersion.StatefulSet" . }}
+apiVersion: apps/v1
 metadata:
   name: {{ template "prometheus.fullname" . }}
   labels:
@@ -95,13 +95,13 @@ spec:
           configMap:
             name: {{ template "prometheus.fullname" . }}-config
             items:
-              - key: prometheus.yaml
+              - key: config
                 path: prometheus.yaml
         - name: alert-volume
           configMap:
             name: {{ template "prometheus.fullname" . }}-alerts
             items:
-              - key: alerts.yaml
+              - key: alerts
                 path: alerts.yaml
   {{- if not .Values.persistence.enabled }}
         - name: data

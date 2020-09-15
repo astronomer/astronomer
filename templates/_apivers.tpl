@@ -10,9 +10,9 @@ apps/v1
 
 {{- define "apiVersion.Deployment.16" -}}
 {{- if semverCompare "^1.16-0" .Capabilities.KubeVersion.Version }}
- apps/v1
+apps/v1
 {{- else }}
- apps/v1beta2
+apps/v1beta2
 {{- end }}
 {{- end -}}
 
@@ -43,15 +43,6 @@ scheduling.k8s.io/v1
 scheduling.k8s.io/v1beta1
 {{- end -}}
 {{- end -}}
-
-{{- define "apiVersion.StatefulSet" -}}
-{{- if semverCompare "^1.16-0" .Capabilities.KubeVersion.Version -}}
-apps/v1
-{{- else -}}
-apps/v1beta2
-{{- end -}}
-{{- end -}}
-
 
 {{- define "apiVersion.rbac.v1beta2" -}}
 {{- if semverCompare "^1.16-0" .Capabilities.KubeVersion.Version -}}

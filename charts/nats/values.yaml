@@ -19,6 +19,14 @@ nats:
   # to a client that has no activity.
   pingInterval:
 
+  resources: {}
+  #  limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  #  requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
   # Server settings.
   limits:
     maxConnections:
@@ -78,7 +86,6 @@ podAnnotations: {}
 
 cluster:
   enabled: true
-  replicas: 3
 
 # Leafnode connections to extend a cluster:
 #
@@ -94,11 +101,11 @@ leafnodes:
   #  TLS Configuration  #
   #                     #
   #######################
-  # 
+  #
   #  # You can find more on how to setup and trouble shoot TLS connnections at:
-  # 
+  #
   #  # https://docs.nats.io/nats-server/configuration/securing_nats/tls
-  # 
+  #
 
   #
   # tls:
@@ -130,9 +137,9 @@ gateway:
   #  TLS Configuration  #
   #                     #
   #######################
-  # 
+  #
   #  # You can find more on how to setup and trouble shoot TLS connnections at:
-  # 
+  #
   #  # https://docs.nats.io/nats-server/configuration/securing_nats/tls
   #
   # tls:
@@ -141,11 +148,11 @@ gateway:
   #   ca: "ca.crt"
   #   cert: "tls.crt"
   #   key: "tls.key"
-  
+
 # NATS Box
 #
 # https://github.com/nats-io/nats-box
-# 
+#
 natsbox:
   enabled: false
 
@@ -153,12 +160,28 @@ natsbox:
 # The NATS config reloader image to use.
 reloader:
   enabled: false
+  resources: {}
+  #  limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  #  requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
 
 # Prometheus NATS Exporter configuration.
 exporter:
   enabled: true
   image: astronomerinc/ap-nats-exporter:0.6.2
   pullPolicy: IfNotPresent
+  # resource configuration for the metrics sidecar
+  resources: {}
+  #  limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  #  requests:
+  #   cpu: 100m
+  #   memory: 128Mi
 
 # Authentication setup
 auth:
@@ -180,14 +203,14 @@ auth:
   #   #                          #
   #   ##############################
   #   # type: memory
-  #   # 
+  #   #
   #   # Use a configmap reference which will be mounted
   #   # into the container.
-  #   # 
+  #   #
   #   # configMap:
   #   #   name: nats-accounts
   #   #   key: resolver.conf
-  #  
+  #
   #   ##########################
   #   #                        #
   #   #  URL resolver settings #

@@ -8,7 +8,7 @@ metadata:
   name: {{ .Release.Name }}-houston-upgrade-deployments
   labels:
     tier: astronomer
-    component: houston
+    component: houston-upgrader
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
@@ -26,7 +26,7 @@ spec:
     metadata:
       labels:
         tier: astronomer
-        component: houston
+        component: houston-upgrader
         release: {{ .Release.Name }}
       {{- if .Values.global.istio.enabled }}
       annotations:
@@ -50,6 +50,11 @@ spec:
             {{- include "houston_volume_mounts" . | indent 12 }}
             {{- include "custom_ca_volume_mounts" . | indent 12 }}
           env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "houston.backendSecret" . }}
+                  key: connection
             {{- include "houston_environment" . | indent 12 }}
       volumes:
         {{- include "houston_volumes" . | indent 8 }}

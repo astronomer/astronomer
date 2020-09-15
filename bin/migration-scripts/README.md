@@ -214,3 +214,28 @@ helm3 upgrade --namespace $NAMESPACE \
             $RELEASE_NAME \
             astronomer/astronomer
 ```
+
+# Common problems
+
+Usually to solve an issue, it involves understanding what went wrong and manually resolving just that part, then re-running the script. The script is safe to re-run, just copy the helm-values-backup directory to somewhere else first, otherwise the script will fail indicating that it won't overwrite the backups.
+
+## Helm migration
+
+Helm 2to3 plugin is the least reliable part of this. I have found that it fails to migrate sometimes. In the event that the script fails due to helm 2to3 migration, then you can manually migrate releases like this:
+
+
+If the release exists in helm 2 but not helm 3:
+```sh
+helm 2to3 convert --delete-v2-releases $release
+```
+
+If the release exists in helm 2 and helm 3:
+```sh
+helm 2to3 cleanup --name $release
+```
+
+If all else fails, delete and re-install this airflow to the new airflow chart version using the helm 3 and the helm chart values backup.
+
+## Customer-specific resource collision
+
+For example, maybe a customer created ingress object prometheus.basedomain before the platform added that in by default. In this case, the helm upgrade will fail. Just delete this resource and re-run the script.
