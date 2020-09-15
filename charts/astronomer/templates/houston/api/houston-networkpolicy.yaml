@@ -23,6 +23,11 @@ spec:
   - from:
     - podSelector:
         matchLabels:
+          tier: monitoring
+          component: prometheus
+          release: {{ .Release.Name }}
+    - podSelector:
+        matchLabels:
           tier: astronomer
           component: registry
           release: {{ .Release.Name }}
