@@ -23,10 +23,10 @@ global:
   tlsSecret: astronomer-tls
   postgresqlEnabled: true
   nats:
-    replicas: 3
+    replicas: 1
     enabled: true
   stan:
-    replicas: 3
+    replicas: 1
     enabled: true
   sslmodeEnabled: false
   # Custom CA TLS certificates
