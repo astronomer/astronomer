@@ -1,6 +1,6 @@
 # Generates the final network policy files that allow blackbox exporter to scrape the defined service
 # Using this method it allows us to selectively include a policy
-# or Not based on other variables. The templates with the actualy policies 
+# or Not based on other variables. The templates with the actualy policies
 # start with "_" and are named bb-<service it is affecting>-policy.yaml
 
 {{- if .Values.astroServices.commander.enabled}}
@@ -37,3 +37,8 @@
 ---
 {{- include "blackbox.cliInstallNetPol" . }}
 {{- end}}
+
+---
+# This one is unconditionally enabled because blackbox exporter is
+# only useful when Prometheus is enabled.
+{{- include "blackbox.prometheusPolicy" . }}
