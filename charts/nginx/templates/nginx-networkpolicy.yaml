@@ -14,8 +14,8 @@ metadata:
 spec:
   podSelector:
     matchLabels:
-      tier: astronomer
-      component: houston
+      component: ingress-controller
+      tier: nginx
       release: {{ .Release.Name }}
   policyTypes:
   - Ingress
