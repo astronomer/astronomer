@@ -1,0 +1,8 @@
+suite: Test houston/helm-hooks/houston-upgrade-deployments-job.yaml
+templates:
+- houston/helm-hooks/houston-upgrade-deployments-job.yaml
+tests:
+- it: should work
+  asserts:
+    - isKind:
+        of: Job

@@ -23,6 +23,10 @@ spec:
         tier: astronomer
         component: houston-db-migrations
         release: {{ .Release.Name }}
+      {{- if .Values.global.istio.enabled }}
+      annotations:
+        sidecar.istio.io/inject: "false"
+      {{- end }}
     spec:
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
