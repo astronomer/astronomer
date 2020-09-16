@@ -16,7 +16,10 @@ pip install -r $REPO_DIR/bin/functional-tests/requirements.txt
 export NAMESPACE=astronomer
 export RELEASE_NAME=astronomer
 
-sleep 40 # give prometheus time to collect metrics
+# Sleep twice the prometheus scrape period
+# plus five seconds to allow for metrics to be
+# collected, which the functional tests need.
+sleep 65
 pytest -s $REPO_DIR/bin/functional-tests/
 deactivate
 
