@@ -41,7 +41,7 @@ def test_prometheus_targets(prometheus):
     for target in targets:
         if target['health'] != 'up':
             print("Test failed, saving debugging output")
-            targets_html = prometheus.check_output("wget -qO- http://localhost:9090/api/v1/targets")
+            targets_html = prometheus.check_output("wget -qO- http://localhost:9090/targets")
             print("Debugging output, prometheus targets view:")
             print("============")
             print(targets_html)
