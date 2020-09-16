@@ -1,0 +1,28 @@
+{{- define "blackbox.prometheusPolicy" }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  labels:
+    release: {{ .Release.Name }}
+    tier: monitoring
+  name: blackbox-prometheus-policy
+  namespace: {{ .Release.Namespace }}
+spec:
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          component: prometheus
+          release: {{ .Release.Name }}
+          tier: monitoring
+    ports:
+    - port: 9115
+      protocol: TCP
+  podSelector:
+    matchLabels:
+      component: blackbox-exporter
+      release: {{ .Release.Name }}
+      tier: monitoring
+  policyTypes:
+  - Ingress
+{{- end }}

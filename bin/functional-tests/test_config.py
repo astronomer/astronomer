@@ -44,6 +44,7 @@ def test_prometheus_targets(prometheus):
             'Please check the "targets" view in the Prometheus UI' + \
             f" Target data from the one that is not up:\n\n{target}"
 
+
 def test_core_dns_metrics_are_collected(prometheus):
     """ Ensure CoreDNS metrics are collected.
 

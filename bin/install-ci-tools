@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -xeuo pipefail
 
-KIND_VERSION="0.8.1"
+KIND_VERSION="0.9.0"
 HELM2_VERSION="2.16.8"
 HELM3_VERSION="3.2.3"
 GCLOUD_VERSION="292.0.0"

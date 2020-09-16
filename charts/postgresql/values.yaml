@@ -303,14 +303,14 @@ resources:
 networkPolicy:
   ## Enable creation of NetworkPolicy resources.
   ##
-  enabled: false
+  enabled: true
 
   ## The Policy model to apply. When set to false, only pods with the correct
   ## client label will have network access to the port PostgreSQL is listening
   ## on. When true, PostgreSQL will accept connections from any source
   ## (with the correct destination port).
   ##
-  allowExternal: true
+  allowExternal: false
 
 ## Configure extra options for liveness and readiness probes
 ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes)
