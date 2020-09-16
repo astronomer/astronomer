@@ -11,6 +11,37 @@ execs into a running pods.
 import json
 import os
 import docker
+import requests
+from subprocess import check_output, Popen
+from time import sleep
+
+def test_nginx_is_accessible():
+    try:
+        process_1 = Popen(
+            "kubectl port-forward svc/astronomer-nginx 4443:443",
+            shell=True)
+        process_2 = Popen(
+            "kubectl port-forward svc/astronomer-nginx 8080:80",
+            shell=True)
+        sleep(1)
+        response = requests.get("https://localhost:4443/", verify=False, timeout=1)
+        assert response.status_code == 404
+        response = requests.get("http://localhost:8080/", verify=False, timeout=1)
+        assert response.status_code == 404
+    except:
+        raise Exception("Expected to be able to connect to the nginx service on port 80 and 443")
+    finally:
+        process_1.kill()
+        process_2.kill()
+        process_1.wait()
+        process_2.wait()
+
+def test_prometheus_user(prometheus):
+    """ Ensure user is 'nobody'
+    """
+    user = prometheus.check_output('whoami')
+    assert user == "nobody", \
+        f"Expected prometheus to be running as 'nobody', not '{user}'"
 
 def test_prometheus_user(prometheus):
     """ Ensure user is 'nobody'
