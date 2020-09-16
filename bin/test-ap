@@ -25,6 +25,3 @@ pip install --user pytest testinfra kubernetes
 export PATH=/home/circleci/.local/bin:$PATH
 kubectl create namespace astronomer-scan-test
 pytest $REPO_DIR/bin/network-security-test.py
-
-# exit with same code as tests
-exit $EC
