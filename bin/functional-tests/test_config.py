@@ -39,10 +39,18 @@ def test_prometheus_targets(prometheus):
     data = prometheus.check_output("wget -qO- http://localhost:9090/api/v1/targets")
     targets = json.loads(data)['data']['activeTargets']
     for target in targets:
+        if target['health'] != 'up':
+            print("Test failed, saving debugging output")
+            targets_html = prometheus.check_output("wget -qO- http://localhost:9090/api/v1/targets")
+            print("Debugging output, prometheus targets view:")
+            print("============")
+            print(targets_html)
+            print("============")
         assert target['health'] == 'up', \
             'Expected all prometheus targets to be up. ' + \
             'Please check the "targets" view in the Prometheus UI' + \
             f" Target data from the one that is not up:\n\n{target}"
+
 
 def test_core_dns_metrics_are_collected(prometheus):
     """ Ensure CoreDNS metrics are collected.
