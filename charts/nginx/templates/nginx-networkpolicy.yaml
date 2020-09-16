@@ -29,3 +29,13 @@ spec:
     ports:
     - protocol: TCP
       port: {{ .Values.ports.metrics }}
+  - from:
+    - ipBlock:
+        cidr: 0.0.0.0/0
+    ports:
+    - protocol: TCP
+      port: {{ .Values.ports.http }}
+    - protocol: TCP
+      port: {{ .Values.ports.https }}
+    - protocol: TCP
+      port: {{ .Values.ports.defaultBackendHTTP }}
