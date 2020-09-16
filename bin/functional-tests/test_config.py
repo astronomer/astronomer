@@ -11,16 +11,6 @@ execs into a running pods.
 import json
 import os
 import docker
-import requests
-from subprocess import check_output, Popen
-from time import sleep
-
-def test_prometheus_user(prometheus):
-    """ Ensure user is 'nobody'
-    """
-    user = prometheus.check_output('whoami')
-    assert user == "nobody", \
-        f"Expected prometheus to be running as 'nobody', not '{user}'"
 
 def test_prometheus_user(prometheus):
     """ Ensure user is 'nobody'
