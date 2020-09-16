@@ -9,51 +9,16 @@ REPO_DIR=$DIR/../
 helm3 repo add astronomer-internal https://internal-helm.astronomer.io
 helm3 repo update
 
-sleep 20
-
 pip3 install virtualenv
 virtualenv --python=python3 /tmp/venv
 source /tmp/venv/bin/activate
 pip install -r $REPO_DIR/bin/functional-tests/requirements.txt
 export NAMESPACE=astronomer
 export RELEASE_NAME=astronomer
+
+sleep 40 # give prometheus time to collect metrics
 pytest -s $REPO_DIR/bin/functional-tests/
 deactivate
-
-exit 0
-
-# TODO: below this is legacy e2e tests that will be replaced
-
-TESTING_VERSION="v0.0.1"
-
-# get testing repo
-ssh-agent bash -c 'ssh-add ~/.ssh/id_rsa_fbbd3c2fefafe95bfe330ee101809fcf; git clone git@github.com:astronomer/astro-testing.git'
-
-# everything else happens from withing the testing repo
-cd astro-testing
-
-# Checkout the version we want
-git checkout $TESTING_VERSION
-
-# build testing tools container, this should be removed when private docker build/usage is available
-docker build -t astro/testing .
-
-# Setup cert trust, this will get mounted into the container
-cat `mkcert -CAROOT`/rootCA.pem > root-ca.crt
-
-# Setup .env file
-cp env-example .env
-echo "ASTRO_DOMAIN=local.astronomer-development.com" >> .env
-
-# Run tests and capture exit code
-set +e
-./scripts/run-in-ci.sh
-EC=$?
-set -e
-
-# Print debug info
-kubectl get pods --all-namespaces
-echo "TEST EXIT CODE: $EC"
 
 pyenv global 3.8.2
 pip install --user pytest testinfra kubernetes
