@@ -72,7 +72,7 @@ jobs:
   platform-{{ version | replace(".", "-") }}:
     machine:
       image: ubuntu-1604:202004-01
-      resource_class: xlarge
+      resource_class: 2xlarge
     environment:
       KUBE_VERSION: v{{ version }}
     steps:
