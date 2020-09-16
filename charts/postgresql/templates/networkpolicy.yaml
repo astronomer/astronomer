@@ -21,6 +21,22 @@ spec:
       from:
       - podSelector:
           matchLabels:
+            release: {{ .Release.Name }}
+            tier: astronomer
+      - podSelector:
+          matchLabels:
+            release: {{ .Release.Name }}
+            component: grafana
+      - podSelector:
+          matchLabels:
+            component: pgbouncer
+        namespaceSelector: {}
+      - podSelector:
+          matchLabels:
+            release: {{ .Release.Name }}
+            app: prometheus-postgres-exporter
+      - podSelector:
+          matchLabels:
             {{ template "postgresql.fullname" . }}-client: "true"
       - podSelector:
           matchLabels:
