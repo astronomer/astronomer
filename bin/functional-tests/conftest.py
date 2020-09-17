@@ -36,7 +36,7 @@ def nginx(request):
         print("RELEASE_NAME env var is not present, assuming 'astronomer' is the release name")
         release_name = 'astronomer'
     kube = create_kube_client()
-    pods = kube.list_namespaced_pod(namespace, label_selector=f"component=ingress-controller")
+    pods = kube.list_namespaced_pod(namespace, label_selector="component=ingress-controller")
     pods = pods.items
     assert len(pods) > 0, "Expected to find at least one pod with label 'component: ingress-controller'"
     pod = pods[0]
