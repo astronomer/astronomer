@@ -44,14 +44,6 @@ spec:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       restartPolicy: Always
       serviceAccountName: {{ template "prometheus.fullname" . }}
-      initContainers:
-        - name: init
-          image: {{ include "prometheus.init.image" . }}
-          imagePullPolicy: {{ .Values.images.init.pullPolicy }}
-          command: ["chown", "-R", "65534:65534", "{{ .Values.dataDir }}"]
-          volumeMounts:
-            - name: data
-              mountPath: "{{ .Values.dataDir }}"
       containers:
         - name: prometheus
           image: {{ include "prometheus.image" . }}
@@ -90,6 +82,10 @@ spec:
               port: {{ .Values.ports.http }}
             initialDelaySeconds: 10
             periodSeconds: 5
+      securityContext:
+        fsGroup: 65534
+        runAsNonRoot: true
+        runAsUser: 65534
       volumes:
         - name: prometheus-config-volume
           configMap:
