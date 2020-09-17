@@ -37,6 +37,9 @@ def test_chart_version_is_not_already_published():
                            "Chart.yaml"), "r") as f:
         astro_chart_dot_yaml = yaml.safe_load(f.read())
     major, minor, patch = semver(astro_chart_dot_yaml['version']).release
+    if patch == 0:
+      print("This test does not apply to patch version zero")
+      return
     repo_result = check_output(
         f"helm3 search repo --output=json --version=^{major}.{minor} astronomer-internal/astronomer",
         shell=True)
