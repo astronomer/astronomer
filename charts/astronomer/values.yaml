@@ -23,11 +23,11 @@ images:
     pullPolicy: IfNotPresent
   houston:
     repository: astronomerinc/ap-houston-api
-    tag: main
+    tag: 0.20.0
     pullPolicy: IfNotPresent
   astroUI:
     repository: astronomerinc/ap-astro-ui
-    tag: 0.19.3
+    tag: 0.20.0
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: astronomerinc/ap-db-bootstrapper
@@ -256,7 +256,7 @@ registry:
 
 install:
   resources: {}
-  cliVersion: 0.18.0
+  cliVersion: 0.20.0
   #  limits:
   #   cpu: 100m
   #   memory: 128Mi
