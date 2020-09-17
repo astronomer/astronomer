@@ -32,6 +32,8 @@ def test_houston_config(houston_api):
         assert 'localhost' not in server, \
             f"Expected not to find 'localhost' in the 'servers' configuration. Found:\n\n{houston_config['nats']}"
 
+def test_houston_can_reach_prometheus(houston_api):
+    houston_api.check_output("curl http://astronomer-prometheus.astronomer.svc.cluster.local/targets")
 
 def test_prometheus_targets(prometheus):
     """ Ensure all Prometheus targets are healthy
