@@ -36,7 +36,7 @@ def test_houston_can_reach_prometheus(houston_api):
     houston_api.check_output("wget -qO- --timeout=1 http://astronomer-prometheus.astronomer.svc.cluster.local:9090/targets")
 
 def test_nginx_can_reach_default_backend(nginx):
-    nginx.check_output("curl --max-time 1 http://astronomer-nginx-default-backend:8080")
+    nginx.check_output("curl -s --max-time 1 http://astronomer-nginx-default-backend:8080")
 
 def test_prometheus_targets(prometheus):
     """ Ensure all Prometheus targets are healthy
