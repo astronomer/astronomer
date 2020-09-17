@@ -213,7 +213,14 @@ class KubernetesNetworkChecker():
         return result
 
 
-def test_network():
+def test_network(kube_client):
+    try:
+        kube_client.create_namespace(client.V1Namespace(
+            metadata=client.V1ObjectMeta(name='astronomer-scan-test')))
+    except Exception as e:
+        if not 'already exists' in str(e):
+            raise e
+        print("namespace astronomer-scan-test already exists, proceeding")
     network_assessment = KubernetesNetworkChecker()
     network_assessment.collect_scan_targets()
     logging.info(f"Collected {len(network_assessment.targets)} scan targets")
@@ -221,6 +228,8 @@ def test_network():
     allow_list = ["pod/coredns-",
                   "service/kube-dns",
                   "service/kubernetes",
+                  "service/astronomer-nginx",
+                  "pod/astronomer-nginx",
                   "service/astronomer-prometheus-node-exporter",
                   "pod/astronomer-prometheus-node-exporter"]
     for finding in scan_result.findings:
