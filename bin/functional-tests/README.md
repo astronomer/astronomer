@@ -60,7 +60,7 @@ Long story short, testinfra allows for connections to various places (in this ca
 
 pytest fixtures can also be used to provide connections to kubernetes, for example a kubernetes client.
 
-## What does it do
+## What it does
 
 ### test_config.py
 
