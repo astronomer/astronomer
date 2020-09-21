@@ -18,3 +18,10 @@ tests:
       - equal: 
           path: spec.template.spec.securityContext.runAsNonRoot
           value: true
+
+  - it: Should have configmap-reloader sidecar container
+    asserts:
+    - equal:
+        path: spec.template.spec.containers[0].name
+        value: configmap-reloader
+    
