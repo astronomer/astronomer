@@ -9,7 +9,7 @@
 - pytest https://docs.pytest.org/en/stable/getting-started.html
 - testinfra https://testinfra.readthedocs.io/en/latest/
 
-## How does it work
+## How it works
 
 This is a pytest suite that assumes the current shell is authenticated to a kubernetes cluster running Astronomer. It is not safe to run against a production system and does perform mutations on the system. This is designed to work running locally using Kind (kubernetes in docker).
 
