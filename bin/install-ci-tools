@@ -2,7 +2,7 @@
 # This contents of this file must be compatible with CI and local dev workflows
 set -euo pipefail
 
-KIND_VERSION="${KIND_VERSION:-0.8.1}"
+KIND_VERSION="${KIND_VERSION:-0.9.0}"
 HELM2_VERSION="${HELM2_VERSION:-2.16.8}"
 HELM3_VERSION="${HELM3_VERSION:-3.2.3}"
 GCLOUD_VERSION="${GCLOUD_VERSION:-292.0.0}"

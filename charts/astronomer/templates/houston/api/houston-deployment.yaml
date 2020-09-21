@@ -48,6 +48,11 @@ spec:
           resources:
 {{ toYaml .Values.houston.resources | indent 12 }}
           env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: astronomer-bootstrap
+                  key: connection
             {{- include "houston_environment" . | indent 12 }}
         - name: houston-bootstrapper
           image: {{ template "dbBootstrapper.image" . }}
@@ -58,6 +63,13 @@ spec:
                 secretKeyRef:
                   name: astronomer-bootstrap
                   key: connection
+            # we need to hardcode it to be able to upgrade from prisma1 to prisma2
+            - name: SCHEMA_NAME
+              value: "houston$default"
+            {{ if .Values.global.sslmodeEnabled }}
+            - name: SSLMODE
+              value: "require"
+            {{- end }}
             - name: DB_NAME
               value: {{ .Release.Name }}-houston
             - name: SECRET_NAME
@@ -66,13 +78,6 @@ spec:
               value: {{ .Release.Namespace }}
             - name: IN_CLUSTER
               value: "true"
-        - name: init-migrations
-          image: {{ template "houston.image" . }}
-          imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
-          command: ['yarn', 'migrate']
-          env:
-            {{- include "houston_environment" . | indent 12 }}
-
       {{- end }}
       containers:
         - name: houston
@@ -101,6 +106,11 @@ spec:
             periodSeconds: {{ .Values.houston.readinessProbe.periodSeconds }}
             failureThreshold: {{ .Values.houston.readinessProbe.failureThreshold }}
           env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "houston.backendSecret" . }}
+                  key: connection
             {{- include "houston_environment" . | indent 12 }}
             - name: APOLLO_SERVER_ID
               valueFrom:

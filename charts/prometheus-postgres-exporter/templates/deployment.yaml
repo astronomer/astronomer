@@ -1,3 +1,4 @@
+{{- if .Values.global.prometheusPostgresExporterEnabled -}}
 {{- if and .Values.config.datasource.passwordSecret .Values.config.datasource.password -}}
 {{ fail (printf "ERROR: only one of .Values.config.datasource.passwordSecret and .Values.config.datasource.password must be defined") }}
 {{- end -}}
@@ -127,4 +128,5 @@ spec:
         name: queries
 {{- with .Values.extraVolumes }}
 {{ tpl . $ | indent 6 }}
+{{- end }}
 {{- end }}

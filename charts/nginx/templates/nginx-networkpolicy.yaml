@@ -1,0 +1,41 @@
+################################
+## Nginx controller pods NetworkPolicy
+#################################
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ .Release.Name }}-nginx-policy
+  labels:
+    tier: astronomer
+    component: nginx-policy
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+spec:
+  podSelector:
+    matchLabels:
+      component: ingress-controller
+      tier: nginx
+      release: {{ .Release.Name }}
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          tier: monitoring
+          component: prometheus
+          release: {{ .Release.Name }}
+    ports:
+    - protocol: TCP
+      port: {{ .Values.ports.metrics }}
+  - from:
+    - ipBlock:
+        cidr: 0.0.0.0/0
+    ports:
+    - protocol: TCP
+      port: {{ .Values.ports.http }}
+    - protocol: TCP
+      port: {{ .Values.ports.https }}
+    - protocol: TCP
+      port: {{ .Values.ports.defaultBackendHTTP }}

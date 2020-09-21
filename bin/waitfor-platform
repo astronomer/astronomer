@@ -25,7 +25,7 @@ while [ $return_code -eq 0 ]; do
     echo "Error (timeout): giving up after $MAX_SECONDS seconds"
   else
     sleep 10
-    if ! kubectl get pods -n astronomer > /tmp/pods ; then
+    if ! kubectl get pods --all-namespaces > /tmp/pods ; then
       echo "kubectl get pods timed out. retrying."
       continue
     fi
@@ -33,14 +33,14 @@ while [ $return_code -eq 0 ]; do
     # of logging tag without the platform. This is the only logging component
     # that will not start without the platform. The benefit of allowing us to
     # test the logging tag outweighs the downside of ignoring one pod.
-    grep -vE '1/1|2/2|NAME|Completed|elasticsearch-nginx' /tmp/pods >/dev/null 2>&1
+    grep -vE '1/1|2/2|3/3|NAME|Completed|elasticsearch-nginx' /tmp/pods >/dev/null 2>&1
     return_code=$?
   fi
 done
 
 # Output debugging information
 if [ $timed_out -eq 0 ]; then
-  echo "Astronomer deployed!"
+  echo "all pods are ready!"
 else
   get_debugging_info
 fi

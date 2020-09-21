@@ -53,7 +53,7 @@ jobs:
             pyenv global 2.7.17
             bin/release-helm-chart /tmp/workspace/astronomer-*.tgz
 
-  release-to-prod:
+  release-to-public:
     machine:
       image: ubuntu-1604:202004-01
     steps:
@@ -89,11 +89,11 @@ workflows:
       - build-artifact:
           requires:
             - lint
-            - unittest-charts
 {% for version in kube_versions %}
       - platform-{{ version | replace(".", "-") }}:
           requires:
             - build-artifact
+            - unittest-charts
 {% endfor %}
       - approve-internal-release:
           type: approval
@@ -104,13 +104,13 @@ workflows:
           filters:
             branches:
               only:
-                - '/release-.*/'
+                - '/release-0\.\d+/'
 
       - release-to-internal:
           requires:
             - approve-internal-release
 
-      - approve-prod-release:
+      - approve-public-release:
           type: approval
           requires:
             - release-to-internal
@@ -118,15 +118,15 @@ workflows:
           filters:
             branches:
               only:
-                - '/release-.*/'
+                - '/release-0\.(12|13|14|15|16)/'
 
-      - release-to-prod:
+      - release-to-public:
           requires:
-            - approve-prod-release
+            - approve-public-release
           filters:
             branches:
               only:
-                - '/release-.*/'
+                - '/release-0\.(12|13|14|15|16)/'
 
 commands:
   helm-install:

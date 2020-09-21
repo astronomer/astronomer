@@ -31,15 +31,9 @@ sleep 5
 
 "$BIN_DIR/setup-hosts"
 
-"$BIN_DIR/create-initial-user" "tester@astronomer.io" "password"
+# "$BIN_DIR/create-initial-user" "tester@astronomer.io" "password"
+
+sudo kill -9 $WATCH_PID
 
 ### Test Platform
 "$BIN_DIR/test-ap"
-
-# Test monitoring/alerting ingress - This is a stopgap until it can move in to full testing suite
-echo "Testing alertmanager ingress"
-curl -f -s -o /dev/null -H "Host: alertmanager.local.astronomer-development.com" http://127.0.0.1/
-echo "Testing prometheus ingress"
-curl -f -s -o /dev/null -H "Host: prometheus.local.astronomer-development.com" http://127.0.0.1/
-
-sudo kill -9 $WATCH_PID

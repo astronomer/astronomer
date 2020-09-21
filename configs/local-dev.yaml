@@ -23,16 +23,30 @@ global:
   tlsSecret: astronomer-tls
   postgresqlEnabled: true
   nats:
-    replicas: 3
+    replicas: 1
     enabled: true
   stan:
-    replicas: 3
+    replicas: 1
     enabled: true
-
+  sslmodeEnabled: false
   # Custom CA TLS certificates
   # Each secret must have one data entry 'cert.pem'
   privateCaCerts:
   - private-ca
+
+nats:
+  cluster:
+    enabled: false
+    replicas: 1
+  resources: {}
+
+stan:
+  stan:
+    replicas: 1
+  store:
+    cluster:
+      enabled: false
+  resources: {}
 
 ############################
 ## Astronomer configuration
@@ -47,6 +61,8 @@ astronomer:
         memory: "0Mi"
   houston:
     replicas: 1
+    worker:
+      replicas: 1
     resources:
       requests:
         cpu: "0m"
@@ -57,11 +73,6 @@ astronomer:
       auth:
         local:
           enabled: true
-  prisma:
-    resources:
-      requests:
-        cpu: "0m"
-        memory: "0Mi"
   commander:
     replicas: 1
     resources:

@@ -1,4 +1,5 @@
 .DS_Store
+*.key
 config.yaml
 config.yml
 dev-config.yaml
@@ -6,6 +7,8 @@ dev-config.yaml
 **kubeconfig**
 certs
 /secrets
+test-*
+__pycache__
 
 # IDEs
 .idea/
@@ -26,3 +29,4 @@ temp.sh
 /venv/
 **pycache**
 server.key
+upgrade_test_config.yaml
