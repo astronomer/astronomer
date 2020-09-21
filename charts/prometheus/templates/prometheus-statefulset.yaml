@@ -53,7 +53,7 @@ spec:
           args:
             - "--config.file=/etc/prometheus/config/prometheus.yaml"
             - "--storage.tsdb.path={{ .Values.dataDir }}"
-            - "--storage.tsdb.retention={{ .Values.retention }}"
+            - "--storage.tsdb.retention.time={{ .Values.retention }}"
             {{- if .Values.enableLifecycle }}
             - "--web.enable-lifecycle"
             {{- end }}
