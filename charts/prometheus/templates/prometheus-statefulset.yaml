@@ -43,25 +43,21 @@ spec:
       restartPolicy: Always
       serviceAccountName: {{ template "prometheus.fullname" . }}
       containers:
-        - args:
-          - --webhook-url=http://localhost:9090/-/reload
-          - --volume-dir=/etc/prometheus/alerts.d
-          - --volume-dir=/etc/prometheus/config
-          image: jimmidyson/configmap-reload:v0.4.0
-          imagePullPolicy: IfNotPresent
-          name: configmap-reloader
+        - name: configmap-reloader
+          args:
+            - --webhook-url=http://localhost:9090/-/reload
+            - --volume-dir=/etc/prometheus/alerts.d
+            - --volume-dir=/etc/prometheus/config
+          image: {{ include "configReloader.image" . }}
+          imagePullPolicy: {{ .Values.images.prometheus.pullPolicy }}
           resources:
-            limits:
-              cpu: 100m
-              memory: 25Mi
-            requests:
-              cpu: 100m
-              memory: 25Mi
+{{ toYaml .Values.configMapReloader.resources | indent 12 }}
           volumeMounts:
           - name: alert-volume
             mountPath: /etc/prometheus/alerts.d
           - name: prometheus-config-volume
             mountPath: /etc/prometheus/config
+
         - name: prometheus
           image: {{ include "prometheus.image" . }}
           imagePullPolicy: {{ .Values.images.prometheus.pullPolicy }}
