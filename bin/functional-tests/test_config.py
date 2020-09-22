@@ -11,6 +11,9 @@ execs into a running pods.
 import json
 import os
 import docker
+import time
+from kubernetes import client, config
+from kubernetes.client.rest import ApiException
 
 def test_prometheus_user(prometheus):
     """ Ensure user is 'nobody'
@@ -67,3 +70,60 @@ def test_houston_metrics_are_collected(prometheus):
     parsed = json.loads(data)
     assert len(parsed['data']['result']) > 0, \
         f"Expected to find a metric houston_up, but we got this response:\n\n{parsed}"
+
+
+def test_prometheus_config_reloader_works(prometheus, kube_client):
+    """ Ensure that Prometheus reloads it's config when the cofigMap is updated
+    and the reloader sidecar triggers the reload
+    """
+    
+    # get the current configmap
+    orig_cm = kube_client.read_namespaced_config_map("astronomer-prometheus-config", "astronomer")
+
+    # define the test configmap
+    test_cm = {
+        "data": {
+            "config": """global:
+    scrape_interval: 30s
+    evaluation_interval: 30s"""
+        }
+    }
+
+    # check the checksum of the currenty configuration file
+    pre_md5sum = prometheus.check_output("md5sum /etc/prometheus/config/prometheus.yaml")
+
+    # update the configmap
+    kube_client.patch_namespaced_config_map(
+        name="astronomer-prometheus-config",
+        namespace="astronomer",
+        body=test_cm
+    )
+
+    # hackup original 
+    orig_cm.metadata.resource_version = ""
+
+    # wait here, it can take up to a minute or more sometimes for change to be picked up and reloaded.
+    time.sleep(70)
+
+    # # check the md5sum again of the configuration file
+    post_md5sum = prometheus.check_output("md5sum /etc/prometheus/config/prometheus.yaml")
+
+    # put the old configmap back
+    try:
+        kube_client.delete_namespaced_config_map(
+            name="astronomer-prometheus-config",
+            namespace="astronomer"
+        )
+    except ApiException as e:
+        print("Exception when calling CoreV1Api->delete_namespaced_config_map: %s\n" % e)
+    try: 
+        kube_client.create_namespaced_config_map(
+            namespace="astronomer",
+            body=orig_cm
+        )
+    except ApiException as e:
+        print("Exception when calling CoreV1Api->patch_namespaced_config_map: %s\n" % e)
+
+
+    assert pre_md5sum != post_md5sum, \
+        f"Expected the md5 checksum of the prometheus config file to change"
