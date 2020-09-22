@@ -75,7 +75,7 @@ def test_houston_metrics_are_collected(prometheus):
 
 def test_prometheus_config_reloader_works(prometheus, kube_client):
     """ 
-    Ensure that Prometheus reloads it's config when the cofigMap is updated
+    Ensure that Prometheus reloads its config when the cofigMap is updated
     and the reloader sidecar triggers the reload
     """
     # define new value we'll use for the config change
