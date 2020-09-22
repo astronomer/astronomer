@@ -12,67 +12,9 @@ import json
 import os
 import docker
 import time
+import yaml
 from kubernetes import client, config
 from kubernetes.client.rest import ApiException
-
-# This test should remain first because this sleep is required to allow for other tests
-# to have enough time for metrics to be collected.
-def test_prometheus_config_reloader_works(prometheus, kube_client):
-    """ Ensure that Prometheus reloads it's config when the cofigMap is updated
-    and the reloader sidecar triggers the reload
-    """
-
-    # get the current configmap
-    orig_cm = kube_client.read_namespaced_config_map("astronomer-prometheus-config", "astronomer")
-
-    # define the test configmap
-    test_cm = {
-        "data": {
-            "config": """global:
-    scrape_interval: 30s
-    evaluation_interval: 30s"""
-        }
-    }
-
-    # check the checksum of the currenty configuration file
-    pre_md5sum = prometheus.check_output("md5sum /etc/prometheus/config/prometheus.yaml")
-
-    # update the configmap
-    kube_client.patch_namespaced_config_map(
-        name="astronomer-prometheus-config",
-        namespace="astronomer",
-        body=test_cm
-    )
-
-    # hackup original
-    orig_cm.metadata.resource_version = ""
-
-    # wait here, it can take up to a minute or more sometimes for change to be picked up and reloaded.
-    time.sleep(70)
-
-    # # check the md5sum again of the configuration file
-    post_md5sum = prometheus.check_output("md5sum /etc/prometheus/config/prometheus.yaml")
-
-    # put the old configmap back
-    try:
-        kube_client.delete_namespaced_config_map(
-            name="astronomer-prometheus-config",
-            namespace="astronomer"
-        )
-    except ApiException as e:
-        print("Exception when calling CoreV1Api->delete_namespaced_config_map: %s\n" % e)
-    try:
-        kube_client.create_namespaced_config_map(
-            namespace="astronomer",
-            body=orig_cm
-        )
-    except ApiException as e:
-        print("Exception when calling CoreV1Api->patch_namespaced_config_map: %s\n" % e)
-
-
-    assert pre_md5sum != post_md5sum, \
-        f"Expected the md5 checksum of the prometheus config file to change"
-
 
 def test_prometheus_user(prometheus):
     """ Ensure user is 'nobody'
@@ -129,3 +71,75 @@ def test_houston_metrics_are_collected(prometheus):
     parsed = json.loads(data)
     assert len(parsed['data']['result']) > 0, \
         f"Expected to find a metric houston_up, but we got this response:\n\n{parsed}"
+
+
+def test_prometheus_config_reloader_works(prometheus, kube_client):
+    """ 
+    Ensure that Prometheus reloads it's config when the cofigMap is updated
+    and the reloader sidecar triggers the reload
+    """
+    # define new value we'll use for the config change
+    new_scrape_interval = "31s"
+
+    # get the current configmap
+    orig_cm = kube_client.read_namespaced_config_map("astronomer-prometheus-config", "astronomer")
+
+    prom_config = yaml.safe_load(orig_cm.data['config'])
+    # modify the configmap
+    prom_config['global']['scrape_interval'] = new_scrape_interval
+    new_body = {
+        "apiversion": "v1",
+        "kind": "ConfigMap",
+        "data": {
+            "config": yaml.dump(prom_config)
+        }
+    }
+
+    try:
+        # update the configmap
+        kube_client.patch_namespaced_config_map(
+            name="astronomer-prometheus-config",
+            namespace="astronomer",
+            body=new_body
+        )
+    except ApiException as e:
+        print("Exception when calling CoreV1Api->patch_namespaced_config_map: %s\n" % e)
+    
+    # This can take more than a minute.
+    i = 0 
+    while i < 12: 
+        data = prometheus.check_output("wget -qO- http://localhost:9090/api/v1/status/config")
+        j_parsed = json.loads(data)
+        # print(parsed['data']['yaml']['config']['global'])
+        y_parsed = yaml.safe_load(j_parsed['data']['yaml'])
+        if y_parsed['global']['scrape_interval'] != "30s":
+            print(y_parsed['global']['scrape_interval'])
+            break
+        else:
+            time.sleep(10)
+        i+=1
+        
+
+    # set the config back to it's original settings
+    prom_config['global']['scrape_interval'] = "30s"
+    new_body = {
+        "apiversion": "v1",
+        "kind": "ConfigMap",
+        "data": {
+            "config": yaml.dump(prom_config)
+        }
+    }
+
+    try:
+        # update the configmap
+        kube_client.patch_namespaced_config_map(
+            name="astronomer-prometheus-config",
+            namespace="astronomer",
+            body=new_body
+        )
+    except ApiException as e:
+        print("Exception when calling CoreV1Api->patch_namespaced_config_map: %s\n" % e)
+
+
+    assert y_parsed['global']['scrape_interval'] != "30s", \
+        f"Expected the prometheus config file to change"
