@@ -1458,15 +1458,4 @@ data:
           annotations:
             summary: {{ printf "%q" "PostgreSQL high number of slow on {{ $labels.cluster }} for database {{ $labels.datname }} " }}
             description: {{ printf "%q" "PostgreSQL high number of slow queries {{ $labels.cluster }} for database {{ $labels.datname }} with a value of {{ $value }} " }}
-
-        - alert: NumberOfNodesHigh
-          expr: count(kube_node_info) >= 60
-          for: 10m
-          labels:
-            severity: critical
-            tier: platform
-          annotations:
-            runbook_url:
-            summary: "Number of nodes is critically close to the NAT Gateway Limit of 64"
-            description: "Cluster has {{`{{ $value }}`}} nodes, or NAT gateway Limit ofo nodes is 64, we need to reduce the node count."
       {{- end }}
