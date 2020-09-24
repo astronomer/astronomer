@@ -40,6 +40,11 @@ spec:
         matchLabels:
           tier: astronomer
           release: {{ .Release.Name }}
+          component: houston-expire-deployments
+    - podSelector:
+        matchLabels:
+          tier: astronomer
+          release: {{ .Release.Name }}
           component: houston
     - podSelector:
         matchLabels:
