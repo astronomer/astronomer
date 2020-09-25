@@ -40,7 +40,7 @@ done
 
 # Output debugging information
 if [ $timed_out -eq 0 ]; then
-  echo "all pods are ready!"
+  echo 'all pods are ready!'
 else
   get_debugging_info
 fi
