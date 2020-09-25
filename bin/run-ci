@@ -30,7 +30,7 @@ sleep 5
 
 # "$BIN_DIR/create-initial-user" "tester@astronomer.io" "password"
 
+sudo kill -9 $WATCH_PID
+
 ### Test Platform
 "$BIN_DIR/test-ap"
-
-sudo kill -9 $WATCH_PID

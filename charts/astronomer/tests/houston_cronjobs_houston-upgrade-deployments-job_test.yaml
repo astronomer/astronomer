@@ -1,8 +1,0 @@
-suite: Test houston/cronjobs/houston-upgrade-deployments-job.yaml
-templates:
-- houston/cronjobs/houston-upgrade-deployments-job.yaml
-tests:
-- it: should work
-  asserts:
-    - isKind:
-        of: Job

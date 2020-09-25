@@ -3,7 +3,7 @@ set -xeuo pipefail
 
 KIND_VERSION="0.9.0"
 HELM2_VERSION="2.16.8"
-HELM3_VERSION="3.2.3"
+HELM3_VERSION="3.3.4"
 GCLOUD_VERSION="292.0.0"
 MKCERT_VERSION="1.4.1"
 
@@ -80,7 +80,7 @@ fi
 
 echo "--------- versions -------------"
 
-# kind 
+# kind
 set +e
 kind version
 helm2 version --client

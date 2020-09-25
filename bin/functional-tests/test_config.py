@@ -32,6 +32,11 @@ def test_houston_config(houston_api):
         assert 'localhost' not in server, \
             f"Expected not to find 'localhost' in the 'servers' configuration. Found:\n\n{houston_config['nats']}"
 
+def test_houston_can_reach_prometheus(houston_api):
+    houston_api.check_output("wget -qO- --timeout=1 http://astronomer-prometheus.astronomer.svc.cluster.local:9090/targets")
+
+def test_nginx_can_reach_default_backend(nginx):
+    nginx.check_output("curl -s --max-time 1 http://astronomer-nginx-default-backend:8080")
 
 def test_prometheus_targets(prometheus):
     """ Ensure all Prometheus targets are healthy
@@ -43,6 +48,7 @@ def test_prometheus_targets(prometheus):
             'Expected all prometheus targets to be up. ' + \
             'Please check the "targets" view in the Prometheus UI' + \
             f" Target data from the one that is not up:\n\n{target}"
+
 
 def test_core_dns_metrics_are_collected(prometheus):
     """ Ensure CoreDNS metrics are collected.

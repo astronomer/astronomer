@@ -1,0 +1,17 @@
+suite: Test deployment.yaml of prometheus postgres exporter
+templates:
+- deployment.yaml
+tests:
+  - it: disabling works
+    set:
+      global.prometheusPostgresExporterEnabled: false
+    not: true
+    assert:
+      - isKind:
+          of: Deployment
+  - it: enabling works
+    set:
+      global.prometheusPostgresExporterEnabled: true
+    assert:
+      - isKind:
+          of: Deployment
