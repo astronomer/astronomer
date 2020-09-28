@@ -7,3 +7,21 @@ tests:
     asserts:
       - isKind:
           of: StatefulSet
+  - it: STAN Server Should Have Readiness and LivenessProbes
+    asserts:
+      - isNotEmpty:
+          path: spec.template.spec.containers[0].livenessProbe
+      - isNotEmpty:
+          path: spec.template.spec.containers[0].readinessProbe
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.httpGet.path
+          value: "/streaming/serverz"
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.httpGet.path
+          value: "/streaming/serverz"
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.httpGet.port
+          value: "monitor"
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.httpGet.port
+          value: "monitor"
