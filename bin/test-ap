@@ -20,5 +20,6 @@ export RELEASE_NAME=astronomer
 # plus five seconds to allow for metrics to be
 # collected, which the functional tests need.
 sleep 65
+
 pytest -s $REPO_DIR/bin/functional-tests/
 deactivate
