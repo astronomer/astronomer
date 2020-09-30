@@ -42,3 +42,11 @@ ALTER TABLE "houston$default"."Deployment" ALTER COLUMN "workspaceId" SET DATA T
 ALTER TABLE "houston$default"."DockerImage" ALTER COLUMN "id" SET DATA TYPE varchar(30);
 ALTER TABLE "houston$default"."DockerImage" ALTER COLUMN "deploymentId" SET DATA TYPE varchar(30);
 ALTER TABLE "houston$default"."PlatformRelease" ALTER COLUMN "id" SET DATA TYPE varchar(30);
+
+-- migrate Deployment_alertEmails"
+ALTER TABLE "houston$default"."Deployment" ADD COLUMN "alertEmails" text[];
+UPDATE "houston$default"."Deployment" AS v
+SET "alertEmails" = s.alert_emails
+FROM (select string_to_array(string_agg(value, ',' order by position),',') as alert_emails, "nodeId" from "houston$default"."Deployment_alertEmails" group by "nodeId") AS s
+WHERE v.id = s."nodeId";
+DROP table if exists "houston$default"."Deployment_alertEmails";
