@@ -437,7 +437,9 @@ function main {
               "$RELEASE_NAME" \
               astronomer/astronomer
   fail_with "Failed to upgrade Astronomer"
-
+  
+  # give prisma time to get ready
+  sleep 120
   # Since the upgrade was not performed by houston, inform houston by
   # upgrading the 'version' field in the database
   echo "Updating Astronomer... (3/4) Upgrading Airflow deployments version"
