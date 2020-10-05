@@ -1,0 +1,35 @@
+---
+
+- name: Set up variables
+  set_fact:
+    release_name: "astronomer"
+    namespace: "default"
+    db_hostname: "localhost"
+    db_username: "postgres"
+    db_password: "postgres"
+    db_port: "5432"
+    astro_save: "/astronomer-backups/astro-save-2020-10-05-13-59-31"
+
+- name: Read revision from backup
+  set_fact:
+    helm_history: "{{ lookup('file', '{{ astro_save }}/helm-revision.json') | from_json }}"
+
+- name: Show information the revision we are about to restore to
+  changed_when: false
+  debug:
+    msg:
+      - "Reverting to revision: {{ helm_history.revision }}"
+      - "Helm chart was: {{ helm_history.chart }}"
+
+- name: Restore Astronomer DB
+  postgresql_db:
+    login_host: "{{ db_hostname }}"
+    login_user: "{{ db_username }}"
+    login_password: "{{ db_password }}"
+    name: "{{ release_name }}_houston"
+    state: restore
+    target: "{{ astro_save }}/astronomer-db-backup.sql"
+
+- name: Rollback with Helm
+  shell: |
+    helm rollback {{ release_name }} {{ helm_history.revision }} --recreate-pods
