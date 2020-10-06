@@ -8,7 +8,7 @@
     db_username: "postgres"
     db_password: "postgres"
     db_port: "5432"
-    astro_save: "/astronomer-backups/astro-save-2020-10-05-13-59-31"
+    astro_save: "/astronomer-backups/astro-save-2020-10-06-11-35-57"
 
 - name: Read revision from backup
   set_fact:
@@ -30,6 +30,9 @@
     state: restore
     target: "{{ astro_save }}/astronomer-db-backup.sql"
 
+# TODO: Ensure this is deleted: astronomer-houston-db-migrations
+#
 - name: Rollback with Helm
   shell: |
-    helm rollback {{ release_name }} {{ helm_history.revision }} --recreate-pods
+    helm rollback {{ release_name }} {{ helm_history.revision }} --force
+    helm rollback {{ release_name }} {{ helm_history.revision }}

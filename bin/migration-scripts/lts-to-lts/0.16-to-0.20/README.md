@@ -79,6 +79,18 @@ kubectl get pods -n <your astronomer namespace> | grep lts-upgrade
 
 If the upgrade has some issues and you need to recover, you can rollback to the previous state
 
+## Apply the rollback automation
+
 ```
 kubectl apply -f https://raw.githubusercontent.com/astronomer/astronomer/master/bin/migration-scripts/lts-to-lts/0.16-to-0.20/manifests/rollback.yaml
 ```
+
+## Wait for platform to come back up
+
+Watch the pods until they have stabilized. Everything in your Astronomer namespace should be Running with full readiness, or Completed:
+
+```
+watch kubectl get pods -n <your namespace>
+```
+
+
