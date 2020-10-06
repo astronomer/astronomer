@@ -8,7 +8,7 @@
     db_username: "postgres"
     db_password: "postgres"
     db_port: "5432"
-    astro_save: "/astronomer-backups/astro-save-2020-10-06-11-35-57"
+    astro_save: "/astronomer-backups/astro-save-2020-10-06-15-18-33"
 
 - name: Read revision from backup
   set_fact:
@@ -21,18 +21,98 @@
       - "Reverting to revision: {{ helm_history.revision }}"
       - "Helm chart was: {{ helm_history.chart }}"
 
+# First, we get rid of everything that touches the DB
+- name: Ensure DB migration job is deleted
+  community.kubernetes.k8s:
+    state: absent
+    api_version: v1
+    kind: Job
+    namespace: "{{ namespace }}"
+    name: "{{ release_name }}-houston-db-migrations"
+
+- name: Ensure Houston API is deleted
+  community.kubernetes.k8s:
+    state: absent
+    api_version: v1
+    kind: Deployment
+    namespace: "{{ namespace }}"
+    name: "{{ release_name }}-houston"
+    wait: yes
+
+- name: Ensure Houston workers are deleted
+  community.kubernetes.k8s:
+    state: absent
+    api_version: v1
+    kind: Deployment
+    namespace: "{{ namespace }}"
+    name: "{{ release_name }}-houston-workers"
+    wait: yes
+
+- name: Deleting logs, rollback destroys logs because Elasticsearch version downgrade is not supported
+  community.kubernetes.k8s:
+    state: absent
+    api_version: v1
+    kind: StatefulSet
+    namespace: "{{ namespace }}"
+    name: "{{ item }}"
+    wait: yes
+  with_items:
+    - "{{ release_name }}-elasticsearch-master"
+    - "{{ release_name }}-elasticsearch-data"
+
+- name: Deleting logs, rollback destroys logs because Elasticsearch version downgrade is not supported
+  community.kubernetes.k8s:
+    state: absent
+    api_version: v1
+    kind: StatefulSet
+    namespace: "{{ namespace }}"
+    name: "{{ item }}"
+    wait: yes
+  with_items:
+    - "{{ release_name }}-elasticsearch-master"
+    - "{{ release_name }}-elasticsearch-data"
+
+- name: Get a list of all PersistentVolumeClaim objects
+  k8s_info:
+    api_version: v1
+    kind: PersistentVolumeClaim
+    namespace: "{{ namespace }}"
+  register: pvc_list
+
+- name: Delete Elasticsearch volumes
+  when: "'elasticsearch' in item"
+  community.kubernetes.k8s:
+    state: absent
+    api_version: v1
+    kind: PersistentVolumeClaim
+    namespace: "{{ namespace }}"
+    name: "{{ item }}"
+  with_items: "{{ pvc_list.resources | map(attribute='metadata') | map(attribute='name') | list }}"
+
+# Then, we perform the restore
 - name: Restore Astronomer DB
-  postgresql_db:
+  failed_when: false
+  community.general.postgresql_db:
     login_host: "{{ db_hostname }}"
     login_user: "{{ db_username }}"
     login_password: "{{ db_password }}"
-    name: "{{ release_name }}_houston"
     state: restore
-    target: "{{ astro_save }}/astronomer-db-backup.sql"
+    target: "{{ astro_save }}/astronomer-db-backup.tar"
+    db: "{{ release_name }}_houston"
+    target_opts: "--clean"
 
-# TODO: Ensure this is deleted: astronomer-houston-db-migrations
-#
+# It is possible that we interrupted
+# a lock on the migrations table when we
+# backed up. So, we just delete this table right
+# after restoring.
+- name: Drop the migrations table
+  postgresql_query:
+    login_host: "{{ db_hostname }}"
+    login_user: "{{ db_username }}"
+    login_password: "{{ db_password }}"
+    db: "{{ release_name }}_houston"
+    query: "drop table migrations;"
+
 - name: Rollback with Helm
   shell: |
-    helm rollback {{ release_name }} {{ helm_history.revision }} --force
-    helm rollback {{ release_name }} {{ helm_history.revision }}
+    helm rollback {{ release_name }} {{ helm_history.revision }} --no-hooks

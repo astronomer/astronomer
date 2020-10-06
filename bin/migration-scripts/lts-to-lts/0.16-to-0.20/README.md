@@ -92,5 +92,3 @@ Watch the pods until they have stabilized. Everything in your Astronomer namespa
 ```
 watch kubectl get pods -n <your namespace>
 ```
-
-

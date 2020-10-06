@@ -92,6 +92,22 @@
     dest: "{{ astro_save_dir.path }}/helm-status.json"
     content: "{{ helm_status | to_json }}"
 
+- name: Ensure Houston API is deleted
+  community.kubernetes.k8s:
+    state: absent
+    api_version: v1
+    kind: Deployment
+    namespace: "{{ namespace }}"
+    name: "{{ release_name }}-houston"
+
+- name: Ensure Prisma is deleted
+  community.kubernetes.k8s:
+    state: absent
+    api_version: v1
+    kind: Deployment
+    namespace: "{{ namespace }}"
+    name: "{{ release_name }}-prisma"
+
 - name: Backup Astronomer database
   postgresql_db:
     login_host: "{{ db_hostname }}"
@@ -99,7 +115,8 @@
     login_password: "{{ db_password }}"
     name: "{{ release_name }}_houston"
     state: dump
-    target: "{{ astro_save_dir.path }}/astronomer-db-backup.sql"
+    target: "{{ astro_save_dir.path }}/astronomer-db-backup.tar"
+    target_opts: '--clean --create --format=tar'
 
 - name: Run SQL for Prisma 1 to Prisma 2 migration
   postgresql_query:
@@ -113,8 +130,8 @@
 # Also, there are new network security policies we need to apply before the db migration.
 - name: "Upgrade Astronomer: Helm upgrade (1/2) swap out pods"
   shell: |
-    helm upgrade --namespace {{ namespace }} --reset-values -f {{ astro_save_dir.path }}/helm-user-values.json --no-hooks --version=0.20.0 {{ release_name }} astronomer-internal/astronomer
+    helm upgrade --namespace {{ namespace }} --reset-values -f {{ astro_save_dir.path }}/helm-user-values.json --no-hooks --version=0.20.0 {{ release_name }} astronomer-internal/astronomer --cleanup-on-fail
 
 - name: "Upgrade Astronomer: Helm upgrade (2/2) Run DB migration"
   shell: |
-    helm upgrade --namespace {{ namespace }} --reset-values -f {{ astro_save_dir.path }}/helm-user-values.json --version=0.20.0 {{ release_name }} astronomer-internal/astronomer
+    helm upgrade --namespace {{ namespace }} --reset-values -f {{ astro_save_dir.path }}/helm-user-values.json --version=0.20.0 {{ release_name }} astronomer-internal/astronomer --cleanup-on-fail
