@@ -91,6 +91,12 @@ data:
         - version: 1.10.5
           channel: stable
           tag: 1.10.5-10-buster-onbuild
+        - version: 1.10.5
+          channel: stable
+          tag: 1.10.5-11-alpine3.10-onbuild
+        - version: 1.10.5
+          channel: stable
+          tag: 1.10.5-11-buster-onbuild
         - version: 1.10.7
           channel: stable
           tag: 1.10.7-alpine3.10-onbuild
