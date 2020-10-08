@@ -66,9 +66,28 @@
   set_fact:
     helm_values: "{{ helm_values_raw.stdout | from_json }}"
 
+# In the event the user rolls back, we need to make sure
+# the houston prisma 1 migration runs before we try to
+# re-run the upgrade
+- name: Wait for Houston to apply migrations in 0.16
+  retries: 30
+  delay: 5
+  until: result is not failed
+  register: result
+  changed_when: false
+  postgresql_query:
+    login_host: "{{ db_hostname }}"
+    login_user: "{{ db_username }}"
+    login_password: "{{ db_password }}"
+    db: "{{ release_name }}_houston"
+    query: |
+      SET search_path to "houston$default";
+      SELECT "localCredential" FROM "houston$default"."User";
+
 # TODO: check that every airflow has airflow version defined in DB
 
 - name: Back up the Helm secret state
+  changed_when: false
   community.kubernetes.k8s_info:
     api_version: v1
     kind: Secret
@@ -80,21 +99,25 @@
 - set_fact:
     helm_secret: {}
     helm_secret_metadata: {}
+  changed_when: false
 
 - set_fact:
     helm_secret: "{{ helm_secret | combine({item.key: item.value}) }}"
   no_log: true
   when: "item.key not in ['metadata']"
   with_dict: "{{ helm_secret_raw.resources[0] }}"
+  changed_when: false
 
 - set_fact:
     helm_secret_metadata: "{{ helm_secret_metadata | combine({item.key: item.value}) }}"
-    when: "item.key not in ['resourceVersion', 'uid', 'selfLink', 'creationTimestamp']"
-  with_dict: "{{ helm_secret_raw.resources[0].metadata }}"
+  when: "item.key not in ['resourceVersion', 'uid', 'selfLink', 'creationTimestamp']"
   no_log: true
+  changed_when: false
+  with_dict: "{{ helm_secret_raw.resources[0].metadata }}"
 
 - set_fact:
     helm_secret: "{{ helm_secret | combine({'metadata': helm_secret_metadata}) }}"
+  changed_when: false
 
 - name: Ensure backup directory is created
   file:
@@ -137,25 +160,7 @@
     target: "{{ astro_save_dir.path }}/astronomer-db-backup.tar"
     target_opts: '--clean --create --format=tar'
 
-# - name: Ensure Houston API is deleted
-#   community.kubernetes.k8s:
-#     state: absent
-#     api_version: v1
-#     kind: Deployment
-#     namespace: "{{ namespace }}"
-#     name: "{{ release_name }}-houston"
-# 
-# - name: Ensure Prisma is deleted
-#   community.kubernetes.k8s:
-#     state: absent
-#     api_version: v1
-#     kind: Deployment
-#     namespace: "{{ namespace }}"
-#     name: "{{ release_name }}-prisma"
-
 - name: Run SQL for Prisma 1 to Prisma 2 migration
-  # Some statements may fail and that's OK
-  # failed_when: false
   register: prisma1_to_2
   postgresql_query:
     autocommit: yes

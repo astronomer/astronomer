@@ -8,7 +8,7 @@
     db_username: "postgres"
     db_password: "postgres"
     db_port: "5432"
-    astro_save: "/astronomer-backups/astro-save-2020-10-07-14-29-45"
+    astro_save: "/astronomer-backups/astro-save-2020-10-08-13-45-07"
 
 - name: Read revision from backup
   set_fact:
@@ -20,6 +20,12 @@
     msg:
       - "Reverting to revision: {{ helm_history.revision }}"
       - "Helm chart was: {{ helm_history.chart }}"
+
+- name: Ensure backup revision exists in Helm state
+  community.kubernetes.k8s:
+    state: present
+    src: "{{ astro_save }}/helm-secret.yaml"
+    namespace: "{{ namespace }}"
 
 # First, we get rid of everything that touches the DB
 - name: Ensure DB migration job is deleted
@@ -48,6 +54,15 @@
     name: "{{ release_name }}-houston-workers"
     wait: yes
 
+- name: Ensure Prisma is deleted
+  community.kubernetes.k8s:
+    state: absent
+    api_version: v1
+    kind: Deployment
+    namespace: "{{ namespace }}"
+    name: "{{ release_name }}-prisma"
+    wait: yes
+
 - name: Get a list of all Pods
   k8s_info:
     api_version: v1
@@ -57,6 +72,16 @@
 
 - name: Delete all Houston pods
   when: "'houston' in item"
+  community.kubernetes.k8s:
+    state: absent
+    api_version: v1
+    kind: Pod
+    namespace: "{{ namespace }}"
+    name: "{{ item }}"
+  with_items: "{{ pod_list.resources | map(attribute='metadata') | map(attribute='name') | list }}"
+
+- name: Delete all Prisma pods
+  when: "'prisma' in item"
   community.kubernetes.k8s:
     state: absent
     api_version: v1
@@ -106,26 +131,25 @@
     name: "{{ item }}"
   with_items: "{{ pvc_list.resources | map(attribute='metadata') | map(attribute='name') | list }}"
 
-# - name: Ensure backup revision exists in Helm state
-#   community.kubernetes.k8s:
-#     state: "{{ item }}"
-#     src: "{{ astro_save }}/helm-secret.json"
-#     namespace: "{{ namespace }}"
-#   with_items:
-#     - absent
-#     - present
-
 # Then, we perform the restore
-- name: Restore Astronomer DB
-  failed_when: false
+- name: Restore Astronomer DB, retrying until all connections are closed
+  retries: 15
+  delay: 2
+  until: result is not failed
+  register: result
   community.general.postgresql_db:
     login_host: "{{ db_hostname }}"
     login_user: "{{ db_username }}"
     login_password: "{{ db_password }}"
     state: restore
     target: "{{ astro_save }}/astronomer-db-backup.tar"
-    db: "{{ release_name }}_houston"
-    target_opts: "--clean"
+    # db: "{{ release_name }}_houston"
+    # When you do pg_restore, the --dbname argument should be
+    # postgres, the maintenance db. Otherwise, we are connected
+    # to the DB we are trying to restore and that will cause
+    # issues.
+    db: postgres
+    target_opts: "--clean --create"
 
 # It is possible that we interrupted
 # a lock on the migrations table when we
