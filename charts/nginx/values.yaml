@@ -16,7 +16,6 @@ images:
     tag: 0.16.1
     pullPolicy: IfNotPresent
 
-forceNamespaceIsolation: true
 ingressClass: ~
 
 replicas: 2
