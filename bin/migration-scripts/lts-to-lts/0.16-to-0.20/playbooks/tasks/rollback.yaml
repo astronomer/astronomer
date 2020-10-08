@@ -8,7 +8,7 @@
     db_username: "postgres"
     db_password: "postgres"
     db_port: "5432"
-    astro_save: "/astronomer-backups/astro-save-2020-10-06-15-18-33"
+    astro_save: "/astronomer-backups/astro-save-2020-10-07-14-29-45"
 
 - name: Read revision from backup
   set_fact:
@@ -47,6 +47,23 @@
     namespace: "{{ namespace }}"
     name: "{{ release_name }}-houston-workers"
     wait: yes
+
+- name: Get a list of all Pods
+  k8s_info:
+    api_version: v1
+    kind: Pod
+    namespace: "{{ namespace }}"
+  register: pod_list
+
+- name: Delete all Houston pods
+  when: "'houston' in item"
+  community.kubernetes.k8s:
+    state: absent
+    api_version: v1
+    kind: Pod
+    namespace: "{{ namespace }}"
+    name: "{{ item }}"
+  with_items: "{{ pod_list.resources | map(attribute='metadata') | map(attribute='name') | list }}"
 
 - name: Deleting logs, rollback destroys logs because Elasticsearch version downgrade is not supported
   community.kubernetes.k8s:
@@ -88,6 +105,15 @@
     namespace: "{{ namespace }}"
     name: "{{ item }}"
   with_items: "{{ pvc_list.resources | map(attribute='metadata') | map(attribute='name') | list }}"
+
+# - name: Ensure backup revision exists in Helm state
+#   community.kubernetes.k8s:
+#     state: "{{ item }}"
+#     src: "{{ astro_save }}/helm-secret.json"
+#     namespace: "{{ namespace }}"
+#   with_items:
+#     - absent
+#     - present
 
 # Then, we perform the restore
 - name: Restore Astronomer DB

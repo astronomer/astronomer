@@ -66,6 +66,36 @@
   set_fact:
     helm_values: "{{ helm_values_raw.stdout | from_json }}"
 
+# TODO: check that every airflow has airflow version defined in DB
+
+- name: Back up the Helm secret state
+  community.kubernetes.k8s_info:
+    api_version: v1
+    kind: Secret
+    name: "sh.helm.release.v1.{{ release_name }}.v{{ helm_history.revision }}"
+    namespace: "{{ namespace }}"
+  register: helm_secret_raw
+
+# Format the secret for reapplying later
+- set_fact:
+    helm_secret: {}
+    helm_secret_metadata: {}
+
+- set_fact:
+    helm_secret: "{{ helm_secret | combine({item.key: item.value}) }}"
+  no_log: true
+  when: "item.key not in ['metadata']"
+  with_dict: "{{ helm_secret_raw.resources[0] }}"
+
+- set_fact:
+    helm_secret_metadata: "{{ helm_secret_metadata | combine({item.key: item.value}) }}"
+    when: "item.key not in ['resourceVersion', 'uid', 'selfLink', 'creationTimestamp']"
+  with_dict: "{{ helm_secret_raw.resources[0].metadata }}"
+  no_log: true
+
+- set_fact:
+    helm_secret: "{{ helm_secret | combine({'metadata': helm_secret_metadata}) }}"
+
 - name: Ensure backup directory is created
   file:
     path: "{{ backup_dir }}"
@@ -76,6 +106,11 @@
   file:
     path: "{{ backup_dir }}/astro-save-{{ timestamp }}"
     state: directory
+
+- name: Backup Helm backend state
+  copy:
+    dest: "{{ astro_save_dir.path }}/helm-secret.yaml"
+    content: "{{ helm_secret | to_yaml }}"
 
 - name: Backup Astronomer Helm values
   copy:
@@ -92,22 +127,6 @@
     dest: "{{ astro_save_dir.path }}/helm-status.json"
     content: "{{ helm_status | to_json }}"
 
-- name: Ensure Houston API is deleted
-  community.kubernetes.k8s:
-    state: absent
-    api_version: v1
-    kind: Deployment
-    namespace: "{{ namespace }}"
-    name: "{{ release_name }}-houston"
-
-- name: Ensure Prisma is deleted
-  community.kubernetes.k8s:
-    state: absent
-    api_version: v1
-    kind: Deployment
-    namespace: "{{ namespace }}"
-    name: "{{ release_name }}-prisma"
-
 - name: Backup Astronomer database
   postgresql_db:
     login_host: "{{ db_hostname }}"
@@ -118,8 +137,28 @@
     target: "{{ astro_save_dir.path }}/astronomer-db-backup.tar"
     target_opts: '--clean --create --format=tar'
 
+# - name: Ensure Houston API is deleted
+#   community.kubernetes.k8s:
+#     state: absent
+#     api_version: v1
+#     kind: Deployment
+#     namespace: "{{ namespace }}"
+#     name: "{{ release_name }}-houston"
+# 
+# - name: Ensure Prisma is deleted
+#   community.kubernetes.k8s:
+#     state: absent
+#     api_version: v1
+#     kind: Deployment
+#     namespace: "{{ namespace }}"
+#     name: "{{ release_name }}-prisma"
+
 - name: Run SQL for Prisma 1 to Prisma 2 migration
+  # Some statements may fail and that's OK
+  # failed_when: false
+  register: prisma1_to_2
   postgresql_query:
+    autocommit: yes
     login_host: "{{ db_hostname }}"
     login_user: "{{ db_username }}"
     login_password: "{{ db_password }}"
@@ -128,10 +167,18 @@
 
 # The db migration container waits on NATs, and for that, we need the new pods.
 # Also, there are new network security policies we need to apply before the db migration.
-- name: "Upgrade Astronomer: Helm upgrade (1/2) swap out pods"
+- name: "Upgrade Astronomer: Helm upgrade (1/4) Update software in Astronomer"
   shell: |
-    helm upgrade --namespace {{ namespace }} --reset-values -f {{ astro_save_dir.path }}/helm-user-values.json --no-hooks --version=0.20.0 {{ release_name }} astronomer-internal/astronomer --cleanup-on-fail
+    helm upgrade --namespace {{ namespace }} --reset-values -f {{ astro_save_dir.path }}/helm-user-values.json --no-hooks --set astronomer.houston.upgradeDeployments.enabled=false --version=0.20.0 {{ release_name }} astronomer-internal/astronomer
 
-- name: "Upgrade Astronomer: Helm upgrade (2/2) Run DB migration"
+- name: "Upgrade Astronomer: Helm upgrade (2/4) Run Astronomer DB migration"
   shell: |
-    helm upgrade --namespace {{ namespace }} --reset-values -f {{ astro_save_dir.path }}/helm-user-values.json --version=0.20.0 {{ release_name }} astronomer-internal/astronomer --cleanup-on-fail
+    helm upgrade --namespace {{ namespace }} --reset-values -f {{ astro_save_dir.path }}/helm-user-values.json --set astronomer.houston.upgradeDeployments.enabled=false --version=0.20.0 {{ release_name }} astronomer-internal/astronomer
+
+- name: "Upgrade Astronomer: Helm upgrade (3/4) Update Airflow configurations"
+  shell: |
+    helm upgrade --namespace {{ namespace }} --reset-values -f {{ astro_save_dir.path }}/helm-user-values.json --set astronomer.houston.upgradeDeployments.enabled=true --version=0.20.0 {{ release_name }} astronomer-internal/astronomer
+
+- name: "Upgrade Astronomer: Helm upgrade (4/4) Turn off airflow auto upgrade configuration"
+  shell: |
+    helm upgrade --namespace {{ namespace }} --reset-values -f {{ astro_save_dir.path }}/helm-user-values.json --no-hooks --set astronomer.houston.upgradeDeployments.enabled=false --version=0.20.0 {{ release_name }} astronomer-internal/astronomer

@@ -12,8 +12,17 @@ ALTER TABLE "houston$default"."DockerImage" alter column labels type jsonb using
 ALTER TABLE "houston$default"."DockerImage" alter column env type jsonb using env::JSON;
 ALTER TABLE "houston$default"."DockerImage" RENAME COLUMN "deployment" TO "deploymentId";
 ALTER TABLE "houston$default"."User" RENAME COLUMN "localCredential" TO "localCredentialId";
-CREATE TYPE "houston$default"."Role" AS ENUM ('SYSTEM_ADMIN', 'SYSTEM_EDITOR', 'SYSTEM_VIEWER', 'WORKSPACE_ADMIN', 'WORKSPACE_EDITOR', 'WORKSPACE_VIEWER', 'DEPLOYMENT_ADMIN', 'DEPLOYMENT_EDITOR', 'DEPLOYMENT_VIEWER', 'USER');
-CREATE TYPE "houston$default"."InviteSource" AS ENUM ('SYSTEM', 'WORKSPACE');
+
+DO $$ BEGIN
+IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'Role') THEN
+    CREATE TYPE "houston$default"."Role" AS ENUM ('SYSTEM_ADMIN', 'SYSTEM_EDITOR', 'SYSTEM_VIEWER', 'WORKSPACE_ADMIN', 'WORKSPACE_EDITOR', 'WORKSPACE_VIEWER', 'DEPLOYMENT_ADMIN', 'DEPLOYMENT_EDITOR', 'DEPLOYMENT_VIEWER', 'USER');
+END IF;
+
+IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'InviteSource') THEN
+  CREATE TYPE "houston$default"."InviteSource" AS ENUM ('SYSTEM', 'WORKSPACE');
+END IF;
+END $$;
+
 alter table "houston$default"."InviteToken" ALTER COLUMN source TYPE "houston$default"."InviteSource" using source::"InviteSource";
 alter table "houston$default"."InviteToken" ALTER COLUMN role TYPE "houston$default"."Role" using role::"Role";
 alter table "houston$default"."RoleBinding" ALTER COLUMN role TYPE "houston$default"."Role" using role::"Role";
