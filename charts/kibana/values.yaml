@@ -4,7 +4,7 @@ tolerations: []
 
 images:
   kibana:
-    repository: astronomerinc/ap-kibana
+    repository: quay.io/astronomer/ap-kibana
     tag: 7.8.0
     pullPolicy: IfNotPresent
 

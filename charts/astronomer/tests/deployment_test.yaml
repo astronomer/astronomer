@@ -8,4 +8,4 @@ tests:
         of: Deployment
     - equal:
         path: spec.template.spec.containers[0].image
-        value: astronomerinc/ap-commander:0.18.0
+        value: quay.io/astronomer/ap-commander:0.18.0

@@ -7,27 +7,27 @@
 astronomer:
   images:
     commander:
-      repository: astronomerinc/ap-commander
+      repository: quay.io/astronomer/ap-commander
       tag: dev
       pullPolicy: Always
     registry:
-      repository: astronomerinc/ap-registry
+      repository: quay.io/astronomer/ap-registry
       tag: master
       pullPolicy: Always
     houston:
-      repository: astronomerinc/ap-houston-api
+      repository: quay.io/astronomer/ap-houston-api
       tag: dev
       pullPolicy: Always
     astroUI:
-      repository: astronomerinc/ap-astro-ui
+      repository: quay.io/astronomer/ap-astro-ui
       tag: dev
       pullPolicy: Always
     dbBootstrapper:
-      repository: astronomerinc/ap-db-bootstrapper
+      repository: quay.io/astronomer/ap-db-bootstrapper
       tag: master
       pullPolicy: Always
     cliInstall:
-      repository: astronomerinc/ap-cli-install
+      repository: quay.io/astronomer/ap-cli-install
       tag: master
       pullPolicy: Always
 
@@ -39,11 +39,11 @@ astronomer:
 nginx:
   images:
     nginx:
-      repository: astronomerinc/ap-nginx
+      repository: quay.io/astronomer/ap-nginx
       tag: master
       pullPolicy: Always
     defaultBackend:
-      repository: astronomerinc/ap-default-backend
+      repository: quay.io/astronomer/ap-default-backend
       tag: master
       pullPolicy: Always
 
@@ -54,11 +54,11 @@ nginx:
 grafana:
   images:
     grafana:
-      repository: astronomerinc/ap-grafana
+      repository: quay.io/astronomer/ap-grafana
       tag: master
       pullPolicy: Always
     dbBootstrapper:
-      repository: astronomerinc/ap-db-bootstrapper
+      repository: quay.io/astronomer/ap-db-bootstrapper
       tag: master
       pullPolicy: IfNotPresent
 
@@ -69,7 +69,7 @@ grafana:
 kibana:
   images:
     kibana:
-      repository: astronomerinc/ap-kibana
+      repository: quay.io/astronomer/ap-kibana
       tag: master
       pullPolicy: Always
 
@@ -80,23 +80,23 @@ kibana:
 elasticsearch:
   images:
     es:
-      repository: astronomerinc/ap-elasticsearch
+      repository: quay.io/astronomer/ap-elasticsearch
       tag: master
       pullPolicy: Always
     init:
-      repository: astronomerinc/ap-base
+      repository: quay.io/astronomer/ap-base
       tag: master
       pullPolicy: Always
     curator:
-      repository: astronomerinc/ap-curator
+      repository: quay.io/astronomer/ap-curator
       tag: master
       pullPolicy: Always
     exporter:
-      repository: astronomerinc/ap-elasticsearch-exporter
+      repository: quay.io/astronomer/ap-elasticsearch-exporter
       tag: master
       pullPolicy: Always
     nginx:
-      repository: astronomerinc/ap-nginx-es
+      repository: quay.io/astronomer/ap-nginx-es
       tag: master
       pullPolicy: Always
 
@@ -107,7 +107,7 @@ elasticsearch:
 fluentd:
   images:
     fluentd:
-      repository: astronomerinc/ap-fluentd
+      repository: quay.io/astronomer/ap-fluentd
       tag: master
       pullPolicy: Always
 
@@ -118,7 +118,7 @@ fluentd:
 kube-state:
   images:
     kubeState:
-      repository: astronomerinc/ap-kube-state
+      repository: quay.io/astronomer/ap-kube-state
       tag: master
       pullPolicy: Always
 
@@ -129,7 +129,7 @@ kube-state:
 kubed:
   images:
     kubed:
-      repository: astronomerinc/ap-kubed
+      repository: quay.io/astronomer/ap-kubed
       tag: master
       pullPolicy: Always
 
@@ -140,11 +140,11 @@ kubed:
 prometheus:
   images:
     init:
-      repository: astronomerinc/ap-base
+      repository: quay.io/astronomer/ap-base
       tag: master
       pullPolicy: Always
     prometheus:
-      repository: astronomerinc/ap-prometheus
+      repository: quay.io/astronomer/ap-prometheus
       tag: master
       pullPolicy: Always
 
@@ -155,7 +155,6 @@ prometheus:
 alertmanager:
   images:
     alertmanager:
-      repository: astronomerinc/ap-alertmanager
+      repository: quay.io/astronomer/ap-alertmanager
       tag: master
       pullPolicy: IfNotPresent
-

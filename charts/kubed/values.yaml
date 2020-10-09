@@ -4,7 +4,7 @@
 
 images:
   kubed:
-    repository: astronomerinc/ap-kubed
+    repository: quay.io/astronomer/ap-kubed
     tag: 0.12.0-rc.2
     pullPolicy: IfNotPresent
 

@@ -4,7 +4,7 @@
 #                             #
 ###############################
 nats:
-  image: astronomerinc/ap-nats-server:2.1.7
+  image: quay.io/astronomer/ap-nats-server:2.1.7
   pullPolicy: IfNotPresent
 
   # In case both external access and advertise are enabled
@@ -172,7 +172,7 @@ reloader:
 # Prometheus NATS Exporter configuration.
 exporter:
   enabled: true
-  image: astronomerinc/ap-nats-exporter:0.6.2
+  image: quay.io/astronomer/ap-nats-exporter:0.6.2
   pullPolicy: IfNotPresent
   # resource configuration for the metrics sidecar
   resources: {}

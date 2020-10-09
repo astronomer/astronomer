@@ -8,7 +8,7 @@ metadata:
 spec:
   containers:
     - name: ap-e2e-test
-      image: astronomerinc/ap-e2e-test:latest
+      image: quay.io/astronomer/ap-e2e-test:latest
       imagePullPolicy: Always
       env:
         - name: ASTRO_USER
@@ -27,6 +27,3 @@ spec:
     - name: ap-e2e-test-creds
       secret:
         secretName: ap-e2e-test-creds
-
-
-

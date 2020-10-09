@@ -12,7 +12,7 @@ strategy:
   type: RollingUpdate
 
 image:
-  repository: astronomerinc/ap-blackbox-exporter
+  repository: quay.io/astronomer/ap-blackbox-exporter
   tag: 0.16.0
   pullPolicy: IfNotPresent
 
@@ -28,7 +28,7 @@ runAsUser: 1000
 readOnlyRootFilesystem: true
 runAsNonRoot: true
 
-# These are set in the global values. 
+# These are set in the global values.
 # nodeSelector: {}
 # tolerations: {}
 # affinity: {}

@@ -14,31 +14,31 @@ tolerations: []
 # Images for Astronomer
 images:
   commander:
-    repository: astronomerinc/ap-commander
+    repository: quay.io/astronomer/ap-commander
     tag: 0.18.0
     pullPolicy: IfNotPresent
   registry:
-    repository: astronomerinc/ap-registry
+    repository: quay.io/astronomer/ap-registry
     tag: 3.11.5-4
     pullPolicy: IfNotPresent
   houston:
-    repository: astronomerinc/ap-houston-api
+    repository: quay.io/astronomer/ap-houston-api
     tag: 0.20.9
     pullPolicy: IfNotPresent
   astroUI:
-    repository: astronomerinc/ap-astro-ui
+    repository: quay.io/astronomer/ap-astro-ui
     tag: 0.20.2
     pullPolicy: IfNotPresent
   dbBootstrapper:
-    repository: astronomerinc/ap-db-bootstrapper
+    repository: quay.io/astronomer/ap-db-bootstrapper
     tag: 0.20.0
     pullPolicy: IfNotPresent
   cliInstall:
-    repository: astronomerinc/ap-cli-install
+    repository: quay.io/astronomer/ap-cli-install
     tag: 0.13.1
     pullPolicy: IfNotPresent
   e2eTest:
-    repository: astronomerinc/ap-e2e-test
+    repository: quay.io/astronomer/ap-e2e-test
     tag: 0.0.7
     pullPolicy: IfNotPresent
 
