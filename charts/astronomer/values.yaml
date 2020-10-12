@@ -15,19 +15,19 @@ tolerations: []
 images:
   commander:
     repository: astronomerinc/ap-commander
-    tag: 0.18.0
+    tag: 0.21.0
     pullPolicy: IfNotPresent
   registry:
     repository: astronomerinc/ap-registry
     tag: 3.11.5-4
     pullPolicy: IfNotPresent
   houston:
-    repository: astronomerinc/ap-houston-api
-    tag: 0.20.11
+    repository: asoldatenko/ap-houston-api
+    tag: 0.21.3
     pullPolicy: IfNotPresent
   astroUI:
     repository: astronomerinc/ap-astro-ui
-    tag: 0.20.2
+    tag: 0.21.0
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: astronomerinc/ap-db-bootstrapper
