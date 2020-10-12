@@ -9,7 +9,7 @@ tolerations: []
 images:
   nginx:
     repository: astronomerinc/ap-nginx
-    tag: 0.31.1
+    tag: 0.33.0
     pullPolicy: IfNotPresent
   defaultBackend:
     repository: astronomerinc/ap-default-backend
