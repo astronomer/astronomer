@@ -1,0 +1,49 @@
+---
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  name: astronomer-upgrader-service-account
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: upgrade-astronomer
+spec:
+  backoffLimit: 0
+  template:
+    metadata:
+      labels:
+        run: test-upgrade
+    spec:
+      serviceAccountName: astronomer-upgrader-service-account
+      restartPolicy: Never
+      containers:
+      - image: sjmiller609/upgrade-testing:latest
+        imagePullPolicy: Always
+        name: test-upgrade
+      terminationGracePeriodSeconds: 300
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: astronomer-upgrader-cluster-role
+rules:
+- apiGroups:
+  - '*'
+  resources:
+  - '*'
+  verbs:
+  - '*'
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: astronomer-upgrader-cluster-role-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: astronomer-upgrader-cluster-role
+subjects:
+- kind: ServiceAccount
+  name: astronomer-upgrader-service-account
+  namespace: default
