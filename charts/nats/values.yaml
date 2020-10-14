@@ -4,7 +4,7 @@
 #                             #
 ###############################
 nats:
-  image: astronomerinc/ap-nats-server:2.1.7
+  image: astronomerinc/ap-nats-server:2.1.8
   pullPolicy: IfNotPresent
 
   # In case both external access and advertise are enabled
