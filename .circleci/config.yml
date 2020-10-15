@@ -72,42 +72,42 @@ jobs:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging kubed keda"
 
-  platform-1-15-11:
+  platform-1-15-12:
     machine:
       image: ubuntu-2004:202008-01
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.15.11
+      KUBE_VERSION: v1.15.12
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging kubed keda"
 
-  platform-1-16-9:
+  platform-1-16-15:
     machine:
       image: ubuntu-2004:202008-01
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.16.9
+      KUBE_VERSION: v1.16.15
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging kubed keda"
 
-  platform-1-17-5:
+  platform-1-17-11:
     machine:
       image: ubuntu-2004:202008-01
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.17.5
+      KUBE_VERSION: v1.17.11
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging kubed keda"
 
-  platform-1-18-2:
+  platform-1-18-8:
     machine:
       image: ubuntu-2004:202008-01
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.18.2
+      KUBE_VERSION: v1.18.8
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging kubed keda"
@@ -121,37 +121,43 @@ workflows:
       - build-artifact:
           requires:
             - lint
+            - unittest-charts
+
+      - test-all-platforms:
+          type: approval
 
       - platform-1-14-10:
           requires:
+            - test-all-platforms
             - build-artifact
 
-      - platform-1-15-11:
+      - platform-1-15-12:
           requires:
+            - test-all-platforms
             - build-artifact
 
-      - platform-1-16-9:
+      - platform-1-16-15:
           requires:
+            - test-all-platforms
             - build-artifact
 
-      - platform-1-17-5:
+      - platform-1-17-11:
           requires:
+            - test-all-platforms
             - build-artifact
 
-      - platform-1-18-2:
+      - platform-1-18-8:
           requires:
             - build-artifact
 
       - approve-internal-release:
           type: approval
           requires:
-
             - platform-1-14-10
-            - platform-1-15-11
-            - platform-1-16-9
-            - platform-1-17-5
-            - platform-1-18-2
-
+            - platform-1-15-12
+            - platform-1-16-15
+            - platform-1-17-11
+            - platform-1-18-8
           filters:
             branches:
               only:

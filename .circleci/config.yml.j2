@@ -79,17 +79,26 @@ workflows:
       - build-artifact:
           requires:
             - lint
-{% for version in kube_versions %}
+            - unittest-charts
+
+      - test-all-platforms:
+          type: approval
+{% for version in kube_versions %}{% if version == kube_versions[-1:][0] %}
       - platform-{{ version | replace(".", "-") }}:
           requires:
             - build-artifact
-{% endfor %}
+{%- else %}
+      - platform-{{ version | replace(".", "-") }}:
+          requires:
+            - test-all-platforms
+            - build-artifact
+{% endif %}{% endfor %}
+
       - approve-internal-release:
           type: approval
           requires:
-{% for version in kube_versions %}
+{%- for version in kube_versions %}
             - platform-{{ version | replace(".", "-") }}{% endfor %}
-
           filters:
             branches:
               only:
