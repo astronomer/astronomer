@@ -110,10 +110,10 @@ workflows:
           requires:
 {%- for version in kube_versions %}
             - platform-{{ version | replace(".", "-") }}{% endfor %}
-#          filters:
-#            branches:
-#              only:
-#                - '/release-0\.\d+/'
+          filters:
+            branches:
+              only:
+                - '/release-0\.\d+/'
 
       - release-to-internal:
           requires:
