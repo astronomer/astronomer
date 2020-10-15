@@ -9,15 +9,12 @@ from jinja2 import Template
 
 # When adding a new version, look up the most
 # recent patch version on Dockerhub
-KUBE_VERSIONS = ['1.14.10',
-        '1.15.11',
-        '1.16.9',
-        '1.17.5',
-        '1.18.2']
+# https://hub.docker.com/r/kindest/node/tags
+KUBE_VERSIONS = ["1.14.10", "1.15.12", "1.16.15", "1.17.11", "1.18.8"]
+
 
 def main():
-    """ Render the Jinja2 template file
-    """
+    """Render the Jinja2 template file"""
     circle_directory = os.path.dirname(os.path.realpath(__file__))
     config_template_path = os.path.join(circle_directory, "config.yml.j2")
     config_path = os.path.join(circle_directory, "config.yml")
@@ -25,14 +22,15 @@ def main():
     with open(config_template_path, "r") as circle_ci_config_template:
         templated_file_content = circle_ci_config_template.read()
     template = Template(templated_file_content)
-    config = template.render(
-            kube_versions=KUBE_VERSIONS
-            )
-    warning_header = "# Warning: automatically generated file\n" + \
-            "# Please edit config.yml.j2, and use the script generate_circleci_config.py\n"
+    config = template.render(kube_versions=KUBE_VERSIONS)
+    warning_header = (
+        "# Warning: automatically generated file\n"
+        + "# Please edit config.yml.j2, and use the script generate_circleci_config.py\n"
+    )
     with open(config_path, "w") as circle_ci_config_file:
         circle_ci_config_file.write(warning_header)
         circle_ci_config_file.write(config)
+        circle_ci_config_file.write("\n")
 
 
 if __name__ == "__main__":
