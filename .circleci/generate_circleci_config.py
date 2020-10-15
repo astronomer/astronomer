@@ -9,7 +9,7 @@ from jinja2 import Template
 
 # When adding a new version, look up the most
 # recent patch version on Dockerhub
-KUBE_VERSIONS = ["1.14.10", "1.15.11", "1.16.9", "1.17.5", "1.18.2"]
+KUBE_VERSIONS = ["1.14.10", "1.15.12", "1.16.15", "1.17.11", "1.18.8"]
 
 
 def main():
