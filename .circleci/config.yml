@@ -131,46 +131,45 @@ workflows:
       - build-artifact:
           requires:
             - lint
+            - unittest-charts
+
+      - test-all-platforms:
+          type: approval
+          requires:
+            - build-artifact
 
       - platform-1-14-10:
           requires:
-            - build-artifact
-            - unittest-charts
+            - test-all-platforms
 
       - platform-1-15-11:
           requires:
-            - build-artifact
-            - unittest-charts
+            - test-all-platforms
 
       - platform-1-16-9:
           requires:
-            - build-artifact
-            - unittest-charts
+            - test-all-platforms
 
       - platform-1-17-5:
           requires:
-            - build-artifact
-            - unittest-charts
+            - test-all-platforms
 
       - platform-1-18-2:
           requires:
             - build-artifact
-            - unittest-charts
 
       - approve-internal-release:
           type: approval
           requires:
-
             - platform-1-14-10
             - platform-1-15-11
             - platform-1-16-9
             - platform-1-17-5
             - platform-1-18-2
-
-          filters:
-            branches:
-              only:
-                - '/release-0\.\d+/'
+#          filters:
+#            branches:
+#              only:
+#                - '/release-0\.\d+/'
 
       - release-to-internal:
           requires:
