@@ -93,8 +93,6 @@ workflows:
 
       - test-all-platforms:
           type: approval
-          requires:
-            - build-artifact
 {% for version in kube_versions %}{% if version == kube_versions[-1:][0] %}
       - platform-{{ version | replace(".", "-") }}:
           requires:
@@ -103,6 +101,7 @@ workflows:
       - platform-{{ version | replace(".", "-") }}:
           requires:
             - test-all-platforms
+            - build-artifact
 {% endif %}{% endfor %}
 
       - approve-internal-release:
