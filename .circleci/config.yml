@@ -168,10 +168,10 @@ workflows:
             - platform-1-16-15
             - platform-1-17-11
             - platform-1-18-8
-#          filters:
-#            branches:
-#              only:
-#                - '/release-0\.\d+/'
+          filters:
+            branches:
+              only:
+                - '/release-0\.\d+/'
 
       - release-to-internal:
           requires:
@@ -181,18 +181,19 @@ workflows:
           type: approval
           requires:
             - release-to-internal
-#          filters:
-#            branches:
-#              only:
-#                - '/release-0\.(12|13|14|15|16)/'
+
+          filters:
+            branches:
+              only:
+                - '/release-0\.(12|13|14|15|16)/'
 
       - release-to-public:
           requires:
             - approve-public-release
-#          filters:
-#            branches:
-#              only:
-#                - '/release-0\.(12|13|14|15|16)/'
+          filters:
+            branches:
+              only:
+                - '/release-0\.(12|13|14|15|16)/'
 
 commands:
   helm-install:
