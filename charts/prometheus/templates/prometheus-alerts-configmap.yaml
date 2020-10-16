@@ -1414,8 +1414,8 @@ data:
             severity: warning
             tier: platform
           annotations:
-            summary: 'Low Watermark Reached - disk saturation is {{ $value }}%'
-            description: 'Low Watermark Reached at {{ $labels.node }} Elasticsearch will not allocate shards to node'
+            summary: {{"Low Watermark Reached - disk saturation is {{ $value }}%"}}
+            description: {{"Low Watermark Reached at {{ $labels.node }} Elasticsearch will not allocate shards to node"}}
 
         - alert: ElasticDiskHighWatermarkReached
           expr: >
@@ -1432,8 +1432,8 @@ data:
             severity: high
             tier: platform
           annotations:
-            summary: 'High Watermark Reached - disk saturation is {{ $value }}%'
-            description: 'High Watermark Reached at {{ $labels.node }} Elasticsearch will attempt to relocate shards away from a node'
+            summary: {{"High Watermark Reached - disk saturation is {{ $value }}%"}}
+            description: {{"High Watermark Reached at {{ $labels.node }} Elasticsearch will attempt to relocate shards away from a node"}}
 
         - alert: ElasticDiskFloodWatermarkReached
           expr: >
@@ -1450,8 +1450,8 @@ data:
             severity: critical
             tier: platform
           annotations:
-            summary: 'Foold Watermark Reached - disk saturation is {{ $value }}%'
-            description: 'Flood Watermark Reached at {{ $labels.node }} Elasticsearch enforcing a read-only index block'
+            summary: {{"Flood Watermark Reached - disk saturation is {{ $value }}%"}}
+            description: {{"Flood Watermark Reached at {{ $labels.node }} Elasticsearch enforcing a read-only index block"}}
 
         - alert: IngessCertificateExpiration
           expr: avg(nginx_ingress_controller_ssl_expire_time_seconds) by (host) - time() < 604800
