@@ -1383,17 +1383,81 @@ data:
           expr: elasticsearch_cluster_health_unassigned_shards > 0
           for: 10m
           labels:
-            severity: High
+            severity: high
             tier: platform
           annotations:
             summary: {{ printf "%q" "Elastic Search has {{ $value }} unassigned shards" }}
             description: "Unassigned shards in Elastic Search cluster"
 
+        # There are two important thresholds that impact how ES node allocates index shards.
+        #   - 85% used - Low watermark
+        #   - 90% used - High watermark
+        #   - 95% used - Flood watermark
+        #
+        # It is important the make sure there is enough free disk space for automatic background Lucene segment merges.
+        # Ideally as much free disk space as total sum of actual segment size (ie, data can fit into disk twice).
+        #
+        # https://www.elastic.co/guide/en/elasticsearch/reference/current/modules-cluster.html#disk-based-shard-allocation
+        
+        - alert: ElasticDiskLowWatermarkReached
+          expr: >
+          sum by (name) (
+                    round(
+                      (1 - (
+                        elasticsearch_filesystem_data_available_bytes /
+                        elasticsearch_filesystem_data_size_bytes
+                      )
+                    ) * 100, 0.001)
+                  ) > 85
+          for: 5m
+          labels:
+            severity: warning
+            tier: platform
+          annotations:
+            summary: 'Low Watermark Reached - disk saturation is {{ $value }}%'
+            description: 'Low Watermark Reached at {{ $labels.node }} Elasticsearch will not allocate shards to node'
+
+        - alert: ElasticDiskHighWatermarkReached
+          expr: >
+          sum by (name) (
+                    round(
+                      (1 - (
+                        elasticsearch_filesystem_data_available_bytes /
+                        elasticsearch_filesystem_data_size_bytes
+                      )
+                    ) * 100, 0.001)
+                  ) > 90
+          for: 5m
+          labels:
+            severity: high
+            tier: platform
+          annotations:
+            summary: 'High Watermark Reached - disk saturation is {{ $value }}%'
+            description: 'High Watermark Reached at {{ $labels.node }} Elasticsearch will attempt to relocate shards away from a node'
+
+        - alert: ElasticDiskFloodWatermarkReached
+          expr: >
+          sum by (name) (
+                    round(
+                      (1 - (
+                        elasticsearch_filesystem_data_available_bytes /
+                        elasticsearch_filesystem_data_size_bytes
+                      )
+                    ) * 100, 0.001)
+                  ) > 95
+          for: 5m
+          labels:
+            severity: critical
+            tier: platform
+          annotations:
+            summary: 'Foold Watermark Reached - disk saturation is {{ $value }}%'
+            description: 'Flood Watermark Reached at {{ $labels.node }} Elasticsearch enforcing a read-only index block'
+
         - alert: IngessCertificateExpiration
           expr: avg(nginx_ingress_controller_ssl_expire_time_seconds) by (host) - time() < 604800
           for: 10s
           labels:
-            severity: High
+            severity: high
             tier: platform
             component: ingress
           annotations:
