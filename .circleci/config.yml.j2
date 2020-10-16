@@ -50,7 +50,7 @@ jobs:
           command: |
             set -e
             sudo apt-get update && sudo apt-get install -y ca-certificates curl
-            pyenv global 2.7.17
+            pyenv global 3.8.5
             bin/release-helm-chart /tmp/workspace/astronomer-*.tgz
 
   release-to-public:
@@ -65,7 +65,7 @@ jobs:
           command: |
             set -e
             sudo apt-get update && sudo apt-get install -y ca-certificates curl
-            pyenv global 2.7.17
+            pyenv global 3.8.5
             bin/release-helm-chart -p /tmp/workspace/astronomer-*.tgz
       - publish-github-release
 {% for version in kube_versions %}
@@ -89,18 +89,26 @@ workflows:
       - build-artifact:
           requires:
             - lint
-{% for version in kube_versions %}
+            - unittest-charts
+
+      - test-all-platforms:
+          type: approval
+{% for version in kube_versions %}{% if version == kube_versions[-1:][0] %}
       - platform-{{ version | replace(".", "-") }}:
           requires:
             - build-artifact
-            - unittest-charts
-{% endfor %}
+{%- else %}
+      - platform-{{ version | replace(".", "-") }}:
+          requires:
+            - test-all-platforms
+            - build-artifact
+{% endif %}{% endfor %}
+
       - approve-internal-release:
           type: approval
           requires:
-{% for version in kube_versions %}
+{%- for version in kube_versions %}
             - platform-{{ version | replace(".", "-") }}{% endfor %}
-
           filters:
             branches:
               only:
@@ -159,6 +167,6 @@ commands:
           name: Create a release on GitHub
           command: |
             set -xe
-            pyenv global 3.8.2
+            pyenv global 3.8.5
             pip install astronomer_e2e_test
             astronomer-ci publish-github-release --github-repository $CIRCLE_PROJECT_REPONAME --github-organization $CIRCLE_PROJECT_USERNAME --commitish $CIRCLE_SHA1

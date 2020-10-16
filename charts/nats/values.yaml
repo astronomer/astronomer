@@ -4,7 +4,7 @@
 #                             #
 ###############################
 nats:
-  image: quay.io/astronomer/ap-nats-server:2.1.7
+  image: quay.io/astronomer/ap-nats-server:2.1.8
   pullPolicy: IfNotPresent
 
   # In case both external access and advertise are enabled
