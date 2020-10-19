@@ -1400,8 +1400,8 @@ data:
         # https://www.elastic.co/guide/en/elasticsearch/reference/current/modules-cluster.html#disk-based-shard-allocation
         
         - alert: ElasticDiskLowWatermarkReached
-          expr: >
-          sum by (name) (
+          
+          expr: sum by (name) (
                     round(
                       (1 - (
                         elasticsearch_filesystem_data_available_bytes /
@@ -1418,8 +1418,7 @@ data:
             description: {{"Low Watermark Reached at {{ $labels.node }} Elasticsearch will not allocate shards to node"}}
 
         - alert: ElasticDiskHighWatermarkReached
-          expr: >
-          sum by (name) (
+          expr: sum by (name) (
                     round(
                       (1 - (
                         elasticsearch_filesystem_data_available_bytes /
@@ -1436,8 +1435,7 @@ data:
             description: {{"High Watermark Reached at {{ $labels.node }} Elasticsearch will attempt to relocate shards away from a node"}}
 
         - alert: ElasticDiskFloodWatermarkReached
-          expr: >
-          sum by (name) (
+          expr: sum by (name) (
                     round(
                       (1 - (
                         elasticsearch_filesystem_data_available_bytes /
