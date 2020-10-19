@@ -50,7 +50,7 @@ preserveSourceIP: false
 proxyConnectTimeout: 15
 proxyReadTimeout: 600
 proxySendTimeout: 600
-proxyBodySize: "512m"
+proxyBodySize: "1024m"
 hstsIncludeSubdomains: false
 serverNameHashBucketSize: 256
 
