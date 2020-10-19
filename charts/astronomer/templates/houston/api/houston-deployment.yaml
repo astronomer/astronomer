@@ -106,11 +106,6 @@ spec:
             periodSeconds: {{ .Values.houston.readinessProbe.periodSeconds }}
             failureThreshold: {{ .Values.houston.readinessProbe.failureThreshold }}
           env:
-            - name: DATABASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: {{ template "houston.backendSecret" . }}
-                  key: connection
             {{- include "houston_environment" . | indent 12 }}
             - name: APOLLO_SERVER_ID
               valueFrom:
