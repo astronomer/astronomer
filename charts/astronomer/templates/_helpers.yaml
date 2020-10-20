@@ -194,6 +194,11 @@ s3:
   value: {{ .Values.registry.auth.issuer }}
 - name: JWT__REGISTRY__SERVICE
   value: {{ .Values.registry.auth.service }}
+- name: DATABASE_URL
+  valueFrom:
+    secretKeyRef:
+      name: {{ template "houston.backendSecret" . }}
+      key: connection
 - name: DEPLOYMENTS__DATABASE__CONNECTION
   valueFrom:
     secretKeyRef:
