@@ -100,7 +100,7 @@ data:
           labels:
             tier: airflow
             component: container
-            workspace: {{ printf "%q" "{{ $labels.workspace }}" }
+            workspace: {{ printf "%q" "{{ $labels.workspace }}" }}
             deployment: {{ printf "%q" "{{ $labels.deployment }}" }}
             severity: warning
           annotations:
