@@ -69,6 +69,5 @@ This test file makes assertions about the configuration of the platform by live-
 ### test_versioning.py
 
 This test file makes assertions about versioning:
-  - This version should not already by published
   - Patch versions support downgrade and upgrade
   - Versioning is in a valid configuration
