@@ -22,16 +22,8 @@ images:
     tag: 3.11.5-4
     pullPolicy: IfNotPresent
   houston:
-<<<<<<< HEAD
     repository: astronomerinc/ap-houston-api
     tag: 0.21.5
-||||||| parent of 81297044... remove unesesary config
-    repository: astronomerinc/ap-houston-api
-    tag: 0.21.4
-=======
-    repository: asoldatenko/ap-houston-api
-    tag: 0.22.0
->>>>>>> 81297044... remove unesesary config
     pullPolicy: IfNotPresent
   astroUI:
     repository: astronomerinc/ap-astro-ui
