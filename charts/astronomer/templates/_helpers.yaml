@@ -65,14 +65,6 @@
 {{- end }}
 {{- end }}
 
-{{ define "e2eTest.image" -}}
-{{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/ap-e2e-test:{{ .Values.images.e2eTest.tag }}
-{{- else -}}
-{{ .Values.images.e2eTest.repository }}:{{ .Values.images.e2eTest.tag }}
-{{- end }}
-{{- end }}
-
 {{ define "registry.docker.config" -}}
   {{- $domain := printf "registry.%v" .Values.global.baseDomain }}
   {{- $email := printf "admin@%v" .Values.global.baseDomain }}

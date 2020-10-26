@@ -92,9 +92,6 @@ and ensures the TLS certificate is in place and correct.
 
 If you have made it this far, great!
 Your Astronomer platform is ready to go.
-The next section will tell you how to
-run the E2E test for a final verification.
-
 
 #### Example output for prereq-tests
 
@@ -154,47 +151,3 @@ Done checking Astronomer prereqs
 ```
 
 In the terminal, failing tests are colored red.
-
-
-## platform-tests
-
-The platform tests are run against an installed Astronomer platform.
-They run a series of suites to ensure that the system and features
-are operating correctly from both the CLI and API.
-Astronomer runs thes tests against the full platform
-for each commit and pull request across five versions of Kubernetes.
-(see .circleci/config.yml for details.)
-
-The platform tests exist in https://github.com/astronomer/astronomer_e2e_test
-where you can find more specfic documentation.
-They are bundled into a docker image to make it easy to run them
-in cluster, but you can also run them directly from that repository.
-
-For most installations, the first step is to run these with Helm.
-
-```shell
-# Previously, you installed Astronomer with
-helm install ....
-
-# To run the full test suite in cluster...
-helm test astronomer
-```
-
-You can inspect the pod and logs to see that it completed,
-or if it failed, where and why.
-
-You can also run these tests manually, either from your local machine
-or from a container in-cluster. To run in-cluster:
-
-```shell
-# Create the same pod as using in “helm test”
-kubectl apply -f bin/e2e_test/e2e-pod.yaml
-
-# Log into the container to run tests
-kubectl exec -it -n astronomer manual-ap-e2e-test bash
-```
-
-For more information about what you can do with these
-tests, whether you are in-cluster or local,
-please see the documenation at
-https://github.com/astronomer/astronomer_e2e_test
