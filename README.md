@@ -22,7 +22,7 @@ The Astronomer Platform documentation is located at https://www.astronomer.io/do
 We welcome any contributions:
 
 * Report all enhancements, bugs, and tasks as [GitHub issues](https://github.com/astronomerio/helm.astronomer.io/issues)
-* Provide fixes or enhancements by opening pull requests in Github
+* Provide fixes or enhancements by opening pull requests in GitHub
 
 ## Local Development
 
