@@ -14,6 +14,11 @@ metadata:
     component: private-ca
     release: {{ .Release.Name }}
 spec:
+  # allow update to occur all at once
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: "100%"
   selector:
     matchLabels:
       tier: platform
@@ -29,32 +34,35 @@ spec:
       serviceAccountName: {{ .Release.Name }}-private-ca
       containers:
       - name: sleeper
-        image: alpine:latest
+        image: ubuntu:20.04
         command:
           - "/bin/bash"
           - "-c"
         args:
-          - "cp /private-ca-certs/* /host-trust-store/ && sleep infinity"
+          - "ls -ltrah /private-ca-certs/* && cp -v /private-ca-certs/* /host-trust-store/ && sleep infinity"
         imagePullPolicy: IfNotPresent
         volumeMounts:
         - name: hostcerts
           mountPath: /host-trust-store
         {{ range $secret_name := (.Values.global.privateCaCerts) }}
         - name: {{ $secret_name }}
-          mountPath: /private-ca-certs/{{ $secret_name }}.pem
+          # mush be named as *.crt to be noticed by Docker
+          # after this is copied to docker trust store
+          mountPath: /private-ca-certs/{{ $secret_name }}.crt
           subPath: cert.pem
         {{- end }}
         resources:
           requests:
             cpu: 1m
-            memory: "1Mi"
+            memory: "25Mi"
           limits:
-            cpu: 10m
-            memory: "1Mi"
+            cpu: 50m
+            memory: "50Mi"
+      terminationGracePeriodSeconds: 1
       volumes:
       - name: hostcerts
         hostPath:
-          path: {{ .Values.global.privateCaCertsAddToHost.hostDirectory }}
+          path: {{ .Values.global.privateCaCertsAddToHost.hostDirectory }}/registry.{{ .Values.global.baseDomain }}/
       {{ range $secret_name := (.Values.global.privateCaCerts) }}
       - name: {{ $secret_name }}
         secret:
