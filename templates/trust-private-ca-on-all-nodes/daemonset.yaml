@@ -1,0 +1,62 @@
+################################
+## DaemonSet to mount the private root CA
+##
+## This can be used by enterprise with private
+## CAs that do not already install their root
+## certificate on the kubernetes nodes.
+#################################
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ .Release.Name }}-private-ca
+  labels:
+    tier: platform
+    component: private-ca
+    release: {{ .Release.Name }}
+spec:
+  selector:
+    matchLabels:
+      tier: platform
+      component: private-ca
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        tier: platform
+        component: private-ca
+        release: {{ .Release.Name }}
+    spec:
+      serviceAccountName: {{ .Release.Name }}-private-ca
+      containers:
+      - name: sleeper
+        image: alpine:latest
+        command:
+          - "/bin/bash"
+          - "-c"
+        args:
+          - "cp /private-ca-certs/* /host-trust-store/ && sleep infinity"
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+        - name: hostcerts
+          mountPath: /host-trust-store
+        {{ range $secret_name := (.Values.global.privateCaCerts) }}
+        - name: {{ $secret_name }}
+          mountPath: /private-ca-certs/{{ $secret_name }}.pem
+          subPath: cert.pem
+        {{- end }}
+        resources:
+          requests:
+            cpu: 1m
+            memory: "1Mi"
+          limits:
+            cpu: 10m
+            memory: "1Mi"
+      volumes:
+      - name: hostcerts
+        hostPath:
+          path: {{ .Values.global.privateCaCertsAddToHost.hostDirectory }}
+      {{ range $secret_name := (.Values.global.privateCaCerts) }}
+      - name: {{ $secret_name }}
+        secret:
+          secretName: {{ $secret_name }}
+      {{- end }}

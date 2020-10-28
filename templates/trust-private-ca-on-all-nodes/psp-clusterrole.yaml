@@ -1,0 +1,15 @@
+{{- if .Values.global.pspEnabled }}
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ .Release.Name }}-psp-private-ca
+rules:
+- apiGroups:
+  - policy
+  resources:
+  - podsecuritypolicies
+  resourceNames:
+  - {{ .Release.Name }}-private-ca
+  verbs:
+  - use
+{{- end -}}
