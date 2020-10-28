@@ -1,3 +1,4 @@
+{{- if .Values.global.privateCaCertsAddToHost.enabled }}
 ################################
 ## DaemonSet to mount the private root CA
 ##
@@ -68,3 +69,4 @@ spec:
         secret:
           secretName: {{ $secret_name }}
       {{- end }}
+{{- end }}

@@ -1,3 +1,4 @@
+{{- if .Values.global.privateCaCertsAddToHost.enabled }}
 {{- if .Values.global.pspEnabled }}
 ################################
 ## PSP RoleBinding
@@ -13,4 +14,5 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: {{ .Release.Name }}-private-ca
+{{- end -}}
 {{- end -}}
