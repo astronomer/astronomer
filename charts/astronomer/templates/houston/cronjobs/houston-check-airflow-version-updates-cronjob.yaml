@@ -1,0 +1,54 @@
+###################################
+## Houston Update Check CronJob
+###################################
+{{- if .Values.houston.updateAirflowCheck.enabled }}
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: {{ .Release.Name }}-houston-update-airflow-check
+  labels:
+    tier: astronomer
+    component: houston-update-check
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  schedule: {{ .Values.houston.updateAirflowCheck.schedule }}
+  # The cron job does not allow concurrent runs; if it is time for a new job run and the previous job run hasn’t finished yet, the cron job skips the new job run
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        metadata:
+          labels:
+            tier: astronomer
+            component: houston-update-airflow-check
+            release: {{ .Release.Name }}
+          {{- if .Values.global.istio.enabled }}
+          annotations:
+            sidecar.istio.io/inject: "false"
+          {{- end }}
+        spec:
+          nodeSelector:
+{{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 12 }}
+          affinity:
+{{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 12 }}
+          tolerations:
+{{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 12 }}
+          restartPolicy: Never
+          containers:
+            - name: update-check
+              image: {{ template "houston.image" . }}
+              imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
+              # If you supply only args for a Container, the default Entrypoint defined in the Docker image is run with the args that you supplied.
+              args: ["yarn", "check-airflow-updates", "--", " --url={{ .Values.houston.updateAirflowCheck.url }}"]
+              volumeMounts:
+                {{- include "houston_volume_mounts" . | indent 16 }}
+                {{- include "custom_ca_volume_mounts" . | indent 16 }}
+              env:
+                {{- include "houston_environment" . | indent 16 }}
+          volumes:
+            {{- include "houston_volumes" . | indent 12 }}
+            {{- include "custom_ca_volumes" . | indent 12 }}
+{{- end }}
