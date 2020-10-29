@@ -40,7 +40,7 @@ spec:
         matchLabels:
           tier: astronomer
           release: {{ .Release.Name }}
-          component: houston-airflow-update-check
+          component: houston-update-airflow-check
     - podSelector:
         matchLabels:
           tier: astronomer
