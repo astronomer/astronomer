@@ -8,7 +8,7 @@ metadata:
   name: {{ .Release.Name }}-houston-update-airflow-check
   labels:
     tier: astronomer
-    component: houston-update-check
+    component: houston-airflow-update-check
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
