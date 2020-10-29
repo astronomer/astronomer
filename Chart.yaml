@@ -42,10 +42,6 @@ dependencies:
     condition: global.kubeStateEnabled
     tags:
       - monitoring
-  - name: node-exporter
-    condition: global.nodeExporterEnabled
-    tags:
-      - monitoring
   - name: prometheus-blackbox-exporter
     condition: global.blackboxExporterEnabled
     tags:
