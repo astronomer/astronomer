@@ -14,8 +14,8 @@ spec:
   - 'secret'
   - 'emptyDir'
   allowedHostPaths:
-    - pathPrefix: /etc/docker/certs.d
-  hostNetwork: true
+    - pathPrefix: {{ .Vales.global.privateCaCertsAddToHost.hostDirectory }}
+  hostNetwork: false
   hostIPC: false
   hostPID: false
   runAsUser:

@@ -34,20 +34,20 @@ spec:
     spec:
       serviceAccountName: {{ .Release.Name }}-private-ca
       containers:
-      - name: sleeper
-        image: ubuntu:20.04
+      - name: cert-copy
+        image: alpine
         command:
-          - "/bin/bash"
+          - "sh"
           - "-c"
         args:
-          - "ls -ltrah /private-ca-certs/* && cp -v /private-ca-certs/* /host-trust-store/ && sleep infinity"
+          - "while true; do date; cp -v /private-ca-certs/* /host-trust-store/; sleep 10; done"
         imagePullPolicy: IfNotPresent
         volumeMounts:
         - name: hostcerts
           mountPath: /host-trust-store
         {{ range $secret_name := (.Values.global.privateCaCerts) }}
         - name: {{ $secret_name }}
-          # mush be named as *.crt to be noticed by Docker
+          # must be named as *.crt to be noticed by Docker
           # after this is copied to docker trust store
           mountPath: /private-ca-certs/{{ $secret_name }}.crt
           subPath: cert.pem
