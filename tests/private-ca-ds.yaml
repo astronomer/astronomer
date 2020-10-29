@@ -1,5 +1,5 @@
 ---
-suite: Test fluentd-daemonset
+suite: Test private-ca-daemonset
 templates:
   - trust-private-ca-on-all-nodes/daemonset.yaml
 tests:
