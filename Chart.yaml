@@ -8,7 +8,6 @@ icon: https://www.astronomer.io/static/iconforLIGHTbackground.svg
 keywords:
   - astronomer
 
-kubeVersion: '^1.14.0'
 
 dependencies:
   # Platform components
