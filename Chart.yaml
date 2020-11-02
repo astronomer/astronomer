@@ -4,10 +4,8 @@ version: 0.21.2
 appVersion: 0.21.2
 description: Helm chart to deploy the Astronomer Platform
 icon: https://www.astronomer.io/static/iconforLIGHTbackground.svg
-
 keywords:
   - astronomer
-
 dependencies:
   # Platform components
   - name: astronomer
@@ -18,7 +16,6 @@ dependencies:
     condition: global.nginxEnabled
     tags:
       - platform
-
   # Monitoring stack
   - name: grafana
     condition: global.grafanaEnabled
@@ -48,7 +45,6 @@ dependencies:
     condition: global.blackboxExporterEnabled
     tags:
       - monitoring
-
   # Logging stack
   - name: elasticsearch
     condition: global.elasticsearchEnabled
@@ -62,32 +58,27 @@ dependencies:
     condition: global.fluentdEnabled
     tags:
       - logging
-
   # KubeD
   - name: kubed
     condition: global.kubedEnabled
     tags:
       - kubed
-
   # In-cluster DB, not recommended
   # for production
   - name: postgresql
     condition: global.postgresqlEnabled
     tags:
       - postgresql
-
   # Used to enable Celery autoscaling
   - name: keda
     condition: global.kedaEnabled
     tags:
       - keda
-
   # Nats-server
   - name: nats
     condition: global.nats.enabled
     tags:
       - nats
-
   # Nats-streaming
   - name: stan
     condition: global.stan.enabled

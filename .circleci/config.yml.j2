@@ -28,11 +28,10 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Install ci tools
-          command: ./bin/install-ci-tools 1
-      - run:
           name: Package the Astronomer chart
-          command: make build
+          command: |
+            source ./bin/install-ci-tools 1
+            make build
       - persist_to_workspace:
           root: '.'
           paths:
