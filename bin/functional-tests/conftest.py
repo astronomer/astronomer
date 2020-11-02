@@ -83,3 +83,7 @@ def docker_client(request):
     client = docker.from_env()
     yield client
     client.close()
+
+@pytest.fixture(scope='session')
+def kube_client(request):
+    yield create_kube_client()

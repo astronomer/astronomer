@@ -13,6 +13,15 @@ import os
 import docker
 
 
+def test_default_disabled(kube_client):
+    pods = kube_client.list_namespaced_pod('astronomer')
+    default_disabled = ['keda', 'prometheus-postgres-exporter']
+    for pod in pods.items:
+        for feature in default_disabled:
+            if feature in pod.metadata.name:
+                raise Exception(f"Expected '{feature}' to be disabled")
+
+
 def test_prometheus_user(prometheus):
     """Ensure user is 'nobody'"""
     user = prometheus.check_output("whoami")
