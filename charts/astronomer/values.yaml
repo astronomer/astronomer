@@ -23,7 +23,7 @@ images:
     pullPolicy: IfNotPresent
   houston:
     repository: quay.io/astronomer/ap-houston-api
-    tag: 0.21.5
+    tag: 0.21.6
     pullPolicy: IfNotPresent
   astroUI:
     repository: quay.io/astronomer/ap-astro-ui
@@ -180,6 +180,17 @@ houston:
     # Default here is to run at midnight every night
     schedule: "0 0 * * *"
 
+  # Check for Airflow Updates
+  # This runs as a CronJob
+  updateAirflowCheck:
+    # Enable check updates CronJob
+    enabled: true
+
+    # url for update service
+    url: https://updates.astronomer.io/astronomer-certified
+
+    # Default here is to run at midnight every night
+    schedule: "0 0 * * *"
 prisma:
   podLabels: {}
   env: []

@@ -40,7 +40,9 @@ additionalVolumes: []
 # Configure log forwarding to S3
 s3:
   enabled: false
+  path: ~
   role_arn: ~
   role_session_name: ~
   s3_bucket: ~
   s3_region: ~
+  use_server_side_encryption: ~
