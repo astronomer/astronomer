@@ -3,7 +3,7 @@ version: 2.1
 jobs:
   lint:
     docker:
-      - image: astronomerio/ap-build:0.1.3
+      - image: quay.io/astronomer/ap-build:0.1.3
     steps:
       - checkout
       - run:
@@ -15,7 +15,7 @@ jobs:
 
   unittest-charts:
     docker:
-      - image: astronomerio/ap-build:0.1.3
+      - image: quay.io/astronomer/ap-build:0.1.3
     steps:
       - checkout
       - run:
@@ -24,7 +24,7 @@ jobs:
 
   build-artifact:
     docker:
-      - image: astronomerio/ap-build:0.1.3
+      - image: quay.io/astronomer/ap-build:0.1.3
     steps:
       - checkout
       - run:
