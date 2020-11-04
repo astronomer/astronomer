@@ -7,6 +7,10 @@
 # child airflow deployments are kept up to date and on the latest version.
 airflowChartVersion: 0.17.1
 
+# Airflow version to run. Added for transition to 2.0
+airflowVersion: ~
+
+
 nodeSelector: {}
 affinity: {}
 tolerations: []
