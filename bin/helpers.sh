@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# This contents of this file must be compatible with CI and local dev workflows
+# The contents of this file must be compatible with CI and local dev workflows
 set -euo pipefail
 
 function hr {

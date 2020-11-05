@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC1090
-# This contents of this file must be compatible with CI and local dev workflows
+# The contents of this file must be compatible with CI and local dev workflows
 set -euo pipefail
 
 export KUBE_VERSION="${KUBE_VERSION:-v1.18.8}"
