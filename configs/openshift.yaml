@@ -1,0 +1,6 @@
+# This is a configuation file to serve as a template for
+# an installation on OpenShift
+
+global:
+  nodeExporterEnabled: false
+  sccEnabled: true
