@@ -29,8 +29,6 @@ spec:
         component: {{ template "prometheus.name" . }}
         release: {{ .Release.Name }}
       annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/prometheus-config-configmap.yaml") . | sha256sum }}
-        checksum/alerts: {{ include (print $.Template.BasePath "/prometheus-alerts-configmap.yaml") . | sha256sum }}
 {{- if .Values.global.istio.enabled }}
         sidecar.istio.io/proxyCPU: "500m"
         sidecar.istio.io/proxyMemory: "400Mi"
@@ -44,15 +42,22 @@ spec:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       restartPolicy: Always
       serviceAccountName: {{ template "prometheus.fullname" . }}
-      initContainers:
-        - name: init
-          image: {{ include "prometheus.init.image" . }}
-          imagePullPolicy: {{ .Values.images.init.pullPolicy }}
-          command: ["chown", "-R", "65534:65534", "{{ .Values.dataDir }}"]
-          volumeMounts:
-            - name: data
-              mountPath: "{{ .Values.dataDir }}"
       containers:
+        - name: configmap-reloader
+          args:
+            - --webhook-url=http://localhost:9090/-/reload
+            - --volume-dir=/etc/prometheus/alerts.d
+            - --volume-dir=/etc/prometheus/config
+          image: {{ include "configReloader.image" . }}
+          imagePullPolicy: {{ .Values.images.prometheus.pullPolicy }}
+          resources:
+{{ toYaml .Values.configMapReloader.resources | indent 12 }}
+          volumeMounts:
+          - name: alert-volume
+            mountPath: /etc/prometheus/alerts.d
+          - name: prometheus-config-volume
+            mountPath: /etc/prometheus/config
+
         - name: prometheus
           image: {{ include "prometheus.image" . }}
           imagePullPolicy: {{ .Values.images.prometheus.pullPolicy }}
@@ -61,7 +66,7 @@ spec:
           args:
             - "--config.file=/etc/prometheus/config/prometheus.yaml"
             - "--storage.tsdb.path={{ .Values.dataDir }}"
-            - "--storage.tsdb.retention={{ .Values.retention }}"
+            - "--storage.tsdb.retention.time={{ .Values.retention }}"
             {{- if .Values.enableLifecycle }}
             - "--web.enable-lifecycle"
             {{- end }}
@@ -90,6 +95,10 @@ spec:
               port: {{ .Values.ports.http }}
             initialDelaySeconds: 10
             periodSeconds: 5
+      securityContext:
+        fsGroup: 65534
+        runAsNonRoot: true
+        runAsUser: 65534
       volumes:
         - name: prometheus-config-volume
           configMap:

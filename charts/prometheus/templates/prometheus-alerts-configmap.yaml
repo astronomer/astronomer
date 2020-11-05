@@ -36,9 +36,10 @@ data:
             tier: airflow
             component: deployment
             workspace: {{ printf "%q" "{{ $labels.workspace }}" }}
-            deployment: {{ printf "%q" "{{ $labels.deployment }}" }}
+            # deployment label isn't populated by the query. However release and deployment are the same thing
+            deployment: {{ printf "%q" "{{ $labels.release }}" }}
           annotations:
-            summary: {{ printf "%q" "{{ $labels.deployment }} deployment is unhealthy" }}
+            summary: {{ printf "%q" "{{ $labels.release }} deployment is unhealthy" }}
             description: {{ printf "%q" "The {{ $labels.deployment }} deployment is not completely available." }}
 
 
@@ -64,10 +65,11 @@ data:
             tier: airflow
             component: deployment
             workspace: {{ printf "%q" "{{ $labels.workspace }}" }}
-            deployment: {{ printf "%q" "{{ $labels.deployment }}" }}
+            # deployment label isn't populated by the query. However release and deployment are the same thing
+            deployment: {{ printf "%q" "{{ $labels.release }}" }}
           annotations:
-            summary: {{ printf "%q" "{{ $labels.deployment }} is near its pod quota" }}
-            description: {{ printf "%q" "{{ $labels.deployment }} has been using over 95% of its pod quota for over 10 minutes." }}
+            summary: {{ printf "%q" "{{ $labels.release }} is near its pod quota" }}
+            description: {{ printf "%q" "{{ $labels.release }} has been using over 95% of its pod quota for over 10 minutes." }}
 
         - alert: AirflowEphemeralStorageLimit
           expr: (container_fs_usage_bytes{pod_name=~".*(scheduler|webserver|worker).*"}) >= 1800000000
@@ -92,7 +94,7 @@ data:
             summary: {{ printf "%q" "{{ $labels.deployment }} is creating tasks faster than it's clearing them." }}
             description: {{ printf "%q" "{{ $labels.deployment }}: the number of pending tasks has been increasing for 30 minutes" }}
 
-        - alert: ContainerMemoryNearTheLimit
+        - alert: ContainerMemoryNearTheLimitInDeployment
           expr: |
             (container_memory_working_set_bytes{container=~".*(scheduler|scheduler-gc|webserver|worker|statsd|pgbouncer|metrics-exporter|redis|flower)", container_name!~"POD|istio-proxy"} /
             container_spec_memory_limit_bytes{container=~".*(scheduler|scheduler-gc|webserver|worker|statsd|pgbouncer|metrics-exporter|redis|flower)", container_name!~"POD|istio-proxy"}) * 100 > 80 < +Inf
@@ -101,10 +103,23 @@ data:
             tier: airflow
             component: container
             workspace: {{ printf "%q" "{{ $labels.workspace }}" }}
+            deployment: {{ printf "%q" "{{ $labels.deployment }}" }}
             severity: warning
           annotations:
             summary: "A container is using more than 80% of the memory limit"
             description: {{ printf "%q" "container {{ $labels.container }} in pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is using {{ printf \"%.2f\" $value }}% of available memory." }}
+
+        - alert: CpuThrottlingInDeployment
+          expr: 100 * (increase(container_cpu_cfs_throttled_periods_total{namespace!="{{ .Release.Name }}", container_name!~".*worker.*|()"}[5m]) / increase(container_cpu_cfs_periods_total{namespace!="{{ .Release.Name }}", namespace != "kube-system", container_name!~".*worker.*|()"}[5m])) > 75
+          for: 5m
+          labels:
+            tier: airflow
+            workspace: {{ printf "%q" "{{ $labels.workspace }}" }}
+            deployment: {{ printf "%q" "{{ $labels.deployment }}" }}
+            severity: warning
+          annotations:
+            summary: {{ printf "%q" "{{ $labels.pod_name }} ({{ $labels.container_name }}) in namespace {{ $labels.namespace }} is getting throttled {{ $value }}% of the time" }}
+            description: "In the past 5 minutes, one or more components in the deployment are experiencing CPU throttling."
 
       - name: platform
         rules:
@@ -734,7 +749,7 @@ data:
             description: Only {{`{{ $value | humanizePercentage }}`}} of the desired Pods of DaemonSet
               {{`{{ $labels.namespace }}`}}/{{`{{ $labels.daemonset }}`}} are scheduled and ready.
             runbook_url:
-            summary: DaemonSet not deployed on all exptected nodes.
+            summary: DaemonSet not deployed on all expected nodes.
           expr: |
             kube_daemonset_status_number_ready{job="{{.Release.Name}}-kube-state"}
               /
@@ -748,7 +763,7 @@ data:
             description: Pod {{`{{ $labels.namespace }}`}}/{{`{{ $labels.pod }}`}} container {{`{{ $labels.container}}`}}
               has been in waiting state for longer than 1 hour.
             runbook_url:
-            summary: '{{`{{ $labels.container}}`}} Container is stucket in waiting state'
+            summary: '{{`{{ $labels.container}}`}} Container is stuck in waiting state'
           expr: |
             sum by (namespace, pod, container) (kube_pod_container_status_waiting_reason{job="{{.Release.Name}}-kube-state"}) > 0
           for: 1h
@@ -903,9 +918,9 @@ data:
             summary: 'CPU Throttling high in pod {{`{{$labels.pod }}`}}'
             runbook_url:
           expr: |
-            sum(increase(container_cpu_cfs_throttled_periods_total{container!="", namespace!~"^{{ .Release.Namespace }}-.*$", namespace != "kube-system"}[5m])) by (container, pod, namespace)
+            sum(increase(container_cpu_cfs_throttled_periods_total{container!="", namespace!~"{{ .Release.Namespace }}", namespace != "kube-system"}[5m])) by (container, pod, namespace)
               /
-            sum(increase(container_cpu_cfs_periods_total{container!="", namespace!~"^{{ .Release.Namespace }}-.*$", namespace != "kube-system"}[5m])) by (container, pod, namespace)
+            sum(increase(container_cpu_cfs_periods_total{container!="", namespace!~"{{ .Release.Namespace }}", namespace != "kube-system"}[5m])) by (container, pod, namespace)
               > ( 51 / 100 )
           for: 15m
           labels:
@@ -981,7 +996,7 @@ data:
             description: There are {{`{{ $value }}`}} different semantic versions of Kubernetes
               components running.
             runbook_url:
-            summary: Different versions of kuernetes detected across nodes
+            summary: Different versions of kubernetes detected across nodes
           expr: |
             count(count by (gitVersion) (label_replace(kubernetes_build_info{job!~"kube-dns|coredns"},"gitVersion","$1","gitVersion","(v[0-9]*.[0-9]*.[0-9]*).*"))) > 1
           for: 15m
@@ -1362,7 +1377,7 @@ data:
             component: nginx
           annotations:
             summary: {{ printf "%q" "NGINX Ingress {{ $labels.ingress }} failure rate is {{ printf \"%.2f\" $value }}%." }}
-            description: "This alert fires if the failure rate (the rate of 5xx reponses)
+            description: "This alert fires if the failure rate (the rate of 5xx responses)
               measured on a time window of 2 minutes was higher than 1% in the last
               5 minutes."
 
@@ -1383,22 +1398,84 @@ data:
           expr: elasticsearch_cluster_health_unassigned_shards > 0
           for: 10m
           labels:
-            severity: High
+            severity: high
             tier: platform
           annotations:
             summary: {{ printf "%q" "Elastic Search has {{ $value }} unassigned shards" }}
             description: "Unassigned shards in Elastic Search cluster"
 
+        # There are two important thresholds that impact how ES node allocates index shards.
+        #   - 85% used - Low watermark
+        #   - 90% used - High watermark
+        #   - 95% used - Flood watermark
+        #
+        # It is important the make sure there is enough free disk space for automatic background Lucene segment merges.
+        # Ideally as much free disk space as total sum of actual segment size (ie, data can fit into disk twice).
+        #
+        # https://www.elastic.co/guide/en/elasticsearch/reference/current/modules-cluster.html#disk-based-shard-allocation
+
+        - alert: ElasticDiskLowWatermarkReached
+
+          expr: sum by (name) (
+                    round(
+                      (1 - (
+                        elasticsearch_filesystem_data_available_bytes /
+                        elasticsearch_filesystem_data_size_bytes
+                      )
+                    ) * 100, 0.001)
+                  ) > 85
+          for: 5m
+          labels:
+            severity: warning
+            tier: platform
+          annotations:
+            summary: {{"Low Watermark Reached - disk saturation is {{ $value }}%"}}
+            description: {{"Low Watermark Reached at {{ $labels.node }} Elasticsearch will not allocate shards to node"}}
+
+        - alert: ElasticDiskHighWatermarkReached
+          expr: sum by (name) (
+                    round(
+                      (1 - (
+                        elasticsearch_filesystem_data_available_bytes /
+                        elasticsearch_filesystem_data_size_bytes
+                      )
+                    ) * 100, 0.001)
+                  ) > 90
+          for: 5m
+          labels:
+            severity: high
+            tier: platform
+          annotations:
+            summary: {{"High Watermark Reached - disk saturation is {{ $value }}%"}}
+            description: {{"High Watermark Reached at {{ $labels.node }} Elasticsearch will attempt to relocate shards away from a node"}}
+
+        - alert: ElasticDiskFloodWatermarkReached
+          expr: sum by (name) (
+                    round(
+                      (1 - (
+                        elasticsearch_filesystem_data_available_bytes /
+                        elasticsearch_filesystem_data_size_bytes
+                      )
+                    ) * 100, 0.001)
+                  ) > 95
+          for: 5m
+          labels:
+            severity: critical
+            tier: platform
+          annotations:
+            summary: {{"Flood Watermark Reached - disk saturation is {{ $value }}%"}}
+            description: {{"Flood Watermark Reached at {{ $labels.node }} Elasticsearch enforcing a read-only index block"}}
+
         - alert: IngessCertificateExpiration
           expr: avg(nginx_ingress_controller_ssl_expire_time_seconds) by (host) - time() < 604800
           for: 10s
           labels:
-            severity: High
+            severity: high
             tier: platform
             component: ingress
           annotations:
             summary: "TLS Certificate Expiring Soon"
-            {{/* We want '{{ $labels.host }}' to be evaluted by prometheus, not helm, so we have to escape it once */ -}}
+            {{/* We want '{{ $labels.host }}' to be evaluated by prometheus, not helm, so we have to escape it once */ -}}
             description: {{ printf "%q" "The TLS Certificate for {{ $labels.host }} is expiring in less than a week." }}
 
       {{- if .Values.global.prometheusPostgresExporterEnabled }}

@@ -53,6 +53,14 @@ else
   target_env="helm-dev"
 fi
 
+echo "${GCP_TOKEN}" > /tmp/gcs_token.json
+gcloud auth activate-service-account --key-file=/tmp/gcs_token.json
+
+if gsutil -q stat "gs://${target_repo}/${helm_chart_path##*/}" ; then
+  echo "ABORT: destination file ${helm_chart_path##*/} already exists. Did you forget to bump the chart version number in both Chart.yaml and charts/astronomer/Chart.yaml?"
+  exit 1
+fi
+
 pre-flight-setup() {
   # Set script_path to the path of this script
   script_path="${0%/*}"
@@ -78,10 +86,6 @@ pre-flight-setup() {
 
   # This is needed to avoid using the CI's built-in gcloud configurations.
   export BOTO_CONFIG=/dev/null
-
-  set +x
-  echo "${GCP_TOKEN}" > /tmp/gcs_token.json
-  gcloud auth activate-service-account --key-file=/tmp/gcs_token.json
 }
 
 process_and_release_chart_file() {

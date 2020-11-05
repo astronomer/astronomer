@@ -438,6 +438,8 @@ function main {
               astronomer/astronomer
   fail_with "Failed to upgrade Astronomer"
 
+  # give prisma time to get ready
+  sleep 120
   # Since the upgrade was not performed by houston, inform houston by
   # upgrading the 'version' field in the database
   echo "Updating Astronomer... (3/4) Upgrading Airflow deployments version"
@@ -483,7 +485,7 @@ function main {
   echo "curl -sSL https://install.astronomer.io | sudo bash -s -- v0.16.1"
   echo
   echo "You may choose to upgrade Airflow versions by changing your Dockerfile, for example:"
-  echo "FROM astronomerinc/ap-airflow:1.10.10-alpine3.10-onbuild"
+  echo "FROM quay.io/astronomer/ap-airflow:1.10.10-alpine3.10-onbuild"
 }
 
 main "$1" "$2"

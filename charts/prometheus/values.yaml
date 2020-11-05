@@ -16,14 +16,16 @@ podLabels: {}
 replicas: 1
 
 images:
-  init:
-    repository: astronomerinc/ap-base
-    tag: 3.11.5-3
-    pullPolicy: IfNotPresent
   prometheus:
-    repository: astronomerinc/ap-prometheus
-    tag: 2.17.1
+    repository: quay.io/astronomer/ap-prometheus
+    tag: 2.21.0
     pullPolicy: IfNotPresent
+  configReloader:
+    # repository: astronomerinc/ap-config-reloader
+    repository: quay.io/astronomer/ap-configmap-reloader
+    tag: 0.4.0
+    pullPolicy: IfNotPresent
+
 
 resources: {}
 #  limits:
@@ -32,6 +34,15 @@ resources: {}
 #  requests:
 #   cpu: 100m
 #   memory: 128Mi
+
+configMapReloader:
+  resources: {}
+    # limits:
+    #   cpu: 100m
+    #   memory: 25Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 25Mi
 
 # Which directory prometheus data should be stored
 dataDir: "/prometheus"

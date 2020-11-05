@@ -8,15 +8,14 @@ tolerations: []
 
 images:
   nginx:
-    repository: astronomerinc/ap-nginx
-    tag: 0.30.0
+    repository: quay.io/astronomer/ap-nginx
+    tag: 0.33.0
     pullPolicy: IfNotPresent
   defaultBackend:
-    repository: astronomerinc/ap-default-backend
+    repository: quay.io/astronomer/ap-default-backend
     tag: 0.16.1
     pullPolicy: IfNotPresent
 
-forceNamespaceIsolation: true
 ingressClass: ~
 
 replicas: 2
@@ -51,7 +50,7 @@ preserveSourceIP: false
 proxyConnectTimeout: 15
 proxyReadTimeout: 600
 proxySendTimeout: 600
-proxyBodySize: "512m"
+proxyBodySize: "1024m"
 hstsIncludeSubdomains: false
 serverNameHashBucketSize: 256
 

@@ -26,37 +26,36 @@ spec:
           tier: astronomer
           release: {{ .Release.Name }}
           component: houston-db-migrations
-    ports:
-    - protocol: TCP
-      port: {{ .Values.ports.commanderGRPC }}
-  - from:
     - podSelector:
         matchLabels:
           tier: astronomer
           release: {{ .Release.Name }}
           component: houston-upgrader
-    ports:
-    - protocol: TCP
-      port: {{ .Values.ports.commanderGRPC }}
-  - from:
+    - podSelector:
+        matchLabels:
+          tier: astronomer
+          release: {{ .Release.Name }}
+          component: houston-update-check
+    - podSelector:
+        matchLabels:
+          tier: astronomer
+          release: {{ .Release.Name }}
+          component: houston-update-airflow-check
+    - podSelector:
+        matchLabels:
+          tier: astronomer
+          release: {{ .Release.Name }}
+          component: houston-expire-deployments
     - podSelector:
         matchLabels:
           tier: astronomer
           release: {{ .Release.Name }}
           component: houston
-    ports:
-    - protocol: TCP
-      port: {{ .Values.ports.commanderGRPC }}
-  - from:
     - podSelector:
         matchLabels:
           tier: astronomer
           release: {{ .Release.Name }}
           component: houston-worker
-    ports:
-    - protocol: TCP
-      port: {{ .Values.ports.commanderGRPC }}
-  - from:
     - podSelector:
         matchLabels:
           tier: astronomer

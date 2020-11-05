@@ -52,9 +52,6 @@ spec:
             - --configmap={{ .Release.Namespace }}/{{ template "nginx.fullname" . }}-ingress-controller
             - --ingress-class={{ template "nginx.ingress.class" . }}
             - --default-ssl-certificate={{ .Release.Namespace }}/{{ .Values.global.tlsSecret }}
-            {{- if .Values.forceNamespaceIsolation }}
-            - --force-namespace-isolation
-            {{- end }}
             {{- if .Values.global.singleNamespace }}
             - --watch-namespace={{ .Release.Namespace }}
             {{- end }}

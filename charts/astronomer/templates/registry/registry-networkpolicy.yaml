@@ -24,6 +24,21 @@ spec:
     - podSelector:
         matchLabels:
           tier: astronomer
+          component: houston-update-check
+          release: {{ .Release.Name }}
+    - podSelector:
+        matchLabels:
+          tier: astronomer
+          release: {{ .Release.Name }}
+          component: houston-update-airflow-check
+    - podSelector:
+        matchLabels:
+          tier: astronomer
+          component: houston-expire-deployments
+          release: {{ .Release.Name }}
+    - podSelector:
+        matchLabels:
+          tier: astronomer
           component: houston-db-migrations
           release: {{ .Release.Name }}
     - podSelector:

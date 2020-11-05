@@ -6,8 +6,10 @@
 - Astronomer-internal is added to Helm 3 repositories and up-to-date
 - Kubernetes cluster, with Astronomer already installed from this chart in test
 - HELM_CHART_PATH environment variable is set to a path to the chart in test
+- pytest https://docs.pytest.org/en/stable/getting-started.html
+- testinfra https://testinfra.readthedocs.io/en/latest/
 
-## How does it work?
+## How it works
 
 This is a pytest suite that assumes the current shell is authenticated to a kubernetes cluster running Astronomer. It is not safe to run against a production system and does perform mutations on the system. This is designed to work running locally using Kind (kubernetes in docker).
 
@@ -58,7 +60,7 @@ Long story short, testinfra allows for connections to various places (in this ca
 
 pytest fixtures can also be used to provide connections to kubernetes, for example a kubernetes client.
 
-## What does it do?
+## What it does
 
 ### test_config.py
 
@@ -67,6 +69,5 @@ This test file makes assertions about the configuration of the platform by live-
 ### test_versioning.py
 
 This test file makes assertions about versioning:
-  - This version should not already by published
   - Patch versions support downgrade and upgrade
   - Versioning is in a valid configuration
