@@ -8,7 +8,7 @@ tolerations: []
 
 images:
   alertmanager:
-    repository: astronomerinc/ap-alertmanager
+    repository: quay.io/astronomer/ap-alertmanager
     tag: 0.20.0
     pullPolicy: IfNotPresent
 
@@ -47,3 +47,10 @@ receivers:
 
   # Configs for airflow alerts
   airflow: {}
+
+customRoutes: {}
+# Example
+# - receiver: blackhole-receiver
+#   match_re:
+#     tier: platform
+#     namespace: ^(test-ns.*)

@@ -1,0 +1,72 @@
+{{- if .Values.global.privateCaCertsAddToHost.enabled }}
+################################
+## DaemonSet to mount the private root CA
+##
+## This can be used by enterprise with private
+## CAs that do not already install their root
+## certificate on the kubernetes nodes.
+#################################
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ .Release.Name }}-private-ca
+  labels:
+    tier: platform
+    component: private-ca
+    release: {{ .Release.Name }}
+spec:
+  # allow update to occur all at once
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: "100%"
+  selector:
+    matchLabels:
+      tier: platform
+      component: private-ca
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        tier: platform
+        component: private-ca
+        release: {{ .Release.Name }}
+    spec:
+      serviceAccountName: {{ .Release.Name }}-private-ca
+      containers:
+      - name: cert-copy
+        image: alpine
+        command:
+          - "sh"
+          - "-c"
+        args:
+          - "while true; do date; cp -v /private-ca-certs/* /host-trust-store/; sleep 10; done"
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+        - name: hostcerts
+          mountPath: /host-trust-store
+        {{ range $secret_name := (.Values.global.privateCaCerts) }}
+        - name: {{ $secret_name }}
+          # must be named as *.crt to be noticed by Docker
+          # after this is copied to docker trust store
+          mountPath: /private-ca-certs/{{ $secret_name }}.crt
+          subPath: cert.pem
+        {{- end }}
+        resources:
+          requests:
+            cpu: 1m
+            memory: "25Mi"
+          limits:
+            cpu: 50m
+            memory: "50Mi"
+      terminationGracePeriodSeconds: 1
+      volumes:
+      - name: hostcerts
+        hostPath:
+          path: {{ .Values.global.privateCaCertsAddToHost.hostDirectory }}/registry.{{ .Values.global.baseDomain }}/
+      {{ range $secret_name := (.Values.global.privateCaCerts) }}
+      - name: {{ $secret_name }}
+        secret:
+          secretName: {{ $secret_name }}
+      {{- end }}
+{{- end }}

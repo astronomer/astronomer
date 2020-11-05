@@ -47,4 +47,10 @@ Full image name.
 </assume_role_credentials>
 s3_bucket {{ .Values.s3.s3_bucket }}
 s3_region {{ .Values.s3.s3_region }}
+{{- if .Values.s3.path -}}
+path {{ .Values.s3.path }}
+{{- end -}}
+{{- if .Values.s3.use_server_side_encryption -}}
+use_server_side_encryption {{ .Values.s3.use_server_side_encryption }}
+{{- end -}}
 {{- end }}

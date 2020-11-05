@@ -17,7 +17,7 @@ replicas: 1
 
 images:
   prometheus:
-    repository: astronomerinc/ap-prometheus
+    repository: quay.io/astronomer/ap-prometheus
     tag: 2.21.0
     pullPolicy: IfNotPresent
   configReloader:
