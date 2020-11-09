@@ -1,6 +1,37 @@
-# This is a configuation file to serve as a template for
-# an installation on OpenShift
+
+tags:
+  # Disable logging stack of Elasticsearch, Kibana, Fluentd.
+  # Instead, please use your existing logging solution.
+  logging: false
 
 global:
+
+  # This configuration is required
+  # For a baseDomain 'example.astronomer-development.com'
+  # should should have TLS certificate for *.example.astronomer-development.com
+  #
+  # Example configuration, please replace
+  baseDomain: example.astronomer-development.com
+
+  # Name of secret containing TLS certificate.
+  # Please do not rename this secret.
+  tlsSecret: astronomer-tls
+
+  # We recommend you use an externally provided database
+  postgresqlEnabled: true
+
+  # Do not run the built-in prometheus node exporter
   nodeExporterEnabled: false
-  sccEnabled: true
+
+nginx:
+  # IP address the nginx ingress should bind to
+  loadBalancerIP: ~
+  privateLoadBalancer: false
+
+astronomer:
+  houston:
+    config:
+      email:
+        enabled: true
+        # Example SMTP url, please replace
+        smtpUrl: "smtps://postmaster%40mg.astronomer.io:*********@smtp.mailgun.org/?pool=true"
