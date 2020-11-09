@@ -57,7 +57,7 @@ rules:
   verbs: ["get"]
 - apiGroups: [""]
   resources: ["persistentvolumes"]
-  verbs: ["list", "watch"]
+  verbs: ["create", "delete", "get", "list", "watch"]
 - apiGroups: [""]
   resources: ["replicationcontrollers"]
   verbs: ["list", "watch"]
