@@ -1,25 +1,30 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+function hr {
+  echo "======================="
+}
+
 function get_debugging_info {
   echo "Failed to deploy Astronomer!"
   echo "Printing description and logs where containers in pod are not 1/1..."
-  for pod in $(kubectl get pods -n astronomer | grep -v NAME | grep -v 1/1 | grep -v Completed | awk '{ print $1 }'); do
-    echo "======================="
+  for pod in $(kubectl get pods -n astronomer -o name | grep -vE 'NAME|1/1|2/2|3/3|Completed') ; do
+    hr
     set -x
-    kubectl describe pod -n astronomer $pod
-    kubectl logs -n astronomer $pod --all-containers=true | tail -n 30
+    kubectl describe -n astronomer "$pod"
+    kubectl logs -n astronomer "$pod" --all-containers=true | tail -n 30
     set +x
-    echo "======================="
+    hr
   done
   kubectl get secrets --all-namespaces
-  echo "======================="
+  hr
   kubectl get pods --all-namespaces
-  echo "======================="
+  hr
   kubectl get ds --all-namespaces
-  echo "======================="
+  hr
   kubectl get sts --all-namespaces
-  echo "======================="
+  hr
   kubectl get deployments --all-namespaces
+  hr
+  docker exec kind-control-plane crictl images
 }
-

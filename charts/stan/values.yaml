@@ -4,7 +4,7 @@
 #                                #
 ##################################
 stan:
-  image: astronomerinc/ap-nats-streaming:0.18.0
+  image: quay.io/astronomer/ap-nats-streaming:0.18.0
   pullPolicy: IfNotPresent
 
   resources: {}
@@ -142,7 +142,7 @@ store:
 #######################################
 exporter:
   enabled: true
-  image: astronomerinc/ap-nats-exporter:0.6.2
+  image: quay.io/astronomer/ap-nats-exporter:0.6.2
   pullPolicy: IfNotPresent
   resources: {}
   #  limits:

@@ -69,7 +69,7 @@ spec:
             - "tcp://{{ .Release.Name }}-nats:4222"
             - "-timeout"
             - "1m"
-          image: astronomerinc/ap-base:3.12-1
+          image: quay.io/astronomer/ap-base:3.12-1
           imagePullPolicy: IfNotPresent
           env:
             - name: NATS__URL
