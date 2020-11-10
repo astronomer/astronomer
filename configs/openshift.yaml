@@ -17,21 +17,9 @@ global:
   # Please do not rename this secret.
   tlsSecret: astronomer-tls
 
-  # We recommend you use an externally provided database
-  postgresqlEnabled: true
-
   # Do not run the built-in prometheus node exporter
+  # Openshift users typically have their own node exporter on by default.
   nodeExporterEnabled: false
 
-nginx:
-  # IP address the nginx ingress should bind to
-  loadBalancerIP: ~
-  privateLoadBalancer: false
-
-astronomer:
-  houston:
-    config:
-      email:
-        enabled: true
-        # Example SMTP url, please replace
-        smtpUrl: "smtps://postmaster%40mg.astronomer.io:*********@smtp.mailgun.org/?pool=true"
+  # This will enable SCC in the platform and in Airflow
+  sccEnabled: true
