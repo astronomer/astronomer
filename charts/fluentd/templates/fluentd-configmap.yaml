@@ -34,6 +34,13 @@ data:
           format /^(?<time>.+) (?<stream>stdout|stderr)( (?<logtag>.))? (?<log>.*)$/
           time_format %Y-%m-%dT%H:%M:%S.%NZ
         </pattern>
+         # Example log we are parsing
+         # 2020-11-11T19:22:45.526814634+00:00 stdout F 10.130.4.1 - - [11/Nov/2020:19:22:45 +0000] "GET /meteoroidal-kiloparsec-2912/airflow/health HTTP/1.1" 200 187 "-" "kube-probe/1.17+"
+         <pattern>
+           format /^(?<time>.+) (?<stream>stdout|stderr)( (?<logtag>.))? (?<log>.*)$/
+           # https://docs.ruby-lang.org/en/2.4.0/Time.html#method-c-strptime
+           time_format %Y-%m-%dT%H:%M:%S.%N+%z
+         </pattern>
       </parse>
       tag raw.kubernetes.*
       read_from_head true
