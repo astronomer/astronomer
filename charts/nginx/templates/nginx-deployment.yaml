@@ -58,6 +58,8 @@ spec:
             - --watch-namespace={{ .Release.Namespace }}
             {{- end }}
             - --publish-service={{ .Release.Namespace }}/{{ template "nginx.fullname" . }}
+            - --http-port=8080
+            - --https-port=4433
           ports:
             - name: http
               containerPort: {{ .Values.ports.http }}
