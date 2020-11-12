@@ -53,7 +53,7 @@ global:
   prometheusPostgresExporterEnabled: false
 
   # Enables blackbox exporter
-  blackboxExporterEnabled: false
+  blackboxExporterEnabled: true
 
   # Used to enable Celery autoscaling
   kedaEnabled: false
