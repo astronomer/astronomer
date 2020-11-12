@@ -5,36 +5,57 @@ templates:
 tests:
   - it: should work
     documentIndex: 0
+    set:
+      global:
+        blackboxExporterEnabled: true
     asserts:
       - isKind:
           of: NetworkPolicy
   - it: should work
     documentIndex: 1
+    set:
+      global:
+        blackboxExporterEnabled: true
     asserts:
       - isKind:
           of: NetworkPolicy
   - it: should work
     documentIndex: 2
+    set:
+      global:
+        blackboxExporterEnabled: true
     asserts:
       - isKind:
           of: NetworkPolicy
   - it: should work
     documentIndex: 3
+    set:
+      global:
+        blackboxExporterEnabled: true
     asserts:
       - isKind:
           of: NetworkPolicy
   - it: should work
     documentIndex: 4
+    set:
+      global:
+        blackboxExporterEnabled: true
     asserts:
       - isKind:
           of: NetworkPolicy
   - it: should work
     documentIndex: 5
+    set:
+      global:
+        blackboxExporterEnabled: true
     asserts:
       - isKind:
           of: NetworkPolicy
   - it: should work
     documentIndex: 6
+    set:
+      global:
+        blackboxExporterEnabled: true
     asserts:
       - isKind:
           of: NetworkPolicy

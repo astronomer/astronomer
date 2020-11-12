@@ -4,6 +4,9 @@ templates:
   - service.yaml
 tests:
   - it: should work
+    set:
+      global:
+        blackboxExporterEnabled: true
     asserts:
       - isKind:
           of: Service

@@ -4,6 +4,9 @@ templates:
   - deployment.yaml
 tests:
   - it: should work
+    set:
+      global:
+        blackboxExporterEnabled: true
     asserts:
       - isKind:
           of: Deployment
