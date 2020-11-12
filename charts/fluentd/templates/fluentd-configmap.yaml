@@ -39,7 +39,7 @@ data:
          <pattern>
            format /^(?<time>.+) (?<stream>stdout|stderr)( (?<logtag>.))? (?<log>.*)$/
            # https://docs.ruby-lang.org/en/2.4.0/Time.html#method-c-strptime
-           time_format %Y-%m-%dT%H:%M:%S.%N+%z
+           time_format %Y-%m-%dT%H:%M:%S.%N%z
          </pattern>
       </parse>
       tag raw.kubernetes.*
