@@ -7,34 +7,41 @@ tests:
     documentIndex: 0
     asserts:
       - isKind:
+          template: blackbox-networkpolicies.yaml
           of: NetworkPolicy
   - it: should work
     documentIndex: 1
     asserts:
       - isKind:
+          template: blackbox-networkpolicies.yaml
           of: NetworkPolicy
   - it: should work
     documentIndex: 2
     asserts:
       - isKind:
+          template: blackbox-networkpolicies.yaml
           of: NetworkPolicy
   - it: should work
     documentIndex: 3
     asserts:
       - isKind:
+          template: blackbox-networkpolicies.yaml
           of: NetworkPolicy
   - it: should work
     documentIndex: 4
     asserts:
       - isKind:
+          template: blackbox-networkpolicies.yaml
           of: NetworkPolicy
   - it: should work
     documentIndex: 5
     asserts:
       - isKind:
+          template: blackbox-networkpolicies.yaml
           of: NetworkPolicy
   - it: should work
     documentIndex: 6
     asserts:
       - isKind:
+          template: blackbox-networkpolicies.yaml
           of: NetworkPolicy
