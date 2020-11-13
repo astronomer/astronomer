@@ -206,8 +206,8 @@ data:
         postgresql:
           enabled: false
 
-        {{- /* If security context constraints are enabled, enable SCCs for airflow-chart */ }}
     {{- if .Values.global.sccEnabled }}
+        # If security context constraints are enabled, enable SCCs for airflow-chart
         sccEnabled: true
     {{- end }}
 
