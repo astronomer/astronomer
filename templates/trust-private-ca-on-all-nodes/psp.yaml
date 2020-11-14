@@ -14,7 +14,7 @@ spec:
   - 'secret'
   - 'emptyDir'
   allowedHostPaths:
-    - pathPrefix: {{ .Vales.global.privateCaCertsAddToHost.hostDirectory }}
+    - pathPrefix: {{ .Values.global.privateCaCertsAddToHost.hostDirectory }}
   hostNetwork: false
   hostIPC: false
   hostPID: false
