@@ -17,11 +17,11 @@ replicas: 1
 
 images:
   init:
-    repository: astronomerinc/ap-base
+    repository: quay.io/astronomer/ap-base
     tag: 3.11.5-3
     pullPolicy: IfNotPresent
   prometheus:
-    repository: astronomerinc/ap-prometheus
+    repository: quay.io/astronomer/ap-prometheus
     tag: 2.17.1
     pullPolicy: IfNotPresent
 
