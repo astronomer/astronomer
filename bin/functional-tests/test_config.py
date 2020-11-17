@@ -2,7 +2,7 @@
 """
 This file is for system testing the Astronomer Helm chart.
 
-Testinfra is used to create test fixures.
+Testinfra is used to create test fixtures.
 
 testinfra simplifies and provides syntactic sugar for doing
 execs into a running pods.
