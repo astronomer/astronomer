@@ -20,7 +20,7 @@ astronomer:
       pullPolicy: Always
     astroUI:
       repository: quay.io/astronomer/ap-astro-ui
-      tag: dev
+      tag: master
       pullPolicy: Always
     dbBootstrapper:
       repository: quay.io/astronomer/ap-db-bootstrapper
