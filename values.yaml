@@ -35,6 +35,9 @@ global:
   # Single namespace mode
   singleNamespace: false
 
+  # Enables the deployment of Astronomer Core Edge (astronomer/core:edge)
+  edgeEnabled: false
+
   # Enables necessary components for compatibility with Istio Service Mesh
   istio:
     enabled: false
