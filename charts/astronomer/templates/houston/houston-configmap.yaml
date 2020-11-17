@@ -320,7 +320,7 @@ data:
           tolerations: []
 
         # This is here for upgrading to 0.11.0+ of Airflow.
-        defaultAirflowRepository: astronomerinc/ap-airflow
+        defaultAirflowRepository: quay.io/astronomer/ap-airflow
 
         # This is here for upgrading to 0.11.1+ of Airflow.
         data:

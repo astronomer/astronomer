@@ -24,7 +24,7 @@ brew install jq
 
 Ensure that all your airflow deployments are running FROM this Docker image
 ```
-astronomerinc/ap-airflow:1.10.7-alpine3.10-onbuild
+quay.io/astronomer/ap-airflow:1.10.7-alpine3.10-onbuild
 ```
 
 ## Kubernetes preparation
@@ -92,7 +92,7 @@ helm list | grep airflow
 - Note: above, the results that include "airflow" should all have the same version, and the version should be the [latest published airflow chart version](https://github.com/astronomer/airflow-chart/releases), not including alpha releases or release candidates (.alpha or .rc).
 - Check that all pods are running in the Airflow namespaces. If the scheduler is crashlooping with the liveness probe failing because 'airflow.jobs' module is missing, it's because you need to update Airflow Dockerfile to version
 ```
-FROM astronomerinc/ap-airflow:1.10.7-alpine3.10-onbuild
+FROM quay.io/astronomer/ap-airflow:1.10.7-alpine3.10-onbuild
 ```
 - Tasks should resume normal success rate within a few minutes
 - Check that you can deploy changes to Airflow, and check that the chart version remains the same after deploying an update to an Airflow (helm list | grep airflow)
