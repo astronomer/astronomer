@@ -15,7 +15,7 @@ if os.environ.get('DEBUG'):
 else:
     logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
-class ScanFinding():
+class ScanFinding:
 
     def __init__(self, name="", ip_address="", ports=[]):
         self.name = name
@@ -26,7 +26,7 @@ class ScanFinding():
         if not port in self.ports:
             self.ports.append(port)
 
-class ScanResult():
+class ScanResult:
 
     def __init__(self, findings=[]):
         self.findings = findings
@@ -37,7 +37,7 @@ class ScanResult():
     def remove_finding(self, finding):
         self.findings.remove(finding)
 
-class ScanTarget():
+class ScanTarget:
 
     def __init__(self, name, ip_address, _type, ports=[], namespace=None):
         self.name = name
@@ -56,7 +56,7 @@ class ScanTarget():
             f"Expected to find str, but found: {type(self.namespace)}"
 
 
-class KubernetesNetworkChecker():
+class KubernetesNetworkChecker:
 
     def __init__(self):
         config.load_kube_config()
