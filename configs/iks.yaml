@@ -1,5 +1,5 @@
 # This is an example configuration that overrides values
-# required for logging funcitonality when using IBM Cloud Kubernetes Service (IKS)
+# required for logging functionality when using IBM Cloud Kubernetes Service (IKS)
 
 #################################
 ## Fluentd configuration

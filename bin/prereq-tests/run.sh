@@ -96,7 +96,7 @@ fi
 
 if [[ $T_AWS ]]; then
   run_test $DIR/aws/base.bats "AWS Base:"
-  run_test $DIR/aws/perms.bats "AWS Permsissions:"
+  run_test $DIR/aws/perms.bats "AWS Permissions:"
 fi
 
 if [[ $T_GCP ]]; then
