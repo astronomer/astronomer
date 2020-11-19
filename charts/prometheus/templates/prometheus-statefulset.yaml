@@ -111,7 +111,7 @@ spec:
             name: {{ template "prometheus.fullname" . }}-alerts
             items:
               - key: alerts
-                path: alerts.yaml
+                path: alerts
   {{- if not .Values.persistence.enabled }}
         - name: data
           emptyDir: {}
