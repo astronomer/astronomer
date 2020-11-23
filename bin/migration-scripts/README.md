@@ -88,7 +88,7 @@ E0401 22:10:07.041224   11330 portforward.go:372] error copying from remote stre
 
 **If you are on an LTS version**
 
-- There will be a script to upgrade from each LTS version to the next, at the time of writing the first LTS verison, 0.16 is the current most-recent version.
+- There will be a script to upgrade from each LTS version to the next, at the time of writing the first LTS version, 0.16 is the current most-recent version.
 
 ## Check that it worked
 

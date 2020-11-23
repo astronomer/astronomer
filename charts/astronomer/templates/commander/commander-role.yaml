@@ -57,7 +57,7 @@ rules:
   verbs: ["get"]
 - apiGroups: [""]
   resources: ["persistentvolumes"]
-  verbs: ["list", "watch"]
+  verbs: ["create", "delete", "get", "list", "watch"]
 - apiGroups: [""]
   resources: ["replicationcontrollers"]
   verbs: ["list", "watch"]
@@ -81,7 +81,7 @@ rules:
   verbs: ["list", "watch"]
 - apiGroups: ["batch"]
   resources: ["jobs"]
-  verbs: ["list", "watch"]
+  verbs: ["list", "watch", "create", "delete"]
 - apiGroups: ["batch"]
   resources: ["cronjobs"]
   verbs: ["create", "delete", "get", "list", "patch", "watch"]
@@ -129,4 +129,9 @@ rules:
 - apiGroups: ["policy"]
   resources: ["poddisruptionbudgets"]
   verbs: ["create", "delete", "get"]
+{{- if .Values.global.sccEnabled }}
+- apiGroups: ["security.openshift.io"]
+  resources: ["securitycontextconstraints"]
+  verbs: ["create", "delete"]
+{{- end }}
 {{- end }}

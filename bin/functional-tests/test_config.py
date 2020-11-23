@@ -2,7 +2,7 @@
 """
 This file is for system testing the Astronomer Helm chart.
 
-Testinfra is used to create test fixures.
+Testinfra is used to create test fixtures.
 
 testinfra simplifies and provides syntactic sugar for doing
 execs into a running pods.
@@ -15,6 +15,15 @@ import time
 import yaml
 from kubernetes import client, config
 from kubernetes.client.rest import ApiException
+
+
+def test_default_disabled(kube_client):
+    pods = kube_client.list_namespaced_pod('astronomer')
+    default_disabled = ['keda', 'prometheus-postgres-exporter']
+    for pod in pods.items:
+        for feature in default_disabled:
+            if feature in pod.metadata.name:
+                raise Exception(f"Expected '{feature}' to be disabled")
 
 
 def test_prometheus_user(prometheus):

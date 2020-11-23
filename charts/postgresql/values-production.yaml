@@ -190,7 +190,7 @@ postgresqlDataDir: /bitnami/postgresql/data
 
 ## PostgreSQL service configuration
 service:
-  ## PosgresSQL service type
+  ## PostgresSQL service type
   type: ClusterIP
   # clusterIP: None
   port: 5432

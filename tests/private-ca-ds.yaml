@@ -1,0 +1,22 @@
+---
+suite: Test private-ca-daemonset
+templates:
+  - trust-private-ca-on-all-nodes/daemonset.yaml
+tests:
+  - it: should exist
+    set:
+      global:
+        privateCaCertsAddToHost:
+          enabled: True
+    asserts:
+      - isKind:
+          of: DaemonSet
+  - it: should not exist
+    set:
+      global:
+        privateCaCertsAddToHost:
+          enabled: False
+    asserts:
+      - not: true
+        isKind:
+          of: DaemonSet

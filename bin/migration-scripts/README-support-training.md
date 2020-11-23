@@ -1,6 +1,6 @@
 # Support training or development of the upgrade script
 
-First, you can deploy an old verison of Astronomer on our AWS development account using an old version of the Astronomer Enterprise Terraform module.
+First, you can deploy an old version of Astronomer on our AWS development account using an old version of the Astronomer Enterprise Terraform module.
 
 ```ruby
 provider "aws" {
@@ -29,7 +29,7 @@ module "astronomer_aws_from_scratch" {
   # you can pick any EKS-supported version here
   cluster_version = "1.14"
 
-  # you can pick any Astronomer verison here
+  # you can pick any Astronomer version here
   astronomer_version = "0.10.2"
 
   email = "{var.deployment_id}@astronomer.io"

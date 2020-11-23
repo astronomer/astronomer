@@ -20,6 +20,9 @@ data:
       repeat_interval: 3h
       receiver: default-receiver
       routes:
+{{ if .Values.customRoutes }}
+{{ toYaml .Values.customRoutes | trim | indent 6 }}
+{{ end }}
       {{ if .Values.receivers.platformCritical }}
       - receiver: platform-critical-receiver
         continue: true  # allows alert to continue down the tree matching any additional child routes
