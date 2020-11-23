@@ -235,16 +235,16 @@
 # Also, there are new network security policies we need to apply before the db migration.
 - name: "Upgrade Astronomer: Helm upgrade (1/4) Update software in Astronomer"
   shell: |
-    helm upgrade --namespace {{ namespace }} --reset-values -f {{ astro_save_dir.path }}/helm-user-values.json --no-hooks --set astronomer.houston.upgradeDeployments.enabled=false --version=0.20.0 {{ release_name }} astronomer-internal/astronomer
+    helm upgrade --namespace {{ namespace }} --reset-values -f {{ astro_save_dir.path }}/helm-user-values.json --no-hooks --set astronomer.houston.upgradeDeployments.enabled=false --version=0.23.0 {{ release_name }} astronomer-internal/astronomer
 
 - name: "Upgrade Astronomer: Helm upgrade (2/4) Run Astronomer DB migration"
   shell: |
-    helm upgrade --namespace {{ namespace }} --reset-values -f {{ astro_save_dir.path }}/helm-user-values.json --set astronomer.houston.upgradeDeployments.enabled=false --version=0.20.0 {{ release_name }} astronomer-internal/astronomer
+    helm upgrade --namespace {{ namespace }} --reset-values -f {{ astro_save_dir.path }}/helm-user-values.json --set astronomer.houston.upgradeDeployments.enabled=false --version=0.23.0 {{ release_name }} astronomer-internal/astronomer
 
 - name: "Upgrade Astronomer: Helm upgrade (3/4) Update Airflow configurations"
   shell: |
-    helm upgrade --namespace {{ namespace }} --reset-values -f {{ astro_save_dir.path }}/helm-user-values.json --set astronomer.houston.upgradeDeployments.enabled=true --version=0.20.0 {{ release_name }} astronomer-internal/astronomer
+    helm upgrade --namespace {{ namespace }} --reset-values -f {{ astro_save_dir.path }}/helm-user-values.json --set astronomer.houston.upgradeDeployments.enabled=true --version=0.23.0 {{ release_name }} astronomer-internal/astronomer
 
 - name: "Upgrade Astronomer: Helm upgrade (4/4) Turn off airflow auto upgrade configuration"
   shell: |
-    helm upgrade --namespace {{ namespace }} --reset-values -f {{ astro_save_dir.path }}/helm-user-values.json --no-hooks --set astronomer.houston.upgradeDeployments.enabled=false --version=0.20.0 {{ release_name }} astronomer-internal/astronomer
+    helm upgrade --namespace {{ namespace }} --reset-values -f {{ astro_save_dir.path }}/helm-user-values.json --no-hooks --set astronomer.houston.upgradeDeployments.enabled=false --version=0.23.0 {{ release_name }} astronomer-internal/astronomer
