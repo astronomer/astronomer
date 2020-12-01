@@ -59,6 +59,10 @@
     msg: "DB port: {{ db_port }}"
 
 - name: Check that we can connect to the database
+  delay: 5
+  retries: 10
+  until: result is not failed
+  register: result
   postgresql_query:
     port: "{{ db_port }}"
     login_host: "{{ db_hostname }}"
@@ -219,6 +223,6 @@
     db: "{{ release_name }}_houston"
     query: "drop table migrations;"
 
-- name: Rollback with Helm
+- name: Rollback with Helm (no hooks)
   shell: |
     helm rollback {{ release_name }} {{ helm_history.revision }} --no-hooks
