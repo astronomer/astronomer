@@ -82,7 +82,6 @@ spec:
               value: {{ .Release.Namespace }}
             - name: IN_CLUSTER
               value: "true"
-        {{- end }}
       containers:
         - name: post-upgrade-job
           image: {{ template "houston.image" . }}
