@@ -13,6 +13,8 @@ import os
 import docker
 import time
 import yaml
+import testinfra
+from subprocess import check_output
 from kubernetes import client, config
 from kubernetes.client.rest import ApiException
 
@@ -166,3 +168,47 @@ def test_prometheus_config_reloader_works(prometheus, kube_client):
     assert (
         y_parsed["global"]["scrape_interval"] != "30s"
     ), f"Expected the prometheus config file to change"
+
+
+def test_houston_backend_secret_present_after_helm_upgrade_and_container_restart(houston_api, kube_client):
+    """
+    Test when helm upgrade occurs without Houston pods restarting that a
+    Houston container restart will not miss the Houston connection backend secret
+
+    Regression test for: https://github.com/astronomer/issues/issues/2251
+    """
+    helm_chart_path = os.environ.get("HELM_CHART_PATH")
+    if not helm_chart_path:
+        raise Exception("This test only works with HELM_CHART_PATH set to the path of the chart to be tested")
+    namespace = os.environ.get('NAMESPACE')
+    release_name = os.environ.get('RELEASE_NAME')
+    if not namespace:
+        print("NAMESPACE env var is not present, using 'astronomer' namespace")
+        namespace = 'astronomer'
+    if not release_name:
+        print("RELEASE_NAME env var is not present, assuming 'astronomer' is the release name")
+        release_name = 'astronomer'
+    # attempt downgrade with the documented procedure
+    print("Performing a Helm upgrade without hooks twice:\n")
+    command = \
+        "helm3 upgrade --reuse-values " + \
+        "--no-hooks " + \
+        f"-n {namespace} " + \
+        f"{release_name} " + \
+        helm_chart_path
+    print(command)
+    print(check_output(command, shell=True))
+    # Run the command twice to ensure the most
+    # recent change is a no-operation change
+    print(check_output(command, shell=True))
+    print("")
+    result = houston_api.check_output("env | grep DATABASE_URL")
+    # check that the connection is not reset
+    assert "postgres" in result, "Expected to find DB connection string before Houston restart"
+    # Kill houston in this pod so the container restarts
+    houston_api.check_output("kill 1")
+    # give time for container to restart
+    time.sleep(2)
+    result = houston_api.check_output("env | grep DATABASE_URL")
+    # check that the connection is not reset
+    assert "postgres" in result, "Expected to find DB connection string after Houston restart"
