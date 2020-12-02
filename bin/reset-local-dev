@@ -14,7 +14,7 @@ Options:
   -h    Print this help text
   -H    Use HA
   -k    List recent kubernetes versions to use with -K (not all will be available to KIND)
-  -K    Kubernetes version to use (eg: 1.15.11) https://github.com/kubernetes/kubernetes/releases/
+  -K    Kubernetes version to use (eg: 1.18.8) https://github.com/kubernetes/kubernetes/releases/
   -M    Enable multi-node kind cluster
 
 "
@@ -34,7 +34,7 @@ while getopts ':hHkK:Mx' option ; do
     H) USE_HA=1 ;;
     k) get_kube_versions ; exit 0 ;;
     K) export KUBE_VERSION="${OPTARG}" ;;
-    M) MULTI_NODE=1 ;;
+    M) export MULTI_NODE=1 ;;
     x) set -x ;;
     *) echo "ERROR: Unknown option: -${OPTARG}" ; usage ; exit 1 ;;
   esac

@@ -40,7 +40,7 @@ brew install jq
 
 ## Kubernetes preparation
 
-Ensure you are running on an Astronomer-supported version of Kubernetes. Currently, versions 1.14 through 1.18 are supported.
+Ensure you are running on an Astronomer-supported version of Kubernetes. Currently, versions 1.16 through 1.18 are supported.
 
 To perform the Kubernetes upgrade, please contact your cloud provider's support team.
 
