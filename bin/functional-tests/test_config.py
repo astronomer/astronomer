@@ -14,6 +14,7 @@ import docker
 import time
 import yaml
 import testinfra
+from subprocess import check_output
 from kubernetes import client, config
 from kubernetes.client.rest import ApiException
 
@@ -201,10 +202,13 @@ def test_houston_backend_secret_present_after_helm_upgrade_and_container_restart
     # recent change is a no-operation change
     print(check_output(command, shell=True))
     print("")
+    result = houston_api.check_output("env | grep DATABASE_URL")
+    # check that the connection is not reset
+    assert "postgres" in result, "Expected to find DB connection string before Houston restart"
     # Kill houston in this pod so the container restarts
     houston_api.check_output("kill 1")
     # give time for container to restart
     time.sleep(2)
     result = houston_api.check_output("env | grep DATABASE_URL")
     # check that the connection is not reset
-    assert "postgres" in result
+    assert "postgres" in result, "Expected to find DB connection string after Houston restart"
