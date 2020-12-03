@@ -242,6 +242,12 @@ s3:
         path: production.yaml
       - key: local-production.yaml
         path: local-production.yaml
+-- name: houston-airflow-releases-volume
+  configMap:
+    name: {{ .Release.Name }}-houston-config
+    items:
+      - key: airflow_releases.json
+        path: airflow_releases.json
 - name: houston-jwt-key-volume
   secret:
     secretName: {{ template "houston.jwtKeySecret" . }}
