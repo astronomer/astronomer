@@ -124,4 +124,4 @@ bin/drain.sh
 
 ## License
 
-Usage of Astronomer code requires an [Astronomer Platform Enterprise Edition license](https://github.com/astronomer/astronomer/blob/master/LICENSE).
+Apache 2.0 with Commons Clause
