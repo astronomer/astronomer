@@ -218,6 +218,9 @@ s3:
 - name: houston-config-volume
   mountPath: /houston/config/local-production.yaml
   subPath: local-production.yaml
+- name: houston-airflow-releases-volume
+  mountPath: /houston/airflow_releases.json
+  subPath: airflow_releases.json
 - name: houston-jwt-key-volume
   mountPath: {{ template "houston.jwtKeyPath" . }}
   subPath: tls.key
@@ -242,12 +245,14 @@ s3:
         path: production.yaml
       - key: local-production.yaml
         path: local-production.yaml
--- name: houston-airflow-releases-volume
+{{ if .Values.airflowReleasesConfig }}
+- name: houston-airflow-releases-volume
   configMap:
     name: {{ .Release.Name }}-houston-config
     items:
       - key: airflow_releases.json
         path: airflow_releases.json
+{{- end }}
 - name: houston-jwt-key-volume
   secret:
     secretName: {{ template "houston.jwtKeySecret" . }}
