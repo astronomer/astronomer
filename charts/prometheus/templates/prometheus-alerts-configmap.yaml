@@ -97,7 +97,7 @@ data:
         - alert: ContainerMemoryNearTheLimitInDeployment
           expr: |
             (container_memory_working_set_bytes{container=~".*(scheduler|scheduler-gc|webserver|worker|statsd|pgbouncer|metrics-exporter|redis|flower)", container_name!~"POD|istio-proxy"} /
-            container_spec_memory_limit_bytes{container=~".*(scheduler|scheduler-gc|webserver|worker|statsd|pgbouncer|metrics-exporter|redis|flower)", container_name!~"POD|istio-proxy"}) * 100 > 80 < +Inf
+            container_spec_memory_limit_bytes{container=~".*(scheduler|scheduler-gc|webserver|worker|statsd|pgbouncer|metrics-exporter|redis|flower)", container_name!~"POD|istio-proxy"}) * 100 > 95 < +Inf
           for: 1h
           labels:
             tier: airflow
@@ -106,7 +106,7 @@ data:
             deployment: {{ printf "%q" "{{ $labels.deployment }}" }}
             severity: warning
           annotations:
-            summary: "A container is using more than 80% of the memory limit"
+            summary: "A container is using more than 95% of the memory limit"
             description: {{ printf "%q" "container {{ $labels.container }} in pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is using {{ printf \"%.2f\" $value }}% of available memory." }}
 
         - alert: CpuThrottlingInDeployment
@@ -911,14 +911,14 @@ data:
         - alert: ContainerMemoryNearTheLimit
           expr: |
             (container_memory_working_set_bytes{namespace="{{ .Release.Namespace }}", container_name!="POD"} /
-            container_spec_memory_limit_bytes{namespace="{{ .Release.Namespace }}", container_name!="POD"}) * 100 > 80 < +Inf
+            container_spec_memory_limit_bytes{namespace="{{ .Release.Namespace }}", container_name!="POD"}) * 100 > 95 < +Inf
           for: 1h
           labels:
             tier: platform
             component: container
             severity: warning
           annotations:
-            summary: "A container in the platform namespace uses more than 80% of the memory limit"
+            summary: "A container in the platform namespace uses more than 95% of the memory limit"
             description: {{ printf "%q" "{{ $labels.container }} in {{ $labels.pod }} is using {{ printf \"%.2f\" $value }}% of available memory." }}
 
       - name: kubernetes-storage
