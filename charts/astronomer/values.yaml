@@ -192,7 +192,8 @@ houston:
     # Default here is to run at midnight every night
     schedule: "0 0 * * *"
   
-  # this option allow to overrides airflow releases config
+  # this option allows to override airflow releases config
+
   #
   airflowReleasesConfig:
     # example of usage:
