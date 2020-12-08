@@ -12,7 +12,11 @@ metadata:
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
 data:
+  {{ if .Values.houston.airflowReleasesConfig }}
+  airflow_releases.json: |
+    {{ .Values.houston.airflowReleasesConfig | toJson }}
   # These are system-specified config overrides.
+  {{- end }}
   production.yaml: |
     webserver:
       port: {{ .Values.ports.houstonHTTP }}
