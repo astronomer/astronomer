@@ -37,6 +37,9 @@ data:
         group_by: [deployment, alertname]
         match_re:
           tier: airflow
+      - receiver: blackhole-receiver
+        match:
+          silence: cre
     receivers:
     - name: blackhole-receiver
     # Deliberately left empty to not deliver anywhere.

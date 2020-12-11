@@ -113,6 +113,7 @@ data:
           expr: 100 * (increase(container_cpu_cfs_throttled_periods_total{namespace!="{{ .Release.Name }}", container_name!~".*worker.*|()"}[5m]) / increase(container_cpu_cfs_periods_total{namespace!="{{ .Release.Name }}", namespace != "kube-system", container_name!~".*worker.*|()"}[5m])) > 75
           for: 5m
           labels:
+            silence: cre
             tier: airflow
             workspace: {{ printf "%q" "{{ $labels.workspace }}" }}
             deployment: {{ printf "%q" "{{ $labels.deployment }}" }}
@@ -905,6 +906,7 @@ data:
               > ( 51 / 100 )
           for: 15m
           labels:
+            silence: cre
             severity: warning
             tier: platform
 
