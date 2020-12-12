@@ -114,7 +114,7 @@ data:
           for: 5m
           labels:
             silence: cre
-            tier: airflow
+            #tier: airflow
             workspace: {{ printf "%q" "{{ $labels.workspace }}" }}
             deployment: {{ printf "%q" "{{ $labels.deployment }}" }}
             severity: warning
@@ -908,7 +908,7 @@ data:
           labels:
             silence: cre
             severity: warning
-            tier: platform
+            #tier: platform
 
         - alert: ContainerMemoryNearTheLimit
           expr: |
