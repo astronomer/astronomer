@@ -199,6 +199,9 @@ data:
         - version: 1.10.12
           channel: stable
           tag: 1.10.12-2-buster-onbuild
+        - version: 1.10.14
+          channel: stable
+          tag: 1.10.14-1-buster-onbuild
 
       # Kubernetes labels to add on each airflow deployment namespace
       namespaceLabels:
