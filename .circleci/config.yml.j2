@@ -3,7 +3,7 @@ version: 2.1
 jobs:
   lint:
     docker:
-      - image: quay.io/astronomer/ap-build:0.1.3
+      - image: quay.io/astronomer/ap-build:0.1.5
     steps:
       - checkout
       - run:
@@ -15,7 +15,7 @@ jobs:
 
   unittest-charts:
     docker:
-      - image: quay.io/astronomer/ap-build:0.1.3
+      - image: quay.io/astronomer/ap-build:0.1.5
     steps:
       - checkout
       - run:
@@ -24,7 +24,7 @@ jobs:
 
   build-artifact:
     docker:
-      - image: quay.io/astronomer/ap-build:0.1.3
+      - image: quay.io/astronomer/ap-build:0.1.5
     steps:
       - checkout
       - run:
@@ -47,8 +47,7 @@ jobs:
       - run:
           name: Release the Astronomer chart to internal
           command: |
-            set -e
-            sudo apt-get update && sudo apt-get install -y ca-certificates curl
+            set -xe
             pyenv global 3.8.5
             bin/release-helm-chart /tmp/workspace/astronomer-*.tgz
 
@@ -62,8 +61,7 @@ jobs:
       - run:
           name: Release the Astronomer chart to prod
           command: |
-            set -e
-            sudo apt-get update && sudo apt-get install -y ca-certificates curl
+            set -xe
             pyenv global 3.8.5
             bin/release-helm-chart -p /tmp/workspace/astronomer-*.tgz
       - publish-github-release
