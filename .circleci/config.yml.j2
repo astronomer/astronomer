@@ -47,8 +47,7 @@ jobs:
       - run:
           name: Release the Astronomer chart to internal
           command: |
-            set -e
-            sudo apt-get update && sudo apt-get install -y ca-certificates curl
+            set -xe
             pyenv global 3.8.5
             bin/release-helm-chart /tmp/workspace/astronomer-*.tgz
 
@@ -62,8 +61,7 @@ jobs:
       - run:
           name: Release the Astronomer chart to prod
           command: |
-            set -e
-            sudo apt-get update && sudo apt-get install -y ca-certificates curl
+            set -xe
             pyenv global 3.8.5
             bin/release-helm-chart -p /tmp/workspace/astronomer-*.tgz
       - publish-github-release
