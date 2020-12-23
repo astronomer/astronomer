@@ -4,7 +4,7 @@
   set_fact:
     backup_dir: "/astronomer-backups"
     timestamp: "{{ lookup('pipe','date +%Y-%m-%d-%H-%M-%S') }}"
-    upgrade_to_version: "0.23.3"
+    upgrade_to_version: "0.23.6"
     upgrade_to_version_airflow: "0.18.5"
     # db_hostname: "localhost"
     # db_username: "postgres"
