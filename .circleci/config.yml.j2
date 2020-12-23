@@ -120,11 +120,6 @@ workflows:
           requires:
             - test-all-platforms
             - build-artifact
-          filters:
-            branches:
-              only:
-                - '/release-0\.23/'
-                - '/lts-to-lts/'
 
       - approve-internal-release:
           type: approval
@@ -159,6 +154,22 @@ workflows:
                 - '/release-0\.(12|13|14|15|16)/'
 
 commands:
+
+  upgrade-0-23-test:
+    description: "Test LTS to LTS upgrade automation"
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - add_ssh_keys:
+          fingerprints:
+            - "fb:bd:3c:2f:ef:af:e9:5b:fe:33:0e:e1:01:80:9f:cf"
+      - run:
+          name: Install Astronomer chart
+          command: |
+            set -e
+            bin/lts-upgrade-0-23-test
+
   helm-install:
     description: "Install Helm chart from artifact"
     parameters:
