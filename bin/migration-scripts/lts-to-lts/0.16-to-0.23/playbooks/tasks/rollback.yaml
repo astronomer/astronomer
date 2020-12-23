@@ -58,6 +58,17 @@
 - debug:
     msg: "DB port: {{ db_port }}"
 
+- name: Ensure DB network policy is removed
+  community.kubernetes.k8s:
+    state: absent
+    api_version: 'networking.k8s.io/v1'
+    kind: NetworkPolicy
+    namespace: "{{ namespace }}"
+    name: "{{ item }}"
+  with_items:
+    - "{{ release_name }}-default-deny-ingress"
+    - "{{ release_name }}-postgresql"
+
 - name: Check that we can connect to the database
   delay: 5
   retries: 10
@@ -225,4 +236,4 @@
 
 - name: Rollback with Helm (no hooks)
   shell: |
-    helm rollback {{ release_name }} {{ helm_history.revision }} --no-hooks
+    helm rollback {{ release_name }} {{ helm_history.revision }} --no-hooks --namespace {{ namespace }}

@@ -79,6 +79,19 @@ jobs:
           astronomer-tags: "platform postgresql monitoring logging kubed keda"
 {% endfor %}
 
+{% for version in [kube_versions[-1]] %}
+
+  lts-upgrade-0-23-test:
+    machine:
+      image: ubuntu-2004:202008-01
+      resource_class: xlarge
+    environment:
+      KUBE_VERSION: v{{ version }}
+    steps:
+      - upgrade-0-23-test
+
+{% endfor %}
+
 workflows:
   version: 2.1
   build-and-release-helm-chart:
@@ -102,6 +115,15 @@ workflows:
             - test-all-platforms
             - build-artifact
 {% endif %}{% endfor %}
+
+      - lts-upgrade-0-23-test:
+          requires:
+            - test-all-platforms
+            - build-artifact
+          filters:
+            branches:
+              only:
+                - '/release-0\.23/'
 
       - approve-internal-release:
           type: approval
