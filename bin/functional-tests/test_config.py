@@ -208,7 +208,11 @@ def test_houston_backend_secret_present_after_helm_upgrade_and_container_restart
     # Kill houston in this pod so the container restarts
     houston_api.check_output("kill 1")
     # give time for container to restart
-    time.sleep(20)
-    result = houston_api.check_output("env | grep DATABASE_URL")
+    time.sleep(100)
+    # we can use kube_client instead of fixture, because we restarted pod so houston_api still ref to old pod id.
+    pods = kube_client.list_namespaced_pod(namespace, label_selector=f"component=houston")
+    pod = pods.items[0]
+    houston_api_new = testinfra.get_host(f'kubectl://{pod.metadata.name}?container=houston&namespace={namespace}')
+    result = houston_api_new.check_output("env | grep DATABASE_URL")
     # check that the connection is not reset
     assert "postgres" in result, "Expected to find DB connection string after Houston restart"
