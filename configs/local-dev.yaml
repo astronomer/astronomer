@@ -28,7 +28,8 @@ global:
   stan:
     replicas: 1
     enabled: true
-  sslmodeEnabled: false
+  ssl:
+    enabled: false
   # Custom CA TLS certificates
   # Each secret must have one data entry 'cert.pem'
   privateCaCerts:
