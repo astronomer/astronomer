@@ -1029,7 +1029,7 @@ data:
             runbook_url:
             summary: Too many pods on '{{`{{ $labels.node }}`}}'
           expr: |
-            max(max(kubelet_running_pod_count{job="kubernetes-nodes"}) by(instance) * on(instance) group_left(node) kubelet_node_name{job="kubernetes-nodes"}) by(node) / max(kube_node_status_capacity_pods{job="{{.Release.Name}}-kube-state"}) by(node) > 0.95
+            count by(node) ( (kube_pod_status_phase{job="astronomer-kube-state",phase="Running"} == 1) * on(instance,pod,namespace,cluster) group_left(node) topk by(instance,pod,namespace,cluster) (1, kube_pod_info{job="astronomer-kube-state"}) ) / max by(node) ( kube_node_status_capacity_pods{job="astronomer-kube-state"} != 1 ) > 0.95
           for: 15m
           labels:
             severity: warning
