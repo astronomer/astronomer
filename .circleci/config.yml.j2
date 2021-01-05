@@ -1,5 +1,10 @@
 version: 2.1
-
+executors:
+  docker-executor:
+    environment:
+      GIT_ORG: astronomer
+    docker:
+      - image: circleci/python:3
 jobs:
   lint:
     docker:
@@ -12,6 +17,13 @@ jobs:
       - run:
           name: Lint the Astronomer chart
           command: export PATH=/tmp/bin:$PATH make lint
+
+  build-lts-upgrade:
+    executor: docker-executor
+    steps:
+      - docker-build:
+          image_name: lts-016-023-upgrade
+          path: './bin/migration-scripts/lts-to-lts/0.16-to-0.23/playbooks/'
 
   unittest-charts:
     docker:
@@ -98,6 +110,14 @@ workflows:
     jobs:
       - lint
       - unittest-charts
+      - build-lts-upgrade:
+          requires:
+            - lint
+          filters:
+            branches:
+              only:
+                - 'release-0.23'
+                - 'lts-to-lts'
       - build-artifact:
           requires:
             - lint
@@ -118,7 +138,12 @@ workflows:
 
       - lts-upgrade-0-23-test:
           requires:
-            - test-all-platforms
+            - build-lts-upgrade
+          filters:
+            branches:
+              only:
+                - 'release-0.23'
+                - 'lts-to-lts'
 
       - approve-internal-release:
           type: approval
@@ -154,10 +179,44 @@ workflows:
 
 commands:
 
+
+  docker-build:
+    description: "Build a Docker image"
+    parameters:
+      dockerfile:
+        type: string
+        default: Dockerfile
+      path:
+        type: string
+        default: "."
+      image_name:
+        type: string
+        default: $CIRCLE_PROJECT_REPONAME
+    steps:
+      - checkout
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - run:
+          name: Build the Docker image
+          command: |
+            set -xe
+            image_name="<< parameters.image_name >>"
+            docker build -t $image_name --file << parameters.path>>/<< parameters.dockerfile >> --build-arg BUILD_NUMBER=${CIRCLE_BUILD_NUM} << parameters.path >>
+            docker save -o << parameters.image_name >>.tar $image_name
+      - persist_to_workspace:
+          root: .
+          paths:
+            - './<< parameters.image_name >>.tar'
+
   upgrade-0-23-test:
     description: "Test LTS to LTS upgrade automation"
     steps:
      - checkout
+     - attach_workspace:
+         at: /tmp/workspace
+     - run:
+         name: Load archived Docker image
+         command: docker load -i /tmp/workspace/lts-016-023-upgrade.tar
      - run:
          name: Test lts to lts upgrade automation
          command: |
