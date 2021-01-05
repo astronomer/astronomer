@@ -10,7 +10,7 @@ source $DIR/helpers.sh
 REPO_DIR=$DIR/../
 HELM_CHART_PATH=${HELM_CHART_PATH:-$REPO_DIR}
 
-if [[ -z "${ASTRONOMER_VERSION}" ]]; then
+if [[ -z "${ASTRONOMER_VERSION:-}" ]]; then
   ASTRONOMER_VERSION_LINE=""
 else
   ASTRONOMER_VERSION_LINE="--version=$ASTRONOMER_VERSION"

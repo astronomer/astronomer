@@ -2,8 +2,8 @@
 # shellcheck disable=SC1090
 set -euo pipefail
 
-BIN_DIR="${0%/*}"
 REPO_DIR="$(git rev-parse --show-toplevel)"
+BIN_DIR="${REPO_DIR}/bin"
 
 source "$REPO_DIR/bin/install-ci-tools" 1
 export PATH="$PATH:/tmp/bin"
@@ -23,11 +23,8 @@ echo "Deploying Astronomer..."
 echo "Installing the most recent version of 0.16"
 export HELM_CHART_PATH=astronomer/astronomer
 export ASTRONOMER_VERSION=0.16
-# "$BIN_DIR/install-platform"
-
-sleep 5
-
-# "$BIN_DIR/waitfor-platform"
+"$BIN_DIR/install-platform"
+"$BIN_DIR/waitfor-platform"
 
 echo "Astronomer 0.16 installed. Running 0.23 upgrade tests!"
 export HELM_CHART_PATH=$REPO_DIR
