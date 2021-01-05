@@ -40,6 +40,48 @@ spec:
       tolerations:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       restartPolicy: Never
+      initContainers:
+        - name: wait-for-db
+          image: {{ template "houston.image" . }}
+          imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
+          command:
+            - "/houston/bin/entrypoint"
+          args:
+            - "echo"
+            - "DB ready"
+          resources:
+{{ toYaml .Values.houston.resources | indent 12 }}
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: astronomer-bootstrap
+                  key: connection
+            {{- include "houston_environment" . | indent 12 }}
+        - name: houston-bootstrapper
+          image: {{ template "dbBootstrapper.image" . }}
+          imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
+          env:
+            - name: BOOTSTRAP_DB
+              valueFrom:
+                secretKeyRef:
+                  name: astronomer-bootstrap
+                  key: connection
+            # we need to hardcode it to be able to upgrade from prisma1 to prisma2
+            - name: SCHEMA_NAME
+              value: "houston$default"
+            {{ if .Values.global.sslmodeEnabled }}
+            - name: SSLMODE
+              value: "require"
+            {{- end }}
+            - name: DB_NAME
+              value: {{ .Release.Name }}-houston
+            - name: SECRET_NAME
+              value: {{ template "houston.airflowBackendSecret" . }}
+            - name: NAMESPACE
+              value: {{ .Release.Namespace }}
+            - name: IN_CLUSTER
+              value: "true"
       containers:
         - name: post-upgrade-job
           image: {{ template "houston.image" . }}
