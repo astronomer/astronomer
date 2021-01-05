@@ -41,7 +41,18 @@ def test_upgrade():
     # Get the existing values
     result = check_output(f"helm3 history { release_name } -n { namespace } | tail -n 1", shell=True).decode('utf8')
     assert "0.16" in result
-    check_output(f"kubectl apply -f {upgrade_manifest_path}", shell=True)
+    # rewrite manifest to replace with CI image for Kind test
+    with open(upgrade_manifest_path, "r") as f:
+        upgrade_manifest_data = f.read()
+    upgrade_manifest_data = upgrade_manifest_data.replace(
+        "image: quay.io/astronomer/lts-016-023-upgrade:latest",
+        "image: lts-016-023-upgrade:latest")
+    upgrade_manifest_data = upgrade_manifest_data.replace(
+        "imagePullPolicy: Always",
+        "imagePullPolicy: Never")
+    with open(f"{upgrade_manifest_path}.test.yaml", "w") as f:
+        f.write(upgrade_manifest_data)
+    check_output(f"kubectl apply -f {upgrade_manifest_path}.test.yaml", shell=True)
     timeout = 800
     start_time = time()
     while True:
@@ -61,7 +72,17 @@ def test_upgrade():
             assert False, "Failed to perform upgrade (timeout!), see logs"
     result = check_output(f"helm3 history astronomer -n astronomer | tail -n 1", shell=True).decode('utf8')
     assert "0.23" in result and "deployed" in result, "Expected upgrade to be performed"
-    check_output(f"kubectl apply -f {rollback_manifest_path}", shell=True)
+    with open(rollback_manifest_path, "r") as f:
+        rollback_manifest_data = f.read()
+    rollback_manifest_data = rollback_manifest_data.replace(
+        "image: quay.io/astronomer/lts-016-023-upgrade:latest",
+        "image: lts-016-023-upgrade:latest")
+    rollback_manifest_data = rollback_manifest_data.replace(
+        "imagePullPolicy: Always",
+        "imagePullPolicy: Never")
+    with open(f"{rollback_manifest_path}.test.yaml", "w") as f:
+        f.write(rollback_manifest_data)
+    check_output(f"kubectl apply -f {rollback_manifest_path}.test.yaml", shell=True)
     timeout = 800
     start_time = time()
     while True:

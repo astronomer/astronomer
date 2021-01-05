@@ -12,9 +12,9 @@ spec:
       serviceAccountName: astronomer-upgrader-service-account
       restartPolicy: Never
       containers:
-      - image: sjmiller609/upgrade-testing:latest
+      - image: quay.io/astronomer/lts-016-023-upgrade:latest
         imagePullPolicy: Always
-        name: test-upgrade
+        name: upgrade
         command:
           - ansible-playbook
           - rollback-astronomer.yaml
