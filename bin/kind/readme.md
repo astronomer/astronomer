@@ -44,7 +44,7 @@ cd astronomer
 #   or set to any version supported by Kind
 #   this value is exported by CircleCI
 #   the default otherwise is in bin/setup-kind
-export KUBE_VERSION="v1.15.6"
+export KUBE_VERSION="v1.18.8"
 
 # Astronomer Install
 ./bin/setup-kind
@@ -59,7 +59,7 @@ sudo /tmp/bin/kubectl port-forward -n astronomer svc/astronomer-nginx 80 443 &
 # Create Initial User
 ./bin/create-initial-user "<username>" "<password>"
 
-# Stop background port-foward
+# Stop background port-forward
 fg
 <CTRL>-C
 

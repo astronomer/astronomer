@@ -27,7 +27,7 @@ module "astronomer_aws_from_scratch" {
   version         = "1.0.221"
 
   # you can pick any EKS-supported version here
-  cluster_version = "1.14"
+  cluster_version = "1.18"
 
   # you can pick any Astronomer version here
   astronomer_version = "0.10.2"

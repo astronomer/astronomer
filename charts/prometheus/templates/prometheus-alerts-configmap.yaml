@@ -72,16 +72,16 @@ data:
             description: {{ printf "%q" "{{ $labels.release }} has been using over 95% of its pod quota for over 10 minutes." }}
 
         - alert: AirflowEphemeralStorageLimit
-          expr: (container_fs_usage_bytes{pod_name=~".*(scheduler|webserver|worker).*"}) >= 1800000000
-          for: 5m
+          expr: (container_fs_usage_bytes{pod_name=~".*(scheduler|webserver|worker).*"}) >= 5000000000
+          for: 10m
           labels:
             tier: airflow
             component: {{ printf "%q" "{{ $labels.component_name }}" }}
             workspace: {{ printf "%q" "{{ $labels.workspace }}" }}
             deployment: {{ printf "%q" "{{ $labels.deployment }}" }}
           annotations:
-            summary: {{ printf "%q" "{{ $labels.deployment }} {{ $labels.component_name }} is near its ephemeral storage limit" }}
-            description: {{ printf "%q" "{{ $labels.deployment }} {{ $labels.component_name }} has been using 90% of its ephemeral storage for over 5 minutes." }}
+            summary: {{ printf "%q" "{{ $labels.deployment }} {{ $labels.component_name }} is experiencing high ephemeral storage usage" }}
+            description: {{ printf "%q" "{{ $labels.deployment }} {{ $labels.component_name }} has been using >=5GB of its ephemeral storage for over 10 minutes." }}
 
         - alert: AirflowTasksPendingIncreasing
           expr: (max_over_time(airflow_scheduler_tasks_pending[5m]) - max_over_time(airflow_scheduler_tasks_pending[5m] offset 5m)) > 0
@@ -97,7 +97,7 @@ data:
         - alert: ContainerMemoryNearTheLimitInDeployment
           expr: |
             (container_memory_working_set_bytes{container=~".*(scheduler|scheduler-gc|webserver|worker|statsd|pgbouncer|metrics-exporter|redis|flower)", container_name!~"POD|istio-proxy"} /
-            container_spec_memory_limit_bytes{container=~".*(scheduler|scheduler-gc|webserver|worker|statsd|pgbouncer|metrics-exporter|redis|flower)", container_name!~"POD|istio-proxy"}) * 100 > 80 < +Inf
+            container_spec_memory_limit_bytes{container=~".*(scheduler|scheduler-gc|webserver|worker|statsd|pgbouncer|metrics-exporter|redis|flower)", container_name!~"POD|istio-proxy"}) * 100 > 95 < +Inf
           for: 1h
           labels:
             tier: airflow
@@ -106,14 +106,15 @@ data:
             deployment: {{ printf "%q" "{{ $labels.deployment }}" }}
             severity: warning
           annotations:
-            summary: "A container is using more than 80% of the memory limit"
+            summary: "A container is using more than 95% of the memory limit"
             description: {{ printf "%q" "container {{ $labels.container }} in pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is using {{ printf \"%.2f\" $value }}% of available memory." }}
 
         - alert: CpuThrottlingInDeployment
           expr: 100 * (increase(container_cpu_cfs_throttled_periods_total{namespace!="{{ .Release.Name }}", container_name!~".*worker.*|()"}[5m]) / increase(container_cpu_cfs_periods_total{namespace!="{{ .Release.Name }}", namespace != "kube-system", container_name!~".*worker.*|()"}[5m])) > 75
           for: 5m
           labels:
-            tier: airflow
+            silence: cre
+            #tier: airflow
             workspace: {{ printf "%q" "{{ $labels.workspace }}" }}
             deployment: {{ printf "%q" "{{ $labels.deployment }}" }}
             severity: warning
@@ -905,20 +906,21 @@ data:
               > ( 51 / 100 )
           for: 15m
           labels:
+            silence: cre
             severity: warning
-            tier: platform
+            #tier: platform
 
         - alert: ContainerMemoryNearTheLimit
           expr: |
             (container_memory_working_set_bytes{namespace="{{ .Release.Namespace }}", container_name!="POD"} /
-            container_spec_memory_limit_bytes{namespace="{{ .Release.Namespace }}", container_name!="POD"}) * 100 > 80 < +Inf
+            container_spec_memory_limit_bytes{namespace="{{ .Release.Namespace }}", container_name!="POD"}) * 100 > 95 < +Inf
           for: 1h
           labels:
             tier: platform
             component: container
             severity: warning
           annotations:
-            summary: "A container in the platform namespace uses more than 80% of the memory limit"
+            summary: "A container in the platform namespace uses more than 95% of the memory limit"
             description: {{ printf "%q" "{{ $labels.container }} in {{ $labels.pod }} is using {{ printf \"%.2f\" $value }}% of available memory." }}
 
       - name: kubernetes-storage
@@ -1027,7 +1029,7 @@ data:
             runbook_url:
             summary: Too many pods on '{{`{{ $labels.node }}`}}'
           expr: |
-            max(max(kubelet_running_pod_count{job="kubernetes-nodes"}) by(instance) * on(instance) group_left(node) kubelet_node_name{job="kubernetes-nodes"}) by(node) / max(kube_node_status_capacity_pods{job="{{.Release.Name}}-kube-state"}) by(node) > 0.95
+            count by(node) ( (kube_pod_status_phase{job="{{.Release.Name}}-kube-state",phase="Running"} == 1) * on(instance,pod,namespace,cluster) group_left(node) topk by(instance,pod,namespace,cluster) (1, kube_pod_info{job="{{.Release.Name}}-kube-state"}) ) / max by(node) ( kube_node_status_capacity_pods{job="{{.Release.Name}}-kube-state"} != 1 ) > 0.95
           for: 15m
           labels:
             severity: warning

@@ -5,7 +5,7 @@
 # This version number controls the default Airflow chart version that will be installed
 # when creating a new deployment in the system. This is also used to ensure all
 # child airflow deployments are kept up to date and on the latest version.
-airflowChartVersion: 0.18.2
+airflowChartVersion: 0.18.6
 
 nodeSelector: {}
 affinity: {}
@@ -23,15 +23,15 @@ images:
     pullPolicy: IfNotPresent
   houston:
     repository: quay.io/astronomer/ap-houston-api
-    tag: 0.23.0
+    tag: 0.23.9
     pullPolicy: IfNotPresent
   astroUI:
     repository: quay.io/astronomer/ap-astro-ui
-    tag: 0.23.0
+    tag: 0.23.3
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
-    tag: 0.20.0
+    tag: 0.23.0
     pullPolicy: IfNotPresent
   cliInstall:
     repository: quay.io/astronomer/ap-cli-install
@@ -191,6 +191,40 @@ houston:
 
     # Default here is to run at midnight every night
     schedule: "0 0 * * *"
+  
+  # this option allows to override airflow releases config
+
+  #
+  airflowReleasesConfig:
+    # example of usage:
+    # available_releases:
+    # - version: 1.10.7-15
+    #   level: bug_fix
+    #   url: https://github.com/astronomer/airflow/releases/tag/v1.10.7%2Bastro.15
+    #   release_date: '2020-09-22T15:52:00+00:00'
+    #   tags:
+    #   - 1.10.7-15-alpine3.10-onbuild
+    #   - 1.10.7-15-buster-onbuild
+    #   - 1.10.7-15-alpine3.10
+    #   - 1.10.7-15-buster
+    #   channel: stable
+    # - version: 1.10.12-1
+    #   level: new_feature
+    #   url: https://github.com/astronomer/airflow/releases/tag/v1.10.12%2Bastro.1
+    #   release_date: '2020-09-29T22:15:00+00:00'
+    #   tags:
+    #   - 1.10.12-1-alpine3.10-onbuild
+    #   - 1.10.12-1-buster-onbuild
+    #   - 1.10.12-1-alpine3.10
+    #   - 1.10.12-1-buster
+    #   channel: stable
+    # - version: 2.0.0
+    #   level: new_feature
+    #   url: https://github.com/astronomer/airflow/releases/tag/v1.10.12%2Bastro.1
+    #   release_date: '2020-09-29T22:15:00+00:00'
+    #   tags:
+    #   - 2.0.0-alpine3.10-onbuild
+    #   channel: stable
 prisma:
   podLabels: {}
   env: []

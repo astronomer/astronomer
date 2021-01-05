@@ -12,7 +12,11 @@ metadata:
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
 data:
+  {{ if .Values.houston.airflowReleasesConfig }}
+  airflow_releases.json: |
+    {{ .Values.houston.airflowReleasesConfig | toJson }}
   # These are system-specified config overrides.
+  {{- end }}
   production.yaml: |
     webserver:
       port: {{ .Values.ports.houstonHTTP }}
@@ -148,7 +152,7 @@ data:
                   extra_labels["kubernetes-pod-operator"] = "True"
                   # In the case of KPO, we allow Airflow to overwrite the entrypoint
                   # because we do not know what the container will be (and it's probably
-                  # not a container vendored by Astronomer, and it's definately not
+                  # not a container vendored by Astronomer, and it's definitely not
                   # an Airflow container).
               pod.labels.update(extra_labels)
           resources:
@@ -177,7 +181,7 @@ data:
           requests.ephemeral-storage: "50Gi"
           limits.ephemeral-storage: "50Gi"
 
-        # This is here for backward compatability.
+        # This is here for backward compatibility.
         # 0.11+ versions of Airflow have this defined
         # so this needs to be passed through to all upgrades.
         podMutation:
