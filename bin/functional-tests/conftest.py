@@ -21,7 +21,7 @@ def create_kube_client(in_cluster=False):
         config.load_kube_config()
     return client.CoreV1Api()
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope='function')
 def nginx(request):
     """ This is the host fixture for testinfra. To read more, please see
     the testinfra documentation:
@@ -42,7 +42,7 @@ def nginx(request):
     pod = pods[0]
     yield testinfra.get_host(f'kubectl://{pod.metadata.name}?container=nginx&namespace={namespace}')
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope='function')
 def houston_api(request):
     """ This is the host fixture for testinfra. To read more, please see
     the testinfra documentation:
@@ -63,8 +63,7 @@ def houston_api(request):
     pod = pods[0]
     yield testinfra.get_host(f'kubectl://{pod.metadata.name}?container=houston&namespace={namespace}')
 
-# Create a test fixture for the prometheus pod
-@pytest.fixture(scope='session')
+@pytest.fixture(scope='function')
 def prometheus(request):
     """ This is the host fixture for testinfra. To read more, please see
     the testinfra documentation:
