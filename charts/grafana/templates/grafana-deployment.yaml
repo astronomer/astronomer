@@ -62,9 +62,9 @@ spec:
                   key: connection
             - name: DB_NAME
               value: {{ .Release.Name }}-grafana
-            {{ if .Values.global.sslmodeEnabled }}
+            {{ if .Values.global.ssl.enabled }}
             - name: SSLMODE
-              value: "require"
+              value: {{ .Values.global.ssl.mode }}
             {{- end }}
             - name: SECRET_NAME
               value: {{ template "grafana.backend.secret" . }}
@@ -115,7 +115,7 @@ spec:
                 secretKeyRef:
                   name: {{ template "grafana.backend.secret" . }}
                   key: connection
-            {{ if .Values.global.sslmodeEnabled }}
+            {{ if .Values.global.ssl.enabled }}
             - name: GF_DATABASE_SSL_MODE
               value: "require"
             {{- end }}
