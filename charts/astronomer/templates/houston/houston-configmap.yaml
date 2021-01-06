@@ -85,6 +85,11 @@ data:
           # Disable creation of initial user.
           defaultUser:
             enabled: false
+    {{- if .Values.global.azure.enabled }}
+          livenessProbe:
+            failureThreshold: 25
+            periodSeconds: 10
+    {{- end }}
 
         # Worker configuration (applies to Celery and Kubernetes task pods).
         workers:
