@@ -28,7 +28,7 @@ jobs:
   push-lts-upgrade:
     executor: docker-executor
     steps:
-      - docker-registry-push:
+      - push-to-quay-io:
           comma_separated_tags: "latest,$CIRCLE_BUILD_NUM"
           image_name: lts-016-023-upgrade
 
@@ -204,45 +204,55 @@ workflows:
 
 commands:
 
-  docker-registry-push:
-    description: "Push docker images and tags"
+  push-to-quay-io:
+    description: "Push a Docker image to Quay.io"
     parameters:
       comma_separated_tags:
         type: string
         default: latest
+      docker_repository:
+        type: string
+        default: $DOCKER_REPO
       image_name:
         type: string
         default: $CIRCLE_PROJECT_REPONAME
     steps:
       - attach_workspace:
           at: /tmp/workspace
-      - setup_remote_docker
       - run:
           name: Load archived Docker image
           command: docker load -i /tmp/workspace/<< parameters.image_name >>.tar
       - run:
-          name: "Login to docker registries"
-          command: |
-            echo "$QUAY_PASSWORD" | docker login --username "$QUAY_USERNAME" --password-stdin quay.io
-            echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin docker.io
+          name: Login to Quay.io
+          command: echo "$QUAY_PASSWORD" | docker login --username "$QUAY_USERNAME" --password-stdin quay.io
       - run:
           name: Push Docker image(s)
           command: |
-            set -e
+            set -xe
+            function docker_tag_exists() {
+                curl --silent -f -lSL "https://quay.io/api/v1/repository/$1/tag/$2/images" > /dev/null
+            }
+            function tag_and_push() {
+                docker tag "<< parameters.image_name >>" "quay.io/astronomer/<< parameters.image_name >>:$1"
+                docker push "quay.io/astronomer/<< parameters.image_name >>:$1"
+            }
             for tag in $(echo "<< parameters.comma_separated_tags >>" | sed "s/,/ /g");
             do
-              set -x
               # If the tag looks starts with "v" then a digit, remove the "v"
               pattern="^(v[0-9].*)"
               if [[ $tag =~ $pattern ]]; then
                 tag="${tag:1}"
               fi
-              docker tag << parameters.image_name >> docker.io/astronomerinc/<< parameters.image_name >>:${tag}
-              docker tag << parameters.image_name >> quay.io/astronomer/<< parameters.image_name >>:${tag}
+              if docker_tag_exists "<< parameters.docker_repository >>/<< parameters.image_name >>" "${tag}" ; then
+                  if [[ "$tag" -eq "latest" ]]; then
+                    tag_and_push "$tag"
+                  else
+                    echo "This docker tag already exists. Skipping the Docker push!"
+                  fi
+              else
+                tag_and_push "$tag"
+              fi
             done
-            docker push quay.io/astronomer/<< parameters.image_name >>
-            docker push docker.io/astronomerinc/<< parameters.image_name >>
-            set +x
 
   docker-build:
     description: "Build a Docker image"
