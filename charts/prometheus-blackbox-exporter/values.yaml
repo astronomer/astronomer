@@ -73,7 +73,7 @@ extraSecretMounts: []
 
 allowIcmp: false
 
-# These are overriden by what is  in the global values file
+# These are overridden by what is  in the global values file
 resources:
   requests:
     cpu: "60m"
@@ -96,7 +96,7 @@ extraArgs: []
 
 replicas: 2
 
-# these can all be overriden via the umbrella chart values file
+# these can all be overridden via the umbrella chart values file
 astroServices:
   commander:
     enabled: true

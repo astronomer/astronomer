@@ -38,7 +38,7 @@ data:
         enabled: ${HTTP_CORS_ENABLE}
         allow-origin: ${HTTP_CORS_ALLOW_ORIGIN}
 
-    # Setting the ping schedule explictly ensures that
+    # Setting the ping schedule explicitly ensures that
     # tcp_keep_alive configuration does not cause components
     # to have their connections terminated.
     transport:

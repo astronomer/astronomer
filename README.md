@@ -124,4 +124,4 @@ bin/drain.sh
 
 ## License
 
-The code in this repo is licensed Apache 2.0 with Commons Clause, however it installs Astronomer components that have a commerical license, and requires a commerical subscription from Astronomer, Inc.
+The code in this repo is licensed Apache 2.0 with Commons Clause, however it installs Astronomer components that have a commercial license, and requires a commercial subscription from Astronomer, Inc.

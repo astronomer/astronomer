@@ -59,7 +59,7 @@ sudo /tmp/bin/kubectl port-forward -n astronomer svc/astronomer-nginx 80 443 &
 # Create Initial User
 ./bin/create-initial-user "<username>" "<password>"
 
-# Stop background port-foward
+# Stop background port-forward
 fg
 <CTRL>-C
 

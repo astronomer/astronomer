@@ -10,6 +10,12 @@ source $DIR/helpers.sh
 REPO_DIR=$DIR/../
 HELM_CHART_PATH=${HELM_CHART_PATH:-$REPO_DIR}
 
+if [[ -z "${ASTRONOMER_VERSION:-}" ]]; then
+  ASTRONOMER_VERSION_LINE=""
+else
+  ASTRONOMER_VERSION_LINE="--version=$ASTRONOMER_VERSION"
+fi
+
 echo "Deploying Astronomer..."
 
 # No args means all
@@ -89,6 +95,7 @@ helm ${ACTION} \
   --set global.postgresqlEnabled=${postgresql} \
   --set tags.keda=${keda} \
   --set astronomer.houston.upgradeDeployments.enabled=true \
+  $ASTRONOMER_VERSION_LINE \
   $HELM_CHART_PATH
 
 if [ ! $? -eq 0 ]; then
