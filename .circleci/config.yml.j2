@@ -25,6 +25,13 @@ jobs:
           image_name: lts-016-023-upgrade
           path: './bin/migration-scripts/lts-to-lts/0.16-to-0.23/playbooks/'
 
+  push-lts-upgrade:
+    executor: docker-executor
+    steps:
+      - docker-registry-push:
+          comma_separated_tags: "latest,$CIRCLE_BUILD_NUM"
+          image_name: lts-016-023-upgrade
+
   unittest-charts:
     docker:
       - image: quay.io/astronomer/ap-build:0.1.3
@@ -159,6 +166,14 @@ workflows:
           requires:
             - approve-internal-release
 
+      - approve-lts-upgrader-release:
+          type: approval
+          filters:
+            branches:
+              only:
+                - 'release-0.23'
+                - 'lts-to-lts'
+
       - approve-public-release:
           type: approval
           requires:
@@ -168,6 +183,16 @@ workflows:
             branches:
               only:
                 - '/release-0\.(12|13|14|15|16|23)/'
+
+      - push-lts-upgrade:
+          requires:
+            - approve-lts-upgrader-release
+            - lts-upgrade-0-23-test
+          filters:
+            branches:
+              only:
+                - 'release-0.23'
+                - 'lts-to-lts'
 
       - release-to-public:
           requires:
@@ -179,6 +204,45 @@ workflows:
 
 commands:
 
+  docker-registry-push:
+    description: "Push docker images and tags"
+    parameters:
+      comma_separated_tags:
+        type: string
+        default: latest
+      image_name:
+        type: string
+        default: $CIRCLE_PROJECT_REPONAME
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - setup_remote_docker
+      - run:
+          name: Load archived Docker image
+          command: docker load -i /tmp/workspace/<< parameters.image_name >>.tar
+      - run:
+          name: "Login to docker registries"
+          command: |
+            echo "$QUAY_PASSWORD" | docker login --username "$QUAY_USERNAME" --password-stdin quay.io
+            echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin docker.io
+      - run:
+          name: Push Docker image(s)
+          command: |
+            set -e
+            for tag in $(echo "<< parameters.comma_separated_tags >>" | sed "s/,/ /g");
+            do
+              set -x
+              # If the tag looks starts with "v" then a digit, remove the "v"
+              pattern="^(v[0-9].*)"
+              if [[ $tag =~ $pattern ]]; then
+                tag="${tag:1}"
+              fi
+              docker tag << parameters.image_name >> docker.io/astronomerinc/<< parameters.image_name >>:${tag}
+              docker tag << parameters.image_name >> quay.io/astronomer/<< parameters.image_name >>:${tag}
+            done
+            docker push quay.io/astronomer/<< parameters.image_name >>
+            docker push docker.io/astronomerinc/<< parameters.image_name >>
+            set +x
 
   docker-build:
     description: "Build a Docker image"
