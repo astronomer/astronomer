@@ -217,6 +217,8 @@ commands:
         type: string
         default: $CIRCLE_PROJECT_REPONAME
     steps:
+      - setup_remote_docker:
+          docker_layer_caching: true
       - attach_workspace:
           at: /tmp/workspace
       - run:
