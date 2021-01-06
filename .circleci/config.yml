@@ -215,6 +215,8 @@ workflows:
           requires:
             - approve-lts-upgrader-release
             - lts-upgrade-0-23-test
+          context:
+            - quay.io
           filters:
             branches:
               only:
