@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# shellcheck disable=SC1090
+set -euo pipefail
+
+REPO_DIR="$(git rev-parse --show-toplevel)"
+BIN_DIR="${REPO_DIR}/bin"
+
+source "$REPO_DIR/bin/install-ci-tools" 1
+export PATH="$PATH:/tmp/bin"
+ls -lh /tmp/bin
+
+source "$REPO_DIR/bin/setup-kind"
+
+helm repo add astronomer https://helm.astronomer.io
+helm repo update
+
+echo "Deploying Astronomer..."
+
+# This is so CI does not timeout on "no input in 10 minutes"
+# kubectl get pods -n astronomer -w &
+# WATCH_PID=$!
+
+echo "Installing the most recent version of 0.16"
+export HELM_CHART_PATH=astronomer/astronomer
+export ASTRONOMER_VERSION=0.16
+"$BIN_DIR/install-platform"
+"$BIN_DIR/waitfor-platform"
+
+echo "Loading upgrader image into Kind"
+kind load docker-image lts-016-023-upgrade
+
+echo "Astronomer 0.16 installed. Running 0.23 upgrade tests!"
+export HELM_CHART_PATH=$REPO_DIR
+
+pip3 install virtualenv
+virtualenv --python=python3 /tmp/venv
+source /tmp/venv/bin/activate
+pip install -r $REPO_DIR/bin/lts-0-23-upgrade-tests/requirements.txt
+export NAMESPACE=astronomer
+export RELEASE_NAME=astronomer
+
+pytest -s $REPO_DIR/bin/lts-0-23-upgrade-tests
+deactivate

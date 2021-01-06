@@ -1,7 +1,12 @@
 # Warning: automatically generated file
 # Please edit config.yml.j2, and use the script generate_circleci_config.py
 version: 2.1
-
+executors:
+  docker-executor:
+    environment:
+      GIT_ORG: astronomer
+    docker:
+      - image: circleci/python:3
 jobs:
   lint:
     docker:
@@ -14,6 +19,20 @@ jobs:
       - run:
           name: Lint the Astronomer chart
           command: export PATH=/tmp/bin:$PATH make lint
+
+  build-lts-upgrade:
+    executor: docker-executor
+    steps:
+      - docker-build:
+          image_name: lts-016-023-upgrade
+          path: './bin/migration-scripts/lts-to-lts/0.16-to-0.23/playbooks/'
+
+  push-lts-upgrade:
+    executor: docker-executor
+    steps:
+      - push-to-quay-io:
+          comma_separated_tags: "latest,$CIRCLE_BUILD_NUM"
+          image_name: lts-016-023-upgrade
 
   unittest-charts:
     docker:
@@ -101,12 +120,33 @@ jobs:
           astronomer-tags: "platform postgresql monitoring logging kubed keda"
 
 
+
+
+  lts-upgrade-0-23-test:
+    machine:
+      image: ubuntu-2004:202008-01
+      resource_class: xlarge
+    environment:
+      KUBE_VERSION: v1.18.8
+    steps:
+      - upgrade-0-23-test
+
+
+
 workflows:
   version: 2.1
   build-and-release-helm-chart:
     jobs:
       - lint
       - unittest-charts
+      - build-lts-upgrade:
+          requires:
+            - lint
+          filters:
+            branches:
+              only:
+                - 'release-0.23'
+                - 'lts-to-lts'
       - build-artifact:
           requires:
             - lint
@@ -129,6 +169,15 @@ workflows:
           requires:
             - build-artifact
 
+      - lts-upgrade-0-23-test:
+          requires:
+            - build-lts-upgrade
+          filters:
+            branches:
+              only:
+                - 'release-0.23'
+                - 'lts-to-lts'
+
       - approve-internal-release:
           type: approval
           requires:
@@ -144,6 +193,14 @@ workflows:
           requires:
             - approve-internal-release
 
+      - approve-lts-upgrader-release:
+          type: approval
+          filters:
+            branches:
+              only:
+                - 'release-0.23'
+                - 'lts-to-lts'
+
       - approve-public-release:
           type: approval
           requires:
@@ -154,6 +211,18 @@ workflows:
               only:
                 - '/release-0\.(12|13|14|15|16|23)/'
 
+      - push-lts-upgrade:
+          requires:
+            - approve-lts-upgrader-release
+            - lts-upgrade-0-23-test
+          context:
+            - quay.io
+          filters:
+            branches:
+              only:
+                - 'release-0.23'
+                - 'lts-to-lts'
+
       - release-to-public:
           requires:
             - approve-public-release
@@ -163,6 +232,102 @@ workflows:
                 - '/release-0\.(12|13|14|15|16|23)/'
 
 commands:
+
+  push-to-quay-io:
+    description: "Push a Docker image to Quay.io"
+    parameters:
+      comma_separated_tags:
+        type: string
+        default: latest
+      docker_repository:
+        type: string
+        default: $DOCKER_REPO
+      image_name:
+        type: string
+        default: $CIRCLE_PROJECT_REPONAME
+    steps:
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - attach_workspace:
+          at: /tmp/workspace
+      - run:
+          name: Load archived Docker image
+          command: docker load -i /tmp/workspace/<< parameters.image_name >>.tar
+      - run:
+          name: Login to Quay.io
+          command: echo "$QUAY_PASSWORD" | docker login --username "$QUAY_USERNAME" --password-stdin quay.io
+      - run:
+          name: Push Docker image(s)
+          command: |
+            set -xe
+            function docker_tag_exists() {
+                curl --silent -f -lSL "https://quay.io/api/v1/repository/$1/tag/$2/images" > /dev/null
+            }
+            function tag_and_push() {
+                docker tag "<< parameters.image_name >>" "quay.io/astronomer/<< parameters.image_name >>:$1"
+                docker push "quay.io/astronomer/<< parameters.image_name >>:$1"
+            }
+            for tag in $(echo "<< parameters.comma_separated_tags >>" | sed "s/,/ /g");
+            do
+              # If the tag looks starts with "v" then a digit, remove the "v"
+              pattern="^(v[0-9].*)"
+              if [[ $tag =~ $pattern ]]; then
+                tag="${tag:1}"
+              fi
+              if docker_tag_exists "<< parameters.docker_repository >>/<< parameters.image_name >>" "${tag}" ; then
+                  if [[ "$tag" -eq "latest" ]]; then
+                    tag_and_push "$tag"
+                  else
+                    echo "This docker tag already exists. Skipping the Docker push!"
+                  fi
+              else
+                tag_and_push "$tag"
+              fi
+            done
+
+  docker-build:
+    description: "Build a Docker image"
+    parameters:
+      dockerfile:
+        type: string
+        default: Dockerfile
+      path:
+        type: string
+        default: "."
+      image_name:
+        type: string
+        default: $CIRCLE_PROJECT_REPONAME
+    steps:
+      - checkout
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - run:
+          name: Build the Docker image
+          command: |
+            set -xe
+            image_name="<< parameters.image_name >>"
+            docker build -t $image_name --file << parameters.path>>/<< parameters.dockerfile >> --build-arg BUILD_NUMBER=${CIRCLE_BUILD_NUM} << parameters.path >>
+            docker save -o << parameters.image_name >>.tar $image_name
+      - persist_to_workspace:
+          root: .
+          paths:
+            - './<< parameters.image_name >>.tar'
+
+  upgrade-0-23-test:
+    description: "Test LTS to LTS upgrade automation"
+    steps:
+     - checkout
+     - attach_workspace:
+         at: /tmp/workspace
+     - run:
+         name: Load archived Docker image
+         command: docker load -i /tmp/workspace/lts-016-023-upgrade.tar
+     - run:
+         name: Test lts to lts upgrade automation
+         command: |
+           set -e
+           bin/lts-upgrade-0-23-test
+
   helm-install:
     description: "Install Helm chart from artifact"
     parameters:
