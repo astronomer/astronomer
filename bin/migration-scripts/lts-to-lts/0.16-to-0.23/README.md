@@ -69,7 +69,7 @@ kubectl apply -f https://raw.githubusercontent.com/astronomer/astronomer/master/
 Watch the logs of the upgrade pod, you can find pod name with:
 
 ```
-kubectl get pods -n <your astronomer namespace> | grep lts-upgrade
+kubectl get pods -n <your astronomer namespace> | grep upgrade-astronomer
 ```
 
 ## Validate your upgrade worked
