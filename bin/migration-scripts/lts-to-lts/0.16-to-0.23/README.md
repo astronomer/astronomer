@@ -51,7 +51,14 @@ All pods should be "Running" or "Completed". If you have any pods that are crash
 
 # Upgrade
 
-Ensure that you have the default namespace in your kubernetes context, not necessarily the namespace in which Astronomer is install.
+*Ensure that you have the default namespace in your kubernetes context, this is not necessarily the namespace in which Astronomer is installed.*
+
+Note: you will receive this error message if you do not apply into the default namespace:
+```
+TASK [Find the Astronomer Helm release (helm list)] ****************************
+fatal: [localhost]: FAILED! => {"changed": true, "cmd": "helm list --all-namespaces -o json --offset=0 --max=1000\n", "delta": "0:00:00.052201", "end": "2021-01-07 19:26:40.494387", "msg": "non-zero return code", "rc": 1, "start": "2021-01-07 19:26:40.442186", "stderr": "Error: list: failed to list: secrets is forbidden: User \"system:serviceaccount:astronomer:astronomer-upgrader-service-account\" cannot list resource \"secrets\" in API group \"\" at the cluster scope", "stderr_lines": ["Error: list: failed to list: secrets is forbidden: User \"system:serviceaccount:astronomer:astronomer-upgrader-service-account\" cannot list resource \"secrets\" in API group \"\" at the cluster scope"], "stdout": "", "stdout_lines": []}
+```
+If this happens, you can just kubectl delete the same URL you applied, then re-apply into the correct namespace (default).
 
 ## Run the Astronomer upgrade automation
 
