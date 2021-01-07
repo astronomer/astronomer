@@ -191,6 +191,10 @@ workflows:
             - platform-1-16-15
             - platform-1-17-11
             - platform-1-18-8
+          filters:
+            branches:
+              only:
+                - '/release-0\.\d+/'
 
       - approve-lts-upgrader-release:
           type: approval
