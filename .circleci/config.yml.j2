@@ -154,9 +154,6 @@ workflows:
 
       - approve-internal-release:
           type: approval
-          requires:
-{%- for version in kube_versions %}
-            - platform-{{ version | replace(".", "-") }}{% endfor %}
           filters:
             branches:
               only:
@@ -165,6 +162,12 @@ workflows:
       - release-to-internal:
           requires:
             - approve-internal-release
+{%- for version in kube_versions %}
+            - platform-{{ version | replace(".", "-") }}{% endfor %}
+          filters:
+            branches:
+              only:
+                - '/release-0\.\d+/'
 
       - approve-lts-upgrader-release:
           type: approval
