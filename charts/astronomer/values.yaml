@@ -23,7 +23,7 @@ images:
     pullPolicy: IfNotPresent
   houston:
     repository: quay.io/astronomer/ap-houston-api
-    tag: 0.23.9
+    tag: 0.23.11
     pullPolicy: IfNotPresent
   astroUI:
     repository: quay.io/astronomer/ap-astro-ui
@@ -191,7 +191,7 @@ houston:
 
     # Default here is to run at midnight every night
     schedule: "0 0 * * *"
-  
+
   # this option allows to override airflow releases config
 
   #
@@ -236,19 +236,18 @@ prisma:
   #   cpu: 100m
   #   memory: 128Mi
 
-
 commander:
   replicas: 2
   env: []
   # This only applies when replicas > 3
   maxUnavailable: 25%
   resources: {}
-   # limits:
-   #  cpu: 100m
-   #  memory: 128Mi
-   # requests:
-   #  cpu: 100m
-   #  memory: 128Mi
+    # limits:
+    #  cpu: 100m
+    #  memory: 128Mi
+    # requests:
+    #  cpu: 100m
+    #  memory: 128Mi
 
 registry:
   replicas: 1
