@@ -21,6 +21,7 @@ global:
 
   # Name of secret containing TLS certificate
   tlsSecret: astronomer-tls
+  kedaEnabled: true
   postgresqlEnabled: true
   nats:
     replicas: 1

@@ -45,7 +45,7 @@ global:
 
   # Enable default postgresql database.
   # This is not recommended for production.
-  postgresqlEnabled: false
+  postgresqlEnabled: true
 
   # Enables a node exporter DaemonSet for node-level metrics
   nodeExporterEnabled: true
@@ -56,7 +56,7 @@ global:
   blackboxExporterEnabled: false
 
   # Used to enable Celery autoscaling
-  kedaEnabled: false
+  kedaEnabled: true
 
   # Used to enable nats-server
   nats:
