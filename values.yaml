@@ -56,7 +56,7 @@ global:
   blackboxExporterEnabled: false
 
   # Used to enable Celery autoscaling
-  kedaEnabled: true
+  kedaEnabled: false
 
   # Used to enable nats-server
   nats:
