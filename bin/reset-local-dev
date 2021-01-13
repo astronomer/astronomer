@@ -61,6 +61,7 @@ echo "Deploying Astronomer..."
 helm install -f "$CONFIG_FILE" \
   --namespace astronomer astronomer \
   --set global.postgresqlEnabled=true \
+  --set global.kedaEnabled=true \
   "$REPO_DIR"
 
 
