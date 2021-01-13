@@ -4,7 +4,7 @@ import os
 import yaml
 from subprocess import check_output
 from packaging.version import parse as semver
-from pytest.mark import skip
+from pytest import mark
 
 # The top-level path of this repository
 git_root_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "..")
@@ -28,7 +28,7 @@ def test_astro_sub_chart_version_match():
     )
 
 
-@skip(reason="https://github.com/astronomer/issues/issues/2486")
+@mark.skip(reason="https://github.com/astronomer/issues/issues/2486")
 def test_downgrade_then_upgrade():
     """
     If the patch version is greater than zero,
