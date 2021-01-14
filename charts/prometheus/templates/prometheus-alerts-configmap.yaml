@@ -72,7 +72,7 @@ data:
             description: {{ printf "%q" "{{ $labels.release }} has been using over 95% of its pod quota for over 10 minutes." }}
 
         - alert: AirflowEphemeralStorageLimit
-          expr: (container_fs_usage_bytes{pod_name=~".*(scheduler|webserver|worker).*"}) >= 5000000000
+          expr: (container_fs_usage_bytes{pod_name=~".*(scheduler|webserver|worker).*"}) >= 8500000000
           for: 10m
           labels:
             tier: airflow
@@ -81,7 +81,7 @@ data:
             deployment: {{ printf "%q" "{{ $labels.deployment }}" }}
           annotations:
             summary: {{ printf "%q" "{{ $labels.deployment }} {{ $labels.component_name }} is experiencing high ephemeral storage usage" }}
-            description: {{ printf "%q" "{{ $labels.deployment }} {{ $labels.component_name }} has been using >=5GB of its ephemeral storage for over 10 minutes." }}
+            description: {{ printf "%q" "{{ $labels.deployment }} {{ $labels.component_name }} has been using >=8.5GB of its ephemeral storage for over 10 minutes." }}
 
         - alert: AirflowTasksPendingIncreasing
           expr: (max_over_time(airflow_scheduler_tasks_pending[5m]) - max_over_time(airflow_scheduler_tasks_pending[5m] offset 5m)) > 0
