@@ -58,7 +58,7 @@ jobs:
 
   release-to-internal:
     machine:
-      image: ubuntu-2004:202008-01
+      image: ubuntu-2004:202010-01
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -73,7 +73,7 @@ jobs:
 
   release-to-public:
     machine:
-      image: ubuntu-2004:202008-01
+      image: ubuntu-2004:202010-01
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -89,7 +89,7 @@ jobs:
 {% for version in kube_versions %}
   platform-{{ version | replace(".", "-") }}:
     machine:
-      image: ubuntu-2004:202008-01
+      image: ubuntu-2004:202010-01
       resource_class: xlarge
     environment:
       KUBE_VERSION: v{{ version }}
@@ -102,7 +102,7 @@ jobs:
 
   lts-upgrade-0-23-test:
     machine:
-      image: ubuntu-2004:202008-01
+      image: ubuntu-2004:202010-01
       resource_class: xlarge
     environment:
       KUBE_VERSION: v{{ version }}
@@ -117,14 +117,15 @@ workflows:
     jobs:
       - lint
       - unittest-charts
+
+      - approve-lts-upgrader-build:
+          type: approval
+
       - build-lts-upgrade:
           requires:
             - lint
-          filters:
-            branches:
-              only:
-                - 'release-0.23'
-                - 'lts-to-lts'
+            - approve-lts-upgrader-build
+
       - build-artifact:
           requires:
             - lint
@@ -146,11 +147,7 @@ workflows:
       - lts-upgrade-0-23-test:
           requires:
             - build-lts-upgrade
-          filters:
-            branches:
-              only:
-                - 'release-0.23'
-                - 'lts-to-lts'
+            - release-to-internal
 
       - approve-internal-release:
           type: approval
