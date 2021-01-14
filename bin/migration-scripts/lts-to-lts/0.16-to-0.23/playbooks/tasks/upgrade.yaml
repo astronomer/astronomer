@@ -276,4 +276,4 @@
 
 - name: Update supported Airflow versions list
   shell: |
-    kubectl create job --namespace {{ namespace }} --from=cronjob/{{ release_name }}-houston-update-check airflow-update-check-first-run
+    kubectl create job --namespace {{ namespace }} --from=cronjob/{{ release_name }}-houston-airflow-update-check airflow-update-check-first-run
