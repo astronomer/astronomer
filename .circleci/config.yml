@@ -172,6 +172,7 @@ workflows:
       - lts-upgrade-0-23-test:
           requires:
             - build-lts-upgrade
+            - release-to-internal
           filters:
             branches:
               only:
