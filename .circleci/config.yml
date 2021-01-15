@@ -139,14 +139,15 @@ workflows:
     jobs:
       - lint
       - unittest-charts
+
+      - approve-lts-upgrader-build:
+          type: approval
+
       - build-lts-upgrade:
           requires:
             - lint
-          filters:
-            branches:
-              only:
-                - 'release-0.23'
-                - 'lts-to-lts'
+            - approve-lts-upgrader-build
+
       - build-artifact:
           requires:
             - lint
@@ -173,11 +174,6 @@ workflows:
           requires:
             - build-lts-upgrade
             - release-to-internal
-          filters:
-            branches:
-              only:
-                - 'release-0.23'
-                - 'lts-to-lts'
 
       - approve-internal-release:
           type: approval
