@@ -85,16 +85,17 @@ config:
   excludeDatabases: []
   # you have to be connected to the houston db for this to work, no place for to set DB
   # https://github.com/wrouesnel/postgres_exporter/issues/443
-  queries: |-
-    airflow_chart_version:
-      query: |
-        SET search_path TO houston$default, public; select count(*) from "Deployment" where version != (select mode() within group (order by version) as version_group FROM "Deployment")
-      master: false
-      cache_seconds: 30
-      metrics:
-        - unconverged:
-            usage: "GAUGE"
-            description: "How many rows in the 'version' column of 'Deployments' are not converged to the mode version"
+  queries: ''
+  # |-
+  #   airflow_chart_version:
+  #     query: |
+  #       SET search_path TO houston$default, public; select count(*) from "Deployment" where version != (select mode() within group (order by version) as version_group FROM "Deployment")
+  #     master: false
+  #     cache_seconds: 30
+  #     metrics:
+  #       - unconverged:
+  #           usage: "GAUGE"
+  #           description: "How many rows in the 'version' column of 'Deployments' are not converged to the mode version"
 
 nodeSelector: {}
 
