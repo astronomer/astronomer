@@ -266,7 +266,7 @@
     namespace: "{{ namespace }}"
   register: astronomer_houston_backend
 
-  - name: Update supported Airflow versions list (look for pod airflow-upgrade-check-first-run to appear after 30 seconds)
+- name: Update supported Airflow versions list (look for pod airflow-upgrade-check-first-run to appear after 30 seconds)
   shell: |
     set -xe
     kubectl delete job --namespace {{ namespace }} airflow-update-check-first-run || true
