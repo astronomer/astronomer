@@ -242,12 +242,12 @@
 # Also, there are new network security policies we need to apply before the db migration.
 - name: "Upgrade Astronomer: Helm upgrade (1/5) Update software in Astronomer"
   shell: |
-    helm upgrade --namespace {{ namespace }} --reset-values -f {{ astro_save_dir.path }}/helm-user-values.json --no-hooks --set astronomer.houston.upgradeDeployments.enabled=false --version={{ upgrade_to_version }} {{ release_name }} astronomer-internal/astronomer
+    helm upgrade --namespace {{ namespace }} --reset-values -f {{ astro_save_dir.path }}/helm-user-values.json --no-hooks --set astronomer.houston.upgradeDeployments.enabled=false --version={{ upgrade_to_version }} {{ release_name }} astronomer/astronomer
 
 # Run DB migration container
 - name: "Upgrade Astronomer: Helm upgrade (2/5) Run Astronomer DB migration"
   shell: |
-    helm upgrade --namespace {{ namespace }} --reset-values -f {{ astro_save_dir.path }}/helm-user-values.json --set astronomer.houston.upgradeDeployments.enabled=false --version={{ upgrade_to_version }} {{ release_name }} astronomer-internal/astronomer
+    helm upgrade --namespace {{ namespace }} --reset-values -f {{ astro_save_dir.path }}/helm-user-values.json --set astronomer.houston.upgradeDeployments.enabled=false --version={{ upgrade_to_version }} {{ release_name }} astronomer/astronomer
 
 # Ensure Houston initializes after DB migration container runs
 - name: "Upgrade Astronomer: Helm upgrade (3/5) Initialize Astronomer Secrets"
@@ -266,14 +266,18 @@
     namespace: "{{ namespace }}"
   register: astronomer_houston_backend
 
+  - name: Update supported Airflow versions list (look for pod airflow-upgrade-check-first-run to appear after 30 seconds)
+  shell: |
+    set -xe
+    kubectl delete job --namespace {{ namespace }} airflow-update-check-first-run || true
+    sleep 30
+    kubectl create job --namespace {{ namespace }} --from=cronjob/{{ release_name }}-houston-update-airflow-check airflow-update-check-first-run
+    kubectl wait --for=condition=complete --timeout=300s --namespace {{ namespace }} airflow-update-check-first-run
+
 - name: "Upgrade Astronomer: Helm upgrade (4/5) Update Airflow configurations"
   shell: |
-    helm upgrade --namespace {{ namespace }} --reset-values -f {{ astro_save_dir.path }}/helm-user-values.json --set astronomer.houston.upgradeDeployments.enabled=true --set astronomer.airflowChartVersion={{ upgrade_to_version_airflow }} --version={{ upgrade_to_version }} {{ release_name }} astronomer-internal/astronomer
+    helm upgrade --namespace {{ namespace }} --reset-values -f {{ astro_save_dir.path }}/helm-user-values.json --set astronomer.houston.upgradeDeployments.enabled=true --set astronomer.airflowChartVersion={{ upgrade_to_version_airflow }} --version={{ upgrade_to_version }} {{ release_name }} astronomer/astronomer
 
 - name: "Upgrade Astronomer: Helm upgrade (5/5) Turn off airflow auto upgrade configuration"
   shell: |
-    helm upgrade --namespace {{ namespace }} --reset-values -f {{ astro_save_dir.path }}/helm-user-values.json --no-hooks --set astronomer.houston.upgradeDeployments.enabled=false --version={{ upgrade_to_version }} {{ release_name }} astronomer-internal/astronomer
-
-- name: Update supported Airflow versions list
-  shell: |
-    kubectl create job --namespace {{ namespace }} --from=cronjob/{{ release_name }}-houston-update-airflow-check airflow-update-check-first-run
+    helm upgrade --namespace {{ namespace }} --reset-values -f {{ astro_save_dir.path }}/helm-user-values.json --no-hooks --set astronomer.houston.upgradeDeployments.enabled=false --version={{ upgrade_to_version }} {{ release_name }} astronomer/astronomer
