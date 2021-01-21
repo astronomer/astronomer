@@ -272,7 +272,7 @@
     kubectl delete job --namespace {{ namespace }} airflow-update-check-first-run || true
     sleep 30
     kubectl create job --namespace {{ namespace }} --from=cronjob/{{ release_name }}-houston-update-airflow-check airflow-update-check-first-run
-    kubectl wait --for=condition=complete --timeout=300s --namespace {{ namespace }} airflow-update-check-first-run
+    kubectl wait --for=condition=complete --timeout=300s --namespace {{ namespace }} job/airflow-update-check-first-run
 
 - name: "(5/6) Upgrade Astronomer: Helm upgrade - Update Airflow configurations. Watch for Airflow charts to upgrade version with 'helm list --all-namespaces', watch for airflow pods to start back up."
   shell: |
