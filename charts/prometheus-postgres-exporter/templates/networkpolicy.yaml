@@ -19,13 +19,12 @@ spec:
   - Ingress
   ingress:
   - from:
-    - namespaceSelector: {}
-      podSelector:
+    - podSelector:
         matchLabels:
           tier: monitoring
           component: prometheus
           release: {{ .Release.Name }}
     ports:
     - protocol: TCP
-      port: {{ .Values.service.port }}
+      port: {{ .Values.service.targetPort }}
 {{- end }}
