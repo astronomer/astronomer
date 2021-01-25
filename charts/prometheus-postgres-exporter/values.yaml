@@ -59,11 +59,6 @@ securityContext: {}
 config:
   datasource:
     connectionSecret:
-      # we have a problem here...
-      # 1. astronomer-bootstrap uses the airflow user, but there is no database called "airflow" so it dies connecting
-      # 2. since astronomer-bootstrap is created outside the cluster we can't grab it and modify it during helm
-      # 3. <releasename>-houston-backend appears to be changed to a random value, and then changed via something else to use astronomer-bootstrap + houston db name, but 
-      #    it has a ?schema=... that causes errors.
       name: astronomer-bootstrap
       key: connection
     host:
@@ -85,17 +80,16 @@ config:
   excludeDatabases: []
   # you have to be connected to the houston db for this to work, no place for to set DB
   # https://github.com/wrouesnel/postgres_exporter/issues/443
-  queries: ''
-  # |-
-  #   airflow_chart_version:
-  #     query: |
-  #       SET search_path TO houston$default, public; select count(*) from "Deployment" where version != (select mode() within group (order by version) as version_group FROM "Deployment")
-  #     master: false
-  #     cache_seconds: 30
-  #     metrics:
-  #       - unconverged:
-  #           usage: "GAUGE"
-  #           description: "How many rows in the 'version' column of 'Deployments' are not converged to the mode version"
+  queries: |-
+    airflow_chart_version:
+      query: |
+        SET search_path TO houston$default, public; select count(*) from "Deployment" where version != (select mode() within group (order by version) as version_group FROM "Deployment")
+      master: false
+      cache_seconds: 30
+      metrics:
+        - unconverged:
+            usage: "GAUGE"
+            description: "How many rows in the 'version' column of 'Deployments' are not converged to the mode version"
 
 nodeSelector: {}
 
