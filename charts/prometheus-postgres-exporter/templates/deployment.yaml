@@ -86,16 +86,16 @@ spec:
             - name: {{ .Values.service.name }}
               containerPort: {{ .Values.service.targetPort }}
               protocol: TCP
-          # livenessProbe:
-          #   exec:
-          #     command:
-          #     - /healthcheck
-          #     - "{{ .Values.service.targetPort }}"
-          # readinessProbe:
-          #   exec:
-          #     command:
-          #     - /healthcheck
-          #     - "{{ .Values.service.targetPort }}"
+          livenessProbe:
+            tcpSocket:
+              port: {{ .Values.service.targetPort }}
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            tcpSocket:
+              port: {{ .Values.service.targetPort }}
+            initialDelaySeconds: 5
+            periodSeconds: 10
           resources:
 {{ toYaml .Values.resources | indent 12 }}
           volumeMounts:
