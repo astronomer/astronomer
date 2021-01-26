@@ -91,7 +91,7 @@ data:
 
       - job_name: nginx
         kubernetes_sd_configs:
-          - role: service
+          - role: endpoints
             namespaces:
               names:
                 - {{ .Release.Namespace }}
