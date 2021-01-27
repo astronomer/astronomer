@@ -82,6 +82,7 @@ houston:
     # host: ~
     # port: ~
     # db: ~
+    # connectionLimit: ~
   # Airflow backends
   airflowBackendSecretName: ~
   airflowBackendConnection: {}
