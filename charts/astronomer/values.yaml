@@ -56,6 +56,7 @@ astroUI:
   #   memory: 128Mi
 
 houston:
+  prismaConnectionLimit: 5
   replicas: 2
   # This only applies when replicas > 3
   maxUnavailable: 25%
@@ -82,7 +83,7 @@ houston:
     # host: ~
     # port: ~
     # db: ~
-    # connectionLimit: ~
+
   # Airflow backends
   airflowBackendSecretName: ~
   airflowBackendConnection: {}

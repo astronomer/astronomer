@@ -104,9 +104,6 @@ global:
     enabled: false
     mode: "prefer"
   
-  connectionLimit:
-    enabled: false
-    limit: 5
 #################################
 ## Default tagged groups enabled
 #################################
