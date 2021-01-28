@@ -103,6 +103,10 @@ global:
   ssl:
     enabled: false
     mode: "prefer"
+  
+  connectionLimit:
+    enabled: true
+    limit: 5
 #################################
 ## Default tagged groups enabled
 #################################

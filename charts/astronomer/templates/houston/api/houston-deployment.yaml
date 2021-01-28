@@ -71,6 +71,10 @@ spec:
             - name: SSLMODE
               value: {{ .Values.global.ssl.mode }}
             {{- end }}
+            {{ if .Values.global.connectionLimit.enabled }}
+            - name: CONNECTION_LIMIT
+              value: {{ .Values.global.connectionLimit.limit }}
+            {{- end }}
             - name: DB_NAME
               value: {{ .Release.Name }}-houston
             - name: SECRET_NAME
