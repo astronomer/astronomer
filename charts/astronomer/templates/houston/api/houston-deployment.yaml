@@ -71,6 +71,7 @@ spec:
             - name: SSLMODE
               value: {{ .Values.global.ssl.mode }}
             {{- end }}
+            # Connection Limit for Prisma Connection Pool: https://www.prisma.io/docs/concepts/components/prisma-client/deployment#database-connection-limit
             {{ if .Values.global.connectionLimit.enabled }}
             - name: CONNECTION_LIMIT
               value: {{ .Values.global.connectionLimit.limit }}
