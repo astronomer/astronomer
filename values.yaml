@@ -103,6 +103,7 @@ global:
   ssl:
     enabled: false
     mode: "prefer"
+  
 #################################
 ## Default tagged groups enabled
 #################################
