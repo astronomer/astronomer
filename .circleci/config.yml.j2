@@ -120,8 +120,16 @@ workflows:
 
       - approve-lts-upgrader-build:
           type: approval
+          filters:
+            branches:
+              not:
+                - 'master'
 
       - build-lts-upgrade:
+          filters:
+            branches:
+              not:
+                - 'master'
           requires:
             - lint
             - approve-lts-upgrader-build
@@ -145,6 +153,10 @@ workflows:
 {% endif %}{% endfor %}
 
       - lts-upgrade-0-23-test:
+          filters:
+            branches:
+              not:
+                - 'master'
           requires:
             - build-lts-upgrade
             - release-to-internal
@@ -172,7 +184,6 @@ workflows:
             branches:
               only:
                 - 'release-0.23'
-                - 'master'
                 - 'lts-to-lts'
 
       - approve-public-release:
@@ -195,7 +206,6 @@ workflows:
             branches:
               only:
                 - 'release-0.23'
-                - 'master'
                 - 'lts-to-lts'
 
       - release-to-public:
