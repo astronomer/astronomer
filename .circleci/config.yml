@@ -144,13 +144,13 @@ workflows:
           type: approval
           filters:
             branches:
-              not:
+              ignore:
                 - 'master'
 
       - build-lts-upgrade:
           filters:
             branches:
-              not:
+              ignore:
                 - 'master'
           requires:
             - lint
@@ -181,7 +181,7 @@ workflows:
       - lts-upgrade-0-23-test:
           filters:
             branches:
-              not:
+              ignore:
                 - 'master'
           requires:
             - build-lts-upgrade
