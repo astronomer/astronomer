@@ -145,13 +145,15 @@ workflows:
           filters:
             branches:
               ignore:
-                - 'master'
+                - remote-lts-upgrader-from-master
+                - master
 
       - build-lts-upgrade:
           filters:
             branches:
               ignore:
-                - 'master'
+                - remote-lts-upgrader-from-master
+                - master
           requires:
             - lint
             - approve-lts-upgrader-build
@@ -182,7 +184,8 @@ workflows:
           filters:
             branches:
               ignore:
-                - 'master'
+                - remote-lts-upgrader-from-master
+                - master
           requires:
             - build-lts-upgrade
             - release-to-internal
