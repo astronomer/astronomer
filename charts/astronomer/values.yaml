@@ -23,11 +23,11 @@ images:
     pullPolicy: IfNotPresent
   houston:
     repository: quay.io/astronomer/ap-houston-api
-    tag: 0.23.17
+    tag: 0.23.16
     pullPolicy: IfNotPresent
   astroUI:
     repository: quay.io/astronomer/ap-astro-ui
-    tag: 0.23.5
+    tag: 0.23.4
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
