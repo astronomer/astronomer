@@ -208,13 +208,15 @@
     dest: "{{ astro_save_dir.path }}/helm-status.json"
     content: "{{ helm_status | to_json }}"
 
-- name: Add helm repos
+- name: "Add private helm repo (for testing only)"
+  command: helm repo add astronomer https://internal-helm.astronomer.io
+  when: (CIRCLECI is defined) and (CIRCLECI | bool)
+
+- name: Add public helm repo
   shell: |
     set -xe
     helm repo add astronomer https://helm.astronomer.io
-    helm repo add astronomer-internal https://internal-helm.astronomer.io
     helm repo update
-
 
 - name: Backup Astronomer database
   postgresql_db:
