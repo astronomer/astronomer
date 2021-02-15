@@ -22,6 +22,18 @@ metadata:
     service.kubernetes.io/ibm-load-balancer-cloud-provider-ip-type: "private"
     {{- end }}
 
+    {{- if .Values.loadBalancerType }}
+    service.beta.kubernetes.io/aws-load-balancer-type: {{ .Values.loadBalancerType | quote }}
+    {{- end }}
+
+    {{- if .Values.loadBalancerAcmCertificate }}
+    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: {{ .Values.loadBalancerAcmCertificate | quote }}
+    {{- end }}
+
+    {{- if .Values.loadBalancerBackendProtocol }}
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: {{ .Values.loadBalancerBackendProtocol | quote }}
+    {{- end }}
+
     # Metrics annotations
     prometheus.io/scrape: "true"
     prometheus.io/port: {{ .Values.ports.metrics | quote }}
