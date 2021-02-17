@@ -197,13 +197,13 @@ nginx:
   loadBalancerSourceRanges:
 
   # On AWS, set to "nlb" to provision a network load balancer for NGINX instead of a classic load balancer
-  loadBalancerType:
+  loadBalancerType: ~
 
   # Set to "ssl" if TLS termination is performed at the load balancer, but NGINX still expects to receive TLS traffic
-  loadBalancerBackendProtocol:
+  loadBalancerBackendProtocol: ~
 
   # If using ACM, enter the ARN of the certificate to use on the load balancer
-  loadBalancerAcmCertificate:
+  loadBalancerAcmCertificate: ~
 
 
 #################################
