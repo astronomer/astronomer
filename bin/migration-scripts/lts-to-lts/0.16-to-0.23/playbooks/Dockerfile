@@ -5,7 +5,7 @@ ARG KUBECTL_VERSION="1.18.8"
 
 # Install Ansible and the modules we will use for upgrade
 RUN apk add build-base libffi-dev openssl-dev postgresql-dev bash curl postgresql-client
-RUN pip install ansible==2.9.14 psycopg2==2.8.6 openshift==0.11.2
+RUN pip install ansible==2.9.14 psycopg2==2.8.6 openshift==0.11.2 cryptography==3.1.1
 RUN ansible-galaxy collection install community.general:1.2.0 community.kubernetes:1.1.0
 # Install kubectl
 RUN curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl"
