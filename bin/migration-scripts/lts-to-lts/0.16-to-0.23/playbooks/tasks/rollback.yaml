@@ -24,6 +24,7 @@
   set_fact:
     namespace: "{{ (lookup('file', '{{ astro_save }}/helm-status.json') | from_json).namespace }}"
     release_name: "{{ (lookup('file', '{{ astro_save }}/helm-status.json') | from_json).name }}"
+    database_name: "{{ (lookup('file', '{{ astro_save }}/helm-status.json') | from_json).name | regex_replace('-', '_') }}"
 
 - debug:
     msg: "Namespace: {{ namespace }}"
@@ -79,7 +80,7 @@
     login_host: "{{ db_hostname }}"
     login_user: "{{ db_username }}"
     login_password: "{{ db_password }}"
-    db: "{{ release_name }}_houston"
+    db: "{{ database_name }}_houston"
     query: |
       SET search_path to "houston$default";
 
@@ -231,7 +232,7 @@
     login_host: "{{ db_hostname }}"
     login_user: "{{ db_username }}"
     login_password: "{{ db_password }}"
-    db: "{{ release_name }}_houston"
+    db: "{{ database_name }}_houston"
     query: "drop table migrations;"
 
 - name: Rollback with Helm (no hooks)

@@ -21,6 +21,7 @@
     release_name: "{{ (helm_releases.stdout | from_json | selectattr('chart', 'match', 'astronomer-.*') | list)[0].name }}"
     namespace: "{{ (helm_releases.stdout | from_json | selectattr('chart', 'match', 'astronomer-.*') | list)[0].namespace }}"
     airflow_releases: "{{ helm_releases.stdout | from_json | selectattr('chart', 'match', 'airflow-.*') | list | map(attribute='name') | list }}"
+    database_name: "{{ (helm_releases.stdout | from_json | selectattr('chart', 'match', 'astronomer-.*') | list)[0].name | regex_replace( '-', '_') }}"
 
 - name: Show Airflow releases
   debug:
@@ -119,7 +120,7 @@
     login_host: "{{ db_hostname }}"
     login_user: "{{ db_username }}"
     login_password: "{{ db_password }}"
-    db: "{{ release_name }}_houston"
+    db: "{{ database_name }}_houston"
     query: |
       SET search_path to "houston$default";
 
@@ -137,7 +138,7 @@
     login_host: "{{ db_hostname }}"
     login_user: "{{ db_username }}"
     login_password: "{{ db_password }}"
-    db: "{{ release_name }}_houston"
+    db: "{{ database_name }}_houston"
     query: |
       SET search_path to "houston$default";
       SELECT "localCredential" FROM "houston$default"."User";
@@ -222,7 +223,7 @@
     login_host: "{{ db_hostname }}"
     login_user: "{{ db_username }}"
     login_password: "{{ db_password }}"
-    name: "{{ release_name }}_houston"
+    name: "{{ database_name }}_houston"
     state: dump
     target: "{{ astro_save_dir.path }}/astronomer-db-backup.tar"
     target_opts: '--clean --create --format=tar'
@@ -235,7 +236,7 @@
     login_host: "{{ db_hostname }}"
     login_user: "{{ db_username }}"
     login_password: "{{ db_password }}"
-    db: "{{ release_name }}_houston"
+    db: "{{ database_name }}_houston"
     path_to_script: "files/prisma1_to_prisma2.sql"
 
 # The db migration container waits on NATs, and for that, we need the new pods.
