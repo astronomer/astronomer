@@ -50,6 +50,9 @@ spec:
           {{- if .Values.global.baseDomain }}
             - --web.external-url=https://alertmanager.{{ .Values.global.baseDomain }}
           {{- end }}
+          {{- if .Values.disableClustering }}
+            - --cluster.listen-address=
+          {{- end }}
           ports:
             - containerPort: {{ .Values.ports.http }}
               name: alertmanager

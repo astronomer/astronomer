@@ -36,6 +36,9 @@ env: {}
 ports:
   http: 9093
 
+# Set to true to disable alertmanager clustering
+disableClustering: false
+
 receivers:
   # Configs for platform alerts
   platform: {}
