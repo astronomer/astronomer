@@ -37,10 +37,6 @@ images:
     repository: quay.io/astronomer/ap-cli-install
     tag: 0.13.1
     pullPolicy: IfNotPresent
-  e2eTest:
-    repository: quay.io/astronomer/ap-e2e-test
-    tag: 0.0.7
-    pullPolicy: IfNotPresent
 
 astroUI:
   replicas: 2
