@@ -78,6 +78,8 @@ config:
   disableSettingsMetrics: false
   autoDiscoverDatabases: false
   excludeDatabases: []
+  # you have to be connected to the houston db for this to work, no place for to set DB
+  # https://github.com/wrouesnel/postgres_exporter/issues/443
   queries: |-
     airflow_chart_version:
       query: |

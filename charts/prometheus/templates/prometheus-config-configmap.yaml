@@ -91,7 +91,7 @@ data:
 
       - job_name: nginx
         kubernetes_sd_configs:
-          - role: service
+          - role: endpoints
             namespaces:
               names:
                 - {{ .Release.Namespace }}
@@ -167,6 +167,8 @@ data:
 
       {{- if .Values.global.prometheusPostgresExporterEnabled }}
       - job_name: postgresql-exporter
+        scrape_interval: 60s
+        scrape_timeout: 30s
         kubernetes_sd_configs:
           - role: service
             namespaces:
@@ -176,6 +178,14 @@ data:
           - source_labels: [__meta_kubernetes_service_name]
             action: keep
             regex: "^{{ .Release.Name }}-postgresql-exporter"
+          - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scrape]
+            action: keep
+            regex: true
+          - source_labels: [__address__, __meta_kubernetes_service_annotation_prometheus_io_port]
+            action: replace
+            regex: ([^:]+)(?::\d+)?;(\d+)
+            replacement: $1:$2
+            target_label: __address__
       {{- end }}
 
 

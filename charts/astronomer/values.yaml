@@ -31,7 +31,7 @@ images:
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
-    tag: 0.23.0
+    tag: 0.24.0
     pullPolicy: IfNotPresent
   cliInstall:
     repository: quay.io/astronomer/ap-cli-install
@@ -52,6 +52,7 @@ astroUI:
   #   memory: 128Mi
 
 houston:
+  prismaConnectionLimit: 5
   replicas: 2
   # This only applies when replicas > 3
   maxUnavailable: 25%
@@ -78,6 +79,7 @@ houston:
     # host: ~
     # port: ~
     # db: ~
+
   # Airflow backends
   airflowBackendSecretName: ~
   airflowBackendConnection: {}

@@ -103,6 +103,11 @@ global:
   ssl:
     enabled: false
     mode: "prefer"
+
+  # Storage class for persistent volumes. If you have multiple storage classes available this will force all charts with persistent
+  # volumes to use the one specified here.
+  # storageClass: ~
+  
 #################################
 ## Default tagged groups enabled
 #################################

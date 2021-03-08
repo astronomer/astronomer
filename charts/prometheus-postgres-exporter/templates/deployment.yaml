@@ -54,8 +54,6 @@ spec:
           {{- end }}
           {{- end }}
           env:
-          - name: PG_EXPORTER_AUTO_DISCOVER_DATABASES
-            value: "true"
           {{- if eq .Values.config.datasource.sslmode "disable" }}
           - name: SSL_MODE_OFF
             value: "1"
@@ -85,19 +83,19 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
-            - name: http
+            - name: {{ .Values.service.name }}
               containerPort: {{ .Values.service.targetPort }}
               protocol: TCP
           livenessProbe:
-            exec:
-              command:
-              - /healthcheck
-              - "{{ .Values.service.targetPort }}"
+            tcpSocket:
+              port: {{ .Values.service.targetPort }}
+            initialDelaySeconds: 5
+            periodSeconds: 10
           readinessProbe:
-            exec:
-              command:
-              - /healthcheck
-              - "{{ .Values.service.targetPort }}"
+            tcpSocket:
+              port: {{ .Values.service.targetPort }}
+            initialDelaySeconds: 5
+            periodSeconds: 10
           resources:
 {{ toYaml .Values.resources | indent 12 }}
           volumeMounts:
