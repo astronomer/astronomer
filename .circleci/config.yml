@@ -119,12 +119,22 @@ jobs:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging kubed keda"
 
+  platform-1-19-7:
+    machine:
+      image: ubuntu-2004:202101-01
+      resource_class: xlarge
+    environment:
+      KUBE_VERSION: v1.19.7
+    steps:
+      - helm-install:
+          astronomer-tags: "platform postgresql monitoring logging kubed keda"
+
   lts-23-to-25-test:
     machine:
       image: ubuntu-2004:202101-01
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.18.15
+      KUBE_VERSION: v1.19.7
     steps:
       - lts-23-to-25-test
 
@@ -190,6 +200,11 @@ workflows:
 
       - platform-1-18-15:
           requires:
+            - test-all-platforms
+            - build-artifact
+
+      - platform-1-19-7:
+          requires:
             - build-artifact
       - approve-internal-release:
           type: approval
@@ -205,6 +220,7 @@ workflows:
             - platform-1-16-15
             - platform-1-17-17
             - platform-1-18-15
+            - platform-1-19-7
           filters:
             branches:
               only:

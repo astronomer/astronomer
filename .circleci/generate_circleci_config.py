@@ -10,7 +10,7 @@ from jinja2 import Template
 # When adding a new version, look up the most
 # recent patch version on Dockerhub
 # https://hub.docker.com/r/kindest/node/tags
-KUBE_VERSIONS = ["1.16.15", "1.17.17", "1.18.15"]
+KUBE_VERSIONS = ["1.16.15", "1.17.17", "1.18.15", "1.19.7"]
 
 
 def main():
