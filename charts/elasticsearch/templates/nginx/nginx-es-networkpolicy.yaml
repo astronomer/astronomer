@@ -15,10 +15,9 @@ metadata:
 spec:
   podSelector:
     matchLabels:
-      tier: logging
-      component: {{ template "elasticsearch.name" . }}
+      tier: elasticsearch
+      component: es-ingress-controller
       release: {{ .Release.Name }}
-      role: nginx
   policyTypes:
   - Ingress
   ingress:
