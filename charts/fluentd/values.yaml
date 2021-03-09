@@ -5,7 +5,7 @@ tolerations: []
 images:
   fluentd:
     repository: quay.io/astronomer/ap-fluentd
-    tag: 1.9.2-r1
+    tag: 1.11.4-1
     pullPolicy: IfNotPresent
 
 elasticsearch:
@@ -26,7 +26,8 @@ ports:
   promScrape: 24231
 
 # Configure resources
-resources: {}
+resources:
+  {}
   # limits:
   #   cpu: 100m
   #   memory: 128Mi
