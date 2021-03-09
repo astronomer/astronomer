@@ -26,6 +26,7 @@ images:
     tag: 0.4.0
     pullPolicy: IfNotPresent
 
+
 resources: {}
 #  limits:
 #   cpu: 100m
@@ -35,8 +36,7 @@ resources: {}
 #   memory: 128Mi
 
 configMapReloader:
-  resources:
-    {}
+  resources: {}
     # limits:
     #   cpu: 100m
     #   memory: 25Mi
