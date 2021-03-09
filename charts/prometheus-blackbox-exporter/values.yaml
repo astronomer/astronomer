@@ -2,8 +2,7 @@ restartPolicy: Always
 
 kind: Deployment
 
-podDisruptionBudget:
-  {}
+podDisruptionBudget: {}
   # maxUnavailable: 0
 
 strategy:
@@ -50,12 +49,12 @@ config:
     dns_int:
       prober: dns
       dns:
-        preferred_ip_protocol: "ip4" # can be ip4 or ip6
+        preferred_ip_protocol: "ip4"  # can be ip4 or ip6
         query_name: gcr.io # host you wish to look up as a DNS test
         transport_protocol: udp # can be udp or tcp
 
-extraConfigmapMounts:
-  []
+
+extraConfigmapMounts: []
   # - name: certs-configmap
   #   mountPath: /etc/secrets/ssl/
   #   subPath: certificates.crt # (optional)
@@ -65,8 +64,7 @@ extraConfigmapMounts:
 
 ## Additional secret mounts
 # Defines additional mounts with secrets. Secrets must be manually created in the namespace.
-extraSecretMounts:
-  []
+extraSecretMounts: []
   # - name: secret-files
   #   mountPath: /etc/secrets
   #   secretName: blackbox-secret-files
