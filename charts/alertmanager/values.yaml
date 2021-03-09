@@ -12,8 +12,7 @@ images:
     tag: 0.20.0
     pullPolicy: IfNotPresent
 
-resources:
-  {}
+resources: {}
   # limits:
   #  cpu: 100m
   #  memory: 128Mi
