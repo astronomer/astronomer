@@ -31,8 +31,6 @@ Return the list of peers in a NATS Streaming cluster.
 {{- end }}
 {{- end }}
 
-
-
 {{ define "stan.init.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
 {{ .Values.global.privateRegistry.repository }}/ap-base:{{ .Values.images.init.tag }}
