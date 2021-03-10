@@ -70,7 +70,7 @@ helm test astronomer
 kubectl -n astronomer describe po/astronomer-ap-e2e-test
 kubectl -n astronomer logs astronomer-ap-e2e-test
 
-# Debug: Run Manulally
+# Debug: Run Manually
 kubectl apply -n astronomer -f bin/e2e-test/e2e-pod.yaml
 kubectl exec -it -n astronomer manual-ap-e2e-test bash
 

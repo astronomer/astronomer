@@ -109,7 +109,7 @@ kubectl delete pod -n <namespace> <pod name>
 ```
 
 - Above: Astronomer has found a few pods (prometheus) sometimes need a delete after upgrading from an older version directly to 0.16
-- If a pod is stuck "Terminating" (occaisionally seen in old versions of Elasticsearch), then forcefully delete it
+- If a pod is stuck "Terminating" (occasionally seen in old versions of Elasticsearch), then forcefully delete it
 
 ```sh
 kubectl delete pod -n <namespace> <pod name> --grace-period 0 --force
