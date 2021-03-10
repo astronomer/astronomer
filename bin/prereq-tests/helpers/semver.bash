@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ###
-# semantic version comparition using semver specification http://semver.org/
+# semantic version comparison using semver specification http://semver.org/
 # This bash script compares pre-releases alphabetically as well
 #
 # returns 1 when A greater than B
@@ -54,7 +54,7 @@ semver_compare() {
     [ "$pr_a" \> "$pr_b" ] && [ -n "$pr_b" ] && [ "$number_a" -gt "$number_b" ] && echo 1 && return 0
 
     ####
-    # Retrun -1 when A is lower than B
+    # Return -1 when A is lower than B
     echo -1 && return 0
   fi
   arr_version_a=(${version_a//./ })

@@ -1,7 +1,7 @@
 # This is an example configuration for running the platform in
 # single namespace mode.
 
-# Disable EFK stack which requires a CluterRole
+# Disable EFK stack which requires a ClusterRole
 tags:
   logging: false
   kubed: false
