@@ -11,7 +11,7 @@ The Astronomer upgrade will run in a pod in the cluster.
 ```
 astronomerinc/ap-airflow:<airflow-version>-<build number>-<distribution>-onbuild
 ```
-The "onbuild" part is optional, but recommended. This enables features in the astro-cli, such as using requirements.txt and packages.txt. The "build number" part is optional but recommended. Excluding the build number will referene a mutable Docker image that is occaisonally replaced with underlying pip modules updated, this is typically not preferred and instead it's best to plan when updates will occur in your Docker image. If you have your own build, test, and publish workflows that are layered on top of the Astronomer Airflow images, then it is appropriate to use the mutable image.
+The "onbuild" part is optional, but recommended. This enables features in the astro-cli, such as using requirements.txt and packages.txt. The "build number" part is optional but recommended. Excluding the build number will reference a mutable Docker image that is occasionally replaced with underlying pip modules updated, this is typically not preferred and instead it's best to plan when updates will occur in your Docker image. If you have your own build, test, and publish workflows that are layered on top of the Astronomer Airflow images, then it is appropriate to use the mutable image.
 
 Valid examples:
 ```
