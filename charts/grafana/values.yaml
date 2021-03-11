@@ -9,15 +9,16 @@ tolerations: []
 images:
   grafana:
     repository: quay.io/astronomer/ap-grafana
-    tag: "7.0.1-r2"
+    tag: 7.3.7
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
-    tag: 0.13.2
+    tag: 0.24.0
     pullPolicy: IfNotPresent
 
 backendSecretName: ~
-backendConnection: {}
+backendConnection:
+  {}
   # user: ~
   # pass: ~
   # host: ~
@@ -41,7 +42,8 @@ resources: {}
 ##
 ## dashboards per provider, use provider name as key.
 ##
-dashboards: {}
+dashboards:
+  {}
   # default:
   #   some-dashboard:
   #     json: |

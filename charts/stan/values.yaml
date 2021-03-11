@@ -3,10 +3,17 @@
 #  NATS Streaming Configuration  #
 #                                #
 ##################################
-stan:
-  image: quay.io/astronomer/ap-nats-streaming:0.18.0
-  pullPolicy: IfNotPresent
+images:
+  init:
+    repository: quay.io/astronomer/ap-base
+    tag: 3.13.2
+    pullPolicy: IfNotPresent
+  stan:
+    repository: quay.io/astronomer/ap-nats-streaming
+    tag: 0.21.0
+    pullPolicy: IfNotPresent
 
+stan:
   resources: {}
   #  limits:
   #   cpu: 100m
@@ -14,7 +21,6 @@ stan:
   #  requests:
   #   cpu: 100m
   #   memory: 128Mi
-
 
   # Cluster name, generated into a name from the
   # release name by default.
@@ -151,7 +157,6 @@ exporter:
   #  requests:
   #   cpu: 100m
   #   memory: 128Mi
-
 ##################################
 #                                #
 #  Embedded NATS Configuration   #

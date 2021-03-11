@@ -5,14 +5,15 @@ tolerations: []
 images:
   kibana:
     repository: quay.io/astronomer/ap-kibana
-    tag: 7.8.0
+    tag: 7.10.2
     pullPolicy: IfNotPresent
 
 clusterName: "astronomer"
 
 replicas: 1
 
-resources: {}
+resources:
+  {}
   # limits:
   #   cpu: 100m
   #   memory: 128Mi

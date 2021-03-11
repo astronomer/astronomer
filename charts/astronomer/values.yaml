@@ -19,15 +19,15 @@ images:
     pullPolicy: IfNotPresent
   registry:
     repository: quay.io/astronomer/ap-registry
-    tag: 3.11.5-4
+    tag: 3.13.2
     pullPolicy: IfNotPresent
   houston:
     repository: quay.io/astronomer/ap-houston-api
-    tag: 0.23.15
+    tag: 0.23.20
     pullPolicy: IfNotPresent
   astroUI:
     repository: quay.io/astronomer/ap-astro-ui
-    tag: 0.23.3
+    tag: 0.23.6
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
@@ -73,7 +73,8 @@ houston:
   regenerateCaEachUpgrade: false
   # Houston datastore
   backendSecretName: ~
-  backendConnection: {}
+  backendConnection:
+    {}
     # user: ~
     # pass: ~
     # host: ~
@@ -82,7 +83,8 @@ houston:
 
   # Airflow backends
   airflowBackendSecretName: ~
-  airflowBackendConnection: {}
+  airflowBackendConnection:
+    {}
     # user: ~
     # pass: ~
     # host: ~
@@ -239,7 +241,8 @@ commander:
   env: []
   # This only applies when replicas > 3
   maxUnavailable: 25%
-  resources: {}
+  resources:
+    {}
     # limits:
     #  cpu: 100m
     #  memory: 128Mi
@@ -277,7 +280,7 @@ registry:
     bucket: ~
     keyfile: /var/gcs-keyfile/astronomer-gcs-keyfile
     rootdirectory: /
-    chunksize: '5242880'
+    chunksize: "5242880"
 
   azure:
     enabled: false

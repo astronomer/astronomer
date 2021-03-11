@@ -21,3 +21,19 @@ Return the NATS cluster routes.
 {{- printf "nats://%s-%d.%s.%s.svc:6222," $name $i $name $.Release.Namespace -}}
 {{- end -}}
 {{- end }}
+
+{{ define "nats.image" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-nats:{{ .Values.images.nats.tag }}
+{{- else -}}
+{{ .Values.images.nats.repository }}:{{ .Values.images.nats.tag }}
+{{- end }}
+{{- end }}
+
+{{ define "nats.init.image" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-base:{{ .Values.images.init.tag }}
+{{- else -}}
+{{ .Values.images.init.repository }}:{{ .Values.images.init.tag }}
+{{- end }}
+{{- end }}
