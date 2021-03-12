@@ -56,7 +56,7 @@ spec:
           imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
           env:
             - name: SCHEMA_NAME
-              value: "houston$default"
+              value: "grafana"
             - name: BOOTSTRAP_DB
               valueFrom:
                 secretKeyRef:
