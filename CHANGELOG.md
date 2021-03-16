@@ -98,7 +98,7 @@ All changes to this project will be documented in this file. For more detail on 
 - Default additional 10AU for KubeExecutor
 - Can now set roles for Service Accounts
 - Login to CLI with service account
-- API standardiztaion and stablilization
+- API standardization and stabilization
 - Fix airflow access after reinstalling the platform
 - Addressed security issues flagged by clair
 

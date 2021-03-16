@@ -51,7 +51,7 @@ stan:
 
 ############################
 ## Astronomer configuration
-## Omit resouce requests
+## Omit resource requests
 ############################
 astronomer:
   astroUI:

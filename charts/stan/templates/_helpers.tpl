@@ -1,3 +1,4 @@
+{{/* vim: set filetype=mustache: */}}
 {{/*
 Expand the name of the chart.
 */}}
@@ -21,3 +22,19 @@ Return the list of peers in a NATS Streaming cluster.
 {{- end -}}
 {{ print $replicas }}
 {{- end -}}
+
+{{ define "stan.image" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-stan:{{ .Values.images.stan.tag }}
+{{- else -}}
+{{ .Values.images.stan.repository }}:{{ .Values.images.stan.tag }}
+{{- end }}
+{{- end }}
+
+{{ define "stan.init.image" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-base:{{ .Values.images.init.tag }}
+{{- else -}}
+{{ .Values.images.init.repository }}:{{ .Values.images.init.tag }}
+{{- end }}
+{{- end }}

@@ -43,7 +43,7 @@ You will need to use the flag that corresponds to the cloud provider.
 ./bin/prereq-tests/run.sh -G
 ```
 
-This will check that you have the cloud procider tools and permissions.
+This will check that you have the cloud provider tools and permissions.
 
 
 __3. Is my database available?__

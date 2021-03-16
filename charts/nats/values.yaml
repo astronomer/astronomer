@@ -3,10 +3,13 @@
 #  NATS Server Configuration  #
 #                             #
 ###############################
-nats:
-  image: quay.io/astronomer/ap-nats-server:2.1.8
-  pullPolicy: IfNotPresent
+images:
+  nats:
+    repository: quay.io/astronomer/ap-nats-server
+    tag: 2.1.9
+    pullPolicy: IfNotPresent
 
+nats:
   # In case both external access and advertise are enabled
   # then a service account would be required to be able to
   # gather the public ip from a node.
@@ -121,7 +124,7 @@ leafnodes:
 #
 gateway:
   enabled: false
-  name: 'default'
+  name: "default"
 
   #############################
   #                           #
@@ -156,7 +159,6 @@ gateway:
 natsbox:
   enabled: false
 
-
 # The NATS config reloader image to use.
 reloader:
   enabled: false
@@ -167,7 +169,6 @@ reloader:
   #  requests:
   #   cpu: 100m
   #   memory: 128Mi
-
 
 # Prometheus NATS Exporter configuration.
 exporter:
