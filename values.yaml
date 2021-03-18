@@ -253,16 +253,14 @@ keda:
       <<: *platformNodeSelector
     affinity:
       <<: *platformAffinity
-    tolerations:
-      <<: *platformTolerations
+    tolerations: *platformTolerations
 
 nats:
   nodeSelector:
     <<: *platformNodeSelector
     affinity:
       <<: *platformAffinity
-    tolerations:
-      <<: *platformTolerations
+    tolerations: *platformTolerations
   resources:
     requests:
       cpu: "75m"
@@ -276,8 +274,7 @@ stan:
     <<: *platformNodeSelector
     affinity:
       <<: *platformAffinity
-    tolerations:
-      <<: *platformTolerations
+    tolerations: *platformTolerations
   resources:
     requests:
       cpu: "75m"
