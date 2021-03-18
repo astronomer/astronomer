@@ -3,7 +3,26 @@ suite: Test nginx-psp-clusterrole
 templates:
   - nginx-psp-clusterrole.yaml
 tests:
-  - it: should work
+  - it: works without pspEnabled
     asserts:
+      - hasDocuments:
+          count: 0
+  - it: works with pspEnabled
+    set:
+      global.pspEnabled: True
+    asserts:
+      - hasDocuments:
+          count: 1
       - isKind:
           of: ClusterRole
+      - equal:
+          path: rules
+          value:
+            - apiGroups:
+              - policy
+              resources:
+              - podsecuritypolicies
+              resourceNames:
+              - RELEASE-NAME-ingress-nginx
+              verbs:
+              - use
