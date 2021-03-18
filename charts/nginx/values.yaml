@@ -32,7 +32,7 @@ resources: {}
 #   cpu: 100m
 #   memory: 128Mi
 
-# ingressAnnotations should be a dict of annotations to add to th ingress-controller
+# dict of annotations to add to the ingress controller
 ingressAnnotations: {}
 
 # AntiAffinity can be "hard" or "soft"
