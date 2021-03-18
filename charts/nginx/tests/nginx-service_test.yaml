@@ -37,3 +37,28 @@ tests:
       - equal:
           path: spec.loadBalancerIP
           value: 5.5.5.5
+
+  - it: works without loadBalancerSourceRanges
+    asserts:
+      - equal:
+          path: spec.type
+          value: LoadBalancer
+      - isNull:
+          path: spec.loadBalancerSourceRanges
+
+  - it: works with loadBalancerSourceRanges
+    set:
+      loadBalancerSourceRanges:
+        - "1.1.1.1/32"
+        - "2.2.2.2/32"
+        - "3.3.3.3/32"
+    asserts:
+      - equal:
+          path: spec.type
+          value: LoadBalancer
+      - equal:
+          path: spec.loadBalancerSourceRanges
+          value:
+            - "1.1.1.1/32"
+            - "2.2.2.2/32"
+            - "3.3.3.3/32"
