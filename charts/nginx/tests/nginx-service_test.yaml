@@ -3,7 +3,37 @@ suite: Test nginx-service
 templates:
   - nginx-service.yaml
 tests:
-  - it: should work
+  - it: nginx service exists
     asserts:
       - isKind:
           of: Service
+
+  - it: works with ingressAnnotations
+    set:
+      ingressAnnotations:
+        foo1: foo
+        foo2: foo
+        foo3: foo
+    asserts:
+      - equal:
+          path: metadata.annotations.foo1
+          value: foo
+      - equal:
+          path: metadata.annotations.foo2
+          value: foo
+      - equal:
+          path: metadata.annotations.foo3
+          value: foo
+
+  - it: works without loadBalancerIP
+    asserts:
+      - isNull:
+          path: spec.loadBalancerIP
+
+  - it: works with loadBalancerIP
+    set:
+      loadBalancerIP: 5.5.5.5
+    asserts:
+      - equal:
+          path: spec.loadBalancerIP
+          value: 5.5.5.5

@@ -196,8 +196,8 @@ nginx:
   # String IP address the nginx ingress should bind to
   loadBalancerIP: ~
 
-  # Dict used to restrict IPs which can reach the nginx ingress
-  loadBalancerSourceRanges: {}
+  # List used to restrict IPs which can reach the nginx ingress
+  loadBalancerSourceRanges: []
 
   # Dict of arbitrary annotations to add to the nginx ingress
   ingressAnnotations: {}
