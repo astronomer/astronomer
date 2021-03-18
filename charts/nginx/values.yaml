@@ -32,11 +32,14 @@ resources: {}
 #   cpu: 100m
 #   memory: 128Mi
 
+# ingressAnnotations should be a dict of annotations to add to th ingress-controller
+ingressAnnotations: {}
+
 # AntiAffinity can be "hard" or "soft"
 antiAffinity: "soft"
 
 # IP address the nginx ingress should bind to
-loadBalancerIP:
+loadBalancerIP: ~
 
 # Used to restrict IPs which can reach the nginx ingress
 loadBalancerSourceRanges:
