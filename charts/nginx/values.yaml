@@ -38,7 +38,7 @@ ingressAnnotations: {}
 # AntiAffinity can be "hard" or "soft"
 antiAffinity: "soft"
 
-# IP address the nginx ingress should bind to
+# String IP address the nginx ingress should bind to
 loadBalancerIP: ~
 
 # List used to restrict IPs which can reach the nginx ingress
