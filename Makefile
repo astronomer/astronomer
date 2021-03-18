@@ -23,7 +23,7 @@ lint-astro:
 
 .PHONY: unittest-charts
 unittest-charts:
-	helm plugin install https://github.com/astronomer/helm-unittest >/dev/null || true
+	helm plugin install https://github.com/quintush/helm-unittest >/dev/null || true
 	helm unittest -3 .
 
 .PHONY: lint-charts
