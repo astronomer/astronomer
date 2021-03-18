@@ -42,7 +42,7 @@ antiAffinity: "soft"
 loadBalancerIP: ~
 
 # Used to restrict IPs which can reach the nginx ingress
-loadBalancerSourceRanges:
+loadBalancerSourceRanges: {}
 
 # Set to 'true' when deploying to a private EKS cluster
 privateLoadBalancer: false
