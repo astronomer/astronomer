@@ -41,7 +41,7 @@ antiAffinity: "soft"
 # String IP address the nginx ingress should bind to
 loadBalancerIP: ~
 
-# List used to restrict IPs which can reach the nginx ingress
+# List used to restrict IPs that can reach the nginx ingress
 loadBalancerSourceRanges: []
 
 # Set to 'true' when deploying to a private EKS cluster
