@@ -32,14 +32,17 @@ resources: {}
 #   cpu: 100m
 #   memory: 128Mi
 
+# dict of annotations to add to the ingress controller
+ingressAnnotations: {}
+
 # AntiAffinity can be "hard" or "soft"
 antiAffinity: "soft"
 
-# IP address the nginx ingress should bind to
-loadBalancerIP:
+# String IP address the nginx ingress should bind to
+loadBalancerIP: ~
 
-# Used to restrict IPs which can reach the nginx ingress
-loadBalancerSourceRanges:
+# List used to restrict IPs that can reach the nginx ingress
+loadBalancerSourceRanges: []
 
 # Set to 'true' when deploying to a private EKS cluster
 privateLoadBalancer: false

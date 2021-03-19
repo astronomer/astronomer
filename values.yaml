@@ -107,7 +107,7 @@ global:
   # Storage class for persistent volumes. If you have multiple storage classes available this will force all charts with persistent
   # volumes to use the one specified here.
   # storageClass: ~
-  
+
 #################################
 ## Default tagged groups enabled
 #################################
@@ -180,7 +180,6 @@ astronomer:
         cpu: "500m"
         memory: "1024Mi"
 
-
 #################################
 ## Nginx configuration
 #################################
@@ -194,12 +193,14 @@ nginx:
       cpu: "1"
       memory: "2048Mi"
 
-  # IP address the nginx ingress should bind to
-  loadBalancerIP:
+  # String IP address the nginx ingress should bind to
+  loadBalancerIP: ~
 
-  # Used to restrict IPs which can reach the nginx ingress
-  loadBalancerSourceRanges:
+  # List used to restrict IPs that can reach the nginx ingress
+  loadBalancerSourceRanges: []
 
+  # Dict of arbitrary annotations to add to the nginx ingress
+  ingressAnnotations: {}
 
 #################################
 ## Grafana configuration
@@ -214,10 +215,11 @@ grafana:
       cpu: "500m"
       memory: "1024Mi"
 
-  dashboards: {}
-   # default:
-   #   velero:
-   #     file: dashboards/velero.json
+  dashboards:
+    {}
+    # default:
+    #   velero:
+    #     file: dashboards/velero.json
 
 #################################
 ## Prometheus configuration
@@ -251,16 +253,14 @@ keda:
       <<: *platformNodeSelector
     affinity:
       <<: *platformAffinity
-    tolerations:
-      *platformTolerations
+    tolerations: *platformTolerations
 
 nats:
   nodeSelector:
     <<: *platformNodeSelector
     affinity:
       <<: *platformAffinity
-    tolerations:
-      *platformTolerations
+    tolerations: *platformTolerations
   resources:
     requests:
       cpu: "75m"
@@ -274,8 +274,7 @@ stan:
     <<: *platformNodeSelector
     affinity:
       <<: *platformAffinity
-    tolerations:
-      *platformTolerations
+    tolerations: *platformTolerations
   resources:
     requests:
       cpu: "75m"
@@ -297,9 +296,9 @@ prometheus-blackbox-exporter:
       cpu: "100m"
       memory: "200Mi"
 
-# define what astronomer platform services will be checked
-# for up/down status. Enable this will also include
-# the required network policies
+  # define what astronomer platform services will be checked
+  # for up/down status. Enable this will also include
+  # the required network policies
   astroServices:
     commander:
       enabled: true
@@ -370,7 +369,6 @@ elasticsearch:
     persistence:
       size: "20Gi"
 
-
 #################################
 ## Kibana configuration
 #################################
@@ -384,7 +382,6 @@ kibana:
       cpu: "500m"
       memory: "1024Mi"
 
-
 #################################
 ## Fluentd configuration
 #################################
@@ -397,7 +394,6 @@ kibana:
 #     limits:
 #       cpu: "500m"
 #       memory: "1024Mi"
-
 
 #################################
 ## Kube State configuration

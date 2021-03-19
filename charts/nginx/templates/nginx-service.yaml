@@ -12,7 +12,11 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
   annotations:
-    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+{{- if .Values.ingressAnnotations -}}
+{{ range $key, $value := .Values.ingressAnnotations }}
+    {{ $key }}: {{ $value }}
+{{- end -}}
+{{- end -}}
     {{- if .Values.privateLoadBalancer }}
     # This annotation is detected by EKS to indicate that
     # it should provision a private ("internal") load balancer
