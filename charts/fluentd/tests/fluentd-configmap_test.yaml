@@ -11,6 +11,7 @@ tests:
     set:
       fluentd.s3.use_server_side_encryption: AES256
       fluentd.s3.enabled: true
+      fluentd.s3.path: airflow/logs/gibson
     asserts:
       - isKind:
           of: ConfigMap
