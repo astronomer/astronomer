@@ -7,3 +7,11 @@ tests:
     asserts:
       - isKind:
           of: ConfigMap
+  - it: should work with use_server_side_encryption # <https://github.com/astronomer/issues/issues/2687>
+    set:
+      fluentd.s3.use_server_side_encryption: AES256
+      fluentd.s3.enabled: true
+    asserts:
+      - isKind:
+          of: ConfigMap
+      # Should contain the right strings
