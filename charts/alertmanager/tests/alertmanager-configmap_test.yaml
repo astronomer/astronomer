@@ -7,3 +7,13 @@ tests:
     asserts:
       - isKind:
           of: ConfigMap
+
+  - it: should work with customRoutes # <https://github.com/astronomer/astronomer/pull/1044>
+    set:
+      values.customRoutes: ['foo', 'bar', 'baz']
+    asserts:
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: whatever
+          value: not sure yet, this is just a stump
