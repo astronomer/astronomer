@@ -8,12 +8,15 @@ The Astronomer upgrade will run in a pod in the cluster.
 
 - Kubernetes version must be greater than or equal to 1.14 and less than 1.19. If you need help to upgrade, please contact your cloud provider's support or your Kubernetes administrator.
 - You must be using Astronomer Certified Airflow images, and your version must be 1.10.5 or greater. These images are in the form:
+
 ```
 astronomerinc/ap-airflow:<airflow-version>-<build number>-<distribution>-onbuild
 ```
+
 The "onbuild" part is optional, but recommended. This enables features in the astro-cli, such as using requirements.txt and packages.txt. The "build number" part is optional but recommended. Excluding the build number will reference a mutable Docker image that is occasionally replaced with underlying pip modules updated, this is typically not preferred and instead it's best to plan when updates will occur in your Docker image. If you have your own build, test, and publish workflows that are layered on top of the Astronomer Airflow images, then it is appropriate to use the mutable image.
 
 Valid examples:
+
 ```
 astronomerinc/ap-airflow:1.10.12-1-alpine3.10-onbuild
 astronomerinc/ap-airflow:1.10.12-1-alpine3.10
@@ -21,7 +24,8 @@ astronomerinc/ap-airflow:1.10.5-9-buster-onbuild
 astronomerinc/ap-airflow:1.10.5-9-buster
 ```
 
-This is an example of a legacy images that should *not* be used:
+This is an example of a legacy images that should _not_ be used:
+
 ```
 astronomerinc/ap-airflow:<astronomer version>-<airflow version>
 astronomerinc/ap-airflow:

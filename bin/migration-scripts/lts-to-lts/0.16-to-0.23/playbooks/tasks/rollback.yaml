@@ -1,5 +1,4 @@
 ---
-
 - name: Set up variables
   set_fact:
     astro_save_dir: "/astronomer-backups"
@@ -12,7 +11,7 @@
   register: saves
 
 - debug:
-   msg: "{{ saves }}"
+    msg: "{{ saves }}"
 - set_fact:
     astro_save: "{{ (saves.files | sort(attribute='mtime', reverse=true) | first).path }}"
 
@@ -62,7 +61,7 @@
 - name: Ensure DB network policy is removed
   community.kubernetes.k8s:
     state: absent
-    api_version: 'networking.k8s.io/v1'
+    api_version: "networking.k8s.io/v1"
     kind: NetworkPolicy
     namespace: "{{ namespace }}"
     name: "{{ item }}"

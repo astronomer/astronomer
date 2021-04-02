@@ -1,5 +1,4 @@
 ---
-
 - name: Set up variables
   set_fact:
     backup_dir: "/astronomer-backups"
@@ -32,17 +31,17 @@
     msg: |
       Release Name: {{ release_name }}, Namespace: {{ namespace }}
 
-- name: 'Check that release name and namespace are correctly configured (1/3): helm status'
+- name: "Check that release name and namespace are correctly configured (1/3): helm status"
   changed_when: false
   register: helm_status_raw
   shell: |
     helm status -o json --namespace {{ namespace }} {{ release_name }}
 
-- name: 'Check that release name and namespace are correctly configured (2/3): parse json'
+- name: "Check that release name and namespace are correctly configured (2/3): parse json"
   set_fact:
     helm_status: "{{ helm_status_raw.stdout | from_json }}"
 
-- name: 'Check that release name and namespace are correctly configured (3/3): assert contents look right'
+- name: "Check that release name and namespace are correctly configured (3/3): assert contents look right"
   changed_when: false
   assert:
     that:
@@ -50,13 +49,13 @@
       - helm_status.info.status == 'deployed'
       - helm_status.namespace == namespace
 
-- name: 'Fetch Helm history from Astronomer (1/2): helm history'
+- name: "Fetch Helm history from Astronomer (1/2): helm history"
   changed_when: false
   register: helm_history_raw
   shell: |
     helm history -o json --namespace {{ namespace }} {{ release_name }}
 
-- name: 'Fetch Helm history from Astronomer (2/2): parse json'
+- name: "Fetch Helm history from Astronomer (2/2): parse json"
   set_fact:
     # this will select only the current revision from the helm history
     helm_history: "{{ helm_history_raw.stdout | from_json | last }}"
@@ -77,13 +76,13 @@
       - "Current revision is: {{ helm_history.revision }}"
       - "Status is: {{ helm_history.status }}"
 
-- name: 'Fetch Helm values from Astronomer (1/2): helm get values'
+- name: "Fetch Helm values from Astronomer (1/2): helm get values"
   register: helm_values_raw
   changed_when: false
   shell: |
     helm get values -o json --namespace {{ namespace }} {{ release_name }}
 
-- name: 'Fetch Helm values from Astronomer (2/2): parse json'
+- name: "Fetch Helm values from Astronomer (2/2): parse json"
   set_fact:
     helm_values: "{{ helm_values_raw.stdout | from_json }}"
 
@@ -228,7 +227,7 @@
     name: "{{ database_name }}_houston"
     state: dump
     target: "{{ astro_save_dir.path }}/astronomer-db-backup.tar"
-    target_opts: '--clean --create --format=tar'
+    target_opts: "--clean --create --format=tar"
 
 - name: Run SQL for Prisma 1 to Prisma 2 migration
   register: prisma1_to_2
