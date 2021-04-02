@@ -10,18 +10,16 @@ execs into a running pods.
 
 import json
 import os
-import docker
 import time
 import yaml
 import testinfra
 from subprocess import check_output
-from kubernetes import client, config
 from kubernetes.client.rest import ApiException
 
 
 def test_default_disabled(kube_client):
-    pods = kube_client.list_namespaced_pod('astronomer')
-    default_disabled = ['keda', 'prometheus-postgres-exporter']
+    pods = kube_client.list_namespaced_pod("astronomer")
+    default_disabled = ["keda", "prometheus-postgres-exporter"]
     for pod in pods.items:
         for feature in default_disabled:
             if feature in pod.metadata.name:
@@ -167,10 +165,12 @@ def test_prometheus_config_reloader_works(prometheus, kube_client):
 
     assert (
         y_parsed["global"]["scrape_interval"] != "30s"
-    ), f"Expected the prometheus config file to change"
+    ), "Expected the prometheus config file to change"
 
 
-def test_houston_backend_secret_present_after_helm_upgrade_and_container_restart(houston_api, kube_client):
+def test_houston_backend_secret_present_after_helm_upgrade_and_container_restart(
+    houston_api, kube_client
+):
     """
     Test when helm upgrade occurs without Houston pods restarting that a
     Houston container restart will not miss the Houston connection backend secret
@@ -179,23 +179,28 @@ def test_houston_backend_secret_present_after_helm_upgrade_and_container_restart
     """
     helm_chart_path = os.environ.get("HELM_CHART_PATH")
     if not helm_chart_path:
-        raise Exception("This test only works with HELM_CHART_PATH set to the path of the chart to be tested")
-    namespace = os.environ.get('NAMESPACE')
-    release_name = os.environ.get('RELEASE_NAME')
+        raise Exception(
+            "This test only works with HELM_CHART_PATH set to the path of the chart to be tested"
+        )
+    namespace = os.environ.get("NAMESPACE")
+    release_name = os.environ.get("RELEASE_NAME")
     if not namespace:
         print("NAMESPACE env var is not present, using 'astronomer' namespace")
-        namespace = 'astronomer'
+        namespace = "astronomer"
     if not release_name:
-        print("RELEASE_NAME env var is not present, assuming 'astronomer' is the release name")
-        release_name = 'astronomer'
+        print(
+            "RELEASE_NAME env var is not present, assuming 'astronomer' is the release name"
+        )
+        release_name = "astronomer"
     # attempt downgrade with the documented procedure
     print("Performing a Helm upgrade without hooks twice:\n")
-    command = \
-        "helm3 upgrade --reuse-values " + \
-        "--no-hooks " + \
-        f"-n {namespace} " + \
-        f"{release_name} " + \
-        helm_chart_path
+    command = (
+        "helm3 upgrade --reuse-values "
+        + "--no-hooks "
+        + f"-n {namespace} "
+        + f"{release_name} "
+        + helm_chart_path
+    )
     print(command)
     print(check_output(command, shell=True))
     # Run the command twice to ensure the most
@@ -204,15 +209,23 @@ def test_houston_backend_secret_present_after_helm_upgrade_and_container_restart
     print("")
     result = houston_api.check_output("env | grep DATABASE_URL")
     # check that the connection is not reset
-    assert "postgres" in result, "Expected to find DB connection string before Houston restart"
+    assert (
+        "postgres" in result
+    ), "Expected to find DB connection string before Houston restart"
     # Kill houston in this pod so the container restarts
     houston_api.check_output("kill 1")
     # give time for container to restart
     time.sleep(100)
     # we can use kube_client instead of fixture, because we restarted pod so houston_api still ref to old pod id.
-    pods = kube_client.list_namespaced_pod(namespace, label_selector=f"component=houston")
+    pods = kube_client.list_namespaced_pod(
+        namespace, label_selector="component=houston"
+    )
     pod = pods.items[0]
-    houston_api_new = testinfra.get_host(f'kubectl://{pod.metadata.name}?container=houston&namespace={namespace}')
+    houston_api_new = testinfra.get_host(
+        f"kubectl://{pod.metadata.name}?container=houston&namespace={namespace}"
+    )
     result = houston_api_new.check_output("env | grep DATABASE_URL")
     # check that the connection is not reset
-    assert "postgres" in result, "Expected to find DB connection string after Houston restart"
+    assert (
+        "postgres" in result
+    ), "Expected to find DB connection string after Houston restart"
