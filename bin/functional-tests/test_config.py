@@ -129,7 +129,7 @@ def test_prometheus_config_reloader_works(prometheus, kube_client):
             name="astronomer-prometheus-config", namespace="astronomer", body=new_body
         )
     except ApiException as e:
-        print("Exception when calling CoreV1Api->patch_namespaced_config_map: %s\n" % e)
+        print(f"Exception when calling CoreV1Api->patch_namespaced_config_map: {e}\n")
 
     # This can take more than a minute.
     i = 0
@@ -161,7 +161,7 @@ def test_prometheus_config_reloader_works(prometheus, kube_client):
             name="astronomer-prometheus-config", namespace="astronomer", body=new_body
         )
     except ApiException as e:
-        print("Exception when calling CoreV1Api->patch_namespaced_config_map: %s\n" % e)
+        print(f"Exception when calling CoreV1Api->patch_namespaced_config_map: {e}\n")
 
     assert (
         y_parsed["global"]["scrape_interval"] != "30s"
