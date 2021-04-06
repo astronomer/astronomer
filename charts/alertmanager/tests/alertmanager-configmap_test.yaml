@@ -10,10 +10,22 @@ tests:
 
   - it: should work with customRoutes # <https://github.com/astronomer/astronomer/pull/1044>
     set:
-      values.customRoutes: ['foo', 'bar', 'baz']
+      values.customRoutes:
+        - receiver: foo-receiver
+          match_re:
+            tier: foo
     asserts:
       - isKind:
           of: ConfigMap
-      - matchRegex:
-          path: whatever
-          value: not sure yet, this is just a stump
+      - equal:
+          path: data
+          # Lifesaver: https://yaml-multiline.info
+          value:
+            alertmanager.yaml: "route:\n  group_wait: 30s\n  group_interval: 5m\n  group_by: [alertname]\n
+              \ repeat_interval: 3h\n  receiver: default-receiver\n  routes:\n\n  \n  - receiver:
+              \ blackhole-receiver \n    match_re:\n      tier: platform\n  - receiver:  default-receiver
+              \n    group_by: [deployment, alertname]\n    match_re:\n      tier: airflow\n  -
+              receiver: blackhole-receiver\n    match:\n      silence: cre\nreceivers:\n- name:
+              blackhole-receiver\n# Deliberately left empty to not deliver anywhere.\n- name:
+              default-receiver\n  webhook_configs:\n  - url: http://RELEASE-NAME-houston:8871/v1/alerts\n
+              \   send_resolved: true"
