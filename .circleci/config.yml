@@ -25,7 +25,7 @@ jobs:
     steps:
       - docker-build:
           image_name: lts-016-023-upgrade
-          path: './bin/migration-scripts/lts-to-lts/0.16-to-0.23/playbooks/'
+          path: "./bin/migration-scripts/lts-to-lts/0.16-to-0.23/playbooks/"
 
   push-lts-upgrade:
     executor: docker-executor
@@ -54,9 +54,9 @@ jobs:
             source ./bin/install-ci-tools 1
             make build
       - persist_to_workspace:
-          root: '.'
+          root: "."
           paths:
-            - './*.tgz'
+            - "./*.tgz"
 
   release-to-internal:
     machine:
@@ -130,11 +130,9 @@ jobs:
 
 workflows:
   version: 2.1
-  build-and-release-helm-chart:
+  build-and-release-upgrader:
     jobs:
       - lint
-      - unittest-charts
-
       - approve-lts-upgrader-build:
           type: approval
 
@@ -142,6 +140,37 @@ workflows:
           requires:
             - lint
             - approve-lts-upgrader-build
+
+      - lts-upgrade-0-23-test:
+          requires:
+            - build-lts-upgrade
+
+      - approve-lts-upgrader-release:
+          type: approval
+          filters:
+            branches:
+              only:
+                - "release-0.23"
+                - "master"
+                - "lts-to-lts"
+
+      - push-lts-upgrade:
+          requires:
+            - approve-lts-upgrader-release
+            - lts-upgrade-0-23-test
+          context:
+            - quay.io
+          filters:
+            branches:
+              only:
+                - "release-0.23"
+                - "master"
+                - "lts-to-lts"
+
+  build-and-release-helm-chart:
+    jobs:
+      - lint
+      - unittest-charts
 
       - build-artifact:
           requires:
@@ -165,10 +194,6 @@ workflows:
           requires:
             - build-artifact
 
-      - lts-upgrade-0-23-test:
-          requires:
-            - build-lts-upgrade
-
       - approve-internal-release:
           type: approval
           filters:
@@ -187,15 +212,6 @@ workflows:
               only:
                 - '/release-0\.\d+/'
 
-      - approve-lts-upgrader-release:
-          type: approval
-          filters:
-            branches:
-              only:
-                - 'release-0.23'
-                - 'master'
-                - 'lts-to-lts'
-
       - approve-public-release:
           type: approval
           requires:
@@ -205,19 +221,6 @@ workflows:
             branches:
               only:
                 - '/release-0\.(12|13|14|15|16|23)/'
-
-      - push-lts-upgrade:
-          requires:
-            - approve-lts-upgrader-release
-            - lts-upgrade-0-23-test
-          context:
-            - quay.io
-          filters:
-            branches:
-              only:
-                - 'release-0.23'
-                - 'master'
-                - 'lts-to-lts'
 
       - release-to-public:
           requires:
@@ -306,7 +309,7 @@ commands:
       - persist_to_workspace:
           root: .
           paths:
-            - './<< parameters.image_name >>.tar'
+            - "./<< parameters.image_name >>.tar"
 
   upgrade-0-23-test:
     description: "Test LTS to LTS upgrade automation"
