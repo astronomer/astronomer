@@ -10,7 +10,7 @@ metadata:
   name: astronomer-upgrades-backup
 spec:
   accessModes:
-  - ReadWriteOnce
+    - ReadWriteOnce
   resources:
     requests:
       storage: 20Gi
@@ -29,29 +29,29 @@ spec:
       serviceAccountName: astronomer-upgrader-service-account
       restartPolicy: Never
       containers:
-      - image: quay.io/astronomer/lts-016-023-upgrade:latest
-        imagePullPolicy: Always
-        name: upgrade
-        volumeMounts:
-        - mountPath: /astronomer-backups
-          name: astronomer-upgrades-backup
+        - image: quay.io/astronomer/lts-016-023-upgrade:latest
+          imagePullPolicy: Always
+          name: upgrade
+          volumeMounts:
+            - mountPath: /astronomer-backups
+              name: astronomer-upgrades-backup
       terminationGracePeriodSeconds: 300
       volumes:
-      - name: astronomer-upgrades-backup
-        persistentVolumeClaim:
-          claimName: astronomer-upgrades-backup
+        - name: astronomer-upgrades-backup
+          persistentVolumeClaim:
+            claimName: astronomer-upgrades-backup
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   name: astronomer-upgrader-cluster-role
 rules:
-- apiGroups:
-  - '*'
-  resources:
-  - '*'
-  verbs:
-  - '*'
+  - apiGroups:
+      - "*"
+    resources:
+      - "*"
+    verbs:
+      - "*"
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -62,6 +62,6 @@ roleRef:
   kind: ClusterRole
   name: astronomer-upgrader-cluster-role
 subjects:
-- kind: ServiceAccount
-  name: astronomer-upgrader-service-account
-  namespace: default
+  - kind: ServiceAccount
+    name: astronomer-upgrader-service-account
+    namespace: default

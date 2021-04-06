@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 
-import os
 import pytest
 import docker
-import testinfra
 from kubernetes import client, config
-from kubernetes import client, config
+
 
 def create_kube_client(in_cluster=False):
     """
@@ -21,15 +19,17 @@ def create_kube_client(in_cluster=False):
         config.load_kube_config()
     return client.CoreV1Api()
 
-@pytest.fixture(scope='session')
+
+@pytest.fixture(scope="session")
 def docker_client(request):
-    """ This is a text fixture for the docker client,
+    """This is a text fixture for the docker client,
     should it be needed in a test
     """
     client = docker.from_env()
     yield client
     client.close()
 
-@pytest.fixture(scope='session')
+
+@pytest.fixture(scope="session")
 def kube_client(request):
     yield create_kube_client()

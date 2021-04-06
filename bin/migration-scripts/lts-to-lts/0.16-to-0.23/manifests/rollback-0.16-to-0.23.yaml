@@ -12,17 +12,17 @@ spec:
       serviceAccountName: astronomer-upgrader-service-account
       restartPolicy: Never
       containers:
-      - image: quay.io/astronomer/lts-016-023-upgrade:latest
-        imagePullPolicy: Always
-        name: upgrade
-        command:
-          - ansible-playbook
-          - rollback-astronomer.yaml
-        volumeMounts:
-        - mountPath: /astronomer-backups
-          name: astronomer-upgrades-backup
+        - image: quay.io/astronomer/lts-016-023-upgrade:latest
+          imagePullPolicy: Always
+          name: upgrade
+          command:
+            - ansible-playbook
+            - rollback-astronomer.yaml
+          volumeMounts:
+            - mountPath: /astronomer-backups
+              name: astronomer-upgrades-backup
       terminationGracePeriodSeconds: 300
       volumes:
-      - name: astronomer-upgrades-backup
-        persistentVolumeClaim:
-          claimName: astronomer-upgrades-backup
+        - name: astronomer-upgrades-backup
+          persistentVolumeClaim:
+            claimName: astronomer-upgrades-backup

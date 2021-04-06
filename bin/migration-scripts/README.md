@@ -49,6 +49,7 @@ To perform the Kubernetes upgrade, please contact your cloud provider's support 
 - Namespace in which the Astronomer platform is installed (example: 'astronomer')
 - Helm release name of the Astronomer platform (example: 'astronomer')
 - You can confirm the namespace with
+
 ```sh
 kubectl get pods -n <namespace here>
 ```
@@ -223,13 +224,14 @@ Usually to solve an issue, it involves understanding what went wrong and manuall
 
 Helm 2to3 plugin is the least reliable part of this. I have found that it fails to migrate sometimes. In the event that the script fails due to helm 2to3 migration, then you can manually migrate releases like this:
 
-
 If the release exists in helm 2 but not helm 3:
+
 ```sh
 helm 2to3 convert --delete-v2-releases $release
 ```
 
 If the release exists in helm 2 and helm 3:
+
 ```sh
 helm 2to3 cleanup --name $release
 ```

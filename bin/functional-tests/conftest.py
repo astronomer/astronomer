@@ -5,7 +5,7 @@ import pytest
 import docker
 import testinfra
 from kubernetes import client, config
-from kubernetes import client, config
+
 
 def create_kube_client(in_cluster=False):
     """
@@ -21,74 +21,97 @@ def create_kube_client(in_cluster=False):
         config.load_kube_config()
     return client.CoreV1Api()
 
-@pytest.fixture(scope='function')
+
+@pytest.fixture(scope="function")
 def nginx(request):
-    """ This is the host fixture for testinfra. To read more, please see
+    """This is the host fixture for testinfra. To read more, please see
     the testinfra documentation:
     https://testinfra.readthedocs.io/en/latest/examples.html#test-docker-images
     """
-    namespace = os.environ.get('NAMESPACE')
-    release_name = os.environ.get('RELEASE_NAME')
+    namespace = os.environ.get("NAMESPACE")
+    release_name = os.environ.get("RELEASE_NAME")
     if not namespace:
         print("NAMESPACE env var is not present, using 'astronomer' namespace")
-        namespace = 'astronomer'
+        namespace = "astronomer"
     if not release_name:
-        print("RELEASE_NAME env var is not present, assuming 'astronomer' is the release name")
-        release_name = 'astronomer'
+        print(
+            "RELEASE_NAME env var is not present, assuming 'astronomer' is the release name"
+        )
+        release_name = "astronomer"
     kube = create_kube_client()
-    pods = kube.list_namespaced_pod(namespace, label_selector="component=ingress-controller")
+    pods = kube.list_namespaced_pod(
+        namespace, label_selector="component=ingress-controller"
+    )
     pods = pods.items
-    assert len(pods) > 0, "Expected to find at least one pod with label 'component: ingress-controller'"
+    assert (
+        len(pods) > 0
+    ), "Expected to find at least one pod with label 'component: ingress-controller'"
     pod = pods[0]
-    yield testinfra.get_host(f'kubectl://{pod.metadata.name}?container=nginx&namespace={namespace}')
+    yield testinfra.get_host(
+        f"kubectl://{pod.metadata.name}?container=nginx&namespace={namespace}"
+    )
 
-@pytest.fixture(scope='function')
+
+@pytest.fixture(scope="function")
 def houston_api(request):
-    """ This is the host fixture for testinfra. To read more, please see
+    """This is the host fixture for testinfra. To read more, please see
     the testinfra documentation:
     https://testinfra.readthedocs.io/en/latest/examples.html#test-docker-images
     """
-    namespace = os.environ.get('NAMESPACE')
-    release_name = os.environ.get('RELEASE_NAME')
+    namespace = os.environ.get("NAMESPACE")
+    release_name = os.environ.get("RELEASE_NAME")
     if not namespace:
         print("NAMESPACE env var is not present, using 'astronomer' namespace")
-        namespace = 'astronomer'
+        namespace = "astronomer"
     if not release_name:
-        print("RELEASE_NAME env var is not present, assuming 'astronomer' is the release name")
-        release_name = 'astronomer'
+        print(
+            "RELEASE_NAME env var is not present, assuming 'astronomer' is the release name"
+        )
+        release_name = "astronomer"
     kube = create_kube_client()
-    pods = kube.list_namespaced_pod(namespace, label_selector=f"component=houston")
+    pods = kube.list_namespaced_pod(namespace, label_selector="component=houston")
     pods = pods.items
-    assert len(pods) > 0, "Expected to find at least one pod with label 'component: houston'"
+    assert (
+        len(pods) > 0
+    ), "Expected to find at least one pod with label 'component: houston'"
     pod = pods[0]
-    yield testinfra.get_host(f'kubectl://{pod.metadata.name}?container=houston&namespace={namespace}')
+    yield testinfra.get_host(
+        f"kubectl://{pod.metadata.name}?container=houston&namespace={namespace}"
+    )
 
-@pytest.fixture(scope='function')
+
+@pytest.fixture(scope="function")
 def prometheus(request):
-    """ This is the host fixture for testinfra. To read more, please see
+    """This is the host fixture for testinfra. To read more, please see
     the testinfra documentation:
     https://testinfra.readthedocs.io/en/latest/examples.html#test-docker-images
     """
-    namespace = os.environ.get('NAMESPACE')
-    release_name = os.environ.get('RELEASE_NAME')
+    namespace = os.environ.get("NAMESPACE")
+    release_name = os.environ.get("RELEASE_NAME")
     if not namespace:
         print("NAMESPACE env var is not present, using 'astronomer' namespace")
-        namespace = 'astronomer'
+        namespace = "astronomer"
     if not release_name:
-        print("RELEASE_NAME env var is not present, assuming 'astronomer' is the release name")
-        release_name = 'astronomer'
-    pod = f'{release_name}-prometheus-0'
-    yield testinfra.get_host(f'kubectl://{pod}?container=prometheus&namespace={namespace}')
+        print(
+            "RELEASE_NAME env var is not present, assuming 'astronomer' is the release name"
+        )
+        release_name = "astronomer"
+    pod = f"{release_name}-prometheus-0"
+    yield testinfra.get_host(
+        f"kubectl://{pod}?container=prometheus&namespace={namespace}"
+    )
 
-@pytest.fixture(scope='session')
+
+@pytest.fixture(scope="session")
 def docker_client(request):
-    """ This is a text fixture for the docker client,
+    """This is a text fixture for the docker client,
     should it be needed in a test
     """
     client = docker.from_env()
     yield client
     client.close()
 
-@pytest.fixture(scope='session')
+
+@pytest.fixture(scope="session")
 def kube_client(request):
     yield create_kube_client()
