@@ -38,6 +38,8 @@ spec:
   loadBalancerSourceRanges: {{ .Values.loadBalancerSourceRanges | toJson }}
   {{- end }}
   {{- if .Values.preserveSourceIP }}
+  externalTrafficPolicy: "Local"
+  {{- else }}
   externalTrafficPolicy: "Cluster"
   {{- end }}
   selector:

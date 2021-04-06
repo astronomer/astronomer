@@ -16,6 +16,22 @@ tests:
       - isKind:
           of: Service
 
+  - it: "Should set 'externalTrafficPolicy: Local' with 'preserveSourceIP: True'"
+    set:
+      preserveSourceIP: True
+    asserts:
+      - equal:
+          path: spec.externalTrafficPolicy
+          value: Local
+
+  - it: "Should set 'externalTrafficPolicy: Cluster' with 'preserveSourceIP: False'"
+    set:
+      preserveSourceIP: False
+    asserts:
+      - equal:
+          path: spec.externalTrafficPolicy
+          value: Cluster
+
   - it: works with ingressAnnotations
     set:
       ingressAnnotations:
