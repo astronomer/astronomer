@@ -3,6 +3,8 @@ FROM python:3.9-alpine3.12
 ARG HELM3_VERSION="3.5.3"
 ARG KUBECTL_VERSION="1.18.15"
 
+ENV USE_INTERNAL_HELM_REPO False
+
 # Install Ansible and the modules we will use for upgrade
 RUN apk add build-base libffi-dev openssl-dev postgresql-dev bash curl postgresql-client
 RUN pip install ansible==2.9.14 psycopg2==2.8.6 openshift==0.11.2 cryptography==3.1.1
@@ -22,4 +24,4 @@ WORKDIR /lts-upgrade
 
 COPY . .
 
-ENTRYPOINT ["ansible-playbook", "upgrade-astronomer.yaml"]
+ENTRYPOINT ansible-playbook -e "USE_INTERNAL_HELM_REPO=$USE_INTERNAL_HELM_REPO" upgrade-astronomer.yaml
