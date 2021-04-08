@@ -1,36 +1,39 @@
 #!/usr/bin/env python3
 
-import os
+from os import environ
+from pathlib import Path
 import yaml
 from time import sleep, time
 from subprocess import check_output
 from packaging.version import parse as semver
 
 # The top-level path of this repository
-git_root_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "..")
+git_root_dir = Path(__file__).absolute().parent.parent
 
 
 def test_upgrade():
     """
     Functional test for the LTS to LTS upgrade (0.16 to 0.23)
     """
-    with open(os.path.join(git_root_dir, "Chart.yaml"), "r") as f:
+    with open(Path(git_root_dir / "Chart.yaml"), "r") as f:
         astro_chart_dot_yaml = yaml.safe_load(f.read())
     major, minor, patch = semver(astro_chart_dot_yaml["version"]).release
 
     assert major == 0 and minor == 23, "This test is only applicable for 0.23"
 
-    upgrade_manifest_path = os.path.join(
-        git_root_dir,
-        "bin/migration-scripts/lts-to-lts/0.16-to-0.23/manifests/upgrade-0.16-to-0.23.yaml",
+    upgrade_manifest_path = Path(
+        git_root_dir
+        / "bin/migration-scripts/lts-to-lts/0.16-to-0.23/manifests/upgrade-0.16-to-0.23.yaml"
     )
-    rollback_manifest_path = os.path.join(
-        git_root_dir,
-        "bin/migration-scripts/lts-to-lts/0.16-to-0.23/manifests/rollback-0.16-to-0.23.yaml",
+    print(f"{upgrade_manifest_path=}")
+    rollback_manifest_path = Path(
+        git_root_dir
+        / "bin/migration-scripts/lts-to-lts/0.16-to-0.23/manifests/rollback-0.16-to-0.23.yaml"
     )
+    print(f"{rollback_manifest_path=}")
 
-    namespace = os.environ.get("NAMESPACE")
-    release_name = os.environ.get("RELEASE_NAME")
+    namespace = environ.get("NAMESPACE")
+    release_name = environ.get("RELEASE_NAME")
     if not namespace:
         print("NAMESPACE env var is not present, using 'astronomer' namespace")
         namespace = "astronomer"
@@ -71,9 +74,11 @@ def test_upgrade():
 
     upgrade_manifest_data = yaml.safe_dump_all(upgrade_manifest_yaml)
 
-    with open(f"{upgrade_manifest_path}.test.yaml", "w") as f:
+    modified_upgrade_manifest_path = f"{upgrade_manifest_path}.test.yaml"
+    print(f"{modified_upgrade_manifest_path=}")
+    with open(modified_upgrade_manifest_path, "w") as f:
         f.write(upgrade_manifest_data)
-    check_output(f"kubectl apply -f {upgrade_manifest_path}.test.yaml", shell=True)
+    check_output(f"kubectl apply -f {modified_upgrade_manifest_path}", shell=True)
     timeout = 800
     start_time = time()
     while True:
