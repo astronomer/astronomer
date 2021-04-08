@@ -209,6 +209,10 @@ s3:
   value: {{ template "houston.nats.servers" . }}
 - name: NATS__CLUSTER_ID
   value: {{ .Release.Name }}-stan
+- name: DEPLOYMENTS__NFS_MOUNT_DAG_DEPLOYMENT
+  value: {{ .Values.houston.nfsMountDagDeployment }}
+- name: DEPLOYMENTS__CONFIGURE_DAG_DEPLOYMENT
+  value: {{ .Values.houston.configureDagDeployment }}
 {{- end }}
 
 {{- define "houston_volume_mounts" }}

@@ -121,6 +121,11 @@ spec:
               value: {{ template "houston.image" . }}
             - name: APOLLO_SERVER_PLATFORM
               value: "kubernetes/deployment"
+            - name: DEPLOYMENTS__NFS_MOUNT_DAG_DEPLOYMENT
+              value: "true"
+            - name: DEPLOYMENTS__CONFIGURE_DAG_DEPLOYMENT
+              value: "true"
+
       volumes:
         {{- include "houston_volumes" . | indent 8 }}
         {{- include "custom_ca_volumes" . | indent 8 }}
