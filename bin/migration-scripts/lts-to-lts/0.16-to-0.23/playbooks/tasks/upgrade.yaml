@@ -208,15 +208,19 @@
     dest: "{{ astro_save_dir.path }}/helm-status.json"
     content: "{{ helm_status | to_json }}"
 
-- name: "Add private helm repo (for testing only)"
-  command: helm repo add astronomer https://internal-helm.astronomer.io
-  when: (USE_INTERNAL_HELM_REPO is defined) and (USE_INTERNAL_HELM_REPO | bool)
-
 - name: Add public helm repo
   shell: |
     set -xe
     helm repo add astronomer https://helm.astronomer.io
     helm repo update
+  when: (USE_INTERNAL_HELM_REPO is not defined) or not (USE_INTERNAL_HELM_REPO | bool)
+
+- name: "Add private helm repo (for testing only)"
+  shell: |
+    set -xe
+    helm repo add astronomer https://internal-helm.astronomer.io
+    helm repo update
+  when: (USE_INTERNAL_HELM_REPO is defined) and (USE_INTERNAL_HELM_REPO | bool)
 
 - name: Backup Astronomer database
   postgresql_db:
