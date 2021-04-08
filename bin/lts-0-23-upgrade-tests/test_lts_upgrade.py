@@ -69,7 +69,7 @@ def test_upgrade():
                     if not container.get("env"):
                         container["env"] = []
                     container["env"].append(
-                        {"name": "USE_INTERNAL_HELM_REPO", "value": True}
+                        {"name": "USE_INTERNAL_HELM_REPO", "value": "True"}
                     )
                 upgrade_manifest_yaml[i] = doc
             except KeyError:
