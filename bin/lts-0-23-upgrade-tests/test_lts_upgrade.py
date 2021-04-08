@@ -9,7 +9,7 @@ from packaging.version import parse as semver
 
 # The top-level path of this repository
 git_root_dir = Path(__file__).absolute().parent.parent.parent
-print(f"{git_root_dir=}")
+print(f"DEBUG: {git_root_dir=}")
 
 
 def test_upgrade():
@@ -26,12 +26,12 @@ def test_upgrade():
         git_root_dir
         / "bin/migration-scripts/lts-to-lts/0.16-to-0.23/manifests/upgrade-0.16-to-0.23.yaml"
     )
-    print(f"{upgrade_manifest_path=}")
+    print(f"DEBUG: {upgrade_manifest_path=}")
     rollback_manifest_path = Path(
         git_root_dir
         / "bin/migration-scripts/lts-to-lts/0.16-to-0.23/manifests/rollback-0.16-to-0.23.yaml"
     )
-    print(f"{rollback_manifest_path=}")
+    print(f"DEBUG: {rollback_manifest_path=}")
 
     namespace = environ.get("NAMESPACE")
     release_name = environ.get("RELEASE_NAME")
@@ -68,7 +68,9 @@ def test_upgrade():
                 for container in containers:
                     if not container.get("env"):
                         container["env"] = []
-                    container["env"].append({"USE_INTERNAL_HELM_REPO": True})
+                    container["env"].append(
+                        {"name": "USE_INTERNAL_HELM_REPO", "value": True}
+                    )
                 upgrade_manifest_yaml[i] = doc
             except KeyError:
                 pass
@@ -76,7 +78,7 @@ def test_upgrade():
     upgrade_manifest_data = yaml.safe_dump_all(upgrade_manifest_yaml)
 
     modified_upgrade_manifest_path = f"{upgrade_manifest_path}.test.yaml"
-    print(f"{modified_upgrade_manifest_path=}")
+    print(f"DEBUG: {modified_upgrade_manifest_path=}")
     with open(modified_upgrade_manifest_path, "w") as f:
         f.write(upgrade_manifest_data)
     check_output(f"kubectl apply -f {modified_upgrade_manifest_path}", shell=True)
