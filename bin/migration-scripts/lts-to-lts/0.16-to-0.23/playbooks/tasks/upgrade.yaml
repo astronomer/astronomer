@@ -210,7 +210,7 @@
 
 - name: "Add private helm repo (for testing only)"
   command: helm repo add astronomer https://internal-helm.astronomer.io
-  when: (CIRCLECI is defined) and (CIRCLECI | bool)
+  when: (USE_INTERNAL_HELM_REPO is defined) and (USE_INTERNAL_HELM_REPO | bool)
 
 - name: Add public helm repo
   shell: |

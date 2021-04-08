@@ -45,7 +45,8 @@ def test_upgrade():
         f"helm3 history { release_name } -n { namespace } | tail -n 1", shell=True
     ).decode("utf8")
     assert "0.16" in result
-    # rewrite manifest to replace with CI image for Kind test
+
+    # Rewrite some parts of the k8s manifest with testing-specific configs
     with open(upgrade_manifest_path, "r") as f:
         upgrade_manifest_data = f.read()
     upgrade_manifest_data = upgrade_manifest_data.replace(
@@ -55,6 +56,21 @@ def test_upgrade():
     upgrade_manifest_data = upgrade_manifest_data.replace(
         "imagePullPolicy: Always", "imagePullPolicy: Never"
     )
+    upgrade_manifest_yaml = [doc for doc in yaml.safe_load_all(upgrade_manifest_data)]
+    for i, doc in enumerate(upgrade_manifest_yaml):
+        if doc.get("kind") == "Job":
+            try:
+                containers = doc["spec"]["template"]["spec"]["containers"]
+                for container in containers:
+                    if not container.get("env"):
+                        container["env"] = []
+                    container["env"].append({"USE_INTERNAL_HELM_REPO": True})
+                upgrade_manifest_yaml[i] = doc
+            except KeyError:
+                pass
+
+    upgrade_manifest_data = yaml.safe_dump_all(upgrade_manifest_yaml)
+
     with open(f"{upgrade_manifest_path}.test.yaml", "w") as f:
         f.write(upgrade_manifest_data)
     check_output(f"kubectl apply -f {upgrade_manifest_path}.test.yaml", shell=True)
