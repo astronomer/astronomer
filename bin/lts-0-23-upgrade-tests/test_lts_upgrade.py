@@ -8,7 +8,8 @@ from subprocess import check_output
 from packaging.version import parse as semver
 
 # The top-level path of this repository
-git_root_dir = Path(__file__).absolute().parent.parent
+git_root_dir = Path(__file__).absolute().parent.parent.parent
+print(f"{git_root_dir=}")
 
 
 def test_upgrade():
