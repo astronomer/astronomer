@@ -121,7 +121,6 @@ spec:
               value: {{ template "houston.image" . }}
             - name: APOLLO_SERVER_PLATFORM
               value: "kubernetes/deployment"
-
       volumes:
         {{- include "houston_volumes" . | indent 8 }}
         {{- include "custom_ca_volumes" . | indent 8 }}
