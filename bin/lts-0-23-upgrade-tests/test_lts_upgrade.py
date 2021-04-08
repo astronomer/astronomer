@@ -6,9 +6,11 @@ import yaml
 from time import sleep, time
 from subprocess import check_output
 from packaging.version import parse as semver
+import git
 
 # The top-level path of this repository
-git_root_dir = Path(__file__).absolute().parent.parent.parent
+git_repo = git.Repo(__file__, search_parent_directories=True)
+git_root_dir = Path(git_repo.git.rev_parse("--show-toplevel"))
 
 
 def test_upgrade():
