@@ -191,6 +191,12 @@ houston:
 
     # Default here is to run at midnight every night
     schedule: "0 0 * * *"
+ 
+  # Enable ability to select dag deployment strategy
+  configureDagDeployment: false
+
+  # Enable nfs mount for dag deployment
+  nfsMountDagDeployment: false
 
   # this option allows to override airflow releases config
 
