@@ -197,7 +197,7 @@ workflows:
           filters:
             branches:
               only:
-                - '/release-0\.(16|23|25)/'
+                - '/release-0\.\d+/'
 
       - release-to-public:
           requires:
@@ -205,7 +205,7 @@ workflows:
           filters:
             branches:
               only:
-                - '/release-0\.(16|23|25)/'
+                - '/release-0\.\d+/'
 
 commands:
   push-to-quay-io:
