@@ -220,7 +220,7 @@ workflows:
           filters:
             branches:
               only:
-                - '/release-0\.(12|13|14|15|16|23)/'
+                - '/release-0\.(16|23|25)/'
 
       - release-to-public:
           requires:
@@ -228,7 +228,7 @@ workflows:
           filters:
             branches:
               only:
-                - '/release-0\.(12|13|14|15|16|23)/'
+                - '/release-0\.(16|23|25)/'
 
 commands:
   push-to-quay-io:
