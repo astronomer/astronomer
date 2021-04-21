@@ -19,7 +19,7 @@ images:
     pullPolicy: IfNotPresent
   registry:
     repository: quay.io/astronomer/ap-registry
-    tag: 3.13.2
+    tag: 3.13.6
     pullPolicy: IfNotPresent
   houston:
     repository: quay.io/astronomer/ap-houston-api
