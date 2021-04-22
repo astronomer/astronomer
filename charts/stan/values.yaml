@@ -10,7 +10,7 @@ images:
     pullPolicy: IfNotPresent
   stan:
     repository: quay.io/astronomer/ap-nats-streaming
-    tag: 0.21.0
+    tag: 0.21.2
     pullPolicy: IfNotPresent
 
 stan:
