@@ -202,6 +202,8 @@ workflows:
                 - '/release-0\.\d+/'
 
       - release-to-internal:
+          context:
+            - gcp-astronomer-prod
           requires:
             - approve-internal-release
             - platform-1-16-15
@@ -223,6 +225,8 @@ workflows:
                 - '/release-0\.\d+/'
 
       - release-to-public:
+          context:
+            - gcp-astronomer-prod
           requires:
             - approve-public-release
           filters:

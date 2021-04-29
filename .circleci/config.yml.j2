@@ -180,6 +180,8 @@ workflows:
                 - '/release-0\.\d+/'
 
       - release-to-internal:
+          context:
+            - gcp-astronomer-prod
           requires:
             - approve-internal-release
 {%- for version in kube_versions %}
@@ -200,6 +202,8 @@ workflows:
                 - '/release-0\.\d+/'
 
       - release-to-public:
+          context:
+            - gcp-astronomer-prod
           requires:
             - approve-public-release
           filters:
