@@ -736,6 +736,8 @@ data:
             kube_daemonset_status_number_ready{job="{{.Release.Name}}-kube-state"}
               /
             kube_daemonset_status_desired_number_scheduled{job="{{.Release.Name}}-kube-state"} < 1.00
+            and
+            increase(kube_daemonset_metadata_generation{job="{{.Release.Name}}-kube-state"}[10m]) == 0
           for: 15m
           labels:
             severity: critical
