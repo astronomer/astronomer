@@ -9,7 +9,7 @@ replicaCount: 2
 
 image:
   repository: quay.io/astronomer/ap-postgres-exporter
-  tag: 3.13.2
+  tag: 3.13.5
   pullPolicy: IfNotPresent
 
 service:
