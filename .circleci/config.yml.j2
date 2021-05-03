@@ -153,12 +153,10 @@ workflows:
     jobs:
       - lint
       - unittest-charts
-
       - build-artifact:
           requires:
             - lint
             - unittest-charts
-
       - test-all-platforms:
           type: approval
 {% for version in kube_versions %}{% if version == kube_versions[-1:][0] %}
@@ -171,15 +169,15 @@ workflows:
             - test-all-platforms
             - build-artifact
 {% endif %}{% endfor %}
-
       - approve-internal-release:
           type: approval
           filters:
             branches:
               only:
                 - '/release-0\.\d+/'
-
       - release-to-internal:
+          context:
+            - gcp-astronomer-prod
           requires:
             - approve-internal-release
 {%- for version in kube_versions %}
@@ -200,6 +198,8 @@ workflows:
                 - '/release-0\.\d+/'
 
       - release-to-public:
+          context:
+            - gcp-astronomer-prod
           requires:
             - approve-public-release
           filters:
