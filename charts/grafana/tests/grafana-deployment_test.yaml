@@ -7,3 +7,12 @@ tests:
     asserts:
       - isKind:
           of: Deployment
+  - it: should work with ssl mode
+    set:
+      global:
+        ssl:
+          enabled: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          value: []
