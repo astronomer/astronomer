@@ -99,7 +99,7 @@ jobs:
 {% endfor -%}
 
 {% for version in [kube_versions[-1]] %}
-  lts-lts-16-to-23-test:
+  lts-16-to-23-test:
     machine:
       image: ubuntu-2004:202101-01
       resource_class: xlarge
@@ -123,7 +123,7 @@ workflows:
             - lint
             - approve-lts-upgrader-build
 
-      - lts-lts-16-to-23-test:
+      - lts-16-to-23-test:
           requires:
             - build-lts-16-to-23-upgrade
 
@@ -139,7 +139,7 @@ workflows:
       - push-lts-16-to-23-upgrade:
           requires:
             - approve-lts-upgrader-release
-            - lts-lts-16-to-23-test
+            - lts-16-to-23-test
           context:
             - quay.io
           filters:
