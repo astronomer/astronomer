@@ -1,0 +1,6 @@
+docker==4.3.1
+GitPython==3.1.14
+kubernetes==11.0.0
+pytest==6.0.1
+PyYAML==5.4
+testinfra==5.2.2
