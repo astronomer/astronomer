@@ -106,7 +106,7 @@ global:
     # we need seperate mode for grafana: 
     # it supports only disable/require/verify-ca/verify-full
     grafana:
-      sslmode: "disable"
+      sslmode: "require"
 
   # Storage class for persistent volumes. If you have multiple storage classes available this will force all charts with persistent
   # volumes to use the one specified here.
