@@ -25,11 +25,11 @@ def test_upgrade():
 
     upgrade_manifest_path = Path(
         git_root_dir
-        / "bin/migration-scripts/lts-to-lts/0.16-to-0.23/manifests/upgrade-0.16-to-0.23.yaml"
+        / "migrations/scripts/lts-to-lts/0.16-to-0.23/manifests/upgrade-0.16-to-0.23.yaml"
     )
     rollback_manifest_path = Path(
         git_root_dir
-        / "bin/migration-scripts/lts-to-lts/0.16-to-0.23/manifests/rollback-0.16-to-0.23.yaml"
+        / "migrations/scripts/lts-to-lts/0.16-to-0.23/manifests/rollback-0.16-to-0.23.yaml"
     )
 
     namespace = environ.get("NAMESPACE")
