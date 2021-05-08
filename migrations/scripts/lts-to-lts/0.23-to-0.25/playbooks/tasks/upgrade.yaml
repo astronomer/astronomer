@@ -65,7 +65,7 @@
   assert:
     that:
       - helm_history.status == "deployed"
-      - "'0.16' in helm_history.app_version"
+      - "'0.23' in helm_history.app_version"
       - "'astronomer' in helm_history.chart"
 
 - name: Show information about current Helm revision
@@ -126,7 +126,7 @@
 # In the event the user rolls back, we need to make sure
 # the houston prisma 1 migration runs before we try to
 # re-run the upgrade
-- name: Wait for Houston to apply migrations in 0.16
+- name: Wait for Houston to apply migrations in 0.23
   retries: 30
   delay: 5
   until: result is not failed

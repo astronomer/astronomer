@@ -4,9 +4,9 @@ If you are already on an LTS version and you are seeking a patch version update 
 
 ## Astronomer versioning: moving to the long-term-support (LTS) software versioning model
 
-We have customers running Astronomer versions 0.7 through 0.16, and we currently support all of them. The wide variety of configurations and versions present in our customer's environments and the accelerating new minor version release cycle has presented challenges with regard to training support engineering, backporting fixes, documenting change notes, and with upgrades. In July 2020, Astronomer decided to start following the long-term-support (LTS) model for enterprise-ready Astronomer versions. This will look like some of our minor versions receive continuous patching while the others do not. This allows our developers to focus on building new features and limiting the number of versions where they need to backport patches. In the near future, we will be only publicly publishing the LTS versions. The release cadence is not yet decided but it will be somewhere in between 1 month and 6 months, depending on how many LTS versions we plan to support at the same time.
+At one point Astronomer had customers running Astronomer versions 0.7 through 0.16, and we supported all of them. The wide variety of configurations and versions in our customer's environments and the accelerating new minor version release cycle has presented challenges with regard to training support engineering, backporting fixes, documenting change notes, and with upgrades. In July 2020, Astronomer decided to start following the long-term-support (LTS) model for enterprise-ready Astronomer versions. This will look like some of our minor versions receive continuous patching while the others do not. This allows our developers to focus on building new features and limiting the number of versions where they need to backport patches. In the near future, we will be only publicly publishing the LTS versions. The release cadence is not yet decided but it will be somewhere in between 1 month and 6 months, depending on how many LTS versions we plan to support at the same time.
 
-Astronomer will provide a script to automatically upgrade customers from any version 0.7 or later to the first LTS version 0.16 (included in this directory - read on). Then, moving forward, Astronomer will provide automatic upgrades between each new LTS version.
+Astronomer will provide a script to automatically upgrade customers from any version 0.7 or later to the first LTS version 0.16. Then, moving forward, Astronomer will provide automatic upgrades between each new LTS version.
 
 ## Advanced cases that require Astronomer support
 
@@ -28,8 +28,7 @@ If you are in one of these categories, please contact Astronomer support to help
 Install some command line tools:
 
 - kubectl (version appropriate for your cluster's version or newer)
-- [helm (version 2.16.12)](https://github.com/helm/helm/releases/tag/v2.16.12), please install into PATH as "helm"
-- [helm 3 (version 3.3.4)](https://github.com/helm/helm/releases/tag/v3.3.4), please install into PATH as "helm3"
+- [helm 3 (version 3.5 or newer)](https://github.com/helm/helm/releases/), please install into PATH as "helm3"
 - [jq](https://stedolan.github.io/jq/download/)
 
 On Mac, if you have brew, you can install 'jq' with:

@@ -12,45 +12,8 @@ function fail_with {
   fi
 }
 
-function determine_helm_version {
-  echo "Determining which version of Helm is being used for Astronomer"
-  HELM_VERSION="2"
-  if ! helm status "$RELEASE_NAME" > /dev/null 2>&1 ; then
-    HELM_VERSION="3"
-    helm3 status -n "$NAMESPACE" "$RELEASE_NAME" > /dev/null 2>&1
-    fail_with "Failed to determine Helm version being used for Astronomer"
-  else
-    if helm3 status -n "$NAMESPACE" "$RELEASE_NAME" > /dev/null 2>&1 ; then
-      echo "ERROR: found Astronomer to be installed in both Helm 2 and Helm 3"
-      exit 1
-    fi
-  fi
-  echo "Determined Astronomer is running Helm version $HELM_VERSION"
-}
-
 function get_chart_version {
   version_result=$(helm list "^${1}$" | grep "^${1}\b" | awk '{ print $(9) }' | awk -F'-' '{ print $NF }')
-}
-
-# this is a temporary workaround
-function upgrade_version_in_astro_db {
-  PRISMA=$(kubectl get pods -n "$NAMESPACE" | grep prisma | head -n1 | awk '{ print $1}')
-  fail_with 'failed to find prisma pod'
-  QUERY="UPDATE houston\$default.\"Deployment\" SET version = '${UPGRADE_TO_VERSION_AIRFLOW}';"
-  PRISMA_DB_URI=$(kubectl exec -n "$NAMESPACE" "$PRISMA" env | grep 'PRISMA_DB_URI=' | cut -c15-)
-  echo "prisma pod: $PRISMA"
-  kubectl exec -n "$NAMESPACE" "$PRISMA" -- apk add postgresql-client
-  fail_with 'failed install postgresql client in prisma pod'
-  if ! kubectl exec -n "$NAMESPACE" "$PRISMA" -- psql -Atx "$PRISMA_DB_URI" -c "$QUERY" ; then
-    echo "Failed to update Airflow chart version in DB. Retrying in 60 seconds..."
-    sleep 60
-    PRISMA=$(kubectl get pods -n "$NAMESPACE" | grep prisma | head -n1 | awk '{ print $1}')
-    PRISMA_DB_URI=$(kubectl exec -n "$NAMESPACE" "$PRISMA" env | grep 'PRISMA_DB_URI=' | cut -c15-)
-    kubectl exec -n "$NAMESPACE" "$PRISMA" -- apk add postgresql-client
-    fail_with 'failed install postgresql client in prisma pod'
-    kubectl exec -n "$NAMESPACE" "$PRISMA" -- psql -Atx "$PRISMA_DB_URI" -c "$QUERY"
-    fail_with 'failed upgrade airflow version in astro DB'
-  fi
 }
 
 function check_get_deployments_safe {
@@ -262,39 +225,6 @@ function save_helm_values {
   echo "$RELEASE_NAMES_HELM3" > "$backup_dir/release_names_helm3.txt"
 }
 
-function helm2_to_3 {
-  HELM2_RELEASES=()
-  while IFS='' read -r line ; do
-    HELM2_RELEASES+=("$line")
-  done < <(kubectl get secret,configmap -n "$TILLER_NAMESPACE" -l "OWNER=TILLER" -o name |
-    grep -v 'No resources' |
-    cut -d '.' -f1 |
-    cut -d '/' -f2 |
-    uniq)
-  [ "${#HELM2_RELEASES}" -gt 0 ]
-  fail_with "Failed to find helm 2 releases"
-  RELEASES_TO_UPGRADE=()
-  set +e
-  for release in "${HELM2_RELEASES[@]}" ; do
-    if helm list "^${release}$" | tail -n 1 | grep -E "astronomer|airflow" > /dev/null ; then
-      RELEASES_TO_UPGRADE+=( "$release" )
-    fi
-  done
-  if [ "${#RELEASES_TO_UPGRADE[@]}" -gt 0 ]; then
-    echo "Non zero Airflow and Astronomer releases on Helm 2. Performing Helm 2 to Helm 3 upgrade procedure"
-    echo "Scaling down ingress so nobody can access Astronomer, this avoids race conditions of the upgrade process against customer activity"
-    kubectl scale --replicas=0 -n "$NAMESPACE" "deployment/${RELEASE_NAME}-nginx"
-    echo "Scaling down commander, this ensures that old commander can't be used during the upgrade procedure"
-    kubectl scale --replicas=0 -n "$NAMESPACE" "deployment/${RELEASE_NAME}-commander"
-    echo "Upgrading releases"
-    # Upgrade the releases
-    for release in "${RELEASES_TO_UPGRADE[@]}" ; do
-      helm3 2to3 convert --tiller-ns "$TILLER_NAMESPACE" --delete-v2-releases "$release"
-      fail_with "Failed to convert $release from helm 2 to helm 3, please read the above helm log"
-    done
-  fi
-}
-
 function interactive_confirmation {
   echo
   echo
@@ -381,17 +311,14 @@ function main {
   export UPGRADE_TO_VERSION_AIRFLOW=0.15.2
 
   # Pre-flight checks
-  check_helm_version_client '2.16.12'
-  check_helm3_version_client '3.3.4'
+  check_helm3_version_client '3.5.3'
   check_cli_tools_installed helm kubectl jq head tail grep awk base64 cut wc git
-
-  determine_helm_version
 
   kube_checks
 
   setup_helm
 
-  UPGRADE_TO_VERSION=$(helm3 search repo astronomer/astronomer --version 0.16 | head -n2 | tail -n1 | awk '{ print $2 }')
+  UPGRADE_TO_VERSION=$(helm3 search repo astronomer/astronomer --version 0.23 | awk 'NR==2 {print $2}')
   export UPGRADE_TO_VERSION
 
   collect_current_version_info
@@ -399,8 +326,6 @@ function main {
   interactive_confirmation
 
   save_helm_values
-
-  helm2_to_3
 
   git_clone_if_necessary
 
@@ -482,7 +407,7 @@ function main {
   echo "Done! Please contact Astronomer support if any issues are detected."
   echo
   echo "Please install the new CLI:"
-  echo "curl -sSL https://install.astronomer.io | sudo bash -s -- v0.16.1"
+  echo "curl -sSL https://install.astronomer.io | sudo bash -s -- v0.23.4"
   echo
   echo "You may choose to upgrade Airflow versions by changing your Dockerfile, for example:"
   echo "FROM quay.io/astronomer/ap-airflow:1.10.10-alpine3.10-onbuild"

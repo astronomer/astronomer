@@ -18,19 +18,19 @@ jobs:
           name: Lint the Astronomer chart
           command: export PATH=/tmp/bin:$PATH make lint
 
-  build-lts-16-to-23-upgrade:
+  build-lts-23-to-25-upgrade:
     executor: docker-executor
     steps:
       - docker-build:
-          image_name: lts-016-023-upgrade
-          path: "./migrations/scripts/lts-to-lts/0.16-to-0.23/playbooks/"
+          image_name: lts-23-to-25-upgrade
+          path: "./migrations/scripts/lts-to-lts/0.23-to-0.25/playbooks/"
 
-  push-lts-16-to-23-upgrade:
+  push-lts-23-to-25-upgrade:
     executor: docker-executor
     steps:
       - push-to-quay-io:
           comma_separated_tags: "latest,$CIRCLE_BUILD_NUM"
-          image_name: lts-016-023-upgrade
+          image_name: lts-23-to-25-upgrade
 
   unittest-charts:
     docker:
@@ -99,14 +99,14 @@ jobs:
 {% endfor -%}
 
 {% for version in [kube_versions[-1]] %}
-  lts-16-to-23-test:
+  lts-23-to-25-test:
     machine:
       image: ubuntu-2004:202101-01
       resource_class: xlarge
     environment:
       KUBE_VERSION: v{{ version }}
     steps:
-      - lts-16-to-23-test
+      - lts-23-to-25-test
 
 {%- endfor %}
 
@@ -118,14 +118,14 @@ workflows:
       - approve-lts-upgrader-build:
           type: approval
 
-      - build-lts-16-to-23-upgrade:
+      - build-lts-23-to-25-upgrade:
           requires:
             - lint
             - approve-lts-upgrader-build
 
-      - lts-16-to-23-test:
+      - lts-23-to-25-test:
           requires:
-            - build-lts-16-to-23-upgrade
+            - build-lts-23-to-25-upgrade
 
       - approve-lts-upgrader-release:
           type: approval
@@ -136,10 +136,10 @@ workflows:
                 - "master"
                 - "lts-to-lts"
 
-      - push-lts-16-to-23-upgrade:
+      - push-lts-23-to-25-upgrade:
           requires:
             - approve-lts-upgrader-release
-            - lts-16-to-23-test
+            - lts-23-to-25-test
           context:
             - quay.io
           filters:
@@ -288,20 +288,20 @@ commands:
           paths:
             - "./<< parameters.image_name >>.tar"
 
-  lts-16-to-23-test:
-    description: "Test LTS 16 to 23 upgrade automation"
+  lts-23-to-25-test:
+    description: "Test LTS 23 to 25 upgrade automation"
     steps:
       - checkout
       - attach_workspace:
           at: /tmp/workspace
       - run:
           name: Load archived Docker image
-          command: docker load -i /tmp/workspace/lts-016-023-upgrade.tar
+          command: docker load -i /tmp/workspace/lts-23-to-25-upgrade.tar
       - run:
           name: Test lts to lts upgrade automation
           command: |
             set -e
-            bin/lts-16-to-23-test
+            bin/lts-23-to-25-test
 
   helm-install:
     description: "Install Helm chart from artifact"

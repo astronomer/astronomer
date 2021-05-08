@@ -20,24 +20,24 @@ echo "Deploying Astronomer..."
 # kubectl get pods -n astronomer -w &
 # WATCH_PID=$!
 
-echo "Installing the most recent version of 0.16"
+echo "Installing the most recent version of 0.23"
 export HELM_CHART_PATH=astronomer/astronomer
-export ASTRONOMER_VERSION=0.16
+export ASTRONOMER_VERSION=0.23
 "$BIN_DIR/install-platform"
 "$BIN_DIR/waitfor-platform"
 
 echo "Loading upgrader image into Kind"
 kind load docker-image lts-016-023-upgrade
 
-echo "Astronomer 0.16 installed. Running 0.23 upgrade tests!"
+echo "Astronomer 0.23 installed. Running 0.25 upgrade tests!"
 export HELM_CHART_PATH=$REPO_DIR
 
 pip3 install virtualenv
 virtualenv --python=python3 /tmp/venv
 source /tmp/venv/bin/activate
-pip install -r "$REPO_DIR/migrations/lts-16-to-23-tests/requirements.txt"
+pip install -r "$REPO_DIR/migrations/lts-23-to-25-tests/requirements.txt"
 export NAMESPACE=astronomer
 export RELEASE_NAME=astronomer
 
-pytest -s "$REPO_DIR/migrations/lts-16-to-23-tests"
+pytest -s "$REPO_DIR/migrations/lts-23-to-25-tests"
 deactivate
