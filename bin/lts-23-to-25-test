@@ -27,7 +27,7 @@ export ASTRONOMER_VERSION=0.23
 "$BIN_DIR/waitfor-platform"
 
 echo "Loading upgrader image into Kind"
-kind load docker-image lts-016-023-upgrade
+kind load docker-image lts-23-to-25-upgrade
 
 echo "Astronomer 0.23 installed. Running 0.25 upgrade tests!"
 export HELM_CHART_PATH=$REPO_DIR
