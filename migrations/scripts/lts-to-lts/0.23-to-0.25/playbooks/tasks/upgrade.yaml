@@ -99,12 +99,12 @@
     db_connection: "{{ astronomer_bootstrap.resources[0].data.connection | b64decode }}"
 
 - set_fact:
-    db_username: "{{ db_connection | regex_search(regex, '\\1') | first }}"
-    db_password: "{{ db_connection | regex_search(regex, '\\2') | first }}"
-    db_hostname: "{{ db_connection | regex_search(regex, '\\3') | first }}"
-    db_port: "{{ db_connection | regex_search(regex, '\\4') | first }}"
+    db_username: "{{ db_connection | regex_search(regex, '\\g<username>') | first }}"
+    db_password: "{{ db_connection | regex_search(regex, '\\g<password>') | first }}"
+    db_hostname: "{{ db_connection | regex_search(regex, '\\g<hostname>') | first }}"
+    db_port: "{{ db_connection | regex_search(regex, '\\g<port>') | first }}"
   vars:
-    regex: 'postgres:\/\/([^:]*):([^@]*)@([^:]*):(\d*).*'
+    regex: 'postgres(ql)?:\/\/(?P<username>[^:]+):(?P<password>[^@]+)@(?P<hostname>[^:]+):(?P<port>\d+)'
 
 - debug:
     msg: "DB username: {{ db_username }}"
