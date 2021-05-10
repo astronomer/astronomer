@@ -107,11 +107,11 @@
     regex: 'postgres(ql)?:\/\/(?P<username>[^:]+):(?P<password>[^@]+)@(?P<hostname>[^:]+):(?P<port>\d+)'
 
 - debug:
-    msg: "DB username: {{ db_username }}"
-- debug:
-    msg: "DB hostname: {{ db_hostname }}"
-- debug:
-    msg: "DB port: {{ db_port }}"
+    msg:
+      - "DB hostname: {{ db_hostname }}"
+      - "DB port: {{ db_port }}"
+      - "DB username: {{ db_username }}"
+      - "DB password (sha512): {{ db_password | password_hash('sha512') }}"
 
 - name: Check that we can connect to the database
   postgresql_query:
