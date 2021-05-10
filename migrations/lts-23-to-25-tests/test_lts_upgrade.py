@@ -17,6 +17,8 @@ def test_upgrade():
     """
     Functional test for the LTS to LTS upgrade (0.23 to 0.25)
     """
+    print("Checking current chart version")
+
     with open(Path(git_root_dir / "Chart.yaml"), "r") as f:
         astro_chart_dot_yaml = yaml.safe_load(f.read())
     major, minor, patch = semver(astro_chart_dot_yaml["version"]).release
@@ -34,16 +36,18 @@ def test_upgrade():
 
     namespace = environ.get("NAMESPACE")
     release_name = environ.get("RELEASE_NAME")
+    print("Checking NAMESPACE")
     if not namespace:
         print("NAMESPACE env var is not present, using 'astronomer' namespace")
         namespace = "astronomer"
+    print("Checking RELEASE_NAME")
     if not release_name:
         print(
             "RELEASE_NAME env var is not present, assuming 'astronomer' is the release name"
         )
         release_name = "astronomer"
 
-    # Get the existing values
+    print("Checking installed version")
     result = check_output(
         f"helm3 history { release_name } -n { namespace } | tail -n 1", shell=True
     ).decode("utf8")
@@ -70,6 +74,7 @@ def test_upgrade():
                     container["env"].append(
                         {"name": "USE_INTERNAL_HELM_REPO", "value": "True"}
                     )
+                    print("Modified test env with USE_INTERNAL_HELM_REPO=True")
                 upgrade_manifest_yaml[i] = doc
             except KeyError:
                 pass
@@ -79,6 +84,7 @@ def test_upgrade():
     modified_upgrade_manifest_path = f"{upgrade_manifest_path}.test.yaml"
     with open(modified_upgrade_manifest_path, "w") as f:
         f.write(upgrade_manifest_data)
+    print("Performing upgrade from 0.23 to 0.25")
     check_output(f"kubectl apply -f {modified_upgrade_manifest_path}", shell=True)
     timeout = 800
     start_time = time()
@@ -110,7 +116,7 @@ def test_upgrade():
     result = check_output(
         "helm3 history astronomer -n astronomer | tail -n 1", shell=True
     ).decode("utf8")
-    assert "0.23" in result and "deployed" in result, "Expected upgrade to be performed"
+    assert "0.25" in result and "deployed" in result, "Expected upgrade to be performed"
     with open(rollback_manifest_path, "r") as f:
         rollback_manifest_data = f.read()
     rollback_manifest_data = rollback_manifest_data.replace(
