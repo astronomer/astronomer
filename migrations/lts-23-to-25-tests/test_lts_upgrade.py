@@ -51,7 +51,7 @@ def test_upgrade():
     result = check_output(
         f"helm3 history { release_name } -n { namespace } | tail -n 1", shell=True
     ).decode("utf8")
-    assert "0.23" in result
+    assert "0.25" in result
 
     # Rewrite some parts of the k8s manifest with testing-specific configs
     with open(upgrade_manifest_path, "r") as f:
