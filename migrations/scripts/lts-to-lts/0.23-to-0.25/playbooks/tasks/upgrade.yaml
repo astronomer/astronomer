@@ -151,7 +151,7 @@
     db: "{{ database_name }}_houston"
     query: |
       SET search_path to "houston$default";
-      SELECT "localCredential" FROM "houston$default"."User";
+      SELECT "localCredentialId" FROM "houston$default"."User";
 
 # TODO: check that every airflow has airflow version defined in DB
 
