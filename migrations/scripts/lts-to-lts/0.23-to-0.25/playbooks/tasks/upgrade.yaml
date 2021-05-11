@@ -113,6 +113,17 @@
       - "DB username: {{ db_username }}"
       - "DB password (sha512): {{ db_password | password_hash('sha512') }}"
 
+- name: Ensure DB network policy is removed
+  community.kubernetes.k8s:
+    state: absent
+    api_version: "networking.k8s.io/v1"
+    kind: NetworkPolicy
+    namespace: "{{ namespace }}"
+    name: "{{ item }}"
+  with_items:
+    - "{{ release_name }}-default-deny-ingress"
+    - "{{ release_name }}-postgresql"
+
 - name: Check that we can connect to the database
   postgresql_query:
     port: "{{ db_port }}"
