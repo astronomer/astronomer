@@ -65,7 +65,7 @@
   assert:
     that:
       - helm_history.status == "deployed"
-      - "'0.23' in helm_history.app_version"
+      - "'0.25' in helm_history.app_version"
       - "'astronomer' in helm_history.chart"
 
 - name: Show information about current Helm revision
