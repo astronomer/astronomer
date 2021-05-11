@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC1090,SC1091
 set -euo pipefail
+set -x
 
 REPO_DIR="$(git rev-parse --show-toplevel)"
 BIN_DIR="${REPO_DIR}/bin"
@@ -11,33 +12,34 @@ ls -lh /tmp/bin
 
 source "$REPO_DIR/bin/setup-kind"
 
+export NAMESPACE=astronomer
+export RELEASE_NAME=astronomer
+export HELM_CHART_PATH=astronomer/astronomer
+export ASTRONOMER_VERSION=0.23
+export HELM_CHART_PATH=$REPO_DIR
+
 helm repo add astronomer https://helm.astronomer.io
 helm repo update
 
 echo "Deploying Astronomer..."
 
-# This is so CI does not timeout on "no input in 10 minutes"
-# kubectl get pods -n astronomer -w &
-# WATCH_PID=$!
-
 echo "Installing the most recent version of 0.23"
-export HELM_CHART_PATH=astronomer/astronomer
-export ASTRONOMER_VERSION=0.23
 "$BIN_DIR/install-platform"
 "$BIN_DIR/waitfor-platform"
+
+echo "Checking that the DB is reachable"
+CONN_STRING="$(kubectl get secrets -n "$NAMESPACE" astronomer-bootstrap -o jsonpath='{.data.connection}' | base64 -d)/postgres"
+kubectl -n "$NAMESPACE" run "db-check-$(date +%s)" --timeout=60s --rm -ti --image=postgres --restart=Never --image-pull-policy=Always -- psql "$CONN_STRING" -c 'show server_version ;'
 
 echo "Loading upgrader image into Kind"
 kind load docker-image lts-23-to-25-upgrade
 
 echo "Astronomer 0.23 installed. Running 0.25 upgrade tests!"
-export HELM_CHART_PATH=$REPO_DIR
 
 pip3 install virtualenv
 virtualenv --python=python3 /tmp/venv
 source /tmp/venv/bin/activate
 pip install -r "$REPO_DIR/migrations/lts-23-to-25-tests/requirements.txt"
-export NAMESPACE=astronomer
-export RELEASE_NAME=astronomer
 
 pytest -s "$REPO_DIR/migrations/lts-23-to-25-tests"
 deactivate
