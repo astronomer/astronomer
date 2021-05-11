@@ -27,10 +27,6 @@ echo "Installing the most recent version of 0.23"
 "$BIN_DIR/install-platform"
 "$BIN_DIR/waitfor-platform"
 
-echo "Checking that the DB is reachable"
-CONN_STRING="$(kubectl get secrets -n "$NAMESPACE" astronomer-bootstrap -o jsonpath='{.data.connection}' | base64 -d)/postgres"
-kubectl -n "$NAMESPACE" run "db-check-$(date +%s)" --timeout=60s --rm -ti --image=postgres --restart=Never --image-pull-policy=Always -- psql "$CONN_STRING" -c 'show server_version ;'
-
 echo "Loading upgrader image into Kind"
 kind load docker-image lts-23-to-25-upgrade
 
