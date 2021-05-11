@@ -244,17 +244,6 @@
     target: "{{ astro_save_dir.path }}/astronomer-db-backup.tar"
     target_opts: "--clean --create --format=tar"
 
-- name: Run SQL for Prisma 1 to Prisma 2 migration
-  register: prisma1_to_2
-  postgresql_query:
-    port: "{{ db_port }}"
-    autocommit: yes
-    login_host: "{{ db_hostname }}"
-    login_user: "{{ db_username }}"
-    login_password: "{{ db_password }}"
-    db: "{{ database_name }}_houston"
-    path_to_script: "files/prisma1_to_prisma2.sql"
-
 # The db migration container waits on NATs, and for that, we need the new pods.
 # Also, there are new network security policies we need to apply before the db migration.
 - name: "(1/6) Upgrade Astronomer: Helm upgrade - Update software in Astronomer. Watch for 'helm list' to show new version."
