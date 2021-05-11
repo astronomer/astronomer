@@ -113,6 +113,7 @@ def test_upgrade():
             ).decode("utf8")
             print(logs)
             assert False, "Failed to perform upgrade (timeout!), see logs"
+
     result = check_output(
         "helm3 history astronomer -n astronomer | tail -n 1", shell=True
     ).decode("utf8")
