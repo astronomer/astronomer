@@ -111,7 +111,6 @@
       - "DB hostname: {{ db_hostname }}"
       - "DB port: {{ db_port }}"
       - "DB username: {{ db_username }}"
-      - "DB password (sha512): {{ db_password | password_hash('sha512') }}"
 
 - name: Ensure DB network policy is removed
   community.kubernetes.k8s:
