@@ -404,13 +404,15 @@ function main {
   fail_with "Failed to upgrade Astronomer"
 
 
-  echo "Done! Please contact Astronomer support if any issues are detected."
-  echo
-  echo "Please install the new CLI:"
-  echo "curl -sSL https://install.astronomer.io | sudo bash -s -- v0.23.4"
-  echo
-  echo "You may choose to upgrade Airflow versions by changing your Dockerfile, for example:"
-  echo "FROM quay.io/astronomer/ap-airflow:1.10.10-alpine3.10-onbuild"
+  cat <<EOF
+Done! Please contact Astronomer support if any issues are detected.
+
+Please install the new CLI:
+curl -sSL https://install.astronomer.io | sudo bash -s -- v0.23.14
+
+You may choose to upgrade Airflow versions by changing your Dockerfile, for example:
+FROM quay.io/astronomer/ap-airflow:2.0.0-buster-onbuild
+EOF
 }
 
 main "$1" "$2"
