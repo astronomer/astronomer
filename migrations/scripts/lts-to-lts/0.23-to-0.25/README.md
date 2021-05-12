@@ -60,7 +60,7 @@ Ensure that you have the default namespace in your kubernetes context, not neces
 ## Run the Astronomer upgrade automation
 
 ```
-kubectl apply -f https://raw.githubusercontent.com/astronomer/astronomer/master/migrations/scripts/lts-to-lts/0.23-to-0.25/manifests/upgrade-0.23-to-0.25.yaml
+kubectl apply -f https://raw.githubusercontent.com/astronomer/astronomer/release-0.25/migrations/scripts/lts-to-lts/0.23-to-0.25/manifests/upgrade-0.23-to-0.25.yaml
 ```
 
 Watch the logs of the upgrade pod, you can find pod name with:
@@ -88,7 +88,7 @@ If the upgrade has some issues and you need to recover, you can rollback to the 
 ## Apply the rollback automation
 
 ```
-kubectl apply -f https://raw.githubusercontent.com/astronomer/astronomer/master/migrations/scripts/lts-to-lts/0.23-to-0.25/manifests/rollback-0.23-to-0.25.yaml
+kubectl apply -f https://raw.githubusercontent.com/astronomer/astronomer/release-0.25/migrations/scripts/lts-to-lts/0.23-to-0.25/manifests/rollback-0.23-to-0.25.yaml
 ```
 
 ## Wait for platform to come back up
