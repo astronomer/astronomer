@@ -15,8 +15,7 @@ source "$REPO_DIR/bin/setup-kind"
 export NAMESPACE=astronomer
 export RELEASE_NAME=astronomer
 export HELM_CHART_PATH=astronomer/astronomer
-export ASTRONOMER_VERSION=0.23
-export HELM_CHART_PATH=$REPO_DIR
+export ASTRONOMER_VERSION=0.23  # Must be set to pre-upgrade version
 
 helm repo add astronomer https://helm.astronomer.io
 helm repo update
@@ -31,6 +30,7 @@ echo "Loading upgrader image into Kind"
 kind load docker-image lts-23-to-25-upgrade
 
 echo "Astronomer 0.23 installed. Running 0.25 upgrade tests!"
+export HELM_CHART_PATH="$REPO_DIR"  # Must be set to local directory to test chart from current git branch
 
 pip3 install virtualenv
 virtualenv --python=python3 /tmp/venv
