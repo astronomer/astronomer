@@ -60,27 +60,22 @@
     # this will select only the current revision from the helm history
     helm_history: "{{ helm_history_raw.stdout | from_json | last }}"
 
-- debug:
+- name: Show information about current Helm revision
+  changed_when: false
+  debug:
     msg:
-      - "helm_history.status: {{ helm_history.status }}"
-      - "helm_history.app_version: {{ helm_history.app_version }}"
-      - "helm_history.chart: {{ helm_history.chart }}"
+      - "Helm install revision: {{ helm_history.revision }}"
+      - "App version: {{ helm_history.app_version }}"
+      - "Helm chart: {{ helm_history.chart }}"
+      - "Status: {{ helm_history.status }}"
 
 - name: Assert helm revision looks right
   changed_when: false
   assert:
     that:
       - helm_history.status == "deployed"
-      - "'0.25' in helm_history.app_version"
+      - "'0.23' in helm_history.app_version"
       - "'astronomer' in helm_history.chart"
-
-- name: Show information about current Helm revision
-  changed_when: false
-  debug:
-    msg:
-      - "Helm chart is: {{ helm_history.chart }}"
-      - "Current revision is: {{ helm_history.revision }}"
-      - "Status is: {{ helm_history.status }}"
 
 - name: "Fetch Helm values from Astronomer (1/2): helm get values"
   register: helm_values_raw
