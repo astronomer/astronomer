@@ -84,7 +84,7 @@ if ! helm ${ACTION} \
   --set global.postgresqlEnabled="${postgresql}" \
   --set tags.keda="${keda}" \
   --set astronomer.houston.upgradeDeployments.enabled=true \
-  "$ASTRONOMER_VERSION_LINE" \
+  $ASTRONOMER_VERSION_LINE \
   $HELM_CHART_PATH # cannot be quoted because it may contain a glob
 then
   echo "Helm chart failed to install"
