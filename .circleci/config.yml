@@ -324,6 +324,7 @@ commands:
           name: Test lts to lts upgrade automation
           command: |
             set -e
+            echo 'export PATH="/tmp/bin:/tmp/google-cloud-sdk/bin:$PATH"' >> "$HOME/.bashrc" # for interactive ssh debugging
             bin/lts-23-to-25-test
 
   helm-install:
