@@ -200,6 +200,7 @@ workflows:
       - release-to-public:
           context:
             - gcp-astronomer-prod
+            - github-repo
           requires:
             - approve-public-release
           filters:
