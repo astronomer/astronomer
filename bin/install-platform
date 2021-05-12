@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC1091
 set -euo pipefail
+set -x
 
 # Bit of common bash magic that sets DIR to the directory of this script
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
@@ -62,7 +63,7 @@ if [ $# -ne 0 ]; then
   done
 fi
 
-set +ex
+set +e
 
 if [[ -z "${USE_HA+x}" ]]; then
   CONFIG_FILE=$REPO_DIR/configs/local-dev.yaml
