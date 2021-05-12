@@ -3,16 +3,14 @@
 set -euo pipefail
 set -x
 
-# Bit of common bash magic that sets DIR to the directory of this script
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-source "$DIR/helpers.sh"
-
 # The path to the working directory - the root of the repo
-REPO_DIR=$DIR/../
+REPO_DIR="$(git rev-parse --show-toplevel)"
 HELM_CHART_PATH=${HELM_CHART_PATH:-$REPO_DIR}
 RELEASE_NAME="${RELEASE_NAME:-astronomer}"
 NAMESPACE="${NAMESPACE:-astronomer}"
 HELM_TIMEOUT=${HELM_TIMEOUT:-800}
+
+source "$REPO_DIR/bin/helpers.sh"
 
 if [[ -z "${ASTRONOMER_VERSION:-}" ]]; then
   ASTRONOMER_VERSION_LINE=""

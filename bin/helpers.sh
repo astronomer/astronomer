@@ -8,7 +8,7 @@ function hr {
 function get_debugging_info {
   echo "Failed to deploy Astronomer!"
   echo "Printing description and logs where containers in pod are not 1/1..."
-  for pod in $(kubectl get pods -n astronomer -o name | grep -vE 'NAME|1/1|2/2|3/3|Completed') ; do
+  for pod in $(kubectl get pods -n astronomer -o name | grep -vE 'NAME|Completed| ([0-9]+)/\1 ') ; do
     hr
     set -x
     kubectl describe -n astronomer "$pod"
