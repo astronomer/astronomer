@@ -60,6 +60,12 @@
     # this will select only the current revision from the helm history
     helm_history: "{{ helm_history_raw.stdout | from_json | last }}"
 
+- debug:
+    msg:
+      - "helm_history.status: {{ helm_history.status }}"
+      - "helm_history.app_version: {{ helm_history.app_version }}"
+      - "helm_history.chart: {{ helm_history.chart }}"
+
 - name: Assert helm revision looks right
   changed_when: false
   assert:
@@ -245,33 +251,11 @@
 
 # The db migration container waits on NATs, and for that, we need the new pods.
 # Also, there are new network security policies we need to apply before the db migration.
-- name: "(1/6) Upgrade Astronomer: Helm upgrade - Update software in Astronomer. Watch for 'helm list' to show new version."
+- name: "(1/4) Upgrade Astronomer: Helm upgrade - Update software in Astronomer. Watch for 'helm list' to show new version."
   shell: |
     helm upgrade --namespace {{ namespace }} --reset-values -f {{ astro_save_dir.path }}/helm-user-values.json --no-hooks --set astronomer.houston.upgradeDeployments.enabled=false --version={{ upgrade_to_version }} {{ release_name }} astronomer/astronomer
 
-# Run DB migration container
-- name: "(2/6) Upgrade Astronomer: Helm upgrade - Run Astronomer DB migration. Watch for houston db migrations pod to exit in success."
-  shell: |
-    helm upgrade --namespace {{ namespace }} --reset-values -f {{ astro_save_dir.path }}/helm-user-values.json --set astronomer.houston.upgradeDeployments.enabled=false --version={{ upgrade_to_version }} {{ release_name }} astronomer/astronomer
-
-# Ensure Houston initializes after DB migration container runs
-- name: "(3/6) Upgrade Astronomer: Helm upgrade - Initialize Astronomer Secrets. Watch for houston pods to become ready again."
-  shell: |
-    kubectl rollout restart --namespace {{ namespace }} deployments
-
-- name: "Wait until the houston backend secret is updated (waiting on previous step to finish)"
-  until: astronomer_houston_backend.resources[0].data.connection | length > 0
-  retries: 48
-  delay: 5
-  changed_when: false
-  community.kubernetes.k8s_info:
-    api_version: v1
-    kind: Secret
-    name: "{{ release_name }}-houston-backend"
-    namespace: "{{ namespace }}"
-  register: astronomer_houston_backend
-
-- name: "(4/6) Update supported Airflow versions list. Look for pod airflow-upgrade-check-first-run to appear after 40 seconds then complete in success"
+- name: "(2/4) Update supported Airflow versions list. Look for pod airflow-upgrade-check-first-run to appear after 40 seconds then complete in success"
   shell: |
     set -xe
     kubectl delete job --namespace {{ namespace }} airflow-update-check-first-run || true
@@ -279,10 +263,10 @@
     kubectl create job --namespace {{ namespace }} --from=cronjob/{{ release_name }}-houston-update-airflow-check airflow-update-check-first-run
     kubectl wait --for=condition=complete --timeout=300s --namespace {{ namespace }} job/airflow-update-check-first-run
 
-- name: "(5/6) Upgrade Astronomer: Helm upgrade - Update Airflow configurations. Watch for Airflow charts to upgrade version with 'helm list --all-namespaces', watch for airflow pods to start back up."
+- name: "(3/4) Upgrade Astronomer: Helm upgrade - Update Airflow configurations. Watch for Airflow charts to upgrade version with 'helm list --all-namespaces', watch for airflow pods to start back up."
   shell: |
     helm upgrade --namespace {{ namespace }} --reset-values -f {{ astro_save_dir.path }}/helm-user-values.json --set astronomer.houston.upgradeDeployments.enabled=true --set astronomer.airflowChartVersion={{ upgrade_to_version_airflow }} --version={{ upgrade_to_version }} {{ release_name }} astronomer/astronomer
 
-- name: "(6/6) Upgrade Astronomer: Helm upgrade - Turn off airflow auto upgrade configuration. Perfunctory step, nothing to look for."
+- name: "(4/4) Upgrade Astronomer: Helm upgrade - Turn off airflow auto upgrade configuration. Perfunctory step, nothing to look for."
   shell: |
     helm upgrade --namespace {{ namespace }} --reset-values -f {{ astro_save_dir.path }}/helm-user-values.json --no-hooks --set astronomer.houston.upgradeDeployments.enabled=false --version={{ upgrade_to_version }} {{ release_name }} astronomer/astronomer
