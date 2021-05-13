@@ -1,14 +1,16 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC1091
 set -euo pipefail
-
-# Bit of common bash magic that sets DIR to the directory of this script
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-source $DIR/helpers.sh
-
+set -x
 
 # The path to the working directory - the root of the repo
-REPO_DIR=$DIR/../
+REPO_DIR="$(git rev-parse --show-toplevel)"
 HELM_CHART_PATH=${HELM_CHART_PATH:-$REPO_DIR}
+RELEASE_NAME="${RELEASE_NAME:-astronomer}"
+NAMESPACE="${NAMESPACE:-astronomer}"
+HELM_TIMEOUT=${HELM_TIMEOUT:-800}
+
+source "$REPO_DIR/bin/helpers.sh"
 
 if [[ -z "${ASTRONOMER_VERSION:-}" ]]; then
   ASTRONOMER_VERSION_LINE=""
@@ -36,22 +38,15 @@ if [ $# -ne 0 ]; then
   kubed=false
   postgresql=false
   keda=false
-  for component in $@
+  for component in "$@"
   do
     case $component in
-
     install)
-      ACTION="install"
-      ;;
-
+      ACTION="install" ;;
     template)
-      ACTION="template"
-      ;;
-
+      ACTION="template" ;;
     dryrun)
-      dryrun="--dry-run"
-      ;;
-
+      dryrun="--dry-run" ;;
     all)
         platform=true
         logging=true
@@ -60,20 +55,13 @@ if [ $# -ne 0 ]; then
         postgresql=true
         keda=true
       ;;
-
     *)
-      export $component=true
-      ;;
-
+      export $component=true ;;
     esac
-
   done
 fi
 
-
-set +ex
-
-HELM_TIMEOUT=${HELM_TIMEOUT:-800}
+set +e
 
 if [[ -z "${USE_HA+x}" ]]; then
   CONFIG_FILE=$REPO_DIR/configs/local-dev.yaml
@@ -82,25 +70,26 @@ else
 fi
 
 set -x
-helm ${ACTION} \
-  --namespace astronomer \
-  astronomer \
+# shellcheck disable=SC2086
+if ! helm ${ACTION} \
+  --namespace "$NAMESPACE" \
+  "$RELEASE_NAME" \
   ${dryrun} \
-  --timeout ${HELM_TIMEOUT}s \
-  -f $CONFIG_FILE \
-  --set tags.platform=${platform} \
-  --set tags.logging=${logging} \
-  --set tags.monitoring=${monitoring} \
-  --set tags.kubed=${kubed} \
-  --set global.postgresqlEnabled=${postgresql} \
-  --set tags.keda=${keda} \
+  --timeout "${HELM_TIMEOUT}s" \
+  -f "$CONFIG_FILE" \
+  --set tags.platform="${platform}" \
+  --set tags.logging="${logging}" \
+  --set tags.monitoring="${monitoring}" \
+  --set tags.kubed="${kubed}" \
+  --set global.postgresqlEnabled="${postgresql}" \
+  --set tags.keda="${keda}" \
   --set astronomer.houston.upgradeDeployments.enabled=true \
   $ASTRONOMER_VERSION_LINE \
-  $HELM_CHART_PATH
-
-if [ ! $? -eq 0 ]; then
-  set +x
+  $HELM_CHART_PATH # cannot be quoted because it may contain a glob
+then
   echo "Helm chart failed to install"
   get_debugging_info
   exit 1
+else
+  helm history -n "$NAMESPACE" "$RELEASE_NAME"
 fi

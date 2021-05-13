@@ -52,11 +52,10 @@
     regex: 'postgres(ql)?:\/\/(?P<username>[^:]+):(?P<password>[^@]+)@(?P<hostname>[^:]+):(?P<port>\d+)'
 
 - debug:
-    msg: "DB username: {{ db_username }}"
-- debug:
-    msg: "DB hostname: {{ db_hostname }}"
-- debug:
-    msg: "DB port: {{ db_port }}"
+    msg:
+      - "DB hostname: {{ db_hostname }}"
+      - "DB port: {{ db_port }}"
+      - "DB username: {{ db_username }}"
 
 - name: Ensure DB network policy is removed
   community.kubernetes.k8s:

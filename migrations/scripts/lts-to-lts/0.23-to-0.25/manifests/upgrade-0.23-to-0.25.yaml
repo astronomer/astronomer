@@ -29,7 +29,7 @@ spec:
       serviceAccountName: astronomer-upgrader-service-account
       restartPolicy: Never
       containers:
-        - image: quay.io/astronomer/lts-016-023-upgrade:latest
+        - image: quay.io/astronomer/lts-23-to-25-upgrade:latest
           imagePullPolicy: Always
           name: upgrade
           volumeMounts:

@@ -1,24 +1,21 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC1091
 set -euo pipefail
 
-# Bit of common bash magic that sets DIR to the directory of this script
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-source $DIR/helpers.sh
-
 # The path to the working directory - the root of the repo
-REPO_DIR=$DIR/../
+REPO_DIR="$(git rev-parse --show-toplevel)"
+source "$REPO_DIR/bin/helpers.sh"
 
 set +ex
 
 START=$(date +%s)
 
 # Wait for Astronomer to deploy
-RC=0
 HELM_CODE=0
 MAX_SECONDS=800
-while [ $RC -eq 0 ]; do
+while [ "${RC:-0}" -eq 0 ]; do
   NOW=$(date +%s)
-  DURATION="$(($NOW-$START))"
+  DURATION="$(( NOW - START ))"
   echo "${DURATION} seconds have elapsed, timeout at $MAX_SECONDS seconds"
   if [ $DURATION -gt $MAX_SECONDS ];then
     HELM_CODE=1
@@ -26,8 +23,8 @@ while [ $RC -eq 0 ]; do
     echo "Error (timeout): giving up after $MAX_SECONDS seconds"
   else
     sleep 10
-    kubectl get pods --all-namespaces > /tmp/pods
-    if [ ! $? -eq 0 ];then
+    if ! kubectl get pods --all-namespaces > /tmp/pods
+    then
       echo "kubectl get pods timed out. retrying."
       continue
     fi
@@ -35,13 +32,13 @@ while [ $RC -eq 0 ]; do
     # of logging tag without the platform. This is the only logging component
     # that will not start without the platform. The benefit of allowing us to
     # test the logging tag outweighs the downside of ignoring one pod.
-    cat /tmp/pods | grep -v 1/1 | grep -v 2/2 | grep -v 3/3 | grep -v NAME | grep -v Completed | grep -v 'elasticsearch-nginx' >/dev/null 2>&1
+    grep -q -vE 'NAME|Completed|elasticsearch-nginx| ([0-9]+)/\1 ' /tmp/pods
     RC=$?
   fi
 done
 
 # Output debugging information
-if [ $HELM_CODE -eq 0 ]; then
+if [ "$HELM_CODE" -eq 0 ]; then
   echo "pods are all ready!"
 else
   get_debugging_info
@@ -49,6 +46,6 @@ fi
 
 set -x
 kubectl get pods --all-namespaces
-helm list
+helm list -A
 
-exit $HELM_CODE
+exit "$HELM_CODE"
