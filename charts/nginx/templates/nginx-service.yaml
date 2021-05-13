@@ -30,6 +30,9 @@ metadata:
     prometheus.io/scrape: "true"
     prometheus.io/port: {{ .Values.ports.metrics | quote }}
 spec:
+{{- if .Values.global.openShift.useRouter }}
+  type: ClusterIP
+{{- else }}
   type: LoadBalancer
   {{- if .Values.loadBalancerIP }}
   loadBalancerIP: {{ .Values.loadBalancerIP }}
@@ -40,6 +43,7 @@ spec:
   {{- if .Values.preserveSourceIP }}
   externalTrafficPolicy: "Cluster"
   {{- end }}
+{{- end }}
   selector:
     tier: {{ template "nginx.name" . }}
     component: ingress-controller

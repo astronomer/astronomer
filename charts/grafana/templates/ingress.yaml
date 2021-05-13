@@ -2,6 +2,36 @@
 ## Grafana Ingress
 #################################
 {{- if .Values.global.baseDomain }}
+{{- if .Values.global.openShift.useRouter }}
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: {{ template "grafana.fullname" . }}
+  labels:
+    tier: grafana-networking
+    component: grafana-ingress
+    chart: {{ template "grafana.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  host: {{ template "grafana.url" . }}
+  to:
+    kind: Service
+    name: "{{ .Release.Name }}-nginx"
+    weight: 100
+  wildcardPolicy: None
+  {{- if or .Values.global.acme .Values.global.tlsSecret }}
+  port:
+    targetPort: https
+  tls:
+    termination: passthrough
+    insecureEdgeTerminationPolicy: Redirect
+  {{- else }}
+  port:
+    targetPort: http
+  {{- end }}
+---
+{{- end }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:
@@ -12,12 +42,18 @@ metadata:
     chart: {{ template "grafana.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+{{- if .Values.global.openShift.useRouter }}
+    astronomerIngress: internal
+{{- end }}
   annotations:
     kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
     kubernetes.io/tls-acme: {{ eq .Values.global.acme true | quote }}
     nginx.ingress.kubernetes.io/auth-url: https://houston.{{ .Values.global.baseDomain }}/v1/authorization
     nginx.ingress.kubernetes.io/auth-signin: https://app.{{ .Values.global.baseDomain }}/login
     nginx.ingress.kubernetes.io/auth-response-headers: authorization, username, email
+{{- if .Values.global.openShift.useRouter }}
+    haproxy.router.openshift.io/ip_whitelist: "127.0.0.1/32"
+{{- end }}
 spec:
   {{- if or .Values.global.tlsSecret .Values.global.acme }}
   tls:

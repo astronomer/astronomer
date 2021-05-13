@@ -2,12 +2,53 @@
 ## Astronomer Ingress
 #################################
 {{- if .Values.global.baseDomain }}
+{{- if .Values.global.openShift.useRouter }}
+{{- range $prefix := (list "" "app." "houston." "registry." "install.") }}
+# Route {{ . }}
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: {{ list $.Release.Name "public" (trimSuffix "." $prefix) | compact | join "-" }}
+  labels:
+    component: public-ingress
+    tier: astronomer
+    release: {{ $.Release.Name }}
+    chart: "{{ $.Chart.Name }}-{{ $.Chart.Version }}"
+    heritage: {{ $.Release.Service }}
+spec:
+  host: {{ $prefix }}{{ $.Values.global.baseDomain }}
+  to:
+    kind: Service
+    name: {{ $.Release.Name }}-nginx
+    weight: 100
+  wildcardPolicy: None
+  {{- if or $.Values.global.acme $.Values.global.tlsSecret }}
+  port:
+    targetPort: https
+  tls:
+    termination: passthrough
+    insecureEdgeTerminationPolicy: Redirect
+  {{- else }}
+  port:
+    targetPort: http
+  {{- end }}
+---
+{{- end }}
+{{- end }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:
+{{- if .Values.global.openShift.useRouter }}
+  name: {{ .Release.Name }}-internal-ingress
+  labels:
+    component: internal-ingress
+    astronomerIngress: internal
+{{- else }}
   name: {{ .Release.Name }}-public-ingress
   labels:
     component: public-ingress
+{{- end }}
     tier: astronomer
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
@@ -20,6 +61,9 @@ metadata:
       if ($host = '{{ .Values.global.baseDomain }}' ) {
         rewrite ^ https://app.{{ .Values.global.baseDomain }}$request_uri permanent;
       }
+{{- if .Values.global.openShift.useRouter }}
+    haproxy.router.openshift.io/ip_whitelist: "127.0.0.1/32"
+{{- end }}
 spec:
   {{- if or .Values.global.tlsSecret .Values.global.acme }}
   tls:

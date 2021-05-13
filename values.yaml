@@ -113,6 +113,11 @@ global:
   # volumes to use the one specified here.
   # storageClass: ~
 
+  openShift:
+    # If running on an OpenShift cluster, use the existing Router for public traffic ingress. This sets up
+    # routes to form the Router to our Nginx (which enforces wuth), and then from there to the actual sercie
+    useRouter: false
+
 #################################
 ## Default tagged groups enabled
 #################################
