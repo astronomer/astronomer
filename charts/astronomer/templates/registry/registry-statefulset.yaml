@@ -62,7 +62,7 @@ spec:
               mountPath: /etc/docker/ssl
             - name: data
               mountPath: /var/lib/registry
-            {{- if .Values.registry.gcs.enabled }}
+            {{- if and .Values.registry.gcs.enabled .Values.registry.gcs.useKeyfile }}
             {{- include "registry.gcsVolumeMount" . | indent 12 }}
             {{- end }}
           ports:
@@ -94,7 +94,7 @@ spec:
         - name: certificate
           secret:
             secretName: {{ .Values.global.tlsSecret }}
-        {{- if .Values.registry.gcs.enabled }}
+        {{- if and .Values.registry.gcs.enabled .Values.registry.gcs.useKeyfile }}
         {{- include "registry.gcsVolume" . | indent 8 }}
         {{- end }}
   {{- if or (not .Values.registry.persistence.enabled) (.Values.registry.gcs.enabled) (.Values.registry.azure.enabled) (.Values.registry.s3.enabled)}}
