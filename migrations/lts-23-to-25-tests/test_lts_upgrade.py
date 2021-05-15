@@ -54,10 +54,10 @@ def test_upgrade():
     print(f"Helm history:\n{helm_history}")
 
     assert (
-        "0.23" in helm_history.split("\n")[-1]
+        "0.23" in helm_history.split("\n")[-2]
     ), "Expected 0.23 to be installed before upgrade"
     assert (
-        "deployed" in helm_history.split("\n")[-1]
+        "deployed" in helm_history.split("\n")[-2]
     ), "Expected state to be deployed before upgrade"
 
     # Rewrite some parts of the k8s manifest with testing-specific configs
@@ -127,10 +127,10 @@ def test_upgrade():
     print(f"Helm history:\n{helm_history}")
 
     assert (
-        "0.25" in helm_history.split("\n")[-1]
+        "0.25" in helm_history.split("\n")[-2]
     ), "Expected version 0.25 to be installed after upgrade"
     assert (
-        "deployed" in helm_history.split("\n")[-1]
+        "deployed" in helm_history.split("\n")[-2]
     ), "Expected state to be deployed after upgrade"
 
     with open(rollback_manifest_path, "r") as f:
@@ -179,8 +179,8 @@ def test_upgrade():
     print(f"Helm history:\n{helm_history}")
 
     assert (
-        "0.23" in helm_history.split("\n")[-1]
+        "0.23" in helm_history.split("\n")[-2]
     ), "Expected version 0.23 to be installed after rollback"
     assert (
-        "deployed" in helm_history.split("\n")[-1]
+        "deployed" in helm_history.split("\n")[-2]
     ), "Expected state to be deployed after rollback"
