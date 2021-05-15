@@ -1,4 +1,9 @@
 ---
+- name: Validate that namespace is 'default'
+  assert:
+    that:
+      - lookup('env', 'ASTRONOMER_UPGRADER_NAMESPACE') == "default"
+
 - name: Set up variables
   set_fact:
     backup_dir: "/astronomer-backups"

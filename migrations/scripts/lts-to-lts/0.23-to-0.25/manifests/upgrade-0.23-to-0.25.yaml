@@ -35,7 +35,12 @@ spec:
           volumeMounts:
             - mountPath: /astronomer-backups
               name: astronomer-upgrades-backup
-          # env: [{"name": "USE_INTERNAL_HELM_REPO", "value": "True"}]
+          env:
+            - name: ASTRONOMER_UPGRADER_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          # - {"name": "USE_INTERNAL_HELM_REPO", "value": "True"}
           # command: ["/bin/sleep", "infinity"]
       terminationGracePeriodSeconds: 300
       volumes:
