@@ -51,7 +51,7 @@ def test_upgrade():
     helm_history = check_output(
         f"helm3 history { release_name } -n { namespace }", shell=True
     ).decode("utf8")
-    print(f"Helm history:\n{helm_history}")
+    print(f"Helm history: (pre-upgrade)\n{helm_history}")
 
     assert (
         "0.23" in helm_history.split("\n")[-2]
@@ -124,7 +124,7 @@ def test_upgrade():
     helm_history = check_output(
         f"helm3 history { release_name } -n { namespace }", shell=True
     ).decode("utf8")
-    print(f"Helm history:\n{helm_history}")
+    print(f"Helm history: (post-upgrade)\n{helm_history}")
 
     assert (
         "0.25" in helm_history.split("\n")[-2]
@@ -176,7 +176,7 @@ def test_upgrade():
     helm_history = check_output(
         f"helm3 history { release_name } -n { namespace }", shell=True
     ).decode("utf8")
-    print(f"Helm history:\n{helm_history}")
+    print(f"Helm history: (post-rollback)\n{helm_history}")
 
     assert (
         "0.23" in helm_history.split("\n")[-2]
