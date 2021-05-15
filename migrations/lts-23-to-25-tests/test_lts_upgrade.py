@@ -49,7 +49,7 @@ def test_upgrade():
 
     print("Checking installed version")
     result = check_output(
-        f"helm3 history { release_name } -n { namespace } | tail -n 1", shell=True
+        f"helm history { release_name } -n { namespace } | tail -n 1", shell=True
     ).decode("utf8")
     assert "0.23" in result
 
@@ -115,7 +115,7 @@ def test_upgrade():
             assert False, "Failed to perform upgrade (timeout!), see logs"
 
     result = check_output(
-        "helm3 history astronomer -n astronomer | tail -n 1", shell=True
+        "helm history astronomer -n astronomer | tail -n 1", shell=True
     ).decode("utf8")
     assert "0.25" in result and "deployed" in result, "Expected upgrade to be performed"
     with open(rollback_manifest_path, "r") as f:
@@ -158,7 +158,7 @@ def test_upgrade():
             print(logs)
             assert False, "Failed to perform rollback (timeout!), see logs"
     result = check_output(
-        "helm3 history astronomer -n astronomer | tail -n 1", shell=True
+        "helm history astronomer -n astronomer | tail -n 1", shell=True
     ).decode("utf8")
     assert (
         "0.23" in result and "deployed" in result

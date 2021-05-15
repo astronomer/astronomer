@@ -2,8 +2,7 @@
 set -xeuo pipefail
 
 KIND_VERSION="0.10.0"
-HELM2_VERSION="2.17.0"
-HELM3_VERSION="3.5.3"
+HELM_VERSION="3.5.3"
 GCLOUD_VERSION="334.0.0"
 MKCERT_VERSION="1.4.3"
 
@@ -26,23 +25,18 @@ else
   mv "./kind-${OS}-amd64" /tmp/bin/kind
 fi
 
-if [[ $FORCE -eq 0 && -f /tmp/bin/helm2 ]]; then
-  echo "helm2 is already installed."
-else
-  # Install helm
-  wget "https://get.helm.sh/helm-v${HELM2_VERSION}-${OS}-amd64.tar.gz"
-  tar -zxvf "./helm-v${HELM2_VERSION}-${OS}-amd64.tar.gz"
-  mv "${OS}-amd64/helm" /tmp/bin/helm2
+if [[ $FORCE -eq 0 && -f /tmp/bin/helm ]]; then
+  echo "helm is already installed."
 fi
 
 if [[ $FORCE -eq 0 && -f /tmp/bin/helm ]]; then
   echo "helm is already installed."
 else
   # Install helm
-  wget "https://get.helm.sh/helm-v${HELM3_VERSION}-${OS}-amd64.tar.gz"
-  tar -zxvf "./helm-v${HELM3_VERSION}-${OS}-amd64.tar.gz"
-  mv "${OS}-amd64/helm" /tmp/bin/helm3
-  cp /tmp/bin/helm3 /tmp/bin/helm
+  wget "https://get.helm.sh/helm-v${HELM_VERSION}-${OS}-amd64.tar.gz"
+  tar -zxvf "./helm-v${HELM_VERSION}-${OS}-amd64.tar.gz"
+  mv "${OS}-amd64/helm" /tmp/bin/helm
+  cp /tmp/bqin/helm /tmp/bin/helm
 fi
 
 # Add stable helm repo
@@ -83,8 +77,7 @@ echo "--------- versions -------------"
 # kind
 set +e
 kind version
-helm2 version --client
-helm3 version --client
+helm version --client
 kubectl version --client
 gcloud version
 mkcert --version

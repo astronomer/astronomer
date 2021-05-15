@@ -61,12 +61,12 @@ def test_downgrade_then_upgrade():
     config_path = os.path.join(git_root_dir, "upgrade_test_config.yaml")
     # Get the existing values
     check_output(
-        f"helm3 get values -n {namespace} {release_name} > {config_path}", shell=True
+        f"helm get values -n {namespace} {release_name} > {config_path}", shell=True
     )
     # attempt downgrade with the documented procedure
     print("Performing patch version downgrade...")
     command = (
-        "helm3 upgrade --reset-values "
+        "helm upgrade --reset-values "
         + f"-f {config_path} "
         + f"-n {namespace} "
         + f"--version={major}.{minor}.{patch - 1} "
@@ -77,7 +77,7 @@ def test_downgrade_then_upgrade():
     print(check_output(command, shell=True))
     print("The downgrade worked, upgrading!")
     command = (
-        "helm3 upgrade --reset-values "
+        "helm upgrade --reset-values "
         + f"-f {config_path} "
         + f"-n {namespace} "
         + f"--version={major}.{minor}.{patch} "

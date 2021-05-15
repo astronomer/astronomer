@@ -6,8 +6,8 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 # The path to the working directory - the root of the repo
 REPO_DIR=$DIR/../
 
-helm3 repo add astronomer-internal https://internal-helm.astronomer.io
-helm3 repo update
+helm repo add astronomer-internal https://internal-helm.astronomer.io
+helm repo update
 
 pip3 install virtualenv
 virtualenv --python=python3 /tmp/venv

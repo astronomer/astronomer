@@ -195,7 +195,7 @@ def test_houston_backend_secret_present_after_helm_upgrade_and_container_restart
     # attempt downgrade with the documented procedure
     print("Performing a Helm upgrade without hooks twice:\n")
     command = (
-        "helm3 upgrade --reuse-values "
+        "helm upgrade --reuse-values "
         + "--no-hooks "
         + f"-n {namespace} "
         + f"{release_name} "

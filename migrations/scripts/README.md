@@ -28,7 +28,7 @@ If you are in one of these categories, please contact Astronomer support to help
 Install some command line tools:
 
 - kubectl (version appropriate for your cluster's version or newer)
-- [helm 3 (version 3.5 or newer)](https://github.com/helm/helm/releases/), please install into PATH as "helm3"
+- [helm  (version 3.5 or newer)](https://github.com/helm/helm/releases/), please install into PATH as "helm"
 - [jq](https://stedolan.github.io/jq/download/)
 
 On Mac, if you have brew, you can install 'jq' with:
@@ -65,7 +65,7 @@ Or
 
 ```sh
 # helm 3
-helm3 list <release name> -n <namespace>
+helm list <release name> -n <namespace>
 ```
 
 - Above, you should have found "astronomer" or "astronomer-platform" somewhere in the result line
@@ -157,7 +157,7 @@ kubectl logs -n <release namespace> astronomer-houston-upgrade-deployments-lw9kc
 - Check the airflow chart version, it should be the same and 0.15 for all airflow Helm releases
 
 ```sh
-helm3 list --all-namespaces | grep -i airflow
+helm list --all-namespaces | grep -i airflow
 ```
 
 - In the UI, check that you can deploy changes to Airflow by adding a new environment variable and deploying the change with the UI button while watching the pods in the corresponding namespace. You should see the Airflow components restart to get the new environment variable.
@@ -170,24 +170,24 @@ kubectl get pods -n <airflow namespace you are changing> -w
 - Now, again check your Airflow releases to make sure the Airflow chart version did not change - it should be the same result as before.
 
 ```sh
-helm3 list --all-namespaces | grep -i airflow
+helm list --all-namespaces | grep -i airflow
 ```
 
 ## Patch version updates
 
-If you are already on an LTS version, then you can update yourself much more simply. You can use normal helm3 commands to update your configuration or patch version, a sample script is provided below.
+If you are already on an LTS version, then you can update yourself much more simply. You can use normal helm commands to update your configuration or patch version, a sample script is provided below.
 
 - First, ensure you have a copy of your Astronomer configuration if you don't already have one
 
 ```sh
-helm3 get values -n <namespace> <release name of astronomer> > config.yaml
+helm get values -n <namespace> <release name of astronomer> > config.yaml
 ```
 
 - review this configuration, and you can delete the line "USER-SUPPLIED VALUES:"
 - check your current version
 
 ```sh
-helm3 list --all-namespaces | grep astronomer
+helm list --all-namespaces | grep astronomer
 ```
 
 - Use a script like this to update Astronomer patch versions or reconfigurations, please review this script to understand what it is doing and substitute the variables with your own values
@@ -200,14 +200,14 @@ RELEASE_NAME=replace-this
 NAMESPACE=replace-this
 ASTRO_VERSION=0.16.replace-patch-version
 
-helm3 repo add astronomer https://helm.astronomer.io
-helm3 repo update
+helm repo add astronomer https://helm.astronomer.io
+helm repo update
 
 # upgradeDeployments false ensures that Airflow charts are not upgraded when this script is ran
 # If you deployed a config change that is intended to reconfigure something inside Airflow,
 # then you may set this value to "true" instead. When it is "true", then each Airflow chart will
 # restart.
-helm3 upgrade --namespace $NAMESPACE \
+helm upgrade --namespace $NAMESPACE \
             -f ./config.yaml \
             --version $ASTRO_VERSION \
             --set astronomer.houston.upgradeDeployments.enabled=false \
