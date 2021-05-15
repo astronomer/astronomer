@@ -224,24 +224,28 @@
     dest: "{{ astro_save_dir.path }}/helm-status.json"
     content: "{{ helm_status | to_json }}"
 
-- name: Add public helm repo
+- name: Configure for public usage
   block:
-    set_fact:
-      helm_devel: ''
-    shell: |
-      set -xe
-      helm repo add astronomer https://helm.astronomer.io
-      helm repo update
+    - name: Use public helm repo
+      shell: |
+        set -xe
+        helm repo add astronomer https://helm.astronomer.io
+        helm repo update
+    - name: Use only final versions
+      set_fact:
+        helm_devel: ''
   when: (USE_INTERNAL_HELM_REPO is not defined) or not (USE_INTERNAL_HELM_REPO | bool)
 
-- name: "Add private helm repo (for testing only)"
+- name: Configure for dev usage
   block:
-    set_fact:
-      helm_devel: '--devel'
-    shell: |
-      set -xe
-      helm repo add astronomer https://internal-helm.astronomer.io
-      helm repo update
+    - name: Use internal helm repo
+      shell: |
+        set -xe
+        helm repo add astronomer https://internal-helm.astronomer.io
+        helm repo update
+    - name: Use development versions
+      set_fact:
+        helm_devel: '--devel'
   when: (USE_INTERNAL_HELM_REPO is defined) and (USE_INTERNAL_HELM_REPO | bool)
 
 - name: Backup Astronomer database
