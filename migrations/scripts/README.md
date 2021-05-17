@@ -57,14 +57,7 @@ kubectl get pods -n <namespace here>
 - You can confirm the release name with
 
 ```sh
-# helm 2
-helm list <release name>
-```
-
-Or
-
-```sh
-# helm 3
+# helm 
 helm list <release name> -n <namespace>
 ```
 
