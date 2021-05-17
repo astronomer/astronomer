@@ -9,7 +9,7 @@
     backup_dir: "/astronomer-backups"
     timestamp: "{{ lookup('pipe','date +%Y-%m-%d-%H-%M-%S') }}"
     upgrade_to_version: "0.25"
-    upgrade_to_version_airflow: "0.18"
+    upgrade_to_version_airflow: "0.19"
     # db_hostname: "localhost"
     # db_username: "postgres"
     # db_password: "postgres"
@@ -231,9 +231,6 @@
         set -xe
         helm repo add astronomer https://helm.astronomer.io
         helm repo update
-    - name: Use only final versions
-      set_fact:
-        helm_devel: ''
   when: (USE_INTERNAL_HELM_REPO is not defined) or not (USE_INTERNAL_HELM_REPO | bool)
 
 - name: Configure for dev usage
@@ -245,7 +242,7 @@
         helm repo update
     - name: Use development versions
       set_fact:
-        helm_devel: '--devel'
+        upgrade_to_version: "{{ upgrade_to_version }}-0"
   when: (USE_INTERNAL_HELM_REPO is defined) and (USE_INTERNAL_HELM_REPO | bool)
 
 - name: Backup Astronomer database
@@ -264,7 +261,6 @@
 - name: "(1/4) Upgrade Astronomer: Helm upgrade - Update software in Astronomer. Watch for 'helm list' to show new version."
   shell: >
     helm upgrade
-    {{ helm_devel }}
     --namespace {{ namespace }}
     --reset-values
     -f {{ astro_save_dir.path }}/helm-user-values.json
@@ -285,7 +281,6 @@
 - name: "(3/4) Upgrade Astronomer: Helm upgrade - Update Airflow configurations. Watch for Airflow charts to upgrade version with 'helm list --all-namespaces', watch for airflow pods to start back up."
   shell: >
     helm upgrade
-    {{ helm_devel }}
     --namespace {{ namespace }}
     --reset-values
     -f {{ astro_save_dir.path }}/helm-user-values.json
@@ -298,7 +293,6 @@
 - name: "(4/4) Upgrade Astronomer: Helm upgrade - Turn off airflow auto upgrade configuration. Perfunctory step, nothing to look for."
   shell: >
     helm upgrade
-    {{ helm_devel }}
     --namespace {{ namespace }}
     --reset-values
     -f {{ astro_save_dir.path }}/helm-user-values.json
