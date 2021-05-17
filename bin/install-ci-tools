@@ -31,8 +31,8 @@ else
   # Install helm
   wget "https://get.helm.sh/helm-v${HELM_VERSION}-${OS}-amd64.tar.gz"
   tar -zxvf "./helm-v${HELM_VERSION}-${OS}-amd64.tar.gz"
-  mv "${OS}-amd64/helm" /tmp/bin/helm
-  cp /tmp/bqin/helm /tmp/bin/helm
+  mv "${OS}-amd64/helm" /tmp/bin/helm3
+  cp /tmp/bqin/helm3 /tmp/bin/helm
 fi
 
 # Add stable helm repo
