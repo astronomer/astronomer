@@ -48,10 +48,17 @@ def test_upgrade():
         release_name = "astronomer"
 
     print("Checking installed version")
-    result = check_output(
-        f"helm3 history { release_name } -n { namespace } | tail -n 1", shell=True
+    helm_history = check_output(
+        f"helm3 history { release_name } -n { namespace }", shell=True
     ).decode("utf8")
-    assert "0.23" in result
+    print(f"Helm history: (pre-upgrade)\n{helm_history}")
+
+    assert (
+        "0.23" in helm_history.split("\n")[-2]
+    ), "Expected 0.23 to be installed before upgrade"
+    assert (
+        "deployed" in helm_history.split("\n")[-2]
+    ), "Expected state to be deployed before upgrade"
 
     # Rewrite some parts of the k8s manifest with testing-specific configs
     with open(upgrade_manifest_path, "r") as f:
@@ -114,10 +121,18 @@ def test_upgrade():
             print(logs)
             assert False, "Failed to perform upgrade (timeout!), see logs"
 
-    result = check_output(
-        "helm3 history astronomer -n astronomer | tail -n 1", shell=True
+    helm_history = check_output(
+        f"helm3 history { release_name } -n { namespace }", shell=True
     ).decode("utf8")
-    assert "0.25" in result and "deployed" in result, "Expected upgrade to be performed"
+    print(f"Helm history: (post-upgrade)\n{helm_history}")
+
+    assert (
+        "0.25" in helm_history.split("\n")[-2]
+    ), "Expected version 0.25 to be installed after upgrade"
+    assert (
+        "deployed" in helm_history.split("\n")[-2]
+    ), "Expected state to be deployed after upgrade"
+
     with open(rollback_manifest_path, "r") as f:
         rollback_manifest_data = f.read()
     rollback_manifest_data = rollback_manifest_data.replace(
@@ -157,9 +172,15 @@ def test_upgrade():
             ).decode("utf8")
             print(logs)
             assert False, "Failed to perform rollback (timeout!), see logs"
-    result = check_output(
-        "helm3 history astronomer -n astronomer | tail -n 1", shell=True
+
+    helm_history = check_output(
+        f"helm3 history { release_name } -n { namespace }", shell=True
     ).decode("utf8")
+    print(f"Helm history: (post-rollback)\n{helm_history}")
+
     assert (
-        "0.23" in result and "deployed" in result
-    ), "Expected rollback to be performed"
+        "0.23" in helm_history.split("\n")[-2]
+    ), "Expected version 0.23 to be installed after rollback"
+    assert (
+        "deployed" in helm_history.split("\n")[-2]
+    ), "Expected state to be deployed after rollback"
