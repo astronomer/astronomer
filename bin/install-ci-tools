@@ -27,10 +27,6 @@ fi
 
 if [[ $FORCE -eq 0 && -f /tmp/bin/helm ]]; then
   echo "helm is already installed."
-fi
-
-if [[ $FORCE -eq 0 && -f /tmp/bin/helm ]]; then
-  echo "helm is already installed."
 else
   # Install helm
   wget "https://get.helm.sh/helm-v${HELM_VERSION}-${OS}-amd64.tar.gz"
