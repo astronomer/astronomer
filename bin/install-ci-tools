@@ -32,7 +32,7 @@ else
   wget "https://get.helm.sh/helm-v${HELM_VERSION}-${OS}-amd64.tar.gz"
   tar -zxvf "./helm-v${HELM_VERSION}-${OS}-amd64.tar.gz"
   mv "${OS}-amd64/helm" /tmp/bin/helm2
-  cp /tmp/bqin/helm2 /tmp/bin/helm
+  cp /tmp/bqin/helm /tmp/bin/helm
 fi
 
 # Add stable helm repo
