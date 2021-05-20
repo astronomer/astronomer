@@ -2,7 +2,7 @@
 
 This repository contains the helm charts for deploying the [Astronomer Platform](https://github.com/astronomer/astronomer) into a Kubernetes cluster.
 
-Astronomer is a commercial "Airflow as a Service" platform that runs on Kubernetes. Source code is made available for the benefit of our customers, if you'd like to use the platform [reach out for a license](https://www.astronomer.io/enterprise/) or try out [Astronomer Cloud](https://www.astronomer.io/cloud/).
+Astronomer is a commercial "Airflow as a Service" platform that runs on Kubernetes. Source code is made available for the benefit of our customers, if you'd like to use the platform [reach out for a license](https://www.astronomer.io/get-astronomer) or try out [Astronomer Cloud](https://www.astronomer.io/get-astronomer).
 
 ## Architecture
 
