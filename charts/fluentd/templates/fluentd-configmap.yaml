@@ -189,6 +189,7 @@ data:
         reload_on_failure true
         reload_connections false
         request_timeout 120s
+        suppress_type_name true
         host "#{ENV['OUTPUT_HOST']}"
         port "#{ENV['OUTPUT_PORT']}"
         index_name fluentd.${record["release"]}.${Time.at(time).getutc.strftime(@logstash_dateformat)}
