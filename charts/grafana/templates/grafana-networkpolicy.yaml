@@ -35,8 +35,8 @@ spec:
     ports:
     {{- if .Values.global.sidecar.enabled  }}
     - protocol: TCP
-      port: {{ .Values.ports.http }}
+      port: 80
     {{- else }}
     - protocol: TCP
-      port: 80
+      port: {{ .Values.ports.http }}
     {{- end }}
