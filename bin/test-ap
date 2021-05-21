@@ -15,10 +15,7 @@ pip install -r "$GIT_ROOT/bin/functional-tests/requirements.txt"
 export NAMESPACE=astronomer
 export RELEASE_NAME=astronomer
 
-# Sleep twice the prometheus scrape period
-# plus five seconds to allow for metrics to be
-# collected, which the functional tests need.
-sleep 65
+echo "Sleeping for 100 seconds to allow metrics to be collected so we can test against them"
 
 pytest -s "$GIT_ROOT/bin/functional-tests/"
 deactivate

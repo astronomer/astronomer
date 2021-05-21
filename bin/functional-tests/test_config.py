@@ -132,8 +132,7 @@ def test_prometheus_config_reloader_works(prometheus, kube_client):
         print(f"Exception when calling CoreV1Api->patch_namespaced_config_map: {e}\n")
 
     # This can take more than a minute.
-    i = 0
-    while i < 12:
+    for i in range(12):
         data = prometheus.check_output(
             "wget -qO- http://localhost:9090/api/v1/status/config"
         )
@@ -145,7 +144,6 @@ def test_prometheus_config_reloader_works(prometheus, kube_client):
             break
         else:
             time.sleep(10)
-        i += 1
 
     # set the config back to it's original settings
     prom_config["global"]["scrape_interval"] = "30s"
@@ -177,54 +175,49 @@ def test_houston_backend_secret_present_after_helm_upgrade_and_container_restart
 
     Regression test for: https://github.com/astronomer/issues/issues/2251
     """
-    helm_chart_path = os.environ.get("HELM_CHART_PATH")
-    if not helm_chart_path:
+    if not (helm_chart_path := os.getenv("HELM_CHART_PATH")):  # noqa F841
         raise Exception(
             "This test only works with HELM_CHART_PATH set to the path of the chart to be tested"
         )
-    namespace = os.environ.get("NAMESPACE")
-    release_name = os.environ.get("RELEASE_NAME")
-    if not namespace:
+
+    if not (namespace := os.getenv("NAMESPACE")):
         print("NAMESPACE env var is not present, using 'astronomer' namespace")
-        namespace = "astronomer"
-    if not release_name:
+        namespace = "astronomer"  # noqa F841
+
+    if not (release_name := os.getenv("RELEASE_NAME")):
         print(
             "RELEASE_NAME env var is not present, assuming 'astronomer' is the release name"
         )
-        release_name = "astronomer"
-    # attempt downgrade with the documented procedure
-    print("Performing a Helm upgrade without hooks twice:\n")
-    command = (
-        "helm3 upgrade --reuse-values "
-        + "--no-hooks "
-        + f"-n {namespace} "
-        + f"{release_name} "
-        + helm_chart_path
-    )
-    print(command)
+        release_name = "astronomer"  # noqa F841
+
+    # Attempt downgrade with the documented procedure.
+    # Run the command twice to ensure the most recent change is a no-operation change
+    command = "helm3 upgrade --reuse-values --no-hooks -n '{namespace}' '{release_name}' {helm_chart_path}"
+    print("Performing a Helm upgrade without hooks twice with command:\n{command}\n")
     print(check_output(command, shell=True))
-    # Run the command twice to ensure the most
-    # recent change is a no-operation change
-    print(check_output(command, shell=True))
-    print("")
+    print(check_output(command, shell=True) + "\n")
+
     result = houston_api.check_output("env | grep DATABASE_URL")
     # check that the connection is not reset
     assert (
         "postgres" in result
     ), "Expected to find DB connection string before Houston restart"
+
     # Kill houston in this pod so the container restarts
     houston_api.check_output("kill 1")
+
     # give time for container to restart
     time.sleep(100)
+
     # we can use kube_client instead of fixture, because we restarted pod so houston_api still ref to old pod id.
-    pods = kube_client.list_namespaced_pod(
+    pod = kube_client.list_namespaced_pod(
         namespace, label_selector="component=houston"
-    )
-    pod = pods.items[0]
+    )[0]
     houston_api_new = testinfra.get_host(
         f"kubectl://{pod.metadata.name}?container=houston&namespace={namespace}"
     )
     result = houston_api_new.check_output("env | grep DATABASE_URL")
+
     # check that the connection is not reset
     assert (
         "postgres" in result

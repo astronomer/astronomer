@@ -1,6 +1,6 @@
-pytest==6.0.1
-testinfra==5.2.2
 docker==4.3.1
 kubernetes==11.0.0
+pytest==6.0.1
 PyYAML==5.4
 rsa>=4.7 # not directly required, pinned by Snyk to avoid a vulnerability
+testinfra==5.2.2
