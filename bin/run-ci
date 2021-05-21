@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
-# shellcheck disable=SC1090
+# shellcheck disable=SC1090,SC1091
+
 set -euo pipefail
 
-BIN_DIR="${0%/*}"
-REPO_DIR="$(git rev-parse --show-toplevel)"
+GIT_ROOT="$(git rev-parse --show-toplevel)"
+BIN_DIR="${GIT_ROOT}/bin"
 
-source "$REPO_DIR/bin/install-ci-tools" 1
+source "$BIN_DIR/install-ci-tools" 1
 export PATH="$PATH:/tmp/bin"
 ls -lh /tmp/bin
 
-source "$REPO_DIR/bin/setup-kind"
+source "$BIN_DIR/setup-kind"
 
 echo "Deploying Astronomer..."
 

@@ -42,26 +42,26 @@ done
 shift $((OPTIND - 1))
 
 # The path to the working directory - the root of the repo
-REPO_DIR="$(git rev-parse --show-toplevel)"
+GIT_ROOT="$(git rev-parse --show-toplevel)"
 
 if [[ -z "${USE_HA+x}" ]]; then
-  CONFIG_FILE="$REPO_DIR/configs/local-dev.yaml"
+  CONFIG_FILE="$GIT_ROOT/configs/local-dev.yaml"
   echo "Using non-HA config file ${CONFIG_FILE##*/}"
 else
-  CONFIG_FILE="$REPO_DIR/configs/local-dev-ha.yaml"
+  CONFIG_FILE="$GIT_ROOT/configs/local-dev-ha.yaml"
   echo "Using HA config file ${CONFIG_FILE##*/}"
 fi
 
 # Fail fast for helm syntax errors
-helm template -f "$CONFIG_FILE" "$REPO_DIR" >/dev/null && echo "Helm template parsed successfully"
+helm template -f "$CONFIG_FILE" "$GIT_ROOT" >/dev/null && echo "Helm template parsed successfully"
 
-source "$REPO_DIR/bin/setup-kind"
+source "$GIT_ROOT/bin/setup-kind"
 
 echo "Deploying Astronomer..."
 helm install -f "$CONFIG_FILE" \
   --namespace astronomer astronomer \
   --set global.postgresqlEnabled=true \
-  "$REPO_DIR"
+  "$GIT_ROOT"
 
 
 echo '

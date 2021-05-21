@@ -3,8 +3,8 @@
 set -euo pipefail
 
 # The path to the working directory - the root of the repo
-REPO_DIR="$(git rev-parse --show-toplevel)"
-source "$REPO_DIR/bin/helpers.sh"
+GIT_ROOT="$(git rev-parse --show-toplevel)"
+source "$GIT_ROOT/bin/helpers.sh"
 
 set +ex
 

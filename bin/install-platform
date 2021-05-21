@@ -4,13 +4,13 @@ set -euo pipefail
 set -x
 
 # The path to the working directory - the root of the repo
-REPO_DIR="$(git rev-parse --show-toplevel)"
-HELM_CHART_PATH=${HELM_CHART_PATH:-$REPO_DIR}
+GIT_ROOT="$(git rev-parse --show-toplevel)"
+HELM_CHART_PATH=${HELM_CHART_PATH:-$GIT_ROOT}
 RELEASE_NAME="${RELEASE_NAME:-astronomer}"
 NAMESPACE="${NAMESPACE:-astronomer}"
 HELM_TIMEOUT=${HELM_TIMEOUT:-800}
 
-source "$REPO_DIR/bin/helpers.sh"
+source "$GIT_ROOT/bin/helpers.sh"
 
 if [[ -z "${ASTRONOMER_VERSION:-}" ]]; then
   ASTRONOMER_VERSION_LINE=""
@@ -64,9 +64,9 @@ fi
 set +e
 
 if [[ -z "${USE_HA+x}" ]]; then
-  CONFIG_FILE=$REPO_DIR/configs/local-dev.yaml
+  CONFIG_FILE=$GIT_ROOT/configs/local-dev.yaml
 else
-  CONFIG_FILE=$REPO_DIR/configs/local-dev-ha.yaml
+  CONFIG_FILE=$GIT_ROOT/configs/local-dev-ha.yaml
 fi
 
 set -x

@@ -3,14 +3,14 @@
 set -euo pipefail
 set -x
 
-REPO_DIR="$(git rev-parse --show-toplevel)"
-BIN_DIR="${REPO_DIR}/bin"
+GIT_ROOT="$(git rev-parse --show-toplevel)"
+BIN_DIR="${GIT_ROOT}/bin"
 
-source "$REPO_DIR/bin/install-ci-tools" 1
+source "$GIT_ROOT/bin/install-ci-tools" 1
 export PATH="$PATH:/tmp/bin"
 ls -lh /tmp/bin
 
-source "$REPO_DIR/bin/setup-kind"
+source "$GIT_ROOT/bin/setup-kind"
 
 export NAMESPACE=astronomer
 export RELEASE_NAME=astronomer
@@ -30,12 +30,12 @@ echo "Loading upgrader image into Kind"
 kind load docker-image lts-23-to-25-upgrade
 
 echo "Astronomer 0.23 installed. Running 0.25 upgrade tests!"
-export HELM_CHART_PATH="$REPO_DIR"  # Must be set to local directory to test chart from current git branch
+export HELM_CHART_PATH="$GIT_ROOT"  # Must be set to local directory to test chart from current git branch
 
 pip3 install virtualenv
 virtualenv --python=python3 /tmp/venv
 source /tmp/venv/bin/activate
-pip install -r "$REPO_DIR/migrations/lts-23-to-25-tests/requirements.txt"
+pip install -r "$GIT_ROOT/migrations/lts-23-to-25-tests/requirements.txt"
 
-pytest -s "$REPO_DIR/migrations/lts-23-to-25-tests"
+pytest -s "$GIT_ROOT/migrations/lts-23-to-25-tests"
 deactivate

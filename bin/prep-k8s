@@ -1,27 +1,26 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC1090,SC1091
+
 set -euo pipefail
 
 # Bit of common bash magic that sets DIR to the directory of this script
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 # The path to the working directory - the root of the repo
-REPO_DIR=$DIR/../
+GIT_ROOT=$DIR/../
 
 echo "Generating SSL keys..."
-source ${REPO_DIR}/bin/generate_ssl_keys
 
-if [[ $? -eq 0 ]]; then
+if source "${GIT_ROOT}/bin/generate_ssl_keys" ; then
   echo "Installed TLS secrets to /tmp/fullchain.pem and /tmp/privkey.pem"
 else
-  echo "Something goes wrong... :("
+  echo "Something went wrong... :("
   exit 1
 fi
 
 kubectl get nodes
 
 echo "Install requirements"
-cd $REPO_DIR/charts/postgresql
-helm dependency update .
-cd $REPO_DIR
+( cd "$GIT_ROOT/charts/postgresql" && helm dependency update . )
 
 echo "Creating namespace 'astronomer'"
 kubectl create namespace astronomer
