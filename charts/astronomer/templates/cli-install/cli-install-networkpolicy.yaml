@@ -21,10 +21,16 @@ spec:
   - Ingress
   ingress:
   - from:
+    {{- if .Values.global.sidecar.enabled  }}
+    - namespaceSelector:
+        matchLabels:
+          network.openshift.io/policy-group: ingress
+    {{- else }}
     - podSelector:
         matchLabels:
           tier: nginx
           component: ingress-controller
+    {{- end }}
     ports:
     - protocol: TCP
       port: {{ .Values.ports.installHTTP }}
