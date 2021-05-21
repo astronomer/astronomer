@@ -175,24 +175,24 @@ def test_houston_backend_secret_present_after_helm_upgrade_and_container_restart
 
     Regression test for: https://github.com/astronomer/issues/issues/2251
     """
-    if not (helm_chart_path := os.getenv("HELM_CHART_PATH")):  # noqa F841
+    if not (helm_chart_path := os.getenv("HELM_CHART_PATH")):
         raise Exception(
             "This test only works with HELM_CHART_PATH set to the path of the chart to be tested"
         )
 
     if not (namespace := os.getenv("NAMESPACE")):
         print("NAMESPACE env var is not present, using 'astronomer' namespace")
-        namespace = "astronomer"  # noqa F841
+        namespace = "astronomer"
 
     if not (release_name := os.getenv("RELEASE_NAME")):
         print(
             "RELEASE_NAME env var is not present, assuming 'astronomer' is the release name"
         )
-        release_name = "astronomer"  # noqa F841
+        release_name = "astronomer"
 
     # Attempt downgrade with the documented procedure.
     # Run the command twice to ensure the most recent change is a no-operation change
-    command = "helm3 upgrade --reuse-values --no-hooks -n '{namespace}' '{release_name}' {helm_chart_path}"
+    command = f"helm3 upgrade --reuse-values --no-hooks -n '{namespace}' '{release_name}' {helm_chart_path}"
     print("Performing a Helm upgrade without hooks twice with command:\n{command}\n")
     print(check_output(command, shell=True))
     print(check_output(command, shell=True) + "\n")
