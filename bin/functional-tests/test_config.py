@@ -181,21 +181,19 @@ def test_houston_backend_secret_present_after_helm_upgrade_and_container_restart
         )
 
     if not (namespace := os.getenv("NAMESPACE")):
-        print("NAMESPACE env var is not present, using 'astronomer' namespace")
+        print("No NAMESPACE env var, using NAMESPACE=astronomer")
         namespace = "astronomer"
 
     if not (release_name := os.getenv("RELEASE_NAME")):
-        print(
-            "RELEASE_NAME env var is not present, assuming 'astronomer' is the release name"
-        )
+        print("No RELEASE_NAME env var, usgin RELEASE_NAME=astronomer")
         release_name = "astronomer"
 
     # Attempt downgrade with the documented procedure.
     # Run the command twice to ensure the most recent change is a no-operation change
     command = f"helm3 upgrade --reuse-values --no-hooks -n '{namespace}' '{release_name}' {helm_chart_path}"
-    print("Performing a Helm upgrade without hooks twice with command:\n{command}\n")
-    print(check_output(command, shell=True))
-    print(check_output(command, shell=True) + "\n")
+    for i in range(2):
+        print(f"Iteration {i+1}/2: {command}\n")
+        print(check_output(command, shell=True).decode("utf8"))
 
     result = houston_api.check_output("env | grep DATABASE_URL")
     # check that the connection is not reset
@@ -212,7 +210,7 @@ def test_houston_backend_secret_present_after_helm_upgrade_and_container_restart
     # we can use kube_client instead of fixture, because we restarted pod so houston_api still ref to old pod id.
     pod = kube_client.list_namespaced_pod(
         namespace, label_selector="component=houston"
-    )[0]
+    ).items[0]
     houston_api_new = testinfra.get_host(
         f"kubectl://{pod.metadata.name}?container=houston&namespace={namespace}"
     )
