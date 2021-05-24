@@ -81,13 +81,33 @@ def test_core_dns_metrics_are_collected(prometheus):
 
     This test should work in CI and locally because Kind uses CoreDNS
     """
+
+    # coredns 1.7.0 changed a bunch of fields, so we have to act differently on >= 1.7.0
+    # https://coredns.io/2020/06/15/coredns-1.7.0-release/
     data = prometheus.check_output(
-        "wget -qO- http://localhost:9090/api/v1/query?query=coredns_dns_request_count_total"
+        "wget -qO- http://localhost:9090/api/v1/query?query=coredns_build_info"
+    )
+    parsed = json.loads(data)
+    coredns_version_string = parsed["data"]["result"][0]["metric"]["version"]
+    coredns_version_list = [int(x) for x in coredns_version_string.split(".")[:3]]
+
+    if coredns_version_list[0] != 1:
+        raise Exception(f"Cannot determine CoreDNS version from {parsed}")
+
+    if coredns_version_list[1] >= 7:
+        metric = "coredns_dns_requests_total"
+    elif coredns_version_list[1] < 7:
+        metric = "coredns_dns_request_count_total"
+    else:
+        raise Exception(f"Cannot determine CoreDNS version from {parsed}")
+
+    data = prometheus.check_output(
+        f"wget -qO- http://localhost:9090/api/v1/query?query={metric}"
     )
     parsed = json.loads(data)
     assert (
         len(parsed["data"]["result"]) > 0
-    ), f"Expected to find a metric coredns_dns_request_count_total, but we got this response:\n\n{parsed}"
+    ), f"Expected to find a metric {metric} in CoreDNS version {'.'.join(coredns_version_list)}, but we got this response:\n\n{parsed}"
 
 
 def test_houston_metrics_are_collected(prometheus):
