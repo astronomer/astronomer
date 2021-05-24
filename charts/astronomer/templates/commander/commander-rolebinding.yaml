@@ -7,6 +7,10 @@ apiVersion: {{ template "apiVersion.rbac.v1beta1" . }}
 kind: {{ if $singleNamespace }}RoleBinding{{ else }}ClusterRoleBinding{{ end }}
 metadata:
   name: {{ .Release.Name }}-commander
+  {{ if .Values.global.enableArgoCDAnnotation }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+  {{- end }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: {{ if $singleNamespace }}Role{{ else }}ClusterRole{{ end }}
