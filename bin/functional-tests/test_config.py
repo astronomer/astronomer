@@ -107,7 +107,7 @@ def test_core_dns_metrics_are_collected(prometheus):
     parsed = json.loads(data)
     assert (
         len(parsed["data"]["result"]) > 0
-    ), f"Expected to find a metric {metric} in CoreDNS version {'.'.join(coredns_version_list)}, but we got this response:\n\n{parsed}"
+    ), f"Expected to find a metric {metric} in CoreDNS version {coredns_version_string}, but we got this response:\n\n{parsed}"
 
 
 def test_houston_metrics_are_collected(prometheus):
