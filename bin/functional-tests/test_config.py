@@ -9,7 +9,7 @@ execs into a running pods.
 """
 
 import json
-import os
+from os import getenv
 import time
 import yaml
 import testinfra
@@ -195,16 +195,16 @@ def test_houston_backend_secret_present_after_helm_upgrade_and_container_restart
 
     Regression test for: https://github.com/astronomer/issues/issues/2251
     """
-    if not (helm_chart_path := os.getenv("HELM_CHART_PATH")):
+    if not (helm_chart_path := getenv("HELM_CHART_PATH")):
         raise Exception(
             "This test only works with HELM_CHART_PATH set to the path of the chart to be tested"
         )
 
-    if not (namespace := os.getenv("NAMESPACE")):
+    if not (namespace := getenv("NAMESPACE")):
         print("No NAMESPACE env var, using NAMESPACE=astronomer")
         namespace = "astronomer"
 
-    if not (release_name := os.getenv("RELEASE_NAME")):
+    if not (release_name := getenv("RELEASE_NAME")):
         print("No RELEASE_NAME env var, usgin RELEASE_NAME=astronomer")
         release_name = "astronomer"
 

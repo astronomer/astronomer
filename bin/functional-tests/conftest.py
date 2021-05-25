@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import os
+from os import getenv
 import pytest
 import docker
 import testinfra
@@ -28,7 +28,7 @@ def nginx(request):
     the testinfra documentation:
     https://testinfra.readthedocs.io/en/latest/examples.html#test-docker-images
     """
-    if not (namespace := os.getenv("NAMESPACE")):
+    if not (namespace := getenv("NAMESPACE")):
         print("NAMESPACE env var is not present, using 'astronomer' namespace")
         namespace = "astronomer"
 
@@ -52,7 +52,7 @@ def houston_api(request):
     the testinfra documentation:
     https://testinfra.readthedocs.io/en/latest/examples.html#test-docker-images
     """
-    if not (namespace := os.getenv("NAMESPACE")):
+    if not (namespace := getenv("NAMESPACE")):
         print("NAMESPACE env var is not present, using 'astronomer' namespace")
         namespace = "astronomer"
 
@@ -74,11 +74,11 @@ def prometheus(request):
     the testinfra documentation:
     https://testinfra.readthedocs.io/en/latest/examples.html#test-docker-images
     """
-    if not (namespace := os.getenv("NAMESPACE")):
+    if not (namespace := getenv("NAMESPACE")):
         print("NAMESPACE env var is not present, using 'astronomer' namespace")
         namespace = "astronomer"
 
-    if not (release_name := os.getenv("RELEASE_NAME")):
+    if not (release_name := getenv("RELEASE_NAME")):
         print(
             "RELEASE_NAME env var is not present, assuming 'astronomer' is the release name"
         )
