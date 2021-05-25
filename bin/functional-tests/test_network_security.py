@@ -1,4 +1,4 @@
-import os
+from os import getenv
 import sys
 import logging
 from random import randint
@@ -9,7 +9,7 @@ import xml.etree.ElementTree as xml_parser
 import testinfra
 from kubernetes import client, config
 
-if os.environ.get("DEBUG"):
+if getenv("DEBUG"):
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 else:
     logging.basicConfig(stream=sys.stdout, level=logging.INFO)

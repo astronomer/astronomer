@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC1090,SC1091
+
 set -euo pipefail
 
-# Bit of common bash magic that sets DIR to the directory of this script
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-# The path to the working directory - the root of the repo
-REPO_DIR=$DIR/../
+GIT_ROOT="$(git rev-parse --show-toplevel)"
 
 helm3 repo add astronomer-internal https://internal-helm.astronomer.io
 helm3 repo update
@@ -12,14 +11,11 @@ helm3 repo update
 pip3 install virtualenv
 virtualenv --python=python3 /tmp/venv
 source /tmp/venv/bin/activate
-pip install -r $REPO_DIR/bin/functional-tests/requirements.txt
+pip install -r "$GIT_ROOT/bin/functional-tests/requirements.txt"
 export NAMESPACE=astronomer
 export RELEASE_NAME=astronomer
 
-# Sleep twice the prometheus scrape period
-# plus five seconds to allow for metrics to be
-# collected, which the functional tests need.
-sleep 65
+echo "Sleeping for 100 seconds to allow metrics to be collected so we can test against them"
 
-pytest -s $REPO_DIR/bin/functional-tests/
+pytest -s "$GIT_ROOT/bin/functional-tests/"
 deactivate

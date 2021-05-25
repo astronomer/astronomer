@@ -5,7 +5,7 @@ set -euo pipefail
 export KUBE_VERSION="${KUBE_VERSION:-v1.18.15}"
 
 # The path to the working directory - the root of the repo
-REPO_DIR="$(git rev-parse --show-toplevel)"
+GIT_ROOT="$(git rev-parse --show-toplevel)"
 
 echo "Beginning KIND setup with KUBE_VERSION=${KUBE_VERSION}"
 echo "Checking tools are installed"
@@ -23,7 +23,7 @@ for executable in mkcert kind helm kubectl docker; do
 done
 
 echo "Generating SSL keys..."
-if "${REPO_DIR}/bin/generate_ssl_keys" ; then
+if "${GIT_ROOT}/bin/generate_ssl_keys" ; then
   echo "Installed TLS secrets to /tmp/fullchain.pem and /tmp/privkey.pem"
 else
   echo "Something went wrong... 😭"
@@ -36,9 +36,9 @@ set -xe
 # Delete the old cluster, if it exists
 kind delete cluster || true
 
-KIND_OPTIONS=( --config "${REPO_DIR}/bin/kind/calico.yaml" --image "kindest/node:${KUBE_VERSION}" )
+KIND_OPTIONS=( --config "${GIT_ROOT}/bin/kind/calico.yaml" --image "kindest/node:${KUBE_VERSION}" )
 if [[ -n "${MULTI_NODE+x}" ]]; then
-  KIND_OPTIONS+=( --config "$REPO_DIR/bin/kind/multi-node.yaml" )
+  KIND_OPTIONS+=( --config "$GIT_ROOT/bin/kind/multi-node.yaml" )
 fi
 
 # Start a cluster
@@ -71,18 +71,18 @@ kubectl apply -f https://docs.projectcalico.org/v3.8/manifests/calico.yaml
 kubectl -n kube-system set env daemonset/calico-node FELIX_IGNORELOOSERPF=true
 echo "Waiting for core services like Calico and Kube DNS to become ready"
 sleep 10
-"$REPO_DIR/bin/waitfor-platform"
+"$GIT_ROOT/bin/waitfor-platform"
 
 echo "Install requirements"
-cd "$REPO_DIR/charts/postgresql"
+cd "$GIT_ROOT/charts/postgresql"
 helm dependency update .
-cd "$REPO_DIR"
+cd "$GIT_ROOT"
 
 echo "Creating namespace 'astronomer'"
 kubectl create namespace astronomer
 
 (
-  cd "${REPO_DIR}"
+  cd "${GIT_ROOT}"
   mkcert -cert-file=server.pem -key-file=server.key server.example.org
   # shellcheck disable=SC2140
   kubectl --namespace astronomer create secret generic "private-ca" --from-file="cert.pem"="$(mkcert -CAROOT)/rootCA.pem"

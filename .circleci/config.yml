@@ -109,12 +109,22 @@ jobs:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging kubed keda"
 
-  platform-1-18-15:
+  platform-1-18-19:
     machine:
       image: ubuntu-2004:202101-01
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.18.15
+      KUBE_VERSION: v1.18.19
+    steps:
+      - helm-install:
+          astronomer-tags: "platform postgresql monitoring logging kubed keda"
+
+  platform-1-19-11:
+    machine:
+      image: ubuntu-2004:202101-01
+      resource_class: xlarge
+    environment:
+      KUBE_VERSION: v1.19.11
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging kubed keda"
@@ -124,7 +134,7 @@ jobs:
       image: ubuntu-2004:202101-01
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.18.15
+      KUBE_VERSION: v1.19.11
     steps:
       - lts-23-to-25-test
 
@@ -188,7 +198,10 @@ workflows:
             - test-all-platforms
             - build-artifact
 
-      - platform-1-18-15:
+      - platform-1-18-19:
+          requires:
+            - build-artifact
+      - platform-1-19-11:
           requires:
             - build-artifact
       - approve-internal-release:
@@ -204,7 +217,8 @@ workflows:
             - approve-internal-release
             - platform-1-16-15
             - platform-1-17-17
-            - platform-1-18-15
+            - platform-1-18-19
+            - platform-1-19-11
           filters:
             branches:
               only:
@@ -348,6 +362,7 @@ commands:
       - run:
           name: Install Astronomer chart
           command: |
+            echo 'export PATH="/tmp/bin:/tmp/google-cloud-sdk/bin:$PATH"' >> "$HOME/.bashrc"
             set -e
             HELM_CHART_PATH='/tmp/workspace/astronomer-*.tgz' bin/run-ci << parameters.astronomer-tags >>
 

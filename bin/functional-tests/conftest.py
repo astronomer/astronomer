@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import os
+from os import getenv
 import pytest
 import docker
 import testinfra
@@ -28,16 +28,10 @@ def nginx(request):
     the testinfra documentation:
     https://testinfra.readthedocs.io/en/latest/examples.html#test-docker-images
     """
-    namespace = os.environ.get("NAMESPACE")
-    release_name = os.environ.get("RELEASE_NAME")
-    if not namespace:
+    if not (namespace := getenv("NAMESPACE")):
         print("NAMESPACE env var is not present, using 'astronomer' namespace")
         namespace = "astronomer"
-    if not release_name:
-        print(
-            "RELEASE_NAME env var is not present, assuming 'astronomer' is the release name"
-        )
-        release_name = "astronomer"
+
     kube = create_kube_client()
     pods = kube.list_namespaced_pod(
         namespace, label_selector="component=ingress-controller"
@@ -58,16 +52,10 @@ def houston_api(request):
     the testinfra documentation:
     https://testinfra.readthedocs.io/en/latest/examples.html#test-docker-images
     """
-    namespace = os.environ.get("NAMESPACE")
-    release_name = os.environ.get("RELEASE_NAME")
-    if not namespace:
+    if not (namespace := getenv("NAMESPACE")):
         print("NAMESPACE env var is not present, using 'astronomer' namespace")
         namespace = "astronomer"
-    if not release_name:
-        print(
-            "RELEASE_NAME env var is not present, assuming 'astronomer' is the release name"
-        )
-        release_name = "astronomer"
+
     kube = create_kube_client()
     pods = kube.list_namespaced_pod(namespace, label_selector="component=houston")
     pods = pods.items
@@ -86,12 +74,11 @@ def prometheus(request):
     the testinfra documentation:
     https://testinfra.readthedocs.io/en/latest/examples.html#test-docker-images
     """
-    namespace = os.environ.get("NAMESPACE")
-    release_name = os.environ.get("RELEASE_NAME")
-    if not namespace:
+    if not (namespace := getenv("NAMESPACE")):
         print("NAMESPACE env var is not present, using 'astronomer' namespace")
         namespace = "astronomer"
-    if not release_name:
+
+    if not (release_name := getenv("RELEASE_NAME")):
         print(
             "RELEASE_NAME env var is not present, assuming 'astronomer' is the release name"
         )

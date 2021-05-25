@@ -12,11 +12,11 @@
       }
     ]
   },
-  "description": "A dashboard for the CoreDNS DNS server version <1.7.0. If this is blank, check the CoreDNS 1.7.0 or kube-dns dashboards.",
+  "description": "A dashboard for the CoreDNS DNS server version >=1.7.0. If this is blank, check the CoreDNS 1.6.0 or kube-dns dashboards.",
   "editable": true,
-  "gnetId": 5926,
+  "gnetId": null,
   "graphTooltip": 0,
-  "id": 14,
+  "id": null,
   "iteration": 1599080384489,
   "links": [],
   "panels": [
@@ -76,7 +76,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(rate(coredns_dns_request_count_total{instance=~\"$instance\"}[5m])) by (proto)",
+          "expr": "sum(rate(coredns_dns_requests_total{instance=~\"$instance\"}[5m])) by (proto)",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "{{proto}}",
@@ -84,7 +84,7 @@
           "step": 60
         },
         {
-          "expr": "sum(rate(coredns_dns_request_count_total{instance=~\"$instance\"}[5m]))",
+          "expr": "sum(rate(coredns_dns_requests_total{instance=~\"$instance\"}[5m]))",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "total",
@@ -191,7 +191,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(rate(coredns_dns_request_type_count_total{instance=~\"$instance\"}[5m])) by (type)",
+          "expr": "sum(rate(coredns_dns_requests_total{instance=~\"$instance\"}[5m])) by (type)",
           "intervalFactor": 2,
           "legendFormat": "{{type}}",
           "refId": "A",
@@ -293,14 +293,14 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(rate(coredns_dns_request_count_total{instance=~\"$instance\"}[5m])) by (zone)",
+          "expr": "sum(rate(coredns_dns_requests_total{instance=~\"$instance\"}[5m])) by (zone)",
           "intervalFactor": 2,
           "legendFormat": "{{zone}}",
           "refId": "A",
           "step": 60
         },
         {
-          "expr": "sum(rate(coredns_dns_request_count_total{instance=~\"$instance\"}[5m]))",
+          "expr": "sum(rate(coredns_dns_requests_total{instance=~\"$instance\"}[5m]))",
           "intervalFactor": 2,
           "legendFormat": "total",
           "refId": "B",
@@ -402,14 +402,14 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(rate(coredns_dns_request_do_count_total{instance=~\"$instance\"}[5m]))",
+          "expr": "sum(rate(coredns_dns_do_requests_total{instance=~\"$instance\"}[5m]))",
           "intervalFactor": 2,
           "legendFormat": "DO",
           "refId": "A",
           "step": 40
         },
         {
-          "expr": "sum(rate(coredns_dns_request_count_total{instance=~\"$instance\"}[5m]))",
+          "expr": "sum(rate(coredns_dns_requests_total{instance=~\"$instance\"}[5m]))",
           "intervalFactor": 2,
           "legendFormat": "total",
           "refId": "B",
@@ -754,7 +754,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(rate(coredns_dns_response_rcode_count_total{instance=~\"$instance\"}[5m])) by (rcode)",
+          "expr": "sum(rate(coredns_dns_responses_total{instance=~\"$instance\"}[5m])) by (rcode)",
           "intervalFactor": 2,
           "legendFormat": "{{rcode}}",
           "refId": "A",
@@ -1223,7 +1223,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(coredns_cache_size{instance=~\"$instance\"}) by (type)",
+          "expr": "sum(coredns_cache_entries{instance=~\"$instance\"}) by (type)",
           "intervalFactor": 2,
           "legendFormat": "{{type}}",
           "refId": "A",
@@ -1445,7 +1445,7 @@
     ]
   },
   "timezone": "utc",
-  "title": "CoreDNS 1.6.0",
-  "uid": "oRLSzKvMz",
+  "title": "CoreDNS 1.7.0",
+  "uid": "zoRLSzKvM",
   "version": 2
 }
