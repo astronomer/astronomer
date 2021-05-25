@@ -6,7 +6,7 @@ tests:
     asserts:
       - isKind:
           of: Role
-  - it: should not contains argoCD annotations by default
+  - it: should not contain argoCD annotations by default
     asserts:
       - isNull:
           path: metadata.annotations
