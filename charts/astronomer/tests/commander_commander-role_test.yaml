@@ -2,7 +2,11 @@ suite: Test commander/commander-role.yaml
 templates:
 - commander/commander-role.yaml
 tests:
-- it: should work
-  asserts:
+  - it: should work
+    asserts:
     - isKind:
         of: ClusterRole
+  - it: should not contains argoCD annotations by default
+    asserts:
+      - isNull:
+          path: metadata.annotations

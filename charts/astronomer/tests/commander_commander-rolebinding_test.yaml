@@ -1,8 +1,12 @@
 suite: Test commander/commander-rolebinding.yaml
 templates:
-- commander/commander-rolebinding.yaml
+  - commander/commander-rolebinding.yaml
 tests:
-- it: should work
-  asserts:
-    - isKind:
-        of: ClusterRoleBinding
+  - it: should work
+    asserts:
+      - isKind:
+          of: ClusterRoleBinding
+  - it: should not contains argoCD annotations by default
+    asserts:
+      - isNull:
+          path: metadata.annotations
