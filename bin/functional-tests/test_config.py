@@ -15,6 +15,7 @@ import yaml
 import testinfra
 from subprocess import check_output
 from kubernetes.client.rest import ApiException
+import pytest
 
 
 def test_default_disabled(kube_client):
@@ -64,6 +65,7 @@ def test_nginx_can_reach_default_backend(nginx):
     )
 
 
+@pytest.mark.flaky(reruns=5, reruns_delay=15)
 def test_prometheus_targets(prometheus):
     """Ensure all Prometheus targets are healthy"""
     data = prometheus.check_output("wget -qO- http://localhost:9090/api/v1/targets")
