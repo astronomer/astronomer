@@ -1,0 +1,8 @@
+suite: Test houston/helm-hooks/houston-db-migration-job.yaml
+templates:
+  - houston/helm-hooks/houston-db-migration-job.yaml
+tests:
+  - it: should work
+    asserts:
+      - isKind:
+          of: Job
