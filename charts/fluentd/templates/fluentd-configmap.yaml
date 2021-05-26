@@ -224,7 +224,7 @@ data:
           retry_max_interval 30
           chunk_limit_size "#{ENV['OUTPUT_BUFFER_CHUNK_LIMIT']}"
           queue_limit_length "#{ENV['OUTPUT_BUFFER_QUEUE_LIMIT']}"
-          overflow_action block
+          overflow_action drop_oldest_chunk
         </buffer>
       </store>
       {{- end }}
