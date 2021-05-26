@@ -2,6 +2,7 @@ suite: Test commander/commander-service.yaml
 templates:
   - commander/commander-service.yaml
 tests:
+<<<<<<< HEAD
   - it: should work
     asserts:
       - isKind:
@@ -10,3 +11,18 @@ tests:
     asserts:
       - isNull:
           path: metadata.annotations
+||||||| parent of cfb2c110 (add few negative tests)
+- it: should work
+  asserts:
+    - isKind:
+        of: Service
+=======
+  - it: should work
+    asserts:
+      - isKind:
+          of: Service
+  - it: should not contains argoCD annotations by default
+    asserts:
+      - isNull:
+          path: metadata.annotations
+>>>>>>> cfb2c110 (add few negative tests)

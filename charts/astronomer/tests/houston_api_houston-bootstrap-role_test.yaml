@@ -2,6 +2,7 @@ suite: Test houston/api/houston-bootstrap-role.yaml
 templates:
   - houston/api/houston-bootstrap-role.yaml
 tests:
+<<<<<<< HEAD
   - it: should work
     asserts:
       - isKind:
@@ -10,3 +11,18 @@ tests:
     asserts:
       - isNull:
           path: metadata.annotations
+||||||| parent of cfb2c110 (add few negative tests)
+- it: should work
+  asserts:
+    - isKind:
+        of: Role
+=======
+  - it: should work
+    asserts:
+      - isKind:
+          of: Role
+  - it: should not contains argoCD annotations by default
+    asserts:
+      - isNull:
+          path: metadata.annotations
+>>>>>>> cfb2c110 (add few negative tests)

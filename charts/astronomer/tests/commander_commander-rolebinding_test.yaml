@@ -2,6 +2,7 @@ suite: Test commander/commander-rolebinding.yaml
 templates:
   - commander/commander-rolebinding.yaml
 tests:
+<<<<<<< HEAD
   - it: should work
     asserts:
       - isKind:
@@ -10,3 +11,18 @@ tests:
     asserts:
       - isNull:
           path: metadata.annotations
+||||||| parent of cfb2c110 (add few negative tests)
+- it: should work
+  asserts:
+    - isKind:
+        of: ClusterRoleBinding
+=======
+  - it: should work
+    asserts:
+      - isKind:
+          of: ClusterRoleBinding
+  - it: should not contains argoCD annotations by default
+    asserts:
+      - isNull:
+          path: metadata.annotations
+>>>>>>> cfb2c110 (add few negative tests)
