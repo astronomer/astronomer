@@ -35,8 +35,7 @@ def nginx(request):
     kube = create_kube_client()
     pods = kube.list_namespaced_pod(
         namespace, label_selector="component=ingress-controller"
-    )
-    pods = pods.items
+    ).items
     assert (
         len(pods) > 0
     ), "Expected to find at least one pod with label 'component: ingress-controller'"
@@ -57,8 +56,7 @@ def houston_api(request):
         namespace = "astronomer"
 
     kube = create_kube_client()
-    pods = kube.list_namespaced_pod(namespace, label_selector="component=houston")
-    pods = pods.items
+    pods = kube.list_namespaced_pod(namespace, label_selector="component=houston").items
     assert (
         len(pods) > 0
     ), "Expected to find at least one pod with label 'component: houston'"
