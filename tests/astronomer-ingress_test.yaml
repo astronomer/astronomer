@@ -1,4 +1,6 @@
 ---
+# Note: tests that require setting global values must live in the parent chart, not the sub-chart!
+
 suite: Test ingress
 templates:
   - charts/astronomer/templates/ingress.yaml
