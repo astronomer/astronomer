@@ -1,7 +1,7 @@
 ---
 # Good example of multi-template test. statefulset requires configmap to be present to be
 # rendered. The two template files must be tested with different assertions, so each test
-# references the template that it is valid for. configmap has no global assertions tough,
+# references the template that it is valid for. configmap has no global assertions though,
 # so its tests live in the sub-chart, not the parent chart.
 
 suite: Test alertmanager-statefulset
