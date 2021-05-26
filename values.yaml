@@ -112,6 +112,11 @@ global:
   # Storage class for persistent volumes. If you have multiple storage classes available this will force all charts with persistent
   # volumes to use the one specified here.
   # storageClass: ~
+  
+  # Enable argo CD annotations currently available only for:
+  # ServiceAccounts, ClusterRoles, RoleBindings, ClusterRoleBindings
+  # https://github.com/argoproj/argo-cd/blob/master/docs/user-guide/sync-waves.md
+  enableArgoCDAnnotation: false
 
 #################################
 ## Default tagged groups enabled

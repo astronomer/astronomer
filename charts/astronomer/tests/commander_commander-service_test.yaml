@@ -1,8 +1,12 @@
 suite: Test commander/commander-service.yaml
 templates:
-- commander/commander-service.yaml
+  - commander/commander-service.yaml
 tests:
-- it: should work
-  asserts:
-    - isKind:
-        of: Service
+  - it: should work
+    asserts:
+      - isKind:
+          of: Service
+  - it: should not contain argoCD annotations by default
+    asserts:
+      - isNull:
+          path: metadata.annotations

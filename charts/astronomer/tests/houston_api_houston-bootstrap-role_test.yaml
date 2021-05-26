@@ -1,8 +1,12 @@
 suite: Test houston/api/houston-bootstrap-role.yaml
 templates:
-- houston/api/houston-bootstrap-role.yaml
+  - houston/api/houston-bootstrap-role.yaml
 tests:
-- it: should work
-  asserts:
-    - isKind:
-        of: Role
+  - it: should work
+    asserts:
+      - isKind:
+          of: Role
+  - it: should not contain argoCD annotations by default
+    asserts:
+      - isNull:
+          path: metadata.annotations
