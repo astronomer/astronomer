@@ -25,3 +25,30 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].readinessProbe.httpGet.port
           value: "monitor"
+  - it: is only one resource in this template
+    asserts:
+      - hasDocuments:
+          count: 1
+  - it: if another container is added, a test should also be added
+    set:
+      exporter.enabled: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers
+          count: 2
+  - it: configuration of resources works
+    set:
+      stan.resources.requests.cpu: 123m
+      exporter.enabled: true
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.cpu
+          value: 123m
+  - it: configuration of resources works on metrics sidecar
+    set:
+      exporter.resources.requests.cpu: 234m
+      exporter.enabled: true
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[1].resources.requests.cpu
+          value: 234m
