@@ -1,7 +1,0 @@
-#!/usr/bin/env bash
-set -euo pipefail
-
-# Deletes PVCs from current namespace
-# TODO: Namespace option
-
- kubectl get pvc | grep -E 'alertmanager|elasticsearch|prometheus|registry' | awk '{print $1}' | xargs kubectl delete pvc
