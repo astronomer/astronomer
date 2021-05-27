@@ -28,13 +28,14 @@ tests:
           path: apiVersion
           value: networking.k8s.io/v1beta1
 
-  - it: "Should use ingress networking.k8s.io/v1 with k8s >= 1.19"
-    set:
-      global.baseDomain: example.com
-    capabilities:
-      majorVersion: 1
-      minorVersion: 19
-    asserts:
-      - equal:
-          path: apiVersion
-          value: networking.k8s.io/v1
+  # This test passes with latest quintush but fails with our old fork. https://github.com/astronomer/issues/issues/2701
+  # - it: "Should use ingress networking.k8s.io/v1 with k8s >= 1.19"
+  #   set:
+  #     global.baseDomain: example.com
+  #   capabilities:
+  #     majorVersion: 1
+  #     minorVersion: 19
+  #   asserts:
+  #     - equal:
+  #         path: apiVersion
+  #         value: networking.k8s.io/v1
