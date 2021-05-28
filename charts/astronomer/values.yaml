@@ -21,7 +21,6 @@ images:
     repository: quay.io/astronomer/ap-registry
     tag: 3.13.7
     pullPolicy: IfNotPresent
-    # httpSecret: ~
   houston:
     repository: quay.io/astronomer/ap-houston-api
     tag: 0.25.5

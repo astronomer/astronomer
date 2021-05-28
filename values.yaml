@@ -98,8 +98,6 @@ global:
   privateRegistry:
     enabled: false
     repository: ~
-    # user: ~
-    # password: ~
 
   # SSL support for using SSL connections to encrypt client/server communication between database and Astronomer platform
   ssl:
