@@ -162,7 +162,6 @@ workflows:
 
       - build-lts-23-to-25-upgrade:
           requires:
-            - lint
             - approve-lts-upgrader-build
 
       - lts-23-to-25-test:
