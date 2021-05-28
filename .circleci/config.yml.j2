@@ -17,7 +17,7 @@ jobs:
             KUBE_VERSIONS=( {% for version in kube_versions %}v{{ version }} {% endfor %})
             for k8s_version in "${KUBE_VERSIONS[@]}" ; do
               echo "Testing k8s version ${k8s_version} for deprecations"
-              helm template -f values.yaml --set baseDomain=example.com . --api-versions "${k8s_version}" |
+              helm template -f values.yaml --set baseDomain=example.com . --kube-version "${k8s_version}" |
               kubepug --error-on-deprecated --error-on-deleted --k8s-version "${k8s_version}" --input-file /dev/stdin
             done
 
