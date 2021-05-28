@@ -157,8 +157,6 @@ workflows:
   version: 2.1
   build-and-release-upgrader:
     jobs:
-      - lint
-      - api-deprecations-test
       - approve-lts-upgrader-build:
           type: approval
 
@@ -196,6 +194,7 @@ workflows:
   build-and-release-helm-chart:
     jobs:
       - lint
+      - api-deprecations-test
       - unittest-charts
       - build-artifact:
           requires:
