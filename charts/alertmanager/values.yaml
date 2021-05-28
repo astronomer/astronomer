@@ -57,3 +57,5 @@ customRoutes: []
 #   match_re:
 #     tier: platform
 #     namespace: ^(test-ns.*)
+
+enableNonRFC1918: false

@@ -34,3 +34,21 @@ tests:
       - equal:
           path: spec.template.spec.securityContext.fsGroup
           value: 65534
+  - it: should work
+    template: charts/alertmanager/templates/alertmanager-statefulset.yaml
+    asserts:
+      - isKind:
+          of: StatefulSet
+  - it: should have POD_IP environment variable and cluster.advertise args if enableNonRFC1918 is true
+    template: charts/alertmanager/templates/alertmanager-statefulset.yaml
+    set:
+      enableNonRFC1918: true
+    assert:
+      contains:
+        path: containers.env.name
+        content:
+          name: POD_IP
+      matchRegex:
+        path: containers.args
+        pattern: --cluster.advertise-address=\$\(POD_IP\):9094$
+      

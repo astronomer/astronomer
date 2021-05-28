@@ -42,6 +42,12 @@ spec:
           image: {{ template "alertmanager.image" . }}
           imagePullPolicy: {{ .Values.images.alertmanager.pullPolicy }}
           env:
+            {{- if .Values.enableNonRFC1918 }}
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            {{- end }}
             {{- range $key, $value := .Values.env }}
             - name: {{ $key }}
               value: {{ $value }}
@@ -54,6 +60,9 @@ spec:
           {{- end }}
           {{- if .Values.disableClustering }}
             - --cluster.listen-address=
+          {{- end }}
+          {{- if .Values.enableNonRFC1918 }}
+            - --cluster.advertise-address=$(POD_IP):9094
           {{- end }}
           ports:
             - containerPort: {{ .Values.ports.http }}
