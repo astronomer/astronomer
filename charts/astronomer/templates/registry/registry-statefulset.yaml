@@ -56,11 +56,11 @@ spec:
           imagePullPolicy: {{ .Values.images.registry.pullPolicy }}
           env:
           - name: REGISTRY_HTTP_SECRET
-					  {{- if .Values.registry.httpSecret }}
+            {{- if .Values.registry.httpSecret }}
             value: {{ .Values.registry.httpSecret }}
-						{{- else }}
-						value: {{ randAlphaNum 32 }}
-						{{- end }}
+            {{- else }}
+            value: {{ randAlphaNum 32 }}
+            {{- end }}
           resources:
 {{ toYaml .Values.registry.resources | indent 12 }}
           volumeMounts:
