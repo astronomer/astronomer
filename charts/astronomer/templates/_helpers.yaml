@@ -65,11 +65,11 @@
   {{- else }}
   {{- $user := randAlphaNum 16 -}}
   {{- end }}
-	{{- if .Values.global.privateRegistry.password }}
-	{{- $pass := .Values.global.privateRegistry.password -}}
-	{{- else }}
-	{{- $pass := randAlphaNum 32 -}}
-	{{- end }}
+  {{- if .Values.global.privateRegistry.password }}
+  {{- $pass := .Values.global.privateRegistry.password -}}
+  {{- else }}
+  {{- $pass := randAlphaNum 32 -}}
+  {{- end }}
   {{- $config := dict "auths" -}}
   {{- $auth := dict -}}
   {{- $data := dict -}}
