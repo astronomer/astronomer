@@ -58,4 +58,4 @@ customRoutes: []
 #     tier: platform
 #     namespace: ^(test-ns.*)
 
-enableNonRFC: false
+enableNonRFC1918: false
