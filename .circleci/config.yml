@@ -8,6 +8,21 @@ executors:
     docker:
       - image: circleci/python:3
 jobs:
+  api-deprecations-test:
+    docker:
+      - image: quay.io/astronomer/ci-helm-release:2021-05
+    steps:
+      - checkout
+      - run:
+          name: Run Kubepug on all k8s versions
+          command: |
+            KUBE_VERSIONS=( 1.16.15 1.17.17 1.18.19 1.19.11 )
+            for k8s_version in "${KUBE_VERSIONS[@]}" ; do
+              echo "Testing k8s version ${k8s_version} for deprecations"
+              helm template -f values.yaml --set baseDomain=example.com . --api-versions "${k8s_version}" |
+              kubepug --error-on-deprecated --error-on-deleted --k8s-version "${k8s_version}" --input-file /dev/stdin
+            done
+
   lint:
     docker:
       - image: quay.io/astronomer/ap-build:0.2.0
@@ -143,6 +158,7 @@ workflows:
   build-and-release-upgrader:
     jobs:
       - lint
+      - api-deprecations-test
       - approve-lts-upgrader-build:
           type: approval
 
