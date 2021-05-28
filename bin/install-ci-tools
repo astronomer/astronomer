@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 set -xeuo pipefail
 
-KIND_VERSION="0.10.0"
+KIND_VERSION="0.11.1"
 HELM2_VERSION="2.17.0"
-HELM3_VERSION="3.5.3"
-GCLOUD_VERSION="334.0.0"
+HELM3_VERSION="3.6.0"
+GCLOUD_VERSION="342.0.0"
 MKCERT_VERSION="1.4.3"
 
 OS=$(uname | tr '[:upper:]' '[:lower:]')
