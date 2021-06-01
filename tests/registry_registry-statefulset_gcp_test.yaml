@@ -1,0 +1,13 @@
+suite: Test-registry-statefulset
+templates:
+  - charts/astronomer/templates/registry/registry-statefulset.yaml
+tests:
+  - it: Should create statefulset if gcs.enabled is set to false
+    set:
+      global.baseDomain: example.com
+      astronomer.registry.gcs.useKeyfile: true
+      astronomer.registry.gcs.enabled: false
+    asserts:
+      - isKind:
+          of: StatefulSet
+

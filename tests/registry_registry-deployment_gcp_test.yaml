@@ -1,0 +1,15 @@
+suite: Test-deployment-and-volume-mount
+templates:
+  - charts/astronomer/templates/registry/registry-statefulset.yaml
+tests:
+  - it: should be a deployment and have gcs volume mount if useKeyfile is true
+    set:
+      global.baseDomain: example.com
+      astronomer.registry.gcs.useKeyfile: true
+      astronomer.registry.gcs.enabled: true
+    asserts:
+      - isKind:
+          of: Deployment
+      - equal:
+          path: spec.template.spec.containers[0].volumeMounts[3].name
+          value: gcs-keyfile
