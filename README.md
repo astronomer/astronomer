@@ -40,12 +40,6 @@ Run this script from the root of this repository:
 bin/reset-local-dev
 ```
 
-For MacOS, if kind version >=0.8.1, use the following command
-
-```sh
-KIND_EXPERIMENTAL_DOCKER_NETWORK=bridge ./bin/reset-local-dev
-```
-
 Each time you run the script, the platform will be fully reset to the current helm chart.
 
 ### Customizing the local deployment
