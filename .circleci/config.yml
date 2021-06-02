@@ -17,12 +17,18 @@ jobs:
           name: Run Kubepug on all k8s versions
           command: |
             set -x
-            KUBE_VERSIONS=( v1.16.15 v1.17.17 v1.18.19 v1.19.11 )
-            for k8s_version in "${KUBE_VERSIONS[@]}" ; do
-              echo "Testing k8s version ${k8s_version} for deprecations"
-              helm template -f values.yaml --set baseDomain=example.com . --kube-version "${k8s_version}" |
-              kubepug --error-on-deprecated --error-on-deleted --k8s-version "${k8s_version}" --input-file /dev/stdin
-            done
+
+            helm template -f values.yaml --set baseDomain=example.com --kube-version v1.16.15 . |
+            kubepug --error-on-deprecated --error-on-deleted --k8s-version v1.16.15 --input-file /dev/stdin
+
+            helm template -f values.yaml --set baseDomain=example.com --kube-version v1.17.17 . |
+            kubepug --error-on-deprecated --error-on-deleted --k8s-version v1.17.17 --input-file /dev/stdin
+
+            helm template -f values.yaml --set baseDomain=example.com --kube-version v1.18.19 . |
+            kubepug --error-on-deprecated --error-on-deleted --k8s-version v1.18.19 --input-file /dev/stdin
+
+            helm template -f values.yaml --set baseDomain=example.com --kube-version v1.19.11 . |
+            kubepug --error-on-deprecated --error-on-deleted --k8s-version v1.19.11 --input-file /dev/stdin
 
   lint:
     docker:
