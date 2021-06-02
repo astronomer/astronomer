@@ -60,9 +60,17 @@
 {{ define "registry.docker.config" -}}
   {{- $domain := printf "registry.%v" .Values.global.baseDomain }}
   {{- $email := printf "admin@%v" .Values.global.baseDomain }}
-  {{- $user := randAlphaNum 16 -}}
-  {{- $pass := randAlphaNum 32 -}}
 
+  {{- $user := randAlphaNum 16 -}}
+  {{- if .Values.global.privateRegistry.user -}}
+  {{- $user := .Values.global.privateRegistry.user -}}
+  {{- end }}
+
+  {{- $pass := randAlphaNum 32 -}}
+  {{- if .Values.global.privateRegistry.password -}}
+  {{- $pass := .Values.global.privateRegistry.password -}}
+  {{- end }}
+  
   {{- $config := dict "auths" -}}
   {{- $auth := dict -}}
   {{- $data := dict -}}
