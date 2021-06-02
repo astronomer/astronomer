@@ -29,8 +29,6 @@ sleep 5
 
 "$BIN_DIR/setup-hosts"
 
-/tmp/bin/kubepug --error-on-deprecated --error-on-deleted
-
 # "$BIN_DIR/create-initial-user" "tester@astronomer.io" "password"
 
 sudo kill -9 $WATCH_PID

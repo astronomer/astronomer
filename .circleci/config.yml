@@ -120,6 +120,10 @@ jobs:
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging kubed keda"
+      - kubepug:
+          name: kubepug
+          run: /tmp/bin/kubepug --error-on-deprecated --error-on-deleted
+          when: always
 
   platform-1-17-17:
     machine:
@@ -130,6 +134,10 @@ jobs:
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging kubed keda"
+      - kubepug:
+          name: kubepug
+          run: /tmp/bin/kubepug --error-on-deprecated --error-on-deleted
+          when: always
 
   platform-1-18-19:
     machine:
@@ -140,6 +148,10 @@ jobs:
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging kubed keda"
+      - kubepug:
+          name: kubepug
+          run: /tmp/bin/kubepug --error-on-deprecated --error-on-deleted
+          when: always
 
   platform-1-19-11:
     machine:
@@ -150,6 +162,10 @@ jobs:
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging kubed keda"
+      - kubepug:
+          name: kubepug
+          run: /tmp/bin/kubepug --error-on-deprecated --error-on-deleted
+          when: always
 
   lts-23-to-25-test:
     machine:
