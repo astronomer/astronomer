@@ -16,6 +16,7 @@ jobs:
       - run:
           name: Run Kubepug on all k8s versions
           command: |
+            set -x
             KUBE_VERSIONS=( v1.16.15 v1.17.17 v1.18.19 v1.19.11 )
             for k8s_version in "${KUBE_VERSIONS[@]}" ; do
               echo "Testing k8s version ${k8s_version} for deprecations"
