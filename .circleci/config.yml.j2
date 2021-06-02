@@ -111,9 +111,9 @@ jobs:
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging kubed keda"
-      - kubepug:
+      - run:
           name: kubepug
-          run: /tmp/bin/kubepug --error-on-deprecated --error-on-deleted
+          command: /tmp/bin/kubepug --error-on-deprecated --error-on-deleted
           when: always
 {% endfor -%}
 
