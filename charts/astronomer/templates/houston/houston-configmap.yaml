@@ -257,10 +257,10 @@ data:
         sccEnabled: true
     {{- end }}
 
-    {{- if .Values.sidecar.enabled }}
+    {{- if .Values.authSidecar.enabled }}
         # enables nginx auth sidecar for airflow deployments
-        sidecar:
-          enabled: false
+        authSidecar:
+          enabled: true
           image: nginxinc/nginx-unprivileged
     {{- end }}
 
