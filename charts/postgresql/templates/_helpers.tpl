@@ -40,11 +40,7 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 Return the appropriate apiVersion for networkpolicy.
 */}}
 {{- define "postgresql.networkPolicy.apiVersion" -}}
-{{- if semverCompare ">=1.4-0, <1.7-0" .Capabilities.KubeVersion.Version -}}
-"extensions/v1beta1"
-{{- else if semverCompare "^1.7-0" .Capabilities.KubeVersion.Version -}}
 "networking.k8s.io/v1"
-{{- end -}}
 {{- end -}}
 
 {{/*
