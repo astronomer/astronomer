@@ -36,7 +36,7 @@ spec:
         - registry.{{ .Values.global.baseDomain }}
         - install.{{ .Values.global.baseDomain }}
   {{- end }}
-  {{ if semverCompare "< 1.19-0" .Capabilities.KubeVersion.Version -}}
+  {{ if semverCompare "<1.19-0" .Capabilities.KubeVersion.Version -}}
   rules:
   - host: {{ .Values.global.baseDomain }}
     http:
