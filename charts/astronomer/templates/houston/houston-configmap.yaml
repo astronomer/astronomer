@@ -68,225 +68,234 @@ data:
 
       # These values get passed directly into the airflow helm deployments
       helm:
-        # Webserver configuration.
-        webserver:
-          # This is the name of the secret that gets copied from the platform namespace
-          # to the airflow namespaces.
-          jwtSigningCertificateSecretName: {{ template "houston.jwtCertificateSecret" . }}
-          resources:
-            limits:
-              # XXX: There is an alert configured to trigger when ephemeral storage reaches
-              # 1800000000 bytes (90% of the 2Gi limit). Be aware of this when modifying
-              # ephemeral-storage limits.
-              ephemeral-storage: "2Gi"
-            requests:
-              ephemeral-storage: "1Gi"
-
-          # Disable creation of initial user.
-          defaultUser:
-            enabled: false
-    {{- if .Values.global.azure.enabled }}
-          livenessProbe:
-            failureThreshold: 25
-            periodSeconds: 10
-    {{- end }}
-
-        # Worker configuration (applies to Celery and Kubernetes task pods).
-        workers:
-          resources:
-            limits:
-              ephemeral-storage: "2Gi"
-            requests:
-              ephemeral-storage: "1Gi"
-
-          # This is here for upgrading to 0.11.1+ of Airflow.
-          keda:
-            enabled: false
-            namespaceLabels:
-              name: {{ .Release.Name }}
-
-          # This is here for upgrading to 0.11.2+ of Airflow.
-          safeToEvict: true
-
-        # Scheduler configuration.
-        scheduler:
-
-          # Scheduler pod disruption budget
-          podDisruptionBudget:
-            enabled: false
-
-            # PDB configuration
-            config:
-              maxUnavailable: 1
-
-          # This is here for upgrading to 0.11.2+ of Airflow.
-          safeToEvict: true
-
-          # Airflow Local Settings.
-          airflowLocalSettings: |
-            # This pod mutation hook runs for all pods dynamically created by Airflow
-            # in Kubernetes (K8s). This includes K8s executor Airflow-workers, which is
-            # an alternative executor to Celery, and K8s Pod Operator (KPO) pods, which is
-            # an Airflow operator that launches a task in a K8s cluster.
-            #
-            # This function is responsible for two things. It assigns labels to disambiguate
-            # between KPO and K8s executor pods. Also, it handles writing the entrypoint for
-            # K8s executor pods. Why we do this second part, you can read below.
-            from airflow.configuration import conf
-            from airflow.version import version
-            def pod_mutation_hook_deprecated(pod):
-              from airflow.contrib.kubernetes.pod import Pod
-              extra_labels = {
-                  "kubernetes-pod-operator": "False"
-              }
-              if 'airflow-worker' in pod.labels.keys() and \
-                      conf.get('core', 'EXECUTOR') == "KubernetesExecutor":
-                  # extra_labels["kubernetes-executor"] = "True"
-                  # By default, Airflow overwrites the entrypoint
-                  # of KPO and K8s executor Airflow-worker pods.
-                  # K8s worker pods are Airflow containers, and we can assume these
-                  # Airflow containers are vendored by Astronomer. Astronomer provides
-                  # an entrypoint in these containers to handle waiting for the network
-                  # and the database to be ready, so we do not want this entrypoint
-                  # to be overwritten. This helps with the stability of the K8s executor.
-                  if "1.10" in version:
-                      if not pod.args:
-                          pod.args = []
-                      pod.args = pod.cmds + pod.args
-                  pod.cmds = ["tini", "--", "/entrypoint"]
-              else:
-                  # In the case of KPO, we allow Airflow to overwrite the entrypoint
-                  # because we do not know what the container will be (and it's probably
-                  # not a container vendored by Astronomer, and it's definitely not
-                  # an Airflow container).
-                  extra_labels["kubernetes-pod-operator"] = "True"
-                  extra_labels["kubernetes-executor"] = "False"
-              pod.labels.update(extra_labels)
-            def pod_mutation_hook_new(pod):
-              extra_labels = {
-                  "kubernetes-pod-operator": "False"
-              }
-              if 'airflow-worker' in pod.metadata.labels.keys() and \
-                      conf.get('core', 'EXECUTOR') == "KubernetesExecutor":
-                  # extra_labels["kubernetes-executor"] = "True"
-                  # By default, Airflow overwrites the entrypoint
-                  # of KPO and K8s executor Airflow-worker pods.
-                  # K8s worker pods are Airflow containers, and we can assume these
-                  # Airflow containers are vendored by Astronomer. Astronomer provides
-                  # an entrypoint in these containers to handle waiting for the network
-                  # and the database to be ready, so we do not want this entrypoint
-                  # to be overwritten. This helps with the stability of the K8s executor.
-                  container = pod.spec.containers[0]
-                  if "1.10" in version:
-                      if not container.args:
-                          container.args = []
-                      container.args = container.command + container.args
-                  container.command = ["tini", "--", "/entrypoint"]
-                  pod.spec.containers[0] = container
-              else:
-                  # In the case of KPO, we allow Airflow to overwrite the entrypoint
-                  # because we do not know what the container will be (and it's probably
-                  # not a container vendored by Astronomer, and it's definately not
-                  # an Airflow container).
-                  extra_labels["kubernetes-pod-operator"] = "True"
-                  extra_labels["kubernetes-executor"] = "False"
-              pod.metadata.labels.update(extra_labels)
-            def pod_mutation_hook(pod):
-              try:
-                pod_mutation_hook_new(pod)
-              except Exception as e:
-                pod_mutation_hook_deprecated(pod)
-
-          resources:
-            limits:
-              ephemeral-storage: "2Gi"
-            requests:
-              ephemeral-storage: "1Gi"
-
-        # Redis settings
-        redis:
-          # This is here for upgrading to 0.11.2+ of Airflow.
-          safeToEvict: true
-
-        # Pgbouncer settings
-        pgbouncer:
-          # Pgbouner pod disruption budget
-          podDisruptionBudget:
-            enabled: false
-
-            # PDB configuration
-            config:
-              maxUnavailable: 1
-
-        # Default quotas for airflow deployments.
-        quotas:
-          requests.ephemeral-storage: "50Gi"
-          limits.ephemeral-storage: "50Gi"
-
-        # This is here for backward compatibility.
-        # 0.11+ versions of Airflow have this defined
-        # so this needs to be passed through to all upgrades.
-        podMutation:
-          tolerations: []
-
-        # This is here for upgrading to 0.11.0+ of Airflow.
-        defaultAirflowRepository: quay.io/astronomer/ap-airflow
-
-        # This is here for upgrading to 0.11.1+ of Airflow.
-        data:
-          metadataConnection:
-            sslmode: disable
-          resultBackendConnection:
-            sslmode: disable
-
-    {{- if not .Values.global.singleNamespace }}
-        # Enable cleanup CronJob in Airflow deployents
-        # to cleanup evicted/failed/succeeded pods.
-        cleanup:
-          enabled: true
-          schedule: "*/15 * * * *"
-    {{- end }}
-
-        # Disable the postgres subchart. The platform pass credentials down
-        # from the platform configuration.
-        postgresql:
-          enabled: false
-
-    {{- if .Values.global.sccEnabled }}
+      {{- if .Values.global.sccEnabled }}
         # If security context constraints are enabled, enable SCCs for airflow-chart
         sccEnabled: true
-    {{- end }}
+      {{- end }}
+        airflow:
+          # Webserver configuration.
+          webserver:
+            useAstroSecurityManager: true
+            extraVolumeMounts:
+              - name: signing-certificate
+                mountPath: /etc/airflow/tls/tls.crt
+                readOnly: true
+            extraVolumes:
+              - name: signing-certificate
+                secret:
+                  # This is the name of the secret that gets copied from the platform namespace
+                  # to the airflow namespaces.
+                  secretName: {{ template "houston.jwtCertificateSecret" . }}
+            resources:
+              limits:
+                # XXX: There is an alert configured to trigger when ephemeral storage reaches
+                # 1800000000 bytes (90% of the 2Gi limit). Be aware of this when modifying
+                # ephemeral-storage limits.
+                ephemeral-storage: "2Gi"
+              requests:
+                ephemeral-storage: "1Gi"
+
+            # Disable creation of initial user.
+            defaultUser:
+              enabled: false
+      {{- if .Values.global.azure.enabled }}
+            livenessProbe:
+              failureThreshold: 25
+              periodSeconds: 10
+      {{- end }}
+
+          # Worker configuration (applies to Celery and Kubernetes task pods).
+          workers:
+            resources:
+              limits:
+                ephemeral-storage: "2Gi"
+              requests:
+                ephemeral-storage: "1Gi"
+
+            # This is here for upgrading to 0.11.1+ of Airflow.
+            keda:
+              enabled: false
+              namespaceLabels:
+                name: {{ .Release.Name }}
+
+            # This is here for upgrading to 0.11.2+ of Airflow.
+            safeToEvict: true
+
+          # Scheduler configuration.
+          scheduler:
+
+            # Scheduler pod disruption budget
+            podDisruptionBudget:
+              enabled: false
+
+              # PDB configuration
+              config:
+                maxUnavailable: 1
+
+            # This is here for upgrading to 0.11.2+ of Airflow.
+            safeToEvict: true
+
+            # Airflow Local Settings.
+            airflowLocalSettings: |
+              # This pod mutation hook runs for all pods dynamically created by Airflow
+              # in Kubernetes (K8s). This includes K8s executor Airflow-workers, which is
+              # an alternative executor to Celery, and K8s Pod Operator (KPO) pods, which is
+              # an Airflow operator that launches a task in a K8s cluster.
+              #
+              # This function is responsible for two things. It assigns labels to disambiguate
+              # between KPO and K8s executor pods. Also, it handles writing the entrypoint for
+              # K8s executor pods. Why we do this second part, you can read below.
+              from airflow.configuration import conf
+              from airflow.version import version
+              def pod_mutation_hook_deprecated(pod):
+                from airflow.contrib.kubernetes.pod import Pod
+                extra_labels = {
+                    "kubernetes-pod-operator": "False"
+                }
+                if 'airflow-worker' in pod.labels.keys() and \
+                        conf.get('core', 'EXECUTOR') == "KubernetesExecutor":
+                    # extra_labels["kubernetes-executor"] = "True"
+                    # By default, Airflow overwrites the entrypoint
+                    # of KPO and K8s executor Airflow-worker pods.
+                    # K8s worker pods are Airflow containers, and we can assume these
+                    # Airflow containers are vendored by Astronomer. Astronomer provides
+                    # an entrypoint in these containers to handle waiting for the network
+                    # and the database to be ready, so we do not want this entrypoint
+                    # to be overwritten. This helps with the stability of the K8s executor.
+                    if "1.10" in version:
+                        if not pod.args:
+                            pod.args = []
+                        pod.args = pod.cmds + pod.args
+                    pod.cmds = ["tini", "--", "/entrypoint"]
+                else:
+                    # In the case of KPO, we allow Airflow to overwrite the entrypoint
+                    # because we do not know what the container will be (and it's probably
+                    # not a container vendored by Astronomer, and it's definitely not
+                    # an Airflow container).
+                    extra_labels["kubernetes-pod-operator"] = "True"
+                    extra_labels["kubernetes-executor"] = "False"
+                pod.labels.update(extra_labels)
+              def pod_mutation_hook_new(pod):
+                extra_labels = {
+                    "kubernetes-pod-operator": "False"
+                }
+                if 'airflow-worker' in pod.metadata.labels.keys() and \
+                        conf.get('core', 'EXECUTOR') == "KubernetesExecutor":
+                    # extra_labels["kubernetes-executor"] = "True"
+                    # By default, Airflow overwrites the entrypoint
+                    # of KPO and K8s executor Airflow-worker pods.
+                    # K8s worker pods are Airflow containers, and we can assume these
+                    # Airflow containers are vendored by Astronomer. Astronomer provides
+                    # an entrypoint in these containers to handle waiting for the network
+                    # and the database to be ready, so we do not want this entrypoint
+                    # to be overwritten. This helps with the stability of the K8s executor.
+                    container = pod.spec.containers[0]
+                    if "1.10" in version:
+                        if not container.args:
+                            container.args = []
+                        container.args = container.command + container.args
+                    container.command = ["tini", "--", "/entrypoint"]
+                    pod.spec.containers[0] = container
+                else:
+                    # In the case of KPO, we allow Airflow to overwrite the entrypoint
+                    # because we do not know what the container will be (and it's probably
+                    # not a container vendored by Astronomer, and it's definately not
+                    # an Airflow container).
+                    extra_labels["kubernetes-pod-operator"] = "True"
+                    extra_labels["kubernetes-executor"] = "False"
+                pod.metadata.labels.update(extra_labels)
+              def pod_mutation_hook(pod):
+                try:
+                  pod_mutation_hook_new(pod)
+                except Exception as e:
+                  pod_mutation_hook_deprecated(pod)
+
+            resources:
+              limits:
+                ephemeral-storage: "2Gi"
+              requests:
+                ephemeral-storage: "1Gi"
+
+          # Redis settings
+          redis:
+            # This is here for upgrading to 0.11.2+ of Airflow.
+            safeToEvict: true
+
+          # Pgbouncer settings
+          pgbouncer:
+            # Pgbouner pod disruption budget
+            podDisruptionBudget:
+              enabled: false
+
+              # PDB configuration
+              config:
+                maxUnavailable: 1
+
+          # Default quotas for airflow deployments.
+          quotas:
+            requests.ephemeral-storage: "50Gi"
+            limits.ephemeral-storage: "50Gi"
+
+          # This is here for backward compatibility.
+          # 0.11+ versions of Airflow have this defined
+          # so this needs to be passed through to all upgrades.
+          podMutation:
+            tolerations: []
+
+          # This is here for upgrading to 0.11.0+ of Airflow.
+          defaultAirflowRepository: quay.io/astronomer/ap-airflow
+
+          # This is here for upgrading to 0.11.1+ of Airflow.
+          data:
+            metadataConnection:
+              sslmode: disable
+            resultBackendConnection:
+              sslmode: disable
+
+      {{- if not .Values.global.singleNamespace }}
+          # Enable cleanup CronJob in Airflow deployents
+          # to cleanup evicted/failed/succeeded pods.
+          cleanup:
+            enabled: true
+            schedule: "*/15 * * * *"
+      {{- end }}
+
+          # Disable the postgres subchart. The platform pass credentials down
+          # from the platform configuration.
+          postgresql:
+            enabled: false
 
     {{- if .Values.global.authSidecar.enabled }}
         # enables nginx auth sidecar for airflow deployments
-        authSidecar:
-          enabled: true
-          repository: {{ .Values.global.authSidecar.repository }}
-          tag: {{ .Values.global.authSidecar.tag }}
-          port: {{ .Values.global.authSidecar.port }}
-          pullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
-          annotations:
-            {{- range $key, $value := .Values.global.extraAnnotations}}
-            {{ $key }}: {{ $value | quote }}
-            {{- end }}
+        # TODO: auth sidecar support isn't done yet
+        #authSidecar:
+        #  enabled: true
+        #  repository: {{ .Values.global.authSidecar.repository }}
+        #  tag: {{ .Values.global.authSidecar.tag }}
+        #  port: {{ .Values.global.authSidecar.port }}
+        #  pullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
+        #  annotations:
+        #    {{- range $key, $value := .Values.global.extraAnnotations}}
+        #    {{ $key }}: {{ $value | quote }}
+        #    {{- end }}
 
     {{- end }}
 
-    # If we're in single namespace mode, we will also
-    # skip the configuration for elasticsearch. Houston will fallback
-    # to its default modes, which are false/disabled.
-    # XXX: We may want to decouple these configurations from the
-    # singleNamespace config. At the moment, this is a convenient
-    # helper to require a minimal config change to run the platform in
-    # single namespace mode. Fluentd requires a ClusterRole to
-    # enrich logs with kubernetes metadata. In a single namespace environment,
-    # we're likely not going to get a ClusterRole from admins.
-    {{- if not .Values.global.singleNamespace }}
-      elasticsearch:
-        enabled: true
-        connection:
-          host: {{ printf "%s-elasticsearch-nginx.%s" .Release.Name .Release.Namespace }}
-          port: 9200
+      # If we're in single namespace mode, we will also
+      # skip the configuration for elasticsearch. Houston will fallback
+      # to its default modes, which are false/disabled.
+      # XXX: We may want to decouple these configurations from the
+      # singleNamespace config. At the moment, this is a convenient
+      # helper to require a minimal config change to run the platform in
+      # single namespace mode. Fluentd requires a ClusterRole to
+      # enrich logs with kubernetes metadata. In a single namespace environment,
+      # we're likely not going to get a ClusterRole from admins.
+      {{- if not .Values.global.singleNamespace }}
+        elasticsearch:
+          enabled: true
+          connection:
+            host: {{ printf "%s-elasticsearch-nginx.%s" .Release.Name .Release.Namespace }}
+            port: 9200
 
     elasticsearch:
       enabled: true
