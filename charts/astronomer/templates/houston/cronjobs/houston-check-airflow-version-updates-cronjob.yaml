@@ -2,7 +2,7 @@
 ## Houston Update Check CronJob
 ###################################
 {{- if .Values.houston.updateAirflowCheck.enabled }}
-apiVersion: batch/v1beta1
+apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: {{ .Release.Name }}-houston-update-airflow-check
