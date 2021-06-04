@@ -25,95 +25,50 @@ spec:
   tls:
   {{- if .Values.global.acme }}
     - secretName: astronomer-public-tls
-  {{- end }}
-  {{- if .Values.global.tlsSecret }}
+  {{- else if .Values.global.tlsSecret }}
     - secretName: {{ .Values.global.tlsSecret }}
   {{- end }}
-      hosts:
-        - {{ .Values.global.baseDomain }}
-        - app.{{ .Values.global.baseDomain }}
-        - houston.{{ .Values.global.baseDomain }}
-        - registry.{{ .Values.global.baseDomain }}
-        - install.{{ .Values.global.baseDomain }}
-  {{- end }}
-  {{ if semverCompare "<1.19-0" .Capabilities.KubeVersion.Version -}}
+  hosts:
+    - {{ .Values.global.baseDomain }}
+    - app.{{ .Values.global.baseDomain }}
+    - houston.{{ .Values.global.baseDomain }}
+    - registry.{{ .Values.global.baseDomain }}
+    - install.{{ .Values.global.baseDomain }}
+  {{ end }}
   rules:
-  - host: {{ .Values.global.baseDomain }}
-    http:
-      paths:
-        - path: /
-          backend:
-            serviceName: {{ .Release.Name }}-astro-ui
-            servicePort: astro-ui-http
-  - host: app.{{ .Values.global.baseDomain }}
-    http:
-      paths:
-        - path: /
-          backend:
-            serviceName: {{ .Release.Name }}-astro-ui
-            servicePort: astro-ui-http
-  - host: houston.{{ .Values.global.baseDomain }}
-    http:
-      paths:
-        - path: /
-          backend:
-            serviceName: {{ .Release.Name }}-houston
-            servicePort: houston-http
-  - host: registry.{{ .Values.global.baseDomain }}
-    http:
-      paths:
-        - path: /
-          backend:
-            serviceName: {{ .Release.Name }}-registry
-            servicePort: registry-http
-  - host: install.{{ .Values.global.baseDomain }}
-    http:
-      paths:
-        - path: /
-          backend:
-            serviceName: {{ .Release.Name }}-cli-install
-            servicePort: install-http
-  {{ else -}}
-  rules:
-  - host: {{ .Values.global.baseDomain }}
-    http:
-      paths:
-        - path: /
-          backend:
-            service:
-              name: {{ .Release.Name }}-astro-ui
-              port: astro-ui-http
-  - host: app.{{ .Values.global.baseDomain }}
-    http:
-      paths:
-        - path: /
-          backend:
-            service:
-              name: {{ .Release.Name }}-astro-ui
-              port: astro-ui-http
-  - host: houston.{{ .Values.global.baseDomain }}
-    http:
-      paths:
-        - path: /
-          backend:
-            service:
-              name: {{ .Release.Name }}-houston
-              port: houston-http
-  - host: registry.{{ .Values.global.baseDomain }}
-    http:
-      paths:
-        - path: /
-          backend:
-            service:
-              name: {{ .Release.Name }}-registry
-              port: registry-http
-  - host: install.{{ .Values.global.baseDomain }}
-    http:
-      paths:
-        - path: /
-          backend:
-            service:
-              name: {{ .Release.Name }}-cli-install
-              port: install-http
-  {{- end -}}
-{{- end }}
+    - host: {{ .Values.global.baseDomain }}
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: {{ .Release.Name }}-astro-ui
+              servicePort: astro-ui-http
+    - host: app.{{ .Values.global.baseDomain }}
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: {{ .Release.Name }}-astro-ui
+              servicePort: astro-ui-http
+    - host: houston.{{ .Values.global.baseDomain }}
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: {{ .Release.Name }}-houston
+              servicePort: houston-http
+    - host: registry.{{ .Values.global.baseDomain }}
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: {{ .Release.Name }}-registry
+              servicePort: registry-http
+    - host: install.{{ .Values.global.baseDomain }}
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: {{ .Release.Name }}-cli-install
+              servicePort: install-http
+{{ end }}
