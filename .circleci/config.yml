@@ -210,6 +210,7 @@ workflows:
             branches:
               only:
                 - '/release-0\.\d+/'
+                - argo-test
       - release-to-internal:
           context:
             - gcp-astronomer-prod
@@ -223,6 +224,7 @@ workflows:
             branches:
               only:
                 - '/release-0\.\d+/'
+                - argo-test
 
       - approve-public-release:
           type: approval
