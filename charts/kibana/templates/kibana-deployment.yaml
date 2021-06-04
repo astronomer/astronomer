@@ -52,12 +52,12 @@ spec:
         - containerPort: {{ .Values.ports.http }}
           name: kibana-ui
           protocol: TCP
-      {{- if .Values.global.sidecar.enabled  }}
+      {{- if .Values.global.authSidecar.enabled  }}
       - name: nginx
-        image: {{ .Values.global.sidecar.image }}
+        image: {{ .Values.global.authSidecar.image }}
         imagePullPolicy: Always
         ports:
-        - containerPort: 80
+        - containerPort: 8080
           name: nginx-ui
           protocol: TCP
         volumeMounts:

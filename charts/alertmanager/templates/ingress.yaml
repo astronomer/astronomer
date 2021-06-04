@@ -13,7 +13,7 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
   annotations:
-    {{- if .Values.global.sidecar.enabled  }}
+    {{- if .Values.global.authSidecar.enabled  }}
     kubernetes.io/ingress.class: "default"
     route.openshift.io/termination: "reencrypt"
     {{- else }}
@@ -43,7 +43,7 @@ spec:
             {{ if semverCompare "<1.19-0" .Capabilities.KubeVersion.Version -}}
             backend:
               serviceName: {{ template "alertmanager.fullname" . }}
-              {{- if .Values.global.sidecar.enabled  }}
+              {{- if .Values.global.authSidecar.enabled  }}
               servicePort: nginx-ui
               {{- else }}
               servicePort: http

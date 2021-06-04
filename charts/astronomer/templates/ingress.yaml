@@ -13,7 +13,7 @@ metadata:
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
   annotations:
-    {{- if .Values.global.sidecar.enabled  }}
+    {{- if .Values.global.authSidecar.enabled  }}
     kubernetes.io/ingress.class: "default"
     route.openshift.io/termination: "reencrypt"
     {{- else }}

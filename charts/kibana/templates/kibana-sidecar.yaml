@@ -1,7 +1,7 @@
 ################################
 ## Kibana sidecar ConfigMap
 #################################
-{{- if .Values.global.sidecar.enabled  }}
+{{- if .Values.global.authSidecar.enabled  }}
 kind: ConfigMap
 apiVersion: v1
 metadata:
@@ -19,8 +19,8 @@ data:
     }
     server {
         		server_name {{ template "kibana.url" . }} ;
-        		listen 80  ;
-        		listen [::]:80  ;
+        		listen 8080  ;
+        		listen [::]:8080  ;
 
         		location  = /auth {
         			internal;

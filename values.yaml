@@ -78,9 +78,9 @@ global:
   sccEnabled: false
 
   # Deploy auth sidecar to use openshift native features
-  sidecar:
+  authSidecar:
     enabled: false
-    image: nginx
+    image: nginxinc/nginx-unprivileged
 
   # Enable values required for use with Microsoft Azure
   azure:

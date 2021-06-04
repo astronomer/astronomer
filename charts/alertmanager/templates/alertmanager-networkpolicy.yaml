@@ -26,7 +26,7 @@ spec:
           tier: monitoring
           component: prometheus
           release: {{ .Release.Name }}
-    {{- if .Values.global.sidecar.enabled  }}
+    {{- if .Values.global.authSidecar.enabled  }}
     - namespaceSelector:
         matchLabels:
           network.openshift.io/policy-group: ingress
@@ -40,7 +40,7 @@ spec:
     ports:
     - protocol: TCP
       port: {{ .Values.ports.http }}
-    {{- if .Values.global.sidecar.enabled  }}
+    {{- if .Values.global.authSidecar.enabled  }}
     - protocol: TCP
-      port: 80
+      port: 8080
     {{- end }}

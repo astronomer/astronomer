@@ -21,7 +21,7 @@ spec:
   - Ingress
   ingress:
   - from:
-    {{- if .Values.global.sidecar.enabled  }}
+    {{- if .Values.global.authSidecar.enabled  }}
     - namespaceSelector:
         matchLabels:
           network.openshift.io/policy-group: ingress
