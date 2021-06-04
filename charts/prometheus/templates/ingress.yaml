@@ -36,6 +36,12 @@ spec:
         paths:
           - path: /
             backend:
+              {{- if semverCompare "< 1.19-0" .Capabilities.KubeVersion.Version -}}
               serviceName: {{ template "prometheus.fullname" . }}
               servicePort: prometheus-data
+              {{- else -}}
+              service:
+                name: {{ template "prometheus.fullname" . }}
+                port: prometheus
+              {{- end -}}
 {{- end }}

@@ -36,6 +36,12 @@ spec:
         paths:
           - path: /
             backend:
+              {{- if semverCompare "< 1.19-0" .Capabilities.KubeVersion.Version -}}
               serviceName: {{ template "grafana.fullname" . }}
               servicePort: grafana-ui
+              {{- else -}}
+              service:
+                name:  {{ template "grafana.fullname" . }}
+                port: grafana-ui
+              {{- end -}}
 {{- end }}

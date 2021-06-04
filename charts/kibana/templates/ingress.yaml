@@ -36,6 +36,12 @@ spec:
         paths:
           - path: /
             backend:
+              {{- if semverCompare "< 1.19-0" .Capabilities.KubeVersion.Version -}}
               serviceName: {{ template "kibana.fullname" . }}
               servicePort: kibana-ui
+              {{- else -}}
+              service:
+                name: {{ template "kibana.fullname" . }}
+                port: kibana-ui
+              {{- end -}}
 {{- end }}
