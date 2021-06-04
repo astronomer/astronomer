@@ -1,9 +1,0 @@
----
-suite: Test fluentd-daemonset
-templates:
-  - fluentd-daemonset.yaml
-tests:
-  - it: should work
-    asserts:
-      - isKind:
-          of: DaemonSet
