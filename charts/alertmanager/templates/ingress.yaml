@@ -36,6 +36,12 @@ spec:
         paths:
           - path: /
             backend:
+              {{- if semverCompare "< 1.19-0" .Capabilities.KubeVersion.Version -}}
               serviceName: {{ template "alertmanager.fullname" . }}
               servicePort: http
+              {{- else -}}
+                service:
+                  Name: {{ template "alertmanager.fullname" . }}
+                  Port: http
+              {{- end -}}
 {{- end }}
