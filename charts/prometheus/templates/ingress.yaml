@@ -42,6 +42,7 @@ spec:
               {{- else -}}
               service:
                 name: {{ template "prometheus.fullname" . }}
-                port: prometheus
+                port:
+                  name: prometheus
               {{- end -}}
 {{- end }}

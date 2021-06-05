@@ -42,6 +42,7 @@ spec:
               {{- else -}}
               service:
                 name:  {{ template "grafana.fullname" . }}
-                port: grafana-ui
+                port:
+                  name: grafana-ui
               {{- end -}}
 {{- end }}

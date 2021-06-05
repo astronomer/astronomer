@@ -42,6 +42,7 @@ spec:
               {{- else -}}
               service:
                 name: {{ template "kibana.fullname" . }}
-                port: kibana-ui
+                port:
+                  name: kibana-ui
               {{- end -}}
 {{- end }}
