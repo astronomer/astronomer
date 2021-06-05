@@ -10,18 +10,28 @@ tests:
       - hasDocuments:
           count: 0
 
-  # helm-unittest does not appear to support capabilities, and ingress syntax changes in 1.19. We will
-  # need to fix these tests in pytest when we implement that.
-
   - it: Should be ingress when baseDomain is set
     set:
       global.baseDomain: example.com
-    capabilities:
-      majorVersion: 1
-      minorVersion: 18
     asserts:
       - isKind:
           of: Ingress
+
+  # TODO: We need tests here for the syntax changes in ingress between 1.18 and 1.19
+
+  # This fails with our fork of helm-unittest, but manual testing shows that it should pass:
+  # helm template . --set global.baseDomain=example.com --kube-version=1.19.0 --show-only charts/astronomer/templates/ingress.yaml
+  #
+  # - it: "Should use ingress networking.k8s.io/v1 with k8s >= 1.19"
+  #   set:
+  #     global.baseDomain: example.com
+  #   capabilities:
+  #     majorVersion: 1
+  #     minorVersion: 19
+  #   asserts:
+  #     - equal:
+  #         path: apiVersion
+  #         value: networking.k8s.io/v1
 
   - it: "Should use ingress networking.k8s.io/v1beta1 with k8s < 1.19"
     set:
