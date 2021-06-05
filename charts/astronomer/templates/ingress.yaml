@@ -23,52 +23,52 @@ metadata:
 spec:
   {{- if or .Values.global.tlsSecret .Values.global.acme }}
   tls:
+    - hosts:
+        - {{ .Values.global.baseDomain }}
+        - app.{{ .Values.global.baseDomain }}
+        - houston.{{ .Values.global.baseDomain }}
+        - registry.{{ .Values.global.baseDomain }}
+        - install.{{ .Values.global.baseDomain }}
   {{- if .Values.global.acme }}
-    - secretName: astronomer-public-tls
+      secretName: astronomer-public-tls
   {{- else if .Values.global.tlsSecret }}
-    - secretName: {{ .Values.global.tlsSecret }}
+      secretName: {{ .Values.global.tlsSecret }}
   {{- end }}
-  hosts:
-    - {{ .Values.global.baseDomain }}
-    - app.{{ .Values.global.baseDomain }}
-    - houston.{{ .Values.global.baseDomain }}
-    - registry.{{ .Values.global.baseDomain }}
-    - install.{{ .Values.global.baseDomain }}
-  {{ end }}
+  {{ end -}}
   rules:
-    - host: {{ .Values.global.baseDomain }}
-      http:
-        paths:
-          - path: /
-            backend:
-              serviceName: {{ .Release.Name }}-astro-ui
-              servicePort: astro-ui-http
-    - host: app.{{ .Values.global.baseDomain }}
-      http:
-        paths:
-          - path: /
-            backend:
-              serviceName: {{ .Release.Name }}-astro-ui
-              servicePort: astro-ui-http
-    - host: houston.{{ .Values.global.baseDomain }}
-      http:
-        paths:
-          - path: /
-            backend:
-              serviceName: {{ .Release.Name }}-houston
-              servicePort: houston-http
-    - host: registry.{{ .Values.global.baseDomain }}
-      http:
-        paths:
-          - path: /
-            backend:
-              serviceName: {{ .Release.Name }}-registry
-              servicePort: registry-http
-    - host: install.{{ .Values.global.baseDomain }}
-      http:
-        paths:
-          - path: /
-            backend:
-              serviceName: {{ .Release.Name }}-cli-install
-              servicePort: install-http
+  - host: {{ .Values.global.baseDomain }}
+    http:
+      paths:
+        - path: /
+          backend:
+            serviceName: {{ .Release.Name }}-astro-ui
+            servicePort: astro-ui-http
+  - host: app.{{ .Values.global.baseDomain }}
+    http:
+      paths:
+        - path: /
+          backend:
+            serviceName: {{ .Release.Name }}-astro-ui
+            servicePort: astro-ui-http
+  - host: houston.{{ .Values.global.baseDomain }}
+    http:
+      paths:
+        - path: /
+          backend:
+            serviceName: {{ .Release.Name }}-houston
+            servicePort: houston-http
+  - host: registry.{{ .Values.global.baseDomain }}
+    http:
+      paths:
+        - path: /
+          backend:
+            serviceName: {{ .Release.Name }}-registry
+            servicePort: registry-http
+  - host: install.{{ .Values.global.baseDomain }}
+    http:
+      paths:
+        - path: /
+          backend:
+            serviceName: {{ .Release.Name }}-cli-install
+            servicePort: install-http
 {{ end }}
