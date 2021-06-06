@@ -81,6 +81,15 @@ global:
   authSidecar:
     enabled: false
     image: nginxinc/nginx-unprivileged
+    resources:
+      limits: {}
+      requests: {}
+
+  ## Add annotations to all the auth sidecar deployed ingress resources
+  ##
+  extraAnnotations: {}
+    #kubernetes.io/ingress.class: "default"
+    #route.openshift.io/termination: "passthrough"
 
   # Enable values required for use with Microsoft Azure
   azure:

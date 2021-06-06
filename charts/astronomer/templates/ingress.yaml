@@ -14,8 +14,9 @@ metadata:
     heritage: {{ .Release.Service }}
   annotations:
     {{- if .Values.global.authSidecar.enabled  }}
-    kubernetes.io/ingress.class: "default"
-    route.openshift.io/termination: "reencrypt"
+    {{- range $key, $value := .Values.global.extraAnnotations}}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
     {{- else }}
     kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
     kubernetes.io/tls-acme: {{ eq .Values.global.acme true | quote }}

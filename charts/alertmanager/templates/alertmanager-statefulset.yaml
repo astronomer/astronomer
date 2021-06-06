@@ -84,6 +84,9 @@ spec:
         - name: nginx
           image: {{ .Values.global.authSidecar.image }}
           imagePullPolicy: Always
+          {{- if .Values.global.authSidecar.resources }}
+          resources: {{- toYaml .Values.global.authSidecar.resources | nindent 12 }}
+          {{- end }}
           ports:
           - containerPort: 8080
             name: nginx-ui
