@@ -9,7 +9,7 @@ metadata:
     heritage: {{ .Release.Service | quote }}
   {{ if .Values.global.enableArgoCDAnnotation }}
   annotations:
-    argocd.argoproj.io/sync-wave: "-2"
+    argocd.argoproj.io/sync-wave: "-1"
   {{- end }}
 spec:
   serviceName: {{ template "postgresql.fullname" . }}-headless

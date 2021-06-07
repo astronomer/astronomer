@@ -3,6 +3,10 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: {{ template "postgresql.fullname" . }}-init-scripts
+  {{ if .Values.global.enableArgoCDAnnotation }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+  {{- end }}
   labels:
     app: {{ template "postgresql.name" . }}
     chart: {{ template "postgresql.chart" . }}
