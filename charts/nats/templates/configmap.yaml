@@ -6,6 +6,10 @@ metadata:
   labels:
     app: {{ template "nats.name" . }}
     chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+  {{ if .Values.global.enableArgoCDAnnotation }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+  {{- end }}
 data:
   nats.conf: |
     # PID file shared with configuration reloader.
