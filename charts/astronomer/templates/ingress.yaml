@@ -79,6 +79,7 @@ spec:
     http:
       paths:
         - path: /
+          pathType: Prefix
           backend:
             service:
               name: {{ .Release.Name }}-astro-ui
@@ -88,6 +89,7 @@ spec:
     http:
       paths:
         - path: /
+          pathType: Prefix
           backend:
             service:
               name: {{ .Release.Name }}-astro-ui
@@ -97,6 +99,7 @@ spec:
     http:
       paths:
         - path: /
+          pathType: Prefix
           backend:
             service:
               name: {{ .Release.Name }}-houston
@@ -106,6 +109,7 @@ spec:
     http:
       paths:
         - path: /
+          pathType: Prefix
           backend:
             service:
               name: {{ .Release.Name }}-registry
@@ -115,6 +119,7 @@ spec:
     http:
       paths:
         - path: /
+          pathType: Prefix
           backend:
             service:
               name: {{ .Release.Name }}-cli-install

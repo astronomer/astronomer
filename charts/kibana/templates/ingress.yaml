@@ -35,14 +35,16 @@ spec:
       http:
         paths:
           - path: /
+            {{ if semverCompare "<1.19-0" .Capabilities.KubeVersion.Version -}}
             backend:
-              {{ if semverCompare "<1.19-0" .Capabilities.KubeVersion.Version -}}
               serviceName: {{ template "kibana.fullname" . }}
               servicePort: kibana-ui
-              {{- else -}}
+            {{- else -}}
+            pathType: Prefix
+            backend:
               service:
                 name: {{ template "kibana.fullname" . }}
                 port:
                   name: kibana-ui
-              {{- end -}}
+            {{- end -}}
 {{- end }}
