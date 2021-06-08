@@ -1,0 +1,20 @@
+---
+suite: Test astronomer-scc-privileged
+templates:
+  - scc/astronomer-scc-privileged.yaml
+tests:
+  - it: should exist
+    set:
+      global:
+        sccEnabled: True
+    asserts:
+      - isKind:
+          of: SecurityContextConstraints
+  - it: should not exist
+    set:
+      global:
+        sccEnabled: False
+    asserts:
+      - hasDocuments:
+          count: 0
+
