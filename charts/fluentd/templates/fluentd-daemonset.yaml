@@ -78,6 +78,7 @@ spec:
         {{- if .Values.additionalVolumeMounts }}
         {{- toYaml .Values.additionalVolumeMounts | nindent 8 }}
         {{- end }}
+        {{- include "custom_ca_volume_mounts" . | nindent 8 }}
         - name: varlog
           mountPath: /var/log
         - name: varlibdockercontainers
@@ -98,6 +99,7 @@ spec:
       {{- if .Values.additionalVolumes }}
       {{- toYaml .Values.additionalVolumes | nindent 6 }}
       {{- end }}
+      {{- include "custom_ca_volumes" . | nindent 6 }}
       - name: varlog
         hostPath:
           path: /var/log

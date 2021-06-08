@@ -1,0 +1,11 @@
+---
+suite: Test fluentd-psp-rolebinding
+templates:
+  - charts/fluentd/templates/fluentd-psp-rolebinding.yaml
+set:
+  global.pspEnabled: true
+tests:
+  - it: should work
+    asserts:
+      - isKind:
+          of: RoleBinding

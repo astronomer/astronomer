@@ -79,41 +79,51 @@ spec:
     http:
       paths:
         - path: /
+          pathType: Prefix
           backend:
             service:
               name: {{ .Release.Name }}-astro-ui
-              port: astro-ui-http
+              port:
+                name: astro-ui-http
   - host: app.{{ .Values.global.baseDomain }}
     http:
       paths:
         - path: /
+          pathType: Prefix
           backend:
             service:
               name: {{ .Release.Name }}-astro-ui
-              port: astro-ui-http
+              port:
+                name: astro-ui-http
   - host: houston.{{ .Values.global.baseDomain }}
     http:
       paths:
         - path: /
+          pathType: Prefix
           backend:
             service:
               name: {{ .Release.Name }}-houston
-              port: houston-http
+              port:
+                name: houston-http
   - host: registry.{{ .Values.global.baseDomain }}
     http:
       paths:
         - path: /
+          pathType: Prefix
           backend:
             service:
               name: {{ .Release.Name }}-registry
-              port: registry-http
+              port:
+                name: registry-http
   - host: install.{{ .Values.global.baseDomain }}
     http:
       paths:
         - path: /
+          pathType: Prefix
           backend:
             service:
               name: {{ .Release.Name }}-cli-install
-              port: install-http
+              port:
+                name: install-http
   {{- end -}}
 {{- end }}

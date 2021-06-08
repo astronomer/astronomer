@@ -35,13 +35,16 @@ spec:
       http:
         paths:
           - path: /
+            {{ if semverCompare "<1.19-0" .Capabilities.KubeVersion.Version -}}
             backend:
-              {{- if semverCompare "< 1.19-0" .Capabilities.KubeVersion.Version -}}
               serviceName: {{ template "prometheus.fullname" . }}
               servicePort: prometheus-data
-              {{- else -}}
+            {{- else -}}
+            pathType: Prefix
+            backend:
               service:
                 name: {{ template "prometheus.fullname" . }}
-                port: prometheus
-              {{- end -}}
+                port:
+                  name: prometheus
+            {{- end -}}
 {{- end }}

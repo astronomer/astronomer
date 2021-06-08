@@ -1,7 +1,9 @@
 ---
 suite: Test fluentd-psp
 templates:
-  - fluentd-psp.yaml
+  - charts/fluentd/templates/fluentd-psp.yaml
+set:
+  global.pspEnabled: true
 tests:
   - it: should work
     asserts:
