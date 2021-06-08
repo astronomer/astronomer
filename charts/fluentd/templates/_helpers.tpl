@@ -54,3 +54,23 @@ path {{ .Values.s3.path }}
 use_server_side_encryption {{ .Values.s3.use_server_side_encryption }}
 {{- end }}
 {{- end }}
+
+{{- define "custom_ca_volume_mounts" }}
+{{ if .Values.global.privateCaCerts }}
+{{ range $secret_name := (.Values.global.privateCaCerts) }}
+- name: {{ $secret_name }}
+  mountPath: /usr/local/share/ca-certificates/{{ $secret_name }}.pem
+  subPath: cert.pem
+{{- end }}
+{{- end }}
+{{- end }}
+
+{{- define "custom_ca_volumes"}}
+{{ if .Values.global.privateCaCerts }}
+{{ range .Values.global.privateCaCerts }}
+- name: {{ . }}
+  secret:
+    secretName: {{ . }}
+{{- end }}
+{{- end }}
+{{- end }}
