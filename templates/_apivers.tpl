@@ -48,6 +48,7 @@ batch/v1
 {{- else -}}
 batch/v1beta1
 {{- end -}}
+{{- end -}}
 
 {{- define "apiVersion.istio.networking" -}}
 networking.istio.io/v1alpha3
