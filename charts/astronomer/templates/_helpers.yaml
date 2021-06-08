@@ -141,7 +141,9 @@
 {{- define "registry.gcsConfig" }}
 gcs:
   bucket: {{ .Values.registry.gcs.bucket }}
+  {{- if .Values.registry.gcs.useKeyfile }}
   keyfile: {{ .Values.registry.gcs.keyfile }}
+  {{- end }}
   rootdirectory: {{ .Values.registry.gcs.rootdirectory }}
   chunksize: {{ .Values.registry.gcs.chunksize }}
 {{- end }}

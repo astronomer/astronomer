@@ -279,6 +279,7 @@ registry:
   gcs:
     enabled: false
     bucket: ~
+    useKeyfile: true
     keyfile: /var/gcs-keyfile/astronomer-gcs-keyfile
     rootdirectory: /
     chunksize: "5242880"
