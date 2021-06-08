@@ -42,6 +42,13 @@ rbac.authorization.k8s.io/v1
 batch/v1
 {{- end -}}
 
+{{- define "apiVersion.batch.cronjob" -}}
+{{- if semverCompare ">=1.21-0" .Capabilities.KubeVersion.Version -}}
+batch/v1
+{{- else -}}
+batch/v1beta1
+{{- end -}}
+
 {{- define "apiVersion.istio.networking" -}}
 networking.istio.io/v1alpha3
 {{- end -}}

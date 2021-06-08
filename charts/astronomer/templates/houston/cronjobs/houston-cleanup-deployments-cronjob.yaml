@@ -2,7 +2,7 @@
 ## Houston Cleanup CronJob
 #################################
 {{- if .Values.houston.cleanupDeployments.enabled }}
-apiVersion: batch/v1
+apiVersion: {{ include "apiVersion.batch.cronjob" . }}
 kind: CronJob
 metadata:
   name: {{ .Release.Name }}-houston-cleanup-deployments
