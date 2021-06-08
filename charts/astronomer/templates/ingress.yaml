@@ -36,6 +36,7 @@ spec:
         - registry.{{ .Values.global.baseDomain }}
         - install.{{ .Values.global.baseDomain }}
   {{- end }}
+  {{ if semverCompare "< 1.19-0" .Capabilities.KubeVersion.Version -}}
   rules:
   - host: {{ .Values.global.baseDomain }}
     http:
@@ -72,4 +73,57 @@ spec:
           backend:
             serviceName: {{ .Release.Name }}-cli-install
             servicePort: install-http
+  {{ else -}}
+  rules:
+  - host: {{ .Values.global.baseDomain }}
+    http:
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: {{ .Release.Name }}-astro-ui
+              port:
+                name: astro-ui-http
+  - host: app.{{ .Values.global.baseDomain }}
+    http:
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: {{ .Release.Name }}-astro-ui
+              port:
+                name: astro-ui-http
+  - host: houston.{{ .Values.global.baseDomain }}
+    http:
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: {{ .Release.Name }}-houston
+              port:
+                name: houston-http
+  - host: registry.{{ .Values.global.baseDomain }}
+    http:
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: {{ .Release.Name }}-registry
+              port:
+                name: registry-http
+  - host: install.{{ .Values.global.baseDomain }}
+    http:
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: {{ .Release.Name }}-cli-install
+              port:
+                name: install-http
+  {{- end -}}
 {{- end }}

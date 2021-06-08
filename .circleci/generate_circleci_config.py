@@ -10,7 +10,7 @@ from jinja2 import Template
 # When adding a new version, look up the most
 # recent patch version on Dockerhub
 # https://hub.docker.com/r/kindest/node/tags
-KUBE_VERSIONS = ["1.16.15", "1.17.17", "1.18.19", "1.19.11"]
+KUBE_VERSIONS = ["1.16.15", "1.17.17", "1.18.19", "1.19.11", "1.20.7"]
 
 
 def main():
@@ -23,11 +23,11 @@ def main():
         templated_file_content = circle_ci_config_template.read()
     template = Template(templated_file_content)
     config = template.render(kube_versions=KUBE_VERSIONS)
-    warning_header = (
-        "# Warning: automatically generated file\n"
-        + "# Please edit config.yml.j2, and use the script generate_circleci_config.py\n"
-    )
     with open(config_path, "w") as circle_ci_config_file:
+        warning_header = (
+            "# Warning: automatically generated file\n"
+            + "# Please edit config.yml.j2, and use the script generate_circleci_config.py\n"
+        )
         circle_ci_config_file.write(warning_header)
         circle_ci_config_file.write(config)
         circle_ci_config_file.write("\n")

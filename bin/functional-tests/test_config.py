@@ -65,7 +65,7 @@ def test_nginx_can_reach_default_backend(nginx):
     )
 
 
-@pytest.mark.flaky(reruns=5, reruns_delay=15)
+@pytest.mark.flaky(reruns=10, reruns_delay=10)
 def test_prometheus_targets(prometheus):
     """Ensure all Prometheus targets are healthy"""
     data = prometheus.check_output("wget -qO- http://localhost:9090/api/v1/targets")
