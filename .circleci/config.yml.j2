@@ -12,14 +12,8 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Run Kubepug on all k8s versions
-          command: |
-            set -x
-            {%- for version in kube_versions %}
-
-            helm template -f values.yaml --set baseDomain=example.com --kube-version v{{ version }} . |
-            kubepug --error-on-deprecated --error-on-deleted --k8s-version v{{ version }} --input-file /dev/stdin
-            {%- endfor %}
+          name: Check chart for deprecated kubernetes API versions
+          command: helm template -f values.yaml --set global.baseDomain=example.com . --show-only charts/alertmanager/templates/ingress.yaml | kubent --filename -
 
   lint:
     docker:
@@ -111,10 +105,6 @@ jobs:
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging kubed keda"
-      - run:
-          name: kubepug
-          command: /tmp/bin/kubepug --error-on-deprecated --error-on-deleted
-          when: always
 {% endfor -%}
 
 {% for version in [kube_versions[-1]] %}

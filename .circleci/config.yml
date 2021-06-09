@@ -14,24 +14,8 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Run Kubepug on all k8s versions
-          command: |
-            set -x
-
-            helm template -f values.yaml --set baseDomain=example.com --kube-version v1.16.15 . |
-            kubepug --error-on-deprecated --error-on-deleted --k8s-version v1.16.15 --input-file /dev/stdin
-
-            helm template -f values.yaml --set baseDomain=example.com --kube-version v1.17.17 . |
-            kubepug --error-on-deprecated --error-on-deleted --k8s-version v1.17.17 --input-file /dev/stdin
-
-            helm template -f values.yaml --set baseDomain=example.com --kube-version v1.18.19 . |
-            kubepug --error-on-deprecated --error-on-deleted --k8s-version v1.18.19 --input-file /dev/stdin
-
-            helm template -f values.yaml --set baseDomain=example.com --kube-version v1.19.11 . |
-            kubepug --error-on-deprecated --error-on-deleted --k8s-version v1.19.11 --input-file /dev/stdin
-
-            helm template -f values.yaml --set baseDomain=example.com --kube-version v1.20.7 . |
-            kubepug --error-on-deprecated --error-on-deleted --k8s-version v1.20.7 --input-file /dev/stdin
+          name: Check chart for deprecated kubernetes API versions
+          command: helm template -f values.yaml --set global.baseDomain=example.com . --show-only charts/alertmanager/templates/ingress.yaml | kubent --filename -
 
   lint:
     docker:
@@ -123,10 +107,6 @@ jobs:
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging kubed keda"
-      - run:
-          name: kubepug
-          command: /tmp/bin/kubepug --error-on-deprecated --error-on-deleted
-          when: always
 
   platform-1-17-17:
     machine:
@@ -137,10 +117,6 @@ jobs:
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging kubed keda"
-      - run:
-          name: kubepug
-          command: /tmp/bin/kubepug --error-on-deprecated --error-on-deleted
-          when: always
 
   platform-1-18-19:
     machine:
@@ -151,10 +127,6 @@ jobs:
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging kubed keda"
-      - run:
-          name: kubepug
-          command: /tmp/bin/kubepug --error-on-deprecated --error-on-deleted
-          when: always
 
   platform-1-19-11:
     machine:
@@ -165,10 +137,6 @@ jobs:
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging kubed keda"
-      - run:
-          name: kubepug
-          command: /tmp/bin/kubepug --error-on-deprecated --error-on-deleted
-          when: always
 
   platform-1-20-7:
     machine:
@@ -179,10 +147,6 @@ jobs:
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging kubed keda"
-      - run:
-          name: kubepug
-          command: /tmp/bin/kubepug --error-on-deprecated --error-on-deleted
-          when: always
 
   lts-23-to-25-test:
     machine:

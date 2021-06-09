@@ -78,15 +78,6 @@ else
   mv "./mkcert-v${MKCERT_VERSION}-${OS}-amd64" /tmp/bin/mkcert
 fi
 
-# Install kubepug
-if [[ $FORCE -eq 0 && -f /tmp/bin/kubepug ]]; then
-  echo "kubepug is already installed"
-else
-  curl -sSL https://github.com/rikatz/kubepug/releases/latest/download/kubepug_linux_amd64.tar.gz |
-  tar --directory=/tmp/ -xzf - && \
-  mv /tmp/kubepug /tmp/bin/kubepug
-fi
-
 echo "--------- versions -------------"
 
 # kind
