@@ -218,7 +218,6 @@ workflows:
   build-and-release-helm-chart:
     jobs:
       - lint
-      - api-deprecations-test
       - unittest-charts
       - build-artifact:
           requires:
