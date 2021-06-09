@@ -13,7 +13,13 @@ jobs:
       - checkout
       - run:
           name: Check chart for deprecated kubernetes API versions
-          command: helm template -f values.yaml --set global.baseDomain=example.com . --show-only charts/alertmanager/templates/ingress.yaml | kubent --filename -
+          command: |
+            set -x
+            {%- for version in kube_versions %}
+
+            helm template --kube-version=v{{ version }} -f values.yaml --set global.baseDomain=example.com . |
+            kubent --filename -
+            {%- endfor %}
 
   lint:
     docker:
