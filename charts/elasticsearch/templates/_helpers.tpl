@@ -23,13 +23,6 @@ Create chart name and version as used by the chart label.
 {{- end -}}
 
 {{/*
-Return the appropriate apiVersion for Curactor cron job.
-*/}}
-{{- define "curator.cronJob.apiVersion" -}}
-"batch/v1"
-{{- end -}}
-
-{{/*
 Init image name.
 */}}
 {{- define "init.image" -}}
