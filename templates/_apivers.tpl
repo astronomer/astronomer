@@ -1,4 +1,10 @@
-{{/* Generic Kubernetes apiVersion helpers */}}
+{{/*
+Generic Kubernetes apiVersion helpers
+
+Add any definitions at the version they are introduced to the API. EG: do not use v1beta1 if v1 exists.
+Delete definitions at the version they are deleted from the API.
+Delete logic related to unsupported versions of kubernetes. EG: https://www.astronomer.io/docs/enterprise/v0.25/resources/version-compatibility-reference
+*/}}
 
 {{- define "apiVersion.DaemonSet" -}}
 apps/v1
@@ -6,14 +12,6 @@ apps/v1
 
 {{- define "apiVersion.Deployment" -}}
 apps/v1
-{{- end -}}
-
-{{- define "apiVersion.Deployment.16" -}}
-{{- if semverCompare "^1.16-0" .Capabilities.KubeVersion.Version }}
-apps/v1
-{{- else }}
-apps/v1beta2
-{{- end }}
 {{- end -}}
 
 {{- define "apiVersion.Ingress" -}}
@@ -29,39 +27,23 @@ networking.k8s.io/v1
 {{- end -}}
 
 {{- define "apiVersion.PodSecurityPolicy" -}}
-{{- if semverCompare "^1.10-0" .Capabilities.KubeVersion.Version -}}
-policy/v1beta1
-{{- else -}}
 extensions/v1beta1
-{{- end -}}
 {{- end -}}
 
 {{- define "apiVersion.PriorityClass" -}}
-{{- if semverCompare "^1.14-0" .Capabilities.KubeVersion.Version -}}
 scheduling.k8s.io/v1
-{{- else -}}
-scheduling.k8s.io/v1beta1
-{{- end -}}
 {{- end -}}
 
-{{- define "apiVersion.rbac.v1beta2" -}}
-{{- if semverCompare "^1.16-0" .Capabilities.KubeVersion.Version -}}
+{{- define "apiVersion.rbac" -}}
 rbac.authorization.k8s.io/v1
-{{- else -}}
-use something more specific
-{{- end -}}
 {{- end -}}
 
-{{- define "apiVersion.rbac.v1beta1" -}}
-{{- if semverCompare "^1.16-0" .Capabilities.KubeVersion.Version -}}
-rbac.authorization.k8s.io/v1
-{{- else -}}
-rbac.authorization.k8s.io/v1beta1
-{{- end -}}
+{{- define "apiVersion.batch" -}}
+batch/v1
 {{- end -}}
 
-{{- define "apiVersion.batch.v1beta1" -}}
-{{- if semverCompare "^1.16-0" .Capabilities.KubeVersion.Version -}}
+{{- define "apiVersion.batch.cronjob" -}}
+{{- if semverCompare ">=1.21-0" .Capabilities.KubeVersion.Version -}}
 batch/v1
 {{- else -}}
 batch/v1beta1

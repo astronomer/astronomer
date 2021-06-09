@@ -2,7 +2,7 @@
 ## Curator CronJob
 #################################
 {{- if .Values.curator.enabled }}
-apiVersion: {{ template "curator.cronJob.apiVersion" . }}
+apiVersion: {{ include "apiVersion.batch.cronjob" . }}
 kind: CronJob
 metadata:
   name: {{ template "elasticsearch.fullname" . }}-curator

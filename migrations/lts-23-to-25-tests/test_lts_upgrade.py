@@ -60,16 +60,7 @@ def test_upgrade():
         "deployed" in helm_history.split("\n")[-2]
     ), "Expected state to be deployed before upgrade"
 
-    # Rewrite some parts of the k8s manifest with testing-specific configs
-    with open(upgrade_manifest_path, "r") as f:
-        upgrade_manifest_data = f.read()
-    upgrade_manifest_data = upgrade_manifest_data.replace(
-        "image: quay.io/astronomer/lts-23-to-25-upgrade:latest",
-        "image: lts-23-to-25-upgrade:latest",
-    )
-    upgrade_manifest_data = upgrade_manifest_data.replace(
-        "imagePullPolicy: Always", "imagePullPolicy: Never"
-    )
+    upgrade_manifest_data = rewrite_manifest_for_local_testing(upgrade_manifest_path)
     upgrade_manifest_yaml = [doc for doc in yaml.safe_load_all(upgrade_manifest_data)]
     for i, doc in enumerate(upgrade_manifest_yaml):
         if doc.get("kind") == "Job":
@@ -133,15 +124,8 @@ def test_upgrade():
         "deployed" in helm_history.split("\n")[-2]
     ), "Expected state to be deployed after upgrade"
 
-    with open(rollback_manifest_path, "r") as f:
-        rollback_manifest_data = f.read()
-    rollback_manifest_data = rollback_manifest_data.replace(
-        "image: quay.io/astronomer/lts-23-to-25-upgrade:latest",
-        "image: lts-23-to-25-upgrade:latest",
-    )
-    rollback_manifest_data = rollback_manifest_data.replace(
-        "imagePullPolicy: Always", "imagePullPolicy: Never"
-    )
+    rollback_manifest_data = rewrite_manifest_for_local_testing(rollback_manifest_path)
+
     with open(f"{rollback_manifest_path}.test.yaml", "w") as f:
         f.write(rollback_manifest_data)
     check_output(f"kubectl apply -f {rollback_manifest_path}.test.yaml", shell=True)
@@ -184,3 +168,18 @@ def test_upgrade():
     assert (
         "deployed" in helm_history.split("\n")[-2]
     ), "Expected state to be deployed after rollback"
+
+
+def rewrite_manifest_for_local_testing(manifest):
+    # Rewrite some parts of the k8s manifest with testing-specific configs
+    with open(manifest, "r") as f:
+        new_manifest = f.read()
+
+    new_manifest = new_manifest.replace(
+        "image: quay.io/astronomer/lts-23-to-25-upgrade:latest",
+        "image: lts-23-to-25-upgrade:latest",
+    )
+    new_manifest = new_manifest.replace(
+        "imagePullPolicy: Always", "imagePullPolicy: Never"
+    )
+    return new_manifest

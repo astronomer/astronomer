@@ -16,7 +16,7 @@ repos:
       - id: check-xml
       - id: check-yaml
         args: ['--allow-multiple-documents']
-        exclude: charts
+        exclude: 'charts|templates\/.*\.yaml'
       - id: debug-statements
       - id: detect-private-key
       - id: end-of-file-fixer

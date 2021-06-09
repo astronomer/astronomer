@@ -89,9 +89,7 @@ class KubernetesNetworkChecker:
             ip = service.spec.cluster_ip
             name = service.metadata.name
             namespace = service.metadata.namespace
-            ports = []
-            for port in service.spec.ports:
-                ports.append(port.port)
+            ports = [port.port for port in service.spec.ports]
             target = ScanTarget(name, ip, "service", ports=ports, namespace=namespace)
             if ports:
                 self.targets.append(target)
@@ -141,9 +139,7 @@ class KubernetesNetworkChecker:
             for port in target.ports:
                 all_ports.add(port)
         all_ports = list(all_ports)
-        all_ips = set()
-        for target in self.targets:
-            all_ips.add(target.ip_address)
+        all_ips = {target.ip_address for target in self.targets}
         # Nmap does not have an option to specify ports-per-target,
         # so we scan all ports for any target on all hosts.
         with self._scanning_pod() as scanner:
@@ -184,7 +180,7 @@ class KubernetesNetworkChecker:
                         for port in grandchild:
                             is_open = False
                             for state in port:
-                                if not state.tag == "state":
+                                if state.tag != "state":
                                     continue
                                 is_open = state.attrib["state"] == "open"
                             if is_open:
@@ -195,7 +191,7 @@ class KubernetesNetworkChecker:
                                 )
         result = ScanResult()
         # def __init__(self, name, ip_address, ports=[]):
-        for address in open_ports.keys():
+        for address, value in open_ports.items():
             if not open_ports[address]:
                 continue
             scan_finding = ScanFinding()
@@ -205,7 +201,7 @@ class KubernetesNetworkChecker:
                     scan_finding.name = f"{target._type}/{target.name}"
                     print(f"{target._type} {target.name} ({address}):")
                     break
-            for port in open_ports[address]:
+            for port in value:
                 scan_finding.add_port(port)
                 print(f"  {port}")
             result.add_finding(scan_finding)
@@ -237,9 +233,6 @@ def test_network(kube_client):
         "pod/astronomer-prometheus-node-exporter",
     ]
     for finding in scan_result.findings:
-        allowed = False
-        for allow in allow_list:
-            if allow in finding.name:
-                allowed = True
+        allowed = any(allow in finding.name for allow in allow_list)
         if not allowed:
             raise Exception(f"Found {finding.name} has ports {finding.ports} open")

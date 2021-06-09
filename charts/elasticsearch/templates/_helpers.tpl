@@ -23,14 +23,6 @@ Create chart name and version as used by the chart label.
 {{- end -}}
 
 {{/*
-Return the appropriate apiVersion for Curactor cron job.
-Could use .Capabilities.KubeVersion.Minor in future.
-*/}}
-{{- define "curator.cronJob.apiVersion" -}}
-"batch/v1beta1"
-{{- end -}}
-
-{{/*
 Init image name.
 */}}
 {{- define "init.image" -}}

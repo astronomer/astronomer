@@ -1,5 +1,5 @@
 {{- if .Values.rbac.create }}
-apiVersion: {{ template "apiVersion.rbac.v1beta1" . }}
+apiVersion: {{ template "apiVersion.rbac" . }}
 kind: Role
 metadata:
   name: {{ template "prometheus-postgres-exporter.fullname" . }}

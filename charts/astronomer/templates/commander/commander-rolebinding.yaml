@@ -3,7 +3,7 @@
 #################################
 {{- $singleNamespace := .Values.global.singleNamespace }}
 {{- if and .Values.global.rbacEnabled }}
-apiVersion: {{ template "apiVersion.rbac.v1beta1" . }}
+apiVersion: {{ template "apiVersion.rbac" . }}
 kind: {{ if $singleNamespace }}RoleBinding{{ else }}ClusterRoleBinding{{ end }}
 metadata:
   name: {{ .Release.Name }}-commander
