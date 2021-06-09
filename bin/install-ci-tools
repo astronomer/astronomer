@@ -6,6 +6,7 @@ HELM2_VERSION="2.17.0"
 HELM3_VERSION="3.6.0"
 GCLOUD_VERSION="342.0.0"
 MKCERT_VERSION="1.4.3"
+KUBENT_VERSION="0.4.0"
 
 OS=$(uname | tr '[:upper:]' '[:lower:]')
 
@@ -17,7 +18,7 @@ export PATH=/tmp/bin:$PATH
 
 pushd /tmp
 
-if [[ $FORCE -eq 0 && -f /tmp/bin/kind ]]; then
+if [[ "$FORCE" -eq 0 && -f /tmp/bin/kind ]]; then
   echo "kind already installed."
 else
   # Install KinD
@@ -26,7 +27,7 @@ else
   mv "./kind-${OS}-amd64" /tmp/bin/kind
 fi
 
-if [[ $FORCE -eq 0 && -f /tmp/bin/helm2 ]]; then
+if [[ "$FORCE" -eq 0 && -f /tmp/bin/helm2 ]]; then
   echo "helm2 is already installed."
 else
   # Install helm
@@ -35,7 +36,7 @@ else
   mv "${OS}-amd64/helm" /tmp/bin/helm2
 fi
 
-if [[ $FORCE -eq 0 && -f /tmp/bin/helm ]]; then
+if [[ "$FORCE" -eq 0 && -f /tmp/bin/helm ]]; then
   echo "helm is already installed."
 else
   # Install helm
@@ -48,7 +49,7 @@ fi
 # Add stable helm repo
 helm repo add stable https://charts.helm.sh/stable || true
 
-if [[ $FORCE -eq 0 && -f /tmp/bin/kubectl ]]; then
+if [[ "$FORCE" -eq 0 && -f /tmp/bin/kubectl ]]; then
   echo "kubectl is already installed."
 else
   # Install kubectl
@@ -59,7 +60,7 @@ else
 fi
 
 set +e
-if [[ $FORCE -ne 0 ]] || ! which gcloud gsutil ; then
+if [[ "$FORCE" -ne 0 ]] || ! which gcloud gsutil ; then
   # Install gcloud SDK
   wget "https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-${GCLOUD_VERSION}-${OS}-x86_64.tar.gz"
   tar xvzf "./google-cloud-sdk-${GCLOUD_VERSION}-${OS}-x86_64.tar.gz" >/dev/null 2>&1
@@ -69,8 +70,16 @@ else
 fi
 set -e
 
+# Install kubent
+if [[ "$FORCE" -eq 0 && -f /tmp/bin/kubent ]]; then
+  echo "kubent is already installed."
+else
+  curl -sSL "https://github.com/doitintl/kube-no-trouble/releases/download/${KUBENT_VERSION}/kubent-${KUBENT_VERSION}-linux-amd64.tar.gz" |
+  tar --directory=/tmp/bin/ -xzvf - kubent
+fi
+
 # Install mkcert
-if [[ $FORCE -eq 0 && -f /tmp/bin/mkcert ]]; then
+if [[ "$FORCE" -eq 0 && -f /tmp/bin/mkcert ]]; then
   echo "mkcert is already installed."
 else
   curl -LO "https://github.com/FiloSottile/mkcert/releases/download/v${MKCERT_VERSION}/mkcert-v${MKCERT_VERSION}-${OS}-amd64"
