@@ -8,7 +8,7 @@
 {{- $cert := genSignedCert $cn nil (list $altName1 $altName2) 3650 $ca }}
 
 {{ if .Values.apiserver.enabled }}
-apiVersion: apiregistration.k8s.io/v1beta1
+apiVersion: apiregistration.k8s.io/v1
 kind: APIService
 metadata:
   name: v1alpha1.kubed.appscode.com
