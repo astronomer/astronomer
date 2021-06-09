@@ -6,21 +6,6 @@ executors:
     docker:
       - image: circleci/python:3
 jobs:
-  api-deprecations-test:
-    docker:
-      - image: quay.io/astronomer/ci-helm-release:2021-06
-    steps:
-      - checkout
-      - run:
-          name: Check chart for deprecated kubernetes API versions
-          command: |
-            set -x
-            {%- for version in kube_versions %}
-
-            helm template --kube-version=v{{ version }} -f values.yaml --set global.baseDomain=example.com . |
-            kubent --filename -
-            {%- endfor %}
-
   lint:
     docker:
       - image: quay.io/astronomer/ap-build:0.2.0
@@ -111,6 +96,12 @@ jobs:
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging kubed keda"
+      - run:
+          name: Check chart for k8s {{ version }} compatibility with kubent
+          command: |
+            helm template --kube-version=v{{ version }} -f values.yaml --set global.baseDomain=example.com . |
+            kubent --filename -
+          when: always
 {% endfor -%}
 
 {% for version in [kube_versions[-1]] %}
