@@ -40,7 +40,7 @@ data:
             deployment: {{ printf "%q" "{{ $labels.release }}" }}
           annotations:
             summary: {{ printf "%q" "{{ $labels.release }} deployment is unhealthy" }}
-            description: {{ printf "%q" "The {{ $labels.deployment }} deployment is not completely available." }}
+            description: {{ printf "%q" "The {{ $labels.release }} deployment is not completely available." }}
 
 
         # This alert depends on the scheduler_heartbeat metric being a counter.
