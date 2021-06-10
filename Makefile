@@ -22,6 +22,7 @@ lint-astro:
 	helm lint ${TEMPDIR}/astronomer
 
 .unittest-requirements:
+	pip3 install --upgrade virtualenv
 	[ -d venv ] || virtualenv venv -p python3
 	venv/bin/pip install -r requirements-chart-tests.txt
 	touch .unittest-requirements
