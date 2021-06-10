@@ -51,4 +51,3 @@ tests:
       matchRegex:
         path: containers.args
         pattern: --cluster.advertise-address=\$\(POD_IP\):9094$
-      

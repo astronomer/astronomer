@@ -16,34 +16,40 @@
 # under the License.
 
 import subprocess
-import sys
 
 import pytest
 from filelock import FileLock
 
 
 @pytest.fixture(autouse=True, scope="session")
-def upgrade_helm(tmp_path_factory, worker_id):
+def upgrade_helm(tmp_path_factory, worker_id="main"):
     """
     Upgrade Helm repo
     """
 
     def _upgrade_helm():
         subprocess.check_output(
-            ["helm", "repo", "add", "stable", "https://charts.helm.sh/stable/"]
+            [
+                "helm",
+                "repo",
+                "add",
+                "stable",
+                "--force-update",
+                "https://charts.helm.sh/stable/",
+            ]
         )
-        subprocess.check_output(["helm", "dep", "update", sys.path[0]])
+        # subprocess.check_output(["helm", "dep", "update", sys.path[0]])
 
     if worker_id == "main":
         # not executing in with multiple workers, just update
         _upgrade_helm()
         return
 
-    root_tmp_dir = tmp_path_factory.getbasetemp().parent
-    lock_fn = root_tmp_dir / "upgrade_helm.lock"
-    flag_fn = root_tmp_dir / "upgrade_helm.done"
+    tmp_path_root = tmp_path_factory.getbasetemp().parent
+    lock_file = tmp_path_root / "upgrade_helm.lock"
+    done_file = tmp_path_root / "upgrade_helm.done"
 
-    with FileLock(str(lock_fn)):
-        if not flag_fn.is_file():
+    with FileLock(str(lock_file)):
+        if not done_file.is_file():
             _upgrade_helm()
-            flag_fn.touch()
+            done_file.touch()

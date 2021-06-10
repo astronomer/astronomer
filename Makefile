@@ -21,10 +21,14 @@ lint-prep:
 lint-astro:
 	helm lint ${TEMPDIR}/astronomer
 
+.unittest-requirements:
+	[ -d venv ] || virtualenv venv -p python3
+	venv/bin/pip install -r requirements-chart-tests.txt
+	touch .unittest-requirements
+
 .PHONY: unittest-charts
-unittest-charts:
-	helm plugin install https://github.com/astronomer/helm-unittest >/dev/null || true
-	helm unittest -3 .
+unittest-charts: .unittest-requirements
+	venv/bin/python -m pytest tests
 
 .PHONY: lint-charts
 lint-charts:
