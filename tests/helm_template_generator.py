@@ -28,36 +28,36 @@ from kubernetes.client.api_client import ApiClient
 
 api_client = ApiClient()
 
-BASE_URL_SPEC = (
-    "https://raw.githubusercontent.com/instrumenta/kubernetes-json-schema/master"
-)
+BASE_URL_SPEC = "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master"
 
 
-def get_schema_k8s(api_version, kind, kube_version="v1.18.0"):
+def get_schema_k8s(api_version, kind, kube_version="1.18.0"):
     api_version = api_version.lower()
     kind = kind.lower()
 
     if "/" in api_version:
         ext, _, api_version = api_version.partition("/")
         ext = ext.split(".")[0]
-        url = f"{BASE_URL_SPEC}/{kube_version}/{kind}-{ext}-{api_version}.json"
+        url = f"{BASE_URL_SPEC}/v{kube_version}/{kind}-{ext}-{api_version}.json"
     else:
-        url = f"{BASE_URL_SPEC}/{kube_version}/{kind}-{api_version}.json"
+        url = f"{BASE_URL_SPEC}/v{kube_version}/{kind}-{api_version}.json"
     request = requests.get(url)
     request.raise_for_status()
     return request.json()
 
 
 @lru_cache(maxsize=None)
-def create_validator(api_version, kind):
-    schema = get_schema_k8s(api_version, kind)
+def create_validator(api_version, kind, kube_version="1.18.0"):
+    schema = get_schema_k8s(api_version, kind, kube_version=kube_version)
     jsonschema.Draft7Validator.check_schema(schema)
     return jsonschema.Draft7Validator(schema)
 
 
-def validate_k8s_object(instance):
+def validate_k8s_object(instance, kube_version="1.18.0"):
     """Validate the k8s object."""
-    validate = create_validator(instance.get("apiVersion"), instance.get("kind"))
+    validate = create_validator(
+        instance.get("apiVersion"), instance.get("kind"), kube_version=kube_version
+    )
     validate.validate(instance)
 
 
@@ -97,7 +97,7 @@ def render_chart(
         k8s_objects = yaml.full_load_all(templates)
         k8s_objects = [k8s_object for k8s_object in k8s_objects if k8s_object]  # type: ignore
         for k8s_object in k8s_objects:
-            validate_k8s_object(k8s_object)
+            validate_k8s_object(k8s_object, kube_version=kube_version)
         return k8s_objects
 
 
