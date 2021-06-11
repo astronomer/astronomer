@@ -22,7 +22,7 @@ from filelock import FileLock
 
 
 @pytest.fixture(autouse=True, scope="session")
-def upgrade_helm(tmp_path_factory, worker_id="main"):
+def upgrade_helm(tmp_path_factory):
     """
     Upgrade Helm repo
     """
@@ -39,11 +39,6 @@ def upgrade_helm(tmp_path_factory, worker_id="main"):
             ]
         )
         # subprocess.check_output(["helm", "dep", "update", sys.path[0]])
-
-    if worker_id == "main":
-        # not executing in with multiple workers, just update
-        _upgrade_helm()
-        return
 
     tmp_path_root = tmp_path_factory.getbasetemp().parent
     lock_file = tmp_path_root / "upgrade_helm.lock"

@@ -43,7 +43,6 @@ def get_schema_k8s(api_version, kind, kube_version="v1.18.0"):
         url = f"{BASE_URL_SPEC}/{kube_version}/{kind}-{ext}-{api_version}.json"
     else:
         url = f"{BASE_URL_SPEC}/{kube_version}/{kind}-{api_version}.json"
-    print(f"{url=}")
     request = requests.get(url)
     request.raise_for_status()
     return request.json()
@@ -98,7 +97,6 @@ def render_chart(
         k8s_objects = yaml.full_load_all(templates)
         k8s_objects = [k8s_object for k8s_object in k8s_objects if k8s_object]  # type: ignore
         for k8s_object in k8s_objects:
-            print(f"{k8s_object=}")
             validate_k8s_object(k8s_object)
         return k8s_objects
 
