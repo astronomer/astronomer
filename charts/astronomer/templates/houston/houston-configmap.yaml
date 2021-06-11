@@ -262,6 +262,11 @@ data:
         authSidecar:
           enabled: true
           image: nginxinc/nginx-unprivileged
+          annotations:
+            {{- range $key, $value := .Values.global.extraAnnotations}}
+            {{ $key }}: {{ $value | quote }}
+            {{- end }}
+             
     {{- end }}
 
     # If we're in single namespace mode, we will also
