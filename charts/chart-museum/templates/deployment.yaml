@@ -2,21 +2,36 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: helm-museum
+  name: {{ .Release.Name }}-chartmuseum
+  labels:
+    component: chartmuseum
+    tier: astronomer
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
   namespace: astronomer
 spec:
   selector:
     matchLabels:
-      app: helm-museum
+      component: chartmuseum
   template:
     metadata:
       labels:
-        app: helm-museum
+        tier: astronomer
+        component: chartmuseum
+        release: {{ .Release.Name }}
     spec:
+      nodeSelector:
+{{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
+      affinity:
+{{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 8 }}
+      tolerations:
+{{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
+      restartPolicy: Always
       securityContext:
         fsGroup: 1000
       containers:
-      - name: helm-museum
+      - name: chartmuseum
         image: ghcr.io/helm/chartmuseum:v0.13.1
         env:
           - name: STORAGE
@@ -25,18 +40,13 @@ spec:
             value: "/charts"
         volumeMounts:
           - mountPath: "/charts"
-            name: helm-chart-museum
+            name: chartmuseum
         resources:
-          requests:
-            memory: "32Mi"
-            cpu: "100m"
-          limits:
-            memory: "128Mi"
-            cpu: "500m"
+{{ toYaml .Values.chartmuseum.resources | indent 10 }}
         ports:
         - containerPort: 8080
       volumes:
-        - name: helm-chart-museum
+        - name: chartmuseum
           persistentVolumeClaim:
-            claimName: helm-chart-museum
+            claimName: chartmuseum
 {{- end }}

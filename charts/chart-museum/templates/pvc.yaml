@@ -2,12 +2,14 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: helm-chart-museum
-  namespace: astronomer
+  name: chartmuseum
 spec:
   accessModes:
   - ReadWriteOnce
   resources:
     requests:
       storage: 1Gi
+    {{- if .Values.common.persistence.storageClassName }}
+      storageClassName: {{ .Values.common.persistence.storageClassName }}
+    {{- end }}
 {{- end }}
