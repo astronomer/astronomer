@@ -1,11 +1,12 @@
 from tests.helm_template_generator import render_chart
 import jmespath
 import pytest
+from . import supported_versions
 
 
 @pytest.mark.parametrize(
     "kube_version",
-    ["1.16.0", "1.17.0", "1.18.0", "1.19.0", "1.20.0", "1.21.0"],
+    supported_versions,
 )
 class TestIngress:
     def test_astro_ui_deployment(self, kube_version):
