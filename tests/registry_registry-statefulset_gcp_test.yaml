@@ -10,4 +10,3 @@ tests:
     asserts:
       - isKind:
           of: StatefulSet
-
