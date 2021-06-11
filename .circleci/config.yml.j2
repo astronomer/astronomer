@@ -16,7 +16,7 @@ jobs:
           command: ./bin/install-ci-tools 1
       - run:
           name: Lint the Astronomer chart
-          command: PATH=/tmp/bin:$PATH make lint
+          command: export PATH=/tmp/bin:$PATH make lint
 
   build-lts-23-to-25-upgrade:
     executor: docker-executor
