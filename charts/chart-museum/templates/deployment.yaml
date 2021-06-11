@@ -1,0 +1,42 @@
+{{- if .Values.global.chartMuseumEnabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: helm-museum
+  namespace: astronomer
+spec:
+  selector:
+    matchLabels:
+      app: helm-museum
+  template:
+    metadata:
+      labels:
+        app: helm-museum
+    spec:
+      securityContext:
+        fsGroup: 1000
+      containers:
+      - name: helm-museum
+        image: ghcr.io/helm/chartmuseum:v0.13.1
+        env:
+          - name: STORAGE
+            value: "local"
+          - name: STORAGE_LOCAL_ROOTDIR
+            value: "/charts"
+        volumeMounts:
+          - mountPath: "/charts"
+            name: helm-chart-museum
+        resources:
+          requests:
+            memory: "32Mi"
+            cpu: "100m"
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 8080
+      volumes:
+        - name: helm-chart-museum
+          persistentVolumeClaim:
+            claimName: helm-chart-museum
+{{- end }}

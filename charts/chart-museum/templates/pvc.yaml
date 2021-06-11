@@ -1,0 +1,13 @@
+{{- if .Values.global.chartMuseumEnabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: helm-chart-museum
+  namespace: astronomer
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+{{- end }}

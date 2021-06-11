@@ -1,0 +1,13 @@
+{{- if .Values.global.chartMuseumEnabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: helm-museum
+spec:
+  type: ClusterIP
+  selector:
+    app: helm-museum
+  ports:
+  - port: 8080
+    targetPort: 8080
+{{- end }}
