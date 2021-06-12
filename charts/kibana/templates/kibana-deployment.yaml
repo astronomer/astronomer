@@ -52,3 +52,19 @@ spec:
         - containerPort: {{ .Values.ports.http }}
           name: kibana-ui
           protocol: TCP
+      {{- if .Values.global.sidecar.enabled  }}
+      - name: nginx
+        image: {{ .Values.global.sidecar.image }}
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80
+          name: nginx-ui
+          protocol: TCP
+        volumeMounts:
+        - mountPath: /etc/nginx/conf.d/
+          name: kibana-sidecar-conf
+      volumes:
+        - name: kibana-sidecar-conf
+          configMap:
+            name: {{ template "kibana.fullname" . }}-nginx-conf
+      {{- end }}

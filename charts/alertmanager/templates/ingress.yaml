@@ -13,11 +13,16 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
   annotations:
+    {{- if .Values.global.sidecar.enabled  }}
+    kubernetes.io/ingress.class: "default"
+    route.openshift.io/termination: "reencrypt"
+    {{- else }}
     kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
     kubernetes.io/tls-acme: {{ eq .Values.global.acme true | quote }}
     nginx.ingress.kubernetes.io/auth-url: https://houston.{{ .Values.global.baseDomain }}/v1/authorization
     nginx.ingress.kubernetes.io/auth-signin: https://app.{{ .Values.global.baseDomain }}/login
     nginx.ingress.kubernetes.io/auth-response-headers: authorization, username, email
+    {{- end }}
 spec:
   {{- if or .Values.global.tlsSecret .Values.global.acme }}
   tls:
@@ -38,6 +43,9 @@ spec:
             {{ if semverCompare "<1.19-0" .Capabilities.KubeVersion.Version -}}
             backend:
               serviceName: {{ template "alertmanager.fullname" . }}
+              {{- if .Values.global.sidecar.enabled  }}
+              servicePort: nginx-ui
+              {{- else }}
               servicePort: http
             {{ else -}}
             pathType: Prefix

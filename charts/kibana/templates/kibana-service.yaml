@@ -22,3 +22,9 @@ spec:
     port: {{ .Values.ports.http }}
     targetPort: {{ .Values.ports.http }}
     protocol: TCP
+  {{- if .Values.global.sidecar.enabled  }}
+  - name: nginx-ui
+    protocol: TCP
+    port: 80
+    targetPort: 80
+  {{- end}}

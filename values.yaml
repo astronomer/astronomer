@@ -75,7 +75,12 @@ global:
   defaultDenyNetworkPolicy: true
 
   # Enable security context constraints required for OpenShift
-  sccEnabled: false
+  sccEnabled: true
+
+  # Deploy auth sidecar to use openshift native features
+  sidecar:
+    enabled: true
+    image: nginx
 
   # Enable values required for use with Microsoft Azure
   azure:
