@@ -5,11 +5,13 @@ metadata:
   name: chartmuseum
 spec:
   accessModes:
-  - ReadWriteOnce
+    {{- range .Values.persistence.accessModes }}
+    - {{ . | quote }}
+    {{- end }}
   resources:
     requests:
-      storage: 1Gi
-    {{- if .Values.common.persistence.storageClassName }}
-      storageClassName: {{ .Values.common.persistence.storageClassName }}
+      storage: {{ .Values.persistence.size | quote }}
+    {{- if .Values.persistence.storageClassName }}
+      storageClassName: {{ .Values.persistence.storageClassName }}
     {{- end }}
 {{- end }}
