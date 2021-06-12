@@ -48,6 +48,7 @@ spec:
               servicePort: nginx-ui
               {{- else }}
               servicePort: grafana-ui
+              {{- end }}
             {{- else -}}
             pathType: Prefix
             backend:

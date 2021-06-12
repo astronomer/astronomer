@@ -47,6 +47,7 @@ spec:
               servicePort: nginx-ui
               {{- else }}
               servicePort: kibana-ui
+              {{- end }}
             {{- else -}}
             pathType: Prefix
             backend:

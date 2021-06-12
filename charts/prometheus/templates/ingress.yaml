@@ -48,6 +48,7 @@ spec:
               servicePort: nginx-ui
               {{- else }}
               servicePort: prometheus-data
+              {{- end }}
             {{- else -}}
             pathType: Prefix
             backend:
