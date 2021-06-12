@@ -33,9 +33,10 @@ spec:
           release: {{ .Release.Name }}
     {{- end }}
     ports:
+    {{- if .Values.global.sidecar.enabled  }}
     - protocol: TCP
       port: {{ .Values.ports.http }}
-    {{- if .Values.global.sidecar.enabled  }}
+    {{- else }}
     - protocol: TCP
       port: 80
     {{- end }}

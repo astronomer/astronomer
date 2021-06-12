@@ -43,6 +43,9 @@ spec:
             {{ if semverCompare "<1.19-0" .Capabilities.KubeVersion.Version -}}
             backend:
               serviceName: {{ template "kibana.fullname" . }}
+              {{- if .Values.global.sidecar.enabled  }}
+              servicePort: nginx-ui
+              {{- else }}
               servicePort: kibana-ui
             {{- else -}}
             pathType: Prefix
