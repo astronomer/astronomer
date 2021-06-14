@@ -261,7 +261,8 @@ data:
         # enables nginx auth sidecar for airflow deployments
         authSidecar:
           enabled: true
-          image: nginxinc/nginx-unprivileged
+          image: {{ .Values.global.authSidecar.image }}
+          pullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
           annotations:
             {{- range $key, $value := .Values.global.extraAnnotations}}
             {{ $key }}: {{ $value | quote }}
