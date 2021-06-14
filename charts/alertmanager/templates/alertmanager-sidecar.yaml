@@ -21,22 +21,18 @@ data:
       server_name {{ template "alertmanager.url" . }} ;
       listen 8080  ;
       listen [::]:8080  ;
-
       location  = /auth {
-			  {{ template "sidecar_nginx_auth_headers" }}
+        {{ template "sidecar_nginx_auth_headers" }}
       }
-
       location @401_auth_error {
-      	internal;
-      	add_header Set-Cookie $auth_cookie;
+        internal;
+        add_header Set-Cookie $auth_cookie;
         return 302 https://app.{{ .Values.global.baseDomain }}/login?rd=https://$http_host$request_uri;
       }
-
-
       location / {
         # Custom headers to proxied server
         proxy_set_header  Host  {{ template "alertmanager.url" . }};
-				proxy_pass http://astro-alertmanager;
+        proxy_pass http://astro-alertmanager;
         {{ template "sidecar_nginx_location" }}
       }
     }
