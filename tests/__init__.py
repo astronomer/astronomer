@@ -1,2 +1,3 @@
 # This should match the major.minor version list in .circleci/generate_circleci_config.py
-supported_k8s_versions = [f"1.{x}.0" for x in range(16, 21)]
+# Patch version should always be 0
+supported_k8s_versions = ["1.16.0", "1.17.0", "1.18.0", "1.19.0", "1.20.0"]
