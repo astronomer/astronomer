@@ -123,7 +123,7 @@ spec:
             {{- end }}
             - name: GF_AUTH_ANONYMOUS_ENABLED
               value: "true"
-        {{- if .Values.global.authSidecar }}
+        {{- if .Values.global.authSidecar.enabled }}
         - name: nginx
           image: {{ .Values.global.authSidecar.image }}
           imagePullPolicy: Always
