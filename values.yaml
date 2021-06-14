@@ -79,7 +79,7 @@ global:
 
   # Deploy auth sidecar to use openshift native features
   authSidecar:
-    enabled: true
+    enabled: false
     image: nginxinc/nginx-unprivileged
     default_nginx_settings: |
       internal;
