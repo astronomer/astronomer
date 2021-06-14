@@ -46,7 +46,7 @@ spec:
         {{- if .Values.global.authSidecar.enabled  }}
         - name: nginx
           image: {{ .Values.global.authSidecar.image }}
-          imagePullPolicy: Always
+          imagePullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
           {{- if .Values.global.authSidecar.resources }}
           resources: {{- toYaml .Values.global.authSidecar.resources | nindent 12 }}
           {{- end }}

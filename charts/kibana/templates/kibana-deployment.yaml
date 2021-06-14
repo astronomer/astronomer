@@ -55,7 +55,7 @@ spec:
       {{- if .Values.global.authSidecar.enabled  }}
       - name: nginx
         image: {{ .Values.global.authSidecar.image }}
-        imagePullPolicy: Always
+        imagePullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
         ports:
         - containerPort: 8080
           name: nginx-ui

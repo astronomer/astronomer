@@ -81,6 +81,7 @@ global:
   authSidecar:
     enabled: false
     image: nginxinc/nginx-unprivileged
+    pullPolicy: IfNotPresent
     default_nginx_settings: |
       internal;
       proxy_pass_request_body     off;
