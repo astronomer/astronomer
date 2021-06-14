@@ -22,7 +22,9 @@ data:
       listen 8080  ;
       listen [::]:8080  ;
       location  = /auth {
-        {{ template "sidecar_nginx_auth_headers" }}
+        proxy_set_header Host houston.{{ .Values.global.baseDomain }};
+        proxy_pass  https://houston.{{ .Values.global.baseDomain }}/v1/authorization;
+        {{ .Values.global.default_nginx_settings }}
       }
       location @401_auth_error {
       	internal;
@@ -33,7 +35,7 @@ data:
         # Custom headers to proxied server
         proxy_set_header  Host  {{ template "kibana.url" . }};
         proxy_pass http://astro-kibana;
-        {{ template "sidecar_nginx_location" }}
+        {{ .Values.global.default_nginx_settings_location }}
       }
     }
 {{- end }}
