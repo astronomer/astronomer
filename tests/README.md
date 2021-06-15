@@ -189,7 +189,7 @@ The output of this test will be exactly the same as it was before, so there's no
 
 ### Inspecting tests with print
 
-Since the additional assertions are in the same test function we originally wrote, the output will not be any different when we run this. We could add print functions if we want to be sure our test is working right. For instance, if we add `print(f'{kube_version=} {docs[0]["apiVersion"]=}')` to our code above each of the last two assertions and run pytest with `--capture=no/-s`, we will see:
+Adding print statements to view what is happening as code runs is a common debugging technique that works with pytest as long as you run pytest with `--capture=no/-s`. If we add `print(f'{kube_version=} {docs[0]["apiVersion"]=}')` to our code above each of the last two assertions and run `pytest -s`, we will see:
 
 ```
 $ venv/bin/python -m pytest -s tests/test_ingress_example.py
@@ -234,7 +234,7 @@ def test_basic_ingress(kube_version):
     assert len(docs) == 1
 ```
 
-Then we run that test with like so:
+Then we run that test like so:
 
 ```
 $ venv/bin/python -m pytest -s --pdb tests/test_ingress_example.py
@@ -248,7 +248,7 @@ collecting ...
 (Pdb)
 ```
 
-From here, we can see where we are in the code:
+This is a standard `pdb` prompt. From here, we can see where we are in the code:
 
 ```
 (Pdb) ll
@@ -273,15 +273,14 @@ From here, we can see where we are in the code:
  24  	        assert docs[0]["apiVersion"] == "networking.k8s.io/v1beta1"
 ```
 
-And we can drop into an interactive python shell at this line to inspect things:
-
+And we can drop into an interactive python shell to inspect things as they exist at our current point of execution:
 ```
 (Pdb) interact
 *interactive*
 >>>
 ```
 
-From here, it's just a normal python repl that we can type python code into:
+This is a normal python repl that we can type python code into:
 ```
 >>> type(docs[0])
 <class 'dict'>
@@ -303,7 +302,7 @@ http:
     path: /
 ```
 
-This gives us an interactive playground with our tests that we can try out assertions, data reformatting with `jmespath.search` or comprehensions, etc..
+This gives us an interactive playground for our tests where we can try out assertions, data reformatting with `jmespath.search` or comprehensions, etc..
 
 ### Where to go from here
 
