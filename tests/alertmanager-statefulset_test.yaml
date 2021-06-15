@@ -1,3 +1,11 @@
+### DEPRECATED
+#
+#   helm-unittest usage is deprecated in this repository.
+#   Do not modify these tests. If changes are needed,
+#   migrate the test to the pytest test suite.
+#
+##############
+
 ---
 # Good example of multi-template test. statefulset requires configmap to be present to be
 # rendered. The two template files must be tested with different assertions, so each test

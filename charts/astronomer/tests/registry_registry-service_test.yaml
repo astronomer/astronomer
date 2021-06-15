@@ -1,3 +1,11 @@
+### DEPRECATED
+#
+#   helm-unittest usage is deprecated in this repository.
+#   Do not modify these tests. If changes are needed,
+#   migrate the test to the pytest test suite.
+#
+##############
+
 suite: Test registry/registry-service.yaml
 templates:
 - registry/registry-service.yaml
