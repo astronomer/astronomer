@@ -36,6 +36,14 @@ filelock==3.0.12 \
     --hash=sha256:18d82244ee114f543149c66a6e0c14e9c4f8a1044b5cdaadd0f82159d6a6ff59 \
     --hash=sha256:929b7d63ec5b7d6b71b0fa5ac14e030b3f70b75747cef1b10da9b879fef15836
     # via -r requirements/chart-tests.in
+gitdb==4.0.7 \
+    --hash=sha256:6c4cc71933456991da20917998acbe6cf4fb41eeaab7d6d67fbc05ecd4c865b0 \
+    --hash=sha256:96bf5c08b157a666fec41129e6d327235284cca4c81e92109260f353ba138005
+    # via gitpython
+gitpython==3.1.17 \
+    --hash=sha256:29fe82050709760081f588dd50ce83504feddbebdc4da6956d02351552b1c135 \
+    --hash=sha256:ee24bdc93dce357630764db659edaf6b8d664d4ff5447ccfeedd2dc5c253f41e
+    # via -r requirements/chart-tests.in
 google-auth==1.31.0 \
     --hash=sha256:154f7889c5d679a6f626f36adb12afbd4dbb0a9a04ec575d989d6ba79c4fd65e \
     --hash=sha256:6d47c79b5d09fbc7e8355fd9594cc4cf65fdde5d401c63951eaac4baa1ba2ae1
@@ -187,6 +195,10 @@ six==1.16.0 \
     #   jsonschema
     #   kubernetes
     #   python-dateutil
+smmap==4.0.0 \
+    --hash=sha256:7e65386bd122d45405ddf795637b7f7d2b532e7e401d46bbe3fb49b9986d5182 \
+    --hash=sha256:a9a7479e4c572e2e775c404dcd3080c8dc49f39918c2cf74913d30c4c478e3c2
+    # via gitdb
 termcolor==1.1.0 \
     --hash=sha256:1d6d69ce66211143803fbc56652b41d73b4a400a2891d7bf7a1cdf4c02de613b
     # via pytest-sugar
