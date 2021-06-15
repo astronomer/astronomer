@@ -1,5 +1,5 @@
 ################################
-## Alertmanager sidecar ConfigMap
+## Alertmanager auth sidecar ConfigMap
 #################################
 {{- if .Values.global.authSidecar.enabled }}
 kind: ConfigMap
