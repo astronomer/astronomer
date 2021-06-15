@@ -1,3 +1,11 @@
+### DEPRECATED
+#
+#   helm-unittest usage is deprecated in this repository.
+#   Do not modify these tests. If changes are needed,
+#   migrate the test to the pytest test suite.
+#
+##############
+
 ---
 # Note: tests that require setting global values must live in the parent chart, not the sub-chart!
 
@@ -16,33 +24,3 @@ tests:
     asserts:
       - isKind:
           of: Ingress
-
-  # TODO: We need tests here for the syntax changes in ingress between 1.18 and 1.19
-
-  # This test passes with latest quintush but fails with our old fork of helm-unittest.
-  # https://github.com/astronomer/issues/issues/2701
-  # Manual testing shows that it should pass:
-  #   helm template . --set global.baseDomain=example.com --kube-version=1.19.0 --show-only charts/astronomer/templates/ingress.yaml
-  #
-  # - it: "Should use ingress networking.k8s.io/v1 with k8s >= 1.19"
-  #   set:
-  #     global.baseDomain: example.com
-  #   capabilities:
-  #     majorVersion: 1
-  #     minorVersion: 19
-  #   asserts:
-  #     - equal:
-  #         path: apiVersion
-  #         value: networking.k8s.io/v1
-
-  # This passes now, but we don't know when it will begin to fail and the prior will begin to pass, so we preemptively comment it out
-  # - it: "Should use ingress networking.k8s.io/v1beta1 with k8s < 1.19"
-  #   set:
-  #     global.baseDomain: example.com
-  #   capabilities:
-  #     majorVersion: 1
-  #     minorVersion: 18
-  #   asserts:
-  #     - equal:
-  #         path: apiVersion
-  #         value: networking.k8s.io/v1beta1

@@ -1,3 +1,11 @@
+### DEPRECATED
+#
+#   helm-unittest usage is deprecated in this repository.
+#   Do not modify these tests. If changes are needed,
+#   migrate the test to the pytest test suite.
+#
+##############
+
 ---
 suite: Test DaemonSet
 templates:
@@ -7,9 +15,9 @@ tests:
     asserts:
       - isKind:
           of: DaemonSet
-      - equal: 
+      - equal:
           path: spec.selector.matchLabels.app
           value: prometheus-node-exporter
-      - equal: 
+      - equal:
           path: spec.template.metadata.labels.app
           value: prometheus-node-exporter

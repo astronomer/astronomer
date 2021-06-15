@@ -1,9 +1,0 @@
----
-suite: Test kubed-pvc
-templates:
-  - kubed-pvc.yaml
-tests:
-  - it: should work
-    asserts:
-      - isKind:
-        of: PersistentVolumeClaim

@@ -1,3 +1,11 @@
+### DEPRECATED
+#
+#   helm-unittest usage is deprecated in this repository.
+#   Do not modify these tests. If changes are needed,
+#   migrate the test to the pytest test suite.
+#
+##############
+
 ---
 suite: Test prometheus-alerts-configmap
 templates:
@@ -57,4 +65,3 @@ tests:
       - matchRegex:
           path: data.alerts
           pattern: '.*kube_pod_status_phase{job="mr-coolio-kube-state",.*'
-      

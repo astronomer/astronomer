@@ -1,3 +1,11 @@
+### DEPRECATED
+#
+#   helm-unittest usage is deprecated in this repository.
+#   Do not modify these tests. If changes are needed,
+#   migrate the test to the pytest test suite.
+#
+##############
+
 ---
 suite: Test prometheus-statefulset
 templates:
@@ -9,13 +17,13 @@ tests:
           of: StatefulSet
   - it: Security context should have user and fsgroup set correctly
     asserts:
-      - equal: 
+      - equal:
           path: spec.template.spec.securityContext.fsGroup
           value: 65534
-      - equal: 
+      - equal:
           path: spec.template.spec.securityContext.runAsUser
           value: 65534
-      - equal: 
+      - equal:
           path: spec.template.spec.securityContext.runAsNonRoot
           value: true
 
@@ -24,4 +32,3 @@ tests:
     - equal:
         path: spec.template.spec.containers[0].name
         value: configmap-reloader
-    

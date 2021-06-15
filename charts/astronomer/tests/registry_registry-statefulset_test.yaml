@@ -1,8 +1,0 @@
-suite: Test registry/registry-statefulset.yaml
-templates:
-- registry/registry-statefulset.yaml
-tests:
-- it: should work
-  asserts:
-    - isKind:
-        of: StatefulSet
