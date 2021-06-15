@@ -128,7 +128,16 @@ Results (1.02s):
 Using `pytest.parametrize` (notice it's "trize" not "terize") We can test many versions of kubernetes. Let's modify the test we created above using parametrize, and the list of kubernetes versions supported by Astronomer. To do this we add a decorator that handles the `kube_version` keyword argument, and modify our function definition to take that keyword argument, and also to pass that argument on to `render_chart`:
 
 ```python
-
+@pytest.mark.parametrize(
+    "kube_version",
+    supported_k8s_versions,
+)
+def test_basic_ingress(kube_version):
+    docs = render_chart(
+        kube_version=kube_version,
+        show_only=["charts/astronomer/templates/ingress.yaml"],
+    )
+    assert len(docs) == 1
 ```
 
 When we run this test, all versions found in the `supported_k8s_version` list that we imported will be tested:
