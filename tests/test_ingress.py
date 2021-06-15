@@ -9,20 +9,49 @@ from . import supported_k8s_versions
     supported_k8s_versions,
 )
 class TestIngress:
-    def test_should_pass_validation_with_just_ingress_enabled(self, kube_version):
-        render_chart(
-            kube_version=kube_version,
-            show_only=["charts/astronomer/templates/ingress.yaml"],
-        )  # checks that no validation exception is raised
-
-    def test_should_allow_more_than_one_annotation(self, kube_version):
+    def test_basic_ingress(self, kube_version):
+        # sourcery skip: extract-duplicate-method
         docs = render_chart(
             kube_version=kube_version,
             show_only=["charts/astronomer/templates/ingress.yaml"],
         )
-        assert (
-            jmespath.search("metadata.annotations", docs[0])[
-                "kubernetes.io/ingress.class"
+
+        assert len(docs) == 1
+
+        doc = docs[0]
+
+        annotations = jmespath.search("metadata.annotations", doc)
+        assert len(annotations) > 1
+        assert annotations["kubernetes.io/ingress.class"] == "RELEASE-NAME-nginx"
+
+        _, minor, _ = (int(x) for x in kube_version.split("."))
+
+        if minor >= 19:
+            assert doc["apiVersion"] == "networking.k8s.io/v1"
+            assert "RELEASE-NAME-astro-ui" in [
+                name[0]
+                for name in jmespath.search(
+                    "spec.rules[*].http.paths[*].backend.service.name", doc
+                )
             ]
-            == "RELEASE-NAME-nginx"
-        )
+            assert "astro-ui-http" in [
+                port[0]
+                for port in jmespath.search(
+                    "spec.rules[*].http.paths[*].backend.service.port.name", doc
+                )
+            ]
+
+        if minor < 19:
+            assert doc["apiVersion"] == "networking.k8s.io/v1beta1"
+            assert "RELEASE-NAME-astro-ui" in [
+                name[0]
+                for name in jmespath.search(
+                    "spec.rules[*].http.paths[*].backend.serviceName", doc
+                )
+            ]
+            assert "astro-ui-http" in [
+                port[0]
+                for port in jmespath.search(
+                    "spec.rules[*].http.paths[*].backend.servicePort", doc
+                )
+            ]

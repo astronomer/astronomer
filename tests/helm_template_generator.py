@@ -66,7 +66,7 @@ def render_chart(
     values=None,
     show_only=None,
     chart_dir=None,
-    kube_version="v1.18.0",
+    kube_version="1.18.0",
     baseDomain="example.com",
 ):
     """
