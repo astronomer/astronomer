@@ -25,7 +25,7 @@ lint-astro: lint-prep ## Lint the Astronomer helm chart
 unittest-requirements: .unittest-requirements ## Setup venv required for unit testing the Astronomer helm chart
 .unittest-requirements:
 	[ -d venv ] || virtualenv venv -p python3
-	venv/bin/pip install -r requirements-chart-tests.txt
+	venv/bin/pip install -r requirements/chart-tests.txt
 	touch .unittest-requirements
 
 .PHONY: unittest-charts
@@ -65,3 +65,7 @@ build: ## Build the Astronomer helm chart
 	cp -R . ${TEMPDIR}/astronomer
 	find "${TEMPDIR}/astronomer/charts" -name requirements.yaml -type f -print | while read -r FILE ; do ( set -x ; cd `dirname $$FILE` && helm dep update ; ) ; done ;
 	helm package ${TEMPDIR}/astronomer
+
+.PHONY: update-requirements
+update-requirements: ## Update all requirements.txt files
+	for FILE in requirements/*.in ; do pip-compile --allow-unsafe --upgrade --generate-hashes $${FILE} ; done ;

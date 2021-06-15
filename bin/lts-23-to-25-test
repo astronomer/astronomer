@@ -35,7 +35,7 @@ export HELM_CHART_PATH="$GIT_ROOT"  # Must be set to local directory to test cha
 pip3 install virtualenv
 virtualenv --python=python3 /tmp/venv
 source /tmp/venv/bin/activate
-pip install -r "$GIT_ROOT/migrations/lts-23-to-25-tests/requirements.txt"
+pip install -r "$GIT_ROOT/requirements/lts-23-to-25-tests.txt"
 
 pytest -s "$GIT_ROOT/migrations/lts-23-to-25-tests"
 deactivate

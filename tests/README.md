@@ -96,7 +96,7 @@ created virtual environment CPython3.9.5.final.0-64 in 299ms
   seeder FromAppData(download=False, pip=bundle, setuptools=bundle, wheel=bundle, via=copy, app_data_dir=/Users/danielh/Library/Application Support/virtualenv)
     added seed packages: pip==21.1.2, setuptools==57.0.0, wheel==0.36.2
   activators BashActivator,CShellActivator,FishActivator,PowerShellActivator,PythonActivator,XonshActivator
-$ venv/bin/pip3 install -r requirements-chart-tests.txt
+$ venv/bin/pip3 install -r requirements/chart-tests.txt
 Collecting docker
   Using cached docker-5.0.0-py2.py3-none-any.whl (146 kB)
 Collecting filelock

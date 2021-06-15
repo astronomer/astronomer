@@ -1,0 +1,11 @@
+docker
+filelock
+jmespath
+jsonschema
+kubernetes
+pytest
+pytest-forked
+pytest-sugar
+pytest-xdist
+PyYAML
+requests
