@@ -22,7 +22,7 @@ from filelock import FileLock
 
 
 @pytest.fixture(autouse=True, scope="session")
-def upgrade_helm(tmp_path_factory):
+def upgrade_helm(tmp_path_factory, worker_id):
     """
     Upgrade Helm repo
     """
@@ -38,13 +38,17 @@ def upgrade_helm(tmp_path_factory):
                 "https://charts.helm.sh/stable/",
             ]
         )
-        # subprocess.check_output(["helm", "dep", "update", sys.path[0]])
+        subprocess.check_output(["helm", "repo", "update"])
 
-    tmp_path_root = tmp_path_factory.getbasetemp().parent
-    lock_file = tmp_path_root / "upgrade_helm.lock"
-    done_file = tmp_path_root / "upgrade_helm.done"
+    if worker_id == "master":
+        _upgrade_helm()
+        return
 
-    with FileLock(str(lock_file)):
-        if not done_file.is_file():
+    root_tmp_dir = tmp_path_factory.getbasetemp().parent
+    lock_fn = root_tmp_dir / "upgrade_helm.lock"
+    flag_fn = root_tmp_dir / "upgrade_helm.done"
+
+    with FileLock(str(lock_fn)):
+        if not flag_fn.is_file():
             _upgrade_helm()
-            done_file.touch()
+            flag_fn.touch()
