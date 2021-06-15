@@ -15,7 +15,7 @@ metadata:
 data:
   default.conf: |
     upstream astro-grafana {
-      server {{ .Release.Name }}-grafana:3000 ;
+      server localhost:{{ .Values.ports.http }} ;
     }
     server {
       server_name {{ template "grafana.url" . }} ;

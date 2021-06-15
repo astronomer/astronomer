@@ -15,7 +15,7 @@ metadata:
 data:
   default.conf: |
     upstream astro-prometheus {
-      server {{ .Release.Name }}-prometheus:{{ .Values.ports.http }} ;
+      server localhost:{{ .Values.ports.http }} ;
     }
     server {
       server_name {{ template "prometheus.url" . }} ;

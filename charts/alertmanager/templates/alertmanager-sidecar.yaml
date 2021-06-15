@@ -15,7 +15,7 @@ metadata:
 data:
   default.conf: |
     upstream astro-alertmanager {
-      server {{ .Release.Name }}-alertmanager:{{ .Values.ports.http }} ;
+      server localhost:{{ .Values.ports.http }} ;
     }
     server {
       server_name {{ template "alertmanager.url" . }} ;

@@ -15,7 +15,7 @@ metadata:
 data:
   default.conf: |
     upstream astro-kibana {
-      server {{ .Release.Name }}-kibana:{{ .Values.ports.http }} ;
+      server localhost:{{ .Values.ports.http }} ;
     }
     server {
       server_name {{ template "kibana.url" . }} ;
