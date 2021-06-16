@@ -254,25 +254,25 @@ This is a standard `pdb` prompt. From here, we can see where we are in the code:
 
 ```
 (Pdb) ll
-  6  	@pytest.mark.parametrize(
-  7  	    "kube_version",
-  8  	    supported_k8s_versions,
-  9  	)
- 10  	def test_basic_ingress(kube_version):
- 11  	    docs = render_chart(
- 12  	        kube_version=kube_version,
- 13  	        show_only=["charts/astronomer/templates/ingress.yaml"],
- 14  	    )
- 15  	    breakpoint()
- 16  ->	    assert len(docs) == 1
+  6      @pytest.mark.parametrize(
+  7          "kube_version",
+  8          supported_k8s_versions,
+  9      )
+ 10      def test_basic_ingress(kube_version):
+ 11          docs = render_chart(
+ 12              kube_version=kube_version,
+ 13              show_only=["charts/astronomer/templates/ingress.yaml"],
+ 14          )
+ 15          breakpoint()
+ 16  ->        assert len(docs) == 1
  17
- 18  	    major, minor, patch = [int(x) for x in kube_version.split(".")]
- 19  	    if major == 1 and minor >= 19:
- 20  	        print(f'{kube_version=} {docs[0]["apiVersion"]=}')
- 21  	        assert docs[0]["apiVersion"] == "networking.k8s.io/v1"
- 22  	    if major == 1 and minor < 19:
- 23  	        print(f'{kube_version=} {docs[0]["apiVersion"]=}')
- 24  	        assert docs[0]["apiVersion"] == "networking.k8s.io/v1beta1"
+ 18          major, minor, patch = [int(x) for x in kube_version.split(".")]
+ 19          if major == 1 and minor >= 19:
+ 20              print(f'{kube_version=} {docs[0]["apiVersion"]=}')
+ 21              assert docs[0]["apiVersion"] == "networking.k8s.io/v1"
+ 22          if major == 1 and minor < 19:
+ 23              print(f'{kube_version=} {docs[0]["apiVersion"]=}')
+ 24              assert docs[0]["apiVersion"] == "networking.k8s.io/v1beta1"
 ```
 
 And we can drop into an interactive python shell to inspect things as they exist at our current point of execution:

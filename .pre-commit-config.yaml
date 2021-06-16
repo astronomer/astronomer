@@ -1,6 +1,11 @@
 ---
 exclude: '(venv|.vscode)'  # regex
 repos:
+  - repo: https://github.com/Lucas-C/pre-commit-hooks
+    rev: v1.1.10
+    hooks:
+      - id: remove-tabs
+        exclude_types: [makefile, binary]
   - repo: https://github.com/psf/black
     rev: 21.6b0
     hooks:
