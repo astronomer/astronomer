@@ -101,8 +101,19 @@ def render_chart(
             templates = subprocess.check_output(command, stderr=subprocess.PIPE)
             if not templates:
                 return None
-        except subprocess.CalledProcessError as e:
-            print(e.output)
+        except subprocess.CalledProcessError as error:
+            print(
+                f"ERROR: subprocess.CalledProcessError:\n{error.output=}\n{error.stderr=}"
+            )
+            if "could not find template" in error.stderr.decode("utf-8"):
+                print(
+                    "ERROR: command is probably using templates with null output, which "
+                    + "usually means there is a helm value that needs to be set to render "
+                    + "the content of the chart.\n"
+                    + "command: "
+                    + " ".join(command)
+                )
+            raise
         k8s_objects = yaml.full_load_all(templates)
         k8s_objects = [k8s_object for k8s_object in k8s_objects if k8s_object]  # type: ignore
         for k8s_object in k8s_objects:
