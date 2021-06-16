@@ -70,7 +70,7 @@
   {{- if .Values.global.privateRegistry.password -}}
   {{- $pass := .Values.global.privateRegistry.password -}}
   {{- end }}
-  
+
   {{- $config := dict "auths" -}}
   {{- $auth := dict -}}
   {{- $data := dict -}}

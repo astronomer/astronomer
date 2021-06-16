@@ -10,7 +10,7 @@ rules:
 - apiGroups:
   - policy
   resources:
-  - podsecuritypolicies  
+  - podsecuritypolicies
   resourceNames:
   - {{ .Release.Name }}-ingress-nginx
   verbs:

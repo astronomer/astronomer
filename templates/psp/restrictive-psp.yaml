@@ -7,7 +7,7 @@ metadata:
   name: {{ .Release.Name }}-restrictive
 spec:
   privileged: true # this should be false but pending changes in debian airflow image
-  hostNetwork: false 
+  hostNetwork: false
   allowPrivilegeEscalation: true # this should be false but pending changes in debian airflow image
   defaultAllowPrivilegeEscalation: true # this should be false but pending changes in debian airflow image
   hostPID: false

@@ -44,4 +44,3 @@ The following table lists the configurable parameters of the Node Exporter chart
 | `updateStrategy`                      | Configure a custom update strategy for the daemonset                                                                          | `Rolling update with 1 max unavailable`          |
 | `sidecars`               | Additional containers for export metrics to text file     | `[]`           |  |
 | `sidecarVolumeMount`               | Volume for sidecar containers     | `[]`           |  |
-

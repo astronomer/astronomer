@@ -1,7 +1,7 @@
 
 # This is an example configuration that allows for logs to be forwarded to an AWS S3 bucket.
 
-fluentd:  
+fluentd:
   s3:
     enabled: true
     role_arn: ~

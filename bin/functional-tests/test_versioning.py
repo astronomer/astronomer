@@ -18,10 +18,10 @@ def test_astro_sub_chart_version_match():
     Tests that Chart.yaml and charts/astronomer/Chart.yaml
     have matching versions.
     """
-    with open(git_root_dir / "Chart.yaml", "r") as f:
+    with open(git_root_dir / "Chart.yaml") as f:
         astro_chart_dot_yaml = yaml.safe_load(f.read())
 
-    with open(git_root_dir / "charts" / "astronomer" / "Chart.yaml", "r") as f:
+    with open(git_root_dir / "charts" / "astronomer" / "Chart.yaml") as f:
         astro_subchart_dot_yaml = yaml.safe_load(f.read())
     assert astro_chart_dot_yaml["version"] == astro_subchart_dot_yaml["version"], (
         "Please ensure that 'version' in Chart.yaml and "
@@ -41,7 +41,7 @@ def test_downgrade_then_upgrade():
         raise Exception(
             "This test only works with HELM_CHART_PATH set to the path of the chart to be tested"
         )
-    with open(git_root_dir / "Chart.yaml", "r") as f:
+    with open(git_root_dir / "Chart.yaml") as f:
         astro_chart_dot_yaml = yaml.safe_load(f.read())
     major, minor, patch = semver(astro_chart_dot_yaml["version"]).release
     if patch == 0:
