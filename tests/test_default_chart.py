@@ -12,13 +12,8 @@ template_ids = [template["name"] for template in default_chart_data]
 
 @pytest.mark.parametrize("template", default_chart_data, ids=template_ids)
 def test_default_chart_with_basedomain(template):
+    """Test that each template used with just baseDomain set renders."""
     docs = render_chart(
         show_only=[template["name"]],
     )
     assert len(docs) == template["length"]
-
-
-@pytest.mark.xfail(reason="Validator fails empty ['livenessProbe']['periodSeconds']")
-def test_basic_ingress():
-    docs = render_chart()
-    assert len(docs) == 1
