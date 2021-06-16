@@ -1,10 +1,11 @@
 from tests.helm_template_generator import render_chart
 import pytest
 import yaml
+from . import git_root_dir
 
-with open("default_chart_data.yaml") as file:
+
+with open(f"{git_root_dir}/tests/default_chart_data.yaml") as file:
     default_chart_data = yaml.load(file, Loader=yaml.SafeLoader)
-
 
 template_ids = [template["name"] for template in default_chart_data]
 

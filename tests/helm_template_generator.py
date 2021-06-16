@@ -20,6 +20,7 @@ import sys
 from functools import lru_cache
 from tempfile import NamedTemporaryFile
 from typing import Any, Dict, Tuple
+from pathlib import Path
 
 import jsonschema
 import requests
@@ -92,8 +93,16 @@ def render_chart(
         ]
         if show_only:
             for i in show_only:
-                command.extend(["--show-only", i])
-        templates = subprocess.check_output(command, stderr=subprocess.PIPE)
+                if not Path(i).exists():
+                    raise FileNotFoundError(f"ERROR: {i} not found")
+                else:
+                    command.extend(["--show-only", i])
+        try:
+            templates = subprocess.check_output(command, stderr=subprocess.PIPE)
+            if not templates:
+                return None
+        except subprocess.CalledProcessError as e:
+            print(e.output)
         k8s_objects = yaml.full_load_all(templates)
         k8s_objects = [k8s_object for k8s_object in k8s_objects if k8s_object]  # type: ignore
         for k8s_object in k8s_objects:

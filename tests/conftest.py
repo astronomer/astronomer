@@ -16,9 +16,9 @@
 # under the License.
 
 import subprocess
-
 import pytest
 from filelock import FileLock
+from . import git_root_dir
 
 
 @pytest.fixture(autouse=True, scope="session")
@@ -28,17 +28,17 @@ def upgrade_helm(tmp_path_factory, worker_id):
     """
 
     def _upgrade_helm():
-        subprocess.check_output(
-            [
-                "helm",
-                "repo",
-                "add",
-                "stable",
-                "--force-update",
-                "https://charts.helm.sh/stable/",
-            ]
-        )
-        subprocess.check_output(["helm", "repo", "update"])
+        try:
+            subprocess.check_output(
+                "helm repo add stable --force-update https://charts.helm.sh/stable/".split()
+            )
+            # The following command may modify any requirements.yaml with updated metadata
+            subprocess.check_output(
+                f"find {git_root_dir} -type f -name requirements.yaml -print -execdir helm dep update ;".split()
+            )
+            subprocess.check_output("helm repo update".split())
+        except subprocess.CalledProcessError as e:
+            print(e.output)
 
     if worker_id == "master":
         _upgrade_helm()
