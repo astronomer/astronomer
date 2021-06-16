@@ -24,7 +24,7 @@ from . import git_root_dir
 @pytest.fixture(autouse=True, scope="session")
 def upgrade_helm(tmp_path_factory, worker_id):
     """
-    Upgrade Helm repo
+    Add stable helm repo, upgrade helm repos, and do helm dep upgrade.
     """
 
     def _upgrade_helm():
