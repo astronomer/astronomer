@@ -57,7 +57,7 @@ spec:
                 port:
                   {{- if .Values.global.authSidecar.enabled  }}
                   name: nginx-ui
-                  {{- else }} 
+                  {{- else }}
                   name: prometheus
                   {{- end }}
             {{- end -}}

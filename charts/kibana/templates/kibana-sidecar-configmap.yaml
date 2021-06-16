@@ -27,8 +27,8 @@ data:
 {{ .Values.global.authSidecar.default_nginx_settings  |  indent 8 }}
       }
       location @401_auth_error {
-      	internal;
-      	add_header Set-Cookie $auth_cookie;
+        internal;
+        add_header Set-Cookie $auth_cookie;
         return 302 https://app.{{ .Values.global.baseDomain }}/login?rd=https://$http_host$request_uri;
       }
       location / {
