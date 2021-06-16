@@ -54,6 +54,10 @@ spec:
               service:
                 name: {{ template "kibana.fullname" . }}
                 port:
+                  {{- if .Values.global.authSidecar.enabled  }}
+                  name: nginx-ui
+                  {{- else }} 
                   name: kibana-ui
+                  {{- end }}
             {{- end -}}
 {{- end }}

@@ -55,6 +55,10 @@ spec:
               service:
                 name: {{ template "prometheus.fullname" . }}
                 port:
+                  {{- if .Values.global.authSidecar.enabled  }}
+                  name: nginx-ui
+                  {{- else }} 
                   name: prometheus
+                  {{- end }}
             {{- end -}}
 {{- end }}

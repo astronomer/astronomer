@@ -55,6 +55,10 @@ spec:
               service:
                 name:  {{ template "grafana.fullname" . }}
                 port:
+                  {{- if .Values.global.authSidecar.enabled  }}
+                  name: nginx-ui
+                  {{- else }}
                   name: grafana-ui
+                  {{- end }}
             {{- end -}}
 {{- end }}

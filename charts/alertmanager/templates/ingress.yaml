@@ -55,6 +55,10 @@ spec:
               service:
                 name: {{ template "alertmanager.fullname" . }}
                 port:
+                  {{- if .Values.global.authSidecar.enabled  }}
+                  name: nginx-ui
+                  {{- else }}
                   name: http
+                  {{- end }}
             {{- end -}}
 {{- end }}
