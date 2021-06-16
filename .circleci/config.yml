@@ -302,7 +302,6 @@ workflows:
             branches:
               only:
                 - '/release-0\.\d+/'
-                - openshift-authsidecar-poc
       - release-to-internal:
           context:
             - gcp-astronomer-prod
@@ -317,7 +316,6 @@ workflows:
             branches:
               only:
                 - '/release-0\.\d+/'
-                - openshift-authsidecar-poc
 
       - approve-public-release:
           type: approval
