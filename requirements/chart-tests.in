@@ -1,11 +1,12 @@
 docker
-GitPython
 filelock
+GitPython
 jmespath
 jsonschema
 kubernetes
 pytest
 pytest-forked
+pytest-profiling
 pytest-sugar
 pytest-xdist
 PyYAML
