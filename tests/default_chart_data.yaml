@@ -392,3 +392,13 @@
   name: charts/elasticsearch/templates/es-serviceaccount.yaml
 - length: 1
   name: charts/elasticsearch/templates/es-configmap.yaml
+- length: 1
+  name: charts/prometheus-node-exporter/templates/daemonset.yaml
+- length: 1
+  name: charts/prometheus-node-exporter/templates/service.yaml
+- length: 1
+  name: charts/astronomer/templates/houston/cronjobs/houston-cleanup-deployments-cronjob.yaml
+- length: 1
+  name: charts/astronomer/templates/houston/worker/houston-worker-pod-disruption-budget.yaml
+- length: 1
+  name: charts/nginx/templates/nginx-default-backend-pod-disruption-budget.yaml
