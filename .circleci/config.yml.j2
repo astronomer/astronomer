@@ -60,6 +60,15 @@ jobs:
       - image: quay.io/astronomer/ci-helm-release:2021-06
     steps:
       - checkout
+      - restore_cache:
+          keys:
+            - chart-test-venv-{{ '{{' }} checksum requirements/chart-tests.txt }}
+      - run: make unittest-requirements
+      - save_cache:
+          keys: chart-test-venv-{{ '{{' }} checksum requirements/chart-tests.txt }}
+          paths:
+            - ~/project/venv
+            - ~/project/.unittest-requirements
       - run:
           name: unittest the Astronomer chart
           command: make unittest-charts
