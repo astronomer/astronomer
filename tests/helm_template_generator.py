@@ -17,7 +17,7 @@
 
 import subprocess
 import sys
-from functools import cache
+from functools import lru_cache
 from tempfile import NamedTemporaryFile
 from typing import Any, Dict, Tuple
 from pathlib import Path
@@ -48,7 +48,7 @@ def get_schema_k8s(api_version, kind, kube_version="1.18.0"):
     return request.json()
 
 
-@cache
+@lru_cache(maxsize=None)
 def create_validator(api_version, kind, kube_version="1.18.0"):
     """Create a k8s validator for the given inputs."""
     schema = get_schema_k8s(api_version, kind, kube_version=kube_version)
