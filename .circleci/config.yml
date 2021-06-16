@@ -62,16 +62,21 @@ jobs:
       - image: quay.io/astronomer/ci-helm-release:2021-06
     steps:
       - checkout
+      - run:
+          name: Create chart-tests-cache-key.txt
+          command: |
+            cp requirements/chart-tests.txt /tmp/chart-tests-cache-key.txt
+            python --version --version | sed 's/^/# /' >> /tmp/chart-tests-cache-key.txt
       - restore_cache:
           keys:
-            - chart-test-venv-{{ checksum "requirements/chart-tests.txt" }}
+            - chart-test-venv-{{ checksum "/tmp/chart-tests-cache-key.txt" }}
       - run:
           name: Create venv
           command: |
             make unittest-requirements
             helm plugin install https://github.com/astronomer/helm-unittest >/dev/null || true
       - save_cache:
-          key: chart-test-venv-{{ checksum "requirements/chart-tests.txt" }}
+          key: chart-test-venv-{{ checksum "/tmp/chart-tests-cache-key.txt" }}
           paths:
             - ~/project/venv
             - ~/project/.unittest-requirements
