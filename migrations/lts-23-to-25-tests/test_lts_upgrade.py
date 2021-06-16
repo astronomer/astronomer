@@ -19,7 +19,7 @@ def test_upgrade():
     """
     print("Checking current chart version")
 
-    with open(Path(git_root_dir / "Chart.yaml"), "r") as f:
+    with open(Path(git_root_dir / "Chart.yaml")) as f:
         astro_chart_dot_yaml = yaml.safe_load(f.read())
     major, minor, patch = semver(astro_chart_dot_yaml["version"]).release
 
@@ -172,7 +172,7 @@ def test_upgrade():
 
 def rewrite_manifest_for_local_testing(manifest):
     # Rewrite some parts of the k8s manifest with testing-specific configs
-    with open(manifest, "r") as f:
+    with open(manifest) as f:
         new_manifest = f.read()
 
     new_manifest = new_manifest.replace(

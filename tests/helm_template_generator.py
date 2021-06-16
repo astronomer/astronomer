@@ -20,6 +20,7 @@ import sys
 from functools import lru_cache
 from tempfile import NamedTemporaryFile
 from typing import Any, Dict, Tuple
+from pathlib import Path
 
 import jsonschema
 import requests
@@ -32,15 +33,16 @@ BASE_URL_SPEC = "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/
 
 
 def get_schema_k8s(api_version, kind, kube_version="1.18.0"):
+    """Return a k8s schema for use in validation."""
     api_version = api_version.lower()
     kind = kind.lower()
 
     if "/" in api_version:
         ext, _, api_version = api_version.partition("/")
         ext = ext.split(".")[0]
-        url = f"{BASE_URL_SPEC}/v{kube_version}/{kind}-{ext}-{api_version}.json"
+        url = f"{BASE_URL_SPEC}/v{kube_version}-standalone/{kind}-{ext}-{api_version}.json"
     else:
-        url = f"{BASE_URL_SPEC}/v{kube_version}/{kind}-{api_version}.json"
+        url = f"{BASE_URL_SPEC}/v{kube_version}-standalone/{kind}-{api_version}.json"
     request = requests.get(url)
     request.raise_for_status()
     return request.json()
@@ -48,6 +50,7 @@ def get_schema_k8s(api_version, kind, kube_version="1.18.0"):
 
 @lru_cache(maxsize=None)
 def create_validator(api_version, kind, kube_version="1.18.0"):
+    """Create a k8s validator for the given inputs."""
     schema = get_schema_k8s(api_version, kind, kube_version=kube_version)
     jsonschema.Draft7Validator.check_schema(schema)
     return jsonschema.Draft7Validator(schema)
@@ -92,8 +95,27 @@ def render_chart(
         ]
         if show_only:
             for i in show_only:
-                command.extend(["--show-only", i])
-        templates = subprocess.check_output(command, stderr=subprocess.PIPE)
+                if not Path(i).exists():
+                    raise FileNotFoundError(f"ERROR: {i} not found")
+                else:
+                    command.extend(["--show-only", i])
+        try:
+            templates = subprocess.check_output(command, stderr=subprocess.PIPE)
+            if not templates:
+                return None
+        except subprocess.CalledProcessError as error:
+            print(
+                f"ERROR: subprocess.CalledProcessError:\n{error.output=}\n{error.stderr=}"
+            )
+            if "could not find template" in error.stderr.decode("utf-8"):
+                print(
+                    "ERROR: command is probably using templates with null output, which "
+                    + "usually means there is a helm value that needs to be set to render "
+                    + "the content of the chart.\n"
+                    + "command: "
+                    + " ".join(command)
+                )
+            raise
         k8s_objects = yaml.full_load_all(templates)
         k8s_objects = [k8s_object for k8s_object in k8s_objects if k8s_object]  # type: ignore
         for k8s_object in k8s_objects:

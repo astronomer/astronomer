@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import pytest
 import docker
 from kubernetes import client, config

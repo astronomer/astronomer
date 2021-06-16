@@ -19,7 +19,9 @@ For example:
 helm template . --set global.baseDomain=example.com --kube-version=1.18.0 --show-only charts/astronomer/templates/ingress.yaml
 ```
 
-The above command will render the full chart, but give us only the output of that one template. The output would be something like:
+*N.B.: If you see the error `Error: unknown flag: --kube-version` you need to upgrade your helm client to >=3.6.0*
+
+The above command will render the full chart for kubernetes version 1.18.0, but give us only the output of that one template. The output would be something like:
 
 ```yaml
 kind: Ingress
@@ -159,7 +161,7 @@ Results (3.45s):
        5 passed
 ```
 
-Let's write a new test where testing the kubernetes would be important. In our chart, we use the Ingress v1 syntax starting with kubernetes 1.19, but v1beta1 with anything before 1.19. We will once again extend the function that we originally started, doing additional assertions depending on what version of kubernetes we are testing against. Here is the full content of our test file:
+Let's write a new test where testing the kubernetes would be important. In our chart, we use the Ingress v1 syntax starting with kubernetes 1.19, but v1beta1 with anything before 1.19. We will once again extend the function that we originally started, doing additional assertions depending on what version of kubernetes we are testing against. We can inspect the data produced for different versions of kubernetes by substituting `--kube-version=1.18.0` in our original command with `--kube-version=1.19.0`, allowing us to easily see what kind of assertions we can make for the various kubernetes versions. Here is the full content of our test file:
 
 ```python
 from tests.helm_template_generator import render_chart
@@ -252,25 +254,25 @@ This is a standard `pdb` prompt. From here, we can see where we are in the code:
 
 ```
 (Pdb) ll
-  6  	@pytest.mark.parametrize(
-  7  	    "kube_version",
-  8  	    supported_k8s_versions,
-  9  	)
- 10  	def test_basic_ingress(kube_version):
- 11  	    docs = render_chart(
- 12  	        kube_version=kube_version,
- 13  	        show_only=["charts/astronomer/templates/ingress.yaml"],
- 14  	    )
- 15  	    breakpoint()
- 16  ->	    assert len(docs) == 1
+  6      @pytest.mark.parametrize(
+  7          "kube_version",
+  8          supported_k8s_versions,
+  9      )
+ 10      def test_basic_ingress(kube_version):
+ 11          docs = render_chart(
+ 12              kube_version=kube_version,
+ 13              show_only=["charts/astronomer/templates/ingress.yaml"],
+ 14          )
+ 15          breakpoint()
+ 16  ->        assert len(docs) == 1
  17
- 18  	    major, minor, patch = [int(x) for x in kube_version.split(".")]
- 19  	    if major == 1 and minor >= 19:
- 20  	        print(f'{kube_version=} {docs[0]["apiVersion"]=}')
- 21  	        assert docs[0]["apiVersion"] == "networking.k8s.io/v1"
- 22  	    if major == 1 and minor < 19:
- 23  	        print(f'{kube_version=} {docs[0]["apiVersion"]=}')
- 24  	        assert docs[0]["apiVersion"] == "networking.k8s.io/v1beta1"
+ 18          major, minor, patch = [int(x) for x in kube_version.split(".")]
+ 19          if major == 1 and minor >= 19:
+ 20              print(f'{kube_version=} {docs[0]["apiVersion"]=}')
+ 21              assert docs[0]["apiVersion"] == "networking.k8s.io/v1"
+ 22          if major == 1 and minor < 19:
+ 23              print(f'{kube_version=} {docs[0]["apiVersion"]=}')
+ 24              assert docs[0]["apiVersion"] == "networking.k8s.io/v1beta1"
 ```
 
 And we can drop into an interactive python shell to inspect things as they exist at our current point of execution:
