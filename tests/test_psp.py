@@ -1,6 +1,7 @@
 from tests.helm_template_generator import render_chart
 import pytest
 from . import supported_k8s_versions
+from subprocess import CalledProcessError
 
 
 @pytest.mark.parametrize(
@@ -39,6 +40,14 @@ class TestPspEnabled:
 
     @pytest.mark.parametrize("psp_docs", psp_docs, ids=psp_doc_ids)
     def test_psp(self, kube_version, psp_docs):
+        """Test that helm errors when pspEnabled=False, and renders a good PodSecurityPolicy template when pspEnabled=True."""
+        with pytest.raises(CalledProcessError):
+            docs = render_chart(
+                kube_version=kube_version,
+                values={"global": {"pspEnabled": False}},
+                show_only=[psp_docs["template"]],
+            )
+
         docs = render_chart(
             kube_version=kube_version,
             values={"global": {"pspEnabled": True}},
@@ -85,6 +94,14 @@ class TestPspEnabled:
         "clusterrole_docs", clusterrole_docs, ids=clusterrole_doc_ids
     )
     def test_clusterrole(self, kube_version, clusterrole_docs):
+        """Test that helm errors when pspEnabled=False, and renders a good ClusterRole template when pspEnabled=True."""
+        with pytest.raises(CalledProcessError):
+            docs = render_chart(
+                kube_version=kube_version,
+                values={"global": {"pspEnabled": False}},
+                show_only=[clusterrole_docs["template"]],
+            )
+
         docs = render_chart(
             kube_version=kube_version,
             values={"global": {"pspEnabled": True}},
@@ -121,6 +138,14 @@ class TestPspEnabled:
         ids=clusterrolebinding_doc_ids,
     )
     def test_clusterrolebinding(self, kube_version, clusterrolebinding_docs):
+        """Test that helm errors when pspEnabled=False, and renders a good ClusterRoleBinding template when pspEnabled=True."""
+        with pytest.raises(CalledProcessError):
+            docs = render_chart(
+                kube_version=kube_version,
+                values={"global": {"pspEnabled": False}},
+                show_only=[clusterrolebinding_docs["template"]],
+            )
+
         docs = render_chart(
             kube_version=kube_version,
             values={"global": {"pspEnabled": True}},
@@ -162,6 +187,14 @@ class TestPspEnabled:
         ids=rolebinding_doc_ids,
     )
     def test_rolebinding(self, kube_version, rolebinding_docs):
+        """Test that helm errors when pspEnabled=False, and renders a good RoleBinding template when pspEnabled=True."""
+        with pytest.raises(CalledProcessError):
+            docs = render_chart(
+                kube_version=kube_version,
+                values={"global": {"pspEnabled": False}},
+                show_only=[rolebinding_docs["template"]],
+            )
+
         docs = render_chart(
             kube_version=kube_version,
             values={"global": {"pspEnabled": True}},
