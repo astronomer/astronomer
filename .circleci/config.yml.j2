@@ -62,14 +62,14 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - chart-test-venv-{{ '{{' }} checksum requirements/chart-tests.txt }}
+            - chart-test-venv-{{ '{{' }} checksum "requirements/chart-tests.txt" }}
       - run:
           name: Create venv
           command: |
             make unittest-requirements
             helm plugin install https://github.com/astronomer/helm-unittest >/dev/null || true
       - save_cache:
-          key: chart-test-venv-{{ '{{' }} checksum requirements/chart-tests.txt }}
+          key: chart-test-venv-{{ '{{' }} checksum "requirements/chart-tests.txt" }}
           paths:
             - ~/project/venv
             - ~/project/.unittest-requirements
