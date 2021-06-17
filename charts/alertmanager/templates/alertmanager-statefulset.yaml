@@ -80,7 +80,27 @@ spec:
               mountPath: /etc/config
             - name: data
               mountPath: {{ .Values.dataDir }}
+        {{- if .Values.global.authSidecar.enabled  }}
+        - name: nginx
+          image: {{ .Values.global.authSidecar.image }}
+          imagePullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
+          {{- if .Values.global.authSidecar.resources }}
+          resources: {{- toYaml .Values.global.authSidecar.resources | nindent 12 }}
+          {{- end }}
+          ports:
+          - containerPort: 8080
+            name: nginx-ui
+            protocol: TCP
+          volumeMounts:
+          - mountPath: /etc/nginx/conf.d/
+            name: alertmanager-sidecar-conf
+        {{- end }}
       volumes:
+        {{- if .Values.global.authSidecar.enabled }}
+        - name: alertmanager-sidecar-conf
+          configMap:
+            name: {{ template "alertmanager.fullname" . }}-nginx-conf
+        {{- end }}
         - name: config-volume
           configMap:
             name: {{ template "alertmanager.fullname" . }}

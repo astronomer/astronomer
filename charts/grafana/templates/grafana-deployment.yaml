@@ -123,7 +123,27 @@ spec:
             {{- end }}
             - name: GF_AUTH_ANONYMOUS_ENABLED
               value: "true"
+        {{- if .Values.global.authSidecar.enabled }}
+        - name: nginx
+          image: {{ .Values.global.authSidecar.image }}
+          imagePullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
+          {{- if .Values.global.authSidecar.resources }}
+          resources: {{- toYaml .Values.global.authSidecar.resources | nindent 12 }}
+          {{- end }}
+          ports:
+          - containerPort: 8080
+            name: nginx-ui
+            protocol: TCP
+          volumeMounts:
+          - mountPath: /etc/nginx/conf.d/
+            name: grafana-sidecar-conf
+        {{- end }}
       volumes:
+        {{- if .Values.global.authSidecar.enabled }}
+        - name: grafana-sidecar-conf
+          configMap:
+            name: {{ template "grafana.fullname" . }}-nginx-conf
+        {{- end }}
         - name: grafana-datasource-volume
           configMap:
             name: {{ template "grafana.fullname" . }}-datasource

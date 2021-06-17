@@ -31,11 +31,17 @@ spec:
           tier: monitoring
           component: grafana
           release: {{ .Release.Name }}
+    {{- if .Values.global.authSidecar.enabled  }}
+    - namespaceSelector:
+        matchLabels:
+          network.openshift.io/policy-group: ingress
+    {{- else }}
     - podSelector:
         matchLabels:
           tier: nginx
           component: ingress-controller
           release: {{ .Release.Name }}
+    {{- end }}
     # It is sometimes useful to whitelist other pods,
     # for example admin Airflow tasks.
     {{- range .Values.ingressNetworkPolicyExtraSelectors }}
@@ -45,3 +51,7 @@ spec:
     ports:
     - protocol: TCP
       port: {{ .Values.ports.http }}
+    {{- if .Values.global.authSidecar.enabled  }}
+    - protocol: TCP
+      port: 8080
+    {{- end }}

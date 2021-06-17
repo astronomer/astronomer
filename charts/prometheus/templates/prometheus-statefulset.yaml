@@ -43,6 +43,21 @@ spec:
       restartPolicy: Always
       serviceAccountName: {{ template "prometheus.fullname" . }}
       containers:
+        {{- if .Values.global.authSidecar.enabled  }}
+        - name: nginx
+          image: {{ .Values.global.authSidecar.image }}
+          imagePullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
+          {{- if .Values.global.authSidecar.resources }}
+          resources: {{- toYaml .Values.global.authSidecar.resources | nindent 12 }}
+          {{- end }}
+          ports:
+          - containerPort: 8080
+            name: nginx-ui
+            protocol: TCP
+          volumeMounts:
+          - mountPath: /etc/nginx/conf.d/
+            name: prometheus-sidecar-conf
+        {{- end }}
         - name: configmap-reloader
           args:
             - --webhook-url=http://localhost:9090/-/reload
@@ -100,6 +115,11 @@ spec:
         runAsNonRoot: true
         runAsUser: 65534
       volumes:
+        {{- if .Values.global.authSidecar.enabled }}
+        - name: prometheus-sidecar-conf
+          configMap:
+            name: {{ template "prometheus.fullname" . }}-nginx-conf
+        {{- end }}
         - name: prometheus-config-volume
           configMap:
             name: {{ template "prometheus.fullname" . }}-config

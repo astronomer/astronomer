@@ -257,6 +257,19 @@ data:
         sccEnabled: true
     {{- end }}
 
+    {{- if .Values.global.authSidecar.enabled }}
+        # enables nginx auth sidecar for airflow deployments
+        authSidecar:
+          enabled: true
+          image: {{ .Values.global.authSidecar.image }}
+          pullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
+          annotations:
+            {{- range $key, $value := .Values.global.extraAnnotations}}
+            {{ $key }}: {{ $value | quote }}
+            {{- end }}
+
+    {{- end }}
+
     # If we're in single namespace mode, we will also
     # skip the configuration for elasticsearch. Houston will fallback
     # to its default modes, which are false/disabled.
