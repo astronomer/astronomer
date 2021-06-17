@@ -1,4 +1,4 @@
-################################
+#################################
 ## Kibana auth sidecar ConfigMap
 #################################
 {{- if .Values.global.authSidecar.enabled  }}
