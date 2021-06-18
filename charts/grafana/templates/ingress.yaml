@@ -45,7 +45,7 @@ spec:
             backend:
               serviceName: {{ template "grafana.fullname" . }}
               {{- if .Values.global.authSidecar.enabled  }}
-              servicePort: nginx-ui
+              servicePort: auth-proxy
               {{- else }}
               servicePort: grafana-ui
               {{- end }}
@@ -56,7 +56,7 @@ spec:
                 name:  {{ template "grafana.fullname" . }}
                 port:
                   {{- if .Values.global.authSidecar.enabled  }}
-                  name: nginx-ui
+                  name: auth-proxy
                   {{- else }}
                   name: grafana-ui
                   {{- end }}

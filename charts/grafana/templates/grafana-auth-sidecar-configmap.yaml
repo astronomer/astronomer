@@ -19,8 +19,12 @@ data:
     }
     server {
       server_name {{ template "grafana.url" . }} ;
-      listen 8080  ;
-      listen [::]:8080  ;
+      listen {{ .Values.global.authSidecar.port }}  ;
+      listen [::]:{{ .Values.global.authSidecar.port }}  ;
+
+      # Disable Nginx Server version
+      server_tokens off;
+
       location  = /auth {
         proxy_set_header Host houston.{{ .Values.global.baseDomain }};
         proxy_pass  https://houston.{{ .Values.global.baseDomain }}/v1/authorization;
@@ -36,6 +40,10 @@ data:
         proxy_set_header  Host  {{ template "grafana.url" . }};
         proxy_pass http://astro-grafana;
 {{ .Values.global.authSidecar.default_nginx_settings_location  |  indent 8 }}
+      }
+
+      location /healthz {
+          return 200;
       }
     }
 {{- end }}

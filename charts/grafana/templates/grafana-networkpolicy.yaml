@@ -35,7 +35,7 @@ spec:
     ports:
     {{- if .Values.global.authSidecar.enabled  }}
     - protocol: TCP
-      port: 8080
+      port: {{ .Values.global.authSidecar.port }}
     {{- else }}
     - protocol: TCP
       port: {{ .Values.ports.http }}

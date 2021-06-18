@@ -53,16 +53,30 @@ spec:
           name: kibana-ui
           protocol: TCP
       {{- if .Values.global.authSidecar.enabled  }}
-      - name: nginx
-        image: {{ .Values.global.authSidecar.image }}
+      - name: auth-proxy
+        image: "{{ .Values.global.authSidecar.repository }}:{{ .Values.global.authSidecar.tag }}"
         imagePullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
         {{- if .Values.global.authSidecar.resources }}
         resources: {{- toYaml .Values.global.authSidecar.resources | nindent 12 }}
         {{- end }}
         ports:
-        - containerPort: 8080
-          name: nginx-ui
+        - containerPort: {{ .Values.global.authSidecar.port }}
+          name: auth-proxy
           protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: {{ .Values.global.authSidecar.port }}
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: {{ .Values.global.authSidecar.port }}
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 10
         volumeMounts:
         - mountPath: /etc/nginx/conf.d/
           name: kibana-sidecar-conf
