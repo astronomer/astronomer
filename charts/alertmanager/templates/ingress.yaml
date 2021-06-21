@@ -14,9 +14,7 @@ metadata:
     heritage: {{ .Release.Service }}
   annotations:
     {{- if .Values.global.authSidecar.enabled  }}
-    {{- range $key, $value := .Values.global.extraAnnotations}}
-    {{ $key }}: {{ $value | quote }}
-    {{- end }}
+{{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- else }}
     kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
     kubernetes.io/tls-acme: {{ eq .Values.global.acme true | quote }}
@@ -45,7 +43,7 @@ spec:
             backend:
               serviceName: {{ template "alertmanager.fullname" . }}
               {{- if .Values.global.authSidecar.enabled  }}
-              servicePort: nginx-ui
+              servicePort: auth-proxy
               {{- else }}
               servicePort: http
               {{- end }}
@@ -56,7 +54,7 @@ spec:
                 name: {{ template "alertmanager.fullname" . }}
                 port:
                   {{- if .Values.global.authSidecar.enabled  }}
-                  name: nginx-ui
+                  name: auth-proxy
                   {{- else }}
                   name: http
                   {{- end }}

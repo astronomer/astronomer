@@ -14,8 +14,7 @@ metadata:
     heritage: {{ .Release.Service }}
   annotations:
     {{- if .Values.global.authSidecar.enabled  }}
-    kubernetes.io/ingress.class: "default"
-    route.openshift.io/termination: "reencrypt"
+{{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- else }}
     kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
     kubernetes.io/tls-acme: {{ eq .Values.global.acme true | quote }}
@@ -44,7 +43,7 @@ spec:
             backend:
               serviceName: {{ template "kibana.fullname" . }}
               {{- if .Values.global.authSidecar.enabled  }}
-              servicePort: nginx-ui
+              servicePort: auth-proxy
               {{- else }}
               servicePort: kibana-ui
               {{- end }}
@@ -55,7 +54,7 @@ spec:
                 name: {{ template "kibana.fullname" . }}
                 port:
                   {{- if .Values.global.authSidecar.enabled  }}
-                  name: nginx-ui
+                  name: auth-proxy
                   {{- else }}
                   name: kibana-ui
                   {{- end }}
