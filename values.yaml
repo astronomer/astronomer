@@ -80,8 +80,10 @@ global:
   # Deploy auth sidecar to use openshift native features
   authSidecar:
     enabled: false
-    image: nginxinc/nginx-unprivileged
+    repository: nginxinc/nginx-unprivileged
+    tag: stable
     pullPolicy: IfNotPresent
+    port: 8084
     default_nginx_settings: |
       internal;
       proxy_pass_request_body     off;

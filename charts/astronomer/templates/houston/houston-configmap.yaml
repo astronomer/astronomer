@@ -261,7 +261,9 @@ data:
         # enables nginx auth sidecar for airflow deployments
         authSidecar:
           enabled: true
-          image: {{ .Values.global.authSidecar.image }}
+          repository: {{ .Values.global.authSidecar.repository }}
+          tag: {{ .Values.global.authSidecar.tag }}
+          port: {{ .Values.global.authSidecar.port }}
           pullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
           annotations:
             {{- range $key, $value := .Values.global.extraAnnotations}}

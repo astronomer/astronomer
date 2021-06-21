@@ -65,8 +65,7 @@ spec:
       port: {{ $.Values.ports.http }}
       targetPort: {{ $.Values.ports.http }}
     {{- if .Values.global.authSidecar.enabled }}
-    - name: nginx-ui
+    - name: auth-proxy
       protocol: TCP
-      port: 8080
-      targetPort: 8080
+      port: {{ .Values.global.authSidecar.port }}
     {{- end}}
