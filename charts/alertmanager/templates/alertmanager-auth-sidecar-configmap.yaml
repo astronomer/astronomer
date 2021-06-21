@@ -20,7 +20,6 @@ data:
     server {
       server_name {{ template "alertmanager.url" . }} ;
       listen {{ .Values.global.authSidecar.port }}  ;
-      listen [::]:{{ .Values.global.authSidecar.port }}  ;
 
       # Disable Nginx Server version
       server_tokens off;

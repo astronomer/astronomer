@@ -14,9 +14,7 @@ metadata:
     heritage: {{ .Release.Service }}
   annotations:
     {{- if .Values.global.authSidecar.enabled  }}
-    {{- range $key, $value := .Values.global.extraAnnotations}}
-    {{ $key }}: {{ $value | quote }}
-    {{- end }}
+{{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- else }}
     kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
     kubernetes.io/tls-acme: {{ eq .Values.global.acme true | quote }}
