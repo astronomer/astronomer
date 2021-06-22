@@ -220,27 +220,21 @@ workflows:
 {% endif %}{% endfor %}
       - approve-internal-release:
           type: approval
-          filters:
-            branches:
-              only:
-                - '/release-0\.\d+/'
       - release-to-internal:
           context:
             - gcp-astronomer-prod
           requires:
             - approve-internal-release
-{%- for version in kube_versions %}
-            - platform-{{ version | replace(".", "-") }}{% endfor %}
-          filters:
-            branches:
-              only:
-                - '/release-0\.\d+/'
-
+{%- for version in [kube_versions[0], kube_versions[-1]] %}
+            - platform-{{ version | replace(".", "-") }}
+{%- endfor %}
       - approve-public-release:
           type: approval
           requires:
             - release-to-internal
-
+{%- for version in kube_versions[1:-1] %}
+            - platform-{{ version | replace(".", "-") }}
+{%- endfor %}
           filters:
             branches:
               only:

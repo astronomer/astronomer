@@ -59,12 +59,7 @@ clean: ## Clean build and test artifacts
 
 .PHONY: build
 build: ## Build the Astronomer helm chart
-	helm repo add kedacore https://kedacore.github.io/charts
-	rm -rf ${TEMPDIR}/astronomer || true
-	mkdir -p ${TEMPDIR}
-	cp -R . ${TEMPDIR}/astronomer
-	find "${TEMPDIR}/astronomer/charts" -name requirements.yaml -type f -print | while read -r FILE ; do ( set -x ; cd `dirname $$FILE` && helm dep update ; ) ; done ;
-	helm package ${TEMPDIR}/astronomer
+	bin/build-helm-chart.sh
 
 .PHONY: update-requirements
 update-requirements: ## Update all requirements.txt files

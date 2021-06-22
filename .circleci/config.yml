@@ -298,30 +298,20 @@ workflows:
             - build-artifact
       - approve-internal-release:
           type: approval
-          filters:
-            branches:
-              only:
-                - '/release-0\.\d+/'
       - release-to-internal:
           context:
             - gcp-astronomer-prod
           requires:
             - approve-internal-release
             - platform-1-16-15
-            - platform-1-17-17
-            - platform-1-18-19
-            - platform-1-19-11
             - platform-1-20-7
-          filters:
-            branches:
-              only:
-                - '/release-0\.\d+/'
-
       - approve-public-release:
           type: approval
           requires:
             - release-to-internal
-
+            - platform-1-17-17
+            - platform-1-18-19
+            - platform-1-19-11
           filters:
             branches:
               only:
