@@ -309,8 +309,9 @@ workflows:
           type: approval
           requires:
             - release-to-internal
-            - test-all-platforms
-
+            - platform-1-17-17
+            - platform-1-18-19
+            - platform-1-19-11
           filters:
             branches:
               only:

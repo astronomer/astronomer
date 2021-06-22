@@ -232,8 +232,9 @@ workflows:
           type: approval
           requires:
             - release-to-internal
-            - test-all-platforms
-
+{%- for version in kube_versions[1:-1] %}
+            - platform-{{ version | replace(".", "-") }}
+{%- endfor %}
           filters:
             branches:
               only:
