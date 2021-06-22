@@ -56,7 +56,7 @@ spec:
                   {{- if .Values.global.authSidecar.enabled  }}
                   name: auth-proxy
                   {{- else }}
-                  name: prometheus
+                  name: prometheus-data
                   {{- end }}
             {{- end -}}
 {{- end }}
