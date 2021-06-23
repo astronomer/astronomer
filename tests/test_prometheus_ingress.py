@@ -28,7 +28,7 @@ class TestIngress:
 
         if minor >= 19:
             assert doc["apiVersion"] == "networking.k8s.io/v1"
-            assert "RELEASE-NAME-prometheus-ingress" in [
+            assert "RELEASE-NAME-prometheus" in [
                 name[0]
                 for name in jmespath.search(
                     "spec.rules[*].http.paths[*].backend.service.name", doc
@@ -43,7 +43,7 @@ class TestIngress:
 
         if minor < 19:
             assert doc["apiVersion"] == "networking.k8s.io/v1beta1"
-            assert "RELEASE-NAME-prometheus-ingress" in [
+            assert "RELEASE-NAME-prometheus" in [
                 name[0]
                 for name in jmespath.search(
                     "spec.rules[*].http.paths[*].backend.serviceName", doc
