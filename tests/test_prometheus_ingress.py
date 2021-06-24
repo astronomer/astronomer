@@ -9,7 +9,7 @@ from . import supported_k8s_versions
     supported_k8s_versions,
 )
 class TestIngress:
-    def test_basic_ingress(self, kube_version):
+    def test_prometheus_ingress(self, kube_version):
         # sourcery skip: extract-duplicate-method
         docs = render_chart(
             kube_version=kube_version,
