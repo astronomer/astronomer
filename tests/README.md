@@ -306,10 +306,12 @@ http:
 
 This gives us an interactive playground for our tests where we can try out assertions, data reformatting with `jmespath.search` or comprehensions, etc..
 
-### Where to go from here
+## Where to go from here
 
 Read the [Astronomer chart tests](https://github.com/astronomer/astronomer/tree/master/tests) and the [Airflow chart tests](https://github.com/apache/airflow/tree/master/chart/tests) for more examples of how to write chart tests.
 
 [Pytest](https://docs.pytest.org) is an incredibly powerful test suite with a huge community of users and developers, and well worth exploring. There is a great book called [Python Testing with pytest](https://pragprog.com/titles/bopytest/python-testing-with-pytest/) by Brian Okken at [Python Bytes](https://pythonbytes.fm).
 
 [PDB](https://docs.python.org/3/library/pdb.html) is powerful so if you're unfamiliar with it then that is definitely a great avenue to explore.
+
+Here is an [example of porting helm-unittest to pytest](https://github.com/astronomer/astronomer/commit/cd1719da0488a28cf7da185c3b5cf10ed781ffa1). Be sure to expand the deleted file to see the helm-unittest code.
