@@ -3,13 +3,19 @@ from tests.helm_template_generator import render_chart
 
 
 def process_record(rule):
-    """Process a record rule."""
+    """Process a record rule.
+
+    https://prometheus.io/docs/prometheus/latest/configuration/recording_rules/
+    """
     assert isinstance(rule.get("expr"), str)
     assert isinstance(rule.get("record"), str)
 
 
 def process_alert(rule):
-    """Process an alert rule."""
+    """Process an alert rule.
+
+    https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/
+    """
     assert isinstance(rule.get("alert"), str)
     assert isinstance(rule.get("expr"), str)
     if rule["alert"] != "Watchdog":
