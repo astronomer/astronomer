@@ -1343,19 +1343,25 @@ data:
       - name: Ingress
         rules:
         - alert: NginxIngressHigh4XXRate
-          expr: sum by (ingress) (rate(nginx_ingress_controller_requests{status=~"^4..", namespace="{{.Release.Namespace}}"}[5m])) / sum by (ingress) (rate(nginx_ingress_controller_requests{ingress!=""}[5m])) * 100 > 5
+          expr: >-
+            sum by (ingress) (rate(nginx_ingress_controller_requests{status=~"^4..", namespace="{{.Release.Namespace}}"}[5m])) / sum by (ingress) (rate(nginx_ingress_controller_requests{ingress!="", namespace="{{.Release.Namespace}}"}[5m])) * 100 > 5
+            and
+            sum by (ingress) (rate(nginx_ingress_controller_requests{status=~"^4..", namespace="astronomer"}[5m])) > 5
           for: 10m
           labels:
             tier: platform
             component: nginx
           annotations:
             summary: {{ printf "%q" "NGINX Ingress {{ $labels.ingress }} failure rate is {{ printf \"%.2f\" $value }}%." }}
-            description: "This alert fires if the failure rate (the rate of 4xx)
-              measured on a time window of 2 minutes was higher than 5% in the last
-              10 minutes."
+            description: "This alert fires if the failure rate (the rate of 4xx responses)
+              measured on a time window of 5 minutes was higher than 5% of all traffic
+              AND more than 5 per minute for the last 10 minutes."
 
         - alert: NginxIngressHigh5XXRate
-          expr: sum by (ingress) (rate(nginx_ingress_controller_requests{status=~"^5..",  namespace="{{.Release.Namespace}}" }[5m])) / sum by (ingress) (rate(nginx_ingress_controller_requests{ingress!=""}[5m])) * 100 > 1
+          expr: >-
+            sum by (ingress) (rate(nginx_ingress_controller_requests{status=~"^5..",  namespace="{{.Release.Namespace}}"}[5m])) / sum by (ingress) (rate(nginx_ingress_controller_requests{ingress!="", namespace="{{.Release.Namespace}}"}[5m])) * 100 > 5
+            and
+            sum by (ingress) (rate(nginx_ingress_controller_requests{status=~"^5..", namespace="astronomer"}[5m])) > 5
           for: 5m
           labels:
             tier: platform
@@ -1363,8 +1369,8 @@ data:
           annotations:
             summary: {{ printf "%q" "NGINX Ingress {{ $labels.ingress }} failure rate is {{ printf \"%.2f\" $value }}%." }}
             description: "This alert fires if the failure rate (the rate of 5xx responses)
-              measured on a time window of 2 minutes was higher than 1% in the last
-              5 minutes."
+              measured on a time window of 5 minutes was higher than 5% of all traffic
+              AND more than 5 per minute for the last 10 minutes."
 
       - name: logging
         rules:
