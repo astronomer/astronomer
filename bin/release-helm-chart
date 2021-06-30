@@ -108,7 +108,7 @@ process_and_release_chart_file() {
   helm repo index . --url "https://${target_repo}" --merge /tmp/index.yaml.current
 
   gsutil cp "$helm_chart_path" "gs://${target_repo}"
-  gsutil -h "Cache-Control: public, max-age=300" cp ./index.yaml "gs://${target_repo}"
+  gsutil -h "Cache-Control: public, max-age=${max_age}" cp ./index.yaml "gs://${target_repo}"
 
   set +x
   hr
@@ -122,6 +122,7 @@ release_to_dev() {
   # Copy the artifact
   cp "$helm_chart_path" .
 
+  max_age="30"
   process_and_release_chart_file
 }
 
@@ -132,6 +133,7 @@ release_to_pub() {
   # Fetch artifact from helm-dev
   wget "http://$dev_repo/${helm_chart_path##*/}"
 
+  max_age="300"
   process_and_release_chart_file
 }
 
