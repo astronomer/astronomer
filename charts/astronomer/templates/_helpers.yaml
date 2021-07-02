@@ -70,6 +70,7 @@
   {{- else }}
   {{- $pass := randAlphaNum 32 -}}
   {{- end }}
+
   {{- $config := dict "auths" -}}
   {{- $auth := dict -}}
   {{- $data := dict -}}
@@ -81,6 +82,7 @@
   {{- $_ := set $config "auths" $auth -}}
   {{ $config | toJson | print }}
 {{- end }}
+
 {{ define "houston.backendSecret" -}}
 {{ default (printf "%s-houston-backend" .Release.Name) .Values.houston.backendSecretName }}
 {{- end }}
