@@ -9,6 +9,9 @@ metadata:
     prometheus.io/port: "7777"
     prometheus.io/scrape: "true"
   {{- end }}
+  {{ if .Values.global.enableArgoCDAnnotation }}
+    argocd.argoproj.io/sync-wave: "-1"
+  {{- end }}
   labels:
     app: {{ template "stan.name" . }}
     chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
