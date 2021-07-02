@@ -60,17 +60,16 @@
 {{ define "registry.docker.config" -}}
   {{- $domain := printf "registry.%v" .Values.global.baseDomain }}
   {{- $email := printf "admin@%v" .Values.global.baseDomain }}
-
+  {{- if .Values.global.privateRegistry.user }}
+  {{- $user := .Values.global.privateRegistry.user }}
+  {{- else }}
   {{- $user := randAlphaNum 16 -}}
-  {{- if .Values.global.privateRegistry.user -}}
-  {{- $user := .Values.global.privateRegistry.user -}}
   {{- end }}
-
-  {{- $pass := randAlphaNum 32 -}}
-  {{- if .Values.global.privateRegistry.password -}}
+  {{- if .Values.global.privateRegistry.password }}
   {{- $pass := .Values.global.privateRegistry.password -}}
+  {{- else }}
+  {{- $pass := randAlphaNum 32 -}}
   {{- end }}
-  
   {{- $config := dict "auths" -}}
   {{- $auth := dict -}}
   {{- $data := dict -}}
@@ -81,7 +80,6 @@
   {{- $_ := set $auth $domain $data -}}
   {{- $_ := set $config "auths" $auth -}}
   {{ $config | toJson | print }}
-
 {{- end }}
 {{ define "houston.backendSecret" -}}
 {{ default (printf "%s-houston-backend" .Release.Name) .Values.houston.backendSecretName }}
