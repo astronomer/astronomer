@@ -3,7 +3,7 @@
 
 set -euo pipefail
 
-GIT_ROOT="$(git rev-parse --show-toplevel)"
+GIT_ROOT="$(git rev-parse -C "${0%/*}" --show-toplevel)"
 
 echo "Generating SSL keys..."
 
