@@ -246,13 +246,6 @@ data:
           # This is here for upgrading to 0.11.0+ of Airflow.
           defaultAirflowRepository: quay.io/astronomer/ap-airflow
 
-          # This is here for upgrading to 0.11.1+ of Airflow.
-          data:
-            metadataConnection:
-              sslmode: disable
-            resultBackendConnection:
-              sslmode: disable
-
       {{- if not .Values.global.singleNamespace }}
           # Enable cleanup CronJob in Airflow deployents
           # to cleanup evicted/failed/succeeded pods.
