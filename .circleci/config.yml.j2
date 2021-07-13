@@ -29,7 +29,6 @@ jobs:
       - run:
           name: Run pre-commit
           command: |
-            git config --global --replace-all diff.wsErrorHighlight all
             pre-commit run --all-files --show-diff-on-failure
   lint:
     docker:
