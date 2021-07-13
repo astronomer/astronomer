@@ -30,7 +30,9 @@ jobs:
             - ~/.cache/pre-commit
       - run:
           name: Run pre-commit
-          command: pre-commit run --all-files --show-diff-on-failure
+          command: |
+            git config --global --replace-all diff.wsErrorHighlight all
+            pre-commit run --all-files --show-diff-on-failure
   lint:
     docker:
       - image: quay.io/astronomer/ap-build:0.2.0
