@@ -31,7 +31,7 @@ def common_test_cases(docs):
         f.write(airflow_local_settings.encode())
         f.flush()
         # validate embedded python. returns if black succeeds, else raises CalledProcessError.
-        check_call(["black", "-q", f.name])
+        check_call(["black", "-q", f.name])  
 
 
 def test_houston_configmap():
