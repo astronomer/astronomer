@@ -31,7 +31,7 @@ spec:
           tier: monitoring
           component: grafana
           release: {{ .Release.Name }}
-    {{- if .Values.global.authSidecar.enabled  }}
+    {{- if and (.Values.global.authSidecar.enabled) (not .Values.global.nginxEnabled) }}
     - namespaceSelector:
         matchLabels:
           network.openshift.io/policy-group: ingress
