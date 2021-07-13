@@ -76,15 +76,6 @@ def test_houston_configmap_with_azure_enabled():
     with pytest.raises(KeyError):
         assert prod["deployments"]["helm"]["sccEnabled"] is False
 
-    assert (
-        prod["deployments"]["helm"]["airflow"]["webserver"]["livenessProbe"][
-            "failureThreshold"
-        ]
-        == 25
-    )
-    assert (
-        prod["deployments"]["helm"]["airflow"]["webserver"]["livenessProbe"][
-            "periodSeconds"
-        ]
-        == 10
-    )
+    livenessProbe = prod["deployments"]["helm"]["airflow"]["webserver"]["livenessProbe"]
+    assert livenessProbe["failureThreshold"] == 25
+    assert livenessProbe["periodSeconds"] == 10
