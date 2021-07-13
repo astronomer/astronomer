@@ -44,6 +44,7 @@ def test_houston_configmap():
     doc = docs[0]
     prod = yaml.safe_load(doc["data"]["production.yaml"])
 
+    # Ensure sccEnabled is not defined by default
     with pytest.raises(KeyError):
         assert prod["deployments"]["helm"]["sccEnabled"] is False
 
