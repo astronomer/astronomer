@@ -5,7 +5,7 @@
 # This version number controls the default Airflow chart version that will be installed
 # when creating a new deployment in the system. This is also used to ensure all
 # child airflow deployments are kept up to date and on the latest version.
-airflowChartVersion: 0.20.0
+airflowChartVersion: 1.0.0-rc1-build10949
 
 nodeSelector: {}
 affinity: {}
