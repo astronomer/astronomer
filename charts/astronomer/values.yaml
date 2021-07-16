@@ -14,8 +14,8 @@ tolerations: []
 # Images for Astronomer
 images:
   commander:
-    repository: asoldatenko/ap-commander
-    tag: airflow-chart-0.20.0-2
+    repository: quay.io/astronomer/ap-commander
+    tag: 0.25.0
     pullPolicy: IfNotPresent
   registry:
     repository: quay.io/astronomer/ap-registry
