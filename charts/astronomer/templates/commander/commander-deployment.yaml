@@ -88,5 +88,5 @@ spec:
 				    {{ if .Values.commander.airGapped.enabled }}
             - name: COMMANDER_AIRGAPPED
               value: "true"
-				    {{- else }}
+				    {{- end }}
 
