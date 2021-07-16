@@ -14,8 +14,8 @@ tolerations: []
 # Images for Astronomer
 images:
   commander:
-    repository: quay.io/astronomer/ap-commander
-    tag: 0.25.0
+    repository: asoldatenko/ap-commander
+    tag: airflow-chart-0.20.0-2
     pullPolicy: IfNotPresent
   registry:
     repository: quay.io/astronomer/ap-registry
@@ -250,6 +250,9 @@ commander:
     # requests:
     #  cpu: 100m
     #  memory: 128Mi
+  airGapped:
+    # Enable airgapped mode
+    enabled: false
 
 registry:
   replicas: 1
