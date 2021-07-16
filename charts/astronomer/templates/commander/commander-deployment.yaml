@@ -75,8 +75,6 @@ spec:
             {{- end }}
             - name: COMMANDER_HTTP_PORT
               value: "8880"
-            - name: COMMANDER_AIRGAPPED
-              value: {{ .Values.commander.airGapped.enabled }}
             - name: COMMANDER_GRPC_PORT
               value: "50051"
             - name: COMMANDER_PLATFORM_NAMESPACE
@@ -87,3 +85,8 @@ spec:
               value: {{ .Values.global.helmRepo }}
             - name: HELM_HOST
               value: {{ .Values.global.helmHost }}
+				    {{ if .Values.commander.airGapped.enabled }}
+            - name: COMMANDER_AIRGAPPED
+              value: "true"
+				    {{- else }}
+
