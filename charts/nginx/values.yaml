@@ -32,6 +32,9 @@ resources: {}
 #   cpu: 100m
 #   memory: 128Mi
 
+# Service type that Nginx can be. Default is LoadBalancer but "ClusterIP" and "NodePort" are both valid.
+serviceType: "LoadBalancer"
+
 # dict of annotations to add to the ingress controller
 ingressAnnotations: {}
 
