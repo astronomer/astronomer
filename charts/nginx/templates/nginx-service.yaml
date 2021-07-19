@@ -31,6 +31,10 @@ metadata:
     prometheus.io/port: {{ .Values.ports.metrics | quote }}
 spec:
   type: {{ .Values.serviceType }}
+  {{- if .Values.externalIPs }}
+  externalIps: 
+    - {{ .Values.externalIPs }}
+  {{- end }}
   {{- if .Values.loadBalancerIP }}
   loadBalancerIP: {{ .Values.loadBalancerIP }}
   {{- end }}

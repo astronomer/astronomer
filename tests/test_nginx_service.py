@@ -54,3 +54,15 @@ class TestNginx:
 
         assert doc["spec"]["type"] == "NodePort"    
 
+    def test_nginx_enabled_externalips(self):
+        
+        docs = render_chart(
+            values={"nginx": {"externalIPs": "1.2.3.4"}},
+            show_only=["charts/nginx/templates/nginx-service.yaml"],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+
+        assert len(doc["spec"]["externalIps"]) > 0
+        assert "1.2.3.4" in doc["spec"]["externalIps"]
