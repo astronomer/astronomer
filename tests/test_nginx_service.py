@@ -1,7 +1,4 @@
 from tests.helm_template_generator import render_chart
-import jmespath
-import pytest
-
 
 class TestNginx:
     def test_nginx_service_basics(self):
@@ -39,7 +36,6 @@ class TestNginx:
 
         assert len(docs) == 1
         doc = docs[0]
-
         assert doc["spec"]["type"] == "ClusterIP"    
 
     def test_nginx_type_nodeport(self):
@@ -51,7 +47,6 @@ class TestNginx:
 
         assert len(docs) == 1
         doc = docs[0]
-
         assert doc["spec"]["type"] == "NodePort"    
 
     def test_nginx_enabled_externalips(self):
@@ -63,6 +58,5 @@ class TestNginx:
 
         assert len(docs) == 1
         doc = docs[0]
-
         assert len(doc["spec"]["externalIps"]) > 0
         assert "1.2.3.4" in doc["spec"]["externalIps"]
