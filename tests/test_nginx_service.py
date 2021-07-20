@@ -1,5 +1,6 @@
 from tests.helm_template_generator import render_chart
 
+
 class TestNginx:
     def test_nginx_service_basics(self):
         # sourcery skip: extract-duplicate-method
