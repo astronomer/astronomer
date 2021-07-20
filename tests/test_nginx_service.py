@@ -19,7 +19,7 @@ class TestNginx:
         assert doc["metadata"]["name"] == "RELEASE-NAME-nginx"
 
     def test_nginx_type_loadbalancer(self):
-        
+        # sourcery skip: extract-duplicate-method
         docs = render_chart(
             values={"nginx": {"serviceType": "LoadBalancer"}},
             show_only=["charts/nginx/templates/nginx-service.yaml"],
@@ -31,7 +31,7 @@ class TestNginx:
         assert doc["spec"]["type"] == "LoadBalancer"
 
     def test_nginx_type_clusterip(self):
-        
+        # sourcery skip: extract-duplicate-method
         docs = render_chart(
             values={"nginx": {"serviceType": "ClusterIP"}},
             show_only=["charts/nginx/templates/nginx-service.yaml"],
@@ -43,7 +43,7 @@ class TestNginx:
         assert doc["spec"]["type"] == "ClusterIP"    
 
     def test_nginx_type_nodeport(self):
-        
+        # sourcery skip: extract-duplicate-method
         docs = render_chart(
             values={"nginx": {"serviceType": "NodePort"}},
             show_only=["charts/nginx/templates/nginx-service.yaml"],
@@ -55,7 +55,7 @@ class TestNginx:
         assert doc["spec"]["type"] == "NodePort"    
 
     def test_nginx_enabled_externalips(self):
-        
+        # sourcery skip: extract-duplicate-method
         docs = render_chart(
             values={"nginx": {"externalIPs": "1.2.3.4"}},
             show_only=["charts/nginx/templates/nginx-service.yaml"],
