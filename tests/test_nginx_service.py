@@ -36,7 +36,7 @@ class TestNginx:
 
         assert len(docs) == 1
         doc = docs[0]
-        assert doc["spec"]["type"] == "ClusterIP"    
+        assert doc["spec"]["type"] == "ClusterIP"
 
     def test_nginx_type_nodeport(self):
         # sourcery skip: extract-duplicate-method
@@ -47,7 +47,7 @@ class TestNginx:
 
         assert len(docs) == 1
         doc = docs[0]
-        assert doc["spec"]["type"] == "NodePort"    
+        assert doc["spec"]["type"] == "NodePort"
 
     def test_nginx_enabled_externalips(self):
         # sourcery skip: extract-duplicate-method

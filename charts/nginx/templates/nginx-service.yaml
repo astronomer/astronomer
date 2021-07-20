@@ -32,7 +32,7 @@ metadata:
 spec:
   type: {{ .Values.serviceType }}
   {{- if .Values.externalIPs }}
-  externalIps: 
+  externalIps:
     - {{ .Values.externalIPs }}
   {{- end }}
   {{- if .Values.loadBalancerIP }}
