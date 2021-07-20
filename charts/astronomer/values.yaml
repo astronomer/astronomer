@@ -250,6 +250,9 @@ commander:
     # requests:
     #  cpu: 100m
     #  memory: 128Mi
+  airGapped:
+    # Enable airgapped mode
+    enabled: false
 
 registry:
   replicas: 1
