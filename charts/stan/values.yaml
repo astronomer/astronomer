@@ -57,11 +57,10 @@ imagePullSecrets: {}
 
 # Toggle whether to use setup a Pod Security Context
 # ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
-securityContext: null
-# securityContext:
-#   fsGroup: 1000
-#   runAsUser: 1000
-#   runAsNonRoot: true
+securityContext:
+  fsGroup: 1000
+  runAsGroup: 1000
+  runAsUser: 1000
 
 # Affinity for pod assignment
 # ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
