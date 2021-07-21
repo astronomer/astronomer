@@ -85,3 +85,7 @@ spec:
               value: {{ .Values.global.helmRepo }}
             - name: HELM_HOST
               value: {{ .Values.global.helmHost }}
+            {{ if .Values.commander.airGapped.enabled }}
+            - name: COMMANDER_AIRGAPPED
+              value: "true"
+            {{- end }}

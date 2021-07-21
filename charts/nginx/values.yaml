@@ -9,11 +9,11 @@ tolerations: []
 images:
   nginx:
     repository: quay.io/astronomer/ap-nginx
-    tag: 0.46.0
+    tag: 0.47.0
     pullPolicy: IfNotPresent
   defaultBackend:
     repository: quay.io/astronomer/ap-default-backend
-    tag: 0.25.1
+    tag: 0.25.2
     pullPolicy: IfNotPresent
 
 ingressClass: ~
@@ -32,6 +32,9 @@ resources: {}
 #   cpu: 100m
 #   memory: 128Mi
 
+# Service type that Nginx can be. Default is LoadBalancer but "ClusterIP" and "NodePort" are both valid.
+serviceType: "LoadBalancer"
+
 # dict of annotations to add to the ingress controller
 ingressAnnotations: {}
 
@@ -39,7 +42,10 @@ ingressAnnotations: {}
 antiAffinity: "soft"
 
 # String IP address the nginx ingress should bind to
-loadBalancerIP: ~
+loadBalancerIPs: ~
+
+# String IP address that the service should list as an external IP. Currently only 1 address is supported
+externalIPs: ~
 
 # List used to restrict IPs that can reach the nginx ingress
 loadBalancerSourceRanges: []
