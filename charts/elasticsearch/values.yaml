@@ -26,7 +26,7 @@ images:
     pullPolicy: IfNotPresent
   nginx:
     repository: quay.io/astronomer/ap-nginx-es
-    tag: 3.13.5-1
+    tag: 3.13.5-2
     pullPolicy: IfNotPresent
 
 common:
