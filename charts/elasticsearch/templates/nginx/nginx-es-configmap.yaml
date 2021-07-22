@@ -14,6 +14,7 @@ metadata:
 data:
   nginx.conf: |-
     worker_processes 1;
+    pid /tmp/nginx.pid;
     events { worker_connections 1024; }
     error_log /dev/stdout info;
 
