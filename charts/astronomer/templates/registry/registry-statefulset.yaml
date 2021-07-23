@@ -50,14 +50,14 @@ spec:
       tolerations:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       restartPolicy: Always
+      securityContext:
+			  fsGroup: 1000
+		    runAsGroup: 1000
+		    runAsUser: 1000
       containers:
         - name: registry
           image: {{ template  "registry.image" . }}
           imagePullPolicy: {{ .Values.images.registry.pullPolicy }}
-          securityContext:
-            fsGroup: 1000
-            runAsGroup: 1000
-            runAsUser: 1000
           env:
           - name: REGISTRY_HTTP_SECRET
             {{- if .Values.registry.httpSecret }}
