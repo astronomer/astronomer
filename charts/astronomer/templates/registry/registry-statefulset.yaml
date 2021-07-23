@@ -54,6 +54,10 @@ spec:
         - name: registry
           image: {{ template  "registry.image" . }}
           imagePullPolicy: {{ .Values.images.registry.pullPolicy }}
+          securityContext:
+            fsGroup: 1000
+            runAsGroup: 1000
+            runAsUser: 1000
           env:
           - name: REGISTRY_HTTP_SECRET
             {{- if .Values.registry.httpSecret }}
