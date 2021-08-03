@@ -8,7 +8,7 @@ import jmespath
     "kube_version",
     supported_k8s_versions,
 )
-def test_commander_deployment(kube_version):
+def test_astronomer_commander_deployment(kube_version):
     """Test that helm renders a good deployment template for astronomer/commander."""
     docs = render_chart(
         kube_version=kube_version,
