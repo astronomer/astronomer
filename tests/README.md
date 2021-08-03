@@ -161,7 +161,7 @@ Results (3.45s):
        5 passed
 ```
 
-Let's write a new test where testing the kubernetes would be important. In our chart, we use the Ingress v1 syntax starting with kubernetes 1.19, but v1beta1 with anything before 1.19. We will once again extend the function that we originally started, doing additional assertions depending on what version of kubernetes we are testing against. We can inspect the data produced for different versions of kubernetes by substituting `--kube-version=1.18.0` in our original command with `--kube-version=1.19.0`, allowing us to easily see what kind of assertions we can make for the various kubernetes versions. Here is the full content of our test file:
+Let's write a new test where testing the kubernetes version would be important. In our chart, we use the Ingress v1 syntax starting with kubernetes 1.19, but v1beta1 with anything before 1.19. We will once again extend the function that we originally started, doing additional assertions depending on what version of kubernetes we are testing against. We can inspect the data produced for different versions of kubernetes by substituting `--kube-version=1.18.0` in our original command with `--kube-version=1.19.0`, allowing us to easily see what kind of assertions we can make for the various kubernetes versions. Here is the full content of our test file:
 
 ```python
 from tests.helm_template_generator import render_chart
