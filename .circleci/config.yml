@@ -218,7 +218,7 @@ jobs:
 
   platform-1-21-1:
     machine:
-      image: ubuntu-2004:202101-01
+      image: ubuntu-2004:202104-01
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.21.1
