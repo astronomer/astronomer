@@ -20,6 +20,7 @@ def test_astronomer_commander_deployment(kube_version):
     assert doc["kind"] == "Deployment"
     assert doc["apiVersion"] == "apps/v1"
     assert doc["metadata"]["name"] == "RELEASE-NAME-commander"
-    assert "quay.io/astronomer/ap-commander:0.25.2" in jmespath.search(
-        "spec.template.spec.containers[*].image", doc
+    assert any(
+        "quay.io/astronomer/ap-commander:" in item
+        for item in jmespath.search("spec.template.spec.containers[*].image", doc)
     )
