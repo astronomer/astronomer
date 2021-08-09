@@ -281,7 +281,23 @@ data:
     # single namespace mode. Fluentd requires a ClusterRole to
     # enrich logs with kubernetes metadata. In a single namespace environment,
     # we're likely not going to get a ClusterRole from admins.
+    {{- if  .Values.global.custom_logging.enabled }}
+
+      elasticsearch:
+        enabled: true
+        connection:
+          host: {{ printf "%s-external-es-proxy.%s" .Release.Name .Release.Namespace }}
+          port: 9200
+
+    elasticsearch:
+      enabled: true
+      client:
+        host: {{ printf "%s-external-es-proxy:9201" .Release.Name }}
+        log: error
+    {{- end }}
+
     {{- if not .Values.global.singleNamespace }}
+    {{- if not .Values.global.custom_logging.enabled }}
       elasticsearch:
         enabled: true
         connection:
@@ -293,6 +309,7 @@ data:
       client:
         host: {{ printf "%s-elasticsearch:9200" .Release.Name }}
         log: error
+    {{- end }}
     {{- end }}
 
     prometheus:
