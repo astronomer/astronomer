@@ -1,0 +1,45 @@
+###############################
+## Nginx ES proxy NetworkPolicy
+###############################
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "external-es-proxy.fullname" . }}-policy
+  labels:
+    tier: external-logging
+    component: {{ template "external-es-proxy.name" . }}
+    chart: {{ template "external-es-proxy.chart" . }}
+    heritage: {{ .Release.Service }}
+    release: {{ .Release.Name }}
+spec:
+  podSelector:
+    matchLabels:
+      tier: external-logging
+      component: {{ template "external-es-proxy.name" . }}
+      release: {{ .Release.Name }}
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector: {}
+      podSelector:
+        matchLabels:
+          tier: airflow
+          component: webserver
+    ports:
+    - protocol: TCP
+      port: 9200
+  - from:
+    - podSelector:
+        matchLabels:
+          component: fluentd
+          tier: logging
+          release: {{ .Release.Name }}
+    - podSelector:
+        matchLabels:
+          component: houston
+          tier: astronomer
+          release: {{ .Release.Name }}
+    ports:
+    - protocol: TCP
+      port: 9201

@@ -84,3 +84,6 @@ dependencies:
     condition: global.stan.enabled
     tags:
       - stan
+  # external-es-proxy
+  - name: external-es-proxy
+    condition: global.custom_logging.enabled

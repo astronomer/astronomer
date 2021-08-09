@@ -1,0 +1,87 @@
+############################
+## Nginx ES proxy Deployment
+############################
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "external-es-proxy.fullname" . }}
+  labels:
+    tier: external-logging
+    component: {{ template "external-es-proxy.name" . }}
+    chart: {{ template "external-es-proxy.chart" . }}
+    heritage: {{ .Release.Service }}
+    release: {{ .Release.Name }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      tier: external-logging
+      component: {{ template "external-es-proxy.name" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        tier: external-logging
+        component: {{ template "external-es-proxy.name" . }}
+        release: {{ .Release.Name }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/external-es-proxy-configmap.yaml") . | sha256sum }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "external-es-proxy.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          volumeMounts:
+            - name: nginx-config-volume
+              mountPath: /etc/nginx
+          ports:
+            - name: secure-http
+              containerPort: 9200
+              protocol: TCP
+            - name: http
+              containerPort: 9201
+              protocol: TCP
+          #livenessProbe:
+          #  httpGet:
+          #    path: /healthz
+          #    port: http
+          #readinessProbe:
+          #  httpGet:
+          #    path: /healthz
+          #    port: http
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: nginx-config-volume
+          configMap:
+            name: {{ .Release.Name }}-{{ template "external-es-proxy.name" . }}
+            items:
+              - key: nginx.conf
+                path: nginx.conf

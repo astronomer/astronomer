@@ -137,6 +137,14 @@ global:
       limits: {}
       requests: {}
 
+  # External ES logging
+  custom_logging:
+    enabled: false
+    scheme: https
+    host: ""
+    port: ""
+    secret: ""
+
   ## Add annotations to all the auth sidecar deployed ingress resources
   ##
   extraAnnotations: {}

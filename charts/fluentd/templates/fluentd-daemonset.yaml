@@ -62,10 +62,17 @@ spec:
         env:
         - name: FLUENTD_ARGS
           value: --no-supervisor -q
+        {{- if .Values.global.custom_logging }}
+        - name: OUTPUT_HOST
+          value: {{ printf "%s-external-es-proxy" .Release.Name | quote }}
+        - name: OUTPUT_PORT
+          value: "9201"
+        {{- else }}
         - name: OUTPUT_HOST
           value: {{ template "elasticsearch.host" . }}
         - name: OUTPUT_PORT
           value: {{ .Values.elasticsearch.port | quote }}
+        {{- end }}
         - name: OUTPUT_BUFFER_CHUNK_LIMIT
           value: {{ .Values.elasticsearch.buffer_chunk_limit | quote }}
         - name: OUTPUT_BUFFER_QUEUE_LIMIT
