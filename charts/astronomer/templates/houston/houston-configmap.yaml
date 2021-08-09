@@ -296,8 +296,7 @@ data:
         log: error
     {{- end }}
 
-    {{- if not .Values.global.singleNamespace }}
-    {{- if not .Values.global.custom_logging.enabled }}
+    {{- if and (not .Values.global.singleNamespace ) (not .Values.global.custom_logging.enabled ) }}
       elasticsearch:
         enabled: true
         connection:
@@ -309,7 +308,6 @@ data:
       client:
         host: {{ printf "%s-elasticsearch:9200" .Release.Name }}
         log: error
-    {{- end }}
     {{- end }}
 
     prometheus:
