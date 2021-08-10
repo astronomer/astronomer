@@ -9,7 +9,7 @@ from subprocess import CalledProcessError
     "kube_version",
     supported_k8s_versions,
 )
-class TestDameonset:
+class TestDaemonset:
     @staticmethod
     def common_tests_daemonset(doc):
         """Test things common to all daemonsets"""
