@@ -275,21 +275,21 @@ data:
 
     {{- end }}
 
-    # If we're in single namespace mode, we will also
-    # skip the configuration for elasticsearch. Houston will fallback
-    # to its default modes, which are false/disabled.
-    # XXX: We may want to decouple these configurations from the
-    # singleNamespace config. At the moment, this is a convenient
-    # helper to require a minimal config change to run the platform in
-    # single namespace mode. Fluentd requires a ClusterRole to
-    # enrich logs with kubernetes metadata. In a single namespace environment,
-    # we're likely not going to get a ClusterRole from admins.
-    {{- if not .Values.global.singleNamespace }}
-      elasticsearch:
-        enabled: true
-        connection:
-          host: {{ printf "%s-elasticsearch-nginx.%s" .Release.Name .Release.Namespace }}
-          port: 9200
+        # If we're in single namespace mode, we will also
+        # skip the configuration for elasticsearch. Houston will fallback
+        # to its default modes, which are false/disabled.
+        # XXX: We may want to decouple these configurations from the
+        # singleNamespace config. At the moment, this is a convenient
+        # helper to require a minimal config change to run the platform in
+        # single namespace mode. Fluentd requires a ClusterRole to
+        # enrich logs with kubernetes metadata. In a single namespace environment,
+        # we're likely not going to get a ClusterRole from admins.
+        {{- if not .Values.global.singleNamespace }}
+          elasticsearch:
+            enabled: true
+            connection:
+              host: {{ printf "%s-elasticsearch-nginx.%s" .Release.Name .Release.Namespace }}
+              port: 9200
 
     elasticsearch:
       enabled: true
