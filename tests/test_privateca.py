@@ -26,9 +26,13 @@ class TestDaemonset:
                 show_only=["templates/trust-private-ca-on-all-nodes/daemonset.yaml"],
                 values={
                     "global": {
+                        "privateCaCerts": [
+                            "private-ca-cert-foo",
+                            "private-ca-cert-bar",
+                        ],
                         "privateCaCertsAddToHost": {
                             "enabled": False,
-                        }
+                        },
                     }
                 },
             )
@@ -39,9 +43,10 @@ class TestDaemonset:
             show_only=["templates/trust-private-ca-on-all-nodes/daemonset.yaml"],
             values={
                 "global": {
+                    "privateCaCerts": ["private-ca-cert-foo", "private-ca-cert-bar"],
                     "privateCaCertsAddToHost": {
                         "enabled": True,
-                    }
+                    },
                 }
             },
         )
@@ -53,6 +58,23 @@ class TestDaemonset:
             "alpine:3.14" in item
             for item in jmespath.search("spec.template.spec.containers[*].image", doc)
         )
+        volmounts = jmespath.search(
+            "spec.template.spec.containers[*].volumeMounts[*]", doc
+        )[0]
+
+        assert all(
+            name in jmespath.search("[*].name", volmounts)
+            for name in ["hostcerts", "private-ca-cert-foo", "private-ca-cert-bar"]
+        )
+        assert all(
+            mountpath in jmespath.search("[*].mountPath", volmounts)
+            for mountpath in [
+                "/host-trust-store",
+                "/private-ca-certs/private-ca-cert-foo.crt",
+                "/private-ca-certs/private-ca-cert-bar.crt",
+            ]
+        )
+        assert {"cert.pem"} == set(jmespath.search("[*].subPath", volmounts))
 
     def test_privateca_daemonset_enabled_with_custom_image(self, kube_version):
         docs = render_chart(
