@@ -144,6 +144,7 @@ global:
     host: ""
     port: ""
     secret: ""
+    #secretName: ~
 
   ## Add annotations to all the auth sidecar deployed ingress resources
   ##

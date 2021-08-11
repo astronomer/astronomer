@@ -5,9 +5,9 @@
 replicaCount: 1
 
 image:
-  repository: nginx
+  repository: openresty/openresty
   pullPolicy: IfNotPresent
-  tag: ""
+  tag: latest
 
 imagePullSecrets: []
 nameOverride: ""

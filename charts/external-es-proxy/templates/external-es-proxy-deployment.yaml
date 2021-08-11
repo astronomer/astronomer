@@ -31,7 +31,8 @@ spec:
         component: {{ template "external-es-proxy.name" . }}
         release: {{ .Release.Name }}
       annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/external-es-proxy-configmap.yaml") . | sha256sum }}
+        checksum/nginx-config: {{ include (print $.Template.BasePath "/external-es-proxy-configmap.yaml") . | sha256sum }}
+        checksum/lua-config: {{ include (print $.Template.BasePath "/external-es-proxy-env-configmap.yaml") . | sha256sum }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -46,9 +47,25 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+{{- if .Values.global.custom_logging.secret }}
+          - name: ES_SECRET
+            value: {{.Values.global.custom_logging.secret }}
+{{- else if .Values.global.custom_logging.secretName }}
+          - name: ES_SECRET_NAME
+            #value: text
+            valueFrom:
+              secretKeyRef:
+                name: {{.Values.global.custom_logging.secretName }}
+                key: elastic
+{{- end }}
           volumeMounts:
             - name: nginx-config-volume
-              mountPath: /etc/nginx
+              mountPath: /usr/local/openresty/nginx/conf/nginx.conf
+              subPath: nginx.conf
+            - name: nginx-env-volume
+              mountPath: /usr/local/openresty/nginx/conf/setenv.lua
+              subPath: setenv.lua
           ports:
             - name: secure-http
               containerPort: 9200
@@ -85,3 +102,9 @@ spec:
             items:
               - key: nginx.conf
                 path: nginx.conf
+        - name: nginx-env-volume
+          configMap:
+            name: {{ .Release.Name }}-{{ template "external-es-proxy.name" . }}-setenv
+            items:
+              - key: setenv.lua
+                path: setenv.lua

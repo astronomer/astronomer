@@ -1,0 +1,23 @@
+################################
+## NGINX Elasticsearch Proxy ConfigMap
+#################################
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: {{ template "external-es-proxy.fullname" . }}-setenv
+  labels:
+    tier: external-logging
+    component: {{ template "external-es-proxy.name" . }}
+    chart: {{ template "external-es-proxy.chart" . }}
+    heritage: {{ .Release.Service }}
+    release: {{ .Release.Name }}
+data:
+  setenv.lua: |-
+    -- check if  variable is defined
+    if not (os.getenv("ES_SECRET") == nil or os.getenv("ES_SECRET") == '') then 
+        local api_key = os.getenv("ES_SECRET")
+        return ngx.req.set_header("Authorization", string.format("Basic %s", api_key))
+    elseif not (os.getenv("ES_SECRET_NAME") == nil or os.getenv("ES_SECRET_NAME") == '' ) then 
+        local api_key = os.getenv("ES_SECRET_NAME")
+        return ngx.req.set_header("Authorization", string.format("Basic %s", ngx.encode_base64(api_key)))
+    end 
