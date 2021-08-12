@@ -50,6 +50,7 @@ def test_houston_configmap():
         # Ensure sccEnabled is not defined by default
         assert prod["deployments"]["helm"]["sccEnabled"] is False
 
+
 def test_houston_configmapwith_scc_enabled():
     """Validate the houston configmap and its embedded data with sscEnabled."""
     docs = render_chart(
