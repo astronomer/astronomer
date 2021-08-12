@@ -1,6 +1,6 @@
-#########################
-## Nginx ES proxy Service
-#########################
+##############################
+## Elasticsearch Proxy Service
+##############################
 apiVersion: v1
 kind: Service
 metadata:

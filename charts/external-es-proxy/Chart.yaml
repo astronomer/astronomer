@@ -5,4 +5,5 @@ name: external-es-proxy
 keywords:
 - astronomer
 - custom-logging
+- external-logging
 version: 0.12.1

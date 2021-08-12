@@ -1,6 +1,6 @@
-######################################
-## NGINX Elasticsearch Proxy ConfigMap
-######################################
+################################
+## Elasticsearch Proxy ConfigMap
+################################
 kind: ConfigMap
 apiVersion: v1
 metadata:
@@ -24,11 +24,6 @@ data:
       access_log /dev/stdout;
       client_max_body_size 1024M;
 
-      #upstream external-es-proxy {
-      #  server {{.Values.global.custom_logging.host}}:{{.Values.global.custom_logging.port}};
-      #  keepalive 15;
-      #}
-
       server {
         listen 9200;
         auth_request /auth;
@@ -40,7 +35,7 @@ data:
         proxy_set_header Proxy-Connection "Keep-Alive";
 
         location ~ ^/ {
-          access_by_lua_file  /usr/local/openresty/nginx/conf/setenv.lua; 
+          access_by_lua_file  /usr/local/openresty/nginx/conf/setenv.lua;
           proxy_pass {{.Values.global.custom_logging.scheme}}://{{.Values.global.custom_logging.host}}:{{.Values.global.custom_logging.port}};
         }
 
@@ -48,7 +43,7 @@ data:
           # This combined with disabling explicit index searching downstream
           # prevents any deployment from being able to query any other indexes.
           rewrite ^/(.*) /fluentd.$remote_user.*/$1 break;
-          access_by_lua_file  /usr/local/openresty/nginx/conf/setenv.lua; 
+          access_by_lua_file  /usr/local/openresty/nginx/conf/setenv.lua;
           proxy_pass {{.Values.global.custom_logging.scheme}}://{{.Values.global.custom_logging.host}}:{{.Values.global.custom_logging.port}};
         }
 
@@ -66,7 +61,7 @@ data:
         proxy_set_header Proxy-Connection "Keep-Alive";
 
         location ~ ^/ {
-          access_by_lua_file  /usr/local/openresty/nginx/conf/setenv.lua; 
+          access_by_lua_file  /usr/local/openresty/nginx/conf/setenv.lua;
           proxy_pass {{.Values.global.custom_logging.scheme}}://{{.Values.global.custom_logging.host}}:{{.Values.global.custom_logging.port}};
         }
       }
