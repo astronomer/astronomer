@@ -81,21 +81,3 @@ def test_houston_configmap_with_azure_enabled():
     livenessProbe = prod["deployments"]["helm"]["airflow"]["webserver"]["livenessProbe"]
     assert livenessProbe["failureThreshold"] == 25
     assert livenessProbe["periodSeconds"] == 10
-
-def test_houston_configmap_with_azure_enabled():
-    """Validate the houston configmap and its embedded data with azure enabled."""
-    docs = render_chart(
-        values={"global": {"azure": {"enabled": True}}},
-        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
-    )
-
-    common_test_cases(docs)
-    doc = docs[0]
-    prod = yaml.safe_load(doc["data"]["production.yaml"])
-
-    with pytest.raises(KeyError):
-        assert prod["deployments"]["helm"]["sccEnabled"] is False
-
-    livenessProbe = prod["deployments"]["helm"]["airflow"]["webserver"]["livenessProbe"]
-    assert livenessProbe["failureThreshold"] == 25
-    assert livenessProbe["periodSeconds"] == 10
