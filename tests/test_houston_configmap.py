@@ -43,11 +43,12 @@ def test_houston_configmap():
     common_test_cases(docs)
     doc = docs[0]
     prod = yaml.safe_load(doc["data"]["production.yaml"])
+    # Ensure airflow elasticsearch param is at correct location
+    assert prod["deployments"]["helm"]["airflow"]["elasticsearch"]["enabled"] is True
 
-    # Ensure sccEnabled is not defined by default
     with pytest.raises(KeyError):
+        # Ensure sccEnabled is not defined by default
         assert prod["deployments"]["helm"]["sccEnabled"] is False
-
 
 def test_houston_configmapwith_scc_enabled():
     """Validate the houston configmap and its embedded data with sscEnabled."""
@@ -62,6 +63,24 @@ def test_houston_configmapwith_scc_enabled():
 
     assert prod["deployments"]["helm"]["sccEnabled"] is True
 
+
+def test_houston_configmap_with_azure_enabled():
+    """Validate the houston configmap and its embedded data with azure enabled."""
+    docs = render_chart(
+        values={"global": {"azure": {"enabled": True}}},
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+
+    common_test_cases(docs)
+    doc = docs[0]
+    prod = yaml.safe_load(doc["data"]["production.yaml"])
+
+    with pytest.raises(KeyError):
+        assert prod["deployments"]["helm"]["sccEnabled"] is False
+
+    livenessProbe = prod["deployments"]["helm"]["airflow"]["webserver"]["livenessProbe"]
+    assert livenessProbe["failureThreshold"] == 25
+    assert livenessProbe["periodSeconds"] == 10
 
 def test_houston_configmap_with_azure_enabled():
     """Validate the houston configmap and its embedded data with azure enabled."""
