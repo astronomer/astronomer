@@ -92,6 +92,13 @@ This very simple test will render the helm chart using the default kubernetes ve
 To run python tests, it's best to use a virtual environment. From the root of the git repository, we will create a virtual environment named `venv` and install the required files in it.
 
 ```
+Make sure your python version is >= 3.9.6, helm is >=3.6.0 , and black is installed
+$ python --version
+Python 3.9.6
+$ helm version
+Python 3.9.6
+$ black --version
+black, version 21.7b0
 $ virtualenv venv -p python3
 created virtual environment CPython3.9.5.final.0-64 in 299ms
   creator CPython3Posix(dest=/Users/danielh/a/astronomer/venv, clear=False, no_vcs_ignore=False, global=False)

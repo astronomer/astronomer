@@ -43,9 +43,11 @@ def test_houston_configmap():
     common_test_cases(docs)
     doc = docs[0]
     prod = yaml.safe_load(doc["data"]["production.yaml"])
+    # Ensure airflow elasticsearch param is at correct location
+    assert prod["deployments"]["helm"]["airflow"]["elasticsearch"]["enabled"] is True
 
-    # Ensure sccEnabled is not defined by default
     with pytest.raises(KeyError):
+        # Ensure sccEnabled is not defined by default
         assert prod["deployments"]["helm"]["sccEnabled"] is False
 
 
