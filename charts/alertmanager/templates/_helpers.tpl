@@ -45,3 +45,38 @@ Image name.
 {{ define "alertmanager.url" -}}
 alertmanager.{{ .Values.global.baseDomain }}
 {{- end }}
+
+{{/*
+Return  the proper Storage Class
+*/}}
+{{- define "alertmanager.storageClass" -}}
+{{/*
+Helm 2.11 supports the assignment of a value to a variable defined in a different scope,
+but Helm 2.9 and 2.10 does not support it, so we need to implement this if-else logic.
+*/}}
+{{- if .Values.global -}}
+    {{- if .Values.global.storageClass -}}
+        {{- if (eq "-" .Values.global.storageClass) -}}
+            {{- printf "storageClassName: \"\"" -}}
+        {{- else }}
+            {{- printf "storageClassName: %s" .Values.global.storageClass -}}
+        {{- end -}}
+    {{- else -}}
+        {{- if .Values.persistence.storageClassName -}}
+              {{- if (eq "-" .Values.persistence.storageClassName) -}}
+                  {{- printf "storageClassName: \"\"" -}}
+              {{- else }}
+                  {{- printf "storageClassName: %s" .Values.persistence.storageClassName -}}
+              {{- end -}}
+        {{- end -}}
+    {{- end -}}
+{{- else -}}
+    {{- if .Values.persistence.storageClassName -}}
+        {{- if (eq "-" .Values.persistence.storageClassName) -}}
+            {{- printf "storageClassName: \"\"" -}}
+        {{- else }}
+            {{- printf "storageClassName: %s" .Values.persistence.storageClassName -}}
+        {{- end -}}
+    {{- end -}}
+{{- end -}}
+{{- end -}}

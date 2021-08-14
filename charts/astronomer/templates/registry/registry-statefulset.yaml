@@ -121,6 +121,7 @@ spec:
         resources:
           requests:
             storage: {{ .Values.registry.persistence.size }}
+        {{ include "registry.storageClass" . }}
       {{- if .Values.registry.persistence.storageClassName }}
         storageClassName: {{ .Values.registry.persistence.storageClassName }}
       {{- end }}
