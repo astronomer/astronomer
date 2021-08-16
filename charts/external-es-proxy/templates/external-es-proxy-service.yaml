@@ -14,10 +14,12 @@ metadata:
 spec:
   type: {{ .Values.service.type }}
   ports:
-    - port: 9200
+    - name: securehttp
+      port: {{ .Values.service.securehttp }}
       protocol: TCP
       name: secure-http
-    - port: 9201
+    - name: http
+      port: {{ .Values.service.http }}
       protocol: TCP
       name: http
   selector:

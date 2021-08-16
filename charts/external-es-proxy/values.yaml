@@ -37,7 +37,8 @@ securityContext: {}
 
 service:
   type: ClusterIP
-  port: 80
+  securehttp: 9200
+  http: 9201
 
 resources: {}
   # limits:

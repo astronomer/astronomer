@@ -28,7 +28,7 @@ spec:
           component: webserver
     ports:
     - protocol: TCP
-      port: 9200
+      port: {{ .Values.service.securehttp }}
   - from:
     - podSelector:
         matchLabels:
@@ -42,4 +42,4 @@ spec:
           release: {{ .Release.Name }}
     ports:
     - protocol: TCP
-      port: 9201
+      port: {{ .Values.service.http }}

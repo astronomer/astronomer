@@ -25,7 +25,7 @@ data:
       client_max_body_size 1024M;
 
       server {
-        listen 9200;
+        listen {{ .Values.service.securehttp }};
         auth_request /auth;
         proxy_http_version 1.1;
         {{- if not .Values.global.istio.enabled }}
@@ -55,7 +55,7 @@ data:
         }
       }
       server {
-        listen 9201;
+        listen {{ .Values.service.http }};
         proxy_http_version 1.1;
         proxy_set_header Connection "Keep-Alive";
         proxy_set_header Proxy-Connection "Keep-Alive";

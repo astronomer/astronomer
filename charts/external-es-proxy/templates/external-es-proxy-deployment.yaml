@@ -67,10 +67,10 @@ spec:
               subPath: setenv.lua
           ports:
             - name: secure-http
-              containerPort: 9200
+              containerPort: {{ .Values.service.securehttp }}
               protocol: TCP
             - name: http
-              containerPort: 9201
+              containerPort: {{ .Values.service.http }}
               protocol: TCP
           #livenessProbe:
           #  httpGet:
