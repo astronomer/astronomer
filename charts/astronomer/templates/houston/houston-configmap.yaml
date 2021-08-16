@@ -281,7 +281,7 @@ data:
     # single namespace mode. Fluentd requires a ClusterRole to
     # enrich logs with kubernetes metadata. In a single namespace environment,
     # we're likely not going to get a ClusterRole from admins.
-    {{- if  .Values.global.custom_logging.enabled }}
+    {{- if .Values.global.custom_logging.enabled }}
 
       elasticsearch:
         enabled: true
