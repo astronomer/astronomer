@@ -8,7 +8,7 @@ executors:
 jobs:
   run_pre_commit:
     docker:
-      - image: quay.io/astronomer/ci-pre-commit:2021-06
+      - image: quay.io/astronomer/ci-pre-commit:2021-08
     steps:
       - checkout
       - run:
@@ -28,7 +28,7 @@ jobs:
             - ~/.cache/pre-commit
       - run:
           name: Run pre-commit
-          command: pre-commit run --all-files || { git --no-pager diff && false ; }
+          command: pre-commit run --all-files --show-diff-on-failure
   lint:
     docker:
       - image: quay.io/astronomer/ap-build:0.2.0
@@ -57,7 +57,7 @@ jobs:
 
   unittest-charts:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2021-06
+      - image: quay.io/astronomer/ci-helm-release:2021-08
     steps:
       - checkout
       - run:
@@ -100,7 +100,7 @@ jobs:
 
   release-to-internal:
     machine:
-      image: ubuntu-2004:202101-01
+      image: ubuntu-2004:202104-01
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -110,12 +110,12 @@ jobs:
           command: |
             set -e
             sudo apt-get update && sudo apt-get install -y ca-certificates curl
-            pyenv global 3.9.1
+            pyenv global 3.9.4
             bin/release-helm-chart /tmp/workspace/astronomer-*.tgz
 
   release-to-public:
     machine:
-      image: ubuntu-2004:202101-01
+      image: ubuntu-2004:202104-01
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -125,13 +125,13 @@ jobs:
           command: |
             set -e
             sudo apt-get update && sudo apt-get install -y ca-certificates curl
-            pyenv global 3.9.1
+            pyenv global 3.9.4
             bin/release-helm-chart -p /tmp/workspace/astronomer-*.tgz
       - publish-github-release
 {% for version in kube_versions %}
   platform-{{ version | replace(".", "-") }}:
     machine:
-      image: ubuntu-2004:202101-01
+      image: ubuntu-2004:202104-01
       resource_class: xlarge
     environment:
       KUBE_VERSION: v{{ version }}
@@ -150,7 +150,7 @@ jobs:
 {% for version in [kube_versions[-1]] %}
   lts-23-to-25-test:
     machine:
-      image: ubuntu-2004:202101-01
+      image: ubuntu-2004:202104-01
       resource_class: xlarge
     environment:
       KUBE_VERSION: v{{ version }}
@@ -383,6 +383,6 @@ commands:
           name: Create a release on GitHub
           command: |
             set -xe
-            pyenv global 3.9.1
+            pyenv global 3.9.4
             pip install astronomer_e2e_test
             astronomer-ci publish-github-release --github-repository $CIRCLE_PROJECT_REPONAME --github-organization $CIRCLE_PROJECT_USERNAME --commitish $CIRCLE_SHA1

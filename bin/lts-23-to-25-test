@@ -3,7 +3,7 @@
 set -euo pipefail
 set -x
 
-GIT_ROOT="$(git rev-parse --show-toplevel)"
+GIT_ROOT="$(git -C "${0%/*}" rev-parse --show-toplevel)"
 BIN_DIR="${GIT_ROOT}/bin"
 
 source "$GIT_ROOT/bin/install-ci-tools" 1

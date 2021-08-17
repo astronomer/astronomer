@@ -104,9 +104,11 @@ def render_chart(
             if not templates:
                 return None
         except subprocess.CalledProcessError as error:
-            print(
-                f"ERROR: subprocess.CalledProcessError:\n{error.output=}\n{error.stderr=}"
-            )
+            print("ERROR: subprocess.CalledProcessError:")
+            print(f"helm command: {' '.join(command)}")
+            print(f"Values file contents:\n{'-' * 21}\n{yaml.dump(values)}{'-' * 21}")
+            print(f"{error.output=}\n{error.stderr=}")
+
             if "could not find template" in error.stderr.decode("utf-8"):
                 print(
                     "ERROR: command is probably using templates with null output, which "

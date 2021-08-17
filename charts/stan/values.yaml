@@ -6,11 +6,11 @@
 images:
   init:
     repository: quay.io/astronomer/ap-base
-    tag: 3.13.5
+    tag: 3.14.0
     pullPolicy: IfNotPresent
   stan:
     repository: quay.io/astronomer/ap-nats-streaming
-    tag: 0.21.2
+    tag: 0.22.0
     pullPolicy: IfNotPresent
 
 stan:
@@ -57,11 +57,10 @@ imagePullSecrets: {}
 
 # Toggle whether to use setup a Pod Security Context
 # ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
-securityContext: null
-# securityContext:
-#   fsGroup: 1000
-#   runAsUser: 1000
-#   runAsNonRoot: true
+securityContext:
+  fsGroup: 1000
+  runAsGroup: 1000
+  runAsUser: 1000
 
 # Affinity for pod assignment
 # ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
@@ -148,7 +147,7 @@ store:
 #######################################
 exporter:
   enabled: true
-  image: quay.io/astronomer/ap-nats-exporter:0.6.2
+  image: quay.io/astronomer/ap-nats-exporter:0.6.2-1
   pullPolicy: IfNotPresent
   resources: {}
   #  limits:

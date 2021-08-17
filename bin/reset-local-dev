@@ -42,7 +42,7 @@ done
 shift $((OPTIND - 1))
 
 # The path to the working directory - the root of the repo
-GIT_ROOT="$(git rev-parse --show-toplevel)"
+GIT_ROOT="$(git -C "${0%/*}" rev-parse --show-toplevel)"
 
 if [[ -z "${USE_HA+x}" ]]; then
   CONFIG_FILE="$GIT_ROOT/configs/local-dev.yaml"

@@ -30,7 +30,11 @@ metadata:
     prometheus.io/scrape: "true"
     prometheus.io/port: {{ .Values.ports.metrics | quote }}
 spec:
-  type: LoadBalancer
+  type: {{ .Values.serviceType }}
+  {{- if .Values.externalIPs }}
+  externalIps:
+    - {{ .Values.externalIPs }}
+  {{- end }}
   {{- if .Values.loadBalancerIP }}
   loadBalancerIP: {{ .Values.loadBalancerIP }}
   {{- end }}

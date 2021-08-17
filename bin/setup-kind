@@ -2,10 +2,10 @@
 # shellcheck disable=SC1090
 set -euo pipefail
 
-export KUBE_VERSION="${KUBE_VERSION:-v1.18.15}"
+export KUBE_VERSION="${KUBE_VERSION:-v1.18.19}"
 
 # The path to the working directory - the root of the repo
-GIT_ROOT="$(git rev-parse --show-toplevel)"
+GIT_ROOT="$(git -C "${0%/*}" rev-parse --show-toplevel)"
 
 echo "Beginning KIND setup with KUBE_VERSION=${KUBE_VERSION}"
 echo "Checking tools are installed"

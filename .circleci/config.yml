@@ -10,7 +10,7 @@ executors:
 jobs:
   run_pre_commit:
     docker:
-      - image: quay.io/astronomer/ci-pre-commit:2021-06
+      - image: quay.io/astronomer/ci-pre-commit:2021-08
     steps:
       - checkout
       - run:
@@ -30,7 +30,7 @@ jobs:
             - ~/.cache/pre-commit
       - run:
           name: Run pre-commit
-          command: pre-commit run --all-files || { git --no-pager diff && false ; }
+          command: pre-commit run --all-files --show-diff-on-failure
   lint:
     docker:
       - image: quay.io/astronomer/ap-build:0.2.0
@@ -59,7 +59,7 @@ jobs:
 
   unittest-charts:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2021-06
+      - image: quay.io/astronomer/ci-helm-release:2021-08
     steps:
       - checkout
       - run:
@@ -102,7 +102,7 @@ jobs:
 
   release-to-internal:
     machine:
-      image: ubuntu-2004:202101-01
+      image: ubuntu-2004:202104-01
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -112,12 +112,12 @@ jobs:
           command: |
             set -e
             sudo apt-get update && sudo apt-get install -y ca-certificates curl
-            pyenv global 3.9.1
+            pyenv global 3.9.4
             bin/release-helm-chart /tmp/workspace/astronomer-*.tgz
 
   release-to-public:
     machine:
-      image: ubuntu-2004:202101-01
+      image: ubuntu-2004:202104-01
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -127,30 +127,13 @@ jobs:
           command: |
             set -e
             sudo apt-get update && sudo apt-get install -y ca-certificates curl
-            pyenv global 3.9.1
+            pyenv global 3.9.4
             bin/release-helm-chart -p /tmp/workspace/astronomer-*.tgz
       - publish-github-release
 
-  platform-1-16-15:
-    machine:
-      image: ubuntu-2004:202101-01
-      resource_class: xlarge
-    environment:
-      KUBE_VERSION: v1.16.15
-    steps:
-      - helm-install:
-          astronomer-tags: "platform postgresql monitoring logging kubed keda"
-      - run:
-          name: Check chart for k8s 1.16.15 compatibility with kubent
-          command: |
-            set -o pipefail
-            helm template --kube-version=v1.16.15 -f values.yaml --set global.baseDomain=example.com . |
-            kubent --cluster=false --helm2=false --helm3=false --filename -
-          when: always
-
   platform-1-17-17:
     machine:
-      image: ubuntu-2004:202101-01
+      image: ubuntu-2004:202104-01
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.17.17
@@ -167,7 +150,7 @@ jobs:
 
   platform-1-18-19:
     machine:
-      image: ubuntu-2004:202101-01
+      image: ubuntu-2004:202104-01
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.18.19
@@ -184,7 +167,7 @@ jobs:
 
   platform-1-19-11:
     machine:
-      image: ubuntu-2004:202101-01
+      image: ubuntu-2004:202104-01
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.19.11
@@ -201,7 +184,7 @@ jobs:
 
   platform-1-20-7:
     machine:
-      image: ubuntu-2004:202101-01
+      image: ubuntu-2004:202104-01
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.20.7
@@ -216,12 +199,29 @@ jobs:
             kubent --cluster=false --helm2=false --helm3=false --filename -
           when: always
 
-  lts-23-to-25-test:
+  platform-1-21-1:
     machine:
-      image: ubuntu-2004:202101-01
+      image: ubuntu-2004:202104-01
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.20.7
+      KUBE_VERSION: v1.21.1
+    steps:
+      - helm-install:
+          astronomer-tags: "platform postgresql monitoring logging kubed keda"
+      - run:
+          name: Check chart for k8s 1.21.1 compatibility with kubent
+          command: |
+            set -o pipefail
+            helm template --kube-version=v1.21.1 -f values.yaml --set global.baseDomain=example.com . |
+            kubent --cluster=false --helm2=false --helm3=false --filename -
+          when: always
+
+  lts-23-to-25-test:
+    machine:
+      image: ubuntu-2004:202104-01
+      resource_class: xlarge
+    environment:
+      KUBE_VERSION: v1.21.1
     steps:
       - lts-23-to-25-test
 
@@ -275,14 +275,9 @@ workflows:
       - test-all-platforms:
           type: approval
 
-      - platform-1-16-15:
-          requires:
-            - build-artifact
       - platform-1-17-17:
           requires:
-            - test-all-platforms
             - build-artifact
-
       - platform-1-18-19:
           requires:
             - test-all-platforms
@@ -295,6 +290,11 @@ workflows:
 
       - platform-1-20-7:
           requires:
+            - test-all-platforms
+            - build-artifact
+
+      - platform-1-21-1:
+          requires:
             - build-artifact
       - approve-internal-release:
           type: approval
@@ -303,15 +303,15 @@ workflows:
             - gcp-astronomer-prod
           requires:
             - approve-internal-release
-            - platform-1-16-15
-            - platform-1-20-7
+            - platform-1-17-17
+            - platform-1-21-1
       - approve-public-release:
           type: approval
           requires:
             - release-to-internal
-            - platform-1-17-17
             - platform-1-18-19
             - platform-1-19-11
+            - platform-1-20-7
           filters:
             branches:
               only:
@@ -460,6 +460,6 @@ commands:
           name: Create a release on GitHub
           command: |
             set -xe
-            pyenv global 3.9.1
+            pyenv global 3.9.4
             pip install astronomer_e2e_test
             astronomer-ci publish-github-release --github-repository $CIRCLE_PROJECT_REPONAME --github-organization $CIRCLE_PROJECT_USERNAME --commitish $CIRCLE_SHA1

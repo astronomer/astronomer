@@ -11,6 +11,10 @@ metadata:
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
+  {{ if .Values.global.enableArgoCDAnnotation }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+  {{- end }}
 spec:
   replicas: {{ .Values.commander.replicas }}
   selector:
@@ -81,3 +85,7 @@ spec:
               value: {{ .Values.global.helmRepo }}
             - name: HELM_HOST
               value: {{ .Values.global.helmHost }}
+            {{ if .Values.commander.airGapped.enabled }}
+            - name: COMMANDER_AIRGAPPED
+              value: "true"
+            {{- end }}

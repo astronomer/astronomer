@@ -56,14 +56,6 @@ data:
       max_bytes 500000
       max_lines 1000
     </match>
-    # Concat log truncated by docker 16KB limit, single line JSON, https://github.com/fluent-plugins-nursery/fluent-plugin-concat
-    <filter **>
-      @type concat
-      key message
-      multiline_end_regexp /\n$/
-      separator ""
-    </filter>
-
   forward.input.conf: |-
     # Takes the messages sent over TCP
     <source>
