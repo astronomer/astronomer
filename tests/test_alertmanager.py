@@ -1,5 +1,6 @@
 from tests.helm_template_generator import render_chart
-import jmespath, pytest
+import jmespath
+import pytest
 
 
 def test_alertmanager_defaults():
