@@ -76,7 +76,6 @@ def test_alertmanager_global_storageclass(supported_types):
         values={"global": {"storageClass": supported_types}},
         show_only=["charts/alertmanager/templates/alertmanager-statefulset.yaml"],
     )
-    print(docs)
     assert len(docs) == 1
     doc = docs[0]
     print(supported_types)
