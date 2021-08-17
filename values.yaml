@@ -19,6 +19,11 @@ global:
   privateCaCertsAddToHost:
     enabled: false
     hostDirectory: /etc/docker/certs.d
+    certCopier:
+      repository: alpine
+      tag: 3.14
+      pullPolicy: IfNotPresent
+
 
   # Use kube-lego
   acme: false

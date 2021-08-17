@@ -83,6 +83,7 @@ spec:
 {{ toYaml .Values.houston.resources | indent 12 }}
           volumeMounts:
             {{- include "houston_volume_mounts" . | indent 12 }}
+            {{- include "custom_ca_volume_mounts" . | indent 12 }}
           env:
             - name: DATABASE_URL
               valueFrom:
@@ -100,4 +101,5 @@ spec:
               value: "kubernetes/deployment"
       volumes:
         {{- include "houston_volumes" . | indent 8 }}
+        {{- include "custom_ca_volumes" . | indent 8 }}
 {{- end }}
