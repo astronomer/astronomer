@@ -47,29 +47,19 @@ Return  the proper Storage Class
 Helm 2.11 supports the assignment of a value to a variable defined in a different scope,
 but Helm 2.9 and 2.10 does not support it, so we need to implement this if-else logic.
 */}}
-{{- if .Values.global -}}
-    {{- if .Values.global.storageClass -}}
-        {{- if (eq "-" .Values.global.storageClass) -}}
-            {{- printf "storageClassName: \"\"" -}}
-        {{- else }}
-            {{- printf "storageClassName: %s" .Values.global.storageClass -}}
-        {{- end -}}
-    {{- else -}}
-        {{- if .Values.store.volume.storageClass -}}
-              {{- if (eq "-" .Values.store.volume.storageClass) -}}
-                  {{- printf "storageClassName: \"\"" -}}
-              {{- else }}
-                  {{- printf "storageClassName: %s" .Values.store.volume.storageClass -}}
-              {{- end -}}
-        {{- end -}}
+{{- if .Values.global.storageClass -}}
+    {{- if (eq "-" .Values.global.storageClass) -}}
+        {{- printf "storageClassName: \"\"" -}}
+    {{- else }}
+        {{- printf "storageClassName: %s" .Values.global.storageClass -}}
     {{- end -}}
 {{- else -}}
     {{- if .Values.store.volume.storageClass -}}
-        {{- if (eq "-" .Values.store.volume.storageClass) -}}
-            {{- printf "storageClassName: \"\"" -}}
-        {{- else }}
-            {{- printf "storageClassName: %s" .Values.store.volume.storageClass -}}
-        {{- end -}}
+          {{- if (eq "-" .Values.store.volume.storageClass) -}}
+              {{- printf "storageClassName: \"\"" -}}
+          {{- else }}
+              {{- printf "storageClassName: %s" .Values.store.volume.storageClass -}}
+          {{- end -}}
     {{- end -}}
 {{- end -}}
 {{- end -}}
