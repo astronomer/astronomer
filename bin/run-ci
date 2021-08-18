@@ -27,8 +27,6 @@ sleep 5
 
 "$BIN_DIR/waitfor-platform"
 
-"$BIN_DIR/setup-hosts"
-
 # "$BIN_DIR/create-initial-user" "tester@astronomer.io" "password"
 
 sudo kill -9 $WATCH_PID

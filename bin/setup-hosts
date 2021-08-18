@@ -1,6 +1,0 @@
-#!/usr/bin/env bash
-set -euo pipefail
-
-grep "^[^#]*localtest.me" /etc/hosts ||
-echo "172.17.0.1 localtest.me" |
-sudo tee -a /etc/hosts
