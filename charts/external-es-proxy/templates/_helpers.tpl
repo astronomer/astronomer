@@ -60,3 +60,16 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+
+{{- define "external-es-proxy-trustcerts" -}}
+{{- if .Values.global.custom_logging.trustCaCerts  }}
+{{- $secret_name := .Values.global.custom_logging.trustCaCerts }}
+  proxy_ssl_trusted_certificate /etc/ssl/certs/{{ $secret_name }}.pem;
+  proxy_ssl_verify              on;
+  proxy_ssl_verify_depth        2;
+  proxy_ssl_session_reuse on;
+{{- else }}
+  proxy_ssl_verify              off;
+{{- end }}
+{{- end }}

@@ -65,6 +65,13 @@ spec:
             - name: nginx-env-volume
               mountPath: /usr/local/openresty/nginx/conf/setenv.lua
               subPath: setenv.lua
+
+            {{- if .Values.global.custom_logging.trustCaCerts  -}}
+            {{ $secretName := .Values.global.custom_logging.trustCaCerts  }}
+            - name: trust-ca-certs
+              mountPath: /etc/ssl/certs/{{ $secretName }}.pem
+              subPath: {{ $secretName }}.pem
+            {{- end}}
           ports:
             - name: secure-http
               containerPort: {{ .Values.service.securehttp }}
@@ -107,3 +114,10 @@ spec:
             items:
               - key: setenv.lua
                 path: setenv.lua
+        {{- if .Values.global.custom_logging.trustCaCerts  -}}
+        {{ $secretName := .Values.global.custom_logging.trustCaCerts  }}
+        - name: trust-ca-certs
+          secret:
+            secretName: {{ $secretName }}
+        {{- end}}
+
