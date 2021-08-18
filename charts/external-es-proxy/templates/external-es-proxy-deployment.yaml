@@ -120,4 +120,3 @@ spec:
           secret:
             secretName: {{ $secretName }}
         {{- end}}
-
