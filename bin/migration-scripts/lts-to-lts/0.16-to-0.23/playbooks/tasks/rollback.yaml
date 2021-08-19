@@ -238,7 +238,7 @@
 # to prevent init container wait-for-airflow-migrations 
 # to append in existing 0.15.7 airflow chart preventing 
 # creation of 2 init containers (run-airflow-migrations + wait-for-airflow-migrations)
-- name: Delete all All Scheduler Deployemnts
+- name: Delete All Scheduler Deployemnts
   kubernetes.core.k8s:
     api_version: v1
     state: absent
