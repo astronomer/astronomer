@@ -13,7 +13,7 @@ chart_files = [
 @pytest.mark.parametrize(
     "supported_types, expected_output", [("-", ""), ("vishnure", "vishnure")]
 )
-def test_alertmanager_global_storageclass(supported_types, expected_output):
+def test_global_storageclass(supported_types, expected_output):
     """Test globalstorageclass feature of alertmanager statefulset template"""
     docs = render_chart(
         values={"global": {"storageClass": supported_types}},
