@@ -8,22 +8,22 @@ chart_files = [
     "charts/prometheus/templates/prometheus-statefulset.yaml",
     "charts/astronomer/templates/registry/registry-statefulset.yaml",
 ]
-doc_ids = [x for x in range(0, len(chart_files))]
+doc_ids = [x.split("/")[-1] for x in chart_files]
 
 
 @pytest.mark.parametrize(
     "supported_types, expected_output", [("-", ""), ("astrosc", "astrosc")]
 )
-@pytest.mark.parametrize("ids", doc_ids)
-def test_global_storageclass(supported_types, expected_output, ids):
+@pytest.mark.parametrize("chart", chart_files, ids=doc_ids)
+def test_global_storageclass(supported_types, expected_output, chart):
     """Test globalstorageclass feature of alertmanager statefulset template"""
     docs = render_chart(
         values={"global": {"storageClass": supported_types}},
-        show_only=chart_files,
+        show_only=[chart],
     )
-    assert len(docs) == 5
+    assert len(docs) == 1
 
-    doc = docs[ids]
+    doc = docs[0]
     assert (
         doc["spec"]["volumeClaimTemplates"][0]["spec"]["storageClassName"]
         == expected_output
