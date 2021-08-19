@@ -1,6 +1,0 @@
-#!/usr/bin/env bash
-set -euo pipefail
-
-grep "^[^#]*local.astronomer-development.com" /etc/hosts ||
-echo "172.17.0.1 local.astronomer-development.com" |
-sudo tee -a /etc/hosts
