@@ -234,10 +234,9 @@
     db: "{{ database_name }}_houston"
     query: "drop table migrations;"
 
-# Delete Scheduler deployment before rollback
-# to prevent init container wait-for-airflow-migrations 
-# to append in existing 0.15.7 airflow chart preventing 
-# creation of 2 init containers (run-airflow-migrations + wait-for-airflow-migrations)
+# Prevents to append scheduler deployment definition ,which
+# lead to 2 init containers wait-for-airflow-migrations(0.19.0) + run-airflow-migrations
+# when performing rollback to 0.15.7 airflow chart
 - name: Delete All Scheduler Deployemnts
   kubernetes.core.k8s:
     api_version: v1
