@@ -1,5 +1,6 @@
 from tests.helm_template_generator import render_chart
 import pytest
+import jmespath
 
 chart_files = [
     "charts/alertmanager/templates/alertmanager-statefulset.yaml",
@@ -8,23 +9,26 @@ chart_files = [
     "charts/prometheus/templates/prometheus-statefulset.yaml",
     "charts/astronomer/templates/registry/registry-statefulset.yaml",
 ]
-doc_ids = [x.split("/")[-1] for x in chart_files]
+
+supported_types = [("-", ""), ("astrosc", "astrosc")]
 
 
 @pytest.mark.parametrize(
-    "supported_types, expected_output", [("-", ""), ("astrosc", "astrosc")]
+    "supported_types, expected_output",
+    supported_types,
+    ids=[x[0] for x in supported_types],
 )
-@pytest.mark.parametrize("chart", chart_files, ids=doc_ids)
-def test_global_storageclass(supported_types, expected_output, chart):
+def test_global_storageclass(supported_types, expected_output):
     """Test globalstorageclass feature of alertmanager statefulset template"""
     docs = render_chart(
         values={"global": {"storageClass": supported_types}},
-        show_only=[chart],
+        show_only=chart_files,
     )
-    assert len(docs) == 1
+    assert len(docs) == 5
 
-    doc = docs[0]
-    assert (
-        doc["spec"]["volumeClaimTemplates"][0]["spec"]["storageClassName"]
-        == expected_output
+    assert all(
+        expected_output in storageClassNames
+        for storageClassNames in jmespath.search(
+            "[*].spec.volumeClaimTemplates[*].spec.storageClassName", docs
+        )
     )
