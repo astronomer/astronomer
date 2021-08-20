@@ -3,5 +3,5 @@ set -euo pipefail
 
 # https://github.com/FiloSottile/mkcert
 mkcert -install
-mkcert -cert-file /tmp/fullchain.pem -key-file /tmp/privkey.pem app.local.astronomer-development.com local.astronomer-development.com "*.local.astronomer-development.com"
+mkcert -cert-file /tmp/fullchain.pem -key-file /tmp/privkey.pem app.localtest.me localtest.me "*.localtest.me"
 cat "$(mkcert -CAROOT)/rootCA.pem" >> /tmp/fullchain.pem

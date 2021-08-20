@@ -15,7 +15,7 @@ Docker images for deploying and running Astronomer are currently available on
 
 ## Documentation
 
-The Astronomer Platform documentation is located at https://www.astronomer.io/docs/
+The Astronomer Platform documentation is located at https://www.astronomer.io/docs/enterprise
 
 ## Contributing
 

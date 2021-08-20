@@ -6,7 +6,7 @@
 images:
   nats:
     repository: quay.io/astronomer/ap-nats-server
-    tag: 2.3.2
+    tag: 2.3.2-1
     pullPolicy: IfNotPresent
 
 nats:
