@@ -173,7 +173,7 @@ reloader:
 # Prometheus NATS Exporter configuration.
 exporter:
   enabled: true
-  image: quay.io/astronomer/ap-nats-exporter:0.6.2-1
+  image: quay.io/astronomer/ap-nats-exporter:0.8.0
   pullPolicy: IfNotPresent
   # resource configuration for the metrics sidecar
   resources: {}
