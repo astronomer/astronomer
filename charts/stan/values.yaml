@@ -6,7 +6,7 @@
 images:
   init:
     repository: quay.io/astronomer/ap-base
-    tag: 3.14.0
+    tag: 3.14.1
     pullPolicy: IfNotPresent
   stan:
     repository: quay.io/astronomer/ap-nats-streaming
@@ -147,7 +147,7 @@ store:
 #######################################
 exporter:
   enabled: true
-  image: quay.io/astronomer/ap-nats-exporter:0.6.2-1
+  image: quay.io/astronomer/ap-nats-exporter:0.8.0
   pullPolicy: IfNotPresent
   resources: {}
   #  limits:
