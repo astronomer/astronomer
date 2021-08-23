@@ -1,6 +1,5 @@
 from tests.helm_template_generator import render_chart
 import jmespath
-import pytest
 
 
 def test_alertmanager_defaults():
@@ -62,29 +61,3 @@ def test_alertmanager_rfc1918():
         )
         for value in item
     )
-
-
-supported_global_storage_options = ["-", "astrosc"]
-
-
-@pytest.mark.parametrize(
-    "supported_types",
-    supported_global_storage_options,
-)
-def test_alertmanager_global_storageclass(supported_types):
-    """Test globalstorageclass feature of alertmanager statefulset template"""
-    docs = render_chart(
-        values={"global": {"storageClass": supported_types}},
-        show_only=["charts/alertmanager/templates/alertmanager-statefulset.yaml"],
-    )
-    assert len(docs) == 1
-    doc = docs[0]
-    print(supported_types)
-    if supported_types == "-":
-        assert doc["spec"]["volumeClaimTemplates"][0]["spec"]["storageClassName"] == ""
-
-    if supported_types == "astrosc":
-        assert (
-            doc["spec"]["volumeClaimTemplates"][0]["spec"]["storageClassName"]
-            == "astrosc"
-        )
