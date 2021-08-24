@@ -1,5 +1,5 @@
 ---
-exclude: '(venv|.vscode)'  # regex
+exclude: '(venv|\.vscode)' # regex
 repos:
   - repo: https://github.com/Lucas-C/pre-commit-hooks
     rev: v1.1.10
@@ -25,14 +25,20 @@ repos:
       - id: check-toml
       - id: check-xml
       - id: check-yaml
-        args: ['--allow-multiple-documents']
+        args: ["--allow-multiple-documents"]
         exclude: 'charts|templates\/.*\.yaml'
       - id: debug-statements
       - id: detect-private-key
       - id: end-of-file-fixer
       - id: mixed-line-ending
-        args: ['--fix=lf']
+        args: ["--fix=lf"]
       - id: requirements-txt-fixer
+        args:
+          [
+            "requirements/chart-tests.in",
+            "requirements/functional-tests.in",
+            "requirements/lts-23-to-25-tests.in",
+          ]
       - id: sort-simple-yaml
       - id: trailing-whitespace
   - repo: https://gitlab.com/pycqa/flake8
@@ -52,4 +58,4 @@ repos:
         language: python
         files: "config.yml$|config.yml.j2|generate_circleci_config.py$"
         entry: .circleci/generate_circleci_config.py
-        additional_dependencies: ['jinja2']
+        additional_dependencies: ["jinja2"]

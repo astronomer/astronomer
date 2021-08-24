@@ -101,3 +101,28 @@ Elasticsearch NGINX variable definitions
 {{- define "nginx-es.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
+
+{{/*
+Return  the proper Storage Class
+*/}}
+{{- define "elasticsearch.storageClass" -}}
+{{/*
+Helm 2.11 supports the assignment of a value to a variable defined in a different scope,
+but Helm 2.9 and 2.10 does not support it, so we need to implement this if-else logic.
+*/}}
+{{- if .Values.global.storageClass -}}
+    {{- if (eq "-" .Values.global.storageClass) -}}
+        {{- printf "storageClassName: \"\"" -}}
+    {{- else }}
+        {{- printf "storageClassName: %s" .Values.global.storageClass -}}
+    {{- end -}}
+{{- else -}}
+    {{- if .Values.common.persistence.storageClassName -}}
+          {{- if (eq "-" .Values.common.persistence.storageClassName) -}}
+              {{- printf "storageClassName: \"\"" -}}
+          {{- else }}
+              {{- printf "storageClassName: %s" .Values.common.persistence.storageClassName -}}
+          {{- end -}}
+    {{- end -}}
+{{- end -}}
+{{- end -}}
