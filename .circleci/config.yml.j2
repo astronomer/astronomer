@@ -206,7 +206,7 @@ workflows:
             - lint
             - run_pre_commit
             - unittest-charts
-      - test-all-platforms:
+      - approve-test-all-platforms:
           type: approval
 {% for version in kube_versions %}{% if version in [kube_versions[0], kube_versions[-1]] %}
       - platform-{{ version | replace(".", "-") }}:
@@ -215,7 +215,7 @@ workflows:
 {%- else %}
       - platform-{{ version | replace(".", "-") }}:
           requires:
-            - test-all-platforms
+            - approve-test-all-platforms
             - build-artifact
 {% endif %}{% endfor %}
       - approve-internal-release:
