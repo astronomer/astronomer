@@ -254,20 +254,6 @@ data:
           postgresql:
             enabled: false
 
-    {{- if .Values.global.authSidecar.enabled }}
-        # enables nginx auth sidecar for airflow deployments
-        # TODO: auth sidecar support isn't done yet
-        #authSidecar:
-        #  enabled: true
-        #  repository: {{ .Values.global.authSidecar.repository }}
-        #  tag: {{ .Values.global.authSidecar.tag }}
-        #  port: {{ .Values.global.authSidecar.port }}
-        #  pullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
-        #  annotations:
-        #    {{- range $key, $value := .Values.global.extraAnnotations}}
-        #    {{ $key }}: {{ $value | quote }}
-        #    {{- end }}
-
     {{- end }}
 
         # If we're in single namespace mode, we will also skip the configurationr
