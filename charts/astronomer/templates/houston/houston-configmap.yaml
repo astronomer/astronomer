@@ -254,8 +254,6 @@ data:
           postgresql:
             enabled: false
 
-    {{- end }}
-
         # If we're in single namespace mode, we will also skip the configurationr
         # for elasticsearch. Houston will fallback to its default modes, which are
         # false/disabled.
