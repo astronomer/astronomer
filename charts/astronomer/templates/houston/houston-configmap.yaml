@@ -74,7 +74,6 @@ data:
       {{- end }}
         airflow:
           useAstroSecurityManager: true
-          # Webserver configuration.
           webserver:
             extraVolumeMounts:
               - name: signing-certificate
@@ -121,10 +120,8 @@ data:
             # This is here for upgrading to 0.11.2+ of Airflow.
             safeToEvict: true
 
-          # Scheduler configuration.
           scheduler:
 
-            # Scheduler pod disruption budget
             podDisruptionBudget:
               enabled: false
 
@@ -141,7 +138,6 @@ data:
               requests:
                 ephemeral-storage: "1Gi"
 
-          # Airflow Local Settings.
           airflowLocalSettings: |
             # This pod mutation hook runs for all pods dynamically created by Airflow
             # in Kubernetes (K8s). This includes K8s executor Airflow-workers, which is
@@ -224,7 +220,6 @@ data:
 
           # Pgbouncer settings
           pgbouncer:
-            # Pgbouner pod disruption budget
             podDisruptionBudget:
               enabled: false
 
