@@ -245,11 +245,35 @@
     definition: "{{ lookup('community.kubernetes.k8s', api_version='apps/v1', kind='Deployment', label_selector='component = scheduler') }}"
 
 - name: Rollback with Helm (no hooks)
-  shell: |
-    helm rollback {{ release_name }} {{ helm_history.revision }} --no-hooks --namespace {{ namespace }}
-- name: " Upgrade Astronomer: Helm upgrade - Update Airflow configurations. Watch for Airflow charts to upgrade version with 'helm list --all-namespaces', watch for airflow pods to start back up."
-  shell: |
-    helm upgrade --namespace {{ namespace }} --reuse-values --set astronomer.houston.upgradeDeployments.enabled=true --set astronomer.airflowChartVersion=0.15.7 --version=0.16.15 {{ release_name }} astronomer/astronomer
-- name: " Upgrade Astronomer: Helm upgrade - Turn off airflow auto upgrade configuration. Perfunctory step, nothing to look for."
-  shell: |
-    helm upgrade --namespace {{ namespace }} --reuse-values --no-hooks --set astronomer.houston.upgradeDeployments.enabled=false --version=0.16.15 {{ release_name }} astronomer/astronomer
+  shell: >-
+    helm rollback
+    --namespace {{ namespace }}
+    --no-hooks
+    {{ release_name }}
+    {{ helm_history.revision }}
+
+- name: >-
+    Upgrade Astronomer: Helm upgrade - Update Airflow configurations.
+    Watch for Airflow charts to upgrade version with 'helm list --all-namespaces', watch for airflow pods to start back up.
+  shell: >-
+    helm upgrade
+    --namespace {{ namespace }}
+    --reuse-values
+    --set astronomer.houston.upgradeDeployments.enabled=true
+    --set astronomer.airflowChartVersion=0.15.7
+    --version=0.16.15
+    {{ release_name }}
+    astronomer/astronomer
+
+- name: >-
+    Upgrade Astronomer: Helm upgrade - Turn off airflow auto upgrade configuration.
+    Perfunctory step, nothing to look for.
+  shell: >-
+    helm upgrade
+    --namespace {{ namespace }}
+    --no-hooks
+    --reuse-values
+    --set astronomer.houston.upgradeDeployments.enabled=false
+    --version=0.16.15
+    {{ release_name }}
+    astronomer/astronomer
