@@ -1,5 +1,6 @@
-pytest==6.0.1
-testinfra==5.2.2
-docker==4.3.1
-kubernetes==11.0.0
-PyYAML==5.4
+docker==5.0.0
+kubernetes==17.17.0
+pytest==6.2.4
+pytest-rerunfailures==9.1.1
+PyYAML==5.4.1
+testinfra==6.0.0

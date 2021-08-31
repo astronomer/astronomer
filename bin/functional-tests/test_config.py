@@ -9,12 +9,13 @@ execs into a running pods.
 """
 
 import json
-import os
+from os import getenv
 import time
 import yaml
 import testinfra
 from subprocess import check_output
 from kubernetes.client.rest import ApiException
+import pytest
 
 
 def test_default_disabled(kube_client):
@@ -64,6 +65,7 @@ def test_nginx_can_reach_default_backend(nginx):
     )
 
 
+@pytest.mark.flaky(reruns=10, reruns_delay=10)
 def test_prometheus_targets(prometheus):
     """Ensure all Prometheus targets are healthy"""
     data = prometheus.check_output("wget -qO- http://localhost:9090/api/v1/targets")
@@ -81,13 +83,33 @@ def test_core_dns_metrics_are_collected(prometheus):
 
     This test should work in CI and locally because Kind uses CoreDNS
     """
+
+    # coredns 1.7.0 changed a bunch of fields, so we have to act differently on >= 1.7.0
+    # https://coredns.io/2020/06/15/coredns-1.7.0-release/
     data = prometheus.check_output(
-        "wget -qO- http://localhost:9090/api/v1/query?query=coredns_dns_request_count_total"
+        "wget -qO- http://localhost:9090/api/v1/query?query=coredns_build_info"
+    )
+    parsed = json.loads(data)
+    coredns_version_string = parsed["data"]["result"][0]["metric"]["version"]
+    coredns_version_list = [int(x) for x in coredns_version_string.split(".")[:3]]
+
+    if coredns_version_list[0] != 1:
+        raise Exception(f"Cannot determine CoreDNS version from {parsed}")
+
+    if coredns_version_list[1] >= 7:
+        metric = "coredns_dns_requests_total"
+    elif coredns_version_list[1] < 7:
+        metric = "coredns_dns_request_count_total"
+    else:
+        raise Exception(f"Cannot determine CoreDNS version from {parsed}")
+
+    data = prometheus.check_output(
+        f"wget -qO- http://localhost:9090/api/v1/query?query={metric}"
     )
     parsed = json.loads(data)
     assert (
         len(parsed["data"]["result"]) > 0
-    ), f"Expected to find a metric coredns_dns_request_count_total, but we got this response:\n\n{parsed}"
+    ), f"Expected to find a metric {metric} in CoreDNS version {coredns_version_string}, but we got this response:\n\n{parsed}"
 
 
 def test_houston_metrics_are_collected(prometheus):
@@ -132,8 +154,7 @@ def test_prometheus_config_reloader_works(prometheus, kube_client):
         print(f"Exception when calling CoreV1Api->patch_namespaced_config_map: {e}\n")
 
     # This can take more than a minute.
-    i = 0
-    while i < 12:
+    for i in range(12):
         data = prometheus.check_output(
             "wget -qO- http://localhost:9090/api/v1/status/config"
         )
@@ -145,7 +166,6 @@ def test_prometheus_config_reloader_works(prometheus, kube_client):
             break
         else:
             time.sleep(10)
-        i += 1
 
     # set the config back to it's original settings
     prom_config["global"]["scrape_interval"] = "30s"
@@ -177,54 +197,47 @@ def test_houston_backend_secret_present_after_helm_upgrade_and_container_restart
 
     Regression test for: https://github.com/astronomer/issues/issues/2251
     """
-    helm_chart_path = os.environ.get("HELM_CHART_PATH")
-    if not helm_chart_path:
+    if not (helm_chart_path := getenv("HELM_CHART_PATH")):
         raise Exception(
             "This test only works with HELM_CHART_PATH set to the path of the chart to be tested"
         )
-    namespace = os.environ.get("NAMESPACE")
-    release_name = os.environ.get("RELEASE_NAME")
-    if not namespace:
-        print("NAMESPACE env var is not present, using 'astronomer' namespace")
+
+    if not (namespace := getenv("NAMESPACE")):
+        print("No NAMESPACE env var, using NAMESPACE=astronomer")
         namespace = "astronomer"
-    if not release_name:
-        print(
-            "RELEASE_NAME env var is not present, assuming 'astronomer' is the release name"
-        )
+
+    if not (release_name := getenv("RELEASE_NAME")):
+        print("No RELEASE_NAME env var, usgin RELEASE_NAME=astronomer")
         release_name = "astronomer"
-    # attempt downgrade with the documented procedure
-    print("Performing a Helm upgrade without hooks twice:\n")
-    command = (
-        "helm3 upgrade --reuse-values "
-        + "--no-hooks "
-        + f"-n {namespace} "
-        + f"{release_name} "
-        + helm_chart_path
-    )
-    print(command)
-    print(check_output(command, shell=True))
-    # Run the command twice to ensure the most
-    # recent change is a no-operation change
-    print(check_output(command, shell=True))
-    print("")
+
+    # Attempt downgrade with the documented procedure.
+    # Run the command twice to ensure the most recent change is a no-operation change
+    command = f"helm3 upgrade --reuse-values --no-hooks -n '{namespace}' '{release_name}' {helm_chart_path}"
+    for i in range(2):
+        print(f"Iteration {i+1}/2: {command}\n")
+        print(check_output(command, shell=True).decode("utf8"))
+
     result = houston_api.check_output("env | grep DATABASE_URL")
     # check that the connection is not reset
     assert (
         "postgres" in result
     ), "Expected to find DB connection string before Houston restart"
+
     # Kill houston in this pod so the container restarts
     houston_api.check_output("kill 1")
+
     # give time for container to restart
     time.sleep(100)
+
     # we can use kube_client instead of fixture, because we restarted pod so houston_api still ref to old pod id.
-    pods = kube_client.list_namespaced_pod(
+    pod = kube_client.list_namespaced_pod(
         namespace, label_selector="component=houston"
-    )
-    pod = pods.items[0]
+    ).items[0]
     houston_api_new = testinfra.get_host(
         f"kubectl://{pod.metadata.name}?container=houston&namespace={namespace}"
     )
     result = houston_api_new.check_output("env | grep DATABASE_URL")
+
     # check that the connection is not reset
     assert (
         "postgres" in result
