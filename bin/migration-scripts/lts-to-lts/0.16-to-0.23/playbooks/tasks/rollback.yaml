@@ -234,16 +234,6 @@
     db: "{{ database_name }}_houston"
     query: "drop table migrations;"
 
-# Delete scheduler deployment before rollback, in order to prevent the init container
-# 'wait-for-airflow-migrations' from getting appended in scheduler deployment definition,
-# which leads to 2 init containers wait-for-airflow-migrations(0.19.0) +
-# run-airflow-migrations when performing rollback to 0.15.7 airflow chart
-- name: Delete All Scheduler Deployments
-  community.kubernetes.k8s:
-    api_version: v1
-    state: absent
-    definition: "{{ lookup('community.kubernetes.k8s', api_version='apps/v1', kind='Deployment', label_selector='component = scheduler') }}"
-
 - name: Rollback with Helm (no hooks)
   shell: |
     helm rollback {{ release_name }} {{ helm_history.revision }} --no-hooks --namespace {{ namespace }}
