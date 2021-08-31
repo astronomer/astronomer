@@ -2,11 +2,11 @@
 exclude: '(venv|.vscode)'  # regex
 repos:
   - repo: https://github.com/psf/black
-    rev: 20.8b1
+    rev: 21.8b0
     hooks:
       - id: black
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v3.4.0
+    rev: v4.0.1
     hooks:
       - id: check-case-conflict
       - id: check-json
@@ -25,7 +25,7 @@ repos:
       - id: sort-simple-yaml
       - id: trailing-whitespace
   - repo: https://gitlab.com/pycqa/flake8
-    rev: 3.9.0
+    rev: 3.9.2
     hooks:
       - id: flake8
         args:
