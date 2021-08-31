@@ -16,8 +16,8 @@ spec:
           imagePullPolicy: Always
           name: upgrade
           command:
-            - ansible-playbook
-            - rollback-astronomer.yaml
+            - /bin/sleep
+            - infinity
           volumeMounts:
             - mountPath: /astronomer-backups
               name: astronomer-upgrades-backup
