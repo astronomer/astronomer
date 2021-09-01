@@ -12,7 +12,7 @@
 Install some command line tools:
 
 - kubectl (version appropriate for your cluster's version or newer)
-- [helm (version 2.16.1)](https://github.com/helm/helm/releases/tag/v2.16.1)
+- [helm (version 2.17.0)](https://github.com/helm/helm/releases/tag/v2.17.0)
 - [jq](https://stedolan.github.io/jq/download/)
 
 On Mac, if you have brew, you can install 'jq' with:

@@ -66,12 +66,12 @@ function check_helm_version_client {
     echo ""
     echo "==============="
     echo "Action required:"
-    echo "Helm 2.16.1 is the version that this script was tested with."
-    echo "Please install Helm 2.16.1."
-    echo "Link: https://github.com/helm/helm/releases/tag/v2.16.1"
+    echo "Helm 2.17.0 is the version that this script was tested with."
+    echo "Please install Helm 2.17.0."
+    echo "Link: https://github.com/helm/helm/releases/tag/v2.17.0"
     exit 1
   else
-    echo "Confirmed Helm 2.16.1 is installed."
+    echo "Confirmed Helm 2.17.0 is installed."
   fi
 }
 
@@ -188,7 +188,7 @@ function main {
   export NAMESPACE=$2
 
   # Pre-flight checks
-  check_helm_version_client '2.16.1'
+  check_helm_version_client '2.17.0'
   check_cli_tools_installed helm kubectl jq head tail grep awk base64 cut wc
   kube_checks
 
