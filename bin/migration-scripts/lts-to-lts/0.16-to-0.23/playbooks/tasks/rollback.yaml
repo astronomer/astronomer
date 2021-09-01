@@ -31,7 +31,7 @@
 - debug:
     msg: "Release name: {{ release_name }}"
 
-- name: Find database connection from secret astronomer-boostrap
+- name: Find database connection from secret astronomer-bootstrap
   changed_when: false
   community.kubernetes.k8s_info:
     api_version: v1
@@ -233,16 +233,6 @@
     login_password: "{{ db_password }}"
     db: "{{ database_name }}_houston"
     query: "drop table migrations;"
-
-# Delete scheduler deployment before rollback, in order to prevent the init container
-# 'wait-for-airflow-migrations' from getting appended in scheduler deployment definition,
-# which leads to 2 init containers wait-for-airflow-migrations(0.19.0) +
-# run-airflow-migrations when performing rollback to 0.15.7 airflow chart
-- name: Delete All Scheduler Deployemnts
-  kubernetes.core.k8s:
-    api_version: v1
-    state: absent
-    definition: "{{ lookup('kubernetes.core.k8s', api_version='apps/v1', kind='Deployment', label_selector='component = scheduler') }}"
 
 - name: Rollback with Helm (no hooks)
   shell: |
