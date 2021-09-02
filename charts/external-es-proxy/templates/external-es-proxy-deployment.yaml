@@ -89,6 +89,26 @@ spec:
           #    port: http
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+{{- if .Values.global.custom_logging.awsSecretName }}
+        - name: awsproxy
+          image: "{{ .Values.images.awsproxy.repository }}:{{ .Values.images.awsproxy.tag | default .Chart.AppVersion }}"
+          command: ["/bin/sh","-c"]
+          args: ["aws-es-proxy -listen :{{ .Values.service.awsproxy }}"]
+          imagePullPolicy: {{ .Values.images.awsproxy.pullPolicy }}
+          env:
+          - name: AWS_ACCESS_KEY_ID
+            valueFrom:
+              secretKeyRef:
+                name: {{.Values.global.custom_logging.awsSecretName }}
+                key: aws_access_key
+          - name: AWS_SECRET_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                name: {{.Values.global.custom_logging.awsSecretName }}
+                key: aws_secret_key
+          - name: ENDPOINT
+            value: "{{.Values.global.custom_logging.scheme}}://{{.Values.global.custom_logging.host}}"
+{{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -119,4 +139,9 @@ spec:
         - name: trust-ca-certs
           secret:
             secretName: {{ $secretName }}
+        {{- end}}
+        {{- if .Values.global.custom_logging.awsSecretName }}
+        - name: awssecret
+          secret:
+            secretName: {{ .Values.global.custom_logging.awsSecretName }}
         {{- end}}
