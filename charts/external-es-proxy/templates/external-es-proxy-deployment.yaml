@@ -45,8 +45,8 @@ spec:
         - name: {{ .Chart.Name }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          image: "{{ .Values.images.esproxy.repository }}:{{ .Values.images.esproxy.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.images.esproxy.pullPolicy }}
           env:
 {{- if .Values.global.custom_logging.secret }}
           - name: ES_SECRET

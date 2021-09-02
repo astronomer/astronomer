@@ -4,10 +4,11 @@
 
 replicaCount: 1
 
-image:
-  repository: openresty/openresty
-  pullPolicy: IfNotPresent
-  tag: latest
+images:
+  esproxy:
+    repository: openresty/openresty
+    pullPolicy: IfNotPresent
+    tag: latest
 
 imagePullSecrets: []
 nameOverride: ""
