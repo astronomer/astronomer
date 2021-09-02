@@ -62,7 +62,7 @@ spec:
         env:
         - name: FLUENTD_ARGS
           value: --no-supervisor -q
-        {{- if .Values.global.custom_logging }}
+        {{- if .Values.global.custom_logging.enabled }}
         - name: OUTPUT_HOST
           value: {{ printf "%s-external-es-proxy" .Release.Name | quote }}
         - name: OUTPUT_PORT
