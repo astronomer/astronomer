@@ -33,6 +33,9 @@ spec:
       annotations:
         checksum/nginx-config: {{ include (print $.Template.BasePath "/external-es-proxy-configmap.yaml") . | sha256sum }}
         checksum/lua-config: {{ include (print $.Template.BasePath "/external-es-proxy-env-configmap.yaml") . | sha256sum }}
+        {{- if .Values.global.custom_logging.awsIAMRole }}
+        iam.amazonaws.com/role: {{ .Values.global.custom_logging.awsIAMRole }}
+        {{- end }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -89,7 +92,7 @@ spec:
           #    port: http
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-{{- if  or .Values.global.custom_logging.awsSecretName  .Values.global.custom_logging.awsserviceAccountAnnotation }}
+{{- if  or .Values.global.custom_logging.awsSecretName  .Values.global.custom_logging.awsServiceAccountAnnotation  .Values.global.custom_logging.awsIAMRole}}
         - name: awsproxy
           image: "{{ .Values.images.awsproxy.repository }}:{{ .Values.images.awsproxy.tag | default .Chart.AppVersion }}"
           command: ["/bin/sh","-c"]
