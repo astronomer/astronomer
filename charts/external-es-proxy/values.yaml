@@ -9,6 +9,10 @@ images:
     repository: openresty/openresty
     pullPolicy: IfNotPresent
     tag: latest
+  awsproxy:
+    repository: abutaha/aws-es-proxy
+    pullPolicy: IfNotPresent
+    tag: v1.1
 
 imagePullSecrets: []
 nameOverride: ""
@@ -40,6 +44,7 @@ service:
   type: ClusterIP
   securehttp: 9200
   http: 9201
+  awsproxy: 9203
 
 resources: {}
   # limits:

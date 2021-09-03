@@ -40,6 +40,7 @@ spec:
           component: houston
           tier: astronomer
           release: {{ .Release.Name }}
+
     ports:
     - protocol: TCP
       port: {{ .Values.service.http }}
