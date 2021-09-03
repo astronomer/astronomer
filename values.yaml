@@ -151,6 +151,7 @@ global:
     secret: ""
     #secretName: ~
     #awsSecretName: ~
+    #awsserviceAccountAnnotation: ~
 
   ## Add annotations to all the auth sidecar deployed ingress resources
   ##

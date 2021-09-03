@@ -89,13 +89,14 @@ spec:
           #    port: http
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-{{- if .Values.global.custom_logging.awsSecretName }}
+{{- if  or .Values.global.custom_logging.awsSecretName  .Values.global.custom_logging.awsserviceAccountAnnotation }}
         - name: awsproxy
           image: "{{ .Values.images.awsproxy.repository }}:{{ .Values.images.awsproxy.tag | default .Chart.AppVersion }}"
           command: ["/bin/sh","-c"]
           args: ["aws-es-proxy -listen :{{ .Values.service.awsproxy }}"]
           imagePullPolicy: {{ .Values.images.awsproxy.pullPolicy }}
           env:
+          {{- if .Values.global.custom_logging.awsSecretName }}
           - name: AWS_ACCESS_KEY_ID
             valueFrom:
               secretKeyRef:
@@ -106,6 +107,7 @@ spec:
               secretKeyRef:
                 name: {{.Values.global.custom_logging.awsSecretName }}
                 key: aws_secret_key
+          {{- end }}
           - name: ENDPOINT
             value: "{{.Values.global.custom_logging.scheme}}://{{.Values.global.custom_logging.host}}"
 {{- end }}
