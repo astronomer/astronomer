@@ -63,7 +63,7 @@ global:
   # Used to enable Celery autoscaling
   kedaEnabled: false
 
-  # pre
+  # make fluentd to gather logs from all avaialble namespaces
   preCreatedNamespacesEnabled: false
 
   # Used to enable nats-server
