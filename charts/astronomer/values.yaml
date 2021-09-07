@@ -253,6 +253,7 @@ commander:
   airGapped:
     # Enable airgapped mode
     enabled: false
+  upgradeTimeout: 300
 
 registry:
   replicas: 1

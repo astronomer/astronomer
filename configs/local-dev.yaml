@@ -75,6 +75,7 @@ astronomer:
         local:
           enabled: true
   commander:
+    upgradeTimeout: 600
     replicas: 1
     resources:
       requests:

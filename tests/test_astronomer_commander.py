@@ -23,3 +23,43 @@ def test_astronomer_commander_deployment(kube_version):
     assert "quay.io/astronomer/ap-commander:0.25.2" in jmespath.search(
         "spec.template.spec.containers[*].image", doc
     )
+    envVarNames = jmespath.search("spec.template.spec.containers[0].env[*].name", doc)
+    assert "COMMANDER_UPGRADE_TIMEOUT" in envVarNames
+    upgradeTimeoutIndex = envVarNames.index("COMMANDER_UPGRADE_TIMEOUT")
+    assert (
+        doc["spec"]["template"]["spec"]["containers"][0]["env"][upgradeTimeoutIndex][
+            "value"
+        ]
+        == "300"
+    )
+
+
+@pytest.mark.parametrize(
+    "kube_version",
+    supported_k8s_versions,
+)
+def test_astronomer_commander_deployment_upgrade_timeout(kube_version):
+    """Test that helm renders a good deployment template for astronomer/commander. when upgrade timeout is set"""
+    docs = render_chart(
+        kube_version=kube_version,
+        values={"astronomer": {"commander": {"upgradeTimeout": 600}}},
+        show_only=["charts/astronomer/templates/commander/commander-deployment.yaml"],
+    )
+
+    assert len(docs) == 1
+    doc = docs[0]
+    assert doc["kind"] == "Deployment"
+    assert doc["apiVersion"] == "apps/v1"
+    assert doc["metadata"]["name"] == "RELEASE-NAME-commander"
+    assert "quay.io/astronomer/ap-commander:0.25.2" in jmespath.search(
+        "spec.template.spec.containers[*].image", doc
+    )
+    envVarNames = jmespath.search("spec.template.spec.containers[0].env[*].name", doc)
+    assert "COMMANDER_UPGRADE_TIMEOUT" in envVarNames
+    upgradeTimeoutIndex = envVarNames.index("COMMANDER_UPGRADE_TIMEOUT")
+    assert (
+        doc["spec"]["template"]["spec"]["containers"][0]["env"][upgradeTimeoutIndex][
+            "value"
+        ]
+        == "600"
+    )
