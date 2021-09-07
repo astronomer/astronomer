@@ -63,6 +63,9 @@ global:
   # Used to enable Celery autoscaling
   kedaEnabled: false
 
+  # pre
+  preCreatedNamespacesEnabled: false
+
   # Used to enable nats-server
   nats:
     enabled: true
