@@ -249,6 +249,7 @@ commander:
     # requests:
     #  cpu: 100m
     #  memory: 128Mi
+  upgradeTimeout: 300
 
 registry:
   replicas: 1
