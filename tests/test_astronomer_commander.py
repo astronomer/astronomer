@@ -56,4 +56,4 @@ def test_astronomer_commander_deployment_upgrade_timeout(kube_version):
         x["name"]: x["value"]
         for x in doc["spec"]["template"]["spec"]["containers"][0]["env"]
     }
-    assert env_vars["COMMANDER_UPGRADE_TIMEOUT"] == "601"
+    assert env_vars["COMMANDER_UPGRADE_TIMEOUT"] == "600"
