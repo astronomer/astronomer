@@ -20,16 +20,10 @@ def test_astronomer_commander_deployment(kube_version):
     assert doc["kind"] == "Deployment"
     assert doc["apiVersion"] == "apps/v1"
     assert doc["metadata"]["name"] == "RELEASE-NAME-commander"
-
-    envVarNames = jmespath.search("spec.template.spec.containers[0].env[*].name", doc)
-    assert "COMMANDER_UPGRADE_TIMEOUT" in envVarNames
-    upgradeTimeoutIndex = envVarNames.index("COMMANDER_UPGRADE_TIMEOUT")
-    assert (
-        doc["spec"]["template"]["spec"]["containers"][0]["env"][upgradeTimeoutIndex][
-            "value"
-        ]
-        == "300"
-    )
+    
+    assert len(doc["spec"]["template"]["spec"]["containers"]) == 1
+    env_vars = {x['name']: x['value'] for x in doc["spec"]["template"]["spec"]["containers"][0]['env']}
+    assert env_vars['COMMANDER_UPGRADE_TIMEOUT'] == "300"
 
 
 @pytest.mark.parametrize(
@@ -50,12 +44,6 @@ def test_astronomer_commander_deployment_upgrade_timeout(kube_version):
     assert doc["apiVersion"] == "apps/v1"
     assert doc["metadata"]["name"] == "RELEASE-NAME-commander"
     
-    envVarNames = jmespath.search("spec.template.spec.containers[0].env[*].name", doc)
-    assert "COMMANDER_UPGRADE_TIMEOUT" in envVarNames
-    upgradeTimeoutIndex = envVarNames.index("COMMANDER_UPGRADE_TIMEOUT")
-    assert (
-        doc["spec"]["template"]["spec"]["containers"][0]["env"][upgradeTimeoutIndex][
-            "value"
-        ]
-        == "600"
-    )
+    assert len(doc["spec"]["template"]["spec"]["containers"]) == 1
+    env_vars = {x['name']: x['value'] for x in doc["spec"]["template"]["spec"]["containers"][0]['env']}
+    assert env_vars['COMMANDER_UPGRADE_TIMEOUT'] == "600"
