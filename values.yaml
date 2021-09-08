@@ -64,7 +64,7 @@ global:
   kedaEnabled: false
 
   # make fluentd to gather logs from all avaialble namespaces
-  preCreatedNamespacesEnabled: false
+  manualNamespaceNamesEnabled: false
 
   # Used to enable nats-server
   nats:
