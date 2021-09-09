@@ -21,6 +21,10 @@
     airflow_releases: "{{ helm_releases.stdout | from_json | selectattr('chart', 'match', 'airflow-.*') | list | map(attribute='name') | list }}"
     database_name: "{{ (helm_releases.stdout | from_json | selectattr('chart', 'match', 'astronomer-.*') | list)[0].name | regex_replace( '-', '_') }}"
 
+- name: "Set commander upgrade timeout"
+  set_fact:
+    COMMANDER_UPGRADE_TIMEOUT: "{{ lookup('env', 'COMMANDER_UPGRADE_TIMEOUT') | default('300', True) }}"
+
 - name: Show Airflow releases
   debug:
     msg: "{{ airflow_releases }}"
@@ -281,10 +285,10 @@
 
 - name: "(5/6) Upgrade Astronomer: Helm upgrade - Update Airflow configurations. Watch for Airflow charts to upgrade version with 'helm list --all-namespaces', watch for airflow pods to start back up."
   shell: |
-    helm upgrade --namespace {{ namespace }} --reset-values -f {{ astro_save_dir.path }}/helm-user-values.json --set astronomer.houston.upgradeDeployments.enabled=true --version={{ upgrade_to_version }} {{ release_name }} astronomer/astronomer
-  when: (DISABLE_UPGRADE_DEPLOYMENT is defined) and (DISABLE_UPGRADE_DEPLOYMENT | bool)
+    helm upgrade --namespace {{ namespace }} --reset-values -f {{ astro_save_dir.path }}/helm-user-values.json --set astronomer.houston.upgradeDeployments.enabled=true --set astronomer.commander.upgradeTimeout={{ COMMANDER_UPGRADE_TIMEOUT }} --version={{ upgrade_to_version }} {{ release_name }} astronomer/astronomer
+  when: (DISABLE_UPGRADE_DEPLOYMENT is not defined) or not (DISABLE_UPGRADE_DEPLOYMENT | bool)
 
 - name: "(6/6) Upgrade Astronomer: Helm upgrade - Turn off airflow auto upgrade configuration. Perfunctory step, nothing to look for."
   shell: |
-    helm upgrade --namespace {{ namespace }} --reset-values -f {{ astro_save_dir.path }}/helm-user-values.json --no-hooks --set astronomer.houston.upgradeDeployments.enabled=false --version={{ upgrade_to_version }} {{ release_name }} astronomer/astronomer
-  when: (DISABLE_UPGRADE_DEPLOYMENT is defined) and (DISABLE_UPGRADE_DEPLOYMENT | bool)
+    helm upgrade --namespace {{ namespace }} --reset-values -f {{ astro_save_dir.path }}/helm-user-values.json --no-hooks --set astronomer.houston.upgradeDeployments.enabled=false --set astronomer.commander.upgradeTimeout=300 --version={{ upgrade_to_version }} {{ release_name }} astronomer/astronomer
+  when: (DISABLE_UPGRADE_DEPLOYMENT is not defined) or not (DISABLE_UPGRADE_DEPLOYMENT | bool)
