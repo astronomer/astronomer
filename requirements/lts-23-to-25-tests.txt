@@ -34,9 +34,9 @@ gitpython==3.1.18 \
     --hash=sha256:b838a895977b45ab6f0cc926a9045c8d1c44e2b653c1fcc39fe91f42c6e8f05b \
     --hash=sha256:fce760879cd2aebd2991b3542876dc5c4a909b30c9d69dfc488e504a8db37ee8
     # via -r requirements/lts-23-to-25-tests.in
-google-auth==1.34.0 \
-    --hash=sha256:bd6aa5916970a823e76ffb3d5c3ad3f0bedafca0a7fa53bc15149ab21cb71e05 \
-    --hash=sha256:f1094088bae046fb06f3d1a3d7df14717e8d959e9105b79c57725bd4e17597a2
+google-auth==2.0.1 \
+    --hash=sha256:c012c8be7c442c8309ca8fa0876fef33f5fd977c467be1e1c1c2f721e8ebd73c \
+    --hash=sha256:ea1af050b3e06eb73e4470f704d23007307bc0e87c13e015f6b90460f1407bd3
     # via kubernetes
 idna==3.2 \
     --hash=sha256:14475042e284991034cb48e06f6851428fb14c4dc953acd9be9a5e95c7b6dd7a \
@@ -46,9 +46,9 @@ iniconfig==1.1.1 \
     --hash=sha256:011e24c64b7f47f6ebd835bb12a743f2fbe9a26d4cecaa7f53bc4f35ee9da8b3 \
     --hash=sha256:bc3af051d7d14b2ee5ef9969666def0cd1a000e121eaea580d4a313df4b37f32
     # via pytest
-kubernetes==17.17.0 \
-    --hash=sha256:225a95a0aadbd5b645ab389d941a7980db8cdad2a776fde64d1b43fc3299bde9 \
-    --hash=sha256:c69b318696ba797dcf63eb928a8d4370c52319f4140023c502d7dfdf2080eb79
+kubernetes==18.20.0 \
+    --hash=sha256:0c72d00e7883375bd39ae99758425f5e6cb86388417cf7cc84305c211b2192cf \
+    --hash=sha256:ff31ec17437293e7d4e1459f1228c42d27c7724dfb56b4868aba7a901a5b72c9
     # via -r requirements/lts-23-to-25-tests.in
 oauthlib==3.1.1 \
     --hash=sha256:42bf6354c2ed8c6acb54d971fce6f88193d97297e18602a3a886603f9d7730cc \
@@ -154,7 +154,6 @@ six==1.16.0 \
     --hash=sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926 \
     --hash=sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254
     # via
-    #   google-auth
     #   kubernetes
     #   python-dateutil
 smmap==4.0.0 \
@@ -175,9 +174,9 @@ urllib3==1.26.6 \
     # via
     #   kubernetes
     #   requests
-websocket-client==1.1.0 \
-    --hash=sha256:b68e4959d704768fa20e35c9d508c8dc2bbc041fd8d267c0d7345cffe2824568 \
-    --hash=sha256:e5c333bfa9fa739538b652b6f8c8fc2559f1d364243c8a689d7c0e1d41c2e611
+websocket-client==1.2.1 \
+    --hash=sha256:0133d2f784858e59959ce82ddac316634229da55b498aac311f1620567a710ec \
+    --hash=sha256:8dfb715d8a992f5712fff8c843adae94e22b22a99b2c5e6b0ec4a1a981cc4e0d
     # via
     #   google-auth
     #   kubernetes

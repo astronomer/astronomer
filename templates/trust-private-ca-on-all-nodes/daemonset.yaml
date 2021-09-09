@@ -35,7 +35,7 @@ spec:
       serviceAccountName: {{ .Release.Name }}-private-ca
       containers:
       - name: cert-copy
-        image: alpine
+        image: {{ .Values.global.privateCaCertsAddToHost.certCopier.repository }}:{{ .Values.global.privateCaCertsAddToHost.certCopier.tag }}
         command:
           - "sh"
           - "-c"

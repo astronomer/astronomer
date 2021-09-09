@@ -39,7 +39,7 @@ spec:
             image: {{ template "curator.image" . }}
             imagePullPolicy: {{ .Values.images.curator.pullPolicy }}
             command: ["/bin/sh", "-c"]
-            args: ["sleep 5; /usr/bin/curator --config /etc/config/config.yml /etc/config/action_file.yml; exit_code=$?; wget --post-data='not=used' http://127.0.0.1:15020/quitquitquit; exit $exit_code;"]
+            args: ["sleep 5; /usr/bin/curator --config /etc/config/config.yml /etc/config/action_file.yml; exit_code=$?; wget -O- --post-data='not=used' http://127.0.0.1:15020/quitquitquit; exit $exit_code;"]
             volumeMounts:
               - name: config-volume
                 mountPath: /etc/config

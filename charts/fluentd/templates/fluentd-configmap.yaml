@@ -102,7 +102,12 @@ data:
       @type grep
       <regexp>
         key $.kubernetes.namespace_name
+        # fluentd should gather logs from all namespaces if manualNamespaceNamesEnabled is enabled
+        {{- if .Values.global.manualNamespaceNamesEnabled }}
+        pattern "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
+        {{ else }}
         pattern "^#{ENV['NAMESPACE']}(?:-.*)?$"
+        {{ end }}
       </regexp>
       <regexp>
         key $.kubernetes.labels.component
