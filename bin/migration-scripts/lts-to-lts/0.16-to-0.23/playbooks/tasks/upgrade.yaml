@@ -282,9 +282,9 @@
 - name: "(5/6) Upgrade Astronomer: Helm upgrade - Update Airflow configurations. Watch for Airflow charts to upgrade version with 'helm list --all-namespaces', watch for airflow pods to start back up."
   shell: |
     helm upgrade --namespace {{ namespace }} --reset-values -f {{ astro_save_dir.path }}/helm-user-values.json --set astronomer.houston.upgradeDeployments.enabled=true --version={{ upgrade_to_version }} {{ release_name }} astronomer/astronomer
-  when: (DISABLE_UPGRADE_DEPLOYMENT is not defined) or not (DISABLE_UPGRADE_DEPLOYMENT | bool)
+  when: (DISABLE_UPGRADE_DEPLOYMENT is defined) and (DISABLE_UPGRADE_DEPLOYMENT | bool)
 
 - name: "(6/6) Upgrade Astronomer: Helm upgrade - Turn off airflow auto upgrade configuration. Perfunctory step, nothing to look for."
   shell: |
     helm upgrade --namespace {{ namespace }} --reset-values -f {{ astro_save_dir.path }}/helm-user-values.json --no-hooks --set astronomer.houston.upgradeDeployments.enabled=false --version={{ upgrade_to_version }} {{ release_name }} astronomer/astronomer
-  when: (DISABLE_UPGRADE_DEPLOYMENT is not defined) or not (DISABLE_UPGRADE_DEPLOYMENT | bool)
+  when: (DISABLE_UPGRADE_DEPLOYMENT is defined) and (DISABLE_UPGRADE_DEPLOYMENT | bool)
