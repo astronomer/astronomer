@@ -27,7 +27,7 @@
 
 - name: "Disable deployment upgrades"
   set_fact:
-    disable_upgrade_timeout: "{{ lookup('env', 'DISABLE_UPGRADE_DEPLOYMENT') | default('false', True) }}"
+    disable_deployment_upgrades: "{{ lookup('env', 'DISABLE_DEPLOYMENT_UPGRADES') | default('false', True) }}"
 
 - name: Show Airflow releases
   debug:
@@ -307,7 +307,7 @@
     --set astronomer.houston.upgradeDeployments.enabled=true 
     --set astronomer.commander.upgradeTimeout={{ COMMANDER_UPGRADE_TIMEOUT }} 
     --version={{ upgrade_to_version }} {{ release_name }} astronomer/astronomer
-  when: not disable_upgrade_timeout
+  when: not disable_deployment_upgrades
 
 - name: "(6/6) Upgrade Astronomer: Helm upgrade - Turn off airflow auto upgrade configuration. Perfunctory step, nothing to look for."
   shell: >
@@ -318,4 +318,4 @@
     --no-hooks --set astronomer.houston.upgradeDeployments.enabled=false 
     --set astronomer.commander.upgradeTimeout=300 
     --version={{ upgrade_to_version }} {{ release_name }} astronomer/astronomer
-  when: not disable_upgrade_timeout
+  when: not disable_deployment_upgrades
