@@ -251,6 +251,8 @@ data:
             - airflow-cleanup-pods
             - --namespace={{ .Release.Namespace }}
             args: ~
+            serviceAccount:
+              create: true
       {{- end }}
 
           # Disable the postgres subchart. The platform pass credentials down
