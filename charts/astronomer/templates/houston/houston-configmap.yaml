@@ -250,6 +250,7 @@ data:
             command:
             - airflow-cleanup-pods
             - --namespace={{ .Release.Namespace }}
+            args: ~
       {{- end }}
 
           # Disable the postgres subchart. The platform pass credentials down
