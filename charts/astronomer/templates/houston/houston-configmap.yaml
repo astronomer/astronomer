@@ -247,7 +247,6 @@ data:
           cleanup:
             enabled: true
             schedule: "*/15 * * * *"
-            args: null
             command:
             - airflow-cleanup-pods
             - --namespace={{ .Release.Namespace }}
