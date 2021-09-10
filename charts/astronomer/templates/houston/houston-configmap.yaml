@@ -249,7 +249,7 @@ data:
             schedule: "*/15 * * * *"
             command:
             - airflow-cleanup-pods
-            - --namespace={{ .Release.Namespace }}
+            - --namespace={{ "{{ .Release.Namespace }}" }}
             args: ~
             serviceAccount:
               create: true
