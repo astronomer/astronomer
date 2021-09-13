@@ -9,7 +9,6 @@
     backup_dir: "/astronomer-backups"
     timestamp: "{{ lookup('pipe', 'date +%Y-%m-%d-%H-%M-%S') }}"
     upgrade_to_version: "0.25.6"  # this must be a complete semver
-    upgrade_to_version_airflow: "0.20.0"
     use_internal_helm_repo: "{{ lookup('env', 'USE_INTERNAL_HELM_REPO') }}"
     # db_hostname: "localhost"
     # db_username: "postgres"
@@ -289,7 +288,6 @@
     --reset-values
     -f {{ astro_save_dir.path }}/helm-user-values.json
     --set astronomer.houston.upgradeDeployments.enabled=true
-    --set astronomer.airflowChartVersion={{ upgrade_to_version_airflow }}
     --version={{ upgrade_to_version }}
     {{ release_name }}
     astronomer/astronomer
