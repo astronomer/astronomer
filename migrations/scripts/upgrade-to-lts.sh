@@ -311,7 +311,7 @@ function main {
   export UPGRADE_TO_VERSION_AIRFLOW=0.15.2
 
   # Pre-flight checks
-  check_helm3_version_client '3.5.3'
+  check_helm3_version_client '3.6.3'
   check_cli_tools_installed helm kubectl jq head tail grep awk base64 cut wc git
 
   kube_checks
