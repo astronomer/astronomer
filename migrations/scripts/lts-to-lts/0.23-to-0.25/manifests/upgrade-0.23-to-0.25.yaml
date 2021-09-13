@@ -40,7 +40,7 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
-          # - {"name": "USE_INTERNAL_HELM_REPO", "value": "True"}
+            # - {"name": "USE_INTERNAL_HELM_REPO", "value": "True"}
           # command: ["/bin/sleep", "infinity"]
       terminationGracePeriodSeconds: 300
       volumes:
