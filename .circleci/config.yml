@@ -88,7 +88,7 @@ jobs:
 
   release-to-internal:
     machine:
-      image: ubuntu-2004:202104-01
+      image: ubuntu-2004:202107-02
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -103,7 +103,7 @@ jobs:
 
   release-to-public:
     machine:
-      image: ubuntu-2004:202104-01
+      image: ubuntu-2004:202107-02
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -119,7 +119,7 @@ jobs:
 
   platform-1-17-17:
     machine:
-      image: ubuntu-2004:202104-01
+      image: ubuntu-2004:202107-02
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.17.17
@@ -135,7 +135,7 @@ jobs:
           when: always
   platform-1-18-19:
     machine:
-      image: ubuntu-2004:202104-01
+      image: ubuntu-2004:202107-02
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.18.19
@@ -151,7 +151,7 @@ jobs:
           when: always
   platform-1-19-11:
     machine:
-      image: ubuntu-2004:202104-01
+      image: ubuntu-2004:202107-02
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.19.11
@@ -167,7 +167,7 @@ jobs:
           when: always
   platform-1-20-7:
     machine:
-      image: ubuntu-2004:202104-01
+      image: ubuntu-2004:202107-02
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.20.7
@@ -183,7 +183,7 @@ jobs:
           when: always
   platform-1-21-2:
     machine:
-      image: ubuntu-2004:202104-01
+      image: ubuntu-2004:202107-02
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.21.2
