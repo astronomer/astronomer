@@ -16,7 +16,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 50,
+  "id": 99,
   "links": [],
   "panels": [
     {
@@ -458,7 +458,11 @@
   "refresh": false,
   "schemaVersion": 27,
   "style": "dark",
-  "tags": [],
+  "tags": [
+    "kubed",
+    "platform",
+    "astronomer platform"
+  ],
   "templating": {
     "list": []
   },
@@ -468,7 +472,7 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "kubed Copy",
+  "title": "kubed",
   "uid": "8wljonN7k",
-  "version": 1
+  "version": 3
 }
