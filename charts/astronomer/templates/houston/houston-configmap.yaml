@@ -111,13 +111,13 @@ data:
               requests:
                 ephemeral-storage: "1Gi"
 
-            # This is here for upgrading to 0.11.1+ of Airflow.
+            # This is here for upgrading to 0.11.1+ of airflow-chart
             keda:
               enabled: false
               namespaceLabels:
                 name: {{ .Release.Name }}
 
-            # This is here for upgrading to 0.11.2+ of Airflow.
+            # This is here for upgrading to 0.11.2+ of airflow-chart
             safeToEvict: true
 
           scheduler:
@@ -129,7 +129,7 @@ data:
               config:
                 maxUnavailable: 1
 
-            # This is here for upgrading to 0.11.2+ of Airflow.
+            # This is here for upgrading to 0.11.2+ of airflow-chart
             safeToEvict: true
 
             resources:
@@ -215,7 +215,7 @@ data:
 
           # Redis settings
           redis:
-            # This is here for upgrading to 0.11.2+ of Airflow.
+            # This is here for upgrading to 0.11.2+ of airflow-chart
             safeToEvict: true
 
           # Pgbouncer settings
@@ -233,12 +233,12 @@ data:
             limits.ephemeral-storage: "50Gi"
 
           # This is here for backward compatibility.
-          # 0.11+ versions of Airflow have this defined
+          # 0.11+ versions of airflow-chart have this defined
           # so this needs to be passed through to all upgrades.
           podMutation:
             tolerations: []
 
-          # This is here for upgrading to 0.11.0+ of Airflow.
+          # This is here for upgrading to 0.11.0+ of airflow-chart
           defaultAirflowRepository: quay.io/astronomer/ap-airflow
 
       {{- if not .Values.global.singleNamespace }}
@@ -260,7 +260,7 @@ data:
           postgresql:
             enabled: false
 
-        # If we're in single namespace mode, we will also skip the configurationr
+        # If we're in single namespace mode, we will also skip the configuration
         # for elasticsearch. Houston will fallback to its default modes, which are
         # false/disabled.
         #
