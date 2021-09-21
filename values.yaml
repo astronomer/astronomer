@@ -306,9 +306,9 @@ grafana:
 
   dashboards:
     {}
-    # default:
-    #   velero:
-    #     file: dashboards/velero.json
+    # default: # this creates the 'default' folder in grafana web UI
+    #   velero: # this defines a dashboard within the 'default' grafana folder
+    #     file: dashboards/velero.json # exported from grafana 'save dashboard' web UI
 
 #################################
 ## Prometheus configuration
