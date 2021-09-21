@@ -97,7 +97,7 @@ data:
       @type kubernetes_metadata
     </filter>
 
-    # Filter down by namespace and component (scheduler/webserver/worker)
+    # Filter down by namespace and component (scheduler/webserver/worker/triggerer)
     <filter kubernetes.**>
       @type grep
       <regexp>
@@ -111,7 +111,7 @@ data:
       </regexp>
       <regexp>
         key $.kubernetes.labels.component
-        pattern ^(scheduler|webserver|worker)$
+        pattern ^(scheduler|webserver|worker|triggerer)$
       </regexp>
     </filter>
 
