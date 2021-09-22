@@ -34,7 +34,7 @@ venv:
 	venv/bin/pip install -r requirements/chart-tests.txt
 
 .PHONY: unittest-charts
-unittest-charts: pytest helm-unittest .unittest-requirements ## Unittest the Astronomer helm chart (helm-unittest and pytest)
+unittest-charts: pytest helm-unittest ## Unittest the Astronomer helm chart (helm-unittest and pytest)
 
 helm-unittest: ## Run helm-unittest tests (deprecated test suite, but still some valid tests)
 	helm plugin install https://github.com/astronomer/helm-unittest >/dev/null || true
