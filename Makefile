@@ -22,17 +22,21 @@ lint-prep: ## Prepare a clean env for linting
 lint-astro: lint-prep ## Lint the Astronomer helm chart
 	helm lint ${TEMPDIR}/astronomer
 
-unittest-requirements: .unittest-requirements ## Setup venv required for unit testing the Astronomer helm chart
-.unittest-requirements:
-	[ -d venv ] || virtualenv venv -p python3
+# Protip: you can pass pytest args to the following target like: PYTEST_ADDOPTS='-sv -k test_grafana' make pytest
+.PHONY: pytest
+pytest: export PYTEST_ADDOPTS ?= -n auto
+pytest: venv ## Run pytest chart tests
+	venv/bin/python -m pytest tests
+
+unittest-requirements: venv ## Setup venv required for unit testing the Astronomer helm chart
+venv:
+	virtualenv venv -p python3
 	venv/bin/pip install -r requirements/chart-tests.txt
-	touch .unittest-requirements
 
 .PHONY: unittest-charts
-unittest-charts: helm-unittest .unittest-requirements ## Unittest the Astronomer helm chart
-	venv/bin/python -m pytest -n auto tests
+unittest-charts: pytest helm-unittest .unittest-requirements ## Unittest the Astronomer helm chart (helm-unittest and pytest)
 
-helm-unittest: ## Run helm-unittest tests (deprecated test suite, but still valid tests)
+helm-unittest: ## Run helm-unittest tests (deprecated test suite, but still some valid tests)
 	helm plugin install https://github.com/astronomer/helm-unittest >/dev/null || true
 	helm unittest -3 .
 
