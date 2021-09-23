@@ -40,6 +40,9 @@ global:
   # Single namespace mode
   singleNamespace: false
 
+  # Use cluster roles
+  clusterRoles: true
+
   # Enables necessary components for compatibility with Istio Service Mesh
   istio:
     enabled: false
