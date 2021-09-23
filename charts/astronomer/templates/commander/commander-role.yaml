@@ -2,7 +2,7 @@
 ## Astronomer Commander Role/ClusterRole
 #################################
 {{- $singleNamespace := .Values.global.singleNamespace }}
-{{- $clustenRoles:= .Values.global.clusterRoles }}
+{{- $clusterRoles:= .Values.global.clusterRoles }}
 {{- if and .Values.global.rbacEnabled }}
 kind: {{ if or ($singleNamespace) (not $clusterRoles) }}Role{{ else }}ClusterRole{{ end }}
 apiVersion: rbac.authorization.k8s.io/v1
