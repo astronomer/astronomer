@@ -35,6 +35,11 @@ resources: {}
 # Service type that Nginx can be. Default is LoadBalancer but "ClusterIP" and "NodePort" are both valid.
 serviceType: "LoadBalancer"
 
+# NodePort, requiers serviceType NodePort. Default of nil auto-assigns a port
+httpNodePort: ~
+httpsNodePort: ~
+metricsNodePort: ~
+
 # dict of annotations to add to the ingress controller
 ingressAnnotations: {}
 
