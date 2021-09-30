@@ -72,7 +72,6 @@ class TestNginx:
 
     def test_nginx_type_nodeport_doesnt_require_nodeports(self):
         # sourcery skip: extract-duplicate-method
-        httpNodePort, httpsNodePort, metricsNodePort = [30401, 30402, 30403]
         docs = render_chart(
             values={
                 "nginx": {
@@ -84,6 +83,8 @@ class TestNginx:
         )
 
         assert len(docs) == 1
+        doc = docs[0]
+        assert doc["spec"]["type"] == "NodePort"
 
     def test_nginx_type_nodeport_specifying_nodeports(self):
         # sourcery skip: extract-duplicate-method
