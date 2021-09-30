@@ -53,20 +53,20 @@ spec:
       targetPort: {{ .Values.ports.http }}
       protocol: TCP
       name: http
-      {{- if .Values.httpNodePort }}
+      {{- if and (eq .Values.serviceType "NodePort") .Values.httpNodePort }}
       nodePort: {{ .Values.httpNodePort }}
       {{- end }}
     - port: 443
       targetPort: {{ .Values.ports.https }}
       protocol: TCP
       name: https
-      {{- if .Values.httpsNodePort }}
+      {{- if and (eq .Values.serviceType "NodePort") .Values.httpsNodePort }}
       nodePort: {{ .Values.httpsNodePort }}
       {{- end }}
     - port: {{ .Values.ports.metrics }}
       targetPort: {{ .Values.ports.metrics }}
       protocol: TCP
       name: metrics
-      {{- if .Values.metricsNodePort }}
+      {{- if and (eq .Values.serviceType "NodePort") .Values.metricsNodePort }}
       nodePort: {{ .Values.metricsNodePort }}
       {{- end }}
