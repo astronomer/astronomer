@@ -52,24 +52,26 @@ class TestNginx:
 
     def test_nginx_type_nodeport_specifying_nodeports(self):
         # sourcery skip: extract-duplicate-method
-        httpNodePort, httpsNodePort, metricsNodePort = [ 30401, 30402, 30403 ]
+        httpNodePort, httpsNodePort, metricsNodePort = [30401, 30402, 30403]
         docs = render_chart(
-            values={"nginx": {
-             "serviceType": "NodePort",
-              "httpNodePort": httpNodePort,
-              "httpsNodePort": httpsNodePort,
-              "metricsNodePort":metricsNodePort,
-            }},
+            values={
+                "nginx": {
+                    "serviceType": "NodePort",
+                    "httpNodePort": httpNodePort,
+                    "httpsNodePort": httpsNodePort,
+                    "metricsNodePort": metricsNodePort,
+                }
+            },
             show_only=["charts/nginx/templates/nginx-service.yaml"],
         )
 
         assert len(docs) == 1
         doc = docs[0]
         ports = doc["spec"]["ports"]
-        ports_by_name = { x["name"]:x["nodePort"] for x in ports }
-        assert ports_by_name["http"] == httpNodePort 
-        assert ports_by_name["https"] == httpsNodePort 
-        assert ports_by_name["metrics"] == metricsNodePort 
+        ports_by_name = {x["name"]: x["nodePort"] for x in ports}
+        assert ports_by_name["http"] == httpNodePort
+        assert ports_by_name["https"] == httpsNodePort
+        assert ports_by_name["metrics"] == metricsNodePort
 
     def test_nginx_enabled_externalips(self):
         # sourcery skip: extract-duplicate-method
