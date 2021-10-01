@@ -3,6 +3,7 @@ import pytest
 from . import supported_k8s_versions
 import jmespath
 import yaml
+from pathlib import Path
 
 
 def yd(thing):
@@ -55,12 +56,8 @@ def test_grafana_dashboard_velero_enabled(kube_version):
 
     assert len(docs) == 3
     assert len(jmespath.search('[*].data."velero.json"', docs)) == 1
-    assert (
-        len(
-            jmespath.search(
-                "[].spec.template.spec.containers[].volumeMounts[?subPath=='velero.json']",
-                docs,
-            )[0]
+    for file in list(Path("charts/grafana/dashboards/").glob("*")):
+        assert file.parts[-1] in jmespath.search(
+            "[].spec.template.spec.containers[].volumeMounts[].subPath",
+            docs,
         )
-        == 1
-    )
