@@ -37,7 +37,6 @@ repos:
           [
             "requirements/chart-tests.in",
             "requirements/functional-tests.in",
-            "requirements/lts-23-to-25-tests.in",
           ]
       - id: sort-simple-yaml
       - id: trailing-whitespace
