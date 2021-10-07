@@ -43,20 +43,6 @@ jobs:
           name: Lint the Astronomer chart
           command: export PATH=/tmp/bin:$PATH make lint
 
-  build-lts-23-to-25-upgrade:
-    executor: docker-executor
-    steps:
-      - docker-build:
-          image_name: lts-23-to-25-upgrade
-          path: "./migrations/scripts/lts-to-lts/0.23-to-0.25/playbooks/"
-
-  push-lts-23-to-25-upgrade:
-    executor: docker-executor
-    steps:
-      - push-to-quay-io:
-          comma_separated_tags: "latest,$CIRCLE_BUILD_NUM"
-          image_name: lts-23-to-25-upgrade
-
   unittest-charts:
     docker:
       - image: quay.io/astronomer/ci-helm-release:2021-08
@@ -212,48 +198,8 @@ jobs:
             kubent --cluster=false --helm2=false --helm3=false --filename -
           when: always
 
-  lts-23-to-25-test:
-    machine:
-      image: ubuntu-2004:202104-01
-      resource_class: xlarge
-    environment:
-      KUBE_VERSION: v1.18.19 # last supported major.minor k8s version for astronomer 0.23
-    steps:
-      - lts-23-to-25-test
-
 workflows:
   version: 2.1
-  build-and-release-upgrader:
-    jobs:
-      - build-lts-23-to-25-upgrade
-
-      - lts-23-to-25-test:
-          requires:
-            - build-lts-23-to-25-upgrade
-
-      - approve-lts-upgrader-release:
-          type: approval
-          requires:
-            - lts-23-to-25-test
-          filters:
-            branches:
-              only:
-                - "release-0.25"
-                - "lts-to-lts"
-
-      - push-lts-23-to-25-upgrade:
-          requires:
-            - approve-lts-upgrader-release
-            - lts-23-to-25-test
-          context:
-            - quay.io
-          filters:
-            branches:
-              only:
-                - "release-0.25"
-                - "master"
-                - "lts-to-lts"
-
   build-and-release-helm-chart:
     jobs:
       - lint
@@ -404,22 +350,6 @@ commands:
           root: .
           paths:
             - "./<< parameters.image_name >>.tar"
-
-  lts-23-to-25-test:
-    description: "Test LTS 23 to 25 upgrade automation"
-    steps:
-      - checkout
-      - attach_workspace:
-          at: /tmp/workspace
-      - run:
-          name: Load archived Docker image
-          command: docker load -i /tmp/workspace/lts-23-to-25-upgrade.tar
-      - run:
-          name: Test lts to lts upgrade automation
-          command: |
-            set -e
-            echo 'export PATH="/tmp/bin:/tmp/google-cloud-sdk/bin:$PATH"' >> "$HOME/.bashrc" # for interactive ssh debugging
-            bin/lts-23-to-25-test
 
   helm-install:
     description: "Install Helm chart from artifact"
