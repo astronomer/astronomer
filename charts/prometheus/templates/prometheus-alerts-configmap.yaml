@@ -1350,7 +1350,7 @@ data:
             tier: platform
             component: nginx
           annotations:
-            summary: NGINX Ingress {{ $labels.ingress }} 1m latency is {{ printf "%.2f" $value }} seconds.
+            summary: {{ printf "%q" "NGINX Ingress {{ $labels.ingress }} 1m latency is {{ printf \"%.2f\" $value }} seconds." }}
             description: "This alert fires if the average latency measured on a time window of 1 minute was higher than 1 second for the last 3 minutes."
         - alert: NginxIngressHigh4XXRate
           expr: >-
