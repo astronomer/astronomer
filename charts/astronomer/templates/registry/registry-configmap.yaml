@@ -61,6 +61,8 @@ data:
       endpoints:
         - name: "houston"
           url: "http://{{ .Release.Name }}-houston:{{ .Values.ports.houstonHTTP }}/v1/registry/events"
+          headers:
+				    Authorization: "Bearer {{ template  "registry.authorizationHeader" . }}"
           timeout: 30s
           threshold: 10
           backoff: 1s

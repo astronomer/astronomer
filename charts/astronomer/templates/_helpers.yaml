@@ -87,6 +87,14 @@
 {{ default (printf "%s-houston-backend" .Release.Name) .Values.houston.backendSecretName }}
 {{- end }}
 
+{{ define "registry.authorizationHeader" -}}
+  {{- $authorizationHeader := randAlphaNum 32 -}}
+  {{- if .Values.global.privateRegistry.authorizationHeader -}}
+  {{- $authorizationHeader := .Values.global.privateRegistry.authorizationHeader -}}
+	{{ printf "%s" $authorizationHeader }}
+  {{- end }}
+{{- end }}
+
 {{ define "houston.airflowBackendSecret" -}}
 {{ default (printf "%s-houston-backend" .Release.Name) .Values.houston.airflowBackendSecretName }}
 {{- end }}
