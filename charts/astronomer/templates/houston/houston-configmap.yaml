@@ -250,7 +250,7 @@ data:
             command:
             - airflow-cleanup-pods
             - --namespace={{`{{ .Release.Namespace }}`}}
-            args: ~
+            args: []
             serviceAccount:
               create: true
       {{- end }}
