@@ -25,7 +25,7 @@ metadata:
       if ($host = '{{ .Values.global.baseDomain }}' ) {
         rewrite ^ https://app.{{ .Values.global.baseDomain }}$request_uri permanent;
       }
-      location ~ ^/v1/(registry\/events|alerts) {
+      location ~ ^/v1/(registry\/events|alerts|elasticsearch) {
         deny all;
         return 403;
       }
