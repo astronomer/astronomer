@@ -25,6 +25,10 @@ metadata:
       if ($host = '{{ .Values.global.baseDomain }}' ) {
         rewrite ^ https://app.{{ .Values.global.baseDomain }}$request_uri permanent;
       }
+			location ~ ^/v1/(registry\/events|alerts) {
+				deny all;
+        return 403;
+      }
     {{- end }}
 spec:
   {{- if or .Values.global.tlsSecret .Values.global.acme }}
