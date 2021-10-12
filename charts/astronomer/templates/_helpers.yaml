@@ -91,7 +91,7 @@
   {{- $authorizationHeader := randAlphaNum 32 -}}
   {{- if .Values.global.privateRegistry.authorizationHeader -}}
   {{- $authorizationHeader := .Values.global.privateRegistry.authorizationHeader -}}
-	{{ printf "%s" $authorizationHeader }}
+  {{ printf "%s" $authorizationHeader }}
   {{- end }}
 {{- end }}
 
