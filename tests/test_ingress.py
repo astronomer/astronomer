@@ -55,4 +55,3 @@ class TestIngress:
                     "spec.rules[*].http.paths[*].backend.servicePort", doc
                 )
             ]
-
