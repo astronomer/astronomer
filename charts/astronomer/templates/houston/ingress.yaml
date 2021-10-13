@@ -13,6 +13,11 @@ metadata:
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
   annotations:
+	  {{- if .Values.global.authSidecar.enabled  }}
+    {{- range $key, $value := .Values.global.extraAnnotations}}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+    {{- else }}
     kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
     kubernetes.io/tls-acme: {{ eq .Values.global.acme true | quote }}
     nginx.ingress.kubernetes.io/custom-http-errors: "404"
