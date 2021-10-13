@@ -13,7 +13,7 @@ class TestIngress:
         # sourcery skip: extract-duplicate-method
         docs = render_chart(
             kube_version=kube_version,
-            show_only=["charts/astronomer/templates/ingress.yaml"],
+            show_only=["charts/astronomer/templates/houston/ingress.yaml"],
         )
 
         assert len(docs) == 1
@@ -28,13 +28,13 @@ class TestIngress:
 
         if minor >= 19:
             assert doc["apiVersion"] == "networking.k8s.io/v1"
-            assert "RELEASE-NAME-astro-ui" in [
+            assert "RELEASE-NAME-houston" in [
                 name[0]
                 for name in jmespath.search(
                     "spec.rules[*].http.paths[*].backend.service.name", doc
                 )
             ]
-            assert "astro-ui-http" in [
+            assert "houston-http" in [
                 port[0]
                 for port in jmespath.search(
                     "spec.rules[*].http.paths[*].backend.service.port.name", doc
@@ -43,16 +43,32 @@ class TestIngress:
 
         if minor < 19:
             assert doc["apiVersion"] == "networking.k8s.io/v1beta1"
-            assert "RELEASE-NAME-astro-ui" in [
+            assert "RELEASE-NAME-houston" in [
                 name[0]
                 for name in jmespath.search(
                     "spec.rules[*].http.paths[*].backend.serviceName", doc
                 )
             ]
-            assert "astro-ui-http" in [
+            assert "houston-http" in [
                 port[0]
                 for port in jmespath.search(
                     "spec.rules[*].http.paths[*].backend.servicePort", doc
                 )
             ]
 
+    def test_protect_houston_internal_urls(self, kube_version):
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/astronomer/templates/houston/ingress.yaml"],
+        )
+        assert len(docs) == 1
+        doc = docs[0]
+        annotations = jmespath.search("metadata.annotations", doc)
+        assert (
+            annotations["nginx.ingress.kubernetes.io/configuration-snippet"]
+            == """location ~ ^/v1/(registry\/events|alerts|elasticsearch) {
+  deny all;
+  return 403;
+}
+"""
+        )
