@@ -26,6 +26,7 @@ metadata:
         deny all;
         return 403;
       }
+    {{- end }}
 spec:
   {{- if or .Values.global.tlsSecret .Values.global.acme }}
   tls:
