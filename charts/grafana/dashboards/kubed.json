@@ -17,8 +17,125 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 99,
+  "iteration": 1634249009382,
   "links": [],
   "panels": [
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "unit": "decbytes"
+        },
+        "overrides": []
+      },
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "hiddenSeries": false,
+      "id": 10,
+      "legend": {
+        "alignAsTable": true,
+        "avg": false,
+        "current": true,
+        "max": false,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "7.5.10",
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "exemplar": true,
+          "expr": "avg_over_time(sum(container_memory_rss{namespace=\"astronomer\", component_name=\"astronomer-kubed\", container!=\"POD\", container!=\"istio-proxy\"})[${minutes}:])",
+          "interval": "",
+          "legendFormat": "container_memory_rss {{ container_name }}",
+          "refId": "A"
+        },
+        {
+          "exemplar": true,
+          "expr": "kube_pod_container_resource_limits_memory_bytes{namespace=\"astronomer\", container=\"astronomer-kubed\"}",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "kube_pod_container_resource_limits_memory_bytes",
+          "refId": "B"
+        },
+        {
+          "exemplar": true,
+          "expr": "kube_pod_container_resource_requests_memory_bytes{namespace=\"astronomer\", container=\"astronomer-kubed\"}",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "kube_pod_container_resource_requests_memory_bytes",
+          "refId": "C"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "container_memory_rss bytes",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "$$hashKey": "object:191",
+          "format": "decbytes",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "$$hashKey": "object:192",
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
     {
       "aliasColors": {},
       "bars": false,
@@ -38,7 +155,7 @@
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 0
+        "y": 8
       },
       "hiddenSeries": false,
       "id": 4,
@@ -71,9 +188,10 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "container_memory_working_set_bytes{namespace=\"astronomer\", container_name=\"astronomer-kubed\"}",
+          "expr": "avg_over_time(sum(container_memory_working_set_bytes{namespace=\"astronomer\", component_name=\"astronomer-kubed\", container!=\"POD\", container!=\"istio-proxy\"})[${minutes}:])",
+          "hide": false,
           "interval": "10s",
-          "legendFormat": "Current: {{ container_name }}",
+          "legendFormat": "container_memory_working_set_bytes: {{ container_name }}",
           "refId": "A"
         },
         {
@@ -99,7 +217,7 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "kubed container memory usage",
+      "title": "container_memory_working_set_bytes",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -115,6 +233,7 @@
       },
       "yaxes": [
         {
+          "$$hashKey": "object:67",
           "format": "bytes",
           "label": null,
           "logBase": 1,
@@ -123,6 +242,7 @@
           "show": true
         },
         {
+          "$$hashKey": "object:68",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -152,7 +272,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 10
+        "y": 18
       },
       "hiddenSeries": false,
       "id": 2,
@@ -185,7 +305,7 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "rate(container_cpu_usage_seconds_total{namespace=\"astronomer\", container_name=\"astronomer-kubed\"}[1m])",
+          "expr": "rate(container_cpu_usage_seconds_total{namespace=\"astronomer\", container_name=\"astronomer-kubed\"}[${minutes}])",
           "interval": "",
           "intervalFactor": 2,
           "legendFormat": "{{ pod_name }}",
@@ -231,6 +351,7 @@
       },
       "yaxes": [
         {
+          "$$hashKey": "object:127",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -239,6 +360,7 @@
           "show": true
         },
         {
+          "$$hashKey": "object:128",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -268,7 +390,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 19
+        "y": 27
       },
       "hiddenSeries": false,
       "id": 6,
@@ -301,17 +423,17 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "rate(container_network_receive_bytes_total{namespace=\"astronomer\", component_name=\"kubed\"}[1m])",
+          "expr": "rate(container_network_receive_bytes_total{namespace=\"astronomer\", component_name=\"kubed\"}[${minutes}])",
           "interval": "",
-          "legendFormat": "{{ pod_name }}",
+          "legendFormat": "{{ pod_name }} rx",
           "refId": "A"
         },
         {
           "exemplar": true,
-          "expr": "- rate(container_network_transmit_bytes_total{namespace=\"astronomer\", component_name=\"kubed\"}[1m])",
+          "expr": "rate(container_network_transmit_bytes_total{namespace=\"astronomer\", component_name=\"kubed\"}[${minutes}])",
           "hide": false,
           "interval": "",
-          "legendFormat": "{{ pod_name }}",
+          "legendFormat": "{{ pod_name }} tx",
           "refId": "B"
         }
       ],
@@ -364,6 +486,7 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": null,
+      "decimals": 0,
       "description": "",
       "fieldConfig": {
         "defaults": {},
@@ -375,7 +498,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 27
+        "y": 35
       },
       "hiddenSeries": false,
       "id": 8,
@@ -385,7 +508,7 @@
         "max": false,
         "min": false,
         "rightSide": true,
-        "show": true,
+        "show": false,
         "total": false,
         "values": false
       },
@@ -433,14 +556,18 @@
       },
       "yaxes": [
         {
-          "format": "short",
+          "$$hashKey": "object:125",
+          "decimals": 0,
+          "format": "none",
           "label": null,
           "logBase": 1,
           "max": null,
-          "min": null,
+          "min": "0",
           "show": true
         },
         {
+          "$$hashKey": "object:126",
+          "decimals": null,
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -455,7 +582,7 @@
       }
     }
   ],
-  "refresh": false,
+  "refresh": "30s",
   "schemaVersion": 27,
   "style": "dark",
   "tags": [
@@ -464,15 +591,88 @@
     "astronomer platform"
   ],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "auto": false,
+        "auto_count": 30,
+        "auto_min": "10s",
+        "current": {
+          "selected": true,
+          "text": "1m",
+          "value": "1m"
+        },
+        "description": "minutes to average by",
+        "error": null,
+        "hide": 1,
+        "label": "Minutes",
+        "name": "minutes",
+        "options": [
+          {
+            "selected": true,
+            "text": "1m",
+            "value": "1m"
+          },
+          {
+            "selected": false,
+            "text": "10m",
+            "value": "10m"
+          },
+          {
+            "selected": false,
+            "text": "30m",
+            "value": "30m"
+          },
+          {
+            "selected": false,
+            "text": "1h",
+            "value": "1h"
+          },
+          {
+            "selected": false,
+            "text": "6h",
+            "value": "6h"
+          },
+          {
+            "selected": false,
+            "text": "12h",
+            "value": "12h"
+          },
+          {
+            "selected": false,
+            "text": "1d",
+            "value": "1d"
+          },
+          {
+            "selected": false,
+            "text": "7d",
+            "value": "7d"
+          },
+          {
+            "selected": false,
+            "text": "14d",
+            "value": "14d"
+          },
+          {
+            "selected": false,
+            "text": "30d",
+            "value": "30d"
+          }
+        ],
+        "query": "1m,10m,30m,1h,6h,12h,1d,7d,14d,30d",
+        "queryValue": "",
+        "refresh": 2,
+        "skipUrlSync": false,
+        "type": "interval"
+      }
+    ]
   },
   "time": {
-    "from": "now-7d",
+    "from": "now-2d",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "",
   "title": "kubed",
   "uid": "8wljonN7k",
-  "version": 3
+  "version": 14
 }
