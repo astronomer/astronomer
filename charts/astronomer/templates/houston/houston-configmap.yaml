@@ -47,6 +47,9 @@ data:
       github:
         enabled: true
 
+    registry:
+      authHeader: "{{ template  "registry.authorizationHeader" . }}"
+
     helm:
       baseDomain: {{ .Values.global.baseDomain }}
       registryAuthSecret: {{ .Values.registry.auth.secretName }}

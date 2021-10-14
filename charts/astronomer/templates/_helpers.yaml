@@ -88,11 +88,7 @@
 {{- end }}
 
 {{ define "registry.authorizationHeader" -}}
-  {{- $authorizationHeader := randAlphaNum 32 -}}
-  {{- if .Values.global.privateRegistry.authorizationHeader -}}
-  {{- $authorizationHeader := .Values.global.privateRegistry.authorizationHeader -}}
-  {{ printf "%s" $authorizationHeader }}
-  {{- end }}
+{{ default (randAlphaNum 32 ) .Values.global.privateRegistry.authorizationHeader }}
 {{- end }}
 
 {{ define "houston.airflowBackendSecret" -}}
