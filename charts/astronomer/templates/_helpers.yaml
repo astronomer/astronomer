@@ -227,7 +227,7 @@ s3:
   valueFrom:
     secretKeyRef:
       name: {{ template "registry.authHeaderSecret" . }}
-      key: token 
+      key: token
 {{- end }}
 
 {{- define "houston_volume_mounts" }}
