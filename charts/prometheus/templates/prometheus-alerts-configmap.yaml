@@ -1342,6 +1342,16 @@ data:
 
       - name: Ingress
         rules:
+        - alert: NginxIngressHighAvgLatency
+          expr: >-
+            sum(rate(nginx_ingress_controller_request_duration_seconds_sum{host=~".*houston.*|.*app.*", status!="101"}[1m])) / sum(rate(nginx_ingress_controller_request_duration_seconds_count{host=~".*houston.*|.*app.*", status!="101"}[1m])) > 1
+          for: 3m
+          labels:
+            tier: platform
+            component: nginx
+          annotations:
+            summary: {{ printf "%q" "NGINX Ingress {{ $labels.ingress }} 1m latency is {{ printf \"%.2f\" $value }} seconds." }}
+            description: "This alert fires if the average latency measured on a time window of 1 minute was higher than 1 second for the last 3 minutes."
         - alert: NginxIngressHigh4XXRate
           expr: >-
             sum by (ingress) (rate(nginx_ingress_controller_requests{status=~"^4..", namespace="{{.Release.Namespace}}"}[5m])) / sum by (ingress) (rate(nginx_ingress_controller_requests{ingress!="", namespace="{{.Release.Namespace}}"}[5m])) * 100 > 5
