@@ -252,6 +252,8 @@ commander:
   upgradeTimeout: 300
 
 registry:
+  # k8s secret name for registry to use to authenticate to houston when sending notifications
+  authHeaderSecretName: ~
   replicas: 1
   podLabels: {}
   resources: {}

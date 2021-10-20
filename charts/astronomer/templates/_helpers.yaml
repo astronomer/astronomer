@@ -79,6 +79,10 @@
 {{ default (printf "%s-houston-backend" .Release.Name) .Values.houston.backendSecretName }}
 {{- end }}
 
+{{ define "registry.authHeaderSecret" -}}
+{{ default (printf "%s-registry-auth-key" .Release.Name) .Values.registry.authHeaderSecretName }}
+{{- end }}
+
 {{ define "houston.airflowBackendSecret" -}}
 {{ default (printf "%s-houston-backend" .Release.Name) .Values.houston.airflowBackendSecretName }}
 {{- end }}
@@ -209,6 +213,11 @@ s3:
   value: {{ template "houston.nats.servers" . }}
 - name: NATS__CLUSTER_ID
   value: {{ .Release.Name }}-stan
+- name: REGISTRY__AUTH_HEADER
+  valueFrom:
+    secretKeyRef:
+      name: {{ template "registry.authHeaderSecret" . }}
+      key: token
 {{- end }}
 
 {{- define "houston_volume_mounts" }}
