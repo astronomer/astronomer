@@ -59,6 +59,11 @@ spec:
           image: {{ template  "registry.image" . }}
           imagePullPolicy: {{ .Values.images.registry.pullPolicy }}
           env:
+          - name: REGISTRY_NOTIFICATIONS_ENDPOINTS_0_HEADERS
+            valueFrom:
+              secretKeyRef:
+                name: {{ template "registry.authHeaderSecret" . }}
+                key: authHeaders
           - name: REGISTRY_HTTP_SECRET
             {{- if .Values.registry.httpSecret }}
             value: {{ .Values.registry.httpSecret }}
