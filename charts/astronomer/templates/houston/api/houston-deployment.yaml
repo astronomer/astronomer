@@ -54,6 +54,11 @@ spec:
                 secretKeyRef:
                   name: astronomer-bootstrap
                   key: connection
+            - name: REGISTRY__AUTH_HEADER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "registry.authHeaderSecret" . }}
+                  key: token
             {{- include "houston_environment" . | indent 12 }}
         - name: houston-bootstrapper
           image: {{ template "dbBootstrapper.image" . }}
