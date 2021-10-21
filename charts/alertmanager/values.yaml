@@ -20,7 +20,7 @@ resources: {}
   #  cpu: 100m
   #  memory: 128Mi
 
-replicas: 1
+replicas: 2
 
 dataDir: "/data"
 
