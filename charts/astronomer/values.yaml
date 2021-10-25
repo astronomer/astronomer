@@ -19,12 +19,12 @@ images:
     pullPolicy: IfNotPresent
   registry:
     repository: quay.io/astronomer/ap-registry
-    tag: 3.14.2
+    tag: 3.14.2-2
     pullPolicy: IfNotPresent
     # httpSecret: ~
   houston:
     repository: quay.io/astronomer/ap-houston-api
-    tag: 0.25.12
+    tag: 0.25.13
     pullPolicy: IfNotPresent
   astroUI:
     repository: quay.io/astronomer/ap-astro-ui
@@ -256,6 +256,8 @@ commander:
   upgradeTimeout: 300
 
 registry:
+  # k8s secret name for registry to use to authenticate to houston when sending notifications
+  authHeaderSecretName: ~
   replicas: 1
   podLabels: {}
   resources: {}
