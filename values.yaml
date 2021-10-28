@@ -77,6 +77,10 @@ global:
   # Enable security context constraints required for OpenShift
   sccEnabled: false
 
+  # Deploy auth sidecar to use openshift native features
+  authSidecar:
+    enabled: false
+
   # Enable values required for use with Microsoft Azure
   azure:
     enabled: false
