@@ -213,11 +213,6 @@ s3:
   value: {{ template "houston.nats.servers" . }}
 - name: NATS__CLUSTER_ID
   value: {{ .Release.Name }}-stan
-- name: REGISTRY__AUTH_HEADER
-  valueFrom:
-    secretKeyRef:
-      name: {{ template "registry.authHeaderSecret" . }}
-      key: token
 {{- end }}
 
 {{- define "houston_volume_mounts" }}
