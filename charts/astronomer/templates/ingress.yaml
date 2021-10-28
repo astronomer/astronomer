@@ -64,47 +64,5 @@ spec:
           backend:
             serviceName: {{ .Release.Name }}-cli-install
             servicePort: install-http
-  {{ else -}}
-  rules:
-  - host: {{ .Values.global.baseDomain }}
-    http:
-      paths:
-        - path: /
-          pathType: Prefix
-          backend:
-            service:
-              name: {{ .Release.Name }}-astro-ui
-              port:
-                name: astro-ui-http
-  - host: app.{{ .Values.global.baseDomain }}
-    http:
-      paths:
-        - path: /
-          pathType: Prefix
-          backend:
-            service:
-              name: {{ .Release.Name }}-astro-ui
-              port:
-                name: astro-ui-http
-  - host: registry.{{ .Values.global.baseDomain }}
-    http:
-      paths:
-        - path: /
-          pathType: Prefix
-          backend:
-            service:
-              name: {{ .Release.Name }}-registry
-              port:
-                name: registry-http
-  - host: install.{{ .Values.global.baseDomain }}
-    http:
-      paths:
-        - path: /
-          pathType: Prefix
-          backend:
-            service:
-              name: {{ .Release.Name }}-cli-install
-              port:
-                name: install-http
   {{- end -}}
 {{- end }}
