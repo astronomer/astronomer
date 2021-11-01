@@ -36,9 +36,10 @@ data:
             tier: airflow
             component: deployment
             workspace: {{ printf "%q" "{{ $labels.workspace }}" }}
-            deployment: {{ printf "%q" "{{ $labels.deployment }}" }}
+            # deployment label isn't populated by the query. However release and deployment are the same thing
+            deployment: {{ printf "%q" "{{ $labels.release }}" }}  
           annotations:
-            summary: {{ printf "%q" "{{ $labels.deployment }} deployment is unhealthy" }}
+            summary: {{ printf "%q" "{{ $labels.release }} deployment is unhealthy" }}
             description: {{ printf "%q" "The {{ $labels.deployment }} deployment is not completely available." }}
 
 
@@ -64,10 +65,11 @@ data:
             tier: airflow
             component: deployment
             workspace: {{ printf "%q" "{{ $labels.workspace }}" }}
-            deployment: {{ printf "%q" "{{ $labels.deployment }}" }}
+            # deployment label isn't populated by the query. However release and deployment are the same thing
+            deployment: {{ printf "%q" "{{ $labels.release }}" }}
           annotations:
-            summary: {{ printf "%q" "{{ $labels.deployment }} is near its pod quota" }}
-            description: {{ printf "%q" "{{ $labels.deployment }} has been using over 95% of its pod quota for over 10 minutes." }}
+            summary: {{ printf "%q" "{{ $labels.release }} is near its pod quota" }}
+            description: {{ printf "%q" "{{ $labels.release }} has been using over 95% of its pod quota for over 10 minutes." }}
 
         - alert: AirflowEphemeralStorageLimit
           expr: (container_fs_usage_bytes{pod_name=~".*(scheduler|webserver|worker).*"}) >= 1800000000
@@ -92,7 +94,7 @@ data:
             summary: {{ printf "%q" "{{ $labels.deployment }} is creating tasks faster than it's clearing them." }}
             description: {{ printf "%q" "{{ $labels.deployment }}: the number of pending tasks has been increasing for 30 minutes" }}
 
-        - alert: ContainerMemoryNearTheLimit
+        - alert: ContainerMemoryNearTheLimitInDeployment
           expr: |
             (container_memory_working_set_bytes{container=~".*(scheduler|scheduler-gc|webserver|worker|statsd|pgbouncer|metrics-exporter|redis|flower)", container_name!~"POD|istio-proxy"} /
             container_spec_memory_limit_bytes{container=~".*(scheduler|scheduler-gc|webserver|worker|statsd|pgbouncer|metrics-exporter|redis|flower)", container_name!~"POD|istio-proxy"}) * 100 > 80 < +Inf
@@ -101,10 +103,23 @@ data:
             tier: airflow
             component: container
             workspace: {{ printf "%q" "{{ $labels.workspace }}" }}
+            deployment: {{ printf "%q" "{{ $labels.deployment }}" }}
             severity: warning
           annotations:
             summary: "A container is using more than 80% of the memory limit"
             description: {{ printf "%q" "container {{ $labels.container }} in pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is using {{ printf \"%.2f\" $value }}% of available memory." }}
+
+        - alert: CpuThrottlingInDeployment
+          expr: 100 * (increase(container_cpu_cfs_throttled_periods_total{namespace!="{{ .Release.Name }}", container_name!~".*worker.*|()"}[5m]) / increase(container_cpu_cfs_periods_total{namespace!="{{ .Release.Name }}", namespace != "kube-system", container_name!~".*worker.*|()"}[5m])) > 75
+          for: 5m
+          labels:
+            tier: airflow
+            workspace: {{ printf "%q" "{{ $labels.workspace }}" }}
+            deployment: {{ printf "%q" "{{ $labels.deployment }}" }}
+            severity: warning
+          annotations:
+            summary: {{ printf "%q" "{{ $labels.pod_name }} ({{ $labels.container_name }}) in namespace {{ $labels.namespace }} is getting throttled {{ $value }}% of the time" }}
+            description: "In the past 5 minutes, one or more components in the deployment are experiencing CPU throttling."
 
       - name: platform
         rules:
@@ -903,9 +918,9 @@ data:
             summary: 'CPU Throttling high in pod {{`{{$labels.pod }}`}}'
             runbook_url:
           expr: |
-            sum(increase(container_cpu_cfs_throttled_periods_total{container!="", namespace!~"^{{ .Release.Namespace }}-.*$", namespace != "kube-system"}[5m])) by (container, pod, namespace)
+            sum(increase(container_cpu_cfs_throttled_periods_total{container!="", namespace!~"{{ .Release.Namespace }}", namespace != "kube-system"}[5m])) by (container, pod, namespace)
               /
-            sum(increase(container_cpu_cfs_periods_total{container!="", namespace!~"^{{ .Release.Namespace }}-.*$", namespace != "kube-system"}[5m])) by (container, pod, namespace)
+            sum(increase(container_cpu_cfs_periods_total{container!="", namespace!~"{{ .Release.Namespace }}", namespace != "kube-system"}[5m])) by (container, pod, namespace)
               > ( 51 / 100 )
           for: 15m
           labels:

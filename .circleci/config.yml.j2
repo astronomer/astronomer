@@ -3,7 +3,7 @@ version: 2.1
 jobs:
   lint:
     docker:
-      - image: astronomerio/ap-build:0.1.3
+      - image: quay.io/astronomer/ap-build:0.1.5
     steps:
       - checkout
       - run:
@@ -13,17 +13,25 @@ jobs:
           name: Lint the Astronomer chart
           command: export PATH=/tmp/bin:$PATH make lint
 
-  build-artifact:
+  unittest-charts:
     docker:
-      - image: astronomerio/ap-build:0.1.3
+      - image: quay.io/astronomer/ap-build:0.1.5
     steps:
       - checkout
       - run:
-          name: Install ci tools
-          command: ./bin/install-ci-tools 1
+          name: unittest the Astronomer chart
+          command: make unittest-charts
+
+  build-artifact:
+    docker:
+      - image: quay.io/astronomer/ap-build:0.1.5
+    steps:
+      - checkout
       - run:
           name: Package the Astronomer chart
-          command: make build
+          command: |
+            source ./bin/install-ci-tools 1
+            make build
       - persist_to_workspace:
           root: '.'
           paths:
@@ -31,7 +39,7 @@ jobs:
 
   release-to-internal:
     machine:
-      image: ubuntu-1604:202004-01
+      image: ubuntu-2004:202008-01
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -39,14 +47,13 @@ jobs:
       - run:
           name: Release the Astronomer chart to internal
           command: |
-            set -e
-            sudo apt-get update && sudo apt-get install -y ca-certificates curl
-            pyenv global 2.7.17
+            set -xe
+            pyenv global 3.8.5
             bin/release-helm-chart /tmp/workspace/astronomer-*.tgz
 
   release-to-public:
     machine:
-      image: ubuntu-1604:202004-01
+      image: ubuntu-2004:202008-01
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -54,15 +61,14 @@ jobs:
       - run:
           name: Release the Astronomer chart to prod
           command: |
-            set -e
-            sudo apt-get update && sudo apt-get install -y ca-certificates curl
-            pyenv global 2.7.17
+            set -xe
+            pyenv global 3.8.5
             bin/release-helm-chart -p /tmp/workspace/astronomer-*.tgz
       - publish-github-release
 {% for version in kube_versions %}
   platform-{{ version | replace(".", "-") }}:
     machine:
-      image: ubuntu-1604:202004-01
+      image: ubuntu-2004:202008-01
       resource_class: xlarge
     environment:
       KUBE_VERSION: v{{ version }}
@@ -73,23 +79,33 @@ jobs:
 
 workflows:
   version: 2.1
-  install-helm-tags:
+  build-and-release-helm-chart:
     jobs:
       - lint
+      - unittest-charts
       - build-artifact:
           requires:
             - lint
-{% for version in kube_versions %}
+            - unittest-charts
+
+      - test-all-platforms:
+          type: approval
+{% for version in kube_versions %}{% if version == kube_versions[-1:][0] %}
       - platform-{{ version | replace(".", "-") }}:
           requires:
             - build-artifact
-{% endfor %}
+{%- else %}
+      - platform-{{ version | replace(".", "-") }}:
+          requires:
+            - test-all-platforms
+            - build-artifact
+{% endif %}{% endfor %}
+
       - approve-internal-release:
           type: approval
           requires:
-{% for version in kube_versions %}
+{%- for version in kube_versions %}
             - platform-{{ version | replace(".", "-") }}{% endfor %}
-
           filters:
             branches:
               only:
@@ -148,6 +164,6 @@ commands:
           name: Create a release on GitHub
           command: |
             set -xe
-            pyenv global 3.8.2
+            pyenv global 3.8.5
             pip install astronomer_e2e_test
             astronomer-ci publish-github-release --github-repository $CIRCLE_PROJECT_REPONAME --github-organization $CIRCLE_PROJECT_USERNAME --commitish $CIRCLE_SHA1

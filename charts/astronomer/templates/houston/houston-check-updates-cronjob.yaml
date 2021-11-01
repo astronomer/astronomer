@@ -45,8 +45,10 @@ spec:
               args: ["yarn", "check-platfrom-updates", "--", " --url={{ .Values.houston.updateCheck.url }}"]
               volumeMounts:
                 {{- include "houston_volume_mounts" . | indent 16 }}
+                {{- include "custom_ca_volume_mounts" . | indent 16 }}
               env:
                 {{- include "houston_environment" . | indent 16 }}
           volumes:
             {{- include "houston_volumes" . | indent 12 }}
+            {{- include "custom_ca_volumes" . | indent 12 }}
 {{- end }}

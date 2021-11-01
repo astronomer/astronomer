@@ -91,6 +91,12 @@ data:
         - version: 1.10.5
           channel: stable
           tag: 1.10.5-10-buster-onbuild
+        - version: 1.10.5
+          channel: stable
+          tag: 1.10.5-11-alpine3.10-onbuild
+        - version: 1.10.5
+          channel: stable
+          tag: 1.10.5-11-buster-onbuild
         - version: 1.10.7
           channel: stable
           tag: 1.10.7-alpine3.10-onbuild
@@ -145,6 +151,12 @@ data:
         - version: 1.10.7
           channel: stable
           tag: 1.10.7-15-buster-onbuild
+        - version: 1.10.7
+          channel: stable
+          tag: 1.10.7-16-alpine3.10-onbuild
+        - version: 1.10.7
+          channel: stable
+          tag: 1.10.7-16-buster-onbuild
         - version: 1.10.10
           channel: stable
           tag: 1.10.10-alpine3.10-onbuild
@@ -181,12 +193,27 @@ data:
         - version: 1.10.10
           channel: stable
           tag: 1.10.10-5-buster-onbuild
+        - version: 1.10.10
+          channel: stable
+          tag: 1.10.10-6-alpine3.10-onbuild
+        - version: 1.10.10
+          channel: stable
+          tag: 1.10.10-6-buster-onbuild
         - version: 1.10.12
           channel: stable
           tag: 1.10.12-1-alpine3.10-onbuild
         - version: 1.10.12
           channel: stable
           tag: 1.10.12-1-buster-onbuild
+        - version: 1.10.12
+          channel: stable
+          tag: 1.10.12-2-alpine3.10-onbuild
+        - version: 1.10.12
+          channel: stable
+          tag: 1.10.12-2-buster-onbuild
+        - version: 1.10.14
+          channel: stable
+          tag: 1.10.14-1-buster-onbuild
 
       # Kubernetes labels to add on each airflow deployment namespace
       namespaceLabels:
@@ -314,7 +341,7 @@ data:
           tolerations: []
 
         # This is here for upgrading to 0.11.0+ of Airflow.
-        defaultAirflowRepository: astronomerinc/ap-airflow
+        defaultAirflowRepository: quay.io/astronomer/ap-airflow
 
         # This is here for upgrading to 0.11.1+ of Airflow.
         data:

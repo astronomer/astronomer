@@ -12,7 +12,7 @@ strategy:
   type: RollingUpdate
 
 image:
-  repository: astronomerinc/ap-blackbox-exporter
+  repository: quay.io/astronomer/ap-blackbox-exporter
   tag: 0.16.0
   pullPolicy: IfNotPresent
 

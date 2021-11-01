@@ -42,8 +42,10 @@ spec:
               args: ["yarn", "expire-deployments", "--", "--dry-run={{ .Values.houston.expireDeployments.dryRun }}", "--canary={{ .Values.houston.expireDeployments.canary }}"]
               volumeMounts:
                 {{- include "houston_volume_mounts" . | indent 16 }}
+                {{- include "custom_ca_volume_mounts" . | indent 16 }}
               env:
                 {{- include "houston_environment" . | indent 16 }}
           volumes:
             {{- include "houston_volumes" . | indent 12 }}
+            {{- include "custom_ca_volumes" . | indent 12 }}
 {{- end }}

@@ -8,7 +8,7 @@
 replicaCount: 2
 
 image:
-  repository: astronomerinc/ap-postgres-exporter
+  repository: quay.io/astronomer/ap-postgres-exporter
   tag: 0.8.0
   pullPolicy: IfNotPresent
 

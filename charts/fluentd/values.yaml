@@ -4,7 +4,7 @@ tolerations: []
 
 images:
   fluentd:
-    repository: astronomerinc/ap-fluentd
+    repository: quay.io/astronomer/ap-fluentd
     tag: 1.9.2-r1
     pullPolicy: IfNotPresent
 

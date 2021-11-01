@@ -8,6 +8,18 @@ global:
   # Name of secret containing TLS certificate
   tlsSecret: ~
 
+  # List of secrets containing private CA certificates
+  privateCaCerts: []
+  # Most users with private CA will already have their node
+  # images created including the cert to trust in the appropriate
+  # location. If not, it is necessary to configure Docker (or containerd)
+  # on all nodes to trust the private root CA. This will allow
+  # kubelet to pull from the Astronomer registry that has been signed
+  # by the same private CA.
+  privateCaCertsAddToHost:
+    enabled: false
+    hostDirectory: /etc/docker/certs.d
+
   # Use kube-lego
   acme: false
 

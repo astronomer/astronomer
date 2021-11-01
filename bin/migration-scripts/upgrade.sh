@@ -271,7 +271,7 @@ function main {
   echo "curl -sSL https://install.astronomer.io | sudo bash -s -- v0.12.0"
   echo ""
   echo "Please Upgrade your Airflow version by changing your Dockerfile:"
-  echo "FROM astronomerinc/ap-airflow:1.10.7-alpine3.10-onbuild"
+  echo "FROM quay.io/astronomer/ap-airflow:1.10.7-alpine3.10-onbuild"
 }
 
 main $1 $2

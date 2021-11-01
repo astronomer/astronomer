@@ -65,14 +65,6 @@
 {{- end }}
 {{- end }}
 
-{{ define "e2eTest.image" -}}
-{{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/ap-e2e-test:{{ .Values.images.e2eTest.tag }}
-{{- else -}}
-{{ .Values.images.e2eTest.repository }}:{{ .Values.images.e2eTest.tag }}
-{{- end }}
-{{- end }}
-
 {{ define "registry.docker.config" -}}
   {{- $domain := printf "registry.%v" .Values.global.baseDomain }}
   {{- $email := printf "admin@%v" .Values.global.baseDomain }}
@@ -280,5 +272,25 @@ s3:
 - name: registry-tls-volume
   secret:
     secretName: {{ .Values.global.tlsSecret }}
+{{- end }}
+{{- end }}
+
+{{- define "custom_ca_volume_mounts" }}
+{{ if .Values.global.privateCaCerts }}
+{{ range $secret_name := (.Values.global.privateCaCerts) }}
+- name: {{ $secret_name }}
+  mountPath: /usr/local/share/ca-certificates/{{ $secret_name }}.pem
+  subPath: cert.pem
+{{- end }}
+{{- end }}
+{{- end }}
+
+{{- define "custom_ca_volumes"}}
+{{ if .Values.global.privateCaCerts }}
+{{ range .Values.global.privateCaCerts }}
+- name: {{ . }}
+  secret:
+    secretName: {{ . }}
+{{- end }}
 {{- end }}
 {{- end }}

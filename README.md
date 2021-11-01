@@ -11,7 +11,7 @@ Astronomer is a commercial "Airflow as a Service" platform that runs on Kubernet
 ## Docker images
 
 Docker images for deploying and running Astronomer are currently available on
-[DockerHub](https://hub.docker.com/u/astronomerinc/).
+[Quay.io](https://quay.io/astronomer/)
 
 ## Documentation
 
@@ -113,4 +113,4 @@ bin/drain.sh
 
 ## License
 
-Usage of Astronomer code requires an [Astronomer Platform Enterprise Edition license](https://github.com/astronomer/astronomer/blob/master/LICENSE).
+The code in this repo is licensed Apache 2.0 with Commons Clause, however it installs Astronomer components that have a commercial license, and requires a commercial subscription from Astronomer, Inc.

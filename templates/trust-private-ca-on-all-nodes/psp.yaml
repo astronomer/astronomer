@@ -1,0 +1,31 @@
+{{- if .Values.global.pspEnabled }}
+{{- if .Values.global.privateCaCertsAddToHost.enabled }}
+################################
+## Private CA PSP
+#################################
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: {{ .Release.Name }}-private-ca
+spec:
+  privileged: false
+  allowPrivilegeEscalation: false
+  volumes:
+  - 'secret'
+  - 'emptyDir'
+  allowedHostPaths:
+    - pathPrefix: {{ .Values.global.privateCaCertsAddToHost.hostDirectory }}
+  hostNetwork: false
+  hostIPC: false
+  hostPID: false
+  runAsUser:
+    rule: 'RunAsAny'
+  seLinux:
+    rule: 'RunAsAny'
+  supplementalGroups:
+    rule: 'RunAsAny'
+  fsGroup:
+    rule: 'RunAsAny'
+  readOnlyRootFilesystem: false
+{{- end -}}
+{{- end -}}
