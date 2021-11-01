@@ -19,11 +19,11 @@ images:
     pullPolicy: IfNotPresent
   registry:
     repository: astronomerinc/ap-registry
-    tag: 3.11.5-4
+    tag: 3.14.2-2
     pullPolicy: IfNotPresent
   houston:
-    repository: astronomerinc/ap-houston-api
-    tag: 0.16.14
+    repository: asoldatenko/ap-houston-api
+    tag: test-r16
     pullPolicy: IfNotPresent
   astroUI:
     repository: astronomerinc/ap-astro-ui
