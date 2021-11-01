@@ -17,7 +17,7 @@ def _base64(string):
 class TestExternalElasticSearch:
 
     def test_externalelasticsearch_with_secret(self, kube_version):
-        """Test External ElasticSearch with secret passed from chart."""
+        """Test External ElasticSearch with secret passed from config/values.yaml."""
         docs = render_chart(
             kube_version=kube_version,
             values={
@@ -78,7 +78,7 @@ class TestExternalElasticSearch:
 
 
     def test_externalelasticsearch_with_awsSecretName(self, kube_version):
-        """Test External ElasticSearch with secret passed as kubernetes secrets."""
+        """Test External ElasticSearch with aws secret passed as kubernetes secret."""
         docs = render_chart(
             kube_version=kube_version,
             values={
@@ -109,7 +109,7 @@ class TestExternalElasticSearch:
 
 
     def test_externalelasticsearch_with_awsIAMRole(self, kube_version):
-        """Test External ElasticSearch with secret passed as kubernetes secrets."""
+        """Test External ElasticSearch with iam roles passed as Deployment annotation."""
         docs = render_chart(
             kube_version=kube_version,
             values={
