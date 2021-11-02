@@ -22,11 +22,13 @@ class TestExternalElasticSearch:
             kube_version=kube_version,
             values={"global": {"custom_logging": {"enabled": True, "secret": secret}}},
             show_only=[
-                "charts/external-es-proxy/templates/external-es-proxy-deployment.yaml"
+                "charts/external-es-proxy/templates/external-es-proxy-deployment.yaml",
+                "charts/external-es-proxy/templates/external-es-proxy-env-configmap.yaml",
+                "charts/external-es-proxy/templates/external-es-proxy-configmap.yaml"
             ],
         )
 
-        assert len(docs) == 1
+        assert len(docs) == 3
         doc = docs[0]
         assert doc["kind"] == "Deployment"
         assert doc["apiVersion"] == "apps/v1"
@@ -44,11 +46,13 @@ class TestExternalElasticSearch:
                 }
             },
             show_only=[
-                "charts/external-es-proxy/templates/external-es-proxy-deployment.yaml"
+                "charts/external-es-proxy/templates/external-es-proxy-deployment.yaml",
+                "charts/external-es-proxy/templates/external-es-proxy-env-configmap.yaml",
+                "charts/external-es-proxy/templates/external-es-proxy-configmap.yaml"
             ],
         )
 
-        assert len(docs) == 1
+        assert len(docs) == 3
         doc = docs[0]
         print(doc)
         assert doc["kind"] == "Deployment"
@@ -136,4 +140,38 @@ class TestExternalElasticSearch:
 
         assert "arn:aws:iam::xxxxxxxx:role/customrole" == jmespath.search(
             'spec.template.metadata.annotations."iam.amazonaws.com/role"', docs[0]
+        )
+
+    def test_externalelasticsearch_with_awsServiceAccountAnnotation(self, kube_version):
+        """Test External ElasticSearch with eks iam roles passed as Service Account Annotation."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "custom_logging": {
+                        "enabled": True,
+                        "scheme": "https",
+                        "host": "esdemo.example.com",
+                        "awsServiceAccountAnnotation": "arn:aws:iam::xxxxxxxx:role/customrole",
+                    }
+                }
+            },
+            show_only=[
+                "charts/external-es-proxy/templates/external-es-proxy-deployment.yaml",
+                "charts/external-es-proxy/templates/external-es-proxy-serviceaccount.yaml"
+
+            ],
+        )
+
+        assert len(docs) == 2
+        doc = docs[0]
+        expected_env = [{"name": "ENDPOINT", "value": "https://esdemo.example.com"}]
+
+        assert expected_env == doc["spec"]["template"]["spec"]["containers"][1]["env"]
+
+
+        doc = docs[1]
+
+        assert "arn:aws:iam::xxxxxxxx:role/customrole" == jmespath.search(
+            'metadata.annotations."eks.amazonaws.com/role-arn"', doc
         )
