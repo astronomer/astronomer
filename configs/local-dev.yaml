@@ -1,7 +1,7 @@
 ############################
 ## Astronomer configuration
 ## For local Kubernetes development
-## There should be an A record on *.local.astronomer-development.com
+## There should be an A record on *.localtest.me
 ## with the value 127.0.0.1 and you should set up
 ## the secrets and TLS cert normally.
 ############################
@@ -16,7 +16,7 @@ tags:
 
 global:
   # Base domain for all subdomains exposed through ingress
-  baseDomain: local.astronomer-development.com
+  baseDomain: localtest.me
 
   # Name of secret containing TLS certificate
   tlsSecret: astronomer-tls
