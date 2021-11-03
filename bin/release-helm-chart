@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# shellcheck disable=SC1090
+# shellcheck disable=SC1090,SC1091
 set -eo pipefail
 
 help() {
@@ -53,6 +53,14 @@ else
   target_env="helm-dev"
 fi
 
+echo "${GCP_TOKEN}" > /tmp/gcs_token.json
+gcloud auth activate-service-account --key-file=/tmp/gcs_token.json
+
+if gsutil -q stat "gs://${target_repo}/${helm_chart_path##*/}" ; then
+  echo "ABORT: destination file ${helm_chart_path##*/} already exists. Did you forget to bump the chart version number in both Chart.yaml and charts/astronomer/Chart.yaml?"
+  exit 1
+fi
+
 pre-flight-setup() {
   # Set script_path to the path of this script
   script_path="${0%/*}"
@@ -78,10 +86,6 @@ pre-flight-setup() {
 
   # This is needed to avoid using the CI's built-in gcloud configurations.
   export BOTO_CONFIG=/dev/null
-
-  set +x
-  echo "${GCP_TOKEN}" > /tmp/gcs_token.json
-  gcloud auth activate-service-account --key-file=/tmp/gcs_token.json
 }
 
 process_and_release_chart_file() {
@@ -104,7 +108,7 @@ process_and_release_chart_file() {
   helm repo index . --url "https://${target_repo}" --merge /tmp/index.yaml.current
 
   gsutil cp "$helm_chart_path" "gs://${target_repo}"
-  gsutil -h "Cache-Control: public, max-age=300" cp ./index.yaml "gs://${target_repo}"
+  gsutil -h "Cache-Control: public, max-age=${max_age}" cp ./index.yaml "gs://${target_repo}"
 
   set +x
   hr
@@ -118,6 +122,7 @@ release_to_dev() {
   # Copy the artifact
   cp "$helm_chart_path" .
 
+  max_age="30"
   process_and_release_chart_file
 }
 
@@ -128,6 +133,7 @@ release_to_pub() {
   # Fetch artifact from helm-dev
   wget "http://$dev_repo/${helm_chart_path##*/}"
 
+  max_age="300"
   process_and_release_chart_file
 }
 

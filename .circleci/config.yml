@@ -171,9 +171,12 @@ workflows:
                 - '/release-0\.\d+/'
 
       - release-to-internal:
+          context:
+            - gcp-astronomer-prod
           requires:
             - approve-internal-release
-
+            - platform-1-17-17
+            - platform-1-21-2
       - approve-public-release:
           type: approval
           requires:
