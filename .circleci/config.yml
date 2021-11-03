@@ -175,8 +175,7 @@ workflows:
             - gcp-astronomer-prod
           requires:
             - approve-internal-release
-            - platform-1-17-17
-            - platform-1-21-2
+            - platform-1-17-11
       - approve-public-release:
           type: approval
           requires:
