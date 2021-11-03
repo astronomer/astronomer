@@ -95,6 +95,11 @@ spec:
             failureThreshold: {{ .Values.houston.readinessProbe.failureThreshold }}
           env:
             {{- include "houston_environment" . | indent 12 }}
+            - name: REGISTRY__AUTH_HEADER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "registry.authHeaderSecret" . }}
+                  key: token
       volumes:
         {{- include "houston_volumes" . | indent 8 }}
         {{- include "custom_ca_volumes" . | indent 8 }}

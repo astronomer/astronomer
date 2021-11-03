@@ -50,6 +50,12 @@ spec:
         - name: registry
           image: {{ template  "registry.image" . }}
           imagePullPolicy: {{ .Values.images.registry.pullPolicy }}
+          env:
+            - name: REGISTRY_NOTIFICATIONS_ENDPOINTS_0_HEADERS
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "registry.authHeaderSecret" . }}
+                  key: authHeaders
           resources:
 {{ toYaml .Values.registry.resources | indent 12 }}
           volumeMounts:

@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-export KUBE_VERSION="${KUBE_VERSION:-v1.15.6}"
+export KUBE_VERSION="${KUBE_VERSION:-v1.18.19}"
+
 
 # Bit of common bash magic that sets DIR to the directory of this script
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"

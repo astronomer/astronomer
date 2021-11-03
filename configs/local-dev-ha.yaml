@@ -16,7 +16,7 @@ tags:
 
 global:
   # Base domain for all subdomains exposed through ingress
-  baseDomain: local.astronomer-development.com
+  baseDomain: localtest.me
 
   # Name of secret containing TLS certificate
   tlsSecret: astronomer-tls
