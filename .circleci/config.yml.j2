@@ -112,6 +112,8 @@ workflows:
                 - '/release-0\.\d+/'
 
       - release-to-internal:
+          context:
+            - gcp-astronomer-prod
           requires:
             - approve-internal-release
 
@@ -126,6 +128,9 @@ workflows:
                 - '/release-0\.(12|13|14|15|16)/'
 
       - release-to-public:
+          context:
+            - gcp-astronomer-prod
+            - github-repo
           requires:
             - approve-public-release
           filters:
