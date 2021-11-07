@@ -42,9 +42,6 @@
                           "type": "object",
                           "additionalProperties": false,
                           "properties": {
-                            "affinity": {
-                              "type": "object"
-                            },
                             "autoscaling": {
                               "type": "object",
                               "additionalProperties": false,
@@ -65,24 +62,6 @@
                                   "type": "integer"
                                 }
                               }
-                            },
-                            "extraContainers": {
-                              "type": "array"
-                            },
-                            "extraInitContainers": {
-                              "type": "array"
-                            },
-                            "extraVolumeMounts": {
-                              "type": "array"
-                            },
-                            "extraVolumes": {
-                              "type": "array"
-                            },
-                            "nodeSelector": {
-                              "type": "object"
-                            },
-                            "tolerations": {
-                              "type": "object"
                             }
                           }
                         }
