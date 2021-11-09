@@ -246,7 +246,7 @@ data:
           # to cleanup evicted/failed/succeeded pods.
           cleanup:
             enabled: true
-            schedule: "*/15 * * * *"
+            schedule: "9-59/15 * * * *"
             command:
             - airflow-cleanup-pods
             - --namespace={{`{{ .Release.Namespace }}`}}
