@@ -128,7 +128,7 @@ gch tags/helm-chart/1.2.0
 ag "\.Values\.\w+" -o --no-filename --no-numbers | sort | uniq
 ```
 
-The values output by this command will need to be inserted manually into astronomer/values.schema.json at the astronomer.houston.config.deployments.helm.airflow.allOf parameter. There are two additional params that need to be at this location outisde of what is returned from above. They are podMutation and useAstroSecurityManager. These can be found by running the same ag command against the astronomer/airflow-chart values.yaml file.
+The values output by this command will need to be inserted manually into astronomer/values.schema.json at the `astronomer.houston.config.deployments.helm.airflow.allOf` parameter. There are two additional params that need to be at this location outside of what is returned from above. They are `podMutation` and `useAstroSecurityManager`. These can be found by running the same ag command against the astronomer/airflow-chart values.yaml file.
 
 ## License
 
