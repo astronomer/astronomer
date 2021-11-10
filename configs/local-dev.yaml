@@ -70,10 +70,6 @@ astronomer:
         memory: "0Mi"
 
     config:
-      deployments:
-        helm:
-          airflow:
-            ABadValue: "kdashkdhas"
       emailConfirmation: false
       auth:
         local:
