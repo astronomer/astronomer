@@ -75,6 +75,7 @@
                                 "tolerations": {},
                                 "triggerer": {},
                                 "uid": {},
+                                "useAstroSecurityManager": {},
                                 "webserver": {},
                                 "webserverSecretKey": {},
                                 "webserverSecretKeySecretName": {},
