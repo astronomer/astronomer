@@ -19,7 +19,7 @@
                       "properties": {
                         "airflow": {
                           "allOf": [
-                            {"$ref": "https://github.com/apache/airflow/blob/helm-chart/1.3.0/chart/values.schema.json"},
+                            {"$ref": "https://raw.githubusercontent.com/apache/airflow/helm-chart/1.3.0/chart/values.schema.json"},
                             {
                               "additionalProperties": false,
                               "properties": {
