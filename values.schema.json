@@ -63,6 +63,7 @@
                                 "nodeSelector": {},
                                 "pgbouncer": {},
                                 "podTemplate": {},
+                                "podMutation": {},
                                 "ports": {},
                                 "postgresql": {},
                                 "quotas": {},
