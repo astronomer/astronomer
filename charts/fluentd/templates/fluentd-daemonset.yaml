@@ -60,6 +60,10 @@ spec:
           timeoutSeconds: {{ .Values.livenessProbeConfig.timeoutSeconds }}
         imagePullPolicy: {{ .Values.images.fluentd.pullPolicy }}
         env:
+        - name: K8S_NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
         - name: FLUENTD_ARGS
           value: --no-supervisor -q
         {{- if .Values.global.custom_logging.enabled }}

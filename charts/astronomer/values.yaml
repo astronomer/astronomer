@@ -5,7 +5,7 @@
 # This version number controls the default Airflow chart version that will be installed
 # when creating a new deployment in the system. This is also used to ensure all
 # child airflow deployments are kept up to date and on the latest version.
-airflowChartVersion: 1.0.3
+airflowChartVersion: 1.0.4
 
 nodeSelector: {}
 affinity: {}
@@ -15,20 +15,20 @@ tolerations: []
 images:
   commander:
     repository: quay.io/astronomer/ap-commander
-    tag: 0.26.2
+    tag: 0.26.4
     pullPolicy: IfNotPresent
   registry:
     repository: quay.io/astronomer/ap-registry
-    tag: 3.14.2-1
+    tag: 3.14.2-2
     pullPolicy: IfNotPresent
     # httpSecret: ~
   houston:
     repository: quay.io/astronomer/ap-houston-api
-    tag: 0.26.4
+    tag: 0.27.0
     pullPolicy: IfNotPresent
   astroUI:
     repository: quay.io/astronomer/ap-astro-ui
-    tag: 0.26.6
+    tag: 0.27.0
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
@@ -256,6 +256,8 @@ commander:
   upgradeTimeout: 300
 
 registry:
+  # k8s secret name for registry to use to authenticate to houston when sending notifications
+  authHeaderSecretName: ~
   replicas: 1
   podLabels: {}
   resources: {}
@@ -307,7 +309,7 @@ registry:
 
 install:
   resources: {}
-  cliVersion: 0.25.5
+  cliVersion: 0.26.0
   #  limits:
   #   cpu: 100m
   #   memory: 128Mi
