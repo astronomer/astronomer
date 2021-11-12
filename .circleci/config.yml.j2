@@ -8,7 +8,7 @@ executors:
 jobs:
   run_pre_commit:
     docker:
-      - image: quay.io/astronomer/ci-pre-commit:2021-08
+      - image: quay.io/astronomer/ci-pre-commit:2021-09
     steps:
       - checkout
       - run:
@@ -43,7 +43,7 @@ jobs:
 
   unittest-charts:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2021-08
+      - image: quay.io/astronomer/ci-helm-release:2021-09
     steps:
       - checkout
       - run:
@@ -86,7 +86,7 @@ jobs:
 
   release-to-internal:
     machine:
-      image: ubuntu-2004:202104-01
+      image: ubuntu-2004:202107-02
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -101,7 +101,7 @@ jobs:
 
   release-to-public:
     machine:
-      image: ubuntu-2004:202104-01
+      image: ubuntu-2004:202107-02
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -117,7 +117,7 @@ jobs:
 {% for version in kube_versions %}
   platform-{{ version | replace(".", "-") }}:
     machine:
-      image: ubuntu-2004:202104-01
+      image: ubuntu-2004:202107-02
       resource_class: xlarge
     environment:
       KUBE_VERSION: v{{ version }}

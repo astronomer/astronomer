@@ -116,6 +116,20 @@ After the platform is up, then do
 bin/drain.sh
 ```
 
+#### How to upgrade airflow chart json schema
+Everytime we upgrade the airflow chart we will also need to update the json schema file with the list of acceptable top level params (eventually this will be fixed on the OSS side but for now this needs to be a manual step https://github.com/astronomer/issues/issues/3774). Additionally the json schema url will need to be updated to something of the form https://raw.githubusercontent.com/apache/airflow/helm-chart/1.x.x/chart/values.schema.json. This param is found in astronomer/values.schema.json at the astronomer.houston.config.deployments.helm.airflow.$ref parameter
+
+To get a list of the top level params it is best to switch to the apache/airflow tagged commit for that chart release. Then run the ag command to get a list of all top level params.
+
+Example:
+
+```
+gch tags/helm-chart/1.2.0
+ag "\.Values\.\w+" -o --no-filename --no-numbers | sort | uniq
+```
+
+The values output by this command will need to be inserted manually into astronomer/values.schema.json at the `astronomer.houston.config.deployments.helm.airflow.allOf` parameter. There are two additional params that need to be at this location outside of what is returned from above. They are `podMutation` and `useAstroSecurityManager`. These can be found by running the same ag command against the astronomer/airflow-chart values.yaml file.
+
 ## License
 
 The code in this repo is licensed Apache 2.0 with Commons Clause, however it installs Astronomer components that have a commercial license, and requires a commercial subscription from Astronomer, Inc.
