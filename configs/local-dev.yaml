@@ -29,8 +29,7 @@ global:
     replicas: 1
     enabled: true
   ssl:
-    enabled: true
-    mode: "prefer"
+    enabled: false
   # Custom CA TLS certificates
   # Each secret must have one data entry 'cert.pem'
   privateCaCerts:
