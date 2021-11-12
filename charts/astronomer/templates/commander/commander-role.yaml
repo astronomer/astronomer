@@ -114,8 +114,10 @@ rules:
 - apiGroups: ["networking.k8s.io"]
   resources: ["networkpolicies"]
   verbs: ["create", "delete", "get", "patch"]
+{{ if $clusterRoles }}
 - nonResourceURLs: ["/metrics"]
   verbs: ["get"]
+{{ end }}
 - apiGroups: ["rbac.authorization.k8s.io"]
   resources: ["clusterrolebindings"]
   verbs: ["create", "delete", "get", "patch"]
