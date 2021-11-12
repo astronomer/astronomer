@@ -103,9 +103,6 @@
                         "sccEnabled": {
                           "type": "boolean"
                         },
-                        "sslmode": {
-                          "type": "string"
-                        },
                         "workers": {
                           "type": "object",
                           "additionalProperties": false,
