@@ -188,7 +188,7 @@ houston:
     enabled: true
 
     # url for update service
-    url: https://updates.astronomer.io/astronomer-certified
+    url: https://updates.astronomer.io/astronomer-certified-v2
 
     # Default here is to run at midnight every night
     schedule: "0 0 * * *"
