@@ -24,7 +24,7 @@ class TestExternalElasticSearch:
             show_only=[
                 "charts/external-es-proxy/templates/external-es-proxy-deployment.yaml",
                 "charts/external-es-proxy/templates/external-es-proxy-env-configmap.yaml",
-                "charts/external-es-proxy/templates/external-es-proxy-configmap.yaml"
+                "charts/external-es-proxy/templates/external-es-proxy-configmap.yaml",
             ],
         )
 
@@ -48,7 +48,7 @@ class TestExternalElasticSearch:
             show_only=[
                 "charts/external-es-proxy/templates/external-es-proxy-deployment.yaml",
                 "charts/external-es-proxy/templates/external-es-proxy-env-configmap.yaml",
-                "charts/external-es-proxy/templates/external-es-proxy-configmap.yaml"
+                "charts/external-es-proxy/templates/external-es-proxy-configmap.yaml",
             ],
         )
 
@@ -158,8 +158,7 @@ class TestExternalElasticSearch:
             },
             show_only=[
                 "charts/external-es-proxy/templates/external-es-proxy-deployment.yaml",
-                "charts/external-es-proxy/templates/external-es-proxy-serviceaccount.yaml"
-
+                "charts/external-es-proxy/templates/external-es-proxy-serviceaccount.yaml",
             ],
         )
 
@@ -168,7 +167,6 @@ class TestExternalElasticSearch:
         expected_env = [{"name": "ENDPOINT", "value": "https://esdemo.example.com"}]
 
         assert expected_env == doc["spec"]["template"]["spec"]["containers"][1]["env"]
-
 
         doc = docs[1]
 
