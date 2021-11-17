@@ -74,6 +74,11 @@ spec:
             - name: SSLMODE
               value: "require"
             {{- end }}
+            # Connection Limit for Prisma Connection Pool: https://www.prisma.io/docs/concepts/components/prisma-client/deployment#database-connection-limit
+            {{ if .Values.houston.prismaConnectionLimit }}
+            - name: PRISMA_CONNECTION_LIMIT
+              value: {{ .Values.houston.prismaConnectionLimit | quote }}
+            {{ end }}
             - name: DB_NAME
               value: {{ .Release.Name }}-houston
             - name: SECRET_NAME

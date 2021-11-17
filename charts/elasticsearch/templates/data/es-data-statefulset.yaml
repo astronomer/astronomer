@@ -171,7 +171,5 @@ spec:
       resources:
         requests:
           storage: {{ .Values.data.persistence.size }}
-    {{- if .Values.common.persistence.storageClassName }}
-      storageClassName: {{ .Values.common.persistence.storageClassName }}
-    {{- end }}
+      {{ include "elasticsearch.storageClass" . }}
   {{- end }}

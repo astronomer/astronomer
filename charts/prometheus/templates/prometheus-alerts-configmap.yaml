@@ -136,7 +136,7 @@ data:
             operator: {{ printf "%q" "{{ $labels.operator }}" }}
           annotations:
             summary: {{ printf "%q" "Across all deployments, {{ $labels.operator }} is failing {{ $value }}% of the time" }}
-            description: "This alarm is used to notify support if an external data source may be inoperational, but the query is subject to be incorrect for small sample sizes where a single deployment uses an operator more than the rest of deployments combined over the course of two hours"
+            description: "This alarm is used to notify support if an external data source may be inoperative, but the query is subject to be incorrect for small sample sizes where a single deployment uses an operator more than the rest of deployments combined over the course of two hours"
 
         - alert: ManyUnhealthySchedulers
           expr: count(rate(airflow_scheduler_heartbeat{}[1m]) <= 0) > 5
@@ -1342,6 +1342,16 @@ data:
 
       - name: Ingress
         rules:
+        - alert: NginxIngressHighAvgLatency
+          expr: >-
+            sum(rate(nginx_ingress_controller_request_duration_seconds_sum{host=~".*houston.*|.*app.*", status!="101"}[1m])) / sum(rate(nginx_ingress_controller_request_duration_seconds_count{host=~".*houston.*|.*app.*", status!="101"}[1m])) > 1
+          for: 3m
+          labels:
+            tier: platform
+            component: nginx
+          annotations:
+            summary: {{ printf "%q" "NGINX Ingress {{ $labels.ingress }} 1m latency is {{ printf \"%.2f\" $value }} seconds." }}
+            description: "This alert fires if the average latency measured on a time window of 1 minute was higher than 1 second for the last 3 minutes."
         - alert: NginxIngressHigh4XXRate
           expr: >-
             sum by (ingress) (rate(nginx_ingress_controller_requests{status=~"^4..", namespace="{{.Release.Namespace}}"}[5m])) / sum by (ingress) (rate(nginx_ingress_controller_requests{ingress!="", namespace="{{.Release.Namespace}}"}[5m])) * 100 > 5
@@ -1514,7 +1524,7 @@ data:
             component: postgresql
           annotations:
             summary: {{ printf "%q" "PostgreSQL is not processing queries: {{ $labels.instance }}" }}
-            description: {{ printf "%q" "{{ $labels.instance }} is rejecting query requests from the exporter, and thus probably not allowing DNS requests to work either. User services should not be effected provided at least 1 node is still alive." }}
+            description: {{ printf "%q" "{{ $labels.instance }} is rejecting query requests from the exporter, and thus probably not allowing DNS requests to work either. User services should not be affected provided at least 1 node is still alive." }}
 
         - alert: PostgreSQLSlowQueries
           expr: avg(rate(pg_stat_activity_max_tx_duration{datname!~"template.*"}[2m])) by (datname) > 2 * 60
