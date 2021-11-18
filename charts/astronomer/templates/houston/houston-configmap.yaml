@@ -68,6 +68,9 @@ data:
 
       # These values get passed directly into the airflow helm deployments
       helm:
+      {{- if and .Values.global.ssl.enabled .Values.global.ssl.mode }}
+        sslmode: {{ .Values.global.ssl.mode }}
+      {{- end }}
       {{- if .Values.global.sccEnabled }}
         # If security context constraints are enabled, enable SCCs for airflow-chart
         sccEnabled: true
