@@ -28,9 +28,6 @@ data:
         listen {{ .Values.service.securehttp }};
         auth_request /auth;
         proxy_http_version 1.1;
-        {{- if not .Values.global.istio.enabled }}
-        proxy_set_header Host $host;
-        {{- end }}
         proxy_set_header Connection "Keep-Alive";
         proxy_set_header Proxy-Connection "Keep-Alive";
 
