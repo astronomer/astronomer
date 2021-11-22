@@ -20,7 +20,7 @@ class TestExternalElasticSearch:
         """Test External ElasticSearch with secret passed from config/values.yaml."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"custom_logging": {"enabled": True, "secret": secret}}},
+            values={"global": {"customLogging": {"enabled": True, "secret": secret}}},
             show_only=[
                 "charts/external-es-proxy/templates/external-es-proxy-deployment.yaml",
                 "charts/external-es-proxy/templates/external-es-proxy-env-configmap.yaml",
@@ -42,7 +42,7 @@ class TestExternalElasticSearch:
             kube_version=kube_version,
             values={
                 "global": {
-                    "custom_logging": {"enabled": True, "secretName": "essecret"}
+                    "customLogging": {"enabled": True, "secretName": "essecret"}
                 }
             },
             show_only=[
@@ -77,7 +77,7 @@ class TestExternalElasticSearch:
             kube_version=kube_version,
             values={
                 "global": {
-                    "custom_logging": {
+                    "customLogging": {
                         "enabled": True,
                         "scheme": "https",
                         "host": "esdemo.example.com",
@@ -119,7 +119,7 @@ class TestExternalElasticSearch:
             kube_version=kube_version,
             values={
                 "global": {
-                    "custom_logging": {
+                    "customLogging": {
                         "enabled": True,
                         "scheme": "https",
                         "host": "esdemo.example.com",
@@ -148,7 +148,7 @@ class TestExternalElasticSearch:
             kube_version=kube_version,
             values={
                 "global": {
-                    "custom_logging": {
+                    "customLogging": {
                         "enabled": True,
                         "scheme": "https",
                         "host": "esdemo.example.com",

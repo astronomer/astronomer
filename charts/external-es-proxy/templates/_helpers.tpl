@@ -63,8 +63,8 @@ Create the name of the service account to use
 
 
 {{- define "external-es-proxy-trustcerts" -}}
-{{- if .Values.global.custom_logging.trustCaCerts  }}
-{{- $secret_name := .Values.global.custom_logging.trustCaCerts }}
+{{- if .Values.global.customLogging.trustCaCerts  }}
+{{- $secret_name := .Values.global.customLogging.trustCaCerts }}
   proxy_ssl_trusted_certificate /etc/ssl/certs/{{ $secret_name }}.pem;
   proxy_ssl_verify              on;
   proxy_ssl_verify_depth        2;

@@ -149,7 +149,7 @@ global:
       requests: {}
 
   # External ES logging
-  custom_logging:
+  customLogging:
     enabled: false
     scheme: https
     host: ""
@@ -158,7 +158,7 @@ global:
     #secretName: ~
     #awsSecretName: ~
     #awsIAMRole: ~
-    #awsserviceAccountAnnotation: ~
+    #awsServiceAccountAnnotation: ~
 
   ## Add annotations to all the auth sidecar deployed ingress resources
   ##
