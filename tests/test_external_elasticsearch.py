@@ -41,9 +41,7 @@ class TestExternalElasticSearch:
         docs = render_chart(
             kube_version=kube_version,
             values={
-                "global": {
-                    "customLogging": {"enabled": True, "secretName": "essecret"}
-                }
+                "global": {"customLogging": {"enabled": True, "secretName": "essecret"}}
             },
             show_only=[
                 "charts/external-es-proxy/templates/external-es-proxy-deployment.yaml",
