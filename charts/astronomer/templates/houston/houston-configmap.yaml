@@ -273,7 +273,7 @@ data:
         # logs with kubernetes metadata. In a single namespace environment, we're likely not
         # going to get a ClusterRole from admins.
 
-        {{- if .Values.global.custom_logging.enabled }}
+        {{- if .Values.global.customLogging.enabled }}
           elasticsearch:
             enabled: true
             connection:
@@ -287,7 +287,7 @@ data:
         log: error
     {{- end }}
 
-        {{- if and (not .Values.global.singleNamespace ) (not .Values.global.custom_logging.enabled ) }}
+        {{- if and (not .Values.global.singleNamespace ) (not .Values.global.customLogging.enabled ) }}
           elasticsearch:
             enabled: true
             connection:

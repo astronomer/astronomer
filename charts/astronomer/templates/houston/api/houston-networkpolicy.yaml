@@ -52,7 +52,7 @@ spec:
           tier: elasticsearch
           component: es-ingress-controller
           release: {{ .Release.Name }}
-    {{- if .Values.global.custom_logging.enabled  }}
+    {{- if .Values.global.customLogging.enabled  }}
     - podSelector:
         matchLabels:
           tier: external-logging

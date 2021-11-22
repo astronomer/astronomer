@@ -32,11 +32,11 @@ data:
         proxy_set_header Proxy-Connection "Keep-Alive";
 
         location ~ ^/ {
-          {{- if  or .Values.global.custom_logging.awsSecretName  .Values.global.custom_logging.awsServiceAccountAnnotation .Values.global.custom_logging.awsIAMRole }}
+          {{- if  or .Values.global.customLogging.awsSecretName  .Values.global.customLogging.awsServiceAccountAnnotation .Values.global.customLogging.awsIAMRole }}
           proxy_pass http://localhost:{{ .Values.service.awsproxy }};
           {{- else }}
           access_by_lua_file  /usr/local/openresty/nginx/conf/setenv.lua;
-          proxy_pass {{.Values.global.custom_logging.scheme}}://{{.Values.global.custom_logging.host}}:{{.Values.global.custom_logging.port}};
+          proxy_pass {{.Values.global.customLogging.scheme}}://{{.Values.global.customLogging.host}}:{{.Values.global.customLogging.port}};
           {{- include "external-es-proxy-trustcerts" . | indent 8 }}
           {{- end }}
         }
@@ -45,11 +45,11 @@ data:
           # This combined with disabling explicit index searching downstream
           # prevents any deployment from being able to query any other indexes.
           rewrite ^/(.*) /fluentd.$remote_user.*/$1 break;
-          {{- if  or .Values.global.custom_logging.awsSecretName  .Values.global.custom_logging.awsServiceAccountAnnotation .Values.global.custom_logging.awsIAMRole }}
+          {{- if  or .Values.global.customLogging.awsSecretName  .Values.global.customLogging.awsServiceAccountAnnotation .Values.global.customLogging.awsIAMRole }}
           proxy_pass http://localhost:{{ .Values.service.awsproxy }};
           {{- else }}
           access_by_lua_file  /usr/local/openresty/nginx/conf/setenv.lua;
-          proxy_pass {{.Values.global.custom_logging.scheme}}://{{.Values.global.custom_logging.host}}:{{.Values.global.custom_logging.port}};
+          proxy_pass {{.Values.global.customLogging.scheme}}://{{.Values.global.customLogging.host}}:{{.Values.global.customLogging.port}};
           {{- include "external-es-proxy-trustcerts" . | indent 8 }}
           {{- end }}
         }
@@ -68,11 +68,11 @@ data:
         proxy_set_header Proxy-Connection "Keep-Alive";
 
         location ~ ^/ {
-          {{- if  or .Values.global.custom_logging.awsSecretName  .Values.global.custom_logging.awsServiceAccountAnnotation .Values.global.custom_logging.awsIAMRole }}
+          {{- if  or .Values.global.customLogging.awsSecretName  .Values.global.customLogging.awsServiceAccountAnnotation .Values.global.customLogging.awsIAMRole }}
           proxy_pass http://localhost:{{ .Values.service.awsproxy }};
           {{- else }}
           access_by_lua_file  /usr/local/openresty/nginx/conf/setenv.lua;
-          proxy_pass {{.Values.global.custom_logging.scheme}}://{{.Values.global.custom_logging.host}}:{{.Values.global.custom_logging.port}};
+          proxy_pass {{.Values.global.customLogging.scheme}}://{{.Values.global.customLogging.host}}:{{.Values.global.customLogging.port}};
           {{- include "external-es-proxy-trustcerts" . | indent 8 }}
           {{- end }}
         }
