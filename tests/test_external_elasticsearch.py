@@ -7,10 +7,6 @@ import base64
 secret = base64.b64encode(b"sample-secret").decode()
 
 
-def _base64(string):
-    return base64.b64encode(string.encode()).decode()
-
-
 @pytest.mark.parametrize(
     "kube_version",
     supported_k8s_versions,
@@ -25,16 +21,31 @@ class TestExternalElasticSearch:
                 "charts/external-es-proxy/templates/external-es-proxy-deployment.yaml",
                 "charts/external-es-proxy/templates/external-es-proxy-env-configmap.yaml",
                 "charts/external-es-proxy/templates/external-es-proxy-configmap.yaml",
+                "charts/external-es-proxy/templates/external-es-proxy-service.yaml",
             ],
         )
 
-        assert len(docs) == 3
+        assert len(docs) == 4
         doc = docs[0]
         assert doc["kind"] == "Deployment"
         assert doc["apiVersion"] == "apps/v1"
         assert doc["metadata"]["name"] == "RELEASE-NAME-external-es-proxy"
         expected_env = [{"name": "ES_SECRET", "value": secret}]
         assert expected_env == doc["spec"]["template"]["spec"]["containers"][0]["env"]
+
+        assert "Service" == jmespath.search("kind", docs[3])
+        assert "RELEASE-NAME-external-es-proxy" == jmespath.search(
+            "metadata.name", docs[3]
+        )
+        assert "ClusterIP" == jmespath.search("spec.type", docs[3])
+        assert {
+            "name": "secure-http",
+            "protocol": "TCP",
+            "port": 9200,
+        } in jmespath.search("spec.ports", docs[3])
+        assert {"name": "http", "protocol": "TCP", "port": 9201} in jmespath.search(
+            "spec.ports", docs[3]
+        )
 
     def test_externalelasticsearch_with_secretname(self, kube_version):
         """Test External ElasticSearch with secret passed as kubernetes secrets."""
@@ -47,12 +58,12 @@ class TestExternalElasticSearch:
                 "charts/external-es-proxy/templates/external-es-proxy-deployment.yaml",
                 "charts/external-es-proxy/templates/external-es-proxy-env-configmap.yaml",
                 "charts/external-es-proxy/templates/external-es-proxy-configmap.yaml",
+                "charts/external-es-proxy/templates/external-es-proxy-service.yaml",
             ],
         )
 
-        assert len(docs) == 3
+        assert len(docs) == 4
         doc = docs[0]
-        print(doc)
         assert doc["kind"] == "Deployment"
         assert doc["apiVersion"] == "apps/v1"
         assert doc["metadata"]["name"] == "RELEASE-NAME-external-es-proxy"
@@ -69,6 +80,20 @@ class TestExternalElasticSearch:
         ]
         assert expected_env == doc["spec"]["template"]["spec"]["containers"][0]["env"]
 
+        assert "Service" == jmespath.search("kind", docs[3])
+        assert "RELEASE-NAME-external-es-proxy" == jmespath.search(
+            "metadata.name", docs[3]
+        )
+        assert "ClusterIP" == jmespath.search("spec.type", docs[3])
+        assert {
+            "name": "secure-http",
+            "protocol": "TCP",
+            "port": 9200,
+        } in jmespath.search("spec.ports", docs[3])
+        assert {"name": "http", "protocol": "TCP", "port": 9201} in jmespath.search(
+            "spec.ports", docs[3]
+        )
+
     def test_externalelasticsearch_with_awsSecretName(self, kube_version):
         """Test External ElasticSearch with aws secret passed as kubernetes secret."""
         docs = render_chart(
@@ -84,13 +109,13 @@ class TestExternalElasticSearch:
                 }
             },
             show_only=[
-                "charts/external-es-proxy/templates/external-es-proxy-deployment.yaml"
+                "charts/external-es-proxy/templates/external-es-proxy-deployment.yaml",
+                "charts/external-es-proxy/templates/external-es-proxy-service.yaml",
             ],
         )
 
-        assert len(docs) == 1
+        assert len(docs) == 2
         doc = docs[0]
-        print(doc)
         assert doc["kind"] == "Deployment"
         assert doc["apiVersion"] == "apps/v1"
         assert doc["metadata"]["name"] == "RELEASE-NAME-external-es-proxy"
@@ -111,6 +136,20 @@ class TestExternalElasticSearch:
         ]
         assert expected_env == doc["spec"]["template"]["spec"]["containers"][1]["env"]
 
+        assert "Service" == jmespath.search("kind", docs[1])
+        assert "RELEASE-NAME-external-es-proxy" == jmespath.search(
+            "metadata.name", docs[1]
+        )
+        assert "ClusterIP" == jmespath.search("spec.type", docs[1])
+        assert {
+            "name": "secure-http",
+            "protocol": "TCP",
+            "port": 9200,
+        } in jmespath.search("spec.ports", docs[1])
+        assert {"name": "http", "protocol": "TCP", "port": 9201} in jmespath.search(
+            "spec.ports", docs[1]
+        )
+
     def test_externalelasticsearch_with_awsIAMRole(self, kube_version):
         """Test External ElasticSearch with iam roles passed as Deployment annotation."""
         docs = render_chart(
@@ -126,11 +165,12 @@ class TestExternalElasticSearch:
                 }
             },
             show_only=[
-                "charts/external-es-proxy/templates/external-es-proxy-deployment.yaml"
+                "charts/external-es-proxy/templates/external-es-proxy-deployment.yaml",
+                "charts/external-es-proxy/templates/external-es-proxy-service.yaml",
             ],
         )
 
-        assert len(docs) == 1
+        assert len(docs) == 2
         doc = docs[0]
         expected_env = [{"name": "ENDPOINT", "value": "https://esdemo.example.com"}]
 
@@ -138,6 +178,20 @@ class TestExternalElasticSearch:
 
         assert "arn:aws:iam::xxxxxxxx:role/customrole" == jmespath.search(
             'spec.template.metadata.annotations."iam.amazonaws.com/role"', docs[0]
+        )
+
+        assert "Service" == jmespath.search("kind", docs[1])
+        assert "RELEASE-NAME-external-es-proxy" == jmespath.search(
+            "metadata.name", docs[1]
+        )
+        assert "ClusterIP" == jmespath.search("spec.type", docs[1])
+        assert {
+            "name": "secure-http",
+            "protocol": "TCP",
+            "port": 9200,
+        } in jmespath.search("spec.ports", docs[1])
+        assert {"name": "http", "protocol": "TCP", "port": 9201} in jmespath.search(
+            "spec.ports", docs[1]
         )
 
     def test_externalelasticsearch_with_awsServiceAccountAnnotation(self, kube_version):
@@ -157,10 +211,11 @@ class TestExternalElasticSearch:
             show_only=[
                 "charts/external-es-proxy/templates/external-es-proxy-deployment.yaml",
                 "charts/external-es-proxy/templates/external-es-proxy-serviceaccount.yaml",
+                "charts/external-es-proxy/templates/external-es-proxy-service.yaml",
             ],
         )
 
-        assert len(docs) == 2
+        assert len(docs) == 3
         doc = docs[0]
         expected_env = [{"name": "ENDPOINT", "value": "https://esdemo.example.com"}]
 
@@ -170,4 +225,18 @@ class TestExternalElasticSearch:
 
         assert "arn:aws:iam::xxxxxxxx:role/customrole" == jmespath.search(
             'metadata.annotations."eks.amazonaws.com/role-arn"', doc
+        )
+
+        assert "Service" == jmespath.search("kind", docs[2])
+        assert "RELEASE-NAME-external-es-proxy" == jmespath.search(
+            "metadata.name", docs[2]
+        )
+        assert "ClusterIP" == jmespath.search("spec.type", docs[2])
+        assert {
+            "name": "secure-http",
+            "protocol": "TCP",
+            "port": 9200,
+        } in jmespath.search("spec.ports", docs[2])
+        assert {"name": "http", "protocol": "TCP", "port": 9201} in jmespath.search(
+            "spec.ports", docs[2]
         )
