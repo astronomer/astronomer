@@ -4,10 +4,12 @@
 [ "$CIRCLECI" == true ] || { echo "ERROR: not running in CircleCI" ; exit 1 ; }
 
 STERN_VERSION=1.20.1
+NAMESPACE="${NAMESPACE:-astronomer}"
 
 cat >> "$HOME/.bashrc" <<EOF
 export PATH="/tmp/bin:/tmp/google-cloud-sdk/bin:$PATH"
-alias ka="kubectl -n astronomer"
+export NAMESPACE="${NAMESPACE:-astronomer}"
+alias ka="kubectl -n ${NAMESPACE}"
 alias k="kubectl"
 alias k-pods="kubectl get pods --sort-by=.metadata.creationTimestamp"
 EOF
