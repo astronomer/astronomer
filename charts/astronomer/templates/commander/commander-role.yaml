@@ -32,7 +32,7 @@ rules:
   verbs: ["create", "delete", "deletecollection", "get", "list", "patch", "update", "watch"]
 - apiGroups: [""]
   resources: ["namespaces"]
-  verbs: ["create", "delete", "deletecollection", "get", "list", "update", "watch"]
+  verbs: ["create", "delete", "deletecollection", "get", "list", "patch", "update", "watch"]
 - apiGroups: [""]
   resources: ["serviceaccounts"]
   verbs: ["create", "delete", "get", "patch"]
