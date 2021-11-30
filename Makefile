@@ -68,4 +68,4 @@ update-requirements: ## Update all requirements.txt files
 
 .PHONY: show-docker-images
 show-docker-images: ## Show all docker images and versions used in the helm chart
-	helm template . --set global.baseDomain=foo.com 2>/dev/null | awk '/image: / {match($$2, /(([^"]*):[^"]*)/, a) ; printf "https://%s %s\n", a[2], a[1] ;}' | sort -u | column -t
+	helm template . --set global.postgresqlEnabled=True --set global.baseDomain=foo.com 2>/dev/null | awk '/image: / {match($$2, /(([^"]*):[^"]*)/, a) ; printf "https://%s %s\n", a[2], a[1] ;}' | sort -u | column -t
