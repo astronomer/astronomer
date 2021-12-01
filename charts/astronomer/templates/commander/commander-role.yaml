@@ -1,6 +1,6 @@
-################################
+########################################
 ## Astronomer Commander Role/ClusterRole
-#################################
+########################################
 {{- $singleNamespace := .Values.global.singleNamespace }}
 {{- $clusterRoles:= .Values.global.clusterRoles }}
 {{- if and .Values.global.rbacEnabled }}

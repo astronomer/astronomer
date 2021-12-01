@@ -12,6 +12,7 @@ fi
 BIN_DIR="${0%/*}"
 
 HOST="https://houston.localtest.me/v1"
+NAMESPACE="${NAMESPACE:-astronomer}"
 
 USER="$1"
 PASS="$2"
@@ -20,13 +21,13 @@ PASS="$2"
 export KUBECONFIG="$HOME/.kube/config"
 
 # So we can talk to houston
-sudo /tmp/bin/kubectl --kubeconfig="${KUBECONFIG}" port-forward -n astronomer svc/astronomer-nginx 80 443 &
+sudo /tmp/bin/kubectl --kubeconfig="${KUBECONFIG}" port-forward -n "${NAMESPACE}" svc/astronomer-nginx 80 443 &
 FORWARD_PID="$!"
 
 sleep 10
 
 # create k8s secret
-kubectl -n astronomer \
+kubectl -n "${NAMESPACE}" \
   create secret generic ap-e2e-test-creds \
   --from-literal=ASTRO_USER="$USER" \
   --from-literal=ASTRO_PASS="$PASS"
