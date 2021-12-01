@@ -52,6 +52,13 @@ spec:
           tier: elasticsearch
           component: es-ingress-controller
           release: {{ .Release.Name }}
+    {{- if .Values.global.customLogging.enabled  }}
+    - podSelector:
+        matchLabels:
+          tier: external-logging
+          component: external-es-proxy
+          release: {{ .Release.Name }}
+    {{- end }}
     ports:
     - protocol: TCP
       port: {{ .Values.ports.houstonHTTP }}

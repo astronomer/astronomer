@@ -43,6 +43,7 @@ shift $((OPTIND - 1))
 
 # The path to the working directory - the root of the repo
 GIT_ROOT="$(git -C "${0%/*}" rev-parse --show-toplevel)"
+NAMESPACE="${NAMESPACE:-astronomer}"
 
 if [[ -z "${USE_HA+x}" ]]; then
   CONFIG_FILE="$GIT_ROOT/configs/local-dev.yaml"
@@ -59,7 +60,7 @@ source "$GIT_ROOT/bin/setup-kind"
 
 echo "Deploying Astronomer..."
 helm install -f "$CONFIG_FILE" \
-  --namespace astronomer astronomer \
+  --namespace "${NAMESPACE}" astronomer \
   --set global.postgresqlEnabled=true \
   "$GIT_ROOT"
 
@@ -71,15 +72,16 @@ echo '
 
      export KUBECONFIG="$(kind get kubeconfig-path --name=kind)"
 
-
+'
+echo "
  Astronomer is launching. You can check the status with:
 
-     kubectl get pods -n astronomer
+     kubectl get pods -n ${NAMESPACE}
 
 
  After Astronomer is up (all pods running, all containers up), do this to start a connection to the service:
 
-     sudo -E kubectl port-forward -n astronomer svc/astronomer-nginx 443
+     sudo -E kubectl port-forward -n ${NAMESPACE} svc/astronomer-nginx 443
 
 
  Then you can access the service here: https://app.localtest.me
@@ -89,4 +91,4 @@ echo '
      kind delete cluster
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-'
+"
