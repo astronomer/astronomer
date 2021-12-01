@@ -171,12 +171,10 @@ workflows:
     jobs:
       - lint
       - unittest-charts
-
       - build-artifact:
           requires:
             - lint
             - unittest-charts
-
       - test-all-platforms:
           type: approval
 
@@ -193,15 +191,15 @@ workflows:
       - platform-1-18-15:
           requires:
             - build-artifact
-
       - approve-internal-release:
           type: approval
           filters:
             branches:
               only:
                 - '/release-0\.\d+/'
-
       - release-to-internal:
+          context:
+            - gcp-astronomer-prod
           requires:
             - approve-internal-release
             - platform-1-16-15
@@ -216,13 +214,15 @@ workflows:
           type: approval
           requires:
             - release-to-internal
-
           filters:
             branches:
               only:
                 - '/release-0\.\d+/'
 
       - release-to-public:
+          context:
+            - gcp-astronomer-prod
+            - github-repo
           requires:
             - approve-public-release
           filters:

@@ -4,7 +4,6 @@
     backup_dir: "/astronomer-backups"
     timestamp: "{{ lookup('pipe','date +%Y-%m-%d-%H-%M-%S') }}"
     upgrade_to_version: "0.23"
-    upgrade_to_version_airflow: "0.18"
     # db_hostname: "localhost"
     # db_username: "postgres"
     # db_password: "postgres"
@@ -21,6 +20,14 @@
     namespace: "{{ (helm_releases.stdout | from_json | selectattr('chart', 'match', 'astronomer-.*') | list)[0].namespace }}"
     airflow_releases: "{{ helm_releases.stdout | from_json | selectattr('chart', 'match', 'airflow-.*') | list | map(attribute='name') | list }}"
     database_name: "{{ (helm_releases.stdout | from_json | selectattr('chart', 'match', 'astronomer-.*') | list)[0].name | regex_replace( '-', '_') }}"
+
+- name: "Set commander upgrade timeout"
+  set_fact:
+    COMMANDER_UPGRADE_TIMEOUT: "{{ lookup('env', 'COMMANDER_UPGRADE_TIMEOUT') | default('300', True) }}"
+
+- name: "Disable deployment upgrades"
+  set_fact:
+    disable_deployment_upgrades: "{{ lookup('env', 'DISABLE_DEPLOYMENT_UPGRADES') | default('false', True) }}"
 
 - name: Show Airflow releases
   debug:
@@ -247,13 +254,24 @@
 # The db migration container waits on NATs, and for that, we need the new pods.
 # Also, there are new network security policies we need to apply before the db migration.
 - name: "(1/6) Upgrade Astronomer: Helm upgrade - Update software in Astronomer. Watch for 'helm list' to show new version."
-  shell: |
-    helm upgrade --namespace {{ namespace }} --reset-values -f {{ astro_save_dir.path }}/helm-user-values.json --no-hooks --set astronomer.houston.upgradeDeployments.enabled=false --version={{ upgrade_to_version }} {{ release_name }} astronomer/astronomer
+  shell: >
+    helm upgrade 
+    --namespace {{ namespace }} 
+    --reset-values 
+    -f {{ astro_save_dir.path }}/helm-user-values.json 
+    --no-hooks 
+    --set astronomer.houston.upgradeDeployments.enabled=false 
+    --version={{ upgrade_to_version }} {{ release_name }} astronomer/astronomer
 
 # Run DB migration container
 - name: "(2/6) Upgrade Astronomer: Helm upgrade - Run Astronomer DB migration. Watch for houston db migrations pod to exit in success."
-  shell: |
-    helm upgrade --namespace {{ namespace }} --reset-values -f {{ astro_save_dir.path }}/helm-user-values.json --set astronomer.houston.upgradeDeployments.enabled=false --version={{ upgrade_to_version }} {{ release_name }} astronomer/astronomer
+  shell: >
+    helm upgrade 
+    --namespace {{ namespace }} 
+    --reset-values 
+    -f {{ astro_save_dir.path }}/helm-user-values.json 
+    --set astronomer.houston.upgradeDeployments.enabled=false 
+    --version={{ upgrade_to_version }} {{ release_name }} astronomer/astronomer
 
 # Ensure Houston initializes after DB migration container runs
 - name: "(3/6) Upgrade Astronomer: Helm upgrade - Initialize Astronomer Secrets. Watch for houston pods to become ready again."
@@ -281,9 +299,23 @@
     kubectl wait --for=condition=complete --timeout=300s --namespace {{ namespace }} job/airflow-update-check-first-run
 
 - name: "(5/6) Upgrade Astronomer: Helm upgrade - Update Airflow configurations. Watch for Airflow charts to upgrade version with 'helm list --all-namespaces', watch for airflow pods to start back up."
-  shell: |
-    helm upgrade --namespace {{ namespace }} --reset-values -f {{ astro_save_dir.path }}/helm-user-values.json --set astronomer.houston.upgradeDeployments.enabled=true --set astronomer.airflowChartVersion={{ upgrade_to_version_airflow }} --version={{ upgrade_to_version }} {{ release_name }} astronomer/astronomer
+  shell: >
+    helm upgrade 
+    --namespace {{ namespace }} 
+    --reset-values 
+    -f {{ astro_save_dir.path }}/helm-user-values.json 
+    --set astronomer.houston.upgradeDeployments.enabled=true 
+    --set astronomer.commander.upgradeTimeout={{ COMMANDER_UPGRADE_TIMEOUT }} 
+    --version={{ upgrade_to_version }} {{ release_name }} astronomer/astronomer
+  when: not disable_deployment_upgrades
 
 - name: "(6/6) Upgrade Astronomer: Helm upgrade - Turn off airflow auto upgrade configuration. Perfunctory step, nothing to look for."
-  shell: |
-    helm upgrade --namespace {{ namespace }} --reset-values -f {{ astro_save_dir.path }}/helm-user-values.json --no-hooks --set astronomer.houston.upgradeDeployments.enabled=false --version={{ upgrade_to_version }} {{ release_name }} astronomer/astronomer
+  shell: >
+    helm upgrade 
+    --namespace {{ namespace }} 
+    --reset-values 
+    -f {{ astro_save_dir.path }}/helm-user-values.json 
+    --no-hooks --set astronomer.houston.upgradeDeployments.enabled=false 
+    --set astronomer.commander.upgradeTimeout=300 
+    --version={{ upgrade_to_version }} {{ release_name }} astronomer/astronomer
+  when: not disable_deployment_upgrades
