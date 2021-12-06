@@ -17,10 +17,10 @@ apps/v1beta2
 {{- end -}}
 
 {{- define "apiVersion.Ingress" -}}
-{{- if semverCompare "^1.14-0" .Capabilities.KubeVersion.Version -}}
+{{- if semverCompare "<1.19-0" .Capabilities.KubeVersion.Version -}}
 networking.k8s.io/v1beta1
 {{- else -}}
-extensions/v1beta1
+networking.k8s.io/v1
 {{- end -}}
 {{- end -}}
 

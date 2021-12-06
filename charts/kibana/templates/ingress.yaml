@@ -35,7 +35,16 @@ spec:
       http:
         paths:
           - path: /
+            {{ if or (semverCompare "< 1.19-0" .Capabilities.KubeVersion.Version) (.Values.global.useLegacyIngress) -}}
             backend:
               serviceName: {{ template "kibana.fullname" . }}
               servicePort: kibana-ui
+            {{- else -}}
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ template "kibana.fullname" . }}
+                port:
+                  name: kibana-ui
+            {{- end -}}
 {{- end }}
