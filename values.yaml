@@ -77,6 +77,9 @@ global:
   # Enable security context constraints required for OpenShift
   sccEnabled: false
 
+  # Enable using <1.19 Ingress API
+  useLegacyIngress: false
+
   # Enable values required for use with Microsoft Azure
   azure:
     enabled: false
