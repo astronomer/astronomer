@@ -67,7 +67,7 @@ data:
         platform-release: {{ .Release.Name }}
 
       {{- if .Values.global.authSidecar.enabled }}
-        # enables nginx auth sidecar for airflow deployments
+      # enables nginx auth sidecar for airflow deployments
       authSideCar:
         enabled: true
         repository: {{ .Values.global.authSidecar.repository }}
