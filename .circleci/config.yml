@@ -89,16 +89,6 @@ jobs:
             bin/release-helm-chart -p /tmp/workspace/astronomer-*.tgz
       - publish-github-release
 
-  platform-1-16-15:
-    machine:
-      image: ubuntu-2004:202101-01
-      resource_class: xlarge
-    environment:
-      KUBE_VERSION: v1.16.15
-    steps:
-      - helm-install:
-          astronomer-tags: "platform postgresql monitoring logging kubed keda"
-
   platform-1-17-17:
     machine:
       image: ubuntu-2004:202101-01
@@ -178,11 +168,6 @@ workflows:
       - test-all-platforms:
           type: approval
 
-      - platform-1-16-15:
-          requires:
-            - test-all-platforms
-            - build-artifact
-
       - platform-1-17-17:
           requires:
             - test-all-platforms
@@ -202,7 +187,6 @@ workflows:
             - gcp-astronomer-prod
           requires:
             - approve-internal-release
-            - platform-1-16-15
             - platform-1-17-17
             - platform-1-18-15
           filters:

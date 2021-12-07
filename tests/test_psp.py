@@ -111,7 +111,7 @@ class TestPspEnabled:
         assert len(docs) == 1
         doc = docs[0]
         assert doc["kind"] == "ClusterRole"
-        assert doc["apiVersion"] == "rbac.authorization.k8s.io/v1beta1"
+        assert doc["apiVersion"] == "rbac.authorization.k8s.io/v1"
         assert doc["metadata"]["name"] == clusterrole_docs["name"]
         assert "rules" in doc
         assert all(
@@ -155,7 +155,7 @@ class TestPspEnabled:
         assert len(docs) == 1
         doc = docs[0]
         assert doc["kind"] == "ClusterRoleBinding"
-        assert doc["apiVersion"] == "rbac.authorization.k8s.io/v1beta1"
+        assert doc["apiVersion"] == "rbac.authorization.k8s.io/v1"
         assert doc["metadata"]["name"] == clusterrolebinding_docs["name"]
         assert len(doc["roleRef"]) >= 1
         assert len(doc["subjects"]) >= 1
@@ -204,7 +204,7 @@ class TestPspEnabled:
         assert len(docs) == 1
         doc = docs[0]
         assert doc["kind"] == "RoleBinding"
-        assert doc["apiVersion"] == "rbac.authorization.k8s.io/v1beta1"
+        assert doc["apiVersion"] == "rbac.authorization.k8s.io/v1"
         assert doc["metadata"]["name"] == rolebinding_docs["name"]
         assert len(doc["roleRef"]) >= 1
         assert len(doc["subjects"]) >= 1
