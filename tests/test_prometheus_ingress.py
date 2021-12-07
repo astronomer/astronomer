@@ -4,9 +4,6 @@ import pytest
 from . import supported_k8s_versions
 
 
-@pytest.mark.skip(
-    "TODO: fix this failing test by backporting prometheus-data named port from release-0.25"
-)
 @pytest.mark.parametrize(
     "kube_version",
     supported_k8s_versions,
@@ -37,7 +34,7 @@ class TestIngress:
                     "spec.rules[*].http.paths[*].backend.service.name", doc
                 )
             ]
-            assert "prometheus-data" in [
+            assert "prometheus" in [
                 port[0]
                 for port in jmespath.search(
                     "spec.rules[*].http.paths[*].backend.service.port.name", doc
