@@ -1,12 +1,17 @@
 ---
-exclude: '(venv|.vscode)'  # regex
+exclude: '(venv|\.vscode)' # regex
 repos:
+  - repo: https://github.com/Lucas-C/pre-commit-hooks
+    rev: v1.1.10
+    hooks:
+      - id: remove-tabs
+        exclude_types: [makefile, binary]
   - repo: https://github.com/psf/black
-    rev: 21.8b0
+    rev: 21.9b0
     hooks:
       - id: black
   - repo: https://github.com/asottile/pyupgrade
-    rev: v2.23.3
+    rev: v2.26.0
     hooks:
       - id: pyupgrade
         args: ["--py38-plus"]
@@ -16,17 +21,23 @@ repos:
       - id: check-case-conflict
       - id: check-json
       - id: check-merge-conflict
+      - id: check-shebang-scripts-are-executable
       - id: check-toml
       - id: check-xml
       - id: check-yaml
-        args: ['--allow-multiple-documents']
-        exclude: charts
+        args: ["--allow-multiple-documents"]
+        exclude: 'charts|templates\/.*\.yaml'
       - id: debug-statements
       - id: detect-private-key
       - id: end-of-file-fixer
       - id: mixed-line-ending
-        args: ['--fix=lf']
+        args: ["--fix=lf"]
       - id: requirements-txt-fixer
+        args:
+          [
+            "requirements/chart-tests.in",
+            "requirements/functional-tests.in",
+          ]
       - id: sort-simple-yaml
       - id: trailing-whitespace
   - repo: https://gitlab.com/pycqa/flake8
@@ -46,4 +57,4 @@ repos:
         language: python
         files: "config.yml$|config.yml.j2|generate_circleci_config.py$"
         entry: .circleci/generate_circleci_config.py
-        additional_dependencies: ['jinja2']
+        additional_dependencies: ["jinja2"]

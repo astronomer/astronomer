@@ -10,7 +10,7 @@ from jinja2 import Template
 # When adding a new version, look up the most
 # recent patch version on Dockerhub
 # https://hub.docker.com/r/kindest/node/tags
-KUBE_VERSIONS = ["1.16.15", "1.17.17", "1.18.15"]
+KUBE_VERSIONS = ["1.17.17", "1.18.15"]
 
 
 def main():
@@ -19,7 +19,7 @@ def main():
     config_template_path = os.path.join(circle_directory, "config.yml.j2")
     config_path = os.path.join(circle_directory, "config.yml")
 
-    with open(config_template_path, "r") as circle_ci_config_template:
+    with open(config_template_path) as circle_ci_config_template:
         templated_file_content = circle_ci_config_template.read()
     template = Template(templated_file_content)
     config = template.render(kube_versions=KUBE_VERSIONS)

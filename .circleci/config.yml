@@ -10,7 +10,7 @@ executors:
 jobs:
   lint:
     docker:
-      - image: quay.io/astronomer/ap-build:0.1.3
+      - image: quay.io/astronomer/ap-build:0.2.0
     steps:
       - checkout
       - run:
@@ -36,7 +36,7 @@ jobs:
 
   unittest-charts:
     docker:
-      - image: quay.io/astronomer/ap-build:0.1.3
+      - image: quay.io/astronomer/ci-helm-release:2021-12
     steps:
       - checkout
       - run:
@@ -45,7 +45,7 @@ jobs:
 
   build-artifact:
     docker:
-      - image: quay.io/astronomer/ap-build:0.1.3
+      - image: quay.io/astronomer/ap-build:0.2.0
     steps:
       - checkout
       - run:
@@ -60,7 +60,7 @@ jobs:
 
   release-to-internal:
     machine:
-      image: ubuntu-2004:202101-01
+      image: ubuntu-2004:202107-02
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -70,12 +70,12 @@ jobs:
           command: |
             set -e
             sudo apt-get update && sudo apt-get install -y ca-certificates curl
-            pyenv global 3.9.1
+            pyenv global 3.9.4
             bin/release-helm-chart /tmp/workspace/astronomer-*.tgz
 
   release-to-public:
     machine:
-      image: ubuntu-2004:202101-01
+      image: ubuntu-2004:202107-02
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -85,23 +85,13 @@ jobs:
           command: |
             set -e
             sudo apt-get update && sudo apt-get install -y ca-certificates curl
-            pyenv global 3.9.1
+            pyenv global 3.9.4
             bin/release-helm-chart -p /tmp/workspace/astronomer-*.tgz
       - publish-github-release
 
-  platform-1-16-15:
-    machine:
-      image: ubuntu-2004:202101-01
-      resource_class: xlarge
-    environment:
-      KUBE_VERSION: v1.16.15
-    steps:
-      - helm-install:
-          astronomer-tags: "platform postgresql monitoring logging kubed keda"
-
   platform-1-17-17:
     machine:
-      image: ubuntu-2004:202101-01
+      image: ubuntu-2004:202107-02
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.17.17
@@ -111,7 +101,7 @@ jobs:
 
   platform-1-18-15:
     machine:
-      image: ubuntu-2004:202101-01
+      image: ubuntu-2004:202107-02
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.18.15
@@ -121,7 +111,7 @@ jobs:
 
   lts-upgrade-0-23-test:
     machine:
-      image: ubuntu-2004:202101-01
+      image: ubuntu-2004:202107-02
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.18.15
@@ -178,11 +168,6 @@ workflows:
       - test-all-platforms:
           type: approval
 
-      - platform-1-16-15:
-          requires:
-            - test-all-platforms
-            - build-artifact
-
       - platform-1-17-17:
           requires:
             - test-all-platforms
@@ -202,7 +187,6 @@ workflows:
             - gcp-astronomer-prod
           requires:
             - approve-internal-release
-            - platform-1-16-15
             - platform-1-17-17
             - platform-1-18-15
           filters:
@@ -356,6 +340,6 @@ commands:
           name: Create a release on GitHub
           command: |
             set -xe
-            pyenv global 3.9.1
+            pyenv global 3.9.4
             pip install astronomer_e2e_test
             astronomer-ci publish-github-release --github-repository $CIRCLE_PROJECT_REPONAME --github-organization $CIRCLE_PROJECT_USERNAME --commitish $CIRCLE_SHA1
