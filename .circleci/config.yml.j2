@@ -98,7 +98,7 @@ jobs:
           astronomer-tags: "platform postgresql monitoring logging kubed keda"
 {% endfor -%}
 
-{% for version in [kube_versions[-1]] %}
+{% for version in [kube_versions[1]] %}
   lts-upgrade-0-23-test:
     machine:
       image: ubuntu-2004:202107-02
@@ -159,7 +159,7 @@ workflows:
             - unittest-charts
       - test-all-platforms:
           type: approval
-{% for version in kube_versions %}{% if version == kube_versions[-1:][0] %}
+{% for version in kube_versions %}{% if version == kube_versions[:2][0] %}
       - platform-{{ version | replace(".", "-") }}:
           requires:
             - build-artifact

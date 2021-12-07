@@ -10,7 +10,9 @@ from jinja2 import Template
 # When adding a new version, look up the most
 # recent patch version on Dockerhub
 # https://hub.docker.com/r/kindest/node/tags
-KUBE_VERSIONS = ["1.17.17", "1.18.15"]
+# k8s 1.19 is not supported in release 0.23, but we test it due to some upgrade edge cases
+# k8s 1.16 is supported in astronomer 0.23, but it is no longer available in any cloud provider, so we do not test it in CI
+KUBE_VERSIONS = ["1.17.17", "1.18.15", "1.19.11"]
 
 
 def main():
