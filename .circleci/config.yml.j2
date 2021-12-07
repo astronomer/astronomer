@@ -98,7 +98,7 @@ jobs:
           astronomer-tags: "platform postgresql monitoring logging kubed keda"
 {% endfor -%}
 
-{% for version in [kube_versions[1]] %}
+{% for version in [kube_versions[2]] %}
   lts-upgrade-0-23-test:
     machine:
       image: ubuntu-2004:202107-02
