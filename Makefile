@@ -73,7 +73,6 @@ show-docker-images: ## Show all docker images and versions used in the helm char
 		--set global.blackboxExporterEnabled=True \
 		--set global.kedaEnabled=True \
 		--set global.postgresqlEnabled=True \
-		--set global.postgresqlEnabled=True \
 		--set global.prometheusPostgresExporterEnabled=True \
 		--set global.pspEnabled=True \
 		--set global.veleroEnabled=True \
