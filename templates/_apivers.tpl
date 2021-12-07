@@ -17,7 +17,7 @@ apps/v1beta2
 {{- end -}}
 
 {{- define "apiVersion.Ingress" -}}
-{{- if semverCompare "<1.19-0" .Capabilities.KubeVersion.Version -}}
+{{- if or (semverCompare "<1.19-0" .Capabilities.KubeVersion.Version) (.Values.global.useLegacyIngress) -}}
 networking.k8s.io/v1beta1
 {{- else -}}
 networking.k8s.io/v1
