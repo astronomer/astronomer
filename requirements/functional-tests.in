@@ -1,0 +1,7 @@
+docker
+kubernetes
+pytest
+pytest-rerunfailures
+pytest-sugar
+PyYAML
+testinfra

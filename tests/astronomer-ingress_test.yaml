@@ -1,0 +1,26 @@
+### DEPRECATED
+#
+#   helm-unittest usage is deprecated in this repository.
+#   Do not modify these tests. If changes are needed,
+#   migrate the test to the pytest test suite.
+#
+##############
+
+---
+# Note: tests that require setting global values must live in the parent chart, not the sub-chart!
+
+suite: Test ingress
+templates:
+  - charts/astronomer/templates/ingress.yaml
+tests:
+  - it: Should be empty when baseDomain is not set
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: Should be ingress when baseDomain is set
+    set:
+      global.baseDomain: example.com
+    asserts:
+      - isKind:
+          of: Ingress

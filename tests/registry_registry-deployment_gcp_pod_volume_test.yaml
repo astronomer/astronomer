@@ -1,0 +1,23 @@
+### DEPRECATED
+#
+#   helm-unittest usage is deprecated in this repository.
+#   Do not modify these tests. If changes are needed,
+#   migrate the test to the pytest test suite.
+#
+##############
+
+suite: Test-volume
+templates:
+  - charts/astronomer/templates/registry/registry-statefulset.yaml
+tests:
+  - it: Should have gcs volume mounted at pod level if useKeyfile is true
+    set:
+      global.baseDomain: example.com
+      astronomer.registry.gcs.useKeyfile: true
+      astronomer.registry.gcs.enabled: true
+    asserts:
+      - isKind:
+          of: Deployment
+      - equal:
+          path: spec.template.spec.volumes[2].name
+          value: gcs-keyfile

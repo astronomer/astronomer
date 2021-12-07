@@ -44,15 +44,7 @@ scheduling.k8s.io/v1beta1
 {{- end -}}
 {{- end -}}
 
-{{- define "apiVersion.rbac.v1beta2" -}}
-{{- if semverCompare "^1.16-0" .Capabilities.KubeVersion.Version -}}
-rbac.authorization.k8s.io/v1
-{{- else -}}
-use something more specific
-{{- end -}}
-{{- end -}}
-
-{{- define "apiVersion.rbac.v1beta1" -}}
+{{- define "apiVersion.rbac" -}}
 {{- if semverCompare "^1.16-0" .Capabilities.KubeVersion.Version -}}
 rbac.authorization.k8s.io/v1
 {{- else -}}
