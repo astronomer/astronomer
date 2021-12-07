@@ -8,8 +8,8 @@ from . import supported_k8s_versions
     "kube_version",
     supported_k8s_versions,
 )
-class TestIngress:
-    def test_basic_ingress(self, kube_version):
+class TestHoustonIngress:
+    def test_houston_ingress_basic(self, kube_version):
         # sourcery skip: extract-duplicate-method
         docs = render_chart(
             kube_version=kube_version,
@@ -56,7 +56,7 @@ class TestIngress:
                 )
             ]
 
-    def test_protect_houston_internal_urls(self, kube_version):
+    def test_houston_ingress_protect_internal_urls(self, kube_version):
         docs = render_chart(
             kube_version=kube_version,
             show_only=["charts/astronomer/templates/houston/ingress.yaml"],
@@ -72,3 +72,12 @@ class TestIngress:
 }
 """
         )
+
+    def test_houston_legacy_ingress(self, kube_version):
+        """Test that networking.k8s.io/v1beta1 is always used with global.useLegacyIngress=True"""
+        doc = render_chart(
+            show_only=["charts/astronomer/templates/houston/ingress.yaml"],
+            values={"global": {"useLegacyIngress": True}},
+        )[0]
+
+        assert doc["apiVersion"] == "networking.k8s.io/v1beta1"

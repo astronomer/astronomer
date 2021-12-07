@@ -55,3 +55,12 @@ class TestIngress:
                     "spec.rules[*].http.paths[*].backend.servicePort", doc
                 )
             ]
+
+    def test_prometheus_legacy_ingress(self, kube_version):
+        """Test that networking.k8s.io/v1beta1 is always used with global.useLegacyIngress=True"""
+        doc = render_chart(
+            show_only=["charts/prometheus/templates/ingress.yaml"],
+            values={"global": {"useLegacyIngress": True}},
+        )[0]
+
+        assert doc["apiVersion"] == "networking.k8s.io/v1beta1"
