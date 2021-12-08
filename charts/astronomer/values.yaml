@@ -307,6 +307,9 @@ registry:
     keyid: ~
     rootdirectory: ~
 
+  notifications:
+    timeout: 30s
+
 install:
   resources: {}
   cliVersion: 0.26.0

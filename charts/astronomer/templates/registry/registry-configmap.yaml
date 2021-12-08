@@ -61,7 +61,7 @@ data:
       endpoints:
         - name: "houston"
           url: "http://{{ .Release.Name }}-houston:{{ .Values.ports.houstonHTTP }}/v1/registry/events"
-          timeout: 30s
+          timeout: {{ .Values.registry.notifications.timeout }}
           threshold: 10
           backoff: 1s
           ignoredmediatypes:
