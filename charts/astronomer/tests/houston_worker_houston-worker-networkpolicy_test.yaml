@@ -1,8 +1,0 @@
-suite: Test houston/worker/houston-worker-networkpolicy.yaml
-templates:
-- houston/worker/houston-worker-networkpolicy.yaml
-tests:
-- it: should work
-  asserts:
-    - isKind:
-        of: NetworkPolicy

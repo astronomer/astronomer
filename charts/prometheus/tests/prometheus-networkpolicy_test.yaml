@@ -1,9 +1,0 @@
----
-suite: Test prometheus-networkpolicy
-templates:
-  - prometheus-networkpolicy.yaml
-tests:
-  - it: should work
-    asserts:
-      - isKind:
-          of: NetworkPolicy

@@ -1,8 +1,0 @@
-suite: Test commander/commander-role.yaml
-templates:
-- commander/commander-role.yaml
-tests:
-- it: should work
-  asserts:
-    - isKind:
-        of: ClusterRole

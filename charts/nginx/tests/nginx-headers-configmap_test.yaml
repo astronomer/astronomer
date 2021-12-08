@@ -1,9 +1,0 @@
----
-suite: Test nginx-headers-configmap
-templates:
-  - nginx-headers-configmap.yaml
-tests:
-  - it: should work
-    asserts:
-      - isKind:
-          of: ConfigMap

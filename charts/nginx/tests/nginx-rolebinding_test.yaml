@@ -1,9 +1,0 @@
----
-suite: Test nginx-rolebinding
-templates:
-  - nginx-rolebinding.yaml
-tests:
-  - it: should work
-    asserts:
-      - isKind:
-          of: ClusterRoleBinding

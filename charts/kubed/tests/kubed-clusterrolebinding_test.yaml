@@ -1,9 +1,0 @@
----
-suite: Test kubed-clusterrolebinding
-templates:
-  - kubed-clusterrolebinding.yaml
-tests:
-  - it: should work
-    asserts:
-      - isKind:
-          of: ClusterRoleBinding

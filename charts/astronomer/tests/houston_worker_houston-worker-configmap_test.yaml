@@ -1,8 +1,0 @@
-suite: Test houston/worker/houston-worker-configmap.yaml
-templates:
-- houston/worker/houston-worker-configmap.yaml
-tests:
-- it: should work
-  asserts:
-    - isKind:
-        of: ConfigMap

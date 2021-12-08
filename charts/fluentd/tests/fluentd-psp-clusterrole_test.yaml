@@ -1,9 +1,0 @@
----
-suite: Test fluentd-psp-clusterrole
-templates:
-  - fluentd-psp-clusterrole.yaml
-tests:
-  - it: should work
-    asserts:
-      - isKind:
-          of: ClusterRole

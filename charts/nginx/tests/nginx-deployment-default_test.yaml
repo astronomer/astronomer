@@ -1,9 +1,0 @@
----
-suite: Test nginx-deployment-default
-templates:
-  - nginx-deployment-default.yaml
-tests:
-  - it: should work
-    asserts:
-      - isKind:
-          of: Deployment

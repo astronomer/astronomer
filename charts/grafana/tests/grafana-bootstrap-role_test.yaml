@@ -1,9 +1,0 @@
----
-suite: Test grafana-bootstrap-role
-templates:
-  - grafana-bootstrap-role.yaml
-tests:
-  - it: should work
-    asserts:
-      - isKind:
-          of: Role

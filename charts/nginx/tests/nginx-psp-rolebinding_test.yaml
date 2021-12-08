@@ -1,9 +1,0 @@
----
-suite: Test nginx-psp-rolebinding
-templates:
-  - nginx-psp-rolebinding.yaml
-tests:
-  - it: should work
-    asserts:
-      - isKind:
-          of: RoleBinding

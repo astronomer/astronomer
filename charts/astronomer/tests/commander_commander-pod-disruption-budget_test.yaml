@@ -1,8 +1,0 @@
-suite: Test commander/commander-pod-disruption-budget.yaml
-templates:
-- commander/commander-pod-disruption-budget.yaml
-tests:
-- it: should work
-  asserts:
-    - isKind:
-        of: PodDisruptionBudget

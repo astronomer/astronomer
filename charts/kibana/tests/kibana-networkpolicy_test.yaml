@@ -1,9 +1,0 @@
----
-suite: Test kibana-networkpolicy
-templates:
-  - kibana-networkpolicy.yaml
-tests:
-  - it: should work
-    asserts:
-      - isKind:
-          of: NetworkPolicy

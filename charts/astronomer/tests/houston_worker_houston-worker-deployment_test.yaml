@@ -1,8 +1,0 @@
-suite: Test houston/worker/houston-worker-deployment.yaml
-templates:
-- houston/worker/houston-worker-deployment.yaml
-tests:
-- it: should work
-  asserts:
-    - isKind:
-        of: Deployment

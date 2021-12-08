@@ -1,9 +1,0 @@
----
-suite: Test grafana-configmap
-templates:
-  - grafana-configmap.yaml
-tests:
-  - it: should work
-    asserts:
-      - isKind:
-          of: ConfigMap
