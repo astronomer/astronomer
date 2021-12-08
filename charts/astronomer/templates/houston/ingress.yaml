@@ -33,7 +33,7 @@ spec:
       hosts:
         - houston.{{ .Values.global.baseDomain }}
   {{- end }}
-  {{ if semverCompare "< 1.19-0" .Capabilities.KubeVersion.Version -}}
+  {{ if or (semverCompare "< 1.19-0" .Capabilities.KubeVersion.Version) (.Values.global.useLegacyIngress) -}}
   rules:
   - host: houston.{{ .Values.global.baseDomain }}
     http:
