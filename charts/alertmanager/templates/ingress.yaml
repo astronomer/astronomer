@@ -30,6 +30,7 @@ spec:
       hosts:
         - {{ template "alertmanager.url" . }}
   {{- end }}
+  {{ if or (semverCompare "< 1.19-0" .Capabilities.KubeVersion.Version) (.Values.global.useLegacyIngress) -}}
   rules:
     - host: {{ template "alertmanager.url" . }}
       http:
@@ -38,4 +39,17 @@ spec:
             backend:
               serviceName: {{ template "alertmanager.fullname" . }}
               servicePort: http
+  {{ else -}}
+  rules:
+  - host: alertmanager.{{ .Values.global.baseDomain }}
+    http:
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: {{ template "alertmanager.fullname" . }}
+              port:
+                name: alertmanager-http
+  {{- end -}}
 {{- end }}
