@@ -33,7 +33,7 @@ class TestAuthSidecar:
 
         assert jmespath.search("kind", docs[2]) == "Service"
         assert jmespath.search("metadata.name", docs[2]) == "RELEASE-NAME-alertmanager"
-        assert "ClusterIP" == jmespath.search("spec.type", docs[2])
+        assert jmespath.search("spec.type", docs[2]) == "ClusterIP"
         assert {
             "name": "auth-proxy",
             "protocol": "TCP",
