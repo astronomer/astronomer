@@ -50,6 +50,6 @@ spec:
             service:
               name: {{ template "alertmanager.fullname" . }}
               port:
-                name: alertmanager-http
+                name: http
   {{- end -}}
 {{- end }}

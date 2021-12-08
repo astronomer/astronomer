@@ -12,7 +12,7 @@ def ingress_assertions_v1(doc):
             "spec.rules[*].http.paths[*].backend.service.name", doc
         )
     ]
-    assert "alertmanager-http" in [
+    assert "http" in [
         port[0]
         for port in jmespath.search(
             "spec.rules[*].http.paths[*].backend.service.port.name", doc
