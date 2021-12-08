@@ -29,7 +29,7 @@ class TestAuthSidecar:
         assert doc["kind"] == "StatefulSet"
         assert doc["apiVersion"] == "apps/v1"
         assert doc["metadata"]["name"] == "RELEASE-NAME-alertmanager"
-        assert "auth-proxy" == doc["spec"]["template"]["spec"]["containers"][1]["name"]
+        assert doc["spec"]["template"]["spec"]["containers"][1]["name"] == "auth-proxy"
 
         assert jmespath.search("kind", docs[2]) == "Service"
         assert jmespath.search("metadata.name", docs[2]) == "RELEASE-NAME-alertmanager"
