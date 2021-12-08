@@ -124,7 +124,7 @@ jobs:
       image: ubuntu-2004:202107-02
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.19.11
+      KUBE_VERSION: v1.18.15
     steps:
       - upgrade-0-23-test
 
