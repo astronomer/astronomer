@@ -10,7 +10,7 @@ import jmespath
 )
 class TestAuthSidecar:
     def test_authSidecar_alertmanager(self, kube_version):
-        """Test External ElasticSearch with secret passed from config/values.yaml."""
+        """Test Alertmanager Service with authSidecar."""
         docs = render_chart(
             kube_version=kube_version,
             values={"global": {"authSidecar": {"enabled": True}}},
@@ -40,7 +40,7 @@ class TestAuthSidecar:
         } in jmespath.search("spec.ports", docs[2])
 
     def test_authSidecar_prometheus(self, kube_version):
-        """Test External ElasticSearch with secret passed from config/values.yaml."""
+        """Test Prometheus Service with authSidecar."""
         docs = render_chart(
             kube_version=kube_version,
             values={"global": {"authSidecar": {"enabled": True}}},
@@ -70,7 +70,7 @@ class TestAuthSidecar:
         } in jmespath.search("spec.ports", docs[2])
 
     def test_authSidecar_kibana(self, kube_version):
-        """Test External ElasticSearch with secret passed from config/values.yaml."""
+        """Test Kibana Service with authSidecar."""
         docs = render_chart(
             kube_version=kube_version,
             values={"global": {"authSidecar": {"enabled": True}}},
