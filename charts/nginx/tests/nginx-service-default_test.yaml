@@ -1,9 +1,0 @@
----
-suite: Test nginx-service-default
-templates:
-  - nginx-service-default.yaml
-tests:
-  - it: should work
-    asserts:
-      - isKind:
-          of: Service

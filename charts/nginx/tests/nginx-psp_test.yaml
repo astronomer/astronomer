@@ -1,9 +1,0 @@
----
-suite: Test nginx-psp
-templates:
-  - nginx-psp.yaml
-tests:
-  - it: should work
-    asserts:
-      - isKind:
-          of: PodSecurityPolicy

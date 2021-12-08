@@ -1,8 +1,0 @@
-suite: Test houston/api/houston-service.yaml
-templates:
-- houston/api/houston-service.yaml
-tests:
-- it: should work
-  asserts:
-    - isKind:
-        of: Service

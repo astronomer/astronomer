@@ -1,9 +1,0 @@
----
-suite: Test prometheus-role
-templates:
-  - prometheus-role.yaml
-tests:
-  - it: should work
-    asserts:
-      - isKind:
-          of: ClusterRole

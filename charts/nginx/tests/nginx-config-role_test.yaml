@@ -1,9 +1,0 @@
----
-suite: Test nginx-config-role
-templates:
-  - nginx-config-role.yaml
-tests:
-  - it: should work
-    asserts:
-      - isKind:
-          of: Role

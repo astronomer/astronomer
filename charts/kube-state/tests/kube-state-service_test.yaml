@@ -1,9 +1,0 @@
----
-suite: Test kube-state-service
-templates:
-  - kube-state-service.yaml
-tests:
-  - it: should work
-    asserts:
-      - isKind:
-          of: Service

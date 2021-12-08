@@ -1,9 +1,0 @@
----
-suite: Test kubed-deployment
-templates:
-  - kubed-deployment.yaml
-tests:
-  - it: should work
-    asserts:
-      - isKind:
-          of: Deployment

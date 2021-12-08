@@ -1,8 +1,0 @@
-suite: Test registry/registry-configmap.yaml
-templates:
-- registry/registry-configmap.yaml
-tests:
-- it: should work
-  asserts:
-    - isKind:
-        of: ConfigMap

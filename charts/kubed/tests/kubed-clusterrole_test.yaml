@@ -1,9 +1,0 @@
----
-suite: Test kubed-clusterrole
-templates:
-  - kubed-clusterrole.yaml
-tests:
-  - it: should work
-    asserts:
-      - isKind:
-          of: ClusterRole

@@ -1,8 +1,0 @@
-suite: Test istio/sidecars.yaml
-templates:
-- istio/sidecars.yaml
-tests:
-- it: should work
-  asserts:
-    - isKind:
-        of: NetworkPolicy

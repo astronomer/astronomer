@@ -1,9 +1,0 @@
----
-suite: Test kubed-notifier-secert
-templates:
-  - kubed-notifier-secert.yaml
-tests:
-  - it: should work
-    asserts:
-      - isKind:
-          of: Secret

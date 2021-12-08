@@ -1,9 +1,0 @@
----
-suite: Test nginx-psp-clusterrole
-templates:
-  - nginx-psp-clusterrole.yaml
-tests:
-  - it: should work
-    asserts:
-      - isKind:
-          of: ClusterRole
