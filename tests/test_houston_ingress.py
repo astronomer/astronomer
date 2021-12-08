@@ -4,6 +4,38 @@ import pytest
 from . import supported_k8s_versions
 
 
+def ingress_assertions_v1(doc):
+    assert doc["apiVersion"] == "networking.k8s.io/v1"
+    assert "RELEASE-NAME-houston" in [
+        name[0]
+        for name in jmespath.search(
+            "spec.rules[*].http.paths[*].backend.service.name", doc
+        )
+    ]
+    assert "houston-http" in [
+        port[0]
+        for port in jmespath.search(
+            "spec.rules[*].http.paths[*].backend.service.port.name", doc
+        )
+    ]
+
+
+def ingress_assertions_v1beta1(doc):
+    assert doc["apiVersion"] == "networking.k8s.io/v1beta1"
+    assert "RELEASE-NAME-houston" in [
+        name[0]
+        for name in jmespath.search(
+            "spec.rules[*].http.paths[*].backend.serviceName", doc
+        )
+    ]
+    assert "houston-http" in [
+        port[0]
+        for port in jmespath.search(
+            "spec.rules[*].http.paths[*].backend.servicePort", doc
+        )
+    ]
+
+
 @pytest.mark.parametrize(
     "kube_version",
     supported_k8s_versions,
@@ -27,34 +59,10 @@ class TestHoustonIngress:
         _, minor, _ = (int(x) for x in kube_version.split("."))
 
         if minor >= 19:
-            assert doc["apiVersion"] == "networking.k8s.io/v1"
-            assert "RELEASE-NAME-houston" in [
-                name[0]
-                for name in jmespath.search(
-                    "spec.rules[*].http.paths[*].backend.service.name", doc
-                )
-            ]
-            assert "houston-http" in [
-                port[0]
-                for port in jmespath.search(
-                    "spec.rules[*].http.paths[*].backend.service.port.name", doc
-                )
-            ]
+            ingress_assertions_v1(doc)
 
         if minor < 19:
-            assert doc["apiVersion"] == "networking.k8s.io/v1beta1"
-            assert "RELEASE-NAME-houston" in [
-                name[0]
-                for name in jmespath.search(
-                    "spec.rules[*].http.paths[*].backend.serviceName", doc
-                )
-            ]
-            assert "houston-http" in [
-                port[0]
-                for port in jmespath.search(
-                    "spec.rules[*].http.paths[*].backend.servicePort", doc
-                )
-            ]
+            ingress_assertions_v1beta1(doc)
 
     def test_houston_ingress_protect_internal_urls(self, kube_version):
         docs = render_chart(
@@ -80,4 +88,4 @@ class TestHoustonIngress:
             values={"global": {"useLegacyIngress": True}},
         )[0]
 
-        assert doc["apiVersion"] == "networking.k8s.io/v1beta1"
+        ingress_assertions_v1beta1(doc)
