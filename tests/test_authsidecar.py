@@ -2,6 +2,7 @@ from tests.helm_template_generator import render_chart
 import pytest
 from . import supported_k8s_versions
 import jmespath
+import yaml
 
 
 @pytest.mark.parametrize(
@@ -98,3 +99,71 @@ class TestAuthSidecar:
             "protocol": "TCP",
             "port": 8084,
         } in jmespath.search("spec.ports", docs[2])
+
+    def test_authSidecar_houston_configmap_without_annotation(self, kube_version):
+        """Test Houston Configmap with authSidecar."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"authSidecar": {"enabled": True}}},
+            show_only=[
+                "charts/astronomer/templates/houston/houston-configmap.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+
+        prod = yaml.safe_load(doc["data"]["production.yaml"])
+        print(prod["deployments"]["authSideCar"])
+
+        assert doc["kind"] == "ConfigMap"
+        assert doc["apiVersion"] == "v1"
+        assert doc["metadata"]["name"] == "RELEASE-NAME-houston-config"
+
+        expected_output = {
+            "enabled": True,
+            "repository": "nginxinc/nginx-unprivileged",
+            "tag": "stable",
+            "port": 8084,
+            "pullPolicy": "IfNotPresent",
+            "annotations": {},
+        }
+        assert expected_output == prod["deployments"]["authSideCar"]
+
+    def test_authSidecar_houston_configmap_with_annotation(self, kube_version):
+        """Test Houston Configmap with authSidecar."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "authSidecar": {"enabled": True},
+                    "extraAnnotations": {
+                        "kubernetes.io/ingress.class": "astronomer-nginx",
+                        "nginx.ingress.kubernetes.io/proxy-body-size": "1024m",
+                    },
+                }
+            },
+            show_only=[
+                "charts/astronomer/templates/houston/houston-configmap.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        prod = yaml.safe_load(doc["data"]["production.yaml"])
+        assert doc["kind"] == "ConfigMap"
+        assert doc["apiVersion"] == "v1"
+        assert doc["metadata"]["name"] == "RELEASE-NAME-houston-config"
+
+        expected_output = {
+            "enabled": True,
+            "repository": "nginxinc/nginx-unprivileged",
+            "tag": "stable",
+            "port": 8084,
+            "pullPolicy": "IfNotPresent",
+            "annotations": {
+                "kubernetes.io/ingress.class": "astronomer-nginx",
+                "nginx.ingress.kubernetes.io/proxy-body-size": "1024m",
+            },
+        }
+        assert expected_output == prod["deployments"]["authSideCar"]
