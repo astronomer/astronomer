@@ -32,7 +32,7 @@ class TestAuthSidecar:
         assert "auth-proxy" == doc["spec"]["template"]["spec"]["containers"][1]["name"]
 
         assert "Service" == jmespath.search("kind", docs[2])
-        assert "RELEASE-NAME-alertmanager" == jmespath.search("metadata.name", docs[2])
+        assert jmespath.search("metadata.name", docs[2]) == "RELEASE-NAME-alertmanager"
         assert "ClusterIP" == jmespath.search("spec.type", docs[2])
         assert {
             "name": "auth-proxy",
