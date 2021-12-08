@@ -159,16 +159,14 @@ workflows:
             - unittest-charts
       - test-all-platforms:
           type: approval
-{% for version in kube_versions %}{% if version == kube_versions[:2][0] %}
+{% for version in kube_versions %}
       - platform-{{ version | replace(".", "-") }}:
           requires:
-            - build-artifact
-{%- else %}
-      - platform-{{ version | replace(".", "-") }}:
-          requires:
+{%- if version == kube_versions[2] %}
             - test-all-platforms
+{%- endif %}
             - build-artifact
-{% endif %}{% endfor %}
+{%- endfor %}
       - approve-internal-release:
           type: approval
           filters:

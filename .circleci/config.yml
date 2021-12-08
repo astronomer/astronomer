@@ -183,14 +183,11 @@ workflows:
             - build-artifact
       - platform-1-18-15:
           requires:
-            - test-all-platforms
             - build-artifact
-
       - platform-1-19-11:
           requires:
             - test-all-platforms
             - build-artifact
-
       - approve-internal-release:
           type: approval
           filters:
