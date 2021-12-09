@@ -67,9 +67,24 @@ data:
         platform-release: {{ .Release.Name }}
 
       {{ if or .Values.global.customLogging.enabled }}
-      # Disables Kibana dashboard in Astro UI UI
+      # Disables Kibana dashboard in Astro UI
       kibanaUIEnabled: false
       {{ end }}
+
+      {{- if .Values.global.authSidecar.enabled }}
+      # enables nginx auth sidecar for airflow deployments
+      authSideCar:
+        enabled: true
+        repository: {{ .Values.global.authSidecar.repository }}
+        tag: {{ .Values.global.authSidecar.tag }}
+        port: {{ .Values.global.authSidecar.port }}
+        pullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
+        annotations: {
+          {{- range $key, $value := .Values.global.extraAnnotations}}
+          {{ $key }}: {{ $value | quote }},
+          {{- end }}
+        }
+      {{- end }}
 
       # These values get passed directly into the airflow helm deployments
       helm:
