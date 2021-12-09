@@ -40,6 +40,11 @@ class TestAuthSidecar:
             "port": 8084,
         } in jmespath.search("spec.ports", docs[2])
 
+        assert "NetworkPolicy" == docs[3]["kind"]
+        assert [{"port": 8084, "protocol": "TCP"}] == jmespath.search(
+            "spec.ingress[*].ports[1]", docs[3]
+        )
+
     def test_authSidecar_prometheus(self, kube_version):
         """Test Prometheus Service with authSidecar."""
         docs = render_chart(
@@ -70,6 +75,11 @@ class TestAuthSidecar:
             "port": 8084,
         } in jmespath.search("spec.ports", docs[2])
 
+        assert "NetworkPolicy" == docs[3]["kind"]
+        assert [{"port": 8084, "protocol": "TCP"}] == jmespath.search(
+            "spec.ingress[*].ports[1]", docs[3]
+        )
+
     def test_authSidecar_kibana(self, kube_version):
         """Test Kibana Service with authSidecar."""
         docs = render_chart(
@@ -99,6 +109,11 @@ class TestAuthSidecar:
             "protocol": "TCP",
             "port": 8084,
         } in jmespath.search("spec.ports", docs[2])
+
+        assert "NetworkPolicy" == docs[3]["kind"]
+        assert [{"port": 8084, "protocol": "TCP"}] == jmespath.search(
+            "spec.ingress[*].ports[0]", docs[3]
+        )
 
     def test_authSidecar_houston_configmap_without_annotation(self, kube_version):
         """Test Houston Configmap with authSidecar."""
