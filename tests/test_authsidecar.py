@@ -111,6 +111,13 @@ class TestAuthSidecar:
         } in jmespath.search("spec.ports", docs[2])
 
         assert "NetworkPolicy" == docs[3]["kind"]
+        assert [
+            {
+                "namespaceSelector": {
+                    "matchLabels": {"network.openshift.io/policy-group": "ingress"}
+                }
+            }
+        ] == jmespath.search("spec.ingress[0].from", docs[3])
         assert [{"port": 8084, "protocol": "TCP"}] == jmespath.search(
             "spec.ingress[*].ports[0]", docs[3]
         )
