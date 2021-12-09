@@ -66,6 +66,11 @@ data:
       namespaceLabels:
         platform-release: {{ .Release.Name }}
 
+      {{ if or .Values.global.customLogging.enabled }}
+      # Disables Kibana dashboard in Astro UI UI
+      kibanaUIEnabled: false
+      {{ end }}
+
       # These values get passed directly into the airflow helm deployments
       helm:
       {{- if and .Values.global.ssl.enabled .Values.global.ssl.mode }}
