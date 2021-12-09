@@ -66,6 +66,11 @@ data:
       namespaceLabels:
         platform-release: {{ .Release.Name }}
 
+      {{ if or .Values.global.customLogging.enabled }}
+      # Disables Kibana dashboard in Astro UI
+      kibanaUIEnabled: false
+      {{ end }}
+
       {{- if .Values.global.authSidecar.enabled }}
       # enables nginx auth sidecar for airflow deployments
       authSideCar:
