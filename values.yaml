@@ -322,6 +322,22 @@ grafana:
     #   velero:
     #     file: dashboards/velero.json
 
+  # provide extra configurations to grafana via environment variables
+  extraEnvVars:
+    []
+    # - name: GF_SMTP_ENABLED
+    #   value: true
+    # - name: GF_SMTP_HOST
+    #   value: smtp.astronomer.io
+    # - name: GF_SMTP_USER
+    #   value: grafana
+    # - name: GF_SMTP_PASSWORD
+    #   valueFrom:
+    #     secretKeyRef:
+    #       name: grafana-smtp-secret
+    #       key: smtp_password
+
+
 #################################
 ## Prometheus configuration
 #################################

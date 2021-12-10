@@ -123,6 +123,9 @@ spec:
             {{- end }}
             - name: GF_AUTH_ANONYMOUS_ENABLED
               value: "true"
+{{- if .Values.extraEnvVars}}
+{{ toYaml .Values.extraEnvVars | indent 12 }}
+{{- end }}
         {{- if .Values.global.authSidecar.enabled }}
         - name: auth-proxy
           image: "{{ .Values.global.authSidecar.repository }}:{{ .Values.global.authSidecar.tag }}"
