@@ -6,6 +6,16 @@ import docker
 import testinfra
 from kubernetes import client, config
 
+if not (namespace := getenv("NAMESPACE")):
+    print("NAMESPACE env var is not present, using 'astronomer' namespace")
+    namespace = "astronomer"
+
+if not (release_name := getenv("RELEASE_NAME")):
+    print(
+        "RELEASE_NAME env var is not present, assuming 'astronomer' is the release name"
+    )
+    release_name = "astronomer"
+
 
 def create_kube_client(in_cluster=False):
     """
@@ -28,9 +38,6 @@ def nginx(request):
     the testinfra documentation:
     https://testinfra.readthedocs.io/en/latest/examples.html#test-docker-images
     """
-    if not (namespace := getenv("NAMESPACE")):
-        print("NAMESPACE env var is not present, using 'astronomer' namespace")
-        namespace = "astronomer"
 
     kube = create_kube_client()
     pods = kube.list_namespaced_pod(
@@ -39,10 +46,8 @@ def nginx(request):
     assert (
         len(pods) > 0
     ), "Expected to find at least one pod with label 'component: ingress-controller'"
-    pod = pods[0]
-    yield testinfra.get_host(
-        f"kubectl://{pod.metadata.name}?container=nginx&namespace={namespace}"
-    )
+    pod = pods[0].metadata.name
+    yield testinfra.get_host(f"kubectl://{pod}?container=nginx&namespace={namespace}")
 
 
 @pytest.fixture(scope="function")
@@ -51,19 +56,14 @@ def houston_api(request):
     the testinfra documentation:
     https://testinfra.readthedocs.io/en/latest/examples.html#test-docker-images
     """
-    if not (namespace := getenv("NAMESPACE")):
-        print("NAMESPACE env var is not present, using 'astronomer' namespace")
-        namespace = "astronomer"
 
     kube = create_kube_client()
     pods = kube.list_namespaced_pod(namespace, label_selector="component=houston").items
     assert (
         len(pods) > 0
     ), "Expected to find at least one pod with label 'component: houston'"
-    pod = pods[0]
-    yield testinfra.get_host(
-        f"kubectl://{pod.metadata.name}?container=houston&namespace={namespace}"
-    )
+    pod = pods[0].metadata.name
+    yield testinfra.get_host(f"kubectl://{pod}?container=houston&namespace={namespace}")
 
 
 @pytest.fixture(scope="function")
@@ -72,18 +72,40 @@ def prometheus(request):
     the testinfra documentation:
     https://testinfra.readthedocs.io/en/latest/examples.html#test-docker-images
     """
-    if not (namespace := getenv("NAMESPACE")):
-        print("NAMESPACE env var is not present, using 'astronomer' namespace")
-        namespace = "astronomer"
 
-    if not (release_name := getenv("RELEASE_NAME")):
-        print(
-            "RELEASE_NAME env var is not present, assuming 'astronomer' is the release name"
-        )
-        release_name = "astronomer"
     pod = f"{release_name}-prometheus-0"
     yield testinfra.get_host(
         f"kubectl://{pod}?container=prometheus&namespace={namespace}"
+    )
+
+
+@pytest.fixture(scope="function")
+def es_master(request):
+    pod = f"{release_name}-elasticsearch-master-0"
+    yield testinfra.get_host(
+        f"kubectl://{pod}?container=es-master&namespace={namespace}"
+    )
+
+
+@pytest.fixture(scope="function")
+def es_data(request):
+    pod = f"{release_name}-elasticsearch-data-0"
+    yield testinfra.get_host(f"kubectl://{pod}?container=es-data&namespace={namespace}")
+
+
+@pytest.fixture(scope="function")
+def es_client(request):
+
+    kube = create_kube_client()
+    pods = kube.list_namespaced_pod(
+        namespace, label_selector="component=elasticsearch,role=client"
+    ).items
+    assert (
+        len(pods) > 0
+    ), "Expected to find at least one pod with labels 'component=elasticsearch,role=client'"
+    pod = pods[0].metadata.name
+    yield testinfra.get_host(
+        f"kubectl://{pod}?container=es-client&namespace={namespace}"
     )
 
 
