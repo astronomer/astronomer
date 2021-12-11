@@ -95,6 +95,8 @@ spec:
               fieldPath: metadata.name
         - name: DISCOVERY_SERVICE
           value: {{ template "elasticsearch.fullname" . }}-headless-discovery
+        - name: "ES_JAVA_OPTS"
+          value: "-Xms{{ .Values.client.heapMemory }} -Xmx{{ .Values.client.heapMemory }} -Dlog4j2.formatMsgNoLookups=true"
         {{- range $key, $value :=  .Values.common.env }}
         - name: {{ $key | upper | replace "-" "_" }}
           value: {{ $value | quote }}
@@ -103,8 +105,6 @@ spec:
         - name: {{ $key | upper | replace "-" "_" }}
           value: {{ $value | quote }}
         {{- end }}
-        - name: "ES_JAVA_OPTS"
-          value: "-Xms{{ .Values.client.heapMemory }} -Xmx{{ .Values.client.heapMemory }}"
         resources:
 {{ toYaml .Values.client.resources | indent 10 }}
         ports:
