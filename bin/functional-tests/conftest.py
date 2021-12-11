@@ -17,30 +17,14 @@ if not (release_name := getenv("RELEASE_NAME")):
     release_name = "astronomer"
 
 
-def create_kube_client(in_cluster=False):
-    """
-    Load and store authentication and cluster information from kube-config
-    file; if running inside a pod, use Kubernetes service account. Use that to
-    instantiate Kubernetes client.
-    """
-    if in_cluster:
-        print("Using in cluster kubernetes configuration")
-        config.load_incluster_config()
-    else:
-        print("Using kubectl kubernetes configuration")
-        config.load_kube_config()
-    return client.CoreV1Api()
-
-
 @pytest.fixture(scope="function")
-def nginx(request):
+def nginx(request, kube_client):
     """This is the host fixture for testinfra. To read more, please see
     the testinfra documentation:
     https://testinfra.readthedocs.io/en/latest/examples.html#test-docker-images
     """
 
-    kube = create_kube_client()
-    pods = kube.list_namespaced_pod(
+    pods = kube_client.list_namespaced_pod(
         namespace, label_selector="component=ingress-controller"
     ).items
     assert (
@@ -51,14 +35,15 @@ def nginx(request):
 
 
 @pytest.fixture(scope="function")
-def houston_api(request):
+def houston_api(request, kube_client):
     """This is the host fixture for testinfra. To read more, please see
     the testinfra documentation:
     https://testinfra.readthedocs.io/en/latest/examples.html#test-docker-images
     """
 
-    kube = create_kube_client()
-    pods = kube.list_namespaced_pod(namespace, label_selector="component=houston").items
+    pods = kube_client.list_namespaced_pod(
+        namespace, label_selector="component=houston"
+    ).items
     assert (
         len(pods) > 0
     ), "Expected to find at least one pod with label 'component: houston'"
@@ -94,10 +79,9 @@ def es_data(request):
 
 
 @pytest.fixture(scope="function")
-def es_client(request):
+def es_client(request, kube_client):
 
-    kube = create_kube_client()
-    pods = kube.list_namespaced_pod(
+    pods = kube_client.list_namespaced_pod(
         namespace, label_selector="component=elasticsearch,role=client"
     ).items
     assert (
@@ -120,5 +104,15 @@ def docker_client(request):
 
 
 @pytest.fixture(scope="session")
-def kube_client(request):
-    yield create_kube_client()
+def kube_client(request, in_cluster=False):
+    """
+    Return a kubernetes client. By default, use kube-config. If running in a pod, use k8s service account.
+    """
+
+    if in_cluster:
+        print("Using in cluster kubernetes configuration")
+        config.load_incluster_config()
+    else:
+        print("Using kubectl kubernetes configuration")
+        config.load_kube_config()
+    yield client.CoreV1Api()
