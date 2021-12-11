@@ -24,13 +24,7 @@ def nginx(request, kube_client):
     https://testinfra.readthedocs.io/en/latest/examples.html#test-docker-images
     """
 
-    pods = kube_client.list_namespaced_pod(
-        namespace, label_selector="component=ingress-controller"
-    ).items
-    assert (
-        len(pods) > 0
-    ), "Expected to find at least one pod with label 'component: ingress-controller'"
-    pod = pods[0].metadata.name
+    pod = get_pod_by_label_selector(kube_client, "component=ingress-controller")
     yield testinfra.get_host(f"kubectl://{pod}?container=nginx&namespace={namespace}")
 
 
@@ -41,13 +35,7 @@ def houston_api(request, kube_client):
     https://testinfra.readthedocs.io/en/latest/examples.html#test-docker-images
     """
 
-    pods = kube_client.list_namespaced_pod(
-        namespace, label_selector="component=houston"
-    ).items
-    assert (
-        len(pods) > 0
-    ), "Expected to find at least one pod with label 'component: houston'"
-    pod = pods[0].metadata.name
+    pod = get_pod_by_label_selector(kube_client, "component=houston")
     yield testinfra.get_host(f"kubectl://{pod}?container=houston&namespace={namespace}")
 
 
@@ -80,14 +68,7 @@ def es_data(request):
 
 @pytest.fixture(scope="function")
 def es_client(request, kube_client):
-
-    pods = kube_client.list_namespaced_pod(
-        namespace, label_selector="component=elasticsearch,role=client"
-    ).items
-    assert (
-        len(pods) > 0
-    ), "Expected to find at least one pod with labels 'component=elasticsearch,role=client'"
-    pod = pods[0].metadata.name
+    pod = get_pod_by_label_selector(kube_client, "component=elasticsearch,role=client")
     yield testinfra.get_host(
         f"kubectl://{pod}?container=es-client&namespace={namespace}"
     )
@@ -116,3 +97,14 @@ def kube_client(request, in_cluster=False):
         print("Using kubectl kubernetes configuration")
         config.load_kube_config()
     yield client.CoreV1Api()
+
+
+def get_pod_by_label_selector(kube_client, label_selector, namespace=namespace) -> str:
+    """Return the name of a pod found by label selector."""
+    pods = kube_client.list_namespaced_pod(
+        namespace, label_selector=label_selector
+    ).items
+    assert (
+        len(pods) > 0
+    ), f"Expected to find at least one pod with labels '{label_selector}'"
+    return pods[0].metadata.name
