@@ -8,7 +8,11 @@ from . import supported_k8s_versions
     supported_k8s_versions,
 )
 def test_log4shell(kube_version):
-    """Ensure remediation settings are in place for log4j log4shell CVE-2021-44228"""
+    """
+    Ensure remediation settings are in place for log4j log4shell CVE-2021-44228
+
+    https://github.com/astronomer/issues/issues/3880
+    """
     docs = render_chart(
         kube_version=kube_version,
         show_only=[
@@ -17,11 +21,21 @@ def test_log4shell(kube_version):
             "charts/elasticsearch/templates/master/es-master-statefulset.yaml",
         ],
     )
-    # Assert that all containers have an env var ES_JAVA_OPTS that includes the string -Dlog4j2.formatMsgNoLookups=true
+
+    containers = [
+        c for doc in docs for c in doc["spec"]["template"]["spec"]["containers"]
+    ]
+
+    # Assert that all containers contain at least one ES_JAVA_OPTS env var
+    assert all(
+        any(env_var["name"] == "ES_JAVA_OPTS" for env_var in c["env"])
+        for c in containers
+    )
+
+    # Assert that all ES_JAVA_OPTS env vars in all containers have the string -Dlog4j2.formatMsgNoLookups=true
     assert all(
         "-Dlog4j2.formatMsgNoLookups=true" in env_var["value"]
-        for doc in docs
-        for c in doc["spec"]["template"]["spec"]["containers"]
+        for c in containers
         for env_var in c["env"]
         if env_var["name"] == "ES_JAVA_OPTS"
     )
