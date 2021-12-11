@@ -2,10 +2,8 @@
 """
 This file is for system testing the Astronomer Helm chart.
 
-Testinfra is used to create test fixtures.
-
-testinfra simplifies and provides syntactic sugar for doing
-execs into a running pods.
+Many of these tests use pytest fixtures that use testinfra to exec
+into running pods so we can inspect the run-time environment.
 """
 
 import json
