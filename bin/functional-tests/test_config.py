@@ -2,10 +2,8 @@
 """
 This file is for system testing the Astronomer Helm chart.
 
-Testinfra is used to create test fixtures.
-
-testinfra simplifies and provides syntactic sugar for doing
-execs into a running pods.
+Many of these tests use pytest fixtures that use testinfra to exec
+into running pods so we can inspect the run-time environment.
 """
 
 import json
@@ -242,3 +240,33 @@ def test_houston_backend_secret_present_after_helm_upgrade_and_container_restart
     assert (
         "postgres" in result
     ), "Expected to find DB connection string after Houston restart"
+
+
+def test_cve_2021_44228_es_client(es_client):
+    """Ensure the running es process has -Dlog4j2.formatMsgNoLookups=true configured."""
+    assert (
+        es_client.check_output(
+            "/usr/share/elasticsearch/jdk/bin/jps -lv | grep -o '[^ ]*MsgNoLookups[^ ]*'"
+        )
+        == "-Dlog4j2.formatMsgNoLookups=true"
+    )
+
+
+def test_cve_2021_44228_es_data(es_data):
+    """Ensure the running es process has -Dlog4j2.formatMsgNoLookups=true configured."""
+    assert (
+        es_data.check_output(
+            "/usr/share/elasticsearch/jdk/bin/jps -lv | grep -o '[^ ]*MsgNoLookups[^ ]*'"
+        )
+        == "-Dlog4j2.formatMsgNoLookups=true"
+    )
+
+
+def test_cve_2021_44228_es_master(es_master):
+    """Ensure the running es process has -Dlog4j2.formatMsgNoLookups=true configured."""
+    assert (
+        es_master.check_output(
+            "/usr/share/elasticsearch/jdk/bin/jps -lv | grep -o '[^ ]*MsgNoLookups[^ ]*'"
+        )
+        == "-Dlog4j2.formatMsgNoLookups=true"
+    )
