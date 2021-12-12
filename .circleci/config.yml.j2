@@ -8,7 +8,7 @@ executors:
 jobs:
   lint:
     docker:
-      - image: quay.io/astronomer/ap-build:0.1.3
+      - image: quay.io/astronomer/ap-build:0.2.0
     steps:
       - checkout
       - run:
@@ -34,7 +34,7 @@ jobs:
 
   unittest-charts:
     docker:
-      - image: quay.io/astronomer/ap-build:0.1.3
+      - image: quay.io/astronomer/ci-helm-release:2021-12
     steps:
       - checkout
       - run:
@@ -43,7 +43,7 @@ jobs:
 
   build-artifact:
     docker:
-      - image: quay.io/astronomer/ap-build:0.1.3
+      - image: quay.io/astronomer/ap-build:0.2.0
     steps:
       - checkout
       - run:
@@ -58,7 +58,7 @@ jobs:
 
   release-to-internal:
     machine:
-      image: ubuntu-2004:202101-01
+      image: ubuntu-2004:202107-02
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -68,12 +68,12 @@ jobs:
           command: |
             set -e
             sudo apt-get update && sudo apt-get install -y ca-certificates curl
-            pyenv global 3.9.1
+            pyenv global 3.9.4
             bin/release-helm-chart /tmp/workspace/astronomer-*.tgz
 
   release-to-public:
     machine:
-      image: ubuntu-2004:202101-01
+      image: ubuntu-2004:202107-02
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -83,13 +83,13 @@ jobs:
           command: |
             set -e
             sudo apt-get update && sudo apt-get install -y ca-certificates curl
-            pyenv global 3.9.1
+            pyenv global 3.9.4
             bin/release-helm-chart -p /tmp/workspace/astronomer-*.tgz
       - publish-github-release
 {% for version in kube_versions %}
   platform-{{ version | replace(".", "-") }}:
     machine:
-      image: ubuntu-2004:202101-01
+      image: ubuntu-2004:202107-02
       resource_class: xlarge
     environment:
       KUBE_VERSION: v{{ version }}
@@ -98,10 +98,10 @@ jobs:
           astronomer-tags: "platform postgresql monitoring logging kubed keda"
 {% endfor -%}
 
-{% for version in [kube_versions[-1]] %}
+{% for version in [kube_versions[1]] %}
   lts-upgrade-0-23-test:
     machine:
-      image: ubuntu-2004:202101-01
+      image: ubuntu-2004:202107-02
       resource_class: xlarge
     environment:
       KUBE_VERSION: v{{ version }}
@@ -153,33 +153,29 @@ workflows:
     jobs:
       - lint
       - unittest-charts
-
       - build-artifact:
           requires:
             - lint
             - unittest-charts
-
       - test-all-platforms:
           type: approval
-{% for version in kube_versions %}{% if version == kube_versions[-1:][0] %}
+{% for version in kube_versions %}
       - platform-{{ version | replace(".", "-") }}:
           requires:
-            - build-artifact
-{%- else %}
-      - platform-{{ version | replace(".", "-") }}:
-          requires:
+{%- if version == kube_versions[2] %}
             - test-all-platforms
+{%- endif %}
             - build-artifact
-{% endif %}{% endfor %}
-
+{%- endfor %}
       - approve-internal-release:
           type: approval
           filters:
             branches:
               only:
                 - '/release-0\.\d+/'
-
       - release-to-internal:
+          context:
+            - gcp-astronomer-prod
           requires:
             - approve-internal-release
 {%- for version in kube_versions %}
@@ -193,13 +189,15 @@ workflows:
           type: approval
           requires:
             - release-to-internal
-
           filters:
             branches:
               only:
                 - '/release-0\.\d+/'
 
       - release-to-public:
+          context:
+            - gcp-astronomer-prod
+            - github-repo
           requires:
             - approve-public-release
           filters:
@@ -333,6 +331,6 @@ commands:
           name: Create a release on GitHub
           command: |
             set -xe
-            pyenv global 3.9.1
+            pyenv global 3.9.4
             pip install astronomer_e2e_test
             astronomer-ci publish-github-release --github-repository $CIRCLE_PROJECT_REPONAME --github-organization $CIRCLE_PROJECT_USERNAME --commitish $CIRCLE_SHA1

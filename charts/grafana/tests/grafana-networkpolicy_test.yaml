@@ -1,9 +1,0 @@
----
-suite: Test grafana-networkpolicy
-templates:
-  - grafana-networkpolicy.yaml
-tests:
-  - it: should work
-    asserts:
-      - isKind:
-          of: NetworkPolicy

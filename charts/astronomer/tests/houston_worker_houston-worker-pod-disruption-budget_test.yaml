@@ -1,8 +1,0 @@
-suite: Test houston/worker/houston-worker-pod-disruption-budget.yaml
-templates:
-- houston/worker/houston-worker-pod-disruption-budget.yaml
-tests:
-- it: should work
-  asserts:
-    - isKind:
-        of: PodDisruptionBudget

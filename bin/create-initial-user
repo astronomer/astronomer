@@ -11,7 +11,7 @@ fi
 
 BIN_DIR="${0%/*}"
 
-HOST="https://houston.local.astronomer-development.com/v1"
+HOST="https://houston.localtest.me/v1"
 
 USER="$1"
 PASS="$2"

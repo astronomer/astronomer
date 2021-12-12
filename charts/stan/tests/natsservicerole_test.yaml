@@ -1,9 +1,0 @@
----
-suite: Test natsservicerole
-templates:
-  - natsservicerole.yaml
-tests:
-  - it: should work
-    asserts:
-      - isKind:
-          of: NatsServiceRole

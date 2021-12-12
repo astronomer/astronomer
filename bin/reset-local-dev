@@ -82,7 +82,7 @@ echo '
      sudo -E kubectl port-forward -n astronomer svc/astronomer-nginx 443
 
 
- Then you can access the service here: https://app.local.astronomer-development.com
+ Then you can access the service here: https://app.localtest.me
 
  You can clean up like this:
 

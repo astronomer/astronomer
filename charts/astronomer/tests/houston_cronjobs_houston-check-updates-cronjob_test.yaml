@@ -1,8 +1,0 @@
-suite: Test houston/cronjobs/houston-check-updates-cronjob.yaml
-templates:
-- houston/cronjobs/houston-check-updates-cronjob.yaml
-tests:
-- it: should work
-  asserts:
-    - isKind:
-        of: CronJob

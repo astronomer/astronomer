@@ -1,0 +1,58 @@
+#####################
+## Houston Ingress ##
+#####################
+{{- if .Values.global.baseDomain }}
+kind: Ingress
+apiVersion: {{ template "apiVersion.Ingress" . }}
+metadata:
+  name: {{ .Release.Name }}-houston-ingress
+  labels:
+    component: houston-ingress
+    tier: astronomer
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+  annotations:
+    kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
+    kubernetes.io/tls-acme: {{ eq .Values.global.acme true | quote }}
+    nginx.ingress.kubernetes.io/custom-http-errors: "404"
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      location ~ ^/v1/(registry\/events|alerts|elasticsearch) {
+        deny all;
+        return 403;
+      }
+spec:
+  {{- if or .Values.global.tlsSecret .Values.global.acme }}
+  tls:
+  {{- if .Values.global.acme }}
+    - secretName: houston-tls
+  {{- end }}
+  {{- if .Values.global.tlsSecret }}
+    - secretName: {{ .Values.global.tlsSecret }}
+  {{- end }}
+      hosts:
+        - houston.{{ .Values.global.baseDomain }}
+  {{- end }}
+  {{ if or (semverCompare "< 1.19-0" .Capabilities.KubeVersion.Version) (.Values.global.useLegacyIngress) -}}
+  rules:
+  - host: houston.{{ .Values.global.baseDomain }}
+    http:
+      paths:
+        - path: /
+          backend:
+            serviceName: {{ .Release.Name }}-houston
+            servicePort: houston-http
+  {{ else -}}
+  rules:
+  - host: houston.{{ .Values.global.baseDomain }}
+    http:
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: {{ .Release.Name }}-houston
+              port:
+                name: houston-http
+  {{- end -}}
+{{- end }}

@@ -1,8 +1,0 @@
-suite: Test commander/commander-deployment.yaml
-templates:
-- commander/commander-deployment.yaml
-tests:
-- it: should work
-  asserts:
-    - isKind:
-        of: Deployment

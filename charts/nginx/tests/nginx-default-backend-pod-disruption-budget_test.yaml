@@ -1,9 +1,0 @@
----
-suite: Test nginx-default-backend-pod-disruption-budget
-templates:
-  - nginx-default-backend-pod-disruption-budget.yaml
-tests:
-  - it: should work
-    asserts:
-      - isKind:
-          of: PodDisruptionBudget

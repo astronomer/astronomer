@@ -1,9 +1,0 @@
----
-suite: Test prometheus-rolebinding
-templates:
-  - prometheus-rolebinding.yaml
-tests:
-  - it: should work
-    asserts:
-      - isKind:
-          of: ClusterRoleBinding

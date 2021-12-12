@@ -1,9 +1,0 @@
----
-suite: Test fluentd-clusterrolebinding
-templates:
-  - fluentd-clusterrolebinding.yaml
-tests:
-  - it: should work
-    asserts:
-      - isKind:
-          of: ClusterRoleBinding

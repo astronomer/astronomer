@@ -1,9 +1,0 @@
----
-suite: Test es-psp-rolebinding
-templates:
-  - es-psp-rolebinding.yaml
-tests:
-  - it: should work
-    asserts:
-      - isKind:
-        of: RoleBinding

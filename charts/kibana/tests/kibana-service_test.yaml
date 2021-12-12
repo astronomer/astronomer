@@ -1,9 +1,0 @@
----
-suite: Test kibana-service
-templates:
-  - kibana-service.yaml
-tests:
-  - it: should work
-    asserts:
-      - isKind:
-          of: Service

@@ -1,9 +1,0 @@
----
-suite: Test grafana-service
-templates:
-  - grafana-service.yaml
-tests:
-  - it: should work
-    asserts:
-      - isKind:
-          of: Service

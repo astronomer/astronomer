@@ -77,6 +77,9 @@ global:
   # Enable security context constraints required for OpenShift
   sccEnabled: false
 
+  # Use networking.k8s.io/v1beta1 ingress on k8s >1.18
+  useLegacyIngress: false
+
   # Enable values required for use with Microsoft Azure
   azure:
     enabled: false

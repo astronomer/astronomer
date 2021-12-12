@@ -81,3 +81,7 @@ spec:
               value: {{ .Values.global.helmRepo }}
             - name: HELM_HOST
               value: {{ .Values.global.helmHost }}
+            {{ if .Values.commander.upgradeTimeout }}
+            - name: COMMANDER_UPGRADE_TIMEOUT
+              value: {{ .Values.commander.upgradeTimeout | quote }}
+            {{- end }}
