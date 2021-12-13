@@ -4,6 +4,7 @@
 set -euo pipefail
 
 GIT_ROOT="$(git -C "${0%/*}" rev-parse --show-toplevel)"
+NAMESPACE="${NAMESPACE:-astronomer}"
 
 echo "Generating SSL keys..."
 
@@ -20,10 +21,10 @@ echo "Install requirements"
 ( cd "$GIT_ROOT/charts/postgresql" && helm dependency update . )
 
 echo "Creating namespace 'astronomer'"
-kubectl create namespace astronomer
+kubectl create namespace "${NAMESPACE}"
 
 echo "Installing TLS cert and private key"
 kubectl create secret tls astronomer-tls \
   --key /tmp/privkey.pem \
   --cert /tmp/fullchain.pem \
-  --namespace astronomer
+  --namespace "${NAMESPACE}"

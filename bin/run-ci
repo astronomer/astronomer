@@ -5,6 +5,7 @@ set -euo pipefail
 
 GIT_ROOT="$(git -C "${0%/*}" rev-parse --show-toplevel)"
 BIN_DIR="${GIT_ROOT}/bin"
+NAMESPACE="${NAMESPACE:-astronomer}"
 
 source "$BIN_DIR/install-ci-tools" 1
 export PATH="$PATH:/tmp/bin"
@@ -18,7 +19,7 @@ echo "Deploying Astronomer..."
 # make lint
 
 # This is so CI does not timeout on "no input in 10 minutes"
-kubectl get pods -n astronomer -w &
+kubectl get pods -n "$NAMESPACE" -w &
 WATCH_PID=$!
 
 "$BIN_DIR/install-platform"

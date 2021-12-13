@@ -9,11 +9,11 @@ tolerations: []
 images:
   nginx:
     repository: quay.io/astronomer/ap-nginx
-    tag: 0.47.0
+    tag: 0.49.3
     pullPolicy: IfNotPresent
   defaultBackend:
     repository: quay.io/astronomer/ap-default-backend
-    tag: 0.25.2
+    tag: 0.25.4
     pullPolicy: IfNotPresent
 
 ingressClass: ~
@@ -34,6 +34,11 @@ resources: {}
 
 # Service type that Nginx can be. Default is LoadBalancer but "ClusterIP" and "NodePort" are both valid.
 serviceType: "LoadBalancer"
+
+# NodePort, requires serviceType NodePort. Default of nil auto-assigns a port
+httpNodePort: ~
+httpsNodePort: ~
+metricsNodePort: ~
 
 # dict of annotations to add to the ingress controller
 ingressAnnotations: {}

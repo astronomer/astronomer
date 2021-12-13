@@ -1,0 +1,9 @@
+apiVersion: v2
+appVersion: "1.16.0"
+description: A Helm chart to deploy external es proxy
+name: external-es-proxy
+keywords:
+- astronomer
+- custom-logging
+- external-logging
+version: 0.12.1

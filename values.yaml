@@ -40,6 +40,9 @@ global:
   # Single namespace mode
   singleNamespace: false
 
+  # Use cluster roles
+  clusterRoles: true
+
   # Enables necessary components for compatibility with Istio Service Mesh
   istio:
     enabled: false
@@ -62,6 +65,9 @@ global:
 
   # Used to enable Celery autoscaling
   kedaEnabled: false
+
+  # make fluentd to gather logs from all avaialble namespaces
+  manualNamespaceNamesEnabled: false
 
   # Used to enable nats-server
   nats:
@@ -141,6 +147,18 @@ global:
     resources:
       limits: {}
       requests: {}
+
+  # External ES logging
+  customLogging:
+    enabled: false
+    scheme: https
+    host: ""
+    port: ""
+    secret: ""
+    #secretName: ~
+    #awsSecretName: ~
+    #awsIAMRole: ~
+    #awsServiceAccountAnnotation: ~
 
   ## Add annotations to all the auth sidecar deployed ingress resources
   ##
@@ -303,6 +321,22 @@ grafana:
     # default:
     #   velero:
     #     file: dashboards/velero.json
+
+  # provide extra configurations to grafana via environment variables
+  extraEnvVars:
+    []
+    # - name: GF_SMTP_ENABLED
+    #   value: "true"
+    # - name: GF_SMTP_HOST
+    #   value: smtp.astronomer.io
+    # - name: GF_SMTP_USER
+    #   value: grafana
+    # - name: GF_SMTP_PASSWORD
+    #   valueFrom:
+    #     secretKeyRef:
+    #       name: grafana-smtp-secret
+    #       key: smtp_password
+
 
 #################################
 ## Prometheus configuration
