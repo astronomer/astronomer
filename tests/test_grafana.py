@@ -12,7 +12,7 @@ DEPLOYMENT_FILE = "charts/grafana/templates/grafana-deployment.yaml"
     "kube_version",
     supported_k8s_versions,
 )
-def test_deployment_renders(kube_version):
+def test_deployment_should_render(kube_version):
     """Test that the grafana-deployment renders without error."""
     docs = render_chart(
         kube_version=kube_version,
