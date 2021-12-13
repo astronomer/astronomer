@@ -326,7 +326,7 @@ grafana:
   extraEnvVars:
     []
     # - name: GF_SMTP_ENABLED
-    #   value: true
+    #   value: "true"
     # - name: GF_SMTP_HOST
     #   value: smtp.astronomer.io
     # - name: GF_SMTP_USER
