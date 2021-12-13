@@ -5,7 +5,7 @@ metadata:
   annotations:
     release.openshift.io/create-only: "true"
     "helm.sh/hook": "pre-install,pre-upgrade"
-  name: {{ .Release.Name }}-externales-anyuid
+  name: {{ .Release.Name }}-external-es-proxy-anyuid
 priority: 10
 readOnlyRootFilesystem: false
 requiredDropCapabilities:
