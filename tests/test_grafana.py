@@ -13,6 +13,7 @@ DEPLOYMENT_FILE = "charts/grafana/templates/grafana-deployment.yaml"
     supported_k8s_versions,
 )
 def test_deployment_renders(kube_version):
+    """Test that the grafana-deployment renders without error."""
     docs = render_chart(
         kube_version=kube_version,
         show_only=[DEPLOYMENT_FILE],
@@ -25,7 +26,7 @@ def test_deployment_renders(kube_version):
     supported_k8s_versions,
 )
 def test_deployment_should_render_extra_env(kube_version):
-    """Test that helm renders a good ClusterRoleBinding template for fluentd when rbacEnabled=True."""
+    """Test that helm renders extra environment variables to the grafana-deployment resource when provided."""
     docs = render_chart(
         kube_version=kube_version,
         values={"global": {"ssl": {"enabled": True}}},
