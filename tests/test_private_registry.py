@@ -1,7 +1,5 @@
 from tests.helm_template_generator import render_chart
 import jmespath
-import pytest
-from . import supported_k8s_versions
 
 
 def test_private_repository_image_names_the_same_as_public_ones():
