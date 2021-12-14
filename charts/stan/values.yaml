@@ -12,6 +12,10 @@ images:
     repository: quay.io/astronomer/ap-nats-streaming
     tag: 0.22.0-2
     pullPolicy: IfNotPresent
+  exporter:
+    repository: quay.io/astronomer/ap-nats-exporter
+    tag: 0.9.0
+    pullPolicy: IfNotPresent
 
 stan:
   resources: {}
@@ -147,8 +151,6 @@ store:
 #######################################
 exporter:
   enabled: true
-  image: quay.io/astronomer/ap-nats-exporter:0.9.0
-  pullPolicy: IfNotPresent
   resources: {}
   #  limits:
   #   cpu: 100m

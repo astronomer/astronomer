@@ -8,6 +8,10 @@ images:
     repository: quay.io/astronomer/ap-nats-server
     tag: 2.3.2-3
     pullPolicy: IfNotPresent
+  exporter:
+    repository: quay.io/astronomer/ap-nats-exporter
+    tag: 0.9.0
+    pullPolicy: IfNotPresent
 
 nats:
   # In case both external access and advertise are enabled
@@ -173,8 +177,6 @@ reloader:
 # Prometheus NATS Exporter configuration.
 exporter:
   enabled: true
-  image: quay.io/astronomer/ap-nats-exporter:0.9.0
-  pullPolicy: IfNotPresent
   # resource configuration for the metrics sidecar
   resources: {}
   #  limits:

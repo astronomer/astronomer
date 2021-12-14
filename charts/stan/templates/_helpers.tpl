@@ -23,6 +23,14 @@ Return the list of peers in a NATS Streaming cluster.
 {{ print $replicas }}
 {{- end -}}
 
+{{ define "stan-exporter.image" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-nats-exporter:{{ .Values.images.exporter.tag }}
+{{- else -}}
+{{ .Values.images.exporter.repository }}:{{ .Values.images.exporter.tag }}
+{{- end }}
+{{- end }}
+
 {{ define "stan.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
 {{ .Values.global.privateRegistry.repository }}/ap-nats-streaming:{{ .Values.images.stan.tag }}
