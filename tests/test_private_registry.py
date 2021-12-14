@@ -24,12 +24,14 @@ def test_private_repository_image_names_the_same_as_public_ones():
             for public_repo_image, private_repo_image in zip(
                 public_repo_images, private_repo_images
             ):
+                public_repo_image = public_repo_image.split("/")[-1]
+                private_repo_image = private_repo_image.split("/")[-1]
                 if public_repo_image != private_repo_image:
                     print(
                         f"image name differs when using a private repo named same as public - {public_repo_image} vs {private_repo_image}"
                     )
                     differtly_named_images.append(
-                        (private_repo_image, public_repo_image)
+                        (public_repo_image, private_repo_image)
                     )
     assert len(differtly_named_images) == 0
 
@@ -46,9 +48,9 @@ def test_repository_overrides_work():
     assert len(docs) > 50
     differtly_named_images = []
     for doc in docs:
-        documentImages = jmespath.search("spec.template.spec.containers[*].image", doc)
-        if documentImages is not None:
-            for image in documentImages:
+        doc_images = jmespath.search("spec.template.spec.containers[*].image", doc)
+        if doc_images is not None:
+            for image in doc_images:
                 if not image.startswith(repository):
                     print(
                         f"{image} did not begin with specified repository - {repository}"
