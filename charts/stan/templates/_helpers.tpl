@@ -25,7 +25,7 @@ Return the list of peers in a NATS Streaming cluster.
 
 {{ define "stan.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/ap-stan:{{ .Values.images.stan.tag }}
+{{ .Values.global.privateRegistry.repository }}/ap-nats-streaming:{{ .Values.images.stan.tag }}
 {{- else -}}
 {{ .Values.images.stan.repository }}:{{ .Values.images.stan.tag }}
 {{- end }}
