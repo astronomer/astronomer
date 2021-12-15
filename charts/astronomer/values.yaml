@@ -226,16 +226,6 @@ houston:
     #   tags:
     #   - 2.0.0-alpine3.10-onbuild
     #   channel: stable
-prisma:
-  podLabels: {}
-  env: []
-  resources: {}
-  #  limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  #  requests:
-  #   cpu: 100m
-  #   memory: 128Mi
 
 commander:
   replicas: 2
@@ -259,7 +249,6 @@ registry:
   # k8s secret name for registry to use to authenticate to houston when sending notifications
   authHeaderSecretName: ~
   replicas: 1
-  podLabels: {}
   resources: {}
   #  limits:
   #   cpu: 100m

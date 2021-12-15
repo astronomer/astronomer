@@ -3,5 +3,5 @@ kubernetes
 pytest
 pytest-rerunfailures
 pytest-sugar
+pytest-testinfra
 PyYAML
-testinfra
