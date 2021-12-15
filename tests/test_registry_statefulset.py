@@ -51,12 +51,12 @@ class TestRegistryStatefulset:
         assert len(docs) == 1
         doc = docs[0]
 
-        assert doc["kind"] == "StatefulSet"
+        assert doc["kind"] == "Deployment"
         assert doc["apiVersion"] == "apps/v1"
         assert doc["metadata"]["name"] == "RELEASE-NAME-registry"
         assert doc["spec"]["template"]["spec"]["volumes"][2]["name"] == "gcs-keyfile"
         assert (
-            docs["spec"]["template"]["spec"]["containers"][0]["volumeMounts"][3]["name"]
+            doc["spec"]["template"]["spec"]["containers"][0]["volumeMounts"][3]["name"]
             == "gcs-keyfile"
         )
 

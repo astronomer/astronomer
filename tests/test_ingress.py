@@ -31,27 +31,26 @@ class TestIngress:
         # This would be valid python, but we laod from json just to keep linters happy and the data more compact
         expected_rules_v1beta1 = json.loads(
             """
-        [{"host":"example.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":{"service":{"name":"RELEASE-NAME-astro-ui","port":{"name":"astro-ui-http"}}}}]}},
-        {"host":"app.example.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":{"service":{"name":"RELEASE-NAME-astro-ui","port":{"name":"astro-ui-http"}}}}]}},
-        {"host":"registry.example.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":{"service":{"name":"RELEASE-NAME-registry","port":{"name":"registry-http"}}}}]}},
-        {"host":"install.example.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":{"service":{"name":"RELEASE-NAME-cli-install","port":{"name":"install-http"}}}}]}}]
-        """
-        )
-        expected_rules_v1 = json.loads(
-            """
         [{"host":"example.com","http":{"paths":[{"path":"/","backend":{"serviceName":"RELEASE-NAME-astro-ui","servicePort":"astro-ui-http"}}]}},
         {"host":"app.example.com","http":{"paths":[{"path":"/","backend":{"serviceName":"RELEASE-NAME-astro-ui","servicePort":"astro-ui-http"}}]}},
         {"host":"registry.example.com","http":{"paths":[{"path":"/","backend":{"serviceName":"RELEASE-NAME-registry","servicePort":"registry-http"}}]}},
         {"host":"install.example.com","http":{"paths":[{"path":"/","backend":{"serviceName":"RELEASE-NAME-cli-install","servicePort":"install-http"}}]}}]
         """
         )
+        expected_rules_v1 = json.loads(
+            """
+        [{"host":"example.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":{"service":{"name":"RELEASE-NAME-astro-ui","port":{"name":"astro-ui-http"}}}}]}},
+        {"host":"app.example.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":{"service":{"name":"RELEASE-NAME-astro-ui","port":{"name":"astro-ui-http"}}}}]}},
+        {"host":"registry.example.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":{"service":{"name":"RELEASE-NAME-registry","port":{"name":"registry-http"}}}}]}},
+        {"host":"install.example.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":{"service":{"name":"RELEASE-NAME-cli-install","port":{"name":"install-http"}}}}]}}]
+        """
+        )
 
         _, minor, _ = (int(x) for x in kube_version.split("."))
-
-        if minor >= 19:
-            assert doc["apiVersion"] == "networking.k8s.io/v1"
-            assert doc["spec"]["rules"] == expected_rules_v1
 
         if minor < 19:
             assert doc["apiVersion"] == "networking.k8s.io/v1beta1"
             assert doc["spec"]["rules"] == expected_rules_v1beta1
+        else:
+            assert doc["apiVersion"] == "networking.k8s.io/v1"
+            assert doc["spec"]["rules"] == expected_rules_v1

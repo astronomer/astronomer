@@ -63,6 +63,7 @@ build: ## Build the Astronomer helm chart
 
 .PHONY: update-requirements
 update-requirements: ## Update all requirements.txt files
+	# We should go back to using --generate-hashes when quay.io/astronomer/ci-helm-release gets to python >=3.9 (probably ubuntu 22.04)
 	for FILE in requirements/*.in ; do pip-compile --quiet --allow-unsafe --upgrade $${FILE} ; done ;
 	-pre-commit run requirements-txt-fixer --all-files --show-diff-on-failure
 
