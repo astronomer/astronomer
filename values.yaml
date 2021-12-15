@@ -1,6 +1,6 @@
-#################################
+##################################
 ## Astronomer global configuration
-#################################
+##################################
 global:
   # Base domain for all subdomains exposed through ingress
   baseDomain: ~
@@ -280,6 +280,8 @@ astronomer:
       limits:
         cpu: "500m"
         memory: "1024Mi"
+
+  # podLabels: {}
 
 #################################
 ## Nginx configuration
