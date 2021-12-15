@@ -226,16 +226,6 @@ houston:
     #   tags:
     #   - 2.0.0-alpine3.10-onbuild
     #   channel: stable
-prisma:
-  podLabels: {} # This almost certainly does nothing. The right value is astronomer.podLabels
-  env: []
-  resources: {}
-  #  limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  #  requests:
-  #   cpu: 100m
-  #   memory: 128Mi
 
 commander:
   replicas: 2
