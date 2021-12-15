@@ -249,7 +249,6 @@ registry:
   # k8s secret name for registry to use to authenticate to houston when sending notifications
   authHeaderSecretName: ~
   replicas: 1
-  podLabels: {} # This almost certainly does nothing. The right value is astronomer.podLabels
   resources: {}
   #  limits:
   #   cpu: 100m
