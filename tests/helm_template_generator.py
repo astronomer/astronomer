@@ -71,7 +71,7 @@ def render_chart(
     chart_dir=None,
     kube_version="1.18.0",
     baseDomain="example.com",
-    namespace="default",
+    namespace=None,
 ):
     """
     Render a helm chart into dictionaries. For helm chart testing only.
@@ -87,8 +87,6 @@ def render_chart(
             "template",
             "--kube-version",
             kube_version,
-            "--namespace",
-            namespace,
             name,
             chart_dir,
             "--set",
@@ -96,6 +94,8 @@ def render_chart(
             "--values",
             tmp_file.name,
         ]
+        if namespace:
+            command.extend(["--namespace", namespace])
         if show_only:
             for i in show_only:
                 if not Path(i).exists():
