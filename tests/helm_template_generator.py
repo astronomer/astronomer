@@ -71,9 +71,10 @@ def render_chart(
     chart_dir=None,
     kube_version="1.18.0",
     baseDomain="example.com",
+    namespace="default",
 ):
     """
-    Render a helm chart into dictionaries. For helm chart testing only
+    Render a helm chart into dictionaries. For helm chart testing only.
     """
     values = values or {}
     chart_dir = chart_dir or sys.path[0]
@@ -86,6 +87,8 @@ def render_chart(
             "template",
             "--kube-version",
             kube_version,
+            "--namespace",
+            namespace,
             name,
             chart_dir,
             "--set",
