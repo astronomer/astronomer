@@ -26,9 +26,7 @@ class TestPrometheusConfigConfigmap:
         assert doc["apiVersion"] == "v1"
         assert doc["metadata"]["name"] == "RELEASE-NAME-prometheus-config"
 
-    def test_prometheus_config_configmap_handles_different_name_and_ns(
-        self, kube_version
-    ):
+    def test_prometheus_config_configmap_with_different_name_and_ns(self, kube_version):
         """Validate the prometheus config configmap does not conflate deployment name and namespace."""
         docs = render_chart(
             name="FOO-NAME",
