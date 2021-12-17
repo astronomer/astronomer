@@ -37,7 +37,7 @@ def test_private_repository_image_names_the_same_as_public_ones():
                     differently_named_images.append(
                         (public_repo_image, private_repo_image)
                     )
-    assert (len(differently_named_images) == 0, differently_named_images)
+    assert len(differently_named_images) == 0, differently_named_images
 
 
 def test_repository_overrides_work():
@@ -64,4 +64,4 @@ def test_repository_overrides_work():
                         f"{image} did not begin with specified repository - {repository}"
                     )
                     differently_named_images.append(image)
-    assert (len(differently_named_images) == 0, differently_named_images)
+    assert len(differently_named_images) == 0, differently_named_images
