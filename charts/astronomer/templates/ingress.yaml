@@ -38,7 +38,6 @@ spec:
       hosts:
         - {{ .Values.global.baseDomain }}
         - app.{{ .Values.global.baseDomain }}
-        - houston.{{ .Values.global.baseDomain }}
         - registry.{{ .Values.global.baseDomain }}
         - install.{{ .Values.global.baseDomain }}
   {{- end }}
@@ -58,13 +57,6 @@ spec:
           backend:
             serviceName: {{ .Release.Name }}-astro-ui
             servicePort: astro-ui-http
-  - host: houston.{{ .Values.global.baseDomain }}
-    http:
-      paths:
-        - path: /
-          backend:
-            serviceName: {{ .Release.Name }}-houston
-            servicePort: houston-http
   - host: registry.{{ .Values.global.baseDomain }}
     http:
       paths:
@@ -101,16 +93,6 @@ spec:
               name: {{ .Release.Name }}-astro-ui
               port:
                 name: astro-ui-http
-  - host: houston.{{ .Values.global.baseDomain }}
-    http:
-      paths:
-        - path: /
-          pathType: Prefix
-          backend:
-            service:
-              name: {{ .Release.Name }}-houston
-              port:
-                name: houston-http
   - host: registry.{{ .Values.global.baseDomain }}
     http:
       paths:

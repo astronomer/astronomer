@@ -60,12 +60,23 @@ spec:
           timeoutSeconds: {{ .Values.livenessProbeConfig.timeoutSeconds }}
         imagePullPolicy: {{ .Values.images.fluentd.pullPolicy }}
         env:
+        - name: K8S_NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
         - name: FLUENTD_ARGS
           value: --no-supervisor -q
+        {{- if .Values.global.customLogging.enabled }}
+        - name: OUTPUT_HOST
+          value: {{ printf "%s-external-es-proxy" .Release.Name | quote }}
+        - name: OUTPUT_PORT
+          value: "9201"
+        {{- else }}
         - name: OUTPUT_HOST
           value: {{ template "elasticsearch.host" . }}
         - name: OUTPUT_PORT
           value: {{ .Values.elasticsearch.port | quote }}
+        {{- end }}
         - name: OUTPUT_BUFFER_CHUNK_LIMIT
           value: {{ .Values.elasticsearch.buffer_chunk_limit | quote }}
         - name: OUTPUT_BUFFER_QUEUE_LIMIT

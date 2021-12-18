@@ -87,6 +87,10 @@
 {{ default (printf "%s-houston-backend" .Release.Name) .Values.houston.backendSecretName }}
 {{- end }}
 
+{{ define "registry.authHeaderSecret" -}}
+{{ default (printf "%s-registry-auth-key" .Release.Name) .Values.registry.authHeaderSecretName }}
+{{- end }}
+
 {{ define "houston.airflowBackendSecret" -}}
 {{ default (printf "%s-houston-backend" .Release.Name) .Values.houston.airflowBackendSecretName }}
 {{- end }}
@@ -302,3 +306,28 @@ s3:
 {{- end }}
 {{- printf "'[%s]'" (join "," $ns.servers) -}}
 {{- end }}
+
+{{/*
+Return  the proper Storage Class
+*/}}
+{{- define "registry.storageClass" -}}
+{{/*
+Helm 2.11 supports the assignment of a value to a variable defined in a different scope,
+but Helm 2.9 and 2.10 does not support it, so we need to implement this if-else logic.
+*/}}
+{{- if .Values.global.storageClass -}}
+    {{- if (eq "-" .Values.global.storageClass) -}}
+        {{- printf "storageClassName: \"\"" -}}
+    {{- else }}
+        {{- printf "storageClassName: %s" .Values.global.storageClass -}}
+    {{- end -}}
+{{- else -}}
+    {{- if .Values.registry.persistence.storageClassName -}}
+          {{- if (eq "~" .Values.registry.persistence.storageClassName) -}}
+              {{- printf "storageClassName: \"\"" -}}
+          {{- else }}
+              {{- printf "storageClassName: %s" .Values.registry.persistence.storageClassName -}}
+          {{- end -}}
+    {{- end -}}
+{{- end -}}
+{{- end -}}

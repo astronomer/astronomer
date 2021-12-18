@@ -1,0 +1,80 @@
+################################
+## Elasticsearch Proxy ConfigMap
+################################
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: {{ template "external-es-proxy.fullname" . }}
+  labels:
+    tier: external-logging
+    component: {{ template "external-es-proxy.name" . }}
+    chart: {{ template "external-es-proxy.chart" . }}
+    heritage: {{ .Release.Service }}
+    release: {{ .Release.Name }}
+data:
+  nginx.conf: |-
+    worker_processes 1;
+    pid /tmp/nginx.pid;
+    events { worker_connections 1024; }
+    error_log /dev/stdout info;
+    env ES_SECRET;
+    env ES_SECRET_NAME;
+
+    http {
+      access_log /dev/stdout;
+      client_max_body_size 1024M;
+
+      server {
+        listen {{ .Values.service.securehttp }};
+        auth_request /auth;
+        proxy_http_version 1.1;
+        proxy_set_header Connection "Keep-Alive";
+        proxy_set_header Proxy-Connection "Keep-Alive";
+
+        location ~ ^/ {
+          {{- if  or .Values.global.customLogging.awsSecretName  .Values.global.customLogging.awsServiceAccountAnnotation .Values.global.customLogging.awsIAMRole }}
+          proxy_pass http://localhost:{{ .Values.service.awsproxy }};
+          {{- else }}
+          access_by_lua_file  /usr/local/openresty/nginx/conf/setenv.lua;
+          proxy_pass {{.Values.global.customLogging.scheme}}://{{.Values.global.customLogging.host}}:{{.Values.global.customLogging.port}};
+          {{- include "external-es-proxy-trustcerts" . | indent 8 }}
+          {{- end }}
+        }
+
+        location = /_search {
+          # This combined with disabling explicit index searching downstream
+          # prevents any deployment from being able to query any other indexes.
+          rewrite ^/(.*) /fluentd.$remote_user.*/$1 break;
+          {{- if  or .Values.global.customLogging.awsSecretName  .Values.global.customLogging.awsServiceAccountAnnotation .Values.global.customLogging.awsIAMRole }}
+          proxy_pass http://localhost:{{ .Values.service.awsproxy }};
+          {{- else }}
+          access_by_lua_file  /usr/local/openresty/nginx/conf/setenv.lua;
+          proxy_pass {{.Values.global.customLogging.scheme}}://{{.Values.global.customLogging.host}}:{{.Values.global.customLogging.port}};
+          {{- include "external-es-proxy-trustcerts" . | indent 8 }}
+          {{- end }}
+        }
+
+        location = /auth {
+          internal;
+          proxy_pass http://{{ .Release.Name }}-houston.{{ .Release.Namespace }}:8871/v1/elasticsearch;
+          proxy_set_header Content-Length "";
+          proxy_set_header X-Original-URI $request_uri;
+        }
+      }
+      server {
+        listen {{ .Values.service.http }};
+        proxy_http_version 1.1;
+        proxy_set_header Connection "Keep-Alive";
+        proxy_set_header Proxy-Connection "Keep-Alive";
+
+        location ~ ^/ {
+          {{- if  or .Values.global.customLogging.awsSecretName  .Values.global.customLogging.awsServiceAccountAnnotation .Values.global.customLogging.awsIAMRole }}
+          proxy_pass http://localhost:{{ .Values.service.awsproxy }};
+          {{- else }}
+          access_by_lua_file  /usr/local/openresty/nginx/conf/setenv.lua;
+          proxy_pass {{.Values.global.customLogging.scheme}}://{{.Values.global.customLogging.host}}:{{.Values.global.customLogging.port}};
+          {{- include "external-es-proxy-trustcerts" . | indent 8 }}
+          {{- end }}
+        }
+      }
+    }

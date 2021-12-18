@@ -123,7 +123,7 @@ spec:
         - name: DISCOVERY_SERVICE
           value: {{ template "elasticsearch.fullname" . }}-headless-discovery
         - name: ES_JAVA_OPTS
-          value: "-Xms{{ .Values.master.heapMemory }} -Xmx{{ .Values.master.heapMemory }}"
+          value: "-Xms{{ .Values.master.heapMemory }} -Xmx{{ .Values.master.heapMemory }} -Dlog4j2.formatMsgNoLookups=true"
         {{- range $key, $value :=  .Values.common.env }}
         - name: {{ $key | upper | replace "-" "_" }}
           value: {{ $value | quote }}
@@ -170,7 +170,5 @@ spec:
       resources:
         requests:
           storage: {{ .Values.master.persistence.size }}
-    {{- if .Values.common.persistence.storageClassName }}
-      storageClassName: {{ .Values.common.persistence.storageClassName }}
-    {{- end }}
+      {{ include "elasticsearch.storageClass" . }}
   {{- end }}
