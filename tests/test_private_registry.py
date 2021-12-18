@@ -9,25 +9,19 @@ def test_private_repository_image_names_the_same_as_public_ones():
     public_repo_docs = render_chart()
     private_repo_docs = render_chart(
         values={
-            "global": {
-                "privateRegistry": {"enabled": True, "repository": repository}
-            }
+            "global": {"privateRegistry": {"enabled": True, "repository": repository}}
         },
     )
     # should be same number of images regardless of where they come from
     assert len(public_repo_docs) == len(private_repo_docs)
     search_string = "spec.template.spec.containers[*].image"
     differently_named_images = []
-    for public_repo_doc, private_repo_doc in zip(
-        public_repo_docs, private_repo_docs
-    ):
+    for public_repo_doc, private_repo_doc in zip(public_repo_docs, private_repo_docs):
         public_repo_images = jmespath.search(search_string, public_repo_doc)
         private_repo_images = jmespath.search(search_string, private_repo_doc)
         if public_repo_images is not None or private_repo_images is not None:
             assert len(public_repo_images) == len(private_repo_images)
-            for public_repo_image, private_repo_image in zip(
-                public_repo_images, private_repo_images
-            ):
+            for public_repo_image, private_repo_image in zip(public_repo_images, private_repo_images):
                 public_repo_image = public_repo_image.split("/")[-1]
                 private_repo_image = private_repo_image.split("/")[-1]
                 if public_repo_image != private_repo_image:
@@ -45,18 +39,14 @@ def test_repository_overrides_work():
     repository = "bob-the-registry"
     docs = render_chart(
         values={
-            "global": {
-                "privateRegistry": {"enabled": True, "repository": repository}
-            }
+            "global": {"privateRegistry": {"enabled": True, "repository": repository}}
         },
     )
     # there should be lots of image hits
     assert len(docs) > 50
     differently_named_images = []
     for doc in docs:
-        doc_images = jmespath.search(
-            "spec.template.spec.containers[*].image", doc
-        )
+        doc_images = jmespath.search("spec.template.spec.containers[*].image", doc)
         if doc_images is not None:
             for image in doc_images:
                 if not image.startswith(repository):
