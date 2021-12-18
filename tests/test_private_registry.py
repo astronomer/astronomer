@@ -21,7 +21,9 @@ def test_private_repository_image_names_the_same_as_public_ones():
         private_repo_images = jmespath.search(search_string, private_repo_doc)
         if public_repo_images is not None or private_repo_images is not None:
             assert len(public_repo_images) == len(private_repo_images)
-            for public_repo_image, private_repo_image in zip(public_repo_images, private_repo_images):
+            for public_repo_image, private_repo_image in zip(
+                public_repo_images, private_repo_images
+            ):
                 public_repo_image = public_repo_image.split("/")[-1]
                 private_repo_image = private_repo_image.split("/")[-1]
                 if public_repo_image != private_repo_image:
