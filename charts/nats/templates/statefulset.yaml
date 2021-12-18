@@ -279,7 +279,7 @@ spec:
       ##############################
       {{ if .Values.exporter.enabled }}
       - name: metrics
-        image: {{ .Values.exporter.image }}
+        image: {{ template "nats-exporter.image" . }}
         imagePullPolicy: {{ .Values.exporter.pullPolicy }}
         args:
         - -connz
