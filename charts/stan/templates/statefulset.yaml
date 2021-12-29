@@ -142,7 +142,7 @@ spec:
           {{- end }}
         {{ if .Values.exporter.enabled }}
         - name: metrics
-          image: {{ .Values.exporter.image }}
+          image: {{ template "stan-exporter.image" . }}
           resources:
 {{ toYaml .Values.exporter.resources | indent 12 }}
           args:

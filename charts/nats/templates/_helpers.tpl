@@ -22,9 +22,17 @@ Return the NATS cluster routes.
 {{- end -}}
 {{- end }}
 
+{{ define "nats-exporter.image" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-nats-exporter:{{ .Values.images.exporter.tag }}
+{{- else -}}
+{{ .Values.images.exporter.repository }}:{{ .Values.images.exporter.tag }}
+{{- end }}
+{{- end }}
+
 {{ define "nats.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/ap-nats:{{ .Values.images.nats.tag }}
+{{ .Values.global.privateRegistry.repository }}/ap-nats-server:{{ .Values.images.nats.tag }}
 {{- else -}}
 {{ .Values.images.nats.repository }}:{{ .Values.images.nats.tag }}
 {{- end }}

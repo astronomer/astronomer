@@ -17,16 +17,18 @@ class TestStanStatefulSet:
 
         assert len(docs) == 1
         doc = docs[0]
-        containers = doc["spec"]["template"]["spec"]["containers"]
-        c_by_name = {c["name"]: c for c in containers}
+        c_by_name = {
+            c["name"]: c for c in doc["spec"]["template"]["spec"]["containers"]
+        }
         assert doc["kind"] == "StatefulSet"
         assert doc["apiVersion"] == "apps/v1"
         assert doc["metadata"]["name"] == "RELEASE-NAME-stan"
-        assert {c["image"] for c in containers} == {
-            "quay.io/astronomer/ap-nats-streaming:0.22.0-2",
-            "quay.io/astronomer/ap-nats-exporter:0.9.0",
-        }
-
+        assert c_by_name["metrics"]["image"].startswith(
+            "quay.io/astronomer/ap-nats-exporter:"
+        )
+        assert c_by_name["stan"]["image"].startswith(
+            "quay.io/astronomer/ap-nats-streaming:"
+        )
         assert c_by_name["stan"]["livenessProbe"] == {
             "httpGet": {"path": "/streaming/serverz", "port": "monitor"},
             "initialDelaySeconds": 10,

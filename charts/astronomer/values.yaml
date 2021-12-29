@@ -5,7 +5,7 @@
 # This version number controls the default Airflow chart version that will be installed
 # when creating a new deployment in the system. This is also used to ensure all
 # child airflow deployments are kept up to date and on the latest version.
-airflowChartVersion: 1.1.0
+airflowChartVersion: 1.1.1
 
 nodeSelector: {}
 affinity: {}
@@ -15,7 +15,7 @@ tolerations: []
 images:
   commander:
     repository: quay.io/astronomer/ap-commander
-    tag: 0.27.0
+    tag: 0.27.3
     pullPolicy: IfNotPresent
   registry:
     repository: quay.io/astronomer/ap-registry
@@ -298,7 +298,7 @@ registry:
 
 install:
   resources: {}
-  cliVersion: 0.26.0
+  cliVersion: 0.27.0
   #  limits:
   #   cpu: 100m
   #   memory: 128Mi
