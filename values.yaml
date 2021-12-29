@@ -43,6 +43,9 @@ global:
   # Use cluster roles
   clusterRoles: true
 
+  # Enables kubed
+  kubedEnabled: true
+
   # Enables necessary components for compatibility with Istio Service Mesh
   istio:
     enabled: false
