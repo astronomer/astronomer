@@ -271,8 +271,8 @@ data:
           # to cleanup evicted/failed/succeeded pods.
           cleanup:
             enabled: true
-            {{/* Generate a deterministic random-ish decimal digit from the .Release.Name, effectively a splay to use as the first digit of the cron schedule */}}
-            schedule: "{{- add 3 (initials (adler32sum .Release.Name)) -}}-59/15 * * * *"
+            {{/* Generate a deterministic random-ish decimal digit from the .Release.Name, effectively a splay to use as the last digit of the cron schedule */}}
+            schedule: "{{- add 3 (regexFind ".$" (adler32sum .Release.Name)) -}}-59/15 * * * *"
             command:
             - airflow-cleanup-pods
             - --namespace={{`{{ .Release.Namespace }}`}}
