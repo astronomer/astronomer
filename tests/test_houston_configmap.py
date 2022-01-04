@@ -162,7 +162,7 @@ cron_test_data = [
     "test_data", cron_test_data, ids=[x[0] for x in cron_test_data]
 )
 def test_cron_splay(test_data):
-    """Test that our alter32sum method of generating deterministic random numbers works."""
+    """Test that our adler32sum method of generating deterministic random numbers works."""
     doc = render_chart(
         name=test_data[0],
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
