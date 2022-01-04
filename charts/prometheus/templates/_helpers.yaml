@@ -33,7 +33,7 @@ Create chart name and version as used by the chart label.
 
 {{ define "configReloader.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/ap-config-reloader:{{ .Values.images.configReloader.tag }}
+{{ .Values.global.privateRegistry.repository }}/ap-configmap-reloader:{{ .Values.images.configReloader.tag }}
 {{- else -}}
 {{ .Values.images.configReloader.repository }}:{{ .Values.images.configReloader.tag }}
 {{- end }}

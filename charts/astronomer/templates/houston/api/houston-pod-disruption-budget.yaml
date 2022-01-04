@@ -1,7 +1,7 @@
-################################
+###########################################
 ## Astronomer Houston Pod Disruption Budget
-#################################
-apiVersion: policy/v1beta1
+###########################################
+apiVersion: {{ include "apiVersion.PodDisruptionBudget" . }}
 kind: PodDisruptionBudget
 metadata:
   name: {{ .Release.Name }}-houston-pdb

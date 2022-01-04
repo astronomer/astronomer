@@ -1,6 +1,6 @@
-################################
+########################################
 ## Astronomer Commander Role/ClusterRole
-#################################
+########################################
 {{- $singleNamespace := .Values.global.singleNamespace }}
 {{- $clusterRoles:= .Values.global.clusterRoles }}
 {{- if and .Values.global.rbacEnabled }}
@@ -32,7 +32,7 @@ rules:
   verbs: ["create", "delete", "deletecollection", "get", "list", "patch", "update", "watch"]
 - apiGroups: [""]
   resources: ["namespaces"]
-  verbs: ["create", "delete", "deletecollection", "get", "list", "update", "watch"]
+  verbs: ["create", "delete", "deletecollection", "get", "list", "patch", "update", "watch"]
 - apiGroups: [""]
   resources: ["serviceaccounts"]
   verbs: ["create", "delete", "get", "patch"]
@@ -114,8 +114,10 @@ rules:
 - apiGroups: ["networking.k8s.io"]
   resources: ["networkpolicies"]
   verbs: ["create", "delete", "get", "patch"]
+{{ if $clusterRoles }}
 - nonResourceURLs: ["/metrics"]
   verbs: ["get"]
+{{ end }}
 - apiGroups: ["rbac.authorization.k8s.io"]
   resources: ["clusterrolebindings"]
   verbs: ["create", "delete", "get", "patch"]

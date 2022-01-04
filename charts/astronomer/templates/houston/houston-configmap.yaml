@@ -66,8 +66,31 @@ data:
       namespaceLabels:
         platform-release: {{ .Release.Name }}
 
+      {{ if or .Values.global.customLogging.enabled }}
+      # Disables Kibana dashboard in Astro UI
+      kibanaUIEnabled: false
+      {{ end }}
+
+      {{- if .Values.global.authSidecar.enabled }}
+      # enables nginx auth sidecar for airflow deployments
+      authSideCar:
+        enabled: true
+        repository: {{ .Values.global.authSidecar.repository }}
+        tag: {{ .Values.global.authSidecar.tag }}
+        port: {{ .Values.global.authSidecar.port }}
+        pullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
+        annotations: {
+          {{- range $key, $value := .Values.global.extraAnnotations}}
+          {{ $key }}: {{ $value | quote }},
+          {{- end }}
+        }
+      {{- end }}
+
       # These values get passed directly into the airflow helm deployments
       helm:
+      {{- if and .Values.global.ssl.enabled .Values.global.ssl.mode }}
+        sslmode: {{ .Values.global.ssl.mode }}
+      {{- end }}
       {{- if .Values.global.sccEnabled }}
         # If security context constraints are enabled, enable SCCs for airflow-chart
         sccEnabled: true
@@ -75,6 +98,7 @@ data:
         airflow:
           useAstroSecurityManager: true
           webserver:
+            {{ if .Values.global.kubedEnabled }}
             extraVolumeMounts:
               - name: signing-certificate
                 mountPath: /etc/airflow/tls
@@ -85,6 +109,7 @@ data:
                   # This is the name of the secret that gets copied from the platform namespace
                   # to the airflow namespaces.
                   secretName: {{ template "houston.jwtCertificateSecret" . }}
+            {{ end  }}
             resources:
               limits:
                 # XXX: There is an alert configured to trigger when ephemeral storage reaches
@@ -269,7 +294,22 @@ data:
         # run the platform in single namespace mode. Fluentd requires a ClusterRole to enrich
         # logs with kubernetes metadata. In a single namespace environment, we're likely not
         # going to get a ClusterRole from admins.
-        {{- if not .Values.global.singleNamespace }}
+
+        {{- if .Values.global.customLogging.enabled }}
+          elasticsearch:
+            enabled: true
+            connection:
+              host: {{ printf "%s-external-es-proxy.%s" .Release.Name .Release.Namespace }}
+              port: 9200
+
+    elasticsearch:
+      enabled: true
+      client:
+        host: {{ printf "%s-external-es-proxy:9201" .Release.Name }}
+        log: error
+    {{- end }}
+
+        {{- if and (not .Values.global.singleNamespace ) (not .Values.global.customLogging.enabled ) }}
           elasticsearch:
             enabled: true
             connection:
