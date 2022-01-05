@@ -22,4 +22,4 @@ def test_astronomer_registry_configmap(kube_version):
     timeout = parsed_config_yml["notifications"]["endpoints"][0]["timeout"]
     assert doc["kind"] == "ConfigMap"
     assert doc["apiVersion"] == "v1"
-    assert bool(re.match("[+]?\\d+s", timeout)) #verify timeout is an integer
+    assert bool(re.match("[+]?\\d+s", timeout))  # verify timeout is an integer
