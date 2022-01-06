@@ -13,7 +13,7 @@ def test_astronomer_registry_configmap(kube_version):
     """Test that helm renders a good configmap template for astronomer registry."""
     docs = render_chart(
         kube_version=kube_version,
-        show_only=["charts/astronomer/templates/registry/registry-configmap.yaml"]
+        show_only=["charts/astronomer/templates/registry/registry-configmap.yaml"],
     )
 
     assert len(docs) == 1
