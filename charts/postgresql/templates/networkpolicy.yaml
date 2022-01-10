@@ -31,16 +31,19 @@ spec:
           matchLabels:
             release: {{ .Release.Name }}
             component: grafana
+      {{- if .Values.global.networkNSLabels  }}
+      - namespaceSelector:
+          matchLabels:
+            platform: {{ .Release.Name }}
+        podSelector:
+          matchLabels:
+            component: pgbouncer
+      {{- else }}
       - podSelector:
           matchLabels:
             component: pgbouncer
-        {{- if .Values.global.networkNSLabels }}
-        namespaceSelector:
-          matchLabels:
-            platform: {{ .Release.Name }}
-        {{ else }}
-          namespaceSelector: {}
-        {{- end }}
+        namespaceSelector: {}
+      {{- end }}
       - podSelector:
           matchLabels:
             release: {{ .Release.Name }}
