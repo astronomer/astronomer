@@ -34,7 +34,13 @@ spec:
       - podSelector:
           matchLabels:
             component: pgbouncer
-        namespaceSelector: {}
+        {{- if .Values.global.networkNSLabels }}
+        namespaceSelector:
+          matchLabels:
+            platform: {{ .Release.Name }}
+        {{ else }}
+          namespaceSelector: {}
+        {{- end }}
       - podSelector:
           matchLabels:
             release: {{ .Release.Name }}
