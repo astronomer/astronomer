@@ -71,7 +71,7 @@ Docker repository name
 */}}
 {{ define "image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/node-exporter:{{ .Values.image.tag }}
+{{ .Values.global.privateRegistry.repository }}/ap-node-exporter:{{ .Values.image.tag }}
 {{- else -}}
 {{ .Values.image.repository }}:{{ .Values.image.tag }}
 {{- end }}
