@@ -26,6 +26,7 @@ metadata:
         deny all;
         return 403;
       }
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
     {{- end }}
 spec:
   {{- if or .Values.global.tlsSecret .Values.global.acme }}
