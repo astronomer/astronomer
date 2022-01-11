@@ -2,7 +2,7 @@
 # shellcheck disable=SC1090
 set -euo pipefail
 
-export KUBE_VERSION="${KUBE_VERSION:-v1.18.19}"
+export KUBE_VERSION="${KUBE_VERSION:-v1.21.2}"
 
 # The path to the working directory - the root of the repo
 GIT_ROOT="$(git -C "${0%/*}" rev-parse --show-toplevel)"
