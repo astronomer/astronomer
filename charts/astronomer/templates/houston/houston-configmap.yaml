@@ -75,7 +75,7 @@ data:
       # enables nginx auth sidecar for airflow deployments
       authSideCar:
         enabled: true
-        repository: {{ .Values.global.authSidecar.repository }}
+        repository: {{ template "authSidecar.image" . }}
         tag: {{ .Values.global.authSidecar.tag }}
         port: {{ .Values.global.authSidecar.port }}
         pullPolicy: {{ .Values.global.authSidecar.pullPolicy }}

@@ -41,6 +41,22 @@
 {{- end }}
 {{- end }}
 
+{{ define "astronomer.platform_registry" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}
+{{- else -}}
+quay.io/astronomer
+{{- end }}
+{{- end }}
+
+{{ define "authSidecar.image" -}}
+{{- if .Values.global.authSidecar.repository -}}
+{{ .Values.global.authSidecar.repository }}
+{{- else -}}
+{{ template "astronomer.platform_registry" . }}/ap-nginx-unprivileged
+{{- end }}:{{ .Values.global.authSidecar.tag }}
+{{- end }}
+
 {{ define "dbBootstrapper.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
 {{ .Values.global.privateRegistry.repository }}/ap-db-bootstrapper:{{ .Values.images.dbBootstrapper.tag }}

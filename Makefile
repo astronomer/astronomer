@@ -77,5 +77,6 @@ show-docker-images: ## Show all docker images and versions used in the helm char
 		--set global.prometheusPostgresExporterEnabled=True \
 		--set global.pspEnabled=True \
 		--set global.veleroEnabled=True \
+		--set global.authSidecar.enabled=True \
 		2>/dev/null \
 		| awk '/image: / {match($$2, /(([^"]*):[^"]*)/, a) ; printf "https://%s %s\n", a[2], a[1] ;}' | sort -u | column -t
