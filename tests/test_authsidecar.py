@@ -4,9 +4,12 @@ from . import supported_k8s_versions
 import jmespath
 import yaml
 
-current_tag_level="1.21.4"
-standard_platform_repo="quay.io/astronomer"
-sidecar_image_name=f"{standard_platform_repo}/ap-nginx-unprivileged:{current_tag_level}"
+current_tag_level = "1.21.4"
+standard_platform_repo = "quay.io/astronomer"
+sidecar_image_name = (
+    f"{standard_platform_repo}/ap-nginx-unprivileged:{current_tag_level}"
+)
+
 
 @pytest.mark.parametrize(
     "kube_version",
