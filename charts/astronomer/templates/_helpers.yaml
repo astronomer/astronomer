@@ -41,6 +41,11 @@
 {{- end }}
 {{- end }}
 
+{{/*
+Returns a repository pre-fix to be used to construct image names throughout
+the platform. Defaults to quay.io/astronomer but uses the value defined in 
+global.privateRegistry.repository when enabled.
+*/}}
 {{ define "astronomer.platform_registry" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
 {{ .Values.global.privateRegistry.repository }}
@@ -49,12 +54,22 @@ quay.io/astronomer
 {{- end }}
 {{- end }}
 
-{{ define "authSidecar.image" -}}
+{{/*
+Repository that holds the authSidecar image (does not include tag)
+*/}}
+{{ define "authSidecar.repository" -}}
 {{- if .Values.global.authSidecar.repository -}}
 {{ .Values.global.authSidecar.repository }}
 {{- else -}}
 {{ template "astronomer.platform_registry" . }}/ap-nginx-unprivileged
-{{- end }}:{{ .Values.global.authSidecar.tag }}
+{{- end }}
+{{- end }}
+
+{{/*
+Image of the authSidecar image (same as authSidecar.repository but with tag)
+*/}}
+{{ define "authSidecar.image" -}}
+{{ template "authSidecar.repository" . }}:{{ .Values.global.authSidecar.tag }}
 {{- end }}
 
 {{ define "dbBootstrapper.image" -}}

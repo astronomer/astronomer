@@ -4,10 +4,9 @@ from . import supported_k8s_versions
 import jmespath
 import yaml
 
-current_tag_level = "1.21.4"
 standard_platform_repo = "quay.io/astronomer"
-sidecar_image_name = (
-    f"{standard_platform_repo}/ap-nginx-unprivileged:{current_tag_level}"
+default_public_sidecar_repository_name = (
+    f"{standard_platform_repo}/ap-nginx-unprivileged"
 )
 
 
@@ -20,7 +19,9 @@ class TestAuthSidecar:
         """Test Alertmanager Service with authSidecar."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"authSidecar": {"enabled": True}}},
+            values={
+                "global": {"authSidecar": {"enabled": True, "tag": "placeholder-tag"}}
+            },
             show_only=[
                 "charts/alertmanager/templates/alertmanager-statefulset.yaml",
                 "charts/alertmanager/templates/alertmanager-auth-sidecar-configmap.yaml",
@@ -132,7 +133,9 @@ class TestAuthSidecar:
         """Test Houston Configmap with authSidecar."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"authSidecar": {"enabled": True}}},
+            values={
+                "global": {"authSidecar": {"enabled": True, "tag": "placeholder-tag"}}
+            },
             show_only=[
                 "charts/astronomer/templates/houston/houston-configmap.yaml",
             ],
@@ -150,8 +153,8 @@ class TestAuthSidecar:
 
         expected_output = {
             "enabled": True,
-            "repository": sidecar_image_name,
-            "tag": current_tag_level,
+            "repository": default_public_sidecar_repository_name,
+            "tag": "placeholder-tag",
             "port": 8084,
             "pullPolicy": "IfNotPresent",
             "annotations": {},
@@ -164,7 +167,7 @@ class TestAuthSidecar:
             kube_version=kube_version,
             values={
                 "global": {
-                    "authSidecar": {"enabled": True},
+                    "authSidecar": {"enabled": True, "tag": "placeholder-tag"},
                     "extraAnnotations": {
                         "kubernetes.io/ingress.class": "astronomer-nginx",
                         "nginx.ingress.kubernetes.io/proxy-body-size": "1024m",
@@ -185,8 +188,8 @@ class TestAuthSidecar:
 
         expected_output = {
             "enabled": True,
-            "repository": sidecar_image_name,
-            "tag": current_tag_level,
+            "repository": default_public_sidecar_repository_name,
+            "tag": "placeholder-tag",
             "port": 8084,
             "pullPolicy": "IfNotPresent",
             "annotations": {
@@ -195,3 +198,337 @@ class TestAuthSidecar:
             },
         }
         assert expected_output == prod["deployments"]["authSideCar"]
+
+    def test_authSidecar_houston_configmap_with_private_registry(self, kube_version):
+        """Test houston image obeys custom repository."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "authSidecar": {"enabled": True, "tag": "placeholder-tag"},
+                    "privateRegistry": {
+                        "enabled": True,
+                        "repository": "some.registry.internal",
+                    },
+                }
+            },
+            show_only=[
+                "charts/astronomer/templates/houston/houston-configmap.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+
+        prod = yaml.safe_load(doc["data"]["production.yaml"])
+
+        assert doc["kind"] == "ConfigMap"
+        assert doc["apiVersion"] == "v1"
+        assert doc["metadata"]["name"] == "RELEASE-NAME-houston-config"
+
+        expected_output = {
+            "enabled": True,
+            "repository": "some.registry.internal/ap-nginx-unprivileged",
+            "tag": "placeholder-tag",
+            "port": 8084,
+            "pullPolicy": "IfNotPresent",
+            "annotations": {},
+        }
+        assert expected_output == prod["deployments"]["authSideCar"]
+
+    def test_authSidecar_houston_configmap_honors_custom_sidecar_repository(
+        self, kube_version
+    ):
+        """Test houston image obeys custom repository defined within global.sidecarLogging.repository"""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "authSidecar": {
+                        "enabled": True,
+                        "tag": "placeholder-tag",
+                        "repository": "different.repo/my-awesome-image",
+                    }
+                }
+            },
+            show_only=[
+                "charts/astronomer/templates/houston/houston-configmap.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+
+        prod = yaml.safe_load(doc["data"]["production.yaml"])
+
+        assert doc["kind"] == "ConfigMap"
+        assert doc["apiVersion"] == "v1"
+        assert doc["metadata"]["name"] == "RELEASE-NAME-houston-config"
+
+        expected_output = {
+            "enabled": True,
+            "repository": "different.repo/my-awesome-image",
+            "tag": "placeholder-tag",
+            "port": 8084,
+            "pullPolicy": "IfNotPresent",
+            "annotations": {},
+        }
+        assert expected_output == prod["deployments"]["authSideCar"]
+
+    def test_authSidecar_houston_configmap_honors_privateRegistry_repository(
+        self, kube_version
+    ):
+        """Test authSidecar prioritized honors a privateRegistry repository if defined"""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "authSidecar": {
+                        "enabled": True,
+                        "tag": "placeholder-tag",
+                    },
+                    "privateRegistry": {
+                        "enabled": True,
+                        "repository": "some.registry.internal",
+                    },
+                }
+            },
+            show_only=[
+                "charts/astronomer/templates/houston/houston-configmap.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+
+        prod = yaml.safe_load(doc["data"]["production.yaml"])
+
+        assert doc["kind"] == "ConfigMap"
+        assert doc["apiVersion"] == "v1"
+        assert doc["metadata"]["name"] == "RELEASE-NAME-houston-config"
+
+        expected_output = {
+            "enabled": True,
+            "repository": "some.registry.internal/ap-nginx-unprivileged",
+            "tag": "placeholder-tag",
+            "port": 8084,
+            "pullPolicy": "IfNotPresent",
+            "annotations": {},
+        }
+        assert expected_output == prod["deployments"]["authSideCar"]
+
+    def test_authSidecar_houston_configmap_prioritizes_authSidecar_repository_over_privateRegistry_repository(
+        self, kube_version
+    ):
+        """Test authSidecar prioritized any repository image specified on authSidecar over the one on privateRegistry"""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "authSidecar": {
+                        "enabled": True,
+                        "tag": "placeholder-tag",
+                        "repository": "different.repo/my-awesome-image",
+                    },
+                    "privateRegistry": {
+                        "enabled": True,
+                        "repository": "some.registry.internal",
+                    },
+                }
+            },
+            show_only=[
+                "charts/astronomer/templates/houston/houston-configmap.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+
+        prod = yaml.safe_load(doc["data"]["production.yaml"])
+
+        assert doc["kind"] == "ConfigMap"
+        assert doc["apiVersion"] == "v1"
+        assert doc["metadata"]["name"] == "RELEASE-NAME-houston-config"
+
+        expected_output = {
+            "enabled": True,
+            "repository": "different.repo/my-awesome-image",
+            "tag": "placeholder-tag",
+            "port": 8084,
+            "pullPolicy": "IfNotPresent",
+            "annotations": {},
+        }
+        assert expected_output == prod["deployments"]["authSideCar"]
+
+    def test_authSidecar_houston_configmap_prioritizes_authSidecar_repository_over_privateRegistry_repository(
+        self, kube_version
+    ):
+        """Test authSidecar prioritized any repository image specified on authSidecar over the one on privateRegistry"""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "authSidecar": {
+                        "enabled": True,
+                        "tag": "placeholder-tag",
+                        "repository": "different.repo/my-awesome-image",
+                    },
+                    "privateRegistry": {
+                        "enabled": True,
+                        "repository": "some.registry.internal",
+                    },
+                }
+            },
+            show_only=[
+                "charts/astronomer/templates/houston/houston-configmap.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+
+        prod = yaml.safe_load(doc["data"]["production.yaml"])
+
+        assert doc["kind"] == "ConfigMap"
+        assert doc["apiVersion"] == "v1"
+        assert doc["metadata"]["name"] == "RELEASE-NAME-houston-config"
+
+        expected_output = {
+            "enabled": True,
+            "repository": "different.repo/my-awesome-image",
+            "tag": "placeholder-tag",
+            "port": 8084,
+            "pullPolicy": "IfNotPresent",
+            "annotations": {},
+        }
+        assert expected_output == prod["deployments"]["authSideCar"]
+
+    def test_authSidecar_repository_template_in_effect_on_grafana(self, kube_version):
+        """Test authSidecar.image template modifies sidecar image value for grafana deployment"""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "grafana": {"enabled": True},
+                    "privateRegistry": {
+                        "enabled": True,
+                        "repository": "some.registry.internal",
+                    },
+                    "authSidecar": {"enabled": True, "tag": "placeholder-tag"},
+                }
+            },
+        )
+
+        doc = next(
+            doc
+            for doc in docs
+            if doc["kind"] == "Deployment"
+            and doc["metadata"]["name"] == "RELEASE-NAME-grafana"
+        )
+        container = next(
+            container
+            for container in doc["spec"]["template"]["spec"]["containers"]
+            if container["name"] == "auth-proxy"
+        )
+        assert (
+            container["image"]
+            == "some.registry.internal/ap-nginx-unprivileged:placeholder-tag"
+        )
+
+    def test_authSidecar_repository_template_in_effect_on_kibana(self, kube_version):
+        """Test authSidecar.image template modifies sidecar image value for kibana deployment"""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "kibana": {"enabled": True},
+                    "privateRegistry": {
+                        "enabled": True,
+                        "repository": "some.registry.internal",
+                    },
+                    "authSidecar": {"enabled": True, "tag": "placeholder-tag"},
+                }
+            },
+        )
+
+        doc = next(
+            doc
+            for doc in docs
+            if doc["kind"] == "Deployment"
+            and doc["metadata"]["name"] == "RELEASE-NAME-kibana"
+        )
+        container = next(
+            container
+            for container in doc["spec"]["template"]["spec"]["containers"]
+            if container["name"] == "auth-proxy"
+        )
+        assert (
+            container["image"]
+            == "some.registry.internal/ap-nginx-unprivileged:placeholder-tag"
+        )
+
+    def test_authSidecar_repository_template_in_effect_on_prometheus(
+        self, kube_version
+    ):
+        """Test authSidecar.image template modifies sidecar image value for prometheus stateful set"""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "prometheus": {"enabled": True},
+                    "privateRegistry": {
+                        "enabled": True,
+                        "repository": "some.registry.internal",
+                    },
+                    "authSidecar": {"enabled": True, "tag": "placeholder-tag"},
+                }
+            },
+        )
+
+        doc = next(
+            doc
+            for doc in docs
+            if doc["kind"] == "StatefulSet"
+            and doc["metadata"]["name"] == "RELEASE-NAME-prometheus"
+        )
+        container = next(
+            container
+            for container in doc["spec"]["template"]["spec"]["containers"]
+            if container["name"] == "auth-proxy"
+        )
+        assert (
+            container["image"]
+            == "some.registry.internal/ap-nginx-unprivileged:placeholder-tag"
+        )
+
+    def test_authSidecar_repository_doesnt_use_disabled_private_registry(
+        self, kube_version
+    ):
+        """Test authSidecar.image template doesnt use a value from privateRegistry when privateRegistry disabled"""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "prometheus": {"enabled": True},
+                    "privateRegistry": {
+                        "enabled": False,
+                        "repository": "this-should-not-be-used",
+                    },
+                    "authSidecar": {"enabled": True, "tag": "placeholder-tag"},
+                }
+            },
+        )
+
+        doc = next(
+            doc
+            for doc in docs
+            if doc["kind"] == "StatefulSet"
+            and doc["metadata"]["name"] == "RELEASE-NAME-prometheus"
+        )
+        container = next(
+            container
+            for container in doc["spec"]["template"]["spec"]["containers"]
+            if container["name"] == "auth-proxy"
+        )
+        public_image_name = f"{default_public_sidecar_repository_name}:placeholder-tag"
+        assert container["image"] == public_image_name
