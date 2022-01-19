@@ -43,7 +43,7 @@
 
 {{/*
 Returns a repository pre-fix to be used to construct image names throughout
-the platform. Defaults to quay.io/astronomer but uses the value defined in 
+the platform. Defaults to quay.io/astronomer but uses the value defined in
 global.privateRegistry.repository when enabled.
 */}}
 {{ define "astronomer.platform_registry" -}}
