@@ -19,9 +19,7 @@ class TestAuthSidecar:
         """Test Alertmanager Service with authSidecar."""
         docs = render_chart(
             kube_version=kube_version,
-            values={
-                "global": {"authSidecar": {"enabled": True}}
-            },
+            values={"global": {"authSidecar": {"enabled": True}}},
             show_only=[
                 "charts/alertmanager/templates/alertmanager-statefulset.yaml",
                 "charts/alertmanager/templates/alertmanager-auth-sidecar-configmap.yaml",
