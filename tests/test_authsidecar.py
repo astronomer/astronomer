@@ -20,7 +20,7 @@ class TestAuthSidecar:
         docs = render_chart(
             kube_version=kube_version,
             values={
-                "global": {"authSidecar": {"enabled": True, "tag": "placeholder-tag"}}
+                "global": {"authSidecar": {"enabled": True}}
             },
             show_only=[
                 "charts/alertmanager/templates/alertmanager-statefulset.yaml",
@@ -310,49 +310,6 @@ class TestAuthSidecar:
         expected_output = {
             "enabled": True,
             "repository": "some.registry.internal/ap-nginx-unprivileged",
-            "tag": "placeholder-tag",
-            "port": 8084,
-            "pullPolicy": "IfNotPresent",
-            "annotations": {},
-        }
-        assert expected_output == prod["deployments"]["authSideCar"]
-
-    def test_authSidecar_houston_configmap_prioritizes_authSidecar_repository_over_privateRegistry_repository(
-        self, kube_version
-    ):
-        """Test authSidecar prioritized any repository image specified on authSidecar over the one on privateRegistry"""
-        docs = render_chart(
-            kube_version=kube_version,
-            values={
-                "global": {
-                    "authSidecar": {
-                        "enabled": True,
-                        "tag": "placeholder-tag",
-                        "repository": "different.repo/my-awesome-image",
-                    },
-                    "privateRegistry": {
-                        "enabled": True,
-                        "repository": "some.registry.internal",
-                    },
-                }
-            },
-            show_only=[
-                "charts/astronomer/templates/houston/houston-configmap.yaml",
-            ],
-        )
-
-        assert len(docs) == 1
-        doc = docs[0]
-
-        prod = yaml.safe_load(doc["data"]["production.yaml"])
-
-        assert doc["kind"] == "ConfigMap"
-        assert doc["apiVersion"] == "v1"
-        assert doc["metadata"]["name"] == "RELEASE-NAME-houston-config"
-
-        expected_output = {
-            "enabled": True,
-            "repository": "different.repo/my-awesome-image",
             "tag": "placeholder-tag",
             "port": 8084,
             "pullPolicy": "IfNotPresent",
