@@ -18,11 +18,10 @@ class TestPostgresql:
 
         assert len(docs) == 1
         doc = docs[0]
-        print(doc["spec"]["template"]["spec"]["containers"])
         assert doc["kind"] == "StatefulSet"
         assert doc["apiVersion"] == "apps/v1"
         assert doc["metadata"]["name"] == "RELEASE-NAME-postgresql"
-        assert "initContainers" in doc["spec"]["template"]["spec"]
+        assert "initContainers" not in doc["spec"]["template"]["spec"]
 
     def test_postgresql_statefulset_with_volumePermissions_enabled(self, kube_version):
         """Test postgresql statefulset when volumePermissions init container is enabled."""
@@ -30,14 +29,16 @@ class TestPostgresql:
             kube_version=kube_version,
             values={
                 "global": {"postgresqlEnabled": True},
-                "postgresql.volumePermissions.enabled": True,
+                "postgresql": {
+                    "volumePermissions": {"enabled": True},
+                    "persistence": {"enabled": True},
+                },
             },
             show_only=["charts/postgresql/templates/statefulset.yaml"],
         )
 
         assert len(docs) == 1
         doc = docs[0]
-        print(doc["spec"]["template"]["spec"]["containers"])
         assert doc["kind"] == "StatefulSet"
         assert doc["apiVersion"] == "apps/v1"
         assert doc["metadata"]["name"] == "RELEASE-NAME-postgresql"
