@@ -523,7 +523,7 @@ kibana:
 #################################
 ## Kube State configuration
 #################################
-kubeState:
+kube-state:
   # Configure resources
   resources:
     requests:
