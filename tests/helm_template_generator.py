@@ -67,8 +67,8 @@ def validate_k8s_object(instance, kube_version="1.21.0"):
 
 def render_chart(
     name: str = "RELEASE-NAME",
-    values: dict = {},
-    show_only: list = [],
+    values: Optional[dict] = None,
+    show_only: Optional[list] = None,
     chart_dir: Optional[str] = None,
     kube_version: str = "1.21.0",
     baseDomain: str = "example.com",
