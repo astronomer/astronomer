@@ -52,13 +52,13 @@ def test_houston_config(houston_api):
 
 
 def test_houston_can_reach_prometheus(houston_api):
-    houston_api.check_output(
+    assert houston_api.check_output(
         "wget -qO- --timeout=1 http://astronomer-prometheus.astronomer.svc.cluster.local:9090/targets"
     )
 
 
 def test_nginx_can_reach_default_backend(nginx):
-    nginx.check_output(
+    assert nginx.check_output(
         "curl -s --max-time 1 http://astronomer-nginx-default-backend:8080"
     )
 
@@ -152,12 +152,11 @@ def test_prometheus_config_reloader_works(prometheus, kube_client):
         print(f"Exception when calling CoreV1Api->patch_namespaced_config_map: {e}\n")
 
     # This can take more than a minute.
-    for i in range(12):
+    for _ in range(12):
         data = prometheus.check_output(
             "wget -qO- http://localhost:9090/api/v1/status/config"
         )
         j_parsed = json.loads(data)
-        # print(parsed['data']['yaml']['config']['global'])
         y_parsed = yaml.safe_load(j_parsed["data"]["yaml"])
         if y_parsed["global"]["scrape_interval"] != "30s":
             print(y_parsed["global"]["scrape_interval"])

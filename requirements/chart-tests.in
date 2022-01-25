@@ -4,6 +4,7 @@ GitPython
 jmespath
 jsonschema
 kubernetes
+pdbpp
 pytest
 pytest-forked
 pytest-profiling
