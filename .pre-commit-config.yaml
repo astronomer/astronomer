@@ -36,8 +36,9 @@ repos:
         args:
           [
             "requirements/chart-tests.in",
+            "requirements/chart-tests.txt",
             "requirements/functional-tests.in",
-            "requirements/lts-23-to-25-tests.in",
+            "requirements/functional-tests.txt",
           ]
       - id: sort-simple-yaml
       - id: trailing-whitespace

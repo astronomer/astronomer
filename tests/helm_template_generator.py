@@ -21,6 +21,7 @@ from functools import lru_cache
 from tempfile import NamedTemporaryFile
 from typing import Any, Dict, Tuple
 from pathlib import Path
+from typing import Optional
 
 import jsonschema
 import requests
@@ -32,7 +33,7 @@ api_client = ApiClient()
 BASE_URL_SPEC = "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master"
 
 
-def get_schema_k8s(api_version, kind, kube_version="1.18.0"):
+def get_schema_k8s(api_version, kind, kube_version="1.21.0"):
     """Return a k8s schema for use in validation."""
     api_version = api_version.lower()
     kind = kind.lower()
@@ -49,14 +50,14 @@ def get_schema_k8s(api_version, kind, kube_version="1.18.0"):
 
 
 @lru_cache(maxsize=None)
-def create_validator(api_version, kind, kube_version="1.18.0"):
+def create_validator(api_version, kind, kube_version="1.21.0"):
     """Create a k8s validator for the given inputs."""
     schema = get_schema_k8s(api_version, kind, kube_version=kube_version)
     jsonschema.Draft7Validator.check_schema(schema)
     return jsonschema.Draft7Validator(schema)
 
 
-def validate_k8s_object(instance, kube_version="1.18.0"):
+def validate_k8s_object(instance, kube_version="1.21.0"):
     """Validate the k8s object."""
     validate = create_validator(
         instance.get("apiVersion"), instance.get("kind"), kube_version=kube_version
@@ -65,15 +66,16 @@ def validate_k8s_object(instance, kube_version="1.18.0"):
 
 
 def render_chart(
-    name="RELEASE-NAME",
-    values=None,
-    show_only=None,
-    chart_dir=None,
-    kube_version="1.18.0",
-    baseDomain="example.com",
+    name: str = "RELEASE-NAME",
+    values: Optional[dict] = None,
+    show_only: Optional[list] = None,
+    chart_dir: Optional[str] = None,
+    kube_version: str = "1.21.0",
+    baseDomain: str = "example.com",
+    namespace: Optional[str] = None,
 ):
     """
-    Render a helm chart into dictionaries. For helm chart testing only
+    Render a helm chart into dictionaries. For helm chart testing only.
     """
     values = values or {}
     chart_dir = chart_dir or sys.path[0]
@@ -93,6 +95,8 @@ def render_chart(
             "--values",
             tmp_file.name,
         ]
+        if namespace:
+            command.extend(["--namespace", namespace])
         if show_only:
             for i in show_only:
                 if not Path(i).exists():
@@ -140,6 +144,4 @@ def render_k8s_object(obj, type_to_render):
     """
     Function that renders dictionaries into k8s objects. For helm chart testing only.
     """
-    return api_client._ApiClient__deserialize_model(
-        obj, type_to_render
-    )  # pylint: disable=W0212
+    return api_client._ApiClient__deserialize_model(obj, type_to_render)
