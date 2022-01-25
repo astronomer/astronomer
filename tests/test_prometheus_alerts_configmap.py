@@ -29,8 +29,10 @@ class TestPrometheusAlertConfigmap:
         """
         assert isinstance(rule.get("alert"), str)
         assert isinstance(rule.get("expr"), str)
-        if rule["alert"] != "Watchdog":
-            assert isinstance(rule.get("for"), str)
+        if rule["alert"] == "Watchdog":
+            assert "for" not in rule
+        else:
+            assert "for" in rule
         assert isinstance(rule.get("labels"), dict)
         assert isinstance(rule.get("annotations"), dict)
 
@@ -55,7 +57,7 @@ class TestPrometheusAlertConfigmap:
             assert isinstance(group.get("name"), str)
             assert isinstance(group.get("rules"), list)
             for rule in group["rules"]:
-                if rule.get("alert"):
+                if "alert" in rule:
                     self.process_alert(rule)
                 else:
                     self.process_record(rule)
