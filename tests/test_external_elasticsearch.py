@@ -3,6 +3,7 @@ import pytest
 from . import supported_k8s_versions
 import jmespath
 import base64
+import yaml
 
 secret = base64.b64encode(b"sample-secret").decode()
 
@@ -240,3 +241,18 @@ class TestExternalElasticSearch:
         assert {"name": "http", "protocol": "TCP", "port": 9201} in jmespath.search(
             "spec.ports", docs[2]
         )
+
+    def test_externalelasticsearch_houston_configmap_with_disabled_kibanaUIFlag(
+        self, kube_version
+    ):
+        """Test Houston Configmap with kibanaUIFlag."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"customLogging": {"enabled": True}}},
+            show_only=[
+                "charts/astronomer/templates/houston/houston-configmap.yaml",
+            ],
+        )
+        doc = docs[0]
+        prod = yaml.safe_load(doc["data"]["production.yaml"])
+        assert prod["deployments"]["kibanaUIEnabled"] is False

@@ -9,7 +9,7 @@ tolerations: []
 images:
   grafana:
     repository: quay.io/astronomer/ap-grafana
-    tag: 7.5.10
+    tag: 8.3.3-1
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
@@ -50,3 +50,21 @@ dashboards:
   #       $RAW_JSON
   #   custom-dashboard:
   #     file: dashboards/custom-dashboard.json
+
+
+## Configure extra environment variables for grafana.
+## This allows you to change configuration settings
+## withing grafana such as SMTP configuration for alerts.
+extraEnvVars:
+  []
+  # - name: GF_SMTP_ENABLED
+  #   value: "true"
+  # - name: GF_SMTP_HOST
+  #   value: smtp.astronomer.io
+  # - name: GF_SMTP_USER
+  #   value: grafana
+  # - name: GF_SMTP_PASSWORD
+  #   valueFrom:
+  #     secretKeyRef:
+  #       name: grafana-smtp-secret
+  #       key: smtp_password
