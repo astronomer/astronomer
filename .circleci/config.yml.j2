@@ -100,7 +100,7 @@ jobs:
 
   release-to-internal:
     machine:
-      image: ubuntu-2004:202104-01
+      image: ubuntu-2004:202107-02
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -115,7 +115,7 @@ jobs:
 
   release-to-public:
     machine:
-      image: ubuntu-2004:202104-01
+      image: ubuntu-2004:202107-02
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -131,7 +131,7 @@ jobs:
 {% for version in kube_versions %}
   platform-{{ version | replace(".", "-") }}:
     machine:
-      image: ubuntu-2004:202104-01
+      image: ubuntu-2004:202107-02
       resource_class: xlarge
     environment:
       KUBE_VERSION: v{{ version }}
@@ -149,7 +149,7 @@ jobs:
 
   lts-23-to-25-test:
     machine:
-      image: ubuntu-2004:202104-01
+      image: ubuntu-2004:202107-02
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.18.19 # last supported major.minor k8s version for astronomer 0.23
