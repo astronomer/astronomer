@@ -1,0 +1,78 @@
+########################################################
+## Astronomer Platform Namespace label configure Hook ##
+########################################################
+{{- if .Values.global.networkNSLabels }}
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  annotations:
+    "helm.sh/hook": "pre-install,pre-upgrade"
+    "helm.sh/hook-weight": "-2"
+  namespace: {{ .Release.Namespace }}
+  name: {{ .Release.Name }}-labeller
+rules:
+- apiGroups: [""]
+  resources: ["namespaces"]
+  verbs: ["patch", "update", "get"]
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  annotations:
+    "helm.sh/hook": "pre-install,pre-upgrade"
+    "helm.sh/hook-weight": "-2"
+  name: {{ .Release.Name }}-labeller
+  namespace: {{ .Release.Namespace }}
+subjects:
+- kind: ServiceAccount
+  name: {{ .Release.Name }}-labeller
+  namespace: {{ .Release.Namespace }}
+  apiGroup: ""
+roleRef:
+  kind: Role
+  name: {{ .Release.Name }}-labeller
+  apiGroup: ""
+---
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  annotations:
+    "helm.sh/hook": "pre-install,pre-upgrade"
+    "helm.sh/hook-weight": "3"
+  name: {{ .Release.Name }}-labeller
+  labels:
+    tier: platform
+    component: labeller
+    release: {{ .Release.Name }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-platform-labeller
+  annotations:
+    "helm.sh/hook": "pre-install,pre-upgrade"
+    "helm.sh/hook-delete-policy": "before-hook-creation"
+    "helm.sh/hook-weight": "5"
+  labels:
+    tier: platform
+    component: labeller
+    release: {{ .Release.Name }}
+spec:
+  template:
+    metadata:
+      labels:
+        tier: platform
+        component: labeller
+        release: {{ .Release.Name }}
+    spec:
+      restartPolicy: Never
+      serviceAccountName: {{ .Release.Name }}-labeller
+      containers:
+      - name: label-platform-namespace
+        image: {{ template "dbBootstrapper.image" . }}
+        imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
+        command: ["/bin/sh", "-c"]
+        args:
+          - data=`kubectl get ns {{ .Release.Namespace }} -o=jsonpath='{.metadata.labels.platform}'` ;if [[ "$data" = "" ]]  ; then kubectl label namespace {{ .Release.Namespace }} platform={{ .Release.Name }} ;else echo "Label Already exists" ;fi
+{{ end }}

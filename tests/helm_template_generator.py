@@ -140,6 +140,4 @@ def render_k8s_object(obj, type_to_render):
     """
     Function that renders dictionaries into k8s objects. For helm chart testing only.
     """
-    return api_client._ApiClient__deserialize_model(
-        obj, type_to_render
-    )  # pylint: disable=W0212
+    return api_client._ApiClient__deserialize_model(obj, type_to_render)

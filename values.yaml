@@ -1,6 +1,6 @@
-#################################
+##################################
 ## Astronomer global configuration
-#################################
+##################################
 global:
   # Base domain for all subdomains exposed through ingress
   baseDomain: ~
@@ -42,6 +42,9 @@ global:
 
   # Use cluster roles
   clusterRoles: true
+
+  # Enables kubed
+  kubedEnabled: true
 
   # Enables necessary components for compatibility with Istio Service Mesh
   istio:
@@ -87,6 +90,9 @@ global:
 
   # Enable security context constraints required for OpenShift
   sccEnabled: false
+
+  # Enables namespace labels for network policies
+  networkNSLabels: false
 
   # Deploy auth sidecar to use openshift native features
   authSidecar:
@@ -280,6 +286,8 @@ astronomer:
       limits:
         cpu: "500m"
         memory: "1024Mi"
+
+  # podLabels: {}
 
 #################################
 ## Nginx configuration
@@ -515,7 +523,7 @@ kibana:
 #################################
 ## Kube State configuration
 #################################
-kubeState:
+kube-state:
   # Configure resources
   resources:
     requests:
