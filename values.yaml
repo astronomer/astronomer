@@ -91,6 +91,9 @@ global:
   # Enable security context constraints required for OpenShift
   sccEnabled: false
 
+  # Enables namespace labels for network policies
+  networkNSLabels: false
+
   # Deploy auth sidecar to use openshift native features
   authSidecar:
     enabled: false
@@ -520,7 +523,7 @@ kibana:
 #################################
 ## Kube State configuration
 #################################
-kubeState:
+kube-state:
   # Configure resources
   resources:
     requests:

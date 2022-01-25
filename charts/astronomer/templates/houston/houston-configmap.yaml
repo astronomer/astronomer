@@ -95,6 +95,11 @@ data:
         # If security context constraints are enabled, enable SCCs for airflow-chart
         sccEnabled: true
       {{- end }}
+
+      {{- if .Values.global.networkNSLabels }}
+        networkNSLabels: true
+      {{- end }}
+
         airflow:
           useAstroSecurityManager: true
           webserver:
