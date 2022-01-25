@@ -33,7 +33,7 @@ api_client = ApiClient()
 BASE_URL_SPEC = "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master"
 
 
-def get_schema_k8s(api_version, kind, kube_version="1.18.0"):
+def get_schema_k8s(api_version, kind, kube_version="1.21.0"):
     """Return a k8s schema for use in validation."""
     api_version = api_version.lower()
     kind = kind.lower()
@@ -50,14 +50,14 @@ def get_schema_k8s(api_version, kind, kube_version="1.18.0"):
 
 
 @lru_cache(maxsize=None)
-def create_validator(api_version, kind, kube_version="1.18.0"):
+def create_validator(api_version, kind, kube_version="1.21.0"):
     """Create a k8s validator for the given inputs."""
     schema = get_schema_k8s(api_version, kind, kube_version=kube_version)
     jsonschema.Draft7Validator.check_schema(schema)
     return jsonschema.Draft7Validator(schema)
 
 
-def validate_k8s_object(instance, kube_version="1.18.0"):
+def validate_k8s_object(instance, kube_version="1.21.0"):
     """Validate the k8s object."""
     validate = create_validator(
         instance.get("apiVersion"), instance.get("kind"), kube_version=kube_version
