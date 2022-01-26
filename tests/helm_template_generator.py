@@ -82,7 +82,7 @@ def render_chart(
         tmp_file.write(content.encode())
         tmp_file.flush()
         command = [
-            "helm-3.7.2",
+            "helm",
             "template",
             "--kube-version",
             kube_version,
