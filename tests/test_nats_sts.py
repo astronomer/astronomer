@@ -30,12 +30,12 @@ class TestNatsStatefulSet:
             "quay.io/astronomer/ap-nats-server:"
         )
         assert c_by_name["nats"]["livenessProbe"] == {
-            "httpGet": {"path": "/streaming/serverz", "port": "monitor"},
+            "httpGet": {"path": "/", "port": 8222},
             "initialDelaySeconds": 10,
             "timeoutSeconds": 5,
         }
         assert c_by_name["nats"]["readinessProbe"] == {
-            "httpGet": {"path": "/streaming/serverz", "port": "monitor"},
+            "httpGet": {"path": "/", "port": 8222},
             "initialDelaySeconds": 10,
             "timeoutSeconds": 5,
         }
