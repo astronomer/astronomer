@@ -51,10 +51,12 @@ spec:
 {{ toYaml . | indent 8 }}
 {{- end }}
       terminationGracePeriodSeconds: 90
-{{- with .Values.affinity }}
+      nodeSelector:
+{{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
       affinity:
-{{- toYaml  . | nindent 8 }}
-{{- end }}
+{{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 8 }}
+      tolerations:
+{{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       volumes:
       - configMap:
           name: {{ template "stan.name".  }}-config
