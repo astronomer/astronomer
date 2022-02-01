@@ -59,7 +59,6 @@ rules:
       - get
       - list
       - watch
-  {{- if not $singleNamespace }}
   - apiGroups:
       - ""
     resources:
@@ -79,5 +78,4 @@ rules:
       - ingresses/status
     verbs:
       - update
-  {{- end }}
 {{- end }}
