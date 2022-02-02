@@ -29,4 +29,4 @@ class TestNginxRole:
         assert doc["kind"] == "Role"
         assert doc["apiVersion"] == "rbac.authorization.k8s.io/v1"
         assert doc["metadata"]["name"] == "RELEASE-NAME-nginx"
-        assert doc["rules"] == any('ingresses/status' in val for val in doc.values())
+        assert doc["rules"] == any("ingresses/status" in val for val in doc.values())
