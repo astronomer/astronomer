@@ -14,7 +14,7 @@ images:
     pullPolicy: IfNotPresent
   init:
     repository: quay.io/astronomer/ap-base
-    tag: 3.15.0
+    tag: 3.15.0-2
     pullPolicy: IfNotPresent
   curator:
     repository: quay.io/astronomer/ap-curator
