@@ -12,7 +12,7 @@ class TestNginxRole:
 
         doc = docs[0]
 
-        assert doc["kind"] == "Role"
+        assert doc["kind"] == "ClusterRole"
         assert doc["apiVersion"] == "rbac.authorization.k8s.io/v1"
         assert doc["metadata"]["name"] == "RELEASE-NAME-nginx"
 
