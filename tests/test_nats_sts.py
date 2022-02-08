@@ -69,11 +69,62 @@ class TestNatsStatefulSet:
 
     def test_nats_statefulset_with_affinity_and_tolerations(self, kube_version):
         """Test that nats statefulset renders proper nodeSelector, affinity, and tolerations"""
+        values = {
+            "nats": {
+                "nodeSelector": {"role": "astro"},
+                "affinity": {
+                    "nodeAffinity": {
+                        "requiredDuringSchedulingIgnoredDuringExecution": {
+                            "nodeSelectorTerms": [
+                                {
+                                    "matchExpressions": [
+                                        {
+                                            "key": "astronomer.io/multi-tenant",
+                                            "operator": "In",
+                                            "values": ["false"],
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                },
+                "tolerations": [
+                    {
+                        "effect": "NoSchedule",
+                        "key": "astronomer",
+                        "operator": "Exists",
+                    }
+                ],
+            },
+        }
         docs = render_chart(
             kube_version=kube_version,
             show_only=["charts/nats/templates/statefulset.yaml"],
-            values={
-                "nats": {
+            values=values,
+        )
+
+        assert len(docs) == 1
+        spec = docs[0]["spec"]["template"]["spec"]
+        assert spec["nodeSelector"] != {}
+        assert spec["nodeSelector"]["role"] == "astro"
+        assert spec["affinity"] != {}
+        assert (
+            len(
+                spec["affinity"]["nodeAffinity"][
+                    "requiredDuringSchedulingIgnoredDuringExecution"
+                ]["nodeSelectorTerms"]
+            )
+            == 1
+        )
+        assert len(spec["tolerations"]) > 0
+        assert spec["tolerations"] == values["nats"]["tolerations"]
+
+    def test_nats_statefulset_with_global_affinity_and_tolerations(self, kube_version):
+        """Test that nats statefulset renders proper nodeSelector, affinity, and tolerations with global config"""
+        values = {
+            "global": {
+                "platformNodePool": {
                     "nodeSelector": {"role": "astro"},
                     "affinity": {
                         "nodeAffinity": {
@@ -100,7 +151,12 @@ class TestNatsStatefulSet:
                         }
                     ],
                 },
-            },
+            }
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/nats/templates/statefulset.yaml"],
+            values=values,
         )
 
         assert len(docs) == 1
@@ -117,3 +173,6 @@ class TestNatsStatefulSet:
             == 1
         )
         assert len(spec["tolerations"]) > 0
+        assert (
+            spec["tolerations"] == values["global"]["platformNodePool"]["tolerations"]
+        )
