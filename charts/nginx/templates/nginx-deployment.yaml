@@ -38,6 +38,7 @@ spec:
           securityContext:
             runAsUser: 101
           image: {{ template "nginx.image" . }}
+          imagePullPolicy: {{ .Values.images.nginx.pullPolicy }}
           resources:
 {{ toYaml .Values.resources | indent 12 }}
           args:

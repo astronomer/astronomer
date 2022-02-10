@@ -144,6 +144,7 @@ spec:
         {{ if .Values.exporter.enabled }}
         - name: metrics
           image: {{ .Values.exporter.image }}
+          imagePullPolicy: {{ .Values.images.stan.pullPolicy }}
           resources:
 {{ toYaml .Values.exporter.resources | indent 12 }}
           args:

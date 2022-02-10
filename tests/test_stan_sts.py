@@ -90,10 +90,11 @@ class TestStanStatefulSet:
         assert len(docs) == 1
         doc = docs[0]
         c_by_name = {
-            c["name"]: c
-            for c in doc["spec"]["template"]["spec"]["containers"]
-            + doc["spec"]["template"]["spec"]["initContainers"]
+            c["name"]: c for c in doc["spec"]["template"]["spec"].get("containers")
         }
+
+        if doc["spec"]["template"]["spec"].get("initContainers"):
+            c_by_name.update(doc["spec"]["template"]["spec"].get("initContainers"))
 
         assert doc["kind"] == "StatefulSet"
         assert doc["apiVersion"] == "apps/v1"
