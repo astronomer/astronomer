@@ -22,7 +22,10 @@ def get_containers_by_name(doc, include_init_containers=False):
         "initContainers"
     ):
         c_by_name.update(
-            {c["name"]: c for c in doc["spec"]["template"]["spec"].get("containers")}
+            {
+                c["name"]: c
+                for c in doc["spec"]["template"]["spec"].get("initContainers")
+            }
         )
 
     return c_by_name
