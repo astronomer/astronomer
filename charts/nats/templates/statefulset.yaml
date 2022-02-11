@@ -132,7 +132,7 @@ spec:
       containers:
       - name: nats
         image: {{ include "nats.image" . }}
-        imagePullPolicy: {{ .Values.nats.pullPolicy }}
+        imagePullPolicy: {{ .Values.images.nats.pullPolicy }}
         ports:
         - containerPort: 4222
           name: client
