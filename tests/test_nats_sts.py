@@ -20,7 +20,7 @@ class TestNatsStatefulSet:
         c_by_name = get_containers_by_name(doc)
         assert doc["kind"] == "StatefulSet"
         assert doc["apiVersion"] == "apps/v1"
-        assert doc["metadata"]["name"] == "RELEASE-NAME-nats"
+        assert doc["metadata"]["name"] == "release-name-nats"
         assert c_by_name["metrics"]["image"].startswith(
             "quay.io/astronomer/ap-nats-exporter:"
         )

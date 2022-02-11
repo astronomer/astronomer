@@ -10,9 +10,9 @@ if not (namespace := getenv("NAMESPACE")):
     print("NAMESPACE env var is not present, using 'astronomer' namespace")
     namespace = "astronomer"
 
-if not (release_name := getenv("RELEASE_NAME")):
+if not (release_name := getenv("release_name")):
     print(
-        "RELEASE_NAME env var is not present, assuming 'astronomer' is the release name"
+        "release_name env var is not present, assuming 'astronomer' is the release name"
     )
     release_name = "astronomer"
 

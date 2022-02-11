@@ -28,11 +28,11 @@ class TestAuthSidecar:
         doc = docs[0]
         assert doc["kind"] == "StatefulSet"
         assert doc["apiVersion"] == "apps/v1"
-        assert doc["metadata"]["name"] == "RELEASE-NAME-alertmanager"
+        assert doc["metadata"]["name"] == "release-name-alertmanager"
         assert doc["spec"]["template"]["spec"]["containers"][1]["name"] == "auth-proxy"
 
         assert jmespath.search("kind", docs[2]) == "Service"
-        assert jmespath.search("metadata.name", docs[2]) == "RELEASE-NAME-alertmanager"
+        assert jmespath.search("metadata.name", docs[2]) == "release-name-alertmanager"
         assert jmespath.search("spec.type", docs[2]) == "ClusterIP"
         assert {
             "name": "auth-proxy",
@@ -63,11 +63,11 @@ class TestAuthSidecar:
         doc = docs[0]
         assert doc["kind"] == "StatefulSet"
         assert doc["apiVersion"] == "apps/v1"
-        assert doc["metadata"]["name"] == "RELEASE-NAME-prometheus"
+        assert doc["metadata"]["name"] == "release-name-prometheus"
         assert "auth-proxy" == doc["spec"]["template"]["spec"]["containers"][0]["name"]
 
         assert "Service" == jmespath.search("kind", docs[2])
-        assert "RELEASE-NAME-prometheus" == jmespath.search("metadata.name", docs[2])
+        assert "release-name-prometheus" == jmespath.search("metadata.name", docs[2])
         assert "ClusterIP" == jmespath.search("spec.type", docs[2])
         assert {
             "name": "auth-proxy",
@@ -98,11 +98,11 @@ class TestAuthSidecar:
         doc = docs[0]
         assert doc["kind"] == "Deployment"
         assert doc["apiVersion"] == "apps/v1"
-        assert doc["metadata"]["name"] == "RELEASE-NAME-kibana"
+        assert doc["metadata"]["name"] == "release-name-kibana"
         assert "auth-proxy" == doc["spec"]["template"]["spec"]["containers"][1]["name"]
 
         assert "Service" == jmespath.search("kind", docs[2])
-        assert "RELEASE-NAME-kibana" == jmespath.search("metadata.name", docs[2])
+        assert "release-name-kibana" == jmespath.search("metadata.name", docs[2])
         assert "ClusterIP" == jmespath.search("spec.type", docs[2])
         assert {
             "name": "auth-proxy",
@@ -137,7 +137,7 @@ class TestAuthSidecar:
 
         assert doc["kind"] == "ConfigMap"
         assert doc["apiVersion"] == "v1"
-        assert doc["metadata"]["name"] == "RELEASE-NAME-houston-config"
+        assert doc["metadata"]["name"] == "release-name-houston-config"
 
         prod = yaml.safe_load(doc["data"]["production.yaml"])
         expected_output = {
@@ -173,7 +173,7 @@ class TestAuthSidecar:
         prod = yaml.safe_load(doc["data"]["production.yaml"])
         assert doc["kind"] == "ConfigMap"
         assert doc["apiVersion"] == "v1"
-        assert doc["metadata"]["name"] == "RELEASE-NAME-houston-config"
+        assert doc["metadata"]["name"] == "release-name-houston-config"
 
         expected_output = {
             "enabled": True,

@@ -6,7 +6,7 @@ set -x
 # The path to the working directory - the root of the repo
 GIT_ROOT="$(git -C "${0%/*}" rev-parse --show-toplevel)"
 HELM_CHART_PATH=${HELM_CHART_PATH:-$GIT_ROOT}
-RELEASE_NAME="${RELEASE_NAME:-astronomer}"
+release_name="${release_name:-astronomer}"
 NAMESPACE="${NAMESPACE:-astronomer}"
 HELM_TIMEOUT=${HELM_TIMEOUT:-800}
 
@@ -73,7 +73,7 @@ set -x
 # shellcheck disable=SC2086
 if ! helm ${ACTION} \
   --namespace "$NAMESPACE" \
-  "$RELEASE_NAME" \
+  "$release_name" \
   ${dryrun} \
   --timeout "${HELM_TIMEOUT}s" \
   -f "$CONFIG_FILE" \
@@ -91,5 +91,5 @@ then
   get_debugging_info
   exit 1
 else
-  helm history -n "$NAMESPACE" "$RELEASE_NAME"
+  helm history -n "$NAMESPACE" "$release_name"
 fi

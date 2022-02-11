@@ -20,7 +20,7 @@ class TestPostgresql:
         doc = docs[0]
         assert doc["kind"] == "StatefulSet"
         assert doc["apiVersion"] == "apps/v1"
-        assert doc["metadata"]["name"] == "RELEASE-NAME-postgresql"
+        assert doc["metadata"]["name"] == "release-name-postgresql"
         assert "initContainers" not in doc["spec"]["template"]["spec"]
 
     def test_postgresql_statefulset_with_volumePermissions_enabled(self, kube_version):
@@ -41,7 +41,7 @@ class TestPostgresql:
         doc = docs[0]
         assert doc["kind"] == "StatefulSet"
         assert doc["apiVersion"] == "apps/v1"
-        assert doc["metadata"]["name"] == "RELEASE-NAME-postgresql"
+        assert doc["metadata"]["name"] == "release-name-postgresql"
         assert "initContainers" in doc["spec"]["template"]["spec"]
 
     def test_postgresql_statefulset_with_private_registry_enabled(self, kube_version):

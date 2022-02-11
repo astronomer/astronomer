@@ -19,7 +19,7 @@ class TestPrometheusNodeExporterDaemonset:
         doc = docs[0]
 
         assert doc["kind"] == "DaemonSet"
-        assert doc["metadata"]["name"] == "RELEASE-NAME-prometheus-node-exporter"
+        assert doc["metadata"]["name"] == "release-name-prometheus-node-exporter"
 
         c_by_name = get_containers_by_name(doc)
         assert c_by_name["node-exporter"]
@@ -46,7 +46,7 @@ class TestPrometheusNodeExporterDaemonset:
         doc = docs[0]
 
         assert doc["kind"] == "DaemonSet"
-        assert doc["metadata"]["name"] == "RELEASE-NAME-prometheus-node-exporter"
+        assert doc["metadata"]["name"] == "release-name-prometheus-node-exporter"
 
         c_by_name = get_containers_by_name(doc)
         assert c_by_name["node-exporter"]

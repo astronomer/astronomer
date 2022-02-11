@@ -52,8 +52,8 @@ def test_downgrade_then_upgrade():
         print("NAMESPACE env var is not present, using 'astronomer' namespace")
         namespace = "astronomer"
 
-    if not (release_name := getenv("RELEASE_NAME")):
-        print("No RELEASE_NAME env var, usgin RELEASE_NAME=astronomer")
+    if not (release_name := getenv("release_name")):
+        print("No release_name env var, usgin release_name=astronomer")
         release_name = "astronomer"
 
     config_path = git_root_dir / "upgrade_test_config.yaml"
