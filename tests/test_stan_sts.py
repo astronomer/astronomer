@@ -176,3 +176,81 @@ class TestStanStatefulSet:
         assert (
             spec["tolerations"] == values["global"]["platformNodePool"]["tolerations"]
         )
+
+    def test_stan_statefulset_with_custom_images(self, kube_version):
+        """Test we can customize the stan images."""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/stan/templates/statefulset.yaml"],
+            values={
+                "stan": {
+                    "images": {
+                        "init": {
+                            "repository": "example.com/custom/image/the-init-image",
+                            "tag": "the-custom-init-tag",
+                            "pullPolicy": "Always",
+                        },
+                        "stan": {
+                            "repository": "example.com/custom/image/the-stan-image",
+                            "tag": "the-custom-stan-tag",
+                            "pullPolicy": "Always",
+                        },
+                    },
+                },
+            },
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        c_by_name = {
+            c["name"]: c
+            for c in doc["spec"]["template"]["spec"]["containers"]
+            + doc["spec"]["template"]["spec"]["initContainers"]
+        }
+
+        assert doc["kind"] == "StatefulSet"
+        assert doc["apiVersion"] == "apps/v1"
+
+        assert (
+            c_by_name["stan"]["image"]
+            == "example.com/custom/image/the-stan-image:the-custom-stan-tag"
+        )
+        assert c_by_name["stan"]["imagePullPolicy"] == "Always"
+        assert (
+            c_by_name["wait-for-nats-server"]["image"]
+            == "example.com/custom/image/the-init-image:the-custom-init-tag"
+        )
+        assert c_by_name["stan"]["imagePullPolicy"] == "Always"
+
+    def test_stan_statefulset_with_private_registry(self, kube_version):
+        """Test that stan statefulset properly uses the private registry images."""
+        private_repo = "example.com/the-private-registry-repository"
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/stan/templates/statefulset.yaml"],
+            values={
+                "global": {
+                    "privateRegistry": {
+                        "enabled": True,
+                        "repository": private_repo,
+                    }
+                }
+            },
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+
+        c_by_name = {
+            c["name"]: c
+            for c in doc["spec"]["template"]["spec"]["containers"]
+            + doc["spec"]["template"]["spec"]["initContainers"]
+        }
+
+        assert doc["kind"] == "StatefulSet"
+        assert doc["apiVersion"] == "apps/v1"
+
+        for name, container in c_by_name.items():
+            assert container["image"].startswith(
+                private_repo
+            ), f"The container '{name}' does not use the privateRegistry repo '{private_repo}': {container}"
