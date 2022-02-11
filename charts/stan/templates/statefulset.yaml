@@ -76,13 +76,14 @@ spec:
             - "-timeout"
             - "1m"
           image: {{ include "stan.init.image" . }}
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: {{ .Values.images.init.pullPolicy }}
           env:
             - name: NATS__URL
               value: "nats://{{ .Release.Name }}-nats:4222"
       containers:
         - name: stan
           image: {{ include "stan.image" . }}
+          imagePullPolicy: {{ .Values.images.stan.pullPolicy }}
           args:
           - -sc
           - /etc/stan-config/stan.conf
@@ -145,6 +146,7 @@ spec:
         {{ if .Values.exporter.enabled }}
         - name: metrics
           image: {{ template "stan-exporter.image" . }}
+          imagePullPolicy: {{ .Values.images.stan.pullPolicy }}
           resources:
 {{ toYaml .Values.exporter.resources | indent 12 }}
           args:
