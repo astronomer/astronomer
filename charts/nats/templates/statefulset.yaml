@@ -79,9 +79,7 @@ spec:
       {{- end }}
 
       #################
-      #               #
       #  TLS Volumes  #
-      #               #
       #################
       {{- with .Values.nats.tls }}
       {{ $secretName := .secret.name }}
@@ -126,15 +124,13 @@ spec:
       shareProcessNamespace: true
 
       #################
-      #               #
       #  NATS Server  #
-      #               #
       #################
       terminationGracePeriodSeconds: 60
       containers:
       - name: nats
         image: {{ include "nats.image" . }}
-        imagePullPolicy: {{ .Values.nats.pullPolicy }}
+        imagePullPolicy: {{ .Values.images.nats.pullPolicy }}
         ports:
         - containerPort: 4222
           name: client
@@ -186,9 +182,7 @@ spec:
           {{- end }}
 
           #######################
-          #                     #
           #  TLS Volumes Mounts #
-          #                     #
           #######################
           {{- with .Values.nats.tls }}
           {{ $secretName := .secret.name }}
@@ -251,9 +245,7 @@ spec:
               command: ["/bin/sh", "-c", "nats-server -sl=ldm=/var/run/nats/nats.pid && /bin/sleep 60"]
 
       #################################
-      #                               #
       #  NATS Configuration Reloader  #
-      #                               #
       #################################
       {{ if .Values.reloader.enabled }}
       - name: reloader
@@ -275,14 +267,12 @@ spec:
       {{ end }}
 
       ##############################
-      #                            #
       #  NATS Prometheus Exporter  #
-      #                            #
       ##############################
       {{ if .Values.exporter.enabled }}
       - name: metrics
         image: {{ template "nats-exporter.image" . }}
-        imagePullPolicy: {{ .Values.exporter.pullPolicy }}
+        imagePullPolicy: {{ .Values.images.exporter.pullPolicy }}
         args:
         - -connz
         - -routez

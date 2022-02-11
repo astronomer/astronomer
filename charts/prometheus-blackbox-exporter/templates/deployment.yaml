@@ -53,7 +53,7 @@ spec:
       {{- end }}
       containers:
         - name: blackbox-exporter
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          image: {{ template "prometheus-blackbox-exporter.image" . }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           securityContext:
             readOnlyRootFilesystem: {{ .Values.readOnlyRootFilesystem }}

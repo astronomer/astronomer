@@ -2,7 +2,7 @@
 
 .PHONY: help
 help: ## Print Makefile help.
-	@grep -Eh '^[a-z.A-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-25s\033[0m %s\n", $$1, $$2}'
+	@grep -Eh '^[a-z.A-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-41s\033[0m %s\n", $$1, $$2}'
 
 # List of charts to build
 CHARTS := astronomer nginx grafana prometheus alertmanager elasticsearch kibana fluentd kube-state postgresql
@@ -69,6 +69,22 @@ update-requirements: ## Update all requirements.txt files
 .PHONY: show-docker-images
 show-docker-images: ## Show all docker images and versions used in the helm chart
 	@helm template . \
+		--set global.baseDomain=foo.com \
+		--set global.blackboxExporterEnabled=True \
+		--set global.kedaEnabled=True \
+		--set global.postgresqlEnabled=True \
+		--set global.postgresqlEnabled=True \
+		--set global.prometheusPostgresExporterEnabled=True \
+		--set global.pspEnabled=True \
+		--set global.veleroEnabled=True \
+		2>/dev/null \
+		| awk '/image: / {match($$2, /(([^"]*):[^"]*)/, a) ; printf "https://%s %s\n", a[2], a[1] ;}' | sort -u | column -t
+
+.PHONY: show-docker-images
+show-docker-images-with-private-registry: ## Show all docker images and versions used in the helm chart with a privateRegistry set
+	@helm template . \
+		--set global.privateRegistry.enabled=True \
+		--set global.privateRegistry.repository=example.com/the-private-registry \
 		--set global.baseDomain=foo.com \
 		--set global.blackboxExporterEnabled=True \
 		--set global.kedaEnabled=True \
