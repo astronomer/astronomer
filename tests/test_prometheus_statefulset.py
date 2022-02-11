@@ -1,6 +1,6 @@
 from tests.helm_template_generator import render_chart
 import pytest
-from . import supported_k8s_versions
+from . import supported_k8s_versions, get_containers_by_name
 
 
 @pytest.mark.parametrize(
@@ -29,9 +29,7 @@ class TestPrometheusStatefulset:
         assert sc["runAsUser"] == 65534
         assert sc["runAsNonRoot"] is True
 
-        c_by_name = {
-            c["name"]: c for c in doc["spec"]["template"]["spec"]["containers"]
-        }
+        c_by_name = get_containers_by_name(doc)
         assert c_by_name["configmap-reloader"]["image"].startswith(
             "quay.io/astronomer/ap-configmap-reloader:"
         )

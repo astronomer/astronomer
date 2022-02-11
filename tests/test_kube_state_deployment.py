@@ -1,6 +1,6 @@
 from tests.helm_template_generator import render_chart
 import pytest
-from . import supported_k8s_versions
+from . import supported_k8s_versions, get_containers_by_name
 
 
 @pytest.mark.parametrize(
@@ -21,9 +21,7 @@ class TestKubeStateDeployment:
         assert doc["kind"] == "Deployment"
         assert doc["metadata"]["name"] == "RELEASE-NAME-kube-state"
 
-        c_by_name = {
-            c["name"]: c for c in doc["spec"]["template"]["spec"]["containers"]
-        }
+        c_by_name = get_containers_by_name(doc)
         assert c_by_name["kube-state"]
         assert c_by_name["kube-state"]["resources"] == {
             "limits": {"cpu": "500m", "memory": "1024Mi"},
@@ -50,9 +48,7 @@ class TestKubeStateDeployment:
         assert doc["kind"] == "Deployment"
         assert doc["metadata"]["name"] == "RELEASE-NAME-kube-state"
 
-        c_by_name = {
-            c["name"]: c for c in doc["spec"]["template"]["spec"]["containers"]
-        }
+        c_by_name = get_containers_by_name(doc)
         assert c_by_name["kube-state"]
         assert c_by_name["kube-state"]["resources"] == {
             "limits": {"cpu": "777m", "memory": "999Mi"},

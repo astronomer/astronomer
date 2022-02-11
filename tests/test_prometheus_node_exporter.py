@@ -1,6 +1,6 @@
 from tests.helm_template_generator import render_chart
 import pytest
-from . import supported_k8s_versions
+from . import supported_k8s_versions, get_containers_by_name
 
 
 @pytest.mark.parametrize(
@@ -21,9 +21,7 @@ class TestPrometheusNodeExporterDaemonset:
         assert doc["kind"] == "DaemonSet"
         assert doc["metadata"]["name"] == "RELEASE-NAME-prometheus-node-exporter"
 
-        c_by_name = {
-            c["name"]: c for c in doc["spec"]["template"]["spec"]["containers"]
-        }
+        c_by_name = get_containers_by_name(doc)
         assert c_by_name["node-exporter"]
         assert c_by_name["node-exporter"]["resources"] == {
             "limits": {"cpu": "100m", "memory": "128Mi"},
@@ -50,9 +48,7 @@ class TestPrometheusNodeExporterDaemonset:
         assert doc["kind"] == "DaemonSet"
         assert doc["metadata"]["name"] == "RELEASE-NAME-prometheus-node-exporter"
 
-        c_by_name = {
-            c["name"]: c for c in doc["spec"]["template"]["spec"]["containers"]
-        }
+        c_by_name = get_containers_by_name(doc)
         assert c_by_name["node-exporter"]
         assert c_by_name["node-exporter"]["resources"] == {
             "limits": {"cpu": "777m", "memory": "999Mi"},

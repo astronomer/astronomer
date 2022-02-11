@@ -51,10 +51,12 @@ spec:
 {{ toYaml . | indent 8 }}
 {{- end }}
       terminationGracePeriodSeconds: 90
-{{- with .Values.affinity }}
+      nodeSelector:
+{{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
       affinity:
-{{- toYaml  . | nindent 8 }}
-{{- end }}
+{{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 8 }}
+      tolerations:
+{{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       volumes:
       - configMap:
           name: {{ template "stan.name".  }}-config
@@ -74,13 +76,14 @@ spec:
             - "-timeout"
             - "1m"
           image: {{ include "stan.init.image" . }}
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: {{ .Values.images.init.pullPolicy }}
           env:
             - name: NATS__URL
               value: "nats://{{ .Release.Name }}-nats:4222"
       containers:
         - name: stan
           image: {{ include "stan.image" . }}
+          imagePullPolicy: {{ .Values.images.stan.pullPolicy }}
           args:
           - -sc
           - /etc/stan-config/stan.conf
@@ -143,6 +146,7 @@ spec:
         {{ if .Values.exporter.enabled }}
         - name: metrics
           image: {{ template "stan-exporter.image" . }}
+          imagePullPolicy: {{ .Values.images.stan.pullPolicy }}
           resources:
 {{ toYaml .Values.exporter.resources | indent 12 }}
           args:
