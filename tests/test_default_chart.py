@@ -2,6 +2,7 @@ from tests.helm_template_generator import render_chart
 import pytest
 import yaml
 from . import git_root_dir
+from . import get_containers_by_name
 
 
 with open(f"{git_root_dir}/tests/default_chart_data.yaml") as file:
@@ -23,16 +24,7 @@ class TestAllCharts:
 
         pod_manger_docs = [doc for doc in docs if doc["kind"] in self.pod_managers]
         for doc in pod_manger_docs:
-            c_by_name = {
-                c["name"]: c for c in doc["spec"]["template"]["spec"].get("containers")
-            }
-            if doc["spec"]["template"]["spec"].get("initContainers"):
-                c_by_name.update(
-                    {
-                        c["name"]: c
-                        for c in doc["spec"]["template"]["spec"].get("containers")
-                    }
-                )
+            c_by_name = get_containers_by_name(doc, include_init_containers=True)
             for name, container in c_by_name.items():
                 assert container[
                     "image"
@@ -58,16 +50,7 @@ class TestAllCharts:
 
         pod_manger_docs = [doc for doc in docs if doc["kind"] in self.pod_managers]
         for doc in pod_manger_docs:
-            c_by_name = {
-                c["name"]: c for c in doc["spec"]["template"]["spec"].get("containers")
-            }
-            if doc["spec"]["template"]["spec"].get("initContainers"):
-                c_by_name.update(
-                    {
-                        c["name"]: c
-                        for c in doc["spec"]["template"]["spec"].get("containers")
-                    }
-                )
+            c_by_name = get_containers_by_name(doc)
 
             for name, container in c_by_name.items():
                 assert container["image"].startswith(

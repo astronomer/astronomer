@@ -1,6 +1,6 @@
 from tests.helm_template_generator import render_chart
 import pytest
-from . import supported_k8s_versions
+from . import supported_k8s_versions, get_containers_by_name
 
 
 @pytest.mark.parametrize(
@@ -17,9 +17,7 @@ class TestStanStatefulSet:
 
         assert len(docs) == 1
         doc = docs[0]
-        c_by_name = {
-            c["name"]: c for c in doc["spec"]["template"]["spec"]["containers"]
-        }
+        c_by_name = get_containers_by_name(doc)
         assert doc["kind"] == "StatefulSet"
         assert doc["apiVersion"] == "apps/v1"
         assert doc["metadata"]["name"] == "RELEASE-NAME-stan"
@@ -61,9 +59,8 @@ class TestStanStatefulSet:
         )
 
         assert len(docs) == 1
-        containers = docs[0]["spec"]["template"]["spec"]["containers"]
-        assert len(containers) == 2
-        c_by_name = {c["name"]: c for c in containers}
+        c_by_name = get_containers_by_name(docs[0])
+        assert len(c_by_name) == 2
         assert c_by_name["stan"]["resources"]["requests"]["cpu"] == "123m"
         assert c_by_name["metrics"]["resources"]["requests"]["cpu"] == "234m"
 
@@ -202,11 +199,7 @@ class TestStanStatefulSet:
 
         assert len(docs) == 1
         doc = docs[0]
-        c_by_name = {
-            c["name"]: c
-            for c in doc["spec"]["template"]["spec"]["containers"]
-            + doc["spec"]["template"]["spec"]["initContainers"]
-        }
+        c_by_name = get_containers_by_name(doc, include_init_containers=True)
 
         assert doc["kind"] == "StatefulSet"
         assert doc["apiVersion"] == "apps/v1"
@@ -224,7 +217,7 @@ class TestStanStatefulSet:
 
     def test_stan_statefulset_with_private_registry(self, kube_version):
         """Test that stan statefulset properly uses the private registry images."""
-        private_repo = "example.com/the-private-registry-repository"
+        private_registry = "private-registry.example.com"
         docs = render_chart(
             kube_version=kube_version,
             show_only=["charts/stan/templates/statefulset.yaml"],
@@ -232,7 +225,7 @@ class TestStanStatefulSet:
                 "global": {
                     "privateRegistry": {
                         "enabled": True,
-                        "repository": private_repo,
+                        "repository": private_registry,
                     }
                 }
             },
@@ -241,16 +234,12 @@ class TestStanStatefulSet:
         assert len(docs) == 1
         doc = docs[0]
 
-        c_by_name = {
-            c["name"]: c
-            for c in doc["spec"]["template"]["spec"]["containers"]
-            + doc["spec"]["template"]["spec"]["initContainers"]
-        }
+        c_by_name = get_containers_by_name(doc, include_init_containers=True)
 
         assert doc["kind"] == "StatefulSet"
         assert doc["apiVersion"] == "apps/v1"
 
         for name, container in c_by_name.items():
             assert container["image"].startswith(
-                private_repo
-            ), f"The container '{name}' does not use the privateRegistry repo '{private_repo}': {container}"
+                private_registry
+            ), f"Container named '{name}' does not use registry '{private_registry}': {container}"
