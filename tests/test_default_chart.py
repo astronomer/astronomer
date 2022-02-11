@@ -31,7 +31,7 @@ class TestAllCharts:
                 ], f"container {name} does not have an image: {doc}"
                 assert container[
                     "imagePullPolicy"
-                ], f"container {name} does not have an imagePullPolicy: {doc}"
+                ], f"Template filename: {template['name']}\nContainer name '{name}' does not have an imagePullPolicy\ndoc: {doc}"
 
     def test_all_default_charts_with_private_registry(self, template):
         """Test that each chart uses the privateRegistry.
