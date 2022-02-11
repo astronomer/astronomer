@@ -56,12 +56,11 @@ Return the proper PostgreSQL image name
 */}}
 {{- define "postgresql.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}
+{{ .Values.global.privateRegistry.repository }}/ap-postgresql:{{ .Values.image.tag }}
 {{- else -}}
 {{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}
 {{- end }}
 {{- end }}
-
 
 {{/*
 Return PostgreSQL password
