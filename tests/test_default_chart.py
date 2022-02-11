@@ -33,8 +33,11 @@ class TestAllCharts:
                     "imagePullPolicy"
                 ], f"container {name} does not have an imagePullPolicy: {doc}"
 
-    def test_all_charts_with_private_registry(self, template):
-        """Test that each chart uses the privateRegistry."""
+    def test_all_default_charts_with_private_registry(self, template):
+        """Test that each chart uses the privateRegistry.
+
+        This only finds default images, not the many which are hidden behind feature flags.
+        """
         private_repo = "example.com/the-private-registry-repository"
         docs = render_chart(
             show_only=[template["name"]],
