@@ -17,3 +17,22 @@ def test_default_chart_with_basedomain(template):
         show_only=[template["name"]],
     )
     assert len(docs) == template["length"]
+
+    pod_managers = ["Deployment", "StatefulSet", "DaemonSet"]
+
+    pod_manger_docs = [doc for doc in docs if doc["kind"] in pod_managers]
+    for doc in pod_manger_docs:
+        c_by_name = {
+            c["name"]: c for c in doc["spec"]["template"]["spec"].get("containers")
+        }
+        if doc["spec"]["template"]["spec"].get("initContainers"):
+            c_by_name.update(
+                {
+                    c["name"]: c
+                    for c in doc["spec"]["template"]["spec"].get("containers")
+                }
+            )
+        for name, container in c_by_name.items():
+            assert container[
+                "imagePullPolicy"
+            ], f"container {name} does not have an imagePullPolicy: {doc}"
