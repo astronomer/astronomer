@@ -135,13 +135,11 @@ class TestAuthSidecar:
         assert len(docs) == 1
         doc = docs[0]
 
-        prod = yaml.safe_load(doc["data"]["production.yaml"])
-        print(prod["deployments"]["authSideCar"])
-
         assert doc["kind"] == "ConfigMap"
         assert doc["apiVersion"] == "v1"
         assert doc["metadata"]["name"] == "RELEASE-NAME-houston-config"
 
+        prod = yaml.safe_load(doc["data"]["production.yaml"])
         expected_output = {
             "enabled": True,
             "repository": "nginxinc/nginx-unprivileged",
