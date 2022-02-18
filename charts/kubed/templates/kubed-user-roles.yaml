@@ -1,6 +1,6 @@
 {{- if .Values.global.rbacEnabled }}
 kind: ClusterRole
-apiVersion: rbac.authorization.k8s.io/v1
+apiVersion: {{ template "apiVersion.rbac" . }}
 metadata:
   name: appscode:kubed:view
   labels:
