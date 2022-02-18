@@ -7,6 +7,7 @@ from . import supported_k8s_versions
     "kube_version",
     supported_k8s_versions,
 )
+@pytest.mark.skip(reason="currently not needed")
 def test_log4shell(kube_version):
     """
     Ensure remediation settings are in place for log4j log4shell CVE-2021-44228
