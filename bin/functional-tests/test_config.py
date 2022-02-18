@@ -204,7 +204,7 @@ def test_houston_backend_secret_present_after_helm_upgrade_and_container_restart
         namespace = "astronomer"
 
     if not (release_name := getenv("release_name")):
-        print("No release_name env var, usgin release_name=astronomer")
+        print("No release_name env var, using release_name=astronomer")
         release_name = "astronomer"
 
     # Attempt downgrade with the documented procedure.
