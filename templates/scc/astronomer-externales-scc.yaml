@@ -1,14 +1,11 @@
-###############################################
-## Astronomer Global SecurityContextConstraints
-###############################################
-{{- if .Values.global.sccEnabled }}
+{{- if and .Values.global.sccEnabled .Values.global.customLogging.enabled }}
 apiVersion: security.openshift.io/v1
 kind: SecurityContextConstraints
 metadata:
   annotations:
     release.openshift.io/create-only: "true"
     "helm.sh/hook": "pre-install,pre-upgrade"
-  name: {{ .Release.Name }}-anyuid
+  name: {{ .Release.Name }}-external-es-proxy-anyuid
 priority: 10
 readOnlyRootFilesystem: false
 requiredDropCapabilities:
@@ -20,11 +17,7 @@ seLinuxContext:
 supplementalGroups:
   type: RunAsAny
 users:
-- system:serviceaccount:{{ .Release.Namespace }}:default
-- system:serviceaccount:{{ .Release.Namespace }}:{{ .Release.Name }}-commander
-- system:serviceaccount:{{ .Release.Namespace }}:{{ .Release.Name }}-houston-bootstrapper
-- system:serviceaccount:{{ .Release.Namespace }}:{{ .Release.Name }}-nginx
-- system:serviceaccount:{{ .Release.Namespace }}:{{ .Release.Name }}-prometheus
+- system:serviceaccount:{{ .Release.Namespace }}:{{ .Release.Name }}-external-es-proxy
 volumes:
 - configMap
 - downwardAPI

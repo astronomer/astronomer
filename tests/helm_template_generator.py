@@ -21,6 +21,7 @@ from functools import lru_cache
 from tempfile import NamedTemporaryFile
 from typing import Any, Dict, Tuple
 from pathlib import Path
+from typing import Optional
 
 import jsonschema
 import requests
@@ -65,15 +66,16 @@ def validate_k8s_object(instance, kube_version="1.21.0"):
 
 
 def render_chart(
-    name="RELEASE-NAME",
-    values=None,
-    show_only=None,
-    chart_dir=None,
-    kube_version="1.21.0",
-    baseDomain="example.com",
+    name: str = "RELEASE-NAME",
+    values: Optional[dict] = None,
+    show_only: Optional[list] = None,
+    chart_dir: Optional[str] = None,
+    kube_version: str = "1.21.0",
+    baseDomain: str = "example.com",
+    namespace: Optional[str] = None,
 ):
     """
-    Render a helm chart into dictionaries. For helm chart testing only
+    Render a helm chart into dictionaries. For helm chart testing only.
     """
     values = values or {}
     chart_dir = chart_dir or sys.path[0]
@@ -93,6 +95,8 @@ def render_chart(
             "--values",
             tmp_file.name,
         ]
+        if namespace:
+            command.extend(["--namespace", namespace])
         if show_only:
             for i in show_only:
                 if not Path(i).exists():

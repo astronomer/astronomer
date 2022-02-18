@@ -1,6 +1,6 @@
-################################
+###################
 ## KubeD APIService
-#################################
+###################
 {{- $ca := genCA "ca" 3650 }}
 {{- $cn := include "kubed.fullname" . -}}
 {{- $altName1 := printf "%s.%s" $cn .Release.Namespace }}
