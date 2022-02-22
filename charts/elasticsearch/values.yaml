@@ -207,3 +207,8 @@ nginx:
   fullnameOverride: ~
   ingressClass: ~
   resources: {}
+
+# sysctl init container
+sysctlInitContainer:
+  enabled: true
+  sysctlVmMaxMapCount: 262144
