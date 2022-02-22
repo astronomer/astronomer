@@ -24,15 +24,15 @@ class TestElasticSearch:
             ],
         )
 
+        default_max_map_count = "262144"
         assert len(docs) == 3
         doc = docs[0]
-        print(doc)
         assert doc["kind"] == "StatefulSet"
         assert "sysctl" == jmespath.search(
             "spec.template.spec.initContainers[0].name", docs[0]
         )
         assert any(
-            "262144" in arg
+            default_max_map_count in arg
             for args in jmespath.search(
                 "spec.template.spec.initContainers[*].command", doc
             )
@@ -45,7 +45,7 @@ class TestElasticSearch:
             "spec.template.spec.initContainers[0].name", docs[1]
         )
         assert any(
-            "262144" in arg
+            default_max_map_count in arg
             for args in jmespath.search(
                 "spec.template.spec.initContainers[*].command", doc
             )
@@ -58,7 +58,7 @@ class TestElasticSearch:
             "spec.template.spec.initContainers[0].name", docs[2]
         )
         assert any(
-            "262144" in arg
+            default_max_map_count in arg
             for args in jmespath.search(
                 "spec.template.spec.initContainers[*].command", doc
             )
@@ -79,7 +79,6 @@ class TestElasticSearch:
 
         assert len(docs) == 3
         doc = docs[0]
-        print(doc)
         assert doc["kind"] == "StatefulSet"
         assert "sysctl" not in jmespath.search(
             "spec.template.spec.initContainers[*].name", docs[0]
