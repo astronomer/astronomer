@@ -20,7 +20,7 @@
                         "airflow": {
                           "allOf": [
                             {
-                              "$ref": "https://raw.githubusercontent.com/apache/airflow/helm-chart/1.3.0/chart/values.schema.json"
+                              "$ref": "file://./oss_values.schema.json"
                             },
                             {
                               "additionalProperties": false,
