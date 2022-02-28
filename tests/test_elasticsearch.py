@@ -2,9 +2,6 @@ from tests.helm_template_generator import render_chart
 import pytest
 from . import supported_k8s_versions
 import jmespath
-import base64
-
-secret = base64.b64encode(b"sample-secret").decode()
 
 
 @pytest.mark.parametrize(
