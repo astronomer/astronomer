@@ -23,6 +23,8 @@ class TestElasticSearch:
 
         default_max_map_count = "262144"
         assert len(docs) == 3
+
+        # elasticsearch master
         doc = docs[0]
         assert doc["kind"] == "StatefulSet"
         assert "sysctl" == jmespath.search(
@@ -36,6 +38,7 @@ class TestElasticSearch:
             for arg in args
         )
 
+        # elasticsearch data
         doc = docs[1]
         assert doc["kind"] == "StatefulSet"
         assert "sysctl" == jmespath.search(
@@ -49,6 +52,7 @@ class TestElasticSearch:
             for arg in args
         )
 
+        # elasticsearch client
         doc = docs[2]
         assert doc["kind"] == "Deployment"
         assert "sysctl" == jmespath.search(
@@ -76,17 +80,21 @@ class TestElasticSearch:
 
         assert len(docs) == 3
         doc = docs[0]
+
+        # elasticsearch master
         assert doc["kind"] == "StatefulSet"
         assert "sysctl" not in jmespath.search(
             "spec.template.spec.initContainers[*].name", docs[0]
         )
 
+        # elasticsearch data
         doc = docs[1]
         assert doc["kind"] == "StatefulSet"
         assert "sysctl" not in jmespath.search(
             "spec.template.spec.initContainers[*].name", docs[1]
         )
 
+        # elasticsearch client
         doc = docs[2]
         assert doc["kind"] == "Deployment"
         assert jmespath.search("spec.template.spec.initContainers", docs[2]) is None
