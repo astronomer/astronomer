@@ -6,7 +6,7 @@
 images:
   init:
     repository: quay.io/astronomer/ap-base
-    tag: 3.15.0-2
+    tag: 3.15.0-3
     pullPolicy: IfNotPresent
   stan:
     repository: quay.io/astronomer/ap-nats-streaming
