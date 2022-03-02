@@ -1,7 +1,7 @@
 {{- if .Values.global.istio.enabled }}
 # The default side configuration will apply
 # to the Airflow namespaces.
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: {{ template "apiVersion.istio.networking" . }}
 kind: Sidecar
 metadata:
   name: default-sidecar-config
@@ -25,7 +25,7 @@ spec:
 # This is used to overwrite the default configuration
 # for the platform namespace. This is the defaults
 # for sidecars in the platform namespace.
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: {{ template "apiVersion.istio.networking" . }}
 kind: Sidecar
 metadata:
   name: {{ .Release.Namespace }}-sidecar-config
@@ -41,7 +41,7 @@ spec:
     - "kube-system/*"
 ---
 # This overwrites the defaults in the platform namespace.
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: {{ template "apiVersion.istio.networking" . }}
 kind: Sidecar
 metadata:
   name: {{ .Release.Namespace }}-prometheus-sidecar-config
