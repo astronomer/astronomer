@@ -13,9 +13,14 @@ metadata:
     heritage: {{ .Release.Service }}
 data:
   config: |-
+    # https://prometheus.io/docs/prometheus/latest/configuration/configuration/
     global:
       scrape_interval: 30s
       evaluation_interval: 30s
+      {{ if .Values.external_labels }}external_labels: {{ .Values.external_labels | toYaml | nindent 8 }}{{ end }}
+
+    # https://prometheus.io/docs/prometheus/latest/configuration/configuration/#remote_write
+    {{ if .Values.remote_write }}remote_write: {{ .Values.remote_write | toYaml | nindent 6 }}{{ end }}
 
     # Configure Alertmanager
     alerting:
