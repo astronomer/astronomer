@@ -1,7 +1,6 @@
 from tests.helm_template_generator import render_chart
 import pytest
 from . import supported_k8s_versions
-import re
 import yaml
 
 
@@ -45,11 +44,28 @@ class TestPrometheusConfigConfigmap:
             },
         )[0]
 
-        config_yaml = doc["data"]["config"]
-        assert re.search(r"http://FOO-NAME", config_yaml)
-        assert not re.search(r"http://BAR-NS", config_yaml)
-        assert re.search(r"\.BAR-NS:", config_yaml)
-        assert not re.search(r"\.FOO-NAME:", config_yaml)
+        # config_yaml = doc["data"]["config"]
+        config_yaml = yaml.safe_load(doc["data"]["config"])
+        targets = [
+            x["static_configs"][0]["targets"]
+            for x in config_yaml["scrape_configs"]
+            if x["job_name"] == "blackbox HTTP"
+        ][0]
+
+        target_checks = [
+            "http://FOO-NAME-cli-install.BAR-NS",
+            "http://FOO-NAME-commander.BAR-NS:8880/healthz",
+            "http://FOO-NAME-elasticsearch.BAR-NS:9200/_cluster/health?local=true",
+            "http://FOO-NAME-grafana.BAR-NS:3000/api/health",
+            "http://FOO-NAME-houston.BAR-NS:8871/v1/healthz",
+            "http://FOO-NAME-kibana.BAR-NS:5601",
+            "http://FOO-NAME-registry.BAR-NS:5000",
+            "https://app.example.com",
+            "https://houston.example.com/v1/healthz",
+            "https://install.example.com",
+            "https://registry.example.com",
+        ]
+        assert all(x in targets for x in target_checks)
 
     def test_prometheus_config_configmap_external_labels(self, kube_version):
         """Prometheus should have an external_labels section in config.yaml when external_labels is specified in helm values."""
