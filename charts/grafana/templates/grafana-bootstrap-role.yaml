@@ -3,7 +3,7 @@
 #################################
 {{- if and .Values.global.rbacEnabled (and (not .Values.backendSecretName) (not .Values.backendConnection)) }}
 kind: Role
-apiVersion: rbac.authorization.k8s.io/v1
+apiVersion: {{ template "apiVersion.rbac" . }}
 metadata:
   name: {{ template "grafana.fullname" . }}-bootstrapper
   labels:

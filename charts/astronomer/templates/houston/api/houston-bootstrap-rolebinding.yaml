@@ -3,7 +3,7 @@
 #################################
 {{- if and .Values.global.rbacEnabled (and (not .Values.houston.backendSecretName) (not .Values.houston.backendConnection)) }}
 kind: RoleBinding
-apiVersion: rbac.authorization.k8s.io/v1
+apiVersion: {{ template "apiVersion.rbac" . }}
 metadata:
   name: {{ .Release.Name }}-houston-bootstrapper
   labels:

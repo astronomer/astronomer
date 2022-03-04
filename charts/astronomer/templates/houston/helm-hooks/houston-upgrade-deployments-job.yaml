@@ -2,7 +2,7 @@
 ## Airflow Post Deployment Upgrade Hook
 #######################################
 {{- if .Values.houston.upgradeDeployments.enabled }}
-apiVersion: batch/v1
+apiVersion: {{ include "apiVersion.batch" . }}
 kind: Job
 metadata:
   name: {{ .Release.Name }}-houston-upgrade-deployments

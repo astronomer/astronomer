@@ -2,7 +2,7 @@
 ## KubeD ClusterRole
 #################################
 {{- if .Values.global.rbacEnabled }}
-apiVersion: rbac.authorization.k8s.io/v1
+apiVersion: {{ template "apiVersion.rbac" . }}
 kind: ClusterRole
 metadata:
   name: {{ template "kubed.fullname" . }}
