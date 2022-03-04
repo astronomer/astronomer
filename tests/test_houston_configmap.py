@@ -1,8 +1,7 @@
 import yaml
 from tests.helm_template_generator import render_chart
 import pytest
-import tempfile
-from subprocess import check_call
+import ast
 
 
 def common_test_cases(docs):
@@ -27,11 +26,8 @@ def common_test_cases(docs):
         "airflowLocalSettings"
     ]
 
-    with tempfile.NamedTemporaryFile() as f:
-        f.write(airflow_local_settings.encode())
-        f.flush()
-        # validate embedded python. returns if black succeeds, else raises CalledProcessError.
-        check_call(["black", "-q", f.name])
+    # validate yaml-embedded python
+    ast.parse(airflow_local_settings.encode())
 
 
 def test_houston_configmap():
