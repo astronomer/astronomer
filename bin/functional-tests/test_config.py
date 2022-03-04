@@ -161,7 +161,6 @@ def test_prometheus_config_reloader_works(prometheus, kube_client):
         j_parsed = json.loads(data)
         y_parsed = yaml.safe_load(j_parsed["data"]["yaml"])
         if y_parsed["global"]["scrape_interval"] != "30s":
-            print(y_parsed["global"]["scrape_interval"])
             break
         else:
             time.sleep(10)
