@@ -19,7 +19,7 @@ def test_astronomer_registry_statefulset(kube_version):
     doc = docs[0]
     assert doc["kind"] == "StatefulSet"
     assert doc["apiVersion"] == "apps/v1"
-    assert doc["metadata"]["name"] == "RELEASE-NAME-registry"
+    assert doc["metadata"]["name"] == "release-name-registry"
     assert any(
         "quay.io/astronomer/ap-registry:" in item
         for item in jmespath.search("spec.template.spec.containers[*].image", doc)

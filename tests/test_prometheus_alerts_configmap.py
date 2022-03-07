@@ -49,7 +49,7 @@ class TestPrometheusAlertConfigmap:
 
         assert doc["kind"] == "ConfigMap"
         assert doc["apiVersion"] == "v1"
-        assert doc["metadata"]["name"] == "RELEASE-NAME-prometheus-alerts"
+        assert doc["metadata"]["name"] == "release-name-prometheus-alerts"
 
         # Validate the contents of an embedded yaml doc
         groups = yaml.safe_load(doc["data"]["alerts"])["groups"]
