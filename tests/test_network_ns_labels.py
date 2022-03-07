@@ -24,7 +24,7 @@ class TestNSSelectorNetworkPolicies:
         prod = yaml.safe_load(doc["data"]["production.yaml"])
         assert doc["kind"] == "ConfigMap"
         assert doc["apiVersion"] == "v1"
-        assert doc["metadata"]["name"] == "RELEASE-NAME-houston-config"
+        assert doc["metadata"]["name"] == "release-name-houston-config"
         assert prod["deployments"]["helm"]["networkNSLabels"] is True
 
     def test_networknsselector_with_postgresql(self, kube_version):
@@ -42,7 +42,7 @@ class TestNSSelectorNetworkPolicies:
         assert "NetworkPolicy" == doc["kind"]
         assert [
             {
-                "namespaceSelector": {"matchLabels": {"platform": "RELEASE-NAME"}},
+                "namespaceSelector": {"matchLabels": {"platform": "release-name"}},
                 "podSelector": {"matchLabels": {"component": "pgbouncer"}},
             }
         ] == [doc["spec"]["ingress"][0]["from"][2]]

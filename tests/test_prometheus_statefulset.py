@@ -21,7 +21,7 @@ class TestPrometheusStatefulset:
 
         assert doc["kind"] == "StatefulSet"
         assert doc["apiVersion"] == "apps/v1"
-        assert doc["metadata"]["name"] == "RELEASE-NAME-prometheus"
+        assert doc["metadata"]["name"] == "release-name-prometheus"
         assert len(doc["spec"]["template"]["spec"]["containers"]) == 2
 
         sc = doc["spec"]["template"]["spec"]["securityContext"]

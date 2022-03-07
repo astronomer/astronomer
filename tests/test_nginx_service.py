@@ -14,7 +14,7 @@ class TestNginx:
 
         assert doc["kind"] == "Service"
         assert doc["apiVersion"] == "v1"
-        assert doc["metadata"]["name"] == "RELEASE-NAME-nginx"
+        assert doc["metadata"]["name"] == "release-name-nginx"
 
     def test_nginx_type_loadbalancer(self):
         # sourcery skip: extract-duplicate-method
