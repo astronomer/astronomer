@@ -52,7 +52,13 @@ def test_scc_enabled(kube_version):
 
     docs = render_chart(
         kube_version=kube_version,
-        values={"global": {"sccEnabled": True}},
+        values={
+            "global": {
+                "sccEnabled": True,
+                "clusterRoles": True,
+                "namespacePools": {"enabled": False},
+            }
+        },
         show_only=show_only,
     )
     houston_values = yaml.safe_load(docs[1]["data"]["production.yaml"])

@@ -71,6 +71,12 @@ data:
       kibanaUIEnabled: false
       {{ end }}
 
+      {{ if .Values.global.features.namespacePools.enabled }}
+      hardDeleteDeployment: true
+      manualNamespaceNames: true
+      preCreatedNamespaces:{{ printf "\n" }}{{ toYaml .Values.global.features.namespacePools.namespaces.names | indent 6 }}
+      {{ end }}
+
       {{- if .Values.global.authSidecar.enabled }}
       # enables nginx auth sidecar for airflow deployments
       authSideCar:

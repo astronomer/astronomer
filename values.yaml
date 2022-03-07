@@ -24,6 +24,15 @@ global:
       tag: 3.14
       pullPolicy: IfNotPresent
 
+  # Specific Astronomer features configuration
+  features:
+    # namespace pools: define k8s namespaces in which Astronomer will manage Airflow deployments
+    namespacePools:
+      enabled: false
+      namespaces:
+        # if create is enabled, this helm chart will create the provided k8s namespaces
+        create: false
+        names: []
 
   # Use kube-lego
   acme: false

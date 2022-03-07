@@ -60,3 +60,107 @@ def test_astronomer_commander_deployment_upgrade_timeout(kube_version):
         for x in doc["spec"]["template"]["spec"]["containers"][0]["env"]
     }
     assert env_vars["COMMANDER_UPGRADE_TIMEOUT"] == "600"
+
+
+@pytest.mark.parametrize(
+    "kube_version",
+    supported_k8s_versions,
+)
+def test_astronomer_commander_rbac_cluster_role(kube_version):
+    """Test that helm renders astronomer/commander RBAC resources properly when working with the clusterRoles value"""
+
+    # First rbacEnabled and clusterRoles set to true and namespacePools disabled, should create a ClusterRole and ClusterRoleBinding
+    docs = render_chart(
+        kube_version=kube_version,
+        values={
+            "global": {
+                "rbacEnabled": True,
+                "clusterRoles": True,
+                "features": {
+                    "namespacePools": {"enabled": False},
+                },
+            }
+        },
+        show_only=[
+            "charts/astronomer/templates/commander/commander-role.yaml",
+            "charts/astronomer/templates/commander/commander-rolebinding.yaml",
+        ],
+    )
+
+    cluster_role = docs[0]
+
+    assert cluster_role["kind"] == "ClusterRole"
+    assert len(cluster_role["rules"]) > 0
+
+    cluster_role_binding = docs[1]
+
+    expected_role_ref = {
+        "kind": "ClusterRole",
+        "apiGroup": "rbac.authorization.k8s.io",
+        "name": "release-name-commander",
+    }
+    expected_subjects = [
+        {
+            "kind": "ServiceAccount",
+            "name": "release-name-commander",
+            "namespace": "default",
+        }
+    ]
+    assert cluster_role_binding["kind"] == "ClusterRoleBinding"
+    assert cluster_role_binding["roleRef"] == expected_role_ref
+    assert cluster_role_binding["subjects"] == expected_subjects
+
+    # If clusterRoles or rbacEnabled set to false with namespacePools disabled, should not create any RBAC resource for commander
+    docs = render_chart(
+        kube_version=kube_version,
+        values={
+            "global": {
+                "clusterRoles": False,
+                "rbacEnabled": True,
+                "features": {
+                    "namespacePools": {"enabled": False},
+                },
+            }
+        },
+        show_only=[
+            "charts/astronomer/templates/commander/commander-role.yaml",
+            "charts/astronomer/templates/commander/commander-rolebinding.yaml",
+        ],
+    )
+    assert len(docs) == 0
+
+    docs = render_chart(
+        kube_version=kube_version,
+        values={
+            "global": {
+                "clusterRoles": True,
+                "rbacEnabled": False,
+                "features": {
+                    "namespacePools": {"enabled": False},
+                },
+            }
+        },
+        show_only=[
+            "charts/astronomer/templates/commander/commander-role.yaml",
+            "charts/astronomer/templates/commander/commander-rolebinding.yaml",
+        ],
+    )
+    assert len(docs) == 0
+
+    docs = render_chart(
+        kube_version=kube_version,
+        values={
+            "global": {
+                "clusterRoles": False,
+                "rbacEnabled": False,
+                "features": {
+                    "namespacePools": {"enabled": False},
+                },
+            }
+        },
+        show_only=[
+            "charts/astronomer/templates/commander/commander-role.yaml",
+            "charts/astronomer/templates/commander/commander-rolebinding.yaml",
+        ],
+    )
+    assert len(docs) == 0
