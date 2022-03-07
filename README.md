@@ -136,4 +136,4 @@ The code in this repo is licensed Apache 2.0 with Commons Clause, however it ins
 
 ## Optional schema validation
 
-The ./bin/values.schema.json file can be used to validate the helm values you are using work with the default airflow chart shipped with this repo. To use them move the file to from bin into the root of this directory and proceed with the helm lint, install, and upgrade commands as normal.
+The ./values.schema.json.example file can be used to validate the helm values you are using work with the default airflow chart shipped with this repo. To use it remove the .example postfix from the file and proceed with the helm lint, install, and upgrade commands as normal.
