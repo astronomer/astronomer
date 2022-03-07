@@ -12,7 +12,7 @@ def common_test_cases(docs):
 
     assert doc["kind"] == "ConfigMap"
     assert doc["apiVersion"] == "v1"
-    assert doc["metadata"]["name"] == "RELEASE-NAME-houston-config"
+    assert doc["metadata"]["name"] == "release-name-houston-config"
 
     local_prod = yaml.safe_load(doc["data"]["local-production.yaml"])
 
@@ -100,7 +100,7 @@ def test_houston_configmap_with_kubed_enabled():
     assert prod["deployments"]["helm"]["airflow"]["webserver"]["extraVolumes"] == [
         {
             "name": "signing-certificate",
-            "secret": {"secretName": "RELEASE-NAME-houston-jwt-signing-certificate"},
+            "secret": {"secretName": "release-name-houston-jwt-signing-certificate"},
         }
     ]
 

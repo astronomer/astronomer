@@ -13,7 +13,7 @@ class TestNginx:
 
         assert doc["kind"] == "Service"
         assert doc["apiVersion"] == "v1"
-        assert doc["metadata"]["name"] == "RELEASE-NAME-nginx"
+        assert doc["metadata"]["name"] == "release-name-nginx"
         assert "loadBalancerIP" not in doc["spec"]
         assert "loadBalancerSourceRanges" not in doc["spec"]
 

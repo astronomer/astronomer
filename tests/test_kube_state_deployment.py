@@ -19,7 +19,7 @@ class TestKubeStateDeployment:
         doc = docs[0]
 
         assert doc["kind"] == "Deployment"
-        assert doc["metadata"]["name"] == "RELEASE-NAME-kube-state"
+        assert doc["metadata"]["name"] == "release-name-kube-state"
 
         c_by_name = get_containers_by_name(doc)
         assert c_by_name["kube-state"]
@@ -46,7 +46,7 @@ class TestKubeStateDeployment:
         doc = docs[0]
 
         assert doc["kind"] == "Deployment"
-        assert doc["metadata"]["name"] == "RELEASE-NAME-kube-state"
+        assert doc["metadata"]["name"] == "release-name-kube-state"
 
         c_by_name = get_containers_by_name(doc)
         assert c_by_name["kube-state"]
