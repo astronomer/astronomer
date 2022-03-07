@@ -17,9 +17,15 @@ class TestPrometheusNodeExporterDaemonset:
 
         assert len(docs) == 1
         doc = docs[0]
-
         assert doc["kind"] == "DaemonSet"
         assert doc["metadata"]["name"] == "RELEASE-NAME-prometheus-node-exporter"
+        assert (
+            doc["spec"]["selector"]["matchLabels"]["app"] == "prometheus-node-exporter"
+        )
+        assert (
+            doc["spec"]["template"]["metadata"]["labels"]["app"]
+            == "prometheus-node-exporter"
+        )
 
         c_by_name = get_containers_by_name(doc)
         assert c_by_name["node-exporter"]
@@ -29,7 +35,7 @@ class TestPrometheusNodeExporterDaemonset:
         }
 
     def test_prometheus_node_exporter_daemonset_custom_resources(self, kube_version):
-        docs = render_chart(
+        doc = render_chart(
             kube_version=kube_version,
             values={
                 "prometheus-node-exporter": {
@@ -40,10 +46,7 @@ class TestPrometheusNodeExporterDaemonset:
                 },
             },
             show_only=["charts/prometheus-node-exporter/templates/daemonset.yaml"],
-        )
-
-        assert len(docs) == 1
-        doc = docs[0]
+        )[0]
 
         assert doc["kind"] == "DaemonSet"
         assert doc["metadata"]["name"] == "RELEASE-NAME-prometheus-node-exporter"
