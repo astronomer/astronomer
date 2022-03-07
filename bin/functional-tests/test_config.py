@@ -203,7 +203,7 @@ def test_houston_backend_secret_present_after_helm_upgrade_and_container_restart
         print("No NAMESPACE env var, using NAMESPACE=astronomer")
         namespace = "astronomer"
 
-    if not (release_name := getenv("release_name")):
+    if not (release_name := getenv("RELEASE_NAME")):
         print("No release_name env var, using release_name=astronomer")
         release_name = "astronomer"
 

@@ -52,7 +52,7 @@ def test_downgrade_then_upgrade():
         print("NAMESPACE env var is not present, using 'astronomer' namespace")
         namespace = "astronomer"
 
-    if not (release_name := getenv("release_name")):
+    if not (release_name := getenv("RELEASE_NAME")):
         print("No release_name env var, using release_name=astronomer")
         release_name = "astronomer"
 
