@@ -1,11 +1,9 @@
 ################################
 ## Astronomer Commander RoleBinding
 #################################
-{{- $singleNamespace := .Values.global.singleNamespace }}
-{{- $clusterRoles:= .Values.global.clusterRoles }}
-{{- if and .Values.global.rbacEnabled }}
+{{- if and .Values.global.rbacEnabled .Values.global.clusterRoles }}
 apiVersion: {{ template "apiVersion.rbac" . }}
-kind: {{ if or ($singleNamespace) (not $clusterRoles) }}RoleBinding{{ else }}ClusterRoleBinding{{ end }}
+kind: ClusterRoleBinding
 metadata:
   name: {{ .Release.Name }}-commander
   {{ if .Values.global.enableArgoCDAnnotation }}
@@ -14,7 +12,7 @@ metadata:
   {{- end }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
-  kind: {{ if or ($singleNamespace) (not $clusterRoles) }}Role{{ else }}ClusterRole{{ end }}
+  kind: ClusterRole
   name: {{ .Release.Name }}-commander
 subjects:
   - kind: ServiceAccount

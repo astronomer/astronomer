@@ -1,10 +1,8 @@
 ########################################
 ## Astronomer Commander Role/ClusterRole
 ########################################
-{{- $singleNamespace := .Values.global.singleNamespace }}
-{{- $clusterRoles:= .Values.global.clusterRoles }}
-{{- if and .Values.global.rbacEnabled }}
-kind: {{ if or ($singleNamespace) (not $clusterRoles) }}Role{{ else }}ClusterRole{{ end }}
+{{- if and .Values.global.rbacEnabled .Values.global.clusterRoles }}
+kind: ClusterRole
 apiVersion: {{ template "apiVersion.rbac" . }}
 metadata:
   name: {{ .Release.Name }}-commander
@@ -114,10 +112,8 @@ rules:
 - apiGroups: ["networking.k8s.io"]
   resources: ["networkpolicies"]
   verbs: ["create", "delete", "get", "patch"]
-{{ if $clusterRoles }}
 - nonResourceURLs: ["/metrics"]
   verbs: ["get"]
-{{ end }}
 - apiGroups: ["rbac.authorization.k8s.io"]
   resources: ["clusterrolebindings"]
   verbs: ["create", "delete", "get", "patch"]
