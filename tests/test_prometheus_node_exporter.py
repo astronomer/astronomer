@@ -8,10 +8,25 @@ from . import supported_k8s_versions, get_containers_by_name
     supported_k8s_versions,
 )
 class TestPrometheusNodeExporterDaemonset:
-    def test_prometheus_node_exporter_daemonset_default_resources(self, kube_version):
+    def test_prometheus_node_exporter_service_defaults(self, kube_version):
         docs = render_chart(
             kube_version=kube_version,
-            values={},
+            show_only=["charts/prometheus-node-exporter/templates/service.yaml"],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["kind"] == "Service"
+        assert doc["metadata"]["name"] == "release-name-prometheus-node-exporter"
+        assert doc["spec"]["selector"]["app"] == "prometheus-node-exporter"
+        assert doc["spec"]["type"] == "ClusterIP"
+        assert doc["spec"]["ports"] == [
+            {"port": 9100, "targetPort": 9100, "protocol": "TCP", "name": "metrics"}
+        ]
+
+    def test_prometheus_node_exporter_daemonset_defaults(self, kube_version):
+        docs = render_chart(
+            kube_version=kube_version,
             show_only=["charts/prometheus-node-exporter/templates/daemonset.yaml"],
         )
 
