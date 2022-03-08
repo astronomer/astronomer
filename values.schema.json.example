@@ -19,7 +19,13 @@
                       "properties": {
                         "airflow": {
                           "allOf": [
+<<<<<<< HEAD
                             {"$ref": "https://raw.githubusercontent.com/apache/airflow/helm-chart/1.2.0/chart/values.schema.json"},
+=======
+                            {
+                              "$ref": "https://raw.githubusercontent.com/apache/airflow/helm-chart/1.4.0/chart/values.schema.json"
+                            },
+>>>>>>> ea66f8f4 (re-addValuesSchemaForOptionalValidation (#1396))
                             {
                               "additionalProperties": false,
                               "properties": {
@@ -131,6 +137,30 @@
                           }
                         }
                       }
+<<<<<<< HEAD
+=======
+                    },
+                    "loggingSidecar": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "enabled": { "type": "boolean" },
+                        "repository": { "type": "string" },
+                        "tag": { "type": "string" },
+                        "resources": { "type": "object" },
+                        "sidecarEnv": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                              "name": { "type": "string" },
+                              "value": { "type": "string" }
+                            }
+                          }
+                        }
+                      }
+>>>>>>> ea66f8f4 (re-addValuesSchemaForOptionalValidation (#1396))
                     }
                   }
                 }
