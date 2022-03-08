@@ -133,3 +133,7 @@ The values output by this command will need to be inserted manually into astrono
 ## License
 
 The code in this repo is licensed Apache 2.0 with Commons Clause, however it installs Astronomer components that have a commercial license, and requires a commercial subscription from Astronomer, Inc.
+
+## Optional schema validation
+
+The ./values.schema.json.example file can be used to validate the helm values you are using work with the default airflow chart shipped with this repo. To use it remove the .example postfix from the file and proceed with the helm lint, install, and upgrade commands as normal.
