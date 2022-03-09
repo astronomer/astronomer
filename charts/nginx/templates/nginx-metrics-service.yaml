@@ -1,0 +1,27 @@
+################################
+## NGINX Metrics service
+#################################
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ template "nginx.fullname" . }}-metrics
+  labels:
+    tier: {{ template "nginx.name" . }}
+    component: ingress-controller
+    chart: {{ template "nginx.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  type: ClusterIP
+  selector:
+    tier: {{ template "nginx.name" . }}
+    component: ingress-controller
+    release: {{ .Release.Name }}
+  ports:
+    - port: {{ .Values.ports.metrics }}
+      targetPort: {{ .Values.ports.metrics }}
+      protocol: TCP
+      name: nginx-metrics
+      {{- if and (eq .Values.serviceType "NodePort") .Values.metricsNodePort }}
+      nodePort: {{ .Values.metricsNodePort }}
+      {{- end }}
