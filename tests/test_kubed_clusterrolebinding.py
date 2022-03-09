@@ -19,16 +19,16 @@ class TestKubedClusterrolebinding:
         assert len(docs) == 1
         doc = docs[0]
         assert doc["apiVersion"] == "rbac.authorization.k8s.io/v1"
-        assert doc["metadata"]["name"] == "RELEASE-NAME-kubed"
+        assert doc["metadata"]["name"] == "release-name-kubed"
         assert doc["roleRef"] == {
             "apiGroup": "rbac.authorization.k8s.io",
             "kind": "ClusterRole",
-            "name": "RELEASE-NAME-kubed",
+            "name": "release-name-kubed",
         }
         assert doc["subjects"] == [
             {
                 "kind": "ServiceAccount",
-                "name": "RELEASE-NAME-kubed",
+                "name": "release-name-kubed",
                 "namespace": "default",
             }
         ]
@@ -45,10 +45,12 @@ class TestKubedClusterrolebinding:
         doc = docs[0]
         assert doc["kind"] == "ClusterRoleBinding"
         assert doc["apiVersion"] == "rbac.authorization.k8s.io/v1"
-        assert doc["metadata"]["name"] == "RELEASE-NAME-kubed"
+        assert doc["metadata"]["name"] == "release-name-kubed"
         assert len(doc["roleRef"]) > 0
         assert len(doc["subjects"]) > 0
 
+    def test_kubed_clusterrolebinding_rbac_disabled(self, kube_version):
+        """Test that helm renders no ClusterRoleBinding template for kubed when rbacEnabled=False."""
         docs = render_chart(
             kube_version=kube_version,
             values={"global": {"rbacEnabled": False}},

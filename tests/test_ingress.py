@@ -1,7 +1,7 @@
 from tests.helm_template_generator import render_chart
-import jmespath
 import pytest
 from . import supported_k8s_versions
+import json
 
 
 @pytest.mark.parametrize(
@@ -20,38 +20,37 @@ class TestIngress:
 
         doc = docs[0]
 
-        annotations = jmespath.search("metadata.annotations", doc)
-        assert len(annotations) > 1
-        assert annotations["kubernetes.io/ingress.class"] == "RELEASE-NAME-nginx"
+        assert doc["kind"] == "Ingress"
+
+        assert len(doc["metadata"]["annotations"]) >= 4
+        assert (
+            doc["metadata"]["annotations"]["kubernetes.io/ingress.class"]
+            == "release-name-nginx"
+        )
+
+        # This would be valid python, but we laod from json just to keep linters happy and the data more compact
+        expected_rules_v1beta1 = json.loads(
+            """
+        [{"host":"example.com","http":{"paths":[{"path":"/","backend":{"serviceName":"release-name-astro-ui","servicePort":"astro-ui-http"}}]}},
+        {"host":"app.example.com","http":{"paths":[{"path":"/","backend":{"serviceName":"release-name-astro-ui","servicePort":"astro-ui-http"}}]}},
+        {"host":"registry.example.com","http":{"paths":[{"path":"/","backend":{"serviceName":"release-name-registry","servicePort":"registry-http"}}]}},
+        {"host":"install.example.com","http":{"paths":[{"path":"/","backend":{"serviceName":"release-name-cli-install","servicePort":"install-http"}}]}}]
+        """
+        )
+        expected_rules_v1 = json.loads(
+            """
+        [{"host":"example.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":{"service":{"name":"release-name-astro-ui","port":{"name":"astro-ui-http"}}}}]}},
+        {"host":"app.example.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":{"service":{"name":"release-name-astro-ui","port":{"name":"astro-ui-http"}}}}]}},
+        {"host":"registry.example.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":{"service":{"name":"release-name-registry","port":{"name":"registry-http"}}}}]}},
+        {"host":"install.example.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":{"service":{"name":"release-name-cli-install","port":{"name":"install-http"}}}}]}}]
+        """
+        )
 
         _, minor, _ = (int(x) for x in kube_version.split("."))
 
-        if minor >= 19:
-            assert doc["apiVersion"] == "networking.k8s.io/v1"
-            assert "RELEASE-NAME-astro-ui" in [
-                name[0]
-                for name in jmespath.search(
-                    "spec.rules[*].http.paths[*].backend.service.name", doc
-                )
-            ]
-            assert "astro-ui-http" in [
-                port[0]
-                for port in jmespath.search(
-                    "spec.rules[*].http.paths[*].backend.service.port.name", doc
-                )
-            ]
-
         if minor < 19:
             assert doc["apiVersion"] == "networking.k8s.io/v1beta1"
-            assert "RELEASE-NAME-astro-ui" in [
-                name[0]
-                for name in jmespath.search(
-                    "spec.rules[*].http.paths[*].backend.serviceName", doc
-                )
-            ]
-            assert "astro-ui-http" in [
-                port[0]
-                for port in jmespath.search(
-                    "spec.rules[*].http.paths[*].backend.servicePort", doc
-                )
-            ]
+            assert doc["spec"]["rules"] == expected_rules_v1beta1
+        else:
+            assert doc["apiVersion"] == "networking.k8s.io/v1"
+            assert doc["spec"]["rules"] == expected_rules_v1

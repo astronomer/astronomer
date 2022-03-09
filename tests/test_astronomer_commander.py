@@ -19,7 +19,7 @@ def test_astronomer_commander_deployment(kube_version):
     doc = docs[0]
     assert doc["kind"] == "Deployment"
     assert doc["apiVersion"] == "apps/v1"
-    assert doc["metadata"]["name"] == "RELEASE-NAME-commander"
+    assert doc["metadata"]["name"] == "release-name-commander"
     assert any(
         image_name.startswith("quay.io/astronomer/ap-commander:")
         for image_name in jmespath.search("spec.template.spec.containers[*].image", doc)
@@ -48,7 +48,7 @@ def test_astronomer_commander_deployment_upgrade_timeout(kube_version):
     doc = docs[0]
     assert doc["kind"] == "Deployment"
     assert doc["apiVersion"] == "apps/v1"
-    assert doc["metadata"]["name"] == "RELEASE-NAME-commander"
+    assert doc["metadata"]["name"] == "release-name-commander"
     assert any(
         image_name.startswith("quay.io/astronomer/ap-commander:")
         for image_name in jmespath.search("spec.template.spec.containers[*].image", doc)

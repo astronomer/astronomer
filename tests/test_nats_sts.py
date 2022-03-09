@@ -7,12 +7,12 @@ from . import supported_k8s_versions, get_containers_by_name
     "kube_version",
     supported_k8s_versions,
 )
-class TestStanStatefulSet:
-    def test_stan_statefulset_defaults(self, kube_version):
-        """Test that stan statefulset is good with defaults."""
+class TestNatsStatefulSet:
+    def test_nats_statefulset_defaults(self, kube_version):
+        """Test that nats statefulset is good with defaults."""
         docs = render_chart(
             kube_version=kube_version,
-            show_only=["charts/stan/templates/statefulset.yaml"],
+            show_only=["charts/nats/templates/statefulset.yaml"],
         )
 
         assert len(docs) == 1
@@ -20,20 +20,20 @@ class TestStanStatefulSet:
         c_by_name = get_containers_by_name(doc)
         assert doc["kind"] == "StatefulSet"
         assert doc["apiVersion"] == "apps/v1"
-        assert doc["metadata"]["name"] == "release-name-stan"
+        assert doc["metadata"]["name"] == "release-name-nats"
         assert c_by_name["metrics"]["image"].startswith(
             "quay.io/astronomer/ap-nats-exporter:"
         )
-        assert c_by_name["stan"]["image"].startswith(
-            "quay.io/astronomer/ap-nats-streaming:"
+        assert c_by_name["nats"]["image"].startswith(
+            "quay.io/astronomer/ap-nats-server:"
         )
-        assert c_by_name["stan"]["livenessProbe"] == {
-            "httpGet": {"path": "/streaming/serverz", "port": "monitor"},
+        assert c_by_name["nats"]["livenessProbe"] == {
+            "httpGet": {"path": "/", "port": 8222},
             "initialDelaySeconds": 10,
             "timeoutSeconds": 5,
         }
-        assert c_by_name["stan"]["readinessProbe"] == {
-            "httpGet": {"path": "/streaming/serverz", "port": "monitor"},
+        assert c_by_name["nats"]["readinessProbe"] == {
+            "httpGet": {"path": "/", "port": 8222},
             "initialDelaySeconds": 10,
             "timeoutSeconds": 5,
         }
@@ -42,18 +42,18 @@ class TestStanStatefulSet:
         assert doc["spec"]["template"]["spec"]["affinity"] == {}
         assert doc["spec"]["template"]["spec"]["tolerations"] == []
 
-    def test_stan_statefulset_with_metrics_and_resources(self, kube_version):
-        """Test that stan statefulset renders good metrics exporter."""
+    def test_nats_statefulset_with_metrics_and_resources(self, kube_version):
+        """Test that nats statefulset renders good metrics exporter."""
         docs = render_chart(
             kube_version=kube_version,
-            show_only=["charts/stan/templates/statefulset.yaml"],
+            show_only=["charts/nats/templates/statefulset.yaml"],
             values={
-                "stan": {
+                "nats": {
                     "exporter": {
                         "enabled": True,
                         "resources": {"requests": {"cpu": "234m"}},
                     },
-                    "stan": {"resources": {"requests": {"cpu": "123m"}}},
+                    "nats": {"resources": {"requests": {"cpu": "123m"}}},
                 },
             },
         )
@@ -61,13 +61,13 @@ class TestStanStatefulSet:
         assert len(docs) == 1
         c_by_name = get_containers_by_name(docs[0])
         assert len(c_by_name) == 2
-        assert c_by_name["stan"]["resources"]["requests"]["cpu"] == "123m"
+        assert c_by_name["nats"]["resources"]["requests"]["cpu"] == "123m"
         assert c_by_name["metrics"]["resources"]["requests"]["cpu"] == "234m"
 
-    def test_stan_statefulset_with_affinity_and_tolerations(self, kube_version):
-        """Test that stan statefulset renders proper nodeSelector, affinity, and tolerations"""
+    def test_nats_statefulset_with_affinity_and_tolerations(self, kube_version):
+        """Test that nats statefulset renders proper nodeSelector, affinity, and tolerations"""
         values = {
-            "stan": {
+            "nats": {
                 "nodeSelector": {"role": "astro"},
                 "affinity": {
                     "nodeAffinity": {
@@ -97,7 +97,7 @@ class TestStanStatefulSet:
         }
         docs = render_chart(
             kube_version=kube_version,
-            show_only=["charts/stan/templates/statefulset.yaml"],
+            show_only=["charts/nats/templates/statefulset.yaml"],
             values=values,
         )
 
@@ -115,10 +115,10 @@ class TestStanStatefulSet:
             == 1
         )
         assert len(spec["tolerations"]) > 0
-        assert spec["tolerations"] == values["stan"]["tolerations"]
+        assert spec["tolerations"] == values["nats"]["tolerations"]
 
-    def test_stan_statefulset_with_global_affinity_and_tolerations(self, kube_version):
-        """Test that stan statefulset renders proper nodeSelector, affinity, and tolerations with global config"""
+    def test_nats_statefulset_with_global_affinity_and_tolerations(self, kube_version):
+        """Test that nats statefulset renders proper nodeSelector, affinity, and tolerations with global config"""
         values = {
             "global": {
                 "platformNodePool": {
@@ -152,7 +152,7 @@ class TestStanStatefulSet:
         }
         docs = render_chart(
             kube_version=kube_version,
-            show_only=["charts/stan/templates/statefulset.yaml"],
+            show_only=["charts/nats/templates/statefulset.yaml"],
             values=values,
         )
 
@@ -173,73 +173,3 @@ class TestStanStatefulSet:
         assert (
             spec["tolerations"] == values["global"]["platformNodePool"]["tolerations"]
         )
-
-    def test_stan_statefulset_with_custom_images(self, kube_version):
-        """Test we can customize the stan images."""
-        docs = render_chart(
-            kube_version=kube_version,
-            show_only=["charts/stan/templates/statefulset.yaml"],
-            values={
-                "stan": {
-                    "images": {
-                        "init": {
-                            "repository": "example.com/custom/image/the-init-image",
-                            "tag": "the-custom-init-tag",
-                            "pullPolicy": "Always",
-                        },
-                        "stan": {
-                            "repository": "example.com/custom/image/the-stan-image",
-                            "tag": "the-custom-stan-tag",
-                            "pullPolicy": "Always",
-                        },
-                    },
-                },
-            },
-        )
-
-        assert len(docs) == 1
-        doc = docs[0]
-        c_by_name = get_containers_by_name(doc, include_init_containers=True)
-
-        assert doc["kind"] == "StatefulSet"
-        assert doc["apiVersion"] == "apps/v1"
-
-        assert (
-            c_by_name["stan"]["image"]
-            == "example.com/custom/image/the-stan-image:the-custom-stan-tag"
-        )
-        assert c_by_name["stan"]["imagePullPolicy"] == "Always"
-        assert (
-            c_by_name["wait-for-nats-server"]["image"]
-            == "example.com/custom/image/the-init-image:the-custom-init-tag"
-        )
-        assert c_by_name["stan"]["imagePullPolicy"] == "Always"
-
-    def test_stan_statefulset_with_private_registry(self, kube_version):
-        """Test that stan statefulset properly uses the private registry images."""
-        private_registry = "private-registry.example.com"
-        docs = render_chart(
-            kube_version=kube_version,
-            show_only=["charts/stan/templates/statefulset.yaml"],
-            values={
-                "global": {
-                    "privateRegistry": {
-                        "enabled": True,
-                        "repository": private_registry,
-                    }
-                }
-            },
-        )
-
-        assert len(docs) == 1
-        doc = docs[0]
-
-        c_by_name = get_containers_by_name(doc, include_init_containers=True)
-
-        assert doc["kind"] == "StatefulSet"
-        assert doc["apiVersion"] == "apps/v1"
-
-        for name, container in c_by_name.items():
-            assert container["image"].startswith(
-                private_registry
-            ), f"Container named '{name}' does not use registry '{private_registry}': {container}"

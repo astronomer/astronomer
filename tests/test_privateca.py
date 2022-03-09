@@ -1,5 +1,4 @@
 from tests.helm_template_generator import render_chart
-import jmespath
 import pytest
 from . import supported_k8s_versions
 from subprocess import CalledProcessError
@@ -9,21 +8,22 @@ from subprocess import CalledProcessError
     "kube_version",
     supported_k8s_versions,
 )
-class TestDaemonset:
+class TestPrivateCaDaemonset:
+    show_only = ["templates/trust-private-ca-on-all-nodes/daemonset.yaml"]
+
     @staticmethod
     def common_tests_daemonset(doc):
-        """Test things common to all daemonsets"""
-        assert "DaemonSet" == jmespath.search("kind", doc)
-        assert "RELEASE-NAME-private-ca" == jmespath.search("metadata.name", doc)
-        assert "cert-copy" == jmespath.search(
-            "spec.template.spec.containers[0].name", doc
-        )
+        """Test things common to all daemonsets."""
+        assert doc["kind"] == "DaemonSet"
+        assert doc["metadata"]["name"] == "release-name-private-ca"
+        assert doc["spec"]["template"]["spec"]["containers"][0]["name"] == "cert-copy"
 
     def test_privateca_daemonset_disabled(self, kube_version):
+        """Test that no daemonset is rendered when privateCaCertsAddToHost is disabled."""
         with pytest.raises(CalledProcessError):
             render_chart(
                 kube_version=kube_version,
-                show_only=["templates/trust-private-ca-on-all-nodes/daemonset.yaml"],
+                show_only=self.show_only,
                 values={
                     "global": {
                         "privateCaCerts": [
@@ -38,9 +38,10 @@ class TestDaemonset:
             )
 
     def test_privateca_daemonset_enabled(self, kube_version):
+        """Test that the daemonset is rendered with valid properties when enabled."""
         docs = render_chart(
             kube_version=kube_version,
-            show_only=["templates/trust-private-ca-on-all-nodes/daemonset.yaml"],
+            show_only=self.show_only,
             values={
                 "global": {
                     "privateCaCerts": ["private-ca-cert-foo", "private-ca-cert-bar"],
@@ -52,34 +53,33 @@ class TestDaemonset:
         )
 
         assert len(docs) == 1
-        doc = docs[0]
-        self.common_tests_daemonset(doc)
-        assert any(
-            "alpine:3.14" in item
-            for item in jmespath.search("spec.template.spec.containers[*].image", doc)
-        )
-        volmounts = jmespath.search(
-            "spec.template.spec.containers[*].volumeMounts[*]", doc
-        )[0]
+        self.common_tests_daemonset(docs[0])
+        assert len(docs[0]["spec"]["template"]["spec"]["containers"]) == 1
+        cert_copier = docs[0]["spec"]["template"]["spec"]["containers"][0]
+        cert_copier["image"].startswith("alpine:3")
 
-        assert all(
-            name in jmespath.search("[*].name", volmounts)
-            for name in ["hostcerts", "private-ca-cert-foo", "private-ca-cert-bar"]
-        )
-        assert all(
-            mountpath in jmespath.search("[*].mountPath", volmounts)
-            for mountpath in [
-                "/host-trust-store",
-                "/private-ca-certs/private-ca-cert-foo.crt",
-                "/private-ca-certs/private-ca-cert-bar.crt",
-            ]
-        )
-        assert {"cert.pem"} == set(jmespath.search("[*].subPath", volmounts))
+        volmounts = cert_copier["volumeMounts"]
+
+        volmounts_expected = [
+            {"name": "hostcerts", "mountPath": "/host-trust-store"},
+            {
+                "name": "private-ca-cert-foo",
+                "mountPath": "/private-ca-certs/private-ca-cert-foo.crt",
+                "subPath": "cert.pem",
+            },
+            {
+                "name": "private-ca-cert-bar",
+                "mountPath": "/private-ca-certs/private-ca-cert-bar.crt",
+                "subPath": "cert.pem",
+            },
+        ]
+
+        assert volmounts == volmounts_expected
 
     def test_privateca_daemonset_enabled_with_custom_image(self, kube_version):
         docs = render_chart(
             kube_version=kube_version,
-            show_only=["templates/trust-private-ca-on-all-nodes/daemonset.yaml"],
+            show_only=self.show_only,
             values={
                 "global": {
                     "privateCaCertsAddToHost": {
@@ -96,9 +96,10 @@ class TestDaemonset:
         assert len(docs) == 1
         doc = docs[0]
         self.common_tests_daemonset(doc)
-        assert any(
-            "snarks:boojums" in item
-            for item in jmespath.search("spec.template.spec.containers[*].image", doc)
+        assert len(docs[0]["spec"]["template"]["spec"]["containers"]) == 1
+        assert (
+            doc["spec"]["template"]["spec"]["containers"][0]["image"]
+            == "snarks:boojums"
         )
 
 
@@ -106,8 +107,9 @@ class TestDaemonset:
     "kube_version",
     supported_k8s_versions,
 )
-class TestPSP:
+class TestPrivateCaPsp:
     def test_privateca_psp_enabled_cacertaddtohost_disabled(self, kube_version):
+        """Test that there is nothing rendered when psp is enabled and privateCaCertsAddToHost is disabled."""
         with pytest.raises(CalledProcessError):
             render_chart(
                 kube_version=kube_version,
@@ -123,6 +125,7 @@ class TestPSP:
             )
 
     def test_privateca_psp_disabled_cacertaddtohost_enabled(self, kube_version):
+        """Test that nothing is rendered when psp is disabled and privateCaCertsAddToHost is enabled"""
         with pytest.raises(CalledProcessError):
             render_chart(
                 kube_version=kube_version,
@@ -138,6 +141,7 @@ class TestPSP:
             )
 
     def test_privateca_psp_enabled(self, kube_version):
+        """Test that psp is rendered when psp is enabled and privateCaCertsAddToHost is enabled."""
         docs = render_chart(
             kube_version=kube_version,
             show_only=["templates/trust-private-ca-on-all-nodes/psp.yaml"],
@@ -152,6 +156,5 @@ class TestPSP:
         )
 
         assert len(docs) == 1
-        doc = docs[0]
-        assert "PodSecurityPolicy" == jmespath.search("kind", doc)
-        assert "RELEASE-NAME-private-ca" == jmespath.search("metadata.name", doc)
+        assert docs[0]["kind"] == "PodSecurityPolicy"
+        assert docs[0]["metadata"]["name"] == "release-name-private-ca"
