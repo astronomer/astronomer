@@ -24,37 +24,19 @@ class TestIngress:
         assert len(annotations) > 1
         assert annotations["kubernetes.io/ingress.class"] == "release-name-nginx"
 
-        _, minor, _ = (int(x) for x in kube_version.split("."))
-
-        if minor >= 19:
-            assert doc["apiVersion"] == "networking.k8s.io/v1"
-            assert "release-name-houston" in [
-                name[0]
-                for name in jmespath.search(
-                    "spec.rules[*].http.paths[*].backend.service.name", doc
-                )
-            ]
-            assert "houston-http" in [
-                port[0]
-                for port in jmespath.search(
-                    "spec.rules[*].http.paths[*].backend.service.port.name", doc
-                )
-            ]
-
-        if minor < 19:
-            assert doc["apiVersion"] == "networking.k8s.io/v1beta1"
-            assert "release-name-houston" in [
-                name[0]
-                for name in jmespath.search(
-                    "spec.rules[*].http.paths[*].backend.serviceName", doc
-                )
-            ]
-            assert "houston-http" in [
-                port[0]
-                for port in jmespath.search(
-                    "spec.rules[*].http.paths[*].backend.servicePort", doc
-                )
-            ]
+        assert doc["apiVersion"] == "networking.k8s.io/v1"
+        assert "release-name-houston" in [
+            name[0]
+            for name in jmespath.search(
+                "spec.rules[*].http.paths[*].backend.service.name", doc
+            )
+        ]
+        assert "houston-http" in [
+            port[0]
+            for port in jmespath.search(
+                "spec.rules[*].http.paths[*].backend.service.port.name", doc
+            )
+        ]
 
     def test_protect_houston_internal_urls(self, kube_version):
         docs = render_chart(
