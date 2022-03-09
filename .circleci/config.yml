@@ -165,20 +165,36 @@ jobs:
             helm template --kube-version=v1.21.2 -f values.yaml --set global.baseDomain=example.com . |
             kubent --cluster=false --helm2=false --helm3=false --filename -
           when: always
-  platform-1-22-4:
+  platform-1-22-7:
     machine:
       image: ubuntu-2004:202107-02
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.22.4
+      KUBE_VERSION: v1.22.7
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging kubed keda"
       - run:
-          name: Check chart for k8s 1.22.4 compatibility with kubent
+          name: Check chart for k8s 1.22.7 compatibility with kubent
           command: |
             set -o pipefail
-            helm template --kube-version=v1.22.4 -f values.yaml --set global.baseDomain=example.com . |
+            helm template --kube-version=v1.22.7 -f values.yaml --set global.baseDomain=example.com . |
+            kubent --cluster=false --helm2=false --helm3=false --filename -
+          when: always
+  platform-1-23-4:
+    machine:
+      image: ubuntu-2004:202107-02
+      resource_class: xlarge
+    environment:
+      KUBE_VERSION: v1.23.4
+    steps:
+      - helm-install:
+          astronomer-tags: "platform postgresql monitoring logging kubed keda"
+      - run:
+          name: Check chart for k8s 1.23.4 compatibility with kubent
+          command: |
+            set -o pipefail
+            helm template --kube-version=v1.23.4 -f values.yaml --set global.baseDomain=example.com . |
             kubent --cluster=false --helm2=false --helm3=false --filename -
           when: always
 
@@ -210,7 +226,12 @@ workflows:
             - approve-test-all-platforms
             - build-artifact
 
-      - platform-1-22-4:
+      - platform-1-22-7:
+          requires:
+            - approve-test-all-platforms
+            - build-artifact
+
+      - platform-1-23-4:
           requires:
             - build-artifact
       - approve-internal-release:
@@ -221,13 +242,14 @@ workflows:
           requires:
             - approve-internal-release
             - platform-1-19-11
-            - platform-1-22-4
+            - platform-1-23-4
       - approve-public-release:
           type: approval
           requires:
             - release-to-internal
             - platform-1-20-7
             - platform-1-21-2
+            - platform-1-22-7
           filters:
             branches:
               only:
