@@ -39,15 +39,6 @@ spec:
       http:
         paths:
           - path: /
-            {{ if semverCompare "<1.19-0" .Capabilities.KubeVersion.Version -}}
-            backend:
-              serviceName: {{ template "prometheus.fullname" . }}
-              {{- if .Values.global.authSidecar.enabled  }}
-              servicePort: auth-proxy
-              {{- else }}
-              servicePort: prometheus-data
-              {{- end }}
-            {{- else -}}
             pathType: Prefix
             backend:
               service:
@@ -58,5 +49,4 @@ spec:
                   {{- else }}
                   name: prometheus-data
                   {{- end }}
-            {{- end -}}
 {{- end }}
