@@ -29,12 +29,8 @@ unittest-requirements: .unittest-requirements ## Setup venv required for unit te
 	touch .unittest-requirements
 
 .PHONY: unittest-charts
-unittest-charts: helm-unittest .unittest-requirements ## Unittest the Astronomer helm chart
+unittest-charts: .unittest-requirements ## Unittest the Astronomer helm chart
 	venv/bin/python -m pytest -n auto tests
-
-helm-unittest: ## Run helm-unittest tests (deprecated test suite, but still valid tests)
-	helm plugin install https://github.com/astronomer/helm-unittest >/dev/null || true
-	helm unittest -3 .
 
 .PHONY: lint-charts
 lint-charts: lint-prep ## Lint Astronomer sub-charts
