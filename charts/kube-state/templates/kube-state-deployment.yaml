@@ -52,3 +52,5 @@ spec:
             port: {{ .Values.ports.scrape }}
           initialDelaySeconds: 5
           timeoutSeconds: 5
+        resources:
+{{ toYaml .Values.resources | indent 12 }}

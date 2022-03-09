@@ -26,7 +26,7 @@ class TestIngress:
         )
 
         assert "Deployment" == jmespath.search("kind", docs[0])
-        assert "RELEASE-NAME-astro-ui" == jmespath.search("metadata.name", docs[0])
+        assert "release-name-astro-ui" == jmespath.search("metadata.name", docs[0])
         assert "astro-ui" == jmespath.search(
             "spec.template.spec.containers[0].name", docs[0]
         )

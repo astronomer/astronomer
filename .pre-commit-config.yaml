@@ -2,21 +2,21 @@
 exclude: '(venv|\.vscode)' # regex
 repos:
   - repo: https://github.com/Lucas-C/pre-commit-hooks
-    rev: v1.1.10
+    rev: v1.1.13
     hooks:
       - id: remove-tabs
         exclude_types: [makefile, binary]
   - repo: https://github.com/psf/black
-    rev: 21.9b0
+    rev: 22.1.0
     hooks:
       - id: black
   - repo: https://github.com/asottile/pyupgrade
-    rev: v2.26.0
+    rev: v2.31.0
     hooks:
       - id: pyupgrade
         args: ["--py38-plus"]
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.0.1
+    rev: v4.1.0
     hooks:
       - id: check-case-conflict
       - id: check-json
@@ -36,18 +36,20 @@ repos:
         args:
           [
             "requirements/chart-tests.in",
+            "requirements/chart-tests.txt",
             "requirements/functional-tests.in",
+            "requirements/functional-tests.txt",
           ]
       - id: sort-simple-yaml
       - id: trailing-whitespace
-  - repo: https://gitlab.com/pycqa/flake8
-    rev: 3.9.2
+  - repo: https://github.com/PyCQA/flake8
+    rev: 4.0.1
     hooks:
       - id: flake8
         args:
           - --ignore=E501,W503
   - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: v0.7.2.1
+    rev: v0.8.0.4
     hooks:
       - id: shellcheck
   - repo: local

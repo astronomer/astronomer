@@ -9,11 +9,11 @@ tolerations: []
 images:
   grafana:
     repository: quay.io/astronomer/ap-grafana
-    tag: 7.5.10
+    tag: 8.3.3-1
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
-    tag: 0.26.1
+    tag: 0.26.4
     pullPolicy: IfNotPresent
 
 backendSecretName: ~

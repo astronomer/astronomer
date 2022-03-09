@@ -47,10 +47,12 @@ spec:
       securityContext:
 {{ toYaml . | indent 8 }}
 {{- end }}
-{{- with .Values.affinity }}
+      nodeSelector:
+{{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
       affinity:
-{{- toYaml  . | nindent 8 }}
-{{- end }}
+{{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 8 }}
+      tolerations:
+{{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       # Common volumes for the containers.
       volumes:
       - name: config-volume
@@ -77,9 +79,7 @@ spec:
       {{- end }}
 
       #################
-      #               #
       #  TLS Volumes  #
-      #               #
       #################
       {{- with .Values.nats.tls }}
       {{ $secretName := .secret.name }}
@@ -124,15 +124,13 @@ spec:
       shareProcessNamespace: true
 
       #################
-      #               #
       #  NATS Server  #
-      #               #
       #################
       terminationGracePeriodSeconds: 60
       containers:
       - name: nats
         image: {{ include "nats.image" . }}
-        imagePullPolicy: {{ .Values.nats.pullPolicy }}
+        imagePullPolicy: {{ .Values.images.nats.pullPolicy }}
         ports:
         - containerPort: 4222
           name: client
@@ -184,9 +182,7 @@ spec:
           {{- end }}
 
           #######################
-          #                     #
           #  TLS Volumes Mounts #
-          #                     #
           #######################
           {{- with .Values.nats.tls }}
           {{ $secretName := .secret.name }}
@@ -249,9 +245,7 @@ spec:
               command: ["/bin/sh", "-c", "nats-server -sl=ldm=/var/run/nats/nats.pid && /bin/sleep 60"]
 
       #################################
-      #                               #
       #  NATS Configuration Reloader  #
-      #                               #
       #################################
       {{ if .Values.reloader.enabled }}
       - name: reloader
@@ -273,14 +267,12 @@ spec:
       {{ end }}
 
       ##############################
-      #                            #
       #  NATS Prometheus Exporter  #
-      #                            #
       ##############################
       {{ if .Values.exporter.enabled }}
       - name: metrics
-        image: {{ .Values.exporter.image }}
-        imagePullPolicy: {{ .Values.exporter.pullPolicy }}
+        image: {{ template "nats-exporter.image" . }}
+        imagePullPolicy: {{ .Values.images.exporter.pullPolicy }}
         args:
         - -connz
         - -routez

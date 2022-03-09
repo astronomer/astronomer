@@ -15,7 +15,7 @@ Docker images for deploying and running Astronomer are currently available on
 
 ## Documentation
 
-You can read the Astronomer platform documentation at https://www.astronomer.io/docs/enterprise. For a record of all user-facing changes to the Astronomer platform, see [Release Notes](https://www.astronomer.io/docs/enterprise/stable/resources/release-notes).
+You can read the Astronomer platform documentation at https://docs.astronomer.io/enterprise. For a record of all user-facing changes to the Astronomer platform, see [Release Notes](https://docs.astronomer.io/enterprise/release-notes).
 
 ## Contributing
 
@@ -83,7 +83,7 @@ kubectl edit deployment -n astronomer <your deployment>
 #### Change Kubernetes version:
 
 ```sh
-bin/reset-local-dev -K 1.18.15
+bin/reset-local-dev -K 1.21.2
 ```
 
 #### Locally test HA configurations:
@@ -133,3 +133,7 @@ The values output by this command will need to be inserted manually into astrono
 ## License
 
 The code in this repo is licensed Apache 2.0 with Commons Clause, however it installs Astronomer components that have a commercial license, and requires a commercial subscription from Astronomer, Inc.
+
+## Optional schema validation
+
+The ./values.schema.json.example file can be used to validate the helm values you are using work with the default airflow chart shipped with this repo. To use it remove the .example postfix from the file and proceed with the helm lint, install, and upgrade commands as normal.
