@@ -29,8 +29,8 @@ class TestPrometheusConfigConfigmap:
     def test_prometheus_config_configmap_with_different_name_and_ns(self, kube_version):
         """Validate the prometheus config configmap does not conflate deployment name and namespace."""
         doc = render_chart(
-            name="FOO-NAME",
-            namespace="BAR-NS",
+            name="foo-name",
+            namespace="bar-ns",
             kube_version=kube_version,
             show_only=self.show_only,
             values={
@@ -53,13 +53,13 @@ class TestPrometheusConfigConfigmap:
         ][0]
 
         target_checks = [
-            "http://FOO-NAME-cli-install.BAR-NS",
-            "http://FOO-NAME-commander.BAR-NS:8880/healthz",
-            "http://FOO-NAME-elasticsearch.BAR-NS:9200/_cluster/health?local=true",
-            "http://FOO-NAME-grafana.BAR-NS:3000/api/health",
-            "http://FOO-NAME-houston.BAR-NS:8871/v1/healthz",
-            "http://FOO-NAME-kibana.BAR-NS:5601",
-            "http://FOO-NAME-registry.BAR-NS:5000",
+            "http://foo-name-cli-install.bar-ns",
+            "http://foo-name-commander.bar-ns:8880/healthz",
+            "http://foo-name-elasticsearch.bar-ns:9200/_cluster/health?local=true",
+            "http://foo-name-grafana.bar-ns:3000/api/health",
+            "http://foo-name-houston.bar-ns:8871/v1/healthz",
+            "http://foo-name-kibana.bar-ns:5601",
+            "http://foo-name-registry.bar-ns:5000",
             "https://app.example.com",
             "https://houston.example.com/v1/healthz",
             "https://install.example.com",
