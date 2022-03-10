@@ -1,3 +1,4 @@
+from lib2to3.pgen2.token import EQUAL
 from tests.helm_template_generator import render_chart
 
 
@@ -88,14 +89,13 @@ class TestNginx:
 
     def test_nginx_type_nodeport_specifying_nodeports(self):
         # sourcery skip: extract-duplicate-method
-        httpNodePort, httpsNodePort, metricsNodePort = [30401, 30402, 30403]
+        httpNodePort, httpsNodePort = [30401, 30402]
         docs = render_chart(
             values={
                 "nginx": {
                     "serviceType": "NodePort",
                     "httpNodePort": httpNodePort,
                     "httpsNodePort": httpsNodePort,
-                    "metricsNodePort": metricsNodePort,
                 }
             },
             show_only=["charts/nginx/templates/nginx-service.yaml"],
@@ -105,9 +105,9 @@ class TestNginx:
         doc = docs[0]
         ports = doc["spec"]["ports"]
         ports_by_name = {x["name"]: x["nodePort"] for x in ports}
+        print(f"port_names dict: {ports_by_name}")
         assert ports_by_name["http"] == httpNodePort
         assert ports_by_name["https"] == httpsNodePort
-        assert ports_by_name["metrics"] == metricsNodePort
 
     def test_nginx_enabled_externalips(self):
         # sourcery skip: extract-duplicate-method
@@ -120,3 +120,12 @@ class TestNginx:
         doc = docs[0]
         assert len(doc["spec"]["externalIps"]) > 0
         assert "1.2.3.4" in doc["spec"]["externalIps"]
+
+    def test_nginx_metrics_service_type(self):
+        NodeMetricsPort = 10254
+        docs = render_chart(
+            show_only=["charts/nginx/templates/nginx-metrics-service.yaml"],
+        )
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["spec"]["type"] == "ClusterIP"
