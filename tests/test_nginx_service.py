@@ -1,4 +1,3 @@
-from lib2to3.pgen2.token import EQUAL
 from tests.helm_template_generator import render_chart
 
 
@@ -105,7 +104,6 @@ class TestNginx:
         doc = docs[0]
         ports = doc["spec"]["ports"]
         ports_by_name = {x["name"]: x["nodePort"] for x in ports}
-        print(f"port_names dict: {ports_by_name}")
         assert ports_by_name["http"] == httpNodePort
         assert ports_by_name["https"] == httpsNodePort
 
@@ -129,3 +127,4 @@ class TestNginx:
         assert len(docs) == 1
         doc = docs[0]
         assert doc["spec"]["type"] == "ClusterIP"
+        assert doc["spec"]["ports"][0]["port"] == NodeMetricsPort
