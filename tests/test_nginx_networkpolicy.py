@@ -1,7 +1,7 @@
 from tests.helm_template_generator import render_chart
 
 
-class TestNginx:
+class TestNginxNetworkPolicy:
     def test_nginx_networkpolicy_basics(self):
         docs = render_chart(
             show_only=[

@@ -135,11 +135,8 @@ class TestNginx:
         assert "1.2.3.4" in doc["spec"]["externalIps"]
 
     def test_nginx_metrics_service_type(self):
-        NodeMetricsPort = 10254
-        docs = render_chart(
+        doc = render_chart(
             show_only=["charts/nginx/templates/nginx-metrics-service.yaml"],
-        )
-        assert len(docs) == 1
-        doc = docs[0]
+        )[0]
         assert doc["spec"]["type"] == "ClusterIP"
-        assert doc["spec"]["ports"][0]["port"] == NodeMetricsPort
+        assert doc["spec"]["ports"][0]["port"] == 10254
