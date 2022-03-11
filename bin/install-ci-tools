@@ -2,7 +2,7 @@
 set -xeuo pipefail
 
 KIND_VERSION="0.11.1"
-HELM_VERSION="3.8.0"
+HELM_VERSION="3.8.1"
 GCLOUD_VERSION="345.0.0"
 MKCERT_VERSION="1.4.3"
 KUBENT_VERSION="0.4.0"
@@ -32,8 +32,8 @@ else
   # Install helm
   wget "https://get.helm.sh/helm-v${HELM_VERSION}-${OS}-amd64.tar.gz"
   tar -zxvf "./helm-v${HELM_VERSION}-${OS}-amd64.tar.gz"
-  mv "${OS}-amd64/helm" /tmp/bin/helm3
-  cp /tmp/bin/helm3 /tmp/bin/helm
+  mv "${OS}-amd64/helm" /tmp/bin/helm
+  cp /tmp/bin/helm /tmp/bin/helm
 fi
 
 # Add stable helm repo
