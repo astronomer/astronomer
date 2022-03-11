@@ -70,7 +70,7 @@ def validate_k8s_object(instance, kube_version="1.21.0"):
 def render_chart(
     name: str = "release-name",
     values: Optional[dict] = None,
-    show_only: Optional[list] = None,
+    show_only: Optional[list] = (),
     chart_dir: Optional[str] = None,
     kube_version: str = "1.21.0",
     baseDomain: str = "example.com",
@@ -99,12 +99,11 @@ def render_chart(
         ]
         if namespace:
             command.extend(["--namespace", namespace])
-        if show_only:
-            for i in show_only:
-                if not Path(i).exists():
-                    raise FileNotFoundError(f"ERROR: {i} not found")
-                else:
-                    command.extend(["--show-only", i])
+        for i in show_only:
+            if not Path(i).exists():
+                raise FileNotFoundError(f"ERROR: {i} not found")
+            else:
+                command.extend(["--show-only", i])
         try:
             templates = subprocess.check_output(command, stderr=subprocess.PIPE)
             if not templates:
