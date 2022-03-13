@@ -131,7 +131,7 @@ jobs:
           command: |
             set -o pipefail
             helm template --kube-version=v1.19.11 -f values.yaml --set global.baseDomain=example.com . |
-            kubent --cluster=false --helm=false --filename -
+            kubent --cluster=false --helm2=false --helm3=false --filename -
           when: always
   platform-1-20-7:
     machine:
@@ -147,7 +147,7 @@ jobs:
           command: |
             set -o pipefail
             helm template --kube-version=v1.20.7 -f values.yaml --set global.baseDomain=example.com . |
-            kubent --cluster=false --helm=false --filename -
+            kubent --cluster=false --helm2=false --helm3=false --filename -
           when: always
   platform-1-21-2:
     machine:
@@ -163,7 +163,7 @@ jobs:
           command: |
             set -o pipefail
             helm template --kube-version=v1.21.2 -f values.yaml --set global.baseDomain=example.com . |
-            kubent --cluster=false --helm=false --filename -
+            kubent --cluster=false --helm2=false --helm3=false --filename -
           when: always
 
 workflows:

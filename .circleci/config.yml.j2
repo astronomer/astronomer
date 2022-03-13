@@ -129,7 +129,7 @@ jobs:
           command: |
             set -o pipefail
             helm template --kube-version=v{{ version }} -f values.yaml --set global.baseDomain=example.com . |
-            kubent --cluster=false --helm=false --filename -
+            kubent --cluster=false --helm2=false --helm3=false --filename -
           when: always
 {%- endfor %}
 
