@@ -5,8 +5,8 @@ set -euo pipefail
 
 GIT_ROOT="$(git -C "${0%/*}" rev-parse --show-toplevel)"
 
-helm3 repo add astronomer-internal https://internal-helm.astronomer.io
-helm3 repo update
+helm repo add astronomer-internal https://internal-helm.astronomer.io
+helm repo update
 
 pip3 install virtualenv
 virtualenv --python=python3 /tmp/venv

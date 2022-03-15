@@ -9,11 +9,11 @@ set -e
 TEMPDIR="${TEMPDIR:-/tmp/astro-temp}"
 git_root="$(git rev-parse --show-toplevel)"
 
-helm3 repo add kedacore https://kedacore.github.io/charts
+helm repo add kedacore https://kedacore.github.io/charts
 rm -rf "${TEMPDIR}/astronomer" || true
 mkdir -p "${TEMPDIR}"
 cp -R "${git_root}/" "${TEMPDIR}/astronomer/"
-find "${TEMPDIR}/astronomer/charts" -name requirements.yaml -execdir helm3 dep update \;
+find "${TEMPDIR}/astronomer/charts" -name requirements.yaml -execdir helm dep update \;
 
 if [[ ! "${CIRCLE_BRANCH}" =~ release-[0-9]+\.[0-9]+ ]] ; then
   version=$(awk '$1 ~ /^version/ {printf "%s-build%s\n", $2, ENVIRON["CIRCLE_BUILD_NUM"]}' "${TEMPDIR}/astronomer/Chart.yaml")
@@ -23,4 +23,4 @@ if [[ ! "${CIRCLE_BRANCH}" =~ release-[0-9]+\.[0-9]+ ]] ; then
   sed -i "s#^description: .*#description: $(date "+%FT%T%z") ${short_git_url} ${CIRCLE_BRANCH} ${CIRCLE_BUILD_URL}#" "${TEMPDIR}/astronomer/Chart.yaml"
 fi
 
-helm3 package "${TEMPDIR}/astronomer"
+helm package "${TEMPDIR}/astronomer"
