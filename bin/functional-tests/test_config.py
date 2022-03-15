@@ -209,7 +209,7 @@ def test_houston_backend_secret_present_after_helm_upgrade_and_container_restart
 
     # Attempt downgrade with the documented procedure.
     # Run the command twice to ensure the most recent change is a no-operation change
-    command = f"helm3 upgrade --reuse-values --no-hooks -n '{namespace}' '{release_name}' {helm_chart_path}"
+    command = f"helm upgrade --reuse-values --no-hooks -n '{namespace}' '{release_name}' {helm_chart_path}"
     for i in range(2):
         print(f"Iteration {i+1}/2: {command}\n")
         print(check_output(command, shell=True).decode("utf8"))
