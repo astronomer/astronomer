@@ -209,6 +209,7 @@ nginx:
   resources: {}
 
 # sysctl init container
+# Warning: sysctl changes affect the kernel, and thus, all containers running on the same node.
 sysctlInitContainer:
   enabled: true
   sysctlVmMaxMapCount: 262144
