@@ -1,6 +1,7 @@
 ################################
 ## Prometheus NetworkPolicy
 #################################
+{{- if .Values.global.networkPolicy.enabled }}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -55,3 +56,4 @@ spec:
     - protocol: TCP
       port: {{ .Values.global.authSidecar.port }}
     {{- end }}
+{{- end }}

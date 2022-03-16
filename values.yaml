@@ -23,6 +23,10 @@ global:
       repository: alpine
       tag: 3.14
       pullPolicy: IfNotPresent
+  # Global flag to enable to user to enable/disable Astronomer platfrom  
+  # level Network Policy
+  networkPolicy:
+    enabled: true
 
 
   # Use kube-lego

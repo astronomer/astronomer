@@ -1,3 +1,4 @@
+{{- if .Values.global.networkPolicy.enabled }}
 {{- if .Values.networkPolicy.enabled }}
 kind: NetworkPolicy
 apiVersion: {{ template "apiVersion.NetworkPolicy" . }}
@@ -60,4 +61,5 @@ spec:
     # Allow prometheus scrapes
     - ports:
       - port: 9187
+{{- end }}
 {{- end }}
