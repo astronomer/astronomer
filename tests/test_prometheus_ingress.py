@@ -22,13 +22,13 @@ class TestIngress:
 
         annotations = jmespath.search("metadata.annotations", doc)
         assert len(annotations) > 1
-        assert annotations["kubernetes.io/ingress.class"] == "RELEASE-NAME-nginx"
+        assert annotations["kubernetes.io/ingress.class"] == "release-name-nginx"
 
         _, minor, _ = (int(x) for x in kube_version.split("."))
 
         if minor >= 19:
             assert doc["apiVersion"] == "networking.k8s.io/v1"
-            assert "RELEASE-NAME-prometheus" in [
+            assert "release-name-prometheus" in [
                 name[0]
                 for name in jmespath.search(
                     "spec.rules[*].http.paths[*].backend.service.name", doc
@@ -43,7 +43,7 @@ class TestIngress:
 
         if minor < 19:
             assert doc["apiVersion"] == "networking.k8s.io/v1beta1"
-            assert "RELEASE-NAME-prometheus" in [
+            assert "release-name-prometheus" in [
                 name[0]
                 for name in jmespath.search(
                     "spec.rules[*].http.paths[*].backend.serviceName", doc
