@@ -69,10 +69,6 @@ astronomer:
         cpu: "0m"
         memory: "0Mi"
     config:
-      registry:
-        protectedCustomRegistryEnabled: true
-      deployments:
-        enableUpdateDeploymentImageEndpoint: true
       emailConfirmation: false
       auth:
         local:
