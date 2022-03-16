@@ -22,12 +22,12 @@ class TestRegistryStatefulset:
 
         assert doc["kind"] == "StatefulSet"
         assert doc["apiVersion"] == "apps/v1"
-        assert doc["metadata"]["name"] == "RELEASE-NAME-registry"
+        assert doc["metadata"]["name"] == "release-name-registry"
         expected_env = {
             "name": "REGISTRY_NOTIFICATIONS_ENDPOINTS_0_HEADERS",
             "valueFrom": {
                 "secretKeyRef": {
-                    "name": "RELEASE-NAME-registry-auth-key",
+                    "name": "release-name-registry-auth-key",
                     "key": "authHeaders",
                 }
             },
