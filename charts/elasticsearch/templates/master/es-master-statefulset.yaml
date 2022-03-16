@@ -68,12 +68,14 @@ spec:
       tolerations:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       initContainers:
+      {{- if (.Values.sysctlInitContainer.enabled) }}
       - name: sysctl
         image: {{ template "init.image" . }}
         imagePullPolicy: {{ .Values.images.init.pullPolicy }}
-        command: ["sysctl", "-w", "vm.max_map_count=262144"]
+        command: ["sysctl", "-w", "vm.max_map_count={{ .Values.sysctlInitContainer.sysctlVmMaxMapCount}}"]
         securityContext:
           privileged: true
+      {{- end }}
       - name: chown
         image: {{ template "elasticsearch.image" . }}
         imagePullPolicy: {{ .Values.images.es.pullPolicy }}
