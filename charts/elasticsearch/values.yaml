@@ -213,3 +213,10 @@ nginx:
 sysctlInitContainer:
   enabled: true
   sysctlVmMaxMapCount: 262144
+
+podSecurityContext:
+  fsGroup: 1000
+
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
