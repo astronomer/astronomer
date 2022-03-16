@@ -30,12 +30,12 @@ class TestExternalElasticSearch:
         doc = docs[0]
         assert doc["kind"] == "Deployment"
         assert doc["apiVersion"] == "apps/v1"
-        assert doc["metadata"]["name"] == "RELEASE-NAME-external-es-proxy"
+        assert doc["metadata"]["name"] == "release-name-external-es-proxy"
         expected_env = [{"name": "ES_SECRET", "value": secret}]
         assert expected_env == doc["spec"]["template"]["spec"]["containers"][0]["env"]
 
         assert "Service" == jmespath.search("kind", docs[3])
-        assert "RELEASE-NAME-external-es-proxy" == jmespath.search(
+        assert "release-name-external-es-proxy" == jmespath.search(
             "metadata.name", docs[3]
         )
         assert "ClusterIP" == jmespath.search("spec.type", docs[3])
@@ -67,7 +67,7 @@ class TestExternalElasticSearch:
         doc = docs[0]
         assert doc["kind"] == "Deployment"
         assert doc["apiVersion"] == "apps/v1"
-        assert doc["metadata"]["name"] == "RELEASE-NAME-external-es-proxy"
+        assert doc["metadata"]["name"] == "release-name-external-es-proxy"
         expected_env = [
             {
                 "name": "ES_SECRET_NAME",
@@ -82,7 +82,7 @@ class TestExternalElasticSearch:
         assert expected_env == doc["spec"]["template"]["spec"]["containers"][0]["env"]
 
         assert "Service" == jmespath.search("kind", docs[3])
-        assert "RELEASE-NAME-external-es-proxy" == jmespath.search(
+        assert "release-name-external-es-proxy" == jmespath.search(
             "metadata.name", docs[3]
         )
         assert "ClusterIP" == jmespath.search("spec.type", docs[3])
@@ -119,7 +119,7 @@ class TestExternalElasticSearch:
         doc = docs[0]
         assert doc["kind"] == "Deployment"
         assert doc["apiVersion"] == "apps/v1"
-        assert doc["metadata"]["name"] == "RELEASE-NAME-external-es-proxy"
+        assert doc["metadata"]["name"] == "release-name-external-es-proxy"
         expected_env = [
             {
                 "name": "AWS_ACCESS_KEY_ID",
@@ -138,7 +138,7 @@ class TestExternalElasticSearch:
         assert expected_env == doc["spec"]["template"]["spec"]["containers"][1]["env"]
 
         assert "Service" == jmespath.search("kind", docs[1])
-        assert "RELEASE-NAME-external-es-proxy" == jmespath.search(
+        assert "release-name-external-es-proxy" == jmespath.search(
             "metadata.name", docs[1]
         )
         assert "ClusterIP" == jmespath.search("spec.type", docs[1])
@@ -182,7 +182,7 @@ class TestExternalElasticSearch:
         )
 
         assert "Service" == jmespath.search("kind", docs[1])
-        assert "RELEASE-NAME-external-es-proxy" == jmespath.search(
+        assert "release-name-external-es-proxy" == jmespath.search(
             "metadata.name", docs[1]
         )
         assert "ClusterIP" == jmespath.search("spec.type", docs[1])
@@ -229,7 +229,7 @@ class TestExternalElasticSearch:
         )
 
         assert "Service" == jmespath.search("kind", docs[2])
-        assert "RELEASE-NAME-external-es-proxy" == jmespath.search(
+        assert "release-name-external-es-proxy" == jmespath.search(
             "metadata.name", docs[2]
         )
         assert "ClusterIP" == jmespath.search("spec.type", docs[2])
