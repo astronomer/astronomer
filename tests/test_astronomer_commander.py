@@ -66,8 +66,8 @@ def test_astronomer_commander_deployment_upgrade_timeout(kube_version):
     "kube_version",
     supported_k8s_versions,
 )
-def test_astronomer_commander_rbac_cluster_role(kube_version):
-    """Test that helm renders astronomer/commander RBAC resources properly when working with the clusterRoles value"""
+def test_astronomer_commander_rbac_cluster_role_enabled(kube_version):
+    """Test that if rbacEnabled and clusterRoles are enabled but namespacePools disabled, helm renders ClusterRole and ClusterRoleBinding resources"""
 
     # First rbacEnabled and clusterRoles set to true and namespacePools disabled, should create a ClusterRole and ClusterRoleBinding
     docs = render_chart(
@@ -110,25 +110,13 @@ def test_astronomer_commander_rbac_cluster_role(kube_version):
     assert cluster_role_binding["roleRef"] == expected_role_ref
     assert cluster_role_binding["subjects"] == expected_subjects
 
-    # If clusterRoles or rbacEnabled set to false with namespacePools disabled, should not create any RBAC resource for commander
-    docs = render_chart(
-        kube_version=kube_version,
-        values={
-            "global": {
-                "clusterRoles": False,
-                "rbacEnabled": True,
-                "features": {
-                    "namespacePools": {"enabled": False},
-                },
-            }
-        },
-        show_only=[
-            "charts/astronomer/templates/commander/commander-role.yaml",
-            "charts/astronomer/templates/commander/commander-rolebinding.yaml",
-        ],
-    )
-    assert len(docs) == 0
 
+@pytest.mark.parametrize(
+    "kube_version",
+    supported_k8s_versions,
+)
+def test_astronomer_commander_rbac_cluster_roles_disabled_rbac_enabled(kube_version):
+    """Test that if rbacEnabled set to true, but clusterRoles and namespacePools are disabled, we do not create any RBAC resources"""
     docs = render_chart(
         kube_version=kube_version,
         values={
@@ -147,12 +135,44 @@ def test_astronomer_commander_rbac_cluster_role(kube_version):
     )
     assert len(docs) == 0
 
+
+@pytest.mark.parametrize(
+    "kube_version",
+    supported_k8s_versions,
+)
+def test_astronomer_commander_rbac_all_disabled(kube_version):
+    """Test that if rbacEnabled, namespacePools and clusterRoles are disabled, we do not create any RBAC resources"""
     docs = render_chart(
         kube_version=kube_version,
         values={
             "global": {
                 "clusterRoles": False,
                 "rbacEnabled": False,
+                "features": {
+                    "namespacePools": {"enabled": False},
+                },
+            }
+        },
+        show_only=[
+            "charts/astronomer/templates/commander/commander-role.yaml",
+            "charts/astronomer/templates/commander/commander-rolebinding.yaml",
+        ],
+    )
+    assert len(docs) == 0
+
+
+@pytest.mark.parametrize(
+    "kube_version",
+    supported_k8s_versions,
+)
+def test_astronomer_commander_rbac_cluster_role_disabled(kube_version):
+    """Test that if clusterRoles and namespacePools are disabled but rbacEnabled is enabled, helm does not render RBAC resources"""
+    docs = render_chart(
+        kube_version=kube_version,
+        values={
+            "global": {
+                "clusterRoles": False,
+                "rbacEnabled": True,
                 "features": {
                     "namespacePools": {"enabled": False},
                 },
