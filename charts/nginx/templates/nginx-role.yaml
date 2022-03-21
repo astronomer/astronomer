@@ -19,20 +19,13 @@ rules:
       - endpoints
       - pods
       - secrets
+      - configmaps
       {{- if not $singleNamespace }}
       - nodes
       {{- end }}
     verbs:
       - list
       - watch
-  - apiGroups:
-      - ""
-    resources:
-      - configmaps
-    verbs:
-      - list
-      - watch
-      - update
   {{- if not $singleNamespace }}
   - apiGroups:
       - ""

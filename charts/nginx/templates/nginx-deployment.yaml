@@ -50,6 +50,7 @@ spec:
             {{- if .Values.global.singleNamespace }}
             - --watch-namespace={{ .Release.Namespace }}
             {{- end }}
+            - --election-id={{ .Values.electionID }}-{{ template "nginx.fullname" . }}
             - --publish-service={{ .Release.Namespace }}/{{ template "nginx.fullname" . }}
             - --http-port={{ .Values.ports.http }}
             - --https-port={{ .Values.ports.https }}
