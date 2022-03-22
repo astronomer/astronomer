@@ -76,4 +76,4 @@ ports:
   metrics: 10254
 
 # Election ID to use for status update
-electionID: ingress-controller-leader
+electionId: ingress-controller-leader
