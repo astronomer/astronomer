@@ -37,6 +37,6 @@ Create chart name and version as used by the chart label.
 {{- if .Values.global.privateRegistry.enabled -}}
 {{ .Values.global.privateRegistry.repository }}/ap-blackbox-exporter:{{ .Values.image.tag }}
 {{- else -}}
-{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}
+{{ .Values.image.repository }}:{{ .Values.image.tag }}
 {{- end }}
 {{- end }}

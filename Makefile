@@ -89,7 +89,6 @@ show-docker-images-with-private-registry: ## Show all docker images and versions
 		--set global.blackboxExporterEnabled=True \
 		--set global.kedaEnabled=True \
 		--set global.postgresqlEnabled=True \
-		--set global.postgresqlEnabled=True \
 		--set global.prometheusPostgresExporterEnabled=True \
 		--set global.pspEnabled=True \
 		--set global.veleroEnabled=True \
