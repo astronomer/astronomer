@@ -79,22 +79,46 @@ class TestElasticSearch:
         )
 
         assert len(docs) == 3
-        doc = docs[0]
 
         # elasticsearch master
+        doc = docs[0]
         assert doc["kind"] == "StatefulSet"
-        assert "sysctl" not in jmespath.search(
-            "spec.template.spec.initContainers[*].name", docs[0]
-        )
+        assert jmespath.search("spec.template.spec.initContainers", docs[0]) is None
 
         # elasticsearch data
         doc = docs[1]
         assert doc["kind"] == "StatefulSet"
-        assert "sysctl" not in jmespath.search(
-            "spec.template.spec.initContainers[*].name", docs[1]
-        )
+        assert jmespath.search("spec.template.spec.initContainers", docs[1]) is None
 
         # elasticsearch client
         doc = docs[2]
         assert doc["kind"] == "Deployment"
         assert jmespath.search("spec.template.spec.initContainers", docs[2]) is None
+
+    def test_elasticsearch_securitycontext_defaults(self, kube_version):
+        """Test  ElasticSearch with securitycontext default values"""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={},
+            show_only=[
+                "charts/elasticsearch/templates/master/es-master-statefulset.yaml",
+                "charts/elasticsearch/templates/data/es-data-statefulset.yaml",
+                "charts/elasticsearch/templates/client/es-client-deployment.yaml",
+            ],
+        )
+        assert len(docs) == 3
+
+        # elasticsearch master
+        doc = docs[0]
+
+        assert doc["spec"]["template"]["spec"]["securityContext"] == {"fsGroup": 1000}
+
+        # elasticsearch data
+        doc = docs[1]
+
+        assert doc["spec"]["template"]["spec"]["securityContext"] == {"fsGroup": 1000}
+
+        # elasticsearch client
+        doc = docs[2]
+
+        assert doc["spec"]["template"]["spec"]["securityContext"] == {"fsGroup": 1000}
