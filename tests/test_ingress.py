@@ -25,24 +25,24 @@ class TestIngress:
         assert len(doc["metadata"]["annotations"]) >= 4
         assert (
             doc["metadata"]["annotations"]["kubernetes.io/ingress.class"]
-            == "RELEASE-NAME-nginx"
+            == "release-name-nginx"
         )
 
         # This would be valid python, but we laod from json just to keep linters happy and the data more compact
         expected_rules_v1beta1 = json.loads(
             """
-        [{"host":"example.com","http":{"paths":[{"path":"/","backend":{"serviceName":"RELEASE-NAME-astro-ui","servicePort":"astro-ui-http"}}]}},
-        {"host":"app.example.com","http":{"paths":[{"path":"/","backend":{"serviceName":"RELEASE-NAME-astro-ui","servicePort":"astro-ui-http"}}]}},
-        {"host":"registry.example.com","http":{"paths":[{"path":"/","backend":{"serviceName":"RELEASE-NAME-registry","servicePort":"registry-http"}}]}},
-        {"host":"install.example.com","http":{"paths":[{"path":"/","backend":{"serviceName":"RELEASE-NAME-cli-install","servicePort":"install-http"}}]}}]
+        [{"host":"example.com","http":{"paths":[{"path":"/","backend":{"serviceName":"release-name-astro-ui","servicePort":"astro-ui-http"}}]}},
+        {"host":"app.example.com","http":{"paths":[{"path":"/","backend":{"serviceName":"release-name-astro-ui","servicePort":"astro-ui-http"}}]}},
+        {"host":"registry.example.com","http":{"paths":[{"path":"/","backend":{"serviceName":"release-name-registry","servicePort":"registry-http"}}]}},
+        {"host":"install.example.com","http":{"paths":[{"path":"/","backend":{"serviceName":"release-name-cli-install","servicePort":"install-http"}}]}}]
         """
         )
         expected_rules_v1 = json.loads(
             """
-        [{"host":"example.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":{"service":{"name":"RELEASE-NAME-astro-ui","port":{"name":"astro-ui-http"}}}}]}},
-        {"host":"app.example.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":{"service":{"name":"RELEASE-NAME-astro-ui","port":{"name":"astro-ui-http"}}}}]}},
-        {"host":"registry.example.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":{"service":{"name":"RELEASE-NAME-registry","port":{"name":"registry-http"}}}}]}},
-        {"host":"install.example.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":{"service":{"name":"RELEASE-NAME-cli-install","port":{"name":"install-http"}}}}]}}]
+        [{"host":"example.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":{"service":{"name":"release-name-astro-ui","port":{"name":"astro-ui-http"}}}}]}},
+        {"host":"app.example.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":{"service":{"name":"release-name-astro-ui","port":{"name":"astro-ui-http"}}}}]}},
+        {"host":"registry.example.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":{"service":{"name":"release-name-registry","port":{"name":"registry-http"}}}}]}},
+        {"host":"install.example.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":{"service":{"name":"release-name-cli-install","port":{"name":"install-http"}}}}]}}]
         """
         )
 

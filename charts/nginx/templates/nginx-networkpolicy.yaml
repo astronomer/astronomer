@@ -21,15 +21,6 @@ spec:
   - Ingress
   ingress:
   - from:
-    - podSelector:
-        matchLabels:
-          tier: monitoring
-          component: prometheus
-          release: {{ .Release.Name }}
-    ports:
-    - protocol: TCP
-      port: {{ .Values.ports.metrics }}
-  - from:
     - ipBlock:
         cidr: 0.0.0.0/0
     ports:

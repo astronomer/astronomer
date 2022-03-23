@@ -103,7 +103,7 @@ data:
       <regexp>
         key $.kubernetes.namespace_name
         # fluentd should gather logs from all namespaces if manualNamespaceNamesEnabled is enabled
-        {{- if .Values.global.manualNamespaceNamesEnabled }}
+        {{- if or .Values.global.manualNamespaceNamesEnabled .Values.global.features.namespacePools.enabled }}
         pattern "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
         {{ else }}
         pattern "^#{ENV['NAMESPACE']}(?:-.*)?$"
@@ -202,6 +202,7 @@ data:
           @type file
           path "/var/log/fluentd-buffers/#{ENV['RELEASE']}-kubernetes.system.buffer"
           flush_mode interval
+          flush_at_shutdown true
           retry_type exponential_backoff
           flush_thread_count 2
           flush_interval 5s

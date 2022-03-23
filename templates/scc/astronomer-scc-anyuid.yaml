@@ -1,3 +1,6 @@
+###############################################
+## Astronomer Global SecurityContextConstraints
+###############################################
 {{- if .Values.global.sccEnabled }}
 apiVersion: security.openshift.io/v1
 kind: SecurityContextConstraints

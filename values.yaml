@@ -24,6 +24,15 @@ global:
       tag: 3.14
       pullPolicy: IfNotPresent
 
+  # Specific Astronomer features configuration
+  features:
+    # namespace pools: define k8s namespaces in which Astronomer will manage Airflow deployments
+    namespacePools:
+      enabled: false
+      namespaces:
+        # if create is enabled, this helm chart will create the provided k8s namespaces
+        create: false
+        names: []
 
   # Use kube-lego
   acme: false
@@ -42,6 +51,9 @@ global:
 
   # Use cluster roles
   clusterRoles: true
+
+  # Enables kubed
+  kubedEnabled: true
 
   # Enables necessary components for compatibility with Istio Service Mesh
   istio:
@@ -87,6 +99,9 @@ global:
 
   # Enable security context constraints required for OpenShift
   sccEnabled: false
+
+  # Enables namespace labels for network policies
+  networkNSLabels: false
 
   # Deploy auth sidecar to use openshift native features
   authSidecar:
@@ -377,9 +392,9 @@ keda:
 nats:
   nodeSelector:
     <<: *platformNodeSelector
-    affinity:
-      <<: *platformAffinity
-    tolerations: *platformTolerations
+  affinity:
+    <<: *platformAffinity
+  tolerations: *platformTolerations
   resources:
     requests:
       cpu: "75m"
@@ -391,9 +406,9 @@ nats:
 stan:
   nodeSelector:
     <<: *platformNodeSelector
-    affinity:
-      <<: *platformAffinity
-    tolerations: *platformTolerations
+  affinity:
+    <<: *platformAffinity
+  tolerations: *platformTolerations
   resources:
     requests:
       cpu: "75m"
@@ -517,7 +532,7 @@ kibana:
 #################################
 ## Kube State configuration
 #################################
-kubeState:
+kube-state:
   # Configure resources
   resources:
     requests:

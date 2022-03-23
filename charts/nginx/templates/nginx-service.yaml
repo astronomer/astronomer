@@ -65,10 +65,3 @@ spec:
       {{- if and (eq .Values.serviceType "NodePort") .Values.httpsNodePort }}
       nodePort: {{ .Values.httpsNodePort }}
       {{- end }}
-    - port: {{ .Values.ports.metrics }}
-      targetPort: {{ .Values.ports.metrics }}
-      protocol: TCP
-      name: metrics
-      {{- if and (eq .Values.serviceType "NodePort") .Values.metricsNodePort }}
-      nodePort: {{ .Values.metricsNodePort }}
-      {{- end }}

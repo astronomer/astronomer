@@ -12,27 +12,27 @@ class TestPspEnabled:
     psp_docs = [
         {
             "template": "charts/elasticsearch/templates/es-psp.yaml",
-            "name": "RELEASE-NAME-elasticsearch",
+            "name": "release-name-elasticsearch",
         },
         {
             "template": "charts/fluentd/templates/fluentd-psp.yaml",
-            "name": "RELEASE-NAME-fluentd",
+            "name": "release-name-fluentd",
         },
         {
             "template": "charts/nginx/templates/nginx-psp.yaml",
-            "name": "RELEASE-NAME-ingress-nginx",
+            "name": "release-name-ingress-nginx",
         },
         {
             "template": "charts/prometheus-node-exporter/templates/psp.yaml",
-            "name": "RELEASE-NAME-prometheus-node-exporter",
+            "name": "release-name-prometheus-node-exporter",
         },
         {
             "template": "templates/psp/permissive-psp.yaml",
-            "name": "RELEASE-NAME-permissive",
+            "name": "release-name-permissive",
         },
         {
             "template": "templates/psp/restrictive-psp.yaml",
-            "name": "RELEASE-NAME-restrictive",
+            "name": "release-name-restrictive",
         },
     ]
 
@@ -64,27 +64,27 @@ class TestPspEnabled:
     clusterrole_docs = [
         {
             "template": "charts/elasticsearch/templates/es-psp-clusterrole.yaml",
-            "name": "RELEASE-NAME-psp-elasticsearch",
+            "name": "release-name-psp-elasticsearch",
         },
         {
             "template": "charts/fluentd/templates/fluentd-psp-clusterrole.yaml",
-            "name": "RELEASE-NAME-psp-fluentd",
+            "name": "release-name-psp-fluentd",
         },
         {
             "template": "charts/nginx/templates/nginx-psp-clusterrole.yaml",
-            "name": "RELEASE-NAME-psp-ingress-nginx",
+            "name": "release-name-psp-ingress-nginx",
         },
         {
             "template": "charts/prometheus-node-exporter/templates/psp-clusterrole.yaml",
-            "name": "psp-RELEASE-NAME-prometheus-node-exporter",
+            "name": "psp-release-name-prometheus-node-exporter",
         },
         {
             "template": "templates/psp/permissive-clusterrole.yaml",
-            "name": "RELEASE-NAME-psp-permissive",
+            "name": "release-name-psp-permissive",
         },
         {
             "template": "templates/psp/restrictive-clusterrole.yaml",
-            "name": "RELEASE-NAME-psp-restrictive",
+            "name": "release-name-psp-restrictive",
         },
     ]
 
@@ -122,11 +122,11 @@ class TestPspEnabled:
     clusterrolebinding_docs = [
         {
             "template": "charts/prometheus-node-exporter/templates/psp-clusterrolebinding.yaml",
-            "name": "psp-RELEASE-NAME-prometheus-node-exporter",
+            "name": "psp-release-name-prometheus-node-exporter",
         },
         {
             "template": "templates/psp/restrictive-cluserrolebinding.yaml",
-            "name": "RELEASE-NAME-psp-restrictive",
+            "name": "release-name-psp-restrictive",
         },
     ]
 
@@ -163,19 +163,19 @@ class TestPspEnabled:
     rolebinding_docs = [
         {
             "template": "charts/elasticsearch/templates/es-psp-rolebinding.yaml",
-            "name": "RELEASE-NAME-psp-elasticsearch",
+            "name": "release-name-psp-elasticsearch",
         },
         {
             "template": "charts/fluentd/templates/fluentd-psp-rolebinding.yaml",
-            "name": "RELEASE-NAME-psp-fluentd",
+            "name": "release-name-psp-fluentd",
         },
         {
             "template": "charts/nginx/templates/nginx-psp-rolebinding.yaml",
-            "name": "RELEASE-NAME-psp-ingress-nginx",
+            "name": "release-name-psp-ingress-nginx",
         },
         {
             "template": "templates/psp/permissive-clusterrolebinding.yaml",
-            "name": "RELEASE-NAME-psp-permissive",
+            "name": "release-name-psp-permissive",
         },
     ]
 

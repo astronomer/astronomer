@@ -1,19 +1,33 @@
 ########################################
 ## Astronomer Commander Role/ClusterRole
 ########################################
-{{- $singleNamespace := .Values.global.singleNamespace }}
-{{- $clusterRoles:= .Values.global.clusterRoles }}
-{{- if and .Values.global.rbacEnabled }}
-kind: {{ if or ($singleNamespace) (not $clusterRoles) }}Role{{ else }}ClusterRole{{ end }}
-apiVersion: rbac.authorization.k8s.io/v1
+# Here, we either:
+# 1. Do not create any resource if rbacEnabled is disabled
+# 2. Create a Cluster Role if clusterRoles and rbacEnabled are enabled and namespacePools is disabled
+# 3. Create roles for each namespaces in the namespacePool if enabled.
+{{- $useClusterRoles := and .Values.global.rbacEnabled .Values.global.clusterRoles (not .Values.global.features.namespacePools.enabled)}}
+{{- $shouldCreateResources := and .Values.global.rbacEnabled (or .Values.global.clusterRoles .Values.global.features.namespacePools.enabled) }}
+{{- $namespaces := .Values.global.features.namespacePools.namespaces.names }}
+{{ if $useClusterRoles }}
+  {{- $namespaces = list .Release.Namespace}}
+{{ end }}
+
+{{- if $shouldCreateResources }}
+{{- range $i, $namespaceName := $namespaces -}}
+---
+kind: {{ if $useClusterRoles }}ClusterRole{{ else }}Role{{ end }}
+apiVersion: {{ template "apiVersion.rbac" . }}
 metadata:
-  name: {{ .Release.Name }}-commander
+  {{- if not $useClusterRoles }}
+  namespace: {{ $namespaceName }}
+  {{- end }}
+  name: {{ $.Release.Name }}-commander
   labels:
     tier: houston
-    release: {{ .Release.Name }}
-    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
-    heritage: {{ .Release.Service }}
-  {{ if .Values.global.enableArgoCDAnnotation }}
+    release: {{ $.Release.Name }}
+    chart: "{{ $.Chart.Name }}-{{ $.Chart.Version }}"
+    heritage: {{ $.Release.Service }}
+  {{- if $.Values.global.enableArgoCDAnnotation }}
   annotations:
     argocd.argoproj.io/sync-wave: "-1"
   {{- end }}
@@ -114,10 +128,10 @@ rules:
 - apiGroups: ["networking.k8s.io"]
   resources: ["networkpolicies"]
   verbs: ["create", "delete", "get", "patch"]
-{{ if $clusterRoles }}
+{{- if $useClusterRoles }}
 - nonResourceURLs: ["/metrics"]
   verbs: ["get"]
-{{ end }}
+{{- end }}
 - apiGroups: ["rbac.authorization.k8s.io"]
   resources: ["clusterrolebindings"]
   verbs: ["create", "delete", "get", "patch"]
@@ -136,9 +150,10 @@ rules:
 - apiGroups: ["policy"]
   resources: ["poddisruptionbudgets"]
   verbs: ["create", "delete", "get"]
-{{- if .Values.global.sccEnabled }}
+{{- if $.Values.global.sccEnabled }}
 - apiGroups: ["security.openshift.io"]
   resources: ["securitycontextconstraints"]
   verbs: ["create", "delete"]
-{{- end }}
+{{ end }}
+{{ end }}
 {{- end }}

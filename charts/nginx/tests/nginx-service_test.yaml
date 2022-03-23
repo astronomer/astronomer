@@ -1,10 +1,8 @@
-### DEPRECATED
-#
-#   helm-unittest usage is deprecated in this repository.
-#   Do not modify these tests. If changes are needed,
-#   migrate the test to the pytest test suite.
-#
-##############
+############################
+## THIS FILE IS JUST AS GUIDANCE FOR THE ISSUE
+## THIS FILE SHOULD NOT BE MERGED INTO ANY BRANCH
+## THIS FILE SHOULD BE DELETED BEFORE MERGE
+############################
 
 ---
 suite: Test nginx-service

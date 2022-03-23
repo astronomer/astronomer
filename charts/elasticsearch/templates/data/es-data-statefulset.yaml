@@ -69,12 +69,14 @@ spec:
       tolerations:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       initContainers:
+      {{- if (.Values.sysctlInitContainer.enabled) }}
       - name: sysctl
         image: {{ template "init.image" . }}
         imagePullPolicy: {{ .Values.images.init.pullPolicy }}
-        command: ["sysctl", "-w", "vm.max_map_count=262144"]
+        command: ["sysctl", "-w", "vm.max_map_count={{ .Values.sysctlInitContainer.sysctlVmMaxMapCount}}"]
         securityContext:
           privileged: true
+      {{- end }}
       - name: chown
         image: {{ template "elasticsearch.image" . }}
         imagePullPolicy: {{ .Values.images.es.pullPolicy }}
@@ -124,7 +126,7 @@ spec:
         - name: DISCOVERY_SERVICE
           value: {{ template "elasticsearch.fullname" . }}-headless-discovery
         - name: ES_JAVA_OPTS
-          value: "-Xms{{ .Values.data.heapMemory }} -Xmx{{ .Values.data.heapMemory }} -Dlog4j2.formatMsgNoLookups=true"
+          value: "-Xms{{ .Values.data.heapMemory }} -Xmx{{ .Values.data.heapMemory }}"
         {{- range $key, $value :=  .Values.common.env }}
         - name: {{ $key | upper | replace "-" "_" }}
           value: {{ $value | quote }}

@@ -10,15 +10,15 @@ tolerations: []
 images:
   es:
     repository: quay.io/astronomer/ap-elasticsearch
-    tag: 7.15.2
+    tag: 7.16.3
     pullPolicy: IfNotPresent
   init:
     repository: quay.io/astronomer/ap-base
-    tag: 3.15.0
+    tag: 3.15.0-3
     pullPolicy: IfNotPresent
   curator:
     repository: quay.io/astronomer/ap-curator
-    tag: 5.8.4-7
+    tag: 5.8.4-10
     pullPolicy: IfNotPresent
   exporter:
     repository: quay.io/astronomer/ap-elasticsearch-exporter
@@ -26,7 +26,7 @@ images:
     pullPolicy: IfNotPresent
   nginx:
     repository: quay.io/astronomer/ap-nginx-es
-    tag: 1.21.3
+    tag: 1.21.4
     pullPolicy: IfNotPresent
 
 common:
@@ -207,3 +207,9 @@ nginx:
   fullnameOverride: ~
   ingressClass: ~
   resources: {}
+
+# sysctl init container
+# Warning: sysctl changes affect the kernel, and thus, all containers running on the same node.
+sysctlInitContainer:
+  enabled: true
+  sysctlVmMaxMapCount: 262144

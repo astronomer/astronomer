@@ -71,6 +71,12 @@ data:
       kibanaUIEnabled: false
       {{ end }}
 
+      {{ if .Values.global.features.namespacePools.enabled }}
+      hardDeleteDeployment: true
+      manualNamespaceNames: true
+      preCreatedNamespaces:{{ printf "\n" }}{{ toYaml .Values.global.features.namespacePools.namespaces.names | indent 6 }}
+      {{ end }}
+
       {{- if .Values.global.authSidecar.enabled }}
       # enables nginx auth sidecar for airflow deployments
       authSideCar:
@@ -95,9 +101,15 @@ data:
         # If security context constraints are enabled, enable SCCs for airflow-chart
         sccEnabled: true
       {{- end }}
+
+      {{- if .Values.global.networkNSLabels }}
+        networkNSLabels: true
+      {{- end }}
+
         airflow:
           useAstroSecurityManager: true
           webserver:
+            {{ if .Values.global.kubedEnabled }}
             extraVolumeMounts:
               - name: signing-certificate
                 mountPath: /etc/airflow/tls
@@ -108,6 +120,7 @@ data:
                   # This is the name of the secret that gets copied from the platform namespace
                   # to the airflow namespaces.
                   secretName: {{ template "houston.jwtCertificateSecret" . }}
+            {{ end  }}
             resources:
               limits:
                 # XXX: There is an alert configured to trigger when ephemeral storage reaches
@@ -269,7 +282,12 @@ data:
           # to cleanup evicted/failed/succeeded pods.
           cleanup:
             enabled: true
-            schedule: "*/15 * * * *"
+            {{/*
+            Generate a deterministic random-ish decimal digit from the .Release.Name, which is used to generate
+            the minute field of the cron schedule. This is effectively a splay seeded by the release name.
+            This is used to spread the load of this job away from high-use minutes 0,15,30,45.
+            */}}
+            schedule: "{{- add 3 (regexFind ".$" (adler32sum .Release.Name)) -}}-59/15 * * * *"
             command:
             - airflow-cleanup-pods
             - --namespace={{`{{ .Release.Namespace }}`}}
