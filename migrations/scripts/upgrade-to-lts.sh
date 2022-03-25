@@ -24,7 +24,7 @@ function check_get_deployments_safe {
     echo "    $release: $executor"
   done
   for release in $RELEASE_NAMES_HELM3; do
-    executor=$(helm3 get values -n "$NAMESPACE-$release" "$release" --output json | jq '.executor' | grep -E 'CeleryExecutor|KubernetesExecutor|LocalExecutor')
+    executor=$(helm get values -n "$NAMESPACE-$release" "$release" --output json | jq '.executor' | grep -E 'CeleryExecutor|KubernetesExecutor|LocalExecutor')
     fail_with "Did not find an executor for $release, aborting because we expected this would be an Astronomer deployment"
     echo "    $release: $executor"
   done
@@ -35,7 +35,7 @@ function get_deployments {
   echo "Looking for Astronomer Airflow helm releases..."
   RELEASE_NAMES=$(helm list --max 1000 | grep airflow | grep "$NAMESPACE" | awk '{ print $1 }')
   export RELEASE_NAMES
-  RELEASE_NAMES_HELM3=$(helm3 list --all-namespaces --max 1000 | grep airflow | grep "$NAMESPACE" | awk '{ print $1 }')
+  RELEASE_NAMES_HELM3=$(helm list --all-namespaces --max 1000 | grep airflow | grep "$NAMESPACE" | awk '{ print $1 }')
   fail_with "Did not find any Astronomer Airflow helm releases. What does 'helm list | grep airflow' show?"
   export RELEASE_NAMES_HELM3
   check_get_deployments_safe
@@ -59,18 +59,18 @@ function check_cli_tools_installed {
   done
 }
 
-function check_helm3_version_client {
+function check_helm_version_client {
   echo "Checking that Helm $1 is installed on the client (where this script is executed)..."
-  if ! helm3 version | grep "$1" > /dev/null ; then
+  if ! helm version | grep "$1" > /dev/null ; then
     echo
     echo "==============="
     echo "Action required:"
     echo "Helm $1 is the version that this script was tested with."
-    echo "Please install Helm $1 in your PATH as 'helm3'"
+    echo "Please install helm $1 in your PATH"
     echo "Link: https://github.com/helm/helm/releases/tag/v$1"
     exit 1
   else
-    echo "Confirmed Helm $1 is installed."
+    echo "Confirmed helm $1 is installed."
   fi
 }
 
@@ -111,7 +111,7 @@ function kube_checks {
     fi
   elif [ "$HELM_VERSION" -eq "3" ]; then
     echo "Using Helm 3 to confirm that release name $RELEASE_NAME is in namespace $NAMESPACE"
-    helm3 status -n "$NAMESPACE" "$RELEASE_NAME" > /dev/null
+    helm status -n "$NAMESPACE" "$RELEASE_NAME" > /dev/null
     fail_with "ERROR did not find the namespace of helm release $RELEASE_NAME to be $NAMESPACE"
   else
     echo "ERROR: HELM_VERSION is supposed to be 2 or 3, but it's '$HELM_VERSION'"
@@ -200,10 +200,10 @@ function save_helm_values {
       echo "ERROR: there is both a helm 2 and helm 3 release for $release, this is not expected."
       exit 1
     fi
-    helm3 get values --all -n "$NAMESPACE-$release" "$release" > "$backup_dir/$release-all-values.yaml"
-    fail_with "Failed to run 'helm3 get values --all -n $NAMESPACE-$release $release'"
-    helm3 get values -n "$NAMESPACE-$release" "$release" > "$backup_dir/$release-user-values.yaml"
-    fail_with "Failed to run 'helm3 get values -n $NAMESPACE-$release $release'"
+    helm get values --all -n "$NAMESPACE-$release" "$release" > "$backup_dir/$release-all-values.yaml"
+    fail_with "Failed to run 'helm get values --all -n $NAMESPACE-$release $release'"
+    helm get values -n "$NAMESPACE-$release" "$release" > "$backup_dir/$release-user-values.yaml"
+    fail_with "Failed to run 'helm get values -n $NAMESPACE-$release $release'"
   done
   echo "Backing up Astronomer helm values..."
   release=$RELEASE_NAME
@@ -213,16 +213,16 @@ function save_helm_values {
     helm get values "$release" > "$backup_dir/$release-user-values.yaml"
     fail_with "Failed to run 'helm get values $release'"
   elif [ "$HELM_VERSION" -eq "3" ]; then
-    helm3 get values --all -n "$NAMESPACE" "$release" > "$backup_dir/$release-all-values.yaml"
+    helm get values --all -n "$NAMESPACE" "$release" > "$backup_dir/$release-all-values.yaml"
     fail_with "Failed to run 'helm get $release'"
-    helm3 get values -n "$NAMESPACE" "$release" > "$backup_dir/$release-user-values.yaml"
+    helm get values -n "$NAMESPACE" "$release" > "$backup_dir/$release-user-values.yaml"
     fail_with "Failed to run 'helm get values $release'"
   else
     echo "ERROR: HELM_VERSION is supposed to be 2 or 3, but it's '$HELM_VERSION'"
     exit 1
   fi
   echo "$RELEASE_NAMES" > "$backup_dir/release_names.txt"
-  echo "$RELEASE_NAMES_HELM3" > "$backup_dir/release_names_helm3.txt"
+  echo "$RELEASE_NAMES_HELM3" > "$backup_dir/release_names_helm.txt"
 }
 
 function interactive_confirmation {
@@ -254,12 +254,12 @@ function interactive_confirmation {
 function setup_helm {
   # Initialize helm
   helm init --client-only
-  helm3 plugin install https://github.com/helm/helm-2to3.git
+  helm plugin install https://github.com/helm/helm-2to3.git
   # Install astronomer and airflow chart
   helm repo add astronomer https://helm.astronomer.io
-  helm3 repo add astronomer https://helm.astronomer.io
+  helm repo add astronomer https://helm.astronomer.io
   helm repo update
-  helm3 repo update
+  helm repo update
 }
 
 function collect_current_version_info {
@@ -267,7 +267,7 @@ function collect_current_version_info {
     version_result=$(helm list "^${RELEASE_NAME}$" | grep "$RELEASE_NAME" | awk '{ print $9 }' | awk -F'-' '{ print $NF }')
     fail_with "Failed to find chart version"
   elif [ "$HELM_VERSION" -eq "3" ]; then
-    version_result=$(helm3 list --all-namespaces --filter "$RELEASE_NAME" | grep "$RELEASE_NAME" | awk '{ print $9 }' | awk -F'-' '{ print $NF }')
+    version_result=$(helm list --all-namespaces --filter "$RELEASE_NAME" | grep "$RELEASE_NAME" | awk '{ print $9 }' | awk -F'-' '{ print $NF }')
     fail_with "Failed to find chart version"
   else
     echo "ERROR: HELM_VERSION is supposed to be 2 or 3, but it's '$HELM_VERSION'"
@@ -311,14 +311,14 @@ function main {
   export UPGRADE_TO_VERSION_AIRFLOW=0.15.2
 
   # Pre-flight checks
-  check_helm3_version_client '3.6.3'
+  check_helm_version_client '3.8.1'
   check_cli_tools_installed helm kubectl jq head tail grep awk base64 cut wc git
 
   kube_checks
 
   setup_helm
 
-  UPGRADE_TO_VERSION=$(helm3 search repo astronomer/astronomer --version 0.23 | awk 'NR==2 {print $2}')
+  UPGRADE_TO_VERSION=$(helm search repo astronomer/astronomer --version 0.23 | awk 'NR==2 {print $2}')
   export UPGRADE_TO_VERSION
 
   collect_current_version_info
@@ -332,7 +332,7 @@ function main {
   kubectl delete sts --cascade=false --namespace "$NAMESPACE" "${RELEASE_NAME}-elasticsearch-master" "${RELEASE_NAME}-elasticsearch-data" || true
   sleep 5
   echo "Upgrading Astronomer... (1/4) converge Helm 3 labels"
-  helm3 upgrade --namespace "$NAMESPACE" \
+  helm upgrade --namespace "$NAMESPACE" \
                --reset-values \
                -f "$backup_dir/$RELEASE_NAME-user-values.yaml" \
                --version "$CURRENT_CHART_VERSION" \
@@ -348,7 +348,7 @@ function main {
   fail_with "Failed to upgrade Astronomer"
   sleep 5
   echo "Upgrading Astronomer... (2/4) upgrade Astronomer"
-  helm3 upgrade --namespace "$NAMESPACE" \
+  helm upgrade --namespace "$NAMESPACE" \
                -f "$backup_dir/$RELEASE_NAME-user-values.yaml" \
                --version "$UPGRADE_TO_VERSION" \
                --timeout 1200s \
@@ -373,11 +373,11 @@ function main {
   echo "Reinstall all Airflow releases with new airflow chart version"
   for release in $RELEASE_NAMES $RELEASE_NAMES_HELM3; do
     echo "Removing Airflow release $release"
-    helm3 delete --namespace "$NAMESPACE-$release" "$release"
+    helm delete --namespace "$NAMESPACE-$release" "$release"
     fail_with "Failed to purge $release"
     sleep 5
     echo "Installing airflow release $release"
-    helm3 install --namespace "$NAMESPACE-$release" \
+    helm install --namespace "$NAMESPACE-$release" \
                  "$release" \
                  --set webserver.defaultUser.enabled=false \
                  --set webserver.jwtSigningCertificateSecretName="$RELEASE_NAME-houston-jwt-signing-certificate" \
@@ -388,7 +388,7 @@ function main {
   done
 
   echo "Upgrading Astronomer... (4/4) Ensure Helm upgrade works to reconfigure platform"
-  helm3 upgrade --namespace "$NAMESPACE" \
+  helm upgrade --namespace "$NAMESPACE" \
                 -f "$backup_dir/$RELEASE_NAME-user-values.yaml" \
                 --version "$UPGRADE_TO_VERSION" \
                 --timeout 1200s \
