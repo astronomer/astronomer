@@ -27,15 +27,15 @@ The above command will render the full chart for kubernetes version 1.18.0, but 
 kind: Ingress
 apiVersion: networking.k8s.io/v1beta1
 metadata:
-  name: RELEASE-NAME-public-ingress
+  name: release-name-public-ingress
   labels:
     component: public-ingress
     tier: astronomer
-    release: RELEASE-NAME
+    release: release-name
     chart: "astronomer-0.25.2"
     heritage: Helm
   annotations:
-    kubernetes.io/ingress.class: "RELEASE-NAME-nginx"
+    kubernetes.io/ingress.class: "release-name-nginx"
     kubernetes.io/tls-acme: "false"
     nginx.ingress.kubernetes.io/custom-http-errors: "404"
     nginx.ingress.kubernetes.io/configuration-snippet: |
@@ -57,7 +57,7 @@ spec:
       paths:
         - path: /
           backend:
-            serviceName: RELEASE-NAME-astro-ui
+            serviceName: release-name-astro-ui
             servicePort: astro-ui-http
 ```
 
@@ -290,7 +290,7 @@ This is a normal python repl that we can type python code into:
 >>> pp = pprint.PrettyPrinter(indent=4).pprint
 >>> pp(docs[0]["spec"]["rules"][0])
 {   'host': 'example.com',
-    'http': {   'paths': [   {   'backend': {   'serviceName': 'RELEASE-NAME-astro-ui',
+    'http': {   'paths': [   {   'backend': {   'serviceName': 'release-name-astro-ui',
                                                 'servicePort': 'astro-ui-http'},
                                  'path': '/'}]}}
 >>> import yaml
@@ -299,7 +299,7 @@ host: example.com
 http:
   paths:
   - backend:
-      serviceName: RELEASE-NAME-astro-ui
+      serviceName: release-name-astro-ui
       servicePort: astro-ui-http
     path: /
 ```

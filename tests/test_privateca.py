@@ -14,7 +14,7 @@ class TestDaemonset:
     def common_tests_daemonset(doc):
         """Test things common to all daemonsets"""
         assert "DaemonSet" == jmespath.search("kind", doc)
-        assert "RELEASE-NAME-private-ca" == jmespath.search("metadata.name", doc)
+        assert "release-name-private-ca" == jmespath.search("metadata.name", doc)
         assert "cert-copy" == jmespath.search(
             "spec.template.spec.containers[0].name", doc
         )
@@ -154,4 +154,4 @@ class TestPSP:
         assert len(docs) == 1
         doc = docs[0]
         assert "PodSecurityPolicy" == jmespath.search("kind", doc)
-        assert "RELEASE-NAME-private-ca" == jmespath.search("metadata.name", doc)
+        assert "release-name-private-ca" == jmespath.search("metadata.name", doc)
