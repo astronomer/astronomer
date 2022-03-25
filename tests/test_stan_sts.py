@@ -23,7 +23,7 @@ class TestStanStatefulSet:
 
         assert doc["kind"] == "StatefulSet"
         assert doc["apiVersion"] == "apps/v1"
-        assert doc["metadata"]["name"] == "RELEASE-NAME-stan"
+        assert doc["metadata"]["name"] == "release-name-stan"
         assert c_by_name["metrics"]["image"].startswith(
             "quay.io/astronomer/ap-nats-exporter:"
         )
