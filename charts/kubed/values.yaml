@@ -5,7 +5,7 @@
 images:
   kubed:
     repository: quay.io/astronomer/ap-kubed
-    tag: 0.13.0
+    tag: 0.13.2
     pullPolicy: IfNotPresent
 
 # Declare variables to be passed into your templates.
