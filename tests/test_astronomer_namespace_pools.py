@@ -240,6 +240,7 @@ def test_astronomer_namespace_pools_houston_configmap(kube_version):
     assert "manualNamespaceNames" not in deployments_config["deployments"]
     assert "preCreatedNamespaces" not in deployments_config["deployments"]
 
+
 @pytest.mark.parametrize(
     "kube_version",
     supported_k8s_versions,
@@ -262,5 +263,7 @@ def test_astronomer_namespace_pools_fluentd_configmap(kube_version):
         show_only=["charts/fluentd/templates/fluentd-configmap.yaml"],
     )[0]
 
-    expected_rule = "key $.kubernetes.namespace_name\n    pattern ^({}|{})$".format(namespaces[0], namespaces[1])
+    expected_rule = "key $.kubernetes.namespace_name\n    pattern ^({}|{})$".format(
+        namespaces[0], namespaces[1]
+    )
     assert expected_rule in doc["data"]["output.conf"]

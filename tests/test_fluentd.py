@@ -60,6 +60,7 @@ def test_fluentd_clusterrolebinding(kube_version):
 
     assert len(docs) == 0
 
+
 @pytest.mark.parametrize(
     "kube_version",
     supported_k8s_versions,
@@ -75,7 +76,7 @@ def test_fluentd_configmap_manual_namespaces_enabled(kube_version):
                     "namespacePools": {
                         "enabled": False,
                     }
-                }
+                },
             }
         },
         show_only=["charts/fluentd/templates/fluentd-configmap.yaml"],
@@ -83,6 +84,7 @@ def test_fluentd_configmap_manual_namespaces_enabled(kube_version):
 
     expected_rule = "key $.kubernetes.namespace_name\n    # fluentd should gather logs from all namespaces if manualNamespaceNamesEnabled is enabled"
     assert expected_rule in doc["data"]["output.conf"]
+
 
 @pytest.mark.parametrize(
     "kube_version",
@@ -99,11 +101,13 @@ def test_fluentd_configmap_manual_namespaces_and_namespacepools_disabled(kube_ve
                     "namespacePools": {
                         "enabled": False,
                     }
-                }
+                },
             }
         },
         show_only=["charts/fluentd/templates/fluentd-configmap.yaml"],
     )[0]
 
-    expected_rule = "key $.kubernetes.namespace_name\n    pattern \"^#{ENV['NAMESPACE']}(?:-.*)?$\""
+    expected_rule = (
+        "key $.kubernetes.namespace_name\n    pattern \"^#{ENV['NAMESPACE']}(?:-.*)?$\""
+    )
     assert expected_rule in doc["data"]["output.conf"]
