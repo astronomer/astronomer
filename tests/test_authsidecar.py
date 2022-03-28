@@ -6,7 +6,7 @@ import yaml
 
 standard_platform_repo = "quay.io/astronomer"
 default_public_sidecar_repository_name = (
-    f"{standard_platform_repo}/ap-nginx-unprivileged"
+    f"{standard_platform_repo}/ap-auth-sidecar"
 )
 
 
@@ -226,7 +226,7 @@ class TestAuthSidecar:
 
         expected_output = {
             "enabled": True,
-            "repository": "some.registry.internal/ap-nginx-unprivileged",
+            "repository": "some.registry.internal/ap-auth-sidecar",
             "tag": "placeholder-tag",
             "port": 8084,
             "pullPolicy": "IfNotPresent",
@@ -307,7 +307,7 @@ class TestAuthSidecar:
 
         expected_output = {
             "enabled": True,
-            "repository": "some.registry.internal/ap-nginx-unprivileged",
+            "repository": "some.registry.internal/ap-auth-sidecar",
             "tag": "placeholder-tag",
             "port": 8084,
             "pullPolicy": "IfNotPresent",
@@ -387,7 +387,7 @@ class TestAuthSidecar:
         )
         assert (
             container["image"]
-            == "some.registry.internal/ap-nginx-unprivileged:placeholder-tag"
+            == "some.registry.internal/ap-auth-sidecar:placeholder-tag"
         )
 
     def test_authSidecar_repository_template_in_effect_on_kibana(self, kube_version):
@@ -419,7 +419,7 @@ class TestAuthSidecar:
         )
         assert (
             container["image"]
-            == "some.registry.internal/ap-nginx-unprivileged:placeholder-tag"
+            == "some.registry.internal/ap-auth-sidecar:placeholder-tag"
         )
 
     def test_authSidecar_repository_template_in_effect_on_prometheus(
@@ -453,7 +453,7 @@ class TestAuthSidecar:
         )
         assert (
             container["image"]
-            == "some.registry.internal/ap-nginx-unprivileged:placeholder-tag"
+            == "some.registry.internal/ap-auth-sidecar:placeholder-tag"
         )
 
     def test_authSidecar_repository_doesnt_use_disabled_private_registry(
