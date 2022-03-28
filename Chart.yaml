@@ -69,11 +69,6 @@ dependencies:
     condition: global.postgresqlEnabled
     tags:
       - postgresql
-  # Used to enable Celery autoscaling
-  - name: keda
-    condition: global.kedaEnabled
-    tags:
-      - keda
   # Nats-server
   - name: nats
     condition: global.nats.enabled
