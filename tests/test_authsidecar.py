@@ -5,9 +5,7 @@ import jmespath
 import yaml
 
 standard_platform_repo = "quay.io/astronomer"
-default_public_sidecar_repository_name = (
-    f"{standard_platform_repo}/ap-auth-sidecar"
-)
+default_public_sidecar_repository_name = f"{standard_platform_repo}/ap-auth-sidecar"
 
 
 @pytest.mark.parametrize(
