@@ -91,7 +91,7 @@ def test_fluentd_configmap_manual_namespaces_enabled(kube_version):
     supported_k8s_versions,
 )
 def test_fluentd_configmap_manual_namespaces_and_namespacepools_disabled(kube_version):
-    """Test that when namespace Pools and manualNamespaceNamesEnabled aredisabled, helm renders a default fluentd configmap looking at an environment variable"""
+    """Test that when namespace Pools and manualNamespaceNamesEnabled are disabled, helm renders a default fluentd configmap looking at an environment variable"""
     doc = render_chart(
         kube_version=kube_version,
         values={
