@@ -239,3 +239,31 @@ def test_astronomer_namespace_pools_houston_configmap(kube_version):
     assert "hardDeleteDeployment" not in deployments_config["deployments"]
     assert "manualNamespaceNames" not in deployments_config["deployments"]
     assert "preCreatedNamespaces" not in deployments_config["deployments"]
+
+
+@pytest.mark.parametrize(
+    "kube_version",
+    supported_k8s_versions,
+)
+def test_astronomer_namespace_pools_fluentd_configmap(kube_version):
+    """Test that when namespace Pools is enabled, and a list of namespaces is provided, helm render fluentd configmap correctly, with a regex targeting pods in the provided namespaces only."""
+    namespaces = ["my-namespace-1", "my-namespace-2"]
+    doc = render_chart(
+        kube_version=kube_version,
+        values={
+            "global": {
+                "features": {
+                    "namespacePools": {
+                        "enabled": True,
+                        "namespaces": {"create": True, "names": namespaces},
+                    }
+                }
+            }
+        },
+        show_only=["charts/fluentd/templates/fluentd-configmap.yaml"],
+    )[0]
+
+    expected_rule = "key $.kubernetes.namespace_name\n    pattern ^({}|{})$".format(
+        namespaces[0], namespaces[1]
+    )
+    assert expected_rule in doc["data"]["output.conf"]
