@@ -61,7 +61,7 @@ Repository that holds the authSidecar image (does not include tag)
 {{- if .Values.global.authSidecar.repository -}}
 {{ .Values.global.authSidecar.repository }}
 {{- else -}}
-{{ template "astronomer.platform_registry" . }}/ap-nginx-unprivileged
+{{ template "astronomer.platform_registry" . }}/ap-auth-sidecar
 {{- end }}
 {{- end }}
 

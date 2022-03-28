@@ -95,7 +95,7 @@ global:
   authSidecar:
     enabled: false
     repository: ~
-    tag: 1.21.4
+    tag: 1.21.6
     pullPolicy: IfNotPresent
     port: 8084
     default_nginx_settings: |
