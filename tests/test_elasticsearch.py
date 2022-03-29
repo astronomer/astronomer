@@ -80,7 +80,7 @@ class TestElasticSearch:
 
         assert len(docs) == 3
         for doc_ids in range(len(docs)):
-            assert jmespath.search("spec.template.spec.initContainers", docs[0]) is None
+            assert not docs[doc_ids]["spec"]["template"]["spec"]["initContainers"]
 
     def test_elasticsearch_securitycontext_defaults(self, kube_version):
         """Test  ElasticSearch master, data and client with securitycontext default values"""
