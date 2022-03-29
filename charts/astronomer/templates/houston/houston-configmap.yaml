@@ -147,12 +147,6 @@ data:
               requests:
                 ephemeral-storage: "1Gi"
 
-            # This is here for upgrading to 0.11.1+ of airflow-chart
-            keda:
-              enabled: false
-              namespaceLabels:
-                name: {{ .Release.Name }}
-
             # This is here for upgrading to 0.11.2+ of airflow-chart
             safeToEvict: true
 
@@ -237,7 +231,7 @@ data:
               else:
                   # In the case of KPO, we allow Airflow to overwrite the entrypoint
                   # because we do not know what the container will be (and it's probably
-                  # not a container vendored by Astronomer, and it's definately not
+                  # not a container vendored by Astronomer, and it's definitely not
                   # an Airflow container).
                   extra_labels["kubernetes-pod-operator"] = "True"
                   extra_labels["kubernetes-executor"] = "False"

@@ -1,5 +1,0 @@
-dependencies:
-- name: keda
-  version: 2.6.2
-  repository: "@kedacore"
-  condition: enabled

@@ -28,7 +28,7 @@ class TestIngress:
             == "release-name-nginx"
         )
 
-        # This would be valid python, but we laod from json just to keep linters happy and the data more compact
+        # This would be valid python, but we load from json just to keep linters happy and the data more compact
         expected_rules_v1 = json.loads(
             """
         [{"host":"example.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":{"service":{"name":"release-name-astro-ui","port":{"name":"astro-ui-http"}}}}]}},
