@@ -216,7 +216,9 @@ def test_astronomer_namespace_pools_houston_configmap(kube_version):
 
     assert deployments_config["deployments"]["hardDeleteDeployment"]
     assert deployments_config["deployments"]["manualNamespaceNames"]
-    assert deployments_config["deployments"]["preCreatedNamespaces"] == [{"name": namespace} for namespace in namespaces]
+    assert deployments_config["deployments"]["preCreatedNamespaces"] == [
+        {"name": namespace} for namespace in namespaces
+    ]
 
     # test configuration when namespacePools is disabled -> should not add configuration parameters
     doc = render_chart(
