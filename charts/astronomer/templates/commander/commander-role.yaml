@@ -44,9 +44,10 @@ rules:
 - apiGroups: [""]
   resources: ["serviceaccounts"]
   verbs: ["create", "delete", "get", "patch", "list", "watch"]
+# Important to understand: https://kubernetes.io/docs/reference/access-authn-authz/rbac/#privilege-escalation-prevention-and-bootstrapping
 - apiGroups: ["rbac.authorization.k8s.io"]
   resources: ["roles"]
-  verbs: ["create", "delete", "deletecollection", "get", "list", "patch", "update", "watch"]
+  verbs: ["create", "delete", "deletecollection", "get", "list", "patch", "update", "watch", "escalate", "bind"]
 - apiGroups: [""]
   resources: ["persistentvolumeclaims"]
   verbs: ["create", "delete", "deletecollection", "get", "list", "update", "watch", "patch"]
@@ -149,7 +150,7 @@ rules:
 # Helm doesn't allow to check if values and sub-values are defined in a "clean" way, we have to do this cascading IF statements
 - apiGroups: ["rbac.authorization.k8s.io"]
   resources: ["clusterroles"]
-  verbs: ["create", "delete", "get", "patch", "list", "watch"]
+  verbs: ["create", "delete", "get", "patch", "list", "watch", "escalate"]
 - apiGroups: ["rbac.authorization.k8s.io"]
   resources: ["clusterrolebindings"]
   verbs: ["create", "delete", "get", "patch", "list", "watch"]
