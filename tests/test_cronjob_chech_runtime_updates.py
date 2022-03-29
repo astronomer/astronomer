@@ -23,7 +23,7 @@ class TestHoustonCronJobAstroRuntimeUpdates:
         doc = docs[0]
 
         assert doc["kind"] == "CronJob"
-        assert doc["spec"]["schedule"] == "0 0 * * *"
+        assert doc["spec"]["schedule"] == "43 0 * * *"
         assert doc["spec"]["jobTemplate"]["spec"]["template"]["spec"]["containers"][0][
             "args"
         ] == [
