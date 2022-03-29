@@ -46,14 +46,14 @@ class TestPostgresql:
 
     def test_postgresql_statefulset_with_private_registry_enabled(self, kube_version):
         """Test postgresql with privateRegistry=True."""
-        repostiory = "private-repository.example.com"
+        repository = "private-repository.example.com"
         docs = render_chart(
             kube_version=kube_version,
             values={
                 "global": {
                     "privateRegistry": {
                         "enabled": True,
-                        "repository": repostiory,
+                        "repository": repository,
                     },
                     "postgresqlEnabled": True,
                 },
@@ -67,5 +67,5 @@ class TestPostgresql:
             c_by_name = get_containers_by_name(doc=doc, include_init_containers=True)
             for name, container in c_by_name.items():
                 assert container["image"].startswith(
-                    repostiory
-                ), f"Container named '{name}' does not use registry '{repostiory}': {container}"
+                    repository
+                ), f"Container named '{name}' does not use registry '{repository}': {container}"

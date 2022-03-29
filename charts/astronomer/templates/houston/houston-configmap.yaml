@@ -231,7 +231,7 @@ data:
               else:
                   # In the case of KPO, we allow Airflow to overwrite the entrypoint
                   # because we do not know what the container will be (and it's probably
-                  # not a container vendored by Astronomer, and it's definately not
+                  # not a container vendored by Astronomer, and it's definitely not
                   # an Airflow container).
                   extra_labels["kubernetes-pod-operator"] = "True"
                   extra_labels["kubernetes-executor"] = "False"

@@ -54,7 +54,7 @@ Is a simplified way of doing:
 kubectl exec -it -n astronomer astronomer-prometheus-0 whoami
 ```
 
-Long story short, testinfra allows for connections to various places (in this case kuberentes pods) and you can make assertions by executing commands there or using other function provided by the testinfra "Host" class.
+Long story short, testinfra allows for connections to various places (in this case kubernetes pods) and you can make assertions by executing commands there or using other function provided by the testinfra "Host" class.
 
 ### Kubernetes client
 
