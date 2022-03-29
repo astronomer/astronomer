@@ -150,7 +150,7 @@ rules:
 # Helm doesn't allow to check if values and sub-values are defined in a "clean" way, we have to do this cascading IF statements
 - apiGroups: ["rbac.authorization.k8s.io"]
   resources: ["clusterroles"]
-  verbs: ["create", "delete", "get", "patch", "list", "watch", "escalate"]
+  verbs: ["create", "delete", "get", "patch", "list", "watch", "escalate", "bind"]
 - apiGroups: ["rbac.authorization.k8s.io"]
   resources: ["clusterrolebindings"]
   verbs: ["create", "delete", "get", "patch", "list", "watch"]
