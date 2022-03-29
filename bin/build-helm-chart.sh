@@ -9,7 +9,6 @@ set -e
 TEMPDIR="${TEMPDIR:-/tmp/astro-temp}"
 git_root="$(git rev-parse --show-toplevel)"
 
-helm repo add kedacore https://kedacore.github.io/charts
 rm -rf "${TEMPDIR}/astronomer" || true
 mkdir -p "${TEMPDIR}"
 cp -R "${git_root}/" "${TEMPDIR}/astronomer/"

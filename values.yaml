@@ -75,9 +75,6 @@ global:
   # Enables blackbox exporter
   blackboxExporterEnabled: false
 
-  # Used to enable Celery autoscaling
-  kedaEnabled: false
-
   # make fluentd to gather logs from all available namespaces
   manualNamespaceNamesEnabled: false
 
@@ -376,18 +373,6 @@ prometheus:
     limits:
       cpu: "2000m"
       memory: "8Gi"
-
-#################################
-## KEDA configuration
-#################################
-
-keda:
-  keda:
-    nodeSelector:
-      <<: *platformNodeSelector
-    affinity:
-      <<: *platformAffinity
-    tolerations: *platformTolerations
 
 nats:
   nodeSelector:

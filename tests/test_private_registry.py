@@ -8,7 +8,6 @@ def test_private_registry_repository_image_names_the_same_as_public_ones():
 
     extra_globals = {
         "blackboxExporterEnabled": True,
-        "kedaEnabled": True,
         "postgresqlEnabled": True,
         "prometheusPostgresExporterEnabled": True,
         "pspEnabled": True,
