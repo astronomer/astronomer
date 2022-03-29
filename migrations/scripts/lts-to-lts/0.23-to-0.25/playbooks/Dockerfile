@@ -1,7 +1,7 @@
 FROM python:3.9-alpine3.12
 
 ARG HELM3_VERSION="3.8.1"
-ARG KUBECTL_VERSION="1.18.15"
+ARG KUBECTL_VERSION="1.19.16"
 
 # Install Ansible and the modules we will use for upgrade
 RUN apk add build-base libffi-dev openssl-dev postgresql-dev bash curl postgresql-client

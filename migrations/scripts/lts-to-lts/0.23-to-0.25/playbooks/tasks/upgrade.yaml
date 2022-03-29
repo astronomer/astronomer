@@ -8,7 +8,7 @@
   set_fact:
     backup_dir: "/astronomer-backups"
     timestamp: "{{ lookup('pipe', 'date +%Y-%m-%d-%H-%M-%S') }}"
-    upgrade_to_version: "0.25.6"
+    upgrade_to_version: "0.25.13"
     use_internal_helm_repo: "{{ lookup('env', 'USE_INTERNAL_HELM_REPO') }}"
     # db_hostname: "localhost"
     # db_username: "postgres"
