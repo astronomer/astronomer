@@ -3,4 +3,4 @@ GitPython
 kubernetes
 pytest
 PyYAML
-testinfra
+pytest-testinfra
