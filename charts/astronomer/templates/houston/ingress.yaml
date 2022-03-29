@@ -40,6 +40,16 @@ spec:
       hosts:
         - houston.{{ .Values.global.baseDomain }}
   {{- end }}
+  {{ if semverCompare "< 1.19-0" .Capabilities.KubeVersion.Version -}}
+  rules:
+  - host: houston.{{ .Values.global.baseDomain }}
+    http:
+      paths:
+        - path: /
+          backend:
+            serviceName: {{ .Release.Name }}-houston
+            servicePort: houston-http
+  {{ else -}}
   rules:
   - host: houston.{{ .Values.global.baseDomain }}
     http:
@@ -51,4 +61,5 @@ spec:
               name: {{ .Release.Name }}-houston
               port:
                 name: houston-http
+  {{- end -}}
 {{- end }}

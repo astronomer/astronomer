@@ -29,6 +29,14 @@ class TestIngress:
         )
 
         # This would be valid python, but we load from json just to keep linters happy and the data more compact
+        expected_rules_v1beta1 = json.loads(
+            """
+        [{"host":"example.com","http":{"paths":[{"path":"/","backend":{"serviceName":"release-name-astro-ui","servicePort":"astro-ui-http"}}]}},
+        {"host":"app.example.com","http":{"paths":[{"path":"/","backend":{"serviceName":"release-name-astro-ui","servicePort":"astro-ui-http"}}]}},
+        {"host":"registry.example.com","http":{"paths":[{"path":"/","backend":{"serviceName":"release-name-registry","servicePort":"registry-http"}}]}},
+        {"host":"install.example.com","http":{"paths":[{"path":"/","backend":{"serviceName":"release-name-cli-install","servicePort":"install-http"}}]}}]
+        """
+        )
         expected_rules_v1 = json.loads(
             """
         [{"host":"example.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":{"service":{"name":"release-name-astro-ui","port":{"name":"astro-ui-http"}}}}]}},
@@ -38,5 +46,11 @@ class TestIngress:
         """
         )
 
-        assert doc["apiVersion"] == "networking.k8s.io/v1"
-        assert doc["spec"]["rules"] == expected_rules_v1
+        _, minor, _ = (int(x) for x in kube_version.split("."))
+
+        if minor < 19:
+            assert doc["apiVersion"] == "networking.k8s.io/v1beta1"
+            assert doc["spec"]["rules"] == expected_rules_v1beta1
+        else:
+            assert doc["apiVersion"] == "networking.k8s.io/v1"
+            assert doc["spec"]["rules"] == expected_rules_v1
