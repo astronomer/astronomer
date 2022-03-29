@@ -74,7 +74,10 @@ data:
       {{ if .Values.global.features.namespacePools.enabled }}
       hardDeleteDeployment: true
       manualNamespaceNames: true
-      preCreatedNamespaces:{{ printf "\n" }}{{ toYaml .Values.global.features.namespacePools.namespaces.names | indent 6 }}
+      preCreatedNamespaces:
+      {{- range $i, $namespaceName := .Values.global.features.namespacePools.namespaces.names }}
+        - name: {{ $namespaceName }}
+      {{- end }}
       {{ end }}
 
       {{- if .Values.global.authSidecar.enabled }}
