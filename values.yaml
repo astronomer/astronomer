@@ -75,7 +75,7 @@ global:
   # Enables blackbox exporter
   blackboxExporterEnabled: false
 
-  # make fluentd to gather logs from all avaialble namespaces
+  # make fluentd to gather logs from all available namespaces
   manualNamespaceNamesEnabled: false
 
   # Used to enable nats-server
@@ -206,7 +206,7 @@ global:
   ssl:
     enabled: false
     mode: "prefer"
-    # we need seperate mode for grafana:
+    # we need separate mode for grafana:
     # grafana starting from (7.5.0) only supports sslmodes: disable/require/verify-ca/verify-full
     # https://github.com/grafana/grafana/blob/master/CHANGELOG.md#750-beta1-2021-03-04 (Postgres: SSL certification)
     grafana:

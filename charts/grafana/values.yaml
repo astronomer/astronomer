@@ -54,7 +54,7 @@ dashboards:
 
 ## Configure extra environment variables for grafana.
 ## This allows you to change configuration settings
-## withing grafana such as SMTP configuration for alerts.
+## within grafana such as SMTP configuration for alerts.
 extraEnvVars:
   []
   # - name: GF_SMTP_ENABLED

@@ -193,6 +193,17 @@ houston:
     # Default here is to run at midnight every night
     schedule: "0 0 * * *"
 
+  # Check for Astronomer Runtime Updates
+  # This runs as a CronJob
+  updateRuntimeCheck:
+    # Enable check updates CronJob
+    enabled: true
+
+    # url for update service
+    url: https://updates.astronomer.io/astronomer-runtime
+
+    # Default here is to run at 00:43 every night
+    schedule: "43 0 * * *"
   # this option allows to override airflow releases config
 
   #

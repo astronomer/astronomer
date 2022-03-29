@@ -1,19 +1,19 @@
-###################################
-## Houston Update Check CronJob
-###################################
-{{- if .Values.houston.updateCheck.enabled }}
+##################################
+## Houston Update Check CronJob ##
+##################################
+{{- if .Values.houston.updateRuntimeCheck.enabled }}
 apiVersion: {{ include "apiVersion.batch.cronjob" . }}
 kind: CronJob
 metadata:
-  name: {{ .Release.Name }}-houston-update-check
+  name: {{ .Release.Name }}-houston-update-runtime-check
   labels:
     tier: astronomer
-    component: houston-update-check
+    component: houston-update-runtime-check
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 spec:
-  schedule: {{ .Values.houston.updateCheck.schedule }}
+  schedule: {{ .Values.houston.updateRuntimeCheck.schedule }}
   # The cron job does not allow concurrent runs; if it is time for a new job run and the previous job run hasn't finished yet, the cron job skips the new job run
   concurrencyPolicy: Forbid
   jobTemplate:
@@ -23,7 +23,7 @@ spec:
         metadata:
           labels:
             tier: astronomer
-            component: houston-update-check
+            component: houston-update-runtime-check
             release: {{ .Release.Name }}
           {{- if .Values.global.istio.enabled }}
           annotations:
@@ -40,16 +40,9 @@ spec:
           containers:
             - name: update-check
               image: {{ template "houston.image" . }}
-              resources:
-                requests:
-                  cpu: "500m"
-                  memory: "1024Mi"
-                limits:
-                  cpu: "1000m"
-                  memory: "2048Mi"
               imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
               # If you supply only args for a Container, the default Entrypoint defined in the Docker image is run with the args that you supplied.
-              args: ["yarn", "check-platform-updates", "--", " --url={{ .Values.houston.updateCheck.url }}"]
+              args: ["yarn", "check-runtime-updates", "--url={{ .Values.houston.updateRuntimeCheck.url }}"]
               volumeMounts:
                 {{- include "houston_volume_mounts" . | indent 16 }}
                 {{- include "custom_ca_volume_mounts" . | indent 16 }}
