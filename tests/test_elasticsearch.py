@@ -67,7 +67,7 @@ class TestElasticSearch:
         )
 
     def test_elasticsearch_with_sysctl_disabled(self, kube_version):
-        """Test  ElasticSearch with sysctl config/values.yaml."""
+        """Test ElasticSearch master,data and client with sysctl config/values.yaml."""
         docs = render_chart(
             kube_version=kube_version,
             values={"elasticsearch": {"sysctlInitContainer": {"enabled": False}}},
@@ -79,24 +79,11 @@ class TestElasticSearch:
         )
 
         assert len(docs) == 3
-
-        # elasticsearch master
-        doc = docs[0]
-        assert doc["kind"] == "StatefulSet"
-        assert jmespath.search("spec.template.spec.initContainers", docs[0]) is None
-
-        # elasticsearch data
-        doc = docs[1]
-        assert doc["kind"] == "StatefulSet"
-        assert jmespath.search("spec.template.spec.initContainers", docs[1]) is None
-
-        # elasticsearch client
-        doc = docs[2]
-        assert doc["kind"] == "Deployment"
-        assert jmespath.search("spec.template.spec.initContainers", docs[2]) is None
+        for doc_ids in range(len(docs)):
+            assert jmespath.search("spec.template.spec.initContainers", docs[0]) is None
 
     def test_elasticsearch_securitycontext_defaults(self, kube_version):
-        """Test  ElasticSearch with securitycontext default values"""
+        """Test  ElasticSearch master, data and client with securitycontext default values"""
         docs = render_chart(
             kube_version=kube_version,
             values={},
@@ -107,18 +94,7 @@ class TestElasticSearch:
             ],
         )
         assert len(docs) == 3
-
-        # elasticsearch master
-        doc = docs[0]
-
-        assert doc["spec"]["template"]["spec"]["securityContext"] == {"fsGroup": 1000}
-
-        # elasticsearch data
-        doc = docs[1]
-
-        assert doc["spec"]["template"]["spec"]["securityContext"] == {"fsGroup": 1000}
-
-        # elasticsearch client
-        doc = docs[2]
-
-        assert doc["spec"]["template"]["spec"]["securityContext"] == {"fsGroup": 1000}
+        for doc_ids in range(len(docs)):
+            assert docs[doc_ids]["spec"]["template"]["spec"]["securityContext"] == {
+                "fsGroup": 1000
+            }
