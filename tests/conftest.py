@@ -19,6 +19,7 @@ import subprocess
 import pytest
 from filelock import FileLock
 from . import git_root_dir
+import docker
 
 
 @pytest.fixture(autouse=True, scope="session")
@@ -52,3 +53,13 @@ def upgrade_helm(tmp_path_factory, worker_id):
         if not flag_fn.is_file():
             _upgrade_helm()
             flag_fn.touch()
+
+
+@pytest.fixture(scope="session")
+def docker_client(request):
+    """This is a text fixture for the docker client,
+    should it be needed in a test
+    """
+    client = docker.from_env()
+    yield client
+    client.close()
