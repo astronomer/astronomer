@@ -184,3 +184,98 @@ def test_astronomer_commander_rbac_cluster_role_disabled(kube_version):
         ],
     )
     assert len(docs) == 0
+
+
+@pytest.mark.parametrize(
+    "kube_version",
+    supported_k8s_versions,
+)
+def test_astronomer_commander_rbac_multinamespace_mode_disabled(kube_version):
+    """Test that if Houston's Airflow chart sub-configuration has multiNamespaceMode disabled, the rendered commander role doesn't have permissions to manage Cluster-level RBAC resources"""
+    doc = render_chart(
+        kube_version=kube_version,
+        values={
+            "astronomer": {
+                "houston": {
+                    "config": {
+                        "deployments": {
+                            "helm": {"airflow": {"multiNamespaceMode": False}}
+                        }
+                    }
+                }
+            }
+        },
+        show_only=["charts/astronomer/templates/commander/commander-role.yaml"],
+    )[0]
+
+    cluster_resources = ["clusterrolebindings", "clusterroles"]
+
+    # check that there is no rules regarding ClusterRoles and ClusterRolesBinding
+    generated_resources = [
+        resource
+        for rule in doc["rules"]
+        if "resources" in rule
+        for resource in rule["resources"]
+    ]
+    for resource in generated_resources:
+        assert resource not in cluster_resources
+
+
+@pytest.mark.parametrize(
+    "kube_version",
+    supported_k8s_versions,
+)
+def test_astronomer_commander_rbac_multinamespace_mode_undefined(kube_version):
+    """Test that if Houston's configuration for Airflow chart is not defined, the rendered commander role doesn't have permissions to manage Cluster-level RBAC resources"""
+    doc = render_chart(
+        kube_version=kube_version,
+        values={},
+        show_only=["charts/astronomer/templates/commander/commander-role.yaml"],
+    )[0]
+
+    cluster_resources = ["clusterrolebindings", "clusterroles"]
+
+    # check that there is no rules regarding ClusterRoles and ClusterRolesBinding
+    generated_resources = [
+        resource
+        for rule in doc["rules"]
+        if "resources" in rule
+        for resource in rule["resources"]
+    ]
+    for resource in generated_resources:
+        assert resource not in cluster_resources
+
+
+@pytest.mark.parametrize(
+    "kube_version",
+    supported_k8s_versions,
+)
+def test_astronomer_commander_rbac_multinamespace_mode_enabled(kube_version):
+    """Test that if Houston's Airflow chart sub-configuration has multiNamespaceMode enabled, the rendered commander role has permissions to manage Cluster-level RBAC resources"""
+    doc = render_chart(
+        kube_version=kube_version,
+        values={
+            "astronomer": {
+                "houston": {
+                    "config": {
+                        "deployments": {
+                            "helm": {"airflow": {"multiNamespaceMode": True}}
+                        }
+                    }
+                }
+            }
+        },
+        show_only=["charts/astronomer/templates/commander/commander-role.yaml"],
+    )[0]
+
+    cluster_resources = ["clusterrolebindings", "clusterroles"]
+
+    # check that there are rules for cluterroles and clusterrolebindings
+    generated_resources = [
+        resource
+        for rule in doc["rules"]
+        if "resources" in rule
+        for resource in rule["resources"]
+    ]
+    for resource in cluster_resources:
+        assert resource in generated_resources
