@@ -67,7 +67,7 @@ class TestElasticSearch:
         )
 
     def test_elasticsearch_with_sysctl_disabled(self, kube_version):
-        """Test ElasticSearch master,data and client with sysctl config/values.yaml."""
+        """Test ElasticSearch master, data and client with sysctl config/values.yaml."""
         docs = render_chart(
             kube_version=kube_version,
             values={"elasticsearch": {"sysctlInitContainer": {"enabled": False}}},
