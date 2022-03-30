@@ -75,7 +75,7 @@ show-docker-images: ## Show all docker images and versions used in the helm char
 		2>/dev/null \
 		| awk '/image: / {match($$2, /(([^"]*):[^"]*)/, a) ; printf "https://%s %s\n", a[2], a[1] ;}' | sort -u | column -t
 
-.PHONY: show-docker-images
+.PHONY: show-docker-images-with-private-registry
 show-docker-images-with-private-registry: ## Show all docker images and versions used in the helm chart with a privateRegistry set
 	@helm template . \
 		--set global.privateRegistry.enabled=True \
@@ -88,3 +88,26 @@ show-docker-images-with-private-registry: ## Show all docker images and versions
 		--set global.veleroEnabled=True \
 		2>/dev/null \
 		| awk '/image: / {match($$2, /(([^"]*):[^"]*)/, a) ; printf "https://%s %s\n", a[2], a[1] ;}' | sort -u | column -t
+
+.PHONY: list-docker-images
+list-docker-images: ## Show all docker images and versions used in the helm chart with yq:
+	@helm template . \
+		--set global.baseDomain=foo.com \
+		--set global.blackboxExporterEnabled=True \
+		--set global.postgresqlEnabled=True \
+		--set global.postgresqlEnabled=True \
+		--set global.prometheusPostgresExporterEnabled=True \
+		--set global.pspEnabled=True \
+		--set global.veleroEnabled=True | yq '..|.image? | select(.)' | sort | uniq
+
+.PHONY: list-docker-images-with-private-registry
+list-docker-images-with-private-registry: ## Show all docker images and versions used in the helm chart with a privateRegistry set using yq
+	@helm template . \
+		--set global.privateRegistry.enabled=True \
+		--set global.privateRegistry.repository=example.com/the-private-registry \
+		--set global.baseDomain=foo.com \
+		--set global.blackboxExporterEnabled=True \
+		--set global.postgresqlEnabled=True \
+		--set global.prometheusPostgresExporterEnabled=True \
+		--set global.pspEnabled=True \
+		--set global.veleroEnabled=True | yq '..|.image? | select(.)' | sort | uniq
