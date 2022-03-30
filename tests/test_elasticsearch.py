@@ -79,8 +79,8 @@ class TestElasticSearch:
         )
 
         assert len(docs) == 3
-        for doc_ids in range(len(docs)):
-            assert not docs[doc_ids]["spec"]["template"]["spec"]["initContainers"]
+        for doc in docs:
+            assert not doc["spec"]["template"]["spec"]["initContainers"]
 
     def test_elasticsearch_securitycontext_defaults(self, kube_version):
         """Test  ElasticSearch master, data and client with securitycontext default values"""
