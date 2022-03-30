@@ -94,7 +94,7 @@ class TestElasticSearch:
             ],
         )
         assert len(docs) == 3
-        for doc_ids in range(len(docs)):
-            assert docs[doc_ids]["spec"]["template"]["spec"]["securityContext"] == {
+        for doc in docs:
+            assert doc["spec"]["template"]["spec"]["securityContext"] == {
                 "fsGroup": 1000
             }
