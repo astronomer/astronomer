@@ -63,9 +63,19 @@ build: ## Build the Astronomer helm chart
 
 .PHONY: update-requirements
 update-requirements: ## Update all requirements.txt files
-	for FILE in requirements/*.in ; do pip-compile --quiet --allow-unsafe --upgrade --generate-hashes $${FILE} ; done ;
+	for FILE in requirements/*.in ; do pip-compile --quiet --generate-hashes --allow-unsafe --upgrade $${FILE} ; done ;
 	-pre-commit run requirements-txt-fixer --all-files --show-diff-on-failure
 
 .PHONY: show-docker-images
 show-docker-images: ## Show all docker images and versions used in the helm chart
-	helm template . --set global.postgresqlEnabled=True --set global.baseDomain=foo.com 2>/dev/null | awk '/image: / {match($$2, /(([^"]*):[^"]*)/, a) ; printf "https://%s %s\n", a[2], a[1] ;}' | sort -u | column -t
+	@helm template . \
+		--set global.baseDomain=foo.com \
+		--set global.blackboxExporterEnabled=True \
+		--set global.kedaEnabled=True \
+		--set global.postgresqlEnabled=True \
+		--set global.postgresqlEnabled=True \
+		--set global.prometheusPostgresExporterEnabled=True \
+		--set global.pspEnabled=True \
+		--set global.veleroEnabled=True \
+		2>/dev/null \
+		| gawk '/image: / {match($$2, /(([^"]*):[^"]*)/, a) ; printf "https://%s %s\n", a[2], a[1] ;}' | sort -u | column -t
