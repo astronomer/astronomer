@@ -13,4 +13,3 @@ pytest-sugar
 pytest-xdist
 PyYAML
 requests
-yq
