@@ -310,7 +310,8 @@ registry:
   notifications:
     timeout: 30s
 
-  redirectDisabled: false
+  redirect:
+    disable: false
 
 install:
   resources: {}

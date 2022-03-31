@@ -35,9 +35,9 @@ data:
       filesystem:
         rootdirectory: /var/lib/registry
     {{- end }}
-    {{- if .Values.registry.redirectDisabled }}
+    {{- if (.Values.registry.redirect).disable }}
       redirect:
-        disable: {{ .Values.registry.redirectDisabled }}
+        disable: {{ .Values.registry.redirect.disable }}
     {{- end }}
       delete:
         enabled: true

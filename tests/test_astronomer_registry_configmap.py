@@ -34,7 +34,7 @@ def test_astronomer_registry_redirect(kube_version):
     """Test that helm renders redirect section in configmap of astronomer registry."""
     docs = render_chart(
         kube_version=kube_version,
-        values={"astronomer": {"registry": {"redirectDisabled": True}}},
+        values={"astronomer": {"registry": {"redirect": {"disable": True}}}},
         show_only=["charts/astronomer/templates/registry/registry-configmap.yaml"],
     )
 
