@@ -290,6 +290,7 @@ commands:
     steps:
       - setup_remote_docker:
           docker_layer_caching: true
+          version: 20.10.11
       - attach_workspace:
           at: /tmp/workspace
       - run:
@@ -343,6 +344,7 @@ commands:
       - checkout
       - setup_remote_docker:
           docker_layer_caching: true
+          version: 20.10.11
       - run:
           name: Build the Docker image
           command: |
