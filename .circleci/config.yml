@@ -6,7 +6,7 @@ executors:
     environment:
       GIT_ORG: astronomer
     docker:
-      - image: circleci/python:3
+      - image: cimg/python:3.9
 jobs:
   run_pre_commit:
     docker:
@@ -100,7 +100,7 @@ jobs:
 
   release-to-internal:
     machine:
-      image: ubuntu-2004:202107-02
+      image: ubuntu-2004:202201-02
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -110,12 +110,12 @@ jobs:
           command: |
             set -e
             sudo apt-get update && sudo apt-get install -y ca-certificates curl
-            pyenv global 3.9.4
+            pyenv global 3.10.2
             bin/release-helm-chart /tmp/workspace/astronomer-*.tgz
 
   release-to-public:
     machine:
-      image: ubuntu-2004:202107-02
+      image: ubuntu-2004:202201-02
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -125,13 +125,13 @@ jobs:
           command: |
             set -e
             sudo apt-get update && sudo apt-get install -y ca-certificates curl
-            pyenv global 3.9.4
+            pyenv global 3.10.2
             bin/release-helm-chart -p /tmp/workspace/astronomer-*.tgz
       - publish-github-release
 
   platform-1-19-11:
     machine:
-      image: ubuntu-2004:202107-02
+      image: ubuntu-2004:202201-02
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.19.11
@@ -147,7 +147,7 @@ jobs:
           when: always
   platform-1-20-7:
     machine:
-      image: ubuntu-2004:202107-02
+      image: ubuntu-2004:202201-02
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.20.7
@@ -163,7 +163,7 @@ jobs:
           when: always
   platform-1-21-2:
     machine:
-      image: ubuntu-2004:202107-02
+      image: ubuntu-2004:202201-02
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.21.2
@@ -180,7 +180,7 @@ jobs:
 
   lts-25-to-28-test:
     machine:
-      image: ubuntu-2004:202107-02
+      image: ubuntu-2004:202201-02
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.21.10 # last supported major.minor k8s version for astronomer 0.25
@@ -408,6 +408,6 @@ commands:
           name: Create a release on GitHub
           command: |
             set -xe
-            pyenv global 3.9.4
+            pyenv global 3.10.2
             pip install astronomer_e2e_test
             astronomer-ci publish-github-release --github-repository $CIRCLE_PROJECT_REPONAME --github-organization $CIRCLE_PROJECT_USERNAME --commitish $CIRCLE_SHA1
