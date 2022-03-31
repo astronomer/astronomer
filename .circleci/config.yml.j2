@@ -341,7 +341,7 @@ commands:
           command: |
             set -e
             echo 'export PATH="/tmp/bin:/tmp/google-cloud-sdk/bin:$PATH"' >> "$HOME/.bashrc" # for interactive ssh debugging
-            bin/lts-25-to-28-test
+            bin/test-lts-upgrader
 
   helm-install:
     description: "Install Helm chart from artifact"
