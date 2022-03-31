@@ -1,0 +1,5 @@
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Rollback Astronomer
+      import_tasks: tasks/rollback.yaml
