@@ -34,6 +34,6 @@ def test_docker_image(docker_client, docker_image):
     docker_image = docker_image.replace('"', "").strip()
     try:
         # Pulling docker image
-        image = docker_client.images.pull(docker_image)
+        docker_client.images.pull(docker_image)
     except docker.errors.APIError as exc:
         assert False, f"'Unable to pull docker image: {docker_image} | Error: {exc}"
