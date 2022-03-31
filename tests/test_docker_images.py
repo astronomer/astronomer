@@ -3,7 +3,6 @@ import docker
 
 
 def test_docker_images(docker_client):
-
     # Listing docker images
     list_docker_images_command = ["make", "list-docker-images"]
     docker_images = (
