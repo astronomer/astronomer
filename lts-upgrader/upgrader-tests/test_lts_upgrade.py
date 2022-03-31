@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
-from os import environ
+import contextlib
+from os import getenv
 from pathlib import Path
 import yaml
 from time import sleep, time
@@ -26,30 +27,18 @@ def test_upgrade():
     assert major == 0 and minor == 28, "This test is only applicable for 0.28"
 
     upgrade_manifest_path = Path(
-        git_root_dir
-        / "migrations/scripts/lts-to-lts/0.25-to-0.28/manifests/upgrade-0.25-to-0.28.yaml"
+        git_root_dir / "upgrader/25-to-28/manifests/upgrade-0.25-to-0.28.yaml"
     )
     rollback_manifest_path = Path(
-        git_root_dir
-        / "migrations/scripts/lts-to-lts/0.25-to-0.28/manifests/rollback-0.25-to-0.28.yaml"
+        git_root_dir / "upgrader/25-to-28/manifests/rollback-0.25-to-0.28.yaml"
     )
 
-    namespace = environ.get("NAMESPACE")
-    release_name = environ.get("RELEASE_NAME")
-    print("Checking NAMESPACE")
-    if not namespace:
-        print("NAMESPACE env var is not present, using 'astronomer' namespace")
-        namespace = "astronomer"
-    print("Checking RELEASE_NAME")
-    if not release_name:
-        print(
-            "RELEASE_NAME env var is not present, assuming 'astronomer' is the release name"
-        )
-        release_name = "astronomer"
+    namespace = getenv("NAMESPACE", default="astronomer")
+    release_name = getenv("RELEASE_NAME", default="astronomer")
 
     print("Checking installed version")
     helm_history = check_output(
-        f"helm3 history { release_name } -n { namespace }", shell=True
+        f"helm3 history {release_name} -n {namespace}", shell=True
     ).decode("utf8")
     print(f"Helm history: (pre-upgrade)\n{helm_history}")
 
@@ -61,10 +50,10 @@ def test_upgrade():
     ), "Expected state to be deployed before upgrade"
 
     upgrade_manifest_data = rewrite_manifest_for_local_testing(upgrade_manifest_path)
-    upgrade_manifest_yaml = [doc for doc in yaml.safe_load_all(upgrade_manifest_data)]
+    upgrade_manifest_yaml = list(yaml.safe_load_all(upgrade_manifest_data))
     for i, doc in enumerate(upgrade_manifest_yaml):
         if doc.get("kind") == "Job":
-            try:
+            with contextlib.suppress(KeyError):
                 containers = doc["spec"]["template"]["spec"]["containers"]
                 for container in containers:
                     if not container.get("env"):
@@ -74,9 +63,6 @@ def test_upgrade():
                     )
                     print("Modified test env with USE_INTERNAL_HELM_REPO=True")
                 upgrade_manifest_yaml[i] = doc
-            except KeyError:
-                pass
-
     upgrade_manifest_data = yaml.safe_dump_all(upgrade_manifest_yaml)
 
     modified_upgrade_manifest_path = f"{upgrade_manifest_path}.test.yaml"
@@ -172,9 +158,7 @@ def test_upgrade():
 
 def rewrite_manifest_for_local_testing(manifest):
     # Rewrite some parts of the k8s manifest with testing-specific configs
-    with open(manifest) as f:
-        new_manifest = f.read()
-
+    new_manifest = Path(manifest).read_text()
     new_manifest = new_manifest.replace(
         "image: quay.io/astronomer/lts-25-to-28-upgrade:latest",
         "image: lts-25-to-28-upgrade:latest",
