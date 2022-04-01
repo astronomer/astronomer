@@ -33,7 +33,7 @@
 
 - name: Find database connection from secret astronomer-boostrap
   changed_when: false
-  community.kubernetes.k8s_info:
+  k8s_info:
     api_version: v1
     kind: Secret
     name: astronomer-bootstrap
