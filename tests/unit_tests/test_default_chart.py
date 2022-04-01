@@ -5,7 +5,7 @@ from tests import git_root_dir
 from tests import get_containers_by_name
 
 
-with open(f"{git_root_dir}/tests/default_chart_data.yaml") as file:
+with open(f"{git_root_dir}/tests/unit_tests/default_chart_data.yaml") as file:
     default_chart_data = yaml.load(file, Loader=yaml.SafeLoader)
 
 template_ids = [template["name"] for template in default_chart_data]
