@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# shellcheck disable=SC1090,SC1091
+set -euo pipefail
+set -x
+
+GIT_ROOT="$(git -C "${0%/*}" rev-parse --show-toplevel)"
+BIN_DIR="${GIT_ROOT}/bin"
+
+source "$GIT_ROOT/bin/install-ci-tools" 1
+export PATH="$PATH:/tmp/bin"
+ls -lh /tmp/bin
+
+source "$GIT_ROOT/bin/setup-kind"
+
+export NAMESPACE=astronomer
+export RELEASE_NAME=astronomer
+export HELM_CHART_PATH=astronomer/astronomer
+export ASTRONOMER_VERSION=0.25  # Must be set to pre-upgrade version
+
+helm repo add astronomer https://helm.astronomer.io
+helm repo update
+
+echo "Deploying Astronomer..."
+
+echo "Installing the most recent version of 0.25"
+"$BIN_DIR/install-platform"
+"$BIN_DIR/waitfor-platform"
+
+echo "Loading upgrader image into Kind"
+kind load docker-image lts-25-to-28-upgrade
+
+echo "Astronomer 0.25 installed. Running 0.28 upgrade tests!"
+export HELM_CHART_PATH="$GIT_ROOT"  # Must be set to local directory to test chart from current git branch
+
+pip3 install virtualenv
+virtualenv --python=python3 /tmp/venv
+source /tmp/venv/bin/activate
+pip install -r "$GIT_ROOT/requirements/lts-tests.txt"
+
+pytest -s "$GIT_ROOT/lts-upgrader/upgrader-tests"
+deactivate
