@@ -69,7 +69,11 @@ jobs:
             - ~/project/.unittest-requirements
       - run:
           name: unittest the Astronomer chart
-          command: make unittest-charts
+          command: |
+            mkdir test-results
+            make unittest-charts
+      - store_test_results:
+          path: test-results
 
   build-artifact:
     docker:
