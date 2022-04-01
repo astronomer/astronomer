@@ -28,12 +28,10 @@ def list_docker_images():
     return docker_images
 
 
-# Pulling docker image test
 @pytest.mark.parametrize("docker_image", list_docker_images())
 def test_docker_image(docker_client, docker_image):
     docker_image = docker_image.replace('"', "").strip()
     try:
-        # Pulling docker image
         docker_client.images.get(docker_image)
     except docker.errors.ImageNotFound as exc:
         assert False, f"'Docker image not found: {docker_image} | Error: {exc}"
