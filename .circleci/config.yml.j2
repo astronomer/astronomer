@@ -321,7 +321,6 @@ commands:
             docker build \
               -t "$image_name" \
               --file << parameters.path>>/<< parameters.dockerfile >> \
-              --build-arg BUILD_NUMBER="${CIRCLE_BUILD_NUM}" \
               << parameters.path >>
             docker save -o << parameters.image_name >>.tar "$image_name"
       - persist_to_workspace:
