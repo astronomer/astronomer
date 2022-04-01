@@ -6,8 +6,8 @@ The Astronomer upgrade will run in a pod in the cluster.
 
 ## Check version compatibility
 
-- Kubernetes version must be greater than or equal to 1.14 and less than 1.19. If you need help to upgrade, please contact your cloud provider's support or your Kubernetes administrator.
-- You must be using Astronomer Certified Airflow images, and your version must be 1.10.5 or greater. These images are in the form:
+- Kubernetes version must be greater than or equal to 1.19. If you need help upgrading kubernetes, please contact your cloud provider's support team or your Kubernetes administrator.
+- You must be using Astronomer Certified Airflow images, and your version must be 2.0.0 or greater. These images are in the form:
 
 ```
 astronomerinc/ap-airflow:<airflow-version>-<build number>-<distribution>-onbuild
@@ -18,10 +18,10 @@ The "onbuild" part is optional, but recommended. This enables features in the as
 Valid examples:
 
 ```
-astronomerinc/ap-airflow:1.10.12-1-alpine3.10-onbuild
-astronomerinc/ap-airflow:1.10.12-1-alpine3.10
-astronomerinc/ap-airflow:1.10.5-9-buster-onbuild
-astronomerinc/ap-airflow:1.10.5-9-buster
+astronomerinc/ap-airflow:2.2.4-1-alpine3.10-onbuild
+astronomerinc/ap-airflow:2.2.4-1-alpine3.10
+astronomerinc/ap-airflow:2.2.5-9-buster-onbuild
+astronomerinc/ap-airflow:2.2.5-9-buster
 ```
 
 This is an example of a legacy images that should _not_ be used:
@@ -60,7 +60,7 @@ Ensure that you have the default namespace in your kubernetes context, not neces
 ## Run the Astronomer upgrade automation
 
 ```
-kubectl apply -f https://raw.githubusercontent.com/astronomer/astronomer/release-0.28/migrations/scripts/lts-to-lts/0.25-to-0.28/manifests/upgrade-0.25-to-0.28.yaml
+kubectl apply -f https://raw.githubusercontent.com/astronomer/astronomer/release-0.28/lts-upgrader/upgrader/25-to-28/manifests/upgrade-0.25-to-0.28.yaml
 ```
 
 Watch the logs of the upgrade pod, you can find pod name with:
