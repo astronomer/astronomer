@@ -17,7 +17,7 @@ show_only = [
 commander_expected_result = {
     "apiGroups": ["security.openshift.io"],
     "resources": ["securitycontextconstraints"],
-    "verbs": ["create", "delete"],
+    "verbs": ["create", "delete", "list", "watch"],
 }
 
 
@@ -31,7 +31,12 @@ def test_scc_disabled(kube_version):
     """
     docs = render_chart(
         kube_version=kube_version,
-        values={"global": {"sccEnabled": False}},
+        values={
+            "global": {
+                "sccEnabled": False,
+                "features": {"namespacePools": {"enabled": False}},
+            }
+        },
         show_only=show_only,
     )
     houston_values = yaml.safe_load(docs[1]["data"]["production.yaml"])
@@ -56,7 +61,9 @@ def test_scc_enabled(kube_version):
             "global": {
                 "sccEnabled": True,
                 "clusterRoles": True,
-                "namespacePools": {"enabled": False},
+                "features": {
+                    "namespacePools": {"enabled": False},
+                },
             }
         },
         show_only=show_only,
