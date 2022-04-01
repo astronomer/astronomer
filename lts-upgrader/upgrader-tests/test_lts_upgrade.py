@@ -27,10 +27,10 @@ def test_upgrade():
     assert major == 0 and minor == 28, "This test is only applicable for 0.28"
 
     upgrade_manifest_path = Path(
-        git_root_dir / "upgrader/25-to-28/manifests/upgrade-0.25-to-0.28.yaml"
+        git_root_dir / "lts-upgrader/25-to-28/manifests/upgrade-0.25-to-0.28.yaml"
     )
     rollback_manifest_path = Path(
-        git_root_dir / "upgrader/25-to-28/manifests/rollback-0.25-to-0.28.yaml"
+        git_root_dir / "lts-upgrader/25-to-28/manifests/rollback-0.25-to-0.28.yaml"
     )
 
     namespace = getenv("NAMESPACE", default="astronomer")
