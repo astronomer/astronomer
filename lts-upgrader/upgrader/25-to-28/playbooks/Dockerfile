@@ -4,7 +4,6 @@ ARG HELM3_VERSION="3.8.1"
 ARG KUBECTL_VERSION="1.21.11"
 
 RUN apt-get update
-# RUN apt-get install build-base libffi-dev openssl-dev postgresql-dev bash curl postgresql-client
 RUN apt-get install -y libpq-dev libffi-dev libssl-dev curl postgresql-client
 RUN apt-get install -y build-essential
 ADD requirements.txt /requirements.txt
