@@ -34,6 +34,8 @@ def test_docker_image(docker_client, docker_image):
     docker_image = docker_image.replace('"', "").strip()
     try:
         # Pulling docker image
-        docker_client.images.pull(docker_image)
+        docker_client.images.get(docker_image)
+    except docker.errors.ImageNotFound as exc:
+        assert False, f"'Docker image not found: {docker_image} | Error: {exc}"
     except docker.errors.APIError as exc:
-        assert False, f"'Unable to pull docker image: {docker_image} | Error: {exc}"
+        assert False, f"'Error getting image: {docker_image} | Error: {exc}"
