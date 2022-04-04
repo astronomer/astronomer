@@ -131,6 +131,16 @@ jobs:
           when: always
 {%- endfor %}
 
+  check-commander-airflow-version:
+    docker:
+      - image: cimg/base:2022.03
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Check that commander image uses same Airflow chart version
+          command: make validate-commander-airflow-version
+
 workflows:
   version: 2.1
   build-and-release-helm-chart:
@@ -138,6 +148,7 @@ workflows:
       - lint
       - run_pre_commit
       - unittest-charts
+      - check-commander-airflow-version
       - build-artifact:
           requires:
             - lint
