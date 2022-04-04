@@ -17,6 +17,7 @@ export RELEASE_NAME=astronomer
 
 echo "Sleeping for 100 seconds to allow metrics to be collected so we can test against them"
 
-mkdir -p test-results
-pytest -n 'auto' -v "--junitxml=test-results/junit.xml" -s "$GIT_ROOT/tests/functional_tests/"
+mkdir -p "test-results"
+pytest --help
+pytest -v "--junitxml=test-results/junit.xml" -s "$GIT_ROOT/tests/functional_tests/"
 deactivate
