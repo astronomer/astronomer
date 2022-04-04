@@ -36,7 +36,6 @@ def list_docker_images():
 def test_docker_image(docker_client, docker_image):
     docker_image = docker_image.replace('"', "").strip()
     try:
-        print(docker_client)
         docker_client.images.get_registry_data(docker_image)
     except docker.errors.APIError as exc:
         assert False, f"'Error reading image: {docker_image} | Error: {exc}"
