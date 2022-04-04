@@ -19,6 +19,7 @@ def test_astro_sub_chart_version_match():
     have matching versions.
     """
     with open(git_root_dir / "Chart.yaml") as f:
+
         astro_chart_dot_yaml = yaml.safe_load(f.read())
 
     with open(git_root_dir / "charts" / "astronomer" / "Chart.yaml") as f:
