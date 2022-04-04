@@ -47,6 +47,23 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Create chart-tests-cache-key.txt
+          command: |
+            cp requirements/chart-tests.txt /tmp/chart-tests-cache-key.txt
+            python --version --version | sed 's/^/# /' >> /tmp/chart-tests-cache-key.txt
+      - restore_cache:
+          keys:
+            - chart-test-venv-{{ '{{' }} checksum "/tmp/chart-tests-cache-key.txt" }}
+      - run:
+          name: Create venv
+          command: |
+            make unittest-requirements
+      - save_cache:
+          key: chart-test-venv-{{ '{{' }} checksum "/tmp/chart-tests-cache-key.txt" }}
+          paths:
+            - ~/project/venv
+            - ~/project/.unittest-requirements
+      - run:
           name: unittest the Astronomer chart
           command: make unittest-charts
 
