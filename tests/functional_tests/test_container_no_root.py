@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
-from os import getenv
-import testinfra
+# from os import getenv
+# import testinfra
 
 # if not (namespace := getenv("NAMESPACE")):
 #     print("NAMESPACE env var is not present, using 'astronomer' namespace")

@@ -30,7 +30,7 @@ unittest-requirements: .unittest-requirements ## Setup venv required for unit te
 
 .PHONY: unittest-charts
 unittest-charts: .unittest-requirements ## Unittest the Astronomer helm chart
-	venv/bin/python -m pytest -n auto tests
+	venv/bin/python -m pytest -n auto tests/chart_tests
 
 .PHONY: lint-charts
 lint-charts: lint-prep ## Lint Astronomer sub-charts
