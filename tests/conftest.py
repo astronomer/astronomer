@@ -55,11 +55,21 @@ def upgrade_helm(tmp_path_factory, worker_id):
             flag_fn.touch()
 
 
-@pytest.fixture(scope="session")
-def docker_client(request):
+def docker_daemon_present():
+    try:
+        docker.from_env().ping()
+        return True
+    except docker.errors.DockerException:
+        return False
+
+
+@pytest.fixture(autouse=True, scope="session")
+def docker_client():
     """This is a text fixture for the docker client,
     should it be needed in a test
     """
-    client = docker.from_env()
-    yield client
-    client.close()
+    if docker_daemon_present():
+        docker.from_env().ping()
+        client = docker.from_env()
+        yield client
+        client.close()
