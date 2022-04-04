@@ -17,5 +17,5 @@ export RELEASE_NAME=astronomer
 
 echo "Sleeping for 100 seconds to allow metrics to be collected so we can test against them"
 
-pytest -s "$GIT_ROOT/bin/functional-tests/"
+pytest -s "$GIT_ROOT/tests/functional-tests/"
 deactivate
