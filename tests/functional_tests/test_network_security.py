@@ -1,10 +1,10 @@
-from os import getenv
-import sys
 import logging
+import sys
+import xml.etree.ElementTree as xml_parser
+from contextlib import contextmanager
+from os import getenv
 from random import randint
 from time import sleep, time
-from contextlib import contextmanager
-import xml.etree.ElementTree as xml_parser
 
 import testinfra
 from kubernetes import client, config

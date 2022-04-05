@@ -7,13 +7,14 @@ into running pods so we can inspect the run-time environment.
 """
 
 import json
-from os import getenv
 import time
-import yaml
-import testinfra
+from os import getenv
 from subprocess import check_output
-from kubernetes.client.rest import ApiException
+
 import pytest
+import testinfra
+import yaml
+from kubernetes.client.rest import ApiException
 
 
 def test_default_disabled(kube_client):

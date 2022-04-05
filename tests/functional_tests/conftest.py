@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
 from os import getenv
-import pytest
+
 import docker
+import pytest
 import testinfra
 from kubernetes import client, config
 
@@ -79,9 +80,9 @@ def docker_client(request):
     """This is a text fixture for the docker client,
     should it be needed in a test
     """
-    client = docker.from_env()
-    yield client
-    client.close()
+    docker_client = docker.from_env()
+    yield docker_client
+    docker_client.close()
 
 
 @pytest.fixture(scope="session")
@@ -90,13 +91,20 @@ def kube_client(request, in_cluster=False):
     Return a kubernetes client. By default, use kube-config. If running in a pod, use k8s service account.
     """
 
+    k8s_clinet = get_kube_client(in_cluster)
+    yield k8s_clinet
+
+
+def get_kube_client(in_cluster=False):
+
     if in_cluster:
         print("Using in cluster kubernetes configuration")
         config.load_incluster_config()
     else:
         print("Using kubectl kubernetes configuration")
         config.load_kube_config()
-    yield client.CoreV1Api()
+
+    return client.CoreV1Api()
 
 
 def get_pod_by_label_selector(kube_client, label_selector, namespace=namespace) -> str:
@@ -108,3 +116,21 @@ def get_pod_by_label_selector(kube_client, label_selector, namespace=namespace) 
         len(pods) > 0
     ), f"Expected to find at least one pod with labels '{label_selector}'"
     return pods[0].metadata.name
+
+
+def get_pod_running_containers(namespace=namespace):
+    """Return the containers from pods found."""
+    pods = get_kube_client().list_namespaced_pod(namespace).items
+
+    containers = []
+    for pod in pods:
+        pod_name = pod.metadata.name
+        for container_status in pod.status.container_statuses:
+            if container_status.ready:
+                container = vars(container_status).copy()
+                container["namespace"] = namespace
+                container["pod_name"] = pod_name
+
+                containers.append(container)
+
+    return containers
