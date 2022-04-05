@@ -191,6 +191,7 @@ pytest==7.1.1 \
     #   -r requirements/chart-tests.in
     #   pytest-forked
     #   pytest-profiling
+    #   pytest-rerunfailures
     #   pytest-sugar
     #   pytest-xdist
 pytest-forked==1.4.0 \
@@ -202,6 +203,10 @@ pytest-forked==1.4.0 \
 pytest-profiling==1.7.0 \
     --hash=sha256:93938f147662225d2b8bd5af89587b979652426a8a6ffd7e73ec4a23e24b7f29 \
     --hash=sha256:999cc9ac94f2e528e3f5d43465da277429984a1c237ae9818f8cfd0b06acb019
+    # via -r requirements/chart-tests.in
+pytest-rerunfailures==10.2 \
+    --hash=sha256:9e1e1bad51e07642c5bbab809fc1d4ec8eebcb7de86f90f1a26e6ef9de446697 \
+    --hash=sha256:d31d8e828dfd39363ad99cd390187bf506c7a433a89f15c3126c7d16ab723fe2
     # via -r requirements/chart-tests.in
 pytest-sugar==0.9.4 \
     --hash=sha256:b1b2186b0a72aada6859bea2a5764145e3aaa2c1cfbb23c3a19b5f7b697563d3
@@ -269,9 +274,9 @@ rsa==4.8 \
     # via pdbpp
 
 # The following packages are considered to be unsafe in a requirements file:
-setuptools==61.3.1 \
-    --hash=sha256:41aface2e85b517c3a466b4689b8055c02cd2e623461f09af7d93f3da65c4709 \
-    --hash=sha256:88fafba4abc2f047e08a188fd4bbc10b0e464592c37b514c19f8f8f88d94450b
+setuptools==62.0.0 \
+    --hash=sha256:7999cbd87f1b6e1f33bf47efa368b224bed5e27b5ef2c4d46580186cbcb1a86a \
+    --hash=sha256:a65e3802053e99fc64c6b3b29c11132943d5b8c8facbcc461157511546510967
     # via google-auth
 six==1.16.0 \
     --hash=sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926 \
@@ -312,4 +317,6 @@ websocket-client==1.3.2 \
     #   kubernetes
 wmctrl==0.4 \
     --hash=sha256:66cbff72b0ca06a22ec3883ac3a4d7c41078bdae4fb7310f52951769b10e14e0
-    # via kubernetes
+    # via
+    #   kubernetes
+    #   pytest-rerunfailures
