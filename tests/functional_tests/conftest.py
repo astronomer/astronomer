@@ -107,7 +107,9 @@ def get_kube_client(in_cluster=False):
     return client.CoreV1Api()
 
 
-def get_pod_by_label_selector(kube_client, label_selector, pod_namespace=namespace) -> str:
+def get_pod_by_label_selector(
+    kube_client, label_selector, pod_namespace=namespace
+) -> str:
     """Return the name of a pod found by label selector."""
     pods = kube_client.list_namespaced_pod(
         pod_namespace, label_selector=label_selector
