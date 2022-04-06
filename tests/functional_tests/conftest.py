@@ -107,10 +107,10 @@ def get_kube_client(in_cluster=False):
     return client.CoreV1Api()
 
 
-def get_pod_by_label_selector(kube_client, label_selector, namespace=namespace) -> str:
+def get_pod_by_label_selector(kube_client, label_selector, pod_namespace=namespace) -> str:
     """Return the name of a pod found by label selector."""
     pods = kube_client.list_namespaced_pod(
-        namespace, label_selector=label_selector
+        pod_namespace, label_selector=label_selector
     ).items
     assert (
         len(pods) > 0
@@ -128,7 +128,7 @@ def get_pod_running_containers(pod_namespace=namespace):
         for container_status in pod.status.container_statuses:
             if container_status.ready:
                 container = vars(container_status).copy()
-                container["namespace"] = namespace
+                container["namespace"] = pod_namespace
                 container["pod_name"] = pod_name
 
                 containers.append(container)
