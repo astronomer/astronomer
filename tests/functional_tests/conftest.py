@@ -91,8 +91,8 @@ def kube_client(request, in_cluster=False):
     Return a kubernetes client. By default, use kube-config. If running in a pod, use k8s service account.
     """
 
-    k8s_clinet = get_kube_client(in_cluster)
-    yield k8s_clinet
+    k8s_client = get_kube_client(in_cluster)
+    yield k8s_client
 
 
 def get_kube_client(in_cluster=False):
@@ -118,9 +118,9 @@ def get_pod_by_label_selector(kube_client, label_selector, namespace=namespace) 
     return pods[0].metadata.name
 
 
-def get_pod_running_containers(namespace=namespace):
+def get_pod_running_containers(pod_namespace=namespace):
     """Return the containers from pods found."""
-    pods = get_kube_client().list_namespaced_pod(namespace).items
+    pods = get_kube_client().list_namespaced_pod(pod_namespace).items
 
     containers = []
     for pod in pods:
