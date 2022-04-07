@@ -132,6 +132,7 @@ def get_pod_running_containers(pod_namespace=namespace):
                 container["pod_name"] = pod_name
                 container["namespace"] = pod_namespace
 
-                containers[container_status.name] = container
+                key = pod_name + "_" + container_status.name
+                containers[key] = container
 
     return containers
