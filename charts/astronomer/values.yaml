@@ -24,7 +24,11 @@ images:
     # httpSecret: ~
   houston:
     repository: quay.io/astronomer/ap-houston-api
+<<<<<<< HEAD
     tag: 0.28.16
+=======
+    tag: 0.28.17
+>>>>>>> f519a446 (fix cert issues with bumping houston-api to 0.28.17 (#1454))
     pullPolicy: IfNotPresent
   astroUI:
     repository: quay.io/astronomer/ap-astro-ui
