@@ -96,7 +96,6 @@ def kube_client(request, in_cluster=False):
 
 
 def get_kube_client(in_cluster=False):
-
     if in_cluster:
         print("Using in cluster kubernetes configuration")
         config.load_incluster_config()
@@ -124,15 +123,16 @@ def get_pod_running_containers(pod_namespace=namespace):
     """Return the containers from pods found."""
     pods = get_kube_client().list_namespaced_pod(pod_namespace).items
 
-    containers = []
+    containers = {}
     for pod in pods:
         pod_name = pod.metadata.name
         for container_status in pod.status.container_statuses:
             if container_status.ready:
-                container = vars(container_status).copy()
-                container["namespace"] = pod_namespace
-                container["pod_name"] = pod_name
-
-                containers.append(container)
+                container_name = container_status.name
+                containers[container_name] = {
+                    "container": vars(container_status).copy(),
+                    "namespace": pod_namespace,
+                    "pod_name": pod_name,
+                }
 
     return containers
