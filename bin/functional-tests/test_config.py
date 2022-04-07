@@ -18,7 +18,7 @@ import pytest
 
 def test_default_disabled(kube_client):
     pods = kube_client.list_namespaced_pod("astronomer")
-    default_disabled = ["keda", "prometheus-postgres-exporter"]
+    default_disabled = ["prometheus-postgres-exporter"]
     for pod in pods.items:
         for feature in default_disabled:
             if feature in pod.metadata.name:
@@ -52,13 +52,13 @@ def test_houston_config(houston_api):
 
 
 def test_houston_can_reach_prometheus(houston_api):
-    houston_api.check_output(
-        "wget -qO- --timeout=1 http://astronomer-prometheus.astronomer.svc.cluster.local:9090/targets"
+    assert houston_api.check_output(
+        "wget --timeout=5 -qO- http://astronomer-prometheus.astronomer.svc.cluster.local:9090/targets"
     )
 
 
 def test_nginx_can_reach_default_backend(nginx):
-    nginx.check_output(
+    assert nginx.check_output(
         "curl -s --max-time 1 http://astronomer-nginx-default-backend:8080"
     )
 
@@ -66,7 +66,9 @@ def test_nginx_can_reach_default_backend(nginx):
 @pytest.mark.flaky(reruns=10, reruns_delay=10)
 def test_prometheus_targets(prometheus):
     """Ensure all Prometheus targets are healthy"""
-    data = prometheus.check_output("wget -qO- http://localhost:9090/api/v1/targets")
+    data = prometheus.check_output(
+        "wget --timeout=5 -qO- http://localhost:9090/api/v1/targets"
+    )
     targets = json.loads(data)["data"]["activeTargets"]
     for target in targets:
         assert target["health"] == "up", (
@@ -85,7 +87,7 @@ def test_core_dns_metrics_are_collected(prometheus):
     # coredns 1.7.0 changed a bunch of fields, so we have to act differently on >= 1.7.0
     # https://coredns.io/2020/06/15/coredns-1.7.0-release/
     data = prometheus.check_output(
-        "wget -qO- http://localhost:9090/api/v1/query?query=coredns_build_info"
+        "wget --timeout=5 -qO- http://localhost:9090/api/v1/query?query=coredns_build_info"
     )
     parsed = json.loads(data)
     coredns_version_string = parsed["data"]["result"][0]["metric"]["version"]
@@ -102,7 +104,7 @@ def test_core_dns_metrics_are_collected(prometheus):
         raise Exception(f"Cannot determine CoreDNS version from {parsed}")
 
     data = prometheus.check_output(
-        f"wget -qO- http://localhost:9090/api/v1/query?query={metric}"
+        f"wget --timeout=5 -qO- http://localhost:9090/api/v1/query?query={metric}"
     )
     parsed = json.loads(data)
     assert (
@@ -113,7 +115,7 @@ def test_core_dns_metrics_are_collected(prometheus):
 def test_houston_metrics_are_collected(prometheus):
     """Ensure Houston metrics are collected and prefixed with 'houston_'"""
     data = prometheus.check_output(
-        "wget -qO- http://localhost:9090/api/v1/query?query=houston_up"
+        "wget --timeout=5 -qO- http://localhost:9090/api/v1/query?query=houston_up"
     )
     parsed = json.loads(data)
     assert (
@@ -152,15 +154,13 @@ def test_prometheus_config_reloader_works(prometheus, kube_client):
         print(f"Exception when calling CoreV1Api->patch_namespaced_config_map: {e}\n")
 
     # This can take more than a minute.
-    for i in range(12):
+    for _ in range(12):
         data = prometheus.check_output(
-            "wget -qO- http://localhost:9090/api/v1/status/config"
+            "wget --timeout=5 -qO- http://localhost:9090/api/v1/status/config"
         )
         j_parsed = json.loads(data)
-        # print(parsed['data']['yaml']['config']['global'])
         y_parsed = yaml.safe_load(j_parsed["data"]["yaml"])
         if y_parsed["global"]["scrape_interval"] != "30s":
-            print(y_parsed["global"]["scrape_interval"])
             break
         else:
             time.sleep(10)
@@ -205,12 +205,12 @@ def test_houston_backend_secret_present_after_helm_upgrade_and_container_restart
         namespace = "astronomer"
 
     if not (release_name := getenv("RELEASE_NAME")):
-        print("No RELEASE_NAME env var, usgin RELEASE_NAME=astronomer")
+        print("No release_name env var, using release_name=astronomer")
         release_name = "astronomer"
 
     # Attempt downgrade with the documented procedure.
     # Run the command twice to ensure the most recent change is a no-operation change
-    command = f"helm3 upgrade --reuse-values --no-hooks -n '{namespace}' '{release_name}' {helm_chart_path}"
+    command = f"helm upgrade --reuse-values --no-hooks -n '{namespace}' '{release_name}' {helm_chart_path}"
     for i in range(2):
         print(f"Iteration {i+1}/2: {command}\n")
         print(check_output(command, shell=True).decode("utf8"))

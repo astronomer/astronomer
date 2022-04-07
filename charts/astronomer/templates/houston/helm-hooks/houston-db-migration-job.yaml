@@ -1,7 +1,7 @@
 ##########################################
 ## Db migration Pre install/update Hook ##
 ##########################################
-apiVersion: batch/v1
+apiVersion: {{ include "apiVersion.batch" . }}
 kind: Job
 metadata:
   name: {{ .Release.Name }}-houston-db-migrations

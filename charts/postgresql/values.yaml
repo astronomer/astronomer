@@ -46,7 +46,7 @@ image:
 ## volumePermissions: Change the owner of the persist volume mountpoint to RunAsUser:fsGroup
 ##
 volumePermissions:
-  enabled: true
+  enabled: false
   image:
     ## ref: https://hub.docker.com/r/bitnami/minideb/tags/
     registry: docker.io
@@ -194,7 +194,7 @@ postgresqlDataDir: /bitnami/postgresql/data
 
 ## PostgreSQL service configuration
 service:
-  ## PostgresSQL service type
+  ## PostgreSQL service type
   type: ClusterIP
   # clusterIP: None
   port: 5432

@@ -1,32 +1,40 @@
 ########################################
 ## Astronomer Commander Role/ClusterRole
 ########################################
-{{- $singleNamespace := .Values.global.singleNamespace }}
-{{- $clusterRoles:= .Values.global.clusterRoles }}
-{{- if and .Values.global.rbacEnabled }}
-kind: {{ if or ($singleNamespace) (not $clusterRoles) }}Role{{ else }}ClusterRole{{ end }}
-apiVersion: rbac.authorization.k8s.io/v1
+# Here, we either:
+# 1. Do not create any resource if rbacEnabled is disabled
+# 2. Create a Cluster Role if clusterRoles and rbacEnabled are enabled and namespacePools is disabled
+# 3. Create roles for each namespaces in the namespacePool if enabled.
+{{- $useClusterRoles := and .Values.global.rbacEnabled .Values.global.clusterRoles (not .Values.global.features.namespacePools.enabled)}}
+{{- $shouldCreateResources := and .Values.global.rbacEnabled (or .Values.global.clusterRoles .Values.global.features.namespacePools.enabled) }}
+{{- $namespaces := .Values.global.features.namespacePools.namespaces.names }}
+{{ if $useClusterRoles }}
+  {{- $namespaces = list .Release.Namespace}}
+{{ end }}
+
+{{- if $shouldCreateResources }}
+{{- range $i, $namespaceName := $namespaces -}}
+---
+kind: {{ if $useClusterRoles }}ClusterRole{{ else }}Role{{ end }}
+apiVersion: {{ template "apiVersion.rbac" . }}
 metadata:
-  name: {{ .Release.Name }}-commander
+  {{- if not $useClusterRoles }}
+  namespace: {{ $namespaceName }}
+  {{- end }}
+  name: {{ $.Release.Name }}-commander
   labels:
     tier: houston
-    release: {{ .Release.Name }}
-    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
-    heritage: {{ .Release.Service }}
-  {{ if .Values.global.enableArgoCDAnnotation }}
+    release: {{ $.Release.Name }}
+    chart: "{{ $.Chart.Name }}-{{ $.Chart.Version }}"
+    heritage: {{ $.Release.Service }}
+  {{- if $.Values.global.enableArgoCDAnnotation }}
   annotations:
     argocd.argoproj.io/sync-wave: "-1"
   {{- end }}
 rules:
-- apiGroups: ["*"]
-  resources: ["*"]
-  verbs: ["list", "watch"]
 - apiGroups: [""]
   resources: ["configmaps"]
   verbs: ["create", "delete", "get", "list", "patch", "update", "watch"]
-- apiGroups: ["keda.k8s.io"]
-  resources: ["scaledobjects"]
-  verbs: ["get", "create", "delete"]
 - apiGroups: [""]
   resources: ["secrets"]
   verbs: ["create", "delete", "deletecollection", "get", "list", "patch", "update", "watch"]
@@ -35,13 +43,11 @@ rules:
   verbs: ["create", "delete", "deletecollection", "get", "list", "patch", "update", "watch"]
 - apiGroups: [""]
   resources: ["serviceaccounts"]
-  verbs: ["create", "delete", "get", "patch"]
-- apiGroups: ["rbac.authorization.k8s.io"]
-  resources: ["clusterroles"]
-  verbs: ["create", "delete", "get", "patch"]
+  verbs: ["create", "delete", "get", "patch", "list", "watch"]
+# Important to understand: https://kubernetes.io/docs/reference/access-authn-authz/rbac/#privilege-escalation-prevention-and-bootstrapping
 - apiGroups: ["rbac.authorization.k8s.io"]
   resources: ["roles"]
-  verbs: ["*"]
+  verbs: ["create", "delete", "deletecollection", "get", "list", "patch", "update", "watch", "escalate", "bind"]
 - apiGroups: [""]
   resources: ["persistentvolumeclaims"]
   verbs: ["create", "delete", "deletecollection", "get", "list", "update", "watch", "patch"]
@@ -59,7 +65,7 @@ rules:
   verbs: ["get", "list", "watch"]
 - apiGroups: [""]
   resources: ["nodes/proxy"]
-  verbs: ["get"]
+  verbs: ["get", "list", "watch"]
 - apiGroups: [""]
   resources: ["persistentvolumes"]
   verbs: ["create", "delete", "get", "list", "watch", "patch"]
@@ -98,47 +104,64 @@ rules:
   verbs: ["create", "delete", "get", "list", "patch", "update", "watch"]
 - apiGroups: [""]
   resources: ["events"]
-  verbs: ["create", "delete", "patch"]
+  verbs: ["create", "delete", "patch", "list", "watch"]
 - apiGroups: ["extensions"]
   resources: ["ingresses"]
-  verbs: ["create", "delete", "get", "patch"]
+  verbs: ["create", "delete", "get", "patch", "list", "watch"]
 - apiGroups: ["extensions"]
   resources: ["ingresses/status"]
-  verbs: ["update"]
+  verbs: ["update", "list", "watch"]
 - apiGroups: ["networking.k8s.io"]
   resources: ["ingresses"]
-  verbs: ["get", "create", "delete", "patch"]
+  verbs: ["get", "create", "delete", "patch", "list", "watch"]
 - apiGroups: ["networking.k8s.io"]
   resources: ["ingresses/status"]
-  verbs: ["update"]
+  verbs: ["update", "list", "watch"]
 - apiGroups: ["networking.k8s.io"]
   resources: ["networkpolicies"]
-  verbs: ["create", "delete", "get", "patch"]
-{{ if $clusterRoles }}
-- nonResourceURLs: ["/metrics"]
-  verbs: ["get"]
-{{ end }}
-- apiGroups: ["rbac.authorization.k8s.io"]
-  resources: ["clusterrolebindings"]
-  verbs: ["create", "delete", "get", "patch"]
+  verbs: ["create", "delete", "get", "patch", "list", "watch"]
 - apiGroups: ["rbac.authorization.k8s.io"]
   resources: ["rolebindings"]
-  verbs: ["create", "delete", "get", "patch"]
+  verbs: ["create", "delete", "get", "patch", "list", "watch"]
 - apiGroups: ["authentication.k8s.io"]
   resources: ["tokenreviews"]
-  verbs: ["create", "delete"]
+  verbs: ["create", "delete", "list", "watch"]
 - apiGroups: ["authorization.k8s.io"]
   resources: ["subjectaccessreviews"]
-  verbs: ["create", "delete"]
+  verbs: ["create", "delete", "list", "watch"]
 - apiGroups: ["kubed.appscode.com"]
   resources: ["searchresults"]
-  verbs: ["get"]
+  verbs: ["get", "list", "watch"]
 - apiGroups: ["policy"]
   resources: ["poddisruptionbudgets"]
-  verbs: ["create", "delete", "get"]
-{{- if .Values.global.sccEnabled }}
+  verbs: ["create", "delete", "get", "list", "watch"]
+{{- if $useClusterRoles }}
+# permissions for "nonResourceURLs" can only be applied on ClusterRoles
+- nonResourceURLs: ["/metrics"]
+  verbs: ["get"]
+{{- end }}
+{{- if $.Values.houston.config.deployments }}
+{{- if $.Values.houston.config.deployments.helm }}
+{{- if $.Values.houston.config.deployments.helm.airflow }}
+{{- if $.Values.houston.config.deployments.helm.airflow.multiNamespaceMode }}
+# Commander creates ClusterRoles and ClusterRoleBindings only if user enables multiNamespaceMode on the Airflow Helm Chart
+# However, commander will only create ClusterRole and ClusterRoleBinding resources if the multinamespaceMode is enabled
+# in an Airflow helm deployment.
+# Helm doesn't allow to check if values and sub-values are defined in a "clean" way, we have to do this cascading IF statements
+- apiGroups: ["rbac.authorization.k8s.io"]
+  resources: ["clusterroles"]
+  verbs: ["create", "delete", "get", "patch", "list", "watch", "escalate", "bind"]
+- apiGroups: ["rbac.authorization.k8s.io"]
+  resources: ["clusterrolebindings"]
+  verbs: ["create", "delete", "get", "patch", "list", "watch"]
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- if $.Values.global.sccEnabled }}
 - apiGroups: ["security.openshift.io"]
   resources: ["securitycontextconstraints"]
-  verbs: ["create", "delete"]
-{{- end }}
+  verbs: ["create", "delete", "list", "watch"]
+{{ end }}
+{{ end }}
 {{- end }}

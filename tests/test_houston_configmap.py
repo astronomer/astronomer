@@ -1,8 +1,7 @@
 import yaml
 from tests.helm_template_generator import render_chart
 import pytest
-import tempfile
-from subprocess import check_call
+import ast
 
 
 def common_test_cases(docs):
@@ -13,7 +12,7 @@ def common_test_cases(docs):
 
     assert doc["kind"] == "ConfigMap"
     assert doc["apiVersion"] == "v1"
-    assert doc["metadata"]["name"] == "RELEASE-NAME-houston-config"
+    assert doc["metadata"]["name"] == "release-name-houston-config"
 
     local_prod = yaml.safe_load(doc["data"]["local-production.yaml"])
 
@@ -27,11 +26,8 @@ def common_test_cases(docs):
         "airflowLocalSettings"
     ]
 
-    with tempfile.NamedTemporaryFile() as f:
-        f.write(airflow_local_settings.encode())
-        f.flush()
-        # validate embedded python. returns if black succeeds, else raises CalledProcessError.
-        check_call(["black", "-q", f.name])
+    # validate yaml-embedded python
+    ast.parse(airflow_local_settings.encode())
 
 
 def test_houston_configmap():
@@ -104,7 +100,7 @@ def test_houston_configmap_with_kubed_enabled():
     assert prod["deployments"]["helm"]["airflow"]["webserver"]["extraVolumes"] == [
         {
             "name": "signing-certificate",
-            "secret": {"secretName": "RELEASE-NAME-houston-jwt-signing-certificate"},
+            "secret": {"secretName": "release-name-houston-jwt-signing-certificate"},
         }
     ]
 

@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- Helm 3 installed as 'helm3'
+- Helm 3 installed as 'helm'
 - Astronomer-internal is added to Helm 3 repositories and up-to-date
 - Kubernetes cluster, with Astronomer already installed from this chart in test
 - HELM_CHART_PATH environment variable is set to a path to the chart in test
@@ -54,7 +54,7 @@ Is a simplified way of doing:
 kubectl exec -it -n astronomer astronomer-prometheus-0 whoami
 ```
 
-Long story short, testinfra allows for connections to various places (in this case kuberentes pods) and you can make assertions by executing commands there or using other function provided by the testinfra "Host" class.
+Long story short, testinfra allows for connections to various places (in this case kubernetes pods) and you can make assertions by executing commands there or using other function provided by the testinfra "Host" class.
 
 ### Kubernetes client
 

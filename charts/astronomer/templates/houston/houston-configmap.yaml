@@ -71,6 +71,15 @@ data:
       kibanaUIEnabled: false
       {{ end }}
 
+      {{ if .Values.global.features.namespacePools.enabled }}
+      hardDeleteDeployment: true
+      manualNamespaceNames: true
+      preCreatedNamespaces:
+      {{- range $i, $namespaceName := .Values.global.features.namespacePools.namespaces.names }}
+        - name: {{ $namespaceName }}
+      {{- end }}
+      {{ end }}
+
       {{- if .Values.global.authSidecar.enabled }}
       # enables nginx auth sidecar for airflow deployments
       authSideCar:
@@ -95,6 +104,11 @@ data:
         # If security context constraints are enabled, enable SCCs for airflow-chart
         sccEnabled: true
       {{- end }}
+
+      {{- if .Values.global.networkNSLabels }}
+        networkNSLabels: true
+      {{- end }}
+
         airflow:
           useAstroSecurityManager: true
           webserver:
@@ -135,12 +149,6 @@ data:
                 ephemeral-storage: "2Gi"
               requests:
                 ephemeral-storage: "1Gi"
-
-            # This is here for upgrading to 0.11.1+ of airflow-chart
-            keda:
-              enabled: false
-              namespaceLabels:
-                name: {{ .Release.Name }}
 
             # This is here for upgrading to 0.11.2+ of airflow-chart
             safeToEvict: true
@@ -226,7 +234,7 @@ data:
               else:
                   # In the case of KPO, we allow Airflow to overwrite the entrypoint
                   # because we do not know what the container will be (and it's probably
-                  # not a container vendored by Astronomer, and it's definately not
+                  # not a container vendored by Astronomer, and it's definitely not
                   # an Airflow container).
                   extra_labels["kubernetes-pod-operator"] = "True"
                   extra_labels["kubernetes-executor"] = "False"

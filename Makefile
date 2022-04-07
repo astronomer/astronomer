@@ -2,7 +2,7 @@
 
 .PHONY: help
 help: ## Print Makefile help.
-	@grep -Eh '^[a-z.A-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-25s\033[0m %s\n", $$1, $$2}'
+	@grep -Eh '^[a-z.A-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-41s\033[0m %s\n", $$1, $$2}'
 
 # List of charts to build
 CHARTS := astronomer nginx grafana prometheus alertmanager elasticsearch kibana fluentd kube-state postgresql
@@ -29,12 +29,8 @@ unittest-requirements: .unittest-requirements ## Setup venv required for unit te
 	touch .unittest-requirements
 
 .PHONY: unittest-charts
-unittest-charts: helm-unittest .unittest-requirements ## Unittest the Astronomer helm chart
-	venv/bin/python -m pytest -n auto tests
-
-helm-unittest: ## Run helm-unittest tests (deprecated test suite, but still valid tests)
-	helm plugin install https://github.com/astronomer/helm-unittest >/dev/null || true
-	helm unittest -3 .
+unittest-charts: .unittest-requirements ## Unittest the Astronomer helm chart
+	venv/bin/python -m pytest -v --junitxml=test-results/junit.xml -n auto tests
 
 .PHONY: lint-charts
 lint-charts: lint-prep ## Lint Astronomer sub-charts
@@ -71,7 +67,6 @@ show-docker-images: ## Show all docker images and versions used in the helm char
 	@helm template . \
 		--set global.baseDomain=foo.com \
 		--set global.blackboxExporterEnabled=True \
-		--set global.kedaEnabled=True \
 		--set global.postgresqlEnabled=True \
 		--set global.postgresqlEnabled=True \
 		--set global.prometheusPostgresExporterEnabled=True \
@@ -79,4 +74,18 @@ show-docker-images: ## Show all docker images and versions used in the helm char
 		--set global.veleroEnabled=True \
 		--set global.authSidecar.enabled=True \
 		2>/dev/null \
-		| awk '/image: / {match($$2, /(([^"]*):[^"]*)/, a) ; printf "https://%s %s\n", a[2], a[1] ;}' | sort -u | column -t
+		| gawk '/image: / {match($$2, /(([^"]*):[^"]*)/, a) ; printf "https://%s %s\n", a[2], a[1] ;}' | sort -u | column -t
+
+.PHONY: show-docker-images
+show-docker-images-with-private-registry: ## Show all docker images and versions used in the helm chart with a privateRegistry set
+	@helm template . \
+		--set global.privateRegistry.enabled=True \
+		--set global.privateRegistry.repository=example.com/the-private-registry \
+		--set global.baseDomain=foo.com \
+		--set global.blackboxExporterEnabled=True \
+		--set global.postgresqlEnabled=True \
+		--set global.prometheusPostgresExporterEnabled=True \
+		--set global.pspEnabled=True \
+		--set global.veleroEnabled=True \
+		2>/dev/null \
+		| gawk '/image: / {match($$2, /(([^"]*):[^"]*)/, a) ; printf "https://%s %s\n", a[2], a[1] ;}' | sort -u | column -t

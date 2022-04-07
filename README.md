@@ -83,7 +83,7 @@ kubectl edit deployment -n astronomer <your deployment>
 #### Change Kubernetes version:
 
 ```sh
-bin/reset-local-dev -K 1.18.15
+bin/reset-local-dev -K 1.21.2
 ```
 
 #### Locally test HA configurations:
@@ -117,7 +117,7 @@ bin/drain.sh
 ```
 
 #### How to upgrade airflow chart json schema
-Everytime we upgrade the airflow chart we will also need to update the json schema file with the list of acceptable top level params (eventually this will be fixed on the OSS side but for now this needs to be a manual step https://github.com/astronomer/issues/issues/3774). Additionally the json schema url will need to be updated to something of the form https://raw.githubusercontent.com/apache/airflow/helm-chart/1.x.x/chart/values.schema.json. This param is found in astronomer/values.schema.json at the astronomer.houston.config.deployments.helm.airflow.$ref parameter
+Every time we upgrade the airflow chart we will also need to update the json schema file with the list of acceptable top level params (eventually this will be fixed on the OSS side but for now this needs to be a manual step https://github.com/astronomer/issues/issues/3774). Additionally the json schema url will need to be updated to something of the form https://raw.githubusercontent.com/apache/airflow/helm-chart/1.x.x/chart/values.schema.json. This param is found in astronomer/values.schema.json at the astronomer.houston.config.deployments.helm.airflow.$ref parameter
 
 To get a list of the top level params it is best to switch to the apache/airflow tagged commit for that chart release. Then run the ag command to get a list of all top level params.
 
@@ -133,3 +133,7 @@ The values output by this command will need to be inserted manually into astrono
 ## License
 
 The code in this repo is licensed Apache 2.0 with Commons Clause, however it installs Astronomer components that have a commercial license, and requires a commercial subscription from Astronomer, Inc.
+
+## Optional schema validation
+
+The ./values.schema.json.example file can be used to validate the helm values you are using work with the default airflow chart shipped with this repo. To use it remove the .example postfix from the file and proceed with the helm lint, install, and upgrade commands as normal.

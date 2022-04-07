@@ -48,7 +48,7 @@ def test_fluentd_clusterrolebinding(kube_version):
     doc = docs[0]
     assert doc["kind"] == "ClusterRoleBinding"
     assert doc["apiVersion"] == "rbac.authorization.k8s.io/v1"
-    assert doc["metadata"]["name"] == "RELEASE-NAME-fluentd"
+    assert doc["metadata"]["name"] == "release-name-fluentd"
     assert len(doc["roleRef"]) > 0
     assert len(doc["subjects"]) > 0
 
@@ -59,3 +59,55 @@ def test_fluentd_clusterrolebinding(kube_version):
     )
 
     assert len(docs) == 0
+
+
+@pytest.mark.parametrize(
+    "kube_version",
+    supported_k8s_versions,
+)
+def test_fluentd_configmap_manual_namespaces_enabled(kube_version):
+    """Test that when namespace Pools is disabled, and manualNamespaces is enabled, helm renders fluentd configmap targeting all namespaces."""
+    doc = render_chart(
+        kube_version=kube_version,
+        values={
+            "global": {
+                "manualNamespaceNamesEnabled": True,
+                "features": {
+                    "namespacePools": {
+                        "enabled": False,
+                    }
+                },
+            }
+        },
+        show_only=["charts/fluentd/templates/fluentd-configmap.yaml"],
+    )[0]
+
+    expected_rule = "key $.kubernetes.namespace_name\n    # fluentd should gather logs from all namespaces if manualNamespaceNamesEnabled is enabled"
+    assert expected_rule in doc["data"]["output.conf"]
+
+
+@pytest.mark.parametrize(
+    "kube_version",
+    supported_k8s_versions,
+)
+def test_fluentd_configmap_manual_namespaces_and_namespacepools_disabled(kube_version):
+    """Test that when namespace Pools and manualNamespaceNamesEnabled are disabled, helm renders a default fluentd configmap looking at an environment variable"""
+    doc = render_chart(
+        kube_version=kube_version,
+        values={
+            "global": {
+                "manualNamespaceNamesEnabled": False,
+                "features": {
+                    "namespacePools": {
+                        "enabled": False,
+                    }
+                },
+            }
+        },
+        show_only=["charts/fluentd/templates/fluentd-configmap.yaml"],
+    )[0]
+
+    expected_rule = (
+        "key $.kubernetes.namespace_name\n    pattern \"^#{ENV['NAMESPACE']}(?:-.*)?$\""
+    )
+    assert expected_rule in doc["data"]["output.conf"]

@@ -15,7 +15,7 @@ class TestPrivateCaDaemonset:
     def common_tests_daemonset(doc):
         """Test things common to all daemonsets."""
         assert doc["kind"] == "DaemonSet"
-        assert doc["metadata"]["name"] == "RELEASE-NAME-private-ca"
+        assert doc["metadata"]["name"] == "release-name-private-ca"
         assert doc["spec"]["template"]["spec"]["containers"][0]["name"] == "cert-copy"
 
     def test_privateca_daemonset_disabled(self, kube_version):
@@ -157,4 +157,4 @@ class TestPrivateCaPsp:
 
         assert len(docs) == 1
         assert docs[0]["kind"] == "PodSecurityPolicy"
-        assert docs[0]["metadata"]["name"] == "RELEASE-NAME-private-ca"
+        assert docs[0]["metadata"]["name"] == "release-name-private-ca"

@@ -1,17 +1,22 @@
 ---
 exclude: '(venv|\.vscode)' # regex
 repos:
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.1.0
+    hooks:
+      - id: codespell
+        args: ["-L", "AKS,aks"]
   - repo: https://github.com/Lucas-C/pre-commit-hooks
-    rev: v1.1.10
+    rev: v1.1.13
     hooks:
       - id: remove-tabs
         exclude_types: [makefile, binary]
   - repo: https://github.com/psf/black
-    rev: 21.12b0
+    rev: 22.3.0
     hooks:
       - id: black
   - repo: https://github.com/asottile/pyupgrade
-    rev: v2.31.0
+    rev: v2.31.1
     hooks:
       - id: pyupgrade
         args: ["--py38-plus"]
@@ -36,7 +41,9 @@ repos:
         args:
           [
             "requirements/chart-tests.in",
+            "requirements/chart-tests.txt",
             "requirements/functional-tests.in",
+            "requirements/functional-tests.txt",
           ]
       - id: sort-simple-yaml
       - id: trailing-whitespace
@@ -47,7 +54,7 @@ repos:
         args:
           - --ignore=E501,W503
   - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: v0.8.0.3
+    rev: v0.8.0.4
     hooks:
       - id: shellcheck
   - repo: local

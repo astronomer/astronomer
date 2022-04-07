@@ -12,7 +12,7 @@ def test_alertmanager_defaults():
 
     assert doc["kind"] == "StatefulSet"
     assert doc["apiVersion"] == "apps/v1"
-    assert doc["metadata"]["name"] == "RELEASE-NAME-alertmanager"
+    assert doc["metadata"]["name"] == "release-name-alertmanager"
     assert doc["spec"]["template"]["spec"]["securityContext"]["fsGroup"] == 65534
 
     # rfc1918 configs should be absent from default settings
@@ -45,7 +45,7 @@ def test_alertmanager_rfc1918():
 
     assert doc["kind"] == "StatefulSet"
     assert doc["apiVersion"] == "apps/v1"
-    assert doc["metadata"]["name"] == "RELEASE-NAME-alertmanager"
+    assert doc["metadata"]["name"] == "release-name-alertmanager"
     assert doc["spec"]["template"]["spec"]["securityContext"]["fsGroup"] == 65534
 
     assert any(
