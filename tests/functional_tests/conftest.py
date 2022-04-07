@@ -128,11 +128,10 @@ def get_pod_running_containers(pod_namespace=namespace):
         pod_name = pod.metadata.name
         for container_status in pod.status.container_statuses:
             if container_status.ready:
-                container_name = container_status.name
-                containers[container_name] = {
-                    "container": vars(container_status).copy(),
-                    "namespace": pod_namespace,
-                    "pod_name": pod_name,
-                }
+                container = vars(container_status).copy()
+                container["pod_name"] = pod_name
+                container["namespace"] = pod_namespace
+
+                containers[container_status.name] = container
 
     return containers
