@@ -455,7 +455,7 @@ class TestAuthSidecar:
     def test_authSidecar_repository_doesnt_use_disabled_private_registry(
         self, kube_version
     ):
-        """Test authSidecar.image template doesnt use a value from privateRegistry when privateRegistry disabled"""
+        """Test authSidecar.image template doesn't use a value from privateRegistry when privateRegistry disabled"""
         docs = render_chart(
             kube_version=kube_version,
             values={
