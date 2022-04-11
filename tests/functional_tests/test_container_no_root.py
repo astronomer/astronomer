@@ -9,7 +9,7 @@ container_ignore_list = [
     "astronomer-kubed",
     "kube-state",
     "houston",
-    "flentd",
+    "fluentd",
     "metrics-exporter",
 ]
 
