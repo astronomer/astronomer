@@ -66,6 +66,7 @@ update-requirements: ## Update all requirements.txt files
 show-docker-images: ## Show all docker images and versions used in the helm chart
 	@helm template . \
 		--set global.baseDomain=foo.com \
+		--set global.authSidecar.enabled=True \
 		--set global.blackboxExporterEnabled=True \
 		--set global.postgresqlEnabled=True \
 		--set global.postgresqlEnabled=True \
