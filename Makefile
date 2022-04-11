@@ -65,6 +65,7 @@ update-requirements: ## Update all requirements.txt files
 .PHONY: show-docker-images
 show-docker-images: ## Show all docker images and versions used in the helm chart
 	@helm template . \
+                --set global.authSidecar.enabled=true \
 		--set global.baseDomain=foo.com \
 		--set global.blackboxExporterEnabled=True \
 		--set global.kedaEnabled=True \
