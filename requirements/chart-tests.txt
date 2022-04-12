@@ -49,9 +49,9 @@ charset-normalizer==2.0.12 \
     --hash=sha256:2857e29ff0d34db842cd7ca3230549d1a697f96ee6d3fb071cfa6c7393832597 \
     --hash=sha256:6881edbebdb17b39b4eaaa821b438bf6eddffb4468cf344f09f89def34a8b1df
     # via requests
-click==8.1.1 \
-    --hash=sha256:5e0d195c2067da3136efb897449ec1e9e6c98282fbf30d7f9e164af9be901a6b \
-    --hash=sha256:7ab900e38149c9872376e8f9b5986ddcaf68c0f413cf73678a0bca5547e6f976
+click==8.1.2 \
+    --hash=sha256:24e1a4a9ec5bf6299411369b208c1df2188d9eb8d916302fe6bf03faed227f1e \
+    --hash=sha256:479707fe14d9ec9a0757618b7a100a0ae4c4e236fac5b7f80ca68028141a1a72
     # via black
 docker==5.0.3 \
     --hash=sha256:7a79bb439e3df59d0a72621775d600bc8bc8b422d285824cb37103eab91d1ce0 \
@@ -191,6 +191,7 @@ pytest==7.1.1 \
     #   -r requirements/chart-tests.in
     #   pytest-forked
     #   pytest-profiling
+    #   pytest-rerunfailures
     #   pytest-sugar
     #   pytest-xdist
 pytest-forked==1.4.0 \
@@ -202,6 +203,10 @@ pytest-forked==1.4.0 \
 pytest-profiling==1.7.0 \
     --hash=sha256:93938f147662225d2b8bd5af89587b979652426a8a6ffd7e73ec4a23e24b7f29 \
     --hash=sha256:999cc9ac94f2e528e3f5d43465da277429984a1c237ae9818f8cfd0b06acb019
+    # via -r requirements/chart-tests.in
+pytest-rerunfailures==10.2 \
+    --hash=sha256:9e1e1bad51e07642c5bbab809fc1d4ec8eebcb7de86f90f1a26e6ef9de446697 \
+    --hash=sha256:d31d8e828dfd39363ad99cd390187bf506c7a433a89f15c3126c7d16ab723fe2
     # via -r requirements/chart-tests.in
 pytest-sugar==0.9.4 \
     --hash=sha256:b1b2186b0a72aada6859bea2a5764145e3aaa2c1cfbb23c3a19b5f7b697563d3
@@ -269,9 +274,9 @@ rsa==4.8 \
     # via pdbpp
 
 # The following packages are considered to be unsafe in a requirements file:
-setuptools==61.2.0 \
-    --hash=sha256:8f4813dd6a4d6cc17bde85fb2e635fe19763f96efbb0ddf5575562e5ee0bc47a \
-    --hash=sha256:c3d4e2ab578fbf83775755cd76dae73627915a22832cf4ea5de895978767833b
+setuptools==62.0.0 \
+    --hash=sha256:7999cbd87f1b6e1f33bf47efa368b224bed5e27b5ef2c4d46580186cbcb1a86a \
+    --hash=sha256:a65e3802053e99fc64c6b3b29c11132943d5b8c8facbcc461157511546510967
     # via google-auth
 six==1.16.0 \
     --hash=sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926 \
@@ -312,4 +317,6 @@ websocket-client==1.3.2 \
     #   kubernetes
 wmctrl==0.4 \
     --hash=sha256:66cbff72b0ca06a22ec3883ac3a4d7c41078bdae4fb7310f52951769b10e14e0
-    # via kubernetes
+    # via
+    #   kubernetes
+    #   pytest-rerunfailures
