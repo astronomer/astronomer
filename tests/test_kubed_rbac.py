@@ -15,7 +15,7 @@ class TestKubedRBAC:
             values={
                 "global": {
                     "rbacEnabled": True,
-                    "features": {"namespacePools": {"enabled": False}}
+                    "features": {"namespacePools": {"enabled": False}},
                 }
             },
             show_only=[
@@ -67,17 +67,15 @@ class TestKubedRBAC:
                     "features": {
                         "namespacePools": {
                             "enabled": True,
-                            "namespaces": {
-                                "names": namespaces
-                            }
+                            "namespaces": {"names": namespaces},
                         }
-                    }
+                    },
                 }
             },
             show_only=[
                 "charts/kubed/templates/kubed-role.yaml",
-                "charts/kubed/templates/kubed-rolebinding.yaml"
-            ]
+                "charts/kubed/templates/kubed-rolebinding.yaml",
+            ],
         )
 
         assert len(docs) == 6
@@ -110,4 +108,3 @@ class TestKubedRBAC:
             assert role_binding["metadata"]["namespace"] == expected_namespaces[i - 3]
             assert role_binding["roleRef"] == expected_role
             assert role_binding["subjects"][0] == expected_subject
-

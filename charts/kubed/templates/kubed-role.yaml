@@ -4,7 +4,7 @@
 # Either:
 # 1. Do not create anything if rbacEnabled is disabled
 # 2. Create Role for each namespace in the namespacePool + release namespace if namespacePools is enabled
-# 3. Otherwhise, create ClusterRole
+# 3. Otherwise, create ClusterRole
 {{- $useClusterRoles := not .Values.global.features.namespacePools.enabled }}
 {{- $namespaces := .Values.global.features.namespacePools.namespaces.names }}
 {{ if $useClusterRoles }}
