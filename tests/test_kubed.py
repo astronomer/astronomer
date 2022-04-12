@@ -11,8 +11,8 @@ from . import supported_k8s_versions
 class TestKubed:
     show_only = [
         "charts/kubed/templates/kubed-apiregistration.yaml",
-        "charts/kubed/templates/kubed-clusterrole.yaml",
-        "charts/kubed/templates/kubed-clusterrolebinding.yaml",
+        "charts/kubed/templates/kubed-role.yaml",
+        "charts/kubed/templates/kubed-rolebinding.yaml",
         "charts/kubed/templates/kubed-deployment.yaml",
         "charts/kubed/templates/kubed-notifier-secert.yaml",
         "charts/kubed/templates/kubed-pvc.yaml",
