@@ -310,6 +310,9 @@ registry:
   notifications:
     timeout: 30s
 
+  redirect:
+    disable: false
+
 install:
   resources: {}
   cliVersion: 0.27.0
