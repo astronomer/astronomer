@@ -38,7 +38,15 @@ rules:
   verbs: ["get", "create", "patch", "delete", "list", "watch"]
 - apiGroups: [""]
   resources:
-    - namespaces
+  - namespaces
   verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources:
+  - nodes
+  verbs: ["list"]
+- apiGroups: [""]
+  resources:
+  - events
+  verbs: ["create"]
 {{ end }}
 {{ end }}
