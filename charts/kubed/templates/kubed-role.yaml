@@ -1,0 +1,44 @@
+################################
+## KubeD (Cluster)Role
+#################################
+# Either:
+# 1. Do not create anything if rbacEnabled is disabled
+# 2. Create Role for each namespace in the namespacePool + release namespace if namespacePools is enabled
+# 3. Otherwhise, create ClusterRole
+{{- $useClusterRoles := not .Values.global.features.namespacePools.enabled }}
+{{- $namespaces := .Values.global.features.namespacePools.namespaces.names }}
+{{ if $useClusterRoles }}
+  {{- $namespaces = list .Release.Namespace}}
+{{ else }}
+  # We also want to create a Role inside the astronomer release namespace to allow kubed to get the secrets to synchronize from Astronomer's namespace
+  {{ $namespaces = append $namespaces .Release.Namespace }}
+{{ end }}
+
+{{- if .Values.global.rbacEnabled }}
+{{- range $i, $namespaceName := $namespaces -}}
+---
+apiVersion: {{ template "apiVersion.rbac" $ }}
+kind: {{ if $useClusterRoles }}ClusterRole{{ else }}Role{{ end }}
+metadata:
+  name: {{ template "kubed.fullname" $ }}
+  {{- if not $useClusterRoles }}
+  namespace: {{ $namespaceName }}
+  {{- end }}
+  labels:
+    tier: {{ template "kubed.name" $ }}
+    component: {{ template "kubed.name" $ }}
+    chart: {{ template "kubed.chart" $ }}
+    release: {{ $.Release.Name }}
+    heritage: {{ $.Release.Service }}
+rules:
+- apiGroups: [""]
+  resources:
+  - configmaps
+  - secrets
+  verbs: ["get", "create", "patch", "delete", "list", "watch"]
+- apiGroups: [""]
+  resources:
+    - namespaces
+  verbs: ["get", "list", "watch"]
+{{ end }}
+{{ end }}
