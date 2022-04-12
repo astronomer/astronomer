@@ -68,6 +68,8 @@ show-docker-images: ## Show all docker images and versions used in the helm char
 		--set global.baseDomain=foo.com \
 		--set global.authSidecar.enabled=True \
 		--set global.blackboxExporterEnabled=True \
+		--set global.customLogging.awsSecretName=dummy \
+		--set global.customLogging.enabled=True \
 		--set global.postgresqlEnabled=True \
 		--set global.postgresqlEnabled=True \
 		--set global.prometheusPostgresExporterEnabled=True \
