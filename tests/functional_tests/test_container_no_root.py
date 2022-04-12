@@ -13,11 +13,12 @@ container_ignore_list = [
     "metrics-exporter",
 ]
 
+container_list = get_pod_running_containers()
 
 @pytest.mark.parametrize(
     "container",
-    get_pod_running_containers().values(),
-    ids=get_pod_running_containers().keys(),
+    container_list.values(),
+    ids=container_list.keys(),
 )
 def test_container_non_root(request, container):
 
