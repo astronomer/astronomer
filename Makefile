@@ -65,29 +65,15 @@ update-requirements: ## Update all requirements.txt files
 .PHONY: show-docker-images
 show-docker-images: ## Show all docker images and versions used in the helm chart
 	@helm template . \
-		--set global.baseDomain=foo.com \
-		--set global.authSidecar.enabled=True \
-		--set global.blackboxExporterEnabled=True \
-		--set global.customLogging.awsSecretName=dummy \
-		--set global.customLogging.enabled=True \
-		--set global.postgresqlEnabled=True \
-		--set global.postgresqlEnabled=True \
-		--set global.prometheusPostgresExporterEnabled=True \
-		--set global.pspEnabled=True \
-		--set global.veleroEnabled=True \
+		-f tests/enable_all_features.yaml \
 		2>/dev/null \
 		| gawk '/image: / {match($$2, /(([^"]*):[^"]*)/, a) ; printf "https://%s %s\n", a[2], a[1] ;}' | sort -u | column -t
 
 .PHONY: show-docker-images
 show-docker-images-with-private-registry: ## Show all docker images and versions used in the helm chart with a privateRegistry set
 	@helm template . \
+		-f tests/enable_all_features.yaml \
 		--set global.privateRegistry.enabled=True \
 		--set global.privateRegistry.repository=example.com/the-private-registry \
-		--set global.baseDomain=foo.com \
-		--set global.blackboxExporterEnabled=True \
-		--set global.postgresqlEnabled=True \
-		--set global.prometheusPostgresExporterEnabled=True \
-		--set global.pspEnabled=True \
-		--set global.veleroEnabled=True \
 		2>/dev/null \
 		| gawk '/image: / {match($$2, /(([^"]*):[^"]*)/, a) ; printf "https://%s %s\n", a[2], a[1] ;}' | sort -u | column -t
