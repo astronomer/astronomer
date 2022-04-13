@@ -45,6 +45,8 @@ jobs:
     docker:
       - image: quay.io/astronomer/ci-helm-release:2022-03
     steps:
+      - setup_remote_docker:
+          docker_layer_caching: true
       - checkout
       - run:
           name: Create chart-tests-cache-key.txt
@@ -65,8 +67,11 @@ jobs:
             - ~/project/.unittest-requirements
       - run:
           name: unittest the Astronomer chart
-          command: make unittest-charts
-
+          command: |
+            mkdir test-results
+            make unittest-charts
+      - store_test_results:
+          path: test-results
   build-artifact:
     docker:
       - image: quay.io/astronomer/ap-build:0.2.0
@@ -121,7 +126,7 @@ jobs:
       KUBE_VERSION: v{{ version }}
     steps:
       - helm-install:
-          astronomer-tags: "platform postgresql monitoring logging kubed keda"
+          astronomer-tags: "platform postgresql monitoring logging kubed"
       - run:
           name: Check chart for k8s {{ version }} compatibility with kubent
           command: |

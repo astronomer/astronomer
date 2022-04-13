@@ -30,7 +30,7 @@ unittest-requirements: .unittest-requirements ## Setup venv required for unit te
 
 .PHONY: unittest-charts
 unittest-charts: .unittest-requirements ## Unittest the Astronomer helm chart
-	venv/bin/python -m pytest -n auto tests
+	venv/bin/python -m pytest -v --junitxml=test-results/junit.xml -n auto tests
 
 .PHONY: lint-charts
 lint-charts: lint-prep ## Lint Astronomer sub-charts
@@ -66,15 +66,15 @@ update-requirements: ## Update all requirements.txt files
 show-docker-images: ## Show all docker images and versions used in the helm chart
 	@helm template . \
 		--set global.baseDomain=foo.com \
+		--set global.authSidecar.enabled=True \
 		--set global.blackboxExporterEnabled=True \
-		--set global.kedaEnabled=True \
 		--set global.postgresqlEnabled=True \
 		--set global.postgresqlEnabled=True \
 		--set global.prometheusPostgresExporterEnabled=True \
 		--set global.pspEnabled=True \
 		--set global.veleroEnabled=True \
 		2>/dev/null \
-		| awk '/image: / {match($$2, /(([^"]*):[^"]*)/, a) ; printf "https://%s %s\n", a[2], a[1] ;}' | sort -u | column -t
+		| gawk '/image: / {match($$2, /(([^"]*):[^"]*)/, a) ; printf "https://%s %s\n", a[2], a[1] ;}' | sort -u | column -t
 
 .PHONY: show-docker-images
 show-docker-images-with-private-registry: ## Show all docker images and versions used in the helm chart with a privateRegistry set
@@ -83,11 +83,9 @@ show-docker-images-with-private-registry: ## Show all docker images and versions
 		--set global.privateRegistry.repository=example.com/the-private-registry \
 		--set global.baseDomain=foo.com \
 		--set global.blackboxExporterEnabled=True \
-		--set global.kedaEnabled=True \
-		--set global.postgresqlEnabled=True \
 		--set global.postgresqlEnabled=True \
 		--set global.prometheusPostgresExporterEnabled=True \
 		--set global.pspEnabled=True \
 		--set global.veleroEnabled=True \
 		2>/dev/null \
-		| awk '/image: / {match($$2, /(([^"]*):[^"]*)/, a) ; printf "https://%s %s\n", a[2], a[1] ;}' | sort -u | column -t
+		| gawk '/image: / {match($$2, /(([^"]*):[^"]*)/, a) ; printf "https://%s %s\n", a[2], a[1] ;}' | sort -u | column -t

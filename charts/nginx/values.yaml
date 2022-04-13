@@ -9,11 +9,11 @@ tolerations: []
 images:
   nginx:
     repository: quay.io/astronomer/ap-nginx
-    tag: 0.50.0
+    tag: 1.1.2-1
     pullPolicy: IfNotPresent
   defaultBackend:
     repository: quay.io/astronomer/ap-default-backend
-    tag: 0.28.0
+    tag: 0.28.3
     pullPolicy: IfNotPresent
 
 ingressClass: ~
@@ -74,3 +74,6 @@ ports:
   defaultBackendHTTP: 8080
   healthz: 10254
   metrics: 10254
+
+# Election ID to use for status update
+electionId: ingress-controller-leader

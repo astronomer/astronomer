@@ -16,10 +16,10 @@ rules:
   - apiGroups:
       - ""
     resources:
-      - configmaps
       - endpoints
       - pods
       - secrets
+      - configmaps
       {{- if not $singleNamespace }}
       - nodes
       {{- end }}
@@ -55,6 +55,7 @@ rules:
       - networking.k8s.io
     resources:
       - ingresses
+      - ingressclasses
     verbs:
       - get
       - list

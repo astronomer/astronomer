@@ -18,7 +18,7 @@ import pytest
 
 def test_default_disabled(kube_client):
     pods = kube_client.list_namespaced_pod("astronomer")
-    default_disabled = ["keda", "prometheus-postgres-exporter"]
+    default_disabled = ["prometheus-postgres-exporter"]
     for pod in pods.items:
         for feature in default_disabled:
             if feature in pod.metadata.name:
@@ -63,7 +63,7 @@ def test_nginx_can_reach_default_backend(nginx):
     )
 
 
-@pytest.mark.flaky(reruns=10, reruns_delay=10)
+@pytest.mark.flaky(reruns=20, reruns_delay=10)
 def test_prometheus_targets(prometheus):
     """Ensure all Prometheus targets are healthy"""
     data = prometheus.check_output(
