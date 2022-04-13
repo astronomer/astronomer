@@ -231,6 +231,12 @@ data:
                       container.args = container.command + container.args
                   container.command = ["tini", "--", "/entrypoint"]
                   pod.spec.containers[0] = container
+                  {{ if .Values.houston.loggingSidecar.enabled }}
+                    name = {{ .Values.houston.loggingSidecar.name }}
+                    volumeMountPath = "/var/log/" + name
+                    log = "1> >( tee -a {volumeMountPath}/out.log ) 2> >( tee -a {volumeMountPath}/err.log >&2 )".format(volumeMountPath = volumeMountPath)
+                    container.args = container.args + ["bash", "-c", "exec airflow worker ${log}`]
+                  {{ end }}
               else:
                   # In the case of KPO, we allow Airflow to overwrite the entrypoint
                   # because we do not know what the container will be (and it's probably
