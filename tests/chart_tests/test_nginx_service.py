@@ -140,3 +140,10 @@ class TestNginx:
         )[0]
         assert doc["spec"]["type"] == "ClusterIP"
         assert doc["spec"]["ports"][0]["port"] == 10254
+
+    def test_nginx_controller_electionID_defaults(self):
+        doc = render_chart(
+            show_only=["charts/nginx/templates/nginx-deployment.yaml"],
+        )[0]
+        electionId = "--election-id=ingress-controller-leader-release-name-nginx"
+        assert electionId in doc["spec"]["template"]["spec"]["containers"][0]["args"]

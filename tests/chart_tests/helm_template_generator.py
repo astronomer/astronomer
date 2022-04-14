@@ -17,10 +17,10 @@
 
 import subprocess
 import sys
-from functools import lru_cache
+from functools import cache
+from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Any, Dict, Tuple
-from pathlib import Path
 from typing import Optional
 
 import jsonschema
@@ -33,6 +33,8 @@ api_client = ApiClient()
 BASE_URL_SPEC = "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master"
 
 
+# TODO: make this cache the schema so we can test offline, or better, save these to the tests dir
+@cache
 def get_schema_k8s(api_version, kind, kube_version="1.21.0"):
     """Return a k8s schema for use in validation."""
     api_version = api_version.lower()
@@ -49,7 +51,7 @@ def get_schema_k8s(api_version, kind, kube_version="1.21.0"):
     return request.json()
 
 
-@lru_cache(maxsize=None)
+@cache
 def create_validator(api_version, kind, kube_version="1.21.0"):
     """Create a k8s validator for the given inputs."""
     schema = get_schema_k8s(api_version, kind, kube_version=kube_version)

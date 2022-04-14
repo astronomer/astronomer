@@ -65,7 +65,7 @@ def docker_daemon_present():
         return False
 
 
-@pytest.fixture(autouse=True, scope="session")
+@pytest.fixture(scope="session")
 def docker_client():
     """This is a text fixture for the docker client,
     should it be needed in a test

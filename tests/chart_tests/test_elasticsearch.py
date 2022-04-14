@@ -1,7 +1,8 @@
-from tests.chart_tests.helm_template_generator import render_chart
-import pytest
-from tests import supported_k8s_versions
 import jmespath
+import pytest
+
+from tests import supported_k8s_versions
+from tests.chart_tests.helm_template_generator import render_chart
 
 
 @pytest.mark.parametrize(
@@ -67,7 +68,7 @@ class TestElasticSearch:
         )
 
     def test_elasticsearch_with_sysctl_disabled(self, kube_version):
-        """Test  ElasticSearch with sysctl config/values.yaml."""
+        """Test ElasticSearch master, data and client with sysctl config/values.yaml."""
         docs = render_chart(
             kube_version=kube_version,
             values={"elasticsearch": {"sysctlInitContainer": {"enabled": False}}},
@@ -79,22 +80,22 @@ class TestElasticSearch:
         )
 
         assert len(docs) == 3
-        doc = docs[0]
+        for doc in docs:
+            assert not doc["spec"]["template"]["spec"]["initContainers"]
 
-        # elasticsearch master
-        assert doc["kind"] == "StatefulSet"
-        assert "sysctl" not in jmespath.search(
-            "spec.template.spec.initContainers[*].name", docs[0]
+    def test_elasticsearch_securitycontext_defaults(self, kube_version):
+        """Test  ElasticSearch master, data and client with securitycontext default values"""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={},
+            show_only=[
+                "charts/elasticsearch/templates/master/es-master-statefulset.yaml",
+                "charts/elasticsearch/templates/data/es-data-statefulset.yaml",
+                "charts/elasticsearch/templates/client/es-client-deployment.yaml",
+            ],
         )
-
-        # elasticsearch data
-        doc = docs[1]
-        assert doc["kind"] == "StatefulSet"
-        assert "sysctl" not in jmespath.search(
-            "spec.template.spec.initContainers[*].name", docs[1]
-        )
-
-        # elasticsearch client
-        doc = docs[2]
-        assert doc["kind"] == "Deployment"
-        assert jmespath.search("spec.template.spec.initContainers", docs[2]) is None
+        assert len(docs) == 3
+        for doc in docs:
+            assert doc["spec"]["template"]["spec"]["securityContext"] == {
+                "fsGroup": 1000
+            }

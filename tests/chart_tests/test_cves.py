@@ -1,13 +1,14 @@
-from tests.chart_tests.helm_template_generator import render_chart
 import pytest
+
 from tests import supported_k8s_versions
+from tests.chart_tests.helm_template_generator import render_chart
 
 
 @pytest.mark.parametrize(
     "kube_version",
     supported_k8s_versions,
 )
-@pytest.mark.skip(reason="currently not needed")
+@pytest.mark.skip(reason="No longer needed, images were patched.")
 def test_log4shell(kube_version):
     """
     Ensure remediation settings are in place for log4j log4shell CVE-2021-44228
