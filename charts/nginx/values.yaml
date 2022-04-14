@@ -47,7 +47,7 @@ ingressAnnotations: {}
 antiAffinity: "soft"
 
 # String IP address the nginx ingress should bind to
-loadBalancerIPs: ~
+loadBalancerIP: ~
 
 # String IP address that the service should list as an external IP. Currently only 1 address is supported
 externalIPs: ~
