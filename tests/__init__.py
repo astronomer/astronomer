@@ -1,4 +1,5 @@
 from pathlib import Path
+
 import git
 
 # The top-level path of this repository

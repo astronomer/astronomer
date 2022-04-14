@@ -5,6 +5,7 @@ so that we can stay DRY.
 """
 
 import os
+
 from jinja2 import Template
 
 # When adding a new version, look up the most
