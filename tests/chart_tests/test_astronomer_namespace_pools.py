@@ -34,17 +34,19 @@ def test_astronomer_namespace_pools_rbac(kube_version):
         ],
     )
 
-    assert len(docs) == 4
+    assert len(docs) == 6
+
+    expected_namespaces = [*namespaces, "default"]
 
     # assertions on Role objects
-    for i in range(0, 2):
+    for i in range(0, 3):
         role = docs[i]
 
         assert role["kind"] == "Role"
         assert len(role["rules"]) > 0
-        assert role["metadata"]["namespace"] == namespaces[i]
+        assert role["metadata"]["namespace"] == expected_namespaces[i]
 
-    for i in range(2, 4):
+    for i in range(3, 6):
         role_binding = docs[i]
 
         expected_subject = {
@@ -59,7 +61,7 @@ def test_astronomer_namespace_pools_rbac(kube_version):
         }
 
         assert role_binding["kind"] == "RoleBinding"
-        assert role_binding["metadata"]["namespace"] == namespaces[i - 2]
+        assert role_binding["metadata"]["namespace"] == expected_namespaces[i - 3]
         assert role_binding["roleRef"] == expected_role
         assert role_binding["subjects"][0] == expected_subject
 

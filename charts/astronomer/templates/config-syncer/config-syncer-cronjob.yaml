@@ -1,0 +1,54 @@
+###################################
+## Config Syncer CronJob
+###################################
+{{- if .Values.configSyncer.enabled }}
+apiVersion: {{ include "apiVersion.batch.cronjob" . }}
+kind: CronJob
+metadata:
+  name: {{ .Release.Name }}-config-syncer
+  labels:
+    tier: astronomer
+    component: config-syncer
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  schedule: "{{ .Values.configSyncer.schedule }}"
+  # The cron job does not allow concurrent runs; if it is time for a new job run and the previous job run hasn't finished yet, the cron job skips the new job run
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        metadata:
+          labels:
+            tier: astronomer
+            component: config-syncer
+            release: {{ .Release.Name }}
+          {{- if .Values.global.istio.enabled }}
+          annotations:
+            sidecar.istio.io/inject: "false"
+          {{- end }}
+        spec:
+          serviceAccountName: {{ .Release.Name }}-config-syncer
+          nodeSelector:
+{{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 12 }}
+          affinity:
+{{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 12 }}
+          tolerations:
+{{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 12 }}
+          restartPolicy: Never
+          containers:
+            - name: config-syncer
+              image: {{ template "commander.image" . }}
+              imagePullPolicy: {{ .Values.images.commander.pullPolicy }}
+              # If you supply only args for a Container, the default Entrypoint defined in the Docker image is run with the args that you supplied.
+              args:
+              - "sync"
+              - "--source-namespace"
+              - "{{ .Release.Namespace }}"
+              {{- if .Values.global.features.namespacePools.enabled }}
+              - "--target-namespaces"
+              - "{{ join "," .Values.global.features.namespacePools.namespaces.names }}"
+              {{- end }}
+{{- end }}

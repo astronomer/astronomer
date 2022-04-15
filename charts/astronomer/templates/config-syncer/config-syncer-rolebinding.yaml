@@ -20,7 +20,7 @@
 apiVersion: {{ template "apiVersion.rbac" . }}
 kind: {{ if $useClusterRoles }}ClusterRoleBinding{{ else }}RoleBinding{{ end }}
 metadata:
-  name: {{ $.Release.Name }}-commander
+  name: {{ $.Release.Name }}-config-syncer
   {{- if not $useClusterRoles }}
   namespace: {{ $namespaceName }}
   {{- end }}
@@ -31,10 +31,10 @@ metadata:
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: {{ if $useClusterRoles }}ClusterRole{{ else }}Role{{ end }}
-  name: {{ $.Release.Name }}-commander
+  name: {{ $.Release.Name }}-config-syncer
 subjects:
   - kind: ServiceAccount
-    name: {{ $.Release.Name }}-commander
+    name: {{ $.Release.Name }}-config-syncer
     namespace: {{ $.Release.Namespace }}
 {{ end }}
 {{- end }}
