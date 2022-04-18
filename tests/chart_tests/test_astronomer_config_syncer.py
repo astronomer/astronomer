@@ -34,6 +34,7 @@ cron_test_data = [
     ("development-optical-asteroid-4621", 54, 14),
 ]
 
+
 @pytest.mark.parametrize(
     "kube_version",
     supported_k8s_versions,
@@ -219,7 +220,9 @@ class TestAstronomerConfigSyncer:
     @pytest.mark.parametrize(
         "test_data", cron_test_data, ids=[x[0] for x in cron_test_data]
     )
-    def test_astronomer_config_syncer_cronjob_default_schedule(self, test_data, kube_version):
+    def test_astronomer_config_syncer_cronjob_default_schedule(
+        self, test_data, kube_version
+    ):
         """Test that if no schedule is provided for configSyncer, helm automatically generates a random one"""
 
         doc = render_chart(
@@ -230,7 +233,6 @@ class TestAstronomerConfigSyncer:
             ],
         )[0]
 
-        cron_schedule = doc['spec']['schedule'].split(' ')
+        cron_schedule = doc["spec"]["schedule"].split(" ")
         assert int(cron_schedule[0]) == test_data[1]
         assert int(cron_schedule[1]) == test_data[2]
-
