@@ -241,7 +241,7 @@ houston:
 configSyncer:
   enabled: true
   # default here is to run at midnight every night
-  schedule: "0 0 * * *"
+  schedule: ~
 
 commander:
   replicas: 2

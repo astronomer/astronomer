@@ -14,8 +14,6 @@
   {{- $namespaces = append $namespaces .Release.Namespace }}
 {{- end }}
 
-# TODO: NEED KUBED SYNC PERMISSIONS !!
-
 {{- if $shouldCreateResources }}
 {{- range $i, $namespaceName := $namespaces -}}
 ---

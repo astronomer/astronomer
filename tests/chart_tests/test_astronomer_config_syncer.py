@@ -7,191 +7,180 @@ from tests import supported_k8s_versions
     "kube_version",
     supported_k8s_versions,
 )
-def test_astronomer_config_syncer_rbac_namespace_pools_disabled(kube_version):
-    """Test that if rbacEnabled but namespacePools disabled, helm renders ClusterRole and ClusterRoleBinding resources for config syncer"""
+class TestAstronomerConfigSyncer:
+    def test_astronomer_config_syncer_rbac_namespace_pools_disabled(self, kube_version):
+        """Test that if rbacEnabled but namespacePools disabled, helm renders ClusterRole and ClusterRoleBinding resources for config syncer"""
 
-    # First rbacEnabled set to true and namespacePools disabled, should create a ClusterRole and ClusterRoleBinding
-    docs = render_chart(
-        kube_version=kube_version,
-        values={
-            "global": {
-                "rbacEnabled": True,
-                "features": {
-                    "namespacePools": {"enabled": False},
-                },
-            }
-        },
-        show_only=[
-            "charts/astronomer/templates/config-syncer/config-syncer-role.yaml",
-            "charts/astronomer/templates/config-syncer/config-syncer-rolebinding.yaml",
-        ],
-    )
-
-    cluster_role = docs[0]
-
-    assert cluster_role["kind"] == "ClusterRole"
-    assert len(cluster_role["rules"]) > 0
-
-    cluster_role_binding = docs[1]
-
-    expected_role_ref = {
-        "kind": "ClusterRole",
-        "apiGroup": "rbac.authorization.k8s.io",
-        "name": "release-name-config-syncer",
-    }
-    expected_subjects = [
-        {
-            "kind": "ServiceAccount",
-            "name": "release-name-config-syncer",
-            "namespace": "default",
-        }
-    ]
-    assert cluster_role_binding["kind"] == "ClusterRoleBinding"
-    assert cluster_role_binding["roleRef"] == expected_role_ref
-    assert cluster_role_binding["subjects"] == expected_subjects
-
-
-@pytest.mark.parametrize(
-    "kube_version",
-    supported_k8s_versions,
-)
-def test_astronomer_config_syncer_namespace_pools_rbac(kube_version):
-    """Test that when namespacePools is enabled, helm renders a Role and a RoleBinding for each namespace in the pool + release namespace."""
-
-    # rbacEnabled and clusterRoles and namespacePools set to true, should create Roles and Rolebindings for namespace in Pool
-    # and ignore the cluster role configuration
-    namespaces = ["my-namespace-1", "my-namespace-2"]
-    docs = render_chart(
-        kube_version=kube_version,
-        values={
-            "global": {
-                "rbacEnabled": True,
-                "features": {
-                    "namespacePools": {
-                        "enabled": True,
-                        "namespaces": {"create": True, "names": namespaces},
+        # First rbacEnabled set to true and namespacePools disabled, should create a ClusterRole and ClusterRoleBinding
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "rbacEnabled": True,
+                    "features": {
+                        "namespacePools": {"enabled": False},
                     },
-                },
-            }
-        },
-        show_only=[
-            "charts/astronomer/templates/config-syncer/config-syncer-role.yaml",
-            "charts/astronomer/templates/config-syncer/config-syncer-rolebinding.yaml",
-        ],
-    )
+                }
+            },
+            show_only=[
+                "charts/astronomer/templates/config-syncer/config-syncer-role.yaml",
+                "charts/astronomer/templates/config-syncer/config-syncer-rolebinding.yaml",
+            ],
+        )
 
-    assert len(docs) == 6
+        cluster_role = docs[0]
 
-    expected_namespaces = [*namespaces, "default"]
+        assert cluster_role["kind"] == "ClusterRole"
+        assert len(cluster_role["rules"]) > 0
 
-    # assertions on Role objects
-    for i in range(0, 3):
-        role = docs[i]
+        cluster_role_binding = docs[1]
 
-        assert role["kind"] == "Role"
-        assert len(role["rules"]) > 0
-        assert role["metadata"]["namespace"] == expected_namespaces[i]
-
-    for i in range(3, 6):
-        role_binding = docs[i]
-
-        expected_subject = {
-            "kind": "ServiceAccount",
-            "name": "release-name-config-syncer",
-            "namespace": "default",
-        }
-        expected_role = {
+        expected_role_ref = {
+            "kind": "ClusterRole",
             "apiGroup": "rbac.authorization.k8s.io",
-            "kind": "Role",
             "name": "release-name-config-syncer",
         }
-
-        assert role_binding["kind"] == "RoleBinding"
-        assert role_binding["metadata"]["namespace"] == expected_namespaces[i - 3]
-        assert role_binding["roleRef"] == expected_role
-        assert role_binding["subjects"][0] == expected_subject
-
-
-@pytest.mark.parametrize(
-    "kube_version",
-    supported_k8s_versions,
-)
-def test_astronomer_config_syncer_rbac_all_disabled(kube_version):
-    """Test that if rbacEnabled and namespacePools are disabled, we do not create any RBAC resources"""
-    docs = render_chart(
-        kube_version=kube_version,
-        values={
-            "global": {
-                "rbacEnabled": False,
-                "features": {
-                    "namespacePools": {"enabled": False},
-                },
+        expected_subjects = [
+            {
+                "kind": "ServiceAccount",
+                "name": "release-name-config-syncer",
+                "namespace": "default",
             }
-        },
-        show_only=[
-            "charts/astronomer/templates/config-syncer/config-syncer-role.yaml",
-            "charts/astronomer/templates/config-syncer/config-syncer-rolebinding.yaml",
-        ],
-    )
-    assert len(docs) == 0
+        ]
+        assert cluster_role_binding["kind"] == "ClusterRoleBinding"
+        assert cluster_role_binding["roleRef"] == expected_role_ref
+        assert cluster_role_binding["subjects"] == expected_subjects
 
+    def test_astronomer_config_syncer_namespace_pools_rbac(self, kube_version):
+        """Test that when namespacePools is enabled, helm renders a Role and a RoleBinding for each namespace in the pool + release namespace."""
 
-@pytest.mark.parametrize(
-    "kube_version",
-    supported_k8s_versions,
-)
-def test_astronomer_config_syncer_cronjob_namespace_pool_enabled(kube_version):
-    """Test that when namespace pool is enabled, config-syncer's container is configured to use namespaces from the pool"""
-    namespaces = ["my-namespace-1", "my-namespace-2"]
-    doc = render_chart(
-        kube_version=kube_version,
-        values={
-            "global": {
-                "rbacEnabled": True,
-                "features": {
-                    "namespacePools": {
-                        "enabled": True,
-                        "namespaces": {"create": True, "names": namespaces},
+        # rbacEnabled and clusterRoles and namespacePools set to true, should create Roles and Rolebindings for namespace in Pool
+        # and ignore the cluster role configuration
+        namespaces = ["my-namespace-1", "my-namespace-2"]
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "rbacEnabled": True,
+                    "features": {
+                        "namespacePools": {
+                            "enabled": True,
+                            "namespaces": {"create": True, "names": namespaces},
+                        },
                     },
-                },
+                }
+            },
+            show_only=[
+                "charts/astronomer/templates/config-syncer/config-syncer-role.yaml",
+                "charts/astronomer/templates/config-syncer/config-syncer-rolebinding.yaml",
+            ],
+        )
+
+        assert len(docs) == 6
+
+        expected_namespaces = [*namespaces, "default"]
+
+        # assertions on Role objects
+        for i in range(0, 3):
+            role = docs[i]
+
+            assert role["kind"] == "Role"
+            assert len(role["rules"]) > 0
+            assert role["metadata"]["namespace"] == expected_namespaces[i]
+
+        for i in range(3, 6):
+            role_binding = docs[i]
+
+            expected_subject = {
+                "kind": "ServiceAccount",
+                "name": "release-name-config-syncer",
+                "namespace": "default",
             }
-        },
-        show_only=[
-            "charts/astronomer/templates/config-syncer/config-syncer-cronjob.yaml",
-        ],
-    )[0]
+            expected_role = {
+                "apiGroup": "rbac.authorization.k8s.io",
+                "kind": "Role",
+                "name": "release-name-config-syncer",
+            }
 
-    container = doc["spec"]["jobTemplate"]["spec"]["template"]["spec"]["containers"][0]
+            assert role_binding["kind"] == "RoleBinding"
+            assert role_binding["metadata"]["namespace"] == expected_namespaces[i - 3]
+            assert role_binding["roleRef"] == expected_role
+            assert role_binding["subjects"][0] == expected_subject
 
-    assert "--target-namespaces" in container["args"]
-    assert ",".join(namespaces) in container["args"]
-
-
-@pytest.mark.parametrize(
-    "kube_version",
-    supported_k8s_versions,
-)
-def test_astronomer_config_syncer_cronjob_namespace_pool_disabled(kube_version):
-    """Test that when namespacePools is disabled, config-syncer cronjob is configured not to target any namespace."""
-    namespaces = ["my-namespace-1", "my-namespace-2"]
-    doc = render_chart(
-        kube_version=kube_version,
-        values={
-            "global": {
-                "rbacEnabled": True,
-                "features": {
-                    "namespacePools": {
-                        "enabled": False,
+    def test_astronomer_config_syncer_rbac_all_disabled(self, kube_version):
+        """Test that if rbacEnabled and namespacePools are disabled, we do not create any RBAC resources"""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "rbacEnabled": False,
+                    "features": {
+                        "namespacePools": {"enabled": False},
                     },
-                },
-            }
-        },
-        show_only=[
-            "charts/astronomer/templates/config-syncer/config-syncer-cronjob.yaml",
-        ],
-    )[0]
+                }
+            },
+            show_only=[
+                "charts/astronomer/templates/config-syncer/config-syncer-role.yaml",
+                "charts/astronomer/templates/config-syncer/config-syncer-rolebinding.yaml",
+            ],
+        )
+        assert len(docs) == 0
 
-    container = doc["spec"]["jobTemplate"]["spec"]["template"]["spec"]["containers"][0]
+    def test_astronomer_config_syncer_cronjob_namespace_pool_enabled(
+        self, kube_version
+    ):
+        """Test that when namespace pool is enabled, config-syncer's container is configured to use namespaces from the pool"""
+        namespaces = ["my-namespace-1", "my-namespace-2"]
+        doc = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "rbacEnabled": True,
+                    "features": {
+                        "namespacePools": {
+                            "enabled": True,
+                            "namespaces": {"create": True, "names": namespaces},
+                        },
+                    },
+                }
+            },
+            show_only=[
+                "charts/astronomer/templates/config-syncer/config-syncer-cronjob.yaml",
+            ],
+        )[0]
 
-    assert "--target-namespaces" not in container["args"]
-    assert ",".join(namespaces) not in container["args"]
+        container = doc["spec"]["jobTemplate"]["spec"]["template"]["spec"][
+            "containers"
+        ][0]
+
+        assert "--target-namespaces" in container["args"]
+        assert ",".join(namespaces) in container["args"]
+
+    def test_astronomer_config_syncer_cronjob_namespace_pool_disabled(
+        self, kube_version
+    ):
+        """Test that when namespacePools is disabled, config-syncer cronjob is configured not to target any namespace."""
+        namespaces = ["my-namespace-1", "my-namespace-2"]
+        doc = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "rbacEnabled": True,
+                    "features": {
+                        "namespacePools": {
+                            "enabled": False,
+                        },
+                    },
+                }
+            },
+            show_only=[
+                "charts/astronomer/templates/config-syncer/config-syncer-cronjob.yaml",
+            ],
+        )[0]
+
+        container = doc["spec"]["jobTemplate"]["spec"]["template"]["spec"][
+            "containers"
+        ][0]
+
+        assert "--target-namespaces" not in container["args"]
+        assert ",".join(namespaces) not in container["args"]
