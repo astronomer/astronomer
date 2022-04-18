@@ -2,6 +2,37 @@ from tests.chart_tests.helm_template_generator import render_chart
 import pytest
 from tests import supported_k8s_versions
 
+cron_test_data = [
+    ("development-angular-system-6091", 0, 5),
+    ("development-arithmetic-phases-5695", 0, 5),
+    ("development-empty-aurora-8527", 0, 5),
+    ("development-explosive-inclination-4552", 0, 5),
+    ("development-infrared-nadir-2873", 0, 5),
+    ("development-barren-telemetry-6087", 6, 6),
+    ("development-geocentric-cluster-5666", 6, 6),
+    ("development-mathematical-supernova-1523", 6, 6),
+    ("development-cometary-terrestrial-2880", 12, 7),
+    ("development-nuclear-gegenschein-1657", 12, 7),
+    ("development-quasarian-telescope-4189", 12, 7),
+    ("development-traditional-universe-0643", 12, 7),
+    ("development-asteroidal-space-6369", 18, 8),
+    ("development-blazing-horizon-1542", 18, 8),
+    ("development-boreal-inclination-4658", 18, 8),
+    ("development-exact-ionosphere-3963", 18, 8),
+    ("development-extrasolar-meteor-4188", 18, 8),
+    ("development-inhabited-dust-4345", 18, 8),
+    ("development-nebular-singularity-6518", 18, 8),
+    ("development-arithmetic-sky-0424", 24, 9),
+    ("development-true-century-8320", 24, 9),
+    ("development-angular-radian-2199", 30, 10),
+    ("development-scientific-cosmonaut-1863", 30, 10),
+    ("development-uninhabited-wavelength-9355", 30, 10),
+    ("development-false-spacecraft-1944", 36, 11),
+    ("development-mathematical-equator-2284", 36, 11),
+    ("development-amateur-horizon-3115", 54, 14),
+    ("development-devoid-terminator-0587", 54, 14),
+    ("development-optical-asteroid-4621", 54, 14),
+]
 
 @pytest.mark.parametrize(
     "kube_version",
@@ -184,3 +215,22 @@ class TestAstronomerConfigSyncer:
 
         assert "--target-namespaces" not in container["args"]
         assert ",".join(namespaces) not in container["args"]
+
+    @pytest.mark.parametrize(
+        "test_data", cron_test_data, ids=[x[0] for x in cron_test_data]
+    )
+    def test_astronomer_config_syncer_cronjob_default_schedule(self, test_data, kube_version):
+        """Test that if no schedule is provided for configSyncer, helm automatically generates a random one"""
+
+        doc = render_chart(
+            name=test_data[0],
+            kube_version=kube_version,
+            show_only=[
+                "charts/astronomer/templates/config-syncer/config-syncer-cronjob.yaml",
+            ],
+        )[0]
+
+        cron_schedule = doc['spec']['schedule'].split(' ')
+        assert int(cron_schedule[0]) == test_data[1]
+        assert int(cron_schedule[1]) == test_data[2]
+
