@@ -240,7 +240,7 @@ houston:
 
 configSyncer:
   enabled: true
-  # default here is to run at midnight every night
+  # If not provided, will generate a random hour and minutes to spread cronjob workloads.
   schedule: ~
 
 commander:
