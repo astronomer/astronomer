@@ -126,7 +126,15 @@ class TestAuthSidecar:
         """Test Houston Configmap with authSidecar."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"authSidecar": {"enabled": True}}},
+            values={
+                "global": {
+                    "authSidecar": {
+                        "enabled": True,
+                        "repository": "nginxinc/nginx-unprivileged",
+                        "tag": "stable",
+                    }
+                }
+            },
             show_only=[
                 "charts/astronomer/templates/houston/houston-configmap.yaml",
             ],
@@ -156,7 +164,11 @@ class TestAuthSidecar:
             kube_version=kube_version,
             values={
                 "global": {
-                    "authSidecar": {"enabled": True},
+                    "authSidecar": {
+                        "enabled": True,
+                        "repository": "nginxinc/nginx-unprivileged",
+                        "tag": "stable",
+                    },
                     "extraAnnotations": {
                         "kubernetes.io/ingress.class": "astronomer-nginx",
                         "nginx.ingress.kubernetes.io/proxy-body-size": "1024m",
