@@ -32,6 +32,13 @@ unittest-requirements: .unittest-requirements ## Setup venv required for unit te
 unittest-charts: .unittest-requirements ## Unittest the Astronomer helm chart
 	venv/bin/python -m pytest -v --junitxml=test-results/junit.xml -n auto tests/chart_tests
 
+.PHONY: validate-commander-airflow-version
+validate-commander-airflow-version:
+	./bin/validate_commander_airflow_version
+
+.PHONY: test
+test: validate-commander-airflow-version unittest-charts
+
 .PHONY: lint-charts
 lint-charts: lint-prep ## Lint Astronomer sub-charts
 	# Check that nothing accidentally is using release name instead of namespace for metadata.namespace
