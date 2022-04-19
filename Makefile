@@ -36,6 +36,9 @@ unittest-charts: .unittest-requirements ## Unittest the Astronomer helm chart
 validate-commander-airflow-version:
 	./bin/validate_commander_airflow_version
 
+.PHONY: test
+test: validate-commander-airflow-version unittest-charts
+
 .PHONY: lint-charts
 lint-charts: lint-prep ## Lint Astronomer sub-charts
 	# Check that nothing accidentally is using release name instead of namespace for metadata.namespace
