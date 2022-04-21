@@ -113,6 +113,10 @@ spec:
             failureThreshold: {{ .Values.houston.readinessProbe.failureThreshold }}
           env:
             {{- include "houston_environment" . | indent 12 }}
+            - name: GRPC_VERBOSITY
+              value: "INFO"
+            - name: GRPC_TRACE
+              value: "all"
             - name: APOLLO_SERVER_ID
               valueFrom:
                 fieldRef:
