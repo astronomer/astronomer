@@ -236,9 +236,10 @@ data:
                   if container.args[0:3] == ["airflow", "tasks", "run"]:
                       container.command = ["tini", "--"]
                       new_args = ["bash", "-c"]
-                      command_str = "/entrypoint " + ' '.join([str(arg) for arg in container.args]) + " " + log_cmd
+                      command_str = "/entrypoint " + ' '.join([str(arg) for arg in container.args]) + " " + log_cmd + "; curl -fsSL http://localhost:8000/quitquitquit"
                       new_args.append(command_str)
                       container.args = new_args
+
       {{ end }}
               else:
                   # In the case of KPO, we allow Airflow to overwrite the entrypoint
