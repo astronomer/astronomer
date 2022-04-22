@@ -10,7 +10,7 @@ executors:
 jobs:
   run_pre_commit:
     docker:
-      - image: quay.io/astronomer/ci-pre-commit:2022-03
+      - image: quay.io/astronomer/ci-pre-commit:2022-04
     steps:
       - checkout
       - run:
@@ -45,7 +45,7 @@ jobs:
 
   unittest-charts:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2022-03
+      - image: quay.io/astronomer/ci-helm-release:2022-04
     steps:
       - setup_remote_docker:
           docker_layer_caching: true
