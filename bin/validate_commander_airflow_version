@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 
-docker_ok=$(docker version)
-if [[ "$docker_ok" != 0 ]] ; then
+if ! docker version ; then
     echo "ABORT: Something is wrong with docker."
-    exit "$docker_ok"
+    exit 1
 fi
 
 GIT_ROOT="$(git -C "${0%/*}" rev-parse --show-toplevel)"
