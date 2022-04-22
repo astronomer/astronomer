@@ -19,7 +19,7 @@ images:
     pullPolicy: IfNotPresent
   registry:
     repository: quay.io/astronomer/ap-registry
-    tag: 3.15.1
+    tag: 3.15.4
     pullPolicy: IfNotPresent
     # httpSecret: ~
   houston:
@@ -32,7 +32,11 @@ images:
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
+<<<<<<< HEAD
     tag: 0.26.4
+=======
+    tag: 0.26.6
+>>>>>>> dcb50e9e (fixe CVE-2022-28391 (#1474))
     pullPolicy: IfNotPresent
   cliInstall:
     repository: quay.io/astronomer/ap-cli-install
