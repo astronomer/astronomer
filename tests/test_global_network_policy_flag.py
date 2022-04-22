@@ -44,8 +44,10 @@ def test_render_global_network_policy(np_enabled, num_of_docs):
     docs = render_chart(
         show_only=show_only,
         values={
-            "global": {"networkPolicy": {"enabled": np_enabled},
-                       "postgresqlEnabled": True}
+            "global": {
+                "networkPolicy": {"enabled": np_enabled},
+                "postgresqlEnabled": True,
+            }
         },
     )
 
