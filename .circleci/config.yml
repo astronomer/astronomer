@@ -221,6 +221,7 @@ workflows:
       - check-commander-airflow-version
       - build-artifact:
           requires:
+            - check-commander-airflow-version
             - lint
             - run_pre_commit
             - unittest-charts
