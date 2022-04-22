@@ -193,6 +193,7 @@ pytest==7.1.1 \
     #   pytest-profiling
     #   pytest-rerunfailures
     #   pytest-sugar
+    #   pytest-testinfra
     #   pytest-xdist
 pytest-forked==1.4.0 \
     --hash=sha256:8b67587c8f98cbbadfdd804539ed5455b6ed03802203485dd2f53c1422d7440e \
@@ -210,6 +211,10 @@ pytest-rerunfailures==10.2 \
     # via -r requirements/chart-tests.in
 pytest-sugar==0.9.4 \
     --hash=sha256:b1b2186b0a72aada6859bea2a5764145e3aaa2c1cfbb23c3a19b5f7b697563d3
+    # via -r requirements/chart-tests.in
+pytest-testinfra==6.7.0 \
+    --hash=sha256:b324210d9ead6554302e5c0b6383b238617577619de2e074f5fed22962b3004c \
+    --hash=sha256:dfde1ce0f1f7cc0dd5c62a29d0f986f3a98a8c144bbcbaebdf7eeeaf16163ec1
     # via -r requirements/chart-tests.in
 pytest-xdist==2.5.0 \
     --hash=sha256:4580deca3ff04ddb2ac53eba39d76cb5dd5edeac050cb6fbc768b0dd712b4edf \
