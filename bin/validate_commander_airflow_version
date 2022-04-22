@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 docker_ok=$(docker version)
-if [[ "$docker_ok" -ne 0 ]] ; then
+if [[ "$docker_ok" != 0 ]] ; then
     echo "ABORT: Something is wrong with docker."
     exit "$docker_ok"
 fi
