@@ -121,6 +121,54 @@ def test_houston_configmap_with_kubed_disabled():
     assert "extraVolumes" not in prod["deployments"]["helm"]["airflow"]["webserver"]
 
 
+def test_houston_configmapwith_loggingsidecar_enabled():
+    """Validate the houston configmap and its embedded data with loggingSidecar."""
+    terminationEndpoint = "http://localhost:8000/quitquitquit"
+    docs = render_chart(
+        values={"astronomer": {"houston": {"loggingSidecar": {"enabled": True}}}},
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+
+    common_test_cases(docs)
+    doc = docs[0]
+    prod = yaml.safe_load(doc["data"]["production.yaml"])
+    data = 'log_cmd = "1> >( tee -a /var/log/sidecar-log-consumer/out.log ) 2> >( tee -a /var/log/sidecar-log-consumer/err.log >&2 )"'
+    print(prod["deployments"]["helm"]["airflow"]["airflowLocalSettings"])
+    assert data in prod["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
+    assert (
+        terminationEndpoint
+        in prod["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
+    )
+
+
+def test_houston_configmapwith_loggingsidecar_enabled_with_overrides():
+    """Validate the houston configmap and its embedded data with loggingSidecar."""
+    sidecar_container_name = "sidecar-log-test"
+    terminationEndpoint = "http://localhost:8000/quitquitquit"
+    docs = render_chart(
+        values={
+            "astronomer": {
+                "houston": {
+                    "loggingSidecar": {"enabled": True, "name": sidecar_container_name}
+                }
+            }
+        },
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+
+    common_test_cases(docs)
+    doc = docs[0]
+    prod = yaml.safe_load(doc["data"]["production.yaml"])
+    data = 'log_cmd = "1> >( tee -a /var/log/{sidecar_container_name}/out.log ) 2> >( tee -a /var/log/{sidecar_container_name}/err.log >&2 )"'.format(
+        sidecar_container_name=sidecar_container_name
+    )
+    assert data in prod["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
+    assert (
+        terminationEndpoint
+        in prod["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
+    )
+
+
 cron_test_data = [
     ("development-angular-system-6091", 3),
     ("development-arithmetic-phases-5695", 3),
