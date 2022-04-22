@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 
+docker_ok=$(docker version)
+if [[ "$docker_ok" -ne 0 ]] ; then
+    echo "ABORT: Something is wrong with docker."
+    exit "$docker_ok"
+fi
+
 GIT_ROOT="$(git -C "${0%/*}" rev-parse --show-toplevel)"
 
 commander_image=quay.io/astronomer/ap-commander
