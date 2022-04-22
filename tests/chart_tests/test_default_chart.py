@@ -55,3 +55,69 @@ class TestAllPodSpecContainers:
             assert container["image"].startswith(
                 self.private_repo
             ), f"The container '{name}' does not use the privateRegistry repo '{self.private_repo}': {container}"
+
+
+class TestDuplicateEnvironment:
+    """Parametrize all the docs that have container specs and test them for duplicate env vars."""
+
+    values = {
+        "global": {
+            "baseDomain": "foo.com",
+            "blackboxExporterEnabled": True,
+            "postgresqlEnabled": True,
+            "privateRegistry": {
+                "enabled": True,
+                "repository": "example.com/the-private-registry",
+            },
+            "prometheusPostgresExporterEnabled": True,
+            "pspEnabled": True,
+            "veleroEnabled": True,
+        }
+    }
+    docs = render_chart(values=values)
+    trimmed_docs = [x for x in docs if x["kind"] in pod_managers + ["CronJob"]]
+
+    @staticmethod
+    def check_env_vars_are_unique(container):
+        """Return a list of env vars that are duplicates."""
+        c_env_names = [x["name"] for x in container.get("env") or []]
+        return [x for x in set(c_env_names) if c_env_names.count(x) > 1]
+
+    @pytest.mark.parametrize(
+        "doc",
+        trimmed_docs,
+        ids=[f"{x['kind']}/{x['metadata']['name']}" for x in trimmed_docs],
+    )
+    def test_env_vars_have_no_duplicates(self, doc):
+        """Test that there are no duplicate env vars"""
+        if doc["kind"] in pod_managers:
+            for container in doc["spec"]["template"]["spec"].get("containers") or []:
+                assert (
+                    self.check_env_vars_are_unique(container) == []
+                ), "container has duplicate env vars"
+
+            for container in (
+                doc["spec"]["template"]["spec"].get("initContainers") or []
+            ):
+                assert (
+                    self.check_env_vars_are_unique(container) == []
+                ), "initContainer has duplicate env vars"
+
+        elif doc["kind"] == "CronJob":
+            for container in (
+                doc["spec"]["jobTemplate"]["spec"]["template"]["spec"].get("containers")
+                or []
+            ):
+                assert (
+                    self.check_env_vars_are_unique(container) == []
+                ), "container has duplicate env vars"
+
+            for container in (
+                doc["spec"]["jobTemplate"]["spec"]["template"]["spec"].get(
+                    "initContainers"
+                )
+                or []
+            ):
+                assert (
+                    self.check_env_vars_are_unique(container) == []
+                ), "initContainer has duplicate env vars"
