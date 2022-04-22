@@ -133,7 +133,6 @@ def test_houston_configmapwith_loggingsidecar_enabled():
     doc = docs[0]
     prod = yaml.safe_load(doc["data"]["production.yaml"])
     data = 'log_cmd = "1> >( tee -a /var/log/sidecar-log-consumer/out.log ) 2> >( tee -a /var/log/sidecar-log-consumer/err.log >&2 )"'
-    print(prod["deployments"]["helm"]["airflow"]["airflowLocalSettings"])
     assert data in prod["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
     assert (
         terminationEndpoint
