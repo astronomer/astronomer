@@ -3,10 +3,9 @@
 #################################
 # Either:
 # 1. Do not create anything is rbacEnabled is disabled
-# 2. Create ClusterRoleBinding if clusterRoles enabled and namespacePools disabled
+# 2. Create ClusterRoleBinding if namespacePools disabled
 # 3. Create RoleBinding for each namespace in the namespacePool (+ astronomer namespace) if enabled
-{{- $useClusterRoles := and .Values.global.rbacEnabled .Values.global.clusterRoles (not .Values.global.features.namespacePools.enabled)}}
-{{- $shouldCreateResources := and .Values.global.rbacEnabled (or .Values.global.clusterRoles .Values.global.features.namespacePools.enabled) }}
+{{- $useClusterRoles := and .Values.global.rbacEnabled (not .Values.global.features.namespacePools.enabled)}}
 {{- $namespaces := .Values.global.features.namespacePools.namespaces.names }}
 {{- if $useClusterRoles }}
   {{- $namespaces = list .Release.Namespace}}
@@ -14,13 +13,13 @@
   {{- $namespaces = append $namespaces .Release.Namespace }}
 {{- end }}
 
-{{- if $shouldCreateResources }}
+{{- if .Values.global.rbacEnabled -}}
 {{- range $i, $namespaceName := $namespaces -}}
 ---
 apiVersion: {{ template "apiVersion.rbac" . }}
 kind: {{ if $useClusterRoles }}ClusterRoleBinding{{ else }}RoleBinding{{ end }}
 metadata:
-  name: {{ $.Release.Name }}-commander
+  name: {{ $.Release.Name }}-config-syncer
   {{- if not $useClusterRoles }}
   namespace: {{ $namespaceName }}
   {{- end }}
@@ -31,10 +30,10 @@ metadata:
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: {{ if $useClusterRoles }}ClusterRole{{ else }}Role{{ end }}
-  name: {{ $.Release.Name }}-commander
+  name: {{ $.Release.Name }}-config-syncer
 subjects:
   - kind: ServiceAccount
-    name: {{ $.Release.Name }}-commander
+    name: {{ $.Release.Name }}-config-syncer
     namespace: {{ $.Release.Namespace }}
 {{ end }}
 {{- end }}
