@@ -126,7 +126,7 @@ jobs:
       KUBE_VERSION: v{{ version }}
     steps:
       - helm-install:
-          astronomer-tags: "platform postgresql monitoring logging kubed"
+          astronomer-tags: "platform postgresql monitoring logging"
       - run:
           name: Check chart for k8s {{ version }} compatibility with kubent
           command: |

@@ -231,9 +231,6 @@ tags:
   # Enable logging stack (elasticsearch, fluentd, kibana)
   logging: true
 
-  # Kubed
-  kubed: true
-
   # NATS Streaming
   stan: true
 
@@ -522,17 +519,4 @@ kube-state:
       memory: "512Mi"
     limits:
       cpu: "500m"
-      memory: "1024Mi"
-
-#################################
-## KubeD configuration
-#################################
-kubed:
-  # Configure resources
-  resources:
-    requests:
-      cpu: "250m"
-      memory: "512Mi"
-    limits:
-      cpu: "2"
       memory: "1024Mi"

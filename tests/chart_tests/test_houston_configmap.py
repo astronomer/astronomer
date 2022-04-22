@@ -80,47 +80,6 @@ def test_houston_configmap_with_azure_enabled():
     assert livenessProbe["periodSeconds"] == 10
 
 
-def test_houston_configmap_with_kubed_enabled():
-    """Validate the houston configmap and its embedded data with kubedEnabled."""
-    docs = render_chart(
-        values={"global": {"kubedEnabled": True}},
-        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
-    )
-
-    common_test_cases(docs)
-    doc = docs[0]
-    prod = yaml.safe_load(doc["data"]["production.yaml"])
-    assert prod["deployments"]["helm"]["airflow"]["webserver"]["extraVolumeMounts"] == [
-        {
-            "name": "signing-certificate",
-            "mountPath": "/etc/airflow/tls",
-            "readOnly": True,
-        }
-    ]
-    assert prod["deployments"]["helm"]["airflow"]["webserver"]["extraVolumes"] == [
-        {
-            "name": "signing-certificate",
-            "secret": {"secretName": "release-name-houston-jwt-signing-certificate"},
-        }
-    ]
-
-
-def test_houston_configmap_with_kubed_disabled():
-    """Validate the houston configmap and its embedded data with kubedEnabled."""
-    docs = render_chart(
-        values={"global": {"kubedEnabled": False}},
-        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
-    )
-
-    common_test_cases(docs)
-    doc = docs[0]
-    prod = yaml.safe_load(doc["data"]["production.yaml"])
-    assert (
-        "extraVolumeMounts" not in prod["deployments"]["helm"]["airflow"]["webserver"]
-    )
-    assert "extraVolumes" not in prod["deployments"]["helm"]["airflow"]["webserver"]
-
-
 cron_test_data = [
     ("development-angular-system-6091", 3),
     ("development-arithmetic-phases-5695", 3),
