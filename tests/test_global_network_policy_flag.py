@@ -1,9 +1,5 @@
-from cgitb import enable
 from tests.helm_template_generator import render_chart
 import pytest
-import jmespath
-from . import git_root_dir
-import git
 
 # External-es-proxy and prometheus-postgres-exporter are set false by default,
 # needs additional work on creating test cases for future
@@ -48,8 +44,8 @@ def test_render_global_network_policy(np_enabled, num_of_docs):
     docs = render_chart(
         show_only=show_only,
         values={
-            "global": {"networkPolicy": {"enabled": np_enabled}},
-            "global": {"postgresqlEnabled": True},
+            "global": {"networkPolicy": {"enabled": np_enabled},
+                       "postgresqlEnabled": True}
         },
     )
 
