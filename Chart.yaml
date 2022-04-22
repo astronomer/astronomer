@@ -58,11 +58,6 @@ dependencies:
     condition: global.fluentdEnabled
     tags:
       - logging
-  # KubeD
-  - name: kubed
-    condition: global.kubedEnabled
-    tags:
-      - kubed
   # In-cluster DB, not recommended
   # for production
   - name: postgresql

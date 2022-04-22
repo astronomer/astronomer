@@ -15,11 +15,11 @@ tolerations: []
 images:
   commander:
     repository: quay.io/astronomer/ap-commander
-    tag: 0.28.4
+    tag: 0.29.0
     pullPolicy: IfNotPresent
   registry:
     repository: quay.io/astronomer/ap-registry
-    tag: 3.15.3
+    tag: 3.15.4
     pullPolicy: IfNotPresent
     # httpSecret: ~
   houston:
@@ -32,7 +32,7 @@ images:
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
-    tag: 0.26.5
+    tag: 0.26.6
     pullPolicy: IfNotPresent
   cliInstall:
     repository: quay.io/astronomer/ap-cli-install
@@ -237,6 +237,11 @@ houston:
     #   tags:
     #   - 2.0.0-alpine3.10-onbuild
     #   channel: stable
+
+configSyncer:
+  enabled: true
+  # If not provided, will generate a random hour and minutes to spread cronjob workloads.
+  schedule: ~
 
 commander:
   replicas: 2
