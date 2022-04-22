@@ -53,6 +53,10 @@ astroUI:
   #   memory: 128Mi
 
 houston:
+  loggingSidecar:
+    enabled: false
+    name: sidecar-log-consumer
+    terminationEndpoint: http://localhost:8000/quitquitquit
   prismaConnectionLimit: 5
   replicas: 2
   # This only applies when replicas > 3
