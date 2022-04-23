@@ -93,3 +93,7 @@ spec:
             - name: COMMANDER_AIRGAPPED
               value: "true"
             {{- end }}
+            {{ if .Values.global.features.namespacePools.enabled }}
+            - name: COMMANDER_MANUAL_NAMESPACE_NAMES
+              value: "true"
+            {{- end }}

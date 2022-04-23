@@ -1,0 +1,43 @@
+########################################
+## Astronomer Commander Role/ClusterRole
+########################################
+# Here, we either:
+# 1. Do not create any resource if rbacEnabled is disabled
+# 2. Create a Cluster Role if namespacePools is disabled
+# 3. Create roles for each namespaces in the namespacePool (+ astronomer namespace) if enabled.
+{{- $useClusterRoles := and .Values.global.rbacEnabled (not .Values.global.features.namespacePools.enabled)}}
+{{- $namespaces := .Values.global.features.namespacePools.namespaces.names }}
+{{- if $useClusterRoles }}
+  {{- $namespaces = list .Release.Namespace}}
+{{- else  }}
+  {{- $namespaces = append $namespaces .Release.Namespace }}
+{{- end }}''
+
+{{- if .Values.global.rbacEnabled }}
+{{- range $i, $namespaceName := $namespaces -}}
+---
+kind: {{ if $useClusterRoles }}ClusterRole{{ else }}Role{{ end }}
+apiVersion: {{ template "apiVersion.rbac" . }}
+metadata:
+  {{- if not $useClusterRoles }}
+  namespace: {{ $namespaceName }}
+  {{- end }}
+  name: {{ $.Release.Name }}-config-syncer
+  labels:
+    tier: houston
+    release: {{ $.Release.Name }}
+    chart: "{{ $.Chart.Name }}-{{ $.Chart.Version }}"
+    heritage: {{ $.Release.Service }}
+  {{- if $.Values.global.enableArgoCDAnnotation }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+  {{- end }}
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["create", "get", "list", "patch", "update"]
+- apiGroups: [""]
+  resources: ["namespaces"]
+  verbs: ["get", "list"]
+{{ end }}
+{{- end }}

@@ -58,22 +58,12 @@ dependencies:
     condition: global.fluentdEnabled
     tags:
       - logging
-  # KubeD
-  - name: kubed
-    condition: global.kubedEnabled
-    tags:
-      - kubed
   # In-cluster DB, not recommended
   # for production
   - name: postgresql
     condition: global.postgresqlEnabled
     tags:
       - postgresql
-  # Used to enable Celery autoscaling
-  - name: keda
-    condition: global.kedaEnabled
-    tags:
-      - keda
   # Nats-server
   - name: nats
     condition: global.nats.enabled

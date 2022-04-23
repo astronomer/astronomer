@@ -36,6 +36,8 @@ spec:
 {{ toYaml .Values.client.podAnnotations | indent 8 }}
 {{- end }}
     spec:
+      securityContext:
+{{ toYaml .Values.podSecurityContext | indent 10 }}
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
       {{- if eq .Values.client.antiAffinity "hard" }}
@@ -79,7 +81,7 @@ spec:
       containers:
       - name: es-client
         securityContext:
-          privileged: false
+{{ toYaml .Values.securityContext | indent 10 }}
           capabilities:
             add:
               - IPC_LOCK

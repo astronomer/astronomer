@@ -28,6 +28,15 @@ global:
   networkPolicy:
     enabled: true
 
+  # Specific Astronomer features configuration
+  features:
+    # namespace pools: define k8s namespaces in which Astronomer will manage Airflow deployments
+    namespacePools:
+      enabled: false
+      namespaces:
+        # if create is enabled, this helm chart will create the provided k8s namespaces
+        create: false
+        names: []
 
   # Use kube-lego
   acme: false
@@ -46,9 +55,6 @@ global:
 
   # Use cluster roles
   clusterRoles: true
-
-  # Enables kubed
-  kubedEnabled: true
 
   # Enables necessary components for compatibility with Istio Service Mesh
   istio:
@@ -70,10 +76,7 @@ global:
   # Enables blackbox exporter
   blackboxExporterEnabled: false
 
-  # Used to enable Celery autoscaling
-  kedaEnabled: false
-
-  # make fluentd to gather logs from all avaialble namespaces
+  # make fluentd to gather logs from all available namespaces
   manualNamespaceNamesEnabled: false
 
   # Used to enable nats-server
@@ -204,7 +207,7 @@ global:
   ssl:
     enabled: false
     mode: "prefer"
-    # we need seperate mode for grafana:
+    # we need separate mode for grafana:
     # grafana starting from (7.5.0) only supports sslmodes: disable/require/verify-ca/verify-full
     # https://github.com/grafana/grafana/blob/master/CHANGELOG.md#750-beta1-2021-03-04 (Postgres: SSL certification)
     grafana:
@@ -371,18 +374,6 @@ prometheus:
     limits:
       cpu: "2000m"
       memory: "8Gi"
-
-#################################
-## KEDA configuration
-#################################
-
-keda:
-  keda:
-    nodeSelector:
-      <<: *platformNodeSelector
-    affinity:
-      <<: *platformAffinity
-    tolerations: *platformTolerations
 
 nats:
   nodeSelector:

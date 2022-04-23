@@ -47,6 +47,8 @@ jobs:
     docker:
       - image: quay.io/astronomer/ci-helm-release:2022-03
     steps:
+      - setup_remote_docker:
+          docker_layer_caching: true
       - checkout
       - run:
           name: Create chart-tests-cache-key.txt
@@ -67,8 +69,11 @@ jobs:
             - ~/project/.unittest-requirements
       - run:
           name: unittest the Astronomer chart
-          command: make unittest-charts
-
+          command: |
+            mkdir test-results
+            make unittest-charts
+      - store_test_results:
+          path: test-results
   build-artifact:
     docker:
       - image: quay.io/astronomer/ap-build:0.2.0
@@ -123,7 +128,7 @@ jobs:
       KUBE_VERSION: v1.19.11
     steps:
       - helm-install:
-          astronomer-tags: "platform postgresql monitoring logging kubed keda"
+          astronomer-tags: "platform postgresql monitoring logging kubed"
       - run:
           name: Check chart for k8s 1.19.11 compatibility with kubent
           command: |
@@ -139,7 +144,7 @@ jobs:
       KUBE_VERSION: v1.20.7
     steps:
       - helm-install:
-          astronomer-tags: "platform postgresql monitoring logging kubed keda"
+          astronomer-tags: "platform postgresql monitoring logging kubed"
       - run:
           name: Check chart for k8s 1.20.7 compatibility with kubent
           command: |
@@ -155,7 +160,7 @@ jobs:
       KUBE_VERSION: v1.21.2
     steps:
       - helm-install:
-          astronomer-tags: "platform postgresql monitoring logging kubed keda"
+          astronomer-tags: "platform postgresql monitoring logging kubed"
       - run:
           name: Check chart for k8s 1.21.2 compatibility with kubent
           command: |
@@ -163,6 +168,48 @@ jobs:
             helm template --kube-version=v1.21.2 -f values.yaml --set global.baseDomain=example.com . |
             kubent --cluster=false --helm2=false --helm3=false --filename -
           when: always
+  platform-1-22-7:
+    machine:
+      image: ubuntu-2004:202107-02
+      resource_class: xlarge
+    environment:
+      KUBE_VERSION: v1.22.7
+    steps:
+      - helm-install:
+          astronomer-tags: "platform postgresql monitoring logging kubed"
+      - run:
+          name: Check chart for k8s 1.22.7 compatibility with kubent
+          command: |
+            set -o pipefail
+            helm template --kube-version=v1.22.7 -f values.yaml --set global.baseDomain=example.com . |
+            kubent --cluster=false --helm2=false --helm3=false --filename -
+          when: always
+  platform-1-23-4:
+    machine:
+      image: ubuntu-2004:202107-02
+      resource_class: xlarge
+    environment:
+      KUBE_VERSION: v1.23.4
+    steps:
+      - helm-install:
+          astronomer-tags: "platform postgresql monitoring logging kubed"
+      - run:
+          name: Check chart for k8s 1.23.4 compatibility with kubent
+          command: |
+            set -o pipefail
+            helm template --kube-version=v1.23.4 -f values.yaml --set global.baseDomain=example.com . |
+            kubent --cluster=false --helm2=false --helm3=false --filename -
+          when: always
+
+  check-commander-airflow-version:
+    docker:
+      - image: cimg/base:2022.03
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Check that commander image uses same Airflow chart version
+          command: make validate-commander-airflow-version
 
 workflows:
   version: 2.1
@@ -171,6 +218,7 @@ workflows:
       - lint
       - run_pre_commit
       - unittest-charts
+      - check-commander-airflow-version
       - build-artifact:
           requires:
             - lint
@@ -189,6 +237,16 @@ workflows:
 
       - platform-1-21-2:
           requires:
+            - approve-test-all-platforms
+            - build-artifact
+
+      - platform-1-22-7:
+          requires:
+            - approve-test-all-platforms
+            - build-artifact
+
+      - platform-1-23-4:
+          requires:
             - build-artifact
       - approve-internal-release:
           type: approval
@@ -198,12 +256,14 @@ workflows:
           requires:
             - approve-internal-release
             - platform-1-19-11
-            - platform-1-21-2
+            - platform-1-23-4
       - approve-public-release:
           type: approval
           requires:
             - release-to-internal
             - platform-1-20-7
+            - platform-1-21-2
+            - platform-1-22-7
           filters:
             branches:
               only:
@@ -324,7 +384,8 @@ commands:
             echo 'export PATH="/tmp/bin:/tmp/google-cloud-sdk/bin:$PATH"' >> "$HOME/.bashrc"
             set -e
             HELM_CHART_PATH='/tmp/workspace/astronomer-*.tgz' bin/run-ci << parameters.astronomer-tags >>
-
+      - store_test_results:
+          path: test-results
   publish-github-release:
     description: "Create a release on GitHub"
     parameters:
