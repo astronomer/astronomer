@@ -111,6 +111,11 @@ data:
 
         airflow:
           useAstroSecurityManager: true
+          {{- if .Values.global.networkPolicy.enabled }}
+          networkPolicies:
+          # Enabled network polices to restrict the way pods can communicate.
+            enabled: true
+          {{ end }}
           webserver:
             {{ if .Values.global.kubedEnabled }}
             extraVolumeMounts:
