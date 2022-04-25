@@ -22,7 +22,7 @@ class TestAllPodSpecContainers:
         annotated,
         ids=[f"{x['kind']}/{x['metadata']['name']}" for x in annotated],
     )
-    def test_default_annotaiton_keys_are_valid(self, doc):
+    def test_annotaiton_keys_are_valid(self, doc):
         """Test that our annotation keys are valid."""
         annotation_results = [
             bool(annotation_validator.match(a)) for a in doc["metadata"]["annotations"]
