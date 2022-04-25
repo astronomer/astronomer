@@ -7,9 +7,7 @@ help: ## Print Makefile help.
 # List of charts to build
 CHARTS := astronomer nginx grafana prometheus alertmanager elasticsearch kibana fluentd kube-state postgresql
 
-NPROC   ?= $(shell nproc)
-NPROC75 ?= $(shell echo $$(( ((${NPROC} * 3) / 4) + 1 )))
-TEMPDIR ?= /tmp/astro-temp
+TEMPDIR := /tmp/astro-temp
 
 .PHONY: lint
 lint: lint-prep lint-astro lint-charts ## Run all lint steps on the Astronomer helm chart and subcharts
@@ -32,7 +30,7 @@ unittest-requirements: .unittest-requirements ## Setup venv required for unit te
 
 .PHONY: unittest-charts
 unittest-charts: .unittest-requirements ## Unittest the Astronomer helm chart
-	venv/bin/python -m pytest -v --junitxml=test-results/junit.xml -n ${NPROC75} tests/chart_tests
+	venv/bin/python -m pytest -v --junitxml=test-results/junit.xml -n auto tests/chart_tests
 
 .PHONY: validate-commander-airflow-version
 validate-commander-airflow-version:
