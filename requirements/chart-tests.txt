@@ -115,9 +115,7 @@ oauthlib==3.2.0 \
 packaging==21.3 \
     --hash=sha256:dd47c42927d89ab911e606518907cc2d3a1f38bbd026385970643f9c5b8ecfeb \
     --hash=sha256:ef103e05f519cdc783ae24ea4e2e0f508a9c99b2d4969652eed6a2e1ea5bd522
-    # via
-    #   pytest
-    #   pytest-sugar
+    # via pytest
 pathspec==0.9.0 \
     --hash=sha256:7d15c4ddb0b5c802d161efc417ec1a2558ea2653c2e8ad9c19098201dc1c993a \
     --hash=sha256:e564499435a2673d586f6b2130bb5b95f04a3ba06f81b8f895b651a3c76aabb1
@@ -192,7 +190,6 @@ pytest==7.1.2 \
     #   pytest-forked
     #   pytest-profiling
     #   pytest-rerunfailures
-    #   pytest-sugar
     #   pytest-testinfra
     #   pytest-xdist
 pytest-forked==1.4.0 \
@@ -208,9 +205,6 @@ pytest-profiling==1.7.0 \
 pytest-rerunfailures==10.2 \
     --hash=sha256:9e1e1bad51e07642c5bbab809fc1d4ec8eebcb7de86f90f1a26e6ef9de446697 \
     --hash=sha256:d31d8e828dfd39363ad99cd390187bf506c7a433a89f15c3126c7d16ab723fe2
-    # via -r requirements/chart-tests.in
-pytest-sugar==0.9.4 \
-    --hash=sha256:b1b2186b0a72aada6859bea2a5764145e3aaa2c1cfbb23c3a19b5f7b697563d3
     # via -r requirements/chart-tests.in
 pytest-testinfra==6.7.0 \
     --hash=sha256:b324210d9ead6554302e5c0b6383b238617577619de2e074f5fed22962b3004c \
@@ -295,9 +289,6 @@ smmap==5.0.0 \
     --hash=sha256:2aba19d6a040e78d8b09de5c57e96207b09ed71d8e55ce0959eeee6c8e190d94 \
     --hash=sha256:c840e62059cd3be204b0c9c9f74be2c09d5648eddd4580d9314c3ecde0b30936
     # via gitdb
-termcolor==1.1.0 \
-    --hash=sha256:1d6d69ce66211143803fbc56652b41d73b4a400a2891d7bf7a1cdf4c02de613b
-    # via pytest-sugar
 tomli==2.0.1 \
     --hash=sha256:939de3e7a6161af0c887ef91b7d41a53e7c5a1ca976325f429cb46ea9bc30ecc \
     --hash=sha256:de526c12914f0c550d15924c62d72abc48d6fe7364aa87328337a31007fe8a4f
