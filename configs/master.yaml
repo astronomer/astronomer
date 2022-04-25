@@ -124,17 +124,6 @@ kube-state:
 
 
 #################################
-## Kubed configuration
-#################################
-kubed:
-  images:
-    kubed:
-      repository: quay.io/astronomer/ap-kubed
-      tag: master
-      pullPolicy: Always
-
-
-#################################
 ## Prometheus configuration
 #################################
 prometheus:

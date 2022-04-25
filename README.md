@@ -50,7 +50,6 @@ Modify the "tags:" in configs/local-dev.yaml
 - platform: core Astronomer components
 - logging (large impact on RAM use): ElasticSearch, Kibana, Fluentd (aka 'EFK' stack)
 - monitoring: Prometheus
-- kubed: leave on
 
 #### Add a Docker image into KinD's nodes (so it's available for pods):
 
