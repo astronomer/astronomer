@@ -2,7 +2,11 @@ import pytest
 
 from tests import get_containers_by_name
 from tests.chart_tests.helm_template_generator import render_chart
+import re
 
+annotation_validator = re.compile(
+    "^([^/]+/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$"
+)
 pod_managers = ["Deployment", "StatefulSet", "DaemonSet"]
 
 
@@ -11,6 +15,21 @@ class TestAllPodSpecContainers:
 
     default_docs = render_chart()
     default_docs_trimmed = [doc for doc in default_docs if doc["kind"] in pod_managers]
+    annotated = [x for x in default_docs if x["metadata"].get("annotations")]
+
+    @pytest.mark.parametrize(
+        "doc",
+        annotated,
+        ids=[f"{x['kind']}/{x['metadata']['name']}" for x in annotated],
+    )
+    def test_annotation_keys_are_valid(self, doc):
+        """Test that our annotation keys are valid."""
+        annotation_results = [
+            bool(annotation_validator.match(a)) for a in doc["metadata"]["annotations"]
+        ]
+        assert all(
+            annotation_results
+        ), f"One of the annotation keys in {doc['kind']} {doc['metadata']['name']} is invalid."
 
     @pytest.mark.parametrize(
         "doc",
