@@ -46,10 +46,10 @@ def chart_containers():
     return container_configs
 
 
-## TODO: Find a way to just reduce the contents of the probe to a boolean using jmespath
-## TODO: Find a way to parametrize these tests so they show up as individual tests, not just TestIngress.test_container_probes[1.16.0]
+# TODO: Find a way to just reduce the contents of the probe to a boolean using jmespath
+# TODO: Find a way to parametrize these tests so they show up as individual tests, not just TestIngress.test_container_probes[1.16.0]
 # TODO: Find a way to show which template the missing probe came from? Not sure if this is super valuable, just trying to give the user more hints as to where to make a fix
-## TODO: Find a way to exclude some containers from probes (EG: cronjobs)
+# TODO: Find a way to exclude some containers from probes (EG: cronjobs)
 
 
 class TestIngress:
