@@ -22,7 +22,7 @@ def chart_containers():
     for k8s_version_with_all_feature in k8s_versions_with_all_features:
         docs = render_chart(
             kube_version=k8s_version_with_all_feature["k8s_version"],
-            values=k8s_version_with_all_feature["values"]
+            values=k8s_version_with_all_feature["values"],
         )
 
         # "[?spec.template.spec.containers && kind=='Deployment'].{name: metadata.name, kind: kind, containers: spec.template.spec.containers[*]}",
@@ -34,7 +34,13 @@ def chart_containers():
         for spec in specs:
             name = spec["name"]
             for container in spec["containers"]:
-                key = k8s_version_with_all_feature["k8s_version"] + "_" + name + "_" + container["name"]
+                key = (
+                    k8s_version_with_all_feature["k8s_version"]
+                    + "_"
+                    + name
+                    + "_"
+                    + container["name"]
+                )
                 container_configs[key] = container
 
     return container_configs
@@ -45,12 +51,10 @@ def chart_containers():
 # TODO: Find a way to show which template the missing probe came from? Not sure if this is super valuable, just trying to give the user more hints as to where to make a fix
 ## TODO: Find a way to exclude some containers from probes (EG: cronjobs)
 
-class TestIngress:
 
+class TestIngress:
     @pytest.mark.parametrize(
-        "container",
-        chart_containers().values(),
-        ids=chart_containers().keys()
+        "container", chart_containers().values(), ids=chart_containers().keys()
     )
     def test_container_probes(self, container):
         """Ensure all containers have liveness and readiness probes"""
@@ -58,4 +62,4 @@ class TestIngress:
         assert "livenessProbe" in container
         assert "readinessProbe" in container
 
-        #assert validate_liveness_probe(chart_liveness_probe_config=container["livenessProbe"])
+        # assert validate_liveness_probe(chart_liveness_probe_config=container["livenessProbe"])
