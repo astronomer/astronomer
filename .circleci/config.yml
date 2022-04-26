@@ -71,7 +71,7 @@ jobs:
           name: unittest the Astronomer chart
           command: |
             mkdir test-results
-            make unittest-charts
+            make unittest-charts-ci
       - store_test_results:
           path: test-results
   build-artifact:
