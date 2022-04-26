@@ -8,7 +8,7 @@ executors:
 jobs:
   run_pre_commit:
     docker:
-      - image: quay.io/astronomer/ci-pre-commit:2022-03
+      - image: quay.io/astronomer/ci-pre-commit:2022-04
     steps:
       - checkout
       - run:
@@ -43,7 +43,7 @@ jobs:
 
   unittest-charts:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2022-03
+      - image: quay.io/astronomer/ci-helm-release:2022-04
     steps:
       - setup_remote_docker:
           docker_layer_caching: true
@@ -126,7 +126,7 @@ jobs:
       KUBE_VERSION: v{{ version }}
     steps:
       - helm-install:
-          astronomer-tags: "platform postgresql monitoring logging kubed"
+          astronomer-tags: "platform postgresql monitoring logging"
       - run:
           name: Check chart for k8s {{ version }} compatibility with kubent
           command: |
@@ -156,6 +156,7 @@ workflows:
       - check-commander-airflow-version
       - build-artifact:
           requires:
+            - check-commander-airflow-version
             - lint
             - run_pre_commit
             - unittest-charts

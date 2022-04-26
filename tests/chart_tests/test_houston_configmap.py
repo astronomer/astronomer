@@ -80,10 +80,10 @@ def test_houston_configmap_with_azure_enabled():
     assert livenessProbe["periodSeconds"] == 10
 
 
-def test_houston_configmap_with_kubed_enabled():
-    """Validate the houston configmap and its embedded data with kubedEnabled."""
+def test_houston_configmap_with_config_syncer_enabled():
+    """Validate the houston configmap and its embedded data with configSyncer enabled."""
     docs = render_chart(
-        values={"global": {"kubedEnabled": True}},
+        values={"astronomer": {"configSyncer": {"enabled": True}}},
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
 
@@ -105,10 +105,10 @@ def test_houston_configmap_with_kubed_enabled():
     ]
 
 
-def test_houston_configmap_with_kubed_disabled():
-    """Validate the houston configmap and its embedded data with kubedEnabled."""
+def test_houston_configmap_with_config_syncer_disabled():
+    """Validate the houston configmap and its embedded data with configSyncer disabled."""
     docs = render_chart(
-        values={"global": {"kubedEnabled": False}},
+        values={"astronomer": {"configSyncer": {"enabled": False}}},
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
 

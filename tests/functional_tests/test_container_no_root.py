@@ -6,7 +6,6 @@ import testinfra
 from tests.functional_tests.conftest import get_pod_running_containers
 
 container_ignore_list = [
-    "astronomer-kubed",
     "kube-state",
     "houston",
     "fluentd",
