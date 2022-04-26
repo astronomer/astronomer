@@ -34,8 +34,8 @@ unittest-charts: .unittest-requirements ## Unittest the Astronomer helm chart
 
 .PHONY: unittest-charts-ci
 unittest-charts-ci: .unittest-requirements ## Unittest the Astronomer helm chart
-	TEST_FILES=$(circleci tests glob "tests/chart_tests/test_*.py" | circleci tests split --split-by=timings)
-	venv/bin/python -m pytest -v --junitxml=test-results/junit.xml $TEST_FILES
+	$(eval TEST_FILES := $(circleci tests glob "tests/chart_tests/test_*.py" | circleci tests split --split-by=timings))
+	venv/bin/python -m pytest -v --junitxml=test-results/junit.xml $(TEST_FILES)
 
 .PHONY: validate-commander-airflow-version
 validate-commander-airflow-version: ## Validate that airflowChartVersion is the same in astronomer configs and the commander docker image
