@@ -3,7 +3,6 @@ from pathlib import Path
 import git
 
 # The top-level path of this repository
-
 git_repo = git.Repo(__file__, search_parent_directories=True)
 git_root_dir = Path(git_repo.git.rev_parse("--show-toplevel"))
 
