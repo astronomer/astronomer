@@ -3,8 +3,6 @@ from pathlib import Path
 import git
 
 # The top-level path of this repository
-import yaml
-from yaml import SafeLoader
 
 git_repo = git.Repo(__file__, search_parent_directories=True)
 git_root_dir = Path(git_repo.git.rev_parse("--show-toplevel"))
@@ -33,16 +31,3 @@ def get_containers_by_name(doc, include_init_containers=False):
         )
 
     return c_by_name
-
-
-def k8s_versions_with_all_features():
-    file_path = str(Path(__file__).parent) + "/enable_all_features.yaml"
-
-    configs = []
-    with open(file_path) as f:
-        feature_data = yaml.load(f, Loader=SafeLoader)
-
-    for k8s_version in supported_k8s_versions:
-        configs.append({"k8s_version": k8s_version, "values": feature_data})
-
-    return configs
