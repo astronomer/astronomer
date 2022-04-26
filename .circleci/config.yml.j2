@@ -69,7 +69,8 @@ jobs:
           name: unittest the Astronomer chart
           command: |
             mkdir test-results
-            make unittest-charts
+            TEST_FILES=$(circleci tests glob "tests/chart_tests/test_*.py" | circleci tests split --split-by=timings)
+            venv/bin/python -m pytest -v --junitxml=test-results/junit.xml $(TEST_FILES)
       - store_test_results:
           path: test-results
   build-artifact:
