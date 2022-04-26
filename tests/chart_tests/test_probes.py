@@ -25,8 +25,15 @@ class TestProbes:
     @pytest.mark.parametrize(
         "container", chart_containers.values(), ids=chart_containers.keys()
     )
-    def test_container_probes(self, container):
+    def test_container_readiness_probes(self, container):
+        """Ensure all containers have liveness and readiness probes"""
+
+        assert "readinessProbe" in container
+
+    @pytest.mark.parametrize(
+        "container", chart_containers.values(), ids=chart_containers.keys()
+    )
+    def test_container_liveness_probes(self, container):
         """Ensure all containers have liveness and readiness probes"""
 
         assert "livenessProbe" in container
-        assert "readinessProbe" in container
