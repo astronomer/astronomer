@@ -1,6 +1,14 @@
 ---
 exclude: '(venv|\.vscode)' # regex
 repos:
+  - repo: local
+    hooks:
+      - id: circle-config-yaml
+        name: Checks for consistency between config.yml and config.yml.j2
+        language: python
+        files: "config.yml$|config.yml.j2|generate_circleci_config.py$"
+        entry: .circleci/generate_circleci_config.py
+        additional_dependencies: ["jinja2"]
   - repo: https://github.com/codespell-project/codespell
     rev: v2.1.0
     hooks:
@@ -57,11 +65,3 @@ repos:
     rev: v0.8.0.4
     hooks:
       - id: shellcheck
-  - repo: local
-    hooks:
-      - id: circle-config-yaml
-        name: Checks for consistency between config.yml and config.yml.j2
-        language: python
-        files: "config.yml$|config.yml.j2|generate_circleci_config.py$"
-        entry: .circleci/generate_circleci_config.py
-        additional_dependencies: ["jinja2"]

@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+if grep -E 'airflowChartVersion: [0-9.]+-rc[0-9]+' charts/astronomer/values.yaml ; then
+    echo "Skipping check because airflowChartVersion is an rc"
+    exit 0
+fi
+
 if ! docker version ; then
     echo "ABORT: Something is wrong with docker."
     exit 1
