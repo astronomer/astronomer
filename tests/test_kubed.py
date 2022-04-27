@@ -39,3 +39,16 @@ class TestKubed:
                 values={"global": {"kubedEnabled": False}},
                 show_only=self.show_only,
             )
+
+    def test_kubed_config_source_namespace(self, kube_version):
+        """Test that the KubeD deployment is rendered with the right configuration to scope configuration source to release namespace."""
+
+        namespace = "my-namespace"
+        doc = render_chart(
+            namespace=namespace,
+            kube_version=kube_version,
+            show_only=["charts/kubed/templates/kubed-deployment.yaml"],
+        )[0]
+
+        container = doc["spec"]["template"]["spec"]["containers"][0]
+        assert f"--config-source-namespace={namespace}" in container["args"]
