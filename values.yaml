@@ -104,8 +104,8 @@ global:
   # Deploy auth sidecar to use openshift native features
   authSidecar:
     enabled: false
-    repository: nginxinc/nginx-unprivileged
-    tag: stable
+    repository: quay.io/astronomer/ap-auth-sidecar
+    tag: 1.21.6-2
     pullPolicy: IfNotPresent
     port: 8084
     default_nginx_settings: |
