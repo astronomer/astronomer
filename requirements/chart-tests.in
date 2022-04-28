@@ -9,7 +9,6 @@ pdbpp
 pytest
 pytest-forked
 pytest-profiling
-pytest-sugar
 pytest-xdist
 PyYAML
 requests
