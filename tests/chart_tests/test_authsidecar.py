@@ -130,8 +130,8 @@ class TestAuthSidecar:
                 "global": {
                     "authSidecar": {
                         "enabled": True,
-                        "repository": "quay.io/astronomer/ap-auth-sidecar",
-                        "tag": "1.21.6-2",
+                        "repository": "someregistry.io/my-custom-image",
+                        "tag": "my-custom-tag",
                     }
                 }
             },
@@ -150,8 +150,8 @@ class TestAuthSidecar:
         prod = yaml.safe_load(doc["data"]["production.yaml"])
         expected_output = {
             "enabled": True,
-            "repository": "quay.io/astronomer/ap-auth-sidecar",
-            "tag": "1.21.6-2",
+            "repository": "someregistry.io/my-custom-image",
+            "tag": "my-custom-tag",
             "port": 8084,
             "pullPolicy": "IfNotPresent",
             "annotations": {},
@@ -166,8 +166,8 @@ class TestAuthSidecar:
                 "global": {
                     "authSidecar": {
                         "enabled": True,
-                        "repository": "quay.io/astronomer/ap-auth-sidecar",
-                        "tag": "1.21.6-2",
+                        "repository": "someregistry.io/my-custom-image",
+                        "tag": "my-custom-tag",
                     },
                     "extraAnnotations": {
                         "kubernetes.io/ingress.class": "astronomer-nginx",
@@ -189,8 +189,8 @@ class TestAuthSidecar:
 
         expected_output = {
             "enabled": True,
-            "repository": "quay.io/astronomer/ap-auth-sidecar",
-            "tag": "1.21.6-2",
+            "repository": "someregistry.io/my-custom-image",
+            "tag": "my-custom-tag",
             "port": 8084,
             "pullPolicy": "IfNotPresent",
             "annotations": {
