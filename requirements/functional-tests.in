@@ -1,4 +1,5 @@
 docker
+GitPython
 kubernetes
 pytest
 pytest-rerunfailures
