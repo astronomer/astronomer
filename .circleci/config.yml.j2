@@ -81,7 +81,11 @@ jobs:
             - ~/.local/share/helm/plugins/helm-unittest
       - run:
           name: unittest the Astronomer chart
-          command: make unittest-charts
+          command: |
+            mkdir test-results
+            make unittest-charts
+      - store_test_results:
+          path: test-results
 
   build-artifact:
     docker:
@@ -364,6 +368,8 @@ commands:
             echo 'export PATH="/tmp/bin:/tmp/google-cloud-sdk/bin:$PATH"' >> "$HOME/.bashrc"
             set -e
             HELM_CHART_PATH='/tmp/workspace/astronomer-*.tgz' bin/run-ci << parameters.astronomer-tags >>
+      - store_test_results:
+          path: test-results
 
   publish-github-release:
     description: "Create a release on GitHub"
