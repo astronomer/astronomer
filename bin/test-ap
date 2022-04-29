@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC1090,SC1091
 
-set -euo pipefail
+set -xeuo pipefail
 
 GIT_ROOT="$(git -C "${0%/*}" rev-parse --show-toplevel)"
 
@@ -18,5 +18,5 @@ export RELEASE_NAME=astronomer
 echo "Sleeping for 100 seconds to allow metrics to be collected so we can test against them"
 
 mkdir -p "test-results"
-pytest -v "--junitxml=test-results/junit.xml" -s "$GIT_ROOT/tests/functional_tests/"
+pytest -v "--junitxml=test-results/junit.xml" -s "$GIT_ROOT/bin/functional-tests/"
 deactivate
