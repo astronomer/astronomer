@@ -93,6 +93,11 @@ tcpProbe:
 # Enable prometheus lifecycle api
 enableLifecycle: true
 
+
+global:
+  scrape_interval: 30s
+  evaluation_interval: 30s
+
 additionalAlerts:
   # Additional rules for the 'platform' alert group
   # Provide as a block string in yaml list form

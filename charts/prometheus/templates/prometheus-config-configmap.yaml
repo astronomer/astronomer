@@ -15,8 +15,8 @@ data:
   config: |-
     # https://prometheus.io/docs/prometheus/latest/configuration/configuration/
     global:
-      scrape_interval: 30s
-      evaluation_interval: 30s
+      scrape_interval: {{ .Values.global.scrape_interval }}
+      evaluation_interval: {{ .Values.global.evaluation_interval }}
       {{ if .Values.external_labels }}external_labels: {{ .Values.external_labels | toYaml | nindent 8 }}{{ end }}
 
     # https://prometheus.io/docs/prometheus/latest/configuration/configuration/#remote_write
