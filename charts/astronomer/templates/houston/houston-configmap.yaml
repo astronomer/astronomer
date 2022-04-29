@@ -94,6 +94,13 @@ data:
           {{- end }}
         }
       {{- end }}
+      {{- if .Values.houston.loggingSidecar.enabled }}
+      # enables sidecar logging for airflow deployments
+      loggingSidecar:
+        enabled: true
+        name: {{ .Values.houston.loggingSidecar.name }}
+        terminationEndpoint: {{ .Values.houston.loggingSidecar.terminationEndpoint }}
+      {{- end }}
 
       # These values get passed directly into the airflow helm deployments
       helm:
