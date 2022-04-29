@@ -24,9 +24,7 @@ echo "Deploying Astronomer..."
 platform=true
 logging=true
 monitoring=true
-kubed=true
 postgresql=true
-keda=true
 ACTION="install"
 dryrun=""
 
@@ -35,9 +33,7 @@ if [ $# -ne 0 ]; then
   platform=false
   logging=false
   monitoring=false
-  kubed=false
   postgresql=false
-  keda=false
   for component in "$@"
   do
     case $component in
@@ -51,9 +47,7 @@ if [ $# -ne 0 ]; then
         platform=true
         logging=true
         monitoring=true
-        kubed=true
         postgresql=true
-        keda=true
       ;;
     *)
       export $component=true ;;
@@ -80,9 +74,7 @@ if ! helm ${ACTION} \
   --set tags.platform="${platform}" \
   --set tags.logging="${logging}" \
   --set tags.monitoring="${monitoring}" \
-  --set tags.kubed="${kubed}" \
   --set global.postgresqlEnabled="${postgresql}" \
-  --set tags.keda="${keda}" \
   --set astronomer.houston.upgradeDeployments.enabled=true \
   $ASTRONOMER_VERSION_LINE \
   $HELM_CHART_PATH # cannot be quoted because it may contain a glob

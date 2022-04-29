@@ -90,6 +90,10 @@ spec:
             {{- include "houston_volume_mounts" . | indent 12 }}
             {{- include "custom_ca_volume_mounts" . | indent 12 }}
           env:
+            - name: GRPC_VERBOSITY
+              value: "INFO"
+            - name: GRPC_TRACE
+              value: "all"
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:

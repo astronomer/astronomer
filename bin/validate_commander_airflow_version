@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+if grep -E 'airflowChartVersion: [0-9.]+-rc[0-9]+' charts/astronomer/values.yaml ; then
+    echo "Skipping check because airflowChartVersion is an rc"
+    exit 0
+fi
+
+if ! docker version ; then
+    echo "ABORT: Something is wrong with docker."
+    exit 1
+fi
+
+GIT_ROOT="$(git -C "${0%/*}" rev-parse --show-toplevel)"
+
+commander_image=quay.io/astronomer/ap-commander
+# Get commander's version from astronomer subchart values.yaml
+commander_version=$(grep -A1 -E "$commander_image" "$GIT_ROOT/charts/astronomer/values.yaml" | grep -o -E '[0-9]+.[0-9]+.[0-9]+')
+commander_image_full="$commander_image:$commander_version"
+
+# Retrieve the value for the airflow chart version label on commander's docker image
+docker pull "$commander_image_full"
+
+commander_airflow_chart_version=$(docker inspect "$commander_image_full" | jq -r '.[0].Config.Labels."io.astronomer.build.airflow.chart.version"')
+
+# Check if it matches with astronomer/astronomer chart's default value for Airflow chart version
+if [[ "$commander_airflow_chart_version" != "null" ]]; then
+    astronomer_airflow_chart_version=$(grep -E "airflowChartVersion" "$GIT_ROOT/charts/astronomer/values.yaml" | grep -o -E '[0-9]+.[0-9]+.[0-9]+')
+    if [[ "$astronomer_airflow_chart_version" != "$commander_airflow_chart_version" ]]; then
+        echo "Error: Airflow Chart version mismatch between Commander (release $commander_version): $commander_airflow_chart_version and astronomer/astronomer: $astronomer_airflow_chart_version"
+        exit 1
+    fi
+
+    echo "Success: Airflow Chart version matches in both Commander and astronomer/astronomer Helm Chart."
+else
+    echo "Commander's docker image (release $commander_version) does not have the associated label 'io.astronomer.build.airflow.chart.version', skipping this check..."
+fi

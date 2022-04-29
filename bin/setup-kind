@@ -68,7 +68,7 @@ kubectl get nodes
 
 echo "Installing Calico into Kind so that network policies work"
 # https://github.com/kubernetes-sigs/kind/issues/842#issuecomment-554775260
-kubectl apply -f https://docs.projectcalico.org/v3.8/manifests/calico.yaml
+kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
 kubectl -n kube-system set env daemonset/calico-node FELIX_IGNORELOOSERPF=true
 echo "Waiting for core services like Calico and Kube DNS to become ready"
 sleep 10

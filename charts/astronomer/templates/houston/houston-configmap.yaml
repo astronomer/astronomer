@@ -74,7 +74,10 @@ data:
       {{ if .Values.global.features.namespacePools.enabled }}
       hardDeleteDeployment: true
       manualNamespaceNames: true
-      preCreatedNamespaces:{{ printf "\n" }}{{ toYaml .Values.global.features.namespacePools.namespaces.names | indent 6 }}
+      preCreatedNamespaces:
+      {{- range $i, $namespaceName := .Values.global.features.namespacePools.namespaces.names }}
+        - name: {{ $namespaceName }}
+      {{- end }}
       {{ end }}
 
       {{- if .Values.global.authSidecar.enabled }}
@@ -108,8 +111,13 @@ data:
 
         airflow:
           useAstroSecurityManager: true
+          {{- if .Values.global.networkPolicy.enabled }}
+          networkPolicies:
+          # Enabled network polices to restrict the way pods can communicate.
+            enabled: true
+          {{ end }}
           webserver:
-            {{ if .Values.global.kubedEnabled }}
+            {{ if .Values.configSyncer.enabled }}
             extraVolumeMounts:
               - name: signing-certificate
                 mountPath: /etc/airflow/tls
@@ -146,12 +154,6 @@ data:
                 ephemeral-storage: "2Gi"
               requests:
                 ephemeral-storage: "1Gi"
-
-            # This is here for upgrading to 0.11.1+ of airflow-chart
-            keda:
-              enabled: false
-              namespaceLabels:
-                name: {{ .Release.Name }}
 
             # This is here for upgrading to 0.11.2+ of airflow-chart
             safeToEvict: true
@@ -234,10 +236,24 @@ data:
                       container.args = container.command + container.args
                   container.command = ["tini", "--", "/entrypoint"]
                   pod.spec.containers[0] = container
+      {{ if .Values.houston.loggingSidecar.enabled }}
+                  # For sidecar logging we override the default entrypoint to redirect
+                  # logs to files that are consumed by the sidecar container. The command
+                  # ends with a POST to {{ .Values.houston.loggingSidecar.terminationEndpoint }}, which signals the
+                  # sidecar log consumer to exit.
+                  log_cmd = "1> >( tee -a /var/log/{{ .Values.houston.loggingSidecar.name }}/out.log ) 2> >( tee -a /var/log/{{ .Values.houston.loggingSidecar.name }}/err.log >&2 )"
+                  if container.args[0:3] == ["airflow", "tasks", "run"]:
+                      container.command = ["tini", "--"]
+                      new_args = ["bash", "-c"]
+                      command_str = "/entrypoint " + ' '.join([str(arg) for arg in container.args]) + " " + log_cmd + "; curl -fsSL {{ .Values.houston.loggingSidecar.terminationEndpoint }}"
+                      new_args.append(command_str)
+                      container.args = new_args
+
+      {{ end }}
               else:
                   # In the case of KPO, we allow Airflow to overwrite the entrypoint
                   # because we do not know what the container will be (and it's probably
-                  # not a container vendored by Astronomer, and it's definately not
+                  # not a container vendored by Astronomer, and it's definitely not
                   # an Airflow container).
                   extra_labels["kubernetes-pod-operator"] = "True"
                   extra_labels["kubernetes-executor"] = "False"

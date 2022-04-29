@@ -9,11 +9,11 @@ tolerations: []
 images:
   grafana:
     repository: quay.io/astronomer/ap-grafana
-    tag: 8.3.3-1
+    tag: 8.3.7-1
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
-    tag: 0.26.4
+    tag: 0.26.6
     pullPolicy: IfNotPresent
 
 backendSecretName: ~
@@ -54,7 +54,7 @@ dashboards:
 
 ## Configure extra environment variables for grafana.
 ## This allows you to change configuration settings
-## withing grafana such as SMTP configuration for alerts.
+## within grafana such as SMTP configuration for alerts.
 extraEnvVars:
   []
   # - name: GF_SMTP_ENABLED

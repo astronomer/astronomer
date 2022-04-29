@@ -8,7 +8,7 @@ executors:
 jobs:
   run_pre_commit:
     docker:
-      - image: quay.io/astronomer/ci-pre-commit:2022-03
+      - image: quay.io/astronomer/ci-pre-commit:2022-04
     steps:
       - checkout
       - run:
@@ -43,8 +43,10 @@ jobs:
 
   unittest-charts:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2022-03
+      - image: quay.io/astronomer/ci-helm-release:2022-04
     steps:
+      - setup_remote_docker:
+          docker_layer_caching: true
       - checkout
       - run:
           name: Create chart-tests-cache-key.txt
@@ -65,8 +67,11 @@ jobs:
             - ~/project/.unittest-requirements
       - run:
           name: unittest the Astronomer chart
-          command: make unittest-charts
-
+          command: |
+            mkdir test-results
+            make unittest-charts
+      - store_test_results:
+          path: test-results
   build-artifact:
     docker:
       - image: quay.io/astronomer/ap-build:0.2.0
@@ -121,7 +126,7 @@ jobs:
       KUBE_VERSION: v{{ version }}
     steps:
       - helm-install:
-          astronomer-tags: "platform postgresql monitoring logging kubed keda"
+          astronomer-tags: "platform postgresql monitoring logging"
       - run:
           name: Check chart for k8s {{ version }} compatibility with kubent
           command: |
@@ -131,6 +136,16 @@ jobs:
           when: always
 {%- endfor %}
 
+  check-commander-airflow-version:
+    docker:
+      - image: cimg/base:2022.03
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Check that commander image uses same Airflow chart version
+          command: make validate-commander-airflow-version
+
 workflows:
   version: 2.1
   build-and-release-helm-chart:
@@ -138,8 +153,10 @@ workflows:
       - lint
       - run_pre_commit
       - unittest-charts
+      - check-commander-airflow-version
       - build-artifact:
           requires:
+            - check-commander-airflow-version
             - lint
             - run_pre_commit
             - unittest-charts
@@ -292,7 +309,8 @@ commands:
             echo 'export PATH="/tmp/bin:/tmp/google-cloud-sdk/bin:$PATH"' >> "$HOME/.bashrc"
             set -e
             HELM_CHART_PATH='/tmp/workspace/astronomer-*.tgz' bin/run-ci << parameters.astronomer-tags >>
-
+      - store_test_results:
+          path: test-results
   publish-github-release:
     description: "Create a release on GitHub"
     parameters:

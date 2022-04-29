@@ -10,8 +10,6 @@ tags:
   platform: true
   logging: false
   monitoring: false
-  keda: true
-  kubed: true
   postgresql: true
   nats: true
 

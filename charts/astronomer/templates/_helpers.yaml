@@ -331,3 +331,17 @@ but Helm 2.9 and 2.10 does not support it, so we need to implement this if-else 
     {{- end -}}
 {{- end -}}
 {{- end -}}
+
+{{- define "configSyncer.schedule" -}}
+{{- if .Values.configSyncer.schedule -}}
+{{- printf "%s" .Values.configSyncer.schedule | quote }}
+{{- else -}}
+{{/*
+Automatically generate a random minute and hour to try and spread cronjobs
+1. for minutes get a random digit (0 - 9) -> take last digit from adler32sum hash of the release name and multiply by 6
+2. Get same random digit and add 5
+*/}}
+{{- $randomDigit := (regexFind ".$" (adler32sum .Release.Name)) -}}
+{{- printf "%v %v * * *" (mul 6 $randomDigit) (add 5 $randomDigit) | quote -}}
+{{- end -}}
+{{- end -}}

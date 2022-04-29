@@ -23,6 +23,10 @@ global:
       repository: alpine
       tag: 3.14
       pullPolicy: IfNotPresent
+  # Global flag to enable to user to enable/disable Astronomer platform
+  # level Network Policy
+  networkPolicy:
+    enabled: true
 
   # Specific Astronomer features configuration
   features:
@@ -52,9 +56,6 @@ global:
   # Use cluster roles
   clusterRoles: true
 
-  # Enables kubed
-  kubedEnabled: true
-
   # Enables necessary components for compatibility with Istio Service Mesh
   istio:
     enabled: false
@@ -75,10 +76,7 @@ global:
   # Enables blackbox exporter
   blackboxExporterEnabled: false
 
-  # Used to enable Celery autoscaling
-  kedaEnabled: false
-
-  # make fluentd to gather logs from all avaialble namespaces
+  # make fluentd to gather logs from all available namespaces
   manualNamespaceNamesEnabled: false
 
   # Used to enable nats-server
@@ -106,8 +104,8 @@ global:
   # Deploy auth sidecar to use openshift native features
   authSidecar:
     enabled: false
-    repository: nginxinc/nginx-unprivileged
-    tag: stable
+    repository: quay.io/astronomer/ap-auth-sidecar
+    tag: 1.21.6-2
     pullPolicy: IfNotPresent
     port: 8084
     default_nginx_settings: |
@@ -209,7 +207,7 @@ global:
   ssl:
     enabled: false
     mode: "prefer"
-    # we need seperate mode for grafana:
+    # we need separate mode for grafana:
     # grafana starting from (7.5.0) only supports sslmodes: disable/require/verify-ca/verify-full
     # https://github.com/grafana/grafana/blob/master/CHANGELOG.md#750-beta1-2021-03-04 (Postgres: SSL certification)
     grafana:
@@ -236,9 +234,6 @@ tags:
 
   # Enable logging stack (elasticsearch, fluentd, kibana)
   logging: true
-
-  # Kubed
-  kubed: true
 
   # NATS Streaming
   stan: true
@@ -376,18 +371,6 @@ prometheus:
     limits:
       cpu: "2000m"
       memory: "8Gi"
-
-#################################
-## KEDA configuration
-#################################
-
-keda:
-  keda:
-    nodeSelector:
-      <<: *platformNodeSelector
-    affinity:
-      <<: *platformAffinity
-    tolerations: *platformTolerations
 
 nats:
   nodeSelector:
@@ -540,17 +523,4 @@ kube-state:
       memory: "512Mi"
     limits:
       cpu: "500m"
-      memory: "1024Mi"
-
-#################################
-## KubeD configuration
-#################################
-kubed:
-  # Configure resources
-  resources:
-    requests:
-      cpu: "250m"
-      memory: "512Mi"
-    limits:
-      cpu: "2"
       memory: "1024Mi"
