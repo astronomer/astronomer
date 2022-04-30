@@ -11,7 +11,7 @@ RUN curl -fsSLo /usr/local/bin/kubectl https://storage.googleapis.com/kubernetes
     chmod +x /usr/local/bin/kubectl
 
 COPY requirements.txt .
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 RUN ansible-galaxy collection install community.general:4.8.0 community.kubernetes:2.0.1
 
 WORKDIR /lts-upgrade
