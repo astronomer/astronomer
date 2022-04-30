@@ -47,6 +47,10 @@ repos:
             "requirements/chart-tests.txt",
             "requirements/functional-tests.in",
             "requirements/functional-tests.txt",
+            "requirements/lts-23-to-25-tests.in",
+            "requirements/lts-23-to-25-tests.txt",
+            "migrations/scripts/lts-to-lts/0.23-to-0.25/playbooks/requirements.in",
+            "migrations/scripts/lts-to-lts/0.23-to-0.25/playbooks/requirements.txt"
           ]
       - id: sort-simple-yaml
       - id: trailing-whitespace
