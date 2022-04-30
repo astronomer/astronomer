@@ -1,4 +1,4 @@
 ansible
 cryptography
 openshift
-psycopg2
+psycopg2-binary

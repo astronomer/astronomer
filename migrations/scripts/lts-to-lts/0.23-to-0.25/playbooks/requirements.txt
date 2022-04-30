@@ -38,7 +38,7 @@ openshift==0.13.1
     # via -r requirements.in
 packaging==21.3
     # via ansible-core
-psycopg2==2.9.3
+psycopg2-binary==2.9.3
     # via -r requirements.in
 pyasn1==0.4.8
     # via
