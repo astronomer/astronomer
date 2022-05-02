@@ -100,13 +100,6 @@ class TestElasticSearch:
                 "fsGroup": 1000
             }
 
-            assert doc["spec"]["template"]["spec"]["securityContext"] == {
-                "runAsNonRoot": True
-            }
-            assert doc["spec"]["template"]["spec"]["securityContext"] == {
-                "runAsUser": 1000
-            }
-
     def test_elasticsearch_securitycontext_defaults(self, kube_version):
         """Test  ElasticSearch master, data with securitycontext default values"""
         docs = render_chart(
