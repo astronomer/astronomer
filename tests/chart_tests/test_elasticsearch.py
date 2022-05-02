@@ -118,7 +118,7 @@ class TestElasticSearch:
             assert pod_data["securityContext"]["runAsUser"] == 1000
 
     def test_elasticsearch_securitycontext_overrides(self, kube_version):
-        """Test  ElasticSearch master, data  with securitycontext custom values"""
+        """Test ElasticSearch master, data with securityContext custom values"""
         docs = render_chart(
             kube_version=kube_version,
             values={
