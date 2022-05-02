@@ -131,7 +131,7 @@ class TestElasticSearch:
             values={
                 "elasticsearch": {
                     "securityContext": {
-                        "capabilities": {"drop": ["IPC_LOCK"]},
+                        "capabilities": {"add": ["IPC_LOCK"]},
                         "runAsNonRoot": True,
                         "runAsUser": 1001,
                     }
@@ -145,6 +145,6 @@ class TestElasticSearch:
         assert len(docs) == 2
         for doc in docs:
             pod_data = doc["spec"]["template"]["spec"]["containers"][0]
-            assert pod_data["securityContext"]["capabilities"]["drop"] == ["IPC_LOCK"]
+            assert pod_data["securityContext"]["capabilities"]["add"] == ["IPC_LOCK"]
             assert pod_data["securityContext"]["runAsNonRoot"] is True
             assert pod_data["securityContext"]["runAsUser"] == 1001
