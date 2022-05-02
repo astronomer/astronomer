@@ -84,7 +84,7 @@ class TestElasticSearch:
             assert not doc["spec"]["template"]["spec"]["initContainers"]
 
     def test_elasticsearch_fsgroup_defaults(self, kube_version):
-        """Test  ElasticSearch master, data and client with FsGroup default values"""
+        """Test ElasticSearch master, data and client with fsGroup default values"""
         docs = render_chart(
             kube_version=kube_version,
             values={},
