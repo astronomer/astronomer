@@ -101,7 +101,7 @@ class TestElasticSearch:
             }
 
     def test_elasticsearch_securitycontext_defaults(self, kube_version):
-        """Test  ElasticSearch master, data with securitycontext default values"""
+        """Test ElasticSearch master, data with securityContext default values"""
         docs = render_chart(
             kube_version=kube_version,
             values={},
