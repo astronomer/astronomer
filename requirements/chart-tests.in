@@ -9,7 +9,7 @@ pdbpp
 pytest
 pytest-forked
 pytest-profiling
-pytest-sugar
 pytest-xdist
 PyYAML
 requests
+setuptools<60.0.0 # workaround for known bug with local vs stdlib in pth

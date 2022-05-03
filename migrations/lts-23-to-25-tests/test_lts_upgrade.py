@@ -49,7 +49,7 @@ def test_upgrade():
 
     print("Checking installed version")
     helm_history = check_output(
-        f"helm3 history { release_name } -n { namespace }", shell=True
+        f"helm history { release_name } -n { namespace }", shell=True
     ).decode("utf8")
     print(f"Helm history: (pre-upgrade)\n{helm_history}")
 
@@ -113,7 +113,7 @@ def test_upgrade():
             assert False, "Failed to perform upgrade (timeout!), see logs"
 
     helm_history = check_output(
-        f"helm3 history { release_name } -n { namespace }", shell=True
+        f"helm history { release_name } -n { namespace }", shell=True
     ).decode("utf8")
     print(f"Helm history: (post-upgrade)\n{helm_history}")
 
@@ -158,7 +158,7 @@ def test_upgrade():
             assert False, "Failed to perform rollback (timeout!), see logs"
 
     helm_history = check_output(
-        f"helm3 history { release_name } -n { namespace }", shell=True
+        f"helm history { release_name } -n { namespace }", shell=True
     ).decode("utf8")
     print(f"Helm history: (post-rollback)\n{helm_history}")
 

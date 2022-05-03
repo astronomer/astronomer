@@ -2,5 +2,6 @@ docker
 GitPython
 kubernetes
 pytest
+pytest-testinfra
 PyYAML
-testinfra
+setuptools<60.0.0 # workaround for known bug with local vs stdlib in pth

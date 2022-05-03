@@ -11,7 +11,7 @@ from jinja2 import Template
 # recent patch version on Dockerhub
 # https://hub.docker.com/r/kindest/node/tags
 # This should match what is in tests/__init__.py
-KUBE_VERSIONS = ["1.19.11", "1.20.7", "1.21.2"]
+KUBE_VERSIONS = ["1.19.16", "1.20.15", "1.21.10"]
 
 
 def main():

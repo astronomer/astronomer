@@ -49,7 +49,7 @@ class TestPrometheusAlertConfigmap:
 
         assert doc["kind"] == "ConfigMap"
         assert doc["apiVersion"] == "v1"
-        assert doc["metadata"]["name"] == "RELEASE-NAME-prometheus-alerts"
+        assert doc["metadata"]["name"] == "release-name-prometheus-alerts"
 
         # Validate the contents of an embedded yaml doc
         groups = yaml.safe_load(doc["data"]["alerts"])["groups"]
@@ -65,17 +65,17 @@ class TestPrometheusAlertConfigmap:
     def test_prometheus_alerts_configmap_with_different_name_and_ns(self, kube_version):
         """Validate the prometheus alerts configmap does not conflate helm deployment name and namespace."""
         docs = render_chart(
-            name="FOO-NAME",
-            namespace="BAR-NS",
+            name="foo-name",
+            namespace="bar-ns",
             kube_version=kube_version,
             show_only=self.show_only,
         )
 
         config_yaml = docs[0]["data"]["alerts"]
-        assert re.search(r'job="FOO-NAME', config_yaml)
-        assert not re.search(r'job="BAR-NS', config_yaml)
-        assert re.search(r'namespace="BAR-NS"', config_yaml)
-        assert not re.search(r'namespace="FOO-NAME"', config_yaml)
+        assert re.search(r'job="foo-name', config_yaml)
+        assert not re.search(r'job="bar-ns', config_yaml)
+        assert re.search(r'namespace="bar-ns"', config_yaml)
+        assert not re.search(r'namespace="foo-name"', config_yaml)
 
     def test_prometheus_alerts_configmap_with_addition_alerts(self, kube_version):
         """Validate the prometheus alerts configmap renders additional alerts."""
@@ -88,14 +88,14 @@ class TestPrometheusAlertConfigmap:
         docs = render_chart(
             kube_version=kube_version,
             show_only=self.show_only,
-            name="FOO-NAME",
-            namespace="BAR-NS",
+            name="foo-name",
+            namespace="bar-ns",
             values={"prometheus": {"additionalAlerts": additional_alerts}},
         )
 
         config_yaml = docs[0]["data"]["alerts"]
         assert re.search(
-            r'.*The Astronomer Helm release FOO-NAME is failing task instances "{{ printf \\"%.2f\\" \$value }}\%" of the time over the past 30 minutes.*',
+            r'.*The Astronomer Helm release foo-name is failing task instances "{{ printf \\"%.2f\\" \$value }}\%" of the time over the past 30 minutes.*',
             config_yaml,
         )
         assert re.search(

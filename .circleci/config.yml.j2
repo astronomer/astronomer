@@ -4,11 +4,11 @@ executors:
     environment:
       GIT_ORG: astronomer
     docker:
-      - image: circleci/python:3
+      - image: cimg/python:3.9
 jobs:
   run_pre_commit:
     docker:
-      - image: quay.io/astronomer/ci-pre-commit:2022-01
+      - image: quay.io/astronomer/ci-pre-commit:2022-05
     steps:
       - checkout
       - run:
@@ -57,7 +57,7 @@ jobs:
 
   unittest-charts:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2022-01
+      - image: quay.io/astronomer/ci-helm-release:2022-05
     steps:
       - checkout
       - run:
@@ -81,7 +81,11 @@ jobs:
             - ~/.local/share/helm/plugins/helm-unittest
       - run:
           name: unittest the Astronomer chart
-          command: make unittest-charts
+          command: |
+            mkdir test-results
+            make unittest-charts
+      - store_test_results:
+          path: test-results
 
   build-artifact:
     docker:
@@ -110,7 +114,7 @@ jobs:
           command: |
             set -e
             sudo apt-get update && sudo apt-get install -y ca-certificates curl
-            pyenv global 3.9.4
+            pyenv global 3.9.12
             bin/release-helm-chart /tmp/workspace/astronomer-*.tgz
 
   release-to-public:
@@ -125,7 +129,7 @@ jobs:
           command: |
             set -e
             sudo apt-get update && sudo apt-get install -y ca-certificates curl
-            pyenv global 3.9.4
+            pyenv global 3.9.12
             bin/release-helm-chart -p /tmp/workspace/astronomer-*.tgz
       - publish-github-release
 {% for version in kube_versions %}
@@ -364,6 +368,8 @@ commands:
             echo 'export PATH="/tmp/bin:/tmp/google-cloud-sdk/bin:$PATH"' >> "$HOME/.bashrc"
             set -e
             HELM_CHART_PATH='/tmp/workspace/astronomer-*.tgz' bin/run-ci << parameters.astronomer-tags >>
+      - store_test_results:
+          path: test-results
 
   publish-github-release:
     description: "Create a release on GitHub"
@@ -376,6 +382,6 @@ commands:
           name: Create a release on GitHub
           command: |
             set -xe
-            pyenv global 3.9.4
+            pyenv global 3.9.12
             pip install astronomer_e2e_test
             astronomer-ci publish-github-release --github-repository $CIRCLE_PROJECT_REPONAME --github-organization $CIRCLE_PROJECT_USERNAME --commitish $CIRCLE_SHA1
