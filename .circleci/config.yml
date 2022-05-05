@@ -171,7 +171,7 @@ jobs:
       KUBE_VERSION: v1.22.7
     steps:
       - helm-install:
-          astronomer-tags: "platform postgresql monitoring logging kubed"
+          astronomer-tags: "platform postgresql monitoring logging kubed keda"
       - run:
           name: Check chart for k8s 1.22.7 compatibility with kubent
           command: |
@@ -187,7 +187,7 @@ jobs:
       KUBE_VERSION: v1.23.4
     steps:
       - helm-install:
-          astronomer-tags: "platform postgresql monitoring logging kubed"
+          astronomer-tags: "platform postgresql monitoring logging kubed keda"
       - run:
           name: Check chart for k8s 1.23.4 compatibility with kubent
           command: |
