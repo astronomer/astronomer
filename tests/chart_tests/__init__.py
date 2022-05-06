@@ -30,6 +30,7 @@ def get_chart_containers(k8s_version, chart_values, ignore_kind_list=[]):
             name = spec["name"]
             for container in spec["containers"]:
                 key = k8s_version + "_" + name + "_" + container["name"]
+                container["key"] = key
                 container_configs[key] = container
 
     return container_configs
