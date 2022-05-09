@@ -26,11 +26,13 @@ def get_chart_containers(k8s_version, chart_values, ignore_kind_list=[]):
     container_configs = {}
     ignore_kind_list = [ignore_kind.lower() for ignore_kind in ignore_kind_list]
     for spec in specs:
-        if spec["kind"].lower() not in ignore_kind_list:
+        kind = spec["kind"]
+        if kind.lower() not in ignore_kind_list:
             name = spec["name"]
             for container in spec["containers"]:
                 key = k8s_version + "_" + name + "_" + container["name"]
                 container["key"] = key
+                container["kind"] = kind
                 container_configs[key] = container
 
     return container_configs
