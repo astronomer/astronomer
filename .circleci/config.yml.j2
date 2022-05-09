@@ -44,7 +44,7 @@ jobs:
   unittest-charts:
     docker:
       - image: quay.io/astronomer/ci-helm-release:2022-03
-    parallelism: 4
+    parallelism: 6
     steps:
       - setup_remote_docker:
           docker_layer_caching: true
