@@ -158,7 +158,7 @@ rules:
 {{- end }}
 {{- end }}
 # Only grant OpenShift permissions if using cluster Roles.
-# Commander needs Cluster-level permissions to manage securitycontextconstraints
+# Commander needs Cluster-level permissions to manage SecurityContextConstraints
 {{- if and $useClusterRoles $.Values.global.sccEnabled }}
 - apiGroups: ["security.openshift.io"]
   resources: ["securitycontextconstraints"]
@@ -168,7 +168,7 @@ rules:
 {{- end }}
 
 # If users run Openshift, and are using namespace pools, we also need to provide commander
-# with CLUSTER permissions for the securitycontextconstraints resource from Openshift.
+# with CLUSTER permissions for the SecurityContextConstraints resource from Openshift.
 {{- if and .Values.global.rbacEnabled .Values.global.sccEnabled (not $useClusterRoles) }}
 ---
 kind: ClusterRole
