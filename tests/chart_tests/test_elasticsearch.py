@@ -141,3 +141,37 @@ class TestElasticSearch:
             assert pod_data["securityContext"]["capabilities"]["add"] == ["IPC_LOCK"]
             assert pod_data["securityContext"]["runAsNonRoot"] is True
             assert pod_data["securityContext"]["runAsUser"] == 1001
+
+    def test_nginx_es_client_network_selector_with_logging_sidecar_enabled(self, kube_version):
+        """Test postgresql Service with namespace selector labels."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"astronomer": {"houston": {"loggingSidecar": {"enabled": True}}}},
+            show_only=[
+                "charts/elasticsearch/templates/nginx/nginx-es-networkpolicy.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        assert "NetworkPolicy" == doc["kind"]
+        assert [
+            {
+                "namespaceSelector": {},
+                "podSelector": {
+                    "matchLabels": {"tier": "airflow", "component": "webserver"}
+                },
+            },
+            {
+                "namespaceSelector": {},
+                "podSelector": {
+                    "matchLabels": {"component": "scheduler", "tier": "airflow"}
+                },
+            },
+            {
+                "namespaceSelector": {},
+                "podSelector": {
+                    "matchLabels": {"component": "worker", "tier": "airflow"}
+                },
+            },
+        ] == doc["spec"]["ingress"][0]["from"]
