@@ -38,3 +38,25 @@ subjects:
     namespace: {{ $.Release.Namespace }}
 {{ end }}
 {{- end }}
+
+# If user runs Openshift and uses the namespace pools feature, we need to provide
+# cluster level permissions to manage some Openshift resources.
+{{- if and .Values.global.rbacEnabled .Values.global.sccEnabled (not $useClusterRoles) }}
+---
+apiVersion: {{ template "apiVersion.rbac" . }}
+kind: ClusterRoleBinding
+metadata:
+  name: {{ $.Release.Name }}-commander
+  {{- if $.Values.global.enableArgoCDAnnotation }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+  {{- end }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ $.Release.Name }}-commander
+subjects:
+  - kind: ServiceAccount
+    name: {{ $.Release.Name }}-commander
+    namespace: {{ $.Release.Namespace }}
+{{- end }}
