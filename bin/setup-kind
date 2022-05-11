@@ -37,7 +37,7 @@ set -xe
 # Delete the old cluster, if it exists
 kind delete cluster || true
 
-KIND_OPTIONS=( --config "${GIT_ROOT}/bin/kind/calico.yaml" --image "kindest/node:${KUBE_VERSION}" )
+KIND_OPTIONS=( --config "${GIT_ROOT}/bin/kind/calico-config.yaml" --image "kindest/node:${KUBE_VERSION}" )
 if [[ -n "${MULTI_NODE+x}" ]]; then
   KIND_OPTIONS+=( --config "$GIT_ROOT/bin/kind/multi-node.yaml" )
 fi
@@ -68,7 +68,7 @@ kubectl get nodes
 
 echo "Installing Calico into Kind so that network policies work"
 # https://github.com/kubernetes-sigs/kind/issues/842#issuecomment-554775260
-kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
+kubectl apply -f "bin/kind/calico-crds-${KUBE_VERSION%.*}.yaml"
 kubectl -n kube-system set env daemonset/calico-node FELIX_IGNORELOOSERPF=true
 echo "Waiting for core services like Calico and Kube DNS to become ready"
 sleep 10
