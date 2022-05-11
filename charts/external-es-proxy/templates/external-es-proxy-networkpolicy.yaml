@@ -27,6 +27,16 @@ spec:
         matchLabels:
           tier: airflow
           component: webserver
+    - namespaceSelector: {}
+      podSelector:
+        matchLabels:
+          component: scheduler
+          tier: airflow
+    - namespaceSelector: {}
+      podSelector:
+        matchLabels:
+          component: worker
+          tier: airflow
     ports:
     - protocol: TCP
       port: {{ .Values.service.securehttp }}

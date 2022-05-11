@@ -142,8 +142,10 @@ class TestElasticSearch:
             assert pod_data["securityContext"]["runAsNonRoot"] is True
             assert pod_data["securityContext"]["runAsUser"] == 1001
 
-    def test_nginx_es_client_network_selector_with_logging_sidecar_enabled(self, kube_version):
-        """Test postgresql Service with namespace selector labels."""
+    def test_nginx_es_client_network_selector_with_logging_sidecar_enabled(
+        self, kube_version
+    ):
+        """Test Nginx ES Service with NetworkPolicies."""
         docs = render_chart(
             kube_version=kube_version,
             values={"astronomer": {"houston": {"loggingSidecar": {"enabled": True}}}},
