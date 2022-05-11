@@ -46,8 +46,7 @@ repos:
       - id: mixed-line-ending
         args: ["--fix=lf"]
       - id: requirements-txt-fixer
-        args:
-          [
+        args: [
             "requirements/chart-tests.in",
             "requirements/chart-tests.txt",
             "requirements/functional-tests.in",
