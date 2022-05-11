@@ -45,7 +45,7 @@ jobs:
 
   unittest-charts:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2022-03
+      - image: quay.io/astronomer/ci-helm-release:2022-04
     parallelism: 6
     steps:
       - setup_remote_docker:
