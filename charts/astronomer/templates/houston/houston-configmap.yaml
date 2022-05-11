@@ -94,6 +94,13 @@ data:
           {{- end }}
         }
       {{- end }}
+      {{- if .Values.houston.loggingSidecar.enabled }}
+      # enables sidecar logging for airflow deployments
+      loggingSidecar:
+        enabled: true
+        name: {{ .Values.houston.loggingSidecar.name }}
+        terminationEndpoint: {{ .Values.houston.loggingSidecar.terminationEndpoint }}
+      {{- end }}
 
       # These values get passed directly into the airflow helm deployments
       helm:
@@ -245,7 +252,7 @@ data:
                   if container.args[0:3] == ["airflow", "tasks", "run"]:
                       container.command = ["tini", "--"]
                       new_args = ["bash", "-c"]
-                      command_str = "/entrypoint " + ' '.join([str(arg) for arg in container.args]) + " " + log_cmd + "; curl -fsSL {{ .Values.houston.loggingSidecar.terminationEndpoint }}"
+                      command_str = "/entrypoint " + ' '.join([str(arg) for arg in container.args]) + " " + log_cmd + "; curl -fsSL -XPOST {{ .Values.houston.loggingSidecar.terminationEndpoint }}"
                       new_args.append(command_str)
                       container.args = new_args
 

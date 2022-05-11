@@ -10,7 +10,7 @@ tolerations: []
 images:
   es:
     repository: quay.io/astronomer/ap-elasticsearch
-    tag: 7.17.1
+    tag: 7.17.3-1
     pullPolicy: IfNotPresent
   init:
     repository: quay.io/astronomer/ap-base
@@ -218,5 +218,8 @@ podSecurityContext:
   fsGroup: 1000
 
 securityContext:
+  capabilities:
+    drop:
+      - ALL
   runAsNonRoot: true
   runAsUser: 1000

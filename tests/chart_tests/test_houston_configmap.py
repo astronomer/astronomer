@@ -114,11 +114,15 @@ def test_houston_configmap_with_config_syncer_disabled():
 
     common_test_cases(docs)
     doc = docs[0]
-    prod = yaml.safe_load(doc["data"]["production.yaml"])
+    prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
     assert (
-        "extraVolumeMounts" not in prod["deployments"]["helm"]["airflow"]["webserver"]
+        "extraVolumeMounts"
+        not in prod_yaml["deployments"]["helm"]["airflow"]["webserver"]
     )
-    assert "extraVolumes" not in prod["deployments"]["helm"]["airflow"]["webserver"]
+    assert (
+        "extraVolumes" not in prod_yaml["deployments"]["helm"]["airflow"]["webserver"]
+    )
+    assert not prod_yaml["deployments"].get("loggingSidecar")
 
 
 def test_houston_configmapwith_loggingsidecar_enabled():
@@ -131,13 +135,20 @@ def test_houston_configmapwith_loggingsidecar_enabled():
 
     common_test_cases(docs)
     doc = docs[0]
-    prod = yaml.safe_load(doc["data"]["production.yaml"])
-    data = 'log_cmd = "1> >( tee -a /var/log/sidecar-log-consumer/out.log ) 2> >( tee -a /var/log/sidecar-log-consumer/err.log >&2 )"'
-    assert data in prod["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
+    prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
+    log_cmd = 'log_cmd = "1> >( tee -a /var/log/sidecar-log-consumer/out.log ) 2> >( tee -a /var/log/sidecar-log-consumer/err.log >&2 )"'
+    assert (
+        log_cmd in prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
+    )
     assert (
         terminationEndpoint
-        in prod["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
+        in prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
     )
+    assert prod_yaml["deployments"]["loggingSidecar"] == {
+        "enabled": True,
+        "name": "sidecar-log-consumer",
+        "terminationEndpoint": "http://localhost:8000/quitquitquit",
+    }
 
 
 def test_houston_configmapwith_loggingsidecar_enabled_with_overrides():
@@ -157,15 +168,22 @@ def test_houston_configmapwith_loggingsidecar_enabled_with_overrides():
 
     common_test_cases(docs)
     doc = docs[0]
-    prod = yaml.safe_load(doc["data"]["production.yaml"])
-    data = 'log_cmd = "1> >( tee -a /var/log/{sidecar_container_name}/out.log ) 2> >( tee -a /var/log/{sidecar_container_name}/err.log >&2 )"'.format(
+    prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
+    log_cmd = 'log_cmd = "1> >( tee -a /var/log/{sidecar_container_name}/out.log ) 2> >( tee -a /var/log/{sidecar_container_name}/err.log >&2 )"'.format(
         sidecar_container_name=sidecar_container_name
     )
-    assert data in prod["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
+    assert (
+        log_cmd in prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
+    )
     assert (
         terminationEndpoint
-        in prod["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
+        in prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
     )
+    assert prod_yaml["deployments"]["loggingSidecar"] == {
+        "enabled": True,
+        "name": sidecar_container_name,
+        "terminationEndpoint": terminationEndpoint,
+    }
 
 
 cron_test_data = [

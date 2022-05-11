@@ -11,7 +11,7 @@ from tests.chart_tests.helm_template_generator import render_chart
 )
 class TestElasticSearch:
     def test_elasticsearch_with_sysctl_defaults(self, kube_version):
-        """Test  ElasticSearch with sysctl config/values.yaml."""
+        """Test ElasticSearch with sysctl config/values.yaml."""
         docs = render_chart(
             kube_version=kube_version,
             values={},
@@ -83,8 +83,8 @@ class TestElasticSearch:
         for doc in docs:
             assert not doc["spec"]["template"]["spec"]["initContainers"]
 
-    def test_elasticsearch_securitycontext_defaults(self, kube_version):
-        """Test  ElasticSearch master, data and client with securitycontext default values"""
+    def test_elasticsearch_fsgroup_defaults(self, kube_version):
+        """Test ElasticSearch master, data and client with fsGroup default values"""
         docs = render_chart(
             kube_version=kube_version,
             values={},
@@ -99,3 +99,45 @@ class TestElasticSearch:
             assert doc["spec"]["template"]["spec"]["securityContext"] == {
                 "fsGroup": 1000
             }
+
+    def test_elasticsearch_securitycontext_defaults(self, kube_version):
+        """Test ElasticSearch master, data with securityContext default values"""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={},
+            show_only=[
+                "charts/elasticsearch/templates/master/es-master-statefulset.yaml",
+                "charts/elasticsearch/templates/data/es-data-statefulset.yaml",
+            ],
+        )
+        assert len(docs) == 2
+        for doc in docs:
+            pod_data = doc["spec"]["template"]["spec"]["containers"][0]
+            assert pod_data["securityContext"]["capabilities"]["drop"] == ["ALL"]
+            assert pod_data["securityContext"]["runAsNonRoot"] is True
+            assert pod_data["securityContext"]["runAsUser"] == 1000
+
+    def test_elasticsearch_securitycontext_overrides(self, kube_version):
+        """Test ElasticSearch master, data with securityContext custom values"""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "elasticsearch": {
+                    "securityContext": {
+                        "capabilities": {"add": ["IPC_LOCK"]},
+                        "runAsNonRoot": True,
+                        "runAsUser": 1001,
+                    }
+                }
+            },
+            show_only=[
+                "charts/elasticsearch/templates/master/es-master-statefulset.yaml",
+                "charts/elasticsearch/templates/data/es-data-statefulset.yaml",
+            ],
+        )
+        assert len(docs) == 2
+        for doc in docs:
+            pod_data = doc["spec"]["template"]["spec"]["containers"][0]
+            assert pod_data["securityContext"]["capabilities"]["add"] == ["IPC_LOCK"]
+            assert pod_data["securityContext"]["runAsNonRoot"] is True
+            assert pod_data["securityContext"]["runAsUser"] == 1001
