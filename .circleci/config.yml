@@ -21,12 +21,12 @@ jobs:
   snyk-scan-docker:
     executor: docker-executor
     parameters:
-      image_name:
+      docker_image:
         type: string
     steps:
       - checkout
       - snyk-docker-test:
-          image_name: << parameters.image_name >>
+          docker_image: << parameters.docker_image >>
   run_pre_commit:
     docker:
       - image: quay.io/astronomer/ci-pre-commit:2022-04
@@ -250,9 +250,9 @@ workflows:
     jobs:
       - run:
           name: Pull Docker image
-          command: docker pull << parameters.image_name >>
+          command: docker pull quay.io/astronomer/ap-nginx:1.2.0
       - snyk-scan-docker:
-          image_name: quay.io/astronomer/ap-nginx:1.2.0
+          docker_image: quay.io/astronomer/ap-nginx:1.2.0
   build-and-release-helm-chart:
     jobs:
       - lint
@@ -447,11 +447,11 @@ commands:
   snyk-docker-test:
     description: "Test a Docker image with synk"
     parameters:
-      image_name:
+      docker_image:
         type: string
     steps:
       - snyk/scan:
-          docker-image-name: << parameters.image_name >>
+          docker-image-name: << parameters.docker_image >>
           fail-on-issues: true
           severity-threshold: high
           monitor-on-build: false
