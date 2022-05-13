@@ -254,6 +254,9 @@ workflows:
       - snyk-scan-docker:
           docker_image: quay.io/astronomer/ap-nginx:1.2.0
   build-and-release-helm-chart:
+    unless:
+      and:
+        - << pipeline.parameters.scan-docker-images >>
     jobs:
       - lint
       - run_pre_commit
