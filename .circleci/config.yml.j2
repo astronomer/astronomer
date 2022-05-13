@@ -175,13 +175,6 @@ jobs:
 workflows:
   version: 2.1
   scan-docker-images:
-    triggers:
-      - schedule:
-          cron: "0 0 * * *"
-          filters:
-            branches:
-              only:
-                - master
     when:
       and:
         - << pipeline.parameters.scan-docker-images >>
