@@ -7,7 +7,26 @@ executors:
       GIT_ORG: astronomer
     docker:
       - image: circleci/python:3
+
+orbs:
+  snyk: snyk/snyk@1.1.2
+
+parameters:
+  scan-docker-images:
+    type: boolean
+    default: false
+    description: "This will run docker image scan."
+
 jobs:
+  snyk-scan-docker:
+    executor: docker-executor
+    parameters:
+      image_name:
+        type: string
+    steps:
+      - checkout
+      - snyk-docker-test:
+          image_name: << parameters.image_name >>
   run_pre_commit:
     docker:
       - image: quay.io/astronomer/ci-pre-commit:2022-04
@@ -217,6 +236,23 @@ jobs:
 
 workflows:
   version: 2.1
+  scan-docker-images:
+    triggers:
+      - schedule:
+          cron: "0 0 * * *"
+          filters:
+            branches:
+              only:
+                - master
+    when:
+      and:
+        - << pipeline.parameters.scan-docker-images >>
+    jobs:
+      - run:
+          name: Pull Docker image
+          command: docker pull << parameters.image_name >>
+      - snyk-scan-docker:
+          image_name: quay.io/astronomer/ap-nginx:1.2.0
   build-and-release-helm-chart:
     jobs:
       - lint
@@ -407,3 +443,15 @@ commands:
             pyenv global 3.9.4
             pip install astronomer_e2e_test
             astronomer-ci publish-github-release --github-repository $CIRCLE_PROJECT_REPONAME --github-organization $CIRCLE_PROJECT_USERNAME --commitish $CIRCLE_SHA1
+
+  snyk-docker-test:
+    description: "Test a Docker image with synk"
+    parameters:
+      image_name:
+        type: string
+    steps:
+      - snyk/scan:
+          docker-image-name: << parameters.image_name >>
+          fail-on-issues: true
+          severity-threshold: high
+          monitor-on-build: false
