@@ -23,7 +23,7 @@ jobs:
     executor: docker-executor
     steps:
       - run:
-          command: Running scan for << parameters.docker_image >>
+          command: Running scan for container.
   snyk-scan-docker:
     executor: docker-executor
     parameters:
