@@ -81,7 +81,7 @@ show-docker-images-no-link: ## Show all docker images and versions used in the h
 	@helm template . \
 		-f tests/enable_all_features.yaml \
 		2>/dev/null \
-		| awk '/image: / {match($$2, /(([^"]*):[^"]*)/, a) ; printf "%s\n", a[1] ;}'
+		| awk '/image: / {match($$2, /(([^"]*):[^"]*)/, a) ; printf "%s\n", a[0] ;}'
 
 .PHONY: show-docker-images
 show-docker-images-with-private-registry: ## Show all docker images and versions used in the helm chart with a privateRegistry set

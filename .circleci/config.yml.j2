@@ -19,13 +19,9 @@ parameters:
 jobs:
   scan-docker:
     executor: docker-executor
-    parameters:
-      docker_image:
-        type: string
     steps:
       - run:
-          name: Running scan for << parameters.docker_image >>
-          command: echo << parameters.docker_image >>
+          command: Running scan for << parameters.docker_image >>
   snyk-scan-docker:
     executor: docker-executor
     parameters:
@@ -208,14 +204,13 @@ workflows:
 {%- for docker_image in docker_images %}
       - scan-docker:
           name: {{ docker_image }}
-          docker_image: {{ docker_image }}
       - snyk-scan-docker:
-          name: snyk-{{ docker_image }}
+          name: snyk_{{ docker_image }}
           docker_image: {{ docker_image }}
           requires:
             - {{ docker_image }}
       - trivy-scan-docker:
-          name: trivy-{{ docker_image }}
+          name: trivy_{{ docker_image }}
           docker_image: {{ docker_image }}
           requires:
             - {{ docker_image }}
