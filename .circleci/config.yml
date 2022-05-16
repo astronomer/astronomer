@@ -11,6 +11,7 @@ executors:
 orbs:
   snyk: snyk/snyk@1.1.2
   trivy: signavio/trivy@1.3.0
+  debian: onehq/debian@1.0.0
 
 parameters:
   scan-docker-images:
@@ -56,7 +57,7 @@ jobs:
           name: Installing required tools
           command: |
             apt update -y
-            apt install gawk apt-transport-https -y
+            apt install gnupg gawk apt-transport-https -y
             curl https://baltocdn.com/helm/signing.asc | apt-key add -
             echo "deb https://baltocdn.com/helm/stable/debian/ all main" | tee /etc/apt/sources.list.d/helm-stable-debian.list
             apt-get update -y
