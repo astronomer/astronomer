@@ -282,7 +282,6 @@ class TestExternalElasticSearch:
         assert len(docs) == 1
         doc = docs[0]
         assert doc["kind"] == "NetworkPolicy"
-        print(doc["spec"]["ingress"][0]["from"])
         assert [
             {
                 "namespaceSelector": {},
@@ -300,6 +299,12 @@ class TestExternalElasticSearch:
                 "namespaceSelector": {},
                 "podSelector": {
                     "matchLabels": {"component": "worker", "tier": "airflow"}
+                },
+            },
+            {
+                "namespaceSelector": {},
+                "podSelector": {
+                    "matchLabels": {"component": "triggerer", "tier": "airflow"}
                 },
             },
         ] == doc["spec"]["ingress"][0]["from"]

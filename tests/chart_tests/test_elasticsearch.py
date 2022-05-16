@@ -176,4 +176,10 @@ class TestElasticSearch:
                     "matchLabels": {"component": "worker", "tier": "airflow"}
                 },
             },
+            {
+                "namespaceSelector": {},
+                "podSelector": {
+                    "matchLabels": {"component": "triggerer", "tier": "airflow"}
+                },
+            },
         ] == doc["spec"]["ingress"][0]["from"]
