@@ -205,12 +205,10 @@ workflows:
       - scan-docker:
           name: {{ docker_image }}
       - snyk-scan-docker:
-          name: snyk_{{ docker_image }}
           docker_image: {{ docker_image }}
           requires:
             - {{ docker_image }}
       - trivy-scan-docker:
-          name: trivy_{{ docker_image }}
           docker_image: {{ docker_image }}
           requires:
             - {{ docker_image }}
