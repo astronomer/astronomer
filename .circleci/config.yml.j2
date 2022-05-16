@@ -17,11 +17,6 @@ parameters:
     description: "This will run docker image scan."
 
 jobs:
-  scan-docker:
-    executor: docker-executor
-    steps:
-      - run:
-          command: Running scan for container.
   snyk-scan-docker:
     executor: docker-executor
     parameters:
@@ -202,16 +197,10 @@ workflows:
         - << pipeline.parameters.scan-docker-images >>
     jobs:
 {%- for docker_image in docker_images %}
-      - scan-docker:
-          name: scan_docker_{{ docker_image }}
       - snyk-scan-docker:
           docker_image: {{ docker_image }}
-          requires:
-            - scan_docker_{{ docker_image }}
       - trivy-scan-docker:
           docker_image: {{ docker_image }}
-          requires:
-            - scan_docker_{{ docker_image }}
 {%- endfor %}
 
   build-and-release-helm-chart:
