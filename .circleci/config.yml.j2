@@ -54,7 +54,7 @@ jobs:
           name: Installing required tools
           command: |
             apt update -y
-            apt install gawk -y
+            apt install gawk wget -y
             bin/install-ci-tools
       - run:
           name: Create pre-commit-cache-key.txt
