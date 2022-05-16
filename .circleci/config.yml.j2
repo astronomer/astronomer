@@ -203,15 +203,15 @@ workflows:
     jobs:
 {%- for docker_image in docker_images %}
       - scan-docker:
-          name: {{ docker_image }}
+          name: scan_docker_{{ docker_image }}
       - snyk-scan-docker:
           docker_image: {{ docker_image }}
           requires:
-            - {{ docker_image }}
+            - scan_docker_{{ docker_image }}
       - trivy-scan-docker:
           docker_image: {{ docker_image }}
           requires:
-            - {{ docker_image }}
+            - scan_docker_{{ docker_image }}
 {%- endfor %}
 
   build-and-release-helm-chart:
