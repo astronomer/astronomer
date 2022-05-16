@@ -3,8 +3,9 @@
 This script is used to create the circle config file
 so that we can stay DRY.
 """
-
 import os
+import subprocess
+from pathlib import Path
 
 from jinja2 import Template
 
@@ -15,16 +16,27 @@ from jinja2 import Template
 KUBE_VERSIONS = ["1.19.11", "1.20.7", "1.21.2", "1.22.7", "1.23.4"]
 
 
+def list_docker_images(path):
+    command = "cd " + path + " && make show-docker-images-no-link"
+    docker_images_output = subprocess.check_output(command, shell=True)
+    docker_image_list = docker_images_output.decode("utf-8").strip().split("\n")
+
+    return docker_image_list
+
+
 def main():
     """Render the Jinja2 template file"""
+    project_directory = Path(__file__).parent.parent
     circle_directory = os.path.dirname(os.path.realpath(__file__))
     config_template_path = os.path.join(circle_directory, "config.yml.j2")
     config_path = os.path.join(circle_directory, "config.yml")
 
+    docker_images = list_docker_images(str(project_directory))
+
     with open(config_template_path) as circle_ci_config_template:
         templated_file_content = circle_ci_config_template.read()
     template = Template(templated_file_content)
-    config = template.render(kube_versions=KUBE_VERSIONS)
+    config = template.render(kube_versions=KUBE_VERSIONS, docker_images=docker_images)
     with open(config_path, "w") as circle_ci_config_file:
         warning_header = (
             "# Warning: automatically generated file\n"

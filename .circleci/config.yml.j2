@@ -181,8 +181,11 @@ workflows:
       and:
         - << pipeline.parameters.scan-docker-images >>
     jobs:
+{%- for docker_image in docker_images %}
       - snyk-scan-docker:
-          docker_image: quay.io/astronomer/ap-nginx:1.2.0
+          docker_image: {{ docker_image }}
+{%- endfor %}
+
   build-and-release-helm-chart:
     unless:
       and:
