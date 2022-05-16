@@ -14,6 +14,7 @@ from jinja2 import Template
 # https://hub.docker.com/r/kindest/node/tags
 # This should match what is in tests/__init__.py
 KUBE_VERSIONS = ["1.19.11", "1.20.7", "1.21.2", "1.22.7", "1.23.4"]
+CI_REMOTE_DOCKER_VERSION = "20.10.12"
 
 
 def list_docker_images(path):
@@ -36,11 +37,12 @@ def main():
     with open(config_template_path) as circle_ci_config_template:
         templated_file_content = circle_ci_config_template.read()
     template = Template(templated_file_content)
-    config = template.render(kube_versions=KUBE_VERSIONS, docker_images=docker_images)
+    config = template.render(kube_versions=KUBE_VERSIONS, docker_images=docker_images,
+                             remote_docker_version=CI_REMOTE_DOCKER_VERSION)
     with open(config_path, "w") as circle_ci_config_file:
         warning_header = (
-            "# Warning: automatically generated file\n"
-            + "# Please edit config.yml.j2, and use the script generate_circleci_config.py\n"
+                "# Warning: automatically generated file\n"
+                + "# Please edit config.yml.j2, and use the script generate_circleci_config.py\n"
         )
         circle_ci_config_file.write(warning_header)
         circle_ci_config_file.write(config)

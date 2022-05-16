@@ -23,7 +23,7 @@ jobs:
         type: string
     steps:
       - setup_remote_docker:
-          version: 20.10.12
+          version: {{ remote_docker_version }}
       - checkout
       - run:
           name: Pull Docker image
@@ -72,7 +72,7 @@ jobs:
     steps:
       - setup_remote_docker:
           docker_layer_caching: true
-          version: 20.10.12
+          version: {{ remote_docker_version }}
       - checkout
       - run:
           name: Create chart-tests-cache-key.txt
@@ -169,7 +169,7 @@ jobs:
     steps:
       - checkout
       - setup_remote_docker:
-          version: 20.10.12
+          version: {{ remote_docker_version }}
       - run:
           name: Check that commander image uses same Airflow chart version
           command: make validate-commander-airflow-version
@@ -263,7 +263,7 @@ commands:
     steps:
       - setup_remote_docker:
           docker_layer_caching: true
-          version: 20.10.12
+          version: {{ remote_docker_version }}
       - attach_workspace:
           at: /tmp/workspace
       - run:
@@ -317,7 +317,7 @@ commands:
       - checkout
       - setup_remote_docker:
           docker_layer_caching: true
-          version: 20.10.12
+          version: {{ remote_docker_version }}
       - run:
           name: Build the Docker image
           command: |
