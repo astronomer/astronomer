@@ -18,7 +18,7 @@ CI_REMOTE_DOCKER_VERSION = "20.10.12"
 
 
 def list_docker_images(path):
-    command = f"cd {path} && make show-docker-images | cut -w -f2"
+    command = "cd " + path + " && make show-docker-images | awk '{print $2}'"
     docker_images_output = subprocess.check_output(command, shell=True)
     docker_image_list = docker_images_output.decode("utf-8").strip().split("\n")
 
