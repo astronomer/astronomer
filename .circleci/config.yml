@@ -604,7 +604,6 @@ workflows:
           filters:
             branches:
               only:
-                - master
                 - feature/AP-4620
     jobs:
       - snyk-scan-docker:
