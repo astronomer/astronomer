@@ -56,8 +56,11 @@ jobs:
           name: Installing required tools
           command: |
             apt update -y
-            apt install gawk wget -y
-            bin/install-ci-tools
+            apt install gawk apt-transport-https -y
+            curl https://baltocdn.com/helm/signing.asc | apt-key add -
+            echo "deb https://baltocdn.com/helm/stable/debian/ all main" | tee /etc/apt/sources.list.d/helm-stable-debian.list
+            apt-get update -y
+            apt-get install helm -y
       - run:
           name: Create pre-commit-cache-key.txt
           command: |
