@@ -183,6 +183,7 @@ workflows:
     jobs:
 {%- for docker_image in docker_images %}
       - snyk-scan-docker:
+          name: snyk-scan_{{ docker_image }}
           docker_image: {{ docker_image }}
 {%- endfor %}
 
