@@ -6,7 +6,7 @@ executors:
     environment:
       GIT_ORG: astronomer
     docker:
-      - image: circleci/python:3
+      - image: cimg/python:3.10
 
 orbs:
   snyk: snyk/snyk@1.1.2
