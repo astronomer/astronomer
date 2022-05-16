@@ -33,6 +33,7 @@ spec:
         sidecar.istio.io/inject: "false"
       {{- end }}
     spec:
+      serviceAccountName: {{ template "houston.bootstrapperServiceAccount" . }}
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
       affinity:

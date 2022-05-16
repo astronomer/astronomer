@@ -252,3 +252,118 @@ class TestAstronomerCommander:
         ]
         for resource in cluster_resources:
             assert resource in generated_resources
+
+    def test_astronomer_commander_rbac_scc_enabled_ns_pools(self, kube_version):
+        """Test that if a sccEnabled and namespacePools are enabled, we add Cluster permissions for scc resources"""
+        namespaces = ["test"]
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "rbacEnabled": True,
+                    "sccEnabled": True,
+                    "features": {
+                        "namespacePools": {
+                            "enabled": True,
+                            "namespaces": {"create": True, "names": namespaces},
+                        },
+                    },
+                }
+            },
+            show_only=[
+                "charts/astronomer/templates/commander/commander-role.yaml",
+                "charts/astronomer/templates/commander/commander-rolebinding.yaml",
+            ],
+        )
+
+        assert len(docs) == 6
+
+        expected_namespaces = [*namespaces, "default"]
+
+        cluster_role = docs[0]
+        expected_rule = {
+            "apiGroups": ["security.openshift.io"],
+            "resources": ["securitycontextconstraints"],
+            "verbs": ["create", "delete", "list", "watch"],
+        }
+        assert cluster_role["kind"] == "ClusterRole"
+        assert cluster_role["rules"] == [expected_rule]
+
+        # assertions on Role objects
+        for i in range(1, 3):
+            role = docs[i]
+
+            assert role["kind"] == "Role"
+            assert len(role["rules"]) > 0
+            assert role["metadata"]["namespace"] == expected_namespaces[i - 1]
+
+        # Role Bindings
+        expected_subject = {
+            "kind": "ServiceAccount",
+            "name": "release-name-commander",
+            "namespace": "default",
+        }
+
+        cluster_role_binding = docs[3]
+        expected_cluster_role = {
+            "apiGroup": "rbac.authorization.k8s.io",
+            "kind": "ClusterRole",
+            "name": "release-name-commander",
+        }
+
+        assert cluster_role_binding["roleRef"] == expected_cluster_role
+
+        for i in range(4, 6):
+            role_binding = docs[i]
+
+            expected_role = {
+                "apiGroup": "rbac.authorization.k8s.io",
+                "kind": "Role",
+                "name": "release-name-commander",
+            }
+
+            assert role_binding["kind"] == "RoleBinding"
+            assert role_binding["metadata"]["namespace"] == expected_namespaces[i - 4]
+            assert role_binding["roleRef"] == expected_role
+            assert role_binding["subjects"][0] == expected_subject
+
+    def test_astronomer_commander_rbac_scc_cluster_roles(self, kube_version):
+        """Test that if scc is enabled but namespace pools is disabled, scc permissions are rendered once in ClusterRole and ClusterRoleBinding objects"""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "rbacEnabled": True,
+                    "sccEnabled": True,
+                    "clusterRoles": True,
+                    "features": {
+                        "namespacePools": {"enabled": False},
+                    },
+                }
+            },
+            show_only=[
+                "charts/astronomer/templates/commander/commander-role.yaml",
+                "charts/astronomer/templates/commander/commander-rolebinding.yaml",
+            ],
+        )
+
+        assert len(docs) == 2
+
+        expected_rule = {
+            "apiGroups": ["security.openshift.io"],
+            "resources": ["securitycontextconstraints"],
+            "verbs": ["create", "delete", "list", "watch"],
+        }
+        cluster_role = docs[0]
+
+        assert cluster_role["kind"] == "ClusterRole"
+        assert expected_rule in cluster_role["rules"]
+
+        cluster_role_binding = docs[1]
+        expected_cluster_role = {
+            "apiGroup": "rbac.authorization.k8s.io",
+            "kind": "ClusterRole",
+            "name": "release-name-commander",
+        }
+
+        assert cluster_role_binding["roleRef"] == expected_cluster_role

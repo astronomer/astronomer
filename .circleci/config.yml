@@ -46,9 +46,11 @@ jobs:
   unittest-charts:
     docker:
       - image: quay.io/astronomer/ci-helm-release:2022-04
+    parallelism: 6
     steps:
       - setup_remote_docker:
           docker_layer_caching: true
+          version: 20.10.12
       - checkout
       - run:
           name: Create chart-tests-cache-key.txt
@@ -71,7 +73,8 @@ jobs:
           name: unittest the Astronomer chart
           command: |
             mkdir test-results
-            make unittest-charts
+            TEST_FILES=$(circleci tests glob "tests/chart_tests/test_*.py" | circleci tests split --split-by=timings)
+            venv/bin/python -m pytest -v --junitxml=test-results/junit.xml -n auto $TEST_FILES
       - store_test_results:
           path: test-results
   build-artifact:
@@ -206,7 +209,8 @@ jobs:
       - image: cimg/base:2022.03
     steps:
       - checkout
-      - setup_remote_docker
+      - setup_remote_docker:
+          version: 20.10.12
       - run:
           name: Check that commander image uses same Airflow chart version
           command: make validate-commander-airflow-version
@@ -297,6 +301,7 @@ commands:
     steps:
       - setup_remote_docker:
           docker_layer_caching: true
+          version: 20.10.12
       - attach_workspace:
           at: /tmp/workspace
       - run:
@@ -350,6 +355,7 @@ commands:
       - checkout
       - setup_remote_docker:
           docker_layer_caching: true
+          version: 20.10.12
       - run:
           name: Build the Docker image
           command: |
