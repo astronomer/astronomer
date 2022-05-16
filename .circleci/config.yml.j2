@@ -53,7 +53,7 @@ jobs:
       - run:
           name: Installing required tools
           command: |
-            apt install update -y
+            apt update -y
             apt install gawk -y
             bin/install-ci-tools
       - run:
