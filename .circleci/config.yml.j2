@@ -22,6 +22,8 @@ jobs:
       docker_image:
         type: string
     steps:
+      - setup_remote_docker:
+          version: 20.10.12
       - checkout
       - run:
           name: Pull Docker image
@@ -349,6 +351,7 @@ commands:
             HELM_CHART_PATH='/tmp/workspace/astronomer-*.tgz' bin/run-ci << parameters.astronomer-tags >>
       - store_test_results:
           path: test-results
+
   publish-github-release:
     description: "Create a release on GitHub"
     parameters:
