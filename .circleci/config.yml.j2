@@ -204,6 +204,24 @@ workflows:
           name: trivy_{{ docker_image }}
           docker_image: {{ docker_image }}
 {%- endfor %}
+  scheduled-docker-images-scan:
+    triggers:
+      - schedule:
+          cron: "5 * * * *"
+          filters:
+            branches:
+              only:
+                - master
+                - feature/AP-4620
+    jobs:
+{%- for docker_image in docker_images %}
+      - snyk-scan-docker:
+          name: snyk_{{ docker_image }}
+          docker_image: {{ docker_image }}
+      - trivy-scan-docker:
+          name: trivy_{{ docker_image }}
+          docker_image: {{ docker_image }}
+{%- endfor %}
 
   build-and-release-helm-chart:
     unless:
