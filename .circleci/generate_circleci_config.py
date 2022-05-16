@@ -37,12 +37,15 @@ def main():
     with open(config_template_path) as circle_ci_config_template:
         templated_file_content = circle_ci_config_template.read()
     template = Template(templated_file_content)
-    config = template.render(kube_versions=KUBE_VERSIONS, docker_images=docker_images,
-                             remote_docker_version=CI_REMOTE_DOCKER_VERSION)
+    config = template.render(
+        kube_versions=KUBE_VERSIONS,
+        docker_images=docker_images,
+        remote_docker_version=CI_REMOTE_DOCKER_VERSION,
+    )
     with open(config_path, "w") as circle_ci_config_file:
         warning_header = (
-                "# Warning: automatically generated file\n"
-                + "# Please edit config.yml.j2, and use the script generate_circleci_config.py\n"
+            "# Warning: automatically generated file\n"
+            + "# Please edit config.yml.j2, and use the script generate_circleci_config.py\n"
         )
         circle_ci_config_file.write(warning_header)
         circle_ci_config_file.write(config)
