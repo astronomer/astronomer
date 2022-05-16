@@ -150,7 +150,7 @@ class TestElasticSearch:
             kube_version=kube_version,
             values={"astronomer": {"houston": {"loggingSidecar": {"enabled": True}}}},
             show_only=[
-                "charts/elasticsearch/templates/nginx/nginx-es-networkpolicy.yaml",
+                "charts/elasticsearch/templates/nginx/nginx-es-ingress-networkpolicy.yaml",
             ],
         )
 
