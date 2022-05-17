@@ -9,6 +9,8 @@ ignore_file="$2"
 
 set +exo pipefail
 
+echo "$(<${ignore_file})"
+
 trivy \
   --cache-dir /tmp/workspace/trivy-cache \
   image \
