@@ -13,7 +13,7 @@ trivy \
   --cache-dir /tmp/workspace/trivy-cache \
   image \
   -s HIGH,CRITICAL \
-  --ignorefile "${ignore_file}" \
+  --ignorefile "${GIT_ROOT}/.circleci/${ignore_file}" \
   --ignore-unfixed \
   --exit-code 1 \
   --no-progress \
