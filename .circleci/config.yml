@@ -10,7 +10,6 @@ executors:
 
 orbs:
   snyk: snyk/snyk@1.1.2
-  trivy: signavio/trivy@1.3.0
 
 parameters:
   scan-docker-images:
