@@ -33,7 +33,7 @@ jobs:
           docker_image: << parameters.docker_image >>
   trivy-scan-docker:
     docker:
-      - image: docker:{{ docker_version }}-git
+      - image: docker:{{ remote_docker_version }}-git
     parameters:
       docker_image:
         type: string

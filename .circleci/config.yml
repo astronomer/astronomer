@@ -35,7 +35,7 @@ jobs:
           docker_image: << parameters.docker_image >>
   trivy-scan-docker:
     docker:
-      - image: docker:-git
+      - image: docker:20.10.12-git
     parameters:
       docker_image:
         type: string
