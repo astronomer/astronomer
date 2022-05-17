@@ -43,8 +43,22 @@ jobs:
       - run:
           name: Pull Docker image
           command: docker pull << parameters.docker_image >>
-      - trivy-docker-test:
-          docker_image: << parameters.docker_image >>
+      - run:
+          name: Install trivy
+          command: |
+            apk add --update-cache --upgrade curl rpm bash
+            curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/master/contrib/install.sh | sh -s -- -b /usr/local/bin
+            date +%F > date
+      - restore_cache:
+          keys:
+            {% raw %}- trivy-cache-{{ checksum "date" }}{% endraw %}
+      - run:
+          name: Scan the local image with trivy
+          command: bin/trivy-scan.sh "<< parameters.docker_image >>" "bin/trivyignore"
+      - save_cache:
+          {% raw %}key: trivy-cache-{{ checksum "date" }}{% endraw %}
+          paths:
+            - /tmp/workspace/trivy-cache
   run_pre_commit:
     docker:
       - image: quay.io/astronomer/ci-pre-commit:2022-05
