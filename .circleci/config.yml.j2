@@ -55,7 +55,7 @@ jobs:
             {% raw %}- trivy-cache-{{ checksum "date" }}{% endraw %}
       - run:
           name: Scan the local image with trivy
-          command: bin/trivy-scan.sh "<< parameters.docker_image >>" "bin/trivyignore"
+          command: bin/trivy-scan.sh "<< parameters.docker_image >>" ".circleci/trivyignore"
       - save_cache:
           {% raw %}key: trivy-cache-{{ checksum "date" }}{% endraw %}
           paths:
