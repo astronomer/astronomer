@@ -196,14 +196,14 @@ workflows:
       and:
         - << pipeline.parameters.scan-docker-images >>
     jobs:
-{%- for docker_image in docker_images %}
       - snyk-scan-docker:
-          name: snyk_{{ docker_image }}
-          docker_image: {{ docker_image }}
+          matrix:
+            parameters:
+              docker_image: {{ docker_images }}
       - trivy-scan-docker:
-          name: trivy_{{ docker_image }}
-          docker_image: {{ docker_image }}
-{%- endfor %}
+          matrix:
+            parameters:
+              docker_image: {{ docker_images }}
 
   build-and-release-helm-chart:
     unless:
