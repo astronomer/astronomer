@@ -9,6 +9,7 @@ ignore_file="$2"
 
 set +exo pipefail
 
+echo "${PWD}"
 echo "$(<${ignore_file})"
 
 trivy \
