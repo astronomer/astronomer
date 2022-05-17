@@ -22,7 +22,7 @@ def list_docker_images(path):
     docker_images_output = subprocess.check_output(command, shell=True)
     docker_image_list = docker_images_output.decode("utf-8").strip().split("\n")
 
-    return sorted(list(set(docker_image_list)))
+    return sorted(set(docker_image_list))
 
 
 def main():
