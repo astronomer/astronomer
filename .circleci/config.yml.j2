@@ -32,7 +32,8 @@ jobs:
       - snyk-docker-test:
           docker_image: << parameters.docker_image >>
   trivy-scan-docker:
-    executor: docker:{{ remote_docker_version }}-git
+    docker:
+      - image: docker:{{ docker_version }}-git
     parameters:
       docker_image:
         type: string
