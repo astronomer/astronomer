@@ -12,8 +12,9 @@ set +exo pipefail
 trivy \
   --cache-dir /tmp/workspace/trivy-cache \
   image \
-  --ignorefile "${GIT_ROOT}/.cirleci/${ignore_file}" \
-  --ignore-unfixed -s HIGH,CRITICAL \
+  -s HIGH,CRITICAL \
+  --ignorefile "${ignore_file}" \
+  --ignore-unfixed \
   --exit-code 1 \
   --no-progress \
   "${scan_target}" > "${GIT_ROOT}/trivy-output.txt"
