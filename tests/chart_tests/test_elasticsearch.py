@@ -148,7 +148,7 @@ class TestElasticSearch:
         """Test Nginx ES Service with NetworkPolicies."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"astronomer": {"houston": {"loggingSidecar": {"enabled": True}}}},
+            values={"global": {"loggingSidecar": {"enabled": True}}},
             show_only=[
                 "charts/elasticsearch/templates/nginx/nginx-es-ingress-networkpolicy.yaml",
             ],

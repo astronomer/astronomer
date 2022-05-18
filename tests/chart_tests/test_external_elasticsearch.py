@@ -271,8 +271,8 @@ class TestExternalElasticSearch:
                         "host": "esdemo.example.com",
                         "awsServiceAccountAnnotation": "arn:aws:iam::xxxxxxxx:role/customrole",
                     },
-                    "astronomer": {"houston": {"loggingSidecar": {"enabled": True}}},
-                }
+                    "loggingSidecar": {"enabled": True},
+                },
             },
             show_only=[
                 "charts/external-es-proxy/templates/external-es-proxy-networkpolicy.yaml",

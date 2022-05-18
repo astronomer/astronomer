@@ -27,6 +27,7 @@ spec:
         matchLabels:
           tier: airflow
           component: webserver
+    {{- if .Values.global.loggingSidecar.enabled }}
     - namespaceSelector: {}
       podSelector:
         matchLabels:
@@ -42,6 +43,7 @@ spec:
         matchLabels:
           component: triggerer
           tier: airflow
+    {{- end }}
     ports:
     - protocol: TCP
       port: {{ .Values.service.securehttp }}
