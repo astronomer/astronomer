@@ -257,9 +257,7 @@ class TestExternalElasticSearch:
         prod = yaml.safe_load(doc["data"]["production.yaml"])
         assert prod["deployments"]["kibanaUIEnabled"] is False
 
-    def test_external_es_network_selector_with_logging_sidecar_enabled(
-        self, kube_version
-    ):
+    def test_external_es_network_selector_defaults(self, kube_version):
         """Test External Elasticsearch Service with NetworkPolicies."""
         docs = render_chart(
             kube_version=kube_version,
@@ -271,8 +269,41 @@ class TestExternalElasticSearch:
                         "host": "esdemo.example.com",
                         "awsServiceAccountAnnotation": "arn:aws:iam::xxxxxxxx:role/customrole",
                     },
-                    "astronomer": {"houston": {"loggingSidecar": {"enabled": True}}},
-                }
+                },
+            },
+            show_only=[
+                "charts/external-es-proxy/templates/external-es-proxy-networkpolicy.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["kind"] == "NetworkPolicy"
+        assert [
+            {
+                "namespaceSelector": {},
+                "podSelector": {
+                    "matchLabels": {"tier": "airflow", "component": "webserver"}
+                },
+            },
+        ] == doc["spec"]["ingress"][0]["from"]
+
+    def test_external_es_network_selector_with_logging_sidecar_enabled(
+        self, kube_version
+    ):
+        """Test External Elasticsearch Service with NetworkPolicy Defaults."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "customLogging": {
+                        "enabled": True,
+                        "scheme": "https",
+                        "host": "esdemo.example.com",
+                        "awsServiceAccountAnnotation": "arn:aws:iam::xxxxxxxx:role/customrole",
+                    },
+                    "loggingSidecar": {"enabled": True},
+                },
             },
             show_only=[
                 "charts/external-es-proxy/templates/external-es-proxy-networkpolicy.yaml",
