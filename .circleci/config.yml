@@ -25,7 +25,7 @@ jobs:
         type: string
     steps:
       - setup_remote_docker:
-          version: 20.10.12
+          version: 20.10.14
       - checkout
       - run:
           name: Pull Docker image
@@ -34,13 +34,13 @@ jobs:
           docker_image: << parameters.docker_image >>
   trivy-scan-docker:
     docker:
-      - image: docker:20.10.12-git
+      - image: docker:20.10.14-git
     parameters:
       docker_image:
         type: string
     steps:
       - setup_remote_docker:
-          version: 20.10.12
+          version: 20.10.14
       - checkout
       - run:
           name: Pull Docker image
@@ -103,7 +103,7 @@ jobs:
     steps:
       - setup_remote_docker:
           docker_layer_caching: true
-          version: 20.10.12
+          version: 20.10.14
       - checkout
       - run:
           name: Create chart-tests-cache-key.txt
@@ -263,7 +263,7 @@ jobs:
     steps:
       - checkout
       - setup_remote_docker:
-          version: 20.10.12
+          version: 20.10.14
       - run:
           name: Check that commander image uses same Airflow chart version
           command: make validate-commander-airflow-version
@@ -430,7 +430,7 @@ commands:
     steps:
       - setup_remote_docker:
           docker_layer_caching: true
-          version: 20.10.12
+          version: 20.10.14
       - attach_workspace:
           at: /tmp/workspace
       - run:
@@ -484,7 +484,7 @@ commands:
       - checkout
       - setup_remote_docker:
           docker_layer_caching: true
-          version: 20.10.12
+          version: 20.10.14
       - run:
           name: Build the Docker image
           command: |
