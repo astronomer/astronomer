@@ -6,11 +6,64 @@ executors:
     environment:
       GIT_ORG: astronomer
     docker:
-      - image: circleci/python:3
+      - image: cimg/python:3.10
+
+orbs:
+  snyk: snyk/snyk@1.1.2
+
+parameters:
+  scan-docker-images:
+    type: boolean
+    default: false
+    description: "This will run docker image scan."
+
 jobs:
+  snyk-scan-docker:
+    executor: docker-executor
+    parameters:
+      docker_image:
+        type: string
+    steps:
+      - setup_remote_docker:
+          version: 20.10.14
+      - checkout
+      - run:
+          name: Pull Docker image
+          command: docker pull << parameters.docker_image >>
+      - snyk-docker-test:
+          docker_image: << parameters.docker_image >>
+  trivy-scan-docker:
+    docker:
+      - image: docker:20.10.14-git
+    parameters:
+      docker_image:
+        type: string
+    steps:
+      - setup_remote_docker:
+          version: 20.10.14
+      - checkout
+      - run:
+          name: Pull Docker image
+          command: docker pull << parameters.docker_image >>
+      - run:
+          name: Install trivy
+          command: |
+            apk add --update-cache --upgrade curl rpm bash
+            curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/master/contrib/install.sh | sh -s -- -b /usr/local/bin
+            date +%F > date
+      - restore_cache:
+          keys:
+            - trivy-cache-{{ checksum "date" }}
+      - run:
+          name: Scan the local image with trivy
+          command: bin/trivy-scan.sh "<< parameters.docker_image >>" ".circleci/trivyignore"
+      - save_cache:
+          key: trivy-cache-{{ checksum "date" }}
+          paths:
+            - /tmp/workspace/trivy-cache
   run_pre_commit:
     docker:
-      - image: quay.io/astronomer/ci-pre-commit:2022-05
+      - image: quay.io/astronomer/ci-pre-commit:2022-04
     steps:
       - checkout
       - run:
@@ -46,7 +99,11 @@ jobs:
   unittest-charts:
     docker:
       - image: quay.io/astronomer/ci-helm-release:2022-05
+    parallelism: 6
     steps:
+      - setup_remote_docker:
+          docker_layer_caching: true
+          version: 20.10.14
       - checkout
       - run:
           name: Create chart-tests-cache-key.txt
@@ -67,8 +124,12 @@ jobs:
             - ~/project/.unittest-requirements
       - run:
           name: unittest the Astronomer chart
-          command: make unittest-charts
-
+          command: |
+            mkdir test-results
+            TEST_FILES=$(circleci tests glob "tests/chart_tests/test_*.py" | circleci tests split --split-by=timings)
+            venv/bin/python -m pytest -v --junitxml=test-results/junit.xml -n auto $TEST_FILES
+      - store_test_results:
+          path: test-results
   build-artifact:
     docker:
       - image: quay.io/astronomer/ap-build:0.2.0
@@ -164,15 +225,46 @@ jobs:
             kubent --cluster=false --helm2=false --helm3=false --filename -
           when: always
 
+  check-commander-airflow-version:
+    docker:
+      - image: cimg/base:2022.03
+    steps:
+      - checkout
+      - setup_remote_docker:
+          version: 20.10.12
+      - run:
+          name: Check that commander image uses same Airflow chart version
+          command: make validate-commander-airflow-version
+
 workflows:
   version: 2.1
+  scan-docker-images:
+    when:
+      and:
+        - << pipeline.parameters.scan-docker-images >>
+    jobs:
+      - snyk-scan-docker:
+          matrix:
+            parameters:
+              docker_image:
+                - 
+      - trivy-scan-docker:
+          matrix:
+            parameters:
+              docker_image:
+                - 
   build-and-release-helm-chart:
+    unless:
+      and:
+        - << pipeline.parameters.scan-docker-images >>
     jobs:
       - lint
       - run_pre_commit
       - unittest-charts
+      - check-commander-airflow-version
       - build-artifact:
           requires:
+            - check-commander-airflow-version
             - lint
             - run_pre_commit
             - unittest-charts
@@ -236,6 +328,7 @@ commands:
     steps:
       - setup_remote_docker:
           docker_layer_caching: true
+          version: 20.10.14
       - attach_workspace:
           at: /tmp/workspace
       - run:
@@ -289,6 +382,7 @@ commands:
       - checkout
       - setup_remote_docker:
           docker_layer_caching: true
+          version: 20.10.14
       - run:
           name: Build the Docker image
           command: |
@@ -324,7 +418,8 @@ commands:
             echo 'export PATH="/tmp/bin:/tmp/google-cloud-sdk/bin:$PATH"' >> "$HOME/.bashrc"
             set -e
             HELM_CHART_PATH='/tmp/workspace/astronomer-*.tgz' bin/run-ci << parameters.astronomer-tags >>
-
+      - store_test_results:
+          path: test-results
   publish-github-release:
     description: "Create a release on GitHub"
     parameters:
@@ -339,3 +434,24 @@ commands:
             pyenv global 3.9.4
             pip install astronomer_e2e_test
             astronomer-ci publish-github-release --github-repository $CIRCLE_PROJECT_REPONAME --github-organization $CIRCLE_PROJECT_USERNAME --commitish $CIRCLE_SHA1
+
+  snyk-docker-test:
+    description: "Test a Docker image with synk"
+    parameters:
+      docker_image:
+        type: string
+    steps:
+      - snyk/scan:
+          docker-image-name: << parameters.docker_image >>
+          fail-on-issues: true
+          severity-threshold: high
+          monitor-on-build: false
+
+  trivy-docker-test:
+    description: "Trivy: Vulnerability scan a Docker image"
+    parameters:
+      docker_image:
+        type: string
+    steps:
+      - trivy/vulnerability-scan:
+            docker-image: << parameters.docker_image >>
