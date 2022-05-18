@@ -129,7 +129,7 @@ def test_houston_configmapwith_loggingsidecar_enabled():
     """Validate the houston configmap and its embedded data with loggingSidecar."""
     terminationEndpoint = "http://localhost:8000/quitquitquit"
     docs = render_chart(
-        values={"astronomer": {"houston": {"loggingSidecar": {"enabled": True}}}},
+        values={"global": {"loggingSidecar": {"enabled": True}}},
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
 
@@ -157,10 +157,8 @@ def test_houston_configmapwith_loggingsidecar_enabled_with_overrides():
     terminationEndpoint = "http://localhost:8000/quitquitquit"
     docs = render_chart(
         values={
-            "astronomer": {
-                "houston": {
-                    "loggingSidecar": {"enabled": True, "name": sidecar_container_name}
-                }
+            "global": {
+                "loggingSidecar": {"enabled": True, "name": sidecar_container_name}
             }
         },
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
