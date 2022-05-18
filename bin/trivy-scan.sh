@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-[ "$#" == 2 ] || { echo "ERROR: Must give exactly two arguments to scan." ; exit 1 ; }
+[ "$#" == 2 ] || { echo "ERROR: Must give exactly two arguments: <image_to_scan> <ignore_file>" ; exit 1 ; }
 [ -f /etc/os-release ] && cat /etc/os-release
 
 GIT_ROOT="$(git -C "${0%/*}" rev-parse --show-toplevel)"
