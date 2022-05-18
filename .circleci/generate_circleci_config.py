@@ -35,8 +35,7 @@ def main():
 
     docker_images = list_docker_images(str(project_directory))
 
-    with open(config_template_path) as circle_ci_config_template:
-        templated_file_content = circle_ci_config_template.read()
+    templated_file_content = Path(config_template_path).read_text()
     template = Template(templated_file_content)
     config = template.render(
         kube_versions=KUBE_VERSIONS,
