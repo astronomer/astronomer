@@ -6,8 +6,61 @@ executors:
     environment:
       GIT_ORG: astronomer
     docker:
-      - image: cimg/python:3.9
+      - image: cimg/python:3.10
+
+orbs:
+  snyk: snyk/snyk@1.1.2
+
+parameters:
+  scan-docker-images:
+    type: boolean
+    default: false
+    description: "This will run docker image scan."
+
 jobs:
+  snyk-scan-docker:
+    executor: docker-executor
+    parameters:
+      docker_image:
+        type: string
+    steps:
+      - setup_remote_docker:
+          version: 20.10.14
+      - checkout
+      - run:
+          name: Pull Docker image
+          command: docker pull << parameters.docker_image >>
+      - snyk-docker-test:
+          docker_image: << parameters.docker_image >>
+  trivy-scan-docker:
+    docker:
+      - image: docker:20.10.14-git
+    parameters:
+      docker_image:
+        type: string
+    steps:
+      - setup_remote_docker:
+          version: 20.10.14
+      - checkout
+      - run:
+          name: Pull Docker image
+          command: docker pull << parameters.docker_image >>
+      - run:
+          name: Install trivy
+          command: |
+            apk add --update-cache --upgrade curl rpm bash
+            curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/master/contrib/install.sh | sh -s -- -b /usr/local/bin
+            date +%F > date
+      - restore_cache:
+          keys:
+            - trivy-cache-{{ checksum "date" }}
+      - run:
+          name: Scan the local image with trivy
+          command: bin/trivy-scan.sh "<< parameters.docker_image >>" ".circleci/trivyignore"
+      - save_cache:
+          key: trivy-cache-{{ checksum "date" }}
+          paths:
+            - /tmp/workspace/trivy-cache
   run_pre_commit:
     docker:
       - image: quay.io/astronomer/ci-pre-commit:2022-05
@@ -43,24 +96,14 @@ jobs:
           name: Lint the Astronomer chart
           command: export PATH=/tmp/bin:$PATH make lint
 
-  build-lts-23-to-25-upgrade:
-    executor: docker-executor
-    steps:
-      - docker-build:
-          image_name: lts-23-to-25-upgrade
-          path: "./migrations/scripts/lts-to-lts/0.23-to-0.25/playbooks/"
-
-  push-lts-23-to-25-upgrade:
-    executor: docker-executor
-    steps:
-      - push-to-quay-io:
-          comma_separated_tags: "latest,$CIRCLE_BUILD_NUM"
-          image_name: lts-23-to-25-upgrade
-
   unittest-charts:
     docker:
       - image: quay.io/astronomer/ci-helm-release:2022-05
+    parallelism: 6
     steps:
+      - setup_remote_docker:
+          docker_layer_caching: true
+          version: 20.10.14
       - checkout
       - run:
           name: Create chart-tests-cache-key.txt
@@ -74,21 +117,19 @@ jobs:
           name: Create venv
           command: |
             make unittest-requirements
-            helm plugin install https://github.com/astronomer/helm-unittest >/dev/null || true
       - save_cache:
           key: chart-test-venv-{{ checksum "/tmp/chart-tests-cache-key.txt" }}
           paths:
             - ~/project/venv
             - ~/project/.unittest-requirements
-            - ~/.local/share/helm/plugins/helm-unittest
       - run:
           name: unittest the Astronomer chart
           command: |
             mkdir test-results
-            make unittest-charts
+            TEST_FILES=$(circleci tests glob "tests/chart_tests/test_*.py" | circleci tests split --split-by=timings)
+            venv/bin/python -m pytest -v --junitxml=test-results/junit.xml -n auto $TEST_FILES
       - store_test_results:
           path: test-results
-
   build-artifact:
     docker:
       - image: quay.io/astronomer/ap-build:0.2.0
@@ -116,7 +157,7 @@ jobs:
           command: |
             set -e
             sudo apt-get update && sudo apt-get install -y ca-certificates curl
-            pyenv global 3.9.12
+            pyenv global 3.9.4
             bin/release-helm-chart /tmp/workspace/astronomer-*.tgz
 
   release-to-public:
@@ -131,7 +172,7 @@ jobs:
           command: |
             set -e
             sudo apt-get update && sudo apt-get install -y ca-certificates curl
-            pyenv global 3.9.12
+            pyenv global 3.9.4
             bin/release-helm-chart -p /tmp/workspace/astronomer-*.tgz
       - publish-github-release
 
@@ -143,7 +184,7 @@ jobs:
       KUBE_VERSION: v1.19.16
     steps:
       - helm-install:
-          astronomer-tags: "platform postgresql monitoring logging kubed keda"
+          astronomer-tags: "platform postgresql monitoring logging"
       - run:
           name: Check chart for k8s 1.19.16 compatibility with kubent
           command: |
@@ -159,7 +200,7 @@ jobs:
       KUBE_VERSION: v1.20.15
     steps:
       - helm-install:
-          astronomer-tags: "platform postgresql monitoring logging kubed keda"
+          astronomer-tags: "platform postgresql monitoring logging"
       - run:
           name: Check chart for k8s 1.20.15 compatibility with kubent
           command: |
@@ -167,72 +208,153 @@ jobs:
             helm template --kube-version=v1.20.15 -f values.yaml --set global.baseDomain=example.com . |
             kubent --cluster=false --helm2=false --helm3=false --filename -
           when: always
-  platform-1-21-10:
+  platform-1-21-12:
     machine:
       image: ubuntu-2004:202107-02
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.21.10
+      KUBE_VERSION: v1.21.12
     steps:
       - helm-install:
-          astronomer-tags: "platform postgresql monitoring logging kubed keda"
+          astronomer-tags: "platform postgresql monitoring logging"
       - run:
-          name: Check chart for k8s 1.21.10 compatibility with kubent
+          name: Check chart for k8s 1.21.12 compatibility with kubent
           command: |
             set -o pipefail
-            helm template --kube-version=v1.21.10 -f values.yaml --set global.baseDomain=example.com . |
+            helm template --kube-version=v1.21.12 -f values.yaml --set global.baseDomain=example.com . |
+            kubent --cluster=false --helm2=false --helm3=false --filename -
+          when: always
+  platform-1-22-9:
+    machine:
+      image: ubuntu-2004:202107-02
+      resource_class: xlarge
+    environment:
+      KUBE_VERSION: v1.22.9
+    steps:
+      - helm-install:
+          astronomer-tags: "platform postgresql monitoring logging"
+      - run:
+          name: Check chart for k8s 1.22.9 compatibility with kubent
+          command: |
+            set -o pipefail
+            helm template --kube-version=v1.22.9 -f values.yaml --set global.baseDomain=example.com . |
+            kubent --cluster=false --helm2=false --helm3=false --filename -
+          when: always
+  platform-1-23-6:
+    machine:
+      image: ubuntu-2004:202107-02
+      resource_class: xlarge
+    environment:
+      KUBE_VERSION: v1.23.6
+    steps:
+      - helm-install:
+          astronomer-tags: "platform postgresql monitoring logging"
+      - run:
+          name: Check chart for k8s 1.23.6 compatibility with kubent
+          command: |
+            set -o pipefail
+            helm template --kube-version=v1.23.6 -f values.yaml --set global.baseDomain=example.com . |
             kubent --cluster=false --helm2=false --helm3=false --filename -
           when: always
 
-  lts-23-to-25-test:
-    machine:
-      image: ubuntu-2004:202107-02
-      resource_class: xlarge
-    environment:
-      KUBE_VERSION: v1.18.19 # last supported major.minor k8s version for astronomer 0.23
+  check-commander-airflow-version:
+    docker:
+      - image: cimg/base:2022.03
     steps:
-      - lts-23-to-25-test
+      - checkout
+      - setup_remote_docker:
+          version: 20.10.14
+      - run:
+          name: Check that commander image uses same Airflow chart version
+          command: make validate-commander-airflow-version
 
 workflows:
   version: 2.1
-  build-and-release-upgrader:
+  scan-docker-images:
+    when:
+      and:
+        - << pipeline.parameters.scan-docker-images >>
     jobs:
-      - build-lts-23-to-25-upgrade
-
-      - lts-23-to-25-test:
-          requires:
-            - build-lts-23-to-25-upgrade
-
-      - approve-lts-upgrader-release:
-          type: approval
-          requires:
-            - lts-23-to-25-test
-          filters:
-            branches:
-              only:
-                - "release-0.25"
-                - "lts-to-lts"
-
-      - push-lts-23-to-25-upgrade:
-          requires:
-            - approve-lts-upgrader-release
-            - lts-23-to-25-test
-          context:
-            - quay.io
-          filters:
-            branches:
-              only:
-                - "release-0.25"
-                - "master"
-                - "lts-to-lts"
-
+      - snyk-scan-docker:
+          matrix:
+            parameters:
+              docker_image:
+                - quay.io/astronomer/ap-alertmanager:0.23.0
+                - quay.io/astronomer/ap-astro-ui:0.29.6
+                - quay.io/astronomer/ap-auth-sidecar:1.21.6-2
+                - quay.io/astronomer/ap-awsesproxy:1.3-4
+                - quay.io/astronomer/ap-base:3.15.4
+                - quay.io/astronomer/ap-blackbox-exporter:0.20.0
+                - quay.io/astronomer/ap-cli-install:0.26.4
+                - quay.io/astronomer/ap-commander:0.29.2
+                - quay.io/astronomer/ap-configmap-reloader:0.5.0-1
+                - quay.io/astronomer/ap-curator:5.8.4-13
+                - quay.io/astronomer/ap-db-bootstrapper:0.26.6
+                - quay.io/astronomer/ap-default-backend:0.28.4
+                - quay.io/astronomer/ap-elasticsearch-exporter:1.3.0
+                - quay.io/astronomer/ap-elasticsearch:7.17.3-1
+                - quay.io/astronomer/ap-fluentd:1.14.6-1
+                - quay.io/astronomer/ap-grafana:8.4.5-2
+                - quay.io/astronomer/ap-houston-api:0.29.12
+                - quay.io/astronomer/ap-kibana:7.17.3-1
+                - quay.io/astronomer/ap-kube-state:1.7.2
+                - quay.io/astronomer/ap-nats-exporter:0.9.2-1
+                - quay.io/astronomer/ap-nats-server:2.8.1
+                - quay.io/astronomer/ap-nats-streaming:0.24.5
+                - quay.io/astronomer/ap-nginx-es:1.21.6-2
+                - quay.io/astronomer/ap-nginx:1.2.0
+                - quay.io/astronomer/ap-node-exporter:1.3.1
+                - quay.io/astronomer/ap-openresty:1.19.9-1
+                - quay.io/astronomer/ap-postgres-exporter:0.10.1
+                - quay.io/astronomer/ap-postgresql:11.15.0
+                - quay.io/astronomer/ap-prometheus:2.34.0
+                - quay.io/astronomer/ap-registry:3.15.4-1
+      - trivy-scan-docker:
+          matrix:
+            parameters:
+              docker_image:
+                - quay.io/astronomer/ap-alertmanager:0.23.0
+                - quay.io/astronomer/ap-astro-ui:0.29.6
+                - quay.io/astronomer/ap-auth-sidecar:1.21.6-2
+                - quay.io/astronomer/ap-awsesproxy:1.3-4
+                - quay.io/astronomer/ap-base:3.15.4
+                - quay.io/astronomer/ap-blackbox-exporter:0.20.0
+                - quay.io/astronomer/ap-cli-install:0.26.4
+                - quay.io/astronomer/ap-commander:0.29.2
+                - quay.io/astronomer/ap-configmap-reloader:0.5.0-1
+                - quay.io/astronomer/ap-curator:5.8.4-13
+                - quay.io/astronomer/ap-db-bootstrapper:0.26.6
+                - quay.io/astronomer/ap-default-backend:0.28.4
+                - quay.io/astronomer/ap-elasticsearch-exporter:1.3.0
+                - quay.io/astronomer/ap-elasticsearch:7.17.3-1
+                - quay.io/astronomer/ap-fluentd:1.14.6-1
+                - quay.io/astronomer/ap-grafana:8.4.5-2
+                - quay.io/astronomer/ap-houston-api:0.29.12
+                - quay.io/astronomer/ap-kibana:7.17.3-1
+                - quay.io/astronomer/ap-kube-state:1.7.2
+                - quay.io/astronomer/ap-nats-exporter:0.9.2-1
+                - quay.io/astronomer/ap-nats-server:2.8.1
+                - quay.io/astronomer/ap-nats-streaming:0.24.5
+                - quay.io/astronomer/ap-nginx-es:1.21.6-2
+                - quay.io/astronomer/ap-nginx:1.2.0
+                - quay.io/astronomer/ap-node-exporter:1.3.1
+                - quay.io/astronomer/ap-openresty:1.19.9-1
+                - quay.io/astronomer/ap-postgres-exporter:0.10.1
+                - quay.io/astronomer/ap-postgresql:11.15.0
+                - quay.io/astronomer/ap-prometheus:2.34.0
+                - quay.io/astronomer/ap-registry:3.15.4-1
   build-and-release-helm-chart:
+    unless:
+      and:
+        - << pipeline.parameters.scan-docker-images >>
     jobs:
       - lint
       - run_pre_commit
       - unittest-charts
+      - check-commander-airflow-version
       - build-artifact:
           requires:
+            - check-commander-airflow-version
             - lint
             - run_pre_commit
             - unittest-charts
@@ -247,7 +369,17 @@ workflows:
             - approve-test-all-platforms
             - build-artifact
 
-      - platform-1-21-10:
+      - platform-1-21-12:
+          requires:
+            - approve-test-all-platforms
+            - build-artifact
+
+      - platform-1-22-9:
+          requires:
+            - approve-test-all-platforms
+            - build-artifact
+
+      - platform-1-23-6:
           requires:
             - build-artifact
       - approve-internal-release:
@@ -258,12 +390,14 @@ workflows:
           requires:
             - approve-internal-release
             - platform-1-19-16
-            - platform-1-21-10
+            - platform-1-23-6
       - approve-public-release:
           type: approval
           requires:
             - release-to-internal
             - platform-1-20-15
+            - platform-1-21-12
+            - platform-1-22-9
           filters:
             branches:
               only:
@@ -296,6 +430,7 @@ commands:
     steps:
       - setup_remote_docker:
           docker_layer_caching: true
+          version: 20.10.14
       - attach_workspace:
           at: /tmp/workspace
       - run:
@@ -349,6 +484,7 @@ commands:
       - checkout
       - setup_remote_docker:
           docker_layer_caching: true
+          version: 20.10.14
       - run:
           name: Build the Docker image
           command: |
@@ -364,22 +500,6 @@ commands:
           root: .
           paths:
             - "./<< parameters.image_name >>.tar"
-
-  lts-23-to-25-test:
-    description: "Test LTS 23 to 25 upgrade automation"
-    steps:
-      - checkout
-      - attach_workspace:
-          at: /tmp/workspace
-      - run:
-          name: Load archived Docker image
-          command: docker load -i /tmp/workspace/lts-23-to-25-upgrade.tar
-      - run:
-          name: Test lts to lts upgrade automation
-          command: |
-            set -e
-            echo 'export PATH="/tmp/bin:/tmp/google-cloud-sdk/bin:$PATH"' >> "$HOME/.bashrc" # for interactive ssh debugging
-            bin/lts-23-to-25-test
 
   helm-install:
     description: "Install Helm chart from artifact"
@@ -414,6 +534,27 @@ commands:
           name: Create a release on GitHub
           command: |
             set -xe
-            pyenv global 3.9.12
+            pyenv global 3.9.4
             pip install astronomer_e2e_test
             astronomer-ci publish-github-release --github-repository $CIRCLE_PROJECT_REPONAME --github-organization $CIRCLE_PROJECT_USERNAME --commitish $CIRCLE_SHA1
+
+  snyk-docker-test:
+    description: "Test a Docker image with synk"
+    parameters:
+      docker_image:
+        type: string
+    steps:
+      - snyk/scan:
+          docker-image-name: << parameters.docker_image >>
+          fail-on-issues: true
+          severity-threshold: high
+          monitor-on-build: false
+
+  trivy-docker-test:
+    description: "Trivy: Vulnerability scan a Docker image"
+    parameters:
+      docker_image:
+        type: string
+    steps:
+      - trivy/vulnerability-scan:
+            docker-image: << parameters.docker_image >>
