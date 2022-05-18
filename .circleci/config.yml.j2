@@ -4,11 +4,21 @@ executors:
     environment:
       GIT_ORG: astronomer
     docker:
-      - image: circleci/python:3
+      - image: cimg/python:3.10
+
+orbs:
+  snyk: snyk/snyk@1.1.2
+
+parameters:
+  scan-docker-images:
+    type: boolean
+    default: false
+    description: "This will run docker image scan."
+
 jobs:
   run_pre_commit:
     docker:
-      - image: quay.io/astronomer/ci-pre-commit:2022-01
+      - image: quay.io/astronomer/ci-pre-commit:2022-05
     steps:
       - checkout
       - run:
@@ -43,8 +53,12 @@ jobs:
 
   unittest-charts:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2022-01
+      - image: quay.io/astronomer/ci-helm-release:2022-05
+    parallelism: 6
     steps:
+      - setup_remote_docker:
+          docker_layer_caching: true
+          version: {{ remote_docker_version }}
       - checkout
       - run:
           name: Create chart-tests-cache-key.txt
@@ -58,17 +72,19 @@ jobs:
           name: Create venv
           command: |
             make unittest-requirements
-            helm plugin install https://github.com/astronomer/helm-unittest >/dev/null || true
       - save_cache:
           key: chart-test-venv-{{ '{{' }} checksum "/tmp/chart-tests-cache-key.txt" }}
           paths:
             - ~/project/venv
             - ~/project/.unittest-requirements
-            - ~/.local/share/helm/plugins/helm-unittest
       - run:
           name: unittest the Astronomer chart
-          command: make unittest-charts
-
+          command: |
+            mkdir test-results
+            TEST_FILES=$(circleci tests glob "tests/test_*.py" | circleci tests split --split-by=timings)
+            venv/bin/python -m pytest -v --junitxml=test-results/junit.xml -n auto $TEST_FILES
+      - store_test_results:
+          path: test-results
   build-artifact:
     docker:
       - image: quay.io/astronomer/ap-build:0.2.0
@@ -123,7 +139,7 @@ jobs:
       KUBE_VERSION: v{{ version }}
     steps:
       - helm-install:
-          astronomer-tags: "platform postgresql monitoring logging kubed keda"
+          astronomer-tags: "platform postgresql monitoring logging"
       - run:
           name: Check chart for k8s {{ version }} compatibility with kubent
           command: |
@@ -133,8 +149,38 @@ jobs:
           when: always
 {%- endfor %}
 
+  check-commander-airflow-version:
+    docker:
+      - image: cimg/base:2022.03
+    steps:
+      - checkout
+      - setup_remote_docker:
+          version: {{ remote_docker_version }}
+      - run:
+          name: Check that commander image uses same Airflow chart version
+          command: make validate-commander-airflow-version
+
 workflows:
   version: 2.1
+  scan-docker-images:
+    when:
+      and:
+        - << pipeline.parameters.scan-docker-images >>
+    jobs:
+      - snyk-scan-docker:
+          matrix:
+            parameters:
+              docker_image:
+{%- for image in docker_images %}
+                - {{ image }}
+{%- endfor %}
+      - trivy-scan-docker:
+          matrix:
+            parameters:
+              docker_image:
+{%- for image in docker_images %}
+                - {{ image }}
+{%- endfor %}
   build-and-release-helm-chart:
     jobs:
       - lint
@@ -206,6 +252,7 @@ commands:
     steps:
       - setup_remote_docker:
           docker_layer_caching: true
+          version: {{ remote_docker_version }}
       - attach_workspace:
           at: /tmp/workspace
       - run:
@@ -259,6 +306,7 @@ commands:
       - checkout
       - setup_remote_docker:
           docker_layer_caching: true
+          version: {{ remote_docker_version }}
       - run:
           name: Build the Docker image
           command: |
@@ -294,6 +342,8 @@ commands:
             echo 'export PATH="/tmp/bin:/tmp/google-cloud-sdk/bin:$PATH"' >> "$HOME/.bashrc"
             set -e
             HELM_CHART_PATH='/tmp/workspace/astronomer-*.tgz' bin/run-ci << parameters.astronomer-tags >>
+      - store_test_results:
+          path: test-results
 
   publish-github-release:
     description: "Create a release on GitHub"
@@ -309,3 +359,24 @@ commands:
             pyenv global 3.9.4
             pip install astronomer_e2e_test
             astronomer-ci publish-github-release --github-repository $CIRCLE_PROJECT_REPONAME --github-organization $CIRCLE_PROJECT_USERNAME --commitish $CIRCLE_SHA1
+
+  snyk-docker-test:
+    description: "Test a Docker image with synk"
+    parameters:
+      docker_image:
+        type: string
+    steps:
+      - snyk/scan:
+          docker-image-name: << parameters.docker_image >>
+          fail-on-issues: true
+          severity-threshold: high
+          monitor-on-build: false
+
+  trivy-docker-test:
+    description: "Trivy: Vulnerability scan a Docker image"
+    parameters:
+      docker_image:
+        type: string
+    steps:
+      - trivy/vulnerability-scan:
+            docker-image: << parameters.docker_image >>
