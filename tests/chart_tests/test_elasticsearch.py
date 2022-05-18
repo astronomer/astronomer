@@ -142,6 +142,28 @@ class TestElasticSearch:
             assert pod_data["securityContext"]["runAsNonRoot"] is True
             assert pod_data["securityContext"]["runAsUser"] == 1001
 
+    def test_nginx_es_client_network_selector_defaults(self, kube_version):
+        """Test Nginx ES Service with NetworkPolicy defaults."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={},
+            show_only=[
+                "charts/elasticsearch/templates/nginx/nginx-es-ingress-networkpolicy.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        assert "NetworkPolicy" == doc["kind"]
+        assert [
+            {
+                "namespaceSelector": {},
+                "podSelector": {
+                    "matchLabels": {"tier": "airflow", "component": "webserver"}
+                },
+            },
+        ] == doc["spec"]["ingress"][0]["from"]
+
     def test_nginx_es_client_network_selector_with_logging_sidecar_enabled(
         self, kube_version
     ):
