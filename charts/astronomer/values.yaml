@@ -190,7 +190,7 @@ houston:
     # url for update service
     url: https://updates.astronomer.io/astronomer-certified
 
-    # Default here is to run at midnight every night
+    # Run at minute 57 every hour https://crontab.guru/#57_*_*_*_*
     schedule: "57 * * * *"
 
   # Check for Astronomer Runtime Updates
