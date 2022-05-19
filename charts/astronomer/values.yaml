@@ -5,7 +5,7 @@
 # This version number controls the default Airflow chart version that will be installed
 # when creating a new deployment in the system. This is also used to ensure all
 # child airflow deployments are kept up to date and on the latest version.
-airflowChartVersion: 1.5.0-rc2
+airflowChartVersion: 1.5.0-rc4
 
 nodeSelector: {}
 affinity: {}
@@ -53,10 +53,6 @@ astroUI:
   #   memory: 128Mi
 
 houston:
-  loggingSidecar:
-    enabled: false
-    name: sidecar-log-consumer
-    terminationEndpoint: http://localhost:8000/quitquitquit
   prismaConnectionLimit: 5
   replicas: 2
   # This only applies when replicas > 3

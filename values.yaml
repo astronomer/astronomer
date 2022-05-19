@@ -101,6 +101,12 @@ global:
   # Enables namespace labels for network policies
   networkNSLabels: false
 
+  # Sidecar Logging
+  loggingSidecar:
+    enabled: false
+    name: sidecar-log-consumer
+    terminationEndpoint: http://localhost:8000/quitquitquit
+
   # Deploy auth sidecar to use openshift native features
   authSidecar:
     enabled: false
