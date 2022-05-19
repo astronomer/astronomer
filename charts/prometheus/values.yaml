@@ -54,6 +54,7 @@ persistence:
   enabled: true
   size: 100Gi
   storageClassName: ~
+  annotations: {}
 
 ports:
   http: 9090

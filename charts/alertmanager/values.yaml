@@ -30,6 +30,10 @@ persistence:
   enabled: true
   size: 2Gi
   storageClassName: ~
+  annotations: {
+    foo: "bar",
+    hello: "test/astro"
+  }
 
 env: {}
 
