@@ -117,6 +117,8 @@ houston:
   #   cpu: 100m
   #   memory: 128Mi
 
+  extraContainers: {}
+
   # Any Houston configuration. Reference here:
   # https://github.com/astronomer/houston-api/blob/main/config/default.yaml
   config: {}
