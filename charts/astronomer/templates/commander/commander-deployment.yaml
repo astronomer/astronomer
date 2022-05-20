@@ -97,3 +97,10 @@ spec:
             - name: COMMANDER_MANUAL_NAMESPACE_NAMES
               value: "true"
             {{- end }}
+{{- if .Values.commander.extraContainers }}
+{{- toYaml .Values.commander.extraContainers | nindent 8 }}
+{{- end }}
+      volumes:
+{{- if .Values.commander.extraVolumes }}
+{{- toYaml .Values.commander.extraVolumes | nindent 8 }}
+{{- end }}
