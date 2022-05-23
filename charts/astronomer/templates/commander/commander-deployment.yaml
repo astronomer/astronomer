@@ -98,8 +98,8 @@ spec:
               value: "true"
             {{- end }}
           volumeMounts:
-{{- if .Values.houston.volumeMounts }}
-{{- toYaml .Values.houston.volumeMounts | nindent 12 }}
+{{- if .Values.commander.volumeMounts }}
+{{- toYaml .Values.commander.volumeMounts | nindent 12 }}
 {{- end }}
 {{- if .Values.commander.extraContainers }}
 {{- toYaml .Values.commander.extraContainers | nindent 8 }}
