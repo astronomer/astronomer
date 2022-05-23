@@ -89,6 +89,9 @@ spec:
           volumeMounts:
             {{- include "houston_volume_mounts" . | indent 12 }}
             {{- include "custom_ca_volume_mounts" . | indent 12 }}
+{{- if .Values.houston.volumeMounts }}
+{{- toYaml .Values.houston.volumeMounts | nindent 12 }}
+{{- end }}
           env:
             - name: GRPC_VERBOSITY
               value: "INFO"
