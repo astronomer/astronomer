@@ -50,6 +50,11 @@ spec:
         matchLabels:
           tier: astronomer
           release: {{ .Release.Name }}
+          component: houston-update-runtime-check
+    - podSelector:
+        matchLabels:
+          tier: astronomer
+          release: {{ .Release.Name }}
           component: houston-expire-deployments
     - podSelector:
         matchLabels:

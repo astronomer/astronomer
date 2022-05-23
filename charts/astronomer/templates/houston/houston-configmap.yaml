@@ -95,6 +95,14 @@ data:
         }
       {{- end }}
 
+      {{- if .Values.global.loggingSidecar.enabled }}
+      # enables sidecar logging for airflow deployments
+      loggingSidecar:
+        enabled: true
+        name: {{ .Values.global.loggingSidecar.name }}
+        terminationEndpoint: {{ .Values.global.loggingSidecar.terminationEndpoint }}
+      {{- end }}
+
       # These values get passed directly into the airflow helm deployments
       helm:
       {{- if and .Values.global.ssl.enabled .Values.global.ssl.mode }}
@@ -236,16 +244,16 @@ data:
                       container.args = container.command + container.args
                   container.command = ["tini", "--", "/entrypoint"]
                   pod.spec.containers[0] = container
-      {{ if .Values.houston.loggingSidecar.enabled }}
+      {{ if .Values.global.loggingSidecar.enabled }}
                   # For sidecar logging we override the default entrypoint to redirect
                   # logs to files that are consumed by the sidecar container. The command
-                  # ends with a POST to {{ .Values.houston.loggingSidecar.terminationEndpoint }}, which signals the
+                  # ends with a POST to {{ .Values.global.loggingSidecar.terminationEndpoint }}, which signals the
                   # sidecar log consumer to exit.
-                  log_cmd = "1> >( tee -a /var/log/{{ .Values.houston.loggingSidecar.name }}/out.log ) 2> >( tee -a /var/log/{{ .Values.houston.loggingSidecar.name }}/err.log >&2 )"
+                  log_cmd = "1> >( tee -a /var/log/{{ .Values.global.loggingSidecar.name }}/out.log ) 2> >( tee -a /var/log/{{ .Values.global.loggingSidecar.name }}/err.log >&2 )"
                   if container.args[0:3] == ["airflow", "tasks", "run"]:
                       container.command = ["tini", "--"]
                       new_args = ["bash", "-c"]
-                      command_str = "/entrypoint " + ' '.join([str(arg) for arg in container.args]) + " " + log_cmd + "; curl -fsSL {{ .Values.houston.loggingSidecar.terminationEndpoint }}"
+                      command_str = "/entrypoint " + ' '.join([str(arg) for arg in container.args]) + " " + log_cmd + "; curl -fsSL -XPOST {{ .Values.global.loggingSidecar.terminationEndpoint }}"
                       new_args.append(command_str)
                       container.args = new_args
 

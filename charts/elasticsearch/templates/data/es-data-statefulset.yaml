@@ -84,14 +84,6 @@ spec:
       - name: es-data
         securityContext:
 {{ toYaml .Values.securityContext | indent 10 }}
-          capabilities:
-            add:
-              {{- if .Values.common.persistence.enabled }}
-              - IPC_LOCK
-              {{- else }}
-              - IPC_LOCK
-              - SYS_RESOURCE
-              {{- end }}
         image: {{ template "elasticsearch.image" . }}
         imagePullPolicy: {{ .Values.images.es.pullPolicy }}
         env:

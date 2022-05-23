@@ -1,5 +1,6 @@
-from tests.helm_template_generator import render_chart
 import pytest
+
+from tests.chart_tests.helm_template_generator import render_chart
 
 # External-es-proxy and prometheus-postgres-exporter are set false by default,
 # needs additional work on creating test cases for future
@@ -25,7 +26,7 @@ show_only = [
     "charts/prometheus/templates/prometheus-networkpolicy.yaml",
     "charts/kube-state/templates/kube-state-networkpolicy.yaml",
     "charts/elasticsearch/templates/master/es-master-networkpolicy.yaml",
-    "charts/elasticsearch/templates/nginx/nginx-es-networkpolicy.yaml",
+    "charts/elasticsearch/templates/nginx/nginx-es-ingress-networkpolicy.yaml",
     "charts/elasticsearch/templates/exporter/es-exporter-networkpolicy.yaml",
     "charts/elasticsearch/templates/data/es-data-networkpolicy.yaml",
     "charts/elasticsearch/templates/client/es-client-networkpolicy.yaml",

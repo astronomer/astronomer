@@ -28,6 +28,23 @@ spec:
         matchLabels:
           tier: airflow
           component: webserver
+    {{- if .Values.global.loggingSidecar.enabled }}
+    - namespaceSelector: {}
+      podSelector:
+        matchLabels:
+          component: scheduler
+          tier: airflow
+    - namespaceSelector: {}
+      podSelector:
+        matchLabels:
+          component: worker
+          tier: airflow
+    - namespaceSelector: {}
+      podSelector:
+        matchLabels:
+          component: triggerer
+          tier: airflow
+    {{- end }}
     ports:
     - protocol: TCP
       port: {{ .Values.common.ports.http }}
