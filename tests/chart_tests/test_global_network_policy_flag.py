@@ -1,5 +1,6 @@
-from tests.helm_template_generator import render_chart
 import pytest
+
+from tests.chart_tests.helm_template_generator import render_chart
 
 # External-es-proxy and prometheus-postgres-exporter are set false by default,
 # needs additional work on creating test cases for future
