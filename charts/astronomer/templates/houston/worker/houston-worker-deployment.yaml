@@ -83,7 +83,11 @@ spec:
         - name: houston
           image: {{ template "houston.image" . }}
           imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
-          args: ["yarn", "worker"]
+          args:
+            - sh
+            - -c
+            - |-
+              yarn worker 1> >( tee -a /var/logs/houston/data.out.log ) 2> >( tee -a /var/logs/houston/data.err.log >&2 )
           resources:
 {{ toYaml .Values.houston.resources | indent 12 }}
           volumeMounts:
