@@ -28,6 +28,7 @@ jobs:
       - slack/notify:
           channel: team-enterprise-pvt
           event: always
+          debug: true
           template: basic_fail_1
 
   snyk-scan-docker:
