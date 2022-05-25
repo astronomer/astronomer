@@ -17,8 +17,21 @@ parameters:
     type: boolean
     default: false
     description: "This will run docker image scan."
+  slack-test:
+    type: boolean
+    default: false
+    description: "Test slack notifications."
 
 jobs:
+  notify:
+    docker:
+      - image: 'cimg/base:stable'
+    steps:
+      - slack/notify:
+          channel: team-enterprise-pvt
+          event: fail
+          template: basic_fail_1
+
   snyk-scan-docker:
     executor: docker-executor
     parameters:
@@ -278,6 +291,14 @@ jobs:
 
 workflows:
   version: 2.1
+  send-notification:
+    when:
+      and:
+        - << pipeline.parameters.slack-test >>
+    jobs:
+      - notify:
+          context: slack_team-enterprise-pvt
+
   scan-docker-images:
     when:
       and:
