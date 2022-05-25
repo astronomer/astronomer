@@ -32,7 +32,7 @@ jobs:
       - snyk-docker-test:
           docker_image: << parameters.docker_image >>
       - slack/notify:
-          channel: C02J8JT58CC
+          channel: team-enterprise-pvt
           event: fail
           template: basic_fail_1
 
