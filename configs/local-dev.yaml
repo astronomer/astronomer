@@ -66,6 +66,7 @@ astronomer:
       requests:
         cpu: "0m"
         memory: "0Mi"
+    enableFileLogs: true
     volumeMounts:
       - name: houstonlog
         mountPath: /var/logs/houston
