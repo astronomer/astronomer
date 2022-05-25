@@ -213,12 +213,17 @@ workflows:
       - snyk-scan-docker:
           matrix:
             parameters:
-              docker_image: {{ docker_images }}
+              docker_image:
+{%- for image in docker_images %}
+                - {{ image }}
+{%- endfor %}
       - trivy-scan-docker:
           matrix:
             parameters:
-              docker_image: {{ docker_images }}
-
+              docker_image:
+{%- for image in docker_images %}
+                - {{ image }}
+{%- endfor %}
   build-and-release-helm-chart:
     unless:
       and:

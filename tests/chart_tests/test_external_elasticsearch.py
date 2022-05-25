@@ -1,9 +1,11 @@
-from tests.chart_tests.helm_template_generator import render_chart
-import pytest
-from tests import supported_k8s_versions
-import jmespath
 import base64
+
+import jmespath
+import pytest
 import yaml
+
+from tests import supported_k8s_versions
+from tests.chart_tests.helm_template_generator import render_chart
 
 secret = base64.b64encode(b"sample-secret").decode()
 
@@ -256,3 +258,86 @@ class TestExternalElasticSearch:
         doc = docs[0]
         prod = yaml.safe_load(doc["data"]["production.yaml"])
         assert prod["deployments"]["kibanaUIEnabled"] is False
+
+    def test_external_es_network_selector_defaults(self, kube_version):
+        """Test External Elasticsearch Service with NetworkPolicies."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "customLogging": {
+                        "enabled": True,
+                        "scheme": "https",
+                        "host": "esdemo.example.com",
+                        "awsServiceAccountAnnotation": "arn:aws:iam::xxxxxxxx:role/customrole",
+                    },
+                },
+            },
+            show_only=[
+                "charts/external-es-proxy/templates/external-es-proxy-networkpolicy.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["kind"] == "NetworkPolicy"
+        assert [
+            {
+                "namespaceSelector": {},
+                "podSelector": {
+                    "matchLabels": {"tier": "airflow", "component": "webserver"}
+                },
+            },
+        ] == doc["spec"]["ingress"][0]["from"]
+
+    def test_external_es_network_selector_with_logging_sidecar_enabled(
+        self, kube_version
+    ):
+        """Test External Elasticsearch Service with NetworkPolicy Defaults."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "customLogging": {
+                        "enabled": True,
+                        "scheme": "https",
+                        "host": "esdemo.example.com",
+                        "awsServiceAccountAnnotation": "arn:aws:iam::xxxxxxxx:role/customrole",
+                    },
+                    "loggingSidecar": {"enabled": True},
+                },
+            },
+            show_only=[
+                "charts/external-es-proxy/templates/external-es-proxy-networkpolicy.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["kind"] == "NetworkPolicy"
+        assert [
+            {
+                "namespaceSelector": {},
+                "podSelector": {
+                    "matchLabels": {"tier": "airflow", "component": "webserver"}
+                },
+            },
+            {
+                "namespaceSelector": {},
+                "podSelector": {
+                    "matchLabels": {"component": "scheduler", "tier": "airflow"}
+                },
+            },
+            {
+                "namespaceSelector": {},
+                "podSelector": {
+                    "matchLabels": {"component": "worker", "tier": "airflow"}
+                },
+            },
+            {
+                "namespaceSelector": {},
+                "podSelector": {
+                    "matchLabels": {"component": "triggerer", "tier": "airflow"}
+                },
+            },
+        ] == doc["spec"]["ingress"][0]["from"]

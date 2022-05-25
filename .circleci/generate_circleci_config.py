@@ -13,8 +13,9 @@ from jinja2 import Template
 # recent patch version on Dockerhub
 # https://hub.docker.com/r/kindest/node/tags
 # This should match what is in tests/__init__.py
-KUBE_VERSIONS = ["1.19.11", "1.20.7", "1.21.2", "1.22.7", "1.23.4"]
-CI_REMOTE_DOCKER_VERSION = "20.10.12"
+KUBE_VERSIONS = ["1.19.16", "1.20.15", "1.21.12", "1.22.9", "1.23.6"]
+# https://circleci.com/docs/2.0/building-docker-images/#docker-version
+CI_REMOTE_DOCKER_VERSION = "20.10.14"
 
 
 def list_docker_images(path):
@@ -34,8 +35,7 @@ def main():
 
     docker_images = list_docker_images(str(project_directory))
 
-    with open(config_template_path) as circle_ci_config_template:
-        templated_file_content = circle_ci_config_template.read()
+    templated_file_content = Path(config_template_path).read_text()
     template = Template(templated_file_content)
     config = template.render(
         kube_versions=KUBE_VERSIONS,
