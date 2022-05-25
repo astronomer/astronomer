@@ -45,7 +45,6 @@ jobs:
       - snyk-docker-test:
           docker_image: << parameters.docker_image >>
       - slack/notify:
-          channel: D033F9X1P4P
           event: fail
           template: basic_fail_1
 
