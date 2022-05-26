@@ -51,8 +51,8 @@
       "type": "context",
       "elements": [
         {
-          "type": "plain_text",
-          "text": "SCAN_RESULT",
+          "type": "mrkdwn",
+          "text": "${SCAN_RESULT}",
           "emoji": true
         }
       ]
