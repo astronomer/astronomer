@@ -91,9 +91,6 @@ jobs:
             echo 'export SCAN_RESULT=$(cat ./trivy-output.txt)' >> $BASH_ENV
             echo 'export TRIVY_SCAN_FAIL_TEMPLATE=$(cat ./.circleci/slack_message_templates/trivy_scan_fail.json)' >> $BASH_ENV
             source $BASH_ENV
-            echo "SCAN_RESULT: $SCAN_RESULT"
-            echo "Image: $SCAN_IMAGE"
-            echo "template: $TRIVY_SCAN_FAIL_TEMPLATE"
           when: always
       - run:
           name: Debug Steps
@@ -105,7 +102,7 @@ jobs:
       - slack/notify:
           event: fail
           debug: true
-          template: TRIVY_SCAN_FAIL
+          template: TRIVY_SCAN_FAIL_TEMPLATE
           channel: C03HS1H9G1E
 
   run_pre_commit:
