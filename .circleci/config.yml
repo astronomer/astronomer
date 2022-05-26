@@ -79,21 +79,40 @@ jobs:
       - run:
           name: Scan the local image with trivy
           command: bin/trivy-scan.sh "<< parameters.docker_image >>" ".circleci/trivyignore"
+      - run:
+          name: Slack Init
+          command: |
+            echo -n '<https://$SCAN_IMAGE>|$SCAN_IMAGE> ' >> /tmp/workspace/trivy_scan-$CIRCLE_SHA1.txt
+            echo 'export SLACK_MSG_TEMPLATE=$(cat ./.circleci/slack_message_templates/security_scan_fail.json)' >> $BASH_ENV
+            source $BASH_ENV
+          when: on_fail
+      - slack/notify:
+          event: fail
+          template: SLACK_MSG_TEMPLATE
+          channel: C03HS1H9G1E
       - save_cache:
           key: trivy-cache-{{ checksum "date" }}
           paths:
             - /tmp/workspace/trivy-cache
+            - /tmp/workspace/trivy_scan
+
+  slack_notify:
+    docker:
+      - image: 'cimg/base:stable'
+    steps:
+      - restore_cache:
+          keys:
+            - trivy-scan-{{ checksum "date" }}
       - run:
           name: Slack Init
           command: |
-            echo 'export SLACK_MSG_TEMPLATE=$(cat ./.circleci/slack_message_templates/security_scan_fail.json)' >> $BASH_ENV
+            echo 'export SCAN_RESULT=$(cat ./trivy-scan-$CIRCLE_SHA1.txt)' >> $BASH_ENV
+            echo 'export SLACK_MSG_TEMPLATE=$(cat ./.circleci/slack_message_templates/security_scan_fail_2.json)' >> $BASH_ENV
             source $BASH_ENV
-          when: always
       - slack/notify:
-          event: fail
+          event: pass
           debug: true
           template: SLACK_MSG_TEMPLATE
-          channel: C03HS1H9G1E
 
   run_pre_commit:
     docker:
@@ -382,6 +401,12 @@ workflows:
                 - quay.io/astronomer/ap-registry:3.15.4-1
           context:
             - slack_team-software-infra-bot
+      - slack_notify:
+          context:
+            - slack_team-software-infra-bot
+          requires:
+            - trivy-scan-docker
+
   build-and-release-helm-chart:
     unless:
       and:

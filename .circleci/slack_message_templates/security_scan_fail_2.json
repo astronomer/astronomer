@@ -1,0 +1,44 @@
+{
+  "blocks": [
+    {
+      "type": "header",
+      "text": {
+        "type": "plain_text",
+        "emoji": true,
+        "text": ":red_circle: ${SCAN_TOOL} Vulnerability Scan Result"
+      }
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "*Project*: ${CIRCLE_PROJECT_REPONAME} \n *Branch*: ${CIRCLE_BRANCH} \n *Job*: ${CIRCLE_JOB} \n *Author*: ${CIRCLE_USERNAME}"
+      },
+      "accessory": {
+        "type": "image",
+        "image_url": "https://assets.brandfolder.com/otz5mn-bw4j2w-6jzqo8/original/circle-logo-badge-black.png",
+        "alt_text": "CircleCI logo"
+      }
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "*Vunariable Images*"
+      }
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "${SCAN_RESULT}"
+      }
+    }
+  ]
+}
