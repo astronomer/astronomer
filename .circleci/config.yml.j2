@@ -231,7 +231,7 @@ workflows:
         - << pipeline.parameters.slack-test >>
     jobs:
       - notify:
-          context: slack_team-enterprise-pvt
+          context: slack_team-software-infra-bot
 
   scan-docker-images:
     when:
