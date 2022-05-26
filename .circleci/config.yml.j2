@@ -9,6 +9,7 @@ executors:
 orbs:
   snyk: snyk/snyk@1.1.2
   slack: circleci/slack@4.10.1
+  rememborb: circleci/rememborb@0.0.2
 
 parameters:
   scan-docker-images:
@@ -79,15 +80,13 @@ jobs:
           {% raw %}key: trivy-cache-{{ checksum "date" }}{% endraw %}
           paths:
             - /tmp/workspace/trivy-cache
-      - run:
-          name: Slack Init
-          command: |
-            echo 'export SCAN_RESULT=$(<.trivy-output.txt)' >> $BASH_ENV
-            echo 'export TRIVY_SCAN_FAIL=$(cat .circleci/slack_message_templates/trivy_scan_fail.json)' >> $BASH_ENV
-            source $BASH_ENV
-            echo "SCAN_RESULT: $SCAN_RESULT"
-            echo "Image: $SCAN_IMAGE"
-            echo "template: $TRIVY_SCAN_FAIL"
+      - mem/remember:
+          env_var: SCAN_RESULT
+          value: $(cat trivy-output.txt)
+          when: always
+      - mem/remember:
+          env_var: TRIVY_SCAN_FAIL
+          value: $(cat .circleci/slack_message_templates/trivy_scan_fail.json)
           when: always
       - run:
           name: Debug Steps
