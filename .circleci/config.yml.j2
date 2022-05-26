@@ -82,8 +82,8 @@ jobs:
       - run:
           name: Slack Init
           command: |
-            echo 'export SCAN_RESULT=$(<./trivy-output.txt)' >> $BASH_ENV
-            echo 'export TRIVY_SCAN_FAIL=$(cat ./circleci/slack_message_templates/trivy_scan_fail.json)' >> $BASH_ENV
+            echo 'export SCAN_RESULT=$(<.trivy-output.txt)' >> $BASH_ENV
+            echo 'export TRIVY_SCAN_FAIL=$(cat .circleci/slack_message_templates/trivy_scan_fail.json)' >> $BASH_ENV
             source $BASH_ENV
             echo "SCAN_RESULT: $SCAN_RESULT"
             echo "Image: $SCAN_IMAGE"
