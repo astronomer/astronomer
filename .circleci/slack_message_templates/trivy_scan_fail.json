@@ -1,0 +1,61 @@
+{
+  "blocks": [
+    {
+      "type": "header",
+      "text": {
+        "type": "plain_text",
+        "emoji": true,
+        "text": ":red_circle: Trivy Scan Vulnerabilities"
+      }
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "*Image*: ${SCAN_IMAGE} \n\n *Project*: ${CIRCLE_PROJECT_REPONAME} \n *Branch*: ${CIRCLE_BRANCH} \n *Job*: ${CIRCLE_JOB} \n *Author*: ${CIRCLE_USERNAME}"
+      },
+      "accessory": {
+        "type": "image",
+        "image_url": "https://assets.brandfolder.com/otz5mn-bw4j2w-6jzqo8/original/circle-logo-badge-black.png",
+        "alt_text": "CircleCI logo"
+      }
+    },
+    {
+      "type": "actions",
+      "elements": [
+        {
+          "type": "button",
+          "text": {
+            "type": "plain_text",
+            "text": "View Build",
+            "emoji": true
+          },
+          "url": "${CIRCLE_BUILD_URL}"
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "*Scan Info*"
+      }
+    },
+    {
+      "type": "context",
+      "elements": [
+        {
+          "type": "plain_text",
+          "text": "${SCAN_RESULT}",
+          "emoji": true
+        }
+      ]
+    }
+  ]
+}

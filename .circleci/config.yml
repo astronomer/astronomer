@@ -56,6 +56,8 @@ jobs:
     parameters:
       docker_image:
         type: string
+    environment:
+      SCAN_IMAGE: << parameters.docker_image >>
     steps:
       - setup_remote_docker:
           version: 20.10.14
@@ -79,6 +81,15 @@ jobs:
           key: trivy-cache-{{ checksum "date" }}
           paths:
             - /tmp/workspace/trivy-cache
+      - run:
+          name: Slack Init
+          command: |
+            echo "export SCAN_RESULT=$(<trivy-output.txt)" >> $BASH_ENV
+            echo 'export TRIVY_SCAN_FAIL=$(cat .circleci/slack_message_templates/trivy_scan_fail.json)' >> $BASH_ENV
+      - slack/notify:
+          event: fail
+          debug: true
+          template: TRIVY_SCAN_FAIL
 
   run_pre_commit:
     docker:
@@ -338,7 +349,7 @@ workflows:
                 - quay.io/astronomer/ap-prometheus:2.34.0
                 - quay.io/astronomer/ap-registry:3.15.4-1
           context:
-            - slack_team-enterprise-pvt
+            - slack_team-software-infra-bot
       - trivy-scan-docker:
           matrix:
             parameters:
@@ -374,7 +385,7 @@ workflows:
                 - quay.io/astronomer/ap-prometheus:2.34.0
                 - quay.io/astronomer/ap-registry:3.15.4-1
           context:
-            - slack_team-enterprise-pvt
+            - slack_team-software-infra-bot
   build-and-release-helm-chart:
     unless:
       and:
