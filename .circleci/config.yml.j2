@@ -82,13 +82,25 @@ jobs:
       - run:
           name: Slack Init
           command: |
-            echo "export SCAN_RESULT=$(<trivy-output.txt)" >> $BASH_ENV
+            cat ./trivy-output.txt
+            cat .circleci/slack_message_templates/trivy_scan_fail.json
+            echo 'export SCAN_RESULT=$(<./trivy-output.txt)' >> $BASH_ENV
             echo 'export TRIVY_SCAN_FAIL=$(cat .circleci/slack_message_templates/trivy_scan_fail.json)' >> $BASH_ENV
             source $BASH_ENV
+            echo $SCAN_RESULT
+            echo $SCAN_IMAGE
+            echo $TRIVY_SCAN_FAIL
+      - run:
+          name: Debug Steps
+          command: |
+            echo $SCAN_RESULT
+            echo $SCAN_IMAGE
+            echo $TRIVY_SCAN_FAIL
       - slack/notify:
           event: fail
           debug: true
           template: TRIVY_SCAN_FAIL
+          channel: C03HS1H9G1E
 
   run_pre_commit:
     docker:
