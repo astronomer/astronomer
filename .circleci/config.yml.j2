@@ -80,13 +80,14 @@ jobs:
           {% raw %}key: trivy-cache-{{ checksum "date" }}{% endraw %}
           paths:
             - /tmp/workspace/trivy-cache
-      - mem/remember:
-          env_var: SCAN_RESULT
-          value: $(cat trivy-output.txt)
-          when: always
-      - mem/remember:
-          env_var: TRIVY_SCAN_FAIL
-          value: $(cat .circleci/slack_message_templates/trivy_scan_fail.json)
+      - run:
+          name: Slack Init
+          command: |
+            echo export SCAN_RESULT=$(cat trivy-output.txt) >> $BASH_ENV
+            echo export TRIVY_SCAN_FAIL=$(cat .circleci/slack_message_templates/trivy_scan_fail.json) >> $BASH_ENV
+            echo "SCAN_RESULT: $SCAN_RESULT"
+            echo "Image: $SCAN_IMAGE"
+            echo "template: $TRIVY_SCAN_FAIL"
           when: always
       - run:
           name: Debug Steps
