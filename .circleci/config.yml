@@ -18,26 +18,16 @@ parameters:
     type: boolean
     default: false
     description: "This will run docker image scan."
-  slack-test:
-    type: boolean
-    default: false
-    description: "Test slack notifications."
 
 jobs:
-  notify:
-    docker:
-      - image: 'cimg/base:stable'
-    steps:
-      - slack/notify:
-          event: always
-          debug: true
-          template: basic_fail_1
-
   snyk-scan-docker:
     executor: docker-executor
     parameters:
       docker_image:
         type: string
+    environment:
+      SCAN_IMAGE: << parameters.docker_image >>
+      SCAN_TOOL: Snyk
     steps:
       - setup_remote_docker:
           version: 20.10.14
@@ -50,6 +40,17 @@ jobs:
       - slack/notify:
           event: fail
           template: basic_fail_1
+      - run:
+          name: Slack Init
+          command: |
+            echo 'export SLACK_MSG_TEMPLATE=$(cat ./.circleci/slack_message_templates/security_scan_fail.json)' >> $BASH_ENV
+            source $BASH_ENV
+          when: always
+      - slack/notify:
+          event: fail
+          debug: true
+          template: SLACK_MSG_TEMPLATE
+          channel: C03HS1H9G1E
 
   trivy-scan-docker:
     docker:
@@ -60,6 +61,7 @@ jobs:
         type: string
     environment:
       SCAN_IMAGE: << parameters.docker_image >>
+      SCAN_TOOL: Trivy
       BASH_ENV: /etc/profile
     steps:
       - setup_remote_docker:
@@ -87,22 +89,13 @@ jobs:
       - run:
           name: Slack Init
           command: |
-            echo 'export PATH=$GOPATH/bin:$PATH' >> $BASH_ENV
-            echo 'export SCAN_RESULT=$(cat ./trivy-output.txt)' >> $BASH_ENV
-            echo 'export TRIVY_SCAN_FAIL_TEMPLATE=$(cat ./.circleci/slack_message_templates/trivy_scan_fail.json)' >> $BASH_ENV
+            echo 'export SLACK_MSG_TEMPLATE=$(cat ./.circleci/slack_message_templates/security_scan_fail.json)' >> $BASH_ENV
             source $BASH_ENV
-          when: always
-      - run:
-          name: Debug Steps
-          command: |
-            echo "SCAN_RESULT: $SCAN_RESULT"
-            echo "Image: $SCAN_IMAGE"
-            echo "template: ${TRIVY_SCAN_FAIL_TEMPLATE}"
           when: always
       - slack/notify:
           event: fail
           debug: true
-          template: TRIVY_SCAN_FAIL_TEMPLATE
+          template: SLACK_MSG_TEMPLATE
           channel: C03HS1H9G1E
 
   run_pre_commit:
@@ -315,14 +308,6 @@ jobs:
 
 workflows:
   version: 2.1
-  send-notification:
-    when:
-      and:
-        - << pipeline.parameters.slack-test >>
-    jobs:
-      - notify:
-          context: slack_team-software-infra-bot
-
   scan-docker-images:
     when:
       and:

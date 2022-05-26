@@ -5,7 +5,7 @@
       "text": {
         "type": "plain_text",
         "emoji": true,
-        "text": ":red_circle: Trivy Scan Vulnerabilities"
+        "text": ":red_circle: ${SCAN_TOOL} Vulnerability Scan Result"
       }
     },
     {
@@ -34,26 +34,6 @@
             "emoji": true
           },
           "url": "${CIRCLE_BUILD_URL}"
-        }
-      ]
-    },
-    {
-      "type": "divider"
-    },
-    {
-      "type": "section",
-      "text": {
-        "type": "mrkdwn",
-        "text": "*Scan Info*"
-      }
-    },
-    {
-      "type": "context",
-      "elements": [
-        {
-          "type": "mrkdwn",
-          "text": "${SCAN_RESULT}",
-          "emoji": true
         }
       ]
     }
