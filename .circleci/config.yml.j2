@@ -52,11 +52,13 @@ jobs:
   trivy-scan-docker:
     docker:
       - image: docker:{{ remote_docker_version }}-git
+    shell: /bin/sh -leo pipefail
     parameters:
       docker_image:
         type: string
     environment:
       SCAN_IMAGE: << parameters.docker_image >>
+      BASH_ENV: /etc/profile
     steps:
       - setup_remote_docker:
           version: {{ remote_docker_version }}
@@ -83,20 +85,13 @@ jobs:
       - run:
           name: Slack Init
           command: |
+            echo 'export PATH=$GOPATH/bin:$PATH' >> $BASH_ENV
             echo 'export SCAN_RESULT=$(cat ./trivy-output.txt)' >> $BASH_ENV
             echo 'export TRIVY_SCAN_FAIL_TEMPLATE=$(cat ./.circleci/slack_message_templates/trivy_scan_fail.json)' >> $BASH_ENV
             source $BASH_ENV
             echo "SCAN_RESULT: $SCAN_RESULT"
             echo "Image: $SCAN_IMAGE"
             echo "template: $TRIVY_SCAN_FAIL_TEMPLATE"
-          when: always
-      - rememborb/remember:
-          env_var: SCAN_RESULT
-          value: $(cat ./trivy-output.txt)
-          when: always
-      - rememborb/remember:
-          env_var: TRIVY_SCAN_FAIL_TEMPLATE
-          value: $(cat ./.circleci/slack_message_templates/trivy_scan_fail.json)
           when: always
       - run:
           name: Debug Steps
