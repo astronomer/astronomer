@@ -52,7 +52,7 @@
       "elements": [
         {
           "type": "plain_text",
-          "text": "${SCAN_RESULT}",
+          "text": "SCAN_RESULT",
           "emoji": true
         }
       ]
