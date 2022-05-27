@@ -47,7 +47,7 @@ class TestAstronomerFileLogs:
         assert container["image"] == "ap-fluentd:0.5"
         assert len(container["volumeMounts"]) == 1
 
-    def test_houston_container(self, container, run_type):
+    def houston_container(self, container, run_type):
         assert container["args"] == [
             "sh",
             "-c",
