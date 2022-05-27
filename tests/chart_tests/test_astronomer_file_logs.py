@@ -38,6 +38,10 @@ chart_values = {
 }
 
 
+@pytest.mark.parametrize(
+    "kube_version",
+    supported_k8s_versions,
+)
 class TestAstronomerFileLogs:
     def fleuntd_container(self, container):
         assert container["image"] == "ap-fluentd:0.5"
@@ -57,10 +61,6 @@ class TestAstronomerFileLogs:
             if volume["name"] == "logvol":
                 assert volume["mountPath"] == "/var/logs/houston"
 
-    @pytest.mark.parametrize(
-        "kube_version",
-        supported_k8s_versions,
-    )
     def test_file_logs_config(self, kube_version):
         docs = render_chart(
             "astro-file-logs",
