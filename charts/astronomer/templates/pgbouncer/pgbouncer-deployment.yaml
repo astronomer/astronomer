@@ -1,0 +1,104 @@
+#####################################
+## Astronomer Pgbouncer Deployment ##
+#####################################
+{{- if .Values.pgbouncer.enabled }}
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: {{ .Release.Name }}-pgbouncer
+  labels:
+    tier: astronomer
+    component: pgbouncer
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      tier: astronomer
+      component: pgbouncer
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        tier: astronomer
+        component: pgbouncer
+        release: {{ .Release.Name }}
+    spec:
+      nodeSelector:
+{{ toYaml .Values.nodeSelector | indent 8 }}
+      affinity:
+{{ toYaml .Values.affinity | indent 8 }}
+      tolerations:
+{{ toYaml .Values.tolerations | indent 8 }}
+      restartPolicy: Always
+      serviceAccountName: {{ template "prisma.bootstrapperServiceAccount" . }}
+      initContainers:
+        - name: pgbouncer-bootstrapper
+          image: {{ template "dbBootstrapper.image" . }}
+          imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
+          args: ["pgbouncer-bootstrapper"]
+          env:
+            - name: DB_CONNECTION_STRING
+              valueFrom:
+                secretKeyRef:
+                  name: astronomer-bootstrap
+                  key: connection
+            - name: RELEASE_NAME
+              value: {{ .Release.Name }}
+            - name: PGBOUNCER_POOL_SIZE
+              value: "{{ .Values.pgbouncer.poolSize}}"
+            - name: PGBOUNCER_PORT
+              value: "{{ .Values.ports.pgbouncer}}"
+            - name: MAX_CLIENT_CONN
+              value: "{{ .Values.pgbouncer.maxClientConn}}"
+            - name: SECRET_NAME
+              value: {{ template "pgbouncer_config_secret" . }}
+            - name: NAMESPACE
+              value: {{ .Release.Namespace }}
+            - name: IN_CLUSTER
+              value: "true"
+      containers:
+        - name: pgbouncer
+          image: {{ template "pgbouncer_image" . }}
+          imagePullPolicy: {{ .Values.images.pgbouncer.pullPolicy }}
+          command:
+            - pgbouncer
+            - -u
+            - pgbouncer
+            - /etc/pgbouncer/pgbouncer.ini
+          resources:
+{{ toYaml .Values.pgbouncer.resources | indent 12 }}
+          ports:
+            - name: pgbouncer
+              containerPort: {{ .Values.ports.pgbouncer }}
+          livenessProbe:
+            tcpSocket:
+              port: {{ .Values.ports.pgbouncer }}
+          readinessProbe:
+            tcpSocket:
+              port: {{ .Values.ports.pgbouncer }}
+          volumeMounts:
+            - name: pgbouncer-config
+              subPath: pgbouncer.ini
+              mountPath: /etc/pgbouncer/pgbouncer.ini
+              readOnly: true
+            - name: pgbouncer-config
+              subPath: users.txt
+              mountPath: /etc/pgbouncer/users.txt
+              readOnly: true
+          lifecycle:
+            preStop:
+              exec:
+                # Allow existing queries clients to complete within 120 seconds
+                command: ["/bin/sh", "-c", "killall -INT pgbouncer && sleep 120"]
+      volumes:
+        - name: pgbouncer-config
+          secret:
+            secretName: {{ template "pgbouncer_config_secret" . }}
+{{- end }}

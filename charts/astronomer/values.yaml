@@ -38,6 +38,10 @@ images:
     repository: quay.io/astronomer/ap-cli-install
     tag: 0.26.7
     pullPolicy: IfNotPresent
+  pgbouncer:
+    repository: quay.io/astronomer/ap-pgbouncer
+    tag: main
+    pullPolicy: IfNotPresent
 
 astroUI:
   replicas: 2
@@ -51,6 +55,43 @@ astroUI:
   #  requests:
   #   cpu: 100m
   #   memory: 128Mi
+
+pgbouncer:
+  # Enable pgbouncer
+  enabled: false
+
+  # Pool sizes
+  poolSize: 3
+
+  # Maximum clients that can connect to pgbouncer (higher = more file descriptors)
+  maxClientConn: 100
+
+  # Pgbouner pod disruption budget
+  podDisruptionBudget:
+    enabled: false
+
+    # PDB configuration
+    config:
+      maxUnavailable: 1
+
+  resources: {}
+    # limits:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # requests:
+    #   cpu: 100m
+
+  networkPolicies:
+    # Enabled network policies
+    enabled: false
+
+  connection:
+    user: postgres
+    pass: postgres
+    host: astronomer-postgresql
+    port: 5432
+    db: postgres
+    sslmode: verify-ca
 
 houston:
   prismaConnectionLimit: 5
@@ -355,3 +396,4 @@ ports:
   registryScrape: 5001
   installHTTP: 8080
   prismaHTTP: 4466
+  pgbouncer: 6543

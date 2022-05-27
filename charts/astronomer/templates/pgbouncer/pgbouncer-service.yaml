@@ -1,0 +1,26 @@
+##################################
+## Astronomer Pgbouncer Service ##
+##################################
+{{- if .Values.pgbouncer.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-pgbouncer
+  labels:
+    tier: astronomer
+    component: pgbouncer
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+spec:
+  type: ClusterIP
+  selector:
+    tier: astronomer
+    component: pgbouncer
+    release: {{ .Release.Name }}
+  ports:
+    - name: pgbouncer
+      protocol: TCP
+      port: {{ .Values.ports.pgbouncer }}
+      targetPort: {{ .Values.ports.pgbouncer }}
+{{- end }}
