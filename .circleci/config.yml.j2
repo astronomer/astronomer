@@ -9,7 +9,6 @@ executors:
 orbs:
   snyk: snyk/snyk@1.1.2
   slack: circleci/slack@4.10.1
-  rememborb: circleci/rememborb@0.0.2
 
 parameters:
   scan-docker-images:
@@ -43,7 +42,6 @@ jobs:
           when: always
       - slack/notify:
           event: fail
-          debug: true
           template: SLACK_MSG_TEMPLATE
           channel: C03HS1H9G1E
 
@@ -80,7 +78,6 @@ jobs:
       - run:
           name: Slack Init
           command: |
-            echo -n '<https://$SCAN_IMAGE>|$SCAN_IMAGE> ' >> /tmp/workspace/trivy_scan-$CIRCLE_SHA1.txt
             echo 'export SLACK_MSG_TEMPLATE=$(cat ./.circleci/slack_message_templates/security_scan_fail.json)' >> $BASH_ENV
             source $BASH_ENV
           when: on_fail
@@ -92,25 +89,6 @@ jobs:
           {% raw %}key: trivy-cache-{{ checksum "date" }}{% endraw %}
           paths:
             - /tmp/workspace/trivy-cache
-            - /tmp/workspace/trivy_scan
-
-  slack_notify:
-    docker:
-      - image: 'cimg/base:stable'
-    steps:
-      - restore_cache:
-          keys:
-            {% raw %}- trivy-scan-{{ checksum "date" }}{% endraw %}
-      - run:
-          name: Slack Init
-          command: |
-            echo 'export SCAN_RESULT=$(cat ./trivy-scan-$CIRCLE_SHA1.txt)' >> $BASH_ENV
-            echo 'export SLACK_MSG_TEMPLATE=$(cat ./.circleci/slack_message_templates/security_scan_fail_2.json)' >> $BASH_ENV
-            source $BASH_ENV
-      - slack/notify:
-          event: pass
-          debug: true
-          template: SLACK_MSG_TEMPLATE
 
   run_pre_commit:
     docker:
@@ -282,11 +260,6 @@ workflows:
 {%- endfor %}
           context:
             - slack_team-software-infra-bot
-      - slack_notify:
-          context:
-            - slack_team-software-infra-bot
-          requires:
-            - trivy-scan-docker
 
   build-and-release-helm-chart:
     unless:
