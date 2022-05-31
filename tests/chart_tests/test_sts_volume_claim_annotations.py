@@ -29,9 +29,9 @@ class TestStatefulSetsAnnotations:
         with pytest.raises(Exception) as exec_info:
             for doc in docs:
                 if doc["spec"]["volumeClaimTemplates"][0]["metadata"]["annotations"]:
-                    raise Exception('Empty Annotations')
-            assert exec_info.value.args[0] == 'Empty Annotations'
-            assert str(exec_info.value) == 'Empty Annotations'
+                    raise Exception("Empty Annotations")
+            assert exec_info.value.args[0] == "Empty Annotations"
+            assert str(exec_info.value) == "Empty Annotations"
 
     def test_es_sts_with_overridden_annotations(self, kube_version):
         """Test all sts for the volume claim templates annotations"""
@@ -56,10 +56,9 @@ class TestStatefulSetsAnnotations:
         )
         assert len(docs) == 2
         for doc in docs:
-            assert {
-                "astro.io/elastic": "master-sts",
-                "storage": "astro"
-            } == doc["spec"]["volumeClaimTemplates"][0]["metadata"]["annotations"]
+            assert {"astro.io/elastic": "master-sts", "storage": "astro"} == doc[
+                "spec"
+            ]["volumeClaimTemplates"][0]["metadata"]["annotations"]
 
     def test_prometheus_sts_with_overridden_annotations(self, kube_version):
         """Test all sts for the volume claim templates annotations"""
