@@ -10,6 +10,7 @@ executors:
 
 orbs:
   snyk: snyk/snyk@1.1.2
+  slack: circleci/slack@4.10.1
 
 parameters:
   scan-docker-images:
@@ -23,6 +24,9 @@ jobs:
     parameters:
       docker_image:
         type: string
+    environment:
+      SCAN_IMAGE: << parameters.docker_image >>
+      SCAN_TOOL: Snyk
     steps:
       - setup_remote_docker:
           version: 20.10.14
@@ -32,12 +36,28 @@ jobs:
           command: docker pull << parameters.docker_image >>
       - snyk-docker-test:
           docker_image: << parameters.docker_image >>
+      - run:
+          name: Slack Init
+          command: |
+            echo 'export SLACK_MSG_TEMPLATE=$(cat ./.circleci/slack_message_templates/security_scan_fail.json)' >> $BASH_ENV
+            source $BASH_ENV
+          when: always
+      - slack/notify:
+          event: fail
+          template: SLACK_MSG_TEMPLATE
+          channel: C03HS1H9G1E
+
   trivy-scan-docker:
     docker:
       - image: docker:20.10.14-git
+    shell: /bin/sh -leo pipefail
     parameters:
       docker_image:
         type: string
+    environment:
+      SCAN_IMAGE: << parameters.docker_image >>
+      SCAN_TOOL: Trivy
+      BASH_ENV: /etc/profile
     steps:
       - setup_remote_docker:
           version: 20.10.14
@@ -57,10 +77,21 @@ jobs:
       - run:
           name: Scan the local image with trivy
           command: bin/trivy-scan.sh "<< parameters.docker_image >>" ".circleci/trivyignore"
+      - run:
+          name: Slack Init
+          command: |
+            echo 'export SLACK_MSG_TEMPLATE=$(cat ./.circleci/slack_message_templates/security_scan_fail.json)' >> $BASH_ENV
+            source $BASH_ENV
+          when: on_fail
+      - slack/notify:
+          event: fail
+          template: SLACK_MSG_TEMPLATE
+          channel: C03HS1H9G1E
       - save_cache:
           key: trivy-cache-{{ checksum "date" }}
           paths:
             - /tmp/workspace/trivy-cache
+
   run_pre_commit:
     docker:
       - image: quay.io/astronomer/ci-pre-commit:2022-05
@@ -130,6 +161,7 @@ jobs:
             venv/bin/python -m pytest -v --junitxml=test-results/junit.xml -n auto $TEST_FILES
       - store_test_results:
           path: test-results
+
   build-artifact:
     docker:
       - image: quay.io/astronomer/ap-build:0.2.0
@@ -280,7 +312,7 @@ workflows:
             parameters:
               docker_image:
                 - quay.io/astronomer/ap-alertmanager:0.23.0
-                - quay.io/astronomer/ap-astro-ui:0.29.8
+                - quay.io/astronomer/ap-astro-ui:0.29.9
                 - quay.io/astronomer/ap-auth-sidecar:1.21.6-2
                 - quay.io/astronomer/ap-awsesproxy:1.3-4
                 - quay.io/astronomer/ap-base:3.15.4
@@ -288,14 +320,14 @@ workflows:
                 - quay.io/astronomer/ap-cli-install:0.26.4
                 - quay.io/astronomer/ap-commander:0.29.2
                 - quay.io/astronomer/ap-configmap-reloader:0.5.0-1
-                - quay.io/astronomer/ap-curator:5.8.4-13
+                - quay.io/astronomer/ap-curator:5.8.4-14
                 - quay.io/astronomer/ap-db-bootstrapper:0.26.6
                 - quay.io/astronomer/ap-default-backend:0.28.4
                 - quay.io/astronomer/ap-elasticsearch-exporter:1.3.0
                 - quay.io/astronomer/ap-elasticsearch:7.17.3-1
                 - quay.io/astronomer/ap-fluentd:1.14.6-1
                 - quay.io/astronomer/ap-grafana:8.4.5-3
-                - quay.io/astronomer/ap-houston-api:0.29.22
+                - quay.io/astronomer/ap-houston-api:0.29.24
                 - quay.io/astronomer/ap-kibana:7.17.3-1
                 - quay.io/astronomer/ap-kube-state:1.7.2
                 - quay.io/astronomer/ap-nats-exporter:0.9.2-1
@@ -309,12 +341,14 @@ workflows:
                 - quay.io/astronomer/ap-postgresql:11.15.0
                 - quay.io/astronomer/ap-prometheus:2.34.0
                 - quay.io/astronomer/ap-registry:3.15.4-1
+          context:
+            - slack_team-software-infra-bot
       - trivy-scan-docker:
           matrix:
             parameters:
               docker_image:
                 - quay.io/astronomer/ap-alertmanager:0.23.0
-                - quay.io/astronomer/ap-astro-ui:0.29.8
+                - quay.io/astronomer/ap-astro-ui:0.29.9
                 - quay.io/astronomer/ap-auth-sidecar:1.21.6-2
                 - quay.io/astronomer/ap-awsesproxy:1.3-4
                 - quay.io/astronomer/ap-base:3.15.4
@@ -322,14 +356,14 @@ workflows:
                 - quay.io/astronomer/ap-cli-install:0.26.4
                 - quay.io/astronomer/ap-commander:0.29.2
                 - quay.io/astronomer/ap-configmap-reloader:0.5.0-1
-                - quay.io/astronomer/ap-curator:5.8.4-13
+                - quay.io/astronomer/ap-curator:5.8.4-14
                 - quay.io/astronomer/ap-db-bootstrapper:0.26.6
                 - quay.io/astronomer/ap-default-backend:0.28.4
                 - quay.io/astronomer/ap-elasticsearch-exporter:1.3.0
                 - quay.io/astronomer/ap-elasticsearch:7.17.3-1
                 - quay.io/astronomer/ap-fluentd:1.14.6-1
                 - quay.io/astronomer/ap-grafana:8.4.5-3
-                - quay.io/astronomer/ap-houston-api:0.29.22
+                - quay.io/astronomer/ap-houston-api:0.29.24
                 - quay.io/astronomer/ap-kibana:7.17.3-1
                 - quay.io/astronomer/ap-kube-state:1.7.2
                 - quay.io/astronomer/ap-nats-exporter:0.9.2-1
@@ -343,6 +377,9 @@ workflows:
                 - quay.io/astronomer/ap-postgresql:11.15.0
                 - quay.io/astronomer/ap-prometheus:2.34.0
                 - quay.io/astronomer/ap-registry:3.15.4-1
+          context:
+            - slack_team-software-infra-bot
+
   build-and-release-helm-chart:
     unless:
       and:
