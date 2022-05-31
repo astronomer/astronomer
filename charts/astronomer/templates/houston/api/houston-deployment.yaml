@@ -114,12 +114,9 @@ spec:
             initialDelaySeconds: {{ .Values.houston.readinessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.houston.readinessProbe.periodSeconds }}
             failureThreshold: {{ .Values.houston.readinessProbe.failureThreshold }}
-          {{- if .Values.houston.enableFileLogs }}
+          {{- if .Values.houston.apiArgs }}
           args:
-            - sh
-            - -c
-            - |-
-              yarn serve 1> >( tee -a /var/logs/houston/data.out.log ) 2> >( tee -a /var/logs/houston/data.err.log >&2 )
+            {{- toYaml .Values.houston.apiArgs | nindent 12 }}
           {{ else }}
           args: ["yarn", "serve"]
           {{- end }}

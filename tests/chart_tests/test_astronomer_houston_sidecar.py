@@ -6,7 +6,16 @@ from tests.chart_tests.helm_template_generator import render_chart
 chart_values = {
     "astronomer": {
         "houston": {
-            "enableFileLogs": True,
+            "apiArgs": [
+                "sh",
+                "-c",
+                "yarn serve 1> >( tee -a /var/logs/houston/data.out.log ) 2> >( tee -a /var/logs/houston/data.err.log >&2 )"
+            ],
+            "workerArgs": [
+                "sh",
+                "-c",
+                "yarn worker 1> >( tee -a /var/logs/houston/data.out.log ) 2> >( tee -a /var/logs/houston/data.err.log >&2 )"
+            ],
             "volumeMounts": [{"name": "logvol", "mountPath": "/var/logs/houston"}],
             "extraContainers": [
                 {
@@ -21,6 +30,11 @@ chart_values = {
             "extraVolumes": [{"name": "logvol", "emptyDir": {}}],
         },
         "commander": {
+            "args": [
+                "sh",
+                "-c",
+                "echo hello"
+            ],
             "volumeMounts": [{"name": "logvol", "mountPath": "/var/logs/commander"}],
             "extraContainers": [
                 {
@@ -43,6 +57,7 @@ chart_values = {
     supported_k8s_versions,
 )
 class TestAstronomerFileLogs:
+
     def fleuntd_container(self, container):
         assert container["image"] == "ap-fluentd:0.5"
         assert len(container["volumeMounts"]) == 1
@@ -60,6 +75,18 @@ class TestAstronomerFileLogs:
         for volume in volume_mounts:
             if volume["name"] == "logvol":
                 assert volume["mountPath"] == "/var/logs/houston"
+
+    def commander_container(self, container):
+        assert container["args"] == [
+            "sh",
+            "-c",
+            "echo hello"
+        ]
+
+        volume_mounts = container["volumeMounts"]
+        for volume in volume_mounts:
+            if volume["name"] == "logvol":
+                assert volume["mountPath"] == "/var/logs/commander"
 
     def test_file_logs_config(self, kube_version):
         docs = render_chart(
@@ -96,6 +123,12 @@ class TestAstronomerFileLogs:
 
                     if container["name"] == "houston":
                         self.houston_container(container, "worker")
+                    elif container["name"] == "fluentd":
+                        self.fleuntd_container(container)
+
+                elif name == "astro-file-logs-commander":
+                    if container["name"] == "commander":
+                        self.commander_container(container)
                     elif container["name"] == "fluentd":
                         self.fleuntd_container(container)
 
