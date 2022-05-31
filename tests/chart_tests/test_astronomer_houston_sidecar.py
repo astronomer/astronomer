@@ -9,12 +9,12 @@ chart_values = {
             "apiArgs": [
                 "sh",
                 "-c",
-                "yarn serve 1> >( tee -a /var/logs/houston/data.out.log ) 2> >( tee -a /var/logs/houston/data.err.log >&2 )"
+                "yarn serve 1> >( tee -a /var/logs/houston/data.out.log ) 2> >( tee -a /var/logs/houston/data.err.log >&2 )",
             ],
             "workerArgs": [
                 "sh",
                 "-c",
-                "yarn worker 1> >( tee -a /var/logs/houston/data.out.log ) 2> >( tee -a /var/logs/houston/data.err.log >&2 )"
+                "yarn worker 1> >( tee -a /var/logs/houston/data.out.log ) 2> >( tee -a /var/logs/houston/data.err.log >&2 )",
             ],
             "volumeMounts": [{"name": "logvol", "mountPath": "/var/logs/houston"}],
             "extraContainers": [
@@ -30,11 +30,7 @@ chart_values = {
             "extraVolumes": [{"name": "logvol", "emptyDir": {}}],
         },
         "commander": {
-            "args": [
-                "sh",
-                "-c",
-                "echo hello"
-            ],
+            "args": ["sh", "-c", "echo hello"],
             "volumeMounts": [{"name": "logvol", "mountPath": "/var/logs/commander"}],
             "extraContainers": [
                 {
@@ -57,7 +53,6 @@ chart_values = {
     supported_k8s_versions,
 )
 class TestAstronomerFileLogs:
-
     def fleuntd_container(self, container):
         assert container["image"] == "ap-fluentd:0.5"
         assert len(container["volumeMounts"]) == 1
@@ -77,11 +72,7 @@ class TestAstronomerFileLogs:
                 assert volume["mountPath"] == "/var/logs/houston"
 
     def commander_container(self, container):
-        assert container["args"] == [
-            "sh",
-            "-c",
-            "echo hello"
-        ]
+        assert container["args"] == ["sh", "-c", "echo hello"]
 
         volume_mounts = container["volumeMounts"]
         for volume in volume_mounts:
