@@ -59,7 +59,7 @@ astronomer:
         cpu: "0m"
         memory: "0Mi"
   houston:
-    replicas: 1
+    replicas: 2
     worker:
       replicas: 1
     resources:
