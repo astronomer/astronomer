@@ -9,7 +9,7 @@ from tests.chart_tests.helm_template_generator import render_chart
     supported_k8s_versions,
 )
 class TestStatefulSetsAnnotations:
-    def test_sts_with_default_annotations(self, kube_version):
+    def test_sts_with_no_annotations(self, kube_version):
         """Test all sts for the volume claim templates annotations"""
         docs = render_chart(
             kube_version=kube_version,
@@ -25,9 +25,13 @@ class TestStatefulSetsAnnotations:
         )
 
         assert len(docs) == 6
-        for doc in docs:
-            if "annotations" in doc["spec"]["volumeClaimTemplates"][0]["metadata"]:
-                assert doc["spec"]["volumeClaimTemplates"][0]["metadata"]["annotations"]
+
+        with pytest.raises(Exception) as exec_info:
+            for doc in docs:
+                if doc["spec"]["volumeClaimTemplates"][0]["metadata"]["annotations"]:
+                    raise Exception('Empty Annotations')
+            assert exec_info.value.args[0] == 'Empty Annotations'
+            assert str(exec_info.value) == 'Empty Annotations'
 
     def test_es_sts_with_overridden_annotations(self, kube_version):
         """Test all sts for the volume claim templates annotations"""
@@ -52,9 +56,10 @@ class TestStatefulSetsAnnotations:
         )
         assert len(docs) == 2
         for doc in docs:
-            assert {"astro.io/elastic": "master-sts", "storage": "astro"} == doc[
-                "spec"
-            ]["volumeClaimTemplates"][0]["metadata"]["annotations"]
+            assert {
+                "astro.io/elastic": "master-sts",
+                "storage": "astro"
+            } == doc["spec"]["volumeClaimTemplates"][0]["metadata"]["annotations"]
 
     def test_prometheus_sts_with_overridden_annotations(self, kube_version):
         """Test all sts for the volume claim templates annotations"""
