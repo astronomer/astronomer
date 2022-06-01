@@ -66,20 +66,6 @@ astronomer:
       requests:
         cpu: "0m"
         memory: "0Mi"
-    enableFileLogs: true
-    volumeMounts:
-      - name: houstonlog
-        mountPath: /var/logs/houston
-    extraContainers:
-      - name: fluentd
-        image: ap-fluentd:0.5
-        imagePullPolicy: Never
-        volumeMounts:
-          - name: houstonlog
-            mountPath: /var/log/file_logs/
-    extraVolumes:
-      - name: houstonlog
-        emptyDir: {}
 
     config:
       emailConfirmation: false
@@ -92,20 +78,6 @@ astronomer:
       requests:
         cpu: "0m"
         memory: "0Mi"
-    volumeMounts:
-      - name: commanderlog
-        mountPath: /var/logs/commander
-    extraContainers:
-      - name: fluentd
-        image: ap-fluentd:0.5
-        imagePullPolicy: Never
-        volumeMounts:
-          - name: commanderlog
-            mountPath: /var/log/file_logs/
-    extraVolumes:
-      - name: commanderlog
-        emptyDir: {}
-
   registry:
     resources:
       requests:
