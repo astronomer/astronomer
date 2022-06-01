@@ -157,7 +157,7 @@ jobs:
           name: unittest the Astronomer chart
           command: |
             mkdir test-results
-            TEST_FILES=$(circleci tests glob "tests/chart_tests/test_*.py" | circleci tests split --split-by=timings)
+            TEST_FILES=$(circleci tests glob "tests/test_*.py" | circleci tests split --split-by=timings)
             venv/bin/python -m pytest -v --junitxml=test-results/junit.xml -n auto $TEST_FILES
       - store_test_results:
           path: test-results
@@ -257,17 +257,6 @@ jobs:
             kubent --cluster=false --helm2=false --helm3=false --filename -
           when: always
 
-  check-commander-airflow-version:
-    docker:
-      - image: cimg/base:2022.03
-    steps:
-      - checkout
-      - setup_remote_docker:
-          version: 20.10.14
-      - run:
-          name: Check that commander image uses same Airflow chart version
-          command: make validate-commander-airflow-version
-
 workflows:
   version: 2.1
   scan-docker-images:
@@ -344,10 +333,8 @@ workflows:
       - lint
       - run_pre_commit
       - unittest-charts
-      - check-commander-airflow-version
       - build-artifact:
           requires:
-            - check-commander-airflow-version
             - lint
             - run_pre_commit
             - unittest-charts
