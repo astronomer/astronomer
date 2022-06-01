@@ -179,7 +179,7 @@ data:
       @type record_transformer
       enable_ruby
       <record>
-        log_id ${ record.has_key?("log_id") ? record["log_id"] : record["dag_id"] + "_" + record["task_id"] + "_" + record["execution_date"] + "_" + record["try_number"] }
+        log_id ${record["dag_id"]}_${record["task_id"]}_${record["execution_date"]}_${record["try_number"]}
         offset ${time = Time.now; time.to_i * (10 ** 9) + time.nsec}
       </record>
     </filter>
