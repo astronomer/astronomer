@@ -12,7 +12,7 @@ set +exo pipefail
 trivy \
   --cache-dir /tmp/workspace/trivy-cache \
   image \
-  -s CRITICAL \
+  -s HIGH,CRITICAL \
   --ignorefile "${GIT_ROOT}/${ignore_file}" \
   --ignore-unfixed \
   --exit-code 1 \
