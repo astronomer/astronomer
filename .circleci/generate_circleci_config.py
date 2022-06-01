@@ -20,7 +20,7 @@ CI_REMOTE_DOCKER_VERSION = "20.10.14"
 
 
 def list_docker_images(path):
-    command = f"cd {path} && helm template . -f tests/enable_all_features.yaml 2>/dev/null | awk '/image: / {{print $2}}' | sed 's/\"//g' | sort -u"
+    command = f"cd {path} && helm template . 2>/dev/null | awk '/image: / {{print $2}}' | sed 's/\"//g' | sort -u"
     docker_images_output = subprocess.check_output(command, shell=True)
     docker_image_list = docker_images_output.decode("utf-8").strip().split("\n")
 

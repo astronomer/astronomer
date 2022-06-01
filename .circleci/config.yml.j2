@@ -302,6 +302,7 @@ workflows:
                 - "release-0.25"
                 - "master"
                 - "lts-to-lts"
+
   build-and-release-helm-chart:
     unless:
       and:
@@ -310,10 +311,8 @@ workflows:
       - lint
       - run_pre_commit
       - unittest-charts
-      - check-commander-airflow-version
       - build-artifact:
           requires:
-            - check-commander-airflow-version
             - lint
             - run_pre_commit
             - unittest-charts
