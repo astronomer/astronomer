@@ -272,14 +272,18 @@ workflows:
 {%- for image in docker_images %}
                 - {{ image }}
 {%- endfor %}
+          context:
+            - slack_team-software-infra-bot
+
   build-and-release-upgrader:
+    unless:
+      and:
+        - << pipeline.parameters.scan-docker-images >>
     jobs:
       - build-lts-23-to-25-upgrade
-
       - lts-23-to-25-test:
           requires:
             - build-lts-23-to-25-upgrade
-
       - approve-lts-upgrader-release:
           type: approval
           requires:
@@ -289,7 +293,6 @@ workflows:
               only:
                 - "release-0.25"
                 - "lts-to-lts"
-
       - push-lts-23-to-25-upgrade:
           requires:
             - approve-lts-upgrader-release
@@ -349,7 +352,6 @@ workflows:
             branches:
               only:
                 - '/release-0\.\d+/'
-
       - release-to-public:
           context:
             - gcp-astronomer-prod
