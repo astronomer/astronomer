@@ -1,0 +1,3 @@
+# We are not using SSH as per this comment.
+# https://github.com/astronomer/astronomer/pull/1522#issuecomment-1128470766
+CVE-2022-27191
