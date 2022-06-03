@@ -83,12 +83,20 @@ spec:
         - name: houston
           image: {{ template "houston.image" . }}
           imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
+          {{- if .Values.houston.workerArgs }}
+          args:
+            {{- toYaml .Values.houston.workerArgs | nindent 12 }}
+          {{ else }}
           args: ["yarn", "worker"]
+          {{- end }}
           resources:
 {{ toYaml .Values.houston.resources | indent 12 }}
           volumeMounts:
             {{- include "houston_volume_mounts" . | indent 12 }}
             {{- include "custom_ca_volume_mounts" . | indent 12 }}
+{{- if .Values.houston.volumeMounts }}
+{{- toYaml .Values.houston.volumeMounts | nindent 12 }}
+{{- end }}
           env:
             - name: GRPC_VERBOSITY
               value: "INFO"
@@ -108,7 +116,13 @@ spec:
               value: {{ template "houston.image" . }}
             - name: APOLLO_SERVER_PLATFORM
               value: "kubernetes/deployment"
+{{- if .Values.houston.extraContainers }}
+{{- toYaml .Values.houston.extraContainers | nindent 8 }}
+{{- end }}
       volumes:
+{{- if .Values.houston.extraVolumes }}
+{{ toYaml .Values.houston.extraVolumes | indent 8 }}
+{{- end }}
         {{- include "houston_volumes" . | indent 8 }}
         {{- include "custom_ca_volumes" . | indent 8 }}
 {{- end }}

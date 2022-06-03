@@ -36,7 +36,7 @@ images:
     pullPolicy: IfNotPresent
   cliInstall:
     repository: quay.io/astronomer/ap-cli-install
-    tag: 0.26.4
+    tag: 0.26.5
     pullPolicy: IfNotPresent
 
 astroUI:
@@ -238,6 +238,12 @@ houston:
     #   - 2.0.0-alpine3.10-onbuild
     #   channel: stable
 
+  # Add extra containers here
+  extraContainers: []
+
+  # Add volumes to your containers
+  extraVolumes: []
+
 configSyncer:
   enabled: true
   # If not provided, will generate a random hour and minutes to spread cronjob workloads.
@@ -260,6 +266,12 @@ commander:
     # Enable airgapped mode
     enabled: false
   upgradeTimeout: 300
+
+  # Add extra containers to your commander deployment.
+  extraContainers: []
+
+  # Add extra volumes to your commander deployment.
+  extraVolumes: []
 
 registry:
   # k8s secret name for registry to use to authenticate to houston when sending notifications
