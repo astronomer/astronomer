@@ -43,7 +43,7 @@ global:
 
   # If RBAC on cluster is enabled
   rbacEnabled: true
- 
+
   # whether to create pod disrption budgets by default for platform components
   podDisruptionBudgetsEnabled: true
 
