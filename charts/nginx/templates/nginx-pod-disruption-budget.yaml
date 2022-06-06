@@ -1,6 +1,7 @@
 ################################
 ## Astronomer Nginx Pod Disruption Budget
 #################################
+{{- if .Values.global.podDisruptionBudgetsEnabled }}
 apiVersion: {{ include "apiVersion.PodDisruptionBudget" . }}
 kind: PodDisruptionBudget
 metadata:
@@ -16,3 +17,4 @@ spec:
       tier: {{ template "nginx.name" . }}
       component: ingress-controller
       release: {{ .Release.Name }}
+{{- end }}

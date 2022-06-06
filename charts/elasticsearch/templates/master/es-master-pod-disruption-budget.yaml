@@ -1,6 +1,7 @@
 ########################################################
 ## Astronomer Elasticsearch Master Pod Disruption Budget
 ########################################################
+{{- if .Values.global.podDisruptionBudgetsEnabled }}
 apiVersion: {{ include "apiVersion.PodDisruptionBudget" . }}
 kind: PodDisruptionBudget
 metadata:
@@ -13,3 +14,4 @@ spec:
       component: {{ template "elasticsearch.name" . }}
       release: {{ .Release.Name }}
       role: master
+{{- end }}
