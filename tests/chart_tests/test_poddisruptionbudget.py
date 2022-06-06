@@ -104,10 +104,10 @@ class TestPDB:
             assert ValueError("policy/v1beta1 is not supported in k8s 1.25+")
 
     def test_global_pdb_disabled(self, kube_version):
-        """Validate that there are no PDBs when global.podDisruptionBudgetsEnabled is disabled."""
+        """Validate that there are no PDBs when global.podDisruptionBudgetsEnabled is False."""
         docs = render_chart(
             values={"global": {"podDisruptionBudgetsEnabled": False}},
             kube_version=kube_version,
         )
 
-        assert not [x for x in docs if x["kind"] == "PodDisruptionBudget"]
+        assert not [doc for doc in docs if doc["kind"] == "PodDisruptionBudget"]
