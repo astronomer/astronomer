@@ -64,7 +64,6 @@ class TestHoustonPDB:
     supported_k8s_versions,
 )
 class TestPDB:
-
     show_only = [
         str(path.relative_to(git_root_dir))
         for path in git_root_dir.rglob("charts/**/*")
@@ -103,3 +102,12 @@ class TestPDB:
             assert all(x["apiVersion"] == "policy/v1beta1" for x in docs)
         else:
             assert ValueError("policy/v1beta1 is not supported in k8s 1.25+")
+
+    def test_global_pdb_disabled(self, kube_version):
+        """Validate that there are no PDBs when global.podDisruptionBudgetsEnabled is disabled."""
+        docs = render_chart(
+            values={"global": {"podDisruptionBudgetsEnabled": False}},
+            kube_version=kube_version,
+        )
+
+        assert not [x for x in docs if x["kind"] == "PodDisruptionBudget"]
