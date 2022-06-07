@@ -5,7 +5,7 @@
 # This version number controls the default Airflow chart version that will be installed
 # when creating a new deployment in the system. This is also used to ensure all
 # child airflow deployments are kept up to date and on the latest version.
-airflowChartVersion: 1.5.0-rc2
+airflowChartVersion: 1.6.0
 
 nodeSelector: {}
 affinity: {}
@@ -15,7 +15,7 @@ tolerations: []
 images:
   commander:
     repository: quay.io/astronomer/ap-commander
-    tag: 0.29.2
+    tag: 0.29.3
     pullPolicy: IfNotPresent
   registry:
     repository: quay.io/astronomer/ap-registry
@@ -24,7 +24,7 @@ images:
     # httpSecret: ~
   houston:
     repository: quay.io/astronomer/ap-houston-api
-    tag: 0.29.24
+    tag: 0.29.26
     pullPolicy: IfNotPresent
   astroUI:
     repository: quay.io/astronomer/ap-astro-ui
@@ -36,7 +36,7 @@ images:
     pullPolicy: IfNotPresent
   cliInstall:
     repository: quay.io/astronomer/ap-cli-install
-    tag: 0.26.4
+    tag: 0.26.5
     pullPolicy: IfNotPresent
 
 astroUI:
@@ -238,6 +238,12 @@ houston:
     #   - 2.0.0-alpine3.10-onbuild
     #   channel: stable
 
+  # Add extra containers here
+  extraContainers: []
+
+  # Add volumes to your containers
+  extraVolumes: []
+
 configSyncer:
   enabled: true
   # If not provided, will generate a random hour and minutes to spread cronjob workloads.
@@ -260,6 +266,12 @@ commander:
     # Enable airgapped mode
     enabled: false
   upgradeTimeout: 300
+
+  # Add extra containers to your commander deployment.
+  extraContainers: []
+
+  # Add extra volumes to your commander deployment.
+  extraVolumes: []
 
 registry:
   # k8s secret name for registry to use to authenticate to houston when sending notifications
@@ -320,7 +332,7 @@ registry:
 
 install:
   resources: {}
-  cliVersion: 0.27.0
+  cliVersion: 0.29
   #  limits:
   #   cpu: 100m
   #   memory: 128Mi

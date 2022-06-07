@@ -94,6 +94,9 @@ spec:
           volumeMounts:
             {{- include "houston_volume_mounts" . | indent 12 }}
             {{- include "custom_ca_volume_mounts" . | indent 12 }}
+{{- if .Values.houston.volumeMounts }}
+{{- toYaml .Values.houston.volumeMounts | nindent 12 }}
+{{- end }}
           ports:
             - name: houston-http
               containerPort: {{ .Values.ports.houstonHTTP }}
@@ -111,6 +114,12 @@ spec:
             initialDelaySeconds: {{ .Values.houston.readinessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.houston.readinessProbe.periodSeconds }}
             failureThreshold: {{ .Values.houston.readinessProbe.failureThreshold }}
+          {{- if .Values.houston.apiArgs }}
+          args:
+            {{- toYaml .Values.houston.apiArgs | nindent 12 }}
+          {{ else }}
+          args: ["yarn", "serve"]
+          {{- end }}
           env:
             {{- include "houston_environment" . | indent 12 }}
             - name: GRPC_VERBOSITY
@@ -130,6 +139,12 @@ spec:
                 secretKeyRef:
                   name: {{ template "registry.authHeaderSecret" . }}
                   key: token
+{{- if .Values.houston.extraContainers }}
+{{- toYaml .Values.houston.extraContainers | nindent 8 }}
+{{- end }}
       volumes:
+{{- if .Values.houston.extraVolumes }}
+{{ toYaml .Values.houston.extraVolumes | indent 8 }}
+{{- end }}
         {{- include "houston_volumes" . | indent 8 }}
         {{- include "custom_ca_volumes" . | indent 8 }}
