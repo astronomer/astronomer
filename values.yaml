@@ -111,7 +111,7 @@ global:
   authSidecar:
     enabled: false
     repository: quay.io/astronomer/ap-auth-sidecar
-    tag: 1.21.6-2
+    tag: 1.22.0
     pullPolicy: IfNotPresent
     port: 8084
     default_nginx_settings: |
