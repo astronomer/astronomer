@@ -8,13 +8,13 @@ attrs==21.4.0 \
     --hash=sha256:2d27e3784d7a565d36ab851fe94887c5eccd6a463168875832a1be79c82828b4 \
     --hash=sha256:626ba8234211db98e869df76230a137c4c40a12d72445c45d5f5b716f076e2fd
     # via pytest
-cachetools==5.1.0 \
-    --hash=sha256:4ebbd38701cdfd3603d1f751d851ed248ab4570929f2d8a7ce69e30c420b141c \
-    --hash=sha256:8b3b8fa53f564762e5b221e9896798951e7f915513abf2ba072ce0f07f3f5a98
+cachetools==5.2.0 \
+    --hash=sha256:6a94c6402995a99c3970cc7e4884bb60b4a8639938157eeed436098bf9831757 \
+    --hash=sha256:f9f17d2aec496a9aa6b76f53e3b614c965223c061982d434d160f930c698a9db
     # via google-auth
-certifi==2022.5.18 \
-    --hash=sha256:6ae10321df3e464305a46e997da41ea56c1d311fb9ff1dd4e04d6f14653ec63a \
-    --hash=sha256:8d15a5a7fde18536a249c49e07e8e462b8fc13de21b3c80e8a68315dfa227c99
+certifi==2022.5.18.1 \
+    --hash=sha256:9c5705e395cd70084351dd8ad5c41e65655e08ce46f2ec9cf6c2c08390f71eb7 \
+    --hash=sha256:f1d53542ee8cbedbe2118b5686372fb33c297fcd6379b050cca0ef13a597382a
     # via
     #   kubernetes
     #   requests
@@ -34,9 +34,9 @@ gitpython==3.1.27 \
     --hash=sha256:1c885ce809e8ba2d88a29befeb385fcea06338d3640712b59ca623c220bb5704 \
     --hash=sha256:5b68b000463593e05ff2b261acff0ff0972df8ab1b70d3cdbd41b546c8b8fc3d
     # via -r requirements/functional-tests.in
-google-auth==2.6.6 \
-    --hash=sha256:1ba4938e032b73deb51e59c4656a00e0939cf0b1112575099f136babb4563312 \
-    --hash=sha256:349ac49b18b01019453cc99c11c92ed772739778c92f184002b7ab3a5b7ac77d
+google-auth==2.7.0 \
+    --hash=sha256:8a954960f852d5f19e6af14dd8e75c20159609e85d8db37e4013cc8c3824a7e1 \
+    --hash=sha256:df549a1433108801b11bdcc0e312eaf0d5f0500db42f0523e4d65c78722e8475
     # via kubernetes
 idna==3.3 \
     --hash=sha256:84d9dd047ffa80596e0f246e2eab0b391788b0503584e8945f2368256d2735ff \
