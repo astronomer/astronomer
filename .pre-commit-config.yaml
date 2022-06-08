@@ -1,13 +1,21 @@
 ---
 exclude: '(venv|\.vscode)' # regex
 repos:
+  - repo: local
+    hooks:
+      - id: circle-config-yaml
+        name: Checks for consistency between config.yml and config.yml.j2
+        language: python
+        files: "config.yml$|config.yml.j2|generate_circleci_config.py$|\/values.yaml$"
+        entry: .circleci/generate_circleci_config.py
+        additional_dependencies: ["jinja2"]
   - repo: https://github.com/codespell-project/codespell
     rev: v2.1.0
     hooks:
       - id: codespell
         args: ["-L", "AKS,aks"]
   - repo: https://github.com/Lucas-C/pre-commit-hooks
-    rev: v1.1.13
+    rev: v1.2.0
     hooks:
       - id: remove-tabs
         exclude_types: [makefile, binary]
@@ -16,12 +24,12 @@ repos:
     hooks:
       - id: black
   - repo: https://github.com/asottile/pyupgrade
-    rev: v2.31.1
+    rev: v2.32.1
     hooks:
       - id: pyupgrade
         args: ["--py38-plus"]
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.1.0
+    rev: v4.2.0
     hooks:
       - id: check-case-conflict
       - id: check-json
@@ -57,11 +65,3 @@ repos:
     rev: v0.8.0.4
     hooks:
       - id: shellcheck
-  - repo: local
-    hooks:
-      - id: circle-config-yaml
-        name: Checks for consistency between config.yml and config.yml.j2
-        language: python
-        files: "config.yml$|config.yml.j2|generate_circleci_config.py$"
-        entry: .circleci/generate_circleci_config.py
-        additional_dependencies: ["jinja2"]

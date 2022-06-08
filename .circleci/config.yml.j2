@@ -4,11 +4,95 @@ executors:
     environment:
       GIT_ORG: astronomer
     docker:
-      - image: circleci/python:3
+      - image: cimg/python:3.10
+
+orbs:
+  snyk: snyk/snyk@1.1.2
+  slack: circleci/slack@4.10.1
+
+parameters:
+  scan-docker-images:
+    type: boolean
+    default: false
+    description: "This will run docker image scan."
+
 jobs:
+  snyk-scan-docker:
+    executor: docker-executor
+    parameters:
+      docker_image:
+        type: string
+    environment:
+      SCAN_IMAGE: << parameters.docker_image >>
+      SCAN_TOOL: Snyk
+    steps:
+      - setup_remote_docker:
+          version: {{ remote_docker_version }}
+      - checkout
+      - run:
+          name: Pull Docker image
+          command: docker pull << parameters.docker_image >>
+      - snyk-docker-test:
+          docker_image: << parameters.docker_image >>
+      - run:
+          name: Slack Init
+          command: |
+            echo 'export SLACK_MSG_TEMPLATE=$(cat ./.circleci/slack_message_templates/security_scan_fail.json)' >> $BASH_ENV
+            source $BASH_ENV
+          when: always
+      - slack/notify:
+          event: fail
+          template: SLACK_MSG_TEMPLATE
+          channel: C03HS1H9G1E
+
+  trivy-scan-docker:
+    docker:
+      - image: docker:{{ remote_docker_version }}-git
+    shell: /bin/sh -leo pipefail
+    parameters:
+      docker_image:
+        type: string
+    environment:
+      SCAN_IMAGE: << parameters.docker_image >>
+      SCAN_TOOL: Trivy
+      BASH_ENV: /etc/profile
+    steps:
+      - setup_remote_docker:
+          version: {{ remote_docker_version }}
+      - checkout
+      - run:
+          name: Pull Docker image
+          command: docker pull << parameters.docker_image >>
+      - run:
+          name: Install trivy
+          command: |
+            apk add --update-cache --upgrade curl rpm bash
+            curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/master/contrib/install.sh | sh -s -- -b /usr/local/bin
+            date +%F > date
+      - restore_cache:
+          keys:
+            {% raw %}- trivy-cache-{{ checksum "date" }}{% endraw %}
+      - run:
+          name: Scan the local image with trivy
+          command: bin/trivy-scan.sh "<< parameters.docker_image >>" ".circleci/trivyignore"
+      - run:
+          name: Slack Init
+          command: |
+            echo 'export SLACK_MSG_TEMPLATE=$(cat ./.circleci/slack_message_templates/security_scan_fail.json)' >> $BASH_ENV
+            source $BASH_ENV
+          when: on_fail
+      - slack/notify:
+          event: fail
+          template: SLACK_MSG_TEMPLATE
+          channel: C03HS1H9G1E
+      - save_cache:
+          {% raw %}key: trivy-cache-{{ checksum "date" }}{% endraw %}
+          paths:
+            - /tmp/workspace/trivy-cache
+
   run_pre_commit:
     docker:
-      - image: quay.io/astronomer/ci-pre-commit:2022-03
+      - image: quay.io/astronomer/ci-pre-commit:2022-05
     steps:
       - checkout
       - run:
@@ -43,8 +127,12 @@ jobs:
 
   unittest-charts:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2022-03
+      - image: quay.io/astronomer/ci-helm-release:2022-05
+    parallelism: 6
     steps:
+      - setup_remote_docker:
+          docker_layer_caching: true
+          version: {{ remote_docker_version }}
       - checkout
       - run:
           name: Create chart-tests-cache-key.txt
@@ -65,7 +153,12 @@ jobs:
             - ~/project/.unittest-requirements
       - run:
           name: unittest the Astronomer chart
-          command: make unittest-charts
+          command: |
+            mkdir test-results
+            TEST_FILES=$(circleci tests glob "tests/test_*.py" | circleci tests split --split-by=timings)
+            venv/bin/python -m pytest -v --junitxml=test-results/junit.xml -n auto $TEST_FILES
+      - store_test_results:
+          path: test-results
 
   build-artifact:
     docker:
@@ -133,7 +226,34 @@ jobs:
 
 workflows:
   version: 2.1
+  scan-docker-images:
+    when:
+      and:
+        - << pipeline.parameters.scan-docker-images >>
+    jobs:
+      - snyk-scan-docker:
+          matrix:
+            parameters:
+              docker_image:
+{%- for image in docker_images %}
+                - {{ image }}
+{%- endfor %}
+          context:
+            - slack_team-software-infra-bot
+      - trivy-scan-docker:
+          matrix:
+            parameters:
+              docker_image:
+{%- for image in docker_images %}
+                - {{ image }}
+{%- endfor %}
+          context:
+            - slack_team-software-infra-bot
+
   build-and-release-helm-chart:
+    unless:
+      and:
+        - << pipeline.parameters.scan-docker-images >>
     jobs:
       - lint
       - run_pre_commit
@@ -204,6 +324,7 @@ commands:
     steps:
       - setup_remote_docker:
           docker_layer_caching: true
+          version: {{ remote_docker_version }}
       - attach_workspace:
           at: /tmp/workspace
       - run:
@@ -257,6 +378,7 @@ commands:
       - checkout
       - setup_remote_docker:
           docker_layer_caching: true
+          version: {{ remote_docker_version }}
       - run:
           name: Build the Docker image
           command: |
@@ -292,6 +414,8 @@ commands:
             echo 'export PATH="/tmp/bin:/tmp/google-cloud-sdk/bin:$PATH"' >> "$HOME/.bashrc"
             set -e
             HELM_CHART_PATH='/tmp/workspace/astronomer-*.tgz' bin/run-ci << parameters.astronomer-tags >>
+      - store_test_results:
+          path: test-results
 
   publish-github-release:
     description: "Create a release on GitHub"
@@ -307,3 +431,24 @@ commands:
             pyenv global 3.9.4
             pip install astronomer_e2e_test
             astronomer-ci publish-github-release --github-repository $CIRCLE_PROJECT_REPONAME --github-organization $CIRCLE_PROJECT_USERNAME --commitish $CIRCLE_SHA1
+
+  snyk-docker-test:
+    description: "Test a Docker image with synk"
+    parameters:
+      docker_image:
+        type: string
+    steps:
+      - snyk/scan:
+          docker-image-name: << parameters.docker_image >>
+          fail-on-issues: true
+          severity-threshold: high
+          monitor-on-build: false
+
+  trivy-docker-test:
+    description: "Trivy: Vulnerability scan a Docker image"
+    parameters:
+      docker_image:
+        type: string
+    steps:
+      - trivy/vulnerability-scan:
+            docker-image: << parameters.docker_image >>

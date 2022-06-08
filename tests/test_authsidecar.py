@@ -126,7 +126,15 @@ class TestAuthSidecar:
         """Test Houston Configmap with authSidecar."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"authSidecar": {"enabled": True}}},
+            values={
+                "global": {
+                    "authSidecar": {
+                        "enabled": True,
+                        "repository": "someregistry.io/my-custom-image",
+                        "tag": "my-custom-tag",
+                    }
+                }
+            },
             show_only=[
                 "charts/astronomer/templates/houston/houston-configmap.yaml",
             ],
@@ -142,8 +150,8 @@ class TestAuthSidecar:
         prod = yaml.safe_load(doc["data"]["production.yaml"])
         expected_output = {
             "enabled": True,
-            "repository": "nginxinc/nginx-unprivileged",
-            "tag": "stable",
+            "repository": "someregistry.io/my-custom-image",
+            "tag": "my-custom-tag",
             "port": 8084,
             "pullPolicy": "IfNotPresent",
             "annotations": {},
@@ -156,7 +164,11 @@ class TestAuthSidecar:
             kube_version=kube_version,
             values={
                 "global": {
-                    "authSidecar": {"enabled": True},
+                    "authSidecar": {
+                        "enabled": True,
+                        "repository": "someregistry.io/my-custom-image",
+                        "tag": "my-custom-tag",
+                    },
                     "extraAnnotations": {
                         "kubernetes.io/ingress.class": "astronomer-nginx",
                         "nginx.ingress.kubernetes.io/proxy-body-size": "1024m",
@@ -177,8 +189,8 @@ class TestAuthSidecar:
 
         expected_output = {
             "enabled": True,
-            "repository": "nginxinc/nginx-unprivileged",
-            "tag": "stable",
+            "repository": "someregistry.io/my-custom-image",
+            "tag": "my-custom-tag",
             "port": 8084,
             "pullPolicy": "IfNotPresent",
             "annotations": {
