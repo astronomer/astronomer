@@ -252,3 +252,24 @@ class TestElasticSearch:
         pod_data = doc["spec"]["template"]["spec"]
         assert pod_data["securityContext"]["runAsNonRoot"] is True
         assert pod_data["securityContext"]["runAsUser"] == 1000
+
+    def test_elasticsearch_exporter_securitycontext_overrides(self, kube_version):
+        """Test ElasticSearch Exporter with securityContext default values"""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "elasticsearch": {
+                    "exporter": {
+                        "securityContext": {"runAsNonRoot": True, "runAsUser": 2000}
+                    }
+                }
+            },
+            show_only=[
+                "charts/elasticsearch/templates/exporter/es-exporter-deployment.yaml"
+            ],
+        )
+        assert len(docs) == 1
+        doc = docs[0]
+        pod_data = doc["spec"]["template"]["spec"]
+        assert pod_data["securityContext"]["runAsNonRoot"] is True
+        assert pod_data["securityContext"]["runAsUser"] == 2000

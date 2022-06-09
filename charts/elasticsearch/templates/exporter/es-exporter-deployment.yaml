@@ -50,8 +50,7 @@ spec:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       restartPolicy: {{ .Values.exporter.restartPolicy }}
       securityContext:
-        runAsNonRoot: true
-        runAsUser: {{ .Values.securityContext.runAsUser }}
+{{ toYaml .Values.exporter.securityContext | indent 8 }}
       containers:
         - name: metrics-exporter
           image: {{ template "exporter.image" . }}
