@@ -38,7 +38,7 @@ spec:
     - host: {{- include "kibana.url" . | indent 1 }}
       http:
         paths:
-          - path: /
+          - path: /kibana
             {{ if semverCompare "<1.19-0" .Capabilities.KubeVersion.Version -}}
             backend:
               serviceName: {{ template "kibana.fullname" . }}

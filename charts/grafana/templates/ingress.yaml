@@ -38,7 +38,7 @@ spec:
     - host: {{ template "grafana.url" . }}
       http:
         paths:
-          - path: /
+          - path: /grafana
             {{ if semverCompare "<1.19-0" .Capabilities.KubeVersion.Version -}}
             backend:
               serviceName: {{ template "grafana.fullname" . }}

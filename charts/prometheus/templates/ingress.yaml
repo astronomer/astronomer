@@ -38,7 +38,7 @@ spec:
     - host: {{ template "prometheus.url" . }}
       http:
         paths:
-          - path: /
+          - path: /prometheus
             {{ if semverCompare "<1.19-0" .Capabilities.KubeVersion.Version -}}
             backend:
               serviceName: {{ template "prometheus.fullname" . }}
