@@ -175,3 +175,5 @@ exporter:
 ##################################
 # TODO: Support NATS embedded mode by including
 # nats chart values.
+persistence:
+  annotations: {}

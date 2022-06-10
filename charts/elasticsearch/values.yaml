@@ -50,6 +50,7 @@ common:
   # associated persistent volume claims.
   persistence:
     enabled: true
+    annotations: {}
 
     # The PVC storage class that backs the persistent volume claims. On AWS
     # "gp2" would be appropriate.
