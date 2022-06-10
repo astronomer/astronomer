@@ -10,16 +10,15 @@ from tests.chart_tests.helm_template_generator import render_chart
 )
 class TestStatefulSetsAnnotations:
     def test_sts_with_no_annotations(self, kube_version):
-        """Test if the sts contains volume claim templates annotations or not"""
-        sts_workload = [doc for doc in render_chart() if doc["kind"] == "StatefulSet"]
-        assert len(sts_workload) == 7
-
-        with pytest.raises(Exception) as except_info:
-            for doc in sts_workload:
-                if doc["spec"]["volumeClaimTemplates"][0]["metadata"]["annotations"]:
-                    raise Exception("Empty Annotations")
-            assert except_info.value.args[0] == "Empty Annotations"
-            assert str(except_info.value) == "Empty Annotations"
+        """Test that all sts volume claim templates do not have annotations."""
+        vcts = [
+            doc["spec"]["volumeClaimTemplates"]
+            for doc in render_chart()
+            if doc["kind"] == "StatefulSet" and doc["spec"].get("volumeClaimTemplates")
+        ]
+        assert len(vcts) == 6
+        for vct in vcts:
+            assert not vct[0]["metadata"].get("annotations")
 
     def test_es_sts_with_overridden_annotations(self, kube_version):
         """Test es sts for the volume claim templates annotations"""
