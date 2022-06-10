@@ -35,7 +35,7 @@ Create chart name and version as used by the chart label.
 Create kibana url.
 */}}
 {{ define "kibana.url" -}}
-kibana.{{ .Values.global.baseDomain }}
+kibana.{{ .Values.global.subDomain }}.{{ .Values.global.baseDomain }}
 {{- end }}
 
 {{ define "kibana.image" -}}

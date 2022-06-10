@@ -48,7 +48,7 @@ Create chart name and version as used by the chart label.
 {{- end }}
 
 {{ define "prometheus.url" -}}
-prometheus.{{ .Values.global.baseDomain }}
+prometheus.{{ .Values.global.subDomain }}.{{ .Values.global.baseDomain }}
 {{- end }}
 
 {{/*

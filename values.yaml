@@ -6,6 +6,7 @@ global:
   baseDomain: ~
 
   # Name of secret containing TLS certificate
+  subDomain: # Name of subdomains to avoid conflicts
   tlsSecret: astronomer-tls
 
   # List of secrets containing private CA certificates
