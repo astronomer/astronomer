@@ -2,10 +2,11 @@
 # shellcheck disable=SC1090
 set -euo pipefail
 
-export KUBE_VERSION="${KUBE_VERSION:-v1.18.19}"
+export KUBE_VERSION="${KUBE_VERSION:-v1.19.16}"
 
 # The path to the working directory - the root of the repo
 GIT_ROOT="$(git -C "${0%/*}" rev-parse --show-toplevel)"
+NAMESPACE="${NAMESPACE:-astronomer}"
 
 echo "Beginning KIND setup with KUBE_VERSION=${KUBE_VERSION}"
 echo "Checking tools are installed"
@@ -79,17 +80,17 @@ helm dependency update .
 cd "$GIT_ROOT"
 
 echo "Creating namespace 'astronomer'"
-kubectl create namespace astronomer
+kubectl create namespace "${NAMESPACE}"
 
 (
   cd "${GIT_ROOT}"
   mkcert -cert-file=server.pem -key-file=server.key server.example.org
   # shellcheck disable=SC2140
-  kubectl --namespace astronomer create secret generic "private-ca" --from-file="cert.pem"="$(mkcert -CAROOT)/rootCA.pem"
+  kubectl --namespace "${NAMESPACE}" create secret generic "private-ca" --from-file="cert.pem"="$(mkcert -CAROOT)/rootCA.pem"
 )
 
 echo "Installing TLS cert and private key"
 kubectl create secret tls astronomer-tls \
   --key /tmp/privkey.pem \
   --cert /tmp/fullchain.pem \
-  --namespace astronomer
+  --namespace "${NAMESPACE}"
