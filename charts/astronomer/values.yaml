@@ -15,7 +15,7 @@ tolerations: []
 images:
   commander:
     repository: quay.io/astronomer/ap-commander
-    tag: 0.28.4
+    tag: 0.28.5
     pullPolicy: IfNotPresent
   registry:
     repository: quay.io/astronomer/ap-registry
