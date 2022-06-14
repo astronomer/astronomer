@@ -94,7 +94,7 @@ jobs:
 
   run_pre_commit:
     docker:
-      - image: quay.io/astronomer/ci-pre-commit:2022-05
+      - image: quay.io/astronomer/ci-pre-commit:2022-06
     steps:
       - checkout
       - run:
