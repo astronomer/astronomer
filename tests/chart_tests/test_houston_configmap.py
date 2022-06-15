@@ -41,10 +41,27 @@ def test_houston_configmap():
     prod = yaml.safe_load(doc["data"]["production.yaml"])
     # Ensure airflow elasticsearch param is at correct location
     assert prod["deployments"]["helm"]["airflow"]["elasticsearch"]["enabled"] is True
-
+    # Ensure elasticsearch client param is at the correct location and contains http://
+    assert ("node" in prod["elasticsearch"]["client"]) is True
+    assert prod["elasticsearch"]["client"]["node"].startswith("http://")
     with pytest.raises(KeyError):
         # Ensure sccEnabled is not defined by default
         assert prod["deployments"]["helm"]["sccEnabled"] is False
+
+
+def test_houston_configmap_with_customlogging_enabled():
+    """Validate the houston configmap and its embedded data with customLogging."""
+    docs = render_chart(
+        values={"global": {"customLogging": {"enabled": True}}},
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+
+    common_test_cases(docs)
+    doc = docs[0]
+    prod = yaml.safe_load(doc["data"]["production.yaml"])
+
+    assert ("node" in prod["elasticsearch"]["client"]) is True
+    assert prod["elasticsearch"]["client"]["node"].startswith("https://") is True
 
 
 def test_houston_configmapwith_scc_enabled():
