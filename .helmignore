@@ -23,15 +23,15 @@
 # Astronomer helm repository directory
 /.circleci
 /.github
-/bin/
-/configs/
-/docs/
-/secrets/
-/test/
-/venv/
-/LICENSE
+/bin
 /certs
+/configs
+/docs
 /repository
 /requirements
+/secrets
+/test
 /tests
 /tiller-rbac
+/values.schema.json.example
+/venv
