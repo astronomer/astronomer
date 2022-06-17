@@ -21,15 +21,17 @@
 *.tmproj
 
 # Astronomer helm repository directory
-repository
-certs
-tiller-rbac
-
+/.circleci
+/.github
 /bin/
 /configs/
 /docs/
 /secrets/
 /test/
 /venv/
-tests
-charts/*/tests
+/LICENSE
+/certs
+/repository
+/requirements
+/tests
+/tiller-rbac
