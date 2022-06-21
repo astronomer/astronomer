@@ -39,7 +39,11 @@ Create chart name and version as used by the chart label.
 {{- end }}
 
 {{ define "grafana.url" -}}
-{{ .Values.global.prefixDomain }}-grafana.{{ .Values.global.baseDomain }}
+{{- if .Values.global.suffixDomain -}}
+grafana-{{ .Values.global.suffixDomain }}.{{ .Values.global.baseDomain }}
+{{- else -}}
+grafana.{{ .Values.global.baseDomain }}
+{{- end }}
 {{- end }}
 
 {{ define "grafana.backend.secret" -}}

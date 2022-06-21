@@ -48,7 +48,11 @@ Create chart name and version as used by the chart label.
 {{- end }}
 
 {{ define "prometheus.url" -}}
-{{ .Values.global.prefixDomain }}-prometheus.{{ .Values.global.baseDomain }}
+{{- if .Values.global.suffixDomain -}}
+prometheus-{{ .Values.global.suffixDomain }}.{{ .Values.global.baseDomain }}
+{{- else -}}
+prometheus.{{ .Values.global.baseDomain }}
+{{- end }}
 {{- end }}
 
 {{/*

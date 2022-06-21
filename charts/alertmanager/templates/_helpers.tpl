@@ -43,7 +43,11 @@ Image name.
 {{- end -}}
 
 {{ define "alertmanager.url" -}}
-{{ .Values.global.prefixDomain }}-alertmanager.{{ .Values.global.baseDomain }}
+{{- if .Values.global.suffixDomain -}}
+alertmanager-{{ .Values.global.suffixDomain }}.{{ .Values.global.baseDomain }}
+{{- else -}}
+alertmanager.{{ .Values.global.baseDomain }}
+{{- end }}
 {{- end }}
 
 {{/*
