@@ -41,7 +41,6 @@
 /Makefile
 /bin
 /certs
-/charts/*/tests
 /configs
 /docs
 /repository
