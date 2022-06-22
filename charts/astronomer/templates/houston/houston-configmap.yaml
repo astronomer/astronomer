@@ -124,7 +124,7 @@ data:
           # Enabled network polices to restrict the way pods can communicate.
             enabled: true
           {{ end }}
-          # FlowerUI enabled flag by default
+          # Enable FlowerUI flag by default
           flower:
             enabled: true
           webserver:
