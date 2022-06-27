@@ -39,6 +39,10 @@ spec:
         release: {{ .Release.Name }}
         chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
     spec:
+      imagePullSecrets:
+      {{- if .Values.global.privateRegistry.enabled }}
+        - name: {{ .Values.global.privateRegistry.secretName }}
+      {{- end }}
       {{- if .Values.stan.nats.serviceRoleAuth.enabled }}
       serviceAccountName: "nats-streaming"
       {{- end }}
