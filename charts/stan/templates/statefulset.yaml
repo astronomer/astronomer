@@ -39,17 +39,10 @@ spec:
         release: {{ .Release.Name }}
         chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
     spec:
-      imagePullSecrets:
-      {{- if .Values.global.privateRegistry.enabled }}
-        - name: {{ .Values.global.privateRegistry.secretName }}
-      {{- end }}
       {{- if .Values.stan.nats.serviceRoleAuth.enabled }}
       serviceAccountName: "nats-streaming"
       {{- end }}
-{{- with .Values.imagePullSecrets }}
-      imagePullSecrets:
-{{- toYaml . | nindent 8 }}
-{{- end }}
+{{- include "stan.imagePullSecrets" . | indent 6 }}
 {{- with .Values.securityContext }}
       securityContext:
 {{ toYaml . | indent 8 }}
