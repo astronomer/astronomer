@@ -37,9 +37,9 @@ spec:
         iam.amazonaws.com/role: {{ .Values.global.customLogging.awsIAMRole }}
         {{- end }}
     spec:
-      {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
-        {{- toYaml . | nindent 8 }}
+      {{- if .Values.global.privateRegistry.enabled }}
+      - name: {{ .Values.global.privateRegistry.secretName }}
       {{- end }}
       serviceAccountName: {{ include "external-es-proxy.serviceAccountName" . }}
       securityContext:
