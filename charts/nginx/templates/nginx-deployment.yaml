@@ -33,6 +33,10 @@ spec:
         {{- end }}
     spec:
       serviceAccountName: {{ template "nginx.fullname" . }}
+      imagePullSecrets:
+      {{- if .Values.global.privateRegistry.enabled }}
+      - name: {{ .Values.global.privateRegistry.secretName }}
+      {{- end }}
       containers:
         - name: nginx
           securityContext:
