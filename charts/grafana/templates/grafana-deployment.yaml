@@ -35,6 +35,10 @@ spec:
       {{- if and (not .Values.backendSecretName) (not .Values.backendConnection) }}
       serviceAccountName: {{ template "grafana.bootstrapper.serviceaccount" . }}
       {{- end }}
+      imagePullSecrets:
+      {{- if .Values.global.privateRegistry.enabled }}
+        - name: {{ .Values.global.privateRegistry.secretName }}
+      {{- end }}
       initContainers:
         - name: wait-for-db
           command:
