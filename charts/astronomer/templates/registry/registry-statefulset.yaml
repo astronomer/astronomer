@@ -54,6 +54,10 @@ spec:
         fsGroup: 1000
         runAsGroup: 1000
         runAsUser: 1000
+      imagePullSecrets:
+      {{- if .Values.global.privateRegistry.enabled }}
+        - name: {{ .Values.global.privateRegistry.secretName }}
+      {{- end }}
       containers:
         - name: registry
           image: {{ template  "registry.image" . }}

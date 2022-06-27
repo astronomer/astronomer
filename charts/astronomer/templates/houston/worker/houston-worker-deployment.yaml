@@ -37,6 +37,10 @@ spec:
       restartPolicy: Always
       {{- if and (not .Values.houston.airflowBackendSecretName) (not .Values.houston.airflowBackendConnection) }}
       serviceAccountName: {{ template "houston.bootstrapperServiceAccount" . }}
+      imagePullSecrets:
+      {{- if .Values.global.privateRegistry.enabled }}
+        - name: {{ .Values.global.privateRegistry.secretName }}
+      {{- end }}
       initContainers:
         - name: wait-for-db
           image: {{ template "houston.image" . }}
