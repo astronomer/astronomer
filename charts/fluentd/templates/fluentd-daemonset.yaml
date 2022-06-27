@@ -35,6 +35,10 @@ spec:
       tolerations:
 {{ toYaml (.Values.tolerations) | indent 8 }}
       serviceAccountName: {{ template "fluentd.fullname" . }}
+      imagePullSecrets:
+      {{- if .Values.global.privateRegistry.enabled }}
+        - name: {{ .Values.global.privateRegistry.secretName }}
+      {{- end }}
       containers:
       - name: fluentd
         image: {{ template "fluentd.image" . }}
