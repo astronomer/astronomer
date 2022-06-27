@@ -85,7 +85,6 @@ spec:
             - name: IN_CLUSTER
               value: "true"
       {{- end }}
-      imagePullSecrets:
 {{- include "astronomer.imagePullSecrets" . | indent 6 }}
       containers:
         - name: houston-db-migrations-job
