@@ -38,3 +38,13 @@ Create chart name and version as used by the chart label.
 {{ .Values.images.kubeState.repository }}:{{ .Values.images.kubeState.tag }}
 {{- end }}
 {{- end }}
+
+{{/*
+Return the proper Docker Image Registry Secret Names
+*/}}
+{{- define "kube-state.imagePullSecrets" -}}
+{{- if .Values.global.privateRegistry.enabled }}
+imagePullSecrets:
+  - name: {{ .Values.global.privateRegistry.secretName }}
+{{- end -}}
+{{- end -}}
