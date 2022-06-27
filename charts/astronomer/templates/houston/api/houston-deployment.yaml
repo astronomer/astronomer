@@ -85,10 +85,7 @@ spec:
             - name: IN_CLUSTER
               value: "true"
       {{- end }}
-      imagePullSecrets:
-      {{- if .Values.global.privateRegistry.enabled }}
-        - name: {{ .Values.global.privateRegistry.secretName }}
-      {{- end }}
+{{- include "astronomer.imagePullSecrets" . | indent 6 }}
       containers:
         - name: houston
           image: {{ template "houston.image" . }}

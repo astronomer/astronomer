@@ -54,10 +54,7 @@ spec:
         fsGroup: 1000
         runAsGroup: 1000
         runAsUser: 1000
-      imagePullSecrets:
-      {{- if .Values.global.privateRegistry.enabled }}
-        - name: {{ .Values.global.privateRegistry.secretName }}
-      {{- end }}
+{{- include "astronomer.imagePullSecrets" . | indent 6 }}
       containers:
         - name: registry
           image: {{ template  "registry.image" . }}

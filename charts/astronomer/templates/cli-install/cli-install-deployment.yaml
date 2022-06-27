@@ -34,10 +34,7 @@ spec:
       tolerations:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       terminationGracePeriodSeconds: 60
-      imagePullSecrets:
-      {{- if .Values.global.privateRegistry.enabled }}
-        - name: {{ .Values.global.privateRegistry.secretName }}
-      {{- end }}
+  {{- include "astronomer.imagePullSecrets" . | indent 6 }}
       containers:
         - name: cli-install
           image: {{ template "cliInstall.image" . }}

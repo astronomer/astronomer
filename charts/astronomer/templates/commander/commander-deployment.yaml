@@ -41,10 +41,7 @@ spec:
       restartPolicy: Always
       securityContext:
         runAsUser: {{ .Values.uid }}
-      imagePullSecrets:
-      {{- if .Values.global.privateRegistry.enabled }}
-        - name: {{ .Values.global.privateRegistry.secretName }}
-      {{- end }}
+{{- include "astronomer.imagePullSecrets" . | indent 6 }}
       containers:
         - name: commander
           image: {{ template "commander.image" . }}
