@@ -69,10 +69,7 @@ spec:
     {{- end }}
       tolerations:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
-      imagePullSecrets:
-      {{- if .Values.global.privateRegistry.enabled }}
-        - name: {{ .Values.global.privateRegistry.secretName }}
-      {{- end }}
+{{- include "elasticsearch.imagePullSecrets" . | indent 6 }}
       initContainers:
       {{- if (.Values.sysctlInitContainer.enabled) }}
       - name: sysctl

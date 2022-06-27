@@ -34,10 +34,7 @@ spec:
             release: {{ .Release.Name }}
             heritage: {{ .Release.Service }}
         spec:
-          imagePullSecrets:
-          {{- if .Values.global.privateRegistry.enabled }}
-            - name: {{ .Values.global.privateRegistry.secretName }}
-          {{- end }}
+{{- include "elasticsearch.imagePullSecrets" . | indent 10 }}
           containers:
           - name: curator
             image: {{ template "curator.image" . }}
