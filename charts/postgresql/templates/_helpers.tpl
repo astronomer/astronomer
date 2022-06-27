@@ -253,12 +253,10 @@ but Helm 2.9 and 2.10 does not support it, so we need to implement this if-else 
 Also, we can not use a single if because lazy evaluation is not an option
 */}}
 {{- if .Values.global }}
-{{- if .Values.global.imagePullSecrets }}
+{{- if .Values.global.privateRegistry.enabled }}
 imagePullSecrets:
-{{- range .Values.global.imagePullSecrets }}
-  - name: {{ . }}
-{{- end }}
-{{- else if or .Values.image.pullSecrets .Values.metrics.image.pullSecrets .Values.volumePermissions.image.pullSecrets }}
+  - name: {{ .Values.global.privateRegistry.secretName }}
+{{- else if or .Values.global.imagePullSecrets .Values.image.pullSecrets .Values.metrics.image.pullSecrets .Values.volumePermissions.image.pullSecrets }}
 imagePullSecrets:
 {{- range .Values.image.pullSecrets }}
   - name: {{ . }}
