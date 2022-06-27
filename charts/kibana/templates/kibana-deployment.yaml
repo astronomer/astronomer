@@ -31,10 +31,7 @@ spec:
 {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 8 }}
       tolerations:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
-      imagePullSecrets:
-      {{- if .Values.global.privateRegistry.enabled }}
-        - name: {{ .Values.global.privateRegistry.secretName }}
-      {{- end }}
+{{- include "kibana.imagePullSecrets" . | indent 6 }}
       containers:
       - name: kibana
         image: {{ template "kibana.image" . }}

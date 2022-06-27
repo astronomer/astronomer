@@ -45,3 +45,13 @@ kibana.{{ .Values.global.baseDomain }}
 {{ .Values.images.kibana.repository }}:{{ .Values.images.kibana.tag }}
 {{- end }}
 {{- end }}
+
+{{/*
+Return the proper Docker Image Registry Secret Names
+*/}}
+{{- define "kibana.imagePullSecrets" -}}
+{{- if .Values.global.privateRegistry.enabled }}
+imagePullSecrets:
+  - name: {{ .Values.global.privateRegistry.secretName }}
+{{- end -}}
+{{- end -}}
