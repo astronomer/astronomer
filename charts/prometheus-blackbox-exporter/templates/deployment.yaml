@@ -39,10 +39,7 @@ spec:
       tolerations:
 {{ toYaml .Values.tolerations | indent 6 }}
     {{- end }}
-      imagePullSecrets:
-      {{- if .Values.global.privateRegistry.enabled }}
-        - name: {{ .Values.global.privateRegistry.secretName }}
-      {{- end }}
+{{- include "prometheus-blackbox-exporter.imagePullSecrets" . | indent 6 }}
       restartPolicy: {{ .Values.restartPolicy }}
       {{- if .Values.priorityClassName }}
       priorityClassName: "{{ .Values.priorityClassName }}"

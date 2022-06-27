@@ -31,10 +31,7 @@ spec:
 {{- if .Values.priorityClassName }}
       priorityClassName: {{ .Values.priorityClassName }}
 {{- end }}
-      imagePullSecrets:
-      {{- if .Values.global.privateRegistry.enabled }}
-        - name: {{ .Values.global.privateRegistry.secretName }}
-      {{- end }}
+{{- include "prometheus-node-exporter.imagePullSecrets" . | indent 6 }}
       containers:
         - name: node-exporter
           image: {{ template "image" . }}
