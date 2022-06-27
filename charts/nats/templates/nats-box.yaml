@@ -8,10 +8,7 @@ metadata:
     app: {{ template "nats.name" . }}-box
     chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
 spec:
-  imagePullSecrets:
-  {{- if .Values.global.privateRegistry.enabled }}
-    - name: {{ .Values.global.privateRegistry.secretName }}
-  {{- end }}
+{{- include "nats.imagePullSecrets" . | indent 2 }}
   volumes:
   {{- if .Values.natsbox.credentials }}
   - name: nats-sys-creds
