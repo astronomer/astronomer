@@ -51,6 +51,10 @@ spec:
       restartPolicy: {{ .Values.exporter.restartPolicy }}
       securityContext:
 {{ toYaml .Values.exporter.securityContext | indent 8 }}
+      imagePullSecrets:
+      {{- if .Values.global.privateRegistry.enabled }}
+        - name: {{ .Values.global.privateRegistry.secretName }}
+      {{- end }}
       containers:
         - name: metrics-exporter
           image: {{ template "exporter.image" . }}
