@@ -81,7 +81,7 @@ spec:
                 key: data_source_password
           {{- end }}
           {{- end }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          image: {{ include "prometheus-postgres-exporter.image" . }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: {{ .Values.service.name }}
