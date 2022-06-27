@@ -139,6 +139,13 @@ spec:
                 secretKeyRef:
                   name: {{ template "registry.authHeaderSecret" . }}
                   key: token
+            {{- if and .Values.global.customLogging.enabled .Values.global.customLogging.customConfig }}
+            - name: AIRFLOW_SIDECAR_CONFIG
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.loggingSidecar.secretName }}
+                  key: airflowVector
+            {{- end }}
 {{- if .Values.houston.extraContainers }}
 {{- toYaml .Values.houston.extraContainers | nindent 8 }}
 {{- end }}

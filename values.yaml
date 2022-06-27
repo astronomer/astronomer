@@ -106,6 +106,8 @@ global:
     enabled: false
     name: sidecar-log-consumer
     terminationEndpoint: http://localhost:8000/quitquitquit
+    secretName: airflow-vector-config
+    customConfig: ~
 
   # Deploy auth sidecar to use openshift native features
   authSidecar:
