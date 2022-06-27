@@ -73,3 +73,13 @@ Create the name of the service account to use
   proxy_ssl_verify              off;
 {{- end }}
 {{- end }}
+
+{{/*
+Return the proper Docker Image Registry Secret Names
+*/}}
+{{- define "external-es-proxy.imagePullSecrets" -}}
+{{- if .Values.global.privateRegistry.enabled }}
+imagePullSecrets:
+  - name: {{ .Values.global.privateRegistry.secretName }}
+{{- end -}}
+{{- end -}}

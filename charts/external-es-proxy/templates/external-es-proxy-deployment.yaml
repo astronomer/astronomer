@@ -37,13 +37,10 @@ spec:
         iam.amazonaws.com/role: {{ .Values.global.customLogging.awsIAMRole }}
         {{- end }}
     spec:
-      imagePullSecrets:
-      {{- if .Values.global.privateRegistry.enabled }}
-      - name: {{ .Values.global.privateRegistry.secretName }}
-      {{- end }}
       serviceAccountName: {{ include "external-es-proxy.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
+{{- include "external-es-proxy.imagePullSecrets" . | indent 6 }}
       containers:
         - name: {{ .Chart.Name }}
           securityContext:
