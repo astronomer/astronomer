@@ -130,7 +130,7 @@ jobs:
   unittest-charts:
     docker:
       - image: quay.io/astronomer/ci-helm-release:2022-05
-    parallelism: 10
+    parallelism: 8
     resource_class: xlarge
     steps:
       - setup_remote_docker:
