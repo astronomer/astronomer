@@ -131,7 +131,7 @@ jobs:
     docker:
       - image: quay.io/astronomer/ci-helm-release:2022-05
     parallelism: 6
-    resource_class: large
+    resource_class: xlarge
     steps:
       - setup_remote_docker:
           docker_layer_caching: true
