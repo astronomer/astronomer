@@ -363,7 +363,8 @@ prometheus:
   podLabels: {}
   # Data retention
   retention: 15d
-
+  # Scrape interval
+  scrape_interval: 30s
   # Persistence configuration
   persistence:
     enabled: true

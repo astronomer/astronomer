@@ -14,7 +14,7 @@ podLabels: {}
 # missing data on the other Service(s). The StatefulSet will manage the Pods
 # such that only one is replaced at a time.
 replicas: 1
-
+scrape_interval: 30s
 images:
   prometheus:
     repository: quay.io/astronomer/ap-prometheus

@@ -124,3 +124,14 @@ class TestPrometheusConfigConfigmap:
                 ],
             }
         ]
+
+    def test_prometheus_config_configmap_scrape_interval(self, kube_version):
+        """Prometheus should have configurable scrape interval duration which can be defined as helm value"""
+        doc = render_chart(
+            kube_version=kube_version,
+            show_only=self.show_only,
+            values={"prometheus": {"scrape_interval": "30s"}},
+        )[0]
+
+        config_yaml = yaml.safe_load(doc["data"]["config"])
+        assert config_yaml["global"]["scrape_interval"] == "30s"
