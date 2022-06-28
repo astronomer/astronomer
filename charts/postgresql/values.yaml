@@ -15,7 +15,7 @@ global:
 image:
   registry: quay.io
   repository: astronomer/ap-postgresql
-  tag: 11.13.0
+  tag: 11.15.0
   ## Specify a imagePullPolicy
   ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
   ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
@@ -46,7 +46,7 @@ image:
 ## volumePermissions: Change the owner of the persist volume mountpoint to RunAsUser:fsGroup
 ##
 volumePermissions:
-  enabled: true
+  enabled: false
   image:
     ## ref: https://hub.docker.com/r/bitnami/minideb/tags/
     registry: docker.io
