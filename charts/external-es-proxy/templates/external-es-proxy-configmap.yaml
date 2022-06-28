@@ -44,7 +44,11 @@ data:
         location = /_search {
           # This combined with disabling explicit index searching downstream
           # prevents any deployment from being able to query any other indexes.
+          {{- if .Values.global.loggingSidecar.enabled }}
+          rewrite ^/(.*) /vector.$remote_user.*/$1 break;
+          {{- else }}
           rewrite ^/(.*) /fluentd.$remote_user.*/$1 break;
+          {{- end }}
           {{- if  or .Values.global.customLogging.awsSecretName  .Values.global.customLogging.awsServiceAccountAnnotation .Values.global.customLogging.awsIAMRole }}
           proxy_pass http://localhost:{{ .Values.service.awsproxy }};
           {{- else }}

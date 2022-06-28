@@ -339,3 +339,54 @@ class TestExternalElasticSearch:
                 },
             },
         ] == doc["spec"]["ingress"][0]["from"]
+
+    def test_external_es_index_pattern_defaults(self, kube_version):
+        """Test External Elasticsearch Service Index Pattern Search defaults."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "customLogging": {
+                        "enabled": True,
+                        "scheme": "https",
+                        "host": "esdemo.example.com",
+                        "awsServiceAccountAnnotation": "arn:aws:iam::xxxxxxxx:role/customrole",
+                    },
+                },
+            },
+            show_only=[
+                "charts/external-es-proxy/templates/external-es-proxy-configmap.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        es_index = doc["data"]["nginx.conf"]
+        assert doc["kind"] == "ConfigMap"
+        assert "fluentd.$remote_user.*/$1" in es_index
+
+    def test_external_es_index_pattern_with_sidecar_logging_enabled(self, kube_version):
+        """Test External Elasticsearch Service Index Pattern Search with sidecar logging."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "customLogging": {
+                        "enabled": True,
+                        "scheme": "https",
+                        "host": "esdemo.example.com",
+                        "awsServiceAccountAnnotation": "arn:aws:iam::xxxxxxxx:role/customrole",
+                    },
+                    "loggingSidecar": {"enabled": True},
+                },
+            },
+            show_only=[
+                "charts/external-es-proxy/templates/external-es-proxy-configmap.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        es_index = doc["data"]["nginx.conf"]
+        assert doc["kind"] == "ConfigMap"
+        assert "vector.$remote_user.*/$1" in es_index

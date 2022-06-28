@@ -140,6 +140,10 @@ spec:
   volumeClaimTemplates:
   - metadata:
       name: data
+      {{- if .Values.common.persistence.annotations }}
+      annotations:
+        {{- toYaml .Values.common.persistence.annotations | nindent 10 }}
+      {{- end }}
     spec:
       accessModes: [ "ReadWriteOnce" ]
       resources:
