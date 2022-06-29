@@ -6,17 +6,17 @@ from tests.chart_tests.helm_template_generator import render_chart
 chart_values = {
     "astronomer": {
         "houston": {
+            "command": ["/bin/sh"],
             "apiArgs": [
-                "sh",
                 "-c",
-                "yarn serve 1> >( tee -a /var/logs/houston/data.out.log ) 2> >( tee -a /var/logs/houston/data.err.log >&2 )",
+                "yarn serve 1> >( tee -a /var/log/houston/data.out.log ) 2> >( tee -a /var/log/houston/data.err.log >&2 )",
             ],
+            "workerCommand": ["/bin/sh"],
             "workerArgs": [
-                "sh",
                 "-c",
-                "yarn worker 1> >( tee -a /var/logs/houston/data.out.log ) 2> >( tee -a /var/logs/houston/data.err.log >&2 )",
+                "yarn worker 1> >( tee -a /var/log/houston/data.out.log ) 2> >( tee -a /var/log/houston/data.err.log >&2 )",
             ],
-            "volumeMounts": [{"name": "logvol", "mountPath": "/var/logs/houston"}],
+            "volumeMounts": [{"name": "logvol", "mountPath": "/var/log/houston"}],
             "extraContainers": [
                 {
                     "name": "fluentd",
@@ -30,8 +30,12 @@ chart_values = {
             "extraVolumes": [{"name": "logvol", "emptyDir": {}}],
         },
         "commander": {
-            "args": ["sh", "-c", "echo hello"],
-            "volumeMounts": [{"name": "logvol", "mountPath": "/var/logs/commander"}],
+            "command": ["/bin/sh"],
+            "args": [
+                "-c",
+                "commander  1> >( tee -a /var/log/commander/out.log ) 2> >( tee -a /var/log/commander/err.log >&2 )",
+            ],
+            "volumeMounts": [{"name": "logvol", "mountPath": "/var/log/commander"}],
             "extraContainers": [
                 {
                     "name": "fluentd",
