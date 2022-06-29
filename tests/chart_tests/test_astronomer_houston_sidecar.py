@@ -62,26 +62,31 @@ class TestAstronomerFileLogs:
         assert len(container["volumeMounts"]) == 1
 
     def houston_container(self, container, run_type):
+
+        assert container["command"] == ["/bin/sh"]
         assert container["args"] == [
-            "sh",
             "-c",
             "yarn "
             + run_type
-            + " 1> >( tee -a /var/logs/houston/data.out.log ) 2> >( tee -a /var/logs/houston/data.err.log >&2 )",
+            + " 1> >( tee -a /var/log/houston/data.out.log ) 2> >( tee -a /var/log/houston/data.err.log >&2 )",
         ]
 
         volume_mounts = container["volumeMounts"]
         for volume in volume_mounts:
             if volume["name"] == "logvol":
-                assert volume["mountPath"] == "/var/logs/houston"
+                assert volume["mountPath"] == "/var/log/houston"
 
     def commander_container(self, container):
-        assert container["args"] == ["sh", "-c", "echo hello"]
+        assert container["command"] == ["/bin/sh"]
+        assert container["args"] == [
+            "-c",
+            "commander  1> >( tee -a /var/log/commander/out.log ) 2> >( tee -a /var/log/commander/err.log >&2 )",
+        ]
 
         volume_mounts = container["volumeMounts"]
         for volume in volume_mounts:
             if volume["name"] == "logvol":
-                assert volume["mountPath"] == "/var/logs/commander"
+                assert volume["mountPath"] == "/var/log/commander"
 
     def test_file_logs_config(self, kube_version):
         docs = render_chart(
