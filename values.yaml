@@ -106,7 +106,7 @@ global:
     enabled: false
     name: sidecar-log-consumer
     terminationEndpoint: http://localhost:8000/quitquitquit
-    customConfig: ~
+    customConfig: false
 
   # Deploy auth sidecar to use openshift native features
   authSidecar:
