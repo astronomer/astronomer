@@ -47,6 +47,10 @@ spec:
           imagePullPolicy: {{ .Values.images.commander.pullPolicy }}
           resources:
 {{ toYaml .Values.commander.resources | indent 12 }}
+          {{- if .Values.commander.command }}
+          command:
+            {{- toYaml .Values.commander.command | nindent 12 }}
+          {{- end }}
           {{- if .Values.commander.args }}
           args:
             {{- toYaml .Values.commander.args | nindent 12 }}

@@ -114,11 +114,15 @@ spec:
             initialDelaySeconds: {{ .Values.houston.readinessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.houston.readinessProbe.periodSeconds }}
             failureThreshold: {{ .Values.houston.readinessProbe.failureThreshold }}
+          {{- if .Values.houston.command }}
+          command:
+            {{- toYaml .Values.houston.command | nindent 12 }}
+          {{ else }}
+          command: ["yarn", "serve"]
+          {{- end }}
           {{- if .Values.houston.apiArgs }}
           args:
             {{- toYaml .Values.houston.apiArgs | nindent 12 }}
-          {{ else }}
-          args: ["yarn", "serve"]
           {{- end }}
           env:
             {{- include "houston_environment" . | indent 12 }}
