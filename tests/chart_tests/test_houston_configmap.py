@@ -142,7 +142,7 @@ def test_houston_configmap_with_config_syncer_disabled():
     assert not prod_yaml["deployments"].get("loggingSidecar")
 
 
-def test_houston_configmapwith_loggingsidecar_enabled():
+def test_houston_configmap_with_loggingsidecar_enabled():
     """Validate the houston configmap and its embedded data with loggingSidecar."""
     terminationEndpoint = "http://localhost:8000/quitquitquit"
     docs = render_chart(
@@ -165,10 +165,11 @@ def test_houston_configmapwith_loggingsidecar_enabled():
         "enabled": True,
         "name": "sidecar-log-consumer",
         "terminationEndpoint": "http://localhost:8000/quitquitquit",
+        "customConfig": False,
     }
 
 
-def test_houston_configmapwith_loggingsidecar_enabled_with_overrides():
+def test_houston_configmap_with_loggingsidecar_enabled_with_overrides():
     """Validate the houston configmap and its embedded data with loggingSidecar."""
     sidecar_container_name = "sidecar-log-test"
     terminationEndpoint = "http://localhost:8000/quitquitquit"
@@ -198,6 +199,7 @@ def test_houston_configmapwith_loggingsidecar_enabled_with_overrides():
         "enabled": True,
         "name": sidecar_container_name,
         "terminationEndpoint": terminationEndpoint,
+        "customConfig": False,
     }
 
 
