@@ -297,6 +297,8 @@ astronomer:
         cpu: "500m"
         memory: "1024Mi"
 
+  extraObjects: []
+
   # podLabels: {}
 
 #################################
