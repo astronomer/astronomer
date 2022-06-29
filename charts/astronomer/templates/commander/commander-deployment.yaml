@@ -107,12 +107,12 @@ spec:
             {{- end }}
           volumeMounts:
 {{- if .Values.commander.volumeMounts }}
-{{- toYaml .Values.commander.volumeMounts | nindent 12 }}
+{{- tpl (toYaml .Values.commander.volumeMounts) $ | nindent 12 }}
 {{- end }}
 {{- if .Values.commander.extraContainers }}
-{{- toYaml .Values.commander.extraContainers | nindent 8 }}
+{{- tpl (toYaml .Values.commander.extraContainers) $ | nindent 8 }}
 {{- end }}
       volumes:
 {{- if .Values.commander.extraVolumes }}
-{{- toYaml .Values.commander.extraVolumes | nindent 8 }}
+{{- tpl (toYaml .Values.commander.extraVolumes) $ | nindent 8 }}
 {{- end }}

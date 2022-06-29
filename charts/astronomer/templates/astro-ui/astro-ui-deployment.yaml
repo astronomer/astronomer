@@ -74,12 +74,12 @@ spec:
             {{- end }}
           volumeMounts:
 {{- if .Values.astroUI.volumeMounts }}
-{{- toYaml .Values.astroUI.volumeMounts | nindent 12 }}
+{{- tpl (toYaml .Values.astroUI.volumeMounts) $ | nindent 12 }}
 {{- end }}
 {{- if .Values.astroUI.extraContainers }}
-{{- toYaml .Values.astroUI.extraContainers | nindent 8 }}
+{{- tpl (toYaml .Values.astroUI.extraContainers) $ | nindent 8 }}
 {{- end }}
       volumes:
 {{- if .Values.astroUI.extraVolumes }}
-{{- toYaml .Values.astroUI.extraVolumes | nindent 8 }}
+{{- tpl (toYaml .Values.astroUI.extraVolumes) $ | nindent 8 }}
 {{- end }}

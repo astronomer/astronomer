@@ -99,7 +99,7 @@ spec:
             {{- include "houston_volume_mounts" . | indent 12 }}
             {{- include "custom_ca_volume_mounts" . | indent 12 }}
 {{- if .Values.houston.volumeMounts }}
-{{- toYaml .Values.houston.volumeMounts | nindent 12 }}
+{{- tpl (toYaml .Values.houston.volumeMounts) $ | nindent 12 }}
 {{- end }}
           env:
             - name: GRPC_VERBOSITY
@@ -121,11 +121,11 @@ spec:
             - name: APOLLO_SERVER_PLATFORM
               value: "kubernetes/deployment"
 {{- if .Values.houston.extraContainers }}
-{{- toYaml .Values.houston.extraContainers | nindent 8 }}
+{{- tpl (toYaml .Values.houston.extraContainers) $ | nindent 8 }}
 {{- end }}
       volumes:
 {{- if .Values.houston.extraVolumes }}
-{{ toYaml .Values.houston.extraVolumes | indent 8 }}
+{{ tpl (toYaml .Values.houston.extraVolumes) $ | indent 8 }}
 {{- end }}
         {{- include "houston_volumes" . | indent 8 }}
         {{- include "custom_ca_volumes" . | indent 8 }}
