@@ -117,8 +117,6 @@ spec:
           {{- if .Values.houston.command }}
           command:
             {{- toYaml .Values.houston.command | nindent 12 }}
-          {{ else }}
-          command: ["yarn", "serve"]
           {{- end }}
           {{- if .Values.houston.apiArgs }}
           args:
