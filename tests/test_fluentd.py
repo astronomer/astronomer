@@ -48,7 +48,7 @@ def test_fluentd_clusterrolebinding(kube_version):
     doc = docs[0]
     assert doc["kind"] == "ClusterRoleBinding"
     assert doc["apiVersion"] == "rbac.authorization.k8s.io/v1"
-    assert doc["metadata"]["name"] == "RELEASE-NAME-fluentd"
+    assert doc["metadata"]["name"] == "release-name-fluentd"
     assert len(doc["roleRef"]) > 0
     assert len(doc["subjects"]) > 0
 

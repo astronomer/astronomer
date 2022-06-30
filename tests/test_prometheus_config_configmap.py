@@ -24,13 +24,13 @@ class TestPrometheusConfigConfigmap:
 
         assert doc["kind"] == "ConfigMap"
         assert doc["apiVersion"] == "v1"
-        assert doc["metadata"]["name"] == "RELEASE-NAME-prometheus-config"
+        assert doc["metadata"]["name"] == "release-name-prometheus-config"
 
     def test_prometheus_config_configmap_with_different_name_and_ns(self, kube_version):
         """Validate the prometheus config configmap does not conflate deployment name and namespace."""
         docs = render_chart(
-            name="FOO-NAME",
-            namespace="BAR-NS",
+            name="foo-name",
+            namespace="bar-ns",
             kube_version=kube_version,
             show_only=self.show_only,
             values={
@@ -47,7 +47,7 @@ class TestPrometheusConfigConfigmap:
         assert len(docs) == 1
 
         config_yaml = docs[0]["data"]["config"]
-        assert re.search(r"http://FOO-NAME", config_yaml)
-        assert not re.search(r"http://BAR-NS", config_yaml)
-        assert re.search(r"\.BAR-NS:", config_yaml)
-        assert not re.search(r"\.FOO-NAME:", config_yaml)
+        assert re.search(r"http://foo-name", config_yaml)
+        assert not re.search(r"http://bar-ns", config_yaml)
+        assert re.search(r"\.bar-ns:", config_yaml)
+        assert not re.search(r"\.foo-name:", config_yaml)

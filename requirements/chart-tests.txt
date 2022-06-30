@@ -10,38 +10,38 @@ attrs==21.4.0 \
     # via
     #   jsonschema
     #   pytest
-black==22.1.0 \
-    --hash=sha256:07e5c049442d7ca1a2fc273c79d1aecbbf1bc858f62e8184abe1ad175c4f7cc2 \
-    --hash=sha256:0e21e1f1efa65a50e3960edd068b6ae6d64ad6235bd8bfea116a03b21836af71 \
-    --hash=sha256:1297c63b9e1b96a3d0da2d85d11cd9bf8664251fd69ddac068b98dc4f34f73b6 \
-    --hash=sha256:228b5ae2c8e3d6227e4bde5920d2fc66cc3400fde7bcc74f480cb07ef0b570d5 \
-    --hash=sha256:2d6f331c02f0f40aa51a22e479c8209d37fcd520c77721c034517d44eecf5912 \
-    --hash=sha256:2ff96450d3ad9ea499fc4c60e425a1439c2120cbbc1ab959ff20f7c76ec7e866 \
-    --hash=sha256:3524739d76b6b3ed1132422bf9d82123cd1705086723bc3e235ca39fd21c667d \
-    --hash=sha256:35944b7100af4a985abfcaa860b06af15590deb1f392f06c8683b4381e8eeaf0 \
-    --hash=sha256:373922fc66676133ddc3e754e4509196a8c392fec3f5ca4486673e685a421321 \
-    --hash=sha256:5fa1db02410b1924b6749c245ab38d30621564e658297484952f3d8a39fce7e8 \
-    --hash=sha256:6f2f01381f91c1efb1451998bd65a129b3ed6f64f79663a55fe0e9b74a5f81fd \
-    --hash=sha256:742ce9af3086e5bd07e58c8feb09dbb2b047b7f566eb5f5bc63fd455814979f3 \
-    --hash=sha256:7835fee5238fc0a0baf6c9268fb816b5f5cd9b8793423a75e8cd663c48d073ba \
-    --hash=sha256:8871fcb4b447206904932b54b567923e5be802b9b19b744fdff092bd2f3118d0 \
-    --hash=sha256:a7c0192d35635f6fc1174be575cb7915e92e5dd629ee79fdaf0dcfa41a80afb5 \
-    --hash=sha256:b1a5ed73ab4c482208d20434f700d514f66ffe2840f63a6252ecc43a9bc77e8a \
-    --hash=sha256:c8226f50b8c34a14608b848dc23a46e5d08397d009446353dad45e04af0c8e28 \
-    --hash=sha256:ccad888050f5393f0d6029deea2a33e5ae371fd182a697313bdbd835d3edaf9c \
-    --hash=sha256:dae63f2dbf82882fa3b2a3c49c32bffe144970a573cd68d247af6560fc493ae1 \
-    --hash=sha256:e2f69158a7d120fd641d1fa9a921d898e20d52e44a74a6fbbcc570a62a6bc8ab \
-    --hash=sha256:efbadd9b52c060a8fc3b9658744091cb33c31f830b3f074422ed27bad2b18e8f \
-    --hash=sha256:f5660feab44c2e3cb24b2419b998846cbb01c23c7fe645fee45087efa3da2d61 \
-    --hash=sha256:fdb8754b453fb15fad3f72cd9cad3e16776f0964d67cf30ebcbf10327a3777a3
+black==22.3.0 \
+    --hash=sha256:06f9d8846f2340dfac80ceb20200ea5d1b3f181dd0556b47af4e8e0b24fa0a6b \
+    --hash=sha256:10dbe6e6d2988049b4655b2b739f98785a884d4d6b85bc35133a8fb9a2233176 \
+    --hash=sha256:2497f9c2386572e28921fa8bec7be3e51de6801f7459dffd6e62492531c47e09 \
+    --hash=sha256:30d78ba6bf080eeaf0b7b875d924b15cd46fec5fd044ddfbad38c8ea9171043a \
+    --hash=sha256:328efc0cc70ccb23429d6be184a15ce613f676bdfc85e5fe8ea2a9354b4e9015 \
+    --hash=sha256:35020b8886c022ced9282b51b5a875b6d1ab0c387b31a065b84db7c33085ca79 \
+    --hash=sha256:5795a0375eb87bfe902e80e0c8cfaedf8af4d49694d69161e5bd3206c18618bb \
+    --hash=sha256:5891ef8abc06576985de8fa88e95ab70641de6c1fca97e2a15820a9b69e51b20 \
+    --hash=sha256:637a4014c63fbf42a692d22b55d8ad6968a946b4a6ebc385c5505d9625b6a464 \
+    --hash=sha256:67c8301ec94e3bcc8906740fe071391bce40a862b7be0b86fb5382beefecd968 \
+    --hash=sha256:6d2fc92002d44746d3e7db7cf9313cf4452f43e9ea77a2c939defce3b10b5c82 \
+    --hash=sha256:6ee227b696ca60dd1c507be80a6bc849a5a6ab57ac7352aad1ffec9e8b805f21 \
+    --hash=sha256:863714200ada56cbc366dc9ae5291ceb936573155f8bf8e9de92aef51f3ad0f0 \
+    --hash=sha256:9b542ced1ec0ceeff5b37d69838106a6348e60db7b8fdd245294dc1d26136265 \
+    --hash=sha256:a6342964b43a99dbc72f72812bf88cad8f0217ae9acb47c0d4f141a6416d2d7b \
+    --hash=sha256:ad4efa5fad66b903b4a5f96d91461d90b9507a812b3c5de657d544215bb7877a \
+    --hash=sha256:bc58025940a896d7e5356952228b68f793cf5fcb342be703c3a2669a1488cb72 \
+    --hash=sha256:cc1e1de68c8e5444e8f94c3670bb48a2beef0e91dddfd4fcc29595ebd90bb9ce \
+    --hash=sha256:cee3e11161dde1b2a33a904b850b0899e0424cc331b7295f2a9698e79f9a69a0 \
+    --hash=sha256:e3556168e2e5c49629f7b0f377070240bd5511e45e25a4497bb0073d9dda776a \
+    --hash=sha256:e8477ec6bbfe0312c128e74644ac8a02ca06bcdb8982d4ee06f209be28cdf163 \
+    --hash=sha256:ee8f1f7228cce7dffc2b464f07ce769f478968bfb3dd1254a4c2eeed84928aad \
+    --hash=sha256:fd57160949179ec517d32ac2ac898b5f20d68ed1a9c977346efbac9c2f1e779d
     # via -r requirements/chart-tests.in
-cachetools==5.0.0 \
-    --hash=sha256:486471dfa8799eb7ec503a8059e263db000cdda20075ce5e48903087f79d5fd6 \
-    --hash=sha256:8fecd4203a38af17928be7b90689d8083603073622229ca7077b72d8e5a976e4
+cachetools==5.2.0 \
+    --hash=sha256:6a94c6402995a99c3970cc7e4884bb60b4a8639938157eeed436098bf9831757 \
+    --hash=sha256:f9f17d2aec496a9aa6b76f53e3b614c965223c061982d434d160f930c698a9db
     # via google-auth
-certifi==2021.10.8 \
-    --hash=sha256:78884e7c1d4b00ce3cea67b44566851c4343c120abd683433ce934a68ea58872 \
-    --hash=sha256:d62a0163eb4c2344ac042ab2bdf75399a71a2d8c7d47eac2e2ee91b9d6339569
+certifi==2022.5.18.1 \
+    --hash=sha256:9c5705e395cd70084351dd8ad5c41e65655e08ce46f2ec9cf6c2c08390f71eb7 \
+    --hash=sha256:f1d53542ee8cbedbe2118b5686372fb33c297fcd6379b050cca0ef13a597382a
     # via
     #   kubernetes
     #   requests
@@ -49,9 +49,9 @@ charset-normalizer==2.0.12 \
     --hash=sha256:2857e29ff0d34db842cd7ca3230549d1a697f96ee6d3fb071cfa6c7393832597 \
     --hash=sha256:6881edbebdb17b39b4eaaa821b438bf6eddffb4468cf344f09f89def34a8b1df
     # via requests
-click==8.0.4 \
-    --hash=sha256:6a7a62563bbfabfda3a38f3023a1db4a35978c0abd76f6c9605ecd6554d6d9b1 \
-    --hash=sha256:8458d7b1287c5fb128c90e23381cf99dcde74beaf6c7ff6384ce84d6fe090adb
+click==8.1.3 \
+    --hash=sha256:7682dc8afb30297001674575ea00d1814d808d6a36af415a82bd481d37ba7b8e \
+    --hash=sha256:bb4d8133cb15a609f44e8213d9b391b0809795062913b383c62be0ee95b1db48
     # via black
 docker==5.0.3 \
     --hash=sha256:7a79bb439e3df59d0a72621775d600bc8bc8b422d285824cb37103eab91d1ce0 \
@@ -65,9 +65,9 @@ fancycompleter==0.9.1 \
     --hash=sha256:09e0feb8ae242abdfd7ef2ba55069a46f011814a80fe5476be48f51b00247272 \
     --hash=sha256:dd076bca7d9d524cc7f25ec8f35ef95388ffef9ef46def4d3d25e9b044ad7080
     # via pdbpp
-filelock==3.6.0 \
-    --hash=sha256:9cd540a9352e432c7246a48fe4e8712b10acb1df2ad1f30e8c070b82ae1fed85 \
-    --hash=sha256:f8314284bfffbdcfa0ff3d7992b023d4c628ced6feb957351d4c48d059f56bc0
+filelock==3.7.1 \
+    --hash=sha256:37def7b658813cda163b56fc564cdc75e86d338246458c4c28ae84cabefa2404 \
+    --hash=sha256:3a0fd85166ad9dbab54c9aec96737b744106dc5f15c0b09a6744a445299fcf04
     # via -r requirements/chart-tests.in
 gitdb==4.0.9 \
     --hash=sha256:8033ad4e853066ba6ca92050b9df2f89301b8fc8bf7e9324d412a63f8bf1a8fd \
@@ -77,9 +77,9 @@ gitpython==3.1.27 \
     --hash=sha256:1c885ce809e8ba2d88a29befeb385fcea06338d3640712b59ca623c220bb5704 \
     --hash=sha256:5b68b000463593e05ff2b261acff0ff0972df8ab1b70d3cdbd41b546c8b8fc3d
     # via -r requirements/chart-tests.in
-google-auth==2.6.0 \
-    --hash=sha256:218ca03d7744ca0c8b6697b6083334be7df49b7bf76a69d555962fd1a7657b5f \
-    --hash=sha256:ad160fc1ea8f19e331a16a14a79f3d643d813a69534ba9611d2c80dc10439dad
+google-auth==2.7.0 \
+    --hash=sha256:8a954960f852d5f19e6af14dd8e75c20159609e85d8db37e4013cc8c3824a7e1 \
+    --hash=sha256:df549a1433108801b11bdcc0e312eaf0d5f0500db42f0523e4d65c78722e8475
     # via kubernetes
 gprof2dot==2021.2.21 \
     --hash=sha256:1223189383b53dcc8ecfd45787ac48c0ed7b4dbc16ee8b88695d053eea1acabf
@@ -96,13 +96,13 @@ jmespath==1.0.0 \
     --hash=sha256:a490e280edd1f57d6de88636992d05b71e97d69a26a19f058ecf7d304474bf5e \
     --hash=sha256:e8dcd576ed616f14ec02eed0005c85973b5890083313860136657e24784e4c04
     # via -r requirements/chart-tests.in
-jsonschema==4.4.0 \
-    --hash=sha256:636694eb41b3535ed608fe04129f26542b59ed99808b4f688aa32dcf55317a83 \
-    --hash=sha256:77281a1f71684953ee8b3d488371b162419767973789272434bbc3f29d9c8823
+jsonschema==4.6.0 \
+    --hash=sha256:1c92d2db1900b668201f1797887d66453ab1fbfea51df8e4b46236689c427baf \
+    --hash=sha256:9d6397ba4a6c0bf0300736057f649e3e12ecbc07d3e81a0dacb72de4e9801957
     # via -r requirements/chart-tests.in
-kubernetes==23.3.0 \
-    --hash=sha256:05c98e4bd92f7091fa0fa58f594490e712c9151144d5f458235663a8909e342a \
-    --hash=sha256:223ff8f0ece5bc20fb65545f09a2308c5e1e9c0be83ae68504c1b1c6baa38f5b
+kubernetes==23.6.0 \
+    --hash=sha256:cadb1cd7c44eae5b39b50316313343c0f2aff94529f067ec2ba44d38411158e3 \
+    --hash=sha256:dd58e286a53071bc8e32041f07f3c2236b3ed8ca5b9f57794a5077358f7ccb06
     # via -r requirements/chart-tests.in
 mypy-extensions==0.4.3 \
     --hash=sha256:090fedd75945a69ae91ce1303b5824f428daf5a028d2f6ab8a299250a846f15d \
@@ -115,9 +115,7 @@ oauthlib==3.2.0 \
 packaging==21.3 \
     --hash=sha256:dd47c42927d89ab911e606518907cc2d3a1f38bbd026385970643f9c5b8ecfeb \
     --hash=sha256:ef103e05f519cdc783ae24ea4e2e0f508a9c99b2d4969652eed6a2e1ea5bd522
-    # via
-    #   pytest
-    #   pytest-sugar
+    # via pytest
 pathspec==0.9.0 \
     --hash=sha256:7d15c4ddb0b5c802d161efc417ec1a2558ea2653c2e8ad9c19098201dc1c993a \
     --hash=sha256:e564499435a2673d586f6b2130bb5b95f04a3ba06f81b8f895b651a3c76aabb1
@@ -126,9 +124,9 @@ pdbpp==0.10.3 \
     --hash=sha256:79580568e33eb3d6f6b462b1187f53e10cd8e4538f7d31495c9181e2cf9665d1 \
     --hash=sha256:d9e43f4fda388eeb365f2887f4e7b66ac09dce9b6236b76f63616530e2f669f5
     # via -r requirements/chart-tests.in
-platformdirs==2.5.1 \
-    --hash=sha256:7535e70dfa32e84d4b34996ea99c5e432fa29a708d0f4e394bbcb2a8faa4f16d \
-    --hash=sha256:bcae7cab893c2d310a711b70b24efb93334febe65f8de776ee320b517471e227
+platformdirs==2.5.2 \
+    --hash=sha256:027d8e83a2d7de06bbac4e5ef7e023c02b863d7ea5d079477e722bb41ab25788 \
+    --hash=sha256:58c8abb07dcb441e6ee4b11d8df0ac856038f944ab98b7be6b27b2a3c7feef19
     # via black
 pluggy==1.0.0 \
     --hash=sha256:4224373bacce55f955a878bf9cfa763c1e360858e330072059e10bad68531159 \
@@ -150,13 +148,13 @@ pyasn1-modules==0.2.8 \
     --hash=sha256:905f84c712230b2c592c19470d3ca8d552de726050d1d1716282a1f6146be65e \
     --hash=sha256:a50b808ffeb97cb3601dd25981f6b016cbb3d31fbf57a8b8a87428e6158d0c74
     # via google-auth
-pygments==2.11.2 \
-    --hash=sha256:44238f1b60a76d78fc8ca0528ee429702aae011c265fe6a8dd8b63049ae41c65 \
-    --hash=sha256:4e426f72023d88d03b2fa258de560726ce890ff3b630f88c21cbb8b2503b8c6a
+pygments==2.12.0 \
+    --hash=sha256:5eb116118f9612ff1ee89ac96437bb6b49e8f04d8a13b514ba26f620208e26eb \
+    --hash=sha256:dc9c10fb40944260f6ed4c688ece0cd2048414940f1cea51b8b226318411c519
     # via pdbpp
-pyparsing==3.0.7 \
-    --hash=sha256:18ee9022775d270c55187733956460083db60b37d0d0fb357445f3094eed3eea \
-    --hash=sha256:a6c06a88f252e6c322f65faf8f418b16213b51bdfaece0524c1c1bc30c63c484
+pyparsing==3.0.9 \
+    --hash=sha256:2b020ecf7d21b687f219b71ecad3631f644a47f01403fa1d1036b0c6416d70fb \
+    --hash=sha256:5026bae9a10eeaefb61dab2f09052b9f4307d44aee4eda64b309723d8d206bbc
     # via packaging
 pyrepl==0.9.0 \
     --hash=sha256:292570f34b5502e871bbb966d639474f2b57fbfcd3373c2d6a2f3d56e681a775
@@ -184,14 +182,13 @@ pyrsistent==0.18.1 \
     --hash=sha256:f87cc2863ef33c709e237d4b5f4502a62a00fab450c9e020892e8e2ede5847f5 \
     --hash=sha256:fd8da6d0124efa2f67d86fa70c851022f87c98e205f0594e1fae044e7119a5a6
     # via jsonschema
-pytest==7.1.0 \
-    --hash=sha256:b555252a95bbb2a37a97b5ac2eb050c436f7989993565f5e0c9128fcaacadd0e \
-    --hash=sha256:f1089d218cfcc63a212c42896f1b7fbf096874d045e1988186861a1a87d27b47
+pytest==7.1.2 \
+    --hash=sha256:13d0e3ccfc2b6e26be000cb6568c832ba67ba32e719443bfe725814d3c42433c \
+    --hash=sha256:a06a0425453864a270bc45e71f783330a7428defb4230fb5e6a731fde06ecd45
     # via
     #   -r requirements/chart-tests.in
     #   pytest-forked
     #   pytest-profiling
-    #   pytest-sugar
     #   pytest-xdist
 pytest-forked==1.4.0 \
     --hash=sha256:8b67587c8f98cbbadfdd804539ed5455b6ed03802203485dd2f53c1422d7440e \
@@ -202,9 +199,6 @@ pytest-forked==1.4.0 \
 pytest-profiling==1.7.0 \
     --hash=sha256:93938f147662225d2b8bd5af89587b979652426a8a6ffd7e73ec4a23e24b7f29 \
     --hash=sha256:999cc9ac94f2e528e3f5d43465da277429984a1c237ae9818f8cfd0b06acb019
-    # via -r requirements/chart-tests.in
-pytest-sugar==0.9.4 \
-    --hash=sha256:b1b2186b0a72aada6859bea2a5764145e3aaa2c1cfbb23c3a19b5f7b697563d3
     # via -r requirements/chart-tests.in
 pytest-xdist==2.5.0 \
     --hash=sha256:4580deca3ff04ddb2ac53eba39d76cb5dd5edeac050cb6fbc768b0dd712b4edf \
@@ -269,9 +263,9 @@ rsa==4.8 \
     # via pdbpp
 
 # The following packages are considered to be unsafe in a requirements file:
-setuptools==60.9.3 \
-    --hash=sha256:2347b2b432c891a863acadca2da9ac101eae6169b1d3dfee2ec605ecd50dbfe5 \
-    --hash=sha256:e4f30b9f84e5ab3decf945113119649fec09c1fc3507c6ebffec75646c56e62b
+setuptools==59.8.0 \
+    --hash=sha256:09980778aa734c3037a47997f28d6db5ab18bdf2af0e49f719bfc53967fd2e82 \
+    --hash=sha256:608a7885b664342ae9fafc43840b29d219c5a578876f6f7e00c4e2612160587f
     # via google-auth
 six==1.16.0 \
     --hash=sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926 \
@@ -285,31 +279,30 @@ smmap==5.0.0 \
     --hash=sha256:2aba19d6a040e78d8b09de5c57e96207b09ed71d8e55ce0959eeee6c8e190d94 \
     --hash=sha256:c840e62059cd3be204b0c9c9f74be2c09d5648eddd4580d9314c3ecde0b30936
     # via gitdb
-termcolor==1.1.0 \
-    --hash=sha256:1d6d69ce66211143803fbc56652b41d73b4a400a2891d7bf7a1cdf4c02de613b
-    # via pytest-sugar
 tomli==2.0.1 \
     --hash=sha256:939de3e7a6161af0c887ef91b7d41a53e7c5a1ca976325f429cb46ea9bc30ecc \
     --hash=sha256:de526c12914f0c550d15924c62d72abc48d6fe7364aa87328337a31007fe8a4f
     # via
     #   black
     #   pytest
-typing-extensions==4.1.1 \
-    --hash=sha256:1a9462dcc3347a79b1f1c0271fbe79e844580bb598bafa1ed208b94da3cdcd42 \
-    --hash=sha256:21c85e0fe4b9a155d0799430b0ad741cdce7e359660ccbd8b530613e8df88ce2
+typing-extensions==4.2.0 \
+    --hash=sha256:6657594ee297170d19f67d55c05852a874e7eb634f4f753dbd667855e07c1708 \
+    --hash=sha256:f1c24655a0da0d1b67f07e17a5e6b2a105894e6824b92096378bb3668ef02376
     # via black
-urllib3==1.26.8 \
-    --hash=sha256:000ca7f471a233c2251c6c7023ee85305721bfdf18621ebff4fd17a8653427ed \
-    --hash=sha256:0e7c33d9a63e7ddfcb86780aac87befc2fbddf46c58dbb487e0855f7ceec283c
+urllib3==1.26.9 \
+    --hash=sha256:44ece4d53fb1706f667c9bd1c648f5469a2ec925fcf3a776667042d645472c14 \
+    --hash=sha256:aabaf16477806a5e1dd19aa41f8c2b7950dd3c746362d7e3223dbe6de6ac448e
     # via
     #   kubernetes
     #   requests
-websocket-client==1.3.1 \
-    --hash=sha256:074e2ed575e7c822fc0940d31c3ac9bb2b1142c303eafcf3e304e6ce035522e8 \
-    --hash=sha256:6278a75065395418283f887de7c3beafb3aa68dada5cacbe4b214e8d26da499b
+websocket-client==1.3.2 \
+    --hash=sha256:50b21db0058f7a953d67cc0445be4b948d7fc196ecbeb8083d68d94628e4abf6 \
+    --hash=sha256:722b171be00f2b90e1d4fb2f2b53146a536ca38db1da8ff49c972a4e1365d0ef
     # via
     #   docker
     #   kubernetes
 wmctrl==0.4 \
     --hash=sha256:66cbff72b0ca06a22ec3883ac3a4d7c41078bdae4fb7310f52951769b10e14e0
-    # via kubernetes
+    # via
+    #   -r requirements/chart-tests.in
+    #   kubernetes
