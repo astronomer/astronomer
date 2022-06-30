@@ -1,5 +1,4 @@
 import json
-from subprocess import CalledProcessError
 
 import pytest
 
@@ -11,12 +10,14 @@ from .. import supported_k8s_versions
 class TestExtraObjects:
     def test_extra_objects_defaults(self, kube_version):
         """Test that extra-objects works as default."""
-        with pytest.raises(CalledProcessError):
-            render_chart(
-                kube_version=kube_version,
-                values={"astronomer": {"extraObjects": []}},
-                show_only=["charts/astronomer/templates/extra-objects.yaml"],
-            )
+
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"astronomer": {"extraObjects": []}},
+            show_only=["charts/astronomer/templates/extra-objects.yaml"],
+        )
+
+        assert len(docs) == 0
 
     def test_extra_objects_configured(self, kube_version):
         """Test that extra-objects works as default."""
