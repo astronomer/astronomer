@@ -1,0 +1,39 @@
+apiVersion: "acid.zalan.do/v1"
+kind: postgresql
+metadata:
+  name: acid-minimal-cluster
+  namespace: astronomer
+spec:
+  teamId: "acid"
+  volume:
+    size: 1Gi
+  numberOfInstances: 2
+  users:
+    zalando:  # database owner
+    - superuser
+    - createdb
+    foo_user: []  # role for application foo
+  databases:
+    foo: zalando  # dbname: owner
+  preparedDatabases:
+    bar: {}
+  postgresql:
+    version: "14"
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  namespace: astronomer
+  name: postgres-operator-instance-policy
+  labels:
+    release: astronomer
+    heritage: Helm
+spec:
+  podSelector:
+    matchLabels:
+      spilo-role: master
+      cluster-name: acid-minimal-cluster
+  ingress:
+    # Allow inbound connections
+    - ports:
+      - port: 5432

@@ -64,6 +64,9 @@ global:
   # Enables necessary components for Velero (Velero, Grafana Dashboard, Prometheus Alerts)
   veleroEnabled: false
 
+  # Enablepostgres operator in cluster database.
+  postgresOperatorEnabled: false
+
   # Enable default postgresql database.
   # This is not recommended for production.
   postgresqlEnabled: false

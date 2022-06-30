@@ -61,7 +61,6 @@ source "$GIT_ROOT/bin/setup-kind"
 echo "Deploying Astronomer..."
 helm install -f "$CONFIG_FILE" \
   --namespace "${NAMESPACE}" astronomer \
-  --set global.postgresqlEnabled=true \
   "$GIT_ROOT"
 
 

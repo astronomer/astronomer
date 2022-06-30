@@ -58,6 +58,11 @@ dependencies:
     condition: global.fluentdEnabled
     tags:
       - logging
+  # In-cluster DB zalando postgres operator
+  - name: postgresOperator
+    condition: global.postgresOperatorEnabled
+    tags:
+      - postgresOperator
   # In-cluster DB, not recommended
   # for production
   - name: postgresql

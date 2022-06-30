@@ -136,3 +136,17 @@ The code in this repo is licensed Apache 2.0 with Commons Clause, however it ins
 ## Optional schema validation
 
 The ./values.schema.json.example file can be used to validate the helm values you are using work with the default airflow chart shipped with this repo. To use it remove the .example postfix from the file and proceed with the helm lint, install, and upgrade commands as normal.
+
+## How to use an postgres-operator incluster database
+1. set global.postgresqlEnabled to false and global.postgresOperatorEnabled to true
+2. install the helm chart either manually or via ./bin/reset-local-dev
+3. wait for the postgres operator to come up
+4. Install the potgres instance and network policy via
+```
+kubectl create -f ./templates/postgres-operator-instance/minimal-postgres-manifest.yaml
+```
+5. Create the db secret via
+```
+export PGPASSWORD=$(kubectl get secret zalando.acid-minimal-cluster.credentials.postgresql.acid.zalan.do -o 'jsonpath={.data.password}' -n astronomer | base64 -d)
+kubectl create secret generic astronomer-bootstrap --from-literal connection="postgres://zalando:$PGPASSWORD@acid-minimal-cluster.astronomer.svc.cluster.local:5432" --namespace astronomer
+```
