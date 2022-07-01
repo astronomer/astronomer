@@ -358,6 +358,7 @@ grafana:
 
 #################################
 ## Prometheus configuration
+## Scrape interval can be modified by using arg --set in helm install/update operations
 #################################
 prometheus:
   podLabels: {}
