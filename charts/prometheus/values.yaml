@@ -17,16 +17,20 @@ replicas: 1
 scrape_interval: 30s
 evaluation_interval: 30s
 velero:
+  enabled: false
   scrape_interval: 30s
 kubeState:
+  enabled: true
   scrape_interval: 10s
 fluentd:
   scrape_interval: 30s
 nodeExporter:
+  enabled: true
   scrape_interval: 30s
 airflow:
   scrape_interval: 10s
 postgresqlExporter:
+  enabled: false
   scrape_interval: 60s
   scrape_timeout: 30s
 images:
