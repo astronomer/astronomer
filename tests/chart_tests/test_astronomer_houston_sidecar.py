@@ -6,17 +6,12 @@ from tests.chart_tests.helm_template_generator import render_chart
 chart_values = {
     "astronomer": {
         "houston": {
+            "command": ["/bin/sh"],
             "apiArgs": [
-                "sh",
                 "-c",
-                "yarn serve 1> >( tee -a /var/logs/houston/data.out.log ) 2> >( tee -a /var/logs/houston/data.err.log >&2 )",
+                "yarn serve 1> >( tee -a /var/log/houston/data.out.log ) 2> >( tee -a /var/log/houston/data.err.log >&2 )",
             ],
-            "workerArgs": [
-                "sh",
-                "-c",
-                "yarn worker 1> >( tee -a /var/logs/houston/data.out.log ) 2> >( tee -a /var/logs/houston/data.err.log >&2 )",
-            ],
-            "volumeMounts": [{"name": "logvol", "mountPath": "/var/logs/houston"}],
+            "volumeMounts": [{"name": "logvol", "mountPath": "/var/log/houston"}],
             "extraContainers": [
                 {
                     "name": "fluentd",
@@ -28,10 +23,35 @@ chart_values = {
                 }
             ],
             "extraVolumes": [{"name": "logvol", "emptyDir": {}}],
+            "worker": {
+                "command": ["/bin/sh"],
+                "args": [
+                    "-c",
+                    "yarn worker 1> >( tee -a /var/log/houston_worker/data.out.log ) 2> >( tee -a /var/log/houston_worker/data.err.log >&2 )",
+                ],
+                "volumeMounts": [
+                    {"name": "logvol", "mountPath": "/var/log/houston_worker"}
+                ],
+                "extraContainers": [
+                    {
+                        "name": "fluentd",
+                        "image": "ap-fluentd:0.5",
+                        "imagePullPolicy": "Never",
+                        "volumeMounts": [
+                            {"name": "logvol", "mountPath": "/var/log/file_logs/"}
+                        ],
+                    }
+                ],
+                "extraVolumes": [{"name": "logvol", "emptyDir": {}}],
+            },
         },
         "commander": {
-            "args": ["sh", "-c", "echo hello"],
-            "volumeMounts": [{"name": "logvol", "mountPath": "/var/logs/commander"}],
+            "command": ["/bin/sh"],
+            "args": [
+                "-c",
+                "commander  1> >( tee -a /var/log/commander/out.log ) 2> >( tee -a /var/log/commander/err.log >&2 )",
+            ],
+            "volumeMounts": [{"name": "logvol", "mountPath": "/var/log/commander"}],
             "extraContainers": [
                 {
                     "name": "fluentd",
@@ -57,27 +77,45 @@ class TestAstronomerFileLogs:
         assert container["image"] == "ap-fluentd:0.5"
         assert len(container["volumeMounts"]) == 1
 
-    def houston_container(self, container, run_type):
+    def houston_container(self, container):
+
+        assert container["command"] == ["/bin/sh"]
         assert container["args"] == [
-            "sh",
             "-c",
-            "yarn "
-            + run_type
-            + " 1> >( tee -a /var/logs/houston/data.out.log ) 2> >( tee -a /var/logs/houston/data.err.log >&2 )",
+            "yarn serve"
+            + " 1> >( tee -a /var/log/houston/data.out.log ) 2> >( tee -a /var/log/houston/data.err.log >&2 )",
         ]
 
         volume_mounts = container["volumeMounts"]
         for volume in volume_mounts:
             if volume["name"] == "logvol":
-                assert volume["mountPath"] == "/var/logs/houston"
+                assert volume["mountPath"] == "/var/log/houston"
 
-    def commander_container(self, container):
-        assert container["args"] == ["sh", "-c", "echo hello"]
+    def houston_worker_container(self, container):
+
+        assert container["command"] == ["/bin/sh"]
+        assert container["args"] == [
+            "-c",
+            "yarn worker"
+            + " 1> >( tee -a /var/log/houston_worker/data.out.log ) 2> >( tee -a /var/log/houston_worker/data.err.log >&2 )",
+        ]
 
         volume_mounts = container["volumeMounts"]
         for volume in volume_mounts:
             if volume["name"] == "logvol":
-                assert volume["mountPath"] == "/var/logs/commander"
+                assert volume["mountPath"] == "/var/log/houston_worker"
+
+    def commander_container(self, container):
+        assert container["command"] == ["/bin/sh"]
+        assert container["args"] == [
+            "-c",
+            "commander  1> >( tee -a /var/log/commander/out.log ) 2> >( tee -a /var/log/commander/err.log >&2 )",
+        ]
+
+        volume_mounts = container["volumeMounts"]
+        for volume in volume_mounts:
+            if volume["name"] == "logvol":
+                assert volume["mountPath"] == "/var/log/commander"
 
     def test_file_logs_config(self, kube_version):
         docs = render_chart(
@@ -106,14 +144,14 @@ class TestAstronomerFileLogs:
                 if name == "astro-file-logs-houston":
 
                     if container["name"] == "houston":
-                        self.houston_container(container=container, run_type="serve")
+                        self.houston_container(container=container)
                     elif container["name"] == "fluentd":
                         self.fleuntd_container(container=container)
 
                 elif name == "astro-file-logs-houston-worker":
 
                     if container["name"] == "houston":
-                        self.houston_container(container, "worker")
+                        self.houston_worker_container(container=container)
                     elif container["name"] == "fluentd":
                         self.fleuntd_container(container)
 
