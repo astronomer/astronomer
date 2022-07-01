@@ -250,8 +250,7 @@ class TestElasticSearch:
         assert len(docs) == 1
         doc = docs[0]
         pod_data = doc["spec"]["template"]["spec"]
-        assert pod_data["securityContext"]["runAsNonRoot"] is True
-        assert pod_data["securityContext"]["runAsUser"] == 1000
+        assert pod_data["securityContext"]["runAsUser"] == 65534
 
     def test_elasticsearch_exporter_securitycontext_overrides(self, kube_version):
         """Test ElasticSearch Exporter with securityContext default values"""
@@ -271,4 +270,5 @@ class TestElasticSearch:
         assert len(docs) == 1
         doc = docs[0]
         pod_data = doc["spec"]["template"]["spec"]
-        assert pod_data["securityContext"]["runAsUser"] == 65534
+        assert pod_data["securityContext"]["runAsNonRoot"] is True
+        assert pod_data["securityContext"]["runAsUser"] == 2000
