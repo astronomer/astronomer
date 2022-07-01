@@ -156,16 +156,16 @@ class TestElasticSearch:
         doc = docs[0]
         assert "NetworkPolicy" == doc["kind"]
         assert [
-            {
-                "namespaceSelector": {},
-                "podSelector": {
-                    "matchLabels": {"tier": "airflow", "component": "webserver"}
-                },
-            },
-        ] == doc["spec"]["ingress"][0]["from"]
+                   {
+                       "namespaceSelector": {},
+                       "podSelector": {
+                           "matchLabels": {"tier": "airflow", "component": "webserver"}
+                       },
+                   },
+               ] == doc["spec"]["ingress"][0]["from"]
 
     def test_nginx_es_client_network_selector_with_logging_sidecar_enabled(
-        self, kube_version
+            self, kube_version
     ):
         """Test Nginx ES Service with NetworkPolicies."""
         docs = render_chart(
@@ -180,31 +180,31 @@ class TestElasticSearch:
         doc = docs[0]
         assert "NetworkPolicy" == doc["kind"]
         assert [
-            {
-                "namespaceSelector": {},
-                "podSelector": {
-                    "matchLabels": {"tier": "airflow", "component": "webserver"}
-                },
-            },
-            {
-                "namespaceSelector": {},
-                "podSelector": {
-                    "matchLabels": {"component": "scheduler", "tier": "airflow"}
-                },
-            },
-            {
-                "namespaceSelector": {},
-                "podSelector": {
-                    "matchLabels": {"component": "worker", "tier": "airflow"}
-                },
-            },
-            {
-                "namespaceSelector": {},
-                "podSelector": {
-                    "matchLabels": {"component": "triggerer", "tier": "airflow"}
-                },
-            },
-        ] == doc["spec"]["ingress"][0]["from"]
+                   {
+                       "namespaceSelector": {},
+                       "podSelector": {
+                           "matchLabels": {"tier": "airflow", "component": "webserver"}
+                       },
+                   },
+                   {
+                       "namespaceSelector": {},
+                       "podSelector": {
+                           "matchLabels": {"component": "scheduler", "tier": "airflow"}
+                       },
+                   },
+                   {
+                       "namespaceSelector": {},
+                       "podSelector": {
+                           "matchLabels": {"component": "worker", "tier": "airflow"}
+                       },
+                   },
+                   {
+                       "namespaceSelector": {},
+                       "podSelector": {
+                           "matchLabels": {"component": "triggerer", "tier": "airflow"}
+                       },
+                   },
+               ] == doc["spec"]["ingress"][0]["from"]
 
     def test_nginx_es_index_pattern_defaults(self, kube_version):
         """Test External Elasticsearch Service Index Pattern Search defaults."""
@@ -250,7 +250,8 @@ class TestElasticSearch:
         assert len(docs) == 1
         doc = docs[0]
         pod_data = doc["spec"]["template"]["spec"]
-        assert pod_data["securityContext"]["runAsUser"] == 65534
+
+        assert pod_data["securityContext"] is None
 
     def test_elasticsearch_exporter_securitycontext_overrides(self, kube_version):
         """Test ElasticSearch Exporter with securityContext default values"""
