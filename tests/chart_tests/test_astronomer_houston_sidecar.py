@@ -11,11 +11,6 @@ chart_values = {
                 "-c",
                 "yarn serve 1> >( tee -a /var/log/houston/data.out.log ) 2> >( tee -a /var/log/houston/data.err.log >&2 )",
             ],
-            "workerCommand": ["/bin/sh"],
-            "workerArgs": [
-                "-c",
-                "yarn worker 1> >( tee -a /var/log/houston/data.out.log ) 2> >( tee -a /var/log/houston/data.err.log >&2 )",
-            ],
             "volumeMounts": [{"name": "logvol", "mountPath": "/var/log/houston"}],
             "extraContainers": [
                 {
@@ -28,6 +23,27 @@ chart_values = {
                 }
             ],
             "extraVolumes": [{"name": "logvol", "emptyDir": {}}],
+            "worker": {
+                "command": ["/bin/sh"],
+                "args": [
+                    "-c",
+                    "yarn worker 1> >( tee -a /var/log/houston/data.out.log ) 2> >( tee -a /var/log/houston/data.err.log >&2 )",
+                ],
+                "volumeMounts": [
+                    {"name": "logvol", "mountPath": "/var/log/houston_worker"}
+                ],
+                "extraContainers": [
+                    {
+                        "name": "fluentd",
+                        "image": "ap-fluentd:0.5",
+                        "imagePullPolicy": "Never",
+                        "volumeMounts": [
+                            {"name": "logvol", "mountPath": "/var/log/file_logs/"}
+                        ],
+                    }
+                ],
+                "extraVolumes": [{"name": "logvol", "emptyDir": {}}],
+            },
         },
         "commander": {
             "command": ["/bin/sh"],
