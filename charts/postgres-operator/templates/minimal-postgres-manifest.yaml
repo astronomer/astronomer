@@ -35,7 +35,6 @@ metadata:
 spec:
   podSelector:
     matchLabels:
-      spilo-role: master
       cluster-name: acid-minimal-cluster
   ingress:
     # Allow inbound connections
