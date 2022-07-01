@@ -201,9 +201,10 @@ exporter:
     # Path under which to expose metrics.
     path: /metrics
 
-  securityContext:
-    runAsNonRoot: true
-    runAsUser: 1000
+#  securityContext:
+#    runAsNonRoot: true
+#    runAsUser: 1000
+#    runAsGroup: 1000
 
 # NGINX Elasticsearch values
 nginx:
