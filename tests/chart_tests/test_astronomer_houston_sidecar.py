@@ -27,7 +27,7 @@ chart_values = {
                 "command": ["/bin/sh"],
                 "args": [
                     "-c",
-                    "yarn worker 1> >( tee -a /var/log/houston/data.out.log ) 2> >( tee -a /var/log/houston/data.err.log >&2 )",
+                    "yarn worker 1> >( tee -a /var/log/houston_worker/data.out.log ) 2> >( tee -a /var/log/houston_worker/data.err.log >&2 )",
                 ],
                 "volumeMounts": [
                     {"name": "logvol", "mountPath": "/var/log/houston_worker"}
@@ -82,8 +82,7 @@ class TestAstronomerFileLogs:
         assert container["command"] == ["/bin/sh"]
         assert container["args"] == [
             "-c",
-            "yarn "
-            + run_type
+            "yarn serve"
             + " 1> >( tee -a /var/log/houston/data.out.log ) 2> >( tee -a /var/log/houston/data.err.log >&2 )",
         ]
 
@@ -91,6 +90,20 @@ class TestAstronomerFileLogs:
         for volume in volume_mounts:
             if volume["name"] == "logvol":
                 assert volume["mountPath"] == "/var/log/houston"
+
+    def houston_worker_container(self, container):
+
+        assert container["command"] == ["/bin/sh"]
+        assert container["args"] == [
+            "-c",
+            "yarn worker"
+            + " 1> >( tee -a /var/log/houston_worker/data.out.log ) 2> >( tee -a /var/log/houston_worker/data.err.log >&2 )",
+        ]
+
+        volume_mounts = container["volumeMounts"]
+        for volume in volume_mounts:
+            if volume["name"] == "logvol":
+                assert volume["mountPath"] == "/var/log/houston_worker"
 
     def commander_container(self, container):
         assert container["command"] == ["/bin/sh"]
@@ -131,14 +144,14 @@ class TestAstronomerFileLogs:
                 if name == "astro-file-logs-houston":
 
                     if container["name"] == "houston":
-                        self.houston_container(container=container, run_type="serve")
+                        self.houston_container(container=container)
                     elif container["name"] == "fluentd":
                         self.fleuntd_container(container=container)
 
                 elif name == "astro-file-logs-houston-worker":
 
                     if container["name"] == "houston":
-                        self.houston_container(container, "worker")
+                        self.houston_worker_container(container=container)
                     elif container["name"] == "fluentd":
                         self.fleuntd_container(container)
 
