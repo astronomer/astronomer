@@ -271,5 +271,4 @@ class TestElasticSearch:
         assert len(docs) == 1
         doc = docs[0]
         pod_data = doc["spec"]["template"]["spec"]
-        assert pod_data["securityContext"]["runAsNonRoot"] is True
-        assert pod_data["securityContext"]["runAsUser"] == 2000
+        assert pod_data["securityContext"]["runAsUser"] == 65534
