@@ -140,12 +140,7 @@ The ./values.schema.json.example file can be used to validate the helm values yo
 ## How to use an postgres-operator incluster database
 1. set global.postgresqlEnabled to false and global.postgresOperatorEnabled to true
 2. install the helm chart either manually or via ./bin/reset-local-dev
-3. wait for the postgres operator to come up
-4. Install the potgres instance and network policy via
-```
-kubectl create -f ./templates/postgres-operator-instance/minimal-postgres-manifest.yaml
-```
-5. Create the db secret via
+3. Create the db secret via
 ```
 export PGPASSWORD=$(kubectl get secret zalando.acid-minimal-cluster.credentials.postgresql.acid.zalan.do -o 'jsonpath={.data.password}' -n astronomer | base64 -d)
 kubectl create secret generic astronomer-bootstrap --from-literal connection="postgres://zalando:$PGPASSWORD@acid-minimal-cluster.astronomer.svc.cluster.local:5432" --namespace astronomer

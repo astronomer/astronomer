@@ -20,6 +20,7 @@ spec:
       serviceAccountName: postgres-operator
       containers:
       - name: postgres-operator
+        # IMPORTANT when we inevitably need to upgrade this we need to make sure we also copy the new crd file ./crds/postgresql.crd.yaml
         image: registry.opensource.zalan.do/acid/postgres-operator:v1.8.1
         imagePullPolicy: IfNotPresent
         resources:
