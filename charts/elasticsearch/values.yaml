@@ -10,11 +10,11 @@ tolerations: []
 images:
   es:
     repository: quay.io/astronomer/ap-elasticsearch
-    tag: 7.17.3-1
+    tag: 7.17.4
     pullPolicy: IfNotPresent
   init:
     repository: quay.io/astronomer/ap-base
-    tag: 3.15.4
+    tag: 3.16.0
     pullPolicy: IfNotPresent
   curator:
     repository: quay.io/astronomer/ap-curator
@@ -26,7 +26,7 @@ images:
     pullPolicy: IfNotPresent
   nginx:
     repository: quay.io/astronomer/ap-nginx-es
-    tag: 1.21.6-3
+    tag: 1.23.0
     pullPolicy: IfNotPresent
 
 common:
@@ -50,6 +50,7 @@ common:
   # associated persistent volume claims.
   persistence:
     enabled: true
+    annotations: {}
 
     # The PVC storage class that backs the persistent volume claims. On AWS
     # "gp2" would be appropriate.
@@ -199,6 +200,10 @@ exporter:
   web:
     # Path under which to expose metrics.
     path: /metrics
+
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
 
 # NGINX Elasticsearch values
 nginx:

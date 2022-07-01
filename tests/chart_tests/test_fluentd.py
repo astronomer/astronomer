@@ -108,6 +108,6 @@ def test_fluentd_configmap_manual_namespaces_and_namespacepools_disabled(kube_ve
     )[0]
 
     expected_rule = (
-        "key $.kubernetes.namespace_name\n    pattern \"^#{ENV['NAMESPACE']}(?:-.*)?$\""
+        'key $.kubernetes.namespace_labels.platform\n    pattern "release-name"'
     )
     assert expected_rule in doc["data"]["output.conf"]

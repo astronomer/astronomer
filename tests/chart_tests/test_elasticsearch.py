@@ -205,3 +205,71 @@ class TestElasticSearch:
                 },
             },
         ] == doc["spec"]["ingress"][0]["from"]
+
+    def test_nginx_es_index_pattern_defaults(self, kube_version):
+        """Test External Elasticsearch Service Index Pattern Search defaults."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={},
+            show_only=[
+                "charts/elasticsearch/templates/nginx/nginx-es-configmap.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        es_index = doc["data"]["nginx.conf"]
+        assert doc["kind"] == "ConfigMap"
+        assert "fluentd.$remote_user.*/$1" in es_index
+
+    def test_nginx_es_index_pattern_with_sidecar_logging_enabled(self, kube_version):
+        """Test Nginx ES Service Index Pattern Search with sidecar logging."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"loggingSidecar": {"enabled": True}}},
+            show_only=[
+                "charts/elasticsearch/templates/nginx/nginx-es-configmap.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        es_index = doc["data"]["nginx.conf"]
+        assert doc["kind"] == "ConfigMap"
+        assert "vector.$remote_user.*/$1" in es_index
+
+    def test_elasticsearch_exporter_securitycontext_defaults(self, kube_version):
+        """Test ElasticSearch Exporter with securityContext default values"""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={},
+            show_only=[
+                "charts/elasticsearch/templates/exporter/es-exporter-deployment.yaml"
+            ],
+        )
+        assert len(docs) == 1
+        doc = docs[0]
+        pod_data = doc["spec"]["template"]["spec"]
+        assert pod_data["securityContext"]["runAsNonRoot"] is True
+        assert pod_data["securityContext"]["runAsUser"] == 1000
+
+    def test_elasticsearch_exporter_securitycontext_overrides(self, kube_version):
+        """Test ElasticSearch Exporter with securityContext default values"""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "elasticsearch": {
+                    "exporter": {
+                        "securityContext": {"runAsNonRoot": True, "runAsUser": 2000}
+                    }
+                }
+            },
+            show_only=[
+                "charts/elasticsearch/templates/exporter/es-exporter-deployment.yaml"
+            ],
+        )
+        assert len(docs) == 1
+        doc = docs[0]
+        pod_data = doc["spec"]["template"]["spec"]
+        assert pod_data["securityContext"]["runAsNonRoot"] is True
+        assert pod_data["securityContext"]["runAsUser"] == 2000

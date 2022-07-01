@@ -101,14 +101,18 @@ data:
     <filter kubernetes.**>
       @type grep
       <regexp>
-        key $.kubernetes.namespace_name
         {{- if and .Values.global.features.namespacePools.enabled (gt (len .Values.global.features.namespacePools.namespaces.names) 0) }}
+        key $.kubernetes.namespace_name
         pattern ^({{ join "|" .Values.global.features.namespacePools.namespaces.names }})$
         {{- else if .Values.global.manualNamespaceNamesEnabled }}
+        key $.kubernetes.namespace_name
         # fluentd should gather logs from all namespaces if manualNamespaceNamesEnabled is enabled
         pattern "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
         {{ else }}
-        pattern "^#{ENV['NAMESPACE']}(?:-.*)?$"
+        # only retrieve logs from namespaces containing the label "platform", which is added to all namespaces used to host Airflow Deployments.
+        # this makes sure that if customers enable namespaces pools, then disable it, we can still get the logs from these deployments.
+        key $.kubernetes.namespace_labels.platform
+        pattern "{{ .Release.Name }}"
         {{ end }}
       </regexp>
       <regexp>

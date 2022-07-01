@@ -32,11 +32,11 @@ images:
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
-    tag: 0.26.6
+    tag: 0.26.7
     pullPolicy: IfNotPresent
   cliInstall:
     repository: quay.io/astronomer/ap-cli-install
-    tag: 0.26.5
+    tag: 0.26.6
     pullPolicy: IfNotPresent
 
 astroUI:
@@ -292,6 +292,7 @@ registry:
     size: 100Gi
     # If using a custom storageClass, pass name ref to all statefulSets here
     storageClassName: ~
+    annotations: {}
 
   auth:
     secretName: ~

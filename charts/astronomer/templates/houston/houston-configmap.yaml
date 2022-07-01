@@ -124,6 +124,9 @@ data:
           # Enabled network polices to restrict the way pods can communicate.
             enabled: true
           {{ end }}
+          # Enable FlowerUI flag by default
+          flower:
+            enabled: true
           webserver:
             {{ if .Values.configSyncer.enabled }}
             extraVolumeMounts:
@@ -345,7 +348,7 @@ data:
     elasticsearch:
       enabled: true
       client:
-        host: {{ printf "%s-external-es-proxy:9201" .Release.Name }}
+        node: {{ printf "https://%s-external-es-proxy:9201" .Release.Name }}
         log: error
     {{- end }}
 
@@ -359,7 +362,7 @@ data:
     elasticsearch:
       enabled: true
       client:
-        host: {{ printf "%s-elasticsearch:9200" .Release.Name }}
+        node: {{ printf "http://%s-elasticsearch:9200" .Release.Name }}
         log: error
     {{- end }}
 
