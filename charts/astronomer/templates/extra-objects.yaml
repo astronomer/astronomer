@@ -1,0 +1,7 @@
+#######################################
+## Astronomer Platform Extra Object ##
+#######################################
+{{ range .Values.extraObjects }}
+---
+{{ tpl (toYaml .) $ }}
+{{ end }}

@@ -111,7 +111,7 @@ global:
   authSidecar:
     enabled: false
     repository: quay.io/astronomer/ap-auth-sidecar
-    tag: 1.22.0
+    tag: 1.23.0
     pullPolicy: IfNotPresent
     port: 8084
     default_nginx_settings: |
@@ -296,6 +296,8 @@ astronomer:
         cpu: "500m"
         memory: "1024Mi"
 
+  extraObjects: []
+
   # podLabels: {}
 
 #################################
@@ -357,6 +359,7 @@ grafana:
 
 #################################
 ## Prometheus configuration
+## Scrape interval can be modified by using arg --set in helm install/update operations
 #################################
 prometheus:
   podLabels: {}

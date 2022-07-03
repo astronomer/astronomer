@@ -26,7 +26,7 @@ images:
     pullPolicy: IfNotPresent
   nginx:
     repository: quay.io/astronomer/ap-nginx-es
-    tag: 1.22.0
+    tag: 1.23.0
     pullPolicy: IfNotPresent
 
 common:
@@ -200,10 +200,6 @@ exporter:
   web:
     # Path under which to expose metrics.
     path: /metrics
-
-  securityContext:
-    runAsNonRoot: true
-    runAsUser: 1000
 
 # NGINX Elasticsearch values
 nginx:

@@ -124,6 +124,9 @@ data:
           # Enabled network polices to restrict the way pods can communicate.
             enabled: true
           {{ end }}
+          # Enable FlowerUI flag by default
+          flower:
+            enabled: true
           webserver:
             {{ if .Values.configSyncer.enabled }}
             extraVolumeMounts:
