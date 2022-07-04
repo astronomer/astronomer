@@ -173,8 +173,11 @@ class TestPrometheusConfigConfigmap:
             kube_version=kube_version,
             show_only=self.show_only,
             values={
+                "global": {
+                    "nodeExporterEnabled": True,
+                },
                 "prometheus": {
-                    "nodeExporter": {"enabled": True, "scrape_interval": "333s"},
+                    "nodeExporter": {"scrape_interval": "333s"},
                 },
             },
         )[0]
@@ -183,6 +186,7 @@ class TestPrometheusConfigConfigmap:
         nodeExporterConfigs = [
             x for x in config_yaml["scrape_configs"] if x["job_name"] == "node-exporter"
         ]
+
         if nodeExporterConfigs[0]["scrape_interval"]:
             assert nodeExporterConfigs[0]["scrape_interval"] == "333s"
 
