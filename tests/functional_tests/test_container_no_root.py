@@ -6,11 +6,9 @@ import testinfra
 from tests.functional_tests.conftest import get_pod_running_containers
 
 container_ignore_list = [
-    "astronomer-kubed",
     "kube-state",
     "houston",
     "fluentd",
-    "metrics-exporter",
 ]
 
 container_list = get_pod_running_containers()
@@ -35,5 +33,8 @@ def test_container_non_root(request, container):
         f"kubectl://{container['pod_name']}?container={container['_name']}&namespace={container['namespace']}"
     )
 
-    user = pod_client.check_output("whoami")
-    assert user != "root"
+    user_info = pod_client.user()
+    assert user_info.name != "root"
+    assert user_info.group != "root"
+    assert user_info.gid != 0
+    assert user_info.uid != 0

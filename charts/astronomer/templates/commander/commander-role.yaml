@@ -131,9 +131,6 @@ rules:
 - apiGroups: ["authorization.k8s.io"]
   resources: ["subjectaccessreviews"]
   verbs: ["create", "delete", "list", "watch"]
-- apiGroups: ["kubed.appscode.com"]
-  resources: ["searchresults"]
-  verbs: ["get", "list", "watch"]
 - apiGroups: ["policy"]
   resources: ["poddisruptionbudgets"]
   verbs: ["create", "delete", "get", "list", "watch"]
@@ -160,10 +157,35 @@ rules:
 {{- end }}
 {{- end }}
 {{- end }}
-{{- if $.Values.global.sccEnabled }}
+# Only grant OpenShift permissions if using cluster Roles.
+# Commander needs Cluster-level permissions to manage SecurityContextConstraints
+{{- if and $useClusterRoles $.Values.global.sccEnabled }}
 - apiGroups: ["security.openshift.io"]
   resources: ["securitycontextconstraints"]
   verbs: ["create", "delete", "list", "watch"]
 {{ end }}
 {{ end }}
+{{- end }}
+
+# If users run Openshift, and are using namespace pools, we also need to provide commander
+# with CLUSTER permissions for the SecurityContextConstraints resource from Openshift.
+{{- if and .Values.global.rbacEnabled .Values.global.sccEnabled (not $useClusterRoles) }}
+---
+kind: ClusterRole
+apiVersion: {{ template "apiVersion.rbac" . }}
+metadata:
+  name: {{ $.Release.Name }}-commander
+  labels:
+    tier: houston
+    release: {{ $.Release.Name }}
+    chart: "{{ $.Chart.Name }}-{{ $.Chart.Version }}"
+    heritage: {{ $.Release.Service }}
+  {{- if $.Values.global.enableArgoCDAnnotation }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+  {{- end }}
+rules:
+- apiGroups: ["security.openshift.io"]
+  resources: ["securitycontextconstraints"]
+  verbs: ["create", "delete", "list", "watch"]
 {{- end }}

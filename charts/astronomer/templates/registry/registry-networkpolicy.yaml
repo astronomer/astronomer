@@ -1,6 +1,7 @@
 ################################
 ## Registry NetworkPolicy
 #################################
+{{- if .Values.global.networkPolicy.enabled }}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -35,6 +36,11 @@ spec:
           tier: astronomer
           release: {{ .Release.Name }}
           component: houston-update-airflow-check
+    - podSelector:
+        matchLabels:
+          tier: astronomer
+          release: {{ .Release.Name }}
+          component: houston-update-runtime-check
     - podSelector:
         matchLabels:
           tier: astronomer
@@ -81,3 +87,4 @@ spec:
       port: {{ .Values.ports.registryHTTP }}
     # - protocol: TCP
     #   port: {{ .Values.ports.registryScrape }}
+{{- end }}

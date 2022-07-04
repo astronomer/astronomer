@@ -1,6 +1,7 @@
 ################################
 ## Nginx controller pods NetworkPolicy
 #################################
+{{- if .Values.global.networkPolicy.enabled }}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -30,3 +31,4 @@ spec:
       port: {{ .Values.ports.https }}
     - protocol: TCP
       port: {{ .Values.ports.defaultBackendHTTP }}
+{{- end }}

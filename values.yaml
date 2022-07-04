@@ -23,6 +23,10 @@ global:
       repository: alpine
       tag: 3.14
       pullPolicy: IfNotPresent
+  # Global flag to enable to user to enable/disable Astronomer platform
+  # level Network Policy
+  networkPolicy:
+    enabled: true
 
   # Specific Astronomer features configuration
   features:
@@ -97,11 +101,17 @@ global:
   # Enables namespace labels for network policies
   networkNSLabels: false
 
+  # Sidecar Logging
+  loggingSidecar:
+    enabled: false
+    name: sidecar-log-consumer
+    terminationEndpoint: http://localhost:8000/quitquitquit
+
   # Deploy auth sidecar to use openshift native features
   authSidecar:
     enabled: false
-    repository: nginxinc/nginx-unprivileged
-    tag: stable
+    repository: quay.io/astronomer/ap-auth-sidecar
+    tag: 1.23.0
     pullPolicy: IfNotPresent
     port: 8084
     default_nginx_settings: |
@@ -231,9 +241,6 @@ tags:
   # Enable logging stack (elasticsearch, fluentd, kibana)
   logging: true
 
-  # Kubed
-  kubed: true
-
   # NATS Streaming
   stan: true
 
@@ -289,6 +296,8 @@ astronomer:
       limits:
         cpu: "500m"
         memory: "1024Mi"
+
+  extraObjects: []
 
   # podLabels: {}
 
@@ -351,6 +360,7 @@ grafana:
 
 #################################
 ## Prometheus configuration
+## Scrape interval can be modified by using arg --set in helm install/update operations
 #################################
 prometheus:
   podLabels: {}
@@ -522,17 +532,4 @@ kube-state:
       memory: "512Mi"
     limits:
       cpu: "500m"
-      memory: "1024Mi"
-
-#################################
-## KubeD configuration
-#################################
-kubed:
-  # Configure resources
-  resources:
-    requests:
-      cpu: "250m"
-      memory: "512Mi"
-    limits:
-      cpu: "2"
       memory: "1024Mi"

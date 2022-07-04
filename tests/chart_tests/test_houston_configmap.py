@@ -41,10 +41,27 @@ def test_houston_configmap():
     prod = yaml.safe_load(doc["data"]["production.yaml"])
     # Ensure airflow elasticsearch param is at correct location
     assert prod["deployments"]["helm"]["airflow"]["elasticsearch"]["enabled"] is True
-
+    # Ensure elasticsearch client param is at the correct location and contains http://
+    assert ("node" in prod["elasticsearch"]["client"]) is True
+    assert prod["elasticsearch"]["client"]["node"].startswith("http://")
     with pytest.raises(KeyError):
         # Ensure sccEnabled is not defined by default
         assert prod["deployments"]["helm"]["sccEnabled"] is False
+
+
+def test_houston_configmap_with_customlogging_enabled():
+    """Validate the houston configmap and its embedded data with customLogging."""
+    docs = render_chart(
+        values={"global": {"customLogging": {"enabled": True}}},
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+
+    common_test_cases(docs)
+    doc = docs[0]
+    prod = yaml.safe_load(doc["data"]["production.yaml"])
+
+    assert ("node" in prod["elasticsearch"]["client"]) is True
+    assert prod["elasticsearch"]["client"]["node"].startswith("https://") is True
 
 
 def test_houston_configmapwith_scc_enabled():
@@ -80,10 +97,10 @@ def test_houston_configmap_with_azure_enabled():
     assert livenessProbe["periodSeconds"] == 10
 
 
-def test_houston_configmap_with_kubed_enabled():
-    """Validate the houston configmap and its embedded data with kubedEnabled."""
+def test_houston_configmap_with_config_syncer_enabled():
+    """Validate the houston configmap and its embedded data with configSyncer enabled."""
     docs = render_chart(
-        values={"global": {"kubedEnabled": True}},
+        values={"astronomer": {"configSyncer": {"enabled": True}}},
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
 
@@ -105,20 +122,83 @@ def test_houston_configmap_with_kubed_enabled():
     ]
 
 
-def test_houston_configmap_with_kubed_disabled():
-    """Validate the houston configmap and its embedded data with kubedEnabled."""
+def test_houston_configmap_with_config_syncer_disabled():
+    """Validate the houston configmap and its embedded data with configSyncer disabled."""
     docs = render_chart(
-        values={"global": {"kubedEnabled": False}},
+        values={"astronomer": {"configSyncer": {"enabled": False}}},
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
 
     common_test_cases(docs)
     doc = docs[0]
-    prod = yaml.safe_load(doc["data"]["production.yaml"])
+    prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
     assert (
-        "extraVolumeMounts" not in prod["deployments"]["helm"]["airflow"]["webserver"]
+        "extraVolumeMounts"
+        not in prod_yaml["deployments"]["helm"]["airflow"]["webserver"]
     )
-    assert "extraVolumes" not in prod["deployments"]["helm"]["airflow"]["webserver"]
+    assert (
+        "extraVolumes" not in prod_yaml["deployments"]["helm"]["airflow"]["webserver"]
+    )
+    assert not prod_yaml["deployments"].get("loggingSidecar")
+
+
+def test_houston_configmapwith_loggingsidecar_enabled():
+    """Validate the houston configmap and its embedded data with loggingSidecar."""
+    terminationEndpoint = "http://localhost:8000/quitquitquit"
+    docs = render_chart(
+        values={"global": {"loggingSidecar": {"enabled": True}}},
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+
+    common_test_cases(docs)
+    doc = docs[0]
+    prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
+    log_cmd = 'log_cmd = "1> >( tee -a /var/log/sidecar-log-consumer/out.log ) 2> >( tee -a /var/log/sidecar-log-consumer/err.log >&2 )"'
+    assert (
+        log_cmd in prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
+    )
+    assert (
+        terminationEndpoint
+        in prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
+    )
+    assert prod_yaml["deployments"]["loggingSidecar"] == {
+        "enabled": True,
+        "name": "sidecar-log-consumer",
+        "terminationEndpoint": "http://localhost:8000/quitquitquit",
+    }
+
+
+def test_houston_configmapwith_loggingsidecar_enabled_with_overrides():
+    """Validate the houston configmap and its embedded data with loggingSidecar."""
+    sidecar_container_name = "sidecar-log-test"
+    terminationEndpoint = "http://localhost:8000/quitquitquit"
+    docs = render_chart(
+        values={
+            "global": {
+                "loggingSidecar": {"enabled": True, "name": sidecar_container_name}
+            }
+        },
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+
+    common_test_cases(docs)
+    doc = docs[0]
+    prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
+    log_cmd = 'log_cmd = "1> >( tee -a /var/log/{sidecar_container_name}/out.log ) 2> >( tee -a /var/log/{sidecar_container_name}/err.log >&2 )"'.format(
+        sidecar_container_name=sidecar_container_name
+    )
+    assert (
+        log_cmd in prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
+    )
+    assert (
+        terminationEndpoint
+        in prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
+    )
+    assert prod_yaml["deployments"]["loggingSidecar"] == {
+        "enabled": True,
+        "name": sidecar_container_name,
+        "terminationEndpoint": terminationEndpoint,
+    }
 
 
 cron_test_data = [

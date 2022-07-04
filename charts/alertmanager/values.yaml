@@ -30,6 +30,7 @@ persistence:
   enabled: true
   size: 2Gi
   storageClassName: ~
+  annotations: {}
 
 env: {}
 

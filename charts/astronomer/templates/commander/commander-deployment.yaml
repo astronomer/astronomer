@@ -47,6 +47,14 @@ spec:
           imagePullPolicy: {{ .Values.images.commander.pullPolicy }}
           resources:
 {{ toYaml .Values.commander.resources | indent 12 }}
+          {{- if .Values.commander.command }}
+          command:
+            {{- toYaml .Values.commander.command | nindent 12 }}
+          {{- end }}
+          {{- if .Values.commander.args }}
+          args:
+            {{- toYaml .Values.commander.args | nindent 12 }}
+          {{- end }}
           ports:
             - name: commander-http
               containerPort: {{ .Values.ports.commanderHTTP }}
@@ -97,3 +105,14 @@ spec:
             - name: COMMANDER_MANUAL_NAMESPACE_NAMES
               value: "true"
             {{- end }}
+          volumeMounts:
+{{- if .Values.commander.volumeMounts }}
+{{- tpl (toYaml .Values.commander.volumeMounts) $ | nindent 12 }}
+{{- end }}
+{{- if .Values.commander.extraContainers }}
+{{- tpl (toYaml .Values.commander.extraContainers) $ | nindent 8 }}
+{{- end }}
+      volumes:
+{{- if .Values.commander.extraVolumes }}
+{{- tpl (toYaml .Values.commander.extraVolumes) $ | nindent 8 }}
+{{- end }}

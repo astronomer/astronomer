@@ -7,4 +7,3 @@ tags:
   logging: false
   monitoring: false
   platform: false
-  kubed: false

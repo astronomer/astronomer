@@ -10,7 +10,8 @@ pytest
 pytest-forked
 pytest-profiling
 pytest-rerunfailures
-pytest-sugar
+pytest-testinfra
 pytest-xdist
 PyYAML
 requests
+setuptools<60.0.0 # workaround for known bug with local vs stdlib in pth

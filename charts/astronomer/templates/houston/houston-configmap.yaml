@@ -95,6 +95,14 @@ data:
         }
       {{- end }}
 
+      {{- if .Values.global.loggingSidecar.enabled }}
+      # enables sidecar logging for airflow deployments
+      loggingSidecar:
+        enabled: true
+        name: {{ .Values.global.loggingSidecar.name }}
+        terminationEndpoint: {{ .Values.global.loggingSidecar.terminationEndpoint }}
+      {{- end }}
+
       # These values get passed directly into the airflow helm deployments
       helm:
       {{- if and .Values.global.ssl.enabled .Values.global.ssl.mode }}
@@ -111,8 +119,16 @@ data:
 
         airflow:
           useAstroSecurityManager: true
+          {{- if .Values.global.networkPolicy.enabled }}
+          networkPolicies:
+          # Enabled network polices to restrict the way pods can communicate.
+            enabled: true
+          {{ end }}
+          # Enable FlowerUI flag by default
+          flower:
+            enabled: true
           webserver:
-            {{ if .Values.global.kubedEnabled }}
+            {{ if .Values.configSyncer.enabled }}
             extraVolumeMounts:
               - name: signing-certificate
                 mountPath: /etc/airflow/tls
@@ -231,6 +247,20 @@ data:
                       container.args = container.command + container.args
                   container.command = ["tini", "--", "/entrypoint"]
                   pod.spec.containers[0] = container
+      {{ if .Values.global.loggingSidecar.enabled }}
+                  # For sidecar logging we override the default entrypoint to redirect
+                  # logs to files that are consumed by the sidecar container. The command
+                  # ends with a POST to {{ .Values.global.loggingSidecar.terminationEndpoint }}, which signals the
+                  # sidecar log consumer to exit.
+                  log_cmd = "1> >( tee -a /var/log/{{ .Values.global.loggingSidecar.name }}/out.log ) 2> >( tee -a /var/log/{{ .Values.global.loggingSidecar.name }}/err.log >&2 )"
+                  if container.args[0:3] == ["airflow", "tasks", "run"]:
+                      container.command = ["tini", "--"]
+                      new_args = ["bash", "-c"]
+                      command_str = "/entrypoint " + ' '.join([str(arg) for arg in container.args]) + " " + log_cmd + "; curl -fsSL -XPOST {{ .Values.global.loggingSidecar.terminationEndpoint }}"
+                      new_args.append(command_str)
+                      container.args = new_args
+
+      {{ end }}
               else:
                   # In the case of KPO, we allow Airflow to overwrite the entrypoint
                   # because we do not know what the container will be (and it's probably
@@ -318,7 +348,7 @@ data:
     elasticsearch:
       enabled: true
       client:
-        host: {{ printf "%s-external-es-proxy:9201" .Release.Name }}
+        node: {{ printf "https://%s-external-es-proxy:9201" .Release.Name }}
         log: error
     {{- end }}
 
@@ -332,7 +362,7 @@ data:
     elasticsearch:
       enabled: true
       client:
-        host: {{ printf "%s-elasticsearch:9200" .Release.Name }}
+        node: {{ printf "http://%s-elasticsearch:9200" .Release.Name }}
         log: error
     {{- end }}
 
