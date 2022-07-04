@@ -1,5 +1,6 @@
-from tests.chart_tests.helm_template_generator import render_chart
 import jmespath
+
+from tests.chart_tests.helm_template_generator import render_chart
 
 
 def test_private_registry_repository_image_names_the_same_as_public_ones():
@@ -69,3 +70,29 @@ def test_private_registry_repository_overrides_work():
                     )
                     differently_named_images.append(image)
     assert not differently_named_images, differently_named_images
+
+
+def test_private_registry_repository_image_pull_secret():
+    """Specs must contain imagePullSecrets for private repository when it is specified."""
+    repository = "bob-the-registry"
+    secret_name = "bob-the-registry-secret"
+
+    docs = render_chart(
+        values={
+            "global": {
+                "privateRegistry": {
+                    "enabled": True,
+                    "repository": repository,
+                    "secretName": secret_name,
+                }
+            }
+        },
+    )
+    # there should be lots of image hits
+    assert len(docs) > 50
+
+    for doc in docs:
+        image_pull_secrets = jmespath.search("spec.template.spec.imagePullSecrets", doc)
+
+        if image_pull_secrets is not None:
+            assert {"name": "bob-the-registry-secret"} in image_pull_secrets
