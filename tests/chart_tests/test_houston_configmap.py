@@ -142,7 +142,7 @@ def test_houston_configmap_with_config_syncer_disabled():
     assert not prod_yaml["deployments"].get("loggingSidecar")
 
 
-def test_houston_configmapwith_loggingsidecar_enabled():
+def test_houston_configmap_with_loggingsidecar_enabled():
     """Validate the houston configmap and its embedded data with loggingSidecar."""
     terminationEndpoint = "http://localhost:8000/quitquitquit"
     docs = render_chart(
@@ -165,10 +165,11 @@ def test_houston_configmapwith_loggingsidecar_enabled():
         "enabled": True,
         "name": "sidecar-log-consumer",
         "terminationEndpoint": "http://localhost:8000/quitquitquit",
+        "customConfig": False,
     }
 
 
-def test_houston_configmapwith_loggingsidecar_enabled_with_overrides():
+def test_houston_configmap_with_loggingsidecar_enabled_with_overrides():
     """Validate the houston configmap and its embedded data with loggingSidecar."""
     sidecar_container_name = "sidecar-log-test"
     terminationEndpoint = "http://localhost:8000/quitquitquit"
@@ -198,6 +199,45 @@ def test_houston_configmapwith_loggingsidecar_enabled_with_overrides():
         "enabled": True,
         "name": sidecar_container_name,
         "terminationEndpoint": terminationEndpoint,
+        "customConfig": False,
+    }
+
+
+def test_houston_configmap_with_loggingsidecar_customConfig_enabled():
+    """Validate the houston configmap and its embedded data with loggingSidecar customConfig Enabled."""
+    sidecar_container_name = "sidecar-log-test"
+    terminationEndpoint = "http://localhost:8000/quitquitquit"
+    docs = render_chart(
+        values={
+            "global": {
+                "loggingSidecar": {
+                    "enabled": True,
+                    "name": sidecar_container_name,
+                    "customConfig": True,
+                }
+            }
+        },
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+
+    common_test_cases(docs)
+    doc = docs[0]
+    prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
+    log_cmd = 'log_cmd = "1> >( tee -a /var/log/{sidecar_container_name}/out.log ) 2> >( tee -a /var/log/{sidecar_container_name}/err.log >&2 )"'.format(
+        sidecar_container_name=sidecar_container_name
+    )
+    assert (
+        log_cmd in prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
+    )
+    assert (
+        terminationEndpoint
+        in prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
+    )
+    assert prod_yaml["deployments"]["loggingSidecar"] == {
+        "enabled": True,
+        "name": sidecar_container_name,
+        "terminationEndpoint": terminationEndpoint,
+        "customConfig": True,
     }
 
 
