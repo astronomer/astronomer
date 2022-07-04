@@ -38,7 +38,7 @@ class TestPrometheusConfigConfigmap:
                     "blackboxExporterEnabled": True,
                     "veleroEnabled": True,
                     "prometheusPostgresExporterEnabled": True,
-                    # "nodeExporterEnabled": True,
+                    "nodeExporterEnabled": True,
                 },
                 "tcpProbe": {"enabled": True},
             },
@@ -166,7 +166,28 @@ class TestPrometheusConfigConfigmap:
                 assert job["scrape_timeout"] == "bar"
 
     def test_prometheus_config_configmap_with_node_exporter(self, kube_version):
-        """Validate the prometheus config configmap does not conflate deployment name and namespace."""
+        """Validate the prometheus config configmap has the node-exporter enabled with params."""
+        doc = render_chart(
+            name="foo-name",
+            namespace="bar-ns",
+            kube_version=kube_version,
+            show_only=self.show_only,
+            values={
+                "prometheus": {
+                    "nodeExporter": {"enabled": True, "scrape_interval": "333s"},
+                },
+            },
+        )[0]
+
+        config_yaml = yaml.safe_load(doc["data"]["config"])
+        nodeExporterConfigs = [
+            x for x in config_yaml["scrape_configs"] if x["job_name"] == "node-exporter"
+        ]
+        if nodeExporterConfigs[0]["scrape_interval"]:
+            assert nodeExporterConfigs[0]["scrape_interval"] == "333s"
+
+    def test_prometheus_config_configmap_without_node_exporter(self, kube_version):
+        """Validate the prometheus config configmap does not have node-exporter when it is not enabled."""
         doc = render_chart(
             name="foo-name",
             namespace="bar-ns",
@@ -174,15 +195,11 @@ class TestPrometheusConfigConfigmap:
             show_only=self.show_only,
             values={
                 "global": {
-                    "nodeExporterEnabled": True,
+                    "nodeExporterEnabled": False,
                 },
-                "prometheus": {"scrape_interval": "30s"},
             },
         )[0]
 
         config_yaml = yaml.safe_load(doc["data"]["config"])
-
-        nodeExporterConfigs = [
-            x for x in config_yaml["scrape_configs"] if x["job_name"] == "node-exporter"
-        ]
-        assert nodeExporterConfigs[0]["scrape_interval"] == "30s"
+        job_names = [x["job_name"] for x in config_yaml["scrape_configs"]]
+        assert "node-exporter" not in job_names
