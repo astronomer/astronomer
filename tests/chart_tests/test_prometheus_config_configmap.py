@@ -38,7 +38,7 @@ class TestPrometheusConfigConfigmap:
                     "blackboxExporterEnabled": True,
                     "veleroEnabled": True,
                     "prometheusPostgresExporterEnabled": True,
-                    "nodeExporterEnabled": True,
+                    # "nodeExporterEnabled": True,
                 },
                 "tcpProbe": {"enabled": True},
             },
@@ -164,3 +164,25 @@ class TestPrometheusConfigConfigmap:
             if job["job_name"] == "postgresql-exporter":
                 assert job["scrape_interval"] == "foo"
                 assert job["scrape_timeout"] == "bar"
+
+    def test_prometheus_config_configmap_with_node_exporter(self, kube_version):
+        """Validate the prometheus config configmap does not conflate deployment name and namespace."""
+        doc = render_chart(
+            name="foo-name",
+            namespace="bar-ns",
+            kube_version=kube_version,
+            show_only=self.show_only,
+            values={
+                "global": {
+                    "nodeExporterEnabled": True,
+                },
+                "prometheus": {"scrape_interval": "30s"},
+            },
+        )[0]
+
+        config_yaml = yaml.safe_load(doc["data"]["config"])
+
+        nodeExporterConfigs = [
+            x for x in config_yaml["scrape_configs"] if x["job_name"] == "node-exporter"
+        ]
+        assert nodeExporterConfigs[0]["scrape_interval"] == "30s"
