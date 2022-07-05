@@ -1,4 +1,5 @@
 import jmespath
+import pytest
 
 from tests.chart_tests.helm_template_generator import render_chart
 
@@ -72,10 +73,18 @@ def test_private_registry_repository_overrides_work():
     assert not differently_named_images, differently_named_images
 
 
-def test_private_registry_repository_image_pull_secret():
-    """Specs must contain imagePullSecrets for private repository when it is specified."""
+def get_private_registry_docs_image_pull_secrets():
     repository = "bob-the-registry"
     secret_name = "bob-the-registry-secret"
+
+    kubernetes_objects = {
+        "Deployment": "spec.template.spec.imagePullSecrets",
+        "StatefulSet": "spec.template.spec.imagePullSecrets",
+        "Job": "spec.template.spec.imagePullSecrets",
+        "DaemonSet": "spec.template.spec.imagePullSecrets",
+        "Pod": "spec.template.spec.imagePullSecrets",
+        "CronJob": "spec.jobTemplate.spec.template.spec.imagePullSecrets",
+    }
 
     docs = render_chart(
         values={
@@ -88,11 +97,38 @@ def test_private_registry_repository_image_pull_secret():
             }
         },
     )
-    # there should be lots of image hits
-    assert len(docs) > 50
 
-    for doc in docs:
-        image_pull_secrets = jmespath.search("spec.template.spec.imagePullSecrets", doc)
+    searched_docs = []
+    for key, val in kubernetes_objects.items():
+        searched_doc = jmespath.search(
+            "[?kind == `"
+            + key
+            + "`].{name: metadata.name, kind: kind, image_pull_secrets: "
+            + val
+            + "}",
+            docs,
+        )
+        searched_docs = searched_docs + searched_doc
 
-        if image_pull_secrets is not None:
-            assert {"name": "bob-the-registry-secret"} in image_pull_secrets
+    formatted_docs = {}
+    for searched_doc in searched_docs:
+        name = searched_doc["name"] + "_" + searched_doc["kind"]
+        formatted_docs[name] = searched_doc["image_pull_secrets"]
+
+    return formatted_docs
+
+
+private_registry_docs_image_pull_secrets = (
+    get_private_registry_docs_image_pull_secrets()
+)
+
+
+@pytest.mark.parametrize(
+    "image_pull_secrets",
+    private_registry_docs_image_pull_secrets.values(),
+    ids=private_registry_docs_image_pull_secrets.keys(),
+)
+def test_private_registry_repository_image_pull_secret(image_pull_secrets):
+    """Specs must contain imagePullSecrets for private repository when it is specified."""
+    assert image_pull_secrets is not None
+    assert {"name": "bob-the-registry-secret"} in image_pull_secrets
