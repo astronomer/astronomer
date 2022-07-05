@@ -10,7 +10,7 @@ tags:
   platform: true
   logging: false
   monitoring: false
-  postgresql: false
+  postgresql: true
   nats: true
 
 global:
@@ -19,8 +19,8 @@ global:
 
   # Name of secret containing TLS certificate
   tlsSecret: astronomer-tls
-  postgresqlEnabled: false
-  postgresOperatorEnabled: true
+  postgresqlEnabled: true
+  postgresOperatorEnabled: false
   nats:
     replicas: 1
     enabled: true
