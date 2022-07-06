@@ -8,6 +8,11 @@ metadata:
     # job is considered part of the release.
     "helm.sh/hook": post-install
 spec:
+  tls:
+    secretName: astronomer-tls
+    certificateFile: "tls.crt"
+    privateKeyFile: "tls.key"
+    caSecretName: private-root-ca
   teamId: "acid"
   volume:
     size: 1Gi
