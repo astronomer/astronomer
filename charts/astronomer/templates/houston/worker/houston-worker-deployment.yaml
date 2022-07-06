@@ -83,30 +83,29 @@ spec:
         - name: houston
           image: {{ template "houston.image" . }}
           imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
-          {{- if .Values.houston.workerArgs }}
-          args:
-            {{- toYaml .Values.houston.workerArgs | nindent 12 }}
+          {{- if .Values.houston.worker.command }}
+          command:
+            {{- toYaml .Values.houston.worker.command | nindent 12 }}
           {{ else }}
-          args: ["yarn", "worker"]
+          command: ["yarn", "worker"]
+          {{- end }}
+          {{- if .Values.houston.worker.args }}
+          args:
+            {{- toYaml .Values.houston.worker.args | nindent 12 }}
           {{- end }}
           resources:
 {{ toYaml .Values.houston.resources | indent 12 }}
           volumeMounts:
             {{- include "houston_volume_mounts" . | indent 12 }}
             {{- include "custom_ca_volume_mounts" . | indent 12 }}
-{{- if .Values.houston.volumeMounts }}
-{{- toYaml .Values.houston.volumeMounts | nindent 12 }}
+{{- if .Values.houston.worker.volumeMounts }}
+{{- tpl (toYaml .Values.houston.worker.volumeMounts) $ | nindent 12 }}
 {{- end }}
           env:
             - name: GRPC_VERBOSITY
               value: "INFO"
             - name: GRPC_TRACE
               value: "all"
-            - name: DATABASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: {{ template "houston.backendSecret" . }}
-                  key: connection
             {{- include "houston_environment" . | indent 12 }}
             - name: APOLLO_SERVER_ID
               valueFrom:
@@ -116,12 +115,12 @@ spec:
               value: {{ template "houston.image" . }}
             - name: APOLLO_SERVER_PLATFORM
               value: "kubernetes/deployment"
-{{- if .Values.houston.extraContainers }}
-{{- toYaml .Values.houston.extraContainers | nindent 8 }}
+{{- if .Values.houston.worker.extraContainers }}
+{{- tpl (toYaml .Values.houston.worker.extraContainers) $ | nindent 8 }}
 {{- end }}
       volumes:
-{{- if .Values.houston.extraVolumes }}
-{{ toYaml .Values.houston.extraVolumes | indent 8 }}
+{{- if .Values.houston.worker.extraVolumes }}
+{{ tpl (toYaml .Values.houston.worker.extraVolumes) $ | indent 8 }}
 {{- end }}
         {{- include "houston_volumes" . | indent 8 }}
         {{- include "custom_ca_volumes" . | indent 8 }}

@@ -49,11 +49,6 @@ spec:
           resources:
 {{ toYaml .Values.houston.resources | indent 12 }}
           env:
-            - name: DATABASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: astronomer-bootstrap
-                  key: connection
             {{- include "houston_environment" . | indent 12 }}
         - name: houston-bootstrapper
           image: {{ template "dbBootstrapper.image" . }}
@@ -95,7 +90,7 @@ spec:
             {{- include "houston_volume_mounts" . | indent 12 }}
             {{- include "custom_ca_volume_mounts" . | indent 12 }}
 {{- if .Values.houston.volumeMounts }}
-{{- toYaml .Values.houston.volumeMounts | nindent 12 }}
+{{- tpl (toYaml .Values.houston.volumeMounts) $ | nindent 12 }}
 {{- end }}
           ports:
             - name: houston-http
@@ -114,11 +109,13 @@ spec:
             initialDelaySeconds: {{ .Values.houston.readinessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.houston.readinessProbe.periodSeconds }}
             failureThreshold: {{ .Values.houston.readinessProbe.failureThreshold }}
+          {{- if .Values.houston.command }}
+          command:
+            {{- toYaml .Values.houston.command | nindent 12 }}
+          {{- end }}
           {{- if .Values.houston.apiArgs }}
           args:
             {{- toYaml .Values.houston.apiArgs | nindent 12 }}
-          {{ else }}
-          args: ["yarn", "serve"]
           {{- end }}
           env:
             {{- include "houston_environment" . | indent 12 }}
@@ -140,11 +137,11 @@ spec:
                   name: {{ template "registry.authHeaderSecret" . }}
                   key: token
 {{- if .Values.houston.extraContainers }}
-{{- toYaml .Values.houston.extraContainers | nindent 8 }}
+{{- tpl (toYaml .Values.houston.extraContainers) $ | nindent 8 }}
 {{- end }}
       volumes:
 {{- if .Values.houston.extraVolumes }}
-{{ toYaml .Values.houston.extraVolumes | indent 8 }}
+{{ tpl (toYaml .Values.houston.extraVolumes) $ | indent 8 }}
 {{- end }}
         {{- include "houston_volumes" . | indent 8 }}
         {{- include "custom_ca_volumes" . | indent 8 }}

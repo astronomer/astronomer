@@ -106,6 +106,7 @@ global:
     enabled: false
     name: sidecar-log-consumer
     terminationEndpoint: http://localhost:8000/quitquitquit
+    customConfig: false
 
   # Deploy auth sidecar to use openshift native features
   authSidecar:
@@ -296,6 +297,8 @@ astronomer:
       limits:
         cpu: "500m"
         memory: "1024Mi"
+
+  extraObjects: []
 
   # podLabels: {}
 

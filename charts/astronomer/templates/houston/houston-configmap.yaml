@@ -101,6 +101,7 @@ data:
         enabled: true
         name: {{ .Values.global.loggingSidecar.name }}
         terminationEndpoint: {{ .Values.global.loggingSidecar.terminationEndpoint }}
+        customConfig: {{ .Values.global.loggingSidecar.customConfig }}
       {{- end }}
 
       # These values get passed directly into the airflow helm deployments
