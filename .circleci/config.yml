@@ -9,7 +9,6 @@ executors:
       - image: cimg/python:3.10
 
 orbs:
-  snyk: snyk/snyk@1.1.2
   slack: circleci/slack@4.10.1
 
 parameters:
@@ -19,34 +18,6 @@ parameters:
     description: "This will run docker image scan."
 
 jobs:
-  snyk-scan-docker:
-    executor: docker-executor
-    parameters:
-      docker_image:
-        type: string
-    environment:
-      SCAN_IMAGE: << parameters.docker_image >>
-      SCAN_TOOL: Snyk
-    steps:
-      - setup_remote_docker:
-          version: 20.10.14
-      - checkout
-      - run:
-          name: Pull Docker image
-          command: docker pull << parameters.docker_image >>
-      - snyk-docker-test:
-          docker_image: << parameters.docker_image >>
-      - run:
-          name: Slack Init
-          command: |
-            echo 'export SLACK_MSG_TEMPLATE=$(cat ./.circleci/slack_message_templates/security_scan_fail.json)' >> $BASH_ENV
-            source $BASH_ENV
-          when: always
-      - slack/notify:
-          event: fail
-          template: SLACK_MSG_TEMPLATE
-          channel: C03HS1H9G1E
-
   trivy-scan-docker:
     docker:
       - image: docker:20.10.14-git
@@ -289,36 +260,6 @@ workflows:
       and:
         - << pipeline.parameters.scan-docker-images >>
     jobs:
-      - snyk-scan-docker:
-          matrix:
-            parameters:
-              docker_image:
-                - quay.io/astronomer/ap-alertmanager:0.23.0
-                - quay.io/astronomer/ap-astro-ui:0.25.7
-                - quay.io/astronomer/ap-base:3.15.0-2
-                - quay.io/astronomer/ap-cli-install:0.26.1
-                - quay.io/astronomer/ap-commander:0.25.4
-                - quay.io/astronomer/ap-configmap-reloader:0.5.0-1
-                - quay.io/astronomer/ap-curator:5.8.4-9
-                - quay.io/astronomer/ap-db-bootstrapper:0.26.3
-                - quay.io/astronomer/ap-default-backend:0.28.0
-                - quay.io/astronomer/ap-elasticsearch-exporter:1.2.1
-                - quay.io/astronomer/ap-elasticsearch:7.16.3
-                - quay.io/astronomer/ap-fluentd:1.14.3-1
-                - quay.io/astronomer/ap-grafana:7.5.12
-                - quay.io/astronomer/ap-houston-api:0.25.14
-                - quay.io/astronomer/ap-kibana:7.16.3
-                - quay.io/astronomer/ap-kube-state:1.7.2
-                - quay.io/astronomer/ap-kubed:0.13.0
-                - quay.io/astronomer/ap-nats-exporter:0.9.1
-                - quay.io/astronomer/ap-nats-server:2.7.2
-                - quay.io/astronomer/ap-nats-streaming:0.24.1
-                - quay.io/astronomer/ap-nginx-es:1.21.4
-                - quay.io/astronomer/ap-nginx:0.50.0
-                - quay.io/astronomer/ap-prometheus:2.32.1
-                - quay.io/prometheus/node-exporter:v1.2.2
-          context:
-            - slack_team-software-infra-bot
       - trivy-scan-docker:
           matrix:
             parameters:
@@ -576,18 +517,6 @@ commands:
             pyenv global 3.9.12
             pip install astronomer_e2e_test
             astronomer-ci publish-github-release --github-repository $CIRCLE_PROJECT_REPONAME --github-organization $CIRCLE_PROJECT_USERNAME --commitish $CIRCLE_SHA1
-
-  snyk-docker-test:
-    description: "Test a Docker image with synk"
-    parameters:
-      docker_image:
-        type: string
-    steps:
-      - snyk/scan:
-          docker-image-name: << parameters.docker_image >>
-          fail-on-issues: true
-          severity-threshold: high
-          monitor-on-build: false
 
   trivy-docker-test:
     description: "Trivy: Vulnerability scan a Docker image"
