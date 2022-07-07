@@ -18,7 +18,6 @@
 import subprocess
 import sys
 from functools import cache
-from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Any, Dict, Tuple
 from typing import Optional
@@ -99,10 +98,10 @@ def render_chart(
         ]
         if namespace:
             command.extend(["--namespace", namespace])
-        for i in show_only:
-            if not Path(i).exists():
-                raise FileNotFoundError(f"ERROR: {i} not found")
-            else:
+        if show_only:
+            if isinstance(show_only, str):
+                show_only = [show_only]
+            for i in show_only:
                 command.extend(["--show-only", i])
         try:
             templates = subprocess.check_output(command, stderr=subprocess.PIPE)
