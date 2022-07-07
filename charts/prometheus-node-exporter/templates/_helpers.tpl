@@ -76,3 +76,13 @@ Docker repository name
 {{ .Values.image.repository }}:{{ .Values.image.tag }}
 {{- end }}
 {{- end }}
+
+{{/*
+Return the proper Docker Image Registry Secret Names
+*/}}
+{{- define "prometheus-node-exporter.imagePullSecrets" -}}
+{{- if .Values.global.privateRegistry.enabled }}
+imagePullSecrets:
+  - name: {{ .Values.global.privateRegistry.secretName }}
+{{- end -}}
+{{- end -}}

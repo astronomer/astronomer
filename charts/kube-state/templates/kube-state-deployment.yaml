@@ -33,6 +33,7 @@ spec:
       tolerations:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       serviceAccountName: {{ template "kube-state.fullname" . }}
+{{- include "kube-state.imagePullSecrets" . | indent 6 }}
       containers:
       - name: kube-state
       {{- if .Values.global.singleNamespace }}

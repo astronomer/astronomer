@@ -38,6 +38,7 @@ spec:
           tolerations:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 12 }}
           restartPolicy: Never
+{{- include "astronomer.imagePullSecrets" . | indent 10 }}
           containers:
             - name: config-syncer
               image: {{ template "commander.image" . }}

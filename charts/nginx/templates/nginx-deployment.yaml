@@ -33,6 +33,7 @@ spec:
         {{- end }}
     spec:
       serviceAccountName: {{ template "nginx.fullname" . }}
+{{- include "nginx.imagePullSecrets" . | indent 6 }}
       containers:
         - name: nginx
           securityContext:

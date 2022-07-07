@@ -69,6 +69,7 @@ spec:
     {{- end }}
       tolerations:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
+{{- include "elasticsearch.imagePullSecrets" . | indent 6 }}
       initContainers:
       {{- if (.Values.sysctlInitContainer.enabled) }}
       - name: sysctl

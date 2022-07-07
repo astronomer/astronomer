@@ -40,3 +40,13 @@ Create chart name and version as used by the chart label.
 {{ .Values.image.repository }}:{{ .Values.image.tag }}
 {{- end }}
 {{- end }}
+
+{{/*
+Return the proper Docker Image Registry Secret Names
+*/}}
+{{- define "prometheus-blackbox-exporter.imagePullSecrets" -}}
+{{- if .Values.global.privateRegistry.enabled }}
+imagePullSecrets:
+  - name: {{ .Values.global.privateRegistry.secretName }}
+{{- end -}}
+{{- end -}}

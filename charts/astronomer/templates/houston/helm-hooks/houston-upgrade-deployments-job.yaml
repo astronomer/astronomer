@@ -41,6 +41,7 @@ spec:
       tolerations:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       restartPolicy: Never
+{{- include "astronomer.imagePullSecrets" . | indent 6 }}
       initContainers:
         - name: wait-for-db
           image: {{ template "houston.image" . }}
