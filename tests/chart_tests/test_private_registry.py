@@ -101,11 +101,15 @@ def get_private_registry_docs_image_pull_secrets():
     searched_docs = []
     for key, val in kubernetes_objects.items():
         searched_docs += jmespath.search(
-            "[?kind == `%s`].{name: metadata.name, kind: kind, image_pull_secrets: %s}" % (key, val),
+            "[?kind == `%s`].{name: metadata.name, kind: kind, image_pull_secrets: %s}"
+            % (key, val),
             docs,
         )
 
-    return {f'{doc["name"]}_{doc["kind"]}': doc['image_pull_secrets'] for doc in searched_docs}
+    return {
+        f'{doc["name"]}_{doc["kind"]}': doc["image_pull_secrets"]
+        for doc in searched_docs
+    }
 
 
 private_registry_docs_image_pull_secrets = (
