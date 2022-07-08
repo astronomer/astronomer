@@ -145,6 +145,7 @@ def test_houston_configmap_with_config_syncer_disabled():
 def test_houston_configmap_with_loggingsidecar_enabled():
     """Validate the houston configmap and its embedded data with loggingSidecar."""
     terminationEndpoint = "http://localhost:8000/quitquitquit"
+    image = "test-vector-image"
     docs = render_chart(
         values={"global": {"loggingSidecar": {"enabled": True}}},
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
@@ -164,6 +165,7 @@ def test_houston_configmap_with_loggingsidecar_enabled():
     assert prod_yaml["deployments"]["loggingSidecar"] == {
         "enabled": True,
         "name": "sidecar-log-consumer",
+        "image": image,
         "terminationEndpoint": "http://localhost:8000/quitquitquit",
         "customConfig": False,
     }
@@ -173,6 +175,7 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_overrides():
     """Validate the houston configmap and its embedded data with loggingSidecar."""
     sidecar_container_name = "sidecar-log-test"
     terminationEndpoint = "http://localhost:8000/quitquitquit"
+    image = "test-vector-image"
     docs = render_chart(
         values={
             "global": {
@@ -198,6 +201,7 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_overrides():
     assert prod_yaml["deployments"]["loggingSidecar"] == {
         "enabled": True,
         "name": sidecar_container_name,
+        "image": image,
         "terminationEndpoint": terminationEndpoint,
         "customConfig": False,
     }
@@ -207,6 +211,7 @@ def test_houston_configmap_with_loggingsidecar_customConfig_enabled():
     """Validate the houston configmap and its embedded data with loggingSidecar customConfig Enabled."""
     sidecar_container_name = "sidecar-log-test"
     terminationEndpoint = "http://localhost:8000/quitquitquit"
+    image = "test-vector-image"
     docs = render_chart(
         values={
             "global": {
@@ -236,6 +241,7 @@ def test_houston_configmap_with_loggingsidecar_customConfig_enabled():
     assert prod_yaml["deployments"]["loggingSidecar"] == {
         "enabled": True,
         "name": sidecar_container_name,
+        "image": image,
         "terminationEndpoint": terminationEndpoint,
         "customConfig": True,
     }
