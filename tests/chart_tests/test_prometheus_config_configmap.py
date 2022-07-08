@@ -182,11 +182,11 @@ class TestPrometheusConfigConfigmap:
             },
         )[0]
 
-        config_yaml = yaml.safe_load(doc["data"]["config"])
         nodeExporterConfigs = [
-            x for x in config_yaml["scrape_configs"] if x["job_name"] == "node-exporter"
+            x
+            for x in yaml.safe_load(doc["data"]["config"])["scrape_configs"]
+            if x["job_name"] == "node-exporter"
         ]
-
         assert nodeExporterConfigs[0]["scrape_interval"] == "333s"
 
     def test_prometheus_config_configmap_without_node_exporter(self, kube_version):
