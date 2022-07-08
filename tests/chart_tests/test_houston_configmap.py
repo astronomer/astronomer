@@ -164,9 +164,11 @@ def test_houston_configmap_with_loggingsidecar_enabled():
     assert prod_yaml["deployments"]["loggingSidecar"] == {
         "enabled": True,
         "name": "sidecar-log-consumer",
+        "image": "quay.io/astronomer/ap-vector:0.22.3",
         "terminationEndpoint": "http://localhost:8000/quitquitquit",
         "customConfig": False,
     }
+    assert ("vector" in prod_yaml["deployments"]["loggingSidecar"]["image"]) is True
 
 
 def test_houston_configmap_with_loggingsidecar_enabled_with_overrides():
@@ -198,9 +200,11 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_overrides():
     assert prod_yaml["deployments"]["loggingSidecar"] == {
         "enabled": True,
         "name": sidecar_container_name,
+        "image": "quay.io/astronomer/ap-vector:0.22.3",
         "terminationEndpoint": terminationEndpoint,
         "customConfig": False,
     }
+    assert ("vector" in prod_yaml["deployments"]["loggingSidecar"]["image"]) is True
 
 
 def test_houston_configmap_with_loggingsidecar_customConfig_enabled():
@@ -236,9 +240,11 @@ def test_houston_configmap_with_loggingsidecar_customConfig_enabled():
     assert prod_yaml["deployments"]["loggingSidecar"] == {
         "enabled": True,
         "name": sidecar_container_name,
+        "image": "quay.io/astronomer/ap-vector:0.22.3",
         "terminationEndpoint": terminationEndpoint,
         "customConfig": True,
     }
+    assert ("vector" in prod_yaml["deployments"]["loggingSidecar"]["image"]) is True
 
 
 cron_test_data = [
