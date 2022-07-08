@@ -187,8 +187,7 @@ class TestPrometheusConfigConfigmap:
             x for x in config_yaml["scrape_configs"] if x["job_name"] == "node-exporter"
         ]
 
-        if nodeExporterConfigs[0]["scrape_interval"]:
-            assert nodeExporterConfigs[0]["scrape_interval"] == "333s"
+        assert nodeExporterConfigs[0]["scrape_interval"] == "333s"
 
     def test_prometheus_config_configmap_without_node_exporter(self, kube_version):
         """Validate the prometheus config configmap does not have node-exporter when it is not enabled."""
