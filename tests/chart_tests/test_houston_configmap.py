@@ -61,7 +61,7 @@ def test_houston_configmap_with_customlogging_enabled():
     prod = yaml.safe_load(doc["data"]["production.yaml"])
 
     assert ("node" in prod["elasticsearch"]["client"]) is True
-    assert prod["elasticsearch"]["client"]["node"].startswith("https://") is True
+    assert prod["elasticsearch"]["client"]["node"].startswith("http://") is True
 
 
 def test_houston_configmapwith_scc_enabled():
