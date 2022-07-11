@@ -1,7 +1,7 @@
 apiVersion: "acid.zalan.do/v1"
 kind: postgresql
 metadata:
-  name: acid-minimal-cluster
+  name: {{ .Values.cluserName}}
   namespace: {{ .Release.Namespace }}
   labels:
     tier: {{ template "postgres-operator.name" . }}
@@ -49,7 +49,7 @@ metadata:
 spec:
   podSelector:
     matchLabels:
-      cluster-name: acid-minimal-cluster
+      cluster-name: {{ .Values.cluserName }}
   ingress:
     # Allow inbound connections
     - ports:
