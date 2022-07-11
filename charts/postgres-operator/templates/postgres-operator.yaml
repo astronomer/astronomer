@@ -4,7 +4,11 @@ metadata:
   name: postgres-operator
   namespace: {{ .Release.Namespace }}
   labels:
-    application: postgres-operator
+    tier: {{ template "postgres-operator.name" . }}
+    component: {{ template "postgres-operator.name" . }}
+    chart: {{ template "postgres-operator.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
 spec:
   replicas: 1
   strategy:

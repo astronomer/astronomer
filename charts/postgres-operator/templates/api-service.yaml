@@ -8,10 +8,10 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     tier: {{ template "postgres-operator.name" . }}
-    component: {{ template "prometheus.name" $ }}
-    chart: {{ template "prometheus.chart" $ }}
-    release: {{ $.Release.Name }}
-    heritage: {{ $.Release.Service }}
+    component: {{ template "postgres-operator.name" . }}
+    chart: {{ template "postgres-operator.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
 spec:
   type: ClusterIP
   ports:

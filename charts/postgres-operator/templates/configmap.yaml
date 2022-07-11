@@ -7,8 +7,9 @@ metadata:
   name:  {{ template "postgres-operator.fullname" . }}-configmap
   namespace: {{ .Release.Namespace }}
   labels:
-    tier: postgresoperator
-    component: {{ template "prometheus.name" $ }}
+    labels:
+    tier: {{ template "postgres-operator.name" . }}
+    component: {{ template "postgres-operator.name" . }}
     chart: {{ template "prometheus.chart" $ }}
     release: {{ $.Release.Name }}
     heritage: {{ $.Release.Service }}
