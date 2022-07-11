@@ -1,3 +1,6 @@
+#################################
+## Postgres Operator Deployment #
+#################################
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -10,16 +13,20 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 spec:
-  replicas: 1
+  replicas: {{ .Values.operator.replicas }}
   strategy:
     type: "Recreate"
   selector:
     matchLabels:
-      name: postgres-operator
+      tier: {{ template "postgres-operator.name" . }}
+      component: {{ template "postgres-operator.name" . }}
+      release: {{ .Release.Name }}
   template:
     metadata:
       labels:
-        name: postgres-operator
+        tier: {{ template "postgres-operator.name" . }}
+        component: {{ template "postgres-operator.name" . }}
+        release: {{ .Release.Name }}
     spec:
       serviceAccountName: postgres-operator
       containers:
@@ -28,17 +35,9 @@ spec:
         image: {{ include "operator.image" . }}
         imagePullPolicy: {{ .Values.images.operator.pullPolicy }}
         resources:
-          requests:
-            cpu: 100m
-            memory: 250Mi
-          limits:
-            cpu: 500m
-            memory: 500Mi
+{{ toYaml .Values.operator.resources | indent 10 }}
         securityContext:
-          runAsUser: 1000
-          runAsNonRoot: true
-          readOnlyRootFilesystem: true
-          allowPrivilegeEscalation: false
+{{ toYaml .Values.operator.securityContext | indent 10 }}
         env:
         # provided additional ENV vars can overwrite individual config map entries
         - name: CONFIG_MAP_NAME

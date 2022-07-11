@@ -19,4 +19,6 @@ spec:
     protocol: TCP
     targetPort: 8080
   selector:
-    name: postgres-operator
+    tier: {{ template "postgres-operator.name" . }}
+    component: {{ template "postgres-operator.name" . }}
+    release: {{ .Release.Name }}

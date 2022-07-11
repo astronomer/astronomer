@@ -8,3 +8,21 @@ images:
     repository: registry.opensource.zalan.do/acid/postgres-operator
     tag: v1.8.1
     pullPolicy: IfNotPresent
+
+operator:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 250Mi
+    limits:
+      cpu: 500m
+      memory: 500Mi
+
+
+  securityContext:
+    runAsUser: 1000
+    runAsNonRoot: true
+    readOnlyRootFilesystem: true
+    allowPrivilegeEscalation: false
+
