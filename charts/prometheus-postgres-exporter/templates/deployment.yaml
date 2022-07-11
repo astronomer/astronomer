@@ -36,6 +36,7 @@ spec:
 {{- end }}
     spec:
       serviceAccountName: {{ template "prometheus-postgres-exporter.serviceAccountName" . }}
+{{- include "prometheus-postgres-exporter.imagePullSecrets" . | indent 6 }}
       containers:
         - name: {{ .Chart.Name }}
           args:
@@ -80,7 +81,7 @@ spec:
                 key: data_source_password
           {{- end }}
           {{- end }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          image: {{ include "prometheus-postgres-exporter.image" . }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: {{ .Values.service.name }}

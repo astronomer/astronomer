@@ -34,6 +34,7 @@ spec:
             release: {{ .Release.Name }}
             heritage: {{ .Release.Service }}
         spec:
+{{- include "elasticsearch.imagePullSecrets" . | indent 10 }}
           containers:
           - name: curator
             image: {{ template "curator.image" . }}

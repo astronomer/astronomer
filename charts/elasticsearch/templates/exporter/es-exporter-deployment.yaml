@@ -51,6 +51,7 @@ spec:
       restartPolicy: {{ .Values.exporter.restartPolicy }}
       securityContext:
 {{ toYaml .Values.exporter.securityContext | indent 8 }}
+{{- include "elasticsearch.imagePullSecrets" . | indent 6 }}
       containers:
         - name: metrics-exporter
           image: {{ template "exporter.image" . }}

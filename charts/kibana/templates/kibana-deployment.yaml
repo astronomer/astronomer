@@ -31,6 +31,7 @@ spec:
 {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 8 }}
       tolerations:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
+{{- include "kibana.imagePullSecrets" . | indent 6 }}
       containers:
       - name: kibana
         image: {{ template "kibana.image" . }}

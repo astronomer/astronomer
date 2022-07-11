@@ -35,6 +35,7 @@ spec:
       tolerations:
 {{ toYaml (.Values.tolerations) | indent 8 }}
       serviceAccountName: {{ template "fluentd.fullname" . }}
+{{- include "fluentd.imagePullSecrets" . | indent 6 }}
       containers:
       - name: fluentd
         image: {{ template "fluentd.image" . }}

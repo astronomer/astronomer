@@ -42,6 +42,7 @@ spec:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       restartPolicy: Always
       serviceAccountName: {{ template "prometheus.fullname" . }}
+{{- include "prometheus.imagePullSecrets" . | indent 6 }}
       containers:
         {{- if .Values.global.authSidecar.enabled  }}
         - name: auth-proxy

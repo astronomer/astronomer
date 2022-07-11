@@ -37,6 +37,7 @@ spec:
       tolerations:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       restartPolicy: Always
+{{- include "alertmanager.imagePullSecrets" . | indent 6 }}
       containers:
         - name: alertmanager
           image: {{ template "alertmanager.image" . }}

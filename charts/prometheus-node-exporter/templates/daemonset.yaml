@@ -31,6 +31,7 @@ spec:
 {{- if .Values.priorityClassName }}
       priorityClassName: {{ .Values.priorityClassName }}
 {{- end }}
+{{- include "prometheus-node-exporter.imagePullSecrets" . | indent 6 }}
       containers:
         - name: node-exporter
           image: {{ template "image" . }}

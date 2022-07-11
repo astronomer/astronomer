@@ -31,6 +31,13 @@ Create chart name and version as used by the chart label.
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
+{{ define "prometheus-postgres-exporter.image" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-postgres-exporter:{{ .Values.image.tag }}
+{{- else -}}
+{{ .Values.image.repository }}:{{ .Values.image.tag }}
+{{- end }}
+{{- end }}
 
 {{/*
 Create the name of the service account to use
@@ -50,3 +57,13 @@ Set DATA_SOURCE_URI environment variable
 {{- define "prometheus-postgres-exporter.data_source_uri" -}}
 {{ printf "%s:%s/%s?sslmode=%s" .Values.config.datasource.host .Values.config.datasource.port .Values.config.datasource.database .Values.config.datasource.sslmode | quote }}
 {{- end }}
+
+{{/*
+Return the proper Docker Image Registry Secret Names
+*/}}
+{{- define "prometheus-postgres-exporter.imagePullSecrets" -}}
+{{- if .Values.global.privateRegistry.enabled }}
+imagePullSecrets:
+  - name: {{ .Values.global.privateRegistry.secretName }}
+{{- end -}}
+{{- end -}}

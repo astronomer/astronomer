@@ -345,3 +345,13 @@ Automatically generate a random minute and hour to try and spread cronjobs
 {{- printf "%v %v * * *" (mul 6 $randomDigit) (add 5 $randomDigit) | quote -}}
 {{- end -}}
 {{- end -}}
+
+{{/*
+Return the proper Docker Image Registry Secret Names
+*/}}
+{{- define "astronomer.imagePullSecrets" -}}
+{{- if .Values.global.privateRegistry.enabled }}
+imagePullSecrets:
+  - name: {{ .Values.global.privateRegistry.secretName }}
+{{- end -}}
+{{- end -}}

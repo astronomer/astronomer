@@ -32,6 +32,7 @@ spec:
       tolerations:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       terminationGracePeriodSeconds: 60
+{{- include "nginx.imagePullSecrets" . | indent 6 }}
       containers:
         - name: default-backend
           image: {{ template "nginx.defaultBackend.image" . }}

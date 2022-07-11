@@ -32,6 +32,7 @@ spec:
       tolerations:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       restartPolicy: Always
+{{- include "astronomer.imagePullSecrets" . | indent 6 }}
       containers:
         - name: astro-ui
           image: {{- include "astroUI.image" . | indent 1 }}
