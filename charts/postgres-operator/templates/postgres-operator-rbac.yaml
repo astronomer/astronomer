@@ -4,7 +4,7 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: postgres-operator
+  name: {{ template "postgres-operator.fullname" . }}
   labels:
     tier: {{ template "postgres-operator.name" . }}
     component: {{ template "postgres-operator.name" . }}
