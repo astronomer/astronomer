@@ -10,7 +10,7 @@ metadata:
     labels:
     tier: {{ template "postgres-operator.name" . }}
     component: {{ template "postgres-operator.name" . }}
-    chart: {{ template "prometheus.chart" $ }}
+    chart: {{ template "postgres-operator.chart" . }}
     release: {{ $.Release.Name }}
     heritage: {{ $.Release.Service }}
 data:
