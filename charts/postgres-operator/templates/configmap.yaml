@@ -8,11 +8,11 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     labels:
-    tier: {{ template "postgres-operator.name" . }}
-    component: {{ template "postgres-operator.name" . }}
-    chart: {{ template "postgres-operator.chart" . }}
-    release: {{ $.Release.Name }}
-    heritage: {{ $.Release.Service }}
+      tier: {{ template "postgres-operator.name" . }}
+      component: {{ template "postgres-operator.name" . }}
+      chart: {{ template "postgres-operator.chart" . }}
+      release: {{ $.Release.Name }}
+      heritage: {{ $.Release.Service }}
 data:
   # additional_owner_roles: "cron_admin"
   # additional_pod_capabilities: "SYS_NICE"

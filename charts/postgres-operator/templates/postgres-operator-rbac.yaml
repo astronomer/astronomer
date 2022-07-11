@@ -1,13 +1,16 @@
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: postgres-operator
-  namespace: {{ .Release.Namespace }}
----
+##################################
+## Postgres Operator ClusterRole #
+##################################
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   name: postgres-operator
+  labels:
+    tier: {{ template "postgres-operator.name" . }}
+    component: {{ template "postgres-operator.name" . }}
+    chart: {{ template "postgres-operator.chart" . }}
+    release: {{ $.Release.Name }}
+    heritage: {{ $.Release.Service }}
 rules:
 # all verbs allowed for custom operator resources
 - apiGroups:
@@ -227,18 +230,27 @@ rules:
 #  - use
 
 ---
+##########################################
+## Postgres Operator ClusterRole Binding #
+##########################################
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: postgres-operator
+  name: {{ template "postgres-operator.fullname" . }}
+  labels:
+    tier: {{ template "postgres-operator.name" . }}
+    component: {{ template "postgres-operator.name" . }}
+    chart: {{ template "postgres-operator.chart" . }}
+    release: {{ $.Release.Name }}
+    heritage: {{ $.Release.Service }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: postgres-operator
+  name: {{ template "postgres-operator.fullname" . }}
 subjects:
 - kind: ServiceAccount
-  name: postgres-operator
-  namespace: astronomer
+  name: {{ template "postgres-operator.serviceAccountName" . }}
+  namespace: {{ .Release.Namespace }}
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1

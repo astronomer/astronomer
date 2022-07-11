@@ -24,6 +24,17 @@ Create chart name and version as used by the chart label.
 {{- end -}}
 
 
+{{/*
+Create the name of the service account to use
+*/}}
+{{- define "postgres-operator.serviceAccountName" -}}
+{{- if .Values.operator.serviceAccount.create -}}
+    {{ default (include "postgres-operator.fullname" .) .Values.operator.serviceAccount.name }}
+{{- else -}}
+    {{ default "default" .Values.operator.serviceAccount.name }}
+{{- end -}}
+{{- end -}}
+
 
 {{ define "operator.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}

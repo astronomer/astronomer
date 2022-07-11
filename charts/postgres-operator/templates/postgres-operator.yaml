@@ -4,7 +4,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: postgres-operator
+  name: {{ template "postgres-operator.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
     tier: {{ template "postgres-operator.name" . }}
@@ -28,7 +28,7 @@ spec:
         component: {{ template "postgres-operator.name" . }}
         release: {{ .Release.Name }}
     spec:
-      serviceAccountName: postgres-operator
+      serviceAccountName: {{ template "postgres-operator.serviceAccountName" . }}
       containers:
       - name: postgres-operator
         # IMPORTANT when we inevitably need to upgrade this we need to make sure we also copy the new crd file ./crds/postgresql.crd.yaml
