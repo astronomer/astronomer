@@ -1,6 +1,7 @@
 apiVersion: v1
-name: postgresOperator
+name: postgres-operator
 version: 0.1.0
 description: Helm chart to deploy the Astronomer's flavor of the zalando postgres module
 keywords:
   - astronomer
+  - postgres-operator

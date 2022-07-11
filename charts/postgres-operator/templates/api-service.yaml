@@ -1,8 +1,17 @@
+#################################
+## Postgres Operator Service ####
+#################################
 apiVersion: v1
 kind: Service
 metadata:
-  name: postgres-operator
-  namespace: astronomer
+  name: {{ template "postgres-operator.fullname" . }}-service
+  namespace: {{ .Release.Namespace }}
+  labels:
+    tier: {{ template "postgres-operator.name" . }}
+    component: {{ template "prometheus.name" $ }}
+    chart: {{ template "prometheus.chart" $ }}
+    release: {{ $.Release.Name }}
+    heritage: {{ $.Release.Service }}
 spec:
   type: ClusterIP
   ports:

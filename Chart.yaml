@@ -59,7 +59,7 @@ dependencies:
     tags:
       - logging
   # In-cluster DB zalando postgres operator
-  - name: postgresOperator
+  - name: postgres-operator
     condition: global.postgresOperatorEnabled
     tags:
       - postgresOperator

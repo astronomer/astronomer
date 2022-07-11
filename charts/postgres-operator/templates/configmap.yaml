@@ -1,8 +1,17 @@
+###################################
+## Postgres Operator ConfigMap ####
+###################################
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: postgres-operator
-  namespace: astronomer
+  name:  {{ template "postgres-operator.fullname" . }}-configmap
+  namespace: {{ .Release.Namespace }}
+  labels:
+    tier: postgresoperator
+    component: {{ template "prometheus.name" $ }}
+    chart: {{ template "prometheus.chart" $ }}
+    release: {{ $.Release.Name }}
+    heritage: {{ $.Release.Service }}
 data:
   # additional_owner_roles: "cron_admin"
   # additional_pod_capabilities: "SYS_NICE"
