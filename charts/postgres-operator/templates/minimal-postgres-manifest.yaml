@@ -9,7 +9,7 @@ metadata:
     "helm.sh/hook": post-install
 spec:
   tls:
-    secretName: astronomer-tls
+    secretName: astronomer-postgres-tls-secret
     certificateFile: "tls.crt"
     privateKeyFile: "tls.key"
     caSecretName: private-ca
