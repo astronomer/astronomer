@@ -33,4 +33,13 @@ operator:
     # If not set and create is true, a name is generated using the fullname template
     name: ""
 
+  extraEnvs: []
+  # In order to use the CRD OperatorConfiguration instead, uncomment these lines and comment out the two lines above
+  # - name: POSTGRES_OPERATOR_CONFIGURATION_OBJECT
+  #  value: postgresql-operator-default-configuration
+  # Define an ID to isolate controllers from each other
+  # - name: CONTROLLER_ID
+  #   value: "second-operator"
+
+
 cluserName: acid-minimal-cluster
