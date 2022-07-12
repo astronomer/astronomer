@@ -3,6 +3,9 @@ kind: Deployment
 metadata:
   name: postgres-operator
   namespace: astronomer
+  annotations:
+    "helm.sh/hook": pre-install
+    "helm.sh/hook-weight": "9"
   labels:
     application: postgres-operator
 spec:
