@@ -6,6 +6,9 @@ kind: Deployment
 metadata:
   name: {{ template "postgres-operator.fullname" . }}
   namespace: {{ .Release.Namespace }}
+  annotations:
+    "helm.sh/hook": pre-install
+    "helm.sh/hook-weight": "9"
   labels:
     tier: {{ template "postgres-operator.name" . }}
     component: {{ template "postgres-operator.name" . }}

@@ -1,7 +1,7 @@
 apiVersion: "acid.zalan.do/v1"
 kind: postgresql
 metadata:
-  name: {{ .Values.cluserName}}
+  name: {{ .Values.clusterName}}
   namespace: {{ .Release.Namespace }}
   labels:
     tier: {{ template "postgres-operator.name" . }}
@@ -12,10 +12,11 @@ metadata:
   annotations:
     # This is what defines this resource as a hook. Without this line, the
     # job is considered part of the release.
-    "helm.sh/hook": post-install
+    "helm.sh/hook": pre-install
+    "helm.sh/hook-weight": "10"
 spec:
   tls:
-    secretName: astronomer-tls
+    secretName: astronomer-postgres-tls-secret
     certificateFile: "tls.crt"
     privateKeyFile: "tls.key"
     caSecretName: private-ca
@@ -49,7 +50,7 @@ metadata:
 spec:
   podSelector:
     matchLabels:
-      cluster-name: {{ .Values.cluserName }}
+      cluster-name: {{ .Values.clusterName }}
   ingress:
     # Allow inbound connections
     - ports:

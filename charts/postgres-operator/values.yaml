@@ -46,4 +46,4 @@ operator:
   #   value: "second-operator"
 
 
-cluserName: acid-minimal-cluster
+clusterName: acid-minimal-cluster
