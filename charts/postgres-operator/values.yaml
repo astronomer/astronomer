@@ -26,9 +26,13 @@ operator:
     readOnlyRootFilesystem: true
     allowPrivilegeEscalation: false
 
-  serviceAccount:
-  # Specifies whether a ServiceAccount should be created
+    serviceAccount:
+    # create specifies whether a service account should be created for the operator.
     create: true
+
+    # annotations to add to the service account
+    annotations: {}
+
     # The name of the ServiceAccount to use.
     # If not set and create is true, a name is generated using the fullname template
     name: ""
