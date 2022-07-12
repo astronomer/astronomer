@@ -205,7 +205,7 @@ s3:
     secretKeyRef:
       name: {{ template "houston.backendSecret" . }}
       key: connection
-{{- if not .Values.houston.config.deployments.database.connection }}
+{{- if not $.Values.houston.config.deployments.database.connection }}
 - name: DEPLOYMENTS__DATABASE__CONNECTION
   valueFrom:
     secretKeyRef:
