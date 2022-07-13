@@ -43,3 +43,20 @@ Create the name of the service account to use
 {{ .Values.images.operator.repository }}:{{ .Values.images.operator.tag }}
 {{- end }}
 {{- end }}
+
+{{/*
+Return the proper Docker Image Registry Secret Names
+*/}}
+{{- define "operator.imagePullSecrets" -}}
+{{- if .Values.global }}
+{{- if .Values.global.privateRegistry.enabled }}
+imagePullSecrets:
+  - name: {{ .Values.global.privateRegistry.secretName }}
+{{- else if .Values.operator.imagePullSecrets }}
+imagePullSecrets:
+{{- range .Values.operator.imagePullSecrets }}
+  - name: {{ . }}
+{{- end }}
+{{- end -}}
+{{- end -}}
+{{- end -}}
