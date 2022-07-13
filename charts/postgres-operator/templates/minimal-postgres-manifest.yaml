@@ -1,7 +1,7 @@
 apiVersion: "acid.zalan.do/v1"
 kind: postgresql
 metadata:
-  name: {{ .Values.clusterName}}
+  name: {{ .Values.postgres.clusterName }}
   namespace: {{ .Release.Namespace }}
   labels:
     tier: {{ template "postgres-operator.name" . }}
@@ -15,5 +15,5 @@ metadata:
     "helm.sh/hook": pre-install
     "helm.sh/hook-weight": "10"
 spec:
-{{ toYaml  .Values.postgres | indent 2 }}
+{{ toYaml  .Values.postgres.config | indent 2 }}
 

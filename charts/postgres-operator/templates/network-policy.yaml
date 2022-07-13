@@ -12,7 +12,7 @@ metadata:
 spec:
   podSelector:
     matchLabels:
-      cluster-name: {{ .Values.clusterName }}
+      cluster-name: {{ .Values.postgres.clusterName }}
   ingress:
     # Allow inbound connections
     - ports:
