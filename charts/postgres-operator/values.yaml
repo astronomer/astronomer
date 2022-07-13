@@ -102,7 +102,7 @@ operator:
     spilo_privileged: "false"
     storage_resize_mode: "pvc"
     super_username: postgres
-    watched_namespace: "*" 
+    watched_namespace: "*"
     workers: "8"
 
 postgres:
