@@ -16,4 +16,3 @@ metadata:
     "helm.sh/hook-weight": "10"
 spec:
 {{ toYaml  .Values.postgres.config | indent 2 }}
-
