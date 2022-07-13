@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ template "postgres-operator.fullname" . }}-instance-policy
+  namespace: {{ .Release.Namespace }}
+  labels:
+    tier: {{ template "postgres-operator.name" . }}
+    component: {{ template "postgres-operator.name" . }}
+    chart: {{ template "postgres-operator.chart" . }}
+    release: {{ $.Release.Name }}
+    heritage: {{ $.Release.Service }}
+spec:
+  podSelector:
+    matchLabels:
+      cluster-name: {{ .Values.clusterName }}
+  ingress:
+    # Allow inbound connections
+    - ports:
+      - port: 5432
