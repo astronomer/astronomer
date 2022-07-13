@@ -205,11 +205,13 @@ s3:
     secretKeyRef:
       name: {{ template "houston.backendSecret" . }}
       key: connection
+{{- if not (((.Values.houston.config.deployments).database).connection) }}
 - name: DEPLOYMENTS__DATABASE__CONNECTION
   valueFrom:
     secretKeyRef:
       name: {{ template "houston.airflowBackendSecret" . }}
       key: connection
+{{- end }}
   # These are set here for Houston's entrypoint script
 - name: COMMANDER__HOST
   value: {{ .Release.Name }}-commander
