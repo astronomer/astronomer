@@ -19,7 +19,6 @@ class TestHoustonApiDeployment:
 
         assert len(docs) == 1
         doc = docs[0]
-
         assert doc["kind"] == "Deployment"
         assert "annotations" not in doc["metadata"]
         assert (
@@ -42,3 +41,43 @@ class TestHoustonApiDeployment:
         assert c_by_name["wait-for-db"]["image"].startswith(
             "quay.io/astronomer/ap-houston-api:"
         )
+        houston_env = c_by_name["houston"]["env"]
+        deployments_database_connection_env = next(
+            x for x in houston_env if x["name"] == "DEPLOYMENTS__DATABASE__CONNECTION"
+        )
+        assert deployments_database_connection_env is not None
+
+    def test_houston_api_deployment_with_helm_set_database(self, kube_version):
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=[
+                "charts/astronomer/templates/houston/api/houston-deployment.yaml"
+            ],
+            values={
+                "astronomer": {
+                    "houston": {
+                        "config": {
+                            "deployments": {
+                                "database": {"connection": {"host": "1.1.1.1"}}
+                            }
+                        }
+                    }
+                }
+            },
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+
+        c_by_name = get_containers_by_name(doc, include_init_containers=True)
+        houston_env = c_by_name["houston"]["env"]
+
+        deployments_database_connection_env = next(
+            (
+                x
+                for x in houston_env
+                if x["name"] == "DEPLOYMENTS__DATABASE__CONNECTION"
+            ),
+            None,
+        )
+        assert deployments_database_connection_env is None
