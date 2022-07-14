@@ -46,6 +46,8 @@ operator:
   # - name: CONTROLLER_ID
   #   value: "second-operator"
 
+  podAnnotations: {}
+
   config:
     api_port: "8080"
     aws_region: eu-central-1

@@ -28,6 +28,9 @@ spec:
     metadata:
       annotations:
         checksum/configmap: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+    {{- if .Values.operator.podAnnotations }}
+{{ toYaml .Values.operator.podAnnotations | indent 8 }}
+    {{- end }}
       labels:
         tier: {{ template "postgres-operator.name" . }}
         component: {{ template "postgres-operator.name" . }}
