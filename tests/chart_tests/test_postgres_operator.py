@@ -10,13 +10,13 @@ import jmespath
 )
 class TestPostgresOperator:
     def test_postgres_operator_deployment_defaults(self, kube_version):
-        """Test External ElasticSearch with secret passed from config/values.yaml."""
+        """Test Postgres Operator defaults from config/values.yaml."""
         docs = render_chart(
             kube_version=kube_version,
             values={"global": {"postgresOperatorEnabled": True}},
             show_only=[
                 "charts/postgres-operator/templates/postgres-operator-deployment.yaml",
-                "charts/postgres-operator/templates/api-service.yaml",
+                "charts/postgres-operator/templates/postgres-operator-service.yaml",
                 "charts/postgres-operator/templates/postgres-operator-serviceaccount.yaml",
                 "charts/postgres-operator/templates/configmap.yaml",
             ],
