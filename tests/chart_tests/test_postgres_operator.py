@@ -33,9 +33,23 @@ class TestPostgresOperator:
             "runAsNonRoot": True,
             "runAsUser": 1000,
         }
+        assert doc["spec"]["template"]["spec"]["containers"][0]["resources"] == {
+            "requests": {"cpu": "100m", "memory": "250Mi"},
+            "limits": {"cpu": "500m", "memory": "500Mi"},
+        }
+
         assert [
             {
                 "name": "CONFIG_MAP_NAME",
                 "value": "release-name-postgres-operator-configmap",
             }
         ] in jmespath.search("spec.template.spec.containers[*].env", doc)
+
+        assert "Service" == jmespath.search("kind", docs[1])
+        assert "release-name-postgres-operator-service" == jmespath.search(
+            "metadata.name", docs[1]
+        )
+        assert "ClusterIP" == jmespath.search("spec.type", docs[1])
+        assert {"protocol": "TCP", "port": 8080, "targetPort": 8080} in jmespath.search(
+            "spec.ports", docs[1]
+        )
