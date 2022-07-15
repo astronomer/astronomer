@@ -2,8 +2,7 @@ from tests.chart_tests.helm_template_generator import render_chart
 import pytest
 from tests import supported_k8s_versions
 import jmespath
-import base64
-import yaml
+
 
 @pytest.mark.parametrize(
     "kube_version",
@@ -28,7 +27,15 @@ class TestPostgresOperator:
         assert doc["kind"] == "Deployment"
         assert doc["apiVersion"] == "apps/v1"
         assert doc["metadata"]["name"] == "release-name-postgres-operator"
-        assert doc["spec"]["template"]["spec"]["containers"][0]["securityContext"] == {'allowPrivilegeEscalation': False, 'readOnlyRootFilesystem': True, 'runAsNonRoot': True, 'runAsUser': 1000}
-        assert [{"name": "CONFIG_MAP_NAME", "value": "release-name-postgres-operator-configmap"}] in jmespath.search(
-            "spec.template.spec.containers[*].env", doc
-        )
+        assert doc["spec"]["template"]["spec"]["containers"][0]["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
+            "runAsUser": 1000,
+        }
+        assert [
+            {
+                "name": "CONFIG_MAP_NAME",
+                "value": "release-name-postgres-operator-configmap",
+            }
+        ] in jmespath.search("spec.template.spec.containers[*].env", doc)
