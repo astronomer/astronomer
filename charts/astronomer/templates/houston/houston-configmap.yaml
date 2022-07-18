@@ -371,6 +371,10 @@ data:
     prometheus:
       enabled: true
       host: {{ printf "%s-prometheus" .Release.Name }}
+    updateAirflowCheck: |
+    {{ toYaml .Values.houston.updateAirflowCheck | indent 4 }}
+    updateRuntimeCheck: |
+    {{ toYaml .Values.houston.updateRuntimeCheck | indent 4 }}
 
   # These are any user-specified config overrides.
   local-production.yaml: |
