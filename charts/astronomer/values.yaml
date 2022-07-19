@@ -324,6 +324,7 @@ registry:
     encrypt: false
     keyid: ~
     rootdirectory: ~
+    regionendpoint: ~
 
   notifications:
     timeout: 30s

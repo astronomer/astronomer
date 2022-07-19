@@ -169,6 +169,7 @@ s3:
   encrypt: {{ .Values.registry.s3.encrypt }}
   keyid: {{ .Values.registry.s3.keyid }}
   rootdirectory: {{ .Values.registry.s3.rootdirectory }}
+  regionendpoint: {{ .Values.registry.s3.regionendpoint }}
 {{- end }}
 
 {{- define "houston_environment" }}
