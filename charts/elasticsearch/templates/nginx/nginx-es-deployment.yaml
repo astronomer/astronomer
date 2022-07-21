@@ -24,6 +24,8 @@ spec:
         tier: {{ template "nginx-es.name" . }}
         component: es-ingress-controller
         release: {{ .Release.Name }}
+        app: {{ template "elasticsearch.name" . }}-ingress-controller
+        version: {{ .Chart.Version }}
       annotations:
         checksum/configmap: {{ include (print $.Template.BasePath "/nginx/nginx-es-configmap.yaml") . | sha256sum }}
 {{- if .Values.common.podAnnotations }}

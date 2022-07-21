@@ -21,6 +21,7 @@ spec:
       name: {{ template "postgresql.fullname" . }}
       labels:
         app: {{ template "postgresql.name" . }}
+        version: {{ .Chart.Version }}
         chart: {{ template "postgresql.chart" . }}
         release: {{ .Release.Name | quote }}
         heritage: {{ .Release.Service | quote }}
