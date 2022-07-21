@@ -14,14 +14,14 @@ metadata:
 spec:
   type: {{ .Values.service.type }}
   ports:
-    - name: securehttp
+    - name: secure-http
       port: {{ .Values.service.securehttp }}
       protocol: TCP
-      name: secure-http
+      appProtocol: https
     - name: http
       port: {{ .Values.service.http }}
       protocol: TCP
-      name: http
+      appProtocol: http
   selector:
     tier: external-logging
     component: {{ template "external-es-proxy.name" . }}

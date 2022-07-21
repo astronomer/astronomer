@@ -58,6 +58,7 @@ spec:
       {{- if and (eq .Values.serviceType "NodePort") .Values.httpNodePort }}
       nodePort: {{ .Values.httpNodePort }}
       {{- end }}
+      appProtocol: http
     - port: 443
       targetPort: {{ .Values.ports.https }}
       protocol: TCP
@@ -65,3 +66,4 @@ spec:
       {{- if and (eq .Values.serviceType "NodePort") .Values.httpsNodePort }}
       nodePort: {{ .Values.httpsNodePort }}
       {{- end }}
+      appProtocol: https
