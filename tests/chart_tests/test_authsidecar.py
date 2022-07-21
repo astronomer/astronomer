@@ -39,6 +39,7 @@ class TestAuthSidecar:
             "name": "auth-proxy",
             "protocol": "TCP",
             "port": 8084,
+            "appProtocol": "tcp",
         } in jmespath.search("spec.ports", docs[2])
 
         assert "NetworkPolicy" == docs[3]["kind"]
@@ -74,6 +75,7 @@ class TestAuthSidecar:
             "name": "auth-proxy",
             "protocol": "TCP",
             "port": 8084,
+            "appProtocol": "tcp",
         } in jmespath.search("spec.ports", docs[2])
 
         assert "NetworkPolicy" == docs[3]["kind"]
@@ -109,6 +111,7 @@ class TestAuthSidecar:
             "name": "auth-proxy",
             "protocol": "TCP",
             "port": 8084,
+            "appProtocol": "tcp",
         } in jmespath.search("spec.ports", docs[2])
 
         assert "NetworkPolicy" == docs[3]["kind"]

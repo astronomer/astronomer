@@ -156,10 +156,14 @@ class TestExternalElasticSearch:
             "name": "secure-http",
             "protocol": "TCP",
             "port": 9200,
+            "appProtocol": "https",
         } in jmespath.search("spec.ports", docs[1])
-        assert {"name": "http", "protocol": "TCP", "port": 9201} in jmespath.search(
-            "spec.ports", docs[1]
-        )
+        assert {
+            "name": "http",
+            "protocol": "TCP",
+            "port": 9201,
+            "appProtocol": "http",
+        } in jmespath.search("spec.ports", docs[1])
 
     def test_externalelasticsearch_with_awsIAMRole(self, kube_version):
         """Test External ElasticSearch with iam roles passed as Deployment annotation."""
