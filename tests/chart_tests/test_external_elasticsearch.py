@@ -1,9 +1,11 @@
-from tests.chart_tests.helm_template_generator import render_chart
-import pytest
-from tests import supported_k8s_versions
-import jmespath
 import base64
+
+import jmespath
+import pytest
 import yaml
+
+from tests import supported_k8s_versions
+from tests.chart_tests.helm_template_generator import render_chart
 
 secret = base64.b64encode(b"sample-secret").decode()
 
@@ -43,10 +45,14 @@ class TestExternalElasticSearch:
             "name": "secure-http",
             "protocol": "TCP",
             "port": 9200,
+            "appProtocol": "https",
         } in jmespath.search("spec.ports", docs[3])
-        assert {"name": "http", "protocol": "TCP", "port": 9201} in jmespath.search(
-            "spec.ports", docs[3]
-        )
+        assert {
+            "name": "http",
+            "protocol": "TCP",
+            "port": 9201,
+            "appProtocol": "http",
+        } in jmespath.search("spec.ports", docs[3])
 
     def test_externalelasticsearch_with_secretname(self, kube_version):
         """Test External ElasticSearch with secret passed as kubernetes secrets."""
@@ -90,10 +96,14 @@ class TestExternalElasticSearch:
             "name": "secure-http",
             "protocol": "TCP",
             "port": 9200,
+            "appProtocol": "https",
         } in jmespath.search("spec.ports", docs[3])
-        assert {"name": "http", "protocol": "TCP", "port": 9201} in jmespath.search(
-            "spec.ports", docs[3]
-        )
+        assert {
+            "name": "http",
+            "protocol": "TCP",
+            "port": 9201,
+            "appProtocol": "http",
+        } in jmespath.search("spec.ports", docs[3])
 
     def test_externalelasticsearch_with_awsSecretName(self, kube_version):
         """Test External ElasticSearch with aws secret passed as kubernetes secret."""
@@ -190,10 +200,14 @@ class TestExternalElasticSearch:
             "name": "secure-http",
             "protocol": "TCP",
             "port": 9200,
+            "appProtocol": "https",
         } in jmespath.search("spec.ports", docs[1])
-        assert {"name": "http", "protocol": "TCP", "port": 9201} in jmespath.search(
-            "spec.ports", docs[1]
-        )
+        assert {
+            "name": "http",
+            "protocol": "TCP",
+            "port": 9201,
+            "appProtocol": "http",
+        } in jmespath.search("spec.ports", docs[1])
 
     def test_externalelasticsearch_with_awsServiceAccountAnnotation(self, kube_version):
         """Test External ElasticSearch with eks iam roles passed as Service Account Annotation."""
@@ -237,10 +251,14 @@ class TestExternalElasticSearch:
             "name": "secure-http",
             "protocol": "TCP",
             "port": 9200,
+            "appProtocol": "https",
         } in jmespath.search("spec.ports", docs[2])
-        assert {"name": "http", "protocol": "TCP", "port": 9201} in jmespath.search(
-            "spec.ports", docs[2]
-        )
+        assert {
+            "name": "http",
+            "protocol": "TCP",
+            "port": 9201,
+            "appProtocol": "http",
+        } in jmespath.search("spec.ports", docs[2])
 
     def test_externalelasticsearch_houston_configmap_with_disabled_kibanaUIFlag(
         self, kube_version
