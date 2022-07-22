@@ -139,5 +139,5 @@ def test_fluentd_configmap_configure_extra_log_stores(kube_version):
         },
         show_only=["charts/fluentd/templates/fluentd-configmap.yaml"],
     )[0]
-    expected_store = "<store>\n    @type newrelic\n    @log_level info\n    base_uri https://log-api.newrelic.com/log/v1\n    license_key <LICENSE_KEY>"
+    expected_store = "  <store>\n    @type newrelic\n    @log_level info\n    base_uri https://log-api.newrelic.com/log/v1\n    license_key <LICENSE_KEY>"
     assert expected_store in doc["data"]["output.conf"]
