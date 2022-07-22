@@ -111,3 +111,33 @@ def test_fluentd_configmap_manual_namespaces_and_namespacepools_disabled(kube_ve
         'key $.kubernetes.namespace_labels.platform\n    pattern "release-name"'
     )
     assert expected_rule in doc["data"]["output.conf"]
+
+
+@pytest.mark.parametrize(
+    "kube_version",
+    supported_k8s_versions,
+)
+def test_fluentd_configmap_configure_extra_log_stores(kube_version):
+    """Test that when namespace Pools and manualNamespaceNamesEnabled are disabled, helm renders a default fluentd configmap looking at an environment variable"""
+    doc = render_chart(
+        kube_version=kube_version,
+        values={
+            "fluentd": {
+                "extraLogStores": """
+<store>
+  @type newrelic
+  @log_level info
+  base_uri https://log-api.newrelic.com/log/v1
+  license_key <LICENSE_KEY>
+  <buffer>
+    @type memory
+    flush_interval 5s
+  </buffer>
+</store>
+                """
+            }
+        },
+        show_only=["charts/fluentd/templates/fluentd-configmap.yaml"],
+    )[0]
+    expected_store = "<store>\n    @type newrelic\n    @log_level info\n    base_uri https://log-api.newrelic.com/log/v1\n    license_key <LICENSE_KEY>"
+    assert expected_store in doc["data"]["output.conf"]
