@@ -240,4 +240,7 @@ data:
         </buffer>
       </store>
       {{- end }}
+      {{- if .Values.extraLogStores }}
+{{ .Values.extraLogStores | indent 6}}
+      {{- end }}
     </match>
