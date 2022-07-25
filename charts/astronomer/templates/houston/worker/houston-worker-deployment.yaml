@@ -28,6 +28,7 @@ spec:
       annotations:
         checksum/houston-config: {{ include (print $.Template.BasePath "/houston/houston-configmap.yaml") . | sha256sum }}
     spec:
+      priorityClassName: high-priority
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
       affinity:
@@ -37,7 +38,6 @@ spec:
       restartPolicy: Always
       {{- if and (not .Values.houston.airflowBackendSecretName) (not .Values.houston.airflowBackendConnection) }}
       serviceAccountName: {{ template "houston.bootstrapperServiceAccount" . }}
-{{- include "astronomer.imagePullSecrets" . | indent 6 }}
       initContainers:
         - name: wait-for-db
           image: {{ template "houston.image" . }}
@@ -107,6 +107,11 @@ spec:
               value: "INFO"
             - name: GRPC_TRACE
               value: "all"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "houston.backendSecret" . }}
+                  key: connection
             {{- include "houston_environment" . | indent 12 }}
             - name: APOLLO_SERVER_ID
               valueFrom:

@@ -1,0 +1,7 @@
+apiVersion: scheduling.k8s.io/v1beta1
+kind: PriorityClass
+metadata:
+  name: {{ .Values.overProvision.priorityClassName }}
+value: {{ .Values.overProvision.priorityValue }}
+globalDefault: {{ .Values.overProvision.globalDefault }}
+description: {{ .Values.overProvision.description }}

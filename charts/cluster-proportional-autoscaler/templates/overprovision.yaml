@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.pause.deployName }}
+  namespace: {{ .Values.pause.deployNamespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "overprovision.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "overprovision.selectorLabels" . | nindent 8 }}
+    spec:
+      priorityClassName: {{ .Values.overProvision.priorityClassName }}
+      containers:
+        - name: reserve-resources
+          image:  k8s.gcr.io/pause
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          resources:
+            requests:
+              cpu: 28
+              memory: 120Gi

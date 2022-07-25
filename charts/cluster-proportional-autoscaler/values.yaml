@@ -1,0 +1,58 @@
+affinity: {}
+config:
+  linear:
+    coresPerReplica: 2
+    nodesPerReplica: 1
+    min: 1
+    max: 100
+    preventSinglePointFailure: true
+    includeUnschedulableNodes: true
+image:
+  repository: k8s.gcr.io/cpa/cluster-proportional-autoscaler
+  pullPolicy: IfNotPresent
+fullnameOverride: overprovisioning-autoscaler
+nameOverride: overprovisioning-autoscaler
+options:
+  alsoLogToStdErr:
+  logBacktraceAt:
+  logDir:
+  #  --v=0: log level for V logs
+  logLevel:
+  # Defaulting to true limits use of ephemeral storage
+  logToStdErr: true
+  maxSyncFailures:
+  namespace: kube-system
+  nodeLabels:
+    astronomer.io/multi-tenant: true
+    node.kubernetes.io/instance-type: n1-standard-32
+  pollPeriodSeconds:
+  stdErrThreshold:
+  target: deployment/overprovisioning
+  vmodule:
+podAnnotations: {}
+podSecurityContext:
+  fsGroup: 2000
+replicaCount: 1
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+securityContext:
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1000
+serviceAccount:
+  create: true
+  annotations: {}
+  name: cpa
+overProvision:
+  priorityClassName: negative-priority
+  globalDefault: false
+  priorityValue: -1
+  description: "Priority class used by overprovisioning."
+pause:
+  deployName: overprovisioning
+  deployNamespace: kube-system
