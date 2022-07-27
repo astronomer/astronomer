@@ -27,4 +27,5 @@ ports:
 
 replicas: 1
 
-extraArgs: []
+extraArgs:
+- --metric-labels-allowlist=namespaces=[*]
