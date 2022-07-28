@@ -28,4 +28,4 @@ ports:
 replicas: 1
 
 extraArgs:
-- --metric-labels-allowlist=namespaces=[*]
+- "--metric-labels-allowlist=namespaces=[*]"
