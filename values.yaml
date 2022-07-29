@@ -403,13 +403,24 @@ stan:
   affinity:
     <<: *platformAffinity
   tolerations: *platformTolerations
-  resources:
-    requests:
-      cpu: "75m"
-      memory: "30Mi"
-    limits:
-      cpu: "250m"
-      memory: "100Mi"
+
+  init:
+    resources:
+      requests:
+        cpu: "75m"
+        memory: "30Mi"
+      limits:
+        cpu: "250m"
+        memory: "100Mi"
+
+  stan:
+    resources:
+      requests:
+        cpu: "75m"
+        memory: "30Mi"
+      limits:
+        cpu: "250m"
+        memory: "100Mi"
 
 #################################
 ## Blackbox Exporter configuration
