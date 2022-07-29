@@ -188,13 +188,13 @@ reloader:
 exporter:
   enabled: true
   # resource configuration for the metrics sidecar
-  resources: {}
-  #  limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  #  requests:
-  #   cpu: 100m
-  #   memory: 128Mi
+  resources:
+    limits:
+     cpu: 100m
+     memory: 128Mi
+    requests:
+     cpu: 100m
+     memory: 128Mi
 
 # Authentication setup
 auth:

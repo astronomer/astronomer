@@ -387,13 +387,15 @@ nats:
   affinity:
     <<: *platformAffinity
   tolerations: *platformTolerations
-  resources:
-    requests:
-      cpu: "75m"
-      memory: "30Mi"
-    limits:
-      cpu: "250m"
-      memory: "100Mi"
+
+  nats:
+    resources:
+      requests:
+        cpu: "75m"
+        memory: "30Mi"
+      limits:
+        cpu: "250m"
+        memory: "100Mi"
 
 stan:
   nodeSelector:
