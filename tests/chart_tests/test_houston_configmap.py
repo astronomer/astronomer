@@ -146,7 +146,14 @@ def test_houston_configmap_with_loggingsidecar_enabled():
     """Validate the houston configmap and its embedded data with loggingSidecar."""
     terminationEndpoint = "http://localhost:8000/quitquitquit"
     docs = render_chart(
-        values={"global": {"loggingSidecar": {"enabled": True}}},
+        values={
+            "global": {
+                "loggingSidecar": {
+                    "enabled": True,
+                    "image": "quay.io/astronomer/ap-vector:0.22.3",
+                }
+            }
+        },
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
 
@@ -175,10 +182,15 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_overrides():
     """Validate the houston configmap and its embedded data with loggingSidecar."""
     sidecar_container_name = "sidecar-log-test"
     terminationEndpoint = "http://localhost:8000/quitquitquit"
+    image_name = "quay.io/astronomer/ap-vector:0.22.3"
     docs = render_chart(
         values={
             "global": {
-                "loggingSidecar": {"enabled": True, "name": sidecar_container_name}
+                "loggingSidecar": {
+                    "enabled": True,
+                    "name": sidecar_container_name,
+                    "image": image_name,
+                }
             }
         },
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
@@ -211,6 +223,7 @@ def test_houston_configmap_with_loggingsidecar_customConfig_enabled():
     """Validate the houston configmap and its embedded data with loggingSidecar customConfig Enabled."""
     sidecar_container_name = "sidecar-log-test"
     terminationEndpoint = "http://localhost:8000/quitquitquit"
+    image_name = "quay.io/astronomer/ap-vector:0.22.3"
     docs = render_chart(
         values={
             "global": {
@@ -218,6 +231,7 @@ def test_houston_configmap_with_loggingsidecar_customConfig_enabled():
                     "enabled": True,
                     "name": sidecar_container_name,
                     "customConfig": True,
+                    "image": image_name,
                 }
             }
         },
