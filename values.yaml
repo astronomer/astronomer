@@ -452,6 +452,15 @@ elasticsearch:
 
   # Configure client nodes
   client:
+
+    initResources:
+      requests:
+        cpu: "120m"
+        memory: "100Mi"
+      limits:
+        cpu: "100m"
+        memory: "80Mi"
+
     # Match resources.requests.memory
     heapMemory: "2g"
 
