@@ -105,7 +105,7 @@ global:
   loggingSidecar:
     enabled: false
     name: sidecar-log-consumer
-    image: quay.io/astronomer/ap-vector:0.22.3
+    image: quay.io/astronomer/ap-vector:0.23.0
     terminationEndpoint: http://localhost:8000/quitquitquit
     customConfig: false
 
@@ -511,15 +511,15 @@ kibana:
 #################################
 ## Fluentd configuration
 #################################
-# fluentd:
-#   # Configure resources
-#   resources:
-#     requests:
-#       cpu: "250m"
-#       memory: "512Mi"
-#     limits:
-#       cpu: "500m"
-#       memory: "1024Mi"
+fluentd:
+  # Configure resources
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "1024Mi"
 
 #################################
 ## Kube State configuration
