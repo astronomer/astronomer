@@ -465,6 +465,15 @@ elasticsearch:
 
   # Configure data nodes
   data:
+
+    initResources:
+      requests:
+        cpu: "120m"
+        memory: "100Mi"
+      limits:
+        cpu: "100m"
+        memory: "80Mi"
+
     # Match resources.requests.memory
     heapMemory: "2g"
 
@@ -481,6 +490,15 @@ elasticsearch:
 
   # Configure master nodes
   master:
+
+    initResources:
+      requests:
+        cpu: "120m"
+        memory: "100Mi"
+      limits:
+        cpu: "100m"
+        memory: "80Mi"
+
     # Match resources.requests.memory
     heapMemory: "2g"
 
@@ -494,6 +512,24 @@ elasticsearch:
 
     persistence:
       size: "20Gi"
+
+  exporter:
+    resources:
+      requests:
+        cpu: "50m"
+        memory: "128Mi"
+      limits:
+        cpu: "800m"
+        memory: "100Mi"
+
+  nginx:
+    resources:
+      requests:
+        cpu: "0.8m"
+        memory: "7Mi"
+      limits:
+        cpu: "100m"
+        memory: "10Mi"
 
 #################################
 ## Kibana configuration

@@ -79,6 +79,8 @@ spec:
         command: ["sysctl", "-w", "vm.max_map_count={{ .Values.sysctlInitContainer.sysctlVmMaxMapCount}}"]
         securityContext:
           privileged: true
+        resources:
+{{ toYaml .Values.data.initResources | indent 10 }}
       {{- end }}
       serviceAccountName: {{ template "elasticsearch.fullname" . }}
       containers:
