@@ -381,6 +381,15 @@ prometheus:
       cpu: "2000m"
       memory: "8Gi"
 
+  configMapReloader:
+    resources:
+      limits:
+        cpu: 100m
+        memory: 25Mi
+      requests:
+        cpu: 100m
+        memory: 25Mi
+
 nats:
   nodeSelector:
     <<: *platformNodeSelector
