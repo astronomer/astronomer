@@ -1,8 +1,10 @@
+import re
+
 import pytest
 
+import tests.chart_tests as chart_tests
 from tests import get_containers_by_name
 from tests.chart_tests.helm_template_generator import render_chart
-import re
 
 annotation_validator = re.compile(
     "^([^/]+/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$"
@@ -13,7 +15,9 @@ pod_managers = ["Deployment", "StatefulSet", "DaemonSet"]
 class TestAllPodSpecContainers:
     """Test pod spec containers for some defaults."""
 
-    default_docs = render_chart()
+    chart_values = chart_tests.get_all_features()
+
+    default_docs = render_chart(values=chart_values)
     pod_manager_docs = [doc for doc in default_docs if doc["kind"] in pod_managers]
     annotated = [x for x in default_docs if x["metadata"].get("annotations")]
 
