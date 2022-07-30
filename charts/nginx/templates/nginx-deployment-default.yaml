@@ -44,5 +44,7 @@ spec:
               scheme: HTTP
             initialDelaySeconds: 30
             timeoutSeconds: 5
+          resources:
+{{ toYaml .Values.defaultBackend.resources | indent 12 }}
           ports:
             - containerPort: {{ .Values.ports.defaultBackendHTTP }}

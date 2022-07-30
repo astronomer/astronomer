@@ -324,6 +324,15 @@ nginx:
   # Dict of arbitrary annotations to add to the nginx ingress
   ingressAnnotations: {}
 
+  defaultBackend:
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "50Mi"
+      limits:
+        cpu: "120m"
+        memory: "100Mi"
+
 #################################
 ## Grafana configuration
 #################################
