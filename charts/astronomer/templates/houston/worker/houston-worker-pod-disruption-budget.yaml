@@ -1,6 +1,7 @@
 ##################################################
 ## Astronomer Houston Worker Pod Disruption Budget
 ##################################################
+{{- if .Values.global.podDisruptionBudgetsEnabled }}
 apiVersion: {{ include "apiVersion.PodDisruptionBudget" . }}
 kind: PodDisruptionBudget
 metadata:
@@ -18,3 +19,4 @@ spec:
       tier: astronomer
       component: houston-worker
       release: {{ .Release.Name }}
+{{- end }}

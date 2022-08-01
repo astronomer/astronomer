@@ -1,6 +1,7 @@
 ##############################################
 ## Astronomer Prometheus Pod Disruption Budget
 ##############################################
+{{- if .Values.global.podDisruptionBudgetsEnabled }}
 apiVersion: {{ include "apiVersion.PodDisruptionBudget" . }}
 kind: PodDisruptionBudget
 metadata:
@@ -11,3 +12,4 @@ spec:
     matchLabels:
       app: {{ template "prometheus-postgres-exporter.name" . }}
       release: {{ .Release.Name }}
+{{- end }}
