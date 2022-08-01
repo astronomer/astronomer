@@ -35,9 +35,8 @@ class TestHoustonApiDeployment:
         assert doc["spec"]["template"]["metadata"]["labels"].get("app") == "houston"
         assert doc["spec"]["template"]["metadata"]["labels"].get("tier") == "astronomer"
         assert (
-            "release" in doc["spec"]["template"]["metadata"]["labels"]
-            and "release-name"
-            in doc["spec"]["template"]["metadata"]["labels"]["release"]
+            doc["spec"]["template"]["metadata"]["labels"].get("release")
+            == "release-name"
         )
 
         # assert (
