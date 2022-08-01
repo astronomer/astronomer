@@ -40,7 +40,12 @@ class TestHoustonApiDeployment:
         )
 
         labels = doc["spec"]["template"]["metadata"]["labels"]
-        assert {'tier': 'astronomer', 'component': 'houston', 'release': 'release-name', 'app': 'houston'} == {x: labels[x] for x in labels if x != "version"}
+        assert {
+            "tier": "astronomer",
+            "component": "houston",
+            "release": "release-name",
+            "app": "houston",
+        } == {x: labels[x] for x in labels if x != "version"}
 
         c_by_name = get_containers_by_name(doc, include_init_containers=True)
         assert c_by_name["houston-bootstrapper"]["image"].startswith(
