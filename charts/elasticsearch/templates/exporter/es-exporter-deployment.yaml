@@ -1,6 +1,6 @@
-################################
-## Elasticsearch Exporter Deployment
-#################################
+#######################################
+## Elasticsearch Exporter Deployment ##
+#######################################
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -50,7 +50,8 @@ spec:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       restartPolicy: {{ .Values.exporter.restartPolicy }}
       securityContext:
-        runAsUser: 0
+{{ toYaml .Values.exporter.securityContext | indent 8 }}
+{{- include "elasticsearch.imagePullSecrets" . | indent 6 }}
       containers:
         - name: metrics-exporter
           image: {{ template "exporter.image" . }}

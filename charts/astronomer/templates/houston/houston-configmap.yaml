@@ -100,7 +100,9 @@ data:
       loggingSidecar:
         enabled: true
         name: {{ .Values.global.loggingSidecar.name }}
+        image: {{ .Values.global.loggingSidecar.image }}
         terminationEndpoint: {{ .Values.global.loggingSidecar.terminationEndpoint }}
+        customConfig: {{ .Values.global.loggingSidecar.customConfig }}
       {{- end }}
 
       # These values get passed directly into the airflow helm deployments
@@ -124,6 +126,9 @@ data:
           # Enabled network polices to restrict the way pods can communicate.
             enabled: true
           {{ end }}
+          # Enable FlowerUI flag by default
+          flower:
+            enabled: true
           webserver:
             {{ if .Values.configSyncer.enabled }}
             extraVolumeMounts:
@@ -345,7 +350,7 @@ data:
     elasticsearch:
       enabled: true
       client:
-        host: {{ printf "%s-external-es-proxy:9201" .Release.Name }}
+        node: {{ printf "http://%s-external-es-proxy:9201" .Release.Name }}
         log: error
     {{- end }}
 
@@ -359,13 +364,15 @@ data:
     elasticsearch:
       enabled: true
       client:
-        host: {{ printf "%s-elasticsearch:9200" .Release.Name }}
+        node: {{ printf "http://%s-elasticsearch:9200" .Release.Name }}
         log: error
     {{- end }}
 
     prometheus:
       enabled: true
       host: {{ printf "%s-prometheus" .Release.Name }}
+    updateAirflowCheckEnabled: {{ .Values.houston.updateAirflowCheck.enabled }}
+    updateRuntimeCheckEnabled: {{ .Values.houston.updateRuntimeCheck.enabled }}
 
   # These are any user-specified config overrides.
   local-production.yaml: |

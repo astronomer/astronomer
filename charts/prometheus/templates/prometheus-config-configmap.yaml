@@ -15,8 +15,8 @@ data:
   config: |-
     # https://prometheus.io/docs/prometheus/latest/configuration/configuration/
     global:
-      scrape_interval: 30s
-      evaluation_interval: 30s
+      scrape_interval: {{ .Values.scrape_interval }}
+      evaluation_interval: {{ .Values.evaluation_interval }}
       {{ if .Values.external_labels }}external_labels: {{ .Values.external_labels | toYaml | nindent 8 }}{{ end }}
 
     # https://prometheus.io/docs/prometheus/latest/configuration/configuration/#remote_write
@@ -153,7 +153,7 @@ data:
 
       {{- if .Values.global.veleroEnabled }}
       - job_name: velero
-        scrape_interval: 30s
+        scrape_interval: {{ .Values.velero.scrape_interval }}
         kubernetes_sd_configs:
           - role: service
             namespaces:
@@ -172,8 +172,8 @@ data:
 
       {{- if .Values.global.prometheusPostgresExporterEnabled }}
       - job_name: postgresql-exporter
-        scrape_interval: 60s
-        scrape_timeout: 30s
+        scrape_interval: {{ .Values.postgresqlExporter.scrape_interval }}
+        scrape_timeout: {{ .Values.postgresqlExporter.scrape_timeout }}
         kubernetes_sd_configs:
           - role: service
             namespaces:
@@ -195,7 +195,7 @@ data:
 
 
       - job_name: kube-state
-        scrape_interval: 10s # Faster scrape to power dashboards
+        scrape_interval: {{ .Values.kubeState.scrape_interval }} # Faster scrape to power dashboards
         kubernetes_sd_configs:
           - role: service
             namespaces:
@@ -293,7 +293,7 @@ data:
           {{- end}}
 
       - job_name: fluentd
-        scrape_interval: 30s
+        scrape_interval: {{ .Values.fluentd.scrape_interval }}
         kubernetes_sd_configs:
           - role: pod
             namespaces:
@@ -318,7 +318,7 @@ data:
 
       {{- if .Values.global.nodeExporterEnabled }}
       - job_name: node-exporter
-        scrape_interval: 30s
+        scrape_interval: {{ .Values.nodeExporter.scrape_interval }}
         kubernetes_sd_configs:
           - role: pod
             namespaces:
@@ -349,7 +349,7 @@ data:
       {{- end }}
 
       - job_name: airflow
-        scrape_interval: 10s # Faster scrape to power dashboards
+        scrape_interval: {{ .Values.airflow.scrape_interval }} # Faster scrape to power dashboards
         kubernetes_sd_configs:
           - role: service
           {{- if .Values.global.singleNamespace }}

@@ -41,10 +41,27 @@ def test_houston_configmap():
     prod = yaml.safe_load(doc["data"]["production.yaml"])
     # Ensure airflow elasticsearch param is at correct location
     assert prod["deployments"]["helm"]["airflow"]["elasticsearch"]["enabled"] is True
-
+    # Ensure elasticsearch client param is at the correct location and contains http://
+    assert ("node" in prod["elasticsearch"]["client"]) is True
+    assert prod["elasticsearch"]["client"]["node"].startswith("http://")
     with pytest.raises(KeyError):
         # Ensure sccEnabled is not defined by default
         assert prod["deployments"]["helm"]["sccEnabled"] is False
+
+
+def test_houston_configmap_with_customlogging_enabled():
+    """Validate the houston configmap and its embedded data with customLogging."""
+    docs = render_chart(
+        values={"global": {"customLogging": {"enabled": True}}},
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+
+    common_test_cases(docs)
+    doc = docs[0]
+    prod = yaml.safe_load(doc["data"]["production.yaml"])
+
+    assert ("node" in prod["elasticsearch"]["client"]) is True
+    assert prod["elasticsearch"]["client"]["node"].startswith("http://") is True
 
 
 def test_houston_configmapwith_scc_enabled():
@@ -125,11 +142,18 @@ def test_houston_configmap_with_config_syncer_disabled():
     assert not prod_yaml["deployments"].get("loggingSidecar")
 
 
-def test_houston_configmapwith_loggingsidecar_enabled():
+def test_houston_configmap_with_loggingsidecar_enabled():
     """Validate the houston configmap and its embedded data with loggingSidecar."""
     terminationEndpoint = "http://localhost:8000/quitquitquit"
     docs = render_chart(
-        values={"global": {"loggingSidecar": {"enabled": True}}},
+        values={
+            "global": {
+                "loggingSidecar": {
+                    "enabled": True,
+                    "image": "quay.io/astronomer/ap-vector:0.22.3",
+                }
+            }
+        },
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
 
@@ -147,18 +171,26 @@ def test_houston_configmapwith_loggingsidecar_enabled():
     assert prod_yaml["deployments"]["loggingSidecar"] == {
         "enabled": True,
         "name": "sidecar-log-consumer",
+        "image": "quay.io/astronomer/ap-vector:0.22.3",
         "terminationEndpoint": "http://localhost:8000/quitquitquit",
+        "customConfig": False,
     }
+    assert ("vector" in prod_yaml["deployments"]["loggingSidecar"]["image"]) is True
 
 
-def test_houston_configmapwith_loggingsidecar_enabled_with_overrides():
+def test_houston_configmap_with_loggingsidecar_enabled_with_overrides():
     """Validate the houston configmap and its embedded data with loggingSidecar."""
     sidecar_container_name = "sidecar-log-test"
     terminationEndpoint = "http://localhost:8000/quitquitquit"
+    image_name = "quay.io/astronomer/ap-vector:0.22.3"
     docs = render_chart(
         values={
             "global": {
-                "loggingSidecar": {"enabled": True, "name": sidecar_container_name}
+                "loggingSidecar": {
+                    "enabled": True,
+                    "name": sidecar_container_name,
+                    "image": image_name,
+                }
             }
         },
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
@@ -180,8 +212,53 @@ def test_houston_configmapwith_loggingsidecar_enabled_with_overrides():
     assert prod_yaml["deployments"]["loggingSidecar"] == {
         "enabled": True,
         "name": sidecar_container_name,
+        "image": "quay.io/astronomer/ap-vector:0.22.3",
         "terminationEndpoint": terminationEndpoint,
+        "customConfig": False,
     }
+    assert ("vector" in prod_yaml["deployments"]["loggingSidecar"]["image"]) is True
+
+
+def test_houston_configmap_with_loggingsidecar_customConfig_enabled():
+    """Validate the houston configmap and its embedded data with loggingSidecar customConfig Enabled."""
+    sidecar_container_name = "sidecar-log-test"
+    terminationEndpoint = "http://localhost:8000/quitquitquit"
+    image_name = "quay.io/astronomer/ap-vector:0.22.3"
+    docs = render_chart(
+        values={
+            "global": {
+                "loggingSidecar": {
+                    "enabled": True,
+                    "name": sidecar_container_name,
+                    "customConfig": True,
+                    "image": image_name,
+                }
+            }
+        },
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+
+    common_test_cases(docs)
+    doc = docs[0]
+    prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
+    log_cmd = 'log_cmd = "1> >( tee -a /var/log/{sidecar_container_name}/out.log ) 2> >( tee -a /var/log/{sidecar_container_name}/err.log >&2 )"'.format(
+        sidecar_container_name=sidecar_container_name
+    )
+    assert (
+        log_cmd in prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
+    )
+    assert (
+        terminationEndpoint
+        in prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
+    )
+    assert prod_yaml["deployments"]["loggingSidecar"] == {
+        "enabled": True,
+        "name": sidecar_container_name,
+        "image": "quay.io/astronomer/ap-vector:0.22.3",
+        "terminationEndpoint": terminationEndpoint,
+        "customConfig": True,
+    }
+    assert ("vector" in prod_yaml["deployments"]["loggingSidecar"]["image"]) is True
 
 
 cron_test_data = [
@@ -236,3 +313,47 @@ def test_cron_splay(test_data):
     assert (
         str(test_data[1]) == cron_minute
     ), f'test_data should be: ("{test_data[0]}", {cron_minute}),'
+
+
+def test_houston_configmapwith_update_airflow_runtime_checks_enabled():
+    """Validate the houston configmap and its embedded data with updateAirflowCheck and updateRuntimeCheck."""
+    docs = render_chart(
+        values={
+            "astronomer": {
+                "houston": {
+                    "updateAirflowCheck": {"enabled": True},
+                    "updateRuntimeCheck": {"enabled": True},
+                }
+            }
+        },
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    common_test_cases(docs)
+    doc = docs[0]
+
+    prod = yaml.safe_load(doc["data"]["production.yaml"])
+
+    assert prod["updateAirflowCheckEnabled"] is True
+    assert prod["updateRuntimeCheckEnabled"] is True
+
+
+def test_houston_configmapwith_update_airflow_runtime_checks_disabled():
+    """Validate the houston configmap and its embedded data with updateAirflowCheck and updateRuntimeCheck."""
+    docs = render_chart(
+        values={
+            "astronomer": {
+                "houston": {
+                    "updateAirflowCheck": {"enabled": False},
+                    "updateRuntimeCheck": {"enabled": False},
+                }
+            }
+        },
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    common_test_cases(docs)
+    doc = docs[0]
+
+    prod = yaml.safe_load(doc["data"]["production.yaml"])
+    print(prod)
+    assert prod["updateAirflowCheckEnabled"] is False
+    assert prod["updateRuntimeCheckEnabled"] is False

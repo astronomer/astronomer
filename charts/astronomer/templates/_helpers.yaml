@@ -169,6 +169,7 @@ s3:
   encrypt: {{ .Values.registry.s3.encrypt }}
   keyid: {{ .Values.registry.s3.keyid }}
   rootdirectory: {{ .Values.registry.s3.rootdirectory }}
+  regionendpoint: {{ .Values.registry.s3.regionendpoint }}
 {{- end }}
 
 {{- define "houston_environment" }}
@@ -205,11 +206,13 @@ s3:
     secretKeyRef:
       name: {{ template "houston.backendSecret" . }}
       key: connection
+{{- if not (((.Values.houston.config.deployments).database).connection) }}
 - name: DEPLOYMENTS__DATABASE__CONNECTION
   valueFrom:
     secretKeyRef:
       name: {{ template "houston.airflowBackendSecret" . }}
       key: connection
+{{- end}}
   # These are set here for Houston's entrypoint script
 - name: COMMANDER__HOST
   value: {{ .Release.Name }}-commander
@@ -343,5 +346,15 @@ Automatically generate a random minute and hour to try and spread cronjobs
 */}}
 {{- $randomDigit := (regexFind ".$" (adler32sum .Release.Name)) -}}
 {{- printf "%v %v * * *" (mul 6 $randomDigit) (add 5 $randomDigit) | quote -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return the proper Docker Image Registry Secret Names
+*/}}
+{{- define "astronomer.imagePullSecrets" -}}
+{{- if .Values.global.privateRegistry.enabled }}
+imagePullSecrets:
+  - name: {{ .Values.global.privateRegistry.secretName }}
 {{- end -}}
 {{- end -}}

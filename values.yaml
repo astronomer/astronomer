@@ -108,13 +108,15 @@ global:
   loggingSidecar:
     enabled: false
     name: sidecar-log-consumer
+    image: quay.io/astronomer/ap-vector:0.23.0
     terminationEndpoint: http://localhost:8000/quitquitquit
+    customConfig: false
 
   # Deploy auth sidecar to use openshift native features
   authSidecar:
     enabled: false
     repository: quay.io/astronomer/ap-auth-sidecar
-    tag: 1.21.6-2
+    tag: 1.23.1
     pullPolicy: IfNotPresent
     port: 8084
     default_nginx_settings: |
@@ -209,8 +211,7 @@ global:
   privateRegistry:
     enabled: false
     repository: ~
-    # user: ~
-    # password: ~
+    secretName: ~
 
   # SSL support for using SSL connections to encrypt client/server communication between database and Astronomer platform
   ssl:
@@ -299,6 +300,8 @@ astronomer:
       limits:
         cpu: "500m"
         memory: "1024Mi"
+
+  extraObjects: []
 
   # podLabels: {}
 
@@ -511,15 +514,15 @@ kibana:
 #################################
 ## Fluentd configuration
 #################################
-# fluentd:
-#   # Configure resources
-#   resources:
-#     requests:
-#       cpu: "250m"
-#       memory: "512Mi"
-#     limits:
-#       cpu: "500m"
-#       memory: "1024Mi"
+fluentd:
+  # Configure resources
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "1000m"
+      memory: "1024Mi"
 
 #################################
 ## Kube State configuration

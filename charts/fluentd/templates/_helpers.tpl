@@ -74,3 +74,14 @@ use_server_side_encryption {{ .Values.s3.use_server_side_encryption }}
 {{- end }}
 {{- end }}
 {{- end }}
+
+
+{{/*
+Return the proper Docker Image Registry Secret Names
+*/}}
+{{- define "fluentd.imagePullSecrets" -}}
+{{- if .Values.global.privateRegistry.enabled }}
+imagePullSecrets:
+  - name: {{ .Values.global.privateRegistry.secretName }}
+{{- end -}}
+{{- end -}}

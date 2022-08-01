@@ -32,12 +32,21 @@ spec:
       tolerations:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       restartPolicy: Always
+{{- include "astronomer.imagePullSecrets" . | indent 6 }}
       containers:
         - name: astro-ui
           image: {{- include "astroUI.image" . | indent 1 }}
           imagePullPolicy: {{ .Values.images.astroUI.pullPolicy }}
           resources:
 {{ toYaml .Values.astroUI.resources | indent 12 }}
+          {{- if .Values.astroUI.command }}
+          command:
+            {{- toYaml .Values.astroUI.command | nindent 12 }}
+          {{- end }}
+          {{- if .Values.astroUI.args }}
+          args:
+            {{- toYaml .Values.astroUI.args | nindent 12 }}
+          {{- end }}
           ports:
             - name: astro-ui-http
               containerPort: {{ .Values.ports.astroUIHTTP }}
@@ -64,3 +73,14 @@ spec:
             - name: APP_API_LOC_WSS
               value: "wss://houston.{{ .Values.global.baseDomain }}/ws"
             {{- end }}
+          volumeMounts:
+{{- if .Values.astroUI.volumeMounts }}
+{{- tpl (toYaml .Values.astroUI.volumeMounts) $ | nindent 12 }}
+{{- end }}
+{{- if .Values.astroUI.extraContainers }}
+{{- tpl (toYaml .Values.astroUI.extraContainers) $ | nindent 8 }}
+{{- end }}
+      volumes:
+{{- if .Values.astroUI.extraVolumes }}
+{{- tpl (toYaml .Values.astroUI.extraVolumes) $ | nindent 8 }}
+{{- end }}

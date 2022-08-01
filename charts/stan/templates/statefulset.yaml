@@ -42,10 +42,7 @@ spec:
       {{- if .Values.stan.nats.serviceRoleAuth.enabled }}
       serviceAccountName: "nats-streaming"
       {{- end }}
-{{- with .Values.imagePullSecrets }}
-      imagePullSecrets:
-{{- toYaml . | nindent 8 }}
-{{- end }}
+{{- include "stan.imagePullSecrets" . | indent 6 }}
 {{- with .Values.securityContext }}
       securityContext:
 {{ toYaml . | indent 8 }}
@@ -166,6 +163,10 @@ spec:
   volumeClaimTemplates:
   - metadata:
       name: {{ template "stan.name" . }}-pvc
+      {{- if .Values.persistence.annotations }}
+      annotations:
+        {{- toYaml .Values.persistence.annotations | nindent 10 }}
+      {{- end }}
     spec:
       accessModes:
       {{- with .Values.store.volume.accessModes }}

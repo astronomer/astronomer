@@ -37,6 +37,7 @@ spec:
       tolerations:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       restartPolicy: Always
+{{- include "alertmanager.imagePullSecrets" . | indent 6 }}
       containers:
         - name: alertmanager
           image: {{ template "alertmanager.image" . }}
@@ -128,6 +129,10 @@ spec:
   volumeClaimTemplates:
     - metadata:
         name: data
+        {{- if .Values.persistence.annotations }}
+        annotations:
+          {{- toYaml .Values.persistence.annotations | nindent 10 }}
+        {{- end }}
       spec:
         accessModes: [ "ReadWriteOnce" ]
         resources:

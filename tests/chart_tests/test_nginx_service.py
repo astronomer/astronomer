@@ -147,3 +147,16 @@ class TestNginx:
         )[0]
         electionId = "--election-id=ingress-controller-leader-release-name-nginx"
         assert electionId in doc["spec"]["template"]["spec"]["containers"][0]["args"]
+
+    def test_nginx_externalTrafficPolicy_defaults(self):
+        doc = render_chart(
+            show_only=["charts/nginx/templates/nginx-service.yaml"],
+        )[0]
+        assert "Cluster" == doc["spec"]["externalTrafficPolicy"]
+
+    def test_nginx_externalTrafficPolicy_overrides(self):
+        doc = render_chart(
+            values={"nginx": {"preserveSourceIP": True}},
+            show_only=["charts/nginx/templates/nginx-service.yaml"],
+        )[0]
+        assert "Local" == doc["spec"]["externalTrafficPolicy"]

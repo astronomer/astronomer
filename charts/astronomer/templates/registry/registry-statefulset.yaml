@@ -54,6 +54,7 @@ spec:
         fsGroup: 1000
         runAsGroup: 1000
         runAsUser: 1000
+{{- include "astronomer.imagePullSecrets" . | indent 6 }}
       containers:
         - name: registry
           image: {{ template  "registry.image" . }}
@@ -121,6 +122,10 @@ spec:
   volumeClaimTemplates:
     - metadata:
         name: data
+        {{- if .Values.registry.persistence.annotations }}
+        annotations:
+          {{- toYaml .Values.registry.persistence.annotations | nindent 10 }}
+        {{- end }}
       spec:
         accessModes: ["ReadWriteOnce"]
         resources:

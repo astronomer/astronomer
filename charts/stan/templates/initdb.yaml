@@ -18,6 +18,7 @@ spec:
       terminationGracePeriodSeconds: 0
       restartPolicy: Never
       {{- if eq .Values.store.sql.driver "postgres" }}
+{{- include "stan.imagePullSecrets" . | indent 6 }}
       containers:
         - name: init-database
           image: {{ .Values.store.sql.initdb.image }}
