@@ -1,6 +1,7 @@
 ##############################
 ## STAN Pod Disruption Budget
 ##############################
+{{- if .Values.global.podDisruptionBudgetsEnabled }}
 apiVersion: {{ include "apiVersion.PodDisruptionBudget" . }}
 kind: PodDisruptionBudget
 metadata:
@@ -12,3 +13,4 @@ spec:
       tier: astronomer
       app: {{ template "stan.name" . }}
       release: {{ .Release.Name }}
+{{- end }}
