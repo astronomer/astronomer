@@ -32,10 +32,7 @@ class TestHoustonApiDeployment:
             "app" in doc["spec"]["template"]["metadata"]["labels"]
             and "houston" in doc["spec"]["template"]["metadata"]["labels"]["app"]
         )
-        assert (
-            "tier" in doc["spec"]["template"]["metadata"]["labels"]
-            and "astronomer" in doc["spec"]["template"]["metadata"]["labels"]["tier"]
-        )
+        assert doc["spec"]["template"]["metadata"]["labels"].get("app") == "houston"
         assert doc["spec"]["template"]["metadata"]["labels"].get("tier") == "astronomer"
         assert (
             "release" in doc["spec"]["template"]["metadata"]["labels"]
