@@ -511,10 +511,10 @@ elasticsearch:
   data:
 
     initResources:
-      requests:
+      limits:
         cpu: "120m"
         memory: "100Mi"
-      limits:
+      requests:
         cpu: "100m"
         memory: "80Mi"
 
