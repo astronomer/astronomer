@@ -489,10 +489,10 @@ elasticsearch:
   client:
 
     initResources:
-      requests:
+      limits:
         cpu: "120m"
         memory: "100Mi"
-      limits:
+      requests:
         cpu: "100m"
         memory: "80Mi"
 
@@ -536,10 +536,10 @@ elasticsearch:
   master:
 
     initResources:
-      requests:
+      limits:
         cpu: "120m"
         memory: "100Mi"
-      limits:
+      requests:
         cpu: "100m"
         memory: "80Mi"
 
@@ -569,7 +569,7 @@ elasticsearch:
   nginx:
     resources:
       requests:
-        cpu: "0.8m"
+        cpu: "80m"
         memory: "7Mi"
       limits:
         cpu: "100m"
