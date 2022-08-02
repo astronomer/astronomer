@@ -166,8 +166,12 @@ global:
       proxy_cookie_path                       off;
       proxy_redirect                          off;
     resources:
-      limits: {}
-      requests: {}
+      requests:
+        cpu: "500m"
+        memory: "512Mi"
+      limits:
+        cpu: "1000m"
+        memory: "1024Mi"
 
   # External ES logging
   customLogging:
