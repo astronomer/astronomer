@@ -28,10 +28,7 @@ class TestHoustonApiDeployment:
             "release": "release-name",
         } == doc["spec"]["selector"]["matchLabels"]
 
-        assert (
-            "app" in doc["spec"]["template"]["metadata"]["labels"]
-            and "houston" in doc["spec"]["template"]["metadata"]["labels"]["app"]
-        )
+        assert doc["spec"]["template"]["metadata"]["labels"].get("app") == "houston"
         assert doc["spec"]["template"]["metadata"]["labels"].get("app") == "houston"
         assert doc["spec"]["template"]["metadata"]["labels"].get("tier") == "astronomer"
         assert (
