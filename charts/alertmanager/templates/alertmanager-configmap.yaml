@@ -59,3 +59,6 @@ data:
     - name: airflow-receiver
 {{ toYaml .Values.receivers.airflow | trim | indent 6 }}
 {{- end }}
+{{ if .Values.customReceiver }}
+{{ toYaml .Values.customReceiver | trim | indent 4 }}
+{{ end }}
