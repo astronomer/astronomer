@@ -44,6 +44,9 @@ global:
   # If RBAC on cluster is enabled
   rbacEnabled: true
 
+  # whether to create pod disrption budgets by default for platform components
+  podDisruptionBudgetsEnabled: true
+
   # URL to the Astronomer helm repo
   helmRepo: "https://helm.astronomer.io"
 
@@ -105,7 +108,7 @@ global:
   loggingSidecar:
     enabled: false
     name: sidecar-log-consumer
-    image: quay.io/astronomer/ap-vector:0.22.3
+    image: quay.io/astronomer/ap-vector:0.23.0
     terminationEndpoint: http://localhost:8000/quitquitquit
     customConfig: false
 
@@ -113,7 +116,7 @@ global:
   authSidecar:
     enabled: false
     repository: quay.io/astronomer/ap-auth-sidecar
-    tag: 1.23.0
+    tag: 1.23.1
     pullPolicy: IfNotPresent
     port: 8084
     default_nginx_settings: |
@@ -595,11 +598,11 @@ fluentd:
   # Configure resources
   resources:
     requests:
-      cpu: "800m"
-      memory: "384Mi"
+      cpu: "250m"
+      memory: "512Mi"
     limits:
       cpu: "1000m"
-      memory: "768Mi"
+      memory: "1024Mi"
 
 #################################
 ## Kube State configuration
