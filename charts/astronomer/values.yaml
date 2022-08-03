@@ -354,4 +354,3 @@ ports:
   registryHTTP: 5000
   registryScrape: 5001
   installHTTP: 8080
-  prismaHTTP: 4466
