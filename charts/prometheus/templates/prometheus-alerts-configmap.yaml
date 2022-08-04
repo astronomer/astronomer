@@ -627,7 +627,7 @@ data:
             runbook_url:
             summary: '{{`{{ $labels.pod }}`}} Pod is CrashLooping'
           expr: |
-            rate(kube_pod_container_status_restarts_total{container=~"astro-ui|commander|registry|houston|prisma|prometheus|sqlproxy"}[15m]) * 60 * 5 > 0
+            rate(kube_pod_container_status_restarts_total{container=~"astro-ui|commander|registry|houston|prometheus|sqlproxy"}[15m]) * 60 * 5 > 0
           for: 15m
           labels:
             severity: critical
