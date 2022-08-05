@@ -310,7 +310,7 @@ workflows:
                 - quay.io/astronomer/ap-node-exporter:1.3.1
                 - quay.io/astronomer/ap-openresty:1.21.4-1
                 - quay.io/astronomer/ap-postgres-exporter:0.10.1
-                - quay.io/astronomer/ap-postgresql:11.15.0
+                - quay.io/astronomer/ap-postgresql:11.15.0-1
                 - quay.io/astronomer/ap-prometheus:2.34.0
                 - quay.io/astronomer/ap-registry:3.16.1
           context:
