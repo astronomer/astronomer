@@ -1,6 +1,7 @@
-from tests.chart_tests.helm_template_generator import render_chart
 import pytest
+
 from tests import supported_k8s_versions, get_containers_by_name
+from tests.chart_tests.helm_template_generator import render_chart
 
 
 @pytest.mark.parametrize(
@@ -21,7 +22,13 @@ class TestPrometheusNodeExporterDaemonset:
         assert doc["spec"]["selector"]["app"] == "prometheus-node-exporter"
         assert doc["spec"]["type"] == "ClusterIP"
         assert doc["spec"]["ports"] == [
-            {"port": 9100, "targetPort": 9100, "protocol": "TCP", "name": "metrics"}
+            {
+                "port": 9100,
+                "targetPort": 9100,
+                "protocol": "TCP",
+                "name": "metrics",
+                "appProtocol": "tcp",
+            }
         ]
 
     def test_prometheus_node_exporter_daemonset_defaults(self, kube_version):

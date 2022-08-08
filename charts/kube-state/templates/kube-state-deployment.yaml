@@ -25,6 +25,8 @@ spec:
         tier: {{ template "kube-state.name" . }}
         component: kube-state
         release: {{ .Release.Name }}
+        app: {{ template "kube-state.name" . }}
+        version: {{ .Chart.Version }}
     spec:
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}

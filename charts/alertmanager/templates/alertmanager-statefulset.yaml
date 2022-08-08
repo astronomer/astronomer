@@ -25,6 +25,8 @@ spec:
         tier: monitoring
         component: {{ template "alertmanager.name" . }}
         release: {{ .Release.Name }}
+        app: {{ template "alertmanager.name" . }}
+        version: {{ .Chart.Version }}
       annotations:
         checksum/configmap: {{ include (print $.Template.BasePath "/alertmanager-configmap.yaml") . | sha256sum }}
     spec:

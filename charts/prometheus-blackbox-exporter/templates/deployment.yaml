@@ -21,6 +21,8 @@ spec:
         component: blackbox-exporter
         release: {{ .Release.Name }}
         tier: monitoring
+        app: {{ template "prometheus-blackbox-exporter.name" . }}
+        version: {{ .Chart.Version }}
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
         {{- if .Values.podAnnotations }}

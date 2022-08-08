@@ -30,6 +30,8 @@ spec:
         tier: external-logging
         component: {{ template "external-es-proxy.name" . }}
         release: {{ .Release.Name }}
+        app: {{ template "external-es-proxy.name" . }}
+        version: {{ .Chart.Version }}
       annotations:
         checksum/nginx-config: {{ include (print $.Template.BasePath "/external-es-proxy-configmap.yaml") . | sha256sum }}
         checksum/lua-config: {{ include (print $.Template.BasePath "/external-es-proxy-env-configmap.yaml") . | sha256sum }}

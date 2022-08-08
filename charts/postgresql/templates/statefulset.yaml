@@ -29,10 +29,13 @@ spec:
       name: {{ template "postgresql.fullname" . }}
       labels:
         app: {{ template "postgresql.name" . }}
+        version: {{ .Chart.Version }}
         chart: {{ template "postgresql.chart" . }}
         release: {{ .Release.Name | quote }}
         heritage: {{ .Release.Service | quote }}
         role: master
+        tier: astronomer
+        component: postgresql
 {{- with .Values.master.podLabels }}
 {{ toYaml . | indent 8 }}
 {{- end }}

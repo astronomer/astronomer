@@ -25,6 +25,8 @@ spec:
             tier: astronomer
             component: config-syncer
             release: {{ .Release.Name }}
+            app: config-syncer
+            version: {{ .Chart.Version }}
           {{- if .Values.global.istio.enabled }}
           annotations:
             sidecar.istio.io/inject: "false"

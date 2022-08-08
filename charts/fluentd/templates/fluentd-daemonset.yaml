@@ -23,6 +23,8 @@ spec:
         tier: logging
         component: {{ template "fluentd.name" . }}
         release: {{ .Release.Name }}
+        app: {{ template "fluentd.name" . }}
+        version: {{ .Chart.Version }}
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/fluentd-configmap.yaml") . | sha256sum }}
         prometheus.io/scrape: "true"

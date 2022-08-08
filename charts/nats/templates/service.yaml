@@ -28,13 +28,19 @@ spec:
   ports:
   - name: client
     port: 4222
+    appProtocol: tcp
   - name: cluster
     port: 6222
+    appProtocol: tcp
   - name: monitor
     port: 8222
+    appProtocol: http
   - name: metrics
     port: 7777
+    appProtocol: http
   - name: leafnodes
     port: 7422
+    appProtocol: tcp
   - name: gateways
     port: 7522
+    appProtocol: tcp

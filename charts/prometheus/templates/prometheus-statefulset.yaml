@@ -28,6 +28,8 @@ spec:
         tier: monitoring
         component: {{ template "prometheus.name" . }}
         release: {{ .Release.Name }}
+        app: {{ template "prometheus.name" . }}
+        version: {{ .Chart.Version }}
       annotations:
 {{- if .Values.global.istio.enabled }}
         sidecar.istio.io/proxyCPU: "500m"

@@ -25,6 +25,8 @@ spec:
             tier: astronomer
             component: houston-update-airflow-check
             release: {{ .Release.Name }}
+            app: houston-update-airflow-check
+            version: {{ .Chart.Version }}
           {{- if .Values.global.istio.enabled }}
           annotations:
             sidecar.istio.io/inject: "false"

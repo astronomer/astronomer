@@ -19,6 +19,7 @@ spec:
     - name: http
       port: {{ .Values.service.port }}
       protocol: TCP
+      appProtocol: http
 {{- if .Values.service.externalIPs }}
   externalIPs:
 {{ toYaml .Values.service.externalIPs | indent 4 }}
