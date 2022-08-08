@@ -97,6 +97,9 @@ def test_houston_configmap_with_azure_enabled():
     assert livenessProbe["periodSeconds"] == 10
 
 
+@pytest.mark.skip(
+    reason="Test case for jwt signed secret will be removed in next release"
+)
 def test_houston_configmap_with_config_syncer_enabled():
     """Validate the houston configmap and its embedded data with configSyncer enabled."""
     docs = render_chart(
