@@ -18,6 +18,7 @@ spec:
       targetPort: {{ .Values.service.targetPort }}
       protocol: TCP
       name: metrics
+      appProtocol: tcp
   selector:
     app: {{ template "prometheus-node-exporter.name" . }}
     release: {{ .Release.Name }}

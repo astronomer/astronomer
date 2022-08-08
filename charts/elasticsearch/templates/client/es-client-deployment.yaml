@@ -27,6 +27,8 @@ spec:
         component: {{ template "elasticsearch.name" . }}
         release: {{ .Release.Name }}
         role: client
+        app: {{ template "elasticsearch.name" . }}-client
+        version: {{ .Chart.Version }}
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/es-configmap.yaml") . | sha256sum }}
 {{- if .Values.common.podAnnotations }}

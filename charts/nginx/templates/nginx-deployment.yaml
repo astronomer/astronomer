@@ -24,6 +24,8 @@ spec:
         tier: {{ template "nginx.name" . }}
         component: ingress-controller
         release: {{ .Release.Name }}
+        app: {{ template "nginx.name" . }}
+        version: {{ .Chart.Version }}
       annotations:
         traffic.sidecar.istio.io/includeInboundPorts: ""
         checksum/configmap: {{ include (print $.Template.BasePath "/nginx-configmap.yaml") . | sha256sum }}

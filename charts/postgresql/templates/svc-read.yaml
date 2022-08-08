@@ -24,6 +24,7 @@ spec:
     {{- if .Values.service.nodePort }}
     nodePort: {{ .Values.service.nodePort }}
     {{- end }}
+    appProtocol: tcp
   selector:
     app: {{ template "postgresql.name" . }}
     release: {{ .Release.Name | quote }}

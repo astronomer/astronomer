@@ -1,8 +1,9 @@
-from tests.chart_tests.helm_template_generator import render_chart
-import pytest
-from tests import supported_k8s_versions
 import jmespath
+import pytest
 import yaml
+
+from tests import supported_k8s_versions
+from tests.chart_tests.helm_template_generator import render_chart
 
 
 @pytest.mark.parametrize(
@@ -38,6 +39,7 @@ class TestAuthSidecar:
             "name": "auth-proxy",
             "protocol": "TCP",
             "port": 8084,
+            "appProtocol": "tcp",
         } in jmespath.search("spec.ports", docs[2])
 
         assert "NetworkPolicy" == docs[3]["kind"]
@@ -73,6 +75,7 @@ class TestAuthSidecar:
             "name": "auth-proxy",
             "protocol": "TCP",
             "port": 8084,
+            "appProtocol": "tcp",
         } in jmespath.search("spec.ports", docs[2])
 
         assert "NetworkPolicy" == docs[3]["kind"]
@@ -108,6 +111,7 @@ class TestAuthSidecar:
             "name": "auth-proxy",
             "protocol": "TCP",
             "port": 8084,
+            "appProtocol": "tcp",
         } in jmespath.search("spec.ports", docs[2])
 
         assert "NetworkPolicy" == docs[3]["kind"]

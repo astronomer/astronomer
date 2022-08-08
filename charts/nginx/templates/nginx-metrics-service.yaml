@@ -21,6 +21,7 @@ spec:
     - port: {{ .Values.ports.metrics }}
       targetPort: {{ .Values.ports.metrics }}
       protocol: TCP
+      appProtocol: tcp
       name: nginx-metrics
       {{- if and (eq .Values.serviceType "NodePort") .Values.metricsNodePort }}
       nodePort: {{ .Values.metricsNodePort }}

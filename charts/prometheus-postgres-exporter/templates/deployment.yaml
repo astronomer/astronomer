@@ -25,7 +25,9 @@ spec:
       labels:
         tier: monitoring
         app: {{ template "prometheus-postgres-exporter.name" . }}
+        version: {{ .Chart.Version }}
         release: {{ .Release.Name }}
+        component: prometheus-postgres-exporter
 {{- if .Values.podLabels }}
 {{ toYaml .Values.podLabels | trim | indent 8 }}
 {{- end }}

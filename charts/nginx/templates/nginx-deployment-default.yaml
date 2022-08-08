@@ -24,6 +24,8 @@ spec:
         tier: {{ template "nginx.name" . }}
         component: default-backend
         release: {{ .Release.Name }}
+        app: {{ template "nginx.name" . }}
+        version: {{ .Chart.Version }}
     spec:
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}

@@ -40,6 +40,8 @@ spec:
         component: registry
         tier: astronomer
         release: {{ .Release.Name }}
+        app: registry
+        version: {{ .Chart.Version }}
       annotations:
         checksum/configmap: {{ include (print $.Template.BasePath "/registry/registry-configmap.yaml") . | sha256sum }}
     spec:

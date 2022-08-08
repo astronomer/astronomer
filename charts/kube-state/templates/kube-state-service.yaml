@@ -21,10 +21,12 @@ spec:
     port: {{ .Values.ports.scrape }}
     targetPort: scrape
     protocol: TCP
+    appProtocol: tcp
   - name: telemetry
     port: {{ .Values.ports.telemetry }}
     targetPort: telemetry
     protocol: TCP
+    appProtocol: tcp
   selector:
     tier: {{ template "kube-state.name" . }}
     component: kube-state

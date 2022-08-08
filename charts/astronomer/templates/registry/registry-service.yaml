@@ -31,6 +31,7 @@ spec:
       protocol: TCP
       port: {{ .Values.ports.registryHTTP }}
       targetPort: {{ .Values.ports.registryHTTP }}
+      appProtocol: http
     # - name: registry-scrape
     #   protocol: TCP
     #   port: {{ .Values.ports.registryScrape }}
