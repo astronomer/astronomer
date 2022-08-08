@@ -64,8 +64,10 @@ spec:
       protocol: TCP
       port: {{ $.Values.ports.http }}
       targetPort: {{ $.Values.ports.http }}
+      appProtocol: http
     {{- if .Values.global.authSidecar.enabled }}
     - name: auth-proxy
       protocol: TCP
       port: {{ .Values.global.authSidecar.port }}
+      appProtocol: tcp
     {{- end}}

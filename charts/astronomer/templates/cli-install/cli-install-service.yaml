@@ -22,3 +22,4 @@ spec:
       targetPort: {{ .Values.ports.installHTTP }}
       protocol: TCP
       name: install-http
+      appProtocol: tcp

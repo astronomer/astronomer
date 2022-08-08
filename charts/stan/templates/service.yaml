@@ -24,3 +24,4 @@ spec:
   ports:
   - name: metrics
     port: 7777
+    appProtocol: http

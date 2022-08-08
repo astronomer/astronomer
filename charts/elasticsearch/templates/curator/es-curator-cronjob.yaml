@@ -33,6 +33,8 @@ spec:
             chart: {{ template "elasticsearch.chart" . }}
             release: {{ .Release.Name }}
             heritage: {{ .Release.Service }}
+            app: {{ template "elasticsearch.name" . }}-curator
+            version: {{ .Chart.Version }}
         spec:
 {{- include "elasticsearch.imagePullSecrets" . | indent 10 }}
           containers:
