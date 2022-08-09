@@ -1,0 +1,12 @@
+#############################
+#                           #
+#  Pgbouncer Configuration  #
+#                           #
+#############################
+images:
+  pgbouncer:
+    repository: quay.io/astronomer/ap-pgbouncer-krb
+    tag: 0.0.1
+    pullPolicy: IfNotPresent
+
+

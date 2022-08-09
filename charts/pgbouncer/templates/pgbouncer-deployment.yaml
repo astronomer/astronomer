@@ -37,32 +37,7 @@ spec:
       tolerations:
 {{ toYaml .Values.tolerations | indent 8 }}
       restartPolicy: Always
-      serviceAccountName: {{ template "prisma.bootstrapperServiceAccount" . }}
-      initContainers:
-        - name: pgbouncer-bootstrapper
-          image: {{ template "dbBootstrapper.image" . }}
-          imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
-          args: ["pgbouncer-bootstrapper"]
-          env:
-            - name: DB_CONNECTION_STRING
-              valueFrom:
-                secretKeyRef:
-                  name: astronomer-bootstrap
-                  key: connection
-            - name: RELEASE_NAME
-              value: {{ .Release.Name }}
-            - name: PGBOUNCER_POOL_SIZE
-              value: "{{ .Values.pgbouncer.poolSize}}"
-            - name: PGBOUNCER_PORT
-              value: "{{ .Values.ports.pgbouncer}}"
-            - name: MAX_CLIENT_CONN
-              value: "{{ .Values.pgbouncer.maxClientConn}}"
-            - name: SECRET_NAME
-              value: {{ template "pgbouncer_config_secret" . }}
-            - name: NAMESPACE
-              value: {{ .Release.Namespace }}
-            - name: IN_CLUSTER
-              value: "true"
+      serviceAccountName: {{ template "houston.bootstrapperServiceAccount" . }}
       containers:
         - name: pgbouncer
           image: {{ template "pgbouncer_image" . }}
