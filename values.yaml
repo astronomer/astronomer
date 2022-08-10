@@ -231,7 +231,7 @@ global:
   # ServiceAccounts, ClusterRoles, RoleBindings, ClusterRoleBindings
   # https://github.com/argoproj/argo-cd/blob/master/docs/user-guide/sync-waves.md
   enableArgoCDAnnotation: false
-  
+
   # For now we support only pgbouncer with gss api support
   pgbouncer:
     enabled: false
