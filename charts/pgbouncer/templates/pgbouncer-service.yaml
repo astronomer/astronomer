@@ -1,7 +1,7 @@
 ##################################
 ## Astronomer Pgbouncer Service ##
 ##################################
-{{- if .Values.pgbouncer.enabled }}
+{{- if .Values.global.pgbouncer.enabled }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -21,6 +21,6 @@ spec:
   ports:
     - name: pgbouncer
       protocol: TCP
-      port: {{ .Values.ports.pgbouncer }}
-      targetPort: {{ .Values.ports.pgbouncer }}
+      port: {{ .Values.servicePort }}
+      targetPort: {{ .Values.servicePort }}
 {{- end }}

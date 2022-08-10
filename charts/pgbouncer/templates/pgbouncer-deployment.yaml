@@ -1,7 +1,4 @@
-#####################################
-## Astronomer Pgbouncer Deployment ##
-#####################################
-{{- if .Values.pgbouncer.enabled }}
+{{- if .Values.global.pgbouncer.enabled }}
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -41,23 +38,23 @@ spec:
       containers:
         - name: pgbouncer
           image: {{ template "pgbouncer_image" . }}
-          imagePullPolicy: {{ .Values.images.pgbouncer.pullPolicy }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           command:
             - pgbouncer
             - -u
             - pgbouncer
             - /etc/pgbouncer/pgbouncer.ini
           resources:
-{{ toYaml .Values.pgbouncer.resources | indent 12 }}
+{{ toYaml .Values.resources | indent 12 }}
           ports:
             - name: pgbouncer
-              containerPort: {{ .Values.ports.pgbouncer }}
+              containerPort: {{ .Values.internalPort }}
           livenessProbe:
             tcpSocket:
-              port: {{ .Values.ports.pgbouncer }}
+              port: {{ .Values.internalPort }}
           readinessProbe:
             tcpSocket:
-              port: {{ .Values.ports.pgbouncer }}
+              port: {{ .Values.internalPort }}
           volumeMounts:
             - name: pgbouncer-config
               subPath: pgbouncer.ini

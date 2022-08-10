@@ -1,7 +1,7 @@
 ###################################
 ## Pgbouncer PodDisruptionBudget ##
 ###################################
-{{- if and .Values.pgbouncer.enabled .Values.pgbouncer.podDisruptionBudget.enabled }}
+{{- if and .Values.global.pgbouncer.enabled .Values.podDisruptionBudget.enabled }}
 kind: PodDisruptionBudget
 apiVersion: policy/v1beta1
 metadata:
@@ -18,5 +18,5 @@ spec:
       tier: astronomer
       component: pgbouncer
       release: {{ .Release.Name }}
-{{ toYaml .Values.pgbouncer.podDisruptionBudget.config | indent 2 }}
+{{ toYaml .Values.podDisruptionBudget.config | indent 2 }}
 {{- end }}

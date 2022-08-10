@@ -3,8 +3,91 @@
 #  Pgbouncer Configuration  #
 #                           #
 #############################
-images:
-  pgbouncer:
-    repository: quay.io/astronomer/ap-pgbouncer-krb
-    tag: 0.0.1
-    pullPolicy: IfNotPresent
+image:
+  repository: quay.io/astronomer/ap-pgbouncer-krb
+  tag: 0.0.1
+  pullPolicy: IfNotPresent
+
+internalPort: 5432
+servicePort: 6543
+
+podDisruptionBudget:
+  enabled: false
+  config: {}
+
+networkPolicies:
+  enabled: false
+
+
+# Limit the resources to PgBouncer.
+# When you specify the resource request the k8s scheduler uses this information to decide which node to
+# place the Pod on. When you specify a resource limit for a Container, the kubelet enforces those limits so
+# that the running container is not allowed to use more of that resource than the limit you set.
+# See: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+# Example:
+#
+# resource:
+#   limits:
+#     cpu: 100m
+#     memory: 128Mi
+#   requests:
+#     cpu: 100m
+#     memory: 128Mi
+resources:
+  requests:
+    memory: 256Mi
+    cpu: 250m
+  limits:
+    memory: 256Mi
+    cpu: 250m
+
+# Mount additional volumes into pgbouncer.
+extraVolumes: []
+extraVolumeMounts: []
+
+networkPolices:
+  enabled: false
+
+# Node labels for pod assignment
+# https://kubernetes.io/docs/user-guide/node-selection/
+#
+nodeSelector: {}
+
+affinity: {}
+# podAntiAffinity:
+#   preferredDuringSchedulingIgnoredDuringExecution:
+#   - weight: 100
+#     podAffinityTerm:
+#       labelSelector:
+#         matchExpressions:
+#         - key: app.kubernetes.io/name
+#           operator: In
+#           values:
+#           - pgbouncer
+#         - key: app.kubernetes.io/instance
+#           operator: In
+#           values:
+#           - pgbouncer
+#       topologyKey: kubernetes.io/hostname
+# podAntiAffinity:
+#   requiredDuringSchedulingIgnoredDuringExecution:
+#   - labelSelector:
+#       matchExpressions:
+#       - key: app.kubernetes.io/name
+#         operator: In
+#         values:
+#         - pgbouncer
+#       - key: app.kubernetes.io/instance
+#         operator: In
+#         values:
+#         - pgbouncer
+#     topologyKey: "kubernetes.io/hostname"
+
+# Tolerations for pod assignment
+# ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+#
+tolerations: []
+# - key: "key"
+#   operator: "Equal|Exists"
+#   value: "value"
+#   effect: "NoSchedule|PreferNoSchedule"
