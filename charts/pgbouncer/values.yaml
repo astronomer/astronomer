@@ -4,8 +4,8 @@
 #                           #
 #############################
 image:
-  repository: quay.io/astronomer/ap-pgbouncer-krb
-  tag: 0.0.1
+  repository: asoldatenko/ap-pgbouncer-krb
+  tag: 1.1.17
   pullPolicy: IfNotPresent
 
 internalPort: 5432
@@ -18,6 +18,7 @@ podDisruptionBudget:
 networkPolicies:
   enabled: false
 
+env: []
 
 # Limit the resources to PgBouncer.
 # When you specify the resource request the k8s scheduler uses this information to decide which node to
@@ -46,7 +47,7 @@ extraVolumes: []
 extraVolumeMounts: []
 
 networkPolices:
-  enabled: false
+  enabled: true
 
 # Node labels for pod assignment
 # https://kubernetes.io/docs/user-guide/node-selection/

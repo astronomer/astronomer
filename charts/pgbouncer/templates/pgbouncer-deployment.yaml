@@ -18,13 +18,17 @@ spec:
   selector:
     matchLabels:
       tier: astronomer
+      app: {{ template "pgbouncer.name" . }}
       component: pgbouncer
       release: {{ .Release.Name }}
   template:
     metadata:
       labels:
+        app: {{ template "pgbouncer.name" . }}
+        chart: {{ template "pgbouncer.chart" . }}
         tier: astronomer
         component: pgbouncer
+        heritage: {{ .Release.Service | quote }}
         release: {{ .Release.Name }}
     spec:
       nodeSelector:
@@ -39,11 +43,8 @@ spec:
         - name: pgbouncer
           image: {{ template "pgbouncer_image" . }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command:
-            - pgbouncer
-            - -u
-            - pgbouncer
-            - /etc/pgbouncer/pgbouncer.ini
+          env:
+            {{- include "pgbouncer_environment" . | indent 12 }}
           resources:
 {{ toYaml .Values.resources | indent 12 }}
           ports:
@@ -55,22 +56,9 @@ spec:
           readinessProbe:
             tcpSocket:
               port: {{ .Values.internalPort }}
-          volumeMounts:
-            - name: pgbouncer-config
-              subPath: pgbouncer.ini
-              mountPath: /etc/pgbouncer/pgbouncer.ini
-              readOnly: true
-            - name: pgbouncer-config
-              subPath: users.txt
-              mountPath: /etc/pgbouncer/users.txt
-              readOnly: true
           lifecycle:
             preStop:
               exec:
                 # Allow existing queries clients to complete within 120 seconds
                 command: ["/bin/sh", "-c", "killall -INT pgbouncer && sleep 120"]
-      volumes:
-        - name: pgbouncer-config
-          secret:
-            secretName: {{ template "pgbouncer_config_secret" . }}
 {{- end }}
