@@ -5,7 +5,7 @@
 # This version number controls the default Airflow chart version that will be installed
 # when creating a new deployment in the system. This is also used to ensure all
 # child airflow deployments are kept up to date and on the latest version.
-airflowChartVersion: 1.7.0-rc1
+airflowChartVersion: 1.7.0-rc2
 
 nodeSelector: {}
 affinity: {}
@@ -24,11 +24,11 @@ images:
     # httpSecret: ~
   houston:
     repository: quay.io/astronomer/ap-houston-api
-    tag: 0.30.4
+    tag: 0.30.9
     pullPolicy: IfNotPresent
   astroUI:
     repository: quay.io/astronomer/ap-astro-ui
-    tag: 0.30.0
+    tag: 0.30.1
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
@@ -354,4 +354,3 @@ ports:
   registryHTTP: 5000
   registryScrape: 5001
   installHTTP: 8080
-  prismaHTTP: 4466

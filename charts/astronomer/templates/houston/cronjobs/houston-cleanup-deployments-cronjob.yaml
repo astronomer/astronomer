@@ -25,6 +25,8 @@ spec:
             tier: astronomer
             component: houston-cleanup
             release: {{ .Release.Name }}
+            app: houston-cleanup
+            version: {{ .Chart.Version }}
           {{- if .Values.global.istio.enabled }}
           annotations:
             sidecar.istio.io/inject: "false"

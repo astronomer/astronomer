@@ -22,3 +22,4 @@ spec:
       protocol: TCP
       port: {{ .Values.ports.astroUIHTTP }}
       targetPort: {{ .Values.ports.astroUIHTTP }}
+      appProtocol: http

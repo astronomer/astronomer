@@ -23,7 +23,9 @@ spec:
     port: {{ .Values.common.ports.http }}
     targetPort: {{ .Values.common.ports.http }}
     protocol: TCP
+    appProtocol: http
   - name: transport
     port: {{ .Values.common.ports.transport }}
     targetPort: {{ .Values.common.ports.transport }}
     protocol: TCP
+    appProtocol: tcp

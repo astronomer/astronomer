@@ -22,6 +22,8 @@ spec:
             tier: astronomer
             component: houston-expire-deployments
             release: {{ .Release.Name }}
+            app: houston-expire-deployments
+            version: {{ .Chart.Version }}
           {{- if .Values.global.istio.enabled }}
           annotations:
             sidecar.istio.io/inject: "false"
