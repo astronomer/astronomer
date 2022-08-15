@@ -1,7 +1,5 @@
 #############################
-#                           #
 #  Pgbouncer Configuration  #
-#                           #
 #############################
 image:
   repository: asoldatenko/ap-pgbouncer-krb
