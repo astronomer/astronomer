@@ -40,7 +40,7 @@ spec:
       serviceAccountName: {{ template "houston.bootstrapperServiceAccount" . }}
       containers:
         - name: pgbouncer
-          image: {{ template "pgbouncer_image" . }}
+          image: {{ template "pgbouncer.image" . }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
             {{- include "pgbouncer_environment" . | indent 12 }}
