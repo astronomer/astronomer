@@ -17,19 +17,17 @@ spec:
       maxUnavailable: 0
   selector:
     matchLabels:
-      tier: astronomer
       app: {{ template "pgbouncer.name" . }}
-      component: pgbouncer
       release: {{ .Release.Name }}
+      component: pgbouncer
   template:
     metadata:
       labels:
         app: {{ template "pgbouncer.name" . }}
         chart: {{ template "pgbouncer.chart" . }}
-        tier: astronomer
-        component: pgbouncer
         heritage: {{ .Release.Service | quote }}
         release: {{ .Release.Name }}
+        component: pgbouncer
     spec:
       nodeSelector:
 {{ toYaml .Values.nodeSelector | indent 8 }}

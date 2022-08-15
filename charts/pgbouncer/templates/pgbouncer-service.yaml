@@ -4,7 +4,6 @@ kind: Service
 metadata:
   name: {{ .Release.Name }}-pgbouncer
   labels:
-    tier: astronomer
     app: {{ template "pgbouncer.name" . }}
     chart: {{ template "pgbouncer.chart" . }}
     release: {{ .Release.Name | quote }}
@@ -14,14 +13,9 @@ spec:
   selector:
     app: {{ template "pgbouncer.name" . }}
     release: {{ .Release.Name | quote }}
-    tier: astronomer
   ports:
     - name: pgbouncer
       protocol: TCP
       port: {{ .Values.servicePort }}
       targetPort: {{ .Values.internalPort }}
-  selector:
-    app: {{ template "pgbouncer.name" . }}
-    release: {{ .Release.Name | quote }}
-    role: master
 {{- end }}

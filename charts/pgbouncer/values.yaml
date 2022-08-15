@@ -5,18 +5,18 @@
 #############################
 image:
   repository: asoldatenko/ap-pgbouncer-krb
-  tag: 1.1.17
+  tag: 1.1.17-wo
   pullPolicy: IfNotPresent
 
 internalPort: 5432
-servicePort: 6543
+servicePort: 5432
 
 podDisruptionBudget:
   enabled: false
   config: {}
 
 networkPolicies:
-  enabled: false
+  enabled: true
 
 env: []
 

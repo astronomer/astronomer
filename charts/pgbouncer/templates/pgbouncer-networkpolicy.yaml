@@ -7,26 +7,21 @@ kind: NetworkPolicy
 metadata:
   name: {{ .Release.Name }}-pgbouncer-policy
   labels:
-    tier: astronomer
-    component: astronomer-pgbouncer-policy
-    release: {{ .Release.Name }}
-    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
-    heritage: {{ .Release.Service }}
+    app: {{ template "pgbouncer.name" . }}
+    chart: {{ template "pgbouncer.chart" . }}
+    release: {{ .Release.Name | quote }}
+    heritage: {{ .Release.Service | quote }}
 spec:
   podSelector:
     matchLabels:
-      tier: astronomer
-      component: pgbouncer
-      release: {{ .Release.Name }}
-  policyTypes:
-  - Ingress
+      app: {{ template "pgbouncer.name" . }}
+      release: {{ .Release.Name | quote }}
   ingress:
-  - from:
-    - podSelector:
-        matchLabels:
-          tier: astronomer
-          release: {{ .Release.Name }}
-    ports:
-    - protocol: TCP
-      port: {{ .Values.servicePort }}
+    - ports:
+      - port: {{ template "pgbouncer.port" . }}
+      from:
+      - podSelector:
+          matchLabels:
+            release: {{ .Release.Name }}
+            tier: astronomer
 {{- end }}

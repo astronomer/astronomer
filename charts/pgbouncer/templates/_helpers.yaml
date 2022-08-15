@@ -15,6 +15,11 @@
 {{ printf "%s-pgbouncer" .Release.Name }}
 {{- end }}
 
+{{ define "pgbouncer.port" -}}
+{{- .Values.servicePort }}
+{{- end }}
+
+
 {{ define "pgbouncer_config_secret" -}}
 {{ printf "%s-pgbouncer-config" .Release.Name }}
 {{- end }}
@@ -28,8 +33,8 @@
   value: postgres
 - name: DB_PASSWORD
   value: postgres
-- name: DB_NAME
-  value: postgres
+# - name: DB_NAME
+#   value: postgres
 - name: DB_HOST
   value: "astronomer-postgresql.astronomer.svc.cluster.local"
 - name: DB_PORT
@@ -48,8 +53,8 @@
   value: disable
 - name: SERVER_TLS_CIPHERS
   value: normal
-- name: SERVER_GSSENCMODE
-  value: require
+# - name: SERVER_GSSENCMODE
+#   value: require
 - name: VERBOSE
   value: "999"
 - name: REALM
