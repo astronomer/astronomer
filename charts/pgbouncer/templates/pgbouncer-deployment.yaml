@@ -29,6 +29,7 @@ spec:
         release: {{ .Release.Name }}
         component: pgbouncer
         version: {{ .Chart.Version }}
+        tier: astronomer
     spec:
       nodeSelector:
 {{ toYaml .Values.nodeSelector | indent 8 }}
