@@ -2,8 +2,8 @@
 #  Pgbouncer Configuration  #
 #############################
 image:
-  repository: astronomer/ap-pgbouncer-krb
-  tag: 1.1.17
+  repository: quay.io/astronomer/ap-pgbouncer-krb
+  tag: 1.1.17-1
   pullPolicy: IfNotPresent
 
 internalPort: 5432
