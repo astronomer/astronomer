@@ -18,4 +18,5 @@ spec:
       protocol: TCP
       port: {{ .Values.servicePort }}
       targetPort: {{ .Values.internalPort }}
+      appProtocol: tcp
 {{- end }}

@@ -28,6 +28,7 @@ spec:
         heritage: {{ .Release.Service | quote }}
         release: {{ .Release.Name }}
         component: pgbouncer
+        version: {{ .Chart.Version }}
     spec:
       nodeSelector:
 {{ toYaml .Values.nodeSelector | indent 8 }}

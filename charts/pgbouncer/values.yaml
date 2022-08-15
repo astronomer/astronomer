@@ -2,8 +2,8 @@
 #  Pgbouncer Configuration  #
 #############################
 image:
-  repository: asoldatenko/ap-pgbouncer-krb
-  tag: 1.1.17-wo
+  repository: astronomer/ap-pgbouncer-krb
+  tag: 1.1.17
   pullPolicy: IfNotPresent
 
 internalPort: 5432
