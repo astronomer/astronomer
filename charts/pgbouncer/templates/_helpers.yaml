@@ -33,8 +33,6 @@
   value: postgres
 - name: DB_PASSWORD
   value: postgres
-# - name: DB_NAME
-#   value: postgres
 - name: DB_HOST
   value: "astronomer-postgresql.astronomer.svc.cluster.local"
 - name: DB_PORT
