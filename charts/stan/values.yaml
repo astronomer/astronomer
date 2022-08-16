@@ -167,12 +167,11 @@ exporter:
   enabled: true
   resources:
     limits:
-      memory: 150Mi
-      cpu: 150m
+     cpu: 100m
+     memory: 128Mi
     requests:
-      memory: 128Mi
-      cpu: 100m
-
+     cpu: 50m
+     memory: 80Mi
 ##################################
 #                                #
 #  Embedded NATS Configuration   #
