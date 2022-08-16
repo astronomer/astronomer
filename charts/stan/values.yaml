@@ -167,11 +167,11 @@ exporter:
   enabled: true
   resources:
     limits:
-     cpu: 100m
-     memory: 100Mi
+      memory: 150Mi
+      cpu: 150m
     requests:
-     cpu: 100m
-     memory: 50Mi
+      memory: 128Mi
+      cpu: 100m
 
 ##################################
 #                                #

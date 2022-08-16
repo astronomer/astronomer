@@ -190,8 +190,8 @@ exporter:
   # resource configuration for the metrics sidecar
   resources:
     limits:
-     cpu: 100m
-     memory: 128Mi
+     cpu: 150m
+     memory: 150Mi
     requests:
      cpu: 100m
      memory: 128Mi
