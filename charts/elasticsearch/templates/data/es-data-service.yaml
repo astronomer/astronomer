@@ -17,6 +17,7 @@ spec:
   ports:
   - port: {{ .Values.common.ports.transport }}
     name: transport
+    appProtocol: tcp
   clusterIP: None
   selector:
     component: {{ template "elasticsearch.name" . }}

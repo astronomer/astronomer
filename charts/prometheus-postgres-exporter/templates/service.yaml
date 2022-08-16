@@ -23,6 +23,7 @@ spec:
       targetPort: {{ .Values.service.name }}
       protocol: TCP
       name: {{ .Values.service.name }}
+      appProtocol: tcp
   selector:
     app: {{ template "prometheus-postgres-exporter.name" . }}
     release: {{ .Release.Name }}

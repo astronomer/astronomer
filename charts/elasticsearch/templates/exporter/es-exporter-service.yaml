@@ -21,6 +21,7 @@ spec:
     - name: http
       port: {{ .Values.exporter.service.httpPort }}
       protocol: TCP
+      appProtocol: http
   selector:
     component: {{ template "elasticsearch.name" . }}-exporter
     release: {{ .Release.Name }}

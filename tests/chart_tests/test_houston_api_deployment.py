@@ -1,7 +1,8 @@
-from tests.chart_tests.helm_template_generator import render_chart
 import pytest
-from tests import supported_k8s_versions
+
 from tests import get_containers_by_name
+from tests import supported_k8s_versions
+from tests.chart_tests.helm_template_generator import render_chart
 
 
 @pytest.mark.parametrize(
@@ -21,15 +22,27 @@ class TestHoustonApiDeployment:
         doc = docs[0]
         assert doc["kind"] == "Deployment"
         assert "annotations" not in doc["metadata"]
+        assert {
+            "tier": "astronomer",
+            "component": "houston",
+            "release": "release-name",
+        } == doc["spec"]["selector"]["matchLabels"]
+
+        assert doc["spec"]["template"]["metadata"]["labels"].get("app") == "houston"
+        assert doc["spec"]["template"]["metadata"]["labels"].get("app") == "houston"
+        assert doc["spec"]["template"]["metadata"]["labels"].get("tier") == "astronomer"
         assert (
-            {
-                "tier": "astronomer",
-                "component": "houston",
-                "release": "release-name",
-            }
-            == doc["spec"]["selector"]["matchLabels"]
-            == doc["spec"]["template"]["metadata"]["labels"]
+            doc["spec"]["template"]["metadata"]["labels"].get("release")
+            == "release-name"
         )
+
+        labels = doc["spec"]["template"]["metadata"]["labels"]
+        assert {
+            "tier": "astronomer",
+            "component": "houston",
+            "release": "release-name",
+            "app": "houston",
+        } == {x: labels[x] for x in labels if x != "version"}
 
         c_by_name = get_containers_by_name(doc, include_init_containers=True)
         assert c_by_name["houston-bootstrapper"]["image"].startswith(
