@@ -72,6 +72,8 @@ client:
   maxUnavailable: 25%
   antiAffinity: "soft"
 
+  initResources: {}
+
   # The amount of RAM allocated to the JVM heap. This should be set to the
   # same value as client.resources.requests.memory, or you may see
   # OutOfMemoryErrors on startup.
@@ -99,6 +101,8 @@ data:
   # This count will depend on your data and computation needs.
   replicas: 2
   antiAffinity: "soft"
+
+  initResources: {}
 
   # The amount of RAM allocated to the JVM heap. This should be set to the
   # same value as data.resources.requests.memory, or you may see
@@ -132,6 +136,8 @@ master:
   # Master replica count should be (#clients / 2) + 1, and generally at least 3.
   replicas: 3
   antiAffinity: "soft"
+
+  initResources: {}
 
   # The amount of RAM allocated to the JVM heap. This should be set to the
   # same value as master.resources.requests.memory, or you may see

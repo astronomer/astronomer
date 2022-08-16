@@ -12,13 +12,13 @@ images:
     tag: 0.23.0
     pullPolicy: IfNotPresent
 
-resources: {}
-  # limits:
-  #  cpu: 100m
-  #  memory: 128Mi
-  # requests:
-  #  cpu: 100m
-  #  memory: 128Mi
+resources:
+   limits:
+    cpu: "300m"
+    memory: "100Mi"
+   requests:
+    cpu: "100m"
+    memory: "70Mi"
 
 replicas: 1
 

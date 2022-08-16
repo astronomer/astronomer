@@ -17,6 +17,10 @@ images:
     tag: 0.9.3-1
     pullPolicy: IfNotPresent
 
+
+init:
+  resources: {}
+
 stan:
   resources: {}
   #  limits:
@@ -161,13 +165,13 @@ store:
 #######################################
 exporter:
   enabled: true
-  resources: {}
-  #  limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  #  requests:
-  #   cpu: 100m
-  #   memory: 128Mi
+  resources:
+    limits:
+     cpu: 100m
+     memory: 128Mi
+    requests:
+     cpu: 50m
+     memory: 80Mi
 ##################################
 #                                #
 #  Embedded NATS Configuration   #

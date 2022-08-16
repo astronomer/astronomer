@@ -97,6 +97,8 @@ spec:
           command: ["/bin/sh","-c"]
           args: ["aws-es-proxy -listen :{{ .Values.service.awsproxy }}"]
           imagePullPolicy: {{ .Values.images.awsproxy.pullPolicy }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
           env:
           {{- if .Values.global.customLogging.awsSecretName }}
           - name: AWS_ACCESS_KEY_ID

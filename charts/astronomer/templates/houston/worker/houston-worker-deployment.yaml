@@ -56,6 +56,8 @@ spec:
         - name: houston-bootstrapper
           image: {{ template "dbBootstrapper.image" . }}
           imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
+          resources:
+{{ toYaml .Values.houston.resources | indent 12 }}
           env:
             - name: BOOTSTRAP_DB
               valueFrom:

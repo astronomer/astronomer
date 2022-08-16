@@ -79,6 +79,8 @@ spec:
           env:
             - name: NATS__URL
               value: "nats://{{ .Release.Name }}-nats:4222"
+          resources:
+{{ toYaml .Values.init.resources | indent 12 }}
       containers:
         - name: stan
           image: {{ include "stan.image" . }}

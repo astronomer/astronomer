@@ -47,7 +47,8 @@ spec:
         - name: nginx
           image: {{ template "nginx-es.image" . }}
           imagePullPolicy: {{ .Values.images.nginx.pullPolicy }}
-          resources: {{ toYaml .Values.nginx.resources | indent 12 }}
+          resources:
+{{ toYaml .Values.nginx.resources | indent 12 }}
           volumeMounts:
             - name: nginx-config-volume
               mountPath: /etc/nginx
