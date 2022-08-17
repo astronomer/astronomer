@@ -45,6 +45,10 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
             {{- include "pgbouncer_environment" . | indent 12 }}
+            {{- range $key, $value :=  .Values.env }}
+            - name: {{ $key | replace "-" "_" }}
+              value: {{ $value | quote }}
+            {{- end }}
           resources:
 {{ toYaml .Values.resources | indent 12 }}
           ports:

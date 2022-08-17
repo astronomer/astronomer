@@ -28,3 +28,22 @@ class TestPGBouncerDeployment:
             "limits": {"cpu": "250m", "memory": "256Mi"},
             "requests": {"cpu": "250m", "memory": "256Mi"},
         }
+        assert not doc["spec"]["template"]["spec"].get("env")
+
+    def test_custom_environment(self, kube_version):
+        doc = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "pgbouncer": {
+                        "enabled": True,
+                    }
+                },
+                "pgbouncer": {"env": {"foo_key": "foo_value", "bar_key": "bar_value"}},
+            },
+            show_only=["charts/pgbouncer/templates/pgbouncer-deployment.yaml"],
+        )[0]
+
+        c_env = doc["spec"]["template"]["spec"]["containers"][0]["env"]
+        assert {"name": "bar_key", "value": "bar_value"} in c_env
+        assert {"name": "foo_key", "value": "foo_value"} in c_env
