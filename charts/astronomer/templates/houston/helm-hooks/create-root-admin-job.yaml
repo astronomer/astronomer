@@ -1,0 +1,75 @@
+#######################################
+## Create Root Admin Job
+#######################################
+apiVersion: {{ include "apiVersion.batch" . }}
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-create-root-admin-job
+  labels:
+    tier: astronomer
+    component: houston-create-root-admin-job
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  annotations:
+    # This is what defines this resource as a hook. Without this line, the
+    # job is considered part of the release.
+    "helm.sh/hook": post-upgrade,post-install
+    # since weight is larger than db migration job we should not need the wait for db init container
+    "helm.sh/hook-weight": "1"
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  completions: 1
+  parallelism: 1
+  backoffLimit: 1
+  template:
+    metadata:
+      labels:
+        tier: astronomer
+        component: houston-create-root-admin-job
+        release: {{ .Release.Name }}
+        app: houston-create-root-admin-job
+        version: {{ .Chart.Version }}
+      {{- if .Values.global.istio.enabled }}
+      annotations:
+        sidecar.istio.io/inject: "false"
+      {{- end }}
+    spec:
+      serviceAccountName: {{ template "houston.bootstrapperServiceAccount" . }}
+      nodeSelector:
+{{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
+      affinity:
+{{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 8 }}
+      tolerations:
+{{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
+      restartPolicy: Never
+{{- include "astronomer.imagePullSecrets" . | indent 6 }}
+      containers:
+        - name: post-upgrade-create-admin-job
+          image: {{ template "houston.image" . }}
+          imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
+          command: ["yarn"]
+          # If you supply only args for a Container, the default Entrypoint defined in the Docker image is run with the args that you supplied.
+          args: ["create-root-admin", "--username=$(ROOT_ADMIN_USERNAME)", "--password=$(ROOT_ADMIN_PASSWORD)"]
+          volumeMounts:
+            {{- include "houston_volume_mounts" . | indent 12 }}
+            {{- include "custom_ca_volume_mounts" . | indent 12 }}
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "houston.backendSecret" . }}
+                  key: connection
+            - name: ROOT_ADMIN_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: root-admin-credentials
+                  key: username
+            - name: ROOT_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: root-admin-credentials
+                  key: password
+      volumes:
+        {{- include "houston_volumes" . | indent 8 }}
+        {{- include "custom_ca_volumes" . | indent 8 }}
