@@ -237,6 +237,11 @@ global:
     enabled: false
     gssSupport: true
     krb5ConfSecretName: krb5.conf
+    # we use it only for in cluster postgresql
+    # so we can override astronomer-bootstrap secret
+    username: postgres
+    password: postgres
+    servicePort: 5432
 
 #################################
 ## Default tagged groups enabled
