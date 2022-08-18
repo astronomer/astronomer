@@ -1,0 +1,75 @@
+{{- if .Values.global.pgbouncer.enabled }}
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: {{ .Release.Name }}-pgbouncer
+  labels:
+    tier: astronomer
+    component: pgbouncer
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: {{ template "pgbouncer.name" . }}
+      release: {{ .Release.Name }}
+      component: pgbouncer
+  template:
+    metadata:
+      labels:
+        app: {{ template "pgbouncer.name" . }}
+        chart: {{ template "pgbouncer.chart" . }}
+        heritage: {{ .Release.Service | quote }}
+        release: {{ .Release.Name }}
+        component: pgbouncer
+        version: {{ .Chart.Version }}
+        tier: astronomer
+        {{- range $key, $value :=  .Values.global.pgbouncer.extraLabels }}
+        {{ $key | replace "-" "_" }}: {{ $value | quote }}
+        {{- end }}
+    spec:
+      nodeSelector:
+{{ toYaml .Values.nodeSelector | indent 8 }}
+      affinity:
+{{ toYaml .Values.affinity | indent 8 }}
+      tolerations:
+{{ toYaml .Values.tolerations | indent 8 }}
+      restartPolicy: Always
+      serviceAccountName: {{ template "houston.bootstrapperServiceAccount" . }}
+      containers:
+        - name: pgbouncer
+          image: {{ template "pgbouncer.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            {{- include "pgbouncer_environment" . | indent 12 }}
+            {{- range $key, $value :=  .Values.env }}
+            - name: {{ $key | replace "-" "_" }}
+              value: {{ $value | quote }}
+            {{- end }}
+            {{- range $key, $value :=  .Values.global.pgbouncer.extraEnv }}
+            - name: {{ $key | replace "-" "_" }}
+              value: {{ $value | quote }}
+            {{- end }}
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+          ports:
+            - name: pgbouncer
+              containerPort: {{ .Values.internalPort }}
+          livenessProbe:
+            tcpSocket:
+              port: {{ .Values.internalPort }}
+          readinessProbe:
+            tcpSocket:
+              port: {{ .Values.internalPort }}
+          lifecycle:
+            preStop:
+              exec:
+                # Allow existing queries clients to complete within 120 seconds
+                command: ["/bin/sh", "-c", "killall -INT pgbouncer && sleep 120"]
+{{- end }}

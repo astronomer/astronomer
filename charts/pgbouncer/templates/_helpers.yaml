@@ -1,0 +1,72 @@
+{{- define "pgbouncer.name" -}}
+{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{- define "pgbouncer.chart" -}}
+{{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+
+{{ define "pgbouncer.image" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-pgbouncer-krb:{{ .Values.images.tag }}
+{{- else -}}
+{{ printf "%s:%s" .Values.image.repository .Values.image.tag }}
+{{- end }}
+{{- end }}
+
+{{ define "pgbouncer_host" -}}
+{{ printf "%s-pgbouncer" .Release.Name }}
+{{- end }}
+
+{{ define "pgbouncer.port" -}}
+{{- .Values.servicePort }}
+{{- end }}
+
+
+{{ define "pgbouncer_config_secret" -}}
+{{ printf "%s-pgbouncer-config" .Release.Name }}
+{{- end }}
+
+{{ define "pgbouncer_stats_secret" -}}
+{{ .Release.Name }}-pgbouncer-stats
+{{- end }}
+
+{{- define "pgbouncer_environment" }}
+- name: DB_USER
+  value: postgres
+- name: DB_PASSWORD
+  value: postgres
+- name: DB_HOST
+  value: "astronomer-postgresql.astronomer.svc.cluster.local"
+- name: DB_PORT
+  value: "5432"
+- name: POOL_MODE
+  value: session
+- name: ADMIN_USERS
+  value: postgres
+- name: AUTH_TYPE
+  value: plain
+- name: LOG_DISCONNECTIONS
+  value: "1"
+- name: LOG_CONNECTIONS
+  value: "1"
+- name: SERVER_TLS_SSLMODE
+  value: disable
+- name: SERVER_TLS_CIPHERS
+  value: normal
+# - name: SERVER_GSSENCMODE
+#   value: require
+- name: VERBOSE
+  value: "999"
+- name: REALM
+  value: EXAMPLE.COM
+- name: SUPPORTED_ENCRYPTION_TYPES
+  value: "aes256-cts-hmac-sha1-96:normal"
+- name: KADMIN_PRINCIPAL
+  value: "kadmin/admin"
+- name: KADMIN_PASSWORD
+  value: postgres
+- name: LISTEN_PORT
+  value: "5432"
+{{- end }}

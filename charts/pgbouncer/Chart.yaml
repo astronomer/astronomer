@@ -1,0 +1,7 @@
+apiVersion: v2
+appVersion: "2.1.8"
+description: A Helm chart for the Pgbouncer.
+name: pgbouncer
+keywords:
+  - pgbouncer
+version: 0.0.1

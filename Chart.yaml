@@ -64,6 +64,11 @@ dependencies:
     condition: global.postgresqlEnabled
     tags:
       - postgresql
+  # Pgbouncer
+  - name: pgbouncer
+    condition: global.pgbouncer.enabled
+    tags:
+      - pgbouncer
   # Nats-server
   - name: nats
     condition: global.nats.enabled
