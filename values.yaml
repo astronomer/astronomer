@@ -241,12 +241,12 @@ global:
     # so we can override astronomer-bootstrap secret
     username: postgres
     password: postgres
-    servicePort: 5432
+    servicePort: "5432"
     extraEnv: []
-      # - some: thing
-      #   another: thing
+      # some: thing
+      # another: thing
     extraLabels: []
-      # do-funky-inj ection: maybe
+      # do-funky-injection: maybe
 
 #################################
 ## Default tagged groups enabled

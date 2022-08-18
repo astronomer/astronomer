@@ -63,4 +63,4 @@ class TestPGBouncerDeployment:
         )[0]
 
         labels = doc["spec"]["template"]["metadata"]["labels"]
-        assert labels.get('test_label') == 'test_label1'
+        assert labels.get("test_label") == "test_label1"
