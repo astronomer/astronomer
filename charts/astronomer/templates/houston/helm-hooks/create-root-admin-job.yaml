@@ -63,12 +63,12 @@ spec:
             - name: ROOT_ADMIN_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: root-admin-credentials
+                  name: astronomer-root-admin-credentials
                   key: username
             - name: ROOT_ADMIN_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: root-admin-credentials
+                  name: astronomer-root-admin-credentials
                   key: password
       volumes:
         {{- include "houston_volumes" . | indent 8 }}
