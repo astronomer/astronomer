@@ -63,13 +63,4 @@ class TestPGBouncerDeployment:
         )[0]
 
         labels = doc["spec"]["template"]["metadata"]["labels"]
-        assert labels == {
-            "app": "pgbouncer",
-            "chart": "pgbouncer-0.0.1",
-            "component": "pgbouncer",
-            "heritage": "Helm",
-            "release": "release-name",
-            "test_label": "test_label1",
-            "tier": "astronomer",
-            "version": "0.0.1",
-        }
+        assert labels.get('test_label') == 'test_label1'
