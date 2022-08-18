@@ -232,6 +232,22 @@ global:
   # https://github.com/argoproj/argo-cd/blob/master/docs/user-guide/sync-waves.md
   enableArgoCDAnnotation: false
 
+  # For now we support only pgbouncer with gss api support
+  pgbouncer:
+    enabled: false
+    gssSupport: true
+    krb5ConfSecretName: krb5.conf
+    # we use it only for in cluster postgresql
+    # so we can override astronomer-bootstrap secret
+    username: postgres
+    password: postgres
+    servicePort: "5432"
+    extraEnv: []
+      # some: thing
+      # another: thing
+    extraLabels: []
+      # do-funky-injection: maybe
+
 #################################
 ## Default tagged groups enabled
 #################################
