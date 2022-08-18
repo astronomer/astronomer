@@ -30,6 +30,9 @@ spec:
         component: pgbouncer
         version: {{ .Chart.Version }}
         tier: astronomer
+        {{- range $key, $value :=  .Values.global.pgbouncer.extraLabels }}
+        {{ $key | replace "-" "_" }}: {{ $value | quote }}
+        {{- end }}
     spec:
       nodeSelector:
 {{ toYaml .Values.nodeSelector | indent 8 }}
@@ -46,6 +49,10 @@ spec:
           env:
             {{- include "pgbouncer_environment" . | indent 12 }}
             {{- range $key, $value :=  .Values.env }}
+            - name: {{ $key | replace "-" "_" }}
+              value: {{ $value | quote }}
+            {{- end }}
+            {{- range $key, $value :=  .Values.global.pgbouncer.extraEnv }}
             - name: {{ $key | replace "-" "_" }}
               value: {{ $value | quote }}
             {{- end }}

@@ -242,6 +242,11 @@ global:
     username: postgres
     password: postgres
     servicePort: 5432
+    extraEnv: []
+      # - some: thing
+      #   another: thing
+    extraLabels: []
+      # do-funky-inj ection: maybe
 
 #################################
 ## Default tagged groups enabled

@@ -47,3 +47,29 @@ class TestPGBouncerDeployment:
         c_env = doc["spec"]["template"]["spec"]["containers"][0]["env"]
         assert {"name": "bar_key", "value": "bar_value"} in c_env
         assert {"name": "foo_key", "value": "foo_value"} in c_env
+
+    def test_custom_labels(self, kube_version):
+        doc = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "pgbouncer": {
+                        "enabled": True,
+                        "extraLabels": {"test_label": "test_label1"},
+                    }
+                },
+            },
+            show_only=["charts/pgbouncer/templates/pgbouncer-deployment.yaml"],
+        )[0]
+
+        labels = doc["spec"]["template"]["metadata"]["labels"]
+        assert labels == {
+            "app": "pgbouncer",
+            "chart": "pgbouncer-0.0.1",
+            "component": "pgbouncer",
+            "heritage": "Helm",
+            "release": "release-name",
+            "test_label": "test_label1",
+            "tier": "astronomer",
+            "version": "0.0.1",
+        }
