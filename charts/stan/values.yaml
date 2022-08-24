@@ -10,11 +10,11 @@ images:
     pullPolicy: IfNotPresent
   stan:
     repository: quay.io/astronomer/ap-nats-streaming
-    tag: 0.24.5-1
+    tag: 0.24.5-2
     pullPolicy: IfNotPresent
   exporter:
     repository: quay.io/astronomer/ap-nats-exporter
-    tag: 0.9.3-1
+    tag: 0.9.3-2
     pullPolicy: IfNotPresent
 
 stan:
