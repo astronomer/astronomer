@@ -46,6 +46,8 @@ additionalVolumes: []
 s3:
   enabled: false
   path: ~
+  aws_key_id: ~
+  aws_sec_key: ~
   role_arn: ~
   role_session_name: ~
   s3_bucket: ~
