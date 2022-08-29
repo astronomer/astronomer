@@ -1,4 +1,4 @@
-from tests.chart_tests.helm_template_generator import render_chart
+from tests.helm_template_generator import render_chart
 import pytest
 from subprocess import CalledProcessError
 
@@ -17,6 +17,8 @@ def test_astronomer_bootstrap_secret_postgres_enabled():
         show_only="charts/postgresql/templates/astronomer-bootstrap-secret.yaml",
         values={"global": {"postgresqlEnabled": True}},
     )
+
+    print(docs)
 
     assert docs == [
         {
