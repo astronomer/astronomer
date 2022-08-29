@@ -20,7 +20,6 @@ import sys
 from functools import cache
 from tempfile import NamedTemporaryFile
 from typing import Any, Dict, Tuple
-from pathlib import Path
 from typing import Optional
 
 import jsonschema
