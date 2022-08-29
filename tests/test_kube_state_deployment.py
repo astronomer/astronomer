@@ -72,3 +72,18 @@ class TestKubeStateDeployment:
             "--metric-labels-allowlist=namespaces=[*]"
             in c_by_name["kube-state"]["args"]
         )
+
+    def test_kube_state_deployment_with_default_args_overrides(self, kube_version):
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "kube-state": {"extraArgs": ["--metric-labels-allowlist=pods=[*]"]},
+            },
+            show_only=["charts/kube-state/templates/kube-state-deployment.yaml"],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+
+        c_by_name = get_containers_by_name(doc)
+        assert "--metric-labels-allowlist=pods=[*]" in c_by_name["kube-state"]["args"]
