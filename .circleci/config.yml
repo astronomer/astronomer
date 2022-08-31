@@ -294,7 +294,7 @@ workflows:
                 - quay.io/astronomer/ap-nginx-es:1.23.1
                 - quay.io/astronomer/ap-nginx:1.3.0-1
                 - quay.io/astronomer/ap-node-exporter:1.3.1
-                - quay.io/astronomer/ap-prometheus:2.36.2
+                - quay.io/astronomer/ap-prometheus:2.37.0
           context:
             - slack_team-software-infra-bot
 
