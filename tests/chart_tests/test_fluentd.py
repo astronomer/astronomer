@@ -3,7 +3,6 @@ import pytest
 from tests import supported_k8s_versions
 import jmespath
 
-
 @pytest.mark.parametrize(
     "kube_version",
     supported_k8s_versions,
@@ -111,3 +110,91 @@ def test_fluentd_configmap_manual_namespaces_and_namespacepools_disabled(kube_ve
         'key $.kubernetes.namespace_labels.platform\n    pattern "release-name"'
     )
     assert expected_rule in doc["data"]["output.conf"]
+
+
+@pytest.mark.parametrize(
+    "kube_version",
+    supported_k8s_versions,
+)
+def test_fluentd_pod_securityContextOverride(kube_version):
+    """Test that helm renders a container securityContext when securityContext is enabled."""
+
+    docs = render_chart(
+        kube_version=kube_version,
+        values={
+            "fluentd": {
+                "pod": {
+                    "securityContext": {
+                        "runAsUser": 9999
+                    }
+                }
+            }
+        },
+        show_only=["charts/fluentd/templates/fluentd-daemonset.yaml"],
+    )
+
+    pod_search_result = jmespath.search(
+        "spec.template.spec",
+        docs[0],
+    )
+    # the pod container should report a default user of 9999
+    assert pod_search_result["securityContext"]["runAsUser"] == 9999
+
+
+@pytest.mark.parametrize(
+    "kube_version",
+    supported_k8s_versions,
+)
+def test_fluentd_container_securityContextOverride(kube_version):
+    """Test that helm renders a container securityContext when securityContext is enabled."""
+
+    docs = render_chart(
+        kube_version=kube_version,
+        values={
+            "fluentd": {
+                "container": {
+                    "securityContext": {
+                        "runAsUser": 8888,
+                        "seLinuxOptions": {
+                            "type": "spc_t"
+                        }
+                    }
+                }
+            }
+        },
+        show_only=["charts/fluentd/templates/fluentd-daemonset.yaml"],
+    )
+
+    container_search_result = jmespath.search(
+        "spec.template.spec.containers[?name == 'fluentd']",
+        docs[0],
+    )
+    # the fluentd container should now report running as user 8888
+    assert container_search_result[0]["securityContext"]["runAsUser"] == 8888
+
+
+@pytest.mark.parametrize(
+    "kube_version",
+    supported_k8s_versions,
+)
+def test_fluentd_securityContext_empty_by_default(kube_version):
+    """Test that no securityContext is present by default on pod or container"""
+
+    docs = render_chart(
+        kube_version=kube_version,
+        values={},
+        show_only=["charts/fluentd/templates/fluentd-daemonset.yaml"],
+    )
+
+    container_search_result = jmespath.search(
+        "spec.template.spec.containers[?name == 'fluentd']",
+        docs[0],
+    )
+    pod_search_result = jmespath.search(
+        "spec.template.spec",
+        docs[0],
+    )
+    # the securityContext should be present but empty by default
+    assert not pod_search_result["securityContext"].keys()
+    # the securityContext should be present but empty by default
+    assert not container_search_result[0]["securityContext"].keys()
