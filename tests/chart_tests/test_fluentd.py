@@ -3,6 +3,7 @@ import pytest
 from tests import supported_k8s_versions
 import jmespath
 
+
 @pytest.mark.parametrize(
     "kube_version",
     supported_k8s_versions,
@@ -121,15 +122,7 @@ def test_fluentd_pod_securityContextOverride(kube_version):
 
     docs = render_chart(
         kube_version=kube_version,
-        values={
-            "fluentd": {
-                "pod": {
-                    "securityContext": {
-                        "runAsUser": 9999
-                    }
-                }
-            }
-        },
+        values={"fluentd": {"pod": {"securityContext": {"runAsUser": 9999}}}},
         show_only=["charts/fluentd/templates/fluentd-daemonset.yaml"],
     )
 
@@ -155,9 +148,7 @@ def test_fluentd_container_securityContextOverride(kube_version):
                 "container": {
                     "securityContext": {
                         "runAsUser": 8888,
-                        "seLinuxOptions": {
-                            "type": "spc_t"
-                        }
+                        "seLinuxOptions": {"type": "spc_t"},
                     }
                 }
             }
