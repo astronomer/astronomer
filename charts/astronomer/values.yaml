@@ -28,7 +28,7 @@ images:
     pullPolicy: IfNotPresent
   astroUI:
     repository: quay.io/astronomer/ap-astro-ui
-    tag: 0.28.15
+    tag: 0.28.16
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
@@ -36,7 +36,7 @@ images:
     pullPolicy: IfNotPresent
   cliInstall:
     repository: quay.io/astronomer/ap-cli-install
-    tag: 0.26.7
+    tag: 0.26.8
     pullPolicy: IfNotPresent
 
 astroUI:
