@@ -20,7 +20,6 @@ import sys
 from functools import lru_cache
 from tempfile import NamedTemporaryFile
 from typing import Any, Dict, Tuple
-from pathlib import Path
 from typing import Optional
 
 import jsonschema
@@ -98,11 +97,10 @@ def render_chart(
         if namespace:
             command.extend(["--namespace", namespace])
         if show_only:
+            if isinstance(show_only, str):
+                show_only = [show_only]
             for i in show_only:
-                if not Path(i).exists():
-                    raise FileNotFoundError(f"ERROR: {i} not found")
-                else:
-                    command.extend(["--show-only", i])
+                command.extend(["--show-only", i])
         try:
             templates = subprocess.check_output(command, stderr=subprocess.PIPE)
             if not templates:
