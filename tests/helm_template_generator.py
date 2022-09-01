@@ -17,7 +17,7 @@
 
 import subprocess
 import sys
-from functools import lru_cache
+from functools import cache
 from tempfile import NamedTemporaryFile
 from typing import Any, Dict, Tuple
 from typing import Optional
@@ -32,6 +32,8 @@ api_client = ApiClient()
 BASE_URL_SPEC = "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master"
 
 
+# TODO: make this cache the schema so we can test offline, or better, save these to the tests dir
+@cache
 def get_schema_k8s(api_version, kind, kube_version="1.21.0"):
     """Return a k8s schema for use in validation."""
     api_version = api_version.lower()
@@ -48,7 +50,7 @@ def get_schema_k8s(api_version, kind, kube_version="1.21.0"):
     return request.json()
 
 
-@lru_cache(maxsize=None)
+@cache
 def create_validator(api_version, kind, kube_version="1.21.0"):
     """Create a k8s validator for the given inputs."""
     schema = get_schema_k8s(api_version, kind, kube_version=kube_version)
@@ -67,7 +69,7 @@ def validate_k8s_object(instance, kube_version="1.21.0"):
 def render_chart(
     name: str = "release-name",
     values: Optional[dict] = None,
-    show_only: Optional[list] = None,
+    show_only: Optional[list] = (),
     chart_dir: Optional[str] = None,
     kube_version: str = "1.21.0",
     baseDomain: str = "example.com",
@@ -78,7 +80,7 @@ def render_chart(
     """
     values = values or {}
     chart_dir = chart_dir or sys.path[0]
-    with NamedTemporaryFile() as tmp_file:
+    with NamedTemporaryFile(delete=False) as tmp_file:
         content = yaml.dump(values)
         tmp_file.write(content.encode())
         tmp_file.flush()

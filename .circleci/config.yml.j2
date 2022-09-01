@@ -63,7 +63,7 @@ jobs:
 
   run_pre_commit:
     docker:
-      - image: quay.io/astronomer/ci-pre-commit:2022-05
+      - image: quay.io/astronomer/ci-pre-commit:2022-09
     steps:
       - checkout
       - run:
@@ -112,7 +112,7 @@ jobs:
 
   unittest-charts:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2022-05
+      - image: quay.io/astronomer/ci-helm-release:2022-09
     parallelism: 6
     steps:
       - setup_remote_docker:
