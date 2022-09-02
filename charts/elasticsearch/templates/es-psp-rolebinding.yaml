@@ -1,6 +1,6 @@
 ################################
 ## Elasticsearch PSP Rolebinding
-#################################
+################################
 {{- if .Values.global.pspEnabled }}
 apiVersion: {{ template "apiVersion.rbac" . }}
 kind: RoleBinding
