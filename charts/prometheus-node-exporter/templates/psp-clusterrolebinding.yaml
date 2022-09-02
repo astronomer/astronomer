@@ -1,3 +1,6 @@
+##################################################
+## Prometheus Node Exporter ClusterRoleBinding  ##
+##################################################
 {{- if .Values.rbac.create }}
 {{- if .Values.global.pspEnabled }}
 apiVersion: {{ template "apiVersion.rbac" . }}
