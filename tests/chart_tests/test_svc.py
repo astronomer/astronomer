@@ -35,7 +35,7 @@ def test_svc_port_configs(svc_ports):
 
     for svc_port in svc_ports:
 
-        if svc_port['name'] == 'default-backend':
+        if svc_port["name"] == "default-backend":
             pytest.skip("Skipping test for Nginx default backend.")
 
         assert "appProtocol" in svc_port
