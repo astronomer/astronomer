@@ -22,4 +22,3 @@ spec:
       targetPort: {{ .Values.ports.defaultBackendHTTP }}
       protocol: TCP
       name: default-backend
-      appProtocol: http
