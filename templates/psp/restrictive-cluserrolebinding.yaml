@@ -1,3 +1,6 @@
+#################################
+##    Cluster Role Binding     ##
+#################################
 {{- if .Values.global.pspEnabled }}
 kind: ClusterRoleBinding
 apiVersion: {{ template "apiVersion.rbac" . }}
