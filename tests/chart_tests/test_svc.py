@@ -11,7 +11,7 @@ def init_test_svc_port_configs():
     docs = render_chart(values=chart_values)
 
     svc_docs = jmespath.search(
-        "[?kind == `Service`].{name: metadata.name, chart: metadata.labels.chart, component: metadata.labels.component, ports: spec.ports}",
+        "[?kind == 'Service'].{name: metadata.name, chart: metadata.labels.chart, component: metadata.labels.component, ports: spec.ports}",
         docs,
     )
 
@@ -34,6 +34,10 @@ def test_svc_port_configs(svc_ports):
     assert svc_ports is not None
 
     for svc_port in svc_ports:
+
+        if svc_port["name"] == "default-backend":
+            pytest.skip("Skipping test for Nginx default backend.")
+
         assert "appProtocol" in svc_port
         assert "name" in svc_port
         assert "port" in svc_port
