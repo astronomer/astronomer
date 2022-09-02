@@ -1,5 +1,5 @@
 #################################
-##    PSP ClusterRole         ##
+##    PSP ClusterRole          ##
 #################################
 {{- if .Values.global.pspEnabled }}
 kind: ClusterRole
