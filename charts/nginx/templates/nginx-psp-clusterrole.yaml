@@ -1,6 +1,6 @@
 ################################
 ## Nginx PSP ClusterRole
-#################################
+################################
 {{- if .Values.global.pspEnabled }}
 kind: ClusterRole
 apiVersion: {{ template "apiVersion.rbac" . }}
