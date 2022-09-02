@@ -1,5 +1,5 @@
 #################################
-##    PSP RoleBinding         ##
+##    PSP RoleBinding          ##
 #################################
 {{- if .Values.global.pspEnabled }}
 apiVersion: {{ template "apiVersion.rbac" . }}
