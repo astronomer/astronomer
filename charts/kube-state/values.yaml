@@ -26,3 +26,6 @@ ports:
   telemetry: 8081
 
 replicas: 1
+
+extraArgs:
+- "--metric-labels-allowlist=namespaces=[*]"

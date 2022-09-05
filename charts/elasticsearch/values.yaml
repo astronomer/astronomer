@@ -10,15 +10,15 @@ tolerations: []
 images:
   es:
     repository: quay.io/astronomer/ap-elasticsearch
-    tag: 7.17.4
+    tag: 7.17.5
     pullPolicy: IfNotPresent
   init:
     repository: quay.io/astronomer/ap-base
-    tag: 3.16.0
+    tag: 3.16.2
     pullPolicy: IfNotPresent
   curator:
     repository: quay.io/astronomer/ap-curator
-    tag: 5.8.4-17
+    tag: 5.8.4-18
     pullPolicy: IfNotPresent
   exporter:
     repository: quay.io/astronomer/ap-elasticsearch-exporter
@@ -26,7 +26,7 @@ images:
     pullPolicy: IfNotPresent
   nginx:
     repository: quay.io/astronomer/ap-nginx-es
-    tag: 1.22.0
+    tag: 1.23.1-1
     pullPolicy: IfNotPresent
 
 common:
