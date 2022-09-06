@@ -193,13 +193,12 @@ def test_cron_splay(test_data):
 
 
 def test_houston_configmapwith_update_airflow_runtime_checks_enabled():
-    """Validate the houston configmap and its embedded data with updateAirflowCheck and updateRuntimeCheck."""
+    """Validate the houston configmap and its embedded data with updateAirflowCheck."""
     docs = render_chart(
         values={
             "astronomer": {
                 "houston": {
                     "updateAirflowCheck": {"enabled": True},
-                    "updateRuntimeCheck": {"enabled": True},
                 }
             }
         },
@@ -211,17 +210,15 @@ def test_houston_configmapwith_update_airflow_runtime_checks_enabled():
     prod = yaml.safe_load(doc["data"]["production.yaml"])
 
     assert prod["updateAirflowCheckEnabled"] is True
-    assert prod["updateRuntimeCheckEnabled"] is True
 
 
 def test_houston_configmapwith_update_airflow_runtime_checks_disabled():
-    """Validate the houston configmap and its embedded data with updateAirflowCheck and updateRuntimeCheck."""
+    """Validate the houston configmap and its embedded data with updateAirflowCheck."""
     docs = render_chart(
         values={
             "astronomer": {
                 "houston": {
                     "updateAirflowCheck": {"enabled": False},
-                    "updateRuntimeCheck": {"enabled": False},
                 }
             }
         },
@@ -233,4 +230,3 @@ def test_houston_configmapwith_update_airflow_runtime_checks_disabled():
     prod = yaml.safe_load(doc["data"]["production.yaml"])
     print(prod)
     assert prod["updateAirflowCheckEnabled"] is False
-    assert prod["updateRuntimeCheckEnabled"] is False
