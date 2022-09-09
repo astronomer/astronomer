@@ -38,9 +38,13 @@ spec:
 {{ toYaml (.Values.tolerations) | indent 8 }}
       serviceAccountName: {{ template "fluentd.fullname" . }}
 {{- include "fluentd.imagePullSecrets" . | indent 6 }}
+      securityContext:
+{{ toYaml .Values.pod.securityContext | indent 8 }}
       containers:
       - name: fluentd
         image: {{ template "fluentd.image" . }}
+        securityContext:
+{{ toYaml .Values.container.securityContext | indent 10 }}
         {{- if .Values.global.istioEnabled }}
         command:
           - "/bin/bash"
