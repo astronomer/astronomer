@@ -37,7 +37,7 @@ tests:
     set:
       houston.nats.servers:
         - nats://foo1
-        - nast://foo2
+        - nats://foo2
     assert:
       contains:
         path: containers.env.name
