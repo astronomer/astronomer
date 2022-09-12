@@ -30,6 +30,7 @@ unittest-requirements: .unittest-requirements ## Setup venv required for unit te
 
 .PHONY: unittest-charts
 unittest-charts: helm-unittest .unittest-requirements ## Unittest the Astronomer helm chart
+	# Protip: you can modify pytest behavior like: make unittest-charts PYTEST_ADDOPTS='-v --maxfail=1 --pdb -k "prometheus and 1.20"'
 	venv/bin/python -m pytest -v --junitxml=test-results/junit.xml -n auto tests
 
 helm-unittest: ## Run helm-unittest tests (deprecated test suite, but still valid tests)
