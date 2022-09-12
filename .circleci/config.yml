@@ -65,7 +65,7 @@ jobs:
 
   run_pre_commit:
     docker:
-      - image: quay.io/astronomer/ci-pre-commit:2022-05
+      - image: quay.io/astronomer/ci-pre-commit:2022-09
     steps:
       - checkout
       - run:
@@ -150,7 +150,7 @@ jobs:
 
   release-to-internal:
     machine:
-      image: ubuntu-2004:202107-02
+      image: ubuntu-2204:2022.07.1
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -160,12 +160,12 @@ jobs:
           command: |
             set -e
             sudo apt-get update && sudo apt-get install -y ca-certificates curl
-            pyenv global 3.9.4
+            pyenv global 3.10.4
             bin/release-helm-chart /tmp/workspace/astronomer-*.tgz
 
   release-to-public:
     machine:
-      image: ubuntu-2004:202107-02
+      image: ubuntu-2204:2022.07.1
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -175,13 +175,13 @@ jobs:
           command: |
             set -e
             sudo apt-get update && sudo apt-get install -y ca-certificates curl
-            pyenv global 3.9.4
+            pyenv global 3.10.4
             bin/release-helm-chart -p /tmp/workspace/astronomer-*.tgz
       - publish-github-release
 
   platform-1-19-16:
     machine:
-      image: ubuntu-2004:202107-02
+      image: ubuntu-2204:2022.07.1
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.19.16
@@ -197,7 +197,7 @@ jobs:
           when: always
   platform-1-20-15:
     machine:
-      image: ubuntu-2004:202107-02
+      image: ubuntu-2204:2022.07.1
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.20.15
@@ -213,7 +213,7 @@ jobs:
           when: always
   platform-1-21-12:
     machine:
-      image: ubuntu-2004:202107-02
+      image: ubuntu-2204:2022.07.1
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.21.12
@@ -229,7 +229,7 @@ jobs:
           when: always
   platform-1-22-9:
     machine:
-      image: ubuntu-2004:202107-02
+      image: ubuntu-2204:2022.07.1
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.22.9
@@ -245,7 +245,7 @@ jobs:
           when: always
   platform-1-23-6:
     machine:
-      image: ubuntu-2004:202107-02
+      image: ubuntu-2204:2022.07.1
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.23.6
@@ -487,7 +487,7 @@ commands:
           name: Create a release on GitHub
           command: |
             set -xe
-            pyenv global 3.9.4
+            pyenv global 3.10.4
             pip install astronomer_e2e_test
             astronomer-ci publish-github-release --github-repository $CIRCLE_PROJECT_REPONAME --github-organization $CIRCLE_PROJECT_USERNAME --commitish $CIRCLE_SHA1
 
