@@ -185,8 +185,7 @@ class TestNatsStatefulSet:
             values=values,
         )
 
-        doc = docs[0]
-        nats_cm = doc["data"]["nats.conf"]
+        nats_cm = doc[0]["data"]["nats.conf"]
         assert "release-name-nats" in nats_cm
 
     def test_nats_statefulset_with_default_cluster_name_overrides(self, kube_version):
