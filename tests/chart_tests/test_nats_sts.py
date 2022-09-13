@@ -1,6 +1,10 @@
+import json
 from tests.chart_tests.helm_template_generator import render_chart
 import pytest
 from tests import supported_k8s_versions, get_containers_by_name
+import yaml
+import jmespath
+import sys
 
 
 @pytest.mark.parametrize(
@@ -173,3 +177,33 @@ class TestNatsStatefulSet:
         assert (
             spec["tolerations"] == values["global"]["platformNodePool"]["tolerations"]
         )
+
+    def test_nats_statefulset_with_default_cluster_name(self, kube_version):
+        """Test that nats configmap has cluster name defined"""
+        values = {
+            "nats": {},
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/nats/templates/configmap.yaml"],
+            values=values,
+        )
+
+        doc = docs[0]
+        nats_cm = doc["data"]["nats.conf"]
+        assert "release-name-nats" in nats_cm
+
+    def test_nats_statefulset_with_default_cluster_name_overrides(self, kube_version):
+        """Test that nats configmap has cluster name which allows overrides"""
+        values = {
+            "nats": {"cluster": {"name": "astronats"}},
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/nats/templates/configmap.yaml"],
+            values=values,
+        )
+
+        doc = docs[0]
+        nats_cm = doc["data"]["nats.conf"]
+        assert "release-name-astronats" in nats_cm
