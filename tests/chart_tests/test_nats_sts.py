@@ -175,3 +175,31 @@ class TestNatsStatefulSet:
         assert (
             spec["tolerations"] == values["global"]["platformNodePool"]["tolerations"]
         )
+
+    def test_nats_statefulset_with_default_cluster_name(self, kube_version):
+        """Test that nats configmap has cluster name defined"""
+        values = {
+            "nats": {},
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/nats/templates/configmap.yaml"],
+            values=values,
+        )
+
+        nats_cm = docs[0]["data"]["nats.conf"]
+        assert "release-name-nats" in nats_cm
+
+    def test_nats_statefulset_with_default_cluster_name_overrides(self, kube_version):
+        """Test that nats configmap has cluster name which allows overrides"""
+        values = {
+            "nats": {"cluster": {"name": "astronats"}},
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/nats/templates/configmap.yaml"],
+            values=values,
+        )
+
+        nats_cm = docs[0]["data"]["nats.conf"]
+        assert "release-name-astronats" in nats_cm
