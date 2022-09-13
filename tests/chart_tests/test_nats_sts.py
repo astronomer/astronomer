@@ -199,6 +199,5 @@ class TestNatsStatefulSet:
             values=values,
         )
 
-        doc = docs[0]
-        nats_cm = doc["data"]["nats.conf"]
+        nats_cm = doc[0]["data"]["nats.conf"]
         assert "release-name-astronats" in nats_cm
