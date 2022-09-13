@@ -103,6 +103,7 @@ podAnnotations: {}
 
 cluster:
   enabled: true
+  name: nats
 
 # Leafnode connections to extend a cluster:
 #
