@@ -284,7 +284,7 @@ workflows:
                 - quay.io/astronomer/ap-elasticsearch:7.17.5
                 - quay.io/astronomer/ap-fluentd:1.14.6-1
                 - quay.io/astronomer/ap-grafana:8.5.10
-                - quay.io/astronomer/ap-houston-api:0.28.25
+                - quay.io/astronomer/ap-houston-api:0.28.26
                 - quay.io/astronomer/ap-kibana:7.17.5
                 - quay.io/astronomer/ap-kube-state:2.5.0
                 - quay.io/astronomer/ap-kubed:0.13.2
