@@ -5,7 +5,7 @@ tolerations: []
 images:
   fluentd:
     repository: quay.io/astronomer/ap-fluentd
-    tag: 1.14.3-1
+    tag: 1.15.1
     pullPolicy: IfNotPresent
 
 elasticsearch:

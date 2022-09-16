@@ -76,6 +76,12 @@ data:
     cluster {
       port: 6222
 
+      {{- if .Values.cluster.name}}
+
+      name: {{ .Release.Name }}-{{ .Values.cluster.name }}
+
+      {{- end }}
+
       {{- with .Values.cluster.tls }}
       {{ $secretName := .secret.name }}
       tls {

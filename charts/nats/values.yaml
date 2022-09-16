@@ -6,7 +6,7 @@
 images:
   nats:
     repository: quay.io/astronomer/ap-nats-server
-    tag: 2.7.2
+    tag: 2.8.1-2
     pullPolicy: IfNotPresent
 
 nats:
@@ -89,6 +89,7 @@ podAnnotations: {}
 
 cluster:
   enabled: true
+  name: nats
 
 # Leafnode connections to extend a cluster:
 #
@@ -173,7 +174,7 @@ reloader:
 # Prometheus NATS Exporter configuration.
 exporter:
   enabled: true
-  image: quay.io/astronomer/ap-nats-exporter:0.9.1
+  image: quay.io/astronomer/ap-nats-exporter:0.10.0
   pullPolicy: IfNotPresent
   # resource configuration for the metrics sidecar
   resources: {}
