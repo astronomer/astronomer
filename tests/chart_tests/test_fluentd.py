@@ -31,6 +31,43 @@ def test_fluentd_daemonset(kube_version):
     ]
     assert search_result == expected_result
 
+    search_result_es_index_template_volume_mount = jmespath.search(
+        "spec.template.spec.containers[*].volumeMounts[?name == 'astronomer-elasticsearch-index-template']",
+        docs[0],
+    )
+
+    expected_result_es_index_template_volume_mount = [
+        [
+            {
+                "mountPath": "/host",
+                "name": "astronomer-elasticsearch-index-template",
+                "readOnly": True,
+            }
+        ]
+    ]
+
+    assert (
+        search_result_es_index_template_volume_mount
+        == expected_result_es_index_template_volume_mount
+    )
+
+    search_result_es_index_template_volume = jmespath.search(
+        "spec.template.spec.volumes[?name == 'astronomer-elasticsearch-index-template']",
+        docs[0],
+    )
+
+    expected_result_es_index_template_volume = [
+        {
+            "name": "astronomer-elasticsearch-index-template",
+            "configMap": {"name": "astronomer-elasticsearch-index-template"},
+        }
+    ]
+
+    assert (
+        search_result_es_index_template_volume
+        == expected_result_es_index_template_volume
+    )
+
 
 @pytest.mark.parametrize(
     "kube_version",
