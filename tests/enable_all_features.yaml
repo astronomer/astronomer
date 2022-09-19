@@ -6,6 +6,8 @@ global:
   customLogging:
     awsSecretName: dummy
     enabled: true
+  loggingSidecar:
+    enabled: true
   pgbouncer:
     enabled: true
   postgresqlEnabled: true
