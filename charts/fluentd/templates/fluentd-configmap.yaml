@@ -205,7 +205,7 @@ data:
         host "#{ENV['OUTPUT_HOST']}"
         port "#{ENV['OUTPUT_PORT']}"
         index_name fluentd.${record["release"]}.${Time.at(time).getutc.strftime(@logstash_dateformat)}
-        templates { "fluentdIndexTemplate": "/host/index_template.json"}
+        templates { "fluentdindextemplate": "/host/index_template.json"}
         template_overwrite true
         <buffer>
           @type file

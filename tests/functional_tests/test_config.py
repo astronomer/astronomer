@@ -64,19 +64,19 @@ def test_nginx_can_reach_default_backend(nginx):
     )
 
 
-# @pytest.mark.flaky(reruns=20, reruns_delay=10)
-# def test_prometheus_targets(prometheus):
-#     """Ensure all Prometheus targets are healthy"""
-#     data = prometheus.check_output(
-#         "wget --timeout=5 -qO- http://localhost:9090/api/v1/targets"
-#     )
-#     targets = json.loads(data)["data"]["activeTargets"]
-#     for target in targets:
-#         assert target["health"] == "up", (
-#             "Expected all prometheus targets to be up. "
-#             + 'Please check the "targets" view in the Prometheus UI'
-#             + f" Target data from the one that is not up:\n\n{target}"
-#         )
+@pytest.mark.flaky(reruns=20, reruns_delay=10)
+def test_prometheus_targets(prometheus):
+    """Ensure all Prometheus targets are healthy"""
+    data = prometheus.check_output(
+        "wget --timeout=5 -qO- http://localhost:9090/api/v1/targets"
+    )
+    targets = json.loads(data)["data"]["activeTargets"]
+    for target in targets:
+        assert target["health"] == "up", (
+            "Expected all prometheus targets to be up. "
+            + 'Please check the "targets" view in the Prometheus UI'
+            + f" Target data from the one that is not up:\n\n{target}"
+        )
 
 
 def test_core_dns_metrics_are_collected(prometheus):
