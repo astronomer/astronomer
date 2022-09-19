@@ -8,10 +8,10 @@
 
 tags:
   platform: true
-  logging: true
+  logging: false
   monitoring: false
-  postgresql: false
-  nats: false
+  postgresql: true
+  nats: true
 
 global:
   # Base domain for all subdomains exposed through ingress
