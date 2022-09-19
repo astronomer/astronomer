@@ -11,7 +11,7 @@ import time
 from os import getenv
 from subprocess import check_output
 
-# import pytest
+import pytest
 import testinfra
 import yaml
 from kubernetes.client.rest import ApiException
