@@ -12,7 +12,7 @@ data:
   index_template.json: |-
     {
       "index_patterns": [
-          "logstash-default*"
+          "fluent*"
       ],
       "mappings": {
         "properties": {
