@@ -1,5 +1,7 @@
 from tests.chart_tests.helm_template_generator import render_chart
 import jmespath
+import textwrap
+import yaml
 
 
 def test_alertmanager_defaults():
@@ -61,3 +63,28 @@ def test_alertmanager_rfc1918():
         )
         for value in item
     )
+
+
+def test_alertmanager_customReceiver():
+    """Test  alertmanager customer receiver configuration"""
+    test_custom_receiver_config = textwrap.dedent(
+        """
+        alertmanager:
+          customReceiver:
+          - name: sns-receiver
+            sns_configs:
+              - api_url: <SNS ENDPOINT>
+                subject: '[Alert: {{ .GroupLabels.alertname }} - {{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}]'
+                topic_arn: <SNS-TOPIC>
+                sigv4:
+                  region: <REGION>
+                  role_arn: <SNS-ROLE>
+            """
+    )
+    values = yaml.safe_load(test_custom_receiver_config)
+    docs = render_chart(
+        values=values,
+        show_only=["charts/alertmanager/templates/alertmanager-configmap.yaml"],
+    )
+    assert len(docs) == 1
+    assert "sns-receiver" in docs[0]["data"]["alertmanager.yaml"]
