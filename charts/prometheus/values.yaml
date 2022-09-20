@@ -34,6 +34,16 @@ resources: {}
 #   cpu: 100m
 #   memory: 128Mi
 
+# probe configurations for prometheus container
+livenessProbe:
+  initialDelaySeconds: 10
+  periodSeconds: 5
+  failureThreshold: 3
+readinessProbe:
+  initialDelaySeconds: 10
+  periodSeconds: 5
+  failureThreshold: 3
+
 configMapReloader:
   resources: {}
     # limits:
