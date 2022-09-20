@@ -59,4 +59,15 @@ customRoutes: []
 #     tier: platform
 #     namespace: ^(test-ns.*)
 
+customReceiver: []
+# Example
+#  - name: sns-receiver
+#    sns_configs:
+#      - api_url: <SNS ENDPOINT>
+#        subject: '[Alert: {{ .GroupLabels.alertname }} - {{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}]'
+#        topic_arn: <SNS-TOPIC>
+#        sigv4:
+#          region: <REGION>
+#          role_arn: <SNS-ROLE>
+
 enableNonRFC1918: false
