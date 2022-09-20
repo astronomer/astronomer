@@ -30,9 +30,8 @@ def test_fluentd_daemonset(kube_version):
         ]
     ]
     assert search_result == expected_result
-
     search_result_es_index_template_volume_mount = jmespath.search(
-        "spec.template.spec.containers[*].volumeMounts[?name == 'astronomer-elasticsearch-index-template']",
+        "spec.template.spec.containers[*].volumeMounts[?name == 'release-name-fluentd-index-template-volume']",
         docs[0],
     )
 
@@ -40,7 +39,7 @@ def test_fluentd_daemonset(kube_version):
         [
             {
                 "mountPath": "/host",
-                "name": "astronomer-elasticsearch-index-template",
+                "name": "release-name-fluentd-index-template-volume",
                 "readOnly": True,
             }
         ]
@@ -52,14 +51,14 @@ def test_fluentd_daemonset(kube_version):
     )
 
     search_result_es_index_template_volume = jmespath.search(
-        "spec.template.spec.volumes[?name == 'astronomer-elasticsearch-index-template']",
+        "spec.template.spec.volumes[?name == 'release-name-fluentd-index-template-volume']",
         docs[0],
     )
 
     expected_result_es_index_template_volume = [
         {
-            "name": "astronomer-elasticsearch-index-template",
-            "configMap": {"name": "astronomer-elasticsearch-index-template"},
+            "name": "release-name-fluentd-index-template-volume",
+            "configMap": {"name": "release-name-fluentd-index-template-configmap"},
         }
     ]
 

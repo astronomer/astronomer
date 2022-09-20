@@ -107,7 +107,7 @@ spec:
           readOnly: true
         - name: config-volume-{{ template "fluentd.fullname" . }}
           mountPath: /etc/fluent/config.d
-        - name: astronomer-elasticsearch-index-template
+        - name: {{ template "fluentd.fullname" . }}-index-template-volume
           mountPath: /host
           readOnly: true
         resources:
@@ -133,6 +133,6 @@ spec:
       - name: config-volume-{{ template "fluentd.fullname" . }}
         configMap:
           name: {{ template "fluentd.fullname" . }}
-      - name: astronomer-elasticsearch-index-template
+      - name: {{ template "fluentd.fullname" . }}-index-template-volume
         configMap:
-          name: astronomer-elasticsearch-index-template
+          name: {{ template "fluentd.fullname" . }}-index-template-configmap

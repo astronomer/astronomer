@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: astronomer-elasticsearch-index-template
+  name: {{ template "fluentd.fullname" . }}-index-template-configmap
   labels:
     tier: logging
     component: {{ template "fluentd.name" . }}
@@ -12,7 +12,7 @@ data:
   index_template.json: |-
     {
       "index_patterns": [
-          "fluent*"
+          "fluentd.*"
       ],
       "mappings": {
         "properties": {
