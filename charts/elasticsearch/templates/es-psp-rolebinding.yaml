@@ -2,7 +2,7 @@
 ## Elasticsearch PSP Rolebinding
 ################################
 {{- if .Values.global.pspEnabled }}
-apiVersion: {{ template "apiVersion.rbac" . }}
+apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: {{ .Release.Name }}-psp-elasticsearch
