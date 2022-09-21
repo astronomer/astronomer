@@ -1,7 +1,7 @@
+{{- if .Values.global.pspEnabled }}
 ################################
 ## Fluentd PSP RoleBinding
-################################
-{{- if .Values.global.pspEnabled }}
+#################################
 apiVersion: {{ template "apiVersion.rbac" . }}
 kind: RoleBinding
 metadata:

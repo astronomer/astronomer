@@ -1,6 +1,6 @@
+{{- if .Values.global.pspEnabled }}
 # All purpose catch all restrictive policy
 # If a specific policy is not applied this one will be
-{{- if .Values.global.pspEnabled }}
 apiVersion: policy/v1beta1
 kind: PodSecurityPolicy
 metadata:

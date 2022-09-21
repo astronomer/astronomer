@@ -1,6 +1,3 @@
-#################################
-##    PSP                      ##
-#################################
 {{- if .Values.global.pspEnabled }}
 apiVersion: policy/v1beta1
 kind: PodSecurityPolicy

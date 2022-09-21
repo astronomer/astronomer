@@ -1,6 +1,3 @@
-#############################################
-##   Prometheus Node Exporter ClusterRole  ##
-#############################################
 {{- if .Values.rbac.create }}
 {{- if .Values.global.pspEnabled }}
 kind: ClusterRole

@@ -1,7 +1,7 @@
+{{- if .Values.global.pspEnabled }}
 ################################
 ## Nginx PSP ClusterRole
-################################
-{{- if .Values.global.pspEnabled }}
+#################################
 kind: ClusterRole
 apiVersion: {{ template "apiVersion.rbac" . }}
 metadata:
@@ -15,4 +15,4 @@ rules:
   - {{ .Release.Name }}-ingress-nginx
   verbs:
   - use
-{{- end -}}
+  {{- end -}}
