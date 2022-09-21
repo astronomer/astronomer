@@ -30,6 +30,42 @@ def test_fluentd_daemonset(kube_version):
         ]
     ]
     assert search_result == expected_result
+    search_result_es_index_template_volume_mount = jmespath.search(
+        "spec.template.spec.containers[*].volumeMounts[?name == 'release-name-fluentd-index-template-volume']",
+        docs[0],
+    )
+
+    expected_result_es_index_template_volume_mount = [
+        [
+            {
+                "mountPath": "/host",
+                "name": "release-name-fluentd-index-template-volume",
+                "readOnly": True,
+            }
+        ]
+    ]
+
+    assert (
+        search_result_es_index_template_volume_mount
+        == expected_result_es_index_template_volume_mount
+    )
+
+    search_result_es_index_template_volume = jmespath.search(
+        "spec.template.spec.volumes[?name == 'release-name-fluentd-index-template-volume']",
+        docs[0],
+    )
+
+    expected_result_es_index_template_volume = [
+        {
+            "name": "release-name-fluentd-index-template-volume",
+            "configMap": {"name": "release-name-fluentd-index-template-configmap"},
+        }
+    ]
+
+    assert (
+        search_result_es_index_template_volume
+        == expected_result_es_index_template_volume
+    )
 
 
 @pytest.mark.parametrize(
