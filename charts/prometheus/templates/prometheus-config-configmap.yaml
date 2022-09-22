@@ -270,8 +270,11 @@ data:
             action: labeldrop
           # Required for multi-namespace mode
           - source_labels: [namespace]
+            {{- if (((.Values.houston.config).deployments).namespaceFreeFormEntry) }}
+            {{- else}}
             regex: "^{{ .Release.Namespace }}-(.*$)"
             replacement: "$1"
+            {{- end}}
             target_label: release
         {{- else}}
         # this drops node metrics that we want in the cloud, but maybe shouldn't be scraping

@@ -2,6 +2,7 @@ from tests.chart_tests.helm_template_generator import render_chart
 import pytest
 from tests import supported_k8s_versions
 import yaml
+import jmespath
 
 
 @pytest.mark.parametrize(
@@ -163,3 +164,55 @@ class TestPrometheusConfigConfigmap:
         config_yaml = yaml.safe_load(doc["data"]["config"])
         job_names = [x["job_name"] for x in config_yaml["scrape_configs"]]
         assert "node-exporter" not in job_names
+
+    def test_prometheus_config_release_relabel(self, kube_version):
+        """Prometheus should have a regex for release name."""
+        doc = render_chart(
+            kube_version=kube_version,
+            show_only=self.show_only,
+            values={
+                "astronomer": {
+                    "houston": {
+                        "config": {"deployments": {"namespaceFreeFormEntry": False}},
+                    },
+                },
+            },
+        )[0]
+
+        config = yaml.safe_load(doc["data"]["config"])
+        scrape_config_search_result = jmespath.search(
+            "scrape_configs[?job_name == 'kube-state']", config
+        )
+        metric_relabel_config_search_result = jmespath.search(
+            "metric_relabel_configs[?target_label == 'release']",
+            scrape_config_search_result[0],
+        )
+        assert metric_relabel_config_search_result[0]["regex"] == "^default-(.*$)"
+        assert metric_relabel_config_search_result[0]["replacement"] == "$1"
+
+    def test_prometheus_config_release_relabel_with_free_from_namespace(
+        self, kube_version
+    ):
+        """Prometheus should not have a regex for release name when free form namespace is enabled."""
+        doc = render_chart(
+            kube_version=kube_version,
+            show_only=self.show_only,
+            values={
+                "astronomer": {
+                    "houston": {
+                        "config": {"deployments": {"namespaceFreeFormEntry": True}},
+                    },
+                },
+            },
+        )[0]
+
+        config = yaml.safe_load(doc["data"]["config"])
+        scrape_config_search_result = jmespath.search(
+            "scrape_configs[?job_name == 'kube-state']", config
+        )
+        metric_relabel_config_search_result = jmespath.search(
+            "metric_relabel_configs[?target_label == 'release']",
+            scrape_config_search_result[0],
+        )
+        assert not metric_relabel_config_search_result[0]["regex"]
+        assert not metric_relabel_config_search_result[0]["replacement"]
