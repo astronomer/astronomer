@@ -270,7 +270,7 @@ data:
             action: labeldrop
           # Required for multi-namespace mode
           - source_labels: [namespace]
-            {{- if (((.Values.houston.config).deployments).namespaceFreeFormEntry) }}
+            {{- if ((((.Values.houston).config).deployments).namespaceFreeFormEntry) }}
             {{- else}}
             regex: "^{{ .Release.Namespace }}-(.*$)"
             replacement: "$1"
