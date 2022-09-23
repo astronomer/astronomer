@@ -1,7 +1,7 @@
-{{- if .Values.global.pspEnabled }}
 ################################
 ## Fluentd PSP ClusterRole
-#################################
+################################
+{{- if .Values.global.pspEnabled }}
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
