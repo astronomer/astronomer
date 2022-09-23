@@ -37,7 +37,7 @@ global:
         # if create is enabled, this helm chart will create the provided k8s namespaces
         create: false
         names: []
-
+  namespaceFreeFormEntry: false
   # Use kube-lego
   acme: false
 

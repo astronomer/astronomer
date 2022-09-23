@@ -198,11 +198,7 @@ class TestPrometheusConfigConfigmap:
             kube_version=kube_version,
             show_only=self.show_only,
             values={
-                "astronomer": {
-                    "houston": {
-                        "config": {"deployments": {"namespaceFreeFormEntry": True}},
-                    },
-                },
+                "global": {"namespaceFreeFormEntry": True},
             },
         )[0]
 
@@ -214,5 +210,5 @@ class TestPrometheusConfigConfigmap:
             "metric_relabel_configs[?target_label == 'release']",
             scrape_config_search_result[0],
         )
-        assert not metric_relabel_config_search_result[0]["regex"]
-        assert not metric_relabel_config_search_result[0]["replacement"]
+        assert "regex" not in metric_relabel_config_search_result[0]
+        assert "replacement" not in metric_relabel_config_search_result[0]

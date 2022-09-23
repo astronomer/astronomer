@@ -30,7 +30,7 @@ data:
         {{- tpl .Values.additionalAlerts.airflow $ | nindent 8 }}
         {{- end }}
         - alert: AirflowDeploymentUnhealthy
-          expr: sum by(release) (kube_pod_container_status_running{container=~".*(scheduler|scheduler-gc|webserver|worker|statsd|pgbouncer|metrics-exporter|redis|flower)"}) - count by(release) (kube_pod_container_status_running{container=~".*(scheduler|scheduler-gc|webserver|worker|statsd|pgbouncer|metrics-exporter|redis|flower)"}) < 0
+          expr: sum by(release) (kube_pod_container_status_running{container=~".*(scheduler|scheduler-gc|webserver|worker|statsd|pgbouncer|metrics-exporter|redis|flower|triggerer)"}) - count by(release) (kube_pod_container_status_running{container=~".*(scheduler|scheduler-gc|webserver|worker|statsd|pgbouncer|metrics-exporter|redis|flower|triggerer)"}) < 0
           for: 15m # Rough number but should be enough to clear deployments with a reasonable amount of workers
           labels:
             tier: airflow
@@ -96,8 +96,8 @@ data:
 
         - alert: ContainerMemoryNearTheLimitInDeployment
           expr: |
-            (container_memory_working_set_bytes{container=~".*(scheduler|scheduler-gc|webserver|worker|statsd|pgbouncer|metrics-exporter|redis|flower)", container_name!~"POD|istio-proxy"} /
-            container_spec_memory_limit_bytes{container=~".*(scheduler|scheduler-gc|webserver|worker|statsd|pgbouncer|metrics-exporter|redis|flower)", container_name!~"POD|istio-proxy"}) * 100 > 95 < +Inf
+            (container_memory_working_set_bytes{container=~".*(scheduler|scheduler-gc|webserver|worker|statsd|pgbouncer|metrics-exporter|redis|flower|triggerer)", container_name!~"POD|istio-proxy"} /
+            container_spec_memory_limit_bytes{container=~".*(scheduler|scheduler-gc|webserver|worker|statsd|pgbouncer|metrics-exporter|redis|flower|triggerer)", container_name!~"POD|istio-proxy"}) * 100 > 95 < +Inf
           for: 1h
           labels:
             tier: airflow
