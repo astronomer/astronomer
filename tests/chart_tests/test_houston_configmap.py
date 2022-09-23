@@ -21,7 +21,6 @@ def common_test_cases(docs):
     prod = yaml.safe_load(doc["data"]["production.yaml"])
 
     assert prod["deployments"]["helm"]["airflow"]["useAstroSecurityManager"] is True
-
     airflow_local_settings = prod["deployments"]["helm"]["airflow"][
         "airflowLocalSettings"
     ]
@@ -47,6 +46,25 @@ def test_houston_configmap():
     with pytest.raises(KeyError):
         # Ensure sccEnabled is not defined by default
         assert prod["deployments"]["helm"]["sccEnabled"] is False
+
+
+def test_houston_configmap_with_namespaceFreeFormEntry():
+    """Validate the houston configmap and its embedded data with regard to namespaceFreeFormEntry."""
+    docs = render_chart(
+        values={"global": {"namespaceFreeFormEntry": True}},
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+
+    doc = docs[0]
+    prod = yaml.safe_load(doc["data"]["production.yaml"])
+    assert prod["deployments"]["namespaceFreeFormEntry"] is True
+    docs = render_chart(
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+
+    doc = docs[0]
+    prod = yaml.safe_load(doc["data"]["production.yaml"])
+    assert prod["deployments"]["namespaceFreeFormEntry"] is False
 
 
 def test_houston_configmap_with_customlogging_enabled():
