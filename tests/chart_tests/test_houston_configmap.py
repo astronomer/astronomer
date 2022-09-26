@@ -48,22 +48,23 @@ def test_houston_configmap():
         assert prod["deployments"]["helm"]["sccEnabled"] is False
 
 
-def test_houston_configmap_with_namespaceFreeFormEntry():
-    """Validate the houston configmap and its embedded data with regard to namespaceFreeFormEntry."""
+def test_houston_configmap_with_namespaceFreeFormEntry_true():
+    """Validate the houston configmap's embedded data with namespaceFreeFormEntry=True."""
+
     docs = render_chart(
         values={"global": {"namespaceFreeFormEntry": True}},
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
-
-    doc = docs[0]
-    prod = yaml.safe_load(doc["data"]["production.yaml"])
+    prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
     assert prod["deployments"]["namespaceFreeFormEntry"] is True
+
+
+def test_houston_configmap_with_namespaceFreeFormEntry_defaults():
+    """Validate the houston configmap's embedded data with namespaceFreeFormEntry defaults."""
     docs = render_chart(
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
-
-    doc = docs[0]
-    prod = yaml.safe_load(doc["data"]["production.yaml"])
+    prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
     assert prod["deployments"]["namespaceFreeFormEntry"] is False
 
 
