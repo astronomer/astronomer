@@ -14,7 +14,7 @@ images:
     pullPolicy: IfNotPresent
   exporter:
     repository: quay.io/astronomer/ap-nats-exporter
-    tag: 0.9.3-2
+    tag: 0.10.0
     pullPolicy: IfNotPresent
 
 
