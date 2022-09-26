@@ -10,7 +10,7 @@ tolerations: []
 images:
   es:
     repository: quay.io/astronomer/ap-elasticsearch
-    tag: 7.17.5
+    tag: 7.17.6
     pullPolicy: IfNotPresent
   init:
     repository: quay.io/astronomer/ap-base
