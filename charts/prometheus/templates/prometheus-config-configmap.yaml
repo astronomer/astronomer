@@ -271,6 +271,7 @@ data:
           # Required for multi-namespace mode
           - source_labels: [namespace]
             {{- if .Values.global.namespaceFreeFormEntry }}
+            # use default regex pattern (.*) when namespaceFreeFormEntry is enabled
             {{- else}}
             regex: "^{{ .Release.Namespace }}-(.*$)"
             replacement: "$1"
