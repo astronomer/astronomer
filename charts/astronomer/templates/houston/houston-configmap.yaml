@@ -57,6 +57,7 @@ data:
 
     # Airflow deployment configuration
     deployments:
+      namespaceFreeFormEntry: {{ .Values.global.namespaceFreeFormEntry }}
       # Airflow chart settings
       # Static helm configurations for this chart are found below.
       chart:
