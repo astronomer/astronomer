@@ -62,7 +62,7 @@ Set DATA_SOURCE_URI environment variable
 Return the proper Docker Image Registry Secret Names
 */}}
 {{- define "prometheus-postgres-exporter.imagePullSecrets" -}}
-{{- if .Values.global.privateRegistry.enabled }}
+{{- if and .Values.global.privateRegistry.enabled .Values.global.privateRegistry.secretName }}
 imagePullSecrets:
   - name: {{ .Values.global.privateRegistry.secretName }}
 {{- end -}}
