@@ -94,6 +94,17 @@ global:
   # Enables namespace labels for network policies
   networkNSLabels: false
 
+  rootAdmin:
+    username: root@example.com
+
+  # Sidecar Logging
+  loggingSidecar:
+    enabled: false
+    name: sidecar-log-consumer
+    image: quay.io/astronomer/ap-vector:0.23.0
+    terminationEndpoint: http://localhost:8000/quitquitquit
+    customConfig: false
+
   # Deploy auth sidecar to use openshift native features
   authSidecar:
     enabled: false
