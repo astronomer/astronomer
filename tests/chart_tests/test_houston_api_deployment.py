@@ -1,5 +1,5 @@
 import pytest
-
+import jmespath
 from tests import get_containers_by_name
 from tests import supported_k8s_versions
 from tests.chart_tests.helm_template_generator import render_chart
@@ -94,3 +94,43 @@ class TestHoustonApiDeployment:
             None,
         )
         assert deployments_database_connection_env is None
+
+    def test_houston_api_deployment_private_registry_with_secret_name_undefined(
+        self, kube_version
+    ):
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=[
+                "charts/astronomer/templates/houston/api/houston-deployment.yaml"
+            ],
+            values={
+                "global": {
+                    "privateRegistry": {
+                        "enabled": True,
+                        # secretName being undefined is the crux of this test
+                    }
+                }
+            },
+        )
+
+        assert not jmespath.search("spec.template.spec.imagePullSecrets", docs[0])
+
+    def test_houston_api_deployment_private_registry_with_secret_name_defined(
+        self, kube_version
+    ):
+        secretName = "shhhhh"
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=[
+                "charts/astronomer/templates/houston/api/houston-deployment.yaml"
+            ],
+            values={
+                "global": {
+                    "privateRegistry": {"enabled": True, "secretName": secretName}
+                }
+            },
+        )
+        assert (
+            jmespath.search("spec.template.spec.imagePullSecrets[0].name", docs[0])
+            == secretName
+        )
