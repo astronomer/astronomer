@@ -353,7 +353,7 @@ Automatically generate a random minute and hour to try and spread cronjobs
 Return the proper Docker Image Registry Secret Names
 */}}
 {{- define "astronomer.imagePullSecrets" -}}
-{{- if .Values.global.privateRegistry.enabled }}
+{{- if and .Values.global.privateRegistry.enabled .Values.global.privateRegistry.secretName }}
 imagePullSecrets:
   - name: {{ .Values.global.privateRegistry.secretName }}
 {{- end -}}

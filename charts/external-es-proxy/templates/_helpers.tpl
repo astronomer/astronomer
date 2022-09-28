@@ -78,7 +78,7 @@ Create the name of the service account to use
 Return the proper Docker Image Registry Secret Names
 */}}
 {{- define "external-es-proxy.imagePullSecrets" -}}
-{{- if .Values.global.privateRegistry.enabled }}
+{{- if and .Values.global.privateRegistry.enabled .Values.global.privateRegistry.secretName }}
 imagePullSecrets:
   - name: {{ .Values.global.privateRegistry.secretName }}
 {{- end -}}
