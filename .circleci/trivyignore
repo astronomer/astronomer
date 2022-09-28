@@ -3,3 +3,5 @@
 CVE-2022-27191
 # more info for CVE-2022-1996 available in https://github.com/kubernetes/ingress-nginx/issues/8745
 CVE-2022-1996
+# golang.org/x/net CVE
+CVE-2022-27664
