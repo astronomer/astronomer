@@ -50,7 +50,7 @@ kibana.{{ .Values.global.baseDomain }}
 Return the proper Docker Image Registry Secret Names
 */}}
 {{- define "kibana.imagePullSecrets" -}}
-{{- if .Values.global.privateRegistry.enabled }}
+{{- if and .Values.global.privateRegistry.enabled .Values.global.privateRegistry.secretName }}
 imagePullSecrets:
   - name: {{ .Values.global.privateRegistry.secretName }}
 {{- end -}}
