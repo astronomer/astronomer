@@ -63,7 +63,8 @@ class TestPrometheusAlertConfigmap:
                     self.process_record(rule)
 
     def test_prometheus_alerts_configmap_with_different_name_and_ns(self, kube_version):
-        """Validate the prometheus alerts configmap does not conflate helm deployment name and namespace."""
+        """Validate the prometheus alerts configmap does not conflate helm
+        deployment name and namespace."""
         docs = render_chart(
             name="foo-name",
             namespace="bar-ns",
@@ -78,7 +79,8 @@ class TestPrometheusAlertConfigmap:
         assert not re.search(r'namespace="foo-name"', config_yaml)
 
     def test_prometheus_alerts_configmap_with_addition_alerts(self, kube_version):
-        """Validate the prometheus alerts configmap renders additional alerts."""
+        """Validate the prometheus alerts configmap renders additional
+        alerts."""
 
         additional_alerts = {
             "airflow": '- alert: ExampleAirflowAlert\n  expr: 100 * sum(increase(airflow_ti_failures[30m])) / (sum(increase(airflow_ti_failures[30m])) + sum(increase(airflow_ti_successes[30m]))) > 10\n  for: 15m\n  labels:\n    tier: airflow\n  annotations:\n    summary: The Astronomer Helm release {{ .Release.Name }} is failing task instances {{ printf "%q" "{{ printf \\"%.2f\\" $value }}%" }} of the time over the past 30 minutes\n    description: Task instances failing above threshold\n',

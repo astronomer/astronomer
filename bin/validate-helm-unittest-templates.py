@@ -12,7 +12,8 @@ git_root = this_script.resolve().parent.parent
 
 
 def validate_test_file(file: PosixPath) -> None:
-    """Validate that each template file referenced in the given helm unittest file exists on disk."""
+    """Validate that each template file referenced in the given helm unittest
+    file exists on disk."""
     with open(file) as f:
         try:
             for test_suite in yaml.safe_load_all(f):
@@ -43,7 +44,8 @@ def validate_template_file(file: PosixPath) -> None:
 
 
 def validate_all_unittest_files() -> None:
-    """Find all helm unittest files in the repo and validate all template files found within them."""
+    """Find all helm unittest files in the repo and validate all template files
+    found within them."""
     for test_file in git_root.glob("charts/*/tests/*_test.yaml"):
         validate_test_file(test_file)
 

@@ -41,7 +41,8 @@ class TestAllPodSpecContainers:
         ids=[f"{x['kind']}/{x['metadata']['name']}" for x in pod_manager_docs],
     )
     def test_default_chart_with_basedomain(self, doc):
-        """Test that each container in each pod spec renders and has some required fields."""
+        """Test that each container in each pod spec renders and has some
+        required fields."""
         c_by_name = get_containers_by_name(doc, include_init_containers=True)
         for name, container in c_by_name.items():
             assert container["image"], f"container {name} does not have an image: {doc}"
@@ -76,7 +77,8 @@ class TestAllPodSpecContainers:
     def test_all_default_charts_with_private_registry(self, doc):
         """Test that each chart uses the privateRegistry.
 
-        This only finds default images, not the many which are hidden behind feature flags.
+        This only finds default images, not the many which are hidden
+        behind feature flags.
         """
         c_by_name = get_containers_by_name(doc)
 
@@ -87,7 +89,8 @@ class TestAllPodSpecContainers:
 
 
 class TestDuplicateEnvironment:
-    """Parametrize all the docs that have container specs and test them for duplicate env vars."""
+    """Parametrize all the docs that have container specs and test them for
+    duplicate env vars."""
 
     values = {
         "global": {
@@ -118,7 +121,7 @@ class TestDuplicateEnvironment:
         ids=[f"{x['kind']}/{x['metadata']['name']}" for x in trimmed_docs],
     )
     def test_env_vars_have_no_duplicates(self, doc):
-        """Test that there are no duplicate env vars"""
+        """Test that there are no duplicate env vars."""
         if doc["kind"] in pod_managers:
             for container in doc["spec"]["template"]["spec"].get("containers") or []:
                 assert (

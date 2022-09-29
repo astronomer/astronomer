@@ -10,8 +10,8 @@ from tests.chart_tests.helm_template_generator import render_chart
 )
 @pytest.mark.skip(reason="No longer needed, images were patched.")
 def test_log4shell(kube_version):
-    """
-    Ensure remediation settings are in place for log4j log4shell CVE-2021-44228
+    """Ensure remediation settings are in place for log4j log4shell
+    CVE-2021-44228.
 
     https://github.com/astronomer/issues/issues/3880
     """
