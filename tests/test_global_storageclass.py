@@ -19,7 +19,7 @@ supported_types = [("-", ""), ("astrosc", "astrosc")]
     ids=[x[0] for x in supported_types],
 )
 def test_global_storageclass(supported_types, expected_output):
-    """Test globalstorageclass feature of alertmanager statefulset template"""
+    """Test globalstorageclass feature of alertmanager statefulset template."""
     docs = render_chart(
         values={"global": {"storageClass": supported_types}},
         show_only=chart_files,

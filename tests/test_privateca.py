@@ -12,7 +12,7 @@ from subprocess import CalledProcessError
 class TestDaemonset:
     @staticmethod
     def common_tests_daemonset(doc):
-        """Test things common to all daemonsets"""
+        """Test things common to all daemonsets."""
         assert "DaemonSet" == jmespath.search("kind", doc)
         assert "release-name-private-ca" == jmespath.search("metadata.name", doc)
         assert "cert-copy" == jmespath.search(

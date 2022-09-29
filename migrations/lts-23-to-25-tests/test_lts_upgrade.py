@@ -14,9 +14,7 @@ git_root_dir = Path(git_repo.git.rev_parse("--show-toplevel"))
 
 
 def test_upgrade():
-    """
-    Functional test for the LTS to LTS upgrade (0.23 to 0.25)
-    """
+    """Functional test for the LTS to LTS upgrade (0.23 to 0.25)"""
     print("Checking current chart version")
 
     with open(Path(git_root_dir / "Chart.yaml")) as f:

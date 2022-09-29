@@ -9,7 +9,8 @@ from . import supported_k8s_versions
 )
 class TestKubedClusterrolebinding:
     def test_kubed_clusterrolebinding_defaults(self, kube_version):
-        """Test that helm renders a good ClusterRoleBinding template for kubed with defaults."""
+        """Test that helm renders a good ClusterRoleBinding template for kubed
+        with defaults."""
         docs = render_chart(
             kube_version=kube_version,
             values={"global": {"rbacEnabled": True}},
@@ -34,7 +35,8 @@ class TestKubedClusterrolebinding:
         ]
 
     def test_kubed_clusterrolebinding_rbac_enabled(self, kube_version):
-        """Test that helm renders a good ClusterRoleBinding template for kubed when rbacEnabled=True."""
+        """Test that helm renders a good ClusterRoleBinding template for kubed
+        when rbacEnabled=True."""
         docs = render_chart(
             kube_version=kube_version,
             values={"global": {"rbacEnabled": True}},

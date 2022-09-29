@@ -4,10 +4,10 @@ from kubernetes import client, config
 
 
 def create_kube_client(in_cluster=False):
-    """
-    Load and store authentication and cluster information from kube-config
-    file; if running inside a pod, use Kubernetes service account. Use that to
-    instantiate Kubernetes client.
+    """Load and store authentication and cluster information from kube-config
+    file; if running inside a pod, use Kubernetes service account.
+
+    Use that to instantiate Kubernetes client.
     """
     if in_cluster:
         print("Using in cluster kubernetes configuration")
@@ -20,9 +20,8 @@ def create_kube_client(in_cluster=False):
 
 @pytest.fixture(scope="session")
 def docker_client(request):
-    """This is a text fixture for the docker client,
-    should it be needed in a test
-    """
+    """This is a text fixture for the docker client, should it be needed in a
+    test."""
     client = docker.from_env()
     yield client
     client.close()

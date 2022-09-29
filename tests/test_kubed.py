@@ -32,7 +32,8 @@ class TestKubed:
         assert len(docs) == 11
 
     def test_kubed_disabled(self, kube_version):
-        """Test that helm renders does not render any k8s manifests when kubed is disabled."""
+        """Test that helm renders does not render any k8s manifests when kubed
+        is disabled."""
         with pytest.raises(CalledProcessError):
             render_chart(
                 kube_version=kube_version,

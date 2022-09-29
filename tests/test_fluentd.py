@@ -9,7 +9,8 @@ import jmespath
     supported_k8s_versions,
 )
 def test_fluentd_daemonset(kube_version):
-    """Test that helm renders a volume mount for private ca certificates for fluentd daemonset when private-ca-certificates are enabled."""
+    """Test that helm renders a volume mount for private ca certificates for
+    fluentd daemonset when private-ca-certificates are enabled."""
     docs = render_chart(
         kube_version=kube_version,
         values={"global": {"privateCaCerts": ["private-root-ca"]}},
@@ -37,7 +38,8 @@ def test_fluentd_daemonset(kube_version):
     supported_k8s_versions,
 )
 def test_fluentd_clusterrolebinding(kube_version):
-    """Test that helm renders a good ClusterRoleBinding template for fluentd when rbacEnabled=True."""
+    """Test that helm renders a good ClusterRoleBinding template for fluentd
+    when rbacEnabled=True."""
     docs = render_chart(
         kube_version=kube_version,
         values={"global": {"rbacEnabled": True}},
