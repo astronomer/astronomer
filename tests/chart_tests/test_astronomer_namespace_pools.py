@@ -10,7 +10,8 @@ from tests import supported_k8s_versions, get_containers_by_name
 )
 class TestAstronomerNamespacePools:
     def test_astronomer_namespace_pools_rbac(self, kube_version):
-        """Test that helm renders astronomer/commander RBAC resources properly when working with namespace pools"""
+        """Test that helm renders astronomer/commander RBAC resources properly
+        when working with namespace pools."""
 
         # rbacEnabled and clusterRoles and namespacePools set to true, should create Roles and Rolebindings for namespace in Pool
         # and ignore the cluster role configuration
@@ -67,7 +68,8 @@ class TestAstronomerNamespacePools:
             assert role_binding["subjects"][0] == expected_subject
 
     def test_astronomer_namespace_pools_namespaces(self, kube_version):
-        """Test that Namespaces resources are rendered properly when using namespacePools feature"""
+        """Test that Namespaces resources are rendered properly when using
+        namespacePools feature."""
         # If namespace Pools creation enabled -> create the namespaces
         namespaces = ["my-namespace-1", "my-namespace-2"]
         docs = render_chart(
@@ -128,7 +130,8 @@ class TestAstronomerNamespacePools:
     def test_astronomer_namespace_pools_commander_deployment_configuration(
         self, kube_version
     ):
-        """Test that commander deployment is configured properly when enabling namespace pools"""
+        """Test that commander deployment is configured properly when enabling
+        namespace pools."""
 
         namespaces = ["my-namespace-1", "my-namespace-2"]
         doc = render_chart(
@@ -195,7 +198,8 @@ class TestAstronomerNamespacePools:
         assert not manual_ns_env_found
 
     def test_astronomer_namespace_pools_houston_configmap(self, kube_version):
-        """Test that Houston production.yaml configuration parameters are configured properly when using namespacePools feature"""
+        """Test that Houston production.yaml configuration parameters are
+        configured properly when using namespacePools feature."""
         namespaces = ["my-namespace-1", "my-namespace-2"]
         doc = render_chart(
             kube_version=kube_version,
@@ -243,7 +247,9 @@ class TestAstronomerNamespacePools:
         assert "preCreatedNamespaces" not in deployments_config["deployments"]
 
     def test_astronomer_namespace_pools_fluentd_configmap(self, kube_version):
-        """Test that when namespace Pools is enabled, and a list of namespaces is provided, helm render fluentd configmap correctly, with a regex targeting pods in the provided namespaces only."""
+        """Test that when namespace Pools is enabled, and a list of namespaces
+        is provided, helm render fluentd configmap correctly, with a regex
+        targeting pods in the provided namespaces only."""
         namespaces = ["my-namespace-1", "my-namespace-2"]
         doc = render_chart(
             kube_version=kube_version,

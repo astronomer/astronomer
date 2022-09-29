@@ -27,7 +27,7 @@ class TestProbes:
         "container", chart_containers.values(), ids=chart_containers.keys()
     )
     def test_container_readiness_probes(self, container):
-        """Ensure all containers have liveness and readiness probes"""
+        """Ensure all containers have liveness and readiness probes."""
 
         if container["key"] in ignore_list:
             pytest.skip("Info: Unsupported resource: " + container["key"])
@@ -38,7 +38,7 @@ class TestProbes:
         "container", chart_containers.values(), ids=chart_containers.keys()
     )
     def test_container_liveness_probes(self, container):
-        """Ensure all containers have liveness and readiness probes"""
+        """Ensure all containers have liveness and readiness probes."""
 
         if container["key"] in ignore_list:
             pytest.skip("Info: Unsupported resource: " + container["key"])

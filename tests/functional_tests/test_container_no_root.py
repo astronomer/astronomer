@@ -20,7 +20,6 @@ container_list = get_pod_running_containers()
     ids=container_list.keys(),
 )
 def test_container_non_root(request, container):
-
     if container["_name"] in container_ignore_list:
         pytest.skip("Info: Unsupported container: " + container["_name"])
 

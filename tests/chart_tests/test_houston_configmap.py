@@ -49,7 +49,8 @@ def test_houston_configmap():
 
 
 def test_houston_configmap_with_namespaceFreeFormEntry_true():
-    """Validate the houston configmap's embedded data with namespaceFreeFormEntry=True."""
+    """Validate the houston configmap's embedded data with
+    namespaceFreeFormEntry=True."""
 
     docs = render_chart(
         values={"global": {"namespaceFreeFormEntry": True}},
@@ -60,7 +61,8 @@ def test_houston_configmap_with_namespaceFreeFormEntry_true():
 
 
 def test_houston_configmap_with_namespaceFreeFormEntry_defaults():
-    """Validate the houston configmap's embedded data with namespaceFreeFormEntry defaults."""
+    """Validate the houston configmap's embedded data with
+    namespaceFreeFormEntry defaults."""
     docs = render_chart(
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
@@ -69,7 +71,8 @@ def test_houston_configmap_with_namespaceFreeFormEntry_defaults():
 
 
 def test_houston_configmap_with_customlogging_enabled():
-    """Validate the houston configmap and its embedded data with customLogging."""
+    """Validate the houston configmap and its embedded data with
+    customLogging."""
     docs = render_chart(
         values={"global": {"customLogging": {"enabled": True}}},
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
@@ -98,7 +101,8 @@ def test_houston_configmapwith_scc_enabled():
 
 
 def test_houston_configmap_with_azure_enabled():
-    """Validate the houston configmap and its embedded data with azure enabled."""
+    """Validate the houston configmap and its embedded data with azure
+    enabled."""
     docs = render_chart(
         values={"global": {"azure": {"enabled": True}}},
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
@@ -117,7 +121,8 @@ def test_houston_configmap_with_azure_enabled():
 
 
 def test_houston_configmap_with_config_syncer_enabled():
-    """Validate the houston configmap and its embedded data with configSyncer enabled."""
+    """Validate the houston configmap and its embedded data with configSyncer
+    enabled."""
     docs = render_chart(
         values={"astronomer": {"configSyncer": {"enabled": True}}},
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
@@ -142,7 +147,8 @@ def test_houston_configmap_with_config_syncer_enabled():
 
 
 def test_houston_configmap_with_config_syncer_disabled():
-    """Validate the houston configmap and its embedded data with configSyncer disabled."""
+    """Validate the houston configmap and its embedded data with configSyncer
+    disabled."""
     docs = render_chart(
         values={"astronomer": {"configSyncer": {"enabled": False}}},
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
@@ -162,7 +168,8 @@ def test_houston_configmap_with_config_syncer_disabled():
 
 
 def test_houston_configmap_with_loggingsidecar_enabled():
-    """Validate the houston configmap and its embedded data with loggingSidecar."""
+    """Validate the houston configmap and its embedded data with
+    loggingSidecar."""
     terminationEndpoint = "http://localhost:8000/quitquitquit"
     docs = render_chart(
         values={
@@ -198,7 +205,8 @@ def test_houston_configmap_with_loggingsidecar_enabled():
 
 
 def test_houston_configmap_with_loggingsidecar_enabled_with_overrides():
-    """Validate the houston configmap and its embedded data with loggingSidecar."""
+    """Validate the houston configmap and its embedded data with
+    loggingSidecar."""
     sidecar_container_name = "sidecar-log-test"
     terminationEndpoint = "http://localhost:8000/quitquitquit"
     image_name = "quay.io/astronomer/ap-vector:0.22.3"
@@ -239,7 +247,8 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_overrides():
 
 
 def test_houston_configmap_with_loggingsidecar_customConfig_enabled():
-    """Validate the houston configmap and its embedded data with loggingSidecar customConfig Enabled."""
+    """Validate the houston configmap and its embedded data with loggingSidecar
+    customConfig Enabled."""
     sidecar_container_name = "sidecar-log-test"
     terminationEndpoint = "http://localhost:8000/quitquitquit"
     image_name = "quay.io/astronomer/ap-vector:0.22.3"
@@ -317,7 +326,8 @@ cron_test_data = [
     "test_data", cron_test_data, ids=[x[0] for x in cron_test_data]
 )
 def test_cron_splay(test_data):
-    """Test that our adler32sum method of generating deterministic random numbers works."""
+    """Test that our adler32sum method of generating deterministic random
+    numbers works."""
     doc = render_chart(
         name=test_data[0],
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
@@ -335,7 +345,8 @@ def test_cron_splay(test_data):
 
 
 def test_houston_configmapwith_update_airflow_runtime_checks_enabled():
-    """Validate the houston configmap and its embedded data with updateAirflowCheck and updateRuntimeCheck."""
+    """Validate the houston configmap and its embedded data with
+    updateAirflowCheck and updateRuntimeCheck."""
     docs = render_chart(
         values={
             "astronomer": {
@@ -357,7 +368,8 @@ def test_houston_configmapwith_update_airflow_runtime_checks_enabled():
 
 
 def test_houston_configmapwith_update_airflow_runtime_checks_disabled():
-    """Validate the houston configmap and its embedded data with updateAirflowCheck and updateRuntimeCheck."""
+    """Validate the houston configmap and its embedded data with
+    updateAirflowCheck and updateRuntimeCheck."""
     docs = render_chart(
         values={
             "astronomer": {

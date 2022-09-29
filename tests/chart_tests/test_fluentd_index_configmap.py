@@ -8,7 +8,8 @@ from tests import supported_k8s_versions
     supported_k8s_versions,
 )
 def test_registry_configmap(kube_version):
-    """Test that helm renders an expected registry-configmap to validate regionendpoint flag"""
+    """Test that helm renders an expected registry-configmap to validate
+    regionendpoint flag."""
     docs = render_chart(
         kube_version=kube_version,
         show_only=["charts/fluentd/templates/fluentd-index-template-configmap.yaml"],
