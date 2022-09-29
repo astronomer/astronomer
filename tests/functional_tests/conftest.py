@@ -20,7 +20,9 @@ if not (release_name := getenv("RELEASE_NAME")):
 
 @pytest.fixture(scope="function")
 def nginx(request, kube_client):
-    """This is the host fixture for testinfra. To read more, please see
+    """This is the host fixture for testinfra.
+
+    To read more, please see
     the testinfra documentation:
     https://testinfra.readthedocs.io/en/latest/examples.html#test-docker-images
     """
@@ -31,7 +33,9 @@ def nginx(request, kube_client):
 
 @pytest.fixture(scope="function")
 def houston_api(request, kube_client):
-    """This is the host fixture for testinfra. To read more, please see
+    """This is the host fixture for testinfra.
+
+    To read more, please see
     the testinfra documentation:
     https://testinfra.readthedocs.io/en/latest/examples.html#test-docker-images
     """
@@ -42,7 +46,9 @@ def houston_api(request, kube_client):
 
 @pytest.fixture(scope="function")
 def prometheus(request):
-    """This is the host fixture for testinfra. To read more, please see
+    """This is the host fixture for testinfra.
+
+    To read more, please see
     the testinfra documentation:
     https://testinfra.readthedocs.io/en/latest/examples.html#test-docker-images
     """
@@ -77,9 +83,8 @@ def es_client(request, kube_client):
 
 @pytest.fixture(scope="session")
 def docker_client(request):
-    """This is a text fixture for the docker client,
-    should it be needed in a test
-    """
+    """This is a text fixture for the docker client, should it be needed in a
+    test."""
     docker_client = docker.from_env()
     yield docker_client
     docker_client.close()
@@ -87,8 +92,10 @@ def docker_client(request):
 
 @pytest.fixture(scope="session")
 def kube_client(request, in_cluster=False):
-    """
-    Return a kubernetes client. By default, use kube-config. If running in a pod, use k8s service account.
+    """Return a kubernetes client.
+
+    By default, use kube-config. If running in a pod, use k8s service
+    account.
     """
 
     k8s_client = get_kube_client(in_cluster)

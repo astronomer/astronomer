@@ -41,7 +41,8 @@ cron_test_data = [
 )
 class TestAstronomerConfigSyncer:
     def test_astronomer_config_syncer_rbac_namespace_pools_disabled(self, kube_version):
-        """Test that if rbacEnabled but namespacePools disabled, helm renders ClusterRole and ClusterRoleBinding resources for config syncer"""
+        """Test that if rbacEnabled but namespacePools disabled, helm renders
+        ClusterRole and ClusterRoleBinding resources for config syncer."""
 
         # First rbacEnabled set to true and namespacePools disabled, should create a ClusterRole and ClusterRoleBinding
         docs = render_chart(
@@ -84,7 +85,8 @@ class TestAstronomerConfigSyncer:
         assert cluster_role_binding["subjects"] == expected_subjects
 
     def test_astronomer_config_syncer_namespace_pools_rbac(self, kube_version):
-        """Test that when namespacePools is enabled, helm renders a Role and a RoleBinding for each namespace in the pool + release namespace."""
+        """Test that when namespacePools is enabled, helm renders a Role and a
+        RoleBinding for each namespace in the pool + release namespace."""
 
         # rbacEnabled and clusterRoles and namespacePools set to true, should create Roles and Rolebindings for namespace in Pool
         # and ignore the cluster role configuration
@@ -140,7 +142,8 @@ class TestAstronomerConfigSyncer:
             assert role_binding["subjects"][0] == expected_subject
 
     def test_astronomer_config_syncer_rbac_all_disabled(self, kube_version):
-        """Test that if rbacEnabled and namespacePools are disabled, we do not create any RBAC resources"""
+        """Test that if rbacEnabled and namespacePools are disabled, we do not
+        create any RBAC resources."""
         docs = render_chart(
             kube_version=kube_version,
             values={
@@ -161,7 +164,8 @@ class TestAstronomerConfigSyncer:
     def test_astronomer_config_syncer_cronjob_namespace_pool_enabled(
         self, kube_version
     ):
-        """Test that when namespace pool is enabled, config-syncer's container is configured to use namespaces from the pool"""
+        """Test that when namespace pool is enabled, config-syncer's container
+        is configured to use namespaces from the pool."""
         namespaces = ["my-namespace-1", "my-namespace-2"]
         doc = render_chart(
             kube_version=kube_version,
@@ -191,7 +195,8 @@ class TestAstronomerConfigSyncer:
     def test_astronomer_config_syncer_cronjob_namespace_pool_disabled(
         self, kube_version
     ):
-        """Test that when namespacePools is disabled, config-syncer cronjob is configured not to target any namespace."""
+        """Test that when namespacePools is disabled, config-syncer cronjob is
+        configured not to target any namespace."""
         namespaces = ["my-namespace-1", "my-namespace-2"]
         doc = render_chart(
             kube_version=kube_version,
@@ -223,7 +228,8 @@ class TestAstronomerConfigSyncer:
     def test_astronomer_config_syncer_cronjob_default_schedule(
         self, test_data, kube_version
     ):
-        """Test that if no schedule is provided for configSyncer, helm automatically generates a random one"""
+        """Test that if no schedule is provided for configSyncer, helm
+        automatically generates a random one."""
 
         doc = render_chart(
             name=test_data[0],

@@ -26,7 +26,8 @@ def test_deployment_should_render(kube_version):
     supported_k8s_versions,
 )
 def test_deployment_should_render_extra_env(kube_version):
-    """Test that helm renders extra environment variables to the grafana-deployment resource when provided."""
+    """Test that helm renders extra environment variables to the grafana-
+    deployment resource when provided."""
     docs = render_chart(
         kube_version=kube_version,
         values={"global": {"ssl": {"enabled": True}}},

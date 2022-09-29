@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-"""
-This file is for system testing the Astronomer Helm chart.
+"""This file is for system testing the Astronomer Helm chart.
 
-Many of these tests use pytest fixtures that use testinfra to exec
-into running pods so we can inspect the run-time environment.
+Many of these tests use pytest fixtures that use testinfra to exec into
+running pods so we can inspect the run-time environment.
 """
 
 import json
@@ -27,7 +26,7 @@ def test_default_disabled(kube_client):
 
 
 def test_prometheus_user(prometheus):
-    """Ensure user is 'nobody'"""
+    """Ensure user is 'nobody'."""
     user = prometheus.check_output("whoami")
     assert (
         user == "nobody"
@@ -35,7 +34,7 @@ def test_prometheus_user(prometheus):
 
 
 def test_houston_config(houston_api):
-    """Make assertions about Houston's configuration"""
+    """Make assertions about Houston's configuration."""
     data = houston_api.check_output(
         "echo \"config = require('config'); console.log(JSON.stringify(config))\" | node -"
     )
@@ -66,7 +65,7 @@ def test_nginx_can_reach_default_backend(nginx):
 
 @pytest.mark.flaky(reruns=20, reruns_delay=10)
 def test_prometheus_targets(prometheus):
-    """Ensure all Prometheus targets are healthy"""
+    """Ensure all Prometheus targets are healthy."""
     data = prometheus.check_output(
         "wget --timeout=5 -qO- http://localhost:9090/api/v1/targets"
     )
@@ -114,7 +113,7 @@ def test_core_dns_metrics_are_collected(prometheus):
 
 
 def test_houston_metrics_are_collected(prometheus):
-    """Ensure Houston metrics are collected and prefixed with 'houston_'"""
+    """Ensure Houston metrics are collected and prefixed with 'houston_'."""
     data = prometheus.check_output(
         "wget --timeout=5 -qO- http://localhost:9090/api/v1/query?query=houston_up"
     )
@@ -125,10 +124,8 @@ def test_houston_metrics_are_collected(prometheus):
 
 
 def test_prometheus_config_reloader_works(prometheus, kube_client):
-    """
-    Ensure that Prometheus reloads its config when the cofigMap is updated
-    and the reloader sidecar triggers the reload
-    """
+    """Ensure that Prometheus reloads its config when the cofigMap is updated
+    and the reloader sidecar triggers the reload."""
     # define new value we'll use for the config change
     new_scrape_interval = "31s"
 
@@ -190,11 +187,12 @@ def test_prometheus_config_reloader_works(prometheus, kube_client):
 def test_houston_backend_secret_present_after_helm_upgrade_and_container_restart(
     houston_api, kube_client
 ):
-    """
-    Test when helm upgrade occurs without Houston pods restarting that a
-    Houston container restart will not miss the Houston connection backend secret
+    """Test when helm upgrade occurs without Houston pods restarting that a
+    Houston container restart will not miss the Houston connection backend
+    secret.
 
-    Regression test for: https://github.com/astronomer/issues/issues/2251
+    Regression test for:
+    https://github.com/astronomer/issues/issues/2251
     """
     if not (helm_chart_path := getenv("HELM_CHART_PATH")):
         raise Exception(
@@ -244,21 +242,24 @@ def test_houston_backend_secret_present_after_helm_upgrade_and_container_restart
 
 
 def test_cve_2021_44228_es_client(es_client):
-    """Ensure the running es process has -Dlog4j2.formatMsgNoLookups=true configured."""
+    """Ensure the running es process has -Dlog4j2.formatMsgNoLookups=true
+    configured."""
     assert "-Dlog4j2.formatMsgNoLookups=true" in es_client.check_output(
         "/usr/share/elasticsearch/jdk/bin/jps -lv"
     )
 
 
 def test_cve_2021_44228_es_data(es_data):
-    """Ensure the running es process has -Dlog4j2.formatMsgNoLookups=true configured."""
+    """Ensure the running es process has -Dlog4j2.formatMsgNoLookups=true
+    configured."""
     assert "-Dlog4j2.formatMsgNoLookups=true" in es_data.check_output(
         "/usr/share/elasticsearch/jdk/bin/jps -lv"
     )
 
 
 def test_cve_2021_44228_es_master(es_master):
-    """Ensure the running es process has -Dlog4j2.formatMsgNoLookups=true configured."""
+    """Ensure the running es process has -Dlog4j2.formatMsgNoLookups=true
+    configured."""
     assert "-Dlog4j2.formatMsgNoLookups=true" in es_master.check_output(
         "/usr/share/elasticsearch/jdk/bin/jps -lv"
     )

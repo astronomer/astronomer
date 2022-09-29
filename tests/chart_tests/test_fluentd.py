@@ -9,7 +9,8 @@ import jmespath
     supported_k8s_versions,
 )
 def test_fluentd_daemonset(kube_version):
-    """Test that helm renders a volume mount for private ca certificates for fluentd daemonset when private-ca-certificates are enabled."""
+    """Test that helm renders a volume mount for private ca certificates for
+    fluentd daemonset when private-ca-certificates are enabled."""
     docs = render_chart(
         kube_version=kube_version,
         values={"global": {"privateCaCerts": ["private-root-ca"]}},
@@ -37,7 +38,8 @@ def test_fluentd_daemonset(kube_version):
     supported_k8s_versions,
 )
 def test_fluentd_clusterrolebinding(kube_version):
-    """Test that helm renders a good ClusterRoleBinding template for fluentd when rbacEnabled=True."""
+    """Test that helm renders a good ClusterRoleBinding template for fluentd
+    when rbacEnabled=True."""
     docs = render_chart(
         kube_version=kube_version,
         values={"global": {"rbacEnabled": True}},
@@ -66,7 +68,8 @@ def test_fluentd_clusterrolebinding(kube_version):
     supported_k8s_versions,
 )
 def test_fluentd_configmap_manual_namespaces_enabled(kube_version):
-    """Test that when namespace Pools is disabled, and manualNamespaces is enabled, helm renders fluentd configmap targeting all namespaces."""
+    """Test that when namespace Pools is disabled, and manualNamespaces is
+    enabled, helm renders fluentd configmap targeting all namespaces."""
     doc = render_chart(
         kube_version=kube_version,
         values={
@@ -91,7 +94,9 @@ def test_fluentd_configmap_manual_namespaces_enabled(kube_version):
     supported_k8s_versions,
 )
 def test_fluentd_configmap_manual_namespaces_and_namespacepools_disabled(kube_version):
-    """Test that when namespace Pools and manualNamespaceNamesEnabled are disabled, helm renders a default fluentd configmap looking at an environment variable"""
+    """Test that when namespace Pools and manualNamespaceNamesEnabled are
+    disabled, helm renders a default fluentd configmap looking at an
+    environment variable."""
     doc = render_chart(
         kube_version=kube_version,
         values={
@@ -118,7 +123,9 @@ def test_fluentd_configmap_manual_namespaces_and_namespacepools_disabled(kube_ve
     supported_k8s_versions,
 )
 def test_fluentd_configmap_configure_extra_log_stores(kube_version):
-    """Test that when namespace Pools and manualNamespaceNamesEnabled are disabled, helm renders a default fluentd configmap looking at an environment variable"""
+    """Test that when namespace Pools and manualNamespaceNamesEnabled are
+    disabled, helm renders a default fluentd configmap looking at an
+    environment variable."""
     doc = render_chart(
         kube_version=kube_version,
         values={
@@ -148,7 +155,8 @@ def test_fluentd_configmap_configure_extra_log_stores(kube_version):
     supported_k8s_versions,
 )
 def test_fluentd_pod_securityContextOverride(kube_version):
-    """Test that helm renders a container securityContext when securityContext is enabled."""
+    """Test that helm renders a container securityContext when securityContext
+    is enabled."""
 
     docs = render_chart(
         kube_version=kube_version,
@@ -169,7 +177,8 @@ def test_fluentd_pod_securityContextOverride(kube_version):
     supported_k8s_versions,
 )
 def test_fluentd_container_securityContextOverride(kube_version):
-    """Test that helm renders a container securityContext when securityContext is enabled."""
+    """Test that helm renders a container securityContext when securityContext
+    is enabled."""
 
     docs = render_chart(
         kube_version=kube_version,
@@ -199,7 +208,8 @@ def test_fluentd_container_securityContextOverride(kube_version):
     supported_k8s_versions,
 )
 def test_fluentd_securityContext_empty_by_default(kube_version):
-    """Test that no securityContext is present by default on pod or container"""
+    """Test that no securityContext is present by default on pod or
+    container."""
 
     docs = render_chart(
         kube_version=kube_version,
