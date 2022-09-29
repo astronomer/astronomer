@@ -14,7 +14,8 @@ secret = base64.b64encode(b"sample-secret").decode()
 )
 class TestExternalElasticSearch:
     def test_externalelasticsearch_with_secret(self, kube_version):
-        """Test External ElasticSearch with secret passed from config/values.yaml."""
+        """Test External ElasticSearch with secret passed from
+        config/values.yaml."""
         docs = render_chart(
             kube_version=kube_version,
             values={"global": {"customLogging": {"enabled": True, "secret": secret}}},
@@ -49,7 +50,8 @@ class TestExternalElasticSearch:
         )
 
     def test_externalelasticsearch_with_secretname(self, kube_version):
-        """Test External ElasticSearch with secret passed as kubernetes secrets."""
+        """Test External ElasticSearch with secret passed as kubernetes
+        secrets."""
         docs = render_chart(
             kube_version=kube_version,
             values={
@@ -96,7 +98,8 @@ class TestExternalElasticSearch:
         )
 
     def test_externalelasticsearch_with_awsSecretName(self, kube_version):
-        """Test External ElasticSearch with aws secret passed as kubernetes secret."""
+        """Test External ElasticSearch with aws secret passed as kubernetes
+        secret."""
         docs = render_chart(
             kube_version=kube_version,
             values={
@@ -152,7 +155,8 @@ class TestExternalElasticSearch:
         )
 
     def test_externalelasticsearch_with_awsIAMRole(self, kube_version):
-        """Test External ElasticSearch with iam roles passed as Deployment annotation."""
+        """Test External ElasticSearch with iam roles passed as Deployment
+        annotation."""
         docs = render_chart(
             kube_version=kube_version,
             values={
@@ -196,7 +200,8 @@ class TestExternalElasticSearch:
         )
 
     def test_externalelasticsearch_with_awsServiceAccountAnnotation(self, kube_version):
-        """Test External ElasticSearch with eks iam roles passed as Service Account Annotation."""
+        """Test External ElasticSearch with eks iam roles passed as Service
+        Account Annotation."""
         docs = render_chart(
             kube_version=kube_version,
             values={

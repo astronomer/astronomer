@@ -3,8 +3,8 @@ import jmespath
 
 
 def test_private_registry_repository_image_names_the_same_as_public_ones():
-    """test that image names dont change when using a custom repo because that breaks
-    pull-through caching proxies in use by various customers."""
+    """test that image names dont change when using a custom repo because that
+    breaks pull-through caching proxies in use by various customers."""
 
     extra_globals = {
         "blackboxExporterEnabled": True,
@@ -50,7 +50,8 @@ def test_private_registry_repository_image_names_the_same_as_public_ones():
 
 
 def test_private_registry_repository_overrides_work():
-    """image names should always contain the new repository when it is specified."""
+    """image names should always contain the new repository when it is
+    specified."""
     repository = "bob-the-registry"
     docs = render_chart(
         values={

@@ -27,7 +27,8 @@ class TestPrometheusConfigConfigmap:
         assert doc["metadata"]["name"] == "release-name-prometheus-config"
 
     def test_prometheus_config_configmap_with_different_name_and_ns(self, kube_version):
-        """Validate the prometheus config configmap does not conflate deployment name and namespace."""
+        """Validate the prometheus config configmap does not conflate
+        deployment name and namespace."""
         doc = render_chart(
             name="foo-name",
             namespace="bar-ns",
@@ -68,7 +69,8 @@ class TestPrometheusConfigConfigmap:
         assert all(x in targets for x in target_checks)
 
     def test_prometheus_config_configmap_external_labels(self, kube_version):
-        """Prometheus should have an external_labels section in config.yaml when external_labels is specified in helm values."""
+        """Prometheus should have an external_labels section in config.yaml
+        when external_labels is specified in helm values."""
         doc = render_chart(
             kube_version=kube_version,
             show_only=self.show_only,
@@ -87,7 +89,8 @@ class TestPrometheusConfigConfigmap:
         }
 
     def test_promethesu_config_configmap_remote_write(self, kube_version):
-        """Prometheus should have a remote_write section in config.yaml when remote_write is specified in helm values."""
+        """Prometheus should have a remote_write section in config.yaml when
+        remote_write is specified in helm values."""
         doc = render_chart(
             kube_version=kube_version,
             show_only=self.show_only,

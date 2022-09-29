@@ -9,7 +9,8 @@ import jmespath
     supported_k8s_versions,
 )
 def test_astronomer_commander_deployment(kube_version):
-    """Test that helm renders a good deployment template for astronomer/commander."""
+    """Test that helm renders a good deployment template for
+    astronomer/commander."""
     docs = render_chart(
         kube_version=kube_version,
         show_only=["charts/astronomer/templates/commander/commander-deployment.yaml"],
@@ -37,7 +38,11 @@ def test_astronomer_commander_deployment(kube_version):
     supported_k8s_versions,
 )
 def test_astronomer_commander_deployment_upgrade_timeout(kube_version):
-    """Test that helm renders a good deployment template for astronomer/commander. when upgrade timeout is set"""
+    """Test that helm renders a good deployment template for
+    astronomer/commander.
+
+    when upgrade timeout is set
+    """
     docs = render_chart(
         kube_version=kube_version,
         values={"astronomer": {"commander": {"upgradeTimeout": 600}}},

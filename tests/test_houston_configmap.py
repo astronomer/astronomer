@@ -50,7 +50,8 @@ def test_houston_configmap():
 
 
 def test_houston_configmap_with_customlogging_enabled():
-    """Validate the houston configmap and its embedded data with customLogging."""
+    """Validate the houston configmap and its embedded data with
+    customLogging."""
     docs = render_chart(
         values={"global": {"customLogging": {"enabled": True}}},
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
@@ -79,7 +80,8 @@ def test_houston_configmapwith_scc_enabled():
 
 
 def test_houston_configmap_with_azure_enabled():
-    """Validate the houston configmap and its embedded data with azure enabled."""
+    """Validate the houston configmap and its embedded data with azure
+    enabled."""
     docs = render_chart(
         values={"global": {"azure": {"enabled": True}}},
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
@@ -98,7 +100,8 @@ def test_houston_configmap_with_azure_enabled():
 
 
 def test_houston_configmap_with_kubed_enabled():
-    """Validate the houston configmap and its embedded data with kubedEnabled."""
+    """Validate the houston configmap and its embedded data with
+    kubedEnabled."""
     docs = render_chart(
         values={"global": {"kubedEnabled": True}},
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
@@ -123,7 +126,8 @@ def test_houston_configmap_with_kubed_enabled():
 
 
 def test_houston_configmap_with_kubed_disabled():
-    """Validate the houston configmap and its embedded data with kubedEnabled."""
+    """Validate the houston configmap and its embedded data with
+    kubedEnabled."""
     docs = render_chart(
         values={"global": {"kubedEnabled": False}},
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
@@ -175,7 +179,8 @@ cron_test_data = [
     "test_data", cron_test_data, ids=[x[0] for x in cron_test_data]
 )
 def test_cron_splay(test_data):
-    """Test that our adler32sum method of generating deterministic random numbers works."""
+    """Test that our adler32sum method of generating deterministic random
+    numbers works."""
     doc = render_chart(
         name=test_data[0],
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
@@ -193,7 +198,8 @@ def test_cron_splay(test_data):
 
 
 def test_houston_configmapwith_update_airflow_runtime_checks_enabled():
-    """Validate the houston configmap and its embedded data with updateAirflowCheck."""
+    """Validate the houston configmap and its embedded data with
+    updateAirflowCheck."""
     docs = render_chart(
         values={
             "astronomer": {
@@ -213,7 +219,8 @@ def test_houston_configmapwith_update_airflow_runtime_checks_enabled():
 
 
 def test_houston_configmapwith_update_airflow_runtime_checks_disabled():
-    """Validate the houston configmap and its embedded data with updateAirflowCheck."""
+    """Validate the houston configmap and its embedded data with
+    updateAirflowCheck."""
     docs = render_chart(
         values={
             "astronomer": {

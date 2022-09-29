@@ -26,9 +26,7 @@ commander_expected_result = {
     supported_k8s_versions,
 )
 def test_scc_disabled(kube_version):
-    """
-    Test all things scc related when scc is disabled.
-    """
+    """Test all things scc related when scc is disabled."""
     docs = render_chart(
         kube_version=kube_version,
         values={"global": {"sccEnabled": False}},
@@ -46,9 +44,7 @@ def test_scc_disabled(kube_version):
     supported_k8s_versions,
 )
 def test_scc_enabled(kube_version):
-    """
-    Test all things scc related when scc is disabled.
-    """
+    """Test all things scc related when scc is disabled."""
 
     docs = render_chart(
         kube_version=kube_version,

@@ -36,7 +36,8 @@ class TestAllCharts:
     def test_all_default_charts_with_private_registry(self, template):
         """Test that each chart uses the privateRegistry.
 
-        This only finds default images, not the many which are hidden behind feature flags.
+        This only finds default images, not the many which are hidden
+        behind feature flags.
         """
         private_repo = "example.com/the-private-registry-repository"
         docs = render_chart(

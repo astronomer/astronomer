@@ -8,9 +8,8 @@ from tests.helm_template_generator import render_chart
     [(True, "ClusterRole"), (False, "Role")],
 )
 def test_global_cluster_roles_commander_role(cluster_roles, expected_kind):
-    """
-    Test global clusterRoles feature of commander role/rolebinding template
-    """
+    """Test global clusterRoles feature of commander role/rolebinding
+    template."""
     docs = render_chart(
         values={"global": {"clusterRoles": cluster_roles}},
         show_only=["charts/astronomer/templates/commander/commander-role.yaml"],
@@ -26,9 +25,8 @@ def test_global_cluster_roles_commander_role(cluster_roles, expected_kind):
     [(True, "ClusterRoleBinding"), (False, "RoleBinding")],
 )
 def test_global_cluster_roles_commander_rolebinding(cluster_roles, expected_kind):
-    """
-    Test global clusterRoles feature of commander role/rolebinding template
-    """
+    """Test global clusterRoles feature of commander role/rolebinding
+    template."""
     docs = render_chart(
         values={"global": {"clusterRoles": cluster_roles}},
         show_only=["charts/astronomer/templates/commander/commander-rolebinding.yaml"],

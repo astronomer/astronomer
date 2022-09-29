@@ -11,7 +11,8 @@ class TestKubedApiservice:
     show_only = ["charts/kubed/templates/kubed-apiregistration.yaml"]
 
     def test_kubed_apiregistration_defaults(self, kube_version):
-        """Test that helm renders a good ClusterRoleBinding template for kubed with defaults."""
+        """Test that helm renders a good ClusterRoleBinding template for kubed
+        with defaults."""
         docs = render_chart(kube_version=kube_version, show_only=self.show_only)
 
         assert len(docs) == 3
@@ -20,7 +21,8 @@ class TestKubedApiservice:
         assert docs[2]["kind"] == "RoleBinding"
 
     def test_kubed_apiregistration_rbac_disabled(self, kube_version):
-        """Test that helm renders a good ClusterRoleBinding template for kubed with defaults."""
+        """Test that helm renders a good ClusterRoleBinding template for kubed
+        with defaults."""
         docs = render_chart(
             kube_version=kube_version,
             show_only=self.show_only,
@@ -31,7 +33,8 @@ class TestKubedApiservice:
         assert docs[0]["kind"] == "Secret"
 
     def test_kubed_apiregistration_apiserver_enabled(self, kube_version):
-        """Test that helm renders a good ClusterRoleBinding template for kubed with defaults."""
+        """Test that helm renders a good ClusterRoleBinding template for kubed
+        with defaults."""
         docs = render_chart(
             kube_version=kube_version,
             show_only=self.show_only,

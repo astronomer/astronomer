@@ -14,10 +14,8 @@ git_root_dir = Path(
 
 
 def test_astro_sub_chart_version_match():
-    """
-    Tests that Chart.yaml and charts/astronomer/Chart.yaml
-    have matching versions.
-    """
+    """Tests that Chart.yaml and charts/astronomer/Chart.yaml have matching
+    versions."""
     with open(git_root_dir / "Chart.yaml") as f:
         astro_chart_dot_yaml = yaml.safe_load(f.read())
 
@@ -31,11 +29,9 @@ def test_astro_sub_chart_version_match():
 
 @mark.skip(reason="https://github.com/astronomer/issues/issues/2486")
 def test_downgrade_then_upgrade():
-    """
-    If the patch version is greater than zero,
-    check that we can perform a version downgrade,
-    followed by version upgrade back to the current version
-    """
+    """If the patch version is greater than zero, check that we can perform a
+    version downgrade, followed by version upgrade back to the current
+    version."""
     helm_chart_path = getenv("HELM_CHART_PATH")
     if not helm_chart_path:
         raise Exception(

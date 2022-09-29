@@ -65,7 +65,8 @@ class TestStanStatefulSet:
         assert c_by_name["metrics"]["resources"]["requests"]["cpu"] == "234m"
 
     def test_stan_statefulset_with_affinity_and_tolerations(self, kube_version):
-        """Test that stan statefulset renders proper nodeSelector, affinity, and tolerations"""
+        """Test that stan statefulset renders proper nodeSelector, affinity,
+        and tolerations."""
         values = {
             "stan": {
                 "nodeSelector": {"role": "astro"},
@@ -118,7 +119,8 @@ class TestStanStatefulSet:
         assert spec["tolerations"] == values["stan"]["tolerations"]
 
     def test_stan_statefulset_with_global_affinity_and_tolerations(self, kube_version):
-        """Test that stan statefulset renders proper nodeSelector, affinity, and tolerations with global config"""
+        """Test that stan statefulset renders proper nodeSelector, affinity,
+        and tolerations with global config."""
         values = {
             "global": {
                 "platformNodePool": {
@@ -216,7 +218,8 @@ class TestStanStatefulSet:
         assert c_by_name["stan"]["imagePullPolicy"] == "Always"
 
     def test_stan_statefulset_with_private_registry(self, kube_version):
-        """Test that stan statefulset properly uses the private registry images."""
+        """Test that stan statefulset properly uses the private registry
+        images."""
         private_registry = "private-registry.example.com"
         docs = render_chart(
             kube_version=kube_version,

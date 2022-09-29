@@ -18,7 +18,8 @@ class TestNginx:
         assert "loadBalancerSourceRanges" not in doc["spec"]
 
     def test_nginx_with_ingress_annotations(self):
-        """Deployment should contain the given ingress annotations when they are specified."""
+        """Deployment should contain the given ingress annotations when they
+        are specified."""
         doc = render_chart(
             values={
                 "nginx": {
@@ -35,7 +36,8 @@ class TestNginx:
         )
 
     def test_nginx_type_loadbalancer(self):
-        """Deployment works with type LoadBalancer and some LB customizations."""
+        """Deployment works with type LoadBalancer and some LB
+        customizations."""
         doc = render_chart(
             values={
                 "nginx": {
