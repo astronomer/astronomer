@@ -50,7 +50,7 @@ Return the NATS cluster routes.
 Return the proper Docker Image Registry Secret Names
 */}}
 {{- define "nats.imagePullSecrets" -}}
-{{- if .Values.global.privateRegistry.enabled }}
+{{- if and .Values.global.privateRegistry.enabled .Values.global.privateRegistry.secretName }}
 imagePullSecrets:
   - name: {{ .Values.global.privateRegistry.secretName }}
 {{- end -}}
