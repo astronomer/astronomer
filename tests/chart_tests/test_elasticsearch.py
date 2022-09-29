@@ -68,7 +68,8 @@ class TestElasticSearch:
         )
 
     def test_elasticsearch_with_sysctl_disabled(self, kube_version):
-        """Test ElasticSearch master, data and client with sysctl config/values.yaml."""
+        """Test ElasticSearch master, data and client with sysctl
+        config/values.yaml."""
         docs = render_chart(
             kube_version=kube_version,
             values={"elasticsearch": {"sysctlInitContainer": {"enabled": False}}},
@@ -84,7 +85,8 @@ class TestElasticSearch:
             assert not doc["spec"]["template"]["spec"]["initContainers"]
 
     def test_elasticsearch_fsgroup_defaults(self, kube_version):
-        """Test ElasticSearch master, data and client with fsGroup default values"""
+        """Test ElasticSearch master, data and client with fsGroup default
+        values."""
         docs = render_chart(
             kube_version=kube_version,
             values={},
@@ -101,7 +103,8 @@ class TestElasticSearch:
             }
 
     def test_elasticsearch_securitycontext_defaults(self, kube_version):
-        """Test ElasticSearch master, data with securityContext default values"""
+        """Test ElasticSearch master, data with securityContext default
+        values."""
         docs = render_chart(
             kube_version=kube_version,
             values={},
@@ -118,7 +121,8 @@ class TestElasticSearch:
             assert pod_data["securityContext"]["runAsUser"] == 1000
 
     def test_elasticsearch_securitycontext_overrides(self, kube_version):
-        """Test ElasticSearch master, data with securityContext custom values"""
+        """Test ElasticSearch master, data with securityContext custom
+        values."""
         docs = render_chart(
             kube_version=kube_version,
             values={
@@ -207,7 +211,8 @@ class TestElasticSearch:
         ] == doc["spec"]["ingress"][0]["from"]
 
     def test_nginx_es_index_pattern_defaults(self, kube_version):
-        """Test External Elasticsearch Service Index Pattern Search defaults."""
+        """Test External Elasticsearch Service Index Pattern Search
+        defaults."""
         docs = render_chart(
             kube_version=kube_version,
             values={},
@@ -239,7 +244,7 @@ class TestElasticSearch:
         assert "vector.$remote_user.*/$1" in es_index
 
     def test_elasticsearch_exporter_securitycontext_defaults(self, kube_version):
-        """Test ElasticSearch Exporter with securityContext default values"""
+        """Test ElasticSearch Exporter with securityContext default values."""
         docs = render_chart(
             kube_version=kube_version,
             values={},
@@ -254,7 +259,7 @@ class TestElasticSearch:
         assert pod_data["securityContext"] is None
 
     def test_elasticsearch_exporter_securitycontext_overrides(self, kube_version):
-        """Test ElasticSearch Exporter with securityContext default values"""
+        """Test ElasticSearch Exporter with securityContext default values."""
         docs = render_chart(
             kube_version=kube_version,
             values={

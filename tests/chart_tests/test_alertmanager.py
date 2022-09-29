@@ -3,7 +3,7 @@ import jmespath
 
 
 def test_alertmanager_defaults():
-    """Test that alertmanager chart looks sane with defaults"""
+    """Test that alertmanager chart looks sane with defaults."""
     docs = render_chart(
         show_only=["charts/alertmanager/templates/alertmanager-statefulset.yaml"],
     )
@@ -35,7 +35,7 @@ def test_alertmanager_defaults():
 
 
 def test_alertmanager_rfc1918():
-    """Test rfc1918 features of alertmanager template"""
+    """Test rfc1918 features of alertmanager template."""
     docs = render_chart(
         values={"alertmanager": {"enableNonRFC1918": True}},
         show_only=["charts/alertmanager/templates/alertmanager-statefulset.yaml"],

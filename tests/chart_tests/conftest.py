@@ -26,9 +26,7 @@ from tests import git_root_dir
 
 @pytest.fixture(autouse=True, scope="session")
 def upgrade_helm(tmp_path_factory, worker_id):
-    """
-    Add stable helm repo, upgrade helm repos, and do helm dep upgrade.
-    """
+    """Add stable helm repo, upgrade helm repos, and do helm dep upgrade."""
 
     def _upgrade_helm():
         try:
@@ -67,9 +65,8 @@ def docker_daemon_present():
 
 @pytest.fixture(scope="session")
 def docker_client():
-    """This is a text fixture for the docker client,
-    should it be needed in a test
-    """
+    """This is a text fixture for the docker client, should it be needed in a
+    test."""
     if docker_daemon_present():
         docker.from_env().ping()
         client = docker.from_env()

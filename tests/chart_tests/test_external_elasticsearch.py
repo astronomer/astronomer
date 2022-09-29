@@ -16,7 +16,8 @@ secret = base64.b64encode(b"sample-secret").decode()
 )
 class TestExternalElasticSearch:
     def test_externalelasticsearch_with_secret(self, kube_version):
-        """Test External ElasticSearch with secret passed from config/values.yaml."""
+        """Test External ElasticSearch with secret passed from
+        config/values.yaml."""
         docs = render_chart(
             kube_version=kube_version,
             values={"global": {"customLogging": {"enabled": True, "secret": secret}}},
@@ -55,7 +56,8 @@ class TestExternalElasticSearch:
         } in jmespath.search("spec.ports", docs[3])
 
     def test_externalelasticsearch_with_secretname(self, kube_version):
-        """Test External ElasticSearch with secret passed as kubernetes secrets."""
+        """Test External ElasticSearch with secret passed as kubernetes
+        secrets."""
         docs = render_chart(
             kube_version=kube_version,
             values={
@@ -106,7 +108,8 @@ class TestExternalElasticSearch:
         } in jmespath.search("spec.ports", docs[3])
 
     def test_externalelasticsearch_with_awsSecretName(self, kube_version):
-        """Test External ElasticSearch with aws secret passed as kubernetes secret."""
+        """Test External ElasticSearch with aws secret passed as kubernetes
+        secret."""
         docs = render_chart(
             kube_version=kube_version,
             values={
@@ -166,7 +169,8 @@ class TestExternalElasticSearch:
         } in jmespath.search("spec.ports", docs[1])
 
     def test_externalelasticsearch_with_awsIAMRole(self, kube_version):
-        """Test External ElasticSearch with iam roles passed as Deployment annotation."""
+        """Test External ElasticSearch with iam roles passed as Deployment
+        annotation."""
         docs = render_chart(
             kube_version=kube_version,
             values={
@@ -214,7 +218,8 @@ class TestExternalElasticSearch:
         } in jmespath.search("spec.ports", docs[1])
 
     def test_externalelasticsearch_with_awsServiceAccountAnnotation(self, kube_version):
-        """Test External ElasticSearch with eks iam roles passed as Service Account Annotation."""
+        """Test External ElasticSearch with eks iam roles passed as Service
+        Account Annotation."""
         docs = render_chart(
             kube_version=kube_version,
             values={
@@ -363,7 +368,8 @@ class TestExternalElasticSearch:
         ] == doc["spec"]["ingress"][0]["from"]
 
     def test_external_es_index_pattern_defaults(self, kube_version):
-        """Test External Elasticsearch Service Index Pattern Search defaults."""
+        """Test External Elasticsearch Service Index Pattern Search
+        defaults."""
         docs = render_chart(
             kube_version=kube_version,
             values={
@@ -388,7 +394,8 @@ class TestExternalElasticSearch:
         assert "fluentd.$remote_user.*/$1" in es_index
 
     def test_external_es_index_pattern_with_sidecar_logging_enabled(self, kube_version):
-        """Test External Elasticsearch Service Index Pattern Search with sidecar logging."""
+        """Test External Elasticsearch Service Index Pattern Search with
+        sidecar logging."""
         docs = render_chart(
             kube_version=kube_version,
             values={

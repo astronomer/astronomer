@@ -24,7 +24,8 @@ class TestPostgresql:
         assert "initContainers" not in doc["spec"]["template"]["spec"]
 
     def test_postgresql_statefulset_with_volumePermissions_enabled(self, kube_version):
-        """Test postgresql statefulset when volumePermissions init container is enabled."""
+        """Test postgresql statefulset when volumePermissions init container is
+        enabled."""
         docs = render_chart(
             kube_version=kube_version,
             values={

@@ -65,7 +65,8 @@ class TestNatsStatefulSet:
         assert c_by_name["metrics"]["resources"]["requests"]["cpu"] == "234m"
 
     def test_nats_statefulset_with_affinity_and_tolerations(self, kube_version):
-        """Test that nats statefulset renders proper nodeSelector, affinity, and tolerations"""
+        """Test that nats statefulset renders proper nodeSelector, affinity,
+        and tolerations."""
         values = {
             "nats": {
                 "nodeSelector": {"role": "astro"},
@@ -118,7 +119,8 @@ class TestNatsStatefulSet:
         assert spec["tolerations"] == values["nats"]["tolerations"]
 
     def test_nats_statefulset_with_global_affinity_and_tolerations(self, kube_version):
-        """Test that nats statefulset renders proper nodeSelector, affinity, and tolerations with global config"""
+        """Test that nats statefulset renders proper nodeSelector, affinity,
+        and tolerations with global config."""
         values = {
             "global": {
                 "platformNodePool": {
