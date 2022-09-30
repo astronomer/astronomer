@@ -39,7 +39,7 @@ spec:
       - name: kube-state
         args:
       {{- if .Values.global.singleNamespace }}
-          - --namespace={{ .Release.Namespace }}
+        - --namespaces={{ .Release.Namespace }}
       {{- end }}
       {{- if .Values.extraArgs }}
           {{- .Values.extraArgs | toYaml | nindent 8 }}
