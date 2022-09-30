@@ -6,7 +6,7 @@ from tests import git_root_dir
 
 class TestHoustonPDB:
     def test_houston_pdb_cronjobs(self):
-        """Test that pdbs do not touch houston cronjobs or workers"""
+        """Test that pdbs do not touch houston cronjobs or workers."""
         templates = [
             "charts/astronomer/templates/houston/cronjobs/houston-expire-deployments-cronjob.yaml",
             "charts/astronomer/templates/houston/cronjobs/houston-check-updates-cronjob.yaml",
@@ -26,7 +26,7 @@ class TestHoustonPDB:
             ), f"ERROR: tempplate '{show_only}' matched houston"
 
     def test_houston_pdb_workers(self):
-        """Test that pdbs do not touch houston cronjobs or workers"""
+        """Test that pdbs do not touch houston cronjobs or workers."""
         template = (
             "charts/astronomer/templates/houston/worker/houston-worker-deployment.yaml"
         )
@@ -39,7 +39,7 @@ class TestHoustonPDB:
 
     def test_houston_api_pdb_match_labels(self):
         # sourcery skip: class-extract-method
-        """Houston pdb should have the right matchLabels"""
+        """Houston pdb should have the right matchLabels."""
         template = (
             "charts/astronomer/templates/houston/api/houston-pod-disruption-budget.yaml"
         )
@@ -50,7 +50,7 @@ class TestHoustonPDB:
         assert match_labels["component"] == "houston"
 
     def test_houston_api_pdb_deployment(self):
-        """Houston pdb should have the right matchLabels"""
+        """Houston pdb should have the right matchLabels."""
         template = "charts/astronomer/templates/houston/api/houston-deployment.yaml"
         labels = render_chart(show_only=[template])[0]["spec"]["template"]["metadata"][
             "labels"
@@ -64,7 +64,6 @@ class TestHoustonPDB:
     supported_k8s_versions,
 )
 class TestPDB:
-
     show_only = [
         str(path.relative_to(git_root_dir))
         for path in git_root_dir.rglob("charts/**/*")
@@ -72,7 +71,8 @@ class TestPDB:
     ]
 
     def test_pod_disruption_budgets_default(self, kube_version):
-        """Validate that default PodDisruptionBudget configs use latest available API version."""
+        """Validate that default PodDisruptionBudget configs use latest
+        available API version."""
         docs = render_chart(
             kube_version=kube_version,
             show_only=self.show_only,
@@ -86,7 +86,8 @@ class TestPDB:
             assert all(x["apiVersion"] == "policy/v1" for x in docs)
 
     def test_pod_disruption_budgets_use_legacy(self, kube_version):
-        """Allow global.useLegacyPodDisruptionBudget to use policy/v1beta1 until k8s 1.25.0"""
+        """Allow global.useLegacyPodDisruptionBudget to use policy/v1beta1
+        until k8s 1.25.0."""
         docs = render_chart(
             kube_version=kube_version,
             show_only=self.show_only,
@@ -103,3 +104,13 @@ class TestPDB:
             assert all(x["apiVersion"] == "policy/v1beta1" for x in docs)
         else:
             assert ValueError("policy/v1beta1 is not supported in k8s 1.25+")
+
+    def test_global_pdb_disabled(self, kube_version):
+        """Validate that there are no PDBs when
+        global.podDisruptionBudgetsEnabled is False."""
+        docs = render_chart(
+            values={"global": {"podDisruptionBudgetsEnabled": False}},
+            kube_version=kube_version,
+        )
+
+        assert not [doc for doc in docs if doc["kind"] == "PodDisruptionBudget"]

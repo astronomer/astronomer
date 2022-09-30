@@ -131,6 +131,7 @@ data:
         workspace ${record["kubernetes"]["labels"]["workspace"]}
         release ${record["kubernetes"]["labels"]["release"]}
         message ${record["log"]}
+        date_nano ${time.strftime('%Y-%m-%dT%H:%M:%S.%NZ')}
       </record>
     </filter>
 
@@ -204,6 +205,8 @@ data:
         host "#{ENV['OUTPUT_HOST']}"
         port "#{ENV['OUTPUT_PORT']}"
         index_name fluentd.${record["release"]}.${Time.at(time).getutc.strftime(@logstash_dateformat)}
+        templates { "fluentdindextemplate": "/host/index_template.json"}
+        template_overwrite true
         <buffer>
           @type file
           path "/var/log/fluentd-buffers/#{ENV['RELEASE']}-kubernetes.system.buffer"
@@ -239,5 +242,8 @@ data:
           overflow_action drop_oldest_chunk
         </buffer>
       </store>
+      {{- end }}
+      {{- if .Values.extraLogStores }}
+{{ .Values.extraLogStores | indent 6}}
       {{- end }}
     </match>

@@ -131,7 +131,7 @@ but Helm 2.9 and 2.10 does not support it, so we need to implement this if-else 
 Return the proper Docker Image Registry Secret Names
 */}}
 {{- define "elasticsearch.imagePullSecrets" -}}
-{{- if .Values.global.privateRegistry.enabled }}
+{{- if and .Values.global.privateRegistry.enabled .Values.global.privateRegistry.secretName }}
 imagePullSecrets:
   - name: {{ .Values.global.privateRegistry.secretName }}
 {{- end -}}

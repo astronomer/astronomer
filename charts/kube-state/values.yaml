@@ -9,7 +9,7 @@ tolerations: []
 images:
   kubeState:
     repository: quay.io/astronomer/ap-kube-state
-    tag: 2.5.0
+    tag: 2.6.0
     pullPolicy: IfNotPresent
 
 env: {}
@@ -26,3 +26,6 @@ ports:
   telemetry: 8081
 
 replicas: 1
+
+extraArgs:
+- "--metric-labels-allowlist=namespaces=[*]"

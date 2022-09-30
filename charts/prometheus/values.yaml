@@ -14,34 +14,16 @@ podLabels: {}
 # missing data on the other Service(s). The StatefulSet will manage the Pods
 # such that only one is replaced at a time.
 replicas: 1
-scrape_interval: 30s
-evaluation_interval: 30s
-velero:
-  enabled: false
-  scrape_interval: 30s
-kubeState:
-  enabled: true
-  scrape_interval: 10s
-fluentd:
-  scrape_interval: 30s
-nodeExporter:
-  enabled: true
-  scrape_interval: 30s
-airflow:
-  scrape_interval: 10s
-postgresqlExporter:
-  enabled: false
-  scrape_interval: 60s
-  scrape_timeout: 30s
+
 images:
   prometheus:
     repository: quay.io/astronomer/ap-prometheus
-    tag: 2.34.0
+    tag: 2.37.1
     pullPolicy: IfNotPresent
   configReloader:
     # repository: astronomerinc/ap-config-reloader
     repository: quay.io/astronomer/ap-configmap-reloader
-    tag: 0.5.0-1
+    tag: 0.7.1
     pullPolicy: IfNotPresent
 
 resources: {}
@@ -51,6 +33,16 @@ resources: {}
 #  requests:
 #   cpu: 100m
 #   memory: 128Mi
+
+# probe configurations for prometheus container
+livenessProbe:
+  initialDelaySeconds: 10
+  periodSeconds: 5
+  failureThreshold: 3
+readinessProbe:
+  initialDelaySeconds: 10
+  periodSeconds: 5
+  failureThreshold: 3
 
 configMapReloader:
   resources: {}

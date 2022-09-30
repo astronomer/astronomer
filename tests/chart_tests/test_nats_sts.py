@@ -65,7 +65,8 @@ class TestNatsStatefulSet:
         assert c_by_name["metrics"]["resources"]["requests"]["cpu"] == "234m"
 
     def test_nats_statefulset_with_affinity_and_tolerations(self, kube_version):
-        """Test that nats statefulset renders proper nodeSelector, affinity, and tolerations"""
+        """Test that nats statefulset renders proper nodeSelector, affinity,
+        and tolerations."""
         values = {
             "nats": {
                 "nodeSelector": {"role": "astro"},
@@ -118,7 +119,8 @@ class TestNatsStatefulSet:
         assert spec["tolerations"] == values["nats"]["tolerations"]
 
     def test_nats_statefulset_with_global_affinity_and_tolerations(self, kube_version):
-        """Test that nats statefulset renders proper nodeSelector, affinity, and tolerations with global config"""
+        """Test that nats statefulset renders proper nodeSelector, affinity,
+        and tolerations with global config."""
         values = {
             "global": {
                 "platformNodePool": {
@@ -173,3 +175,31 @@ class TestNatsStatefulSet:
         assert (
             spec["tolerations"] == values["global"]["platformNodePool"]["tolerations"]
         )
+
+    def test_nats_statefulset_with_default_cluster_name(self, kube_version):
+        """Test that nats configmap has cluster name defined."""
+        values = {
+            "nats": {},
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/nats/templates/configmap.yaml"],
+            values=values,
+        )
+
+        nats_cm = docs[0]["data"]["nats.conf"]
+        assert "release-name-nats" in nats_cm
+
+    def test_nats_statefulset_with_default_cluster_name_overrides(self, kube_version):
+        """Test that nats configmap has cluster name which allows overrides."""
+        values = {
+            "nats": {"cluster": {"name": "astronats"}},
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/nats/templates/configmap.yaml"],
+            values=values,
+        )
+
+        nats_cm = docs[0]["data"]["nats.conf"]
+        assert "release-name-astronats" in nats_cm

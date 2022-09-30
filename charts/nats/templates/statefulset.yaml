@@ -36,7 +36,9 @@ spec:
       labels:
         tier: astronomer
         app: {{ template "nats.name" . }}
+        version: {{ .Chart.Version }}
         release: {{ .Release.Name }}
+        component: nats
         chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
     spec:
 {{- include "nats.imagePullSecrets" . | indent 6 }}

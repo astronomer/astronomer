@@ -1,9 +1,11 @@
-from tests.chart_tests.helm_template_generator import render_chart
-import pytest
-from tests import supported_k8s_versions
-import jmespath
 import base64
+
+import jmespath
+import pytest
 import yaml
+
+from tests import supported_k8s_versions
+from tests.chart_tests.helm_template_generator import render_chart
 
 secret = base64.b64encode(b"sample-secret").decode()
 
@@ -14,7 +16,8 @@ secret = base64.b64encode(b"sample-secret").decode()
 )
 class TestExternalElasticSearch:
     def test_externalelasticsearch_with_secret(self, kube_version):
-        """Test External ElasticSearch with secret passed from config/values.yaml."""
+        """Test External ElasticSearch with secret passed from
+        config/values.yaml."""
         docs = render_chart(
             kube_version=kube_version,
             values={"global": {"customLogging": {"enabled": True, "secret": secret}}},
@@ -43,13 +46,18 @@ class TestExternalElasticSearch:
             "name": "secure-http",
             "protocol": "TCP",
             "port": 9200,
+            "appProtocol": "https",
         } in jmespath.search("spec.ports", docs[3])
-        assert {"name": "http", "protocol": "TCP", "port": 9201} in jmespath.search(
-            "spec.ports", docs[3]
-        )
+        assert {
+            "name": "http",
+            "protocol": "TCP",
+            "port": 9201,
+            "appProtocol": "http",
+        } in jmespath.search("spec.ports", docs[3])
 
     def test_externalelasticsearch_with_secretname(self, kube_version):
-        """Test External ElasticSearch with secret passed as kubernetes secrets."""
+        """Test External ElasticSearch with secret passed as kubernetes
+        secrets."""
         docs = render_chart(
             kube_version=kube_version,
             values={
@@ -90,13 +98,18 @@ class TestExternalElasticSearch:
             "name": "secure-http",
             "protocol": "TCP",
             "port": 9200,
+            "appProtocol": "https",
         } in jmespath.search("spec.ports", docs[3])
-        assert {"name": "http", "protocol": "TCP", "port": 9201} in jmespath.search(
-            "spec.ports", docs[3]
-        )
+        assert {
+            "name": "http",
+            "protocol": "TCP",
+            "port": 9201,
+            "appProtocol": "http",
+        } in jmespath.search("spec.ports", docs[3])
 
     def test_externalelasticsearch_with_awsSecretName(self, kube_version):
-        """Test External ElasticSearch with aws secret passed as kubernetes secret."""
+        """Test External ElasticSearch with aws secret passed as kubernetes
+        secret."""
         docs = render_chart(
             kube_version=kube_version,
             values={
@@ -146,13 +159,18 @@ class TestExternalElasticSearch:
             "name": "secure-http",
             "protocol": "TCP",
             "port": 9200,
+            "appProtocol": "https",
         } in jmespath.search("spec.ports", docs[1])
-        assert {"name": "http", "protocol": "TCP", "port": 9201} in jmespath.search(
-            "spec.ports", docs[1]
-        )
+        assert {
+            "name": "http",
+            "protocol": "TCP",
+            "port": 9201,
+            "appProtocol": "http",
+        } in jmespath.search("spec.ports", docs[1])
 
     def test_externalelasticsearch_with_awsIAMRole(self, kube_version):
-        """Test External ElasticSearch with iam roles passed as Deployment annotation."""
+        """Test External ElasticSearch with iam roles passed as Deployment
+        annotation."""
         docs = render_chart(
             kube_version=kube_version,
             values={
@@ -190,13 +208,18 @@ class TestExternalElasticSearch:
             "name": "secure-http",
             "protocol": "TCP",
             "port": 9200,
+            "appProtocol": "https",
         } in jmespath.search("spec.ports", docs[1])
-        assert {"name": "http", "protocol": "TCP", "port": 9201} in jmespath.search(
-            "spec.ports", docs[1]
-        )
+        assert {
+            "name": "http",
+            "protocol": "TCP",
+            "port": 9201,
+            "appProtocol": "http",
+        } in jmespath.search("spec.ports", docs[1])
 
     def test_externalelasticsearch_with_awsServiceAccountAnnotation(self, kube_version):
-        """Test External ElasticSearch with eks iam roles passed as Service Account Annotation."""
+        """Test External ElasticSearch with eks iam roles passed as Service
+        Account Annotation."""
         docs = render_chart(
             kube_version=kube_version,
             values={
@@ -237,10 +260,14 @@ class TestExternalElasticSearch:
             "name": "secure-http",
             "protocol": "TCP",
             "port": 9200,
+            "appProtocol": "https",
         } in jmespath.search("spec.ports", docs[2])
-        assert {"name": "http", "protocol": "TCP", "port": 9201} in jmespath.search(
-            "spec.ports", docs[2]
-        )
+        assert {
+            "name": "http",
+            "protocol": "TCP",
+            "port": 9201,
+            "appProtocol": "http",
+        } in jmespath.search("spec.ports", docs[2])
 
     def test_externalelasticsearch_houston_configmap_with_disabled_kibanaUIFlag(
         self, kube_version
@@ -341,7 +368,8 @@ class TestExternalElasticSearch:
         ] == doc["spec"]["ingress"][0]["from"]
 
     def test_external_es_index_pattern_defaults(self, kube_version):
-        """Test External Elasticsearch Service Index Pattern Search defaults."""
+        """Test External Elasticsearch Service Index Pattern Search
+        defaults."""
         docs = render_chart(
             kube_version=kube_version,
             values={
@@ -366,7 +394,8 @@ class TestExternalElasticSearch:
         assert "fluentd.$remote_user.*/$1" in es_index
 
     def test_external_es_index_pattern_with_sidecar_logging_enabled(self, kube_version):
-        """Test External Elasticsearch Service Index Pattern Search with sidecar logging."""
+        """Test External Elasticsearch Service Index Pattern Search with
+        sidecar logging."""
         docs = render_chart(
             kube_version=kube_version,
             values={

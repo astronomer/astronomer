@@ -27,6 +27,8 @@ spec:
         component: {{ template "elasticsearch.name" . }}
         release: {{ .Release.Name }}
         role: client
+        app: {{ template "elasticsearch.name" . }}-client
+        version: {{ .Chart.Version }}
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/es-configmap.yaml") . | sha256sum }}
 {{- if .Values.common.podAnnotations }}
@@ -77,7 +79,9 @@ spec:
         command: ["sysctl", "-w", "vm.max_map_count={{ .Values.sysctlInitContainer.sysctlVmMaxMapCount}}"]
         securityContext:
           privileged: true
-      {{- end }}
+        resources:
+{{ toYaml .Values.client.initResources | indent 10 }}
+  {{- end }}
       serviceAccountName: {{ template "elasticsearch.fullname" . }}
       containers:
       - name: es-client

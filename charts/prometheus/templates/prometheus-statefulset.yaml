@@ -28,6 +28,8 @@ spec:
         tier: monitoring
         component: {{ template "prometheus.name" . }}
         release: {{ .Release.Name }}
+        app: {{ template "prometheus.name" . }}
+        version: {{ .Chart.Version }}
       annotations:
 {{- if .Values.global.istio.enabled }}
         sidecar.istio.io/proxyCPU: "500m"
@@ -117,14 +119,16 @@ spec:
             httpGet:
               path: /-/healthy
               port: {{ .Values.ports.http }}
-            initialDelaySeconds: 10
-            periodSeconds: 5
+            initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+            failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
           readinessProbe:
             httpGet:
               path: /-/ready
               port: {{ .Values.ports.http }}
-            initialDelaySeconds: 10
-            periodSeconds: 5
+            initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
+            failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
       securityContext:
         fsGroup: 65534
         runAsNonRoot: true

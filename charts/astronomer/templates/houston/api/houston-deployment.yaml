@@ -24,6 +24,8 @@ spec:
         tier: astronomer
         component: houston
         release: {{ .Release.Name }}
+        app: houston
+        version: {{ .Chart.Version }}
       annotations:
         checksum/houston-config: {{ include (print $.Template.BasePath "/houston/houston-configmap.yaml") . | sha256sum }}
         checksum/houston-backend-secret: {{ include (print $.Template.BasePath "/houston/api/houston-backend-secret.yaml") . | sha256sum }}
@@ -53,6 +55,8 @@ spec:
         - name: houston-bootstrapper
           image: {{ template "dbBootstrapper.image" . }}
           imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
+          resources:
+{{ toYaml .Values.houston.resources | indent 12 }}
           env:
             - name: BOOTSTRAP_DB
               valueFrom:

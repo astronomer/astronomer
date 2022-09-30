@@ -23,6 +23,8 @@ spec:
         tier: logging
         component: {{ template "fluentd.name" . }}
         release: {{ .Release.Name }}
+        app: {{ template "fluentd.name" . }}
+        version: {{ .Chart.Version }}
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/fluentd-configmap.yaml") . | sha256sum }}
         prometheus.io/scrape: "true"
@@ -36,9 +38,13 @@ spec:
 {{ toYaml (.Values.tolerations) | indent 8 }}
       serviceAccountName: {{ template "fluentd.fullname" . }}
 {{- include "fluentd.imagePullSecrets" . | indent 6 }}
+      securityContext:
+{{ toYaml .Values.pod.securityContext | indent 8 }}
       containers:
       - name: fluentd
         image: {{ template "fluentd.image" . }}
+        securityContext:
+{{ toYaml .Values.container.securityContext | indent 10 }}
         {{- if .Values.global.istioEnabled }}
         command:
           - "/bin/bash"
@@ -101,6 +107,9 @@ spec:
           readOnly: true
         - name: config-volume-{{ template "fluentd.fullname" . }}
           mountPath: /etc/fluent/config.d
+        - name: {{ template "fluentd.fullname" . }}-index-template-volume
+          mountPath: /host
+          readOnly: true
         resources:
 {{ toYaml .Values.resources | indent 12 }}
         ports:
@@ -124,3 +133,6 @@ spec:
       - name: config-volume-{{ template "fluentd.fullname" . }}
         configMap:
           name: {{ template "fluentd.fullname" . }}
+      - name: {{ template "fluentd.fullname" . }}-index-template-volume
+        configMap:
+          name: {{ template "fluentd.fullname" . }}-index-template-configmap

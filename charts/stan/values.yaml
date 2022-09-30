@@ -6,16 +6,20 @@
 images:
   init:
     repository: quay.io/astronomer/ap-base
-    tag: 3.16.0
+    tag: 3.16.2-1
     pullPolicy: IfNotPresent
   stan:
     repository: quay.io/astronomer/ap-nats-streaming
-    tag: 0.24.5
+    tag: 0.24.5-3
     pullPolicy: IfNotPresent
   exporter:
     repository: quay.io/astronomer/ap-nats-exporter
-    tag: 0.9.3
+    tag: 0.10.0-1
     pullPolicy: IfNotPresent
+
+
+init:
+  resources: {}
 
 stan:
   resources: {}
@@ -161,13 +165,13 @@ store:
 #######################################
 exporter:
   enabled: true
-  resources: {}
-  #  limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  #  requests:
-  #   cpu: 100m
-  #   memory: 128Mi
+  resources:
+    limits:
+     cpu: 100m
+     memory: 128Mi
+    requests:
+     cpu: 50m
+     memory: 80Mi
 ##################################
 #                                #
 #  Embedded NATS Configuration   #

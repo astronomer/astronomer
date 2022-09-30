@@ -25,6 +25,8 @@ spec:
         tier: {{ template "kube-state.name" . }}
         component: kube-state
         release: {{ .Release.Name }}
+        app: {{ template "kube-state.name" . }}
+        version: {{ .Chart.Version }}
     spec:
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
@@ -36,9 +38,12 @@ spec:
 {{- include "kube-state.imagePullSecrets" . | indent 6 }}
       containers:
       - name: kube-state
-      {{- if .Values.global.singleNamespace }}
         args:
-          - --namespace={{ .Release.Namespace }}
+      {{- if .Values.global.singleNamespace }}
+        - --namespaces={{ .Release.Namespace }}
+      {{- end }}
+      {{- if .Values.extraArgs }}
+          {{- .Values.extraArgs | toYaml | nindent 8 }}
       {{- end }}
         image: {{ include "kube-state.image" . }}
         imagePullPolicy: {{ .Values.images.kubeState.pullPolicy }}

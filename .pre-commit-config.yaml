@@ -1,6 +1,10 @@
 ---
 exclude: '(venv|\.vscode)' # regex
 repos:
+  - repo: https://github.com/PyCQA/docformatter
+    rev: v1.5.0
+    hooks:
+      - id: docformatter
   - repo: local
     hooks:
       - id: circle-config-yaml
@@ -10,26 +14,26 @@ repos:
         entry: .circleci/generate_circleci_config.py
         additional_dependencies: ["jinja2"]
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.1.0
+    rev: v2.2.1
     hooks:
       - id: codespell
         args: ["-L", "AKS,aks"]
   - repo: https://github.com/Lucas-C/pre-commit-hooks
-    rev: v1.1.13
+    rev: v1.3.1
     hooks:
       - id: remove-tabs
         exclude_types: [makefile, binary]
   - repo: https://github.com/psf/black
-    rev: 22.3.0
+    rev: 22.8.0
     hooks:
       - id: black
   - repo: https://github.com/asottile/pyupgrade
-    rev: v2.32.1
+    rev: v2.38.2
     hooks:
       - id: pyupgrade
         args: ["--py38-plus"]
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.2.0
+    rev: v4.3.0
     hooks:
       - id: check-case-conflict
       - id: check-json
@@ -55,7 +59,7 @@ repos:
       - id: sort-simple-yaml
       - id: trailing-whitespace
   - repo: https://github.com/PyCQA/flake8
-    rev: 4.0.1
+    rev: 5.0.4
     hooks:
       - id: flake8
         args:

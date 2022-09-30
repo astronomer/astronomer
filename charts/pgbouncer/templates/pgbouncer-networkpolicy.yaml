@@ -1,0 +1,27 @@
+#############################
+## Pgbouncer NetworkPolicy ##
+#############################
+{{- if .Values.networkPolicies.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ .Release.Name }}-pgbouncer-policy
+  labels:
+    app: {{ template "pgbouncer.name" . }}
+    chart: {{ template "pgbouncer.chart" . }}
+    release: {{ .Release.Name | quote }}
+    heritage: {{ .Release.Service | quote }}
+spec:
+  podSelector:
+    matchLabels:
+      app: {{ template "pgbouncer.name" . }}
+      release: {{ .Release.Name | quote }}
+  ingress:
+    - ports:
+      - port: {{ template "pgbouncer.port" . }}
+      from:
+      - podSelector:
+          matchLabels:
+            release: {{ .Release.Name }}
+            tier: astronomer
+{{- end }}

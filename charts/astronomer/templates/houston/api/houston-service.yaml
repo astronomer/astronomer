@@ -22,3 +22,4 @@ spec:
       protocol: TCP
       port: {{ .Values.ports.houstonHTTP }}
       targetPort: {{ .Values.ports.houstonHTTP }}
+      appProtocol: http

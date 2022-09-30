@@ -27,10 +27,12 @@ If release name contains chart name it will be used as a full name.
 {{/* Generate basic labels */}}
 {{- define "prometheus-node-exporter.labels" }}
 app: {{ template "prometheus-node-exporter.name" . }}
+version: {{ .Chart.Version }}
 heritage: {{.Release.Service }}
 release: {{.Release.Name }}
 chart: {{ template "prometheus-node-exporter.chart" . }}
 tier: monitoring
+component: prometheus-node-exporter
 {{- if .Values.podLabels}}
 {{ toYaml .Values.podLabels }}
 {{- end }}
@@ -81,7 +83,7 @@ Docker repository name
 Return the proper Docker Image Registry Secret Names
 */}}
 {{- define "prometheus-node-exporter.imagePullSecrets" -}}
-{{- if .Values.global.privateRegistry.enabled }}
+{{- if and .Values.global.privateRegistry.enabled .Values.global.privateRegistry.secretName }}
 imagePullSecrets:
   - name: {{ .Values.global.privateRegistry.secretName }}
 {{- end -}}

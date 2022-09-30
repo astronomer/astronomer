@@ -57,6 +57,7 @@ data:
 
     # Airflow deployment configuration
     deployments:
+      namespaceFreeFormEntry: {{ .Values.global.namespaceFreeFormEntry }}
       # Airflow chart settings
       # Static helm configurations for this chart are found below.
       chart:
@@ -100,6 +101,7 @@ data:
       loggingSidecar:
         enabled: true
         name: {{ .Values.global.loggingSidecar.name }}
+        image: {{ .Values.global.loggingSidecar.image }}
         terminationEndpoint: {{ .Values.global.loggingSidecar.terminationEndpoint }}
         customConfig: {{ .Values.global.loggingSidecar.customConfig }}
       {{- end }}
@@ -349,7 +351,7 @@ data:
     elasticsearch:
       enabled: true
       client:
-        node: {{ printf "https://%s-external-es-proxy:9201" .Release.Name }}
+        node: {{ printf "http://%s-external-es-proxy:9201" .Release.Name }}
         log: error
     {{- end }}
 
@@ -370,6 +372,8 @@ data:
     prometheus:
       enabled: true
       host: {{ printf "%s-prometheus" .Release.Name }}
+    updateAirflowCheckEnabled: {{ .Values.houston.updateAirflowCheck.enabled }}
+    updateRuntimeCheckEnabled: {{ .Values.houston.updateRuntimeCheck.enabled }}
 
   # These are any user-specified config overrides.
   local-production.yaml: |

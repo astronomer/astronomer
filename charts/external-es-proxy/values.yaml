@@ -7,11 +7,11 @@ replicaCount: 1
 images:
   esproxy:
     repository: quay.io/astronomer/ap-openresty
-    tag: 1.21.4
+    tag: 1.21.4-2
     pullPolicy: IfNotPresent
   awsproxy:
     repository: quay.io/astronomer/ap-awsesproxy
-    tag: 1.3-5
+    tag: 1.3-8
     pullPolicy: IfNotPresent
 
 imagePullSecrets: []
@@ -46,13 +46,13 @@ service:
   http: 9201
   awsproxy: 9203
 
-resources: {}
-  # limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  # requests:
-  #   cpu: 100m
-  #   memory: 128Mi
+resources:
+   limits:
+     cpu: 200m
+     memory: 256Mi
+   requests:
+     cpu: 100m
+     memory: 128Mi
 
 autoscaling:
   enabled: false

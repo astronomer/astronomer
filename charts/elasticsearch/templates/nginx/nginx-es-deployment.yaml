@@ -24,6 +24,8 @@ spec:
         tier: {{ template "nginx-es.name" . }}
         component: es-ingress-controller
         release: {{ .Release.Name }}
+        app: {{ template "elasticsearch.name" . }}-ingress-controller
+        version: {{ .Chart.Version }}
       annotations:
         checksum/configmap: {{ include (print $.Template.BasePath "/nginx/nginx-es-configmap.yaml") . | sha256sum }}
 {{- if .Values.common.podAnnotations }}
@@ -45,7 +47,8 @@ spec:
         - name: nginx
           image: {{ template "nginx-es.image" . }}
           imagePullPolicy: {{ .Values.images.nginx.pullPolicy }}
-          resources: {{ toYaml .Values.nginx.resources | indent 12 }}
+          resources:
+{{ toYaml .Values.nginx.resources | indent 12 }}
           volumeMounts:
             - name: nginx-config-volume
               mountPath: /etc/nginx

@@ -15,7 +15,7 @@ global:
 image:
   registry: quay.io
   repository: astronomer/ap-postgresql
-  tag: 11.15.0
+  tag: 11.15.0-1
   ## Specify a imagePullPolicy
   ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
   ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
@@ -300,6 +300,9 @@ resources:
   requests:
     memory: 256Mi
     cpu: 250m
+  limits:
+    memory: 2Gi
+    cpu: 1000m
 
 networkPolicy:
   ## Enable creation of NetworkPolicy resources.

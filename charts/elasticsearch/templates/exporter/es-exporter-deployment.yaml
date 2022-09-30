@@ -32,6 +32,8 @@ spec:
         component: {{ template "elasticsearch.name" . }}-exporter
         release: {{ .Release.Name }}
         role: exporter
+        app: {{ template "elasticsearch.name" . }}-exporter
+        version: {{ .Chart.Version }}
 {{- if or .Values.common.podAnnotations .Values.exporter.podAnnotations }}
       annotations:
 {{- end }}

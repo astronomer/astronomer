@@ -37,12 +37,15 @@ global:
         # if create is enabled, this helm chart will create the provided k8s namespaces
         create: false
         names: []
-
+  namespaceFreeFormEntry: false
   # Use kube-lego
   acme: false
 
   # If RBAC on cluster is enabled
   rbacEnabled: true
+
+  # whether to create pod disrption budgets by default for platform components
+  podDisruptionBudgetsEnabled: true
 
   # URL to the Astronomer helm repo
   helmRepo: "https://helm.astronomer.io"
@@ -101,10 +104,14 @@ global:
   # Enables namespace labels for network policies
   networkNSLabels: false
 
+  rootAdmin:
+    username: root@example.com
+
   # Sidecar Logging
   loggingSidecar:
     enabled: false
     name: sidecar-log-consumer
+    image: quay.io/astronomer/ap-vector:0.23.3-1
     terminationEndpoint: http://localhost:8000/quitquitquit
     customConfig: false
 
@@ -112,7 +119,7 @@ global:
   authSidecar:
     enabled: false
     repository: quay.io/astronomer/ap-auth-sidecar
-    tag: 1.23.0
+    tag: 1.23.1-1
     pullPolicy: IfNotPresent
     port: 8084
     default_nginx_settings: |
@@ -165,8 +172,12 @@ global:
       proxy_cookie_path                       off;
       proxy_redirect                          off;
     resources:
-      limits: {}
-      requests: {}
+      requests:
+        cpu: "500m"
+        memory: "512Mi"
+      limits:
+        cpu: "1000m"
+        memory: "1024Mi"
 
   # External ES logging
   customLogging:
@@ -192,7 +203,7 @@ global:
 
   # Set nodeSelector, affinity, and tolerations values for platform and deployment related pods.
   # This allows for separation of platform and airflow pods between kubernetes node pools.
-  # Pods in the platformNodePool include alertmanager, cli-install, commander, houston, kube-replicator, astro-ui, prisma,
+  # Pods in the platformNodePool include alertmanager, cli-install, commander, houston, kube-replicator, astro-ui,
   # registry, es-client, es-data, es-exporter, es-master, nginx-es, grafana, kibana, kube-state, nginx, nginx-default, prometheus.
   # nodeSelector, affinity, and tolerations values for airflow deployment pods are assigned via houston config.
   # See more information on pod / node assignment here: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
@@ -227,6 +238,22 @@ global:
   # ServiceAccounts, ClusterRoles, RoleBindings, ClusterRoleBindings
   # https://github.com/argoproj/argo-cd/blob/master/docs/user-guide/sync-waves.md
   enableArgoCDAnnotation: false
+
+  # For now we support only pgbouncer with gss api support
+  pgbouncer:
+    enabled: false
+    gssSupport: true
+    krb5ConfSecretName: krb5.conf
+    # we use it only for in cluster postgresql
+    # so we can override astronomer-bootstrap secret
+    username: postgres
+    password: postgres
+    servicePort: "5432"
+    extraEnv: []
+      # some: thing
+      # another: thing
+    extraLabels: []
+      # do-funky-injection: maybe
 
 #################################
 ## Default tagged groups enabled
@@ -323,6 +350,15 @@ nginx:
   # Dict of arbitrary annotations to add to the nginx ingress
   ingressAnnotations: {}
 
+  defaultBackend:
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "50Mi"
+      limits:
+        cpu: "120m"
+        memory: "100Mi"
+
 #################################
 ## Grafana configuration
 #################################
@@ -380,19 +416,30 @@ prometheus:
       cpu: "2000m"
       memory: "8Gi"
 
+  configMapReloader:
+    resources:
+      limits:
+        cpu: 100m
+        memory: 25Mi
+      requests:
+        cpu: 100m
+        memory: 25Mi
+
 nats:
   nodeSelector:
     <<: *platformNodeSelector
   affinity:
     <<: *platformAffinity
   tolerations: *platformTolerations
-  resources:
-    requests:
-      cpu: "75m"
-      memory: "30Mi"
-    limits:
-      cpu: "250m"
-      memory: "100Mi"
+
+  nats:
+    resources:
+      requests:
+        cpu: "75m"
+        memory: "30Mi"
+      limits:
+        cpu: "250m"
+        memory: "100Mi"
 
 stan:
   nodeSelector:
@@ -400,13 +447,24 @@ stan:
   affinity:
     <<: *platformAffinity
   tolerations: *platformTolerations
-  resources:
-    requests:
-      cpu: "75m"
-      memory: "30Mi"
-    limits:
-      cpu: "250m"
-      memory: "100Mi"
+
+  init:
+    resources:
+      requests:
+        cpu: "75m"
+        memory: "30Mi"
+      limits:
+        cpu: "250m"
+        memory: "100Mi"
+
+  stan:
+    resources:
+      requests:
+        cpu: "75m"
+        memory: "30Mi"
+      limits:
+        cpu: "250m"
+        memory: "100Mi"
 
 #################################
 ## Blackbox Exporter configuration
@@ -451,6 +509,15 @@ elasticsearch:
 
   # Configure client nodes
   client:
+
+    initResources:
+      limits:
+        cpu: "120m"
+        memory: "100Mi"
+      requests:
+        cpu: "100m"
+        memory: "80Mi"
+
     # Match resources.requests.memory
     heapMemory: "2g"
 
@@ -464,6 +531,15 @@ elasticsearch:
 
   # Configure data nodes
   data:
+
+    initResources:
+      limits:
+        cpu: "120m"
+        memory: "100Mi"
+      requests:
+        cpu: "100m"
+        memory: "80Mi"
+
     # Match resources.requests.memory
     heapMemory: "2g"
 
@@ -480,6 +556,15 @@ elasticsearch:
 
   # Configure master nodes
   master:
+
+    initResources:
+      limits:
+        cpu: "120m"
+        memory: "100Mi"
+      requests:
+        cpu: "100m"
+        memory: "80Mi"
+
     # Match resources.requests.memory
     heapMemory: "2g"
 
@@ -493,6 +578,24 @@ elasticsearch:
 
     persistence:
       size: "20Gi"
+
+  exporter:
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "100Mi"
+      limits:
+        cpu: "200m"
+        memory: "128Mi"
+
+  nginx:
+    resources:
+      requests:
+        cpu: "80m"
+        memory: "7Mi"
+      limits:
+        cpu: "100m"
+        memory: "10Mi"
 
 #################################
 ## Kibana configuration
@@ -510,15 +613,15 @@ kibana:
 #################################
 ## Fluentd configuration
 #################################
-# fluentd:
-#   # Configure resources
-#   resources:
-#     requests:
-#       cpu: "250m"
-#       memory: "512Mi"
-#     limits:
-#       cpu: "500m"
-#       memory: "1024Mi"
+fluentd:
+  # Configure resources
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "1000m"
+      memory: "1024Mi"
 
 #################################
 ## Kube State configuration

@@ -12,13 +12,13 @@ images:
     tag: 0.23.0
     pullPolicy: IfNotPresent
 
-resources: {}
-  # limits:
-  #  cpu: 100m
-  #  memory: 128Mi
-  # requests:
-  #  cpu: 100m
-  #  memory: 128Mi
+resources:
+   limits:
+    cpu: "300m"
+    memory: "100Mi"
+   requests:
+    cpu: "100m"
+    memory: "70Mi"
 
 replicas: 1
 
@@ -58,5 +58,16 @@ customRoutes: []
 #   match_re:
 #     tier: platform
 #     namespace: ^(test-ns.*)
+
+customReceiver: []
+# Example
+#  - name: sns-receiver
+#    sns_configs:
+#      - api_url: <SNS ENDPOINT>
+#        subject: '[Alert: {{ .GroupLabels.alertname }} - {{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}]'
+#        topic_arn: <SNS-TOPIC>
+#        sigv4:
+#          region: <REGION>
+#          role_arn: <SNS-ROLE>
 
 enableNonRFC1918: false

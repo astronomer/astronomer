@@ -24,6 +24,8 @@ spec:
         tier: monitoring
         component: grafana
         release: {{ .Release.Name }}
+        app: {{ template "grafana.name" . }}
+        version: {{ .Chart.Version }}
     spec:
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
@@ -45,6 +47,8 @@ spec:
             - "DB ready"
           image: {{ template "grafana.image" . }}
           imagePullPolicy: IfNotPresent
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
           env:
             - name: GF_DATABASE_URL
               valueFrom:
@@ -55,6 +59,8 @@ spec:
         - name: bootstrapper
           image: {{ template "grafana.bootstrapper.image" . }}
           imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
           env:
             - name: SCHEMA_NAME
               value: "grafana"
@@ -132,7 +138,8 @@ spec:
           image: "{{ .Values.global.authSidecar.repository }}:{{ .Values.global.authSidecar.tag }}"
           imagePullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
           {{- if .Values.global.authSidecar.resources }}
-          resources: {{- toYaml .Values.global.authSidecar.resources | nindent 12 }}
+          resources:
+{{ toYaml .Values.global.authSidecar.resources | nindent 12 }}
           {{- end }}
           ports:
           - containerPort: {{ .Values.global.authSidecar.port }}

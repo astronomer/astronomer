@@ -1,0 +1,27 @@
+################################
+## Fluentd Index Template ConfigMap
+#################################
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "fluentd.fullname" . }}-index-template-configmap
+  labels:
+    tier: logging
+    component: {{ template "fluentd.name" . }}
+    chart: {{ template "fluentd.chart" . }}
+    heritage: {{ .Release.Service }}
+    release: {{ .Release.Name }}
+data:
+  index_template.json: |-
+    {
+      "index_patterns": [
+          "fluentd.*"
+      ],
+      "mappings": {
+        "properties": {
+          "date_nano": {
+            "type": "date_nanos"
+          }
+        }
+      }
+    }

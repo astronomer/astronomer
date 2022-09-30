@@ -10,7 +10,8 @@ import jmespath
 )
 class TestAstronomerCommander:
     def test_astronomer_commander_deployment(self, kube_version):
-        """Test that helm renders a good deployment template for astronomer/commander."""
+        """Test that helm renders a good deployment template for
+        astronomer/commander."""
         docs = render_chart(
             kube_version=kube_version,
             show_only=[
@@ -37,7 +38,11 @@ class TestAstronomerCommander:
         assert env_vars["COMMANDER_UPGRADE_TIMEOUT"] == "300"
 
     def test_astronomer_commander_deployment_upgrade_timeout(self, kube_version):
-        """Test that helm renders a good deployment template for astronomer/commander. when upgrade timeout is set"""
+        """Test that helm renders a good deployment template for
+        astronomer/commander.
+
+        when upgrade timeout is set
+        """
         docs = render_chart(
             kube_version=kube_version,
             values={"astronomer": {"commander": {"upgradeTimeout": 600}}},
@@ -66,7 +71,9 @@ class TestAstronomerCommander:
         assert env_vars["COMMANDER_UPGRADE_TIMEOUT"] == "600"
 
     def test_astronomer_commander_rbac_cluster_role_enabled(self, kube_version):
-        """Test that if rbacEnabled and clusterRoles are enabled but namespacePools disabled, helm renders ClusterRole and ClusterRoleBinding resources"""
+        """Test that if rbacEnabled and clusterRoles are enabled but
+        namespacePools disabled, helm renders ClusterRole and
+        ClusterRoleBinding resources."""
 
         # First rbacEnabled and clusterRoles set to true and namespacePools disabled, should create a ClusterRole and ClusterRoleBinding
         docs = render_chart(
@@ -112,7 +119,8 @@ class TestAstronomerCommander:
     def test_astronomer_commander_rbac_cluster_roles_disabled_rbac_enabled(
         self, kube_version
     ):
-        """Test that if rbacEnabled set to true, but clusterRoles and namespacePools are disabled, we do not create any RBAC resources"""
+        """Test that if rbacEnabled set to true, but clusterRoles and
+        namespacePools are disabled, we do not create any RBAC resources."""
         docs = render_chart(
             kube_version=kube_version,
             values={
@@ -132,7 +140,8 @@ class TestAstronomerCommander:
         assert len(docs) == 0
 
     def test_astronomer_commander_rbac_all_disabled(self, kube_version):
-        """Test that if rbacEnabled, namespacePools and clusterRoles are disabled, we do not create any RBAC resources"""
+        """Test that if rbacEnabled, namespacePools and clusterRoles are
+        disabled, we do not create any RBAC resources."""
         docs = render_chart(
             kube_version=kube_version,
             values={
@@ -152,7 +161,8 @@ class TestAstronomerCommander:
         assert len(docs) == 0
 
     def test_astronomer_commander_rbac_cluster_role_disabled(self, kube_version):
-        """Test that if clusterRoles and namespacePools are disabled but rbacEnabled is enabled, helm does not render RBAC resources"""
+        """Test that if clusterRoles and namespacePools are disabled but
+        rbacEnabled is enabled, helm does not render RBAC resources."""
         docs = render_chart(
             kube_version=kube_version,
             values={
@@ -172,7 +182,9 @@ class TestAstronomerCommander:
         assert len(docs) == 0
 
     def test_astronomer_commander_rbac_multinamespace_mode_disabled(self, kube_version):
-        """Test that if Houston's Airflow chart sub-configuration has multiNamespaceMode disabled, the rendered commander role doesn't have permissions to manage Cluster-level RBAC resources"""
+        """Test that if Houston's Airflow chart sub-configuration has
+        multiNamespaceMode disabled, the rendered commander role doesn't have
+        permissions to manage Cluster-level RBAC resources."""
         doc = render_chart(
             kube_version=kube_version,
             values={
@@ -204,7 +216,9 @@ class TestAstronomerCommander:
     def test_astronomer_commander_rbac_multinamespace_mode_undefined(
         self, kube_version
     ):
-        """Test that if Houston's configuration for Airflow chart is not defined, the rendered commander role doesn't have permissions to manage Cluster-level RBAC resources"""
+        """Test that if Houston's configuration for Airflow chart is not
+        defined, the rendered commander role doesn't have permissions to manage
+        Cluster-level RBAC resources."""
         doc = render_chart(
             kube_version=kube_version,
             values={},
@@ -224,7 +238,9 @@ class TestAstronomerCommander:
             assert resource not in cluster_resources
 
     def test_astronomer_commander_rbac_multinamespace_mode_enabled(self, kube_version):
-        """Test that if Houston's Airflow chart sub-configuration has multiNamespaceMode enabled, the rendered commander role has permissions to manage Cluster-level RBAC resources"""
+        """Test that if Houston's Airflow chart sub-configuration has
+        multiNamespaceMode enabled, the rendered commander role has permissions
+        to manage Cluster-level RBAC resources."""
         doc = render_chart(
             kube_version=kube_version,
             values={
@@ -254,7 +270,8 @@ class TestAstronomerCommander:
             assert resource in generated_resources
 
     def test_astronomer_commander_rbac_scc_enabled_ns_pools(self, kube_version):
-        """Test that if a sccEnabled and namespacePools are enabled, we add Cluster permissions for scc resources"""
+        """Test that if a sccEnabled and namespacePools are enabled, we add
+        Cluster permissions for scc resources."""
         namespaces = ["test"]
         docs = render_chart(
             kube_version=kube_version,
@@ -328,7 +345,9 @@ class TestAstronomerCommander:
             assert role_binding["subjects"][0] == expected_subject
 
     def test_astronomer_commander_rbac_scc_cluster_roles(self, kube_version):
-        """Test that if scc is enabled but namespace pools is disabled, scc permissions are rendered once in ClusterRole and ClusterRoleBinding objects"""
+        """Test that if scc is enabled but namespace pools is disabled, scc
+        permissions are rendered once in ClusterRole and ClusterRoleBinding
+        objects."""
         docs = render_chart(
             kube_version=kube_version,
             values={

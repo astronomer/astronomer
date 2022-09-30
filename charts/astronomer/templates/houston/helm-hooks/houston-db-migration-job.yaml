@@ -23,6 +23,8 @@ spec:
         tier: astronomer
         component: houston-db-migrations
         release: {{ .Release.Name }}
+        app: houston-db-migrations
+        version: {{ .Chart.Version }}
       {{- if .Values.global.istio.enabled }}
       annotations:
         sidecar.istio.io/inject: "false"

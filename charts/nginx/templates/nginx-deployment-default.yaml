@@ -24,6 +24,8 @@ spec:
         tier: {{ template "nginx.name" . }}
         component: default-backend
         release: {{ .Release.Name }}
+        app: {{ template "nginx.name" . }}
+        version: {{ .Chart.Version }}
     spec:
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
@@ -44,5 +46,7 @@ spec:
               scheme: HTTP
             initialDelaySeconds: 30
             timeoutSeconds: 5
+          resources:
+{{ toYaml .Values.defaultBackend.resources | indent 12 }}
           ports:
             - containerPort: {{ .Values.ports.defaultBackendHTTP }}
