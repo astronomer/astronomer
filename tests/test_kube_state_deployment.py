@@ -65,25 +65,21 @@ class TestKubeStateDeployment:
         )
 
         assert len(docs) == 1
-        doc = docs[0]
-
-        c_by_name = get_containers_by_name(doc)
+        c_by_name = get_containers_by_name(docs[0])
         assert (
             "--metric-labels-allowlist=namespaces=[*]"
             in c_by_name["kube-state"]["args"]
         )
+        assert "--namespaces=" not in c_by_name["kube-state"]["args"]
+        assert "--namespace=" not in c_by_name["kube-state"]["args"]
 
-    def test_kube_state_deployment_with_default_args_overrides(self, kube_version):
+    def test_kube_state_deployment_singleNamespace(self, kube_version):
+        """Test that global.singleNamespace=asdf renders an accurate chart."""
         docs = render_chart(
             kube_version=kube_version,
-            values={
-                "kube-state": {"extraArgs": ["--metric-labels-allowlist=pods=[*]"]},
-            },
+            values={"global": {"singleNamespace": True}},
+            namespace="test_namespace",
             show_only=["charts/kube-state/templates/kube-state-deployment.yaml"],
         )
-
-        assert len(docs) == 1
-        doc = docs[0]
-
-        c_by_name = get_containers_by_name(doc)
-        assert "--metric-labels-allowlist=pods=[*]" in c_by_name["kube-state"]["args"]
+        c_by_name = get_containers_by_name(docs[0])
+        assert "--namespaces=test_namespace" in c_by_name["kube-state"]["args"]
