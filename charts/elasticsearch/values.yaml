@@ -222,12 +222,18 @@ sysctlInitContainer:
   sysctlVmMaxMapCount: 262144
 
 #defined in the values to be modified via user
-#podSecurityContext:
-#  fsGroup: 1000
-#
-#securityContext:
-#  capabilities:
-#    drop:
-#      - ALL
-#  runAsNonRoot: true
-#  runAsUser: 1000
+podSecurityContext:
+  fsGroup: 1000
+
+securityContext:
+  capabilities:
+    drop:
+      - ALL
+  runAsNonRoot: true
+  runAsUser: 1000
+
+securityContext_esclient:
+  capabilities:
+    add:
+      - IPC_LOCK
+      - SYS_RESOURCE

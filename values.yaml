@@ -507,16 +507,16 @@ elasticsearch:
     persistence:
       enabled: true
 
-  # Common default value for security context configuration
-  podSecurityContext:
-    fsGroup: 1000
-
-  securityContext:
-    capabilities:
-      drop:
-        - ALL
-    runAsNonRoot: true
-    runAsUser: 1000
+#  # Common default value for security context configuration
+#  podSecurityContext:
+#    fsGroup: 1000
+#
+#  securityContext:
+#    capabilities:
+#      drop:
+#        - ALL
+#    runAsNonRoot: true
+#    runAsUser: 1000
 
   # Configure client nodes
   client:
