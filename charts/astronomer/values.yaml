@@ -204,7 +204,7 @@ houston:
 
     # Default here is to run at 00:43 every night https://crontab.guru/#43_0_*_*_*
     schedule: "43 0 * * *"
-  
+
 
   # This option allows to override airflow releases config
   airflowReleasesConfig:
