@@ -221,7 +221,6 @@ sysctlInitContainer:
   enabled: true
   sysctlVmMaxMapCount: 262144
 
-#defined in the values to be modified via user
 podSecurityContext:
   fsGroup: 1000
 
