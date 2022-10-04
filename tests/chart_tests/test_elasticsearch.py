@@ -141,12 +141,8 @@ class TestElasticSearch:
         assert len(docs) == 1
         doc = docs[0]
         pod_data = doc["spec"]["template"]["spec"]["containers"][0]
-        assert pod_data["securityContext"]["capabilities"]["add"] == [
-            "IPC_LOCK"
-        ]
-        assert pod_data["securityContext"]["capabilities"]["add"] != [
-        "SYS_RESOURCE"
-        ]
+        assert pod_data["securityContext"]["capabilities"]["add"] == ["IPC_LOCK"]
+        assert pod_data["securityContext"]["capabilities"]["add"] != ["SYS_RESOURCE"]
 
     def test_elasticsearch_securitycontext_overrides(self, kube_version):
         """Test ElasticSearch master, data with securityContext custom
