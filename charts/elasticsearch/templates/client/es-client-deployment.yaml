@@ -86,8 +86,11 @@ spec:
       containers:
       - name: es-client
         securityContext:
-{{ toYaml .Values.securityContext | indent 10 }}
+        {{- if .Values.securityContext_esclient }}
 {{ toYaml .Values.securityContext_esclient | indent 10 }}
+        {{- else }}
+{{ toYaml .Values.securityContext | indent 10 }}
+        {{- end }}
         image: {{ template "elasticsearch.image" . }}
         imagePullPolicy: {{ .Values.images.es.pullPolicy }}
         env:
