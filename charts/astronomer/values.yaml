@@ -142,7 +142,7 @@ houston:
     # Enable expire deployments CronJob
     enabled: false
 
-    # Default here is to run at midnight every night
+    # Default here is to run at midnight every night https://crontab.guru/#0_0_*_*_*
     schedule: "0 0 * * *"
 
     # Print out the deployments that should be expired and skip actual deletion
@@ -157,7 +157,7 @@ houston:
     # Enable cleanup CronJob
     enabled: true
 
-    # Default here is to run at midnight every night
+    # Default here is to run at midnight every night https://crontab.guru/#0_0_*_*_*
     schedule: "0 0 * * *"
 
     # Cleanup deployments older than this many days
@@ -178,7 +178,7 @@ houston:
     # url for update service
     url: https://updates.astronomer.io/astronomer-platform
 
-    # Default here is to run at midnight every night
+    # Default here is to run at midnight every night https://crontab.guru/#0_0_*_*_*
     schedule: "0 0 * * *"
 
   # Check for Airflow Updates
@@ -202,11 +202,10 @@ houston:
     # url for update service
     url: https://updates.astronomer.io/astronomer-runtime
 
-    # Default here is to run at 00:43 every night
+    # Default here is to run at 00:43 every night https://crontab.guru/#43_0_*_*_*
     schedule: "43 0 * * *"
-  # this option allows to override airflow releases config
 
-  #
+
   airflowReleasesConfig:
     # example of usage:
     # available_releases:
