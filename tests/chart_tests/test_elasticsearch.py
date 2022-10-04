@@ -129,10 +129,6 @@ class TestElasticSearch:
                     "securityContext_esclient": {
                         "capabilities": {"add": ["IPC_LOCK", "SYS_RESOURCE"]},
                     },
-                    "securityContext": {
-                        "runAsNonRoot": True,
-                        "runAsUser": 1001,
-                    },
                 }
             },
             show_only=[
@@ -146,8 +142,6 @@ class TestElasticSearch:
             "IPC_LOCK",
             "SYS_RESOURCE",
         ]
-        assert pod_data["securityContext"]["runAsNonRoot"] is True
-        assert pod_data["securityContext"]["runAsUser"] == 1001
 
     def test_elasticsearch_securitycontext_overrides(self, kube_version):
         """Test ElasticSearch master, data with securityContext custom
