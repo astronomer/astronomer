@@ -127,7 +127,10 @@ class TestElasticSearch:
             values={
                 "elasticsearch": {
                     "securityContext_esclient": {
-                        "capabilities": {"add": ["IPC_LOCK", "SYS_RESOURCE"]},
+                        "capabilities": {"add": ["IPC_LOCK"]},
+                    },
+                    "securityContext": {
+                        "capabilities": {"add": ["SYS_RESOURCE"]},
                     },
                 }
             },
@@ -139,8 +142,10 @@ class TestElasticSearch:
         doc = docs[0]
         pod_data = doc["spec"]["template"]["spec"]["containers"][0]
         assert pod_data["securityContext"]["capabilities"]["add"] == [
-            "IPC_LOCK",
-            "SYS_RESOURCE",
+            "IPC_LOCK"
+        ]
+        assert pod_data["securityContext"]["capabilities"]["add"] != [
+        "SYS_RESOURCE"
         ]
 
     def test_elasticsearch_securitycontext_overrides(self, kube_version):
