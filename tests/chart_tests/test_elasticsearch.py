@@ -126,11 +126,13 @@ class TestElasticSearch:
             kube_version=kube_version,
             values={
                 "elasticsearch": {
-                    "securityContext": {
+                    "securityContext_esclient": {
                         "capabilities": {"add": ["IPC_LOCK", "SYS_RESOURCE"]},
+                    },
+                    "securityContext": {
                         "runAsNonRoot": True,
                         "runAsUser": 1001,
-                    }
+                    },
                 }
             },
             show_only=[
