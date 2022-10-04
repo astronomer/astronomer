@@ -120,6 +120,33 @@ class TestElasticSearch:
             assert pod_data["securityContext"]["runAsNonRoot"] is True
             assert pod_data["securityContext"]["runAsUser"] == 1000
 
+    def test_elasticsearch_client_securitycontext_overrides(self, kube_version):
+        """Test ElasticSearch client with securityContext custom values."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "elasticsearch": {
+                    "securityContext": {
+                        "capabilities": {"add": ["IPC_LOCK", "SYS_RESOURCE"]},
+                        "runAsNonRoot": True,
+                        "runAsUser": 1001,
+                    }
+                }
+            },
+            show_only=[
+                "charts/elasticsearch/templates/master/es-client-deployment.yaml",
+            ],
+        )
+        assert len(docs) == 1
+        for doc in docs:
+            pod_data = doc["spec"]["template"]["spec"]["containers"][0]
+            assert pod_data["securityContext"]["capabilities"]["add"] == [
+                "IPC_LOCK",
+                "SYS_RESOURCE",
+            ]
+            assert pod_data["securityContext"]["runAsNonRoot"] is True
+            assert pod_data["securityContext"]["runAsUser"] == 1001
+
     def test_elasticsearch_securitycontext_overrides(self, kube_version):
         """Test ElasticSearch master, data with securityContext custom
         values."""
