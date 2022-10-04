@@ -206,7 +206,6 @@ houston:
     schedule: "43 0 * * *"
 
 
-  # This option allows to override airflow releases config
   airflowReleasesConfig:
     # example of usage:
     # available_releases:
