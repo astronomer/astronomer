@@ -86,8 +86,8 @@ spec:
       containers:
       - name: es-client
         securityContext:
-        {{- if .Values.securityContext_esclient }}
-{{ toYaml .Values.securityContext_esclient | indent 10 }}
+        {{- if .Values.client.securityContext }}
+{{ toYaml .Values.client.securityContext | indent 10 }}
         {{- else }}
 {{ toYaml .Values.securityContext | indent 10 }}
         {{- end }}
