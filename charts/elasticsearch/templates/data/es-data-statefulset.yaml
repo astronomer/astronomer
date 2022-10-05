@@ -88,11 +88,7 @@ spec:
       containers:
       - name: es-data
         securityContext:
-          { { - if .Values.data.securityContext } }
-{ { toYaml .Values.data.securityContext | indent 10 } }
-          { { - else } }
-{ { toYaml .Values.securityContext | indent 10 } }
-          { { - end } }
+{{ toYaml .Values.securityContext | indent 10 }}
         image: {{ template "elasticsearch.image" . }}
         imagePullPolicy: {{ .Values.images.es.pullPolicy }}
         env:
