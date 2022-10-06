@@ -71,7 +71,6 @@ client:
       add:
         - IPC_LOCK
         - SYS_RESOURCE
-        -
   podAnnotations: {}
   # It isn't common to need more than 2 client nodes.
   replicas: 2
