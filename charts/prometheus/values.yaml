@@ -17,7 +17,7 @@ replicas: 1
 images:
   prometheus:
     repository: quay.io/astronomer/ap-prometheus
-    tag: 2.37.0
+    tag: 2.37.1
     pullPolicy: IfNotPresent
   configReloader:
     # repository: astronomerinc/ap-config-reloader
@@ -32,6 +32,16 @@ resources: {}
 #  requests:
 #   cpu: 100m
 #   memory: 128Mi
+
+# probe configurations for prometheus container
+livenessProbe:
+  initialDelaySeconds: 10
+  periodSeconds: 5
+  failureThreshold: 3
+readinessProbe:
+  initialDelaySeconds: 10
+  periodSeconds: 5
+  failureThreshold: 3
 
 configMapReloader:
   resources: {}
