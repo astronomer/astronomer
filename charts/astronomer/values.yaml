@@ -228,10 +228,10 @@ houston:
 
     # Default here is to run at 00:10 every night
     schedule: "10 0 * * *"
-    
+
     # Print out the aggregated daily task usage data that should be inserted and skip actual insertion
     dryRun: false
-  
+
   # this option allows to override airflow releases config
   #
   airflowReleasesConfig:
