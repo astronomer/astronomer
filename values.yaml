@@ -114,6 +114,7 @@ global:
     image: quay.io/astronomer/ap-vector:0.23.3-1
     terminationEndpoint: http://localhost:8000/quitquitquit
     customConfig: false
+    extraEnv: []
 
   # Deploy auth sidecar to use openshift native features
   authSidecar:
