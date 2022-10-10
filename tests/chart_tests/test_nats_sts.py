@@ -177,7 +177,7 @@ class TestNatsStatefulSet:
         )
 
     def test_nats_statefulset_with_default_cluster_name(self, kube_version):
-        """Test that nats configmap has cluster name defined"""
+        """Test that nats configmap has cluster name defined."""
         values = {
             "nats": {},
         }
@@ -191,7 +191,7 @@ class TestNatsStatefulSet:
         assert "release-name-nats" in nats_cm
 
     def test_nats_statefulset_with_default_cluster_name_overrides(self, kube_version):
-        """Test that nats configmap has cluster name which allows overrides"""
+        """Test that nats configmap has cluster name which allows overrides."""
         values = {
             "nats": {"cluster": {"name": "astronats"}},
         }
