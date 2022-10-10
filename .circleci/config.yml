@@ -275,7 +275,7 @@ workflows:
                 - quay.io/astronomer/ap-astro-ui:0.28.16
                 - quay.io/astronomer/ap-base:3.16.2-1
                 - quay.io/astronomer/ap-cli-install:0.26.8
-                - quay.io/astronomer/ap-commander:0.28.6
+                - quay.io/astronomer/ap-commander:0.28.7
                 - quay.io/astronomer/ap-configmap-reloader:0.7.1
                 - quay.io/astronomer/ap-curator:5.8.4-19
                 - quay.io/astronomer/ap-db-bootstrapper:0.26.11
