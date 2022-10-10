@@ -21,7 +21,7 @@ global:
     hostDirectory: /etc/docker/certs.d
     certCopier:
       repository: alpine
-      tag: 3.14
+      tag: 3.16
       pullPolicy: IfNotPresent
 
 
@@ -88,8 +88,8 @@ global:
   # Deploy auth sidecar to use openshift native features
   authSidecar:
     enabled: false
-    repository: nginxinc/nginx-unprivileged
-    tag: stable
+    repository: quay.io/astronomer/ap-auth-sidecar
+    tag: 1.23.1-1
     pullPolicy: IfNotPresent
     port: 8084
     default_nginx_settings: |
