@@ -14,7 +14,6 @@ metadata:
     heritage: {{ .Release.Service }}
 spec:
   schedule: {{ .Values.houston.cleanupTaskUsageData.schedule }}
-  # The cron job does not allow concurrent runs; if it is time for a new job run and the previous job run hasn't finished yet, the cron job skips the new job run
   concurrencyPolicy: Forbid
   jobTemplate:
     spec:
@@ -44,7 +43,6 @@ spec:
             - name: cleanup
               image: {{ template "houston.image" . }}
               imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
-              # If you supply only args for a Container, the default Entrypoint defined in the Docker image is run with the args that you supplied.
               args: ["yarn", "cleanup-task-usage-data", "--", "--older-than={{ .Values.houston.cleanupTaskUsageData.olderThan }}", "--dry-run={{ .Values.houston.cleanupTaskUsageData.dryRun }}", "--canary={{ .Values.houston.cleanupTaskUsageData.canary }}"]
               volumeMounts:
                 {{- include "houston_volume_mounts" . | indent 16 }}

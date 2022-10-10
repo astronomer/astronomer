@@ -175,8 +175,8 @@ houston:
     # Enable cleanup CronJob
     enabled: true
 
-    # Default here is to run at midnight every night
-    schedule: "0 0 * * *"
+    # Run at 23:40 every night
+    schedule: "40 23 * * *"  # https://crontab.guru/#40_23_*_*_*
 
     # Cleanup deployments older than this many days
     olderThan: 90
