@@ -5,7 +5,7 @@
 apiVersion: {{ include "apiVersion.batch.cronjob" . }}
 kind: CronJob
 metadata:
-  name: houston-cleanup-task-usage-data
+  name: "{{ .Release.Name }}-houston-cleanup-task-usage-data"
   labels:
     tier: astronomer
     component: houston-cleanup
