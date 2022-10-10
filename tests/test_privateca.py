@@ -46,6 +46,10 @@ class TestDaemonset:
                     "privateCaCerts": ["private-ca-cert-foo", "private-ca-cert-bar"],
                     "privateCaCertsAddToHost": {
                         "enabled": True,
+                        "certCopier": {
+                            "repository": "alpine",
+                            "tag": "3.14",
+                        },
                     },
                 }
             },
