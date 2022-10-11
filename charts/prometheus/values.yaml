@@ -22,7 +22,7 @@ images:
   configReloader:
     # repository: astronomerinc/ap-config-reloader
     repository: quay.io/astronomer/ap-configmap-reloader
-    tag: 0.7.1
+    tag: 0.8.0
     pullPolicy: IfNotPresent
 
 resources: {}
