@@ -72,6 +72,8 @@ data:
       kibanaUIEnabled: false
       {{ end }}
 
+      taskUsageMetricsEnabled: {{ .Values.global.taskUsageMetricsEnabled }}
+
       {{ if .Values.global.features.namespacePools.enabled }}
       hardDeleteDeployment: true
       manualNamespaceNames: true

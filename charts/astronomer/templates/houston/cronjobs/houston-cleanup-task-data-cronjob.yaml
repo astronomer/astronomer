@@ -1,7 +1,7 @@
 ##########################################
 ## Houston Cleanup Task Usage data CronJob
 ##########################################
-{{- if .Values.houston.cleanupTaskUsageData.enabled }}
+{{- if .Values.global.taskUsageMetricsEnabled }}
 apiVersion: {{ include "apiVersion.batch.cronjob" . }}
 kind: CronJob
 metadata:

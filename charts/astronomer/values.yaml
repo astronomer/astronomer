@@ -172,9 +172,6 @@ houston:
   # Cleanup task usage data and task audit data in Houston
   # This runs as a CronJob
   cleanupTaskUsageData:
-    # Enable cleanup CronJob
-    enabled: true
-
     # Run at 23:40 every night
     schedule: "40 23 * * *"  # https://crontab.guru/#40_23_*_*_*
 
