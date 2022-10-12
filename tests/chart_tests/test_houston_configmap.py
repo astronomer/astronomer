@@ -49,7 +49,8 @@ def test_houston_configmap():
 
 
 def test_houston_configmap_with_namespaceFreeFormEntry_true():
-    """Validate the houston configmap's embedded data with namespaceFreeFormEntry=True."""
+    """Validate the houston configmap's embedded data with
+    namespaceFreeFormEntry=True."""
 
     docs = render_chart(
         values={"global": {"namespaceFreeFormEntry": True}},
@@ -60,7 +61,8 @@ def test_houston_configmap_with_namespaceFreeFormEntry_true():
 
 
 def test_houston_configmap_with_namespaceFreeFormEntry_defaults():
-    """Validate the houston configmap's embedded data with namespaceFreeFormEntry defaults."""
+    """Validate the houston configmap's embedded data with
+    namespaceFreeFormEntry defaults."""
     docs = render_chart(
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )

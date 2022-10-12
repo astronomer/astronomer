@@ -242,7 +242,8 @@ class TestPrometheusConfigConfigmap:
     def test_prometheus_config_release_relabel_with_free_from_namespace(
         self, kube_version
     ):
-        """Prometheus should not have a regex for release name when free form namespace is enabled."""
+        """Prometheus should not have a regex for release name when free form
+        namespace is enabled."""
         doc = render_chart(
             kube_version=kube_version,
             show_only=self.show_only,
