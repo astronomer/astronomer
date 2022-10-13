@@ -169,6 +169,21 @@ houston:
     # Only run on deployments marked as canary
     canary: false
 
+  # Cleanup task usage data and task audit data in Houston
+  # This runs as a CronJob
+  cleanupTaskUsageData:
+    # Run at 23:40 every night
+    schedule: "40 23 * * *"  # https://crontab.guru/#40_23_*_*_*
+
+    # Cleanup deployments older than this many days
+    olderThan: 90
+
+    # Print out the deployments that should be cleaned up and skip actual cleanup
+    dryRun: false
+
+    # Only run on deployments marked as canary
+    canary: false
+
   # Check for Astronomer Platform Updates
   # This runs as a CronJob
   updateCheck:
