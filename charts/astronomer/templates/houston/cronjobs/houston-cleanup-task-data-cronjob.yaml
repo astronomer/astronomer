@@ -1,0 +1,55 @@
+##########################################
+## Houston Cleanup Task Usage data CronJob
+##########################################
+{{- if .Values.global.taskUsageMetricsEnabled }}
+apiVersion: {{ include "apiVersion.batch.cronjob" . }}
+kind: CronJob
+metadata:
+  name: "{{ .Release.Name }}-houston-cleanup-task-usage-data"
+  labels:
+    tier: astronomer
+    component: houston-cleanup
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  schedule: {{ .Values.houston.cleanupTaskUsageData.schedule }}
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        metadata:
+          labels:
+            tier: astronomer
+            component: houston-cleanup
+            release: {{ .Release.Name }}
+            app: houston-cleanup
+            version: {{ .Chart.Version }}
+          {{- if .Values.global.istio.enabled }}
+          annotations:
+            sidecar.istio.io/inject: "false"
+          {{- end }}
+        spec:
+          nodeSelector:
+{{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 12 }}
+          affinity:
+{{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 12 }}
+          tolerations:
+{{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 12 }}
+          restartPolicy: Never
+{{- include "astronomer.imagePullSecrets" . | indent 10 }}
+          containers:
+            - name: cleanup
+              image: {{ template "houston.image" . }}
+              imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
+              args: ["yarn", "cleanup-task-usage-data", "--", "--older-than={{ .Values.houston.cleanupTaskUsageData.olderThan }}", "--dry-run={{ .Values.houston.cleanupTaskUsageData.dryRun }}", "--canary={{ .Values.houston.cleanupTaskUsageData.canary }}"]
+              volumeMounts:
+                {{- include "houston_volume_mounts" . | indent 16 }}
+                {{- include "custom_ca_volume_mounts" . | indent 16 }}
+              env:
+                {{- include "houston_environment" . | indent 16 }}
+          volumes:
+            {{- include "houston_volumes" . | indent 12 }}
+            {{- include "custom_ca_volumes" . | indent 12 }}
+{{- end }}

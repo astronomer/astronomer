@@ -107,6 +107,8 @@ global:
   rootAdmin:
     username: root@example.com
 
+  taskUsageMetricsEnabled: false
+
   # Sidecar Logging
   loggingSidecar:
     enabled: false
