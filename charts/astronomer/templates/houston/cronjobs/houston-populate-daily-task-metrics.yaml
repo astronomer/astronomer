@@ -1,11 +1,11 @@
-########################################
+##############################################
 ## Houston Populate Daily Task Metrics CronJob
-########################################
-{{- if .Values.houston.populateDailyTaskMetrics.enabled }}
+##############################################
+{{- if .Values.global.taskUsageMetricsEnabled }}
 apiVersion: {{ include "apiVersion.batch.cronjob" . }}
 kind: CronJob
 metadata:
-  name: houston-populate-daily-task-metrics
+  name: "{{ .Release.Name }}-houston-populate-daily-task-metrics"
   labels:
     tier: astronomer
     component: houston-populate-daily-task-metrics

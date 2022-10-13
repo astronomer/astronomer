@@ -223,11 +223,8 @@ houston:
   # Populate daily task usage data
   # This runs as a CronJob
   populateDailyTaskMetrics:
-    # Enable check updates CronJob
-    enabled: true
-
-    # Default here is to run at 00:10 every night
-    schedule: "10 0 * * *"
+    # Default here is to run at 01:30 every night
+    schedule: "30 1 * * *"
 
     # Print out the aggregated daily task usage data that should be inserted and skip actual insertion
     dryRun: false
