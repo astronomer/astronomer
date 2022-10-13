@@ -1,0 +1,54 @@
+########################################
+## Houston Populate Daily Task Metrics CronJob
+########################################
+{{- if .Values.houston.populateDailyTaskMetrics.enabled }}
+apiVersion: {{ include "apiVersion.batch.cronjob" . }}
+kind: CronJob
+metadata:
+  name: houston-populate-daily-task-metrics
+  labels:
+    tier: astronomer
+    component: houston-populate-daily-task-metrics
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  schedule: {{ .Values.houston.populateDailyTaskMetrics.schedule }}
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            tier: astronomer
+            component: houston-populate-daily-task-metrics
+            release: {{ .Release.Name }}
+            app: houston-populate-daily-task-metrics
+            version: {{ .Chart.Version }}
+          {{- if .Values.global.istio.enabled }}
+          annotations:
+            sidecar.istio.io/inject: "false"
+          {{- end }}
+        spec:
+          nodeSelector:
+{{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 12 }}
+          affinity:
+{{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 12 }}
+          tolerations:
+{{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 12 }}
+          restartPolicy: Never
+{{- include "astronomer.imagePullSecrets" . | indent 10 }}
+          containers:
+            - name: populate-daily-task-metrics
+              image: {{ template "houston.image" . }}
+              imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
+              # If you supply only args for a Container, the default Entrypoint defined in the Docker image is run with the args that you supplied.
+              args: ["yarn", "populate-daily-task-metrics", "--", "--dry-run={{ .Values.houston.populateDailyTaskMetrics.dryRun }}"]
+              volumeMounts:
+                {{- include "houston_volume_mounts" . | indent 16 }}
+                {{- include "custom_ca_volume_mounts" . | indent 16 }}
+              env:
+                {{- include "houston_environment" . | indent 16 }}
+          volumes:
+            {{- include "houston_volumes" . | indent 12 }}
+            {{- include "custom_ca_volumes" . | indent 12 }}
+{{- end }}
