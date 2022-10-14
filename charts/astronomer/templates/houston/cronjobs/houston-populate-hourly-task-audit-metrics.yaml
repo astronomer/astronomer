@@ -41,7 +41,7 @@ spec:
             - name: populate-daily-task-metrics
               image: {{ template "houston.image" . }}
               imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
-              args: ["yarn", "populate-daily-task-metrics"]
+              args: ["yarn", "populate-hourly-task-audit-metrics"]
               volumeMounts:
                 {{- include "houston_volume_mounts" . | indent 16 }}
                 {{- include "custom_ca_volume_mounts" . | indent 16 }}
