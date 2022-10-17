@@ -114,7 +114,7 @@ class TestAstronomerHoustonTaskMetricsCronjobs:
             == "release-name-houston-populate-hourly-task-audit-metrics"
         )
         assert docs[0]["spec"]["schedule"] == "90 * * * *"
-    
+
     def test_astronomer_populate_daily_task_metrics_defaults(self, kube_version):
         docs = render_chart(
             kube_version=kube_version,
