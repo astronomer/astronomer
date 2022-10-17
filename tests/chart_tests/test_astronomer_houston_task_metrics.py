@@ -61,7 +61,7 @@ class TestAstronomerHoustonTaskMetricsCronjobs:
             docs[0]["metadata"]["name"]
             == "release-name-houston-populate-daily-task-metrics"
         )
-        assert docs[0]["spec"]["schedule"] == "30 2 * * *"
+        assert docs[0]["spec"]["schedule"] == "8 0 * * *"
 
     def test_houston_configmap_with_taskusagemetrics_enabled(self, kube_version):
         """Validate the houston configmap and its embedded data with
