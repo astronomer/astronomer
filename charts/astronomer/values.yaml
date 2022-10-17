@@ -222,12 +222,17 @@ houston:
 
   # Populate daily task usage data
   # This runs as a CronJob
+
   populateDailyTaskMetrics:
     # Default here is to run at 00:08 every night
     schedule: "8 0 * * *"
 
     # Print out the aggregated daily task usage data that should be inserted and skip actual insertion
     dryRun: false
+
+  populateHourlyTaskAuditMetrics:
+    # Run at minute 57 every hour https://crontab.guru/#57_*_*_*_*
+    schedule: "57 * * * *"
 
   # this option allows to override airflow releases config
   #
