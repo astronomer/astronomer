@@ -285,13 +285,13 @@ data:
       elasticsearch:
         enabled: true
         connection:
-          host: {{ printf "%s-elasticsearch-nginx.%s" .Release.Name .Release.Namespace }}
+          node: {{ printf "%s-elasticsearch-nginx.%s" .Release.Name .Release.Namespace }}
           port: 9200
 
     elasticsearch:
       enabled: true
       client:
-        host: {{ printf "%s-elasticsearch:9200" .Release.Name }}
+        node: {{ printf "http://%s-elasticsearch:9200" .Release.Name }}
         log: error
     {{- end }}
 
