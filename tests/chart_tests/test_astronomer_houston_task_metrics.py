@@ -67,6 +67,32 @@ class TestAstronomerHoustonTaskMetricsCronjobs:
         )
         assert docs[0]["spec"]["schedule"] == "57 * * * *"
 
+    def test_astronomer_populate_hourly_task_audit_metrics_cron_custom_schedule(
+        self, kube_version
+    ):
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"taskUsageMetricsEnabled": True},
+                "astronomer": {
+                    "houston": {
+                        "populateHourlyTaskAuditMetrics": {"schedule": "90 * * * *"}
+                    }
+                },
+            },
+            show_only=[
+                "charts/astronomer/templates/houston/cronjobs/houston-populate-hourly-task-audit-metrics.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+        assert docs[0]["kind"] == "CronJob"
+        assert (
+            docs[0]["metadata"]["name"]
+            == "release-name-houston-populate-hourly-task-audit-metrics"
+        )
+        assert docs[0]["spec"]["schedule"] == "90 * * * *"
+
     def test_houston_configmap_with_taskusagemetrics_enabled(self, kube_version):
         """Validate the houston configmap and its embedded data with
         taskUsageMetricsEnabled."""
