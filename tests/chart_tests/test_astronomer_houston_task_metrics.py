@@ -36,6 +36,28 @@ class TestAstronomerHoustonTaskMetricsCronjobs:
         )
         assert docs[0]["spec"]["schedule"] == "40 23 * * *"
 
+    def test_astronomer_cleanup_task_usage_cron_custom_schedule(self, kube_version):
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"taskUsageMetricsEnabled": True},
+                "astronomer": {
+                    "houston": {"cleanupTaskUsageData": {"schedule": "0 23 * * *"}}
+                },
+            },
+            show_only=[
+                "charts/astronomer/templates/houston/cronjobs/houston-cleanup-task-data-cronjob.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+        assert docs[0]["kind"] == "CronJob"
+        assert (
+            docs[0]["metadata"]["name"]
+            == "release-name-houston-cleanup-task-usage-data"
+        )
+        assert docs[0]["spec"]["schedule"] == "0 23 * * *"
+
     def test_astronomer_populate_daily_task_metrics_defaults(self, kube_version):
         docs = render_chart(
             kube_version=kube_version,
@@ -62,6 +84,28 @@ class TestAstronomerHoustonTaskMetricsCronjobs:
             == "release-name-houston-populate-daily-task-metrics"
         )
         assert docs[0]["spec"]["schedule"] == "8 0 * * *"
+
+    def test_astronomer_populate_daily_task_metrics_custom_schedule(self, kube_version):
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"taskUsageMetricsEnabled": True},
+                "astronomer": {
+                    "houston": {"populateDailyTaskMetrics": {"schedule": "0 23 * * *"}}
+                },
+            },
+            show_only=[
+                "charts/astronomer/templates/houston/cronjobs/houston-populate-daily-task-metrics.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+        assert docs[0]["kind"] == "CronJob"
+        assert (
+            docs[0]["metadata"]["name"]
+            == "release-name-houston-populate-daily-task-metrics"
+        )
+        assert docs[0]["spec"]["schedule"] == "0 23 * * *"
 
     def test_houston_configmap_with_taskusagemetrics_enabled(self, kube_version):
         """Validate the houston configmap and its embedded data with
