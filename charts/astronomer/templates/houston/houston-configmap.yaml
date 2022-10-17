@@ -285,7 +285,7 @@ data:
       elasticsearch:
         enabled: true
         connection:
-          node: {{ printf "%s-elasticsearch-nginx.%s" .Release.Name .Release.Namespace }}
+          host: {{ printf "%s-elasticsearch-nginx.%s" .Release.Name .Release.Namespace }}
           port: 9200
 
     elasticsearch:
