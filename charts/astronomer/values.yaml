@@ -220,6 +220,11 @@ houston:
     # Default here is to run at 00:43 every night https://crontab.guru/#43_0_*_*_*
     schedule: "43 0 * * *"
 
+  # Populate daily task usage data
+  # This runs as a CronJob
+  populateHourlyTaskAuditMetrics:
+    # Run at minute 57 every hour https://crontab.guru/#57_*_*_*_*
+    schedule: "57 * * * *"
 
   airflowReleasesConfig:
     # example of usage:

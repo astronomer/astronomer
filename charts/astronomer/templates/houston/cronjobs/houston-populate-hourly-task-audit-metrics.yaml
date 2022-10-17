@@ -1,0 +1,53 @@
+########################################
+## Houston Populate Daily Task Metrics CronJob
+########################################
+{{- if .Values.global.taskUsageMetricsEnabled }}
+apiVersion: {{ include "apiVersion.batch.cronjob" . }}
+kind: CronJob
+metadata:
+  name: "{{ .Release.Name }}-houston-populate-hourly-task-audit-metrics"
+  labels:
+    tier: astronomer
+    component: houston-populate-hourly-task-audit-metrics
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  schedule: {{ .Values.houston.populateHourlyTaskAuditMetrics.schedule }}
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            tier: astronomer
+            component: houston-populate-hourly-task-audit-metrics
+            release: {{ .Release.Name }}
+            app: houston-populate-hourly-task-audit-metrics
+            version: {{ .Chart.Version }}
+          {{- if .Values.global.istio.enabled }}
+          annotations:
+            sidecar.istio.io/inject: "false"
+          {{- end }}
+        spec:
+          nodeSelector:
+{{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 12 }}
+          affinity:
+{{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 12 }}
+          tolerations:
+{{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 12 }}
+          restartPolicy: Never
+{{- include "astronomer.imagePullSecrets" . | indent 10 }}
+          containers:
+            - name: populate-daily-task-metrics
+              image: {{ template "houston.image" . }}
+              imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
+              args: ["yarn", "populate-hourly-task-audit-metrics"]
+              volumeMounts:
+                {{- include "houston_volume_mounts" . | indent 16 }}
+                {{- include "custom_ca_volume_mounts" . | indent 16 }}
+              env:
+                {{- include "houston_environment" . | indent 16 }}
+          volumes:
+            {{- include "houston_volumes" . | indent 12 }}
+            {{- include "custom_ca_volumes" . | indent 12 }}
+{{- end }}
