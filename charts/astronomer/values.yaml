@@ -223,9 +223,6 @@ houston:
   # Populate daily task usage data
   # This runs as a CronJob
   populateHourlyTaskAuditMetrics:
-    # Enable check updates CronJob
-    enabled: true
-
     # Run at minute 57 every hour https://crontab.guru/#57_*_*_*_*
     schedule: "57 * * * *"
 
