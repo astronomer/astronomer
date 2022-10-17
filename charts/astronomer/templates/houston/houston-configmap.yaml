@@ -104,6 +104,10 @@ data:
         image: {{ .Values.global.loggingSidecar.image }}
         terminationEndpoint: {{ .Values.global.loggingSidecar.terminationEndpoint }}
         customConfig: {{ .Values.global.loggingSidecar.customConfig }}
+        {{- if .Values.global.loggingSidecar.extraEnv}}
+        extraEnv:
+{{- .Values.global.loggingSidecar.extraEnv | toYaml | nindent 8 }}
+        {{- end }}
       {{- end }}
 
       # These values get passed directly into the airflow helm deployments

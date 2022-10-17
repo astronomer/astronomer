@@ -289,6 +289,83 @@ def test_houston_configmap_with_loggingsidecar_customConfig_enabled():
     assert ("vector" in prod_yaml["deployments"]["loggingSidecar"]["image"]) is True
 
 
+def test_houston_configmap_with_loggingsidecar_enabled_with_custom_env_overrides():
+    """Validate the houston configmap and its embedded data with
+    loggingSidecar."""
+    sidecar_container_name = "sidecar-log-test"
+    terminationEndpoint = "http://localhost:8000/quitquitquit"
+    image_name = "quay.io/astronomer/ap-vector:0.22.3"
+    docs = render_chart(
+        values={
+            "global": {
+                "loggingSidecar": {
+                    "enabled": True,
+                    "name": sidecar_container_name,
+                    "image": image_name,
+                    "extraEnv": [
+                        {
+                            "name": "ES_USER",
+                            "valueFrom": {
+                                "secretKeyRef": {
+                                    "name": "elastic-creds",
+                                    "key": "ESUSER",
+                                }
+                            },
+                        },
+                        {
+                            "name": "ES_PASS",
+                            "valueFrom": {
+                                "secretKeyRef": {
+                                    "name": "elastic-creds",
+                                    "key": "ESPASS",
+                                }
+                            },
+                        },
+                    ],
+                }
+            }
+        },
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    common_test_cases(docs)
+    doc = docs[0]
+    prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
+    print(prod_yaml)
+    log_cmd = 'log_cmd = "1> >( tee -a /var/log/{sidecar_container_name}/out.log ) 2> >( tee -a /var/log/{sidecar_container_name}/err.log >&2 )"'.format(
+        sidecar_container_name=sidecar_container_name
+    )
+    assert (
+        log_cmd in prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
+    )
+    assert (
+        terminationEndpoint
+        in prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
+    )
+    assert prod_yaml["deployments"]["loggingSidecar"] == {
+        "enabled": True,
+        "name": sidecar_container_name,
+        "image": "quay.io/astronomer/ap-vector:0.22.3",
+        "terminationEndpoint": terminationEndpoint,
+        "customConfig": False,
+        "extraEnv": [
+            {
+                "name": "ES_USER",
+                "valueFrom": {
+                    "secretKeyRef": {"name": "elastic-creds", "key": "ESUSER"}
+                },
+            },
+            {
+                "name": "ES_PASS",
+                "valueFrom": {
+                    "secretKeyRef": {"name": "elastic-creds", "key": "ESPASS"}
+                },
+            },
+        ],
+    }
+
+    assert ("vector" in prod_yaml["deployments"]["loggingSidecar"]["image"]) is True
+
+
 cron_test_data = [
     ("development-angular-system-6091", 3),
     ("development-arithmetic-phases-5695", 3),
