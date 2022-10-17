@@ -62,7 +62,8 @@ def test_houston_configmap_with_scc_enabled():
 
 
 def test_houston_configmap_with_azure_enabled():
-    """Validate the houston configmap and its embedded data with azure enabled."""
+    """Validate the houston configmap and its embedded data with azure
+    enabled."""
     docs = render_chart(
         values={"global": {"azure": {"enabled": True}}},
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
