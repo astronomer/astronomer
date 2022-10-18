@@ -24,8 +24,7 @@ data:
       data: ${NODE_DATA}
       ingest: ${NODE_INGEST}
       max_local_storage_nodes: ${MAX_LOCAL_STORAGE_NODES}
-
-    processors: ${PROCESSORS:1}
+      processors: ${PROCESSORS:1}
 
     network.host: 0.0.0.0
 
@@ -37,6 +36,12 @@ data:
       cors:
         enabled: ${HTTP_CORS_ENABLE}
         allow-origin: ${HTTP_CORS_ALLOW_ORIGIN}
+
+
+    # disable xpack security by default
+    xpack:
+      security:
+        enabled: false
 
     # Setting the ping schedule explicitly ensures that
     # tcp_keep_alive configuration does not cause components
