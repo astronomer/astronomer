@@ -107,8 +107,10 @@ data:
         terminationEndpoint: {{ .Values.global.loggingSidecar.terminationEndpoint }}
         customConfig: {{ .Values.global.loggingSidecar.customConfig }}
         {{- if .Values.global.loggingSidecar.extraEnv}}
-        extraEnv:
-{{- .Values.global.loggingSidecar.extraEnv | toYaml | nindent 8 }}
+        extraEnv: {{- .Values.global.loggingSidecar.extraEnv | toYaml | nindent 8 }}
+        {{- end }}
+        {{- if .Values.global.loggingSidecar.resources}}
+        resources: {{- .Values.global.loggingSidecar.resources | toYaml | nindent 10 }}
         {{- end }}
       {{- end }}
 
