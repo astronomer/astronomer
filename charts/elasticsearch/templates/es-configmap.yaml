@@ -24,8 +24,7 @@ data:
       data: ${NODE_DATA}
       ingest: ${NODE_INGEST}
       max_local_storage_nodes: ${MAX_LOCAL_STORAGE_NODES}
-
-    processors: ${PROCESSORS:1}
+      processors: ${PROCESSORS:1}
 
     network.host: 0.0.0.0
 
