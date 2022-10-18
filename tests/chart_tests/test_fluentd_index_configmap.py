@@ -9,7 +9,7 @@ from tests import supported_k8s_versions
     supported_k8s_versions,
 )
 def test_fluentd_index_configmap(kube_version):
-    """Test to validate  fluentd index configmap."""
+    """Test to validate fluentd index configmap."""
     docs = render_chart(
         kube_version=kube_version,
         show_only=["charts/fluentd/templates/fluentd-index-template-configmap.yaml"],
