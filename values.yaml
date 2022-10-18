@@ -112,6 +112,13 @@ global:
     terminationEndpoint: http://localhost:8000/quitquitquit
     customConfig: false
     extraEnv: []
+    resources: {}
+    #  requests:
+    #    cpu: "100m"
+    #    memory: "386Mi"
+    #  limits:
+    #    cpu: "100m"
+    #    memory: "386Mi"
 
   # Deploy auth sidecar to use openshift native features
   authSidecar:
