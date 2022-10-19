@@ -1,3 +1,6 @@
+##############################
+# postgresql network policy
+##############################
 {{- if .Values.global.networkPolicy.enabled }}
 {{- if .Values.networkPolicy.enabled }}
 kind: NetworkPolicy
