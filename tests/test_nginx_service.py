@@ -133,8 +133,8 @@ class TestNginx:
             show_only=["charts/nginx/templates/nginx-service.yaml"],
         )[0]
 
-        assert len(doc["spec"]["externalIps"]) > 0
-        assert "1.2.3.4" in doc["spec"]["externalIps"]
+        assert len(doc["spec"]["externalIPs"]) > 0
+        assert "1.2.3.4" in doc["spec"]["externalIPs"]
 
     def test_nginx_metrics_service_type(self):
         doc = render_chart(
