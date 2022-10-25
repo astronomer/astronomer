@@ -129,47 +129,6 @@ class TestPrometheusConfigConfigmap:
             }
         ]
 
-    def test_prometheus_config_configmap_scrape_interval(self, kube_version):
-        """Prometheus should have configurable scrape interval duration which
-        can be defined as helm value."""
-        doc = render_chart(
-            kube_version=kube_version,
-            show_only=self.show_only,
-            values={
-                "prometheus": {
-                    "scrape_interval": "30s",
-                    "evaluation_interval": "foo",
-                    "velero": {"scrape_interval": "velero"},
-                    "fluentd": {"scrape_interval": "fluentd"},
-                    "airflow": {"scrape_interval": "airflow"},
-                    "nodeExporter": {"scrape_interval": "node-exp"},
-                    "kubeState": {"scrape_interval": "kube-state"},
-                    "postgresqlExporter": {
-                        "scrape_interval": "foo",
-                        "scrape_timeout": "bar",
-                    },
-                }
-            },
-        )[0]
-        # few jobs have scrape timeout, that's why dirty if-else
-        config_yaml = yaml.safe_load(doc["data"]["config"])
-        assert config_yaml["global"]["scrape_interval"] == "30s"
-        assert config_yaml["global"]["evaluation_interval"] == "foo"
-        for job in config_yaml["scrape_configs"]:
-            if job["job_name"] == "velero":
-                assert job["scrape_interval"] == "velero"
-            elif job["job_name"] == "fluentd":
-                assert job["scrape_interval"] == "fluentd"
-            elif job["job_name"] == "airflow":
-                assert job["scrape_interval"] == "airflow"
-            elif job["job_name"] == "node-exporter":
-                assert job["scrape_interval"] == "node-exp"
-            elif job["job_name"] == "kube-state":
-                assert job["scrape_interval"] == "kube-state"
-            if job["job_name"] == "postgresql-exporter":
-                assert job["scrape_interval"] == "foo"
-                assert job["scrape_timeout"] == "bar"
-
     def test_prometheus_config_configmap_with_node_exporter(self, kube_version):
         """Validate the prometheus config configmap has the node-exporter
         enabled with params."""
