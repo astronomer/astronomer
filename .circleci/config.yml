@@ -350,7 +350,7 @@ workflows:
           filters:
             branches:
               only:
-                - '/release-0\.\d+/'
+                - '/^release-0\.\d+$/'
 
       - release-to-public:
           context:
@@ -361,7 +361,7 @@ workflows:
           filters:
             branches:
               only:
-                - '/release-0\.\d+/'
+                - '/^release-0\.\d+$/'
 
 commands:
   push-to-quay-io:
