@@ -12,7 +12,8 @@ from tests.chart_tests.helm_template_generator import render_chart
     supported_k8s_versions,
 )
 def test_astronomer_registry_configmap_defaults(kube_version):
-    """Test that helm renders a good configmap template for astronomer registry."""
+    """Test that helm renders a good configmap template for astronomer
+    registry."""
     docs = render_chart(
         kube_version=kube_version,
         show_only=["charts/astronomer/templates/registry/registry-configmap.yaml"],
@@ -34,7 +35,8 @@ def test_astronomer_registry_configmap_defaults(kube_version):
     supported_k8s_versions,
 )
 def test_astronomer_registry_redirect_disabled(kube_version):
-    """Test that helm renders astronomer registry configmap template with redirect disabled."""
+    """Test that helm renders astronomer registry configmap template with
+    redirect disabled."""
     docs = render_chart(
         kube_version=kube_version,
         values={"astronomer": {"registry": {"redirect": {"disable": True}}}},

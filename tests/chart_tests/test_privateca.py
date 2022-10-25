@@ -19,7 +19,8 @@ class TestPrivateCaDaemonset:
         assert doc["spec"]["template"]["spec"]["containers"][0]["name"] == "cert-copy"
 
     def test_privateca_daemonset_disabled(self, kube_version):
-        """Test that no daemonset is rendered when privateCaCertsAddToHost is disabled."""
+        """Test that no daemonset is rendered when privateCaCertsAddToHost is
+        disabled."""
         with pytest.raises(CalledProcessError):
             render_chart(
                 kube_version=kube_version,
@@ -38,7 +39,8 @@ class TestPrivateCaDaemonset:
             )
 
     def test_privateca_daemonset_enabled(self, kube_version):
-        """Test that the daemonset is rendered with valid properties when enabled."""
+        """Test that the daemonset is rendered with valid properties when
+        enabled."""
         docs = render_chart(
             kube_version=kube_version,
             show_only=self.show_only,
@@ -109,7 +111,8 @@ class TestPrivateCaDaemonset:
 )
 class TestPrivateCaPsp:
     def test_privateca_psp_enabled_cacertaddtohost_disabled(self, kube_version):
-        """Test that there is nothing rendered when psp is enabled and privateCaCertsAddToHost is disabled."""
+        """Test that there is nothing rendered when psp is enabled and
+        privateCaCertsAddToHost is disabled."""
         with pytest.raises(CalledProcessError):
             render_chart(
                 kube_version=kube_version,
@@ -125,7 +128,8 @@ class TestPrivateCaPsp:
             )
 
     def test_privateca_psp_disabled_cacertaddtohost_enabled(self, kube_version):
-        """Test that nothing is rendered when psp is disabled and privateCaCertsAddToHost is enabled"""
+        """Test that nothing is rendered when psp is disabled and
+        privateCaCertsAddToHost is enabled."""
         with pytest.raises(CalledProcessError):
             render_chart(
                 kube_version=kube_version,
@@ -141,7 +145,8 @@ class TestPrivateCaPsp:
             )
 
     def test_privateca_psp_enabled(self, kube_version):
-        """Test that psp is rendered when psp is enabled and privateCaCertsAddToHost is enabled."""
+        """Test that psp is rendered when psp is enabled and
+        privateCaCertsAddToHost is enabled."""
         docs = render_chart(
             kube_version=kube_version,
             show_only=["templates/trust-private-ca-on-all-nodes/psp.yaml"],

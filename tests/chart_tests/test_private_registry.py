@@ -5,8 +5,8 @@ from tests.chart_tests.helm_template_generator import render_chart
 
 
 def test_private_registry_repository_image_names_the_same_as_public_ones():
-    """test that image names dont change when using a custom repo because that breaks
-    pull-through caching proxies in use by various customers."""
+    """test that image names dont change when using a custom repo because that
+    breaks pull-through caching proxies in use by various customers."""
 
     extra_globals = {
         "blackboxExporterEnabled": True,
@@ -51,7 +51,8 @@ def test_private_registry_repository_image_names_the_same_as_public_ones():
 
 
 def test_private_registry_repository_overrides_work():
-    """image names should always contain the new repository when it is specified."""
+    """image names should always contain the new repository when it is
+    specified."""
     repository = "bob-the-registry"
     docs = render_chart(
         values={
@@ -123,6 +124,7 @@ private_registry_docs_image_pull_secrets = (
     ids=private_registry_docs_image_pull_secrets.keys(),
 )
 def test_private_registry_repository_image_pull_secret(image_pull_secrets):
-    """Specs must contain imagePullSecrets for private repository when it is specified."""
+    """Specs must contain imagePullSecrets for private repository when it is
+    specified."""
     assert image_pull_secrets is not None
     assert {"name": "bob-the-registry-secret"} in image_pull_secrets

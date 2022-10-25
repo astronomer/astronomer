@@ -21,7 +21,7 @@ class TestStatefulSetsAnnotations:
             assert not vct[0]["metadata"].get("annotations")
 
     def test_es_sts_with_overridden_annotations(self, kube_version):
-        """Test es sts for the volume claim templates annotations"""
+        """Test es sts for the volume claim templates annotations."""
         docs = render_chart(
             kube_version=kube_version,
             values={
@@ -48,7 +48,7 @@ class TestStatefulSetsAnnotations:
             ]["volumeClaimTemplates"][0]["metadata"]["annotations"]
 
     def test_prometheus_sts_with_overridden_annotations(self, kube_version):
-        """Test prometheus sts for the volume claim templates annotations"""
+        """Test prometheus sts for the volume claim templates annotations."""
         docs = render_chart(
             kube_version=kube_version,
             values={
@@ -73,7 +73,7 @@ class TestStatefulSetsAnnotations:
             } == doc["spec"]["volumeClaimTemplates"][0]["metadata"]["annotations"]
 
     def test_registry_sts_with_overridden_annotations(self, kube_version):
-        """Test registry sts for the volume claim templates annotations"""
+        """Test registry sts for the volume claim templates annotations."""
         docs = render_chart(
             kube_version=kube_version,
             values={
@@ -100,7 +100,7 @@ class TestStatefulSetsAnnotations:
             } == doc["spec"]["volumeClaimTemplates"][0]["metadata"]["annotations"]
 
     def test_stan_sts_with_overridden_annotations(self, kube_version):
-        """Test stan sts for the volume claim templates annotations"""
+        """Test stan sts for the volume claim templates annotations."""
         docs = render_chart(
             kube_version=kube_version,
             values={
