@@ -57,6 +57,7 @@ data:
 
     # Airflow deployment configuration
     deployments:
+      namespaceFreeFormEntry: {{ .Values.global.namespaceFreeFormEntry }}
       # Airflow chart settings
       # Static helm configurations for this chart are found below.
       chart:
@@ -103,6 +104,12 @@ data:
         image: {{ .Values.global.loggingSidecar.image }}
         terminationEndpoint: {{ .Values.global.loggingSidecar.terminationEndpoint }}
         customConfig: {{ .Values.global.loggingSidecar.customConfig }}
+        {{- if .Values.global.loggingSidecar.extraEnv}}
+        extraEnv: {{- .Values.global.loggingSidecar.extraEnv | toYaml | nindent 8 }}
+        {{- end }}
+        {{- if .Values.global.loggingSidecar.resources}}
+        resources: {{- .Values.global.loggingSidecar.resources | toYaml | nindent 10 }}
+        {{- end }}
       {{- end }}
 
       # These values get passed directly into the airflow helm deployments

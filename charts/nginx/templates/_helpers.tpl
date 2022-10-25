@@ -59,7 +59,7 @@ Create chart name and version as used by the chart label.
 Return the proper Docker Image Registry Secret Names
 */}}
 {{- define "nginx.imagePullSecrets" -}}
-{{- if .Values.global.privateRegistry.enabled }}
+{{- if and .Values.global.privateRegistry.enabled .Values.global.privateRegistry.secretName }}
 imagePullSecrets:
   - name: {{ .Values.global.privateRegistry.secretName }}
 {{- end -}}
