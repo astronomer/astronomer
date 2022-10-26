@@ -228,6 +228,16 @@ s3:
   value: {{ template "houston.nats.servers" . }}
 - name: NATS__CLUSTER_ID
   value: {{ .Release.Name }}-stan
+{{- if .Values.houston.updateAirflowCheck.enabled }}
+- name: HOUSTON_SCRIPT_UPDATE_SERVICE_URL
+  value: {{ .Values.houston.updateAirflowCheck.url }}
+{{- end }}
+
+{{- if .Values.houston.updateRuntimeCheck.enabled }}
+- name: HOUSTON_SCRIPT_UPDATE_RUNTIME_SERVICE_URL
+  value: {{ .Values.houston.updateRuntimeCheck.url }}
+{{- end }}
+
 {{- end }}
 
 {{- define "houston_volume_mounts" }}
