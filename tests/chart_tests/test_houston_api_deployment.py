@@ -211,3 +211,40 @@ class TestHoustonApiDeployment:
         }
 
         assert expected_airflow_env in houston_env
+
+    def test_houston_api_deployment_passing_in_base_houston_host_in_env(
+        self, kube_version
+    ):
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=[
+                "charts/astronomer/templates/houston/api/houston-deployment.yaml"
+            ],
+        )
+        assert len(docs) == 1
+        doc = docs[0]
+
+        c_by_name = get_containers_by_name(doc, include_init_containers=False)
+        houston_env = c_by_name["houston"]["env"]
+
+        expected_env = {
+            "name": "HOUSTON__HOST",
+            "value": "release-name-houston",
+        }
+        assert expected_env in houston_env
+
+    def test_houston_env_custom_release_name(self, kube_version):
+        """Ensure all houston environment __HOST variables use the custom
+        release name."""
+        docs = render_chart(
+            name="custom-name",
+            kube_version=kube_version,
+            show_only=[
+                "charts/astronomer/templates/houston/api/houston-deployment.yaml"
+            ],
+        )
+        assert all(
+            env["value"].startswith("custom-name-")
+            for env in docs[0]["spec"]["template"]["spec"]["containers"][0]["env"]
+            if "__HOST" in env.get("name") and env.get("value")
+        )

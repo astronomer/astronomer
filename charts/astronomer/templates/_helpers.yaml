@@ -214,6 +214,8 @@ s3:
       key: connection
 {{- end}}
   # These are set here for Houston's entrypoint script
+- name: HOUSTON__HOST
+  value: {{ .Release.Name }}-houston
 - name: COMMANDER__HOST
   value: {{ .Release.Name }}-commander
 - name: COMMANDER__PORT
