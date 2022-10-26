@@ -134,3 +134,22 @@ class TestHoustonApiDeployment:
             jmespath.search("spec.template.spec.imagePullSecrets[0].name", docs[0])
             == secretName
         )
+
+    def test_houston_api_deployment_passing_in_houston_host_in_env(self, kube_version):
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=[
+                "charts/astronomer/templates/houston/api/houston-deployment.yaml"
+            ],
+        )
+        assert len(docs) == 1
+        doc = docs[0]
+
+        c_by_name = get_containers_by_name(doc, include_init_containers=False)
+        houston_env = c_by_name["houston"]["env"]
+
+        expected_env = {
+            "name": "HOUSTON__HOST",
+            "value": "release-name-houston",
+        }
+        assert expected_env in houston_env
