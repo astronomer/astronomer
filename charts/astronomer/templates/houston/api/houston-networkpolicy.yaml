@@ -35,6 +35,11 @@ spec:
     {{- end }}
     - podSelector:
         matchLabels:
+          tier: astronomer
+          component: houston-populate-hourly-task-audit-metrics
+          release: {{ .Release.Name }}
+    - podSelector:
+        matchLabels:
           tier: monitoring
           component: prometheus
           release: {{ .Release.Name }}
