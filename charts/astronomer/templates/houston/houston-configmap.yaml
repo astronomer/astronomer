@@ -72,7 +72,9 @@ data:
       kibanaUIEnabled: false
       {{ end }}
 
-      taskUsageMetricsEnabled: {{ .Values.global.taskUsageMetricsEnabled }}
+      taskUsageReport:
+        taskUsageMetricsEnabled: {{ .Values.global.taskUsageMetricsEnabled }}
+        taskUsageReportNumberOfDays: {{ .Values.houston.cleanupTaskUsageData.olderThan}}
 
       {{ if .Values.global.features.namespacePools.enabled }}
       hardDeleteDeployment: true
