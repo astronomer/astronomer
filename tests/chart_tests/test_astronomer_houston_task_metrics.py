@@ -175,4 +175,7 @@ class TestAstronomerHoustonTaskMetricsCronjobs:
 
         doc = docs[0]
         prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
-        assert prod_yaml["deployments"]["taskUsageMetricsEnabled"] is True
+        assert (
+            prod_yaml["deployments"]["taskUsageReport"]["taskUsageMetricsEnabled"]
+            is True
+        )
