@@ -86,11 +86,11 @@ spec:
       containers:
       - name: es-client
         securityContext:
+        {{- if .Values.client.securityContext }}
+{{ toYaml .Values.client.securityContext | indent 10 }}
+        {{- else }}
 {{ toYaml .Values.securityContext | indent 10 }}
-          capabilities:
-            add:
-              - IPC_LOCK
-              - SYS_RESOURCE
+        {{- end }}
         image: {{ template "elasticsearch.image" . }}
         imagePullPolicy: {{ .Values.images.es.pullPolicy }}
         env:

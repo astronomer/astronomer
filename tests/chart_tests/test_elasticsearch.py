@@ -120,6 +120,81 @@ class TestElasticSearch:
             assert pod_data["securityContext"]["runAsNonRoot"] is True
             assert pod_data["securityContext"]["runAsUser"] == 1000
 
+    def test_elasticsearch_master_securitycontext_overrides(self, kube_version):
+        """Test ElasticSearch client with securityContext custom values."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "elasticsearch": {
+                    "master": {
+                        "securityContext": {
+                            "capabilities": {"add": ["IPC_LOCK"]},
+                        },
+                    },
+                    "securityContext": {
+                        "capabilities": {"add": ["SYS_RESOURCE"]},
+                    },
+                }
+            },
+            show_only=[
+                "charts/elasticsearch/templates/master/es-master-statefulset.yaml",
+            ],
+        )
+        assert len(docs) == 1
+        doc = docs[0]
+        pod_data = doc["spec"]["template"]["spec"]["containers"][0]
+        assert pod_data["securityContext"]["capabilities"]["add"] == ["IPC_LOCK"]
+
+    def test_elasticsearch_data_securitycontext_overrides(self, kube_version):
+        """Test ElasticSearch client with securityContext custom values."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "elasticsearch": {
+                    "data": {
+                        "securityContext": {
+                            "capabilities": {"add": ["IPC_LOCK"]},
+                        },
+                    },
+                    "securityContext": {
+                        "capabilities": {"add": ["SYS_RESOURCE"]},
+                    },
+                }
+            },
+            show_only=[
+                "charts/elasticsearch/templates/data/es-data-statefulset.yaml",
+            ],
+        )
+        assert len(docs) == 1
+        doc = docs[0]
+        pod_data = doc["spec"]["template"]["spec"]["containers"][0]
+        assert pod_data["securityContext"]["capabilities"]["add"] == ["IPC_LOCK"]
+
+    def test_elasticsearch_client_securitycontext_overrides(self, kube_version):
+        """Test ElasticSearch client with securityContext custom values."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "elasticsearch": {
+                    "client": {
+                        "securityContext": {
+                            "capabilities": {"add": ["IPC_LOCK"]},
+                        },
+                    },
+                    "securityContext": {
+                        "capabilities": {"add": ["SYS_RESOURCE"]},
+                    },
+                }
+            },
+            show_only=[
+                "charts/elasticsearch/templates/client/es-client-deployment.yaml",
+            ],
+        )
+        assert len(docs) == 1
+        doc = docs[0]
+        pod_data = doc["spec"]["template"]["spec"]["containers"][0]
+        assert pod_data["securityContext"]["capabilities"]["add"] == ["IPC_LOCK"]
+
     def test_elasticsearch_securitycontext_overrides(self, kube_version):
         """Test ElasticSearch master, data with securityContext custom
         values."""
