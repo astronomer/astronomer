@@ -120,7 +120,6 @@ class TestElasticSearch:
             assert pod_data["securityContext"]["runAsNonRoot"] is True
             assert pod_data["securityContext"]["runAsUser"] == 1000
 
-
     def test_elasticsearch_master_securitycontext_overrides(self, kube_version):
         """Test ElasticSearch client with securityContext custom values."""
         docs = render_chart(
