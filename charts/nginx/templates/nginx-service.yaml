@@ -41,7 +41,7 @@ spec:
   {{- if .Values.loadBalancerSourceRanges }}
   loadBalancerSourceRanges: {{ .Values.loadBalancerSourceRanges | toJson }}
   {{- end }}
-  {{- if .Values.preserveSourceIP }}
+  {{- if or (.Values.preserveSourceIP) (eq .Values.serviceType "ClusterIP") }}
   externalTrafficPolicy: "Local"
   {{- else }}
   externalTrafficPolicy: "Cluster"

@@ -1,4 +1,5 @@
 from tests.chart_tests.helm_template_generator import render_chart
+import pytest
 
 
 class TestNginx:
@@ -16,6 +17,24 @@ class TestNginx:
         assert doc["metadata"]["name"] == "release-name-nginx"
         assert "loadBalancerIP" not in doc["spec"]
         assert "loadBalancerSourceRanges" not in doc["spec"]
+
+    @pytest.mark.parametrize(
+        "service_type,external_traffic_policy",
+        [
+            ("ClusterIP", "Local"),
+            ("NodePort", "Cluster"),
+            ("LoadBalancer", "Cluster"),
+            ("ExternalName", "Cluster"),
+        ],
+    )
+    def test_nginx_service_servicetype(self, service_type, external_traffic_policy):
+        values = {"nginx": {"serviceType": service_type}}
+        doc = render_chart(
+            values=values,
+            show_only=["charts/nginx/templates/nginx-service.yaml"],
+        )[0]
+        assert doc["spec"]["type"] == service_type
+        assert doc["spec"]["externalTrafficPolicy"] == external_traffic_policy
 
     def test_nginx_with_ingress_annotations(self):
         """Deployment should contain the given ingress annotations when they
