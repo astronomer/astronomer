@@ -21,11 +21,11 @@ class TestNginx:
     @pytest.mark.parametrize(
         "service_type,external_traffic_policy,preserve_source_ip",
         [
-            ("ClusterIP", "Local", False),
+            ("ClusterIP", None, False),
             ("NodePort", "Cluster", False),
             ("LoadBalancer", "Cluster", False),
             ("ExternalName", "Cluster", False),
-            ("ClusterIP", "Local", True),
+            ("ClusterIP", None, True),
             ("NodePort", "Local", True),
             ("LoadBalancer", "Local", True),
             ("ExternalName", "Local", True),
@@ -34,6 +34,12 @@ class TestNginx:
     def test_nginx_service_servicetype(
         self, service_type, external_traffic_policy, preserve_source_ip
     ):
+        """Verify that ClusterIP never has an externalTrafficPolicy, and other
+        configurations are correct according to spec.
+
+        More details and links about this behavior linked in PR
+        https://github.com/astronomer/astronomer/pull/1726
+        """
         values = {
             "nginx": {
                 "serviceType": service_type,
@@ -45,7 +51,7 @@ class TestNginx:
             show_only=["charts/nginx/templates/nginx-service.yaml"],
         )[0]
         assert doc["spec"]["type"] == service_type
-        assert doc["spec"]["externalTrafficPolicy"] == external_traffic_policy
+        assert doc["spec"].get("externalTrafficPolicy") == external_traffic_policy
 
     def test_nginx_with_ingress_annotations(self):
         """Deployment should contain the given ingress annotations when they
