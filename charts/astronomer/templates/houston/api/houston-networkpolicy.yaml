@@ -36,7 +36,7 @@ spec:
     - podSelector:
         matchLabels:
           tier: astronomer
-          component: houston-populate-hourly-task-audit-metrics
+          component: houston-populate-hourly-ta-metrics
           release: {{ .Release.Name }}
     - podSelector:
         matchLabels:
