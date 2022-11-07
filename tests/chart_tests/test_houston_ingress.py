@@ -66,7 +66,7 @@ class TestIngress:
         annotations = jmespath.search("metadata.annotations", doc)
         assert (
             annotations["nginx.ingress.kubernetes.io/configuration-snippet"]
-            == r"""location ~ ^/v1/(registry\/events|alerts|elasticsearch) {
+            == r"""location ~ ^/v1/(registry\/events|alerts|elasticsearch|metrics) {
   deny all;
   return 403;
 }
