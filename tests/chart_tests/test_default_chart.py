@@ -12,6 +12,23 @@ annotation_validator = re.compile(
 pod_managers = ["Deployment", "StatefulSet", "DaemonSet"]
 
 
+class TestAllCronJobs:
+    chart_values = chart_tests.get_all_features()
+
+    def test_ensure_cronjob_names_are_max_52_chars(self):
+        """Cronjob names must be DNS_MAX_LEN - TIMESTAMP_LEN, which is 52 chars."""
+        default_docs = render_chart(values=self.chart_values)
+        cronjobs = [
+            doc for doc in default_docs if doc["kind"].lower() == "CronJob".lower()
+        ]
+
+        for doc in cronjobs:
+            name_len = len(doc["metadata"]["name"])
+            assert (
+                name_len <= 52
+            ), f'{doc["metadata"]["name"]} is too long at {name_len} characters'
+
+
 class TestAllPodSpecContainers:
     """Test pod spec containers for some defaults."""
 

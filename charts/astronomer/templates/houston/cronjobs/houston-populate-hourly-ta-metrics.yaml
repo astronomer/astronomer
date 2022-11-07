@@ -5,10 +5,10 @@
 apiVersion: {{ include "apiVersion.batch.cronjob" . }}
 kind: CronJob
 metadata:
-  name: "{{ .Release.Name }}-houston-populate-hourly-task-audit-metrics"
+  name: "{{ .Release.Name }}-houston-populate-hourly-ta-metrics"
   labels:
     tier: astronomer
-    component: houston-populate-hourly-task-audit-metrics
+    component: houston-populate-hourly-ta-metrics
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
@@ -23,9 +23,9 @@ spec:
         metadata:
           labels:
             tier: astronomer
-            component: houston-populate-hourly-task-audit-metrics
+            component: houston-populate-hourly-ta-metrics
             release: {{ .Release.Name }}
-            app: houston-populate-hourly-task-audit-metrics
+            app: houston-populate-hourly-ta-metrics
             version: {{ .Chart.Version }}
           {{- if .Values.global.istio.enabled }}
           annotations:

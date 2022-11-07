@@ -13,4 +13,5 @@ global:
   postgresqlEnabled: true
   prometheusPostgresExporterEnabled: true
   pspEnabled: true
+  taskUsageMetricsEnabled: True
   veleroEnabled: true

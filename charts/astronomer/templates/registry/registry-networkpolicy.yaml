@@ -80,7 +80,7 @@ spec:
         matchLabels:
           tier: astronomer
           release: {{ .Release.Name }}
-          component: houston-populate-hourly-task-audit-metrics
+          component: houston-populate-hourly-ta-metrics
     {{- if .Values.global.authSidecar.enabled  }}
     - namespaceSelector:
         matchLabels:

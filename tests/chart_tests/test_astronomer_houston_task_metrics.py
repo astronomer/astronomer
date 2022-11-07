@@ -65,7 +65,7 @@ class TestAstronomerHoustonTaskMetricsCronjobs:
             kube_version=kube_version,
             values={"global": {"taskUsageMetricsEnabled": False}},
             show_only=[
-                "charts/astronomer/templates/houston/cronjobs/houston-populate-hourly-task-audit-metrics.yaml",
+                "charts/astronomer/templates/houston/cronjobs/houston-populate-hourly-ta-metrics.yaml",
             ],
         )
         assert len(docs) == 0
@@ -77,7 +77,7 @@ class TestAstronomerHoustonTaskMetricsCronjobs:
             kube_version=kube_version,
             values={"global": {"taskUsageMetricsEnabled": True}},
             show_only=[
-                "charts/astronomer/templates/houston/cronjobs/houston-populate-hourly-task-audit-metrics.yaml",
+                "charts/astronomer/templates/houston/cronjobs/houston-populate-hourly-ta-metrics.yaml",
             ],
         )
 
@@ -85,7 +85,7 @@ class TestAstronomerHoustonTaskMetricsCronjobs:
         assert docs[0]["kind"] == "CronJob"
         assert (
             docs[0]["metadata"]["name"]
-            == "release-name-houston-populate-hourly-task-audit-metrics"
+            == "release-name-houston-populate-hourly-ta-metrics"
         )
         assert docs[0]["spec"]["schedule"] == "57 * * * *"
 
@@ -103,7 +103,7 @@ class TestAstronomerHoustonTaskMetricsCronjobs:
                 },
             },
             show_only=[
-                "charts/astronomer/templates/houston/cronjobs/houston-populate-hourly-task-audit-metrics.yaml",
+                "charts/astronomer/templates/houston/cronjobs/houston-populate-hourly-ta-metrics.yaml",
             ],
         )
 
@@ -111,7 +111,7 @@ class TestAstronomerHoustonTaskMetricsCronjobs:
         assert docs[0]["kind"] == "CronJob"
         assert (
             docs[0]["metadata"]["name"]
-            == "release-name-houston-populate-hourly-task-audit-metrics"
+            == "release-name-houston-populate-hourly-ta-metrics"
         )
         assert docs[0]["spec"]["schedule"] == "90 * * * *"
 
