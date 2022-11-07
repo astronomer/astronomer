@@ -85,7 +85,7 @@ class TestAstronomerHoustonTaskMetricsCronjobs:
         assert docs[0]["kind"] == "CronJob"
         assert (
             docs[0]["metadata"]["name"]
-            == "release-name-houston-populate-hourly-task-audit-metrics"
+            == "release-name-houston-populate-hourly-ta-metrics"
         )
         assert docs[0]["spec"]["schedule"] == "57 * * * *"
 
@@ -111,7 +111,7 @@ class TestAstronomerHoustonTaskMetricsCronjobs:
         assert docs[0]["kind"] == "CronJob"
         assert (
             docs[0]["metadata"]["name"]
-            == "release-name-houston-populate-hourly-task-audit-metrics"
+            == "release-name-houston-populate-hourly-ta-metrics"
         )
         assert docs[0]["spec"]["schedule"] == "90 * * * *"
 
