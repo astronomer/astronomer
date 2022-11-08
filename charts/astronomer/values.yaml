@@ -361,6 +361,8 @@ registry:
   redirect:
     disable: false
 
+  logLevel: info
+
 install:
   resources: {}
   cliVersion: 0.29
