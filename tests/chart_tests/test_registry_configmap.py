@@ -9,7 +9,7 @@ import yaml
     supported_k8s_versions,
 )
 class Test_Registry_Configmap:
-    def test_registry_configmap_with_s3Enabled(self, kube_version):
+    def test_registry_configmap_with_s3_enabled(self, kube_version):
         """Test that helm renders an expected registry-configmap to validate
         regionendpoint flag."""
         docs = render_chart(
