@@ -13,7 +13,7 @@ images:
     tag: 7.17.6
     pullPolicy: IfNotPresent
   init:
-    repository: quay.io/astronomer/ap-base
+    repository: quay.io/astronomer/ap-base # needs root permissions for sysctl changes
     tag: 3.16.2-4
     pullPolicy: IfNotPresent
   curator:
