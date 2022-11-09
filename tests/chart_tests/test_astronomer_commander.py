@@ -28,8 +28,8 @@ class TestAstronomerCommander:
         assert c_by_name["commander"]["image"].startswith(
             "quay.io/astronomer/ap-commander:"
         )
-        assert c_by_name["commander"]["resources"]["limits"]["memory"] == "4Gi"
-        assert c_by_name["commander"]["resources"]["requests"]["memory"] == "2Gi"
+        assert c_by_name["commander"]["resources"]["limits"]["memory"] == "2Gi"
+        assert c_by_name["commander"]["resources"]["requests"]["memory"] == "1Gi"
         env_vars = {x["name"]: x["value"] for x in c_by_name["commander"]["env"]}
         assert env_vars["COMMANDER_UPGRADE_TIMEOUT"] == "300"
 
