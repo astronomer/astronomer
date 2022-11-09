@@ -5,7 +5,7 @@
 ##################################
 images:
   init:
-    repository: quay.io/astronomer/ap-base
+    repository: quay.io/astronomer/ap-init
     tag: 3.16.2-4
     pullPolicy: IfNotPresent
   stan:
