@@ -5,3 +5,5 @@ CVE-2022-27191
 CVE-2022-1996
 # golang.org/x/net CVE
 CVE-2022-27664
+# golang.org/x/text
+CVE-2022-32149
