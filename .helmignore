@@ -1,48 +1,34 @@
-# Patterns to ignore when building packages.
-# This supports shell glob matching, relative path matching, and
-# negation (prefixed with !). Only one pattern per line.
-# https://helm.sh/docs/chart_template_guide/helm_ignore_file/
-
-# Common VCS dirs
-.git/
-.gitignore
-.bzr/
-.bzrignore
-.hg/
-.hgignore
-.svn/
-
-# Common backup files
-*.swp
 *.bak
-*.tmp
-*~
-
-# Various IDEs
-.project
-.idea/
-*.tmproj
-
-# Certificate files
 *.crt
 *.csr
 *.key
 *.pem
-
-# Astronomer helm repository directory
+*.swp
 *.tgz
+*.tmp
+*.tmproj
+*~
+.bzr/
+.bzrignore
 .DS_Store
+.git/
+.gitignore
+.hg/
+.hgignore
+.idea/
+.project
 .pytest_cache
+.svn/
 /.circleci
 /.github
 /.pre-commit-config.yaml
 /.unittest-requirements
-/CODEOWNERS
-/Makefile
 /bin
 /certs
+/CODEOWNERS
 /configs
 /docs
+/Makefile
 /repository
 /requirements
 /secrets
