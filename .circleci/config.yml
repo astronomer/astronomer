@@ -20,7 +20,7 @@ parameters:
 jobs:
   trivy-scan-docker:
     docker:
-      - image: docker:20.10.14-git
+      - image: docker:20.10.18-git
     shell: /bin/sh -leo pipefail
     parameters:
       docker_image:
@@ -31,7 +31,7 @@ jobs:
       BASH_ENV: /etc/profile
     steps:
       - setup_remote_docker:
-          version: 20.10.14
+          version: 20.10.18
       - checkout
       - run:
           name: Pull Docker image
@@ -106,7 +106,7 @@ jobs:
     steps:
       - setup_remote_docker:
           docker_layer_caching: true
-          version: 20.10.14
+          version: 20.10.18
       - checkout
       - run:
           name: Create chart-tests-cache-key.txt
@@ -151,7 +151,7 @@ jobs:
 
   release-to-internal:
     machine:
-      image: ubuntu-2204:2022.10.2 # https://circleci.com/developer/machine/image/ubuntu-2204
+      image: ubuntu-2204:2022.10.2
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -161,12 +161,11 @@ jobs:
           command: |
             set -e
             sudo apt-get update && sudo apt-get install -y ca-certificates curl
-            pyenv global 3.10.5
             bin/release-helm-chart /tmp/workspace/astronomer-*.tgz
 
   release-to-public:
     machine:
-      image: ubuntu-2204:2022.07.1
+      image: ubuntu-2204:2022.10.2
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -176,13 +175,12 @@ jobs:
           command: |
             set -e
             sudo apt-get update && sudo apt-get install -y ca-certificates curl
-            pyenv global 3.10.5
             bin/release-helm-chart -p /tmp/workspace/astronomer-*.tgz
       - publish-github-release
 
   platform-1-21-14:
     machine:
-      image: ubuntu-2204:2022.07.1
+      image: ubuntu-2204:2022.10.2
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.21.14
@@ -198,7 +196,7 @@ jobs:
           when: always
   platform-1-22-15:
     machine:
-      image: ubuntu-2204:2022.07.1
+      image: ubuntu-2204:2022.10.2
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.22.15
@@ -214,7 +212,7 @@ jobs:
           when: always
   platform-1-23-13:
     machine:
-      image: ubuntu-2204:2022.07.1
+      image: ubuntu-2204:2022.10.2
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.23.13
@@ -230,7 +228,7 @@ jobs:
           when: always
   platform-1-24-7:
     machine:
-      image: ubuntu-2204:2022.07.1
+      image: ubuntu-2204:2022.10.2
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.24.7
@@ -251,7 +249,7 @@ jobs:
     steps:
       - checkout
       - setup_remote_docker:
-          version: 20.10.14
+          version: 20.10.18
       - run:
           name: Check that commander image uses same Airflow chart version
           command: make validate-commander-airflow-version
@@ -386,7 +384,7 @@ commands:
     steps:
       - setup_remote_docker:
           docker_layer_caching: true
-          version: 20.10.14
+          version: 20.10.18
       - attach_workspace:
           at: /tmp/workspace
       - run:
@@ -440,7 +438,7 @@ commands:
       - checkout
       - setup_remote_docker:
           docker_layer_caching: true
-          version: 20.10.14
+          version: 20.10.18
       - run:
           name: Build the Docker image
           command: |
@@ -490,7 +488,6 @@ commands:
           name: Create a release on GitHub
           command: |
             set -xe
-            pyenv global 3.10.5
             pip install astronomer_e2e_test
             astronomer-ci publish-github-release --github-repository $CIRCLE_PROJECT_REPONAME --github-organization $CIRCLE_PROJECT_USERNAME --commitish $CIRCLE_SHA1
 
