@@ -65,7 +65,7 @@ jobs:
 
   run_pre_commit:
     docker:
-      - image: quay.io/astronomer/ci-pre-commit:2022-09
+      - image: quay.io/astronomer/ci-pre-commit:2022-11
     steps:
       - checkout
       - run:
@@ -100,7 +100,7 @@ jobs:
 
   unittest-charts:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2022-09
+      - image: quay.io/astronomer/ci-helm-release:2022-11
     parallelism: 8
     resource_class: xlarge
     steps:
@@ -151,7 +151,7 @@ jobs:
 
   release-to-internal:
     machine:
-      image: ubuntu-2204:2022.07.1 # https://circleci.com/developer/machine/image/ubuntu-2204
+      image: ubuntu-2204:2022.10.2 # https://circleci.com/developer/machine/image/ubuntu-2204
     steps:
       - attach_workspace:
           at: /tmp/workspace
