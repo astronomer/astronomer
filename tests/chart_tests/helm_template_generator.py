@@ -19,7 +19,7 @@ import subprocess
 import sys
 from functools import cache
 from tempfile import NamedTemporaryFile
-from typing import Any, Dict, Tuple
+from typing import Any
 from typing import Optional
 
 import jsonschema
@@ -130,7 +130,7 @@ def render_chart(
         return k8s_objects
 
 
-def prepare_k8s_lookup_dict(k8s_objects) -> Dict[Tuple[str, str], Dict[str, Any]]:
+def prepare_k8s_lookup_dict(k8s_objects) -> dict[tuple[str, str], dict[str, Any]]:
     """Helper to create a lookup dict from k8s_objects.
 
     The keys of the dict are the k8s object's kind and name

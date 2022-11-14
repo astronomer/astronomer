@@ -4,7 +4,6 @@
 from pathlib import Path, PosixPath
 import yaml
 import sys
-from typing import Dict
 
 
 this_script = Path(__file__)
@@ -24,7 +23,7 @@ def validate_test_file(file: PosixPath) -> None:
             sys.exit(1)
 
 
-def validate_test_suite(test_suite: Dict, file: PosixPath) -> None:
+def validate_test_suite(test_suite: dict, file: PosixPath) -> None:
     """Validate all templates within a given test suite."""
 
     for template_file in test_suite["templates"]:
