@@ -3,7 +3,7 @@
 
 [ "$CIRCLECI" == true ] || { echo "ERROR: not running in CircleCI" ; exit 1 ; }
 
-STERN_VERSION=1.20.1
+STERN_VERSION=1.22.0
 NAMESPACE="${NAMESPACE:-astronomer}"
 
 cat >> "$HOME/.bashrc" <<EOF

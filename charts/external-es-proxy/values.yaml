@@ -7,11 +7,11 @@ replicaCount: 1
 images:
   esproxy:
     repository: quay.io/astronomer/ap-openresty
-    tag: 1.21.4-2
+    tag: 1.21.4-3
     pullPolicy: IfNotPresent
   awsproxy:
     repository: quay.io/astronomer/ap-awsesproxy
-    tag: 1.3-8
+    tag: 1.3-9
     pullPolicy: IfNotPresent
 
 imagePullSecrets: []

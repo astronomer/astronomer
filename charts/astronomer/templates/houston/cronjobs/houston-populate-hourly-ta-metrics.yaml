@@ -1,29 +1,31 @@
-#######################################
-## Create Root Admin Job
-#######################################
+########################################
+## Houston Populate Daily Task Metrics CronJob
+########################################
+{{- if .Values.global.taskUsageMetricsEnabled }}
 apiVersion: {{ include "apiVersion.batch.cronjob" . }}
 kind: CronJob
 metadata:
-  name: {{ .Release.Name }}-update-root-admin-password-cronjob
+  name: "{{ .Release.Name }}-houston-populate-hourly-ta-metrics"
   labels:
     tier: astronomer
-    component: houston-update-root-admin-password-cronjob
+    component: houston-populate-hourly-ta-metrics
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 spec:
-  schedule: "0 5 31 2 *" # https://crontab.guru/#0_5_31_2_*  At 05:00 on day-of-month 31 in February.
-  # this cronjob is only intended for manually triggering
-  suspend: true
+  schedule: {{ .Values.houston.populateHourlyTaskAuditMetrics.schedule }}
+  # The cron job does not allow concurrent runs; if it is time for a new job run and the previous job run hasn't finished yet, the cron job skips the new job run
+  concurrencyPolicy: Forbid
   jobTemplate:
     spec:
+      backoffLimit: 1
       template:
         metadata:
           labels:
             tier: astronomer
-            component: houston-update-root-admin-password-cronjob
+            component: houston-populate-hourly-ta-metrics
             release: {{ .Release.Name }}
-            app: houston-update-root-admin-password-cronjob
+            app: houston-populate-hourly-ta-metrics
             version: {{ .Chart.Version }}
           {{- if .Values.global.istio.enabled }}
           annotations:
@@ -39,31 +41,16 @@ spec:
           restartPolicy: Never
 {{- include "astronomer.imagePullSecrets" . | indent 10 }}
           containers:
-            - name: update-root-admin-password-job
+            - name: populate-daily-task-metrics
               image: {{ template "houston.image" . }}
               imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
+              args: ["yarn", "populate-hourly-task-audit-metrics"]
               volumeMounts:
                 {{- include "houston_volume_mounts" . | indent 16 }}
                 {{- include "custom_ca_volume_mounts" . | indent 16 }}
               env:
-                - name: DATABASE_URL
-                  valueFrom:
-                    secretKeyRef:
-                      name: {{ template "houston.backendSecret" . }}
-                      key: connection
-                - name: ROOT_ADMIN_USERNAME
-                  valueFrom:
-                    secretKeyRef:
-                      name: astronomer-root-admin-credentials
-                      key: username
-                - name: ROOT_ADMIN_PASSWORD
-                  valueFrom:
-                    secretKeyRef:
-                      name: astronomer-root-admin-credentials
-                      key: password
-              command: ["yarn"]
-              # If you supply only args for a Container, the default Entrypoint defined in the Docker image is run with the args that you supplied.
-              args: ["update-root-admin-password", "--username=$(ROOT_ADMIN_USERNAME)", "--password=$(ROOT_ADMIN_PASSWORD)"]
+                {{- include "houston_environment" . | indent 16 }}
           volumes:
             {{- include "houston_volumes" . | indent 12 }}
             {{- include "custom_ca_volumes" . | indent 12 }}
+{{- end }}

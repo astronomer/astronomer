@@ -63,7 +63,7 @@ jobs:
 
   run_pre_commit:
     docker:
-      - image: quay.io/astronomer/ci-pre-commit:2022-09
+      - image: quay.io/astronomer/ci-pre-commit:2022-11
     steps:
       - checkout
       - run:
@@ -98,7 +98,7 @@ jobs:
 
   unittest-charts:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2022-09
+      - image: quay.io/astronomer/ci-helm-release:2022-11
     parallelism: 8
     resource_class: xlarge
     steps:
@@ -149,7 +149,7 @@ jobs:
 
   release-to-internal:
     machine:
-      image: ubuntu-2204:2022.07.1 # https://circleci.com/developer/machine/image/ubuntu-2204
+      image: ubuntu-2204:2022.10.2 # https://circleci.com/developer/machine/image/ubuntu-2204
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -209,6 +209,8 @@ jobs:
 
 workflows:
   version: 2.1
+
+  # This workflow is triggered by https://app.circleci.com/settings/project/github/astronomer/astronomer/triggers
   scan-docker-images:
     when:
       and:
@@ -271,7 +273,7 @@ workflows:
           filters:
             branches:
               only:
-                - '/release-0\.\d+/'
+                - '/^release-0\.\d+$/'
 
       - release-to-public:
           context:
@@ -282,7 +284,7 @@ workflows:
           filters:
             branches:
               only:
-                - '/release-0\.\d+/'
+                - '/^release-0\.\d+$/'
 
 commands:
   push-to-quay-io:

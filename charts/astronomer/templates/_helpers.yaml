@@ -214,6 +214,8 @@ s3:
       key: connection
 {{- end}}
   # These are set here for Houston's entrypoint script
+- name: HOUSTON__HOST
+  value: {{ .Release.Name }}-houston
 - name: COMMANDER__HOST
   value: {{ .Release.Name }}-commander
 - name: COMMANDER__PORT
@@ -226,6 +228,16 @@ s3:
   value: {{ template "houston.nats.servers" . }}
 - name: NATS__CLUSTER_ID
   value: {{ .Release.Name }}-stan
+{{- if .Values.houston.updateAirflowCheck.enabled }}
+- name: HOUSTON_SCRIPT_UPDATE_SERVICE_URL
+  value: {{ .Values.houston.updateAirflowCheck.url }}
+{{- end }}
+
+{{- if .Values.houston.updateRuntimeCheck.enabled }}
+- name: HOUSTON_SCRIPT_UPDATE_RUNTIME_SERVICE_URL
+  value: {{ .Values.houston.updateRuntimeCheck.url }}
+{{- end }}
+
 {{- end }}
 
 {{- define "houston_volume_mounts" }}

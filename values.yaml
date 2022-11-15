@@ -107,19 +107,29 @@ global:
   rootAdmin:
     username: root@example.com
 
+  taskUsageMetricsEnabled: false
+
   # Sidecar Logging
   loggingSidecar:
     enabled: false
     name: sidecar-log-consumer
-    image: quay.io/astronomer/ap-vector:0.23.3-1
+    image: quay.io/astronomer/ap-vector:0.24.1-1
     terminationEndpoint: http://localhost:8000/quitquitquit
     customConfig: false
+    extraEnv: []
+    resources: {}
+    #  requests:
+    #    cpu: "100m"
+    #    memory: "386Mi"
+    #  limits:
+    #    cpu: "100m"
+    #    memory: "386Mi"
 
   # Deploy auth sidecar to use openshift native features
   authSidecar:
     enabled: false
     repository: quay.io/astronomer/ap-auth-sidecar
-    tag: 1.23.1-1
+    tag: 1.23.2
     pullPolicy: IfNotPresent
     port: 8084
     default_nginx_settings: |
@@ -297,10 +307,10 @@ astronomer:
     resources:
       requests:
         cpu: "250m"
-        memory: "512Mi"
+        memory: "1Gi"
       limits:
         cpu: "500m"
-        memory: "1024Mi"
+        memory: "2Gi"
 
   registry:
     resources:

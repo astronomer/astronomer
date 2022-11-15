@@ -1,6 +1,6 @@
 ################################
 ## Registry NetworkPolicy
-#################################
+################################
 {{- if .Values.global.networkPolicy.enabled }}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -71,6 +71,16 @@ spec:
           tier: astronomer
           component: houston-worker
           release: {{ .Release.Name }}
+    - podSelector:
+        matchLabels:
+          tier: astronomer
+          release: {{ .Release.Name }}
+          component: houston-populate-daily-task-metrics
+    - podSelector:
+        matchLabels:
+          tier: astronomer
+          release: {{ .Release.Name }}
+          component: houston-populate-hourly-ta-metrics
     {{- if .Values.global.authSidecar.enabled  }}
     - namespaceSelector:
         matchLabels:

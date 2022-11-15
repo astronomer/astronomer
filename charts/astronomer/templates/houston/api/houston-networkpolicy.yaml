@@ -1,6 +1,6 @@
 ################################
 ## Houston NetworkPolicy
-#################################
+################################
 {{- if .Values.global.networkPolicy.enabled }}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -33,6 +33,11 @@ spec:
           component: ingress-controller
           release: {{ .Release.Name }}
     {{- end }}
+    - podSelector:
+        matchLabels:
+          tier: astronomer
+          component: houston-populate-hourly-ta-metrics
+          release: {{ .Release.Name }}
     - podSelector:
         matchLabels:
           tier: monitoring

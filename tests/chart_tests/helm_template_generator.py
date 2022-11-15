@@ -19,7 +19,7 @@ import subprocess
 import sys
 from functools import cache
 from tempfile import NamedTemporaryFile
-from typing import Any, Dict, Tuple
+from typing import Any
 from typing import Optional
 
 import jsonschema
@@ -42,9 +42,9 @@ def get_schema_k8s(api_version, kind, kube_version="1.21.0"):
     if "/" in api_version:
         ext, _, api_version = api_version.partition("/")
         ext = ext.split(".")[0]
-        url = f"{BASE_URL_SPEC}/v{kube_version}-standalone/{kind}-{ext}-{api_version}.json"
+        url = f"{BASE_URL_SPEC}/v{kube_version}-standalone-strict/{kind}-{ext}-{api_version}.json"
     else:
-        url = f"{BASE_URL_SPEC}/v{kube_version}-standalone/{kind}-{api_version}.json"
+        url = f"{BASE_URL_SPEC}/v{kube_version}-standalone-strict/{kind}-{api_version}.json"
     request = requests.get(url)
     request.raise_for_status()
     return request.json()
@@ -130,7 +130,7 @@ def render_chart(
         return k8s_objects
 
 
-def prepare_k8s_lookup_dict(k8s_objects) -> Dict[Tuple[str, str], Dict[str, Any]]:
+def prepare_k8s_lookup_dict(k8s_objects) -> dict[tuple[str, str], dict[str, Any]]:
     """Helper to create a lookup dict from k8s_objects.
 
     The keys of the dict are the k8s object's kind and name
