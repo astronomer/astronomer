@@ -104,9 +104,6 @@ global:
   # Enables namespace labels for network policies
   networkNSLabels: false
 
-  rootAdmin:
-    username: root@example.com
-
   taskUsageMetricsEnabled: false
 
   # Sidecar Logging
