@@ -108,6 +108,11 @@ spec:
               value: "INFO"
             - name: GRPC_TRACE
               value: "all"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "houston.backendSecret" . }}
+                  key: connection
             {{- include "houston_environment" . | indent 12 }}
             - name: APOLLO_SERVER_ID
               valueFrom:
