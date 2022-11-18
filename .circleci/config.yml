@@ -177,7 +177,7 @@ jobs:
 
   platform-1-21-14:
     machine:
-      image: ubuntu-2204:2022.10.2 https://circleci.com/developer/machine/image/ubuntu-2204
+      image: ubuntu-2204:2022.10.2 # https://circleci.com/developer/machine/image/ubuntu-2204
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.21.14
@@ -193,7 +193,7 @@ jobs:
           when: always
   platform-1-22-15:
     machine:
-      image: ubuntu-2204:2022.10.2 https://circleci.com/developer/machine/image/ubuntu-2204
+      image: ubuntu-2204:2022.10.2 # https://circleci.com/developer/machine/image/ubuntu-2204
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.22.15
@@ -209,7 +209,7 @@ jobs:
           when: always
   platform-1-23-13:
     machine:
-      image: ubuntu-2204:2022.10.2 https://circleci.com/developer/machine/image/ubuntu-2204
+      image: ubuntu-2204:2022.10.2 # https://circleci.com/developer/machine/image/ubuntu-2204
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.23.13
@@ -225,7 +225,7 @@ jobs:
           when: always
   platform-1-24-7:
     machine:
-      image: ubuntu-2204:2022.10.2 https://circleci.com/developer/machine/image/ubuntu-2204
+      image: ubuntu-2204:2022.10.2 # https://circleci.com/developer/machine/image/ubuntu-2204
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.24.7

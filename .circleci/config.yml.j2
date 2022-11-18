@@ -175,7 +175,7 @@ jobs:
 {% for version in kube_versions %}
   platform-{{ version | replace(".", "-") }}:
     machine:
-      image: ubuntu-2204:2022.10.2 https://circleci.com/developer/machine/image/ubuntu-2204
+      image: ubuntu-2204:2022.10.2 # https://circleci.com/developer/machine/image/ubuntu-2204
       resource_class: xlarge
     environment:
       KUBE_VERSION: v{{ version }}
