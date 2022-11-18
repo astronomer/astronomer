@@ -22,7 +22,4 @@ class TestHoustonSecretHoustonRootAdminCredentials:
         doc = docs[0]
 
         assert doc["kind"] == "Secret"
-        username = base64.b64decode(doc["data"]["username"])
-
-        assert username == b"root@example.com"
         assert len(base64.b64decode(doc["data"]["password"])) == 20
