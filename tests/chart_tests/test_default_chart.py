@@ -105,24 +105,15 @@ class TestAllPodSpecContainers:
             ), f"The container '{name}' does not use the privateRegistry repo '{self.private_repo}': {container}"
 
 
+@pytest.mark.skip(
+    "See issue https://github.com/astronomer/issues/issues/5227 for details about when to reenabling this."
+)
 class TestDuplicateEnvironment:
     """Parametrize all the docs that have container specs and test them for
     duplicate env vars."""
 
-    values = {
-        "global": {
-            "baseDomain": "foo.com",
-            "blackboxExporterEnabled": True,
-            "postgresqlEnabled": True,
-            "privateRegistry": {
-                "enabled": True,
-                "repository": "example.com/the-private-registry",
-            },
-            "prometheusPostgresExporterEnabled": True,
-            "pspEnabled": True,
-            "veleroEnabled": True,
-        }
-    }
+    values = chart_tests.get_all_features()
+
     docs = render_chart(values=values)
     trimmed_docs = [x for x in docs if x["kind"] in pod_managers + ["CronJob"]]
 
