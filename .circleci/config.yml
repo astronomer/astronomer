@@ -150,8 +150,8 @@ jobs:
             - "./*.tgz"
 
   release-to-internal:
-    machine:
-      image: ubuntu-2204:2022.10.2
+    docker:
+      - image: quay.io/astronomer/ci-helm-release:2022-11
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -160,12 +160,11 @@ jobs:
           name: Release the Astronomer chart to internal
           command: |
             set -e
-            sudo apt-get update && sudo apt-get install -y ca-certificates curl
             bin/release-helm-chart /tmp/workspace/astronomer-*.tgz
 
   release-to-public:
-    machine:
-      image: ubuntu-2204:2022.10.2
+    docker:
+      - image: quay.io/astronomer/ci-helm-release:2022-11
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -173,8 +172,6 @@ jobs:
       - run:
           name: Release the Astronomer chart to prod
           command: |
-            set -e
-            sudo apt-get update && sudo apt-get install -y ca-certificates curl
             bin/release-helm-chart -p /tmp/workspace/astronomer-*.tgz
       - publish-github-release
 
@@ -268,13 +265,13 @@ workflows:
             parameters:
               docker_image:
                 - quay.io/astronomer/ap-alertmanager:0.23.0
-                - quay.io/astronomer/ap-astro-ui:0.31.1
+                - quay.io/astronomer/ap-astro-ui:0.31.6
                 - quay.io/astronomer/ap-auth-sidecar:1.23.2
                 - quay.io/astronomer/ap-awsesproxy:1.3-9
                 - quay.io/astronomer/ap-base:3.16.2-4
                 - quay.io/astronomer/ap-blackbox-exporter:0.22.0-1
                 - quay.io/astronomer/ap-cli-install:0.26.9
-                - quay.io/astronomer/ap-commander:0.30.4
+                - quay.io/astronomer/ap-commander:0.31.0
                 - quay.io/astronomer/ap-configmap-reloader:0.8.0
                 - quay.io/astronomer/ap-curator:5.8.4-21
                 - quay.io/astronomer/ap-db-bootstrapper:0.26.13
@@ -283,7 +280,7 @@ workflows:
                 - quay.io/astronomer/ap-elasticsearch:7.17.6
                 - quay.io/astronomer/ap-fluentd:1.15.2
                 - quay.io/astronomer/ap-grafana:8.5.10
-                - quay.io/astronomer/ap-houston-api:0.31.5
+                - quay.io/astronomer/ap-houston-api:0.31.8
                 - quay.io/astronomer/ap-init:3.16.2-4
                 - quay.io/astronomer/ap-kibana:7.17.6
                 - quay.io/astronomer/ap-kube-state:2.6.0
@@ -297,7 +294,7 @@ workflows:
                 - quay.io/astronomer/ap-pgbouncer-krb:1.17.0-4
                 - quay.io/astronomer/ap-postgres-exporter:0.11.1
                 - quay.io/astronomer/ap-postgresql:11.17.0
-                - quay.io/astronomer/ap-prometheus:2.37.2
+                - quay.io/astronomer/ap-prometheus:2.37.3
                 - quay.io/astronomer/ap-registry:3.16.2-4
                 - quay.io/astronomer/ap-vector:0.24.1-1
           context:
@@ -489,7 +486,7 @@ commands:
           command: |
             set -xe
             pip install astronomer_e2e_test
-            astronomer-ci publish-github-release --github-repository $CIRCLE_PROJECT_REPONAME --github-organization $CIRCLE_PROJECT_USERNAME --commitish $CIRCLE_SHA1
+            astronomer-ci publish-github-release --github-repository "$CIRCLE_PROJECT_REPONAME" --github-organization "$CIRCLE_PROJECT_USERNAME" --commitish "$CIRCLE_SHA1"
 
   trivy-docker-test:
     description: "Trivy: Vulnerability scan a Docker image"

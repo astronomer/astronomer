@@ -148,8 +148,8 @@ jobs:
             - "./*.tgz"
 
   release-to-internal:
-    machine:
-      image: {{ machine_image_version }}
+    docker:
+      - image: quay.io/astronomer/ci-helm-release:2022-11
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -158,12 +158,11 @@ jobs:
           name: Release the Astronomer chart to internal
           command: |
             set -e
-            sudo apt-get update && sudo apt-get install -y ca-certificates curl
             bin/release-helm-chart /tmp/workspace/astronomer-*.tgz
 
   release-to-public:
-    machine:
-      image: {{ machine_image_version }}
+    docker:
+      - image: quay.io/astronomer/ci-helm-release:2022-11
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -171,8 +170,6 @@ jobs:
       - run:
           name: Release the Astronomer chart to prod
           command: |
-            set -e
-            sudo apt-get update && sudo apt-get install -y ca-certificates curl
             bin/release-helm-chart -p /tmp/workspace/astronomer-*.tgz
       - publish-github-release
 {% for version in kube_versions %}
@@ -405,7 +402,7 @@ commands:
           command: |
             set -xe
             pip install astronomer_e2e_test
-            astronomer-ci publish-github-release --github-repository $CIRCLE_PROJECT_REPONAME --github-organization $CIRCLE_PROJECT_USERNAME --commitish $CIRCLE_SHA1
+            astronomer-ci publish-github-release --github-repository "$CIRCLE_PROJECT_REPONAME" --github-organization "$CIRCLE_PROJECT_USERNAME" --commitish "$CIRCLE_SHA1"
 
   trivy-docker-test:
     description: "Trivy: Vulnerability scan a Docker image"

@@ -68,15 +68,6 @@ pre-flight-setup() {
   # we need to source this file because it modifies PATH
   source "$script_path/install-ci-tools"
 
-  command -v sudo >/dev/null 2>&1
-  command -v apt-get >/dev/null 2>&1
-  set +e
-  command -v tree >/dev/null 2>&1 || {
-    hr
-    sudo apt-get update > /dev/null
-    sudo apt-get install -y tree > /dev/null
-    hr
-  }
   set -e
 
   # Ensure we have a new directory
