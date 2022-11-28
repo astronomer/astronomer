@@ -142,6 +142,7 @@ data:
             enabled: true
 
           # Set Flower URL prefix to empty string
+          # Remove after https://github.com/apache/airflow/issues/27402 is resolved
           config:
             celery:
               flower_url_prefix: ''
