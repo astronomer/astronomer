@@ -140,6 +140,12 @@ data:
           # Enable FlowerUI flag by default
           flower:
             enabled: true
+
+          # Set Flower URL prefix to empty string
+          config:
+            celery:
+              flower_url_prefix: ''
+
           webserver:
             {{ if .Values.configSyncer.enabled }}
             extraVolumeMounts:
