@@ -32,6 +32,8 @@ if grep -q -i 'OS is not detected' trivy-output.txt; then
   echo "Skipping the Trivy scan because of unsupported OS"
 elif [ "${exit_code}" -gt 0 ]; then
 
+  set +x
+
   payload=$(cat "${GIT_ROOT}/trivy-output.txt")
 
   curl --location --request POST 'https://app.us-east-2.astrosec-dev.astro-7051.com/vulnerabilities/' \
@@ -42,6 +44,8 @@ elif [ "${exit_code}" -gt 0 ]; then
       "repo": "astronomer/astronomer",
       "payload": "'"${payload}"'"
     }'
+
+    set -x
 
 fi
 
