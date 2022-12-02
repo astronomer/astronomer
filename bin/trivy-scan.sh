@@ -32,7 +32,7 @@ if grep -q -i 'OS is not detected' trivy-output.txt; then
   echo "Skipping the Trivy scan because of unsupported OS"
 elif [ "${exit_code}" -gt 0 ]; then
 
-  set +x
+  set -o xtrace
 
   payload=$(cat "${GIT_ROOT}/trivy-output.txt")
 
@@ -42,10 +42,8 @@ elif [ "${exit_code}" -gt 0 ]; then
       "operation": "create",
       "scanner": "trivy",
       "repo": "astronomer/astronomer",
-      "payload": "'"${payload}"'"
+      "payload": '"${payload}"'
     }'
-
-    set -x
 
 fi
 
