@@ -1,0 +1,10 @@
+{{- if semverCompare "> 1.24-0" .Capabilities.KubeVersion.Version }}
+apiVersion: {{ template "apiVersion.Namespace" . }}
+kind: Namespace
+metadata:
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: v1.25
+#    pod-security.kubernetes.io/audit: baseline
+#    pod-security.kubernetes.io/audit-version: v1.23
+{{- end -}}
