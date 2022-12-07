@@ -10,11 +10,8 @@ EG: https://www.astronomer.io/docs/enterprise/v0.25/resources/version-compatibil
 */}}
 
 {{- define "apiVersion.PodDisruptionBudget" -}}
-{{- if or (semverCompare "<1.21-0" .Capabilities.KubeVersion.Version) (.Values.global.useLegacyPodDisruptionBudget) -}}
-policy/v1beta1
-{{- else -}}
 policy/v1
-{{- end -}}{{- end -}}
+{{- end -}}
 
 {{- define "apiVersion.DaemonSet" -}}
 apps/v1
@@ -25,11 +22,7 @@ apps/v1
 {{- end -}}
 
 {{- define "apiVersion.Ingress" -}}
-{{- if semverCompare "<1.19-0" .Capabilities.KubeVersion.Version -}}
-networking.k8s.io/v1beta1
-{{- else -}}
 networking.k8s.io/v1
-{{- end -}}
 {{- end -}}
 
 {{- define "apiVersion.NetworkPolicy" -}}
@@ -37,7 +30,9 @@ networking.k8s.io/v1
 {{- end -}}
 
 {{- define "apiVersion.PodSecurityPolicy" -}}
+{{- if semverCompare "<1.25-0" .Capabilities.KubeVersion.Version -}}
 extensions/v1beta1
+{{- end -}}
 {{- end -}}
 
 {{- define "apiVersion.PriorityClass" -}}
@@ -53,11 +48,7 @@ batch/v1
 {{- end -}}
 
 {{- define "apiVersion.batch.cronjob" -}}
-{{- if or (semverCompare "<1.21-0" .Capabilities.KubeVersion.Version) (.Values.global.useLegacyBatchCronJob) -}}
-batch/v1beta1
-{{- else -}}
 batch/v1
-{{- end -}}
 {{- end -}}
 
 {{- define "apiVersion.istio.networking" -}}

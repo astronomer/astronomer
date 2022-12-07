@@ -1,6 +1,7 @@
 #############################################
 ##   Prometheus Node Exporter ClusterRole  ##
 #############################################
+{{- if semverCompare "<1.25-0" .Capabilities.KubeVersion.Version }}
 {{- if .Values.rbac.create }}
 {{- if .Values.global.pspEnabled }}
 kind: ClusterRole
@@ -16,3 +17,4 @@ rules:
   - {{ template "prometheus-node-exporter.fullname" . }}
 {{- end }}
 {{- end }}
+{{- end -}}

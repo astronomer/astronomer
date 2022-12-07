@@ -56,13 +56,16 @@ class TestPspEnabled:
             values={"global": {"pspEnabled": True}},
             show_only=[psp_docs["template"]],
         )
-
-        assert len(docs) == 1
-        doc = docs[0]
-        assert doc["kind"] == "PodSecurityPolicy"
-        assert doc["apiVersion"] == "policy/v1beta1"
-        assert doc["metadata"]["name"] == psp_docs["name"]
-        assert "spec" in doc
+        _, minor, _ = (int(x) for x in kube_version.split("."))
+        if minor < 25:
+            assert len(docs) == 1
+            doc = docs[0]
+            assert doc["kind"] == "PodSecurityPolicy"
+            assert doc["apiVersion"] == "policy/v1beta1"
+            assert doc["metadata"]["name"] == psp_docs["name"]
+            assert "spec" in doc
+        else:
+            assert ValueError("policy/v1beta1 is not supported in k8s 1.25+")
 
     clusterrole_docs = [
         {
@@ -111,17 +114,20 @@ class TestPspEnabled:
             values={"global": {"pspEnabled": True}},
             show_only=[clusterrole_docs["template"]],
         )
-
-        assert len(docs) == 1
-        doc = docs[0]
-        assert doc["kind"] == "ClusterRole"
-        assert doc["apiVersion"] == "rbac.authorization.k8s.io/v1"
-        assert doc["metadata"]["name"] == clusterrole_docs["name"]
-        assert "rules" in doc
-        assert all(
-            item in doc["rules"][0]
-            for item in ["apiGroups", "resources", "resourceNames", "verbs"]
-        )
+        _, minor, _ = (int(x) for x in kube_version.split("."))
+        if minor < 25:
+            assert len(docs) == 1
+            doc = docs[0]
+            assert doc["kind"] == "ClusterRole"
+            assert doc["apiVersion"] == "rbac.authorization.k8s.io/v1"
+            assert doc["metadata"]["name"] == clusterrole_docs["name"]
+            assert "rules" in doc
+            assert all(
+                item in doc["rules"][0]
+                for item in ["apiGroups", "resources", "resourceNames", "verbs"]
+            )
+        else:
+            assert ValueError("policy/v1beta1 is not supported in k8s 1.25+")
 
     clusterrolebinding_docs = [
         {
@@ -158,14 +164,17 @@ class TestPspEnabled:
             values={"global": {"pspEnabled": True}},
             show_only=[clusterrolebinding_docs["template"]],
         )
-
-        assert len(docs) == 1
-        doc = docs[0]
-        assert doc["kind"] == "ClusterRoleBinding"
-        assert doc["apiVersion"] == "rbac.authorization.k8s.io/v1"
-        assert doc["metadata"]["name"] == clusterrolebinding_docs["name"]
-        assert len(doc["roleRef"]) >= 1
-        assert len(doc["subjects"]) >= 1
+        _, minor, _ = (int(x) for x in kube_version.split("."))
+        if minor < 25:
+            assert len(docs) == 1
+            doc = docs[0]
+            assert doc["kind"] == "ClusterRoleBinding"
+            assert doc["apiVersion"] == "rbac.authorization.k8s.io/v1"
+            assert doc["metadata"]["name"] == clusterrolebinding_docs["name"]
+            assert len(doc["roleRef"]) >= 1
+            assert len(doc["subjects"]) >= 1
+        else:
+            assert ValueError("policy/v1beta1 is not supported in k8s 1.25+")
 
     rolebinding_docs = [
         {
@@ -211,10 +220,14 @@ class TestPspEnabled:
             show_only=[rolebinding_docs["template"]],
         )
 
-        assert len(docs) == 1
-        doc = docs[0]
-        assert doc["kind"] == "RoleBinding"
-        assert doc["apiVersion"] == "rbac.authorization.k8s.io/v1"
-        assert doc["metadata"]["name"] == rolebinding_docs["name"]
-        assert len(doc["roleRef"]) >= 1
-        assert len(doc["subjects"]) >= 1
+        _, minor, _ = (int(x) for x in kube_version.split("."))
+        if minor < 25:
+            assert len(docs) == 1
+            doc = docs[0]
+            assert doc["kind"] == "RoleBinding"
+            assert doc["apiVersion"] == "rbac.authorization.k8s.io/v1"
+            assert doc["metadata"]["name"] == rolebinding_docs["name"]
+            assert len(doc["roleRef"]) >= 1
+            assert len(doc["subjects"]) >= 1
+        else:
+            assert ValueError("policy/v1beta1 is not supported in k8s 1.25+")

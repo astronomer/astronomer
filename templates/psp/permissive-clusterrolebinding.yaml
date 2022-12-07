@@ -1,6 +1,7 @@
 #################################
 ##    PSP RoleBinding          ##
 #################################
+{{- if semverCompare "<1.25-0" .Capabilities.KubeVersion.Version }}
 {{- if .Values.global.pspEnabled }}
 apiVersion: {{ template "apiVersion.rbac" . }}
 kind: RoleBinding
@@ -21,4 +22,5 @@ subjects:
 - kind: ServiceAccount
   name: job-controller
   namespace: kube-system
+{{- end -}}
 {{- end -}}

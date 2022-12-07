@@ -1,6 +1,7 @@
 #################################
 ##    Cluster Role             ##
 #################################
+{{- if semverCompare "<1.25-0" .Capabilities.KubeVersion.Version }}
 {{- if .Values.global.pspEnabled }}
 kind: ClusterRole
 apiVersion: {{ template "apiVersion.rbac" . }}
@@ -15,4 +16,5 @@ rules:
   - {{ .Release.Name }}-restrictive
   verbs:
   - use
+{{- end -}}
 {{- end -}}

@@ -16,6 +16,7 @@ kube_versions = [
     "1.22.15",
     "1.23.13",
     "1.24.7",
+    "1.25.4",
 ]
 # https://circleci.com/docs/2.0/building-docker-images/#docker-version
 ci_remote_docker_version = "20.10.18"

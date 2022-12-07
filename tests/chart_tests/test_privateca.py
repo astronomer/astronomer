@@ -159,7 +159,11 @@ class TestPrivateCaPsp:
                 }
             },
         )
-
-        assert len(docs) == 1
-        assert docs[0]["kind"] == "PodSecurityPolicy"
-        assert docs[0]["metadata"]["name"] == "release-name-private-ca"
+        _, minor, _ = (int(x) for x in kube_version.split("."))
+        if minor < 25:
+            assert all(x["kind"] == "PodSecurityPolicy" for x in docs)
+            assert len(docs) == 1
+            # assert docs[0]["kind"] == "PodSecurityPolicy"
+            assert docs[0]["metadata"]["name"] == "release-name-private-ca"
+        else:
+            assert ValueError("policy/v1beta1 is not supported in k8s 1.25+")
