@@ -130,5 +130,5 @@ additionalAlerts:
 # https://prometheus.io/docs/prometheus/latest/configuration/configuration/#remote_write
 # external_labels: {}
 
-extraFlags: {}
+extraFlags: []
 #- "log.level=debug"
