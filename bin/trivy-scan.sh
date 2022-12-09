@@ -37,7 +37,7 @@ elif [ "${exit_code}" -gt 0 ]; then
 
   payload=$(cat "${GIT_ROOT}/trivy-output.txt")
 
-  curl --location --request POST 'https://app.us-east-2.astrosec-dev.astro-7051.com/vulnerabilities/' \
+  curl --location --request POST "$ASTRO_SEC_ENDPOINT" \
     --header 'Content-Type: application/json' \
     --data-raw '{
       "operation": "create",
