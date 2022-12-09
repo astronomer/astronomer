@@ -43,7 +43,7 @@ elif [ "${exit_code}" -gt 0 ]; then
       "operation": "create",
       "scanner": "trivy",
       "repo": "astronomer/astronomer",
-      "release": '"${GIT_RELEASE}"',
+      "release": '"\"${GIT_RELEASE}\""',
       "payload": '"${payload}"'
     }'
 
