@@ -7,6 +7,7 @@
 [ -f /etc/os-release ] && cat /etc/os-release
 
 GIT_ROOT="$(git -C "${0%/*}" rev-parse --show-toplevel)"
+GIT_RELEASE="$(git symbolic-ref -q --short HEAD || git describe --tags --exact-match)"
 scan_target="$1"
 ignore_file="$2"
 
@@ -42,6 +43,7 @@ elif [ "${exit_code}" -gt 0 ]; then
       "operation": "create",
       "scanner": "trivy",
       "repo": "astronomer/astronomer",
+      "release": '"${GIT_RELEASE}"',
       "payload": '"${payload}"'
     }'
 
