@@ -94,7 +94,7 @@ class TestPrometheusStatefulset:
         docs = render_chart(
             kube_version=kube_version,
             values={
-                "prometheus": {"extraFlags": ["log.level=debug"]},
+                "prometheus": {"extraFlags": ["--log.level=debug"]},
             },
             show_only=["charts/prometheus/templates/prometheus-statefulset.yaml"],
         )
