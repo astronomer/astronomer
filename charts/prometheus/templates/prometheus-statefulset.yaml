@@ -106,7 +106,7 @@ spec:
             - "--web.external-url=https://prometheus.{{ .Values.global.baseDomain }}"
             {{- end }}
             {{- range .Values.extraFlags }}
-            - --{{ . }}
+            - {{ . }}
             {{- end }}
           volumeMounts:
             - name: prometheus-config-volume

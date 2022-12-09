@@ -131,4 +131,4 @@ additionalAlerts:
 # external_labels: {}
 
 extraFlags: []
-#- "log.level=debug"
+#- "--log.level=debug"
