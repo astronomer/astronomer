@@ -12,9 +12,9 @@ cachetools==5.2.0 \
     --hash=sha256:6a94c6402995a99c3970cc7e4884bb60b4a8639938157eeed436098bf9831757 \
     --hash=sha256:f9f17d2aec496a9aa6b76f53e3b614c965223c061982d434d160f930c698a9db
     # via google-auth
-certifi==2022.9.24 \
-    --hash=sha256:0d9c601124e5a6ba9712dbc60d9c53c21e34f5f641fe83002317394311bdce14 \
-    --hash=sha256:90c1a32f1d68f940488354e36370f6cca89f0f106db09518524c88d6ed83f382
+certifi==2022.12.7 \
+    --hash=sha256:35824b4c3a97115964b408844d64aa14db1cc518f6562e8d7261699d1350a9e3 \
+    --hash=sha256:4ad3232f5e926d6718ec31cfc1fcadfde020920e278684144551c91769c7bc18
     # via
     #   kubernetes
     #   requests
@@ -25,11 +25,7 @@ charset-normalizer==2.1.1 \
 docker==6.0.1 \
     --hash=sha256:896c4282e5c7af5c45e8b683b0b0c33932974fe6e50fc6906a0a83616ab3da97 \
     --hash=sha256:dbcb3bd2fa80dca0788ed908218bf43972772009b881ed1e20dfc29a65e49782
-    # via -r requirements/functional-tests.in
-exceptiongroup==1.0.1 \
-    --hash=sha256:4d6c0aa6dd825810941c792f53d7b8d71da26f5e5f84f20f9508e8f2d33b140a \
-    --hash=sha256:73866f7f842ede6cb1daa42c4af078e2035e5f7607f0e2c762cc51bb31bbe7b2
-    # via pytest
+    # via -r functional-tests.in
 gitdb==4.0.9 \
     --hash=sha256:8033ad4e853066ba6ca92050b9df2f89301b8fc8bf7e9324d412a63f8bf1a8fd \
     --hash=sha256:bac2fd45c0a1c9cf619e63a90d62bdc63892ef92387424b855792a6cabe789aa
@@ -37,7 +33,7 @@ gitdb==4.0.9 \
 gitpython==3.1.29 \
     --hash=sha256:41eea0deec2deea139b459ac03656f0dd28fc4a3387240ec1d3c259a2c47850f \
     --hash=sha256:cc36bfc4a3f913e66805a28e84703e419d9c264c1077e537b54f0e1af85dbefd
-    # via -r requirements/functional-tests.in
+    # via -r functional-tests.in
 google-auth==2.14.1 \
     --hash=sha256:ccaa901f31ad5cbb562615eb8b664b3dd0bf5404a67618e642307f00613eda4d \
     --hash=sha256:f5d8701633bebc12e0deea4df8abd8aff31c28b355360597f7f2ee60f2e4d016
@@ -53,7 +49,7 @@ iniconfig==1.1.1 \
 kubernetes==25.3.0 \
     --hash=sha256:213befbb4e5aed95f94950c7eed0c2322fc5a2f8f40932e58d28fdd42d90836c \
     --hash=sha256:eb42333dad0bb5caf4e66460c6a4a1a36f0f057a040f35018f6c05a699baed86
-    # via -r requirements/functional-tests.in
+    # via -r functional-tests.in
 oauthlib==3.2.2 \
     --hash=sha256:8139f29aac13e25d502680e9e19963e83f16838d48a0d71c287fe40e7067fbca \
     --hash=sha256:9859c40929662bec5d64f34d01c99e093149682a3f38915dc0655d5a633dd918
@@ -86,17 +82,17 @@ pytest==7.2.0 \
     --hash=sha256:892f933d339f068883b6fd5a459f03d85bfcb355e4981e146d2c7616c21fef71 \
     --hash=sha256:c4014eb40e10f11f355ad4e3c2fb2c6c6d1919c73f3b5a433de4708202cade59
     # via
-    #   -r requirements/functional-tests.in
+    #   -r functional-tests.in
     #   pytest-rerunfailures
     #   pytest-testinfra
 pytest-rerunfailures==10.2 \
     --hash=sha256:9e1e1bad51e07642c5bbab809fc1d4ec8eebcb7de86f90f1a26e6ef9de446697 \
     --hash=sha256:d31d8e828dfd39363ad99cd390187bf506c7a433a89f15c3126c7d16ab723fe2
-    # via -r requirements/functional-tests.in
+    # via -r functional-tests.in
 pytest-testinfra==6.8.0 \
     --hash=sha256:07c8c2c472aca7d83099ebc5f850d383721cd654b66c60ffbb145e45e584ff99 \
     --hash=sha256:56ac1dfc61342632a1189091473e253db1a3cdcecce0d49d6a769f33cd264814
-    # via -r requirements/functional-tests.in
+    # via -r functional-tests.in
 python-dateutil==2.8.2 \
     --hash=sha256:0123cacc1627ae19ddf3c27a5de5bd67ee4586fbdd6440d9748f8abb483d3e86 \
     --hash=sha256:961d03dc3453ebbc59dbdea9e4e11c5651520a876d0f4db161e8674aae935da9
@@ -143,7 +139,7 @@ pyyaml==6.0 \
     --hash=sha256:e61ceaab6f49fb8bdfaa0f92c4b57bcfbea54c09277b1b4f7ac376bfb7a7c174 \
     --hash=sha256:f84fbc98b019fef2ee9a1cb3ce93e3187a6df0b2538a651bfb890254ba9f90b5
     # via
-    #   -r requirements/functional-tests.in
+    #   -r functional-tests.in
     #   kubernetes
 requests==2.28.1 \
     --hash=sha256:7c5599b102feddaa661c826c56ab4fee28bfd17f5abca1ebbe3e7f19d7c97983 \
@@ -159,14 +155,6 @@ requests-oauthlib==1.3.1 \
 rsa==4.9 \
     --hash=sha256:90260d9058e514786967344d0ef75fa8727eed8a7d2e43ce9f4bcf1b536174f7 \
     --hash=sha256:e38464a49c6c85d7f1351b0126661487a7e0a14a50f1675ec50eb34d4f20ef21
-    # via
-    #   docker
-    #   kubernetes
-
-# The following packages are considered to be unsafe in a requirements file:
-setuptools==59.8.0 \
-    --hash=sha256:09980778aa734c3037a47997f28d6db5ab18bdf2af0e49f719bfc53967fd2e82 \
-    --hash=sha256:608a7885b664342ae9fafc43840b29d219c5a578876f6f7e00c4e2612160587f
     # via google-auth
 six==1.16.0 \
     --hash=sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926 \
@@ -179,10 +167,6 @@ smmap==5.0.0 \
     --hash=sha256:2aba19d6a040e78d8b09de5c57e96207b09ed71d8e55ce0959eeee6c8e190d94 \
     --hash=sha256:c840e62059cd3be204b0c9c9f74be2c09d5648eddd4580d9314c3ecde0b30936
     # via gitdb
-tomli==2.0.1 \
-    --hash=sha256:939de3e7a6161af0c887ef91b7d41a53e7c5a1ca976325f429cb46ea9bc30ecc \
-    --hash=sha256:de526c12914f0c550d15924c62d72abc48d6fe7364aa87328337a31007fe8a4f
-    # via pytest
 urllib3==1.26.12 \
     --hash=sha256:3fa96cf423e6987997fc326ae8df396db2a8b7c667747d47ddd8ecba91f4a74e \
     --hash=sha256:b930dd878d5a8afb066a637fbb35144fe7901e3b209d1cd4f524bd0e9deee997
@@ -194,6 +178,14 @@ websocket-client==1.4.2 \
     --hash=sha256:d6b06432f184438d99ac1f456eaf22fe1ade524c3dd16e661142dc54e9cba574 \
     --hash=sha256:d6e8f90ca8e2dd4e8027c4561adeb9456b54044312dba655e7cae652ceb9ae59
     # via
-    #   -r requirements/functional-tests.in
+    #   docker
+    #   kubernetes
+
+# The following packages are considered to be unsafe in a requirements file:
+setuptools==59.8.0 \
+    --hash=sha256:09980778aa734c3037a47997f28d6db5ab18bdf2af0e49f719bfc53967fd2e82 \
+    --hash=sha256:608a7885b664342ae9fafc43840b29d219c5a578876f6f7e00c4e2612160587f
+    # via
+    #   -r functional-tests.in
     #   kubernetes
     #   pytest-rerunfailures
