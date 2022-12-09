@@ -89,3 +89,16 @@ class TestPrometheusStatefulset:
         assert c_by_name["prometheus"]["readinessProbe"]["initialDelaySeconds"] == 30
         assert c_by_name["prometheus"]["readinessProbe"]["periodSeconds"] == 31
         assert c_by_name["prometheus"]["readinessProbe"]["failureThreshold"] == 32
+
+    def test_prometheus_with_extraFlags(self, kube_version):
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "prometheus": {"extraFlags": {"-": "log.level=debug"}},
+            },
+            show_only=["charts/prometheus/templates/prometheus-statefulset.yaml"],
+        )
+        assert len(docs) == 1
+        c_by_name = get_containers_by_name(docs[0])
+        print(c_by_name["prometheus"]["args"])
+        assert "--log.level=debug" in c_by_name["prometheus"]["args"]
