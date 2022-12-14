@@ -16,6 +16,10 @@ parameters:
     type: boolean
     default: false
     description: "This will run docker image scan."
+  scan-docker-images-report-url:
+    type: string
+    default: ""
+    description: "This URN to report image scan result."
 
 jobs:
   trivy-scan-docker:
@@ -25,10 +29,13 @@ jobs:
     parameters:
       docker_image:
         type: string
+      report_url:
+        type: string
     environment:
       SCAN_IMAGE: << parameters.docker_image >>
       SCAN_TOOL: Trivy
       BASH_ENV: /etc/profile
+      ASTRO_SEC_ENDPOINT: << parameters.report_url >>
     steps:
       - setup_remote_docker:
           version: 20.10.18
@@ -261,6 +268,7 @@ workflows:
         - << pipeline.parameters.scan-docker-images >>
     jobs:
       - trivy-scan-docker:
+          report_url: << pipeline.parameters.scan-docker-images-report-url >>
           matrix:
             parameters:
               docker_image:
