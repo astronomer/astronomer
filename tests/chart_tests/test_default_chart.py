@@ -1,5 +1,5 @@
 import pytest
-
+import tests.chart_tests as chart_tests
 from tests import get_containers_by_name
 from tests.chart_tests.helm_template_generator import render_chart
 import re
