@@ -19,7 +19,7 @@ parameters:
   scan-docker-images-report-url:
     type: string
     default: ""
-    description: "This URN to report image scan result."
+    description: "The URN to report image scan result."
 
 jobs:
   trivy-scan-docker:
@@ -266,6 +266,7 @@ workflows:
     when:
       and:
         - << pipeline.parameters.scan-docker-images >>
+        - << pipeline.parameters.scan-docker-images-report-url >>
     jobs:
       - trivy-scan-docker:
           report_url: << pipeline.parameters.scan-docker-images-report-url >>
