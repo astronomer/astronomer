@@ -9,11 +9,18 @@ from jinja2 import Template
 
 # When adding a new version, look up the most
 # recent patch version on Dockerhub
-# https://hub.docker.com/r/kindest/node/tags
 # This should match what is in tests/__init__.py
-KUBE_VERSIONS = ["1.21.14", "1.22.15", "1.23.13", "1.24.7"]
+# https://hub.docker.com/r/kindest/node/tags
+kube_versions = [
+    "1.21.14",
+    "1.22.15",
+    "1.23.13",
+    "1.24.7",
+]
 # https://circleci.com/docs/2.0/building-docker-images/#docker-version
-CI_REMOTE_DOCKER_VERSION = "20.10.14"
+ci_remote_docker_version = "20.10.18"
+# https://circleci.com/developer/machine/image/ubuntu-2204
+machine_image_version = "ubuntu-2204:2022.10.2"
 
 
 def list_docker_images(path):
@@ -36,9 +43,10 @@ def main():
     templated_file_content = Path(config_template_path).read_text()
     template = Template(templated_file_content)
     config = template.render(
-        kube_versions=KUBE_VERSIONS,
+        kube_versions=kube_versions,
         docker_images=docker_images,
-        remote_docker_version=CI_REMOTE_DOCKER_VERSION,
+        machine_image_version=machine_image_version,
+        remote_docker_version=ci_remote_docker_version,
     )
     with open(config_path, "w") as circle_ci_config_file:
         warning_header = (
