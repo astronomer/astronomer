@@ -77,7 +77,7 @@ show-docker-images: ## Show all docker images and versions used in the helm char
 		2>/dev/null \
 		| gawk '/image: / {match($$2, /(([^"]*):[^"]*)/, a) ; printf "https://%s %s\n", a[2], a[1] ;}' | sort -u | column -t
 
-.PHONY: show-docker-images
+.PHONY: show-docker-images-with-private-registry
 show-docker-images-with-private-registry: ## Show all docker images and versions used in the helm chart with a privateRegistry set
 	@helm template . \
 		-f tests/enable_all_features.yaml \
