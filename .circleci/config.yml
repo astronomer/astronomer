@@ -95,7 +95,7 @@ jobs:
           command: pre-commit run --all-files --show-diff-on-failure
   lint:
     docker:
-      - image: quay.io/astronomer/ap-build:0.2.0
+      - image: quay.io/astronomer/ap-build:0.2.3
     steps:
       - checkout
       - run:
@@ -143,7 +143,7 @@ jobs:
 
   build-artifact:
     docker:
-      - image: quay.io/astronomer/ap-build:0.2.0
+      - image: quay.io/astronomer/ap-build:0.2.3
     steps:
       - checkout
       - run:

@@ -83,3 +83,21 @@ imagePullSecrets:
   - name: {{ .Values.global.privateRegistry.secretName }}
 {{- end -}}
 {{- end -}}
+
+
+{{ define "esproxy.image" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-openresty:{{ .Values.images.esproxy.tag }}
+{{- else -}}
+{{ printf "%s:%s" .Values.images.esproxy.repository .Values.images.esproxy.tag }}
+{{- end }}
+{{- end }}
+
+
+{{ define "awsesproxy.image" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-awsesproxy:{{ .Values.images.awsproxy.tag }}
+{{- else -}}
+{{ printf "%s:%s" .Values.images.awsproxy.repository .Values.images.awsproxy.tag }}
+{{- end }}
+{{- end }}

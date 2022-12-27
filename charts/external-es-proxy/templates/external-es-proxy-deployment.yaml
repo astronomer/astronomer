@@ -47,7 +47,7 @@ spec:
         - name: {{ .Chart.Name }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
-          image: "{{ .Values.images.esproxy.repository }}:{{ .Values.images.esproxy.tag | default .Chart.AppVersion }}"
+          image: {{ template "esproxy.image" . }}
           imagePullPolicy: {{ .Values.images.esproxy.pullPolicy }}
           env:
 {{- if .Values.global.customLogging.secret }}
@@ -93,7 +93,7 @@ spec:
             {{- toYaml .Values.resources | nindent 12 }}
 {{- if  or .Values.global.customLogging.awsSecretName  .Values.global.customLogging.awsServiceAccountAnnotation  .Values.global.customLogging.awsIAMRole}}
         - name: awsproxy
-          image: "{{ .Values.images.awsproxy.repository }}:{{ .Values.images.awsproxy.tag | default .Chart.AppVersion }}"
+          image: {{ template "awsesproxy.image" . }}
           command: ["/bin/sh","-c"]
           args: ["aws-es-proxy -listen :{{ .Values.service.awsproxy }}"]
           imagePullPolicy: {{ .Values.images.awsproxy.pullPolicy }}
