@@ -38,10 +38,12 @@ livenessProbe:
   initialDelaySeconds: 10
   periodSeconds: 5
   failureThreshold: 3
+  timeoutSeconds: 1
 readinessProbe:
   initialDelaySeconds: 10
   periodSeconds: 5
   failureThreshold: 3
+  timeoutSeconds: 1
 
 configMapReloader:
   resources: {}
