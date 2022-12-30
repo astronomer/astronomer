@@ -7,7 +7,7 @@ metadata:
   kubernetes.io/metadata.name: {{ .Release.Name }}
   app.kubernetes.io/managed-by: Helm
   pod-security.kubernetes.io/enforce: privileged
-  pod-security.kubernetes.io/enforce-version: v1.25 
+  pod-security.kubernetes.io/enforce-version: v1.25
   pod-security.kubernetes.io/warn: baseline
   pod-security.kubernetes.io/warn-version: v1.25
   pod-security.kubernetes.io/audit: baseline

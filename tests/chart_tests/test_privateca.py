@@ -144,7 +144,6 @@ class TestPrivateCaPsp:
                 },
             )
 
-    
     def test_privateca_psp_enabled(self, kube_version):
         """Test that psp is rendered when psp is enabled and
         privateCaCertsAddToHost is enabled."""
@@ -163,7 +162,7 @@ class TestPrivateCaPsp:
                     }
                 },
             )
-            
+
             assert all(x["kind"] == "PodSecurityPolicy" for x in docs)
             assert len(docs) == 1
             assert docs[0]["kind"] == "PodSecurityPolicy"
