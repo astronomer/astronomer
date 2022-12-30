@@ -2,9 +2,17 @@
 apiVersion: {{ template "apiVersion.Namespace" . }}
 kind: Namespace
 metadata:
-  labels:
-    pod-security.kubernetes.io/enforce: restricted
-    pod-security.kubernetes.io/enforce-version: v1.25
-#    pod-security.kubernetes.io/audit: baseline
-#    pod-security.kubernetes.io/audit-version: v1.23
+ name: {{ .Release.Name }}
+ labels:
+  kubernetes.io/metadata.name: {{ .Release.Name }}
+  app.kubernetes.io/managed-by: Helm
+  pod-security.kubernetes.io/enforce: privileged
+  pod-security.kubernetes.io/enforce-version: v1.25 
+  pod-security.kubernetes.io/warn: baseline
+  pod-security.kubernetes.io/warn-version: v1.25
+  pod-security.kubernetes.io/audit: baseline
+  pod-security.kubernetes.io/audit-version: v1.25
+annotations:
+  meta.helm.sh/release-name: {{ .Release.Name }}
+  meta.helm.sh/release-namespace: {{ .Release.Name }}
 {{- end -}}
