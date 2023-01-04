@@ -31,7 +31,7 @@ class TestAstronomerCommander:
         assert c_by_name["commander"]["resources"]["limits"]["memory"] == "2Gi"
         assert c_by_name["commander"]["resources"]["requests"]["memory"] == "1Gi"
         env_vars = {x["name"]: x["value"] for x in c_by_name["commander"]["env"]}
-        assert env_vars["COMMANDER_UPGRADE_TIMEOUT"] == "300"
+        assert env_vars["COMMANDER_UPGRADE_TIMEOUT"] == "600"
 
     def test_astronomer_commander_deployment_upgrade_timeout(self, kube_version):
         """Test that helm renders a good deployment template for
@@ -41,7 +41,7 @@ class TestAstronomerCommander:
         """
         docs = render_chart(
             kube_version=kube_version,
-            values={"astronomer": {"commander": {"upgradeTimeout": 600}}},
+            values={"astronomer": {"commander": {"upgradeTimeout": 997}}},
             show_only=[
                 "charts/astronomer/templates/commander/commander-deployment.yaml"
             ],
@@ -59,7 +59,7 @@ class TestAstronomerCommander:
         )
 
         env_vars = {x["name"]: x["value"] for x in c_by_name["commander"]["env"]}
-        assert env_vars["COMMANDER_UPGRADE_TIMEOUT"] == "600"
+        assert env_vars["COMMANDER_UPGRADE_TIMEOUT"] == "997"
 
     def test_astronomer_commander_rbac_cluster_role_enabled(self, kube_version):
         """Test that if rbacEnabled and clusterRoles are enabled but
