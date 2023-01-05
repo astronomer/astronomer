@@ -275,12 +275,12 @@ workflows:
               docker_image:
                 - quay.io/astronomer/ap-alertmanager:0.25.0
                 - quay.io/astronomer/ap-astro-ui:0.31.9
-                - quay.io/astronomer/ap-auth-sidecar:1.23.3
+                - quay.io/astronomer/ap-auth-sidecar:1.23.3-1
                 - quay.io/astronomer/ap-awsesproxy:1.3-10
                 - quay.io/astronomer/ap-base:3.16.3
                 - quay.io/astronomer/ap-blackbox-exporter:0.23.0-1
                 - quay.io/astronomer/ap-cli-install:0.26.10
-                - quay.io/astronomer/ap-commander:0.31.2
+                - quay.io/astronomer/ap-commander:0.31.3
                 - quay.io/astronomer/ap-configmap-reloader:0.8.0
                 - quay.io/astronomer/ap-curator:5.8.4-23
                 - quay.io/astronomer/ap-db-bootstrapper:0.26.14
@@ -296,8 +296,8 @@ workflows:
                 - quay.io/astronomer/ap-nats-exporter:0.10.0-3
                 - quay.io/astronomer/ap-nats-server:2.8.4
                 - quay.io/astronomer/ap-nats-streaming:0.24.6
-                - quay.io/astronomer/ap-nginx-es:1.23.3
-                - quay.io/astronomer/ap-nginx:1.3.1-1
+                - quay.io/astronomer/ap-nginx-es:1.23.3-1
+                - quay.io/astronomer/ap-nginx:1.3.1-2
                 - quay.io/astronomer/ap-node-exporter:1.5.0
                 - quay.io/astronomer/ap-openresty:1.21.4-3
                 - quay.io/astronomer/ap-pgbouncer-krb:1.17.0-5
