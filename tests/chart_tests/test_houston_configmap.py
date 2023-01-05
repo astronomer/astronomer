@@ -16,7 +16,7 @@ def common_test_cases(docs):
 
     local_prod = yaml.safe_load(doc["data"]["local-production.yaml"])
 
-    assert local_prod == {}
+    assert local_prod == {"nats": {"ackWait": 600000}}
 
     prod = yaml.safe_load(doc["data"]["production.yaml"])
 
@@ -41,7 +41,7 @@ def test_houston_configmap():
     # Ensure airflow elasticsearch param is at correct location
     assert prod["deployments"]["helm"]["airflow"]["elasticsearch"]["enabled"] is True
     # Ensure elasticsearch client param is at the correct location and contains http://
-    assert ("node" in prod["elasticsearch"]["client"]) is True
+    assert "node" in prod["elasticsearch"]["client"]
     assert prod["elasticsearch"]["client"]["node"].startswith("http://")
     with pytest.raises(KeyError):
         # Ensure sccEnabled is not defined by default
@@ -82,7 +82,7 @@ def test_houston_configmap_with_customlogging_enabled():
     doc = docs[0]
     prod = yaml.safe_load(doc["data"]["production.yaml"])
 
-    assert ("node" in prod["elasticsearch"]["client"]) is True
+    assert "node" in prod["elasticsearch"]["client"]
     assert prod["elasticsearch"]["client"]["node"].startswith("http://") is True
 
 
@@ -201,7 +201,7 @@ def test_houston_configmap_with_loggingsidecar_enabled():
         "terminationEndpoint": "http://localhost:8000/quitquitquit",
         "customConfig": False,
     }
-    assert ("vector" in prod_yaml["deployments"]["loggingSidecar"]["image"]) is True
+    assert "vector" in prod_yaml["deployments"]["loggingSidecar"]["image"]
 
 
 def test_houston_configmap_with_loggingsidecar_enabled_with_overrides():
@@ -243,7 +243,7 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_overrides():
         "terminationEndpoint": terminationEndpoint,
         "customConfig": False,
     }
-    assert ("vector" in prod_yaml["deployments"]["loggingSidecar"]["image"]) is True
+    assert "vector" in prod_yaml["deployments"]["loggingSidecar"]["image"]
 
 
 def test_houston_configmap_with_loggingsidecar_customConfig_enabled():
@@ -286,7 +286,7 @@ def test_houston_configmap_with_loggingsidecar_customConfig_enabled():
         "terminationEndpoint": terminationEndpoint,
         "customConfig": True,
     }
-    assert ("vector" in prod_yaml["deployments"]["loggingSidecar"]["image"]) is True
+    assert "vector" in prod_yaml["deployments"]["loggingSidecar"]["image"]
 
 
 def test_houston_configmap_with_loggingsidecar_enabled_with_custom_env_overrides():
@@ -363,7 +363,7 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_custom_env_overrides
         ],
     }
 
-    assert ("vector" in prod_yaml["deployments"]["loggingSidecar"]["image"]) is True
+    assert "vector" in prod_yaml["deployments"]["loggingSidecar"]["image"]
 
 
 def test_houston_configmap_with_loggingsidecar_enabled_with_resource_overrides():
@@ -413,7 +413,7 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_resource_overrides()
         },
     }
 
-    assert ("vector" in prod_yaml["deployments"]["loggingSidecar"]["image"]) is True
+    assert "vector" in prod_yaml["deployments"]["loggingSidecar"]["image"]
 
 
 cron_test_data = [
