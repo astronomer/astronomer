@@ -72,7 +72,7 @@ jobs:
 
   run_pre_commit:
     docker:
-      - image: quay.io/astronomer/ci-pre-commit:2022-11
+      - image: quay.io/astronomer/ci-pre-commit:2023-01
     steps:
       - checkout
       - run:
@@ -107,7 +107,7 @@ jobs:
 
   unittest-charts:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2022-11
+      - image: quay.io/astronomer/ci-helm-release:2023-01
     parallelism: 8
     resource_class: xlarge
     steps:
@@ -158,7 +158,7 @@ jobs:
 
   release-to-internal:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2022-11
+      - image: quay.io/astronomer/ci-helm-release:2023-01
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -171,7 +171,7 @@ jobs:
 
   release-to-public:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2022-11
+      - image: quay.io/astronomer/ci-helm-release:2023-01
     steps:
       - attach_workspace:
           at: /tmp/workspace
