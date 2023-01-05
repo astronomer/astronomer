@@ -119,7 +119,9 @@ houston:
 
   # Any Houston configuration. Reference here:
   # https://github.com/astronomer/houston-api/blob/main/config/default.yaml
-  config: {}
+  config:
+    nats:
+      ackWait: 600000
 
   # Worker to connect to NATS
   worker:
@@ -294,7 +296,7 @@ commander:
   airGapped:
     # Enable airgapped mode
     enabled: false
-  upgradeTimeout: 300
+  upgradeTimeout: 600
 
   # Add extra containers to your commander deployment.
   extraContainers: []
