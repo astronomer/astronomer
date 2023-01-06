@@ -7,3 +7,7 @@ CVE-2022-1996
 CVE-2022-27664
 # golang.org/x/text
 CVE-2022-32149
+
+# github.com/opencontainers/runc 1.0.1
+# upstream not interested in resolving the CVE
+CVE-2022-29162
