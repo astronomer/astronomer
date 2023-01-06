@@ -56,7 +56,7 @@ if [ $# -ne 0 ]; then
         keda=true
       ;;
     *)
-      export $component=true ;;
+      export "$component"=true ;;
     esac
   done
 fi

@@ -20,7 +20,7 @@ parameters:
 jobs:
   trivy-scan-docker:
     docker:
-      - image: docker:20.10.14-git
+      - image: docker:20.10.18-git
     shell: /bin/sh -leo pipefail
     parameters:
       docker_image:
@@ -31,7 +31,7 @@ jobs:
       BASH_ENV: /etc/profile
     steps:
       - setup_remote_docker:
-          version: 20.10.14
+          version: 20.10.18
       - checkout
       - run:
           name: Pull Docker image
@@ -65,7 +65,7 @@ jobs:
 
   run_pre_commit:
     docker:
-      - image: quay.io/astronomer/ci-pre-commit:2022-11
+      - image: quay.io/astronomer/ci-pre-commit:2023-01
     steps:
       - checkout
       - run:
@@ -100,13 +100,13 @@ jobs:
 
   unittest-charts:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2022-11
+      - image: quay.io/astronomer/ci-helm-release:2023-01
     parallelism: 8
     resource_class: xlarge
     steps:
       - setup_remote_docker:
           docker_layer_caching: true
-          version: 20.10.14
+          version: 20.10.18
       - checkout
       - run:
           name: Create chart-tests-cache-key.txt
@@ -151,7 +151,7 @@ jobs:
 
   release-to-internal:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2022-11
+      - image: quay.io/astronomer/ci-helm-release:2023-01
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -164,7 +164,7 @@ jobs:
 
   release-to-public:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2022-11
+      - image: quay.io/astronomer/ci-helm-release:2023-01
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -253,7 +253,10 @@ workflows:
               docker_image:
                 - quay.io/astronomer/ap-alertmanager:0.23.0
                 - quay.io/astronomer/ap-astro-ui:0.28.17
+                - quay.io/astronomer/ap-auth-sidecar:1.23.1-1
+                - quay.io/astronomer/ap-awsesproxy:1.3-10
                 - quay.io/astronomer/ap-base:3.16.2-4
+                - quay.io/astronomer/ap-blackbox-exporter:0.22.0-1
                 - quay.io/astronomer/ap-cli-install:0.26.8
                 - quay.io/astronomer/ap-commander:0.28.7
                 - quay.io/astronomer/ap-configmap-reloader:0.8.0
@@ -275,7 +278,11 @@ workflows:
                 - quay.io/astronomer/ap-nginx-es:1.23.1-1
                 - quay.io/astronomer/ap-nginx:1.3.1
                 - quay.io/astronomer/ap-node-exporter:1.4.0
+                - quay.io/astronomer/ap-openresty:1.19.9-1
+                - quay.io/astronomer/ap-postgres-exporter:0.11.1
+                - quay.io/astronomer/ap-postgresql:11.17.0
                 - quay.io/astronomer/ap-prometheus:2.37.1
+                - quay.io/astronomer/ap-registry:3.16.2-4
           context:
             - slack_team-software-infra-bot
 
@@ -358,7 +365,7 @@ commands:
     steps:
       - setup_remote_docker:
           docker_layer_caching: true
-          version: 20.10.14
+          version: 20.10.18
       - attach_workspace:
           at: /tmp/workspace
       - run:
@@ -412,7 +419,7 @@ commands:
       - checkout
       - setup_remote_docker:
           docker_layer_caching: true
-          version: 20.10.14
+          version: 20.10.18
       - run:
           name: Build the Docker image
           command: |

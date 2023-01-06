@@ -1,0 +1,17 @@
+global:
+  authSidecar:
+    enabled: true
+  baseDomain: foo.com
+  blackboxExporterEnabled: true
+  customLogging:
+    awsSecretName: dummy
+    enabled: true
+  loggingSidecar:
+    enabled: true
+  pgbouncer:
+    enabled: true
+  postgresqlEnabled: true
+  prometheusPostgresExporterEnabled: true
+  pspEnabled: true
+  taskUsageMetricsEnabled: True
+  veleroEnabled: true
