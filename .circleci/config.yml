@@ -291,7 +291,7 @@ workflows:
                 - quay.io/astronomer/ap-openresty:1.21.4-3
                 - quay.io/astronomer/ap-pgbouncer-krb:1.17.0-5
                 - quay.io/astronomer/ap-postgres-exporter:0.11.1
-                - quay.io/astronomer/ap-postgresql:11.17.0-1
+                - quay.io/astronomer/ap-postgresql:11.18.0
                 - quay.io/astronomer/ap-prometheus:2.37.5
                 - quay.io/astronomer/ap-registry:3.16.3
                 - quay.io/astronomer/ap-vector:0.24.1-1
