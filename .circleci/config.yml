@@ -20,7 +20,7 @@ parameters:
 jobs:
   trivy-scan-docker:
     docker:
-      - image: docker:20.10.14-git
+      - image: docker:20.10.18-git
     shell: /bin/sh -leo pipefail
     parameters:
       docker_image:
@@ -31,7 +31,7 @@ jobs:
       BASH_ENV: /etc/profile
     steps:
       - setup_remote_docker:
-          version: 20.10.14
+          version: 20.10.18
       - checkout
       - run:
           name: Pull Docker image
@@ -65,7 +65,7 @@ jobs:
 
   run_pre_commit:
     docker:
-      - image: quay.io/astronomer/ci-pre-commit:2022-11
+      - image: quay.io/astronomer/ci-pre-commit:2023-01
     steps:
       - checkout
       - run:
@@ -100,13 +100,13 @@ jobs:
 
   unittest-charts:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2022-11
+      - image: quay.io/astronomer/ci-helm-release:2023-01
     parallelism: 8
     resource_class: xlarge
     steps:
       - setup_remote_docker:
           docker_layer_caching: true
-          version: 20.10.14
+          version: 20.10.18
       - checkout
       - run:
           name: Create chart-tests-cache-key.txt
@@ -151,7 +151,7 @@ jobs:
 
   release-to-internal:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2022-11
+      - image: quay.io/astronomer/ci-helm-release:2023-01
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -164,7 +164,7 @@ jobs:
 
   release-to-public:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2022-11
+      - image: quay.io/astronomer/ci-helm-release:2023-01
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -246,7 +246,7 @@ jobs:
     steps:
       - checkout
       - setup_remote_docker:
-          version: 20.10.14
+          version: 20.10.18
       - run:
           name: Check that commander image uses same Airflow chart version
           command: make validate-commander-airflow-version
@@ -379,7 +379,7 @@ commands:
     steps:
       - setup_remote_docker:
           docker_layer_caching: true
-          version: 20.10.14
+          version: 20.10.18
       - attach_workspace:
           at: /tmp/workspace
       - run:
@@ -433,7 +433,7 @@ commands:
       - checkout
       - setup_remote_docker:
           docker_layer_caching: true
-          version: 20.10.14
+          version: 20.10.18
       - run:
           name: Build the Docker image
           command: |

@@ -78,7 +78,6 @@ class TestAstronomerFileLogs:
         assert len(container["volumeMounts"]) == 1
 
     def houston_container(self, container):
-
         assert container["command"] == ["/bin/sh"]
         assert container["args"] == [
             "-c",
@@ -92,7 +91,6 @@ class TestAstronomerFileLogs:
                 assert volume["mountPath"] == "/var/log/houston"
 
     def houston_worker_container(self, container):
-
         assert container["command"] == ["/bin/sh"]
         assert container["args"] == [
             "-c",
