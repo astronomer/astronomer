@@ -9,11 +9,11 @@ tolerations: []
 images:
   nginx:
     repository: quay.io/astronomer/ap-nginx
-    tag: 1.3.1
+    tag: 1.3.1-2
     pullPolicy: IfNotPresent
   defaultBackend:
     repository: quay.io/astronomer/ap-default-backend
-    tag: 0.28.9
+    tag: 0.28.12
     pullPolicy: IfNotPresent
 
 ingressClass: ~
