@@ -55,10 +55,6 @@ batch/v1
 networking.istio.io/v1alpha3
 {{- end -}}
 
-{{- define "apiVersion.AdmissionConfiguration" -}}
-apiserver.config.k8s.io/v1
-{{- end -}}
-
 {{- define "apiVersion.Namespace" -}}
 v1
 {{- end -}}
