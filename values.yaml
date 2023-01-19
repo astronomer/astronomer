@@ -93,7 +93,7 @@ global:
     replicas: 3
 
   # If PodSecurityPolicies (PSP) should be enabled
-  pspEnabled: true
+  pspEnabled: false
 
   # Do you want to apply the global, default deny ingress network policy?
   defaultDenyNetworkPolicy: true

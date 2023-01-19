@@ -27,8 +27,6 @@ spec:
         app: astro-ui
         version: {{ .Chart.Version }}
     spec:
-#      securityContext:
-#        privileged: false
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
       affinity:

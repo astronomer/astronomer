@@ -78,12 +78,7 @@ class TestPDB:
             show_only=self.show_only,
             values={"global": {"prometheusPostgresExporterEnabled": True}},
         )
-        _, minor, _ = (int(x) for x in kube_version.split("."))
-
-        if minor < 25:
-            assert all(x["apiVersion"] == "policy/v1" for x in docs)
-        else:
-            assert ValueError("policy/v1beta1 is not supported in k8s 1.25+")
+        assert all(x["apiVersion"] == "policy/v1" for x in docs)
 
     def test_pod_disruption_budgets_use_legacy(self, kube_version):
         """Allow global.useLegacyPodDisruptionBudget to use policy/v1beta1
@@ -98,12 +93,7 @@ class TestPDB:
                 }
             },
         )
-        _, minor, _ = (int(x) for x in kube_version.split("."))
-
-        if minor < 25:
-            assert all(x["apiVersion"] == "policy/v1" for x in docs)
-        else:
-            assert ValueError("policy/v1beta1 is not supported in k8s 1.25+")
+        assert all(x["apiVersion"] == "policy/v1" for x in docs)
 
     def test_global_pdb_disabled(self, kube_version):
         """Validate that there are no PDBs when
