@@ -65,7 +65,9 @@ class TestPspEnabled:
             assert doc["metadata"]["name"] == psp_docs["name"]
             assert "spec" in doc
         else:
-            assert ValueError("policy/v1beta1 is not supported in k8s 1.25+")
+            assert ValueError(
+                "Pod Security Policy is not supported in k8s 1.25+ ref: https://kubernetes.io/docs/concepts/security/pod-security-policy"
+            )
 
     clusterrole_docs = [
         {
@@ -127,7 +129,9 @@ class TestPspEnabled:
                 for item in ["apiGroups", "resources", "resourceNames", "verbs"]
             )
         else:
-            assert ValueError("policy/v1beta1 is not supported in k8s 1.25+")
+            assert ValueError(
+                "Pod Security Policy is not supported in k8s 1.25+ ref: https://kubernetes.io/docs/concepts/security/pod-security-policy"
+            )
 
     clusterrolebinding_docs = [
         {
@@ -174,7 +178,9 @@ class TestPspEnabled:
             assert len(doc["roleRef"]) >= 1
             assert len(doc["subjects"]) >= 1
         else:
-            assert ValueError("policy/v1beta1 is not supported in k8s 1.25+")
+            assert ValueError(
+                "Pod Security Policy is not supported in k8s 1.25+ ref: https://kubernetes.io/docs/concepts/security/pod-security-policy"
+            )
 
     rolebinding_docs = [
         {
@@ -230,4 +236,6 @@ class TestPspEnabled:
             assert len(doc["roleRef"]) >= 1
             assert len(doc["subjects"]) >= 1
         else:
-            assert ValueError("policy/v1beta1 is not supported in k8s 1.25+")
+            assert ValueError(
+                "Pod Security Policy is not supported in k8s 1.25+ ref: https://kubernetes.io/docs/concepts/security/pod-security-policy"
+            )
