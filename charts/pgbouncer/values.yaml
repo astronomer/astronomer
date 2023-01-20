@@ -3,7 +3,7 @@
 #############################
 image:
   repository: quay.io/astronomer/ap-pgbouncer-krb
-  tag: 1.17.0-4
+  tag: 1.17.0-5
   pullPolicy: IfNotPresent
 
 internalPort: 5432

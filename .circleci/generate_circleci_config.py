@@ -4,6 +4,7 @@ DRY."""
 import os
 import subprocess
 from pathlib import Path
+import datetime
 
 from jinja2 import Template
 
@@ -22,6 +23,7 @@ kube_versions = [
 ci_remote_docker_version = "20.10.18"
 # https://circleci.com/developer/machine/image/ubuntu-2204
 machine_image_version = "ubuntu-2204:2022.10.2"
+ci_runner_version = datetime.datetime.now().strftime("%Y-%m")
 
 
 def list_docker_images(path):
@@ -48,6 +50,7 @@ def main():
         docker_images=docker_images,
         machine_image_version=machine_image_version,
         remote_docker_version=ci_remote_docker_version,
+        ci_runner_version=ci_runner_version,
     )
     with open(config_path, "w") as circle_ci_config_file:
         warning_header = (

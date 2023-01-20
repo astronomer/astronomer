@@ -105,6 +105,9 @@ spec:
             {{- if .Values.global.baseDomain }}
             - "--web.external-url=https://prometheus.{{ .Values.global.baseDomain }}"
             {{- end }}
+            {{- range .Values.extraFlags }}
+            - {{ . }}
+            {{- end }}
           volumeMounts:
             - name: prometheus-config-volume
               mountPath: /etc/prometheus/config
@@ -122,6 +125,7 @@ spec:
             initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
             failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
+            timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds }}
           readinessProbe:
             httpGet:
               path: /-/ready
@@ -129,6 +133,7 @@ spec:
             initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
             failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
+            timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
       securityContext:
         fsGroup: 65534
         runAsNonRoot: true

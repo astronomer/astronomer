@@ -14,6 +14,10 @@ parameters:
     type: boolean
     default: false
     description: "This will run docker image scan."
+  scan-docker-images-report-url:
+    type: string
+    default: ""
+    description: "The URN to report image scan result."
 
 jobs:
   trivy-scan-docker:
@@ -23,10 +27,13 @@ jobs:
     parameters:
       docker_image:
         type: string
+      report_url:
+        type: string
     environment:
       SCAN_IMAGE: << parameters.docker_image >>
       SCAN_TOOL: Trivy
       BASH_ENV: /etc/profile
+      ASTRO_SEC_ENDPOINT: << parameters.report_url >>
     steps:
       - setup_remote_docker:
           version: {{ remote_docker_version }}
@@ -63,7 +70,7 @@ jobs:
 
   run_pre_commit:
     docker:
-      - image: quay.io/astronomer/ci-pre-commit:2022-11
+      - image: quay.io/astronomer/ci-pre-commit:{{ ci_runner_version }}
     steps:
       - checkout
       - run:
@@ -86,7 +93,7 @@ jobs:
           command: pre-commit run --all-files --show-diff-on-failure
   lint:
     docker:
-      - image: quay.io/astronomer/ap-build:0.2.0
+      - image: quay.io/astronomer/ap-build:0.2.3
     steps:
       - checkout
       - run:
@@ -98,7 +105,7 @@ jobs:
 
   unittest-charts:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2022-11
+      - image: quay.io/astronomer/ci-helm-release:{{ ci_runner_version }}
     parallelism: 8
     resource_class: xlarge
     steps:
@@ -134,7 +141,7 @@ jobs:
 
   build-artifact:
     docker:
-      - image: quay.io/astronomer/ap-build:0.2.0
+      - image: quay.io/astronomer/ap-build:0.2.3
     steps:
       - checkout
       - run:
@@ -149,7 +156,7 @@ jobs:
 
   release-to-internal:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2022-11
+      - image: quay.io/astronomer/ci-helm-release:{{ ci_runner_version }}
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -162,7 +169,7 @@ jobs:
 
   release-to-public:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2022-11
+      - image: quay.io/astronomer/ci-helm-release:{{ ci_runner_version }}
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -210,8 +217,10 @@ workflows:
     when:
       and:
         - << pipeline.parameters.scan-docker-images >>
+        - << pipeline.parameters.scan-docker-images-report-url >>
     jobs:
       - trivy-scan-docker:
+          report_url: << pipeline.parameters.scan-docker-images-report-url >>
           matrix:
             parameters:
               docker_image:

@@ -22,8 +22,7 @@ if not (release_name := getenv("RELEASE_NAME")):
 def nginx(request, kube_client):
     """This is the host fixture for testinfra.
 
-    To read more, please see
-    the testinfra documentation:
+    To read more, please see the testinfra documentation:
     https://testinfra.readthedocs.io/en/latest/examples.html#test-docker-images
     """
 
@@ -35,8 +34,7 @@ def nginx(request, kube_client):
 def houston_api(request, kube_client):
     """This is the host fixture for testinfra.
 
-    To read more, please see
-    the testinfra documentation:
+    To read more, please see the testinfra documentation:
     https://testinfra.readthedocs.io/en/latest/examples.html#test-docker-images
     """
 
@@ -48,8 +46,7 @@ def houston_api(request, kube_client):
 def prometheus(request):
     """This is the host fixture for testinfra.
 
-    To read more, please see
-    the testinfra documentation:
+    To read more, please see the testinfra documentation:
     https://testinfra.readthedocs.io/en/latest/examples.html#test-docker-images
     """
 
