@@ -150,22 +150,21 @@ class TestPrivateCaPsp:
 
         _, minor, _ = (int(x) for x in kube_version.split("."))
         if minor >= 25:
-            assert ValueError(
-                "Pod Security Policy is not supported in k8s 1.25+ ref: https://kubernetes.io/docs/concepts/security/pod-security-policy"
+            assert ValueError("PSP is not supported in k8s 1.25+")
+        else:
+            docs = render_chart(
+                kube_version=kube_version,
+                show_only=["templates/trust-private-ca-on-all-nodes/psp.yaml"],
+                values={
+                    "global": {
+                        "pspEnabled": True,
+                        "privateCaCertsAddToHost": {
+                            "enabled": True,
+                        },
+                    }
+                },
             )
-        docs = render_chart(
-            kube_version=kube_version,
-            show_only=["templates/trust-private-ca-on-all-nodes/psp.yaml"],
-            values={
-                "global": {
-                    "pspEnabled": True,
-                    "privateCaCertsAddToHost": {
-                        "enabled": True,
-                    },
-                }
-            },
-        )
-        assert all(x["kind"] == "PodSecurityPolicy" for x in docs)
-        assert len(docs) == 1
-        assert docs[0]["kind"] == "PodSecurityPolicy"
-        assert docs[0]["metadata"]["name"] == "release-name-private-ca"
+            assert all(x["kind"] == "PodSecurityPolicy" for x in docs)
+            assert len(docs) == 1
+            assert docs[0]["kind"] == "PodSecurityPolicy"
+            assert docs[0]["metadata"]["name"] == "release-name-private-ca"
