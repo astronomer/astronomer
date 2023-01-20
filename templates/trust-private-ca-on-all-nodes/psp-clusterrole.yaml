@@ -1,3 +1,4 @@
+{{- if semverCompare "<1.25-0" .Capabilities.KubeVersion.Version }}
 {{- if .Values.global.privateCaCertsAddToHost.enabled }}
 {{- if .Values.global.pspEnabled }}
 kind: ClusterRole
@@ -13,5 +14,6 @@ rules:
   - {{ .Release.Name }}-private-ca
   verbs:
   - use
+{{- end -}}
 {{- end -}}
 {{- end -}}
