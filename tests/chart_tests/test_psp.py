@@ -42,32 +42,29 @@ class TestPspEnabled:
     def test_psp(self, kube_version, psp_docs):
         """Test that helm errors when pspEnabled=False, and renders a good
         PodSecurityPolicy template when pspEnabled=True."""
-
-        docs = render_chart(
-            kube_version=kube_version,
-            values={"global": {"pspEnabled": False}},
-            show_only=[psp_docs["template"]],
-        )
-
-        assert len(docs) == 0
-
-        docs = render_chart(
-            kube_version=kube_version,
-            values={"global": {"pspEnabled": True}},
-            show_only=[psp_docs["template"]],
-        )
         _, minor, _ = (int(x) for x in kube_version.split("."))
-        if minor < 25:
+        if minor >= 25:
+            assert ValueError("PSP is not supported in k8s 1.25+")
+        else:
+            docs = render_chart(
+                kube_version=kube_version,
+                values={"global": {"pspEnabled": False}},
+                show_only=[psp_docs["template"]],
+            )
+
+            assert len(docs) == 0
+
+            docs = render_chart(
+                kube_version=kube_version,
+                values={"global": {"pspEnabled": True}},
+                show_only=[psp_docs["template"]],
+            )
             assert len(docs) == 1
             doc = docs[0]
             assert doc["kind"] == "PodSecurityPolicy"
             assert doc["apiVersion"] == "policy/v1beta1"
             assert doc["metadata"]["name"] == psp_docs["name"]
             assert "spec" in doc
-        else:
-            assert ValueError(
-                "Pod Security Policy is not supported in k8s 1.25+ ref: https://kubernetes.io/docs/concepts/security/pod-security-policy"
-            )
 
     clusterrole_docs = [
         {
@@ -104,20 +101,23 @@ class TestPspEnabled:
     def test_clusterrole(self, kube_version, clusterrole_docs):
         """Test that helm errors when pspEnabled=False, and renders a good
         ClusterRole template when pspEnabled=True."""
-        docs = render_chart(
-            kube_version=kube_version,
-            values={"global": {"pspEnabled": False}},
-            show_only=[clusterrole_docs["template"]],
-        )
-        assert len(docs) == 0
-
-        docs = render_chart(
-            kube_version=kube_version,
-            values={"global": {"pspEnabled": True}},
-            show_only=[clusterrole_docs["template"]],
-        )
         _, minor, _ = (int(x) for x in kube_version.split("."))
-        if minor < 25:
+        if minor >= 25:
+            assert ValueError("PSP is not supported in k8s 1.25+")
+        else:
+            docs = render_chart(
+                kube_version=kube_version,
+                values={"global": {"pspEnabled": False}},
+                show_only=[clusterrole_docs["template"]],
+            )
+            assert len(docs) == 0
+
+            docs = render_chart(
+                kube_version=kube_version,
+                values={"global": {"pspEnabled": True}},
+                show_only=[clusterrole_docs["template"]],
+            )
+
             assert len(docs) == 1
             doc = docs[0]
             assert doc["kind"] == "ClusterRole"
@@ -127,10 +127,6 @@ class TestPspEnabled:
             assert all(
                 item in doc["rules"][0]
                 for item in ["apiGroups", "resources", "resourceNames", "verbs"]
-            )
-        else:
-            assert ValueError(
-                "Pod Security Policy is not supported in k8s 1.25+ ref: https://kubernetes.io/docs/concepts/security/pod-security-policy"
             )
 
     clusterrolebinding_docs = [
@@ -154,22 +150,24 @@ class TestPspEnabled:
     def test_clusterrolebinding(self, kube_version, clusterrolebinding_docs):
         """Test that helm errors when pspEnabled=False, and renders a good
         ClusterRoleBinding template when pspEnabled=True."""
-
-        docs = render_chart(
-            kube_version=kube_version,
-            values={"global": {"pspEnabled": False}},
-            show_only=[clusterrolebinding_docs["template"]],
-        )
-
-        assert len(docs) == 0
-
-        docs = render_chart(
-            kube_version=kube_version,
-            values={"global": {"pspEnabled": True}},
-            show_only=[clusterrolebinding_docs["template"]],
-        )
         _, minor, _ = (int(x) for x in kube_version.split("."))
-        if minor < 25:
+        if minor >= 25:
+            assert ValueError("PSP is not supported in k8s 1.25+")
+        else:
+            docs = render_chart(
+                kube_version=kube_version,
+                values={"global": {"pspEnabled": False}},
+                show_only=[clusterrolebinding_docs["template"]],
+            )
+
+            assert len(docs) == 0
+
+            docs = render_chart(
+                kube_version=kube_version,
+                values={"global": {"pspEnabled": True}},
+                show_only=[clusterrolebinding_docs["template"]],
+            )
+
             assert len(docs) == 1
             doc = docs[0]
             assert doc["kind"] == "ClusterRoleBinding"
@@ -177,10 +175,6 @@ class TestPspEnabled:
             assert doc["metadata"]["name"] == clusterrolebinding_docs["name"]
             assert len(doc["roleRef"]) >= 1
             assert len(doc["subjects"]) >= 1
-        else:
-            assert ValueError(
-                "Pod Security Policy is not supported in k8s 1.25+ ref: https://kubernetes.io/docs/concepts/security/pod-security-policy"
-            )
 
     rolebinding_docs = [
         {
@@ -211,23 +205,24 @@ class TestPspEnabled:
     def test_rolebinding(self, kube_version, rolebinding_docs):
         """Test that helm errors when pspEnabled=False, and renders a good
         RoleBinding template when pspEnabled=True."""
-
-        docs = render_chart(
-            kube_version=kube_version,
-            values={"global": {"pspEnabled": False}},
-            show_only=[rolebinding_docs["template"]],
-        )
-
-        assert len(docs) == 0
-
-        docs = render_chart(
-            kube_version=kube_version,
-            values={"global": {"pspEnabled": True}},
-            show_only=[rolebinding_docs["template"]],
-        )
-
         _, minor, _ = (int(x) for x in kube_version.split("."))
-        if minor < 25:
+        if minor >= 25:
+            assert ValueError("PSP is not supported in k8s 1.25+")
+        else:
+            docs = render_chart(
+                kube_version=kube_version,
+                values={"global": {"pspEnabled": False}},
+                show_only=[rolebinding_docs["template"]],
+            )
+
+            assert len(docs) == 0
+
+            docs = render_chart(
+                kube_version=kube_version,
+                values={"global": {"pspEnabled": True}},
+                show_only=[rolebinding_docs["template"]],
+            )
+
             assert len(docs) == 1
             doc = docs[0]
             assert doc["kind"] == "RoleBinding"
@@ -235,7 +230,3 @@ class TestPspEnabled:
             assert doc["metadata"]["name"] == rolebinding_docs["name"]
             assert len(doc["roleRef"]) >= 1
             assert len(doc["subjects"]) >= 1
-        else:
-            assert ValueError(
-                "Pod Security Policy is not supported in k8s 1.25+ ref: https://kubernetes.io/docs/concepts/security/pod-security-policy"
-            )
