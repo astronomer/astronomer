@@ -3,10 +3,14 @@ import pytest
 from tests import supported_k8s_versions
 from tests.chart_tests.helm_template_generator import render_chart
 
+psp_compatible_versions = [
+    x for x in supported_k8s_versions if int(x.split(".")[1]) < 25
+]
+
 
 @pytest.mark.parametrize(
     "kube_version",
-    supported_k8s_versions,
+    psp_compatible_versions,
 )
 class TestPspEnabled:
     psp_docs = [
@@ -42,29 +46,26 @@ class TestPspEnabled:
     def test_psp(self, kube_version, psp_docs):
         """Test that helm errors when pspEnabled=False, and renders a good
         PodSecurityPolicy template when pspEnabled=True."""
-        _, minor, _ = (int(x) for x in kube_version.split("."))
-        if minor >= 25:
-            assert ValueError("PSP is not supported in k8s 1.25+")
-        else:
-            docs = render_chart(
-                kube_version=kube_version,
-                values={"global": {"pspEnabled": False}},
-                show_only=[psp_docs["template"]],
-            )
 
-            assert len(docs) == 0
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"pspEnabled": False}},
+            show_only=[psp_docs["template"]],
+        )
 
-            docs = render_chart(
-                kube_version=kube_version,
-                values={"global": {"pspEnabled": True}},
-                show_only=[psp_docs["template"]],
-            )
-            assert len(docs) == 1
-            doc = docs[0]
-            assert doc["kind"] == "PodSecurityPolicy"
-            assert doc["apiVersion"] == "policy/v1beta1"
-            assert doc["metadata"]["name"] == psp_docs["name"]
-            assert "spec" in doc
+        assert len(docs) == 0
+
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"pspEnabled": True}},
+            show_only=[psp_docs["template"]],
+        )
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["kind"] == "PodSecurityPolicy"
+        assert doc["apiVersion"] == "policy/v1beta1"
+        assert doc["metadata"]["name"] == psp_docs["name"]
+        assert "spec" in doc
 
     clusterrole_docs = [
         {
@@ -150,31 +151,28 @@ class TestPspEnabled:
     def test_clusterrolebinding(self, kube_version, clusterrolebinding_docs):
         """Test that helm errors when pspEnabled=False, and renders a good
         ClusterRoleBinding template when pspEnabled=True."""
-        _, minor, _ = (int(x) for x in kube_version.split("."))
-        if minor >= 25:
-            assert ValueError("PSP is not supported in k8s 1.25+")
-        else:
-            docs = render_chart(
-                kube_version=kube_version,
-                values={"global": {"pspEnabled": False}},
-                show_only=[clusterrolebinding_docs["template"]],
-            )
 
-            assert len(docs) == 0
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"pspEnabled": False}},
+            show_only=[clusterrolebinding_docs["template"]],
+        )
 
-            docs = render_chart(
-                kube_version=kube_version,
-                values={"global": {"pspEnabled": True}},
-                show_only=[clusterrolebinding_docs["template"]],
-            )
+        assert len(docs) == 0
 
-            assert len(docs) == 1
-            doc = docs[0]
-            assert doc["kind"] == "ClusterRoleBinding"
-            assert doc["apiVersion"] == "rbac.authorization.k8s.io/v1"
-            assert doc["metadata"]["name"] == clusterrolebinding_docs["name"]
-            assert len(doc["roleRef"]) >= 1
-            assert len(doc["subjects"]) >= 1
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"pspEnabled": True}},
+            show_only=[clusterrolebinding_docs["template"]],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["kind"] == "ClusterRoleBinding"
+        assert doc["apiVersion"] == "rbac.authorization.k8s.io/v1"
+        assert doc["metadata"]["name"] == clusterrolebinding_docs["name"]
+        assert len(doc["roleRef"]) >= 1
+        assert len(doc["subjects"]) >= 1
 
     rolebinding_docs = [
         {
@@ -205,28 +203,25 @@ class TestPspEnabled:
     def test_rolebinding(self, kube_version, rolebinding_docs):
         """Test that helm errors when pspEnabled=False, and renders a good
         RoleBinding template when pspEnabled=True."""
-        _, minor, _ = (int(x) for x in kube_version.split("."))
-        if minor >= 25:
-            assert ValueError("PSP is not supported in k8s 1.25+")
-        else:
-            docs = render_chart(
-                kube_version=kube_version,
-                values={"global": {"pspEnabled": False}},
-                show_only=[rolebinding_docs["template"]],
-            )
 
-            assert len(docs) == 0
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"pspEnabled": False}},
+            show_only=[rolebinding_docs["template"]],
+        )
 
-            docs = render_chart(
-                kube_version=kube_version,
-                values={"global": {"pspEnabled": True}},
-                show_only=[rolebinding_docs["template"]],
-            )
+        assert len(docs) == 0
 
-            assert len(docs) == 1
-            doc = docs[0]
-            assert doc["kind"] == "RoleBinding"
-            assert doc["apiVersion"] == "rbac.authorization.k8s.io/v1"
-            assert doc["metadata"]["name"] == rolebinding_docs["name"]
-            assert len(doc["roleRef"]) >= 1
-            assert len(doc["subjects"]) >= 1
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"pspEnabled": True}},
+            show_only=[rolebinding_docs["template"]],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["kind"] == "RoleBinding"
+        assert doc["apiVersion"] == "rbac.authorization.k8s.io/v1"
+        assert doc["metadata"]["name"] == rolebinding_docs["name"]
+        assert len(doc["roleRef"]) >= 1
+        assert len(doc["subjects"]) >= 1
