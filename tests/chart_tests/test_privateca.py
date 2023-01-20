@@ -150,7 +150,7 @@ class TestPrivateCaPsp:
 
         _, minor, _ = (int(x) for x in kube_version.split("."))
         if minor >= 25:
-            assert ValueError("PSP is not supported in k8s 1.25+")
+            pytest.skip()
         else:
             docs = render_chart(
                 kube_version=kube_version,
