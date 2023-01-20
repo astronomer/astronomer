@@ -102,33 +102,30 @@ class TestPspEnabled:
     def test_clusterrole(self, kube_version, clusterrole_docs):
         """Test that helm errors when pspEnabled=False, and renders a good
         ClusterRole template when pspEnabled=True."""
-        _, minor, _ = (int(x) for x in kube_version.split("."))
-        if minor >= 25:
-            assert ValueError("PSP is not supported in k8s 1.25+")
-        else:
-            docs = render_chart(
-                kube_version=kube_version,
-                values={"global": {"pspEnabled": False}},
-                show_only=[clusterrole_docs["template"]],
-            )
-            assert len(docs) == 0
 
-            docs = render_chart(
-                kube_version=kube_version,
-                values={"global": {"pspEnabled": True}},
-                show_only=[clusterrole_docs["template"]],
-            )
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"pspEnabled": False}},
+            show_only=[clusterrole_docs["template"]],
+        )
+        assert len(docs) == 0
 
-            assert len(docs) == 1
-            doc = docs[0]
-            assert doc["kind"] == "ClusterRole"
-            assert doc["apiVersion"] == "rbac.authorization.k8s.io/v1"
-            assert doc["metadata"]["name"] == clusterrole_docs["name"]
-            assert "rules" in doc
-            assert all(
-                item in doc["rules"][0]
-                for item in ["apiGroups", "resources", "resourceNames", "verbs"]
-            )
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"pspEnabled": True}},
+            show_only=[clusterrole_docs["template"]],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["kind"] == "ClusterRole"
+        assert doc["apiVersion"] == "rbac.authorization.k8s.io/v1"
+        assert doc["metadata"]["name"] == clusterrole_docs["name"]
+        assert "rules" in doc
+        assert all(
+            item in doc["rules"][0]
+            for item in ["apiGroups", "resources", "resourceNames", "verbs"]
+        )
 
     clusterrolebinding_docs = [
         {
