@@ -14,7 +14,7 @@ Options:
   -h    Print this help text
   -H    Use HA
   -k    List recent kubernetes versions to use with -K (not all will be available to KIND)
-  -K    Kubernetes version to use (eg: 1.21.2) https://github.com/kubernetes/kubernetes/releases/
+  -K    Kubernetes version to use (eg: 1.25.3) https://github.com/kubernetes/kubernetes/releases/
   -M    Enable multi-node kind cluster
 
 "

@@ -3,10 +3,14 @@ import pytest
 from tests import supported_k8s_versions
 from tests.chart_tests.helm_template_generator import render_chart
 
+psp_compatible_versions = [
+    x for x in supported_k8s_versions if int(x.split(".")[1]) < 25
+]
+
 
 @pytest.mark.parametrize(
     "kube_version",
-    supported_k8s_versions,
+    psp_compatible_versions,
 )
 class TestPspEnabled:
     psp_docs = [
@@ -55,7 +59,6 @@ class TestPspEnabled:
             values={"global": {"pspEnabled": True}},
             show_only=[psp_docs["template"]],
         )
-
         assert len(docs) == 1
         doc = docs[0]
         assert doc["kind"] == "PodSecurityPolicy"

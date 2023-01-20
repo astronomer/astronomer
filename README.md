@@ -82,7 +82,7 @@ kubectl edit deployment -n astronomer <your deployment>
 #### Change Kubernetes version:
 
 ```sh
-bin/reset-local-dev -K 1.21.2
+bin/reset-local-dev -K 1.24.7
 ```
 
 #### Locally test HA configurations:
