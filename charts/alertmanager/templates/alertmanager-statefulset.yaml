@@ -55,6 +55,13 @@ spec:
             - name: {{ $key }}
               value: {{ $value }}
             {{- end }}
+            {{- range $i, $config := .Values.secret }}
+            - name: {{ $config.envName }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $config.secretName }}
+                  key: {{ default "value" $config.secretKey }}
+            {{- end }}
           args:
             - --config.file=/etc/config/alertmanager.yaml
             - --storage.path={{ .Values.dataDir }}

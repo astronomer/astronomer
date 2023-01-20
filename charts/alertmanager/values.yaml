@@ -34,6 +34,8 @@ persistence:
 
 env: {}
 
+secret: []
+
 ports:
   http: 9093
 
