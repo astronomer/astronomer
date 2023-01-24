@@ -2,6 +2,7 @@ docker
 GitPython
 kubernetes
 pytest
+pytest-pretty
 pytest-rerunfailures
 pytest-testinfra
 PyYAML
