@@ -8,6 +8,7 @@ kubernetes
 pdbpp
 pytest
 pytest-forked
+pytest-pretty
 pytest-profiling
 pytest-rerunfailures
 pytest-testinfra
