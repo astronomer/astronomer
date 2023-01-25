@@ -188,6 +188,8 @@ s3:
 {{- end }}
 - name: NODE_ENV
   value: "production"
+- name: ALLOW_CONFIG_MUTATIONS
+  value: "true"
 - name: DATABASE__CONNECTION
   valueFrom:
     secretKeyRef:
