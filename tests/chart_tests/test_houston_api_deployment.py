@@ -248,3 +248,22 @@ class TestHoustonApiDeployment:
             for env in docs[0]["spec"]["template"]["spec"]["containers"][0]["env"]
             if "__HOST" in env.get("name") and env.get("value")
         )
+
+    def test_houston_env_validate_mutuable_config(self, kube_version):
+        """Ensure houston deployment has mutable config set."""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=[
+                "charts/astronomer/templates/houston/api/houston-deployment.yaml"
+            ],
+        )
+        assert len(docs) == 1
+        doc = docs[0]
+        c_by_name = get_containers_by_name(doc, include_init_containers=False)
+        houston_env = c_by_name["houston"]["env"]
+
+        expected_env = {
+            "name": "ALLOW_CONFIG_MUTATIONS",
+            "value": "true",
+        }
+        assert expected_env in houston_env
