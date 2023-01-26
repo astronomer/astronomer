@@ -83,6 +83,7 @@ spec:
             - --volume-dir=/etc/prometheus/config
           image: {{ include "configReloader.image" . }}
           imagePullPolicy: {{ .Values.images.prometheus.pullPolicy }}
+          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
           resources:
 {{ toYaml .Values.configMapReloader.resources | indent 12 }}
           volumeMounts:

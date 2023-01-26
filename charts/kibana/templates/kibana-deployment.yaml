@@ -58,6 +58,7 @@ spec:
       {{- if .Values.global.authSidecar.enabled  }}
       - name: auth-proxy
         image: "{{ .Values.global.authSidecar.repository }}:{{ .Values.global.authSidecar.tag }}"
+        securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
         imagePullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
         {{- if .Values.global.authSidecar.resources }}
         resources: {{- toYaml .Values.global.authSidecar.resources | nindent 12 }}

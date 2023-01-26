@@ -151,8 +151,9 @@ spec:
         - name: metrics
           image: {{ template "stan-exporter.image" . }}
           imagePullPolicy: {{ .Values.images.stan.pullPolicy }}
-          resources:
-{{ toYaml .Values.exporter.resources | indent 12 }}
+          securityContext:
+            runAsNonRoot: {{ .Values.securityContext.runAsNonRoot }}
+          resources: {{ toYaml .Values.exporter.resources | nindent 12 }}
           args:
           - -connz
           - -routez
