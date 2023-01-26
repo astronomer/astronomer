@@ -45,8 +45,7 @@ spec:
 {{- include "external-es-proxy.imagePullSecrets" . | indent 6 }}
       containers:
         - name: {{ .Chart.Name }}
-          securityContext:
-            {{- toYaml .Values.securityContext | nindent 12 }}
+          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
           image: {{ template "esproxy.image" . }}
           imagePullPolicy: {{ .Values.images.esproxy.pullPolicy }}
           env:
@@ -96,6 +95,7 @@ spec:
           image: {{ template "awsesproxy.image" . }}
           command: ["/bin/sh","-c"]
           args: ["aws-es-proxy -listen :{{ .Values.service.awsproxy }}"]
+          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
           imagePullPolicy: {{ .Values.images.awsproxy.pullPolicy }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
