@@ -39,6 +39,9 @@ images:
     tag: 0.26.11
     pullPolicy: IfNotPresent
 
+securityContext:
+    runAsNonRoot: true
+
 astroUI:
   replicas: 2
   env: []
@@ -51,6 +54,8 @@ astroUI:
   #  requests:
   #   cpu: 100m
   #   memory: 128Mi
+  securityContext:
+    runAsNonRoot: true
 
 houston:
   prismaConnectionLimit: 5

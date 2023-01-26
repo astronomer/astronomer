@@ -8,6 +8,9 @@ images:
     tag: 7.17.8
     pullPolicy: IfNotPresent
 
+securityContext:
+    runAsNonRoot: true
+
 clusterName: "astronomer"
 
 replicas: 1

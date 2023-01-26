@@ -38,6 +38,7 @@ spec:
       - name: kibana
         image: {{ template "kibana.image" . }}
         imagePullPolicy: {{ .Values.images.kibana.pullPolicy }}
+        securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
         env:
         {{- range $key, $value :=  .Values.env }}
         - name: {{ $key }}
@@ -49,8 +50,7 @@ spec:
           value: "http://{{ .Release.Name }}-elasticsearch:9200"
         - name: ELASTICSEARCH_REQUESTTIMEOUT
           value: "60000"
-        resources:
-{{ toYaml .Values.resources | indent 12 }}
+        resources: {{ toYaml .Values.resources | nindent 12 }}
         ports:
         - containerPort: {{ .Values.ports.http }}
           name: kibana-ui

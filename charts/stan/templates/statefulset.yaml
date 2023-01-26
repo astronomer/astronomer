@@ -46,8 +46,7 @@ spec:
       {{- end }}
 {{- include "stan.imagePullSecrets" . | indent 6 }}
 {{- with .Values.securityContext }}
-      securityContext:
-{{ toYaml . | indent 8 }}
+      securityContext: {{ toYaml . | nindent 8 }}
 {{- end }}
       terminationGracePeriodSeconds: 90
       nodeSelector:
@@ -67,6 +66,8 @@ spec:
       {{- end }}
       initContainers:
         - name: wait-for-nats-server
+          securityContext:
+            runAsNonRoot: {{ .Values.securityContext.runAsNonRoot}}
           command:
             - "dockerize"
           args:
@@ -84,6 +85,8 @@ spec:
       containers:
         - name: stan
           image: {{ include "stan.image" . }}
+          securityContext:
+            runAsNonRoot: {{ .Values.securityContext.runAsNonRoot }}
           imagePullPolicy: {{ .Values.images.stan.pullPolicy }}
           args:
           - -sc

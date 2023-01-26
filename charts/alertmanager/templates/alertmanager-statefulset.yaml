@@ -44,6 +44,7 @@ spec:
         - name: alertmanager
           image: {{ template "alertmanager.image" . }}
           imagePullPolicy: {{ .Values.images.alertmanager.pullPolicy }}
+          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
           env:
             {{- if .Values.enableNonRFC1918 }}
             - name: POD_IP

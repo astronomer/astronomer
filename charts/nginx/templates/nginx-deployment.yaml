@@ -40,6 +40,7 @@ spec:
         - name: nginx
           securityContext:
             runAsUser: 101
+{{ toYaml .Values.securityContext| indent 12 }}
           image: {{ template "nginx.image" . }}
           imagePullPolicy: {{ .Values.images.nginx.pullPolicy }}
           resources:

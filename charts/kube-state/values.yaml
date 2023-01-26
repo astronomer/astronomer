@@ -12,6 +12,9 @@ images:
     tag: 2.7.0
     pullPolicy: IfNotPresent
 
+securityContext:
+    runAsNonRoot: true
+
 env: {}
 resources:
   limits:

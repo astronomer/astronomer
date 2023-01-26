@@ -16,6 +16,9 @@ images:
     tag: 0.26.14
     pullPolicy: IfNotPresent
 
+securityContext:
+    runAsNonRoot: true
+
 backendSecretName: ~
 backendConnection:
   {}

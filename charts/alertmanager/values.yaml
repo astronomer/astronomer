@@ -12,6 +12,9 @@ images:
     tag: 0.25.0
     pullPolicy: IfNotPresent
 
+securityContext:
+    runAsNonRoot: true
+
 resources:
    limits:
     cpu: "300m"

@@ -16,6 +16,9 @@ images:
     tag: 0.28.12
     pullPolicy: IfNotPresent
 
+securityContext:
+  runAsNonRoot: true
+
 ingressClass: ~
 
 replicas: 2

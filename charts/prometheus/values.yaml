@@ -45,6 +45,9 @@ readinessProbe:
   timeoutSeconds: 1
   failureThreshold: 3
 
+securityContext:
+    runAsNonRoot: true
+
 configMapReloader:
   resources: {}
     # limits:

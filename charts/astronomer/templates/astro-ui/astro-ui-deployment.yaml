@@ -39,6 +39,8 @@ spec:
         - name: astro-ui
           image: {{- include "astroUI.image" . | indent 1 }}
           imagePullPolicy: {{ .Values.images.astroUI.pullPolicy }}
+          securityContext:
+{{ toYaml (.Values.securityContext)| indent 12 }}
           resources:
 {{ toYaml .Values.astroUI.resources | indent 12 }}
           {{- if .Values.astroUI.command }}
