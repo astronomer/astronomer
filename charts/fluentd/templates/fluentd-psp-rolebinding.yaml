@@ -1,6 +1,7 @@
 ################################
 ## Fluentd PSP RoleBinding
 ################################
+{{- if semverCompare "<1.25-0" .Capabilities.KubeVersion.Version }}
 {{- if .Values.global.pspEnabled }}
 apiVersion: {{ template "apiVersion.rbac" . }}
 kind: RoleBinding
@@ -13,4 +14,5 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: {{ template "fluentd.fullname" . }}
+{{- end -}}
 {{- end -}}

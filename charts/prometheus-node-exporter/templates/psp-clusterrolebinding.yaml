@@ -1,6 +1,7 @@
 ##################################################
 ## Prometheus Node Exporter ClusterRoleBinding  ##
 ##################################################
+{{- if semverCompare "<1.25-0" .Capabilities.KubeVersion.Version }}
 {{- if .Values.rbac.create }}
 {{- if .Values.global.pspEnabled }}
 apiVersion: {{ template "apiVersion.rbac" . }}
@@ -18,3 +19,4 @@ subjects:
     namespace: {{ template "prometheus-node-exporter.namespace" . }}
 {{- end }}
 {{- end }}
+{{- end -}}
