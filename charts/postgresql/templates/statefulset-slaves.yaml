@@ -92,7 +92,7 @@ spec:
         {{- if .Values.securityContext.enabled }}
         securityContext:
           runAsUser: {{ .Values.securityContext.runAsUser }}
-          runAsNonRoot: { { .Values.securityContext.runAsNonRoot } }
+          runAsNonRoot: {{ .Values.securityContext.runAsNonRoot }}
   {{- end }}
         env:
         - name: BITNAMI_DEBUG
