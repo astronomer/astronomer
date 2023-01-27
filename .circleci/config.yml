@@ -257,7 +257,7 @@ jobs:
           when: always
   platform-1-26-0:
     machine:
-      image: ubuntu-2204:2022.10.2
+      image: ubuntu-2204:2022.10.2 # https://circleci.com/developer/machine/image/ubuntu-2204
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.26.0
