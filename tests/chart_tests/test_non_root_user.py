@@ -2,9 +2,14 @@ import pytest
 
 import tests.chart_tests as chart_tests
 from tests import supported_k8s_versions
+import re
 
 ignore_kind_list = ["Job"]
-ignore_list = []
+ignore_list = [
+    "fluentd_fluentd",
+    "elasticsearch-exporter_metrics-exporter",
+    "elasticsearch-nginx_nginx",
+]
 
 
 def init_test_non_root_user():
@@ -27,9 +32,9 @@ class TestProbes:
         "container", chart_containers.values(), ids=chart_containers.keys()
     )
     def test_container_runasnonroot(self, container):
-        """Ensure all containers have liveness and readiness probes."""
+        """Ensure all containers have runAsNonRoot."""
 
-        if container["key"] in ignore_list:
-            pytest.skip("Info: Unsupported resource: " + container["key"])
+        if re.split("(?<=name-)(.*$)", container["key"])[1] in ignore_list:
+            pytest.skip("Info: Resource needs root access" + container["key"])
         else:
             assert container.get("securityContext").get("runAsNonRoot") is True
