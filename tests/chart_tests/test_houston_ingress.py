@@ -92,9 +92,9 @@ class TestIngress:
         annotations = jmespath.search("metadata.annotations", doc)
         assert (
             annotations["nginx.ingress.kubernetes.io/upstream-keepalive-connections"]
-            == "400"
+            == "9999"
         )
         assert (
             annotations["nginx.ingress.kubernetes.io/upstream-keepalive-timeout"]
-            == "120"
+            == "7777"
         )
