@@ -30,7 +30,7 @@ metadata:
     {{- end }}
 
     {{- if .Values.houston.ingress.annotation  }}
-    {{ toYaml .Values.houston.ingress.annotation  }}
+    {{- toYaml .Values.houston.ingress.annotation  | nindent 4  }}
     {{- end }}
 spec:
   {{- if or .Values.global.tlsSecret .Values.global.acme }}
