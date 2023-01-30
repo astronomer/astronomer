@@ -275,6 +275,10 @@ houston:
   # Add volumes to your containers
   extraVolumes: []
 
+  # Add custom annotation for houston ingress
+  ingress:
+    annotation: {}
+
 configSyncer:
   enabled: true
   # If not provided, will generate a random hour and minutes to spread cronjob workloads.
