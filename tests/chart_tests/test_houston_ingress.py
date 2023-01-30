@@ -75,8 +75,8 @@ class TestIngress:
 
     def test_houston_ingress_overrides(self, kube_version):
         custom_annotations = {
-            "nginx.ingress.kubernetes.io/upstream-keepalive-connections": "400",
-            "nginx.ingress.kubernetes.io/upstream-keepalive-timeout": "120",
+            "nginx.ingress.kubernetes.io/upstream-keepalive-connections": "9999",
+            "nginx.ingress.kubernetes.io/upstream-keepalive-timeout": "7777",
         }
         docs = render_chart(
             kube_version=kube_version,
