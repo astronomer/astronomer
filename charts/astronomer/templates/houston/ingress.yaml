@@ -28,6 +28,10 @@ metadata:
       }
     nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
     {{- end }}
+
+    {{- if .Values.houston.ingress.annotation  }}
+    {{ toYaml .Values.houston.ingress.annotation  }}
+    {{- end }}
 spec:
   {{- if or .Values.global.tlsSecret .Values.global.acme }}
   tls:
