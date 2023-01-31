@@ -18,6 +18,10 @@ parameters:
     type: string
     default: ""
     description: "The URN to report image scan result."
+  qa-release:
+    type: boolean
+    default: false
+    description: "This will trigger QA release workflow."
 
 jobs:
   trivy-scan-docker:
@@ -218,6 +222,7 @@ workflows:
       and:
         - << pipeline.parameters.scan-docker-images >>
         - << pipeline.parameters.scan-docker-images-report-url >>
+        - not: << pipeline.parameters.qa-release >>
     jobs:
       - trivy-scan-docker:
           report_url: << pipeline.parameters.scan-docker-images-report-url >>
@@ -234,6 +239,7 @@ workflows:
     unless:
       and:
         - << pipeline.parameters.scan-docker-images >>
+        - << pipeline.parameters.qa-release >>
     jobs:
       - lint
       - run_pre_commit
@@ -285,6 +291,38 @@ workflows:
             - github-repo
           requires:
             - approve-public-release
+          filters:
+            branches:
+              only:
+                - '/^release-0\.\d+$/'
+
+  qa-build-and-release-helm-chart:
+    when:
+      and:
+        - not: << pipeline.parameters.qa-release >>
+    jobs:
+      - lint
+      - run_pre_commit
+      - unittest-charts
+      - check-commander-airflow-version
+      - build-artifact:
+          requires:
+            - check-commander-airflow-version
+            - lint
+            - run_pre_commit
+            - unittest-charts
+{% for version in kube_versions %}{% if version in [kube_versions[0], kube_versions[-1]] %}
+      - platform-{{ version | replace(".", "-") }}:
+          requires:
+            - build-artifact
+{% endif %}{% endfor %}
+      - release-to-internal:
+          context:
+            - gcp-astronomer-prod
+          requires:
+{%- for version in [kube_versions[0], kube_versions[-1]] %}
+            - platform-{{ version | replace(".", "-") }}
+{%- endfor %}
           filters:
             branches:
               only:

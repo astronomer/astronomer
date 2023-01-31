@@ -20,6 +20,10 @@ parameters:
     type: string
     default: ""
     description: "The URN to report image scan result."
+  qa-release:
+    type: boolean
+    default: false
+    description: "This will trigger QA release workflow."
 
 jobs:
   trivy-scan-docker:
@@ -299,6 +303,7 @@ workflows:
       and:
         - << pipeline.parameters.scan-docker-images >>
         - << pipeline.parameters.scan-docker-images-report-url >>
+        - not: << pipeline.parameters.qa-release >>
     jobs:
       - trivy-scan-docker:
           report_url: << pipeline.parameters.scan-docker-images-report-url >>
@@ -345,6 +350,7 @@ workflows:
     unless:
       and:
         - << pipeline.parameters.scan-docker-images >>
+        - << pipeline.parameters.qa-release >>
     jobs:
       - lint
       - run_pre_commit
@@ -413,6 +419,41 @@ workflows:
             - github-repo
           requires:
             - approve-public-release
+          filters:
+            branches:
+              only:
+                - '/^release-0\.\d+$/'
+
+  qa-build-and-release-helm-chart:
+    when:
+      and:
+        - not: << pipeline.parameters.qa-release >>
+    jobs:
+      - lint
+      - run_pre_commit
+      - unittest-charts
+      - check-commander-airflow-version
+      - build-artifact:
+          requires:
+            - check-commander-airflow-version
+            - lint
+            - run_pre_commit
+            - unittest-charts
+
+      - platform-1-21-14:
+          requires:
+            - build-artifact
+
+      - platform-1-26-0:
+          requires:
+            - build-artifact
+
+      - release-to-internal:
+          context:
+            - gcp-astronomer-prod
+          requires:
+            - platform-1-21-14
+            - platform-1-26-0
           filters:
             branches:
               only:
