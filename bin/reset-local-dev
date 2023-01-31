@@ -82,7 +82,7 @@ cat <<EOF
   command to find the root password:
 
     kubectl -n ${NAMESPACE} get secrets astronomer-root-admin-credentials \\
-      -o go-template --template='{{.data.password|base64decode}}{{\"\n\"}}'
+      -o go-template --template='{{.data.password|base64decode}}{{"\n"}}'
 
   Next, run the following command to port-forward into the kind cluster so you can
   access the web UI:
