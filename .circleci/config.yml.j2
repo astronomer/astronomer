@@ -240,10 +240,10 @@ workflows:
             - slack_team-software-infra-bot
 
   build-and-release-helm-chart:
-    unless:
+    when:
       and:
-        - << pipeline.parameters.scan-docker-images >>
-        - << pipeline.parameters.qa-release >>
+        - not: << pipeline.parameters.scan-docker-images >>
+        - not: << pipeline.parameters.qa-release >>
     jobs:
       - lint
       - run_pre_commit
@@ -304,6 +304,7 @@ workflows:
     when:
       and:
         - << pipeline.parameters.qa-release >>
+        - not: << pipeline.parameters.scan-docker-images >>
     jobs:
       - lint
       - run_pre_commit
