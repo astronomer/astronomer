@@ -74,23 +74,24 @@ cat <<EOF
 
     kind export kubeconfig
 
-  You can then check the status with:
+  Run the following command to check the progress of the Astronomer installation:
 
     kubectl get pods -n ${NAMESPACE}
 
-  After Astronomer is up (all pods running, all containers up), find the root login
-  credentials:
+  After Astronomer is up (all pods running, all containers up), run the following
+  command to find the root password:
 
     kubectl -n ${NAMESPACE} get secrets astronomer-root-admin-credentials \\
       -o go-template --template='{{.data.password|base64decode}}{{\"\n\"}}'
 
-  Next, port-forward into the kind cluster so you can access the application:
+  Next, run the following command to port-forward into the kind cluster so you can
+  access the web UI:
 
     sudo -E kubectl port-forward -n ${NAMESPACE} svc/astronomer-nginx 443
 
-  You can then access the service here: https://app.localtest.me
+  You can then access the web UI here: https://app.localtest.me
 
-  Run the following command to remove everything:
+  Run the following command to delete the cluster and all installed software:
 
     kind delete cluster
 
