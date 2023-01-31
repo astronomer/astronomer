@@ -146,13 +146,17 @@ jobs:
   build-artifact:
     docker:
       - image: quay.io/astronomer/ap-build:0.2.3
+    parameters:
+      qa_release:
+        type: boolean
+        default: false
     steps:
       - checkout
       - run:
           name: Package the Astronomer chart
           command: |
             source ./bin/install-ci-tools 1
-            make build
+            bin/build-helm-chart.sh << parameters.qa_release >>
       - persist_to_workspace:
           root: "."
           paths:
@@ -306,6 +310,7 @@ workflows:
       - unittest-charts
       - check-commander-airflow-version
       - build-artifact:
+          qa_release: true
           requires:
             - check-commander-airflow-version
             - lint
