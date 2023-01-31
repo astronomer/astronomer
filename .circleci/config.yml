@@ -431,7 +431,7 @@ workflows:
   qa-build-and-release-helm-chart:
     when:
       and:
-        - not: << pipeline.parameters.qa-release >>
+        - << pipeline.parameters.qa-release >>
     jobs:
       - lint
       - run_pre_commit
