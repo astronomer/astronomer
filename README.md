@@ -79,7 +79,7 @@ and set the pull policy to "Never".
 kubectl edit deployment -n astronomer <your deployment>
 ```
 
-#### Change Kubernetes version:
+#### Specify the Kubernetes version:
 
 ```sh
 bin/reset-local-dev -K 1.24.7
