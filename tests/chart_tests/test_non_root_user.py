@@ -12,29 +12,28 @@ ignore_list = [
 ]
 
 
-def init_test_non_root_user():
+def init_test_non_root_user(kube_version: str) -> dict:
+    """Return a dict of container specs for the given k8s version"""
     chart_values = chart_tests.get_all_features()
-
     containers = {}
-    for k8s_version in supported_k8s_versions:
-        k8s_version_containers = chart_tests.get_chart_containers(
-            k8s_version, chart_values, ignore_kind_list
-        )
-        containers = {**containers, **k8s_version_containers}
-
-    return containers
-
-
-class TestProbes:
-    chart_containers = init_test_non_root_user()
-
-    @pytest.mark.parametrize(
-        "container", chart_containers.values(), ids=chart_containers.keys()
+    kube_version_containers = chart_tests.get_chart_containers(
+        kube_version, chart_values, ignore_kind_list
     )
-    def test_container_runasnonroot(self, container):
+    return {**containers, **kube_version_containers}
+
+
+@pytest.mark.parametrize(
+    "kube_version",
+    supported_k8s_versions,
+)
+class TestProbes:
+    def test_container_runasnonroot(self, kube_version):
         """Ensure all containers have runAsNonRoot."""
 
-        if re.split("(?<=name-)(.*$)", container["key"])[1] in ignore_list:
-            pytest.skip("Info: Resource needs root access" + container["key"])
-        else:
-            assert container.get("securityContext").get("runAsNonRoot") is True
+        containers = init_test_non_root_user(kube_version)
+
+        for container in containers.values():
+            if re.split("(?<=name-)(.*$)", container["key"])[1] in ignore_list:
+                pytest.skip("Info: Resource needs root access" + container["key"])
+            else:
+                assert container.get("securityContext").get("runAsNonRoot") is True
