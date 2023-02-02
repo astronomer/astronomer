@@ -66,30 +66,34 @@ helm install -f "$CONFIG_FILE" \
   "$GIT_ROOT"
 
 
-echo '
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+cat <<EOF
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
- Please run the following command to configure kubectl:
+  Astronomer is launching and should be available shortly. Run the following command
+  to configure kubectl to access the kind cluster that Astronomer is running in:
 
-     export KUBECONFIG="$(kind get kubeconfig-path --name=kind)"
+    kind export kubeconfig
 
-'
-echo "
- Astronomer is launching. You can check the status with:
+  Run the following command to check the progress of the Astronomer installation:
 
-     kubectl get pods -n ${NAMESPACE}
+    kubectl get pods -n ${NAMESPACE}
 
+  After Astronomer is up (all pods running, all containers up), run the following
+  command to find the root password:
 
- After Astronomer is up (all pods running, all containers up), do this to start a connection to the service:
+    kubectl -n ${NAMESPACE} get secrets astronomer-root-admin-credentials \\
+      -o go-template --template='{{.data.password|base64decode}}{{"\n"}}'
 
-     sudo -E kubectl port-forward -n ${NAMESPACE} svc/astronomer-nginx 443
+  Next, run the following command to port-forward into the kind cluster so you can
+  access the web UI:
 
+    sudo -E kubectl port-forward -n ${NAMESPACE} svc/astronomer-nginx 443
 
- Then you can access the service here: https://app.localtest.me
+  You can then access the web UI here: https://app.localtest.me
 
- You can clean up like this:
+  Run the following command to delete the cluster and all installed software:
 
-     kind delete cluster
+    kind delete cluster
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-"
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+EOF

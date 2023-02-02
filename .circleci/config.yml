@@ -262,6 +262,22 @@ jobs:
             helm template --kube-version=v1.25.3 -f values.yaml --set global.baseDomain=example.com . |
             kubent --cluster=false --helm2=false --helm3=false --filename -
           when: always
+  platform-1-26-0:
+    machine:
+      image: ubuntu-2204:2022.10.2
+      resource_class: xlarge
+    environment:
+      KUBE_VERSION: v1.26.0
+    steps:
+      - helm-install:
+          astronomer-tags: "platform postgresql monitoring logging"
+      - run:
+          name: Check chart for k8s 1.26.0 compatibility with kubent
+          command: |
+            set -o pipefail
+            helm template --kube-version=v1.26.0 -f values.yaml --set global.baseDomain=example.com . |
+            kubent --cluster=false --helm2=false --helm3=false --filename -
+          when: always
 
   check-commander-airflow-version:
     docker:
@@ -290,22 +306,22 @@ workflows:
             parameters:
               docker_image:
                 - quay.io/astronomer/ap-alertmanager:0.25.0
-                - quay.io/astronomer/ap-astro-ui:0.31.9
+                - quay.io/astronomer/ap-astro-ui:0.31.10
                 - quay.io/astronomer/ap-auth-sidecar:1.23.3-1
                 - quay.io/astronomer/ap-awsesproxy:1.3-10
                 - quay.io/astronomer/ap-base:3.16.3
                 - quay.io/astronomer/ap-blackbox-exporter:0.23.0-1
                 - quay.io/astronomer/ap-cli-install:0.26.11
-                - quay.io/astronomer/ap-commander:0.31.3
+                - quay.io/astronomer/ap-commander:0.31.4
                 - quay.io/astronomer/ap-configmap-reloader:0.8.0
                 - quay.io/astronomer/ap-curator:5.8.4-23
-                - quay.io/astronomer/ap-db-bootstrapper:0.26.14
+                - quay.io/astronomer/ap-db-bootstrapper:0.31.0
                 - quay.io/astronomer/ap-default-backend:0.28.12
                 - quay.io/astronomer/ap-elasticsearch-exporter:1.5.0
                 - quay.io/astronomer/ap-elasticsearch:7.17.8
-                - quay.io/astronomer/ap-fluentd:1.15.2
-                - quay.io/astronomer/ap-grafana:8.5.15
-                - quay.io/astronomer/ap-houston-api:0.31.13
+                - quay.io/astronomer/ap-fluentd:1.15.3-1
+                - quay.io/astronomer/ap-grafana:8.5.16
+                - quay.io/astronomer/ap-houston-api:0.31.15
                 - quay.io/astronomer/ap-init:3.16.3
                 - quay.io/astronomer/ap-kibana:7.17.8
                 - quay.io/astronomer/ap-kube-state:2.7.0
@@ -321,7 +337,7 @@ workflows:
                 - quay.io/astronomer/ap-postgresql:11.18.0
                 - quay.io/astronomer/ap-prometheus:2.37.5
                 - quay.io/astronomer/ap-registry:3.16.3
-                - quay.io/astronomer/ap-vector:0.24.2
+                - quay.io/astronomer/ap-vector:0.26.0
           context:
             - slack_team-software-infra-bot
 
@@ -363,6 +379,11 @@ workflows:
 
       - platform-1-25-3:
           requires:
+            - approve-test-all-platforms
+            - build-artifact
+
+      - platform-1-26-0:
+          requires:
             - build-artifact
       - approve-internal-release:
           type: approval
@@ -372,7 +393,7 @@ workflows:
           requires:
             - approve-internal-release
             - platform-1-21-14
-            - platform-1-25-3
+            - platform-1-26-0
       - approve-public-release:
           type: approval
           requires:
@@ -380,6 +401,7 @@ workflows:
             - platform-1-22-15
             - platform-1-23-13
             - platform-1-24-7
+            - platform-1-25-3
           filters:
             branches:
               only:
