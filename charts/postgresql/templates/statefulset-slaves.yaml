@@ -93,7 +93,7 @@ spec:
         securityContext:
           runAsUser: {{ .Values.securityContext.runAsUser }}
           runAsNonRoot: {{ .Values.securityContext.runAsNonRoot }}
-  {{- end }}
+        {{- end }}
         env:
         - name: BITNAMI_DEBUG
           value: {{ ternary "true" "false" .Values.image.debug | quote }}
