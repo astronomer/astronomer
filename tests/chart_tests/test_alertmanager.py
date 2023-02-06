@@ -1,7 +1,11 @@
-from tests.chart_tests.helm_template_generator import render_chart
-import jmespath
 import textwrap
+
+import jmespath
+import pytest
 import yaml
+
+from tests import supported_k8s_versions
+from tests.chart_tests.helm_template_generator import render_chart
 
 
 def test_alertmanager_defaults():
@@ -88,3 +92,39 @@ def test_alertmanager_customReceiver():
     )
     assert len(docs) == 1
     assert "sns-receiver" in docs[0]["data"]["alertmanager.yaml"]
+
+
+@pytest.mark.parametrize(
+    "kube_version",
+    supported_k8s_versions,
+)
+def test_alertmanager_extra_volumes(kube_version):
+    test_extra_volumes_config = textwrap.dedent(
+        """
+        alertmanager:
+          extraVolumes:
+            - name: webhook-alert-secret
+              secret:
+                secretName: webhook-alert-secret
+          extraVolumeMounts:
+            - mountPath: "/var/webhook-alert-secret"
+              name: webhook-alert-secret
+              readOnly: true
+        """
+    )
+    values = yaml.safe_load(test_extra_volumes_config)
+    docs = render_chart(
+        kube_version=kube_version,
+        values=values,
+        show_only=["charts/alertmanager/templates/alertmanager-statefulset.yaml"],
+    )
+
+    assert "webhook-alert-secret" in [
+        x["name"] for x in jmespath.search("spec.template.spec.volumes", docs[0])
+    ]
+    assert "webhook-alert-secret" in [
+        x["name"]
+        for x in jmespath.search(
+            "spec.template.spec.containers[0].volumeMounts", docs[0]
+        )
+    ]
