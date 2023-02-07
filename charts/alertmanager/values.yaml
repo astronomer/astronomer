@@ -9,11 +9,12 @@ tolerations: []
 images:
   alertmanager:
     repository: quay.io/astronomer/ap-alertmanager
-    tag: 0.25.0
+    tag: 0.25.0-1
     pullPolicy: IfNotPresent
 
 securityContext:
     runAsNonRoot: true
+    runAsUser: 65534
 
 resources:
    limits:

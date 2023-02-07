@@ -48,7 +48,7 @@ spec:
         - name: commander
           image: {{ template "commander.image" . }}
           imagePullPolicy: {{ .Values.images.commander.pullPolicy }}
-          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
+          securityContext: {{ toYaml .Values.commander.securityContext| nindent 12 }}
           resources:
 {{ toYaml .Values.commander.resources | indent 12 }}
           {{- if .Values.commander.command }}

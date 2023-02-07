@@ -15,16 +15,16 @@ tolerations: []
 images:
   commander:
     repository: quay.io/astronomer/ap-commander
-    tag: 0.31.4
+    tag: master
     pullPolicy: IfNotPresent
   registry:
     repository: quay.io/astronomer/ap-registry
-    tag: 3.16.3
+    tag: 3.16.3-1
     pullPolicy: IfNotPresent
     # httpSecret: ~
   houston:
     repository: quay.io/astronomer/ap-houston-api
-    tag: 0.31.15
+    tag: master
     pullPolicy: IfNotPresent
   astroUI:
     repository: quay.io/astronomer/ap-astro-ui
@@ -58,9 +58,12 @@ astroUI:
     runAsNonRoot: true
 
 houston:
+  securityContext:
+    runAsUser: 1000
+    runAsNonRoot: true
   prismaConnectionLimit: 5
   replicas: 2
-  # This only applies when replicas > 3
+  # This only applies when replicas >
   maxUnavailable: 25%
   livenessProbe:
     initialDelaySeconds: 30
@@ -290,6 +293,9 @@ configSyncer:
   schedule: ~
 
 commander:
+  securityContext:
+    runAsUser: 1000
+    runAsNonRoot: true
   replicas: 2
   env: []
   # This only applies when replicas > 3

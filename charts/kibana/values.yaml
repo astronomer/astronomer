@@ -5,11 +5,12 @@ tolerations: []
 images:
   kibana:
     repository: quay.io/astronomer/ap-kibana
-    tag: 7.17.8
+    tag: 7.17.9
     pullPolicy: IfNotPresent
 
 securityContext:
     runAsNonRoot: true
+    runAsUser: 1000
 
 clusterName: "astronomer"
 

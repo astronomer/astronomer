@@ -6,7 +6,7 @@
 images:
   nats:
     repository: quay.io/astronomer/ap-nats-server
-    tag: 2.8.4
+    tag: 2.8.4-1
     pullPolicy: IfNotPresent
   exporter:
     repository: quay.io/astronomer/ap-nats-exporter
@@ -80,7 +80,7 @@ imagePullSecrets: []
 securityContext:
 # securityContext: null
 #   fsGroup: 1000
-#   runAsUser: 1000
+   runAsUser: 1000
    runAsNonRoot: true
 
 ## Node labels for pod assignment
