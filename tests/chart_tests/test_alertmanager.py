@@ -4,7 +4,7 @@ import jmespath
 import pytest
 import yaml
 
-from tests import supported_k8s_versions
+from tests import get_containers_by_name, supported_k8s_versions
 from tests.chart_tests.helm_template_generator import render_chart
 
 
@@ -113,18 +113,17 @@ def test_alertmanager_extra_volumes(kube_version):
         """
     )
     values = yaml.safe_load(test_extra_volumes_config)
-    docs = render_chart(
+    doc = render_chart(
         kube_version=kube_version,
         values=values,
         show_only=["charts/alertmanager/templates/alertmanager-statefulset.yaml"],
-    )
+    )[0]
+
+    c_by_name = get_containers_by_name(doc, include_init_containers=False)
 
     assert "webhook-alert-secret" in [
-        x["name"] for x in jmespath.search("spec.template.spec.volumes", docs[0])
+        x["name"] for x in doc["spec"]["template"]["spec"]["volumes"]
     ]
     assert "webhook-alert-secret" in [
-        x["name"]
-        for x in jmespath.search(
-            "spec.template.spec.containers[0].volumeMounts", docs[0]
-        )
+        x["name"] for x in c_by_name["alertmanager"]["volumeMounts"]
     ]
