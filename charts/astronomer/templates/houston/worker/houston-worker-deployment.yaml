@@ -44,7 +44,7 @@ spec:
         - name: wait-for-db
           image: {{ template "houston.image" . }}
           imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
-          securityContext: {{ toYaml .Values.houston.securityContext| nindent 12 }}
+          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
           command:
             - "/houston/bin/entrypoint"
           args:
@@ -89,7 +89,7 @@ spec:
         - name: houston
           image: {{ template "houston.image" . }}
           imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
-          securityContext: {{ toYaml (.Values.houston.securityContext)| nindent 12 }}
+          securityContext: {{ toYaml (.Values.securityContext)| nindent 12 }}
           {{- if .Values.houston.worker.command }}
           command:
             {{- toYaml .Values.houston.worker.command | nindent 12 }}
