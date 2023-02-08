@@ -2,7 +2,7 @@
 exclude: '(venv|\.vscode)' # regex
 repos:
   - repo: https://github.com/PyCQA/docformatter
-    rev: v1.6.0.rc1
+    rev: v1.5.0
     hooks:
       - id: docformatter
         args: ["--wrap-summaries=125", "--wrap-descriptions=125"]
