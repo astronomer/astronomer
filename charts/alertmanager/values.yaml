@@ -14,7 +14,6 @@ images:
 
 securityContext:
     runAsNonRoot: true
-    runAsUser: 65534
 
 resources:
    limits:
