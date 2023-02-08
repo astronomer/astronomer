@@ -288,7 +288,7 @@ class TestElasticSearch:
                 "podSelector": {
                     "matchLabels": {"component": "git-sync-relay", "tier": "airflow"}
                 },
-            }
+            },
         ] == doc["spec"]["ingress"][0]["from"]
 
     def test_nginx_es_index_pattern_defaults(self, kube_version):
