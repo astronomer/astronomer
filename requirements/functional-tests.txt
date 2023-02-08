@@ -185,9 +185,9 @@ pytest==7.2.1 \
     #   pytest-pretty
     #   pytest-rerunfailures
     #   pytest-testinfra
-pytest-pretty==1.0.1 \
-    --hash=sha256:c1039f05ee1a11e1d9e586faea79c7437d74d899d95e8f2824e884d2117329bd \
-    --hash=sha256:d5221cb69384d581b490edd15e22d607e00772e02e6a393292626c626ff1c075
+pytest-pretty==1.1.0 \
+    --hash=sha256:425e116c1ed10ce67eeb688f22d1bcb91ca58a97986026bf42c0717da80740b3 \
+    --hash=sha256:e7e63e0437694e5a7c557d99c81d6e29e0dcaab3b6b9dcb3ba23ddf3eebb5b42
     # via -r requirements/functional-tests.in
 pytest-rerunfailures==11.0 \
     --hash=sha256:b8c535b6c353de8c4b39258216512c64f288e4d349e86877583a08b2f5ea5441 \
@@ -256,17 +256,17 @@ requests-oauthlib==1.3.1 \
     --hash=sha256:2577c501a2fb8d05a304c09d090d6e47c306fef15809d102b327cf8364bddab5 \
     --hash=sha256:75beac4a47881eeb94d5ea5d6ad31ef88856affe2332b9aafb52c6452ccf0d7a
     # via kubernetes
-rich==13.2.0 \
-    --hash=sha256:7c963f0d03819221e9ac561e1bc866e3f95a02248c1234daa48954e6d381c003 \
-    --hash=sha256:f1a00cdd3eebf999a15d85ec498bfe0b1a77efe9b34f645768a54132ef444ac5
+rich==13.3.1 \
+    --hash=sha256:125d96d20c92b946b983d0d392b84ff945461e5a06d3867e9f9e575f8697b67f \
+    --hash=sha256:8aa57747f3fc3e977684f0176a88e789be314a99f99b43b75d1e9cb5dc6db9e9
     # via pytest-pretty
 rsa==4.9 \
     --hash=sha256:90260d9058e514786967344d0ef75fa8727eed8a7d2e43ce9f4bcf1b536174f7 \
     --hash=sha256:e38464a49c6c85d7f1351b0126661487a7e0a14a50f1675ec50eb34d4f20ef21
     # via google-auth
-setuptools==66.1.1 \
-    --hash=sha256:6f590d76b713d5de4e49fe4fbca24474469f53c83632d5d0fd056f7ff7e8112b \
-    --hash=sha256:ac4008d396bc9cd983ea483cb7139c0240a07bbc74ffb6232fceffedc6cf03a8
+setuptools==67.2.0 \
+    --hash=sha256:16ccf598aab3b506593c17378473978908a2734d7336755a8769b480906bec1c \
+    --hash=sha256:b440ee5f7e607bb8c9de15259dba2583dd41a38879a7abc1d43a71c59524da48
     # via kubernetes
 six==1.16.0 \
     --hash=sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926 \
@@ -290,9 +290,9 @@ urllib3==1.26.14 \
     #   docker
     #   kubernetes
     #   requests
-websocket-client==1.4.2 \
-    --hash=sha256:d6b06432f184438d99ac1f456eaf22fe1ade524c3dd16e661142dc54e9cba574 \
-    --hash=sha256:d6e8f90ca8e2dd4e8027c4561adeb9456b54044312dba655e7cae652ceb9ae59
+websocket-client==1.5.1 \
+    --hash=sha256:3f09e6d8230892547132177f575a4e3e73cfdf06526e20cc02aa1c3b47184d40 \
+    --hash=sha256:cdf5877568b7e83aa7cf2244ab56a3213de587bbe0ce9d8b9600fc77b455d89e
     # via
     #   docker
     #   kubernetes
