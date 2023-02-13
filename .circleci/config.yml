@@ -189,7 +189,7 @@ jobs:
           command: |
             set -o pipefail
             helm template --kube-version=v1.21.14 -f values.yaml --set global.baseDomain=example.com . |
-            kubent --cluster=false --helm2=false --helm3=false --filename -
+            kubent --cluster=false --helm3=false --filename -
           when: always
   platform-1-22-15:
     machine:
@@ -205,7 +205,7 @@ jobs:
           command: |
             set -o pipefail
             helm template --kube-version=v1.22.15 -f values.yaml --set global.baseDomain=example.com . |
-            kubent --cluster=false --helm2=false --helm3=false --filename -
+            kubent --cluster=false --helm3=false --filename -
           when: always
   platform-1-23-13:
     machine:
@@ -221,7 +221,7 @@ jobs:
           command: |
             set -o pipefail
             helm template --kube-version=v1.23.13 -f values.yaml --set global.baseDomain=example.com . |
-            kubent --cluster=false --helm2=false --helm3=false --filename -
+            kubent --cluster=false --helm3=false --filename -
           when: always
   platform-1-24-7:
     machine:
@@ -237,7 +237,7 @@ jobs:
           command: |
             set -o pipefail
             helm template --kube-version=v1.24.7 -f values.yaml --set global.baseDomain=example.com . |
-            kubent --cluster=false --helm2=false --helm3=false --filename -
+            kubent --cluster=false --helm3=false --filename -
           when: always
   platform-1-25-3:
     machine:
@@ -253,7 +253,7 @@ jobs:
           command: |
             set -o pipefail
             helm template --kube-version=v1.25.3 -f values.yaml --set global.baseDomain=example.com . |
-            kubent --cluster=false --helm2=false --helm3=false --filename -
+            kubent --cluster=false --helm3=false --filename -
           when: always
   platform-1-26-0:
     machine:
@@ -269,7 +269,7 @@ jobs:
           command: |
             set -o pipefail
             helm template --kube-version=v1.26.0 -f values.yaml --set global.baseDomain=example.com . |
-            kubent --cluster=false --helm2=false --helm3=false --filename -
+            kubent --cluster=false --helm3=false --filename -
           when: always
 
   check-commander-airflow-version:
