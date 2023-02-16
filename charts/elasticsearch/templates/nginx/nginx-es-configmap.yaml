@@ -36,26 +36,22 @@ data:
         proxy_set_header Connection "Keep-Alive";
         proxy_set_header Proxy-Connection "Keep-Alive";
 
-        location ~ ^/ {
-          proxy_pass http://elasticsearch;
-        }
-
-        location = /_search {
-          # This combined with disabling explicit index searching downstream
-          # prevents any deployment from being able to query any other indexes.
+        location ~* /_search$ {
           {{- if .Values.global.loggingSidecar.enabled }}
-          rewrite ^/(.*) /vector.$remote_user.*/$1 break;
+          rewrite /_search(.*) /vector.$remote_user.*/_search$1 break;
           {{- else }}
-          rewrite ^/(.*) /fluentd.$remote_user.*/$1 break;
+          rewrite /_search(.*) /fluentd.$remote_user.*/_search$1 break;
           {{- end }}
           proxy_pass http://elasticsearch;
         }
-
         location = /auth {
           internal;
           proxy_pass http://{{ .Release.Name }}-houston.{{ .Release.Namespace }}:8871/v1/elasticsearch;
           proxy_set_header Content-Length "";
           proxy_set_header X-Original-URI $request_uri;
+        }
+        location ~ ^/ {
+          deny all;
         }
       }
     }
