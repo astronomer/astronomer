@@ -36,6 +36,8 @@ data:
         proxy_set_header Connection "Keep-Alive";
         proxy_set_header Proxy-Connection "Keep-Alive";
 
+        # The following "location" rules limit airflow interactions to only their indices. Any further
+        # additions should follow this pattern.
         location ~* /_count$ {
           {{- if .Values.global.loggingSidecar.enabled }}
           rewrite /_count(.*) /vector.$remote_user.*/_count$1 break;
