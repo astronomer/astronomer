@@ -36,17 +36,31 @@ data:
         proxy_set_header Connection "Keep-Alive";
         proxy_set_header Proxy-Connection "Keep-Alive";
 
-        location ~ ^/ {
+        # The following "location" rules limit airflow interactions to only their indices. Any further
+        # additions should follow this pattern.
+        location ~* /_count$ {
+          {{- if .Values.global.loggingSidecar.enabled }}
+          rewrite /_count(.*) /vector.$remote_user.*/_count$1 break;
+          {{- else }}
+          rewrite /_count(.*) /fluentd.$remote_user.*/_count$1 break;
+          {{- end }}
           proxy_pass http://elasticsearch;
         }
 
-        location = /_search {
-          # This combined with disabling explicit index searching downstream
-          # prevents any deployment from being able to query any other indexes.
+        location ~* /_bulk$ {
           {{- if .Values.global.loggingSidecar.enabled }}
-          rewrite ^/(.*) /vector.$remote_user.*/$1 break;
+          rewrite /_bulk(.*) /vector.$remote_user.*/_bulk$1 break;
           {{- else }}
-          rewrite ^/(.*) /fluentd.$remote_user.*/$1 break;
+          rewrite /_bulk(.*) /fluentd.$remote_user.*/_bulk$1 break;
+          {{- end }}
+          proxy_pass http://elasticsearch;
+        }
+
+        location ~* /_search$ {
+          {{- if .Values.global.loggingSidecar.enabled }}
+          rewrite /_search(.*) /vector.$remote_user.*/_search$1 break;
+          {{- else }}
+          rewrite /_search(.*) /fluentd.$remote_user.*/_search$1 break;
           {{- end }}
           proxy_pass http://elasticsearch;
         }
@@ -56,6 +70,9 @@ data:
           proxy_pass http://{{ .Release.Name }}-houston.{{ .Release.Namespace }}:8871/v1/elasticsearch;
           proxy_set_header Content-Length "";
           proxy_set_header X-Original-URI $request_uri;
+        }
+        location ~ ^/ {
+          deny all;
         }
       }
     }
