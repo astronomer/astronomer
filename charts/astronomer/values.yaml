@@ -36,7 +36,7 @@ images:
     pullPolicy: IfNotPresent
   cliInstall:
     repository: quay.io/astronomer/ap-cli-install
-    tag: 0.26.11
+    tag: 0.26.12
     pullPolicy: IfNotPresent
 
 astroUI:
