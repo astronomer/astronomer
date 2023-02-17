@@ -291,7 +291,7 @@ class TestElasticSearch:
             },
         ] == doc["spec"]["ingress"][0]["from"]
 
-    def test_nginx_es_index_pattern_defaults(self, kube_version):
+    def test_nginx_nginx_config_pattern_defaults(self, kube_version):
         """Test External Elasticsearch Service Index Pattern Search
         defaults."""
         docs = render_chart(
@@ -304,11 +304,22 @@ class TestElasticSearch:
 
         assert len(docs) == 1
         doc = docs[0]
-        es_index = doc["data"]["nginx.conf"]
         assert doc["kind"] == "ConfigMap"
-        assert "fluentd.$remote_user.*/$1" in es_index
 
-    def test_nginx_es_index_pattern_with_sidecar_logging_enabled(self, kube_version):
+        nginx_config = " ".join(doc["data"]["nginx.conf"].split())
+        assert all(
+            x in nginx_config
+            for x in [
+                "location ~* /_bulk$ { rewrite /_bulk(.*) /fluentd.$remote_user.*/_bulk$1 break;",
+                "location ~* /_count$ { rewrite /_count(.*) /fluentd.$remote_user.*/_count$1 break;",
+                "location ~* /_search$ { rewrite /_search(.*) /fluentd.$remote_user.*/_search$1 break;",
+                "location ~ ^/ { deny all; } } }",
+            ]
+        )
+
+    def test_nginx_nginx_config_pattern_with_sidecar_logging_enabled(
+        self, kube_version
+    ):
         """Test Nginx ES Service Index Pattern Search with sidecar logging."""
         docs = render_chart(
             kube_version=kube_version,
@@ -320,9 +331,18 @@ class TestElasticSearch:
 
         assert len(docs) == 1
         doc = docs[0]
-        es_index = doc["data"]["nginx.conf"]
         assert doc["kind"] == "ConfigMap"
-        assert "vector.$remote_user.*/$1" in es_index
+
+        nginx_config = " ".join(doc["data"]["nginx.conf"].split())
+        assert all(
+            x in nginx_config
+            for x in [
+                "location ~* /_bulk$ { rewrite /_bulk(.*) /vector.$remote_user.*/_bulk$1 break;",
+                "location ~* /_count$ { rewrite /_count(.*) /vector.$remote_user.*/_count$1 break;",
+                "location ~* /_search$ { rewrite /_search(.*) /vector.$remote_user.*/_search$1 break;",
+                "location ~ ^/ { deny all; } } }",
+            ]
+        )
 
     def test_elasticsearch_exporter_securitycontext_defaults(self, kube_version):
         """Test ElasticSearch Exporter with securityContext default values."""
