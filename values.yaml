@@ -110,7 +110,7 @@ global:
   loggingSidecar:
     enabled: false
     name: sidecar-log-consumer
-    image: quay.io/astronomer/ap-vector:0.26.0
+    image: quay.io/astronomer/ap-vector:0.26.0-2
     terminationEndpoint: http://localhost:8000/quitquitquit
     customConfig: false
     extraEnv: []
