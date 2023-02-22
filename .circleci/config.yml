@@ -327,12 +327,12 @@ workflows:
                 - quay.io/astronomer/ap-db-bootstrapper:0.31.1
                 - quay.io/astronomer/ap-default-backend:0.28.13
                 - quay.io/astronomer/ap-elasticsearch-exporter:1.5.0
-                - quay.io/astronomer/ap-elasticsearch:7.17.8-1
+                - quay.io/astronomer/ap-elasticsearch:7.17.9
                 - quay.io/astronomer/ap-fluentd:1.15.3-2
-                - quay.io/astronomer/ap-grafana:8.5.16
+                - quay.io/astronomer/ap-grafana:8.5.16-2
                 - quay.io/astronomer/ap-houston-api:0.31.18
                 - quay.io/astronomer/ap-init:3.16.3-1
-                - quay.io/astronomer/ap-kibana:7.17.8
+                - quay.io/astronomer/ap-kibana:7.17.9
                 - quay.io/astronomer/ap-kube-state:2.7.0
                 - quay.io/astronomer/ap-nats-exporter:0.10.0-4
                 - quay.io/astronomer/ap-nats-server:2.8.4-2
