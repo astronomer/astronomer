@@ -313,6 +313,7 @@ class TestElasticSearch:
                 "location ~* /_bulk$ { rewrite /_bulk(.*) /fluentd.$remote_user.*/_bulk$1 break;",
                 "location ~* /_count$ { rewrite /_count(.*) /fluentd.$remote_user.*/_count$1 break;",
                 "location ~* /_search$ { rewrite /_search(.*) /fluentd.$remote_user.*/_search$1 break;",
+                "location = /_cluster/state/version { proxy_pass http://elasticsearch; }",
                 "location ~ ^/ { deny all; } } }",
             ]
         )
@@ -341,6 +342,7 @@ class TestElasticSearch:
                 "location ~* /_count$ { rewrite /_count(.*) /vector.$remote_user.*/_count$1 break;",
                 "location ~* /_search$ { rewrite /_search(.*) /vector.$remote_user.*/_search$1 break;",
                 "location ~ ^/ { deny all; } } }",
+                "location = /_cluster/state/version { proxy_pass http://elasticsearch; }",
             ]
         )
 
