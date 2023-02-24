@@ -71,6 +71,11 @@ data:
           proxy_set_header Content-Length "";
           proxy_set_header X-Original-URI $request_uri;
         }
+
+        location = /_cluster/state/version {
+          proxy_pass http://elasticsearch;
+        }
+
         location ~ ^/ {
           deny all;
         }
