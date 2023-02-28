@@ -108,7 +108,7 @@ global:
   loggingSidecar:
     enabled: false
     name: sidecar-log-consumer
-    image: quay.io/astronomer/ap-vector:0.26.0
+    image: quay.io/astronomer/ap-vector:0.26.0-2
     terminationEndpoint: http://localhost:8000/quitquitquit
     customConfig: false
     extraEnv: []
@@ -124,7 +124,7 @@ global:
   authSidecar:
     enabled: false
     repository: quay.io/astronomer/ap-auth-sidecar
-    tag: 1.23.3-1
+    tag: 1.23.3-2
     pullPolicy: IfNotPresent
     port: 8084
     default_nginx_settings: |
