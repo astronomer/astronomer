@@ -192,7 +192,7 @@ jobs:
 
   platform-1-22-15:
     machine:
-      image: ubuntu-2204:2022.10.2
+      image: ubuntu-2204:2023.02.1
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.22.15
@@ -208,7 +208,7 @@ jobs:
           when: always
   platform-1-23-13:
     machine:
-      image: ubuntu-2204:2022.10.2
+      image: ubuntu-2204:2023.02.1
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.23.13
@@ -224,7 +224,7 @@ jobs:
           when: always
   platform-1-24-7:
     machine:
-      image: ubuntu-2204:2022.10.2
+      image: ubuntu-2204:2023.02.1
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.24.7
@@ -240,7 +240,7 @@ jobs:
           when: always
   platform-1-25-3:
     machine:
-      image: ubuntu-2204:2022.10.2
+      image: ubuntu-2204:2023.02.1
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.25.3
@@ -256,7 +256,7 @@ jobs:
           when: always
   platform-1-26-0:
     machine:
-      image: ubuntu-2204:2022.10.2
+      image: ubuntu-2204:2023.02.1
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.26.0
@@ -547,7 +547,7 @@ commands:
           name: Install Astronomer chart
           command: |
             echo 'export PATH="/tmp/bin:/tmp/google-cloud-sdk/bin:$PATH"' >> "$HOME/.bashrc"
-            set -e
+            set -xe
             HELM_CHART_PATH='/tmp/workspace/astronomer-*.tgz' bin/run-ci << parameters.astronomer-tags >>
       - store_test_results:
           path: test-results
