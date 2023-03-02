@@ -171,6 +171,24 @@ houston:
     # Only run on deployments marked as canary
     canary: false
 
+  # Cleanup airflow db data
+  # This runs as a CronJob
+  cleanupAirflowDb:
+    # Enable cleanup CronJob
+    enabled: true
+
+    # Default here is to run at midnight every night https://crontab.guru/#0_0_*_*_*
+    schedule: "0 0 * * *"
+
+    # Cleanup deployments older than this many days
+    olderThan: 365
+
+    # Print out the deployments that should be cleaned up and skip actual cleanup
+    dryRun: false
+
+    # Only run on deployments marked as canary
+    canary: false
+
   # Cleanup task usage data and task audit data in Houston
   # This runs as a CronJob
   cleanupTaskUsageData:

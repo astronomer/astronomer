@@ -1,0 +1,57 @@
+################################
+## Houston Cleanup CronJob
+#################################
+{{- if .Values.houston.cleanupAirflowDb.enabled }}
+apiVersion: {{ include "apiVersion.batch.cronjob" . }}
+kind: CronJob
+metadata:
+  name: {{ .Release.Name }}-houston-cleanup-airflow-db-data
+  labels:
+    tier: astronomer
+    component: houston-cleanup-airflow-db
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  schedule: {{ .Values.houston.cleanupAirflowDb.schedule }}
+  # The cron job does not allow concurrent runs; if it is time for a new job run and the previous job run hasn't finished yet, the cron job skips the new job run
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        metadata:
+          labels:
+            tier: astronomer
+            component: houston-cleanup-airflow-db
+            release: {{ .Release.Name }}
+            app: houston-cleanup-airflow-db
+            version: {{ .Chart.Version }}
+          {{- if .Values.global.istio.enabled }}
+          annotations:
+            sidecar.istio.io/inject: "false"
+          {{- end }}
+        spec:
+          nodeSelector:
+{{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 12 }}
+          affinity:
+{{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 12 }}
+          tolerations:
+{{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 12 }}
+          restartPolicy: Never
+{{- include "astronomer.imagePullSecrets" . | indent 10 }}
+          containers:
+            - name: cleanup
+              image: {{ template "houston.image" . }}
+              imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
+              # If you supply only args for a Container, the default Entrypoint defined in the Docker image is run with the args that you supplied.
+              args: ["yarn", "cleanup-airflow-db-data", "--", "--older-than={{ .Values.houston.cleanupAirflowDb.olderThan }}", "--dry-run={{ .Values.houston.cleanupAirflowDb.dryRun }}", "--canary={{ .Values.houston.cleanupAirflowDb.canary }}"]
+              volumeMounts:
+                {{- include "houston_volume_mounts" . | indent 16 }}
+                {{- include "custom_ca_volume_mounts" . | indent 16 }}
+              env:
+                {{- include "houston_environment" . | indent 16 }}
+          volumes:
+            {{- include "houston_volumes" . | indent 12 }}
+            {{- include "custom_ca_volumes" . | indent 12 }}
+{{- end }}
