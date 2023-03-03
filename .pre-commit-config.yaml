@@ -2,7 +2,7 @@
 exclude: '(venv|\.vscode)' # regex
 repos:
   - repo: https://github.com/PyCQA/docformatter
-    rev: v1.5.0
+    rev: v1.5.1
     hooks:
       - id: docformatter
         args: ["--wrap-summaries=125", "--wrap-descriptions=125"]
@@ -28,11 +28,11 @@ repos:
     rev: 23.1.0
     hooks:
       - id: black
-  - repo: https://github.com/asottile/pyupgrade
-    rev: v3.3.1
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: "v0.0.253"
     hooks:
-      - id: pyupgrade
-        args: ["--py39-plus"]
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix, --ignore, E501]
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
     hooks:
@@ -62,12 +62,6 @@ repos:
           ]
       - id: sort-simple-yaml
       - id: trailing-whitespace
-  - repo: https://github.com/PyCQA/flake8
-    rev: 6.0.0
-    hooks:
-      - id: flake8
-        args:
-          - --ignore=E501,W503
   - repo: https://github.com/shellcheck-py/shellcheck-py
     rev: v0.9.0.2
     hooks:
