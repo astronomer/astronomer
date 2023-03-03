@@ -183,6 +183,15 @@ houston:
     # Cleanup deployments older than this many days
     olderThan: 365
 
+    # Export archived data to remote/nfs/local file storage
+    export: true
+    
+    # Output path of file storage location
+    outputPath: "/tmp"
+    
+    # Delete archived tables
+    purgeArchive: true
+
     # Print out the deployments that should be cleaned up and skip actual cleanup
     dryRun: false
 
