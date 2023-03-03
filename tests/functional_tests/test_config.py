@@ -16,8 +16,8 @@ import yaml
 from kubernetes.client.rest import ApiException
 
 
-def test_default_disabled(kube_client):
-    pods = kube_client.list_namespaced_pod("astronomer")
+def test_default_disabled(core_v1_client):
+    pods = core_v1_client.list_namespaced_pod("astronomer")
     default_disabled = ["prometheus-postgres-exporter"]
     for pod in pods.items:
         for feature in default_disabled:
@@ -79,37 +79,15 @@ def test_prometheus_targets(prometheus):
 
 
 def test_core_dns_metrics_are_collected(prometheus):
-    """Ensure CoreDNS metrics are collected.
-
-    This test should work in CI and locally because Kind uses CoreDNS
-    """
-
-    # coredns 1.7.0 changed a bunch of fields, so we have to act differently on >= 1.7.0
-    # https://coredns.io/2020/06/15/coredns-1.7.0-release/
-    data = prometheus.check_output(
-        "wget --timeout=5 -qO- http://localhost:9090/api/v1/query?query=coredns_build_info"
-    )
-    parsed = json.loads(data)
-    coredns_version_string = parsed["data"]["result"][0]["metric"]["version"]
-    coredns_version_list = [int(x) for x in coredns_version_string.split(".")[:3]]
-
-    if coredns_version_list[0] != 1:
-        raise Exception(f"Cannot determine CoreDNS version from {parsed}")
-
-    if coredns_version_list[1] >= 7:
-        metric = "coredns_dns_requests_total"
-    elif coredns_version_list[1] < 7:
-        metric = "coredns_dns_request_count_total"
-    else:
-        raise Exception(f"Cannot determine CoreDNS version from {parsed}")
+    """Ensure CoreDNS metrics are collected."""
 
     data = prometheus.check_output(
-        f"wget --timeout=5 -qO- http://localhost:9090/api/v1/query?query={metric}"
+        "wget --timeout=5 -qO- http://localhost:9090/api/v1/query?query=coredns_dns_requests_total"
     )
     parsed = json.loads(data)
     assert (
         len(parsed["data"]["result"]) > 0
-    ), f"Expected to find a metric {metric} in CoreDNS version {coredns_version_string}, but we got this response:\n\n{parsed}"
+    ), f"Expected to find a metric coredns_dns_requests_total, but we got this response:\n\n{parsed}"
 
 
 def test_houston_metrics_are_collected(prometheus):
@@ -123,14 +101,14 @@ def test_houston_metrics_are_collected(prometheus):
     ), f"Expected to find a metric houston_up, but we got this response:\n\n{parsed}"
 
 
-def test_prometheus_config_reloader_works(prometheus, kube_client):
+def test_prometheus_config_reloader_works(prometheus, core_v1_client):
     """Ensure that Prometheus reloads its config when the cofigMap is updated
     and the reloader sidecar triggers the reload."""
     # define new value we'll use for the config change
     new_scrape_interval = "31s"
 
     # get the current configmap
-    orig_cm = kube_client.read_namespaced_config_map(
+    orig_cm = core_v1_client.read_namespaced_config_map(
         "astronomer-prometheus-config", "astronomer"
     )
 
@@ -145,7 +123,7 @@ def test_prometheus_config_reloader_works(prometheus, kube_client):
 
     try:
         # update the configmap
-        kube_client.patch_namespaced_config_map(
+        core_v1_client.patch_namespaced_config_map(
             name="astronomer-prometheus-config", namespace="astronomer", body=new_body
         )
     except ApiException as e:
@@ -173,7 +151,7 @@ def test_prometheus_config_reloader_works(prometheus, kube_client):
 
     try:
         # update the configmap
-        kube_client.patch_namespaced_config_map(
+        core_v1_client.patch_namespaced_config_map(
             name="astronomer-prometheus-config", namespace="astronomer", body=new_body
         )
     except ApiException as e:
@@ -184,8 +162,12 @@ def test_prometheus_config_reloader_works(prometheus, kube_client):
     ), "Expected the prometheus config file to change"
 
 
+@pytest.mark.skipif(
+    not getenv("HELM_CHART_PATH"),
+    reason="This test only works with HELM_CHART_PATH set to the path of the chart to be tested",
+)
 def test_houston_backend_secret_present_after_helm_upgrade_and_container_restart(
-    houston_api, kube_client
+    houston_api, core_v1_client
 ):
     """Test when helm upgrade occurs without Houston pods restarting that a
     Houston container restart will not miss the Houston connection backend
@@ -194,10 +176,7 @@ def test_houston_backend_secret_present_after_helm_upgrade_and_container_restart
     Regression test for:
     https://github.com/astronomer/issues/issues/2251
     """
-    if not (helm_chart_path := getenv("HELM_CHART_PATH")):
-        raise Exception(
-            "This test only works with HELM_CHART_PATH set to the path of the chart to be tested"
-        )
+    helm_chart_path = getenv("HELM_CHART_PATH")
 
     if not (namespace := getenv("NAMESPACE")):
         print("No NAMESPACE env var, using NAMESPACE=astronomer")
@@ -226,8 +205,8 @@ def test_houston_backend_secret_present_after_helm_upgrade_and_container_restart
     # give time for container to restart
     time.sleep(100)
 
-    # we can use kube_client instead of fixture, because we restarted pod so houston_api still ref to old pod id.
-    pod = kube_client.list_namespaced_pod(
+    # we can use core_v1_client instead of fixture, because we restarted pod so houston_api still ref to old pod id.
+    pod = core_v1_client.list_namespaced_pod(
         namespace, label_selector="component=houston"
     ).items[0]
     houston_api_new = testinfra.get_host(
