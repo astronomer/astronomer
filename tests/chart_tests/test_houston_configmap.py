@@ -515,6 +515,7 @@ def test_houston_configmapwith_update_airflow_runtime_checks_disabled():
     assert prod["updateAirflowCheckEnabled"] is False
     assert prod["updateRuntimeCheckEnabled"] is False
 
+
 def test_houston_configmap_with_cleanup_airflow_db_enabled():
     """Validate the houston configmap and its embedded data with
     cleanupAirflowDb."""
@@ -533,6 +534,7 @@ def test_houston_configmap_with_cleanup_airflow_db_enabled():
 
     prod = yaml.safe_load(doc["data"]["production.yaml"])
     assert prod["cleanupAirflowDb"]["enabled"] is True
+
 
 def test_houston_configmap_with_cleanup_airflow_db_disabled():
     """Validate the houston configmap and its embedded data with
