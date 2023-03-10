@@ -38,29 +38,29 @@ data:
 
         # The following "location" rules limit airflow interactions to only their indices. Any further
         # additions should follow this pattern.
-        location ~* /_count$ {
+        location ~* ^/_count$ {
           {{- if .Values.global.loggingSidecar.enabled }}
-          rewrite /_count(.*) /vector.$remote_user.*/_count$1 break;
+          rewrite ^/_count(.*) /vector.$remote_user.*/_count$1 break;
           {{- else }}
-          rewrite /_count(.*) /fluentd.$remote_user.*/_count$1 break;
+          rewrite ^/_count(.*) /fluentd.$remote_user.*/_count$1 break;
           {{- end }}
           proxy_pass http://elasticsearch;
         }
 
-        location ~* /_bulk$ {
+        location ~* ^/_bulk$ {
           {{- if .Values.global.loggingSidecar.enabled }}
-          rewrite /_bulk(.*) /vector.$remote_user.*/_bulk$1 break;
+          rewrite ^/_bulk(.*) /vector.$remote_user.*/_bulk$1 break;
           {{- else }}
-          rewrite /_bulk(.*) /fluentd.$remote_user.*/_bulk$1 break;
+          rewrite ^/_bulk(.*) /fluentd.$remote_user.*/_bulk$1 break;
           {{- end }}
           proxy_pass http://elasticsearch;
         }
 
-        location ~* /_search$ {
+        location ~* ^/_search$ {
           {{- if .Values.global.loggingSidecar.enabled }}
-          rewrite /_search(.*) /vector.$remote_user.*/_search$1 break;
+          rewrite ^/_search(.*) /vector.$remote_user.*/_search$1 break;
           {{- else }}
-          rewrite /_search(.*) /fluentd.$remote_user.*/_search$1 break;
+          rewrite ^/_search(.*) /fluentd.$remote_user.*/_search$1 break;
           {{- end }}
           proxy_pass http://elasticsearch;
         }
@@ -73,6 +73,10 @@ data:
         }
 
         location = /_cluster/state/version {
+          proxy_pass http://elasticsearch;
+        }
+
+        location = /_cluster/health {
           proxy_pass http://elasticsearch;
         }
 
