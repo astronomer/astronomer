@@ -319,7 +319,7 @@ workflows:
                 - quay.io/astronomer/ap-postgresql:11.18.0-1
                 - quay.io/astronomer/ap-prometheus:2.37.5
                 - quay.io/astronomer/ap-registry:3.16.3-2
-                - quay.io/astronomer/ap-vector:0.26.0-2
+                - quay.io/astronomer/ap-vector:0.26.0-4
           context:
             - slack_team-software-infra-bot
 
