@@ -535,7 +535,7 @@ def test_houston_configmap_with_cleanup_airflow_db_enabled():
     doc = docs[0]
 
     prod = yaml.safe_load(doc["data"]["production.yaml"])
-    assert prod["cleanupAirflowDb"]["enabled"] is True
+    assert prod["deployments"]["cleanupAirflowDb"]["enabled"] is True
 
 
 def test_houston_configmap_with_cleanup_airflow_db_disabled():
@@ -557,4 +557,4 @@ def test_houston_configmap_with_cleanup_airflow_db_disabled():
     doc = docs[0]
 
     prod = yaml.safe_load(doc["data"]["production.yaml"])
-    assert prod["cleanupAirflowDb"]["enabled"] is False
+    assert prod["deployments"]["cleanupAirflowDb"]["enabled"] is False
