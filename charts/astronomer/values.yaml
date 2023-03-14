@@ -178,13 +178,10 @@ houston:
     enabled: true
 
     # Default here is to run at midnight every night https://crontab.guru/#0_0_*_*_*
-    schedule: "0 0 * * *"
+    schedule: "23 5 * * *"
 
     # Cleanup deployments older than this many days
     olderThan: 365
-
-    # Export archived data to remote/nfs/local file storage
-    export: true
 
     # Output path of file storage location
     outputPath: "/tmp"

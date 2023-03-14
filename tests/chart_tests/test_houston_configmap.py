@@ -521,9 +521,11 @@ def test_houston_configmap_with_cleanup_airflow_db_enabled():
     cleanupAirflowDb."""
     docs = render_chart(
         values={
-            "global": {
-                "cleanupAirflowDb": {
-                    "enabled": True,
+            "astronomer": {
+                "houston": {
+                    "cleanupAirflowDb": {
+                        "enabled": True,
+                    }
                 }
             }
         },
@@ -541,9 +543,11 @@ def test_houston_configmap_with_cleanup_airflow_db_disabled():
     cleanupAirflowDb."""
     docs = render_chart(
         values={
-            "global": {
-                "cleanupAirflowDb": {
-                    "enabled": False,
+            "astronomer": {
+                "houston": {
+                    "cleanupAirflowDb": {
+                        "enabled": False,
+                    }
                 }
             }
         },

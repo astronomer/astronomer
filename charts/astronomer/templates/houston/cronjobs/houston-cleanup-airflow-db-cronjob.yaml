@@ -49,7 +49,6 @@ spec:
               "--older-than={{ .Values.houston.cleanupAirflowDb.olderThan }}",
               "--dry-run={{ .Values.houston.cleanupAirflowDb.dryRun }}",
               "--canary={{ .Values.houston.cleanupAirflowDb.canary }}",
-              "--export={{ .Values.houston.export }}",
               "--output-path={{ .Values.houston.outputPath }}",
               "--purge-archive={{ .Values.houston.purgeArchive }}"]
               volumeMounts:
