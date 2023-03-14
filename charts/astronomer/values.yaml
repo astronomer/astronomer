@@ -175,9 +175,9 @@ houston:
   # This runs as a CronJob
   cleanupAirflowDb:
     # Enable cleanup CronJob
-    enabled: true
+    enabled: false
 
-    # Default here is to run at midnight every night https://crontab.guru/#0_0_*_*_*
+    # Default run is at 5:23 every morning https://crontab.guru/#23_5_*_*_*
     schedule: "23 5 * * *"
 
     # Cleanup deployments older than this many days
