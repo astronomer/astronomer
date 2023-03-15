@@ -533,6 +533,7 @@ def test_houston_configmap_with_cleanup_airflow_db_defaults():
         "outputPath": "/tmp",
         "purgeArchive": True,
         "dryRun": False,
+        "canary": False,
     }
 
 
