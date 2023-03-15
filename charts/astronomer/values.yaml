@@ -192,9 +192,6 @@ houston:
     # Print out the deployments that should be cleaned up and skip actual cleanup
     dryRun: false
 
-    # Only run on deployments marked as canary
-    canary: false
-
   # Cleanup task usage data and task audit data in Houston
   # This runs as a CronJob
   cleanupTaskUsageData:
