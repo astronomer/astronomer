@@ -18,6 +18,10 @@ parameters:
     type: string
     default: ""
     description: "The URN to report image scan result."
+  qa-release:
+    type: boolean
+    default: false
+    description: "This will trigger QA release workflow."
 
 jobs:
   trivy-scan-docker:
@@ -142,13 +146,17 @@ jobs:
   build-artifact:
     docker:
       - image: quay.io/astronomer/ap-build:0.2.3
+    parameters:
+      qa_release:
+        type: boolean
+        default: false
     steps:
       - checkout
       - run:
           name: Package the Astronomer chart
           command: |
             source ./bin/install-ci-tools 1
-            make build
+            bin/build-helm-chart.sh << parameters.qa_release >>
       - persist_to_workspace:
           root: "."
           paths:
@@ -194,7 +202,7 @@ jobs:
           command: |
             set -o pipefail
             helm template --kube-version=v{{ version }} -f values.yaml --set global.baseDomain=example.com . |
-            kubent --cluster=false --helm2=false --helm3=false --filename -
+            kubent --cluster=false --helm3=false --filename -
           when: always
 {%- endfor %}
 
@@ -218,6 +226,7 @@ workflows:
       and:
         - << pipeline.parameters.scan-docker-images >>
         - << pipeline.parameters.scan-docker-images-report-url >>
+        - not: << pipeline.parameters.qa-release >>
     jobs:
       - trivy-scan-docker:
           report_url: << pipeline.parameters.scan-docker-images-report-url >>
@@ -231,9 +240,10 @@ workflows:
             - slack_team-software-infra-bot
 
   build-and-release-helm-chart:
-    unless:
+    when:
       and:
-        - << pipeline.parameters.scan-docker-images >>
+        - not: << pipeline.parameters.scan-docker-images >>
+        - not: << pipeline.parameters.qa-release >>
     jobs:
       - lint
       - run_pre_commit
@@ -285,6 +295,40 @@ workflows:
             - github-repo
           requires:
             - approve-public-release
+          filters:
+            branches:
+              only:
+                - '/^release-0\.\d+$/'
+
+  qa-build-and-release-helm-chart:
+    when:
+      and:
+        - << pipeline.parameters.qa-release >>
+        - not: << pipeline.parameters.scan-docker-images >>
+    jobs:
+      - lint
+      - run_pre_commit
+      - unittest-charts
+      - check-commander-airflow-version
+      - build-artifact:
+          qa_release: true
+          requires:
+            - check-commander-airflow-version
+            - lint
+            - run_pre_commit
+            - unittest-charts
+{% for version in kube_versions %}{% if version in [kube_versions[0], kube_versions[-1]] %}
+      - platform-{{ version | replace(".", "-") }}:
+          requires:
+            - build-artifact
+{% endif %}{% endfor %}
+      - release-to-internal:
+          context:
+            - gcp-astronomer-prod
+          requires:
+{%- for version in [kube_versions[0], kube_versions[-1]] %}
+            - platform-{{ version | replace(".", "-") }}
+{%- endfor %}
           filters:
             branches:
               only:
@@ -394,7 +438,7 @@ commands:
           name: Install Astronomer chart
           command: |
             echo 'export PATH="/tmp/bin:/tmp/google-cloud-sdk/bin:$PATH"' >> "$HOME/.bashrc"
-            set -e
+            set -xe
             HELM_CHART_PATH='/tmp/workspace/astronomer-*.tgz' bin/run-ci << parameters.astronomer-tags >>
       - store_test_results:
           path: test-results

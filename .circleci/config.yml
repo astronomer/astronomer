@@ -20,6 +20,10 @@ parameters:
     type: string
     default: ""
     description: "The URN to report image scan result."
+  qa-release:
+    type: boolean
+    default: false
+    description: "This will trigger QA release workflow."
 
 jobs:
   trivy-scan-docker:
@@ -144,13 +148,17 @@ jobs:
   build-artifact:
     docker:
       - image: quay.io/astronomer/ap-build:0.2.3
+    parameters:
+      qa_release:
+        type: boolean
+        default: false
     steps:
       - checkout
       - run:
           name: Package the Astronomer chart
           command: |
             source ./bin/install-ci-tools 1
-            make build
+            bin/build-helm-chart.sh << parameters.qa_release >>
       - persist_to_workspace:
           root: "."
           paths:
@@ -182,25 +190,9 @@ jobs:
             bin/release-helm-chart -p /tmp/workspace/astronomer-*.tgz
       - publish-github-release
 
-  platform-1-21-14:
-    machine:
-      image: ubuntu-2204:2022.10.2
-      resource_class: xlarge
-    environment:
-      KUBE_VERSION: v1.21.14
-    steps:
-      - helm-install:
-          astronomer-tags: "platform postgresql monitoring logging"
-      - run:
-          name: Check chart for k8s 1.21.14 compatibility with kubent
-          command: |
-            set -o pipefail
-            helm template --kube-version=v1.21.14 -f values.yaml --set global.baseDomain=example.com . |
-            kubent --cluster=false --helm2=false --helm3=false --filename -
-          when: always
   platform-1-22-15:
     machine:
-      image: ubuntu-2204:2022.10.2
+      image: ubuntu-2204:2023.02.1
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.22.15
@@ -212,11 +204,11 @@ jobs:
           command: |
             set -o pipefail
             helm template --kube-version=v1.22.15 -f values.yaml --set global.baseDomain=example.com . |
-            kubent --cluster=false --helm2=false --helm3=false --filename -
+            kubent --cluster=false --helm3=false --filename -
           when: always
   platform-1-23-13:
     machine:
-      image: ubuntu-2204:2022.10.2
+      image: ubuntu-2204:2023.02.1
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.23.13
@@ -228,11 +220,11 @@ jobs:
           command: |
             set -o pipefail
             helm template --kube-version=v1.23.13 -f values.yaml --set global.baseDomain=example.com . |
-            kubent --cluster=false --helm2=false --helm3=false --filename -
+            kubent --cluster=false --helm3=false --filename -
           when: always
   platform-1-24-7:
     machine:
-      image: ubuntu-2204:2022.10.2
+      image: ubuntu-2204:2023.02.1
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.24.7
@@ -244,11 +236,11 @@ jobs:
           command: |
             set -o pipefail
             helm template --kube-version=v1.24.7 -f values.yaml --set global.baseDomain=example.com . |
-            kubent --cluster=false --helm2=false --helm3=false --filename -
+            kubent --cluster=false --helm3=false --filename -
           when: always
   platform-1-25-3:
     machine:
-      image: ubuntu-2204:2022.10.2
+      image: ubuntu-2204:2023.02.1
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.25.3
@@ -260,11 +252,11 @@ jobs:
           command: |
             set -o pipefail
             helm template --kube-version=v1.25.3 -f values.yaml --set global.baseDomain=example.com . |
-            kubent --cluster=false --helm2=false --helm3=false --filename -
+            kubent --cluster=false --helm3=false --filename -
           when: always
   platform-1-26-0:
     machine:
-      image: ubuntu-2204:2022.10.2
+      image: ubuntu-2204:2023.02.1
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.26.0
@@ -276,7 +268,7 @@ jobs:
           command: |
             set -o pipefail
             helm template --kube-version=v1.26.0 -f values.yaml --set global.baseDomain=example.com . |
-            kubent --cluster=false --helm2=false --helm3=false --filename -
+            kubent --cluster=false --helm3=false --filename -
           when: always
 
   check-commander-airflow-version:
@@ -299,53 +291,54 @@ workflows:
       and:
         - << pipeline.parameters.scan-docker-images >>
         - << pipeline.parameters.scan-docker-images-report-url >>
+        - not: << pipeline.parameters.qa-release >>
     jobs:
       - trivy-scan-docker:
           report_url: << pipeline.parameters.scan-docker-images-report-url >>
           matrix:
             parameters:
               docker_image:
-                - quay.io/astronomer/ap-alertmanager:0.25.0-1
-                - quay.io/astronomer/ap-astro-ui:0.31.10
-                - quay.io/astronomer/ap-auth-sidecar:1.23.3-1
-                - quay.io/astronomer/ap-awsesproxy:1.3-10
-                - quay.io/astronomer/ap-base:3.16.3
-                - quay.io/astronomer/ap-blackbox-exporter:0.23.0-2
-                - quay.io/astronomer/ap-cli-install:0.26.11
+                - quay.io/astronomer/ap-alertmanager:0.25.0
+                - quay.io/astronomer/ap-astro-ui:0.31.13
+                - quay.io/astronomer/ap-auth-sidecar:1.23.3-2
+                - quay.io/astronomer/ap-awsesproxy:1.3-11
+                - quay.io/astronomer/ap-base:3.16.3-2
+                - quay.io/astronomer/ap-blackbox-exporter:0.23.0-3
+                - quay.io/astronomer/ap-cli-install:0.26.12
                 - quay.io/astronomer/ap-commander:0.31.5
                 - quay.io/astronomer/ap-configmap-reloader:0.8.0
-                - quay.io/astronomer/ap-curator:7.0.0-1
-                - quay.io/astronomer/ap-db-bootstrapper:0.31.0
+                - quay.io/astronomer/ap-curator:7.0.0-2
                 - quay.io/astronomer/ap-db-bootstrapper:0.31.1
-                - quay.io/astronomer/ap-default-backend:0.28.12
-                - quay.io/astronomer/ap-elasticsearch-exporter:1.5.0-1
-                - quay.io/astronomer/ap-elasticsearch:7.17.8
-                - quay.io/astronomer/ap-fluentd:1.15.3-1
-                - quay.io/astronomer/ap-grafana:8.5.16-1
+                - quay.io/astronomer/ap-default-backend:0.28.13
+                - quay.io/astronomer/ap-elasticsearch-exporter:1.5.0
+                - quay.io/astronomer/ap-elasticsearch:7.17.9
+                - quay.io/astronomer/ap-fluentd:1.15.3-2
+                - quay.io/astronomer/ap-grafana:8.5.16-2
                 - quay.io/astronomer/ap-houston-api:0.31.18
-                - quay.io/astronomer/ap-init:3.16.3
+                - quay.io/astronomer/ap-init:3.16.3-1
                 - quay.io/astronomer/ap-kibana:7.17.9
-                - quay.io/astronomer/ap-kube-state:2.7.0-1
-                - quay.io/astronomer/ap-nats-exporter:0.10.0-3
-                - quay.io/astronomer/ap-nats-server:2.8.4-1
-                - quay.io/astronomer/ap-nats-streaming:0.24.6-1
-                - quay.io/astronomer/ap-nginx-es:1.23.3-1
-                - quay.io/astronomer/ap-nginx:1.5.1
+                - quay.io/astronomer/ap-kube-state:2.7.0
+                - quay.io/astronomer/ap-nats-exporter:0.10.0-4
+                - quay.io/astronomer/ap-nats-server:2.8.4-2
+                - quay.io/astronomer/ap-nats-streaming:0.24.6-2
+                - quay.io/astronomer/ap-nginx-es:1.23.3-2
+                - quay.io/astronomer/ap-nginx:1.3.1-3
                 - quay.io/astronomer/ap-node-exporter:1.5.0
-                - quay.io/astronomer/ap-openresty:1.21.4-3
-                - quay.io/astronomer/ap-pgbouncer-krb:1.17.0-5
-                - quay.io/astronomer/ap-postgres-exporter:0.11.1-1
-                - quay.io/astronomer/ap-postgresql:11.18.0
-                - quay.io/astronomer/ap-prometheus:2.37.5-1
-                - quay.io/astronomer/ap-registry:3.16.3-1
-                - quay.io/astronomer/ap-vector:0.26.0
+                - quay.io/astronomer/ap-openresty:1.21.4-4
+                - quay.io/astronomer/ap-pgbouncer-krb:1.17.0-6
+                - quay.io/astronomer/ap-postgres-exporter:0.11.1
+                - quay.io/astronomer/ap-postgresql:11.18.0-1
+                - quay.io/astronomer/ap-prometheus:2.37.5
+                - quay.io/astronomer/ap-registry:3.16.3-2
+                - quay.io/astronomer/ap-vector:0.26.0-4
           context:
             - slack_team-software-infra-bot
 
   build-and-release-helm-chart:
-    unless:
+    when:
       and:
-        - << pipeline.parameters.scan-docker-images >>
+        - not: << pipeline.parameters.scan-docker-images >>
+        - not: << pipeline.parameters.qa-release >>
     jobs:
       - lint
       - run_pre_commit
@@ -360,14 +353,9 @@ workflows:
       - approve-test-all-platforms:
           type: approval
 
-      - platform-1-21-14:
-          requires:
-            - build-artifact
       - platform-1-22-15:
           requires:
-            - approve-test-all-platforms
             - build-artifact
-
       - platform-1-23-13:
           requires:
             - approve-test-all-platforms
@@ -393,13 +381,12 @@ workflows:
             - gcp-astronomer-prod
           requires:
             - approve-internal-release
-            - platform-1-21-14
+            - platform-1-22-15
             - platform-1-26-0
       - approve-public-release:
           type: approval
           requires:
             - release-to-internal
-            - platform-1-22-15
             - platform-1-23-13
             - platform-1-24-7
             - platform-1-25-3
@@ -414,6 +401,43 @@ workflows:
             - github-repo
           requires:
             - approve-public-release
+          filters:
+            branches:
+              only:
+                - '/^release-0\.\d+$/'
+
+  qa-build-and-release-helm-chart:
+    when:
+      and:
+        - << pipeline.parameters.qa-release >>
+        - not: << pipeline.parameters.scan-docker-images >>
+    jobs:
+      - lint
+      - run_pre_commit
+      - unittest-charts
+      - check-commander-airflow-version
+      - build-artifact:
+          qa_release: true
+          requires:
+            - check-commander-airflow-version
+            - lint
+            - run_pre_commit
+            - unittest-charts
+
+      - platform-1-22-15:
+          requires:
+            - build-artifact
+
+      - platform-1-26-0:
+          requires:
+            - build-artifact
+
+      - release-to-internal:
+          context:
+            - gcp-astronomer-prod
+          requires:
+            - platform-1-22-15
+            - platform-1-26-0
           filters:
             branches:
               only:
@@ -523,7 +547,7 @@ commands:
           name: Install Astronomer chart
           command: |
             echo 'export PATH="/tmp/bin:/tmp/google-cloud-sdk/bin:$PATH"' >> "$HOME/.bashrc"
-            set -e
+            set -xe
             HELM_CHART_PATH='/tmp/workspace/astronomer-*.tgz' bin/run-ci << parameters.astronomer-tags >>
       - store_test_results:
           path: test-results

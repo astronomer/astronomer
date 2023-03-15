@@ -74,3 +74,15 @@ customReceiver: []
 #          role_arn: <SNS-ROLE>
 
 enableNonRFC1918: false
+
+extraVolumes: []
+# Example
+#  - name: webhook-alert-secret
+#    secret:
+#      secretName: webhook-alert-secret
+
+extraVolumeMounts: []
+# Example
+#  - name: webhook-alert-secret
+#    mountPath: "/var/webhook-alert-secret"
+#    readOnly: true

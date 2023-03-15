@@ -3,8 +3,7 @@ import sys
 import xml.etree.ElementTree as xml_parser
 from contextlib import contextmanager
 from os import getenv
-from random import randint
-from time import sleep, time
+from time import sleep, time, strftime
 
 import testinfra
 from kubernetes import client, config
@@ -16,7 +15,9 @@ else:
 
 
 class ScanFinding:
-    def __init__(self, name="", ip_address="", ports=[]):
+    def __init__(self, name="", ip_address="", ports=None):
+        if ports is None:
+            ports = []
         self.name = name
         self.ip_address = ip_address
         self.ports = ports
@@ -27,7 +28,9 @@ class ScanFinding:
 
 
 class ScanResult:
-    def __init__(self, findings=[]):
+    def __init__(self, findings=None):
+        if findings is None:
+            findings = []
         self.findings = findings
 
     def add_finding(self, finding):
@@ -38,7 +41,9 @@ class ScanResult:
 
 
 class ScanTarget:
-    def __init__(self, name, ip_address, _type, ports=[], namespace=None):
+    def __init__(self, name, ip_address, _type, ports=None, namespace=None):
+        if ports is None:
+            ports = []
         self.name = name
         self.ip_address = ip_address
         assert isinstance(
@@ -79,8 +84,7 @@ class KubernetesNetworkChecker:
             for container in pod.spec.containers:
                 if not container.ports:
                     continue
-                for port in container.ports:
-                    ports.append(port.container_port)
+                ports.extend(port.container_port for port in container.ports)
             target = ScanTarget(name, ip, "pod", ports=ports, namespace=namespace)
             if ports:
                 self.targets.append(target)
@@ -96,8 +100,9 @@ class KubernetesNetworkChecker:
 
     @contextmanager
     def _scanning_pod(self):
+        """Create a new kubernetes pod to run a network scan from."""
         namespace = "astronomer-scan-test"
-        pod_name = f"network-scanner-{randint(0,100000)}"
+        pod_name = f"network-scanner-{strftime('%s')}"
         v1container = client.V1Container(name="scanner")
         v1container.command = ["sleep", "300"]
         v1container.image = "alpine"
@@ -133,6 +138,8 @@ class KubernetesNetworkChecker:
             self.v1.delete_namespaced_pod(v1pod.metadata.name, namespace)
 
     def scan_all_targets(self):
+        """Use nmap to scan all targets on all ports."""
+
         # Configure API key authorization: BearerToken
         all_ports = set()
         for target in self.targets:
@@ -190,7 +197,6 @@ class KubernetesNetworkChecker:
                                     int(port.attrib["portid"])
                                 )
         result = ScanResult()
-        # def __init__(self, name, ip_address, ports=[]):
         for address, value in open_ports.items():
             if not open_ports[address]:
                 continue
@@ -208,9 +214,9 @@ class KubernetesNetworkChecker:
         return result
 
 
-def test_network(kube_client):
+def test_network(core_v1_client):
     try:
-        kube_client.create_namespace(
+        core_v1_client.create_namespace(
             client.V1Namespace(
                 metadata=client.V1ObjectMeta(name="astronomer-scan-test")
             )

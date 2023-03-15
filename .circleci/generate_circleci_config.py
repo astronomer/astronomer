@@ -13,7 +13,6 @@ from jinja2 import Template
 # This should match what is in tests/__init__.py
 # https://hub.docker.com/r/kindest/node/tags
 kube_versions = [
-    "1.21.14",
     "1.22.15",
     "1.23.13",
     "1.24.7",
@@ -23,7 +22,7 @@ kube_versions = [
 # https://circleci.com/docs/2.0/building-docker-images/#docker-version
 ci_remote_docker_version = "20.10.18"
 # https://circleci.com/developer/machine/image/ubuntu-2204
-machine_image_version = "ubuntu-2204:2022.10.2"
+machine_image_version = "ubuntu-2204:2023.02.1"
 ci_runner_version = datetime.datetime.now().strftime("%Y-%m")
 
 

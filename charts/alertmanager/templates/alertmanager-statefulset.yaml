@@ -83,6 +83,9 @@ spec:
               mountPath: /etc/config
             - name: data
               mountPath: {{ .Values.dataDir }}
+            {{- if .Values.extraVolumeMounts }}
+            {{- toYaml .Values.extraVolumeMounts | nindent 12 }}
+            {{- end }}
         {{- if .Values.global.authSidecar.enabled  }}
         - name: auth-proxy
           image: "{{ .Values.global.authSidecar.repository }}:{{ .Values.global.authSidecar.tag }}"
@@ -125,6 +128,9 @@ spec:
             items:
               - key: alertmanager.yaml
                 path: alertmanager.yaml
+        {{- if .Values.extraVolumes }}
+        {{- toYaml .Values.extraVolumes | nindent 8 }}
+        {{- end }}
   {{- if not .Values.persistence.enabled }}
         - name: data
           emptyDir: {}
