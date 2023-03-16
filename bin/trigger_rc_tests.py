@@ -59,8 +59,15 @@ def main(circleci_token: str, astro_path: str):
     astro_version = None
     for file_name in file_list:
         x = re.search("astronomer-.*.tgz", file_name)
-        if x is not None:
+        if x is not None and astro_version is None and "rc" in astro_version:
             astro_version = file_name
+
+    if astro_version is None:
+        print(
+            f"Error: No valid version found for RC test. Below files are found at path: {astro_path}."
+        )
+        print(json.dumps(file_list))
+        exit(0)
 
     # Trigger the workflow
 
