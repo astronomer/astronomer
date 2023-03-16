@@ -198,7 +198,7 @@ houston:
     # Name of the provider bucket name / local file path
     bucketName: "/tmp"
 
-    # Connection ID for provider bucket
+    # Airflow provider connection id to connect to provider bucket, read more - https://airflow.apache.org/docs/apache-airflow/stable/howto/connection.html
     connectionId: ""
 
   # Cleanup task usage data and task audit data in Houston
