@@ -183,7 +183,7 @@ houston:
     # Cleanup deployments older than this many days
     olderThan: 365
 
-    # Output path of file storage location
+    # Output path of archived data csv export
     outputPath: "/tmp"
 
     # Delete archived tables
@@ -191,6 +191,15 @@ houston:
 
     # Print out the deployments that should be cleaned up and skip actual cleanup
     dryRun: false
+
+    # Name of file storage provider, supported providers - aws/azure/gcp/local
+    provider: local
+
+    # Name of the provider bucket name / local file path
+    bucketName: "/tmp"
+
+    # Connection ID for provider bucket
+    connectionId: ""
 
   # Cleanup task usage data and task audit data in Houston
   # This runs as a CronJob

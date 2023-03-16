@@ -1,5 +1,5 @@
 ################################
-## Houston Cleanup CronJob
+## Houston Airflow Db Cleanup CronJob
 ################################
 {{- if .Values.houston.cleanupAirflowDb.enabled }}
 apiVersion: {{ include "apiVersion.batch.cronjob" . }}
@@ -48,9 +48,11 @@ spec:
               args: ["yarn", "cleanup-airflow-db-data", "--",
               "--older-than={{ .Values.houston.cleanupAirflowDb.olderThan }}",
               "--dry-run={{ .Values.houston.cleanupAirflowDb.dryRun }}",
-              "--canary={{ .Values.houston.cleanupAirflowDb.canary }}",
-              "--output-path={{ .Values.houston.outputPath }}",
-              "--purge-archive={{ .Values.houston.purgeArchive }}"]
+              "--output-path={{ .Values.houston.cleanupAirflowDb.outputPath }}",
+              "--purge-archive={{ .Values.houston.cleanupAirflowDb.purgeArchive }}",
+              "--provider={{ .Values.houston.cleanupAirflowDb.provider }}",
+              "--bucket-name={{ .Values.houston.cleanupAirflowDb.bucketName }}",
+              "--connection-id={{ .Values.houston.cleanupAirflowDb.connectionId }}"]
               volumeMounts:
                 {{- include "houston_volume_mounts" . | indent 16 }}
                 {{- include "custom_ca_volume_mounts" . | indent 16 }}

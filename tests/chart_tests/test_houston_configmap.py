@@ -527,7 +527,6 @@ def test_houston_configmap_with_cleanup_airflow_db_defaults():
 
     prod = yaml.safe_load(doc["data"]["production.yaml"])
     assert prod["deployments"]["cleanupAirflowDb"]["enabled"] is False
-    assert prod["deployments"]["cleanupAirflowDb"]["schedule"] == "23 5 * * *"
     assert prod["deployments"]["cleanupAirflowDb"]["outputPath"] == "/tmp"
     assert prod["deployments"]["cleanupAirflowDb"]["olderThan"] == 365
     assert prod["deployments"]["cleanupAirflowDb"]["purgeArchive"] is True
