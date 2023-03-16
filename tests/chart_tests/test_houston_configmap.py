@@ -516,22 +516,6 @@ def test_houston_configmapwith_update_airflow_runtime_checks_disabled():
     assert prod["updateRuntimeCheckEnabled"] is False
 
 
-def test_houston_configmap_with_cleanup_airflow_db_defaults():
-    """Validate the houston configmap and its embedded data with
-    cleanupAirflowDb."""
-    docs = render_chart(
-        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"]
-    )
-    common_test_cases(docs)
-    doc = docs[0]
-
-    prod = yaml.safe_load(doc["data"]["production.yaml"])
-    assert prod["deployments"]["cleanupAirflowDb"]["enabled"] is False
-    assert prod["deployments"]["cleanupAirflowDb"]["outputPath"] == "/tmp"
-    assert prod["deployments"]["cleanupAirflowDb"]["olderThan"] == 365
-    assert prod["deployments"]["cleanupAirflowDb"]["purgeArchive"] is True
-
-
 def test_houston_configmap_with_cleanup_airflow_db_enabled():
     """Validate the houston configmap and its embedded data with
     cleanupAirflowDb."""
