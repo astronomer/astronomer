@@ -399,7 +399,7 @@ workflows:
             - platform-1-26-0
       - trigger-rc-test:
           requires:
-            - approve-internal-release
+            - release-to-internal
       - approve-public-release:
           type: approval
           requires:
