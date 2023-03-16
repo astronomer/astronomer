@@ -65,7 +65,7 @@ def main(circleci_token: str, astro_path: str):
 
     if astro_version is None:
         print(
-            f"Error: No valid version found for RC test. Below files are found at path: {astro_path}."
+            f"INFO: Skipping calling workflow as no valid version found for the RC test. Below files are found at path: {astro_path}."
         )
         print(json.dumps(file_list))
         exit(0)
