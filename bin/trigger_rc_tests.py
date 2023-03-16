@@ -93,7 +93,7 @@ def main(circleci_token: str, astro_path: str):
         f"CircleCI JOB URL = https://app.circleci.com/pipelines/github/{GITHUB_ORG}/{REPO}/{pipeline_number}"
     )
 
-    print("INFO: Waiting till pipeline starts running. It will wait for 5 mins.")
+    print("INFO: Waiting until pipeline starts running. It will wait for 5 min.")
     pipeline_state = "pending"
     counter = 0
     while "pending" != pipeline_state:
