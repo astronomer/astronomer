@@ -177,6 +177,19 @@ jobs:
             set -e
             bin/release-helm-chart /tmp/workspace/astronomer-*.tgz
 
+  trigger-rc-test:
+    executor: python/default
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - run:
+          name: Triggering RC testing for upgrade path
+          command: |
+            set -e
+            bin/trigger_rc_tests.py --astro_path=/tmp/workspace --circleci_token=$CIRCLECI_API_KEY_TEST
+
   release-to-public:
     docker:
       - image: quay.io/astronomer/ci-helm-release:2023-03
@@ -383,6 +396,9 @@ workflows:
             - approve-internal-release
             - platform-1-22-15
             - platform-1-26-0
+      - trigger-rc-test:
+          requires:
+            - approve-internal-release
       - approve-public-release:
           type: approval
           requires:
