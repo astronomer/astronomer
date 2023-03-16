@@ -76,6 +76,9 @@ data:
         taskUsageMetricsEnabled: {{ .Values.global.taskUsageMetricsEnabled }}
         taskUsageReportNumberOfDays: {{ .Values.houston.cleanupTaskUsageData.olderThan}}
 
+      cleanupAirflowDb:
+        enabled: {{ .Values.houston.cleanupAirflowDb.enabled }}
+
       {{ if .Values.global.features.namespacePools.enabled }}
       hardDeleteDeployment: true
       manualNamespaceNames: true
