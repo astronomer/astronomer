@@ -44,7 +44,6 @@ spec:
             - name: cleanup
               image: {{ template "houston.image" . }}
               imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
-              # If you supply only args for a Container, the default Entrypoint defined in the Docker image is run with the args that you supplied.
               args: ["yarn", "cleanup-airflow-db-data", "--",
               "--older-than={{ .Values.houston.cleanupAirflowDb.olderThan }}",
               "--dry-run={{ .Values.houston.cleanupAirflowDb.dryRun }}",
