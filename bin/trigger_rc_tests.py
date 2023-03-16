@@ -59,7 +59,7 @@ def main(circleci_token: str, astro_path: str):
     astro_version = None
     for file_name in file_list:
         x = re.search("astronomer-.*.tgz", file_name)
-        if x is not None and astro_version is None and "rc" in astro_version:
+        if x is not None and astro_version is None and "rc" in file_name:
             astro_version = file_name
 
     if astro_version is None:
