@@ -10,6 +10,7 @@ executors:
 
 orbs:
   slack: circleci/slack@4.10.1
+  python: circleci/python@2.1.1
 
 parameters:
   scan-docker-images:
@@ -168,6 +169,19 @@ jobs:
           command: |
             set -e
             bin/release-helm-chart /tmp/workspace/astronomer-*.tgz
+
+  trigger-rc-test:
+    executor: python/default
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - run:
+          name: Triggering RC testing for upgrade path
+          command: |
+            set -e
+            bin/trigger_rc_tests.py --astro_path=/tmp/workspace --circleci_token=$CIRCLECI_API_KEY_TEST
 
   release-to-public:
     docker:
@@ -371,6 +385,9 @@ workflows:
             - approve-internal-release
             - platform-1-22-15
             - platform-1-26-0
+      - trigger-rc-test:
+          requires:
+            - release-to-internal
       - approve-public-release:
           type: approval
           requires:
