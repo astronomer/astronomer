@@ -70,7 +70,6 @@ def main(circleci_token: str, astro_path: str):
         print(json.dumps(file_list))
         raise SystemExit(0)
 
-
     astro_version = astro_version.removeprefix("astronomer-")
     astro_version = astro_version.removesuffix(".tgz")
 
@@ -111,9 +110,8 @@ def main(circleci_token: str, astro_path: str):
 
 
 if __name__ == "__main__":
-    arg_parser = argparse.ArgumentParser(description="Optional app description")
+    arg_parser = argparse.ArgumentParser()
 
-    # Required positional argument
     arg_parser.add_argument("--circleci_token", type=str, required=True)
     arg_parser.add_argument("--astro_path", type=str, required=True)
 
