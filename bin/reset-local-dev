@@ -78,12 +78,6 @@ cat <<EOF
 
     kubectl get pods -n ${NAMESPACE}
 
-  After Astronomer is up (all pods running, all containers up), run the following
-  command to find the root password:
-
-    kubectl -n ${NAMESPACE} get secrets astronomer-root-admin-credentials \\
-      -o go-template --template='{{.data.password|base64decode}}{{"\n"}}'
-
   Next, run the following command to port-forward into the kind cluster so you can
   access the web UI:
 

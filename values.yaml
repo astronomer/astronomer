@@ -104,6 +104,7 @@ global:
   # Enables namespace labels for network policies
   networkNSLabels: false
 
+
   taskUsageMetricsEnabled: false
 
   # Sidecar Logging
