@@ -87,7 +87,6 @@ def main(circleci_token: str, astro_path: str):
     pipeline_id = json.loads(run_workflow_resp)["id"]
     pipeline_number = json.loads(run_workflow_resp)["number"]
 
-    # Printing Info
     print(
         f"CircleCI JOB URL = https://app.circleci.com/pipelines/github/{GITHUB_ORG}/{REPO}/{pipeline_number}"
     )
