@@ -1,5 +1,6 @@
 black
 docker
+exceptiongroup # indirect, needed to satisfy hash requirement
 filelock
 GitPython
 jmespath
