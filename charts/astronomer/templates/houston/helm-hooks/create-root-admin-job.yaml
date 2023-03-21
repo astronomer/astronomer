@@ -50,7 +50,7 @@ spec:
           imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
           command: ["yarn"]
           # If you supply only args for a Container, the default Entrypoint defined in the Docker image is run with the args that you supplied.
-          args: ["create-root-admin", "--password=$(ROOT_ADMIN_PASSWORD)"]
+          args: ["create-root-admin", "--username=$(ROOT_ADMIN_USERNAME)", "--password=$(ROOT_ADMIN_PASSWORD)"]
           volumeMounts:
             {{- include "houston_volume_mounts" . | indent 12 }}
             {{- include "custom_ca_volume_mounts" . | indent 12 }}
@@ -60,6 +60,11 @@ spec:
                 secretKeyRef:
                   name: {{ template "houston.backendSecret" . }}
                   key: connection
+            - name: ROOT_ADMIN_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: astronomer-root-admin-credentials
+                  key: username
             - name: ROOT_ADMIN_PASSWORD
               valueFrom:
                 secretKeyRef:
