@@ -70,7 +70,6 @@ def main(circleci_token: str, astro_path: str):
         print(json.dumps(file_list))
         raise SystemExit(0)
 
-    # Trigger the workflow
 
     astro_version = astro_version.removeprefix("astronomer-")
     astro_version = astro_version.removesuffix(".tgz")
