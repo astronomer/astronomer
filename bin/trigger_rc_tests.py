@@ -79,7 +79,6 @@ def main(circleci_token: str, astro_path: str):
     print("INFO: Printing parameters")
     print(json.dumps(parameters, indent=1))
 
-    # Run Workflow
     run_workflow_resp = run_workflow(
         circleci_token=circleci_token, parameters=parameters
     )
