@@ -70,8 +70,6 @@ def main(circleci_token: str, astro_path: str):
         print(json.dumps(file_list))
         raise SystemExit(0)
 
-    # Trigger the workflow
-
     astro_version = astro_version.removeprefix("astronomer-")
     astro_version = astro_version.removesuffix(".tgz")
 
@@ -80,7 +78,6 @@ def main(circleci_token: str, astro_path: str):
     print("INFO: Printing parameters")
     print(json.dumps(parameters, indent=1))
 
-    # Run Workflow
     run_workflow_resp = run_workflow(
         circleci_token=circleci_token, parameters=parameters
     )
@@ -88,7 +85,6 @@ def main(circleci_token: str, astro_path: str):
     pipeline_id = json.loads(run_workflow_resp)["id"]
     pipeline_number = json.loads(run_workflow_resp)["number"]
 
-    # Printing Info
     print(
         f"CircleCI JOB URL = https://app.circleci.com/pipelines/github/{GITHUB_ORG}/{REPO}/{pipeline_number}"
     )
@@ -114,9 +110,8 @@ def main(circleci_token: str, astro_path: str):
 
 
 if __name__ == "__main__":
-    arg_parser = argparse.ArgumentParser(description="Optional app description")
+    arg_parser = argparse.ArgumentParser()
 
-    # Required positional argument
     arg_parser.add_argument("--circleci_token", type=str, required=True)
     arg_parser.add_argument("--astro_path", type=str, required=True)
 
