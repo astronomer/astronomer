@@ -5,7 +5,7 @@
 # This version number controls the default Airflow chart version that will be installed
 # when creating a new deployment in the system. This is also used to ensure all
 # child airflow deployments are kept up to date and on the latest version.
-airflowChartVersion: 1.7.6
+airflowChartVersion: 1.8.1
 
 nodeSelector: {}
 affinity: {}
@@ -15,7 +15,7 @@ tolerations: []
 images:
   commander:
     repository: quay.io/astronomer/ap-commander
-    tag: 0.31.5
+    tag: 0.32.0
     pullPolicy: IfNotPresent
   registry:
     repository: quay.io/astronomer/ap-registry
@@ -24,11 +24,11 @@ images:
     # httpSecret: ~
   houston:
     repository: quay.io/astronomer/ap-houston-api
-    tag: 0.31.18
+    tag: 0.31.21
     pullPolicy: IfNotPresent
   astroUI:
     repository: quay.io/astronomer/ap-astro-ui
-    tag: 0.31.13
+    tag: 0.31.14
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
@@ -173,6 +173,36 @@ houston:
 
     # Only run on deployments marked as canary
     canary: false
+
+  # Cleanup airflow db data
+  # This runs as a CronJob
+  cleanupAirflowDb:
+    # Enable cleanup CronJob
+    enabled: false
+
+    # Default run is at 5:23 every morning https://crontab.guru/#23_5_*_*_*
+    schedule: "23 5 * * *"
+
+    # Cleanup deployments older than this many days
+    olderThan: 365
+
+    # Output path of archived data csv export
+    outputPath: "/tmp"
+
+    # Delete archived tables
+    purgeArchive: true
+
+    # Print out the deployments that should be cleaned up and skip actual cleanup
+    dryRun: false
+
+    # Name of file storage provider, supported providers - aws/azure/gcp/local
+    provider: local
+
+    # Name of the provider bucket name / local file path
+    bucketName: "/tmp"
+
+    # Airflow provider connection id to connect to provider bucket, read more - https://airflow.apache.org/docs/apache-airflow/stable/howto/connection.html
+    connectionId: ""
 
   # Cleanup task usage data and task audit data in Houston
   # This runs as a CronJob

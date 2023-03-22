@@ -514,3 +514,47 @@ def test_houston_configmapwith_update_airflow_runtime_checks_disabled():
     prod = yaml.safe_load(doc["data"]["production.yaml"])
     assert prod["updateAirflowCheckEnabled"] is False
     assert prod["updateRuntimeCheckEnabled"] is False
+
+
+def test_houston_configmap_with_cleanup_airflow_db_enabled():
+    """Validate the houston configmap and its embedded data with
+    cleanupAirflowDb."""
+    docs = render_chart(
+        values={
+            "astronomer": {
+                "houston": {
+                    "cleanupAirflowDb": {
+                        "enabled": True,
+                    }
+                }
+            }
+        },
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    common_test_cases(docs)
+    doc = docs[0]
+
+    prod = yaml.safe_load(doc["data"]["production.yaml"])
+    assert prod["deployments"]["cleanupAirflowDb"]["enabled"] is True
+
+
+def test_houston_configmap_with_cleanup_airflow_db_disabled():
+    """Validate the houston configmap and its embedded data with
+    cleanupAirflowDb."""
+    docs = render_chart(
+        values={
+            "astronomer": {
+                "houston": {
+                    "cleanupAirflowDb": {
+                        "enabled": False,
+                    }
+                }
+            }
+        },
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    common_test_cases(docs)
+    doc = docs[0]
+
+    prod = yaml.safe_load(doc["data"]["production.yaml"])
+    assert prod["deployments"]["cleanupAirflowDb"]["enabled"] is False
