@@ -13,6 +13,7 @@ images:
     tag: 0.10.0-4
     pullPolicy: IfNotPresent
 
+
 nats:
   # In case both external access and advertise are enabled
   # then a service account would be required to be able to
@@ -75,12 +76,12 @@ nameOverride: ""
 imagePullSecrets: []
 
 # Toggle whether to use setup a Pod Security Context
+PodSecurityContext:
+   fsGroup: 1000
 # ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
-securityContext: null
-# securityContext: null
-#   fsGroup: 1000
-#   runAsUser: 1000
-#   runAsNonRoot: true
+securityContext:
+   runAsUser: 1000
+   runAsNonRoot: true
 
 ## Node labels for pod assignment
 ## Ref: https://kubernetes.io/docs/user-guide/node-selection/
