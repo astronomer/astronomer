@@ -45,9 +45,12 @@ readinessProbe:
   timeoutSeconds: 1
   failureThreshold: 3
 
+PodSecurityContext:
+  fsGroup: 65534
+
 securityContext:
     runAsNonRoot: true
-
+    runAsUser: 65534
 configMapReloader:
   resources: {}
     # limits:

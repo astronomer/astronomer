@@ -2,10 +2,8 @@ nodeSelector: {}
 affinity: {}
 tolerations: []
 
-pod:
-  securityContext: {}
-container:
-  securityContext: {}
+PodSecurityContext: {}
+SecurityContext: {}
 images:
   fluentd:
     repository: quay.io/astronomer/ap-fluentd

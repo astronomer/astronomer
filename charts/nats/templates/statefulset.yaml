@@ -42,7 +42,7 @@ spec:
         chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
     spec:
 {{- include "nats.imagePullSecrets" . | indent 6 }}
-{{- with .Values.securityContext }}
+{{- with .Values.PodSecurityContext }}
       securityContext:
 {{ toYaml . | indent 8 }}
 {{- end }}

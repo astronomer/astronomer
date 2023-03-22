@@ -30,8 +30,7 @@ spec:
       annotations:
         checksum/configmap: {{ include (print $.Template.BasePath "/alertmanager-configmap.yaml") . | sha256sum }}
     spec:
-      securityContext:
-        fsGroup: 65534
+      securityContext: {{ toYaml .Values.PodSecurityContext| nindent 8 }}
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
       affinity:

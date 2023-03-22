@@ -12,6 +12,8 @@ images:
     tag: 0.25.0-1
     pullPolicy: IfNotPresent
 
+PodSecurityContext:
+  fsGroup: 65534
 securityContext:
     runAsNonRoot: true
 

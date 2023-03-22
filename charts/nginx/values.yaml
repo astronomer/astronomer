@@ -17,6 +17,7 @@ images:
     pullPolicy: IfNotPresent
 
 securityContext:
+  runAsUser: 101
   runAsNonRoot: true
 
 ingressClass: ~
