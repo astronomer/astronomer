@@ -38,7 +38,7 @@ data:
 
         # The following "location" rules limit airflow interactions to only their indices. Any further
         # additions should follow this pattern.
-        location ~* ^/_count$ {
+        location ~* ^/(_all/|\*/)?_count$ {
           {{- if .Values.global.loggingSidecar.enabled }}
           rewrite ^/_count(.*) /vector.$remote_user.*/_count$1 break;
           {{- else }}
