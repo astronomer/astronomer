@@ -38,8 +38,7 @@ spec:
 {{- include "nginx.imagePullSecrets" . | indent 6 }}
       containers:
         - name: nginx
-          securityContext:
-            runAsUser: 101
+          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
           image: {{ template "nginx.image" . }}
           imagePullPolicy: {{ .Values.images.nginx.pullPolicy }}
           resources:

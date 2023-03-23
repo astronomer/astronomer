@@ -45,9 +45,8 @@ spec:
       serviceAccountName: "nats-streaming"
       {{- end }}
 {{- include "stan.imagePullSecrets" . | indent 6 }}
-{{- with .Values.securityContext }}
-      securityContext:
-{{ toYaml . | indent 8 }}
+{{- with .Values.PodsecurityContext }}
+      securityContext: {{ toYaml . | nindent 8 }}
 {{- end }}
       terminationGracePeriodSeconds: 90
       nodeSelector:
@@ -67,6 +66,8 @@ spec:
       {{- end }}
       initContainers:
         - name: wait-for-nats-server
+          securityContext:
+            runAsNonRoot: {{ .Values.securityContext.runAsNonRoot}}
           command:
             - "dockerize"
           args:
@@ -84,6 +85,8 @@ spec:
       containers:
         - name: stan
           image: {{ include "stan.image" . }}
+          securityContext:
+            runAsNonRoot: {{ .Values.securityContext.runAsNonRoot }}
           imagePullPolicy: {{ .Values.images.stan.pullPolicy }}
           args:
           - -sc
@@ -148,8 +151,8 @@ spec:
         - name: metrics
           image: {{ template "stan-exporter.image" . }}
           imagePullPolicy: {{ .Values.images.stan.pullPolicy }}
-          resources:
-{{ toYaml .Values.exporter.resources | indent 12 }}
+          securityContext: {{toYaml .Values.securityContext | nindent 12 }}
+          resources: {{ toYaml .Values.exporter.resources | nindent 12 }}
           args:
           - -connz
           - -routez

@@ -6,6 +6,9 @@ image:
   tag: 1.17.0-6
   pullPolicy: IfNotPresent
 
+securityContext:
+  runAsNonRoot: true
+
 internalPort: 5432
 servicePort: 5432
 

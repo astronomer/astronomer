@@ -60,6 +60,7 @@ spec:
       containers:
         - name: registry
           image: {{ template  "registry.image" . }}
+          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
           imagePullPolicy: {{ .Values.images.registry.pullPolicy }}
           env:
           - name: REGISTRY_NOTIFICATIONS_ENDPOINTS_0_HEADERS

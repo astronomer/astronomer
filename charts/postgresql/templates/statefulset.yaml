@@ -86,6 +86,7 @@ spec:
             find {{ .Values.persistence.mountPath }} -mindepth 0 -maxdepth 1 -not -name ".snapshot" -not -name "lost+found" | \
               xargs chown -R {{ .Values.securityContext.runAsUser }}:{{ .Values.securityContext.fsGroup }}
         securityContext:
+          runAsNonRoot: {{ .Values.securityContext.runAsNonRoot }}
           runAsUser: {{ .Values.volumePermissions.securityContext.runAsUser }}
         volumeMounts:
         - name: data
@@ -100,6 +101,7 @@ spec:
 {{ toYaml .Values.resources | indent 10 }}
         {{- if .Values.securityContext.enabled }}
         securityContext:
+          runAsNonRoot: {{ .Values.securityContext.runAsNonRoot }}
           runAsUser: {{ .Values.securityContext.runAsUser }}
         {{- end }}
         env:

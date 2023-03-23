@@ -11,6 +11,7 @@ strategy:
     maxUnavailable: 1
   type: RollingUpdate
 
+
 image:
   repository: quay.io/astronomer/ap-blackbox-exporter
   tag: 0.23.0-3
