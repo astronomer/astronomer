@@ -40,9 +40,9 @@ data:
         # additions should follow this pattern.
         location ~* ^/(_all/|\*/)?_count$ {
           {{- if .Values.global.loggingSidecar.enabled }}
-          rewrite ^/_count(.*) /vector.$remote_user.*/_count$1 break;
+          rewrite ^/(_all/|\*/)?_count(.*) /vector.$remote_user.*/_count$1 break;
           {{- else }}
-          rewrite ^/_count(.*) /fluentd.$remote_user.*/_count$1 break;
+          rewrite ^/(_all/|\*/)?_count(.*) /fluentd.$remote_user.*/_count$1 break;
           {{- end }}
           proxy_pass http://elasticsearch;
         }
