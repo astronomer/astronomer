@@ -126,4 +126,8 @@ if __name__ == "__main__":
 
     args = arg_parser.parse_args()
 
-    main(astro_path=args.astro_path, circleci_token=args.circleci_token, branch=args.branch)
+    main(
+        astro_path=args.astro_path,
+        circleci_token=args.circleci_token,
+        branch=args.branch,
+    )
