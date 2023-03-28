@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-This script is used to run test_upgrade script.
+This script is used to run feature_stack_release workflow from terraform-aws-astronomer.
 """
 
 import argparse
@@ -52,25 +52,23 @@ def get_job_state(circleci_token: str, pipeline_id: str):
     return resp
 
 
-def main(circleci_token: str, astro_path: str):
+def main(circleci_token: str, astro_path: str, branch: str):
     # Getting Astronomer Helm Chart - FileName
     file_list = os.listdir(astro_path)
 
     astro_version = None
     for file_name in file_list:
         x = re.search("astronomer-.*.tgz", file_name)
-        if x is not None and astro_version is None and "rc" in file_name:
+        if x is not None and astro_version is None:
             print(f"INFO: Found file {file_name}")
             astro_version = file_name
 
     if astro_version is None:
         print(
-            f"INFO: Skipping calling workflow as no valid version found for the RC test. Below files are found at path: {astro_path}."
+            f"INFO: Skipping calling workflow as no valid version. Below files are found at path: {astro_path}."
         )
         print(json.dumps(file_list))
         raise SystemExit(0)
-
-    # Trigger the workflow
 
     astro_version = astro_version.removeprefix("astronomer-")
     astro_version = astro_version.removesuffix(".tgz")
@@ -78,7 +76,8 @@ def main(circleci_token: str, astro_path: str):
     parameters = {
         "astro_version": astro_version,
         "workflow_gen": True,
-        "workflow_name": "test_upgrade",
+        "workflow_name": "feature_stack",
+        "workflow_extra_params_json": json.dumps({"release": branch}),
     }
 
     print("INFO: Printing parameters")
@@ -123,6 +122,7 @@ if __name__ == "__main__":
     # Required positional argument
     arg_parser.add_argument("--circleci_token", type=str, required=True)
     arg_parser.add_argument("--astro_path", type=str, required=True)
+    arg_parser.add_argument("--branch", type=str, required=True)
 
     args = arg_parser.parse_args()
 

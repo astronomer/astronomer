@@ -189,6 +189,19 @@ jobs:
             set -e
             bin/trigger_rc_tests.py --astro_path=/tmp/workspace --circleci_token=$CIRCLECI_API_KEY_TEST
 
+  trigger-feature-stack-release:
+    executor: python/default
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - run:
+          name: Triggering RC testing for upgrade path
+          command: |
+            set -e
+            bin/trigger_feature_stack_update.py --astro_path=/tmp/workspace --circleci_token=$CIRCLECI_API_KEY_TEST --branch=$CIRCLE_BRANCH
+
   release-to-public:
     docker:
       - image: quay.io/astronomer/ci-helm-release:{{ ci_runner_version }}
@@ -294,6 +307,12 @@ workflows:
       - trigger-rc-test:
           requires:
             - release-to-internal
+      - approve-feature-stack-release:
+          type: approval
+      - trigger-feature-stack-release:
+          requires:
+            - release-to-internal
+            - approve-feature-stack-release
       - approve-public-release:
           type: approval
           requires:
