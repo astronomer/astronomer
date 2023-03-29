@@ -179,7 +179,7 @@ jobs:
             bin/release-helm-chart /tmp/workspace/astronomer-*.tgz
 
   trigger-rc-test:
-    executor: python/default
+    executor: docker-executor
     resource_class: small
     steps:
       - attach_workspace:
@@ -192,7 +192,7 @@ jobs:
             bin/trigger_rc_tests.py --astro_path=/tmp/workspace --circleci_token=$CIRCLECI_API_KEY_TEST
 
   trigger-feature-stack-release:
-    executor: python/default
+    executor: docker-executor
     resource_class: small
     steps:
       - attach_workspace:
