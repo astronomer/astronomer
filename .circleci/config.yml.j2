@@ -309,10 +309,18 @@ workflows:
             - release-to-internal
       - approve-feature-stack-release:
           type: approval
+          filters:
+            branches:
+              only:
+                - '/^release-0\.\d+$/'
       - trigger-feature-stack-release:
           requires:
             - release-to-internal
             - approve-feature-stack-release
+          filters:
+            branches:
+              only:
+                - '/^release-0\.\d+$/'
       - approve-public-release:
           type: approval
           requires:
