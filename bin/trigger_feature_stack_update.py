@@ -99,15 +99,16 @@ def main(circleci_token: str, astro_path: str, branch: str):
     print("INFO: Waiting until pipeline starts running. It will wait for 5 min.")
     pipeline_state = "pending"
     counter = 0
-    while "pending" != pipeline_state:
-        time.sleep(60)
+
+    while "pending" == pipeline_state:
+        time.sleep(10)
         job_state_resp = get_job_state(
             circleci_token=circleci_token, pipeline_id=pipeline_id
         )
         pipeline_state = json.loads(job_state_resp)["items"][0]["status"]
         counter = counter + 1
 
-        if counter == 5:
+        if counter == 6:
             break
 
     if "success" != pipeline_state and "running" != pipeline_state:
