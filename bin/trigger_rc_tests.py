@@ -41,7 +41,7 @@ def run_workflow(circleci_token: str, parameters: dict = None):
 
 
 def get_job_state(circleci_token: str, pipeline_id: str):
-    circle_ci_conn = http.client.HTTPSConnection(CIRCLECI_URL)
+    circle_ci_conn = http.client.HTTPSConnection(CIRCLECI_URL, timeout=15)
     api_endpoint = f"/api/v2/pipeline/{pipeline_id}/workflow"
 
     headers = {"content-type": "application/json", "Circle-Token": circleci_token}
@@ -118,7 +118,7 @@ def main(circleci_token: str, astro_path: str):
 
 
 if __name__ == "__main__":
-    arg_parser = argparse.ArgumentParser(description="Optional app description")
+    arg_parser = argparse.ArgumentParser()
 
     # Required positional argument
     arg_parser.add_argument("--circleci_token", type=str, required=True)
