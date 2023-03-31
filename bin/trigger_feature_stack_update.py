@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-This script is used to run test_upgrade script.
+This script is used to run feature_stack_release workflow from terraform-aws-astronomer.
 """
 
 import argparse
@@ -52,20 +52,20 @@ def get_job_state(circleci_token: str, pipeline_id: str):
     return resp
 
 
-def main(circleci_token: str, astro_path: str):
+def main(circleci_token: str, astro_path: str, branch: str):
     # Getting Astronomer Helm Chart - FileName
     file_list = os.listdir(astro_path)
 
     astro_version = None
     for file_name in file_list:
         x = re.search("astronomer-.*.tgz", file_name)
-        if x is not None and astro_version is None and "rc" in file_name:
+        if x is not None and astro_version is None:
             print(f"INFO: Found file {file_name}")
             astro_version = file_name
 
     if astro_version is None:
         print(
-            f"INFO: Skipping calling workflow as no valid version found for the RC test. Below files are found at path: {astro_path}."
+            f"INFO: Skipping calling workflow as no valid version. Below files are found at path: {astro_path}."
         )
         print(json.dumps(file_list))
         raise SystemExit(0)
@@ -76,12 +76,14 @@ def main(circleci_token: str, astro_path: str):
     parameters = {
         "astro_version": astro_version,
         "workflow_gen": True,
-        "workflow_name": "test_upgrade",
+        "workflow_name": "feature_stack",
+        "workflow_extra_params_json": json.dumps({"release": branch}),
     }
 
     print("INFO: Printing parameters")
     print(json.dumps(parameters, indent=1))
 
+    # Run Workflow
     run_workflow_resp = run_workflow(
         circleci_token=circleci_token, parameters=parameters
     )
@@ -89,6 +91,7 @@ def main(circleci_token: str, astro_path: str):
     pipeline_id = json.loads(run_workflow_resp)["id"]
     pipeline_number = json.loads(run_workflow_resp)["number"]
 
+    # Printing Info
     print(
         f"CircleCI JOB URL = https://app.circleci.com/pipelines/github/{GITHUB_ORG}/{REPO}/{pipeline_number}"
     )
@@ -96,6 +99,7 @@ def main(circleci_token: str, astro_path: str):
     print("INFO: Waiting until pipeline starts running. It will wait for 5 min.")
     pipeline_state = "pending"
     counter = 0
+
     while "pending" == pipeline_state:
         time.sleep(10)
         job_state_resp = get_job_state(
@@ -108,6 +112,7 @@ def main(circleci_token: str, astro_path: str):
             break
 
     if "success" != pipeline_state and "running" != pipeline_state:
+        print(f"Error: Failed to run pipeline. Last Status: {pipeline_state}")
         raise SystemError(1)
     else:
         raise SystemExit(0)
@@ -116,9 +121,15 @@ def main(circleci_token: str, astro_path: str):
 if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser()
 
+    # Required positional argument
     arg_parser.add_argument("--circleci_token", type=str, required=True)
     arg_parser.add_argument("--astro_path", type=str, required=True)
+    arg_parser.add_argument("--branch", type=str, required=True)
 
     args = arg_parser.parse_args()
 
-    main(astro_path=args.astro_path, circleci_token=args.circleci_token)
+    main(
+        astro_path=args.astro_path,
+        circleci_token=args.circleci_token,
+        branch=args.branch,
+    )

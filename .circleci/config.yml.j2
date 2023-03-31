@@ -177,7 +177,7 @@ jobs:
             bin/release-helm-chart /tmp/workspace/astronomer-*.tgz
 
   trigger-rc-test:
-    executor: python/default
+    executor: docker-executor
     resource_class: small
     steps:
       - attach_workspace:
@@ -188,6 +188,19 @@ jobs:
           command: |
             set -e
             bin/trigger_rc_tests.py --astro_path=/tmp/workspace --circleci_token=$CIRCLECI_API_KEY_TEST
+
+  trigger-feature-stack-release:
+    executor: docker-executor
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - run:
+          name: Triggering RC testing for upgrade path
+          command: |
+            set -e
+            bin/trigger_feature_stack_update.py --astro_path=/tmp/workspace --circleci_token=$CIRCLECI_API_KEY_TEST --branch=$CIRCLE_BRANCH
 
   release-to-public:
     docker:
@@ -294,6 +307,20 @@ workflows:
       - trigger-rc-test:
           requires:
             - release-to-internal
+      - approve-feature-stack-release:
+          type: approval
+          filters:
+            branches:
+              only:
+                - '/^release-0\.\d+$/'
+      - trigger-feature-stack-release:
+          requires:
+            - release-to-internal
+            - approve-feature-stack-release
+          filters:
+            branches:
+              only:
+                - '/^release-0\.\d+$/'
       - approve-public-release:
           type: approval
           requires:
