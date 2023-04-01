@@ -117,7 +117,7 @@ class TestAstronomerFileLogs:
 
     def test_file_logs_config(self, kube_version):
         docs = render_chart(
-            "astro-file-logs",
+            name="astro-file-logs",
             kube_version=kube_version,
             show_only=[
                 "charts/astronomer/templates/houston/api/houston-deployment.yaml",
