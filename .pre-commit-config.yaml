@@ -1,5 +1,5 @@
 ---
-exclude: '(venv|\.vscode)' # regex
+exclude: '(venv|\.vscode|tests/k8s_schema)' # regex
 repos:
   - repo: https://github.com/PyCQA/docformatter
     rev: v1.5.1
