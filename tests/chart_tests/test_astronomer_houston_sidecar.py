@@ -138,16 +138,13 @@ class TestAstronomerFileLogs:
             assert len(containers) == 2
 
             for container in containers:
-
                 if name == "astro-file-logs-houston":
-
                     if container["name"] == "houston":
                         self.houston_container(container=container)
                     elif container["name"] == "fluentd":
                         self.fleuntd_container(container=container)
 
                 elif name == "astro-file-logs-houston-worker":
-
                     if container["name"] == "houston":
                         self.houston_worker_container(container=container)
                     elif container["name"] == "fluentd":
