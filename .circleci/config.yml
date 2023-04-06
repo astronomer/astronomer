@@ -77,7 +77,7 @@ jobs:
 
   run_pre_commit:
     docker:
-      - image: quay.io/astronomer/ci-pre-commit:2023-03
+      - image: quay.io/astronomer/ci-pre-commit:2023-04
     steps:
       - checkout
       - run:
@@ -112,7 +112,7 @@ jobs:
 
   unittest-charts:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2023-03
+      - image: quay.io/astronomer/ci-helm-release:2023-04
     parallelism: 8
     resource_class: xlarge
     steps:
@@ -167,7 +167,7 @@ jobs:
 
   release-to-internal:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2023-03
+      - image: quay.io/astronomer/ci-helm-release:2023-04
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -179,7 +179,7 @@ jobs:
             bin/release-helm-chart /tmp/workspace/astronomer-*.tgz
 
   trigger-rc-test:
-    executor: python/default
+    executor: docker-executor
     resource_class: small
     steps:
       - attach_workspace:
@@ -191,9 +191,22 @@ jobs:
             set -e
             bin/trigger_rc_tests.py --astro_path=/tmp/workspace --circleci_token=$CIRCLECI_API_KEY_TEST
 
+  trigger-feature-stack-release:
+    executor: docker-executor
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - run:
+          name: Triggering RC testing for upgrade path
+          command: |
+            set -e
+            bin/trigger_feature_stack_update.py --astro_path=/tmp/workspace --circleci_token=$CIRCLECI_API_KEY_TEST --branch=$CIRCLE_BRANCH
+
   release-to-public:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2023-03
+      - image: quay.io/astronomer/ci-helm-release:2023-04
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -327,7 +340,7 @@ workflows:
                 - quay.io/astronomer/ap-elasticsearch-exporter:1.5.0-1
                 - quay.io/astronomer/ap-elasticsearch:7.17.9
                 - quay.io/astronomer/ap-fluentd:1.15.3-2
-                - quay.io/astronomer/ap-grafana:8.5.16-2
+                - quay.io/astronomer/ap-grafana:8.5.22
                 - quay.io/astronomer/ap-houston-api:0.32.1
                 - quay.io/astronomer/ap-init:3.16.3-1
                 - quay.io/astronomer/ap-kibana:7.17.9
@@ -400,6 +413,20 @@ workflows:
       - trigger-rc-test:
           requires:
             - release-to-internal
+      - approve-feature-stack-release:
+          type: approval
+          filters:
+            branches:
+              only:
+                - '/^release-0\.\d+$/'
+      - trigger-feature-stack-release:
+          requires:
+            - release-to-internal
+            - approve-feature-stack-release
+          filters:
+            branches:
+              only:
+                - '/^release-0\.\d+$/'
       - approve-public-release:
           type: approval
           requires:
