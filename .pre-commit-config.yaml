@@ -1,11 +1,6 @@
 ---
 exclude: '(venv|\.vscode|tests/k8s_schema)' # regex
 repos:
-  - repo: https://github.com/PyCQA/docformatter
-    rev: v1.5.1
-    hooks:
-      - id: docformatter
-        args: ["--wrap-summaries=125", "--wrap-descriptions=125"]
   - repo: local
     hooks:
       - id: circle-config-yaml
@@ -15,21 +10,21 @@ repos:
         entry: .circleci/generate_circleci_config.py
         additional_dependencies: ["jinja2"]
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.2.2
+    rev: v2.2.4
     hooks:
       - id: codespell
         args: ["-L", "AKS,aks"]
   - repo: https://github.com/Lucas-C/pre-commit-hooks
-    rev: v1.3.1
+    rev: v1.5.1
     hooks:
       - id: remove-tabs
         exclude_types: [makefile, binary]
   - repo: https://github.com/psf/black
-    rev: 22.12.0
+    rev: 23.3.0
     hooks:
       - id: black
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: "v0.0.253"
+    rev: "v0.0.261"
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix, --ignore, E501]
