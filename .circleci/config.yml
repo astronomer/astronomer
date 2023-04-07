@@ -410,19 +410,15 @@ workflows:
             - approve-internal-release
             - platform-1-22-15
             - platform-1-26-0
-      - trigger-rc-test:
-          requires:
-            - release-to-internal
-      - approve-feature-stack-release:
+      - approve-rc-test:
           type: approval
           filters:
             branches:
               only:
                 - '/^release-0\.\d+$/'
-      - trigger-feature-stack-release:
+      - trigger-rc-test:
           requires:
-            - release-to-internal
-            - approve-feature-stack-release
+            - approve-rc-test
           filters:
             branches:
               only:
@@ -482,6 +478,13 @@ workflows:
           requires:
             - platform-1-22-15
             - platform-1-26-0
+          filters:
+            branches:
+              only:
+                - '/^release-0\.\d+$/'
+      - trigger-feature-stack-release:
+          requires:
+            - release-to-internal
           filters:
             branches:
               only:
