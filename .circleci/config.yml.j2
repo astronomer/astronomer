@@ -304,19 +304,17 @@ workflows:
 {%- for version in [kube_versions[0], kube_versions[-1]] %}
             - platform-{{ version | replace(".", "-") }}
 {%- endfor %}
-      - trigger-rc-test:
+      - approve-rc-test:
+          type: approval
           requires:
             - release-to-internal
-      - approve-feature-stack-release:
-          type: approval
           filters:
             branches:
               only:
                 - '/^release-0\.\d+$/'
-      - trigger-feature-stack-release:
+      - trigger-rc-test:
           requires:
-            - release-to-internal
-            - approve-feature-stack-release
+            - approve-rc-test
           filters:
             branches:
               only:
@@ -373,6 +371,13 @@ workflows:
 {%- for version in [kube_versions[0], kube_versions[-1]] %}
             - platform-{{ version | replace(".", "-") }}
 {%- endfor %}
+          filters:
+            branches:
+              only:
+                - '/^release-0\.\d+$/'
+      - trigger-feature-stack-release:
+          requires:
+            - release-to-internal
           filters:
             branches:
               only:
