@@ -412,6 +412,8 @@ workflows:
             - platform-1-26-0
       - approve-rc-test:
           type: approval
+          requires:
+            - release-to-internal
           filters:
             branches:
               only:
