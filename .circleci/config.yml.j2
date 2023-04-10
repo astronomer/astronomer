@@ -306,6 +306,8 @@ workflows:
 {%- endfor %}
       - approve-rc-test:
           type: approval
+          requires:
+            - release-to-internal
           filters:
             branches:
               only:
