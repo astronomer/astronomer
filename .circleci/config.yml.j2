@@ -19,6 +19,10 @@ parameters:
     type: string
     default: ""
     description: "The URN to report image scan result."
+  qa-release:
+    type: boolean
+    default: false
+    description: "This will trigger QA release workflow."
 
 jobs:
   trivy-scan-docker:
@@ -94,7 +98,7 @@ jobs:
           command: pre-commit run --all-files --show-diff-on-failure
   lint:
     docker:
-      - image: quay.io/astronomer/ap-build:0.2.0
+      - image: quay.io/astronomer/ap-build:0.2.3
     steps:
       - checkout
       - run:
@@ -142,14 +146,18 @@ jobs:
 
   build-artifact:
     docker:
-      - image: quay.io/astronomer/ap-build:0.2.0
+      - image: quay.io/astronomer/ap-build:0.2.3
+    parameters:
+      qa_release:
+        type: boolean
+        default: false
     steps:
       - checkout
       - run:
           name: Package the Astronomer chart
           command: |
             source ./bin/install-ci-tools 1
-            make build
+            bin/build-helm-chart.sh << parameters.qa_release >>
       - persist_to_workspace:
           root: "."
           paths:
@@ -209,7 +217,7 @@ jobs:
 {% for version in kube_versions %}
   platform-{{ version | replace(".", "-") }}:
     machine:
-      image: ubuntu-2204:2022.10.2 # https://circleci.com/developer/machine/image/ubuntu-2204
+      image: {{ machine_image_version }}
       resource_class: xlarge
     environment:
       KUBE_VERSION: v{{ version }}
@@ -238,11 +246,14 @@ jobs:
 
 workflows:
   version: 2.1
+
+  # This workflow is triggered by https://app.circleci.com/settings/project/github/astronomer/astronomer/triggers
   scan-docker-images:
     when:
       and:
         - << pipeline.parameters.scan-docker-images >>
         - << pipeline.parameters.scan-docker-images-report-url >>
+        - not: << pipeline.parameters.qa-release >>
     jobs:
       - trivy-scan-docker:
           report_url: << pipeline.parameters.scan-docker-images-report-url >>
@@ -256,9 +267,10 @@ workflows:
             - slack_team-software-infra-bot
 
   build-and-release-helm-chart:
-    unless:
+    when:
       and:
-        - << pipeline.parameters.scan-docker-images >>
+        - not: << pipeline.parameters.scan-docker-images >>
+        - not: << pipeline.parameters.qa-release >>
     jobs:
       - lint
       - run_pre_commit
@@ -292,19 +304,17 @@ workflows:
 {%- for version in [kube_versions[0], kube_versions[-1]] %}
             - platform-{{ version | replace(".", "-") }}
 {%- endfor %}
-      - trigger-rc-test:
+      - approve-rc-test:
+          type: approval
           requires:
             - release-to-internal
-      - approve-feature-stack-release:
-          type: approval
           filters:
             branches:
               only:
                 - '/^release-0\.\d+$/'
-      - trigger-feature-stack-release:
+      - trigger-rc-test:
           requires:
-            - release-to-internal
-            - approve-feature-stack-release
+            - approve-rc-test
           filters:
             branches:
               only:
@@ -327,6 +337,47 @@ workflows:
             - github-repo
           requires:
             - approve-public-release
+          filters:
+            branches:
+              only:
+                - '/^release-0\.\d+$/'
+
+  qa-build-and-release-helm-chart:
+    when:
+      and:
+        - << pipeline.parameters.qa-release >>
+        - not: << pipeline.parameters.scan-docker-images >>
+    jobs:
+      - lint
+      - run_pre_commit
+      - unittest-charts
+      - check-commander-airflow-version
+      - build-artifact:
+          qa_release: true
+          requires:
+            - check-commander-airflow-version
+            - lint
+            - run_pre_commit
+            - unittest-charts
+{% for version in kube_versions %}{% if version in [kube_versions[0], kube_versions[-1]] %}
+      - platform-{{ version | replace(".", "-") }}:
+          requires:
+            - build-artifact
+{% endif %}{% endfor %}
+      - release-to-internal:
+          context:
+            - gcp-astronomer-prod
+          requires:
+{%- for version in [kube_versions[0], kube_versions[-1]] %}
+            - platform-{{ version | replace(".", "-") }}
+{%- endfor %}
+          filters:
+            branches:
+              only:
+                - '/^release-0\.\d+$/'
+      - trigger-feature-stack-release:
+          requires:
+            - release-to-internal
           filters:
             branches:
               only:
