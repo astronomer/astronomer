@@ -185,7 +185,7 @@ def test_houston_configmap_with_loggingsidecar_enabled():
     common_test_cases(docs)
     doc = docs[0]
     prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
-    log_cmd = 'log_cmd = "1> >( tee -a /var/log/sidecar-log-consumer/out.log ) 2> >( tee -a /var/log/sidecar-log-consumer/err.log >&2 )"'
+    log_cmd = 'log_cmd = " 1> >( tee -a /var/log/sidecar-log-consumer/out.log ) 2> >( tee -a /var/log/sidecar-log-consumer/err.log >&2 ) ; "'
     assert (
         log_cmd in prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
     )
@@ -219,9 +219,7 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_overrides():
     common_test_cases(docs)
     doc = docs[0]
     prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
-    log_cmd = 'log_cmd = "1> >( tee -a /var/log/{sidecar_container_name}/out.log ) 2> >( tee -a /var/log/{sidecar_container_name}/err.log >&2 )"'.format(
-        sidecar_container_name=sidecar_container_name
-    )
+    log_cmd = 'log_cmd = " 1> >( tee -a /var/log/sidecar-log-consumer/out.log ) 2> >( tee -a /var/log/sidecar-log-consumer/err.log >&2 ) ; "'
     assert (
         log_cmd in prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
     )
@@ -256,9 +254,7 @@ def test_houston_configmap_with_loggingsidecar_customConfig_enabled():
     common_test_cases(docs)
     doc = docs[0]
     prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
-    log_cmd = 'log_cmd = "1> >( tee -a /var/log/{sidecar_container_name}/out.log ) 2> >( tee -a /var/log/{sidecar_container_name}/err.log >&2 )"'.format(
-        sidecar_container_name=sidecar_container_name
-    )
+    log_cmd = 'log_cmd = " 1> >( tee -a /var/log/sidecar-log-consumer/out.log ) 2> >( tee -a /var/log/sidecar-log-consumer/err.log >&2 ) ; "'
     assert (
         log_cmd in prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
     )
@@ -312,9 +308,7 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_custom_env_overrides
     doc = docs[0]
     prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
     print(prod_yaml)
-    log_cmd = 'log_cmd = "1> >( tee -a /var/log/{sidecar_container_name}/out.log ) 2> >( tee -a /var/log/{sidecar_container_name}/err.log >&2 )"'.format(
-        sidecar_container_name=sidecar_container_name
-    )
+    log_cmd = 'log_cmd = " 1> >( tee -a /var/log/sidecar-log-consumer/out.log ) 2> >( tee -a /var/log/sidecar-log-consumer/err.log >&2 ) ; "'
     assert (
         log_cmd in prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
     )
@@ -366,9 +360,7 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_resource_overrides()
     common_test_cases(docs)
     doc = docs[0]
     prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
-    log_cmd = 'log_cmd = "1> >( tee -a /var/log/{sidecar_container_name}/out.log ) 2> >( tee -a /var/log/{sidecar_container_name}/err.log >&2 )"'.format(
-        sidecar_container_name=sidecar_container_name
-    )
+    log_cmd = 'log_cmd = " 1> >( tee -a /var/log/sidecar-log-consumer/out.log ) 2> >( tee -a /var/log/sidecar-log-consumer/err.log >&2 ) ; "'
     assert (
         log_cmd in prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
     )
