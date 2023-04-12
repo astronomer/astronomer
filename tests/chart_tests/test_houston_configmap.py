@@ -170,7 +170,6 @@ def test_houston_configmap_with_config_syncer_disabled():
 def test_houston_configmap_with_loggingsidecar_enabled():
     """Validate the houston configmap and its embedded data with
     loggingSidecar."""
-    terminationEndpoint = "http://localhost:8000/quitquitquit"
     docs = render_chart(
         values={
             "global": {
@@ -190,15 +189,10 @@ def test_houston_configmap_with_loggingsidecar_enabled():
     assert (
         log_cmd in prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
     )
-    assert (
-        terminationEndpoint
-        in prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
-    )
     assert prod_yaml["deployments"]["loggingSidecar"] == {
         "enabled": True,
         "name": "sidecar-log-consumer",
         "image": "quay.io/astronomer/ap-vector:0.22.3",
-        "terminationEndpoint": "http://localhost:8000/quitquitquit",
         "customConfig": False,
     }
     assert "vector" in prod_yaml["deployments"]["loggingSidecar"]["image"]
@@ -208,7 +202,6 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_overrides():
     """Validate the houston configmap and its embedded data with
     loggingSidecar."""
     sidecar_container_name = "sidecar-log-test"
-    terminationEndpoint = "http://localhost:8000/quitquitquit"
     image_name = "quay.io/astronomer/ap-vector:0.22.3"
     docs = render_chart(
         values={
@@ -232,15 +225,10 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_overrides():
     assert (
         log_cmd in prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
     )
-    assert (
-        terminationEndpoint
-        in prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
-    )
     assert prod_yaml["deployments"]["loggingSidecar"] == {
         "enabled": True,
         "name": sidecar_container_name,
         "image": "quay.io/astronomer/ap-vector:0.22.3",
-        "terminationEndpoint": terminationEndpoint,
         "customConfig": False,
     }
     assert "vector" in prod_yaml["deployments"]["loggingSidecar"]["image"]
@@ -250,7 +238,6 @@ def test_houston_configmap_with_loggingsidecar_customConfig_enabled():
     """Validate the houston configmap and its embedded data with loggingSidecar
     customConfig Enabled."""
     sidecar_container_name = "sidecar-log-test"
-    terminationEndpoint = "http://localhost:8000/quitquitquit"
     image_name = "quay.io/astronomer/ap-vector:0.22.3"
     docs = render_chart(
         values={
@@ -275,15 +262,10 @@ def test_houston_configmap_with_loggingsidecar_customConfig_enabled():
     assert (
         log_cmd in prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
     )
-    assert (
-        terminationEndpoint
-        in prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
-    )
     assert prod_yaml["deployments"]["loggingSidecar"] == {
         "enabled": True,
         "name": sidecar_container_name,
         "image": "quay.io/astronomer/ap-vector:0.22.3",
-        "terminationEndpoint": terminationEndpoint,
         "customConfig": True,
     }
     assert "vector" in prod_yaml["deployments"]["loggingSidecar"]["image"]
@@ -293,7 +275,6 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_custom_env_overrides
     """Validate the houston configmap and its embedded data with
     loggingSidecar."""
     sidecar_container_name = "sidecar-log-test"
-    terminationEndpoint = "http://localhost:8000/quitquitquit"
     image_name = "quay.io/astronomer/ap-vector:0.22.3"
     docs = render_chart(
         values={
@@ -337,15 +318,10 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_custom_env_overrides
     assert (
         log_cmd in prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
     )
-    assert (
-        terminationEndpoint
-        in prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
-    )
     assert prod_yaml["deployments"]["loggingSidecar"] == {
         "enabled": True,
         "name": sidecar_container_name,
         "image": "quay.io/astronomer/ap-vector:0.22.3",
-        "terminationEndpoint": terminationEndpoint,
         "customConfig": False,
         "extraEnv": [
             {
@@ -370,7 +346,6 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_resource_overrides()
     """Validate the houston configmap and its embedded data with
     loggingSidecar."""
     sidecar_container_name = "sidecar-log-test"
-    terminationEndpoint = "http://localhost:8000/quitquitquit"
     image_name = "quay.io/astronomer/ap-vector:0.22.3"
     docs = render_chart(
         values={
@@ -397,15 +372,10 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_resource_overrides()
     assert (
         log_cmd in prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
     )
-    assert (
-        terminationEndpoint
-        in prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
-    )
     assert prod_yaml["deployments"]["loggingSidecar"] == {
         "enabled": True,
         "name": sidecar_container_name,
         "image": "quay.io/astronomer/ap-vector:0.22.3",
-        "terminationEndpoint": terminationEndpoint,
         "customConfig": False,
         "resources": {
             "requests": {"memory": "386Mi", "cpu": "100m"},
