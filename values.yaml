@@ -189,15 +189,16 @@ global:
 
   # External ES logging
   customLogging:
-    enabled: false
+    enabled: true
     scheme: https
     host: ""
     port: ""
     secret: ""
     #secretName: ~
-    #awsSecretName: ~
+    awsSecretName: help
     #awsIAMRole: ~
     #awsServiceAccountAnnotation: ~
+    extraEnv: []
 
   ## Add annotations to all the auth sidecar deployed ingress resources
   ##

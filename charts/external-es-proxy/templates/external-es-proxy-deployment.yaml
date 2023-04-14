@@ -49,6 +49,9 @@ spec:
           image: {{ template "esproxy.image" . }}
           imagePullPolicy: {{ .Values.images.esproxy.pullPolicy }}
           env:
+{{- if .Values.global.customLogging.extraEnv }}
+{{ toYaml .Values.global.customLogging.extraEnv | indent 10 }}
+{{- end }}
 {{- if .Values.global.customLogging.secret }}
           - name: ES_SECRET
             value: {{.Values.global.customLogging.secret }}
