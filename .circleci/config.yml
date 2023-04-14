@@ -326,7 +326,7 @@ workflows:
             parameters:
               docker_image:
                 - quay.io/astronomer/ap-alertmanager:0.25.0-1
-                - quay.io/astronomer/ap-astro-ui:0.32.1
+                - quay.io/astronomer/ap-astro-ui:0.32.2
                 - quay.io/astronomer/ap-auth-sidecar:1.23.3-2
                 - quay.io/astronomer/ap-awsesproxy:1.3-11
                 - quay.io/astronomer/ap-base:3.16.3-2
@@ -341,7 +341,7 @@ workflows:
                 - quay.io/astronomer/ap-elasticsearch:7.17.9
                 - quay.io/astronomer/ap-fluentd:1.15.3-2
                 - quay.io/astronomer/ap-grafana:8.5.22
-                - quay.io/astronomer/ap-houston-api:0.32.3
+                - quay.io/astronomer/ap-houston-api:0.32.4
                 - quay.io/astronomer/ap-init:3.16.3-1
                 - quay.io/astronomer/ap-kibana:7.17.9
                 - quay.io/astronomer/ap-kube-state:2.7.0-1
