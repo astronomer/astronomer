@@ -189,13 +189,13 @@ global:
 
   # External ES logging
   customLogging:
-    enabled: true
+    enabled: false
     scheme: https
     host: ""
     port: ""
     secret: ""
     #secretName: ~
-    awsSecretName: help
+    #awsSecretName: ~
     #awsIAMRole: ~
     #awsServiceAccountAnnotation: ~
     extraEnv: []
