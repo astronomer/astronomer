@@ -489,6 +489,6 @@ class TestExternalElasticSearch:
         assert doc["kind"] == "Deployment"
         assert doc["apiVersion"] == "apps/v1"
         assert doc["metadata"]["name"] == "release-name-external-es-proxy"
-        assert {"name": "NO_PROXY", "value": "127.0.0.1"} in doc["spec"]["template"][
+        assert {"name": "TEST_VAR_NAME", "value": "test_var_value"} in doc["spec"]["template"][
             "spec"
         ]["containers"][0]["env"]
