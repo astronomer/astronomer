@@ -280,20 +280,22 @@ class TestElasticSearch:
 
         nginx_config = " ".join(doc["data"]["nginx.conf"].split())
         assert all(
-            x in nginx_config
-            for x in [
-                "location ~* ^/_bulk$ { rewrite ^/_bulk(.*) /fluentd.$remote_user.*/_bulk$1 break;",
-                "location ~* ^/(_all/|\*/)?_count$ { rewrite ^/(_all/|\*/)?_count(.*) /fluentd.$remote_user.*/_count$1 break;",
-                "location ~* ^/_search$ { rewrite ^/_search(.*) /fluentd.$remote_user.*/_search$1 break;",
-                "location = /_cluster/state/version { proxy_pass http://elasticsearch; }",
-                "location = /_cluster/health { proxy_pass http://elasticsearch; }",
-                "location ~ ^/ { deny all; } } }",
+            [
+                x in nginx_config
+                for x in [
+                    "location ~* ^/_bulk$ { rewrite ^/_bulk(.*) /fluentd.$remote_user.*/_bulk$1 break;",
+                    "location ~* /_count$ { rewrite /_count(.*) /fluentd.$remote_user.*/_count$1 break;",
+                    "location ~* ^/_search$ { rewrite ^/_search(.*) /fluentd.$remote_user.*/_search$1 break;",
+                    "location = /_cluster/state/version { proxy_pass http://elasticsearch; }",
+                    "location = /_cluster/health { proxy_pass http://elasticsearch; }",
+                    "location ~ ^/ { deny all; } } }",
+                ]
             ]
         )
 
     def test_nginx_nginx_config_pattern_with_sidecar_logging_enabled(
         self, kube_version
-    ):
+    ):  # sourcery skip: comprehension-to-generator
         """Test Nginx ES Service Index Pattern Search with sidecar logging."""
         docs = render_chart(
             kube_version=kube_version,
@@ -309,14 +311,16 @@ class TestElasticSearch:
 
         nginx_config = " ".join(doc["data"]["nginx.conf"].split())
         assert all(
-            x in nginx_config
-            for x in [
-                "location ~* ^/_bulk$ { rewrite ^/_bulk(.*) /vector.$remote_user.*/_bulk$1 break;",
-                "location ~* ^/(_all/|\*/)?_count$ { rewrite ^/(_all/|\*/)?_count(.*) /vector.$remote_user.*/_count$1 break;",
-                "location ~* ^/_search$ { rewrite ^/_search(.*) /vector.$remote_user.*/_search$1 break;",
-                "location = /_cluster/state/version { proxy_pass http://elasticsearch; }",
-                "location = /_cluster/health { proxy_pass http://elasticsearch; }",
-                "location ~ ^/ { deny all; } } }",
+            [
+                x in nginx_config
+                for x in [
+                    "location ~* ^/_bulk$ { rewrite ^/_bulk(.*) /vector.$remote_user.*/_bulk$1 break;",
+                    "location ~* /_count$ { rewrite /_count(.*) /vector.$remote_user.*/_count$1 break;",
+                    "location ~* ^/_search$ { rewrite ^/_search(.*) /vector.$remote_user.*/_search$1 break;",
+                    "location = /_cluster/state/version { proxy_pass http://elasticsearch; }",
+                    "location = /_cluster/health { proxy_pass http://elasticsearch; }",
+                    "location ~ ^/ { deny all; } } }",
+                ]
             ]
         )
 
