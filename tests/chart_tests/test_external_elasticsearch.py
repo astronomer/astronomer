@@ -474,7 +474,7 @@ class TestExternalElasticSearch:
                         "enabled": True,
                         "secret": secret,
                         "extraEnv": [
-                            {"name": "NO_PROXY", "value": "127.0.0.1"},
+                            {"name": "TEST_VAR_NAME", "value": "test_var_value"},
                         ],
                     }
                 }
