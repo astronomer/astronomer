@@ -197,6 +197,7 @@ global:
     #awsSecretName: ~
     #awsIAMRole: ~
     #awsServiceAccountAnnotation: ~
+    extraEnv: []
 
   ## Add annotations to all the auth sidecar deployed ingress resources
   ##
