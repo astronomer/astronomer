@@ -419,3 +419,70 @@ class TestExternalElasticSearch:
         es_index = doc["data"]["nginx.conf"]
         assert doc["kind"] == "ConfigMap"
         assert "vector.$remote_user.*/$1" in es_index
+
+    def test_external_es_with_private_registry_enabled(self, kube_version):
+        """Test External Elasticsearch Service with Private Registry
+        Enabled."""
+        private_registry = "private-registry.example.com"
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "privateRegistry": {
+                        "enabled": True,
+                        "repository": private_registry,
+                    },
+                    "customLogging": {
+                        "enabled": True,
+                        "scheme": "https",
+                        "host": "esdemo.example.com",
+                        "awsServiceAccountAnnotation": "arn:aws:iam::xxxxxxxx:role/customrole",
+                    },
+                },
+            },
+            show_only=[
+                "charts/external-es-proxy/templates/external-es-proxy-deployment.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+
+        c_by_name = get_containers_by_name(doc, include_init_containers=False)
+
+        assert doc["kind"] == "Deployment"
+        assert doc["apiVersion"] == "apps/v1"
+        for name, container in c_by_name.items():
+            assert container["image"].startswith(
+                private_registry
+            ), f"Container named '{name}' does not use registry '{private_registry}': {container}"
+
+    def test_externalelasticsearch_with_extraenv(self, kube_version):
+        """Test External ElasticSearch with custom env passed from
+        config/values.yaml."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "customLogging": {
+                        "enabled": True,
+                        "secret": secret,
+                        "extraEnv": [
+                            {"name": "TEST_VAR_NAME", "value": "test_var_value"},
+                        ],
+                    }
+                }
+            },
+            show_only=[
+                "charts/external-es-proxy/templates/external-es-proxy-deployment.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["kind"] == "Deployment"
+        assert doc["apiVersion"] == "apps/v1"
+        assert doc["metadata"]["name"] == "release-name-external-es-proxy"
+        assert {"name": "TEST_VAR_NAME", "value": "test_var_value"} in doc["spec"][
+            "template"
+        ]["spec"]["containers"][0]["env"]
