@@ -462,3 +462,33 @@ class TestExternalElasticSearch:
             assert container["image"].startswith(
                 private_registry
             ), f"Container named '{name}' does not use registry '{private_registry}': {container}"
+
+    def test_externalelasticsearch_with_extraenv(self, kube_version):
+        """Test External ElasticSearch with custom env passed from
+        config/values.yaml."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "customLogging": {
+                        "enabled": True,
+                        "secret": secret,
+                        "extraEnv": [
+                            {"name": "TEST_VAR_NAME", "value": "test_var_value"},
+                        ],
+                    }
+                }
+            },
+            show_only=[
+                "charts/external-es-proxy/templates/external-es-proxy-deployment.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["kind"] == "Deployment"
+        assert doc["apiVersion"] == "apps/v1"
+        assert doc["metadata"]["name"] == "release-name-external-es-proxy"
+        assert {"name": "TEST_VAR_NAME", "value": "test_var_value"} in doc["spec"][
+            "template"
+        ]["spec"]["containers"][0]["env"]

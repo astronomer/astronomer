@@ -111,8 +111,7 @@ global:
   loggingSidecar:
     enabled: false
     name: sidecar-log-consumer
-    image: quay.io/astronomer/ap-vector:0.26.0-4
-    terminationEndpoint: http://localhost:8000/quitquitquit
+    image: quay.io/astronomer/ap-vector:0.28.2
     customConfig: false
     extraEnv: []
     resources: {}
@@ -127,7 +126,7 @@ global:
   authSidecar:
     enabled: false
     repository: quay.io/astronomer/ap-auth-sidecar
-    tag: 1.23.3-2
+    tag: 1.23.4
     pullPolicy: IfNotPresent
     port: 8084
     default_nginx_settings: |
@@ -198,6 +197,7 @@ global:
     #awsSecretName: ~
     #awsIAMRole: ~
     #awsServiceAccountAnnotation: ~
+    extraEnv: []
 
   ## Add annotations to all the auth sidecar deployed ingress resources
   ##
