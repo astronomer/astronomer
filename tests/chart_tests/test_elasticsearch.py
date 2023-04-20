@@ -1,7 +1,6 @@
-import jmespath
 import pytest
 
-from tests import supported_k8s_versions
+from tests import get_containers_by_name, supported_k8s_versions
 from tests.chart_tests.helm_template_generator import render_chart
 
 
@@ -22,50 +21,23 @@ class TestElasticSearch:
             ],
         )
 
-        default_max_map_count = "262144"
+        vm_max_map_count = "vm.max_map_count=262144"
         assert len(docs) == 3
 
         # elasticsearch master
-        doc = docs[0]
-        assert doc["kind"] == "StatefulSet"
-        assert "sysctl" == jmespath.search(
-            "spec.template.spec.initContainers[0].name", docs[0]
-        )
-        assert any(
-            default_max_map_count in arg
-            for args in jmespath.search(
-                "spec.template.spec.initContainers[*].command", doc
-            )
-            for arg in args
-        )
+        assert docs[0]["kind"] == "StatefulSet"
+        esm_containers = get_containers_by_name(docs[0], include_init_containers=True)
+        assert vm_max_map_count in esm_containers["sysctl"]["command"]
 
         # elasticsearch data
-        doc = docs[1]
-        assert doc["kind"] == "StatefulSet"
-        assert "sysctl" == jmespath.search(
-            "spec.template.spec.initContainers[0].name", docs[1]
-        )
-        assert any(
-            default_max_map_count in arg
-            for args in jmespath.search(
-                "spec.template.spec.initContainers[*].command", doc
-            )
-            for arg in args
-        )
+        assert docs[1]["kind"] == "StatefulSet"
+        esd_containers = get_containers_by_name(docs[1], include_init_containers=True)
+        assert vm_max_map_count in esd_containers["sysctl"]["command"]
 
         # elasticsearch client
-        doc = docs[2]
-        assert doc["kind"] == "Deployment"
-        assert "sysctl" == jmespath.search(
-            "spec.template.spec.initContainers[0].name", docs[2]
-        )
-        assert any(
-            default_max_map_count in arg
-            for args in jmespath.search(
-                "spec.template.spec.initContainers[*].command", doc
-            )
-            for arg in args
-        )
+        assert docs[2]["kind"] == "Deployment"
+        esc_containers = get_containers_by_name(docs[1], include_init_containers=True)
+        assert vm_max_map_count in esc_containers["sysctl"]["command"]
 
     def test_elasticsearch_with_sysctl_disabled(self, kube_version):
         """Test ElasticSearch master, data and client with sysctl
@@ -313,6 +285,7 @@ class TestElasticSearch:
                 "location ~* /_bulk$ { rewrite /_bulk(.*) /fluentd.$remote_user.*/_bulk$1 break;",
                 "location ~* /_count$ { rewrite /_count(.*) /fluentd.$remote_user.*/_count$1 break;",
                 "location ~* /_search$ { rewrite /_search(.*) /fluentd.$remote_user.*/_search$1 break;",
+                "location = /_cluster/health { proxy_pass http://elasticsearch; }",
                 "location = /_cluster/state/version { proxy_pass http://elasticsearch; }",
                 "location ~ ^/ { deny all; } } }",
             ]
@@ -341,8 +314,9 @@ class TestElasticSearch:
                 "location ~* /_bulk$ { rewrite /_bulk(.*) /vector.$remote_user.*/_bulk$1 break;",
                 "location ~* /_count$ { rewrite /_count(.*) /vector.$remote_user.*/_count$1 break;",
                 "location ~* /_search$ { rewrite /_search(.*) /vector.$remote_user.*/_search$1 break;",
-                "location ~ ^/ { deny all; } } }",
+                "location = /_cluster/health { proxy_pass http://elasticsearch; }",
                 "location = /_cluster/state/version { proxy_pass http://elasticsearch; }",
+                "location ~ ^/ { deny all; } } }",
             ]
         )
 
