@@ -76,6 +76,10 @@ data:
           proxy_pass http://elasticsearch;
         }
 
+        location = /_cluster/health {
+          proxy_pass http://elasticsearch;
+        }
+
         location ~ ^/ {
           deny all;
         }
