@@ -81,6 +81,11 @@ spec:
           tier: astronomer
           release: {{ .Release.Name }}
           component: houston-populate-hourly-ta-metrics
+    - podSelector:
+        matchLabels:
+          tier: astronomer
+          release: {{ .Release.Name }}
+          component: houston-cleanup-airflow-db
     ports:
     - protocol: TCP
       port: {{ .Values.ports.commanderGRPC }}
