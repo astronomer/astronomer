@@ -202,7 +202,7 @@ houston:
     bucketName: "/tmp"
 
     # Airflow provider connection id to connect to provider bucket, read more - https://airflow.apache.org/docs/apache-airflow/stable/howto/connection.html
-    connectionId: ""
+    providerEnvSecretName: ""
 
   # Cleanup task usage data and task audit data in Houston
   # This runs as a CronJob
