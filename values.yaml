@@ -600,10 +600,10 @@ elasticsearch:
     resources:
       requests:
         cpu: "80m"
-        memory: "7Mi"
+        memory: "128Mi"
       limits:
         cpu: "100m"
-        memory: "10Mi"
+        memory: "256Mi"
 
 #################################
 ## Kibana configuration
