@@ -9,8 +9,9 @@ replicaCount: 2
 
 image:
   repository: quay.io/astronomer/ap-postgres-exporter
-  tag: 0.11.1
+  tag: 0.12.0
   pullPolicy: IfNotPresent
+
 
 service:
   type: ClusterIP
@@ -53,7 +54,7 @@ serviceAccount:
   name:
 
 securityContext:
-  {}
+  runAsNonRoot: true
   # The securityContext this Pod should use. See https://kubernetes.io/docs/concepts/policy/security-context/ for more.
   # runAsUser: 65534
 

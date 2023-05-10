@@ -176,18 +176,31 @@ jobs:
             set -e
             bin/release-helm-chart /tmp/workspace/astronomer-*.tgz
 
-  trigger-rc-test:
-    executor: python/default
+  trigger-upgrade-test:
+    executor: docker-executor
     resource_class: small
     steps:
       - attach_workspace:
           at: /tmp/workspace
       - checkout
       - run:
-          name: Triggering RC testing for upgrade path
+          name: Triggering testing for upgrade path
           command: |
             set -e
             bin/trigger_rc_tests.py --astro_path=/tmp/workspace --circleci_token=$CIRCLECI_API_KEY_TEST
+
+  trigger-feature-stack-release:
+    executor: docker-executor
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - run:
+          name: Triggering update to feature cluster
+          command: |
+            set -e
+            bin/trigger_feature_stack_update.py --astro_path=/tmp/workspace --circleci_token=$CIRCLECI_API_KEY_TEST --branch=$CIRCLE_BRANCH
 
   release-to-public:
     docker:
@@ -291,9 +304,20 @@ workflows:
 {%- for version in [kube_versions[0], kube_versions[-1]] %}
             - platform-{{ version | replace(".", "-") }}
 {%- endfor %}
-      - trigger-rc-test:
+      - approve-upgrade-test:
+          type: approval
+          filters:
+            branches:
+              only:
+                - '/^release-0\.\d+$/'
+      - trigger-upgrade-test:
           requires:
             - release-to-internal
+            - approve-upgrade-test
+          filters:
+            branches:
+              only:
+                - '/^release-0\.\d+$/'
       - approve-public-release:
           type: approval
           requires:
@@ -346,6 +370,13 @@ workflows:
 {%- for version in [kube_versions[0], kube_versions[-1]] %}
             - platform-{{ version | replace(".", "-") }}
 {%- endfor %}
+          filters:
+            branches:
+              only:
+                - '/^release-0\.\d+$/'
+      - trigger-feature-stack-release:
+          requires:
+            - release-to-internal
           filters:
             branches:
               only:

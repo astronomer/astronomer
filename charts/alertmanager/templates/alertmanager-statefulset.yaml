@@ -30,8 +30,7 @@ spec:
       annotations:
         checksum/configmap: {{ include (print $.Template.BasePath "/alertmanager-configmap.yaml") . | sha256sum }}
     spec:
-      securityContext:
-        fsGroup: 65534
+      securityContext: {{ toYaml .Values.PodSecurityContext| nindent 8 }}
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
       affinity:
@@ -44,6 +43,7 @@ spec:
         - name: alertmanager
           image: {{ template "alertmanager.image" . }}
           imagePullPolicy: {{ .Values.images.alertmanager.pullPolicy }}
+          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
           env:
             {{- if .Values.enableNonRFC1918 }}
             - name: POD_IP
@@ -76,8 +76,7 @@ spec:
               port: {{ .Values.ports.http }}
             initialDelaySeconds: 30
             timeoutSeconds: 30
-          resources:
-{{ toYaml .Values.resources | indent 12 }}
+          resources: {{ toYaml .Values.resources | nindent 12 }}
           volumeMounts:
             - name: config-volume
               mountPath: /etc/config
@@ -89,6 +88,7 @@ spec:
         {{- if .Values.global.authSidecar.enabled  }}
         - name: auth-proxy
           image: "{{ .Values.global.authSidecar.repository }}:{{ .Values.global.authSidecar.tag }}"
+          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
           imagePullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
           {{- if .Values.global.authSidecar.resources }}
           resources: {{- toYaml .Values.global.authSidecar.resources | nindent 12 }}

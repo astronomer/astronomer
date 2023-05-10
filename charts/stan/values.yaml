@@ -6,15 +6,15 @@
 images:
   init:
     repository: quay.io/astronomer/ap-init
-    tag: 3.16.3-1
+    tag: 3.16.5
     pullPolicy: IfNotPresent
   stan:
     repository: quay.io/astronomer/ap-nats-streaming
-    tag: 0.24.6-2
+    tag: 0.24.6-3
     pullPolicy: IfNotPresent
   exporter:
     repository: quay.io/astronomer/ap-nats-exporter
-    tag: 0.10.0-4
+    tag: 0.10.0-5
     pullPolicy: IfNotPresent
 
 
@@ -65,11 +65,13 @@ imagePullSecrets: {}
 
 # Toggle whether to use setup a Pod Security Context
 # ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
-securityContext:
+PodsecurityContext:
   fsGroup: 1000
   runAsGroup: 1000
   runAsUser: 1000
 
+securityContext:
+  runAsNonRoot: true
 ## Node labels for pod assignment
 ## Ref: https://kubernetes.io/docs/user-guide/node-selection/
 ##

@@ -5,7 +5,7 @@
 # This version number controls the default Airflow chart version that will be installed
 # when creating a new deployment in the system. This is also used to ensure all
 # child airflow deployments are kept up to date and on the latest version.
-airflowChartVersion: 1.8.1
+airflowChartVersion: 1.8.4
 
 nodeSelector: {}
 affinity: {}
@@ -15,29 +15,32 @@ tolerations: []
 images:
   commander:
     repository: quay.io/astronomer/ap-commander
-    tag: 0.32.0
+    tag: 0.32.3
     pullPolicy: IfNotPresent
   registry:
     repository: quay.io/astronomer/ap-registry
-    tag: 3.16.3-2
+    tag: 3.16.5
     pullPolicy: IfNotPresent
     # httpSecret: ~
   houston:
     repository: quay.io/astronomer/ap-houston-api
-    tag: 0.31.21
+    tag: 0.32.6
     pullPolicy: IfNotPresent
   astroUI:
     repository: quay.io/astronomer/ap-astro-ui
-    tag: 0.31.14
+    tag: 0.32.4
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
-    tag: 0.31.1
+    tag: 0.31.2
     pullPolicy: IfNotPresent
   cliInstall:
     repository: quay.io/astronomer/ap-cli-install
-    tag: 0.26.12
+    tag: 0.26.15
     pullPolicy: IfNotPresent
+
+securityContext:
+    runAsNonRoot: true
 
 astroUI:
   replicas: 2
@@ -199,7 +202,10 @@ houston:
     bucketName: "/tmp"
 
     # Airflow provider connection id to connect to provider bucket, read more - https://airflow.apache.org/docs/apache-airflow/stable/howto/connection.html
-    connectionId: ""
+    providerEnvSecretName: ""
+
+    # Run cleanup on specific table or list of tables in a comma separated format
+    tables: ""
 
   # Cleanup task usage data and task audit data in Houston
   # This runs as a CronJob

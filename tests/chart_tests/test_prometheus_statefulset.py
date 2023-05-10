@@ -26,8 +26,6 @@ class TestPrometheusStatefulset:
 
         sc = doc["spec"]["template"]["spec"]["securityContext"]
         assert sc["fsGroup"] == 65534
-        assert sc["runAsUser"] == 65534
-        assert sc["runAsNonRoot"] is True
 
         c_by_name = get_containers_by_name(doc)
         assert c_by_name["configmap-reloader"]["image"].startswith(

@@ -18,7 +18,7 @@ replicas: 1
 images:
   prometheus:
     repository: quay.io/astronomer/ap-prometheus
-    tag: 2.37.5
+    tag: 2.37.6
     pullPolicy: IfNotPresent
   configReloader:
     repository: quay.io/astronomer/ap-configmap-reloader
@@ -45,6 +45,12 @@ readinessProbe:
   timeoutSeconds: 1
   failureThreshold: 3
 
+PodSecurityContext:
+  fsGroup: 65534
+
+securityContext:
+    runAsNonRoot: true
+    runAsUser: 65534
 configMapReloader:
   resources: {}
     # limits:

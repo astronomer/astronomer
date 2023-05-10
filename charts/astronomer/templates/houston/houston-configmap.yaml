@@ -109,7 +109,6 @@ data:
         enabled: true
         name: {{ .Values.global.loggingSidecar.name }}
         image: {{ .Values.global.loggingSidecar.image }}
-        terminationEndpoint: {{ .Values.global.loggingSidecar.terminationEndpoint }}
         customConfig: {{ .Values.global.loggingSidecar.customConfig }}
         {{- if .Values.global.loggingSidecar.extraEnv}}
         extraEnv: {{- .Values.global.loggingSidecar.extraEnv | toYaml | nindent 8 }}
@@ -264,18 +263,46 @@ data:
                   container.command = ["tini", "--", "/entrypoint"]
                   pod.spec.containers[0] = container
       {{ if .Values.global.loggingSidecar.enabled }}
-                  # For sidecar logging we override the default entrypoint to redirect
-                  # logs to files that are consumed by the sidecar container. The command
-                  # ends with a POST to {{ .Values.global.loggingSidecar.terminationEndpoint }}, which signals the
-                  # sidecar log consumer to exit.
-                  log_cmd = "1> >( tee -a /var/log/{{ .Values.global.loggingSidecar.name }}/out.log ) 2> >( tee -a /var/log/{{ .Values.global.loggingSidecar.name }}/err.log >&2 )"
+                  # For sidecar logging we override the default entrypoint to redirect logs to
+                  # files that are consumed by the sidecar container. The command ends by creating
+                  # the file /var/log/sidecar-log-consumer/finished, which signals the sidecar log
+                  # consumer to exit.
+                  from textwrap import dedent
+                  cmd_init = dedent(
+                      r"""
+                      echo '
+                      import signal
+                      import sys
+                      import subprocess
+                      import time
+                      from pathlib import Path
+                      process = subprocess.Popen(sys.argv[1:])
+                      def handler(signum, frame):
+                          process.kill()
+                          print("Process killed")
+                      signal.signal(signal.SIGINT, handler)
+                      while True:
+                          time.sleep(5)
+                          with open("/var/log/sidecar-log-consumer/heartbeat", "w") as f:
+                              f.write(f"{time.time()}\n")
+                          if process.poll() is not None:
+                              break
+                      print("Process exited")
+                      Path("/var/log/sidecar-log-consumer/finished").touch()
+                      ' | python3 - """
+                  )
+                  log_cmd = " 1> >( tee -a /var/log/sidecar-log-consumer/out.log ) 2> >( tee -a /var/log/sidecar-log-consumer/err.log >&2 ) ; "
                   if container.args[0:3] == ["airflow", "tasks", "run"]:
                       container.command = ["tini", "--"]
                       new_args = ["bash", "-c"]
-                      command_str = "/entrypoint " + ' '.join([str(arg) for arg in container.args]) + " " + log_cmd + "; curl -fsSL --retry 5 --max-time 10 --retry-connrefused -XPOST {{ .Values.global.loggingSidecar.terminationEndpoint }}"
+                      command_str = (
+                          cmd_init
+                          + " /entrypoint "
+                          + " ".join([str(arg) for arg in container.args])
+                          + log_cmd
+                      )
                       new_args.append(command_str)
                       container.args = new_args
-
       {{ end }}
               else:
                   # In the case of KPO, we allow Airflow to overwrite the entrypoint

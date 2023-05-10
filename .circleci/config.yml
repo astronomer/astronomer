@@ -77,7 +77,7 @@ jobs:
 
   run_pre_commit:
     docker:
-      - image: quay.io/astronomer/ci-pre-commit:2023-03
+      - image: quay.io/astronomer/ci-pre-commit:2023-04
     steps:
       - checkout
       - run:
@@ -112,7 +112,7 @@ jobs:
 
   unittest-charts:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2023-03
+      - image: quay.io/astronomer/ci-helm-release:2023-04
     parallelism: 8
     resource_class: xlarge
     steps:
@@ -167,7 +167,7 @@ jobs:
 
   release-to-internal:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2023-03
+      - image: quay.io/astronomer/ci-helm-release:2023-04
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -178,22 +178,35 @@ jobs:
             set -e
             bin/release-helm-chart /tmp/workspace/astronomer-*.tgz
 
-  trigger-rc-test:
-    executor: python/default
+  trigger-upgrade-test:
+    executor: docker-executor
     resource_class: small
     steps:
       - attach_workspace:
           at: /tmp/workspace
       - checkout
       - run:
-          name: Triggering RC testing for upgrade path
+          name: Triggering testing for upgrade path
           command: |
             set -e
             bin/trigger_rc_tests.py --astro_path=/tmp/workspace --circleci_token=$CIRCLECI_API_KEY_TEST
 
+  trigger-feature-stack-release:
+    executor: docker-executor
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - run:
+          name: Triggering update to feature cluster
+          command: |
+            set -e
+            bin/trigger_feature_stack_update.py --astro_path=/tmp/workspace --circleci_token=$CIRCLECI_API_KEY_TEST --branch=$CIRCLE_BRANCH
+
   release-to-public:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2023-03
+      - image: quay.io/astronomer/ci-helm-release:2023-04
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -312,39 +325,39 @@ workflows:
           matrix:
             parameters:
               docker_image:
-                - quay.io/astronomer/ap-alertmanager:0.25.0
-                - quay.io/astronomer/ap-astro-ui:0.31.14
-                - quay.io/astronomer/ap-auth-sidecar:1.23.3-2
-                - quay.io/astronomer/ap-awsesproxy:1.3-11
-                - quay.io/astronomer/ap-base:3.16.3-2
-                - quay.io/astronomer/ap-blackbox-exporter:0.23.0-3
-                - quay.io/astronomer/ap-cli-install:0.26.12
-                - quay.io/astronomer/ap-commander:0.32.0
+                - quay.io/astronomer/ap-alertmanager:0.25.0-1
+                - quay.io/astronomer/ap-astro-ui:0.32.4
+                - quay.io/astronomer/ap-auth-sidecar:1.24.0
+                - quay.io/astronomer/ap-awsesproxy:1.3-12
+                - quay.io/astronomer/ap-base:3.16.5
+                - quay.io/astronomer/ap-blackbox-exporter:0.23.0-4
+                - quay.io/astronomer/ap-cli-install:0.26.15
+                - quay.io/astronomer/ap-commander:0.32.3
                 - quay.io/astronomer/ap-configmap-reloader:0.8.0
-                - quay.io/astronomer/ap-curator:7.0.0-2
-                - quay.io/astronomer/ap-db-bootstrapper:0.31.1
-                - quay.io/astronomer/ap-default-backend:0.28.13
-                - quay.io/astronomer/ap-elasticsearch-exporter:1.5.0
-                - quay.io/astronomer/ap-elasticsearch:7.17.9
+                - quay.io/astronomer/ap-curator:7.0.0-4
+                - quay.io/astronomer/ap-db-bootstrapper:0.31.2
+                - quay.io/astronomer/ap-default-backend:0.28.15
+                - quay.io/astronomer/ap-elasticsearch-exporter:1.5.0-1
+                - quay.io/astronomer/ap-elasticsearch:7.17.9-1
                 - quay.io/astronomer/ap-fluentd:1.15.3-2
-                - quay.io/astronomer/ap-grafana:8.5.16-2
-                - quay.io/astronomer/ap-houston-api:0.31.21
-                - quay.io/astronomer/ap-init:3.16.3-1
+                - quay.io/astronomer/ap-grafana:8.5.22
+                - quay.io/astronomer/ap-houston-api:0.32.6
+                - quay.io/astronomer/ap-init:3.16.5
                 - quay.io/astronomer/ap-kibana:7.17.9
-                - quay.io/astronomer/ap-kube-state:2.7.0
-                - quay.io/astronomer/ap-nats-exporter:0.10.0-4
-                - quay.io/astronomer/ap-nats-server:2.8.4-2
-                - quay.io/astronomer/ap-nats-streaming:0.24.6-2
-                - quay.io/astronomer/ap-nginx-es:1.23.3-2
-                - quay.io/astronomer/ap-nginx:1.3.1-3
+                - quay.io/astronomer/ap-kube-state:2.7.0-1
+                - quay.io/astronomer/ap-nats-exporter:0.10.0-5
+                - quay.io/astronomer/ap-nats-server:2.8.4-3
+                - quay.io/astronomer/ap-nats-streaming:0.24.6-3
+                - quay.io/astronomer/ap-nginx-es:1.24.0
+                - quay.io/astronomer/ap-nginx:1.7.0
                 - quay.io/astronomer/ap-node-exporter:1.5.0
-                - quay.io/astronomer/ap-openresty:1.21.4-4
-                - quay.io/astronomer/ap-pgbouncer-krb:1.17.0-6
-                - quay.io/astronomer/ap-postgres-exporter:0.11.1
-                - quay.io/astronomer/ap-postgresql:15.2.0
-                - quay.io/astronomer/ap-prometheus:2.37.5
-                - quay.io/astronomer/ap-registry:3.16.3-2
-                - quay.io/astronomer/ap-vector:0.26.0-4
+                - quay.io/astronomer/ap-openresty:1.21.4-6
+                - quay.io/astronomer/ap-pgbouncer-krb:1.17.0-7
+                - quay.io/astronomer/ap-postgres-exporter:0.12.0
+                - quay.io/astronomer/ap-postgresql:15.2.0-1
+                - quay.io/astronomer/ap-prometheus:2.37.6
+                - quay.io/astronomer/ap-registry:3.16.5
+                - quay.io/astronomer/ap-vector:0.28.2-1
           context:
             - slack_team-software-infra-bot
 
@@ -397,9 +410,20 @@ workflows:
             - approve-internal-release
             - platform-1-22-15
             - platform-1-26-0
-      - trigger-rc-test:
+      - approve-upgrade-test:
+          type: approval
+          filters:
+            branches:
+              only:
+                - '/^release-0\.\d+$/'
+      - trigger-upgrade-test:
           requires:
             - release-to-internal
+            - approve-upgrade-test
+          filters:
+            branches:
+              only:
+                - '/^release-0\.\d+$/'
       - approve-public-release:
           type: approval
           requires:
@@ -455,6 +479,13 @@ workflows:
           requires:
             - platform-1-22-15
             - platform-1-26-0
+          filters:
+            branches:
+              only:
+                - '/^release-0\.\d+$/'
+      - trigger-feature-stack-release:
+          requires:
+            - release-to-internal
           filters:
             branches:
               only:

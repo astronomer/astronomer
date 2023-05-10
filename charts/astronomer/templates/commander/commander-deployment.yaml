@@ -41,13 +41,12 @@ spec:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       serviceAccountName: {{ .Release.Name }}-commander
       restartPolicy: Always
-      securityContext:
-        runAsUser: {{ .Values.uid }}
 {{- include "astronomer.imagePullSecrets" . | indent 6 }}
       containers:
         - name: commander
           image: {{ template "commander.image" . }}
           imagePullPolicy: {{ .Values.images.commander.pullPolicy }}
+          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
           resources:
 {{ toYaml .Values.commander.resources | indent 12 }}
           {{- if .Values.commander.command }}
