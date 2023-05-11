@@ -77,7 +77,7 @@ jobs:
 
   run_pre_commit:
     docker:
-      - image: quay.io/astronomer/ci-pre-commit:2023-04
+      - image: quay.io/astronomer/ci-pre-commit:2023-05
     steps:
       - checkout
       - run:
@@ -112,7 +112,7 @@ jobs:
 
   unittest-charts:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2023-04
+      - image: quay.io/astronomer/ci-helm-release:2023-05
     parallelism: 8
     resource_class: xlarge
     steps:
@@ -167,7 +167,7 @@ jobs:
 
   release-to-internal:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2023-04
+      - image: quay.io/astronomer/ci-helm-release:2023-05
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -206,7 +206,7 @@ jobs:
 
   release-to-public:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2023-04
+      - image: quay.io/astronomer/ci-helm-release:2023-05
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -217,84 +217,84 @@ jobs:
             bin/release-helm-chart -p /tmp/workspace/astronomer-*.tgz
       - publish-github-release
 
-  platform-1-22-15:
+  platform-1-22-17:
     machine:
       image: ubuntu-2204:2023.02.1
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.22.15
+      KUBE_VERSION: v1.22.17
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging"
       - run:
-          name: Check chart for k8s 1.22.15 compatibility with kubent
+          name: Check chart for k8s 1.22.17 compatibility with kubent
           command: |
             set -o pipefail
-            helm template --kube-version=v1.22.15 -f values.yaml --set global.baseDomain=example.com . |
+            helm template --kube-version=v1.22.17 -f values.yaml --set global.baseDomain=example.com . |
             kubent --cluster=false --helm3=false --filename -
           when: always
-  platform-1-23-13:
+  platform-1-23-17:
     machine:
       image: ubuntu-2204:2023.02.1
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.23.13
+      KUBE_VERSION: v1.23.17
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging"
       - run:
-          name: Check chart for k8s 1.23.13 compatibility with kubent
+          name: Check chart for k8s 1.23.17 compatibility with kubent
           command: |
             set -o pipefail
-            helm template --kube-version=v1.23.13 -f values.yaml --set global.baseDomain=example.com . |
+            helm template --kube-version=v1.23.17 -f values.yaml --set global.baseDomain=example.com . |
             kubent --cluster=false --helm3=false --filename -
           when: always
-  platform-1-24-7:
+  platform-1-24-12:
     machine:
       image: ubuntu-2204:2023.02.1
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.24.7
+      KUBE_VERSION: v1.24.12
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging"
       - run:
-          name: Check chart for k8s 1.24.7 compatibility with kubent
+          name: Check chart for k8s 1.24.12 compatibility with kubent
           command: |
             set -o pipefail
-            helm template --kube-version=v1.24.7 -f values.yaml --set global.baseDomain=example.com . |
+            helm template --kube-version=v1.24.12 -f values.yaml --set global.baseDomain=example.com . |
             kubent --cluster=false --helm3=false --filename -
           when: always
-  platform-1-25-3:
+  platform-1-25-8:
     machine:
       image: ubuntu-2204:2023.02.1
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.25.3
+      KUBE_VERSION: v1.25.8
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging"
       - run:
-          name: Check chart for k8s 1.25.3 compatibility with kubent
+          name: Check chart for k8s 1.25.8 compatibility with kubent
           command: |
             set -o pipefail
-            helm template --kube-version=v1.25.3 -f values.yaml --set global.baseDomain=example.com . |
+            helm template --kube-version=v1.25.8 -f values.yaml --set global.baseDomain=example.com . |
             kubent --cluster=false --helm3=false --filename -
           when: always
-  platform-1-26-0:
+  platform-1-26-3:
     machine:
       image: ubuntu-2204:2023.02.1
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.26.0
+      KUBE_VERSION: v1.26.3
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging"
       - run:
-          name: Check chart for k8s 1.26.0 compatibility with kubent
+          name: Check chart for k8s 1.26.3 compatibility with kubent
           command: |
             set -o pipefail
-            helm template --kube-version=v1.26.0 -f values.yaml --set global.baseDomain=example.com . |
+            helm template --kube-version=v1.26.3 -f values.yaml --set global.baseDomain=example.com . |
             kubent --cluster=false --helm3=false --filename -
           when: always
 
@@ -380,25 +380,25 @@ workflows:
       - approve-test-all-platforms:
           type: approval
 
-      - platform-1-22-15:
+      - platform-1-22-17:
           requires:
             - build-artifact
-      - platform-1-23-13:
-          requires:
-            - approve-test-all-platforms
-            - build-artifact
-
-      - platform-1-24-7:
+      - platform-1-23-17:
           requires:
             - approve-test-all-platforms
             - build-artifact
 
-      - platform-1-25-3:
+      - platform-1-24-12:
           requires:
             - approve-test-all-platforms
             - build-artifact
 
-      - platform-1-26-0:
+      - platform-1-25-8:
+          requires:
+            - approve-test-all-platforms
+            - build-artifact
+
+      - platform-1-26-3:
           requires:
             - build-artifact
       - approve-internal-release:
@@ -408,8 +408,8 @@ workflows:
             - gcp-astronomer-prod
           requires:
             - approve-internal-release
-            - platform-1-22-15
-            - platform-1-26-0
+            - platform-1-22-17
+            - platform-1-26-3
       - approve-upgrade-test:
           type: approval
           filters:
@@ -428,9 +428,9 @@ workflows:
           type: approval
           requires:
             - release-to-internal
-            - platform-1-23-13
-            - platform-1-24-7
-            - platform-1-25-3
+            - platform-1-23-17
+            - platform-1-24-12
+            - platform-1-25-8
           filters:
             branches:
               only:
@@ -465,11 +465,11 @@ workflows:
             - run_pre_commit
             - unittest-charts
 
-      - platform-1-22-15:
+      - platform-1-22-17:
           requires:
             - build-artifact
 
-      - platform-1-26-0:
+      - platform-1-26-3:
           requires:
             - build-artifact
 
@@ -477,8 +477,8 @@ workflows:
           context:
             - gcp-astronomer-prod
           requires:
-            - platform-1-22-15
-            - platform-1-26-0
+            - platform-1-22-17
+            - platform-1-26-3
           filters:
             branches:
               only:
