@@ -60,6 +60,9 @@ clean: ## Clean build and test artifacts
 	rm -rf ${TEMPDIR}
 	rm -f .unittest-requirements
 	rm -rf venv
+	rm -rf .pytest_cache
+	rm -rf test-results
+	find . -name __pycache__ -exec rm -rf {} \+
 
 .PHONY: build
 build: ## Build the Astronomer helm chart
