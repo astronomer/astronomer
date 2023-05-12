@@ -27,6 +27,13 @@ class TestPrometheusConfigConfigmap:
         assert doc["apiVersion"] == "v1"
         assert doc["metadata"]["name"] == "release-name-prometheus-config"
 
+        config_yaml = yaml.safe_load(doc["data"]["config"])
+        assert [
+            x["tls_config"]["insecure_skip_verify"]
+            for x in list(config_yaml["scrape_configs"])
+            if x["job_name"] == "kubernetes-apiservers"
+        ] == [False]
+
     def test_prometheus_config_configmap_with_different_name_and_ns(self, kube_version):
         """Validate the prometheus config configmap does not conflate
         deployment name and namespace."""
@@ -46,7 +53,6 @@ class TestPrometheusConfigConfigmap:
             },
         )[0]
 
-        # config_yaml = doc["data"]["config"]
         config_yaml = yaml.safe_load(doc["data"]["config"])
         targets = [
             x["static_configs"][0]["targets"]
@@ -262,3 +268,28 @@ class TestPrometheusConfigConfigmap:
         )
         assert "regex" not in metric_relabel_config_search_result[0]
         assert "replacement" not in metric_relabel_config_search_result[0]
+
+    def test_prometheus_config_insecure_skip_verify(self, kube_version):
+        """Test that insecure_skip_verify is rendered correctly in the config when specified."""
+        doc = render_chart(
+            kube_version=kube_version,
+            show_only=self.show_only,
+            values={
+                "prometheus": {
+                    "config": {
+                        "scrape_configs": {
+                            "kubernetes_apiservers": {
+                                "tls_config": {"insecure_skip_verify": True}
+                            }
+                        }
+                    },
+                },
+            },
+        )[0]
+
+        config_yaml = yaml.safe_load(doc["data"]["config"])
+        assert [
+            x["tls_config"]["insecure_skip_verify"]
+            for x in list(config_yaml["scrape_configs"])
+            if x["job_name"] == "kubernetes-apiservers"
+        ] == [True]

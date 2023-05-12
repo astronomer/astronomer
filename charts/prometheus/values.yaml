@@ -150,3 +150,12 @@ additionalAlerts:
 # Prometheus config file global.external_labels stanza
 # https://prometheus.io/docs/prometheus/latest/configuration/configuration/#remote_write
 # external_labels: {}
+
+# Amost mirror the prometheus config data structure for values we want to customize.
+# Convert lists to dicts for more explicit assignment.
+# Convert dashes to underscores for golang compatibility.
+config:
+  scrape_configs:
+    kubernetes_apiservers:
+      tls_config:
+        insecure_skip_verify: false
