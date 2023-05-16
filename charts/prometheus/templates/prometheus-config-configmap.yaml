@@ -278,6 +278,16 @@ data:
             replacement: "$1"
             {{- end}}
             target_label: release
+          {{- if .Values.global.features.namespacePools.enabled }}
+          - source_labels: [pod]
+            regex: "(.*?)(?:-webserver.*|-scheduler.*|-cleanup.*|-pgbouncer.*|-statsd.*|-triggerer.*|-run-airflow-migrations.*)?$"
+            replacement: "$1"
+            target_label: release
+          - source_labels: [resourcequota]
+            regex: "(.+)-resource-quota$"
+            replacement: "$1"
+            target_label: release
+          {{- end }}
         {{- else}}
         # this drops node metrics that we want in the cloud, but maybe shouldn't be scraping
         # if we are in a shared cluster in enterprise
