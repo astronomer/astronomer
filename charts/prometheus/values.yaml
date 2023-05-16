@@ -36,7 +36,7 @@ postgresqlExporter:
 images:
   prometheus:
     repository: quay.io/astronomer/ap-prometheus
-    tag: 2.37.6
+    tag: 2.37.8
     pullPolicy: IfNotPresent
   configReloader:
     # repository: astronomerinc/ap-config-reloader
