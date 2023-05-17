@@ -10,8 +10,7 @@ import jmespath
     supported_k8s_versions,
 )
 class TestPrometheusConfigConfigmap:
-    show_only = [
-        "charts/prometheus/templates/prometheus-config-configmap.yaml"]
+    show_only = ["charts/prometheus/templates/prometheus-config-configmap.yaml"]
 
     def test_prometheus_config_configmap(self, kube_version):
         """Validate the prometheus config configmap and its embedded data."""
@@ -184,12 +183,13 @@ class TestPrometheusConfigConfigmap:
             kube_version=kube_version,
             show_only=self.show_only,
             namespace=namespace,
-            values={"global": {"features": {"namespacePools": {"enabled": False}}},
-                    "astronomer": {
+            values={
+                "global": {"features": {"namespacePools": {"enabled": False}}},
+                "astronomer": {
                     "houston": {
                         "config": {"deployments": {"namespaceFreeFormEntry": False}},
                     },
-            },
+                },
             },
         )[0]
 
@@ -203,12 +203,10 @@ class TestPrometheusConfigConfigmap:
         )
 
         assert len(metric_relabel_config_search_result) == 1
-        assert metric_relabel_config_search_result[0]["source_labels"] == [
-            'namespace']
-        assert metric_relabel_config_search_result[0][
-            "regex"] == "^testnamespace-(.*$)"
+        assert metric_relabel_config_search_result[0]["source_labels"] == ["namespace"]
+        assert metric_relabel_config_search_result[0]["regex"] == "^testnamespace-(.*$)"
         assert metric_relabel_config_search_result[0]["replacement"] == "$1"
-        assert metric_relabel_config_search_result[0]["target_label"] == 'release'
+        assert metric_relabel_config_search_result[0]["target_label"] == "release"
 
     def test_prometheus_config_release_relabel_with_free_from_namespace(
         self, kube_version
@@ -233,18 +231,20 @@ class TestPrometheusConfigConfigmap:
         )
 
         assert len(metric_relabel_config_search_result) == 2
-        assert metric_relabel_config_search_result[0][
-            "regex"] == '(.*?)(?:-webserver.*|-scheduler.*|-cleanup.*|-pgbouncer.*|-statsd.*|-triggerer.*|-run-airflow-migrations.*)?$'
-        assert metric_relabel_config_search_result[0]["source_labels"] == [
-            'pod']
-        assert metric_relabel_config_search_result[0]["replacement"] == '$1'
-        assert metric_relabel_config_search_result[0]["target_label"] == 'release'
+        assert (
+            metric_relabel_config_search_result[0]["regex"]
+            == "(.*?)(?:-webserver.*|-scheduler.*|-cleanup.*|-pgbouncer.*|-statsd.*|-triggerer.*|-run-airflow-migrations.*)?$"
+        )
+        assert metric_relabel_config_search_result[0]["source_labels"] == ["pod"]
+        assert metric_relabel_config_search_result[0]["replacement"] == "$1"
+        assert metric_relabel_config_search_result[0]["target_label"] == "release"
 
-        assert metric_relabel_config_search_result[1]["regex"] == '(.+)-resource-quota$'
+        assert metric_relabel_config_search_result[1]["regex"] == "(.+)-resource-quota$"
         assert metric_relabel_config_search_result[1]["source_labels"] == [
-            'resourcequota']
-        assert metric_relabel_config_search_result[1]["replacement"] == '$1'
-        assert metric_relabel_config_search_result[1]["target_label"] == 'release'
+            "resourcequota"
+        ]
+        assert metric_relabel_config_search_result[1]["replacement"] == "$1"
+        assert metric_relabel_config_search_result[1]["target_label"] == "release"
 
     def test_prometheus_config_insecure_skip_verify(self, kube_version):
         """Test that insecure_skip_verify is rendered correctly in the config when specified."""
@@ -280,7 +280,10 @@ class TestPrometheusConfigConfigmap:
             kube_version=kube_version,
             show_only=self.show_only,
             values={
-                "global": {"features": {"namespacePools": {"enabled": True}}, "namespaceFreeFormEntry": False}
+                "global": {
+                    "features": {"namespacePools": {"enabled": True}},
+                    "namespaceFreeFormEntry": False,
+                }
             },
         )[0]
 
@@ -294,15 +297,17 @@ class TestPrometheusConfigConfigmap:
         )
 
         assert len(metric_relabel_config_search_result) == 2
-        assert metric_relabel_config_search_result[0][
-            "regex"] == '(.*?)(?:-webserver.*|-scheduler.*|-cleanup.*|-pgbouncer.*|-statsd.*|-triggerer.*|-run-airflow-migrations.*)?$'
-        assert metric_relabel_config_search_result[0]["source_labels"] == [
-            'pod']
-        assert metric_relabel_config_search_result[0]["replacement"] == '$1'
-        assert metric_relabel_config_search_result[0]["target_label"] == 'release'
+        assert (
+            metric_relabel_config_search_result[0]["regex"]
+            == "(.*?)(?:-webserver.*|-scheduler.*|-cleanup.*|-pgbouncer.*|-statsd.*|-triggerer.*|-run-airflow-migrations.*)?$"
+        )
+        assert metric_relabel_config_search_result[0]["source_labels"] == ["pod"]
+        assert metric_relabel_config_search_result[0]["replacement"] == "$1"
+        assert metric_relabel_config_search_result[0]["target_label"] == "release"
 
-        assert metric_relabel_config_search_result[1]["regex"] == '(.+)-resource-quota$'
+        assert metric_relabel_config_search_result[1]["regex"] == "(.+)-resource-quota$"
         assert metric_relabel_config_search_result[1]["source_labels"] == [
-            'resourcequota']
-        assert metric_relabel_config_search_result[1]["replacement"] == '$1'
-        assert metric_relabel_config_search_result[1]["target_label"] == 'release'
+            "resourcequota"
+        ]
+        assert metric_relabel_config_search_result[1]["replacement"] == "$1"
+        assert metric_relabel_config_search_result[1]["target_label"] == "release"
