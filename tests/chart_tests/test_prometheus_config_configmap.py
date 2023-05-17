@@ -10,8 +10,7 @@ import jmespath
     supported_k8s_versions,
 )
 class TestPrometheusConfigConfigmap:
-    show_only = [
-        "charts/prometheus/templates/prometheus-config-configmap.yaml"]
+    show_only = ["charts/prometheus/templates/prometheus-config-configmap.yaml"]
 
     def test_prometheus_config_configmap(self, kube_version):
         """Validate the prometheus config configmap and its embedded data."""
@@ -204,10 +203,8 @@ class TestPrometheusConfigConfigmap:
         )
 
         assert len(metric_relabel_config_search_result) == 1
-        assert metric_relabel_config_search_result[0]["source_labels"] == [
-            "namespace"]
-        assert metric_relabel_config_search_result[
-            0]["regex"] == "^testnamespace-(.*$)"
+        assert metric_relabel_config_search_result[0]["source_labels"] == ["namespace"]
+        assert metric_relabel_config_search_result[0]["regex"] == "^testnamespace-(.*$)"
         assert metric_relabel_config_search_result[0]["replacement"] == "$1"
         assert metric_relabel_config_search_result[0]["target_label"] == "release"
 
@@ -238,8 +235,7 @@ class TestPrometheusConfigConfigmap:
             metric_relabel_config_search_result[0]["regex"]
             == "(.*?)(?:-webserver.*|-scheduler.*|-cleanup.*|-pgbouncer.*|-statsd.*|-triggerer.*|-run-airflow-migrations.*)?$"
         )
-        assert metric_relabel_config_search_result[0]["source_labels"] == [
-            "pod"]
+        assert metric_relabel_config_search_result[0]["source_labels"] == ["pod"]
         assert metric_relabel_config_search_result[0]["replacement"] == "$1"
         assert metric_relabel_config_search_result[0]["target_label"] == "release"
 
@@ -305,8 +301,7 @@ class TestPrometheusConfigConfigmap:
             metric_relabel_config_search_result[0]["regex"]
             == "(.*?)(?:-webserver.*|-scheduler.*|-cleanup.*|-pgbouncer.*|-statsd.*|-triggerer.*|-run-airflow-migrations.*)?$"
         )
-        assert metric_relabel_config_search_result[0]["source_labels"] == [
-            "pod"]
+        assert metric_relabel_config_search_result[0]["source_labels"] == ["pod"]
         assert metric_relabel_config_search_result[0]["replacement"] == "$1"
         assert metric_relabel_config_search_result[0]["target_label"] == "release"
 
