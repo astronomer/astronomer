@@ -179,9 +179,11 @@ class TestPrometheusConfigConfigmap:
 
     def test_prometheus_config_release_relabel(self, kube_version):
         """Prometheus should have a regex for release name."""
+        namespace = "testnamespace"
         doc = render_chart(
             kube_version=kube_version,
             show_only=self.show_only,
+            namespace=namespace,
             values={"global": {"features": {"namespacePools": {"enabled": False}}},
                     "astronomer": {
                     "houston": {
@@ -199,14 +201,12 @@ class TestPrometheusConfigConfigmap:
             "metric_relabel_configs[?target_label == 'release']",
             scrape_config_search_result[0],
         )
-        print("metric_relabel_config_search_result..",
-              metric_relabel_config_search_result)
 
         assert len(metric_relabel_config_search_result) == 1
         assert metric_relabel_config_search_result[0]["source_labels"] == [
             'namespace']
         assert metric_relabel_config_search_result[0][
-            "regex"] == "^{{ .Release.Namespace }}-(.*$)"
+            "regex"] == "^testnamespace-(.*$)"
         assert metric_relabel_config_search_result[0]["replacement"] == "$1"
         assert metric_relabel_config_search_result[0]["target_label"] == 'release'
 
