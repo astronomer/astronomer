@@ -10,7 +10,8 @@ import jmespath
     supported_k8s_versions,
 )
 class TestPrometheusConfigConfigmap:
-    show_only = ["charts/prometheus/templates/prometheus-config-configmap.yaml"]
+    show_only = [
+        "charts/prometheus/templates/prometheus-config-configmap.yaml"]
 
     def test_prometheus_config_configmap(self, kube_version):
         """Validate the prometheus config configmap and its embedded data."""
@@ -181,12 +182,12 @@ class TestPrometheusConfigConfigmap:
         doc = render_chart(
             kube_version=kube_version,
             show_only=self.show_only,
-            values={
-                "astronomer": {
+            values={"global": {"features": {"namespacePools": {"enabled": False}}},
+                    "astronomer": {
                     "houston": {
                         "config": {"deployments": {"namespaceFreeFormEntry": False}},
                     },
-                },
+            },
             },
         )[0]
 
@@ -198,8 +199,16 @@ class TestPrometheusConfigConfigmap:
             "metric_relabel_configs[?target_label == 'release']",
             scrape_config_search_result[0],
         )
-        assert metric_relabel_config_search_result[0]["regex"] == "^default-(.*$)"
+        print("metric_relabel_config_search_result..",
+              metric_relabel_config_search_result)
+
+        assert len(metric_relabel_config_search_result) == 1
+        assert metric_relabel_config_search_result[0]["source_labels"] == [
+            'namespace']
+        assert metric_relabel_config_search_result[0][
+            "regex"] == "^{{ .Release.Namespace }}-(.*$)"
         assert metric_relabel_config_search_result[0]["replacement"] == "$1"
+        assert metric_relabel_config_search_result[0]["target_label"] == 'release'
 
     def test_prometheus_config_release_relabel_with_free_from_namespace(
         self, kube_version
@@ -222,8 +231,20 @@ class TestPrometheusConfigConfigmap:
             "metric_relabel_configs[?target_label == 'release']",
             scrape_config_search_result[0],
         )
-        assert "regex" not in metric_relabel_config_search_result[0]
-        assert "replacement" not in metric_relabel_config_search_result[0]
+
+        assert len(metric_relabel_config_search_result) == 2
+        assert metric_relabel_config_search_result[0][
+            "regex"] == '(.*?)(?:-webserver.*|-scheduler.*|-cleanup.*|-pgbouncer.*|-statsd.*|-triggerer.*|-run-airflow-migrations.*)?$'
+        assert metric_relabel_config_search_result[0]["source_labels"] == [
+            'pod']
+        assert metric_relabel_config_search_result[0]["replacement"] == '$1'
+        assert metric_relabel_config_search_result[0]["target_label"] == 'release'
+
+        assert metric_relabel_config_search_result[1]["regex"] == '(.+)-resource-quota$'
+        assert metric_relabel_config_search_result[1]["source_labels"] == [
+            'resourcequota']
+        assert metric_relabel_config_search_result[1]["replacement"] == '$1'
+        assert metric_relabel_config_search_result[1]["target_label"] == 'release'
 
     def test_prometheus_config_insecure_skip_verify(self, kube_version):
         """Test that insecure_skip_verify is rendered correctly in the config when specified."""
@@ -249,3 +270,39 @@ class TestPrometheusConfigConfigmap:
             for x in list(config_yaml["scrape_configs"])
             if x["job_name"] == "kubernetes-apiservers"
         ] == [True]
+        
+    def test_prometheus_config_release_relabel_with_pre_created_namespace(
+        self, kube_version
+    ):
+        """Prometheus should have a regex for release name when namespacePools
+        namespace is enabled."""
+        doc = render_chart(
+            kube_version=kube_version,
+            show_only=self.show_only,
+            values={
+                "global": {"features": {"namespacePools": {"enabled": True}}, "namespaceFreeFormEntry": False}
+            },
+        )[0]
+
+        config = yaml.safe_load(doc["data"]["config"])
+        scrape_config_search_result = jmespath.search(
+            "scrape_configs[?job_name == 'kube-state']", config
+        )
+        metric_relabel_config_search_result = jmespath.search(
+            "metric_relabel_configs[?target_label == 'release']",
+            scrape_config_search_result[0],
+        )
+
+        assert len(metric_relabel_config_search_result) == 2
+        assert metric_relabel_config_search_result[0][
+            "regex"] == '(.*?)(?:-webserver.*|-scheduler.*|-cleanup.*|-pgbouncer.*|-statsd.*|-triggerer.*|-run-airflow-migrations.*)?$'
+        assert metric_relabel_config_search_result[0]["source_labels"] == [
+            'pod']
+        assert metric_relabel_config_search_result[0]["replacement"] == '$1'
+        assert metric_relabel_config_search_result[0]["target_label"] == 'release'
+
+        assert metric_relabel_config_search_result[1]["regex"] == '(.+)-resource-quota$'
+        assert metric_relabel_config_search_result[1]["source_labels"] == [
+            'resourcequota']
+        assert metric_relabel_config_search_result[1]["replacement"] == '$1'
+        assert metric_relabel_config_search_result[1]["target_label"] == 'release'
