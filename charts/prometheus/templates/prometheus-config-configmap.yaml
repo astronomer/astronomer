@@ -270,14 +270,21 @@ data:
           - regex: 'label_kubernetes_pod_operator'
             action: labeldrop
           # Required for multi-namespace mode
+          {{- if or .Values.global.features.namespacePools.enabled .Values.global.namespaceFreeFormEntry }}
+          - source_labels: [pod]
+            regex: "(.*?)(?:-webserver.*|-scheduler.*|-cleanup.*|-pgbouncer.*|-statsd.*|-triggerer.*|-run-airflow-migrations.*)?$"
+            replacement: "$1"
+            target_label: release
+          - source_labels: [resourcequota]
+            regex: "(.+)-resource-quota$"
+            replacement: "$1"
+            target_label: release
+          {{- else}}
           - source_labels: [namespace]
-            {{- if .Values.global.namespaceFreeFormEntry }}
-            # use default regex pattern (.*) when namespaceFreeFormEntry is enabled
-            {{- else}}
             regex: "^{{ .Release.Namespace }}-(.*$)"
             replacement: "$1"
-            {{- end}}
             target_label: release
+          {{- end }}
         {{- else}}
         # this drops node metrics that we want in the cloud, but maybe shouldn't be scraping
         # if we are in a shared cluster in enterprise
