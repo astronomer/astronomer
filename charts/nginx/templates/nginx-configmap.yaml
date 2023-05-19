@@ -52,7 +52,7 @@ data:
 
           -- Check if the parameter should be masked
           if paramsToMask[paramName] then
-              paramValue = "********" -- Replace the value with asterisks
+              paramValue = "REDACTED" -- Replace the value with asterisks
           end
 
           table.insert(queryParams, paramName .. "=" .. paramValue)
@@ -89,7 +89,7 @@ data:
 
           -- Check if the parameter should be masked
           if paramsToMask[paramName] then
-              paramValue = "********" -- Replace the value with asterisks
+              paramValue = "REDACTED" -- Replace the value with asterisks
           end
 
           table.insert(queryParams, paramName .. "=" .. paramValue)
