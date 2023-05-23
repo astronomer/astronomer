@@ -264,31 +264,7 @@ class TestPrometheusConfigConfigmap:
                 "global": {"namespaceFreeFormEntry": True},
             },
         )[0]
-
-        config = yaml.safe_load(doc["data"]["config"])
-        scrape_config_search_result = jmespath.search(
-            "scrape_configs[?job_name == 'kube-state']", config
-        )
-        metric_relabel_config_search_result = jmespath.search(
-            "metric_relabel_configs[?target_label == 'release']",
-            scrape_config_search_result[0],
-        )
-
-        assert len(metric_relabel_config_search_result) == 2
-        assert (
-            metric_relabel_config_search_result[0]["regex"]
-            == "(.*?)(?:-webserver.*|-scheduler.*|-cleanup.*|-pgbouncer.*|-statsd.*|-triggerer.*|-run-airflow-migrations.*)?$"
-        )
-        assert metric_relabel_config_search_result[0]["source_labels"] == ["pod"]
-        assert metric_relabel_config_search_result[0]["replacement"] == "$1"
-        assert metric_relabel_config_search_result[0]["target_label"] == "release"
-
-        assert metric_relabel_config_search_result[1]["regex"] == "(.+)-resource-quota$"
-        assert metric_relabel_config_search_result[1]["source_labels"] == [
-            "resourcequota"
-        ]
-        assert metric_relabel_config_search_result[1]["replacement"] == "$1"
-        assert metric_relabel_config_search_result[1]["target_label"] == "release"
+        self.assert_relabel_config_for_non_auto_generated_namesaces(doc)
 
     def test_prometheus_config_insecure_skip_verify(self, kube_version):
         """Test that insecure_skip_verify is rendered correctly in the config when specified."""
@@ -330,8 +306,27 @@ class TestPrometheusConfigConfigmap:
                 }
             },
         )[0]
+        self.assert_relabel_config_for_non_auto_generated_namesaces(doc)
 
-        config = yaml.safe_load(doc["data"]["config"])
+    def test_prometheus_config_release_relabel_with_manual_namespace_names_enabled(
+        self, kube_version
+    ):
+        """Prometheus should have a regex for release name when manualNamespaceNames
+        is enabled."""
+        doc = render_chart(
+            kube_version=kube_version,
+            show_only=self.show_only,
+            values={
+                "global": {
+                    "features": {"namespacePools": {"enabled": False}},
+                    "manualNamespaceNamesEnabled": True,
+                }
+            },
+        )[0]
+        self.assert_relabel_config_for_non_auto_generated_namesaces(doc)
+
+    def assert_relabel_config_for_non_auto_generated_namesaces(self, chart):
+        config = yaml.safe_load(chart["data"]["config"])
         scrape_config_search_result = jmespath.search(
             "scrape_configs[?job_name == 'kube-state']", config
         )
@@ -339,7 +334,6 @@ class TestPrometheusConfigConfigmap:
             "metric_relabel_configs[?target_label == 'release']",
             scrape_config_search_result[0],
         )
-
         assert len(metric_relabel_config_search_result) == 2
         assert (
             metric_relabel_config_search_result[0]["regex"]
