@@ -14,9 +14,9 @@ from jinja2 import Template
 kube_versions = [
     "1.22.17",
     "1.23.17",
-    "1.24.12",
-    "1.25.8",
-    "1.26.3",
+    "1.24.13",
+    "1.25.9",
+    "1.26.4",
 ]
 # https://circleci.com/docs/2.0/building-docker-images/#docker-version
 ci_remote_docker_version = "20.10.18"

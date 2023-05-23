@@ -249,52 +249,52 @@ jobs:
             helm template --kube-version=v1.23.17 -f values.yaml --set global.baseDomain=example.com . |
             kubent --cluster=false --helm3=false --filename -
           when: always
-  platform-1-24-12:
+  platform-1-24-13:
     machine:
       image: ubuntu-2204:2023.02.1
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.24.12
+      KUBE_VERSION: v1.24.13
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging"
       - run:
-          name: Check chart for k8s 1.24.12 compatibility with kubent
+          name: Check chart for k8s 1.24.13 compatibility with kubent
           command: |
             set -o pipefail
-            helm template --kube-version=v1.24.12 -f values.yaml --set global.baseDomain=example.com . |
+            helm template --kube-version=v1.24.13 -f values.yaml --set global.baseDomain=example.com . |
             kubent --cluster=false --helm3=false --filename -
           when: always
-  platform-1-25-8:
+  platform-1-25-9:
     machine:
       image: ubuntu-2204:2023.02.1
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.25.8
+      KUBE_VERSION: v1.25.9
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging"
       - run:
-          name: Check chart for k8s 1.25.8 compatibility with kubent
+          name: Check chart for k8s 1.25.9 compatibility with kubent
           command: |
             set -o pipefail
-            helm template --kube-version=v1.25.8 -f values.yaml --set global.baseDomain=example.com . |
+            helm template --kube-version=v1.25.9 -f values.yaml --set global.baseDomain=example.com . |
             kubent --cluster=false --helm3=false --filename -
           when: always
-  platform-1-26-3:
+  platform-1-26-4:
     machine:
       image: ubuntu-2204:2023.02.1
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.26.3
+      KUBE_VERSION: v1.26.4
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging"
       - run:
-          name: Check chart for k8s 1.26.3 compatibility with kubent
+          name: Check chart for k8s 1.26.4 compatibility with kubent
           command: |
             set -o pipefail
-            helm template --kube-version=v1.26.3 -f values.yaml --set global.baseDomain=example.com . |
+            helm template --kube-version=v1.26.4 -f values.yaml --set global.baseDomain=example.com . |
             kubent --cluster=false --helm3=false --filename -
           when: always
 
@@ -341,7 +341,7 @@ workflows:
                 - quay.io/astronomer/ap-elasticsearch:7.17.9-1
                 - quay.io/astronomer/ap-fluentd:1.15.3-2
                 - quay.io/astronomer/ap-grafana:8.5.24
-                - quay.io/astronomer/ap-houston-api:0.32.6
+                - quay.io/astronomer/ap-houston-api:0.32.8
                 - quay.io/astronomer/ap-init:3.16.5
                 - quay.io/astronomer/ap-kibana:7.17.9
                 - quay.io/astronomer/ap-kube-state:2.8.2
@@ -388,17 +388,17 @@ workflows:
             - approve-test-all-platforms
             - build-artifact
 
-      - platform-1-24-12:
+      - platform-1-24-13:
           requires:
             - approve-test-all-platforms
             - build-artifact
 
-      - platform-1-25-8:
+      - platform-1-25-9:
           requires:
             - approve-test-all-platforms
             - build-artifact
 
-      - platform-1-26-3:
+      - platform-1-26-4:
           requires:
             - build-artifact
       - approve-internal-release:
@@ -409,7 +409,7 @@ workflows:
           requires:
             - approve-internal-release
             - platform-1-22-17
-            - platform-1-26-3
+            - platform-1-26-4
       - approve-upgrade-test:
           type: approval
           filters:
@@ -429,8 +429,8 @@ workflows:
           requires:
             - release-to-internal
             - platform-1-23-17
-            - platform-1-24-12
-            - platform-1-25-8
+            - platform-1-24-13
+            - platform-1-25-9
           filters:
             branches:
               only:
@@ -469,7 +469,7 @@ workflows:
           requires:
             - build-artifact
 
-      - platform-1-26-3:
+      - platform-1-26-4:
           requires:
             - build-artifact
 
@@ -478,7 +478,7 @@ workflows:
             - gcp-astronomer-prod
           requires:
             - platform-1-22-17
-            - platform-1-26-3
+            - platform-1-26-4
           filters:
             branches:
               only:
