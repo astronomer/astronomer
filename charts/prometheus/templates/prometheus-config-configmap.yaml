@@ -270,7 +270,7 @@ data:
           - regex: 'label_kubernetes_pod_operator'
             action: labeldrop
           # Required for multi-namespace mode
-          {{- if or .Values.global.features.namespacePools.enabled .Values.global.namespaceFreeFormEntry }}
+          {{- if or .Values.global.features.namespacePools.enabled .Values.global.namespaceFreeFormEntry .Values.global.manualNamespaceNamesEnabled}}
           - source_labels: [pod]
             regex: "(.*?)(?:-webserver.*|-scheduler.*|-cleanup.*|-pgbouncer.*|-statsd.*|-triggerer.*|-run-airflow-migrations.*)?$"
             replacement: "$1"
