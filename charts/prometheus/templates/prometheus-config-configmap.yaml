@@ -269,7 +269,7 @@ data:
             action: labeldrop
           - regex: 'label_kubernetes_pod_operator'
             action: labeldrop
-          # Required for multi-namespace mode (non auto-generated namespaces should be relabelled differently)
+          # Required for multi-namespace mode (non auto-generated namespaces should be relabeled differently)
           {{- if or .Values.global.features.namespacePools.enabled .Values.global.namespaceFreeFormEntry .Values.global.manualNamespaceNamesEnabled}}
           - source_labels: [pod]
             regex: "(.*?)(?:-webserver.*|-scheduler.*|-cleanup.*|-pgbouncer.*|-statsd.*|-triggerer.*|-run-airflow-migrations.*)?$"
