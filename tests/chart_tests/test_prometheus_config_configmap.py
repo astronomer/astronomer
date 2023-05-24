@@ -337,7 +337,7 @@ class TestPrometheusConfigConfigmap:
         assert len(metric_relabel_config_search_result) == 2
         assert (
             metric_relabel_config_search_result[0]["regex"]
-            == "(.*?)(?:-webserver.*|-scheduler.*|-cleanup.*|-pgbouncer.*|-statsd.*|-triggerer.*|-run-airflow-migrations.*)?$"
+            == "(.*?)(?:-webserver.*|-scheduler.*|-worker.*|-cleanup.*|-pgbouncer.*|-statsd.*|-triggerer.*|-run-airflow-migrations.*)?$"
         )
         assert metric_relabel_config_search_result[0]["source_labels"] == ["pod"]
         assert metric_relabel_config_search_result[0]["replacement"] == "$1"
