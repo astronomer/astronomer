@@ -272,7 +272,7 @@ data:
           # Required for multi-namespace mode (non auto-generated namespaces should be relabeled differently)
           {{- if or .Values.global.features.namespacePools.enabled .Values.global.namespaceFreeFormEntry .Values.global.manualNamespaceNamesEnabled}}
           - source_labels: [pod]
-            regex: "(.*?)(?:-webserver.*|-scheduler.*|-worker.*|-cleanup.*|-pgbouncer.*|-statsd.*|-triggerer.*|-run-airflow-migrations.*)?$"
+            regex: "(.*?)(?:-webserver.*|-scheduler.*|-worker.*|-cleanup.*|-pgbouncer.*|-statsd.*|-triggerer.*|-run-airflow-migrations.*|-git-sync-relay.*)?$"
             replacement: "$1"
             target_label: release
           - source_labels: [resourcequota]
