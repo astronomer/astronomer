@@ -36,6 +36,7 @@ jobs:
         type: string
       report_url:
         type: string
+        default: ""
     environment:
       SCAN_IMAGE: << parameters.docker_image >>
       SCAN_TOOL: Trivy
