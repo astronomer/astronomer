@@ -253,7 +253,6 @@ workflows:
     when:
       and:
         - << pipeline.parameters.scan-docker-images >>
-        - << pipeline.parameters.scan-docker-images-report-url >>
         - not: << pipeline.parameters.qa-release >>
     jobs:
       - trivy-scan-docker:
