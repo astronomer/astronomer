@@ -29,7 +29,7 @@ class TestRegistryStatefulset:
             for item in jmespath.search("spec.template.spec.containers[*].image", doc)
         )
 
-    def test_astronomer_registry_statefulset_with_customenv(self, kube_version):
+    def test_astronomer_registry_statefulset_with_custom_env(self, kube_version):
         """Test that helm renders statefulset template for astronomer
         registry with custom env values."""
         docs = render_chart(
