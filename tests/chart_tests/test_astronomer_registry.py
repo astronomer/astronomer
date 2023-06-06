@@ -34,10 +34,11 @@ class TestRegistryStatefulset:
         registry with custom env values."""
         docs = render_chart(
             kube_version=kube_version,
+            extra_env = {"name": "TEST_ENV_VAR_876", "value": "test"}
             values={
                 "astronomer": {
                     "registry": {
-                        "extraEnv": [{"name": "REGISTRY_ENV_STORAGE", "value": "test"}]
+                        "extraEnv": [extra_env]
                     }
                 }
             },
@@ -51,6 +52,4 @@ class TestRegistryStatefulset:
         assert doc["kind"] == "StatefulSet"
         assert doc["apiVersion"] == "apps/v1"
         assert doc["metadata"]["name"] == "release-name-registry"
-        assert {"name": "REGISTRY_ENV_STORAGE", "value": "test"} in doc["spec"][
-            "template"
-        ]["spec"]["containers"][0]["env"]
+        assert extra_env in doc["spec"]["template"]["spec"]["containers"][0]["env"]
