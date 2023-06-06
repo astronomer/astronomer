@@ -32,16 +32,10 @@ class TestRegistryStatefulset:
     def test_astronomer_registry_statefulset_with_custom_env(self, kube_version):
         """Test that helm renders statefulset template for astronomer
         registry with custom env values."""
+        extra_env = {"name": "TEST_ENV_VAR_876", "value": "test"}
         docs = render_chart(
             kube_version=kube_version,
-            extra_env = {"name": "TEST_ENV_VAR_876", "value": "test"}
-            values={
-                "astronomer": {
-                    "registry": {
-                        "extraEnv": [extra_env]
-                    }
-                }
-            },
+            values={"astronomer": {"registry": {"extraEnv": [extra_env]}}},
             show_only=[
                 "charts/astronomer/templates/registry/registry-statefulset.yaml"
             ],
