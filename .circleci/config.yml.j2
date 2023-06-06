@@ -34,6 +34,7 @@ jobs:
         type: string
       report_url:
         type: string
+        default: ""
     environment:
       SCAN_IMAGE: << parameters.docker_image >>
       SCAN_TOOL: Trivy
@@ -252,7 +253,6 @@ workflows:
     when:
       and:
         - << pipeline.parameters.scan-docker-images >>
-        - << pipeline.parameters.scan-docker-images-report-url >>
         - not: << pipeline.parameters.qa-release >>
     jobs:
       - trivy-scan-docker:
