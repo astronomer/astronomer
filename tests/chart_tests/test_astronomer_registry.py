@@ -9,7 +9,7 @@ import jmespath
     supported_k8s_versions,
 )
 class TestRegistryStatefulset:
-    def test_astronomer_registry_statefulset(self, kube_version):
+    def test_astronomer_registry_statefulset_defaults(self, kube_version):
         """Test that helm renders a good statefulset template for astronomer
         registry."""
         docs = render_chart(
