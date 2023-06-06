@@ -30,8 +30,8 @@ class TestRegistryStatefulset:
         )
 
     def test_astronomer_registry_statefulset_with_customenv(self, kube_version):
-        """Test that helm renders a good statefulset template for astronomer
-        registry."""
+        """Test that helm renders statefulset template for astronomer
+        registry with custom env values."""
         docs = render_chart(
             kube_version=kube_version,
             values={
