@@ -3,7 +3,7 @@
 ##################################
 global:
   # Base domain for all subdomains exposed through ingress
-  baseDomain: example.com
+  baseDomain: ~
 
   # Name of secret containing TLS certificate
   tlsSecret: astronomer-tls
