@@ -74,6 +74,9 @@ spec:
             {{- else }}
             value: {{ randAlphaNum 32 }}
             {{- end }}
+{{- if .Values.registry.extraEnv }}
+{{ toYaml .Values.registry.extraEnv | indent 10 }}
+{{- end }}
           resources:
 {{ toYaml .Values.registry.resources | indent 12 }}
           volumeMounts:

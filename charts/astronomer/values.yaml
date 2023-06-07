@@ -356,6 +356,8 @@ registry:
   #   cpu: 100m
   #   memory: 128Mi
 
+  extraEnv: []
+
   persistence:
     # Enable persistent storage
     enabled: true
