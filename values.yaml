@@ -111,7 +111,7 @@ global:
   loggingSidecar:
     enabled: false
     name: sidecar-log-consumer
-    image: quay.io/astronomer/ap-vector:0.28.2-2
+    image: quay.io/astronomer/ap-vector:0.28.2-3
     customConfig: false
     extraEnv: []
     resources: {}
