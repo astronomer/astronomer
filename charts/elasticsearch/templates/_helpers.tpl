@@ -149,3 +149,9 @@ imagePullSecrets:
 {{ . }},
 {{- end -}}
 {{- end -}}
+
+{{- define "elasticsearch.client.roles" -}}
+{{- range $.Values.client.roles -}}
+{{ . }},
+{{- end -}}
+{{- end -}}
