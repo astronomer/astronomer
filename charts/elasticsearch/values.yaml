@@ -89,6 +89,8 @@ client:
     NODE_INGEST: "true"
     HTTP_ENABLE: "true"
 
+  roles: []
+
 # Data nodes hold the shards that contain the documents you have indexed. Data
 # nodes handle data related operations like CRUD, search, and aggregations.
 # These operations are I/O-, memory-, and CPU-intensive. It is important to
@@ -118,6 +120,10 @@ data:
     NODE_MASTER: "false"
     NODE_INGEST: "false"
     HTTP_ENABLE: "false"
+
+  roles:
+    - data
+    - ingest
 
   # Determines the properties of the persistent volume claim associated with a
   # data node StatefulSet that is created when the common.persistence.enabled
@@ -153,6 +159,9 @@ master:
     NODE_MASTER: "true"
     NODE_INGEST: "false"
     HTTP_ENABLE: "false"
+
+  roles:
+    - master
 
   # Determines the properties of the persistent volume claim associated with a
   # data node StatefulSet that is created when the common.stateful.enabled

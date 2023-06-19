@@ -136,3 +136,16 @@ imagePullSecrets:
   - name: {{ .Values.global.privateRegistry.secretName }}
 {{- end -}}
 {{- end -}}
+
+
+{{- define "elasticsearch.master.roles" -}}
+{{- range $.Values.master.roles -}}
+{{ . }},
+{{- end -}}
+{{- end -}}
+
+{{- define "elasticsearch.data.roles" -}}
+{{- range $.Values.data.roles -}}
+{{ . }},
+{{- end -}}
+{{- end -}}

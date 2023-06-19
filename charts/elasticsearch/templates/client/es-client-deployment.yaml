@@ -151,6 +151,6 @@ spec:
           name: config
           subPath: elasticsearch.yml
       volumes:
-      - name: config
-        configMap:
-          name: {{ template "elasticsearch.fullname" . }}-config
+        - name: config
+          configMap:
+            name: {{ template "elasticsearch.fullname" . }}-client-config

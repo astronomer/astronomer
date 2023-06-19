@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ template "elasticsearch.fullname" . }}-config
+  name: {{ template "elasticsearch.fullname" . }}-client-config
   labels:
     tier: logging
     component: {{ template "elasticsearch.name" . }}
@@ -19,6 +19,7 @@ data:
         - {{ $releaseName }}-elasticsearch-master-{{ $i }}
         {{- end }}
     node:
+      roles: [ingest]
       processors: ${PROCESSORS:1}
 
     network.host: 0.0.0.0
