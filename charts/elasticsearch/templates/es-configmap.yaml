@@ -49,7 +49,12 @@ data:
         - {{ template "elasticsearch.fullname" . }}-headless-discovery
 
     # Disable scripting for security.
+    {{ if semverCompare "<8" .Values.images.es.tag -}}
     script.allowed_types: none
+    {{- else -}}
+    script.allowed_types: inline
+    {{- end }}
+
 
     # Prevent a user from overriding an index in the body of a request.
     # We force the index pattern at the NGINX layer, and this prevents anybody
