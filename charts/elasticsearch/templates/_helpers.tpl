@@ -136,8 +136,6 @@ imagePullSecrets:
   - name: {{ .Values.global.privateRegistry.secretName }}
 {{- end -}}
 {{- end -}}
-
-
 {{- define "elasticsearch.master.roles" -}}
 {{- range $.Values.master.roles -}}
 {{ . }},
