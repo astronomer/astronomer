@@ -55,7 +55,7 @@ data:
               paramValue = "##REDACTED##" -- Replace the value with REDACTED
           end
 
-          if paramName and paramName ~= '' and paramValue then -- Check if paramName and paramValue exist
+          if paramName and paramValue then -- Check if paramName and paramValue exist
              table.insert(queryParams, paramName .. "=" .. paramValue)
           end
         end
@@ -94,7 +94,7 @@ data:
               paramValue = "##REDACTED##" -- Replace sensitive data with REDACTED
           end
 
-          if paramName and paramName ~= '' and paramValue then -- Check if paramName and paramValue exist
+          if paramName and paramValue then -- Check if paramName and paramValue exist
              table.insert(queryParams, paramName .. "=" .. paramValue)
           end
         end
