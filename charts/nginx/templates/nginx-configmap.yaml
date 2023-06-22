@@ -87,7 +87,7 @@ data:
 
         -- Split the query string into individual parameters
         for param in string.gmatch(queryString, "([^&]+)") do
-          local paramName, paramValue = string.match(param, "(.+)=(.*)") -- Allow empty paramValue
+          local paramName, paramValue = string.match(param, "([^=]+)=(.*)") -- Allow empty paramValue
 
           -- Check if the parameter should be masked
           if paramsToMask[paramName] then
