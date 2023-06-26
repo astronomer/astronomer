@@ -392,3 +392,46 @@ class TestElasticSearch:
             node_client_roles_env
             in docs[2]["spec"]["template"]["spec"]["containers"][0]["env"]
         )
+
+    def test_elasticsearch_role_overrides(self, kube_version):
+        """Test ElasticSearch master, data and client with custom roles"""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "elasticsearch": {
+                    "master": {"roles": ["master"]},
+                    "data": {"roles": ["data"]},
+                    "client": {"roles": ["ingest"]},
+                }
+            },
+            show_only=[
+                "charts/elasticsearch/templates/master/es-master-statefulset.yaml",
+                "charts/elasticsearch/templates/data/es-data-statefulset.yaml",
+                "charts/elasticsearch/templates/client/es-client-deployment.yaml",
+            ],
+        )
+        assert len(docs) == 3
+        node_master_roles_env = {
+            "name": "node.roles",
+            "value": "master,",
+        }
+        assert (
+            node_master_roles_env
+            in docs[0]["spec"]["template"]["spec"]["containers"][0]["env"]
+        )
+        node_data_roles_env = {
+            "name": "node.roles",
+            "value": "data,",
+        }
+        assert (
+            node_data_roles_env
+            in docs[1]["spec"]["template"]["spec"]["containers"][0]["env"]
+        )
+        node_client_roles_env = {
+            "name": "node.roles",
+            "value": "ingest,",
+        }
+        assert (
+            node_client_roles_env
+            in docs[2]["spec"]["template"]["spec"]["containers"][0]["env"]
+        )
