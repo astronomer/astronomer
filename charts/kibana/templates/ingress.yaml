@@ -21,6 +21,8 @@ metadata:
     nginx.ingress.kubernetes.io/auth-url: https://houston.{{ .Values.global.baseDomain }}/v1/authorization
     nginx.ingress.kubernetes.io/auth-signin: https://app.{{ .Values.global.baseDomain }}/login
     nginx.ingress.kubernetes.io/auth-response-headers: authorization, username, email
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      more_set_headers "Content-Security-Policy: script-src 'self'";
     {{- end }}
 spec:
   {{- if or .Values.global.tlsSecret .Values.global.acme }}
