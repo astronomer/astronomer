@@ -112,6 +112,8 @@ spec:
         - name: {{ $key | upper | replace "-" "_" }}
           value: {{ $value | quote }}
         {{- end }}
+        - name: node.roles
+          value: "{{ template "elasticsearch.client.roles" . }}"
         resources:
 {{ toYaml .Values.client.resources | indent 10 }}
         ports:
