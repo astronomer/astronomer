@@ -142,4 +142,4 @@ class TestRegistryStatefulset:
             ],
         )
         assert len(docs) == 2
-        assert "serviceAccountName" not in docs[0]["spec"]
+        assert "serviceAccountName" not in docs[0]["spec"]["template"]["spec"]
