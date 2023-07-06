@@ -236,7 +236,7 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_indexPattern():
     """Validate the houston configmap and its embedded data with
     loggingSidecar."""
     sidecar_container_name = "sidecar-log-test"
-    image_name = "quay.io/astronomer/ap-vector:0.22.3"
+    image_name = "example.com/some-repo/test-image-name:test-tag-foo"
     indexPattern = "%Y.%m"
     docs = render_chart(
         values={
@@ -262,7 +262,7 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_indexPattern():
     assert prod_yaml["deployments"]["loggingSidecar"] == {
         "enabled": True,
         "name": sidecar_container_name,
-        "image": "quay.io/astronomer/ap-vector:0.22.3",
+        "image": image_name,
         "customConfig": False,
         "indexPattern": indexPattern,
     }
