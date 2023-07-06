@@ -45,6 +45,9 @@ spec:
       annotations:
         checksum/configmap: {{ include (print $.Template.BasePath "/registry/registry-configmap.yaml") . | sha256sum }}
     spec:
+{{- if .Values.registry.serviceAccount.create }}
+      serviceAccountName: {{ template "registry.ServiceAccount" . }}
+{{- end }}
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
       affinity:
