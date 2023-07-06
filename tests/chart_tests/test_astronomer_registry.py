@@ -135,17 +135,11 @@ class TestRegistryStatefulset:
         registry with SA disabled."""
         docs = render_chart(
             kube_version=kube_version,
-            values={
-                "astronomer": {
-                    "registry": {
-                        "serviceAccount": {"create": True, "name": "customregistrysa"}
-                    }
-                }
-            },
+            values={},
             show_only=[
                 "charts/astronomer/templates/registry/registry-statefulset.yaml",
                 "charts/astronomer/templates/registry/registry-serviceaccount.yaml",
             ],
         )
-        assert len(docs) == 2
+        assert len(docs) == 1
         assert "serviceAccountName" not in docs[0]["spec"]["template"]["spec"]
