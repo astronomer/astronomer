@@ -11,13 +11,7 @@ from jinja2 import Template
 # recent patch version on Dockerhub
 # This should match what is in tests/__init__.py
 # https://hub.docker.com/r/kindest/node/tags
-kube_versions = [
-    "1.22.17",
-    "1.23.17",
-    "1.24.13",
-    "1.25.9",
-    "1.26.4",
-]
+kube_versions = ["1.22.17", "1.23.17", "1.24.15", "1.25.11", "1.26.6", "1.27.3"]
 # https://circleci.com/docs/2.0/building-docker-images/#docker-version
 ci_remote_docker_version = "20.10.18"
 # https://circleci.com/developer/machine/image/ubuntu-2204
