@@ -131,6 +131,10 @@
 {{ printf "%s-houston-bootstrapper" .Release.Name }}
 {{- end }}
 
+{{ define "registry.ServiceAccount" -}}
+{{ printf "%s-registry" .Release.Name }}
+{{- end }}
+
 {{- define "registry.gcsVolume" }}
 - name: gcs-keyfile
   secret:
