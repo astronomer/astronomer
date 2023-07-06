@@ -47,3 +47,82 @@ class TestRegistryStatefulset:
         assert doc["apiVersion"] == "apps/v1"
         assert doc["metadata"]["name"] == "release-name-registry"
         assert extra_env in doc["spec"]["template"]["spec"]["containers"][0]["env"]
+
+
+    def test_astronomer_registry_statefulset_with_serviceaccount_enabled_defaults(
+        self, kube_version
+    ):
+        """Test that helm renders statefulset and serviceAccount template for astronomer
+        registry with SA enabled."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"astronomer": {"registry": {"serviceAccount": {"create": True}}}},
+            show_only=[
+                "charts/astronomer/templates/registry/registry-statefulset.yaml",
+                "charts/astronomer/templates/registry/registry-serviceaccount.yaml",
+            ],
+        )
+        assert len(docs) == 2
+        doc = docs[0]
+        assert doc["kind"] == "StatefulSet"
+        assert doc["apiVersion"] == "apps/v1"
+        assert doc["metadata"]["name"] == "release-name-registry"
+        assert doc["spec"]["serviceAccountName"] == "release-name-registry"
+
+        doc = docs[1]
+        assert doc["kind"] == "ServiceAccount"
+        assert doc["apiVersion"] == "v1"
+        assert doc["metadata"]["name"] == "release-name-registry"
+
+    def test_astronomer_registry_statefulset_with_serviceaccount_enabled_with_custom_name(
+        self, kube_version
+    ):
+        """Test that helm renders statefulset and serviceAccount template for astronomer
+        registry with SA enabled with custom name."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "astronomer": {
+                    "registry": {
+                        "serviceAccount": {"create": True, "name": "customregistrysa"}
+                    }
+                }
+            },
+            show_only=[
+                "charts/astronomer/templates/registry/registry-statefulset.yaml",
+                "charts/astronomer/templates/registry/registry-serviceaccount.yaml",
+            ],
+        )
+        assert len(docs) == 2
+        doc = docs[0]
+        assert doc["kind"] == "StatefulSet"
+        assert doc["apiVersion"] == "apps/v1"
+        assert doc["metadata"]["name"] == "release-name-registry"
+        assert doc["spec"]["serviceAccountName"] == "customregistrysa"
+
+        doc = docs[1]
+        assert doc["kind"] == "ServiceAccount"
+        assert doc["apiVersion"] == "v1"
+        assert doc["spec"]["serviceAccountName"] == "release-name-customregistrysa"
+
+    def test_astronomer_registry_statefulset_with_serviceaccount_disabled(
+        self, kube_version
+    ):
+        """Test that helm renders statefulset template for astronomer
+        registry with SA disabled."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "astronomer": {
+                    "registry": {
+                        "serviceAccount": {"create": True, "name": "customregistrysa"}
+                    }
+                }
+            },
+            show_only=[
+                "charts/astronomer/templates/registry/registry-statefulset.yaml",
+                "charts/astronomer/templates/registry/registry-serviceaccount.yaml",
+            ],
+        )
+        assert len(docs) == 2
+        assert "serviceAccountName" not in docs[0]["spec"]
