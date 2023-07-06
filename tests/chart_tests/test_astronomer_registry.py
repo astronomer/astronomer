@@ -75,7 +75,10 @@ class TestRegistryStatefulset:
         assert doc["kind"] == "StatefulSet"
         assert doc["apiVersion"] == "apps/v1"
         assert doc["metadata"]["name"] == "release-name-registry"
-        assert doc["spec"]["template"]["spec"]["serviceAccountName"] == "release-name-registry"
+        assert (
+            doc["spec"]["template"]["spec"]["serviceAccountName"]
+            == "release-name-registry"
+        )
 
         doc = docs[1]
         assert doc["kind"] == "ServiceAccount"
@@ -114,7 +117,10 @@ class TestRegistryStatefulset:
         assert doc["kind"] == "StatefulSet"
         assert doc["apiVersion"] == "apps/v1"
         assert doc["metadata"]["name"] == "release-name-registry"
-        assert doc["spec"]["template"]["spec"]["serviceAccountName"] == "release-name-customregistrysa"
+        assert (
+            doc["spec"]["template"]["spec"]["serviceAccountName"]
+            == "release-name-customregistrysa"
+        )
 
         doc = docs[1]
         assert doc["kind"] == "ServiceAccount"
