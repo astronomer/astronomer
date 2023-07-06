@@ -117,7 +117,7 @@ data:
         resources: {{- .Values.global.loggingSidecar.resources | toYaml | nindent 10 }}
         {{- end }}
         {{- if .Values.global.loggingSidecar.indexPattern }}
-        indexPattern: {{ .Values.global.loggingSidecar.indexPattern }}
+        indexPattern: {{ .Values.global.loggingSidecar.indexPattern | squote }}
         {{- end }}
       {{- end }}
 

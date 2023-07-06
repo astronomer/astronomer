@@ -232,6 +232,42 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_overrides():
     assert "vector" in prod_yaml["deployments"]["loggingSidecar"]["image"]
 
 
+def test_houston_configmap_with_loggingsidecar_enabled_with_indexPattern():
+    """Validate the houston configmap and its embedded data with
+    loggingSidecar."""
+    sidecar_container_name = "sidecar-log-test"
+    image_name = "quay.io/astronomer/ap-vector:0.22.3"
+    indexPattern = "%Y.%m"
+    docs = render_chart(
+        values={
+            "global": {
+                "loggingSidecar": {
+                    "enabled": True,
+                    "name": sidecar_container_name,
+                    "image": image_name,
+                    "indexPattern": indexPattern,
+                }
+            }
+        },
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+
+    common_test_cases(docs)
+    doc = docs[0]
+    prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
+    log_cmd = 'log_cmd = " 1> >( tee -a /var/log/sidecar-log-consumer/out.log ) 2> >( tee -a /var/log/sidecar-log-consumer/err.log >&2 ) ; "'
+    assert (
+        log_cmd in prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
+    )
+    assert prod_yaml["deployments"]["loggingSidecar"] == {
+        "enabled": True,
+        "name": sidecar_container_name,
+        "image": "quay.io/astronomer/ap-vector:0.22.3",
+        "customConfig": False,
+        "indexPattern": indexPattern,
+    }
+
+
 def test_houston_configmap_with_loggingsidecar_customConfig_enabled():
     """Validate the houston configmap and its embedded data with loggingSidecar
     customConfig Enabled."""
