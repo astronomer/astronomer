@@ -48,7 +48,6 @@ class TestRegistryStatefulset:
         assert doc["metadata"]["name"] == "release-name-registry"
         assert extra_env in doc["spec"]["template"]["spec"]["containers"][0]["env"]
 
-
     def test_astronomer_registry_statefulset_with_serviceaccount_enabled_defaults(
         self, kube_version
     ):
