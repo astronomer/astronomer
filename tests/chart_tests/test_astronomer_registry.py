@@ -53,37 +53,15 @@ class TestRegistryStatefulset:
     ):
         """Test that helm renders statefulset and serviceAccount template for astronomer
         registry with SA enabled."""
-        docs = render_chart(
-            kube_version=kube_version,
-            values={"astronomer": {"registry": {"serviceAccount": {"create": True}}}},
-            show_only=[
-                "charts/astronomer/templates/registry/registry-statefulset.yaml",
-                "charts/astronomer/templates/registry/registry-serviceaccount.yaml",
-            ],
-        )
-        assert len(docs) == 2
-        doc = docs[0]
-        assert doc["kind"] == "StatefulSet"
-        assert doc["apiVersion"] == "apps/v1"
-        assert doc["metadata"]["name"] == "release-name-registry"
-        assert doc["spec"]["serviceAccountName"] == "release-name-registry"
-
-        doc = docs[1]
-        assert doc["kind"] == "ServiceAccount"
-        assert doc["apiVersion"] == "v1"
-        assert doc["metadata"]["name"] == "release-name-registry"
-
-    def test_astronomer_registry_statefulset_with_serviceaccount_enabled_with_custom_name(
-        self, kube_version
-    ):
-        """Test that helm renders statefulset and serviceAccount template for astronomer
-        registry with SA enabled with custom name."""
+        annotation = {
+            "eks.amazonaws.com/role-arn": "custom-role",
+        }
         docs = render_chart(
             kube_version=kube_version,
             values={
                 "astronomer": {
                     "registry": {
-                        "serviceAccount": {"create": True, "name": "customregistrysa"}
+                        "serviceAccount": {"create": True, "annotations": annotation}
                     }
                 }
             },
@@ -97,12 +75,52 @@ class TestRegistryStatefulset:
         assert doc["kind"] == "StatefulSet"
         assert doc["apiVersion"] == "apps/v1"
         assert doc["metadata"]["name"] == "release-name-registry"
-        assert doc["spec"]["serviceAccountName"] == "customregistrysa"
+        assert doc["spec"]["template"]["spec"]["serviceAccountName"] == "release-name-registry"
 
         doc = docs[1]
         assert doc["kind"] == "ServiceAccount"
         assert doc["apiVersion"] == "v1"
-        assert doc["spec"]["serviceAccountName"] == "release-name-customregistrysa"
+        assert doc["metadata"]["name"] == "release-name-registry"
+        assert annotation == doc["metadata"]["annotations"]
+
+    def test_astronomer_registry_statefulset_with_serviceaccount_enabled_with_custom_name(
+        self, kube_version
+    ):
+        """Test that helm renders statefulset and serviceAccount template for astronomer
+        registry with SA enabled with custom name."""
+        annotation = {
+            "eks.amazonaws.com/role-arn": "custom-role",
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "astronomer": {
+                    "registry": {
+                        "serviceAccount": {
+                            "create": True,
+                            "name": "customregistrysa",
+                            "annotations": annotation,
+                        }
+                    }
+                }
+            },
+            show_only=[
+                "charts/astronomer/templates/registry/registry-statefulset.yaml",
+                "charts/astronomer/templates/registry/registry-serviceaccount.yaml",
+            ],
+        )
+        assert len(docs) == 2
+        doc = docs[0]
+        assert doc["kind"] == "StatefulSet"
+        assert doc["apiVersion"] == "apps/v1"
+        assert doc["metadata"]["name"] == "release-name-registry"
+        assert doc["spec"]["template"]["spec"]["serviceAccountName"] == "release-name-customregistrysa"
+
+        doc = docs[1]
+        assert doc["kind"] == "ServiceAccount"
+        assert doc["apiVersion"] == "v1"
+        assert doc["metadata"]["name"] == "release-name-customregistrysa"
+        assert annotation == doc["metadata"]["annotations"]
 
     def test_astronomer_registry_statefulset_with_serviceaccount_disabled(
         self, kube_version
