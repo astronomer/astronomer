@@ -72,24 +72,31 @@ class TestAllPodSpecContainers:
             assert "memory" in resources.get("requests")
 
     private_repo = "example.com/the-private-registry-repository"
-    private_repo_docs = render_chart(
-        values={
-            "global": {
-                "privateRegistry": {
-                    "enabled": True,
-                    "repository": private_repo,
-                }
-            }
-        },
-    )
-    private_repo_docs_trimmed = [
+    private_values = chart_tests.get_all_features()
+    private_values["global"]["privateRegistry"] = {
+        "enabled": True,
+        "repository": private_repo,
+    }
+    private_repo_docs = render_chart(values=private_values)
+    pod_manager_docs_private = [
         doc for doc in private_repo_docs if doc["kind"] in pod_managers
     ]
+    pod_manager_docs_private_ids = [
+        f"{doc['kind']}/{doc['metadata']['name']}" for doc in pod_manager_docs_private
+    ]
+
+    pod_manager_containers_public = {
+        f"{doc['kind']}/{doc['metadata']['name']}/{name}": container
+        for doc in pod_manager_docs
+        for name, container in get_containers_by_name(
+            doc, include_init_containers=True
+        ).items()
+    }
 
     @pytest.mark.parametrize(
         "doc",
-        private_repo_docs_trimmed,
-        ids=[f"{x['kind']}/{x['metadata']['name']}" for x in private_repo_docs_trimmed],
+        pod_manager_docs_private,
+        ids=pod_manager_docs_private_ids,
     )
     def test_all_default_charts_with_private_registry(self, doc):
         """Test that each chart uses the privateRegistry.
@@ -97,9 +104,16 @@ class TestAllPodSpecContainers:
         This only finds default images, not the many which are hidden
         behind feature flags.
         """
-        c_by_name = get_containers_by_name(doc)
+        c_by_name = get_containers_by_name(doc, include_init_containers=True)
 
         for name, container in c_by_name.items():
+            pod_container = f"{doc['kind']}/{doc['metadata']['name']}/{name}"
+            assert (
+                container["image"].split("/")[-1:]
+                == self.pod_manager_containers_public[pod_container]["image"].split(
+                    "/"
+                )[-1:]
+            ), f"The spec for '{pod_container}' does not use the same image for public and private registry configurations."
             assert container["image"].startswith(
                 self.private_repo
             ), f"The container '{name}' does not use the privateRegistry repo '{self.private_repo}': {container}"
