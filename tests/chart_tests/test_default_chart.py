@@ -77,6 +77,10 @@ class TestAllPodSpecContainers:
         "enabled": True,
         "repository": private_repo,
     }
+    private_values["global"]["authSidecar"] = {
+        "enabled": True,
+        "repository": f"{private_repo}/ap-auth-sidecar",
+    }
     private_repo_docs = render_chart(values=private_values)
     pod_manager_docs_private = [
         doc for doc in private_repo_docs if doc["kind"] in pod_managers
@@ -116,7 +120,7 @@ class TestAllPodSpecContainers:
             ), f"The spec for '{pod_container}' does not use the same image for public and private registry configurations."
             assert container["image"].startswith(
                 self.private_repo
-            ), f"The container '{name}' does not use the privateRegistry repo '{self.private_repo}': {container}"
+            ), f"The spec for '{pod_container}' does not use the privateRegistry repo '{self.private_repo}': {container}"
 
 
 @pytest.mark.skip(
