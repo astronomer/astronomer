@@ -11,12 +11,12 @@ from jinja2 import Template
 # recent patch version on Dockerhub
 # This should match what is in tests/__init__.py
 # https://hub.docker.com/r/kindest/node/tags
-kube_versions = ["1.22.17", "1.23.17", "1.24.15", "1.25.11", "1.26.6", "1.27.3"]
+kube_versions = ["1.23.17", "1.24.15", "1.25.11", "1.26.6", "1.27.3"]
 # https://circleci.com/docs/2.0/building-docker-images/#docker-version
 ci_remote_docker_version = "20.10.18"
 # https://circleci.com/developer/machine/image/ubuntu-2204
 machine_image_version = "ubuntu-2204:2023.02.1"
-ci_runner_version = "2023-05"
+ci_runner_version = "2023-07"
 
 
 def list_docker_images(path):
