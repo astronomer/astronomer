@@ -78,7 +78,7 @@ jobs:
 
   run_pre_commit:
     docker:
-      - image: quay.io/astronomer/ci-pre-commit:2023-05
+      - image: quay.io/astronomer/ci-pre-commit:2023-07
     steps:
       - checkout
       - run:
@@ -113,7 +113,7 @@ jobs:
 
   unittest-charts:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2023-05
+      - image: quay.io/astronomer/ci-helm-release:2023-07
     parallelism: 8
     resource_class: xlarge
     steps:
@@ -168,7 +168,7 @@ jobs:
 
   release-to-internal:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2023-05
+      - image: quay.io/astronomer/ci-helm-release:2023-07
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -207,7 +207,7 @@ jobs:
 
   release-to-public:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2023-05
+      - image: quay.io/astronomer/ci-helm-release:2023-07
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -218,22 +218,6 @@ jobs:
             bin/release-helm-chart -p /tmp/workspace/astronomer-*.tgz
       - publish-github-release
 
-  platform-1-22-17:
-    machine:
-      image: ubuntu-2204:2023.02.1
-      resource_class: xlarge
-    environment:
-      KUBE_VERSION: v1.22.17
-    steps:
-      - helm-install:
-          astronomer-tags: "platform postgresql monitoring logging"
-      - run:
-          name: Check chart for k8s 1.22.17 compatibility with kubent
-          command: |
-            set -o pipefail
-            helm template --kube-version=v1.22.17 -f values.yaml --set global.baseDomain=example.com . |
-            kubent --cluster=false --helm3=false --filename -
-          when: always
   platform-1-23-17:
     machine:
       image: ubuntu-2204:2023.02.1
@@ -396,14 +380,9 @@ workflows:
       - approve-test-all-platforms:
           type: approval
 
-      - platform-1-22-17:
-          requires:
-            - build-artifact
       - platform-1-23-17:
           requires:
-            - approve-test-all-platforms
             - build-artifact
-
       - platform-1-24-15:
           requires:
             - approve-test-all-platforms
@@ -429,7 +408,7 @@ workflows:
             - gcp-astronomer-prod
           requires:
             - approve-internal-release
-            - platform-1-22-17
+            - platform-1-23-17
             - platform-1-27-3
       - approve-upgrade-test:
           type: approval
@@ -449,7 +428,6 @@ workflows:
           type: approval
           requires:
             - release-to-internal
-            - platform-1-23-17
             - platform-1-24-15
             - platform-1-25-11
             - platform-1-26-6
@@ -487,7 +465,7 @@ workflows:
             - run_pre_commit
             - unittest-charts
 
-      - platform-1-22-17:
+      - platform-1-23-17:
           requires:
             - build-artifact
 
@@ -499,7 +477,7 @@ workflows:
           context:
             - gcp-astronomer-prod
           requires:
-            - platform-1-22-17
+            - platform-1-23-17
             - platform-1-27-3
           filters:
             branches:
