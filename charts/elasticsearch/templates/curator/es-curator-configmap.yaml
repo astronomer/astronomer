@@ -34,7 +34,7 @@ data:
         - filtertype: age
           source: name
           direction: older
-          timestring: '{{ .Values.curator.age.timestring }}'
+          timestring: {{ template "curator.indexPattern" . }}
           unit: {{ .Values.curator.age.unit }}
           unit_count: {{ .Values.curator.age.unit_count }}
           field:
