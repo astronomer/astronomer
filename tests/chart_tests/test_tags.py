@@ -1,6 +1,5 @@
 from tests.chart_tests.helm_template_generator import render_chart
 import pytest
-from tests import supported_k8s_versions
 import tests.chart_tests as chart_tests
 import subprocess
 from pathlib import Path
@@ -16,22 +15,29 @@ component_paths = [
     "charts/prometheus/templates",
 ]
 
+# Some charts have configs that are hard to test when parametrizing with get_all_features()
+# eg: password vs passwordSecret
+edge_cases = [
+    "charts/prometheus-postgres-exporter/templates/secret.yaml",
+]
+
 show_only = [
     str(y)
     for x in component_paths
     for y in list(Path(x).glob("*.yaml"))
-    if not y.name.startswith("_")
+    if not y.name.startswith("_") and str(y) not in edge_cases
 ]
 
 chart_values = chart_tests.get_all_features()
 
 
+# We use kube_version=1.24 here because 1.25 removes psp, and we need to test psp. Once 1.24
+# is deprecated we can set this to something higher, and will likely have to solve similar
+# problems for newer api differences.
 @pytest.mark.parametrize("template", show_only)
-@pytest.mark.parametrize(
-    "kube_version",
-    supported_k8s_versions,
-)
-def test_tags_monitoring_enabled(kube_version, template, chart_values=chart_values):
+def test_tags_monitoring_enabled(
+    template, chart_values=chart_values, kube_version="1.24.0"
+):
     """Test that when monitoring is disabled, the monitoring components are not present."""
     chart_values["tags"] = {"monitoring": True}
     docs = render_chart(
@@ -48,12 +54,13 @@ def test_tags_monitoring_enabled(kube_version, template, chart_values=chart_valu
     )
 
 
+# We use kube_version=1.24 here because 1.25 removes psp, and we need to test psp. Once 1.24
+# is deprecated we can set this to something higher, and will likely have to solve similar
+# problems for newer api differences.
 @pytest.mark.parametrize("template", show_only)
-@pytest.mark.parametrize(
-    "kube_version",
-    supported_k8s_versions,
-)
-def test_tags_monitoring_disabled(kube_version, template, chart_values=chart_values):
+def test_tags_monitoring_disabled(
+    template, chart_values=chart_values, kube_version="1.24.0"
+):
     """Test that when monitoring is disabled, the monitoring components are not present."""
     chart_values["tags"] = {"monitoring": False}
 
