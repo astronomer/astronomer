@@ -17,32 +17,32 @@ dependencies:
     tags:
       - platform
   # Monitoring stack
-  - name: grafana
-    condition: global.grafanaEnabled
-    tags:
-      - monitoring
-  - name: prometheus
-    condition: global.prometheusEnabled
-    tags:
-      - monitoring
-  - name: prometheus-postgres-exporter
-    condition: global.prometheusPostgresExporterEnabled
-    tags:
-      - monitoring
   - name: alertmanager
     condition: global.alertmanagerEnabled
+    tags:
+      - monitoring
+  - name: grafana
+    condition: global.grafanaEnabled
     tags:
       - monitoring
   - name: kube-state
     condition: global.kubeStateEnabled
     tags:
       - monitoring
+  - name: prometheus-blackbox-exporter
+    condition: global.blackboxExporterEnabled
+    tags:
+      - monitoring
   - name: prometheus-node-exporter
     condition: global.nodeExporterEnabled
     tags:
       - monitoring
-  - name: prometheus-blackbox-exporter
-    condition: global.blackboxExporterEnabled
+  - name: prometheus-postgres-exporter
+    condition: global.prometheusPostgresExporterEnabled
+    tags:
+      - monitoring
+  - name: prometheus
+    condition: global.prometheusEnabled
     tags:
       - monitoring
   # Logging stack
