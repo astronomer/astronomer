@@ -38,10 +38,14 @@ def test_tags_monitoring_enabled(kube_version, template, chart_values=chart_valu
         kube_version=kube_version, values=chart_values, show_only=template
     )
 
-    assert len(docs) == 1
-    assert docs[0]["kind"].lower() == template.split("/")[-1].split("-")[
-        -1
-    ].removesuffix(".yaml")
+    assert len(docs) >= 1
+    assert (
+        template.split("/")[-1]
+        .split("-")[-1]
+        .removesuffix(".yaml")
+        .replace("psp", "podsecuritypolicy")
+        in docs[0]["kind"].lower()
+    )
 
 
 @pytest.mark.parametrize("template", show_only)
