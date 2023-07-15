@@ -39,7 +39,7 @@ dependencies:
     tags:
       - monitoring
   - name: prometheus-postgres-exporter
-    condition: global.prometheusPostgresExporterEnabled
+    condition: global.prometheusPostgresExporter.Enabled
     tags:
       - monitoring
   - name: prometheus
