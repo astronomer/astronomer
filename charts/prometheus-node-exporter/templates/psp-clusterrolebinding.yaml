@@ -8,8 +8,7 @@ apiVersion: {{ template "apiVersion.rbac" . }}
 kind: ClusterRoleBinding
 metadata:
   name: psp-{{ template "prometheus-node-exporter.fullname" . }}
-  labels: {{ include "prometheus-node-exporter.labels" . | nindent 4 }}
-    tier: monitoring
+  labels: {{ include "prometheus-node-exporter.labels" . | indent 4 }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole

@@ -7,7 +7,7 @@ apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:
   name: {{ template "grafana.fullname" . }}-ingress
   labels:
-    tier: monitoring
+    tier: grafana-networking
     component: grafana-ingress
     chart: {{ template "grafana.chart" . }}
     release: {{ .Release.Name }}
