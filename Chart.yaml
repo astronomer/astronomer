@@ -31,11 +31,11 @@ dependencies:
     tags:
       - monitoring
   - name: prometheus-blackbox-exporter
-    condition: global.blackboxExporterEnabled
+    condition: global.blackboxExporter.Enabled
     tags:
       - monitoring
   - name: prometheus-node-exporter
-    condition: global.nodeExporterEnabled
+    condition: global.nodeExporter.Enabled
     tags:
       - monitoring
   - name: prometheus-postgres-exporter
