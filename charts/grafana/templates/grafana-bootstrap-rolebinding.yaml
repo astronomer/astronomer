@@ -7,7 +7,7 @@ apiVersion: {{ template "apiVersion.rbac" . }}
 metadata:
   name: {{ template "grafana.fullname" . }}-bootstrapper
   labels:
-    tier: grafana
+    tier: monitoring
     chart: {{ template "grafana.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
