@@ -16,6 +16,7 @@ dependencies:
     condition: global.nginxEnabled
     tags:
       - platform
+
   # Monitoring stack
   - name: alertmanager
     condition: global.alertmanagerEnabled
@@ -45,6 +46,7 @@ dependencies:
     condition: global.prometheusEnabled
     tags:
       - monitoring
+
   # Logging stack
   - name: elasticsearch
     condition: global.elasticsearchEnabled
@@ -58,27 +60,32 @@ dependencies:
     condition: global.fluentdEnabled
     tags:
       - logging
-  # In-cluster DB, not recommended
-  # for production
+
+  # In-cluster DB
+  # !! Not recommended for production !!
   - name: postgresql
     condition: global.postgresqlEnabled
     tags:
       - postgresql
+
   # Pgbouncer
   - name: pgbouncer
     condition: global.pgbouncer.enabled
     tags:
       - pgbouncer
+
   # Nats-server
   - name: nats
     condition: global.nats.enabled
     tags:
       - nats
+
   # Nats-streaming
   - name: stan
     condition: global.stan.enabled
     tags:
       - stan
+
   # external-es-proxy
   - name: external-es-proxy
     condition: global.customLogging.enabled
