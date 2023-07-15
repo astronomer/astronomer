@@ -21,6 +21,7 @@ from functools import cache
 from tempfile import NamedTemporaryFile
 from typing import Any, Optional
 from pathlib import Path
+import os
 
 import jsonschema
 import requests
@@ -32,6 +33,7 @@ api_client = ApiClient()
 
 BASE_URL_SPEC = "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master"
 GIT_ROOT = Path(__file__).parent.parent.parent
+DEBUG = os.getenv("DEBUG", "").lower() in ["yes", "true", "1"]
 
 
 def get_schema_k8s(api_version, kind, kube_version="1.24.0"):
@@ -89,7 +91,7 @@ def render_chart(
     """
     values = values or {}
     chart_dir = chart_dir or sys.path[0]
-    with NamedTemporaryFile(delete=True) as tmp_file:  # use delete=False when debugging
+    with NamedTemporaryFile(delete=DEBUG) as tmp_file:  # export DEBUG=true to keep
         content = yaml.dump(values)
         tmp_file.write(content.encode())
         tmp_file.flush()
@@ -117,19 +119,22 @@ def render_chart(
             if not templates:
                 return None
         except subprocess.CalledProcessError as error:
-            print("ERROR: subprocess.CalledProcessError:")
-            print(f"helm command: {' '.join(command)}")
-            print(f"Values file contents:\n{'-' * 21}\n{yaml.dump(values)}{'-' * 21}")
-            print(f"{error.output=}\n{error.stderr=}")
-
-            if "could not find template" in error.stderr.decode("utf-8"):
+            if DEBUG:
+                print("ERROR: subprocess.CalledProcessError:")
+                print(f"helm command: {' '.join(command)}")
                 print(
-                    "ERROR: command is probably using templates with null output, which "
-                    + "usually means there is a helm value that needs to be set to render "
-                    + "the content of the chart.\n"
-                    + "command: "
-                    + " ".join(command)
+                    f"Values file contents:\n{'-' * 21}\n{yaml.dump(values)}{'-' * 21}"
                 )
+                print(f"{error.output=}\n{error.stderr=}")
+
+                if "could not find template" in error.stderr.decode("utf-8"):
+                    print(
+                        "ERROR: command is probably using templates with null output, which "
+                        + "usually means there is a helm value that needs to be set to render "
+                        + "the content of the chart.\n"
+                        + "command: "
+                        + " ".join(command)
+                    )
             raise
         k8s_objects = yaml.full_load_all(templates)
         k8s_objects = [k8s_object for k8s_object in k8s_objects if k8s_object]  # type: ignore
