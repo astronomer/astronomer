@@ -3,16 +3,24 @@ import pytest
 from tests import supported_k8s_versions
 import tests.chart_tests as chart_tests
 import subprocess
+from pathlib import Path
 
+
+component_paths = [
+    "charts/alertmanager/templates",
+    "charts/grafana/templates",
+    "charts/kube-state/templates",
+    "charts/prometheus-blackbox-exporter/templates",
+    "charts/prometheus-node-exporter/templates",
+    "charts/prometheus-postgres-exporter/templates",
+    "charts/prometheus/templates",
+]
 
 show_only = [
-    "charts/alertmanager/templates/alertmanager-statefulset.yaml",
-    "charts/grafana/templates/grafana-deployment.yaml",
-    "charts/kube-state/templates/kube-state-deployment.yaml",
-    "charts/prometheus/templates/prometheus-statefulset.yaml",
-    "charts/prometheus-blackbox-exporter/templates/deployment.yaml",
-    "charts/prometheus-node-exporter/templates/daemonset.yaml",
-    "charts/prometheus-postgres-exporter/templates/deployment.yaml",
+    str(y)
+    for x in component_paths
+    for y in list(Path(x).glob("*.yaml"))
+    if not y.name.startswith("_")
 ]
 
 chart_values = chart_tests.get_all_features()
