@@ -6,6 +6,9 @@ description: Helm chart to deploy the Astronomer Platform
 icon: https://www.astronomer.io/static/iconforLIGHTbackground.svg
 keywords:
   - astronomer
+
+# In order for tags to function, the referenced condition must not be set to True
+# anywhere else in the chart. Helm values take precedence over tag conditions.
 dependencies:
   # Platform components
   - name: astronomer
