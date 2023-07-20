@@ -13,7 +13,7 @@ images:
     pullPolicy: IfNotPresent
   defaultBackend:
     repository: quay.io/astronomer/ap-default-backend
-    tag: 0.28.17
+    tag: 0.28.18
     pullPolicy: IfNotPresent
 
 securityContext:
