@@ -13,9 +13,9 @@ from jinja2 import Template
 # https://hub.docker.com/r/kindest/node/tags
 kube_versions = ["1.23.17", "1.24.15", "1.25.11", "1.26.6", "1.27.3"]
 # https://circleci.com/docs/2.0/building-docker-images/#docker-version
-ci_remote_docker_version = "20.10.18"
+ci_remote_docker_version = "20.10.24"
 # https://circleci.com/developer/machine/image/ubuntu-2204
-machine_image_version = "ubuntu-2204:2023.02.1"
+machine_image_version = "ubuntu-2204:2023.07.2"
 ci_runner_version = "2023-07"
 
 
