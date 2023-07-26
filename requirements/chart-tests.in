@@ -16,4 +16,3 @@ pytest-testinfra
 pytest-xdist
 PyYAML
 requests
-tomli # indirect, needed to satisfy hash requirement
