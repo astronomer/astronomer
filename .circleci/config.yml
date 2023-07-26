@@ -6,7 +6,7 @@ executors:
     environment:
       GIT_ORG: astronomer
     docker:
-      - image: cimg/python:3.10
+      - image: cimg/python:3.11
 
 orbs:
   slack: circleci/slack@4.10.1
@@ -29,7 +29,7 @@ parameters:
 jobs:
   trivy-scan-docker:
     docker:
-      - image: docker:20.10.18-git
+      - image: docker:20.10.24-git
     shell: /bin/sh -leo pipefail
     parameters:
       docker_image:
@@ -44,7 +44,7 @@ jobs:
       ASTRO_SEC_ENDPOINT: << parameters.report_url >>
     steps:
       - setup_remote_docker:
-          version: 20.10.18
+          version: 20.10.24
       - checkout
       - run:
           name: Pull Docker image
@@ -119,7 +119,7 @@ jobs:
     steps:
       - setup_remote_docker:
           docker_layer_caching: true
-          version: 20.10.18
+          version: 20.10.24
       - checkout
       - run:
           name: Create chart-tests-cache-key.txt
@@ -220,7 +220,7 @@ jobs:
 
   platform-1-23-17:
     machine:
-      image: ubuntu-2204:2023.02.1
+      image: ubuntu-2204:2023.07.2
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.23.17
@@ -236,7 +236,7 @@ jobs:
           when: always
   platform-1-24-15:
     machine:
-      image: ubuntu-2204:2023.02.1
+      image: ubuntu-2204:2023.07.2
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.24.15
@@ -252,7 +252,7 @@ jobs:
           when: always
   platform-1-25-11:
     machine:
-      image: ubuntu-2204:2023.02.1
+      image: ubuntu-2204:2023.07.2
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.25.11
@@ -268,7 +268,7 @@ jobs:
           when: always
   platform-1-26-6:
     machine:
-      image: ubuntu-2204:2023.02.1
+      image: ubuntu-2204:2023.07.2
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.26.6
@@ -284,7 +284,7 @@ jobs:
           when: always
   platform-1-27-3:
     machine:
-      image: ubuntu-2204:2023.02.1
+      image: ubuntu-2204:2023.07.2
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.27.3
@@ -305,7 +305,7 @@ jobs:
     steps:
       - checkout
       - setup_remote_docker:
-          version: 20.10.18
+          version: 20.10.24
       - run:
           name: Check that commander image uses same Airflow chart version
           command: make validate-commander-airflow-version
@@ -507,7 +507,7 @@ commands:
     steps:
       - setup_remote_docker:
           docker_layer_caching: true
-          version: 20.10.18
+          version: 20.10.24
       - attach_workspace:
           at: /tmp/workspace
       - run:
@@ -561,7 +561,7 @@ commands:
       - checkout
       - setup_remote_docker:
           docker_layer_caching: true
-          version: 20.10.18
+          version: 20.10.24
       - run:
           name: Build the Docker image
           command: |
