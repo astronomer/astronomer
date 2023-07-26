@@ -14,3 +14,4 @@ pytest-testinfra
 pytest-xdist
 PyYAML
 requests
+tomli
