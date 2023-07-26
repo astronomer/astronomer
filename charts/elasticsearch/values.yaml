@@ -10,11 +10,11 @@ tolerations: []
 images:
   es:
     repository: quay.io/astronomer/ap-elasticsearch
-    tag: 8.8.1
+    tag: 8.8.2
     pullPolicy: IfNotPresent
   init:
     repository: quay.io/astronomer/ap-base # needs root permissions for sysctl changes
-    tag: 3.16.5-2
+    tag: 3.18.0-1
     pullPolicy: IfNotPresent
   curator:
     repository: quay.io/astronomer/ap-curator
