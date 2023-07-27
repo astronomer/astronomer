@@ -133,4 +133,3 @@ class TestPrometheusAlertConfigmap:
 
         alerts = yaml.safe_load(docs[0]["data"]["alerts"])
         assert alerts == {"baz": "bam", "blah": [1337, "arf"], "foo": "bar"}
-        assert False
