@@ -23,6 +23,9 @@ metadata:
     heritage: {{ .Release.Service }}
 data:
   alerts: |-
+    {{- if .Values.customAlertConfig.enabled }}
+    {{- .Values.customAlertConfig.content | toYaml | nindent 4 }}
+    {{- else }}
     groups:
       - name: airflow
         rules:
@@ -1537,3 +1540,4 @@ data:
             summary: {{ printf "%q" "PostgreSQL high number of slow on {{ $labels.cluster }} for database {{ $labels.datname }} " }}
             description: {{ printf "%q" "PostgreSQL high number of slow queries {{ $labels.cluster }} for database {{ $labels.datname }} with a value of {{ $value }} " }}
       {{- end }}
+    {{- end }}

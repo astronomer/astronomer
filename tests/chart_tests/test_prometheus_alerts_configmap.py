@@ -3,6 +3,7 @@ from tests.chart_tests.helm_template_generator import render_chart
 from tests import supported_k8s_versions
 import re
 import pytest
+from textwrap import dedent
 
 
 @pytest.mark.parametrize(
@@ -104,3 +105,32 @@ class TestPrometheusAlertConfigmap:
             r".*If more than 2 Airflow Schedulers are not heartbeating for more than 5 minutes, this alarm fires..*",
             config_yaml,
         )
+
+    def test_custom_alert_config(self, kube_version):
+        values = {
+            "prometheus": {
+                "customAlertConfig": {
+                    "enabled": True,
+                    "content": yaml.safe_load(
+                        dedent(
+                            """
+                            foo: bar
+                            baz: bam
+                            blah:
+                                - 1337
+                                - arf
+                            """
+                        )
+                    ),
+                }
+            }
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=self.show_only,
+            values=values,
+        )
+
+        alerts = yaml.safe_load(docs[0]["data"]["alerts"])
+        assert alerts == {"baz": "bam", "blah": [1337, "arf"], "foo": "bar"}
+        assert False
