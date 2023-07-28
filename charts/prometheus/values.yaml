@@ -124,11 +124,20 @@ tcpProbe:
 # Enable prometheus lifecycle api
 enableLifecycle: true
 
+# This section allows you to disable parts of the default set of alerts. Use
+# this in combination with additionalAlerts if you want prometheus to only
+# use the alerts you have configured.
+defaultAlerts:
+  airflow:
+    enabled: true
+  platform:
+    enabled: true
+
 additionalAlerts:
-  # Additional rules for the 'platform' alert group
+  # Additional rules appended to the default 'platform' alert group
   # Provide as a block string in yaml list form
   platform: ~
-  # Additional rules for the 'airflow' alert group
+  # Additional rules appended to the default 'airflow' alert group
   # Provide as a block string in yaml list form
   airflow: ~
 # Example:
