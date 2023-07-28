@@ -360,7 +360,7 @@ data:
             the minute field of the cron schedule. This is effectively a splay seeded by the release name.
             This is used to spread the load of this job away from high-use minutes 0,15,30,45.
             */}}
-            schedule: "{{- add 3 (regexFind ".$" (adler32sum .Release.Name)) -}}-59/15 * * * *"
+            schedule: {{`'{{- add 3 (regexFind ".$" (adler32sum .Release.Name)) -}}-59/15 * * * *'`}}
             command:
             - airflow-cleanup-pods
             - --namespace={{`{{ .Release.Namespace }}`}}
