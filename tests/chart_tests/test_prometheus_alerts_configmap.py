@@ -128,7 +128,7 @@ class TestPrometheusAlertConfigmap:
         groups = yaml.safe_load(docs[0]["data"]["alerts"])["groups"]
         assert len(groups) == 22
         assert [x["rules"] for x in groups if x["name"] == section] == [[]]
-        assert [x["rules"] for x in groups if x["name"] != section] != [[]]
+        assert len([x["rules"] for x in groups if x["name"] != section]) == 21
 
     @pytest.mark.parametrize("section", ["airflow", "platform"])
     def test_default_alerts_section_disabled_with_additional_alerts(
@@ -163,6 +163,8 @@ class TestPrometheusAlertConfigmap:
         assert [x["rules"] for x in groups if x["name"] == section] == [
             [{"alert": "some-happy-alert", "expr": "sum(all-happiness)"}]
         ]
-        assert [x["rules"] for x in groups if x["name"] != section] != [
-            [{"alert": "some-happy-alert", "expr": "sum(all-happiness)"}]
+        assert [
+            x["rules"] != [{"alert": "some-happy-alert", "expr": "sum(all-happiness)"}]
+            for x in groups
+            if x["name"] != section
         ]
