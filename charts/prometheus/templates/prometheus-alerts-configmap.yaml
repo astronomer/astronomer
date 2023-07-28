@@ -23,15 +23,16 @@ metadata:
     heritage: {{ .Release.Service }}
 data:
   alerts: |-
-    {{- if .Values.customAlertConfig.enabled }}
-    {{- .Values.customAlertConfig.content | toYaml | nindent 4 }}
-    {{- else }}
     groups:
       - name: airflow
         rules:
+        {{- if and (not .Values.additionalAlerts.airflow) (not .Values.defaultAlerts.airflow.enabled) }}
+          []
+        {{ end }}
         {{- if .Values.additionalAlerts.airflow }}
         {{- tpl .Values.additionalAlerts.airflow $ | nindent 8 }}
         {{- end }}
+        {{- if .Values.defaultAlerts.airflow.enabled }}
         - alert: AirflowDeploymentUnhealthy
           expr: sum by(release) (kube_pod_container_status_running{container=~".*(scheduler|scheduler-gc|webserver|worker|statsd|pgbouncer|metrics-exporter|redis|flower|triggerer)"}) - count by(release) (kube_pod_container_status_running{container=~".*(scheduler|scheduler-gc|webserver|worker|statsd|pgbouncer|metrics-exporter|redis|flower|triggerer)"}) < 0
           for: 15m # Rough number but should be enough to clear deployments with a reasonable amount of workers
@@ -124,12 +125,17 @@ data:
           annotations:
             summary: {{ printf "%q" "{{ $labels.pod_name }} ({{ $labels.container_name }}) in namespace {{ $labels.namespace }} is getting throttled {{ $value }}% of the time" }}
             description: "In the past 5 minutes, one or more components in the deployment are experiencing CPU throttling."
+        {{- end }}
 
       - name: platform
         rules:
+        {{- if and (not .Values.additionalAlerts.platform) (not .Values.defaultAlerts.platform.enabled) }}
+          []
+        {{- end }}
         {{- if .Values.additionalAlerts.platform }}
         {{- tpl .Values.additionalAlerts.platform $ | nindent 8 }}
         {{- end }}
+        {{- if .Values.defaultAlerts.platform.enabled }}
         - alert: AirflowOperatorFailureRate
           expr: 100 * (sum by (operator) (increase(airflow_operator_failures{operator=~"([A-Z][a-z0-9]+)(([0-9])|([A-Z0-9][a-z0-9]+))*([A-Z])?Operator"}[1h])) / (sum by (operator) (increase(airflow_operator_successes{operator=~"([A-Z][a-z0-9]+)(([0-9])|([A-Z0-9][a-z0-9]+))*([A-Z])?Operator"}[1h])) + sum by (operator) (increase(airflow_operator_failures{operator=~"([A-Z][a-z0-9]+)(([0-9])|([A-Z0-9][a-z0-9]+))*([A-Z])?Operator"}[1h])))) > 50
           for: 2h
@@ -161,6 +167,7 @@ data:
           annotations:
             summary: "Half or more of schedulers do not have a heartbeat"
             description: {{ printf "%q" "{{ $value }} }} schedulers do not have a heartbeat in the last five minutes" }}
+        {{- end }}
 
       - name: node-exporter-recording.rules
         rules:
@@ -1540,4 +1547,3 @@ data:
             summary: {{ printf "%q" "PostgreSQL high number of slow on {{ $labels.cluster }} for database {{ $labels.datname }} " }}
             description: {{ printf "%q" "PostgreSQL high number of slow queries {{ $labels.cluster }} for database {{ $labels.datname }} with a value of {{ $value }} " }}
       {{- end }}
-    {{- end }}

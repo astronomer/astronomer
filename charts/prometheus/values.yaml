@@ -111,12 +111,14 @@ tcpProbe:
 # Enable prometheus lifecycle api
 enableLifecycle: true
 
-# If customAlertConfig is enabled, the entire content of the prometheus
-# alertmanager config file will be replaced with the value provided. This
-# setting takes precedence over all other settings like additionalAlerts.
-customAlertConfig:
-  enabled: false
-  content: ~
+# This section allows you to disable parts of the default set of alerts. Use
+# this in combination with additionalAlerts if you want prometheus to only
+# use the alerts you have configured.
+defaultAlerts:
+  airflow:
+    enabled: true
+  platform:
+    enabled: true
 
 additionalAlerts:
   # Additional rules appended to the default 'platform' alert group
