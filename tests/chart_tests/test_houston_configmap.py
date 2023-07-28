@@ -27,7 +27,7 @@ def common_test_cases(docs):
 
     assert (
         prod["deployments"]["helm"]["airflow"]["cleanup"]["schedule"]
-        == """'{{- add 3 (regexFind ".$" (adler32sum .Release.Name)) -}}-59/15 * * * *'"""
+        == '{{- add 3 (regexFind ".$" (adler32sum .Release.Name)) -}}-59/15 * * * *'
     )
 
     # validate yaml-embedded python
