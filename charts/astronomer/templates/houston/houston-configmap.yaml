@@ -362,7 +362,7 @@ data:
             This template is passed to the airflow chart as a string where the template is interpreted in that
             context, including the airflow-chart's .Release.Name.
             */}}
-            schedule: "'{{"{{"}}- add 3 (regexFind \".$\" (adler32sum .Release.Name)) -}}-59/15 * * * *'"
+            schedule: {{`'{{- add 3 (regexFind ".$" (adler32sum .Release.Name)) -}}-59/15 * * * *'`}}
             command:
             - airflow-cleanup-pods
             - --namespace={{`{{ .Release.Namespace }}`}}
