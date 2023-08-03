@@ -78,3 +78,23 @@ class TestGrafanaDeployment:
         assert doc["spec"]["template"]["spec"]["containers"][0]["securityContext"] == {
             "runAsNonRoot": True
         }
+
+    def test_deployment_with_securitycontext_overrides(self, kube_version):
+        """Test that the grafana-deployment renders with the expected securityContext."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "grafana": {
+                    "securityContext": {"runAsNonRoot": True, "runAsUser": 467}
+                }
+            },
+            show_only=[DEPLOYMENT_FILE],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["kind"] == "Deployment"
+        assert doc["spec"]["template"]["spec"]["containers"][0]["securityContext"] == {
+            "runAsNonRoot": True,
+            "runAsUser": 467
+        }
