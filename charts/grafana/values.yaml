@@ -18,7 +18,6 @@ images:
 
 securityContext:
     runAsNonRoot: true
-    runAsUser: 472
 
 backendSecretName: ~
 backendConnection:
