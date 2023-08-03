@@ -84,9 +84,7 @@ class TestGrafanaDeployment:
         docs = render_chart(
             kube_version=kube_version,
             values={
-                "grafana": {
-                    "securityContext": {"runAsNonRoot": True, "runAsUser": 467}
-                }
+                "grafana": {"securityContext": {"runAsNonRoot": True, "runAsUser": 467}}
             },
             show_only=[DEPLOYMENT_FILE],
         )
@@ -96,5 +94,5 @@ class TestGrafanaDeployment:
         assert doc["kind"] == "Deployment"
         assert doc["spec"]["template"]["spec"]["containers"][0]["securityContext"] == {
             "runAsNonRoot": True,
-            "runAsUser": 467
+            "runAsUser": 467,
         }
