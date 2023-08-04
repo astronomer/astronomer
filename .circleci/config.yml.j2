@@ -84,7 +84,6 @@ jobs:
     steps:
       - setup_remote_docker:
           version: {{ remote_docker_version }}
-      - checkout
       - run:
           name: Pull Docker image
           command: docker pull << parameters.docker_image >>
@@ -97,7 +96,7 @@ jobs:
       - run:
           name: scan image
           command: |
-            ./twistcli images scan --address $CONSOLE_URL --user=$USER --password=$PASSWORD << parameters.docker_image >>
+            ./twistcli images scan --address $CONSOLE_URL --user=$USER --password=$PASSWORD --details << parameters.docker_image >>
 
   run_pre_commit:
     docker:
