@@ -17,8 +17,7 @@ images:
     pullPolicy: IfNotPresent
 
 securityContext:
-    runAsNonRoot: true
-    runAsUser: 472
+  runAsNonRoot: true
 
 backendSecretName: ~
 backendConnection:
