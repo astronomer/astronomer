@@ -101,6 +101,9 @@ global:
   # Enable security context constraints required for OpenShift
   sccEnabled: false
 
+  # Enabled nodeexporter security context constraints required for OpenShift
+  nodeExporterSccEnabled: false
+
   # Enables namespace labels for network policies
   networkNSLabels: false
 
