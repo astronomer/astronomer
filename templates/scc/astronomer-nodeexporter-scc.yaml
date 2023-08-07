@@ -1,0 +1,38 @@
+##########################################################
+## Astronomer Node Exporter SecurityContextConstraints  ##
+##########################################################
+{{- if and .Values.global.sccEnabled .Values.global.nodeExporterSccEnabled }}
+apiVersion: security.openshift.io/v1
+kind: SecurityContextConstraints
+metadata:
+  annotations:
+    release.openshift.io/create-only: "true"
+    "helm.sh/hook": "pre-install,pre-upgrade"
+    color: blue
+  name: {{ .Release.Name }}-prometheus-node-exporter-scc
+priority: 15
+allowPrivilegedContainer: true
+readOnlyRootFilesystem: false
+runAsUser:
+  type: RunAsAny
+seLinuxContext:
+  type: MustRunAs
+supplementalGroups:
+  type: RunAsAny
+users:
+- system:serviceaccount:{{ .Release.Namespace }}:{{ .Release.Name }}-prometheus-node-exporter
+volumes:
+- configMap
+- hostPath
+- secret
+- projected
+- emptyDir
+fsGroup:
+  type: RunAsAny
+allowHostDirVolumePlugin: true
+allowHostIPC: false
+allowHostNetwork: true
+allowHostPID: true
+allowHostPorts: true
+allowPrivilegeEscalation: true
+{{- end }}
