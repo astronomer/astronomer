@@ -510,9 +510,6 @@ class TestExternalElasticSearch:
         assert (
             prod["deployments"]["helm"]["airflow"]["elasticsearch"]["enabled"] is True
         )
-        assert (
-            "http"
-            in prod["deployments"]["helm"]["airflow"]["elasticsearch"]["connection"][
-                "host"
-            ]
-        )
+        assert prod["deployments"]["helm"]["airflow"]["elasticsearch"]["connection"][
+            "host"
+        ].startswith("http://")
