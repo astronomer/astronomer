@@ -390,7 +390,7 @@ data:
           elasticsearch:
             enabled: true
             connection:
-              host: {{ printf "%s-external-es-proxy.%s" .Release.Name .Release.Namespace }}
+              host: {{ printf "http://%s-external-es-proxy.%s" .Release.Name .Release.Namespace }}
               port: 9200
 
     elasticsearch:
@@ -404,7 +404,7 @@ data:
           elasticsearch:
             enabled: true
             connection:
-              host: {{ printf "%s-elasticsearch-nginx.%s" .Release.Name .Release.Namespace }}
+              host: {{ printf "http://%s-elasticsearch-nginx.%s" .Release.Name .Release.Namespace }}
               port: 9200
 
     elasticsearch:
