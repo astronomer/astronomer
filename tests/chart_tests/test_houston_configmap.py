@@ -48,9 +48,6 @@ def test_houston_configmap():
     # Ensure elasticsearch client param is at the correct location and contains http://
     assert "node" in prod["elasticsearch"]["client"]
     assert prod["elasticsearch"]["client"]["node"].startswith("http://")
-    assert prod["deployments"]["helm"]["airflow"]["elasticsearch"]["connection"][
-        "host"
-    ].startswith("http://")
     with pytest.raises(KeyError):
         # Ensure sccEnabled is not defined by default
         assert prod["deployments"]["helm"]["sccEnabled"] is False

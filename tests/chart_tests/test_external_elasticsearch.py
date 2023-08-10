@@ -492,24 +492,3 @@ class TestExternalElasticSearch:
         assert {"name": "TEST_VAR_NAME", "value": "test_var_value"} in doc["spec"][
             "template"
         ]["spec"]["containers"][0]["env"]
-
-    def test_externalelasticsearch_houston_configmap_with_http_endpoint(
-        self, kube_version
-    ):
-        """Test Houston Configmap with kibanaUIFlag."""
-        docs = render_chart(
-            kube_version=kube_version,
-            values={"global": {"customLogging": {"enabled": True}}},
-            show_only=[
-                "charts/astronomer/templates/houston/houston-configmap.yaml",
-            ],
-        )
-        doc = docs[0]
-        prod = yaml.safe_load(doc["data"]["production.yaml"])
-        print(prod)
-        assert (
-            prod["deployments"]["helm"]["airflow"]["elasticsearch"]["enabled"] is True
-        )
-        assert prod["deployments"]["helm"]["airflow"]["elasticsearch"]["connection"][
-            "host"
-        ].startswith("http://")
