@@ -492,4 +492,3 @@ class TestExternalElasticSearch:
         assert {"name": "TEST_VAR_NAME", "value": "test_var_value"} in doc["spec"][
             "template"
         ]["spec"]["containers"][0]["env"]
-
