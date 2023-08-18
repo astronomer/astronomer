@@ -4,7 +4,7 @@ executors:
     environment:
       GIT_ORG: astronomer
     docker:
-      - image: cimg/python:3.10
+      - image: cimg/python:3.11
 
 orbs:
   slack: circleci/slack@4.10.1
@@ -35,6 +35,9 @@ jobs:
       report_url:
         type: string
         default: ""
+      slack_notify:
+        type: boolean
+        default: false
     environment:
       SCAN_IMAGE: << parameters.docker_image >>
       SCAN_TOOL: Trivy
@@ -59,20 +62,49 @@ jobs:
       - run:
           name: Scan the local image with trivy
           command: bin/trivy-scan.sh "<< parameters.docker_image >>" ".circleci/trivyignore"
-      - run:
-          name: Slack Init
-          command: |
-            echo 'export SLACK_MSG_TEMPLATE=$(cat ./.circleci/slack_message_templates/security_scan_fail.json)' >> $BASH_ENV
-            source $BASH_ENV
-          when: on_fail
-      - slack/notify:
-          event: fail
-          template: SLACK_MSG_TEMPLATE
-          channel: C03HS1H9G1E
+      - when:
+          condition:
+            or:
+              - << parameters.slack_notify >>
+          steps:
+            - run:
+                name: Slack Init
+                command: |
+                  echo 'export SLACK_MSG_TEMPLATE=$(cat ./.circleci/slack_message_templates/security_scan_fail.json)' >> $BASH_ENV
+                  source $BASH_ENV
+                when: on_fail
+            - slack/notify:
+                event: fail
+                template: SLACK_MSG_TEMPLATE
+                channel: C03HS1H9G1E
       - save_cache:
           {% raw %}key: trivy-cache-{{ checksum "date" }}{% endraw %}
           paths:
             - /tmp/workspace/trivy-cache
+
+  twistcli-scan-docker:
+    docker:
+      - image: docker:{{ remote_docker_version }}-git
+    shell: /bin/sh -leo pipefail
+    parameters:
+      docker_image:
+        type: string
+    steps:
+      - setup_remote_docker:
+          version: {{ remote_docker_version }}
+      - run:
+          name: Pull Docker image
+          command: docker pull << parameters.docker_image >>
+      - run:
+          name: Install twistcli
+          command: |
+            apk add --update-cache --upgrade curl
+            curl -k -u $USER:$PASSWORD --output twistcli $CONSOLE_URL"/api/v1/util/twistcli"
+            chmod +x twistcli
+      - run:
+          name: scan image
+          command: |
+            ./twistcli images scan --address $CONSOLE_URL --user=$USER --password=$PASSWORD --details << parameters.docker_image >>
 
   run_pre_commit:
     docker:
@@ -257,6 +289,7 @@ workflows:
     jobs:
       - trivy-scan-docker:
           report_url: << pipeline.parameters.scan-docker-images-report-url >>
+          slack_notify: false
           matrix:
             parameters:
               docker_image:
@@ -265,6 +298,15 @@ workflows:
 {%- endfor %}
           context:
             - slack_team-software-infra-bot
+      - twistcli-scan-docker:
+          matrix:
+            parameters:
+              docker_image:
+{%- for image in docker_images %}
+                - {{ image }}
+{%- endfor %}
+          context:
+            - twistcli
 
   build-and-release-helm-chart:
     when:

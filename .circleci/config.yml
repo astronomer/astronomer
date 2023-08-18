@@ -6,7 +6,7 @@ executors:
     environment:
       GIT_ORG: astronomer
     docker:
-      - image: cimg/python:3.10
+      - image: cimg/python:3.11
 
 orbs:
   slack: circleci/slack@4.10.1
@@ -29,7 +29,7 @@ parameters:
 jobs:
   trivy-scan-docker:
     docker:
-      - image: docker:20.10.18-git
+      - image: docker:20.10.24-git
     shell: /bin/sh -leo pipefail
     parameters:
       docker_image:
@@ -37,6 +37,9 @@ jobs:
       report_url:
         type: string
         default: ""
+      slack_notify:
+        type: boolean
+        default: false
     environment:
       SCAN_IMAGE: << parameters.docker_image >>
       SCAN_TOOL: Trivy
@@ -44,7 +47,7 @@ jobs:
       ASTRO_SEC_ENDPOINT: << parameters.report_url >>
     steps:
       - setup_remote_docker:
-          version: 20.10.18
+          version: 20.10.24
       - checkout
       - run:
           name: Pull Docker image
@@ -61,20 +64,49 @@ jobs:
       - run:
           name: Scan the local image with trivy
           command: bin/trivy-scan.sh "<< parameters.docker_image >>" ".circleci/trivyignore"
-      - run:
-          name: Slack Init
-          command: |
-            echo 'export SLACK_MSG_TEMPLATE=$(cat ./.circleci/slack_message_templates/security_scan_fail.json)' >> $BASH_ENV
-            source $BASH_ENV
-          when: on_fail
-      - slack/notify:
-          event: fail
-          template: SLACK_MSG_TEMPLATE
-          channel: C03HS1H9G1E
+      - when:
+          condition:
+            or:
+              - << parameters.slack_notify >>
+          steps:
+            - run:
+                name: Slack Init
+                command: |
+                  echo 'export SLACK_MSG_TEMPLATE=$(cat ./.circleci/slack_message_templates/security_scan_fail.json)' >> $BASH_ENV
+                  source $BASH_ENV
+                when: on_fail
+            - slack/notify:
+                event: fail
+                template: SLACK_MSG_TEMPLATE
+                channel: C03HS1H9G1E
       - save_cache:
           key: trivy-cache-{{ checksum "date" }}
           paths:
             - /tmp/workspace/trivy-cache
+
+  twistcli-scan-docker:
+    docker:
+      - image: docker:20.10.24-git
+    shell: /bin/sh -leo pipefail
+    parameters:
+      docker_image:
+        type: string
+    steps:
+      - setup_remote_docker:
+          version: 20.10.24
+      - run:
+          name: Pull Docker image
+          command: docker pull << parameters.docker_image >>
+      - run:
+          name: Install twistcli
+          command: |
+            apk add --update-cache --upgrade curl
+            curl -k -u $USER:$PASSWORD --output twistcli $CONSOLE_URL"/api/v1/util/twistcli"
+            chmod +x twistcli
+      - run:
+          name: scan image
+          command: |
+            ./twistcli images scan --address $CONSOLE_URL --user=$USER --password=$PASSWORD --details << parameters.docker_image >>
 
   run_pre_commit:
     docker:
@@ -119,7 +151,7 @@ jobs:
     steps:
       - setup_remote_docker:
           docker_layer_caching: true
-          version: 20.10.18
+          version: 20.10.24
       - checkout
       - run:
           name: Create chart-tests-cache-key.txt
@@ -220,7 +252,7 @@ jobs:
 
   platform-1-23-17:
     machine:
-      image: ubuntu-2204:2023.02.1
+      image: ubuntu-2204:2023.07.2
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.23.17
@@ -236,7 +268,7 @@ jobs:
           when: always
   platform-1-24-15:
     machine:
-      image: ubuntu-2204:2023.02.1
+      image: ubuntu-2204:2023.07.2
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.24.15
@@ -252,7 +284,7 @@ jobs:
           when: always
   platform-1-25-11:
     machine:
-      image: ubuntu-2204:2023.02.1
+      image: ubuntu-2204:2023.07.2
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.25.11
@@ -268,7 +300,7 @@ jobs:
           when: always
   platform-1-26-6:
     machine:
-      image: ubuntu-2204:2023.02.1
+      image: ubuntu-2204:2023.07.2
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.26.6
@@ -284,7 +316,7 @@ jobs:
           when: always
   platform-1-27-3:
     machine:
-      image: ubuntu-2204:2023.02.1
+      image: ubuntu-2204:2023.07.2
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.27.3
@@ -305,7 +337,7 @@ jobs:
     steps:
       - checkout
       - setup_remote_docker:
-          version: 20.10.18
+          version: 20.10.24
       - run:
           name: Check that commander image uses same Airflow chart version
           command: make validate-commander-airflow-version
@@ -322,17 +354,18 @@ workflows:
     jobs:
       - trivy-scan-docker:
           report_url: << pipeline.parameters.scan-docker-images-report-url >>
+          slack_notify: false
           matrix:
             parameters:
               docker_image:
                 - quay.io/astronomer/ap-alertmanager:0.25.0-1
-                - quay.io/astronomer/ap-astro-ui:0.32.6
+                - quay.io/astronomer/ap-astro-ui:0.33.3
                 - quay.io/astronomer/ap-auth-sidecar:1.25.1
                 - quay.io/astronomer/ap-awsesproxy:1.3-13
                 - quay.io/astronomer/ap-base:3.18.0-1
                 - quay.io/astronomer/ap-blackbox-exporter:0.24.0
                 - quay.io/astronomer/ap-cli-install:0.26.17
-                - quay.io/astronomer/ap-commander:0.33.1
+                - quay.io/astronomer/ap-commander:0.33.2
                 - quay.io/astronomer/ap-configmap-reloader:0.11.0
                 - quay.io/astronomer/ap-curator:8.0.4
                 - quay.io/astronomer/ap-db-bootstrapper:0.31.4
@@ -341,7 +374,7 @@ workflows:
                 - quay.io/astronomer/ap-elasticsearch:8.8.2
                 - quay.io/astronomer/ap-fluentd:1.16.1-1
                 - quay.io/astronomer/ap-grafana:10.0.2
-                - quay.io/astronomer/ap-houston-api:0.32.15
+                - quay.io/astronomer/ap-houston-api:0.33.4
                 - quay.io/astronomer/ap-init:3.18.0
                 - quay.io/astronomer/ap-kibana:8.8.2
                 - quay.io/astronomer/ap-kube-state:2.8.2
@@ -351,7 +384,7 @@ workflows:
                 - quay.io/astronomer/ap-nginx-es:1.25.1
                 - quay.io/astronomer/ap-nginx:1.8.1
                 - quay.io/astronomer/ap-node-exporter:1.6.1
-                - quay.io/astronomer/ap-openresty:1.21.4-8
+                - quay.io/astronomer/ap-openresty:1.21.4-9
                 - quay.io/astronomer/ap-pgbouncer-krb:1.17.0-9
                 - quay.io/astronomer/ap-postgres-exporter:0.12.0-1
                 - quay.io/astronomer/ap-postgresql:15.2.0-3
@@ -360,6 +393,45 @@ workflows:
                 - quay.io/astronomer/ap-vector:0.28.2-3
           context:
             - slack_team-software-infra-bot
+      - twistcli-scan-docker:
+          matrix:
+            parameters:
+              docker_image:
+                - quay.io/astronomer/ap-alertmanager:0.25.0-1
+                - quay.io/astronomer/ap-astro-ui:0.33.3
+                - quay.io/astronomer/ap-auth-sidecar:1.25.1
+                - quay.io/astronomer/ap-awsesproxy:1.3-13
+                - quay.io/astronomer/ap-base:3.18.0-1
+                - quay.io/astronomer/ap-blackbox-exporter:0.24.0
+                - quay.io/astronomer/ap-cli-install:0.26.17
+                - quay.io/astronomer/ap-commander:0.33.2
+                - quay.io/astronomer/ap-configmap-reloader:0.11.0
+                - quay.io/astronomer/ap-curator:8.0.4
+                - quay.io/astronomer/ap-db-bootstrapper:0.31.4
+                - quay.io/astronomer/ap-default-backend:0.28.18
+                - quay.io/astronomer/ap-elasticsearch-exporter:1.5.0-1
+                - quay.io/astronomer/ap-elasticsearch:8.8.2
+                - quay.io/astronomer/ap-fluentd:1.16.1-1
+                - quay.io/astronomer/ap-grafana:10.0.2
+                - quay.io/astronomer/ap-houston-api:0.33.4
+                - quay.io/astronomer/ap-init:3.18.0
+                - quay.io/astronomer/ap-kibana:8.8.2
+                - quay.io/astronomer/ap-kube-state:2.8.2
+                - quay.io/astronomer/ap-nats-exporter:0.10.0-6
+                - quay.io/astronomer/ap-nats-server:2.8.4-4
+                - quay.io/astronomer/ap-nats-streaming:0.24.6-4
+                - quay.io/astronomer/ap-nginx-es:1.25.1
+                - quay.io/astronomer/ap-nginx:1.8.1
+                - quay.io/astronomer/ap-node-exporter:1.6.1
+                - quay.io/astronomer/ap-openresty:1.21.4-9
+                - quay.io/astronomer/ap-pgbouncer-krb:1.17.0-9
+                - quay.io/astronomer/ap-postgres-exporter:0.12.0-1
+                - quay.io/astronomer/ap-postgresql:15.2.0-3
+                - quay.io/astronomer/ap-prometheus:2.45.0
+                - quay.io/astronomer/ap-registry:3.16.5-1
+                - quay.io/astronomer/ap-vector:0.28.2-3
+          context:
+            - twistcli
 
   build-and-release-helm-chart:
     when:
@@ -507,7 +579,7 @@ commands:
     steps:
       - setup_remote_docker:
           docker_layer_caching: true
-          version: 20.10.18
+          version: 20.10.24
       - attach_workspace:
           at: /tmp/workspace
       - run:
@@ -561,7 +633,7 @@ commands:
       - checkout
       - setup_remote_docker:
           docker_layer_caching: true
-          version: 20.10.18
+          version: 20.10.24
       - run:
           name: Build the Docker image
           command: |
