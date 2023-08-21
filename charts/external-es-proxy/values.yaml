@@ -11,7 +11,7 @@ images:
     pullPolicy: IfNotPresent
   awsproxy:
     repository: quay.io/astronomer/ap-awsesproxy
-    tag: 1.3-12
+    tag: 1.3-13
     pullPolicy: IfNotPresent
 
 imagePullSecrets: []
