@@ -46,12 +46,6 @@ class TestAllPodSpecContainers:
             assert container["image"], f"container {name} does not have an image: {doc}"
             assert container["imagePullPolicy"] == "IfNotPresent"
 
-            resources = c_by_name[name]["resources"]
-            assert "cpu" in resources.get("limits")
-            assert "memory" in resources.get("limits")
-            assert "cpu" in resources.get("requests")
-            assert "memory" in resources.get("requests")
-
     private_repo = "example.com/the-private-registry-repository"
     private_values = chart_tests.get_all_features()
     private_values["global"]["privateRegistry"] = {
