@@ -13,8 +13,10 @@ pod_managers = ["Deployment", "StatefulSet", "DaemonSet"]
 class TestAllPodSpecContainers:
     """Test pod spec containers for some defaults."""
 
-    default_docs = render_chart()
-    default_docs_trimmed = [doc for doc in default_docs if doc["kind"] in pod_managers]
+    chart_values = chart_tests.get_all_features()
+
+    default_docs = render_chart(values=chart_values)
+    pod_manager_docs = [doc for doc in default_docs if doc["kind"] in pod_managers]
     annotated = [x for x in default_docs if x["metadata"].get("annotations")]
 
     @pytest.mark.parametrize(
@@ -33,15 +35,16 @@ class TestAllPodSpecContainers:
 
     @pytest.mark.parametrize(
         "doc",
-        default_docs_trimmed,
-        ids=[f"{x['kind']}/{x['metadata']['name']}" for x in default_docs_trimmed],
+        pod_manager_docs,
+        ids=[f"{x['kind']}/{x['metadata']['name']}" for x in pod_manager_docs],
     )
     def test_default_chart_with_basedomain(self, doc):
-        """Test that each container in each pod spec renders."""
+        """Test that each container in each pod spec renders and has some
+        required fields."""
         c_by_name = get_containers_by_name(doc, include_init_containers=True)
         for name, container in c_by_name.items():
             assert container["image"], f"container {name} does not have an image: {doc}"
-            assert container["imagePullPolicy"]
+            assert container["imagePullPolicy"] == "IfNotPresent"
 
     private_repo = "example.com/the-private-registry-repository"
     private_values = chart_tests.get_all_features()
