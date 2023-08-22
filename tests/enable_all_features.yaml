@@ -15,3 +15,8 @@ global:
   pspEnabled: true
   taskUsageMetricsEnabled: True
   veleroEnabled: true
+prometheus-node-exporter:
+  rbac:
+    create: true
+  endpoints:
+    - example.com
