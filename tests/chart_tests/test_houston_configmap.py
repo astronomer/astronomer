@@ -25,6 +25,11 @@ def common_test_cases(docs):
         "airflowLocalSettings"
     ]
 
+    assert (
+        prod["deployments"]["helm"]["airflow"]["cleanup"]["schedule"]
+        == '{{- add 3 (regexFind ".$" (adler32sum .Release.Name)) -}}-59/15 * * * *'
+    )
+
     # validate yaml-embedded python
     ast.parse(airflow_local_settings.encode())
 
@@ -445,28 +450,6 @@ cron_test_data = [
     ("development-devoid-terminator-0587", 12),
     ("development-optical-asteroid-4621", 12),
 ]
-
-
-@pytest.mark.parametrize(
-    "test_data", cron_test_data, ids=[x[0] for x in cron_test_data]
-)
-def test_cron_splay(test_data):
-    """Test that our adler32sum method of generating deterministic random
-    numbers works."""
-    doc = render_chart(
-        name=test_data[0],
-        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
-    )[0]
-
-    production_yaml = yaml.safe_load(doc["data"]["production.yaml"])
-    cron_schedule = production_yaml["deployments"]["helm"]["airflow"]["cleanup"][
-        "schedule"
-    ]
-    cron_minute = cron_schedule.split("-")[0]
-    # We are comparing after the addition of 3, which happens in the configmap template
-    assert (
-        str(test_data[1]) == cron_minute
-    ), f'test_data should be: ("{test_data[0]}", {cron_minute}),'
 
 
 def test_houston_configmapwith_update_airflow_runtime_checks_enabled():
