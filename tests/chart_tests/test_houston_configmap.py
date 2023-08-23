@@ -539,3 +539,31 @@ def test_houston_configmap_with_cleanup_airflow_db_disabled():
 
     prod = yaml.safe_load(doc["data"]["production.yaml"])
     assert prod["deployments"]["cleanupAirflowDb"]["enabled"] is False
+
+
+def test_houston_configmap_with_internal_authorization_flag_defaults():
+    """Validate the houston configmap to internal authorization."""
+    docs = render_chart(
+        values={},
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    common_test_cases(docs)
+    doc = docs[0]
+
+    prod = yaml.safe_load(doc["data"]["production.yaml"])
+    assert prod["deployments"]["enableHoustonInternalAuthorization"] is False
+
+
+def test_houston_configmap_with_internal_authorization_flag_enabled():
+    """Validate the houston configmap to internal authorization."""
+    docs = render_chart(
+        values={
+            "astronomer": {"houston": {"enableHoustonInternalAuthorization": True}}
+        },
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    common_test_cases(docs)
+    doc = docs[0]
+
+    prod = yaml.safe_load(doc["data"]["production.yaml"])
+    assert prod["deployments"]["enableHoustonInternalAuthorization"] is True

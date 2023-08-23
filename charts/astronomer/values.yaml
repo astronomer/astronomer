@@ -24,7 +24,7 @@ images:
     # httpSecret: ~
   houston:
     repository: quay.io/astronomer/ap-houston-api
-    tag: 0.32.19
+    tag: 0.32.20
     pullPolicy: IfNotPresent
   astroUI:
     repository: quay.io/astronomer/ap-astro-ui
@@ -314,6 +314,7 @@ houston:
   # Add custom annotation for houston ingress
   ingress:
     annotation: {}
+  enableHoustonInternalAuthorization: false
 
 configSyncer:
   enabled: true
