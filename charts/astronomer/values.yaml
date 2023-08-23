@@ -314,6 +314,7 @@ houston:
   # Add custom annotation for houston ingress
   ingress:
     annotation: {}
+  enableHoustonInternalAuthorization: false
 
 configSyncer:
   enabled: true
