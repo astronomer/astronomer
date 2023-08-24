@@ -143,3 +143,17 @@ class TestRegistryStatefulset:
         )
         assert len(docs) == 1
         assert "serviceAccountName" not in docs[0]["spec"]["template"]["spec"]
+
+    def test_astronomer_registry_statefulset_with_scc_disabled(
+        self, kube_version
+    ):
+        """Test that helm renders statefulset template for astronomer
+        registry with SA disabled."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={},
+            show_only=[
+                "charts/astronomer/templates/registry/registry-scc.yaml",
+            ],
+        )
+        assert len(docs) == 0
