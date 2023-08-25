@@ -48,7 +48,7 @@ data:
     elasticsearch:
       client:
         hosts:
-          - http://{{ template "elasticsearch.fullname" . }}:{{ .Values.common.ports.http }}
+          - {{ .Values.common.protocol }}://{{ template "elasticsearch.fullname" . }}:{{ .Values.common.ports.http }}
         ca_certs:
         client_cert:
         client_key:
