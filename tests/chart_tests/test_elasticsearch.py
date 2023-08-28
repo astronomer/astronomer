@@ -1,5 +1,5 @@
 import pytest
-
+import yaml
 from tests import get_containers_by_name, supported_k8s_versions
 from tests.chart_tests.helm_template_generator import render_chart
 
@@ -353,4 +353,74 @@ class TestElasticSearch:
         assert (
             node_client_roles_env
             in docs[2]["spec"]["template"]["spec"]["containers"][0]["env"]
+        )
+
+    def test_elasticsearch_curator_indexPatterns_override_with_loggingSidecar(
+        self, kube_version
+    ):
+        """Test ElasticSearch Curator IndexPattern Override with loggingSidecar"""
+        indexPattern = "%Y.%m"
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "loggingSidecar": {"enabled": True, "indexPattern": indexPattern}
+                }
+            },
+            show_only=[
+                "charts/elasticsearch/templates/curator/es-curator-configmap.yaml"
+            ],
+        )
+        assert len(docs) == 1
+        assert (LS := yaml.safe_load(docs[0]["data"]["action_file.yml"]))
+        assert indexPattern == LS["actions"][1]["filters"][0]["timestring"]
+
+    def test_elasticsearch_curator_with_indexPatterns_defaults(self, kube_version):
+        """Test ElasticSearch Curator IndexPattern with defaults"""
+        indexPattern = "%Y.%m.%d"
+        docs = render_chart(
+            kube_version=kube_version,
+            values={},
+            show_only=[
+                "charts/elasticsearch/templates/curator/es-curator-configmap.yaml"
+            ],
+        )
+        assert len(docs) == 1
+        assert (LS := yaml.safe_load(docs[0]["data"]["action_file.yml"]))
+        assert indexPattern == LS["actions"][1]["filters"][0]["timestring"]
+
+    def test_elasticsearch_curator_config_defaults(self, kube_version):
+        """Test ElasticSearch Curator IndexPattern with defaults"""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={},
+            show_only=[
+                "charts/elasticsearch/templates/curator/es-curator-configmap.yaml"
+            ],
+        )
+        assert len(docs) == 1
+        assert (LS := yaml.safe_load(docs[0]["data"]["config.yml"]))
+        print(LS["elasticsearch"])
+        assert "elasticsearch" in LS
+        assert (
+            "http://release-name-elasticsearch:9200"
+            in LS["elasticsearch"]["client"]["hosts"]
+        )
+
+    def test_elasticsearch_curator_config_overrides(self, kube_version):
+        """Test ElasticSearch Curator IndexPattern with defaults"""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"elasticsearch": {"common": {"protocol": "https"}}},
+            show_only=[
+                "charts/elasticsearch/templates/curator/es-curator-configmap.yaml"
+            ],
+        )
+        assert len(docs) == 1
+        assert (LS := yaml.safe_load(docs[0]["data"]["config.yml"]))
+        print(LS["elasticsearch"])
+        assert "elasticsearch" in LS
+        assert (
+            "https://release-name-elasticsearch:9200"
+            in LS["elasticsearch"]["client"]["hosts"]
         )
