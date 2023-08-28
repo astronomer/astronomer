@@ -32,6 +32,7 @@ images:
 common:
   podAnnotations: {}
   serviceType: ClusterIP
+  protocol: http
 
   env:
     CLUSTER_NAME: "astronomer"

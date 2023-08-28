@@ -469,3 +469,39 @@ class TestElasticSearch:
         assert len(docs) == 1
         assert (LS := yaml.safe_load(docs[0]["data"]["action_file.yml"]))
         assert indexPattern == LS["actions"][1]["filters"][0]["timestring"]
+
+    def test_elasticsearch_curator_config_defaults(self, kube_version):
+        """Test ElasticSearch Curator IndexPattern with defaults"""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={},
+            show_only=[
+                "charts/elasticsearch/templates/curator/es-curator-configmap.yaml"
+            ],
+        )
+        assert len(docs) == 1
+        assert (LS := yaml.safe_load(docs[0]["data"]["config.yml"]))
+        print(LS["elasticsearch"])
+        assert "elasticsearch" in LS
+        assert (
+            "http://release-name-elasticsearch:9200"
+            in LS["elasticsearch"]["client"]["hosts"]
+        )
+
+    def test_elasticsearch_curator_config_overrides(self, kube_version):
+        """Test ElasticSearch Curator IndexPattern with defaults"""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"elasticsearch": {"common": {"protocol": "https"}}},
+            show_only=[
+                "charts/elasticsearch/templates/curator/es-curator-configmap.yaml"
+            ],
+        )
+        assert len(docs) == 1
+        assert (LS := yaml.safe_load(docs[0]["data"]["config.yml"]))
+        print(LS["elasticsearch"])
+        assert "elasticsearch" in LS
+        assert (
+            "https://release-name-elasticsearch:9200"
+            in LS["elasticsearch"]["client"]["hosts"]
+        )
