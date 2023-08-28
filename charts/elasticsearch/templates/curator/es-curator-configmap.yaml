@@ -45,6 +45,26 @@ data:
     ---
     # Remember, leave a key empty if there is no value.  None will be a string,
     # not a Python "NoneType"
+    {{ if semverCompare "<8" .Values.images.curator.tag -}}
+    client:
+      hosts:
+        - {{ template "elasticsearch.fullname" . }}
+      port: {{ .Values.common.ports.http }}
+      url_prefix:
+      use_ssl: False
+      certificate:
+      client_cert:
+      client_key:
+      ssl_no_validate: False
+      http_auth:
+      timeout: 30
+      master_only: False
+    logging:
+      loglevel: INFO
+      logfile:
+      logformat: default
+      blacklist: ['elasticsearch', 'urllib3']
+    {{- else -}}
     elasticsearch:
       client:
         hosts:
@@ -61,4 +81,5 @@ data:
       logfile:
       logformat: default
       blacklist: ['elasticsearch', 'urllib3']
+    {{- end }}
 {{- end }}
