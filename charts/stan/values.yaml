@@ -36,7 +36,7 @@ stan:
 
   logging:
     debug: true
-    trace:
+    trace: false
 
   # In case of NATS not being embedded then
   # an URL for NATS is required.
