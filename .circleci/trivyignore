@@ -12,3 +12,4 @@ CVE-2022-32149
 # github.com/opencontainers/runc 1.0.1
 # upstream not interested in resolving the CVE
 CVE-2022-29162
+CVE-2023-27561
