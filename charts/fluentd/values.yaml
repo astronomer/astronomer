@@ -9,7 +9,7 @@ container:
 images:
   fluentd:
     repository: quay.io/astronomer/ap-fluentd
-    tag: 1.16.1-1
+    tag: 1.16.2
     pullPolicy: IfNotPresent
 
 elasticsearch:
