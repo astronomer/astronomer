@@ -110,6 +110,7 @@ global:
     name: sidecar-log-consumer
     image: quay.io/astronomer/ap-vector:0.28.2-3
     customConfig: false
+    indexPattern: ~
     extraEnv: []
     resources: {}
     #  requests:

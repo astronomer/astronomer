@@ -153,3 +153,12 @@ imagePullSecrets:
 {{ . }},
 {{- end -}}
 {{- end -}}
+
+
+{{- define "curator.indexPattern" -}}
+{{ if and .Values.global.loggingSidecar.enabled  .Values.global.loggingSidecar.indexPattern }}
+{{- .Values.global.loggingSidecar.indexPattern | squote }}
+{{ else }}
+{{- .Values.curator.age.timestring | squote}}
+{{- end -}}
+{{- end -}}
