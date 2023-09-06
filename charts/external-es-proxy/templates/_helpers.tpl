@@ -89,7 +89,7 @@ imagePullSecrets:
 {{- if .Values.global.privateRegistry.enabled -}}
 {{ .Values.global.privateRegistry.repository }}/ap-openresty:{{ .Values.images.esproxy.tag }}
 {{- else -}}
-{{ printf "%s:%s" .Values.images.esproxy.repository .Values.images.esproxy.tag }}
+{{ .Values.images.esproxy.repository}}:{{ .Values.images.esproxy.tag }}
 {{- end }}
 {{- end }}
 
@@ -98,6 +98,6 @@ imagePullSecrets:
 {{- if .Values.global.privateRegistry.enabled -}}
 {{ .Values.global.privateRegistry.repository }}/ap-awsesproxy:{{ .Values.images.awsproxy.tag }}
 {{- else -}}
-{{ printf "%s:%s" .Values.images.awsproxy.repository .Values.images.awsproxy.tag }}
+{{ .Values.images.awsproxy.repository }}:{{ .Values.images.awsproxy.tag }}
 {{- end }}
 {{- end }}
