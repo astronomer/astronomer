@@ -3,13 +3,30 @@ import re
 import pytest
 
 import tests.chart_tests as chart_tests
-from tests import get_containers_by_name
+from tests import get_containers_by_name, k8s_version_too_old, k8s_version_too_new
 from tests.chart_tests.helm_template_generator import render_chart
 
 annotation_validator = re.compile(
     "^([^/]+/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$"
 )
 pod_managers = ["Deployment", "StatefulSet", "DaemonSet"]
+
+
+@pytest.mark.parametrize(
+    "version,err_substring",
+    [
+        (k8s_version_too_old, "too old!"),
+        (k8s_version_too_new, "too new!"),
+    ],
+)
+def test_k8s_version_out_of_bounds(version, err_substring):
+    """Test that an error is raised when the k8s version is too new."""
+    with pytest.raises(Exception) as err:
+        render_chart(
+            values=chart_tests.get_all_features(),
+            kube_version=version,
+        )
+    assert err_substring in str(err.value.stderr.decode())
 
 
 class TestAllCronJobs:
