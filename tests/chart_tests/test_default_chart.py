@@ -12,21 +12,36 @@ annotation_validator = re.compile(
 pod_managers = ["Deployment", "StatefulSet", "DaemonSet"]
 
 
-@pytest.mark.parametrize(
-    "version,err_substring",
-    [
-        (k8s_version_too_old, "too old!"),
-        (k8s_version_too_new, "too new!"),
-    ],
-)
-def test_k8s_version_out_of_bounds(version, err_substring):
-    """Test that an error is raised when the k8s version is too new."""
-    with pytest.raises(Exception) as err:
+class TestK8sVersionConstraints:
+    @pytest.mark.parametrize(
+        "version,err_substring",
+        [
+            (k8s_version_too_old, "too old!"),
+            (k8s_version_too_new, "too new!"),
+        ],
+    )
+    def test_k8s_version_out_of_bounds(self, version, err_substring):
+        """Test that an error is returned when the k8s version is too old or too new."""
+        with pytest.raises(Exception) as err:
+            render_chart(
+                kube_version=version,
+            )
+        assert err_substring in str(err.value.stderr.decode())
+
+    @pytest.mark.parametrize(
+        "version",
+        [
+            (k8s_version_too_old),
+            (k8s_version_too_new),
+        ],
+    )
+    def test_k8s_version_out_of_bounds_override(self, version):
+        """Test that no error is returned for versions that are too old or new when forceIncompatibleKubernetes is used."""
         render_chart(
-            values=chart_tests.get_all_features(),
+            values={"forceIncompatibleKubernetes": True},
             kube_version=version,
+            validate_objects=False,
         )
-    assert err_substring in str(err.value.stderr.decode())
 
 
 class TestAllCronJobs:
