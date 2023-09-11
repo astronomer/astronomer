@@ -3,9 +3,9 @@ from pathlib import Path
 import yaml
 
 # The top-level path of this repository
-git_root_dir = [x for x in Path(".").resolve().parents if (x / ".git").is_dir()][
+git_root_dir = [x for x in Path(__file__).resolve().parents if (x / ".git").is_dir()][
     -1
-].as_posix()
+]
 
 metadata = yaml.safe_load((Path(git_root_dir) / "metadata.yaml").read_text())
 # replace all patch versions with 0 so we end up with ['1.26.0', '1.27.0']
