@@ -46,6 +46,14 @@ kibana.{{ .Values.global.baseDomain }}
 {{- end }}
 {{- end }}
 
+{{ define "kibana.init.image" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-init:{{ .Values.images.init.tag }}
+{{- else -}}
+{{ .Values.images.init.repository }}:{{ .Values.images.init.tag }}
+{{- end }}
+{{- end }}
+
 {{/*
 Return the proper Docker Image Registry Secret Names
 */}}
