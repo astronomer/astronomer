@@ -27,7 +27,7 @@ spec:
           app: kibana-default-index
           version: {{ .Chart.Version }}
       spec:
-{{- include "kibana.imagePullSecrets" . | indent 6 }}
+{{- include "kibana.imagePullSecrets" . | indent 8 }}
         containers:
         - name: kibana-default-index
           image: {{ template "kibana.init.image" . }}
