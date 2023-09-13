@@ -23,9 +23,7 @@ spec:
         labels:
           tier: logging
           component: kibana-default-index
-          chart: {{ template "kibana.chart" . }}
           release: {{ .Release.Name }}
-          heritage: {{ .Release.Service }}
           app: kibana-default-index
           version: {{ .Chart.Version }}
       spec:
