@@ -1,5 +1,5 @@
 #######################################################
-##           Kibana Default Index CronJob        ###### 
+##           Kibana Default Index CronJob        ######
 #######################################################
 apiVersion: {{ include "apiVersion.batch.cronjob" . }}
 kind: Job
@@ -34,7 +34,7 @@ spec:
         - name: kibana-default-index
           image: {{ template "kibana.image" . }}
           imagePullPolicy: {{ .Values.images.kibana.pullPolicy }}
-          command: 
+          command:
           - "/bin/bash"
           - -c
           - |
