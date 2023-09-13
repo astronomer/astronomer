@@ -1,6 +1,6 @@
-#######################################################
-##           Kibana Default Index CronJob        ######
-#######################################################
+########################################
+# Kibana default index helm hook
+########################################
 apiVersion: {{ include "apiVersion.batch.cronjob" . }}
 kind: Job
 metadata:
