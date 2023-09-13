@@ -33,6 +33,11 @@ spec:
           component: ingress-controller
           release: {{ .Release.Name }}
     {{- end }}
+    - podSelector:
+        matchLabels:
+          app: {{ template "kibana.name" . }}-default-index
+          release: {{ .Release.Name }}
+          tier: logging
     ports:
     {{- if .Values.global.authSidecar.enabled  }}
     - protocol: TCP
