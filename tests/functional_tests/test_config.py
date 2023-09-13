@@ -246,7 +246,7 @@ def test_cve_2021_44228_es_master(es_master):
 
 def test_kibana_index_pod(kibana_index_pod_client):
     """Check kibana index pod completed successfully"""
-    command = ["kubectl logs -f  -lcomponent=kibana-default-index"]
+    command = ["kubectl -n astronomer logs -f  -lcomponent=kibana-default-index"]
     pod_output = Popen(command, shell=True, stdout=PIPE, stderr=PIPE)
     stdout, stderr = pod_output.communicate()
     assert "fluentd.*" in stdout.decode("utf-8")
