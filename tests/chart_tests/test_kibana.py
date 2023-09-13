@@ -22,7 +22,7 @@ class TestKibana:
         doc = docs[0]
         assert doc["kind"] == "Job"
         assert doc["apiVersion"] == "batch/v1"
-        assert doc["metadata"]["name"] == "release-name-kibana-default-index-job"
+        assert doc["metadata"]["name"] == "release-name-kibana-default-index"
         assert (
             "fluentd.*"
             in doc["spec"]["template"]["spec"]["containers"][0]["command"][2]
@@ -42,7 +42,7 @@ class TestKibana:
         doc = docs[0]
         assert doc["kind"] == "Job"
         assert doc["apiVersion"] == "batch/v1"
-        assert doc["metadata"]["name"] == "release-name-kibana-default-index-job"
+        assert doc["metadata"]["name"] == "release-name-kibana-default-index"
         assert (
             "vector.*" in doc["spec"]["template"]["spec"]["containers"][0]["command"][2]
         )
