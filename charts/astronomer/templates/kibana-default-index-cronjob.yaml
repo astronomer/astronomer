@@ -1,0 +1,48 @@
+################################
+## Curator CronJob
+#################################
+apiVersion: {{ include "apiVersion.batch.cronjob" . }}
+kind: Job
+metadata:
+  name: {{ template "kibana.fullname" . }}-default-index-job
+  labels:
+    tier: logging
+    component: {{ template "kibana.name" . }}
+    chart: {{ template "kibana.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  annotations:
+    # This is what defines this resource as a hook. Without this line, the
+    # job is considered part of the release.
+    "helm.sh/hook": post-upgrade,post-install
+    "helm.sh/hook-weight": "1"
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  template:
+      metadata:
+        labels:
+          tier: logging
+          component: {{ template "kibana.name" . }}
+          chart: {{ template "kibana.chart" . }}
+          release: {{ .Release.Name }}
+          heritage: {{ .Release.Service }}
+          app: {{ template "kibana.name" . }}-default-index
+          version: {{ .Chart.Version }}
+      spec:
+{{- include "kibana.imagePullSecrets" . | indent 6 }}
+        containers:
+        - name: default-index
+          image: quay.io/astronomer/ap-kibana
+          imagePullPolicy: IfNotPresent
+          command: 
+          - "/bin/bash"
+          - -c
+          - |
+            http_status=$(curl -s -o /dev/null -w "%{http_code}" -XGET http://{{ .Release.Name }}-kibana:5601/api/data_views/data_view/fluentd.*)
+            if [ "$http_status" -eq 200 ]; then
+              echo "Index Patterns Already Exists. Skipping Creation"
+            else
+              echo "Creating Index Pattern"
+              curl -XPOST -H 'Content-Type: application/json' -H 'kbn-xsrf: astronomer' --data '{"attributes":{"title":"fluentd.*","timeFieldName":"@timestamp"}}' http://{{ .Release.Name }}-kibana:5601/api/saved_objects/index-pattern/fluentd.*?overwrite=false
+            fi
+        restartPolicy: OnFailure
