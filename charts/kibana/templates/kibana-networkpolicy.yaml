@@ -36,7 +36,7 @@ spec:
     - podSelector:
         matchLabels:
           component: kibana-default-index
-          release: astronomer
+          release: {{ .Release.Name }}
           tier: logging
     ports:
     {{- if .Values.global.authSidecar.enabled  }}
