@@ -1,6 +1,6 @@
-################################
-## Curator CronJob
-#################################
+#######################################################
+##           Kibana Default Index CronJob        ###### 
+#######################################################
 apiVersion: {{ include "apiVersion.batch.cronjob" . }}
 kind: Job
 metadata:
@@ -31,9 +31,9 @@ spec:
       spec:
 {{- include "kibana.imagePullSecrets" . | indent 6 }}
         containers:
-        - name: default-index
-          image: quay.io/astronomer/ap-kibana
-          imagePullPolicy: IfNotPresent
+        - name: kibana-default-index
+          image: {{ template "kibana.image" . }}
+          imagePullPolicy: {{ .Values.images.kibana.pullPolicy }}
           command: 
           - "/bin/bash"
           - -c
