@@ -45,4 +45,4 @@ spec:
               echo "Creating Index Pattern"
               curl -XPOST -H 'Content-Type: application/json' -H 'kbn-xsrf: astronomer' --data '{"attributes":{"title":"{{ template "kibana.IndexPattern" . }}.*","timeFieldName":"@timestamp"}}' http://{{ .Release.Name }}-kibana:5601/api/saved_objects/index-pattern/{{ template "kibana.IndexPattern" . }}.*?overwrite=false
             fi
-        restartPolicy: OnFailure
+        restartPolicy: Never
