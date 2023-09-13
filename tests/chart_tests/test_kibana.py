@@ -29,7 +29,7 @@ class TestKibana:
         )
 
     def test_kibana_index_with_logging_sidecar(self, kube_version):
-        """Test kibana Service with logging sidecar."""
+        """Test kibana Service with logging sidecar index."""
         docs = render_chart(
             kube_version=kube_version,
             values={"global": {"loggingSidecar": {"enabled": True}}},
@@ -46,3 +46,15 @@ class TestKibana:
         assert (
             "vector.*" in doc["spec"]["template"]["spec"]["containers"][0]["command"][2]
         )
+
+    def test_kibana_index_disabled(self, kube_version):
+        """Test kibana Service with index creation disabled."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"kibana": {"createDefaultIndex": False}},
+            show_only=[
+                "charts/kibana/templates/kibana-default-index-cronjob.yaml",
+            ],
+        )
+
+        assert len(docs) == 0

@@ -1,6 +1,7 @@
 ########################################
 # Kibana default index helm hook
 ########################################
+{{ if .Values.createDefaultIndex }}
 apiVersion: {{ include "apiVersion.batch.cronjob" . }}
 kind: Job
 metadata:
@@ -32,9 +33,10 @@ spec:
         - name: kibana-default-index
           image: {{ template "kibana.init.image" . }}
           imagePullPolicy: {{ .Values.images.init.pullPolicy }}
+          resources: {{ toYaml .Values.resources | nindent 12 }}
           command:
           - "/bin/sh"
-          - -c
+          - -ec
           - |
             http_status=$(curl --retry 10 --retry-delay 30 --retry-all-errors -s -o /dev/null -w "%{http_code}" -XGET http://{{ .Release.Name }}-kibana:5601/api/data_views/data_view/{{ template "kibana.IndexPattern" . }}.*)
             if [[ "$http_status" -eq 200 ]]; then
@@ -44,3 +46,4 @@ spec:
               curl --retry 10 --retry-delay 30 --retry-all-errors -XPOST -H 'Content-Type: application/json' -H 'kbn-xsrf: astronomer' --data '{"attributes":{"title":"{{ template "kibana.IndexPattern" . }}.*","timeFieldName":"@timestamp"}}' http://{{ .Release.Name }}-kibana:5601/api/saved_objects/index-pattern/{{ template "kibana.IndexPattern" . }}.*?overwrite=false
             fi
         restartPolicy: Never
+{{ end }}
