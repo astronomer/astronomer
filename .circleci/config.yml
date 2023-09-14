@@ -477,9 +477,17 @@ workflows:
             - build-artifact
       - approve-internal-release:
           type: approval
+          filters:
+            branches:
+              only:
+                - '/^release-0\.\d+$/'
       - release-to-internal:
           context:
             - gcp-astronomer-prod
+          filters:
+            branches:
+              only:
+                - '/^release-0\.\d+$/'
           requires:
             - approve-internal-release
             - platform-1-23-17
