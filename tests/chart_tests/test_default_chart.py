@@ -1,6 +1,6 @@
 import pytest
 import tests.chart_tests as chart_tests
-from tests import get_containers_by_name
+from tests import get_containers_by_name, k8s_version_too_old, k8s_version_too_new
 from tests.chart_tests.helm_template_generator import render_chart
 import re
 
@@ -8,6 +8,55 @@ annotation_validator = re.compile(
     "^([^/]+/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$"
 )
 pod_managers = ["Deployment", "StatefulSet", "DaemonSet"]
+
+
+class TestK8sVersionConstraints:
+    @pytest.mark.parametrize(
+        "version,err_substring",
+        [
+            (k8s_version_too_old, "too old!"),
+            (k8s_version_too_new, "too new!"),
+        ],
+    )
+    def test_k8s_version_out_of_bounds(self, version, err_substring):
+        """Test that an error is returned when the k8s version is too old or too new."""
+        with pytest.raises(Exception) as err:
+            render_chart(
+                kube_version=version,
+            )
+        assert err_substring in str(err.value.stderr.decode())
+
+    @pytest.mark.parametrize(
+        "version",
+        [
+            (k8s_version_too_old),
+            (k8s_version_too_new),
+        ],
+    )
+    def test_k8s_version_out_of_bounds_override(self, version):
+        """Test that no error is returned for versions that are too old or new when forceIncompatibleKubernetes is used."""
+        render_chart(
+            values={"forceIncompatibleKubernetes": True},
+            kube_version=version,
+            validate_objects=False,
+        )
+
+
+class TestAllCronJobs:
+    chart_values = chart_tests.get_all_features()
+
+    def test_ensure_cronjob_names_are_max_52_chars(self):
+        """Cronjob names must be DNS_MAX_LEN - TIMESTAMP_LEN, which is 52 chars."""
+        default_docs = render_chart(values=self.chart_values)
+        cronjobs = [
+            doc for doc in default_docs if doc["kind"].lower() == "CronJob".lower()
+        ]
+
+        for doc in cronjobs:
+            name_len = len(doc["metadata"]["name"])
+            assert (
+                name_len <= 52
+            ), f'{doc["metadata"]["name"]} is too long at {name_len} characters'
 
 
 class TestAllPodSpecContainers:

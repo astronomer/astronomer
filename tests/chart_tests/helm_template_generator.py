@@ -84,6 +84,7 @@ def render_chart(
     kube_version: str = "1.24.0",
     baseDomain: str = "example.com",
     namespace: Optional[str] = None,
+    validate_objects: bool = True,
 ):
     """Render a helm chart into dictionaries.
 
@@ -137,9 +138,10 @@ def render_chart(
                     )
             raise
         k8s_objects = yaml.full_load_all(templates)
-        k8s_objects = [k8s_object for k8s_object in k8s_objects if k8s_object]  # type: ignore
-        for k8s_object in k8s_objects:
-            validate_k8s_object(k8s_object, kube_version=kube_version)
+        k8s_objects: list = [k8s_object for k8s_object in k8s_objects if k8s_object]
+        if validate_objects:
+            for k8s_object in k8s_objects:
+                validate_k8s_object(k8s_object, kube_version=kube_version)
         return k8s_objects
 
 
