@@ -130,3 +130,13 @@ def get_pod_running_containers(pod_namespace=namespace):
                 containers[key] = container
 
     return containers
+
+
+@pytest.fixture(scope="function")
+def kibana_index_pod_client(core_v1_client):
+    pod = get_pod_by_label_selector(
+        core_v1_client, "component=kibana-default-index,tier=logging"
+    )
+    yield testinfra.get_host(
+        f"kubectl://{pod}?container=kibana-default-index&namespace={namespace}"
+    )
