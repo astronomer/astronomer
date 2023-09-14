@@ -1,0 +1,49 @@
+########################################
+# Kibana default index helm hook
+########################################
+{{ if .Values.createDefaultIndex }}
+apiVersion: {{ include "apiVersion.batch.cronjob" . }}
+kind: Job
+metadata:
+  name: {{ template "kibana.fullname" . }}-default-index
+  labels:
+    tier: logging
+    component: kibana-default-index
+    chart: {{ template "kibana.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  annotations:
+    # This is what defines this resource as a hook. Without this line, the
+    # job is considered part of the release.
+    "helm.sh/hook": post-upgrade,post-install
+    "helm.sh/hook-weight": "1"
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  template:
+      metadata:
+        labels:
+          tier: logging
+          component: kibana-default-index
+          release: {{ .Release.Name }}
+          app: kibana-default-index
+          version: {{ .Chart.Version }}
+      spec:
+{{- include "kibana.imagePullSecrets" . | indent 8 }}
+        containers:
+        - name: kibana-default-index
+          image: {{ template "kibana.init.image" . }}
+          imagePullPolicy: {{ .Values.images.init.pullPolicy }}
+          resources: {{ toYaml .Values.resources | nindent 12 }}
+          command:
+          - "/bin/sh"
+          - -ec
+          - |
+            http_status=$(curl --retry 10 --retry-delay 30 --retry-all-errors -s -o /dev/null -w "%{http_code}" -XGET http://{{ .Release.Name }}-kibana:5601/api/data_views/data_view/{{ template "kibana.IndexPattern" . }}.*)
+            if [[ "$http_status" -eq 200 ]]; then
+              echo "Kibana Index Pattern Already Exists. Skipping Creation"
+            else
+              echo "Creating Kibana Index Pattern"
+              curl --retry 10 --retry-delay 30 --retry-all-errors -XPOST -H 'Content-Type: application/json' -H 'kbn-xsrf: astronomer' --data '{"attributes":{"title":"{{ template "kibana.IndexPattern" . }}.*","timeFieldName":"@timestamp"}}' http://{{ .Release.Name }}-kibana:5601/api/saved_objects/index-pattern/{{ template "kibana.IndexPattern" . }}.*?overwrite=false
+            fi
+        restartPolicy: Never
+{{ end }}

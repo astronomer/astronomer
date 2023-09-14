@@ -7,6 +7,10 @@ images:
     repository: quay.io/astronomer/ap-kibana
     tag: 8.8.2
     pullPolicy: IfNotPresent
+  init:
+    repository: quay.io/astronomer/ap-init
+    tag: 3.18.3-1
+    pullPolicy: IfNotPresent
 
 securityContext:
     runAsNonRoot: true
@@ -35,3 +39,5 @@ serviceType: ClusterIP
 
 ports:
   http: 5601
+
+createDefaultIndex: true
