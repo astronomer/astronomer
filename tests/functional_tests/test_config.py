@@ -8,7 +8,7 @@ running pods so we can inspect the run-time environment.
 import json
 import time
 from os import getenv
-from subprocess import check_output
+from subprocess import check_output, Popen, PIPE
 
 import pytest
 import testinfra
@@ -242,3 +242,11 @@ def test_cve_2021_44228_es_master(es_master):
     assert "-Dlog4j2.formatMsgNoLookups=true" in es_master.check_output(
         "/usr/share/elasticsearch/jdk/bin/jps -lv"
     )
+
+
+def test_kibana_index_pod(kibana_index_pod_client):
+    """Check kibana index pod completed successfully"""
+    command = ["kubectl -n astronomer logs -f  -lcomponent=kibana-default-index"]
+    pod_output = Popen(command, shell=True, stdout=PIPE, stderr=PIPE)
+    stdout, stderr = pod_output.communicate()
+    assert "fluentd.*" in stdout.decode("utf-8")
