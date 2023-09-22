@@ -47,6 +47,57 @@ nats:
     maxPings:
     lameDuckDuration:
 
+  jetstream:
+    enabled: false
+
+    # Jetstream Domain
+    domain:
+
+    ##########################
+    #                        #
+    #  Jetstream Encryption  #
+    #                        #
+    ##########################
+    encryption:
+      # Use key if you want to provide the key via Helm Values
+      # key: random_key
+
+      # Use a secret reference if you want to get a key from a secret
+      # secret:
+      #   name: "nats-jetstream-encryption"
+      #   key: "key"
+
+    #############################
+    #                           #
+    #  Jetstream Memory Storage #
+    #                           #
+    #############################
+    memStorage:
+      enabled: true
+      size: 1Gi
+
+    ############################
+    #                          #
+    #  Jetstream File Storage  #
+    #                          #
+    ############################
+    fileStorage:
+      enabled: true
+      storageDirectory: /data
+
+      # Set for use with existing PVC
+      # existingClaim: jetstream-pvc
+      # claimStorageSize: 1Gi
+
+      # Use below block to create new persistent volume
+      # only used if existingClaim is not specified
+      size: 1Gi
+      # storageClassName: ""
+      accessModes:
+        - ReadWriteOnce
+      annotations:
+      # key: "value"
+
   logging:
     debug:
     trace:
@@ -105,6 +156,7 @@ podAnnotations: {}
 cluster:
   enabled: true
   name: nats
+  noAdvertise: false
 
 # Leafnode connections to extend a cluster:
 #
@@ -112,6 +164,7 @@ cluster:
 #
 leafnodes:
   enabled: false
+  noAdvertise: false
   # remotes:
   #   - url: "tls://connect.ngs.global:7422"
 

@@ -67,6 +67,42 @@ data:
     {{- end }}
     {{- end }}
 
+    {{- if .Values.nats.jetstream.enabled }}
+    ###################################
+    #                                 #
+    # NATS JetStream                  #
+    #                                 #
+    ###################################
+    jetstream {
+      {{- if .Values.nats.jetstream.encryption }}
+      {{- if .Values.nats.jetstream.encryption.key }}
+      key: {{ .Values.nats.jetstream.encryption.key | quote }}
+      {{- else if .Values.nats.jetstream.encryption.secret }}
+      key: $JS_KEY
+      {{- end}}
+      {{- end}}
+
+      {{- if .Values.nats.jetstream.memStorage.enabled }}
+      max_mem: {{ .Values.nats.jetstream.memStorage.size }}
+      {{- end }}
+
+      {{- if .Values.nats.jetstream.domain }}
+      domain: {{ .Values.nats.jetstream.domain }}
+      {{- end }}
+
+      {{- if .Values.nats.jetstream.fileStorage.enabled }}
+      store_dir: {{ .Values.nats.jetstream.fileStorage.storageDirectory }}
+
+      max_file:
+      {{- if .Values.nats.jetstream.fileStorage.existingClaim }}
+      {{- .Values.nats.jetstream.fileStorage.claimStorageSize  }}
+      {{- else }}
+      {{- .Values.nats.jetstream.fileStorage.size }}
+      {{- end }}
+      {{- end }}
+    }
+    {{- end }}
+
     {{ if .Values.cluster.enabled }}
     ###################################
     #                                 #
@@ -124,18 +160,27 @@ data:
       ]
       cluster_advertise: $CLUSTER_ADVERTISE
 
+      {{- with .Values.cluster.noAdvertise }}
+      no_advertise: {{ . }}
+      {{- end }}
+
       connect_retries: {{ .Values.nats.connectRetries }}
     }
     {{ end }}
 
+    {{- if .Values.leafnodes.enabled }}
     #################
     #               #
     # NATS Leafnode #
     #               #
     #################
-    {{- if .Values.leafnodes.enabled }}
+
     leafnodes {
       listen: "0.0.0.0:7422"
+
+      {{- with .Values.leafnodes.noAdvertise }}
+      no_advertise: {{ . }}
+      {{- end }}
 
       {{- with .Values.leafnodes.tls }}
       {{ $secretName := .secret.name }}
@@ -190,12 +235,13 @@ data:
     }
     {{ end }}
 
+    {{- if .Values.gateway.enabled }}
     #################
     #               #
     # NATS Gateways #
     #               #
     #################
-    {{- if .Values.gateway.enabled }}
+
     gateway {
       name: {{ .Values.gateway.name }}
       port: 7522

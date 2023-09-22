@@ -181,6 +181,11 @@ spec:
           {{- end }}
           {{- end }}
 
+          {{- if .Values.nats.jetstream.fileStorage.enabled }}
+          - name: {{ template "nats.name" . }}-js-pvc
+            mountPath: {{ .Values.nats.jetstream.fileStorage.storageDirectory }}
+          {{- end }}
+
           #######################
           #  TLS Volumes Mounts #
           #######################
@@ -282,6 +287,9 @@ spec:
         - -varz
         - -prefix=gnatsd
         - -use_internal_server_id
+        {{- if .Values.nats.jetstream.enabled }}
+        - -jsz=all
+        {{- end }}
         - http://localhost:8222/
         ports:
         - containerPort: 7777
@@ -289,3 +297,31 @@ spec:
         resources:
 {{ toYaml .Values.exporter.resources | indent 10 }}
       {{ end }}
+
+  volumeClaimTemplates:
+  {{- if and .Values.nats.jetstream.fileStorage.enabled (not .Values.nats.jetstream.fileStorage.existingClaim) }}
+  #####################################
+  #                                   #
+  #  Jetstream New Persistent Volume  #
+  #                                   #
+  #####################################
+    - metadata:
+        name: {{ template "nats.name" . }}-js-pvc
+        {{- if .Values.nats.jetstream.fileStorage.annotations }}
+        annotations:
+        {{- range $key, $value := .Values.nats.jetstream.fileStorage.annotations }}
+          {{ $key }}: {{ $value | quote }}
+        {{- end }}
+        {{- end }}
+      spec:
+        accessModes:
+        {{- range .Values.nats.jetstream.fileStorage.accessModes }}
+          - {{ . | quote }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.nats.jetstream.fileStorage.size }}
+        {{- if .Values.nats.jetstream.fileStorage.storageClassName }}
+        storageClassName: {{ .Values.nats.jetstream.fileStorage.storageClassName | quote }}
+        {{- end }}
+  {{- end }}
