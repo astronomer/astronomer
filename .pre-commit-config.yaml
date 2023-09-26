@@ -8,14 +8,14 @@ repos:
         language: python
         files: "config.yml$|config.yml.j2|generate_circleci_config.py$|values.yaml$"
         entry: .circleci/generate_circleci_config.py
-        additional_dependencies: ["jinja2"]
+        additional_dependencies: ["jinja2", "PyYAML"]
   - repo: https://github.com/codespell-project/codespell
     rev: v2.2.5
     hooks:
       - id: codespell
         args: ["-L", "AKS,aks"]
   - repo: https://github.com/Lucas-C/pre-commit-hooks
-    rev: v1.5.1
+    rev: v1.5.4
     hooks:
       - id: remove-tabs
         exclude_types: [makefile, binary]
@@ -24,7 +24,7 @@ repos:
     hooks:
       - id: black
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: "v0.0.280"
+    rev: "v0.0.287"
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix, --ignore, E501]

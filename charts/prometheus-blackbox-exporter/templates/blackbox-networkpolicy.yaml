@@ -2,7 +2,7 @@
 # Using this method it allows us to selectively include a policy
 # or Not based on other variables. The templates with the actually policies
 # start with "_" and are named bb-<service it is affecting>-policy.yaml
-
+{{- if .Values.global.networkPolicy.enabled }}
 {{- if .Values.astroServices.commander.enabled}}
 ---
 {{- include "blackbox.commanderNetPol" .}}
@@ -42,3 +42,4 @@
 # This one is unconditionally enabled because blackbox exporter is
 # only useful when Prometheus is enabled.
 {{- include "blackbox.prometheusPolicy" . }}
+{{- end }}
