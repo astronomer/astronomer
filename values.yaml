@@ -111,7 +111,7 @@ global:
   loggingSidecar:
     enabled: false
     name: sidecar-log-consumer
-    image: quay.io/astronomer/ap-vector:0.28.2-3
+    image: quay.io/astronomer/ap-vector:0.32.2
     customConfig: false
     indexPattern: ~
     extraEnv: []
@@ -127,7 +127,7 @@ global:
   authSidecar:
     enabled: false
     repository: quay.io/astronomer/ap-auth-sidecar
-    tag: 1.25.1
+    tag: 1.25.2
     pullPolicy: IfNotPresent
     port: 8084
     default_nginx_settings: |
