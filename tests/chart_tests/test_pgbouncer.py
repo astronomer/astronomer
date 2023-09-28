@@ -64,3 +64,34 @@ class TestPGBouncerDeployment:
 
         labels = doc["spec"]["template"]["metadata"]["labels"]
         assert labels.get("test_label") == "test_label1"
+
+    def test_pgbouncer_deployment_with_private_registry(self, kube_version):
+        """Test that pgbouncer deployment properly uses the private registry
+        images."""
+        private_registry = "private-registry.example.com"
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/pgbouncer/templates/pgbouncer-deployment.yaml"],
+            values={
+                "global": {
+                    "privateRegistry": {
+                        "enabled": True,
+                        "repository": private_registry,
+                    },
+                    "pgbouncer": {"enabled": True},
+                }
+            },
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+
+        c_by_name = get_containers_by_name(doc, include_init_containers=True)
+
+        assert doc["kind"] == "Deployment"
+        assert doc["apiVersion"] == "apps/v1"
+
+        for name, container in c_by_name.items():
+            assert container["image"].startswith(
+                private_registry
+            ), f"Container named '{name}' does not use registry '{private_registry}': {container}"

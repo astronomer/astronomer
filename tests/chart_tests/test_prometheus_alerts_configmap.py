@@ -3,6 +3,7 @@ from tests.chart_tests.helm_template_generator import render_chart
 from tests import supported_k8s_versions
 import re
 import pytest
+from textwrap import dedent
 
 
 @pytest.mark.parametrize(
@@ -53,6 +54,7 @@ class TestPrometheusAlertConfigmap:
 
         # Validate the contents of an embedded yaml doc
         groups = yaml.safe_load(doc["data"]["alerts"])["groups"]
+        assert len(groups) == 22
         for group in groups:
             assert isinstance(group.get("name"), str)
             assert isinstance(group.get("rules"), list)
@@ -104,3 +106,65 @@ class TestPrometheusAlertConfigmap:
             r".*If more than 2 Airflow Schedulers are not heartbeating for more than 5 minutes, this alarm fires..*",
             config_yaml,
         )
+
+    @pytest.mark.parametrize("section", ["airflow", "platform"])
+    def test_default_alerts_section_disabled(self, kube_version, section):
+        """Should only disable the alert rules for the given section."""
+        values = {
+            "prometheus": {
+                "defaultAlerts": {
+                    section: {
+                        "enabled": False,
+                    }
+                }
+            }
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=self.show_only,
+            values=values,
+        )
+
+        groups = yaml.safe_load(docs[0]["data"]["alerts"])["groups"]
+        assert len(groups) == 22
+        assert [x["rules"] for x in groups if x["name"] == section] == [[]]
+        assert len([x["rules"] for x in groups if x["name"] != section]) == 21
+
+    @pytest.mark.parametrize("section", ["airflow", "platform"])
+    def test_default_alerts_section_disabled_with_additional_alerts(
+        self, kube_version, section
+    ):
+        """Should only show the additional alert rules for the given section."""
+        values = {
+            "prometheus": {
+                "defaultAlerts": {
+                    section: {
+                        "enabled": False,
+                    }
+                },
+                "additionalAlerts": {
+                    section: dedent(
+                        """
+                        - alert: some-happy-alert
+                          expr: sum(all-happiness)
+                        """
+                    )
+                },
+            }
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=self.show_only,
+            values=values,
+        )
+
+        groups = yaml.safe_load(docs[0]["data"]["alerts"])["groups"]
+        assert len(groups) == 22
+        assert [x["rules"] for x in groups if x["name"] == section] == [
+            [{"alert": "some-happy-alert", "expr": "sum(all-happiness)"}]
+        ]
+        assert [
+            x["rules"] != [{"alert": "some-happy-alert", "expr": "sum(all-happiness)"}]
+            for x in groups
+            if x["name"] != section
+        ]

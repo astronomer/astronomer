@@ -19,46 +19,55 @@ import subprocess
 import sys
 from functools import cache
 from tempfile import NamedTemporaryFile
-from typing import Any, Dict, Tuple
-from typing import Optional
+from typing import Any, Optional
+from pathlib import Path
+import os
 
 import jsonschema
 import requests
 import yaml
+import json
 from kubernetes.client.api_client import ApiClient
 
 api_client = ApiClient()
 
 BASE_URL_SPEC = "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master"
+GIT_ROOT = Path(__file__).parent.parent.parent
+DEBUG = os.getenv("DEBUG", "").lower() in ["yes", "true", "1"]
 
 
-# TODO: make this cache the schema so we can test offline, or better, save these to the tests dir
-@cache
-def get_schema_k8s(api_version, kind, kube_version="1.21.0"):
-    """Return a k8s schema for use in validation."""
+def get_schema_k8s(api_version, kind, kube_version="1.24.0"):
+    """Return a standalone k8s schema for use in validation."""
     api_version = api_version.lower()
     kind = kind.lower()
 
     if "/" in api_version:
         ext, _, api_version = api_version.partition("/")
         ext = ext.split(".")[0]
-        url = f"{BASE_URL_SPEC}/v{kube_version}-standalone-strict/{kind}-{ext}-{api_version}.json"
+        schema_path = f"v{kube_version}-standalone/{kind}-{ext}-{api_version}.json"
     else:
-        url = f"{BASE_URL_SPEC}/v{kube_version}-standalone-strict/{kind}-{api_version}.json"
-    request = requests.get(url)
-    request.raise_for_status()
-    return request.json()
+        schema_path = f"v{kube_version}-standalone/{kind}-{api_version}.json"
+
+    local_sp = Path(f"{GIT_ROOT}/tests/k8s_schema/{schema_path}")
+    if not local_sp.exists():
+        if not local_sp.parent.is_dir():
+            local_sp.parent.mkdir()
+        request = requests.get(f"{BASE_URL_SPEC}/{schema_path}")
+        request.raise_for_status()
+        local_sp.write_text(request.text)
+
+    return json.loads(local_sp.read_text())
 
 
 @cache
-def create_validator(api_version, kind, kube_version="1.21.0"):
+def create_validator(api_version, kind, kube_version="1.24.0"):
     """Create a k8s validator for the given inputs."""
     schema = get_schema_k8s(api_version, kind, kube_version=kube_version)
     jsonschema.Draft7Validator.check_schema(schema)
     return jsonschema.Draft7Validator(schema)
 
 
-def validate_k8s_object(instance, kube_version="1.21.0"):
+def validate_k8s_object(instance, kube_version="1.24.0"):
     """Validate the k8s object."""
     validate = create_validator(
         instance.get("apiVersion"), instance.get("kind"), kube_version=kube_version
@@ -67,13 +76,15 @@ def validate_k8s_object(instance, kube_version="1.21.0"):
 
 
 def render_chart(
+    *,  # require keyword args
     name: str = "release-name",
     values: Optional[dict] = None,
-    show_only: Optional[list] = (),
+    show_only: Optional[list] = None,
     chart_dir: Optional[str] = None,
-    kube_version: str = "1.21.0",
+    kube_version: str = "1.24.0",
     baseDomain: str = "example.com",
     namespace: Optional[str] = None,
+    validate_objects: bool = True,
 ):
     """Render a helm chart into dictionaries.
 
@@ -81,7 +92,7 @@ def render_chart(
     """
     values = values or {}
     chart_dir = chart_dir or sys.path[0]
-    with NamedTemporaryFile(delete=False) as tmp_file:
+    with NamedTemporaryFile(delete=not DEBUG) as tmp_file:  # export DEBUG=true to keep
         content = yaml.dump(values)
         tmp_file.write(content.encode())
         tmp_file.flush()
@@ -109,28 +120,32 @@ def render_chart(
             if not templates:
                 return None
         except subprocess.CalledProcessError as error:
-            print("ERROR: subprocess.CalledProcessError:")
-            print(f"helm command: {' '.join(command)}")
-            print(f"Values file contents:\n{'-' * 21}\n{yaml.dump(values)}{'-' * 21}")
-            print(f"{error.output=}\n{error.stderr=}")
-
-            if "could not find template" in error.stderr.decode("utf-8"):
+            if DEBUG:
+                print("ERROR: subprocess.CalledProcessError:")
+                print(f"helm command: {' '.join(command)}")
                 print(
-                    "ERROR: command is probably using templates with null output, which "
-                    + "usually means there is a helm value that needs to be set to render "
-                    + "the content of the chart.\n"
-                    + "command: "
-                    + " ".join(command)
+                    f"Values file contents:\n{'-' * 21}\n{yaml.dump(values)}{'-' * 21}"
                 )
+                print(f"{error.output=}\n{error.stderr=}")
+
+                if "could not find template" in error.stderr.decode("utf-8"):
+                    print(
+                        "ERROR: command is probably using templates with null output, which "
+                        + "usually means there is a helm value that needs to be set to render "
+                        + "the content of the chart.\n"
+                        + "command: "
+                        + " ".join(command)
+                    )
             raise
         k8s_objects = yaml.full_load_all(templates)
-        k8s_objects = [k8s_object for k8s_object in k8s_objects if k8s_object]  # type: ignore
-        for k8s_object in k8s_objects:
-            validate_k8s_object(k8s_object, kube_version=kube_version)
+        k8s_objects: list = [k8s_object for k8s_object in k8s_objects if k8s_object]
+        if validate_objects:
+            for k8s_object in k8s_objects:
+                validate_k8s_object(k8s_object, kube_version=kube_version)
         return k8s_objects
 
 
-def prepare_k8s_lookup_dict(k8s_objects) -> Dict[Tuple[str, str], Dict[str, Any]]:
+def prepare_k8s_lookup_dict(k8s_objects) -> dict[tuple[str, str], dict[str, Any]]:
     """Helper to create a lookup dict from k8s_objects.
 
     The keys of the dict are the k8s object's kind and name

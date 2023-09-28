@@ -10,28 +10,29 @@ tolerations: []
 images:
   es:
     repository: quay.io/astronomer/ap-elasticsearch
-    tag: 7.17.6
+    tag: 8.8.2
     pullPolicy: IfNotPresent
   init:
-    repository: quay.io/astronomer/ap-base
-    tag: 3.16.2-1
+    repository: quay.io/astronomer/ap-base # needs root permissions for sysctl changes
+    tag: 3.18.3
     pullPolicy: IfNotPresent
   curator:
     repository: quay.io/astronomer/ap-curator
-    tag: 5.8.4-19
+    tag: 8.0.8-2
     pullPolicy: IfNotPresent
   exporter:
     repository: quay.io/astronomer/ap-elasticsearch-exporter
-    tag: 1.5.0
+    tag: 1.6.0
     pullPolicy: IfNotPresent
   nginx:
     repository: quay.io/astronomer/ap-nginx-es
-    tag: 1.23.1-1
+    tag: 1.25.2
     pullPolicy: IfNotPresent
 
 common:
   podAnnotations: {}
   serviceType: ClusterIP
+  protocol: http
 
   env:
     CLUSTER_NAME: "astronomer"
@@ -89,6 +90,11 @@ client:
     NODE_INGEST: "true"
     HTTP_ENABLE: "true"
 
+  roles:
+    - ingest
+    - ml
+    - remote_cluster_client
+
 # Data nodes hold the shards that contain the documents you have indexed. Data
 # nodes handle data related operations like CRUD, search, and aggregations.
 # These operations are I/O-, memory-, and CPU-intensive. It is important to
@@ -118,6 +124,17 @@ data:
     NODE_MASTER: "false"
     NODE_INGEST: "false"
     HTTP_ENABLE: "false"
+
+  roles:
+    - data
+    - data_cold
+    - data_content
+    - data_frozen
+    - data_hot
+    - data_warm
+    - ml
+    - remote_cluster_client
+    - transform
 
   # Determines the properties of the persistent volume claim associated with a
   # data node StatefulSet that is created when the common.persistence.enabled
@@ -153,6 +170,11 @@ master:
     NODE_MASTER: "true"
     NODE_INGEST: "false"
     HTTP_ENABLE: "false"
+
+  roles:
+    - master
+    - ml
+    - remote_cluster_client
 
   # Determines the properties of the persistent volume claim associated with a
   # data node StatefulSet that is created when the common.stateful.enabled
@@ -221,7 +243,7 @@ sysctlInitContainer:
   enabled: true
   sysctlVmMaxMapCount: 262144
 
-podSecurityContext:
+PodSecurityContext:
   fsGroup: 1000
 
 securityContext:

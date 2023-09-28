@@ -35,6 +35,16 @@ spec:
     {{- end }}
     - podSelector:
         matchLabels:
+          tier: astronomer
+          component: houston-populate-hourly-ta-metrics
+          release: {{ .Release.Name }}
+    - podSelector:
+        matchLabels:
+          tier: astronomer
+          component: houston-cleanup-airflow-db
+          release: {{ .Release.Name }}
+    - podSelector:
+        matchLabels:
           tier: monitoring
           component: prometheus
           release: {{ .Release.Name }}

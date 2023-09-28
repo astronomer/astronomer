@@ -1,17 +1,17 @@
-black
 docker
+exceptiongroup # indirect, needed to satisfy hash requirement
 filelock
-GitPython
 jmespath
 jsonschema
 kubernetes
-pdbpp
 pytest
 pytest-forked
+pytest-pretty
 pytest-profiling
 pytest-rerunfailures
 pytest-testinfra
 pytest-xdist
 PyYAML
 requests
-setuptools<60.0.0 # workaround for known bug with local vs stdlib in pth
+tomli # # indirect, needed to satisfy hash requirement
+typing-extensions # indirect, needed to satisfy hash requirement

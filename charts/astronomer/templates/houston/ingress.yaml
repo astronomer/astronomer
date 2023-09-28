@@ -22,11 +22,15 @@ metadata:
     kubernetes.io/tls-acme: {{ eq .Values.global.acme true | quote }}
     nginx.ingress.kubernetes.io/custom-http-errors: "404"
     nginx.ingress.kubernetes.io/configuration-snippet: |
-      location ~ ^/v1/(registry\/events|alerts|elasticsearch) {
+      location ~ ^/v1/(registry\/events|alerts|elasticsearch|metrics) {
         deny all;
         return 403;
       }
     nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
+    {{- end }}
+
+    {{- if .Values.houston.ingress.annotation  }}
+    {{- toYaml .Values.houston.ingress.annotation  | nindent 4  }}
     {{- end }}
 spec:
   {{- if or .Values.global.tlsSecret .Values.global.acme }}

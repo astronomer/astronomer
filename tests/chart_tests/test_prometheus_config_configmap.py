@@ -27,6 +27,13 @@ class TestPrometheusConfigConfigmap:
         assert doc["apiVersion"] == "v1"
         assert doc["metadata"]["name"] == "release-name-prometheus-config"
 
+        config_yaml = yaml.safe_load(doc["data"]["config"])
+        assert [
+            x["tls_config"]["insecure_skip_verify"]
+            for x in list(config_yaml["scrape_configs"])
+            if x["job_name"] == "kubernetes-apiservers"
+        ] == [False]
+
     def test_prometheus_config_configmap_with_different_name_and_ns(self, kube_version):
         """Validate the prometheus config configmap does not conflate
         deployment name and namespace."""
@@ -46,7 +53,6 @@ class TestPrometheusConfigConfigmap:
             },
         )[0]
 
-        # config_yaml = doc["data"]["config"]
         config_yaml = yaml.safe_load(doc["data"]["config"])
         targets = [
             x["static_configs"][0]["targets"]
@@ -172,10 +178,13 @@ class TestPrometheusConfigConfigmap:
 
     def test_prometheus_config_release_relabel(self, kube_version):
         """Prometheus should have a regex for release name."""
+        namespace = "testnamespace"
         doc = render_chart(
             kube_version=kube_version,
             show_only=self.show_only,
+            namespace=namespace,
             values={
+                "global": {"features": {"namespacePools": {"enabled": False}}},
                 "astronomer": {
                     "houston": {
                         "config": {"deployments": {"namespaceFreeFormEntry": False}},
@@ -192,8 +201,12 @@ class TestPrometheusConfigConfigmap:
             "metric_relabel_configs[?target_label == 'release']",
             scrape_config_search_result[0],
         )
-        assert metric_relabel_config_search_result[0]["regex"] == "^default-(.*$)"
+
+        assert len(metric_relabel_config_search_result) == 1
+        assert metric_relabel_config_search_result[0]["source_labels"] == ["namespace"]
+        assert metric_relabel_config_search_result[0]["regex"] == "^testnamespace-(.*$)"
         assert metric_relabel_config_search_result[0]["replacement"] == "$1"
+        assert metric_relabel_config_search_result[0]["target_label"] == "release"
 
     def test_prometheus_config_release_relabel_with_free_from_namespace(
         self, kube_version
@@ -207,8 +220,69 @@ class TestPrometheusConfigConfigmap:
                 "global": {"namespaceFreeFormEntry": True},
             },
         )[0]
+        self.assert_relabel_config_for_non_auto_generated_namesaces(doc)
 
-        config = yaml.safe_load(doc["data"]["config"])
+    def test_prometheus_config_insecure_skip_verify(self, kube_version):
+        """Test that insecure_skip_verify is rendered correctly in the config when specified."""
+        doc = render_chart(
+            kube_version=kube_version,
+            show_only=self.show_only,
+            values={
+                "prometheus": {
+                    "config": {
+                        "scrape_configs": {
+                            "kubernetes_apiservers": {
+                                "tls_config": {"insecure_skip_verify": True}
+                            }
+                        }
+                    },
+                },
+            },
+        )[0]
+
+        config_yaml = yaml.safe_load(doc["data"]["config"])
+        assert [
+            x["tls_config"]["insecure_skip_verify"]
+            for x in list(config_yaml["scrape_configs"])
+            if x["job_name"] == "kubernetes-apiservers"
+        ] == [True]
+
+    def test_prometheus_config_release_relabel_with_pre_created_namespace(
+        self, kube_version
+    ):
+        """Prometheus should have a regex for release name when namespacePools
+        namespace is enabled."""
+        doc = render_chart(
+            kube_version=kube_version,
+            show_only=self.show_only,
+            values={
+                "global": {
+                    "features": {"namespacePools": {"enabled": True}},
+                    "namespaceFreeFormEntry": False,
+                }
+            },
+        )[0]
+        self.assert_relabel_config_for_non_auto_generated_namesaces(doc)
+
+    def test_prometheus_config_release_relabel_with_manual_namespace_names_enabled(
+        self, kube_version
+    ):
+        """Prometheus should have a regex for release name when manualNamespaceNames
+        is enabled."""
+        doc = render_chart(
+            kube_version=kube_version,
+            show_only=self.show_only,
+            values={
+                "global": {
+                    "features": {"namespacePools": {"enabled": False}},
+                    "manualNamespaceNamesEnabled": True,
+                }
+            },
+        )[0]
+        self.assert_relabel_config_for_non_auto_generated_namesaces(doc)
+
+    def assert_relabel_config_for_non_auto_generated_namesaces(self, chart):
+        config = yaml.safe_load(chart["data"]["config"])
         scrape_config_search_result = jmespath.search(
             "scrape_configs[?job_name == 'kube-state']", config
         )
@@ -216,5 +290,18 @@ class TestPrometheusConfigConfigmap:
             "metric_relabel_configs[?target_label == 'release']",
             scrape_config_search_result[0],
         )
-        assert "regex" not in metric_relabel_config_search_result[0]
-        assert "replacement" not in metric_relabel_config_search_result[0]
+        assert len(metric_relabel_config_search_result) == 2
+        assert (
+            metric_relabel_config_search_result[0]["regex"]
+            == "(.*?)(?:-webserver.*|-scheduler.*|-worker.*|-cleanup.*|-pgbouncer.*|-statsd.*|-triggerer.*|-run-airflow-migrations.*|-git-sync-relay.*)?$"
+        )
+        assert metric_relabel_config_search_result[0]["source_labels"] == ["pod"]
+        assert metric_relabel_config_search_result[0]["replacement"] == "$1"
+        assert metric_relabel_config_search_result[0]["target_label"] == "release"
+
+        assert metric_relabel_config_search_result[1]["regex"] == "(.+)-resource-quota$"
+        assert metric_relabel_config_search_result[1]["source_labels"] == [
+            "resourcequota"
+        ]
+        assert metric_relabel_config_search_result[1]["replacement"] == "$1"
+        assert metric_relabel_config_search_result[1]["target_label"] == "release"

@@ -34,7 +34,7 @@ data:
         - filtertype: age
           source: name
           direction: older
-          timestring: '{{ .Values.curator.age.timestring }}'
+          timestring: {{ template "curator.indexPattern" . }}
           unit: {{ .Values.curator.age.unit }}
           unit_count: {{ .Values.curator.age.unit_count }}
           field:
@@ -45,6 +45,7 @@ data:
     ---
     # Remember, leave a key empty if there is no value.  None will be a string,
     # not a Python "NoneType"
+    {{ if semverCompare "<8" .Values.images.curator.tag -}}
     client:
       hosts:
         - {{ template "elasticsearch.fullname" . }}
@@ -63,4 +64,22 @@ data:
       logfile:
       logformat: default
       blacklist: ['elasticsearch', 'urllib3']
+    {{- else -}}
+    elasticsearch:
+      client:
+        hosts:
+          - {{ .Values.common.protocol }}://{{ template "elasticsearch.fullname" . }}:{{ .Values.common.ports.http }}
+        ca_certs:
+        client_cert:
+        client_key:
+        verify_certs:
+        request_timeout: 30
+      other_settings:
+        master_only: False
+    logging:
+      loglevel: INFO
+      logfile:
+      logformat: default
+      blacklist: ['elasticsearch', 'urllib3']
+    {{- end }}
 {{- end }}

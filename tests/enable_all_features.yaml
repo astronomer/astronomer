@@ -13,4 +13,10 @@ global:
   postgresqlEnabled: true
   prometheusPostgresExporterEnabled: true
   pspEnabled: true
+  taskUsageMetricsEnabled: True
   veleroEnabled: true
+prometheus-node-exporter:
+  rbac:
+    create: true
+  endpoints:
+    - example.com

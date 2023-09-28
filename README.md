@@ -51,13 +51,13 @@ Modify the "tags:" in configs/local-dev.yaml
 - logging (large impact on RAM use): ElasticSearch, Kibana, Fluentd (aka 'EFK' stack)
 - monitoring: Prometheus
 
-#### Add a Docker image into KinD's nodes (so it's available for pods):
+#### Load a Docker image into KinD's nodes (so it's available for pods)
 
 ```sh
 kind load docker-image $your_local_image_name_with_tag
 ```
 
-#### Make use of that image:
+#### Make use of that image
 
 Make note of your pod name
 
@@ -79,13 +79,13 @@ and set the pull policy to "Never".
 kubectl edit deployment -n astronomer <your deployment>
 ```
 
-#### Change Kubernetes version:
+#### Specify the Kubernetes version
 
 ```sh
-bin/reset-local-dev -K 1.21.2
+bin/reset-local-dev -K 1.24.7
 ```
 
-#### Locally test HA configurations:
+#### Locally test HA configurations
 
 You need a powerful computer to run the HA testing locally. 28 GB or more of memory should be available to Docker.
 

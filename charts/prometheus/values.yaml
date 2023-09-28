@@ -18,12 +18,11 @@ replicas: 1
 images:
   prometheus:
     repository: quay.io/astronomer/ap-prometheus
-    tag: 2.37.1
+    tag: 2.45.0
     pullPolicy: IfNotPresent
   configReloader:
-    # repository: astronomerinc/ap-config-reloader
     repository: quay.io/astronomer/ap-configmap-reloader
-    tag: 0.8.0
+    tag: 0.11.0
     pullPolicy: IfNotPresent
 
 resources: {}
@@ -38,12 +37,20 @@ resources: {}
 livenessProbe:
   initialDelaySeconds: 10
   periodSeconds: 5
+  timeoutSeconds: 1
   failureThreshold: 3
 readinessProbe:
   initialDelaySeconds: 10
   periodSeconds: 5
+  timeoutSeconds: 1
   failureThreshold: 3
 
+PodSecurityContext:
+  fsGroup: 65534
+
+securityContext:
+    runAsNonRoot: true
+    runAsUser: 65534
 configMapReloader:
   resources: {}
     # limits:
@@ -104,11 +111,20 @@ tcpProbe:
 # Enable prometheus lifecycle api
 enableLifecycle: true
 
+# This section allows you to disable parts of the default set of alerts. Use
+# this in combination with additionalAlerts if you want prometheus to only
+# use the alerts you have configured.
+defaultAlerts:
+  airflow:
+    enabled: true
+  platform:
+    enabled: true
+
 additionalAlerts:
-  # Additional rules for the 'platform' alert group
+  # Additional rules appended to the default 'platform' alert group
   # Provide as a block string in yaml list form
   platform: ~
-  # Additional rules for the 'airflow' alert group
+  # Additional rules appended to the default 'airflow' alert group
   # Provide as a block string in yaml list form
   airflow: ~
 # Example:
@@ -130,3 +146,15 @@ additionalAlerts:
 # Prometheus config file global.external_labels stanza
 # https://prometheus.io/docs/prometheus/latest/configuration/configuration/#remote_write
 # external_labels: {}
+
+extraFlags: []
+#- "--log.level=debug"
+
+# Amost mirror the prometheus config data structure for values we want to customize.
+# Convert lists to dicts for more explicit assignment.
+# Convert dashes to underscores for golang compatibility.
+config:
+  scrape_configs:
+    kubernetes_apiservers:
+      tls_config:
+        insecure_skip_verify: false

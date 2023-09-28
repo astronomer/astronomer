@@ -43,17 +43,23 @@ spec:
         - name: wait-for-db
           image: {{ template "houston.image" . }}
           imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
+          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
           command:
             - "/houston/bin/entrypoint"
           args:
             - "echo"
             - "DB ready"
-          resources:
-{{ toYaml .Values.houston.resources | indent 12 }}
+          resources: {{ toYaml .Values.houston.resources | nindent 12 }}
           env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: astronomer-bootstrap
+                  key: connection
             {{- include "houston_environment" . | indent 12 }}
         - name: houston-bootstrapper
           image: {{ template "dbBootstrapper.image" . }}
+          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
           imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
           resources:
 {{ toYaml .Values.houston.resources | indent 12 }}
@@ -89,8 +95,8 @@ spec:
         - name: houston
           image: {{ template "houston.image" . }}
           imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
-          resources:
-{{ toYaml .Values.houston.resources | indent 12 }}
+          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
+          resources: {{ toYaml .Values.houston.resources | nindent 12 }}
           volumeMounts:
             {{- include "houston_volume_mounts" . | indent 12 }}
             {{- include "custom_ca_volume_mounts" . | indent 12 }}

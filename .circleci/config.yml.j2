@@ -4,16 +4,25 @@ executors:
     environment:
       GIT_ORG: astronomer
     docker:
-      - image: cimg/python:3.10
+      - image: cimg/python:3.11
 
 orbs:
   slack: circleci/slack@4.10.1
+  python: circleci/python@2.1.1
 
 parameters:
   scan-docker-images:
     type: boolean
     default: false
     description: "This will run docker image scan."
+  scan-docker-images-report-url:
+    type: string
+    default: ""
+    description: "The URN to report image scan result."
+  qa-release:
+    type: boolean
+    default: false
+    description: "This will trigger QA release workflow."
 
 jobs:
   trivy-scan-docker:
@@ -23,10 +32,17 @@ jobs:
     parameters:
       docker_image:
         type: string
+      report_url:
+        type: string
+        default: ""
+      slack_notify:
+        type: boolean
+        default: false
     environment:
       SCAN_IMAGE: << parameters.docker_image >>
       SCAN_TOOL: Trivy
       BASH_ENV: /etc/profile
+      ASTRO_SEC_ENDPOINT: << parameters.report_url >>
     steps:
       - setup_remote_docker:
           version: {{ remote_docker_version }}
@@ -46,24 +62,53 @@ jobs:
       - run:
           name: Scan the local image with trivy
           command: bin/trivy-scan.sh "<< parameters.docker_image >>" ".circleci/trivyignore"
-      - run:
-          name: Slack Init
-          command: |
-            echo 'export SLACK_MSG_TEMPLATE=$(cat ./.circleci/slack_message_templates/security_scan_fail.json)' >> $BASH_ENV
-            source $BASH_ENV
-          when: on_fail
-      - slack/notify:
-          event: fail
-          template: SLACK_MSG_TEMPLATE
-          channel: C03HS1H9G1E
+      - when:
+          condition:
+            or:
+              - << parameters.slack_notify >>
+          steps:
+            - run:
+                name: Slack Init
+                command: |
+                  echo 'export SLACK_MSG_TEMPLATE=$(cat ./.circleci/slack_message_templates/security_scan_fail.json)' >> $BASH_ENV
+                  source $BASH_ENV
+                when: on_fail
+            - slack/notify:
+                event: fail
+                template: SLACK_MSG_TEMPLATE
+                channel: C03HS1H9G1E
       - save_cache:
           {% raw %}key: trivy-cache-{{ checksum "date" }}{% endraw %}
           paths:
             - /tmp/workspace/trivy-cache
 
+  twistcli-scan-docker:
+    docker:
+      - image: docker:{{ remote_docker_version }}-git
+    shell: /bin/sh -leo pipefail
+    parameters:
+      docker_image:
+        type: string
+    steps:
+      - setup_remote_docker:
+          version: {{ remote_docker_version }}
+      - run:
+          name: Pull Docker image
+          command: docker pull << parameters.docker_image >>
+      - run:
+          name: Install twistcli
+          command: |
+            apk add --update-cache --upgrade curl
+            curl -k -u $USER:$PASSWORD --output twistcli $CONSOLE_URL"/api/v1/util/twistcli"
+            chmod +x twistcli
+      - run:
+          name: scan image
+          command: |
+            ./twistcli images scan --address $CONSOLE_URL --user=$USER --password=$PASSWORD --details << parameters.docker_image >>
+
   run_pre_commit:
     docker:
-      - image: quay.io/astronomer/ci-pre-commit:2022-09
+      - image: quay.io/astronomer/ci-pre-commit:{{ ci_runner_version }}
     steps:
       - checkout
       - run:
@@ -86,7 +131,7 @@ jobs:
           command: pre-commit run --all-files --show-diff-on-failure
   lint:
     docker:
-      - image: quay.io/astronomer/ap-build:0.2.0
+      - image: quay.io/astronomer/ap-build:0.2.3
     steps:
       - checkout
       - run:
@@ -98,7 +143,7 @@ jobs:
 
   unittest-charts:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2022-09
+      - image: quay.io/astronomer/ci-helm-release:{{ ci_runner_version }}
     parallelism: 8
     resource_class: xlarge
     steps:
@@ -134,22 +179,26 @@ jobs:
 
   build-artifact:
     docker:
-      - image: quay.io/astronomer/ap-build:0.2.0
+      - image: quay.io/astronomer/ap-build:0.2.3
+    parameters:
+      qa_release:
+        type: boolean
+        default: false
     steps:
       - checkout
       - run:
           name: Package the Astronomer chart
           command: |
             source ./bin/install-ci-tools 1
-            make build
+            bin/build-helm-chart.sh << parameters.qa_release >>
       - persist_to_workspace:
           root: "."
           paths:
             - "./*.tgz"
 
   release-to-internal:
-    machine:
-      image: ubuntu-2204:2022.07.1 # https://circleci.com/developer/machine/image/ubuntu-2204
+    docker:
+      - image: quay.io/astronomer/ci-helm-release:{{ ci_runner_version }}
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -158,13 +207,37 @@ jobs:
           name: Release the Astronomer chart to internal
           command: |
             set -e
-            sudo apt-get update && sudo apt-get install -y ca-certificates curl
-            pyenv global 3.10.5
             bin/release-helm-chart /tmp/workspace/astronomer-*.tgz
 
+  trigger-upgrade-test:
+    executor: docker-executor
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - run:
+          name: Triggering testing for upgrade path
+          command: |
+            set -e
+            bin/trigger_rc_tests.py --astro_path=/tmp/workspace --circleci_token=$CIRCLECI_API_KEY_TEST
+
+  trigger-feature-stack-release:
+    executor: docker-executor
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - run:
+          name: Triggering update to feature cluster
+          command: |
+            set -e
+            bin/trigger_feature_stack_update.py --astro_path=/tmp/workspace --circleci_token=$CIRCLECI_API_KEY_TEST --branch=$CIRCLE_BRANCH
+
   release-to-public:
-    machine:
-      image: ubuntu-2204:2022.07.1
+    docker:
+      - image: quay.io/astronomer/ci-helm-release:{{ ci_runner_version }}
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -172,15 +245,12 @@ jobs:
       - run:
           name: Release the Astronomer chart to prod
           command: |
-            set -e
-            sudo apt-get update && sudo apt-get install -y ca-certificates curl
-            pyenv global 3.10.5
             bin/release-helm-chart -p /tmp/workspace/astronomer-*.tgz
       - publish-github-release
 {% for version in kube_versions %}
   platform-{{ version | replace(".", "-") }}:
     machine:
-      image: ubuntu-2204:2022.07.1
+      image: {{ machine_image_version }}
       resource_class: xlarge
     environment:
       KUBE_VERSION: v{{ version }}
@@ -192,7 +262,7 @@ jobs:
           command: |
             set -o pipefail
             helm template --kube-version=v{{ version }} -f values.yaml --set global.baseDomain=example.com . |
-            kubent --cluster=false --helm2=false --helm3=false --filename -
+            kubent --cluster=false --helm3=false --filename -
           when: always
 {%- endfor %}
 
@@ -209,12 +279,17 @@ jobs:
 
 workflows:
   version: 2.1
+
+  # This workflow is triggered by https://app.circleci.com/settings/project/github/astronomer/astronomer/triggers
   scan-docker-images:
     when:
       and:
         - << pipeline.parameters.scan-docker-images >>
+        - not: << pipeline.parameters.qa-release >>
     jobs:
       - trivy-scan-docker:
+          report_url: << pipeline.parameters.scan-docker-images-report-url >>
+          slack_notify: false
           matrix:
             parameters:
               docker_image:
@@ -223,11 +298,21 @@ workflows:
 {%- endfor %}
           context:
             - slack_team-software-infra-bot
+      - twistcli-scan-docker:
+          matrix:
+            parameters:
+              docker_image:
+{%- for image in docker_images %}
+                - {{ image }}
+{%- endfor %}
+          context:
+            - twistcli
 
   build-and-release-helm-chart:
-    unless:
+    when:
       and:
-        - << pipeline.parameters.scan-docker-images >>
+        - not: << pipeline.parameters.scan-docker-images >>
+        - not: << pipeline.parameters.qa-release >>
     jobs:
       - lint
       - run_pre_commit
@@ -253,14 +338,36 @@ workflows:
 {% endif %}{% endfor %}
       - approve-internal-release:
           type: approval
+          filters:
+            branches:
+              only:
+                - '/^release-0\.\d+$/'
       - release-to-internal:
           context:
             - gcp-astronomer-prod
+          filters:
+            branches:
+              only:
+                - '/^release-0\.\d+$/'
           requires:
             - approve-internal-release
 {%- for version in [kube_versions[0], kube_versions[-1]] %}
             - platform-{{ version | replace(".", "-") }}
 {%- endfor %}
+      - approve-upgrade-test:
+          type: approval
+          filters:
+            branches:
+              only:
+                - '/^release-0\.\d+$/'
+      - trigger-upgrade-test:
+          requires:
+            - release-to-internal
+            - approve-upgrade-test
+          filters:
+            branches:
+              only:
+                - '/^release-0\.\d+$/'
       - approve-public-release:
           type: approval
           requires:
@@ -271,7 +378,7 @@ workflows:
           filters:
             branches:
               only:
-                - '/release-0\.\d+/'
+                - '/^release-0\.\d+$/'
 
       - release-to-public:
           context:
@@ -282,7 +389,48 @@ workflows:
           filters:
             branches:
               only:
-                - '/release-0\.\d+/'
+                - '/^release-0\.\d+$/'
+
+  qa-build-and-release-helm-chart:
+    when:
+      and:
+        - << pipeline.parameters.qa-release >>
+        - not: << pipeline.parameters.scan-docker-images >>
+    jobs:
+      - lint
+      - run_pre_commit
+      - unittest-charts
+      - check-commander-airflow-version
+      - build-artifact:
+          qa_release: true
+          requires:
+            - check-commander-airflow-version
+            - lint
+            - run_pre_commit
+            - unittest-charts
+{% for version in kube_versions %}{% if version in [kube_versions[0], kube_versions[-1]] %}
+      - platform-{{ version | replace(".", "-") }}:
+          requires:
+            - build-artifact
+{% endif %}{% endfor %}
+      - release-to-internal:
+          context:
+            - gcp-astronomer-prod
+          requires:
+{%- for version in [kube_versions[0], kube_versions[-1]] %}
+            - platform-{{ version | replace(".", "-") }}
+{%- endfor %}
+          filters:
+            branches:
+              only:
+                - '/^release-0\.\d+$/'
+      - trigger-feature-stack-release:
+          requires:
+            - release-to-internal
+          filters:
+            branches:
+              only:
+                - '/^release-0\.\d+$/'
 
 commands:
   push-to-quay-io:
@@ -388,7 +536,7 @@ commands:
           name: Install Astronomer chart
           command: |
             echo 'export PATH="/tmp/bin:/tmp/google-cloud-sdk/bin:$PATH"' >> "$HOME/.bashrc"
-            set -e
+            set -xe
             HELM_CHART_PATH='/tmp/workspace/astronomer-*.tgz' bin/run-ci << parameters.astronomer-tags >>
       - store_test_results:
           path: test-results
@@ -404,9 +552,8 @@ commands:
           name: Create a release on GitHub
           command: |
             set -xe
-            pyenv global 3.10.5
             pip install astronomer_e2e_test
-            astronomer-ci publish-github-release --github-repository $CIRCLE_PROJECT_REPONAME --github-organization $CIRCLE_PROJECT_USERNAME --commitish $CIRCLE_SHA1
+            astronomer-ci publish-github-release --github-repository "$CIRCLE_PROJECT_REPONAME" --github-organization "$CIRCLE_PROJECT_USERNAME" --commitish "$CIRCLE_SHA1"
 
   trivy-docker-test:
     description: "Trivy: Vulnerability scan a Docker image"

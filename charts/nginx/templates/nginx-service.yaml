@@ -41,10 +41,12 @@ spec:
   {{- if .Values.loadBalancerSourceRanges }}
   loadBalancerSourceRanges: {{ .Values.loadBalancerSourceRanges | toJson }}
   {{- end }}
-  {{- if .Values.preserveSourceIP }}
+  {{- if not (eq .Values.serviceType "ClusterIP") }}
+  {{- if (.Values.preserveSourceIP) }}
   externalTrafficPolicy: "Local"
   {{- else }}
   externalTrafficPolicy: "Cluster"
+  {{- end }}
   {{- end }}
   selector:
     tier: {{ template "nginx.name" . }}

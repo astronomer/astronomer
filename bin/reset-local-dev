@@ -14,7 +14,7 @@ Options:
   -h    Print this help text
   -H    Use HA
   -k    List recent kubernetes versions to use with -K (not all will be available to KIND)
-  -K    Kubernetes version to use (eg: 1.21.2) https://github.com/kubernetes/kubernetes/releases/
+  -K    Kubernetes version to use (eg: 1.25.3) https://github.com/kubernetes/kubernetes/releases/
   -M    Enable multi-node kind cluster
 
 "
@@ -66,30 +66,28 @@ helm install -f "$CONFIG_FILE" \
   "$GIT_ROOT"
 
 
-echo '
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+cat <<EOF
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
- Please run the following command to configure kubectl:
+  Astronomer is launching and should be available shortly. Run the following command
+  to configure kubectl to access the kind cluster that Astronomer is running in:
 
-     export KUBECONFIG="$(kind get kubeconfig-path --name=kind)"
+    kind export kubeconfig
 
-'
-echo "
- Astronomer is launching. You can check the status with:
+  Run the following command to check the progress of the Astronomer installation:
 
-     kubectl get pods -n ${NAMESPACE}
+    kubectl get pods -n ${NAMESPACE}
 
+  Next, run the following command to port-forward into the kind cluster so you can
+  access the web UI:
 
- After Astronomer is up (all pods running, all containers up), do this to start a connection to the service:
+    sudo -E kubectl port-forward -n ${NAMESPACE} svc/astronomer-nginx 443
 
-     sudo -E kubectl port-forward -n ${NAMESPACE} svc/astronomer-nginx 443
+  You can then access the web UI here: https://app.localtest.me
 
+  Run the following command to delete the cluster and all installed software:
 
- Then you can access the service here: https://app.localtest.me
+    kind delete cluster
 
- You can clean up like this:
-
-     kind delete cluster
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-"
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+EOF
