@@ -2,8 +2,8 @@
 set -xeuo pipefail
 
 KIND_VERSION="0.20.0" # https://github.com/kubernetes-sigs/kind/releases
-HELM_VERSION="3.12.1" # https://github.com/helm/helm/releases
-GCLOUD_VERSION="431.0.0"
+HELM_VERSION="3.13.0" # https://github.com/helm/helm/releases
+GCLOUD_VERSION="447.0.0"
 MKCERT_VERSION="1.4.4" # https://github.com/FiloSottile/mkcert/tags
 KUBENT_VERSION="0.7.0" # https://github.com/doitintl/kube-no-trouble
 
