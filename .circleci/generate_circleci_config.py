@@ -16,7 +16,7 @@ ci_remote_docker_version = "20.10.24"
 
 # https://circleci.com/developer/machine/image/ubuntu-2204
 machine_image_version = "ubuntu-2204:2023.07.2"
-ci_runner_version = "2023-07"
+ci_runner_version = "2023-10"
 
 
 def list_docker_images(path):
