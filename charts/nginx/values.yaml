@@ -9,7 +9,7 @@ tolerations: []
 images:
   nginx:
     repository: quay.io/astronomer/ap-nginx
-    tag: 1.8.1
+    tag: 1.9.0
     pullPolicy: IfNotPresent
   defaultBackend:
     repository: quay.io/astronomer/ap-default-backend
@@ -82,6 +82,14 @@ ports:
 # Election ID to use for status update
 electionId: ingress-controller-leader
 
+# Enables the annotation validation feature
+enableAnnotationValidations: false
+
+# -- This configuration defines if Ingress Controller should allow users to set
+# their own *-snippet annotations, otherwise this is forbidden / dropped
+# when users add those annotations.
+# Global snippets in ConfigMap are still respected
+allowSnippetAnnotations: false
 
 defaultBackend:
   resources: {}
