@@ -181,7 +181,7 @@ spec:
           {{- end }}
           {{- end }}
 
-          {{- if .Values.nats.jetstream.enabled .Values.nats.jetstream.fileStorage.enabled }}
+          {{- if and .Values.nats.jetstream.enabled .Values.nats.jetstream.fileStorage.enabled }}
           - name: {{ template "nats.name" . }}-js-pvc
             mountPath: {{ .Values.nats.jetstream.fileStorage.storageDirectory }}
           {{- end }}
@@ -297,7 +297,6 @@ spec:
         resources:
 {{ toYaml .Values.exporter.resources | indent 10 }}
       {{ end }}
-
   {{- if and .Values.nats.jetstream.enabled .Values.nats.jetstream.fileStorage.enabled (not .Values.nats.jetstream.fileStorage.existingClaim) }}
   volumeClaimTemplates:
   #####################################
