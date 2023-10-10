@@ -110,7 +110,7 @@ jobs:
 
   run_pre_commit:
     docker:
-      - image: quay.io/astronomer/ci-pre-commit:2023-09
+      - image: quay.io/astronomer/ci-pre-commit:2023-10
     steps:
       - checkout
       - run:
@@ -145,7 +145,7 @@ jobs:
 
   unittest-charts:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2023-09
+      - image: quay.io/astronomer/ci-helm-release:2023-10
     parallelism: 8
     resource_class: xlarge
     steps:
@@ -200,7 +200,7 @@ jobs:
 
   release-to-internal:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2023-09
+      - image: quay.io/astronomer/ci-helm-release:2023-10
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -239,7 +239,7 @@ jobs:
 
   release-to-public:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2023-09
+      - image: quay.io/astronomer/ci-helm-release:2023-10
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -330,6 +330,22 @@ jobs:
             helm template --kube-version=v1.27.3 -f values.yaml --set global.baseDomain=example.com . |
             kubent --cluster=false --helm3=false --filename -
           when: always
+  platform-1-28-0:
+    machine:
+      image: ubuntu-2204:2023.07.2
+      resource_class: xlarge
+    environment:
+      KUBE_VERSION: v1.28.0
+    steps:
+      - helm-install:
+          astronomer-tags: "platform postgresql monitoring logging"
+      - run:
+          name: Check chart for k8s 1.28.0 compatibility with kubent
+          command: |
+            set -o pipefail
+            helm template --kube-version=v1.28.0 -f values.yaml --set global.baseDomain=example.com . |
+            kubent --cluster=false --helm3=false --filename -
+          when: always
 
   check-commander-airflow-version:
     docker:
@@ -359,39 +375,39 @@ workflows:
             parameters:
               docker_image:
                 - quay.io/astronomer/ap-alertmanager:0.26.0
-                - quay.io/astronomer/ap-astro-ui:0.33.3
-                - quay.io/astronomer/ap-auth-sidecar:1.25.1
+                - quay.io/astronomer/ap-astro-ui:0.33.4
+                - quay.io/astronomer/ap-auth-sidecar:1.25.2
                 - quay.io/astronomer/ap-awsesproxy:1.5
-                - quay.io/astronomer/ap-base:3.18.3
+                - quay.io/astronomer/ap-base:3.18.4
                 - quay.io/astronomer/ap-blackbox-exporter:0.24.0-1
-                - quay.io/astronomer/ap-cli-install:0.26.17
-                - quay.io/astronomer/ap-commander:0.33.2
-                - quay.io/astronomer/ap-configmap-reloader:0.11.0
-                - quay.io/astronomer/ap-curator:8.0.8-1
+                - quay.io/astronomer/ap-cli-install:0.26.18
+                - quay.io/astronomer/ap-commander:0.33.4
+                - quay.io/astronomer/ap-configmap-reloader:0.12.0
+                - quay.io/astronomer/ap-curator:8.0.8-2
                 - quay.io/astronomer/ap-db-bootstrapper:0.31.6
-                - quay.io/astronomer/ap-default-backend:0.28.18
-                - quay.io/astronomer/ap-elasticsearch-exporter:1.5.0-1
+                - quay.io/astronomer/ap-default-backend:0.28.19
+                - quay.io/astronomer/ap-elasticsearch-exporter:1.6.0
                 - quay.io/astronomer/ap-elasticsearch:8.8.2
-                - quay.io/astronomer/ap-fluentd:1.16.2
-                - quay.io/astronomer/ap-grafana:10.0.2
-                - quay.io/astronomer/ap-houston-api:0.33.4
+                - quay.io/astronomer/ap-fluentd:1.16.2-1
+                - quay.io/astronomer/ap-grafana:10.0.8
+                - quay.io/astronomer/ap-houston-api:0.33.5
                 - quay.io/astronomer/ap-init:3.18.3
-                - quay.io/astronomer/ap-init:3.18.3-1
+                - quay.io/astronomer/ap-init:3.18.4
                 - quay.io/astronomer/ap-kibana:8.8.2
                 - quay.io/astronomer/ap-kube-state:2.8.2
                 - quay.io/astronomer/ap-nats-exporter:0.10.0-6
                 - quay.io/astronomer/ap-nats-server:2.8.4-4
                 - quay.io/astronomer/ap-nats-streaming:0.24.6-4
-                - quay.io/astronomer/ap-nginx-es:1.25.1
-                - quay.io/astronomer/ap-nginx:1.8.1
+                - quay.io/astronomer/ap-nginx-es:1.25.2
+                - quay.io/astronomer/ap-nginx:1.9.0
                 - quay.io/astronomer/ap-node-exporter:1.6.1
-                - quay.io/astronomer/ap-openresty:1.21.4-9
+                - quay.io/astronomer/ap-openresty:1.21.4-10
                 - quay.io/astronomer/ap-pgbouncer-krb:1.17.0-9
-                - quay.io/astronomer/ap-postgres-exporter:0.12.0-1
-                - quay.io/astronomer/ap-postgresql:15.2.0-3
-                - quay.io/astronomer/ap-prometheus:2.45.0
-                - quay.io/astronomer/ap-registry:3.18.3-1
-                - quay.io/astronomer/ap-vector:0.28.2-3
+                - quay.io/astronomer/ap-postgres-exporter:0.14.0
+                - quay.io/astronomer/ap-postgresql:15.4.0-1
+                - quay.io/astronomer/ap-prometheus:2.45.1
+                - quay.io/astronomer/ap-registry:3.16.5-1
+                - quay.io/astronomer/ap-vector:0.32.2
           context:
             - slack_team-software-infra-bot
       - twistcli-scan-docker:
@@ -399,39 +415,39 @@ workflows:
             parameters:
               docker_image:
                 - quay.io/astronomer/ap-alertmanager:0.26.0
-                - quay.io/astronomer/ap-astro-ui:0.33.3
-                - quay.io/astronomer/ap-auth-sidecar:1.25.1
+                - quay.io/astronomer/ap-astro-ui:0.33.4
+                - quay.io/astronomer/ap-auth-sidecar:1.25.2
                 - quay.io/astronomer/ap-awsesproxy:1.5
-                - quay.io/astronomer/ap-base:3.18.3
+                - quay.io/astronomer/ap-base:3.18.4
                 - quay.io/astronomer/ap-blackbox-exporter:0.24.0-1
-                - quay.io/astronomer/ap-cli-install:0.26.17
-                - quay.io/astronomer/ap-commander:0.33.2
-                - quay.io/astronomer/ap-configmap-reloader:0.11.0
-                - quay.io/astronomer/ap-curator:8.0.8-1
+                - quay.io/astronomer/ap-cli-install:0.26.18
+                - quay.io/astronomer/ap-commander:0.33.4
+                - quay.io/astronomer/ap-configmap-reloader:0.12.0
+                - quay.io/astronomer/ap-curator:8.0.8-2
                 - quay.io/astronomer/ap-db-bootstrapper:0.31.6
-                - quay.io/astronomer/ap-default-backend:0.28.18
-                - quay.io/astronomer/ap-elasticsearch-exporter:1.5.0-1
+                - quay.io/astronomer/ap-default-backend:0.28.19
+                - quay.io/astronomer/ap-elasticsearch-exporter:1.6.0
                 - quay.io/astronomer/ap-elasticsearch:8.8.2
-                - quay.io/astronomer/ap-fluentd:1.16.2
-                - quay.io/astronomer/ap-grafana:10.0.2
-                - quay.io/astronomer/ap-houston-api:0.33.4
+                - quay.io/astronomer/ap-fluentd:1.16.2-1
+                - quay.io/astronomer/ap-grafana:10.0.8
+                - quay.io/astronomer/ap-houston-api:0.33.5
                 - quay.io/astronomer/ap-init:3.18.3
-                - quay.io/astronomer/ap-init:3.18.3-1
+                - quay.io/astronomer/ap-init:3.18.4
                 - quay.io/astronomer/ap-kibana:8.8.2
                 - quay.io/astronomer/ap-kube-state:2.8.2
                 - quay.io/astronomer/ap-nats-exporter:0.10.0-6
                 - quay.io/astronomer/ap-nats-server:2.8.4-4
                 - quay.io/astronomer/ap-nats-streaming:0.24.6-4
-                - quay.io/astronomer/ap-nginx-es:1.25.1
-                - quay.io/astronomer/ap-nginx:1.8.1
+                - quay.io/astronomer/ap-nginx-es:1.25.2
+                - quay.io/astronomer/ap-nginx:1.9.0
                 - quay.io/astronomer/ap-node-exporter:1.6.1
-                - quay.io/astronomer/ap-openresty:1.21.4-9
+                - quay.io/astronomer/ap-openresty:1.21.4-10
                 - quay.io/astronomer/ap-pgbouncer-krb:1.17.0-9
-                - quay.io/astronomer/ap-postgres-exporter:0.12.0-1
-                - quay.io/astronomer/ap-postgresql:15.2.0-3
-                - quay.io/astronomer/ap-prometheus:2.45.0
-                - quay.io/astronomer/ap-registry:3.18.3-1
-                - quay.io/astronomer/ap-vector:0.28.2-3
+                - quay.io/astronomer/ap-postgres-exporter:0.14.0
+                - quay.io/astronomer/ap-postgresql:15.4.0-1
+                - quay.io/astronomer/ap-prometheus:2.45.1
+                - quay.io/astronomer/ap-registry:3.16.5-1
+                - quay.io/astronomer/ap-vector:0.32.2
           context:
             - twistcli
 
@@ -474,6 +490,11 @@ workflows:
 
       - platform-1-27-3:
           requires:
+            - approve-test-all-platforms
+            - build-artifact
+
+      - platform-1-28-0:
+          requires:
             - build-artifact
       - approve-internal-release:
           type: approval
@@ -491,7 +512,7 @@ workflows:
           requires:
             - approve-internal-release
             - platform-1-23-17
-            - platform-1-27-3
+            - platform-1-28-0
       - approve-upgrade-test:
           type: approval
           filters:
@@ -513,6 +534,7 @@ workflows:
             - platform-1-24-15
             - platform-1-25-11
             - platform-1-26-6
+            - platform-1-27-3
           filters:
             branches:
               only:
@@ -551,7 +573,7 @@ workflows:
           requires:
             - build-artifact
 
-      - platform-1-27-3:
+      - platform-1-28-0:
           requires:
             - build-artifact
 
@@ -560,7 +582,7 @@ workflows:
             - gcp-astronomer-prod
           requires:
             - platform-1-23-17
-            - platform-1-27-3
+            - platform-1-28-0
           filters:
             branches:
               only:

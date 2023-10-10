@@ -70,6 +70,13 @@ spec:
           component: external-es-proxy
           release: {{ .Release.Name }}
     {{- end }}
+    {{- if .Values.houston.enableHoustonInternalAuthorization  }}
+    - namespaceSelector: {}
+      podSelector:
+        matchLabels:
+          component: webserver
+          tier: airflow
+    {{- end }}
     ports:
     - protocol: TCP
       port: {{ .Values.ports.houstonHTTP }}
