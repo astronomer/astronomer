@@ -89,7 +89,7 @@ enableAnnotationValidations: false
 # their own *-snippet annotations, otherwise this is forbidden / dropped
 # when users add those annotations.
 # Global snippets in ConfigMap are still respected
-allowSnippetAnnotations: false
+allowSnippetAnnotations: true
 
 defaultBackend:
   resources: {}
