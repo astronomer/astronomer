@@ -74,7 +74,6 @@ class TestKibana:
         assert "NetworkPolicy" == doc["kind"]
         assert [
             {
-                "namespaceSelector": {"matchLabels": {"platform": "release-name"}},
                 "podSelector": {
                     "matchLabels": {
                         "component": "kibana-default-index",
@@ -83,4 +82,6 @@ class TestKibana:
                     }
                 },
             }
-        ] == [doc["spec"]["ingress"][0]["from"][1]]
+        ] == [doc["spec"]["ingress"][1]["from"][0]]
+
+        assert [{"port": 5601, "protocol": "TCP"}] == doc["spec"]["ingress"][1]["ports"]
