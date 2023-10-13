@@ -83,4 +83,4 @@ class TestKibana:
                     }
                 },
             }
-        ] == [doc["spec"]["ingress"][0]["from"][2]]
+        ] == [doc["spec"]["ingress"][0]["from"][1]]
