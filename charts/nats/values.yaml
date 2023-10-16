@@ -6,11 +6,11 @@
 images:
   nats:
     repository: quay.io/astronomer/ap-nats-server
-    tag: 2.8.4-4
+    tag: 2.10.2
     pullPolicy: IfNotPresent
   exporter:
     repository: quay.io/astronomer/ap-nats-exporter
-    tag: 0.10.0-6
+    tag: 0.12.0
     pullPolicy: IfNotPresent
 
 
