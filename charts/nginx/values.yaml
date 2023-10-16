@@ -9,11 +9,11 @@ tolerations: []
 images:
   nginx:
     repository: quay.io/astronomer/ap-nginx
-    tag: 1.9.0
+    tag: 1.9.0-1
     pullPolicy: IfNotPresent
   defaultBackend:
     repository: quay.io/astronomer/ap-default-backend
-    tag: 0.28.19
+    tag: 0.28.20
     pullPolicy: IfNotPresent
 
 securityContext:
@@ -89,7 +89,7 @@ enableAnnotationValidations: false
 # their own *-snippet annotations, otherwise this is forbidden / dropped
 # when users add those annotations.
 # Global snippets in ConfigMap are still respected
-allowSnippetAnnotations: false
+allowSnippetAnnotations: true
 
 defaultBackend:
   resources: {}
