@@ -39,7 +39,7 @@ spec:
 {{- end }}
     spec:
       securityContext:
-{{ toYaml .Values.podSecurityContext | indent 10 }}
+{{ toYaml .Values.PodSecurityContext | indent 10 }}
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
       {{- if eq .Values.client.antiAffinity "hard" }}
@@ -86,11 +86,11 @@ spec:
       containers:
       - name: es-client
         securityContext:
+        {{- if .Values.client.securityContext }}
+{{ toYaml .Values.client.securityContext | indent 10 }}
+        {{- else }}
 {{ toYaml .Values.securityContext | indent 10 }}
-          capabilities:
-            add:
-              - IPC_LOCK
-              - SYS_RESOURCE
+        {{- end }}
         image: {{ template "elasticsearch.image" . }}
         imagePullPolicy: {{ .Values.images.es.pullPolicy }}
         env:
@@ -114,6 +114,8 @@ spec:
         - name: {{ $key | upper | replace "-" "_" }}
           value: {{ $value | quote }}
         {{- end }}
+        - name: node.roles
+          value: "{{ template "elasticsearch.client.roles" . }}"
         resources:
 {{ toYaml .Values.client.resources | indent 10 }}
         ports:

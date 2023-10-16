@@ -1,11 +1,14 @@
 apiVersion: v2
 name: astronomer
-version: 0.30.2-rc1
-appVersion: 0.30.2-rc1
+version: 0.33.1
+appVersion: 0.33.1
 description: Helm chart to deploy the Astronomer Platform
 icon: https://www.astronomer.io/static/iconforLIGHTbackground.svg
 keywords:
   - astronomer
+
+# In order for tags to function, the referenced condition must not be set to True
+# anywhere else in the chart. Helm values take precedence over tag conditions.
 dependencies:
   # Platform components
   - name: astronomer
@@ -16,35 +19,37 @@ dependencies:
     condition: global.nginxEnabled
     tags:
       - platform
+
   # Monitoring stack
-  - name: grafana
-    condition: global.grafanaEnabled
-    tags:
-      - monitoring
-  - name: prometheus
-    condition: global.prometheusEnabled
-    tags:
-      - monitoring
-  - name: prometheus-postgres-exporter
-    condition: global.prometheusPostgresExporterEnabled
-    tags:
-      - monitoring
   - name: alertmanager
     condition: global.alertmanagerEnabled
+    tags:
+      - monitoring
+  - name: grafana
+    condition: global.grafanaEnabled
     tags:
       - monitoring
   - name: kube-state
     condition: global.kubeStateEnabled
     tags:
       - monitoring
-  - name: prometheus-node-exporter
-    condition: global.nodeExporterEnabled
-    tags:
-      - monitoring
   - name: prometheus-blackbox-exporter
-    condition: global.blackboxExporterEnabled
+    condition: global.blackboxExporter.Enabled
     tags:
       - monitoring
+  - name: prometheus-node-exporter
+    condition: global.nodeExporter.Enabled
+    tags:
+      - monitoring
+  - name: prometheus-postgres-exporter
+    condition: global.prometheusPostgresExporter.Enabled
+    tags:
+      - monitoring
+  - name: prometheus
+    condition: global.prometheusEnabled
+    tags:
+      - monitoring
+
   # Logging stack
   - name: elasticsearch
     condition: global.elasticsearchEnabled
@@ -58,27 +63,32 @@ dependencies:
     condition: global.fluentdEnabled
     tags:
       - logging
-  # In-cluster DB, not recommended
-  # for production
+
+  # In-cluster DB
+  # !! Not recommended for production !!
   - name: postgresql
     condition: global.postgresqlEnabled
     tags:
       - postgresql
+
   # Pgbouncer
   - name: pgbouncer
     condition: global.pgbouncer.enabled
     tags:
       - pgbouncer
+
   # Nats-server
   - name: nats
     condition: global.nats.enabled
     tags:
       - nats
+
   # Nats-streaming
   - name: stan
     condition: global.stan.enabled
     tags:
       - stan
+
   # external-es-proxy
   - name: external-es-proxy
     condition: global.customLogging.enabled

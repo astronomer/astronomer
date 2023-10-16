@@ -9,7 +9,7 @@
 
 {{ define "pgbouncer.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/ap-pgbouncer-krb:{{ .Values.images.tag }}
+{{ .Values.global.privateRegistry.repository }}/ap-pgbouncer-krb:{{ .Values.image.tag }}
 {{- else -}}
 {{ printf "%s:%s" .Values.image.repository .Values.image.tag }}
 {{- end }}

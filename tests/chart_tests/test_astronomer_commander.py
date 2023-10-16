@@ -1,7 +1,6 @@
 from tests.chart_tests.helm_template_generator import render_chart
 import pytest
-from tests import supported_k8s_versions
-import jmespath
+from tests import supported_k8s_versions, get_containers_by_name
 
 
 @pytest.mark.parametrize(
@@ -9,7 +8,7 @@ import jmespath
     supported_k8s_versions,
 )
 class TestAstronomerCommander:
-    def test_astronomer_commander_deployment(self, kube_version):
+    def test_astronomer_commander_deployment_default(self, kube_version):
         """Test that helm renders a good deployment template for
         astronomer/commander."""
         docs = render_chart(
@@ -24,18 +23,15 @@ class TestAstronomerCommander:
         assert doc["kind"] == "Deployment"
         assert doc["apiVersion"] == "apps/v1"
         assert doc["metadata"]["name"] == "release-name-commander"
-        assert any(
-            image_name.startswith("quay.io/astronomer/ap-commander:")
-            for image_name in jmespath.search(
-                "spec.template.spec.containers[*].image", doc
-            )
+        c_by_name = get_containers_by_name(doc)
+        assert len(c_by_name) == 1
+        assert c_by_name["commander"]["image"].startswith(
+            "quay.io/astronomer/ap-commander:"
         )
-        assert len(doc["spec"]["template"]["spec"]["containers"]) == 1
-        env_vars = {
-            x["name"]: x["value"]
-            for x in doc["spec"]["template"]["spec"]["containers"][0]["env"]
-        }
-        assert env_vars["COMMANDER_UPGRADE_TIMEOUT"] == "300"
+        assert c_by_name["commander"]["resources"]["limits"]["memory"] == "2Gi"
+        assert c_by_name["commander"]["resources"]["requests"]["memory"] == "1Gi"
+        env_vars = {x["name"]: x["value"] for x in c_by_name["commander"]["env"]}
+        assert env_vars["COMMANDER_UPGRADE_TIMEOUT"] == "600"
 
     def test_astronomer_commander_deployment_upgrade_timeout(self, kube_version):
         """Test that helm renders a good deployment template for
@@ -45,7 +41,7 @@ class TestAstronomerCommander:
         """
         docs = render_chart(
             kube_version=kube_version,
-            values={"astronomer": {"commander": {"upgradeTimeout": 600}}},
+            values={"astronomer": {"commander": {"upgradeTimeout": 997}}},
             show_only=[
                 "charts/astronomer/templates/commander/commander-deployment.yaml"
             ],
@@ -56,19 +52,14 @@ class TestAstronomerCommander:
         assert doc["kind"] == "Deployment"
         assert doc["apiVersion"] == "apps/v1"
         assert doc["metadata"]["name"] == "release-name-commander"
-        assert any(
-            image_name.startswith("quay.io/astronomer/ap-commander:")
-            for image_name in jmespath.search(
-                "spec.template.spec.containers[*].image", doc
-            )
+        c_by_name = get_containers_by_name(doc)
+        assert len(c_by_name) == 1
+        assert c_by_name["commander"]["image"].startswith(
+            "quay.io/astronomer/ap-commander:"
         )
 
-        assert len(doc["spec"]["template"]["spec"]["containers"]) == 1
-        env_vars = {
-            x["name"]: x["value"]
-            for x in doc["spec"]["template"]["spec"]["containers"][0]["env"]
-        }
-        assert env_vars["COMMANDER_UPGRADE_TIMEOUT"] == "600"
+        env_vars = {x["name"]: x["value"] for x in c_by_name["commander"]["env"]}
+        assert env_vars["COMMANDER_UPGRADE_TIMEOUT"] == "997"
 
     def test_astronomer_commander_rbac_cluster_role_enabled(self, kube_version):
         """Test that if rbacEnabled and clusterRoles are enabled but

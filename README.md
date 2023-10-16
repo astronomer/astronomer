@@ -51,13 +51,13 @@ Modify the "tags:" in configs/local-dev.yaml
 - logging (large impact on RAM use): ElasticSearch, Kibana, Fluentd (aka 'EFK' stack)
 - monitoring: Prometheus
 
-#### Add a Docker image into KinD's nodes (so it's available for pods):
+#### Load a Docker image into KinD's nodes (so it's available for pods)
 
 ```sh
 kind load docker-image $your_local_image_name_with_tag
 ```
 
-#### Make use of that image:
+#### Make use of that image
 
 Make note of your pod name
 
@@ -79,13 +79,13 @@ and set the pull policy to "Never".
 kubectl edit deployment -n astronomer <your deployment>
 ```
 
-#### Change Kubernetes version:
+#### Specify the Kubernetes version
 
 ```sh
-bin/reset-local-dev -K 1.21.2
+bin/reset-local-dev -K 1.24.7
 ```
 
-#### Locally test HA configurations:
+#### Locally test HA configurations
 
 You need a powerful computer to run the HA testing locally. 28 GB or more of memory should be available to Docker.
 
@@ -128,6 +128,18 @@ ag "\.Values\.\w+" -o --no-filename --no-numbers | sort | uniq
 ```
 
 The values output by this command will need to be inserted manually into astronomer/values.schema.json at the `astronomer.houston.config.deployments.helm.airflow.allOf` parameter. There are two additional params that need to be at this location outside of what is returned from above. They are `podMutation` and `useAstroSecurityManager`. These can be found by running the same ag command against the astronomer/airflow-chart values.yaml file.
+
+### Searching code
+
+We include k8s schema files and calico CRD manifests in this repo to aid in testing, but their inclusion makes grepping for code a bit difficult in some cases. You can exclude those files from your `git grep`` results if you use the following syntax:
+
+```sh
+git grep .Values.global. -- ':!tests/k8s_schema' ':!bin/kind'
+```
+
+The `--` ends the `git` command arguments and indicates that the rest of the arguments are filenames or `pathspecs`. `pathspecs` begin with a colon. `:!tests/k8s_schema` is a pathspec that instructs git to exclude the directory `tests/k8s_schema`.
+
+Note that this `pathspec` syntax is a `git` feature, so this exclusion technique will not work with normal `grep`.
 
 ## License
 

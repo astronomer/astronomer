@@ -60,6 +60,7 @@ data:
         scheme: https
         tls_config:
           ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+          insecure_skip_verify: {{ .Values.config.scrape_configs.kubernetes_apiservers.tls_config.insecure_skip_verify }}
         bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
         relabel_configs:
           - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
@@ -268,15 +269,22 @@ data:
             action: labeldrop
           - regex: 'label_kubernetes_pod_operator'
             action: labeldrop
-          # Required for multi-namespace mode
+          # Required for multi-namespace mode (non auto-generated namespaces should be relabeled differently)
+          {{- if or .Values.global.features.namespacePools.enabled .Values.global.namespaceFreeFormEntry .Values.global.manualNamespaceNamesEnabled}}
+          - source_labels: [pod]
+            regex: "(.*?)(?:-webserver.*|-scheduler.*|-worker.*|-cleanup.*|-pgbouncer.*|-statsd.*|-triggerer.*|-run-airflow-migrations.*|-git-sync-relay.*)?$"
+            replacement: "$1"
+            target_label: release
+          - source_labels: [resourcequota]
+            regex: "(.+)-resource-quota$"
+            replacement: "$1"
+            target_label: release
+          {{- else}}
           - source_labels: [namespace]
-            {{- if .Values.global.namespaceFreeFormEntry }}
-            # use default regex pattern (.*) when namespaceFreeFormEntry is enabled
-            {{- else}}
             regex: "^{{ .Release.Namespace }}-(.*$)"
             replacement: "$1"
-            {{- end}}
             target_label: release
+          {{- end }}
         {{- else}}
         # this drops node metrics that we want in the cloud, but maybe shouldn't be scraping
         # if we are in a shared cluster in enterprise

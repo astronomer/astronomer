@@ -38,8 +38,7 @@ spec:
 {{- include "nginx.imagePullSecrets" . | indent 6 }}
       containers:
         - name: nginx
-          securityContext:
-            runAsUser: 101
+          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
           image: {{ template "nginx.image" . }}
           imagePullPolicy: {{ .Values.images.nginx.pullPolicy }}
           resources:
@@ -52,6 +51,9 @@ spec:
             - --default-ssl-certificate={{ .Release.Namespace }}/{{ .Values.global.tlsSecret }}
             {{- if .Values.global.singleNamespace }}
             - --watch-namespace={{ .Release.Namespace }}
+            {{- end }}
+            {{- if .Values.enableAnnotationValidations }}
+            - --enable-annotation-validation=true
             {{- end }}
             - --election-id={{ .Values.electionId }}-{{ template "nginx.fullname" . }}
             - --publish-service={{ .Release.Namespace }}/{{ template "nginx.fullname" . }}

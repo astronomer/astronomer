@@ -36,7 +36,12 @@ spec:
     - podSelector:
         matchLabels:
           tier: astronomer
-          component: houston-populate-hourly-task-audit-metrics
+          component: houston-populate-hourly-ta-metrics
+          release: {{ .Release.Name }}
+    - podSelector:
+        matchLabels:
+          tier: astronomer
+          component: houston-cleanup-airflow-db
           release: {{ .Release.Name }}
     - podSelector:
         matchLabels:
@@ -64,6 +69,13 @@ spec:
           tier: external-logging
           component: external-es-proxy
           release: {{ .Release.Name }}
+    {{- end }}
+    {{- if .Values.houston.enableHoustonInternalAuthorization  }}
+    - namespaceSelector: {}
+      podSelector:
+        matchLabels:
+          component: webserver
+          tier: airflow
     {{- end }}
     ports:
     - protocol: TCP

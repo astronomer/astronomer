@@ -3,13 +3,62 @@ import re
 import pytest
 
 import tests.chart_tests as chart_tests
-from tests import get_containers_by_name
+from tests import get_containers_by_name, k8s_version_too_old, k8s_version_too_new
 from tests.chart_tests.helm_template_generator import render_chart
 
 annotation_validator = re.compile(
     "^([^/]+/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$"
 )
 pod_managers = ["Deployment", "StatefulSet", "DaemonSet"]
+
+
+class TestK8sVersionConstraints:
+    @pytest.mark.parametrize(
+        "version,err_substring",
+        [
+            (k8s_version_too_old, "too old!"),
+            (k8s_version_too_new, "too new!"),
+        ],
+    )
+    def test_k8s_version_out_of_bounds(self, version, err_substring):
+        """Test that an error is returned when the k8s version is too old or too new."""
+        with pytest.raises(Exception) as err:
+            render_chart(
+                kube_version=version,
+            )
+        assert err_substring in str(err.value.stderr.decode())
+
+    @pytest.mark.parametrize(
+        "version",
+        [
+            (k8s_version_too_old),
+            (k8s_version_too_new),
+        ],
+    )
+    def test_k8s_version_out_of_bounds_override(self, version):
+        """Test that no error is returned for versions that are too old or new when forceIncompatibleKubernetes is used."""
+        render_chart(
+            values={"forceIncompatibleKubernetes": True},
+            kube_version=version,
+            validate_objects=False,
+        )
+
+
+class TestAllCronJobs:
+    chart_values = chart_tests.get_all_features()
+
+    def test_ensure_cronjob_names_are_max_52_chars(self):
+        """Cronjob names must be DNS_MAX_LEN - TIMESTAMP_LEN, which is 52 chars."""
+        default_docs = render_chart(values=self.chart_values)
+        cronjobs = [
+            doc for doc in default_docs if doc["kind"].lower() == "CronJob".lower()
+        ]
+
+        for doc in cronjobs:
+            name_len = len(doc["metadata"]["name"])
+            assert (
+                name_len <= 52
+            ), f'{doc["metadata"]["name"]} is too long at {name_len} characters'
 
 
 class TestAllPodSpecContainers:
@@ -55,24 +104,35 @@ class TestAllPodSpecContainers:
             assert "memory" in resources.get("requests")
 
     private_repo = "example.com/the-private-registry-repository"
-    private_repo_docs = render_chart(
-        values={
-            "global": {
-                "privateRegistry": {
-                    "enabled": True,
-                    "repository": private_repo,
-                }
-            }
-        },
-    )
-    private_repo_docs_trimmed = [
+    private_values = chart_tests.get_all_features()
+    private_values["global"]["privateRegistry"] = {
+        "enabled": True,
+        "repository": private_repo,
+    }
+    private_values["global"]["authSidecar"] = {
+        "enabled": True,
+        "repository": f"{private_repo}/ap-auth-sidecar",
+    }
+    private_repo_docs = render_chart(values=private_values)
+    pod_manager_docs_private = [
         doc for doc in private_repo_docs if doc["kind"] in pod_managers
     ]
+    pod_manager_docs_private_ids = [
+        f"{doc['kind']}/{doc['metadata']['name']}" for doc in pod_manager_docs_private
+    ]
+
+    pod_manager_containers_public = {
+        f"{doc['kind']}/{doc['metadata']['name']}/{name}": container
+        for doc in pod_manager_docs
+        for name, container in get_containers_by_name(
+            doc, include_init_containers=True
+        ).items()
+    }
 
     @pytest.mark.parametrize(
         "doc",
-        private_repo_docs_trimmed,
-        ids=[f"{x['kind']}/{x['metadata']['name']}" for x in private_repo_docs_trimmed],
+        pod_manager_docs_private,
+        ids=pod_manager_docs_private_ids,
     )
     def test_all_default_charts_with_private_registry(self, doc):
         """Test that each chart uses the privateRegistry.
@@ -80,32 +140,30 @@ class TestAllPodSpecContainers:
         This only finds default images, not the many which are hidden
         behind feature flags.
         """
-        c_by_name = get_containers_by_name(doc)
+        c_by_name = get_containers_by_name(doc, include_init_containers=True)
 
         for name, container in c_by_name.items():
+            pod_container = f"{doc['kind']}/{doc['metadata']['name']}/{name}"
+            assert (
+                container["image"].split("/")[-1:]
+                == self.pod_manager_containers_public[pod_container]["image"].split(
+                    "/"
+                )[-1:]
+            ), f"The spec for '{pod_container}' does not use the same image for public and private registry configurations."
             assert container["image"].startswith(
                 self.private_repo
-            ), f"The container '{name}' does not use the privateRegistry repo '{self.private_repo}': {container}"
+            ), f"The spec for '{pod_container}' does not use the privateRegistry repo '{self.private_repo}': {container}"
 
 
+@pytest.mark.skip(
+    "See issue https://github.com/astronomer/issues/issues/5227 for details about when to reenabling this."
+)
 class TestDuplicateEnvironment:
     """Parametrize all the docs that have container specs and test them for
     duplicate env vars."""
 
-    values = {
-        "global": {
-            "baseDomain": "foo.com",
-            "blackboxExporterEnabled": True,
-            "postgresqlEnabled": True,
-            "privateRegistry": {
-                "enabled": True,
-                "repository": "example.com/the-private-registry",
-            },
-            "prometheusPostgresExporterEnabled": True,
-            "pspEnabled": True,
-            "veleroEnabled": True,
-        }
-    }
+    values = chart_tests.get_all_features()
+
     docs = render_chart(values=values)
     trimmed_docs = [x for x in docs if x["kind"] in pod_managers + ["CronJob"]]
 
