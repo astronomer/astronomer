@@ -40,8 +40,9 @@ spec:
 {{- end }}
     spec:
       terminationGracePeriodSeconds: 3600
-      securityContext:
-{{ toYaml .Values.PodSecurityContext | indent 8 }}
+{{- with .Values.PodsecurityContext }}
+      securityContext: {{ toYaml . | nindent 8 }}
+{{- end }}
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
       {{- if eq .Values.data.antiAffinity "hard" }}

@@ -38,8 +38,9 @@ spec:
 {{ toYaml .Values.client.podAnnotations | indent 8 }}
 {{- end }}
     spec:
-      securityContext:
-{{ toYaml .Values.PodSecurityContext | indent 10 }}
+{{- with .Values.PodsecurityContext }}
+      securityContext: {{ toYaml . | nindent 8 }}
+{{- end }}
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
       {{- if eq .Values.client.antiAffinity "hard" }}

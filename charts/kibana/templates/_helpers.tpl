@@ -67,3 +67,11 @@ imagePullSecrets:
 {{ define "kibana.IndexPattern" -}}
 {{- if .Values.global.loggingSidecar.enabled }}vector{{- else }}fluentd{{- end -}}
 {{- end }}
+
+{{- define "kibana.securityContext" -}}
+{{- if eq ( toString ( .Values.securityContext.runAsUser )) "auto" }}
+{{- omit  .Values.securityContext "runAsUser" | toYaml | nindent 12 }}
+{{- else }}
+{{- .Values.securityContext | toYaml | nindent 12 }}
+{{- end -}}
+{{- end }}
