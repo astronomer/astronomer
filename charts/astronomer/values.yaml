@@ -356,7 +356,10 @@ registry:
   #  requests:
   #   cpu: 100m
   #   memory: 128Mi
-
+  podSecurityContext:
+    fsGroup: 1000
+    runAsGroup: 1000
+    runAsUser: 1000
   extraEnv: []
   PodSecurityContext:
     fsGroup: 1000

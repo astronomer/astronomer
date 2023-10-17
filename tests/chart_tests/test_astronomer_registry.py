@@ -28,6 +28,11 @@ class TestRegistryStatefulset:
             "quay.io/astronomer/ap-registry:" in item
             for item in jmespath.search("spec.template.spec.containers[*].image", doc)
         )
+        assert docs[0]["spec"]["template"]["spec"]["securityContext"] == {
+            "fsGroup": 1000,
+            "runAsGroup": 1000,
+            "runAsUser": 1000,
+        }
 
     def test_astronomer_registry_statefulset_with_custom_env(self, kube_version):
         """Test that helm renders statefulset template for astronomer
@@ -155,3 +160,18 @@ class TestRegistryStatefulset:
             ],
         )
         assert len(docs) == 0
+
+    def test_astronomer_registry_statefulset_with_podSecurityContext_disabled(
+        self, kube_version
+    ):
+        """Test that helm renders statefulset template for astronomer
+        registry with podSecurityContext disabled."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"astronomer": {"registry": {"podSecurityContext": []}}},
+            show_only=[
+                "charts/astronomer/templates/registry/registry-statefulset.yaml",
+            ],
+        )
+        assert len(docs) == 1
+        assert "securityContext" not in docs[0]["spec"]["template"]["spec"]
