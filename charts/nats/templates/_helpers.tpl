@@ -55,3 +55,11 @@ imagePullSecrets:
   - name: {{ .Values.global.privateRegistry.secretName }}
 {{- end -}}
 {{- end -}}
+
+{{- define "nats.securityContext" -}}
+{{- if eq ( toString ( .Values.securityContext.runAsUser )) "auto" }}
+{{- omit  .Values.securityContext "runAsUser" | toYaml | nindent 10 }}
+{{- else }}
+{{- .Values.securityContext | toYaml | nindent 10 }}
+{{- end -}}
+{{- end }}

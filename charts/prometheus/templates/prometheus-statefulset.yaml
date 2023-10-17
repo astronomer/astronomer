@@ -49,7 +49,7 @@ spec:
         {{- if .Values.global.authSidecar.enabled  }}
         - name: auth-proxy
           image: "{{ .Values.global.authSidecar.repository }}:{{ .Values.global.authSidecar.tag }}"
-          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
+          securityContext: {{ template "prometheus.securityContext" . }}
           imagePullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
           {{- if .Values.global.authSidecar.resources }}
           resources: {{- toYaml .Values.global.authSidecar.resources | nindent 12 }}
@@ -83,7 +83,7 @@ spec:
             - --volume-dir=/etc/prometheus/config
           image: {{ include "configReloader.image" . }}
           imagePullPolicy: {{ .Values.images.prometheus.pullPolicy }}
-          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
+          securityContext: {{ template "prometheus.securityContext" . }}
           resources:
 {{ toYaml .Values.configMapReloader.resources | indent 12 }}
           volumeMounts:
@@ -94,7 +94,7 @@ spec:
 
         - name: prometheus
           image: {{ include "prometheus.image" . }}
-          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
+          securityContext: {{ template "prometheus.securityContext" . }}
           imagePullPolicy: {{ .Values.images.prometheus.pullPolicy }}
           resources: {{ toYaml .Values.resources | nindent 12 }}
           args:
@@ -136,7 +136,10 @@ spec:
             periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
             failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
             timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
-      securityContext: {{ toYaml .Values.PodSecurityContext| nindent 8 }}
+  {{- with .Values.PodSecurityContext }}
+      securityContext:
+{{ toYaml . | indent 8 }}
+{{- end }}
       volumes:
         {{- if .Values.global.authSidecar.enabled }}
         - name: prometheus-sidecar-conf

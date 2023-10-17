@@ -130,7 +130,7 @@ spec:
       - name: nats
         image: {{ include "nats.image" . }}
         imagePullPolicy: {{ .Values.images.nats.pullPolicy }}
-        securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
+        securityContext: {{ template "nats.securityContext" . }}
         ports:
         - containerPort: 4222
           name: client
@@ -251,7 +251,7 @@ spec:
       - name: reloader
         image: {{ .Values.reloader.image }}
         imagePullPolicy: {{ .Values.reloader.pullPolicy }}
-        securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
+        securityContext: {{ template "nats.securityContext" . }}
         command:
          - "nats-server-config-reloader"
          - "-pid"
@@ -274,7 +274,7 @@ spec:
       - name: metrics
         image: {{ template "nats-exporter.image" . }}
         imagePullPolicy: {{ .Values.images.exporter.pullPolicy }}
-        securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
+        securityContext: {{ template "nats.securityContext" . }}
         args:
         - -connz
         - -routez

@@ -49,8 +49,8 @@ PodSecurityContext:
   fsGroup: 65534
 
 securityContext:
-    runAsNonRoot: true
-    runAsUser: 65534
+  runAsNonRoot: true
+  runAsUser: 65534
 configMapReloader:
   resources: {}
     # limits:
