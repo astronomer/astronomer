@@ -55,8 +55,9 @@ spec:
       tolerations:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       restartPolicy: Always
-      securityContext:
-{{ toYaml .Values.registry.securityContext | indent 8 }}
+{{- with .Values.registry.podSecurityContext }}
+      securityContext: {{ toYaml . | nindent 8 }}
+{{- end }}
 {{- include "astronomer.imagePullSecrets" . | indent 6 }}
       containers:
         - name: registry
