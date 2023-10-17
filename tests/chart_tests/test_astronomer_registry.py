@@ -155,3 +155,18 @@ class TestRegistryStatefulset:
             ],
         )
         assert len(docs) == 0
+
+    def test_astronomer_registry_statefulset_with_podSecurityContext_disabled(
+        self, kube_version
+    ):
+        """Test that helm renders statefulset template for astronomer
+        registry with podSecurityContext_ disabled."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"astronomer": {"registry": {"podSecurityContext": []}}},
+            show_only=[
+                "charts/astronomer/templates/registry/registry-statefulset.yaml",
+            ],
+        )
+        assert len(docs) == 1
+        assert "securityContext" not in docs[0]["spec"]["template"]["spec"]
