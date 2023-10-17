@@ -25,9 +25,14 @@ image:
   #   - myRegistrKeySecretName
 
 ## User to run blackbox-exporter container as
-runAsUser: 1000
-readOnlyRootFilesystem: true
-runAsNonRoot: true
+securityContext:
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: ["ALL"]
+# Add NET_RAW to enable ICMP
+#    add: ["NET_RAW"]
 
 # These are set in the global values.
 # nodeSelector: {}
@@ -71,8 +76,6 @@ extraSecretMounts: []
   #   secretName: blackbox-secret-files
   #   readOnly: true
   #   defaultMode: 420
-
-allowIcmp: false
 
 # These are overridden by what is  in the global values file
 resources:
