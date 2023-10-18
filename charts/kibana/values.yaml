@@ -40,4 +40,4 @@ serviceType: ClusterIP
 ports:
   http: 5601
 
-createDefaultIndex: true
+createDefaultIndex: false
