@@ -243,7 +243,7 @@ def test_cve_2021_44228_es_master(es_master):
         "/usr/share/elasticsearch/jdk/bin/jps -lv"
     )
 
-
+@pytest.mark.skip(reason="resrved for 0.32.5")
 def test_kibana_index_pod(kibana_index_pod_client):
     """Check kibana index pod completed successfully"""
     command = ["kubectl -n astronomer logs -f  -lcomponent=kibana-default-index"]

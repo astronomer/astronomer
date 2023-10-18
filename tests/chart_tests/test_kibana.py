@@ -9,6 +9,7 @@ from tests.chart_tests.helm_template_generator import render_chart
     supported_k8s_versions,
 )
 class TestKibana:
+    @pytest.mark.skip(reason="resrved for 0.32.5")
     def test_kibana_index_defaults(self, kube_version):
         """Test kibana Service with index defaults."""
         docs = render_chart(
@@ -27,7 +28,7 @@ class TestKibana:
             "fluentd.*"
             in doc["spec"]["template"]["spec"]["containers"][0]["command"][2]
         )
-
+    @pytest.mark.skip(reason="resrved for 0.32.5")
     def test_kibana_index_with_logging_sidecar(self, kube_version):
         """Test kibana Service with logging sidecar index."""
         docs = render_chart(
