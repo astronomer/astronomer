@@ -50,15 +50,9 @@ spec:
         - name: blackbox-exporter
           image: {{ template "prometheus-blackbox-exporter.image" . }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          securityContext:
-            readOnlyRootFilesystem: {{ .Values.readOnlyRootFilesystem }}
-            {{- if .Values.allowIcmp }}
-            capabilities:
-              add: ["NET_RAW"]
-            {{- else }}
-            runAsNonRoot: {{ .Values.runAsNonRoot  }}
-            runAsUser: {{ .Values.runAsUser }}
-            {{- end }}
+          {{- with .Values.securityContext }}
+          securityContext: {{ toYaml . | nindent 12 }}
+          {{- end }}
           args:
 {{- if .Values.config }}
             - "--config.file=/config/blackbox.yaml"
