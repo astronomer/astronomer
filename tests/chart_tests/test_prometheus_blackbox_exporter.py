@@ -61,7 +61,7 @@ class TestPrometheusBlackBoxExporterDeployment:
             "capabilities": {"drop": ["ALL"]},
         }
 
-    def test_prometheus_blackbox_exporter_daemonset_custom_resources(
+    def test_prometheus_blackbox_exporter_deployment_custom_resources(
         self, kube_version
     ):
         doc = render_chart(
@@ -85,4 +85,26 @@ class TestPrometheusBlackBoxExporterDeployment:
         assert c_by_name["blackbox-exporter"]["resources"] == {
             "limits": {"cpu": "777m", "memory": "999Mi"},
             "requests": {"cpu": "666m", "memory": "888Mi"},
+        }
+
+    def test_prometheus_blackbox_exporter_deployment_custom_security_context(
+        self, kube_version
+    ):
+        doc = render_chart(
+            kube_version=kube_version,
+            values={
+                "prometheus-blackbox-exporter": {
+                    "securityContext": {"runAsUser": 1000}
+                },
+            },
+            show_only=["charts/prometheus-blackbox-exporter/templates/deployment.yaml"],
+        )[0]
+
+        c_by_name = get_containers_by_name(doc)
+        assert c_by_name["blackbox-exporter"]["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "capabilities": {"drop": ["ALL"]},
+            "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
+            "runAsUser": 1000,
         }
