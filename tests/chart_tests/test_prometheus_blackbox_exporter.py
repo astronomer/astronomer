@@ -54,6 +54,12 @@ class TestPrometheusBlackBoxExporterDeployment:
             "limits": {"cpu": "100m", "memory": "200Mi"},
             "requests": {"cpu": "50m", "memory": "70Mi"},
         }
+        assert c_by_name["blackbox-exporter"]["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
+            "capabilities": {"drop": ["ALL"]},
+        }
 
     def test_prometheus_blackbox_exporter_daemonset_custom_resources(
         self, kube_version
