@@ -80,7 +80,7 @@ class TestPrometheusBlackBoxExporterDeployment:
         assert doc["metadata"]["name"] == "release-name-prometheus-blackbox-exporter"
 
         c_by_name = get_containers_by_name(doc)
-        assert c_by_name["blackbox-exporter"].get("resources"] == {
+        assert c_by_name["blackbox-exporter"].get("resources") == {
             "limits": {"cpu": "777m", "memory": "999Mi"},
             "requests": {"cpu": "666m", "memory": "888Mi"},
         }
