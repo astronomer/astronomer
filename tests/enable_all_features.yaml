@@ -2,7 +2,7 @@ global:
   authSidecar:
     enabled: true
   baseDomain: foo.com
-  blackboxExporterEnabled: true
+  #blackboxExporterEnabled: true
   customLogging:
     awsSecretName: dummy
     enabled: true
