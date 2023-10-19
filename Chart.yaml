@@ -34,15 +34,15 @@ dependencies:
     tags:
       - monitoring
   - name: prometheus-blackbox-exporter
-    condition: global.blackboxExporter.Enabled
+    condition: global.blackboxExporterEnabled
     tags:
       - monitoring
   - name: prometheus-node-exporter
-    condition: global.nodeExporter.Enabled
+    condition: global.nodeExporterEnabled
     tags:
       - monitoring
   - name: prometheus-postgres-exporter
-    condition: global.prometheusPostgresExporter.Enabled
+    condition: global.prometheusPostgresExporterEnabled
     tags:
       - monitoring
   - name: prometheus
