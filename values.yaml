@@ -74,7 +74,7 @@ global:
   # Enables a node exporter DaemonSet for node-level metrics
   #nodeExporterEnabled: true
 
-  #prometheusPostgresExporterEnabled: false
+  prometheusPostgresExporterEnabled: false
 
   # Enables blackbox exporter
   #blackboxExporterEnabled: false
