@@ -49,7 +49,6 @@ class TestPrometheusBlackBoxExporterDeployment:
         )
 
         c_by_name = get_containers_by_name(doc)
-        assert c_by_name["blackbox-exporter"]
         assert c_by_name["blackbox-exporter"]["resources"] == {
             "limits": {"cpu": "100m", "memory": "200Mi"},
             "requests": {"cpu": "50m", "memory": "70Mi"},
