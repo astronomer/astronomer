@@ -90,6 +90,6 @@ imagePullSecrets:
 {{- if eq ( toString ( .Values.securityContext.runAsUser )) "auto" }}
 {{- omit  .Values.securityContext "runAsUser" | toYaml | nindent 12 }}
 {{- else }}
-{{- .Values.securityContext | toYaml | nindent 10 }}
+{{- .Values.securityContext | toYaml | nindent 12 }}
 {{- end -}}
 {{- end }}
