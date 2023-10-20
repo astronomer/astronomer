@@ -39,7 +39,7 @@ spec:
 {{ toYaml .Values.master.podAnnotations | indent 8 }}
 {{- end }}
     spec:
-{{- with .Values.PodsecurityContext }}
+{{- with .Values.podSecurityContext }}
       securityContext: {{ toYaml . | nindent 8 }}
 {{- end }}
       nodeSelector:
