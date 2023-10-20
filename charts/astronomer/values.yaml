@@ -361,10 +361,6 @@ registry:
     runAsGroup: 1000
     runAsUser: 1000
   extraEnv: []
-  PodSecurityContext:
-    fsGroup: 1000
-    runAsGroup: 1000
-    runAsUser: 1000
 
   serviceAccount:
     # Specifies whether a service account should be created

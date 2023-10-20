@@ -15,7 +15,7 @@ images:
 podSecurityContext:
   fsGroup: 65534
 securityContext:
-    runAsNonRoot: true
+  runAsNonRoot: true
 
 resources:
    limits:
