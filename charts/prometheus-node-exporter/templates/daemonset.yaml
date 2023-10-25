@@ -24,7 +24,7 @@ spec:
 {{- if and .Values.rbac.create .Values.serviceAccount.create }}
       serviceAccountName: {{ template "prometheus-node-exporter.serviceAccountName" . }}
 {{- end }}
-{{- with .Values.PodsecurityContext }}
+{{- with .Values.podSecurityContext }}
       securityContext: {{ toYaml . | nindent 8 }}
 {{- end }}
 {{- if .Values.priorityClassName }}

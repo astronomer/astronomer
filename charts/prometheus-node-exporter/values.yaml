@@ -46,7 +46,7 @@ serviceAccount:
   name:
   imagePullSecrets: []
 
-PodsecurityContext:
+podSecurityContext:
   fsGroup: 65534
   runAsGroup: 65534
   runAsUser: 65534

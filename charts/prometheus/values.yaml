@@ -45,7 +45,7 @@ readinessProbe:
   timeoutSeconds: 1
   failureThreshold: 3
 
-PodSecurityContext:
+podSecurityContext:
   fsGroup: 65534
 
 securityContext:

@@ -29,7 +29,7 @@ serviceAccount:
 
 podAnnotations: {}
 
-PodSecurityContext: {}
+podSecurityContext: {}
   # fsGroup: 2000
 
 securityContext:

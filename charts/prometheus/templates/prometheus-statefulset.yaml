@@ -136,7 +136,7 @@ spec:
             periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
             failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
             timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
-  {{- with .Values.PodSecurityContext }}
+  {{- with .Values.podSecurityContext }}
       securityContext:
 {{ toYaml . | indent 8 }}
 {{- end }}
