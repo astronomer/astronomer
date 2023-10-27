@@ -45,8 +45,8 @@ spec:
       serviceAccountName: "nats-streaming"
       {{- end }}
 {{- include "stan.imagePullSecrets" . | indent 6 }}
-{{- with .Values.podSecurityContext }}
-      securityContext: {{ toYaml . | nindent 8 }}
+{{- if eq .Values.global.openshiftEnabled false }}
+      securityContext: {{ toYaml .Values.podSecurityContext| nindent 8 }}
 {{- end }}
       terminationGracePeriodSeconds: 90
       nodeSelector:

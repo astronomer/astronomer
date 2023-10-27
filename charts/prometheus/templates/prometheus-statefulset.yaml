@@ -136,9 +136,8 @@ spec:
             periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
             failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
             timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
-  {{- with .Values.podSecurityContext }}
-      securityContext:
-{{ toYaml . | indent 8 }}
+{{- if eq .Values.global.openshiftEnabled false }}
+      securityContext: {{ toYaml .Values.podSecurityContext| nindent 8 }}
 {{- end }}
       volumes:
         {{- if .Values.global.authSidecar.enabled }}

@@ -69,7 +69,7 @@ imagePullSecrets:
 {{- end }}
 
 {{- define "kibana.securityContext" -}}
-{{- if eq ( toString ( .Values.securityContext.runAsUser )) "auto" }}
+{{- if or (eq ( toString ( .Values.securityContext.runAsUser )) "auto") ( .Values.global.openshiftEnabled ) }}
 {{- omit  .Values.securityContext "runAsUser" | toYaml | nindent 12 }}
 {{- else }}
 {{- .Values.securityContext | toYaml | nindent 12 }}

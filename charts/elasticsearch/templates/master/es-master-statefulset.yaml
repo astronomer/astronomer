@@ -39,8 +39,8 @@ spec:
 {{ toYaml .Values.master.podAnnotations | indent 8 }}
 {{- end }}
     spec:
-{{- with .Values.podSecurityContext }}
-      securityContext: {{ toYaml . | nindent 8 }}
+{{- if eq .Values.global.openshiftEnabled false }}
+      securityContext: {{ toYaml .Values.podSecurityContext| nindent 8 }}
 {{- end }}
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}

@@ -98,6 +98,8 @@ global:
   # Do you want to apply the global, default deny ingress network policy?
   defaultDenyNetworkPolicy: true
 
+  openshiftEnabled: false
+
   # Enable security context constraints required for OpenShift
   sccEnabled: false
 
