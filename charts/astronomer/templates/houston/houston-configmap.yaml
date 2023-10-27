@@ -146,6 +146,11 @@ data:
           # Enable FlowerUI flag by default
           flower:
             enabled: true
+            {{ if .Values.global.openshiftEnabled }}
+            securityContexts:
+              pod:
+                runAsNonRoot: true
+            {{ end }}
           webserver:
             {{ if .Values.configSyncer.enabled }}
             extraVolumeMounts:
@@ -343,6 +348,11 @@ data:
           redis:
             # This is here for upgrading to 0.11.2+ of airflow-chart
             safeToEvict: true
+            {{ if .Values.global.openshiftEnabled }}
+            securityContexts:
+              pod:
+                runAsNonRoot: true
+            {{ end }}
 
           {{ if .Values.global.openshiftEnabled }}
           # Statsd settings
@@ -415,8 +425,8 @@ data:
               create: true
             {{ if .Values.global.openshiftEnabled }}
             securityContexts:
-                containers:
-                  runAsNonRoot: true
+              pod:
+                runAsNonRoot: true
             {{ end  }}
       {{- end }}
 
