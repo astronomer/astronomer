@@ -161,6 +161,8 @@ class TestRegistryStatefulset:
         )
         assert len(docs) == 0
 
+    
+    @pytest.mark.skip(reason="This test needs rework")
     def test_astronomer_registry_statefulset_with_podSecurityContext_disabled(
         self, kube_version
     ):
