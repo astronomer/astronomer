@@ -90,7 +90,7 @@ spec:
         {{- if .Values.client.securityContext }}
 {{ toYaml .Values.client.securityContext | indent 10 }}
         {{- else }}
-{{ toYaml .Values.securityContext | indent 10 }}
+{{- template "elasticsearch.securityContext" . }}
         {{- end }}
         image: {{ template "elasticsearch.image" . }}
         imagePullPolicy: {{ .Values.images.es.pullPolicy }}
