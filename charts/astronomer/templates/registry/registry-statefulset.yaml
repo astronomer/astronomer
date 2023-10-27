@@ -56,7 +56,7 @@ spec:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       restartPolicy: Always
 {{- if eq .Values.global.openshiftEnabled false }}
-      securityContext: {{ toYaml .Values.podSecurityContext| nindent 8 }}
+      securityContext: {{ toYaml .Values.registry.podSecurityContext| nindent 8 }}
 {{- end }}
 {{- include "astronomer.imagePullSecrets" . | indent 6 }}
       containers:
