@@ -1,4 +1,5 @@
 import pytest
+import jmespath
 
 from tests import supported_k8s_versions
 from tests.chart_tests.helm_template_generator import render_chart
@@ -20,7 +21,9 @@ show_only = [
     supported_k8s_versions,
 )
 class TestOpenshift:
-    def test_openshift_flag_defaults_with_enabled(self, kube_version):
+    def test_openshift_flag_defaults_with_enabled_and_validate_podsecuritycontext(
+        self, kube_version
+    ):
         "Validate podSecurityContext is not set when openshiftEnabled is True"
         docs = render_chart(
             kube_version=kube_version,
@@ -33,3 +36,24 @@ class TestOpenshift:
         assert len(docs) == 8
         for doc in docs:
             assert "securityContext" not in doc["spec"]["template"]["spec"]
+
+    def test_openshift_flag_defaults_with_enabled_and_validate_container_securitycontext(
+        self, kube_version
+    ):
+        "Validate containerSecurityContext when openshiftEnabled is Enabled"
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"openshiftEnabled": True},
+            },
+            show_only=[
+                "charts/prometheus/templates/prometheus-statefulset.yaml",
+                "charts/nats/templates/statefulset.yaml",
+            ],
+        )
+
+        assert len(docs) == 2
+        for doc in docs:
+            assert "runAsUser" not in jmespath.search(
+                "spec.template.spec.containers[*].securityContext", doc
+            )
