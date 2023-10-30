@@ -49,10 +49,14 @@ class TestOpenshift:
             show_only=[
                 "charts/prometheus/templates/prometheus-statefulset.yaml",
                 "charts/nats/templates/statefulset.yaml",
+                "charts/kibana/templates/kibana-deployment.yaml",
+                "charts/elasticsearch/templates/client/es-client-deployment.yaml",
+                "charts/elasticsearch/templates/data/es-data-statefulset.yaml",
+                "charts/elasticsearch/templates/master/es-master-statefulset.yaml",
             ],
         )
 
-        assert len(docs) == 2
+        assert len(docs) == 6
         for doc in docs:
             assert "runAsUser" not in jmespath.search(
                 "spec.template.spec.containers[*].securityContext", doc
