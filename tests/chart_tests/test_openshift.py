@@ -61,3 +61,28 @@ class TestOpenshift:
             assert "runAsUser" not in jmespath.search(
                 "spec.template.spec.containers[*].securityContext", doc
             )
+
+    def test_openshift_flag_defaults_with_enabled_and_validate_container_securitycontext(
+        self, kube_version
+    ):
+        "Validate containerSecurityContext when openshiftEnabled is Enabled"
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"openshiftEnabled": True},
+            },
+            show_only=[
+                "charts/prometheus/templates/prometheus-statefulset.yaml",
+                "charts/nats/templates/statefulset.yaml",
+                "charts/kibana/templates/kibana-deployment.yaml",
+                "charts/elasticsearch/templates/client/es-client-deployment.yaml",
+                "charts/elasticsearch/templates/data/es-data-statefulset.yaml",
+                "charts/elasticsearch/templates/master/es-master-statefulset.yaml",
+            ],
+        )
+
+        assert len(docs) == 6
+        for doc in docs:
+            assert "runAsUser" not in jmespath.search(
+                "spec.template.spec.containers[*].securityContext", doc
+            )
