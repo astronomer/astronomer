@@ -398,7 +398,7 @@ workflows:
                 - quay.io/astronomer/ap-nats-server:2.10.2
                 - quay.io/astronomer/ap-nats-streaming:0.25.5
                 - quay.io/astronomer/ap-nginx-es:1.25.2-1
-                - quay.io/astronomer/ap-nginx:1.9.0-1
+                - quay.io/astronomer/ap-nginx:1.9.4
                 - quay.io/astronomer/ap-node-exporter:1.6.1
                 - quay.io/astronomer/ap-openresty:1.21.4-11
                 - quay.io/astronomer/ap-pgbouncer-krb:1.17.0-9
@@ -437,7 +437,7 @@ workflows:
                 - quay.io/astronomer/ap-nats-server:2.10.2
                 - quay.io/astronomer/ap-nats-streaming:0.25.5
                 - quay.io/astronomer/ap-nginx-es:1.25.2-1
-                - quay.io/astronomer/ap-nginx:1.9.0-1
+                - quay.io/astronomer/ap-nginx:1.9.4
                 - quay.io/astronomer/ap-node-exporter:1.6.1
                 - quay.io/astronomer/ap-openresty:1.21.4-11
                 - quay.io/astronomer/ap-pgbouncer-krb:1.17.0-9
