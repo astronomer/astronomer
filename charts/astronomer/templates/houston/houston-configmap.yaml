@@ -120,6 +120,9 @@ data:
         {{- if .Values.global.loggingSidecar.indexPattern }}
         indexPattern: {{ .Values.global.loggingSidecar.indexPattern | squote }}
         {{- end }}
+        {{- if .Values.global.loggingSidecar.indexNamePrefix }}
+        indexNamePrefix: {{ .Values.global.loggingSidecar.indexNamePrefix }}
+        {{- end }}
       {{- end }}
 
       # These values get passed directly into the airflow helm deployments

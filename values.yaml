@@ -117,6 +117,7 @@ global:
     image: quay.io/astronomer/ap-vector:0.32.2
     customConfig: false
     indexPattern: ~
+    indexNamePrefix: ~
     extraEnv: []
     resources: {}
     #  requests:
