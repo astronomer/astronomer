@@ -406,7 +406,7 @@ It also fixes an issue with `postgresql.master.fullname` helper template not obe
 
 #### Breaking changes
 
-- `affinty` has been renamed to `master.affinity` and `slave.affinity`.
+- `affinity` has been renamed to `master.affinity` and `slave.affinity`.
 - `tolerations` has been renamed to `master.tolerations` and `slave.tolerations`.
 - `nodeSelector` has been renamed to `master.nodeSelector` and `slave.nodeSelector`.
 
