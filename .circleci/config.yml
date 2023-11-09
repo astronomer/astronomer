@@ -29,7 +29,7 @@ parameters:
 jobs:
   trivy-scan-docker:
     docker:
-      - image: docker:20.10.24-git
+      - image: docker:24.0.6-git
     shell: /bin/sh -leo pipefail
     parameters:
       docker_image:
@@ -47,7 +47,7 @@ jobs:
       ASTRO_SEC_ENDPOINT: << parameters.report_url >>
     steps:
       - setup_remote_docker:
-          version: 20.10.24
+          version: 24.0.6
       - checkout
       - run:
           name: Pull Docker image
@@ -86,14 +86,14 @@ jobs:
 
   twistcli-scan-docker:
     docker:
-      - image: docker:20.10.24-git
+      - image: docker:24.0.6-git
     shell: /bin/sh -leo pipefail
     parameters:
       docker_image:
         type: string
     steps:
       - setup_remote_docker:
-          version: 20.10.24
+          version: 24.0.6
       - run:
           name: Pull Docker image
           command: docker pull << parameters.docker_image >>
@@ -110,7 +110,7 @@ jobs:
 
   run_pre_commit:
     docker:
-      - image: quay.io/astronomer/ci-pre-commit:2023-10
+      - image: quay.io/astronomer/ci-pre-commit:2023-11
     steps:
       - checkout
       - run:
@@ -145,13 +145,13 @@ jobs:
 
   unittest-charts:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2023-10
+      - image: quay.io/astronomer/ci-helm-release:2023-11
     parallelism: 8
     resource_class: xlarge
     steps:
       - setup_remote_docker:
           docker_layer_caching: true
-          version: 20.10.24
+          version: 24.0.6
       - checkout
       - run:
           name: Create chart-tests-cache-key.txt
@@ -200,7 +200,7 @@ jobs:
 
   release-to-internal:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2023-10
+      - image: quay.io/astronomer/ci-helm-release:2023-11
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -239,7 +239,7 @@ jobs:
 
   release-to-public:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2023-10
+      - image: quay.io/astronomer/ci-helm-release:2023-11
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -337,7 +337,7 @@ jobs:
     steps:
       - checkout
       - setup_remote_docker:
-          version: 20.10.24
+          version: 24.0.6
       - run:
           name: Check that commander image uses same Airflow chart version
           command: make validate-commander-airflow-version
@@ -587,7 +587,7 @@ commands:
     steps:
       - setup_remote_docker:
           docker_layer_caching: true
-          version: 20.10.24
+          version: 24.0.6
       - attach_workspace:
           at: /tmp/workspace
       - run:
@@ -641,7 +641,7 @@ commands:
       - checkout
       - setup_remote_docker:
           docker_layer_caching: true
-          version: 20.10.24
+          version: 24.0.6
       - run:
           name: Build the Docker image
           command: |
