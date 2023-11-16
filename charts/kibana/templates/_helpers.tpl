@@ -65,9 +65,13 @@ imagePullSecrets:
 {{- end -}}
 
 {{- define "kibana.IndexPattern" -}}
-{{- if and .Values.global.loggingSidecar.enabled  .Values.global.loggingSidecar.indexNamePrefix -}}
-{{- .Values.global.loggingSidecar.indexNamePrefix  -}}
+{{- if and .Values.global.loggingSidecar.enabled }}
+{{- if .Values.global.loggingSidecar.indexNamePrefix -}}
+{{- .Values.global.loggingSidecar.indexNamePrefix -}}
 {{- else -}}
 vector
+{{- end -}}
+{{- else -}}
+fluend
 {{- end -}}
 {{- end -}}
