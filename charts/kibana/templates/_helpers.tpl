@@ -72,6 +72,6 @@ imagePullSecrets:
 vector
 {{- end -}}
 {{- else -}}
-fluend
+fluentd
 {{- end -}}
 {{- end -}}
