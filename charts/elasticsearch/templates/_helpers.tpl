@@ -162,3 +162,11 @@ imagePullSecrets:
 {{- .Values.curator.age.timestring | squote}}
 {{- end -}}
 {{- end -}}
+
+{{- define "loggingSidecar.indexNamePrefix" -}}
+{{- if and .Values.global.loggingSidecar.enabled  .Values.global.loggingSidecar.indexNamePrefix -}}
+{{- .Values.global.loggingSidecar.indexNamePrefix  -}}
+{{- else -}}
+vector
+{{- end -}}
+{{- end -}}

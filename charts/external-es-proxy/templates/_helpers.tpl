@@ -101,3 +101,11 @@ imagePullSecrets:
 {{ .Values.images.awsproxy.repository }}:{{ .Values.images.awsproxy.tag }}
 {{- end }}
 {{- end }}
+
+{{- define "loggingSidecar.indexNamePrefix" -}}
+{{- if and .Values.global.loggingSidecar.enabled  .Values.global.loggingSidecar.indexNamePrefix -}}
+{{- .Values.global.loggingSidecar.indexNamePrefix -}}
+{{- else -}}
+vector
+{{- end -}}
+{{- end -}}
