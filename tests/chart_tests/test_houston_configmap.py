@@ -229,7 +229,7 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_index_prefix_overrid
     assert prod_yaml["deployments"]["loggingSidecar"] == {
         "enabled": True,
         "name": "sidecar-log-consumer",
-        "image": "quay.io/astronomer/ap-vector:0.32.2-1",
+        "image": "registry.example.com/foobar/test-image-name:99.88.77",
         "customConfig": False,
         "indexNamePrefix": "test-index-name-prefix-999",
     }
