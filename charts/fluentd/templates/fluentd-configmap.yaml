@@ -204,7 +204,7 @@ data:
         suppress_type_name true
         host "#{ENV['OUTPUT_HOST']}"
         port "#{ENV['OUTPUT_PORT']}"
-        index_name fluentd.${record["release"]}.${Time.at(time).getutc.strftime(@logstash_dateformat)}
+        index_name {{ include "logging.indexNamePrefix" .}}.${record["release"]}.${Time.at(time).getutc.strftime(@logstash_dateformat)}
         templates { "fluentdindextemplate": "/host/index_template.json"}
         template_overwrite true
         <buffer>
