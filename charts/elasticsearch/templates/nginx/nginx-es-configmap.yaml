@@ -39,29 +39,17 @@ data:
         # The following "location" rules limit airflow interactions to only their indices. Any further
         # additions should follow this pattern.
         location ~* /_count$ {
-          {{- if .Values.global.loggingSidecar.enabled }}
           rewrite /_count(.*) /{{ include "logging.indexNamePrefix" . }}.$remote_user.*/_count$1 break;
-          {{- else }}
-          rewrite /_count(.*) /fluentd.$remote_user.*/_count$1 break;
-          {{- end }}
           proxy_pass http://elasticsearch;
         }
 
         location ~* /_bulk$ {
-          {{- if .Values.global.loggingSidecar.enabled }}
           rewrite /_bulk(.*) /{{ include "logging.indexNamePrefix" . }}.$remote_user.*/_bulk$1 break;
-          {{- else }}
-          rewrite /_bulk(.*) /fluentd.$remote_user.*/_bulk$1 break;
-          {{- end }}
           proxy_pass http://elasticsearch;
         }
 
         location ~* /_search$ {
-          {{- if .Values.global.loggingSidecar.enabled }}
           rewrite /_search(.*) /{{ include "logging.indexNamePrefix" . }}.$remote_user.*/_search$1 break;
-          {{- else }}
-          rewrite /_search(.*) /fluentd.$remote_user.*/_search$1 break;
-          {{- end }}
           proxy_pass http://elasticsearch;
         }
 
