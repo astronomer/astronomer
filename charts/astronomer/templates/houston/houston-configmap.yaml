@@ -121,7 +121,7 @@ data:
         indexPattern: {{ .Values.global.loggingSidecar.indexPattern | squote }}
         {{- end }}
         {{- if .Values.global.logging.indexNamePrefix }}
-        indexNamePrefix: {{ .Values.global.loggingSidecar.indexNamePrefix }}
+        indexNamePrefix: {{ .Values.global.logging.indexNamePrefix }}
         {{- end }}
       {{- end }}
 
