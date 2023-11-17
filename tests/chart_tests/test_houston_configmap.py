@@ -231,7 +231,7 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_index_prefix_overrid
         "name": "sidecar-log-consumer",
         "image": "quay.io/astronomer/ap-vector:0.32.2-1",
         "customConfig": False,
-        "indexNamePrefix": "astronomer",
+        "indexNamePrefix": "test-index-name-prefix-999",
     }
     assert "vector" in prod_yaml["deployments"]["loggingSidecar"]["image"]
 
