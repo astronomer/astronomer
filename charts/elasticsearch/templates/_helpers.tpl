@@ -163,10 +163,18 @@ imagePullSecrets:
 {{- end -}}
 {{- end -}}
 
-{{- define "loggingSidecar.indexNamePrefix" -}}
-{{- if and .Values.global.loggingSidecar.enabled  .Values.global.loggingSidecar.indexNamePrefix -}}
-{{- .Values.global.loggingSidecar.indexNamePrefix  -}}
+{{- define "logging.indexNamePrefix" -}}
+{{- if .Values.global.loggingSidecar.enabled -}}  
+{{- if .Values.global.logging.indexNamePrefix -}}
+{{- .Values.global.logging.indexNamePrefix  -}}
 {{- else -}}
 vector
+{{- end -}}
+{{- else -}}
+{{- if .Values.global.logging.indexNamePrefix -}}
+{{- .Values.global.logging.indexNamePrefix -}}
+{{- else -}}
+fluentd
+{{- end -}}
 {{- end -}}
 {{- end -}}

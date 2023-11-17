@@ -110,6 +110,9 @@ global:
 
   taskUsageMetricsEnabled: false
 
+  logging:
+    indexNamePrefix: ~
+
   # Sidecar Logging
   loggingSidecar:
     enabled: false
@@ -117,7 +120,6 @@ global:
     image: quay.io/astronomer/ap-vector:0.32.2-1
     customConfig: false
     indexPattern: ~
-    indexNamePrefix: ~
     extraEnv: []
     resources: {}
     #  requests:
