@@ -172,6 +172,34 @@ def test_houston_configmap_with_config_syncer_disabled():
     assert not prod_yaml["deployments"].get("loggingSidecar")
 
 
+def test_houston_configmap_with_fluentd_index_prefix_defaults():
+    """Validate the houston configmap and its embedded data with configSyncer
+    disabled."""
+    docs = render_chart(
+        values={},
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+
+    common_test_cases(docs)
+    doc = docs[0]
+    prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
+    assert "fluentd" in prod_yaml["deployments"].get("fluentdIndexPrefix")
+
+
+def test_houston_configmap_with_fluentd_index_prefix_overrides():
+    """Validate the houston configmap and its embedded data with configSyncer
+    disabled."""
+    docs = render_chart(
+        values={"global": {"logging": {"indexNamePrefix": "astronomer"}}},
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+
+    common_test_cases(docs)
+    doc = docs[0]
+    prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
+    assert "astronomer" in prod_yaml["deployments"].get("fluentdIndexPrefix")
+
+
 def test_houston_configmap_with_loggingsidecar_enabled():
     """Validate the houston configmap and its embedded data with
     loggingSidecar."""
