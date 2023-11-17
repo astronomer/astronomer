@@ -235,17 +235,27 @@ class TestFluentd:
         # the securityContext should be present but empty by default
         assert not container_search_result[0]["securityContext"].keys()
 
-    def test_fluentd_index_configmap(self, kube_version):
-        """Test to validate fluentd index configmap."""
+    def test_fluentd_index_defaults(self, kube_version):
+        """Test to validate fluentd index name prefix defaults in fluentd configmap."""
         docs = render_chart(
             kube_version=kube_version,
+            values={"global": {"rbacEnabled": True}},
             show_only=[
-                "charts/fluentd/templates/fluentd-index-template-configmap.yaml"
+                "charts/fluentd/templates/fluentd-configmap.yaml",
+                "charts/fluentd/templates/fluentd-index-template-configmap.yaml",
             ],
         )
 
-        assert len(docs) == 1
+        assert len(docs) == 2
         doc = docs[0]
+        assert doc["kind"] == "ConfigMap"
+        assert doc["apiVersion"] == "v1"
+        assert doc["metadata"]["name"] == "release-name-fluentd"
+        assert (
+            'fluentd.${record["release"]}.${Time.at(time).getutc.strftime(@logstash_dateformat)}'
+            in doc["data"]["output.conf"]
+        )
+        doc = docs[1]
         assert doc["kind"] == "ConfigMap"
         assert doc["apiVersion"] == "v1"
         assert (
@@ -254,5 +264,39 @@ class TestFluentd:
         index_cm = yaml.safe_load(doc["data"]["index_template.json"])
         assert index_cm == {
             "index_patterns": ["fluentd.*"],
+            "mappings": {"properties": {"date_nano": {"type": "date_nanos"}}},
+        }
+
+    def test_fluentd_index_overrides(self, kube_version):
+        """Test to validate fluentd index name prefix defaults in fluentd configmap."""
+        indexNamePrefix = "astronomer"
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"logging": {"indexNamePrefix": indexNamePrefix}}},
+            show_only=[
+                "charts/fluentd/templates/fluentd-configmap.yaml",
+                "charts/fluentd/templates/fluentd-index-template-configmap.yaml",
+            ],
+        )
+
+        assert len(docs) == 2
+        doc = docs[0]
+        assert doc["kind"] == "ConfigMap"
+        assert doc["apiVersion"] == "v1"
+        assert doc["metadata"]["name"] == "release-name-fluentd"
+        assert (
+            'astronomer.${record["release"]}.${Time.at(time).getutc.strftime(@logstash_dateformat)}'
+            in doc["data"]["output.conf"]
+        )
+
+        doc = docs[1]
+        assert doc["kind"] == "ConfigMap"
+        assert doc["apiVersion"] == "v1"
+        assert (
+            doc["metadata"]["name"] == "release-name-fluentd-index-template-configmap"
+        )
+        index_cm = yaml.safe_load(doc["data"]["index_template.json"])
+        assert index_cm == {
+            "index_patterns": ["astronomer.*"],
             "mappings": {"properties": {"date_nano": {"type": "date_nanos"}}},
         }
