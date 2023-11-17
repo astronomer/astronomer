@@ -57,6 +57,7 @@ data:
 
     # Airflow deployment configuration
     deployments:
+      fluentdIndexPrefix: {{ include "fluentd.IndexPattern" .}}
       enableHoustonInternalAuthorization: {{ .Values.houston.enableHoustonInternalAuthorization }}
       namespaceFreeFormEntry: {{ .Values.global.namespaceFreeFormEntry }}
       # Airflow chart settings
@@ -119,6 +120,9 @@ data:
         {{- end }}
         {{- if .Values.global.loggingSidecar.indexPattern }}
         indexPattern: {{ .Values.global.loggingSidecar.indexPattern | squote }}
+        {{- end }}
+        {{- if .Values.global.logging.indexNamePrefix }}
+        indexNamePrefix: {{ .Values.global.logging.indexNamePrefix }}
         {{- end }}
       {{- end }}
 

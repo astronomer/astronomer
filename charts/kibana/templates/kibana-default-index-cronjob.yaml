@@ -38,12 +38,12 @@ spec:
           - "/bin/sh"
           - -ec
           - |
-            http_status=$(curl --retry 10 --retry-delay 30 --retry-all-errors -s -o /dev/null -w "%{http_code}" -XGET http://{{ .Release.Name }}-kibana:5601/api/data_views/data_view/{{ template "kibana.IndexPattern" . }}.*)
+            http_status=$(curl --retry 10 --retry-delay 30 --retry-all-errors -s -o /dev/null -w "%{http_code}" -XGET http://{{ .Release.Name }}-kibana:5601/api/data_views/data_view/{{ template "logging.indexNamePrefix" . }}.*)
             if [[ "$http_status" -eq 200 ]]; then
               echo "Kibana Index Pattern Already Exists. Skipping Creation"
             else
               echo "Creating Kibana Index Pattern"
-              curl --retry 10 --retry-delay 30 --retry-all-errors -XPOST -H 'Content-Type: application/json' -H 'kbn-xsrf: astronomer' --data '{"attributes":{"title":"{{ template "kibana.IndexPattern" . }}.*","timeFieldName":"@timestamp"}}' http://{{ .Release.Name }}-kibana:5601/api/saved_objects/index-pattern/{{ template "kibana.IndexPattern" . }}.*?overwrite=false
+              curl --retry 10 --retry-delay 30 --retry-all-errors -XPOST -H 'Content-Type: application/json' -H 'kbn-xsrf: astronomer' --data '{"attributes":{"title":"{{ template "logging.indexNamePrefix" . }}.*","timeFieldName":"@timestamp"}}' http://{{ .Release.Name }}-kibana:5601/api/saved_objects/index-pattern/{{ template "logging.indexNamePrefix" . }}.*?overwrite=false
             fi
         restartPolicy: Never
 {{ end }}
