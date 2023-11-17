@@ -202,6 +202,7 @@ def test_houston_configmap_with_loggingsidecar_enabled():
     }
     assert "vector" in prod_yaml["deployments"]["loggingSidecar"]["image"]
 
+
 def test_houston_configmap_with_loggingsidecar_enabled_with_index_prefix_overrides():
     """Validate the houston configmap and its embedded data with
     loggingSidecar."""
@@ -212,7 +213,7 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_index_prefix_overrid
                 "loggingSidecar": {
                     "enabled": True,
                     "image": "quay.io/astronomer/ap-vector:0.32.2-1",
-                }
+                },
             }
         },
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
@@ -230,7 +231,7 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_index_prefix_overrid
         "name": "sidecar-log-consumer",
         "image": "quay.io/astronomer/ap-vector:0.32.2-1",
         "customConfig": False,
-        "indexNamePrefix": "astronomer"
+        "indexNamePrefix": "astronomer",
     }
     assert "vector" in prod_yaml["deployments"]["loggingSidecar"]["image"]
 
