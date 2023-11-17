@@ -110,6 +110,9 @@ global:
 
   taskUsageMetricsEnabled: false
 
+  logging:
+    indexNamePrefix: ~
+
   # Sidecar Logging
   loggingSidecar:
     enabled: false

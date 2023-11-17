@@ -63,7 +63,3 @@ imagePullSecrets:
   - name: {{ .Values.global.privateRegistry.secretName }}
 {{- end -}}
 {{- end -}}
-
-{{ define "kibana.IndexPattern" -}}
-{{- if .Values.global.loggingSidecar.enabled }}vector{{- else }}fluentd{{- end -}}
-{{- end }}
