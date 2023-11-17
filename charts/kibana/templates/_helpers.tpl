@@ -72,12 +72,10 @@ imagePullSecrets:
 vector
 {{- end -}}
 {{- else -}}
-{{- if not .Values.global.loggingSidecar.enabled }}
 {{- if .Values.global.logging.indexNamePrefix -}}
 {{- .Values.global.logging.indexNamePrefix -}}
 {{- else -}}
 fluentd
-{{- end -}}
 {{- end -}}
 {{- end -}}
 {{- end -}}
