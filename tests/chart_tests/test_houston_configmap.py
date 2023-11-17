@@ -209,7 +209,7 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_index_prefix_overrid
     docs = render_chart(
         values={
             "global": {
-                "logging": {"indexNamePrefix": "astronomer"},
+                "logging": {"indexNamePrefix": "test-index-name-prefix-999"},
                 "loggingSidecar": {
                     "enabled": True,
                     "image": "registry.example.com/foobar/test-image-name:99.88.77",
