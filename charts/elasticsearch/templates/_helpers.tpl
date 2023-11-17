@@ -164,7 +164,7 @@ imagePullSecrets:
 {{- end -}}
 
 {{- define "logging.indexNamePrefix" -}}
-{{- if .Values.global.loggingSidecar.enabled -}}  
+{{- if .Values.global.loggingSidecar.enabled -}}
 {{- if .Values.global.logging.indexNamePrefix -}}
 {{- .Values.global.logging.indexNamePrefix  -}}
 {{- else -}}
