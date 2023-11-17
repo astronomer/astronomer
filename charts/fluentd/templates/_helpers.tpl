@@ -86,9 +86,9 @@ imagePullSecrets:
 {{- end -}}
 {{- end -}}
 
-{{- define "logging.indexNamePrefix" -}}
+{{- define "fluentd.indexNamePrefix" -}}
 {{- if .Values.global.logging.indexNamePrefix -}}
-{{- .Values.global.logging.indexNamePrefix -}}
+{{ .Values.global.logging.indexNamePrefix }}
 {{- else -}}
 fluentd
 {{- end -}}

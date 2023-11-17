@@ -15,7 +15,7 @@ data:
   index_template.json: |-
     {
       "index_patterns": [
-          "{{ include "logging.indexNamePrefix" .}}.*"
+          "{{ include "fluentd.indexNamePrefix" .}}.*"
       ],
       "mappings": {
         "properties": {
