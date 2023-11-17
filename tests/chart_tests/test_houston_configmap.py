@@ -212,7 +212,7 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_index_prefix_overrid
                 "logging": {"indexNamePrefix": "astronomer"},
                 "loggingSidecar": {
                     "enabled": True,
-                    "image": "quay.io/astronomer/ap-vector:0.32.2-1",
+                    "image": "registry.example.com/foobar/test-image-name:99.88.77",
                 },
             }
         },
