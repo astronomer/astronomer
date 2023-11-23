@@ -63,3 +63,12 @@ imagePullSecrets:
   - name: {{ .Values.global.privateRegistry.secretName }}
 {{- end -}}
 {{- end -}}
+
+
+{{ define "kibana.internalauthurl" -}}
+{{- if .Values.global.enableHoustonInternalAuthorization  }}
+nginx.ingress.kubernetes.io/auth-url: http://{{ .Release.Name }}-kibana.{{ .Release.Namespace }}.svc.cluster.local/v1/authorization
+{{- else }}
+nginx.ingress.kubernetes.io/auth-url: https://houston.{{ .Values.global.baseDomain }}/v1/authorization
+{{- end }}
+{{- end }}
