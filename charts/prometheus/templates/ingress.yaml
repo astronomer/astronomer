@@ -18,7 +18,7 @@ metadata:
     {{- else }}
     kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
     kubernetes.io/tls-acme: {{ eq .Values.global.acme true | quote }}
-    {{- include "prometheus.internalauthurl" . | nindent 4 }}
+    {{- include "houston.internalauthurl" . | nindent 4 }}
     nginx.ingress.kubernetes.io/auth-signin: https://app.{{ .Values.global.baseDomain }}/login
     nginx.ingress.kubernetes.io/auth-response-headers: authorization, username, email
     {{- end }}
