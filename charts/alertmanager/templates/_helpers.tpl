@@ -80,3 +80,11 @@ imagePullSecrets:
   - name: {{ .Values.global.privateRegistry.secretName }}
 {{- end -}}
 {{- end -}}
+
+{{ define "alertmanager.internalauthurl" -}}
+{{- if .Values.global.enableHoustonInternalAuthorization  }}
+nginx.ingress.kubernetes.io/auth-url: http://{{ .Release.Name }}-alertmanager.{{ .Release.Namespace }}.svc.cluster.local:8871/v1/authorization
+{{- else }}
+nginx.ingress.kubernetes.io/auth-url: https://houston.{{ .Values.global.baseDomain }}/v1/authorization
+{{- end }}
+{{- end }}
