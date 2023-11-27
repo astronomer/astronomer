@@ -58,9 +58,7 @@ data:
     # Airflow deployment configuration
     deployments:
       fluentdIndexPrefix: {{ include "fluentd.IndexPattern" .}}
-      {{- if or .Values.houston.enableHoustonInternalAuthorization .Values.global.enableHoustonInternalAuthorization  }}
-      enableHoustonInternalAuthorization: true
-      {{- end }}
+      enableHoustonInternalAuthorization: {{ include "houston.InternalAuthorization" . }}
       namespaceFreeFormEntry: {{ .Values.global.namespaceFreeFormEntry }}
       # Airflow chart settings
       # Static helm configurations for this chart are found below.
