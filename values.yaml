@@ -107,6 +107,8 @@ global:
 
   taskUsageMetricsEnabled: false
 
+  enableHoustonInternalAuthorization: false
+
   logging:
     indexNamePrefix: ~
 
