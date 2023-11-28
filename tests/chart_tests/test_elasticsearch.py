@@ -263,7 +263,7 @@ class TestElasticSearch:
             },
         ] == doc["spec"]["ingress"][0]["from"]
 
-    def test_nginx_nginx_config_pattern_defaults(self, kube_version):
+    def test_elastic_nginx_config_pattern_defaults(self, kube_version):
         """Test External Elasticsearch Service Index Pattern Search
         defaults."""
         docs = render_chart(
@@ -291,7 +291,36 @@ class TestElasticSearch:
             ]
         )
 
-    def test_nginx_nginx_config_pattern_with_sidecar_logging_enabled(
+    def test_elastic_nginx_config_pattern_defaults_and_index_prefix_overrides(
+        self, kube_version
+    ):
+        """Test External Elasticsearch Service Index Pattern Search with index prefix overrides."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"logging": {"indexNamePrefix": "astronomer"}}},
+            show_only=[
+                "charts/elasticsearch/templates/nginx/nginx-es-configmap.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["kind"] == "ConfigMap"
+
+        nginx_config = " ".join(doc["data"]["nginx.conf"].split())
+        assert all(
+            x in nginx_config
+            for x in [
+                "location ~* /_bulk$ { rewrite /_bulk(.*) /astronomer.$remote_user.*/_bulk$1 break;",
+                "location ~* /_count$ { rewrite /_count(.*) /astronomer.$remote_user.*/_count$1 break;",
+                "location ~* /_search$ { rewrite /_search(.*) /astronomer.$remote_user.*/_search$1 break;",
+                "location = /_cluster/health { proxy_pass http://elasticsearch; }",
+                "location = /_cluster/state/version { proxy_pass http://elasticsearch; }",
+                "location ~ ^/ { deny all; } } }",
+            ]
+        )
+
+    def test_elasticsearch_nginx_config_pattern_with_sidecar_logging_enabled(
         self, kube_version
     ):
         """Test Nginx ES Service Index Pattern Search with sidecar logging."""
@@ -314,6 +343,40 @@ class TestElasticSearch:
                 "location ~* /_bulk$ { rewrite /_bulk(.*) /vector.$remote_user.*/_bulk$1 break;",
                 "location ~* /_count$ { rewrite /_count(.*) /vector.$remote_user.*/_count$1 break;",
                 "location ~* /_search$ { rewrite /_search(.*) /vector.$remote_user.*/_search$1 break;",
+                "location = /_cluster/health { proxy_pass http://elasticsearch; }",
+                "location = /_cluster/state/version { proxy_pass http://elasticsearch; }",
+                "location ~ ^/ { deny all; } } }",
+            ]
+        )
+
+    def test_elasticsearch_nginx_config_pattern_with_sidecar_logging_enabled_and_index_prefix_overrides(
+        self, kube_version
+    ):
+        """Test Nginx ES Service Index Pattern Search with sidecar logging."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "loggingSidecar": {"enabled": True},
+                    "logging": {"indexNamePrefix": "astronomer"},
+                }
+            },
+            show_only=[
+                "charts/elasticsearch/templates/nginx/nginx-es-configmap.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["kind"] == "ConfigMap"
+
+        nginx_config = " ".join(doc["data"]["nginx.conf"].split())
+        assert all(
+            x in nginx_config
+            for x in [
+                "location ~* /_bulk$ { rewrite /_bulk(.*) /astronomer.$remote_user.*/_bulk$1 break;",
+                "location ~* /_count$ { rewrite /_count(.*) /astronomer.$remote_user.*/_count$1 break;",
+                "location ~* /_search$ { rewrite /_search(.*) /astronomer.$remote_user.*/_search$1 break;",
                 "location = /_cluster/health { proxy_pass http://elasticsearch; }",
                 "location = /_cluster/state/version { proxy_pass http://elasticsearch; }",
                 "location ~ ^/ { deny all; } } }",
