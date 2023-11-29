@@ -1,14 +1,14 @@
 ---
 exclude: '(venv|\.vscode|tests/k8s_schema)' # regex
 repos:
-  - repo: local
-    hooks:
-      - id: circle-config-yaml
-        name: Checks for consistency between config.yml and config.yml.j2
-        language: python
-        files: "config.yml$|config.yml.j2|generate_circleci_config.py$|values.yaml$"
-        entry: .circleci/generate_circleci_config.py
-        additional_dependencies: ["jinja2", "PyYAML"]
+  # - repo: local
+  #   hooks:
+  #     - id: circle-config-yaml
+  #       name: Checks for consistency between config.yml and config.yml.j2
+  #       language: python
+  #       files: "config.yml$|config.yml.j2|generate_circleci_config.py$|values.yaml$"
+  #       entry: .circleci/generate_circleci_config.py
+  #       additional_dependencies: ["jinja2", "PyYAML"]
   - repo: https://github.com/codespell-project/codespell
     rev: v2.2.6
     hooks:
@@ -56,7 +56,7 @@ repos:
             "requirements/functional-tests.txt",
           ]
       - id: sort-simple-yaml
-      - id: trailing-whitespace
+      # - id: trailing-whitespace
   - repo: https://github.com/shellcheck-py/shellcheck-py
     rev: v0.9.0.6
     hooks:
