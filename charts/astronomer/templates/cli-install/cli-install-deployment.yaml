@@ -1,6 +1,7 @@
 ################################
 ## Install Deployment
 #################################
+{{- if .Values.install.enabled }}
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -59,3 +60,4 @@ spec:
             items:
               - key: install.sh
                 path: install.sh
+{{ end }}

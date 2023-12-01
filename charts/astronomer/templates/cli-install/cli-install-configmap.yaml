@@ -1,6 +1,7 @@
 ################################
 ## Install ConfigMap
 #################################
+{{- if .Values.install.enabled }}
 kind: ConfigMap
 apiVersion: v1
 metadata:

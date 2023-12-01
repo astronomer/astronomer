@@ -1,6 +1,7 @@
 ################################
 ## Install Service
 #################################
+{{- if .Values.install.enabled }}
 kind: Service
 apiVersion: v1
 metadata:
@@ -23,3 +24,4 @@ spec:
       protocol: TCP
       name: install-http
       appProtocol: tcp
+{{- end }}
