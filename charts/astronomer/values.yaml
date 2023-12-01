@@ -423,6 +423,7 @@ registry:
   logLevel: info
 
 install:
+  enabled: true
   resources: {}
   cliVersion: 0.29
   #  limits:

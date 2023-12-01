@@ -25,3 +25,4 @@ data:
 
     DOWNLOADER="https://raw.githubusercontent.com/astronomer/astro-cli/main/godownloader.sh"
     curl -sL -o- "${DOWNLOADER}" | bash -s -- -b /usr/local/bin "$TAG"
+{{ end }}
