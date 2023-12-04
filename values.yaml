@@ -226,6 +226,8 @@ global:
     enabled: false
     repository: ~
     secretName: ~
+    user: ~
+    password: ~
 
   # SSL support for using SSL connections to encrypt client/server communication between database and Astronomer platform
   ssl:
@@ -292,6 +294,7 @@ astronomer:
         memory: "1024Mi"
 
   houston:
+    connection: ~
     resources:
       requests:
         cpu: "500m"
@@ -642,3 +645,19 @@ kube-state:
     limits:
       cpu: "500m"
       memory: "1024Mi"
+
+secrets: {}
+  # - name: astronomer-bootstrap
+  #   value:
+  #     connection: postgres://<username>:<password>:5432
+  # - name: astronomer-smtp
+  #   value:
+  #     connection: smtp://<username>:<password>@<endpoint>/?requireTLS=true
+  # - name: astronomer-tls
+  #   value:
+  #     tls.crt: |
+  #         -----BEGIN CERTIFICATE-----
+  #          -----END CERTIFICATE-----
+  #     tls.key: |
+  #         -----BEGIN RSA PRIVATE KEY-----
+  #         -----END RSA PRIVATE KEY-----
