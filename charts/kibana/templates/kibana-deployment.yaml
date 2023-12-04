@@ -38,6 +38,7 @@ spec:
       - name: kibana
         image: {{ template "kibana.image" . }}
         imagePullPolicy: {{ .Values.images.kibana.pullPolicy }}
+        securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
         env:
         {{- range $key, $value :=  .Values.env }}
         - name: {{ $key }}
@@ -49,8 +50,7 @@ spec:
           value: "http://{{ .Release.Name }}-elasticsearch:9200"
         - name: ELASTICSEARCH_REQUESTTIMEOUT
           value: "60000"
-        resources:
-{{ toYaml .Values.resources | indent 12 }}
+        resources: {{ toYaml .Values.resources | nindent 12 }}
         ports:
         - containerPort: {{ .Values.ports.http }}
           name: kibana-ui
@@ -58,6 +58,7 @@ spec:
       {{- if .Values.global.authSidecar.enabled  }}
       - name: auth-proxy
         image: "{{ .Values.global.authSidecar.repository }}:{{ .Values.global.authSidecar.tag }}"
+        securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
         imagePullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
         {{- if .Values.global.authSidecar.resources }}
         resources: {{- toYaml .Values.global.authSidecar.resources | nindent 12 }}

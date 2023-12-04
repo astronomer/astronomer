@@ -72,18 +72,6 @@ The following table lists the configurable parameters of the Blackbox-Exporter c
 | `service.type`                            | type of service to create                                                        | `ClusterIP`                                                                  |
 | `service.port`                            | port for the blackbox http service                                               | `9115`                                                                       |
 | `service.externalIPs`                     | list of external ips                                                             | []                                                                           |
-| `serviceMonitor.enabled`                  | If true, a ServiceMonitor CRD is created for a prometheus operator               | `false`                                                                      |
-| `serviceMonitor.defaults.labels`          | Labels for prometheus operator                                                   | `{}`                                                                         |
-| `serviceMonitor.defaults.interval`        | Interval for prometheus operator endpoint                                        | `30s`                                                                        |
-| `serviceMonitor.defaults.scrapeTimeout`   | Scrape timeout for prometheus operator endpoint                                  | `30s`                                                                        |
-| `serviceMonitor.defaults.module`          | The module that blackbox will use if serviceMonitor is enabled                   | `http_2xx`                                                                   |
-| `serviceMonitor.targets.[]`               | List of targets to scrape                                                        | `[]`                                                                         |
-| `serviceMonitor.targets.[].name`          | Human readable name for the job. It will also appear in job labels in Prometheus | `example`                                                                    |
-| `serviceMonitor.targets.[].url`           | The URL that blackbox will scrape if serviceMonitor is enabled                   | `http://example.com/healthz`                                                 |
-| `serviceMonitor.targets.[].labels`        | See above in `serviceMonitor.defaults`                                           | `{{ serviceMonitor.defaults.labels }`                                        |
-| `serviceMonitor.targets.[].interval`      | See above in `serviceMonitor.defaults`                                           | `{{ serviceMonitor.defaults.interval }}`                                     |
-| `serviceMonitor.targets.[].scrapeTimeout` | See above in `serviceMonitor.defaults`                                           | `{{ serviceMonitor.defaults.scrateTimeout }}`                                |
-| `serviceMonitor.targets.[].module`        | See above in `serviceMonitor.defaults`                                           | `{{ serviceMonitor.defaults.module }}`                                       |
 | `strategy`                                | strategy used to replace old Pods with new ones                                  | `{"rollingUpdate":{"maxSurge":1,"maxUnavailable":0},"type":"RollingUpdate"}` |
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,

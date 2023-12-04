@@ -44,6 +44,11 @@ spec:
         matchLabels:
           component: triggerer
           tier: airflow
+    - namespaceSelector: {}
+      podSelector:
+        matchLabels:
+          component: git-sync-relay
+          tier: airflow
     {{- end }}
     ports:
     - protocol: TCP

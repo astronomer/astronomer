@@ -41,15 +41,17 @@ spec:
     spec:
       serviceAccountName: {{ include "external-es-proxy.serviceAccountName" . }}
       securityContext:
-        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+        {{- toYaml .Values.PodSecurityContext | nindent 8 }}
 {{- include "external-es-proxy.imagePullSecrets" . | indent 6 }}
       containers:
         - name: {{ .Chart.Name }}
-          securityContext:
-            {{- toYaml .Values.securityContext | nindent 12 }}
-          image: "{{ .Values.images.esproxy.repository }}:{{ .Values.images.esproxy.tag | default .Chart.AppVersion }}"
+          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
+          image: {{ template "esproxy.image" . }}
           imagePullPolicy: {{ .Values.images.esproxy.pullPolicy }}
           env:
+{{- if .Values.global.customLogging.extraEnv }}
+{{ toYaml .Values.global.customLogging.extraEnv | indent 10 }}
+{{- end }}
 {{- if .Values.global.customLogging.secret }}
           - name: ES_SECRET
             value: {{.Values.global.customLogging.secret }}
@@ -93,9 +95,10 @@ spec:
             {{- toYaml .Values.resources | nindent 12 }}
 {{- if  or .Values.global.customLogging.awsSecretName  .Values.global.customLogging.awsServiceAccountAnnotation  .Values.global.customLogging.awsIAMRole}}
         - name: awsproxy
-          image: "{{ .Values.images.awsproxy.repository }}:{{ .Values.images.awsproxy.tag | default .Chart.AppVersion }}"
+          image: {{ template "awsesproxy.image" . }}
           command: ["/bin/sh","-c"]
           args: ["aws-es-proxy -listen :{{ .Values.service.awsproxy }}"]
+          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
           imagePullPolicy: {{ .Values.images.awsproxy.pullPolicy }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}

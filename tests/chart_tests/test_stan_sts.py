@@ -1,6 +1,7 @@
 from tests.chart_tests.helm_template_generator import render_chart
 import pytest
 from tests import supported_k8s_versions, get_containers_by_name
+import re
 
 
 @pytest.mark.parametrize(
@@ -246,3 +247,42 @@ class TestStanStatefulSet:
             assert container["image"].startswith(
                 private_registry
             ), f"Container named '{name}' does not use registry '{private_registry}': {container}"
+
+    def test_stan_configmap_with_logging_defaults(self, kube_version):
+        """Test that stan configmap with logging defaults."""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/stan/templates/configmap.yaml"],
+            values={},
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["kind"] == "ConfigMap"
+        assert doc["apiVersion"] == "v1"
+        config = doc["data"]["stan.conf"]
+        sd_match = re.search(r"sd:\s+(.*?)\n", config)
+        sd = sd_match.group(1)
+        assert sd == "true"
+
+    def test_stan_configmap_with_logging_overrides(self, kube_version):
+        """Test that stan configmap with logging defaults."""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/stan/templates/configmap.yaml"],
+            values={
+                "stan": {"stan": {"logging": {"trace": "true"}}},
+            },
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["kind"] == "ConfigMap"
+        assert doc["apiVersion"] == "v1"
+        config = doc["data"]["stan.conf"]
+        sd_match = re.search(r"sd:\s+(.*?)\n", config)
+        sv_match = re.search(r"sv:\s+(.*?)\n", config)
+        sd = sd_match.group(1)
+        sv = sv_match.group(1)
+        assert sd == "true"
+        assert sv == "true"

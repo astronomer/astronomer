@@ -72,3 +72,29 @@ class TestIngress:
 }
 """
         )
+
+    def test_houston_ingress_overrides(self, kube_version):
+        custom_annotations = {
+            "nginx.ingress.kubernetes.io/upstream-keepalive-connections": "9999",
+            "nginx.ingress.kubernetes.io/upstream-keepalive-timeout": "7777",
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "astronomer": {
+                    "houston": {"ingress": {"annotation": custom_annotations}}
+                }
+            },
+            show_only=["charts/astronomer/templates/houston/ingress.yaml"],
+        )
+        assert len(docs) == 1
+        doc = docs[0]
+        annotations = jmespath.search("metadata.annotations", doc)
+        assert (
+            annotations["nginx.ingress.kubernetes.io/upstream-keepalive-connections"]
+            == "9999"
+        )
+        assert (
+            annotations["nginx.ingress.kubernetes.io/upstream-keepalive-timeout"]
+            == "7777"
+        )

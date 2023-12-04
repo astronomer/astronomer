@@ -40,6 +40,11 @@ spec:
           release: {{ .Release.Name }}
     - podSelector:
         matchLabels:
+          tier: astronomer
+          component: houston-cleanup-airflow-db
+          release: {{ .Release.Name }}
+    - podSelector:
+        matchLabels:
           tier: monitoring
           component: prometheus
           release: {{ .Release.Name }}
@@ -64,6 +69,13 @@ spec:
           tier: external-logging
           component: external-es-proxy
           release: {{ .Release.Name }}
+    {{- end }}
+    {{- if or .Values.houston.enableHoustonInternalAuthorization .Values.global.enableHoustonInternalAuthorization  }}
+    - namespaceSelector: {}
+      podSelector:
+        matchLabels:
+          component: webserver
+          tier: airflow
     {{- end }}
     ports:
     - protocol: TCP

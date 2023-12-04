@@ -8,7 +8,6 @@ from tests import supported_k8s_versions
     supported_k8s_versions,
 )
 class TestRegistryStatefulset:
-
     show_only = ["charts/astronomer/templates/registry/registry-statefulset.yaml"]
 
     def test_registry_sts_basic_cases(self, kube_version):

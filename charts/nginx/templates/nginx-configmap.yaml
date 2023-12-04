@@ -11,6 +11,7 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 data:
+  allow-snippet-annotations: "{{ .Values.allowSnippetAnnotations }}"
   add-headers: {{ .Release.Namespace }}/{{ template "nginx.fullname" . }}-ingress-controller-headers
   proxy-add-original-uri-header: "true"
   proxy-connect-timeout: {{ .Values.proxyConnectTimeout | quote }}
@@ -25,7 +26,85 @@ data:
   log-format-upstream: '{"timestamp": "$time_iso8601", "requestID": "$req_id", "proxyUpstreamName":
     "$proxy_upstream_name", "proxyAlternativeUpstreamName": "$proxy_alternative_upstream_name","upstreamStatus":
     "$upstream_status", "upstreamAddr": "$upstream_addr","httpRequest":{"requestMethod":
-    "$request_method", "requestUrl": "$host$request_uri", "status": $status,"requestSize":
+    "$request_method", "requestUrl": "$host$request_uri_masked", "status": $status,"requestSize":
     "$request_length", "responseSize": "$upstream_response_length", "userAgent": "$http_user_agent",
-    "remoteIp": "$remote_addr", "referer": "$http_referer", "latency": "$upstream_response_time
+    "remoteIp": "$remote_addr", "referer": "$http_referer_masked", "latency": "$upstream_response_time
     s", "protocol":"$server_protocol"}}'
+  server-snippet: |
+    set_by_lua_block $request_uri_masked {
+      local url = ngx.var.request_uri
+      if url == nil or url == '' then
+        return url
+      end
+      local paramsToMask = {
+        token = true
+      }
+      local maskedUrl = url
+      local queryStringStart = string.find(url, "?")
+      -- Check if there is a query string in the URL
+      if queryStringStart then
+        -- Extract the query string
+        local queryString = string.sub(url, queryStringStart + 1)
+        local queryParams = {}
+
+        -- Split the query string into individual parameters
+        for param in string.gmatch(queryString, "([^&]+)") do
+          local paramName, paramValue = string.match(param, "([^=]+)=(.*)") -- Allow empty paramValue
+
+          -- Check if the parameter should be masked
+          if paramsToMask[paramName] then
+              paramValue = "##REDACTED##" -- Replace the value with REDACTED
+          end
+
+          if paramName and paramValue then -- Check if paramName and paramValue exist
+             table.insert(queryParams, paramName .. "=" .. paramValue)
+          end
+        end
+
+        -- Reconstruct the masked query string
+        local maskedQueryString = table.concat(queryParams, "&")
+
+        -- Replace the original query string with the masked query string
+        maskedUrl = string.sub(url, 1, queryStringStart) .. maskedQueryString
+      end
+      return maskedUrl
+    }
+
+    set_by_lua_block $http_referer_masked {
+      local url = ngx.var.http_referer
+      if url == nil or url == '' then
+        return url
+      end
+      local paramsToMask = {
+        token = true
+      }
+      local maskedUrl = url
+      local queryStringStart = string.find(url, "?")
+      -- Check if there is a query string in the URL
+      if queryStringStart then
+        -- Extract the query string
+        local queryString = string.sub(url, queryStringStart + 1)
+        local queryParams = {}
+
+        -- Split the query string into individual parameters
+        for param in string.gmatch(queryString, "([^&]+)") do
+          local paramName, paramValue = string.match(param, "([^=]+)=(.*)") -- Allow empty paramValue
+
+          -- Check if the parameter should be masked
+          if paramsToMask[paramName] then
+              paramValue = "##REDACTED##" -- Replace sensitive data with REDACTED
+          end
+
+          if paramName and paramValue then -- Check if paramName and paramValue exist
+             table.insert(queryParams, paramName .. "=" .. paramValue)
+          end
+        end
+
+        -- Reconstruct the masked query string
+        local maskedQueryString = table.concat(queryParams, "&")
+
+        -- Replace the original query string with the masked query string
+        maskedUrl = string.sub(url, 1, queryStringStart) .. maskedQueryString
+      end
+      return maskedUrl
+    }

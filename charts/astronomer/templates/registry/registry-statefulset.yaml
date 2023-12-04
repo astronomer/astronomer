@@ -45,6 +45,9 @@ spec:
       annotations:
         checksum/configmap: {{ include (print $.Template.BasePath "/registry/registry-configmap.yaml") . | sha256sum }}
     spec:
+{{- if .Values.registry.serviceAccount.create }}
+      serviceAccountName: {{ template "registry.ServiceAccount" . }}
+{{- end }}
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
       affinity:
@@ -52,14 +55,14 @@ spec:
       tolerations:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       restartPolicy: Always
-      securityContext:
-        fsGroup: 1000
-        runAsGroup: 1000
-        runAsUser: 1000
+{{- with .Values.registry.podSecurityContext }}
+      securityContext: {{ toYaml . | nindent 8 }}
+{{- end }}
 {{- include "astronomer.imagePullSecrets" . | indent 6 }}
       containers:
         - name: registry
           image: {{ template  "registry.image" . }}
+          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
           imagePullPolicy: {{ .Values.images.registry.pullPolicy }}
           env:
           - name: REGISTRY_NOTIFICATIONS_ENDPOINTS_0_HEADERS
@@ -73,6 +76,9 @@ spec:
             {{- else }}
             value: {{ randAlphaNum 32 }}
             {{- end }}
+{{- if .Values.registry.extraEnv }}
+{{ toYaml .Values.registry.extraEnv | indent 10 }}
+{{- end }}
           resources:
 {{ toYaml .Values.registry.resources | indent 12 }}
           volumeMounts:

@@ -41,7 +41,7 @@ spec:
     spec:
       terminationGracePeriodSeconds: 3600
       securityContext:
-{{ toYaml .Values.podSecurityContext | indent 8 }}
+{{ toYaml .Values.PodSecurityContext | indent 8 }}
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
       {{- if eq .Values.data.antiAffinity "hard" }}
@@ -116,6 +116,8 @@ spec:
         - name: {{ $key | upper | replace "-" "_" }}
           value: {{ $value | quote }}
         {{- end }}
+        - name: node.roles
+          value: "{{ template "elasticsearch.data.roles" . }}"
         resources:
 {{ toYaml .Values.data.resources | indent 10 }}
         ports:

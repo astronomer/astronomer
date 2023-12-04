@@ -41,7 +41,7 @@ Create chart name and version as used by the chart label.
 
 {{ define "prometheus.init.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/ap-base:{{ .Values.images.init.tag }}
+{{ .Values.global.privateRegistry.repository }}/ap-init:{{ .Values.images.init.tag }}
 {{- else -}}
 {{ .Values.images.init.repository }}:{{ .Values.images.init.tag }}
 {{- end }}

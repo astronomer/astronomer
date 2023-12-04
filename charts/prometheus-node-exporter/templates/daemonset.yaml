@@ -25,8 +25,7 @@ spec:
       serviceAccountName: {{ template "prometheus-node-exporter.serviceAccountName" . }}
 {{- end }}
 {{- if .Values.securityContext }}
-      securityContext:
-{{ toYaml .Values.securityContext | indent 8 }}
+      securityContext: {{ toYaml .Values.PodsecurityContext | nindent 8 }}
 {{- end }}
 {{- if .Values.priorityClassName }}
       priorityClassName: {{ .Values.priorityClassName }}
@@ -36,6 +35,8 @@ spec:
         - name: node-exporter
           image: {{ template "image" . }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            runAsNonRoot: {{ toYaml .Values.securityContext.runAsNonRoot }}
           args:
             - --path.procfs=/host/proc
             - --path.sysfs=/host/sys

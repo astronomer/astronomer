@@ -46,6 +46,7 @@ spec:
           {{- .Values.extraArgs | toYaml | nindent 8 }}
       {{- end }}
         image: {{ include "kube-state.image" . }}
+        securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
         imagePullPolicy: {{ .Values.images.kubeState.pullPolicy }}
         ports:
         - name: scrape

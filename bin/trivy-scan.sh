@@ -10,8 +10,13 @@ GIT_ROOT="$(git -C "${0%/*}" rev-parse --show-toplevel)"
 GIT_RELEASE="$(git symbolic-ref -q --short HEAD || git describe --tags --exact-match)"
 scan_target="$1"
 ignore_file="$2"
+TRIVY_REPORT_FORMAT="json"
 
 set +exo pipefail
+
+if [ -z "$ASTRO_SEC_ENDPOINT" ]; then
+  TRIVY_REPORT_FORMAT="table"
+fi
 
 trivy \
   --cache-dir /tmp/workspace/trivy-cache \
@@ -21,7 +26,7 @@ trivy \
   --ignore-unfixed \
   --exit-code 1 \
   --no-progress \
-  --format json \
+  --format "${TRIVY_REPORT_FORMAT}" \
   "${scan_target}" >"${GIT_ROOT}/trivy-output.txt"
 exit_code=$?
 
@@ -31,7 +36,7 @@ cat "${GIT_ROOT}/trivy-output.txt"
 # - https://github.com/aquasecurity/trivy/issues/481 2020-04-30
 if grep -q -i 'OS is not detected' trivy-output.txt; then
   echo "Skipping the Trivy scan because of unsupported OS"
-elif [ "${exit_code}" -gt 0 ]; then
+elif [[ (-n "$ASTRO_SEC_ENDPOINT") && ("${exit_code}" -gt 0) ]]; then
 
   set -o xtrace
 

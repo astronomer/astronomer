@@ -22,7 +22,7 @@ show_only = [
     # "charts/postgresql/templates/extended-config-configmap.yaml", # esoteric configurations
     # "charts/postgresql/templates/initialization-configmap.yaml", # esoteric configurations
     "charts/postgresql/templates/networkpolicy.yaml",
-    "charts/postgresql/templates/secrets.yaml",
+    "charts/postgresql/templates/secret.yaml",
     "charts/postgresql/templates/serviceaccount.yaml",
     "charts/postgresql/templates/statefulset.yaml",
     "charts/postgresql/templates/svc.yaml",

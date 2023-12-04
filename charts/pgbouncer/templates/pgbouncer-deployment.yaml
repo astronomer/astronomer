@@ -45,6 +45,7 @@ spec:
       containers:
         - name: pgbouncer
           image: {{ template "pgbouncer.image" . }}
+          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
             {{- include "pgbouncer_environment" . | indent 12 }}

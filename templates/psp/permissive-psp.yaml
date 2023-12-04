@@ -1,6 +1,7 @@
 #################################
 ##    PSP                      ##
 #################################
+{{- if semverCompare "<1.25-0" .Capabilities.KubeVersion.Version }}
 {{- if .Values.global.pspEnabled }}
 apiVersion: policy/v1beta1
 kind: PodSecurityPolicy
@@ -24,4 +25,5 @@ spec:
     max: 65535
   volumes:
   - '*'
+{{- end -}}
 {{- end -}}

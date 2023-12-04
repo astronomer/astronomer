@@ -4,23 +4,19 @@ DRY."""
 import os
 import subprocess
 from pathlib import Path
+import yaml
 
 from jinja2 import Template
 
-# When adding a new version, look up the most
-# recent patch version on Dockerhub
-# This should match what is in tests/__init__.py
-# https://hub.docker.com/r/kindest/node/tags
-kube_versions = [
-    "1.21.14",
-    "1.22.15",
-    "1.23.13",
-    "1.24.7",
-]
+metadata = yaml.safe_load((Path(__file__).parents[1] / "metadata.yaml").read_text())
+kube_versions = metadata["test_k8s_versions"]
+
 # https://circleci.com/docs/2.0/building-docker-images/#docker-version
-ci_remote_docker_version = "20.10.18"
+ci_remote_docker_version = "20.10.24"
+
 # https://circleci.com/developer/machine/image/ubuntu-2204
-machine_image_version = "ubuntu-2204:2022.10.2"
+machine_image_version = "ubuntu-2204:2023.07.2"
+ci_runner_version = "2023-11"
 
 
 def list_docker_images(path):
@@ -47,6 +43,7 @@ def main():
         docker_images=docker_images,
         machine_image_version=machine_image_version,
         remote_docker_version=ci_remote_docker_version,
+        ci_runner_version=ci_runner_version,
     )
     with open(config_path, "w") as circle_ci_config_file:
         warning_header = (

@@ -9,8 +9,13 @@ tolerations: []
 images:
   alertmanager:
     repository: quay.io/astronomer/ap-alertmanager
-    tag: 0.23.0
+    tag: 0.26.0
     pullPolicy: IfNotPresent
+
+PodSecurityContext:
+  fsGroup: 65534
+securityContext:
+    runAsNonRoot: true
 
 resources:
    limits:
@@ -71,3 +76,15 @@ customReceiver: []
 #          role_arn: <SNS-ROLE>
 
 enableNonRFC1918: false
+
+extraVolumes: []
+# Example
+#  - name: webhook-alert-secret
+#    secret:
+#      secretName: webhook-alert-secret
+
+extraVolumeMounts: []
+# Example
+#  - name: webhook-alert-secret
+#    mountPath: "/var/webhook-alert-secret"
+#    readOnly: true

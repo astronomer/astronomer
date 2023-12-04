@@ -97,7 +97,7 @@ data:
       @type kubernetes_metadata
     </filter>
 
-    # Filter down by namespace and component (scheduler/webserver/worker/triggerer)
+    # Filter down by namespace and component (scheduler/webserver/worker/triggerer/git-sync-relay)
     <filter kubernetes.**>
       @type grep
       <regexp>
@@ -117,7 +117,7 @@ data:
       </regexp>
       <regexp>
         key $.kubernetes.labels.component
-        pattern ^(scheduler|webserver|worker|triggerer)$
+        pattern ^(scheduler|webserver|worker|triggerer|git-sync-relay)$
       </regexp>
     </filter>
 
@@ -204,7 +204,7 @@ data:
         suppress_type_name true
         host "#{ENV['OUTPUT_HOST']}"
         port "#{ENV['OUTPUT_PORT']}"
-        index_name fluentd.${record["release"]}.${Time.at(time).getutc.strftime(@logstash_dateformat)}
+        index_name {{ include "fluentd.indexNamePrefix" .}}.${record["release"]}.${Time.at(time).getutc.strftime(@logstash_dateformat)}
         templates { "fluentdindextemplate": "/host/index_template.json"}
         template_overwrite true
         <buffer>

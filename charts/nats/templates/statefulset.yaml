@@ -42,7 +42,7 @@ spec:
         chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
     spec:
 {{- include "nats.imagePullSecrets" . | indent 6 }}
-{{- with .Values.securityContext }}
+{{- with .Values.PodSecurityContext }}
       securityContext:
 {{ toYaml . | indent 8 }}
 {{- end }}
@@ -130,6 +130,7 @@ spec:
       - name: nats
         image: {{ include "nats.image" . }}
         imagePullPolicy: {{ .Values.images.nats.pullPolicy }}
+        securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
         ports:
         - containerPort: 4222
           name: client
@@ -250,6 +251,7 @@ spec:
       - name: reloader
         image: {{ .Values.reloader.image }}
         imagePullPolicy: {{ .Values.reloader.pullPolicy }}
+        securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
         command:
          - "nats-server-config-reloader"
          - "-pid"
@@ -272,6 +274,7 @@ spec:
       - name: metrics
         image: {{ template "nats-exporter.image" . }}
         imagePullPolicy: {{ .Values.images.exporter.pullPolicy }}
+        securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
         args:
         - -connz
         - -routez

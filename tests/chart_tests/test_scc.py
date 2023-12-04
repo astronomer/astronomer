@@ -25,47 +25,43 @@ commander_expected_result = {
     "kube_version",
     supported_k8s_versions,
 )
-def test_scc_disabled(kube_version):
-    """Test all things scc related when scc is disabled."""
-    docs = render_chart(
-        kube_version=kube_version,
-        values={
-            "global": {
-                "sccEnabled": False,
-                "features": {"namespacePools": {"enabled": False}},
-            }
-        },
-        show_only=show_only,
-    )
-    houston_values = yaml.safe_load(docs[1]["data"]["production.yaml"])
+class TestScc:
+    def test_scc_disabled(self, kube_version):
+        """Test all things scc related when scc is disabled."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "sccEnabled": False,
+                    "features": {"namespacePools": {"enabled": False}},
+                }
+            },
+            show_only=show_only,
+        )
+        houston_values = yaml.safe_load(docs[1]["data"]["production.yaml"])
 
-    assert len(docs) == 2
-    assert commander_expected_result not in docs[0]["rules"]
-    assert houston_values["deployments"]["helm"].get("sccEnabled") is None
+        assert len(docs) == 2
+        assert commander_expected_result not in docs[0]["rules"]
+        assert houston_values["deployments"]["helm"].get("sccEnabled") is None
 
+    def test_scc_enabled(self, kube_version):
+        """Test all things scc related when scc is disabled."""
 
-@pytest.mark.parametrize(
-    "kube_version",
-    supported_k8s_versions,
-)
-def test_scc_enabled(kube_version):
-    """Test all things scc related when scc is disabled."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "sccEnabled": True,
+                    "clusterRoles": True,
+                    "features": {
+                        "namespacePools": {"enabled": False},
+                    },
+                }
+            },
+            show_only=show_only,
+        )
+        houston_values = yaml.safe_load(docs[1]["data"]["production.yaml"])
 
-    docs = render_chart(
-        kube_version=kube_version,
-        values={
-            "global": {
-                "sccEnabled": True,
-                "clusterRoles": True,
-                "features": {
-                    "namespacePools": {"enabled": False},
-                },
-            }
-        },
-        show_only=show_only,
-    )
-    houston_values = yaml.safe_load(docs[1]["data"]["production.yaml"])
-
-    assert len(docs) == 2
-    assert commander_expected_result in docs[0]["rules"]
-    assert houston_values["deployments"]["helm"]["sccEnabled"] is True
+        assert len(docs) == 2
+        assert commander_expected_result in docs[0]["rules"]
+        assert houston_values["deployments"]["helm"]["sccEnabled"] is True
