@@ -27,7 +27,7 @@ class TestAstronomerCliInstall:
         assert "install.example.com" in jmespath.search("spec.rules[*].host", docs[4])
 
     def test_astronomer_cli_install_disabled(self, kube_version):
-        """Test that cli install service is disbled."""
+        """Test that cli install service is disabled."""
         docs = render_chart(
             kube_version=kube_version,
             values={"astronomer": {"install": {"enabled": False}}},
@@ -42,7 +42,7 @@ class TestAstronomerCliInstall:
         assert len(docs) == 0
 
     def test_astronomer_cli_install_ingress_disabled(self, kube_version):
-        """Test that cli install service is disbled."""
+        """Test that cli install service ingress is disabled."""
         docs = render_chart(
             kube_version=kube_version,
             values={"astronomer": {"install": {"enabled": False}}},
