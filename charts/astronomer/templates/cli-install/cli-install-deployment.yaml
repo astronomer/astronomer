@@ -1,7 +1,7 @@
 ################################
 ## Install Deployment
 #################################
-{{- if .Values.install.enabled }}
+{{- if .Values.install.cliEnabled }}
 kind: Deployment
 apiVersion: apps/v1
 metadata:

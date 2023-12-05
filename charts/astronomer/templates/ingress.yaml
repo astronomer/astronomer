@@ -103,7 +103,7 @@ spec:
               name: {{ .Release.Name }}-registry
               port:
                 name: registry-http
-{{- if .Values.install.enabled }}
+{{- if .Values.install.cliEnabled }}
   - host: install.{{ .Values.global.baseDomain }}
     http:
       paths:

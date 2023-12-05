@@ -30,7 +30,7 @@ class TestAstronomerCliInstall:
         """Test that cli install service is disabled."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"astronomer": {"install": {"enabled": False}}},
+            values={"astronomer": {"install": {"cliEnabled": False}}},
             show_only=[
                 "charts/astronomer/templates/cli-install/cli-install-configmap.yaml",
                 "charts/astronomer/templates/cli-install/cli-install-deployment.yaml",
@@ -45,7 +45,7 @@ class TestAstronomerCliInstall:
         """Test that cli install service ingress is disabled."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"astronomer": {"install": {"enabled": False}}},
+            values={"astronomer": {"install": {"cliEnabled": False}}},
             show_only=["charts/astronomer/templates/ingress.yaml"],
         )
 

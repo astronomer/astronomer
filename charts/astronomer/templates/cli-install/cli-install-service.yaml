@@ -1,7 +1,7 @@
 ################################
 ## Install Service
 #################################
-{{- if .Values.install.enabled }}
+{{- if .Values.install.cliEnabled }}
 kind: Service
 apiVersion: v1
 metadata:
