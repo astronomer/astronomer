@@ -1,0 +1,80 @@
+########################################################
+## Astronomer Platform Namespace label configure Hook ##
+########################################################
+{{- if  .Values.nats.jetstream.enabled }}
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  annotations:
+    "helm.sh/hook": "pre-install,pre-upgrade"
+    "helm.sh/hook-weight": "-2"
+  namespace: {{ .Release.Namespace }}
+  name: {{ .Release.Name }}-jetstream--role
+rules:
+- apiGroups: [""]
+  resources: ["namespaces"]
+  verbs: ["patch", "update", "get"]
+- apiGroups: ["apps"]
+  resources: ["statefulsets"]
+  verbs: ["delete", "get", "list", "patch"]
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  annotations:
+    "helm.sh/hook": "pre-install,pre-upgrade"
+    "helm.sh/hook-weight": "-2"
+  name: {{ .Release.Name }}-labeller
+  namespace: {{ .Release.Namespace }}
+subjects:
+- kind: ServiceAccount
+  name: {{ .Release.Name }}-jetstream-sa
+  namespace: {{ .Release.Namespace }}
+  apiGroup: ""
+roleRef:
+  kind: Role
+  name: {{ .Release.Name }}-jetstream--role
+  apiGroup: ""
+---
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  annotations:
+    "helm.sh/hook": "pre-install,pre-upgrade"
+    "helm.sh/hook-weight": "3"
+  name: {{ .Release.Name }}-jetstream-sa
+  labels:
+    tier: platform
+    component: labeller
+    release: {{ .Release.Name }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-jetstream-job
+  annotations:
+    "helm.sh/hook": "pre-install,pre-upgrade"
+    "helm.sh/hook-delete-policy": "before-hook-creation"
+    "helm.sh/hook-weight": "5"
+  labels:
+    tier: platform
+    component: labeller
+    release: {{ .Release.Name }}
+spec:
+  template:
+    metadata:
+      labels:
+        tier: platform
+        component: labeller
+        release: {{ .Release.Name }}
+    spec:
+      restartPolicy: Never
+      serviceAccountName: {{ .Release.Name }}-jetstream-sa
+      containers:
+      - name: label-platform-namespace
+        image: quay.io/astronomer/ap-db-bootstrapper
+        command: ["/bin/sh", "-c"]
+        args:
+          - data=`kubectl get ns astronomer -o=jsonpath='{.metadata.labels.jetstreamEnabled}'` ;if [[ "$data" = "" ]]  ; then kubectl label namespace astronomer jetstreamEnabled=true;kubectl delete sts astronomer-nats --cascade=orphan ;else echo "Nats is already enabled with jetstream. skipping sts cleanup" ;fi
+{{ end }}
