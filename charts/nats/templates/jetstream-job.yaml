@@ -45,8 +45,8 @@ metadata:
     "helm.sh/hook-weight": "3"
   name: {{ .Release.Name }}-jetstream-sa
   labels:
-    tier: platform
-    component: labeller
+    tier: nats
+    component: nats
     release: {{ .Release.Name }}
 ---
 apiVersion: batch/v1
@@ -58,15 +58,15 @@ metadata:
     "helm.sh/hook-delete-policy": "before-hook-creation"
     "helm.sh/hook-weight": "5"
   labels:
-    tier: platform
-    component: labeller
+    tier: nats
+    component: nats
     release: {{ .Release.Name }}
 spec:
   template:
     metadata:
       labels:
-        tier: platform
-        component: labeller
+        tier: nats
+        component: nats
         release: {{ .Release.Name }}
     spec:
       restartPolicy: Never
