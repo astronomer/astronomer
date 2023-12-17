@@ -172,6 +172,34 @@ def test_houston_configmap_with_config_syncer_disabled():
     assert not prod_yaml["deployments"].get("loggingSidecar")
 
 
+def test_houston_configmap_with_fluentd_index_prefix_defaults():
+    """Validate the houston configmap and its embedded data with configSyncer
+    disabled."""
+    docs = render_chart(
+        values={},
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+
+    common_test_cases(docs)
+    doc = docs[0]
+    prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
+    assert "fluentd" in prod_yaml["deployments"].get("fluentdIndexPrefix")
+
+
+def test_houston_configmap_with_fluentd_index_prefix_overrides():
+    """Validate the houston configmap and its embedded data with configSyncer
+    disabled."""
+    docs = render_chart(
+        values={"global": {"logging": {"indexNamePrefix": "astronomer"}}},
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+
+    common_test_cases(docs)
+    doc = docs[0]
+    prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
+    assert "astronomer" in prod_yaml["deployments"].get("fluentdIndexPrefix")
+
+
 def test_houston_configmap_with_loggingsidecar_enabled():
     """Validate the houston configmap and its embedded data with
     loggingSidecar."""
@@ -201,6 +229,40 @@ def test_houston_configmap_with_loggingsidecar_enabled():
         "customConfig": False,
     }
     assert "vector" in prod_yaml["deployments"]["loggingSidecar"]["image"]
+
+
+def test_houston_configmap_with_loggingsidecar_enabled_with_index_prefix_overrides():
+    """Validate the houston configmap and its embedded data with
+    loggingSidecar."""
+    image = "registry.example.com/foobar/test-image-name:99.88.77"
+    docs = render_chart(
+        values={
+            "global": {
+                "logging": {"indexNamePrefix": "test-index-name-prefix-999"},
+                "loggingSidecar": {
+                    "enabled": True,
+                    "image": image,
+                },
+            }
+        },
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+
+    common_test_cases(docs)
+    doc = docs[0]
+    prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
+    log_cmd = 'log_cmd = " 1> >( tee -a /var/log/sidecar-log-consumer/out.log ) 2> >( tee -a /var/log/sidecar-log-consumer/err.log >&2 ) ; "'
+    assert (
+        log_cmd in prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
+    )
+    assert prod_yaml["deployments"]["loggingSidecar"] == {
+        "enabled": True,
+        "name": "sidecar-log-consumer",
+        "image": image,
+        "customConfig": False,
+        "indexNamePrefix": "test-index-name-prefix-999",
+    }
+    assert image in prod_yaml["deployments"]["loggingSidecar"]["image"]
 
 
 def test_houston_configmap_with_loggingsidecar_enabled_with_overrides():

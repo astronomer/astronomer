@@ -11,7 +11,6 @@ component_paths = [
     "charts/kube-state/templates",
     "charts/prometheus-blackbox-exporter/templates",
     "charts/prometheus-node-exporter/templates",
-    "charts/prometheus-postgres-exporter/templates",
     "charts/prometheus/templates",
 ]
 
@@ -19,6 +18,7 @@ component_paths = [
 # eg: password vs passwordSecret
 edge_cases = [
     "charts/prometheus-postgres-exporter/templates/secret.yaml",
+    "charts/prometheus-postgres-exporter/templates",
 ]
 
 show_only = [

@@ -378,3 +378,19 @@ imagePullSecrets:
   - name: {{ .Values.global.privateRegistry.secretName }}
 {{- end -}}
 {{- end -}}
+
+{{ define "fluentd.IndexPattern" -}}
+{{- if .Values.global.logging.indexNamePrefix -}}
+{{ .Values.global.logging.indexNamePrefix }}
+{{- else -}}
+fluentd
+{{- end -}}
+{{- end }}
+
+{{- define "houston.InternalAuthorization" -}}
+{{- if or .Values.houston.enableHoustonInternalAuthorization .Values.global.enableHoustonInternalAuthorization -}}
+true
+{{- else -}}
+false
+{{- end }}
+{{- end }}

@@ -57,7 +57,8 @@ data:
 
     # Airflow deployment configuration
     deployments:
-      enableHoustonInternalAuthorization: {{ .Values.houston.enableHoustonInternalAuthorization }}
+      fluentdIndexPrefix: {{ include "fluentd.IndexPattern" .}}
+      enableHoustonInternalAuthorization: {{ include "houston.InternalAuthorization" . }}
       namespaceFreeFormEntry: {{ .Values.global.namespaceFreeFormEntry }}
       # Airflow chart settings
       # Static helm configurations for this chart are found below.
@@ -119,6 +120,9 @@ data:
         {{- end }}
         {{- if .Values.global.loggingSidecar.indexPattern }}
         indexPattern: {{ .Values.global.loggingSidecar.indexPattern | squote }}
+        {{- end }}
+        {{- if .Values.global.logging.indexNamePrefix }}
+        indexNamePrefix: {{ .Values.global.logging.indexNamePrefix }}
         {{- end }}
       {{- end }}
 

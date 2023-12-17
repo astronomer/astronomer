@@ -1,7 +1,7 @@
 apiVersion: v2
 name: astronomer
-version: 0.33.1
-appVersion: 0.33.1
+version: 0.33.2
+appVersion: 0.33.2
 description: Helm chart to deploy the Astronomer Platform
 icon: https://www.astronomer.io/static/iconforLIGHTbackground.svg
 keywords:
@@ -34,15 +34,15 @@ dependencies:
     tags:
       - monitoring
   - name: prometheus-blackbox-exporter
-    condition: global.blackboxExporter.Enabled
+    condition: global.blackboxExporterEnabled
     tags:
       - monitoring
   - name: prometheus-node-exporter
-    condition: global.nodeExporter.Enabled
+    condition: global.nodeExporterEnabled
     tags:
       - monitoring
   - name: prometheus-postgres-exporter
-    condition: global.prometheusPostgresExporter.Enabled
+    condition: global.prometheusPostgresExporterEnabled
     tags:
       - monitoring
   - name: prometheus
