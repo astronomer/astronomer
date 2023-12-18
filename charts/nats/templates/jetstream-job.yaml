@@ -10,7 +10,7 @@ metadata:
     "helm.sh/hook": "pre-install,pre-upgrade"
     "helm.sh/hook-weight": "-2"
   namespace: {{ .Release.Namespace }}
-  name: {{ .Release.Name }}-jetstream--role
+  name: {{ .Release.Name }}-jetstream-role
 rules:
 - apiGroups: [""]
   resources: ["namespaces"]
