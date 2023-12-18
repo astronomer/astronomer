@@ -67,7 +67,7 @@ data:
     {{- end }}
     {{- end }}
 
-    {{- if .Values.nats.jetstream.enabled }}
+    {{- if or   .Values.global.nats.jetStream.enabled  .Values.nats.jetstream.enabled }}
     ###################################
     #                                 #
     # NATS JetStream                  #
