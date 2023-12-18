@@ -47,6 +47,13 @@ data:
       github:
         enabled: true
 
+    {{ if  .Values.global.nats.jetStream.enabled }}
+    nats:
+      jetStreamEnabled: {{ .Values.global.nats.jetStream.enabled  }}
+      tlsEnabled: {{ .Values.global.nats.jetStream.tls }}
+    {{ end }}
+
+
     helm:
       baseDomain: {{ .Values.global.baseDomain }}
       registryAuthSecret: {{ .Values.registry.auth.secretName }}

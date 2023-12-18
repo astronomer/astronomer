@@ -86,6 +86,9 @@ global:
   nats:
     enabled: true
     replicas: 3
+    jetStream:
+      enabled: false
+      tls: false
 
   # Used to enable nats-streaming
   stan:
