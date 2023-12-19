@@ -40,6 +40,8 @@ spec:
         release: {{ .Release.Name }}
         component: nats
         chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+      annotations:
+        checksum/nats-config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
     spec:
 {{- include "nats.imagePullSecrets" . | indent 6 }}
 {{- with .Values.PodSecurityContext }}
