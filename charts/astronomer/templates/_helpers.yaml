@@ -277,6 +277,8 @@ s3:
 {{ $secretName :=  include "nats.jestreamTLSSecret" . }}
 - name: nats-jetstream-tls-volume
   mountPath: {{ include "houston.jetStreamSSLCertificateDir" . }}/{{ $secretName }}
+- name: nats-jetstream-tls-volume
+  mountPath: /usr/local/share/ca-certificates/{{ $secretName }}
 {{- end }}
 {{- end }}
 

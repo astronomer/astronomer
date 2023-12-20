@@ -79,7 +79,7 @@ spec:
       restartPolicy: Never
       serviceAccountName: {{ .Release.Name }}-jetstream-sa
       containers:
-      - name: label-platform-namespace
+      - name: jetstream-template-fixer
         image: quay.io/astronomer/ap-db-bootstrapper
         command:
         - /bin/sh
@@ -97,6 +97,4 @@ spec:
         - name: jetstream-tls-script
           mountPath: /app/tls-script.sh
           subPath: tls-script.sh
-
-        # - data=`kubectl get ns astronomer -o=jsonpath='{.metadata.labels.jetsteamEnabled}'` ;if [[ "$data" = "" ]]  ; then kubectl label namespace astronomer jetstreamEnabled=true;kubectl delete sts astronomer-nats --cascade=orphan ;else echo "Nats is already enabled with jetstream. skipping sts cleanup" ;fi
 {{ end }}
