@@ -70,11 +70,11 @@ nats:
       #   name: "nats-jetstream-encryption"
       #   key: "key"
 
-    #############################
-    #                           #
-    #  Jetstream Memory Storage #
-    #                           #
-    #############################
+    ##############################
+    #                            #
+    #  Jetstream Memory Storage  #
+    #                            #
+    ##############################
     memStorage:
       enabled: true
       size: 1Gi
