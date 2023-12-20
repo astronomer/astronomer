@@ -23,7 +23,15 @@ data:
     http: 8222
     server_name: $POD_NAME
 
-    {{- if .Values.nats.tls }}
+    {{- if and  .Values.global.nats.jetStream.enabled  .Values.global.nats.jetStream.tls  }}
+      {{ $secretName :=  include "nats.jestreamTLSSecret" . }}
+      tls {
+        cert_file: /etc/nats-certs/clients/{{ $secretName }}/tls.crt
+        key_file: /etc/nats-certs/clients/{{ $secretName }}/tls.key
+        }
+    {{- end }}
+
+    {{- if or  .Values.nats.tls ( not  .Values.global.nats.jetStream.enabled  ) }}
     #####################
     #                   #
     # TLS Configuration #
@@ -67,7 +75,7 @@ data:
     {{- end }}
     {{- end }}
 
-    {{- if or   .Values.global.nats.jetStream.enabled  .Values.nats.jetstream.enabled }}
+    {{- if or .Values.global.nats.jetStream.enabled  .Values.nats.jetstream.enabled }}
     ###################################
     #                                 #
     # NATS JetStream                  #
@@ -153,6 +161,15 @@ data:
          timeout: {{ . }}
          {{- end }}
       }
+      {{- end }}
+
+      {{- if and  .Values.global.nats.jetStream.enabled  .Values.global.nats.jetStream.tls  }}
+      {{ $secretName :=  include "nats.jestreamTLSSecret" . }}
+      tls {
+        cert_file: /etc/nats-certs/clients/{{ $secretName }}/tls.crt
+        key_file: /etc/nats-certs/clients/{{ $secretName }}/tls.key
+        ca_file: /etc/nats-certs/clients/{{ $secretName }}/ca.crt
+        }
       {{- end }}
 
       routes = [

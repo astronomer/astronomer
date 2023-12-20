@@ -18,6 +18,9 @@ rules:
 - apiGroups: ["apps"]
   resources: ["statefulsets"]
   verbs: ["delete", "get", "list", "patch"]
+- apiGroups: ["apps"]
+  resources: ["secrets"]
+  verbs: ["delete", "get", "list", "patch", "create"]
 ---
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
@@ -34,7 +37,7 @@ subjects:
   apiGroup: ""
 roleRef:
   kind: Role
-  name: {{ .Release.Name }}-jetstream--role
+  name: {{ .Release.Name }}-jetstream-role
   apiGroup: ""
 ---
 kind: ServiceAccount
@@ -69,12 +72,31 @@ spec:
         component: nats
         release: {{ .Release.Name }}
     spec:
+      volumes:
+      - name: jetstream-tls-script
+        configMap:
+          name: {{ template "nats.name" . }}-tls-script-config
       restartPolicy: Never
       serviceAccountName: {{ .Release.Name }}-jetstream-sa
       containers:
       - name: label-platform-namespace
         image: quay.io/astronomer/ap-db-bootstrapper
-        command: ["/bin/sh", "-c"]
-        args:
-          - data=`kubectl get ns astronomer -o=jsonpath='{.metadata.labels.jetstreamEnabled}'` ;if [[ "$data" = "" ]]  ; then kubectl label namespace astronomer jetstreamEnabled=true;kubectl delete sts astronomer-nats --cascade=orphan ;else echo "Nats is already enabled with jetstream. skipping sts cleanup" ;fi
+        command:
+        - /bin/sh
+        - -c
+        - |
+          data=`kubectl get ns astronomer -o=jsonpath='{.metadata.labels.jetstreamEnabled}'`
+          if [[ "$data" = "" ]]  ; then
+            kubectl label namespace astronomer jetstreamEnabled=true;
+            kubectl delete sts astronomer-nats --cascade=orphan;
+            sh tls-script.sh
+          else
+            echo "Nats is already enabled with jetstream. skipping sts cleanup"
+          fi
+        volumeMounts:
+        - name: jetstream-tls-script
+          mountPath: /app/tls-script.sh
+          subPath: tls-script.sh
+
+        # - data=`kubectl get ns astronomer -o=jsonpath='{.metadata.labels.jetsteamEnabled}'` ;if [[ "$data" = "" ]]  ; then kubectl label namespace astronomer jetstreamEnabled=true;kubectl delete sts astronomer-nats --cascade=orphan ;else echo "Nats is already enabled with jetstream. skipping sts cleanup" ;fi
 {{ end }}

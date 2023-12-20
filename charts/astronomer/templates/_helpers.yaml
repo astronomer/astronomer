@@ -273,6 +273,11 @@ s3:
   mountPath: {{ template "houston.tlsRegistryCertificatePath" . }}
   subPath: tls.crt
 {{- end }}
+{{ if and  .Values.global.nats.jetStream.enabled  .Values.global.nats.jetStream.tls  }}
+{{ $secretName :=  include "nats.jestreamTLSSecret" . }}
+- name: nats-jetstream-tls-volume
+  mountPath: {{ include "houston.jetStreamSSLCertificateDir" . }}/{{ $secretName }}
+{{- end }}
 {{- end }}
 
 {{- define "houston_volumes" }}
@@ -298,6 +303,12 @@ s3:
 - name: registry-tls-volume
   secret:
     secretName: {{ .Values.global.tlsSecret }}
+{{- end }}
+{{- if and  .Values.global.nats.jetStream.enabled  .Values.global.nats.jetStream.tls  }}
+{{ $secretName :=  include "nats.jestreamTLSSecret" . }}
+- name: nats-jetstream-tls-volume
+  secret:
+    secretName: {{ $secretName }}-houston
 {{- end }}
 {{- end }}
 
@@ -393,4 +404,27 @@ true
 {{- else -}}
 false
 {{- end }}
+{{- end }}
+
+
+{{ define "houston.jetStreamSSLCertificateDir" -}}
+/etc/houston/jetstream/tls
+{{- end }}
+
+
+{{ define "jetstreamTLS" }}
+{{ $secretName :=  include "nats.jestreamTLSSecret" . }}
+{{ if .Values.global.nats.jetStream.tls }}
+tlsEnabled: true
+tls:
+  caFile: {{ include "houston.jetStreamSSLCertificateDir" . }}/{{ $secretName  }}/ca.crt
+  certFile: {{ include "houston.jetStreamSSLCertificateDir" . }}/{{ $secretName  }}/tls.crt
+  keyFile: {{ include "houston.jetStreamSSLCertificateDir" . }}/{{ $secretName  }}/tls.key
+{{- else -}}
+tlsEnabled: false
+{{- end }}
+{{- end }}
+
+{{ define "nats.jestreamTLSSecret" -}}
+{{ default (printf "%s-jetstream-tls-certificate" .Release.Name)}}
 {{- end }}

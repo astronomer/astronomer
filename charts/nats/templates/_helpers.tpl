@@ -58,5 +58,5 @@ imagePullSecrets:
 
 
 {{ define "nats.jestreamTLSSecret" -}}
-{{ default (printf "%s-jetstream-tls-certificate" .Release.Name) .Values.nats.jetstreamSSLSecretName }}
+{{ default (printf "%s-jetstream-tls-certificate" .Release.Name) .Values.global.nats.jetstreamSSLSecretName }}
 {{- end }}

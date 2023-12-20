@@ -47,10 +47,10 @@ data:
       github:
         enabled: true
 
-    {{ if  .Values.global.nats.jetStream.enabled }}
+    {{- if  .Values.global.nats.jetStream.enabled }}
     nats:
       jetStreamEnabled: {{ .Values.global.nats.jetStream.enabled  }}
-      tlsEnabled: {{ .Values.global.nats.jetStream.tls }}
+      {{- include "jetstreamTLS" . | indent 6 }}
     {{ end }}
 
 
