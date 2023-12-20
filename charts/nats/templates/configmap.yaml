@@ -28,6 +28,7 @@ data:
       tls {
         cert_file: /etc/nats-certs/clients/{{ $secretName }}/tls.crt
         key_file: /etc/nats-certs/clients/{{ $secretName }}/tls.key
+        ca_file: /etc/nats-certs/clients/{{ $secretName }}/ca.crt
         }
     {{- end }}
 

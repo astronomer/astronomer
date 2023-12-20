@@ -18,7 +18,7 @@ rules:
 - apiGroups: ["apps"]
   resources: ["statefulsets"]
   verbs: ["delete", "get", "list", "patch"]
-- apiGroups: ["apps"]
+- apiGroups: [""]
   resources: ["secrets"]
   verbs: ["delete", "get", "list", "patch", "create"]
 ---
