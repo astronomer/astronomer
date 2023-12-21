@@ -72,10 +72,6 @@ spec:
         component: nats
         release: {{ .Release.Name }}
     spec:
-      volumes:
-      - name: jetstream-tls-script
-        configMap:
-          name: {{ template "nats.name" . }}-tls-script-config
       restartPolicy: Never
       serviceAccountName: {{ .Release.Name }}-jetstream-sa
       containers:
@@ -89,12 +85,7 @@ spec:
           if [[ "$data" = "" ]]  ; then
             kubectl label namespace astronomer jetstreamEnabled=true;
             kubectl delete sts astronomer-nats --cascade=orphan;
-            sh tls-script.sh
           else
             echo "Nats is already enabled with jetstream. skipping sts cleanup"
           fi
-        volumeMounts:
-        - name: jetstream-tls-script
-          mountPath: /app/tls-script.sh
-          subPath: tls-script.sh
 {{ end }}
