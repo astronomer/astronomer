@@ -60,15 +60,19 @@ metadata:
     "helm.sh/hook-delete-policy": "before-hook-creation"
     "helm.sh/hook-weight": "5"
   labels:
-    tier: jetsream-migrator
+    app: {{ template "nats.name" . }}
+    tier: nats
+    version: {{ .Chart.Version }}
     component: jetsream-migrator
     release: {{ .Release.Name }}
 spec:
   template:
     metadata:
       labels:
-        tier: jetsream-migrator
+        app: {{ template "nats.name" . }}
+        tier: nats
         component: jetsream-migrator
+        version: {{ .Chart.Version }}
         release: {{ .Release.Name }}
     spec:
       restartPolicy: Never
