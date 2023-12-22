@@ -274,11 +274,12 @@ s3:
   subPath: tls.crt
 {{- end }}
 {{ if and  .Values.global.nats.jetStream.enabled  .Values.global.nats.jetStream.tls  }}
-{{ $secretName :=  include "nats.jestreamTLSSecret" . }}
-- name: nats-jetstream-tls-volume
+{{ $secretName :=  printf "%s-client" (include "nats.jestreamTLSSecret" . ) }}
+- name: nats-jetstream-client-tls-volume
   mountPath: {{ include "houston.jetStreamSSLCertificateDir" . }}/{{ $secretName }}
-- name: nats-jetstream-tls-volume
-  mountPath: /usr/local/share/ca-certificates/{{ $secretName }}
+- name: nats-jetstream-client-tls-volume
+  mountPath: /usr/local/share/ca-certificates/{{ $secretName }}/ca.crt
+  subPath: ca.crt
 {{- end }}
 {{- end }}
 
@@ -307,10 +308,10 @@ s3:
     secretName: {{ .Values.global.tlsSecret }}
 {{- end }}
 {{- if and  .Values.global.nats.jetStream.enabled  .Values.global.nats.jetStream.tls  }}
-{{ $secretName :=  include "nats.jestreamTLSSecret" . }}
-- name: nats-jetstream-tls-volume
+{{ $secretName :=  printf "%s-client" (include "nats.jestreamTLSSecret" . ) }}
+- name: nats-jetstream-client-tls-volume
   secret:
-    secretName: {{ $secretName }}-houston
+    secretName: {{ $secretName }}
 {{- end }}
 {{- end }}
 
@@ -415,7 +416,7 @@ false
 
 
 {{ define "jetstreamTLS" }}
-{{ $secretName :=  include "nats.jestreamTLSSecret" . }}
+{{ $secretName :=  printf "%s-client" (include "nats.jestreamTLSSecret" . ) }}
 {{ if .Values.global.nats.jetStream.tls }}
 tlsEnabled: true
 tls:
