@@ -76,7 +76,7 @@ nats:
     #                            #
     ##############################
     memStorage:
-      enabled: true
+      enabled: false
       size: 1Gi
 
     ############################
