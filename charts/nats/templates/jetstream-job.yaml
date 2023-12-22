@@ -85,7 +85,7 @@ spec:
             kubectl label namespace {{ .Release.Namespace }} jetstreamEnabled-
             kubectl delete sts {{ .Release.Name }}-nats --cascade=orphan -n {{ .Release.Namespace }};
           else
-            echo "{{ .Release.Name }}-Nats is already enabled with jetstream. skipping sts cleanup"
+            echo "{{ .Release.Name }}-Nats is already enabled with stan. skipping sts cleanup"
           fi
           {{ else }}
           data=`kubectl get ns {{ .Release.Namespace }} -o=jsonpath='{.metadata.labels.jetstreamEnabled}'`
@@ -94,7 +94,7 @@ spec:
             kubectl label namespace {{ .Release.Namespace }} stanEnabled-
             kubectl delete sts {{ .Release.Name }}-nats --cascade=orphan -n {{ .Release.Namespace }};
           else
-            echo "{{ .Release.Name }}-Nats is already enabled with stan. skipping sts cleanup"
+            echo "{{ .Release.Name }}-Nats is already enabled with jetstream. skipping sts cleanup"
           fi
           {{ end }}
 {{ end }}
