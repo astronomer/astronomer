@@ -41,6 +41,9 @@ spec:
         component: nats
         chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
       annotations:
+        {{ if and  .Values.global.nats.jetStream.enabled .Values.global.nats.jetStream.tls }}
+        checksum/nats-tls: {{ include (print $.Template.BasePath "/nats-jetstream-tls-secret.yaml") . | sha256sum }}
+        {{- end }}
         checksum/nats-config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
     spec:
 {{- include "nats.imagePullSecrets" . | indent 6 }}
@@ -108,7 +111,10 @@ spec:
       {{- end }}
       {{- if and  .Values.global.nats.jetStream.enabled  .Values.global.nats.jetStream.tls  }}
       {{ $secretName :=  include "nats.jestreamTLSSecret" . }}
-      - name: {{ $secretName }}-clients-volume
+      - name: {{ $secretName }}-client-volume
+        secret:
+          secretName: {{ $secretName }}-client
+      - name: {{ $secretName }}-server-volume
         secret:
           secretName: {{ $secretName }}
       {{- end }}
@@ -199,8 +205,10 @@ spec:
           #######################
           {{- with .Values.nats.tls }}
           {{ $secretName := .secret.name }}
-          - name: {{ $secretName }}-clients-volume
-            mountPath: /etc/nats-certs/clients/{{ $secretName }}
+          - name: {{ $secretName }}-server-volume
+            mountPath: /etc/nats-certs/server/{{ $secretName }}
+          - name: {{ $secretName }}-client-volume
+            mountPath: /etc/nats-certs/client/{{ $secretName }}-client
           {{- end }}
           {{- with .Values.cluster.tls }}
           {{ $secretName := .secret.name }}
@@ -220,8 +228,10 @@ spec:
 
           {{- if and  .Values.global.nats.jetStream.enabled  .Values.global.nats.jetStream.tls  }}
           {{ $secretName :=  include "nats.jestreamTLSSecret" . }}
-          - name: {{ $secretName }}-clients-volume
-            mountPath: /etc/nats-certs/clients/{{ $secretName }}
+          - name: {{ $secretName }}-server-volume
+            mountPath: /etc/nats-certs/server/{{ $secretName }}
+          - name: {{ $secretName }}-client-volume
+            mountPath: /etc/nats-certs/client/{{ $secretName }}-client
           {{- end }}
 
           {{- if .Values.leafnodes.enabled }}

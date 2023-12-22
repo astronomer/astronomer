@@ -51,23 +51,38 @@ class TestNatsJetstream:
         )
 
         assert len(docs) == 11
+
+        jetStreamCertPrefix = (
+            "/etc/houston/jetstream/tls/release-name-jetstream-tls-certificate"
+        )
         prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
         assert prod["nats"] == {
             "jetStreamEnabled": True,
             "tlsEnabled": True,
             "tls": {
-                "caFile": "/etc/houston/jetstream/tls/release-name-jetstream-tls-certificate-client/ca.crt",
-                "certFile": "/etc/houston/jetstream/tls/release-name-jetstream-tls-certificate-client/tls.crt",
-                "keyFile": "/etc/houston/jetstream/tls/release-name-jetstream-tls-certificate-client/tls.key",
+                "caFile": f"{jetStreamCertPrefix}-client/ca.crt",
+                "certFile": f"{jetStreamCertPrefix}-client/tls.crt",
+                "keyFile": f"{jetStreamCertPrefix}-client/tls.key",
             },
         }
+
         assert {
-            "name": "release-name-jetstream-tls-certificate-clients-volume",
-            "mountPath": "/etc/nats-certs/clients/release-name-jetstream-tls-certificate",
+            "name": "release-name-jetstream-tls-certificate-client-volume",
+            "mountPath": "/etc/nats-certs/client/release-name-jetstream-tls-certificate-client",
         } in docs[1]["spec"]["template"]["spec"]["containers"][0]["volumeMounts"]
 
         assert {
-            "name": "release-name-jetstream-tls-certificate-clients-volume",
+            "name": "release-name-jetstream-tls-certificate-server-volume",
+            "mountPath": "/etc/nats-certs/server/release-name-jetstream-tls-certificate",
+        } in docs[1]["spec"]["template"]["spec"]["containers"][0]["volumeMounts"]
+
+        assert {
+            "name": "release-name-jetstream-tls-certificate-client-volume",
+            "secret": {"secretName": "release-name-jetstream-tls-certificate-client"},
+        } in docs[1]["spec"]["template"]["spec"]["volumes"]
+
+        assert {
+            "name": "release-name-jetstream-tls-certificate-server-volume",
             "secret": {"secretName": "release-name-jetstream-tls-certificate"},
         } in docs[1]["spec"]["template"]["spec"]["volumes"]
 
@@ -80,7 +95,7 @@ class TestNatsJetstream:
         )
         assert {
             "name": "nats-jetstream-client-tls-volume",
-            "mountPath": "/etc/houston/jetstream/tls/release-name-jetstream-tls-certificate-client",
+            "mountPath": f"{jetStreamCertPrefix}-client",
         } in docs[10]["spec"]["template"]["spec"]["containers"][0]["volumeMounts"]
         assert {
             "name": "nats-jetstream-client-tls-volume",

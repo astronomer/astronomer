@@ -26,9 +26,9 @@ data:
     {{- if and  .Values.global.nats.jetStream.enabled  .Values.global.nats.jetStream.tls  }}
       {{ $secretName :=  include "nats.jestreamTLSSecret" . }}
       tls {
-        cert_file: /etc/nats-certs/clients/{{ $secretName }}/tls.crt
-        key_file: /etc/nats-certs/clients/{{ $secretName }}/tls.key
-        ca_file: /etc/nats-certs/clients/{{ $secretName }}/ca.crt
+        cert_file: /etc/nats-certs/client/{{ $secretName }}-client/tls.crt
+        key_file: /etc/nats-certs/client/{{ $secretName }}-client/tls.key
+        ca_file: /etc/nats-certs/client/{{ $secretName }}-client/ca.crt
         }
     {{- end }}
 
@@ -127,6 +127,7 @@ data:
 
       {{- end }}
 
+      {{- if or  .Values.cluster.tls ( not  .Values.global.nats.jetStream.enabled  ) }}
       {{- with .Values.cluster.tls }}
       {{ $secretName := .secret.name }}
       tls {
@@ -163,13 +164,14 @@ data:
          {{- end }}
       }
       {{- end }}
+      {{- end }}
 
       {{- if and  .Values.global.nats.jetStream.enabled  .Values.global.nats.jetStream.tls  }}
       {{ $secretName :=  include "nats.jestreamTLSSecret" . }}
       tls {
-        cert_file: /etc/nats-certs/clients/{{ $secretName }}/tls.crt
-        key_file: /etc/nats-certs/clients/{{ $secretName }}/tls.key
-        ca_file: /etc/nats-certs/clients/{{ $secretName }}/ca.crt
+        cert_file: /etc/nats-certs/server/{{ $secretName }}/tls.crt
+        key_file: /etc/nats-certs/server/{{ $secretName }}/tls.key
+        ca_file: /etc/nats-certs/server/{{ $secretName }}/ca.crt
         }
       {{- end }}
 
