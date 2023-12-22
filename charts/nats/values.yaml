@@ -12,6 +12,10 @@ images:
     repository: quay.io/astronomer/ap-nats-exporter
     tag: 0.12.0-2
     pullPolicy: IfNotPresent
+  dbBootstrapper:
+    repository: quay.io/astronomer/ap-db-bootstrapper
+    tag: 0.31.9
+    pullPolicy: IfNotPresent
 
 
 nats:
@@ -26,6 +30,8 @@ nats:
   # How many seconds should pass before sending a PING
   # to a client that has no activity.
   pingInterval:
+
+  terminationGracePeriodSeconds: 60
 
   resources: {}
   #  limits:

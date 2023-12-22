@@ -18,6 +18,8 @@ rules:
 - apiGroups: ["apps"]
   resources: ["statefulsets"]
   verbs: ["delete", "get", "list", "patch"]
+  resourceNames:
+  - {{ .Release.Name }}-nats
 ---
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
@@ -45,8 +47,8 @@ metadata:
     "helm.sh/hook-weight": "3"
   name: {{ .Release.Name }}-jetstream-sa
   labels:
-    tier: nats
-    component: nats
+    tier: jetsream-migrator
+    component: jetsream-migrator
     release: {{ .Release.Name }}
 ---
 apiVersion: batch/v1
@@ -58,22 +60,22 @@ metadata:
     "helm.sh/hook-delete-policy": "before-hook-creation"
     "helm.sh/hook-weight": "5"
   labels:
-    tier: nats
-    component: nats
+    tier: jetsream-migrator
+    component: jetsream-migrator
     release: {{ .Release.Name }}
 spec:
   template:
     metadata:
       labels:
-        tier: nats
-        component: nats
+        tier: jetsream-migrator
+        component: jetsream-migrator
         release: {{ .Release.Name }}
     spec:
       restartPolicy: Never
       serviceAccountName: {{ .Release.Name }}-jetstream-sa
       containers:
       - name: jetstream-template-fixer
-        image: quay.io/astronomer/ap-db-bootstrapper
+        image: {{ template "dbBootstrapper.image" . }}
         command:
         - /bin/sh
         - -c
@@ -81,18 +83,18 @@ spec:
           {{ if or .Values.global.stan.enabled (not .Values.global.nats.jetStream.enabled) }}
           data=`kubectl get ns {{ .Release.Namespace }} -o=jsonpath='{.metadata.labels.stanEnabled}'`
           if [[ "$data" = "" ]]  ; then
+            kubectl delete sts {{ .Release.Name }}-nats --cascade=orphan -n {{ .Release.Namespace }};
             kubectl label namespace {{ .Release.Namespace }} stanEnabled=true;
             kubectl label namespace {{ .Release.Namespace }} jetstreamEnabled-
-            kubectl delete sts {{ .Release.Name }}-nats --cascade=orphan -n {{ .Release.Namespace }};
           else
             echo "{{ .Release.Name }}-Nats is already enabled with stan. skipping sts cleanup"
           fi
           {{ else }}
           data=`kubectl get ns {{ .Release.Namespace }} -o=jsonpath='{.metadata.labels.jetstreamEnabled}'`
           if [[ "$data" = "" ]]  ; then
+            kubectl delete sts {{ .Release.Name }}-nats  -n {{ .Release.Namespace }};
             kubectl label namespace {{ .Release.Namespace }} jetstreamEnabled=true;
             kubectl label namespace {{ .Release.Namespace }} stanEnabled-
-            kubectl delete sts {{ .Release.Name }}-nats --cascade=orphan -n {{ .Release.Namespace }};
           else
             echo "{{ .Release.Name }}-Nats is already enabled with jetstream. skipping sts cleanup"
           fi

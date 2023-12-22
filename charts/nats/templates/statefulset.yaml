@@ -139,7 +139,7 @@ spec:
       #################
       #  NATS Server  #
       #################
-      terminationGracePeriodSeconds: 60
+      terminationGracePeriodSeconds: {{ .Values.nats.terminationGracePeriodSeconds }}
       containers:
       - name: nats
         image: {{ include "nats.image" . }}
