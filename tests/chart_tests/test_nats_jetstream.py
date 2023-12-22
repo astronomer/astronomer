@@ -45,10 +45,12 @@ class TestNatsJetstream:
                 "charts/nats/templates/configmap.yaml",
                 "charts/nats/templates/jetstream-job.yaml",
                 "charts/nats/templates/nats-jetstream-tls-secret.yaml",
+                "charts/astronomer/templates/houston/api/houston-deployment.yaml",
+                "charts/astronomer/templates/houston/worker/houston-worker-deployment.yaml",
             ],
         )
 
-        assert len(docs) == 9
+        assert len(docs) == 11
         prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
         assert prod["nats"] == {
             "jetStreamEnabled": True,
@@ -59,9 +61,31 @@ class TestNatsJetstream:
                 "keyFile": "/etc/houston/jetstream/tls/release-name-jetstream-tls-certificate/tls.key",
             },
         }
+        assert {
+            "name": "release-name-jetstream-tls-certificate-clients-volume",
+            "mountPath": "/etc/nats-certs/clients/release-name-jetstream-tls-certificate",
+        } in docs[1]["spec"]["template"]["spec"]["containers"][0]["volumeMounts"]
+
+        assert {
+            "name": "release-name-jetstream-tls-certificate-clients-volume",
+            "secret": {"secretName": "release-name-jetstream-tls-certificate"},
+        } in docs[1]["spec"]["template"]["spec"]["volumes"]
+
         nats_cm = docs[2]["data"]["nats.conf"]
         assert "jetstream" in nats_cm
         assert docs[7]["metadata"]["name"] == "release-name-jetstream-tls-certificate"
+        assert {
+            "name": "nats-jetstream-tls-volume",
+            "mountPath": "/etc/houston/jetstream/tls/release-name-jetstream-tls-certificate",
+        } in docs[10]["spec"]["template"]["spec"]["containers"][0]["volumeMounts"]
+        assert {
+            "name": "nats-jetstream-tls-volume",
+            "mountPath": "/usr/local/share/ca-certificates/release-name-jetstream-tls-certificate",
+        } in docs[10]["spec"]["template"]["spec"]["containers"][0]["volumeMounts"]
+        assert {
+            "name": "nats-jetstream-tls-volume",
+            "secret": {"secretName": "release-name-jetstream-tls-certificate-houston"},
+        } in docs[10]["spec"]["template"]["spec"]["volumes"]
         assert (
             docs[8]["metadata"]["name"]
             == "release-name-jetstream-tls-certificate-houston"
