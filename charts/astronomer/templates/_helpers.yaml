@@ -409,11 +409,9 @@ false
 {{- end }}
 {{- end }}
 
-
 {{ define "houston.jetStreamSSLCertificateDir" -}}
 /etc/houston/jetstream/tls
 {{- end }}
-
 
 {{ define "jetstreamTLS" }}
 {{ $secretName :=  printf "%s-client" (include "nats.jestreamTLSSecret" . ) }}
