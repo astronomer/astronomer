@@ -77,6 +77,7 @@ spec:
     spec:
       restartPolicy: Never
       serviceAccountName: {{ .Release.Name }}-jetstream-sa
+{{- include "nats.imagePullSecrets" . | indent 10 }}
       containers:
       - name: jetstream-template-fixer
         image: {{ template "dbBootstrapper.image" . }}
