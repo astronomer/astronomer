@@ -112,11 +112,16 @@ global:
 
   taskUsageMetricsEnabled: false
 
+  enableHoustonInternalAuthorization: false
+
+  logging:
+    indexNamePrefix: ~
+
   # Sidecar Logging
   loggingSidecar:
     enabled: false
     name: sidecar-log-consumer
-    image: quay.io/astronomer/ap-vector:0.32.2
+    image: quay.io/astronomer/ap-vector:0.32.2-1
     customConfig: false
     indexPattern: ~
     extraEnv: []
@@ -132,7 +137,7 @@ global:
   authSidecar:
     enabled: false
     repository: quay.io/astronomer/ap-auth-sidecar
-    tag: 1.25.2-1
+    tag: 1.25.2-3
     pullPolicy: IfNotPresent
     port: 8084
     default_nginx_settings: |
