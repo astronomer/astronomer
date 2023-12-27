@@ -85,7 +85,7 @@ spec:
         - /bin/sh
         - -c
         - |
-          {{ if or .Values.global.stan.enabled (not .Values.global.nats.jetStream.enabled) }}
+          {{- if and .Values.global.stan.enabled (not .Values.global.nats.jetStream.enabled) }}
           data=`kubectl get ns {{ .Release.Namespace }} -o=jsonpath='{.metadata.labels.stanEnabled}'`
           if [[ "$data" = "" ]]  ; then
             kubectl delete sts {{ .Release.Name }}-nats --cascade=orphan -n {{ .Release.Namespace }};
