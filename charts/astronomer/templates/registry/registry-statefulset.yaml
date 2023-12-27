@@ -91,6 +91,7 @@ spec:
             {{- if and .Values.registry.gcs.enabled .Values.registry.gcs.useKeyfile }}
             {{- include "registry.gcsVolumeMount" . | indent 12 }}
             {{- end }}
+            {{- include "custom_ca_volume_mounts" . | indent 12  }}
           ports:
             - name: registry-http
               containerPort: {{ .Values.ports.registryHTTP }}
@@ -127,6 +128,7 @@ spec:
         - name: data
           emptyDir: {}
   {{- else }}
+        {{ include "custom_ca_volumes" . | indent 8  }}
   volumeClaimTemplates:
     - metadata:
         name: data
