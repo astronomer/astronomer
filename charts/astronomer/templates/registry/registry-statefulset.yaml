@@ -76,6 +76,10 @@ spec:
             {{- else }}
             value: {{ randAlphaNum 32 }}
             {{- end }}
+          {{- if .Values.global.privateCaCerts }}
+          - name: UPDATE_CA_CERTS
+            value: "true"
+          {{- end }}
 {{- if .Values.registry.extraEnv }}
 {{ toYaml .Values.registry.extraEnv | indent 10 }}
 {{- end }}
