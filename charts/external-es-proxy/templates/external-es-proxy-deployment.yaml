@@ -41,7 +41,7 @@ spec:
     spec:
       serviceAccountName: {{ include "external-es-proxy.serviceAccountName" . }}
       securityContext:
-        {{- toYaml .Values.PodSecurityContext | nindent 8 }}
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
 {{- include "external-es-proxy.imagePullSecrets" . | indent 6 }}
       containers:
         - name: {{ .Chart.Name }}

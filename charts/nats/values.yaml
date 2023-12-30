@@ -76,7 +76,7 @@ nameOverride: ""
 imagePullSecrets: []
 
 # Toggle whether to use setup a Pod Security Context
-PodSecurityContext:
+podSecurityContext:
    fsGroup: 1000
 # ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
 securityContext:

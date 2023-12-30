@@ -162,3 +162,11 @@ imagePullSecrets:
 {{- .Values.curator.age.timestring | squote}}
 {{- end -}}
 {{- end -}}
+
+{{- define "elasticsearch.securityContext" -}}
+{{- if or (eq ( toString ( .Values.securityContext.runAsUser )) "auto") ( .Values.global.openshiftEnabled ) }}
+{{- omit  .Values.securityContext "runAsUser" | toYaml | nindent 10 }}
+{{- else }}
+{{- .Values.securityContext | toYaml | nindent 10 }}
+{{- end -}}
+{{- end }}
