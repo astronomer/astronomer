@@ -150,6 +150,11 @@ data:
           # Enable FlowerUI flag by default
           flower:
             enabled: true
+            {{ if .Values.global.openshiftEnabled }}
+            securityContexts:
+              pod:
+                runAsNonRoot: true
+            {{ end }}
           webserver:
             {{ if .Values.configSyncer.enabled }}
             extraVolumeMounts:
@@ -162,6 +167,11 @@ data:
                   # This is the name of the secret that gets copied from the platform namespace
                   # to the airflow namespaces.
                   secretName: {{ template "houston.jwtCertificateSecret" . }}
+            {{ end  }}
+            {{ if .Values.global.openshiftEnabled }}
+            securityContexts:
+              pod:
+                runAsNonRoot: true
             {{ end  }}
             resources:
               limits:
@@ -183,6 +193,11 @@ data:
 
           # Worker configuration (applies to Celery and Kubernetes task pods).
           workers:
+            {{ if .Values.global.openshiftEnabled }}
+            securityContexts:
+              pod:
+                runAsNonRoot: true
+            {{ end  }}
             resources:
               limits:
                 ephemeral-storage: "2Gi"
@@ -193,6 +208,12 @@ data:
             safeToEvict: true
 
           scheduler:
+
+            {{ if .Values.global.openshiftEnabled }}
+            securityContexts:
+              pod:
+                runAsNonRoot: true
+            {{ end  }}
 
             podDisruptionBudget:
               enabled: false
@@ -331,9 +352,41 @@ data:
           redis:
             # This is here for upgrading to 0.11.2+ of airflow-chart
             safeToEvict: true
+            {{ if .Values.global.openshiftEnabled }}
+            securityContexts:
+              pod:
+                runAsNonRoot: true
+            {{ end }}
+
+          {{ if .Values.global.openshiftEnabled }}
+          # Statsd settings
+          statsd:
+            securityContexts:
+              pod:
+                runAsNonRoot: true
+
+          # Triggerer settings
+          triggerer:
+            securityContexts:
+              pod:
+                runAsNonRoot: true
+
+          # migrateDatabaseJob  settings
+          migrateDatabaseJob:
+            securityContexts:
+              pod:
+                runAsNonRoot: true
+
+          {{ end }}
 
           # Pgbouncer settings
           pgbouncer:
+            {{ if .Values.global.openshiftEnabled }}
+            securityContexts:
+              pod:
+                runAsNonRoot: true
+            command: ["pgbouncer", "/etc/pgbouncer/pgbouncer.ini"]
+            {{ end }}
             podDisruptionBudget:
               enabled: false
 
@@ -374,6 +427,11 @@ data:
             args: []
             serviceAccount:
               create: true
+            {{ if .Values.global.openshiftEnabled }}
+            securityContexts:
+              pod:
+                runAsNonRoot: true
+            {{ end  }}
       {{- end }}
 
           # Disable the postgres subchart. The platform pass credentials down
