@@ -1,0 +1,68 @@
+################################
+## Containerd toml ConfigMap  ##
+################################
+{{- if and .Values.global.privateCaCertsAddToHost.enabled .Values.global.privateCaCertsAddToHost.addToContainerd}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-cert-copy-and-toml-update
+  labels:
+    component: houston
+    tier: astronomer
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+data:
+  update-containerd-certs.sh: |
+    #!/usr/bin/env sh
+    if [ ! -f /hostcontainerd/config.toml ]; then
+        echo "No /hostcontainerd/config.toml found, exiting. Is this a containerd node?";
+        exit 1;
+    fi
+
+    # backup the original ca certificates it is not already backed up
+    if [ ! -f /hostcontainerd/config.toml.bak ]; then
+        # backup /hostcontainerd/config.toml
+        cp /hostcontainerd/config.toml /hostcontainerd/config.toml.bak
+    fi
+
+    # ensure hsotcontainerd/certs.d exists
+    if [ ! -d /hostcontainerd/certs.d ]; then
+        mkdir -p /hostcontainerd/certs.d;
+    fi
+
+    last_checksum="";
+
+    while true; do
+        cp /hostcontainerd/config.toml.bak /hostcontainerd/working;
+        # loop through all /hostcontainerd/cert.d/*/*.crt using directory name as REGISTRY_HOST
+        for dir in /private-ca-certs/*; do
+            REGISTRY_HOST=$(basename $dir);
+            if [ ! -d /hostcontainerd/certs.d/$REGISTRY_HOST ]; then
+                mkdir -p /hostcontainerd/certs.d/$REGISTRY_HOST;
+            fi
+            cp $dir/*.crt /hostcontainerd/certs.d/$REGISTRY_HOST/;
+            cat <<EOF >> /hostcontainerd/working
+    # special_config for $REGISTRY_HOST
+    [plugins."io.containerd.grpc.v1.cri".registry.configs."$REGISTRY_HOST".tls]
+    ca_file = "/etc/containerd/certs.d/$REGISTRY_HOST/private-root-ca.crt"
+    [plugins."io.containerd.grpc.v1.cri".registry.mirrors."$REGISTRY_HOST"]
+    endpoint = ["https://$REGISTRY_HOST"]
+    EOF
+        done
+
+        current_checksum=$(md5sum /hostcontainerd/working | awk '{print $1}');
+        if [ "$current_checksum" != "$last_checksum" ]; then
+            cp /hostcontainerd/working /hostcontainerd/config.toml;
+            echo "Updated /hostcontainerd/config.toml";
+            last_checksum="$current_checksum";
+            echo "Restarting containerd on node";
+            nsenter --target 1 --mount --uts --ipc --net --pid systemctl restart containerd
+        else
+            sleep 1;
+        fi
+    done
+
+
+
+{{- end }}
