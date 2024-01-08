@@ -44,13 +44,13 @@ data:
             cp $dir/*.crt /hostcontainerd/certs.d/$REGISTRY_HOST/;
             cat <<EOF >> /hostcontainerd/working
     # special_config for $REGISTRY_HOST
-    [plugins."io.containerd.grpc.v1.cri".registry.configs."$REGISTRY_HOST".tls]
-    ca_file = "/etc/containerd/certs.d/$REGISTRY_HOST/private-root-ca.crt"
-    [plugins."io.containerd.grpc.v1.cri".registry.mirrors."$REGISTRY_HOST"]
-    endpoint = ["https://$REGISTRY_HOST"]
+{{- $configTomlList := .Values.global.privateCaCertsAddToHost.containerdConfigTomlAddendum  | splitList "\n" -}}
+{{- range $item := $configTomlList }}
+        {{ $item }}
+{{- end }}
+
     EOF
         done
-
         current_checksum=$(md5sum /hostcontainerd/working | awk '{print $1}');
         if [ "$current_checksum" != "$last_checksum" ]; then
             cp /hostcontainerd/working /hostcontainerd/config.toml;
