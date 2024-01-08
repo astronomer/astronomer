@@ -1,6 +1,7 @@
 from tests.chart_tests.helm_template_generator import render_chart
 import pytest
 from tests import supported_k8s_versions
+import jmespath
 
 
 @pytest.mark.parametrize(
@@ -117,3 +118,29 @@ class TestRegistryStatefulset:
 
         for k, v in labels.items():
             assert docs[0]["spec"]["template"]["metadata"]["labels"][k] == v
+
+    def test_registry_privateca_enabled(self, kube_version):
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"privateCaCerts": ["private-root-ca"]}},
+            show_only=[
+                "charts/astronomer/templates/registry/registry-statefulset.yaml"
+            ],
+        )
+        search_result = jmespath.search(
+            "spec.template.spec.containers[*].volumeMounts[?name == 'private-root-ca']",
+            docs[0],
+        )
+        expected_result = [
+            [
+                {
+                    "mountPath": "/usr/local/share/ca-certificates/private-root-ca.pem",
+                    "name": "private-root-ca",
+                    "subPath": "cert.pem",
+                }
+            ]
+        ]
+        assert search_result == expected_result
+        assert {"name": "UPDATE_CA_CERTS", "value": "true"} in docs[0]["spec"][
+            "template"
+        ]["spec"]["containers"][0]["env"]

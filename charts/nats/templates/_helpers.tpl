@@ -68,3 +68,11 @@ imagePullSecrets:
 {{ define "nats.jestreamTLSSecret" -}}
 {{ default (printf "%s-jetstream-tls-certificate" .Release.Name) .Values.global.nats.jetstreamSSLSecretName }}
 {{- end }}
+
+{{- define "nats.securityContext" -}}
+{{- if or (eq ( toString ( .Values.securityContext.runAsUser )) "auto") ( .Values.global.openshiftEnabled ) }}
+{{- omit  .Values.securityContext "runAsUser" | toYaml | nindent 10 }}
+{{- else }}
+{{- .Values.securityContext | toYaml | nindent 10 }}
+{{- end -}}
+{{- end }}

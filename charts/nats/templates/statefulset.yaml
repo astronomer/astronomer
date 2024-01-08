@@ -47,9 +47,8 @@ spec:
         checksum/nats-config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
     spec:
 {{- include "nats.imagePullSecrets" . | indent 6 }}
-{{- with .Values.PodSecurityContext }}
-      securityContext:
-{{ toYaml . | indent 8 }}
+{{- if eq .Values.global.openshiftEnabled false }}
+      securityContext: {{ toYaml .Values.podSecurityContext| nindent 8 }}
 {{- end }}
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
@@ -144,7 +143,7 @@ spec:
       - name: nats
         image: {{ include "nats.image" . }}
         imagePullPolicy: {{ .Values.images.nats.pullPolicy }}
-        securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
+        securityContext: {{ template "nats.securityContext" . }}
         ports:
         - containerPort: 4222
           name: client
@@ -280,7 +279,7 @@ spec:
       - name: reloader
         image: {{ .Values.reloader.image }}
         imagePullPolicy: {{ .Values.reloader.pullPolicy }}
-        securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
+        securityContext: {{ template "nats.securityContext" . }}
         command:
          - "nats-server-config-reloader"
          - "-pid"
@@ -303,7 +302,7 @@ spec:
       - name: metrics
         image: {{ template "nats-exporter.image" . }}
         imagePullPolicy: {{ .Values.images.exporter.pullPolicy }}
-        securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
+        securityContext: {{ template "nats.securityContext" . }}
         args:
         - -connz
         - -routez
