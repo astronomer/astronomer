@@ -1,7 +1,7 @@
 ################################
 ## Containerd toml ConfigMap  ##
 ################################
-{{- if and .Values.global.privateCaCertsAddToHost.enabled .Values.global.privateCaCertsAddToHost.addToContainerd}}
+{{- if and .Values.global.privateCaCertsAddToHost.enabled .Values.global.privateCaCertsAddToHost.addToContainerd }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -43,7 +43,6 @@ data:
             fi
             cp $dir/*.crt /hostcontainerd/certs.d/$REGISTRY_HOST/;
             cat <<EOF >> /hostcontainerd/working
-    # special_config for $REGISTRY_HOST
 {{- $configTomlList := .Values.global.privateCaCertsAddToHost.containerdConfigTomlAddendum  | splitList "\n" -}}
 {{- range $item := $configTomlList }}
         {{ $item }}
