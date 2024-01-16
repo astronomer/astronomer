@@ -65,6 +65,8 @@ spec:
           subPath: cert.pem
         {{- end }}
       terminationGracePeriodSeconds: 1
+      hostNetwork: true
+      hostPID: true
       volumes:
       - hostPath:
           path: /etc/containerd
