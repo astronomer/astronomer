@@ -18,3 +18,8 @@ nginx.ingress.kubernetes.io/auth-url: http://{{ .Release.Name }}-houston.{{ .Rel
 nginx.ingress.kubernetes.io/auth-url: https://houston.{{ .Values.global.baseDomain }}/v1/authorization
 {{- end }}
 {{- end }}
+
+
+{{ define "containerd.configToml" -}}
+{{- .Values.global.privateCaCertsAddToHost.containerdConfigTomlAddendum -}}
+{{- end }}

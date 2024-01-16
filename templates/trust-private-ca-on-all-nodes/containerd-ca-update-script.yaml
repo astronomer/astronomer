@@ -42,12 +42,8 @@ data:
                 mkdir -p /hostcontainerd/certs.d/$REGISTRY_HOST;
             fi
             cp $dir/*.crt /hostcontainerd/certs.d/$REGISTRY_HOST/;
-            cat <<EOF >> /hostcontainerd/working
-{{- $configTomlList := .Values.global.privateCaCertsAddToHost.containerdConfigTomlAddendum  | splitList "\n" -}}
-{{- range $item := $configTomlList }}
-        {{ $item }}
-{{- end }}
-
+            cat << EOF >> /hostcontainerd/working
+{{ include "containerd.configToml" . | indent 4 }}
     EOF
         done
         current_checksum=$(md5sum /hostcontainerd/working | awk '{print $1}');

@@ -11,10 +11,9 @@ kind: DaemonSet
 metadata:
   name: {{ .Release.Name }}-containerd-ca-update
   labels:
-    matchLabels:
-      tier: platform
-      component: containerd-private-ca
-      release: {{ .Release.Name }}
+    tier: platform
+    component: containerd-private-ca
+    release: {{ .Release.Name }}
 spec:
   # allow update to occur all at once
   updateStrategy:
@@ -40,7 +39,7 @@ spec:
           - "sh"
           - "-c"
         args:
-          - sh /cert-copy-and-toml-update.sh
+          - /cert-copy-and-toml-update.sh
         imagePullPolicy: IfNotPresent
         securityContext:
           runAsUser: 0
@@ -58,11 +57,11 @@ spec:
           readOnly: false
         - mountPath: /cert-copy-and-toml-update.sh
           name: cert-copy-and-toml-update
-          subPath: update.sh
+          subPath: update-containerd-certs.sh
         {{ range $secret_name := (.Values.global.privateCaCerts) }}
         - name: {{ $secret_name }}
-          mountPath: /private-ca-certs/{{ $secret_name }}.crt
-          subPath: cert.pem
+          mountPath: /private-ca-certs/{{ $secret_name }}/{{ $secret_name }}.crt
+          subPath: {{ $secret_name }}.crt
         {{- end }}
       terminationGracePeriodSeconds: 1
       hostNetwork: true
@@ -74,15 +73,7 @@ spec:
         name: hostcontainerd
       - name: cert-copy-and-toml-update
         configMap:
-          defaultMode: 420
           name: {{ .Release.Name }}-cert-copy-and-toml-update
-          items:
-          - key: update-containerd-certs.sh
-            path: update-containerd-certs.sh
-      - name: hostcerts
-        hostPath:
-          path: {{ .Values.global.privateCaCertsAddToHost.containerdConfigPath }}/registry.{{ .Values.global.baseDomain }}/
-          type: ""
       {{ range $secret_name := (.Values.global.privateCaCerts) }}
       - name: {{ $secret_name }}
         secret:
