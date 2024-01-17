@@ -46,6 +46,14 @@ Return the NATS cluster routes.
 {{- end }}
 {{- end }}
 
+{{ define "dbBootstrapper.image" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-db-bootstrapper:{{ .Values.images.dbBootstrapper.tag }}
+{{- else -}}
+{{ .Values.images.dbBootstrapper.repository }}:{{ .Values.images.dbBootstrapper.tag }}
+{{- end }}
+{{- end }}
+
 {{/*
 Return the proper Docker Image Registry Secret Names
 */}}
@@ -55,6 +63,11 @@ imagePullSecrets:
   - name: {{ .Values.global.privateRegistry.secretName }}
 {{- end -}}
 {{- end -}}
+
+
+{{ define "nats.jestreamTLSSecret" -}}
+{{ default (printf "%s-jetstream-tls-certificate" .Release.Name) .Values.global.nats.jetstreamSSLSecretName }}
+{{- end }}
 
 {{- define "nats.securityContext" -}}
 {{- if or (eq ( toString ( .Values.securityContext.runAsUser )) "auto") ( .Values.global.openshiftEnabled ) }}
