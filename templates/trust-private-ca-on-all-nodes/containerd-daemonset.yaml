@@ -32,6 +32,10 @@ spec:
         component: containerd-private-ca
         release: {{ .Release.Name }}
     spec:
+{{- if .Values.global.privateCaCertsAddToHost.containerdnodeAffinitys }}
+      affinity:
+{{ toYaml .Values.global.privateCaCertsAddToHost.containerdnodeAffinitys  | indent 8 }}
+{{ end }}
       containers:
       - name: cert-copy-and-toml-update
         image: {{ .Values.global.privateCaCertsAddToHost.certCopier.repository }}:{{ .Values.global.privateCaCertsAddToHost.certCopier.tag }}
@@ -52,6 +56,8 @@ spec:
             cpu: 50m
             memory: "50Mi"
         volumeMounts:
+        - name: hostcerts
+          mountPath: /host-trust-store
         - mountPath: /hostcontainerd
           name: hostcontainerd
           readOnly: false
@@ -71,6 +77,9 @@ spec:
           path: /etc/containerd
           type: ""
         name: hostcontainerd
+      - name: hostcerts
+        hostPath:
+          path: {{ .Values.global.privateCaCertsAddToHost.containerdCertConfigPath }}/registry.{{ .Values.global.baseDomain }}/
       - name: cert-copy-and-toml-update
         configMap:
           name: {{ .Release.Name }}-cert-copy-and-toml-update

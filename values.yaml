@@ -20,9 +20,8 @@ global:
     enabled: false
     hostDirectory: /etc/docker/certs.d
     addToContainerd: false
-    containerdConfigPath: /etc/containerd/certs.d
+    containerdCertConfigPath: /etc/containerd/certs.d
     containerdnodeAffinitys: []
-    dockerdnodeAffinitys: []
     certCopier:
       repository: alpine
       tag: 3.18

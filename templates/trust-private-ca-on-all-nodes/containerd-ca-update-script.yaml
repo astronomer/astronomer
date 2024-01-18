@@ -68,11 +68,11 @@ data:
         if [ "$CONFIG_KEY" = true ]; then
            current_host_checksum=$(md5sum /hostcontainerd/host.toml | awk '{print $1}');
            if [ "$current_host_checksum" != "$last_host_checksum" ]; then
-              cp /hostcontainerd/working /hostcontainerd/config.toml;
-              echo "Updated /hostcontainerd/config.toml";
+              cp /hostcontainerd/host.toml /hostcontainerd/certs.d/$REGISTRY_HOST/host.toml;
+              echo "Updated /hostcontainerd/certs.d/$REGISTRY_HOST/host.toml";
               last_host_checksum="$current_host_checksum";
               echo "Restarting containerd on node";
-              #nsenter --target 1 --mount --uts --ipc --net --pid systemctl restart containerd
+              nsenter --target 1 --mount --uts --ipc --net --pid systemctl restart containerd
             else
               sleep 1;
             fi
@@ -83,7 +83,7 @@ data:
               echo "Updated /hostcontainerd/config.toml";
               last_checksum="$current_checksum";
               echo "Restarting containerd on node";
-              #nsenter --target 1 --mount --uts --ipc --net --pid systemctl restart containerd
+              nsenter --target 1 --mount --uts --ipc --net --pid systemctl restart containerd
           else
               sleep 1;
           fi
