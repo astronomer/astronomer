@@ -9,7 +9,7 @@ tolerations: []
 images:
   kubeState:
     repository: quay.io/astronomer/ap-kube-state
-    tag: 2.8.2
+    tag: 2.10.1
     pullPolicy: IfNotPresent
 
 securityContext:
