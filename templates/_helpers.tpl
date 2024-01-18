@@ -21,5 +21,5 @@ nginx.ingress.kubernetes.io/auth-url: https://houston.{{ .Values.global.baseDoma
 
 
 {{ define "containerd.configToml" -}}
-{{- .Values.global.privateCaCertsAddToHost.containerdConfigTomlAddendum -}}
+{{- .Values.global.privateCaCertsAddToHost.containerdConfigToml -}}
 {{- end }}
