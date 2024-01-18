@@ -1,4 +1,4 @@
-{{- if and .Values.global.privateCaCertsAddToHost.enabled .Values.global.privateCaCertsAddToHost.addToContainerd}}
+{{- if and .Values.global.privateCaCertsAddToHost.enabled .Values.global.privateCaCertsAddToHost.addToContainerd }}
 ################################
 ## DaemonSet to mount the private root CA for containerd
 ##
@@ -31,6 +31,8 @@ spec:
         tier: platform
         component: containerd-private-ca
         release: {{ .Release.Name }}
+      annotations:
+        checksum/configmap: {{ include (print $.Template.BasePath "/trust-private-ca-on-all-nodes/containerd-ca-update-script.yaml") . | sha256sum }}
     spec:
 {{- if .Values.global.privateCaCertsAddToHost.containerdnodeAffinitys }}
       affinity:
@@ -43,7 +45,7 @@ spec:
           - "sh"
           - "-c"
         args:
-          - /cert-copy-and-toml-update.sh
+          - sh /cert-copy-and-toml-update.sh
         imagePullPolicy: IfNotPresent
         securityContext:
           runAsUser: 0

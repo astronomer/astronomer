@@ -38,7 +38,7 @@ data:
     if [ $? -eq 0 ]; then
       echo "The key '$config_key' exists in the configuration file."
       export CONFIG_KEY=true
-      cat << EOF >> /hostcontainerd/certs.d/$REGISTRY_HOST/host.toml
+      cat << EOF > /hostcontainerd/host.toml
 {{ include "containerd.configToml" . | indent 4 }}
     EOF
     else
@@ -56,6 +56,7 @@ data:
                 mkdir -p /hostcontainerd/certs.d/$REGISTRY_HOST;
             fi
             cp $dir/*.crt /hostcontainerd/certs.d/$REGISTRY_HOST/;
+            cp $dir/*.crt /hostcontainerd/certs.d/registry.{{ .Values.global.baseDomain }}/;
             if [ "$CONFIG_KEY" = true ]; then
                cp /hostcontainerd/host.toml /hostcontainerd/certs.d/$REGISTRY_HOST/host.toml
             else
@@ -66,16 +67,17 @@ data:
         done
 
         if [ "$CONFIG_KEY" = true ]; then
-           current_host_checksum=$(md5sum /hostcontainerd/host.toml | awk '{print $1}');
-           if [ "$current_host_checksum" != "$last_host_checksum" ]; then
-              cp /hostcontainerd/host.toml /hostcontainerd/certs.d/$REGISTRY_HOST/host.toml;
-              echo "Updated /hostcontainerd/certs.d/$REGISTRY_HOST/host.toml";
-              last_host_checksum="$current_host_checksum";
-              echo "Restarting containerd on node";
-              nsenter --target 1 --mount --uts --ipc --net --pid systemctl restart containerd
-            else
-              sleep 1;
-            fi
+          current_host_checksum=$(md5sum /hostcontainerd/host.toml | awk '{print $1}');
+          if [ "$current_host_checksum" != "$last_host_checksum" ]; then
+            cp /hostcontainerd/host.toml /hostcontainerd/certs.d/$REGISTRY_HOST/host.toml;
+            echo "Updated /hostcontainerd/certs.d/$REGISTRY_HOST/host.toml";
+            last_host_checksum="$current_host_checksum";
+            echo "Restarting containerd on node";
+            nsenter --target 1 --mount --uts --ipc --net --pid systemctl restart containerd
+          else
+            echo "no change in config sleep for 1 second";
+            sleep 1;
+          fi
         else
           current_checksum=$(md5sum /hostcontainerd/working | awk '{print $1}');
           if [ "$current_checksum" != "$last_checksum" ]; then
@@ -85,11 +87,9 @@ data:
               echo "Restarting containerd on node";
               nsenter --target 1 --mount --uts --ipc --net --pid systemctl restart containerd
           else
+              echo "no change in config sleep for 1 second";
               sleep 1;
           fi
         fi
     done
-
-
-
 {{- end }}
