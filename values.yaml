@@ -19,6 +19,10 @@ global:
   privateCaCertsAddToHost:
     enabled: false
     hostDirectory: /etc/docker/certs.d
+    addToContainerd: false
+    containerdCertConfigPath: /etc/containerd/certs.d
+    containerdConfigToml: ~
+    containerdnodeAffinitys: []
     certCopier:
       repository: alpine
       tag: 3.18
