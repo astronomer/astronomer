@@ -106,3 +106,21 @@ class TestNatsJetstream:
             "name": "nats-jetstream-client-tls-volume",
             "secret": {"secretName": "release-name-jetstream-tls-certificate-client"},
         } in docs[10]["spec"]["template"]["spec"]["volumes"]
+
+    def test_stan_disabled_with_jetstream_enabled(self, kube_version):
+        """Test that stan statefulset is disabled when jetstream is enabled."""
+        values = {
+            "global": {"nats": {"jetStream": {"enabled": True}}},
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=[
+                "charts/stan/templates/configmap.yaml",
+                "charts/stan/templates/service.yaml",
+                "charts/stan/templates/statefulset.yaml",
+                "charts/stan/templates/stan-networkpolicy.yaml",
+            ],
+        )
+
+        assert len(docs) == 0

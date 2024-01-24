@@ -1,4 +1,7 @@
 ---
+##############################
+## STAN Service Template    ##
+##############################
 {{- if not .Values.global.nats.jetStream.enabled }}
 apiVersion: v1
 kind: Service
