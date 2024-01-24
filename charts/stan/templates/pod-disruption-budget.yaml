@@ -1,6 +1,7 @@
 ##############################
 ## STAN Pod Disruption Budget
 ##############################
+{{- if not .Values.global.nats.jetStream.enabled }}
 {{- if .Values.global.podDisruptionBudgetsEnabled }}
 apiVersion: {{ include "apiVersion.PodDisruptionBudget" . }}
 kind: PodDisruptionBudget
@@ -13,4 +14,5 @@ spec:
       tier: astronomer
       app: {{ template "stan.name" . }}
       release: {{ .Release.Name }}
+{{- end }}
 {{- end }}

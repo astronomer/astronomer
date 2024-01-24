@@ -1,4 +1,5 @@
 ---
+{{- if not .Values.global.nats.jetStream.enabled }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -25,3 +26,4 @@ spec:
   - name: metrics
     port: 7777
     appProtocol: http
+{{- end }}

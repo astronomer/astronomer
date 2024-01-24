@@ -1,4 +1,5 @@
 ---
+{{- if not .Values.global.nats.jetStream.enabled }}
 {{- if eq .Values.store.type "sql" }}
 {{- if .Values.store.sql.initdb.enabled }}
 apiVersion: batch/v1
@@ -44,5 +45,6 @@ spec:
           ALTER TABLE Clients ADD IF NOT EXISTS proto BYTEA;'
           ]
      {{- end }}
+{{- end }}
 {{- end }}
 {{- end }}
