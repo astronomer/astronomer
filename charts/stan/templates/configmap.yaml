@@ -1,4 +1,7 @@
----
+##############################
+## STAN ConfigMap Template  ##
+##############################
+{{- if not .Values.global.nats.jetStream.enabled }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -62,3 +65,4 @@ data:
       store_limits: {{ toPrettyJson . | indent 6 }}
       {{- end }}
     }
+{{- end }}
