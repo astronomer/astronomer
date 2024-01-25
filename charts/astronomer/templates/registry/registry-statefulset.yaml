@@ -125,6 +125,7 @@ spec:
         - name: certificate
           secret:
             secretName: {{ .Values.global.tlsSecret }}
+        {{ include "custom_ca_volumes" . | indent 8  }}
         {{- if and .Values.registry.gcs.enabled .Values.registry.gcs.useKeyfile }}
         {{- include "registry.gcsVolume" . | indent 8 }}
         {{- end }}
@@ -132,7 +133,6 @@ spec:
         - name: data
           emptyDir: {}
   {{- else }}
-        {{ include "custom_ca_volumes" . | indent 8  }}
   volumeClaimTemplates:
     - metadata:
         name: data

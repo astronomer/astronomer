@@ -127,11 +127,15 @@ class TestRegistryStatefulset:
                 "charts/astronomer/templates/registry/registry-statefulset.yaml"
             ],
         )
-        search_result = jmespath.search(
+        volume_mount_search_result = jmespath.search(
             "spec.template.spec.containers[*].volumeMounts[?name == 'private-root-ca']",
             docs[0],
         )
-        expected_result = [
+        volume_search_result = jmespath.search(
+            "spec.template.spec.volumes[?name == 'private-root-ca']",
+            docs[0],
+        )
+        expected_volume_mounts_result = [
             [
                 {
                     "mountPath": "/usr/local/share/ca-certificates/private-root-ca.pem",
@@ -140,7 +144,51 @@ class TestRegistryStatefulset:
                 }
             ]
         ]
-        assert search_result == expected_result
+        expected_volume_result = [
+            {"name": "private-root-ca", "secret": {"secretName": "private-root-ca"}}
+        ]
+
+        assert docs[0]["kind"] == "StatefulSet"
+        assert volume_mount_search_result == expected_volume_mounts_result
+        assert volume_search_result == expected_volume_result
+        assert {"name": "UPDATE_CA_CERTS", "value": "true"} in docs[0]["spec"][
+            "template"
+        ]["spec"]["containers"][0]["env"]
+
+    def test_registry_privateca_enabled_with_external_backend(self, kube_version):
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"privateCaCerts": ["private-root-ca"]},
+                "astronomer": {"registry": {"s3": {"enabled": True}}},
+            },
+            show_only=[
+                "charts/astronomer/templates/registry/registry-statefulset.yaml"
+            ],
+        )
+        volume_mount_search_result = jmespath.search(
+            "spec.template.spec.containers[*].volumeMounts[?name == 'private-root-ca']",
+            docs[0],
+        )
+        volume_search_result = jmespath.search(
+            "spec.template.spec.volumes[?name == 'private-root-ca']",
+            docs[0],
+        )
+        expected_volume_mounts_result = [
+            [
+                {
+                    "mountPath": "/usr/local/share/ca-certificates/private-root-ca.pem",
+                    "name": "private-root-ca",
+                    "subPath": "cert.pem",
+                }
+            ]
+        ]
+        expected_volume_result = [
+            {"name": "private-root-ca", "secret": {"secretName": "private-root-ca"}}
+        ]
+        assert docs[0]["kind"] == "Deployment"
+        assert volume_mount_search_result == expected_volume_mounts_result
+        assert volume_search_result == expected_volume_result
         assert {"name": "UPDATE_CA_CERTS", "value": "true"} in docs[0]["spec"][
             "template"
         ]["spec"]["containers"][0]["env"]
