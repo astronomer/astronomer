@@ -148,7 +148,7 @@ class TestRegistryStatefulset:
             {"name": "private-root-ca", "secret": {"secretName": "private-root-ca"}}
         ]
 
-        assert docs[0]["kind"] == "Statefulset"
+        assert docs[0]["kind"] == "StatefulSet"
         assert volume_mount_search_result == expected_volume_mounts_result
         assert volume_search_result == expected_volume_result
         assert {"name": "UPDATE_CA_CERTS", "value": "true"} in docs[0]["spec"][
