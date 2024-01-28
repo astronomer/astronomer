@@ -68,9 +68,9 @@ class TestContainerdPrivateCaDaemonset:
         cert_copier = docs[0]["spec"]["template"]["spec"]["containers"][0]
         cert_copier["image"].startswith("alpine:3")
 
-        volmounts = cert_copier["volumeMounts"]
+        volumemounts = cert_copier["volumeMounts"]
 
-        volmounts_expected = [
+        expected_volumemounts = [
             {"name": "hostcerts", "mountPath": "/host-trust-store"},
             {
                 "mountPath": "/hostcontainerd",
@@ -84,14 +84,14 @@ class TestContainerdPrivateCaDaemonset:
             },
             {
                 "name": "private-ca-cert-foo",
-                "mountPath": "/private-ca-certs/private-ca-cert-foo/private-ca-cert-foo.crt",
-                "subPath": "private-ca-cert-foo.crt",
+                "mountPath": "/private-ca-certs/private-ca-cert-foo/private-ca-cert-foo.pem",
+                "subPath": "cert.pem",
             },
             {
                 "name": "private-ca-cert-bar",
-                "mountPath": "/private-ca-certs/private-ca-cert-bar/private-ca-cert-bar.crt",
-                "subPath": "private-ca-cert-bar.crt",
+                "mountPath": "/private-ca-certs/private-ca-cert-bar/private-ca-cert-bar.pem",
+                "subPath": "cert.pem",
             },
         ]
 
-        assert volmounts == volmounts_expected
+        assert volumemounts == expected_volumemounts
