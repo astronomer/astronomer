@@ -69,7 +69,7 @@ spec:
         {{ range $secret_name := (.Values.global.privateCaCerts) }}
         - name: {{ $secret_name }}
           mountPath: /private-ca-certs/{{ $secret_name }}/{{ $secret_name }}.crt
-          subPath: {{ $secret_name }}.crt
+          subPath: cert.pem
         {{- end }}
       terminationGracePeriodSeconds: 1
       hostNetwork: true
