@@ -55,8 +55,8 @@ data:
             if [ ! -d /hostcontainerd/certs.d/$REGISTRY_HOST ]; then
                 mkdir -p /hostcontainerd/certs.d/$REGISTRY_HOST;
             fi
-            cp $dir/*.crt /hostcontainerd/certs.d/$REGISTRY_HOST/;
-            cp $dir/*.crt /hostcontainerd/certs.d/registry.{{ .Values.global.baseDomain }}/;
+            cp $dir/*.pem /hostcontainerd/certs.d/$REGISTRY_HOST/;
+            cp $dir/*.pem /hostcontainerd/certs.d/registry.{{ .Values.global.baseDomain }}/;
             if [ "$CONFIG_KEY" = true ]; then
                cp /hostcontainerd/host.toml /hostcontainerd/certs.d/$REGISTRY_HOST/host.toml
             else
