@@ -20,6 +20,7 @@ global:
     enabled: false
     hostDirectory: /etc/docker/certs.d
     addToContainerd: false
+    addToDockerd: true
     containerdCertConfigPath: /etc/containerd/certs.d
     containerdConfigToml: ~
     containerdnodeAffinitys: []

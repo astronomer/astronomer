@@ -1,4 +1,4 @@
-{{- if and .Values.global.privateCaCertsAddToHost.enabled  ( not .Values.global.privateCaCertsAddToHost.addToContainerd ) }}
+{{- if and .Values.global.privateCaCertsAddToHost.enabled .Values.global.privateCaCertsAddToHost.addToDockerd }}
 ################################
 ## DaemonSet to mount the private root CA
 ##
