@@ -38,7 +38,7 @@ data:
     if [ $? -eq 0 ]; then
       echo "The key '$config_key' exists in the configuration file."
       export CONFIG_KEY=true
-      cat << EOF > /hostcontainerd/host.toml
+      cat << EOF > /hostcontainerd/hosts.toml
 {{ include "containerd.configToml" . | indent 4 }}
     EOF
     else
@@ -58,7 +58,7 @@ data:
             cp $dir/*.pem /hostcontainerd/certs.d/$REGISTRY_HOST/;
             cp $dir/*.pem /hostcontainerd/certs.d/registry.{{ .Values.global.baseDomain }}/;
             if [ "$CONFIG_KEY" = true ]; then
-               cp /hostcontainerd/host.toml /hostcontainerd/certs.d/$REGISTRY_HOST/host.toml
+               cp /hostcontainerd/hosts.toml /hostcontainerd/certs.d/registry.{{ .Values.global.baseDomain }}/hosts.toml
             else
             cat << EOF >> /hostcontainerd/working
 {{ include "containerd.configToml" . | indent 4 }}
