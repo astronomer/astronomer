@@ -51,11 +51,6 @@ data:
         cp /hostcontainerd/config.toml.bak /hostcontainerd/working;
         # loop through all /hostcontainerd/cert.d/*/*.crt using directory name as REGISTRY_HOST
         for dir in /private-ca-certs/*; do
-            REGISTRY_HOST=$(basename $dir);
-            if [ ! -d /hostcontainerd/certs.d/$REGISTRY_HOST ]; then
-                mkdir -p /hostcontainerd/certs.d/$REGISTRY_HOST;
-            fi
-            cp $dir/*.pem /hostcontainerd/certs.d/$REGISTRY_HOST/;
             cp $dir/*.pem /hostcontainerd/certs.d/registry.{{ .Values.global.baseDomain }}/;
             if [ "$CONFIG_KEY" = true ]; then
                cp /hostcontainerd/hosts.toml /hostcontainerd/certs.d/registry.{{ .Values.global.baseDomain }}/hosts.toml
@@ -67,7 +62,7 @@ data:
         done
 
         if [ "$CONFIG_KEY" = true ]; then
-          current_host_checksum=$(md5sum /hostcontainerd/host.toml | awk '{print $1}');
+          current_host_checksum=$(md5sum /hostcontainerd/hosts.toml | awk '{print $1}');
           if [ "$current_host_checksum" != "$last_host_checksum" ]; then
             cp /hostcontainerd/hosts.toml /hostcontainerd/certs.d/registry.{{ .Values.global.baseDomain }}/hosts.toml
             echo "Updated /hostcontainerd/certs.d/registry.{{ .Values.global.baseDomain }}/hosts.toml";
