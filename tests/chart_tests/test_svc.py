@@ -34,7 +34,6 @@ def test_svc_port_configs(svc_ports):
     assert svc_ports is not None
 
     for svc_port in svc_ports:
-
         if svc_port["name"] == "default-backend":
             pytest.skip("Skipping test for Nginx default backend.")
 

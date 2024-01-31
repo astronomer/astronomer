@@ -41,6 +41,7 @@ spec:
 {{- include "prometheus-postgres-exporter.imagePullSecrets" . | indent 6 }}
       containers:
         - name: {{ .Chart.Name }}
+          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
           args:
           - "--extend.query-path=/etc/config.yaml"
           {{- if .Values.config.disableDefaultMetrics }}

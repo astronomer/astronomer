@@ -131,6 +131,14 @@
 {{ printf "%s-houston-bootstrapper" .Release.Name }}
 {{- end }}
 
+{{ define "registry.ServiceAccount" -}}
+{{- if .Values.registry.serviceAccount.name -}}
+{{ printf "%s-%s" .Release.Name .Values.registry.serviceAccount.name }}
+{{- else -}}
+{{ printf "%s-registry" .Release.Name }}
+{{- end }}
+{{- end }}
+
 {{- define "registry.gcsVolume" }}
 - name: gcs-keyfile
   secret:
@@ -214,6 +222,8 @@ s3:
       key: connection
 {{- end}}
   # These are set here for Houston's entrypoint script
+- name: HOUSTON__HOST
+  value: {{ .Release.Name }}-houston
 - name: COMMANDER__HOST
   value: {{ .Release.Name }}-commander
 - name: COMMANDER__PORT
@@ -226,6 +236,16 @@ s3:
   value: {{ template "houston.nats.servers" . }}
 - name: NATS__CLUSTER_ID
   value: {{ .Release.Name }}-stan
+{{- if .Values.houston.updateAirflowCheck.enabled }}
+- name: HOUSTON_SCRIPT_UPDATE_SERVICE_URL
+  value: {{ .Values.houston.updateAirflowCheck.url }}
+{{- end }}
+
+{{- if .Values.houston.updateRuntimeCheck.enabled }}
+- name: HOUSTON_SCRIPT_UPDATE_RUNTIME_SERVICE_URL
+  value: {{ .Values.houston.updateRuntimeCheck.url }}
+{{- end }}
+
 {{- end }}
 
 {{- define "houston_volume_mounts" }}
@@ -253,6 +273,14 @@ s3:
   mountPath: {{ template "houston.tlsRegistryCertificatePath" . }}
   subPath: tls.crt
 {{- end }}
+{{ if and  .Values.global.nats.jetStream.enabled  .Values.global.nats.jetStream.tls  }}
+{{ $secretName :=  printf "%s-client" (include "nats.jestreamTLSSecret" . ) }}
+- name: nats-jetstream-client-tls-volume
+  mountPath: {{ include "houston.jetStreamSSLCertificateDir" . }}/{{ $secretName }}
+- name: nats-jetstream-client-tls-volume
+  mountPath: /usr/local/share/ca-certificates/{{ $secretName }}/ca.crt
+  subPath: ca.crt
+{{- end }}
 {{- end }}
 
 {{- define "houston_volumes" }}
@@ -278,6 +306,12 @@ s3:
 - name: registry-tls-volume
   secret:
     secretName: {{ .Values.global.tlsSecret }}
+{{- end }}
+{{- if and  .Values.global.nats.jetStream.enabled  .Values.global.nats.jetStream.tls  }}
+{{ $secretName :=  printf "%s-client" (include "nats.jestreamTLSSecret" . ) }}
+- name: nats-jetstream-client-tls-volume
+  secret:
+    secretName: {{ $secretName }}
 {{- end }}
 {{- end }}
 
@@ -358,3 +392,40 @@ imagePullSecrets:
   - name: {{ .Values.global.privateRegistry.secretName }}
 {{- end -}}
 {{- end -}}
+
+{{ define "fluentd.IndexPattern" -}}
+{{- if .Values.global.logging.indexNamePrefix -}}
+{{ .Values.global.logging.indexNamePrefix }}
+{{- else -}}
+fluentd
+{{- end -}}
+{{- end }}
+
+{{- define "houston.InternalAuthorization" -}}
+{{- if or .Values.houston.enableHoustonInternalAuthorization .Values.global.enableHoustonInternalAuthorization -}}
+true
+{{- else -}}
+false
+{{- end }}
+{{- end }}
+
+{{ define "houston.jetStreamSSLCertificateDir" -}}
+/etc/houston/jetstream/tls
+{{- end }}
+
+{{ define "jetstreamTLS" }}
+{{ $secretName :=  printf "%s-client" (include "nats.jestreamTLSSecret" . ) }}
+{{ if .Values.global.nats.jetStream.tls }}
+tlsEnabled: true
+tls:
+  caFile: {{ include "houston.jetStreamSSLCertificateDir" . }}/{{ $secretName  }}/ca.crt
+  certFile: {{ include "houston.jetStreamSSLCertificateDir" . }}/{{ $secretName  }}/tls.crt
+  keyFile: {{ include "houston.jetStreamSSLCertificateDir" . }}/{{ $secretName  }}/tls.key
+{{- else -}}
+tlsEnabled: false
+{{- end }}
+{{- end }}
+
+{{ define "nats.jestreamTLSSecret" -}}
+{{ default (printf "%s-jetstream-tls-certificate" .Release.Name)}}
+{{- end }}

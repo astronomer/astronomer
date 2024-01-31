@@ -44,6 +44,7 @@ spec:
         - name: wait-for-db
           image: {{ template "houston.image" . }}
           imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
+          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
           command:
             - "/houston/bin/entrypoint"
           args:
@@ -56,8 +57,8 @@ spec:
         - name: houston-bootstrapper
           image: {{ template "dbBootstrapper.image" . }}
           imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
-          resources:
-{{ toYaml .Values.houston.resources | indent 12 }}
+          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
+          resources: {{ toYaml .Values.houston.resources | nindent 12 }}
           env:
             - name: BOOTSTRAP_DB
               valueFrom:
@@ -88,6 +89,7 @@ spec:
         - name: houston
           image: {{ template "houston.image" . }}
           imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
+          securityContext: {{ toYaml (.Values.securityContext)| nindent 12 }}
           {{- if .Values.houston.worker.command }}
           command:
             {{- toYaml .Values.houston.worker.command | nindent 12 }}
@@ -111,6 +113,11 @@ spec:
               value: "INFO"
             - name: GRPC_TRACE
               value: "all"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "houston.backendSecret" . }}
+                  key: connection
             {{- include "houston_environment" . | indent 12 }}
             - name: APOLLO_SERVER_ID
               valueFrom:

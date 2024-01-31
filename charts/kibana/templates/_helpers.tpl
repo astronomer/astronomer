@@ -46,6 +46,14 @@ kibana.{{ .Values.global.baseDomain }}
 {{- end }}
 {{- end }}
 
+{{ define "kibana.init.image" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-init:{{ .Values.images.init.tag }}
+{{- else -}}
+{{ .Values.images.init.repository }}:{{ .Values.images.init.tag }}
+{{- end }}
+{{- end }}
+
 {{/*
 Return the proper Docker Image Registry Secret Names
 */}}
@@ -55,3 +63,11 @@ imagePullSecrets:
   - name: {{ .Values.global.privateRegistry.secretName }}
 {{- end -}}
 {{- end -}}
+
+{{- define "kibana.securityContext" -}}
+{{- if or (eq ( toString ( .Values.securityContext.runAsUser )) "auto") ( .Values.global.openshiftEnabled ) }}
+{{- omit  .Values.securityContext "runAsUser" | toYaml | nindent 12 }}
+{{- else }}
+{{- .Values.securityContext | toYaml | nindent 12 }}
+{{- end -}}
+{{- end }}

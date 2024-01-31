@@ -1,5 +1,6 @@
 # All purpose catch all restrictive policy
 # If a specific policy is not applied this one will be
+{{- if semverCompare "<1.25-0" .Capabilities.KubeVersion.Version }}
 {{- if .Values.global.pspEnabled }}
 apiVersion: policy/v1beta1
 kind: PodSecurityPolicy
@@ -31,4 +32,5 @@ spec:
   - '*'
 
   - '*'
+{{- end -}}
 {{- end -}}

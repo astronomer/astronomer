@@ -40,8 +40,9 @@ spec:
 {{- end }}
     spec:
       terminationGracePeriodSeconds: 3600
-      securityContext:
-{{ toYaml .Values.podSecurityContext | indent 8 }}
+{{- if eq .Values.global.openshiftEnabled false }}
+      securityContext: {{ toYaml .Values.podSecurityContext| nindent 8 }}
+{{- end }}
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
       {{- if eq .Values.data.antiAffinity "hard" }}
@@ -88,7 +89,11 @@ spec:
       containers:
       - name: es-data
         securityContext:
-{{ toYaml .Values.securityContext | indent 10 }}
+          {{- if .Values.data.securityContext }}
+{{ toYaml .Values.data.securityContext | indent 10 }}
+          {{- else }}
+{{- template "elasticsearch.securityContext" . }}
+          {{- end }}
         image: {{ template "elasticsearch.image" . }}
         imagePullPolicy: {{ .Values.images.es.pullPolicy }}
         env:
@@ -112,6 +117,8 @@ spec:
         - name: {{ $key | upper | replace "-" "_" }}
           value: {{ $value | quote }}
         {{- end }}
+        - name: node.roles
+          value: "{{ template "elasticsearch.data.roles" . }}"
         resources:
 {{ toYaml .Values.data.resources | indent 10 }}
         ports:

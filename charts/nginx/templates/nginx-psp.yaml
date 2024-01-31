@@ -1,6 +1,7 @@
 ######################
 ##    Nginx PSP     ##
 ######################
+{{- if semverCompare "<1.25-0" .Capabilities.KubeVersion.Version }}
 {{- if .Values.global.pspEnabled }}
 apiVersion: policy/v1beta1
 kind: PodSecurityPolicy
@@ -42,4 +43,5 @@ spec:
   - 'emptyDir'
   - 'projected'
   - 'secret'
+{{- end -}}
 {{- end -}}

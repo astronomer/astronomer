@@ -78,7 +78,6 @@ class TestAstronomerFileLogs:
         assert len(container["volumeMounts"]) == 1
 
     def houston_container(self, container):
-
         assert container["command"] == ["/bin/sh"]
         assert container["args"] == [
             "-c",
@@ -92,7 +91,6 @@ class TestAstronomerFileLogs:
                 assert volume["mountPath"] == "/var/log/houston"
 
     def houston_worker_container(self, container):
-
         assert container["command"] == ["/bin/sh"]
         assert container["args"] == [
             "-c",
@@ -119,7 +117,7 @@ class TestAstronomerFileLogs:
 
     def test_file_logs_config(self, kube_version):
         docs = render_chart(
-            "astro-file-logs",
+            name="astro-file-logs",
             kube_version=kube_version,
             show_only=[
                 "charts/astronomer/templates/houston/api/houston-deployment.yaml",
@@ -140,16 +138,13 @@ class TestAstronomerFileLogs:
             assert len(containers) == 2
 
             for container in containers:
-
                 if name == "astro-file-logs-houston":
-
                     if container["name"] == "houston":
                         self.houston_container(container=container)
                     elif container["name"] == "fluentd":
                         self.fleuntd_container(container=container)
 
                 elif name == "astro-file-logs-houston-worker":
-
                     if container["name"] == "houston":
                         self.houston_worker_container(container=container)
                     elif container["name"] == "fluentd":

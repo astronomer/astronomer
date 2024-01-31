@@ -1,6 +1,6 @@
 ################################
 ## Kibana NetworkPolicy
-#################################
+################################
 {{- if .Values.global.networkPolicy.enabled }}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -38,6 +38,17 @@ spec:
     - protocol: TCP
       port: {{ .Values.global.authSidecar.port }}
     {{- else }}
+    - protocol: TCP
+      port: {{ .Values.ports.http }}
+    {{- end}}
+{{ if .Values.createDefaultIndex }}
+  - from:
+    - podSelector:
+        matchLabels:
+          component: kibana-default-index
+          release: {{ .Release.Name }}
+          tier: logging
+    ports:
     - protocol: TCP
       port: {{ .Values.ports.http }}
     {{- end}}

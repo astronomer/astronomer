@@ -1,6 +1,7 @@
 ################################
 ## Install Deployment
 #################################
+{{- if .Values.install.cliEnabled }}
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -29,18 +30,16 @@ spec:
       annotations:
         checksum/configmap: {{ include (print $.Template.BasePath "/cli-install/cli-install-configmap.yaml") . | sha256sum }}
     spec:
-      nodeSelector:
-{{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
-      affinity:
-{{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 8 }}
-      tolerations:
-{{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
+      nodeSelector: {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
+      affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
+      tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       terminationGracePeriodSeconds: 60
 {{- include "astronomer.imagePullSecrets" . | indent 6 }}
       containers:
         - name: cli-install
           image: {{ template "cliInstall.image" . }}
           imagePullPolicy: {{ .Values.images.cliInstall.pullPolicy }}
+          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
           livenessProbe:
             httpGet:
               path: /healthz
@@ -50,8 +49,7 @@ spec:
             timeoutSeconds: 5
           ports:
             - containerPort: {{ .Values.ports.installHTTP }}
-          resources:
-{{ toYaml .Values.install.resources | indent 12 }}
+          resources: {{ toYaml .Values.install.resources | nindent 12 }}
           volumeMounts:
             - name: cli-install-config-volume
               mountPath: /usr/share/nginx/html
@@ -62,3 +60,4 @@ spec:
             items:
               - key: install.sh
                 path: install.sh
+{{ end }}

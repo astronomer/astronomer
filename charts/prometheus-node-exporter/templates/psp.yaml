@@ -1,6 +1,7 @@
 #############################################
 ##    Prometheus Node Exporter PSP         ##
 #############################################
+{{- if semverCompare "<1.25-0" .Capabilities.KubeVersion.Version }}
 {{- if .Values.rbac.create }}
 {{- if .Values.global.pspEnabled }}
 apiVersion: policy/v1beta1
@@ -51,5 +52,6 @@ spec:
       - min: 0
         max: 65535
   readOnlyRootFilesystem: false
+{{- end }}
 {{- end }}
 {{- end }}

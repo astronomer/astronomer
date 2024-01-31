@@ -41,7 +41,7 @@ Create chart name and version as used by the chart label.
 
 {{ define "prometheus.init.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/ap-base:{{ .Values.images.init.tag }}
+{{ .Values.global.privateRegistry.repository }}/ap-init:{{ .Values.images.init.tag }}
 {{- else -}}
 {{ .Values.images.init.repository }}:{{ .Values.images.init.tag }}
 {{- end }}
@@ -85,3 +85,11 @@ imagePullSecrets:
   - name: {{ .Values.global.privateRegistry.secretName }}
 {{- end -}}
 {{- end -}}
+
+{{- define "prometheus.securityContext" -}}
+{{- if or (eq ( toString ( .Values.securityContext.runAsUser )) "auto") ( .Values.global.openshiftEnabled )  }}
+{{- omit  .Values.securityContext "runAsUser" | toYaml | nindent 12 }}
+{{- else }}
+{{- .Values.securityContext | toYaml | nindent 12 }}
+{{- end -}}
+{{- end }}

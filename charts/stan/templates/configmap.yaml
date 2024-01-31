@@ -1,4 +1,7 @@
----
+##############################
+## STAN ConfigMap Template  ##
+##############################
+{{- if not .Values.global.nats.jetStream.enabled }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -26,6 +29,12 @@ data:
       {{- else }}
       id: {{ template "stan.name" . }}
       {{- end }}
+      {{- if .Values.stan.logging.debug }}
+      sd: true
+      {{- end }}
+      {{- if .Values.stan.logging.trace }}
+      sv: true
+      {{- end }}
       {{- if eq .Values.store.type "sql" }}
       store: "sql"
       sql_options {
@@ -38,8 +47,6 @@ data:
       store: "file"
       dir: {{ .Values.store.file.path }}
       {{- end  }}
-      sd: true
-      sv: true
       {{- if .Values.store.cluster.enabled }}
       cluster {
         node_id: $POD_NAME
@@ -58,3 +65,4 @@ data:
       store_limits: {{ toPrettyJson . | indent 6 }}
       {{- end }}
     }
+{{- end }}

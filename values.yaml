@@ -19,9 +19,14 @@ global:
   privateCaCertsAddToHost:
     enabled: false
     hostDirectory: /etc/docker/certs.d
+    addToContainerd: false
+    addToDockerd: true
+    containerdCertConfigPath: /etc/containerd/certs.d
+    containerdConfigToml: ~
+    containerdnodeAffinitys: []
     certCopier:
       repository: alpine
-      tag: 3.14
+      tag: 3.18
       pullPolicy: IfNotPresent
   # Global flag to enable to user to enable/disable Astronomer platform
   # level Network Policy
@@ -72,12 +77,12 @@ global:
   postgresqlEnabled: false
 
   # Enables a node exporter DaemonSet for node-level metrics
-  nodeExporterEnabled: true
+  #nodeExporterEnabled: true
 
   prometheusPostgresExporterEnabled: false
 
   # Enables blackbox exporter
-  blackboxExporterEnabled: false
+  #blackboxExporterEnabled: false
 
   # make fluentd to gather logs from all available namespaces
   manualNamespaceNamesEnabled: false
@@ -86,6 +91,9 @@ global:
   nats:
     enabled: true
     replicas: 3
+    jetStream:
+      enabled: false
+      tls: false
 
   # Used to enable nats-streaming
   stan:
@@ -98,24 +106,32 @@ global:
   # Do you want to apply the global, default deny ingress network policy?
   defaultDenyNetworkPolicy: true
 
+  openshiftEnabled: false
+
   # Enable security context constraints required for OpenShift
   sccEnabled: false
+
+  # Enabled nodeexporter security context constraints required for OpenShift
+  nodeExporterSccEnabled: false
 
   # Enables namespace labels for network policies
   networkNSLabels: false
 
-  rootAdmin:
-    username: root@example.com
 
   taskUsageMetricsEnabled: false
+
+  enableHoustonInternalAuthorization: false
+
+  logging:
+    indexNamePrefix: ~
 
   # Sidecar Logging
   loggingSidecar:
     enabled: false
     name: sidecar-log-consumer
-    image: quay.io/astronomer/ap-vector:0.23.3-1
-    terminationEndpoint: http://localhost:8000/quitquitquit
+    image: quay.io/astronomer/ap-vector:0.32.2-1
     customConfig: false
+    indexPattern: ~
     extraEnv: []
     resources: {}
     #  requests:
@@ -129,7 +145,7 @@ global:
   authSidecar:
     enabled: false
     repository: quay.io/astronomer/ap-auth-sidecar
-    tag: 1.23.1-1
+    tag: 1.25.2-3
     pullPolicy: IfNotPresent
     port: 8084
     default_nginx_settings: |
@@ -200,6 +216,7 @@ global:
     #awsSecretName: ~
     #awsIAMRole: ~
     #awsServiceAccountAnnotation: ~
+    extraEnv: []
 
   ## Add annotations to all the auth sidecar deployed ingress resources
   ##
@@ -307,10 +324,10 @@ astronomer:
     resources:
       requests:
         cpu: "250m"
-        memory: "512Mi"
+        memory: "1Gi"
       limits:
         cpu: "500m"
-        memory: "1024Mi"
+        memory: "2Gi"
 
   registry:
     resources:
@@ -602,10 +619,10 @@ elasticsearch:
     resources:
       requests:
         cpu: "80m"
-        memory: "7Mi"
+        memory: "128Mi"
       limits:
         cpu: "100m"
-        memory: "10Mi"
+        memory: "256Mi"
 
 #################################
 ## Kibana configuration

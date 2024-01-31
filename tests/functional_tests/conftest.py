@@ -5,7 +5,7 @@ from os import getenv
 import docker
 import pytest
 import testinfra
-from kubernetes import client, config
+from . import get_core_v1_client
 
 if not (namespace := getenv("NAMESPACE")):
     print("NAMESPACE env var is not present, using 'astronomer' namespace")
@@ -19,37 +19,34 @@ if not (release_name := getenv("RELEASE_NAME")):
 
 
 @pytest.fixture(scope="function")
-def nginx(request, kube_client):
+def nginx(core_v1_client):
     """This is the host fixture for testinfra.
 
-    To read more, please see
-    the testinfra documentation:
+    To read more, please see the testinfra documentation:
     https://testinfra.readthedocs.io/en/latest/examples.html#test-docker-images
     """
 
-    pod = get_pod_by_label_selector(kube_client, "component=ingress-controller")
+    pod = get_pod_by_label_selector(core_v1_client, "component=ingress-controller")
     yield testinfra.get_host(f"kubectl://{pod}?container=nginx&namespace={namespace}")
 
 
 @pytest.fixture(scope="function")
-def houston_api(request, kube_client):
+def houston_api(core_v1_client):
     """This is the host fixture for testinfra.
 
-    To read more, please see
-    the testinfra documentation:
+    To read more, please see the testinfra documentation:
     https://testinfra.readthedocs.io/en/latest/examples.html#test-docker-images
     """
 
-    pod = get_pod_by_label_selector(kube_client, "component=houston")
+    pod = get_pod_by_label_selector(core_v1_client, "component=houston")
     yield testinfra.get_host(f"kubectl://{pod}?container=houston&namespace={namespace}")
 
 
 @pytest.fixture(scope="function")
-def prometheus(request):
+def prometheus():
     """This is the host fixture for testinfra.
 
-    To read more, please see
-    the testinfra documentation:
+    To read more, please see the testinfra documentation:
     https://testinfra.readthedocs.io/en/latest/examples.html#test-docker-images
     """
 
@@ -60,7 +57,7 @@ def prometheus(request):
 
 
 @pytest.fixture(scope="function")
-def es_master(request):
+def es_master():
     pod = f"{release_name}-elasticsearch-master-0"
     yield testinfra.get_host(
         f"kubectl://{pod}?container=es-master&namespace={namespace}"
@@ -68,21 +65,23 @@ def es_master(request):
 
 
 @pytest.fixture(scope="function")
-def es_data(request):
+def es_data():
     pod = f"{release_name}-elasticsearch-data-0"
     yield testinfra.get_host(f"kubectl://{pod}?container=es-data&namespace={namespace}")
 
 
 @pytest.fixture(scope="function")
-def es_client(request, kube_client):
-    pod = get_pod_by_label_selector(kube_client, "component=elasticsearch,role=client")
+def es_client(core_v1_client):
+    pod = get_pod_by_label_selector(
+        core_v1_client, "component=elasticsearch,role=client"
+    )
     yield testinfra.get_host(
         f"kubectl://{pod}?container=es-client&namespace={namespace}"
     )
 
 
 @pytest.fixture(scope="session")
-def docker_client(request):
+def docker_client():
     """This is a text fixture for the docker client, should it be needed in a
     test."""
     docker_client = docker.from_env()
@@ -91,33 +90,21 @@ def docker_client(request):
 
 
 @pytest.fixture(scope="session")
-def kube_client(request, in_cluster=False):
+def core_v1_client(in_cluster=False):
     """Return a kubernetes client.
 
     By default, use kube-config. If running in a pod, use k8s service
     account.
     """
 
-    k8s_client = get_kube_client(in_cluster)
-    yield k8s_client
-
-
-def get_kube_client(in_cluster=False):
-    if in_cluster:
-        print("Using in cluster kubernetes configuration")
-        config.load_incluster_config()
-    else:
-        print("Using kubectl kubernetes configuration")
-        config.load_kube_config()
-
-    return client.CoreV1Api()
+    yield get_core_v1_client(in_cluster)
 
 
 def get_pod_by_label_selector(
-    kube_client, label_selector, pod_namespace=namespace
+    core_v1_client, label_selector, pod_namespace=namespace
 ) -> str:
     """Return the name of a pod found by label selector."""
-    pods = kube_client.list_namespaced_pod(
+    pods = core_v1_client.list_namespaced_pod(
         pod_namespace, label_selector=label_selector
     ).items
     assert (
@@ -128,7 +115,7 @@ def get_pod_by_label_selector(
 
 def get_pod_running_containers(pod_namespace=namespace):
     """Return the containers from pods found."""
-    pods = get_kube_client().list_namespaced_pod(pod_namespace).items
+    pods = get_core_v1_client().list_namespaced_pod(pod_namespace).items
 
     containers = {}
     for pod in pods:
@@ -139,7 +126,17 @@ def get_pod_running_containers(pod_namespace=namespace):
                 container["pod_name"] = pod_name
                 container["namespace"] = pod_namespace
 
-                key = pod_name + "_" + container_status.name
+                key = f"{pod_name}_{container_status.name}"
                 containers[key] = container
 
     return containers
+
+
+@pytest.fixture(scope="function")
+def kibana_index_pod_client(core_v1_client):
+    pod = get_pod_by_label_selector(
+        core_v1_client, "component=kibana-default-index,tier=logging"
+    )
+    yield testinfra.get_host(
+        f"kubectl://{pod}?container=kibana-default-index&namespace={namespace}"
+    )

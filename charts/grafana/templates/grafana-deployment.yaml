@@ -47,8 +47,8 @@ spec:
             - "DB ready"
           image: {{ template "grafana.image" . }}
           imagePullPolicy: IfNotPresent
-          resources:
-{{ toYaml .Values.resources | indent 12 }}
+          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
+          resources: {{ toYaml .Values.resources | nindent 12 }}
           env:
             - name: GF_DATABASE_URL
               valueFrom:
@@ -62,8 +62,6 @@ spec:
           resources:
 {{ toYaml .Values.resources | indent 12 }}
           env:
-            - name: SCHEMA_NAME
-              value: "grafana"
             - name: BOOTSTRAP_DB
               valueFrom:
                 secretKeyRef:
@@ -86,8 +84,8 @@ spec:
         - name: grafana
           image: {{ template "grafana.image" . }}
           imagePullPolicy: {{ .Values.images.grafana.pullPolicy }}
-          resources:
-{{ toYaml .Values.resources | indent 12 }}
+          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
+          resources: {{ toYaml .Values.resources | nindent 12 }}
           ports:
             - name: grafana-ui
               containerPort: {{ .Values.ports.http }}
@@ -136,6 +134,7 @@ spec:
         {{- if .Values.global.authSidecar.enabled }}
         - name: auth-proxy
           image: "{{ .Values.global.authSidecar.repository }}:{{ .Values.global.authSidecar.tag }}"
+          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
           imagePullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
           {{- if .Values.global.authSidecar.resources }}
           resources:

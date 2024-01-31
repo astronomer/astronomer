@@ -27,7 +27,7 @@ Download the CLI:
 
     curl -sSL https://install.{{ .Values.global.baseDomain }} | sudo bash
 
-We have guides available at https://www.astronomer.io/guides/ and are always available to help.
+We have guides available at https://docs.astronomer.io/learn and are always available to help.
 
 {{- else }}
 

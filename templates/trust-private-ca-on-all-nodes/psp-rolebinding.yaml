@@ -1,3 +1,4 @@
+{{- if semverCompare "<1.25-0" .Capabilities.KubeVersion.Version }}
 {{- if .Values.global.privateCaCertsAddToHost.enabled }}
 {{- if .Values.global.pspEnabled }}
 ################################
@@ -14,5 +15,6 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: {{ .Release.Name }}-private-ca
+{{- end -}}
 {{- end -}}
 {{- end -}}

@@ -90,3 +90,11 @@ imagePullSecrets:
   - name: {{ .Values.global.privateRegistry.secretName }}
 {{- end -}}
 {{- end -}}
+
+{{- define "fluentd.indexNamePrefix" -}}
+{{- if .Values.global.logging.indexNamePrefix -}}
+{{ .Values.global.logging.indexNamePrefix }}
+{{- else -}}
+fluentd
+{{- end -}}
+{{- end -}}

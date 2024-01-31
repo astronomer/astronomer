@@ -12,7 +12,10 @@ def get_all_features():
     )
 
 
-def get_chart_containers(k8s_version, chart_values, ignore_kind_list=[]):
+def get_chart_containers(k8s_version, chart_values, ignore_kind_list=None) -> dict:
+    """Return a dict of pod specs in the form of {k8s_version}_{release_name}-{pod_name}_{container_name}, with some additional metadata."""
+    if ignore_kind_list is None:
+        ignore_kind_list = []
     docs = render_chart(
         kube_version=k8s_version,
         values=chart_values,
@@ -23,16 +26,16 @@ def get_chart_containers(k8s_version, chart_values, ignore_kind_list=[]):
         docs,
     )
 
-    container_configs = {}
+    container_spec = {}
     ignore_kind_list = [ignore_kind.lower() for ignore_kind in ignore_kind_list]
     for spec in specs:
         kind = spec["kind"]
         if kind.lower() not in ignore_kind_list:
             name = spec["name"]
             for container in spec["containers"]:
-                key = k8s_version + "_" + name + "_" + container["name"]
+                key = f"{k8s_version}_{name}_" + container["name"]
                 container["key"] = key
                 container["kind"] = kind
-                container_configs[key] = container
+                container_spec[key] = container
 
-    return container_configs
+    return container_spec

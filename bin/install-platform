@@ -50,7 +50,7 @@ if [ $# -ne 0 ]; then
         postgresql=true
       ;;
     *)
-      export $component=true ;;
+      export "$component"=true ;;
     esac
   done
 fi
