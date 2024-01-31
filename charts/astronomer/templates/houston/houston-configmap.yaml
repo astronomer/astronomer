@@ -134,6 +134,22 @@ data:
         {{- end }}
       {{- end }}
 
+      {{- if .Values.global.dagOnlyDeployment.enabled }}
+      # enables sidecar logging for airflow deployments
+      dagDeploy:
+        enabled: {{ .Values.global.dagOnlyDeployment.enabled }}
+        images:
+          dagServer:
+            repository: {{ (splitList ":"  .Values.global.dagOnlyDeployment.image ) | first | quote }}
+            tag: {{ (splitList ":"  .Values.global.dagOnlyDeployment.image ) | last  }}
+        {{- if .Values.global.dagOnlyDeployment.enabled }}
+        securityContext: {{- .Values.global.dagOnlyDeployment.securityContext | toYaml | nindent 12 }}
+        {{- end }}
+        {{- if .Values.global.dagOnlyDeployment.resources}}
+        resources: {{- .Values.global.dagOnlyDeployment.resources | toYaml | nindent 12 }}
+        {{- end }}
+      {{- end }}
+
       # These values get passed directly into the airflow helm deployments
       helm:
       {{- if and .Values.global.ssl.enabled .Values.global.ssl.mode }}
@@ -147,20 +163,7 @@ data:
       {{- if .Values.global.networkNSLabels }}
         networkNSLabels: true
       {{- end }}
-      {{- if .Values.global.dagOnlyDeployment.enabled }}
-        dagDeploy:
-          enabled: {{ .Values.global.dagOnlyDeployment.enabled }}
-          images:
-            dagServer:
-              repository: {{ (splitList ":"  .Values.global.dagOnlyDeployment.image ) | first | quote }}
-              tag: {{ (splitList ":"  .Values.global.dagOnlyDeployment.image ) | last  }}
-        {{- if .Values.global.dagOnlyDeployment.enabled }}
-          securityContext: {{- .Values.global.dagOnlyDeployment.securityContext | toYaml | nindent 12 }}
-        {{- end }}
-        {{- if .Values.global.dagOnlyDeployment.resources}}
-          resources: {{- .Values.global.dagOnlyDeployment.resources | toYaml | nindent 12 }}
-        {{- end }}
-      {{- end }}
+
         airflow:
           useAstroSecurityManager: true
           {{- if .Values.global.networkPolicy.enabled }}

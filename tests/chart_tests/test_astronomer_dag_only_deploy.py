@@ -44,7 +44,7 @@ class TestDagOnlyDeploy:
         doc = docs[0]
         prod = yaml.safe_load(doc["data"]["production.yaml"])
         assert prod["deployments"]["dagOnlyDeployment"] is True
-        assert prod["deployments"]["helm"]["dagDeploy"] == {
+        assert prod["deployments"]["dagDeploy"] == {
             "enabled": True,
             "images": {
                 "dagServer": {
