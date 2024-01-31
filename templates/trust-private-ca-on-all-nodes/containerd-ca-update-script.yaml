@@ -38,7 +38,7 @@ data:
     if [ $? -eq 0 ]; then
       echo "The key '$config_key' exists in the configuration file."
       export CONFIG_KEY=true
-      cat << EOF > /hostcontainerd/host.toml
+      cat << EOF > /hostcontainerd/hosts.toml
 {{ include "containerd.configToml" . | indent 4 }}
     EOF
     else
@@ -51,14 +51,9 @@ data:
         cp /hostcontainerd/config.toml.bak /hostcontainerd/working;
         # loop through all /hostcontainerd/cert.d/*/*.crt using directory name as REGISTRY_HOST
         for dir in /private-ca-certs/*; do
-            REGISTRY_HOST=$(basename $dir);
-            if [ ! -d /hostcontainerd/certs.d/$REGISTRY_HOST ]; then
-                mkdir -p /hostcontainerd/certs.d/$REGISTRY_HOST;
-            fi
-            cp $dir/*.pem /hostcontainerd/certs.d/$REGISTRY_HOST/;
             cp $dir/*.pem /hostcontainerd/certs.d/registry.{{ .Values.global.baseDomain }}/;
             if [ "$CONFIG_KEY" = true ]; then
-               cp /hostcontainerd/host.toml /hostcontainerd/certs.d/$REGISTRY_HOST/host.toml
+               cp /hostcontainerd/hosts.toml /hostcontainerd/certs.d/registry.{{ .Values.global.baseDomain }}/hosts.toml
             else
             cat << EOF >> /hostcontainerd/working
 {{ include "containerd.configToml" . | indent 4 }}
@@ -67,13 +62,13 @@ data:
         done
 
         if [ "$CONFIG_KEY" = true ]; then
-          current_host_checksum=$(md5sum /hostcontainerd/host.toml | awk '{print $1}');
+          current_host_checksum=$(md5sum /hostcontainerd/hosts.toml | awk '{print $1}');
           if [ "$current_host_checksum" != "$last_host_checksum" ]; then
-            cp /hostcontainerd/host.toml /hostcontainerd/certs.d/$REGISTRY_HOST/host.toml;
-            echo "Updated /hostcontainerd/certs.d/$REGISTRY_HOST/host.toml";
+            cp /hostcontainerd/hosts.toml /hostcontainerd/certs.d/registry.{{ .Values.global.baseDomain }}/hosts.toml
+            echo "Updated /hostcontainerd/certs.d/registry.{{ .Values.global.baseDomain }}/hosts.toml";
             last_host_checksum="$current_host_checksum";
-            echo "Restarting containerd on node";
-            nsenter --target 1 --mount --uts --ipc --net --pid systemctl restart containerd
+            echo "Skipping containerd restart.";
+            #nsenter --target 1 --mount --uts --ipc --net --pid systemctl restart containerd
           else
             echo "no change in config sleep for 1 second";
             sleep 1;
