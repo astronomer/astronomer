@@ -3,6 +3,12 @@ exclude: '(venv|\.vscode|tests/k8s_schema)' # regex
 repos:
   - repo: local
     hooks:
+      - id: verify-image-tags
+        name: Verify image tags
+        entry: python3
+        args: [bin/verify_image_tags.py]
+        language: system
+        files: ^.*\.(tpl|yaml)$
       - id: circle-config-yaml
         name: Checks for consistency between config.yml and config.yml.j2
         language: python

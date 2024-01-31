@@ -29,7 +29,7 @@ parameters:
 jobs:
   trivy-scan-docker:
     docker:
-      - image: docker:20.10.24-git
+      - image: cimg/base:stable
     shell: /bin/sh -leo pipefail
     parameters:
       docker_image:
@@ -44,7 +44,7 @@ jobs:
       ASTRO_SEC_ENDPOINT: << parameters.report_url >>
     steps:
       - setup_remote_docker:
-          version: 20.10.24
+          docker_layer_caching: true
       - checkout
       - run:
           name: Pull Docker image
@@ -78,14 +78,14 @@ jobs:
 
   twistcli-scan-docker:
     docker:
-      - image: docker:20.10.24-git
+      - image: cimg/base:stable
     shell: /bin/sh -leo pipefail
     parameters:
       docker_image:
         type: string
     steps:
       - setup_remote_docker:
-          version: 20.10.24
+          docker_layer_caching: true
       - run:
           name: Pull Docker image
           command: docker pull << parameters.docker_image >>
@@ -143,7 +143,6 @@ jobs:
     steps:
       - setup_remote_docker:
           docker_layer_caching: true
-          version: 20.10.24
       - checkout
       - run:
           name: Create chart-tests-cache-key.txt
@@ -325,11 +324,11 @@ jobs:
 
   check-commander-airflow-version:
     docker:
-      - image: cimg/base:2022.09
+      - image: cimg/base:stable
     steps:
       - checkout
       - setup_remote_docker:
-          version: 20.10.24
+          docker_layer_caching: true
       - run:
           name: Check that commander image uses same Airflow chart version
           command: make validate-commander-airflow-version
@@ -578,7 +577,6 @@ commands:
     steps:
       - setup_remote_docker:
           docker_layer_caching: true
-          version: 20.10.24
       - attach_workspace:
           at: /tmp/workspace
       - run:
@@ -632,7 +630,6 @@ commands:
       - checkout
       - setup_remote_docker:
           docker_layer_caching: true
-          version: 20.10.24
       - run:
           name: Build the Docker image
           command: |
