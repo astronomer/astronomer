@@ -19,6 +19,11 @@ global:
   privateCaCertsAddToHost:
     enabled: false
     hostDirectory: /etc/docker/certs.d
+    addToContainerd: false
+    addToDockerd: true
+    containerdCertConfigPath: /etc/containerd/certs.d
+    containerdConfigToml: ~
+    containerdnodeAffinitys: []
     certCopier:
       repository: alpine
       tag: 3.18
@@ -86,6 +91,9 @@ global:
   nats:
     enabled: true
     replicas: 3
+    jetStream:
+      enabled: false
+      tls: false
 
   # Used to enable nats-streaming
   stan:

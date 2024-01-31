@@ -40,6 +40,11 @@ spec:
         release: {{ .Release.Name }}
         component: nats
         chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+      annotations:
+        {{- if and  .Values.global.nats.jetStream.enabled .Values.global.nats.jetStream.tls }}
+        checksum/nats-tls: {{ include (print $.Template.BasePath "/nats-jetstream-tls-secret.yaml") . | sha256sum }}
+        {{- end }}
+        checksum/nats-config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
     spec:
 {{- include "nats.imagePullSecrets" . | indent 6 }}
 {{- if eq .Values.global.openshiftEnabled false }}
@@ -103,6 +108,15 @@ spec:
         secret:
           secretName: {{ $secretName }}
       {{- end }}
+      {{- if and  .Values.global.nats.jetStream.enabled  .Values.global.nats.jetStream.tls  }}
+      {{ $secretName :=  include "nats.jestreamTLSSecret" . }}
+      - name: {{ $secretName }}-client-volume
+        secret:
+          secretName: {{ $secretName }}-client
+      - name: {{ $secretName }}-server-volume
+        secret:
+          secretName: {{ $secretName }}
+      {{- end }}
 
       {{- if .Values.leafnodes.enabled }}
       #
@@ -124,7 +138,7 @@ spec:
       #################
       #  NATS Server  #
       #################
-      terminationGracePeriodSeconds: 60
+      terminationGracePeriodSeconds: {{ .Values.nats.terminationGracePeriodSeconds }}
       containers:
       - name: nats
         image: {{ include "nats.image" . }}
@@ -180,13 +194,20 @@ spec:
           {{- end }}
           {{- end }}
 
+          {{- if and ( or .Values.nats.jetstream.enabled  .Values.global.nats.jetStream.enabled ) .Values.nats.jetstream.fileStorage.enabled }}
+          - name: {{ template "nats.name" . }}-js-pvc
+            mountPath: {{ .Values.nats.jetstream.fileStorage.storageDirectory }}
+          {{- end }}
+
           #######################
           #  TLS Volumes Mounts #
           #######################
           {{- with .Values.nats.tls }}
           {{ $secretName := .secret.name }}
-          - name: {{ $secretName }}-clients-volume
-            mountPath: /etc/nats-certs/clients/{{ $secretName }}
+          - name: {{ $secretName }}-server-volume
+            mountPath: /etc/nats-certs/server/{{ $secretName }}
+          - name: {{ $secretName }}-client-volume
+            mountPath: /etc/nats-certs/client/{{ $secretName }}-client
           {{- end }}
           {{- with .Values.cluster.tls }}
           {{ $secretName := .secret.name }}
@@ -202,6 +223,14 @@ spec:
           {{ $secretName := .secret.name }}
           - name: {{ $secretName }}-gateways-volume
             mountPath: /etc/nats-certs/gateways/{{ $secretName }}
+          {{- end }}
+
+          {{- if and  .Values.global.nats.jetStream.enabled  .Values.global.nats.jetStream.tls  }}
+          {{ $secretName :=  include "nats.jestreamTLSSecret" . }}
+          - name: {{ $secretName }}-server-volume
+            mountPath: /etc/nats-certs/server/{{ $secretName }}
+          - name: {{ $secretName }}-client-volume
+            mountPath: /etc/nats-certs/client/{{ $secretName }}-client
           {{- end }}
 
           {{- if .Values.leafnodes.enabled }}
@@ -281,6 +310,9 @@ spec:
         - -varz
         - -prefix=gnatsd
         - -use_internal_server_id
+        {{- if .Values.nats.jetstream.enabled }}
+        - -jsz=all
+        {{- end }}
         - http://localhost:8222/
         ports:
         - containerPort: 7777
@@ -288,3 +320,30 @@ spec:
         resources:
 {{ toYaml .Values.exporter.resources | indent 10 }}
       {{ end }}
+  {{- if and ( or .Values.nats.jetstream.enabled .Values.global.nats.jetStream.enabled ) .Values.nats.jetstream.fileStorage.enabled (not .Values.nats.jetstream.fileStorage.existingClaim) }}
+  volumeClaimTemplates:
+  #####################################
+  #                                   #
+  #  Jetstream New Persistent Volume  #
+  #                                   #
+  #####################################
+    - metadata:
+        name: {{ template "nats.name" . }}-js-pvc
+        {{- if .Values.nats.jetstream.fileStorage.annotations }}
+        annotations:
+        {{- range $key, $value := .Values.nats.jetstream.fileStorage.annotations }}
+          {{ $key }}: {{ $value | quote }}
+        {{- end }}
+        {{- end }}
+      spec:
+        accessModes:
+        {{- range .Values.nats.jetstream.fileStorage.accessModes }}
+          - {{ . | quote }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.nats.jetstream.fileStorage.size }}
+        {{- if .Values.nats.jetstream.fileStorage.storageClassName }}
+        storageClassName: {{ .Values.nats.jetstream.fileStorage.storageClassName | quote }}
+        {{- end }}
+  {{- end }}
