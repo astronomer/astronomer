@@ -135,7 +135,7 @@ data:
       {{- end }}
 
       {{- if .Values.global.dagOnlyDeployment.enabled }}
-      # enables sidecar logging for airflow deployments
+      # enables dag only deployment for airflow deployments
       dagDeploy:
         enabled: {{ .Values.global.dagOnlyDeployment.enabled }}
         images:
