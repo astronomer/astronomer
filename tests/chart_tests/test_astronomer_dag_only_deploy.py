@@ -17,12 +17,15 @@ class TestDagOnlyDeploy:
             show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
         )
 
-        doc = docs[0]
-        prod = yaml.safe_load(doc["data"]["production.yaml"])
+        prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
         assert prod["deployments"]["dagOnlyDeployment"] is False
 
     def test_dagonlydeploy_config_enabled(self, kube_version):
         """Test dagonlydeploy Service defaults."""
+        resources = {
+            "requests": {"memory": "888Mi", "cpu": "666m"},
+            "limits": {"memory": "999Mi", "cpu": "777m"},
+        }
         docs = render_chart(
             kube_version=kube_version,
             values={
@@ -30,11 +33,8 @@ class TestDagOnlyDeploy:
                     "dagOnlyDeployment": {
                         "enabled": True,
                         "image": "someregistry.io/my-custom-image:my-custom-tag",
-                        "securityContext": {"fsGroup": 50000},
-                        "resources": {
-                            "requests": {"memory": "386Mi", "cpu": "100m"},
-                            "limits": {"memory": "386Mi", "cpu": "100m"},
-                        },
+                        "securityContext": {"fsGroup": 55555},
+                        "resources": resources,
                     }
                 }
             },
@@ -52,9 +52,6 @@ class TestDagOnlyDeploy:
                     "tag": "my-custom-tag",
                 }
             },
-            "securityContext": {"fsGroup": 50000},
-            "resources": {
-                "requests": {"memory": "386Mi", "cpu": "100m"},
-                "limits": {"memory": "386Mi", "cpu": "100m"},
-            },
+            "securityContext": {"fsGroup": 55555},
+            "resources": resources,
         }
