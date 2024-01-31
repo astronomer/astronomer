@@ -122,6 +122,13 @@ global:
 
   enableHoustonInternalAuthorization: false
 
+  dagOnlyDeployment:
+    enabled: false
+    image: quay.io/astronomer/ap-dag-deploy:0.3.1
+    securityContext:
+      fsGroup: 50000
+    resources: {}
+
   logging:
     indexNamePrefix: ~
 
