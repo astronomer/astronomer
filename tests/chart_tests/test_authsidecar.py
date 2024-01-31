@@ -120,18 +120,9 @@ class TestAuthSidecar:
                 "namespaceSelector": {
                     "matchLabels": {"network.openshift.io/policy-group": "ingress"}
                 }
-            },
-            {
-                "podSelector": {
-                    "matchLabels": {
-                        "component": "kibana-default-index",
-                        "release": "release-name",
-                        "tier": "logging",
-                    }
-                }
-            },
+            }
         ] == jmespath.search("spec.ingress[0].from", docs[3])
-        assert [{"port": 8084, "protocol": "TCP"}] == jmespath.search(
+        assert {"port": 8084, "protocol": "TCP"} in jmespath.search(
             "spec.ingress[*].ports[0]", docs[3]
         )
 

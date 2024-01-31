@@ -19,6 +19,11 @@ global:
   privateCaCertsAddToHost:
     enabled: false
     hostDirectory: /etc/docker/certs.d
+    addToContainerd: false
+    addToDockerd: true
+    containerdCertConfigPath: /etc/containerd/certs.d
+    containerdConfigToml: ~
+    containerdnodeAffinitys: []
     certCopier:
       repository: alpine
       tag: 3.18
@@ -72,12 +77,12 @@ global:
   postgresqlEnabled: false
 
   # Enables a node exporter DaemonSet for node-level metrics
-  nodeExporterEnabled: true
+  #nodeExporterEnabled: true
 
   prometheusPostgresExporterEnabled: false
 
   # Enables blackbox exporter
-  blackboxExporterEnabled: false
+  #blackboxExporterEnabled: false
 
   # make fluentd to gather logs from all available namespaces
   manualNamespaceNamesEnabled: false
@@ -86,6 +91,9 @@ global:
   nats:
     enabled: true
     replicas: 3
+    jetStream:
+      enabled: false
+      tls: false
 
   # Used to enable nats-streaming
   stan:
@@ -97,6 +105,8 @@ global:
 
   # Do you want to apply the global, default deny ingress network policy?
   defaultDenyNetworkPolicy: true
+
+  openshiftEnabled: false
 
   # Enable security context constraints required for OpenShift
   sccEnabled: false
@@ -110,11 +120,16 @@ global:
 
   taskUsageMetricsEnabled: false
 
+  enableHoustonInternalAuthorization: false
+
+  logging:
+    indexNamePrefix: ~
+
   # Sidecar Logging
   loggingSidecar:
     enabled: false
     name: sidecar-log-consumer
-    image: quay.io/astronomer/ap-vector:0.32.2
+    image: quay.io/astronomer/ap-vector:0.32.2-1
     customConfig: false
     indexPattern: ~
     extraEnv: []
@@ -130,7 +145,7 @@ global:
   authSidecar:
     enabled: false
     repository: quay.io/astronomer/ap-auth-sidecar
-    tag: 1.25.2
+    tag: 1.25.2-3
     pullPolicy: IfNotPresent
     port: 8084
     default_nginx_settings: |

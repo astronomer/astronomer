@@ -198,3 +198,30 @@ class TestNginx:
             show_only=["charts/nginx/templates/nginx-service.yaml"],
         )[0]
         assert "Local" == doc["spec"]["externalTrafficPolicy"]
+
+    def test_nginx_allowSnippetAnnotations_defaults(self):
+        doc = render_chart(
+            show_only=["charts/nginx/templates/nginx-configmap.yaml"],
+        )[0]
+        assert doc["data"]["allow-snippet-annotations"] == "true"
+
+    def test_nginx_enableAnnotationValidations_defaults(self):
+        doc = render_chart(
+            show_only=["charts/nginx/templates/nginx-deployment.yaml"],
+        )[0]
+        annotationValidation = "--enable-annotation-validation"
+        assert (
+            annotationValidation
+            not in doc["spec"]["template"]["spec"]["containers"][0]["args"]
+        )
+
+    def test_nginx_enableAnnotationValidations_overrides(self):
+        doc = render_chart(
+            values={"nginx": {"enableAnnotationValidations": True}},
+            show_only=["charts/nginx/templates/nginx-deployment.yaml"],
+        )[0]
+        annotationValidation = "--enable-annotation-validation=true"
+        assert (
+            annotationValidation
+            in doc["spec"]["template"]["spec"]["containers"][0]["args"]
+        )

@@ -3,7 +3,7 @@
 # Declare variables to be passed into your templates.
 image:
   repository: quay.io/astronomer/ap-node-exporter
-  tag: 1.6.1
+  tag: 1.7.0
   pullPolicy: IfNotPresent
 
 service:
@@ -46,7 +46,7 @@ serviceAccount:
   name:
   imagePullSecrets: []
 
-PodsecurityContext:
+podSecurityContext:
   fsGroup: 65534
   runAsGroup: 65534
   runAsUser: 65534

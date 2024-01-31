@@ -39,8 +39,9 @@ spec:
 {{ toYaml .Values.master.podAnnotations | indent 8 }}
 {{- end }}
     spec:
-      securityContext:
-{{ toYaml .Values.PodSecurityContext | indent 10 }}
+{{- if eq .Values.global.openshiftEnabled false }}
+      securityContext: {{ toYaml .Values.podSecurityContext| nindent 8 }}
+{{- end }}
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
       {{- if eq .Values.master.antiAffinity "hard" }}
@@ -90,7 +91,7 @@ spec:
           {{- if .Values.master.securityContext }}
 {{ toYaml .Values.master.securityContext | indent 10 }}
           {{- else }}
-{{ toYaml .Values.securityContext | indent 10 }}
+{{- template "elasticsearch.securityContext" . }}
           {{- end }}
         image: {{ template "elasticsearch.image" . }}
         imagePullPolicy: {{ .Values.images.es.pullPolicy }}

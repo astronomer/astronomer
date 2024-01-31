@@ -1,0 +1,90 @@
+################################
+## Containerd toml ConfigMap  ##
+################################
+{{- if and .Values.global.privateCaCertsAddToHost.enabled .Values.global.privateCaCertsAddToHost.addToContainerd }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-cert-copy-and-toml-update
+  labels:
+    component: houston
+    tier: astronomer
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+data:
+  update-containerd-certs.sh: |
+    #!/usr/bin/env sh
+    if [ ! -f /hostcontainerd/config.toml ]; then
+        echo "No /hostcontainerd/config.toml found, exiting. Is this a containerd node?";
+        exit 1;
+    fi
+
+    # backup the original ca certificates it is not already backed up
+    if [ ! -f /hostcontainerd/config.toml.bak ]; then
+        # backup /hostcontainerd/config.toml
+        cp /hostcontainerd/config.toml /hostcontainerd/config.toml.bak
+    fi
+
+    # ensure hsotcontainerd/certs.d exists
+    if [ ! -d /hostcontainerd/certs.d ]; then
+        mkdir -p /hostcontainerd/certs.d;
+    fi
+
+    # check if config_path exists
+    echo "checking if config_path key exists in /hostcontainerd/config.toml"
+    export config_key="config_path"
+    grep -w  "$config_key" "/hostcontainerd/config.toml"
+    if [ $? -eq 0 ]; then
+      echo "The key '$config_key' exists in the configuration file."
+      export CONFIG_KEY=true
+      cat << EOF > /hostcontainerd/hosts.toml
+{{ include "containerd.configToml" . | indent 4 }}
+    EOF
+    else
+      export CONFIG_KEY=false
+    fi
+
+    last_checksum="";
+
+    while true; do
+        cp /hostcontainerd/config.toml.bak /hostcontainerd/working;
+        # loop through all /hostcontainerd/cert.d/*/*.crt using directory name as REGISTRY_HOST
+        for dir in /private-ca-certs/*; do
+            cp $dir/*.pem /hostcontainerd/certs.d/registry.{{ .Values.global.baseDomain }}/;
+            if [ "$CONFIG_KEY" = true ]; then
+               cp /hostcontainerd/hosts.toml /hostcontainerd/certs.d/registry.{{ .Values.global.baseDomain }}/hosts.toml
+            else
+            cat << EOF >> /hostcontainerd/working
+{{ include "containerd.configToml" . | indent 4 }}
+    EOF
+            fi
+        done
+
+        if [ "$CONFIG_KEY" = true ]; then
+          current_host_checksum=$(md5sum /hostcontainerd/hosts.toml | awk '{print $1}');
+          if [ "$current_host_checksum" != "$last_host_checksum" ]; then
+            cp /hostcontainerd/hosts.toml /hostcontainerd/certs.d/registry.{{ .Values.global.baseDomain }}/hosts.toml
+            echo "Updated /hostcontainerd/certs.d/registry.{{ .Values.global.baseDomain }}/hosts.toml";
+            last_host_checksum="$current_host_checksum";
+            echo "Skipping containerd restart.";
+            #nsenter --target 1 --mount --uts --ipc --net --pid systemctl restart containerd
+          else
+            echo "no change in config sleep for 1 second";
+            sleep 1;
+          fi
+        else
+          current_checksum=$(md5sum /hostcontainerd/working | awk '{print $1}');
+          if [ "$current_checksum" != "$last_checksum" ]; then
+              cp /hostcontainerd/working /hostcontainerd/config.toml;
+              echo "Updated /hostcontainerd/config.toml";
+              last_checksum="$current_checksum";
+              echo "Restarting containerd on node";
+              nsenter --target 1 --mount --uts --ipc --net --pid systemctl restart containerd
+          else
+              echo "no change in config sleep for 1 second";
+              sleep 1;
+          fi
+        fi
+    done
+{{- end }}

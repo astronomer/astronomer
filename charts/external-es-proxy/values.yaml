@@ -7,11 +7,11 @@ replicaCount: 1
 images:
   esproxy:
     repository: quay.io/astronomer/ap-openresty
-    tag: 1.21.4-10
+    tag: 1.25.3
     pullPolicy: IfNotPresent
   awsproxy:
     repository: quay.io/astronomer/ap-awsesproxy
-    tag: 1.5
+    tag: 1.5.0-6
     pullPolicy: IfNotPresent
 
 imagePullSecrets: []
@@ -29,7 +29,7 @@ serviceAccount:
 
 podAnnotations: {}
 
-PodSecurityContext: {}
+podSecurityContext: {}
   # fsGroup: 2000
 
 securityContext:

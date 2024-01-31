@@ -129,6 +129,18 @@ ag "\.Values\.\w+" -o --no-filename --no-numbers | sort | uniq
 
 The values output by this command will need to be inserted manually into astronomer/values.schema.json at the `astronomer.houston.config.deployments.helm.airflow.allOf` parameter. There are two additional params that need to be at this location outside of what is returned from above. They are `podMutation` and `useAstroSecurityManager`. These can be found by running the same ag command against the astronomer/airflow-chart values.yaml file.
 
+### Searching code
+
+We include k8s schema files and calico CRD manifests in this repo to aid in testing, but their inclusion makes grepping for code a bit difficult in some cases. You can exclude those files from your `git grep`` results if you use the following syntax:
+
+```sh
+git grep .Values.global. -- ':!tests/k8s_schema' ':!bin/kind'
+```
+
+The `--` ends the `git` command arguments and indicates that the rest of the arguments are filenames or `pathspecs`. `pathspecs` begin with a colon. `:!tests/k8s_schema` is a pathspec that instructs git to exclude the directory `tests/k8s_schema`.
+
+Note that this `pathspec` syntax is a `git` feature, so this exclusion technique will not work with normal `grep`.
+
 ## License
 
 The code in this repo is licensed Apache 2.0 with Commons Clause, however it installs Astronomer components that have a commercial license, and requires a commercial subscription from Astronomer, Inc.

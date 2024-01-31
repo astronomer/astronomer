@@ -242,3 +242,22 @@ class TestAstronomerConfigSyncer:
         cron_schedule = doc["spec"]["schedule"].split(" ")
         assert int(cron_schedule[0]) == test_data[1]
         assert int(cron_schedule[1]) == test_data[2]
+
+    def test_astronomer_config_syncer_disabled(self, kube_version):
+        """Test that config syncer is disabled."""
+
+        # First rbacEnabled set to true and namespacePools disabled, should create a ClusterRole and ClusterRoleBinding
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "astronomer": {"configSyncer": {"enabled": False}},
+            },
+            show_only=[
+                "charts/astronomer/templates/config-syncer/config-syncer-cronjob.yaml",
+                "charts/astronomer/templates/config-syncer/config-syncer-role.yaml",
+                "charts/astronomer/templates/config-syncer/config-syncer-rolebinding.yaml",
+                "charts/astronomer/templates/config-syncer/config-syncer-serviceaccount.yaml",
+            ],
+        )
+
+        assert len(docs) == 0

@@ -10,23 +10,23 @@ tolerations: []
 images:
   es:
     repository: quay.io/astronomer/ap-elasticsearch
-    tag: 8.8.2
+    tag: 8.11.4
     pullPolicy: IfNotPresent
   init:
     repository: quay.io/astronomer/ap-base # needs root permissions for sysctl changes
-    tag: 3.18.3
+    tag: 3.18.5
     pullPolicy: IfNotPresent
   curator:
     repository: quay.io/astronomer/ap-curator
-    tag: 8.0.8-2
+    tag: 8.0.8-6
     pullPolicy: IfNotPresent
   exporter:
     repository: quay.io/astronomer/ap-elasticsearch-exporter
-    tag: 1.6.0
+    tag: 1.7.0
     pullPolicy: IfNotPresent
   nginx:
     repository: quay.io/astronomer/ap-nginx-es
-    tag: 1.25.2
+    tag: 1.25.3
     pullPolicy: IfNotPresent
 
 common:
@@ -243,7 +243,7 @@ sysctlInitContainer:
   enabled: true
   sysctlVmMaxMapCount: 262144
 
-PodSecurityContext:
+podSecurityContext:
   fsGroup: 1000
 
 securityContext:

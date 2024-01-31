@@ -11,6 +11,7 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 data:
+  allow-snippet-annotations: "{{ .Values.allowSnippetAnnotations }}"
   add-headers: {{ .Release.Namespace }}/{{ template "nginx.fullname" . }}-ingress-controller-headers
   proxy-add-original-uri-header: "true"
   proxy-connect-timeout: {{ .Values.proxyConnectTimeout | quote }}

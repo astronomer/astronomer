@@ -9,11 +9,11 @@ tolerations: []
 images:
   kubeState:
     repository: quay.io/astronomer/ap-kube-state
-    tag: 2.8.2
+    tag: 2.10.1
     pullPolicy: IfNotPresent
 
 securityContext:
-    runAsNonRoot: true
+  runAsNonRoot: true
 
 env: {}
 resources:
@@ -31,4 +31,4 @@ ports:
 replicas: 1
 
 extraArgs:
-- "--metric-labels-allowlist=namespaces=[*]"
+- "--metric-labels-allowlist=namespaces=[*],pods=[*]"

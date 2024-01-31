@@ -11,16 +11,13 @@ from jinja2 import Template
 metadata = yaml.safe_load((Path(__file__).parents[1] / "metadata.yaml").read_text())
 kube_versions = metadata["test_k8s_versions"]
 
-# https://circleci.com/docs/2.0/building-docker-images/#docker-version
-ci_remote_docker_version = "20.10.24"
-
 # https://circleci.com/developer/machine/image/ubuntu-2204
 machine_image_version = "ubuntu-2204:2023.07.2"
-ci_runner_version = "2023-09"
+ci_runner_version = "2023-11"
 
 
 def list_docker_images(path):
-    command = f"cd {path} && helm template . -f tests/enable_all_features.yaml 2>/dev/null | awk '/image: / {{print $2}}' | sed 's/\"//g' | sort -u"
+    command = f"cd {path} && helm template . --set forceIncompatibleKubernetes=true -f tests/enable_all_features.yaml 2>/dev/null | awk '/image: / {{print $2}}' | sed 's/\"//g' | sort -u"
     docker_images_output = subprocess.check_output(command, shell=True)
     docker_image_list = docker_images_output.decode("utf-8").strip().split("\n")
 
@@ -42,7 +39,6 @@ def main():
         kube_versions=kube_versions,
         docker_images=docker_images,
         machine_image_version=machine_image_version,
-        remote_docker_version=ci_remote_docker_version,
         ci_runner_version=ci_runner_version,
     )
     with open(config_path, "w") as circle_ci_config_file:

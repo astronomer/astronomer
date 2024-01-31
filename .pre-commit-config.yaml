@@ -3,6 +3,12 @@ exclude: '(venv|\.vscode|tests/k8s_schema)' # regex
 repos:
   - repo: local
     hooks:
+      - id: verify-image-tags
+        name: Verify image tags
+        entry: python3
+        args: [bin/verify_image_tags.py]
+        language: system
+        files: ^.*\.(tpl|yaml)$
       - id: circle-config-yaml
         name: Checks for consistency between config.yml and config.yml.j2
         language: python
@@ -10,7 +16,7 @@ repos:
         entry: .circleci/generate_circleci_config.py
         additional_dependencies: ["jinja2", "PyYAML"]
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.2.5
+    rev: v2.2.6
     hooks:
       - id: codespell
         args: ["-L", "AKS,aks"]
@@ -20,16 +26,16 @@ repos:
       - id: remove-tabs
         exclude_types: [makefile, binary]
   - repo: https://github.com/psf/black
-    rev: 23.7.0
+    rev: 23.11.0
     hooks:
       - id: black
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: "v0.0.287"
+    rev: "v0.1.5"
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix, --ignore, E501]
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
+    rev: v4.5.0
     hooks:
       - id: check-case-conflict
       - id: check-json
@@ -58,6 +64,6 @@ repos:
       - id: sort-simple-yaml
       - id: trailing-whitespace
   - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: v0.9.0.5
+    rev: v0.9.0.6
     hooks:
       - id: shellcheck

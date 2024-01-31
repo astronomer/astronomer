@@ -58,3 +58,30 @@ class TestKibana:
         )
 
         assert len(docs) == 0
+
+    def test_kibana_index_network_policy_enabled(self, kube_version):
+        """Test network policy for kibana index service."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"kibana": {"createDefaultIndex": True}},
+            show_only=[
+                "charts/kibana/templates/kibana-networkpolicy.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        assert "NetworkPolicy" == doc["kind"]
+        assert [
+            {
+                "podSelector": {
+                    "matchLabels": {
+                        "component": "kibana-default-index",
+                        "release": "release-name",
+                        "tier": "logging",
+                    }
+                },
+            }
+        ] == [doc["spec"]["ingress"][1]["from"][0]]
+
+        assert [{"port": 5601, "protocol": "TCP"}] == doc["spec"]["ingress"][1]["ports"]

@@ -1,0 +1,93 @@
+{{- if and .Values.global.privateCaCertsAddToHost.enabled .Values.global.privateCaCertsAddToHost.addToContainerd }}
+################################
+## DaemonSet to mount the private root CA for containerd
+##
+## This can be used by enterprise with private
+## CAs that do not already install their root
+## certificate on the kubernetes nodes.
+#################################
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ .Release.Name }}-containerd-ca-update
+  labels:
+    tier: platform
+    component: containerd-private-ca
+    release: {{ .Release.Name }}
+spec:
+  # allow update to occur all at once
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: "100%"
+  selector:
+    matchLabels:
+      tier: platform
+      component: containerd-private-ca
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        tier: platform
+        component: containerd-private-ca
+        release: {{ .Release.Name }}
+      annotations:
+        checksum/configmap: {{ include (print $.Template.BasePath "/trust-private-ca-on-all-nodes/containerd-ca-update-script.yaml") . | sha256sum }}
+    spec:
+{{- if .Values.global.privateCaCertsAddToHost.containerdnodeAffinitys }}
+      affinity:
+{{ toYaml .Values.global.privateCaCertsAddToHost.containerdnodeAffinitys  | indent 8 }}
+{{ end }}
+      containers:
+      - name: cert-copy-and-toml-update
+        image: {{ .Values.global.privateCaCertsAddToHost.certCopier.repository }}:{{ .Values.global.privateCaCertsAddToHost.certCopier.tag }}
+        command:
+          - "sh"
+          - "-c"
+        args:
+          - sh /cert-copy-and-toml-update.sh
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          runAsUser: 0
+          privileged: true
+        resources:
+          requests:
+            cpu: 1m
+            memory: "25Mi"
+          limits:
+            cpu: 50m
+            memory: "50Mi"
+        volumeMounts:
+        - name: hostcerts
+          mountPath: /host-trust-store
+        - mountPath: /hostcontainerd
+          name: hostcontainerd
+          readOnly: false
+        - mountPath: /cert-copy-and-toml-update.sh
+          name: cert-copy-and-toml-update
+          subPath: update-containerd-certs.sh
+        {{ range $secret_name := (.Values.global.privateCaCerts) }}
+        - name: {{ $secret_name }}
+          mountPath: /private-ca-certs/{{ $secret_name }}/{{ $secret_name }}.pem
+          subPath: cert.pem
+        {{- end }}
+      terminationGracePeriodSeconds: 1
+      hostNetwork: true
+      hostPID: true
+      volumes:
+      - hostPath:
+          path: /etc/containerd
+          type: ""
+        name: hostcontainerd
+      - name: hostcerts
+        hostPath:
+          path: {{ .Values.global.privateCaCertsAddToHost.containerdCertConfigPath }}/registry.{{ .Values.global.baseDomain }}/
+      - name: cert-copy-and-toml-update
+        configMap:
+          name: {{ .Release.Name }}-cert-copy-and-toml-update
+      {{ range $secret_name := (.Values.global.privateCaCerts) }}
+      - name: {{ $secret_name }}
+        secret:
+          secretName: {{ $secret_name }}
+      {{- end }}
+{{- end }}
