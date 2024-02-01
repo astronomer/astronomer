@@ -9,11 +9,6 @@ import sys
 import json
 
 
-GIT_ROOT = next(
-    iter([x for x in Path(__file__).resolve().parents if (x / ".git").is_dir()]), None
-)
-
-
 def get_containers_from_spec(spec):
     """Return a list of images used in a kubernetes pod spec."""
     return [
@@ -75,6 +70,11 @@ def main():
     parser.add_argument("--private-registry", action="store_true")
     parser.add_argument("-v", "--verbose", action="store_true")
     args = parser.parse_args()
+
+    GIT_ROOT = next(
+        iter([x for x in Path(__file__).resolve().parents if (x / ".git").is_dir()]),
+        None,
+    )
 
     command = "helm template . --set forceIncompatibleKubernetes=true -f tests/enable_all_features.yaml"
 
