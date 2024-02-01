@@ -62,7 +62,9 @@ def main():
                 )
                 containers.update(item_containers)
                 if args.private_registry and "quay.io" in yaml.dump(item_containers):
-                    print(f'{doc["kind"]} {doc["metadata"]["name"]} uses quay.io')
+                    print(
+                        f'{doc["kind"]} {doc["metadata"]["name"].removeprefix("release-name-")} uses quay.io'
+                    )
                     if args.verbose:
                         print(json.dumps(doc["spec"]["template"]["spec"]))
             case {"spec": {"jobTemplate": {"spec": {"template": {"spec": _}}}}}:
@@ -71,7 +73,9 @@ def main():
                 )
                 containers.update(item_containers)
                 if args.private_registry and "quay.io" in yaml.dump(item_containers):
-                    print(f'{doc["kind"]} {doc["metadata"]["name"]} uses quay.io')
+                    print(
+                        f'{doc["kind"]} {doc["metadata"]["name"].removeprefix("release-name-")} uses quay.io'
+                    )
                     if args.verbose:
                         print(
                             json.dumps(
