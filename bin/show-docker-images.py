@@ -30,6 +30,44 @@ def print_results(items):
         print(f"https://{image:{max_length}}  {image}:{tag}")
 
 
+def default_spec_parser(doc, args):
+    """Parse and report on Deployments, StatefulSets, and DaemonSets."""
+
+    item_containers = get_containers_from_spec(doc["spec"]["template"]["spec"])
+
+    if args.verbose:
+        print(f"Processing {doc['kind']} {doc['metadata']['name']}")
+
+    if args.private_registry and "quay.io" in yaml.dump(item_containers):
+        print(
+            f'{doc["kind"]} {doc["metadata"]["name"].removeprefix("release-name-")} uses quay.io'
+        )
+        if args.verbose:
+            print(json.dumps(doc["spec"]["template"]["spec"]))
+
+    return item_containers
+
+
+def job_template_spec_parser(doc, args):
+    """Parse and report on CronJobs, which have a different structure than other pod managers."""
+
+    if args.verbose:
+        print(f"Processing {doc['kind']} {doc['metadata']['name']}")
+
+    item_containers = get_containers_from_spec(
+        doc["spec"]["jobTemplate"]["spec"]["template"]["spec"]
+    )
+
+    if args.private_registry and "quay.io" in yaml.dump(item_containers):
+        print(
+            f'{doc["kind"]} {doc["metadata"]["name"].removeprefix("release-name-")} uses quay.io'
+        )
+        if args.verbose:
+            print(json.dumps(doc["spec"]["jobTemplate"]["spec"]["template"]["spec"]))
+
+    return item_containers
+
+
 def main():
     """Parse the helm output and print the images."""
 
@@ -57,32 +95,9 @@ def main():
             continue
         match doc:
             case {"spec": {"template": {"spec": _}}}:
-                item_containers = get_containers_from_spec(
-                    doc["spec"]["template"]["spec"]
-                )
-                containers.update(item_containers)
-                if args.private_registry and "quay.io" in yaml.dump(item_containers):
-                    print(
-                        f'{doc["kind"]} {doc["metadata"]["name"].removeprefix("release-name-")} uses quay.io'
-                    )
-                    if args.verbose:
-                        print(json.dumps(doc["spec"]["template"]["spec"]))
+                containers.update(default_spec_parser(doc, args))
             case {"spec": {"jobTemplate": {"spec": {"template": {"spec": _}}}}}:
-                item_containers = get_containers_from_spec(
-                    doc["spec"]["jobTemplate"]["spec"]["template"]["spec"]
-                )
-                containers.update(item_containers)
-                if args.private_registry and "quay.io" in yaml.dump(item_containers):
-                    print(
-                        f'{doc["kind"]} {doc["metadata"]["name"].removeprefix("release-name-")} uses quay.io'
-                    )
-                    if args.verbose:
-                        print(
-                            json.dumps(
-                                doc["spec"]["jobTemplate"]["spec"]["template"]["spec"]
-                            )
-                        )
-
+                containers.update(job_template_spec_parser(doc, args))
             case _:
                 pass
 
