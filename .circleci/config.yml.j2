@@ -54,7 +54,6 @@ jobs:
       - run:
           name: Install trivy
           command: |
-            apt update && apt install -y bash curl
             curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/master/contrib/install.sh | sh -s -- -b /usr/local/bin
             date +%F > date
       - restore_cache:
