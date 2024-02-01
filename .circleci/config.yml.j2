@@ -93,7 +93,7 @@ jobs:
     steps:
       - setup_remote_docker:
           docker_layer_caching: true
-      - run: set -leo pipefail
+      - run: set -euo pipefail
       - run:
           name: Pull Docker image
           command: docker pull << parameters.docker_image >>
