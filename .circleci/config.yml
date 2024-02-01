@@ -29,8 +29,8 @@ parameters:
 jobs:
   trivy-scan-docker:
     docker:
-      - image: cimg/base:stable
-    shell: /bin/sh -leo pipefail
+      - image: cimg/base:current-22.04
+    shell: /usr/bin/bash
     parameters:
       docker_image:
         type: string
@@ -48,6 +48,7 @@ jobs:
     steps:
       - setup_remote_docker:
           docker_layer_caching: true
+      - run: set -euo pipefail
       - checkout
       - run:
           name: Pull Docker image
@@ -55,8 +56,7 @@ jobs:
       - run:
           name: Install trivy
           command: |
-            apk add --update-cache --upgrade curl rpm bash
-            curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/master/contrib/install.sh | sh -s -- -b /usr/local/bin
+            curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/master/contrib/install.sh | sudo sh -s -- -b /usr/local/bin
             date +%F > date
       - restore_cache:
           keys:
@@ -86,21 +86,21 @@ jobs:
 
   twistcli-scan-docker:
     docker:
-      - image: cimg/base:stable
-    shell: /bin/sh -leo pipefail
+      - image: cimg/base:current-22.04
+    shell: /usr/bin/bash
     parameters:
       docker_image:
         type: string
     steps:
       - setup_remote_docker:
           docker_layer_caching: true
+      - run: set -euo pipefail
       - run:
           name: Pull Docker image
           command: docker pull << parameters.docker_image >>
       - run:
           name: Install twistcli
           command: |
-            apk add --update-cache --upgrade curl
             curl -k -u $USER:$PASSWORD --output twistcli $CONSOLE_URL"/api/v1/util/twistcli"
             chmod +x twistcli
       - run:
@@ -332,7 +332,7 @@ jobs:
 
   check-commander-airflow-version:
     docker:
-      - image: cimg/base:stable
+      - image: cimg/base:current-22.04
     steps:
       - checkout
       - setup_remote_docker:
@@ -364,7 +364,7 @@ workflows:
                 - quay.io/astronomer/ap-base:3.18.5
                 - quay.io/astronomer/ap-blackbox-exporter:0.24.0-5
                 - quay.io/astronomer/ap-cli-install:0.26.21
-                - quay.io/astronomer/ap-commander:0.33.7
+                - quay.io/astronomer/ap-commander:0.34.0
                 - quay.io/astronomer/ap-configmap-reloader:0.12.0
                 - quay.io/astronomer/ap-curator:8.0.8-6
                 - quay.io/astronomer/ap-db-bootstrapper:0.31.9
@@ -403,7 +403,7 @@ workflows:
                 - quay.io/astronomer/ap-base:3.18.5
                 - quay.io/astronomer/ap-blackbox-exporter:0.24.0-5
                 - quay.io/astronomer/ap-cli-install:0.26.21
-                - quay.io/astronomer/ap-commander:0.33.7
+                - quay.io/astronomer/ap-commander:0.34.0
                 - quay.io/astronomer/ap-configmap-reloader:0.12.0
                 - quay.io/astronomer/ap-curator:8.0.8-6
                 - quay.io/astronomer/ap-db-bootstrapper:0.31.9
