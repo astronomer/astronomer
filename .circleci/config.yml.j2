@@ -27,8 +27,8 @@ parameters:
 jobs:
   trivy-scan-docker:
     docker:
-      - image: cimg/base:stable
-    shell: /bin/sh -leo pipefail
+      - image: cimg/base:current-22.04
+    shell: /usr/bin/bash
     parameters:
       docker_image:
         type: string
@@ -46,6 +46,7 @@ jobs:
     steps:
       - setup_remote_docker:
           docker_layer_caching: true
+      - run: set -euo pipefail
       - checkout
       - run:
           name: Pull Docker image
@@ -84,14 +85,15 @@ jobs:
 
   twistcli-scan-docker:
     docker:
-      - image: cimg/base:stable
-    shell: /bin/sh -leo pipefail
+      - image: cimg/base:current-22.04
+    shell: /usr/bin/bash
     parameters:
       docker_image:
         type: string
     steps:
       - setup_remote_docker:
           docker_layer_caching: true
+      - run: set -leo pipefail
       - run:
           name: Pull Docker image
           command: docker pull << parameters.docker_image >>
@@ -267,7 +269,7 @@ jobs:
 
   check-commander-airflow-version:
     docker:
-      - image: cimg/base:stable
+      - image: cimg/base:current-22.04
     steps:
       - checkout
       - setup_remote_docker:
