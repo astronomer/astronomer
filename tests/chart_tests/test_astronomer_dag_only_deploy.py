@@ -63,7 +63,10 @@ class TestDagOnlyDeploy:
             kube_version=kube_version,
             values={
                 "global": {
-                    "privateRegistry": {"repository": private_registry},
+                    "privateRegistry": {
+                        "enabled": True,
+                        "repository": private_registry,
+                    },
                     "dagOnlyDeployment": {
                         "enabled": True,
                     },
