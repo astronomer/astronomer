@@ -75,8 +75,8 @@ update-requirements: ## Update all requirements.txt files
 
 .PHONY: show-docker-images
 show-docker-images: ## Show all docker images and versions used in the helm chart
-	@bin/show-docker-images.py
+	@bin/show-docker-images.py --with-houston
 
 .PHONY: show-docker-images-with-private-registry
 show-docker-images-with-private-registry: ## Show all docker images and versions used in the helm chart with a privateRegistry set
-	@bin/show-docker-images.py --private-registry
+	@bin/show-docker-images.py --private-registry --with-houston
