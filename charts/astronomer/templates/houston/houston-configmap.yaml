@@ -100,10 +100,11 @@ data:
 
       {{- if .Values.global.authSidecar.enabled }}
       # enables nginx auth sidecar for airflow deployments
+      {{- $authSidecar := include "authSidecar.image" . }}
       authSideCar:
         enabled: true
-        repository: {{ .Values.global.authSidecar.repository }}
-        tag: {{ .Values.global.authSidecar.tag }}
+        repository: {{ (splitList ":"  $authSidecar ) | first  }}
+        tag: {{ (splitList ":"  $authSidecar ) | last  }}
         port: {{ .Values.global.authSidecar.port }}
         pullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
         annotations: {
