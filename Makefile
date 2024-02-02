@@ -75,18 +75,8 @@ update-requirements: ## Update all requirements.txt files
 
 .PHONY: show-docker-images
 show-docker-images: ## Show all docker images and versions used in the helm chart
-	@helm template . \
-		-f tests/enable_all_features.yaml \
-		--set forceIncompatibleKubernetes=true \
-		2>/dev/null \
-		| gawk '/image: / {match($$2, /(([^"]*):[^"]*)/, a) ; printf "https://%s %s\n", a[2], a[1] ;}' | sort -u | column -t
+	@bin/show-docker-images.py --with-houston
 
 .PHONY: show-docker-images-with-private-registry
 show-docker-images-with-private-registry: ## Show all docker images and versions used in the helm chart with a privateRegistry set
-	@helm template . \
-		-f tests/enable_all_features.yaml \
-		--set forceIncompatibleKubernetes=true \
-		--set global.privateRegistry.enabled=True \
-		--set global.privateRegistry.repository=example.com/the-private-registry \
-		2>/dev/null \
-		| gawk '/image: / {match($$2, /(([^"]*):[^"]*)/, a) ; printf "https://%s %s\n", a[2], a[1] ;}' | sort -u | column -t
+	@bin/show-docker-images.py --private-registry --with-houston
