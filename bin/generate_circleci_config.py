@@ -19,9 +19,11 @@ ci_runner_version = "2024-02"
 
 
 def list_docker_images():
-    command = f"cd {GIT_ROOT} && helm template . --set forceIncompatibleKubernetes=true -f tests/enable_all_features.yaml 2>/dev/null | awk '/image: / {{print $2}}' | sed 's/\"//g' | sort -u"
+    command = f"{GIT_ROOT}/bin/show-docker-images.py --with-houston"
     docker_images_output = subprocess.check_output(command, shell=True)
-    docker_image_list = docker_images_output.decode("utf-8").strip().split("\n")
+    docker_image_list = [
+        x.split()[1] for x in docker_images_output.decode("utf-8").strip().split("\n")
+    ]
 
     return sorted(set(docker_image_list))
 
