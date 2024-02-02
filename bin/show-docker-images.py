@@ -63,12 +63,33 @@ def job_template_spec_parser(doc, args):
     return item_containers
 
 
+def get_images_from_houston_configmap(doc):
+    """Return a list of images used in the houston configmap."""
+    houston_config = yaml.safe_load(doc["data"]["production.yaml"])
+    keepers = ("authSideCar", "loggingSidecar")
+    items = {k: v for k, v in houston_config["deployments"].items() if k in keepers}
+    auth_sidecar_image = (
+        f'{items["authSideCar"]["repository"]}:{items["authSideCar"]["tag"]}'
+    )
+    logging_sidecar_image = f'{items["loggingSidecar"]["image"]}'
+    return (auth_sidecar_image, logging_sidecar_image)
+
+
 def main():
     """Parse the helm output and print the images."""
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--private-registry", action="store_true")
-    parser.add_argument("-v", "--verbose", action="store_true")
+    parser.add_argument(
+        "--private-registry",
+        action="store_true",
+        help="show images when using private registry",
+    )
+    parser.add_argument("-v", "--verbose", action="store_true", help="be verbose")
+    parser.add_argument(
+        "--with-houston",
+        action="store_true",
+        help="include images from houston configmap",
+    )
     args = parser.parse_args()
 
     GIT_ROOT = next(
@@ -87,10 +108,11 @@ def main():
     if args.verbose:
         print(f"Running: {command}", flush=True, file=sys.stderr)
     output = subprocess.check_output(command, shell=True, cwd=GIT_ROOT).decode("utf-8")
+    docs = list(yaml.safe_load_all(output))
 
     containers = set()
 
-    for doc in yaml.safe_load_all(output):
+    for doc in docs:
         if doc is None:
             continue
         match doc:
@@ -98,6 +120,9 @@ def main():
                 containers.update(default_spec_parser(doc, args))
             case {"spec": {"jobTemplate": {"spec": {"template": {"spec": _}}}}}:
                 containers.update(job_template_spec_parser(doc, args))
+            case {"metadata": {"name": "release-name-houston-config"}}:
+                if args.with_houston:
+                    containers.update(get_images_from_houston_configmap(doc))
             case _:
                 pass
 
