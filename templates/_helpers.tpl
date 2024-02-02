@@ -23,3 +23,19 @@ nginx.ingress.kubernetes.io/auth-url: https://houston.{{ .Values.global.baseDoma
 {{ define "containerd.configToml" -}}
 {{- .Values.global.privateCaCertsAddToHost.containerdConfigToml -}}
 {{- end }}
+
+{{ define "authSidecar.image" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-auth-sidecar:{{ .Values.global.authSidecar.tag }}
+{{- else -}}
+{{ .Values.global.authSidecar.repository }}:{{ .Values.global.authSidecar.tag }}
+{{- end }}
+{{- end }}
+
+{{ define "loggingSidecar.image" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-vector:{{ (splitList ":"  .Values.global.loggingSidecar.image ) | last  }}
+{{- else -}}
+{{ .Values.global.loggingSidecar.image }}
+{{- end }}
+{{- end }}

@@ -57,7 +57,7 @@ spec:
           protocol: TCP
       {{- if .Values.global.authSidecar.enabled  }}
       - name: auth-proxy
-        image: "{{ .Values.global.authSidecar.repository }}:{{ .Values.global.authSidecar.tag }}"
+        image: {{ include "authSidecar.image" . }}
         securityContext: {{ template "kibana.securityContext" . }}
         imagePullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
         {{- if .Values.global.authSidecar.resources }}
