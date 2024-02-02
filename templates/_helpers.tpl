@@ -24,6 +24,14 @@ nginx.ingress.kubernetes.io/auth-url: https://houston.{{ .Values.global.baseDoma
 {{- .Values.global.privateCaCertsAddToHost.containerdConfigToml -}}
 {{- end }}
 
+{{ define "dagOnlyDeployment.image" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-dag-deploy:{{ (splitList ":"  .Values.global.dagOnlyDeployment.image ) | last  }}
+{{- else -}}
+{{ .Values.global.dagOnlyDeployment.image }}
+{{- end }}
+{{- end }}
+
 {{ define "authSidecar.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
 {{ .Values.global.privateRegistry.repository }}/ap-auth-sidecar:{{ .Values.global.authSidecar.tag }}
