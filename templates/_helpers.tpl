@@ -23,3 +23,11 @@ nginx.ingress.kubernetes.io/auth-url: https://houston.{{ .Values.global.baseDoma
 {{ define "containerd.configToml" -}}
 {{- .Values.global.privateCaCertsAddToHost.containerdConfigToml -}}
 {{- end }}
+
+{{ define "dagOnlyDeployment.image" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-dag-deploy:{{ (splitList ":"  .Values.global.dagOnlyDeployment.image ) | last  }}
+{{- else -}}
+{{ .Values.global.dagOnlyDeployment.image }}
+{{- end }}
+{{- end }}

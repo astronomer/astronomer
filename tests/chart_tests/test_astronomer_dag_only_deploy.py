@@ -55,3 +55,30 @@ class TestDagOnlyDeploy:
             "securityContext": {"fsGroup": 55555},
             "resources": resources,
         }
+
+    def test_dagonlydeploy_config_enabled_with_private_registry(self, kube_version):
+        """Test dagonlydeploy with private registry."""
+        private_registry = "private-registry.example.com"
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "privateRegistry": {
+                        "enabled": True,
+                        "repository": private_registry,
+                    },
+                    "dagOnlyDeployment": {
+                        "enabled": True,
+                    },
+                }
+            },
+            show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+        )
+
+        doc = docs[0]
+        prod = yaml.safe_load(doc["data"]["production.yaml"])
+        assert prod["deployments"]["dagOnlyDeployment"] is True
+
+        assert prod["deployments"]["dagDeploy"]["images"]["dagServer"][
+            "repository"
+        ].startswith(private_registry)
