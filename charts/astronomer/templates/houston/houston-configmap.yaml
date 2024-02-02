@@ -119,7 +119,7 @@ data:
       loggingSidecar:
         enabled: true
         name: {{ .Values.global.loggingSidecar.name }}
-        image: {{ .Values.global.loggingSidecar.image }}
+        image: {{ include "loggingSidecar.image" . }}
         customConfig: {{ .Values.global.loggingSidecar.customConfig }}
         {{- if .Values.global.loggingSidecar.extraEnv}}
         extraEnv: {{- .Values.global.loggingSidecar.extraEnv | toYaml | nindent 8 }}
