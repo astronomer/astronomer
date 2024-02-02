@@ -34,7 +34,7 @@ nginx.ingress.kubernetes.io/auth-url: https://houston.{{ .Values.global.baseDoma
 
 {{ define "loggingSidecar.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.loggingSidecar.repository }}/ap-vector:{{ (splitList ":"  .Values.global.loggingSidecar.image ) | last  }}
+{{ .Values.global.privateRegistry.repository }}/ap-vector:{{ (splitList ":"  .Values.global.loggingSidecar.image ) | last  }}
 {{- else -}}
 {{ .Values.global.loggingSidecar.image }}
 {{- end }}
