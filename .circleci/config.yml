@@ -251,7 +251,7 @@ jobs:
 
   platform-1-24-17:
     machine:
-      image: ubuntu-2204:2023.07.2
+      image: ubuntu-2204:2024.01.1
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.24.17
@@ -267,7 +267,7 @@ jobs:
           when: always
   platform-1-25-16:
     machine:
-      image: ubuntu-2204:2023.07.2
+      image: ubuntu-2204:2024.01.1
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.25.16
@@ -283,7 +283,7 @@ jobs:
           when: always
   platform-1-26-13:
     machine:
-      image: ubuntu-2204:2023.07.2
+      image: ubuntu-2204:2024.01.1
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.26.13
@@ -299,7 +299,7 @@ jobs:
           when: always
   platform-1-27-10:
     machine:
-      image: ubuntu-2204:2023.07.2
+      image: ubuntu-2204:2024.01.1
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.27.10
@@ -315,7 +315,7 @@ jobs:
           when: always
   platform-1-28-6:
     machine:
-      image: ubuntu-2204:2023.07.2
+      image: ubuntu-2204:2024.01.1
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.28.6
@@ -331,7 +331,7 @@ jobs:
           when: always
   platform-1-29-1:
     machine:
-      image: ubuntu-2204:2023.07.2
+      image: ubuntu-2204:2024.01.1
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.29.1
