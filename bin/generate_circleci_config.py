@@ -7,10 +7,10 @@ import yaml
 
 from jinja2 import Template
 
-GIT_ROOT = next(
+git_root_dir = next(
     iter([x for x in Path(__file__).resolve().parents if (x / ".git").is_dir()]), None
 )
-metadata = yaml.safe_load((GIT_ROOT / "metadata.yaml").read_text())
+metadata = yaml.safe_load((git_root_dir / "metadata.yaml").read_text())
 kube_versions = metadata["test_k8s_versions"]
 
 # https://circleci.com/developer/machine/image/ubuntu-2204
@@ -19,7 +19,7 @@ ci_runner_version = "2024-02"
 
 
 def list_docker_images():
-    command = f"{GIT_ROOT}/bin/show-docker-images.py --with-houston"
+    command = f"{git_root_dir}/bin/show-docker-images.py --with-houston"
     docker_images_output = subprocess.check_output(command, shell=True)
     docker_image_list = [
         x.split()[1] for x in docker_images_output.decode("utf-8").strip().split("\n")
@@ -30,8 +30,8 @@ def list_docker_images():
 
 def main():
     """Render the Jinja2 template file."""
-    config_file_template_path = GIT_ROOT / ".circleci" / "config.yml.j2"
-    config_file_path = GIT_ROOT / ".circleci" / "config.yml"
+    config_file_template_path = git_root_dir / ".circleci" / "config.yml.j2"
+    config_file_path = git_root_dir / ".circleci" / "config.yml"
 
     docker_images = list_docker_images()
 
