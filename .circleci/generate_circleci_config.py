@@ -12,8 +12,8 @@ metadata = yaml.safe_load((Path(__file__).parents[1] / "metadata.yaml").read_tex
 kube_versions = metadata["test_k8s_versions"]
 
 # https://circleci.com/developer/machine/image/ubuntu-2204
-machine_image_version = "ubuntu-2204:2023.07.2"
-ci_runner_version = "2023-11"
+machine_image_version = "ubuntu-2204:2024.01.1"
+ci_runner_version = "2024-02"
 
 
 def list_docker_images(path):
