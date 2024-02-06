@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 """This script is used to create the circle config file so that we can stay
 DRY."""
-import os
 import subprocess
 from pathlib import Path
 import yaml
 
 from jinja2 import Template
 
-metadata = yaml.safe_load((Path(__file__).parents[1] / "metadata.yaml").read_text())
+git_root_dir = next(
+    iter([x for x in Path(__file__).resolve().parents if (x / ".git").is_dir()]), None
+)
+metadata = yaml.safe_load((git_root_dir / "metadata.yaml").read_text())
 kube_versions = metadata["test_k8s_versions"]
 
 # https://circleci.com/developer/machine/image/ubuntu-2204
@@ -16,24 +18,24 @@ machine_image_version = "ubuntu-2204:2024.01.1"
 ci_runner_version = "2024-02"
 
 
-def list_docker_images(path):
-    command = f"cd {path} && helm template . --set forceIncompatibleKubernetes=true -f tests/enable_all_features.yaml 2>/dev/null | awk '/image: / {{print $2}}' | sed 's/\"//g' | sort -u"
+def list_docker_images():
+    command = f"{git_root_dir}/bin/show-docker-images.py --with-houston"
     docker_images_output = subprocess.check_output(command, shell=True)
-    docker_image_list = docker_images_output.decode("utf-8").strip().split("\n")
+    docker_image_list = [
+        x.split()[1] for x in docker_images_output.decode("utf-8").strip().split("\n")
+    ]
 
     return sorted(set(docker_image_list))
 
 
 def main():
     """Render the Jinja2 template file."""
-    project_directory = Path(__file__).parent.parent
-    circle_directory = os.path.dirname(os.path.realpath(__file__))
-    config_template_path = os.path.join(circle_directory, "config.yml.j2")
-    config_path = os.path.join(circle_directory, "config.yml")
+    config_file_template_path = git_root_dir / ".circleci" / "config.yml.j2"
+    config_file_path = git_root_dir / ".circleci" / "config.yml"
 
-    docker_images = list_docker_images(str(project_directory))
+    docker_images = list_docker_images()
 
-    templated_file_content = Path(config_template_path).read_text()
+    templated_file_content = config_file_template_path.read_text()
     template = Template(templated_file_content)
     config = template.render(
         kube_versions=kube_versions,
@@ -41,7 +43,7 @@ def main():
         machine_image_version=machine_image_version,
         ci_runner_version=ci_runner_version,
     )
-    with open(config_path, "w") as circle_ci_config_file:
+    with open(config_file_path, "w") as circle_ci_config_file:
         warning_header = (
             "# Warning: automatically generated file\n"
             + "# Please edit config.yml.j2, and use the script generate_circleci_config.py\n"

@@ -12,8 +12,8 @@ repos:
       - id: circle-config-yaml
         name: Checks for consistency between config.yml and config.yml.j2
         language: python
-        files: "config.yml$|config.yml.j2|generate_circleci_config.py$|values.yaml$"
-        entry: .circleci/generate_circleci_config.py
+        files: '(config.yml|config.yml.j2|generate_circleci_config.py|values.yaml|metadata.yaml)$'
+        entry: bin/generate_circleci_config.py
         additional_dependencies: ["jinja2", "PyYAML"]
   - repo: https://github.com/codespell-project/codespell
     rev: v2.2.6
@@ -26,11 +26,11 @@ repos:
       - id: remove-tabs
         exclude_types: [makefile, binary]
   - repo: https://github.com/psf/black
-    rev: 23.11.0
+    rev: 24.1.1
     hooks:
       - id: black
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: "v0.1.5"
+    rev: "v0.2.1"
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix, --ignore, E501]
