@@ -20,8 +20,8 @@ global:
     enabled: false
     hostDirectory: /etc/docker/certs.d
     certCopier:
-      repository: alpine
-      tag: 3.18
+      repository: quay.io/astronomer/ap-base
+      tag: 3.18.5
       pullPolicy: IfNotPresent
   # Global flag to enable to user to enable/disable Astronomer platform
   # level Network Policy
