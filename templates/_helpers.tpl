@@ -47,3 +47,11 @@ nginx.ingress.kubernetes.io/auth-url: https://houston.{{ .Values.global.baseDoma
 {{ .Values.global.loggingSidecar.image }}
 {{- end }}
 {{- end }}
+
+{{ define "certCopied.image" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-base:{{ .Values.global.privateCaCertsAddToHost.certCopier.tag }}
+{{- else -}}
+{{ .Values.global.privateCaCertsAddToHost.certCopier.repository }}:{{ .Values.global.privateCaCertsAddToHost.certCopier.tag }}
+{{- end }}
+{{- end }}
