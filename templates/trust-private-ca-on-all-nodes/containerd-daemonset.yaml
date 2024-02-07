@@ -22,7 +22,6 @@ spec:
       maxUnavailable: "100%"
   selector:
     matchLabels:
-      app: containerd-private-ca
       tier: platform
       component: containerd-private-ca
       release: {{ .Release.Name }}
@@ -33,6 +32,7 @@ spec:
         tier: platform
         component: containerd-private-ca
         release: {{ .Release.Name }}
+        version: {{ .Chart.Version }}
       annotations:
         checksum/configmap: {{ include (print $.Template.BasePath "/trust-private-ca-on-all-nodes/containerd-ca-update-script.yaml") . | sha256sum }}
     spec:
