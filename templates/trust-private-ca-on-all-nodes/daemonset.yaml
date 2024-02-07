@@ -35,6 +35,7 @@ spec:
         version: {{ .Chart.Version }}
     spec:
       serviceAccountName: {{ .Release.Name }}-private-ca
+{{- include "certCopier.imagePullSecrets" . | indent 6 }}
       containers:
       - name: cert-copy
         image: {{ include "certCopier.image" . }}
