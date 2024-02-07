@@ -389,7 +389,7 @@ workflows:
                 - quay.io/astronomer/ap-postgresql:15.5.0
                 - quay.io/astronomer/ap-prometheus:2.45.2
                 - quay.io/astronomer/ap-registry:3.18.5-1
-                - quay.io/astronomer/ap-vector:0.32.2-1
+                - quay.io/astronomer/ap-vector:0.32.2-3
           context:
             - slack_team-software-infra-bot
       - twistcli-scan-docker:
@@ -428,7 +428,7 @@ workflows:
                 - quay.io/astronomer/ap-postgresql:15.5.0
                 - quay.io/astronomer/ap-prometheus:2.45.2
                 - quay.io/astronomer/ap-registry:3.18.5-1
-                - quay.io/astronomer/ap-vector:0.32.2-1
+                - quay.io/astronomer/ap-vector:0.32.2-3
           context:
             - twistcli
 
