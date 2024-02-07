@@ -22,12 +22,14 @@ spec:
       maxUnavailable: "100%"
   selector:
     matchLabels:
+      app: private-ca
       tier: platform
       component: private-ca
       release: {{ .Release.Name }}
   template:
     metadata:
       labels:
+        app: private-ca
         tier: platform
         component: private-ca
         release: {{ .Release.Name }}
