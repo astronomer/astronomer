@@ -35,16 +35,15 @@ spec:
         version: {{ .Chart.Version }}
     spec:
       serviceAccountName: {{ .Release.Name }}-private-ca
-{{- include "certCopier.imagePullSecrets" . | indent 6 }}
       containers:
       - name: cert-copy
-        image: {{ include "certCopier.image" . }}
+        image: {{ .Values.global.privateCaCertsAddToHost.certCopier.repository }}:{{ .Values.global.privateCaCertsAddToHost.certCopier.tag }}
         command:
           - "sh"
           - "-c"
         args:
           - "while true; do date; cp -v /private-ca-certs/* /host-trust-store/; sleep 10; done"
-        imagePullPolicy: {{ .Values.global.privateCaCertsAddToHost.certCopier.pullPolicy }}
+        imagePullPolicy: IfNotPresent
         volumeMounts:
         - name: hostcerts
           mountPath: /host-trust-store
