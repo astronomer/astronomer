@@ -15,9 +15,6 @@ global:
   pspEnabled: true
   taskUsageMetricsEnabled: True
   veleroEnabled: true
-  privateCaCertsAddToHost:
-    enabled: true
-    addToContainerd: true
 prometheus-node-exporter:
   rbac:
     create: true
