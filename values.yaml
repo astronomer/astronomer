@@ -25,8 +25,8 @@ global:
     containerdConfigToml: ~
     containerdnodeAffinitys: []
     certCopier:
-      repository: alpine
-      tag: 3.18
+      repository: quay.io/astronomer/ap-base
+      tag: 3.18.5
       pullPolicy: IfNotPresent
   # Global flag to enable to user to enable/disable Astronomer platform
   # level Network Policy
@@ -136,7 +136,7 @@ global:
   loggingSidecar:
     enabled: false
     name: sidecar-log-consumer
-    image: quay.io/astronomer/ap-vector:0.32.2-1
+    image: quay.io/astronomer/ap-vector:0.32.2-3
     customConfig: false
     indexPattern: ~
     extraEnv: []
