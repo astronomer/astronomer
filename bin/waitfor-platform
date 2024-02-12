@@ -32,7 +32,7 @@ while [ "${RC:-0}" -eq 0 ]; do
     # of logging tag without the platform. This is the only logging component
     # that will not start without the platform. The benefit of allowing us to
     # test the logging tag outweighs the downside of ignoring one pod.
-    grep -q -vE 'NAME|Completed|elasticsearch-nginx| ([0-9]+)/\1 ' /tmp/pods
+    grep -vE 'NAME|Completed|elasticsearch-nginx| ([0-9]+)/\1 ' /tmp/pods
     RC=$?
   fi
 done
