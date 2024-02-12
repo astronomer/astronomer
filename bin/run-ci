@@ -19,13 +19,16 @@ echo "Deploying Astronomer..."
 # make lint
 
 # This is so CI does not timeout on "no input in 10 minutes"
+echo "Watching all pods"
 kubectl get pods -n "$NAMESPACE" -w &
 WATCH_PID=$!
 
+echo "Installing platform"
 "$BIN_DIR/install-platform"
 
 sleep 5
 
+echo "Waiting for platform to be ready"
 "$BIN_DIR/waitfor-platform"
 
 # "$BIN_DIR/create-initial-user" "tester@astronomer.io" "password"
@@ -33,4 +36,5 @@ sleep 5
 sudo kill -9 $WATCH_PID
 
 ### Test Platform
+echo "Testing platform"
 "$BIN_DIR/test-ap"
