@@ -313,6 +313,22 @@ jobs:
             helm template --kube-version=v1.28.6 -f values.yaml --set global.baseDomain=example.com . |
             kubent --cluster=false --helm3=false --filename -
           when: always
+  platform-1-29-1:
+    machine:
+      image: ubuntu-2204:2024.01.1
+      resource_class: xlarge
+    environment:
+      KUBE_VERSION: v1.29.1
+    steps:
+      - helm-install:
+          astronomer-tags: "platform postgresql monitoring logging"
+      - run:
+          name: Check chart for k8s 1.29.1 compatibility with kubent
+          command: |
+            set -o pipefail
+            helm template --kube-version=v1.29.1 -f values.yaml --set global.baseDomain=example.com . |
+            kubent --cluster=false --helm3=false --filename -
+          when: always
 
   check-commander-airflow-version:
     docker:
@@ -342,7 +358,7 @@ workflows:
             parameters:
               docker_image:
                 - quay.io/astronomer/ap-alertmanager:0.26.0
-                - quay.io/astronomer/ap-astro-ui:0.34.1
+                - quay.io/astronomer/ap-astro-ui:0.34.3
                 - quay.io/astronomer/ap-auth-sidecar:1.25.2-3
                 - quay.io/astronomer/ap-awsesproxy:1.5.0-6
                 - quay.io/astronomer/ap-base:3.18.5
@@ -357,7 +373,7 @@ workflows:
                 - quay.io/astronomer/ap-elasticsearch:8.11.4
                 - quay.io/astronomer/ap-fluentd:1.16.3
                 - quay.io/astronomer/ap-grafana:10.2.3
-                - quay.io/astronomer/ap-houston-api:0.34.2
+                - quay.io/astronomer/ap-houston-api:0.34.4
                 - quay.io/astronomer/ap-init:3.18.5
                 - quay.io/astronomer/ap-kibana:8.11.4
                 - quay.io/astronomer/ap-kube-state:2.10.1
@@ -370,10 +386,10 @@ workflows:
                 - quay.io/astronomer/ap-openresty:1.25.3
                 - quay.io/astronomer/ap-pgbouncer-krb:1.17.0-9
                 - quay.io/astronomer/ap-postgres-exporter:0.15.0-3
-                - quay.io/astronomer/ap-postgresql:15.4.0-1
+                - quay.io/astronomer/ap-postgresql:15.5.0
                 - quay.io/astronomer/ap-prometheus:2.45.3
                 - quay.io/astronomer/ap-registry:3.18.5-1
-                - quay.io/astronomer/ap-vector:0.32.2-1
+                - quay.io/astronomer/ap-vector:0.32.2-3
           context:
             - slack_team-software-infra-bot
       - twistcli-scan-docker:
@@ -381,7 +397,7 @@ workflows:
             parameters:
               docker_image:
                 - quay.io/astronomer/ap-alertmanager:0.26.0
-                - quay.io/astronomer/ap-astro-ui:0.34.1
+                - quay.io/astronomer/ap-astro-ui:0.34.3
                 - quay.io/astronomer/ap-auth-sidecar:1.25.2-3
                 - quay.io/astronomer/ap-awsesproxy:1.5.0-6
                 - quay.io/astronomer/ap-base:3.18.5
@@ -396,7 +412,7 @@ workflows:
                 - quay.io/astronomer/ap-elasticsearch:8.11.4
                 - quay.io/astronomer/ap-fluentd:1.16.3
                 - quay.io/astronomer/ap-grafana:10.2.3
-                - quay.io/astronomer/ap-houston-api:0.34.2
+                - quay.io/astronomer/ap-houston-api:0.34.4
                 - quay.io/astronomer/ap-init:3.18.5
                 - quay.io/astronomer/ap-kibana:8.11.4
                 - quay.io/astronomer/ap-kube-state:2.10.1
@@ -409,10 +425,10 @@ workflows:
                 - quay.io/astronomer/ap-openresty:1.25.3
                 - quay.io/astronomer/ap-pgbouncer-krb:1.17.0-9
                 - quay.io/astronomer/ap-postgres-exporter:0.15.0-3
-                - quay.io/astronomer/ap-postgresql:15.4.0-1
+                - quay.io/astronomer/ap-postgresql:15.5.0
                 - quay.io/astronomer/ap-prometheus:2.45.3
                 - quay.io/astronomer/ap-registry:3.18.5-1
-                - quay.io/astronomer/ap-vector:0.32.2-1
+                - quay.io/astronomer/ap-vector:0.32.2-3
           context:
             - twistcli
 
@@ -450,6 +466,11 @@ workflows:
 
       - platform-1-28-6:
           requires:
+            - approve-test-all-platforms
+            - build-artifact
+
+      - platform-1-29-1:
+          requires:
             - build-artifact
       - approve-internal-release:
           type: approval
@@ -467,7 +488,7 @@ workflows:
           requires:
             - approve-internal-release
             - platform-1-25-16
-            - platform-1-28-6
+            - platform-1-29-1
       - approve-upgrade-test:
           type: approval
           filters:
@@ -488,6 +509,7 @@ workflows:
             - release-to-internal
             - platform-1-26-13
             - platform-1-27-10
+            - platform-1-28-6
           filters:
             branches:
               only:
@@ -526,7 +548,7 @@ workflows:
           requires:
             - build-artifact
 
-      - platform-1-28-6:
+      - platform-1-29-1:
           requires:
             - build-artifact
 
@@ -535,7 +557,7 @@ workflows:
             - gcp-astronomer-prod
           requires:
             - platform-1-25-16
-            - platform-1-28-6
+            - platform-1-29-1
           filters:
             branches:
               only:
