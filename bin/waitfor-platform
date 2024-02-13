@@ -33,7 +33,11 @@ while [ "${RC:-0}" -eq 0 ]; do
     # of logging tag without the platform. This is the only logging component
     # that will not start without the platform. The benefit of allowing us to
     # test the logging tag outweighs the downside of ignoring one pod.
-    grep -q -vE 'NAME|Completed|elasticsearch-nginx| ([0-9]+)/\1 ' /tmp/pods
+    #
+    # Also ignore kibana-default-index because it leaves behind failed pods if
+    # it doesn't succeed on the first try, which falsely make it seem like the
+    # job failed. https://github.com/astronomer/issues/issues/6158
+    grep -vE 'NAME|Completed|elasticsearch-nginx|kibana-default-index| ([0-9]+)/\1 ' /tmp/pods
     RC=$?
   fi
 done
