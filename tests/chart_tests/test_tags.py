@@ -16,16 +16,19 @@ component_paths = [
 
 # Some charts have configs that are hard to test when parametrizing with get_all_features()
 # eg: password vs passwordSecret
-edge_cases = [
-    "charts/prometheus-postgres-exporter/templates/secret.yaml",
+templates_to_exclude = [
+    "charts/prometheus-node-exporter/templates/psp-clusterrole.yaml",
+    "charts/prometheus-node-exporter/templates/psp-clusterrolebinding.yaml",
+    "charts/prometheus-node-exporter/templates/psp.yaml",
     "charts/prometheus-postgres-exporter/templates",
+    "charts/prometheus-postgres-exporter/templates/secret.yaml",
 ]
 
 show_only = [
     str(y)
     for x in component_paths
     for y in list(Path(x).glob("*.yaml"))
-    if not y.name.startswith("_") and str(y) not in edge_cases
+    if not y.name.startswith("_") and str(y) not in templates_to_exclude
 ]
 
 chart_values = chart_tests.get_all_features()
@@ -36,7 +39,7 @@ chart_values = chart_tests.get_all_features()
 # problems for newer api differences.
 @pytest.mark.parametrize("template", show_only)
 def test_tags_monitoring_enabled(
-    template, chart_values=chart_values, kube_version="1.24.0"
+    template, chart_values=chart_values, kube_version="1.28.0"
 ):
     """Test that when monitoring is disabled, the monitoring components are not present."""
     chart_values["tags"] = {"monitoring": True}
@@ -59,7 +62,7 @@ def test_tags_monitoring_enabled(
 # problems for newer api differences.
 @pytest.mark.parametrize("template", show_only)
 def test_tags_monitoring_disabled(
-    template, chart_values=chart_values, kube_version="1.24.0"
+    template, chart_values=chart_values, kube_version="1.28.0"
 ):
     """Test that when monitoring is disabled, the monitoring components are not present."""
     chart_values["tags"] = {"monitoring": False}
