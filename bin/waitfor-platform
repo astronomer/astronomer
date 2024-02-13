@@ -13,6 +13,7 @@ START=$(date +%s)
 # Wait for Astronomer to deploy
 HELM_CODE=0
 MAX_SECONDS=800
+kubectl get pods --all-namespaces -w &
 while [ "${RC:-0}" -eq 0 ]; do
   NOW=$(date +%s)
   DURATION="$(( NOW - START ))"
@@ -40,6 +41,8 @@ while [ "${RC:-0}" -eq 0 ]; do
     RC=$?
   fi
 done
+
+kill %1
 
 # Output debugging information
 if [ "$HELM_CODE" -eq 0 ]; then
