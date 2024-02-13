@@ -249,22 +249,6 @@ jobs:
             bin/release-helm-chart -p /tmp/workspace/astronomer-*.tgz
       - publish-github-release
 
-  platform-1-24-17:
-    machine:
-      image: ubuntu-2204:2024.01.1
-      resource_class: xlarge
-    environment:
-      KUBE_VERSION: v1.24.17
-    steps:
-      - helm-install:
-          astronomer-tags: "platform postgresql monitoring logging"
-      - run:
-          name: Check chart for k8s 1.24.17 compatibility with kubent
-          command: |
-            set -o pipefail
-            helm template --kube-version=v1.24.17 -f values.yaml --set global.baseDomain=example.com . |
-            kubent --cluster=false --helm3=false --filename -
-          when: always
   platform-1-25-16:
     machine:
       image: ubuntu-2204:2024.01.1
@@ -467,14 +451,9 @@ workflows:
       - approve-test-all-platforms:
           type: approval
 
-      - platform-1-24-17:
-          requires:
-            - build-artifact
       - platform-1-25-16:
           requires:
-            - approve-test-all-platforms
             - build-artifact
-
       - platform-1-26-13:
           requires:
             - approve-test-all-platforms
@@ -508,7 +487,7 @@ workflows:
                 - '/^release-0\.\d+$/'
           requires:
             - approve-internal-release
-            - platform-1-24-17
+            - platform-1-25-16
             - platform-1-29-1
       - approve-upgrade-test:
           type: approval
@@ -528,7 +507,6 @@ workflows:
           type: approval
           requires:
             - release-to-internal
-            - platform-1-25-16
             - platform-1-26-13
             - platform-1-27-10
             - platform-1-28-6
@@ -566,7 +544,7 @@ workflows:
             - run_pre_commit
             - unittest-charts
 
-      - platform-1-24-17:
+      - platform-1-25-16:
           requires:
             - build-artifact
 
@@ -578,7 +556,7 @@ workflows:
           context:
             - gcp-astronomer-prod
           requires:
-            - platform-1-24-17
+            - platform-1-25-16
             - platform-1-29-1
           filters:
             branches:
