@@ -12,6 +12,11 @@ images:
     repository: quay.io/astronomer/ap-nats-exporter
     tag: 0.14.0-1
     pullPolicy: IfNotPresent
+  dbBootstrapper:
+    repository: quay.io/astronomer/ap-db-bootstrapper
+    tag: 0.31.10
+    pullPolicy: IfNotPresent
+
 
 nats:
   # In case both external access and advertise are enabled
