@@ -28,20 +28,23 @@ spec:
   template:
     metadata:
       labels:
+        app: private-ca
         tier: platform
         component: private-ca
         release: {{ .Release.Name }}
+        version: {{ .Chart.Version }}
     spec:
       serviceAccountName: {{ .Release.Name }}-private-ca
+{{- include "certCopier.imagePullSecrets" . | indent 6 }}
       containers:
       - name: cert-copy
-        image: {{ .Values.global.privateCaCertsAddToHost.certCopier.repository }}:{{ .Values.global.privateCaCertsAddToHost.certCopier.tag }}
+        image: {{ include "certCopier.image" . }}
         command:
           - "sh"
           - "-c"
         args:
           - "while true; do date; cp -v /private-ca-certs/* /host-trust-store/; sleep 10; done"
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: {{ .Values.global.privateCaCertsAddToHost.certCopier.pullPolicy }}
         volumeMounts:
         - name: hostcerts
           mountPath: /host-trust-store
