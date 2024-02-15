@@ -1,5 +1,5 @@
 {
-  "description": "Deployment enables declarative updates for Pods and ReplicaSets.",
+  "description": "DaemonSet represents the configuration of a daemon set.",
   "properties": {
     "apiVersion": {
       "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -18,7 +18,7 @@
         "null"
       ],
       "enum": [
-        "Deployment"
+        "DaemonSet"
       ]
     },
     "metadata": {
@@ -31,16 +31,9 @@
               "null"
             ]
           },
-          "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: http://kubernetes.io/docs/user-guide/annotations",
+          "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
           "type": [
             "object",
-            "null"
-          ]
-        },
-        "clusterName": {
-          "description": "Deprecated: ClusterName is a legacy field that was always cleared by the system and never used; it will be removed completely in 1.25.\n\nThe name in the go struct is changed to help clients detect accidental use.",
-          "type": [
-            "string",
             "null"
           ]
         },
@@ -104,7 +97,7 @@
               "null"
             ]
           },
-          "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: http://kubernetes.io/docs/user-guide/labels",
+          "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
           "type": [
             "object",
             "null"
@@ -177,14 +170,14 @@
           ]
         },
         "name": {
-          "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: http://kubernetes.io/docs/user-guide/identifiers#names",
+          "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
           "type": [
             "string",
             "null"
           ]
         },
         "namespace": {
-          "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: http://kubernetes.io/docs/user-guide/namespaces",
+          "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
           "type": [
             "string",
             "null"
@@ -218,11 +211,11 @@
                 "type": "string"
               },
               "name": {
-                "description": "Name of the referent. More info: http://kubernetes.io/docs/user-guide/identifiers#names",
+                "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
                 "type": "string"
               },
               "uid": {
-                "description": "UID of the referent. More info: http://kubernetes.io/docs/user-guide/identifiers#uids",
+                "description": "UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids",
                 "type": "string"
               }
             },
@@ -260,7 +253,7 @@
           ]
         },
         "uid": {
-          "description": "UID is the unique in time and space value for this object. It is typically generated by the server on successful creation of a resource and is not allowed to change on PUT operations.\n\nPopulated by the system. Read-only. More info: http://kubernetes.io/docs/user-guide/identifiers#uids",
+          "description": "UID is the unique in time and space value for this object. It is typically generated by the server on successful creation of a resource and is not allowed to change on PUT operations.\n\nPopulated by the system. Read-only. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids",
           "type": [
             "string",
             "null"
@@ -273,33 +266,10 @@
       ]
     },
     "spec": {
-      "description": "DeploymentSpec is the specification of the desired behavior of the Deployment.",
+      "description": "DaemonSetSpec is the specification of a daemon set.",
       "properties": {
         "minReadySeconds": {
-          "description": "Minimum number of seconds for which a newly created pod should be ready without any of its container crashing, for it to be considered available. Defaults to 0 (pod will be considered available as soon as it is ready)",
-          "format": "int32",
-          "type": [
-            "integer",
-            "null"
-          ]
-        },
-        "paused": {
-          "description": "Indicates that the deployment is paused.",
-          "type": [
-            "boolean",
-            "null"
-          ]
-        },
-        "progressDeadlineSeconds": {
-          "description": "The maximum time in seconds for a deployment to make progress before it is considered to be failed. The deployment controller will continue to process failed deployments and a condition with a ProgressDeadlineExceeded reason will be surfaced in the deployment status. Note that progress will not be estimated during the time a deployment is paused. Defaults to 600s.",
-          "format": "int32",
-          "type": [
-            "integer",
-            "null"
-          ]
-        },
-        "replicas": {
-          "description": "Number of desired pods. This is a pointer to distinguish between explicit zero and not specified. Defaults to 1.",
+          "description": "The minimum number of seconds for which a newly created DaemonSet pod should be ready without any of its container crashing, for it to be considered available. Defaults to 0 (pod will be considered available as soon as it is ready).",
           "format": "int32",
           "type": [
             "integer",
@@ -307,7 +277,7 @@
           ]
         },
         "revisionHistoryLimit": {
-          "description": "The number of old ReplicaSets to retain to allow rollback. This is a pointer to distinguish between explicit zero and not specified. Defaults to 10.",
+          "description": "The number of old history to retain to allow rollback. This is a pointer to distinguish between explicit zero and not specified. Defaults to 10.",
           "format": "int32",
           "type": [
             "integer",
@@ -324,9 +294,7 @@
                 "properties": {
                   "key": {
                     "description": "key is the label key that the selector applies to.",
-                    "type": "string",
-                    "x-kubernetes-patch-merge-key": "key",
-                    "x-kubernetes-patch-strategy": "merge"
+                    "type": "string"
                   },
                   "operator": {
                     "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
@@ -377,63 +345,6 @@
           "type": "object",
           "x-kubernetes-map-type": "atomic"
         },
-        "strategy": {
-          "description": "DeploymentStrategy describes how to replace existing pods with new ones.",
-          "properties": {
-            "rollingUpdate": {
-              "description": "Spec to control the desired behavior of rolling update.",
-              "properties": {
-                "maxSurge": {
-                  "oneOf": [
-                    {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    {
-                      "type": [
-                        "integer",
-                        "null"
-                      ]
-                    }
-                  ]
-                },
-                "maxUnavailable": {
-                  "oneOf": [
-                    {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    {
-                      "type": [
-                        "integer",
-                        "null"
-                      ]
-                    }
-                  ]
-                }
-              },
-              "type": [
-                "object",
-                "null"
-              ]
-            },
-            "type": {
-              "description": "Type of deployment. Can be \"Recreate\" or \"RollingUpdate\". Default is RollingUpdate.\n\n",
-              "type": [
-                "string",
-                "null"
-              ]
-            }
-          },
-          "type": [
-            "object",
-            "null"
-          ]
-        },
         "template": {
           "description": "PodTemplateSpec describes the data a pod should have when created from a template",
           "properties": {
@@ -447,16 +358,9 @@
                       "null"
                     ]
                   },
-                  "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: http://kubernetes.io/docs/user-guide/annotations",
+                  "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
                   "type": [
                     "object",
-                    "null"
-                  ]
-                },
-                "clusterName": {
-                  "description": "Deprecated: ClusterName is a legacy field that was always cleared by the system and never used; it will be removed completely in 1.25.\n\nThe name in the go struct is changed to help clients detect accidental use.",
-                  "type": [
-                    "string",
                     "null"
                   ]
                 },
@@ -520,7 +424,7 @@
                       "null"
                     ]
                   },
-                  "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: http://kubernetes.io/docs/user-guide/labels",
+                  "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
                   "type": [
                     "object",
                     "null"
@@ -593,14 +497,14 @@
                   ]
                 },
                 "name": {
-                  "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: http://kubernetes.io/docs/user-guide/identifiers#names",
+                  "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
                   "type": [
                     "string",
                     "null"
                   ]
                 },
                 "namespace": {
-                  "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: http://kubernetes.io/docs/user-guide/namespaces",
+                  "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
                   "type": [
                     "string",
                     "null"
@@ -634,11 +538,11 @@
                         "type": "string"
                       },
                       "name": {
-                        "description": "Name of the referent. More info: http://kubernetes.io/docs/user-guide/identifiers#names",
+                        "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
                         "type": "string"
                       },
                       "uid": {
-                        "description": "UID of the referent. More info: http://kubernetes.io/docs/user-guide/identifiers#uids",
+                        "description": "UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids",
                         "type": "string"
                       }
                     },
@@ -676,7 +580,7 @@
                   ]
                 },
                 "uid": {
-                  "description": "UID is the unique in time and space value for this object. It is typically generated by the server on successful creation of a resource and is not allowed to change on PUT operations.\n\nPopulated by the system. Read-only. More info: http://kubernetes.io/docs/user-guide/identifiers#uids",
+                  "description": "UID is the unique in time and space value for this object. It is typically generated by the server on successful creation of a resource and is not allowed to change on PUT operations.\n\nPopulated by the system. Read-only. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids",
                   "type": [
                     "string",
                     "null"
@@ -723,7 +627,7 @@
                                           "type": "string"
                                         },
                                         "operator": {
-                                          "description": "Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.\n\n",
+                                          "description": "Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.",
                                           "type": "string"
                                         },
                                         "values": {
@@ -764,7 +668,7 @@
                                           "type": "string"
                                         },
                                         "operator": {
-                                          "description": "Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.\n\n",
+                                          "description": "Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.",
                                           "type": "string"
                                         },
                                         "values": {
@@ -837,7 +741,7 @@
                                           "type": "string"
                                         },
                                         "operator": {
-                                          "description": "Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.\n\n",
+                                          "description": "Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.",
                                           "type": "string"
                                         },
                                         "values": {
@@ -878,7 +782,7 @@
                                           "type": "string"
                                         },
                                         "operator": {
-                                          "description": "Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.\n\n",
+                                          "description": "Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.",
                                           "type": "string"
                                         },
                                         "values": {
@@ -955,9 +859,7 @@
                                           "properties": {
                                             "key": {
                                               "description": "key is the label key that the selector applies to.",
-                                              "type": "string",
-                                              "x-kubernetes-patch-merge-key": "key",
-                                              "x-kubernetes-patch-strategy": "merge"
+                                              "type": "string"
                                             },
                                             "operator": {
                                               "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
@@ -1011,6 +913,34 @@
                                     ],
                                     "x-kubernetes-map-type": "atomic"
                                   },
+                                  "matchLabelKeys": {
+                                    "description": "MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
+                                    "items": {
+                                      "type": [
+                                        "string",
+                                        "null"
+                                      ]
+                                    },
+                                    "type": [
+                                      "array",
+                                      "null"
+                                    ],
+                                    "x-kubernetes-list-type": "atomic"
+                                  },
+                                  "mismatchLabelKeys": {
+                                    "description": "MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
+                                    "items": {
+                                      "type": [
+                                        "string",
+                                        "null"
+                                      ]
+                                    },
+                                    "type": [
+                                      "array",
+                                      "null"
+                                    ],
+                                    "x-kubernetes-list-type": "atomic"
+                                  },
                                   "namespaceSelector": {
                                     "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
                                     "properties": {
@@ -1021,9 +951,7 @@
                                           "properties": {
                                             "key": {
                                               "description": "key is the label key that the selector applies to.",
-                                              "type": "string",
-                                              "x-kubernetes-patch-merge-key": "key",
-                                              "x-kubernetes-patch-strategy": "merge"
+                                              "type": "string"
                                             },
                                             "operator": {
                                               "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
@@ -1135,9 +1063,7 @@
                                       "properties": {
                                         "key": {
                                           "description": "key is the label key that the selector applies to.",
-                                          "type": "string",
-                                          "x-kubernetes-patch-merge-key": "key",
-                                          "x-kubernetes-patch-strategy": "merge"
+                                          "type": "string"
                                         },
                                         "operator": {
                                           "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
@@ -1191,6 +1117,34 @@
                                 ],
                                 "x-kubernetes-map-type": "atomic"
                               },
+                              "matchLabelKeys": {
+                                "description": "MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
+                                "items": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                },
+                                "type": [
+                                  "array",
+                                  "null"
+                                ],
+                                "x-kubernetes-list-type": "atomic"
+                              },
+                              "mismatchLabelKeys": {
+                                "description": "MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
+                                "items": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                },
+                                "type": [
+                                  "array",
+                                  "null"
+                                ],
+                                "x-kubernetes-list-type": "atomic"
+                              },
                               "namespaceSelector": {
                                 "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
                                 "properties": {
@@ -1201,9 +1155,7 @@
                                       "properties": {
                                         "key": {
                                           "description": "key is the label key that the selector applies to.",
-                                          "type": "string",
-                                          "x-kubernetes-patch-merge-key": "key",
-                                          "x-kubernetes-patch-strategy": "merge"
+                                          "type": "string"
                                         },
                                         "operator": {
                                           "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
@@ -1315,9 +1267,7 @@
                                           "properties": {
                                             "key": {
                                               "description": "key is the label key that the selector applies to.",
-                                              "type": "string",
-                                              "x-kubernetes-patch-merge-key": "key",
-                                              "x-kubernetes-patch-strategy": "merge"
+                                              "type": "string"
                                             },
                                             "operator": {
                                               "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
@@ -1371,6 +1321,34 @@
                                     ],
                                     "x-kubernetes-map-type": "atomic"
                                   },
+                                  "matchLabelKeys": {
+                                    "description": "MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
+                                    "items": {
+                                      "type": [
+                                        "string",
+                                        "null"
+                                      ]
+                                    },
+                                    "type": [
+                                      "array",
+                                      "null"
+                                    ],
+                                    "x-kubernetes-list-type": "atomic"
+                                  },
+                                  "mismatchLabelKeys": {
+                                    "description": "MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
+                                    "items": {
+                                      "type": [
+                                        "string",
+                                        "null"
+                                      ]
+                                    },
+                                    "type": [
+                                      "array",
+                                      "null"
+                                    ],
+                                    "x-kubernetes-list-type": "atomic"
+                                  },
                                   "namespaceSelector": {
                                     "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
                                     "properties": {
@@ -1381,9 +1359,7 @@
                                           "properties": {
                                             "key": {
                                               "description": "key is the label key that the selector applies to.",
-                                              "type": "string",
-                                              "x-kubernetes-patch-merge-key": "key",
-                                              "x-kubernetes-patch-strategy": "merge"
+                                              "type": "string"
                                             },
                                             "operator": {
                                               "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
@@ -1495,9 +1471,7 @@
                                       "properties": {
                                         "key": {
                                           "description": "key is the label key that the selector applies to.",
-                                          "type": "string",
-                                          "x-kubernetes-patch-merge-key": "key",
-                                          "x-kubernetes-patch-strategy": "merge"
+                                          "type": "string"
                                         },
                                         "operator": {
                                           "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
@@ -1551,6 +1525,34 @@
                                 ],
                                 "x-kubernetes-map-type": "atomic"
                               },
+                              "matchLabelKeys": {
+                                "description": "MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
+                                "items": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                },
+                                "type": [
+                                  "array",
+                                  "null"
+                                ],
+                                "x-kubernetes-list-type": "atomic"
+                              },
+                              "mismatchLabelKeys": {
+                                "description": "MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
+                                "items": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                },
+                                "type": [
+                                  "array",
+                                  "null"
+                                ],
+                                "x-kubernetes-list-type": "atomic"
+                              },
                               "namespaceSelector": {
                                 "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
                                 "properties": {
@@ -1561,9 +1563,7 @@
                                       "properties": {
                                         "key": {
                                           "description": "key is the label key that the selector applies to.",
-                                          "type": "string",
-                                          "x-kubernetes-patch-merge-key": "key",
-                                          "x-kubernetes-patch-strategy": "merge"
+                                          "type": "string"
                                         },
                                         "operator": {
                                           "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
@@ -1942,7 +1942,7 @@
                         ]
                       },
                       "imagePullPolicy": {
-                        "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images\n\n",
+                        "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
                         "type": [
                           "string",
                           "null"
@@ -1992,7 +1992,7 @@
                                       "description": "HTTPHeader describes a custom header to be used in HTTP probes",
                                       "properties": {
                                         "name": {
-                                          "description": "The header field name",
+                                          "description": "The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.",
                                           "type": "string"
                                         },
                                         "value": {
@@ -2038,7 +2038,7 @@
                                     ]
                                   },
                                   "scheme": {
-                                    "description": "Scheme to use for connecting to the host. Defaults to HTTP.\n\n",
+                                    "description": "Scheme to use for connecting to the host. Defaults to HTTP.",
                                     "type": [
                                       "string",
                                       "null"
@@ -2047,6 +2047,23 @@
                                 },
                                 "required": [
                                   "port"
+                                ],
+                                "type": [
+                                  "object",
+                                  "null"
+                                ]
+                              },
+                              "sleep": {
+                                "description": "SleepAction describes a \"sleep\" action.",
+                                "properties": {
+                                  "seconds": {
+                                    "description": "Seconds is the number of seconds to sleep.",
+                                    "format": "int64",
+                                    "type": "integer"
+                                  }
+                                },
+                                "required": [
+                                  "seconds"
                                 ],
                                 "type": [
                                   "object",
@@ -2135,7 +2152,7 @@
                                       "description": "HTTPHeader describes a custom header to be used in HTTP probes",
                                       "properties": {
                                         "name": {
-                                          "description": "The header field name",
+                                          "description": "The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.",
                                           "type": "string"
                                         },
                                         "value": {
@@ -2181,7 +2198,7 @@
                                     ]
                                   },
                                   "scheme": {
-                                    "description": "Scheme to use for connecting to the host. Defaults to HTTP.\n\n",
+                                    "description": "Scheme to use for connecting to the host. Defaults to HTTP.",
                                     "type": [
                                       "string",
                                       "null"
@@ -2190,6 +2207,23 @@
                                 },
                                 "required": [
                                   "port"
+                                ],
+                                "type": [
+                                  "object",
+                                  "null"
+                                ]
+                              },
+                              "sleep": {
+                                "description": "SleepAction describes a \"sleep\" action.",
+                                "properties": {
+                                  "seconds": {
+                                    "description": "Seconds is the number of seconds to sleep.",
+                                    "format": "int64",
+                                    "type": "integer"
+                                  }
+                                },
+                                "required": [
+                                  "seconds"
                                 ],
                                 "type": [
                                   "object",
@@ -2315,7 +2349,7 @@
                                   "description": "HTTPHeader describes a custom header to be used in HTTP probes",
                                   "properties": {
                                     "name": {
-                                      "description": "The header field name",
+                                      "description": "The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.",
                                       "type": "string"
                                     },
                                     "value": {
@@ -2361,7 +2395,7 @@
                                 ]
                               },
                               "scheme": {
-                                "description": "Scheme to use for connecting to the host. Defaults to HTTP.\n\n",
+                                "description": "Scheme to use for connecting to the host. Defaults to HTTP.",
                                 "type": [
                                   "string",
                                   "null"
@@ -2462,7 +2496,7 @@
                         "type": "string"
                       },
                       "ports": {
-                        "description": "List of ports to expose from the container. Exposing a port here gives the system additional information about the network connections a container uses, but is primarily informational. Not specifying a port here DOES NOT prevent that port from being exposed. Any port which is listening on the default \"0.0.0.0\" address inside a container will be accessible from the network. Cannot be updated.",
+                        "description": "List of ports to expose from the container. Not specifying a port here DOES NOT prevent that port from being exposed. Any port which is listening on the default \"0.0.0.0\" address inside a container will be accessible from the network. Modifying this array with strategic merge patch may corrupt the data. For more information See https://github.com/kubernetes/kubernetes/issues/108255. Cannot be updated.",
                         "items": {
                           "description": "ContainerPort represents a network port in a single container.",
                           "properties": {
@@ -2494,7 +2528,7 @@
                               ]
                             },
                             "protocol": {
-                              "description": "Protocol for port. Must be UDP, TCP, or SCTP. Defaults to \"TCP\".\n\n",
+                              "description": "Protocol for port. Must be UDP, TCP, or SCTP. Defaults to \"TCP\".",
                               "type": [
                                 "string",
                                 "null"
@@ -2593,7 +2627,7 @@
                                   "description": "HTTPHeader describes a custom header to be used in HTTP probes",
                                   "properties": {
                                     "name": {
-                                      "description": "The header field name",
+                                      "description": "The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.",
                                       "type": "string"
                                     },
                                     "value": {
@@ -2639,7 +2673,7 @@
                                 ]
                               },
                               "scheme": {
-                                "description": "Scheme to use for connecting to the host. Defaults to HTTP.\n\n",
+                                "description": "Scheme to use for connecting to the host. Defaults to HTTP.",
                                 "type": [
                                   "string",
                                   "null"
@@ -2735,9 +2769,65 @@
                           "null"
                         ]
                       },
+                      "resizePolicy": {
+                        "description": "Resources resize policy for the container.",
+                        "items": {
+                          "description": "ContainerResizePolicy represents resource resize policy for the container.",
+                          "properties": {
+                            "resourceName": {
+                              "description": "Name of the resource to which this resource resize policy applies. Supported values: cpu, memory.",
+                              "type": "string"
+                            },
+                            "restartPolicy": {
+                              "description": "Restart policy to apply when specified resource is resized. If not specified, it defaults to NotRequired.",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "resourceName",
+                            "restartPolicy"
+                          ],
+                          "type": [
+                            "object",
+                            "null"
+                          ]
+                        },
+                        "type": [
+                          "array",
+                          "null"
+                        ],
+                        "x-kubernetes-list-type": "atomic"
+                      },
                       "resources": {
                         "description": "ResourceRequirements describes the compute resource requirements.",
                         "properties": {
+                          "claims": {
+                            "description": "Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container.\n\nThis is an alpha field and requires enabling the DynamicResourceAllocation feature gate.\n\nThis field is immutable. It can only be set for containers.",
+                            "items": {
+                              "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
+                              "properties": {
+                                "name": {
+                                  "description": "Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container.",
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "name"
+                              ],
+                              "type": [
+                                "object",
+                                "null"
+                              ]
+                            },
+                            "type": [
+                              "array",
+                              "null"
+                            ],
+                            "x-kubernetes-list-map-keys": [
+                              "name"
+                            ],
+                            "x-kubernetes-list-type": "map"
+                          },
                           "limits": {
                             "additionalProperties": {
                               "oneOf": [
@@ -2778,7 +2868,7 @@
                                 }
                               ]
                             },
-                            "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+                            "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
                             "type": [
                               "object",
                               "null"
@@ -2787,6 +2877,13 @@
                         },
                         "type": [
                           "object",
+                          "null"
+                        ]
+                      },
+                      "restartPolicy": {
+                        "description": "RestartPolicy defines the restart behavior of individual containers in a pod. This field may only be set for init containers, and the only allowed value is \"Always\". For non-init containers or when this field is not specified, the restart behavior is defined by the Pod's restart policy and the container type. Setting the RestartPolicy as \"Always\" for the init container will have the following effect: this init container will be continually restarted on exit until all regular containers have terminated. Once all regular containers have completed, all init containers with restartPolicy \"Always\" will be shut down. This lifecycle differs from normal init containers and is often referred to as a \"sidecar\" container. Although this init container still starts in the init container sequence, it does not wait for the container to complete before proceeding to the next init container. Instead, the next init container starts immediately after this init container is started, or after any startupProbe has successfully completed.",
+                        "type": [
+                          "string",
                           "null"
                         ]
                       },
@@ -2920,14 +3017,14 @@
                             "description": "SeccompProfile defines a pod/container's seccomp profile settings. Only one profile source may be set.",
                             "properties": {
                               "localhostProfile": {
-                                "description": "localhostProfile indicates a profile defined in a file on the node should be used. The profile must be preconfigured on the node to work. Must be a descending path, relative to the kubelet's configured seccomp profile location. Must only be set if type is \"Localhost\".",
+                                "description": "localhostProfile indicates a profile defined in a file on the node should be used. The profile must be preconfigured on the node to work. Must be a descending path, relative to the kubelet's configured seccomp profile location. Must be set if type is \"Localhost\". Must NOT be set for any other type.",
                                 "type": [
                                   "string",
                                   "null"
                                 ]
                               },
                               "type": {
-                                "description": "type indicates which kind of seccomp profile will be applied. Valid options are:\n\nLocalhost - a profile defined in a file on the node should be used. RuntimeDefault - the container runtime default profile should be used. Unconfined - no profile should be applied.\n\n",
+                                "description": "type indicates which kind of seccomp profile will be applied. Valid options are:\n\nLocalhost - a profile defined in a file on the node should be used. RuntimeDefault - the container runtime default profile should be used. Unconfined - no profile should be applied.",
                                 "type": "string"
                               }
                             },
@@ -2965,7 +3062,7 @@
                                 ]
                               },
                               "hostProcess": {
-                                "description": "HostProcess determines if a container should be run as a 'Host Process' container. This field is alpha-level and will only be honored by components that enable the WindowsHostProcessContainers feature flag. Setting this field without the feature flag will result in errors when validating the Pod. All of a Pod's containers must have the same effective HostProcess value (it is not allowed to have a mix of HostProcess containers and non-HostProcess containers).  In addition, if HostProcess is true then HostNetwork must also be set to true.",
+                                "description": "HostProcess determines if a container should be run as a 'Host Process' container. All of a Pod's containers must have the same effective HostProcess value (it is not allowed to have a mix of HostProcess containers and non-HostProcess containers). In addition, if HostProcess is true then HostNetwork must also be set to true.",
                                 "type": [
                                   "boolean",
                                   "null"
@@ -3062,7 +3159,7 @@
                                   "description": "HTTPHeader describes a custom header to be used in HTTP probes",
                                   "properties": {
                                     "name": {
-                                      "description": "The header field name",
+                                      "description": "The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.",
                                       "type": "string"
                                     },
                                     "value": {
@@ -3108,7 +3205,7 @@
                                 ]
                               },
                               "scheme": {
-                                "description": "Scheme to use for connecting to the host. Defaults to HTTP.\n\n",
+                                "description": "Scheme to use for connecting to the host. Defaults to HTTP.",
                                 "type": [
                                   "string",
                                   "null"
@@ -3226,7 +3323,7 @@
                         ]
                       },
                       "terminationMessagePolicy": {
-                        "description": "Indicate how the termination message should be populated. File will use the contents of terminationMessagePath to populate the container status message on both success and failure. FallbackToLogsOnError will use the last chunk of container log output if the termination message file is empty and the container exited with an error. The log output is limited to 2048 bytes or 80 lines, whichever is smaller. Defaults to File. Cannot be updated.\n\n",
+                        "description": "Indicate how the termination message should be populated. File will use the contents of terminationMessagePath to populate the container status message on both success and failure. FallbackToLogsOnError will use the last chunk of container log output if the termination message file is empty and the container exited with an error. The log output is limited to 2048 bytes or 80 lines, whichever is smaller. Defaults to File. Cannot be updated.",
                         "type": [
                           "string",
                           "null"
@@ -3412,7 +3509,7 @@
                   ]
                 },
                 "dnsPolicy": {
-                  "description": "Set DNS policy for the pod. Defaults to \"ClusterFirst\". Valid values are 'ClusterFirstWithHostNet', 'ClusterFirst', 'Default' or 'None'. DNS parameters given in DNSConfig will be merged with the policy selected with DNSPolicy. To have DNS options set along with hostNetwork, you have to specify DNS policy explicitly to 'ClusterFirstWithHostNet'.\n\n",
+                  "description": "Set DNS policy for the pod. Defaults to \"ClusterFirst\". Valid values are 'ClusterFirstWithHostNet', 'ClusterFirst', 'Default' or 'None'. DNS parameters given in DNSConfig will be merged with the policy selected with DNSPolicy. To have DNS options set along with hostNetwork, you have to specify DNS policy explicitly to 'ClusterFirstWithHostNet'.",
                   "type": [
                     "string",
                     "null"
@@ -3426,9 +3523,9 @@
                   ]
                 },
                 "ephemeralContainers": {
-                  "description": "List of ephemeral containers run in this pod. Ephemeral containers may be run in an existing pod to perform user-initiated actions such as debugging. This list cannot be specified when creating a pod, and it cannot be modified by updating the pod spec. In order to add an ephemeral container to an existing pod, use the pod's ephemeralcontainers subresource. This field is beta-level and available on clusters that haven't disabled the EphemeralContainers feature gate.",
+                  "description": "List of ephemeral containers run in this pod. Ephemeral containers may be run in an existing pod to perform user-initiated actions such as debugging. This list cannot be specified when creating a pod, and it cannot be modified by updating the pod spec. In order to add an ephemeral container to an existing pod, use the pod's ephemeralcontainers subresource.",
                   "items": {
-                    "description": "An EphemeralContainer is a temporary container that you may add to an existing Pod for user-initiated activities such as debugging. Ephemeral containers have no resource or scheduling guarantees, and they will not be restarted when they exit or when a Pod is removed or restarted. The kubelet may evict a Pod if an ephemeral container causes the Pod to exceed its resource allocation.\n\nTo add an ephemeral container, use the ephemeralcontainers subresource of an existing Pod. Ephemeral containers may not be removed or restarted.\n\nThis is a beta feature available on clusters that haven't disabled the EphemeralContainers feature gate.",
+                    "description": "An EphemeralContainer is a temporary container that you may add to an existing Pod for user-initiated activities such as debugging. Ephemeral containers have no resource or scheduling guarantees, and they will not be restarted when they exit or when a Pod is removed or restarted. The kubelet may evict a Pod if an ephemeral container causes the Pod to exceed its resource allocation.\n\nTo add an ephemeral container, use the ephemeralcontainers subresource of an existing Pod. Ephemeral containers may not be removed or restarted.",
                     "properties": {
                       "args": {
                         "description": "Arguments to the entrypoint. The image's CMD is used if this is not provided. Variable references $(VAR_NAME) are expanded using the container's environment. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Cannot be updated. More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell",
@@ -3700,7 +3797,7 @@
                         ]
                       },
                       "imagePullPolicy": {
-                        "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images\n\n",
+                        "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
                         "type": [
                           "string",
                           "null"
@@ -3750,7 +3847,7 @@
                                       "description": "HTTPHeader describes a custom header to be used in HTTP probes",
                                       "properties": {
                                         "name": {
-                                          "description": "The header field name",
+                                          "description": "The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.",
                                           "type": "string"
                                         },
                                         "value": {
@@ -3796,7 +3893,7 @@
                                     ]
                                   },
                                   "scheme": {
-                                    "description": "Scheme to use for connecting to the host. Defaults to HTTP.\n\n",
+                                    "description": "Scheme to use for connecting to the host. Defaults to HTTP.",
                                     "type": [
                                       "string",
                                       "null"
@@ -3805,6 +3902,23 @@
                                 },
                                 "required": [
                                   "port"
+                                ],
+                                "type": [
+                                  "object",
+                                  "null"
+                                ]
+                              },
+                              "sleep": {
+                                "description": "SleepAction describes a \"sleep\" action.",
+                                "properties": {
+                                  "seconds": {
+                                    "description": "Seconds is the number of seconds to sleep.",
+                                    "format": "int64",
+                                    "type": "integer"
+                                  }
+                                },
+                                "required": [
+                                  "seconds"
                                 ],
                                 "type": [
                                   "object",
@@ -3893,7 +4007,7 @@
                                       "description": "HTTPHeader describes a custom header to be used in HTTP probes",
                                       "properties": {
                                         "name": {
-                                          "description": "The header field name",
+                                          "description": "The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.",
                                           "type": "string"
                                         },
                                         "value": {
@@ -3939,7 +4053,7 @@
                                     ]
                                   },
                                   "scheme": {
-                                    "description": "Scheme to use for connecting to the host. Defaults to HTTP.\n\n",
+                                    "description": "Scheme to use for connecting to the host. Defaults to HTTP.",
                                     "type": [
                                       "string",
                                       "null"
@@ -3948,6 +4062,23 @@
                                 },
                                 "required": [
                                   "port"
+                                ],
+                                "type": [
+                                  "object",
+                                  "null"
+                                ]
+                              },
+                              "sleep": {
+                                "description": "SleepAction describes a \"sleep\" action.",
+                                "properties": {
+                                  "seconds": {
+                                    "description": "Seconds is the number of seconds to sleep.",
+                                    "format": "int64",
+                                    "type": "integer"
+                                  }
+                                },
+                                "required": [
+                                  "seconds"
                                 ],
                                 "type": [
                                   "object",
@@ -4073,7 +4204,7 @@
                                   "description": "HTTPHeader describes a custom header to be used in HTTP probes",
                                   "properties": {
                                     "name": {
-                                      "description": "The header field name",
+                                      "description": "The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.",
                                       "type": "string"
                                     },
                                     "value": {
@@ -4119,7 +4250,7 @@
                                 ]
                               },
                               "scheme": {
-                                "description": "Scheme to use for connecting to the host. Defaults to HTTP.\n\n",
+                                "description": "Scheme to use for connecting to the host. Defaults to HTTP.",
                                 "type": [
                                   "string",
                                   "null"
@@ -4252,7 +4383,7 @@
                               ]
                             },
                             "protocol": {
-                              "description": "Protocol for port. Must be UDP, TCP, or SCTP. Defaults to \"TCP\".\n\n",
+                              "description": "Protocol for port. Must be UDP, TCP, or SCTP. Defaults to \"TCP\".",
                               "type": [
                                 "string",
                                 "null"
@@ -4351,7 +4482,7 @@
                                   "description": "HTTPHeader describes a custom header to be used in HTTP probes",
                                   "properties": {
                                     "name": {
-                                      "description": "The header field name",
+                                      "description": "The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.",
                                       "type": "string"
                                     },
                                     "value": {
@@ -4397,7 +4528,7 @@
                                 ]
                               },
                               "scheme": {
-                                "description": "Scheme to use for connecting to the host. Defaults to HTTP.\n\n",
+                                "description": "Scheme to use for connecting to the host. Defaults to HTTP.",
                                 "type": [
                                   "string",
                                   "null"
@@ -4493,9 +4624,65 @@
                           "null"
                         ]
                       },
+                      "resizePolicy": {
+                        "description": "Resources resize policy for the container.",
+                        "items": {
+                          "description": "ContainerResizePolicy represents resource resize policy for the container.",
+                          "properties": {
+                            "resourceName": {
+                              "description": "Name of the resource to which this resource resize policy applies. Supported values: cpu, memory.",
+                              "type": "string"
+                            },
+                            "restartPolicy": {
+                              "description": "Restart policy to apply when specified resource is resized. If not specified, it defaults to NotRequired.",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "resourceName",
+                            "restartPolicy"
+                          ],
+                          "type": [
+                            "object",
+                            "null"
+                          ]
+                        },
+                        "type": [
+                          "array",
+                          "null"
+                        ],
+                        "x-kubernetes-list-type": "atomic"
+                      },
                       "resources": {
                         "description": "ResourceRequirements describes the compute resource requirements.",
                         "properties": {
+                          "claims": {
+                            "description": "Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container.\n\nThis is an alpha field and requires enabling the DynamicResourceAllocation feature gate.\n\nThis field is immutable. It can only be set for containers.",
+                            "items": {
+                              "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
+                              "properties": {
+                                "name": {
+                                  "description": "Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container.",
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "name"
+                              ],
+                              "type": [
+                                "object",
+                                "null"
+                              ]
+                            },
+                            "type": [
+                              "array",
+                              "null"
+                            ],
+                            "x-kubernetes-list-map-keys": [
+                              "name"
+                            ],
+                            "x-kubernetes-list-type": "map"
+                          },
                           "limits": {
                             "additionalProperties": {
                               "oneOf": [
@@ -4536,7 +4723,7 @@
                                 }
                               ]
                             },
-                            "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+                            "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
                             "type": [
                               "object",
                               "null"
@@ -4545,6 +4732,13 @@
                         },
                         "type": [
                           "object",
+                          "null"
+                        ]
+                      },
+                      "restartPolicy": {
+                        "description": "Restart policy for the container to manage the restart behavior of each container within a pod. This may only be set for init containers. You cannot set this field on ephemeral containers.",
+                        "type": [
+                          "string",
                           "null"
                         ]
                       },
@@ -4678,14 +4872,14 @@
                             "description": "SeccompProfile defines a pod/container's seccomp profile settings. Only one profile source may be set.",
                             "properties": {
                               "localhostProfile": {
-                                "description": "localhostProfile indicates a profile defined in a file on the node should be used. The profile must be preconfigured on the node to work. Must be a descending path, relative to the kubelet's configured seccomp profile location. Must only be set if type is \"Localhost\".",
+                                "description": "localhostProfile indicates a profile defined in a file on the node should be used. The profile must be preconfigured on the node to work. Must be a descending path, relative to the kubelet's configured seccomp profile location. Must be set if type is \"Localhost\". Must NOT be set for any other type.",
                                 "type": [
                                   "string",
                                   "null"
                                 ]
                               },
                               "type": {
-                                "description": "type indicates which kind of seccomp profile will be applied. Valid options are:\n\nLocalhost - a profile defined in a file on the node should be used. RuntimeDefault - the container runtime default profile should be used. Unconfined - no profile should be applied.\n\n",
+                                "description": "type indicates which kind of seccomp profile will be applied. Valid options are:\n\nLocalhost - a profile defined in a file on the node should be used. RuntimeDefault - the container runtime default profile should be used. Unconfined - no profile should be applied.",
                                 "type": "string"
                               }
                             },
@@ -4723,7 +4917,7 @@
                                 ]
                               },
                               "hostProcess": {
-                                "description": "HostProcess determines if a container should be run as a 'Host Process' container. This field is alpha-level and will only be honored by components that enable the WindowsHostProcessContainers feature flag. Setting this field without the feature flag will result in errors when validating the Pod. All of a Pod's containers must have the same effective HostProcess value (it is not allowed to have a mix of HostProcess containers and non-HostProcess containers).  In addition, if HostProcess is true then HostNetwork must also be set to true.",
+                                "description": "HostProcess determines if a container should be run as a 'Host Process' container. All of a Pod's containers must have the same effective HostProcess value (it is not allowed to have a mix of HostProcess containers and non-HostProcess containers). In addition, if HostProcess is true then HostNetwork must also be set to true.",
                                 "type": [
                                   "boolean",
                                   "null"
@@ -4820,7 +5014,7 @@
                                   "description": "HTTPHeader describes a custom header to be used in HTTP probes",
                                   "properties": {
                                     "name": {
-                                      "description": "The header field name",
+                                      "description": "The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.",
                                       "type": "string"
                                     },
                                     "value": {
@@ -4866,7 +5060,7 @@
                                 ]
                               },
                               "scheme": {
-                                "description": "Scheme to use for connecting to the host. Defaults to HTTP.\n\n",
+                                "description": "Scheme to use for connecting to the host. Defaults to HTTP.",
                                 "type": [
                                   "string",
                                   "null"
@@ -4991,7 +5185,7 @@
                         ]
                       },
                       "terminationMessagePolicy": {
-                        "description": "Indicate how the termination message should be populated. File will use the contents of terminationMessagePath to populate the container status message on both success and failure. FallbackToLogsOnError will use the last chunk of container log output if the termination message file is empty and the container exited with an error. The log output is limited to 2048 bytes or 80 lines, whichever is smaller. Defaults to File. Cannot be updated.\n\n",
+                        "description": "Indicate how the termination message should be populated. File will use the contents of terminationMessagePath to populate the container status message on both success and failure. FallbackToLogsOnError will use the last chunk of container log output if the termination message file is empty and the container exited with an error. The log output is limited to 2048 bytes or 80 lines, whichever is smaller. Defaults to File. Cannot be updated.",
                         "type": [
                           "string",
                           "null"
@@ -5169,6 +5363,13 @@
                 },
                 "hostPID": {
                   "description": "Use the host's pid namespace. Optional: Default to false.",
+                  "type": [
+                    "boolean",
+                    "null"
+                  ]
+                },
+                "hostUsers": {
+                  "description": "Use the host's user namespace. Optional: Default to true. If set to true or not present, the pod will be run in the host user namespace, useful for when the pod needs a feature only available to the host user namespace, such as loading a kernel module with CAP_SYS_MODULE. When set to false, a new userns is created for the pod. Setting false is useful for mitigating container breakout vulnerabilities even allowing users to run their containers as root without actually having root privileges on the host. This field is alpha-level and is only honored by servers that enable the UserNamespacesSupport feature.",
                   "type": [
                     "boolean",
                     "null"
@@ -5482,7 +5683,7 @@
                         ]
                       },
                       "imagePullPolicy": {
-                        "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images\n\n",
+                        "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
                         "type": [
                           "string",
                           "null"
@@ -5532,7 +5733,7 @@
                                       "description": "HTTPHeader describes a custom header to be used in HTTP probes",
                                       "properties": {
                                         "name": {
-                                          "description": "The header field name",
+                                          "description": "The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.",
                                           "type": "string"
                                         },
                                         "value": {
@@ -5578,7 +5779,7 @@
                                     ]
                                   },
                                   "scheme": {
-                                    "description": "Scheme to use for connecting to the host. Defaults to HTTP.\n\n",
+                                    "description": "Scheme to use for connecting to the host. Defaults to HTTP.",
                                     "type": [
                                       "string",
                                       "null"
@@ -5587,6 +5788,23 @@
                                 },
                                 "required": [
                                   "port"
+                                ],
+                                "type": [
+                                  "object",
+                                  "null"
+                                ]
+                              },
+                              "sleep": {
+                                "description": "SleepAction describes a \"sleep\" action.",
+                                "properties": {
+                                  "seconds": {
+                                    "description": "Seconds is the number of seconds to sleep.",
+                                    "format": "int64",
+                                    "type": "integer"
+                                  }
+                                },
+                                "required": [
+                                  "seconds"
                                 ],
                                 "type": [
                                   "object",
@@ -5675,7 +5893,7 @@
                                       "description": "HTTPHeader describes a custom header to be used in HTTP probes",
                                       "properties": {
                                         "name": {
-                                          "description": "The header field name",
+                                          "description": "The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.",
                                           "type": "string"
                                         },
                                         "value": {
@@ -5721,7 +5939,7 @@
                                     ]
                                   },
                                   "scheme": {
-                                    "description": "Scheme to use for connecting to the host. Defaults to HTTP.\n\n",
+                                    "description": "Scheme to use for connecting to the host. Defaults to HTTP.",
                                     "type": [
                                       "string",
                                       "null"
@@ -5730,6 +5948,23 @@
                                 },
                                 "required": [
                                   "port"
+                                ],
+                                "type": [
+                                  "object",
+                                  "null"
+                                ]
+                              },
+                              "sleep": {
+                                "description": "SleepAction describes a \"sleep\" action.",
+                                "properties": {
+                                  "seconds": {
+                                    "description": "Seconds is the number of seconds to sleep.",
+                                    "format": "int64",
+                                    "type": "integer"
+                                  }
+                                },
+                                "required": [
+                                  "seconds"
                                 ],
                                 "type": [
                                   "object",
@@ -5855,7 +6090,7 @@
                                   "description": "HTTPHeader describes a custom header to be used in HTTP probes",
                                   "properties": {
                                     "name": {
-                                      "description": "The header field name",
+                                      "description": "The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.",
                                       "type": "string"
                                     },
                                     "value": {
@@ -5901,7 +6136,7 @@
                                 ]
                               },
                               "scheme": {
-                                "description": "Scheme to use for connecting to the host. Defaults to HTTP.\n\n",
+                                "description": "Scheme to use for connecting to the host. Defaults to HTTP.",
                                 "type": [
                                   "string",
                                   "null"
@@ -6002,7 +6237,7 @@
                         "type": "string"
                       },
                       "ports": {
-                        "description": "List of ports to expose from the container. Exposing a port here gives the system additional information about the network connections a container uses, but is primarily informational. Not specifying a port here DOES NOT prevent that port from being exposed. Any port which is listening on the default \"0.0.0.0\" address inside a container will be accessible from the network. Cannot be updated.",
+                        "description": "List of ports to expose from the container. Not specifying a port here DOES NOT prevent that port from being exposed. Any port which is listening on the default \"0.0.0.0\" address inside a container will be accessible from the network. Modifying this array with strategic merge patch may corrupt the data. For more information See https://github.com/kubernetes/kubernetes/issues/108255. Cannot be updated.",
                         "items": {
                           "description": "ContainerPort represents a network port in a single container.",
                           "properties": {
@@ -6034,7 +6269,7 @@
                               ]
                             },
                             "protocol": {
-                              "description": "Protocol for port. Must be UDP, TCP, or SCTP. Defaults to \"TCP\".\n\n",
+                              "description": "Protocol for port. Must be UDP, TCP, or SCTP. Defaults to \"TCP\".",
                               "type": [
                                 "string",
                                 "null"
@@ -6133,7 +6368,7 @@
                                   "description": "HTTPHeader describes a custom header to be used in HTTP probes",
                                   "properties": {
                                     "name": {
-                                      "description": "The header field name",
+                                      "description": "The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.",
                                       "type": "string"
                                     },
                                     "value": {
@@ -6179,7 +6414,7 @@
                                 ]
                               },
                               "scheme": {
-                                "description": "Scheme to use for connecting to the host. Defaults to HTTP.\n\n",
+                                "description": "Scheme to use for connecting to the host. Defaults to HTTP.",
                                 "type": [
                                   "string",
                                   "null"
@@ -6275,9 +6510,65 @@
                           "null"
                         ]
                       },
+                      "resizePolicy": {
+                        "description": "Resources resize policy for the container.",
+                        "items": {
+                          "description": "ContainerResizePolicy represents resource resize policy for the container.",
+                          "properties": {
+                            "resourceName": {
+                              "description": "Name of the resource to which this resource resize policy applies. Supported values: cpu, memory.",
+                              "type": "string"
+                            },
+                            "restartPolicy": {
+                              "description": "Restart policy to apply when specified resource is resized. If not specified, it defaults to NotRequired.",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "resourceName",
+                            "restartPolicy"
+                          ],
+                          "type": [
+                            "object",
+                            "null"
+                          ]
+                        },
+                        "type": [
+                          "array",
+                          "null"
+                        ],
+                        "x-kubernetes-list-type": "atomic"
+                      },
                       "resources": {
                         "description": "ResourceRequirements describes the compute resource requirements.",
                         "properties": {
+                          "claims": {
+                            "description": "Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container.\n\nThis is an alpha field and requires enabling the DynamicResourceAllocation feature gate.\n\nThis field is immutable. It can only be set for containers.",
+                            "items": {
+                              "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
+                              "properties": {
+                                "name": {
+                                  "description": "Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container.",
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "name"
+                              ],
+                              "type": [
+                                "object",
+                                "null"
+                              ]
+                            },
+                            "type": [
+                              "array",
+                              "null"
+                            ],
+                            "x-kubernetes-list-map-keys": [
+                              "name"
+                            ],
+                            "x-kubernetes-list-type": "map"
+                          },
                           "limits": {
                             "additionalProperties": {
                               "oneOf": [
@@ -6318,7 +6609,7 @@
                                 }
                               ]
                             },
-                            "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+                            "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
                             "type": [
                               "object",
                               "null"
@@ -6327,6 +6618,13 @@
                         },
                         "type": [
                           "object",
+                          "null"
+                        ]
+                      },
+                      "restartPolicy": {
+                        "description": "RestartPolicy defines the restart behavior of individual containers in a pod. This field may only be set for init containers, and the only allowed value is \"Always\". For non-init containers or when this field is not specified, the restart behavior is defined by the Pod's restart policy and the container type. Setting the RestartPolicy as \"Always\" for the init container will have the following effect: this init container will be continually restarted on exit until all regular containers have terminated. Once all regular containers have completed, all init containers with restartPolicy \"Always\" will be shut down. This lifecycle differs from normal init containers and is often referred to as a \"sidecar\" container. Although this init container still starts in the init container sequence, it does not wait for the container to complete before proceeding to the next init container. Instead, the next init container starts immediately after this init container is started, or after any startupProbe has successfully completed.",
+                        "type": [
+                          "string",
                           "null"
                         ]
                       },
@@ -6460,14 +6758,14 @@
                             "description": "SeccompProfile defines a pod/container's seccomp profile settings. Only one profile source may be set.",
                             "properties": {
                               "localhostProfile": {
-                                "description": "localhostProfile indicates a profile defined in a file on the node should be used. The profile must be preconfigured on the node to work. Must be a descending path, relative to the kubelet's configured seccomp profile location. Must only be set if type is \"Localhost\".",
+                                "description": "localhostProfile indicates a profile defined in a file on the node should be used. The profile must be preconfigured on the node to work. Must be a descending path, relative to the kubelet's configured seccomp profile location. Must be set if type is \"Localhost\". Must NOT be set for any other type.",
                                 "type": [
                                   "string",
                                   "null"
                                 ]
                               },
                               "type": {
-                                "description": "type indicates which kind of seccomp profile will be applied. Valid options are:\n\nLocalhost - a profile defined in a file on the node should be used. RuntimeDefault - the container runtime default profile should be used. Unconfined - no profile should be applied.\n\n",
+                                "description": "type indicates which kind of seccomp profile will be applied. Valid options are:\n\nLocalhost - a profile defined in a file on the node should be used. RuntimeDefault - the container runtime default profile should be used. Unconfined - no profile should be applied.",
                                 "type": "string"
                               }
                             },
@@ -6505,7 +6803,7 @@
                                 ]
                               },
                               "hostProcess": {
-                                "description": "HostProcess determines if a container should be run as a 'Host Process' container. This field is alpha-level and will only be honored by components that enable the WindowsHostProcessContainers feature flag. Setting this field without the feature flag will result in errors when validating the Pod. All of a Pod's containers must have the same effective HostProcess value (it is not allowed to have a mix of HostProcess containers and non-HostProcess containers).  In addition, if HostProcess is true then HostNetwork must also be set to true.",
+                                "description": "HostProcess determines if a container should be run as a 'Host Process' container. All of a Pod's containers must have the same effective HostProcess value (it is not allowed to have a mix of HostProcess containers and non-HostProcess containers). In addition, if HostProcess is true then HostNetwork must also be set to true.",
                                 "type": [
                                   "boolean",
                                   "null"
@@ -6602,7 +6900,7 @@
                                   "description": "HTTPHeader describes a custom header to be used in HTTP probes",
                                   "properties": {
                                     "name": {
-                                      "description": "The header field name",
+                                      "description": "The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.",
                                       "type": "string"
                                     },
                                     "value": {
@@ -6648,7 +6946,7 @@
                                 ]
                               },
                               "scheme": {
-                                "description": "Scheme to use for connecting to the host. Defaults to HTTP.\n\n",
+                                "description": "Scheme to use for connecting to the host. Defaults to HTTP.",
                                 "type": [
                                   "string",
                                   "null"
@@ -6766,7 +7064,7 @@
                         ]
                       },
                       "terminationMessagePolicy": {
-                        "description": "Indicate how the termination message should be populated. File will use the contents of terminationMessagePath to populate the container status message on both success and failure. FallbackToLogsOnError will use the last chunk of container log output if the termination message file is empty and the container exited with an error. The log output is limited to 2048 bytes or 80 lines, whichever is smaller. Defaults to File. Cannot be updated.\n\n",
+                        "description": "Indicate how the termination message should be populated. File will use the contents of terminationMessagePath to populate the container status message on both success and failure. FallbackToLogsOnError will use the last chunk of container log output if the termination message file is empty and the container exited with an error. The log output is limited to 2048 bytes or 80 lines, whichever is smaller. Defaults to File. Cannot be updated.",
                         "type": [
                           "string",
                           "null"
@@ -6995,8 +7293,60 @@
                     "null"
                   ]
                 },
+                "resourceClaims": {
+                  "description": "ResourceClaims defines which ResourceClaims must be allocated and reserved before the Pod is allowed to start. The resources will be made available to those containers which consume them by name.\n\nThis is an alpha field and requires enabling the DynamicResourceAllocation feature gate.\n\nThis field is immutable.",
+                  "items": {
+                    "description": "PodResourceClaim references exactly one ResourceClaim through a ClaimSource. It adds a name to it that uniquely identifies the ResourceClaim inside the Pod. Containers that need access to the ResourceClaim reference it with this name.",
+                    "properties": {
+                      "name": {
+                        "description": "Name uniquely identifies this resource claim inside the pod. This must be a DNS_LABEL.",
+                        "type": "string"
+                      },
+                      "source": {
+                        "description": "ClaimSource describes a reference to a ResourceClaim.\n\nExactly one of these fields should be set.  Consumers of this type must treat an empty object as if it has an unknown value.",
+                        "properties": {
+                          "resourceClaimName": {
+                            "description": "ResourceClaimName is the name of a ResourceClaim object in the same namespace as this pod.",
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "resourceClaimTemplateName": {
+                            "description": "ResourceClaimTemplateName is the name of a ResourceClaimTemplate object in the same namespace as this pod.\n\nThe template will be used to create a new ResourceClaim, which will be bound to this pod. When this pod is deleted, the ResourceClaim will also be deleted. The pod name and resource name, along with a generated component, will be used to form a unique name for the ResourceClaim, which will be recorded in pod.status.resourceClaimStatuses.\n\nThis field is immutable and no changes will be made to the corresponding ResourceClaim by the control plane after creating the ResourceClaim.",
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          }
+                        },
+                        "type": [
+                          "object",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "name"
+                    ],
+                    "type": [
+                      "object",
+                      "null"
+                    ]
+                  },
+                  "type": [
+                    "array",
+                    "null"
+                  ],
+                  "x-kubernetes-list-map-keys": [
+                    "name"
+                  ],
+                  "x-kubernetes-list-type": "map",
+                  "x-kubernetes-patch-merge-key": "name",
+                  "x-kubernetes-patch-strategy": "merge,retainKeys"
+                },
                 "restartPolicy": {
-                  "description": "Restart policy for all containers within the pod. One of Always, OnFailure, Never. Default to Always. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#restart-policy\n\n",
+                  "description": "Restart policy for all containers within the pod. One of Always, OnFailure, Never. In some contexts, only a subset of those values may be permitted. Default to Always. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#restart-policy",
                   "type": [
                     "string",
                     "null"
@@ -7015,6 +7365,35 @@
                     "string",
                     "null"
                   ]
+                },
+                "schedulingGates": {
+                  "description": "SchedulingGates is an opaque list of values that if specified will block scheduling the pod. If schedulingGates is not empty, the pod will stay in the SchedulingGated state and the scheduler will not attempt to schedule the pod.\n\nSchedulingGates can only be set at pod creation time, and be removed only afterwards.\n\nThis is a beta feature enabled by the PodSchedulingReadiness feature gate.",
+                  "items": {
+                    "description": "PodSchedulingGate is associated to a Pod to guard its scheduling.",
+                    "properties": {
+                      "name": {
+                        "description": "Name of the scheduling gate. Each scheduling gate must have a unique name field.",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "name"
+                    ],
+                    "type": [
+                      "object",
+                      "null"
+                    ]
+                  },
+                  "type": [
+                    "array",
+                    "null"
+                  ],
+                  "x-kubernetes-list-map-keys": [
+                    "name"
+                  ],
+                  "x-kubernetes-list-type": "map",
+                  "x-kubernetes-patch-merge-key": "name",
+                  "x-kubernetes-patch-strategy": "merge"
                 },
                 "securityContext": {
                   "description": "PodSecurityContext holds pod-level security attributes and common container settings. Some fields are also present in container.securityContext.  Field values of container.securityContext take precedence over field values of PodSecurityContext.",
@@ -7098,14 +7477,14 @@
                       "description": "SeccompProfile defines a pod/container's seccomp profile settings. Only one profile source may be set.",
                       "properties": {
                         "localhostProfile": {
-                          "description": "localhostProfile indicates a profile defined in a file on the node should be used. The profile must be preconfigured on the node to work. Must be a descending path, relative to the kubelet's configured seccomp profile location. Must only be set if type is \"Localhost\".",
+                          "description": "localhostProfile indicates a profile defined in a file on the node should be used. The profile must be preconfigured on the node to work. Must be a descending path, relative to the kubelet's configured seccomp profile location. Must be set if type is \"Localhost\". Must NOT be set for any other type.",
                           "type": [
                             "string",
                             "null"
                           ]
                         },
                         "type": {
-                          "description": "type indicates which kind of seccomp profile will be applied. Valid options are:\n\nLocalhost - a profile defined in a file on the node should be used. RuntimeDefault - the container runtime default profile should be used. Unconfined - no profile should be applied.\n\n",
+                          "description": "type indicates which kind of seccomp profile will be applied. Valid options are:\n\nLocalhost - a profile defined in a file on the node should be used. RuntimeDefault - the container runtime default profile should be used. Unconfined - no profile should be applied.",
                           "type": "string"
                         }
                       },
@@ -7126,7 +7505,7 @@
                       ]
                     },
                     "supplementalGroups": {
-                      "description": "A list of groups applied to the first process run in each container, in addition to the container's primary GID.  If unspecified, no groups will be added to any container. Note that this field cannot be set when spec.os.name is windows.",
+                      "description": "A list of groups applied to the first process run in each container, in addition to the container's primary GID, the fsGroup (if specified), and group memberships defined in the container image for the uid of the container process. If unspecified, no additional groups are added to any container. Note that group memberships defined in the container image for the uid of the container process are still effective, even if they are not included in this list. Note that this field cannot be set when spec.os.name is windows.",
                       "items": {
                         "format": "int64",
                         "type": [
@@ -7185,7 +7564,7 @@
                           ]
                         },
                         "hostProcess": {
-                          "description": "HostProcess determines if a container should be run as a 'Host Process' container. This field is alpha-level and will only be honored by components that enable the WindowsHostProcessContainers feature flag. Setting this field without the feature flag will result in errors when validating the Pod. All of a Pod's containers must have the same effective HostProcess value (it is not allowed to have a mix of HostProcess containers and non-HostProcess containers).  In addition, if HostProcess is true then HostNetwork must also be set to true.",
+                          "description": "HostProcess determines if a container should be run as a 'Host Process' container. All of a Pod's containers must have the same effective HostProcess value (it is not allowed to have a mix of HostProcess containers and non-HostProcess containers). In addition, if HostProcess is true then HostNetwork must also be set to true.",
                           "type": [
                             "boolean",
                             "null"
@@ -7259,7 +7638,7 @@
                     "description": "The pod this Toleration is attached to tolerates any taint that matches the triple <key,value,effect> using the matching operator <operator>.",
                     "properties": {
                       "effect": {
-                        "description": "Effect indicates the taint effect to match. Empty means match all taint effects. When specified, allowed values are NoSchedule, PreferNoSchedule and NoExecute.\n\n",
+                        "description": "Effect indicates the taint effect to match. Empty means match all taint effects. When specified, allowed values are NoSchedule, PreferNoSchedule and NoExecute.",
                         "type": [
                           "string",
                           "null"
@@ -7273,7 +7652,7 @@
                         ]
                       },
                       "operator": {
-                        "description": "Operator represents a key's relationship to the value. Valid operators are Exists and Equal. Defaults to Equal. Exists is equivalent to wildcard for value, so that a pod can tolerate all taints of a particular category.\n\n",
+                        "description": "Operator represents a key's relationship to the value. Valid operators are Exists and Equal. Defaults to Equal. Exists is equivalent to wildcard for value, so that a pod can tolerate all taints of a particular category.",
                         "type": [
                           "string",
                           "null"
@@ -7320,9 +7699,7 @@
                               "properties": {
                                 "key": {
                                   "description": "key is the label key that the selector applies to.",
-                                  "type": "string",
-                                  "x-kubernetes-patch-merge-key": "key",
-                                  "x-kubernetes-patch-strategy": "merge"
+                                  "type": "string"
                                 },
                                 "operator": {
                                   "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
@@ -7376,25 +7753,53 @@
                         ],
                         "x-kubernetes-map-type": "atomic"
                       },
+                      "matchLabelKeys": {
+                        "description": "MatchLabelKeys is a set of pod label keys to select the pods over which spreading will be calculated. The keys are used to lookup values from the incoming pod labels, those key-value labels are ANDed with labelSelector to select the group of existing pods over which spreading will be calculated for the incoming pod. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. MatchLabelKeys cannot be set when LabelSelector isn't set. Keys that don't exist in the incoming pod labels will be ignored. A null or empty list means only match against labelSelector.\n\nThis is a beta field and requires the MatchLabelKeysInPodTopologySpread feature gate to be enabled (enabled by default).",
+                        "items": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "type": [
+                          "array",
+                          "null"
+                        ],
+                        "x-kubernetes-list-type": "atomic"
+                      },
                       "maxSkew": {
                         "description": "MaxSkew describes the degree to which pods may be unevenly distributed. When `whenUnsatisfiable=DoNotSchedule`, it is the maximum permitted difference between the number of matching pods in the target topology and the global minimum. The global minimum is the minimum number of matching pods in an eligible domain or zero if the number of eligible domains is less than MinDomains. For example, in a 3-zone cluster, MaxSkew is set to 1, and pods with the same labelSelector spread as 2/2/1: In this case, the global minimum is 1. | zone1 | zone2 | zone3 | |  P P  |  P P  |   P   | - if MaxSkew is 1, incoming pod can only be scheduled to zone3 to become 2/2/2; scheduling it onto zone1(zone2) would make the ActualSkew(3-1) on zone1(zone2) violate MaxSkew(1). - if MaxSkew is 2, incoming pod can be scheduled onto any zone. When `whenUnsatisfiable=ScheduleAnyway`, it is used to give higher precedence to topologies that satisfy it. It's a required field. Default value is 1 and 0 is not allowed.",
                         "format": "int32",
                         "type": "integer"
                       },
                       "minDomains": {
-                        "description": "MinDomains indicates a minimum number of eligible domains. When the number of eligible domains with matching topology keys is less than minDomains, Pod Topology Spread treats \"global minimum\" as 0, and then the calculation of Skew is performed. And when the number of eligible domains with matching topology keys equals or greater than minDomains, this value has no effect on scheduling. As a result, when the number of eligible domains is less than minDomains, scheduler won't schedule more than maxSkew Pods to those domains. If value is nil, the constraint behaves as if MinDomains is equal to 1. Valid values are integers greater than 0. When value is not nil, WhenUnsatisfiable must be DoNotSchedule.\n\nFor example, in a 3-zone cluster, MaxSkew is set to 2, MinDomains is set to 5 and pods with the same labelSelector spread as 2/2/2: | zone1 | zone2 | zone3 | |  P P  |  P P  |  P P  | The number of domains is less than 5(MinDomains), so \"global minimum\" is treated as 0. In this situation, new pod with the same labelSelector cannot be scheduled, because computed skew will be 3(3 - 0) if new Pod is scheduled to any of the three zones, it will violate MaxSkew.\n\nThis is an alpha field and requires enabling MinDomainsInPodTopologySpread feature gate.",
+                        "description": "MinDomains indicates a minimum number of eligible domains. When the number of eligible domains with matching topology keys is less than minDomains, Pod Topology Spread treats \"global minimum\" as 0, and then the calculation of Skew is performed. And when the number of eligible domains with matching topology keys equals or greater than minDomains, this value has no effect on scheduling. As a result, when the number of eligible domains is less than minDomains, scheduler won't schedule more than maxSkew Pods to those domains. If value is nil, the constraint behaves as if MinDomains is equal to 1. Valid values are integers greater than 0. When value is not nil, WhenUnsatisfiable must be DoNotSchedule.\n\nFor example, in a 3-zone cluster, MaxSkew is set to 2, MinDomains is set to 5 and pods with the same labelSelector spread as 2/2/2: | zone1 | zone2 | zone3 | |  P P  |  P P  |  P P  | The number of domains is less than 5(MinDomains), so \"global minimum\" is treated as 0. In this situation, new pod with the same labelSelector cannot be scheduled, because computed skew will be 3(3 - 0) if new Pod is scheduled to any of the three zones, it will violate MaxSkew.\n\nThis is a beta field and requires the MinDomainsInPodTopologySpread feature gate to be enabled (enabled by default).",
                         "format": "int32",
                         "type": [
                           "integer",
                           "null"
                         ]
                       },
+                      "nodeAffinityPolicy": {
+                        "description": "NodeAffinityPolicy indicates how we will treat Pod's nodeAffinity/nodeSelector when calculating pod topology spread skew. Options are: - Honor: only nodes matching nodeAffinity/nodeSelector are included in the calculations. - Ignore: nodeAffinity/nodeSelector are ignored. All nodes are included in the calculations.\n\nIf this value is nil, the behavior is equivalent to the Honor policy. This is a beta-level feature default enabled by the NodeInclusionPolicyInPodTopologySpread feature flag.",
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "nodeTaintsPolicy": {
+                        "description": "NodeTaintsPolicy indicates how we will treat node taints when calculating pod topology spread skew. Options are: - Honor: nodes without taints, along with tainted nodes for which the incoming pod has a toleration, are included. - Ignore: node taints are ignored. All nodes are included.\n\nIf this value is nil, the behavior is equivalent to the Ignore policy. This is a beta-level feature default enabled by the NodeInclusionPolicyInPodTopologySpread feature flag.",
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
                       "topologyKey": {
-                        "description": "TopologyKey is the key of node labels. Nodes that have a label with this key and identical values are considered to be in the same topology. We consider each <key, value> as a \"bucket\", and try to put balanced number of pods into each bucket. We define a domain as a particular instance of a topology. Also, we define an eligible domain as a domain whose nodes match the node selector. e.g. If TopologyKey is \"kubernetes.io/hostname\", each Node is a domain of that topology. And, if TopologyKey is \"topology.kubernetes.io/zone\", each zone is a domain of that topology. It's a required field.",
+                        "description": "TopologyKey is the key of node labels. Nodes that have a label with this key and identical values are considered to be in the same topology. We consider each <key, value> as a \"bucket\", and try to put balanced number of pods into each bucket. We define a domain as a particular instance of a topology. Also, we define an eligible domain as a domain whose nodes meet the requirements of nodeAffinityPolicy and nodeTaintsPolicy. e.g. If TopologyKey is \"kubernetes.io/hostname\", each Node is a domain of that topology. And, if TopologyKey is \"topology.kubernetes.io/zone\", each zone is a domain of that topology. It's a required field.",
                         "type": "string"
                       },
                       "whenUnsatisfiable": {
-                        "description": "WhenUnsatisfiable indicates how to deal with a pod if it doesn't satisfy the spread constraint. - DoNotSchedule (default) tells the scheduler not to schedule it. - ScheduleAnyway tells the scheduler to schedule the pod in any location,\n  but giving higher precedence to topologies that would help reduce the\n  skew.\nA constraint is considered \"Unsatisfiable\" for an incoming pod if and only if every possible node assignment for that pod would violate \"MaxSkew\" on some topology. For example, in a 3-zone cluster, MaxSkew is set to 1, and pods with the same labelSelector spread as 3/1/1: | zone1 | zone2 | zone3 | | P P P |   P   |   P   | If WhenUnsatisfiable is set to DoNotSchedule, incoming pod can only be scheduled to zone2(zone3) to become 3/2/1(3/1/2) as ActualSkew(2-1) on zone2(zone3) satisfies MaxSkew(1). In other words, the cluster can still be imbalanced, but scheduler won't make it *more* imbalanced. It's a required field.\n\n",
+                        "description": "WhenUnsatisfiable indicates how to deal with a pod if it doesn't satisfy the spread constraint. - DoNotSchedule (default) tells the scheduler not to schedule it. - ScheduleAnyway tells the scheduler to schedule the pod in any location,\n  but giving higher precedence to topologies that would help reduce the\n  skew.\nA constraint is considered \"Unsatisfiable\" for an incoming pod if and only if every possible node assignment for that pod would violate \"MaxSkew\" on some topology. For example, in a 3-zone cluster, MaxSkew is set to 1, and pods with the same labelSelector spread as 3/1/1: | zone1 | zone2 | zone3 | | P P P |   P   |   P   | If WhenUnsatisfiable is set to DoNotSchedule, incoming pod can only be scheduled to zone2(zone3) to become 3/2/1(3/1/2) as ActualSkew(2-1) on zone2(zone3) satisfies MaxSkew(1). In other words, the cluster can still be imbalanced, but scheduler won't make it *more* imbalanced. It's a required field.",
                         "type": "string"
                       }
                     },
@@ -7941,16 +8346,9 @@
                                         "null"
                                       ]
                                     },
-                                    "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: http://kubernetes.io/docs/user-guide/annotations",
+                                    "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
                                     "type": [
                                       "object",
-                                      "null"
-                                    ]
-                                  },
-                                  "clusterName": {
-                                    "description": "Deprecated: ClusterName is a legacy field that was always cleared by the system and never used; it will be removed completely in 1.25.\n\nThe name in the go struct is changed to help clients detect accidental use.",
-                                    "type": [
-                                      "string",
                                       "null"
                                     ]
                                   },
@@ -8014,7 +8412,7 @@
                                         "null"
                                       ]
                                     },
-                                    "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: http://kubernetes.io/docs/user-guide/labels",
+                                    "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
                                     "type": [
                                       "object",
                                       "null"
@@ -8087,14 +8485,14 @@
                                     ]
                                   },
                                   "name": {
-                                    "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: http://kubernetes.io/docs/user-guide/identifiers#names",
+                                    "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
                                     "type": [
                                       "string",
                                       "null"
                                     ]
                                   },
                                   "namespace": {
-                                    "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: http://kubernetes.io/docs/user-guide/namespaces",
+                                    "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
                                     "type": [
                                       "string",
                                       "null"
@@ -8128,11 +8526,11 @@
                                           "type": "string"
                                         },
                                         "name": {
-                                          "description": "Name of the referent. More info: http://kubernetes.io/docs/user-guide/identifiers#names",
+                                          "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
                                           "type": "string"
                                         },
                                         "uid": {
-                                          "description": "UID of the referent. More info: http://kubernetes.io/docs/user-guide/identifiers#uids",
+                                          "description": "UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids",
                                           "type": "string"
                                         }
                                       },
@@ -8170,7 +8568,7 @@
                                     ]
                                   },
                                   "uid": {
-                                    "description": "UID is the unique in time and space value for this object. It is typically generated by the server on successful creation of a resource and is not allowed to change on PUT operations.\n\nPopulated by the system. Read-only. More info: http://kubernetes.io/docs/user-guide/identifiers#uids",
+                                    "description": "UID is the unique in time and space value for this object. It is typically generated by the server on successful creation of a resource and is not allowed to change on PUT operations.\n\nPopulated by the system. Read-only. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids",
                                     "type": [
                                       "string",
                                       "null"
@@ -8228,7 +8626,6 @@
                                     "x-kubernetes-map-type": "atomic"
                                   },
                                   "dataSourceRef": {
-                                    "description": "TypedLocalObjectReference contains enough information to let you locate the typed referenced object inside the same namespace.",
                                     "properties": {
                                       "apiGroup": {
                                         "description": "APIGroup is the group for the resource being referenced. If APIGroup is not specified, the specified Kind must be in the core API group. For any other third-party types, APIGroup is required.",
@@ -8244,6 +8641,13 @@
                                       "name": {
                                         "description": "Name is the name of resource being referenced",
                                         "type": "string"
+                                      },
+                                      "namespace": {
+                                        "description": "Namespace is the namespace of resource being referenced Note that when a namespace is specified, a gateway.networking.k8s.io/ReferenceGrant object is required in the referent namespace to allow that namespace's owner to accept the reference. See the ReferenceGrant documentation for details. (Alpha) This field requires the CrossNamespaceVolumeDataSource feature gate to be enabled.",
+                                        "type": [
+                                          "string",
+                                          "null"
+                                        ]
                                       }
                                     },
                                     "required": [
@@ -8253,11 +8657,10 @@
                                     "type": [
                                       "object",
                                       "null"
-                                    ],
-                                    "x-kubernetes-map-type": "atomic"
+                                    ]
                                   },
                                   "resources": {
-                                    "description": "ResourceRequirements describes the compute resource requirements.",
+                                    "description": "VolumeResourceRequirements describes the storage resource requirements for a volume.",
                                     "properties": {
                                       "limits": {
                                         "additionalProperties": {
@@ -8299,7 +8702,7 @@
                                             }
                                           ]
                                         },
-                                        "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+                                        "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
                                         "type": [
                                           "object",
                                           "null"
@@ -8321,9 +8724,7 @@
                                           "properties": {
                                             "key": {
                                               "description": "key is the label key that the selector applies to.",
-                                              "type": "string",
-                                              "x-kubernetes-patch-merge-key": "key",
-                                              "x-kubernetes-patch-strategy": "merge"
+                                              "type": "string"
                                             },
                                             "operator": {
                                               "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
@@ -8379,6 +8780,13 @@
                                   },
                                   "storageClassName": {
                                     "description": "storageClassName is the name of the StorageClass required by the claim. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#class-1",
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ]
+                                  },
+                                  "volumeAttributesClassName": {
+                                    "description": "volumeAttributesClassName may be used to set the VolumeAttributesClass used by this claim. If specified, the CSI driver will create or update the volume with the attributes defined in the corresponding VolumeAttributesClass. This has a different purpose than storageClassName, it can be changed after the claim is created. An empty string value means that no VolumeAttributesClass will be applied to the claim but it's not allowed to reset this field to empty string once it is set. If unspecified and the PersistentVolumeClaim is unbound, the default VolumeAttributesClass will be set by the persistentvolume controller if it exists. If the resource referred to by volumeAttributesClass does not exist, this PersistentVolumeClaim will be set to a Pending state, as reflected by the modifyVolumeStatus field, until such as a resource exists. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#volumeattributesclass (Alpha) Using this field requires the VolumeAttributesClass feature gate to be enabled.",
                                     "type": [
                                       "string",
                                       "null"
@@ -8898,6 +9306,107 @@
                             "items": {
                               "description": "Projection that may be projected along with other supported volume types",
                               "properties": {
+                                "clusterTrustBundle": {
+                                  "description": "ClusterTrustBundleProjection describes how to select a set of ClusterTrustBundle objects and project their contents into the pod filesystem.",
+                                  "properties": {
+                                    "labelSelector": {
+                                      "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
+                                      "properties": {
+                                        "matchExpressions": {
+                                          "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
+                                          "items": {
+                                            "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
+                                            "properties": {
+                                              "key": {
+                                                "description": "key is the label key that the selector applies to.",
+                                                "type": "string"
+                                              },
+                                              "operator": {
+                                                "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
+                                                "type": "string"
+                                              },
+                                              "values": {
+                                                "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
+                                                "items": {
+                                                  "type": [
+                                                    "string",
+                                                    "null"
+                                                  ]
+                                                },
+                                                "type": [
+                                                  "array",
+                                                  "null"
+                                                ]
+                                              }
+                                            },
+                                            "required": [
+                                              "key",
+                                              "operator"
+                                            ],
+                                            "type": [
+                                              "object",
+                                              "null"
+                                            ]
+                                          },
+                                          "type": [
+                                            "array",
+                                            "null"
+                                          ]
+                                        },
+                                        "matchLabels": {
+                                          "additionalProperties": {
+                                            "type": [
+                                              "string",
+                                              "null"
+                                            ]
+                                          },
+                                          "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
+                                          "type": [
+                                            "object",
+                                            "null"
+                                          ]
+                                        }
+                                      },
+                                      "type": [
+                                        "object",
+                                        "null"
+                                      ],
+                                      "x-kubernetes-map-type": "atomic"
+                                    },
+                                    "name": {
+                                      "description": "Select a single ClusterTrustBundle by object name.  Mutually-exclusive with signerName and labelSelector.",
+                                      "type": [
+                                        "string",
+                                        "null"
+                                      ]
+                                    },
+                                    "optional": {
+                                      "description": "If true, don't block pod startup if the referenced ClusterTrustBundle(s) aren't available.  If using name, then the named ClusterTrustBundle is allowed not to exist.  If using signerName, then the combination of signerName and labelSelector is allowed to match zero ClusterTrustBundles.",
+                                      "type": [
+                                        "boolean",
+                                        "null"
+                                      ]
+                                    },
+                                    "path": {
+                                      "description": "Relative path from the volume root to write the bundle.",
+                                      "type": "string"
+                                    },
+                                    "signerName": {
+                                      "description": "Select all ClusterTrustBundles that match this signer name. Mutually-exclusive with name.  The contents of all selected ClusterTrustBundles will be unified and deduplicated.",
+                                      "type": [
+                                        "string",
+                                        "null"
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "path"
+                                  ],
+                                  "type": [
+                                    "object",
+                                    "null"
+                                  ]
+                                },
                                 "configMap": {
                                   "description": "Adapts a ConfigMap into a projected volume.\n\nThe contents of the target ConfigMap's Data field will be presented in a projected volume as files using the keys in the Data field as the file names, unless the items element is populated with specific mappings of keys to paths. Note that this is identical to a configmap volume source without the default mode.",
                                   "properties": {
@@ -9566,6 +10075,63 @@
             }
           },
           "type": "object"
+        },
+        "updateStrategy": {
+          "description": "DaemonSetUpdateStrategy is a struct used to control the update strategy for a DaemonSet.",
+          "properties": {
+            "rollingUpdate": {
+              "description": "Spec to control the desired behavior of daemon set rolling update.",
+              "properties": {
+                "maxSurge": {
+                  "oneOf": [
+                    {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    }
+                  ]
+                },
+                "maxUnavailable": {
+                  "oneOf": [
+                    {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    }
+                  ]
+                }
+              },
+              "type": [
+                "object",
+                "null"
+              ]
+            },
+            "type": {
+              "description": "Type of daemon set update. Can be \"RollingUpdate\" or \"OnDelete\". Default is RollingUpdate.",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "type": [
+            "object",
+            "null"
+          ]
         }
       },
       "required": [
@@ -9578,18 +10144,10 @@
       ]
     },
     "status": {
-      "description": "DeploymentStatus is the most recently observed status of the Deployment.",
+      "description": "DaemonSetStatus represents the current status of a daemon set.",
       "properties": {
-        "availableReplicas": {
-          "description": "Total number of available pods (ready for at least minReadySeconds) targeted by this deployment.",
-          "format": "int32",
-          "type": [
-            "integer",
-            "null"
-          ]
-        },
         "collisionCount": {
-          "description": "Count of hash collisions for the Deployment. The Deployment controller uses this field as a collision avoidance mechanism when it needs to create the name for the newest ReplicaSet.",
+          "description": "Count of hash collisions for the DaemonSet. The DaemonSet controller uses this field as a collision avoidance mechanism when it needs to create the name for the newest ControllerRevision.",
           "format": "int32",
           "type": [
             "integer",
@@ -9597,19 +10155,11 @@
           ]
         },
         "conditions": {
-          "description": "Represents the latest available observations of a deployment's current state.",
+          "description": "Represents the latest available observations of a DaemonSet's current state.",
           "items": {
-            "description": "DeploymentCondition describes the state of a deployment at a certain point.",
+            "description": "DaemonSetCondition describes the state of a DaemonSet at a certain point.",
             "properties": {
               "lastTransitionTime": {
-                "description": "Time is a wrapper around time.Time which supports correct marshaling to YAML and JSON.  Wrappers are provided for many of the factory methods that the time package offers.",
-                "format": "date-time",
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "lastUpdateTime": {
                 "description": "Time is a wrapper around time.Time which supports correct marshaling to YAML and JSON.  Wrappers are provided for many of the factory methods that the time package offers.",
                 "format": "date-time",
                 "type": [
@@ -9636,7 +10186,7 @@
                 "type": "string"
               },
               "type": {
-                "description": "Type of deployment condition.",
+                "description": "Type of DaemonSet condition.",
                 "type": "string"
               }
             },
@@ -9656,40 +10206,52 @@
           "x-kubernetes-patch-merge-key": "type",
           "x-kubernetes-patch-strategy": "merge"
         },
+        "currentNumberScheduled": {
+          "description": "The number of nodes that are running at least 1 daemon pod and are supposed to run the daemon pod. More info: https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/",
+          "format": "int32",
+          "type": "integer"
+        },
+        "desiredNumberScheduled": {
+          "description": "The total number of nodes that should be running the daemon pod (including nodes correctly running the daemon pod). More info: https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/",
+          "format": "int32",
+          "type": "integer"
+        },
+        "numberAvailable": {
+          "description": "The number of nodes that should be running the daemon pod and have one or more of the daemon pod running and available (ready for at least spec.minReadySeconds)",
+          "format": "int32",
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "numberMisscheduled": {
+          "description": "The number of nodes that are running the daemon pod, but are not supposed to run the daemon pod. More info: https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/",
+          "format": "int32",
+          "type": "integer"
+        },
+        "numberReady": {
+          "description": "numberReady is the number of nodes that should be running the daemon pod and have one or more of the daemon pod running with a Ready Condition.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "numberUnavailable": {
+          "description": "The number of nodes that should be running the daemon pod and have none of the daemon pod running and available (ready for at least spec.minReadySeconds)",
+          "format": "int32",
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
         "observedGeneration": {
-          "description": "The generation observed by the deployment controller.",
+          "description": "The most recent generation observed by the daemon set controller.",
           "format": "int64",
           "type": [
             "integer",
             "null"
           ]
         },
-        "readyReplicas": {
-          "description": "readyReplicas is the number of pods targeted by this Deployment with a Ready Condition.",
-          "format": "int32",
-          "type": [
-            "integer",
-            "null"
-          ]
-        },
-        "replicas": {
-          "description": "Total number of non-terminated pods targeted by this deployment (their labels match the selector).",
-          "format": "int32",
-          "type": [
-            "integer",
-            "null"
-          ]
-        },
-        "unavailableReplicas": {
-          "description": "Total number of unavailable pods targeted by this deployment. This is the total number of pods that are still required for the deployment to have 100% available capacity. They may either be pods that are running but not yet available or pods that still have not been created.",
-          "format": "int32",
-          "type": [
-            "integer",
-            "null"
-          ]
-        },
-        "updatedReplicas": {
-          "description": "Total number of non-terminated pods targeted by this deployment that have the desired template spec.",
+        "updatedNumberScheduled": {
+          "description": "The total number of nodes that are running updated daemon pod",
           "format": "int32",
           "type": [
             "integer",
@@ -9697,6 +10259,12 @@
           ]
         }
       },
+      "required": [
+        "currentNumberScheduled",
+        "numberMisscheduled",
+        "desiredNumberScheduled",
+        "numberReady"
+      ],
       "type": [
         "object",
         "null"
@@ -9707,7 +10275,7 @@
   "x-kubernetes-group-version-kind": [
     {
       "group": "apps",
-      "kind": "Deployment",
+      "kind": "DaemonSet",
       "version": "v1"
     }
   ],

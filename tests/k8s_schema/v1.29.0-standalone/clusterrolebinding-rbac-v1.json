@@ -1,5 +1,5 @@
 {
-  "description": "ServiceAccount binds together: * a name, understood by users, and perhaps by peripheral systems, for an identity * a principal that can be authenticated and authorized * a set of secrets",
+  "description": "ClusterRoleBinding references a ClusterRole, but not contain it.  It can reference a ClusterRole in the global namespace, and adds who information via Subject.",
   "properties": {
     "apiVersion": {
       "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -8,38 +8,7 @@
         "null"
       ],
       "enum": [
-        "v1"
-      ]
-    },
-    "automountServiceAccountToken": {
-      "description": "AutomountServiceAccountToken indicates whether pods running as this service account should have an API token automatically mounted. Can be overridden at the pod level.",
-      "type": [
-        "boolean",
-        "null"
-      ]
-    },
-    "imagePullSecrets": {
-      "description": "ImagePullSecrets is a list of references to secrets in the same namespace to use for pulling any images in pods that reference this ServiceAccount. ImagePullSecrets are distinct from Secrets because Secrets can be mounted in the pod, but ImagePullSecrets are only accessed by the kubelet. More info: https://kubernetes.io/docs/concepts/containers/images/#specifying-imagepullsecrets-on-a-pod",
-      "items": {
-        "description": "LocalObjectReference contains enough information to let you locate the referenced object inside the same namespace.",
-        "properties": {
-          "name": {
-            "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-            "type": [
-              "string",
-              "null"
-            ]
-          }
-        },
-        "type": [
-          "object",
-          "null"
-        ],
-        "x-kubernetes-map-type": "atomic"
-      },
-      "type": [
-        "array",
-        "null"
+        "rbac.authorization.k8s.io/v1"
       ]
     },
     "kind": {
@@ -49,7 +18,7 @@
         "null"
       ],
       "enum": [
-        "ServiceAccount"
+        "ClusterRoleBinding"
       ]
     },
     "metadata": {
@@ -62,16 +31,9 @@
               "null"
             ]
           },
-          "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: http://kubernetes.io/docs/user-guide/annotations",
+          "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
           "type": [
             "object",
-            "null"
-          ]
-        },
-        "clusterName": {
-          "description": "Deprecated: ClusterName is a legacy field that was always cleared by the system and never used; it will be removed completely in 1.25.\n\nThe name in the go struct is changed to help clients detect accidental use.",
-          "type": [
-            "string",
             "null"
           ]
         },
@@ -135,7 +97,7 @@
               "null"
             ]
           },
-          "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: http://kubernetes.io/docs/user-guide/labels",
+          "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
           "type": [
             "object",
             "null"
@@ -208,14 +170,14 @@
           ]
         },
         "name": {
-          "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: http://kubernetes.io/docs/user-guide/identifiers#names",
+          "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
           "type": [
             "string",
             "null"
           ]
         },
         "namespace": {
-          "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: http://kubernetes.io/docs/user-guide/namespaces",
+          "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
           "type": [
             "string",
             "null"
@@ -249,11 +211,11 @@
                 "type": "string"
               },
               "name": {
-                "description": "Name of the referent. More info: http://kubernetes.io/docs/user-guide/identifiers#names",
+                "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
                 "type": "string"
               },
               "uid": {
-                "description": "UID of the referent. More info: http://kubernetes.io/docs/user-guide/identifiers#uids",
+                "description": "UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids",
                 "type": "string"
               }
             },
@@ -291,7 +253,7 @@
           ]
         },
         "uid": {
-          "description": "UID is the unique in time and space value for this object. It is typically generated by the server on successful creation of a resource and is not allowed to change on PUT operations.\n\nPopulated by the system. Read-only. More info: http://kubernetes.io/docs/user-guide/identifiers#uids",
+          "description": "UID is the unique in time and space value for this object. It is typically generated by the server on successful creation of a resource and is not allowed to change on PUT operations.\n\nPopulated by the system. Read-only. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids",
           "type": [
             "string",
             "null"
@@ -303,61 +265,65 @@
         "null"
       ]
     },
-    "secrets": {
-      "description": "Secrets is a list of the secrets in the same namespace that pods running using this ServiceAccount are allowed to use. Pods are only limited to this list if this service account has a \"kubernetes.io/enforce-mountable-secrets\" annotation set to \"true\". This field should not be used to find auto-generated service account token secrets for use outside of pods. Instead, tokens can be requested directly using the TokenRequest API, or service account token secrets can be manually created. More info: https://kubernetes.io/docs/concepts/configuration/secret",
+    "roleRef": {
+      "description": "RoleRef contains information that points to the role being used",
+      "properties": {
+        "apiGroup": {
+          "description": "APIGroup is the group for the resource being referenced",
+          "type": "string"
+        },
+        "kind": {
+          "description": "Kind is the type of resource being referenced",
+          "type": "string"
+        },
+        "name": {
+          "description": "Name is the name of resource being referenced",
+          "type": "string"
+        }
+      },
+      "required": [
+        "apiGroup",
+        "kind",
+        "name"
+      ],
+      "type": [
+        "object",
+        "null"
+      ],
+      "x-kubernetes-map-type": "atomic"
+    },
+    "subjects": {
+      "description": "Subjects holds references to the objects the role applies to.",
       "items": {
-        "description": "ObjectReference contains enough information to let you inspect or modify the referred object.",
+        "description": "Subject contains a reference to the object or user identities a role binding applies to.  This can either hold a direct API object reference, or a value for non-objects such as user and group names.",
         "properties": {
-          "apiVersion": {
-            "description": "API version of the referent.",
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "fieldPath": {
-            "description": "If referring to a piece of an object instead of an entire object, this string should contain a valid JSON/Go field access statement, such as desiredState.manifest.containers[2]. For example, if the object reference is to a container within a pod, this would take on a value like: \"spec.containers{name}\" (where \"name\" refers to the name of the container that triggered the event) or if no container name is specified \"spec.containers[2]\" (container with index 2 in this pod). This syntax is chosen only to have some well-defined way of referencing a part of an object.",
+          "apiGroup": {
+            "description": "APIGroup holds the API group of the referenced subject. Defaults to \"\" for ServiceAccount subjects. Defaults to \"rbac.authorization.k8s.io\" for User and Group subjects.",
             "type": [
               "string",
               "null"
             ]
           },
           "kind": {
-            "description": "Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": [
-              "string",
-              "null"
-            ]
+            "description": "Kind of object being referenced. Values defined by this API group are \"User\", \"Group\", and \"ServiceAccount\". If the Authorizer does not recognized the kind value, the Authorizer should report an error.",
+            "type": "string"
           },
           "name": {
-            "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-            "type": [
-              "string",
-              "null"
-            ]
+            "description": "Name of the object being referenced.",
+            "type": "string"
           },
           "namespace": {
-            "description": "Namespace of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/",
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "resourceVersion": {
-            "description": "Specific resourceVersion to which this reference is made, if any. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency",
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "uid": {
-            "description": "UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids",
+            "description": "Namespace of the referenced object.  If the object kind is non-namespace, such as \"User\" or \"Group\", and this value is not empty the Authorizer should report an error.",
             "type": [
               "string",
               "null"
             ]
           }
         },
+        "required": [
+          "kind",
+          "name"
+        ],
         "type": [
           "object",
           "null"
@@ -367,16 +333,17 @@
       "type": [
         "array",
         "null"
-      ],
-      "x-kubernetes-patch-merge-key": "name",
-      "x-kubernetes-patch-strategy": "merge"
+      ]
     }
   },
+  "required": [
+    "roleRef"
+  ],
   "type": "object",
   "x-kubernetes-group-version-kind": [
     {
-      "group": "",
-      "kind": "ServiceAccount",
+      "group": "rbac.authorization.k8s.io",
+      "kind": "ClusterRoleBinding",
       "version": "v1"
     }
   ],

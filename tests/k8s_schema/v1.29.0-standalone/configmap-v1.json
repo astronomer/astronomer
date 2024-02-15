@@ -1,65 +1,6 @@
 {
-  "description": "StorageClass describes the parameters for a class of storage for which PersistentVolumes can be dynamically provisioned.\n\nStorageClasses are non-namespaced; the name of the storage class according to etcd is in ObjectMeta.Name.",
+  "description": "ConfigMap holds configuration data for pods to consume.",
   "properties": {
-    "allowVolumeExpansion": {
-      "description": "AllowVolumeExpansion shows whether the storage class allow volume expand",
-      "type": [
-        "boolean",
-        "null"
-      ]
-    },
-    "allowedTopologies": {
-      "description": "Restrict the node topologies where volumes can be dynamically provisioned. Each volume plugin defines its own supported topology specifications. An empty TopologySelectorTerm list means there is no topology restriction. This field is only honored by servers that enable the VolumeScheduling feature.",
-      "items": {
-        "description": "A topology selector term represents the result of label queries. A null or empty topology selector term matches no objects. The requirements of them are ANDed. It provides a subset of functionality as NodeSelectorTerm. This is an alpha feature and may change in the future.",
-        "properties": {
-          "matchLabelExpressions": {
-            "description": "A list of topology selector requirements by labels.",
-            "items": {
-              "description": "A topology selector requirement is a selector that matches given label. This is an alpha feature and may change in the future.",
-              "properties": {
-                "key": {
-                  "description": "The label key that the selector applies to.",
-                  "type": "string"
-                },
-                "values": {
-                  "description": "An array of string values. One value must match the label to be selected. Each entry in Values is ORed.",
-                  "items": {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "type": "array"
-                }
-              },
-              "required": [
-                "key",
-                "values"
-              ],
-              "type": [
-                "object",
-                "null"
-              ]
-            },
-            "type": [
-              "array",
-              "null"
-            ]
-          }
-        },
-        "type": [
-          "object",
-          "null"
-        ],
-        "x-kubernetes-map-type": "atomic"
-      },
-      "type": [
-        "array",
-        "null"
-      ],
-      "x-kubernetes-list-type": "atomic"
-    },
     "apiVersion": {
       "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
       "type": [
@@ -67,7 +8,41 @@
         "null"
       ],
       "enum": [
-        "storage.k8s.io/v1"
+        "v1"
+      ]
+    },
+    "binaryData": {
+      "additionalProperties": {
+        "format": "byte",
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "description": "BinaryData contains the binary data. Each key must consist of alphanumeric characters, '-', '_' or '.'. BinaryData can contain byte sequences that are not in the UTF-8 range. The keys stored in BinaryData must not overlap with the ones in the Data field, this is enforced during validation process. Using this field will require 1.10+ apiserver and kubelet.",
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "data": {
+      "additionalProperties": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "description": "Data contains the configuration data. Each key must consist of alphanumeric characters, '-', '_' or '.'. Values with non-UTF-8 byte sequences must use the BinaryData field. The keys stored in Data must not overlap with the keys in the BinaryData field, this is enforced during validation process.",
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "immutable": {
+      "description": "Immutable, if set to true, ensures that data stored in the ConfigMap cannot be updated (only object metadata can be modified). If not set to true, the field can be modified at any time. Defaulted to nil.",
+      "type": [
+        "boolean",
+        "null"
       ]
     },
     "kind": {
@@ -77,7 +52,7 @@
         "null"
       ],
       "enum": [
-        "StorageClass"
+        "ConfigMap"
       ]
     },
     "metadata": {
@@ -90,16 +65,9 @@
               "null"
             ]
           },
-          "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: http://kubernetes.io/docs/user-guide/annotations",
+          "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
           "type": [
             "object",
-            "null"
-          ]
-        },
-        "clusterName": {
-          "description": "Deprecated: ClusterName is a legacy field that was always cleared by the system and never used; it will be removed completely in 1.25.\n\nThe name in the go struct is changed to help clients detect accidental use.",
-          "type": [
-            "string",
             "null"
           ]
         },
@@ -163,7 +131,7 @@
               "null"
             ]
           },
-          "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: http://kubernetes.io/docs/user-guide/labels",
+          "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
           "type": [
             "object",
             "null"
@@ -236,14 +204,14 @@
           ]
         },
         "name": {
-          "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: http://kubernetes.io/docs/user-guide/identifiers#names",
+          "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
           "type": [
             "string",
             "null"
           ]
         },
         "namespace": {
-          "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: http://kubernetes.io/docs/user-guide/namespaces",
+          "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
           "type": [
             "string",
             "null"
@@ -277,11 +245,11 @@
                 "type": "string"
               },
               "name": {
-                "description": "Name of the referent. More info: http://kubernetes.io/docs/user-guide/identifiers#names",
+                "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
                 "type": "string"
               },
               "uid": {
-                "description": "UID of the referent. More info: http://kubernetes.io/docs/user-guide/identifiers#uids",
+                "description": "UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids",
                 "type": "string"
               }
             },
@@ -319,7 +287,7 @@
           ]
         },
         "uid": {
-          "description": "UID is the unique in time and space value for this object. It is typically generated by the server on successful creation of a resource and is not allowed to change on PUT operations.\n\nPopulated by the system. Read-only. More info: http://kubernetes.io/docs/user-guide/identifiers#uids",
+          "description": "UID is the unique in time and space value for this object. It is typically generated by the server on successful creation of a resource and is not allowed to change on PUT operations.\n\nPopulated by the system. Read-only. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids",
           "type": [
             "string",
             "null"
@@ -330,63 +298,13 @@
         "object",
         "null"
       ]
-    },
-    "mountOptions": {
-      "description": "Dynamically provisioned PersistentVolumes of this storage class are created with these mountOptions, e.g. [\"ro\", \"soft\"]. Not validated - mount of the PVs will simply fail if one is invalid.",
-      "items": {
-        "type": [
-          "string",
-          "null"
-        ]
-      },
-      "type": [
-        "array",
-        "null"
-      ]
-    },
-    "parameters": {
-      "additionalProperties": {
-        "type": [
-          "string",
-          "null"
-        ]
-      },
-      "description": "Parameters holds the parameters for the provisioner that should create volumes of this storage class.",
-      "type": [
-        "object",
-        "null"
-      ]
-    },
-    "provisioner": {
-      "description": "Provisioner indicates the type of the provisioner.",
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "reclaimPolicy": {
-      "description": "Dynamically provisioned PersistentVolumes of this storage class are created with this reclaimPolicy. Defaults to Delete.",
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "volumeBindingMode": {
-      "description": "VolumeBindingMode indicates how PersistentVolumeClaims should be provisioned and bound.  When unset, VolumeBindingImmediate is used. This field is only honored by servers that enable the VolumeScheduling feature.",
-      "type": [
-        "string",
-        "null"
-      ]
     }
   },
-  "required": [
-    "provisioner"
-  ],
   "type": "object",
   "x-kubernetes-group-version-kind": [
     {
-      "group": "storage.k8s.io",
-      "kind": "StorageClass",
+      "group": "",
+      "kind": "ConfigMap",
       "version": "v1"
     }
   ],

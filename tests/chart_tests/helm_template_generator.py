@@ -22,6 +22,7 @@ from tempfile import NamedTemporaryFile
 from typing import Any, Optional
 from pathlib import Path
 import os
+from tests import supported_k8s_versions
 
 import jsonschema
 import requests
@@ -34,9 +35,10 @@ api_client = ApiClient()
 BASE_URL_SPEC = "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master"
 GIT_ROOT = Path(__file__).parent.parent.parent
 DEBUG = os.getenv("DEBUG", "").lower() in ["yes", "true", "1"]
+default_version = supported_k8s_versions[-1]
 
 
-def get_schema_k8s(api_version, kind, kube_version="1.24.0"):
+def get_schema_k8s(api_version, kind, kube_version=default_version):
     """Return a standalone k8s schema for use in validation."""
     api_version = api_version.lower()
     kind = kind.lower()
@@ -60,14 +62,14 @@ def get_schema_k8s(api_version, kind, kube_version="1.24.0"):
 
 
 @cache
-def create_validator(api_version, kind, kube_version="1.24.0"):
+def create_validator(api_version, kind, kube_version=default_version):
     """Create a k8s validator for the given inputs."""
     schema = get_schema_k8s(api_version, kind, kube_version=kube_version)
     jsonschema.Draft7Validator.check_schema(schema)
     return jsonschema.Draft7Validator(schema)
 
 
-def validate_k8s_object(instance, kube_version="1.24.0"):
+def validate_k8s_object(instance, kube_version=default_version):
     """Validate the k8s object."""
     validate = create_validator(
         instance.get("apiVersion"), instance.get("kind"), kube_version=kube_version
@@ -81,7 +83,7 @@ def render_chart(
     values: Optional[dict] = None,
     show_only: Optional[list] = None,
     chart_dir: Optional[str] = None,
-    kube_version: str = "1.24.0",
+    kube_version: str = default_version,
     baseDomain: str = "example.com",
     namespace: Optional[str] = None,
     validate_objects: bool = True,
