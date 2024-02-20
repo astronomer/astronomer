@@ -1,0 +1,46 @@
+{{- if  .Values.global.serviceMesh.enabled  }}
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: {{ .Release.Name }}-alertmanager-gateway
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "grafana.{{ .Values.global.baseDomain }}"
+    tls:
+      httpsRedirect: true
+  - port:
+      number: 443
+      name: https
+      protocol: HTTPS
+    tls:
+      mode: SIMPLE
+      credentialName: {{ .Values.global.tlsSecret }}
+    hosts:
+    - "alertmanager.{{ .Values.global.baseDomain }}"
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: {{ .Release.Name }}-alertmanager
+spec:
+  hosts:
+  - "alertmanager.{{ .Values.global.baseDomain }}"
+  gateways:
+  - {{ .Release.Name }}-alertmanager-gateway
+  http:
+  - match:
+    - uri:
+        prefix: /
+    route:
+    - destination:
+        port:
+          number: 8084
+        host: {{ .Release.Name }}-alertmanager
+{{- end }}
