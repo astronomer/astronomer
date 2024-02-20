@@ -30,4 +30,31 @@ spec:
     - "app.{{ .Values.global.baseDomain }}"
     - "registry.{{ .Values.global.baseDomain }}"
     - "install.{{ .Values.global.baseDomain }}"
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: {{ .Release.Name }}-common-gateway
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "deployments.{{ .Values.global.baseDomain }}"
+    tls:
+      httpsRedirect: true
+  - port:
+      number: 443
+      name: https
+      protocol: HTTPS
+    tls:
+      mode: SIMPLE
+      credentialName: astronomer-tls
+    hosts:
+    - "deployments.{{ .Values.global.baseDomain }}"
+
 {{- end }}
