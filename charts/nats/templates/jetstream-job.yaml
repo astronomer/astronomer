@@ -74,6 +74,10 @@ spec:
         component: jetsream-migrator
         version: {{ .Chart.Version }}
         release: {{ .Release.Name }}
+      {{- if .Values.global.istio.enabled }}
+      annotations:
+        sidecar.istio.io/inject: "false"
+      {{- end }}
     spec:
       restartPolicy: Never
       serviceAccountName: {{ .Release.Name }}-jetstream-sa
