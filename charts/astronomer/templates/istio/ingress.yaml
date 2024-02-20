@@ -36,4 +36,42 @@ spec:
         port:
           number: 8080
         host: {{ .Release.Name }}-astro-ui
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: {{ .Release.Name }}-registry
+spec:
+  hosts:
+  - "registry.{{ .Values.global.baseDomain }}"
+  gateways:
+  - {{ .Release.Name }}-platform-gateway
+  http:
+  - match:
+    - uri:
+        prefix: /
+    route:
+    - destination:
+        port:
+          number: 5000
+        host: {{ .Release.Name }}-registry
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: {{ .Release.Name }}-cli-install
+spec:
+  hosts:
+  - "install.{{ .Values.global.baseDomain }}"
+  gateways:
+  - {{ .Release.Name }}-platform-gateway
+  http:
+  - match:
+    - uri:
+        prefix: /
+    route:
+    - destination:
+        port:
+          number: 8080
+        host: {{ .Release.Name }}-cli-install
 {{- end }}

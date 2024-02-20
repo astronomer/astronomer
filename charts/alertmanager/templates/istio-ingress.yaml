@@ -12,7 +12,7 @@ spec:
       name: http
       protocol: HTTP
     hosts:
-    - "grafana.{{ .Values.global.baseDomain }}"
+    - "alertmanager.{{ .Values.global.baseDomain }}"
     tls:
       httpsRedirect: true
   - port:
