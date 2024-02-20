@@ -1,4 +1,4 @@
----
+{{- if  .Values.global.serviceMesh.enabled  }}
 apiVersion: networking.istio.io/v1alpha3
 kind: Gateway
 metadata:
@@ -26,3 +26,4 @@ spec:
     hosts:
     - "houston.{{ .Values.global.baseDomain }}"
     - "app.{{ .Values.global.baseDomain }}"
+{{- end }}

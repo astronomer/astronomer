@@ -31,7 +31,7 @@ metadata:
   name: {{ .Release.Name }}-kibana
 spec:
   hosts:
-  - "app.{{ .Values.global.baseDomain }}"
+  - "kibana.{{ .Values.global.baseDomain }}"
   gateways:
   - {{ .Release.Name }}-kibana-gateway
   http:
