@@ -723,3 +723,13 @@ data:
             regex: ([^:]+)(?::\d+)?;(\d+)
             replacement: $1:$2
             target_label: __address__
+
+    {{- if .Values.additionalScrapeJobs }}
+    {{- range .Values.additionalScrapeJobs }}
+      - job_name: '{{ .job_name }}'
+        kubernetes_sd_configs:
+    {{ toYaml .kubernetes_sd_configs | indent 8 }}
+        relabel_configs:
+    {{ toYaml .relabel_configs | indent 8 }}
+    {{- end }}
+    {{- end }}
