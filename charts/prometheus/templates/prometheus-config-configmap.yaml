@@ -723,3 +723,7 @@ data:
             regex: ([^:]+)(?::\d+)?;(\d+)
             replacement: $1:$2
             target_label: __address__
+
+    {{- with .Values.additionalScrapeJobs }}
+    {{- toYaml . | nindent 6 }}
+    {{- end }}

@@ -305,3 +305,39 @@ class TestPrometheusConfigConfigmap:
         ]
         assert metric_relabel_config_search_result[1]["replacement"] == "$1"
         assert metric_relabel_config_search_result[1]["target_label"] == "release"
+
+    def test_additional_scrape_jobs(self, kube_version):
+        static_job = {
+            "job_name": "example-static-job",
+            "static_configs": [{"targets": ["localhost:9090"]}],
+        }
+        kubernetes_job = {
+            "job_name": "example-kubernetes-job",
+            "kubernetes_sd_configs": [
+                {
+                    "role": "endpoints",
+                    "namespaces": {"names": ["default"]},
+                }
+            ],
+        }
+        doc = render_chart(
+            kube_version=kube_version,
+            show_only=self.show_only,
+            name="astronomer",
+            values={
+                "prometheus": {
+                    "additionalScrapeJobs": [
+                        static_job,
+                        kubernetes_job,
+                    ]
+                }
+            },
+        )[0]
+        scrape_configs = yaml.safe_load(doc["data"]["config"])["scrape_configs"]
+
+        assert (
+            static_job in scrape_configs
+        ), "Static job not found in rendered ConfigMap"
+        assert (
+            kubernetes_job in scrape_configs
+        ), "Kubernetes job not found in rendered ConfigMap"
