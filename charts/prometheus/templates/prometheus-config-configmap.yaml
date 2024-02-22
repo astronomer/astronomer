@@ -724,12 +724,6 @@ data:
             replacement: $1:$2
             target_label: __address__
 
-    {{- if .Values.additionalScrapeJobs }}
-    {{- range .Values.additionalScrapeJobs }}
-      - job_name: '{{ .job_name }}'
-        kubernetes_sd_configs:
-    {{ toYaml .kubernetes_sd_configs | indent 8 }}
-        relabel_configs:
-    {{ toYaml .relabel_configs | indent 8 }}
-    {{- end }}
+    {{- with .Values.additionalScrapeJobs }}
+    {{- toYaml . | nindent 6 }}
     {{- end }}
