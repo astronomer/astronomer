@@ -313,7 +313,7 @@ class TestPrometheusConfigConfigmap:
             name="astronomer",
             values={
                 "prometheus": {
-                    "extraScrapeJobs": [
+                    "additionalScrapeJobs": [
                         {
                             "job_name": "example-static-job",
                             "static_configs": [{"targets": ["localhost:9090"]}],
@@ -330,10 +330,8 @@ class TestPrometheusConfigConfigmap:
                     ]
                 }
             },
-        )
-
-        config_map = yaml.safe_load(doc[0])
-        prometheus_config = yaml.safe_load(config_map["data"]["prometheus.yml"])
+        )[0]
+        prometheus_config = yaml.safe_load(doc["data"]["config"])
 
         found_static_job = False
         found_kubernetes_job = False
