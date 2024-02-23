@@ -64,3 +64,7 @@ imagePullSecrets:
   - name: {{ .Values.global.privateRegistry.secretName }}
 {{- end -}}
 {{- end -}}
+
+{{- define "defaultBackend.fullname" -}}
+{{ printf "%s-default-backend" (include "nginx.fullname" .)}}
+{{- end -}}
