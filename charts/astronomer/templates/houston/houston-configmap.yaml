@@ -166,6 +166,12 @@ data:
         networkNSLabels: true
       {{- end }}
 
+      {{- if and .Values.global.serviceMesh  .Values.global.serviceMesh.istio }}
+        serviceMesh:
+          enabled: {{ .Values.global.serviceMesh }}
+          istio: {{ .Values.global.serviceMesh.istio }}
+      {{- end }}
+
         airflow:
           useAstroSecurityManager: true
           {{- if .Values.global.networkPolicy.enabled }}
