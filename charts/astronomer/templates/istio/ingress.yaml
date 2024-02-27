@@ -36,6 +36,22 @@ spec:
             X-Content-Type-Options: nosniff
             X-Frame-Options: deny
             X-XSS-Protection: 1; mode=block
+    corsPolicy:
+      maxAge: 15m
+      allowCredentials: true
+      allowMethods:
+      - GET
+      - POST
+      - OPTIONS
+      allowHeaders:
+      - Content-Type
+      - Authorization
+      - Content-Length
+      - X-Requested-With
+      - X-Apollo-Tracing
+      - X-Client-Type
+      allowOrigins:
+        - exact: "https://app.{{ .Values.global.baseDomain }}"
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
@@ -132,7 +148,7 @@ spec:
         port:
           number: 8080
         host: {{ .Release.Name }}-cli-install
-        headers:
+      headers:
         response:
           set:
             Content-Security-Policy: 'default-src ''self'' *.{{ .Values.global.baseDomain }}; script-src
