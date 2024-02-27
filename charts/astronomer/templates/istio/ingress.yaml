@@ -30,9 +30,7 @@ spec:
               cdn.jsdelivr.net fonts.googleapis.com; frame-src js.stripe.com; font-src
               *.{{ .Values.global.baseDomain }} cdn.astronomer.io fonts.gstatic.com js.intercomcdn.com
               data:; worker-src blob:'
-            Permissions-Policy: autoplay 'none'; camera 'none'; encrypted-media 'none';
-              fullscreen 'none'; geolocation 'none'; microphone 'none'; midi 'none';
-              payment 'none'; xr-spatial-tracking 'none'
+            Permissions-Policy: "autoplay 'none'; camera 'none'; encrypted-media 'none'; fullscreen 'none'; geolocation 'none'; microphone 'none'; midi 'none'; payment 'none'; xr-spatial-tracking 'none'"
             Referrer-Policy: same-origin
             Strict-Transport-Security: max-age=31536000; includeSubDomains
             X-Content-Type-Options: nosniff
@@ -70,9 +68,7 @@ spec:
               cdn.jsdelivr.net fonts.googleapis.com; frame-src js.stripe.com; font-src
               *.{{ .Values.global.baseDomain }} cdn.astronomer.io fonts.gstatic.com js.intercomcdn.com
               data:; worker-src blob:'
-            Permissions-Policy: autoplay 'none'; camera 'none'; encrypted-media 'none';
-              fullscreen 'none'; geolocation 'none'; microphone 'none'; midi 'none';
-              payment 'none'; xr-spatial-tracking 'none'
+            Permissions-Policy: "autoplay 'none'; camera 'none'; encrypted-media 'none'; fullscreen 'none'; geolocation 'none'; microphone 'none'; midi 'none'; payment 'none'; xr-spatial-tracking 'none'"
             Referrer-Policy: same-origin
             Strict-Transport-Security: max-age=31536000; includeSubDomains
             X-Content-Type-Options: nosniff
@@ -110,9 +106,7 @@ spec:
               cdn.jsdelivr.net fonts.googleapis.com; frame-src js.stripe.com; font-src
               *.{{ .Values.global.baseDomain }} cdn.astronomer.io fonts.gstatic.com js.intercomcdn.com
               data:; worker-src blob:'
-            Permissions-Policy: autoplay 'none'; camera 'none'; encrypted-media 'none';
-              fullscreen 'none'; geolocation 'none'; microphone 'none'; midi 'none';
-              payment 'none'; xr-spatial-tracking 'none'
+            Permissions-Policy: "autoplay 'none'; camera 'none'; encrypted-media 'none'; fullscreen 'none'; geolocation 'none'; microphone 'none'; midi 'none'; payment 'none'; xr-spatial-tracking 'none'"
             Referrer-Policy: same-origin
             Strict-Transport-Security: max-age=31536000; includeSubDomains
             X-Content-Type-Options: nosniff
@@ -151,9 +145,7 @@ spec:
               cdn.jsdelivr.net fonts.googleapis.com; frame-src js.stripe.com; font-src
               *.{{ .Values.global.baseDomain }} cdn.astronomer.io fonts.gstatic.com js.intercomcdn.com
               data:; worker-src blob:'
-            Permissions-Policy: autoplay 'none'; camera 'none'; encrypted-media 'none';
-              fullscreen 'none'; geolocation 'none'; microphone 'none'; midi 'none';
-              payment 'none'; xr-spatial-tracking 'none'
+            Permissions-Policy: "autoplay 'none'; camera 'none'; encrypted-media 'none'; fullscreen 'none'; geolocation 'none'; microphone 'none'; midi 'none'; payment 'none'; xr-spatial-tracking 'none'"
             Referrer-Policy: same-origin
             Strict-Transport-Security: max-age=31536000; includeSubDomains
             X-Content-Type-Options: nosniff
