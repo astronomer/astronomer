@@ -1,7 +1,7 @@
 ################################
 ## Astronomer Ingress
 #################################
-{{- if .Values.global.baseDomain }}
+{{- if and .Values.global.baseDomain  ( not .Values.global.serviceMesh.enabled ) }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:

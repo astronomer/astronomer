@@ -69,6 +69,10 @@ global:
     enabled: false
     rootNamespace: "istio-config"
 
+  serviceMesh:
+    enabled: true
+    istio: true
+
   # Enables necessary components for Velero (Velero, Grafana Dashboard, Prometheus Alerts)
   veleroEnabled: false
 

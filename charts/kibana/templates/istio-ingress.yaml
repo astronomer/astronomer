@@ -1,0 +1,65 @@
+{{- if  .Values.global.serviceMesh.enabled  }}
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: {{ .Release.Name }}-kibana-gateway
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "kibana.{{ .Values.global.baseDomain }}"
+    tls:
+      httpsRedirect: true
+  - port:
+      number: 443
+      name: https
+      protocol: HTTPS
+    tls:
+      mode: SIMPLE
+      credentialName: {{ .Values.global.tlsSecret }}
+    hosts:
+    - "kibana.{{ .Values.global.baseDomain }}"
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: {{ .Release.Name }}-kibana
+spec:
+  hosts:
+  - "kibana.{{ .Values.global.baseDomain }}"
+  gateways:
+  - {{ .Release.Name }}-kibana-gateway
+  http:
+  - match:
+    - uri:
+        prefix: /
+    route:
+    - destination:
+        port:
+          number: 8084
+        host: {{ .Release.Name }}-kibana
+      headers:
+        response:
+          set:
+            Content-Security-Policy: 'default-src ''self'' *.{{ .Values.global.baseDomain }}; script-src
+              ''unsafe-inline'' ''unsafe-eval'' *.{{ .Values.global.baseDomain }} cdn.jsdelivr.net
+              cdn.astronomer.io cdn.metarouter.io cdn.segment.com www.google-analytics.com
+              js.stripe.com widget.intercom.io js.intercomcdn.com cdn.lr-ingest.io;
+              img-src ''self'' data: *; connect-src *.{{ .Values.global.baseDomain }} wss://*.{{ .Values.global.baseDomain }}
+              e.metarouter.io api.segment.com api.segment.io api-iam.intercom.io wss://nexus-websocket-a.intercom.io
+              https://grafana.com/blog/news.xml; style-src ''unsafe-inline'' *.{{ .Values.global.baseDomain }}
+              cdn.jsdelivr.net fonts.googleapis.com; frame-src js.stripe.com; font-src
+              *.{{ .Values.global.baseDomain }} cdn.astronomer.io fonts.gstatic.com js.intercomcdn.com
+              data:; worker-src blob:'
+            Permissions-Policy: "autoplay 'none'; camera 'none'; encrypted-media 'none'; fullscreen 'none'; geolocation 'none'; microphone 'none'; midi 'none'; payment 'none'; xr-spatial-tracking 'none'"
+            Referrer-Policy: same-origin
+            Strict-Transport-Security: max-age=31536000; includeSubDomains
+            X-Content-Type-Options: nosniff
+            X-Frame-Options: deny
+            X-XSS-Protection: 1; mode=block
+{{- end }}
