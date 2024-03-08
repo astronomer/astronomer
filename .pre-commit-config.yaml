@@ -3,10 +3,10 @@ exclude: '(venv|\.vscode|tests/k8s_schema)' # regex
 repos:
   - repo: local
     hooks:
-      - id: verify-image-tags
+      - id: check-image-tags
         language: python
         additional_dependencies: ["jinja2", "PyYAML"]
-        name: Verify image tags
+        name: Ensure unique tags per image
         entry: python3
         args: ["bin/show-docker-images.py", "--private-registry", "--with-houston", "-c"]
         files: '(config.yml|config.yml.j2|generate_circleci_config.py|yaml|tpl)$'
