@@ -126,7 +126,7 @@ def main():
         "-c",
         "--check-tags",
         action="store_true",
-        help="Only check for multiple tags for the same image, do not print the images",
+        help="only check for multiple tags for the same image, do not print the images",
     )
     args = parser.parse_args()
 
