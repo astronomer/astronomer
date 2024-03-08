@@ -4,17 +4,20 @@ repos:
   - repo: local
     hooks:
       - id: verify-image-tags
+        language: python
+        additional_dependencies: ["jinja2", "PyYAML"]
         name: Verify image tags
         entry: python3
-        args: [bin/verify_image_tags.py]
-        language: system
-        files: ^.*\.(tpl|yaml)$
+        args: ["bin/show-docker-images.py", "--private-registry", "--with-houston", "-c"]
+        files: '(config.yml|config.yml.j2|generate_circleci_config.py|yaml|tpl)$'
+        pass_filenames: false
       - id: circle-config-yaml
-        name: Checks for consistency between config.yml and config.yml.j2
         language: python
-        files: '(config.yml|config.yml.j2|generate_circleci_config.py|values.yaml|metadata.yaml)$'
-        entry: bin/generate_circleci_config.py
         additional_dependencies: ["jinja2", "PyYAML"]
+        name: Checks for consistency between config.yml and config.yml.j2
+        entry: bin/generate_circleci_config.py
+        files: '(config.yml|config.yml.j2|generate_circleci_config.py|yaml|tpl)$'
+        pass_filenames: false
   - repo: https://github.com/codespell-project/codespell
     rev: v2.2.6
     hooks:
