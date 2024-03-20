@@ -27,6 +27,7 @@ spec:
         app: {{ template "nginx.name" . }}
         version: {{ .Chart.Version }}
     spec:
+      serviceAccountName: {{ template "defaultBackend.fullname" . }}
       nodeSelector: {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
       affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
       tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}

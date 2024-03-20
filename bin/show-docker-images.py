@@ -8,6 +8,8 @@ import argparse
 import sys
 import json
 
+from collections import defaultdict
+
 
 def get_containers_from_spec(spec):
     """Return a list of images used in a kubernetes pod spec."""
@@ -120,6 +122,12 @@ def main():
         action="store_true",
         help="include images from houston configmap",
     )
+    parser.add_argument(
+        "-c",
+        "--check-tags",
+        action="store_true",
+        help="only check for multiple tags for the same image, do not print the images",
+    )
     args = parser.parse_args()
 
     docs = helm_template(args)
@@ -139,6 +147,20 @@ def main():
                     containers.update(get_images_from_houston_configmap(doc, args))
             case _:
                 pass
+
+    if args.check_tags:
+        image_tag_counts = defaultdict(int)
+        for x, y in [
+            (tag.rpartition(":")[0], tag.rpartition(":")[2]) for tag in containers
+        ]:
+            image_tag_counts[x] += 1
+        for image, count in image_tag_counts.items():
+            if count > 1:
+                print(
+                    f"ALERT: {image} has {count} different tags: {', '.join([c.rpartition(':')[-1] for c in containers if image in c])}"
+                )
+        # Exit with a return code equal to the number of images with multiple tags
+        raise SystemExit(len([y for x, y in image_tag_counts.items() if y > 1]))
 
     print_results(sorted(containers))
 

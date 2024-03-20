@@ -225,3 +225,13 @@ class TestNginx:
             annotationValidation
             in doc["spec"]["template"]["spec"]["containers"][0]["args"]
         )
+
+    def test_nginx_backend_serviceaccount_defaults(self):
+        doc = render_chart(
+            values={},
+            show_only=[
+                "charts/nginx/templates/nginx-default-backend-serviceaccount.yaml"
+            ],
+        )[0]
+
+        assert "release-name-nginx-default-backend" == doc["metadata"]["name"]
