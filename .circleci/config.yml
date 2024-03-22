@@ -370,12 +370,12 @@ workflows:
                 - quay.io/astronomer/ap-db-bootstrapper:0.31.11
                 - quay.io/astronomer/ap-default-backend:0.28.23
                 - quay.io/astronomer/ap-elasticsearch-exporter:1.7.0
-                - quay.io/astronomer/ap-elasticsearch:8.11.4
+                - quay.io/astronomer/ap-elasticsearch:8.12.0
                 - quay.io/astronomer/ap-fluentd:1.16.3
                 - quay.io/astronomer/ap-grafana:10.2.3
                 - quay.io/astronomer/ap-houston-api:0.34.4
                 - quay.io/astronomer/ap-init:3.18.6
-                - quay.io/astronomer/ap-kibana:8.11.4
+                - quay.io/astronomer/ap-kibana:8.12.0
                 - quay.io/astronomer/ap-kube-state:2.10.1
                 - quay.io/astronomer/ap-nats-exporter:0.14.0-1
                 - quay.io/astronomer/ap-nats-server:2.10.9-2
@@ -409,12 +409,12 @@ workflows:
                 - quay.io/astronomer/ap-db-bootstrapper:0.31.11
                 - quay.io/astronomer/ap-default-backend:0.28.23
                 - quay.io/astronomer/ap-elasticsearch-exporter:1.7.0
-                - quay.io/astronomer/ap-elasticsearch:8.11.4
+                - quay.io/astronomer/ap-elasticsearch:8.12.0
                 - quay.io/astronomer/ap-fluentd:1.16.3
                 - quay.io/astronomer/ap-grafana:10.2.3
                 - quay.io/astronomer/ap-houston-api:0.34.4
                 - quay.io/astronomer/ap-init:3.18.6
-                - quay.io/astronomer/ap-kibana:8.11.4
+                - quay.io/astronomer/ap-kibana:8.12.0
                 - quay.io/astronomer/ap-kube-state:2.10.1
                 - quay.io/astronomer/ap-nats-exporter:0.14.0-1
                 - quay.io/astronomer/ap-nats-server:2.10.9-2
