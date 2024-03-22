@@ -62,6 +62,11 @@ def test_nginx_can_reach_default_backend(nginx):
         "curl -s --max-time 1 http://astronomer-nginx-default-backend:8080"
     )
 
+def test_nginx_ssl_cache(nginx):
+    """Ensure default nginx cache size if 10m."""
+    assert "ssl_session_cache shared:SSL:10m;" == nginx.check_output(
+        "cat nginx.conf | grep ssl_session_cache"
+    ).replace('\t',"")
 
 @pytest.mark.flaky(reruns=20, reruns_delay=10)
 def test_prometheus_targets(prometheus):
