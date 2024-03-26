@@ -63,6 +63,13 @@ def test_nginx_can_reach_default_backend(nginx):
     )
 
 
+def test_nginx_ssl_cache(nginx):
+    """Ensure nginx default ssl cache size is 10m."""
+    assert "ssl_session_cache shared:SSL:10m;" == nginx.check_output(
+        "cat nginx.conf | grep ssl_session_cache"
+    ).replace("\t", "")
+
+
 @pytest.mark.flaky(reruns=20, reruns_delay=10)
 def test_prometheus_targets(prometheus):
     """Ensure all Prometheus targets are healthy."""
