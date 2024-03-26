@@ -94,7 +94,7 @@ spec:
           command:
             {{- toYaml .Values.houston.worker.command | nindent 12 }}
           {{ else }}
-          command: ["yarn", "worker"]
+          command: ["/bin/sh", "-c", "update-ca-certificates;yarn worker"]
           {{- end }}
           {{- if .Values.houston.worker.args }}
           args:

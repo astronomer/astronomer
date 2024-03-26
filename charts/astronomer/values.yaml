@@ -40,7 +40,7 @@ images:
     pullPolicy: IfNotPresent
 
 securityContext:
-    runAsNonRoot: true
+  runAsNonRoot: true
 
 astroUI:
   replicas: 2
