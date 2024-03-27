@@ -31,7 +31,21 @@ data:
         proxy_set_header Connection "Keep-Alive";
         proxy_set_header Proxy-Connection "Keep-Alive";
 
-        location ~ ^/ {
+        # The following "location" rules limit airflow interactions to only their indices. Any further
+        # additions should follow this pattern.
+        location ~* /_count$ {
+          rewrite /_count(.*) /{{ include "logging.indexNamePrefix" . }}.$remote_user.*/_count$1 break;
+          {{- if  or .Values.global.customLogging.awsSecretName  .Values.global.customLogging.awsServiceAccountAnnotation .Values.global.customLogging.awsIAMRole }}
+          proxy_pass http://localhost:{{ .Values.service.awsproxy }};
+          {{- else }}
+          access_by_lua_file  /usr/local/openresty/nginx/conf/setenv.lua;
+          proxy_pass {{.Values.global.customLogging.scheme}}://{{.Values.global.customLogging.host}}:{{.Values.global.customLogging.port}};
+          {{- include "external-es-proxy-trustcerts" . | indent 8 }}
+          {{- end }}
+        }
+
+        location ~* /_bulk$ {
+          rewrite /_bulk(.*) /{{ include "logging.indexNamePrefix" . }}.$remote_user.*/_bulk$1 break;
           {{- if  or .Values.global.customLogging.awsSecretName  .Values.global.customLogging.awsServiceAccountAnnotation .Values.global.customLogging.awsIAMRole }}
           proxy_pass http://localhost:{{ .Values.service.awsproxy }};
           {{- else }}
@@ -60,6 +74,27 @@ data:
           proxy_set_header Content-Length "";
           proxy_set_header X-Original-URI $request_uri;
         }
+
+        location = /_cluster/state/version {
+          {{- if  or .Values.global.customLogging.awsSecretName  .Values.global.customLogging.awsServiceAccountAnnotation .Values.global.customLogging.awsIAMRole }}
+          proxy_pass http://localhost:{{ .Values.service.awsproxy }};
+          {{- else }}
+          access_by_lua_file  /usr/local/openresty/nginx/conf/setenv.lua;
+          proxy_pass {{.Values.global.customLogging.scheme}}://{{.Values.global.customLogging.host}}:{{.Values.global.customLogging.port}};
+          {{- include "external-es-proxy-trustcerts" . | indent 8 }}
+          {{- end }}
+        }
+
+        location = /_cluster/health {
+          {{- if  or .Values.global.customLogging.awsSecretName  .Values.global.customLogging.awsServiceAccountAnnotation .Values.global.customLogging.awsIAMRole }}
+          proxy_pass http://localhost:{{ .Values.service.awsproxy }};
+          {{- else }}
+          access_by_lua_file  /usr/local/openresty/nginx/conf/setenv.lua;
+          proxy_pass {{.Values.global.customLogging.scheme}}://{{.Values.global.customLogging.host}}:{{.Values.global.customLogging.port}};
+          {{- include "external-es-proxy-trustcerts" . | indent 8 }}
+          {{- end }}
+        }
+
       }
       server {
         listen {{ .Values.service.http }};
