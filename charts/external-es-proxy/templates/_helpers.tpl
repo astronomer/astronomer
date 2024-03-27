@@ -65,12 +65,12 @@ Create the name of the service account to use
 {{- define "external-es-proxy-trustcerts" -}}
 {{- if .Values.global.customLogging.trustCaCerts  }}
 {{- $secret_name := .Values.global.customLogging.trustCaCerts }}
-  proxy_ssl_trusted_certificate /etc/ssl/certs/{{ $secret_name }}.pem;
-  proxy_ssl_verify              on;
-  proxy_ssl_verify_depth        2;
-  proxy_ssl_session_reuse on;
+proxy_ssl_trusted_certificate /etc/ssl/certs/{{ $secret_name }}.pem;
+proxy_ssl_verify              on;
+proxy_ssl_verify_depth        2;
+proxy_ssl_session_reuse on;
 {{- else }}
-  proxy_ssl_verify              off;
+proxy_ssl_verify              off;
 {{- end }}
 {{- end }}
 
@@ -99,5 +99,17 @@ imagePullSecrets:
 {{ .Values.global.privateRegistry.repository }}/ap-awsesproxy:{{ .Values.images.awsproxy.tag }}
 {{- else -}}
 {{ .Values.images.awsproxy.repository }}:{{ .Values.images.awsproxy.tag }}
+{{- end }}
+{{- end }}
+
+
+
+{{- define "external-es-proxy-nginx-common" -}}
+{{- if  or .Values.global.customLogging.awsSecretName  .Values.global.customLogging.awsServiceAccountAnnotation .Values.global.customLogging.awsIAMRole }}
+proxy_pass http://localhost:{{ .Values.service.awsproxy }};
+{{- else }}
+access_by_lua_file  /usr/local/openresty/nginx/conf/setenv.lua;
+proxy_pass {{.Values.global.customLogging.scheme}}://{{.Values.global.customLogging.host}}:{{.Values.global.customLogging.port}};
+{{- include "external-es-proxy-trustcerts" . }}
 {{- end }}
 {{- end }}
