@@ -102,7 +102,7 @@ imagePullSecrets:
 {{- end }}
 {{- end }}
 
-{{- define "external-es-proxy-nginx-common" -}}
+{{- define "external-es-proxy-nginx-location-common" -}}
 {{- if  or .Values.global.customLogging.awsSecretName  .Values.global.customLogging.awsServiceAccountAnnotation .Values.global.customLogging.awsIAMRole }}
 proxy_pass http://localhost:{{ .Values.service.awsproxy }};
 {{- else }}
