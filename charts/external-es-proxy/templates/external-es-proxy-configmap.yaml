@@ -58,11 +58,11 @@ data:
         }
 
         location = /_cluster/state/version {
-          {{- include "external-es-proxy-nginx-common" . | indent 10 }}
+          {{- include "external-es-proxy-nginx-location-common" . | indent 10 }}
         }
 
         location = /_cluster/health {
-          {{- include "external-es-proxy-nginx-common" . | indent 10 }}
+          {{- include "external-es-proxy-nginx-location-common" . | indent 10 }}
         }
 
       }
