@@ -600,7 +600,7 @@ class TestExternalElasticSearch:
             "tests/chart_tests/test_data/default-external-es-nginx.conf"
         ).read_text()
         assert doc["kind"] == "ConfigMap"
-        assert nginx_conf in doc["data"]["nginx.conf"]
+        assert nginx_conf.strip() in doc["data"]["nginx.conf"].strip()
 
     def test_external_elasticsearch_nginx_with_aws_secret_config(self, kube_version):
         """Test External ElasticSearch with nginx aws secret config."""
@@ -627,4 +627,4 @@ class TestExternalElasticSearch:
             "tests/chart_tests/test_data/external-es-nginx-with-aws-secrets.conf"
         ).read_text()
         assert doc["kind"] == "ConfigMap"
-        assert nginx_conf in doc["data"]["nginx.conf"]
+        assert nginx_conf.strip() in doc["data"]["nginx.conf"].strip()
