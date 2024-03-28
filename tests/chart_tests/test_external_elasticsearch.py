@@ -3,6 +3,7 @@ import base64
 import jmespath
 import pytest
 import yaml
+import pathlib
 
 from tests import get_containers_by_name, supported_k8s_versions
 from tests.chart_tests.helm_template_generator import render_chart
@@ -574,3 +575,56 @@ class TestExternalElasticSearch:
         assert {"name": "TEST_VAR_NAME", "value": "test_var_value"} in doc["spec"][
             "template"
         ]["spec"]["containers"][0]["env"]
+
+    def test_external_elasticsearch_nginx_defaults_config(self, kube_version):
+        """Test External ElasticSearch with nginx defaults."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "customLogging": {
+                        "enabled": True,
+                        "secret": secret,
+                        "host": "esdemo.example.com",
+                    }
+                }
+            },
+            show_only=[
+                "charts/external-es-proxy/templates/external-es-proxy-configmap.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        nginx_conf = pathlib.Path(
+            "tests/chart_tests/test_data/default-external-es-nginx.conf"
+        ).read_text()
+        assert doc["kind"] == "ConfigMap"
+        assert nginx_conf in doc["data"]["nginx.conf"]
+
+    def test_external_elasticsearch_nginx_with_aws_secret_config(self, kube_version):
+        """Test External ElasticSearch with nginx aws secret config."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "customLogging": {
+                        "enabled": True,
+                        "scheme": "https",
+                        "host": "esdemo.example.com",
+                        "awsSecretName": "awssecret",
+                    }
+                }
+            },
+            show_only=[
+                "charts/external-es-proxy/templates/external-es-proxy-configmap.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        nginx_conf = pathlib.Path(
+            "tests/chart_tests/test_data/external-es-nginx-with-aws-secrets.conf"
+        ).read_text()
+        assert doc["kind"] == "ConfigMap"
+        assert nginx_conf in doc["data"]["nginx.conf"]

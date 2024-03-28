@@ -1,5 +1,5 @@
 ---
-exclude: '(venv|\.vscode|tests/k8s_schema)' # regex
+exclude: '(venv|\.vscode|tests/k8s_schema|tests/chart_tests/test_data)' # regex
 repos:
   - repo: local
     hooks:
