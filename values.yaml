@@ -72,6 +72,10 @@ global:
   # Enables necessary components for Velero (Velero, Grafana Dashboard, Prometheus Alerts)
   veleroEnabled: false
 
+  # Enable default mysql database.
+  # This is not recommended for production.
+  mysqlEnabled: false
+
   # Enable default postgresql database.
   # This is not recommended for production.
   postgresqlEnabled: false
