@@ -585,6 +585,7 @@ class TestExternalElasticSearch:
                     "customLogging": {
                         "enabled": True,
                         "secret": secret,
+                        "host": "esdemo.example.com",
                     }
                 }
             },
@@ -595,9 +596,35 @@ class TestExternalElasticSearch:
 
         assert len(docs) == 1
         doc = docs[0]
-
         nginx_conf = pathlib.Path(
             "tests/chart_tests/test_data/default-external-es-nginx.conf"
+        ).read_text()
+        assert doc["kind"] == "ConfigMap"
+        assert nginx_conf in doc["data"]["nginx.conf"]
+
+    def test_external_elasticsearch_nginx_with_aws_secret_config(self, kube_version):
+        """Test External ElasticSearch with nginx aws secret config."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "customLogging": {
+                        "enabled": True,
+                        "scheme": "https",
+                        "host": "esdemo.example.com",
+                        "awsSecretName": "awssecret",
+                    }
+                }
+            },
+            show_only=[
+                "charts/external-es-proxy/templates/external-es-proxy-configmap.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        nginx_conf = pathlib.Path(
+            "tests/chart_tests/test_data/external-es-nginx-with-aws-secrets.conf"
         ).read_text()
         assert doc["kind"] == "ConfigMap"
         assert nginx_conf in doc["data"]["nginx.conf"]
