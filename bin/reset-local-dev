@@ -16,6 +16,7 @@ Options:
   -k    List recent kubernetes versions to use with -K (not all will be available to KIND)
   -K    Kubernetes version to use (eg: 1.25.3) https://github.com/kubernetes/kubernetes/releases/
   -M    Enable multi-node kind cluster
+  -d    Database type (postgresql, mysql)
 
 "
 }
@@ -28,8 +29,9 @@ get_kube_versions() {
     sort
 }
 
-while getopts ':hHkK:Mx' option ; do
+while getopts ':hHkK:Mxd:' option ; do
   case "${option}" in
+    d) export DATABASE="${OPTARG}" ;;
     h) usage ; exit 0 ;;
     H) USE_HA=1 ;;
     k) get_kube_versions ; exit 0 ;;
@@ -44,6 +46,7 @@ shift $((OPTIND - 1))
 # The path to the working directory - the root of the repo
 GIT_ROOT="$(git -C "${0%/*}" rev-parse --show-toplevel)"
 NAMESPACE="${NAMESPACE:-astronomer}"
+DATABASE="${DATABASE:-postgresql}"
 
 if [[ -z "${USE_HA+x}" ]]; then
   CONFIG_FILE="$GIT_ROOT/configs/local-dev.yaml"
@@ -51,6 +54,19 @@ if [[ -z "${USE_HA+x}" ]]; then
 else
   CONFIG_FILE="$GIT_ROOT/configs/local-dev-ha.yaml"
   echo "Using HA config file ${CONFIG_FILE##*/}"
+fi
+
+if [[ "${DATABASE}" == postgresql ]] ; then
+  echo "Using postgresql database"
+  ENABLE_POSTGRESQL=true
+  ENABLE_MYSQL=false
+elif [[ "${DATABASE}" == mysql ]] ; then
+  echo "Using mysql database"
+  ENABLE_POSTGRESQL=false
+  ENABLE_MYSQL=true
+else
+  echo "ERROR: Invalid database type: ${DATABASE}"
+  exit 1
 fi
 
 # Fail fast for helm syntax errors
@@ -62,7 +78,8 @@ echo "Deploying Astronomer..."
 helm install -f "$CONFIG_FILE" \
   --timeout "${HELM_INSTALL_TIMEOUT:-800}s" \
   --namespace "${NAMESPACE}" astronomer \
-  --set global.postgresqlEnabled=true \
+  --set global.postgresqlEnabled=${ENABLE_POSTGRESQL} \
+  --set global.mysqlEnabled=${ENABLE_MYSQL} \
   "$GIT_ROOT"
 
 

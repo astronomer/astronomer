@@ -9,8 +9,9 @@ from packaging.version import parse as semver
 from pytest import mark
 
 # The top-level path of this repository
-git_root_dir = Path(
-    check_output(["git", "rev-parse", "--show-toplevel"]).decode("utf-8").rstrip()
+git_root_dir = next(
+    iter([x for x in Path(__file__).resolve().parents if (x / ".git").is_dir()]),
+    None,
 )
 
 

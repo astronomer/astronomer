@@ -6,8 +6,10 @@ import yaml
 import sys
 
 
-this_script = Path(__file__)
-git_root = this_script.resolve().parent.parent
+git_root = next(
+    iter([x for x in Path(__file__).resolve().parents if (x / ".git").is_dir()]),
+    None,
+)
 
 
 def validate_test_file(file: PosixPath) -> None:
