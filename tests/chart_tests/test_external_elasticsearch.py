@@ -126,10 +126,11 @@ class TestExternalElasticSearch:
             show_only=[
                 "charts/external-es-proxy/templates/external-es-proxy-deployment.yaml",
                 "charts/external-es-proxy/templates/external-es-proxy-service.yaml",
+                "charts/external-es-proxy/templates/external-es-proxy-configmap.yaml",
             ],
         )
 
-        assert len(docs) == 2
+        assert len(docs) == 3
         doc = docs[0]
         assert doc["kind"] == "Deployment"
         assert doc["apiVersion"] == "apps/v1"
@@ -168,6 +169,11 @@ class TestExternalElasticSearch:
             "port": 9201,
             "appProtocol": "http",
         } in jmespath.search("spec.ports", docs[1])
+
+        nginx_conf = pathlib.Path(
+            "tests/chart_tests/test_data/external-es-nginx-with-aws-secrets.conf"
+        ).read_text()
+        assert nginx_conf in docs[2]["data"]["nginx.conf"]
 
     def test_externalelasticsearch_with_awsIAMRole(self, kube_version):
         """Test External ElasticSearch with iam roles passed as Deployment
@@ -598,33 +604,6 @@ class TestExternalElasticSearch:
         doc = docs[0]
         nginx_conf = pathlib.Path(
             "tests/chart_tests/test_data/default-external-es-nginx.conf"
-        ).read_text()
-        assert doc["kind"] == "ConfigMap"
-        assert nginx_conf in doc["data"]["nginx.conf"]
-
-    def test_external_elasticsearch_nginx_with_aws_secret_config(self, kube_version):
-        """Test External ElasticSearch with nginx aws secret config."""
-        docs = render_chart(
-            kube_version=kube_version,
-            values={
-                "global": {
-                    "customLogging": {
-                        "enabled": True,
-                        "scheme": "https",
-                        "host": "esdemo.example.com",
-                        "awsSecretName": "awssecret",
-                    }
-                }
-            },
-            show_only=[
-                "charts/external-es-proxy/templates/external-es-proxy-configmap.yaml",
-            ],
-        )
-
-        assert len(docs) == 1
-        doc = docs[0]
-        nginx_conf = pathlib.Path(
-            "tests/chart_tests/test_data/external-es-nginx-with-aws-secrets.conf"
         ).read_text()
         assert doc["kind"] == "ConfigMap"
         assert nginx_conf in doc["data"]["nginx.conf"]

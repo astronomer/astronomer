@@ -62,6 +62,12 @@ Create the name of the service account to use
 {{- end }}
 
 
+{{/*
+Option to add trust certs when privateCA or self signed certs are used
+with hosted elastic search. By defaults it is off when trustCaCerts are
+provided it will use that certs to trust the connection
+*/}}
+
 {{- define "external-es-proxy-trustcerts" -}}
 {{- if .Values.global.customLogging.trustCaCerts  }}
 {{- $secret_name := .Values.global.customLogging.trustCaCerts }}
@@ -101,6 +107,13 @@ imagePullSecrets:
 {{ .Values.images.awsproxy.repository }}:{{ .Values.images.awsproxy.tag }}
 {{- end }}
 {{- end }}
+
+
+{{/*
+Switches the elasticsearch configuratiob based on customLogging
+when aws managed elastic search is confired awsesproxy settings is required
+to authenticate with aws managed elastic search or opensearch
+*/}}
 
 {{- define "external-es-proxy-nginx-location-common" -}}
 {{- if  or .Values.global.customLogging.awsSecretName  .Values.global.customLogging.awsServiceAccountAnnotation .Values.global.customLogging.awsIAMRole }}
