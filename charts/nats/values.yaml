@@ -54,7 +54,6 @@ nats:
     lameDuckDuration:
 
   regenerateCaEachUpgrade: false
-  jetstreamSSLSecretName: ~
 
   jetstream:
     enabled: false
