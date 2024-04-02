@@ -278,7 +278,7 @@ s3:
 - name: nats-jetstream-client-tls-volume
   mountPath: {{ include "houston.jetStreamSSLCertificateDir" . }}/{{ $secretName }}
 - name: nats-jetstream-client-tls-volume
-  mountPath: /usr/local/share/ca-certificates/{{ $secretName }}/ca.crt
+  mountPath: /usr/local/share/ca-certificates/{{ $secretName }}.crt
   subPath: ca.crt
 {{- end }}
 {{- end }}
