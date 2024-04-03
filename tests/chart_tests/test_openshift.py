@@ -35,6 +35,7 @@ non_airflow_components_list = [
     "pgbouncer",
 ]
 
+
 @pytest.mark.parametrize(
     "kube_version",
     supported_k8s_versions,
