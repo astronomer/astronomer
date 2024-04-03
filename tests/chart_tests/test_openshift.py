@@ -22,10 +22,8 @@ airflow_components_list = [
     "scheduler",
     "workers",
     "redis",
-    "statsd",
     "triggerer",
     "migrateDatabaseJob",
-    "pgbouncer",
     "cleanup",
 ]
 
