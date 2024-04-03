@@ -15,32 +15,32 @@ tolerations: []
 images:
   commander:
     repository: quay.io/astronomer/ap-commander
-    tag: 0.34.0
+    tag: 0.34.1
     pullPolicy: IfNotPresent
   registry:
     repository: quay.io/astronomer/ap-registry
-    tag: 3.18.6
+    tag: 3.18.6-2
     pullPolicy: IfNotPresent
     # httpSecret: ~
   houston:
     repository: quay.io/astronomer/ap-houston-api
-    tag: 0.34.4
+    tag: 0.34.5
     pullPolicy: IfNotPresent
   astroUI:
     repository: quay.io/astronomer/ap-astro-ui
-    tag: 0.34.3
+    tag: 0.34.4
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
-    tag: 0.31.11
+    tag: 0.31.12
     pullPolicy: IfNotPresent
   cliInstall:
     repository: quay.io/astronomer/ap-cli-install
-    tag: 0.26.22
+    tag: 0.26.23
     pullPolicy: IfNotPresent
 
 securityContext:
-    runAsNonRoot: true
+  runAsNonRoot: true
 
 astroUI:
   replicas: 2
