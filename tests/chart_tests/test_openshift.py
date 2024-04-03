@@ -30,6 +30,11 @@ airflow_components_list = [
 ]
 
 
+non_airflow_components_list = [
+    "statsd",
+    "pgbouncer",
+]
+
 @pytest.mark.parametrize(
     "kube_version",
     supported_k8s_versions,
@@ -93,6 +98,11 @@ class TestOpenshift:
         airflowConfig = prod["deployments"]["helm"]["airflow"]
 
         for component in airflow_components_list:
+            assert {"runAsNonRoot": False} == airflowConfig[component][
+                "securityContexts"
+            ]["pod"]
+
+        for component in non_airflow_components_list:
             assert {"runAsNonRoot": True} == airflowConfig[component][
                 "securityContexts"
             ]["pod"]
