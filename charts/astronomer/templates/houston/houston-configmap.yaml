@@ -179,7 +179,7 @@ data:
             {{ if .Values.global.openshiftEnabled }}
             securityContexts:
               pod:
-                runAsNonRoot: true
+                runAsNonRoot: false
             {{ end }}
           webserver:
             {{ if .Values.configSyncer.enabled }}
@@ -197,7 +197,7 @@ data:
             {{ if .Values.global.openshiftEnabled }}
             securityContexts:
               pod:
-                runAsNonRoot: true
+                runAsNonRoot: false
             {{ end  }}
             resources:
               limits:
@@ -222,7 +222,7 @@ data:
             {{ if .Values.global.openshiftEnabled }}
             securityContexts:
               pod:
-                runAsNonRoot: true
+                runAsNonRoot: false
             {{ end  }}
             resources:
               limits:
@@ -238,7 +238,7 @@ data:
             {{ if .Values.global.openshiftEnabled }}
             securityContexts:
               pod:
-                runAsNonRoot: true
+                runAsNonRoot: false
             {{ end  }}
 
             podDisruptionBudget:
@@ -381,7 +381,7 @@ data:
             {{ if .Values.global.openshiftEnabled }}
             securityContexts:
               pod:
-                runAsNonRoot: true
+                runAsNonRoot: false
             {{ end }}
 
           {{ if .Values.global.openshiftEnabled }}
@@ -395,13 +395,13 @@ data:
           triggerer:
             securityContexts:
               pod:
-                runAsNonRoot: true
+                runAsNonRoot: false
 
           # migrateDatabaseJob  settings
           migrateDatabaseJob:
             securityContexts:
               pod:
-                runAsNonRoot: true
+                runAsNonRoot: false
 
           {{ end }}
 
@@ -456,7 +456,7 @@ data:
             {{ if .Values.global.openshiftEnabled }}
             securityContexts:
               pod:
-                runAsNonRoot: true
+                runAsNonRoot: false
             {{ end  }}
       {{- end }}
 
