@@ -32,12 +32,12 @@ spec:
       affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
       tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       terminationGracePeriodSeconds: 60
-{{- include "nginx.imagePullSecrets" . | indent 6 }}
+{{- include "nginx.imagePullSecrets" . | trim| indent 6 }}
       containers:
         - name: default-backend
           image: {{ template "nginx.defaultBackend.image" . }}
           imagePullPolicy: {{ .Values.images.defaultBackend.pullPolicy }}
-          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
+          securityContext: {{- include "nginx.securityContext" . | nindent 2 }}
           livenessProbe:
             httpGet:
               path: /healthz
