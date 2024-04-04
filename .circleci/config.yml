@@ -543,15 +543,6 @@ workflows:
             - lint
             - run_pre_commit
             - unittest-charts
-
-      - platform-1-25-16:
-          requires:
-            - build-artifact
-
-      - platform-1-29-2:
-          requires:
-            - build-artifact
-
       - release-to-internal:
           context:
             - gcp-astronomer-prod
