@@ -72,10 +72,6 @@ global:
   # Enables necessary components for Velero (Velero, Grafana Dashboard, Prometheus Alerts)
   veleroEnabled: false
 
-  # Enable default mysql database.
-  # This is not recommended for production.
-  mysqlEnabled: false
-
   # Enable default postgresql database.
   # This is not recommended for production.
   postgresqlEnabled: false
@@ -292,6 +288,14 @@ global:
       # another: thing
     extraLabels: []
       # do-funky-injection: maybe
+
+  # Enable default mysql database.
+  # This is not recommended for production.
+  mysql:
+    enabled: false
+    servicePort: "3306"
+    username: "root"
+    password: "root"
 
 #################################
 ## Default tagged groups enabled

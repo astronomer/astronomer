@@ -67,7 +67,7 @@ dependencies:
   # In-cluster DB
   # !! Not recommended for production !!
   - name: mysql
-    condition: global.mysqlEnabled
+    condition: global.mysql.enabled
     tags:
       - mysql
 
