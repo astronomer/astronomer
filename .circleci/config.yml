@@ -546,6 +546,8 @@ workflows:
       - release-to-internal:
           context:
             - gcp-astronomer-prod
+          requires:
+            - build-artifact
           filters:
             branches:
               only:
