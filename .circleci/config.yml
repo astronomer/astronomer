@@ -555,9 +555,6 @@ workflows:
       - release-to-internal:
           context:
             - gcp-astronomer-prod
-          requires:
-            - platform-1-25-16
-            - platform-1-29-2
           filters:
             branches:
               only:
