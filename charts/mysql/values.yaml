@@ -1022,7 +1022,7 @@ secondary:
 serviceAccount:
   ## @param serviceAccount.create Enable the creation of a ServiceAccount for MySQL pods
   ##
-  create: true
+  create: false
   ## @param serviceAccount.name Name of the created ServiceAccount
   ## If not set and create is true, a name is generated using the mysql.fullname template
   ##
