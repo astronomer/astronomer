@@ -203,3 +203,40 @@ class TestNatsStatefulSet:
 
         nats_cm = docs[0]["data"]["nats.conf"]
         assert "release-name-astronats" in nats_cm
+
+    def test_nats_statefulset_template_annotation_defaults(self, kube_version):
+        """Test that nats template default annotations."""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/nats/templates/statefulset.yaml"],
+        )
+        doc = docs[0]
+        assert set(
+            {
+                "checksum/nats-config": "8173240e8d81e0c797b3ce1c4a97b3031176e057483524bc185419df1d52b54a",
+                "prometheus.io/path": "/metrics",
+                "prometheus.io/port": "7777",
+                "prometheus.io/scrape": "true",
+            }.keys()
+        ) == set(doc["spec"]["template"]["metadata"]["annotations"].keys())
+
+    def test_nats_statefulset_template_annotation_with_podAnnotations_overrides(
+        self, kube_version
+    ):
+        """Test that nats template default annotations."""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/nats/templates/statefulset.yaml"],
+            values={
+                "nats": {
+                    "podAnnotations": {
+                        "app.test.io": "sampleannotation",
+                    }
+                }
+            },
+        )
+        doc = docs[0]
+        assert (
+            "sampleannotation"
+            in doc["spec"]["template"]["metadata"]["annotations"]["app.test.io"]
+        )
