@@ -33,6 +33,10 @@ spec:
         {{ $key }}: {{ $value | quote }}
       {{- end }}
       {{- end }}
+      {{- if and  .Values.global.nats.jetStream.enabled .Values.global.nats.jetStream.tls }}
+        checksum/nats-tls: {{ include (print $.Template.BasePath "/nats-jetstream-tls-secret.yaml") . | sha256sum }}
+      {{- end }}
+        checksum/nats-config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
       labels:
         tier: astronomer
         app: {{ template "nats.name" . }}
@@ -40,11 +44,6 @@ spec:
         release: {{ .Release.Name }}
         component: nats
         chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
-      annotations:
-        {{- if and  .Values.global.nats.jetStream.enabled .Values.global.nats.jetStream.tls }}
-        checksum/nats-tls: {{ include (print $.Template.BasePath "/nats-jetstream-tls-secret.yaml") . | sha256sum }}
-        {{- end }}
-        checksum/nats-config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
     spec:
 {{- include "nats.imagePullSecrets" . | indent 6 }}
 {{- if eq .Values.global.openshiftEnabled false }}
