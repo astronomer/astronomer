@@ -38,6 +38,7 @@ spec:
           image: {{ template "kibana.init.image" . }}
           imagePullPolicy: {{ .Values.images.init.pullPolicy }}
           resources: {{ toYaml .Values.resources | nindent 12 }}
+          securityContext: {{ template "kibana.securityContext" . }}
           command:
           - "/bin/sh"
           - -ec
