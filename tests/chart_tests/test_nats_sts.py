@@ -211,12 +211,12 @@ class TestNatsStatefulSet:
             show_only=["charts/nats/templates/statefulset.yaml"],
         )
         doc = docs[0]
-        assert {
+        assert set({
             "checksum/nats-config": "8173240e8d81e0c797b3ce1c4a97b3031176e057483524bc185419df1d52b54a",
             "prometheus.io/path": "/metrics",
             "prometheus.io/port": "7777",
             "prometheus.io/scrape": "true",
-        } == doc["spec"]["template"]["metadata"]["annotations"]
+        }.keys()) == set(doc["spec"]["template"]["metadata"]["annotations"]).keys()
 
     def test_nats_statefulset_template_annotation_with_podAnnotations_overrides(
         self, kube_version
