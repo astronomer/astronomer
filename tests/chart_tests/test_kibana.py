@@ -4,6 +4,15 @@ from tests import supported_k8s_versions
 from tests.chart_tests.helm_template_generator import render_chart
 
 
+def common_kibana_cronjob_test(docs):
+    """Test common asserts for kibana index cronjob."""
+    assert len(docs) == 1
+    doc = docs[0]
+    assert doc["kind"] == "Job"
+    assert doc["apiVersion"] == "batch/v1"
+    assert doc["metadata"]["name"] == "release-name-kibana-default-index"
+
+
 @pytest.mark.parametrize(
     "kube_version",
     supported_k8s_versions,
@@ -18,11 +27,8 @@ class TestKibana:
                 "charts/kibana/templates/kibana-default-index-cronjob.yaml",
             ],
         )
-        assert len(docs) == 1
+        common_kibana_cronjob_test(docs)
         doc = docs[0]
-        assert doc["kind"] == "Job"
-        assert doc["apiVersion"] == "batch/v1"
-        assert doc["metadata"]["name"] == "release-name-kibana-default-index"
         assert (
             "fluentd.*"
             in doc["spec"]["template"]["spec"]["containers"][0]["command"][2]
@@ -37,12 +43,8 @@ class TestKibana:
                 "charts/kibana/templates/kibana-default-index-cronjob.yaml",
             ],
         )
-
-        assert len(docs) == 1
+        common_kibana_cronjob_test(docs)
         doc = docs[0]
-        assert doc["kind"] == "Job"
-        assert doc["apiVersion"] == "batch/v1"
-        assert doc["metadata"]["name"] == "release-name-kibana-default-index"
         assert (
             "vector.*" in doc["spec"]["template"]["spec"]["containers"][0]["command"][2]
         )
@@ -85,3 +87,33 @@ class TestKibana:
         ] == [doc["spec"]["ingress"][1]["from"][0]]
 
         assert [{"port": 5601, "protocol": "TCP"}] == doc["spec"]["ingress"][1]["ports"]
+
+    def test_kibana_index_securitycontext_defaults(self, kube_version):
+        """Test kibana Service with index defaults."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={},
+            show_only=[
+                "charts/kibana/templates/kibana-default-index-cronjob.yaml",
+            ],
+        )
+        common_kibana_cronjob_test(docs)
+        doc = docs[0]
+        assert {"runAsNonRoot": True, "runAsUser": 1000} == doc["spec"]["template"][
+            "spec"
+        ]["containers"][0]["securityContext"]
+
+    def test_kibana_index_securitycontext_with_openshiftEnabled(self, kube_version):
+        """Test kibana Service with index defaults."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"openshiftEnabled": True}},
+            show_only=[
+                "charts/kibana/templates/kibana-default-index-cronjob.yaml",
+            ],
+        )
+        common_kibana_cronjob_test(docs)
+        doc = docs[0]
+        assert {"runAsNonRoot": True} == doc["spec"]["template"]["spec"]["containers"][
+            0
+        ]["securityContext"]
