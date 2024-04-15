@@ -15,7 +15,7 @@ kube_versions = metadata["test_k8s_versions"]
 
 # https://circleci.com/developer/machine/image/ubuntu-2204
 machine_image_version = "ubuntu-2204:2024.01.1"
-ci_runner_version = "2024-03"
+ci_runner_version = "2024-04"
 
 
 def list_docker_images():
