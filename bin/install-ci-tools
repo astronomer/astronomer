@@ -2,10 +2,10 @@
 set -xeuo pipefail
 
 KIND_VERSION="0.22.0" # https://github.com/kubernetes-sigs/kind/releases
-HELM_VERSION="3.14.2" # https://github.com/helm/helm/releases
-GCLOUD_VERSION="465.0.0"
+HELM_VERSION="3.14.4" # https://github.com/helm/helm/releases
+GCLOUD_VERSION="471.0.0"
 MKCERT_VERSION="1.4.4" # https://github.com/FiloSottile/mkcert/tags
-KUBENT_VERSION="0.7.1" # https://github.com/doitintl/kube-no-trouble/releases
+KUBENT_VERSION="0.7.2" # https://github.com/doitintl/kube-no-trouble/releases
 
 OS=$(uname | tr '[:upper:]' '[:lower:]')
 
