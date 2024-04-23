@@ -133,7 +133,7 @@ rules:
   verbs: ["create", "delete", "list", "watch"]
 - apiGroups: ["policy"]
   resources: ["poddisruptionbudgets"]
-  verbs: ["create", "delete", "get", "list", "watch"]
+  verbs: ["create", "delete", "get", "list", "patch", "watch"]
 {{- if $useClusterRoles }}
 # permissions for "nonResourceURLs" can only be applied on ClusterRoles
 - nonResourceURLs: ["/metrics"]
