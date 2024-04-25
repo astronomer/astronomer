@@ -48,8 +48,8 @@ class TestIngress:
                 "charts/astronomer/templates/ingress.yaml",
             ],
         )
-        assert len(docs) == 1
-        expected_rules_v1 = json.loads(
+        assert len(docs) == 2
+        expected_astroui_rules_v1 = json.loads(
             """
         [
             {"host":"app.example.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":{"service":{"name":"release-name-astro-ui","port":{"name":"astro-ui-http"}}}}]}}
@@ -57,7 +57,17 @@ class TestIngress:
         """
         )
         assert docs[0]["apiVersion"] == "networking.k8s.io/v1"
-        assert docs[0]["spec"]["rules"] == expected_rules_v1
+        assert docs[0]["spec"]["rules"] == expected_astroui_rules_v1
+
+        expected_common_rules_v1 = json.loads(
+            """
+        [
+            {"host":"example.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":{"service":{"name":"release-name-astro-ui","port":{"name":"astro-ui-http"}}}}]}}
+        ]
+        """
+        )
+        assert docs[1]["apiVersion"] == "networking.k8s.io/v1"
+        assert docs[1]["spec"]["rules"] == expected_common_rules_v1
 
     def test_registry_per_host_ingress(self, kube_version):
         docs = render_chart(

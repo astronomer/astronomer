@@ -1,5 +1,5 @@
 ################################
-## Astronomer Ingress
+## Astronomer Cli Install Ingress
 #################################
 {{- if and .Values.global.baseDomain  .Values.install.cliEnabled }}
 kind: Ingress
