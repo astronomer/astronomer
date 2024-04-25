@@ -22,8 +22,11 @@ spec:
   serviceName: {{ template "nats.name" . }}
   template:
     metadata:
-      {{- if or .Values.podAnnotations .Values.exporter.enabled }}
       annotations:
+        checksum/nats-config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+      {{- if and  .Values.global.nats.jetStream.enabled .Values.global.nats.jetStream.tls }}
+        checksum/nats-tls: {{ include (print $.Template.BasePath "/nats-jetstream-tls-secret.yaml") . | sha256sum }}
+      {{- end }}
       {{- if .Values.exporter.enabled }}
         prometheus.io/path: /metrics
         prometheus.io/port: "7777"
@@ -32,7 +35,6 @@ spec:
       {{- range $key, $value := .Values.podAnnotations }}
         {{ $key }}: {{ $value | quote }}
       {{- end }}
-      {{- end }}
       labels:
         tier: astronomer
         app: {{ template "nats.name" . }}
@@ -40,11 +42,6 @@ spec:
         release: {{ .Release.Name }}
         component: nats
         chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
-      annotations:
-        {{- if and  .Values.global.nats.jetStream.enabled .Values.global.nats.jetStream.tls }}
-        checksum/nats-tls: {{ include (print $.Template.BasePath "/nats-jetstream-tls-secret.yaml") . | sha256sum }}
-        {{- end }}
-        checksum/nats-config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
     spec:
 {{- include "nats.imagePullSecrets" . | indent 6 }}
 {{- if eq .Values.global.openshiftEnabled false }}
