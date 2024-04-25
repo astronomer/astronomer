@@ -5,9 +5,9 @@
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:
-  name: {{ .Release.Name }}-public-ingress
+  name: {{ .Release.Name }}-registry-ingress
   labels:
-    component: public-ingress
+    component: registry-ingress
     tier: astronomer
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
@@ -21,10 +21,6 @@ metadata:
     kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
     kubernetes.io/tls-acme: {{ eq .Values.global.acme true | quote }}
     nginx.ingress.kubernetes.io/custom-http-errors: "404"
-    nginx.ingress.kubernetes.io/configuration-snippet: |
-      if ($host = '{{ .Values.global.baseDomain }}' ) {
-        rewrite ^ https://app.{{ .Values.global.baseDomain }}$request_uri permanent;
-      }
     {{- end }}
 spec:
   {{- if or .Values.global.tlsSecret .Values.global.acme }}
@@ -36,26 +32,10 @@ spec:
     - secretName: {{ .Values.global.tlsSecret }}
   {{- end }}
       hosts:
-        - {{ .Values.global.baseDomain }}
-        - app.{{ .Values.global.baseDomain }}
         - registry.{{ .Values.global.baseDomain }}
   {{- end }}
   {{ if semverCompare "< 1.19-0" .Capabilities.KubeVersion.Version -}}
   rules:
-  - host: {{ .Values.global.baseDomain }}
-    http:
-      paths:
-        - path: /
-          backend:
-            serviceName: {{ .Release.Name }}-astro-ui
-            servicePort: astro-ui-http
-  - host: app.{{ .Values.global.baseDomain }}
-    http:
-      paths:
-        - path: /
-          backend:
-            serviceName: {{ .Release.Name }}-astro-ui
-            servicePort: astro-ui-http
   - host: registry.{{ .Values.global.baseDomain }}
     http:
       paths:
@@ -65,26 +45,6 @@ spec:
             servicePort: registry-http
   {{ else -}}
   rules:
-  - host: {{ .Values.global.baseDomain }}
-    http:
-      paths:
-        - path: /
-          pathType: Prefix
-          backend:
-            service:
-              name: {{ .Release.Name }}-astro-ui
-              port:
-                name: astro-ui-http
-  - host: app.{{ .Values.global.baseDomain }}
-    http:
-      paths:
-        - path: /
-          pathType: Prefix
-          backend:
-            service:
-              name: {{ .Release.Name }}-astro-ui
-              port:
-                name: astro-ui-http
   - host: registry.{{ .Values.global.baseDomain }}
     http:
       paths:
