@@ -38,3 +38,42 @@ class TestIngress:
 
         assert doc["apiVersion"] == "networking.k8s.io/v1"
         assert doc["spec"]["rules"] == expected_rules_v1
+
+    def test_astro_ui_per_host_ingress(self, kube_version):
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"enablePerHostIngress": True}},
+            show_only=[
+                "charts/astronomer/templates/astro-ui/astro-ui-ingress.yaml",
+                "charts/astronomer/templates/ingress.yaml",
+            ],
+        )
+        assert len(docs) == 1
+        expected_rules_v1 = json.loads(
+            """
+        [
+            {"host":"app.example.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":{"service":{"name":"release-name-astro-ui","port":{"name":"astro-ui-http"}}}}]}}
+        ]
+        """
+        )
+        assert docs[0]["apiVersion"] == "networking.k8s.io/v1"
+        assert docs[0]["spec"]["rules"] == expected_rules_v1
+
+    def test_registry_per_host_ingress(self, kube_version):
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"enablePerHostIngress": True}},
+            show_only=[
+                "charts/astronomer/templates/registry/registry-ingress.yaml",
+                "charts/astronomer/templates/ingress.yaml",
+            ],
+        )
+        assert len(docs) == 1
+        expected_rules_v1 = json.loads(
+            """
+        [
+        {"host":"registry.example.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":{"service":{"name":"release-name-registry","port":{"name":"registry-http"}}}}]}}]
+        """
+        )
+        assert docs[0]["apiVersion"] == "networking.k8s.io/v1"
+        assert docs[0]["spec"]["rules"] == expected_rules_v1
