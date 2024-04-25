@@ -122,6 +122,8 @@ global:
 
   enableHoustonInternalAuthorization: false
 
+  enablePerHostIngress: false
+
   dagOnlyDeployment:
     enabled: false
     image: quay.io/astronomer/ap-dag-deploy:0.3.2

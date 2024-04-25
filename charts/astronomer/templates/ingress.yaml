@@ -1,7 +1,7 @@
 ################################
 ## Astronomer Ingress
 #################################
-{{- if .Values.global.baseDomain }}
+{{- if and .Values.global.baseDomain  ( not .Values.global.enablePerHostIngress ) }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:
@@ -37,6 +37,9 @@ spec:
   {{- end }}
       hosts:
         - {{ .Values.global.baseDomain }}
+        - app.{{ .Values.global.baseDomain }}
+        - registry.{{ .Values.global.baseDomain }}
+        - install.{{ .Values.global.baseDomain }}
   {{- end }}
   {{ if semverCompare "< 1.19-0" .Capabilities.KubeVersion.Version -}}
   rules:
@@ -47,6 +50,27 @@ spec:
           backend:
             serviceName: {{ .Release.Name }}-astro-ui
             servicePort: astro-ui-http
+  - host: app.{{ .Values.global.baseDomain }}
+    http:
+      paths:
+        - path: /
+          backend:
+            serviceName: {{ .Release.Name }}-astro-ui
+            servicePort: astro-ui-http
+  - host: registry.{{ .Values.global.baseDomain }}
+    http:
+      paths:
+        - path: /
+          backend:
+            serviceName: {{ .Release.Name }}-registry
+            servicePort: registry-http
+  - host: install.{{ .Values.global.baseDomain }}
+    http:
+      paths:
+        - path: /
+          backend:
+            serviceName: {{ .Release.Name }}-cli-install
+            servicePort: install-http
   {{ else -}}
   rules:
   - host: {{ .Values.global.baseDomain }}
@@ -59,5 +83,37 @@ spec:
               name: {{ .Release.Name }}-astro-ui
               port:
                 name: astro-ui-http
+  - host: app.{{ .Values.global.baseDomain }}
+    http:
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: {{ .Release.Name }}-astro-ui
+              port:
+                name: astro-ui-http
+  - host: registry.{{ .Values.global.baseDomain }}
+    http:
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: {{ .Release.Name }}-registry
+              port:
+                name: registry-http
+{{- if .Values.install.cliEnabled }}
+  - host: install.{{ .Values.global.baseDomain }}
+    http:
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: {{ .Release.Name }}-cli-install
+              port:
+                name: install-http
+{{- end -}}
   {{- end -}}
 {{- end }}
