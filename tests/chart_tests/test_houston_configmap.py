@@ -511,7 +511,7 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_securityContext_conf
     assert prod_yaml["deployments"]["loggingSidecar"] == {
         "enabled": True,
         "name": sidecar_container_name,
-        "image": "quay.io/astronomer/ap-vector:0.22.3",
+        "image": "quay.io/astronomer/ap-vector:unittest-tag",
         "customConfig": False,
         "securityContext": securityContext,
     }
