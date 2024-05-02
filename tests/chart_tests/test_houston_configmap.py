@@ -483,6 +483,9 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_resource_overrides()
 def test_houston_configmap_with_loggingsidecar_enabled_with_securityContext_configured():
     """Validate the houston configmap and its embedded data with
     loggingSidecar."""
+    securityContext = {
+        "runAsUser": 1000,
+    }
     sidecar_container_name = "sidecar-log-test"
     image_name = "quay.io/astronomer/ap-vector:0.22.3"
     docs = render_chart(
@@ -492,9 +495,7 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_securityContext_conf
                     "enabled": True,
                     "name": sidecar_container_name,
                     "image": image_name,
-                    "securityContext": {
-                        "runAsUser": 1000,
-                    },
+                    "securityContext": securityContext,
                 }
             }
         },
@@ -512,7 +513,7 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_securityContext_conf
         "name": sidecar_container_name,
         "image": "quay.io/astronomer/ap-vector:0.22.3",
         "customConfig": False,
-        "securityContext": {"runAsUser": 1000},
+        "securityContext": securityContext,
     }
 
     assert "vector" in prod_yaml["deployments"]["loggingSidecar"]["image"]
