@@ -487,7 +487,7 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_securityContext_conf
         "runAsUser": 1000,
     }
     sidecar_container_name = "sidecar-log-test"
-    image_name = "quay.io/astronomer/ap-vector:0.22.3"
+    image_name = "quay.io/astronomer/ap-vector:unittest-tag"
     docs = render_chart(
         values={
             "global": {
