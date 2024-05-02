@@ -140,6 +140,7 @@ global:
     customConfig: false
     indexPattern: ~
     extraEnv: []
+    securityContext: {}
     resources: {}
     #  requests:
     #    cpu: "100m"
