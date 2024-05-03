@@ -5,6 +5,7 @@ import yaml
 from tests import supported_k8s_versions
 from tests.chart_tests.helm_template_generator import render_chart
 
+
 def common_houston_config_test_cases(docs):
     """Test some things that should apply to all cases."""
     assert len(docs) == 1
@@ -12,7 +13,6 @@ def common_houston_config_test_cases(docs):
     assert doc["kind"] == "ConfigMap"
     assert doc["apiVersion"] == "v1"
     assert doc["metadata"]["name"] == "release-name-houston-config"
-
 
 
 @pytest.mark.parametrize(
@@ -190,7 +190,6 @@ class TestAuthSidecar:
 
         common_houston_config_test_cases(docs)
         prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
-        
 
         expected_output = {
             "enabled": True,
