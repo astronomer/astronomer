@@ -5,6 +5,15 @@ import yaml
 from tests import supported_k8s_versions
 from tests.chart_tests.helm_template_generator import render_chart
 
+def common_houston_config_test_cases(docs):
+    """Test some things that should apply to all cases."""
+    assert len(docs) == 1
+    doc = docs[0]
+    assert doc["kind"] == "ConfigMap"
+    assert doc["apiVersion"] == "v1"
+    assert doc["metadata"]["name"] == "release-name-houston-config"
+
+
 
 @pytest.mark.parametrize(
     "kube_version",
@@ -144,14 +153,9 @@ class TestAuthSidecar:
             ],
         )
 
-        assert len(docs) == 1
-        doc = docs[0]
+        common_houston_config_test_cases(docs)
 
-        assert doc["kind"] == "ConfigMap"
-        assert doc["apiVersion"] == "v1"
-        assert doc["metadata"]["name"] == "release-name-houston-config"
-
-        prod = yaml.safe_load(doc["data"]["production.yaml"])
+        prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
         expected_output = {
             "enabled": True,
             "repository": "someregistry.io/my-custom-image",
@@ -184,12 +188,9 @@ class TestAuthSidecar:
             ],
         )
 
-        assert len(docs) == 1
-        doc = docs[0]
-        prod = yaml.safe_load(doc["data"]["production.yaml"])
-        assert doc["kind"] == "ConfigMap"
-        assert doc["apiVersion"] == "v1"
-        assert doc["metadata"]["name"] == "release-name-houston-config"
+        common_houston_config_test_cases(docs)
+        prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
+        
 
         expected_output = {
             "enabled": True,
@@ -225,13 +226,8 @@ class TestAuthSidecar:
             ],
         )
 
-        assert len(docs) == 1
-        doc = docs[0]
-        prod = yaml.safe_load(doc["data"]["production.yaml"])
-        assert doc["kind"] == "ConfigMap"
-        assert doc["apiVersion"] == "v1"
-        assert doc["metadata"]["name"] == "release-name-houston-config"
-
+        common_houston_config_test_cases(docs)
+        prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
         expected_output = {
             "enabled": True,
             "repository": "someregistry.io/my-custom-image",
