@@ -241,6 +241,6 @@ class TestAuthSidecar:
             "securityContext": {
                 "runAsUser": 1000,
             },
-            "annotations": {}
+            "annotations": {},
         }
         assert expected_output == prod["deployments"]["authSideCar"]
