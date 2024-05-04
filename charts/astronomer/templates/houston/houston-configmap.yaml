@@ -107,6 +107,9 @@ data:
         tag: {{ (splitList ":"  $authSidecar ) | last  }}
         port: {{ .Values.global.authSidecar.port }}
         pullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
+        {{- if .Values.global.authSidecar.securityContext}}
+        securityContext: {{- .Values.global.authSidecar.securityContext | toYaml | nindent 10 }}
+        {{- end }}
         annotations: {
           {{- range $key, $value := .Values.global.extraAnnotations}}
           {{ $key }}: {{ $value | quote }},
