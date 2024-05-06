@@ -154,7 +154,10 @@ data:
         securityContext: {{- .Values.global.dagOnlyDeployment.securityContext | toYaml | nindent 10 }}
         {{- end }}
         {{- if .Values.global.dagOnlyDeployment.resources }}
-        resources: {{- .Values.global.dagOnlyDeployment.resources | toYaml | nindent 10 }}
+        server:
+          resources: {{- .Values.global.dagOnlyDeployment.resources | toYaml | nindent 12 }}
+        client:
+          resources: {{- .Values.global.dagOnlyDeployment.resources | toYaml | nindent 12 }}
         {{- end }}
       {{- end }}
 

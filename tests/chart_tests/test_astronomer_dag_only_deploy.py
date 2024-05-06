@@ -53,7 +53,8 @@ class TestDagOnlyDeploy:
                 }
             },
             "securityContext": {"fsGroup": 55555},
-            "resources": resources,
+            "server": {"resources": resources},
+            "client": {"resources": resources},
         }
 
     def test_dagonlydeploy_config_enabled_with_private_registry(self, kube_version):
