@@ -173,7 +173,6 @@ class TestExternalElasticSearch:
         nginx_conf = pathlib.Path(
             "tests/chart_tests/test_data/external-es-nginx-with-aws-secrets.conf"
         ).read_text()
-        print(docs[2]["data"]["nginx.conf"])
         assert nginx_conf in docs[2]["data"]["nginx.conf"]
 
     def test_externalelasticsearch_with_awsIAMRole(self, kube_version):
