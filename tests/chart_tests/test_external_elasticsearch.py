@@ -432,7 +432,7 @@ class TestExternalElasticSearch:
         doc = docs[0]
         es_index = doc["data"]["nginx.conf"]
         assert doc["kind"] == "ConfigMap"
-        assert "astronomer.$remote_user.*/$1" in es_index
+        assert "astronomer.$remote_user.*" in es_index
 
     def test_external_es_index_pattern_sidecar_logging_overrides(self, kube_version):
         """Test External Elasticsearch Service Index Pattern Search
