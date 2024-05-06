@@ -155,9 +155,9 @@ data:
         {{- end }}
         {{- if .Values.global.dagOnlyDeployment.resources }}
         server:
-          resources: {{- .Values.global.dagOnlyDeployment.resources | toYaml | nindent 10 }}
+          resources: {{- .Values.global.dagOnlyDeployment.resources | toYaml | nindent 12 }}
         client:
-          resources: {{- .Values.global.dagOnlyDeployment.resources | toYaml | nindent 10 }}
+          resources: {{- .Values.global.dagOnlyDeployment.resources | toYaml | nindent 12 }}
         {{- end }}
       {{- end }}
 
