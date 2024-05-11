@@ -90,6 +90,7 @@ class TestDagOnlyDeploy:
             kube_version=kube_version,
             values={
                 "global": {
+                    "openshiftEnabled": True,
                     "dagOnlyDeployment": {
                         "enabled": True,
                     },
