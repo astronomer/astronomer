@@ -142,6 +142,7 @@ global:
     customConfig: false
     indexPattern: ~
     extraEnv: []
+    securityContext: {}
     resources: {}
     #  requests:
     #    cpu: "100m"
@@ -157,6 +158,7 @@ global:
     tag: 1.25.4
     pullPolicy: IfNotPresent
     port: 8084
+    securityContext: {}
     default_nginx_settings: |
       internal;
       proxy_pass_request_body     off;

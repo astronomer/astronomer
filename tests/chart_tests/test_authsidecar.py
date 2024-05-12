@@ -6,6 +6,15 @@ from tests import supported_k8s_versions
 from tests.chart_tests.helm_template_generator import render_chart
 
 
+def common_houston_config_test_cases(docs):
+    """Test some things that should apply to all cases."""
+    assert len(docs) == 1
+    doc = docs[0]
+    assert doc["kind"] == "ConfigMap"
+    assert doc["apiVersion"] == "v1"
+    assert doc["metadata"]["name"] == "release-name-houston-config"
+
+
 @pytest.mark.parametrize(
     "kube_version",
     supported_k8s_versions,
@@ -144,14 +153,9 @@ class TestAuthSidecar:
             ],
         )
 
-        assert len(docs) == 1
-        doc = docs[0]
+        common_houston_config_test_cases(docs)
 
-        assert doc["kind"] == "ConfigMap"
-        assert doc["apiVersion"] == "v1"
-        assert doc["metadata"]["name"] == "release-name-houston-config"
-
-        prod = yaml.safe_load(doc["data"]["production.yaml"])
+        prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
         expected_output = {
             "enabled": True,
             "repository": "someregistry.io/my-custom-image",
@@ -184,12 +188,8 @@ class TestAuthSidecar:
             ],
         )
 
-        assert len(docs) == 1
-        doc = docs[0]
-        prod = yaml.safe_load(doc["data"]["production.yaml"])
-        assert doc["kind"] == "ConfigMap"
-        assert doc["apiVersion"] == "v1"
-        assert doc["metadata"]["name"] == "release-name-houston-config"
+        common_houston_config_test_cases(docs)
+        prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
 
         expected_output = {
             "enabled": True,
@@ -201,5 +201,41 @@ class TestAuthSidecar:
                 "kubernetes.io/ingress.class": "astronomer-nginx",
                 "nginx.ingress.kubernetes.io/proxy-body-size": "1024m",
             },
+        }
+        assert expected_output == prod["deployments"]["authSideCar"]
+
+    def test_authSidecar_houston_configmap_with_securityContext(self, kube_version):
+        """Test Houston Configmap with authSidecar securityContext."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "authSidecar": {
+                        "enabled": True,
+                        "repository": "someregistry.io/my-custom-image",
+                        "tag": "my-custom-tag",
+                        "securityContext": {
+                            "runAsUser": 1000,
+                        },
+                    },
+                }
+            },
+            show_only=[
+                "charts/astronomer/templates/houston/houston-configmap.yaml",
+            ],
+        )
+
+        common_houston_config_test_cases(docs)
+        prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
+        expected_output = {
+            "enabled": True,
+            "repository": "someregistry.io/my-custom-image",
+            "tag": "my-custom-tag",
+            "port": 8084,
+            "pullPolicy": "IfNotPresent",
+            "securityContext": {
+                "runAsUser": 1000,
+            },
+            "annotations": {},
         }
         assert expected_output == prod["deployments"]["authSideCar"]
