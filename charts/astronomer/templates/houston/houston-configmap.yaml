@@ -107,6 +107,9 @@ data:
         tag: {{ (splitList ":"  $authSidecar ) | last  }}
         port: {{ .Values.global.authSidecar.port }}
         pullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
+        {{- if .Values.global.authSidecar.securityContext}}
+        securityContext: {{- .Values.global.authSidecar.securityContext | toYaml | nindent 10 }}
+        {{- end }}
         annotations: {
           {{- range $key, $value := .Values.global.extraAnnotations}}
           {{ $key }}: {{ $value | quote }},
@@ -123,6 +126,9 @@ data:
         customConfig: {{ .Values.global.loggingSidecar.customConfig }}
         {{- if .Values.global.loggingSidecar.extraEnv}}
         extraEnv: {{- .Values.global.loggingSidecar.extraEnv | toYaml | nindent 8 }}
+        {{- end }}
+        {{- if .Values.global.loggingSidecar.securityContext}}
+        securityContext: {{- .Values.global.loggingSidecar.securityContext | toYaml | nindent 10 }}
         {{- end }}
         {{- if .Values.global.loggingSidecar.resources}}
         resources: {{- .Values.global.loggingSidecar.resources | toYaml | nindent 10 }}
