@@ -43,6 +43,7 @@ spec:
         - name: wait-for-db
           image: {{ template "houston.image" . }}
           imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
+          securityContext: {{ toYaml .Values.securityContext | nindent 12 }}
           command:
             - "/houston/bin/entrypoint"
           args:
@@ -60,6 +61,7 @@ spec:
         - name: houston-bootstrapper
           image: {{ template "dbBootstrapper.image" . }}
           imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
+          securityContext: {{ toYaml .Values.securityContext | nindent 12 }}
           env:
             - name: BOOTSTRAP_DB
               valueFrom:
@@ -94,6 +96,7 @@ spec:
           imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
           # If you supply only args for a Container, the default Entrypoint defined in the Docker image is run with the args that you supplied.
           args: ["yarn", "migrate"]
+          securityContext: {{ toYaml .Values.securityContext | nindent 12 }}
           volumeMounts:
           {{- include "houston_volume_mounts" . | indent 12 }}
           {{- include "custom_ca_volume_mounts" . | indent 12 }}
