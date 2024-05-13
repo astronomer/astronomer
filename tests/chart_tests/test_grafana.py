@@ -2,7 +2,7 @@ import pytest
 
 from tests.chart_tests.helm_template_generator import render_chart
 
-from tests import supported_k8s_versions
+from tests import supported_k8s_versions, get_containers_by_name
 
 
 DEPLOYMENT_FILE = "charts/grafana/templates/grafana-deployment.yaml"
@@ -74,16 +74,11 @@ class TestGrafanaDeployment:
 
         assert len(docs) == 1
         doc = docs[0]
+        c_by_name = get_containers_by_name(doc, include_init_containers=True)
         assert doc["kind"] == "Deployment"
-        assert doc["spec"]["template"]["spec"]["containers"][0]["securityContext"] == {
-            "runAsNonRoot": True
-        }
-        assert doc["spec"]["template"]["spec"]["initContainers"][0][
-            "securityContext"
-        ] == {"runAsNonRoot": True}
-        assert doc["spec"]["template"]["spec"]["initContainers"][1][
-            "securityContext"
-        ] == {"runAsNonRoot": True}
+        assert c_by_name["grafana"]["securityContext"] == {"runAsNonRoot": True}
+        assert c_by_name["wait-for-db"]["securityContext"] == {"runAsNonRoot": True}
+        assert c_by_name["bootstrapper"]["securityContext"] == {"runAsNonRoot": True}
 
     def test_deployment_with_securitycontext_overrides(self, kube_version):
         """Test that the grafana-deployment renders with the expected securityContext."""
@@ -98,19 +93,17 @@ class TestGrafanaDeployment:
         assert len(docs) == 1
         doc = docs[0]
         assert doc["kind"] == "Deployment"
-        assert doc["spec"]["template"]["spec"]["containers"][0]["securityContext"] == {
+        c_by_name = get_containers_by_name(doc, include_init_containers=True)
+        assert c_by_name["grafana"]["securityContext"] == {
             "runAsNonRoot": True,
             "runAsUser": 467,
         }
-        assert doc["spec"]["template"]["spec"]["initContainers"][0][
-            "securityContext"
-        ] == {
+
+        assert c_by_name["wait-for-db"]["securityContext"] == {
             "runAsNonRoot": True,
             "runAsUser": 467,
         }
-        assert doc["spec"]["template"]["spec"]["initContainers"][1][
-            "securityContext"
-        ] == {
+        assert c_by_name["bootstrapper"]["securityContext"] == {
             "runAsNonRoot": True,
             "runAsUser": 467,
         }
