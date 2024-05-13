@@ -85,6 +85,7 @@ spec:
       containers:
       - name: jetstream-template-fixer
         image: {{ template "dbBootstrapper.image" . }}
+        securityContext: {{ template "nats.securityContext" . }}
         command:
         - /bin/sh
         - -c
