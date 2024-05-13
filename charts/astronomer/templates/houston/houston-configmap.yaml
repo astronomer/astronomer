@@ -150,8 +150,8 @@ data:
           dagServer:
             repository: {{ (splitList ":"  $dagOnlyDeployment ) | first  }}
             tag: {{ (splitList ":"  $dagOnlyDeployment ) | last  }}
-        {{- if .Values.global.dagOnlyDeployment.enabled }}
-        securityContext: {{- .Values.global.dagOnlyDeployment.securityContext | toYaml | nindent 10 }}
+        {{- if .Values.global.dagOnlyDeployment.securityContext }}
+        securityContext: {{ template "dagOnlyDeployment.securityContext" . }}
         {{- end }}
         {{- if .Values.global.dagOnlyDeployment.resources }}
         server:
