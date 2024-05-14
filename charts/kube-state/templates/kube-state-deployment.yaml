@@ -1,6 +1,10 @@
 ################################
 ## Kube State Deployment
 #################################
+{{- $useRoles := or .Values.global.features.namespacePools.enabled .Values.global.singleNamespace }}
+{{- $namespaces := .Values.global.features.namespacePools.namespaces.names }}
+{{- $namespaces = append $namespaces .Release.Namespace }}
+{{- $namespaceList := join "," $namespaces }}
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -39,8 +43,21 @@ spec:
       containers:
       - name: kube-state
         args:
-      {{- if .Values.global.singleNamespace }}
-        - --namespaces={{ .Release.Namespace }}
+      {{- if $useRoles }}
+        - --namespaces={{ $namespaceList }}
+        {{- /* Remove
+              certificatesigningrequests
+              daemonsets
+              leases
+              mutatingwebhookconfigurations
+              namespaces
+              nodes
+              persistentvolumes
+              storageclasses
+              validatingwebhookconfigurations
+              volumeattachments 
+        */}}
+        - --resources=configmaps,cronjobs,deployments,endpoints,horizontalpodautoscalers,ingresses,jobs,limitranges,networkpolicies,persistentvolumeclaims,poddisruptionbudgets,pods,replicasets,replicationcontrollers,resourcequotas,secrets,services,statefulsets
       {{- end }}
       {{- if .Values.extraArgs }}
           {{- .Values.extraArgs | toYaml | nindent 8 }}

@@ -1,0 +1,28 @@
+#################################
+## Kube State ClusterRoleBinding
+#################################
+{{- $useRoles := or .Values.global.features.namespacePools.enabled .Values.global.singleNamespace }}
+{{- $useClusterRoles := and .Values.global.clusterRoles (not $useRoles) }}
+
+{{- $shouldCreateResources := and .Values.global.rbacEnabled $useClusterRoles }}
+
+{{- if $shouldCreateResources }}
+apiVersion: {{ template "apiVersion.rbac" . }}
+kind: ClusterRoleBinding
+metadata:
+  name: {{ template "kube-state.fullname" . }}
+  labels:
+    tier: monitoring
+    component: {{ template "kube-state.name" . }}
+    chart: {{ template "kube-state.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ template "kube-state.fullname" . }}
+subjects:
+- kind: ServiceAccount
+  name: {{ template "kube-state.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+{{- end }}

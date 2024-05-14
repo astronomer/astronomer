@@ -1,24 +1,40 @@
 ################################
-## Kube State ClusterRoleBinding
+## Kube State RoleBinding
 #################################
-{{- $singleNamespace := .Values.global.singleNamespace }}
-{{- if .Values.global.rbacEnabled }}
-apiVersion: {{ template "apiVersion.rbac" . }}
-kind: {{ if $singleNamespace }}RoleBinding{{ else }}ClusterRoleBinding{{ end }}
+{{- $useRoles := or .Values.global.features.namespacePools.enabled .Values.global.singleNamespace }}
+{{- $useClusterRoles := and .Values.global.clusterRoles (not $useRoles) }}
+
+{{- $shouldCreateResources := and .Values.global.rbacEnabled $useRoles }}
+{{- $namespaces := .Values.global.features.namespacePools.namespaces.names }}
+{{- if $useClusterRoles }}
+  {{- $namespaces = list .Release.Namespace}}
+{{- else  }}
+  {{- $namespaces = append $namespaces .Release.Namespace }}
+{{- end }}
+
+{{- $rootContext := . }}
+
+{{- if $shouldCreateResources }}
+{{- range $i, $namespaceName := $namespaces -}}
+---
+apiVersion: {{ template "apiVersion.rbac" $rootContext }}
+kind: RoleBinding
 metadata:
-  name: {{ template "kube-state.fullname" . }}
+  name: {{ template "kube-state.fullname" $rootContext }}
+  namespace: {{ $namespaceName }}
   labels:
     tier: monitoring
-    component: {{ template "kube-state.name" . }}
-    chart: {{ template "kube-state.chart" . }}
-    release: {{ .Release.Name }}
-    heritage: {{ .Release.Service }}
+    component: {{ template "kube-state.name" $rootContext }}
+    chart: {{ template "kube-state.chart" $rootContext }}
+    release: {{ $rootContext.Release.Name }}
+    heritage: {{ $rootContext.Release.Service }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
-  kind: {{ if $singleNamespace }}Role{{ else }}ClusterRole{{ end }}
-  name: {{ template "kube-state.fullname" . }}
+  kind: Role
+  name: {{ template "kube-state.fullname" $rootContext }}
 subjects:
 - kind: ServiceAccount
-  name: {{ template "kube-state.fullname" . }}
-  namespace: {{ .Release.Namespace }}
+  name: {{ template "kube-state.fullname" $rootContext }}
+  namespace: {{ $rootContext.Release.Namespace }}
+{{ end }}
 {{- end }}
