@@ -30,26 +30,10 @@ class TestNatsJetstream:
         assert prod["nats"] == {"jetStreamEnabled": True, "tlsEnabled": False}
         nats_cm = docs[2]["data"]["nats.conf"]
         assert "jetstream" in nats_cm
-
-    def test_nats_statefulset_with_jetstream_security_context_defaults(
-        self, kube_version
-    ):
-        """Test that nats statefulset is good with defaults."""
-        values = {
-            "global": {"nats": {"jetStream": {"enabled": True}}},
-        }
-        docs = render_chart(
-            kube_version=kube_version,
-            values=values,
-            show_only=[
-                "charts/nats/templates/jetstream-job.yaml",
-            ],
-        )
-
-        assert len(docs) == 4
-        assert {"runAsUser": 1000, "runAsNonRoot": True} == docs[3]["spec"]["template"][
+        assert {"runAsUser": 1000, "runAsNonRoot": True} == docs[6]["spec"]["template"][
             "spec"
         ]["containers"][0]["securityContext"]
+
 
     def test_nats_statefulset_with_jetstream_and_tls(self, kube_version):
         """Test Nats with jetstream config."""
