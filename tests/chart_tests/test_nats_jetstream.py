@@ -34,7 +34,6 @@ class TestNatsJetstream:
             "spec"
         ]["containers"][0]["securityContext"]
 
-
     def test_nats_statefulset_with_jetstream_and_tls(self, kube_version):
         """Test Nats with jetstream config."""
         values = {
