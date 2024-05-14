@@ -196,6 +196,7 @@ curator:
     timestring: "%Y.%m.%d"
     unit: "days"
     unit_count: 10
+  securityContext: {}
 
 exporter:
   podAnnotations: {}
