@@ -213,6 +213,13 @@ exporter:
   #   cpu: 100m
   #   memory: 128Mi
 
+  podSecurityContext: {}
+  securityContext:
+    capabilities:
+      drop:
+      - ALL
+    readOnlyRootFilesystem: true
+
   service:
     type: ClusterIP
     httpPort: 9108
