@@ -96,7 +96,9 @@ class TestContainerdPrivateCaDaemonset:
 
         assert volumemounts == expected_volumemounts
 
-    def test_containerd_privateca_daemonset_enabled_with_priority_class(self, kube_version):
+    def test_containerd_privateca_daemonset_enabled_with_priority_class(
+        self, kube_version
+    ):
         """Test that the containerd daemonset is rendered with priorityClass when
         enabled."""
         docs = render_chart(
@@ -118,6 +120,6 @@ class TestContainerdPrivateCaDaemonset:
         assert len(docs[0]["spec"]["template"]["spec"]["containers"]) == 1
         cert_copier = docs[0]["spec"]["template"]["spec"]["containers"][0]
         cert_copier["image"].startswith("alpine:3")
-        assert "high-priority" ==  docs[0]["spec"]["template"]["spec"]["priorityClassName"]
-
-
+        assert (
+            "high-priority" == docs[0]["spec"]["template"]["spec"]["priorityClassName"]
+        )
