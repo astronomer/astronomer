@@ -320,6 +320,7 @@ configSyncer:
   enabled: true
   # If not provided, will generate a random hour and minutes to spread cronjob workloads.
   schedule: ~
+  securityContext: {}
 
 commander:
   replicas: 2
