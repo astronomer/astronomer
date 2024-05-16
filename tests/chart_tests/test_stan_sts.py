@@ -46,9 +46,40 @@ class TestStanStatefulSet:
             "runAsNonRoot": True,
         }
 
+        assert c_by_name["metrics"]["securityContext"] == {
+            "runAsNonRoot": True,
+        }
+
         assert doc["spec"]["template"]["spec"]["nodeSelector"] == {}
         assert doc["spec"]["template"]["spec"]["affinity"] == {}
         assert doc["spec"]["template"]["spec"]["tolerations"] == []
+
+    def test_stan_statefulset_with_security_context_overrides(self, kube_version):
+        """Test that stan statefulset renders good metrics exporter."""
+
+        securityContextResponse = {
+            "runAsNonRoot": True,
+            "allowPrivilegeEscalation": False
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/stan/templates/statefulset.yaml"],
+            values={
+                "stan": {
+                    "securityContext": {
+                        "runAsNonRoot": True,
+                        "allowPrivilegeEscalation": False ,
+                    },
+                },
+            },
+        )
+
+        assert len(docs) == 1
+        c_by_name = get_containers_by_name(docs[0], include_init_containers=True)
+        assert len(c_by_name) == 3
+        assert c_by_name["wait-for-nats-server"]["securityContext"] == securityContextResponse
+        assert c_by_name["stan"]["securityContext"] == securityContextResponse
+        assert c_by_name["metrics"]["securityContext"] == securityContextResponse
 
     def test_stan_statefulset_with_metrics_and_resources(self, kube_version):
         """Test that stan statefulset renders good metrics exporter."""
