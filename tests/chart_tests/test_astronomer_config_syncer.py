@@ -191,6 +191,7 @@ class TestAstronomerConfigSyncer:
 
         assert "--target-namespaces" in container["args"]
         assert ",".join(namespaces) in container["args"]
+        assert {'runAsNonRoot': True} == container["securityContext"]
 
     def test_astronomer_config_syncer_cronjob_namespace_pool_disabled(
         self, kube_version
