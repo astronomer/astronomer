@@ -437,3 +437,11 @@ tlsEnabled: false
 {{- .Values.global.dagOnlyDeployment.securityContext | toYaml | nindent 10 }}
 {{- end -}}
 {{- end }}
+
+{{- define "configSyncer.securityContext" -}}
+{{- if .Values.configSyncer.securityContext }}
+{{ toYaml .Values.configSyncer.securityContext | indent 16 }}
+{{- else }}
+{{ toYaml .Values.securityContext | indent 16 }}
+{{- end }}
+{{- end }}
