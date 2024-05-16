@@ -105,5 +105,5 @@ class TestPrometheusNodeExporterDaemonset:
         assert c_by_name["node-exporter"]["securityContext"] == {
             "allowPrivilegeEscalation": False,
             "readOnlyRootFilesystem": True,
-            "runAsNonRoot": True
+            "runAsNonRoot": True,
         }
