@@ -59,7 +59,7 @@ class TestStanStatefulSet:
 
         securityContextResponse = {
             "runAsNonRoot": True,
-            "allowPrivilegeEscalation": False
+            "allowPrivilegeEscalation": False,
         }
         docs = render_chart(
             kube_version=kube_version,
@@ -68,7 +68,7 @@ class TestStanStatefulSet:
                 "stan": {
                     "securityContext": {
                         "runAsNonRoot": True,
-                        "allowPrivilegeEscalation": False ,
+                        "allowPrivilegeEscalation": False,
                     },
                 },
             },
@@ -77,7 +77,10 @@ class TestStanStatefulSet:
         assert len(docs) == 1
         c_by_name = get_containers_by_name(docs[0], include_init_containers=True)
         assert len(c_by_name) == 3
-        assert c_by_name["wait-for-nats-server"]["securityContext"] == securityContextResponse
+        assert (
+            c_by_name["wait-for-nats-server"]["securityContext"]
+            == securityContextResponse
+        )
         assert c_by_name["stan"]["securityContext"] == securityContextResponse
         assert c_by_name["metrics"]["securityContext"] == securityContextResponse
 
