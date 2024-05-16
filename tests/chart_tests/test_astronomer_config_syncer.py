@@ -193,6 +193,36 @@ class TestAstronomerConfigSyncer:
         assert ",".join(namespaces) in container["args"]
         assert {"runAsNonRoot": True} == container["securityContext"]
 
+    def test_astronomer_config_syncer_cronjob_security_context_default_overrides(
+        self, kube_version
+    ):
+        """Test that  config-syncer's container is allowed to configure security context."""
+        doc = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "rbacEnabled": True,
+                },
+                "astronomer": {
+                    "securityContext": {
+                        "runAsNonRoot": True,
+                        "allowPrivilegeEscalation": False,
+                    },
+                },
+            },
+            show_only=[
+                "charts/astronomer/templates/config-syncer/config-syncer-cronjob.yaml",
+            ],
+        )[0]
+
+        container = doc["spec"]["jobTemplate"]["spec"]["template"]["spec"][
+            "containers"
+        ][0]
+
+        assert {"runAsNonRoot": True, "allowPrivilegeEscalation": False} == container[
+            "securityContext"
+        ]
+
     def test_astronomer_config_syncer_cronjob_namespace_pool_disabled(
         self, kube_version
     ):
