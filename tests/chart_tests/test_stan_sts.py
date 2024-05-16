@@ -39,17 +39,7 @@ class TestStanStatefulSet:
             "timeoutSeconds": 5,
         }
 
-        assert c_by_name["wait-for-nats-server"]["securityContext"] == {
-            "runAsNonRoot": True,
-        }
-        assert c_by_name["stan"]["securityContext"] == {
-            "runAsNonRoot": True,
-        }
-
-        assert c_by_name["metrics"]["securityContext"] == {
-            "runAsNonRoot": True,
-        }
-
+assert all(c["securityContext"] == {"runAsNonRoot": True} for c in c_by_name.values())
         assert doc["spec"]["template"]["spec"]["nodeSelector"] == {}
         assert doc["spec"]["template"]["spec"]["affinity"] == {}
         assert doc["spec"]["template"]["spec"]["tolerations"] == []
