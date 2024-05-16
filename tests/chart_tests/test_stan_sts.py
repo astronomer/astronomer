@@ -18,7 +18,7 @@ class TestStanStatefulSet:
 
         assert len(docs) == 1
         doc = docs[0]
-        c_by_name = get_containers_by_name(doc)
+        c_by_name = get_containers_by_name(doc, include_init_containers=True)
         assert doc["kind"] == "StatefulSet"
         assert doc["apiVersion"] == "apps/v1"
         assert doc["metadata"]["name"] == "release-name-stan"
@@ -37,6 +37,13 @@ class TestStanStatefulSet:
             "httpGet": {"path": "/streaming/serverz", "port": "monitor"},
             "initialDelaySeconds": 10,
             "timeoutSeconds": 5,
+        }
+
+        assert c_by_name["wait-for-nats-server"]["securityContext"] == {
+            "runAsNonRoot": True,
+        }
+        assert c_by_name["stan"]["securityContext"] == {
+            "runAsNonRoot": True,
         }
 
         assert doc["spec"]["template"]["spec"]["nodeSelector"] == {}
