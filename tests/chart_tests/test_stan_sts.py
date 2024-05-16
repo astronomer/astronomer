@@ -67,12 +67,7 @@ assert all(c["securityContext"] == {"runAsNonRoot": True} for c in c_by_name.val
         assert len(docs) == 1
         c_by_name = get_containers_by_name(docs[0], include_init_containers=True)
         assert len(c_by_name) == 3
-        assert (
-            c_by_name["wait-for-nats-server"]["securityContext"]
-            == securityContextResponse
-        )
-        assert c_by_name["stan"]["securityContext"] == securityContextResponse
-        assert c_by_name["metrics"]["securityContext"] == securityContextResponse
+        assert all(c["securityContext"] == securityContextResponse for c in c_by_name.values())
 
     def test_stan_statefulset_with_metrics_and_resources(self, kube_version):
         """Test that stan statefulset renders good metrics exporter."""
