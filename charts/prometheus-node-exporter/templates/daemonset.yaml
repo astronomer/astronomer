@@ -35,8 +35,7 @@ spec:
         - name: node-exporter
           image: {{ template "image" . }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          securityContext:
-            runAsNonRoot: {{ toYaml .Values.securityContext.runAsNonRoot }}
+          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
           args:
             - --path.procfs=/host/proc
             - --path.sysfs=/host/sys
