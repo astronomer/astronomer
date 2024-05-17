@@ -145,3 +145,18 @@ class TestNatsJetstream:
         )
 
         assert len(docs) == 4
+
+    def test_jetstream_hook_job_disabled(self, kube_version):
+        """Test that jetstream hook job is disabled when createJetStreamJob is disabled."""
+        values = {
+            "nats": {"nats": {"createJetStreamJob": False}},
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=[
+                "charts/nats/templates/jetstream-job.yaml",
+            ],
+        )
+
+        assert len(docs) == 0
