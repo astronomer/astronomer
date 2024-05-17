@@ -110,7 +110,7 @@ jobs:
 
   run_pre_commit:
     docker:
-      - image: quay.io/astronomer/ci-pre-commit:2024-04
+      - image: quay.io/astronomer/ci-pre-commit:2024-05
     steps:
       - checkout
       - run:
@@ -145,7 +145,7 @@ jobs:
 
   unittest-charts:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2024-04
+      - image: quay.io/astronomer/ci-helm-release:2024-05
     parallelism: 8
     resource_class: xlarge
     steps:
@@ -199,7 +199,7 @@ jobs:
 
   release-to-internal:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2024-04
+      - image: quay.io/astronomer/ci-helm-release:2024-05
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -238,7 +238,7 @@ jobs:
 
   release-to-public:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2024-04
+      - image: quay.io/astronomer/ci-helm-release:2024-05
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -251,7 +251,7 @@ jobs:
 
   platform-1-25-16:
     machine:
-      image: ubuntu-2204:2024.01.1
+      image: ubuntu-2204:2024.04.4
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.25.16
@@ -267,7 +267,7 @@ jobs:
           when: always
   platform-1-26-15:
     machine:
-      image: ubuntu-2204:2024.01.1
+      image: ubuntu-2204:2024.04.4
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.26.15
@@ -283,7 +283,7 @@ jobs:
           when: always
   platform-1-27-13:
     machine:
-      image: ubuntu-2204:2024.01.1
+      image: ubuntu-2204:2024.04.4
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.27.13
@@ -299,7 +299,7 @@ jobs:
           when: always
   platform-1-28-9:
     machine:
-      image: ubuntu-2204:2024.01.1
+      image: ubuntu-2204:2024.04.4
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.28.9
@@ -315,7 +315,7 @@ jobs:
           when: always
   platform-1-29-4:
     machine:
-      image: ubuntu-2204:2024.01.1
+      image: ubuntu-2204:2024.04.4
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.29.4
@@ -331,7 +331,7 @@ jobs:
           when: always
   platform-1-30-0:
     machine:
-      image: ubuntu-2204:2024.01.1
+      image: ubuntu-2204:2024.04.4
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.30.0
