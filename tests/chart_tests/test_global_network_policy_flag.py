@@ -1,6 +1,7 @@
 import pytest
 
 from tests.chart_tests.helm_template_generator import render_chart
+from tests import supported_k8s_versions
 
 # External-es-proxy and prometheus-postgres-exporter are set false by default,
 # needs additional work on creating test cases for future
@@ -35,8 +36,22 @@ show_only = [
 ]
 
 
+def test_networkpolicy_disabled():
+    """Test that no NetworkPolicies are rendered by default."""
+    docs = render_chart(
+        values={
+            "global": {
+                "networkPolicy": {"enabled": False},
+                "postgresqlEnabled": True,
+            }
+        },
+    )
+
+    assert not [x for x in docs if x["kind"] == "NetworkPolicy"]
+
+
 @pytest.mark.parametrize("np_enabled, num_of_docs", [(True, 32), (False, 0)])
-def test_render_global_network_policy(np_enabled, num_of_docs):
+def test_networkpolicy_enabled(np_enabled, num_of_docs):
     """Test some things that should apply to all cases."""
     docs = render_chart(
         show_only=show_only,
@@ -49,3 +64,32 @@ def test_render_global_network_policy(np_enabled, num_of_docs):
     )
 
     assert len(docs) == num_of_docs
+    if docs:
+        components = [
+            x["podSelector"]["matchLabels"].get("component")
+            for x in docs[0]["spec"]["ingress"][0]["from"]
+        ]
+        assert "dag-server" not in components
+
+
+@pytest.mark.parametrize("kube_version", supported_k8s_versions)
+def test_networkpolicy_dag_deploy_enabled(kube_version):
+    """Test that the dagOnlyDeployment flag configures a NetworkPolicy for its traffic."""
+    docs = render_chart(
+        show_only="charts/astronomer/templates/houston/api/houston-networkpolicy.yaml",
+        values={
+            "global": {
+                "networkPolicy": {"enabled": True},
+                "dagOnlyDeployment": {"enabled": True},
+            },
+        },
+    )
+
+    assert len(docs) == 1
+
+    components = [
+        x["podSelector"]["matchLabels"].get("component")
+        for x in docs[0]["spec"]["ingress"][0]["from"]
+    ]
+    assert len(components) == 8
+    assert "dag-server" in components
