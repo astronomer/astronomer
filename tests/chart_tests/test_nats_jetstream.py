@@ -146,6 +146,28 @@ class TestNatsJetstream:
 
         assert len(docs) == 4
 
+    def test_nats_with_jetstream_disabled_with_custom_flag(self, kube_version):
+        """Test that jetstream feature  is disabled completely with createJetStreamJob."""
+        values = {
+            "global": {"nats": {"jetStream": {"enabled": False}}},
+            "nats": {"nats": {"createJetStreamJob": False}},
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=[
+                "charts/nats/templates/statefulset.yaml",
+                "charts/nats/templates/configmap.yaml",
+                "charts/nats/templates/jetstream-job.yaml",
+                "charts/stan/templates/configmap.yaml",
+                "charts/stan/templates/service.yaml",
+                "charts/stan/templates/statefulset.yaml",
+                "charts/stan/templates/stan-networkpolicy.yaml",
+                "charts/nats/templates/nats-jetstream-tls-secret.yaml",
+            ],
+        )
+        assert len(docs) == 6
+
     def test_jetstream_hook_job_disabled(self, kube_version):
         """Test that jetstream hook job is disabled when createJetStreamJob is disabled."""
         values = {
