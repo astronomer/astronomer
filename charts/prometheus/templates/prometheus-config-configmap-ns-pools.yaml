@@ -1,15 +1,12 @@
-################################$
-## Prometheus Config ConfigMap
 #################################
-{{- $useClusterRoles := and .Values.global.rbacEnabled .Values.global.clusterRoles (not .Values.global.features.namespacePools.enabled)}}
-{{- $shouldCreateResources := and .Values.global.rbacEnabled (or .Values.global.clusterRoles .Values.global.features.namespacePools.enabled) }}
+## Prometheus Config ConfigMap for namespace pools configuration
+#################################
+{{- $useRoles := or .Values.global.features.namespacePools.enabled .Values.global.singleNamespace }}
+{{- $useClusterRoles := and .Values.global.clusterRoles (not $useRoles) }}
+
 {{- $namespaces := .Values.global.features.namespacePools.namespaces.names }}
-{{- if $useClusterRoles }}
-  {{- $namespaces = list .Release.Namespace}}
-{{- else }}
-  {{- $namespaces = append $namespaces .Release.Namespace }}
-{{- end }}
-{{- if $useClusterRoles }}
+{{- $namespaces = append $namespaces .Release.Namespace }}
+{{- if $useRoles }}
 kind: ConfigMap
 apiVersion: v1
 metadata:
@@ -26,10 +23,12 @@ data:
     global:
       scrape_interval: 30s
       evaluation_interval: 30s
-      {{ if .Values.external_labels }}external_labels: {{ .Values.external_labels | toYaml | nindent 8 }}{{ end }}
+      {{- if .Values.external_labels }}external_labels: {{ .Values.external_labels | toYaml | nindent 8 }}{{ end }}
 
+    {{- if .Values.remote_write }}
     # https://prometheus.io/docs/prometheus/latest/configuration/configuration/#remote_write
-    {{ if .Values.remote_write }}remote_write: {{ .Values.remote_write | toYaml | nindent 6 }}{{ end }}
+    remote_write: {{ .Values.remote_write | toYaml | nindent 6 }}
+    {{- end }}
 
     # Configure Alertmanager
     alerting:
@@ -62,52 +61,9 @@ data:
       - job_name: prometheus
         static_configs:
           - targets: ["localhost:9090"]
-      
-      {{/* Requires ClusterRole */}}
-      {{- if $useClusterRoles }}
-      - job_name: 'kubernetes-apiservers'
-        kubernetes_sd_configs:
-          - role: endpoints
-        scheme: https
-        tls_config:
-          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-          insecure_skip_verify: {{ .Values.config.scrape_configs.kubernetes_apiservers.tls_config.insecure_skip_verify }}
-        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
-        relabel_configs:
-          - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
-            action: keep
-            regex: default;kubernetes;https
 
-      - job_name: core-dns
-        kubernetes_sd_configs:
-          - role: pod
-            namespaces:
-              names:
-                - kube-system
-        relabel_configs:
-          - source_labels: [__meta_kubernetes_pod_container_name]
-            action: keep
-            regex: "^coredns"
-          - source_labels: [__meta_kubernetes_pod_container_port_number]
-            action: keep
-            regex: "^9153"
+      {{- if (or .Values.global.nginxEnabled (empty .Values.global.nginxEnabled)) }}
 
-      - job_name: kube-dns
-        kubernetes_sd_configs:
-          - role: pod
-            namespaces:
-              names:
-                - kube-system
-        relabel_configs:
-          - source_labels: [__meta_kubernetes_pod_container_name]
-            action: keep
-            regex: "^sidecar|^kubedns"
-          - source_labels: [__meta_kubernetes_pod_container_port_number]
-            action: keep
-            regex: "^1005[45]"
-      {{- end }}
-
-      {{- if .Values.global.nginxEnabled }}
       - job_name: nginx
         kubernetes_sd_configs:
           - role: endpoints
@@ -128,7 +84,8 @@ data:
             target_label: __address__
       {{- end }}
       
-      {{- if .Values.global.elasticsearchEnabled }}
+      {{- if (or .Values.global.elasticsearchEnabled (empty .Values.global.elasticsearchEnabled)) }}
+
       - job_name: elasticsearch
         kubernetes_sd_configs:
           - role: service
@@ -150,6 +107,7 @@ data:
       {{- end }}
 
       {{- if .Values.global.veleroEnabled }}
+
       - job_name: velero
         scrape_interval: 30s
         kubernetes_sd_configs:
@@ -168,7 +126,14 @@ data:
             target_label: __address__
       {{- end }}
 
-      {{- if .Values.global.prometheusPostgresExporterEnabled }}
+      {{- if (and 
+          .Values.global.postgresqlEnabled 
+          (or 
+            .Values.global.prometheusPostgresExporterEnabled 
+            (empty .Values.global.prometheusPostgresExporterEnabled)
+          )
+        )
+      }}
       - job_name: postgresql-exporter
         scrape_interval: 60s
         scrape_timeout: 30s
@@ -191,8 +156,6 @@ data:
             target_label: __address__
       {{- end }}
 
-      {{/* Requires ClusterRole */}}
-      {{- if $useClusterRoles }}
       - job_name: kube-state
         scrape_interval: 10s # Faster scrape to power dashboards
         kubernetes_sd_configs:
@@ -212,16 +175,14 @@ data:
             regex: ([^:]+)(?::\d+)?;(\d+)
             replacement: $1:$2
             target_label: __address__
-
-        {{- if not .Values.global.singleNamespace }}
-            # This allows us to collect all the metrics we want in the cloud environment
-            # does not limit to just the astronomer release namespace
+          {{- /* TODO: Probably remove Node */}}
           - source_labels: [__meta_kubernetes_endpoint_address_target_kind, __meta_kubernetes_endpoint_address_target_name]
             separator: ;
             regex: Node;(.*)
             target_label: node
             replacement: ${1}
             action: replace
+          {{- /* END TODO */}}
           - source_labels: [__meta_kubernetes_endpoint_address_target_kind, __meta_kubernetes_endpoint_address_target_name]
             separator: ;
             regex: Pod;(.*)
@@ -268,168 +229,31 @@ data:
           - regex: 'label_kubernetes_pod_operator'
             action: labeldrop
           # Required for multi-namespace mode (non auto-generated namespaces should be relabeled differently)
-          {{- if or .Values.global.features.namespacePools.enabled .Values.global.namespaceFreeFormEntry .Values.global.manualNamespaceNamesEnabled}}
+      {{- if or .Values.global.features.namespacePools.enabled .Values.global.namespaceFreeFormEntry .Values.global.manualNamespaceNamesEnabled}}
+          - source_labels: [__name__,label_component,label_release]
+            regex: kube_pod_labels;scheduler;(.*)
+            separator: ;         
+            replacement: "$1"
+            target_label: runtime_deployment_release
           - source_labels: [pod]
+            # This regex is too permissive and catches 
             regex: "(.*?)(?:-webserver.*|-scheduler.*|-worker.*|-cleanup.*|-pgbouncer.*|-statsd.*|-triggerer.*|-run-airflow-migrations.*|-git-sync-relay.*)?$"
             replacement: "$1"
             target_label: release
+          # In environments where resource quota cannot be set
+          #   this metric may not be available 
+          # https://github.com/kubernetes/kube-state-metrics/blob/main/docs/resourcequota-metrics.md
+          # TODO: There isn't a "resourcequota" metric label
           - source_labels: [resourcequota]
             regex: "(.+)-resource-quota$"
             replacement: "$1"
             target_label: release
-          {{- else}}
+      {{- else}}
           - source_labels: [namespace]
             regex: "^{{ .Release.Namespace }}-(.*$)"
             replacement: "$1"
             target_label: release
-          {{- end }}
-        {{- else}}
-        # this drops node metrics that we want in the cloud, but maybe shouldn't be scraping
-        # if we are in a shared cluster in enterprise
-        metric_relabel_configs:
-          # Only keep metrics that start with platforms namespace (includes airflow children)
-          - action: keep
-            source_labels: [namespace]
-            regex: "^{{ .Release.Namespace }}.*"
-          - source_labels: [deployment]
-            regex: "([-a-z0-9]*[a-z0-9])-.*?"
-            replacement: "$1"
-            target_label: release
-          # Required for single-namespace mode
-          - source_labels: [pod]
-            regex: "([-a-z0-9]*[a-z0-9])-.*?"
-            replacement: "$1"
-            target_label: release
-        {{- end }}
-      {{ else }}
-      - job_name: "kubernetes-pods-astro-runtimes"
-        kubernetes_sd_configs:
-          - role: pod
-          {{- if or (not $useClusterRoles) .Values.global.singleNamespace }}
-            namespaces:
-              names:
-            {{- if .Values.global.singleNamespace }}
-                - {{ .Release.Namespace }}
-            {{- end }}
-            {{- if not $useClusterRoles }}
-              {{- range $i, $namespaceName := .Values.global.features.namespacePools.namespaces.names }}
-                - {{ $namespaceName }}
-              {{- end }}
-            {{- end }}
-          {{- end }}
-        relabel_configs:
-          - source_labels: [__meta_kubernetes_pod_label_tier]
-            action: keep
-            regex: "^airflow"
-          - source_labels: [__meta_kubernetes_pod_name]
-            separator: ;
-            regex: (.*)
-            target_label: pod
-            replacement: $1
-            action: replace
-        metric_relabel_configs:
-          # Pods have this label twice
-          - regex: 'label_kubernetes_executor'
-            action: labeldrop
-          - regex: 'label_kubernetes_pod_operator'
-            action: labeldrop
-          - source_labels: [pod]
-            regex: "(.*?)(?:-webserver.*|-scheduler.*|-worker.*|-cleanup.*|-pgbouncer.*|-statsd.*|-triggerer.*|-run-airflow-migrations.*|-git-sync-relay.*)?$"
-            replacement: "$1"
-            target_label: release
-          - source_labels: [resourcequota]
-            regex: "(.+)-resource-quota$"
-            replacement: "$1"
-            target_label: release
-
-
-        {{/* TODO DELETE ME
-        relabel_configs:
-          - source_labels: [__meta_kubernetes_service_name]
-            action: keep
-            regex: "^{{ .Release.Name }}-kube-state"
-          - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scrape]
-            action: keep
-            regex: true
-          - source_labels: [__address__, __meta_kubernetes_service_annotation_prometheus_io_port]
-            action: replace
-            regex: ([^:]+)(?::\d+)?;(\d+)
-            replacement: $1:$2
-            target_label: __address__
-
-        {{- if not .Values.global.singleNamespace }}
-            # This allows us to collect all the metrics we want in the cloud environment
-            # does not limit to just the astronomer release namespace
-          - source_labels: [__meta_kubernetes_endpoint_address_target_kind, __meta_kubernetes_endpoint_address_target_name]
-            separator: ;
-            regex: Node;(.*)
-            target_label: node
-            replacement: ${1}
-            action: replace
-          - source_labels: [__meta_kubernetes_endpoint_address_target_kind, __meta_kubernetes_endpoint_address_target_name]
-            separator: ;
-            regex: Pod;(.*)
-            target_label: pod
-            replacement: ${1}
-            action: replace
-          - source_labels: [__meta_kubernetes_namespace]
-            separator: ;
-            regex: (.*)
-            target_label: namespace
-            replacement: $1
-            action: replace
-          - source_labels: [__meta_kubernetes_service_name]
-            separator: ;
-            regex: (.*)
-            target_label: service
-            replacement: $1
-            action: replace
-          - source_labels: [__meta_kubernetes_pod_name]
-            separator: ;
-            regex: (.*)
-            target_label: pod
-            replacement: $1
-            action: replace
-          - source_labels: [__meta_kubernetes_service_name]
-            separator: ;
-            regex: (.*)
-            target_label: job
-            replacement: ${1}
-            action: replace
-          - separator: ;
-            regex: (.*)
-            target_label: endpoint
-            replacement: http-metrics
-            action: replace
-          - separator: ;
-            regex: (pod|service|endpoint|namespace)
-            replacement: $1
-            action: labeldrop
-        metric_relabel_configs:
-          # Pods have this label twice
-          - regex: 'label_kubernetes_executor'
-            action: labeldrop
-          - regex: 'label_kubernetes_pod_operator'
-            action: labeldrop
-          # Required for multi-namespace mode (non auto-generated namespaces should be relabeled differently)
-          {{- if or .Values.global.features.namespacePools.enabled .Values.global.namespaceFreeFormEntry .Values.global.manualNamespaceNamesEnabled}}
-          - source_labels: [pod]
-            regex: "(.*?)(?:-webserver.*|-scheduler.*|-worker.*|-cleanup.*|-pgbouncer.*|-statsd.*|-triggerer.*|-run-airflow-migrations.*|-git-sync-relay.*)?$"
-            replacement: "$1"
-            target_label: release
-          - source_labels: [resourcequota]
-            regex: "(.+)-resource-quota$"
-            replacement: "$1"
-            target_label: release
-          {{- else}}
-          - source_labels: [namespace]
-            regex: "^{{ .Release.Namespace }}-(.*$)"
-            replacement: "$1"
-            target_label: release
-          {{- end }}
-        {{- end}}
-        TODO DELETE ME */}}
-      {{- end}}
+      {{- end }}
 
       - job_name: fluentd
         scrape_interval: 30s
@@ -455,9 +279,10 @@ data:
             regex: 'fluentd_tail_file_.*'
             action: drop
 
-      {{/* Requires ClusterRole */}}
+      {{- /* Requires ClusterRole */}}
       {{- if $useClusterRoles }}
       {{- if .Values.global.nodeExporterEnabled }}
+
       - job_name: node-exporter
         scrape_interval: 30s
         kubernetes_sd_configs:
@@ -506,7 +331,6 @@ data:
               {{- end }}
             {{- end }}
           {{- end }}
-            
         relabel_configs:
           - action: labelmap
             regex: __meta_kubernetes_service_label_(.+)
@@ -564,9 +388,10 @@ data:
             regex: 'airflow_dag_processing_last_duration_.*_sum'
             action: drop
 
-      {{/* Requires ClusterRole */}}
+      {{- /* Requires ClusterRole */}}
       {{- if $useClusterRoles }}
       {{- if not .Values.global.singleNamespace }}
+
       - job_name: kubernetes-nodes
         scheme: https
         tls_config:

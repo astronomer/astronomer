@@ -1,18 +1,37 @@
-################################
-## Prometheus ClusterRole
-#################################
-{{- $singleNamespace := .Values.global.singleNamespace }}
-{{- if .Values.global.rbacEnabled }}
-kind: {{ if $singleNamespace }}Role{{ else }}ClusterRole{{ end }}
-apiVersion: {{ template "apiVersion.rbac" . }}
+########################################
+## Prometheus Role/ClusterRole
+########################################
+# Here, we either:
+# 1. Do not create any resource if rbacEnabled is disabled
+# 2. Create a Cluster Role if clusterRoles and rbacEnabled are enabled and namespacePools is disabled
+# 3. Create roles for each namespaces in the namespacePool (+ astronomer namespace) if enabled.
+{{- $useClusterRoles := and .Values.global.rbacEnabled .Values.global.clusterRoles (not .Values.global.features.namespacePools.enabled)}}
+{{- $shouldCreateResources := and .Values.global.rbacEnabled (or .Values.global.clusterRoles .Values.global.features.namespacePools.enabled) }}
+{{- $namespaces := .Values.global.features.namespacePools.namespaces.names }}
+{{- if $useClusterRoles }}
+  {{- $namespaces = list .Release.Namespace}}
+{{- else  }}
+  {{- $namespaces = append $namespaces .Release.Namespace }}
+{{- end }}
+
+{{- $rootContext := . }}
+
+{{- if $shouldCreateResources }}
+{{- range $i, $namespaceName := $namespaces -}}
+---
+kind: {{ if $useClusterRoles }}ClusterRole{{ else }}Role{{ end }}
+apiVersion: {{ template "apiVersion.rbac" $rootContext }}
 metadata:
-  name: {{ template "prometheus.fullname" . }}
+  name: {{ template "prometheus.fullname" $rootContext }}
+  {{- if not $useClusterRoles }}
+  namespace: {{ $namespaceName }}
+  {{- end }}
   labels:
     tier: monitoring
-    component: {{ template "prometheus.name" . }}
-    chart: {{ template "prometheus.chart" . }}
-    release: {{ .Release.Name }}
-    heritage: {{ .Release.Service }}
+    release: {{ $rootContext.Release.Name }}
+    component: {{ template "prometheus.name" $rootContext }}
+    chart: {{ template "prometheus.chart" $rootContext }}
+    heritage: {{ $rootContext.Release.Service }}
 rules:
   - apiGroups:
       - ""
@@ -20,7 +39,7 @@ rules:
       - "services"
       - "endpoints"
       - "pods"
-      {{- if not $singleNamespace }}
+      {{- if $useClusterRoles }}
       - "nodes"
       - "nodes/proxy"
       {{- end }}
@@ -28,10 +47,11 @@ rules:
       - "get"
       - "list"
       - "watch"
-  {{- if not $singleNamespace }}
+  {{- if $useClusterRoles }}
   - nonResourceURLs:
       - "/metrics"
     verbs:
       - "get"
   {{- end }}
+{{ end }}
 {{- end }}
