@@ -19,7 +19,6 @@ images:
 
 
 nats:
-
   createJetStreamJob: true
 
   # In case both external access and advertise are enabled
