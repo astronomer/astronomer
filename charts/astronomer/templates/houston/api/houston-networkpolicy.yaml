@@ -22,7 +22,7 @@ spec:
   - Ingress
   ingress:
   - from:
-    {{- if .Values.global.authSidecar.enabled  }}
+    {{- if .Values.global.authSidecar.enabled }}
     - namespaceSelector:
         matchLabels:
           network.openshift.io/policy-group: ingress
@@ -63,18 +63,25 @@ spec:
           tier: elasticsearch
           component: es-ingress-controller
           release: {{ .Release.Name }}
-    {{- if .Values.global.customLogging.enabled  }}
+    {{- if .Values.global.customLogging.enabled }}
     - podSelector:
         matchLabels:
           tier: external-logging
           component: external-es-proxy
           release: {{ .Release.Name }}
     {{- end }}
-    {{- if or .Values.houston.enableHoustonInternalAuthorization .Values.global.enableHoustonInternalAuthorization  }}
+    {{- if or .Values.houston.enableHoustonInternalAuthorization .Values.global.enableHoustonInternalAuthorization }}
     - namespaceSelector: {}
       podSelector:
         matchLabels:
           component: webserver
+          tier: airflow
+    {{- end }}
+    {{- if .Values.global.dagOnlyDeployment.enabled }}
+    - namespaceSelector: {}
+      podSelector:
+        matchLabels:
+          component: dag-server
           tier: airflow
     {{- end }}
     ports:

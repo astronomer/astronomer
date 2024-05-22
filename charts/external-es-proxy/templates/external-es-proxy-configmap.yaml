@@ -43,10 +43,10 @@ data:
           {{- include "external-es-proxy-nginx-location-common" . | indent 10 }}
         }
 
-        location = /_search {
+        location ~* /_search$ {
           # This combined with disabling explicit index searching downstream
           # prevents any deployment from being able to query any other indexes.
-          rewrite ^/(.*) /{{ include "logging.indexNamePrefix" . }}.$remote_user.*/$1 break;
+          rewrite /_search(.*) /{{ include "logging.indexNamePrefix" . }}.$remote_user.*/_search$1 break;
           {{- include "external-es-proxy-nginx-location-common" . | indent 10 }}
         }
 

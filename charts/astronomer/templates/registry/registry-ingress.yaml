@@ -1,0 +1,59 @@
+################################
+## Astronomer Registry Ingress
+#################################
+{{- if and .Values.global.baseDomain .Values.global.enablePerHostIngress  }}
+kind: Ingress
+apiVersion: {{ template "apiVersion.Ingress" . }}
+metadata:
+  name: {{ .Release.Name }}-registry-ingress
+  labels:
+    component: registry-ingress
+    tier: astronomer
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+  annotations:
+    {{- if .Values.global.authSidecar.enabled  }}
+    {{- range $key, $value := .Values.global.extraAnnotations}}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+    {{- else }}
+    kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
+    kubernetes.io/tls-acme: {{ eq .Values.global.acme true | quote }}
+    nginx.ingress.kubernetes.io/custom-http-errors: "404"
+    {{- end }}
+spec:
+  {{- if or .Values.global.tlsSecret .Values.global.acme }}
+  tls:
+  {{- if .Values.global.acme }}
+    - secretName: astronomer-public-tls
+  {{- end }}
+  {{- if .Values.global.tlsSecret }}
+    - secretName: {{ .Values.global.tlsSecret }}
+  {{- end }}
+      hosts:
+        - registry.{{ .Values.global.baseDomain }}
+  {{- end }}
+  {{ if semverCompare "< 1.19-0" .Capabilities.KubeVersion.Version -}}
+  rules:
+  - host: registry.{{ .Values.global.baseDomain }}
+    http:
+      paths:
+        - path: /
+          backend:
+            serviceName: {{ .Release.Name }}-registry
+            servicePort: registry-http
+  {{ else -}}
+  rules:
+  - host: registry.{{ .Values.global.baseDomain }}
+    http:
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: {{ .Release.Name }}-registry
+              port:
+                name: registry-http
+  {{- end -}}
+{{- end }}

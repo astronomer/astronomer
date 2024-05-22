@@ -114,17 +114,17 @@ gitdb==4.0.11 \
     --hash=sha256:81a3407ddd2ee8df444cbacea00e2d038e40150acfa3001696fe0dcf1d3adfa4 \
     --hash=sha256:bf5421126136d6d0af55bc1e7c1af1c397a34f5b7bd79e776cd3e89785c2b04b
     # via gitpython
-gitpython==3.1.42 \
-    --hash=sha256:1bf9cd7c9e7255f77778ea54359e54ac22a72a5b51288c457c881057b7bb9ecd \
-    --hash=sha256:2d99869e0fef71a73cbd242528105af1d6c1b108c60dfabd994bf292f76c3ceb
+gitpython==3.1.43 \
+    --hash=sha256:35f314a9f878467f5453cc1fee295c3e18e52f1b99f10f6cf5b1682e968a9e7c \
+    --hash=sha256:eec7ec56b92aad751f9912a73404bc02ba212a23adb2c7098ee668417051a1ff
     # via -r requirements/functional-tests.in
-google-auth==2.28.1 \
-    --hash=sha256:25141e2d7a14bfcba945f5e9827f98092716e99482562f15306e5b026e21aa72 \
-    --hash=sha256:34fc3046c257cedcf1622fc4b31fc2be7923d9b4d44973d481125ecc50d83885
+google-auth==2.29.0 \
+    --hash=sha256:672dff332d073227550ffc7457868ac4218d6c500b155fe6cc17d2b13602c360 \
+    --hash=sha256:d452ad095688cd52bae0ad6fafe027f6a6d6f560e810fec20914e17a09526415
     # via kubernetes
-idna==3.6 \
-    --hash=sha256:9ecdbbd083b06798ae1e86adcbfe8ab1479cf864e4ee30fe4e46a003d12491ca \
-    --hash=sha256:c05567e9c24a6b9faaa835c4821bad0590fbb9d5779e7caa6e1cc4978e7eb24f
+idna==3.7 \
+    --hash=sha256:028ff3aadf0609c1fd278d8ea3089299412a7a8b9bd005dd08b9f8285bcb5cfc \
+    --hash=sha256:82fee1fc78add43492d3a1898bfa6d8a904cc97d8427f683ed8e798d07761aa0
     # via requests
 iniconfig==2.0.0 \
     --hash=sha256:2d91e135bf72d31a410b17c16da610a82cb55f6b0477d1a902134b24a455b8b3 \
@@ -148,34 +148,34 @@ oauthlib==3.2.2 \
     # via
     #   kubernetes
     #   requests-oauthlib
-packaging==23.2 \
-    --hash=sha256:048fb0e9405036518eaaf48a55953c750c11e1a1b68e0dd1a9d62ed0c092cfc5 \
-    --hash=sha256:8c491190033a9af7e1d931d0b5dacc2ef47509b34dd0de67ed209b5203fc88c7
+packaging==24.0 \
+    --hash=sha256:2ddfb553fdf02fb784c234c7ba6ccc288296ceabec964ad2eae3777778130bc5 \
+    --hash=sha256:eb82c5e3e56209074766e6885bb04b8c38a0c015d0a30036ebe7ece34c9989e9
     # via
     #   docker
     #   pytest
     #   pytest-rerunfailures
-pluggy==1.4.0 \
-    --hash=sha256:7db9f7b503d67d1c5b95f59773ebb58a8c1c288129a88665838012cfb07b8981 \
-    --hash=sha256:8c85c2876142a764e5b7548e7d9a0e0ddb46f5185161049a79b7e974454223be
+pluggy==1.5.0 \
+    --hash=sha256:2cffa88e94fdc978c4c574f15f9e59b7f4201d439195c3715ca9e2486f1d0cf1 \
+    --hash=sha256:44e1ad92c8ca002de6377e165f3e0f1be63266ab4d554740532335b9d75ea669
     # via pytest
-pyasn1==0.5.1 \
-    --hash=sha256:4439847c58d40b1d0a573d07e3856e95333f1976294494c325775aeca506eb58 \
-    --hash=sha256:6d391a96e59b23130a5cfa74d6fd7f388dbbe26cc8f1edf39fdddf08d9d6676c
+pyasn1==0.6.0 \
+    --hash=sha256:3a35ab2c4b5ef98e17dfdec8ab074046fbda76e281c5a706ccd82328cfc8f64c \
+    --hash=sha256:cca4bb0f2df5504f02f6f8a775b6e416ff9b0b3b16f7ee80b5a3153d9b804473
     # via
     #   pyasn1-modules
     #   rsa
-pyasn1-modules==0.3.0 \
-    --hash=sha256:5bd01446b736eb9d31512a30d46c1ac3395d676c6f3cafa4c03eb54b9925631c \
-    --hash=sha256:d3ccd6ed470d9ffbc716be08bd90efbd44d0734bc9303818f7336070984a162d
+pyasn1-modules==0.4.0 \
+    --hash=sha256:831dbcea1b177b28c9baddf4c6d1013c24c3accd14a1873fffaa6a2e905f17b6 \
+    --hash=sha256:be04f15b66c206eed667e0bb5ab27e2b1855ea54a842e5037738099e8ca4ae0b
     # via google-auth
-pygments==2.17.2 \
-    --hash=sha256:b27c2826c47d0f3219f29554824c30c5e8945175d888647acd804ddd04af846c \
-    --hash=sha256:da46cec9fd2de5be3a8a784f434e4c4ab670b4ff54d605c4c2717e9d49c4c367
+pygments==2.18.0 \
+    --hash=sha256:786ff802f32e91311bff3889f6e9a86e81505fe99f2735bb6d60ae0c5004f199 \
+    --hash=sha256:b8e6aca0523f3ab76fee51799c488e38782ac06eafcf95e7ba832985c8e7b13a
     # via rich
-pytest==8.0.2 \
-    --hash=sha256:d4051d623a2e0b7e51960ba963193b09ce6daeb9759a451844a21e4ddedfc1bd \
-    --hash=sha256:edfaaef32ce5172d5466b5127b42e0d6d35ebbe4453f0e3505d96afd93f6b096
+pytest==8.2.0 \
+    --hash=sha256:1733f0620f6cda4095bbf0d9ff8022486e91892245bb9e7d5542c018f612f233 \
+    --hash=sha256:d507d4482197eac0ba2bae2e9babf0672eb333017bcedaa5fb1a3d42c1174b3f
     # via
     #   -r requirements/functional-tests.in
     #   pytest-pretty
@@ -185,9 +185,9 @@ pytest-pretty==1.2.0 \
     --hash=sha256:105a355f128e392860ad2c478ae173ff96d2f03044692f9818ff3d49205d3a60 \
     --hash=sha256:6f79122bf53864ae2951b6c9e94d7a06a87ef753476acd4588aeac018f062036
     # via -r requirements/functional-tests.in
-pytest-rerunfailures==13.0 \
-    --hash=sha256:34919cb3fcb1f8e5d4b940aa75ccdea9661bade925091873b7c6fa5548333069 \
-    --hash=sha256:e132dbe420bc476f544b96e7036edd0a69707574209b6677263c950d19b09199
+pytest-rerunfailures==14.0 \
+    --hash=sha256:4197bdd2eaeffdbf50b5ea6e7236f47ff0e44d1def8dae08e409f536d84e7b32 \
+    --hash=sha256:4a400bcbcd3c7a4ad151ab8afac123d90eca3abe27f98725dc4d9702887d2e92
     # via -r requirements/functional-tests.in
 pytest-testinfra==10.1.0 \
     --hash=sha256:0a03b7f21c863396adba9578880e5a1a6764e9d20bb603e25317883fdeda024b \
@@ -259,9 +259,9 @@ requests==2.31.0 \
     #   docker
     #   kubernetes
     #   requests-oauthlib
-requests-oauthlib==1.3.1 \
-    --hash=sha256:2577c501a2fb8d05a304c09d090d6e47c306fef15809d102b327cf8364bddab5 \
-    --hash=sha256:75beac4a47881eeb94d5ea5d6ad31ef88856affe2332b9aafb52c6452ccf0d7a
+requests-oauthlib==2.0.0 \
+    --hash=sha256:7dd8a5c40426b779b0868c404bdef9768deccf22749cde15852df527e6269b36 \
+    --hash=sha256:b3dffaebd884d8cd778494369603a9e7b58d29111bf6b41bdc2dcd87203af4e9
     # via kubernetes
 rich==13.7.1 \
     --hash=sha256:4edbae314f59eb482f54e9e30bf00d33350aaa94f4bfcd4e9e3110e64d0d7222 \
@@ -288,7 +288,7 @@ urllib3==2.2.1 \
     #   docker
     #   kubernetes
     #   requests
-websocket-client==1.7.0 \
-    --hash=sha256:10e511ea3a8c744631d3bd77e61eb17ed09304c413ad42cf6ddfa4c7787e8fe6 \
-    --hash=sha256:f4c3d22fec12a2461427a29957ff07d35098ee2d976d3ba244e688b8b4057588
+websocket-client==1.8.0 \
+    --hash=sha256:17b44cc997f5c498e809b22cdf2d9c7a9e71c02c8cc2b6c56e7c2d1239bfa526 \
+    --hash=sha256:3239df9f44da632f96012472805d40a23281a991027ce11d2f45a6f24ac4c3da
     # via kubernetes

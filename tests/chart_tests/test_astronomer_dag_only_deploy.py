@@ -53,7 +53,8 @@ class TestDagOnlyDeploy:
                 }
             },
             "securityContext": {"fsGroup": 55555},
-            "resources": resources,
+            "server": {"resources": resources},
+            "client": {"resources": resources},
         }
 
     def test_dagonlydeploy_config_enabled_with_private_registry(self, kube_version):
@@ -82,3 +83,45 @@ class TestDagOnlyDeploy:
         assert prod["deployments"]["dagDeploy"]["images"]["dagServer"][
             "repository"
         ].startswith(private_registry)
+
+    def test_dagonlydeploy_config_enabled_with_openshift_enabled(self, kube_version):
+        """Test dagonlydeploy with openshift enabled to validate fsGroup removal."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "openshiftEnabled": True,
+                    "dagOnlyDeployment": {
+                        "enabled": True,
+                    },
+                }
+            },
+            show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+        )
+
+        doc = docs[0]
+        prod = yaml.safe_load(doc["data"]["production.yaml"])
+        assert prod["deployments"]["dagOnlyDeployment"] is True
+
+        assert {} == prod["deployments"]["dagDeploy"]["securityContext"]
+
+    def test_dagonlydeploy_config_enabled_with_fsGroup_auto(self, kube_version):
+        """Test dagonlydeploy with auto to validate fsGroup removal."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "dagOnlyDeployment": {
+                        "enabled": True,
+                        "securityContext": {"fsGroup": "auto"},
+                    },
+                }
+            },
+            show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+        )
+
+        doc = docs[0]
+        prod = yaml.safe_load(doc["data"]["production.yaml"])
+        assert prod["deployments"]["dagOnlyDeployment"] is True
+
+        assert {} == prod["deployments"]["dagDeploy"]["securityContext"]

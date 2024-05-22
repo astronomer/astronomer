@@ -1,7 +1,8 @@
 ########################################################
 ## Astronomer Platform Namespace label configure Hook ##
 ########################################################
-{{- if or  .Values.nats.jetstream.enabled .Values.global.nats.jetStream.enabled  .Values.global.stan.enabled }}
+{{- if .Values.nats.createJetStreamJob -}}
+{{- if or .Values.nats.jetstream.enabled .Values.global.nats.jetStream.enabled .Values.global.stan.enabled }}
 ---
 kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
@@ -85,6 +86,7 @@ spec:
       containers:
       - name: jetstream-template-fixer
         image: {{ template "dbBootstrapper.image" . }}
+        securityContext: {{ template "nats.securityContext" . }}
         command:
         - /bin/sh
         - -c
@@ -108,4 +110,5 @@ spec:
             echo "{{ .Release.Name }}-Nats is already enabled with jetstream. skipping sts cleanup"
           fi
           {{ end }}
+{{ end }}
 {{ end }}

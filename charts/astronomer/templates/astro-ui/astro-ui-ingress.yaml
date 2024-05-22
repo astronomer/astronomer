@@ -1,0 +1,134 @@
+################################
+## Astronomer astro ui Ingress
+#################################
+{{- if and .Values.global.baseDomain .Values.global.enablePerHostIngress  }}
+kind: Ingress
+apiVersion: {{ template "apiVersion.Ingress" . }}
+metadata:
+  name: {{ .Release.Name }}-astroui-ingress
+  labels:
+    component: astroui-ingress
+    tier: astronomer
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+  annotations:
+    {{- if .Values.global.authSidecar.enabled  }}
+    {{- range $key, $value := .Values.global.extraAnnotations}}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+    {{- else }}
+    kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
+    kubernetes.io/tls-acme: {{ eq .Values.global.acme true | quote }}
+    nginx.ingress.kubernetes.io/custom-http-errors: "404"
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      if ($host = '{{ .Values.global.baseDomain }}' ) {
+        rewrite ^ https://app.{{ .Values.global.baseDomain }}$request_uri permanent;
+      }
+    {{- end }}
+spec:
+  {{- if or .Values.global.tlsSecret .Values.global.acme }}
+  tls:
+  {{- if .Values.global.acme }}
+    - secretName: astronomer-public-tls
+  {{- end }}
+  {{- if .Values.global.tlsSecret }}
+    - secretName: {{ .Values.global.tlsSecret }}
+  {{- end }}
+      hosts:
+        - app.{{ .Values.global.baseDomain }}
+  {{- end }}
+  {{ if semverCompare "< 1.19-0" .Capabilities.KubeVersion.Version -}}
+  rules:
+  - host: {{ .Values.global.baseDomain }}
+    http:
+      paths:
+        - path: /
+          backend:
+            serviceName: {{ .Release.Name }}-astro-ui
+            servicePort: astro-ui-http
+  - host: app.{{ .Values.global.baseDomain }}
+    http:
+      paths:
+        - path: /
+          backend:
+            serviceName: {{ .Release.Name }}-astro-ui
+            servicePort: astro-ui-http
+  {{ else -}}
+  rules:
+  - host: app.{{ .Values.global.baseDomain }}
+    http:
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: {{ .Release.Name }}-astro-ui
+              port:
+                name: astro-ui-http
+  {{- end -}}
+{{- end }}
+---
+################################
+## Astronomer Common Ingress
+#################################
+{{- if and .Values.global.baseDomain .Values.global.enablePerHostIngress  }}
+kind: Ingress
+apiVersion: {{ template "apiVersion.Ingress" . }}
+metadata:
+  name: {{ .Release.Name }}-common-ingress
+  labels:
+    component: common-ingress
+    tier: astronomer
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+  annotations:
+    {{- if .Values.global.authSidecar.enabled  }}
+    {{- range $key, $value := .Values.global.extraAnnotations}}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+    {{- else }}
+    kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
+    kubernetes.io/tls-acme: {{ eq .Values.global.acme true | quote }}
+    nginx.ingress.kubernetes.io/custom-http-errors: "404"
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      if ($host = '{{ .Values.global.baseDomain }}' ) {
+        rewrite ^ https://app.{{ .Values.global.baseDomain }}$request_uri permanent;
+      }
+    {{- end }}
+spec:
+  {{- if or .Values.global.tlsSecret .Values.global.acme }}
+  tls:
+  {{- if .Values.global.acme }}
+    - secretName: astronomer-public-tls
+  {{- end }}
+  {{- if .Values.global.tlsSecret }}
+    - secretName: {{ .Values.global.tlsSecret }}
+  {{- end }}
+      hosts:
+        - {{ .Values.global.baseDomain }}
+  {{- end }}
+  {{ if semverCompare "< 1.19-0" .Capabilities.KubeVersion.Version -}}
+  rules:
+  - host: {{ .Values.global.baseDomain }}
+    http:
+      paths:
+        - path: /
+          backend:
+            serviceName: {{ .Release.Name }}-astro-ui
+            servicePort: astro-ui-http
+  {{ else -}}
+  rules:
+  - host: {{ .Values.global.baseDomain }}
+    http:
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: {{ .Release.Name }}-astro-ui
+              port:
+                name: astro-ui-http
+{{- end }}
+{{- end }}
