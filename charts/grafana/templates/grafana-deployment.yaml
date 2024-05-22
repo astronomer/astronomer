@@ -59,6 +59,7 @@ spec:
         - name: bootstrapper
           image: {{ template "grafana.bootstrapper.image" . }}
           imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
+          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
           resources:
 {{ toYaml .Values.resources | indent 12 }}
           env:

@@ -1,7 +1,7 @@
 ################################
 ## Astronomer Ingress
 #################################
-{{- if .Values.global.baseDomain }}
+{{- if and .Values.global.baseDomain  ( not .Values.global.enablePerHostIngress ) }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:
@@ -64,13 +64,6 @@ spec:
           backend:
             serviceName: {{ .Release.Name }}-registry
             servicePort: registry-http
-  - host: install.{{ .Values.global.baseDomain }}
-    http:
-      paths:
-        - path: /
-          backend:
-            serviceName: {{ .Release.Name }}-cli-install
-            servicePort: install-http
   {{ else -}}
   rules:
   - host: {{ .Values.global.baseDomain }}
@@ -103,17 +96,5 @@ spec:
               name: {{ .Release.Name }}-registry
               port:
                 name: registry-http
-{{- if .Values.install.cliEnabled }}
-  - host: install.{{ .Values.global.baseDomain }}
-    http:
-      paths:
-        - path: /
-          pathType: Prefix
-          backend:
-            service:
-              name: {{ .Release.Name }}-cli-install
-              port:
-                name: install-http
-{{- end -}}
   {{- end -}}
 {{- end }}

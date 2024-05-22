@@ -28,6 +28,7 @@ global:
       repository: quay.io/astronomer/ap-base
       tag: 3.18.6-1
       pullPolicy: IfNotPresent
+    priorityClassName: ~
   # Global flag to enable to user to enable/disable Astronomer platform
   # level Network Policy
   networkPolicy:
@@ -122,6 +123,8 @@ global:
 
   enableHoustonInternalAuthorization: false
 
+  enablePerHostIngress: false
+
   dagOnlyDeployment:
     enabled: false
     image: quay.io/astronomer/ap-dag-deploy:0.3.2
@@ -140,6 +143,7 @@ global:
     customConfig: false
     indexPattern: ~
     extraEnv: []
+    securityContext: {}
     resources: {}
     #  requests:
     #    cpu: "100m"
@@ -155,6 +159,7 @@ global:
     tag: 1.25.4
     pullPolicy: IfNotPresent
     port: 8084
+    securityContext: {}
     default_nginx_settings: |
       internal;
       proxy_pass_request_body     off;
