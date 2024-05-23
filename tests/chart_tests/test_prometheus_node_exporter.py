@@ -79,3 +79,31 @@ class TestPrometheusNodeExporterDaemonset:
             "limits": {"cpu": "777m", "memory": "999Mi"},
             "requests": {"cpu": "666m", "memory": "888Mi"},
         }
+        assert c_by_name["node-exporter"]["securityContext"] == {"runAsNonRoot": True}
+
+    def test_prometheus_node_exporter_daemonset_with_security_context_overrides(
+        self, kube_version
+    ):
+        doc = render_chart(
+            kube_version=kube_version,
+            values={
+                "prometheus-node-exporter": {
+                    "securityContext": {
+                        "allowPrivilegeEscalation": False,
+                        "readOnlyRootFilesystem": True,
+                    }
+                },
+            },
+            show_only=["charts/prometheus-node-exporter/templates/daemonset.yaml"],
+        )[0]
+
+        assert doc["kind"] == "DaemonSet"
+        assert doc["metadata"]["name"] == "release-name-prometheus-node-exporter"
+
+        c_by_name = get_containers_by_name(doc)
+        assert c_by_name["node-exporter"]
+        assert c_by_name["node-exporter"]["securityContext"] == {
+            "allowPrivilegeEscalation": False,
+            "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
+        }

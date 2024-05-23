@@ -36,7 +36,7 @@ images:
     pullPolicy: IfNotPresent
   cliInstall:
     repository: quay.io/astronomer/ap-cli-install
-    tag: 0.26.23
+    tag: 0.26.24
     pullPolicy: IfNotPresent
 
 securityContext:
@@ -320,6 +320,7 @@ configSyncer:
   enabled: true
   # If not provided, will generate a random hour and minutes to spread cronjob workloads.
   schedule: ~
+  securityContext: {}
 
 commander:
   replicas: 2

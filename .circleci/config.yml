@@ -110,7 +110,7 @@ jobs:
 
   run_pre_commit:
     docker:
-      - image: quay.io/astronomer/ci-pre-commit:2024-04
+      - image: quay.io/astronomer/ci-pre-commit:2024-05
     steps:
       - checkout
       - run:
@@ -145,7 +145,7 @@ jobs:
 
   unittest-charts:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2024-04
+      - image: quay.io/astronomer/ci-helm-release:2024-05
     parallelism: 8
     resource_class: xlarge
     steps:
@@ -199,7 +199,7 @@ jobs:
 
   release-to-internal:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2024-04
+      - image: quay.io/astronomer/ci-helm-release:2024-05
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -238,7 +238,7 @@ jobs:
 
   release-to-public:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2024-04
+      - image: quay.io/astronomer/ci-helm-release:2024-05
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -251,7 +251,7 @@ jobs:
 
   platform-1-25-16:
     machine:
-      image: ubuntu-2204:2024.01.1
+      image: ubuntu-2204:2024.04.4
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.25.16
@@ -265,68 +265,84 @@ jobs:
             helm template --kube-version=v1.25.16 -f values.yaml --set global.baseDomain=example.com . |
             kubent --cluster=false --helm3=false --filename -
           when: always
-  platform-1-26-14:
+  platform-1-26-15:
     machine:
-      image: ubuntu-2204:2024.01.1
+      image: ubuntu-2204:2024.04.4
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.26.14
+      KUBE_VERSION: v1.26.15
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging"
       - run:
-          name: Check chart for k8s 1.26.14 compatibility with kubent
+          name: Check chart for k8s 1.26.15 compatibility with kubent
           command: |
             set -o pipefail
-            helm template --kube-version=v1.26.14 -f values.yaml --set global.baseDomain=example.com . |
+            helm template --kube-version=v1.26.15 -f values.yaml --set global.baseDomain=example.com . |
             kubent --cluster=false --helm3=false --filename -
           when: always
-  platform-1-27-11:
+  platform-1-27-13:
     machine:
-      image: ubuntu-2204:2024.01.1
+      image: ubuntu-2204:2024.04.4
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.27.11
+      KUBE_VERSION: v1.27.13
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging"
       - run:
-          name: Check chart for k8s 1.27.11 compatibility with kubent
+          name: Check chart for k8s 1.27.13 compatibility with kubent
           command: |
             set -o pipefail
-            helm template --kube-version=v1.27.11 -f values.yaml --set global.baseDomain=example.com . |
+            helm template --kube-version=v1.27.13 -f values.yaml --set global.baseDomain=example.com . |
             kubent --cluster=false --helm3=false --filename -
           when: always
-  platform-1-28-7:
+  platform-1-28-9:
     machine:
-      image: ubuntu-2204:2024.01.1
+      image: ubuntu-2204:2024.04.4
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.28.7
+      KUBE_VERSION: v1.28.9
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging"
       - run:
-          name: Check chart for k8s 1.28.7 compatibility with kubent
+          name: Check chart for k8s 1.28.9 compatibility with kubent
           command: |
             set -o pipefail
-            helm template --kube-version=v1.28.7 -f values.yaml --set global.baseDomain=example.com . |
+            helm template --kube-version=v1.28.9 -f values.yaml --set global.baseDomain=example.com . |
             kubent --cluster=false --helm3=false --filename -
           when: always
-  platform-1-29-2:
+  platform-1-29-4:
     machine:
-      image: ubuntu-2204:2024.01.1
+      image: ubuntu-2204:2024.04.4
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.29.2
+      KUBE_VERSION: v1.29.4
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging"
       - run:
-          name: Check chart for k8s 1.29.2 compatibility with kubent
+          name: Check chart for k8s 1.29.4 compatibility with kubent
           command: |
             set -o pipefail
-            helm template --kube-version=v1.29.2 -f values.yaml --set global.baseDomain=example.com . |
+            helm template --kube-version=v1.29.4 -f values.yaml --set global.baseDomain=example.com . |
+            kubent --cluster=false --helm3=false --filename -
+          when: always
+  platform-1-30-0:
+    machine:
+      image: ubuntu-2204:2024.04.4
+      resource_class: xlarge
+    environment:
+      KUBE_VERSION: v1.30.0
+    steps:
+      - helm-install:
+          astronomer-tags: "platform postgresql monitoring logging"
+      - run:
+          name: Check chart for k8s 1.30.0 compatibility with kubent
+          command: |
+            set -o pipefail
+            helm template --kube-version=v1.30.0 -f values.yaml --set global.baseDomain=example.com . |
             kubent --cluster=false --helm3=false --filename -
           when: always
 
@@ -359,35 +375,35 @@ workflows:
               docker_image:
                 - quay.io/astronomer/ap-alertmanager:0.27.0
                 - quay.io/astronomer/ap-astro-ui:0.34.5
-                - quay.io/astronomer/ap-auth-sidecar:1.25.4
+                - quay.io/astronomer/ap-auth-sidecar:1.25.5
                 - quay.io/astronomer/ap-awsesproxy:1.5.0-8
-                - quay.io/astronomer/ap-base:3.18.6-1
+                - quay.io/astronomer/ap-base:3.18.6-2
                 - quay.io/astronomer/ap-blackbox-exporter:0.24.0-7
-                - quay.io/astronomer/ap-cli-install:0.26.23
+                - quay.io/astronomer/ap-cli-install:0.26.24
                 - quay.io/astronomer/ap-commander:0.34.1
                 - quay.io/astronomer/ap-configmap-reloader:0.12.0
-                - quay.io/astronomer/ap-curator:8.0.13-1
+                - quay.io/astronomer/ap-curator:8.0.14-1
                 - quay.io/astronomer/ap-db-bootstrapper:0.35.0
-                - quay.io/astronomer/ap-default-backend:0.28.24
+                - quay.io/astronomer/ap-default-backend:0.28.25
                 - quay.io/astronomer/ap-elasticsearch-exporter:1.7.0
                 - quay.io/astronomer/ap-elasticsearch:8.12.0
                 - quay.io/astronomer/ap-fluentd:1.16.3
                 - quay.io/astronomer/ap-grafana:10.2.4
                 - quay.io/astronomer/ap-houston-api:0.34.5
-                - quay.io/astronomer/ap-init:3.18.6-1
+                - quay.io/astronomer/ap-init:3.18.6-2
                 - quay.io/astronomer/ap-kibana:8.12.0
                 - quay.io/astronomer/ap-kube-state:2.10.1
-                - quay.io/astronomer/ap-nats-exporter:0.14.0-2
+                - quay.io/astronomer/ap-nats-exporter:0.15.0
                 - quay.io/astronomer/ap-nats-server:2.10.10
-                - quay.io/astronomer/ap-nats-streaming:0.25.6-2
-                - quay.io/astronomer/ap-nginx-es:1.25.4
+                - quay.io/astronomer/ap-nats-streaming:0.25.6-3
+                - quay.io/astronomer/ap-nginx-es:1.25.5
                 - quay.io/astronomer/ap-nginx:1.9.6
-                - quay.io/astronomer/ap-node-exporter:1.7.0
+                - quay.io/astronomer/ap-node-exporter:1.8.1
                 - quay.io/astronomer/ap-openresty:1.25.3-1
                 - quay.io/astronomer/ap-pgbouncer-krb:1.17.0-11
                 - quay.io/astronomer/ap-postgres-exporter:0.15.0-5
                 - quay.io/astronomer/ap-postgresql:15.6.0-1
-                - quay.io/astronomer/ap-prometheus:2.45.4
+                - quay.io/astronomer/ap-prometheus:2.45.5
                 - quay.io/astronomer/ap-registry:3.18.6-2
                 - quay.io/astronomer/ap-vector:0.33.1-1
           context:
@@ -398,35 +414,35 @@ workflows:
               docker_image:
                 - quay.io/astronomer/ap-alertmanager:0.27.0
                 - quay.io/astronomer/ap-astro-ui:0.34.5
-                - quay.io/astronomer/ap-auth-sidecar:1.25.4
+                - quay.io/astronomer/ap-auth-sidecar:1.25.5
                 - quay.io/astronomer/ap-awsesproxy:1.5.0-8
-                - quay.io/astronomer/ap-base:3.18.6-1
+                - quay.io/astronomer/ap-base:3.18.6-2
                 - quay.io/astronomer/ap-blackbox-exporter:0.24.0-7
-                - quay.io/astronomer/ap-cli-install:0.26.23
+                - quay.io/astronomer/ap-cli-install:0.26.24
                 - quay.io/astronomer/ap-commander:0.34.1
                 - quay.io/astronomer/ap-configmap-reloader:0.12.0
-                - quay.io/astronomer/ap-curator:8.0.13-1
+                - quay.io/astronomer/ap-curator:8.0.14-1
                 - quay.io/astronomer/ap-db-bootstrapper:0.35.0
-                - quay.io/astronomer/ap-default-backend:0.28.24
+                - quay.io/astronomer/ap-default-backend:0.28.25
                 - quay.io/astronomer/ap-elasticsearch-exporter:1.7.0
                 - quay.io/astronomer/ap-elasticsearch:8.12.0
                 - quay.io/astronomer/ap-fluentd:1.16.3
                 - quay.io/astronomer/ap-grafana:10.2.4
                 - quay.io/astronomer/ap-houston-api:0.34.5
-                - quay.io/astronomer/ap-init:3.18.6-1
+                - quay.io/astronomer/ap-init:3.18.6-2
                 - quay.io/astronomer/ap-kibana:8.12.0
                 - quay.io/astronomer/ap-kube-state:2.10.1
-                - quay.io/astronomer/ap-nats-exporter:0.14.0-2
+                - quay.io/astronomer/ap-nats-exporter:0.15.0
                 - quay.io/astronomer/ap-nats-server:2.10.10
-                - quay.io/astronomer/ap-nats-streaming:0.25.6-2
-                - quay.io/astronomer/ap-nginx-es:1.25.4
+                - quay.io/astronomer/ap-nats-streaming:0.25.6-3
+                - quay.io/astronomer/ap-nginx-es:1.25.5
                 - quay.io/astronomer/ap-nginx:1.9.6
-                - quay.io/astronomer/ap-node-exporter:1.7.0
+                - quay.io/astronomer/ap-node-exporter:1.8.1
                 - quay.io/astronomer/ap-openresty:1.25.3-1
                 - quay.io/astronomer/ap-pgbouncer-krb:1.17.0-11
                 - quay.io/astronomer/ap-postgres-exporter:0.15.0-5
                 - quay.io/astronomer/ap-postgresql:15.6.0-1
-                - quay.io/astronomer/ap-prometheus:2.45.4
+                - quay.io/astronomer/ap-prometheus:2.45.5
                 - quay.io/astronomer/ap-registry:3.18.6-2
                 - quay.io/astronomer/ap-vector:0.33.1-1
           context:
@@ -454,22 +470,27 @@ workflows:
       - platform-1-25-16:
           requires:
             - build-artifact
-      - platform-1-26-14:
+      - platform-1-26-15:
           requires:
             - approve-test-all-platforms
             - build-artifact
 
-      - platform-1-27-11:
+      - platform-1-27-13:
           requires:
             - approve-test-all-platforms
             - build-artifact
 
-      - platform-1-28-7:
+      - platform-1-28-9:
           requires:
             - approve-test-all-platforms
             - build-artifact
 
-      - platform-1-29-2:
+      - platform-1-29-4:
+          requires:
+            - approve-test-all-platforms
+            - build-artifact
+
+      - platform-1-30-0:
           requires:
             - build-artifact
       - approve-internal-release:
@@ -488,7 +509,7 @@ workflows:
           requires:
             - approve-internal-release
             - platform-1-25-16
-            - platform-1-29-2
+            - platform-1-30-0
       - approve-upgrade-test:
           type: approval
           filters:
@@ -507,9 +528,10 @@ workflows:
           type: approval
           requires:
             - release-to-internal
-            - platform-1-26-14
-            - platform-1-27-11
-            - platform-1-28-7
+            - platform-1-26-15
+            - platform-1-27-13
+            - platform-1-28-9
+            - platform-1-29-4
           filters:
             branches:
               only:
