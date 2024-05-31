@@ -86,6 +86,10 @@ data:
         taskUsageMetricsEnabled: {{ .Values.global.taskUsageMetricsEnabled }}
         taskUsageReportNumberOfDays: {{ .Values.houston.cleanupTaskUsageData.olderThan}}
 
+      deployRollback:
+        enabled: {{ .Values.global.deployRollbackEnabled }}
+        deployRevisionReportNumberOfDays: {{ .Values.houston.cleanupDeployRevisions.olderThan}}
+
       cleanupAirflowDb:
         enabled: {{ .Values.houston.cleanupAirflowDb.enabled }}
 
