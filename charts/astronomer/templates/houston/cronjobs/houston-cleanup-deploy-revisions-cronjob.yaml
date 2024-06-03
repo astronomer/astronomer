@@ -45,7 +45,8 @@ spec:
               image: {{ template "houston.image" . }}
               imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
               # If you supply only args for a Container, the default Entrypoint defined in the Docker image is run with the args that you supplied.
-              args: ["yarn", "cleanup-deploy-revisions", "--", "--older-than={{ .Values.houston.cleanupDeployRevisions.olderThan }}", "--dry-run={{ .Values.houston.cleanupDeployRevisions.dryRun }}", "--canary={{ .Values.houston.cleanupDeployRevisions.canary }}"]
+              args: ["yarn", "cleanup-deploy-revisions", "--", "--older-than={{ .Values.houston.cleanupDeployRevisions.olderThan }}"]
+              securityContext: {{ toYaml .Values.securityContext | nindent 16 }}
               volumeMounts:
                 {{- include "houston_volume_mounts" . | indent 16 }}
                 {{- include "custom_ca_volume_mounts" . | indent 16 }}
