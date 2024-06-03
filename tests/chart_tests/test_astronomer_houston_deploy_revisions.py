@@ -11,7 +11,11 @@ class TestAstronomerHoustonDeployRevisionsCronjobs:
     def test_astronomer_cleanup_deploy_revisons_cron_defaults(self, kube_version):
         docs = render_chart(
             kube_version=kube_version,
-            values={"astronomer": {"houston": {"cleanupDeployRevisions": {"enabled": False}}}},
+            values={
+                "astronomer": {
+                    "houston": {"cleanupDeployRevisions": {"enabled": False}}
+                }
+            },
             show_only=[
                 "charts/astronomer/templates/houston/cronjobs/houston-cleanup-deploy-revisions-cronjob.yaml",
             ],
@@ -23,7 +27,9 @@ class TestAstronomerHoustonDeployRevisionsCronjobs:
     ):
         docs = render_chart(
             kube_version=kube_version,
-            values={"astronomer": {"houston": {"cleanupDeployRevisions": {"enabled": True}}}},
+            values={
+                "astronomer": {"houston": {"cleanupDeployRevisions": {"enabled": True}}}
+            },
             show_only=[
                 "charts/astronomer/templates/houston/cronjobs/houston-cleanup-deploy-revisions-cronjob.yaml",
             ],
@@ -42,9 +48,16 @@ class TestAstronomerHoustonDeployRevisionsCronjobs:
     ):
         docs = render_chart(
             kube_version=kube_version,
-            values={"astronomer": {
-                "houston": {"cleanupDeployRevisions": {"enabled": True, "schedule": "0 23 * * *"}},
-            }},
+            values={
+                "astronomer": {
+                    "houston": {
+                        "cleanupDeployRevisions": {
+                            "enabled": True,
+                            "schedule": "0 23 * * *",
+                        }
+                    },
+                }
+            },
             show_only=[
                 "charts/astronomer/templates/houston/cronjobs/houston-cleanup-deploy-revisions-cronjob.yaml",
             ],
