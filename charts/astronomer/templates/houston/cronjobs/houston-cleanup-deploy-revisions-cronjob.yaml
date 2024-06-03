@@ -1,10 +1,11 @@
-##########################################
+################################################
 ## Houston Cleanup Deploy Revisions CronJob
-##########################################
+###############################################
+{{- if .Values.houston.cleanupDeployRevisions.enabled }}
 apiVersion: {{ include "apiVersion.batch.cronjob" . }}
 kind: CronJob
 metadata:
-  name: "{{ .Release.Name }}-houston-cleanup-deploy-revisions"
+  name: {{ .Release.Name }}-houston-cleanup-deploy-revisions
   labels:
     tier: astronomer
     component: houston-cleanup
@@ -13,6 +14,7 @@ metadata:
     heritage: {{ .Release.Service }}
 spec:
   schedule: {{ .Values.houston.cleanupDeployRevisions.schedule }}
+  # The cron job does not allow concurrent runs; if it is time for a new job run and the previous job run hasn't finished yet, the cron job skips the new job run
   concurrencyPolicy: Forbid
   jobTemplate:
     spec:
@@ -42,6 +44,7 @@ spec:
             - name: cleanup
               image: {{ template "houston.image" . }}
               imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
+              # If you supply only args for a Container, the default Entrypoint defined in the Docker image is run with the args that you supplied.
               args: ["yarn", "cleanup-deploy-revisions", "--", "--older-than={{ .Values.houston.cleanupDeployRevisions.olderThan }}", "--dry-run={{ .Values.houston.cleanupDeployRevisions.dryRun }}", "--canary={{ .Values.houston.cleanupDeployRevisions.canary }}"]
               volumeMounts:
                 {{- include "houston_volume_mounts" . | indent 16 }}
@@ -51,3 +54,4 @@ spec:
           volumes:
             {{- include "houston_volumes" . | indent 12 }}
             {{- include "custom_ca_volumes" . | indent 12 }}
+{{- end }}
