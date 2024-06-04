@@ -25,9 +25,7 @@ class TestHoustonCronJobAstroRuntimeUpdates:
 
         assert doc["kind"] == "CronJob"
         assert doc["spec"]["schedule"] == "43 0 * * *"
-        assert job_container_by_name["update-check"][
-            "args"
-        ] == [
+        assert job_container_by_name["update-check"]["args"] == [
             "yarn",
             "check-runtime-updates",
             "--url=https://updates.astronomer.io/astronomer-runtime",
@@ -36,11 +34,16 @@ class TestHoustonCronJobAstroRuntimeUpdates:
             "runAsNonRoot": True
         }
 
-    def test_cronjob_runtime_updates_enabled_with_securityContext_overrides(self, kube_version):
+    def test_cronjob_runtime_updates_enabled_with_securityContext_overrides(
+        self, kube_version
+    ):
         docs = render_chart(
             kube_version=kube_version,
             values={
-                "astronomer": {"securityContext": {"allowPriviledgeEscalation": False}, "houston": {"updateRuntimeCheck": {"enabled": True}}}
+                "astronomer": {
+                    "securityContext": {"allowPriviledgeEscalation": False},
+                    "houston": {"updateRuntimeCheck": {"enabled": True}},
+                }
             },
             show_only=[
                 "charts/astronomer/templates/houston/cronjobs/houston-check-runtime-updates.yaml"
@@ -53,16 +56,14 @@ class TestHoustonCronJobAstroRuntimeUpdates:
 
         assert doc["kind"] == "CronJob"
         assert doc["spec"]["schedule"] == "43 0 * * *"
-        assert job_container_by_name["update-check"][
-            "args"
-        ] == [
+        assert job_container_by_name["update-check"]["args"] == [
             "yarn",
             "check-runtime-updates",
             "--url=https://updates.astronomer.io/astronomer-runtime",
         ]
         assert job_container_by_name["update-check"]["securityContext"] == {
             "runAsNonRoot": True,
-            "allowPriviledgeEscalation": False
+            "allowPriviledgeEscalation": False,
         }
 
     def test_cronjob_runtime_updates_disabled(self, kube_version):
