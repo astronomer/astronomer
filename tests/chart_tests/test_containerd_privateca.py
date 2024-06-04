@@ -132,7 +132,7 @@ class TestContainerdPrivateCaDaemonset:
                     "privateCaCertsAddToHost": {
                         "enabled": True,
                         "addToContainerd": True,
-                        "containerdHostPath": "/etc/astronomer"
+                        "containerdHostPath": "/etc/astronomer",
                     },
                 }
             },
