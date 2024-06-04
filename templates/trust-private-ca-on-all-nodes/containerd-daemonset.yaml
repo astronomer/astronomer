@@ -82,7 +82,7 @@ spec:
       hostPID: true
       volumes:
       - hostPath:
-          path: /etc/containerd
+          path: {{ .Values.global.privateCaCertsAddToHost.containerdHostPath }}
           type: ""
         name: hostcontainerd
       - name: hostcerts
