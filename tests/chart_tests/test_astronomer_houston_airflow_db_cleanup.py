@@ -79,7 +79,7 @@ class TestAstronomerHoustonAirflowDbCleanupCronjob:
         print(job_container_by_name["cleanup"]["securityContext"])
         assert job_container_by_name["cleanup"]["securityContext"] == {
             "runAsNonRoot": True,
-            "allowPriviledgeEscation": False,
+            "allowPriviledgeEscalation": False,
         }
 
     def test_houston_configmap_with_cleanup_enabled(self, kube_version):
