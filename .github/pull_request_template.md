@@ -6,6 +6,8 @@ Do not merge this PR until this description is replaced with relevant info.
 
 Do not merge this PR until this text is replaced with links to related issues.
 
+Related astronomer/issues#XXXX
+
 ## Testing
 
 Do not merge this PR until this text is replaced with details about how these changes were tested.
