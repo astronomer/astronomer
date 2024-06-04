@@ -4,7 +4,6 @@ import yaml
 from tests import get_cronjob_containerspec_by_name, supported_k8s_versions
 
 
-
 @pytest.mark.parametrize(
     "kube_version",
     supported_k8s_versions,
@@ -61,7 +60,7 @@ class TestAstronomerHoustonAirflowDbCleanupCronjob:
                     "securityContext": {"allowPriviledgeEscalation": False},
                     "houston": {
                         "cleanupAirflowDb": {"enabled": True, "schedule": "22 5 * * *"}
-                    }
+                    },
                 }
             },
             show_only=[
@@ -80,7 +79,7 @@ class TestAstronomerHoustonAirflowDbCleanupCronjob:
         print(job_container_by_name["cleanup"]["securityContext"])
         assert job_container_by_name["cleanup"]["securityContext"] == {
             "runAsNonRoot": True,
-            "allowPriviledgeEscation": False
+            "allowPriviledgeEscation": False,
         }
 
     def test_houston_configmap_with_cleanup_enabled(self, kube_version):
