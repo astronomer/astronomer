@@ -71,7 +71,28 @@ class TestContainerdPrivateCaDaemonset:
         volumemounts = cert_copier["volumeMounts"]
         volumes = docs[0]["spec"]["template"]["spec"]["volumes"]
 
-        expected_volumes = [{'hostPath': {'path': '/etc/containerd', 'type': ''}, 'name': 'hostcontainerd'}, {'name': 'hostcerts', 'hostPath': {'path': '/etc/containerd/certs.d/registry.example.com/'}}, {'name': 'cert-copy-and-toml-update', 'configMap': {'name': 'release-name-cert-copy-and-toml-update'}}, {'name': 'private-ca-cert-foo', 'secret': {'secretName': 'private-ca-cert-foo'}}, {'name': 'private-ca-cert-bar', 'secret': {'secretName': 'private-ca-cert-bar'}}]
+        expected_volumes = [
+            {
+                "hostPath": {"path": "/etc/containerd", "type": ""},
+                "name": "hostcontainerd",
+            },
+            {
+                "name": "hostcerts",
+                "hostPath": {"path": "/etc/containerd/certs.d/registry.example.com/"},
+            },
+            {
+                "name": "cert-copy-and-toml-update",
+                "configMap": {"name": "release-name-cert-copy-and-toml-update"},
+            },
+            {
+                "name": "private-ca-cert-foo",
+                "secret": {"secretName": "private-ca-cert-foo"},
+            },
+            {
+                "name": "private-ca-cert-bar",
+                "secret": {"secretName": "private-ca-cert-bar"},
+            },
+        ]
 
         expected_volumemounts = [
             {"name": "hostcerts", "mountPath": "/host-trust-store"},
