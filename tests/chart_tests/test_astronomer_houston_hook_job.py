@@ -1,5 +1,5 @@
 import pytest
-from tests import supported_k8s_versions
+from tests import get_containers_by_name, supported_k8s_versions
 from tests.chart_tests.helm_template_generator import render_chart
 
 
@@ -18,9 +18,14 @@ class TestHoustonHookJob:
             ],
         )
         assert len(docs) == 1
+        c_by_name = get_containers_by_name(docs[0])
         assert docs[0]["kind"] == "Job"
         assert docs[0]["metadata"]["name"] == "release-name-update-resource-strategy"
 
-        assert docs[0]["spec"]["template"]["spec"]["containers"][0]["args"] == [
+        assert c_by_name["post-upgrade-update-resource-strategy"]["args"] == [
             "update-deployments-resource-mode"
         ]
+
+        assert c_by_name["post-upgrade-update-resource-strategy"][
+            "securityContext"
+        ] == {"runAsNonRoot": True}
