@@ -210,8 +210,8 @@ houston:
   # Cleanup task usage data and task audit data in Houston
   # This runs as a CronJob
   cleanupTaskUsageData:
-    # Run at 23:15 every night
-    schedule: "15 23 * * *"  # https://crontab.guru/#15_23_*_*_*
+    # Run at 23:40 every night
+    schedule: "40 23 * * *"  # https://crontab.guru/#40_23_*_*_*
 
     # Cleanup deployments older than this many days
     olderThan: 90
@@ -228,8 +228,8 @@ houston:
     # Enable cleanup CronJob
     enabled: true
 
-    # Run at 23:40 every night
-    schedule: "40 23 * * *"  # https://crontab.guru/#40_23_*_*_*
+    # Run at 23:15 every night
+    schedule: "15 23 * * *"  # https://crontab.guru/#15_23_*_*_*
 
     # Cleanup deploy revisions older than this many days
     olderThan: 90
