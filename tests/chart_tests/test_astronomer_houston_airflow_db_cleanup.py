@@ -76,7 +76,6 @@ class TestAstronomerHoustonAirflowDbCleanupCronjob:
             == "release-name-houston-cleanup-airflow-db-data"
         )
         assert docs[0]["spec"]["schedule"] == "22 5 * * *"
-        print(job_container_by_name["cleanup"]["securityContext"])
         assert job_container_by_name["cleanup"]["securityContext"] == {
             "runAsNonRoot": True,
             "allowPriviledgeEscalation": False,
