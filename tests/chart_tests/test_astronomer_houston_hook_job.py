@@ -31,7 +31,7 @@ class TestHoustonHookJob:
         ] == {"runAsNonRoot": True}
 
     def test_upgrade_deployments_job_defaults(self, kube_version):
-        """Test AU Strategy Job defaults."""
+        """Test Upgrade Deployments Job defaults."""
         docs = render_chart(
             kube_version=kube_version,
             values={},
@@ -62,7 +62,7 @@ class TestHoustonHookJob:
         }
 
     def test_upgrade_deployments_job_disabled(self, kube_version):
-        """Test AU Strategy Job defaults."""
+        """Test Upgrade Deployments Job when disabled."""
         docs = render_chart(
             kube_version=kube_version,
             values={
@@ -73,3 +73,32 @@ class TestHoustonHookJob:
             ],
         )
         assert len(docs) == 0
+
+    def test_db_migration_job_defaults(self, kube_version):
+        """Test Db Migration Job defaults."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={},
+            show_only=[
+                "charts/astronomer/templates/houston/helm-hooks/houston-db-migration-job.yaml"
+            ],
+        )
+        assert len(docs) == 1
+        c_by_name = get_containers_by_name(docs[0], include_init_containers=True)
+        assert docs[0]["kind"] == "Job"
+        assert docs[0]["metadata"]["name"] == "release-name-houston-db-migrations"
+
+        assert c_by_name["wait-for-db"]["securityContext"] == {"runAsNonRoot": True}
+
+        assert c_by_name["houston-bootstrapper"]["securityContext"] == {
+            "runAsNonRoot": True
+        }
+
+        assert c_by_name["houston-db-migrations-job"]["args"] == [
+            "yarn",
+            "migrate",
+        ]
+
+        assert c_by_name["houston-db-migrations-job"]["securityContext"] == {
+            "runAsNonRoot": True
+        }
