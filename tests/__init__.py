@@ -40,7 +40,7 @@ def get_containers_by_name(doc, include_init_containers=False) -> dict:
 def get_cronjob_containerspec_by_name(doc) -> dict:
     """Given a single doc, return all the containers by name.
 
-    doc must be a valid spec for a pod manager. (EG: ds, sts)
+    doc must be a valid spec for a CronJob.
     """
 
     c_by_name = {
