@@ -51,6 +51,7 @@ spec:
           command: ["yarn"]
           # If you supply only args for a Container, the default Entrypoint defined in the Docker image is run with the args that you supplied.
           args: ["update-deployments-resource-mode"]
+          securityContext: {{ toYaml .Values.securityContext | nindent 12 }}
           volumeMounts:
             {{- include "houston_volume_mounts" . | indent 12 }}
             {{- include "custom_ca_volume_mounts" . | indent 12 }}
