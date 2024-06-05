@@ -41,7 +41,7 @@ class TestAstronomerHoustonDeployRevisionsCronjobs:
             docs[0]["metadata"]["name"]
             == "release-name-houston-cleanup-deploy-revisions"
         )
-        assert docs[0]["spec"]["schedule"] == "40 23 * * *"
+        assert docs[0]["spec"]["schedule"] == "15 23 * * *"
         assert docs[0]["spec"]["jobTemplate"]["spec"]["template"]["spec"]["containers"][
             0
         ]["securityContext"] == {"runAsNonRoot": True}
@@ -56,7 +56,7 @@ class TestAstronomerHoustonDeployRevisionsCronjobs:
                     "houston": {
                         "cleanupDeployRevisions": {
                             "enabled": True,
-                            "schedule": "0 23 * * *",
+                            "schedule": "1 2 3 4 5",
                         }
                     },
                 }
@@ -72,4 +72,4 @@ class TestAstronomerHoustonDeployRevisionsCronjobs:
             docs[0]["metadata"]["name"]
             == "release-name-houston-cleanup-deploy-revisions"
         )
-        assert docs[0]["spec"]["schedule"] == "0 23 * * *"
+        assert docs[0]["spec"]["schedule"] == "1 2 3 4 5"
