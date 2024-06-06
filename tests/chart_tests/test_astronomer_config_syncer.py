@@ -1,6 +1,6 @@
 from tests.chart_tests.helm_template_generator import render_chart
 import pytest
-from tests import supported_k8s_versions
+from tests import get_cronjob_containerspec_by_name, supported_k8s_versions
 
 cron_test_data = [
     ("development-angular-system-6091", 0, 5),
@@ -184,14 +184,12 @@ class TestAstronomerConfigSyncer:
                 "charts/astronomer/templates/config-syncer/config-syncer-cronjob.yaml",
             ],
         )[0]
-
-        container = doc["spec"]["jobTemplate"]["spec"]["template"]["spec"][
-            "containers"
-        ][0]
-
-        assert "--target-namespaces" in container["args"]
-        assert ",".join(namespaces) in container["args"]
-        assert {"runAsNonRoot": True} == container["securityContext"]
+        job_container_by_name = get_cronjob_containerspec_by_name(doc)
+        assert "--target-namespaces" in job_container_by_name["config-syncer"]["args"]
+        assert ",".join(namespaces) in job_container_by_name["config-syncer"]["args"]
+        assert {"runAsNonRoot": True} == job_container_by_name["config-syncer"][
+            "securityContext"
+        ]
 
     def test_astronomer_config_syncer_cronjob_security_context_default_overrides(
         self, kube_version
@@ -215,13 +213,12 @@ class TestAstronomerConfigSyncer:
             ],
         )[0]
 
-        container = doc["spec"]["jobTemplate"]["spec"]["template"]["spec"][
-            "containers"
-        ][0]
+        job_container_by_name = get_cronjob_containerspec_by_name(doc)
 
-        assert {"runAsNonRoot": True, "allowPrivilegeEscalation": False} == container[
-            "securityContext"
-        ]
+        assert {
+            "runAsNonRoot": True,
+            "allowPrivilegeEscalation": False,
+        } == job_container_by_name["config-syncer"]["securityContext"]
 
     def test_astronomer_config_syncer_cronjob_namespace_pool_disabled(
         self, kube_version
@@ -246,12 +243,14 @@ class TestAstronomerConfigSyncer:
             ],
         )[0]
 
-        container = doc["spec"]["jobTemplate"]["spec"]["template"]["spec"][
-            "containers"
-        ][0]
+        job_container_by_name = get_cronjob_containerspec_by_name(doc)
 
-        assert "--target-namespaces" not in container["args"]
-        assert ",".join(namespaces) not in container["args"]
+        assert (
+            "--target-namespaces" not in job_container_by_name["config-syncer"]["args"]
+        )
+        assert (
+            ",".join(namespaces) not in job_container_by_name["config-syncer"]["args"]
+        )
 
     @pytest.mark.parametrize(
         "test_data", cron_test_data, ids=[x[0] for x in cron_test_data]
