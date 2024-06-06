@@ -228,8 +228,8 @@ houston:
     # Enable cleanup CronJob
     enabled: true
 
-    # Run at 23:15 every night
-    schedule: "15 23 * * *"  # https://crontab.guru/#15_23_*_*_*
+    # Run at 23:11 every night
+    schedule: "11 23 * * *"  # https://crontab.guru/#11_23_*_*_*
 
     # Cleanup deploy revisions older than this many days
     olderThan: 90

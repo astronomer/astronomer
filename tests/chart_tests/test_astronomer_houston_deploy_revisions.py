@@ -41,7 +41,7 @@ class TestAstronomerHoustonDeployRevisionsCronjobs:
             docs[0]["metadata"]["name"]
             == "release-name-houston-cleanup-deploy-revisions"
         )
-        assert docs[0]["spec"]["schedule"] == "15 23 * * *"
+        assert docs[0]["spec"]["schedule"] == "11 23 * * *"
         assert docs[0]["spec"]["jobTemplate"]["spec"]["template"]["spec"]["containers"][
             0
         ]["securityContext"] == {"runAsNonRoot": True}
