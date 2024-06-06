@@ -22,6 +22,7 @@ global:
     addToContainerd: false
     addToDockerd: true
     containerdCertConfigPath: /etc/containerd/certs.d
+    containerdHostPath: /etc/containerd
     containerdConfigToml: ~
     containerdnodeAffinitys: []
     certCopier:
