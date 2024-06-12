@@ -235,3 +235,21 @@ class TestNginx:
         )[0]
 
         assert "release-name-nginx-default-backend" == doc["metadata"]["name"]
+
+    def test_nginx_backend_securitycontext_defaults(self):
+        doc = render_chart(
+            values={},
+            show_only=["charts/nginx/templates/nginx-deployment-default.yaml"],
+        )[0]
+        assert {"runAsNonRoot": True, "runAsUser": 101} == doc["spec"]["template"][
+            "spec"
+        ]["containers"][0]["securityContext"]
+
+    def test_nginx_backend_securitycontext_with_openshift_enabled(self):
+        doc = render_chart(
+            values={"global": {"openshiftEnabled": True}},
+            show_only=["charts/nginx/templates/nginx-deployment-default.yaml"],
+        )[0]
+        assert {"runAsNonRoot": True} == doc["spec"]["template"]["spec"]["containers"][
+            0
+        ]["securityContext"]

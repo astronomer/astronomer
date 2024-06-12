@@ -68,3 +68,11 @@ imagePullSecrets:
 {{- define "defaultBackend.fullname" -}}
 {{ printf "%s-default-backend" (include "nginx.fullname" .)}}
 {{- end -}}
+
+{{- define "nginx.securityContext" -}}
+{{- if or (eq ( toString ( .Values.securityContext.runAsUser )) "auto") ( .Values.global.openshiftEnabled ) -}}
+{{- omit  .Values.securityContext "runAsUser" | toYaml | nindent 10 }}
+{{- else -}}
+{{- .Values.securityContext | toYaml | nindent 10 }}
+{{- end -}}
+{{- end }}

@@ -37,7 +37,7 @@ spec:
         - name: default-backend
           image: {{ template "nginx.defaultBackend.image" . }}
           imagePullPolicy: {{ .Values.images.defaultBackend.pullPolicy }}
-          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
+          securityContext: {{ include "nginx.securityContext" . | nindent 2 }}
           livenessProbe:
             httpGet:
               path: /healthz
