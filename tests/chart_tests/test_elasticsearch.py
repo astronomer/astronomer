@@ -425,8 +425,8 @@ class TestElasticSearch:
         assert len(docs) == 1
         doc = docs[0]
         pod_data = doc["spec"]["template"]["spec"]
-        assert pod_data["securityContext"]["runAsNonRoot"] is True
-        assert pod_data["securityContext"]["runAsUser"] == 2000
+        assert pod_data["containers"][0]["securityContext"]["runAsNonRoot"] is True
+        assert pod_data["containers"][0]["securityContext"]["runAsUser"] == 2000
 
     def test_elasticsearch_role_defaults(self, kube_version):
         """Test ElasticSearch master, data and client with default roles"""
