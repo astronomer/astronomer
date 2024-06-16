@@ -1,6 +1,10 @@
 import pytest
 import yaml
-from tests import get_containers_by_name, supported_k8s_versions
+from tests import (
+    get_containers_by_name,
+    get_cronjob_containerspec_by_name,
+    supported_k8s_versions,
+)
 from tests.chart_tests.helm_template_generator import render_chart
 
 
@@ -568,3 +572,50 @@ class TestElasticSearch:
             "https://release-name-elasticsearch:9200"
             in LS["elasticsearch"]["client"]["hosts"]
         )
+
+    def test_elasticsearch_curator_cronjob_defaults(self, kube_version):
+        """Test ElasticSearch Curator cron job with defaults"""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={},
+            show_only=[
+                "charts/elasticsearch/templates/curator/es-curator-cronjob.yaml"
+            ],
+        )
+        assert len(docs) == 1
+        c_by_name = get_cronjob_containerspec_by_name(docs[0])
+        assert docs[0]["kind"] == "CronJob"
+        assert docs[0]["metadata"]["name"] == "release-name-elasticsearch-curator"
+        assert docs[0]["spec"]["schedule"] == "0 1 * * *"
+        assert c_by_name["curator"]["command"] == ["/bin/sh", "-c"]
+        assert c_by_name["curator"]["args"] == [
+            "sleep 5; /usr/bin/curator --config /etc/config/config.yml /etc/config/action_file.yml; exit_code=$?; wget --timeout=5 -O- --post-data='not=used' http://127.0.0.1:15020/quitquitquit; exit $exit_code;"
+        ]
+        assert c_by_name["curator"]["securityContext"] == {}
+
+    def test_elasticsearch_curator_cronjob_overrides(self, kube_version):
+        """Test ElasticSearch Curator cron job with defaults"""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "elasticsearch": {
+                    "curator": {
+                        "schedule": "0 45 * * *",
+                        "securityContext": {"runAsNonRoot": True},
+                    }
+                }
+            },
+            show_only=[
+                "charts/elasticsearch/templates/curator/es-curator-cronjob.yaml"
+            ],
+        )
+        assert len(docs) == 1
+        c_by_name = get_cronjob_containerspec_by_name(docs[0])
+        assert docs[0]["kind"] == "CronJob"
+        assert docs[0]["metadata"]["name"] == "release-name-elasticsearch-curator"
+        assert docs[0]["spec"]["schedule"] == "0 45 * * *"
+        assert c_by_name["curator"]["command"] == ["/bin/sh", "-c"]
+        assert c_by_name["curator"]["args"] == [
+            "sleep 5; /usr/bin/curator --config /etc/config/config.yml /etc/config/action_file.yml; exit_code=$?; wget --timeout=5 -O- --post-data='not=used' http://127.0.0.1:15020/quitquitquit; exit $exit_code;"
+        ]
+        assert c_by_name["curator"]["securityContext"] == {"runAsNonRoot": True}
