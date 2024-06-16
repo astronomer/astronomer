@@ -205,6 +205,13 @@ exporter:
   # Restart policy for all containers
   restartPolicy: Always
 
+  podSecurityContext: {}
+  securityContext:
+    capabilities:
+      drop:
+      - ALL
+    readOnlyRootFilesystem: true
+
   resources: {}
   # requests:
   #   cpu: 100m
