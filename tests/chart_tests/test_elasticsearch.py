@@ -414,7 +414,8 @@ class TestElasticSearch:
             values={
                 "elasticsearch": {
                     "exporter": {
-                        "securityContext": {"runAsNonRoot": True, "runAsUser": 2000}
+                        "podSecurityContext": {"runAsNonRoot": True},
+                        "securityContext": {"runAsNonRoot": True, "runAsUser": 2000},
                     }
                 }
             },
@@ -425,6 +426,7 @@ class TestElasticSearch:
         assert len(docs) == 1
         doc = docs[0]
         pod_data = doc["spec"]["template"]["spec"]
+        assert pod_data["securityContext"]["runAsNonRoot"] is True
         assert pod_data["containers"][0]["securityContext"]["runAsNonRoot"] is True
         assert pod_data["containers"][0]["securityContext"]["runAsUser"] == 2000
 
