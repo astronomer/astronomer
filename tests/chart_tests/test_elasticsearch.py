@@ -626,3 +626,27 @@ class TestElasticSearch:
             "sleep 5; /usr/bin/curator --config /etc/config/config.yml /etc/config/action_file.yml; exit_code=$?; wget --timeout=5 -O- --post-data='not=used' http://127.0.0.1:15020/quitquitquit; exit $exit_code;"
         ]
         assert c_by_name["curator"]["securityContext"] == {"runAsNonRoot": True}
+
+    def test_elasticsearch_nginx_deployment_defaults(self, kube_version):
+        """Test ElasticSearch Nginx deployment default values."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={},
+            show_only=["charts/elasticsearch/templates/nginx/nginx-es-deployment.yaml"],
+        )
+        assert len(docs) == 1
+        c_by_name = get_containers_by_name(docs[0])
+        assert c_by_name["nginx"]["securityContext"] == {}
+
+    def test_elasticsearch_nginx_deployment_overrides(self, kube_version):
+        """Test ElasticSearch Nginx deployment default overrides."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "elasticsearch": {"nginx": {"securityContext": {"runAsNonRoot": True}}},
+            },
+            show_only=["charts/elasticsearch/templates/nginx/nginx-es-deployment.yaml"],
+        )
+        assert len(docs) == 1
+        c_by_name = get_containers_by_name(docs[0])
+        assert c_by_name["nginx"]["securityContext"] == {"runAsNonRoot": True}
