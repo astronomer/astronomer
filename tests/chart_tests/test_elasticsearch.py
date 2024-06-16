@@ -402,7 +402,10 @@ class TestElasticSearch:
 
         assert pod_data["securityContext"] == {}
 
-        assert pod_data["containers"][0]["securityContext"] ==  {'capabilities': {'drop': ['ALL']},'readOnlyRootFilesystem': True}
+        assert pod_data["containers"][0]["securityContext"] == {
+            "capabilities": {"drop": ["ALL"]},
+            "readOnlyRootFilesystem": True,
+        }
 
     def test_elasticsearch_exporter_securitycontext_overrides(self, kube_version):
         """Test ElasticSearch Exporter with securityContext default values."""
