@@ -206,6 +206,13 @@ exporter:
   # Restart policy for all containers
   restartPolicy: Always
 
+  podSecurityContext: {}
+  securityContext:
+    capabilities:
+      drop:
+      - ALL
+    readOnlyRootFilesystem: true
+
   resources: {}
   # requests:
   #   cpu: 100m
@@ -237,6 +244,7 @@ nginx:
   fullnameOverride: ~
   ingressClass: ~
   resources: {}
+  securityContext: {}
 
 # sysctl init container
 # Warning: sysctl changes affect the kernel, and thus, all containers running on the same node.
