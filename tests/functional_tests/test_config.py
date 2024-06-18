@@ -51,6 +51,28 @@ def test_houston_config(houston_api):
         ), f"Expected not to find 'localhost' in the 'servers' configuration. Found:\n\n{houston_config['nats']}"
 
 
+def test_houston_check_db_info(houston_api):
+    """Make assertions about Houston's configuration."""
+    if not (release_name := getenv("RELEASE_NAME")):
+        print("No release_name env var, using release_name=astronomer")
+        release_name = "astronomer"
+
+    data = houston_api.check_output("env | grep DATABASE_URL")
+    print(data)
+    assert f"{release_name}_houston" in data
+
+
+def test_grafana_check_db_info(grafana):
+    """Make assertions about Houston's configuration."""
+    if not (release_name := getenv("RELEASE_NAME")):
+        print("No release_name env var, using release_name=astronomer")
+        release_name = "astronomer"
+
+    data = grafana.check_output("env | grep GF_DATABASE_URL")
+    print(data)
+    assert f"{release_name}_grafana" in data
+
+
 def test_houston_can_reach_prometheus(houston_api):
     assert houston_api.check_output(
         "wget --timeout=5 -qO- http://astronomer-prometheus.astronomer.svc.cluster.local:9090/targets"
