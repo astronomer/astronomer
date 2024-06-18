@@ -57,9 +57,8 @@ def test_houston_check_db_info(houston_api):
         print("No release_name env var, using release_name=astronomer")
         release_name = "astronomer"
 
-    data = houston_api.check_output("env | grep DATABASE_URL")
-    print(data)
-    assert f"{release_name}_houston" in data
+    houston_db_info = houston_api.check_output("env | grep DATABASE_URL")
+    assert f"{release_name}_houston" in houston_db_info
 
 
 def test_grafana_check_db_info(grafana):
@@ -68,9 +67,8 @@ def test_grafana_check_db_info(grafana):
         print("No release_name env var, using release_name=astronomer")
         release_name = "astronomer"
 
-    data = grafana.check_output("env | grep GF_DATABASE_URL")
-    print(data)
-    assert f"{release_name}_grafana" in data
+    grafana_db_info = grafana.check_output("env | grep GF_DATABASE_URL")
+    assert f"{release_name}_grafana" in grafana_db_info
 
 
 def test_houston_can_reach_prometheus(houston_api):
