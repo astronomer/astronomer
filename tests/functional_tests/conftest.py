@@ -43,6 +43,18 @@ def houston_api(core_v1_client):
 
 
 @pytest.fixture(scope="function")
+def grafana(core_v1_client):
+    """This is the host fixture for testinfra.
+
+    To read more, please see the testinfra documentation:
+    https://testinfra.readthedocs.io/en/latest/examples.html#test-docker-images
+    """
+
+    pod = get_pod_by_label_selector(core_v1_client, "component=grafana")
+    yield testinfra.get_host(f"kubectl://{pod}?container=grafana&namespace={namespace}")
+
+
+@pytest.fixture(scope="function")
 def prometheus():
     """This is the host fixture for testinfra.
 
