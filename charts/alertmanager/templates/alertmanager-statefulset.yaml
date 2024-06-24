@@ -53,6 +53,10 @@ spec:
                 fieldRef:
                   fieldPath: status.podIP
             {{- end }}
+            {{- if .Values.global.privateCaCerts }}
+            - name: UPDATE_CA_CERTS
+              value: "true"
+            {{- end }}
             {{- range $key, $value := .Values.env }}
             - name: {{ $key }}
               value: {{ $value }}
@@ -84,6 +88,7 @@ spec:
               mountPath: /etc/config
             - name: data
               mountPath: {{ .Values.dataDir }}
+            {{- include "alertmanager.custom_ca_volume_mounts" . | indent 12  }}
             {{- if .Values.extraVolumeMounts }}
             {{- toYaml .Values.extraVolumeMounts | nindent 12 }}
             {{- end }}
@@ -129,6 +134,7 @@ spec:
             items:
               - key: alertmanager.yaml
                 path: alertmanager.yaml
+        {{ include "alertmanager.custom_ca_volumes" . | indent 8  }}
         {{- if .Values.extraVolumes }}
         {{- toYaml .Values.extraVolumes | nindent 8 }}
         {{- end }}
