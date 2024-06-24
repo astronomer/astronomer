@@ -53,6 +53,10 @@ spec:
                 fieldRef:
                   fieldPath: status.podIP
             {{- end }}
+            {{- if .Values.global.privateCaCerts }}
+            - name: UPDATE_CA_CERTS
+              value: "true"
+            {{- end }}
             {{- range $key, $value := .Values.env }}
             - name: {{ $key }}
               value: {{ $value }}
