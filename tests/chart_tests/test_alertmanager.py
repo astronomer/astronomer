@@ -188,4 +188,6 @@ class TestAlertmanager:
 
         assert volumemounts == expected_volumemounts
         assert volumes == expected_volumes
-        assert {'name': 'UPDATE_CA_CERTS', 'value': 'true'} in c_by_name["alertmanager"]["env"]
+        assert {"name": "UPDATE_CA_CERTS", "value": "true"} in c_by_name[
+            "alertmanager"
+        ]["env"]
