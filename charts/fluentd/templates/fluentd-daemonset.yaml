@@ -30,6 +30,9 @@ spec:
         prometheus.io/scrape: "true"
         prometheus.io/port: {{ .Values.ports.promScrape | quote }}
     spec:
+    {{- if .Values.priorityClassName }}
+      priorityClassName:  {{ .Values.priorityClassName  }}
+    {{ end }}
       nodeSelector:
 {{ toYaml (.Values.nodeSelector) | indent 8 }}
       affinity:
