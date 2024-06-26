@@ -11,7 +11,6 @@ class TestHoustonPDB:
             "charts/astronomer/templates/houston/cronjobs/houston-expire-deployments-cronjob.yaml",
             "charts/astronomer/templates/houston/cronjobs/houston-check-updates-cronjob.yaml",
             "charts/astronomer/templates/houston/cronjobs/houston-cleanup-deployments-cronjob.yaml",
-            "charts/astronomer/templates/houston/cronjobs/houston-check-updates-cronjob.yaml",
         ]
 
         for show_only in templates:

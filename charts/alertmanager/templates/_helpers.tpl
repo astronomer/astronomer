@@ -80,3 +80,23 @@ imagePullSecrets:
   - name: {{ .Values.global.privateRegistry.secretName }}
 {{- end -}}
 {{- end -}}
+
+{{- define "alertmanager.custom_ca_volume_mounts" }}
+{{ if .Values.global.privateCaCerts }}
+{{- range $secret_name := (.Values.global.privateCaCerts) }}
+- name: {{ $secret_name }}
+  mountPath: /usr/local/share/ca-certificates/{{ $secret_name }}.pem
+  subPath: cert.pem
+{{- end }}
+{{- end }}
+{{- end }}
+
+{{- define "alertmanager.custom_ca_volumes"}}
+{{ if .Values.global.privateCaCerts }}
+{{- range .Values.global.privateCaCerts }}
+- name: {{ . }}
+  secret:
+    secretName: {{ . }}
+{{- end }}
+{{- end }}
+{{- end }}

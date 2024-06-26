@@ -22,11 +22,12 @@ global:
     addToContainerd: false
     addToDockerd: true
     containerdCertConfigPath: /etc/containerd/certs.d
+    containerdHostPath: /etc/containerd
     containerdConfigToml: ~
     containerdnodeAffinitys: []
     certCopier:
       repository: quay.io/astronomer/ap-base
-      tag: 3.18.6-1
+      tag: 3.18.6-2
       pullPolicy: IfNotPresent
     priorityClassName: ~
   # Global flag to enable to user to enable/disable Astronomer platform
@@ -118,8 +119,9 @@ global:
   # Enables namespace labels for network policies
   networkNSLabels: false
 
-
   taskUsageMetricsEnabled: false
+
+  deployRollbackEnabled: false
 
   enableHoustonInternalAuthorization: false
 
@@ -127,7 +129,7 @@ global:
 
   dagOnlyDeployment:
     enabled: false
-    image: quay.io/astronomer/ap-dag-deploy:0.3.2
+    image: quay.io/astronomer/ap-dag-deploy:0.4.0
     securityContext:
       fsGroup: 50000
     resources: {}
@@ -156,7 +158,7 @@ global:
   authSidecar:
     enabled: false
     repository: quay.io/astronomer/ap-auth-sidecar
-    tag: 1.25.4
+    tag: 1.25.5
     pullPolicy: IfNotPresent
     port: 8084
     securityContext: {}

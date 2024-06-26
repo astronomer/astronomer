@@ -1,19 +1,19 @@
-##############################################
-## Houston Populate Daily Task Metrics CronJob
-##############################################
-{{- if .Values.global.taskUsageMetricsEnabled }}
+###############################################
+## Houston Cleanup Deploy Revisions CronJob
+###############################################
+{{- if .Values.houston.cleanupDeployRevisions.enabled }}
 apiVersion: {{ include "apiVersion.batch.cronjob" . }}
 kind: CronJob
 metadata:
-  name: "{{ .Release.Name }}-houston-populate-daily-task-metrics"
+  name: {{ .Release.Name }}-houston-cleanup-deploy-revisions
   labels:
     tier: astronomer
-    component: houston-populate-daily-task-metrics
+    component: houston-cleanup
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 spec:
-  schedule: {{ .Values.houston.populateDailyTaskMetrics.schedule }}
+  schedule: {{ .Values.houston.cleanupDeployRevisions.schedule }}
   # The cron job does not allow concurrent runs; if it is time for a new job run and the previous job run hasn't finished yet, the cron job skips the new job run
   concurrencyPolicy: Forbid
   jobTemplate:
@@ -23,9 +23,9 @@ spec:
         metadata:
           labels:
             tier: astronomer
-            component: houston-populate-daily-task-metrics
+            component: houston-cleanup
             release: {{ .Release.Name }}
-            app: houston-populate-daily-task-metrics
+            app: houston-cleanup
             version: {{ .Chart.Version }}
           {{- if .Values.global.istio.enabled }}
           annotations:
@@ -41,12 +41,11 @@ spec:
           restartPolicy: Never
 {{- include "astronomer.imagePullSecrets" . | indent 10 }}
           containers:
-            - name: populate-daily-task-metrics
+            - name: cleanup
               image: {{ template "houston.image" . }}
               imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
+              args: ["yarn", "cleanup-deploy-revisions", "--", "--older-than={{ .Values.houston.cleanupDeployRevisions.olderThan }}"]
               securityContext: {{ toYaml .Values.securityContext | nindent 16 }}
-              # If you supply only args for a Container, the default Entrypoint defined in the Docker image is run with the args that you supplied.
-              args: ["yarn", "populate-daily-task-metrics", "--", "--dry-run={{ .Values.houston.populateDailyTaskMetrics.dryRun }}"]
               volumeMounts:
                 {{- include "houston_volume_mounts" . | indent 16 }}
                 {{- include "custom_ca_volume_mounts" . | indent 16 }}

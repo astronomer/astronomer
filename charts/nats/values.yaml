@@ -10,15 +10,17 @@ images:
     pullPolicy: IfNotPresent
   exporter:
     repository: quay.io/astronomer/ap-nats-exporter
-    tag: 0.14.0-2
+    tag: 0.15.0
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
-    tag: 0.35.0
+    tag: 0.35.4
     pullPolicy: IfNotPresent
 
 
 nats:
+  createJetStreamJob: true
+
   # In case both external access and advertise are enabled
   # then a service account would be required to be able to
   # gather the public ip from a node.

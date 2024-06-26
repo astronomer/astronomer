@@ -52,7 +52,7 @@ spec:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       restartPolicy: {{ .Values.exporter.restartPolicy }}
       securityContext:
-{{ toYaml .Values.exporter.securityContext | indent 8 }}
+{{ toYaml .Values.exporter.podSecurityContext | indent 8 }}
 {{- include "elasticsearch.imagePullSecrets" . | indent 6 }}
       containers:
         - name: metrics-exporter
@@ -66,23 +66,7 @@ spec:
                     "--web.listen-address=:{{ .Values.exporter.service.httpPort }}",
                     "--web.telemetry-path={{ .Values.exporter.web.path }}"]
           securityContext:
-            capabilities:
-              drop:
-                - SETPCAP
-                - MKNOD
-                - AUDIT_WRITE
-                - CHOWN
-                - NET_RAW
-                - DAC_OVERRIDE
-                - FOWNER
-                - FSETID
-                - KILL
-                - SETGID
-                - SETUID
-                - NET_BIND_SERVICE
-                - SYS_CHROOT
-                - SETFCAP
-            readOnlyRootFilesystem: true
+{{ toYaml .Values.exporter.securityContext | indent 12 }}
           resources:
 {{ toYaml .Values.exporter.resources | indent 12 }}
           ports:

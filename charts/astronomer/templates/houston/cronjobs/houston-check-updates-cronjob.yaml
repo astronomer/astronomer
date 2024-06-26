@@ -43,6 +43,7 @@ spec:
           containers:
             - name: update-check
               image: {{ template "houston.image" . }}
+              securityContext: {{ toYaml .Values.securityContext | nindent 16 }}
               resources:
                 requests:
                   cpu: "500m"
