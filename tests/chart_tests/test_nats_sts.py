@@ -12,7 +12,10 @@ class TestNatsStatefulSet:
         """Test that nats statefulset is good with defaults."""
         docs = render_chart(
             kube_version=kube_version,
-            show_only=["charts/nats/templates/statefulset.yaml"],
+            show_only=[
+                "charts/nats/templates/jetstream-job-scc.yaml",
+                "charts/nats/templates/statefulset.yaml",
+            ],
         )
 
         assert len(docs) == 1
@@ -46,7 +49,10 @@ class TestNatsStatefulSet:
         """Test that nats statefulset renders good metrics exporter."""
         docs = render_chart(
             kube_version=kube_version,
-            show_only=["charts/nats/templates/statefulset.yaml"],
+            show_only=[
+                "charts/nats/templates/jetstream-job-scc.yaml",
+                "charts/nats/templates/statefulset.yaml",
+            ],
             values={
                 "nats": {
                     "exporter": {
@@ -98,7 +104,10 @@ class TestNatsStatefulSet:
         }
         docs = render_chart(
             kube_version=kube_version,
-            show_only=["charts/nats/templates/statefulset.yaml"],
+            show_only=[
+                "charts/nats/templates/jetstream-job-scc.yaml",
+                "charts/nats/templates/statefulset.yaml",
+            ],
             values=values,
         )
 
@@ -154,7 +163,10 @@ class TestNatsStatefulSet:
         }
         docs = render_chart(
             kube_version=kube_version,
-            show_only=["charts/nats/templates/statefulset.yaml"],
+            show_only=[
+                "charts/nats/templates/jetstream-job-scc.yaml",
+                "charts/nats/templates/statefulset.yaml",
+            ],
             values=values,
         )
 
@@ -183,10 +195,14 @@ class TestNatsStatefulSet:
         }
         docs = render_chart(
             kube_version=kube_version,
-            show_only=["charts/nats/templates/configmap.yaml"],
+            show_only=[
+                "charts/nats/templates/configmap.yaml",
+                "charts/nats/templates/jetstream-job-scc.yaml",
+            ],
             values=values,
         )
 
+        assert len(docs) == 1
         nats_cm = docs[0]["data"]["nats.conf"]
         assert "release-name-nats" in nats_cm
 
@@ -197,10 +213,14 @@ class TestNatsStatefulSet:
         }
         docs = render_chart(
             kube_version=kube_version,
-            show_only=["charts/nats/templates/configmap.yaml"],
+            show_only=[
+                "charts/nats/templates/configmap.yaml",
+                "charts/nats/templates/jetstream-job-scc.yaml",
+            ],
             values=values,
         )
 
+        assert len(docs) == 1
         nats_cm = docs[0]["data"]["nats.conf"]
         assert "release-name-astronats" in nats_cm
 
@@ -208,8 +228,12 @@ class TestNatsStatefulSet:
         """Test that nats template default annotations."""
         docs = render_chart(
             kube_version=kube_version,
-            show_only=["charts/nats/templates/statefulset.yaml"],
+            show_only=[
+                "charts/nats/templates/jetstream-job-scc.yaml",
+                "charts/nats/templates/statefulset.yaml",
+            ],
         )
+        assert len(docs) == 1
         doc = docs[0]
         assert set(
             {
@@ -226,7 +250,10 @@ class TestNatsStatefulSet:
         """Test that nats template default annotations."""
         docs = render_chart(
             kube_version=kube_version,
-            show_only=["charts/nats/templates/statefulset.yaml"],
+            show_only=[
+                "charts/nats/templates/jetstream-job-scc.yaml",
+                "charts/nats/templates/statefulset.yaml",
+            ],
             values={
                 "nats": {
                     "podAnnotations": {
@@ -235,6 +262,7 @@ class TestNatsStatefulSet:
                 }
             },
         )
+        assert len(docs) == 1
         doc = docs[0]
         assert (
             "sampleannotation"
