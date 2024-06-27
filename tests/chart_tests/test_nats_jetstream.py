@@ -182,3 +182,15 @@ class TestNatsJetstream:
         )
 
         assert len(docs) == 0
+
+    def test_jetstream_job_with_scc_disabled(self, kube_version):
+        """Test that helm renders statefulset template for nats
+        jetstream with SA Disabled."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={},
+            show_only=[
+                "charts/nats/templates/jetstream-job-scc.yaml",
+            ],
+        )
+        assert len(docs) == 0
