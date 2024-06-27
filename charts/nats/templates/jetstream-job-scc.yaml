@@ -23,6 +23,8 @@ supplementalGroups:
   type: RunAsAny
 users:
 - system:serviceaccount:{{ .Release.Namespace }}:{{ .Release.Name }}-jetstream-sa
+volumes:
+- projected
 defaultAddCapabilities: null
 fsGroup:
   type: RunAsAny
