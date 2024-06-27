@@ -1,0 +1,46 @@
+###################################
+### Astronomer Jetstrem Job SCC ###
+###################################
+{{- if .Values.global.sccEnabled }}
+{{- if .Values.nats.createJetStreamJob -}}
+{{- if or .Values.nats.jetstream.enabled .Values.global.nats.jetStream.enabled .Values.global.stan.enabled }}
+apiVersion: security.openshift.io/v1
+kind: SecurityContextConstraints
+metadata:
+  annotations:
+    release.openshift.io/create-only: "true"
+    "helm.sh/hook": "pre-install,pre-upgrade"
+  name: {{ .Release.Name }}-jetstream-sa-anyuid
+priority: 10
+readOnlyRootFilesystem: false
+requiredDropCapabilities:
+- MKNOD
+runAsUser:
+  type: RunAsAny
+seLinuxContext:
+  type: MustRunAs
+supplementalGroups:
+  type: RunAsAny
+users:
+- system:serviceaccount:{{ .Release.Namespace }}:{{ .Release.Name }}-jetstream-sa
+volumes:
+- configMap
+- downwardAPI
+- emptyDir
+- persistentVolumeClaim
+- projected
+- secret
+defaultAddCapabilities: null
+fsGroup:
+  type: RunAsAny
+allowHostDirVolumePlugin: false
+allowHostIPC: false
+allowHostNetwork: false
+allowHostPID: false
+allowHostPorts: false
+allowPrivilegeEscalation: false
+allowPrivilegedContainer: false
+allowedCapabilities: null
+{{- end }}
+{{- end }}
+{{- end }}
