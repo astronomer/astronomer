@@ -23,13 +23,6 @@ supplementalGroups:
   type: RunAsAny
 users:
 - system:serviceaccount:{{ .Release.Namespace }}:{{ .Release.Name }}-jetstream-sa
-volumes:
-- configMap
-- downwardAPI
-- emptyDir
-- persistentVolumeClaim
-- projected
-- secret
 defaultAddCapabilities: null
 fsGroup:
   type: RunAsAny
