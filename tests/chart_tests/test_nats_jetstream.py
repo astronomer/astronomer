@@ -224,14 +224,58 @@ class TestNatsJetstream:
 
         assert len(docs) == 0
 
-    def test_jetstream_job_with_scc_disabled(self, kube_version):
-        """Test that helm renders statefulset template for nats
-        jetstream with SA Disabled."""
-        docs = render_chart(
-            kube_version=kube_version,
-            values={},
-            show_only=[
-                "charts/nats/templates/jetstream-job-scc.yaml",
-            ],
-        )
-        assert len(docs) == 0
+
+@pytest.mark.parametrize(
+    "scc_enabled,create_jetstream_job,jetstream_enabled,global_jetstream_enabled,stan_enabled,expected_docs",
+    [
+        (True, True, False, True, False, 1),
+        (True, True, False, False, True, 1),
+        (True, True, False, True, True, 1),
+        (True, True, False, False, False, 0),
+        (True, False, False, True, False, 0),
+        (True, False, False, False, False, 0),
+        (False, True, False, True, False, 0),
+        (False, False, False, True, False, 0),
+        (False, True, False, False, False, 0),
+        (False, False, False, False, False, 0),
+    ],
+)
+def test_jetstream_job_with_scc(
+    scc_enabled,
+    create_jetstream_job,
+    jetstream_enabled,
+    global_jetstream_enabled,
+    stan_enabled,
+    expected_docs,
+):
+    """Test that helm renders the nats SCC template only in the right circumstances."""
+    values = {
+        "global": {
+            "sccEnabled": scc_enabled,
+            "nats": {
+                "jetStream": {
+                    "enabled": global_jetstream_enabled,
+                },
+            },
+            "stan": {
+                "enabled": stan_enabled,
+            },
+        },
+        "nats": {
+            "nats": {
+                "createJetStreamJob": create_jetstream_job,
+                "jetStream": {
+                    "enabled": jetstream_enabled,
+                },
+            },
+        },
+    }
+
+    docs = render_chart(
+        validate_objects=False,  # False because SCC is not a standard k8s object
+        values=values,
+        show_only=[
+            "charts/nats/templates/jetstream-job-scc.yaml",
+        ],
+    )
+    assert len(docs) == expected_docs
