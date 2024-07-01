@@ -301,6 +301,19 @@ class TestFluentd:
             "mappings": {"properties": {"date_nano": {"type": "date_nanos"}}},
         }
 
+    def test_fluentd_priorityclass_defaults(self, kube_version):
+        """Test to validate fluentd with priority class ."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={},
+            show_only=["charts/fluentd/templates/fluentd-daemonset.yaml"],
+        )
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["kind"] == "DaemonSet"
+        assert doc["apiVersion"] == "apps/v1"
+        assert "priorityClassName" not in doc["spec"]["template"]["spec"]
+
     def test_fluentd_priorityclass_overrides(self, kube_version):
         """Test to validate fluentd with priority class ."""
         docs = render_chart(
@@ -312,7 +325,6 @@ class TestFluentd:
         doc = docs[0]
         assert doc["kind"] == "DaemonSet"
         assert doc["apiVersion"] == "apps/v1"
-        # {"priorityClassName": "fluentd-priority-pod"}
         assert "priorityClassName" in doc["spec"]["template"]["spec"]
         assert (
             "fluentd-priority-pod"
