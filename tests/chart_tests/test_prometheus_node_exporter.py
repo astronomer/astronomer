@@ -107,3 +107,33 @@ class TestPrometheusNodeExporterDaemonset:
             "readOnlyRootFilesystem": True,
             "runAsNonRoot": True,
         }
+
+    def test_node_exporter_priorityclass_defaults(self, kube_version):
+        """Test to validate fluentd with priority class ."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={},
+            show_only=["charts/prometheus-node-exporter/templates/daemonset.yaml"],
+        )
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["kind"] == "DaemonSet"
+        assert doc["apiVersion"] == "apps/v1"
+        assert "priorityClassName" not in doc["spec"]["template"]["spec"]
+
+    def test_node_exporter_priorityclass_overrides(self, kube_version):
+        """Test to validate node exporter with priority class ."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"prometheus-node-exporter": {"priorityClassName": "node-exporter-priority-pod"}},
+            show_only=["charts/prometheus-node-exporter/templates/daemonset.yaml"],
+        )
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["kind"] == "DaemonSet"
+        assert doc["apiVersion"] == "apps/v1"
+        assert "priorityClassName" in doc["spec"]["template"]["spec"]
+        assert (
+            "node-exporter-priority-pod"
+            == doc["spec"]["template"]["spec"]["priorityClassName"]
+        )
