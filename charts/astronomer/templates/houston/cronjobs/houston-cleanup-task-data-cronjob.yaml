@@ -44,6 +44,7 @@ spec:
               image: {{ template "houston.image" . }}
               imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
               args: ["yarn", "cleanup-task-usage-data", "--", "--older-than={{ .Values.houston.cleanupTaskUsageData.olderThan }}", "--dry-run={{ .Values.houston.cleanupTaskUsageData.dryRun }}", "--canary={{ .Values.houston.cleanupTaskUsageData.canary }}"]
+              securityContext: {{ toYaml .Values.securityContext | nindent 16 }}
               volumeMounts:
                 {{- include "houston_volume_mounts" . | indent 16 }}
                 {{- include "custom_ca_volume_mounts" . | indent 16 }}

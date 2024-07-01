@@ -45,6 +45,7 @@ spec:
               image: {{ template "houston.image" . }}
               imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
               args: ["yarn", "populate-hourly-task-audit-metrics"]
+              securityContext: {{ toYaml .Values.securityContext | nindent 16 }}
               volumeMounts:
                 {{- include "houston_volume_mounts" . | indent 16 }}
                 {{- include "custom_ca_volume_mounts" . | indent 16 }}

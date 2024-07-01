@@ -46,6 +46,7 @@ spec:
             volumeMounts:
               - name: config-volume
                 mountPath: /etc/config
+            securityContext: {{ toYaml .Values.curator.securityContext | nindent 16 }}
           volumes:
             - name: config-volume
               configMap:

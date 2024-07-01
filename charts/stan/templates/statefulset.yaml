@@ -70,8 +70,7 @@ spec:
       {{- end }}
       initContainers:
         - name: wait-for-nats-server
-          securityContext:
-            runAsNonRoot: {{ .Values.securityContext.runAsNonRoot}}
+          securityContext: {{toYaml .Values.securityContext | nindent 12 }}
           command:
             - "dockerize"
           args:
@@ -89,8 +88,7 @@ spec:
       containers:
         - name: stan
           image: {{ include "stan.image" . }}
-          securityContext:
-            runAsNonRoot: {{ .Values.securityContext.runAsNonRoot }}
+          securityContext: {{toYaml .Values.securityContext | nindent 12 }}
           imagePullPolicy: {{ .Values.images.stan.pullPolicy }}
           args:
           - -sc

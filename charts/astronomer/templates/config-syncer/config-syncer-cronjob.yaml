@@ -45,6 +45,7 @@ spec:
             - name: config-syncer
               image: {{ template "commander.image" . }}
               imagePullPolicy: {{ .Values.images.commander.pullPolicy }}
+              securityContext: {{ toYaml .Values.securityContext | nindent 16 }}
               # If you supply only args for a Container, the default Entrypoint defined in the Docker image is run with the args that you supplied.
               args:
               - "sync"

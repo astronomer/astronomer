@@ -19,7 +19,7 @@ class TestAstronomerCliInstall:
                 "charts/astronomer/templates/cli-install/cli-install-deployment.yaml",
                 "charts/astronomer/templates/cli-install/cli-install-networkpolicy.yaml",
                 "charts/astronomer/templates/cli-install/cli-install-service.yaml",
-                "charts/astronomer/templates/ingress.yaml",
+                "charts/astronomer/templates/cli-install/cli-install-ingress.yaml",
             ],
         )
 
@@ -36,6 +36,7 @@ class TestAstronomerCliInstall:
                 "charts/astronomer/templates/cli-install/cli-install-deployment.yaml",
                 "charts/astronomer/templates/cli-install/cli-install-networkpolicy.yaml",
                 "charts/astronomer/templates/cli-install/cli-install-service.yaml",
+                "charts/astronomer/templates/cli-install/cli-install-ingress.yaml",
             ],
         )
 
@@ -46,10 +47,9 @@ class TestAstronomerCliInstall:
         docs = render_chart(
             kube_version=kube_version,
             values={"astronomer": {"install": {"cliEnabled": False}}},
-            show_only=["charts/astronomer/templates/ingress.yaml"],
+            show_only=[
+                "charts/astronomer/templates/cli-install/cli-install-ingress.yaml"
+            ],
         )
 
-        assert len(docs) == 1
-        assert "install.example.com" not in jmespath.search(
-            "spec.rules[*].host", docs[0]
-        )
+        assert len(docs) == 0

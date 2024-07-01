@@ -196,6 +196,7 @@ curator:
     timestring: "%Y.%m.%d"
     unit: "days"
     unit_count: 10
+  securityContext: {}
 
 exporter:
   podAnnotations: {}
@@ -212,6 +213,13 @@ exporter:
   # limits:
   #   cpu: 100m
   #   memory: 128Mi
+
+  podSecurityContext: {}
+  securityContext:
+    capabilities:
+      drop:
+      - ALL
+    readOnlyRootFilesystem: true
 
   service:
     type: ClusterIP
@@ -236,6 +244,7 @@ nginx:
   fullnameOverride: ~
   ingressClass: ~
   resources: {}
+  securityContext: {}
 
 # sysctl init container
 # Warning: sysctl changes affect the kernel, and thus, all containers running on the same node.

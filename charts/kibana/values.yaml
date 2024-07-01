@@ -13,8 +13,8 @@ images:
     pullPolicy: IfNotPresent
 
 securityContext:
-    runAsNonRoot: true
-    runAsUser: 1000
+  runAsNonRoot: true
+  runAsUser: 1000
 
 clusterName: "astronomer"
 

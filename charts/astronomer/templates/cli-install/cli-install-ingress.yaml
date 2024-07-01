@@ -1,0 +1,59 @@
+################################
+## Astronomer Cli Install Ingress
+#################################
+{{- if and .Values.global.baseDomain  .Values.install.cliEnabled }}
+kind: Ingress
+apiVersion: {{ template "apiVersion.Ingress" . }}
+metadata:
+  name: {{ .Release.Name }}-cli-install-ingress
+  labels:
+    component: cli-install-ingress
+    tier: astronomer
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+  annotations:
+    {{- if .Values.global.authSidecar.enabled  }}
+    {{- range $key, $value := .Values.global.extraAnnotations}}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+    {{- else }}
+    kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
+    kubernetes.io/tls-acme: {{ eq .Values.global.acme true | quote }}
+    nginx.ingress.kubernetes.io/custom-http-errors: "404"
+    {{- end }}
+spec:
+  {{- if or .Values.global.tlsSecret .Values.global.acme }}
+  tls:
+  {{- if .Values.global.acme }}
+    - secretName: astronomer-public-tls
+  {{- end }}
+  {{- if .Values.global.tlsSecret }}
+    - secretName: {{ .Values.global.tlsSecret }}
+  {{- end }}
+      hosts:
+        - install.{{ .Values.global.baseDomain }}
+  {{- end }}
+  {{ if semverCompare "< 1.19-0" .Capabilities.KubeVersion.Version -}}
+  rules:
+  - host: install.{{ .Values.global.baseDomain }}
+    http:
+      paths:
+        - path: /
+          backend:
+            serviceName: {{ .Release.Name }}-cli-install
+            servicePort: install-http
+  {{ else -}}
+  rules:
+  - host: install.{{ .Values.global.baseDomain }}
+    http:
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: {{ .Release.Name }}-cli-install
+              port:
+                name: install-http
+  {{- end -}}
+{{- end }}

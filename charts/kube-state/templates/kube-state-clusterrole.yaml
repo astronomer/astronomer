@@ -1,33 +1,22 @@
 ################################
-## Kube State Role
+## Kube State Role/ClusterRole
 #################################
 {{- $useRoles := or .Values.global.features.namespacePools.enabled .Values.global.singleNamespace }}
 {{- $useClusterRoles := and .Values.global.clusterRoles (not $useRoles) }}
 
-{{- $shouldCreateResources := and .Values.global.rbacEnabled $useRoles }}
-{{- $namespaces := .Values.global.features.namespacePools.namespaces.names }}
-{{- if $useClusterRoles }}
-  {{- $namespaces = list .Release.Namespace}}
-{{- else  }}
-  {{- $namespaces = append $namespaces .Release.Namespace }}
-{{- end }}
-
-{{- $rootContext := . }}
+{{- $shouldCreateResources := and .Values.global.rbacEnabled $useClusterRoles }}
 
 {{- if $shouldCreateResources }}
-{{- range $i, $namespaceName := $namespaces -}}
----
 apiVersion: {{ template "apiVersion.rbac" . }}
-kind: Role
+kind: ClusterRole
 metadata:
-  name: {{ template "kube-state.fullname" $rootContext }}
-  namespace: {{ $namespaceName }}
+  name: {{ template "kube-state.fullname" . }}
   labels:
     tier: monitoring
-    component: {{ template "kube-state.name" $rootContext }}
-    chart: {{ template "kube-state.chart" $rootContext }}
-    release: {{ $rootContext.Release.Name }}
-    heritage: {{ $rootContext.Release.Service }}
+    component: {{ template "kube-state.name" . }}
+    chart: {{ template "kube-state.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
 rules:
 - apiGroups: [""]
   resources:
@@ -40,19 +29,23 @@ rules:
   - limitranges
   - persistentvolumeclaims
   - endpoints
+  - nodes
+  - namespaces
+  - persistentvolumes
   verbs: ["list", "watch"]
 - apiGroups: ["extensions"]
   resources:
   - deployments
   - replicasets
-  # TODO: Okay with Role?
   - ingresses
+  - daemonsets
   verbs: ["list", "watch"]
 - apiGroups: ["apps"]
   resources:
   - statefulsets
   - deployments
   - replicasets
+  - daemonsets
   verbs: ["list", "watch"]
 - apiGroups: ["batch"]
   resources:
@@ -70,13 +63,13 @@ rules:
   verbs:
   - list
   - watch
-# - apiGroups:
-#   - certificates.k8s.io
-#   resources:
-#   - certificatesigningrequests
-#   verbs:
-#   - list
-#   - watch
+- apiGroups:
+  - certificates.k8s.io
+  resources:
+  - certificatesigningrequests
+  verbs:
+  - list
+  - watch
 - apiGroups:
   - storage.k8s.io
   resources:
@@ -85,14 +78,14 @@ rules:
   verbs:
   - list
   - watch
-# - apiGroups:
-#   - admissionregistration.k8s.io
-#   resources:
-#   - mutatingwebhookconfigurations
-#   - validatingwebhookconfigurations
-#   verbs:
-#   - list
-#   - watch
+- apiGroups:
+  - admissionregistration.k8s.io
+  resources:
+  - mutatingwebhookconfigurations
+  - validatingwebhookconfigurations
+  verbs:
+  - list
+  - watch
 - apiGroups:
   - networking.k8s.io
   resources:
@@ -101,12 +94,11 @@ rules:
   verbs:
   - list
   - watch
-# - apiGroups:
-#   - coordination.k8s.io
-#   resources:
-#   - leases
-#   verbs:
-#   - list
-#   - watch
-{{ end }}
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - list
+  - watch
 {{- end }}
