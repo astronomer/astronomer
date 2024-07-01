@@ -9,6 +9,13 @@ from tests.chart_tests.helm_template_generator import render_chart
     supported_k8s_versions,
 )
 class TestPrometheusNodeExporterDaemonset:
+
+    @staticmethod
+    def common_tests_daemonset(doc):
+        """Test things common to all daemonsets."""
+        assert doc["kind"] == "DaemonSet"
+        assert doc["metadata"]["name"] == "release-name-prometheus-node-exporter"
+
     def test_prometheus_node_exporter_service_defaults(self, kube_version):
         docs = render_chart(
             kube_version=kube_version,
@@ -39,8 +46,7 @@ class TestPrometheusNodeExporterDaemonset:
 
         assert len(docs) == 1
         doc = docs[0]
-        assert doc["kind"] == "DaemonSet"
-        assert doc["metadata"]["name"] == "release-name-prometheus-node-exporter"
+        self.common_tests_daemonset(doc)
         assert (
             doc["spec"]["selector"]["matchLabels"]["app"] == "prometheus-node-exporter"
         )
@@ -70,8 +76,7 @@ class TestPrometheusNodeExporterDaemonset:
             show_only=["charts/prometheus-node-exporter/templates/daemonset.yaml"],
         )[0]
 
-        assert doc["kind"] == "DaemonSet"
-        assert doc["metadata"]["name"] == "release-name-prometheus-node-exporter"
+        self.common_tests_daemonset(doc)
 
         c_by_name = get_containers_by_name(doc)
         assert c_by_name["node-exporter"]
@@ -97,8 +102,7 @@ class TestPrometheusNodeExporterDaemonset:
             show_only=["charts/prometheus-node-exporter/templates/daemonset.yaml"],
         )[0]
 
-        assert doc["kind"] == "DaemonSet"
-        assert doc["metadata"]["name"] == "release-name-prometheus-node-exporter"
+        self.common_tests_daemonset(doc)
 
         c_by_name = get_containers_by_name(doc)
         assert c_by_name["node-exporter"]
@@ -117,21 +121,23 @@ class TestPrometheusNodeExporterDaemonset:
         )
         assert len(docs) == 1
         doc = docs[0]
-        assert doc["kind"] == "DaemonSet"
-        assert doc["apiVersion"] == "apps/v1"
+        self.common_tests_daemonset(doc)
         assert "priorityClassName" not in doc["spec"]["template"]["spec"]
 
     def test_node_exporter_priorityclass_overrides(self, kube_version):
         """Test to validate node exporter with priority class ."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"prometheus-node-exporter": {"priorityClassName": "node-exporter-priority-pod"}},
+            values={
+                "prometheus-node-exporter": {
+                    "priorityClassName": "node-exporter-priority-pod"
+                }
+            },
             show_only=["charts/prometheus-node-exporter/templates/daemonset.yaml"],
         )
         assert len(docs) == 1
         doc = docs[0]
-        assert doc["kind"] == "DaemonSet"
-        assert doc["apiVersion"] == "apps/v1"
+        self.common_tests_daemonset(doc)
         assert "priorityClassName" in doc["spec"]["template"]["spec"]
         assert (
             "node-exporter-priority-pod"

@@ -10,6 +10,13 @@ import yaml
     supported_k8s_versions,
 )
 class TestFluentd:
+
+    @staticmethod
+    def common_tests_daemonset(doc):
+        """Test things common to all daemonsets."""
+        assert doc["kind"] == "DaemonSet"
+        assert doc["metadata"]["name"] == "release-name-fluentd"
+
     def test_fluentd_daemonset(self, kube_version):
         """Test that helm renders a volume mount for private ca certificates for
         fluentd daemonset when private-ca-certificates are enabled."""
@@ -310,8 +317,7 @@ class TestFluentd:
         )
         assert len(docs) == 1
         doc = docs[0]
-        assert doc["kind"] == "DaemonSet"
-        assert doc["apiVersion"] == "apps/v1"
+        self.common_tests_daemonset(doc)
         assert "priorityClassName" not in doc["spec"]["template"]["spec"]
 
     def test_fluentd_priorityclass_overrides(self, kube_version):
@@ -323,8 +329,7 @@ class TestFluentd:
         )
         assert len(docs) == 1
         doc = docs[0]
-        assert doc["kind"] == "DaemonSet"
-        assert doc["apiVersion"] == "apps/v1"
+        self.common_tests_daemonset(doc)
         assert "priorityClassName" in doc["spec"]["template"]["spec"]
         assert (
             "fluentd-priority-pod"
