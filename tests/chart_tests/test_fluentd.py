@@ -1,6 +1,6 @@
 from tests.chart_tests.helm_template_generator import render_chart
 import pytest
-from tests import supported_k8s_versions
+from tests import supported_k8s_versions, get_containers_by_name
 import jmespath
 import yaml
 
@@ -334,3 +334,23 @@ class TestFluentd:
             "fluentd-priority-pod"
             == doc["spec"]["template"]["spec"]["priorityClassName"]
         )
+
+    def test_fluentd_with_custom_env(self, kube_version):
+        """Test to validate fluentd extraEnv configured."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "fluentd": {
+                    "extraEnv": {"RUBY_GC_HEAP_OLDOBJECT_LIMIT_FACTOR": 1},
+                },
+            },
+            show_only=["charts/fluentd/templates/fluentd-daemonset.yaml"],
+        )
+        assert len(docs) == 1
+        doc = docs[0]
+        c_by_name = get_containers_by_name(doc)
+        self.fluentd_common_tests(doc)
+        assert {
+            "name": "RUBY_GC_HEAP_OLDOBJECT_LIMIT_FACTOR",
+            "value": "1",
+        } in c_by_name["fluentd"]["env"]
