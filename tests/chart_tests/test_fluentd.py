@@ -321,7 +321,7 @@ class TestFluentd:
         assert "priorityClassName" not in doc["spec"]["template"]["spec"]
 
     def test_fluentd_priorityclass_overrides(self, kube_version):
-        """Test to validate fluentd with priority class ."""
+        """Test to validate fluentd with priority class configured."""
         docs = render_chart(
             kube_version=kube_version,
             values={"fluentd": {"priorityClassName": "fluentd-priority-pod"}},
