@@ -12,8 +12,8 @@ import yaml
 class TestFluentd:
 
     @staticmethod
-    def common_tests_daemonset(doc):
-        """Test things common to all daemonsets."""
+    def fluentd_common_tests(doc):
+        """Test common for fluentd daemonsets."""
         assert doc["kind"] == "DaemonSet"
         assert doc["metadata"]["name"] == "release-name-fluentd"
 
@@ -317,7 +317,7 @@ class TestFluentd:
         )
         assert len(docs) == 1
         doc = docs[0]
-        self.common_tests_daemonset(doc)
+        self.fluentd_common_tests(doc)
         assert "priorityClassName" not in doc["spec"]["template"]["spec"]
 
     def test_fluentd_priorityclass_overrides(self, kube_version):
@@ -329,7 +329,7 @@ class TestFluentd:
         )
         assert len(docs) == 1
         doc = docs[0]
-        self.common_tests_daemonset(doc)
+        self.fluentd_common_tests(doc)
         assert "priorityClassName" in doc["spec"]["template"]["spec"]
         assert (
             "fluentd-priority-pod"
