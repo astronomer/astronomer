@@ -95,6 +95,10 @@ spec:
           value: {{ .Release.Namespace | quote }}
         - name: RELEASE
           value: {{ .Release.Name | quote }}
+        {{- range $key, $value :=  .Values.extraEnv }}
+        - name: {{ $key }}
+          value: {{ $value | quote }}
+        {{- end }}
         volumeMounts:
         {{- if .Values.additionalVolumeMounts }}
         {{- toYaml .Values.additionalVolumeMounts | nindent 8 }}
