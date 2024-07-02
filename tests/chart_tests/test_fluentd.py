@@ -351,6 +351,7 @@ class TestFluentd:
         doc = docs[0]
         c_by_name = get_containers_by_name(doc)
         self.fluentd_common_tests(doc)
-        assert {"name": "RUBY_GC_HEAP_OLDOBJECT_LIMIT_FACTOR", "value": '1'} in c_by_name[
-            "fluentd"
-        ]["env"]
+        assert {
+            "name": "RUBY_GC_HEAP_OLDOBJECT_LIMIT_FACTOR",
+            "value": "1",
+        } in c_by_name["fluentd"]["env"]
