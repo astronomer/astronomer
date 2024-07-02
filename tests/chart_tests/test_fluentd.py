@@ -10,6 +10,13 @@ import yaml
     supported_k8s_versions,
 )
 class TestFluentd:
+
+    @staticmethod
+    def fluentd_common_tests(doc):
+        """Test common for fluentd daemonsets."""
+        assert doc["kind"] == "DaemonSet"
+        assert doc["metadata"]["name"] == "release-name-fluentd"
+
     def test_fluentd_daemonset(self, kube_version):
         """Test that helm renders a volume mount for private ca certificates for
         fluentd daemonset when private-ca-certificates are enabled."""
@@ -300,3 +307,31 @@ class TestFluentd:
             "index_patterns": ["astronomer.*"],
             "mappings": {"properties": {"date_nano": {"type": "date_nanos"}}},
         }
+
+    def test_fluentd_priorityclass_defaults(self, kube_version):
+        """Test to validate fluentd with priority class defaults."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={},
+            show_only=["charts/fluentd/templates/fluentd-daemonset.yaml"],
+        )
+        assert len(docs) == 1
+        doc = docs[0]
+        self.fluentd_common_tests(doc)
+        assert "priorityClassName" not in doc["spec"]["template"]["spec"]
+
+    def test_fluentd_priorityclass_overrides(self, kube_version):
+        """Test to validate fluentd with priority class configured."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"fluentd": {"priorityClassName": "fluentd-priority-pod"}},
+            show_only=["charts/fluentd/templates/fluentd-daemonset.yaml"],
+        )
+        assert len(docs) == 1
+        doc = docs[0]
+        self.fluentd_common_tests(doc)
+        assert "priorityClassName" in doc["spec"]["template"]["spec"]
+        assert (
+            "fluentd-priority-pod"
+            == doc["spec"]["template"]["spec"]["priorityClassName"]
+        )
