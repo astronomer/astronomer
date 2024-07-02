@@ -309,7 +309,7 @@ class TestFluentd:
         }
 
     def test_fluentd_priorityclass_defaults(self, kube_version):
-        """Test to validate fluentd with priority class ."""
+        """Test to validate fluentd with priority class defaults."""
         docs = render_chart(
             kube_version=kube_version,
             values={},
