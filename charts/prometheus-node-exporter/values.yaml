@@ -133,3 +133,6 @@ sidecarVolumeMount: []
 ##  - name: collector-textfiles
 ##    mountPath: /run/prometheus
 ##    readOnly: false
+
+
+priorityClassName: ~

@@ -9,6 +9,13 @@ from tests.chart_tests.helm_template_generator import render_chart
     supported_k8s_versions,
 )
 class TestPrometheusNodeExporterDaemonset:
+
+    @staticmethod
+    def node_exporter_common_tests(doc):
+        """Test common for node exporter daemonsets."""
+        assert doc["kind"] == "DaemonSet"
+        assert doc["metadata"]["name"] == "release-name-prometheus-node-exporter"
+
     def test_prometheus_node_exporter_service_defaults(self, kube_version):
         docs = render_chart(
             kube_version=kube_version,
@@ -39,8 +46,7 @@ class TestPrometheusNodeExporterDaemonset:
 
         assert len(docs) == 1
         doc = docs[0]
-        assert doc["kind"] == "DaemonSet"
-        assert doc["metadata"]["name"] == "release-name-prometheus-node-exporter"
+        self.node_exporter_common_tests(doc)
         assert (
             doc["spec"]["selector"]["matchLabels"]["app"] == "prometheus-node-exporter"
         )
@@ -70,8 +76,7 @@ class TestPrometheusNodeExporterDaemonset:
             show_only=["charts/prometheus-node-exporter/templates/daemonset.yaml"],
         )[0]
 
-        assert doc["kind"] == "DaemonSet"
-        assert doc["metadata"]["name"] == "release-name-prometheus-node-exporter"
+        self.node_exporter_common_tests(doc)
 
         c_by_name = get_containers_by_name(doc)
         assert c_by_name["node-exporter"]
@@ -97,8 +102,7 @@ class TestPrometheusNodeExporterDaemonset:
             show_only=["charts/prometheus-node-exporter/templates/daemonset.yaml"],
         )[0]
 
-        assert doc["kind"] == "DaemonSet"
-        assert doc["metadata"]["name"] == "release-name-prometheus-node-exporter"
+        self.node_exporter_common_tests(doc)
 
         c_by_name = get_containers_by_name(doc)
         assert c_by_name["node-exporter"]
@@ -107,3 +111,35 @@ class TestPrometheusNodeExporterDaemonset:
             "readOnlyRootFilesystem": True,
             "runAsNonRoot": True,
         }
+
+    def test_node_exporter_priorityclass_defaults(self, kube_version):
+        """Test to validate fluentd with priority class defaults."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={},
+            show_only=["charts/prometheus-node-exporter/templates/daemonset.yaml"],
+        )
+        assert len(docs) == 1
+        doc = docs[0]
+        self.node_exporter_common_tests(doc)
+        assert "priorityClassName" not in doc["spec"]["template"]["spec"]
+
+    def test_node_exporter_priorityclass_overrides(self, kube_version):
+        """Test to validate node exporter with priority class configured."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "prometheus-node-exporter": {
+                    "priorityClassName": "node-exporter-priority-pod"
+                }
+            },
+            show_only=["charts/prometheus-node-exporter/templates/daemonset.yaml"],
+        )
+        assert len(docs) == 1
+        doc = docs[0]
+        self.node_exporter_common_tests(doc)
+        assert "priorityClassName" in doc["spec"]["template"]["spec"]
+        assert (
+            "node-exporter-priority-pod"
+            == doc["spec"]["template"]["spec"]["priorityClassName"]
+        )

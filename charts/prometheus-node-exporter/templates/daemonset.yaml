@@ -21,6 +21,9 @@ spec:
       {{- toYaml .Values.podAnnotations | nindent 8 }}
       {{- end }}
     spec:
+{{- if .Values.priorityClassName }}
+      priorityClassName:  {{ .Values.priorityClassName  }}
+{{ end }}
 {{- if and .Values.rbac.create .Values.serviceAccount.create }}
       serviceAccountName: {{ template "prometheus-node-exporter.serviceAccountName" . }}
 {{- end }}
