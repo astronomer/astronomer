@@ -125,7 +125,7 @@ class TestPrometheusNodeExporterDaemonset:
         assert "priorityClassName" not in doc["spec"]["template"]["spec"]
 
     def test_node_exporter_priorityclass_overrides(self, kube_version):
-        """Test to validate node exporter with priority class ."""
+        """Test to validate node exporter with priority class configured."""
         docs = render_chart(
             kube_version=kube_version,
             values={
