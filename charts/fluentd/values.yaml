@@ -53,3 +53,5 @@ s3:
   use_server_side_encryption: ~
 
 priorityClassName: ~
+
+extraEnv: ~
