@@ -113,7 +113,7 @@ class TestPrometheusNodeExporterDaemonset:
         }
 
     def test_node_exporter_priorityclass_defaults(self, kube_version):
-        """Test to validate fluentd with priority class ."""
+        """Test to validate fluentd with priority class defaults."""
         docs = render_chart(
             kube_version=kube_version,
             values={},
