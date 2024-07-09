@@ -101,3 +101,12 @@ class TestKubeStateDeployment:
         )
 
         assert len(docs[0]["rules"]) == 1
+
+    def test_kube_state_disable_collectors(self, kube_version):
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"kube-state": {"collectors": []}},
+            show_only=["charts/kube-state/templates/kube-state-role.yaml"],
+        )
+
+        assert docs[0]["rules"] is None
