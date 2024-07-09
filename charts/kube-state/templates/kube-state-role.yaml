@@ -23,7 +23,7 @@ rules:
 {{ if has "volumeattachments" $.Values.collectors }}
 - apiGroups: ["storage.k8s.io"]
   resources:
-    - volumeattachments
+  - volumeattachments
   verbs: ["list", "watch"]
 {{ end -}}
 {{ if has "configmaps" $.Values.collectors }}
@@ -83,7 +83,7 @@ rules:
 {{ if has "poddisruptionbudgets" $.Values.collectors }}
 - apiGroups: ["policy"]
   resources:
-    - poddisruptionbudgets
+  - poddisruptionbudgets
   verbs: ["list", "watch"]
 {{ end -}}
 {{ if has "pods" $.Values.collectors }}
@@ -131,13 +131,13 @@ rules:
 {{ if has "mutatingwebhookconfigurations" $.Values.collectors }}
 - apiGroups: ["admissionregistration.k8s.io"]
   resources:
-    - mutatingwebhookconfigurations
+  - mutatingwebhookconfigurations
   verbs: ["list", "watch"]
 {{ end -}}
 {{ if has "validatingwebhookconfigurations" $.Values.collectors }}
 - apiGroups: ["admissionregistration.k8s.io"]
   resources:
-    - validatingwebhookconfigurations
+  - validatingwebhookconfigurations
   verbs: ["list", "watch"]
 {{ end -}}
 {{ if has "leases" $.Values.collectors }}
@@ -149,7 +149,7 @@ rules:
 {{ if has "storageclasses" $.Values.collectors }}
 - apiGroups: ["storage.k8s.io"]
   resources:
-    - storageclasses
+  - storageclasses
   verbs: ["list", "watch"]
 {{ end -}}
 {{ if has "leases" $.Values.collectors }}
