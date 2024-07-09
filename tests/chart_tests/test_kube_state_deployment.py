@@ -83,3 +83,79 @@ class TestKubeStateDeployment:
         )
         c_by_name = get_containers_by_name(docs[0])
         assert "--namespaces=test_namespace" in c_by_name["kube-state"]["args"]
+
+    def test_kube_state_default_collectors(self, kube_version):
+        collector_resource_args = "--resources=daemonsets,leases,namespaces,nodes,configmaps,cronjobs,deployments,endpoints,horizontalpodautoscalers,ingresses,jobs,limitranges,networkpolicies,persistentvolumeclaims,poddisruptionbudgets,pods,replicasets,replicationcontrollers,resourcequotas,secrets,services,statefulsets"
+        docs = render_chart(
+            kube_version=kube_version,
+            values={},
+            show_only=[
+                "charts/kube-state/templates/kube-state-role.yaml",
+                "charts/kube-state/templates/kube-state-deployment.yaml",
+            ],
+        )
+        c_by_name = get_containers_by_name(docs[1])
+        assert len(docs[0]["rules"]) == 23
+        assert c_by_name["kube-state"]["args"][0] == collector_resource_args
+
+    def test_kube_state_specific_collector_enabled(self, kube_version):
+        collector_resource_args = "--resources=certificatesigningrequests"
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"kube-state": {"collectors": ["certificatesigningrequests"]}},
+            show_only=[
+                "charts/kube-state/templates/kube-state-role.yaml",
+                "charts/kube-state/templates/kube-state-deployment.yaml",
+            ],
+        )
+        c_by_name = get_containers_by_name(docs[1])
+        assert len(docs[0]["rules"]) == 1
+        assert "certificatesigningrequests" in docs[0]["rules"][0]["resources"]
+        assert docs[0]["rules"] == [
+            {
+                "apiGroups": ["certificates.k8s.io"],
+                "resources": ["certificatesigningrequests"],
+                "verbs": ["list", "watch"],
+            }
+        ]
+        assert c_by_name["kube-state"]["args"][0] == collector_resource_args
+
+    def test_kube_state_disable_collectors(self, kube_version):
+        collector_resource_args = "--resources="
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"kube-state": {"collectors": []}},
+            show_only=[
+                "charts/kube-state/templates/kube-state-role.yaml",
+                "charts/kube-state/templates/kube-state-deployment.yaml",
+            ],
+        )
+        c_by_name = get_containers_by_name(docs[1])
+        assert c_by_name["kube-state"]["args"][0] == collector_resource_args
+        assert docs[0]["rules"] is None
+
+    def test_kube_state_metrics_priorityclass_defaults(self, kube_version):
+        """Test to validate kube_state_metrics with priority class defaults."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={},
+            show_only=["charts/kube-state/templates/kube-state-deployment.yaml"],
+        )
+        assert len(docs) == 1
+        doc = docs[0]
+        assert "priorityClassName" not in doc["spec"]["template"]["spec"]
+
+    def test_kube_state_metrics_priorityclass_overrides(self, kube_version):
+        """Test to validate kube_state_metrics with priority class configured."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"kube-state": {"priorityClassName": "kube-state-priority-pod"}},
+            show_only=["charts/kube-state/templates/kube-state-deployment.yaml"],
+        )
+        assert len(docs) == 1
+        doc = docs[0]
+        assert "priorityClassName" in doc["spec"]["template"]["spec"]
+        assert (
+            "kube-state-priority-pod"
+            == doc["spec"]["template"]["spec"]["priorityClassName"]
+        )
