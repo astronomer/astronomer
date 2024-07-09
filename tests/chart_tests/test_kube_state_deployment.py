@@ -110,6 +110,7 @@ class TestKubeStateDeployment:
         )
         c_by_name = get_containers_by_name(docs[1])
         assert len(docs[0]["rules"]) == 1
+        assert "certificatesigningrequests" in docs[0]["rules"][0]["resources"]
         assert docs[0]["rules"] == [
             {
                 "apiGroups": ["certificates.k8s.io"],
