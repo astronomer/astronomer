@@ -32,3 +32,35 @@ replicas: 1
 
 extraArgs:
 - "--metric-labels-allowlist=namespaces=[*],pods=[*]"
+
+priorityClassName: ~
+
+collectors:
+  #- certificatesigningrequests
+  #- mutatingwebhookconfigurations
+  #- persistentvolumes
+  #- validatingwebhookconfigurations
+  #- volumeattachments
+  #- storageclasses
+  - daemonsets
+  - leases
+  - namespaces
+  - nodes
+  - configmaps
+  - cronjobs
+  - deployments
+  - endpoints
+  - horizontalpodautoscalers
+  - ingresses
+  - jobs
+  - limitranges
+  - networkpolicies
+  - persistentvolumeclaims
+  - poddisruptionbudgets
+  - pods
+  - replicasets
+  - replicationcontrollers
+  - resourcequotas
+  - secrets
+  - services
+  - statefulsets
