@@ -28,6 +28,9 @@ spec:
         app: {{ template "kube-state.name" . }}
         version: {{ .Chart.Version }}
     spec:
+    {{- if .Values.priorityClassName }}
+      priorityClassName: {{ .Values.priorityClassName }}
+    {{- end }}
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
       affinity:
@@ -42,6 +45,7 @@ spec:
       {{- if .Values.global.singleNamespace }}
         - --namespaces={{ .Release.Namespace }}
       {{- end }}
+        - --resources={{ .Values.collectors | join "," }}
       {{- if .Values.extraArgs }}
           {{- .Values.extraArgs | toYaml | nindent 8 }}
       {{- end }}

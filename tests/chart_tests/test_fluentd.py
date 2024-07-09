@@ -92,7 +92,6 @@ class TestFluentd:
             values={"global": {"rbacEnabled": False}},
             show_only=["charts/fluentd/templates/fluentd-clusterrolebinding.yaml"],
         )
-
         assert len(docs) == 0
 
     def test_fluentd_configmap_manual_namespaces_enabled(self, kube_version):
