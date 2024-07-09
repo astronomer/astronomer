@@ -36,16 +36,16 @@ extraArgs:
 priorityClassName: ~
 
 collectors:
-  #- certificatesigningrequests
-  #- daemonsets
-  #- mutatingwebhookconfigurations
-  #- leases
-  #- namespaces
-  #- nodes
-  #- persistentvolumes
-  #- storageclasses
-  #- validatingwebhookconfigurations
-  #- volumeattachments
+  - certificatesigningrequests
+  - daemonsets
+  - mutatingwebhookconfigurations
+  - leases
+  - namespaces
+  - nodes
+  - persistentvolumes
+  - storageclasses
+  - validatingwebhookconfigurations
+  - volumeattachments
   - configmaps
   - cronjobs
   - deployments

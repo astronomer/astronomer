@@ -1,9 +1,6 @@
 ################################
 ## Kube State Deployment
 #################################
-{{- $namespacepools := and .Values.global.features.namespacePools.enabled .Values.global.features.namespacePools.namespaces.names  }}
-{{- $namespaces := .Values.global.features.namespacePools.namespaces.names  }}
-{{- $namespaceList := join "," $namespaces }}
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -48,14 +45,10 @@ spec:
       {{- if .Values.global.singleNamespace }}
         - --namespaces={{ .Release.Namespace }}
       {{- end }}
-      {{- if $namespacepools }}
-        - --namespaces={{ $namespaceList }}
         - --resources={{ .Values.collectors | join "," }}
-      {{- end }}
       {{- if .Values.extraArgs }}
           {{- .Values.extraArgs | toYaml | nindent 8 }}
       {{- end }}
-        - --resources={{ .Values.collectors | join "," }}
         image: {{ include "kube-state.image" . }}
         securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
         imagePullPolicy: {{ .Values.images.kubeState.pullPolicy }}
