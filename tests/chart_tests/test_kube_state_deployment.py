@@ -110,6 +110,13 @@ class TestKubeStateDeployment:
         )
         c_by_name = get_containers_by_name(docs[1])
         assert len(docs[0]["rules"]) == 1
+        assert docs[0]["rules"] == [
+            {
+                "apiGroups": ["certificates.k8s.io"],
+                "resources": ["certificatesigningrequests"],
+                "verbs": ["list", "watch"],
+            }
+        ]
         assert c_by_name["kube-state"]["args"][0] == collector_resource_args
 
     def test_kube_state_disable_collectors(self, kube_version):
