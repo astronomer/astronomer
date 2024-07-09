@@ -1,6 +1,9 @@
 ################################
 ## Kube State Deployment
 #################################
+{{- $namespacepools := and .Values.global.features.namespacePools.enabled .Values.global.features.namespacePools.namespaces.names  }}
+{{- $namespaces := .Values.global.features.namespacePools.namespaces.names  }}
+{{- $namespaceList := join "," $namespaces }}
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -28,6 +31,9 @@ spec:
         app: {{ template "kube-state.name" . }}
         version: {{ .Chart.Version }}
     spec:
+    {{- if .Values.priorityClassName }}
+      priorityClassName: {{ .Values.priorityClassName }}
+    {{- end }}
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
       affinity:
@@ -41,6 +47,10 @@ spec:
         args:
       {{- if .Values.global.singleNamespace }}
         - --namespaces={{ .Release.Namespace }}
+      {{- end }}
+      {{- if $namespacepools }}
+        - --namespaces={{ $namespaceList }}
+        - --resources={{ .Values.collectors | join "," }}
       {{- end }}
       {{- if .Values.extraArgs }}
           {{- .Values.extraArgs | toYaml | nindent 8 }}
