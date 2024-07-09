@@ -55,6 +55,7 @@ spec:
       {{- if .Values.extraArgs }}
           {{- .Values.extraArgs | toYaml | nindent 8 }}
       {{- end }}
+        - --resources={{ .Values.collectors | join "," }}
         image: {{ include "kube-state.image" . }}
         securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
         imagePullPolicy: {{ .Values.images.kubeState.pullPolicy }}
