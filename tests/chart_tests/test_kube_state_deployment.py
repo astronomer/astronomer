@@ -110,3 +110,29 @@ class TestKubeStateDeployment:
         )
 
         assert docs[0]["rules"] is None
+
+    def test_kube_state_metrics_priorityclass_defaults(self, kube_version):
+        """Test to validate kube_state_metrics with priority class defaults."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={},
+            show_only=["charts/kube-state/templates/kube-state-deployment.yaml"],
+        )
+        assert len(docs) == 1
+        doc = docs[0]
+        assert "priorityClassName" not in doc["spec"]["template"]["spec"]
+
+    def test_kube_state_metrics_priorityclass_overrides(self, kube_version):
+        """Test to validate kube_state_metrics with priority class configured."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"kube-state": {"priorityClassName": "kube-state-priority-pod"}},
+            show_only=["charts/kube-state/templates/kube-state-deployment.yaml"],
+        )
+        assert len(docs) == 1
+        doc = docs[0]
+        assert "priorityClassName" in doc["spec"]["template"]["spec"]
+        assert (
+            "node-exporter-priority-pod"
+            == doc["spec"]["template"]["spec"]["priorityClassName"]
+        )
