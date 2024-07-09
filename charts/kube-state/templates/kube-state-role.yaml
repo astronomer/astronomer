@@ -20,12 +20,6 @@ rules:
   - certificatesigningrequests
   verbs: ["list", "watch"]
 {{ end -}}
-{{ if has "daemonsets" $.Values.collectors }}
-- apiGroups: ["extensions", "apps"]
-  resources:
-  - daemonsets
-  verbs: ["list", "watch"]
-{{ end -}}
 {{ if has "volumeattachments" $.Values.collectors }}
 - apiGroups: ["storage.k8s.io"]
   resources:
@@ -60,12 +54,6 @@ rules:
 - apiGroups: ["autoscaling"]
   resources:
   - horizontalpodautoscalers
-  verbs: ["list", "watch"]
-{{ end -}}
-{{ if has "ingresses" $.Values.collectors }}
-- apiGroups: ["extensions", "networking.k8s.io"]
-  resources:
-  - ingresses
   verbs: ["list", "watch"]
 {{ end -}}
 {{ if has "jobs" $.Values.collectors }}
@@ -164,12 +152,14 @@ rules:
     - storageclasses
   verbs: ["list", "watch"]
 {{ end -}}
-{{ if has "persistentvolumes" $.Values.collectors }}
-- apiGroups: [""]
+{{ if has "leases" $.Values.collectors }}
+- apiGroups: ["coordination.k8s.io"]
   resources:
-  - persistentvolumes
+  - leases
   verbs: ["list", "watch"]
 {{ end -}}
+{{ end -}}
+{{- if not $singleNamespace }}
 {{ if has "nodes" $.Values.collectors }}
 - apiGroups: [""]
   resources:
@@ -182,10 +172,22 @@ rules:
   - namespaces
   verbs: ["list", "watch"]
 {{ end -}}
-{{ if has "leases" $.Values.collectors }}
-- apiGroups: ["coordination.k8s.io"]
+{{ if has "persistentvolumes" $.Values.collectors }}
+- apiGroups: [""]
   resources:
-  - leases
+  - persistentvolumes
   verbs: ["list", "watch"]
 {{ end -}}
+{{ if has "ingresses" $.Values.collectors }}
+- apiGroups: ["extensions", "networking.k8s.io"]
+  resources:
+  - ingresses
+  verbs: ["list", "watch"]
 {{ end -}}
+{{ if has "daemonsets" $.Values.collectors }}
+- apiGroups: ["extensions", "apps"]
+  resources:
+  - daemonsets
+  verbs: ["list", "watch"]
+{{ end -}}
+{{- end }}
