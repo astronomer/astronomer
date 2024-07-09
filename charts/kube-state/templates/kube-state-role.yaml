@@ -158,7 +158,6 @@ rules:
   - leases
   verbs: ["list", "watch"]
 {{ end -}}
-{{ end -}}
 {{- if not $singleNamespace }}
 {{ if has "nodes" $.Values.collectors }}
 - apiGroups: [""]
@@ -190,4 +189,5 @@ rules:
   - daemonsets
   verbs: ["list", "watch"]
 {{ end -}}
+{{- end }}
 {{- end }}
