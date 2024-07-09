@@ -83,3 +83,21 @@ class TestKubeStateDeployment:
         )
         c_by_name = get_containers_by_name(docs[0])
         assert "--namespaces=test_namespace" in c_by_name["kube-state"]["args"]
+
+    def test_kube_state_default_collectors(self, kube_version):
+        docs = render_chart(
+            kube_version=kube_version,
+            values={},
+            show_only=["charts/kube-state/templates/kube-state-role.yaml"],
+        )
+
+        assert len(docs[0]["rules"]) == 29
+
+    def test_kube_state_specific_collector_enabled(self, kube_version):
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"kube-state": {"collectors": ["certificatesigningrequests"]}},
+            show_only=["charts/kube-state/templates/kube-state-role.yaml"],
+        )
+
+        assert len(docs[0]["rules"]) == 1
