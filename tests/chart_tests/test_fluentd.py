@@ -94,12 +94,12 @@ class TestFluentd:
         assert len(doc["roleRef"]) > 0
         assert len(doc["subjects"]) > 0
 
-        #docs = render_chart(
+        # docs = render_chart(
         #    kube_version=kube_version,
         #    values={"global": {"rbacEnabled": False}},
         #    show_only=["charts/fluentd/templates/fluentd-clusterrolebinding.yaml"],
-        #)
-        #assert len(docs) == 0
+        # )
+        # assert len(docs) == 0
 
     def test_fluentd_configmap_manual_namespaces_enabled(self, kube_version):
         """Test that when namespace Pools is disabled, and manualNamespaces is
