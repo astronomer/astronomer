@@ -91,7 +91,7 @@ class TestKubeStateDeployment:
             show_only=["charts/kube-state/templates/kube-state-role.yaml"],
         )
 
-        assert len(docs[0]["rules"]) == 29
+        assert len(docs[0]["rules"]) == 23
 
     def test_kube_state_specific_collector_enabled(self, kube_version):
         docs = render_chart(
