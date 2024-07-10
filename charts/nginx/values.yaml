@@ -92,8 +92,6 @@ enableTopologyAwareRouting: false
 
 disableLeaderElection: false
 
-electionTTL: "30s"
-
 # -- This configuration defines if Ingress Controller should allow users to set
 # their own *-snippet annotations, otherwise this is forbidden / dropped
 # when users add those annotations.

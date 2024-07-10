@@ -59,9 +59,6 @@ spec:
             {{- if .Values.disableLeaderElection }}
             - --disable-leader-election=true
             {{- end }}
-            {{- if .Values.electionTTL }}
-            - --election-ttl={{ .Values.electionTTL }}
-            {{- end }}
             {{- if .Values.enableTopologyAwareRouting }}
             - --enable-topology-aware-routing=true
             {{- end }}
