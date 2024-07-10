@@ -87,8 +87,7 @@ electionId: ingress-controller-leader
 # Enables the annotation validation feature
 enableAnnotationValidations: false
 
-# -- This configuration enables Topology Aware Routing feature, used together with service annotation service.kubernetes.io/topology-mode="auto"
-# Defaults to false
+# This must be used together with service annotation service.kubernetes.io/topology-mode="auto"
 enableTopologyAwareRouting: false
 
 # -- This configuration disable Nginx Controller Leader Election
