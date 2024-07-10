@@ -55,6 +55,12 @@ spec:
             {{- if .Values.enableAnnotationValidations }}
             - --enable-annotation-validation=true
             {{- end }}
+            {{- if .Values.disableLeaderElection }}
+            - --disable-leader-election=true
+            {{- end }}
+            {{- if .Values.electionTTL }}
+            - --election-ttl={{ .Values.electionTTL }}
+            {{- end }}
             - --election-id={{ .Values.electionId }}-{{ template "nginx.fullname" . }}
             - --publish-service={{ .Release.Namespace }}/{{ template "nginx.fullname" . }}
             - --http-port={{ .Values.ports.http }}
