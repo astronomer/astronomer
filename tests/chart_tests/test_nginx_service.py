@@ -269,3 +269,24 @@ class TestNginx:
         )[0]
         electionTTL = "--election-ttl=30s"
         assert electionTTL in doc["spec"]["template"]["spec"]["containers"][0]["args"]
+
+    def test_nginx_topology_aware_routing_defaults(self):
+        doc = render_chart(
+            show_only=["charts/nginx/templates/nginx-deployment.yaml"],
+        )[0]
+        topologyAwareRouting = "--enable-topology-aware-routing"
+        assert (
+            topologyAwareRouting
+            not in doc["spec"]["template"]["spec"]["containers"][0]["args"]
+        )
+
+    def test_nginx_topology_aware_routing_overrides(self):
+        doc = render_chart(
+            values={"nginx": {"enableTopologyAwareRouting": True}},
+            show_only=["charts/nginx/templates/nginx-deployment.yaml"],
+        )[0]
+        topologyAwareRouting = "--enable-topology-aware-routing=true"
+        assert (
+            topologyAwareRouting
+            in doc["spec"]["template"]["spec"]["containers"][0]["args"]
+        )
