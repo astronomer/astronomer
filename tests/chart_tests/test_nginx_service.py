@@ -235,3 +235,37 @@ class TestNginx:
         )[0]
 
         assert "release-name-nginx-default-backend" == doc["metadata"]["name"]
+
+    def test_nginx_min_ready_seconds_defaults(self):
+        doc = render_chart(
+            values={},
+            show_only=["charts/nginx/templates/nginx-deployment.yaml"],
+        )[0]
+
+        assert doc["spec"]["minReadySeconds"] == 0
+
+    def test_nginx_min_ready_seconds_overrides(self):
+        minReadySeconds = 300
+        doc = render_chart(
+            values={"nginx": {"minReadySeconds": minReadySeconds}},
+            show_only=["charts/nginx/templates/nginx-deployment.yaml"],
+        )[0]
+
+        assert doc["spec"]["minReadySeconds"] == minReadySeconds
+
+    def test_nginx_election_ttl_defaults(self):
+        doc = render_chart(
+            show_only=["charts/nginx/templates/nginx-deployment.yaml"],
+        )[0]
+        electionTTL = "--election-ttl"
+        assert (
+            electionTTL not in doc["spec"]["template"]["spec"]["containers"][0]["args"]
+        )
+
+    def test_nginx_election_ttl_overrides(self):
+        doc = render_chart(
+            values={"nginx": {"electionTTL": "30s"}},
+            show_only=["charts/nginx/templates/nginx-deployment.yaml"],
+        )[0]
+        electionTTL = "--election-ttl=30s"
+        assert electionTTL in doc["spec"]["template"]["spec"]["containers"][0]["args"]
