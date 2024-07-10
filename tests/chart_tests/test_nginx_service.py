@@ -205,16 +205,6 @@ class TestNginx:
         )[0]
         assert doc["data"]["allow-snippet-annotations"] == "true"
 
-    def test_nginx_enableAnnotationValidations_defaults(self):
-        doc = render_chart(
-            show_only=["charts/nginx/templates/nginx-deployment.yaml"],
-        )[0]
-        annotationValidation = "--enable-annotation-validation"
-        assert (
-            annotationValidation
-            not in doc["spec"]["template"]["spec"]["containers"][0]["args"]
-        )
-
     def test_nginx_enableAnnotationValidations_overrides(self):
         doc = render_chart(
             values={"nginx": {"enableAnnotationValidations": True}},
@@ -236,13 +226,29 @@ class TestNginx:
 
         assert "release-name-nginx-default-backend" == doc["metadata"]["name"]
 
-    def test_nginx_min_ready_seconds_defaults(self):
+    def test_nginx_defaults(self):
         doc = render_chart(
             values={},
             show_only=["charts/nginx/templates/nginx-deployment.yaml"],
         )[0]
 
+        electionTTL = "--election-ttl"
+        topologyAwareRouting = "--enable-topology-aware-routing"
+        annotationValidation = "--enable-annotation-validation"
+
         assert doc["spec"]["minReadySeconds"] == 0
+
+        assert (
+            electionTTL not in doc["spec"]["template"]["spec"]["containers"][0]["args"]
+        )
+        assert (
+            topologyAwareRouting
+            not in doc["spec"]["template"]["spec"]["containers"][0]["args"]
+        )
+        assert (
+            annotationValidation
+            not in doc["spec"]["template"]["spec"]["containers"][0]["args"]
+        )
 
     def test_nginx_min_ready_seconds_overrides(self):
         minReadySeconds = 300
@@ -253,15 +259,6 @@ class TestNginx:
 
         assert doc["spec"]["minReadySeconds"] == minReadySeconds
 
-    def test_nginx_election_ttl_defaults(self):
-        doc = render_chart(
-            show_only=["charts/nginx/templates/nginx-deployment.yaml"],
-        )[0]
-        electionTTL = "--election-ttl"
-        assert (
-            electionTTL not in doc["spec"]["template"]["spec"]["containers"][0]["args"]
-        )
-
     def test_nginx_election_ttl_overrides(self):
         doc = render_chart(
             values={"nginx": {"electionTTL": "30s"}},
@@ -269,16 +266,6 @@ class TestNginx:
         )[0]
         electionTTL = "--election-ttl=30s"
         assert electionTTL in doc["spec"]["template"]["spec"]["containers"][0]["args"]
-
-    def test_nginx_topology_aware_routing_defaults(self):
-        doc = render_chart(
-            show_only=["charts/nginx/templates/nginx-deployment.yaml"],
-        )[0]
-        topologyAwareRouting = "--enable-topology-aware-routing"
-        assert (
-            topologyAwareRouting
-            not in doc["spec"]["template"]["spec"]["containers"][0]["args"]
-        )
 
     def test_nginx_topology_aware_routing_overrides(self):
         doc = render_chart(
