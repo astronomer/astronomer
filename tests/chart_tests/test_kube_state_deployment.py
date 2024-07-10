@@ -95,7 +95,7 @@ class TestKubeStateDeployment:
             ],
         )
         c_by_name = get_containers_by_name(docs[1])
-        assert len(docs[0]["rules"]) == 23
+        assert len(docs[0]["rules"]) == 22
         assert c_by_name["kube-state"]["args"][0] == collector_resource_args
 
     def test_kube_state_specific_collector_enabled(self, kube_version):
