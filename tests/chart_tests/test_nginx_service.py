@@ -1,4 +1,5 @@
 from tests.chart_tests.helm_template_generator import render_chart
+from tests import get_containers_by_name
 import pytest
 
 
@@ -238,17 +239,11 @@ class TestNginx:
 
         assert doc["spec"]["minReadySeconds"] == 0
 
-        assert (
-            electionTTL not in doc["spec"]["template"]["spec"]["containers"][0]["args"]
-        )
-        assert (
-            topologyAwareRouting
-            not in doc["spec"]["template"]["spec"]["containers"][0]["args"]
-        )
-        assert (
-            annotationValidation
-            not in doc["spec"]["template"]["spec"]["containers"][0]["args"]
-        )
+        c_by_name = get_containers_by_name(doc)
+
+        assert electionTTL not in c_by_name["nginx"]["args"]
+        assert topologyAwareRouting not in c_by_name["nginx"]["args"]
+        assert annotationValidation not in c_by_name["nginx"]["args"]
 
     def test_nginx_min_ready_seconds_overrides(self):
         minReadySeconds = 300
@@ -265,7 +260,8 @@ class TestNginx:
             show_only=["charts/nginx/templates/nginx-deployment.yaml"],
         )[0]
         electionTTL = "--election-ttl=30s"
-        assert electionTTL in doc["spec"]["template"]["spec"]["containers"][0]["args"]
+        c_by_name = get_containers_by_name(doc)
+        assert electionTTL in c_by_name["nginx"]["args"]
 
     def test_nginx_topology_aware_routing_overrides(self):
         doc = render_chart(
@@ -273,7 +269,5 @@ class TestNginx:
             show_only=["charts/nginx/templates/nginx-deployment.yaml"],
         )[0]
         topologyAwareRouting = "--enable-topology-aware-routing=true"
-        assert (
-            topologyAwareRouting
-            in doc["spec"]["template"]["spec"]["containers"][0]["args"]
-        )
+        c_by_name = get_containers_by_name(doc)
+        assert topologyAwareRouting in c_by_name["nginx"]["args"]
