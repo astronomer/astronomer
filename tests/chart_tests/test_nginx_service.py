@@ -229,6 +229,7 @@ class TestNginx:
         electionId = "--election-id=ingress-controller-leader-release-name-nginx"
         topologyAwareRouting = "--enable-topology-aware-routing"
         annotationValidation = "--enable-annotation-validation"
+        disableLeaderElection = "--disable-leader-election"
 
         c_by_name = get_containers_by_name(doc)
 
@@ -236,6 +237,7 @@ class TestNginx:
         assert electionId in c_by_name["nginx"]["args"]
         assert topologyAwareRouting not in c_by_name["nginx"]["args"]
         assert annotationValidation not in c_by_name["nginx"]["args"]
+        assert disableLeaderElection not in c_by_name["nginx"]["args"]
 
     def test_nginx_min_ready_seconds_overrides(self):
         minReadySeconds = 300
@@ -254,3 +256,12 @@ class TestNginx:
         topologyAwareRouting = "--enable-topology-aware-routing=true"
         c_by_name = get_containers_by_name(doc)
         assert topologyAwareRouting in c_by_name["nginx"]["args"]
+
+    def test_nginx_disable_leader_election_overrides(self):
+        doc = render_chart(
+            values={"nginx": {"disableLeaderElection": True}},
+            show_only=["charts/nginx/templates/nginx-deployment.yaml"],
+        )[0]
+        c_by_name = get_containers_by_name(doc)
+        disableLeaderElection = "--disable-leader-election=true"
+        assert disableLeaderElection in c_by_name["nginx"]["args"]
