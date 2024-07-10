@@ -200,5 +200,5 @@ rules:
   verbs: ["list", "watch"]
 {{ end -}}
 {{- end }}
-{{ end }}
+{{- end }}
 {{- end }}
