@@ -28,6 +28,10 @@ replicasDefaultBackend: 2
 maxUnavailable: 25%
 maxUnavailableDefaultBackend: 25%
 
+# -- `minReadySeconds` to avoid killing pods before we are ready
+##
+minReadySeconds: 0
+
 resources: {}
 #  limits:
 #   cpu: 100m
