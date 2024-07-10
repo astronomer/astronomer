@@ -180,13 +180,6 @@ class TestNginx:
         assert doc["spec"]["type"] == "ClusterIP"
         assert doc["spec"]["ports"][0]["port"] == 10254
 
-    def test_nginx_controller_electionID_defaults(self):
-        doc = render_chart(
-            show_only=["charts/nginx/templates/nginx-deployment.yaml"],
-        )[0]
-        electionId = "--election-id=ingress-controller-leader-release-name-nginx"
-        assert electionId in doc["spec"]["template"]["spec"]["containers"][0]["args"]
-
     def test_nginx_externalTrafficPolicy_defaults(self):
         doc = render_chart(
             show_only=["charts/nginx/templates/nginx-service.yaml"],
@@ -234,13 +227,14 @@ class TestNginx:
         )[0]
 
         electionTTL = "--election-ttl"
+        electionId = "--election-id=ingress-controller-leader-release-name-nginx"
         topologyAwareRouting = "--enable-topology-aware-routing"
         annotationValidation = "--enable-annotation-validation"
 
-        assert doc["spec"]["minReadySeconds"] == 0
-
         c_by_name = get_containers_by_name(doc)
 
+        assert doc["spec"]["minReadySeconds"] == 0
+        assert electionId in c_by_name["nginx"]["args"]
         assert electionTTL not in c_by_name["nginx"]["args"]
         assert topologyAwareRouting not in c_by_name["nginx"]["args"]
         assert annotationValidation not in c_by_name["nginx"]["args"]
