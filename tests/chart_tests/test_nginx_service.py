@@ -1,4 +1,5 @@
 from tests.chart_tests.helm_template_generator import render_chart
+from tests import get_containers_by_name
 import pytest
 
 
@@ -179,13 +180,6 @@ class TestNginx:
         assert doc["spec"]["type"] == "ClusterIP"
         assert doc["spec"]["ports"][0]["port"] == 10254
 
-    def test_nginx_controller_electionID_defaults(self):
-        doc = render_chart(
-            show_only=["charts/nginx/templates/nginx-deployment.yaml"],
-        )[0]
-        electionId = "--election-id=ingress-controller-leader-release-name-nginx"
-        assert electionId in doc["spec"]["template"]["spec"]["containers"][0]["args"]
-
     def test_nginx_externalTrafficPolicy_defaults(self):
         doc = render_chart(
             show_only=["charts/nginx/templates/nginx-service.yaml"],
@@ -204,16 +198,6 @@ class TestNginx:
             show_only=["charts/nginx/templates/nginx-configmap.yaml"],
         )[0]
         assert doc["data"]["allow-snippet-annotations"] == "true"
-
-    def test_nginx_enableAnnotationValidations_defaults(self):
-        doc = render_chart(
-            show_only=["charts/nginx/templates/nginx-deployment.yaml"],
-        )[0]
-        annotationValidation = "--enable-annotation-validation"
-        assert (
-            annotationValidation
-            not in doc["spec"]["template"]["spec"]["containers"][0]["args"]
-        )
 
     def test_nginx_enableAnnotationValidations_overrides(self):
         doc = render_chart(
@@ -235,3 +219,49 @@ class TestNginx:
         )[0]
 
         assert "release-name-nginx-default-backend" == doc["metadata"]["name"]
+
+    def test_nginx_defaults(self):
+        doc = render_chart(
+            values={},
+            show_only=["charts/nginx/templates/nginx-deployment.yaml"],
+        )[0]
+
+        electionId = "--election-id=ingress-controller-leader-release-name-nginx"
+        topologyAwareRouting = "--enable-topology-aware-routing"
+        annotationValidation = "--enable-annotation-validation"
+        disableLeaderElection = "--disable-leader-election"
+
+        c_by_name = get_containers_by_name(doc)
+
+        assert doc["spec"]["minReadySeconds"] == 0
+        assert electionId in c_by_name["nginx"]["args"]
+        assert topologyAwareRouting not in c_by_name["nginx"]["args"]
+        assert annotationValidation not in c_by_name["nginx"]["args"]
+        assert disableLeaderElection not in c_by_name["nginx"]["args"]
+
+    def test_nginx_min_ready_seconds_overrides(self):
+        minReadySeconds = 300
+        doc = render_chart(
+            values={"nginx": {"minReadySeconds": minReadySeconds}},
+            show_only=["charts/nginx/templates/nginx-deployment.yaml"],
+        )[0]
+
+        assert doc["spec"]["minReadySeconds"] == minReadySeconds
+
+    def test_nginx_topology_aware_routing_overrides(self):
+        doc = render_chart(
+            values={"nginx": {"enableTopologyAwareRouting": True}},
+            show_only=["charts/nginx/templates/nginx-deployment.yaml"],
+        )[0]
+        topologyAwareRouting = "--enable-topology-aware-routing=true"
+        c_by_name = get_containers_by_name(doc)
+        assert topologyAwareRouting in c_by_name["nginx"]["args"]
+
+    def test_nginx_disable_leader_election_overrides(self):
+        doc = render_chart(
+            values={"nginx": {"disableLeaderElection": True}},
+            show_only=["charts/nginx/templates/nginx-deployment.yaml"],
+        )[0]
+        c_by_name = get_containers_by_name(doc)
+        disableLeaderElection = "--disable-leader-election=true"
+        assert disableLeaderElection in c_by_name["nginx"]["args"]
