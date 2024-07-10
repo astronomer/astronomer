@@ -1,6 +1,9 @@
 ################################
 ## Kube State Deployment
 #################################
+{{- $namespacePools := and .Values.global.features.namespacePools.enabled .Values.global.features.namespacePools.namespaces.names  }}
+{{- $namespaces := .Values.global.features.namespacePools.namespaces.names }}
+{{- $namespaceList := join "," $namespaces }}
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -44,6 +47,9 @@ spec:
         args:
       {{- if .Values.global.singleNamespace }}
         - --namespaces={{ .Release.Namespace }}
+      {{- end }}
+      {{- if $namespacePools }}
+        - --namespaces={{ $namespaceList }}
       {{- end }}
         - --resources={{ .Values.collectors | join "," }}
       {{- if .Values.extraArgs }}
