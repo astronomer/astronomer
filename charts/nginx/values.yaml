@@ -90,7 +90,6 @@ enableAnnotationValidations: false
 # This must be used together with service annotation service.kubernetes.io/topology-mode="auto"
 enableTopologyAwareRouting: false
 
-# -- This configuration disable Nginx Controller Leader Election
 disableLeaderElection: false
 
 # -- Duration a leader election is valid before it's getting re-elected, e.g. `15s`, `10m` or `1h`. (Default: 30s)
