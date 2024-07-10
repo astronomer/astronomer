@@ -162,6 +162,12 @@ rules:
   - leases
   verbs: ["list", "watch"]
 {{ end -}}
+{{ if has "storageclasses" $.Values.collectors }}
+- apiGroups: ["storage.k8s.io"]
+  resources:
+  - storageclasses
+  verbs: ["list", "watch"]
+{{ end -}}
 {{- if not $useRoles }}
 {{ if has "nodes" $.Values.collectors }}
 - apiGroups: [""]
