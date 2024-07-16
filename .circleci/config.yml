@@ -478,6 +478,7 @@ workflows:
             branches:
               only:
                 - '/^release-0\.\d+$/'
+                - release-0-34-3-hotfix
       - release-to-internal:
           context:
             - gcp-astronomer-prod
@@ -485,6 +486,7 @@ workflows:
             branches:
               only:
                 - '/^release-0\.\d+$/'
+                - release-0-34-3-hotfix
           requires:
             - approve-internal-release
             - platform-1-25-16
@@ -495,6 +497,7 @@ workflows:
             branches:
               only:
                 - '/^release-0\.\d+$/'
+                - release-0-34-3-hotfix
       - trigger-upgrade-test:
           requires:
             - release-to-internal
@@ -503,6 +506,7 @@ workflows:
             branches:
               only:
                 - '/^release-0\.\d+$/'
+                - release-0-34-3-hotfix
       - approve-public-release:
           type: approval
           requires:
@@ -514,6 +518,7 @@ workflows:
             branches:
               only:
                 - '/^release-0\.\d+$/'
+                - release-0-34-3-hotfix
 
       - release-to-public:
           context:
@@ -525,6 +530,7 @@ workflows:
             branches:
               only:
                 - '/^release-0\.\d+$/'
+                - release-0-34-3-hotfix
 
   qa-build-and-release-helm-chart:
     when:
@@ -552,6 +558,7 @@ workflows:
             branches:
               only:
                 - '/^release-0\.\d+$/'
+                - release-0-34-3-hotfix
       - trigger-feature-stack-release:
           requires:
             - release-to-internal
@@ -559,6 +566,7 @@ workflows:
             branches:
               only:
                 - '/^release-0\.\d+$/'
+                - release-0-34-3-hotfix
 
 commands:
   push-to-quay-io:
