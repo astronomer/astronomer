@@ -125,7 +125,7 @@ global:
 
   enableHoustonInternalAuthorization: false
 
-  enableConfigmapLabels: true
+  enableConfigmapLabels: false
 
   enablePerHostIngress: false
 
