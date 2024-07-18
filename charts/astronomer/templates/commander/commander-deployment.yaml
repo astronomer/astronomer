@@ -108,8 +108,8 @@ spec:
               value: "true"
             {{- end }}
             {{ if .Values.global.enableConfigmapLabels }}
-            - name: COMMANDERS_MANAGE_NAMESPACE
-              value: "true"
+            - name: COMMANDER_MANAGE_NAMESPACE
+              value: "false"
             {{- end }}
           volumeMounts:
 {{- if .Values.commander.volumeMounts }}
