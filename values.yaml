@@ -125,6 +125,8 @@ global:
 
   enableHoustonInternalAuthorization: false
 
+  enableConfigmapLabels: true
+
   enablePerHostIngress: false
 
   dagOnlyDeployment:

@@ -107,6 +107,10 @@ spec:
             - name: COMMANDER_MANUAL_NAMESPACE_NAMES
               value: "true"
             {{- end }}
+            {{ if .Values.global.enableConfigmapLabels }}
+            - name: COMMANDERS_MANAGE_NAMESPACE
+              value: "true"
+            {{- end }}
           volumeMounts:
 {{- if .Values.commander.volumeMounts }}
 {{- tpl (toYaml .Values.commander.volumeMounts) $ | nindent 12 }}
