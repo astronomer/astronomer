@@ -90,5 +90,3 @@ class TestHoustonCronjobJob:
             ],
         )
         assert len(docs) == 0
-
-    
