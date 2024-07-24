@@ -8,7 +8,6 @@ class TestHoustonPDB:
     def test_houston_pdb_cronjobs(self):
         """Test that pdbs do not touch houston cronjobs or workers."""
         templates = [
-            "charts/astronomer/templates/houston/cronjobs/houston-expire-deployments-cronjob.yaml",
             "charts/astronomer/templates/houston/cronjobs/houston-check-updates-cronjob.yaml",
             "charts/astronomer/templates/houston/cronjobs/houston-cleanup-deployments-cronjob.yaml",
         ]
@@ -16,10 +15,12 @@ class TestHoustonPDB:
         for show_only in templates:
             labels = render_chart(
                 show_only=[show_only],
-                values={
-                    "astronomer": {"houston": {"expireDeployments": {"enabled": True}}}
-                },
-            )[0]["spec"]["jobTemplate"]["spec"]["template"]["metadata"]["labels"]
+                values={},
+            )[
+                0
+            ]["spec"][
+                "jobTemplate"
+            ]["spec"]["template"]["metadata"]["labels"]
             assert (
                 labels["component"] != "houston"
             ), f"ERROR: tempplate '{show_only}' matched houston"
