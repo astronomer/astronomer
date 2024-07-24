@@ -57,9 +57,6 @@ global:
   # URL to the Astronomer helm repo
   helmRepo: "https://helm.astronomer.io"
 
-  # Host and port of where tiller is running in Kubernetes
-  helmHost: "tiller-deploy.kube-system.svc.cluster.local:44134"
-
   # Single namespace mode
   singleNamespace: false
 
