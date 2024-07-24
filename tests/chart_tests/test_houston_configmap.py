@@ -646,4 +646,4 @@ def test_houston_configmap_with_disable_manage_clusterscopedresources_enabled():
     )
     doc = docs[0]
     prod = yaml.safe_load(doc["data"]["production.yaml"])
-    assert prod["deployments"]["disableManageClusterScopedResources"] == True
+    assert prod["deployments"]["disableManageClusterScopedResources"] is True
