@@ -21,6 +21,7 @@ def common_test_cases(docs):
     prod = yaml.safe_load(doc["data"]["production.yaml"])
 
     assert prod["deployments"]["helm"]["airflow"]["useAstroSecurityManager"] is True
+    assert prod["deployments"]["disableManageClusterScopedResources"] is False
     airflow_local_settings = prod["deployments"]["helm"]["airflow"][
         "airflowLocalSettings"
     ]
@@ -634,3 +635,15 @@ def test_houston_configmap_with_internal_authorization_flag_enabled():
 
     prod = yaml.safe_load(doc["data"]["production.yaml"])
     assert prod["deployments"]["enableHoustonInternalAuthorization"] is True
+
+
+def test_houston_configmap_with_disable_manage_clusterscopedresources_enabled():
+    """Validate the houston configmap and its embedded data with disable manage clusterscoped resources enabled
+    ."""
+    docs = render_chart(
+        values={"global": {"disableManageClusterScopedResources": True}},
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    doc = docs[0]
+    prod = yaml.safe_load(doc["data"]["production.yaml"])
+    assert prod["deployments"]["disableManageClusterScopedResources"] == True
