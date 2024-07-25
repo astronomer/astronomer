@@ -11,15 +11,13 @@
   {{- $namespaces = append $namespaces .Release.Namespace }}
 {{- end }}
 
-{{- $rootContext := . }}
-
 {{- if $shouldCreateResources }}
 {{- range $i, $namespaceName := $namespaces -}}
 ---
 apiVersion: {{ template "apiVersion.rbac" . }}
 kind: {{ if $useClusterRoles }}ClusterRoleBinding{{ else }}RoleBinding{{ end }}
 metadata:
-  name: {{ template "kube-state.fullname" $rootContext }}
+  name: {{ template "kube-state.fullname" $ }}
   {{- if not $useClusterRoles }}
   namespace: {{ $namespaceName }}
   {{- end }}
@@ -32,10 +30,10 @@ metadata:
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: {{ if $useClusterRoles }}ClusterRole{{ else }}Role{{ end }}
-  name: {{ template "kube-state.fullname" $rootContext }}
+  name: {{ template "kube-state.fullname" $ }}
 subjects:
 - kind: ServiceAccount
-  name: {{ template "kube-state.fullname" $rootContext }}
+  name: {{ template "kube-state.fullname" $ }}
   namespace: {{ $.Release.Namespace }}
 {{ end }}
 {{- end }}
