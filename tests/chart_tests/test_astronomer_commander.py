@@ -413,10 +413,12 @@ class TestAstronomerCommander:
                     "disableManageClusterScopedResources": True,
                     "features": {"namespacePools": {"enabled": True}},
                 },
-                "astronomer": {"commander": {
-                    "env": [{"name": "COMMANDER_HELM_DEBUG",
-                             "value": "true"}],
-                    "airGapped":  {"enabled": True}}},
+                "astronomer": {
+                    "commander": {
+                        "env": [{"name": "COMMANDER_HELM_DEBUG", "value": "true"}],
+                        "airGapped": {"enabled": True},
+                    }
+                },
             },
             show_only=[
                 "charts/astronomer/templates/commander/commander-deployment.yaml"
