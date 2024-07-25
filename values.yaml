@@ -122,6 +122,8 @@ global:
 
   enableHoustonInternalAuthorization: false
 
+  disableManageClusterScopedResources: false
+
   enablePerHostIngress: false
 
   dagOnlyDeployment:

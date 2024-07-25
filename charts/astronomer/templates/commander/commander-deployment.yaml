@@ -93,7 +93,7 @@ spec:
               value: {{ .Release.Name }}
             - name: COMMANDER_HELM_REPO
               value: {{ .Values.global.helmRepo }}
-            {{ if .Values.commander.upgradeTimeout }}
+            {{ if .Values.commander.upgradeTimeout -}}
             - name: COMMANDER_UPGRADE_TIMEOUT
               value: {{ .Values.commander.upgradeTimeout | quote }}
             {{- end }}
@@ -101,9 +101,13 @@ spec:
             - name: COMMANDER_AIRGAPPED
               value: "true"
             {{- end }}
-            {{ if .Values.global.features.namespacePools.enabled }}
+            {{- if .Values.global.features.namespacePools.enabled -}}
             - name: COMMANDER_MANUAL_NAMESPACE_NAMES
               value: "true"
+            {{- end -}}
+            {{- if .Values.global.disableManageClusterScopedResources -}}
+            - name: COMMANDER_MANAGE_NAMESPACE_RESOURCE
+              value: "false"
             {{- end }}
           volumeMounts:
 {{- if .Values.commander.volumeMounts }}

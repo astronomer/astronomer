@@ -32,6 +32,7 @@ class TestAstronomerCommander:
         assert c_by_name["commander"]["resources"]["requests"]["memory"] == "1Gi"
         env_vars = {x["name"]: x["value"] for x in c_by_name["commander"]["env"]}
         assert env_vars["COMMANDER_UPGRADE_TIMEOUT"] == "600"
+        assert "COMMANDER_MANAGE_NAMESPACE_RESOURCE" not in env_vars
 
     def test_astronomer_commander_deployment_upgrade_timeout(self, kube_version):
         """Test that helm renders a good deployment template for
@@ -377,3 +378,25 @@ class TestAstronomerCommander:
         }
 
         assert cluster_role_binding["roleRef"] == expected_cluster_role
+
+    def test_astronomer_commander_disable_manage_clusterscopedresources_overrides(
+        self, kube_version
+    ):
+        """Test that helm renders a good deployment template for
+        astronomer/commander."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"disableManageClusterScopedResources": True}},
+            show_only=[
+                "charts/astronomer/templates/commander/commander-deployment.yaml"
+            ],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["kind"] == "Deployment"
+        assert doc["apiVersion"] == "apps/v1"
+        assert doc["metadata"]["name"] == "release-name-commander"
+        c_by_name = get_containers_by_name(doc)
+        env_vars = {x["name"]: x["value"] for x in c_by_name["commander"]["env"]}
+        assert env_vars["COMMANDER_MANAGE_NAMESPACE_RESOURCE"] == "false"
