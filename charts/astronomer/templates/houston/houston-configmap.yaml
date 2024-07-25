@@ -64,6 +64,7 @@ data:
 
     # Airflow deployment configuration
     deployments:
+      disableManageClusterScopedResources: {{ .Values.global.disableManageClusterScopedResources }}
       fluentdIndexPrefix: {{ include "fluentd.IndexPattern" .}}
       enableHoustonInternalAuthorization: {{ include "houston.InternalAuthorization" . }}
       dagOnlyDeployment: {{ .Values.global.dagOnlyDeployment.enabled }}
