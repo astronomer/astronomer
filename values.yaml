@@ -128,7 +128,7 @@ global:
 
   dagOnlyDeployment:
     enabled: false
-    image: quay.io/astronomer/ap-dag-deploy:0.4.0
+    image: quay.io/astronomer/ap-dag-deploy:0.5.0
     securityContext:
       fsGroup: 50000
     resources: {}
