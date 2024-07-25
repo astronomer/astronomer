@@ -32,9 +32,7 @@ class TestAstronomerCommander:
         assert c_by_name["commander"]["resources"]["requests"]["memory"] == "1Gi"
         env_vars = {x["name"]: x["value"] for x in c_by_name["commander"]["env"]}
         assert env_vars["COMMANDER_UPGRADE_TIMEOUT"] == "600"
-        assert (
-            "COMMANDER_MANAGE_NAMESPACE_RESOURCE" not in c_by_name["commander"]["env"]
-        )
+        assert "COMMANDER_MANAGE_NAMESPACE_RESOURCE" not in env_vars
 
     def test_astronomer_commander_deployment_upgrade_timeout(self, kube_version):
         """Test that helm renders a good deployment template for
