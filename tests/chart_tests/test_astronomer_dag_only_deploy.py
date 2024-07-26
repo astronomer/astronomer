@@ -125,3 +125,56 @@ class TestDagOnlyDeploy:
         assert prod["deployments"]["dagOnlyDeployment"] is True
 
         assert {} == prod["deployments"]["dagDeploy"]["securityContext"]
+
+    def test_dagonlydeploy_config_enabled_with_persistence_retain(self, kube_version):
+        """Test dagonlydeploy to validate persistence policy retain."""
+        persistenceRetain = {
+            "persistentVolumeClaimRetentionPolicy": {
+                "whenDeleted": "Retain",
+                "whenScaled": "Retain",
+            }
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "dagOnlyDeployment": {
+                        "enabled": True,
+                        "persistence": persistenceRetain,
+                    },
+                },
+            },
+            show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+        )
+
+        doc = docs[0]
+        prod = yaml.safe_load(doc["data"]["production.yaml"])
+        assert prod["deployments"]["dagOnlyDeployment"] is True
+
+        assert persistenceRetain == prod["deployments"]["dagDeploy"]["persistence"]
+
+    def test_dagonlydeploy_config_enabled_with_persistence_delete(self, kube_version):
+        """Test dagonlydeploy to validate persistence policy delete."""
+        persistenceRetain = {
+            "persistentVolumeClaimRetentionPolicy": {
+                "whenDeleted": "Delete",
+                "whenScaled": "Retain",
+            }
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "dagOnlyDeployment": {
+                        "enabled": True,
+                        "persistence": persistenceRetain,
+                    },
+                },
+            },
+            show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+        )
+
+        doc = docs[0]
+        prod = yaml.safe_load(doc["data"]["production.yaml"])
+        assert prod["deployments"]["dagOnlyDeployment"] is True
+        assert persistenceRetain == prod["deployments"]["dagDeploy"]["persistence"]
