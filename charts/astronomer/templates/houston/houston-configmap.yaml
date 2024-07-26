@@ -164,6 +164,9 @@ data:
         client:
           resources: {{- .Values.global.dagOnlyDeployment.resources | toYaml | nindent 12 }}
         {{- end }}
+        {{- if .Values.global.dagOnlyDeployment.persistence }}
+        persistence: {{- .Values.global.dagOnlyDeployment.persistence | toYaml | nindent 12 }}
+        {{- end }}
       {{- end }}
 
       # These values get passed directly into the airflow helm deployments
