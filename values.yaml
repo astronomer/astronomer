@@ -132,6 +132,7 @@ global:
     securityContext:
       fsGroup: 50000
     resources: {}
+    persistence: {}
 
   logging:
     indexNamePrefix: ~
