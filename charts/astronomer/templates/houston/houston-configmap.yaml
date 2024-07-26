@@ -165,7 +165,7 @@ data:
           resources: {{- .Values.global.dagOnlyDeployment.resources | toYaml | nindent 12 }}
         {{- end }}
         {{- if .Values.global.dagOnlyDeployment.persistence }}
-        persistence: {{- .Values.global.dagOnlyDeployment.persistence | toYaml | nindent 12 }}
+        persistence: {{- .Values.global.dagOnlyDeployment.persistence | toYaml | nindent 10 }}
         {{- end }}
       {{- end }}
 
