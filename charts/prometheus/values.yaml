@@ -72,6 +72,7 @@ persistence:
   size: 100Gi
   storageClassName: ~
   annotations: {}
+  persistentVolumeClaimRetentionPolicy: ~
 
 ports:
   http: 9090

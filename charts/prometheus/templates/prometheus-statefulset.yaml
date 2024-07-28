@@ -12,6 +12,9 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 spec:
+  {{- if and .Values.persistence.enabled .Values.persistence.persistentVolumeClaimRetentionPolicy }}
+  persistentVolumeClaimRetentionPolicy: {{- toYaml .Values.persistence.persistentVolumeClaimRetentionPolicy  | nindent 4 }}
+  {{ end }}
   replicas: {{ .Values.replicas }}
   serviceName: {{ template "prometheus.fullname" . }}
   selector:

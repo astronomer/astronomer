@@ -12,6 +12,9 @@ metadata:
     argocd.argoproj.io/sync-wave: "-1"
   {{- end }}
 spec:
+  {{- if and .Values.persistence.enabled .Values.persistence.persistentVolumeClaimRetentionPolicy }}
+  persistentVolumeClaimRetentionPolicy: {{- toYaml .Values.persistence.persistentVolumeClaimRetentionPolicy  | nindent 4 }}
+  {{ end }}
   serviceName: {{ template "postgresql.fullname" . }}-headless
   replicas: 1
   updateStrategy:
