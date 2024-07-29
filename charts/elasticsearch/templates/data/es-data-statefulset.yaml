@@ -13,8 +13,8 @@ metadata:
     heritage: {{ .Release.Service }}
     role: data
 spec:
-  {{- if and .Values.commmon.persistence.enabled .Values.commmon.persistence.persistentVolumeClaimRetentionPolicy }}
-  persistentVolumeClaimRetentionPolicy: {{- toYaml .Values.commmon.persistence.persistentVolumeClaimRetentionPolicy  | nindent 4 }}
+  {{- if and .Values.common.persistence.enabled .Values.common.persistence.persistentVolumeClaimRetentionPolicy }}
+  persistentVolumeClaimRetentionPolicy: {{- toYaml .Values.common.persistence.persistentVolumeClaimRetentionPolicy  | nindent 4 }}
   {{ end }}
   serviceName: {{ template "elasticsearch.fullname" . }}-data
   replicas: {{ .Values.data.replicas }}
