@@ -3,6 +3,7 @@ import base64
 import jmespath
 import pytest
 import yaml
+import pathlib
 
 from tests import get_containers_by_name, supported_k8s_versions
 from tests.chart_tests.helm_template_generator import render_chart
@@ -125,10 +126,11 @@ class TestExternalElasticSearch:
             show_only=[
                 "charts/external-es-proxy/templates/external-es-proxy-deployment.yaml",
                 "charts/external-es-proxy/templates/external-es-proxy-service.yaml",
+                "charts/external-es-proxy/templates/external-es-proxy-configmap.yaml",
             ],
         )
 
-        assert len(docs) == 2
+        assert len(docs) == 3
         doc = docs[0]
         assert doc["kind"] == "Deployment"
         assert doc["apiVersion"] == "apps/v1"
@@ -167,6 +169,11 @@ class TestExternalElasticSearch:
             "port": 9201,
             "appProtocol": "http",
         } in jmespath.search("spec.ports", docs[1])
+
+        nginx_conf = pathlib.Path(
+            "tests/chart_tests/test_data/external-es-nginx-with-aws-secrets.conf"
+        ).read_text()
+        assert nginx_conf in docs[2]["data"]["nginx.conf"]
 
     def test_externalelasticsearch_with_awsIAMRole(self, kube_version):
         """Test External ElasticSearch with iam roles passed as Deployment
@@ -397,7 +404,7 @@ class TestExternalElasticSearch:
         doc = docs[0]
         es_index = doc["data"]["nginx.conf"]
         assert doc["kind"] == "ConfigMap"
-        assert "fluentd.$remote_user.*/$1" in es_index
+        assert "fluentd.$remote_user.*" in es_index
 
     def test_external_es_index_pattern_overrides(self, kube_version):
         """Test External Elasticsearch Service Index Pattern Search
@@ -424,7 +431,7 @@ class TestExternalElasticSearch:
         doc = docs[0]
         es_index = doc["data"]["nginx.conf"]
         assert doc["kind"] == "ConfigMap"
-        assert "astronomer.$remote_user.*/$1" in es_index
+        assert "astronomer.$remote_user.*" in es_index
 
     def test_external_es_index_pattern_sidecar_logging_overrides(self, kube_version):
         """Test External Elasticsearch Service Index Pattern Search
@@ -452,7 +459,7 @@ class TestExternalElasticSearch:
         doc = docs[0]
         es_index = doc["data"]["nginx.conf"]
         assert doc["kind"] == "ConfigMap"
-        assert "astronomer.$remote_user.*/$1" in es_index
+        assert "astronomer.$remote_user.*" in es_index
 
     def test_external_es_index_pattern_sidecar_logging_defaults(self, kube_version):
         """Test External Elasticsearch Service Index Pattern Search
@@ -479,7 +486,7 @@ class TestExternalElasticSearch:
         doc = docs[0]
         es_index = doc["data"]["nginx.conf"]
         assert doc["kind"] == "ConfigMap"
-        assert "vector.$remote_user.*/$1" in es_index
+        assert "vector.$remote_user.*" in es_index
 
     def test_external_es_index_pattern_with_sidecar_logging_enabled(self, kube_version):
         """Test External Elasticsearch Service Index Pattern Search with
@@ -506,7 +513,7 @@ class TestExternalElasticSearch:
         doc = docs[0]
         es_index = doc["data"]["nginx.conf"]
         assert doc["kind"] == "ConfigMap"
-        assert "vector.$remote_user.*/$1" in es_index
+        assert "vector.$remote_user.*" in es_index
 
     def test_external_es_with_private_registry_enabled(self, kube_version):
         """Test External Elasticsearch Service with Private Registry
@@ -574,3 +581,29 @@ class TestExternalElasticSearch:
         assert {"name": "TEST_VAR_NAME", "value": "test_var_value"} in doc["spec"][
             "template"
         ]["spec"]["containers"][0]["env"]
+
+    def test_external_elasticsearch_nginx_defaults_config(self, kube_version):
+        """Test External ElasticSearch with nginx defaults."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "customLogging": {
+                        "enabled": True,
+                        "secret": secret,
+                        "host": "esdemo.example.com",
+                    }
+                }
+            },
+            show_only=[
+                "charts/external-es-proxy/templates/external-es-proxy-configmap.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        nginx_conf = pathlib.Path(
+            "tests/chart_tests/test_data/default-external-es-nginx.conf"
+        ).read_text()
+        assert doc["kind"] == "ConfigMap"
+        assert nginx_conf in doc["data"]["nginx.conf"]

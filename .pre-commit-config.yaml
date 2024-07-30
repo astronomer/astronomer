@@ -1,41 +1,44 @@
 ---
-exclude: '(venv|\.vscode|tests/k8s_schema)' # regex
+exclude: '(venv|\.vscode|tests/k8s_schema|tests/chart_tests/test_data)' # regex
 repos:
   - repo: local
     hooks:
-      - id: verify-image-tags
-        name: Verify image tags
-        entry: python3
-        args: [bin/verify_image_tags.py]
-        language: system
-        files: ^.*\.(tpl|yaml)$
-      - id: circle-config-yaml
-        name: Checks for consistency between config.yml and config.yml.j2
+      - id: check-image-tags
         language: python
-        files: "config.yml$|config.yml.j2|generate_circleci_config.py$|values.yaml$"
-        entry: .circleci/generate_circleci_config.py
         additional_dependencies: ["jinja2", "PyYAML"]
+        name: Ensure unique tags per image
+        entry: python3
+        args: ["bin/show-docker-images.py", "--private-registry", "--with-houston", "-c"]
+        files: '(config.yml|config.yml.j2|generate_circleci_config.py|yaml|tpl)$'
+        pass_filenames: false
+      - id: circle-config-yaml
+        language: python
+        additional_dependencies: ["jinja2", "PyYAML"]
+        name: Checks for consistency between config.yml and config.yml.j2
+        entry: bin/generate_circleci_config.py
+        files: '(config.yml|config.yml.j2|generate_circleci_config.py|yaml|tpl)$'
+        pass_filenames: false
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.2.6
+    rev: v2.3.0
     hooks:
       - id: codespell
-        args: ["-L", "AKS,aks"]
+        args: ["-L", "AKS,aks,showIn"]
   - repo: https://github.com/Lucas-C/pre-commit-hooks
-    rev: v1.5.4
+    rev: v1.5.5
     hooks:
       - id: remove-tabs
         exclude_types: [makefile, binary]
   - repo: https://github.com/psf/black
-    rev: 23.11.0
+    rev: 24.4.2
     hooks:
       - id: black
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: "v0.1.5"
+    rev: "v0.4.10"
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix, --ignore, E501]
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v4.6.0
     hooks:
       - id: check-case-conflict
       - id: check-json
@@ -64,6 +67,16 @@ repos:
       - id: sort-simple-yaml
       - id: trailing-whitespace
   - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: v0.9.0.6
+    rev: v0.10.0.1
     hooks:
       - id: shellcheck
+  - repo: https://github.com/astronomer/pre-commit-hooks
+    rev: 8b2d969bd549cd7c9454cc8bb54eec5b35c2e5e6
+    hooks:
+      - id: CVE-2017-18342
+      - id: remove-unicode-zero-width-non-breaking-spaces
+      - id: remove-unicode-zero-width-space
+      - id: replace-en-dashes
+        exclude: 'bin/kind/.*'
+      - id: replace-greek-question-mark
+      - id: replace-unicode-non-breaking-spaces

@@ -8,7 +8,7 @@ git_root_dir = [x for x in Path(__file__).resolve().parents if (x / ".git").is_d
 ]
 
 metadata = yaml.safe_load((Path(git_root_dir) / "metadata.yaml").read_text())
-# replace all patch versions with 0 so we end up with ['1.26.0', '1.27.0']
+# replace all patch versions with 0 so we end up with ['a.b.0', 'x.y.0']
 supported_k8s_versions = [
     ".".join(x.split(".")[:-1] + ["0"]) for x in metadata["test_k8s_versions"]
 ]
@@ -33,5 +33,19 @@ def get_containers_by_name(doc, include_init_containers=False) -> dict:
                 for c in doc["spec"]["template"]["spec"].get("initContainers")
             }
         )
+
+    return c_by_name
+
+
+def get_cronjob_containerspec_by_name(doc) -> dict:
+    """Given a single doc, return all the containers by name.
+
+    doc must be a valid spec for a CronJob.
+    """
+
+    c_by_name = {
+        c["name"]: c
+        for c in doc["spec"]["jobTemplate"]["spec"]["template"]["spec"]["containers"]
+    }
 
     return c_by_name

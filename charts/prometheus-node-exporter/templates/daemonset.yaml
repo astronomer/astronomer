@@ -21,6 +21,9 @@ spec:
       {{- toYaml .Values.podAnnotations | nindent 8 }}
       {{- end }}
     spec:
+{{- if .Values.priorityClassName }}
+      priorityClassName:  {{ .Values.priorityClassName  }}
+{{ end }}
 {{- if and .Values.rbac.create .Values.serviceAccount.create }}
       serviceAccountName: {{ template "prometheus-node-exporter.serviceAccountName" . }}
 {{- end }}
@@ -35,8 +38,7 @@ spec:
         - name: node-exporter
           image: {{ template "image" . }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          securityContext:
-            runAsNonRoot: {{ toYaml .Values.securityContext.runAsNonRoot }}
+          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
           args:
             - --path.procfs=/host/proc
             - --path.sysfs=/host/sys

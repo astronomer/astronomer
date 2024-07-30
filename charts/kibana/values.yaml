@@ -5,16 +5,16 @@ tolerations: []
 images:
   kibana:
     repository: quay.io/astronomer/ap-kibana
-    tag: 8.11.4
+    tag: 8.12.1
     pullPolicy: IfNotPresent
   init:
     repository: quay.io/astronomer/ap-init
-    tag: 3.18.5
+    tag: 3.18.7-1
     pullPolicy: IfNotPresent
 
 securityContext:
-    runAsNonRoot: true
-    runAsUser: 1000
+  runAsNonRoot: true
+  runAsUser: 1000
 
 clusterName: "astronomer"
 

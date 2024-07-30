@@ -59,6 +59,7 @@ spec:
         - name: bootstrapper
           image: {{ template "grafana.bootstrapper.image" . }}
           imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
+          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
           resources:
 {{ toYaml .Values.resources | indent 12 }}
           env:
@@ -133,7 +134,7 @@ spec:
 {{- end }}
         {{- if .Values.global.authSidecar.enabled }}
         - name: auth-proxy
-          image: "{{ .Values.global.authSidecar.repository }}:{{ .Values.global.authSidecar.tag }}"
+          image: {{ include "authSidecar.image" . }}
           securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
           imagePullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
           {{- if .Values.global.authSidecar.resources }}

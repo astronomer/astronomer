@@ -21,6 +21,7 @@ def common_test_cases(docs):
     prod = yaml.safe_load(doc["data"]["production.yaml"])
 
     assert prod["deployments"]["helm"]["airflow"]["useAstroSecurityManager"] is True
+    assert prod["deployments"]["disableManageClusterScopedResources"] is False
     airflow_local_settings = prod["deployments"]["helm"]["airflow"][
         "airflowLocalSettings"
     ]
@@ -480,6 +481,45 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_resource_overrides()
     assert "vector" in prod_yaml["deployments"]["loggingSidecar"]["image"]
 
 
+def test_houston_configmap_with_loggingsidecar_enabled_with_securityContext_configured():
+    """Validate the houston configmap and its embedded data with
+    loggingSidecar."""
+    securityContext = {
+        "runAsUser": 1000,
+    }
+    sidecar_container_name = "sidecar-log-test"
+    image_name = "quay.io/astronomer/ap-vector:unittest-tag"
+    docs = render_chart(
+        values={
+            "global": {
+                "loggingSidecar": {
+                    "enabled": True,
+                    "name": sidecar_container_name,
+                    "image": image_name,
+                    "securityContext": securityContext,
+                }
+            }
+        },
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    common_test_cases(docs)
+    doc = docs[0]
+    prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
+    log_cmd = 'log_cmd = " 1> >( tee -a /var/log/sidecar-log-consumer/out.log ) 2> >( tee -a /var/log/sidecar-log-consumer/err.log >&2 ) ; "'
+    assert (
+        log_cmd in prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
+    )
+    assert prod_yaml["deployments"]["loggingSidecar"] == {
+        "enabled": True,
+        "name": sidecar_container_name,
+        "image": "quay.io/astronomer/ap-vector:unittest-tag",
+        "customConfig": False,
+        "securityContext": securityContext,
+    }
+
+    assert "vector" in prod_yaml["deployments"]["loggingSidecar"]["image"]
+
+
 def test_houston_configmapwith_update_airflow_runtime_checks_enabled():
     """Validate the houston configmap and its embedded data with
     updateAirflowCheck and updateRuntimeCheck."""
@@ -595,3 +635,15 @@ def test_houston_configmap_with_internal_authorization_flag_enabled():
 
     prod = yaml.safe_load(doc["data"]["production.yaml"])
     assert prod["deployments"]["enableHoustonInternalAuthorization"] is True
+
+
+def test_houston_configmap_with_disable_manage_clusterscopedresources_enabled():
+    """Validate the houston configmap and its embedded data with disable manage clusterscoped resources enabled
+    ."""
+    docs = render_chart(
+        values={"global": {"disableManageClusterScopedResources": True}},
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    doc = docs[0]
+    prod = yaml.safe_load(doc["data"]["production.yaml"])
+    assert prod["deployments"]["disableManageClusterScopedResources"] is True

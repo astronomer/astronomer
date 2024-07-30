@@ -28,25 +28,31 @@ spec:
   template:
     metadata:
       labels:
+        app: containerd-private-ca
         tier: platform
         component: containerd-private-ca
         release: {{ .Release.Name }}
+        version: {{ .Chart.Version }}
       annotations:
         checksum/configmap: {{ include (print $.Template.BasePath "/trust-private-ca-on-all-nodes/containerd-ca-update-script.yaml") . | sha256sum }}
     spec:
+    {{- if .Values.global.privateCaCertsAddToHost.priorityClassName }}
+      priorityClassName: {{ .Values.global.privateCaCertsAddToHost.priorityClassName }}
+    {{- end }}
 {{- if .Values.global.privateCaCertsAddToHost.containerdnodeAffinitys }}
       affinity:
 {{ toYaml .Values.global.privateCaCertsAddToHost.containerdnodeAffinitys  | indent 8 }}
 {{ end }}
+{{- include "certCopier.imagePullSecrets" . | indent 6 }}
       containers:
       - name: cert-copy-and-toml-update
-        image: {{ .Values.global.privateCaCertsAddToHost.certCopier.repository }}:{{ .Values.global.privateCaCertsAddToHost.certCopier.tag }}
+        image: {{ include "certCopier.image" . }}
         command:
           - "sh"
           - "-c"
         args:
           - sh /cert-copy-and-toml-update.sh
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: {{ .Values.global.privateCaCertsAddToHost.certCopier.pullPolicy }}
         securityContext:
           runAsUser: 0
           privileged: true
@@ -76,7 +82,7 @@ spec:
       hostPID: true
       volumes:
       - hostPath:
-          path: /etc/containerd
+          path: {{ .Values.global.privateCaCertsAddToHost.containerdHostPath }}
           type: ""
         name: hostcontainerd
       - name: hostcerts

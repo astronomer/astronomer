@@ -53,3 +53,7 @@ s3:
   s3_bucket: ~
   s3_region: ~
   use_server_side_encryption: ~
+
+priorityClassName: ~
+
+extraEnv: ~

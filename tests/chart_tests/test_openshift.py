@@ -22,11 +22,15 @@ airflow_components_list = [
     "scheduler",
     "workers",
     "redis",
-    "statsd",
     "triggerer",
     "migrateDatabaseJob",
-    "pgbouncer",
     "cleanup",
+]
+
+
+non_airflow_components_list = [
+    "statsd",
+    "pgbouncer",
 ]
 
 
@@ -93,6 +97,11 @@ class TestOpenshift:
         airflowConfig = prod["deployments"]["helm"]["airflow"]
 
         for component in airflow_components_list:
+            assert {"runAsNonRoot": False} == airflowConfig[component][
+                "securityContexts"
+            ]["pod"]
+
+        for component in non_airflow_components_list:
             assert {"runAsNonRoot": True} == airflowConfig[component][
                 "securityContexts"
             ]["pod"]

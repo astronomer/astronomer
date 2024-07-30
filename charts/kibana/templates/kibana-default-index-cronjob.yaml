@@ -27,6 +27,10 @@ spec:
           release: {{ .Release.Name }}
           app: kibana-default-index
           version: {{ .Chart.Version }}
+        {{- if .Values.global.istio.enabled }}
+        annotations:
+          sidecar.istio.io/inject: "false"
+        {{- end }}
       spec:
 {{- include "kibana.imagePullSecrets" . | indent 8 }}
         containers:
@@ -34,6 +38,7 @@ spec:
           image: {{ template "kibana.init.image" . }}
           imagePullPolicy: {{ .Values.images.init.pullPolicy }}
           resources: {{ toYaml .Values.resources | nindent 12 }}
+          securityContext: {{ template "kibana.securityContext" . }}
           command:
           - "/bin/sh"
           - -ec

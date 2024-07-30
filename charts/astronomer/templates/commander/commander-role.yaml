@@ -94,7 +94,7 @@ rules:
   verbs: ["list", "watch"]
 - apiGroups: ["batch"]
   resources: ["jobs"]
-  verbs: ["list", "watch", "create", "delete"]
+  verbs: ["list", "watch", "create", "delete", "get"]
 - apiGroups: ["batch"]
   resources: ["cronjobs"]
   verbs: ["create", "delete", "get", "list", "patch", "watch"]
@@ -133,7 +133,7 @@ rules:
   verbs: ["create", "delete", "list", "watch"]
 - apiGroups: ["policy"]
   resources: ["poddisruptionbudgets"]
-  verbs: ["create", "delete", "get", "list", "watch"]
+  verbs: ["create", "delete", "get", "list", "patch", "watch"]
 {{- if $useClusterRoles }}
 # permissions for "nonResourceURLs" can only be applied on ClusterRoles
 - nonResourceURLs: ["/metrics"]

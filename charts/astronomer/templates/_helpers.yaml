@@ -278,7 +278,7 @@ s3:
 - name: nats-jetstream-client-tls-volume
   mountPath: {{ include "houston.jetStreamSSLCertificateDir" . }}/{{ $secretName }}
 - name: nats-jetstream-client-tls-volume
-  mountPath: /usr/local/share/ca-certificates/{{ $secretName }}/ca.crt
+  mountPath: /usr/local/share/ca-certificates/{{ $secretName }}.crt
   subPath: ca.crt
 {{- end }}
 {{- end }}
@@ -428,4 +428,20 @@ tlsEnabled: false
 
 {{ define "nats.jestreamTLSSecret" -}}
 {{ default (printf "%s-jetstream-tls-certificate" .Release.Name)}}
+{{- end }}
+
+{{- define "dagOnlyDeployment.securityContext" -}}
+{{- if or (eq ( toString ( .Values.global.dagOnlyDeployment.securityContext.fsGroup )) "auto") ( .Values.global.openshiftEnabled )  }}
+{{- omit  .Values.global.dagOnlyDeployment.securityContext "fsGroup" | toYaml | nindent 10 }}
+{{- else }}
+{{- .Values.global.dagOnlyDeployment.securityContext | toYaml | nindent 10 }}
+{{- end -}}
+{{- end }}
+
+{{- define "configSyncer.securityContext" -}}
+{{- if .Values.configSyncer.securityContext }}
+{{ toYaml .Values.configSyncer.securityContext | indent 16 }}
+{{- else }}
+{{ toYaml .Values.securityContext | indent 16 }}
+{{- end }}
 {{- end }}

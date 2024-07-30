@@ -30,6 +30,9 @@ spec:
         prometheus.io/scrape: "true"
         prometheus.io/port: {{ .Values.ports.promScrape | quote }}
     spec:
+    {{- if .Values.priorityClassName }}
+      priorityClassName:  {{ .Values.priorityClassName  }}
+    {{ end }}
       nodeSelector:
 {{ toYaml (.Values.nodeSelector) | indent 8 }}
       affinity:
@@ -92,6 +95,10 @@ spec:
           value: {{ .Release.Namespace | quote }}
         - name: RELEASE
           value: {{ .Release.Name | quote }}
+        {{- range $key, $value :=  .Values.extraEnv }}
+        - name: {{ $key }}
+          value: {{ $value | quote }}
+        {{- end }}
         volumeMounts:
         {{- if .Values.additionalVolumeMounts }}
         {{- toYaml .Values.additionalVolumeMounts | nindent 8 }}

@@ -44,6 +44,7 @@ spec:
             - name: update-check
               image: {{ template "houston.image" . }}
               imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
+              securityContext: {{ toYaml .Values.securityContext | nindent 16 }}
               # If you supply only args for a Container, the default Entrypoint defined in the Docker image is run with the args that you supplied.
               args: ["yarn", "check-runtime-updates", "--url={{ .Values.houston.updateRuntimeCheck.url }}"]
               volumeMounts:

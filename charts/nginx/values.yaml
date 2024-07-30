@@ -9,11 +9,11 @@ tolerations: []
 images:
   nginx:
     repository: quay.io/astronomer/ap-nginx
-    tag: 1.9.5
+    tag: 1.9.6
     pullPolicy: IfNotPresent
   defaultBackend:
     repository: quay.io/astronomer/ap-default-backend
-    tag: 0.28.22
+    tag: 0.28.25
     pullPolicy: IfNotPresent
 
 securityContext:
@@ -27,6 +27,8 @@ replicasDefaultBackend: 2
 # These are only applicable when respective replicas > 3
 maxUnavailable: 25%
 maxUnavailableDefaultBackend: 25%
+
+minReadySeconds: 0
 
 resources: {}
 #  limits:
@@ -84,6 +86,11 @@ electionId: ingress-controller-leader
 
 # Enables the annotation validation feature
 enableAnnotationValidations: false
+
+# This must be used together with service annotation service.kubernetes.io/topology-mode="auto"
+enableTopologyAwareRouting: false
+
+disableLeaderElection: false
 
 # -- This configuration defines if Ingress Controller should allow users to set
 # their own *-snippet annotations, otherwise this is forbidden / dropped

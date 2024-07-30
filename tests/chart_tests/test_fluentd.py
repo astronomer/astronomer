@@ -1,6 +1,6 @@
 from tests.chart_tests.helm_template_generator import render_chart
 import pytest
-from tests import supported_k8s_versions
+from tests import supported_k8s_versions, get_containers_by_name
 import jmespath
 import yaml
 
@@ -10,6 +10,13 @@ import yaml
     supported_k8s_versions,
 )
 class TestFluentd:
+
+    @staticmethod
+    def fluentd_common_tests(doc):
+        """Test common for fluentd daemonsets."""
+        assert doc["kind"] == "DaemonSet"
+        assert doc["metadata"]["name"] == "release-name-fluentd"
+
     def test_fluentd_daemonset(self, kube_version):
         """Test that helm renders a volume mount for private ca certificates for
         fluentd daemonset when private-ca-certificates are enabled."""
@@ -92,7 +99,6 @@ class TestFluentd:
             values={"global": {"rbacEnabled": False}},
             show_only=["charts/fluentd/templates/fluentd-clusterrolebinding.yaml"],
         )
-
         assert len(docs) == 0
 
     def test_fluentd_configmap_manual_namespaces_enabled(self, kube_version):
@@ -300,3 +306,51 @@ class TestFluentd:
             "index_patterns": ["astronomer.*"],
             "mappings": {"properties": {"date_nano": {"type": "date_nanos"}}},
         }
+
+    def test_fluentd_priorityclass_defaults(self, kube_version):
+        """Test to validate fluentd with priority class defaults."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={},
+            show_only=["charts/fluentd/templates/fluentd-daemonset.yaml"],
+        )
+        assert len(docs) == 1
+        doc = docs[0]
+        self.fluentd_common_tests(doc)
+        assert "priorityClassName" not in doc["spec"]["template"]["spec"]
+
+    def test_fluentd_priorityclass_overrides(self, kube_version):
+        """Test to validate fluentd with priority class configured."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"fluentd": {"priorityClassName": "fluentd-priority-pod"}},
+            show_only=["charts/fluentd/templates/fluentd-daemonset.yaml"],
+        )
+        assert len(docs) == 1
+        doc = docs[0]
+        self.fluentd_common_tests(doc)
+        assert "priorityClassName" in doc["spec"]["template"]["spec"]
+        assert (
+            "fluentd-priority-pod"
+            == doc["spec"]["template"]["spec"]["priorityClassName"]
+        )
+
+    def test_fluentd_with_custom_env(self, kube_version):
+        """Test to validate fluentd extraEnv configured."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "fluentd": {
+                    "extraEnv": {"RUBY_GC_HEAP_OLDOBJECT_LIMIT_FACTOR": 1},
+                },
+            },
+            show_only=["charts/fluentd/templates/fluentd-daemonset.yaml"],
+        )
+        assert len(docs) == 1
+        doc = docs[0]
+        c_by_name = get_containers_by_name(doc)
+        self.fluentd_common_tests(doc)
+        assert {
+            "name": "RUBY_GC_HEAP_OLDOBJECT_LIMIT_FACTOR",
+            "value": "1",
+        } in c_by_name["fluentd"]["env"]

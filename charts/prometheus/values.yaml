@@ -18,11 +18,11 @@ replicas: 1
 images:
   prometheus:
     repository: quay.io/astronomer/ap-prometheus
-    tag: 2.45.2
+    tag: 2.45.6
     pullPolicy: IfNotPresent
   configReloader:
     repository: quay.io/astronomer/ap-configmap-reloader
-    tag: 0.12.0
+    tag: 0.13.1
     pullPolicy: IfNotPresent
 
 resources: {}
@@ -138,6 +138,23 @@ additionalAlerts:
 #     annotations:
 #       summary: "The Astronomer Helm release {{ .Release.Name }} is failing task instances {{ printf \"%.2f\" $value }}% of the time over the past 30 minutes"
 #       description: Task instances failing above threshold
+additionalScrapeJobs: {}
+# Example:
+# additionalScrapeJobs:
+#   - job_name: 'my-job'
+#     kubernetes_sd_configs:
+#       - role: endpoints
+#     relabel_configs:
+#       - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scrape]
+#         action: keep
+#         regex: true
+#       - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scheme]
+#         action: replace
+#         target_label: __scheme__
+#         regex: (https?)
+#       - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_path]
+#         action: replace
+#
 
 # Prometheus config file remote_write stanza
 # https://prometheus.io/docs/prometheus/latest/configuration/configuration/
