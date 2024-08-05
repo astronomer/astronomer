@@ -16,7 +16,7 @@ metadata:
   {{- end }}
 spec:
   {{- if and .Values.store.volume.enabled  .Values.persistence.persistentVolumeClaimRetentionPolicy }}
-  persistentVolumeClaimRetentionPolicy: {{- toYaml .Values.persistence.persistentVolumeClaimRetentionPolicy  | nindent 4 }}
+  persistentVolumeClaimRetentionPolicy: {{- toYaml .Values.persistence.persistentVolumeClaimRetentionPolicy | nindent 4 }}
   {{ end }}
   selector:
     matchLabels:
