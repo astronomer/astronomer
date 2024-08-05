@@ -26,6 +26,7 @@ class TestAlertmanager:
         assert doc["apiVersion"] == "apps/v1"
         assert doc["metadata"]["name"] == "release-name-alertmanager"
         assert doc["spec"]["template"]["spec"]["securityContext"]["fsGroup"] == 65534
+        assert "persistentVolumeClaimRetentionPolicy" not in doc["spec"]
 
         # rfc1918 configs should be absent from default settings
         assert (
@@ -191,3 +192,26 @@ class TestAlertmanager:
         assert {"name": "UPDATE_CA_CERTS", "value": "true"} in c_by_name[
             "alertmanager"
         ]["env"]
+
+    def test_alertmanager_persistentVolumeClaimRetentionPolicy(self, kube_version):
+        test_persistentVolumeClaimRetentionPolicy = {
+            "whenDeleted": "Delete",
+            "whenScaled": "Retain",
+        }
+        doc = render_chart(
+            kube_version=kube_version,
+            values={
+                "alertmanager": {
+                    "persistence": {
+                        "persistentVolumeClaimRetentionPolicy": test_persistentVolumeClaimRetentionPolicy,
+                    },
+                },
+            },
+            show_only=["charts/alertmanager/templates/alertmanager-statefulset.yaml"],
+        )[0]
+
+        assert "persistentVolumeClaimRetentionPolicy" in doc["spec"]
+        assert (
+            test_persistentVolumeClaimRetentionPolicy
+            == doc["spec"]["persistentVolumeClaimRetentionPolicy"]
+        )
