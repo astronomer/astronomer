@@ -106,7 +106,7 @@ class TestKubeStateDeployment:
         assert expected_subjects == docs[1]["subjects"]
         assert docs[2]["kind"] == "Role"
 
-    def test_kube_state_deployment_namespacePools(self, kube_version):
+    def test_kube_state_deployment_namespace_pools(self, kube_version):
         """Test that global.features.namespacePools.enabled=true renders an accurate chart."""
         namespace_pools_list = ["test-1", "test-2", "test-3"]
         docs = render_chart(
@@ -135,7 +135,31 @@ class TestKubeStateDeployment:
             "--namespaces=test-1,test-2,test-3,test_namespace"
             in c_by_name["kube-state"]["args"]
         )
-        assert docs[1]["kind"] == "RoleBinding"
+        roles_namespace_pools_list = ["test-1", "test-2", "test-3", "test_namespace"]
+        for i in range(1, 5):
+            role_binding = docs[i]
+            expected_subject = {
+                "kind": "ServiceAccount",
+                "name": "release-name-kube-state",
+                "namespace": "test_namespace",
+            }
+            expected_role = {
+                "apiGroup": "rbac.authorization.k8s.io",
+                "kind": "Role",
+                "name": "release-name-kube-state",
+            }
+            assert role_binding["kind"] == "RoleBinding"
+            assert (
+                role_binding["metadata"]["namespace"]
+                == roles_namespace_pools_list[i - 5]
+            )
+            assert role_binding["roleRef"] == expected_role
+            assert role_binding["subjects"][0] == expected_subject
+
+        for i in range(5, 9):
+            role = docs[i]
+            assert role["kind"] == "Role"
+            assert role["metadata"]["namespace"] == roles_namespace_pools_list[i - 5]
 
     def test_kube_state_default_collectors(self, kube_version):
         collector_resource_args = "--resources=daemonsets,leases,namespaces,nodes,configmaps,cronjobs,deployments,endpoints,horizontalpodautoscalers,ingresses,jobs,limitranges,networkpolicies,persistentvolumeclaims,poddisruptionbudgets,pods,replicasets,replicationcontrollers,resourcequotas,secrets,services,statefulsets"
