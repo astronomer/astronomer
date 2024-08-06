@@ -32,11 +32,13 @@ class TestElasticSearch:
         assert docs[0]["kind"] == "StatefulSet"
         esm_containers = get_containers_by_name(docs[0], include_init_containers=True)
         assert vm_max_map_count in esm_containers["sysctl"]["command"]
+        assert "persistentVolumeClaimRetentionPolicy" not in docs[0]["spec"]
 
         # elasticsearch data
         assert docs[1]["kind"] == "StatefulSet"
         esd_containers = get_containers_by_name(docs[1], include_init_containers=True)
         assert vm_max_map_count in esd_containers["sysctl"]["command"]
+        assert "persistentVolumeClaimRetentionPolicy" not in docs[1]["spec"]
 
         # elasticsearch client
         assert docs[2]["kind"] == "Deployment"

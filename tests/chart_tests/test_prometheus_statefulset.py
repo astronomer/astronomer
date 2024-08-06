@@ -46,6 +46,7 @@ class TestPrometheusStatefulset:
             {"mountPath": "/etc/prometheus/alerts.d", "name": "alert-volume"},
             {"mountPath": "/prometheus", "name": "data"},
         ]
+        assert "persistentVolumeClaimRetentionPolicy" not in doc["spec"]
         # check default liveness probe values
         assert c_by_name["prometheus"]["livenessProbe"]["initialDelaySeconds"] == 10
         assert c_by_name["prometheus"]["livenessProbe"]["periodSeconds"] == 5
