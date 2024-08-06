@@ -22,6 +22,7 @@ class TestStanStatefulSet:
         assert doc["kind"] == "StatefulSet"
         assert doc["apiVersion"] == "apps/v1"
         assert doc["metadata"]["name"] == "release-name-stan"
+        assert "persistentVolumeClaimRetentionPolicy" not in doc["spec"]
         assert c_by_name["metrics"]["image"].startswith(
             "quay.io/astronomer/ap-nats-exporter:"
         )
@@ -316,3 +317,30 @@ class TestStanStatefulSet:
         sv = sv_match.group(1)
         assert sd == "true"
         assert sv == "true"
+
+    def test_stan_persistentVolumeClaimRetentionPolicy(self, kube_version):
+        test_persistentVolumeClaimRetentionPolicy = {
+            "whenDeleted": "Delete",
+            "whenScaled": "Retain",
+        }
+        doc = render_chart(
+            kube_version=kube_version,
+            values={
+                "stan": {
+                    "persistence": {
+                        "persistentVolumeClaimRetentionPolicy": test_persistentVolumeClaimRetentionPolicy,
+                    },
+                },
+            },
+            show_only=[
+                "charts/stan/templates/statefulset.yaml",
+            ],
+        )
+
+        assert len(doc) == 1
+
+        assert "persistentVolumeClaimRetentionPolicy" in doc[0]["spec"]
+        assert (
+            test_persistentVolumeClaimRetentionPolicy
+            == doc[0]["spec"]["persistentVolumeClaimRetentionPolicy"]
+        )

@@ -183,3 +183,4 @@ exporter:
 # nats chart values.
 persistence:
   annotations: {}
+  persistentVolumeClaimRetentionPolicy: ~

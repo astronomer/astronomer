@@ -13,6 +13,9 @@ metadata:
     heritage: "{{ .Release.Service }}"
     role: master
 spec:
+  {{- if and .Values.common.persistence.enabled .Values.common.persistence.persistentVolumeClaimRetentionPolicy }}
+  persistentVolumeClaimRetentionPolicy: {{- toYaml .Values.common.persistence.persistentVolumeClaimRetentionPolicy | nindent 4 }}
+  {{ end }}
   serviceName: {{ template "elasticsearch.fullname" . }}-master
   replicas: {{ .Values.master.replicas }}
   selector:

@@ -32,11 +32,13 @@ class TestElasticSearch:
         assert docs[0]["kind"] == "StatefulSet"
         esm_containers = get_containers_by_name(docs[0], include_init_containers=True)
         assert vm_max_map_count in esm_containers["sysctl"]["command"]
+        assert "persistentVolumeClaimRetentionPolicy" not in docs[0]["spec"]
 
         # elasticsearch data
         assert docs[1]["kind"] == "StatefulSet"
         esd_containers = get_containers_by_name(docs[1], include_init_containers=True)
         assert vm_max_map_count in esd_containers["sysctl"]["command"]
+        assert "persistentVolumeClaimRetentionPolicy" not in docs[1]["spec"]
 
         # elasticsearch client
         assert docs[2]["kind"] == "Deployment"
@@ -650,3 +652,34 @@ class TestElasticSearch:
         assert len(docs) == 1
         c_by_name = get_containers_by_name(docs[0])
         assert c_by_name["nginx"]["securityContext"] == {"runAsNonRoot": True}
+
+    def test_elasticsearch_persistentVolumeClaimRetentionPolicy(self, kube_version):
+        test_persistentVolumeClaimRetentionPolicy = {
+            "whenDeleted": "Delete",
+            "whenScaled": "Retain",
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "elasticsearch": {
+                    "common": {
+                        "persistence": {
+                            "persistentVolumeClaimRetentionPolicy": test_persistentVolumeClaimRetentionPolicy,
+                        },
+                    },
+                },
+            },
+            show_only=[
+                "charts/elasticsearch/templates/master/es-master-statefulset.yaml",
+                "charts/elasticsearch/templates/data/es-data-statefulset.yaml",
+            ],
+        )
+
+        assert len(docs) == 2
+
+        for doc in docs:
+            assert "persistentVolumeClaimRetentionPolicy" in doc["spec"]
+            assert (
+                test_persistentVolumeClaimRetentionPolicy
+                == doc["spec"]["persistentVolumeClaimRetentionPolicy"]
+            )
