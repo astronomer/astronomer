@@ -22,6 +22,7 @@ class TestPostgresql:
         assert doc["apiVersion"] == "apps/v1"
         assert doc["metadata"]["name"] == "release-name-postgresql"
         assert "initContainers" not in doc["spec"]["template"]["spec"]
+        assert "persistentVolumeClaimRetentionPolicy" not in doc["spec"]
 
     def test_postgresql_statefulset_with_volumePermissions_enabled(self, kube_version):
         """Test postgresql statefulset when volumePermissions init container is
