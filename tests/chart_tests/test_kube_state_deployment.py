@@ -75,14 +75,36 @@ class TestKubeStateDeployment:
 
     def test_kube_state_deployment_singleNamespace(self, kube_version):
         """Test that global.singleNamespace=asdf renders an accurate chart."""
+        expected_role_ref = {
+            "kind": "Role",
+            "apiGroup": "rbac.authorization.k8s.io",
+            "name": "release-name-kube-state",
+        }
+        expected_subjects = [
+            {
+                "kind": "ServiceAccount",
+                "name": "release-name-kube-state",
+                "namespace": "test_namespace",
+            }
+        ]
         docs = render_chart(
             kube_version=kube_version,
             values={"global": {"singleNamespace": True}},
             namespace="test_namespace",
-            show_only=["charts/kube-state/templates/kube-state-deployment.yaml"],
+            show_only=[
+                "charts/kube-state/templates/kube-state-deployment.yaml",
+                "charts/kube-state/templates/kube-state-rolebinding.yaml",
+                "charts/kube-state/templates/kube-state-role.yaml",
+            ],
         )
+
+        assert len(docs) == 3
         c_by_name = get_containers_by_name(docs[0])
         assert "--namespaces=test_namespace" in c_by_name["kube-state"]["args"]
+        assert docs[1]["kind"] == "RoleBinding"
+        assert expected_role_ref == docs[1]["roleRef"]
+        assert expected_subjects == docs[1]["subjects"]
+        assert docs[2]["kind"] == "Role"
 
     def test_kube_state_default_collectors(self, kube_version):
         collector_resource_args = "--resources=daemonsets,leases,namespaces,nodes,configmaps,cronjobs,deployments,endpoints,horizontalpodautoscalers,ingresses,jobs,limitranges,networkpolicies,persistentvolumeclaims,poddisruptionbudgets,pods,replicasets,replicationcontrollers,resourcequotas,secrets,services,statefulsets"
