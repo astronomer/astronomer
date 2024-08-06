@@ -50,6 +50,10 @@ spec:
           value: "http://{{ .Release.Name }}-elasticsearch:9200"
         - name: ELASTICSEARCH_REQUESTTIMEOUT
           value: "60000"
+        {{- if .Values.global.baseDomain }}
+        - name: SERVER_PUBLICBASEURL
+          value: https://{{ template "kibana.name" . }}.{{ .Values.global.baseDomain }}
+        {{- end }}
         resources: {{ toYaml .Values.resources | nindent 12 }}
         ports:
         - containerPort: {{ .Values.ports.http }}
