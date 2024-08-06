@@ -22,6 +22,7 @@ class TestPostgresql:
         assert doc["apiVersion"] == "apps/v1"
         assert doc["metadata"]["name"] == "release-name-postgresql"
         assert "initContainers" not in doc["spec"]["template"]["spec"]
+        assert "persistentVolumeClaimRetentionPolicy" not in doc["spec"]
 
     def test_postgresql_statefulset_with_volumePermissions_enabled(self, kube_version):
         """Test postgresql statefulset when volumePermissions init container is
@@ -70,3 +71,64 @@ class TestPostgresql:
                 assert container["image"].startswith(
                     repository
                 ), f"Container named '{name}' does not use registry '{repository}': {container}"
+
+    def test_postgresql_persistentVolumeClaimRetentionPolicy(self, kube_version):
+        test_persistentVolumeClaimRetentionPolicy = {
+            "whenDeleted": "Delete",
+            "whenScaled": "Retain",
+        }
+        doc = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"postgresqlEnabled": True},
+                "postgresql": {
+                    "persistence": {
+                        "persistentVolumeClaimRetentionPolicy": test_persistentVolumeClaimRetentionPolicy,
+                    },
+                },
+            },
+            show_only=[
+                "charts/postgresql/templates/statefulset.yaml",
+            ],
+        )
+
+        assert len(doc) == 1
+
+        assert "persistentVolumeClaimRetentionPolicy" in doc[0]["spec"]
+        assert (
+            test_persistentVolumeClaimRetentionPolicy
+            == doc[0]["spec"]["persistentVolumeClaimRetentionPolicy"]
+        )
+
+    def test_postgresql_replication_persistentVolumeClaimRetentionPolicy(
+        self, kube_version
+    ):
+        test_persistentVolumeClaimRetentionPolicy = {
+            "whenDeleted": "Delete",
+            "whenScaled": "Retain",
+        }
+        doc = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"postgresqlEnabled": True},
+                "postgresql": {
+                    "replication": {
+                        "enabled": True,
+                    },
+                    "persistence": {
+                        "persistentVolumeClaimRetentionPolicy": test_persistentVolumeClaimRetentionPolicy,
+                    },
+                },
+            },
+            show_only=[
+                "charts/postgresql/templates/statefulset-slaves.yaml",
+            ],
+        )
+
+        assert len(doc) == 1
+
+        assert "persistentVolumeClaimRetentionPolicy" in doc[0]["spec"]
+        assert (
+            test_persistentVolumeClaimRetentionPolicy
+            == doc[0]["spec"]["persistentVolumeClaimRetentionPolicy"]
+        )

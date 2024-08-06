@@ -46,6 +46,7 @@ class TestPrometheusStatefulset:
             {"mountPath": "/etc/prometheus/alerts.d", "name": "alert-volume"},
             {"mountPath": "/prometheus", "name": "data"},
         ]
+        assert "persistentVolumeClaimRetentionPolicy" not in doc["spec"]
         # check default liveness probe values
         assert c_by_name["prometheus"]["livenessProbe"]["initialDelaySeconds"] == 10
         assert c_by_name["prometheus"]["livenessProbe"]["periodSeconds"] == 5
@@ -127,3 +128,26 @@ class TestPrometheusStatefulset:
             "--enable-feature=remote-write-receiver" in c_by_name["prometheus"]["args"]
         )
         assert "--enable-feature=agent" in c_by_name["prometheus"]["args"]
+
+    def test_prometheus_persistentVolumeClaimRetentionPolicy(self, kube_version):
+        test_persistentVolumeClaimRetentionPolicy = {
+            "whenDeleted": "Delete",
+            "whenScaled": "Retain",
+        }
+        doc = render_chart(
+            kube_version=kube_version,
+            values={
+                "prometheus": {
+                    "persistence": {
+                        "persistentVolumeClaimRetentionPolicy": test_persistentVolumeClaimRetentionPolicy,
+                    },
+                },
+            },
+            show_only=["charts/prometheus/templates/prometheus-statefulset.yaml"],
+        )[0]
+
+        assert "persistentVolumeClaimRetentionPolicy" in doc["spec"]
+        assert (
+            test_persistentVolumeClaimRetentionPolicy
+            == doc["spec"]["persistentVolumeClaimRetentionPolicy"]
+        )

@@ -1,6 +1,6 @@
 import pytest
 
-from tests import supported_k8s_versions
+from tests import supported_k8s_versions, get_containers_by_name
 from tests.chart_tests.helm_template_generator import render_chart
 
 
@@ -18,6 +18,30 @@ def common_kibana_cronjob_test(docs):
     supported_k8s_versions,
 )
 class TestKibana:
+    def test_kibana_defaults(self, kube_version):
+        """Test kibana deployment defaults."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={},
+            show_only=[
+                "charts/kibana/templates/kibana-deployment.yaml",
+            ],
+        )
+        doc = docs[0]
+        assert doc["kind"] == "Deployment"
+        assert doc["metadata"]["name"] == "release-name-kibana"
+        c_by_name = get_containers_by_name(doc)
+        assert c_by_name["kibana"]
+        assert c_by_name["kibana"]["resources"] == {
+            "limits": {"cpu": "500m", "memory": "1024Mi"},
+            "requests": {"cpu": "250m", "memory": "512Mi"},
+        }
+
+        assert {
+            "name": "SERVER_PUBLICBASEURL",
+            "value": "https://kibana.example.com",
+        } in c_by_name["kibana"]["env"]
+
     def test_kibana_index_defaults(self, kube_version):
         """Test kibana Service with index defaults."""
         docs = render_chart(
