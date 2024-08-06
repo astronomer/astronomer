@@ -67,7 +67,7 @@ class TestKubeStateDeployment:
         assert len(docs) == 1
         c_by_name = get_containers_by_name(docs[0])
         assert (
-            "--metric-labels-allowlist=namespaces=[*],pods=[*],configmaps[*]"
+            "--metric-labels-allowlist=namespaces=[*],pods=[*],configmaps=[*]"
             in c_by_name["kube-state"]["args"]
         )
         assert "--namespaces=" not in c_by_name["kube-state"]["args"]

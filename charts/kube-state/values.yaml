@@ -31,7 +31,7 @@ ports:
 replicas: 1
 
 extraArgs:
-- "--metric-labels-allowlist=namespaces=[*],pods=[*],configmaps[*]"
+- "--metric-labels-allowlist=namespaces=[*],pods=[*],configmaps=[*]"
 
 priorityClassName: ~
 
