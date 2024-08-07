@@ -67,7 +67,7 @@ class TestKubeStateDeployment:
         assert len(docs) == 1
         c_by_name = get_containers_by_name(docs[0])
         assert (
-            "--metric-labels-allowlist=namespaces=[*],pods=[*]"
+            "--metric-labels-allowlist=namespaces=[*],pods=[*],configmaps=[*]"
             in c_by_name["kube-state"]["args"]
         )
         assert "--namespaces=" not in c_by_name["kube-state"]["args"]
@@ -75,14 +75,91 @@ class TestKubeStateDeployment:
 
     def test_kube_state_deployment_singleNamespace(self, kube_version):
         """Test that global.singleNamespace=asdf renders an accurate chart."""
+        expected_role_ref = {
+            "kind": "Role",
+            "apiGroup": "rbac.authorization.k8s.io",
+            "name": "release-name-kube-state",
+        }
+        expected_subjects = [
+            {
+                "kind": "ServiceAccount",
+                "name": "release-name-kube-state",
+                "namespace": "test_namespace",
+            }
+        ]
         docs = render_chart(
             kube_version=kube_version,
             values={"global": {"singleNamespace": True}},
             namespace="test_namespace",
-            show_only=["charts/kube-state/templates/kube-state-deployment.yaml"],
+            show_only=[
+                "charts/kube-state/templates/kube-state-deployment.yaml",
+                "charts/kube-state/templates/kube-state-rolebinding.yaml",
+                "charts/kube-state/templates/kube-state-role.yaml",
+            ],
         )
+
+        assert len(docs) == 3
         c_by_name = get_containers_by_name(docs[0])
         assert "--namespaces=test_namespace" in c_by_name["kube-state"]["args"]
+        assert docs[1]["kind"] == "RoleBinding"
+        assert expected_role_ref == docs[1]["roleRef"]
+        assert expected_subjects == docs[1]["subjects"]
+        assert docs[2]["kind"] == "Role"
+
+    def test_kube_state_deployment_namespace_pools(self, kube_version):
+        """Test that global.features.namespacePools.enabled=true renders an accurate chart."""
+        namespace_pools_list = ["test-1", "test-2", "test-3"]
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "features": {
+                        "namespacePools": {
+                            "enabled": True,
+                            "namespaces": {"names": namespace_pools_list},
+                        }
+                    }
+                }
+            },
+            namespace="test_namespace",
+            show_only=[
+                "charts/kube-state/templates/kube-state-deployment.yaml",
+                "charts/kube-state/templates/kube-state-rolebinding.yaml",
+                "charts/kube-state/templates/kube-state-role.yaml",
+            ],
+        )
+
+        assert len(docs) == 9
+        c_by_name = get_containers_by_name(docs[0])
+        assert (
+            "--namespaces=test-1,test-2,test-3,test_namespace"
+            in c_by_name["kube-state"]["args"]
+        )
+        roles_namespace_pools_list = ["test-1", "test-2", "test-3", "test_namespace"]
+        for i in range(1, 5):
+            role_binding = docs[i]
+            expected_subject = {
+                "kind": "ServiceAccount",
+                "name": "release-name-kube-state",
+                "namespace": "test_namespace",
+            }
+            expected_role = {
+                "apiGroup": "rbac.authorization.k8s.io",
+                "kind": "Role",
+                "name": "release-name-kube-state",
+            }
+            assert role_binding["kind"] == "RoleBinding"
+            assert (
+                role_binding["metadata"]["namespace"]
+                == roles_namespace_pools_list[i - 5]
+            )
+            assert role_binding["roleRef"] == expected_role
+            assert role_binding["subjects"][0] == expected_subject
+
+        for i in range(5, 9):
+            role = docs[i]
+            assert role["kind"] == "Role"
+            assert role["metadata"]["namespace"] == roles_namespace_pools_list[i - 5]
 
     def test_kube_state_default_collectors(self, kube_version):
         collector_resource_args = "--resources=daemonsets,leases,namespaces,nodes,configmaps,cronjobs,deployments,endpoints,horizontalpodautoscalers,ingresses,jobs,limitranges,networkpolicies,persistentvolumeclaims,poddisruptionbudgets,pods,replicasets,replicationcontrollers,resourcequotas,secrets,services,statefulsets"
@@ -95,7 +172,7 @@ class TestKubeStateDeployment:
             ],
         )
         c_by_name = get_containers_by_name(docs[1])
-        assert len(docs[0]["rules"]) == 23
+        assert len(docs[0]["rules"]) == 22
         assert c_by_name["kube-state"]["args"][0] == collector_resource_args
 
     def test_kube_state_specific_collector_enabled(self, kube_version):

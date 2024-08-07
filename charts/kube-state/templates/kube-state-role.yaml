@@ -1,18 +1,32 @@
 ################################
 ## Kube State Role/ClusterRole
 #################################
-{{- $singleNamespace := .Values.global.singleNamespace }}
-{{- if .Values.global.rbacEnabled }}
+{{- $useRoles := or .Values.global.features.namespacePools.enabled .Values.global.singleNamespace }}
+{{- $useClusterRoles := and .Values.global.rbacEnabled .Values.global.clusterRoles (not $useRoles )}}
+{{- $shouldCreateResources := and .Values.global.rbacEnabled (or .Values.global.clusterRoles .Values.global.features.namespacePools.enabled) }}
+{{- if $shouldCreateResources }}
+{{- $namespaces := .Values.global.features.namespacePools.namespaces.names }}
+{{- if $useClusterRoles }}
+  {{- $namespaces = list .Release.Namespace}}
+{{- else  }}
+  {{- $namespaces = append $namespaces .Release.Namespace }}
+{{- end }}
+
+{{- range $i, $namespaceName := $namespaces -}}
+---
 apiVersion: {{ template "apiVersion.rbac" . }}
-kind: {{ if $singleNamespace }}Role{{ else }}ClusterRole{{ end }}
+kind: {{ if $useClusterRoles }}ClusterRole{{ else }}Role{{ end }}
 metadata:
-  name: {{ template "kube-state.fullname" . }}
+  name: {{ template "kube-state.fullname" $ }}
+  {{- if not $useClusterRoles }}
+  namespace: {{ $namespaceName }}
+  {{- end }}
   labels:
     tier: monitoring
-    component: {{ template "kube-state.name" . }}
-    chart: {{ template "kube-state.chart" . }}
-    release: {{ .Release.Name }}
-    heritage: {{ .Release.Service }}
+    component: {{ $.Chart.Name }}
+    chart: {{ $.Chart.Name }}-{{ $.Chart.Version }}
+    release:  {{ $.Release.Name }}
+    heritage: {{ $.Release.Service }}
 rules:
 {{ if has "certificatesigningrequests" $.Values.collectors }}
 - apiGroups: ["certificates.k8s.io"]
@@ -152,25 +166,19 @@ rules:
   - storageclasses
   verbs: ["list", "watch"]
 {{ end -}}
-{{ if has "leases" $.Values.collectors }}
-- apiGroups: ["coordination.k8s.io"]
-  resources:
-  - leases
-  verbs: ["list", "watch"]
-{{ end -}}
-{{- if not $singleNamespace }}
+{{- if not $useRoles }}
 {{ if has "nodes" $.Values.collectors }}
 - apiGroups: [""]
   resources:
   - nodes
   verbs: ["list", "watch"]
 {{ end -}}
-{{ if has "namespaces" $.Values.collectors }}
+{{ if and (has "namespaces" $.Values.collectors) (not $.Values.global.disableManageClusterScopedResources) }}
 - apiGroups: [""]
   resources:
   - namespaces
   verbs: ["list", "watch"]
-{{ end -}}
+{{- end }}
 {{ if has "persistentvolumes" $.Values.collectors }}
 - apiGroups: [""]
   resources:
@@ -189,5 +197,6 @@ rules:
   - daemonsets
   verbs: ["list", "watch"]
 {{ end -}}
+{{- end }}
 {{- end }}
 {{- end }}
