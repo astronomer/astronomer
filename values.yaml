@@ -27,7 +27,7 @@ global:
     containerdnodeAffinitys: []
     certCopier:
       repository: quay.io/astronomer/ap-base
-      tag: 3.18.7-1
+      tag: 3.18.8
       pullPolicy: IfNotPresent
     priorityClassName: ~
   # Global flag to enable to user to enable/disable Astronomer platform
@@ -139,7 +139,7 @@ global:
   loggingSidecar:
     enabled: false
     name: sidecar-log-consumer
-    image: quay.io/astronomer/ap-vector:0.38.0-1
+    image: quay.io/astronomer/ap-vector:0.40.0-1
     customConfig: false
     indexPattern: ~
     extraEnv: []
