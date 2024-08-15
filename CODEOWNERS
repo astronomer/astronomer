@@ -1,2 +1,2 @@
-*            @astronomer/maintainers-astronomer
-*.md         @astronomer/maintainers-astronomer @astronomer/docs
+*    @astronomer/astronomer-software
+*.md @astronomer/maintainers-astronomer @astronomer/docs
