@@ -3,16 +3,16 @@ timestamp=`date '+%d/%m/%Y %H:%M:%S'`
 # Put the name of the astronomer ASTRONOMER_NAMESPACE below
 #export ASTRONOMER_NAMESPACE=astronomer
 #export DIR="/tmp"
-#export BASEDOMAIN=nandlal51.astro-cre.com 
+#export BASEDOMAIN=example.astro-cre.com 
 echo "****Example to Run This Script:****
 
 Enter your Astronomer Namespace Name: (This is the namespace where all core Astronomer components like Houston, Commander, Registry, etc., are running)
 astronomer <============ 1
 Enter the directory path where you want to save your exported log files:
 /tmp     <============ 2
-If you have a test cluster with the URL https://app.cre-software-01.astro-cre.com, then your base domain would be cre-software-01.astro-cre.com.
+If you have a test cluster with the URL https://app.example.astro-cre.com, then your base domain would be example.astro-cre.com.
 Enter your base domain:
-cre-software-01.astro-cre.com  <============ 3
+example.astro-cre.com  <============ 3
 
 ****
 
@@ -22,8 +22,9 @@ You can refer to the above example as a guide when entering values for your envi
 echo "Enter your Astronomer Namespace Name:"
 read ASTRONOMER_NAMESPACE
 echo "Enter the path of directory where you want to keep your log files exported:"
-read DI
-export DIR=$DI/\astro_logs
+read LOG_DIR
+export DIR=$LOG_DIR/astro_logs
+
 echo "If had a test cluster with the URL https://app.xyz.astro-cre.com then my base domain is xyz.astro-cre.com"
 echo "what is your basedomain:"
 read BASEDOMAIN
@@ -39,8 +40,8 @@ export ASTRONOMER_RELEASE=$(helm ls -A|grep -i "$ASTRONOMER_NAMESPACE"|head -n1 
 #export Ticket=12149
 #export mail="nandlalyadav57@yahoo.in"
 #Kinfly set base domain info for your cluster 
-##For e.g. I had a test cluster with the URL ```https://app.nandlal51.astro-cre.com`then my base domain is ```nandlal51.astro-cre.com``` ###
-#export BASEDOMAIN=nandlal51.astro-cre.com     <<<<MAKE SURE TO LOGIN ON ASTRO CLI>>>>>>>>>>>>>
+##For e.g. I had a test cluster with the URL ```https://app.example.astro-cre.com`then my base domain is ```example.astro-cre.com``` ###
+#export BASEDOMAIN=example.astro-cre.com     <<<<MAKE SURE TO LOGIN ON ASTRO CLI>>>>>>>>>>>>>
 #astro auth login $BASEDOMAIN
 #export Release_Name=$(echo $NS| cut -c 12-)
 #####====================================================================================================================================================#####
@@ -56,7 +57,7 @@ echo "====> Your Base Domain is $BASEDOMAIN.This means you should access your As
 #echo "Mail would be sent to $mail using mutt & sendmail package in linux.If you don't have the package you can install it else you can simple attach the logs to the ticket."
 #####====================================================================================================================================================#####
 echo "====> cleaning any older $DIR directory to avoid script failure"
-rm -rf $DI/\astro_logs
+rm -rf $LOG_DIR/\astro_logs
 echo "====> Creating log file directory $DIR."
 mkdir -p "$DIR"
 mkdir -p "$DIR/$ASTRONOMER_NAMESPACE/Deployment_logs"
