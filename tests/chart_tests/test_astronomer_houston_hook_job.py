@@ -102,3 +102,6 @@ class TestHoustonHookJob:
         assert c_by_name["houston-db-migrations-job"]["securityContext"] == {
             "runAsNonRoot": True
         }
+	assert "resources" in c_by_name["wait-for-db"]
+    	assert "resources" in c_by_name["houston-bootstrapper"]
+    	assert "resources" in c_by_name["houston-db-migrations-job"]
