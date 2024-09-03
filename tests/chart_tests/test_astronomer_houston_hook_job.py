@@ -126,7 +126,9 @@ class TestHoustonHookJob:
         }
         }
 
-        docs_overridden = render_chart(kube_version=kube_version, values=overridden_values, 
+        value={"astronomer":{"houston": {"resources":overridden_resources}}}
+
+        docs_overridden = render_chart(kube_version=kube_version, values=value, 
                                        show_only=['charts/astronomer/templates/houston/helm-hooks/houston-db-migration-job.yaml'])
         assert len(docs_overridden) == 1
         c_by_name_overridden = get_containers_by_name(docs_overridden[0], include_init_containers=True)
