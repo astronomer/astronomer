@@ -113,24 +113,35 @@ class TestHoustonHookJob:
         assert "resources" in c_by_name["wait-for-db"]
         assert "resources" in c_by_name["houston-bootstrapper"]
         assert "resources" in c_by_name["houston-db-migrations-job"]
- 
 
     def test_db_migration_job_custom_resources(self, kube_version):
         """Test Db Migration Job with customer resources."""
 
         overridden_resources = {
-            'requests': {'cpu': '300m', 'memory': '300Mi'},
-            'limits': {'cpu': '700m', 'memory': '700Mi'}
+            "requests": {"cpu": "300m", "memory": "300Mi"},
+            "limits": {"cpu": "700m", "memory": "700Mi"},
         }
 
-        value={"astronomer":{"houston": {"resources":overridden_resources}}}
+        value = {"astronomer": {"houston": {"resources": overridden_resources}}}
 
-        docs_overridden = render_chart(kube_version=kube_version, values=value, 
-                                       show_only=['charts/astronomer/templates/houston/helm-hooks/houston-db-migration-job.yaml'])
+        docs_overridden = render_chart(
+            kube_version=kube_version,
+            values=value,
+            show_only=[
+                "charts/astronomer/templates/houston/helm-hooks/houston-db-migration-job.yaml"
+            ],
+        )
         assert len(docs_overridden) == 1
-        c_by_name_overridden = get_containers_by_name(docs_overridden[0], include_init_containers=True)
+        c_by_name_overridden = get_containers_by_name(
+            docs_overridden[0], include_init_containers=True
+        )
 
-        assert c_by_name_overridden['wait-for-db']['resources'] == overridden_resources
-        assert c_by_name_overridden['houston-bootstrapper']['resources'] == overridden_resources
-        assert c_by_name_overridden['houston-db-migrations-job']['resources'] == overridden_resources
-
+        assert c_by_name_overridden["wait-for-db"]["resources"] == overridden_resources
+        assert (
+            c_by_name_overridden["houston-bootstrapper"]["resources"]
+            == overridden_resources
+        )
+        assert (
+            c_by_name_overridden["houston-db-migrations-job"]["resources"]
+            == overridden_resources
+        )
