@@ -85,6 +85,14 @@ electionId: ingress-controller-leader
 # Enables the annotation validation feature
 enableAnnotationValidations: false
 
+# This must be used together with service annotation service.kubernetes.io/topology-mode="auto"
+enableTopologyAwareRouting: false
+
+disableLeaderElection: false
+
+# -- Duration a leader election is valid before it's getting re-elected, e.g. `15s`, `10m` or `1h`. (Default: 30s)
+electionTTL: ""
+
 # -- This configuration defines if Ingress Controller should allow users to set
 # their own *-snippet annotations, otherwise this is forbidden / dropped
 # when users add those annotations.

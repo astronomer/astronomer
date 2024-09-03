@@ -218,3 +218,60 @@ class TestNginx:
         )[0]
 
         assert "release-name-nginx-default-backend" == doc["metadata"]["name"]
+
+    def test_nginx_defaults(self):
+        doc = render_chart(
+            values={},
+            show_only=["charts/nginx/templates/nginx-deployment.yaml"],
+        )[0]
+
+        electionTTL = "--election-ttl"
+        electionId = "--election-id=ingress-controller-leader-release-name-nginx"
+        topologyAwareRouting = "--enable-topology-aware-routing"
+        annotationValidation = "--enable-annotation-validation"
+        disableLeaderElection = "--disable-leader-election"
+
+        c_by_name = get_containers_by_name(doc)
+
+        assert doc["spec"]["minReadySeconds"] == 0
+        assert electionId in c_by_name["nginx"]["args"]
+        assert electionTTL not in c_by_name["nginx"]["args"]
+        assert topologyAwareRouting not in c_by_name["nginx"]["args"]
+        assert annotationValidation not in c_by_name["nginx"]["args"]
+        assert disableLeaderElection not in c_by_name["nginx"]["args"]
+
+    def test_nginx_min_ready_seconds_overrides(self):
+        minReadySeconds = 300
+        doc = render_chart(
+            values={"nginx": {"minReadySeconds": minReadySeconds}},
+            show_only=["charts/nginx/templates/nginx-deployment.yaml"],
+        )[0]
+
+        assert doc["spec"]["minReadySeconds"] == minReadySeconds
+
+    def test_nginx_election_ttl_overrides(self):
+        doc = render_chart(
+            values={"nginx": {"electionTTL": "30s"}},
+            show_only=["charts/nginx/templates/nginx-deployment.yaml"],
+        )[0]
+        electionTTL = "--election-ttl=30s"
+        c_by_name = get_containers_by_name(doc)
+        assert electionTTL in c_by_name["nginx"]["args"]
+
+    def test_nginx_topology_aware_routing_overrides(self):
+        doc = render_chart(
+            values={"nginx": {"enableTopologyAwareRouting": True}},
+            show_only=["charts/nginx/templates/nginx-deployment.yaml"],
+        )[0]
+        topologyAwareRouting = "--enable-topology-aware-routing=true"
+        c_by_name = get_containers_by_name(doc)
+        assert topologyAwareRouting in c_by_name["nginx"]["args"]
+
+    def test_nginx_disable_leader_election_overrides(self):
+        doc = render_chart(
+            values={"nginx": {"disableLeaderElection": True}},
+            show_only=["charts/nginx/templates/nginx-deployment.yaml"],
+        )[0]
+        c_by_name = get_containers_by_name(doc)
+        disableLeaderElection = "--disable-leader-election=true"
+        assert disableLeaderElection in c_by_name["nginx"]["args"]
