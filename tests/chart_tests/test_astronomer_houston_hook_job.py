@@ -116,7 +116,7 @@ class TestHoustonHookJob:
  
 
     def test_db_migration_job_custom_resources(self, kube_version):
-        """ Test Db Migration Job with customer resources. """
+        """Test Db Migration Job with customer resources."""
 
         overridden_resources = {
             'requests': {'cpu': '300m', 'memory': '300Mi'},
