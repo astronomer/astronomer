@@ -32,6 +32,11 @@ class TestHoustonHookJob:
         assert c_by_name["post-upgrade-update-resource-strategy"][
             "securityContext"
         ] == {"runAsNonRoot": True}
+<<<<<<< HEAD
+=======
+
+        assert "resources" in c_by_name["post-upgrade-update-resource-strategy"]
+>>>>>>> 2fcb135d (Adding resources changes to houston-au-strategy and test improvements)
 
     def test_upgrade_deployments_job_defaults(self, kube_version):
         """Test Upgrade Deployments Job defaults."""
@@ -104,6 +109,40 @@ class TestHoustonHookJob:
         }
 
         assert c_by_name["houston-db-migrations-job"]["args"] == ["yarn", "migrate"]
+<<<<<<< HEAD
+=======
+
+        assert c_by_name["houston-db-migrations-job"]["securityContext"] == {
+            "runAsNonRoot": True
+        }
+        assert "resources" in c_by_name["wait-for-db"]
+        assert "resources" in c_by_name["houston-bootstrapper"]
+        assert "resources" in c_by_name["houston-db-migrations-job"]
+
+
+        overridden_values = {
+            'houston': {
+                'resources': {
+                    'requests': {'cpu': '300m', 'memory': '300Mi'},
+                    'limits': {'cpu': '700m', 'memory': '700Mi'}
+                }
+            }
+        }
+
+        docs_overridden = render_chart(kube_version=kube_version, values=overridden_values, 
+                                       show_only=['charts/astronomer/templates/houston/helm-hooks/houston-db-migration-job.yaml'])
+        assert len(docs_overridden) == 1
+        c_by_name_overridden = get_containers_by_name(docs_overridden[0], include_init_containers=True)
+
+        overridden_resources = {
+            'requests': {'cpu': '300m', 'memory': '300Mi'},
+            'limits': {'cpu': '700m', 'memory': '700Mi'}
+        }
+
+        assert c_by_name_overridden['wait-for-db']['resources'] == overridden_resources
+        assert c_by_name_overridden['houston-bootstrapper']['resources'] == overridden_resources
+        assert c_by_name_overridden['houston-db-migrations-job']['resources'] == overridden_resources 
+>>>>>>> 2fcb135d (Adding resources changes to houston-au-strategy and test improvements)
 
         assert c_by_name["houston-db-migrations-job"]["securityContext"] == {
             "runAsNonRoot": True
