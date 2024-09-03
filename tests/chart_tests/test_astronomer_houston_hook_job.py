@@ -139,5 +139,3 @@ class TestHoustonHookJob:
         assert c_by_name["wait-for-db"]["resources"] == overrides
         assert c_by_name["houston-bootstrapper"]["resources"] == overrides
         assert c_by_name["houston-db-migrations-job"]["resources"] == overrides
-
-
