@@ -97,8 +97,7 @@ spec:
           imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
           args: ["yarn", "migrate"]
           securityContext: {{ toYaml .Values.securityContext | nindent 12 }}
-          resources:
-{{ toYaml .Values.houston.resources | indent 12 }}
+          resources: {{ toYaml .Values.houston.resources | nindent 12 }}
           volumeMounts:
           {{- include "houston_volume_mounts" . | indent 12 }}
           {{- include "custom_ca_volume_mounts" . | indent 12 }}
