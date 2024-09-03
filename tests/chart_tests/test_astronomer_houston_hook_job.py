@@ -115,20 +115,31 @@ class TestHoustonHookJob:
         assert "resources" in c_by_name["houston-db-migrations-job"]
 
         overridden_resources = {
-            'requests': {'cpu': '300m', 'memory': '300Mi'},
-            'limits': {'cpu': '700m', 'memory': '700Mi'}
+            "astronomer":{
+                "houston":{
+                    "resources":{
+                        'requests': {'cpu': '300m', 'memory': '300Mi'},
+                        'limits': {'cpu': '700m', 'memory': '700Mi'}
+
+                    }
+                }
+
+            }
         }
 
-        value={"astronomer":{"houston": {"resources":overridden_resources}}}
-
+        #value={"astronomer":{"houston": {"resources":overridden_resources}}}
+        value = overridden_resources
         docs_overridden = render_chart(kube_version=kube_version, values=value, 
                                        show_only=['charts/astronomer/templates/houston/helm-hooks/houston-db-migration-job.yaml'])
         assert len(docs_overridden) == 1
         c_by_name_overridden = get_containers_by_name(docs_overridden[0], include_init_containers=True)
 
-        
+        overridden_resources_values = {
+            'requests': {'cpu': '300m', 'memory': '300Mi'},
+            'limits': {'cpu': '700m', 'memory': '700Mi'}
+        }
 
-        assert c_by_name_overridden['wait-for-db']['resources'] == overridden_resources
-        assert c_by_name_overridden['houston-bootstrapper']['resources'] == overridden_resources
-        assert c_by_name_overridden['houston-db-migrations-job']['resources'] == overridden_resources 
+        assert c_by_name_overridden['wait-for-db']['resources'] == overridden_resources_values
+        assert c_by_name_overridden['houston-bootstrapper']['resources'] == overridden_resources_values
+        assert c_by_name_overridden['houston-db-migrations-job']['resources'] == overridden_resources_values 
 
