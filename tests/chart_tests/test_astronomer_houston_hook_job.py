@@ -145,4 +145,5 @@ class TestHoustonHookJob:
             c_by_name_overridden["houston-db-migrations-job"]["resources"]
             == overridden_resources
         )
-#EOF
+
+
