@@ -11,12 +11,8 @@ class TestHoustonCronJobAstroRuntimeUpdates:
     def test_cronjob_runtime_updates_enabled(self, kube_version):
         docs = render_chart(
             kube_version=kube_version,
-            values={
-                "astronomer": {"houston": {"updateRuntimeCheck": {"enabled": True}}}
-            },
-            show_only=[
-                "charts/astronomer/templates/houston/cronjobs/houston-check-runtime-updates.yaml"
-            ],
+            values={"astronomer": {"houston": {"updateRuntimeCheck": {"enabled": True}}}},
+            show_only=["charts/astronomer/templates/houston/cronjobs/houston-check-runtime-updates.yaml"],
         )
 
         assert len(docs) == 1
@@ -30,13 +26,9 @@ class TestHoustonCronJobAstroRuntimeUpdates:
             "check-runtime-updates",
             "--url=https://updates.astronomer.io/astronomer-runtime",
         ]
-        assert job_container_by_name["update-check"]["securityContext"] == {
-            "runAsNonRoot": True
-        }
+        assert job_container_by_name["update-check"]["securityContext"] == {"runAsNonRoot": True}
 
-    def test_cronjob_runtime_updates_enabled_with_securityContext_overrides(
-        self, kube_version
-    ):
+    def test_cronjob_runtime_updates_enabled_with_securityContext_overrides(self, kube_version):
         docs = render_chart(
             kube_version=kube_version,
             values={
@@ -45,9 +37,7 @@ class TestHoustonCronJobAstroRuntimeUpdates:
                     "houston": {"updateRuntimeCheck": {"enabled": True}},
                 }
             },
-            show_only=[
-                "charts/astronomer/templates/houston/cronjobs/houston-check-runtime-updates.yaml"
-            ],
+            show_only=["charts/astronomer/templates/houston/cronjobs/houston-check-runtime-updates.yaml"],
         )
 
         assert len(docs) == 1
@@ -69,12 +59,8 @@ class TestHoustonCronJobAstroRuntimeUpdates:
     def test_cronjob_runtime_updates_disabled(self, kube_version):
         docs = render_chart(
             kube_version=kube_version,
-            values={
-                "astronomer": {"houston": {"updateRuntimeCheck": {"enabled": False}}}
-            },
-            show_only=[
-                "charts/astronomer/templates/houston/cronjobs/houston-check-runtime-updates.yaml"
-            ],
+            values={"astronomer": {"houston": {"updateRuntimeCheck": {"enabled": False}}}},
+            show_only=["charts/astronomer/templates/houston/cronjobs/houston-check-runtime-updates.yaml"],
         )
 
         assert len(docs) == 0

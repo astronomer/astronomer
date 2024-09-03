@@ -12,9 +12,7 @@ if not (namespace := getenv("NAMESPACE")):
     namespace = "astronomer"
 
 if not (release_name := getenv("RELEASE_NAME")):
-    print(
-        "RELEASE_NAME env var is not present, assuming 'astronomer' is the release name"
-    )
+    print("RELEASE_NAME env var is not present, assuming 'astronomer' is the release name")
     release_name = "astronomer"
 
 
@@ -63,17 +61,13 @@ def prometheus():
     """
 
     pod = f"{release_name}-prometheus-0"
-    yield testinfra.get_host(
-        f"kubectl://{pod}?container=prometheus&namespace={namespace}"
-    )
+    yield testinfra.get_host(f"kubectl://{pod}?container=prometheus&namespace={namespace}")
 
 
 @pytest.fixture(scope="function")
 def es_master():
     pod = f"{release_name}-elasticsearch-master-0"
-    yield testinfra.get_host(
-        f"kubectl://{pod}?container=es-master&namespace={namespace}"
-    )
+    yield testinfra.get_host(f"kubectl://{pod}?container=es-master&namespace={namespace}")
 
 
 @pytest.fixture(scope="function")
@@ -84,12 +78,8 @@ def es_data():
 
 @pytest.fixture(scope="function")
 def es_client(core_v1_client):
-    pod = get_pod_by_label_selector(
-        core_v1_client, "component=elasticsearch,role=client"
-    )
-    yield testinfra.get_host(
-        f"kubectl://{pod}?container=es-client&namespace={namespace}"
-    )
+    pod = get_pod_by_label_selector(core_v1_client, "component=elasticsearch,role=client")
+    yield testinfra.get_host(f"kubectl://{pod}?container=es-client&namespace={namespace}")
 
 
 @pytest.fixture(scope="session")
@@ -112,16 +102,10 @@ def core_v1_client(in_cluster=False):
     yield get_core_v1_client(in_cluster)
 
 
-def get_pod_by_label_selector(
-    core_v1_client, label_selector, pod_namespace=namespace
-) -> str:
+def get_pod_by_label_selector(core_v1_client, label_selector, pod_namespace=namespace) -> str:
     """Return the name of a pod found by label selector."""
-    pods = core_v1_client.list_namespaced_pod(
-        pod_namespace, label_selector=label_selector
-    ).items
-    assert (
-        len(pods) > 0
-    ), f"Expected to find at least one pod with labels '{label_selector}'"
+    pods = core_v1_client.list_namespaced_pod(pod_namespace, label_selector=label_selector).items
+    assert len(pods) > 0, f"Expected to find at least one pod with labels '{label_selector}'"
     return pods[0].metadata.name
 
 
@@ -146,9 +130,5 @@ def get_pod_running_containers(pod_namespace=namespace):
 
 @pytest.fixture(scope="function")
 def kibana_index_pod_client(core_v1_client):
-    pod = get_pod_by_label_selector(
-        core_v1_client, "component=kibana-default-index,tier=logging"
-    )
-    yield testinfra.get_host(
-        f"kubectl://{pod}?container=kibana-default-index&namespace={namespace}"
-    )
+    pod = get_pod_by_label_selector(core_v1_client, "component=kibana-default-index,tier=logging")
+    yield testinfra.get_host(f"kubectl://{pod}?container=kibana-default-index&namespace={namespace}")

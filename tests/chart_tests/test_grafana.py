@@ -84,9 +84,7 @@ class TestGrafanaDeployment:
         """Test that the grafana-deployment renders with the expected securityContext."""
         docs = render_chart(
             kube_version=kube_version,
-            values={
-                "grafana": {"securityContext": {"runAsNonRoot": True, "runAsUser": 467}}
-            },
+            values={"grafana": {"securityContext": {"runAsNonRoot": True, "runAsUser": 467}}},
             show_only=[DEPLOYMENT_FILE],
         )
 

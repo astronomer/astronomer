@@ -24,15 +24,10 @@ def test_log4shell(kube_version):
         ],
     )
 
-    containers = [
-        c for doc in docs for c in doc["spec"]["template"]["spec"]["containers"]
-    ]
+    containers = [c for doc in docs for c in doc["spec"]["template"]["spec"]["containers"]]
 
     # Assert that all containers contain at least one ES_JAVA_OPTS env var
-    assert all(
-        any(env_var["name"] == "ES_JAVA_OPTS" for env_var in c["env"])
-        for c in containers
-    )
+    assert all(any(env_var["name"] == "ES_JAVA_OPTS" for env_var in c["env"]) for c in containers)
 
     # Assert that all ES_JAVA_OPTS env vars in all containers have the string -Dlog4j2.formatMsgNoLookups=true
     assert all(

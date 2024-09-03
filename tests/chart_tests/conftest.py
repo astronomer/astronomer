@@ -30,9 +30,7 @@ def upgrade_helm(tmp_path_factory, worker_id):
 
     def _upgrade_helm():
         try:
-            subprocess.check_output(
-                "helm repo add stable --force-update https://charts.helm.sh/stable/".split()
-            )
+            subprocess.check_output("helm repo add stable --force-update https://charts.helm.sh/stable/".split())
             # The following command may modify any requirements.yaml with updated metadata
             subprocess.check_output(
                 f"find {git_root_dir} -type f -name requirements.yaml -print -execdir helm dep update ;".split()

@@ -29,32 +29,18 @@ class TestIngress:
         if minor >= 19:
             assert doc["apiVersion"] == "networking.k8s.io/v1"
             assert "release-name-houston" in [
-                name[0]
-                for name in jmespath.search(
-                    "spec.rules[*].http.paths[*].backend.service.name", doc
-                )
+                name[0] for name in jmespath.search("spec.rules[*].http.paths[*].backend.service.name", doc)
             ]
             assert "houston-http" in [
-                port[0]
-                for port in jmespath.search(
-                    "spec.rules[*].http.paths[*].backend.service.port.name", doc
-                )
+                port[0] for port in jmespath.search("spec.rules[*].http.paths[*].backend.service.port.name", doc)
             ]
 
         if minor < 19:
             assert doc["apiVersion"] == "networking.k8s.io/v1beta1"
             assert "release-name-houston" in [
-                name[0]
-                for name in jmespath.search(
-                    "spec.rules[*].http.paths[*].backend.serviceName", doc
-                )
+                name[0] for name in jmespath.search("spec.rules[*].http.paths[*].backend.serviceName", doc)
             ]
-            assert "houston-http" in [
-                port[0]
-                for port in jmespath.search(
-                    "spec.rules[*].http.paths[*].backend.servicePort", doc
-                )
-            ]
+            assert "houston-http" in [port[0] for port in jmespath.search("spec.rules[*].http.paths[*].backend.servicePort", doc)]
 
     def test_protect_houston_internal_urls(self, kube_version):
         docs = render_chart(
@@ -80,21 +66,11 @@ class TestIngress:
         }
         docs = render_chart(
             kube_version=kube_version,
-            values={
-                "astronomer": {
-                    "houston": {"ingress": {"annotation": custom_annotations}}
-                }
-            },
+            values={"astronomer": {"houston": {"ingress": {"annotation": custom_annotations}}}},
             show_only=["charts/astronomer/templates/houston/ingress.yaml"],
         )
         assert len(docs) == 1
         doc = docs[0]
         annotations = jmespath.search("metadata.annotations", doc)
-        assert (
-            annotations["nginx.ingress.kubernetes.io/upstream-keepalive-connections"]
-            == "9999"
-        )
-        assert (
-            annotations["nginx.ingress.kubernetes.io/upstream-keepalive-timeout"]
-            == "7777"
-        )
+        assert annotations["nginx.ingress.kubernetes.io/upstream-keepalive-connections"] == "9999"
+        assert annotations["nginx.ingress.kubernetes.io/upstream-keepalive-timeout"] == "7777"

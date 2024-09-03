@@ -11,9 +11,7 @@ class TestHoustonBootstrapServiceAccount:
     def test_houston_bootstrap_serviceaccount_defaults(self, kube_version):
         docs = render_chart(
             kube_version=kube_version,
-            show_only=[
-                "charts/astronomer/templates/houston/api/houston-bootstrap-serviceaccount.yaml"
-            ],
+            show_only=["charts/astronomer/templates/houston/api/houston-bootstrap-serviceaccount.yaml"],
         )
 
         assert len(docs) == 1
