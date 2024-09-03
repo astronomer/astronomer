@@ -117,12 +117,12 @@ class TestHoustonHookJob:
     def test_db_migration_job_custom_resources(self, kube_version):
         """Test Db Migration Job with customer resources."""
 
-        overridden_resources = {
+        overrides = {
             "requests": {"cpu": "300m", "memory": "300Mi"},
             "limits": {"cpu": "700m", "memory": "700Mi"},
         }
 
-        value = {"astronomer": {"houston": {"resources": overridden_resources}}}
+        value = {"astronomer": {"houston": {"resources": overrides}}}
 
         docs_overridden = render_chart(
             kube_version=kube_version,
@@ -132,16 +132,12 @@ class TestHoustonHookJob:
             ],
         )
         assert len(docs_overridden) == 1
-        c_by_name_overridden = get_containers_by_name(
+        c_by_name = get_containers_by_name(
             docs_overridden[0], include_init_containers=True
         )
 
-        assert c_by_name_overridden["wait-for-db"]["resources"] == overridden_resources
-        assert (
-            c_by_name_overridden["houston-bootstrapper"]["resources"]
-            == overridden_resources
-        )
-        assert (
-            c_by_name_overridden["houston-db-migrations-job"]["resources"]
-            == overridden_resources
-        )
+        assert c_by_name["wait-for-db"]["resources"] == overrides
+        assert c_by_name["houston-bootstrapper"]["resources"] == overrides
+        assert c_by_name["houston-db-migrations-job"]["resources"] == overrides
+
+
