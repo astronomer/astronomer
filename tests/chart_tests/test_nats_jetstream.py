@@ -30,9 +30,7 @@ class TestNatsJetstream:
         assert prod["nats"] == {"jetStreamEnabled": True, "tlsEnabled": False}
         nats_cm = docs[2]["data"]["nats.conf"]
         assert "jetstream" in nats_cm
-        assert {"runAsUser": 1000, "runAsNonRoot": True} == docs[6]["spec"]["template"][
-            "spec"
-        ]["containers"][0]["securityContext"]
+        assert {"runAsUser": 1000, "runAsNonRoot": True} == docs[6]["spec"]["template"]["spec"]["containers"][0]["securityContext"]
 
     def test_nats_statefulset_with_jetstream_and_tls(self, kube_version):
         """Test Nats with jetstream config."""
@@ -58,14 +56,8 @@ class TestNatsJetstream:
 
         obj_by_name = {f"{x['kind']}-{x['metadata']['name']}": x for x in docs}
 
-        jetStreamCertPrefix = (
-            "/etc/houston/jetstream/tls/release-name-jetstream-tls-certificate"
-        )
-        prod = yaml.safe_load(
-            obj_by_name["ConfigMap-release-name-houston-config"]["data"][
-                "production.yaml"
-            ]
-        )
+        jetStreamCertPrefix = "/etc/houston/jetstream/tls/release-name-jetstream-tls-certificate"
+        prod = yaml.safe_load(obj_by_name["ConfigMap-release-name-houston-config"]["data"]["production.yaml"])
         assert prod["nats"] == {
             "jetStreamEnabled": True,
             "tlsEnabled": True,
@@ -79,51 +71,31 @@ class TestNatsJetstream:
         assert {
             "name": "release-name-jetstream-tls-certificate-client-volume",
             "mountPath": "/etc/nats-certs/client/release-name-jetstream-tls-certificate-client",
-        } in obj_by_name["StatefulSet-release-name-nats"]["spec"]["template"]["spec"][
-            "containers"
-        ][
-            0
-        ][
-            "volumeMounts"
-        ]
+        } in obj_by_name["StatefulSet-release-name-nats"]["spec"]["template"]["spec"]["containers"][0]["volumeMounts"]
 
         assert {
             "name": "release-name-jetstream-tls-certificate-server-volume",
             "mountPath": "/etc/nats-certs/server/release-name-jetstream-tls-certificate",
-        } in obj_by_name["StatefulSet-release-name-nats"]["spec"]["template"]["spec"][
-            "containers"
-        ][
-            0
-        ][
-            "volumeMounts"
-        ]
+        } in obj_by_name["StatefulSet-release-name-nats"]["spec"]["template"]["spec"]["containers"][0]["volumeMounts"]
 
         assert {
             "name": "release-name-jetstream-tls-certificate-client-volume",
             "secret": {"secretName": "release-name-jetstream-tls-certificate-client"},
-        } in obj_by_name["StatefulSet-release-name-nats"]["spec"]["template"]["spec"][
-            "volumes"
-        ]
+        } in obj_by_name["StatefulSet-release-name-nats"]["spec"]["template"]["spec"]["volumes"]
 
         assert {
             "name": "release-name-jetstream-tls-certificate-server-volume",
             "secret": {"secretName": "release-name-jetstream-tls-certificate"},
-        } in obj_by_name["StatefulSet-release-name-nats"]["spec"]["template"]["spec"][
-            "volumes"
-        ]
+        } in obj_by_name["StatefulSet-release-name-nats"]["spec"]["template"]["spec"]["volumes"]
 
         nats_cm = obj_by_name["ConfigMap-release-name-nats-config"]["data"]["nats.conf"]
         assert "jetstream" in nats_cm
         assert (
-            obj_by_name["Secret-release-name-jetstream-tls-certificate"]["metadata"][
-                "name"
-            ]
+            obj_by_name["Secret-release-name-jetstream-tls-certificate"]["metadata"]["name"]
             == "release-name-jetstream-tls-certificate"
         )
         assert (
-            obj_by_name["Secret-release-name-jetstream-tls-certificate-client"][
-                "metadata"
-            ]["name"]
+            obj_by_name["Secret-release-name-jetstream-tls-certificate-client"]["metadata"]["name"]
             == "release-name-jetstream-tls-certificate-client"
         )
 
@@ -134,21 +106,17 @@ class TestNatsJetstream:
             assert {
                 "name": "nats-jetstream-client-tls-volume",
                 "mountPath": f"{jetStreamCertPrefix}-client",
-            } in obj_by_name[item]["spec"]["template"]["spec"]["containers"][0][
-                "volumeMounts"
-            ]
+            } in obj_by_name[item][
+                "spec"
+            ]["template"]["spec"]["containers"][0]["volumeMounts"]
             assert {
                 "name": "nats-jetstream-client-tls-volume",
                 "mountPath": "/usr/local/share/ca-certificates/release-name-jetstream-tls-certificate-client.crt",
                 "subPath": "ca.crt",
-            } in obj_by_name[item]["spec"]["template"]["spec"]["containers"][0][
-                "volumeMounts"
-            ]
+            } in obj_by_name[item]["spec"]["template"]["spec"]["containers"][0]["volumeMounts"]
             assert {
                 "name": "nats-jetstream-client-tls-volume",
-                "secret": {
-                    "secretName": "release-name-jetstream-tls-certificate-client"
-                },
+                "secret": {"secretName": "release-name-jetstream-tls-certificate-client"},
             } in obj_by_name[item]["spec"]["template"]["spec"]["volumes"]
 
     def test_stan_with_jetstream_enabled(self, kube_version):

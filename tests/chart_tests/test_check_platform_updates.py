@@ -12,9 +12,7 @@ class TestHoustonCronJobPlatformUpdates:
         docs = render_chart(
             kube_version=kube_version,
             values={"astronomer": {"houston": {"updateCheck": {"enabled": True}}}},
-            show_only=[
-                "charts/astronomer/templates/houston/cronjobs/houston-check-updates-cronjob.yaml"
-            ],
+            show_only=["charts/astronomer/templates/houston/cronjobs/houston-check-updates-cronjob.yaml"],
         )
 
         assert len(docs) == 1
@@ -29,9 +27,7 @@ class TestHoustonCronJobPlatformUpdates:
             "--",
             " --url=https://updates.astronomer.io/astronomer-platform",
         ]
-        assert job_container_by_name["update-check"]["securityContext"] == {
-            "runAsNonRoot": True
-        }
+        assert job_container_by_name["update-check"]["securityContext"] == {"runAsNonRoot": True}
 
     def test_cronjob_platform_updates_enabled_with_overrides(self, kube_version):
         docs = render_chart(
@@ -39,14 +35,10 @@ class TestHoustonCronJobPlatformUpdates:
             values={
                 "astronomer": {
                     "securityContext": {"allowPriviledgeEscalation": False},
-                    "houston": {
-                        "updateCheck": {"enabled": True, "schedule": "57 * * * *"}
-                    },
+                    "houston": {"updateCheck": {"enabled": True, "schedule": "57 * * * *"}},
                 }
             },
-            show_only=[
-                "charts/astronomer/templates/houston/cronjobs/houston-check-updates-cronjob.yaml"
-            ],
+            show_only=["charts/astronomer/templates/houston/cronjobs/houston-check-updates-cronjob.yaml"],
         )
 
         assert len(docs) == 1
@@ -70,9 +62,7 @@ class TestHoustonCronJobPlatformUpdates:
         docs = render_chart(
             kube_version=kube_version,
             values={"astronomer": {"houston": {"updateCheck": {"enabled": False}}}},
-            show_only=[
-                "charts/astronomer/templates/houston/cronjobs/houston-check-updates-cronjob.yaml"
-            ],
+            show_only=["charts/astronomer/templates/houston/cronjobs/houston-check-updates-cronjob.yaml"],
         )
 
         assert len(docs) == 0

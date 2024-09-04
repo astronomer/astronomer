@@ -66,10 +66,7 @@ class TestKubeStateDeployment:
 
         assert len(docs) == 1
         c_by_name = get_containers_by_name(docs[0])
-        assert (
-            "--metric-labels-allowlist=namespaces=[*],pods=[*],configmaps=[*]"
-            in c_by_name["kube-state"]["args"]
-        )
+        assert "--metric-labels-allowlist=namespaces=[*],pods=[*],configmaps=[*]" in c_by_name["kube-state"]["args"]
         assert "--namespaces=" not in c_by_name["kube-state"]["args"]
         assert "--namespace=" not in c_by_name["kube-state"]["args"]
 
@@ -131,10 +128,7 @@ class TestKubeStateDeployment:
 
         assert len(docs) == 9
         c_by_name = get_containers_by_name(docs[0])
-        assert (
-            "--namespaces=test-1,test-2,test-3,test_namespace"
-            in c_by_name["kube-state"]["args"]
-        )
+        assert "--namespaces=test-1,test-2,test-3,test_namespace" in c_by_name["kube-state"]["args"]
         roles_namespace_pools_list = ["test-1", "test-2", "test-3", "test_namespace"]
         for i in range(1, 5):
             role_binding = docs[i]
@@ -149,10 +143,7 @@ class TestKubeStateDeployment:
                 "name": "release-name-kube-state",
             }
             assert role_binding["kind"] == "RoleBinding"
-            assert (
-                role_binding["metadata"]["namespace"]
-                == roles_namespace_pools_list[i - 5]
-            )
+            assert role_binding["metadata"]["namespace"] == roles_namespace_pools_list[i - 5]
             assert role_binding["roleRef"] == expected_role
             assert role_binding["subjects"][0] == expected_subject
 
@@ -232,7 +223,4 @@ class TestKubeStateDeployment:
         assert len(docs) == 1
         doc = docs[0]
         assert "priorityClassName" in doc["spec"]["template"]["spec"]
-        assert (
-            "kube-state-priority-pod"
-            == doc["spec"]["template"]["spec"]["priorityClassName"]
-        )
+        assert "kube-state-priority-pod" == doc["spec"]["template"]["spec"]["priorityClassName"]

@@ -40,13 +40,8 @@ class TestPrometheusBlackBoxExporterDeployment:
         doc = docs[0]
         assert doc["kind"] == "Deployment"
         assert doc["metadata"]["name"] == "release-name-prometheus-blackbox-exporter"
-        assert (
-            doc["spec"]["selector"]["matchLabels"]["component"] == "blackbox-exporter"
-        )
-        assert (
-            doc["spec"]["template"]["metadata"]["labels"]["app"]
-            == "prometheus-blackbox-exporter"
-        )
+        assert doc["spec"]["selector"]["matchLabels"]["component"] == "blackbox-exporter"
+        assert doc["spec"]["template"]["metadata"]["labels"]["app"] == "prometheus-blackbox-exporter"
 
         c_by_name = get_containers_by_name(doc)
         assert c_by_name["blackbox-exporter"]["resources"] == {
@@ -60,9 +55,7 @@ class TestPrometheusBlackBoxExporterDeployment:
             "capabilities": {"drop": ["ALL"]},
         }
 
-    def test_prometheus_blackbox_exporter_deployment_custom_resources(
-        self, kube_version
-    ):
+    def test_prometheus_blackbox_exporter_deployment_custom_resources(self, kube_version):
         doc = render_chart(
             kube_version=kube_version,
             values={
@@ -85,15 +78,11 @@ class TestPrometheusBlackBoxExporterDeployment:
             "requests": {"cpu": "666m", "memory": "888Mi"},
         }
 
-    def test_prometheus_blackbox_exporter_deployment_custom_security_context(
-        self, kube_version
-    ):
+    def test_prometheus_blackbox_exporter_deployment_custom_security_context(self, kube_version):
         doc = render_chart(
             kube_version=kube_version,
             values={
-                "prometheus-blackbox-exporter": {
-                    "securityContext": {"runAsUser": 1000}
-                },
+                "prometheus-blackbox-exporter": {"securityContext": {"runAsUser": 1000}},
             },
             show_only=["charts/prometheus-blackbox-exporter/templates/deployment.yaml"],
         )[0]

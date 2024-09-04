@@ -42,9 +42,7 @@ class TestRegistryStatefulset:
             show_only=self.show_only,
             values={
                 "global": {"baseDomain": "example.com"},
-                "astronomer": {
-                    "registry": {"gcs": {"useKeyfile": True, "enabled": True}}
-                },
+                "astronomer": {"registry": {"gcs": {"useKeyfile": True, "enabled": True}}},
             },
         )
 
@@ -55,10 +53,7 @@ class TestRegistryStatefulset:
         assert doc["apiVersion"] == "apps/v1"
         assert doc["metadata"]["name"] == "release-name-registry"
         assert doc["spec"]["template"]["spec"]["volumes"][2]["name"] == "gcs-keyfile"
-        assert (
-            doc["spec"]["template"]["spec"]["containers"][0]["volumeMounts"][3]["name"]
-            == "gcs-keyfile"
-        )
+        assert doc["spec"]["template"]["spec"]["containers"][0]["volumeMounts"][3]["name"] == "gcs-keyfile"
 
     def test_registry_sts_with_registry_persistence_enabled(self, kube_version):
         docs = render_chart(
@@ -68,9 +63,7 @@ class TestRegistryStatefulset:
         )
 
         assert docs[0]["kind"] == "Deployment"
-        assert {"name": "data", "emptyDir": {}} in docs[0]["spec"]["template"]["spec"][
-            "volumes"
-        ]
+        assert {"name": "data", "emptyDir": {}} in docs[0]["spec"]["template"]["spec"]["volumes"]
 
     def test_registry_sts_with_registry_s3_enabled(self, kube_version):
         docs = render_chart(
@@ -80,9 +73,7 @@ class TestRegistryStatefulset:
         )
 
         assert docs[0]["kind"] == "Deployment"
-        assert {"name": "data", "emptyDir": {}} in docs[0]["spec"]["template"]["spec"][
-            "volumes"
-        ]
+        assert {"name": "data", "emptyDir": {}} in docs[0]["spec"]["template"]["spec"]["volumes"]
 
     def test_registry_sts_with_registry_gcs_enabled(self, kube_version):
         docs = render_chart(
@@ -92,9 +83,7 @@ class TestRegistryStatefulset:
         )
 
         assert docs[0]["kind"] == "Deployment"
-        assert {"name": "data", "emptyDir": {}} in docs[0]["spec"]["template"]["spec"][
-            "volumes"
-        ]
+        assert {"name": "data", "emptyDir": {}} in docs[0]["spec"]["template"]["spec"]["volumes"]
 
     def test_registry_sts_with_registry_azure_enabled(self, kube_version):
         docs = render_chart(
@@ -104,9 +93,7 @@ class TestRegistryStatefulset:
         )
 
         assert docs[0]["kind"] == "Deployment"
-        assert {"name": "data", "emptyDir": {}} in docs[0]["spec"]["template"]["spec"][
-            "volumes"
-        ]
+        assert {"name": "data", "emptyDir": {}} in docs[0]["spec"]["template"]["spec"]["volumes"]
 
     def test_registry_sts_with_podlabels(self, kube_version):
         labels = {"foo-key": "foo-value", "bar-key": "bar-value"}
@@ -123,9 +110,7 @@ class TestRegistryStatefulset:
         docs = render_chart(
             kube_version=kube_version,
             values={"global": {"privateCaCerts": ["private-root-ca"]}},
-            show_only=[
-                "charts/astronomer/templates/registry/registry-statefulset.yaml"
-            ],
+            show_only=["charts/astronomer/templates/registry/registry-statefulset.yaml"],
         )
         volume_mount_search_result = jmespath.search(
             "spec.template.spec.containers[*].volumeMounts[?name == 'private-root-ca']",
@@ -144,16 +129,12 @@ class TestRegistryStatefulset:
                 }
             ]
         ]
-        expected_volume_result = [
-            {"name": "private-root-ca", "secret": {"secretName": "private-root-ca"}}
-        ]
+        expected_volume_result = [{"name": "private-root-ca", "secret": {"secretName": "private-root-ca"}}]
 
         assert docs[0]["kind"] == "StatefulSet"
         assert volume_mount_search_result == expected_volume_mounts_result
         assert volume_search_result == expected_volume_result
-        assert {"name": "UPDATE_CA_CERTS", "value": "true"} in docs[0]["spec"][
-            "template"
-        ]["spec"]["containers"][0]["env"]
+        assert {"name": "UPDATE_CA_CERTS", "value": "true"} in docs[0]["spec"]["template"]["spec"]["containers"][0]["env"]
 
     def test_registry_privateca_enabled_with_external_backend(self, kube_version):
         docs = render_chart(
@@ -162,9 +143,7 @@ class TestRegistryStatefulset:
                 "global": {"privateCaCerts": ["private-root-ca"]},
                 "astronomer": {"registry": {"s3": {"enabled": True}}},
             },
-            show_only=[
-                "charts/astronomer/templates/registry/registry-statefulset.yaml"
-            ],
+            show_only=["charts/astronomer/templates/registry/registry-statefulset.yaml"],
         )
         volume_mount_search_result = jmespath.search(
             "spec.template.spec.containers[*].volumeMounts[?name == 'private-root-ca']",
@@ -183,12 +162,8 @@ class TestRegistryStatefulset:
                 }
             ]
         ]
-        expected_volume_result = [
-            {"name": "private-root-ca", "secret": {"secretName": "private-root-ca"}}
-        ]
+        expected_volume_result = [{"name": "private-root-ca", "secret": {"secretName": "private-root-ca"}}]
         assert docs[0]["kind"] == "Deployment"
         assert volume_mount_search_result == expected_volume_mounts_result
         assert volume_search_result == expected_volume_result
-        assert {"name": "UPDATE_CA_CERTS", "value": "true"} in docs[0]["spec"][
-            "template"
-        ]["spec"]["containers"][0]["env"]
+        assert {"name": "UPDATE_CA_CERTS", "value": "true"} in docs[0]["spec"]["template"]["spec"]["containers"][0]["env"]

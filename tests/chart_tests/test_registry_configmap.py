@@ -32,9 +32,8 @@ class Test_Registry_Configmap:
         assert doc["kind"] == "ConfigMap"
         assert doc["apiVersion"] == "v1"
         assert doc["metadata"]["name"] == "release-name-registry"
-        assert (rc := yaml.safe_load(doc["data"]["config.yml"]))
         assert (
-            rc["storage"]["s3"]["regionendpoint"]
+            yaml.safe_load(doc["data"]["config.yml"])["storage"]["s3"]["regionendpoint"]
             == "s3.us-south.cloud-object-storage.appdomain.cloud"
         )
 
@@ -51,8 +50,7 @@ class Test_Registry_Configmap:
         assert doc["kind"] == "ConfigMap"
         assert doc["apiVersion"] == "v1"
         assert doc["metadata"]["name"] == "release-name-registry"
-        assert (rc := yaml.safe_load(doc["data"]["config.yml"]))
-        assert rc["log"]["level"] == "info"
+        assert yaml.safe_load(doc["data"]["config.yml"])["log"]["level"] == "info"
 
     def test_registry_configmap_with_logLevel_overrides(self, kube_version):
         """Test registry-configmap to validate log level defaults."""
@@ -67,5 +65,4 @@ class Test_Registry_Configmap:
         assert doc["kind"] == "ConfigMap"
         assert doc["apiVersion"] == "v1"
         assert doc["metadata"]["name"] == "release-name-registry"
-        assert (rc := yaml.safe_load(doc["data"]["config.yml"]))
-        assert rc["log"]["level"] == "debug"
+        assert yaml.safe_load(doc["data"]["config.yml"])["log"]["level"] == "debug"

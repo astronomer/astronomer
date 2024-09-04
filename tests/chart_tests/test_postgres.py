@@ -95,14 +95,9 @@ class TestPostgresql:
         assert len(doc) == 1
 
         assert "persistentVolumeClaimRetentionPolicy" in doc[0]["spec"]
-        assert (
-            test_persistentVolumeClaimRetentionPolicy
-            == doc[0]["spec"]["persistentVolumeClaimRetentionPolicy"]
-        )
+        assert test_persistentVolumeClaimRetentionPolicy == doc[0]["spec"]["persistentVolumeClaimRetentionPolicy"]
 
-    def test_postgresql_replication_persistentVolumeClaimRetentionPolicy(
-        self, kube_version
-    ):
+    def test_postgresql_replication_persistentVolumeClaimRetentionPolicy(self, kube_version):
         test_persistentVolumeClaimRetentionPolicy = {
             "whenDeleted": "Delete",
             "whenScaled": "Retain",
@@ -128,7 +123,4 @@ class TestPostgresql:
         assert len(doc) == 1
 
         assert "persistentVolumeClaimRetentionPolicy" in doc[0]["spec"]
-        assert (
-            test_persistentVolumeClaimRetentionPolicy
-            == doc[0]["spec"]["persistentVolumeClaimRetentionPolicy"]
-        )
+        assert test_persistentVolumeClaimRetentionPolicy == doc[0]["spec"]["persistentVolumeClaimRetentionPolicy"]
