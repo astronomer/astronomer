@@ -13,14 +13,10 @@ class TestHoustonHookJob:
         docs = render_chart(
             kube_version=kube_version,
             values={},
-            show_only=[
-                "charts/astronomer/templates/houston/helm-hooks/houston-au-strategy-job.yaml"
-            ],
+            show_only=["charts/astronomer/templates/houston/helm-hooks/houston-au-strategy-job.yaml"],
         )
         assert len(docs) == 1
         assert docs[0]["kind"] == "Job"
         assert docs[0]["metadata"]["name"] == "release-name-update-resource-strategy"
 
-        assert docs[0]["spec"]["template"]["spec"]["containers"][0]["args"] == [
-            "update-deployments-resource-mode"
-        ]
+        assert docs[0]["spec"]["template"]["spec"]["containers"][0]["args"] == ["update-deployments-resource-mode"]

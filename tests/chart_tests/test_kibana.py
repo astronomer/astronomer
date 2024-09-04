@@ -29,10 +29,7 @@ class TestKibana:
         )
         common_kibana_cronjob_test(docs)
         doc = docs[0]
-        assert (
-            "fluentd.*"
-            in doc["spec"]["template"]["spec"]["containers"][0]["command"][2]
-        )
+        assert "fluentd.*" in doc["spec"]["template"]["spec"]["containers"][0]["command"][2]
 
     def test_kibana_index_with_logging_sidecar(self, kube_version):
         """Test kibana Service with logging sidecar index."""
@@ -45,9 +42,7 @@ class TestKibana:
         )
         common_kibana_cronjob_test(docs)
         doc = docs[0]
-        assert (
-            "vector.*" in doc["spec"]["template"]["spec"]["containers"][0]["command"][2]
-        )
+        assert "vector.*" in doc["spec"]["template"]["spec"]["containers"][0]["command"][2]
 
     def test_kibana_index_disabled(self, kube_version):
         """Test kibana Service with index creation disabled."""
@@ -99,9 +94,7 @@ class TestKibana:
         )
         common_kibana_cronjob_test(docs)
         doc = docs[0]
-        assert {"runAsNonRoot": True, "runAsUser": 1000} == doc["spec"]["template"][
-            "spec"
-        ]["containers"][0]["securityContext"]
+        assert {"runAsNonRoot": True, "runAsUser": 1000} == doc["spec"]["template"]["spec"]["containers"][0]["securityContext"]
 
     def test_kibana_index_securitycontext_with_openshiftEnabled(self, kube_version):
         """Test kibana Service with index defaults."""
@@ -114,6 +107,4 @@ class TestKibana:
         )
         common_kibana_cronjob_test(docs)
         doc = docs[0]
-        assert {"runAsNonRoot": True} == doc["spec"]["template"]["spec"]["containers"][
-            0
-        ]["securityContext"]
+        assert {"runAsNonRoot": True} == doc["spec"]["template"]["spec"]["containers"][0]["securityContext"]

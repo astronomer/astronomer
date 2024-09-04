@@ -28,16 +28,12 @@ def test_default_disabled(core_v1_client):
 def test_prometheus_user(prometheus):
     """Ensure user is 'nobody'."""
     user = prometheus.check_output("whoami")
-    assert (
-        user == "nobody"
-    ), f"Expected prometheus to be running as 'nobody', not '{user}'"
+    assert user == "nobody", f"Expected prometheus to be running as 'nobody', not '{user}'"
 
 
 def test_houston_config(houston_api):
     """Make assertions about Houston's configuration."""
-    data = houston_api.check_output(
-        "echo \"config = require('config'); console.log(JSON.stringify(config))\" | node -"
-    )
+    data = houston_api.check_output("echo \"config = require('config'); console.log(JSON.stringify(config))\" | node -")
     houston_config = json.loads(data)
     assert (
         "url" not in houston_config["nats"].keys()
@@ -52,30 +48,22 @@ def test_houston_config(houston_api):
 
 
 def test_houston_can_reach_prometheus(houston_api):
-    assert houston_api.check_output(
-        "wget --timeout=5 -qO- http://astronomer-prometheus.astronomer.svc.cluster.local:9090/targets"
-    )
+    assert houston_api.check_output("wget --timeout=5 -qO- http://astronomer-prometheus.astronomer.svc.cluster.local:9090/targets")
 
 
 def test_nginx_can_reach_default_backend(nginx):
-    assert nginx.check_output(
-        "curl -s --max-time 1 http://astronomer-nginx-default-backend:8080"
-    )
+    assert nginx.check_output("curl -s --max-time 1 http://astronomer-nginx-default-backend:8080")
 
 
 def test_nginx_ssl_cache(nginx):
     """Ensure nginx default ssl cache size is 10m."""
-    assert "ssl_session_cache shared:SSL:10m;" == nginx.check_output(
-        "cat nginx.conf | grep ssl_session_cache"
-    ).replace("\t", "")
+    assert "ssl_session_cache shared:SSL:10m;" == nginx.check_output("cat nginx.conf | grep ssl_session_cache").replace("\t", "")
 
 
 @pytest.mark.flaky(reruns=20, reruns_delay=10)
 def test_prometheus_targets(prometheus):
     """Ensure all Prometheus targets are healthy."""
-    data = prometheus.check_output(
-        "wget --timeout=5 -qO- http://localhost:9090/api/v1/targets"
-    )
+    data = prometheus.check_output("wget --timeout=5 -qO- http://localhost:9090/api/v1/targets")
     targets = json.loads(data)["data"]["activeTargets"]
     for target in targets:
         assert target["health"] == "up", (
@@ -88,9 +76,7 @@ def test_prometheus_targets(prometheus):
 def test_core_dns_metrics_are_collected(prometheus):
     """Ensure CoreDNS metrics are collected."""
 
-    data = prometheus.check_output(
-        "wget --timeout=5 -qO- http://localhost:9090/api/v1/query?query=coredns_dns_requests_total"
-    )
+    data = prometheus.check_output("wget --timeout=5 -qO- http://localhost:9090/api/v1/query?query=coredns_dns_requests_total")
     parsed = json.loads(data)
     assert (
         len(parsed["data"]["result"]) > 0
@@ -99,13 +85,9 @@ def test_core_dns_metrics_are_collected(prometheus):
 
 def test_houston_metrics_are_collected(prometheus):
     """Ensure Houston metrics are collected and prefixed with 'houston_'."""
-    data = prometheus.check_output(
-        "wget --timeout=5 -qO- http://localhost:9090/api/v1/query?query=houston_up"
-    )
+    data = prometheus.check_output("wget --timeout=5 -qO- http://localhost:9090/api/v1/query?query=houston_up")
     parsed = json.loads(data)
-    assert (
-        len(parsed["data"]["result"]) > 0
-    ), f"Expected to find a metric houston_up, but we got this response:\n\n{parsed}"
+    assert len(parsed["data"]["result"]) > 0, f"Expected to find a metric houston_up, but we got this response:\n\n{parsed}"
 
 
 def test_prometheus_config_reloader_works(prometheus, core_v1_client):
@@ -115,9 +97,7 @@ def test_prometheus_config_reloader_works(prometheus, core_v1_client):
     new_scrape_interval = "31s"
 
     # get the current configmap
-    orig_cm = core_v1_client.read_namespaced_config_map(
-        "astronomer-prometheus-config", "astronomer"
-    )
+    orig_cm = core_v1_client.read_namespaced_config_map("astronomer-prometheus-config", "astronomer")
 
     prom_config = yaml.safe_load(orig_cm.data["config"])
     # modify the configmap
@@ -130,17 +110,13 @@ def test_prometheus_config_reloader_works(prometheus, core_v1_client):
 
     try:
         # update the configmap
-        core_v1_client.patch_namespaced_config_map(
-            name="astronomer-prometheus-config", namespace="astronomer", body=new_body
-        )
+        core_v1_client.patch_namespaced_config_map(name="astronomer-prometheus-config", namespace="astronomer", body=new_body)
     except ApiException as e:
         print(f"Exception when calling CoreV1Api->patch_namespaced_config_map: {e}\n")
 
     # This can take more than a minute.
     for _ in range(12):
-        data = prometheus.check_output(
-            "wget --timeout=5 -qO- http://localhost:9090/api/v1/status/config"
-        )
+        data = prometheus.check_output("wget --timeout=5 -qO- http://localhost:9090/api/v1/status/config")
         j_parsed = json.loads(data)
         y_parsed = yaml.safe_load(j_parsed["data"]["yaml"])
         if y_parsed["global"]["scrape_interval"] != "30s":
@@ -158,24 +134,18 @@ def test_prometheus_config_reloader_works(prometheus, core_v1_client):
 
     try:
         # update the configmap
-        core_v1_client.patch_namespaced_config_map(
-            name="astronomer-prometheus-config", namespace="astronomer", body=new_body
-        )
+        core_v1_client.patch_namespaced_config_map(name="astronomer-prometheus-config", namespace="astronomer", body=new_body)
     except ApiException as e:
         print(f"Exception when calling CoreV1Api->patch_namespaced_config_map: {e}\n")
 
-    assert (
-        y_parsed["global"]["scrape_interval"] != "30s"
-    ), "Expected the prometheus config file to change"
+    assert y_parsed["global"]["scrape_interval"] != "30s", "Expected the prometheus config file to change"
 
 
 @pytest.mark.skipif(
     not getenv("HELM_CHART_PATH"),
     reason="This test only works with HELM_CHART_PATH set to the path of the chart to be tested",
 )
-def test_houston_backend_secret_present_after_helm_upgrade_and_container_restart(
-    houston_api, core_v1_client
-):
+def test_houston_backend_secret_present_after_helm_upgrade_and_container_restart(houston_api, core_v1_client):
     """Test when helm upgrade occurs without Houston pods restarting that a
     Houston container restart will not miss the Houston connection backend
     secret.
@@ -202,9 +172,7 @@ def test_houston_backend_secret_present_after_helm_upgrade_and_container_restart
 
     result = houston_api.check_output("env | grep DATABASE_URL")
     # check that the connection is not reset
-    assert (
-        "postgres" in result
-    ), "Expected to find DB connection string before Houston restart"
+    assert "postgres" in result, "Expected to find DB connection string before Houston restart"
 
     # Kill houston in this pod so the container restarts
     houston_api.check_output("kill 1")
@@ -213,42 +181,30 @@ def test_houston_backend_secret_present_after_helm_upgrade_and_container_restart
     time.sleep(100)
 
     # we can use core_v1_client instead of fixture, because we restarted pod so houston_api still ref to old pod id.
-    pod = core_v1_client.list_namespaced_pod(
-        namespace, label_selector="component=houston"
-    ).items[0]
-    houston_api_new = testinfra.get_host(
-        f"kubectl://{pod.metadata.name}?container=houston&namespace={namespace}"
-    )
+    pod = core_v1_client.list_namespaced_pod(namespace, label_selector="component=houston").items[0]
+    houston_api_new = testinfra.get_host(f"kubectl://{pod.metadata.name}?container=houston&namespace={namespace}")
     result = houston_api_new.check_output("env | grep DATABASE_URL")
 
     # check that the connection is not reset
-    assert (
-        "postgres" in result
-    ), "Expected to find DB connection string after Houston restart"
+    assert "postgres" in result, "Expected to find DB connection string after Houston restart"
 
 
 def test_cve_2021_44228_es_client(es_client):
     """Ensure the running es process has -Dlog4j2.formatMsgNoLookups=true
     configured."""
-    assert "-Dlog4j2.formatMsgNoLookups=true" in es_client.check_output(
-        "/usr/share/elasticsearch/jdk/bin/jps -lv"
-    )
+    assert "-Dlog4j2.formatMsgNoLookups=true" in es_client.check_output("/usr/share/elasticsearch/jdk/bin/jps -lv")
 
 
 def test_cve_2021_44228_es_data(es_data):
     """Ensure the running es process has -Dlog4j2.formatMsgNoLookups=true
     configured."""
-    assert "-Dlog4j2.formatMsgNoLookups=true" in es_data.check_output(
-        "/usr/share/elasticsearch/jdk/bin/jps -lv"
-    )
+    assert "-Dlog4j2.formatMsgNoLookups=true" in es_data.check_output("/usr/share/elasticsearch/jdk/bin/jps -lv")
 
 
 def test_cve_2021_44228_es_master(es_master):
     """Ensure the running es process has -Dlog4j2.formatMsgNoLookups=true
     configured."""
-    assert "-Dlog4j2.formatMsgNoLookups=true" in es_master.check_output(
-        "/usr/share/elasticsearch/jdk/bin/jps -lv"
-    )
+    assert "-Dlog4j2.formatMsgNoLookups=true" in es_master.check_output("/usr/share/elasticsearch/jdk/bin/jps -lv")
 
 
 def test_kibana_index_pod(kibana_index_pod_client):

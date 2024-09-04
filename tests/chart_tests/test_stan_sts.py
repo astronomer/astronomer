@@ -22,12 +22,8 @@ class TestStanStatefulSet:
         assert doc["kind"] == "StatefulSet"
         assert doc["apiVersion"] == "apps/v1"
         assert doc["metadata"]["name"] == "release-name-stan"
-        assert c_by_name["metrics"]["image"].startswith(
-            "quay.io/astronomer/ap-nats-exporter:"
-        )
-        assert c_by_name["stan"]["image"].startswith(
-            "quay.io/astronomer/ap-nats-streaming:"
-        )
+        assert c_by_name["metrics"]["image"].startswith("quay.io/astronomer/ap-nats-exporter:")
+        assert c_by_name["stan"]["image"].startswith("quay.io/astronomer/ap-nats-streaming:")
         assert c_by_name["stan"]["livenessProbe"] == {
             "httpGet": {"path": "/streaming/serverz", "port": "monitor"},
             "initialDelaySeconds": 10,
@@ -108,14 +104,7 @@ class TestStanStatefulSet:
         assert spec["nodeSelector"] != {}
         assert spec["nodeSelector"]["role"] == "astro"
         assert spec["affinity"] != {}
-        assert (
-            len(
-                spec["affinity"]["nodeAffinity"][
-                    "requiredDuringSchedulingIgnoredDuringExecution"
-                ]["nodeSelectorTerms"]
-            )
-            == 1
-        )
+        assert len(spec["affinity"]["nodeAffinity"]["requiredDuringSchedulingIgnoredDuringExecution"]["nodeSelectorTerms"]) == 1
         assert len(spec["tolerations"]) > 0
         assert spec["tolerations"] == values["stan"]["tolerations"]
 
@@ -164,18 +153,9 @@ class TestStanStatefulSet:
         assert spec["nodeSelector"] != {}
         assert spec["nodeSelector"]["role"] == "astro"
         assert spec["affinity"] != {}
-        assert (
-            len(
-                spec["affinity"]["nodeAffinity"][
-                    "requiredDuringSchedulingIgnoredDuringExecution"
-                ]["nodeSelectorTerms"]
-            )
-            == 1
-        )
+        assert len(spec["affinity"]["nodeAffinity"]["requiredDuringSchedulingIgnoredDuringExecution"]["nodeSelectorTerms"]) == 1
         assert len(spec["tolerations"]) > 0
-        assert (
-            spec["tolerations"] == values["global"]["platformNodePool"]["tolerations"]
-        )
+        assert spec["tolerations"] == values["global"]["platformNodePool"]["tolerations"]
 
     def test_stan_statefulset_with_custom_images(self, kube_version):
         """Test we can customize the stan images."""
@@ -207,15 +187,9 @@ class TestStanStatefulSet:
         assert doc["kind"] == "StatefulSet"
         assert doc["apiVersion"] == "apps/v1"
 
-        assert (
-            c_by_name["stan"]["image"]
-            == "example.com/custom/image/the-stan-image:the-custom-stan-tag"
-        )
+        assert c_by_name["stan"]["image"] == "example.com/custom/image/the-stan-image:the-custom-stan-tag"
         assert c_by_name["stan"]["imagePullPolicy"] == "Always"
-        assert (
-            c_by_name["wait-for-nats-server"]["image"]
-            == "example.com/custom/image/the-init-image:the-custom-init-tag"
-        )
+        assert c_by_name["wait-for-nats-server"]["image"] == "example.com/custom/image/the-init-image:the-custom-init-tag"
         assert c_by_name["stan"]["imagePullPolicy"] == "Always"
 
     def test_stan_statefulset_with_private_registry(self, kube_version):

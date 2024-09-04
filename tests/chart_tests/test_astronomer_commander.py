@@ -13,9 +13,7 @@ class TestAstronomerCommander:
         astronomer/commander."""
         docs = render_chart(
             kube_version=kube_version,
-            show_only=[
-                "charts/astronomer/templates/commander/commander-deployment.yaml"
-            ],
+            show_only=["charts/astronomer/templates/commander/commander-deployment.yaml"],
         )
 
         assert len(docs) == 1
@@ -25,9 +23,7 @@ class TestAstronomerCommander:
         assert doc["metadata"]["name"] == "release-name-commander"
         c_by_name = get_containers_by_name(doc)
         assert len(c_by_name) == 1
-        assert c_by_name["commander"]["image"].startswith(
-            "quay.io/astronomer/ap-commander:"
-        )
+        assert c_by_name["commander"]["image"].startswith("quay.io/astronomer/ap-commander:")
         assert c_by_name["commander"]["resources"]["limits"]["memory"] == "2Gi"
         assert c_by_name["commander"]["resources"]["requests"]["memory"] == "1Gi"
         env_vars = {x["name"]: x["value"] for x in c_by_name["commander"]["env"]}
@@ -42,9 +38,7 @@ class TestAstronomerCommander:
         docs = render_chart(
             kube_version=kube_version,
             values={"astronomer": {"commander": {"upgradeTimeout": 997}}},
-            show_only=[
-                "charts/astronomer/templates/commander/commander-deployment.yaml"
-            ],
+            show_only=["charts/astronomer/templates/commander/commander-deployment.yaml"],
         )
 
         assert len(docs) == 1
@@ -54,9 +48,7 @@ class TestAstronomerCommander:
         assert doc["metadata"]["name"] == "release-name-commander"
         c_by_name = get_containers_by_name(doc)
         assert len(c_by_name) == 1
-        assert c_by_name["commander"]["image"].startswith(
-            "quay.io/astronomer/ap-commander:"
-        )
+        assert c_by_name["commander"]["image"].startswith("quay.io/astronomer/ap-commander:")
 
         env_vars = {x["name"]: x["value"] for x in c_by_name["commander"]["env"]}
         assert env_vars["COMMANDER_UPGRADE_TIMEOUT"] == "997"
@@ -107,9 +99,7 @@ class TestAstronomerCommander:
         assert cluster_role_binding["roleRef"] == expected_role_ref
         assert cluster_role_binding["subjects"] == expected_subjects
 
-    def test_astronomer_commander_rbac_cluster_roles_disabled_rbac_enabled(
-        self, kube_version
-    ):
+    def test_astronomer_commander_rbac_cluster_roles_disabled_rbac_enabled(self, kube_version):
         """Test that if rbacEnabled set to true, but clusterRoles and
         namespacePools are disabled, we do not create any RBAC resources."""
         docs = render_chart(
@@ -178,35 +168,18 @@ class TestAstronomerCommander:
         permissions to manage Cluster-level RBAC resources."""
         doc = render_chart(
             kube_version=kube_version,
-            values={
-                "astronomer": {
-                    "houston": {
-                        "config": {
-                            "deployments": {
-                                "helm": {"airflow": {"multiNamespaceMode": False}}
-                            }
-                        }
-                    }
-                }
-            },
+            values={"astronomer": {"houston": {"config": {"deployments": {"helm": {"airflow": {"multiNamespaceMode": False}}}}}}},
             show_only=["charts/astronomer/templates/commander/commander-role.yaml"],
         )[0]
 
         cluster_resources = ["clusterrolebindings", "clusterroles"]
 
         # check that there is no rules regarding ClusterRoles and ClusterRolesBinding
-        generated_resources = [
-            resource
-            for rule in doc["rules"]
-            if "resources" in rule
-            for resource in rule["resources"]
-        ]
+        generated_resources = [resource for rule in doc["rules"] if "resources" in rule for resource in rule["resources"]]
         for resource in generated_resources:
             assert resource not in cluster_resources
 
-    def test_astronomer_commander_rbac_multinamespace_mode_undefined(
-        self, kube_version
-    ):
+    def test_astronomer_commander_rbac_multinamespace_mode_undefined(self, kube_version):
         """Test that if Houston's configuration for Airflow chart is not
         defined, the rendered commander role doesn't have permissions to manage
         Cluster-level RBAC resources."""
@@ -219,12 +192,7 @@ class TestAstronomerCommander:
         cluster_resources = ["clusterrolebindings", "clusterroles"]
 
         # check that there is no rules regarding ClusterRoles and ClusterRolesBinding
-        generated_resources = [
-            resource
-            for rule in doc["rules"]
-            if "resources" in rule
-            for resource in rule["resources"]
-        ]
+        generated_resources = [resource for rule in doc["rules"] if "resources" in rule for resource in rule["resources"]]
         for resource in generated_resources:
             assert resource not in cluster_resources
 
@@ -234,29 +202,14 @@ class TestAstronomerCommander:
         to manage Cluster-level RBAC resources."""
         doc = render_chart(
             kube_version=kube_version,
-            values={
-                "astronomer": {
-                    "houston": {
-                        "config": {
-                            "deployments": {
-                                "helm": {"airflow": {"multiNamespaceMode": True}}
-                            }
-                        }
-                    }
-                }
-            },
+            values={"astronomer": {"houston": {"config": {"deployments": {"helm": {"airflow": {"multiNamespaceMode": True}}}}}}},
             show_only=["charts/astronomer/templates/commander/commander-role.yaml"],
         )[0]
 
         cluster_resources = ["clusterrolebindings", "clusterroles"]
 
         # check that there are rules for cluterroles and clusterrolebindings
-        generated_resources = [
-            resource
-            for rule in doc["rules"]
-            if "resources" in rule
-            for resource in rule["resources"]
-        ]
+        generated_resources = [resource for rule in doc["rules"] if "resources" in rule for resource in rule["resources"]]
         for resource in cluster_resources:
             assert resource in generated_resources
 

@@ -48,10 +48,7 @@ class TestFluentd:
             ]
         ]
 
-        assert (
-            search_result_es_index_template_volume_mount
-            == expected_result_es_index_template_volume_mount
-        )
+        assert search_result_es_index_template_volume_mount == expected_result_es_index_template_volume_mount
 
         search_result_es_index_template_volume = jmespath.search(
             "spec.template.spec.volumes[?name == 'release-name-fluentd-index-template-volume']",
@@ -65,10 +62,7 @@ class TestFluentd:
             }
         ]
 
-        assert (
-            search_result_es_index_template_volume
-            == expected_result_es_index_template_volume
-        )
+        assert search_result_es_index_template_volume == expected_result_es_index_template_volume
 
     def test_fluentd_clusterrolebinding(self, kube_version):
         """Test that helm renders a good ClusterRoleBinding template for fluentd
@@ -115,9 +109,7 @@ class TestFluentd:
         expected_rule = "key $.kubernetes.namespace_name\n    # fluentd should gather logs from all namespaces if manualNamespaceNamesEnabled is enabled"
         assert expected_rule in doc["data"]["output.conf"]
 
-    def test_fluentd_configmap_manual_namespaces_and_namespacepools_disabled(
-        self, kube_version
-    ):
+    def test_fluentd_configmap_manual_namespaces_and_namespacepools_disabled(self, kube_version):
         """Test that when namespace Pools and manualNamespaceNamesEnabled are
         disabled, helm renders a default fluentd configmap looking at an
         environment variable."""
@@ -136,9 +128,7 @@ class TestFluentd:
             show_only=["charts/fluentd/templates/fluentd-configmap.yaml"],
         )[0]
 
-        expected_rule = (
-            'key $.kubernetes.namespace_labels.platform\n    pattern "release-name"'
-        )
+        expected_rule = 'key $.kubernetes.namespace_labels.platform\n    pattern "release-name"'
         assert expected_rule in doc["data"]["output.conf"]
 
     def test_fluentd_configmap_configure_extra_log_stores(self, kube_version):
@@ -250,16 +240,11 @@ class TestFluentd:
         assert doc["kind"] == "ConfigMap"
         assert doc["apiVersion"] == "v1"
         assert doc["metadata"]["name"] == "release-name-fluentd"
-        assert (
-            'fluentd.${record["release"]}.${Time.at(time).getutc.strftime(@logstash_dateformat)}'
-            in doc["data"]["output.conf"]
-        )
+        assert 'fluentd.${record["release"]}.${Time.at(time).getutc.strftime(@logstash_dateformat)}' in doc["data"]["output.conf"]
         doc = docs[1]
         assert doc["kind"] == "ConfigMap"
         assert doc["apiVersion"] == "v1"
-        assert (
-            doc["metadata"]["name"] == "release-name-fluentd-index-template-configmap"
-        )
+        assert doc["metadata"]["name"] == "release-name-fluentd-index-template-configmap"
         index_cm = yaml.safe_load(doc["data"]["index_template.json"])
         assert index_cm == {
             "index_patterns": ["fluentd.*"],
@@ -284,16 +269,13 @@ class TestFluentd:
         assert doc["apiVersion"] == "v1"
         assert doc["metadata"]["name"] == "release-name-fluentd"
         assert (
-            'astronomer.${record["release"]}.${Time.at(time).getutc.strftime(@logstash_dateformat)}'
-            in doc["data"]["output.conf"]
+            'astronomer.${record["release"]}.${Time.at(time).getutc.strftime(@logstash_dateformat)}' in doc["data"]["output.conf"]
         )
 
         doc = docs[1]
         assert doc["kind"] == "ConfigMap"
         assert doc["apiVersion"] == "v1"
-        assert (
-            doc["metadata"]["name"] == "release-name-fluentd-index-template-configmap"
-        )
+        assert doc["metadata"]["name"] == "release-name-fluentd-index-template-configmap"
         index_cm = yaml.safe_load(doc["data"]["index_template.json"])
         assert index_cm == {
             "index_patterns": ["astronomer.*"],

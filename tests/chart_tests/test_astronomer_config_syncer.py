@@ -161,9 +161,7 @@ class TestAstronomerConfigSyncer:
         )
         assert len(docs) == 0
 
-    def test_astronomer_config_syncer_cronjob_namespace_pool_enabled(
-        self, kube_version
-    ):
+    def test_astronomer_config_syncer_cronjob_namespace_pool_enabled(self, kube_version):
         """Test that when namespace pool is enabled, config-syncer's container
         is configured to use namespaces from the pool."""
         namespaces = ["my-namespace-1", "my-namespace-2"]
@@ -185,16 +183,12 @@ class TestAstronomerConfigSyncer:
             ],
         )[0]
 
-        container = doc["spec"]["jobTemplate"]["spec"]["template"]["spec"][
-            "containers"
-        ][0]
+        container = doc["spec"]["jobTemplate"]["spec"]["template"]["spec"]["containers"][0]
 
         assert "--target-namespaces" in container["args"]
         assert ",".join(namespaces) in container["args"]
 
-    def test_astronomer_config_syncer_cronjob_namespace_pool_disabled(
-        self, kube_version
-    ):
+    def test_astronomer_config_syncer_cronjob_namespace_pool_disabled(self, kube_version):
         """Test that when namespacePools is disabled, config-syncer cronjob is
         configured not to target any namespace."""
         namespaces = ["my-namespace-1", "my-namespace-2"]
@@ -215,19 +209,13 @@ class TestAstronomerConfigSyncer:
             ],
         )[0]
 
-        container = doc["spec"]["jobTemplate"]["spec"]["template"]["spec"][
-            "containers"
-        ][0]
+        container = doc["spec"]["jobTemplate"]["spec"]["template"]["spec"]["containers"][0]
 
         assert "--target-namespaces" not in container["args"]
         assert ",".join(namespaces) not in container["args"]
 
-    @pytest.mark.parametrize(
-        "test_data", cron_test_data, ids=[x[0] for x in cron_test_data]
-    )
-    def test_astronomer_config_syncer_cronjob_default_schedule(
-        self, test_data, kube_version
-    ):
+    @pytest.mark.parametrize("test_data", cron_test_data, ids=[x[0] for x in cron_test_data])
+    def test_astronomer_config_syncer_cronjob_default_schedule(self, test_data, kube_version):
         """Test that if no schedule is provided for configSyncer, helm
         automatically generates a random one."""
 

@@ -14,9 +14,7 @@ class TestRegistryStatefulset:
         registry."""
         docs = render_chart(
             kube_version=kube_version,
-            show_only=[
-                "charts/astronomer/templates/registry/registry-statefulset.yaml"
-            ],
+            show_only=["charts/astronomer/templates/registry/registry-statefulset.yaml"],
         )
 
         assert len(docs) == 1
@@ -25,8 +23,7 @@ class TestRegistryStatefulset:
         assert doc["apiVersion"] == "apps/v1"
         assert doc["metadata"]["name"] == "release-name-registry"
         assert any(
-            "quay.io/astronomer/ap-registry:" in item
-            for item in jmespath.search("spec.template.spec.containers[*].image", doc)
+            "quay.io/astronomer/ap-registry:" in item for item in jmespath.search("spec.template.spec.containers[*].image", doc)
         )
         assert docs[0]["spec"]["template"]["spec"]["securityContext"] == {
             "fsGroup": 1000,
@@ -41,9 +38,7 @@ class TestRegistryStatefulset:
         docs = render_chart(
             kube_version=kube_version,
             values={"astronomer": {"registry": {"extraEnv": [extra_env]}}},
-            show_only=[
-                "charts/astronomer/templates/registry/registry-statefulset.yaml"
-            ],
+            show_only=["charts/astronomer/templates/registry/registry-statefulset.yaml"],
         )
 
         assert len(docs) == 1
@@ -53,9 +48,7 @@ class TestRegistryStatefulset:
         assert doc["metadata"]["name"] == "release-name-registry"
         assert extra_env in doc["spec"]["template"]["spec"]["containers"][0]["env"]
 
-    def test_astronomer_registry_statefulset_with_serviceaccount_enabled_defaults(
-        self, kube_version
-    ):
+    def test_astronomer_registry_statefulset_with_serviceaccount_enabled_defaults(self, kube_version):
         """Test that helm renders statefulset and serviceAccount template for astronomer
         registry with SA enabled."""
         annotation = {
@@ -63,13 +56,7 @@ class TestRegistryStatefulset:
         }
         docs = render_chart(
             kube_version=kube_version,
-            values={
-                "astronomer": {
-                    "registry": {
-                        "serviceAccount": {"create": True, "annotations": annotation}
-                    }
-                }
-            },
+            values={"astronomer": {"registry": {"serviceAccount": {"create": True, "annotations": annotation}}}},
             show_only=[
                 "charts/astronomer/templates/registry/registry-statefulset.yaml",
                 "charts/astronomer/templates/registry/registry-serviceaccount.yaml",
@@ -80,10 +67,7 @@ class TestRegistryStatefulset:
         assert doc["kind"] == "StatefulSet"
         assert doc["apiVersion"] == "apps/v1"
         assert doc["metadata"]["name"] == "release-name-registry"
-        assert (
-            doc["spec"]["template"]["spec"]["serviceAccountName"]
-            == "release-name-registry"
-        )
+        assert doc["spec"]["template"]["spec"]["serviceAccountName"] == "release-name-registry"
 
         doc = docs[1]
         assert doc["kind"] == "ServiceAccount"
@@ -91,9 +75,7 @@ class TestRegistryStatefulset:
         assert doc["metadata"]["name"] == "release-name-registry"
         assert annotation == doc["metadata"]["annotations"]
 
-    def test_astronomer_registry_statefulset_with_serviceaccount_enabled_with_custom_name(
-        self, kube_version
-    ):
+    def test_astronomer_registry_statefulset_with_serviceaccount_enabled_with_custom_name(self, kube_version):
         """Test that helm renders statefulset and serviceAccount template for astronomer
         registry with SA enabled with custom name."""
         annotation = {
@@ -122,10 +104,7 @@ class TestRegistryStatefulset:
         assert doc["kind"] == "StatefulSet"
         assert doc["apiVersion"] == "apps/v1"
         assert doc["metadata"]["name"] == "release-name-registry"
-        assert (
-            doc["spec"]["template"]["spec"]["serviceAccountName"]
-            == "release-name-customregistrysa"
-        )
+        assert doc["spec"]["template"]["spec"]["serviceAccountName"] == "release-name-customregistrysa"
 
         doc = docs[1]
         assert doc["kind"] == "ServiceAccount"
@@ -133,9 +112,7 @@ class TestRegistryStatefulset:
         assert doc["metadata"]["name"] == "release-name-customregistrysa"
         assert annotation == doc["metadata"]["annotations"]
 
-    def test_astronomer_registry_statefulset_with_serviceaccount_disabled(
-        self, kube_version
-    ):
+    def test_astronomer_registry_statefulset_with_serviceaccount_disabled(self, kube_version):
         """Test that helm renders statefulset template for astronomer
         registry with SA disabled."""
         docs = render_chart(
@@ -162,9 +139,7 @@ class TestRegistryStatefulset:
         assert len(docs) == 0
 
     @pytest.mark.skip(reason="This test needs rework")
-    def test_astronomer_registry_statefulset_with_podSecurityContext_disabled(
-        self, kube_version
-    ):
+    def test_astronomer_registry_statefulset_with_podSecurityContext_disabled(self, kube_version):
         """Test that helm renders statefulset template for astronomer
         registry with podSecurityContext disabled."""
         docs = render_chart(

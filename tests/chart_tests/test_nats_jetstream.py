@@ -52,9 +52,7 @@ class TestNatsJetstream:
 
         assert len(docs) == 11
 
-        jetStreamCertPrefix = (
-            "/etc/houston/jetstream/tls/release-name-jetstream-tls-certificate"
-        )
+        jetStreamCertPrefix = "/etc/houston/jetstream/tls/release-name-jetstream-tls-certificate"
         prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
         assert prod["nats"] == {
             "jetStreamEnabled": True,
@@ -89,14 +87,15 @@ class TestNatsJetstream:
         nats_cm = docs[2]["data"]["nats.conf"]
         assert "jetstream" in nats_cm
         assert docs[7]["metadata"]["name"] == "release-name-jetstream-tls-certificate"
-        assert (
-            docs[8]["metadata"]["name"]
-            == "release-name-jetstream-tls-certificate-client"
-        )
+        assert docs[8]["metadata"]["name"] == "release-name-jetstream-tls-certificate-client"
         assert {
             "name": "nats-jetstream-client-tls-volume",
             "mountPath": f"{jetStreamCertPrefix}-client",
-        } in docs[10]["spec"]["template"]["spec"]["containers"][0]["volumeMounts"]
+        } in docs[
+            10
+        ]["spec"][
+            "template"
+        ]["spec"]["containers"][0]["volumeMounts"]
         assert {
             "name": "nats-jetstream-client-tls-volume",
             "mountPath": "/usr/local/share/ca-certificates/release-name-jetstream-tls-certificate-client.crt",

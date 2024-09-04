@@ -21,12 +21,8 @@ class TestNatsStatefulSet:
         assert doc["kind"] == "StatefulSet"
         assert doc["apiVersion"] == "apps/v1"
         assert doc["metadata"]["name"] == "release-name-nats"
-        assert c_by_name["metrics"]["image"].startswith(
-            "quay.io/astronomer/ap-nats-exporter:"
-        )
-        assert c_by_name["nats"]["image"].startswith(
-            "quay.io/astronomer/ap-nats-server:"
-        )
+        assert c_by_name["metrics"]["image"].startswith("quay.io/astronomer/ap-nats-exporter:")
+        assert c_by_name["nats"]["image"].startswith("quay.io/astronomer/ap-nats-server:")
         assert c_by_name["nats"]["livenessProbe"] == {
             "httpGet": {"path": "/", "port": 8222},
             "initialDelaySeconds": 10,
@@ -107,14 +103,7 @@ class TestNatsStatefulSet:
         assert spec["nodeSelector"] != {}
         assert spec["nodeSelector"]["role"] == "astro"
         assert spec["affinity"] != {}
-        assert (
-            len(
-                spec["affinity"]["nodeAffinity"][
-                    "requiredDuringSchedulingIgnoredDuringExecution"
-                ]["nodeSelectorTerms"]
-            )
-            == 1
-        )
+        assert len(spec["affinity"]["nodeAffinity"]["requiredDuringSchedulingIgnoredDuringExecution"]["nodeSelectorTerms"]) == 1
         assert len(spec["tolerations"]) > 0
         assert spec["tolerations"] == values["nats"]["tolerations"]
 
@@ -163,18 +152,9 @@ class TestNatsStatefulSet:
         assert spec["nodeSelector"] != {}
         assert spec["nodeSelector"]["role"] == "astro"
         assert spec["affinity"] != {}
-        assert (
-            len(
-                spec["affinity"]["nodeAffinity"][
-                    "requiredDuringSchedulingIgnoredDuringExecution"
-                ]["nodeSelectorTerms"]
-            )
-            == 1
-        )
+        assert len(spec["affinity"]["nodeAffinity"]["requiredDuringSchedulingIgnoredDuringExecution"]["nodeSelectorTerms"]) == 1
         assert len(spec["tolerations"]) > 0
-        assert (
-            spec["tolerations"] == values["global"]["platformNodePool"]["tolerations"]
-        )
+        assert spec["tolerations"] == values["global"]["platformNodePool"]["tolerations"]
 
     def test_nats_statefulset_with_default_cluster_name(self, kube_version):
         """Test that nats configmap has cluster name defined."""
@@ -220,9 +200,7 @@ class TestNatsStatefulSet:
             }.keys()
         ) == set(doc["spec"]["template"]["metadata"]["annotations"].keys())
 
-    def test_nats_statefulset_template_annotation_with_podAnnotations_overrides(
-        self, kube_version
-    ):
+    def test_nats_statefulset_template_annotation_with_podAnnotations_overrides(self, kube_version):
         """Test that nats template default annotations."""
         docs = render_chart(
             kube_version=kube_version,
@@ -236,7 +214,4 @@ class TestNatsStatefulSet:
             },
         )
         doc = docs[0]
-        assert (
-            "sampleannotation"
-            in doc["spec"]["template"]["metadata"]["annotations"]["app.test.io"]
-        )
+        assert "sampleannotation" in doc["spec"]["template"]["metadata"]["annotations"]["app.test.io"]

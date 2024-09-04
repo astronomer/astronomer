@@ -80,9 +80,7 @@ class TestDagOnlyDeploy:
         prod = yaml.safe_load(doc["data"]["production.yaml"])
         assert prod["deployments"]["dagOnlyDeployment"] is True
 
-        assert prod["deployments"]["dagDeploy"]["images"]["dagServer"][
-            "repository"
-        ].startswith(private_registry)
+        assert prod["deployments"]["dagDeploy"]["images"]["dagServer"]["repository"].startswith(private_registry)
 
     def test_dagonlydeploy_config_enabled_with_openshift_enabled(self, kube_version):
         """Test dagonlydeploy with openshift enabled to validate fsGroup removal."""

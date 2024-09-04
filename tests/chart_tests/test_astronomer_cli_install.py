@@ -50,6 +50,4 @@ class TestAstronomerCliInstall:
         )
 
         assert len(docs) == 1
-        assert "install.example.com" not in jmespath.search(
-            "spec.rules[*].host", docs[0]
-        )
+        assert "install.example.com" not in jmespath.search("spec.rules[*].host", docs[0])

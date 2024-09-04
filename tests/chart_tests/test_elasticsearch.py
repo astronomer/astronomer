@@ -70,9 +70,7 @@ class TestElasticSearch:
         )
         assert len(docs) == 3
         for doc in docs:
-            assert doc["spec"]["template"]["spec"]["securityContext"] == {
-                "fsGroup": 1000
-            }
+            assert doc["spec"]["template"]["spec"]["securityContext"] == {"fsGroup": 1000}
 
     def test_elasticsearch_securitycontext_defaults(self, kube_version):
         """Test ElasticSearch master, data with securityContext default
@@ -209,15 +207,13 @@ class TestElasticSearch:
         assert [
             {
                 "namespaceSelector": {},
-                "podSelector": {
-                    "matchLabels": {"tier": "airflow", "component": "webserver"}
-                },
+                "podSelector": {"matchLabels": {"tier": "airflow", "component": "webserver"}},
             },
-        ] == doc["spec"]["ingress"][0]["from"]
+        ] == doc[
+            "spec"
+        ]["ingress"][0]["from"]
 
-    def test_nginx_es_client_network_selector_with_logging_sidecar_enabled(
-        self, kube_version
-    ):
+    def test_nginx_es_client_network_selector_with_logging_sidecar_enabled(self, kube_version):
         """Test Nginx ES Service with NetworkPolicies."""
         docs = render_chart(
             kube_version=kube_version,
@@ -233,33 +229,23 @@ class TestElasticSearch:
         assert [
             {
                 "namespaceSelector": {},
-                "podSelector": {
-                    "matchLabels": {"tier": "airflow", "component": "webserver"}
-                },
+                "podSelector": {"matchLabels": {"tier": "airflow", "component": "webserver"}},
             },
             {
                 "namespaceSelector": {},
-                "podSelector": {
-                    "matchLabels": {"component": "scheduler", "tier": "airflow"}
-                },
+                "podSelector": {"matchLabels": {"component": "scheduler", "tier": "airflow"}},
             },
             {
                 "namespaceSelector": {},
-                "podSelector": {
-                    "matchLabels": {"component": "worker", "tier": "airflow"}
-                },
+                "podSelector": {"matchLabels": {"component": "worker", "tier": "airflow"}},
             },
             {
                 "namespaceSelector": {},
-                "podSelector": {
-                    "matchLabels": {"component": "triggerer", "tier": "airflow"}
-                },
+                "podSelector": {"matchLabels": {"component": "triggerer", "tier": "airflow"}},
             },
             {
                 "namespaceSelector": {},
-                "podSelector": {
-                    "matchLabels": {"component": "git-sync-relay", "tier": "airflow"}
-                },
+                "podSelector": {"matchLabels": {"component": "git-sync-relay", "tier": "airflow"}},
             },
         ] == doc["spec"]["ingress"][0]["from"]
 
@@ -291,9 +277,7 @@ class TestElasticSearch:
             ]
         )
 
-    def test_elastic_nginx_config_pattern_defaults_and_index_prefix_overrides(
-        self, kube_version
-    ):
+    def test_elastic_nginx_config_pattern_defaults_and_index_prefix_overrides(self, kube_version):
         """Test External Elasticsearch Service Index Pattern Search with index prefix overrides."""
         docs = render_chart(
             kube_version=kube_version,
@@ -320,9 +304,7 @@ class TestElasticSearch:
             ]
         )
 
-    def test_elasticsearch_nginx_config_pattern_with_sidecar_logging_enabled(
-        self, kube_version
-    ):
+    def test_elasticsearch_nginx_config_pattern_with_sidecar_logging_enabled(self, kube_version):
         """Test Nginx ES Service Index Pattern Search with sidecar logging."""
         docs = render_chart(
             kube_version=kube_version,
@@ -349,9 +331,7 @@ class TestElasticSearch:
             ]
         )
 
-    def test_elasticsearch_nginx_config_pattern_with_sidecar_logging_enabled_and_index_prefix_overrides(
-        self, kube_version
-    ):
+    def test_elasticsearch_nginx_config_pattern_with_sidecar_logging_enabled_and_index_prefix_overrides(self, kube_version):
         """Test Nginx ES Service Index Pattern Search with sidecar logging."""
         docs = render_chart(
             kube_version=kube_version,
@@ -388,9 +368,7 @@ class TestElasticSearch:
         docs = render_chart(
             kube_version=kube_version,
             values={},
-            show_only=[
-                "charts/elasticsearch/templates/exporter/es-exporter-deployment.yaml"
-            ],
+            show_only=["charts/elasticsearch/templates/exporter/es-exporter-deployment.yaml"],
         )
         assert len(docs) == 1
         doc = docs[0]
@@ -402,16 +380,8 @@ class TestElasticSearch:
         """Test ElasticSearch Exporter with securityContext default values."""
         docs = render_chart(
             kube_version=kube_version,
-            values={
-                "elasticsearch": {
-                    "exporter": {
-                        "securityContext": {"runAsNonRoot": True, "runAsUser": 2000}
-                    }
-                }
-            },
-            show_only=[
-                "charts/elasticsearch/templates/exporter/es-exporter-deployment.yaml"
-            ],
+            values={"elasticsearch": {"exporter": {"securityContext": {"runAsNonRoot": True, "runAsUser": 2000}}}},
+            show_only=["charts/elasticsearch/templates/exporter/es-exporter-deployment.yaml"],
         )
         assert len(docs) == 1
         doc = docs[0]
@@ -435,26 +405,17 @@ class TestElasticSearch:
             "name": "node.roles",
             "value": "master,ml,remote_cluster_client,",
         }
-        assert (
-            node_master_roles_env
-            in docs[0]["spec"]["template"]["spec"]["containers"][0]["env"]
-        )
+        assert node_master_roles_env in docs[0]["spec"]["template"]["spec"]["containers"][0]["env"]
         node_data_roles_env = {
             "name": "node.roles",
             "value": "data,data_cold,data_content,data_frozen,data_hot,data_warm,ml,remote_cluster_client,transform,",
         }
-        assert (
-            node_data_roles_env
-            in docs[1]["spec"]["template"]["spec"]["containers"][0]["env"]
-        )
+        assert node_data_roles_env in docs[1]["spec"]["template"]["spec"]["containers"][0]["env"]
         node_client_roles_env = {
             "name": "node.roles",
             "value": "ingest,ml,remote_cluster_client,",
         }
-        assert (
-            node_client_roles_env
-            in docs[2]["spec"]["template"]["spec"]["containers"][0]["env"]
-        )
+        assert node_client_roles_env in docs[2]["spec"]["template"]["spec"]["containers"][0]["env"]
 
     def test_elasticsearch_role_overrides(self, kube_version):
         """Test ElasticSearch master, data and client with custom roles"""
@@ -478,45 +439,28 @@ class TestElasticSearch:
             "name": "node.roles",
             "value": "master,",
         }
-        assert (
-            node_master_roles_env
-            in docs[0]["spec"]["template"]["spec"]["containers"][0]["env"]
-        )
+        assert node_master_roles_env in docs[0]["spec"]["template"]["spec"]["containers"][0]["env"]
         node_data_roles_env = {
             "name": "node.roles",
             "value": "data,",
         }
-        assert (
-            node_data_roles_env
-            in docs[1]["spec"]["template"]["spec"]["containers"][0]["env"]
-        )
+        assert node_data_roles_env in docs[1]["spec"]["template"]["spec"]["containers"][0]["env"]
         node_client_roles_env = {
             "name": "node.roles",
             "value": "ingest,",
         }
-        assert (
-            node_client_roles_env
-            in docs[2]["spec"]["template"]["spec"]["containers"][0]["env"]
-        )
+        assert node_client_roles_env in docs[2]["spec"]["template"]["spec"]["containers"][0]["env"]
 
-    def test_elasticsearch_curator_indexPatterns_override_with_loggingSidecar(
-        self, kube_version
-    ):
+    def test_elasticsearch_curator_indexPatterns_override_with_loggingSidecar(self, kube_version):
         """Test ElasticSearch Curator IndexPattern Override with loggingSidecar"""
         indexPattern = "%Y.%m"
         docs = render_chart(
             kube_version=kube_version,
-            values={
-                "global": {
-                    "loggingSidecar": {"enabled": True, "indexPattern": indexPattern}
-                }
-            },
-            show_only=[
-                "charts/elasticsearch/templates/curator/es-curator-configmap.yaml"
-            ],
+            values={"global": {"loggingSidecar": {"enabled": True, "indexPattern": indexPattern}}},
+            show_only=["charts/elasticsearch/templates/curator/es-curator-configmap.yaml"],
         )
         assert len(docs) == 1
-        assert (LS := yaml.safe_load(docs[0]["data"]["action_file.yml"]))
+        LS = yaml.safe_load(docs[0]["data"]["action_file.yml"])
         assert indexPattern == LS["actions"][1]["filters"][0]["timestring"]
 
     def test_elasticsearch_curator_with_indexPatterns_defaults(self, kube_version):
@@ -525,12 +469,10 @@ class TestElasticSearch:
         docs = render_chart(
             kube_version=kube_version,
             values={},
-            show_only=[
-                "charts/elasticsearch/templates/curator/es-curator-configmap.yaml"
-            ],
+            show_only=["charts/elasticsearch/templates/curator/es-curator-configmap.yaml"],
         )
         assert len(docs) == 1
-        assert (LS := yaml.safe_load(docs[0]["data"]["action_file.yml"]))
+        LS = yaml.safe_load(docs[0]["data"]["action_file.yml"])
         assert indexPattern == LS["actions"][1]["filters"][0]["timestring"]
 
     def test_elasticsearch_curator_config_defaults(self, kube_version):
@@ -538,33 +480,23 @@ class TestElasticSearch:
         docs = render_chart(
             kube_version=kube_version,
             values={},
-            show_only=[
-                "charts/elasticsearch/templates/curator/es-curator-configmap.yaml"
-            ],
+            show_only=["charts/elasticsearch/templates/curator/es-curator-configmap.yaml"],
         )
         assert len(docs) == 1
-        assert (LS := yaml.safe_load(docs[0]["data"]["config.yml"]))
+        LS = yaml.safe_load(docs[0]["data"]["config.yml"])
         print(LS["elasticsearch"])
         assert "elasticsearch" in LS
-        assert (
-            "http://release-name-elasticsearch:9200"
-            in LS["elasticsearch"]["client"]["hosts"]
-        )
+        assert "http://release-name-elasticsearch:9200" in LS["elasticsearch"]["client"]["hosts"]
 
     def test_elasticsearch_curator_config_overrides(self, kube_version):
         """Test ElasticSearch Curator IndexPattern with defaults"""
         docs = render_chart(
             kube_version=kube_version,
             values={"elasticsearch": {"common": {"protocol": "https"}}},
-            show_only=[
-                "charts/elasticsearch/templates/curator/es-curator-configmap.yaml"
-            ],
+            show_only=["charts/elasticsearch/templates/curator/es-curator-configmap.yaml"],
         )
         assert len(docs) == 1
-        assert (LS := yaml.safe_load(docs[0]["data"]["config.yml"]))
+        LS = yaml.safe_load(docs[0]["data"]["config.yml"])
         print(LS["elasticsearch"])
         assert "elasticsearch" in LS
-        assert (
-            "https://release-name-elasticsearch:9200"
-            in LS["elasticsearch"]["client"]["hosts"]
-        )
+        assert "https://release-name-elasticsearch:9200" in LS["elasticsearch"]["client"]["hosts"]

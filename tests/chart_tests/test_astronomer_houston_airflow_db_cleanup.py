@@ -28,13 +28,7 @@ class TestAstronomerHoustonAirflowDbCleanupCronjob:
     def test_astronomer_airflow_db_cleanup_cron_feature_enabled(self, kube_version):
         docs = render_chart(
             kube_version=kube_version,
-            values={
-                "astronomer": {
-                    "houston": {
-                        "cleanupAirflowDb": {"enabled": True, "schedule": "23 5 * * *"}
-                    }
-                }
-            },
+            values={"astronomer": {"houston": {"cleanupAirflowDb": {"enabled": True, "schedule": "23 5 * * *"}}}},
             show_only=[
                 "charts/astronomer/templates/houston/cronjobs/houston-cleanup-airflow-db-cronjob.yaml",
             ],
@@ -42,22 +36,13 @@ class TestAstronomerHoustonAirflowDbCleanupCronjob:
 
         assert len(docs) == 1
         assert docs[0]["kind"] == "CronJob"
-        assert (
-            docs[0]["metadata"]["name"]
-            == "release-name-houston-cleanup-airflow-db-data"
-        )
+        assert docs[0]["metadata"]["name"] == "release-name-houston-cleanup-airflow-db-data"
         assert docs[0]["spec"]["schedule"] == "23 5 * * *"
 
     def test_astronomer_airflow_db_cleanup_cron_custom_schedule(self, kube_version):
         docs = render_chart(
             kube_version=kube_version,
-            values={
-                "astronomer": {
-                    "houston": {
-                        "cleanupAirflowDb": {"enabled": True, "schedule": "22 5 * * *"}
-                    }
-                }
-            },
+            values={"astronomer": {"houston": {"cleanupAirflowDb": {"enabled": True, "schedule": "22 5 * * *"}}}},
             show_only=[
                 "charts/astronomer/templates/houston/cronjobs/houston-cleanup-airflow-db-cronjob.yaml",
             ],
@@ -65,10 +50,7 @@ class TestAstronomerHoustonAirflowDbCleanupCronjob:
 
         assert len(docs) == 1
         assert docs[0]["kind"] == "CronJob"
-        assert (
-            docs[0]["metadata"]["name"]
-            == "release-name-houston-cleanup-airflow-db-data"
-        )
+        assert docs[0]["metadata"]["name"] == "release-name-houston-cleanup-airflow-db-data"
         assert docs[0]["spec"]["schedule"] == "22 5 * * *"
 
     def test_houston_configmap_with_cleanup_enabled(self, kube_version):

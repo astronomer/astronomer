@@ -19,10 +19,7 @@ class TestContainerdPrivateCaDaemonset:
         """Test things common to all daemonsets."""
         assert doc["kind"] == "DaemonSet"
         assert doc["metadata"]["name"] == "release-name-containerd-ca-update"
-        assert (
-            doc["spec"]["template"]["spec"]["containers"][0]["name"]
-            == "cert-copy-and-toml-update"
-        )
+        assert doc["spec"]["template"]["spec"]["containers"][0]["name"] == "cert-copy-and-toml-update"
 
     def test_privateca_daemonset_disabled(self, kube_version):
         """Test that no daemonset is rendered when privateCaCertsAddToHost is
@@ -96,9 +93,7 @@ class TestContainerdPrivateCaDaemonset:
 
         assert volumemounts == expected_volumemounts
 
-    def test_containerd_privateca_daemonset_enabled_with_priority_class(
-        self, kube_version
-    ):
+    def test_containerd_privateca_daemonset_enabled_with_priority_class(self, kube_version):
         """Test that the containerd daemonset is rendered with priorityClass when
         enabled."""
         docs = render_chart(
@@ -120,6 +115,4 @@ class TestContainerdPrivateCaDaemonset:
         assert len(docs[0]["spec"]["template"]["spec"]["containers"]) == 1
         cert_copier = docs[0]["spec"]["template"]["spec"]["containers"][0]
         cert_copier["image"].startswith("alpine:3")
-        assert (
-            "high-priority" == docs[0]["spec"]["template"]["spec"]["priorityClassName"]
-        )
+        assert "high-priority" == docs[0]["spec"]["template"]["spec"]["priorityClassName"]

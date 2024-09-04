@@ -23,10 +23,7 @@ class TestIngress:
         assert doc["kind"] == "Ingress"
 
         assert len(doc["metadata"]["annotations"]) >= 4
-        assert (
-            doc["metadata"]["annotations"]["kubernetes.io/ingress.class"]
-            == "release-name-nginx"
-        )
+        assert doc["metadata"]["annotations"]["kubernetes.io/ingress.class"] == "release-name-nginx"
 
         expected_rules_v1 = json.loads(
             """

@@ -17,9 +17,7 @@ chart_values = {
                     "name": "fluentd",
                     "image": "ap-fluentd:0.5",
                     "imagePullPolicy": "Never",
-                    "volumeMounts": [
-                        {"name": "logvol", "mountPath": "/var/log/file_logs/"}
-                    ],
+                    "volumeMounts": [{"name": "logvol", "mountPath": "/var/log/file_logs/"}],
                 }
             ],
             "extraVolumes": [{"name": "logvol", "emptyDir": {}}],
@@ -29,17 +27,13 @@ chart_values = {
                     "-c",
                     "yarn worker 1> >( tee -a /var/log/houston_worker/data.out.log ) 2> >( tee -a /var/log/houston_worker/data.err.log >&2 )",
                 ],
-                "volumeMounts": [
-                    {"name": "logvol", "mountPath": "/var/log/houston_worker"}
-                ],
+                "volumeMounts": [{"name": "logvol", "mountPath": "/var/log/houston_worker"}],
                 "extraContainers": [
                     {
                         "name": "fluentd",
                         "image": "ap-fluentd:0.5",
                         "imagePullPolicy": "Never",
-                        "volumeMounts": [
-                            {"name": "logvol", "mountPath": "/var/log/file_logs/"}
-                        ],
+                        "volumeMounts": [{"name": "logvol", "mountPath": "/var/log/file_logs/"}],
                     }
                 ],
                 "extraVolumes": [{"name": "logvol", "emptyDir": {}}],
@@ -57,9 +51,7 @@ chart_values = {
                     "name": "fluentd",
                     "image": "ap-fluentd:0.5",
                     "imagePullPolicy": "Never",
-                    "volumeMounts": [
-                        {"name": "logvol", "mountPath": "/var/log/file_logs/"}
-                    ],
+                    "volumeMounts": [{"name": "logvol", "mountPath": "/var/log/file_logs/"}],
                 }
             ],
             "extraVolumes": [{"name": "logvol", "emptyDir": {}}],
@@ -81,8 +73,7 @@ class TestAstronomerFileLogs:
         assert container["command"] == ["/bin/sh"]
         assert container["args"] == [
             "-c",
-            "yarn serve"
-            + " 1> >( tee -a /var/log/houston/data.out.log ) 2> >( tee -a /var/log/houston/data.err.log >&2 )",
+            "yarn serve" + " 1> >( tee -a /var/log/houston/data.out.log ) 2> >( tee -a /var/log/houston/data.err.log >&2 )",
         ]
 
         volume_mounts = container["volumeMounts"]
