@@ -3,7 +3,7 @@ import pytest
 import tests.chart_tests as chart_tests
 from tests import supported_k8s_versions
 
-ignore_kind_list = ["Job"]
+ignore_kind_list = []
 ignore_list = [
     "fluentd_fluentd",
     "elasticsearch-exporter_metrics-exporter",
