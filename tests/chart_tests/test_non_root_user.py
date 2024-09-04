@@ -15,14 +15,13 @@ ignore_list = [
     "kube_version",
     supported_k8s_versions,
 )
-class TestProbes:
-    def test_container_runasnonroot(self, kube_version):
-        """Ensure all containers have runAsNonRoot."""
+def test_container_runasnonroot(kube_version):
+    """Ensure all containers have runAsNonRoot."""
 
-        containers = chart_tests.get_chart_containers(kube_version, chart_tests.get_all_features(), ignore_kind_list)
+    containers = chart_tests.get_chart_containers(kube_version, chart_tests.get_all_features(), ignore_kind_list)
 
-        for container in containers.values():
-            if container["key"].split("release-name-")[-1] in ignore_list:
-                pytest.skip("Info: Resource needs root access" + container["key"])
-            else:
-                assert container.get("securityContext").get("runAsNonRoot") is True
+    for container in containers.values():
+        if container["key"].split("release-name-")[-1] in ignore_list:
+            pytest.skip("Info: Resource needs root access" + container["key"])
+        else:
+            assert container.get("securityContext").get("runAsNonRoot") is True
