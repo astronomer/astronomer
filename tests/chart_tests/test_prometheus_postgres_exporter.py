@@ -47,6 +47,4 @@ class TestPrometheusPostgresExporter:
             "limits": {"cpu": "100m", "memory": "128Mi"},
             "requests": {"cpu": "10m", "memory": "128Mi"},
         }
-        assert c_by_name["prometheus-postgres-exporter"]["securityContext"] == {
-            "runAsNonRoot": True
-        }
+        assert c_by_name["prometheus-postgres-exporter"]["securityContext"] == {"runAsNonRoot": True}

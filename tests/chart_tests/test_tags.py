@@ -38,22 +38,14 @@ chart_values = chart_tests.get_all_features()
 # is deprecated we can set this to something higher, and will likely have to solve similar
 # problems for newer api differences.
 @pytest.mark.parametrize("template", show_only)
-def test_tags_monitoring_enabled(
-    template, chart_values=chart_values, kube_version="1.28.0"
-):
+def test_tags_monitoring_enabled(template, chart_values=chart_values, kube_version="1.28.0"):
     """Test that when monitoring is disabled, the monitoring components are not present."""
     chart_values["tags"] = {"monitoring": True}
-    docs = render_chart(
-        kube_version=kube_version, values=chart_values, show_only=template
-    )
+    docs = render_chart(kube_version=kube_version, values=chart_values, show_only=template)
 
     assert len(docs) >= 1
     assert (
-        template.split("/")[-1]
-        .split("-")[-1]
-        .removesuffix(".yaml")
-        .replace("psp", "podsecuritypolicy")
-        in docs[0]["kind"].lower()
+        template.split("/")[-1].split("-")[-1].removesuffix(".yaml").replace("psp", "podsecuritypolicy") in docs[0]["kind"].lower()
     )
 
 
@@ -61,9 +53,7 @@ def test_tags_monitoring_enabled(
 # is deprecated we can set this to something higher, and will likely have to solve similar
 # problems for newer api differences.
 @pytest.mark.parametrize("template", show_only)
-def test_tags_monitoring_disabled(
-    template, chart_values=chart_values, kube_version="1.28.0"
-):
+def test_tags_monitoring_disabled(template, chart_values=chart_values, kube_version="1.28.0"):
     """Test that when monitoring is disabled, the monitoring components are not present."""
     chart_values["tags"] = {"monitoring": False}
 

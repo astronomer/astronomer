@@ -32,9 +32,7 @@ class TestAlertmanager:
         assert (
             any(
                 "--cluster.advertise-address=" in arg
-                for args in jmespath.search(
-                    "spec.template.spec.containers[*].args", doc
-                )
+                for args in jmespath.search("spec.template.spec.containers[*].args", doc)
                 for arg in args
             )
             is False
@@ -125,12 +123,8 @@ class TestAlertmanager:
 
         c_by_name = get_containers_by_name(doc, include_init_containers=False)
 
-        assert "webhook-alert-secret" in [
-            x["name"] for x in doc["spec"]["template"]["spec"]["volumes"]
-        ]
-        assert "webhook-alert-secret" in [
-            x["name"] for x in c_by_name["alertmanager"]["volumeMounts"]
-        ]
+        assert "webhook-alert-secret" in [x["name"] for x in doc["spec"]["template"]["spec"]["volumes"]]
+        assert "webhook-alert-secret" in [x["name"] for x in c_by_name["alertmanager"]["volumeMounts"]]
 
     def test_alertmanager_global_private_ca(self, kube_version):
         values = {
@@ -157,9 +151,7 @@ class TestAlertmanager:
                 "name": "config-volume",
                 "configMap": {
                     "name": "release-name-alertmanager",
-                    "items": [
-                        {"key": "alertmanager.yaml", "path": "alertmanager.yaml"}
-                    ],
+                    "items": [{"key": "alertmanager.yaml", "path": "alertmanager.yaml"}],
                 },
             },
             {
@@ -189,9 +181,7 @@ class TestAlertmanager:
 
         assert volumemounts == expected_volumemounts
         assert volumes == expected_volumes
-        assert {"name": "UPDATE_CA_CERTS", "value": "true"} in c_by_name[
-            "alertmanager"
-        ]["env"]
+        assert {"name": "UPDATE_CA_CERTS", "value": "true"} in c_by_name["alertmanager"]["env"]
 
     def test_alertmanager_persistentVolumeClaimRetentionPolicy(self, kube_version):
         test_persistentVolumeClaimRetentionPolicy = {
@@ -211,7 +201,4 @@ class TestAlertmanager:
         )[0]
 
         assert "persistentVolumeClaimRetentionPolicy" in doc["spec"]
-        assert (
-            test_persistentVolumeClaimRetentionPolicy
-            == doc["spec"]["persistentVolumeClaimRetentionPolicy"]
-        )
+        assert test_persistentVolumeClaimRetentionPolicy == doc["spec"]["persistentVolumeClaimRetentionPolicy"]

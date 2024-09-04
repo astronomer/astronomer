@@ -32,9 +32,7 @@ class TestNginx:
             ("ExternalName", "Local", True),
         ],
     )
-    def test_nginx_service_servicetype(
-        self, service_type, external_traffic_policy, preserve_source_ip
-    ):
+    def test_nginx_service_servicetype(self, service_type, external_traffic_policy, preserve_source_ip):
         """Verify that ClusterIP never has an externalTrafficPolicy, and other
         configurations are correct according to spec.
 
@@ -58,19 +56,12 @@ class TestNginx:
         """Deployment should contain the given ingress annotations when they
         are specified."""
         doc = render_chart(
-            values={
-                "nginx": {
-                    "ingressAnnotations": {"foo1": "foo", "foo2": "foo", "foo3": "foo"}
-                }
-            },
+            values={"nginx": {"ingressAnnotations": {"foo1": "foo", "foo2": "foo", "foo3": "foo"}}},
             show_only=["charts/nginx/templates/nginx-service.yaml"],
         )[0]
 
         expected_annotations = {"foo1": "foo", "foo2": "foo", "foo3": "foo"}
-        assert all(
-            doc["metadata"]["annotations"][x] == y
-            for x, y in expected_annotations.items()
-        )
+        assert all(doc["metadata"]["annotations"][x] == y for x, y in expected_annotations.items())
 
     def test_nginx_type_loadbalancer(self):
         """Deployment works with type LoadBalancer and some LB
@@ -205,17 +196,12 @@ class TestNginx:
             show_only=["charts/nginx/templates/nginx-deployment.yaml"],
         )[0]
         annotationValidation = "--enable-annotation-validation=true"
-        assert (
-            annotationValidation
-            in doc["spec"]["template"]["spec"]["containers"][0]["args"]
-        )
+        assert annotationValidation in doc["spec"]["template"]["spec"]["containers"][0]["args"]
 
     def test_nginx_backend_serviceaccount_defaults(self):
         doc = render_chart(
             values={},
-            show_only=[
-                "charts/nginx/templates/nginx-default-backend-serviceaccount.yaml"
-            ],
+            show_only=["charts/nginx/templates/nginx-default-backend-serviceaccount.yaml"],
         )[0]
 
         assert "release-name-nginx-default-backend" == doc["metadata"]["name"]

@@ -3,9 +3,7 @@ import pytest
 from tests import supported_k8s_versions
 from tests.chart_tests.helm_template_generator import render_chart
 
-psp_compatible_versions = [
-    x for x in supported_k8s_versions if int(x.split(".")[1]) < 25
-]
+psp_compatible_versions = [x for x in supported_k8s_versions if int(x.split(".")[1]) < 25]
 
 
 @pytest.mark.parametrize(
@@ -96,9 +94,7 @@ class TestPspEnabled:
 
     clusterrole_doc_ids = [x["template"] for x in clusterrole_docs]
 
-    @pytest.mark.parametrize(
-        "clusterrole_docs", clusterrole_docs, ids=clusterrole_doc_ids
-    )
+    @pytest.mark.parametrize("clusterrole_docs", clusterrole_docs, ids=clusterrole_doc_ids)
     def test_clusterrole(self, kube_version, clusterrole_docs):
         """Test that helm errors when pspEnabled=False, and renders a good
         ClusterRole template when pspEnabled=True."""
@@ -122,10 +118,7 @@ class TestPspEnabled:
         assert doc["apiVersion"] == "rbac.authorization.k8s.io/v1"
         assert doc["metadata"]["name"] == clusterrole_docs["name"]
         assert "rules" in doc
-        assert all(
-            item in doc["rules"][0]
-            for item in ["apiGroups", "resources", "resourceNames", "verbs"]
-        )
+        assert all(item in doc["rules"][0] for item in ["apiGroups", "resources", "resourceNames", "verbs"])
 
     clusterrolebinding_docs = [
         {

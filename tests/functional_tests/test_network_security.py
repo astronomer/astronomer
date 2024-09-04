@@ -46,9 +46,7 @@ class ScanTarget:
             ports = []
         self.name = name
         self.ip_address = ip_address
-        assert isinstance(
-            self.ip_address, str
-        ), f"Expected to find str, but found: {type(ip_address)}"
+        assert isinstance(self.ip_address, str), f"Expected to find str, but found: {type(ip_address)}"
         self._type = _type
         assert self._type in [
             "pod",
@@ -56,13 +54,9 @@ class ScanTarget:
         ], f"Expected to find 'pod' or 'service', but found {self._type}"
         self.ports = ports
         for port in self.ports:
-            assert isinstance(
-                port, int
-            ), f"Expected to find int, but found: {type(port)}"
+            assert isinstance(port, int), f"Expected to find int, but found: {type(port)}"
         self.namespace = namespace
-        assert isinstance(
-            self.namespace, str
-        ), f"Expected to find str, but found: {type(self.namespace)}"
+        assert isinstance(self.namespace, str), f"Expected to find str, but found: {type(self.namespace)}"
 
 
 class KubernetesNetworkChecker:
@@ -126,8 +120,7 @@ class KubernetesNetworkChecker:
                     logging.info("network-scanner is ready")
                     break
             test_fixture = testinfra.get_host(
-                f"kubectl://{pod.metadata.name}?"
-                + f"container={v1container.name}&namespace={namespace}"
+                f"kubectl://{pod.metadata.name}?" + f"container={v1container.name}&namespace={namespace}"
             )
             logging.info("Installing nmap into network-scanner")
             test_fixture.check_output("apk add nmap")
@@ -193,9 +186,7 @@ class KubernetesNetworkChecker:
                             if is_open:
                                 if ip_address not in open_ports:
                                     open_ports[ip_address] = []
-                                open_ports[ip_address].append(
-                                    int(port.attrib["portid"])
-                                )
+                                open_ports[ip_address].append(int(port.attrib["portid"]))
         result = ScanResult()
         for address, value in open_ports.items():
             if not open_ports[address]:
@@ -216,11 +207,7 @@ class KubernetesNetworkChecker:
 
 def test_network(core_v1_client):
     try:
-        core_v1_client.create_namespace(
-            client.V1Namespace(
-                metadata=client.V1ObjectMeta(name="astronomer-scan-test")
-            )
-        )
+        core_v1_client.create_namespace(client.V1Namespace(metadata=client.V1ObjectMeta(name="astronomer-scan-test")))
     except Exception as e:
         if "already exists" not in str(e):
             raise e
