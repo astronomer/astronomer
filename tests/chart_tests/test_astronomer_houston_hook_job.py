@@ -87,10 +87,7 @@ class TestHoustonHookJob:
 
         assert c_by_name["houston-db-migrations-job"]["args"] == ["yarn", "migrate"]
 
-
-        assert c_by_name["houston-db-migrations-job"]["securityContext"] == {
-            "runAsNonRoot": True
-        }
+        assert c_by_name["houston-db-migrations-job"]["securityContext"] == {"runAsNonRoot": True}
         assert "resources" in c_by_name["wait-for-db"]
         assert "resources" in c_by_name["houston-bootstrapper"]
         assert "resources" in c_by_name["houston-db-migrations-job"]
@@ -108,16 +105,11 @@ class TestHoustonHookJob:
         docs_overridden = render_chart(
             kube_version=kube_version,
             values=value,
-            show_only=[
-                "charts/astronomer/templates/houston/helm-hooks/houston-db-migration-job.yaml"
-            ],
+            show_only=["charts/astronomer/templates/houston/helm-hooks/houston-db-migration-job.yaml"],
         )
         assert len(docs_overridden) == 1
-        c_by_name = get_containers_by_name(
-            docs_overridden[0], include_init_containers=True
-        )
+        c_by_name = get_containers_by_name(docs_overridden[0], include_init_containers=True)
 
         assert c_by_name["wait-for-db"]["resources"] == overrides
         assert c_by_name["houston-bootstrapper"]["resources"] == overrides
         assert c_by_name["houston-db-migrations-job"]["resources"] == overrides
-
