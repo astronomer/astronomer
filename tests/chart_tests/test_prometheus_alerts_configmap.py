@@ -131,9 +131,7 @@ class TestPrometheusAlertConfigmap:
         assert len([x["rules"] for x in groups if x["name"] != section]) == 21
 
     @pytest.mark.parametrize("section", ["airflow", "platform"])
-    def test_default_alerts_section_disabled_with_additional_alerts(
-        self, kube_version, section
-    ):
+    def test_default_alerts_section_disabled_with_additional_alerts(self, kube_version, section):
         """Should only show the additional alert rules for the given section."""
         values = {
             "prometheus": {
@@ -163,8 +161,4 @@ class TestPrometheusAlertConfigmap:
         assert [x["rules"] for x in groups if x["name"] == section] == [
             [{"alert": "some-happy-alert", "expr": "sum(all-happiness)"}]
         ]
-        assert [
-            x["rules"] != [{"alert": "some-happy-alert", "expr": "sum(all-happiness)"}]
-            for x in groups
-            if x["name"] != section
-        ]
+        assert [x["rules"] != [{"alert": "some-happy-alert", "expr": "sum(all-happiness)"}] for x in groups if x["name"] != section]

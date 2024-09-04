@@ -6,9 +6,7 @@ import tests.chart_tests as chart_tests
 from tests import get_containers_by_name, k8s_version_too_old, k8s_version_too_new
 from tests.chart_tests.helm_template_generator import render_chart
 
-annotation_validator = re.compile(
-    "^([^/]+/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$"
-)
+annotation_validator = re.compile("^([^/]+/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$")
 pod_managers = ["Deployment", "StatefulSet", "DaemonSet"]
 
 
@@ -50,15 +48,11 @@ class TestAllCronJobs:
     def test_ensure_cronjob_names_are_max_52_chars(self):
         """Cronjob names must be DNS_MAX_LEN - TIMESTAMP_LEN, which is 52 chars."""
         default_docs = render_chart(values=self.chart_values)
-        cronjobs = [
-            doc for doc in default_docs if doc["kind"].lower() == "CronJob".lower()
-        ]
+        cronjobs = [doc for doc in default_docs if doc["kind"].lower() == "CronJob".lower()]
 
         for doc in cronjobs:
             name_len = len(doc["metadata"]["name"])
-            assert (
-                name_len <= 52
-            ), f'{doc["metadata"]["name"]} is too long at {name_len} characters'
+            assert name_len <= 52, f'{doc["metadata"]["name"]} is too long at {name_len} characters'
 
 
 class TestAllPodSpecContainers:
@@ -77,12 +71,8 @@ class TestAllPodSpecContainers:
     )
     def test_annotation_keys_are_valid(self, doc):
         """Test that our annotation keys are valid."""
-        annotation_results = [
-            bool(annotation_validator.match(a)) for a in doc["metadata"]["annotations"]
-        ]
-        assert all(
-            annotation_results
-        ), f"One of the annotation keys in {doc['kind']} {doc['metadata']['name']} is invalid."
+        annotation_results = [bool(annotation_validator.match(a)) for a in doc["metadata"]["annotations"]]
+        assert all(annotation_results), f"One of the annotation keys in {doc['kind']} {doc['metadata']['name']} is invalid."
 
     @pytest.mark.parametrize(
         "doc",
@@ -114,19 +104,13 @@ class TestAllPodSpecContainers:
         "repository": f"{private_repo}/ap-auth-sidecar",
     }
     private_repo_docs = render_chart(values=private_values)
-    pod_manager_docs_private = [
-        doc for doc in private_repo_docs if doc["kind"] in pod_managers
-    ]
-    pod_manager_docs_private_ids = [
-        f"{doc['kind']}/{doc['metadata']['name']}" for doc in pod_manager_docs_private
-    ]
+    pod_manager_docs_private = [doc for doc in private_repo_docs if doc["kind"] in pod_managers]
+    pod_manager_docs_private_ids = [f"{doc['kind']}/{doc['metadata']['name']}" for doc in pod_manager_docs_private]
 
     pod_manager_containers_public = {
         f"{doc['kind']}/{doc['metadata']['name']}/{name}": container
         for doc in pod_manager_docs
-        for name, container in get_containers_by_name(
-            doc, include_init_containers=True
-        ).items()
+        for name, container in get_containers_by_name(doc, include_init_containers=True).items()
     }
 
     @pytest.mark.parametrize(
@@ -145,19 +129,14 @@ class TestAllPodSpecContainers:
         for name, container in c_by_name.items():
             pod_container = f"{doc['kind']}/{doc['metadata']['name']}/{name}"
             assert (
-                container["image"].split("/")[-1:]
-                == self.pod_manager_containers_public[pod_container]["image"].split(
-                    "/"
-                )[-1:]
+                container["image"].split("/")[-1:] == self.pod_manager_containers_public[pod_container]["image"].split("/")[-1:]
             ), f"The spec for '{pod_container}' does not use the same image for public and private registry configurations."
             assert container["image"].startswith(
                 self.private_repo
             ), f"The spec for '{pod_container}' does not use the privateRegistry repo '{self.private_repo}': {container}"
 
 
-@pytest.mark.skip(
-    "See issue https://github.com/astronomer/issues/issues/5227 for details about when to reenabling this."
-)
+@pytest.mark.skip("See issue https://github.com/astronomer/issues/issues/5227 for details about when to reenabling this.")
 class TestDuplicateEnvironment:
     """Parametrize all the docs that have container specs and test them for
     duplicate env vars."""
@@ -165,7 +144,7 @@ class TestDuplicateEnvironment:
     values = chart_tests.get_all_features()
 
     docs = render_chart(values=values)
-    trimmed_docs = [x for x in docs if x["kind"] in pod_managers + ["CronJob"]]
+    trimmed_docs = [x for x in docs if x["kind"] in [*pod_managers, "CronJob"]]
 
     @staticmethod
     def check_env_vars_are_unique(container):
@@ -182,32 +161,14 @@ class TestDuplicateEnvironment:
         """Test that there are no duplicate env vars."""
         if doc["kind"] in pod_managers:
             for container in doc["spec"]["template"]["spec"].get("containers") or []:
-                assert (
-                    self.check_env_vars_are_unique(container) == []
-                ), "container has duplicate env vars"
+                assert self.check_env_vars_are_unique(container) == [], "container has duplicate env vars"
 
-            for container in (
-                doc["spec"]["template"]["spec"].get("initContainers") or []
-            ):
-                assert (
-                    self.check_env_vars_are_unique(container) == []
-                ), "initContainer has duplicate env vars"
+            for container in doc["spec"]["template"]["spec"].get("initContainers") or []:
+                assert self.check_env_vars_are_unique(container) == [], "initContainer has duplicate env vars"
 
         elif doc["kind"] == "CronJob":
-            for container in (
-                doc["spec"]["jobTemplate"]["spec"]["template"]["spec"].get("containers")
-                or []
-            ):
-                assert (
-                    self.check_env_vars_are_unique(container) == []
-                ), "container has duplicate env vars"
+            for container in doc["spec"]["jobTemplate"]["spec"]["template"]["spec"].get("containers") or []:
+                assert self.check_env_vars_are_unique(container) == [], "container has duplicate env vars"
 
-            for container in (
-                doc["spec"]["jobTemplate"]["spec"]["template"]["spec"].get(
-                    "initContainers"
-                )
-                or []
-            ):
-                assert (
-                    self.check_env_vars_are_unique(container) == []
-                ), "initContainer has duplicate env vars"
+            for container in doc["spec"]["jobTemplate"]["spec"]["template"]["spec"].get("initContainers") or []:
+                assert self.check_env_vars_are_unique(container) == [], "initContainer has duplicate env vars"

@@ -7,14 +7,14 @@ import yaml
 
 def get_latest_versions(repository, num_versions):
     url = f"https://hub.docker.com/v2/repositories/{repository}/tags/"
-    response = requests.get(url)
+    response = requests.get(url, timeout=30)
     data = response.json()
 
     versions = {}
     for tag in data["results"]:
         version = tag["name"]
         # Split version string into major, minor, and patch
-        major, minor, patch = [int(x.removeprefix("v")) for x in version.split(".")]
+        major, minor, patch = (int(x.removeprefix("v")) for x in version.split("."))
         key = f"{major}.{minor}"
         # Only keep the highest patch version for each major.minor
         if key not in versions or versions[key] < patch:
@@ -29,9 +29,7 @@ def generate_yaml(versions):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Generate a YAML list of latest Docker image versions"
-    )
+    parser = argparse.ArgumentParser(description="Generate a YAML list of latest Docker image versions")
     parser.add_argument("-n", type=int, default=5, help="Number of versions to include")
     parser.add_argument(
         "--repo",

@@ -99,10 +99,7 @@ class TestPrivateCaDaemonset:
         doc = docs[0]
         self.common_tests_daemonset(doc)
         assert len(docs[0]["spec"]["template"]["spec"]["containers"]) == 1
-        assert (
-            doc["spec"]["template"]["spec"]["containers"][0]["image"]
-            == "snarks:boojums"
-        )
+        assert doc["spec"]["template"]["spec"]["containers"][0]["image"] == "snarks:boojums"
 
 
 @pytest.mark.parametrize(

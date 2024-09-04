@@ -13,10 +13,7 @@ from collections import defaultdict
 
 def get_containers_from_spec(spec):
     """Return a list of images used in a kubernetes pod spec."""
-    return [
-        container["image"]
-        for container in spec.get("containers", []) + spec.get("initContainers", [])
-    ]
+    return [container["image"] for container in spec.get("containers", []) + spec.get("initContainers", [])]
 
 
 def print_results(items):
@@ -36,9 +33,7 @@ def default_spec_parser(doc, args):
         print(f"Processing {doc['kind']} {doc['metadata']['name']}", file=sys.stderr)
 
     if args.private_registry and "quay.io" in yaml.dump(item_containers):
-        print(
-            f'{doc["kind"]} {doc["metadata"]["name"].removeprefix("release-name-")} uses quay.io instead of private registry'
-        )
+        print(f'{doc["kind"]} {doc["metadata"]["name"].removeprefix("release-name-")} uses quay.io instead of private registry')
         if args.verbose:
             print(json.dumps(doc["spec"]["template"]["spec"]), file=sys.stderr)
 
@@ -51,14 +46,10 @@ def job_template_spec_parser(doc, args):
     if args.verbose:
         print(f"Processing {doc['kind']} {doc['metadata']['name']}", file=sys.stderr)
 
-    item_containers = get_containers_from_spec(
-        doc["spec"]["jobTemplate"]["spec"]["template"]["spec"]
-    )
+    item_containers = get_containers_from_spec(doc["spec"]["jobTemplate"]["spec"]["template"]["spec"])
 
     if args.private_registry and "quay.io" in yaml.dump(item_containers):
-        print(
-            f'{doc["kind"]} {doc["metadata"]["name"].removeprefix("release-name-")} uses quay.io instead of private registry'
-        )
+        print(f'{doc["kind"]} {doc["metadata"]["name"].removeprefix("release-name-")} uses quay.io instead of private registry')
         if args.verbose:
             print(
                 json.dumps(doc["spec"]["jobTemplate"]["spec"]["template"]["spec"]),
@@ -73,9 +64,7 @@ def get_images_from_houston_configmap(doc, args):
     houston_config = yaml.safe_load(doc["data"]["production.yaml"])
     keepers = ("authSideCar", "loggingSidecar")
     items = {k: v for k, v in houston_config["deployments"].items() if k in keepers}
-    auth_sidecar_image = (
-        f'{items["authSideCar"]["repository"]}:{items["authSideCar"]["tag"]}'
-    )
+    auth_sidecar_image = f'{items["authSideCar"]["repository"]}:{items["authSideCar"]["tag"]}'
     logging_sidecar_image = f'{items["loggingSidecar"]["image"]}'
     images = (auth_sidecar_image, logging_sidecar_image)
     if args.verbose and any("quay.io" in x for x in images):
@@ -96,8 +85,7 @@ def helm_template(args):
     command = "helm template . --set forceIncompatibleKubernetes=true -f tests/enable_all_features.yaml"
     if args.private_registry:
         command += (
-            " --set global.privateRegistry.repository=example.com/the-private-registry"
-            " --set global.privateRegistry.enabled=True"
+            " --set global.privateRegistry.repository=example.com/the-private-registry" " --set global.privateRegistry.enabled=True"
         )
 
     if args.verbose:
@@ -150,9 +138,7 @@ def main():
 
     if args.check_tags:
         image_tag_counts = defaultdict(int)
-        for x, y in [
-            (tag.rpartition(":")[0], tag.rpartition(":")[2]) for tag in containers
-        ]:
+        for x, y in [(tag.rpartition(":")[0], tag.rpartition(":")[2]) for tag in containers]:
             image_tag_counts[x] += 1
         for image, count in image_tag_counts.items():
             if count > 1:

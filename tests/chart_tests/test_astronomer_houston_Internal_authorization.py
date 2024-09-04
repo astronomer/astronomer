@@ -28,9 +28,7 @@ class TestHoustonInternalAuthorization:
             assert doc["apiVersion"] == "networking.k8s.io/v1"
             assert (
                 "https://houston.example.com/v1/authorization"
-                in doc["metadata"]["annotations"][
-                    "nginx.ingress.kubernetes.io/auth-url"
-                ]
+                in doc["metadata"]["annotations"]["nginx.ingress.kubernetes.io/auth-url"]
             )
 
     def test_ingress_with_internal_authorization(self, kube_version):
@@ -52,7 +50,5 @@ class TestHoustonInternalAuthorization:
             assert doc["apiVersion"] == "networking.k8s.io/v1"
             assert (
                 "http://release-name-houston.default.svc.cluster.local:8871/v1/authorization"
-                in doc["metadata"]["annotations"][
-                    "nginx.ingress.kubernetes.io/auth-url"
-                ]
+                in doc["metadata"]["annotations"]["nginx.ingress.kubernetes.io/auth-url"]
             )

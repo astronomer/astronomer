@@ -27,9 +27,5 @@ class TestIngress:
 
         assert "Deployment" == jmespath.search("kind", docs[0])
         assert "release-name-astro-ui" == jmespath.search("metadata.name", docs[0])
-        assert "astro-ui" == jmespath.search(
-            "spec.template.spec.containers[0].name", docs[0]
-        )
-        assert "500m" == jmespath.search(
-            "spec.template.spec.containers[0].resources.limits.cpu", docs[0]
-        )
+        assert "astro-ui" == jmespath.search("spec.template.spec.containers[0].name", docs[0])
+        assert "500m" == jmespath.search("spec.template.spec.containers[0].resources.limits.cpu", docs[0])
