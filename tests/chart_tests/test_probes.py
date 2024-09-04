@@ -12,9 +12,7 @@ def init_test_probes():
 
     containers = {}
     for k8s_version in supported_k8s_versions:
-        k8s_version_containers = chart_tests.get_chart_containers(
-            k8s_version, chart_values, ignore_kind_list
-        )
+        k8s_version_containers = chart_tests.get_chart_containers(k8s_version, chart_values, ignore_kind_list)
         containers = {**containers, **k8s_version_containers}
 
     return containers
@@ -23,9 +21,7 @@ def init_test_probes():
 class TestProbes:
     chart_containers = init_test_probes()
 
-    @pytest.mark.parametrize(
-        "container", chart_containers.values(), ids=chart_containers.keys()
-    )
+    @pytest.mark.parametrize("container", chart_containers.values(), ids=chart_containers.keys())
     def test_container_readiness_probes(self, container):
         """Ensure all containers have liveness and readiness probes."""
 
@@ -34,9 +30,7 @@ class TestProbes:
         else:
             assert "readinessProbe" in container
 
-    @pytest.mark.parametrize(
-        "container", chart_containers.values(), ids=chart_containers.keys()
-    )
+    @pytest.mark.parametrize("container", chart_containers.values(), ids=chart_containers.keys())
     def test_container_liveness_probes(self, container):
         """Ensure all containers have liveness and readiness probes."""
 

@@ -161,9 +161,7 @@ class TestAstronomerConfigSyncer:
         )
         assert len(docs) == 0
 
-    def test_astronomer_config_syncer_cronjob_namespace_pool_enabled(
-        self, kube_version
-    ):
+    def test_astronomer_config_syncer_cronjob_namespace_pool_enabled(self, kube_version):
         """Test that when namespace pool is enabled, config-syncer's container
         is configured to use namespaces from the pool."""
         namespaces = ["my-namespace-1", "my-namespace-2"]
@@ -187,13 +185,9 @@ class TestAstronomerConfigSyncer:
         job_container_by_name = get_cronjob_containerspec_by_name(doc)
         assert "--target-namespaces" in job_container_by_name["config-syncer"]["args"]
         assert ",".join(namespaces) in job_container_by_name["config-syncer"]["args"]
-        assert {"runAsNonRoot": True} == job_container_by_name["config-syncer"][
-            "securityContext"
-        ]
+        assert {"runAsNonRoot": True} == job_container_by_name["config-syncer"]["securityContext"]
 
-    def test_astronomer_config_syncer_cronjob_security_context_default_overrides(
-        self, kube_version
-    ):
+    def test_astronomer_config_syncer_cronjob_security_context_default_overrides(self, kube_version):
         """Test that  config-syncer's container is allowed to configure security context."""
         doc = render_chart(
             kube_version=kube_version,
@@ -218,11 +212,11 @@ class TestAstronomerConfigSyncer:
         assert {
             "runAsNonRoot": True,
             "allowPrivilegeEscalation": False,
-        } == job_container_by_name["config-syncer"]["securityContext"]
+        } == job_container_by_name[
+            "config-syncer"
+        ]["securityContext"]
 
-    def test_astronomer_config_syncer_cronjob_namespace_pool_disabled(
-        self, kube_version
-    ):
+    def test_astronomer_config_syncer_cronjob_namespace_pool_disabled(self, kube_version):
         """Test that when namespacePools is disabled, config-syncer cronjob is
         configured not to target any namespace."""
         namespaces = ["my-namespace-1", "my-namespace-2"]
@@ -245,19 +239,11 @@ class TestAstronomerConfigSyncer:
 
         job_container_by_name = get_cronjob_containerspec_by_name(doc)
 
-        assert (
-            "--target-namespaces" not in job_container_by_name["config-syncer"]["args"]
-        )
-        assert (
-            ",".join(namespaces) not in job_container_by_name["config-syncer"]["args"]
-        )
+        assert "--target-namespaces" not in job_container_by_name["config-syncer"]["args"]
+        assert ",".join(namespaces) not in job_container_by_name["config-syncer"]["args"]
 
-    @pytest.mark.parametrize(
-        "test_data", cron_test_data, ids=[x[0] for x in cron_test_data]
-    )
-    def test_astronomer_config_syncer_cronjob_default_schedule(
-        self, test_data, kube_version
-    ):
+    @pytest.mark.parametrize("test_data", cron_test_data, ids=[x[0] for x in cron_test_data])
+    def test_astronomer_config_syncer_cronjob_default_schedule(self, test_data, kube_version):
         """Test that if no schedule is provided for configSyncer, helm
         automatically generates a random one."""
 

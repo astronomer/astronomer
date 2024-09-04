@@ -66,10 +66,7 @@ class TestKubeStateDeployment:
 
         assert len(docs) == 1
         c_by_name = get_containers_by_name(docs[0])
-        assert (
-            "--metric-labels-allowlist=namespaces=[*],pods=[*]"
-            in c_by_name["kube-state"]["args"]
-        )
+        assert "--metric-labels-allowlist=namespaces=[*],pods=[*]" in c_by_name["kube-state"]["args"]
         assert "--namespaces=" not in c_by_name["kube-state"]["args"]
         assert "--namespace=" not in c_by_name["kube-state"]["args"]
 
@@ -155,7 +152,4 @@ class TestKubeStateDeployment:
         assert len(docs) == 1
         doc = docs[0]
         assert "priorityClassName" in doc["spec"]["template"]["spec"]
-        assert (
-            "kube-state-priority-pod"
-            == doc["spec"]["template"]["spec"]["priorityClassName"]
-        )
+        assert "kube-state-priority-pod" == doc["spec"]["template"]["spec"]["priorityClassName"]

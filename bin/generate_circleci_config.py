@@ -7,9 +7,7 @@ import yaml
 
 from jinja2 import Template
 
-git_root_dir = next(
-    iter([x for x in Path(__file__).resolve().parents if (x / ".git").is_dir()]), None
-)
+git_root_dir = next(iter([x for x in Path(__file__).resolve().parents if (x / ".git").is_dir()]), None)
 metadata = yaml.safe_load((git_root_dir / "metadata.yaml").read_text())
 kube_versions = metadata["test_k8s_versions"]
 
@@ -21,9 +19,7 @@ ci_runner_version = "2024-07"
 def list_docker_images():
     command = f"{git_root_dir}/bin/show-docker-images.py --with-houston"
     docker_images_output = subprocess.check_output(command, shell=True)
-    docker_image_list = [
-        x.split()[1] for x in docker_images_output.decode("utf-8").strip().split("\n")
-    ]
+    docker_image_list = [x.split()[1] for x in docker_images_output.decode("utf-8").strip().split("\n")]
 
     return sorted(set(docker_image_list))
 
@@ -32,12 +28,8 @@ def main():
     """Render the Jinja2 template file."""
     for version in kube_versions:
         maj_min = version.rpartition(".")[0]
-        if not Path(
-            git_root_dir / "bin" / "kind" / f"calico-crds-v{maj_min}.yaml"
-        ).exists():
-            raise SystemExit(
-                f"ERROR: calico-crds-v{maj_min}.yaml is required for for CircleCI to succeed but it does not exist!"
-            )
+        if not Path(git_root_dir / "bin" / "kind" / f"calico-crds-v{maj_min}.yaml").exists():
+            raise SystemExit(f"ERROR: calico-crds-v{maj_min}.yaml is required for for CircleCI to succeed but it does not exist!")
     config_file_template_path = git_root_dir / ".circleci" / "config.yml.j2"
     config_file_path = git_root_dir / ".circleci" / "config.yml"
 

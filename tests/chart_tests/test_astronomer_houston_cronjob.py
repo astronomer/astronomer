@@ -13,9 +13,7 @@ class TestHoustonCronjobJob:
         docs = render_chart(
             kube_version=kube_version,
             values={},
-            show_only=[
-                "charts/astronomer/templates/houston/cronjobs/houston-cleanup-deployments-cronjob.yaml"
-            ],
+            show_only=["charts/astronomer/templates/houston/cronjobs/houston-cleanup-deployments-cronjob.yaml"],
         )
         assert len(docs) == 1
         c_by_name = get_cronjob_containerspec_by_name(docs[0])
@@ -50,9 +48,7 @@ class TestHoustonCronjobJob:
                     },
                 }
             },
-            show_only=[
-                "charts/astronomer/templates/houston/cronjobs/houston-cleanup-deployments-cronjob.yaml"
-            ],
+            show_only=["charts/astronomer/templates/houston/cronjobs/houston-cleanup-deployments-cronjob.yaml"],
         )
         assert len(docs) == 1
         c_by_name = get_cronjob_containerspec_by_name(docs[0])
@@ -85,8 +81,6 @@ class TestHoustonCronjobJob:
                     }
                 }
             },
-            show_only=[
-                "charts/astronomer/templates/houston/cronjobs/houston-cleanup-deployments-cronjob.yaml"
-            ],
+            show_only=["charts/astronomer/templates/houston/cronjobs/houston-cleanup-deployments-cronjob.yaml"],
         )
         assert len(docs) == 0

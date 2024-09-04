@@ -11,12 +11,8 @@ class TestHoustonCronJobAirflowUpdates:
     def test_cronjob_airflow_updates_enabled(self, kube_version):
         docs = render_chart(
             kube_version=kube_version,
-            values={
-                "astronomer": {"houston": {"updateAirflowCheck": {"enabled": True}}}
-            },
-            show_only=[
-                "charts/astronomer/templates/houston/cronjobs/houston-check-airflow-version-updates-cronjob.yaml"
-            ],
+            values={"astronomer": {"houston": {"updateAirflowCheck": {"enabled": True}}}},
+            show_only=["charts/astronomer/templates/houston/cronjobs/houston-check-airflow-version-updates-cronjob.yaml"],
         )
 
         assert len(docs) == 1
@@ -30,13 +26,9 @@ class TestHoustonCronJobAirflowUpdates:
             "check-airflow-updates",
             "--url=https://updates.astronomer.io/astronomer-certified",
         ]
-        assert job_container_by_name["update-check"]["securityContext"] == {
-            "runAsNonRoot": True
-        }
+        assert job_container_by_name["update-check"]["securityContext"] == {"runAsNonRoot": True}
 
-    def test_cronjob_airflow_updates_enabled_with_securityContext_overrides(
-        self, kube_version
-    ):
+    def test_cronjob_airflow_updates_enabled_with_securityContext_overrides(self, kube_version):
         docs = render_chart(
             kube_version=kube_version,
             values={
@@ -45,9 +37,7 @@ class TestHoustonCronJobAirflowUpdates:
                     "houston": {"updateAirflowCheck": {"enabled": True}},
                 }
             },
-            show_only=[
-                "charts/astronomer/templates/houston/cronjobs/houston-check-airflow-version-updates-cronjob.yaml"
-            ],
+            show_only=["charts/astronomer/templates/houston/cronjobs/houston-check-airflow-version-updates-cronjob.yaml"],
         )
 
         assert len(docs) == 1
@@ -69,12 +59,8 @@ class TestHoustonCronJobAirflowUpdates:
     def test_cronjob_airflow_updates_disabled(self, kube_version):
         docs = render_chart(
             kube_version=kube_version,
-            values={
-                "astronomer": {"houston": {"updateAirflowCheck": {"enabled": False}}}
-            },
-            show_only=[
-                "charts/astronomer/templates/houston/cronjobs/houston-check-airflow-version-updates-cronjob.yaml"
-            ],
+            values={"astronomer": {"houston": {"updateAirflowCheck": {"enabled": False}}}},
+            show_only=["charts/astronomer/templates/houston/cronjobs/houston-check-airflow-version-updates-cronjob.yaml"],
         )
 
         assert len(docs) == 0

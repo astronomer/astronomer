@@ -127,9 +127,7 @@ class TestAstronomerNamespacePools:
         )
         assert len(docs) == 0
 
-    def test_astronomer_namespace_pools_commander_deployment_configuration(
-        self, kube_version
-    ):
+    def test_astronomer_namespace_pools_commander_deployment_configuration(self, kube_version):
         """Test that commander deployment is configured properly when enabling
         namespace pools."""
 
@@ -146,9 +144,7 @@ class TestAstronomerNamespacePools:
                     }
                 }
             },
-            show_only=[
-                "charts/astronomer/templates/commander/commander-deployment.yaml"
-            ],
+            show_only=["charts/astronomer/templates/commander/commander-deployment.yaml"],
         )[0]
 
         # Check that by enabling global.features.namespacePools, the environment variable COMMANDER_MANUAL_NAMESPACE_NAMES
@@ -157,10 +153,7 @@ class TestAstronomerNamespacePools:
 
         manual_ns_env_found = False
         for env in c_by_name["commander"]["env"]:
-            if (
-                env["name"] == "COMMANDER_MANUAL_NAMESPACE_NAMES"
-                and env["value"] == "true"
-            ):
+            if env["name"] == "COMMANDER_MANUAL_NAMESPACE_NAMES" and env["value"] == "true":
                 manual_ns_env_found = True
 
         assert manual_ns_env_found
@@ -178,9 +171,7 @@ class TestAstronomerNamespacePools:
                     }
                 }
             },
-            show_only=[
-                "charts/astronomer/templates/commander/commander-deployment.yaml"
-            ],
+            show_only=["charts/astronomer/templates/commander/commander-deployment.yaml"],
         )[0]
 
         # Check that by enabling global.features.namespacePools, the environment variable COMMANDER_MANUAL_NAMESPACE_NAMES
@@ -189,10 +180,7 @@ class TestAstronomerNamespacePools:
 
         manual_ns_env_found = False
         for env in c_by_name["commander"]["env"]:
-            if (
-                env["name"] == "COMMANDER_MANUAL_NAMESPACE_NAMES"
-                and env["value"] == "true"
-            ):
+            if env["name"] == "COMMANDER_MANUAL_NAMESPACE_NAMES" and env["value"] == "true":
                 manual_ns_env_found = True
 
         assert not manual_ns_env_found
@@ -220,9 +208,7 @@ class TestAstronomerNamespacePools:
 
         assert deployments_config["deployments"]["hardDeleteDeployment"]
         assert deployments_config["deployments"]["manualNamespaceNames"]
-        assert deployments_config["deployments"]["preCreatedNamespaces"] == [
-            {"name": namespace} for namespace in namespaces
-        ]
+        assert deployments_config["deployments"]["preCreatedNamespaces"] == [{"name": namespace} for namespace in namespaces]
 
         # test configuration when namespacePools is disabled -> should not add configuration parameters
         doc = render_chart(
@@ -266,7 +252,5 @@ class TestAstronomerNamespacePools:
             show_only=["charts/fluentd/templates/fluentd-configmap.yaml"],
         )[0]
 
-        expected_rule = "key $.kubernetes.namespace_name\n    pattern ^({}|{})$".format(
-            namespaces[0], namespaces[1]
-        )
+        expected_rule = f"key $.kubernetes.namespace_name\n    pattern ^({namespaces[0]}|{namespaces[1]})$"
         assert expected_rule in doc["data"]["output.conf"]

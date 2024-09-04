@@ -121,9 +121,5 @@ def test_alertmanager_extra_volumes(kube_version):
 
     c_by_name = get_containers_by_name(doc, include_init_containers=False)
 
-    assert "webhook-alert-secret" in [
-        x["name"] for x in doc["spec"]["template"]["spec"]["volumes"]
-    ]
-    assert "webhook-alert-secret" in [
-        x["name"] for x in c_by_name["alertmanager"]["volumeMounts"]
-    ]
+    assert "webhook-alert-secret" in [x["name"] for x in doc["spec"]["template"]["spec"]["volumes"]]
+    assert "webhook-alert-secret" in [x["name"] for x in c_by_name["alertmanager"]["volumeMounts"]]
