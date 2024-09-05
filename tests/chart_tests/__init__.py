@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Optional
 
 import yaml
 
@@ -9,10 +10,10 @@ def get_all_features():
     return yaml.safe_load((Path(__file__).parent.parent / "enable_all_features.yaml").read_text())
 
 
-def get_chart_containers(k8s_version, chart_values, ignore_kind_list=None) -> dict:
+def get_chart_containers(
+    k8s_version: str, chart_values: dict, exclude_kinds: Optional[list[str]] = None, include_kinds: Optional[list[str]] = None
+) -> dict:
     """Return a dict of pod specs in the form of {k8s_version}_{release_name}-{pod_name}_{container_name}, with some additional metadata."""
-    if ignore_kind_list is None:
-        ignore_kind_list = []
 
     docs = render_chart(
         kube_version=k8s_version,
@@ -32,7 +33,13 @@ def get_chart_containers(k8s_version, chart_values, ignore_kind_list=None) -> di
         and "containers" in doc["spec"]["template"]["spec"]
     ]
 
-    ignore_kind_list = [ignore_kind.lower() for ignore_kind in ignore_kind_list]
+    if exclude_kinds:
+        exclude_kinds = [kind.lower() for kind in exclude_kinds]
+        specs = [spec for spec in specs if spec["kind"].lower() not in exclude_kinds]
+
+    if include_kinds:
+        include_kinds = [kind.lower() for kind in include_kinds]
+        specs = [spec for spec in specs if spec["kind"].lower() in include_kinds]
 
     return {
         f"{k8s_version}_{spec['name']}_{container['name']}": {
@@ -41,6 +48,5 @@ def get_chart_containers(k8s_version, chart_values, ignore_kind_list=None) -> di
             "kind": spec["kind"],
         }
         for spec in specs
-        if spec["kind"].lower() not in ignore_kind_list
         for container in spec["containers"]
     }
