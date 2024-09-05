@@ -12,7 +12,6 @@ global:
     enabled: true
   postgresqlEnabled: true
   prometheusPostgresExporterEnabled: true
-  pspEnabled: true
   taskUsageMetricsEnabled: True
   veleroEnabled: true
   privateCaCertsAddToHost:
