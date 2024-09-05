@@ -25,7 +25,7 @@ global:
     containerdHostPath: /etc/containerd
     containerdConfigToml: ~
     containerdnodeAffinitys: []
-    containerdTollerations: []
+    containerdTolerations: []
     certCopier:
       repository: quay.io/astronomer/ap-base
       tag: 3.18.8
