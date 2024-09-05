@@ -218,10 +218,10 @@ class TestContainerdPrivateCaDaemonset:
         cert_copier["image"].startswith("alpine:3")
         assert "high-priority" == docs[0]["spec"]["template"]["spec"]["priorityClassName"]
 
-    def test_containerd_privateca_daemonset_enabled_with_affinity_and_tolleration(self, kube_version):
-        """Test that the containerd daemonset is rendered with affinity and tolleration when
+    def test_containerd_privateca_daemonset_enabled_with_affinity_and_toleration(self, kube_version):
+        """Test that the containerd daemonset is rendered with affinity and toleration when
         enabled."""
-        tollerationSpec = [{"key": "special-purpose", "operator": "Equal", "value": "workers-spot-vms", "effect": "NoExecute"}]
+        tolerationSpec = [{"key": "special-purpose", "operator": "Equal", "value": "workers-spot-vms", "effect": "NoExecute"}]
         docs = render_chart(
             kube_version=kube_version,
             show_only=self.show_only,
@@ -230,7 +230,7 @@ class TestContainerdPrivateCaDaemonset:
                     "privateCaCertsAddToHost": {
                         "enabled": True,
                         "addToContainerd": True,
-                        "containerdTollerations": tollerationSpec,
+                        "containerdTolerations": tolerationSpec,
                     },
                 }
             },
@@ -239,4 +239,4 @@ class TestContainerdPrivateCaDaemonset:
         assert len(docs) == 2
         self.common_tests_daemonset(docs[0])
         assert len(docs[0]["spec"]["template"]["spec"]["containers"]) == 1
-        assert tollerationSpec == docs[0]["spec"]["template"]["spec"]["tolerations"]
+        assert tolerationSpec == docs[0]["spec"]["template"]["spec"]["tolerations"]
