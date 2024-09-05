@@ -12,7 +12,6 @@ def test_private_registry_repository_image_names_the_same_as_public_ones():
         "blackboxExporterEnabled": True,
         "postgresqlEnabled": True,
         "prometheusPostgresExporterEnabled": True,
-        "pspEnabled": True,
         "veleroEnabled": True,
     }
 
