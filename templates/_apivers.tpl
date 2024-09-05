@@ -29,12 +29,6 @@ networking.k8s.io/v1
 networking.k8s.io/v1
 {{- end -}}
 
-{{- define "apiVersion.PodSecurityPolicy" -}}
-{{- if semverCompare "<1.25-0" .Capabilities.KubeVersion.Version -}}
-extensions/v1beta1
-{{- end -}}
-{{- end -}}
-
 {{- define "apiVersion.PriorityClass" -}}
 scheduling.k8s.io/v1
 {{- end -}}
