@@ -3,7 +3,7 @@ import pytest
 import tests.chart_tests as chart_tests
 from tests import supported_k8s_versions
 
-ignore_kind_list = []
+include_kind_list = ["Deployment", "DaemonSet", "StatefulSet", "ReplicaSet"]
 ignore_list = []
 
 
@@ -18,7 +18,7 @@ def init_test_probes() -> dict:
     return {
         k: v
         for k8s_version in supported_k8s_versions
-        for k, v in chart_tests.get_chart_containers(k8s_version, chart_values, ignore_kind_list).items()
+        for k, v in chart_tests.get_chart_containers(k8s_version, chart_values, include_kinds=include_kind_list).items()
     }
 
 
