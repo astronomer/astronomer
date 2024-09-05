@@ -3,7 +3,6 @@ import pytest
 import tests.chart_tests as chart_tests
 from tests import supported_k8s_versions
 
-ignore_kind_list = []
 ignore_list = [
     "fluentd_fluentd",
     "elasticsearch-exporter_metrics-exporter",
@@ -18,7 +17,7 @@ ignore_list = [
 def test_container_runasnonroot(kube_version):
     """Ensure all containers have runAsNonRoot."""
 
-    containers = chart_tests.get_chart_containers(kube_version, chart_tests.get_all_features(), ignore_kind_list)
+    containers = chart_tests.get_chart_containers(kube_version, chart_tests.get_all_features())
 
     for container in containers.values():
         if container["key"].split("release-name-")[-1] in ignore_list:
