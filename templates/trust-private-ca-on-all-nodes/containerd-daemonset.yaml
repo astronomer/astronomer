@@ -42,6 +42,9 @@ spec:
       affinity:
 {{ toYaml .Values.global.privateCaCertsAddToHost.containerdnodeAffinitys  | indent 8 }}
 {{ end }}
+{{- if .Values.global.privateCaCertsAddToHost.containerdTolerations }}
+      tolerations: {{ toYaml .Values.global.privateCaCertsAddToHost.containerdTolerations | nindent 8 }}
+{{ end }}
 {{- include "certCopier.imagePullSecrets" . | indent 6 }}
       containers:
       - name: cert-copy-and-toml-update
