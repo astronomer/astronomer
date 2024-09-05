@@ -94,6 +94,25 @@ spec:
             mountPath: /etc/prometheus/alerts.d
           - name: prometheus-config-volume
             mountPath: /etc/prometheus/config
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: 9090
+            initialDelaySeconds: {{ .Values.configMapReloader.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.configMapReloader.readinessProbe.periodSeconds }}
+            failureThreshold: {{ .Values.configMapReloader.readinessProbe.failureThreshold }}
+            timeoutSeconds: {{ .Values.configMapReloader.readinessProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.configMapReloader.readinessProbe.failureThreshold }}
+          livenessProbe:
+            httpGet:
+              path: /-/healthy
+              port: 9090
+            initialDelaySeconds: {{ .Values.configMapReloader.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.configMapReloader.livenessProbe.periodSeconds }}
+            failureThreshold: {{ .Values.configMapReloader.livenessProbe.failureThreshold }}
+            timeoutSeconds: {{ .Values.configMapReloader.livenessProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.configMapReloader.livenessProbe.failureThreshold }}
+
 
         - name: prometheus
           image: {{ include "prometheus.image" . }}
