@@ -219,8 +219,7 @@ class TestContainerdPrivateCaDaemonset:
         assert "high-priority" == docs[0]["spec"]["template"]["spec"]["priorityClassName"]
 
     def test_containerd_privateca_daemonset_enabled_with_affinity_and_toleration(self, kube_version):
-        """Test that the containerd daemonset is rendered with affinity and toleration when
-        enabled."""
+        """Test that the containerd daemonset is rendered with affinity and toleration when enabled."""
         tolerationSpec = [{"key": "special-purpose", "operator": "Equal", "value": "workers-spot-vms", "effect": "NoExecute"}]
         docs = render_chart(
             kube_version=kube_version,
