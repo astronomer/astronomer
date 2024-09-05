@@ -32,7 +32,11 @@ spec:
             sidecar.istio.io/inject: "false"
           {{- end }}
         spec:
+          {{- if .Values.global.rbacEnabled }}
           serviceAccountName: {{ .Release.Name }}-config-syncer
+          {{-else}}
+          serviceAccountName: {{ .Values.global.configsyncerServiceAccountName }}
+          {{- end }}
           nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 12 }}
           affinity:
