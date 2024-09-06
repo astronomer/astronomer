@@ -45,8 +45,19 @@ spec:
               path: /healthz
               port: {{ .Values.ports.installHTTP }}
               scheme: HTTP
-            initialDelaySeconds: 30
-            timeoutSeconds: 5
+            initialDelaySeconds: {{ .Values.install.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.install.livenessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.install.livenessProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.install.livenessProbe.failureThreshold }}
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.ports.installHTTP }}
+              scheme: HTTP
+            initialDelaySeconds: {{ .Values.install.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.install.readinessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.install.readinessProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.install.readinessProbe.failureThreshold }}
           ports:
             - containerPort: {{ .Values.ports.installHTTP }}
           resources: {{ toYaml .Values.install.resources | nindent 12 }}
