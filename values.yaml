@@ -51,9 +51,6 @@ global:
 
   # If RBAC on cluster is enabled
   rbacEnabled: true
-  # Below lists the service accounts provided by the user, it will only be considered if rbacEnabled: false
-  commanderServiceAccountName: custom-service-account-commander 
-  configsyncerServiceAccountName: custom-service-account-config-syncer
   
   # whether to create pod disrption budgets by default for platform components
   podDisruptionBudgetsEnabled: true
