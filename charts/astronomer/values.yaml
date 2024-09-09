@@ -337,8 +337,7 @@ configSyncer:
     # The name of the service account to use.
     # If not set and create is true, a name is generated using the fullname template
     name: ""
-    # Specifies whether a scc privilege should be created for custom sa
-    sccEnabled: false
+
 
 commander:
   replicas: 2
@@ -366,8 +365,7 @@ commander:
     # The name of the service account to use.
     # If not set and create is true, a name is generated using the fullname template
     name: ""
-    # Specifies whether a scc privilege should be created for custom sa
-    sccEnabled: false
+
 
   # Add extra containers to your commander deployment.
   extraContainers: []
