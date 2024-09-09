@@ -76,6 +76,8 @@ spec:
               containerPort: {{ .Values.ports.https }}
             - name: metrics
               containerPort: {{ .Values.ports.metrics }}
+            - name: debug
+              containerPort: 10245
           livenessProbe:
             httpGet:
               path: /healthz
