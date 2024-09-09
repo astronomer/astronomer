@@ -18,7 +18,23 @@ class TestServiceAccounts:
             if isinstance(doc, dict) and doc.get("kind") == "ServiceAccount":
                 service_accounts.append(doc["metadata"]["name"])
         assert len(service_accounts) == 0
-        #print(service_accounts)       
+        #print(service_accounts)      
+
+    def test_role_created(self,kube_version):
+        roles = []
+        rolebindings = []
+        docs = render_chart(
+                kube_version=kube_version,
+                values={"global": {"rbacEnabled": False}}),
+        for doc in docs:
+            if isinstance(doc, dict):
+                if doc.get("kind") == "Role":
+                    roles.append(doc["metadata"]["name"])
+                elif doc.get("kind") == "RoleBinding":
+                    rolebindings.append(doc["metadata"]["name"])
+        assert len(roles) == 0
+        assert len(rolebindings) == 0
+     
 
 
         
