@@ -11,10 +11,9 @@ from tests.chart_tests.helm_template_generator import render_chart
 class TestServiceAccounts:
     def test_SAs_created(self, kube_version):
         docs = (render_chart(kube_version=kube_version, values={"global": {"rbacEnabled": False}}),)
-        service_accounts = []
-        for doc in docs:
-            if isinstance(doc, dict) and doc.get("kind") == "ServiceAccount":
-                service_accounts.append(doc["metadata"]["name"])
+        service_accounts = [
+            doc["metadata"]["name"] for doc in docs if isinstance(doc, dict) and doc.get("kind") == "ServiceAccount"
+        ]
         assert len(service_accounts) == 0
         # print(service_accounts)
 
