@@ -25,6 +25,7 @@ global:
     containerdHostPath: /etc/containerd
     containerdConfigToml: ~
     containerdnodeAffinitys: []
+    containerdTolerations: []
     certCopier:
       repository: quay.io/astronomer/ap-base
       tag: 3.18.8
@@ -101,9 +102,6 @@ global:
   stan:
     enabled: true
     replicas: 3
-
-  # If PodSecurityPolicies (PSP) should be enabled
-  pspEnabled: false
 
   # Do you want to apply the global, default deny ingress network policy?
   defaultDenyNetworkPolicy: true
