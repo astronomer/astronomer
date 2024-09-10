@@ -46,8 +46,13 @@ grafana.{{ .Values.global.baseDomain }}
 {{ default (printf "%s-grafana-backend" .Release.Name) .Values.backendSecretName }}
 {{- end }}
 
+
 {{ define "grafana.bootstrapper.serviceaccount" -}}
-{{ printf "%s-grafana-bootstrapper" .Release.Name }}
+{{- if .Values.global.rbacEnabled }}
+  {{ printf "%s-grafana-bootstrapper" .Release.Name }}
+{{- else -}}
+  default
+{{- end }}
 {{- end }}
 
 {{ define "velero.dashboard" -}}
