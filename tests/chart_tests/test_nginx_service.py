@@ -32,9 +32,7 @@ class TestNginx:
             ("ExternalName", "Local", True),
         ],
     )
-    def test_nginx_service_servicetype(
-        self, service_type, external_traffic_policy, preserve_source_ip
-    ):
+    def test_nginx_service_servicetype(self, service_type, external_traffic_policy, preserve_source_ip):
         """Verify that ClusterIP never has an externalTrafficPolicy, and other
         configurations are correct according to spec.
 
@@ -58,19 +56,12 @@ class TestNginx:
         """Deployment should contain the given ingress annotations when they
         are specified."""
         doc = render_chart(
-            values={
-                "nginx": {
-                    "ingressAnnotations": {"foo1": "foo", "foo2": "foo", "foo3": "foo"}
-                }
-            },
+            values={"nginx": {"ingressAnnotations": {"foo1": "foo", "foo2": "foo", "foo3": "foo"}}},
             show_only=["charts/nginx/templates/nginx-service.yaml"],
         )[0]
 
         expected_annotations = {"foo1": "foo", "foo2": "foo", "foo3": "foo"}
-        assert all(
-            doc["metadata"]["annotations"][x] == y
-            for x, y in expected_annotations.items()
-        )
+        assert all(doc["metadata"]["annotations"][x] == y for x, y in expected_annotations.items())
 
     def test_nginx_type_loadbalancer(self):
         """Deployment works with type LoadBalancer and some LB
@@ -205,17 +196,12 @@ class TestNginx:
             show_only=["charts/nginx/templates/nginx-deployment.yaml"],
         )[0]
         annotationValidation = "--enable-annotation-validation=true"
-        assert (
-            annotationValidation
-            in doc["spec"]["template"]["spec"]["containers"][0]["args"]
-        )
+        assert annotationValidation in doc["spec"]["template"]["spec"]["containers"][0]["args"]
 
     def test_nginx_backend_serviceaccount_defaults(self):
         doc = render_chart(
             values={},
-            show_only=[
-                "charts/nginx/templates/nginx-default-backend-serviceaccount.yaml"
-            ],
+            show_only=["charts/nginx/templates/nginx-default-backend-serviceaccount.yaml"],
         )[0]
 
         assert "release-name-nginx-default-backend" == doc["metadata"]["name"]
@@ -226,6 +212,7 @@ class TestNginx:
             show_only=["charts/nginx/templates/nginx-deployment.yaml"],
         )[0]
 
+        electionTTL = "--election-ttl"
         electionId = "--election-id=ingress-controller-leader-release-name-nginx"
         topologyAwareRouting = "--enable-topology-aware-routing"
         annotationValidation = "--enable-annotation-validation"
@@ -235,6 +222,7 @@ class TestNginx:
 
         assert doc["spec"]["minReadySeconds"] == 0
         assert electionId in c_by_name["nginx"]["args"]
+        assert electionTTL not in c_by_name["nginx"]["args"]
         assert topologyAwareRouting not in c_by_name["nginx"]["args"]
         assert annotationValidation not in c_by_name["nginx"]["args"]
         assert disableLeaderElection not in c_by_name["nginx"]["args"]
@@ -247,6 +235,15 @@ class TestNginx:
         )[0]
 
         assert doc["spec"]["minReadySeconds"] == minReadySeconds
+
+    def test_nginx_election_ttl_overrides(self):
+        doc = render_chart(
+            values={"nginx": {"electionTTL": "30s"}},
+            show_only=["charts/nginx/templates/nginx-deployment.yaml"],
+        )[0]
+        electionTTL = "--election-ttl=30s"
+        c_by_name = get_containers_by_name(doc)
+        assert electionTTL in c_by_name["nginx"]["args"]
 
     def test_nginx_topology_aware_routing_overrides(self):
         doc = render_chart(

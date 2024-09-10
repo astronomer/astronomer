@@ -54,11 +54,7 @@ class TestPrometheusConfigConfigmap:
         )[0]
 
         config_yaml = yaml.safe_load(doc["data"]["config"])
-        targets = [
-            x["static_configs"][0]["targets"]
-            for x in config_yaml["scrape_configs"]
-            if x["job_name"] == "blackbox HTTP"
-        ][0]
+        targets = next(x["static_configs"][0]["targets"] for x in config_yaml["scrape_configs"] if x["job_name"] == "blackbox HTTP")
 
         target_checks = [
             "http://foo-name-cli-install.bar-ns",
@@ -81,19 +77,11 @@ class TestPrometheusConfigConfigmap:
         doc = render_chart(
             kube_version=kube_version,
             show_only=self.show_only,
-            values={
-                "prometheus": {
-                    "external_labels": {
-                        "external_labels_key_1": "external_labels_value_1"
-                    }
-                }
-            },
+            values={"prometheus": {"external_labels": {"external_labels_key_1": "external_labels_value_1"}}},
         )[0]
 
         config_yaml = yaml.safe_load(doc["data"]["config"])
-        assert config_yaml["global"]["external_labels"] == {
-            "external_labels_key_1": "external_labels_value_1"
-        }
+        assert config_yaml["global"]["external_labels"] == {"external_labels_key_1": "external_labels_value_1"}
 
     def test_promethesu_config_configmap_remote_write(self, kube_version):
         """Prometheus should have a remote_write section in config.yaml when
@@ -151,9 +139,7 @@ class TestPrometheusConfigConfigmap:
         )[0]
 
         nodeExporterConfigs = [
-            x
-            for x in yaml.safe_load(doc["data"]["config"])["scrape_configs"]
-            if x["job_name"] == "node-exporter"
+            x for x in yaml.safe_load(doc["data"]["config"])["scrape_configs"] if x["job_name"] == "node-exporter"
         ]
         assert nodeExporterConfigs[0]["job_name"] == "node-exporter"
 
@@ -194,9 +180,7 @@ class TestPrometheusConfigConfigmap:
         )[0]
 
         config = yaml.safe_load(doc["data"]["config"])
-        scrape_config_search_result = jmespath.search(
-            "scrape_configs[?job_name == 'kube-state']", config
-        )
+        scrape_config_search_result = jmespath.search("scrape_configs[?job_name == 'kube-state']", config)
         metric_relabel_config_search_result = jmespath.search(
             "metric_relabel_configs[?target_label == 'release']",
             scrape_config_search_result[0],
@@ -208,9 +192,7 @@ class TestPrometheusConfigConfigmap:
         assert metric_relabel_config_search_result[0]["replacement"] == "$1"
         assert metric_relabel_config_search_result[0]["target_label"] == "release"
 
-    def test_prometheus_config_release_relabel_with_free_from_namespace(
-        self, kube_version
-    ):
+    def test_prometheus_config_release_relabel_with_free_from_namespace(self, kube_version):
         """Prometheus should not have a regex for release name when free form
         namespace is enabled."""
         doc = render_chart(
@@ -229,13 +211,7 @@ class TestPrometheusConfigConfigmap:
             show_only=self.show_only,
             values={
                 "prometheus": {
-                    "config": {
-                        "scrape_configs": {
-                            "kubernetes_apiservers": {
-                                "tls_config": {"insecure_skip_verify": True}
-                            }
-                        }
-                    },
+                    "config": {"scrape_configs": {"kubernetes_apiservers": {"tls_config": {"insecure_skip_verify": True}}}},
                 },
             },
         )[0]
@@ -247,9 +223,7 @@ class TestPrometheusConfigConfigmap:
             if x["job_name"] == "kubernetes-apiservers"
         ] == [True]
 
-    def test_prometheus_config_release_relabel_with_pre_created_namespace(
-        self, kube_version
-    ):
+    def test_prometheus_config_release_relabel_with_pre_created_namespace(self, kube_version):
         """Prometheus should have a regex for release name when namespacePools
         namespace is enabled."""
         doc = render_chart(
@@ -264,9 +238,7 @@ class TestPrometheusConfigConfigmap:
         )[0]
         self.assert_relabel_config_for_non_auto_generated_namesaces(doc)
 
-    def test_prometheus_config_release_relabel_with_manual_namespace_names_enabled(
-        self, kube_version
-    ):
+    def test_prometheus_config_release_relabel_with_manual_namespace_names_enabled(self, kube_version):
         """Prometheus should have a regex for release name when manualNamespaceNames
         is enabled."""
         doc = render_chart(
@@ -283,9 +255,7 @@ class TestPrometheusConfigConfigmap:
 
     def assert_relabel_config_for_non_auto_generated_namesaces(self, chart):
         config = yaml.safe_load(chart["data"]["config"])
-        scrape_config_search_result = jmespath.search(
-            "scrape_configs[?job_name == 'kube-state']", config
-        )
+        scrape_config_search_result = jmespath.search("scrape_configs[?job_name == 'kube-state']", config)
         metric_relabel_config_search_result = jmespath.search(
             "metric_relabel_configs[?target_label == 'release']",
             scrape_config_search_result[0],
@@ -300,9 +270,7 @@ class TestPrometheusConfigConfigmap:
         assert metric_relabel_config_search_result[0]["target_label"] == "release"
 
         assert metric_relabel_config_search_result[1]["regex"] == "(.+)-resource-quota$"
-        assert metric_relabel_config_search_result[1]["source_labels"] == [
-            "resourcequota"
-        ]
+        assert metric_relabel_config_search_result[1]["source_labels"] == ["resourcequota"]
         assert metric_relabel_config_search_result[1]["replacement"] == "$1"
         assert metric_relabel_config_search_result[1]["target_label"] == "release"
 
@@ -335,9 +303,5 @@ class TestPrometheusConfigConfigmap:
         )[0]
         scrape_configs = yaml.safe_load(doc["data"]["config"])["scrape_configs"]
 
-        assert (
-            static_job in scrape_configs
-        ), "Static job not found in rendered ConfigMap"
-        assert (
-            kubernetes_job in scrape_configs
-        ), "Kubernetes job not found in rendered ConfigMap"
+        assert static_job in scrape_configs, "Static job not found in rendered ConfigMap"
+        assert kubernetes_job in scrape_configs, "Kubernetes job not found in rendered ConfigMap"

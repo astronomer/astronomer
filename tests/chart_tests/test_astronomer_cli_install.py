@@ -47,9 +47,7 @@ class TestAstronomerCliInstall:
         docs = render_chart(
             kube_version=kube_version,
             values={"astronomer": {"install": {"cliEnabled": False}}},
-            show_only=[
-                "charts/astronomer/templates/cli-install/cli-install-ingress.yaml"
-            ],
+            show_only=["charts/astronomer/templates/cli-install/cli-install-ingress.yaml"],
         )
 
         assert len(docs) == 0

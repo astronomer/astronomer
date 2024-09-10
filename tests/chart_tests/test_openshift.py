@@ -39,9 +39,7 @@ non_airflow_components_list = [
     supported_k8s_versions,
 )
 class TestOpenshift:
-    def test_openshift_flag_defaults_with_enabled_and_validate_podsecuritycontext(
-        self, kube_version
-    ):
+    def test_openshift_flag_defaults_with_enabled_and_validate_podsecuritycontext(self, kube_version):
         "Validate podSecurityContext is not set when openshiftEnabled is True"
         docs = render_chart(
             kube_version=kube_version,
@@ -55,9 +53,7 @@ class TestOpenshift:
         for doc in docs:
             assert "securityContext" not in doc["spec"]["template"]["spec"]
 
-    def test_openshift_flag_defaults_with_enabled_and_validate_container_securitycontext(
-        self, kube_version
-    ):
+    def test_openshift_flag_defaults_with_enabled_and_validate_container_securitycontext(self, kube_version):
         "Validate containerSecurityContext when openshiftEnabled is Enabled"
         docs = render_chart(
             kube_version=kube_version,
@@ -76,13 +72,9 @@ class TestOpenshift:
 
         assert len(docs) == 6
         for doc in docs:
-            assert "runAsUser" not in jmespath.search(
-                "spec.template.spec.containers[*].securityContext", doc
-            )
+            assert "runAsUser" not in jmespath.search("spec.template.spec.containers[*].securityContext", doc)
 
-    def test_openshift_flag_defaults_with_enabled_and_validate_houston_configmap(
-        self, kube_version
-    ):
+    def test_openshift_flag_defaults_with_enabled_and_validate_houston_configmap(self, kube_version):
         "Validate houston config when openshiftEnabled is Enabled"
         docs = render_chart(
             values={
@@ -97,11 +89,7 @@ class TestOpenshift:
         airflowConfig = prod["deployments"]["helm"]["airflow"]
 
         for component in airflow_components_list:
-            assert {"runAsNonRoot": False} == airflowConfig[component][
-                "securityContexts"
-            ]["pod"]
+            assert {"runAsNonRoot": False} == airflowConfig[component]["securityContexts"]["pod"]
 
         for component in non_airflow_components_list:
-            assert {"runAsNonRoot": True} == airflowConfig[component][
-                "securityContexts"
-            ]["pod"]
+            assert {"runAsNonRoot": True} == airflowConfig[component]["securityContexts"]["pod"]

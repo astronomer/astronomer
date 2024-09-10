@@ -6,9 +6,7 @@ from subprocess import CalledProcessError
 def test_astronomer_bootstrap_secret_defaults():
     """Test the astronomer-bootstrap secret with defaults."""
     with pytest.raises(CalledProcessError):
-        render_chart(
-            show_only="charts/postgresql/templates/astronomer-bootstrap-secret.yaml"
-        )
+        render_chart(show_only="charts/postgresql/templates/astronomer-bootstrap-secret.yaml")
 
 
 def test_astronomer_bootstrap_secret_postgres_enabled():

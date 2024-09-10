@@ -43,9 +43,9 @@ class TestStatefulSetsAnnotations:
         )
         assert len(docs) == 2
         for doc in docs:
-            assert {"astro.io/elastic": "master-sts", "storage": "astro"} == doc[
-                "spec"
-            ]["volumeClaimTemplates"][0]["metadata"]["annotations"]
+            assert {"astro.io/elastic": "master-sts", "storage": "astro"} == doc["spec"]["volumeClaimTemplates"][0]["metadata"][
+                "annotations"
+            ]
 
     def test_prometheus_sts_with_overridden_annotations(self, kube_version):
         """Test prometheus sts for the volume claim templates annotations."""
@@ -70,7 +70,11 @@ class TestStatefulSetsAnnotations:
             assert {
                 "annotation": "astro-test",
                 "astro.io/monitoring": "prom-sts",
-            } == doc["spec"]["volumeClaimTemplates"][0]["metadata"]["annotations"]
+            } == doc["spec"][
+                "volumeClaimTemplates"
+            ][0][
+                "metadata"
+            ]["annotations"]
 
     def test_registry_sts_with_overridden_annotations(self, kube_version):
         """Test registry sts for the volume claim templates annotations."""
@@ -97,7 +101,11 @@ class TestStatefulSetsAnnotations:
             assert {
                 "annotation": "registry-test",
                 "astro.io/registry": "registry-sts",
-            } == doc["spec"]["volumeClaimTemplates"][0]["metadata"]["annotations"]
+            } == doc["spec"][
+                "volumeClaimTemplates"
+            ][0][
+                "metadata"
+            ]["annotations"]
 
     def test_stan_sts_with_overridden_annotations(self, kube_version):
         """Test stan sts for the volume claim templates annotations."""
@@ -119,6 +127,6 @@ class TestStatefulSetsAnnotations:
         )
         assert len(docs) == 1
         for doc in docs:
-            assert {"annotation": "stan-test", "astro.io/stan": "stan-sts"} == doc[
-                "spec"
-            ]["volumeClaimTemplates"][0]["metadata"]["annotations"]
+            assert {"annotation": "stan-test", "astro.io/stan": "stan-sts"} == doc["spec"]["volumeClaimTemplates"][0]["metadata"][
+                "annotations"
+            ]

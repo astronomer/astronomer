@@ -22,9 +22,7 @@ def common_test_cases(docs):
 
     assert prod["deployments"]["helm"]["airflow"]["useAstroSecurityManager"] is True
     assert prod["deployments"]["disableManageClusterScopedResources"] is False
-    airflow_local_settings = prod["deployments"]["helm"]["airflow"][
-        "airflowLocalSettings"
-    ]
+    airflow_local_settings = prod["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
 
     assert (
         prod["deployments"]["helm"]["airflow"]["cleanup"]["schedule"]
@@ -163,13 +161,8 @@ def test_houston_configmap_with_config_syncer_disabled():
     common_test_cases(docs)
     doc = docs[0]
     prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
-    assert (
-        "extraVolumeMounts"
-        not in prod_yaml["deployments"]["helm"]["airflow"]["webserver"]
-    )
-    assert (
-        "extraVolumes" not in prod_yaml["deployments"]["helm"]["airflow"]["webserver"]
-    )
+    assert "extraVolumeMounts" not in prod_yaml["deployments"]["helm"]["airflow"]["webserver"]
+    assert "extraVolumes" not in prod_yaml["deployments"]["helm"]["airflow"]["webserver"]
     assert not prod_yaml["deployments"].get("loggingSidecar")
 
 
@@ -220,9 +213,7 @@ def test_houston_configmap_with_loggingsidecar_enabled():
     doc = docs[0]
     prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
     log_cmd = 'log_cmd = " 1> >( tee -a /var/log/sidecar-log-consumer/out.log ) 2> >( tee -a /var/log/sidecar-log-consumer/err.log >&2 ) ; "'
-    assert (
-        log_cmd in prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
-    )
+    assert log_cmd in prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
     assert prod_yaml["deployments"]["loggingSidecar"] == {
         "enabled": True,
         "name": "sidecar-log-consumer",
@@ -253,9 +244,7 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_index_prefix_overrid
     doc = docs[0]
     prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
     log_cmd = 'log_cmd = " 1> >( tee -a /var/log/sidecar-log-consumer/out.log ) 2> >( tee -a /var/log/sidecar-log-consumer/err.log >&2 ) ; "'
-    assert (
-        log_cmd in prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
-    )
+    assert log_cmd in prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
     assert prod_yaml["deployments"]["loggingSidecar"] == {
         "enabled": True,
         "name": "sidecar-log-consumer",
@@ -288,9 +277,7 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_overrides():
     doc = docs[0]
     prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
     log_cmd = 'log_cmd = " 1> >( tee -a /var/log/sidecar-log-consumer/out.log ) 2> >( tee -a /var/log/sidecar-log-consumer/err.log >&2 ) ; "'
-    assert (
-        log_cmd in prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
-    )
+    assert log_cmd in prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
     assert prod_yaml["deployments"]["loggingSidecar"] == {
         "enabled": True,
         "name": sidecar_container_name,
@@ -324,9 +311,7 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_indexPattern():
     doc = docs[0]
     prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
     log_cmd = 'log_cmd = " 1> >( tee -a /var/log/sidecar-log-consumer/out.log ) 2> >( tee -a /var/log/sidecar-log-consumer/err.log >&2 ) ; "'
-    assert (
-        log_cmd in prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
-    )
+    assert log_cmd in prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
     assert prod_yaml["deployments"]["loggingSidecar"] == {
         "enabled": True,
         "name": sidecar_container_name,
@@ -359,9 +344,7 @@ def test_houston_configmap_with_loggingsidecar_customConfig_enabled():
     doc = docs[0]
     prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
     log_cmd = 'log_cmd = " 1> >( tee -a /var/log/sidecar-log-consumer/out.log ) 2> >( tee -a /var/log/sidecar-log-consumer/err.log >&2 ) ; "'
-    assert (
-        log_cmd in prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
-    )
+    assert log_cmd in prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
     assert prod_yaml["deployments"]["loggingSidecar"] == {
         "enabled": True,
         "name": sidecar_container_name,
@@ -412,9 +395,7 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_custom_env_overrides
     doc = docs[0]
     prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
     log_cmd = 'log_cmd = " 1> >( tee -a /var/log/sidecar-log-consumer/out.log ) 2> >( tee -a /var/log/sidecar-log-consumer/err.log >&2 ) ; "'
-    assert (
-        log_cmd in prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
-    )
+    assert log_cmd in prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
     assert prod_yaml["deployments"]["loggingSidecar"] == {
         "enabled": True,
         "name": sidecar_container_name,
@@ -423,15 +404,11 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_custom_env_overrides
         "extraEnv": [
             {
                 "name": "ES_USER",
-                "valueFrom": {
-                    "secretKeyRef": {"name": "elastic-creds", "key": "ESUSER"}
-                },
+                "valueFrom": {"secretKeyRef": {"name": "elastic-creds", "key": "ESUSER"}},
             },
             {
                 "name": "ES_PASS",
-                "valueFrom": {
-                    "secretKeyRef": {"name": "elastic-creds", "key": "ESPASS"}
-                },
+                "valueFrom": {"secretKeyRef": {"name": "elastic-creds", "key": "ESPASS"}},
             },
         ],
     }
@@ -464,9 +441,7 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_resource_overrides()
     doc = docs[0]
     prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
     log_cmd = 'log_cmd = " 1> >( tee -a /var/log/sidecar-log-consumer/out.log ) 2> >( tee -a /var/log/sidecar-log-consumer/err.log >&2 ) ; "'
-    assert (
-        log_cmd in prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
-    )
+    assert log_cmd in prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
     assert prod_yaml["deployments"]["loggingSidecar"] == {
         "enabled": True,
         "name": sidecar_container_name,
@@ -506,9 +481,7 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_securityContext_conf
     doc = docs[0]
     prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
     log_cmd = 'log_cmd = " 1> >( tee -a /var/log/sidecar-log-consumer/out.log ) 2> >( tee -a /var/log/sidecar-log-consumer/err.log >&2 ) ; "'
-    assert (
-        log_cmd in prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
-    )
+    assert log_cmd in prod_yaml["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
     assert prod_yaml["deployments"]["loggingSidecar"] == {
         "enabled": True,
         "name": sidecar_container_name,
@@ -625,9 +598,7 @@ def test_houston_configmap_with_internal_authorization_flag_defaults():
 def test_houston_configmap_with_internal_authorization_flag_enabled():
     """Validate the houston configmap to internal authorization."""
     docs = render_chart(
-        values={
-            "astronomer": {"houston": {"enableHoustonInternalAuthorization": True}}
-        },
+        values={"astronomer": {"houston": {"enableHoustonInternalAuthorization": True}}},
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
     common_test_cases(docs)

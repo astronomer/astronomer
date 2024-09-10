@@ -19,10 +19,7 @@ class TestContainerdPrivateCaDaemonset:
         """Test things common to all daemonsets."""
         assert doc["kind"] == "DaemonSet"
         assert doc["metadata"]["name"] == "release-name-containerd-ca-update"
-        assert (
-            doc["spec"]["template"]["spec"]["containers"][0]["name"]
-            == "cert-copy-and-toml-update"
-        )
+        assert doc["spec"]["template"]["spec"]["containers"][0]["name"] == "cert-copy-and-toml-update"
 
     def test_privateca_daemonset_disabled(self, kube_version):
         """Test that no daemonset is rendered when privateCaCertsAddToHost is
@@ -197,9 +194,7 @@ class TestContainerdPrivateCaDaemonset:
         assert volumemounts == expected_volumemounts
         assert volumes == expected_volumes
 
-    def test_containerd_privateca_daemonset_enabled_with_priority_class(
-        self, kube_version
-    ):
+    def test_containerd_privateca_daemonset_enabled_with_priority_class(self, kube_version):
         """Test that the containerd daemonset is rendered with priorityClass when
         enabled."""
         docs = render_chart(
@@ -221,6 +216,26 @@ class TestContainerdPrivateCaDaemonset:
         assert len(docs[0]["spec"]["template"]["spec"]["containers"]) == 1
         cert_copier = docs[0]["spec"]["template"]["spec"]["containers"][0]
         cert_copier["image"].startswith("alpine:3")
-        assert (
-            "high-priority" == docs[0]["spec"]["template"]["spec"]["priorityClassName"]
+        assert "high-priority" == docs[0]["spec"]["template"]["spec"]["priorityClassName"]
+
+    def test_containerd_privateca_daemonset_enabled_with_affinity_and_toleration(self, kube_version):
+        """Test that the containerd daemonset is rendered with affinity and toleration when enabled."""
+        tolerationSpec = [{"key": "special-purpose", "operator": "Equal", "value": "workers-spot-vms", "effect": "NoExecute"}]
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=self.show_only,
+            values={
+                "global": {
+                    "privateCaCertsAddToHost": {
+                        "enabled": True,
+                        "addToContainerd": True,
+                        "containerdTolerations": tolerationSpec,
+                    },
+                }
+            },
         )
+
+        assert len(docs) == 2
+        self.common_tests_daemonset(docs[0])
+        assert len(docs[0]["spec"]["template"]["spec"]["containers"]) == 1
+        assert tolerationSpec == docs[0]["spec"]["template"]["spec"]["tolerations"]
