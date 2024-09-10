@@ -46,7 +46,9 @@ spec:
       tolerations:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       restartPolicy: Always
+      {{- if .Values.global.rbacEnabled }}
       serviceAccountName: {{ template "prometheus.fullname" . }}
+      {{- end}}
 {{- include "prometheus.imagePullSecrets" . | indent 6 }}
       containers:
         {{- if .Values.global.authSidecar.enabled  }}
