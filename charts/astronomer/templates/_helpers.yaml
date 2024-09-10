@@ -139,10 +139,10 @@
 {{- end }}
 {{- end }}
 
-{{ define "houston.ServiceAccount" -}}
+{{ define "houston.bootstrapperServiceAccount" -}}
 {{- if .Values.global.rbacEnabled }}
-  {{- if .Values.houston.ServiceAccount.name -}}
-    {{ printf "%s-%s" .Release.Name .Values.houston.ServiceAccount.name }}
+  {{- if .Values.houston.serviceAccount.name -}}
+    {{ printf "%s-%s" .Release.Name .Values.houston.serviceAccount.name }}
   {{- else -}}
     {{ printf "%s-houston" .Release.Name }}
   {{- end }}
@@ -150,6 +150,8 @@
   default
 {{- end }}
 {{- end }}
+
+
 
 {{ define "configSyncer.ServiceAccount" -}}
 {{- if .Values.global.rbacEnabled }}
