@@ -37,7 +37,9 @@ spec:
 {{ toYaml .Values.annotations | indent 8 }}
 {{- end }}
     spec:
+      {{- if .Values.global.rbacEnabled }}
       serviceAccountName: {{ template "prometheus-postgres-exporter.serviceAccountName" . }}
+      {{- end}}
 {{- include "prometheus-postgres-exporter.imagePullSecrets" . | indent 6 }}
       containers:
         - name: {{ .Chart.Name }}

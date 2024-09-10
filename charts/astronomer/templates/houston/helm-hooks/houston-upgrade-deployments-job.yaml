@@ -35,7 +35,9 @@ spec:
         sidecar.istio.io/inject: "false"
       {{- end }}
     spec:
+      {{- if .Values.global.rbacEnabled }}
       serviceAccountName: {{ template "houston.bootstrapperServiceAccount" . }}
+      {{- end}}
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
       affinity:
