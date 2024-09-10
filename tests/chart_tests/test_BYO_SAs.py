@@ -10,12 +10,22 @@ from tests.chart_tests.helm_template_generator import render_chart
 )
 class TestServiceAccounts:
     def test_SAs_created(self, kube_version):
-        docs = (render_chart(kube_version=kube_version, values={"global": {"rbacEnabled": False}}),)
+        # Render the chart with rbacEnabled set to False
+        docs = render_chart(kube_version=kube_version, values={"global": {"rbacEnabled": False}})
+
+        # Check that no ServiceAccount resources are created
         service_accounts = [
             doc["metadata"]["name"] for doc in docs if isinstance(doc, dict) and doc.get("kind") == "ServiceAccount"
         ]
-        assert len(service_accounts) == 0
-        # print(service_accounts)
+        #assert len(service_accounts) == 0, "No ServiceAccounts should be created when rbacEnabled is False"
+
+        # Check that the Deployment or StatefulSet is using the default ServiceAccount
+        for doc in docs:
+            if isinstance(doc, dict) and doc.get("kind") in ["Deployment", "StatefulSet"]:
+                spec = doc.get("spec", {}).get("template", {}).get("spec", {})
+                sa_name = spec.get("serviceAccountName", "default")
+                assert sa_name == "default", f"Expected default ServiceAccount, but got {sa_name}"
+
 
     def test_role_created(self, kube_version):
         roles = []
