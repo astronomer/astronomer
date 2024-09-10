@@ -39,7 +39,9 @@ spec:
 {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 8 }}
       tolerations:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
+      {{- if .Values.global.rbacEnabled }}
       serviceAccountName: {{ .Release.Name }}-commander
+      {{- end}}
       restartPolicy: Always
 {{- include "astronomer.imagePullSecrets" . | indent 6 }}
       containers:
