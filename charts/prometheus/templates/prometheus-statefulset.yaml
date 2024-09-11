@@ -100,7 +100,6 @@ spec:
               port: 9090
             initialDelaySeconds: {{ .Values.configMapReloader.readinessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.configMapReloader.readinessProbe.periodSeconds }}
-            failureThreshold: {{ .Values.configMapReloader.readinessProbe.failureThreshold }}
             timeoutSeconds: {{ .Values.configMapReloader.readinessProbe.timeoutSeconds }}
             failureThreshold: {{ .Values.configMapReloader.readinessProbe.failureThreshold }}
           livenessProbe:
@@ -109,7 +108,6 @@ spec:
               port: 9090
             initialDelaySeconds: {{ .Values.configMapReloader.livenessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.configMapReloader.livenessProbe.periodSeconds }}
-            failureThreshold: {{ .Values.configMapReloader.livenessProbe.failureThreshold }}
             timeoutSeconds: {{ .Values.configMapReloader.livenessProbe.timeoutSeconds }}
             failureThreshold: {{ .Values.configMapReloader.livenessProbe.failureThreshold }}
 
