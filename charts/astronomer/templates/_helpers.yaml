@@ -140,15 +140,7 @@
 {{- end }}
 
 {{ define "houston.bootstrapperServiceAccount" -}}
-{{- if .Values.global.rbacEnabled }}
-  {{- if .Values.houston.serviceAccount.name -}}
-    {{ printf "%s-%s" .Release.Name .Values.houston.serviceAccount.name }}
-  {{- else -}}
-    {{ printf "%s-houston" .Release.Name }}
-  {{- end }}
-{{- else -}}
-  default
-{{- end }}
+{{ printf "%s-houston-bootstrapper" .Release.Name }}
 {{- end }}
 
 
