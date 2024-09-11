@@ -60,6 +60,7 @@ common:
 
   ports:
     http: 9200
+    readiness: 9399
     transport: 9300
 
 # Client/ingest nodes can execute pre-processing pipelines, composed of
