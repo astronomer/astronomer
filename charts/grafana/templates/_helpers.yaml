@@ -48,11 +48,7 @@ grafana.{{ .Values.global.baseDomain }}
 
 
 {{ define "grafana.bootstrapper.serviceaccount" -}}
-{{- if .Values.global.rbacEnabled }}
   {{ printf "%s-grafana-bootstrapper" .Release.Name }}
-{{- else -}}
-  default
-{{- end }}
 {{- end }}
 
 {{ define "velero.dashboard" -}}
