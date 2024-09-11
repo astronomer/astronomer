@@ -122,20 +122,21 @@ spec:
         {{- end }}
         - name: node.roles
           value: "{{ template "elasticsearch.data.roles" . }}"
-        resources:
-{{ toYaml .Values.data.resources | indent 10 }}
+        resources: {{ toYaml .Values.data.resources | nindent 10 }}
         ports:
         - containerPort: {{ .Values.common.ports.transport }}
           name: transport
           protocol: TCP
         readinessProbe:
           tcpSocket:
-            port: {{ .Values.common.ports.transport }}
+            port: {{ .Values.common.ports.readiness }}
           initialDelaySeconds: {{ .Values.data.readinessProbe.initialDelaySeconds }}
           periodSeconds: {{ .Values.data.readinessProbe.periodSeconds }}
           timeoutSeconds: {{ .Values.data.readinessProbe.timeoutSeconds }}
           failureThreshold: {{ .Values.data.readinessProbe.failureThreshold }}
         livenessProbe:
+          tcpSocket:
+            port: {{ .Values.common.ports.transport }}
           initialDelaySeconds: {{ .Values.data.livenessProbe.initialDelaySeconds }}
           periodSeconds: {{ .Values.data.livenessProbe.periodSeconds }}
           timeoutSeconds: {{ .Values.data.livenessProbe.timeoutSeconds }}

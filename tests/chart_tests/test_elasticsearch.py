@@ -629,15 +629,18 @@ class TestElasticSearch:
         assert c_by_name["es-data"]["livenessProbe"]["periodSeconds"] == 5
         assert c_by_name["es-data"]["livenessProbe"]["timeoutSeconds"] == 1
         assert c_by_name["es-data"]["livenessProbe"]["failureThreshold"] == 3
+        assert c_by_name["es-data"]["livenessProbe"]["tcpSocket"]["port"] == 9300
         assert c_by_name["es-data"]["readinessProbe"]["initialDelaySeconds"] == 20
         assert c_by_name["es-data"]["readinessProbe"]["periodSeconds"] == 10
         assert c_by_name["es-data"]["readinessProbe"]["timeoutSeconds"] == 1
         assert c_by_name["es-data"]["readinessProbe"]["failureThreshold"] == 3
+        assert c_by_name["es-data"]["readinessProbe"]["tcpSocket"]["port"] == 9399
 
     def test_es_data_probes_custom(self, kube_version):
-        """Test ElasticSearch data probes with default values."""
+        """Test ElasticSearch data probes with custom values."""
         values = {
             "elasticsearch": {
+                "common": {"ports": {"readiness": 34567, "transport": 76543}},
                 "data": {
                     "livenessProbe": {
                         "initialDelaySeconds": 999,
@@ -663,12 +666,17 @@ class TestElasticSearch:
         )
 
         assert len(docs) == 1
+
         c_by_name = get_containers_by_name(docs[0])
+
         assert c_by_name["es-data"]["livenessProbe"]["initialDelaySeconds"] == 999
         assert c_by_name["es-data"]["livenessProbe"]["periodSeconds"] == 998
         assert c_by_name["es-data"]["livenessProbe"]["timeoutSeconds"] == 996
         assert c_by_name["es-data"]["livenessProbe"]["failureThreshold"] == 997
+        assert c_by_name["es-data"]["livenessProbe"]["tcpSocket"]["port"] == 76543
+
         assert c_by_name["es-data"]["readinessProbe"]["initialDelaySeconds"] == 995
         assert c_by_name["es-data"]["readinessProbe"]["periodSeconds"] == 994
         assert c_by_name["es-data"]["readinessProbe"]["timeoutSeconds"] == 992
         assert c_by_name["es-data"]["readinessProbe"]["failureThreshold"] == 993
+        assert c_by_name["es-data"]["readinessProbe"]["tcpSocket"]["port"] == 34567
