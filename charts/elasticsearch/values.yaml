@@ -120,6 +120,18 @@ data:
     requests:
       memory: 256Mi
 
+  livenessProbe:
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 1
+    failureThreshold: 3
+  readinessProbe:
+    initialDelaySeconds: 20
+    periodSeconds: 10
+    timeoutSeconds: 1
+    failureThreshold: 3
+
+
   env:
     NODE_DATA: "true"
     NODE_MASTER: "false"

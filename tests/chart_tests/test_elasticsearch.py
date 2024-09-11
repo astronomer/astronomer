@@ -612,3 +612,63 @@ class TestElasticSearch:
         for doc in docs:
             assert "persistentVolumeClaimRetentionPolicy" in doc["spec"]
             assert test_persistentVolumeClaimRetentionPolicy == doc["spec"]["persistentVolumeClaimRetentionPolicy"]
+
+    def test_es_data_probes_default(self, kube_version):
+        """Test ElasticSearch data probes with default values."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={},
+            show_only=[
+                "charts/elasticsearch/templates/data/es-data-statefulset.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+        c_by_name = get_containers_by_name(docs[0])
+        assert c_by_name["es-data"]["livenessProbe"]["initialDelaySeconds"] == 10
+        assert c_by_name["es-data"]["livenessProbe"]["periodSeconds"] == 5
+        assert c_by_name["es-data"]["livenessProbe"]["timeoutSeconds"] == 1
+        assert c_by_name["es-data"]["livenessProbe"]["failureThreshold"] == 3
+        assert c_by_name["es-data"]["readinessProbe"]["initialDelaySeconds"] == 20
+        assert c_by_name["es-data"]["readinessProbe"]["periodSeconds"] == 10
+        assert c_by_name["es-data"]["readinessProbe"]["timeoutSeconds"] == 1
+        assert c_by_name["es-data"]["readinessProbe"]["failureThreshold"] == 3
+
+    def test_es_data_probes_custom(self, kube_version):
+        """Test ElasticSearch data probes with default values."""
+        values = {
+            "elasticsearch": {
+                "data": {
+                    "livenessProbe": {
+                        "initialDelaySeconds": 999,
+                        "periodSeconds": 998,
+                        "failureThreshold": 997,
+                        "timeoutSeconds": 996,
+                    },
+                    "readinessProbe": {
+                        "initialDelaySeconds": 995,
+                        "periodSeconds": 994,
+                        "failureThreshold": 993,
+                        "timeoutSeconds": 992,
+                    },
+                },
+            },
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=[
+                "charts/elasticsearch/templates/data/es-data-statefulset.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+        c_by_name = get_containers_by_name(docs[0])
+        assert c_by_name["es-data"]["livenessProbe"]["initialDelaySeconds"] == 999
+        assert c_by_name["es-data"]["livenessProbe"]["periodSeconds"] == 998
+        assert c_by_name["es-data"]["livenessProbe"]["timeoutSeconds"] == 996
+        assert c_by_name["es-data"]["livenessProbe"]["failureThreshold"] == 997
+        assert c_by_name["es-data"]["readinessProbe"]["initialDelaySeconds"] == 995
+        assert c_by_name["es-data"]["readinessProbe"]["periodSeconds"] == 994
+        assert c_by_name["es-data"]["readinessProbe"]["timeoutSeconds"] == 992
+        assert c_by_name["es-data"]["readinessProbe"]["failureThreshold"] == 993

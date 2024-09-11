@@ -128,16 +128,18 @@ spec:
         - containerPort: {{ .Values.common.ports.transport }}
           name: transport
           protocol: TCP
-        # readinessProbe:
-        #   httpGet:
-        #     path: /_cluster/health?local=true
-        #     port: {{ .Values.common.ports.http }}
-        #   initialDelaySeconds: 5
-        livenessProbe:
+        readinessProbe:
           tcpSocket:
             port: {{ .Values.common.ports.transport }}
-          initialDelaySeconds: 20
-          periodSeconds: 10
+          initialDelaySeconds: {{ .Values.data.readinessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.data.readinessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.data.readinessProbe.timeoutSeconds }}
+          failureThreshold: {{ .Values.data.readinessProbe.failureThreshold }}
+        livenessProbe:
+          initialDelaySeconds: {{ .Values.data.livenessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.data.livenessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.data.livenessProbe.timeoutSeconds }}
+          failureThreshold: {{ .Values.data.livenessProbe.failureThreshold }}
         volumeMounts:
         - mountPath: /usr/share/elasticsearch/data
           name: data
