@@ -1,6 +1,6 @@
-###############################
-## NGINX Config Role Binding ##
-###############################
+################################
+## NGINX Config Role Binding
+#################################
 {{- if .Values.global.rbacEnabled }}
 kind: RoleBinding
 apiVersion: {{ template "apiVersion.rbac" . }}

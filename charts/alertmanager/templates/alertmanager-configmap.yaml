@@ -1,6 +1,6 @@
-############################
-## Alertmanager ConfigMap ##
-############################
+################################
+## Alertmanager ConfigMap
+#################################
 kind: ConfigMap
 apiVersion: v1
 metadata:

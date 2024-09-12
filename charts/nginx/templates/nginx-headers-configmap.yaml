@@ -1,6 +1,6 @@
-#####################
-## NGINX ConfigMap ##
-#####################
+################################
+## NGINX ConfigMap
+#################################
 kind: ConfigMap
 apiVersion: v1
 metadata:

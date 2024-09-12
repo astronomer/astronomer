@@ -1,5 +1,5 @@
-#################################
-## Astronomer Registry Service ##
+################################
+## Astronomer Registry Service
 #################################
 {{- if .Values.global.baseDomain }}
 kind: Service

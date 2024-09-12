@@ -1,6 +1,6 @@
-###########################
-## NGINX Metrics service ##
-###########################
+################################
+## NGINX Metrics service
+#################################
 kind: Service
 apiVersion: v1
 metadata:

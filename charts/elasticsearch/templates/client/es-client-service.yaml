@@ -1,6 +1,6 @@
-##################################
-## Elasticsearch Client Service ##
-##################################
+################################
+## Elasticsearch Client Service
+#################################
 apiVersion: v1
 kind: Service
 metadata:

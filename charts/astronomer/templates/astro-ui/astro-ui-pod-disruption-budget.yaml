@@ -1,6 +1,6 @@
-#########################################
-## Astronomer UI Pod Disruption Budget ##
-#########################################
+################################
+## Astronomer UI Pod Disruption Budget
+#################################
 {{- if .Values.global.podDisruptionBudgetsEnabled }}
 apiVersion: {{ include "apiVersion.PodDisruptionBudget" . }}
 kind: PodDisruptionBudget

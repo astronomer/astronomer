@@ -1,6 +1,6 @@
-####################################
-## Houston Bootstrap Role Binding ##
-####################################
+################################
+## Houston Bootstrap Role Binding
+#################################
 {{- if and .Values.global.rbacEnabled (and (not .Values.houston.backendSecretName) (not .Values.houston.backendConnection)) }}
 kind: RoleBinding
 apiVersion: {{ template "apiVersion.rbac" . }}

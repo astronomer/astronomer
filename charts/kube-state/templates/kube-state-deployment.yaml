@@ -1,6 +1,6 @@
-###########################
-## Kube State Deployment ##
-###########################
+################################
+## Kube State Deployment
+#################################
 {{- $useRoles := or .Values.global.features.namespacePools.enabled .Values.global.singleNamespace }}
 {{- $namespaces := .Values.global.features.namespacePools.namespaces.names }}
 {{- $namespaces = append $namespaces .Release.Namespace }}

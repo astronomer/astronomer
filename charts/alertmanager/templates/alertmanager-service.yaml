@@ -1,6 +1,6 @@
-##########################
-## Alertmanager Service ##
-##########################
+################################
+## Alertmanager Service
+#################################
 kind: Service
 apiVersion: v1
 metadata:

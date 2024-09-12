@@ -1,6 +1,6 @@
-########################
-## Install Deployment ##
-########################
+################################
+## Install Deployment
+#################################
 {{- if .Values.install.cliEnabled }}
 kind: Deployment
 apiVersion: apps/v1

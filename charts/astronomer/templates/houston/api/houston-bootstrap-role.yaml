@@ -1,6 +1,6 @@
-############################
-## Houston Bootstrap Role ##
-############################
+################################
+## Houston Bootstrap Role
+#################################
 {{- if and .Values.global.rbacEnabled (and (not .Values.houston.backendSecretName) (not .Values.houston.backendConnection)) }}
 kind: Role
 apiVersion: {{ template "apiVersion.rbac" . }}

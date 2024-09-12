@@ -1,6 +1,6 @@
-###############################
-## Containerd toml ConfigMap ##
-###############################
+################################
+## Containerd toml ConfigMap  ##
+################################
 {{- if and .Values.global.privateCaCertsAddToHost.enabled .Values.global.privateCaCertsAddToHost.addToContainerd }}
 apiVersion: v1
 kind: ConfigMap

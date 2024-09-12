@@ -1,5 +1,5 @@
-#################################
-## Astronomer Registry Ingress ##
+################################
+## Astronomer Registry Ingress
 #################################
 {{- if and .Values.global.baseDomain .Values.global.enablePerHostIngress  }}
 kind: Ingress

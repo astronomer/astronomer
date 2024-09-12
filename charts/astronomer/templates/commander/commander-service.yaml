@@ -1,6 +1,6 @@
-##################################
-## Astronomer Commander Service ##
-##################################
+################################
+## Astronomer Commander Service
+#################################
 kind: Service
 apiVersion: v1
 metadata:

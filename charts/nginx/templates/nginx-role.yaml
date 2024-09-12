@@ -1,6 +1,6 @@
-############################
-## NGINX Role/ClusterRole ##
-############################
+################################
+## NGINX Role/ClusterRole
+#################################
 {{- $singleNamespace := .Values.global.singleNamespace }}
 {{- if .Values.global.rbacEnabled }}
 kind: {{ if $singleNamespace }}Role{{ else }}ClusterRole{{ end }}

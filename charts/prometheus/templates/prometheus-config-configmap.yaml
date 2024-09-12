@@ -1,5 +1,5 @@
-#################################
-## Prometheus Config ConfigMap ##
+################################
+## Prometheus Config ConfigMap
 #################################
 kind: ConfigMap
 apiVersion: v1

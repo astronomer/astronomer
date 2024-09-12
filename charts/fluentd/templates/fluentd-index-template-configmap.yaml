@@ -1,6 +1,6 @@
-#############################
-## Fluentd Index ConfigMap ##
-#############################
+################################
+## Fluentd Index Template ConfigMap
+#################################
 apiVersion: v1
 kind: ConfigMap
 metadata:

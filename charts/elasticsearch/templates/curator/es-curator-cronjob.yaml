@@ -1,6 +1,6 @@
-#####################
-## Curator CronJob ##
-#####################
+################################
+## Curator CronJob
+#################################
 {{- if .Values.curator.enabled }}
 apiVersion: {{ include "apiVersion.batch.cronjob" . }}
 kind: CronJob

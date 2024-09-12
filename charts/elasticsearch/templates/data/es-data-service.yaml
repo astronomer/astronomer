@@ -1,6 +1,6 @@
 ################################
-## Elasticsearch Data Service ##
-################################
+## Elasticsearch Data Service
+#################################
 {{- if .Values.data.persistence.enabled }}
 apiVersion: v1
 kind: Service

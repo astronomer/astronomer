@@ -1,6 +1,6 @@
-#####################
-## Grafana Ingress ##
-#####################
+################################
+## Grafana Ingress
+#################################
 {{- if .Values.global.baseDomain }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}

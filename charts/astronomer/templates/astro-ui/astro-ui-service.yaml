@@ -1,6 +1,6 @@
-###########################
-## Astronomer UI Service ##
-###########################
+################################
+## Astronomer UI Service
+#################################
 kind: Service
 apiVersion: v1
 metadata:

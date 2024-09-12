@@ -1,6 +1,6 @@
-###################################
-## NGINX Default backend service ##
-###################################
+################################
+## NGINX Default backend service
+#################################
 kind: Service
 apiVersion: v1
 metadata:

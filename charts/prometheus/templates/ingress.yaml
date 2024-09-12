@@ -1,6 +1,6 @@
-########################
-## Prometheus Ingress ##
-########################
+################################
+## Prometheus Ingress
+#################################
 {{- if .Values.global.baseDomain }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}

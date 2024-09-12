@@ -1,6 +1,6 @@
-##############################
-## Alertmanager StatefulSet ##
-##############################
+################################
+## Alertmanager StatefulSet
+#################################
 kind: StatefulSet
 apiVersion: apps/v1
 metadata:

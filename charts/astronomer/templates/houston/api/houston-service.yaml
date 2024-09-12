@@ -1,6 +1,6 @@
 ################################
-## Astronomer Houston Service ##
-################################
+## Astronomer Houston Service
+#################################
 kind: Service
 apiVersion: v1
 metadata:

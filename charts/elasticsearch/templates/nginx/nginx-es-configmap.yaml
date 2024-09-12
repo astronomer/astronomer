@@ -1,6 +1,6 @@
-###################################
-## NGINX Elasticsearch ConfigMap ##
-###################################
+################################
+## NGINX Elasticsearch ConfigMap
+#################################
 kind: ConfigMap
 apiVersion: v1
 metadata:

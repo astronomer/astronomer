@@ -1,6 +1,6 @@
-#####################################
-## Resource Strategy Migration Job ##
-#####################################
+#######################################
+##  Resource Strategy Migration Job
+#######################################
 apiVersion: {{ include "apiVersion.batch" . }}
 kind: Job
 metadata:

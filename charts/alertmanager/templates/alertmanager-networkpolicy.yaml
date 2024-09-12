@@ -1,5 +1,5 @@
 ################################
-## Alertmanager NetworkPolicy ##
+## Alertmanager NetworkPolicy
 ################################
 {{- if .Values.global.networkPolicy.enabled }}
 apiVersion: networking.k8s.io/v1

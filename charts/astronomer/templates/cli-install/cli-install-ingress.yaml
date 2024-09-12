@@ -1,6 +1,6 @@
-####################################
-## Astronomer Cli Install Ingress ##
-####################################
+################################
+## Astronomer Cli Install Ingress
+#################################
 {{- if and .Values.global.baseDomain  .Values.install.cliEnabled }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}

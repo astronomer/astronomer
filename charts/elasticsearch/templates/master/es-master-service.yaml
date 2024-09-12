@@ -1,6 +1,6 @@
-##################################
-## Elasticsearch Master Service ##
-##################################
+################################
+## Elasticsearch Master Service
+#################################
 apiVersion: v1
 kind: Service
 metadata:

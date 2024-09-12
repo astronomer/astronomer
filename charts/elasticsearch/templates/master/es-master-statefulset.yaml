@@ -1,6 +1,6 @@
-######################################
-## Elasticsearch Master StatefulSet ##
-######################################
+################################
+## Elasticsearch Master StatefulSet
+#################################
 kind: StatefulSet
 apiVersion: apps/v1
 metadata:

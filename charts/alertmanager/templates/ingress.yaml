@@ -1,6 +1,6 @@
-##########################
-## alertmanager Ingress ##
-##########################
+################################
+## alertmanager Ingress
+#################################
 {{- if .Values.global.baseDomain }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}

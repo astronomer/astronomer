@@ -1,5 +1,5 @@
-#################################
-## Kube State Role/ClusterRole ##
+################################
+## Kube State Role/ClusterRole
 #################################
 {{- $useRoles := or .Values.global.features.namespacePools.enabled .Values.global.singleNamespace }}
 {{- $useClusterRoles := and .Values.global.rbacEnabled .Values.global.clusterRoles (not $useRoles )}}

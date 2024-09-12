@@ -1,6 +1,6 @@
-############################
-## Prometheus ClusterRole ##
-############################
+################################
+## Prometheus ClusterRole
+#################################
 {{- $singleNamespace := .Values.global.singleNamespace }}
 {{- if .Values.global.rbacEnabled }}
 kind: {{ if $singleNamespace }}Role{{ else }}ClusterRole{{ end }}
