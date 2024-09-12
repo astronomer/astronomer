@@ -128,14 +128,10 @@
 {{- end }}
 
 {{ define "registry.ServiceAccount" -}}
-{{- if .Values.global.rbacEnabled }}
-  {{- if .Values.registry.serviceAccount.name -}}
-    {{ printf "%s-%s" .Release.Name .Values.registry.serviceAccount.name }}
-  {{- else -}}
-    {{ printf "%s-registry" .Release.Name }}
-  {{- end }}
+{{- if .Values.registry.serviceAccount.name -}}
+{{ printf "%s-%s" .Release.Name .Values.registry.serviceAccount.name }}
 {{- else -}}
-  default
+{{ printf "%s-registry" .Release.Name }}
 {{- end }}
 {{- end }}
 
@@ -143,32 +139,21 @@
 {{ printf "%s-houston-bootstrapper" .Release.Name }}
 {{- end }}
 
-
-
 {{ define "configSyncer.ServiceAccount" -}}
-{{- if .Values.global.rbacEnabled }}
-  {{- if .Values.configSyncer.serviceAccount.name -}}
-    {{ printf "%s-%s" .Release.Name .Values.configSyncer.serviceAccount.name }}
-  {{- else -}}
-    {{ printf "%s-configSyncer" .Release.Name }}
-  {{- end }}
+{{- if .Values.configSyncer.serviceAccount.name -}}
+{{ printf "%s-%s" .Release.Name .Values.configSyncer.serviceAccount.name }}
 {{- else -}}
-  default
+{{ printf "%s-configSyncer" .Release.Name }}
 {{- end }}
 {{- end }}
 
 {{ define "commander.ServiceAccount" -}}
-{{- if .Values.global.rbacEnabled }}
-  {{- if .Values.commander.serviceAccount.name -}}
-    {{ printf "%s-%s" .Release.Name .Values.commander.serviceAccount.name }}
-  {{- else -}}
-    {{ printf "%s-commander" .Release.Name }}
-  {{- end }}
+{{- if .Values.commander.serviceAccount.name -}}
+{{ printf "%s-%s" .Release.Name .Values.commander.serviceAccount.name }}
 {{- else -}}
-  default
+{{ printf "%s-commander" .Release.Name }}
 {{- end }}
 {{- end }}
-
 
 {{- define "registry.gcsVolume" }}
 - name: gcs-keyfile
