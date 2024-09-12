@@ -1,6 +1,6 @@
-################################
-## Kibana Ingress
-#################################
+####################
+## Kibana Ingress ##
+####################
 {{- if .Values.global.baseDomain }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}

@@ -1,6 +1,6 @@
-##########################################################
-## Astronomer Node Exporter SecurityContextConstraints  ##
-##########################################################
+#########################################################
+## Astronomer Node Exporter SecurityContextConstraints ##
+#########################################################
 {{- if and .Values.global.sccEnabled .Values.global.nodeExporterSccEnabled }}
 apiVersion: security.openshift.io/v1
 kind: SecurityContextConstraints

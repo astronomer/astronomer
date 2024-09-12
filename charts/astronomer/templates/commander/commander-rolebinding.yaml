@@ -1,6 +1,6 @@
-################################
-## Astronomer Commander RoleBinding
-#################################
+######################################
+## Astronomer Commander RoleBinding ##
+######################################
 # Either:
 # 1. Do not create anything is rbacEnabled is disabled
 # 2. Create ClusterRoleBinding if clusterRoles enabled and namespacePools disabled
