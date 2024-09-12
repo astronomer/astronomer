@@ -10,26 +10,19 @@ include_kind_list = ["Deployment", "DaemonSet", "StatefulSet", "ReplicaSet"]
 # ignore_list is the get_chart_containers() key with the k8s version stripped off. For example:
 # "1.30.0_release-name-houston-worker_houston" would be ignored with "release-name-houston-worker_houston"
 ignore_list = [
-    "release-name-kube-state_kube-state",
-    "release-name-nginx-default-backend_default-backend",
+    "release-name-alertmanager_alertmanager",
+    "release-name-containerd-ca-update_cert-copy-and-toml-update",
     "release-name-elasticsearch-nginx_nginx",
     "release-name-external-es-proxy_awsproxy",
-    "release-name-nats_metrics",
-    "release-name-stan_metrics",
-    "release-name-kibana_kibana",
-    "release-name-nginx_nginx",
-    "release-name-elasticsearch-data_es-data",
-    "release-name-containerd-ca-update_cert-copy-and-toml-update",
-    "release-name-private-ca_cert-copy",
-    "release-name-alertmanager_alertmanager",
-    "release-name-nats_metrics",
-    "release-name-elasticsearch-nginx_nginx",
-    "release-name-stan_metrics",
-    "release-name-kibana_kibana",
     "release-name-external-es-proxy_external-es-proxy",
-    "release-name-external-es-proxy_external-es-proxy",
-    "release-name-houston-worker_houston",
     "release-name-fluentd_fluentd",
+    "release-name-houston-worker_houston",
+    "release-name-kibana_kibana",
+    "release-name-kube-state_kube-state",
+    "release-name-nats_metrics",
+    "release-name-nginx-default-backend_default-backend",
+    "release-name-private-ca_cert-copy",
+    "release-name-stan_metrics",
 ]
 
 
