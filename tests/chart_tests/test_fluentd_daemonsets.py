@@ -10,7 +10,7 @@ from tests import supported_k8s_versions, get_containers_by_name
 class TestFluentdConfig:
     show_only = ["charts/fluentd/templates/fluentd-daemonset.yaml"]
 
-    def test_typos_in_daemonset(self, kube_version):
+    def test_fluentd_daemonset(self, kube_version):
         docs = render_chart(
             kube_version=kube_version,
             show_only=self.show_only,
