@@ -56,12 +56,9 @@ spec:
       securityContext: {{ toYaml .Values.podSecurityContext| nindent 8 }}
 {{- end }}
       terminationGracePeriodSeconds: 90
-      nodeSelector:
-{{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
-      affinity:
-{{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 8 }}
-      tolerations:
-{{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
+      nodeSelector: {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
+      affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
+      tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       volumes:
       - configMap:
           name: {{ template "stan.name".  }}-config
@@ -86,8 +83,7 @@ spec:
           env:
             - name: NATS__URL
               value: "nats://{{ .Release.Name }}-nats:4222"
-          resources:
-{{ toYaml .Values.init.resources | indent 12 }}
+          resources: {{ toYaml .Values.init.resources | nindent 12 }}
       containers:
         - name: stan
           image: {{ include "stan.image" . }}
@@ -96,8 +92,7 @@ spec:
           args:
           - -sc
           - /etc/stan-config/stan.conf
-          resources:
-{{ toYaml .Values.stan.resources | indent 12 }}
+          resources: {{ toYaml .Values.stan.resources | nindent 12 }}
           env:
           - name: POD_NAME
             valueFrom:
@@ -126,14 +121,20 @@ spec:
             httpGet:
               path: /streaming/serverz
               port: monitor
-            initialDelaySeconds: 10
-            timeoutSeconds: 5
+            initialDelaySeconds: {{ .Values.stan.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.stan.livenessProbe.periodSeconds }}
+            failureThreshold: {{ .Values.stan.livenessProbe.failureThreshold }}
+            timeoutSeconds: {{ .Values.stan.livenessProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.stan.livenessProbe.failureThreshold }}
           readinessProbe:
             httpGet:
               path: /streaming/serverz
               port: monitor
-            initialDelaySeconds: 10
-            timeoutSeconds: 5
+            initialDelaySeconds: {{ .Values.stan.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.stan.readinessProbe.periodSeconds }}
+            failureThreshold: {{ .Values.stan.readinessProbe.failureThreshold }}
+            timeoutSeconds: {{ .Values.stan.readinessProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.stan.readinessProbe.failureThreshold }}
           ports:
           - containerPort: 8222
             name: monitor
