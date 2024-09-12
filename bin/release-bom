@@ -4,7 +4,7 @@ set -eo pipefail
 
 help() {
   echo "Description:"
-  echo "    Generates and publishes BOM JSON files to the public release repository."
+  echo "    Generate and publish a BOM JSON file for the given version to the public release repository."
   echo
   echo "Usage:"
   echo "    ${0##*/} [-x] <version>"
