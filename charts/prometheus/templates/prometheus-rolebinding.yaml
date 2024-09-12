@@ -1,6 +1,6 @@
-################################
-## Prometheus Cluster Role Binding
-#################################
+#####################################
+## Prometheus Cluster Role Binding ##
+#####################################
 {{- $singleNamespace := .Values.global.singleNamespace }}
 {{- if .Values.global.rbacEnabled }}
 kind: {{ if $singleNamespace }}RoleBinding{{ else }}ClusterRoleBinding{{ end }}
