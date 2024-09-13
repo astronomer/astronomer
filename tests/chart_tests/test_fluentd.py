@@ -341,10 +341,8 @@ class TestFluentd:
             kube_version=kube_version,
             show_only=["charts/fluentd/templates/fluentd-daemonset.yaml"],
         )
-        # assert len(docs) == 1
         doc = docs[0]
         c_by_name = get_containers_by_name(doc)
-        # print (c_by_name)
         assert c_by_name["fluentd"]["name"] == "fluentd"
         liveness_probe = c_by_name["fluentd"]["livenessProbe"]
         assert liveness_probe["failureThreshold"] == 3
