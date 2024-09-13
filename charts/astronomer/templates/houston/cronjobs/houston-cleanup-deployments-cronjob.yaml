@@ -1,6 +1,6 @@
-################################
-## Houston Cleanup CronJob
-#################################
+#############################
+## Houston Cleanup CronJob ##
+#############################
 {{- if .Values.houston.cleanupDeployments.enabled }}
 apiVersion: {{ include "apiVersion.batch.cronjob" . }}
 kind: CronJob

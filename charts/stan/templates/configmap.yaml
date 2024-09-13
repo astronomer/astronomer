@@ -1,6 +1,6 @@
-##############################
-## STAN ConfigMap Template  ##
-##############################
+####################
+## STAN ConfigMap ##
+####################
 {{- if not .Values.global.nats.jetStream.enabled }}
 apiVersion: v1
 kind: ConfigMap

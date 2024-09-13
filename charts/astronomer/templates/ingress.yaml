@@ -1,6 +1,6 @@
-################################
-## Astronomer Ingress
-#################################
+########################
+## Astronomer Ingress ##
+########################
 {{- if .Values.global.baseDomain }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}

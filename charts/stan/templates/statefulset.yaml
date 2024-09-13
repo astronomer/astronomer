@@ -1,7 +1,7 @@
 ---
-###############################
-## STAN Statefulset Template ##
-###############################
+######################
+## STAN Statefulset ##
+######################
 {{- if not .Values.global.nats.jetStream.enabled }}
 apiVersion: apps/v1
 kind: StatefulSet

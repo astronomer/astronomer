@@ -29,11 +29,11 @@ repos:
       - id: remove-tabs
         exclude_types: [makefile, binary]
   - repo: https://github.com/psf/black
-    rev: 24.4.2
+    rev: 24.8.0
     hooks:
       - id: black
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: "v0.4.10"
+    rev: "v0.6.4"
     hooks:
       - id: ruff
         args:

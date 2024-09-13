@@ -1,6 +1,6 @@
-################################
-## NGINX Elasticsearch Deployment
-#################################
+####################################
+## NGINX Elasticsearch Deployment ##
+####################################
 kind: Deployment
 apiVersion: apps/v1
 metadata:
