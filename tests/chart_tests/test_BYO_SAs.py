@@ -28,14 +28,8 @@ class TestServiceAccounts:
                 assert sa_name == "default", f"Expected default ServiceAccount, but got {sa_name}"
 
     def test_role_created(self, kube_version):
-        roles = []
-        rolebindings = []
-        docs = (render_chart(kube_version=kube_version, values={"global": {"rbacEnabled": False}}),)
-        for doc in docs:
-            if isinstance(doc, dict):
-                if doc.get("kind") == "Role":
-                    roles.append(doc["metadata"]["name"])
-                elif doc.get("kind") == "RoleBinding":
-                    rolebindings.append(doc["metadata"]["name"])
-        assert len(roles) == 0
-        assert len(rolebindings) == 0
+        """Test that no roles or rolebindings are created when rbac is disabled."""
+        values = {"global": {"rbacEnabled": False}}
+        docs = [doc for doc in render_chart(kube_version=kube_version, values=values) if doc["kind"] in ["RoleBinding", "Role"]]
+
+        assert not docs
