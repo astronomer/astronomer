@@ -27,9 +27,10 @@ global:
     containerdnodeAffinitys: []
     containerdTolerations: []
     certCopier:
-      repository: quay.io/astronomer/ap-base
-      tag: 3.18.8
-      pullPolicy: IfNotPresent
+      images:
+        repository: quay.io/astronomer/ap-base
+        tag: 3.18.8
+        pullPolicy: IfNotPresent
     priorityClassName: ~
   # Global flag to enable to user to enable/disable Astronomer platform
   # level Network Policy
@@ -155,9 +156,10 @@ global:
   # Deploy auth sidecar to use openshift native features
   authSidecar:
     enabled: false
-    repository: quay.io/astronomer/ap-auth-sidecar
-    tag: 1.25.5
-    pullPolicy: IfNotPresent
+    images:
+      repository: quay.io/astronomer/ap-auth-sidecar
+      tag: 1.25.5
+      pullPolicy: IfNotPresent
     port: 8084
     securityContext: {}
     default_nginx_settings: |

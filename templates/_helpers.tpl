@@ -34,9 +34,9 @@ nginx.ingress.kubernetes.io/auth-url: https://houston.{{ .Values.global.baseDoma
 
 {{ define "authSidecar.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/ap-auth-sidecar:{{ .Values.global.authSidecar.tag }}
+{{ .Values.global.privateRegistry.repository }}/ap-auth-sidecar:{{ .Values.global.authSidecar.images.tag }}
 {{- else -}}
-{{ .Values.global.authSidecar.repository }}:{{ .Values.global.authSidecar.tag }}
+{{ .Values.global.authSidecar.images.repository }}:{{ .Values.global.authSidecar.images.tag }}
 {{- end }}
 {{- end }}
 
@@ -50,9 +50,9 @@ nginx.ingress.kubernetes.io/auth-url: https://houston.{{ .Values.global.baseDoma
 
 {{ define "certCopier.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/ap-base:{{ .Values.global.privateCaCertsAddToHost.certCopier.tag }}
+{{ .Values.global.privateRegistry.repository }}/ap-base:{{ .Values.global.privateCaCertsAddToHost.certCopier.images.tag }}
 {{- else -}}
-{{ .Values.global.privateCaCertsAddToHost.certCopier.repository }}:{{ .Values.global.privateCaCertsAddToHost.certCopier.tag }}
+{{ .Values.global.privateCaCertsAddToHost.certCopier.images.repository }}:{{ .Values.global.privateCaCertsAddToHost.certCopier.images.tag }}
 {{- end }}
 {{- end }}
 
