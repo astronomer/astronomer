@@ -233,7 +233,7 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_index_prefix_overrid
                 "logging": {"indexNamePrefix": "test-index-name-prefix-999"},
                 "loggingSidecar": {
                     "enabled": True,
-                    "image": image,
+                    "images": {"repository": image.split(":")[0], "tag": image.split(":")[1]},
                 },
             }
         },
@@ -290,7 +290,7 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_indexPattern():
     """Validate the houston configmap and its embedded data with
     loggingSidecar."""
     sidecar_container_name = "sidecar-log-test"
-    image_name = {"repository": "example.com/some-repo/test-image-name", "tag": "test-tag-foo"}
+    image_name = "example.com/some-repo/test-image-name:test-tag-foo"
     indexPattern = "%Y.%m"
     docs = render_chart(
         values={
@@ -298,7 +298,7 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_indexPattern():
                 "loggingSidecar": {
                     "enabled": True,
                     "name": sidecar_container_name,
-                    "image": image_name,
+                    "images": {"repository": image_name.split(":")[0], "tag": image_name.split(":")[1]},
                     "indexPattern": indexPattern,
                 }
             }
@@ -324,7 +324,7 @@ def test_houston_configmap_with_loggingsidecar_customConfig_enabled():
     """Validate the houston configmap and its embedded data with loggingSidecar
     customConfig Enabled."""
     sidecar_container_name = "sidecar-log-test"
-    image_name = {"repository": "quay.io/astronomer/ap-vector", "tag": "0.22.3"}
+    image_name = "quay.io/astronomer/ap-vector:0.22.3"
     docs = render_chart(
         values={
             "global": {
@@ -332,7 +332,7 @@ def test_houston_configmap_with_loggingsidecar_customConfig_enabled():
                     "enabled": True,
                     "name": sidecar_container_name,
                     "customConfig": True,
-                    "image": image_name,
+                    "images": {"repository": image_name.split(":")[0], "tag": image_name.split(":")[1]},
                 }
             }
         },
@@ -357,14 +357,14 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_custom_env_overrides
     """Validate the houston configmap and its embedded data with
     loggingSidecar."""
     sidecar_container_name = "sidecar-log-test"
-    image_name = {"repository": "quay.io/astronomer/ap-vector", "tag": "0.22.3"}
+    image_name = "quay.io/astronomer/ap-vector:0.22.3"
     docs = render_chart(
         values={
             "global": {
                 "loggingSidecar": {
                     "enabled": True,
                     "name": sidecar_container_name,
-                    "image": image_name,
+                    "images": {"repository": image_name.split(":")[0], "tag": image_name.split(":")[1]},
                     "extraEnv": [
                         {
                             "name": "ES_USER",
@@ -469,7 +469,7 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_securityContext_conf
                 "loggingSidecar": {
                     "enabled": True,
                     "name": sidecar_container_name,
-                    "image": image_name,
+                    "images": {"repository": image_name.split(":")[0], "tag": image_name.split(":")[1]},
                     "securityContext": securityContext,
                 }
             }
