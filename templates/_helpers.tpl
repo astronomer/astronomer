@@ -26,9 +26,9 @@ nginx.ingress.kubernetes.io/auth-url: https://houston.{{ .Values.global.baseDoma
 
 {{ define "dagOnlyDeployment.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/ap-dag-deploy:{{ (splitList ":"  .Values.global.dagOnlyDeployment.image ) | last  }}
+{{ .Values.global.privateRegistry.repository }}/ap-dag-deploy:{{ .Values.global.dagOnlyDeployment.images.tag }}
 {{- else -}}
-{{ .Values.global.dagOnlyDeployment.image }}
+{{ .Values.global.dagOnlyDeployment.images.repository }}:{{ .Values.global.dagOnlyDeployment.images.tag }}
 {{- end }}
 {{- end }}
 
@@ -42,9 +42,9 @@ nginx.ingress.kubernetes.io/auth-url: https://houston.{{ .Values.global.baseDoma
 
 {{ define "loggingSidecar.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/ap-vector:{{ (splitList ":"  .Values.global.loggingSidecar.image ) | last  }}
+{{ .Values.global.privateRegistry.repository }}/ap-vector:{{ .Values.global.loggingSidecar.images.tag }}
 {{- else -}}
-{{ .Values.global.loggingSidecar.image }}
+{{ .Values.global.loggingSidecar.images.repository }}:{{ .Values.global.loggingSidecar.images.tag }}
 {{- end }}
 {{- end }}
 
