@@ -87,8 +87,10 @@ class TestPrivateCaDaemonset:
                     "privateCaCertsAddToHost": {
                         "enabled": True,
                         "certCopier": {
-                            "repository": "snarks",
-                            "tag": "boojums",
+                            "images": {
+                                "repository": "snarks",
+                                "tag": "boojums",
+                            },
                         },
                     }
                 }
