@@ -93,7 +93,7 @@ def docker_client():
 
 
 @pytest.fixture(scope="session")
-def core_v1_client(*, in_cluster=False):
+def core_v1_client(in_cluster=False):
     """Return a kubernetes client.
 
     By default, use kube-config. If running in a pod, use k8s service
