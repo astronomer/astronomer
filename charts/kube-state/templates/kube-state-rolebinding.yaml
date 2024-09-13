@@ -1,6 +1,6 @@
-################################
-## Kube State ClusterRoleBinding
-#################################
+###############################################
+## Kube State ClusterRoleBinding/RoleBinding ##
+###############################################
 {{- $singleNamespace := .Values.global.singleNamespace }}
 {{- if .Values.global.rbacEnabled }}
 apiVersion: {{ template "apiVersion.rbac" . }}

@@ -1,6 +1,6 @@
-################################
-## Elasticsearch Data StatefulSet
-#################################
+####################################
+## Elasticsearch Data StatefulSet ##
+####################################
 kind: StatefulSet
 apiVersion: apps/v1
 metadata:

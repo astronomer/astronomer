@@ -1,5 +1,5 @@
-################################
-## Kube State Role/ClusterRole
+#################################
+## Kube State Role/ClusterRole ##
 #################################
 {{- $singleNamespace := .Values.global.singleNamespace }}
 {{- if .Values.global.rbacEnabled }}
