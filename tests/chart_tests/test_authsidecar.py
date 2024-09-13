@@ -204,6 +204,7 @@ class TestAuthSidecar:
                     "authSidecar": {
                         "enabled": True,
                         "images": {"repository": "someregistry.io/my-custom-image", "tag": "my-custom-tag"},
+                        "securityContext": {"runAsUser": 1000},
                     },
                 }
             },
