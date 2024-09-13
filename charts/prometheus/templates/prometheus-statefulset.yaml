@@ -53,7 +53,7 @@ spec:
         - name: auth-proxy
           image: {{ include "authSidecar.image" . }}
           securityContext: {{ template "prometheus.securityContext" . }}
-          imagePullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
+          imagePullPolicy: {{ .Values.global.authSidecar.images.pullPolicy }}
           {{- if .Values.global.authSidecar.resources }}
           resources: {{- toYaml .Values.global.authSidecar.resources | nindent 12 }}
           {{- end }}
