@@ -1,6 +1,6 @@
-################################
-## Elasticsearch Client Deployment
-#################################
+#####################################
+## Elasticsearch Client Deployment ##
+#####################################
 apiVersion: apps/v1
 kind: Deployment
 metadata:

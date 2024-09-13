@@ -1,6 +1,6 @@
-################################
-## Kube State ClusterRoleBinding/RoleBinding
-#################################
+###############################################
+## Kube State ClusterRoleBinding/RoleBinding ##
+###############################################
 {{- $useRoles := or .Values.global.features.namespacePools.enabled .Values.global.singleNamespace }}
 {{- $useClusterRoles := and .Values.global.rbacEnabled .Values.global.clusterRoles (not $useRoles )}}
 {{- $shouldCreateResources := and .Values.global.rbacEnabled (or .Values.global.clusterRoles .Values.global.features.namespacePools.enabled) }}
