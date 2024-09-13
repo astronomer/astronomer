@@ -29,7 +29,9 @@ class TestServiceAccounts:
 
     def test_role_created(self, kube_version):
         """Test that no roles or rolebindings are created when rbac is disabled."""
-        values = {"global": {"rbacEnabled": False}}
-        docs = [doc for doc in render_chart(kube_version=kube_version, values=values) if doc["kind"] in ["RoleBinding", "Role"]]
+        values = {"global": {"rbacEnabled": False},
+                  "nats": {"nats": {"createJetStreamJob": False}}}
 
+        docs = [doc for doc in render_chart(kube_version=kube_version, values=values) if doc["kind"] in ["RoleBinding", "Role"]]
+        print(docs)
         assert not docs
