@@ -130,7 +130,6 @@ global:
     images:
       repository: quay.io/astronomer/ap-dag-deploy
       tag: 0.5.3
-      pullPolicy: IfNotPresent
     securityContext:
       fsGroup: 50000
     resources: {}
@@ -146,7 +145,6 @@ global:
     images:
       repository: quay.io/astronomer/ap-vector
       tag: 0.40.1
-      pullPolicy: IfNotPresent
     customConfig: false
     indexPattern: ~
     extraEnv: []
