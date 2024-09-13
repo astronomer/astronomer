@@ -153,8 +153,8 @@ data:
         enabled: {{ .Values.global.dagOnlyDeployment.enabled }}
         images:
           dagServer:
-            repository: {{ (splitList ":"  $dagOnlyDeployment ) | first  }}
-            tag: {{ (splitList ":"  $dagOnlyDeployment ) | last  }}
+            repository: {{ .Values.global.dagOnlyDeployment.images.repository }}
+            tag: {{ .Values.global.dagOnlyDeployment.images.tag  }}
         {{- if .Values.global.dagOnlyDeployment.securityContext }}
         securityContext: {{ template "dagOnlyDeployment.securityContext" . }}
         {{- end }}
