@@ -112,7 +112,7 @@ def lookup_digest_v2(repository_host, repository, tag):
 
     if not raw_digest:
         return None, None
-    
+
     digest_version, digest_value = raw_digest.split(":", 1)
 
     return digest_version, digest_value
@@ -163,7 +163,33 @@ def process_yaml(data, new_data):
             except Exception as e:
                 print(f"Failed to process image {repository}:{tag} - {e}", file=sys.stderr)
                 continue
+        elif key == "defaultAirflowTag":
+            if value is None:
+                continue  # Leave tags with value None unchanged
+            repository_and_host = data["defaultAirflowRepository"]
+            repository = data["defaultAirflowRepository"]
+            repository_host, repository, _ = parse_image(data["defaultAirflowRepository"])
 
+            try:
+                sha_hash = None
+                if repository_host == "docker.io":
+                    # Use Docker Hub public API
+                    print(f"Looking up Docker Hub for {repository}:{value}", file=sys.stderr)
+                    digest_version, sha_hash = lookup_digest_dockerhub(repository, value)
+
+                else:
+                    # Use Docker Registry V2 API for other registries (like Quay.io)
+                    print(f"Looking up {repository_host} for {repository}:{value}", file=sys.stderr)
+                    digest_version, sha_hash = lookup_digest_v2(repository_host, repository, value)
+
+                if sha_hash:
+                    new_data["defaultAirflowRepository"] = f"{repository_and_host}@{digest_version}"
+                    new_data["defaultAirflowTag"] = sha_hash
+                    if "defaultAirflowDigest" in data and data["defaultAirflowDigest"] is not None:
+                        new_data["defaultAirflowDigest"] = sha_hash
+            except Exception as e:
+                print(f"Failed to process tag {value} for {repository} - {e}", file=sys.stderr)
+                continue
         elif key == "tag":
             if value is None:
                 continue  # Leave tags with value None unchanged
@@ -180,7 +206,6 @@ def process_yaml(data, new_data):
                 # if there is a registry host prepend it to the repository
                 explicit_registry = data["registry"] if "registry" in data else None
                 repository_host, repository, _ = parse_image(data["repository"], explicit_registry)
-
                 try:
                     sha_hash = None
                     if repository_host == "docker.io":
@@ -198,7 +223,7 @@ def process_yaml(data, new_data):
                         new_data[key] = sha_hash
                         # repository gets the image with the sha256 hash
                         if "registry" in data:
-                            new_data["repository"] = f"{repository}@{digest_version}:{sha_hash}"
+                            new_data["repository"] = f"{repository}@{digest_version}"
                         else:
                             new_data["repository"] = f"{repository_host}/{repository}@{digest_version}"
                 except Exception as e:
