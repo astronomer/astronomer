@@ -105,8 +105,7 @@ def main(circleci_token: str, astro_path: str, branch: str):
     if "success" != pipeline_state and "running" != pipeline_state:
         print(f"Error: Failed to run pipeline. Last Status: {pipeline_state}")
         raise SystemError(1)
-    else:
-        raise SystemExit(0)
+    raise SystemExit(0)
 
 
 if __name__ == "__main__":

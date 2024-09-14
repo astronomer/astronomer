@@ -106,8 +106,7 @@ def main(circleci_token: str, astro_path: str):
 
     if "success" != pipeline_state and "running" != pipeline_state:
         raise SystemError(1)
-    else:
-        raise SystemExit(0)
+    raise SystemExit(0)
 
 
 if __name__ == "__main__":

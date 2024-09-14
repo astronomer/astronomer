@@ -1,6 +1,6 @@
-################################
-## Grafana Bootstrap Role Binding
-#################################
+####################################
+## Grafana Bootstrap Role Binding ##
+####################################
 {{- if and .Values.global.rbacEnabled (and (not .Values.backendSecretName) (not .Values.backendConnection)) }}
 kind: RoleBinding
 apiVersion: {{ template "apiVersion.rbac" . }}
