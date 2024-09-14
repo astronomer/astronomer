@@ -1,6 +1,6 @@
-################################
-## Astronomer Houston ConfigMap
-#################################
+##################################
+## Astronomer Houston ConfigMap ##
+##################################
 apiVersion: v1
 kind: ConfigMap
 metadata:

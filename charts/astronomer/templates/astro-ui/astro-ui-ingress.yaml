@@ -1,5 +1,5 @@
-################################
-## Astronomer astro ui Ingress
+#################################
+## Astronomer astro ui Ingress ##
 #################################
 {{- if and .Values.global.baseDomain .Values.global.enablePerHostIngress  }}
 kind: Ingress
@@ -69,9 +69,9 @@ spec:
   {{- end -}}
 {{- end }}
 ---
-################################
-## Astronomer Common Ingress
-#################################
+###############################
+## Astronomer Common Ingress ##
+###############################
 {{- if and .Values.global.baseDomain .Values.global.enablePerHostIngress  }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
