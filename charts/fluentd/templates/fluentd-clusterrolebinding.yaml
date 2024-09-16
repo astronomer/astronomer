@@ -1,6 +1,6 @@
 ################################
-## Fluentd ClusterRoleBinding
-#################################
+## Fluentd ClusterRoleBinding ##
+################################
 {{- if .Values.global.rbacEnabled }}
 kind: ClusterRoleBinding
 apiVersion: {{ template "apiVersion.rbac" . }}

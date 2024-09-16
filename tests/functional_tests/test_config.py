@@ -141,8 +141,7 @@ def test_prometheus_config_reloader_works(prometheus, core_v1_client):
         y_parsed = yaml.safe_load(j_parsed["data"]["yaml"])
         if y_parsed["global"]["scrape_interval"] != "30s":
             break
-        else:
-            time.sleep(10)
+        time.sleep(10)
 
     # set the config back to it's original settings
     prom_config["global"]["scrape_interval"] = "30s"

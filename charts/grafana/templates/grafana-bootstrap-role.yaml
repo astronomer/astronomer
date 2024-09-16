@@ -1,6 +1,6 @@
-################################
-## Grafana Bootstrap Role
-#################################
+############################
+## Grafana Bootstrap Role ##
+############################
 {{- if and .Values.global.rbacEnabled (and (not .Values.backendSecretName) (not .Values.backendConnection)) }}
 kind: Role
 apiVersion: {{ template "apiVersion.rbac" . }}

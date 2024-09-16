@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 set -xeuo pipefail
 
-KIND_VERSION="0.23.0" # https://github.com/kubernetes-sigs/kind/releases
-HELM_VERSION="3.15.2" # https://github.com/helm/helm/releases
-GCLOUD_VERSION="475.0.0"
+KIND_VERSION="0.24.0" # https://github.com/kubernetes-sigs/kind/releases
+HELM_VERSION="3.16.1" # https://github.com/helm/helm/releases
+GCLOUD_VERSION="489.0.0"
 MKCERT_VERSION="1.4.4" # https://github.com/FiloSottile/mkcert/tags
-KUBENT_VERSION="0.7.2" # https://github.com/doitintl/kube-no-trouble/releases
+KUBENT_VERSION="0.7.3" # https://github.com/doitintl/kube-no-trouble/releases
 
 OS=$(uname | tr '[:upper:]' '[:lower:]')
 

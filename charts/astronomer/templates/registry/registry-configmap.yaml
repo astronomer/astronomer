@@ -1,6 +1,6 @@
-################################
-## Astronomer Registry ConfigMap
-#################################
+###################################
+## Astronomer Registry ConfigMap ##
+###################################
 {{ if .Values.global.baseDomain }}
 kind: ConfigMap
 apiVersion: v1

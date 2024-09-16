@@ -1,6 +1,6 @@
-################################
-## Curator ConfigMap
-#################################
+#######################
+## Curator ConfigMap ##
+#######################
 {{- if .Values.curator.enabled }}
 apiVersion: v1
 kind: ConfigMap

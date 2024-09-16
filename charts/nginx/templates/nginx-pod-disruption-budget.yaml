@@ -1,6 +1,6 @@
-################################
-## Astronomer Nginx Pod Disruption Budget
-#################################
+############################################
+## Astronomer Nginx Pod Disruption Budget ##
+############################################
 {{- if .Values.global.podDisruptionBudgetsEnabled }}
 apiVersion: {{ include "apiVersion.PodDisruptionBudget" . }}
 kind: PodDisruptionBudget
