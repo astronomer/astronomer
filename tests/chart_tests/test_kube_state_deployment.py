@@ -153,7 +153,7 @@ class TestKubeStateDeployment:
             assert role["metadata"]["namespace"] == roles_namespace_pools_list[i - 5]
 
     def test_kube_state_default_collectors(self, kube_version):
-        collector_resource_args = "--resources=daemonsets,leases,namespaces,nodes,configmaps,cronjobs,deployments,endpoints,horizontalpodautoscalers,ingresses,jobs,limitranges,networkpolicies,persistentvolumeclaims,poddisruptionbudgets,pods,replicasets,replicationcontrollers,resourcequotas,secrets,services,statefulsets"
+        collector_resource_args = "--resources=daemonsets,namespaces,configmaps,cronjobs,deployments,horizontalpodautoscalers,ingresses,jobs,limitranges,networkpolicies,persistentvolumeclaims,pods,replicasets,replicationcontrollers,resourcequotas,secrets,services,statefulsets"
         docs = render_chart(
             kube_version=kube_version,
             values={},
