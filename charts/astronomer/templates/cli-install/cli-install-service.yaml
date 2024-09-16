@@ -1,6 +1,6 @@
-################################
-## Install Service
-#################################
+#####################
+## Install Service ##
+#####################
 {{- if .Values.install.cliEnabled }}
 kind: Service
 apiVersion: v1

@@ -1,6 +1,6 @@
-################################
-## Install ConfigMap
-#################################
+#######################
+## Install ConfigMap ##
+#######################
 {{- if .Values.install.cliEnabled }}
 kind: ConfigMap
 apiVersion: v1
