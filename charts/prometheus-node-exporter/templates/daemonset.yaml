@@ -24,8 +24,7 @@ spec:
 {{- if .Values.priorityClassName }}
       priorityClassName:  {{ .Values.priorityClassName  }}
 {{ end }}
-{{- if .Values.global.rbacEnabled}}
-{{- if and .Values.rbac.create .Values.serviceAccount.create }}
+{{ if or .Values.rbac.create .Values.global.rbacEnabled }}
       serviceAccountName: {{ template "prometheus-node-exporter.serviceAccountName" . }}
 {{- end }}
 {{- end}}
