@@ -16,21 +16,21 @@ class TestServiceAccounts:
         )
 
         # Check that no ServiceAccount resources are created
-    
+
         service_accounts = [
             doc["metadata"]["name"] for doc in docs if isinstance(doc, dict) and doc.get("kind") == "ServiceAccount"
         ]
         assert len(service_accounts) == 0, "No ServiceAccounts should be created when rbacEnabled is False"
-    
+
         # Check that the Deployment or StatefulSet is using the default ServiceAccount
         sa_name = ""
-        #print(docs)
+        # print(docs)
         for doc in docs:
             if doc.get("kind") in ["Deployment", "StatefulSet"]:
                 assert (
                     sa_name == doc["metadata"]["name"] for doc in docs if doc.get("kind") == "ServiceAccount"
                 ), f"Expected default ServiceAccount, but got {sa_name}"
-        
+
     def test_role_created(self, kube_version):
         """Test that no roles or rolebindings are created when rbac is disabled."""
         values = {"global": {"rbacEnabled": False}, "nats": {"nats": {"createJetStreamJob": False}}}
