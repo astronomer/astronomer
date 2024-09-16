@@ -27,11 +27,7 @@ def parse_image(image, explicit_repository_host=None):
     Returns:
         tuple: (repository_host, repository, tag)
     """
-    if ":" in image:
-        repository, tag = image.rsplit(":", 1)
-    else:
-        repository, tag = image, "latest"
-
+    repository, tag = image.rsplit(":", 1) if ":" in image else (image, "latest")
     # Check if the repository specifies a host (contains a dot in the first segment)
     if explicit_repository_host:
         repository_host = explicit_repository_host
@@ -134,7 +130,7 @@ def process_yaml(data, new_data):
                 new_data[key] = temp_data
         elif isinstance(value, list):
             temp_list = []
-            for i, item in enumerate(value):
+            for item in value:
                 if isinstance(item, dict):
                     temp_item = {}
                     process_yaml(item, temp_item)
@@ -194,14 +190,10 @@ def process_yaml(data, new_data):
             if value is None:
                 continue  # Leave tags with value None unchanged
 
-            # For `tag`, find the sibling `image` or `repository`
-            sibling_repo_key = None
-            for sibling_key in ["image", "repository"]:
-                if sibling_key in data:
-                    sibling_repo_key = sibling_key
-                    break
-
-            if sibling_repo_key:
+            if sibling_repo_key := next(
+                (sibling_key for sibling_key in ["image", "repository"] if sibling_key in data),
+                None,
+            ):
                 # Parse the sibling repository and combine with the tag
                 # if there is a registry host prepend it to the repository
                 explicit_registry = data["registry"] if "registry" in data else None
