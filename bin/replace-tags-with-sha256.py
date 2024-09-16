@@ -1,19 +1,31 @@
 #!/usr/bin/env python3
+r"""Replace image tags with SHA256 hashes in an astronomer/astronomer values file.
 
-# USAGE:
-# use another script to collect all the values you want to shaify
-# ./generate-all-values.py ~/astronomer --mount astronomer.houston.config.deployments.helm=~/airflow-chart > all-values.yaml
-# run this script to replace the tags with sha256 hashes
-# cat all-values.yaml | ./replace-tags-with-sha256.py 1 > sha-values.yaml
-# check for tags without sha256
-# ./generate-all-values.py ~/astronomer --mount astronomer.houston.config.deployments.helm=~/airflow-chart -f ./sha-values.yaml --as-path|grep '\.tag='
-# check for images without sha256
-# ./generate-all-values.py ~/astronomer --mount astronomer.houston.config.deployments.helm=~/airflow-chart -f ./sha-values.yaml --as-path|grep '\.image='|grep -v "sha256"
-#!/usr/bin/env python3
+USAGE:
+    Use another script to collect all the values you want to shaify
+
+        bin/generate-all-values.py ~/astronomer --mount astronomer.houston.config.deployments.helm=~/airflow-chart > ~/all-values.yaml
+
+    Run this script to replace the tags with sha256 hashes
+
+        cat all-values.yaml |
+        bin/replace-tags-with-sha256.py 1 > ~/sha-values.yaml
+
+    Check for tags without sha256
+
+        bin/generate-all-values.py ~/astronomer --mount astronomer.houston.config.deployments.helm=~/airflow-chart -f ~/sha-values.yaml --as-path |
+        grep '\.tag='
+
+    Check for images without sha256
+
+        bin/generate-all-values.py ~/astronomer --mount astronomer.houston.config.deployments.helm=~/airflow-chart -f ~/sha-values.yaml --as-path |
+        grep '\.image=' |
+        grep -v "sha256"
+"""
 
 import sys
 import requests
-from ruamel.yaml import YAML
+import yaml
 
 # Docker Hub API URL for public repositories
 DOCKER_HUB_API_URL = "https://hub.docker.com/v2/repositories/library"
@@ -55,7 +67,7 @@ def lookup_digest_dockerhub(repository, tag):
     repo_url = f"{DOCKER_HUB_API_URL}/{repository}/tags/{tag}/"
 
     # Send a GET request to the Docker Hub API
-    response = requests.get(repo_url)
+    response = requests.get(repo_url, timeout=30)
 
     # Log the URL on failure
     if response.status_code != 200:
@@ -93,7 +105,7 @@ def lookup_digest_v2(repository_host, repository, tag):
     headers = {
         "Accept": "application/vnd.docker.distribution.manifest.v2+json",  # Request V2 manifest
     }
-    response = requests.get(repo_url, headers=headers)
+    response = requests.get(repo_url, headers=headers, timeout=30)
 
     # Log the URL on failure
     if response.status_code != 200:
@@ -114,7 +126,7 @@ def lookup_digest_v2(repository_host, repository, tag):
     return digest_version, digest_value
 
 
-def process_yaml(data, new_data):
+def process_yaml(data, new_data):  # noqa: C901
     """
     Recursively process the YAML structure, replacing image tags with SHA hashes,
     and populating the new_data object with only the tag/image changes and minimal scaffolding.
@@ -140,7 +152,6 @@ def process_yaml(data, new_data):
                 new_data[key] = temp_list
         elif key == "image":
             # Parse the image into repository_host, repository, and tag
-            explicit_repository_host = data.get("registry")
             repository_host, repository, tag = parse_image(value)
 
             try:
@@ -156,7 +167,7 @@ def process_yaml(data, new_data):
 
                 if sha_hash:
                     new_data[key] = f"{repository_host}/{repository}@{digest_version}:{sha_hash}"
-            except Exception as e:
+            except TypeError as e:
                 print(f"Failed to process image {repository}:{tag} - {e}", file=sys.stderr)
                 continue
         elif key == "defaultAirflowTag":
@@ -183,17 +194,14 @@ def process_yaml(data, new_data):
                     new_data["defaultAirflowTag"] = sha_hash
                     if "defaultAirflowDigest" in data and data["defaultAirflowDigest"] is not None:
                         new_data["defaultAirflowDigest"] = sha_hash
-            except Exception as e:
+            except TypeError as e:
                 print(f"Failed to process tag {value} for {repository} - {e}", file=sys.stderr)
                 continue
         elif key == "tag":
             if value is None:
                 continue  # Leave tags with value None unchanged
 
-            if sibling_repo_key := next(
-                (sibling_key for sibling_key in ["image", "repository"] if sibling_key in data),
-                None,
-            ):
+            if any(key in data for key in ["image", "repository"]):
                 # Parse the sibling repository and combine with the tag
                 # if there is a registry host prepend it to the repository
                 explicit_registry = data["registry"] if "registry" in data else None
@@ -218,16 +226,15 @@ def process_yaml(data, new_data):
                             new_data["repository"] = f"{repository}@{digest_version}"
                         else:
                             new_data["repository"] = f"{repository_host}/{repository}@{digest_version}"
-                except Exception as e:
+                except TypeError as e:
                     print(f"Failed to process tag {value} for {repository} - {e}", file=sys.stderr)
                     continue
 
 
 def main():
-    yaml = YAML()
 
     # Read YAML content from stdin (you can also use a file)
-    yaml_content = yaml.load(sys.stdin)
+    yaml_content = yaml.safe_load(sys.stdin)
 
     # Create a new object to store the changes
     new_yaml_content = {}
