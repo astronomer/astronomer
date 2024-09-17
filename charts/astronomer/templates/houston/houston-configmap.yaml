@@ -273,7 +273,7 @@ data:
                 ephemeral-storage: "2Gi"
               requests:
                 ephemeral-storage: "1Gi"
-            
+
             updateStrategy:
               type: RollingUpdate
               rollingUpdate:
