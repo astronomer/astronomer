@@ -10,7 +10,6 @@ from tests.chart_tests.helm_template_generator import render_chart
 )
 class TestServiceAccounts:
     def test_serviceaccount_rbac_disabled(self, kube_version):
-        # Render the chart with rbacEnabled set to False
         docs = render_chart(
             kube_version=kube_version, values={"global": {"rbacEnabled": False}, "nats": {"nats": {"createJetStreamJob": False}}}
         )
