@@ -22,7 +22,6 @@ class TestServiceAccounts:
 
         # Check that the Deployment or StatefulSet is using the default ServiceAccount
         sa_name = ""
-        # print(docs)
         for doc in docs:
             if doc.get("kind") in ["Deployment", "StatefulSet"]:
                 assert (
