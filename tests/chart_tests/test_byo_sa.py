@@ -17,9 +17,7 @@ class TestServiceAccounts:
 
         # Check that no ServiceAccount resources are created
 
-        service_accounts = [
-            doc["metadata"]["name"] for doc in docs if isinstance(doc, dict) and doc.get("kind") == "ServiceAccount"
-        ]
+        service_accounts = [doc for doc in docs if doc["kind"] == "ServiceAccount"]
         assert len(service_accounts) == 0, "No ServiceAccounts should be created when rbacEnabled is False"
 
         # Check that the Deployment or StatefulSet is using the default ServiceAccount
