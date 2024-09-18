@@ -46,7 +46,6 @@ grafana.{{ .Values.global.baseDomain }}
 {{ default (printf "%s-grafana-backend" .Release.Name) .Values.backendSecretName }}
 {{- end }}
 
-
 {{ define "grafana.bootstrapper.serviceaccount" -}}
 {{ printf "%s-grafana-bootstrapper" .Release.Name }}
 {{- end }}
