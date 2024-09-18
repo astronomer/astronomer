@@ -335,3 +335,18 @@ class TestFluentd:
         } in c_by_name[
             "fluentd"
         ]["env"]
+
+    def test_fluentd_daemonset_probe(self, kube_version):
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/fluentd/templates/fluentd-daemonset.yaml"],
+        )
+        doc = docs[0]
+        c_by_name = get_containers_by_name(doc)
+        assert c_by_name["fluentd"]["name"] == "fluentd"
+        liveness_probe = c_by_name["fluentd"]["livenessProbe"]
+        assert liveness_probe["failureThreshold"] == 3
+        assert liveness_probe["initialDelaySeconds"] == 30
+        assert liveness_probe["periodSeconds"] == 15
+        assert liveness_probe["successThreshold"] == 1
+        assert liveness_probe["timeoutSeconds"] == 5

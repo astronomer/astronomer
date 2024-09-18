@@ -1,6 +1,6 @@
-################################
-## Fluentd DaemonSet
-#################################
+#######################
+## Fluentd DaemonSet ##
+#######################
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -65,7 +65,7 @@ spec:
               | awk '{ print ($NF > {{ .Values.livenessProbeConfig.bufferSizeUnhealthy }}) }') )); then exit 1; fi; exit 0
           failureThreshold: {{ .Values.livenessProbeConfig.failureThreshold }}
           initialDelaySeconds: {{ .Values.livenessProbeConfig.initialDelaySeconds }}
-          periodSeconds: {{ .Values.livenessProbeConfig.periodSeconds5 }}
+          periodSeconds: {{ .Values.livenessProbeConfig.periodSeconds }}
           successThreshold: {{ .Values.livenessProbeConfig.successThreshold }}
           timeoutSeconds: {{ .Values.livenessProbeConfig.timeoutSeconds }}
         imagePullPolicy: {{ .Values.images.fluentd.pullPolicy }}

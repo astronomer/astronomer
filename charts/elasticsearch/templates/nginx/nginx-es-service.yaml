@@ -1,5 +1,5 @@
-################################
-## NGINX Elasticsearch Service
+#################################
+## NGINX Elasticsearch Service ##
 #################################
 kind: Service
 apiVersion: v1

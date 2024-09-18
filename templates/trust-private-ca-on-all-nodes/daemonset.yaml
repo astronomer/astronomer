@@ -1,10 +1,9 @@
 {{- if and .Values.global.privateCaCertsAddToHost.enabled .Values.global.privateCaCertsAddToHost.addToDockerd }}
-################################
+#################################
 ## DaemonSet to mount the private root CA
 ##
-## This can be used by enterprise with private
-## CAs that do not already install their root
-## certificate on the kubernetes nodes.
+## This can be used by enterprise with private CAs that do not already install
+## their root certificate on the kubernetes nodes.
 #################################
 apiVersion: apps/v1
 kind: DaemonSet

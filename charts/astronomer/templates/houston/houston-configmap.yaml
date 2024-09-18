@@ -1,6 +1,6 @@
-################################
-## Astronomer Houston ConfigMap
-#################################
+##################################
+## Astronomer Houston ConfigMap ##
+##################################
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -273,6 +273,11 @@ data:
                 ephemeral-storage: "2Gi"
               requests:
                 ephemeral-storage: "1Gi"
+
+            updateStrategy:
+              type: RollingUpdate
+              rollingUpdate:
+                maxUnavailable: 1
 
           airflowLocalSettings: |
             # This pod mutation hook runs for all pods dynamically created by Airflow

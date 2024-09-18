@@ -1,6 +1,6 @@
-################################
-## Elasticsearch Exporter Service
-#################################
+####################################
+## Elasticsearch Exporter Service ##
+####################################
 kind: Service
 apiVersion: v1
 metadata:

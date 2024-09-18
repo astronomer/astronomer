@@ -1,8 +1,7 @@
 {{- if gt (int .Values.replicas) 1 }}
-################################
+#################################
 ## Prometheus Service(s)
-## each one pointing to a different
-## Prometheus pod
+## each one pointing to a different Prometheus pod
 #################################
 {{ range $i, $e := until (int .Values.replicas) }}
 {{- if gt $i 0 }}
@@ -38,7 +37,7 @@ spec:
 {{ end }}
 {{- end }}
 ---
-################################
+#################################
 ## Prometheus Service
 ## load balancing between all pods
 #################################
