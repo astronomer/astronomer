@@ -23,7 +23,9 @@ def common_test_cases(docs):
     assert prod["deployments"]["helm"]["airflow"]["useAstroSecurityManager"] is True
     assert prod["deployments"]["disableManageClusterScopedResources"] is False
     airflow_local_settings = prod["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
-
+    scheduler_update_strategy = prod["deployments"]["helm"]["airflow"]["scheduler"]["updateStrategy"]
+    assert scheduler_update_strategy["type"] == "RollingUpdate"
+    assert scheduler_update_strategy["rollingUpdate"]["maxUnavailable"] == 1
     assert (
         prod["deployments"]["helm"]["airflow"]["cleanup"]["schedule"]
         == '{{- add 3 (regexFind ".$" (adler32sum .Release.Name)) -}}-59/15 * * * *'

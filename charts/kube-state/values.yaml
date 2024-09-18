@@ -42,21 +42,21 @@ collectors:
   #- validatingwebhookconfigurations
   #- volumeattachments
   #- storageclasses
+  #- leases
+  #- nodes
+  #- endpoints
+  #- poddisruptionbudgets
   - daemonsets
-  - leases
   - namespaces
-  - nodes
   - configmaps
   - cronjobs
   - deployments
-  - endpoints
   - horizontalpodautoscalers
   - ingresses
   - jobs
   - limitranges
   - networkpolicies
   - persistentvolumeclaims
-  - poddisruptionbudgets
   - pods
   - replicasets
   - replicationcontrollers
