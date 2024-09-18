@@ -22,7 +22,7 @@ def common_test_cases(docs):
 
     assert prod["deployments"]["helm"]["airflow"]["useAstroSecurityManager"] is True
     airflow_local_settings = prod["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
-    scheduler_update_strategy = prod["deployments"]["helm"]["airflow"]["scheduler"]["updateStrategy"]
+    scheduler_update_strategy = prod["deployments"]["helm"]["airflow"]["scheduler"]["strategy"]
     assert scheduler_update_strategy["type"] == "RollingUpdate"
     assert scheduler_update_strategy["rollingUpdate"]["maxUnavailable"] == 1
     assert (
