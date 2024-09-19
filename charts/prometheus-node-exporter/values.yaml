@@ -53,10 +53,6 @@ podSecurityContext:
 
 securityContext:
    runAsNonRoot: true
-rbac:
-  ## If true, create & use RBAC resources
-  ##
-  create: true
 
 # for deployments that have node_exporter deployed outside of the cluster, list
 # their addresses here
