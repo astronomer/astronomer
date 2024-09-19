@@ -274,7 +274,7 @@ data:
               requests:
                 ephemeral-storage: "1Gi"
 
-            updateStrategy:
+            strategy:
               type: RollingUpdate
               rollingUpdate:
                 maxUnavailable: 1
