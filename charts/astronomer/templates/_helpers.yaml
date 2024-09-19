@@ -136,7 +136,11 @@
 {{- end }}
 
 {{ define "houston.bootstrapperServiceAccount" -}}
-{{ printf "%s-houston-bootstrapper" .Release.Name }}
+{{- if .Values.houston.serviceAccount.create -}}
+{{ default (printf "%s-houston-bootstrapper" .Release.Name ) .Values.houston.serviceAccount.name }}
+{{- else -}}
+    {{ default "default" .Values.houston.serviceAccount.name }}
+{{- end }}
 {{- end }}
 
 {{ define "configSyncer.ServiceAccount" -}}
