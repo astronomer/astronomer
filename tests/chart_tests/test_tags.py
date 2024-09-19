@@ -35,7 +35,6 @@ chart_values = chart_tests.get_all_features()
 def test_tags_monitoring_enabled(template, chart_values=chart_values, kube_version="1.30.0"):
     """Test that when monitoring is disabled, the monitoring components are not present."""
     chart_values["tags"] = {"monitoring": True}
-    chart_values["prometheus-node-exporter"] = {"serviceAccount": {"create": True}}
     docs = render_chart(kube_version=kube_version, values=chart_values, show_only=template)
 
     assert len(docs) >= 1
