@@ -18,8 +18,8 @@ class TestServiceAccounts:
         sa_name = ""
         for doc in docs:
             if doc.get("kind") == "ServiceAccount":
-                assert ( sa_name ==
-                    doc["metadata"]["name"]
+                assert (
+                    sa_name == doc["metadata"]["name"]
                 ), f"No ServiceAccounts were expected when rbacEnabled is False, but got {sa_name}"
 
     def test_role_created(self, kube_version):
