@@ -34,7 +34,7 @@ max_age="300"
 
 # Step 1: Runs the Python extractor script to generate the BOM JSON file
 echo "Running the extractor script to generate ${json_file_name}..."
-pip install git+https://${GITHUB_TOKEN}@github.com/astronomer/astronomer-bom-generator.git@v0.1.0
+pip install git+https://"${GITHUB_TOKEN}"@github.com/astronomer/astronomer-bom-generator.git@v0.1.0
 
 if [ ! -f "${local_json_file_path}" ]; then
   echo "ERROR: Failed to generate ${json_file_name}"
