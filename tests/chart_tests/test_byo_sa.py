@@ -23,9 +23,7 @@ class TestServiceAccounts:
         sa_name = []
         for doc in docs:
             if doc.get("kind") == "ServiceAccount":
-                assert (
-                    sa_name.append(doc["metadata"]["name"])
-                )
+                assert sa_name.append(doc["metadata"]["name"])
 
     def test_role_created(self, kube_version):
         """Test that no roles or rolebindings are created when rbac is disabled."""
