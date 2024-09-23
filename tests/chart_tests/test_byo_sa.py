@@ -20,12 +20,12 @@ class TestServiceAccounts:
         assert len(service_accounts) == 0, "No ServiceAccounts should be created when rbacEnabled is False"
 
         # Check that the Deployment or StatefulSet is using the default ServiceAccount
-        sa_name = ""
+        sa_name = []
         for doc in docs:
-            if doc.get("kind") in ["Deployment", "StatefulSet"]:
+            if doc.get("kind") == "ServiceAccount":
                 assert (
-                    sa_name == doc["metadata"]["name"] for doc in docs if doc.get("kind") == "ServiceAccount"
-                ), f"Expected default ServiceAccount, but got {sa_name}"
+                    sa_name.append(doc["metadata"]["name"])
+                )
 
     def test_role_created(self, kube_version):
         """Test that no roles or rolebindings are created when rbac is disabled."""
