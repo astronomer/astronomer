@@ -61,6 +61,7 @@ spec:
           containerPort: {{ .Values.ports.scrape }}
         - name: telemetry
           containerPort: {{ .Values.ports.telemetry }}
+        readinessProbe: {{ toYaml .Values.readinessProbe | nindent 12 }}
         livenessProbe:
           httpGet:
             path: /healthz
