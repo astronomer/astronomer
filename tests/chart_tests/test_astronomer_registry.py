@@ -104,12 +104,12 @@ class TestRegistryStatefulset:
         assert doc["kind"] == "StatefulSet"
         assert doc["apiVersion"] == "apps/v1"
         assert doc["metadata"]["name"] == "release-name-registry"
-        assert doc["spec"]["template"]["spec"]["serviceAccountName"] == "release-name-customregistrysa"
+        assert doc["spec"]["template"]["spec"]["serviceAccountName"] == "customregistrysa"
 
         doc = docs[1]
         assert doc["kind"] == "ServiceAccount"
         assert doc["apiVersion"] == "v1"
-        assert doc["metadata"]["name"] == "release-name-customregistrysa"
+        assert doc["metadata"]["name"] == "customregistrysa"
         assert annotation == doc["metadata"]["annotations"]
 
     def test_astronomer_registry_statefulset_with_serviceaccount_disabled(self, kube_version):
