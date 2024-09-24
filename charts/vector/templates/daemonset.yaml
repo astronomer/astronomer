@@ -1,0 +1,136 @@
+###########################################################################
+# Vector DaemonSet
+###########################################################################
+apiVersion: v1
+kind: DaemonSet
+metadata:
+  name: {{ include "vector.fullname" . }}
+  labels:
+    tier: logging
+    component: {{ template "vector.name" . }}
+    chart: {{ template "vector.chart" . }}
+    heritage: {{ .Release.Service }}
+    release: {{ .Release.Name }}
+
+spec:
+  selector:
+    matchLabels:
+      tier: logging
+      component: {{ template "vector.name" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        tier: logging
+        component: {{ template "vector.name" . }}
+        release: {{ .Release.Name }}
+        app: {{ template "vector.name" . }}
+        version: {{ .Chart.Version }}
+    spec:
+    {{- if .Values.priorityClassName }}
+      priorityClassName:  {{ .Values.priorityClassName  }}
+    {{ end }}
+      nodeSelector: {{ toYaml (.Values.nodeSelector) | nindent 8 }}
+      affinity: {{ toYaml (.Values.affinity) | nindent 8 }}
+      tolerations: {{ toYaml (.Values.tolerations) | nindent 8 }}
+      serviceAccountName: {{ template "vector.fullname" . }}
+      {{- include "vector.imagePullSecrets" . | nindent 6 }}
+      securityContext: {{ toYaml .Values.pod.securityContext | nindent 8 }}
+      containers:
+      - name: vector
+        image: {{ template "vector.image" . }}
+        securityContext: {{ toYaml .Values.container.securityContext | nindent 10 }}
+        {{- if .Values.global.istioEnabled }}
+        command:
+          - "/bin/bash"
+          - "-c"
+        args:
+          - "ruby /wait-for-istio-proxy.rb && /usr/local/bin/vector ${FLUENTD_ARGS}"
+        {{- end }}
+        livenessProbe:
+          exec:
+            command:
+            - /bin/bash
+            - -c
+            - if (( $(ruby -e "require 'net/http';require 'uri';uri = URI.parse('http://127.0.0.1:{{ .Values.ports.promScrape }}/metrics');response
+              = Net::HTTP.get_response(uri);puts response.body" | grep 'vector_output_status_buffer_queue_length{'
+              | awk '{ print ($NF > {{ .Values.livenessProbeConfig.bufferSizeUnhealthy }}) }') )); then exit 1; fi; exit 0
+          failureThreshold: {{ .Values.livenessProbeConfig.failureThreshold }}
+          initialDelaySeconds: {{ .Values.livenessProbeConfig.initialDelaySeconds }}
+          periodSeconds: {{ .Values.livenessProbeConfig.periodSeconds }}
+          successThreshold: {{ .Values.livenessProbeConfig.successThreshold }}
+          timeoutSeconds: {{ .Values.livenessProbeConfig.timeoutSeconds }}
+        imagePullPolicy: {{ .Values.images.vector.pullPolicy }}
+        env:
+        - name: K8S_NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: FLUENTD_ARGS
+          value: --no-supervisor -q
+        {{- if .Values.global.customLogging.enabled }}
+        - name: OUTPUT_HOST
+          value: {{ printf "%s-external-es-proxy" .Release.Name | quote }}
+        - name: OUTPUT_PORT
+          value: "9201"
+        {{- else }}
+        - name: OUTPUT_HOST
+          value: {{ template "elasticsearch.host" . }}
+        - name: OUTPUT_PORT
+          value: {{ .Values.elasticsearch.port | quote }}
+        {{- end }}
+        - name: OUTPUT_BUFFER_CHUNK_LIMIT
+          value: {{ .Values.elasticsearch.buffer_chunk_limit | quote }}
+        - name: OUTPUT_BUFFER_QUEUE_LIMIT
+          value: {{ .Values.elasticsearch.buffer_queue_limit | quote }}
+        - name: NAMESPACE
+          value: {{ .Release.Namespace | quote }}
+        - name: RELEASE
+          value: {{ .Release.Name | quote }}
+        {{- range $key, $value :=  .Values.extraEnv }}
+        - name: {{ $key }}
+          value: {{ $value | quote }}
+        {{- end }}
+        volumeMounts:
+        {{- if .Values.additionalVolumeMounts }}
+        {{- toYaml .Values.additionalVolumeMounts | nindent 8 }}
+        {{- end }}
+        {{- include "custom_ca_volume_mounts" . | nindent 8 }}
+        - name: varlog
+          mountPath: /var/log
+        - name: varlibdockercontainers
+          mountPath: /var/lib/docker/containers
+          readOnly: true
+        - name: libsystemddir
+          mountPath: /host/lib
+          readOnly: true
+        - name: config-volume-{{ template "vector.fullname" . }}
+          mountPath: /etc/fluent/config.d
+        - name: {{ template "vector.fullname" . }}-index-template-volume
+          mountPath: /host
+          readOnly: true
+        resources: {{ toYaml .Values.resources | nindent 12 }}
+        ports:
+          - name: monitor-agent
+            containerPort: {{ .Values.ports.promScrape }}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      {{- if .Values.additionalVolumes }}
+      {{- toYaml .Values.additionalVolumes | nindent 6 }}
+      {{- end }}
+      {{- include "custom_ca_volumes" . | nindent 6 }}
+      - name: varlog
+        hostPath:
+          path: /var/log
+      - name: varlibdockercontainers
+        hostPath:
+          path: /var/lib/docker/containers
+      - name: libsystemddir
+        hostPath:
+          path: /usr/lib64
+      - name: config-volume-{{ template "vector.fullname" . }}
+        configMap:
+          name: {{ template "vector.fullname" . }}
+      - name: {{ template "vector.fullname" . }}-index-template-volume
+        configMap:
+          name: {{ template "vector.fullname" . }}-index-template-configmap

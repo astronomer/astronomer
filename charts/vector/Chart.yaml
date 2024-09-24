@@ -1,0 +1,5 @@
+apiVersion: v2
+name: vector
+description: "Install datadog Vector as a daemonset log aggregator"
+version: "0.1.0"
+appVersion: "0.1.0"
