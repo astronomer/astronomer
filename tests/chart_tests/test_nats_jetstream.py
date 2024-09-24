@@ -13,6 +13,7 @@ class TestNatsJetstream:
         """Test that nats statefulset is good with defaults."""
         values = {
             "global": {"nats": {"jetStream": {"enabled": True}}},
+            "nats": {"nats": {"createJetStreamJob": True}},
         }
         docs = render_chart(
             kube_version=kube_version,
@@ -36,6 +37,7 @@ class TestNatsJetstream:
         """Test Nats with jetstream config."""
         values = {
             "global": {"nats": {"jetStream": {"enabled": True, "tls": True}}},
+            "nats": {"nats": {"createJetStreamJob": True}},
         }
         docs = render_chart(
             kube_version=kube_version,
@@ -123,6 +125,7 @@ class TestNatsJetstream:
         """Test that stan statefulset is disabled when jetstream is enabled."""
         values = {
             "global": {"nats": {"jetStream": {"enabled": True}}},
+            "nats": {"nats": {"createJetStreamJob": True}},
         }
         docs = render_chart(
             kube_version=kube_version,
@@ -141,6 +144,7 @@ class TestNatsJetstream:
         """Test that stan statefulset is disabled when jetstream is enabled."""
         values = {
             "global": {"nats": {"jetStream": {"enabled": False}}},
+            "nats": {"nats": {"createJetStreamJob": True}},
         }
         docs = render_chart(
             kube_version=kube_version,
