@@ -33,7 +33,7 @@ spec:
           {{- end }}
         spec:
           {{- if .Values.global.rbacEnabled }}
-          serviceAccountName: {{ .Release.Name }}-config-syncer
+          serviceAccountName: {{ template "configSyncer.ServiceAccount" . }}
           {{- end}}
           nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 12 }}

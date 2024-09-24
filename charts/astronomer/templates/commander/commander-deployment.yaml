@@ -40,7 +40,7 @@ spec:
       tolerations:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       {{- if .Values.global.rbacEnabled }}
-      serviceAccountName: {{ .Release.Name }}-commander
+      serviceAccountName: {{ template "commander.ServiceAccount" . }}
       {{- end}}
       restartPolicy: Always
 {{- include "astronomer.imagePullSecrets" . | indent 6 }}

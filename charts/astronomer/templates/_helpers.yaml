@@ -128,10 +128,10 @@
 {{- end }}
 
 {{ define "registry.ServiceAccount" -}}
-{{- if .Values.registry.serviceAccount.name -}}
-{{ printf "%s-%s" .Release.Name .Values.registry.serviceAccount.name }}
+{{- if .Values.registry.serviceAccount.create -}}
+{{ default (printf "%s-registry" .Release.Name ) .Values.registry.serviceAccount.name }}
 {{- else -}}
-{{ printf "%s-registry" .Release.Name }}
+    {{ default "default" .Values.registry.serviceAccount.name }}
 {{- end }}
 {{- end }}
 
@@ -144,18 +144,18 @@
 {{- end }}
 
 {{ define "configSyncer.ServiceAccount" -}}
-{{- if .Values.configSyncer.serviceAccount.name -}}
-{{ printf "%s-%s" .Release.Name .Values.configSyncer.serviceAccount.name }}
+{{- if .Values.configSyncer.serviceAccount.create -}}
+{{ default (printf "%s-config-syncer" .Release.Name ) .Values.configSyncer.serviceAccount.name }}
 {{- else -}}
-{{ printf "%s-configSyncer" .Release.Name }}
+    {{ default "default" .Values.commander.serviceAccount.name }}
 {{- end }}
 {{- end }}
 
 {{ define "commander.ServiceAccount" -}}
-{{- if .Values.commander.serviceAccount.name -}}
-{{ printf "%s-%s" .Release.Name .Values.commander.serviceAccount.name }}
+{{- if .Values.commander.serviceAccount.create -}}
+{{ default (printf "%s-commander" .Release.Name ) .Values.commander.serviceAccount.name }}
 {{- else -}}
-{{ printf "%s-commander" .Release.Name }}
+    {{ default "default" .Values.commander.serviceAccount.name }}
 {{- end }}
 {{- end }}
 
