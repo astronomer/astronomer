@@ -43,7 +43,7 @@ spec:
           - "-c"
         args:
           - "while true; do date; cp -v /private-ca-certs/* /host-trust-store/; sleep 10; done"
-        imagePullPolicy: {{ .Values.global.privateCaCertsAddToHost.certCopier.images.pullPolicy }}
+        imagePullPolicy: {{ .Values.global.privateCaCertsAddToHost.certCopier.pullPolicy }}
         volumeMounts:
         - name: hostcerts
           mountPath: /host-trust-store

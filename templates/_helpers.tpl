@@ -26,33 +26,33 @@ nginx.ingress.kubernetes.io/auth-url: https://houston.{{ .Values.global.baseDoma
 
 {{ define "dagOnlyDeployment.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/ap-dag-deploy:{{ .Values.global.dagOnlyDeployment.images.tag }}
+{{ .Values.global.privateRegistry.repository }}/ap-dag-deploy:{{ .Values.global.dagOnlyDeployment.tag }}
 {{- else -}}
-{{ .Values.global.dagOnlyDeployment.images.repository }}:{{ .Values.global.dagOnlyDeployment.images.tag }}
+{{ .Values.global.dagOnlyDeployment.repository }}:{{ .Values.global.dagOnlyDeployment.tag }}
 {{- end }}
 {{- end }}
 
 {{ define "authSidecar.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/ap-auth-sidecar:{{ .Values.global.authSidecar.images.tag }}
+{{ .Values.global.privateRegistry.repository }}/ap-auth-sidecar:{{ .Values.global.authSidecar.tag }}
 {{- else -}}
-{{ .Values.global.authSidecar.images.repository }}:{{ .Values.global.authSidecar.images.tag }}
+{{ .Values.global.authSidecar.repository }}:{{ .Values.global.authSidecar.tag }}
 {{- end }}
 {{- end }}
 
 {{ define "loggingSidecar.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/ap-vector:{{ .Values.global.loggingSidecar.images.tag }}
+{{ .Values.global.privateRegistry.repository }}/ap-vector:{{ .Values.global.loggingSidecar.tag }}
 {{- else -}}
-{{ .Values.global.loggingSidecar.images.repository }}:{{ .Values.global.loggingSidecar.images.tag }}
+{{ .Values.global.loggingSidecar.repository }}:{{ .Values.global.loggingSidecar.tag }}
 {{- end }}
 {{- end }}
 
 {{ define "certCopier.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/ap-base:{{ .Values.global.privateCaCertsAddToHost.certCopier.images.tag }}
+{{ .Values.global.privateRegistry.repository }}/ap-base:{{ .Values.global.privateCaCertsAddToHost.certCopier.tag }}
 {{- else -}}
-{{ .Values.global.privateCaCertsAddToHost.certCopier.images.repository }}:{{ .Values.global.privateCaCertsAddToHost.certCopier.images.tag }}
+{{ .Values.global.privateCaCertsAddToHost.certCopier.repository }}:{{ .Values.global.privateCaCertsAddToHost.certCopier.tag }}
 {{- end }}
 {{- end }}
 

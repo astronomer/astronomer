@@ -27,10 +27,9 @@ global:
     containerdnodeAffinitys: []
     containerdTolerations: []
     certCopier:
-      images:
-        repository: quay.io/astronomer/ap-base
-        tag: 3.18.9
-        pullPolicy: IfNotPresent
+      repository: quay.io/astronomer/ap-base
+      tag: 3.18.9
+      pullPolicy: IfNotPresent
 
     priorityClassName: ~
   # Global flag to enable to user to enable/disable Astronomer platform
@@ -128,9 +127,8 @@ global:
 
   dagOnlyDeployment:
     enabled: false
-    images:
-      repository: quay.io/astronomer/ap-dag-deploy
-      tag: 0.5.3
+    repository: quay.io/astronomer/ap-dag-deploy
+    tag: 0.5.3
     securityContext:
       fsGroup: 50000
     resources: {}
@@ -143,9 +141,8 @@ global:
   loggingSidecar:
     enabled: false
     name: sidecar-log-consumer
-    images:
-      repository: quay.io/astronomer/ap-vector
-      tag: 0.40.1
+    repository: quay.io/astronomer/ap-vector
+    tag: 0.40.1
     customConfig: false
     indexPattern: ~
     extraEnv: []
@@ -161,10 +158,9 @@ global:
   # Deploy auth sidecar to use openshift native features
   authSidecar:
     enabled: false
-    images:
-      repository: quay.io/astronomer/ap-auth-sidecar
-      tag: 1.25.5
-      pullPolicy: IfNotPresent
+    repository: quay.io/astronomer/ap-auth-sidecar
+    tag: 1.25.5
+    pullPolicy: IfNotPresent
     port: 8084
     securityContext: {}
     default_nginx_settings: |

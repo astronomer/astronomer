@@ -111,7 +111,7 @@ data:
         repository: {{ (splitList ":"  $authSidecar ) | first  }}
         tag: {{ (splitList ":"  $authSidecar ) | last  }}
         port: {{ .Values.global.authSidecar.port }}
-        pullPolicy: {{ .Values.global.authSidecar.images.pullPolicy }}
+        pullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
         {{- if .Values.global.authSidecar.securityContext}}
         securityContext: {{- .Values.global.authSidecar.securityContext | toYaml | nindent 10 }}
         {{- end }}
