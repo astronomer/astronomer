@@ -126,7 +126,8 @@ global:
 
   dagOnlyDeployment:
     enabled: false
-    image: quay.io/astronomer/ap-dag-deploy:0.5.3
+    repository: quay.io/astronomer/ap-dag-deploy
+    tag: 0.5.3
     securityContext:
       fsGroup: 50000
     resources: {}
@@ -139,7 +140,8 @@ global:
   loggingSidecar:
     enabled: false
     name: sidecar-log-consumer
-    image: quay.io/astronomer/ap-vector:0.40.2-1
+    repository: quay.io/astronomer/ap-vector
+    tag: 0.40.2-1
     customConfig: false
     indexPattern: ~
     extraEnv: []
