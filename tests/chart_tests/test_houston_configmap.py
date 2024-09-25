@@ -434,7 +434,8 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_resource_overrides()
                 "loggingSidecar": {
                     "enabled": True,
                     "name": sidecar_container_name,
-                    "images": image_name,
+                    "repository": f"{image_name['repository']}",
+                    "tag": f"{image_name['tag']}",
                     "resources": {
                         "requests": {"memory": "386Mi", "cpu": "100m"},
                         "limits": {"memory": "386Mi", "cpu": "100m"},
