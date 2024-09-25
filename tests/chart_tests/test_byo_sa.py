@@ -14,14 +14,8 @@ class TestServiceAccounts:
         docs = render_chart(
             kube_version=kube_version, values={"global": {"rbacEnabled": False}, "nats": {"nats": {"createJetStreamJob": False}}}
         )
-
-        # Check that the Deployment or StatefulSet is using the default ServiceAccount
-        sa_name = ""
-        for doc in docs:
-            if doc.get("kind") == "ServiceAccount":
-                assert (
-                    sa_name == doc["metadata"]["name"]
-                ), f"No ServiceAccounts were expected when rbacEnabled is False, but got {sa_name}"
+        service_account_names = [doc["metadata"]["name"] for doc in docs if doc["kind"] == "ServiceAccount"]
+        assert not service_account_names, f"Expected no ServiceAccounts but found {service_account_names}"
 
     def test_role_created(self, kube_version):
         """Test that no roles or rolebindings are created when rbac is disabled."""
