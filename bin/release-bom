@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+# shellcheck disable=SC1090,SC1091
+set -eo pipefail
+
+help() {
+  echo "Description:"
+  echo "    Generate and publish a BOM JSON file for the given version to the public release repository."
+  echo
+  echo "Usage:"
+  echo "    ${0##*/} [-x] <version>"
+}
+
+while getopts ':hx' option ; do
+  case "${option}" in
+    h) help ; exit ;;
+    x) set -x ;;
+    *) help ; exit 1 ;;
+  esac
+done
+shift $((OPTIND - 1))
+
+if [[ "${#@}" -eq 0 ]] ; then
+  echo "ERROR: missing version argument"
+  echo
+  help
+  exit 1
+fi
+
+version="$1"
+repo_url="https://updates.astronomer.io/astronomer-software/releases"
+json_file_name="astronomer-${version}.json"
+local_json_file_path="./astronomer_bom_generator/doc/${json_file_name}"
+max_age="300"
+
+# Step 1: Runs the Python extractor script to generate the BOM JSON file
+echo "Running the extractor script to generate ${json_file_name}..."
+pip install "git+https://${GITHUB_TOKEN}@github.com/astronomer/astronomer-bom-generator.git@${BOM_GENERATOR_VERSION}"
+
+if [ ! -f "${local_json_file_path}" ]; then
+  echo "ERROR: Failed to generate ${json_file_name}"
+  exit 1
+fi
+
+# Step 2: Authenticate with Google Cloud
+echo "${GCP_TOKEN}" > /tmp/gcs_token.json
+gcloud auth activate-service-account --key-file=/tmp/gcs_token.json
+
+# Step 3: Check if the file already exists in the destination
+if gsutil -q stat "gs://${repo_url}/${json_file_name}" ; then
+  echo "ABORT: destination file ${json_file_name} already exists. Did you forget to bump the version number?"
+  exit 1
+fi
+
+# Step 4: Upload the BOM JSON file to the public release repository
+echo "Uploading ${json_file_name} to ${repo_url}..."
+gsutil cp "${local_json_file_path}" "gs://${repo_url}"
+gsutil -h "Cache-Control: public, max-age=${max_age}" cp "${local_json_file_path}" "gs://${repo_url}"
+
+echo "Successfully published ${json_file_name} to ${repo_url}"
