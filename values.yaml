@@ -30,7 +30,6 @@ global:
       repository: quay.io/astronomer/ap-base
       tag: 3.18.9
       pullPolicy: IfNotPresent
-
     priorityClassName: ~
   # Global flag to enable to user to enable/disable Astronomer platform
   # level Network Policy

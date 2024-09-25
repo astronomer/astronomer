@@ -204,7 +204,8 @@ def test_houston_configmap_with_loggingsidecar_enabled():
             "global": {
                 "loggingSidecar": {
                     "enabled": True,
-                    "images": {"repository": "quay.io/astronomer/ap-vector", "tag": "0.22.3"},
+                    "repository": "quay.io/astronomer/ap-vector",
+                    "tag": "0.22.3",
                 },
             },
         },
@@ -235,7 +236,8 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_index_prefix_overrid
                 "logging": {"indexNamePrefix": "test-index-name-prefix-999"},
                 "loggingSidecar": {
                     "enabled": True,
-                    "images": {"repository": image.split(":")[0], "tag": image.split(":")[1]},
+                    "repository": image.split(":")[0],
+                    "tag": image.split(":")[1],
                 },
             }
         },
@@ -267,7 +269,8 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_overrides():
                 "loggingSidecar": {
                     "enabled": True,
                     "name": sidecar_container_name,
-                    "images": {"repository": "quay.io/astronomer/ap-vector", "tag": "0.22.3"},
+                    "repository": "quay.io/astronomer/ap-vector",
+                    "tag": "0.22.3",
                 }
             }
         },
@@ -300,7 +303,8 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_indexPattern():
                 "loggingSidecar": {
                     "enabled": True,
                     "name": sidecar_container_name,
-                    "images": {"repository": image_name.split(":")[0], "tag": image_name.split(":")[1]},
+                    "repository": image_name.split(":")[0],
+                    "tag": image_name.split(":")[1],
                     "indexPattern": indexPattern,
                 }
             }
@@ -334,7 +338,8 @@ def test_houston_configmap_with_loggingsidecar_customConfig_enabled():
                     "enabled": True,
                     "name": sidecar_container_name,
                     "customConfig": True,
-                    "images": {"repository": image_name.split(":")[0], "tag": image_name.split(":")[1]},
+                    "repository": image_name.split(":")[0],
+                    "tag": image_name.split(":")[1],
                 }
             }
         },
@@ -366,7 +371,8 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_custom_env_overrides
                 "loggingSidecar": {
                     "enabled": True,
                     "name": sidecar_container_name,
-                    "images": {"repository": image_name.split(":")[0], "tag": image_name.split(":")[1]},
+                    "repository": image_name.split(":")[0],
+                    "tag": image_name.split(":")[1],
                     "extraEnv": [
                         {
                             "name": "ES_USER",
@@ -471,7 +477,8 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_securityContext_conf
                 "loggingSidecar": {
                     "enabled": True,
                     "name": sidecar_container_name,
-                    "images": {"repository": image_name.split(":")[0], "tag": image_name.split(":")[1]},
+                    "repository": image_name.split(":")[0],
+                    "tag": image_name.split(":")[1],
                     "securityContext": securityContext,
                 }
             }

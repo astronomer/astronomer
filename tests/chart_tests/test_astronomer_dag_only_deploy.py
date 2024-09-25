@@ -33,7 +33,8 @@ class TestDagOnlyDeploy:
                 "global": {
                     "dagOnlyDeployment": {
                         "enabled": True,
-                        "images": {"repository": images.split(":")[0], "tag": images.split(":")[1]},
+                        "repository": images.split(":")[0],
+                        "tag": images.split(":")[1],
                         "securityContext": {"fsGroup": 55555},
                         "resources": resources,
                     }

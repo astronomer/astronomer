@@ -133,11 +133,9 @@ class TestAuthSidecar:
                 "global": {
                     "authSidecar": {
                         "enabled": True,
-                        "images": {
-                            "repository": "someregistry.io/my-custom-image",
-                            "tag": "my-custom-tag",
-                        },
-                    }
+                        "repository": "someregistry.io/my-custom-image",
+                        "tag": "my-custom-tag",
+                    },
                 }
             },
             show_only=[
@@ -166,7 +164,8 @@ class TestAuthSidecar:
                 "global": {
                     "authSidecar": {
                         "enabled": True,
-                        "images": {"repository": "someregistry.io/my-custom-image", "tag": "my-custom-tag"},
+                        "repository": "someregistry.io/my-custom-image",
+                        "tag": "my-custom-tag",
                     },
                     "extraAnnotations": {
                         "kubernetes.io/ingress.class": "astronomer-nginx",
@@ -203,7 +202,8 @@ class TestAuthSidecar:
                 "global": {
                     "authSidecar": {
                         "enabled": True,
-                        "images": {"repository": "someregistry.io/my-custom-image", "tag": "my-custom-tag"},
+                        "repository": "someregistry.io/my-custom-image",
+                        "tag": "my-custom-tag",
                         "securityContext": {"runAsUser": 1000},
                     },
                 }
