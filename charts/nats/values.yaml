@@ -19,7 +19,7 @@ images:
 
 
 nats:
-  createJetStreamJob: true
+  createJetStreamJob: false
 
   # In case both external access and advertise are enabled
   # then a service account would be required to be able to
