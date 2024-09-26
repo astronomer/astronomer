@@ -107,21 +107,21 @@ jobs:
             ./twistcli images scan --address $CONSOLE_URL --user=$USER --password=$PASSWORD --details << parameters.docker_image >>
 
   release_bom:
-    docker: 
+    docker:
       - image: cimg/python:3.11
     steps:
-      - run: 
+      - run:
         name: Install dependencies
         command: |
-        python -m venv venv
-        source venv/bin/activate
-        pip install git@{github-token}:astronomer/bom-generator.git
-      - run: 
+          python -m venv venv
+          source venv/bin/activate
+          pip install git@{github-token}:astronomer/bom-generator.git
+      - run:
         name: Run Release BOM Script
         command: |
-        source venv/bin/activate
-        bin/release-bom
-  
+          source venv/bin/activate
+          bin/release-bom
+
   run_pre_commit:
     docker:
       - image: quay.io/astronomer/ci-pre-commit:{{ ci_runner_version }}
@@ -394,7 +394,10 @@ workflows:
             branches:
               only:
                 - '/^release-0\.\d+$/'
-
+      - release_bom:
+        context:
+          - github-repo
+          - gcp-astronomer-prod
       - release-to-public:
           context:
             - gcp-astronomer-prod
