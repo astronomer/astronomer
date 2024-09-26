@@ -128,7 +128,7 @@
 {{- end }}
 
 {{ define "registry.ServiceAccount" -}}
-{{- if .Values.registry.serviceAccount.create -}}
+{{- if and .Values.registry.serviceAccount.create .Values.global.rbacEnabled -}}
 {{ default (printf "%s-registry" .Release.Name ) .Values.registry.serviceAccount.name }}
 {{- else -}}
     {{ default "default" .Values.registry.serviceAccount.name }}
@@ -136,7 +136,7 @@
 {{- end }}
 
 {{ define "houston.bootstrapperServiceAccount" -}}
-{{- if .Values.houston.serviceAccount.create -}}
+{{- if and .Values.houston.serviceAccount.create .Values.global.rbacEnabled -}}
 {{ default (printf "%s-houston-bootstrapper" .Release.Name ) .Values.houston.serviceAccount.name }}
 {{- else -}}
     {{ default "default" .Values.houston.serviceAccount.name }}
@@ -144,7 +144,7 @@
 {{- end }}
 
 {{ define "configSyncer.ServiceAccount" -}}
-{{- if .Values.configSyncer.serviceAccount.create -}}
+{{- if and .Values.configSyncer.serviceAccount.create .Values.global.rbacEnabled -}}
 {{ default (printf "%s-config-syncer" .Release.Name ) .Values.configSyncer.serviceAccount.name }}
 {{- else -}}
     {{ default "default" .Values.commander.serviceAccount.name }}
@@ -152,7 +152,7 @@
 {{- end }}
 
 {{ define "commander.ServiceAccount" -}}
-{{- if .Values.commander.serviceAccount.create -}}
+{{- if and .Values.commander.serviceAccount.create .Values.global.rbacEnabled -}}
 {{ default (printf "%s-commander" .Release.Name ) .Values.commander.serviceAccount.name }}
 {{- else -}}
     {{ default "default" .Values.commander.serviceAccount.name }}

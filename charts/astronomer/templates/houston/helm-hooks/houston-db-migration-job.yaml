@@ -38,9 +38,7 @@ spec:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       restartPolicy: Never
       {{- if and (not .Values.houston.airflowBackendSecretName) (not .Values.houston.airflowBackendConnection) }}
-      {{- if .Values.global.rbacEnabled }}
       serviceAccountName: {{ template "houston.bootstrapperServiceAccount" . }}
-      {{- end}}
       initContainers:
         - name: wait-for-db
           image: {{ template "houston.image" . }}

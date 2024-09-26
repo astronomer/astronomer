@@ -20,6 +20,10 @@ securityContext:
   runAsUser: 101
   runAsNonRoot: true
 
+serviceAccount:
+  create: true
+  name: ~
+
 ingressClass: ~
 
 replicas: 2

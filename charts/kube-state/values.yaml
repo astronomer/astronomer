@@ -35,6 +35,10 @@ extraArgs:
 
 priorityClassName: ~
 
+serviceAccount:
+  create: true
+  name: ~
+
 collectors:
   #- certificatesigningrequests
   #- mutatingwebhookconfigurations
