@@ -87,9 +87,7 @@ spec:
         resources:
 {{ toYaml .Values.master.initResources | indent 10 }}
       {{- end }}
-      {{- if .Values.global.rbacEnabled }}
       serviceAccountName: {{ template "elasticsearch.fullname" . }}
-      {{- end }}
       containers:
       - name: es-master
         securityContext:

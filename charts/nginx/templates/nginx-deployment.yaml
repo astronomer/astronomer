@@ -35,9 +35,7 @@ spec:
         sidecar.istio.io/inject: "false"
         {{- end }}
     spec:
-      {{- if .Values.global.rbacEnabled }}
       serviceAccountName: {{ template "nginx.fullname" . }}
-      {{- end }}
 {{- include "nginx.imagePullSecrets" . | indent 6 }}
       containers:
         - name: nginx
