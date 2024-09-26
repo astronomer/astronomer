@@ -55,3 +55,7 @@ s3:
 priorityClassName: ~
 
 extraEnv: ~
+
+serviceAccount:
+  create: true
+  name: ~
