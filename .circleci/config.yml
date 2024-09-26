@@ -113,16 +113,16 @@ jobs:
       - image: cimg/python:3.11
     steps:
       - run:
-          name: Install dependencies
-          command: |
-            python -m venv venv
-            source venv/bin/activate
-            pip install git@{github-token}:astronomer/astronomer-bom-generator.git
+        name: Install dependencies
+        command: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install git@{GITHUB_TOKEN}:astronomer/astronomer-bom-generator.git
       - run:
-          name: Run Release BOM Script
-          command: |
-            source venv/bin/activate
-            bin/release-bom
+        name: Run Release BOM Script
+        command: |
+          source venv/bin/activate
+          bin/release-bom
 
   run_pre_commit:
     docker:
@@ -531,9 +531,14 @@ workflows:
               only:
                 - '/^release-0\.\d+$/'
       - release_bom:
-          context:
+        context:
           - github-repo
           - gcp-astronomer-prod
+        filters:
+            branches:
+              only:
+                - '/^release-0\.\d+$/'
+                - fix-6117-adding-ci-job
       - release-to-public:
           context:
             - gcp-astronomer-prod

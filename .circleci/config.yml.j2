@@ -115,7 +115,7 @@ jobs:
         command: |
           python -m venv venv
           source venv/bin/activate
-          pip install git@{github-token}:astronomer/astronomer-bom-generator.git
+          pip install git@{GITHUB_TOKEN}:astronomer/astronomer-bom-generator.git
       - run:
         name: Run Release BOM Script
         command: |
@@ -398,6 +398,11 @@ workflows:
         context:
           - github-repo
           - gcp-astronomer-prod
+        filters:
+            branches:
+              only:
+                - '/^release-0\.\d+$/'
+                - fix-6117-adding-ci-job
       - release-to-public:
           context:
             - gcp-astronomer-prod
