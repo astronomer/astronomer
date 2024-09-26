@@ -108,14 +108,14 @@ jobs:
 
   release_bom:
     docker:
-      - image: cimg/python:3.11
+      - image: cimg/python:3.12
     steps:
       - run:
           name: Install dependencies
           command: |
             python -m venv venv
             source venv/bin/activate
-            pip install git@{GITHUB_TOKEN}:astronomer/astronomer-bom-generator.git
+            pip install git+https://${GITHUB_TOKEN}@github.com/astronomer/astronomer-bom-generator.git
       - run:
           name: Run Release BOM Script
           command: |
