@@ -26,13 +26,15 @@ class TestDagOnlyDeploy:
             "requests": {"memory": "888Mi", "cpu": "666m"},
             "limits": {"memory": "999Mi", "cpu": "777m"},
         }
+        images = "someregistry.io/my-custom-image:my-custom-tag"
         docs = render_chart(
             kube_version=kube_version,
             values={
                 "global": {
                     "dagOnlyDeployment": {
                         "enabled": True,
-                        "image": "someregistry.io/my-custom-image:my-custom-tag",
+                        "repository": images.split(":")[0],
+                        "tag": images.split(":")[1],
                         "securityContext": {"fsGroup": 55555},
                         "resources": resources,
                     }
