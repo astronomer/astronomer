@@ -50,8 +50,11 @@ global:
   acme: false
 
   # Flag for keeping existing roles and bindings i.e. upon helm upgrade existing roles would not be updated
-  keepExistingRolesAndBindings: false 
-  
+  keepExistingRolesAndBindings: false
+
+  # Flag to manage namespace labels and annotations
+  manageNamespaceResources: true
+
   # If RBAC on cluster is enabled
   rbacEnabled: true
 
