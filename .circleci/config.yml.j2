@@ -167,7 +167,7 @@ jobs:
 
   build-artifact:
     docker:
-      - image: quay.io/astronomer/ap-build:{{ ap_build_tag }}
+      - image: quay.io/astronomer/ci_helm_release:{{ ci_runner_version }}
     parameters:
       qa_release:
         type: boolean
