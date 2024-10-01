@@ -6,12 +6,18 @@ kind: ClusterRole
 apiVersion: {{ template "apiVersion.rbac" . }}
 metadata:
   name: {{ template "fluentd.fullname" . }}
+  {{- if not $.Values.global.disableManageClusterScopedResources }}
+  annotations:
+  {{- if not $.Values.global.features.namespacePools.namespaces.create }}
+    helm.sh/resource-policy: keep
+  {{- end }}
   labels:
     tier: logging
     component: {{ template "fluentd.name" . }}
     chart: {{ template "fluentd.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+  {{- end }}
 rules:
 - apiGroups:
   - ""

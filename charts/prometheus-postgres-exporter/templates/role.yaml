@@ -4,6 +4,10 @@ kind: Role
 metadata:
   name: {{ template "prometheus-postgres-exporter.fullname" . }}
   {{- if not $.Values.global.disableManageClusterScopedResources }}
+  annotations:
+  {{- if not $.Values.global.features.namespacePools.namespaces.create }}
+    helm.sh/resource-policy: keep
+  {{- end }}
   labels:
     app: {{ template "prometheus-postgres-exporter.name" . }}
     chart: {{ template "prometheus-postgres-exporter.chart" . }}
