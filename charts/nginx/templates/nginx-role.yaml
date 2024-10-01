@@ -7,11 +7,13 @@ kind: {{ if $singleNamespace }}Role{{ else }}ClusterRole{{ end }}
 apiVersion: {{ template "apiVersion.rbac" . }}
 metadata:
   name: {{ template "nginx.fullname" . }}
+  {{- if not $.Values.global.disableManageClusterScopedResources }}
   labels:
     tier: {{ template "nginx.name" . }}
     chart: {{ template "nginx.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+  {{- end }}
 rules:
   - apiGroups:
       - ""

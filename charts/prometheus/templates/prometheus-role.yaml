@@ -7,12 +7,14 @@ kind: {{ if $singleNamespace }}Role{{ else }}ClusterRole{{ end }}
 apiVersion: {{ template "apiVersion.rbac" . }}
 metadata:
   name: {{ template "prometheus.fullname" . }}
+  {{- if not $.Values.global.disableManageClusterScopedResources }}
   labels:
     tier: monitoring
     component: {{ template "prometheus.name" . }}
     chart: {{ template "prometheus.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+  {{- end }}
 rules:
   - apiGroups:
       - ""

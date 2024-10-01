@@ -6,11 +6,13 @@ kind: Role
 apiVersion: {{ template "apiVersion.rbac" . }}
 metadata:
   name: {{ template "grafana.fullname" . }}-bootstrapper
+  {{- if not $.Values.global.disableManageClusterScopedResources }}
   labels:
     tier: grafana
     chart: {{ template "grafana.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+  {{- end }}
 rules:
   - apiGroups:
       - ""

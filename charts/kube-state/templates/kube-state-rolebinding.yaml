@@ -21,12 +21,14 @@ metadata:
   {{- if not $useClusterRoles }}
   namespace: {{ $namespaceName }}
   {{- end }}
+  {{- if not $.Values.global.disableManageClusterScopedResources }}
   labels:
     tier: monitoring
     component: {{ $.Chart.Name }}
     chart: {{ $.Chart.Name }}-{{ $.Chart.Version }}
     release: {{ $.Release.Name }}
     heritage: {{ $.Release.Service }}
+  {{- end }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: {{ if $useClusterRoles }}ClusterRole{{ else }}Role{{ end }}

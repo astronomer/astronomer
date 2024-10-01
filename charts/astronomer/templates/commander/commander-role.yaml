@@ -5,16 +5,9 @@
 # 1. Do not create any resource if rbacEnabled is disabled
 # 2. Create a Cluster Role if clusterRoles and rbacEnabled are enabled and namespacePools is disabled
 # 3. Create roles for each namespace in the namespacePool (+ astronomer namespace) if enabled.
-# 4. If keepExistingRolesAndBindings is set to true, we skip creating roles and bindings if they already exist.
-# 5. manageNamespaceResources, if false, disables management of namespace resources (roles, rolebindings, etc.)
 {{- $useClusterRoles := and .Values.global.rbacEnabled .Values.global.clusterRoles (not .Values.global.features.namespacePools.enabled) }}
 {{- $shouldCreateResources := and .Values.global.rbacEnabled (or .Values.global.clusterRoles .Values.global.features.namespacePools.enabled) }}
 {{- $namespaces := .Values.global.features.namespacePools.namespaces.names }}
-
-# Logic for keepExistingRolesAndBindings and manageNamespaceResources
-{{- if not .Values.global.keepExistingRolesAndBindings }}
-  {{- $shouldCreateResources = and $shouldCreateResources .Values.global.manageNamespaceResources }}
-{{- end }}
 
 {{- if $useClusterRoles }}
   {{- $namespaces = list .Release.Namespace}}
@@ -32,14 +25,19 @@ metadata:
   namespace: {{ $namespaceName }}
   {{- end }}
   name: {{ $.Release.Name }}-commander
+  {{- if not $.Values.global.disableManageClusterScopedResources }}
   labels:
     tier: houston
     release: {{ $.Release.Name }}
     chart: "{{ $.Chart.Name }}-{{ $.Chart.Version }}"
     heritage: {{ $.Release.Service }}
-  {{- if $.Values.global.enableArgoCDAnnotation }}
   annotations:
+  {{- if not $.Values.global.features.namespacePools.namespaces.create }}
+    helm.sh/resource-policy: keep
+  {{- end }}
+  {{- if $.Values.global.enableArgoCDAnnotation }}
     argocd.argoproj.io/sync-wave: "-1"
+  {{- end }}
   {{- end }}
 rules:
 - apiGroups: [""]
@@ -183,14 +181,19 @@ kind: ClusterRole
 apiVersion: {{ template "apiVersion.rbac" . }}
 metadata:
   name: {{ $.Release.Name }}-commander
+  {{- if not $.Values.global.disableManageClusterScopedResources }}
   labels:
     tier: houston
     release: {{ $.Release.Name }}
     chart: "{{ $.Chart.Name }}-{{ $.Chart.Version }}"
     heritage: {{ $.Release.Service }}
-  {{- if $.Values.global.enableArgoCDAnnotation }}
   annotations:
+    {{- if not $.Values.global.features.namespacePools.namespaces.create }}
+    helm.sh/resource-policy: keep
+    {{- end }}
+    {{- if $.Values.global.enableArgoCDAnnotation }}
     argocd.argoproj.io/sync-wave: "-1"
+    {{- end }}
   {{- end }}
 rules:
 - apiGroups: ["security.openshift.io"]

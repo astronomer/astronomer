@@ -6,14 +6,19 @@ kind: Role
 apiVersion: {{ template "apiVersion.rbac" . }}
 metadata:
   name: {{ .Release.Name }}-houston-bootstrapper
+  {{- if not $.Values.global.disableManageClusterScopedResources }}
   labels:
     tier: houston
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
-  {{ if .Values.global.enableArgoCDAnnotation }}
   annotations:
+  {{- if not $.Values.global.features.namespacePools.namespaces.create }}
+    helm.sh/resource-policy: keep
+  {{- end }}
+  {{ if .Values.global.enableArgoCDAnnotation }}
     argocd.argoproj.io/sync-wave: "-1"
+  {{- end }}
   {{- end }}
 rules:
   - apiGroups:

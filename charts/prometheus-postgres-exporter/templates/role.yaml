@@ -3,9 +3,11 @@ apiVersion: {{ template "apiVersion.rbac" . }}
 kind: Role
 metadata:
   name: {{ template "prometheus-postgres-exporter.fullname" . }}
+  {{- if not $.Values.global.disableManageClusterScopedResources }}
   labels:
     app: {{ template "prometheus-postgres-exporter.name" . }}
     chart: {{ template "prometheus-postgres-exporter.chart" . }}
     heritage: {{ .Release.Service }}
     release: {{ .Release.Name }}
+  {{- end }}
 {{- end }}

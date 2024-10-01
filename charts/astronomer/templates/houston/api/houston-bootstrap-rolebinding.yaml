@@ -6,15 +6,17 @@ kind: RoleBinding
 apiVersion: {{ template "apiVersion.rbac" . }}
 metadata:
   name: {{ .Release.Name }}-houston-bootstrapper
+  {{- if not $.Values.global.disableManageClusterScopedResources }}
   labels:
     tier: houston
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
-  {{ if .Values.global.enableArgoCDAnnotation }}
   annotations:
+  {{ if .Values.global.enableArgoCDAnnotation }}
     argocd.argoproj.io/sync-wave: "-1"
   {{- end }}
+  {{- end}}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
