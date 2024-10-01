@@ -28,6 +28,12 @@ securityContext: {}  # pod level securityContext
   # runAsNonRoot: true
   # runAsUser: 1000
 
+serviceAccount:
+     # Specifies whether a service account should be created
+     create: true
+     # Annotations to add to the service account
+     annotations: {}
+
 resources: {} # default for all containers, can be overridden by container.resources
 
 extraVolumes: []

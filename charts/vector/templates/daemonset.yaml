@@ -35,11 +35,11 @@ spec:
       tolerations: {{ toYaml (.Values.tolerations) | nindent 8 }}
       serviceAccountName: {{ template "vector.fullname" . }}
       {{- include "vector.imagePullSecrets" . | nindent 6 }}
-      securityContext: {{ toYaml .Values.pod.securityContext | nindent 8 }}
+      securityContext: {{ toYaml .Values.securityContext | nindent 8 }}
       containers:
       - name: vector
         image: {{ template "vector.image" . }}
-        securityContext: {{ toYaml .Values.container.securityContext | nindent 10 }}
+        securityContext: {{ toYaml .Values.vector.securityContext | nindent 10 }}
         {{- if .Values.global.istioEnabled }}
         command:
           - "/bin/bash"
@@ -47,42 +47,13 @@ spec:
         args:
           - "ruby /wait-for-istio-proxy.rb && /usr/local/bin/vector ${FLUENTD_ARGS}"
         {{- end }}
-        livenessProbe:
-          exec:
-            command:
-            - /bin/bash
-            - -c
-            - if (( $(ruby -e "require 'net/http';require 'uri';uri = URI.parse('http://127.0.0.1:{{ .Values.ports.promScrape }}/metrics');response
-              = Net::HTTP.get_response(uri);puts response.body" | grep 'vector_output_status_buffer_queue_length{'
-              | awk '{ print ($NF > {{ .Values.livenessProbeConfig.bufferSizeUnhealthy }}) }') )); then exit 1; fi; exit 0
-          failureThreshold: {{ .Values.livenessProbeConfig.failureThreshold }}
-          initialDelaySeconds: {{ .Values.livenessProbeConfig.initialDelaySeconds }}
-          periodSeconds: {{ .Values.livenessProbeConfig.periodSeconds }}
-          successThreshold: {{ .Values.livenessProbeConfig.successThreshold }}
-          timeoutSeconds: {{ .Values.livenessProbeConfig.timeoutSeconds }}
-        imagePullPolicy: {{ .Values.images.vector.pullPolicy }}
+        livenessProbe: {{ toYaml .Values.vector.livenessProbe | nindent 12 }}
+        imagePullPolicy: {{ .Values.vector.image.pullPolicy }}
         env:
         - name: K8S_NODE_NAME
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
-        - name: FLUENTD_ARGS
-          value: --no-supervisor -q
-        {{- if .Values.global.customLogging.enabled }}
-        - name: OUTPUT_HOST
-          value: {{ printf "%s-external-es-proxy" .Release.Name | quote }}
-        - name: OUTPUT_PORT
-          value: "9201"
-        {{- else }}
-        - name: OUTPUT_HOST
-          value: {{ template "elasticsearch.host" . }}
-        - name: OUTPUT_PORT
-          value: {{ .Values.elasticsearch.port | quote }}
-        {{- end }}
-        - name: OUTPUT_BUFFER_CHUNK_LIMIT
-          value: {{ .Values.elasticsearch.buffer_chunk_limit | quote }}
-        - name: OUTPUT_BUFFER_QUEUE_LIMIT
-          value: {{ .Values.elasticsearch.buffer_queue_limit | quote }}
         - name: NAMESPACE
           value: {{ .Release.Namespace | quote }}
         - name: RELEASE
@@ -110,9 +81,6 @@ spec:
           mountPath: /host
           readOnly: true
         resources: {{ toYaml .Values.resources | nindent 12 }}
-        ports:
-          - name: monitor-agent
-            containerPort: {{ .Values.ports.promScrape }}
       terminationGracePeriodSeconds: 30
       volumes:
       {{- if .Values.additionalVolumes }}

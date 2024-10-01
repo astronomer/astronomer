@@ -60,3 +60,21 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{/*
+Return the proper Docker Image Registry Secret Names
+*/}}
+{{- define "vector.imagePullSecrets" -}}
+{{- if and .Values.global.privateRegistry.enabled .Values.global.privateRegistry.secretName }}
+imagePullSecrets:
+  - name: {{ .Values.global.privateRegistry.secretName }}
+{{- end -}}
+{{- end -}}
+
+{{ define "vector.image" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/vector:{{ .Values.vector.image.tag }}
+{{- else -}}
+{{ .Values.vector.image.repository }}:{{ .Values.vector.image.tag }}
+{{- end }}
+{{- end }}
