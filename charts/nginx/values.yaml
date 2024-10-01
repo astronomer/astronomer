@@ -28,6 +28,8 @@ replicasDefaultBackend: 2
 maxUnavailable: 25%
 maxUnavailableDefaultBackend: 25%
 
+minReadySeconds: 0
+
 resources: {}
 #  limits:
 #   cpu: 100m
