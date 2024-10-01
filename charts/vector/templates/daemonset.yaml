@@ -1,7 +1,7 @@
 ###########################################################################
 # Vector DaemonSet
 ###########################################################################
-apiVersion: v1
+apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: {{ include "vector.fullname" . }}
