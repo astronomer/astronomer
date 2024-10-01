@@ -169,7 +169,7 @@ jobs:
 
   build-artifact:
     docker:
-      - image: quay.io/astronomer/ci_helm_release:2024-09
+      - image: quay.io/astronomer/ci-helm-release:2024-09
     parameters:
       qa_release:
         type: boolean
