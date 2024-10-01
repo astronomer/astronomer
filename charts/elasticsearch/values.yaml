@@ -22,11 +22,11 @@ images:
     pullPolicy: IfNotPresent
   exporter:
     repository: quay.io/astronomer/ap-elasticsearch-exporter
-    tag: 1.7.0
+    tag: 1.8.0
     pullPolicy: IfNotPresent
   nginx:
     repository: quay.io/astronomer/ap-nginx-es
-    tag: 1.27.0
+    tag: 1.27.1
     pullPolicy: IfNotPresent
 
 common:
