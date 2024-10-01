@@ -355,11 +355,7 @@ class TestFluentd:
         """Test that with disable_manage_cluster_scoped_resources, helm renders fluentd configmap targeting all namespaces."""
         doc = render_chart(
             kube_version=kube_version,
-            values={
-                "global": {
-                    "disableManageClusterScopedResources": True
-                }
-            },
+            values={"global": {"disableManageClusterScopedResources": True}},
             show_only=["charts/fluentd/templates/fluentd-configmap.yaml"],
         )[0]
 
