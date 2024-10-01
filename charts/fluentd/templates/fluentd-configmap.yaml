@@ -104,7 +104,7 @@ data:
         {{- if and .Values.global.features.namespacePools.enabled (gt (len .Values.global.features.namespacePools.namespaces.names) 0) }}
         key $.kubernetes.namespace_name
         pattern ^({{ join "|" .Values.global.features.namespacePools.namespaces.names }})$
-        {{- else if .Values.global.manualNamespaceNamesEnabled }}
+        {{- else if or .Values.global.manualNamespaceNamesEnabled .Values.global.disableManageClusterScopedResources }}
         key $.kubernetes.namespace_name
         # fluentd should gather logs from all namespaces if manualNamespaceNamesEnabled is enabled
         pattern "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
