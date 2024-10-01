@@ -13,6 +13,7 @@ metadata:
     heritage: {{ .Release.Service }}
 spec:
   replicas: {{ .Values.replicas }}
+  minReadySeconds: {{ .Values.minReadySeconds }}
   selector:
     matchLabels:
       tier: {{ template "nginx.name" . }}
