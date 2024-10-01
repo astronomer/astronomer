@@ -225,7 +225,7 @@ s3:
 - name: HOUSTON__HOST
   value: {{ .Release.Name }}-houston
 - name: REGISTRY_WAIT_ENABLED
-  value: 1
+  value: "true"
 - name: COMMANDER__HOST
   value: {{ .Release.Name }}-commander
 - name: COMMANDER__PORT
