@@ -1,5 +1,6 @@
 from tests.chart_tests.helm_template_generator import render_chart
 import pytest
+from tests import get_containers_by_name
 
 
 class TestNginx:
