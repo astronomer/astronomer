@@ -25,17 +25,18 @@ class TestNatsJetstream:
             ],
         )
 
-        assert len(docs) == 7
+        assert len(docs) == 3
         prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
         assert prod["nats"] == {"jetStreamEnabled": True, "tlsEnabled": False}
         nats_cm = docs[2]["data"]["nats.conf"]
         assert "jetstream" in nats_cm
-        assert {"runAsUser": 1000, "runAsNonRoot": True} == docs[6]["spec"]["template"]["spec"]["containers"][0]["securityContext"]
+        assert {"runAsUser": 1000, "runAsNonRoot": True} == docs[1]["spec"]["template"]["spec"]["containers"][0]["securityContext"]
 
     def test_nats_statefulset_with_jetstream_and_tls(self, kube_version):
         """Test Nats with jetstream config."""
         values = {
             "global": {"nats": {"jetStream": {"enabled": True, "tls": True}}},
+            "nats": {"nats": {"createJetStreamJob": True}},
         }
         docs = render_chart(
             kube_version=kube_version,
@@ -123,6 +124,7 @@ class TestNatsJetstream:
         """Test that stan statefulset is disabled when jetstream is enabled."""
         values = {
             "global": {"nats": {"jetStream": {"enabled": True}}},
+            "nats": {"nats": {"createJetStreamJob": True}},
         }
         docs = render_chart(
             kube_version=kube_version,
@@ -141,6 +143,7 @@ class TestNatsJetstream:
         """Test that stan statefulset is disabled when jetstream is enabled."""
         values = {
             "global": {"nats": {"jetStream": {"enabled": False}}},
+            "nats": {"nats": {"createJetStreamJob": True}},
         }
         docs = render_chart(
             kube_version=kube_version,
