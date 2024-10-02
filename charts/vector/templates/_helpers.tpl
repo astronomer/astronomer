@@ -73,7 +73,7 @@ imagePullSecrets:
 
 {{ define "vector.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/vector:{{ .Values.vector.image.tag }}
+{{ .Values.global.privateRegistry.repository }}/ap-vector:{{ .Values.vector.image.tag }}
 {{- else -}}
 {{ .Values.vector.image.repository }}:{{ .Values.vector.image.tag }}
 {{- end }}

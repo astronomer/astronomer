@@ -8,7 +8,7 @@ vector:
   securityContext: {}
   image:
     repository: quay.io/astronomer/ap-vector
-    tag: v0.40.2-1
+    tag: 0.40.2-1
     pullPolicy: IfNotPresent
   resources: {}  # TODO: fill this out
   livenessProbe: {}

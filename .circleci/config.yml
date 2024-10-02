@@ -379,7 +379,6 @@ workflows:
                 - quay.io/astronomer/ap-prometheus:2.53.1
                 - quay.io/astronomer/ap-registry:3.18.9
                 - quay.io/astronomer/ap-vector:0.40.2-1
-                - quay.io/astronomer/ap-vector:v0.40.2-1
           context:
             - slack_team-software-infra-bot
       - twistcli-scan-docker:
@@ -419,7 +418,6 @@ workflows:
                 - quay.io/astronomer/ap-prometheus:2.53.1
                 - quay.io/astronomer/ap-registry:3.18.9
                 - quay.io/astronomer/ap-vector:0.40.2-1
-                - quay.io/astronomer/ap-vector:v0.40.2-1
           context:
             - twistcli
 
