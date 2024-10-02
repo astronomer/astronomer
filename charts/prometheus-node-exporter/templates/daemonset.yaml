@@ -24,9 +24,7 @@ spec:
 {{- if .Values.priorityClassName }}
       priorityClassName:  {{ .Values.priorityClassName  }}
 {{ end }}
-{{- if and .Values.rbac.create .Values.serviceAccount.create }}
       serviceAccountName: {{ template "prometheus-node-exporter.serviceAccountName" . }}
-{{- end }}
 {{- if eq .Values.global.openshiftEnabled false }}
       securityContext: {{ toYaml .Values.podSecurityContext| nindent 8 }}
 {{- end }}

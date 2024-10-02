@@ -15,6 +15,14 @@ We truncate at 44 chars (63 - len("-headless-discovery")) because some Kubernete
 {{- printf "%s-%s" .Release.Name $name | trunc 44 | trimSuffix "-" -}}
 {{- end -}}
 
+{{ define "elasticsearch.serviceAccount" -}}
+{{- if and .Values.common.serviceAccount.create .Values.global.rbacEnabled -}}
+{{ default (printf "%s" (include "elasticsearch.fullname" . )) .Values.common.serviceAccount.name }}
+{{- else -}}
+    {{ default "default" .Values.common.serviceAccount.name }}
+{{- end }}
+{{- end }}
+
 {{/*
 Create chart name and version as used by the chart label.
 */}}
