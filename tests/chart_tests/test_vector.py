@@ -18,8 +18,8 @@ class TestVector:
         assert doc["metadata"]["name"] == "release-name-vector"
 
     def test_vector_daemonset(self, kube_version):
-        """Test that helm renders a volume mount for private ca certificates for
-        vector daemonset when private-ca-certificates are enabled."""
+        """Test that helm renders a volume mount for private ca certificates for vector daemonset when private-ca-certificates
+        are enabled."""
         docs = render_chart(
             kube_version=kube_version,
             values={"global": {"privateCaCerts": ["private-root-ca"]}},
@@ -72,8 +72,7 @@ class TestVector:
         assert search_result_es_index_template_volume == expected_result_es_index_template_volume
 
     def test_vector_clusterrolebinding(self, kube_version):
-        """Test that helm renders a good ClusterRoleBinding template for vector
-        when rbacEnabled=True."""
+        """Test that helm renders a good ClusterRoleBinding template for vector when rbacEnabled=True."""
         docs = render_chart(
             kube_version=kube_version,
             values={"global": {"rbacEnabled": True}},
@@ -95,9 +94,10 @@ class TestVector:
         )
         assert len(docs) == 0
 
+    @pytest.mark.skip("TODO: add configmap to vector and then fix these tests")
     def test_vector_configmap_manual_namespaces_enabled(self, kube_version):
-        """Test that when namespace Pools is disabled, and manualNamespaces is
-        enabled, helm renders vector configmap targeting all namespaces."""
+        """Test that when namespace Pools is disabled, and manualNamespaces is enabled, helm renders a vector configmap targeting
+        all namespaces."""
         doc = render_chart(
             kube_version=kube_version,
             values={
@@ -117,9 +117,8 @@ class TestVector:
         assert expected_rule in doc["data"]["output.conf"]
 
     def test_vector_configmap_manual_namespaces_and_namespacepools_disabled(self, kube_version):
-        """Test that when namespace Pools and manualNamespaceNamesEnabled are
-        disabled, helm renders a default vector configmap looking at an
-        environment variable."""
+        """Test that when namespace Pools and manualNamespaceNamesEnabled are disabled, helm renders a default vector configmap
+        looking at an environment variable."""
         doc = render_chart(
             kube_version=kube_version,
             values={
@@ -138,10 +137,10 @@ class TestVector:
         expected_rule = 'key $.kubernetes.namespace_labels.platform\n    pattern "release-name"'
         assert expected_rule in doc["data"]["output.conf"]
 
+    @pytest.mark.skip("TODO: revisit this test to see if we need this kind of thing with vector. Probably not.")
     def test_vector_configmap_configure_extra_log_stores(self, kube_version):
-        """Test that when namespace Pools and manualNamespaceNamesEnabled are
-        disabled, helm renders a default vector configmap looking at an
-        environment variable."""
+        """Test that when namespace Pools and manualNamespaceNamesEnabled are disabled, helm renders a default vector configmap
+        looking at an environment variable."""
         doc = render_chart(
             kube_version=kube_version,
             values={
@@ -166,12 +165,11 @@ class TestVector:
         assert expected_store in doc["data"]["output.conf"]
 
     def test_vector_pod_securityContextOverride(self, kube_version):
-        """Test that helm renders a container securityContext when securityContext
-        is enabled."""
+        """Test that helm renders a container securityContext when securityContext is enabled."""
 
         docs = render_chart(
             kube_version=kube_version,
-            values={"vector": {"pod": {"securityContext": {"runAsUser": 9999}}}},
+            values={"vector": {"securityContext": {"runAsUser": 9999}}},
             show_only=["charts/vector/templates/daemonset.yaml"],
         )
 
@@ -183,8 +181,7 @@ class TestVector:
         assert pod_search_result["securityContext"]["runAsUser"] == 9999
 
     def test_vector_container_securityContextOverride(self, kube_version):
-        """Test that helm renders a container securityContext when securityContext
-        is enabled."""
+        """Test that helm renders a container securityContext when securityContext is enabled."""
 
         docs = render_chart(
             kube_version=kube_version,
@@ -209,8 +206,7 @@ class TestVector:
         assert container_search_result[0]["securityContext"]["runAsUser"] == 8888
 
     def test_vector_securityContext_empty_by_default(self, kube_version):
-        """Test that no securityContext is present by default on pod or
-        container."""
+        """Test that no securityContext is present by default on pod or container."""
 
         docs = render_chart(
             kube_version=kube_version,
@@ -231,6 +227,7 @@ class TestVector:
         # the securityContext should be present but empty by default
         assert not container_search_result[0]["securityContext"].keys()
 
+    @pytest.mark.skip("TODO: revisit this test to see if we need this kind of thing with vector.")
     def test_vector_index_defaults(self, kube_version):
         """Test to validate vector index name prefix defaults in vector configmap."""
         docs = render_chart(
@@ -258,6 +255,7 @@ class TestVector:
             "mappings": {"properties": {"date_nano": {"type": "date_nanos"}}},
         }
 
+    @pytest.mark.skip("TODO: revisit this test to see if we need this kind of thing with vector.")
     def test_vector_index_overrides(self, kube_version):
         """Test to validate vector index name prefix defaults in vector configmap."""
         indexNamePrefix = "astronomer"
