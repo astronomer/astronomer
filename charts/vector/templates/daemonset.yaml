@@ -80,7 +80,7 @@ spec:
         - name: {{ template "vector.fullname" . }}-index-template-volume
           mountPath: /host
           readOnly: true
-        resources: {{ toYaml .Values.resources | nindent 12 }}
+        resources: {{ toYaml .Values.vector.resources | nindent 12 }}
       terminationGracePeriodSeconds: 30
       volumes:
       {{- if .Values.additionalVolumes }}

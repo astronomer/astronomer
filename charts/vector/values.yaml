@@ -10,7 +10,7 @@ vector:
     repository: quay.io/astronomer/ap-vector
     tag: 0.40.2-1
     pullPolicy: IfNotPresent
-  resources: {}  # TODO: fill this out
+  resources: {}
   livenessProbe: {}
   readinessProbe: {}
   securityContext: {}
@@ -33,8 +33,6 @@ serviceAccount:
      create: true
      # Annotations to add to the service account
      annotations: {}
-
-resources: {} # default for all containers, can be overridden by container.resources
 
 extraVolumes: []
 extraVolumeMounts: []
