@@ -1,3 +1,139 @@
 ###########################################################################
 # Vector ConfigMap
 ###########################################################################
+{{- if (eq .Values.global.logging.collector "vector") }}
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: {{ include "vector.fullname" . }}
+  labels:
+    tier: logging
+    component: {{ template "vector.name" . }}
+    chart: {{ template "vector.chart" . }}
+    heritage: {{ .Release.Service }}
+    release: {{ .Release.Name }}
+
+data:
+  vector-config.yaml: |
+    log_schema:
+      timestamp_key : "@timestamp"
+    data_dir: "${SIDECAR_LOGS}"
+    sources:
+      airflow_log_files:
+        type: file
+        include:
+          - "${SIDECAR_LOGS}/*.log"
+        read_from: beginning
+    transforms:
+      transform_airflow_logs:
+        type: remap
+        inputs:
+          - airflow_log_files
+        source: |
+          .component = "${COMPONENT:--}"
+          .workspace = "${WORKSPACE:--}"
+          .release = "${RELEASE:--}"
+          .date_nano = parse_timestamp!(.@timestamp, format: "%Y-%m-%dT%H:%M:%S.%f%Z")
+
+      filter_common_logs:
+        type: filter
+        inputs:
+          - transform_airflow_logs
+        condition:
+          type: "vrl"
+          source: '!includes(["worker","scheduler"], .component)'
+
+      filter_scheduler_logs:
+        type: filter
+        inputs:
+          - transform_airflow_logs
+        condition:
+          type: "vrl"
+          source: 'includes(["scheduler"], .component)'
+
+      filter_worker_logs:
+        type: filter
+        inputs:
+          - transform_airflow_logs
+        condition:
+          type: "vrl"
+          source: 'includes(["worker"], .component)'
+
+      filter_gitsyncrelay_logs:
+        type: filter
+        inputs:
+          - transform_airflow_logs
+        condition:
+          type: "vrl"
+          source: 'includes(["git-sync-relay"], .component)'
+
+      filter_dagserver_logs:
+        type: filter
+        inputs:
+          - transform_airflow_logs
+        condition:
+          type: "vrl"
+          source: 'includes(["dag-server"], .component)'
+
+      filter_airflow_downgrade_logs:
+        type: filter
+        inputs:
+          - transform_airflow_logs
+        condition:
+          type: "vrl"
+          source: 'includes(["airflow-downgrade"], .component)'
+
+      transform_task_log:
+        type: remap
+        inputs:
+          - filter_worker_logs
+          - filter_scheduler_logs
+        source: |-
+          . = parse_json(.message) ?? .
+          .@timestamp = parse_timestamp(.timestamp, "%Y-%m-%dT%H:%M:%S%Z") ?? now()
+          .check_log_id = exists(.log_id)
+          if .check_log_id != true {
+          .log_id = join!([to_string!(.dag_id), to_string!(.task_id), to_string!(.execution_date), to_string!(.try_number)], "_")
+          }
+          .offset = to_int(now()) * 1000000000 + to_unix_timestamp(now()) * 1000000
+
+      final_task_log:
+        type: remap
+        inputs:
+          - transform_task_log
+        source: |
+          .component = "${COMPONENT:--}"
+          .workspace = "${WORKSPACE:--}"
+          .release = "${RELEASE:--}"
+          .date_nano = parse_timestamp!(.@timestamp, format: "%Y-%m-%dT%H:%M:%S.%f%Z")
+
+      transform_remove_fields:
+        type: remap
+        inputs:
+          - final_task_log
+          - filter_common_logs
+          - filter_gitsyncrelay_logs
+          - filter_dagserver_logs
+          - filter_airflow_downgrade_logs
+        source: |
+          del(.host)
+          del(.file)
+
+    sinks:
+      out:
+        type: elasticsearch
+        inputs:
+          - transform_remove_fields
+        mode: bulk
+        compression: none
+      {{- if .Values.airflow.elasticsearch.enabled  }}
+        endpoint: "http://{{ .Values.airflow.elasticsearch.connection.host }}:{{ .Values.airflow.elasticsearch.connection.port }}"
+        auth:
+          strategy: "basic"
+          user: {{ .Values.airflow.elasticsearch.connection.user }}
+          password : {{ .Values.airflow.elasticsearch.connection.pass }}
+      {{- end }}
+        bulk:
+          index: "{{ .Values.loggingSidecar.indexNamePrefix }}.${RELEASE:--}.{{ .Values.loggingSidecar.indexPattern }}"
+          action: create
+{{- end -}}
