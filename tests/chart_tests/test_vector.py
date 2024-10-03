@@ -3,6 +3,9 @@ import pytest
 from tests import supported_k8s_versions, get_containers_by_name
 import jmespath
 import yaml
+from pathlib import Path
+
+all_templates = list(Path("charts/vector/templates").glob("*.yaml"))
 
 
 @pytest.mark.parametrize(
@@ -21,14 +24,21 @@ class TestVector:
         """Test that vector behaves as expected with default values."""
         docs = render_chart(
             kube_version=kube_version,
-            show_only=[
-                "charts/vector/templates/vector-clusterrolebinding.yaml",
-                "charts/vector/templates/vector-configmap.yaml",
-                "charts/vector/templates/vector-daemonset.yaml",
-                "charts/vector/templates/vector-serviceaccount.yaml",
-            ],
+            show_only=all_templates,
         )
         assert len(docs) == 0
+
+    def test_vector_defaults_when_enabled(self, kube_version):
+        """Test that vector behaves as expected with default values when it is enabled."""
+        values = {"global": {"logging": {"collector": "vector"}}}
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=all_templates,
+        )
+        assert len(docs) == 6
+        assert all(doc.get("apiVersion") for doc in docs)
+        assert all(doc.get("kind") for doc in docs)
 
     @pytest.mark.skip("TODO: revisit this.")
     def test_vector_daemonset_private_ca_certificates(self, kube_version):
