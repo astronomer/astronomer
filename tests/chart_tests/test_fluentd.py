@@ -17,9 +17,8 @@ class TestFluentd:
         assert doc["kind"] == "DaemonSet"
         assert doc["metadata"]["name"] == "release-name-fluentd"
 
-    def test_fluentd_daemonset(self, kube_version):
-        """Test that helm renders a volume mount for private ca certificates for
-        fluentd daemonset when private-ca-certificates are enabled."""
+    def test_fluentd_daemonset_private_ca_certificates(self, kube_version):
+        """Test that helm renders a volume mount for private ca certificates for fluentd daemonset when private-ca-certificates are enabled."""
         docs = render_chart(
             kube_version=kube_version,
             values={"global": {"privateCaCerts": ["private-root-ca"]}},
