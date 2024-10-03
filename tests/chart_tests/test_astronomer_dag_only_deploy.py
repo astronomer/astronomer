@@ -30,10 +30,9 @@ class TestDagOnlyDeploy:
 
         prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
         assert prod["deployments"]["dagOnlyDeployment"] is True
-        assert prod["deployments"]["dagDeploy"]["enabled"] == True
+        assert prod["deployments"]["dagDeploy"]["enabled"] is True
         assert "serviceAccount" in prod["deployments"]["dagDeploy"]
-        print(prod["deployments"]["dagDeploy"]["serviceAccount"])
-        # assert {"create": True} in prod["deployments"]["dagDeploy"]["serviceAccount"]
+        assert {"create": True} == prod["deployments"]["dagDeploy"]["serviceAccount"]
 
     def test_dagonlydeploy_config_enabled(self, kube_version):
         """Test dagonlydeploy Service defaults."""
