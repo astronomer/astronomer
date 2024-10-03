@@ -17,12 +17,14 @@ data:
   vector-config.yaml: |
     log_schema:
       timestamp_key : "@timestamp"
-    data_dir: "${SIDECAR_LOGS}"
+    # TODO: revisit this data_dir and see if we can use something better. Sharing a dir with the bare metal machine will allow us to
+    #       persist the checkpoint between pod restarts so we don't have to re-read the logs from the beginning.
+    data_dir: "/tmp"
     sources:
       airflow_log_files:
         type: file
         include:
-          - "${SIDECAR_LOGS}/*.log"
+          - "/var/log/containers/*.log"
         read_from: beginning
     transforms:
       transform_airflow_logs:
@@ -120,20 +122,11 @@ data:
           del(.file)
 
     sinks:
-      out:
-        type: elasticsearch
+      # TODO: remove this debug "print" sink
+      print:
+        encoding:
+          codec: json
         inputs:
-          - transform_remove_fields
-        mode: bulk
-        compression: none
-      {{- if .Values.airflow.elasticsearch.enabled  }}
-        endpoint: "http://{{ .Values.airflow.elasticsearch.connection.host }}:{{ .Values.airflow.elasticsearch.connection.port }}"
-        auth:
-          strategy: "basic"
-          user: {{ .Values.airflow.elasticsearch.connection.user }}
-          password : {{ .Values.airflow.elasticsearch.connection.pass }}
-      {{- end }}
-        bulk:
-          index: "{{ .Values.loggingSidecar.indexNamePrefix }}.${RELEASE:--}.{{ .Values.loggingSidecar.indexPattern }}"
-          action: create
+          - transform_task_log
+        type: console
 {{- end -}}

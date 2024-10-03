@@ -10,10 +10,10 @@ vector:
     repository: quay.io/astronomer/ap-vector
     tag: 0.40.2-1
     pullPolicy: IfNotPresent
-  resources: {}
-  livenessProbe: {}
-  readinessProbe: {}
-  securityContext: {}
+  resources: ~
+  livenessProbe: ~
+  readinessProbe: ~
+  securityContext: ~
 
 imagePullSecrets: []
 
@@ -32,10 +32,14 @@ serviceAccount:
      # Specifies whether a service account should be created
      create: true
      # Annotations to add to the service account
-     annotations: {}
+     annotations: ~
 
 extraVolumes: []
 extraVolumeMounts: []
 extraContainers: []
 extraInitContainers: []
 extraEnv: []
+
+# TODO this is probably not right for vector. Verify it.
+ports:
+  promScrape: 24231

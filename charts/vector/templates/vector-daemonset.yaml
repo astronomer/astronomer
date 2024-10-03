@@ -41,7 +41,6 @@ spec:
       - name: vector
         image: {{ template "vector.image" . }}
         securityContext: {{ toYaml .Values.vector.securityContext | nindent 10 }}
-        livenessProbe: {{ toYaml .Values.vector.livenessProbe | nindent 12 }}
         imagePullPolicy: {{ .Values.vector.image.pullPolicy }}
         env:
         - name: VECTOR_CONFIG_YAML
@@ -64,14 +63,14 @@ spec:
         {{- toYaml .Values.additionalVolumeMounts | nindent 8 }}
         {{- end }}
         {{- include "custom_ca_volume_mounts" . | nindent 8 }}
+        - name: varlogcontainers
+          mountPath: /var/log/containers
+          readOnly: true
         - name: varlibdockercontainers
           mountPath: /var/lib/docker/containers
           readOnly: true
         - name: config-volume-{{ template "vector.fullname" . }}
           mountPath: /etc/vector/config
-          readOnly: true
-        - name: {{ template "vector.fullname" . }}-index-template-volume
-          mountPath: /host
           readOnly: true
         resources: {{ toYaml .Values.vector.resources | nindent 12 }}
       terminationGracePeriodSeconds: 30
@@ -80,13 +79,13 @@ spec:
       {{- toYaml .Values.additionalVolumes | nindent 6 }}
       {{- end }}
       {{- include "custom_ca_volumes" . | nindent 6 }}
+      - name: varlogcontainers
+        hostPath:
+          path: /var/log/containers
       - name: varlibdockercontainers
         hostPath:
           path: /var/lib/docker/containers
       - name: config-volume-{{ template "vector.fullname" . }}
         configMap:
           name: {{ template "vector.fullname" . }}
-      - name: {{ template "vector.fullname" . }}-index-template-volume
-        configMap:
-          name: {{ template "vector.fullname" . }}-index-template-configmap
 {{- end -}}
