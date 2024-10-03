@@ -127,15 +127,35 @@
 {{ default (printf "%s-registry-auth" .Release.Name) .Values.registry.auth.secretName }}
 {{- end }}
 
-{{ define "houston.bootstrapperServiceAccount" -}}
-{{ printf "%s-houston-bootstrapper" .Release.Name }}
+{{ define "registry.ServiceAccount" -}}
+{{- if and .Values.registry.serviceAccount.create .Values.global.rbacEnabled -}}
+{{ default (printf "%s-registry" .Release.Name ) .Values.registry.serviceAccount.name }}
+{{- else -}}
+    {{ default "default" .Values.registry.serviceAccount.name }}
+{{- end }}
 {{- end }}
 
-{{ define "registry.ServiceAccount" -}}
-{{- if .Values.registry.serviceAccount.name -}}
-{{ printf "%s-%s" .Release.Name .Values.registry.serviceAccount.name }}
+{{ define "houston.bootstrapperServiceAccount" -}}
+{{- if and .Values.houston.serviceAccount.create .Values.global.rbacEnabled -}}
+{{ default (printf "%s-houston-bootstrapper" .Release.Name ) .Values.houston.serviceAccount.name }}
 {{- else -}}
-{{ printf "%s-registry" .Release.Name }}
+    {{ default "default" .Values.houston.serviceAccount.name }}
+{{- end }}
+{{- end }}
+
+{{ define "configSyncer.ServiceAccount" -}}
+{{- if and .Values.configSyncer.serviceAccount.create .Values.global.rbacEnabled -}}
+{{ default (printf "%s-config-syncer" .Release.Name ) .Values.configSyncer.serviceAccount.name }}
+{{- else -}}
+    {{ default "default" .Values.commander.serviceAccount.name }}
+{{- end }}
+{{- end }}
+
+{{ define "commander.ServiceAccount" -}}
+{{- if and .Values.commander.serviceAccount.create .Values.global.rbacEnabled -}}
+{{ default (printf "%s-commander" .Release.Name ) .Values.commander.serviceAccount.name }}
+{{- else -}}
+    {{ default "default" .Values.commander.serviceAccount.name }}
 {{- end }}
 {{- end }}
 

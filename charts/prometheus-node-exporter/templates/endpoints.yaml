@@ -1,3 +1,6 @@
+################################
+## Node Exporter endpoints #####
+################################
 {{- if .Values.endpoints }}
 apiVersion: v1
 kind: Endpoints

@@ -41,7 +41,7 @@ spec:
 {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 8 }}
       tolerations:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
-      serviceAccountName: {{ template "kube-state.fullname" . }}
+      serviceAccountName: {{ template "kube-state.serviceAccount" . }}
 {{- include "kube-state.imagePullSecrets" . | indent 6 }}
       containers:
       - name: kube-state
