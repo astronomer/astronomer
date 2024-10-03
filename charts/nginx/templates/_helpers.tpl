@@ -55,6 +55,14 @@ Create chart name and version as used by the chart label.
 {{- end -}}
 {{- end -}}
 
+{{ define "nginx.serviceAccount" -}}
+{{- if and .Values.serviceAccount.create .Values.global.rbacEnabled -}}
+{{ default (printf "%s" (include "nginx.fullname" . )) .Values.serviceAccount.name }}
+{{- else -}}
+    {{ default "default" .Values.serviceAccount.name }}
+{{- end }}
+{{- end }}
+
 {{/*
 Return the proper Docker Image Registry Secret Names
 */}}
