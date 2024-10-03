@@ -28,6 +28,7 @@ class TestDagOnlyDeploy:
             show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
         )
 
+        assert len(docs) == 1
         prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
         assert prod["deployments"]["dagOnlyDeployment"] is True
         assert prod["deployments"]["dagDeploy"]["enabled"] is True
