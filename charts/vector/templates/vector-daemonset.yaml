@@ -1,7 +1,7 @@
 ###########################################################################
 # Vector DaemonSet
 ###########################################################################
-{{- if (eq .Values.global.logging.collector "vector") -}}
+{{- if (eq .Values.global.logging.collector "vector") }}
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
