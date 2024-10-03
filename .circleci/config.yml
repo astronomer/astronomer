@@ -147,17 +147,6 @@ jobs:
       - run:
           name: Run pre-commit
           command: pre-commit run --all-files --show-diff-on-failure
-  lint:
-    docker:
-      - image: quay.io/astronomer/ap-build:0.2.3
-    steps:
-      - checkout
-      - run:
-          name: Install ci tools
-          command: ./bin/install-ci-tools 1
-      - run:
-          name: Lint the Astronomer chart
-          command: export PATH=/tmp/bin:$PATH make lint
 
   unittest-charts:
     docker:
@@ -196,7 +185,7 @@ jobs:
 
   build-artifact:
     docker:
-      - image: quay.io/astronomer/ap-build:0.2.3
+      - image: quay.io/astronomer/ci-helm-release:2024-09
     parameters:
       qa_release:
         type: boolean
@@ -454,14 +443,12 @@ workflows:
         - not: << pipeline.parameters.scan-docker-images >>
         - not: << pipeline.parameters.qa-release >>
     jobs:
-      - lint
       - run_pre_commit
       - unittest-charts
       - check-commander-airflow-version
       - build-artifact:
           requires:
             - check-commander-airflow-version
-            - lint
             - run_pre_commit
             - unittest-charts
       - approve-test-all-platforms:
@@ -556,7 +543,6 @@ workflows:
         - << pipeline.parameters.qa-release >>
         - not: << pipeline.parameters.scan-docker-images >>
     jobs:
-      - lint
       - run_pre_commit
       - unittest-charts
       - check-commander-airflow-version
@@ -564,7 +550,6 @@ workflows:
           qa_release: true
           requires:
             - check-commander-airflow-version
-            - lint
             - run_pre_commit
             - unittest-charts
       - release-to-internal:

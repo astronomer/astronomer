@@ -48,3 +48,11 @@ imagePullSecrets:
   - name: {{ .Values.global.privateRegistry.secretName }}
 {{- end -}}
 {{- end -}}
+
+{{ define "kube-state.serviceAccount" -}}
+{{- if and .Values.serviceAccount.create .Values.global.rbacEnabled -}}
+{{ default (printf "%s" (include "kube-state.fullname" . )) .Values.serviceAccount.name }}
+{{- else -}}
+    {{ default "default" .Values.serviceAccount.name }}
+{{- end }}
+{{- end }}
