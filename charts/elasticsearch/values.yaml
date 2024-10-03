@@ -22,7 +22,7 @@ images:
     pullPolicy: IfNotPresent
   exporter:
     repository: quay.io/astronomer/ap-elasticsearch-exporter
-    tag: 1.7.0
+    tag: 1.8.0
     pullPolicy: IfNotPresent
   nginx:
     repository: quay.io/astronomer/ap-nginx-es
@@ -33,6 +33,13 @@ common:
   podAnnotations: {}
   serviceType: ClusterIP
   protocol: http
+
+  serviceAccount:
+    # Specifies whether a ServiceAccount should be created
+    create: true
+    # The name of the ServiceAccount to use.
+    # If not set and create is true, a name is generated using the fullname template
+    name: ~
 
   env:
     CLUSTER_NAME: "astronomer"

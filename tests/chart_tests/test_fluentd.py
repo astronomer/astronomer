@@ -350,3 +350,14 @@ class TestFluentd:
         assert liveness_probe["periodSeconds"] == 15
         assert liveness_probe["successThreshold"] == 1
         assert liveness_probe["timeoutSeconds"] == 5
+
+    def test_fluentd_configmap_disable_manage_cluster_scoped_resources(self, kube_version):
+        """Test that with disable_manage_cluster_scoped_resources, helm renders fluentd configmap targeting all namespaces."""
+        doc = render_chart(
+            kube_version=kube_version,
+            values={"global": {"disableManageClusterScopedResources": True}},
+            show_only=["charts/fluentd/templates/fluentd-configmap.yaml"],
+        )[0]
+
+        expected_rule = "key $.kubernetes.namespace_name\n    # fluentd should gather logs from all namespaces if manualNamespaceNamesEnabled is enabled"
+        assert expected_rule in doc["data"]["output.conf"]
