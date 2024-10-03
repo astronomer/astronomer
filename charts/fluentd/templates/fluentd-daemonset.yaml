@@ -1,6 +1,7 @@
 #######################
 ## Fluentd DaemonSet ##
 #######################
+{{- if (eq .Values.global.logging.collector "fluentd") }}
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -143,3 +144,4 @@ spec:
       - name: {{ template "fluentd.fullname" . }}-index-template-volume
         configMap:
           name: {{ template "fluentd.fullname" . }}-index-template-configmap
+{{- end -}}

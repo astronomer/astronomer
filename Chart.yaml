@@ -63,6 +63,10 @@ dependencies:
     condition: global.fluentdEnabled
     tags:
       - logging
+  - name: vector
+    condition: global.vectorEnabled
+    tags:
+      - logging
 
   # In-cluster DB
   # !! Not recommended for production !!
