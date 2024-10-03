@@ -17,13 +17,27 @@ class TestVector:
         assert doc["kind"] == "DaemonSet"
         assert doc["metadata"]["name"] == "release-name-vector"
 
+    def test_vector_defaults(self, kube_version):
+        """Test that vector behaves as expected with default values."""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=[
+                "charts/vector/templates/vector-clusterrolebinding.yaml",
+                "charts/vector/templates/vector-configmap.yaml",
+                "charts/vector/templates/vector-daemonset.yaml",
+                "charts/vector/templates/vector-serviceaccount.yaml",
+            ],
+        )
+        assert len(docs) == 0
+
     def test_vector_daemonset(self, kube_version):
         """Test that helm renders a volume mount for private ca certificates for vector daemonset when private-ca-certificates
         are enabled."""
+        values = {"global": {"logging": {"collector": "vector"}}, "privateCaCerts": ["private-root-ca"]}
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"privateCaCerts": ["private-root-ca"]}},
-            show_only=["charts/vector/templates/daemonset.yaml"],
+            values=values,
+            show_only=["charts/vector/templates/vector-daemonset.yaml"],
         )
 
         search_result = jmespath.search(
@@ -73,9 +87,10 @@ class TestVector:
 
     def test_vector_clusterrolebinding(self, kube_version):
         """Test that helm renders a good ClusterRoleBinding template for vector when rbacEnabled=True."""
+        values = {"global": {"rbacEnabled": True, "logging": {"collector": "vector"}}}
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"rbacEnabled": True}},
+            values=values,
             show_only=["charts/vector/templates/vector-clusterrolebinding.yaml"],
         )
 
@@ -98,18 +113,21 @@ class TestVector:
     def test_vector_configmap_manual_namespaces_enabled(self, kube_version):
         """Test that when namespace Pools is disabled, and manualNamespaces is enabled, helm renders a vector configmap targeting
         all namespaces."""
+        values = {
+            "global": {
+                "logging": {"collector": "vector"},
+                "manualNamespaceNamesEnabled": True,
+                "features": {
+                    "namespacePools": {
+                        "enabled": False,
+                    }
+                },
+            }
+        }
+
         doc = render_chart(
             kube_version=kube_version,
-            values={
-                "global": {
-                    "manualNamespaceNamesEnabled": True,
-                    "features": {
-                        "namespacePools": {
-                            "enabled": False,
-                        }
-                    },
-                }
-            },
+            values=values,
             show_only=["charts/vector/templates/vector-configmap.yaml"],
         )[0]
 
@@ -120,18 +138,20 @@ class TestVector:
     def test_vector_configmap_manual_namespaces_and_namespacepools_disabled(self, kube_version):
         """Test that when namespace Pools and manualNamespaceNamesEnabled are disabled, helm renders a default vector configmap
         looking at an environment variable."""
+        values = {
+            "global": {
+                "manualNamespaceNamesEnabled": False,
+                "logging": {"collector": "vector"},
+                "features": {
+                    "namespacePools": {
+                        "enabled": False,
+                    }
+                },
+            }
+        }
         doc = render_chart(
             kube_version=kube_version,
-            values={
-                "global": {
-                    "manualNamespaceNamesEnabled": False,
-                    "features": {
-                        "namespacePools": {
-                            "enabled": False,
-                        }
-                    },
-                }
-            },
+            values=values,
             show_only=["charts/vector/templates/vector-configmap.yaml"],
         )[0]
 
@@ -142,11 +162,10 @@ class TestVector:
     def test_vector_configmap_configure_extra_log_stores(self, kube_version):
         """Test that when namespace Pools and manualNamespaceNamesEnabled are disabled, helm renders a default vector configmap
         looking at an environment variable."""
-        doc = render_chart(
-            kube_version=kube_version,
-            values={
-                "vector": {
-                    "extraLogStores": """
+        values = {
+            "global": {"logging": {"collector": "vector"}},
+            "vector": {
+                "extraLogStores": """
 <store>
   @type newrelic
   @log_level info
@@ -158,8 +177,11 @@ class TestVector:
   </buffer>
 </store>
                     """
-                }
             },
+        }
+        doc = render_chart(
+            kube_version=kube_version,
+            values=values,
             show_only=["charts/vector/templates/vector-configmap.yaml"],
         )[0]
         expected_store = "  <store>\n    @type newrelic\n    @log_level info\n    base_uri https://log-api.newrelic.com/log/v1\n    license_key <LICENSE_KEY>"
@@ -168,10 +190,12 @@ class TestVector:
     def test_vector_pod_securityContextOverride(self, kube_version):
         """Test that helm renders a container securityContext when securityContext is enabled."""
 
+        values = {"global": {"logging": {"collector": "vector"}}, "vector": {"securityContext": {"runAsUser": 9999}}}
+
         docs = render_chart(
             kube_version=kube_version,
-            values={"vector": {"securityContext": {"runAsUser": 9999}}},
-            show_only=["charts/vector/templates/daemonset.yaml"],
+            values=values,
+            show_only=["charts/vector/templates/vector-daemonset.yaml"],
         )
 
         pod_search_result = jmespath.search(
@@ -189,10 +213,12 @@ class TestVector:
             "seLinuxOptions": {"type": "roflbomb"},
         }
 
+        values = {"global": {"logging": {"collector": "vector"}}, "vector": {"vector": {"securityContext": sc}}}
+
         docs = render_chart(
             kube_version=kube_version,
-            values={"vector": {"vector": {"securityContext": sc}}},
-            show_only=["charts/vector/templates/daemonset.yaml"],
+            values=values,
+            show_only=["charts/vector/templates/vector-daemonset.yaml"],
         )
         assert len(docs) == 1
 
@@ -206,7 +232,7 @@ class TestVector:
         docs = render_chart(
             kube_version=kube_version,
             values={},
-            show_only=["charts/vector/templates/daemonset.yaml"],
+            show_only=["charts/vector/templates/vector-daemonset.yaml"],
         )
 
         container_search_result = jmespath.search(
@@ -287,7 +313,7 @@ class TestVector:
         docs = render_chart(
             kube_version=kube_version,
             values={},
-            show_only=["charts/vector/templates/daemonset.yaml"],
+            show_only=["charts/vector/templates/vector-daemonset.yaml"],
         )
         assert len(docs) == 1
         doc = docs[0]
@@ -299,7 +325,7 @@ class TestVector:
         docs = render_chart(
             kube_version=kube_version,
             values={"vector": {"priorityClassName": "vector-priority-pod"}},
-            show_only=["charts/vector/templates/daemonset.yaml"],
+            show_only=["charts/vector/templates/vector-daemonset.yaml"],
         )
         assert len(docs) == 1
         doc = docs[0]
@@ -316,7 +342,7 @@ class TestVector:
                     "extraEnv": {"RUBY_GC_HEAP_OLDOBJECT_LIMIT_FACTOR": 1},
                 },
             },
-            show_only=["charts/vector/templates/daemonset.yaml"],
+            show_only=["charts/vector/templates/vector-daemonset.yaml"],
         )
         assert len(docs) == 1
         doc = docs[0]
@@ -333,7 +359,7 @@ class TestVector:
         """Test the default probes for the vector daemonset."""
         docs = render_chart(
             kube_version=kube_version,
-            show_only=["charts/vector/templates/daemonset.yaml"],
+            show_only=["charts/vector/templates/vector-daemonset.yaml"],
         )
         doc = docs[0]
         c_by_name = get_containers_by_name(doc)

@@ -1,6 +1,7 @@
 ###########################################################################
 # Vector DaemonSet
 ###########################################################################
+{{- if (eq .Values.global.logging.collector "vector") -}}
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -102,3 +103,4 @@ spec:
       - name: {{ template "vector.fullname" . }}-index-template-volume
         configMap:
           name: {{ template "vector.fullname" . }}-index-template-configmap
+{{- end -}}
