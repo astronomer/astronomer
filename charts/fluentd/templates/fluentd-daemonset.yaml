@@ -39,7 +39,7 @@ spec:
 {{ toYaml (.Values.affinity) | indent 8 }}
       tolerations:
 {{ toYaml (.Values.tolerations) | indent 8 }}
-      serviceAccountName: {{ template "fluentd.fullname" . }}
+      serviceAccountName: {{ template "fluentd.serviceAccount" . }}
 {{- include "fluentd.imagePullSecrets" . | indent 6 }}
       securityContext:
 {{ toYaml .Values.pod.securityContext | indent 8 }}

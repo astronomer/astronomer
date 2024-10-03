@@ -33,6 +33,10 @@ resources: {}
 #   cpu: 100m
 #   memory: 128Mi
 
+serviceAccount:
+  create: true
+  name: ~
+
 # probe configurations for prometheus container
 livenessProbe:
   initialDelaySeconds: 10
