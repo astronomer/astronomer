@@ -5,6 +5,7 @@
 # 1. Do not create anything is rbacEnabled is disabled
 # 2. Create ClusterRoleBinding if clusterRoles enabled and namespacePools disabled
 # 3. Create RoleBinding for each namespace in the namespacePool (+ astronomer namespace) if enabled
+{{- $commanderrole:= and .Values.global.features.namespacePools.keeproleandrolebindings (not $.Values.global.features.namespacePools.namespaces.create)}}
 {{- $useClusterRoles := and .Values.global.rbacEnabled .Values.global.clusterRoles (not .Values.global.features.namespacePools.enabled)}}
 {{- $shouldCreateResources := and .Values.global.rbacEnabled (or .Values.global.clusterRoles .Values.global.features.namespacePools.enabled) }}
 {{- $namespaces := .Values.global.features.namespacePools.namespaces.names }}
@@ -14,7 +15,7 @@
   {{- $namespaces = append $namespaces .Release.Namespace }}
 {{- end }}
 
-{{- if $shouldCreateResources }}
+{{- if and $shouldCreateResources (not $commanderrole)}}
 {{- range $i, $namespaceName := $namespaces -}}
 ---
 apiVersion: {{ template "apiVersion.rbac" . }}
