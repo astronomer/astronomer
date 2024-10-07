@@ -1,8 +1,6 @@
-##################################
-#                                #
-#  NATS Streaming Configuration  #
-#                                #
-##################################
+################################
+# NATS Streaming Configuration #
+################################
 images:
   init:
     repository: quay.io/astronomer/ap-init
@@ -29,6 +27,17 @@ stan:
   #  requests:
   #   cpu: 100m
   #   memory: 128Mi
+
+  livenessProbe:
+    initialDelaySeconds: 10
+    periodSeconds: 15
+    timeoutSeconds: 5
+    failureThreshold: 3
+  readinessProbe:
+    initialDelaySeconds: 10
+    periodSeconds: 15
+    timeoutSeconds: 5
+    failureThreshold: 3
 
   # Cluster name, generated into a name from the
   # release name by default.
