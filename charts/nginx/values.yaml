@@ -13,12 +13,19 @@ images:
     pullPolicy: IfNotPresent
   defaultBackend:
     repository: quay.io/astronomer/ap-default-backend
-    tag: 0.28.26
+    tag: 0.28.27
     pullPolicy: IfNotPresent
 
 securityContext:
   runAsUser: 101
   runAsNonRoot: true
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ~
 
 ingressClass: ~
 

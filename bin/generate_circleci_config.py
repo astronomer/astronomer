@@ -11,9 +11,9 @@ git_root_dir = next(iter([x for x in Path(__file__).resolve().parents if (x / ".
 metadata = yaml.safe_load((git_root_dir / "metadata.yaml").read_text())
 kube_versions = metadata["test_k8s_versions"]
 
-# https://circleci.com/developer/machine/image/ubuntu-2204
-machine_image_version = "ubuntu-2204:2024.05.1"
-ci_runner_version = "2024-09"
+ap_build_tag = "0.3.0-4"  # https://quay.io/repository/astronomer/ap-build?tab=tags&tag=latest
+ci_runner_version = "2024-09"  # This should be the current YYYY-MM
+machine_image_version = "ubuntu-2204:2024.05.1"  # https://circleci.com/developer/machine/image/ubuntu-2204
 
 
 def list_docker_images():
@@ -38,10 +38,11 @@ def main():
     templated_file_content = config_file_template_path.read_text()
     template = Template(templated_file_content)
     config = template.render(
-        kube_versions=kube_versions,
-        docker_images=docker_images,
-        machine_image_version=machine_image_version,
+        ap_build_tag=ap_build_tag,
         ci_runner_version=ci_runner_version,
+        docker_images=docker_images,
+        kube_versions=kube_versions,
+        machine_image_version=machine_image_version,
     )
     with open(config_file_path, "w") as circle_ci_config_file:
         warning_header = (

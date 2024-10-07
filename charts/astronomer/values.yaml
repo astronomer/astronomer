@@ -32,11 +32,11 @@ images:
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
-    tag: 0.35.6
+    tag: 0.35.7
     pullPolicy: IfNotPresent
   cliInstall:
     repository: quay.io/astronomer/ap-cli-install
-    tag: 0.26.25
+    tag: 0.26.26
     pullPolicy: IfNotPresent
 
 securityContext:
@@ -101,6 +101,15 @@ houston:
   # If not specified, we use an auto-generated, self-signed certificate.
   jwtSigningKeySecretName: ~
   jwtSigningCertificateSecretName: ~
+
+  serviceAccount:
+    # Specifies whether a service account should be created
+    create: true
+    # Annotations to add to the service account
+    annotations: {}
+    # The name of the service account to use.
+    # If not set and create is true, a name is generated using the fullname template
+    name: ""
 
   env: []
 
@@ -320,6 +329,15 @@ configSyncer:
   # If not provided, will generate a random hour and minutes to spread cronjob workloads.
   schedule: ~
   securityContext: {}
+  serviceAccount:
+    # Specifies whether a service account should be created
+    create: true
+    # Annotations to add to the service account
+    annotations: {}
+    # The name of the service account to use.
+    # If not set and create is true, a name is generated using the fullname template
+    name: ""
+
 
 commander:
   replicas: 2
@@ -338,6 +356,16 @@ commander:
     # Enable airgapped mode
     enabled: false
   upgradeTimeout: 600
+
+  serviceAccount:
+    # Specifies whether a service account should be created
+    create: true
+    # Annotations to add to the service account
+    annotations: {}
+    # The name of the service account to use.
+    # If not set and create is true, a name is generated using the fullname template
+    name: ""
+
 
   # Add extra containers to your commander deployment.
   extraContainers: []

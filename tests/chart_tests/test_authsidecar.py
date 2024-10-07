@@ -135,7 +135,7 @@ class TestAuthSidecar:
                         "enabled": True,
                         "repository": "someregistry.io/my-custom-image",
                         "tag": "my-custom-tag",
-                    }
+                    },
                 }
             },
             show_only=[
@@ -204,9 +204,7 @@ class TestAuthSidecar:
                         "enabled": True,
                         "repository": "someregistry.io/my-custom-image",
                         "tag": "my-custom-tag",
-                        "securityContext": {
-                            "runAsUser": 1000,
-                        },
+                        "securityContext": {"runAsUser": 1000},
                     },
                 }
             },

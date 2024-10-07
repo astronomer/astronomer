@@ -88,7 +88,7 @@ spec:
         resources:
 {{ toYaml .Values.data.initResources | indent 10 }}
       {{- end }}
-      serviceAccountName: {{ template "elasticsearch.fullname" . }}
+      serviceAccountName: {{ template "elasticsearch.serviceAccount" . }}
       containers:
       - name: es-data
         securityContext:

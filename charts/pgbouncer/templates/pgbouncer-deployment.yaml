@@ -41,7 +41,7 @@ spec:
       tolerations:
 {{ toYaml .Values.tolerations | indent 8 }}
       restartPolicy: Always
-      serviceAccountName: {{ template "houston.bootstrapperServiceAccount" . }}
+      serviceAccountName: {{ template "pgbouncer.ServiceAccount" . }}
       containers:
         - name: pgbouncer
           image: {{ template "pgbouncer.image" . }}

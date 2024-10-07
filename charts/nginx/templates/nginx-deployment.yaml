@@ -35,7 +35,7 @@ spec:
         sidecar.istio.io/inject: "false"
         {{- end }}
     spec:
-      serviceAccountName: {{ template "nginx.fullname" . }}
+      serviceAccountName: {{ template "nginx.serviceAccount" . }}
 {{- include "nginx.imagePullSecrets" . | indent 6 }}
       containers:
         - name: nginx
