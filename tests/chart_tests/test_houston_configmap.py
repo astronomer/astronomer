@@ -627,3 +627,24 @@ def test_houston_configmap_with_disable_manage_clusterscopedresources_enabled():
     doc = docs[0]
     prod = yaml.safe_load(doc["data"]["production.yaml"])
     assert prod["deployments"]["disableManageClusterScopedResources"] is True
+
+
+def test_houston_configmap_with_RuntimeReleasesConfig_enabled():
+    """Validate the houston configmap and its embedded data with RuntimeReleasesConfig defined
+    ."""
+
+    runtime_releases_json = {
+        "runtimeVersions": {
+            "4.2.6": {
+                "metadata": {"airflowVersion": "2.2.5", "channel": "stable", "releaseDate": "2022-04-19"},
+                "migrations": {"airflowDatabase": False},
+            }
+        }
+    }
+    docs = render_chart(
+        values={"astronomer": {"houston": {"RuntimeReleasesConfig": runtime_releases_json}}},
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    doc = docs[0]
+    prod = yaml.safe_load(doc["data"]["astro_runtime_releases.json"])
+    assert prod == runtime_releases_json
