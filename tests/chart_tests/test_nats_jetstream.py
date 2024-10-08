@@ -68,6 +68,9 @@ class TestNatsJetstream:
                 "keyFile": f"{jetStreamCertPrefix}-client/tls.key",
             },
         }
+        assert docs[7]["spec"]["template"]["spec"]["nodeSelector"] == {}
+        assert docs[7]["spec"]["template"]["spec"]["affinity"] == {}
+        assert docs[7]["spec"]["template"]["spec"]["tolerations"] == []
 
         assert {
             "name": "release-name-jetstream-tls-certificate-client-volume",

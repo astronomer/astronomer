@@ -55,6 +55,9 @@ class TestKibana:
         )
         common_kibana_cronjob_test(docs)
         doc = docs[0]
+        assert doc["spec"]["template"]["spec"]["nodeSelector"] == {}
+        assert doc["spec"]["template"]["spec"]["affinity"] == {}
+        assert doc["spec"]["template"]["spec"]["tolerations"] == []
         assert "fluentd.*" in doc["spec"]["template"]["spec"]["containers"][0]["command"][2]
 
     def test_kibana_index_with_logging_sidecar(self, kube_version):
