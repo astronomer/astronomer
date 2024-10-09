@@ -32,12 +32,13 @@ def init_test_pod_resources():
 test_pod_resources_configs_data = init_test_pod_resources()
 
 
-@pytest.mark.parametrize(
-    "pod_resources",
-    test_pod_resources_configs_data.values(),
-    ids=test_pod_resources_configs_data.keys(),
-)
-def test_pod_resources_configs(pod_resources):
-    """Labels check for definition."""
-    for container in pod_resources:
-        assert "resources" in container
+class TestPodResources:
+    @pytest.mark.parametrize(
+        "pod_resources",
+        test_pod_resources_configs_data.values(),
+        ids=test_pod_resources_configs_data.keys(),
+    )
+    def test_pod_resources_configs(pod_resources):
+        """Labels check for definition."""
+        for container in pod_resources:
+            assert "resources" in container
