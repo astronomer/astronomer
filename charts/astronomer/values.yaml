@@ -327,6 +327,7 @@ configSyncer:
   # If not provided, will generate a random hour and minutes to spread cronjob workloads.
   schedule: ~
   securityContext: {}
+  resources: {}
   serviceAccount:
     # Specifies whether a service account should be created
     create: true

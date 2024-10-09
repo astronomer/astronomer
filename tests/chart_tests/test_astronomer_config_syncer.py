@@ -241,6 +241,7 @@ class TestAstronomerConfigSyncer:
 
         assert "--target-namespaces" not in job_container_by_name["config-syncer"]["args"]
         assert ",".join(namespaces) not in job_container_by_name["config-syncer"]["args"]
+        assert "resources" in job_container_by_name["config-syncer"]
 
     @pytest.mark.parametrize("test_data", cron_test_data, ids=[x[0] for x in cron_test_data])
     def test_astronomer_config_syncer_cronjob_default_schedule(self, test_data, kube_version):
