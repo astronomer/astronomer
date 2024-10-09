@@ -1,3 +1,5 @@
+indexPattern: "%Y.%m.%d"
+
 nodeSelector: {}
 affinity: {}
 tolerations: []
@@ -43,3 +45,8 @@ extraEnv: []
 # TODO this is probably not right for vector. Verify it.
 ports:
   promScrape: 24231
+
+elasticsearch:
+  port: 9200
+  buffer_chunk_limit: 2M
+  buffer_queue_limit: 8

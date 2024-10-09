@@ -122,6 +122,24 @@ data:
           del(.file)
 
     sinks:
+      # https://vector.dev/docs/reference/configuration/sinks/elasticsearch/
+      elasticserach:
+        type: elasticsearch
+        inputs:
+          - transform_remove_fields
+        mode: bulk
+        compression: none
+        endpoints:
+          - "http://${ELASTICSEARCH_HOST}:${ELASTICSEARCH_PORT}"
+        auth:
+          strategy: "basic"
+          user: {{ .Values.elasticsearch.connection.user }}
+          password : {{ .Values.elasticsearch.connection.pass }}
+        bulk:
+          index: "{{ include "logging.indexNamePrefix" . }}.${RELEASE:--}.{{ .Values.indexPattern }}"
+          action: create
+
+
       # TODO: remove this debug "print" sink
       print:
         encoding:

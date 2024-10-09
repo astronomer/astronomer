@@ -43,6 +43,10 @@ spec:
         securityContext: {{ toYaml .Values.vector.securityContext | nindent 10 }}
         imagePullPolicy: {{ .Values.vector.image.pullPolicy }}
         env:
+        - name: ELASTICSEARCH_HOST
+          value: {{ template "elasticsearch.host" . }}
+        - name: ELASTICSEARCH_PORT
+          value: {{ .Values.elasticsearch.port | quote }}
         - name: VECTOR_CONFIG_YAML
           value: "/etc/vector/config/vector-config.yaml"
         - name: K8S_NODE_NAME

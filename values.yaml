@@ -135,7 +135,7 @@ global:
 
   logging:
     indexNamePrefix: ~
-    collector: "fluentd"  # fluentd or vector
+    collector: "fluentd"  # Must be fluentd or vector
 
   # Sidecar Logging
   loggingSidecar:
