@@ -1,5 +1,6 @@
 import pytest
 import jmespath
+import yaml
 from tests import get_containers_by_name
 from tests import supported_k8s_versions
 from tests.chart_tests.helm_template_generator import render_chart
@@ -196,3 +197,34 @@ class TestHoustonApiDeployment:
             for env in docs[0]["spec"]["template"]["spec"]["containers"][0]["env"]
             if "__HOST" in env.get("name") and env.get("value")
         )
+
+    def test_houston_configmap_with_RuntimeReleasesConfig_enabled(self, kube_version):
+        """Validate the houston configmap and its embedded data with RuntimeReleasesConfig defined
+        ."""
+
+        runtime_releases_json = {
+            "runtimeVersions": {
+                "4.2.6": {
+                    "metadata": {"airflowVersion": "2.2.5", "channel": "stable", "releaseDate": "2022-04-19"},
+                    "migrations": {"airflowDatabase": False},
+                }
+            }
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"astronomer": {"houston": {"RuntimeReleasesConfig": runtime_releases_json}}},
+            show_only=[
+                "charts/astronomer/templates/houston/houston-configmap.yaml",
+                "charts/astronomer/templates/houston/api/houston-deployment.yaml",
+            ],
+        )
+        doc = docs[0]
+        prod = yaml.safe_load(doc["data"]["astro_runtime_releases.json"])
+        assert prod == runtime_releases_json
+        doc = docs[1]
+        c_by_name = get_containers_by_name(doc, include_init_containers=False)
+        assert {
+            "name": "houston-config-volume",
+            "mountPath": "/houston/astro_runtime_releases.json",
+            "subPath": "astro_runtime_releases.json",
+        } in c_by_name["houston"]["volumeMounts"]
