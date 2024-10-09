@@ -44,6 +44,7 @@ spec:
           image: {{ template "houston.image" . }}
           imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
           securityContext: {{ toYaml .Values.securityContext | nindent 12 }}
+          resources: {{ toYaml .Values.houston.resources | nindent 12 }}
           command:
             - "/houston/bin/entrypoint"
           args:
