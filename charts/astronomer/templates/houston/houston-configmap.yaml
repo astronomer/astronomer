@@ -103,7 +103,7 @@ data:
       {{- end }}
       {{ end }}
 
-      {{- if .Values.global.authSidecar.enabled }}
+            {{- if .Values.global.authSidecar.enabled }}
       # enables nginx auth sidecar for airflow deployments
       {{- $authSidecar := include "authSidecar.image" . }}
       authSideCar:
@@ -114,6 +114,23 @@ data:
         pullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
         {{- if .Values.global.authSidecar.securityContext}}
         securityContext: {{- .Values.global.authSidecar.securityContext | toYaml | nindent 10 }}
+        {{- end }}
+        {{- if .Values.global.authSidecar.resources }}
+        resources:
+          limits:
+            {{- if .Values.global.authSidecar.resources.limits.cpu }}
+            cpu: {{ .Values.global.authSidecar.resources.limits.cpu }}
+            {{- end }}
+            {{- if .Values.global.authSidecar.resources.limits.memory }}
+            memory: {{ .Values.global.authSidecar.resources.limits.memory }}
+            {{- end }}
+          requests:
+            {{- if .Values.global.authSidecar.resources.requests.cpu }}
+            cpu: {{ .Values.global.authSidecar.resources.requests.cpu }}
+            {{- end }}
+            {{- if .Values.global.authSidecar.resources.requests.memory }}
+            memory: {{ .Values.global.authSidecar.resources.requests.memory }}
+            {{- end }}
         {{- end }}
         annotations: {
           {{- range $key, $value := .Values.global.extraAnnotations}}
