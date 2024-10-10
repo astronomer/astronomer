@@ -48,7 +48,6 @@ class TestHoustonHookJob:
             "--canary=false",
         ]
 
-
     def test_upgrade_deployments_job_disabled(self, kube_version):
         """Test Upgrade Deployments Job when disabled."""
 
