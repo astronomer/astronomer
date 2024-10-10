@@ -53,30 +53,21 @@ class TestAuthSidecar:
 
         assert "NetworkPolicy" == docs[3]["kind"]
         assert [{"port": 8084, "protocol": "TCP"}] == jmespath.search("spec.ingress[*].ports[1]", docs[3])
-    
+
     def test_authSidecar_houston_with_custom_resources(self, kube_version):
         """Test custom resources are applied on Houston"""
         docs = render_chart(
             kube_version=kube_version,
-            values = {
+            values={
                 "global": {
                     "authSidecar": {
-                    "enabled": True,
-                    "repository": "someregistry.io/my-custom-image",
-                    "tag": "my-custom-tag",
-                    "resources": {
-                        "limits": {
-                            "cpu": "500m",
-                            "memory": "256Mi"
-                                },
-                        "requests": {
-                        "cpu": "200m",
-                        "memory": "128Mi"
-                        }
+                        "enabled": True,
+                        "repository": "someregistry.io/my-custom-image",
+                        "tag": "my-custom-tag",
+                        "resources": {"limits": {"cpu": "500m", "memory": "256Mi"}, "requests": {"cpu": "200m", "memory": "128Mi"}},
                     }
                 }
-            }
-        },
+            },
             show_only=[
                 "charts/astronomer/templates/houston/houston-configmap.yaml",
             ],
