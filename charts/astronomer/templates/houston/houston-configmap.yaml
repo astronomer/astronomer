@@ -103,7 +103,7 @@ data:
       {{- end }}
       {{ end }}
 
-            {{- if .Values.global.authSidecar.enabled }}
+      {{- if .Values.global.authSidecar.enabled }}
       # enables nginx auth sidecar for airflow deployments
       {{- $authSidecar := include "authSidecar.image" . }}
       authSideCar:
