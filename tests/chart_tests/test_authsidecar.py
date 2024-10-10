@@ -152,6 +152,7 @@ class TestAuthSidecar:
             "tag": "my-custom-tag",
             "port": 8084,
             "pullPolicy": "IfNotPresent",
+            "resources": {"limits": {"cpu": "1000m", "memory": "1024Mi"}, "requests": {"cpu": "500m", "memory": "512Mi"}},
             "annotations": {},
         }
         assert expected_output == prod["deployments"]["authSideCar"]
@@ -187,6 +188,7 @@ class TestAuthSidecar:
             "tag": "my-custom-tag",
             "port": 8084,
             "pullPolicy": "IfNotPresent",
+            "resources": {"limits": {"cpu": "1000m", "memory": "1024Mi"}, "requests": {"cpu": "500m", "memory": "512Mi"}},
             "annotations": {
                 "kubernetes.io/ingress.class": "astronomer-nginx",
                 "nginx.ingress.kubernetes.io/proxy-body-size": "1024m",
