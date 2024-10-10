@@ -53,6 +53,49 @@ class TestAuthSidecar:
 
         assert "NetworkPolicy" == docs[3]["kind"]
         assert [{"port": 8084, "protocol": "TCP"}] == jmespath.search("spec.ingress[*].ports[1]", docs[3])
+    
+    def test_authSidecar_houston_with_custom_resources(self, kube_version):
+        """Test custom resources are applied on Houston"""
+        docs = render_chart(
+            kube_version=kube_version,
+            values = {
+                "global": {
+                    "authSidecar": {
+                    "enabled": True,
+                    "repository": "someregistry.io/my-custom-image",
+                    "tag": "my-custom-tag",
+                    "resources": {
+                        "limits": {
+                            "cpu": "500m",
+                            "memory": "256Mi"
+                                },
+                        "requests": {
+                        "cpu": "200m",
+                        "memory": "128Mi"
+                        }
+                    }
+                }
+            }
+        },
+            show_only=[
+                "charts/astronomer/templates/houston/houston-configmap.yaml",
+            ],
+        )
+
+        common_houston_config_test_cases(docs)
+        prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
+
+        expected_output = {
+            "enabled": True,
+            "repository": "someregistry.io/my-custom-image",
+            "tag": "my-custom-tag",
+            "port": 8084,
+            "pullPolicy": "IfNotPresent",
+            "annotations": {},
+            "resources": {"limits": {"cpu": "500m", "memory": "256Mi"}, "requests": {"cpu": "200m", "memory": "128Mi"}},
+        }
+
+        assert expected_output == prod["deployments"]["authSideCar"]
 
     def test_authSidecar_prometheus(self, kube_version):
         """Test Prometheus Service with authSidecar."""
