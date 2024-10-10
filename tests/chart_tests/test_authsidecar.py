@@ -224,6 +224,8 @@ class TestAuthSidecar:
             "securityContext": {
                 "runAsUser": 1000,
             },
+            "resources": {"limits": {"cpu": "1000m", "memory": "1024Mi"},
+               "requests": {"cpu": "500m", "memory": "512Mi"}},
             "annotations": {},
         }
         assert expected_output == prod["deployments"]["authSideCar"]
