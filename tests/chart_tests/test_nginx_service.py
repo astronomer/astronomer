@@ -200,15 +200,14 @@ class TestNginx:
 
     def test_nginx_backend_serviceaccount_defaults(self):
         doc = render_chart(
-            values={},
             show_only=["charts/nginx/templates/nginx-default-backend-serviceaccount.yaml"],
         )[0]
 
         assert "release-name-nginx-default-backend" == doc["metadata"]["name"]
 
     def test_nginx_defaults(self):
+        """Test nginx with default values."""
         doc = render_chart(
-            values={},
             show_only=["charts/nginx/templates/nginx-deployment.yaml"],
         )[0]
 
@@ -227,14 +226,59 @@ class TestNginx:
         assert annotationValidation not in c_by_name["nginx"]["args"]
         assert disableLeaderElection not in c_by_name["nginx"]["args"]
 
-    def test_nginx_min_ready_seconds_overrides(self):
-        minReadySeconds = 300
+        nginx_lp = doc["spec"]["template"]["spec"]["containers"][0]["livenessProbe"]
+        assert nginx_lp["httpGet"] == {"path": "/healthz", "port": 10254}
+        assert nginx_lp["initialDelaySeconds"] == 30
+        assert nginx_lp["periodSeconds"] == 15
+        assert nginx_lp["timeoutSeconds"] == 5
+        assert nginx_lp["failureThreshold"] == 5
+
+        nginx_rp = doc["spec"]["template"]["spec"]["containers"][0]["readinessProbe"]
+        assert nginx_rp["httpGet"] == {"path": "/healthz", "port": 10254}
+        assert nginx_rp["initialDelaySeconds"] == 10
+        assert nginx_rp["periodSeconds"] == 15
+        assert nginx_rp["timeoutSeconds"] == 5
+        assert nginx_rp["failureThreshold"] == 3
+
+    def test_nginx_overrides(self):
+        """Test nginx with some overrides."""
+        values = {
+            "nginx": {
+                "minReadySeconds": 1999,
+                "livenessProbe": {
+                    "initialDelaySeconds": 2888,
+                    "periodSeconds": 2887,
+                    "timeoutSeconds": 2886,
+                    "failureThreshold": 2885,
+                },
+                "readinessProbe": {
+                    "initialDelaySeconds": 3777,
+                    "periodSeconds": 3776,
+                    "timeoutSeconds": 3775,
+                    "failureThreshold": 3774,
+                },
+            }
+        }
         doc = render_chart(
-            values={"nginx": {"minReadySeconds": minReadySeconds}},
+            values=values,
             show_only=["charts/nginx/templates/nginx-deployment.yaml"],
         )[0]
 
-        assert doc["spec"]["minReadySeconds"] == minReadySeconds
+        assert doc["spec"]["minReadySeconds"] == 1999
+
+        nginx_lp = doc["spec"]["template"]["spec"]["containers"][0]["livenessProbe"]
+        assert nginx_lp["httpGet"] == {"path": "/healthz", "port": 10254}
+        assert nginx_lp["initialDelaySeconds"] == 2888
+        assert nginx_lp["periodSeconds"] == 2887
+        assert nginx_lp["timeoutSeconds"] == 2886
+        assert nginx_lp["failureThreshold"] == 2885
+
+        nginx_rp = doc["spec"]["template"]["spec"]["containers"][0]["readinessProbe"]
+        assert nginx_rp["httpGet"] == {"path": "/healthz", "port": 10254}
+        assert nginx_rp["initialDelaySeconds"] == 3777
+        assert nginx_rp["periodSeconds"] == 3776
+        assert nginx_rp["timeoutSeconds"] == 3775
+        assert nginx_rp["failureThreshold"] == 3774
 
     def test_nginx_election_ttl_overrides(self):
         doc = render_chart(
