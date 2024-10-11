@@ -64,7 +64,7 @@ class TestAuthSidecar:
                         "enabled": True,
                         "repository": "someregistry.io/my-custom-image",
                         "tag": "my-custom-tag",
-                        "resources": {"limits": {"cpu": "500m", "memory": "256Mi"}, "requests": {"cpu": "200m", "memory": "128Mi"}},
+                        "resources": {"limits": {"cpu": "999m", "memory": "888Mi"}, "requests": {"cpu": "777m", "memory": "666Mi"}},
                     }
                 }
             },
@@ -83,7 +83,7 @@ class TestAuthSidecar:
             "port": 8084,
             "pullPolicy": "IfNotPresent",
             "annotations": {},
-            "resources": {"limits": {"cpu": "500m", "memory": "256Mi"}, "requests": {"cpu": "200m", "memory": "128Mi"}},
+            "resources": {"limits": {"cpu": "999m", "memory": "888Mi"}, "requests": {"cpu": "777m", "memory": "666Mi"}},
         }
 
         assert expected_output == prod["deployments"]["authSideCar"]
