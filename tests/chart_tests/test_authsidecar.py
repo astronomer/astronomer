@@ -56,6 +56,10 @@ class TestAuthSidecar:
 
     def test_authSidecar_houston_with_custom_resources(self, kube_version):
         """Test custom resources are applied on Houston"""
+        custom_resources = {
+        "limits": {"cpu": "999m", "memory": "888Mi"},
+        "requests": {"cpu": "777m", "memory": "666Mi"},
+    }
         docs = render_chart(
             kube_version=kube_version,
             values={
@@ -64,7 +68,7 @@ class TestAuthSidecar:
                         "enabled": True,
                         "repository": "someregistry.io/my-custom-image",
                         "tag": "my-custom-tag",
-                        "resources": {"limits": {"cpu": "999m", "memory": "888Mi"}, "requests": {"cpu": "777m", "memory": "666Mi"}},
+                        "resources": custom_resources,
                     }
                 }
             },
@@ -83,7 +87,7 @@ class TestAuthSidecar:
             "port": 8084,
             "pullPolicy": "IfNotPresent",
             "annotations": {},
-            "resources": {"limits": {"cpu": "999m", "memory": "888Mi"}, "requests": {"cpu": "777m", "memory": "666Mi"}},
+            "resources": custom_resources,
         }
 
         assert expected_output == prod["deployments"]["authSideCar"]
