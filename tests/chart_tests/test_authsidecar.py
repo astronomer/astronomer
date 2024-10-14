@@ -57,9 +57,9 @@ class TestAuthSidecar:
     def test_authSidecar_houston_with_custom_resources(self, kube_version):
         """Test custom resources are applied on Houston"""
         custom_resources = {
-        "limits": {"cpu": "999m", "memory": "888Mi"},
-        "requests": {"cpu": "777m", "memory": "666Mi"},
-    }
+            "limits": {"cpu": "999m", "memory": "888Mi"},
+            "requests": {"cpu": "777m", "memory": "666Mi"},
+        }
         docs = render_chart(
             kube_version=kube_version,
             values={
