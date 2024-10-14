@@ -14,13 +14,13 @@ def common_houston_config_test_cases(docs):
     assert doc["apiVersion"] == "v1"
     assert doc["metadata"]["name"] == "release-name-houston-config"
 
+default_resource = {"limits": {"cpu": "1000m", "memory": "1024Mi"}, "requests": {"cpu": "500m", "memory": "512Mi"}}
 
 @pytest.mark.parametrize(
     "kube_version",
     supported_k8s_versions,
 )
 class TestAuthSidecar:
-    default_resource = {"limits": {"cpu": "1000m", "memory": "1024Mi"}, "requests": {"cpu": "500m", "memory": "512Mi"}}
 
     def test_authSidecar_alertmanager(self, kube_version):
         """Test Alertmanager Service with authSidecar."""
@@ -192,7 +192,7 @@ class TestAuthSidecar:
             "tag": "my-custom-tag",
             "port": 8084,
             "pullPolicy": "IfNotPresent",
-            "resources": self.default_resource,
+            "resources": default_resource,
             "annotations": {},
         }
         assert expected_output == prod["deployments"]["authSideCar"]
@@ -228,7 +228,7 @@ class TestAuthSidecar:
             "tag": "my-custom-tag",
             "port": 8084,
             "pullPolicy": "IfNotPresent",
-            "resources": self.default_resource,
+            "resources": default_resource,
             "annotations": {
                 "kubernetes.io/ingress.class": "astronomer-nginx",
                 "nginx.ingress.kubernetes.io/proxy-body-size": "1024m",
@@ -266,7 +266,7 @@ class TestAuthSidecar:
             "securityContext": {
                 "runAsUser": 1000,
             },
-            "resources": self.default_resource,
+            "resources": default_resource,
             "annotations": {},
         }
         assert expected_output == prod["deployments"]["authSideCar"]
