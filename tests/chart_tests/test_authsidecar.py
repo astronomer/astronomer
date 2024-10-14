@@ -14,7 +14,9 @@ def common_houston_config_test_cases(docs):
     assert doc["apiVersion"] == "v1"
     assert doc["metadata"]["name"] == "release-name-houston-config"
 
+
 default_resource = {"limits": {"cpu": "1000m", "memory": "1024Mi"}, "requests": {"cpu": "500m", "memory": "512Mi"}}
+
 
 @pytest.mark.parametrize(
     "kube_version",
