@@ -32,12 +32,9 @@ spec:
           sidecar.istio.io/inject: "false"
         {{- end }}
       spec:
-        nodeSelector:
-{{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 10 }}
-        affinity:
-{{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 10 }}
-        tolerations:
-{{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 10 }}
+        nodeSelector: {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 10 }}
+        affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 10 }}
+        tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 10 }}
 {{- include "kibana.imagePullSecrets" . | indent 8 }}
         containers:
         - name: kibana-default-index
