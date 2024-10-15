@@ -87,6 +87,7 @@ spec:
       - name: jetstream-template-fixer
         image: {{ template "dbBootstrapper.image" . }}
         securityContext: {{ template "nats.securityContext" . }}
+        resources: {{ toYaml .Values.nats.resources | nindent 10 }}
         command:
         - /bin/sh
         - -c
