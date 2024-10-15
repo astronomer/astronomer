@@ -33,6 +33,12 @@ spec:
         {{- end }}
       spec:
 {{- include "kibana.imagePullSecrets" . | indent 8 }}
+        nodeSelector:
+{{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
+        affinity:
+{{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 8 }}
+        tolerations:
+{{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
         containers:
         - name: kibana-default-index
           image: {{ template "kibana.init.image" . }}
