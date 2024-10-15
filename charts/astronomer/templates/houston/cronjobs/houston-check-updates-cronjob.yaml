@@ -44,13 +44,7 @@ spec:
             - name: update-check
               image: {{ template "houston.image" . }}
               securityContext: {{ toYaml .Values.securityContext | nindent 16 }}
-              resources:
-                requests:
-                  cpu: "500m"
-                  memory: "1024Mi"
-                limits:
-                  cpu: "1000m"
-                  memory: "2048Mi"
+              resources: {{ toYaml .Values.houston.resources | nindent 16 }}
               imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
               # If you supply only args for a Container, the default Entrypoint defined in the Docker image is run with the args that you supplied.
               args: ["yarn", "check-platform-updates", "--", " --url={{ .Values.houston.updateCheck.url }}"]

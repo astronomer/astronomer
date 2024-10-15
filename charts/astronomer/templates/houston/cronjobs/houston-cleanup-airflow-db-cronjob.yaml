@@ -45,6 +45,7 @@ spec:
               image: {{ template "houston.image" . }}
               imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
               securityContext: {{ toYaml .Values.securityContext | nindent 16 }}
+              resources: {{ toYaml .Values.houston.resources | nindent 16 }}
               args: ["yarn", "cleanup-airflow-db-data", "--",
               "--older-than={{ .Values.houston.cleanupAirflowDb.olderThan }}",
               "--dry-run={{ .Values.houston.cleanupAirflowDb.dryRun }}",
