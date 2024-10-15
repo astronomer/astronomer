@@ -82,9 +82,9 @@ def test_nginx_ssl_cache(nginx):
 
 def test_nginx_capabilities(nginx):
     """Ensure nginx has no getcap capabilities"""
-    assert "" == nginx.check_output("getcap /nginx-ingress-controller").replace("\t", "")
-    assert "" == nginx.check_output("getcap usr/local/nginx/sbin/nginx").replace("\t", "")
-    assert "" == nginx.check_output("getcap /usr/bin/dumb-init").replace("\t", "")
+    assert nginx.check_output("getcap /nginx-ingress-controller").replace("\t", "") == "/nginx-ingress-controller ="
+    assert nginx.check_output("getcap /usr/local/nginx/sbin/nginx").replace("\t", "") == "/usr/local/nginx/sbin/nginx ="
+    assert nginx.check_output("getcap /usr/bin/dumb-init").replace("\t", "") == "/usr/bin/dumb-init ="
 
 
 @pytest.mark.flaky(reruns=20, reruns_delay=10)
