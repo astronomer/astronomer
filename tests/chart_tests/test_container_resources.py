@@ -39,6 +39,6 @@ class TestPodResources:
         ids=test_pod_resources_configs_data.keys(),
     )
     def test_pod_resources_configs(self, pod_resources):
-        """Labels check for definition."""
+        """Test that all pod containers have a resources section defined."""
         for container in pod_resources:
             assert "resources" in container
