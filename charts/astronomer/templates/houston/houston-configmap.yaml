@@ -120,6 +120,7 @@ data:
         {{- if .Values.global.authSidecar.securityContext}}
         securityContext: {{- .Values.global.authSidecar.securityContext | toYaml | nindent 10 }}
         {{- end }}
+        resources: {{- .Values.global.authSidecar.resources | toYaml | nindent 10 }}
         annotations: {
           {{- range $key, $value := .Values.global.extraAnnotations}}
           {{ $key }}: {{ $value | quote }},
