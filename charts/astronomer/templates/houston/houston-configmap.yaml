@@ -17,6 +17,11 @@ data:
     {{ .Values.houston.airflowReleasesConfig | toJson }}
   # These are system-specified config overrides.
   {{- end }}
+  {{ if .Values.houston.RuntimeReleasesConfig }}
+  astro_runtime_releases.json: |
+    {{ .Values.houston.RuntimeReleasesConfig | toJson }}
+  # These are system-specified config overrides.
+  {{- end }}
   production.yaml: |
     webserver:
       port: {{ .Values.ports.houstonHTTP }}
@@ -115,6 +120,7 @@ data:
         {{- if .Values.global.authSidecar.securityContext}}
         securityContext: {{- .Values.global.authSidecar.securityContext | toYaml | nindent 10 }}
         {{- end }}
+        resources: {{- .Values.global.authSidecar.resources | toYaml | nindent 10 }}
         annotations: {
           {{- range $key, $value := .Values.global.extraAnnotations}}
           {{ $key }}: {{ $value | quote }},
