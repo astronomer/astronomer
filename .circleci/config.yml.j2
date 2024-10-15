@@ -126,7 +126,7 @@ jobs:
           name: Run Release BOM Script
           command: |
             source venv/bin/activate
-            bin/release-bom --version ${VERSION}
+            bin/release-bom -x ${VERSION}
 
   run_pre_commit:
     docker:
