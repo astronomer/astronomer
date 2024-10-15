@@ -280,6 +280,11 @@ s3:
   mountPath: /houston/airflow_releases.json
   subPath: airflow_releases.json
 {{- end }}
+{{ if .Values.houston.RuntimeReleasesConfig }}
+- name: houston-config-volume
+  mountPath: /houston/astro_runtime_releases.json
+  subPath: astro_runtime_releases.json
+{{- end }}
 - name: houston-jwt-key-volume
   mountPath: {{ template "houston.jwtKeyPath" . }}
   subPath: tls.key
