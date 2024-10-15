@@ -114,10 +114,10 @@ jobs:
     steps:
       - checkout
       - run:
-        name: Get Version from Git Tag
-        command: |
-          VERSION=$(git describe --tags --abbrev=0)
-          echo "VERSION=${VERSION}"
+          name: Get Version from Git Tag
+          command: |
+            VERSION=$(git describe --tags --abbrev=0)
+            echo "VERSION=${VERSION}"
       - run:
           name: Install dependencies
           command: |
