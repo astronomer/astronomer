@@ -115,7 +115,8 @@ jobs:
           name: Get Version from Git Tag
           command: |
             VERSION=$(git describe --tags --abbrev=0)
-            echo "VERSION=${VERSION}"
+            VERSION=${VERSION#v}
+            echo "VERSION=${VERSION}" >> $BASH_ENV
       - run:
           name: Install dependencies
           command: |
