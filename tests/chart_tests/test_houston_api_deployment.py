@@ -201,15 +201,7 @@ class TestHoustonApiDeployment:
     def test_houston_configmap_with_RuntimeReleasesConfig_enabled(self, kube_version):
         """Validate the houston configmap and its embedded data with RuntimeReleasesConfig defined
         ."""
-
-        runtime_releases_json = {
-            "runtimeVersions": {
-                "4.2.6": {
-                    "metadata": {"airflowVersion": "2.2.5", "channel": "stable", "releaseDate": "2022-04-19"},
-                    "migrations": {"airflowDatabase": False},
-                }
-            }
-        }
+        runtime_releases_json = {"runtimeVersions": {"12.1.1": {"metadata": {"airflowVersion": "2.2.5", "channel": "stable"}}}}
         docs = render_chart(
             kube_version=kube_version,
             values={"astronomer": {"houston": {"RuntimeReleasesConfig": runtime_releases_json}}},

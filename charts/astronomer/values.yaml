@@ -313,16 +313,12 @@ houston:
 
   RuntimeReleasesConfig:
     # example of usage:
-    # available_releases:
-    #runtimeVersions:
-    #  4.2.6:
+    # below are default mandatory fields
+    # runtimeVersions:
+    #  12.1.1:
     #    metadata:
-    #      airflowVersion: 2.2.5
+    #      airflowVersion: 2.10.2
     #      channel: stable
-    #      releaseDate: '2022-04-19'
-    #    migrations:
-    #      airflowDatabase: false
-
 
   # Add extra containers here
   extraContainers: []
@@ -340,7 +336,6 @@ configSyncer:
   # If not provided, will generate a random hour and minutes to spread cronjob workloads.
   schedule: ~
   securityContext: {}
-  resources: {}
   serviceAccount:
     # Specifies whether a service account should be created
     create: true
