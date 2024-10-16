@@ -122,12 +122,10 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            python -m venv venv
-            venv/bin/pip install git+https://${GITHUB_TOKEN}@github.com/astronomer/astronomer-bom-generator.git
+            pip install git+https://${GITHUB_TOKEN}@github.com/astronomer/astronomer-bom-generator.git
       - run:
           name: Run Release BOM Script
           command: |
-            source venv/bin/activate
             bin/release-bom -x ${VERSION}
 
   run_pre_commit:
