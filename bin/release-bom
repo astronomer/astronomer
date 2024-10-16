@@ -29,7 +29,7 @@ fi
 version="$1"
 repo_url="https://updates.astronomer.io/astronomer-software/releases"
 json_file_name="astronomer-${version}.json"
-local_json_file_path="./astronomer_bom_generator/doc/${json_file_name}"
+local_json_file_path="${json_file_name}"
 max_age="300"
 
 # Step 1: Runs the Python extractor script to generate the BOM JSON file
