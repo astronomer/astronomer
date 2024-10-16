@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC1090,SC1091
 set -eo pipefail
-BOM_GENERATOR_VERSION=v0.1.0
+BOM_GENERATOR_VERSION=v0.2.0
 help() {
   echo "Description:"
   echo "    Generate and publish a BOM JSON file for the given version to the public release repository."
