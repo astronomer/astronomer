@@ -106,6 +106,26 @@ jobs:
           command: |
             ./twistcli images scan --address $CONSOLE_URL --user=$USER --password=$PASSWORD --details << parameters.docker_image >>
 
+  release_bom:
+    docker:
+      - image: cimg/python:3.12
+    steps:
+      - checkout
+      - run:
+          name: Get Version from Git Tag
+          command: |
+            VERSION=$(git describe --tags --abbrev=0)
+            VERSION=${VERSION#v}
+            echo "VERSION=${VERSION}" >> $BASH_ENV
+      - run:
+          name: Install dependencies
+          command: |
+            pip install git+https://${GITHUB_TOKEN}@github.com/astronomer/astronomer-bom-generator.git
+      - run:
+          name: Run Release BOM Script
+          command: |
+            bin/release-bom -x ${VERSION}
+
   run_pre_commit:
     docker:
       - image: quay.io/astronomer/ci-pre-commit:{{ ci_runner_version }}
@@ -365,7 +385,15 @@ workflows:
             branches:
               only:
                 - '/^release-0\.\d+$/'
-
+      - release_bom:
+          context:
+            - github-repo
+            - gcp-astronomer-prod
+          filters:
+              branches:
+                only:
+                  - '/^release-0\.\d+$/'
+                  - 'fix-6117-adding-ci-job'
       - release-to-public:
           context:
             - gcp-astronomer-prod
