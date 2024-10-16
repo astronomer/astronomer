@@ -48,6 +48,15 @@ fi
 echo "${GCP_TOKEN}" > /tmp/gcs_token.json
 gcloud auth activate-service-account --key-file=/tmp/gcs_token.json
 
+echo "Installing gcloud"
+sudo apt-get update
+sudo apt-get install apt-transport-https ca-certificates gnupg curl
+curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/cloud.google.gpg
+curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
+curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+sudo apt-get update && sudo apt-get install google-cloud-cli
+
 # Step 3: Check if the file already exists in the destination
 if gsutil -q stat "gs://${repo_url}/${json_file_name}" ; then
   echo "ABORT: destination file ${json_file_name} already exists. Did you forget to bump the version number?"
