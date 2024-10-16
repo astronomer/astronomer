@@ -67,6 +67,6 @@ fi
 # Step 4: Upload the BOM JSON file to the public release repository
 echo "Uploading ${json_file_name} to ${bucket_path}..."
 gsutil cp "${local_json_file_path}" "gs://${bucket_path}"
-gsutil -h "Cache-Control: public, max-age=${max_age}" cp "${local_json_file_path}" "gs://${bucket_path}"
+gsutil -h "Cache-Control: public, max-age=${max_age}" cp "${local_json_file_path}" "${bucket_path}"
 
 echo "Successfully published ${json_file_name} to ${repo_url}"
