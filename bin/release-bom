@@ -59,14 +59,14 @@ echo "${GCP_TOKEN}" > /tmp/gcs_token.json
 gcloud auth activate-service-account --key-file=/tmp/gcs_token.json
 
 # Step 3: Check if the file already exists in the destination
-if gsutil -q stat "gs://${bucket_path}/${json_file_name}" ; then
+if gsutil -q stat "${bucket_path}/${json_file_name}" ; then
   echo "ABORT: destination file ${json_file_name} already exists. Did you forget to bump the version number?"
   exit 1
 fi
 
 # Step 4: Upload the BOM JSON file to the public release repository
 echo "Uploading ${json_file_name} to ${bucket_path}..."
-gsutil cp "${local_json_file_path}" "gs://${bucket_path}"
+gsutil cp "${local_json_file_path}" "${bucket_path}"
 gsutil -h "Cache-Control: public, max-age=${max_age}" cp "${local_json_file_path}" "${bucket_path}"
 
 echo "Successfully published ${json_file_name} to ${repo_url}"
