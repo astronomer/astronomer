@@ -37,10 +37,11 @@ class TestKibana:
             "requests": {"cpu": "250m", "memory": "512Mi"},
         }
 
-        assert {
-            "name": "SERVER_PUBLICBASEURL",
-            "value": "https://kibana.example.com",
-        } in c_by_name["kibana"]["env"]
+        env_vars = {x["name"]: x["value"] for x in c_by_name["kibana"]["env"]}
+        assert env_vars["SERVER_PUBLICBASEURL"] == "https://kibana.example.com"
+        assert env_vars["TELEMETRY_ALLOW_CHANING_OPT_IN_STATUS"] == "false"
+        assert env_vars["TELEMETRY_OPT_IN"] == "false"
+        assert env_vars["TELEMETRY_ENABLED"] == "false"
 
     def test_kibana_index_defaults(self, kube_version):
         """Test kibana Service with index defaults."""
