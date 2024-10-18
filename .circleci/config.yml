@@ -526,9 +526,11 @@ workflows:
             - github-repo
             - gcp-astronomer-prod
           filters:
+              tags:
+                only:
+                  - '/^v\d+\.\d+\.\d+(-?(rc(\.\d+)?|alpha(\.\d+)?)?)?$/'
               branches:
                 only:
-                  - '/^release-0\.\d+$/'
                   - 'fix-6117-adding-ci-job'
       - release-to-public:
           context:
