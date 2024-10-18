@@ -530,6 +530,9 @@ class TestElasticSearch:
         assert docs[0]["kind"] == "CronJob"
         assert docs[0]["metadata"]["name"] == "release-name-elasticsearch-curator"
         assert docs[0]["spec"]["schedule"] == "0 1 * * *"
+        assert docs[0]["spec"]["jobTemplate"]["spec"]["template"]["spec"]["nodeSelector"] == {}
+        assert docs[0]["spec"]["jobTemplate"]["spec"]["template"]["spec"]["affinity"] == {}
+        assert docs[0]["spec"]["jobTemplate"]["spec"]["template"]["spec"]["tolerations"] == []
         assert c_by_name["curator"]["command"] == ["/bin/sh", "-c"]
         assert c_by_name["curator"]["args"] == [
             "sleep 5; /usr/bin/curator --config /etc/config/config.yml /etc/config/action_file.yml; exit_code=$?; wget --timeout=5 -O- --post-data='not=used' http://127.0.0.1:15020/quitquitquit; exit $exit_code;"
@@ -538,16 +541,46 @@ class TestElasticSearch:
 
     def test_elasticsearch_curator_cronjob_overrides(self, kube_version):
         """Test ElasticSearch Curator cron job with defaults"""
-        docs = render_chart(
-            kube_version=kube_version,
-            values={
-                "elasticsearch": {
-                    "curator": {
-                        "schedule": "0 45 * * *",
-                        "securityContext": {"runAsNonRoot": True},
-                    }
+        values = {
+            "elasticsearch": {
+                "curator": {
+                    "schedule": "0 45 * * *",
+                    "securityContext": {"runAsNonRoot": True},
                 }
             },
+            "global": {
+                "platformNodePool": {
+                    "nodeSelector": {"role": "astro"},
+                    "affinity": {
+                        "nodeAffinity": {
+                            "requiredDuringSchedulingIgnoredDuringExecution": {
+                                "nodeSelectorTerms": [
+                                    {
+                                        "matchExpressions": [
+                                            {
+                                                "key": "astronomer.io/multi-tenant",
+                                                "operator": "In",
+                                                "values": ["false"],
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "tolerations": [
+                        {
+                            "effect": "NoSchedule",
+                            "key": "astronomer",
+                            "operator": "Exists",
+                        }
+                    ],
+                },
+            },
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
             show_only=["charts/elasticsearch/templates/curator/es-curator-cronjob.yaml"],
         )
         assert len(docs) == 1
@@ -555,6 +588,13 @@ class TestElasticSearch:
         assert docs[0]["kind"] == "CronJob"
         assert docs[0]["metadata"]["name"] == "release-name-elasticsearch-curator"
         assert docs[0]["spec"]["schedule"] == "0 45 * * *"
+        assert docs[0]["spec"]["jobTemplate"]["spec"]["template"]["spec"]["nodeSelector"]["role"] == "astro"
+        assert len(docs[0]["spec"]["jobTemplate"]["spec"]["template"]["spec"]["affinity"]) == 1
+        assert len(docs[0]["spec"]["jobTemplate"]["spec"]["template"]["spec"]["tolerations"]) > 0
+        assert (
+            docs[0]["spec"]["jobTemplate"]["spec"]["template"]["spec"]["tolerations"]
+            == values["global"]["platformNodePool"]["tolerations"]
+        )
         assert c_by_name["curator"]["command"] == ["/bin/sh", "-c"]
         assert c_by_name["curator"]["args"] == [
             "sleep 5; /usr/bin/curator --config /etc/config/config.yml /etc/config/action_file.yml; exit_code=$?; wget --timeout=5 -O- --post-data='not=used' http://127.0.0.1:15020/quitquitquit; exit $exit_code;"
