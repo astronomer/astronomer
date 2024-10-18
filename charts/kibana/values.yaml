@@ -34,6 +34,9 @@ env:
   # XPACK_ML_ENABLED: "false"
   # XPACK_REPORTING_ENABLED: "false"
   # XPACK_SECURITY_ENABLED: "false"
+  TELEMETRY_ALLOW_CHANING_OPT_IN_STATUS: "false"
+  TELEMETRY_OPT_IN: "false"
+  TELEMETRY_ENABLED: "false"
 
 serviceType: ClusterIP
 
