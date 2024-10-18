@@ -1,3 +1,4 @@
+from textwrap import dedent, indent
 from tests.chart_tests.helm_template_generator import render_chart
 import pytest
 from tests import supported_k8s_versions, get_containers_by_name
@@ -17,9 +18,9 @@ class TestFluentd:
         assert doc["kind"] == "DaemonSet"
         assert doc["metadata"]["name"] == "release-name-fluentd"
 
-    def test_fluentd_daemonset(self, kube_version):
-        """Test that helm renders a volume mount for private ca certificates for
-        fluentd daemonset when private-ca-certificates are enabled."""
+    def test_fluentd_daemonset_private_ca(self, kube_version):
+        """Test that helm renders a volume mount for private ca certificates for fluentd daemonset when
+        private-ca-certificates are enabled."""
         docs = render_chart(
             kube_version=kube_version,
             values={"global": {"privateCaCerts": ["private-root-ca"]}},
@@ -39,7 +40,9 @@ class TestFluentd:
                 }
             ]
         ]
+
         assert search_result == expected_result
+
         search_result_es_index_template_volume_mount = jmespath.search(
             "spec.template.spec.containers[*].volumeMounts[?name == 'release-name-fluentd-index-template-volume']",
             docs[0],
@@ -72,8 +75,7 @@ class TestFluentd:
         assert search_result_es_index_template_volume == expected_result_es_index_template_volume
 
     def test_fluentd_clusterrolebinding(self, kube_version):
-        """Test that helm renders a good ClusterRoleBinding template for fluentd
-        when rbacEnabled=True."""
+        """Test that helm renders a good ClusterRoleBinding template for fluentd when rbacEnabled=True."""
         docs = render_chart(
             kube_version=kube_version,
             values={"global": {"rbacEnabled": True}},
@@ -96,8 +98,8 @@ class TestFluentd:
         assert len(docs) == 0
 
     def test_fluentd_configmap_manual_namespaces_enabled(self, kube_version):
-        """Test that when namespace Pools is disabled, and manualNamespaces is
-        enabled, helm renders fluentd configmap targeting all namespaces."""
+        """Test that when namespace Pools is disabled, and manualNamespaces is enabled, helm renders fluentd
+        configmap targeting all namespaces."""
         doc = render_chart(
             kube_version=kube_version,
             values={
@@ -117,9 +119,8 @@ class TestFluentd:
         assert expected_rule in doc["data"]["output.conf"]
 
     def test_fluentd_configmap_manual_namespaces_and_namespacepools_disabled(self, kube_version):
-        """Test that when namespace Pools and manualNamespaceNamesEnabled are
-        disabled, helm renders a default fluentd configmap looking at an
-        environment variable."""
+        """Test that when namespace Pools and manualNamespaceNamesEnabled are disabled, helm renders a default fluentd configmap
+        looking at an environment variable."""
         doc = render_chart(
             kube_version=kube_version,
             values={
@@ -139,35 +140,39 @@ class TestFluentd:
         assert expected_rule in doc["data"]["output.conf"]
 
     def test_fluentd_configmap_configure_extra_log_stores(self, kube_version):
-        """Test that when namespace Pools and manualNamespaceNamesEnabled are
-        disabled, helm renders a default fluentd configmap looking at an
-        environment variable."""
+        """Test that when namespace Pools and manualNamespaceNamesEnabled are disabled, helm renders a default fluentd configmap
+        looking at an environment variable."""
+        values = {
+            "fluentd": {
+                "extraLogStores": indent(
+                    dedent(
+                        """
+                        <store>
+                        @type newrelic
+                        @log_level info
+                        base_uri https://log-api.newrelic.com/log/v1
+                        license_key <LICENSE_KEY>
+                        <buffer>
+                            @type memory
+                            flush_interval 5s
+                        </buffer>
+                        </store>
+                        """
+                    ),
+                    "  ",
+                )
+            }
+        }
         doc = render_chart(
             kube_version=kube_version,
-            values={
-                "fluentd": {
-                    "extraLogStores": """
-<store>
-  @type newrelic
-  @log_level info
-  base_uri https://log-api.newrelic.com/log/v1
-  license_key <LICENSE_KEY>
-  <buffer>
-    @type memory
-    flush_interval 5s
-  </buffer>
-</store>
-                    """
-                }
-            },
+            values=values,
             show_only=["charts/fluentd/templates/fluentd-configmap.yaml"],
         )[0]
         expected_store = "  <store>\n    @type newrelic\n    @log_level info\n    base_uri https://log-api.newrelic.com/log/v1\n    license_key <LICENSE_KEY>"
         assert expected_store in doc["data"]["output.conf"]
 
     def test_fluentd_pod_securityContextOverride(self, kube_version):
-        """Test that helm renders a container securityContext when securityContext
-        is enabled."""
+        """Test that helm renders a container securityContext when securityContext is enabled."""
 
         docs = render_chart(
             kube_version=kube_version,
@@ -183,8 +188,7 @@ class TestFluentd:
         assert pod_search_result["securityContext"]["runAsUser"] == 9999
 
     def test_fluentd_container_securityContextOverride(self, kube_version):
-        """Test that helm renders a container securityContext when securityContext
-        is enabled."""
+        """Test that helm renders a container securityContext when securityContext is enabled."""
 
         docs = render_chart(
             kube_version=kube_version,
@@ -209,8 +213,7 @@ class TestFluentd:
         assert container_search_result[0]["securityContext"]["runAsUser"] == 8888
 
     def test_fluentd_securityContext_empty_by_default(self, kube_version):
-        """Test that no securityContext is present by default on pod or
-        container."""
+        """Test that no securityContext is present by default on pod or container."""
 
         docs = render_chart(
             kube_version=kube_version,

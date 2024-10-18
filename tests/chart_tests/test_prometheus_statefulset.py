@@ -10,8 +10,8 @@ from tests import supported_k8s_versions, get_containers_by_name
 class TestPrometheusStatefulset:
     show_only = ["charts/prometheus/templates/prometheus-statefulset.yaml"]
 
-    def test_prometheus_sts_basic_cases(self, kube_version):
-        """Test some things that should apply to all cases."""
+    def test_prometheus_sts_defaults(self, kube_version):
+        """Test the default behavior of the prometheus statefulset."""
         docs = render_chart(
             kube_version=kube_version,
             show_only=self.show_only,
@@ -41,16 +41,22 @@ class TestPrometheusStatefulset:
             {"mountPath": "/prometheus", "name": "data"},
         ]
         assert "persistentVolumeClaimRetentionPolicy" not in doc["spec"]
-        # check default liveness probe values
         assert c_by_name["prometheus"]["livenessProbe"]["initialDelaySeconds"] == 10
         assert c_by_name["prometheus"]["livenessProbe"]["periodSeconds"] == 5
         assert c_by_name["prometheus"]["livenessProbe"]["failureThreshold"] == 3
         assert c_by_name["prometheus"]["livenessProbe"]["timeoutSeconds"] == 1
-        # check default readiness probe values
         assert c_by_name["prometheus"]["readinessProbe"]["initialDelaySeconds"] == 10
         assert c_by_name["prometheus"]["readinessProbe"]["periodSeconds"] == 5
         assert c_by_name["prometheus"]["readinessProbe"]["failureThreshold"] == 3
         assert c_by_name["prometheus"]["readinessProbe"]["timeoutSeconds"] == 1
+        assert c_by_name["configmap-reloader"]["livenessProbe"]["initialDelaySeconds"] == 10
+        assert c_by_name["configmap-reloader"]["livenessProbe"]["periodSeconds"] == 5
+        assert c_by_name["configmap-reloader"]["livenessProbe"]["failureThreshold"] == 3
+        assert c_by_name["configmap-reloader"]["livenessProbe"]["timeoutSeconds"] == 1
+        assert c_by_name["configmap-reloader"]["readinessProbe"]["initialDelaySeconds"] == 10
+        assert c_by_name["configmap-reloader"]["readinessProbe"]["periodSeconds"] == 5
+        assert c_by_name["configmap-reloader"]["readinessProbe"]["failureThreshold"] == 3
+        assert c_by_name["configmap-reloader"]["readinessProbe"]["timeoutSeconds"] == 1
 
     def test_prometheus_sts_override_probes(self, kube_version):
         """Test override of probe values."""
@@ -60,16 +66,30 @@ class TestPrometheusStatefulset:
             values={
                 "prometheus": {
                     "livenessProbe": {
-                        "initialDelaySeconds": 20,
-                        "periodSeconds": 21,
-                        "failureThreshold": 22,
-                        "timeoutSeconds": 15,
+                        "initialDelaySeconds": 999,
+                        "periodSeconds": 998,
+                        "failureThreshold": 997,
+                        "timeoutSeconds": 996,
                     },
                     "readinessProbe": {
-                        "initialDelaySeconds": 30,
-                        "periodSeconds": 31,
-                        "failureThreshold": 32,
-                        "timeoutSeconds": 15,
+                        "initialDelaySeconds": 995,
+                        "periodSeconds": 994,
+                        "failureThreshold": 993,
+                        "timeoutSeconds": 992,
+                    },
+                    "configMapReloader": {
+                        "livenessProbe": {
+                            "initialDelaySeconds": 991,
+                            "periodSeconds": 990,
+                            "failureThreshold": 989,
+                            "timeoutSeconds": 988,
+                        },
+                        "readinessProbe": {
+                            "initialDelaySeconds": 987,
+                            "periodSeconds": 986,
+                            "failureThreshold": 985,
+                            "timeoutSeconds": 984,
+                        },
                     },
                 }
             },
@@ -78,16 +98,22 @@ class TestPrometheusStatefulset:
         doc = docs[0]
 
         c_by_name = get_containers_by_name(doc)
-        # check modified liveness probe values
-        assert c_by_name["prometheus"]["livenessProbe"]["initialDelaySeconds"] == 20
-        assert c_by_name["prometheus"]["livenessProbe"]["periodSeconds"] == 21
-        assert c_by_name["prometheus"]["livenessProbe"]["failureThreshold"] == 22
-        assert c_by_name["prometheus"]["livenessProbe"]["timeoutSeconds"] == 15
-        # check modified readiness probe values
-        assert c_by_name["prometheus"]["readinessProbe"]["initialDelaySeconds"] == 30
-        assert c_by_name["prometheus"]["readinessProbe"]["periodSeconds"] == 31
-        assert c_by_name["prometheus"]["readinessProbe"]["failureThreshold"] == 32
-        assert c_by_name["prometheus"]["readinessProbe"]["timeoutSeconds"] == 15
+        assert c_by_name["prometheus"]["livenessProbe"]["initialDelaySeconds"] == 999
+        assert c_by_name["prometheus"]["livenessProbe"]["periodSeconds"] == 998
+        assert c_by_name["prometheus"]["livenessProbe"]["failureThreshold"] == 997
+        assert c_by_name["prometheus"]["livenessProbe"]["timeoutSeconds"] == 996
+        assert c_by_name["prometheus"]["readinessProbe"]["initialDelaySeconds"] == 995
+        assert c_by_name["prometheus"]["readinessProbe"]["periodSeconds"] == 994
+        assert c_by_name["prometheus"]["readinessProbe"]["failureThreshold"] == 993
+        assert c_by_name["prometheus"]["readinessProbe"]["timeoutSeconds"] == 992
+        assert c_by_name["configmap-reloader"]["livenessProbe"]["initialDelaySeconds"] == 991
+        assert c_by_name["configmap-reloader"]["livenessProbe"]["periodSeconds"] == 990
+        assert c_by_name["configmap-reloader"]["livenessProbe"]["failureThreshold"] == 989
+        assert c_by_name["configmap-reloader"]["livenessProbe"]["timeoutSeconds"] == 988
+        assert c_by_name["configmap-reloader"]["readinessProbe"]["initialDelaySeconds"] == 987
+        assert c_by_name["configmap-reloader"]["readinessProbe"]["periodSeconds"] == 986
+        assert c_by_name["configmap-reloader"]["readinessProbe"]["failureThreshold"] == 985
+        assert c_by_name["configmap-reloader"]["readinessProbe"]["timeoutSeconds"] == 984
 
     def test_prometheus_with_extraFlags(self, kube_version):
         docs = render_chart(

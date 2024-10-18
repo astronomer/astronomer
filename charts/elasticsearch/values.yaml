@@ -67,6 +67,7 @@ common:
 
   ports:
     http: 9200
+    readiness: 9399
     transport: 9300
 
 # Client/ingest nodes can execute pre-processing pipelines, composed of
@@ -126,6 +127,18 @@ data:
   resources:
     requests:
       memory: 256Mi
+
+  livenessProbe:
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 1
+    failureThreshold: 3
+  readinessProbe:
+    initialDelaySeconds: 20
+    periodSeconds: 10
+    timeoutSeconds: 1
+    failureThreshold: 3
+
 
   env:
     NODE_DATA: "true"
