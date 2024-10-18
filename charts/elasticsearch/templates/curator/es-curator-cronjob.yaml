@@ -36,6 +36,12 @@ spec:
             app: {{ template "elasticsearch.name" . }}-curator
             version: {{ .Chart.Version }}
         spec:
+          nodeSelector:
+{{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 12 }}
+          affinity:
+{{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 12 }}
+          tolerations:
+{{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 12 }}
 {{- include "elasticsearch.imagePullSecrets" . | indent 10 }}
           containers:
           - name: curator
