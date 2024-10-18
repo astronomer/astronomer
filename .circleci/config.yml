@@ -108,6 +108,33 @@ jobs:
           command: |
             ./twistcli images scan --address $CONSOLE_URL --user=$USER --password=$PASSWORD --details << parameters.docker_image >>
 
+  release_bom:
+    docker:
+      - image: cimg/python:3.12
+    steps:
+      - checkout
+      - run:
+          name: Get Version from Git Tag
+          command: |
+            VERSION=$(git describe --tags --abbrev=0)
+            VERSION=${VERSION#v}
+            echo "VERSION=${VERSION}" >> $BASH_ENV
+      - run:
+          name: Install dependencies
+          command: |
+            sudo apt-get update
+            sudo apt-get install apt-transport-https ca-certificates gnupg curl
+            curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/cloud.google.gpg
+            curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
+            curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+            echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+            sudo apt-get update && sudo apt-get install google-cloud-cli
+            pip install git+https://${GITHUB_TOKEN}@github.com/astronomer/astronomer-bom-generator.git
+      - run:
+          name: Run Release BOM Script
+          command: |
+            bin/release-bom -x ${VERSION}
+
   run_pre_commit:
     docker:
       - image: quay.io/astronomer/ci-pre-commit:2024-09
@@ -501,7 +528,17 @@ workflows:
             branches:
               only:
                 - '/^release-0\.\d+$/'
-
+      - release_bom:
+          context:
+            - github-repo
+            - gcp-astronomer-prod
+          filters:
+              tags:
+                only:
+                  - '/^v\d+\.\d+\.\d+(-?(rc(\.\d+)?|alpha(\.\d+)?)?)?$/'
+              branches:
+                only:
+                  - 'fix-6117-adding-ci-job'
       - release-to-public:
           context:
             - gcp-astronomer-prod
