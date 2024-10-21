@@ -87,9 +87,9 @@ class TestPrometheusPostgresExporter:
             show_only=["charts/prometheus-postgres-exporter/templates/deployment.yaml"],
         )
         assert len(docs) == 1
-        doc = docs[0]
-        assert len(doc["spec"]["template"]["spec"]["nodeSelector"]) == 1
-        assert len(doc["spec"]["template"]["spec"]["affinity"]) == 1
-        assert len(doc["spec"]["template"]["spec"]["tolerations"]) > 0
-        doc["spec"]["template"]["spec"]["nodeSelector"] == "astro-prometheus-postgres-exporter"
-        assert doc["spec"]["template"]["spec"]["tolerations"] == values["prometheus-postgres-exporter"]["tolerations"]
+        spec = docs[0]["spec"]["template"]["spec"]
+        assert len(spec["nodeSelector"]) == 1
+        assert len(spec["affinity"]) == 1
+        assert len(spec["tolerations"]) > 0
+        spec["nodeSelector"] == values["prometheus-postgres-exporter"]["nodeSelector"]
+        assert spec["tolerations"] == values["prometheus-postgres-exporter"]["tolerations"]
