@@ -262,3 +262,48 @@ class TestNginx:
         c_by_name = get_containers_by_name(doc)
         disableLeaderElection = "--disable-leader-election=true"
         assert disableLeaderElection in c_by_name["nginx"]["args"]
+
+    def test_nginx_with_capability_default(self):
+        doc = render_chart(
+            show_only=["charts/nginx/templates/nginx-deployment.yaml"],
+        )[0]
+        security_context = doc["spec"]["template"]["spec"]["containers"][0]["securityContext"]
+        expected_security_context = {
+            "runAsUser": 101,
+            "runAsNonRoot": True,
+            "capabilities": {"drop": ["ALL"]},
+            "allowPrivilegeEscalation": False,
+        }
+
+        assert security_context == expected_security_context
+
+    def test_nginx_with_add_functionality_capability(self):
+
+        values = {
+            "nginx": {
+                "securityContext": {
+                    "runAsUser": 101,
+                    "runAsNonRoot": True,
+                    "capabilities": {
+                        "drop": ["ALL"],
+                        # Add the capability NET_BIND_SERVICE if needed
+                        "add": ["NET_BIND_SERVICE"],
+                    },
+                    "allowPrivilegeEscalation": False,
+                }
+            }
+        }
+
+        doc = render_chart(
+            values=values,
+            show_only=["charts/nginx/templates/nginx-deployment.yaml"],
+        )[0]
+        security_context = doc["spec"]["template"]["spec"]["containers"][0]["securityContext"]
+        expected_security_context = {
+            "runAsUser": 101,
+            "runAsNonRoot": True,
+            "capabilities": {"drop": ["ALL"], "add": ["NET_BIND_SERVICE"]},
+            "allowPrivilegeEscalation": False,
+        }
+
+        assert security_context == expected_security_context
