@@ -199,6 +199,7 @@ class TestNginx:
         assert annotationValidation in doc["spec"]["template"]["spec"]["containers"][0]["args"]
 
     def test_nginx_backend_serviceaccount_defaults(self):
+        """Test nginx ingress deployment service account defaults."""
         doc = render_chart(
             values={},
             show_only=["charts/nginx/templates/nginx-default-backend-serviceaccount.yaml"],
@@ -207,6 +208,7 @@ class TestNginx:
         assert "release-name-nginx-default-backend" == doc["metadata"]["name"]
 
     def test_nginx_defaults(self):
+        """Test nginx ingress deployment template defaults."""
         doc = render_chart(
             values={},
             show_only=["charts/nginx/templates/nginx-deployment.yaml"],
@@ -234,6 +236,7 @@ class TestNginx:
         assert expected_security_context == c_by_name["nginx"]["securityContext"]
 
     def test_nginx_min_ready_seconds_overrides(self):
+        """Test nginx ingress deployment template with min ready seconds overrides."""
         minReadySeconds = 300
         doc = render_chart(
             values={"nginx": {"minReadySeconds": minReadySeconds}},
@@ -243,6 +246,7 @@ class TestNginx:
         assert doc["spec"]["minReadySeconds"] == minReadySeconds
 
     def test_nginx_election_ttl_overrides(self):
+        """Test nginx ingress deployment template with election ttl overrides."""
         doc = render_chart(
             values={"nginx": {"electionTTL": "30s"}},
             show_only=["charts/nginx/templates/nginx-deployment.yaml"],
@@ -252,6 +256,7 @@ class TestNginx:
         assert electionTTL in c_by_name["nginx"]["args"]
 
     def test_nginx_topology_aware_routing_overrides(self):
+        """Test nginx ingress deployment template with topology aware routing overrides."""
         doc = render_chart(
             values={"nginx": {"enableTopologyAwareRouting": True}},
             show_only=["charts/nginx/templates/nginx-deployment.yaml"],
@@ -261,6 +266,7 @@ class TestNginx:
         assert topologyAwareRouting in c_by_name["nginx"]["args"]
 
     def test_nginx_disable_leader_election_overrides(self):
+        """Test nginx ingress deployment template with leader election overrides."""
         doc = render_chart(
             values={"nginx": {"disableLeaderElection": True}},
             show_only=["charts/nginx/templates/nginx-deployment.yaml"],
@@ -270,6 +276,7 @@ class TestNginx:
         assert disableLeaderElection in c_by_name["nginx"]["args"]
 
     def test_nginx_security_context_overrides(self):
+        """Test nginx ingress deployment template with security context overrides."""
 
         values = {
             "nginx": {
