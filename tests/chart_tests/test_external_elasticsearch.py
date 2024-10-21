@@ -590,10 +590,10 @@ class TestExternalElasticSearch:
         )
 
         assert len(docs) == 1
-        doc = docs[0]
-        assert doc["spec"]["template"]["spec"]["nodeSelector"] == {}
-        assert doc["spec"]["template"]["spec"]["affinity"] == {}
-        assert doc["spec"]["template"]["spec"]["tolerations"] == []
+        spec = docs[0]["spec"]["template"]["spec"]
+        assert spec["nodeSelector"] == {}
+        assert spec["affinity"] == {}
+        assert spec["tolerations"] == []
 
     def test_external_elasticsearch_nginx_deployment_global_platformnodepool_overrides(self, kube_version):
         """Test that External ElasticSearch renders proper nodeSelector, affinity,
