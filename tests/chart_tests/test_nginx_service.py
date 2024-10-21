@@ -212,6 +212,14 @@ class TestNginx:
             show_only=["charts/nginx/templates/nginx-deployment.yaml"],
         )[0]
 
+        security_context = doc["spec"]["template"]["spec"]["containers"][0]["securityContext"]
+        expected_security_context = {
+            "runAsUser": 101,
+            "runAsNonRoot": True,
+            "capabilities": {"drop": ["ALL"]},
+            "allowPrivilegeEscalation": False,
+        }
+
         electionTTL = "--election-ttl"
         electionId = "--election-id=ingress-controller-leader-release-name-nginx"
         topologyAwareRouting = "--enable-topology-aware-routing"
@@ -220,6 +228,7 @@ class TestNginx:
 
         c_by_name = get_containers_by_name(doc)
 
+        assert security_context == expected_security_context
         assert doc["spec"]["minReadySeconds"] == 0
         assert electionId in c_by_name["nginx"]["args"]
         assert electionTTL not in c_by_name["nginx"]["args"]
@@ -263,21 +272,7 @@ class TestNginx:
         disableLeaderElection = "--disable-leader-election=true"
         assert disableLeaderElection in c_by_name["nginx"]["args"]
 
-    def test_nginx_with_capability_default(self):
-        doc = render_chart(
-            show_only=["charts/nginx/templates/nginx-deployment.yaml"],
-        )[0]
-        security_context = doc["spec"]["template"]["spec"]["containers"][0]["securityContext"]
-        expected_security_context = {
-            "runAsUser": 101,
-            "runAsNonRoot": True,
-            "capabilities": {"drop": ["ALL"]},
-            "allowPrivilegeEscalation": False,
-        }
-
-        assert security_context == expected_security_context
-
-    def test_nginx_with_add_functionality_capability(self):
+    def test_nginx_security_context_overrides(self):
 
         values = {
             "nginx": {
