@@ -44,7 +44,8 @@ class TestKibana:
         assert env_vars["TELEMETRY_ENABLED"] == "false"
 
     def test_kibana_index_defaults(self, kube_version):
-        """Test kibana Service with index defaults."""
+        """Test that kibana index cronjobs renders proper nodeSelector, affinity,
+        and tolerations with global config and index defaults."""
         docs = render_chart(
             kube_version=kube_version,
             values={},
@@ -57,6 +58,55 @@ class TestKibana:
         assert doc["spec"]["template"]["spec"]["nodeSelector"] == {}
         assert doc["spec"]["template"]["spec"]["affinity"] == {}
         assert doc["spec"]["template"]["spec"]["tolerations"] == []
+        assert "fluentd.*" in doc["spec"]["template"]["spec"]["containers"][0]["command"][2]
+
+    def test_kibana_index_defaults_with_global_overrides(self, kube_version):
+        """Test that kibana index cronjobs renders proper nodeSelector, affinity,
+        and tolerations with global config and index defaults."""
+        values = {
+            "global": {
+                "platformNodePool": {
+                    "nodeSelector": {"role": "astro"},
+                    "affinity": {
+                        "nodeAffinity": {
+                            "requiredDuringSchedulingIgnoredDuringExecution": {
+                                "nodeSelectorTerms": [
+                                    {
+                                        "matchExpressions": [
+                                            {
+                                                "key": "astronomer.io/multi-tenant",
+                                                "operator": "In",
+                                                "values": ["false"],
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "tolerations": [
+                        {
+                            "effect": "NoSchedule",
+                            "key": "astronomer",
+                            "operator": "Exists",
+                        }
+                    ],
+                },
+            },
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=[
+                "charts/kibana/templates/kibana-default-index-cronjob.yaml",
+            ],
+        )
+        common_kibana_cronjob_test(docs)
+        doc = docs[0]
+        assert len(doc["spec"]["template"]["spec"]["nodeSelector"]) == 1
+        assert len(doc["spec"]["template"]["spec"]["tolerations"]) > 0
+        assert doc["spec"]["template"]["spec"]["tolerations"] == values["global"]["platformNodePool"]["tolerations"]
+
         assert "fluentd.*" in doc["spec"]["template"]["spec"]["containers"][0]["command"][2]
 
     def test_kibana_index_with_logging_sidecar(self, kube_version):
