@@ -129,9 +129,7 @@ class TestPrometheusBlackBoxExporterDeployment:
         """Test that blackbox exporter renders proper nodeSelector, affinity,
         and tolerations with sunchart overrides"""
         global_platform_node_pool_config["nodeSelector"] = {"role": "astro-prometheus-blackbox-exporter"}
-        values = {
-            "prometheus-blackbox-exporter": global_platform_node_pool_config
-        }
+        values = {"prometheus-blackbox-exporter": global_platform_node_pool_config}
         docs = render_chart(
             kube_version=kube_version,
             values=values,

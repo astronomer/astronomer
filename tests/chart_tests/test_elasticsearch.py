@@ -578,37 +578,16 @@ class TestElasticSearch:
 
     def test_elasticsearch_curator_cronjob_subchart_overrides(self, kube_version):
         """Test ElasticSearch Curator cron job with nodeSelector, affinity, tolerations and config defaults"""
+        global_platform_node_pool_config["nodeSelector"] = {"role": "astroelasticsearch"}
         values = {
             "elasticsearch": {
                 "curator": {
                     "schedule": "0 45 * * *",
                     "securityContext": {"runAsNonRoot": True},
                 },
-                "nodeSelector": {"role": "astroelasticsearch"},
-                "affinity": {
-                    "nodeAffinity": {
-                        "requiredDuringSchedulingIgnoredDuringExecution": {
-                            "nodeSelectorTerms": [
-                                {
-                                    "matchExpressions": [
-                                        {
-                                            "key": "astronomer.io/multi-tenant",
-                                            "operator": "In",
-                                            "values": ["false"],
-                                        }
-                                    ]
-                                }
-                            ]
-                        }
-                    }
-                },
-                "tolerations": [
-                    {
-                        "effect": "NoSchedule",
-                        "key": "astronomer",
-                        "operator": "Exists",
-                    }
-                ],
+                "nodeSelector": global_platform_node_pool_config["nodeSelector"],
+                "affinity": global_platform_node_pool_config["affinity"],
+                "tolerations": global_platform_node_pool_config["tolerations"],
             },
         }
         docs = render_chart(

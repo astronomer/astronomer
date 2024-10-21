@@ -86,35 +86,8 @@ class TestKibana:
     def test_kibana_index_defaults_with_subchart_overrides(self, kube_version):
         """Test that kibana index cronjobs renders proper nodeSelector, affinity,
         and tolerations with global config and index defaults."""
-        values = {
-            "kibana": {
-                "nodeSelector": {"role": "astrokibana"},
-                "affinity": {
-                    "nodeAffinity": {
-                        "requiredDuringSchedulingIgnoredDuringExecution": {
-                            "nodeSelectorTerms": [
-                                {
-                                    "matchExpressions": [
-                                        {
-                                            "key": "astronomer.io/multi-tenant",
-                                            "operator": "In",
-                                            "values": ["false"],
-                                        }
-                                    ]
-                                }
-                            ]
-                        }
-                    }
-                },
-                "tolerations": [
-                    {
-                        "effect": "NoSchedule",
-                        "key": "astronomer",
-                        "operator": "Exists",
-                    }
-                ],
-            }
-        }
+        global_platform_node_pool_config["nodeSelector"] = {"role": "astrokibana"}
+        values = {"kibana": global_platform_node_pool_config}
         docs = render_chart(
             kube_version=kube_version,
             values=values,
