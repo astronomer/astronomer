@@ -29,11 +29,11 @@ repos:
       - id: remove-tabs
         exclude_types: [makefile, binary]
   - repo: https://github.com/psf/black
-    rev: 24.8.0
+    rev: 24.10.0
     hooks:
       - id: black
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: "v0.6.4"
+    rev: "v0.7.0"
     hooks:
       - id: ruff
         args:
@@ -41,7 +41,7 @@ repos:
           - "--exit-non-zero-on-fix"
           # - "--unsafe-fixes"
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v5.0.0
     hooks:
       - id: check-case-conflict
       - id: check-json
@@ -60,6 +60,9 @@ repos:
         files: '^\.(git|helm)ignore$'
       - id: mixed-line-ending
         args: ["--fix=lf"]
+      - id: name-tests-test
+        args: ["--pytest-test-first"]
+        exclude: "^tests/chart_tests/helm_template_generator.py$"
       - id: requirements-txt-fixer
         args: [
             "requirements/chart-tests.in",
