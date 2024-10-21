@@ -76,12 +76,12 @@ class TestKibana:
             ],
         )
         common_kibana_cronjob_test(docs)
-        doc = docs[0]
-        assert len(doc["spec"]["template"]["spec"]["nodeSelector"]) == 1
-        assert len(doc["spec"]["template"]["spec"]["tolerations"]) > 0
-        assert doc["spec"]["template"]["spec"]["tolerations"] == values["global"]["platformNodePool"]["tolerations"]
+        spec = docs[0]["spec"]["template"]["spec"]
+        assert len(spec["nodeSelector"]) == 1
+        assert len(spec["tolerations"]) > 0
+        assert spec["tolerations"] == values["global"]["platformNodePool"]["tolerations"]
 
-        assert "fluentd.*" in doc["spec"]["template"]["spec"]["containers"][0]["command"][2]
+        assert "fluentd.*" in spec["containers"][0]["command"][2]
 
     def test_kibana_index_defaults_with_subchart_overrides(self, kube_version):
         """Test that kibana index cronjobs renders proper nodeSelector, affinity,
