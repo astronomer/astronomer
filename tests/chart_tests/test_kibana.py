@@ -109,6 +109,54 @@ class TestKibana:
 
         assert "fluentd.*" in doc["spec"]["template"]["spec"]["containers"][0]["command"][2]
 
+    def test_kibana_index_defaults_with_subchart_overrides(self, kube_version):
+        """Test that kibana index cronjobs renders proper nodeSelector, affinity,
+        and tolerations with global config and index defaults."""
+        values = {
+            "kibana": {
+                "nodeSelector": {"role": "astrokibana"},
+                "affinity": {
+                    "nodeAffinity": {
+                        "requiredDuringSchedulingIgnoredDuringExecution": {
+                            "nodeSelectorTerms": [
+                                {
+                                    "matchExpressions": [
+                                        {
+                                            "key": "astronomer.io/multi-tenant",
+                                            "operator": "In",
+                                            "values": ["false"],
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                },
+                "tolerations": [
+                    {
+                        "effect": "NoSchedule",
+                        "key": "astronomer",
+                        "operator": "Exists",
+                    }
+                ],
+            }
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=[
+                "charts/kibana/templates/kibana-default-index-cronjob.yaml",
+            ],
+        )
+        common_kibana_cronjob_test(docs)
+        doc = docs[0]
+        assert len(doc["spec"]["template"]["spec"]["nodeSelector"]) == 1
+        assert len(doc["spec"]["template"]["spec"]["affinity"]) == 1
+        assert len(doc["spec"]["template"]["spec"]["tolerations"]) > 0
+        doc["spec"]["template"]["spec"]["nodeSelector"] == "astrokibana"
+        assert doc["spec"]["template"]["spec"]["tolerations"] == values["kibana"]["tolerations"]
+        assert "fluentd.*" in doc["spec"]["template"]["spec"]["containers"][0]["command"][2]
+
     def test_kibana_index_with_logging_sidecar(self, kube_version):
         """Test kibana Service with logging sidecar index."""
         docs = render_chart(
