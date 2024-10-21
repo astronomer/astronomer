@@ -562,13 +562,11 @@ class TestElasticSearch:
         assert docs[0]["kind"] == "CronJob"
         assert docs[0]["metadata"]["name"] == "release-name-elasticsearch-curator"
         assert docs[0]["spec"]["schedule"] == "0 45 * * *"
-        assert docs[0]["spec"]["jobTemplate"]["spec"]["template"]["spec"]["nodeSelector"]["role"] == "astro"
-        assert len(docs[0]["spec"]["jobTemplate"]["spec"]["template"]["spec"]["affinity"]) == 1
-        assert len(docs[0]["spec"]["jobTemplate"]["spec"]["template"]["spec"]["tolerations"]) > 0
-        assert (
-            docs[0]["spec"]["jobTemplate"]["spec"]["template"]["spec"]["tolerations"]
-            == values["global"]["platformNodePool"]["tolerations"]
-        )
+        spec = docs[0]["spec"]["jobTemplate"]["spec"]["template"]["spec"]
+        assert spec["nodeSelector"]["role"] == "astro"
+        assert len(spec["affinity"]) == 1
+        assert len(spec["tolerations"]) > 0
+        assert spec["tolerations"] == values["global"]["platformNodePool"]["tolerations"]
         c_by_name = get_cronjob_containerspec_by_name(docs[0])
         assert c_by_name["curator"]["command"] == ["/bin/sh", "-c"]
         assert c_by_name["curator"]["args"] == [

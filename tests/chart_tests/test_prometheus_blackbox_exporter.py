@@ -120,10 +120,10 @@ class TestPrometheusBlackBoxExporterDeployment:
             show_only=["charts/prometheus-blackbox-exporter/templates/deployment.yaml"],
         )
         common_blackbox_exporter_tests(docs)
-        doc = docs[0]
-        assert len(doc["spec"]["template"]["spec"]["nodeSelector"]) == 1
-        assert len(doc["spec"]["template"]["spec"]["tolerations"]) > 0
-        assert doc["spec"]["template"]["spec"]["tolerations"] == values["global"]["platformNodePool"]["tolerations"]
+        spec = docs[0]["spec"]["template"]["spec"]
+        assert len(spec["nodeSelector"]) == 1
+        assert len(spec["tolerations"]) > 0
+        assert spec["tolerations"] == values["global"]["platformNodePool"]["tolerations"]
 
     def test_prometheus_blackbox_exporter_defaults_with_subchart_overrides(self, kube_version):
         """Test that blackbox exporter renders proper nodeSelector, affinity,

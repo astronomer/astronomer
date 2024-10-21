@@ -67,10 +67,10 @@ class TestPrometheusPostgresExporter:
             show_only=["charts/prometheus-blackbox-exporter/templates/deployment.yaml"],
         )
         assert len(docs) == 1
-        doc = docs[0]
-        assert len(doc["spec"]["template"]["spec"]["nodeSelector"]) == 1
-        assert len(doc["spec"]["template"]["spec"]["tolerations"]) > 0
-        assert doc["spec"]["template"]["spec"]["tolerations"] == values["global"]["platformNodePool"]["tolerations"]
+        spec = docs[0]["spec"]["template"]["spec"]
+        assert len(spec["nodeSelector"]) == 1
+        assert len(spec["tolerations"]) > 0
+        assert spec["tolerations"] == values["global"]["platformNodePool"]["tolerations"]
 
     def test_prometheus_postgres_exporter_defaults_with_subchart_overrides(self, kube_version):
         """Test that postgres exporter renders proper nodeSelector, affinity,

@@ -617,10 +617,10 @@ class TestExternalElasticSearch:
         )
 
         assert len(docs) == 1
-        doc = docs[0]
-        assert len(doc["spec"]["template"]["spec"]["nodeSelector"]) == 1
-        assert len(doc["spec"]["template"]["spec"]["tolerations"]) > 0
-        assert doc["spec"]["template"]["spec"]["tolerations"] == values["global"]["platformNodePool"]["tolerations"]
+        spec = docs[0]["spec"]["template"]["spec"]
+        assert len(spec["nodeSelector"]) == 1
+        assert len(spec["tolerations"]) > 0
+        assert spec["tolerations"] == values["global"]["platformNodePool"]["tolerations"]
 
     def test_external_elasticsearch_nginx_deployment_with_subchart_overrides(self, kube_version):
         """Test that External ElasticSearch renders proper nodeSelector, affinity,
