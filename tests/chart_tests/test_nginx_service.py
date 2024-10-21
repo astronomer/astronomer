@@ -211,8 +211,6 @@ class TestNginx:
             values={},
             show_only=["charts/nginx/templates/nginx-deployment.yaml"],
         )[0]
-
-        security_context = doc["spec"]["template"]["spec"]["containers"][0]["securityContext"]
         expected_security_context = {
             "runAsUser": 101,
             "runAsNonRoot": True,
@@ -227,14 +225,13 @@ class TestNginx:
         disableLeaderElection = "--disable-leader-election"
 
         c_by_name = get_containers_by_name(doc)
-
-        assert security_context == expected_security_context
         assert doc["spec"]["minReadySeconds"] == 0
         assert electionId in c_by_name["nginx"]["args"]
         assert electionTTL not in c_by_name["nginx"]["args"]
         assert topologyAwareRouting not in c_by_name["nginx"]["args"]
         assert annotationValidation not in c_by_name["nginx"]["args"]
         assert disableLeaderElection not in c_by_name["nginx"]["args"]
+        assert expected_security_context == c_by_name["nginx"]["securityContext"]
 
     def test_nginx_min_ready_seconds_overrides(self):
         minReadySeconds = 300
@@ -293,7 +290,6 @@ class TestNginx:
             values=values,
             show_only=["charts/nginx/templates/nginx-deployment.yaml"],
         )[0]
-        security_context = doc["spec"]["template"]["spec"]["containers"][0]["securityContext"]
         expected_security_context = {
             "runAsUser": 101,
             "runAsNonRoot": True,
@@ -301,4 +297,5 @@ class TestNginx:
             "allowPrivilegeEscalation": False,
         }
 
-        assert security_context == expected_security_context
+        c_by_name = get_containers_by_name(doc)
+        assert expected_security_context == c_by_name["nginx"]["securityContext"]
