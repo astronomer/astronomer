@@ -1,6 +1,6 @@
 import pytest
 
-from tests import supported_k8s_versions, get_containers_by_name
+from tests import supported_k8s_versions, get_containers_by_name, global_platform_node_pool_config
 from tests.chart_tests.helm_template_generator import render_chart
 
 
@@ -65,33 +65,7 @@ class TestKibana:
         and tolerations with global config and index defaults."""
         values = {
             "global": {
-                "platformNodePool": {
-                    "nodeSelector": {"role": "astro"},
-                    "affinity": {
-                        "nodeAffinity": {
-                            "requiredDuringSchedulingIgnoredDuringExecution": {
-                                "nodeSelectorTerms": [
-                                    {
-                                        "matchExpressions": [
-                                            {
-                                                "key": "astronomer.io/multi-tenant",
-                                                "operator": "In",
-                                                "values": ["false"],
-                                            }
-                                        ]
-                                    }
-                                ]
-                            }
-                        }
-                    },
-                    "tolerations": [
-                        {
-                            "effect": "NoSchedule",
-                            "key": "astronomer",
-                            "operator": "Exists",
-                        }
-                    ],
-                },
+                "platformNodePool": global_platform_node_pool_config,
             },
         }
         docs = render_chart(

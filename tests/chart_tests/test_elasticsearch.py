@@ -4,6 +4,7 @@ from tests import (
     get_containers_by_name,
     get_cronjob_containerspec_by_name,
     supported_k8s_versions,
+    global_platform_node_pool_config,
 )
 from tests.chart_tests.helm_template_generator import render_chart
 
@@ -549,33 +550,7 @@ class TestElasticSearch:
                 }
             },
             "global": {
-                "platformNodePool": {
-                    "nodeSelector": {"role": "astro"},
-                    "affinity": {
-                        "nodeAffinity": {
-                            "requiredDuringSchedulingIgnoredDuringExecution": {
-                                "nodeSelectorTerms": [
-                                    {
-                                        "matchExpressions": [
-                                            {
-                                                "key": "astronomer.io/multi-tenant",
-                                                "operator": "In",
-                                                "values": ["false"],
-                                            }
-                                        ]
-                                    }
-                                ]
-                            }
-                        }
-                    },
-                    "tolerations": [
-                        {
-                            "effect": "NoSchedule",
-                            "key": "astronomer",
-                            "operator": "Exists",
-                        }
-                    ],
-                },
+                "platformNodePool": global_platform_node_pool_config,
             },
         }
         docs = render_chart(
