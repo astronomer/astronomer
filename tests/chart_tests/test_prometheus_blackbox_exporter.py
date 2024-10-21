@@ -128,34 +128,9 @@ class TestPrometheusBlackBoxExporterDeployment:
     def test_prometheus_blackbox_exporter_defaults_with_subchart_overrides(self, kube_version):
         """Test that blackbox exporter renders proper nodeSelector, affinity,
         and tolerations with sunchart overrides"""
+        global_platform_node_pool_config["nodeSelector"] = {"role": "astro-prometheus-blackbox-exporter"}
         values = {
-            "prometheus-blackbox-exporter": {
-                "nodeSelector": {"role": "astro-prometheus-blackbox-exporter"},
-                "affinity": {
-                    "nodeAffinity": {
-                        "requiredDuringSchedulingIgnoredDuringExecution": {
-                            "nodeSelectorTerms": [
-                                {
-                                    "matchExpressions": [
-                                        {
-                                            "key": "astronomer.io/multi-tenant",
-                                            "operator": "In",
-                                            "values": ["false"],
-                                        }
-                                    ]
-                                }
-                            ]
-                        }
-                    }
-                },
-                "tolerations": [
-                    {
-                        "effect": "NoSchedule",
-                        "key": "astronomer",
-                        "operator": "Exists",
-                    }
-                ],
-            }
+            "prometheus-blackbox-exporter": global_platform_node_pool_config
         }
         docs = render_chart(
             kube_version=kube_version,
