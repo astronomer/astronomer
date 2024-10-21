@@ -645,7 +645,7 @@ class TestExternalElasticSearch:
         )
 
         assert len(docs) == 1
-        doc = docs[0]
-        assert len(doc["spec"]["template"]["spec"]["nodeSelector"]) == 1
-        assert len(doc["spec"]["template"]["spec"]["tolerations"]) > 0
-        assert doc["spec"]["template"]["spec"]["tolerations"] == values["external-es-proxy"]["tolerations"]
+        spec = docs[0]["spec"]["template"]["spec"]
+        assert len(spec["nodeSelector"]) == 1
+        assert len(spec["tolerations"]) > 0
+        assert spec["tolerations"] == values["external-es-proxy"]["tolerations"]
