@@ -1,7 +1,18 @@
 import pytest
 
-from tests import supported_k8s_versions, get_containers_by_name
+from tests import supported_k8s_versions, get_containers_by_name, global_platform_node_pool_config
 from tests.chart_tests.helm_template_generator import render_chart
+
+
+def common_blackbox_exporter_tests(docs):
+    """Test common asserts for prometheus blackbox exporter."""
+    assert len(docs) == 1
+    doc = docs[0]
+    assert doc["kind"] == "Deployment"
+    assert doc["apiVersion"] == "apps/v1"
+    assert doc["metadata"]["name"] == "release-name-prometheus-blackbox-exporter"
+    assert doc["spec"]["selector"]["matchLabels"]["component"] == "blackbox-exporter"
+    assert doc["spec"]["template"]["metadata"]["labels"]["app"] == "prometheus-blackbox-exporter"
 
 
 @pytest.mark.parametrize(
@@ -36,12 +47,11 @@ class TestPrometheusBlackBoxExporterDeployment:
             show_only=["charts/prometheus-blackbox-exporter/templates/deployment.yaml"],
         )
 
-        assert len(docs) == 1
+        common_blackbox_exporter_tests(docs)
         doc = docs[0]
-        assert doc["kind"] == "Deployment"
-        assert doc["metadata"]["name"] == "release-name-prometheus-blackbox-exporter"
-        assert doc["spec"]["selector"]["matchLabels"]["component"] == "blackbox-exporter"
-        assert doc["spec"]["template"]["metadata"]["labels"]["app"] == "prometheus-blackbox-exporter"
+        assert doc["spec"]["template"]["spec"]["nodeSelector"] == {}
+        assert doc["spec"]["template"]["spec"]["affinity"] == {}
+        assert doc["spec"]["template"]["spec"]["tolerations"] == []
 
         c_by_name = get_containers_by_name(doc)
         assert c_by_name["blackbox-exporter"]["resources"] == {
@@ -56,7 +66,7 @@ class TestPrometheusBlackBoxExporterDeployment:
         }
 
     def test_prometheus_blackbox_exporter_deployment_custom_resources(self, kube_version):
-        doc = render_chart(
+        docs = render_chart(
             kube_version=kube_version,
             values={
                 "prometheus-blackbox-exporter": {
@@ -67,11 +77,10 @@ class TestPrometheusBlackBoxExporterDeployment:
                 },
             },
             show_only=["charts/prometheus-blackbox-exporter/templates/deployment.yaml"],
-        )[0]
+        )
 
-        assert doc["kind"] == "Deployment"
-        assert doc["metadata"]["name"] == "release-name-prometheus-blackbox-exporter"
-
+        common_blackbox_exporter_tests(docs)
+        doc = docs[0]
         c_by_name = get_containers_by_name(doc)
         assert c_by_name["blackbox-exporter"].get("resources") == {
             "limits": {"cpu": "777m", "memory": "999Mi"},
@@ -79,14 +88,15 @@ class TestPrometheusBlackBoxExporterDeployment:
         }
 
     def test_prometheus_blackbox_exporter_deployment_custom_security_context(self, kube_version):
-        doc = render_chart(
+        docs = render_chart(
             kube_version=kube_version,
             values={
                 "prometheus-blackbox-exporter": {"securityContext": {"runAsUser": 1000}},
             },
             show_only=["charts/prometheus-blackbox-exporter/templates/deployment.yaml"],
-        )[0]
-
+        )
+        common_blackbox_exporter_tests(docs)
+        doc = docs[0]
         c_by_name = get_containers_by_name(doc)
         assert c_by_name["blackbox-exporter"]["securityContext"] == {
             "allowPrivilegeEscalation": False,
@@ -95,3 +105,20 @@ class TestPrometheusBlackBoxExporterDeployment:
             "runAsNonRoot": True,
             "runAsUser": 1000,
         }
+
+    def test_prometheus_blackbox_exporter_deployment_global_platform_nodepool(self, kube_version):
+        values = {
+            "global": {
+                "platformNodePool": global_platform_node_pool_config,
+            }
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=["charts/prometheus-blackbox-exporter/templates/deployment.yaml"],
+        )
+        common_blackbox_exporter_tests(docs)
+        doc = docs[0]
+        assert len(doc["spec"]["template"]["spec"]["nodeSelector"]) == 1
+        assert len(doc["spec"]["template"]["spec"]["tolerations"]) > 0
+        assert doc["spec"]["template"]["spec"]["tolerations"] == values["global"]["platformNodePool"]["tolerations"]
