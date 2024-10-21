@@ -48,9 +48,10 @@ class TestPrometheusPostgresExporter:
             "requests": {"cpu": "10m", "memory": "128Mi"},
         }
         assert c_by_name["prometheus-postgres-exporter"]["securityContext"] == {"runAsNonRoot": True}
-        assert doc["spec"]["template"]["spec"]["nodeSelector"] == {}
-        assert doc["spec"]["template"]["spec"]["affinity"] == {}
-        assert doc["spec"]["template"]["spec"]["tolerations"] == []
+        spec = docs[1]["spec"]["template"]["spec"]
+        assert spec["nodeSelector"] == {}
+        assert spec["affinity"] == {}
+        assert spec["tolerations"] == []
 
     def test_prometheus_postgres_exporter_with_global_platform_nodepool(self, kube_version):
         """Test that postgres exporter renders proper nodeSelector, affinity,
