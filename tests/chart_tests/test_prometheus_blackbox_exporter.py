@@ -107,6 +107,8 @@ class TestPrometheusBlackBoxExporterDeployment:
         }
 
     def test_prometheus_blackbox_exporter_deployment_global_platform_nodepool(self, kube_version):
+        """Test that blackbox exporter renders proper nodeSelector, affinity,
+        and tolerations with global overrides"""
         values = {
             "global": {
                 "platformNodePool": global_platform_node_pool_config,
@@ -122,3 +124,47 @@ class TestPrometheusBlackBoxExporterDeployment:
         assert len(doc["spec"]["template"]["spec"]["nodeSelector"]) == 1
         assert len(doc["spec"]["template"]["spec"]["tolerations"]) > 0
         assert doc["spec"]["template"]["spec"]["tolerations"] == values["global"]["platformNodePool"]["tolerations"]
+
+    def test_prometheus_blackbox_exporter_defaults_with_subchart_overrides(self, kube_version):
+        """Test that blackbox exporter renders proper nodeSelector, affinity,
+        and tolerations with sunchart overrides"""
+        values = {
+            "prometheus-blackbox-exporter": {
+                "nodeSelector": {"role": "astro-prometheus-blackbox-exporter"},
+                "affinity": {
+                    "nodeAffinity": {
+                        "requiredDuringSchedulingIgnoredDuringExecution": {
+                            "nodeSelectorTerms": [
+                                {
+                                    "matchExpressions": [
+                                        {
+                                            "key": "astronomer.io/multi-tenant",
+                                            "operator": "In",
+                                            "values": ["false"],
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                },
+                "tolerations": [
+                    {
+                        "effect": "NoSchedule",
+                        "key": "astronomer",
+                        "operator": "Exists",
+                    }
+                ],
+            }
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=["charts/prometheus-blackbox-exporter/templates/deployment.yaml"],
+        )
+        doc = docs[0]
+        assert len(doc["spec"]["template"]["spec"]["nodeSelector"]) == 1
+        assert len(doc["spec"]["template"]["spec"]["affinity"]) == 1
+        assert len(doc["spec"]["template"]["spec"]["tolerations"]) > 0
+        doc["spec"]["template"]["spec"]["nodeSelector"] == "astro-prometheus-blackbox-exporter"
+        assert doc["spec"]["template"]["spec"]["tolerations"] == values["prometheus-blackbox-exporter"]["tolerations"]

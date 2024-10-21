@@ -1,6 +1,6 @@
 import pytest
 
-from tests import supported_k8s_versions, get_containers_by_name
+from tests import supported_k8s_versions, get_containers_by_name, global_platform_node_pool_config
 from tests.chart_tests.helm_template_generator import render_chart
 
 
@@ -48,3 +48,72 @@ class TestPrometheusPostgresExporter:
             "requests": {"cpu": "10m", "memory": "128Mi"},
         }
         assert c_by_name["prometheus-postgres-exporter"]["securityContext"] == {"runAsNonRoot": True}
+        assert doc["spec"]["template"]["spec"]["nodeSelector"] == {}
+        assert doc["spec"]["template"]["spec"]["affinity"] == {}
+        assert doc["spec"]["template"]["spec"]["tolerations"] == []
+
+    def test_prometheus_postgres_exporter_with_global_platform_nodepool(self, kube_version):
+        """Test that postgres exporter renders proper nodeSelector, affinity,
+        and tolerations with global values."""
+        values = {
+            "global": {
+                "prometheusPostgresExporterEnabled": True,
+                "platformNodePool": global_platform_node_pool_config,
+            }
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=["charts/prometheus-blackbox-exporter/templates/deployment.yaml"],
+        )
+        assert len(docs) == 1
+        doc = docs[0]
+        assert len(doc["spec"]["template"]["spec"]["nodeSelector"]) == 1
+        assert len(doc["spec"]["template"]["spec"]["tolerations"]) > 0
+        assert doc["spec"]["template"]["spec"]["tolerations"] == values["global"]["platformNodePool"]["tolerations"]
+
+    def test_prometheus_postgres_exporter_defaults_with_subchart_overrides(self, kube_version):
+        """Test that postgres exporter renders proper nodeSelector, affinity,
+        and tolerations with subchart overrides."""
+        values = {
+            "global": {"prometheusPostgresExporterEnabled": True},
+            "prometheus-postgres-exporter": {
+                "nodeSelector": {"role": "astro-prometheus-postgres-exporter"},
+                "affinity": {
+                    "nodeAffinity": {
+                        "requiredDuringSchedulingIgnoredDuringExecution": {
+                            "nodeSelectorTerms": [
+                                {
+                                    "matchExpressions": [
+                                        {
+                                            "key": "astronomer.io/multi-tenant",
+                                            "operator": "In",
+                                            "values": ["false"],
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                },
+                "tolerations": [
+                    {
+                        "effect": "NoSchedule",
+                        "key": "astronomer",
+                        "operator": "Exists",
+                    }
+                ],
+            },
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=["charts/prometheus-postgres-exporter/templates/deployment.yaml"],
+        )
+        assert len(docs) == 1
+        doc = docs[0]
+        assert len(doc["spec"]["template"]["spec"]["nodeSelector"]) == 1
+        assert len(doc["spec"]["template"]["spec"]["affinity"]) == 1
+        assert len(doc["spec"]["template"]["spec"]["tolerations"]) > 0
+        doc["spec"]["template"]["spec"]["nodeSelector"] == "astro-prometheus-postgres-exporter"
+        assert doc["spec"]["template"]["spec"]["tolerations"] == values["prometheus-postgres-exporter"]["tolerations"]
