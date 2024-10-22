@@ -100,7 +100,7 @@ class TestKibana:
         assert len(spec["nodeSelector"]) == 1
         assert len(spec["affinity"]) == 1
         assert len(spec["tolerations"]) > 0
-        assert spec["nodeSelector"] == "astrokibana"
+        assert spec["nodeSelector"] == values["kibana"]["nodeSelector"]
         assert spec["tolerations"] == values["kibana"]["tolerations"]
         assert "fluentd.*" in docs[0]["spec"]["template"]["spec"]["containers"][0]["command"][2]
 
