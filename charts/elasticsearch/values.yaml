@@ -10,7 +10,7 @@ tolerations: []
 images:
   es:
     repository: quay.io/astronomer/ap-elasticsearch
-    tag: 8.12.1
+    tag: 8.12.1                            # if this needs changes then set useCustomtag to true
     pullPolicy: IfNotPresent
   init:
     repository: quay.io/astronomer/ap-base # needs root permissions for sysctl changes
@@ -241,6 +241,9 @@ exporter:
 
     # Timeout for trying to get stats from Elasticsearch. (ex: 20s)
     timeout: 30s
+
+    #Change useCustomtag to true will help client to use their own tag instead of current tag.
+    useCustomtag: false
 
   web:
     # Path under which to expose metrics.
