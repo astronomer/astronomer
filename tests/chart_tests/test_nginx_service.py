@@ -285,7 +285,6 @@ class TestNginx:
                     "runAsNonRoot": True,
                     "capabilities": {
                         "drop": ["ALL"],
-                        # Add the capability NET_BIND_SERVICE if needed
                         "add": ["NET_BIND_SERVICE"],
                     },
                     "allowPrivilegeEscalation": False,
