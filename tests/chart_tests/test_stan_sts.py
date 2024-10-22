@@ -120,33 +120,7 @@ class TestStanStatefulSet:
         and tolerations with global config."""
         values = {
             "global": {
-                "platformNodePool": {
-                    "nodeSelector": {"role": "astro"},
-                    "affinity": {
-                        "nodeAffinity": {
-                            "requiredDuringSchedulingIgnoredDuringExecution": {
-                                "nodeSelectorTerms": [
-                                    {
-                                        "matchExpressions": [
-                                            {
-                                                "key": "astronomer.io/multi-tenant",
-                                                "operator": "In",
-                                                "values": ["false"],
-                                            }
-                                        ]
-                                    }
-                                ]
-                            }
-                        }
-                    },
-                    "tolerations": [
-                        {
-                            "effect": "NoSchedule",
-                            "key": "astronomer",
-                            "operator": "Exists",
-                        }
-                    ],
-                },
+                "platformNodePool": global_platform_node_pool_config,
             }
         }
         docs = render_chart(
