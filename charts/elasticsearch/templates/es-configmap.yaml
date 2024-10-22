@@ -51,6 +51,7 @@ data:
       seed_hosts:
         - {{ template "elasticsearch.fullname" . }}-headless-discovery
 
+    # Disable scripting for security.
     script.allowed_types: inline
 
     # Prevent a user from overriding an index in the body of a request.

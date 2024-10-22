@@ -22,3 +22,6 @@ prometheus-node-exporter:
     create: true
   endpoints:
     - example.com
+nats:
+  nats:
+    createJetStreamJob: true

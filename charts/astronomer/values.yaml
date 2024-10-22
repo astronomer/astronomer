@@ -15,7 +15,7 @@ tolerations: []
 images:
   commander:
     repository: quay.io/astronomer/ap-commander
-    tag: 0.36.3
+    tag: 0.36.4
     pullPolicy: IfNotPresent
   registry:
     repository: quay.io/astronomer/ap-registry
@@ -24,15 +24,15 @@ images:
     # httpSecret: ~
   houston:
     repository: quay.io/astronomer/ap-houston-api
-    tag: 0.35.11
+    tag: 0.36.2
     pullPolicy: IfNotPresent
   astroUI:
     repository: quay.io/astronomer/ap-astro-ui
-    tag: 0.35.8
+    tag: 0.36.0
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
-    tag: 0.35.7
+    tag: 0.36.0
     pullPolicy: IfNotPresent
   cliInstall:
     repository: quay.io/astronomer/ap-cli-install
@@ -313,6 +313,15 @@ houston:
     #   - 2.0.0-alpine3.10-onbuild
     #   channel: stable
 
+  RuntimeReleasesConfig:
+    # example of usage:
+    # below are default mandatory fields
+    # runtimeVersions:
+    #  12.1.1:
+    #    metadata:
+    #      airflowVersion: 2.10.2
+    #      channel: stable
+
   # Add extra containers here
   extraContainers: []
 
@@ -329,6 +338,7 @@ configSyncer:
   # If not provided, will generate a random hour and minutes to spread cronjob workloads.
   schedule: ~
   securityContext: {}
+  resources: {}
   serviceAccount:
     # Specifies whether a service account should be created
     create: true

@@ -199,6 +199,7 @@ class TestNginx:
         assert annotationValidation in doc["spec"]["template"]["spec"]["containers"][0]["args"]
 
     def test_nginx_backend_serviceaccount_defaults(self):
+        """Test nginx ingress deployment service account defaults."""
         doc = render_chart(
             show_only=["charts/nginx/templates/nginx-default-backend-serviceaccount.yaml"],
         )[0]
@@ -206,10 +207,16 @@ class TestNginx:
         assert "release-name-nginx-default-backend" == doc["metadata"]["name"]
 
     def test_nginx_defaults(self):
-        """Test nginx with default values."""
+        """Test nginx ingress deployment template defaults."""
         doc = render_chart(
             show_only=["charts/nginx/templates/nginx-deployment.yaml"],
         )[0]
+        expected_security_context = {
+            "runAsUser": 101,
+            "runAsNonRoot": True,
+            "capabilities": {"drop": ["ALL"]},
+            "allowPrivilegeEscalation": False,
+        }
 
         electionTTL = "--election-ttl"
         electionId = "--election-id=ingress-controller-leader-release-name-nginx"
@@ -218,13 +225,13 @@ class TestNginx:
         disableLeaderElection = "--disable-leader-election"
 
         c_by_name = get_containers_by_name(doc)
-
         assert doc["spec"]["minReadySeconds"] == 0
         assert electionId in c_by_name["nginx"]["args"]
         assert electionTTL not in c_by_name["nginx"]["args"]
         assert topologyAwareRouting not in c_by_name["nginx"]["args"]
         assert annotationValidation not in c_by_name["nginx"]["args"]
         assert disableLeaderElection not in c_by_name["nginx"]["args"]
+        assert expected_security_context == c_by_name["nginx"]["securityContext"]
 
         nginx_lp = doc["spec"]["template"]["spec"]["containers"][0]["livenessProbe"]
         assert nginx_lp["httpGet"] == {"path": "/healthz", "port": 10254}
@@ -280,7 +287,18 @@ class TestNginx:
         assert nginx_rp["timeoutSeconds"] == 3775
         assert nginx_rp["failureThreshold"] == 3774
 
+    def test_nginx_min_ready_seconds_overrides(self):
+        """Test nginx ingress deployment template with min ready seconds overrides."""
+        minReadySeconds = 300
+        doc = render_chart(
+            values={"nginx": {"minReadySeconds": minReadySeconds}},
+            show_only=["charts/nginx/templates/nginx-deployment.yaml"],
+        )[0]
+
+        assert doc["spec"]["minReadySeconds"] == minReadySeconds
+
     def test_nginx_election_ttl_overrides(self):
+        """Test nginx ingress deployment template with election ttl overrides."""
         doc = render_chart(
             values={"nginx": {"electionTTL": "30s"}},
             show_only=["charts/nginx/templates/nginx-deployment.yaml"],
@@ -290,6 +308,7 @@ class TestNginx:
         assert electionTTL in c_by_name["nginx"]["args"]
 
     def test_nginx_topology_aware_routing_overrides(self):
+        """Test nginx ingress deployment template with topology aware routing overrides."""
         doc = render_chart(
             values={"nginx": {"enableTopologyAwareRouting": True}},
             show_only=["charts/nginx/templates/nginx-deployment.yaml"],
@@ -299,6 +318,7 @@ class TestNginx:
         assert topologyAwareRouting in c_by_name["nginx"]["args"]
 
     def test_nginx_disable_leader_election_overrides(self):
+        """Test nginx ingress deployment template with leader election overrides."""
         doc = render_chart(
             values={"nginx": {"disableLeaderElection": True}},
             show_only=["charts/nginx/templates/nginx-deployment.yaml"],
@@ -306,3 +326,34 @@ class TestNginx:
         c_by_name = get_containers_by_name(doc)
         disableLeaderElection = "--disable-leader-election=true"
         assert disableLeaderElection in c_by_name["nginx"]["args"]
+
+    def test_nginx_security_context_overrides(self):
+        """Test nginx ingress deployment template with security context overrides."""
+
+        values = {
+            "nginx": {
+                "securityContext": {
+                    "runAsUser": 101,
+                    "runAsNonRoot": True,
+                    "capabilities": {
+                        "drop": ["ALL"],
+                        "add": ["NET_BIND_SERVICE"],
+                    },
+                    "allowPrivilegeEscalation": False,
+                }
+            }
+        }
+
+        doc = render_chart(
+            values=values,
+            show_only=["charts/nginx/templates/nginx-deployment.yaml"],
+        )[0]
+        expected_security_context = {
+            "runAsUser": 101,
+            "runAsNonRoot": True,
+            "capabilities": {"drop": ["ALL"], "add": ["NET_BIND_SERVICE"]},
+            "allowPrivilegeEscalation": False,
+        }
+
+        c_by_name = get_containers_by_name(doc)
+        assert expected_security_context == c_by_name["nginx"]["securityContext"]

@@ -9,7 +9,7 @@ tolerations: []
 images:
   nginx:
     repository: quay.io/astronomer/ap-nginx
-    tag: 1.11.2
+    tag: 1.11.2-1
     pullPolicy: IfNotPresent
   defaultBackend:
     repository: quay.io/astronomer/ap-default-backend
@@ -19,6 +19,10 @@ images:
 securityContext:
   runAsUser: 101
   runAsNonRoot: true
+  capabilities:
+    drop:
+      - ALL
+  allowPrivilegeEscalation: false
 
 serviceAccount:
   # Specifies whether a service account should be created
