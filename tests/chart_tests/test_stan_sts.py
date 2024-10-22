@@ -1,6 +1,6 @@
 from tests.chart_tests.helm_template_generator import render_chart
 import pytest
-from tests import supported_k8s_versions, get_containers_by_name
+from tests import supported_k8s_versions, get_containers_by_name, global_platform_node_pool_config
 import re
 
 
@@ -92,33 +92,12 @@ class TestStanStatefulSet:
     def test_stan_statefulset_with_affinity_and_tolerations(self, kube_version):
         """Test that stan statefulset renders proper nodeSelector, affinity,
         and tolerations."""
+        global_platform_node_pool_config["nodeSelector"] = {"role": "astrostan"}
         values = {
             "stan": {
-                "nodeSelector": {"role": "astro"},
-                "affinity": {
-                    "nodeAffinity": {
-                        "requiredDuringSchedulingIgnoredDuringExecution": {
-                            "nodeSelectorTerms": [
-                                {
-                                    "matchExpressions": [
-                                        {
-                                            "key": "astronomer.io/multi-tenant",
-                                            "operator": "In",
-                                            "values": ["false"],
-                                        }
-                                    ]
-                                }
-                            ]
-                        }
-                    }
-                },
-                "tolerations": [
-                    {
-                        "effect": "NoSchedule",
-                        "key": "astronomer",
-                        "operator": "Exists",
-                    }
-                ],
+                "nodeSelector": global_platform_node_pool_config["nodeSelector"],
+                "affinity": global_platform_node_pool_config["affinity"],
+                "tolerations": global_platform_node_pool_config["tolerations"],
             },
         }
         docs = render_chart(
@@ -130,7 +109,7 @@ class TestStanStatefulSet:
         assert len(docs) == 1
         spec = docs[0]["spec"]["template"]["spec"]
         assert spec["nodeSelector"] != {}
-        assert spec["nodeSelector"]["role"] == "astro"
+        assert spec["nodeSelector"]["role"] == "astrostan"
         assert spec["affinity"] != {}
         assert len(spec["affinity"]["nodeAffinity"]["requiredDuringSchedulingIgnoredDuringExecution"]["nodeSelectorTerms"]) == 1
         assert len(spec["tolerations"]) > 0
