@@ -1,6 +1,6 @@
 from tests.chart_tests.helm_template_generator import render_chart
 import pytest
-from tests import supported_k8s_versions, get_containers_by_name
+from tests import supported_k8s_versions, get_containers_by_name, global_platform_node_pool_config
 import re
 
 
@@ -37,9 +37,10 @@ class TestStanStatefulSet:
         }
 
         assert all(c["securityContext"] == {"runAsNonRoot": True} for c in c_by_name.values())
-        assert doc["spec"]["template"]["spec"]["nodeSelector"] == {}
-        assert doc["spec"]["template"]["spec"]["affinity"] == {}
-        assert doc["spec"]["template"]["spec"]["tolerations"] == []
+        spec = doc["spec"]["template"]["spec"]
+        assert spec["nodeSelector"] == {}
+        assert spec["affinity"] == {}
+        assert spec["tolerations"] == []
 
     def test_stan_statefulset_with_security_context_overrides(self, kube_version):
         """Test that stan statefulset renders good metrics exporter."""
@@ -88,85 +89,12 @@ class TestStanStatefulSet:
         assert c_by_name["stan"]["resources"]["requests"]["cpu"] == "123m"
         assert c_by_name["metrics"]["resources"]["requests"]["cpu"] == "234m"
 
-    def test_stan_statefulset_with_affinity_and_tolerations(self, kube_version):
-        """Test that stan statefulset renders proper nodeSelector, affinity,
-        and tolerations."""
-        values = {
-            "stan": {
-                "nodeSelector": {"role": "astro"},
-                "affinity": {
-                    "nodeAffinity": {
-                        "requiredDuringSchedulingIgnoredDuringExecution": {
-                            "nodeSelectorTerms": [
-                                {
-                                    "matchExpressions": [
-                                        {
-                                            "key": "astronomer.io/multi-tenant",
-                                            "operator": "In",
-                                            "values": ["false"],
-                                        }
-                                    ]
-                                }
-                            ]
-                        }
-                    }
-                },
-                "tolerations": [
-                    {
-                        "effect": "NoSchedule",
-                        "key": "astronomer",
-                        "operator": "Exists",
-                    }
-                ],
-            },
-        }
-        docs = render_chart(
-            kube_version=kube_version,
-            show_only=["charts/stan/templates/statefulset.yaml"],
-            values=values,
-        )
-
-        assert len(docs) == 1
-        spec = docs[0]["spec"]["template"]["spec"]
-        assert spec["nodeSelector"] != {}
-        assert spec["nodeSelector"]["role"] == "astro"
-        assert spec["affinity"] != {}
-        assert len(spec["affinity"]["nodeAffinity"]["requiredDuringSchedulingIgnoredDuringExecution"]["nodeSelectorTerms"]) == 1
-        assert len(spec["tolerations"]) > 0
-        assert spec["tolerations"] == values["stan"]["tolerations"]
-
     def test_stan_statefulset_with_global_affinity_and_tolerations(self, kube_version):
         """Test that stan statefulset renders proper nodeSelector, affinity,
         and tolerations with global config."""
         values = {
             "global": {
-                "platformNodePool": {
-                    "nodeSelector": {"role": "astro"},
-                    "affinity": {
-                        "nodeAffinity": {
-                            "requiredDuringSchedulingIgnoredDuringExecution": {
-                                "nodeSelectorTerms": [
-                                    {
-                                        "matchExpressions": [
-                                            {
-                                                "key": "astronomer.io/multi-tenant",
-                                                "operator": "In",
-                                                "values": ["false"],
-                                            }
-                                        ]
-                                    }
-                                ]
-                            }
-                        }
-                    },
-                    "tolerations": [
-                        {
-                            "effect": "NoSchedule",
-                            "key": "astronomer",
-                            "operator": "Exists",
-                        }
-                    ],
-                },
+                "platformNodePool": global_platform_node_pool_config,
             }
         }
         docs = render_chart(
@@ -183,6 +111,32 @@ class TestStanStatefulSet:
         assert len(spec["affinity"]["nodeAffinity"]["requiredDuringSchedulingIgnoredDuringExecution"]["nodeSelectorTerms"]) == 1
         assert len(spec["tolerations"]) > 0
         assert spec["tolerations"] == values["global"]["platformNodePool"]["tolerations"]
+
+    def test_stan_statefulset_with_affinity_and_tolerations(self, kube_version):
+        """Test that stan statefulset renders proper nodeSelector, affinity,
+        and tolerations."""
+        global_platform_node_pool_config["nodeSelector"] = {"role": "astrostan"}
+        values = {
+            "stan": {
+                "nodeSelector": global_platform_node_pool_config["nodeSelector"],
+                "affinity": global_platform_node_pool_config["affinity"],
+                "tolerations": global_platform_node_pool_config["tolerations"],
+            },
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/stan/templates/statefulset.yaml"],
+            values=values,
+        )
+
+        assert len(docs) == 1
+        spec = docs[0]["spec"]["template"]["spec"]
+        assert spec["nodeSelector"] != {}
+        assert spec["nodeSelector"]["role"] == "astrostan"
+        assert spec["affinity"] != {}
+        assert len(spec["affinity"]["nodeAffinity"]["requiredDuringSchedulingIgnoredDuringExecution"]["nodeSelectorTerms"]) == 1
+        assert len(spec["tolerations"]) > 0
+        assert spec["tolerations"] == values["stan"]["tolerations"]
 
     def test_stan_statefulset_with_custom_images(self, kube_version):
         """Test we can customize the stan images."""
