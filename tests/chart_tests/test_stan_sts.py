@@ -89,6 +89,29 @@ class TestStanStatefulSet:
         assert c_by_name["stan"]["resources"]["requests"]["cpu"] == "123m"
         assert c_by_name["metrics"]["resources"]["requests"]["cpu"] == "234m"
 
+    def test_stan_statefulset_with_global_affinity_and_tolerations(self, kube_version):
+        """Test that stan statefulset renders proper nodeSelector, affinity,
+        and tolerations with global config."""
+        values = {
+            "global": {
+                "platformNodePool": global_platform_node_pool_config,
+            }
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/stan/templates/statefulset.yaml"],
+            values=values,
+        )
+
+        assert len(docs) == 1
+        spec = docs[0]["spec"]["template"]["spec"]
+        assert spec["nodeSelector"] != {}
+        assert spec["nodeSelector"]["role"] == "astro"
+        assert spec["affinity"] != {}
+        assert len(spec["affinity"]["nodeAffinity"]["requiredDuringSchedulingIgnoredDuringExecution"]["nodeSelectorTerms"]) == 1
+        assert len(spec["tolerations"]) > 0
+        assert spec["tolerations"] == values["global"]["platformNodePool"]["tolerations"]
+
     def test_stan_statefulset_with_affinity_and_tolerations(self, kube_version):
         """Test that stan statefulset renders proper nodeSelector, affinity,
         and tolerations."""
@@ -114,29 +137,6 @@ class TestStanStatefulSet:
         assert len(spec["affinity"]["nodeAffinity"]["requiredDuringSchedulingIgnoredDuringExecution"]["nodeSelectorTerms"]) == 1
         assert len(spec["tolerations"]) > 0
         assert spec["tolerations"] == values["stan"]["tolerations"]
-
-    def test_stan_statefulset_with_global_affinity_and_tolerations(self, kube_version):
-        """Test that stan statefulset renders proper nodeSelector, affinity,
-        and tolerations with global config."""
-        values = {
-            "global": {
-                "platformNodePool": global_platform_node_pool_config,
-            }
-        }
-        docs = render_chart(
-            kube_version=kube_version,
-            show_only=["charts/stan/templates/statefulset.yaml"],
-            values=values,
-        )
-
-        assert len(docs) == 1
-        spec = docs[0]["spec"]["template"]["spec"]
-        assert spec["nodeSelector"] != {}
-        assert spec["nodeSelector"]["role"] == "astro"
-        assert spec["affinity"] != {}
-        assert len(spec["affinity"]["nodeAffinity"]["requiredDuringSchedulingIgnoredDuringExecution"]["nodeSelectorTerms"]) == 1
-        assert len(spec["tolerations"]) > 0
-        assert spec["tolerations"] == values["global"]["platformNodePool"]["tolerations"]
 
     def test_stan_statefulset_with_custom_images(self, kube_version):
         """Test we can customize the stan images."""
