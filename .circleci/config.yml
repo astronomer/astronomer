@@ -347,22 +347,22 @@ workflows:
             parameters:
               docker_image:
                 - quay.io/astronomer/ap-alertmanager:0.27.0-3
-                - quay.io/astronomer/ap-astro-ui:0.35.8
+                - quay.io/astronomer/ap-astro-ui:0.36.0
                 - quay.io/astronomer/ap-auth-sidecar:1.27.1
                 - quay.io/astronomer/ap-awsesproxy:1.5.0-11
                 - quay.io/astronomer/ap-base:3.18.9
                 - quay.io/astronomer/ap-blackbox-exporter:0.25.0-3
                 - quay.io/astronomer/ap-cli-install:0.26.26
-                - quay.io/astronomer/ap-commander:0.36.3
+                - quay.io/astronomer/ap-commander:0.36.4
                 - quay.io/astronomer/ap-configmap-reloader:0.13.1
                 - quay.io/astronomer/ap-curator:8.0.16-2
-                - quay.io/astronomer/ap-db-bootstrapper:0.35.7
+                - quay.io/astronomer/ap-db-bootstrapper:0.36.0
                 - quay.io/astronomer/ap-default-backend:0.28.27
                 - quay.io/astronomer/ap-elasticsearch-exporter:1.8.0
                 - quay.io/astronomer/ap-elasticsearch:8.12.1
                 - quay.io/astronomer/ap-fluentd:1.17.0-1
                 - quay.io/astronomer/ap-grafana:10.4.6
-                - quay.io/astronomer/ap-houston-api:0.35.17
+                - quay.io/astronomer/ap-houston-api:0.36.2
                 - quay.io/astronomer/ap-init:3.18.9
                 - quay.io/astronomer/ap-kibana:8.12.1
                 - quay.io/astronomer/ap-kube-state:2.10.1
@@ -386,22 +386,22 @@ workflows:
             parameters:
               docker_image:
                 - quay.io/astronomer/ap-alertmanager:0.27.0-3
-                - quay.io/astronomer/ap-astro-ui:0.35.8
+                - quay.io/astronomer/ap-astro-ui:0.36.0
                 - quay.io/astronomer/ap-auth-sidecar:1.27.1
                 - quay.io/astronomer/ap-awsesproxy:1.5.0-11
                 - quay.io/astronomer/ap-base:3.18.9
                 - quay.io/astronomer/ap-blackbox-exporter:0.25.0-3
                 - quay.io/astronomer/ap-cli-install:0.26.26
-                - quay.io/astronomer/ap-commander:0.36.3
+                - quay.io/astronomer/ap-commander:0.36.4
                 - quay.io/astronomer/ap-configmap-reloader:0.13.1
                 - quay.io/astronomer/ap-curator:8.0.16-2
-                - quay.io/astronomer/ap-db-bootstrapper:0.35.7
+                - quay.io/astronomer/ap-db-bootstrapper:0.36.0
                 - quay.io/astronomer/ap-default-backend:0.28.27
                 - quay.io/astronomer/ap-elasticsearch-exporter:1.8.0
                 - quay.io/astronomer/ap-elasticsearch:8.12.1
                 - quay.io/astronomer/ap-fluentd:1.17.0-1
                 - quay.io/astronomer/ap-grafana:10.4.6
-                - quay.io/astronomer/ap-houston-api:0.35.17
+                - quay.io/astronomer/ap-houston-api:0.36.2
                 - quay.io/astronomer/ap-init:3.18.9
                 - quay.io/astronomer/ap-kibana:8.12.1
                 - quay.io/astronomer/ap-kube-state:2.10.1
