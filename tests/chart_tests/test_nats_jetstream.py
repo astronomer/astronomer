@@ -33,7 +33,7 @@ class TestNatsJetstream:
         assert {"runAsUser": 1000, "runAsNonRoot": True} == docs[1]["spec"]["template"]["spec"]["containers"][0]["securityContext"]
 
     def test_nats_statefulset_with_jetstream_and_tls(self, kube_version):
-        """Test Nats with jetstream config."""
+        """Test jetstream config with nodeSelector, affinity, and tolerations defaults."""
         values = {
             "global": {"nats": {"jetStream": {"enabled": True, "tls": True}}},
             "nats": {"nats": {"createJetStreamJob": True}},
@@ -68,6 +68,9 @@ class TestNatsJetstream:
                 "keyFile": f"{jetStreamCertPrefix}-client/tls.key",
             },
         }
+        assert docs[7]["spec"]["template"]["spec"]["nodeSelector"] == {}
+        assert docs[7]["spec"]["template"]["spec"]["affinity"] == {}
+        assert docs[7]["spec"]["template"]["spec"]["tolerations"] == []
 
         assert {
             "name": "release-name-jetstream-tls-certificate-client-volume",

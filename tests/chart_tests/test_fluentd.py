@@ -311,8 +311,9 @@ class TestFluentd:
         assert len(docs) == 1
         doc = docs[0]
         self.fluentd_common_tests(doc)
-        assert "priorityClassName" in doc["spec"]["template"]["spec"]
-        assert "fluentd-priority-pod" == doc["spec"]["template"]["spec"]["priorityClassName"]
+        spec = doc["spec"]["template"]["spec"]
+        assert "priorityClassName" in spec
+        assert "fluentd-priority-pod" == spec["priorityClassName"]
 
     def test_fluentd_with_custom_env(self, kube_version):
         """Test to validate fluentd extraEnv configured."""
