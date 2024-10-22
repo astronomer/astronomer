@@ -49,7 +49,7 @@ data:
         - {{ template "elasticsearch.fullname" . }}-headless-discovery
 
     # Disable scripting for security.
-    {{ if semverCompare "<8" .Values.images.es.tag -}}
+    {{ if .Values.images.es.tag -}}
     script.allowed_types: none
     {{- else -}}
     script.allowed_types: inline
