@@ -41,9 +41,11 @@ rules:
 - apiGroups: [""]
   resources: ["secrets"]
   verbs: ["create", "delete", "deletecollection", "get", "list", "patch", "update", "watch"]
+{{- if $namespacepoolsRBACresources}}
 - apiGroups: [""]
   resources: ["namespaces"]
   verbs: ["create", "delete", "deletecollection", "get", "list", "patch", "update", "watch"]
+{{- end }}
 - apiGroups: [""]
   resources: ["serviceaccounts"]
   verbs: ["create", "delete", "get", "patch", "list", "watch"]
