@@ -49,9 +49,6 @@ class TestPrometheusBlackBoxExporterDeployment:
 
         common_blackbox_exporter_tests(docs)
         doc = docs[0]
-        assert doc["spec"]["template"]["spec"]["nodeSelector"] == {}
-        assert doc["spec"]["template"]["spec"]["affinity"] == {}
-        assert doc["spec"]["template"]["spec"]["tolerations"] == []
 
         c_by_name = get_containers_by_name(doc)
         assert c_by_name["blackbox-exporter"]["resources"] == {
@@ -64,6 +61,10 @@ class TestPrometheusBlackBoxExporterDeployment:
             "runAsNonRoot": True,
             "capabilities": {"drop": ["ALL"]},
         }
+        spec = doc["spec"]["template"]["spec"]
+        assert spec["nodeSelector"] == {}
+        assert spec["affinity"] == {}
+        assert spec["tolerations"] == []
 
     def test_prometheus_blackbox_exporter_deployment_custom_resources(self, kube_version):
         docs = render_chart(
