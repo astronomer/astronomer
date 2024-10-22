@@ -80,8 +80,7 @@ class TestPrometheusBlackBoxExporterDeployment:
         )
 
         common_blackbox_exporter_tests(docs)
-        doc = docs[0]
-        c_by_name = get_containers_by_name(doc)
+        c_by_name = get_containers_by_name(docs[0])
         assert c_by_name["blackbox-exporter"].get("resources") == {
             "limits": {"cpu": "777m", "memory": "999Mi"},
             "requests": {"cpu": "666m", "memory": "888Mi"},
@@ -96,8 +95,7 @@ class TestPrometheusBlackBoxExporterDeployment:
             show_only=["charts/prometheus-blackbox-exporter/templates/deployment.yaml"],
         )
         common_blackbox_exporter_tests(docs)
-        doc = docs[0]
-        c_by_name = get_containers_by_name(doc)
+        c_by_name = get_containers_by_name(docs[0])
         assert c_by_name["blackbox-exporter"]["securityContext"] == {
             "allowPrivilegeEscalation": False,
             "capabilities": {"drop": ["ALL"]},
@@ -139,5 +137,5 @@ class TestPrometheusBlackBoxExporterDeployment:
         assert len(spec["nodeSelector"]) == 1
         assert len(spec["affinity"]) == 1
         assert len(spec["tolerations"]) > 0
-        spec["nodeSelector"] == values["prometheus-blackbox-exporter"]["nodeSelector"]
+        assert spec["nodeSelector"] == values["prometheus-blackbox-exporter"]["nodeSelector"]
         assert spec["tolerations"] == values["prometheus-blackbox-exporter"]["tolerations"]

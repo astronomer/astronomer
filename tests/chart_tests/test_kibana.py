@@ -96,13 +96,13 @@ class TestKibana:
             ],
         )
         common_kibana_cronjob_test(docs)
-        doc = docs[0]
-        assert len(doc["spec"]["template"]["spec"]["nodeSelector"]) == 1
-        assert len(doc["spec"]["template"]["spec"]["affinity"]) == 1
-        assert len(doc["spec"]["template"]["spec"]["tolerations"]) > 0
-        doc["spec"]["template"]["spec"]["nodeSelector"] == "astrokibana"
-        assert doc["spec"]["template"]["spec"]["tolerations"] == values["kibana"]["tolerations"]
-        assert "fluentd.*" in doc["spec"]["template"]["spec"]["containers"][0]["command"][2]
+        spec = docs[0]["spec"]["template"]["spec"]
+        assert len(spec["nodeSelector"]) == 1
+        assert len(spec["affinity"]) == 1
+        assert len(spec["tolerations"]) > 0
+        assert spec["nodeSelector"] == "astrokibana"
+        assert spec["tolerations"] == values["kibana"]["tolerations"]
+        assert "fluentd.*" in docs[0]["spec"]["template"]["spec"]["containers"][0]["command"][2]
 
     def test_kibana_index_with_logging_sidecar(self, kube_version):
         """Test kibana Service with logging sidecar index."""

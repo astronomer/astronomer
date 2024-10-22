@@ -92,5 +92,5 @@ class TestPrometheusPostgresExporter:
         assert len(spec["nodeSelector"]) == 1
         assert len(spec["affinity"]) == 1
         assert len(spec["tolerations"]) > 0
-        spec["nodeSelector"] == values["prometheus-postgres-exporter"]["nodeSelector"]
+        assert spec["nodeSelector"] == values["prometheus-postgres-exporter"]["nodeSelector"]
         assert spec["tolerations"] == values["prometheus-postgres-exporter"]["tolerations"]
