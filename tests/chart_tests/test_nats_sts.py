@@ -37,9 +37,10 @@ class TestNatsStatefulSet:
             "timeoutSeconds": 5,
         }
 
-        assert doc["spec"]["template"]["spec"]["nodeSelector"] == {}
-        assert doc["spec"]["template"]["spec"]["affinity"] == {}
-        assert doc["spec"]["template"]["spec"]["tolerations"] == []
+        spec = doc["spec"]["template"]["spec"]
+        assert spec["nodeSelector"] == {}
+        assert spec["affinity"] == {}
+        assert spec["tolerations"] == []
 
     def test_nats_statefulset_with_metrics_and_resources(self, kube_version):
         """Test that nats statefulset renders good metrics exporter."""
