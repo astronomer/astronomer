@@ -1,6 +1,6 @@
 import pytest
 
-from tests import supported_k8s_versions, get_containers_by_name
+from tests import supported_k8s_versions, get_containers_by_name, global_platform_node_pool_config
 from tests.chart_tests.helm_template_generator import render_chart
 
 
@@ -44,7 +44,8 @@ class TestKibana:
         assert env_vars["TELEMETRY_ENABLED"] == "false"
 
     def test_kibana_index_defaults(self, kube_version):
-        """Test kibana Service with index defaults."""
+        """Test that kibana index cronjobs renders proper nodeSelector, affinity,
+        and tolerations with global config and index defaults."""
         docs = render_chart(
             kube_version=kube_version,
             values={},
@@ -53,8 +54,55 @@ class TestKibana:
             ],
         )
         common_kibana_cronjob_test(docs)
-        doc = docs[0]
-        assert "fluentd.*" in doc["spec"]["template"]["spec"]["containers"][0]["command"][2]
+        spec = docs[0]["spec"]["template"]["spec"]
+        assert spec["nodeSelector"] == {}
+        assert spec["affinity"] == {}
+        assert spec["tolerations"] == []
+        assert "fluentd.*" in spec["containers"][0]["command"][2]
+
+    def test_kibana_index_defaults_with_global_overrides(self, kube_version):
+        """Test that kibana index cronjobs renders proper nodeSelector, affinity,
+        and tolerations with global config and index defaults."""
+        values = {
+            "global": {
+                "platformNodePool": global_platform_node_pool_config,
+            },
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=[
+                "charts/kibana/templates/kibana-default-index-cronjob.yaml",
+            ],
+        )
+        common_kibana_cronjob_test(docs)
+        spec = docs[0]["spec"]["template"]["spec"]
+        assert len(spec["nodeSelector"]) == 1
+        assert len(spec["tolerations"]) > 0
+        assert spec["tolerations"] == values["global"]["platformNodePool"]["tolerations"]
+
+        assert "fluentd.*" in spec["containers"][0]["command"][2]
+
+    def test_kibana_index_defaults_with_subchart_overrides(self, kube_version):
+        """Test that kibana index cronjobs renders proper nodeSelector, affinity,
+        and tolerations with global config and index defaults."""
+        global_platform_node_pool_config["nodeSelector"] = {"role": "astrokibana"}
+        values = {"kibana": global_platform_node_pool_config}
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=[
+                "charts/kibana/templates/kibana-default-index-cronjob.yaml",
+            ],
+        )
+        common_kibana_cronjob_test(docs)
+        spec = docs[0]["spec"]["template"]["spec"]
+        assert len(spec["nodeSelector"]) == 1
+        assert len(spec["affinity"]) == 1
+        assert len(spec["tolerations"]) > 0
+        assert spec["nodeSelector"] == values["kibana"]["nodeSelector"]
+        assert spec["tolerations"] == values["kibana"]["tolerations"]
+        assert "fluentd.*" in docs[0]["spec"]["template"]["spec"]["containers"][0]["command"][2]
 
     def test_kibana_index_with_logging_sidecar(self, kube_version):
         """Test kibana Service with logging sidecar index."""
@@ -118,8 +166,7 @@ class TestKibana:
             ],
         )
         common_kibana_cronjob_test(docs)
-        doc = docs[0]
-        assert {"runAsNonRoot": True, "runAsUser": 1000} == doc["spec"]["template"]["spec"]["containers"][0]["securityContext"]
+        assert {"runAsNonRoot": True, "runAsUser": 1000} == docs[0]["spec"]["template"]["spec"]["containers"][0]["securityContext"]
 
     def test_kibana_index_securitycontext_with_openshiftEnabled(self, kube_version):
         """Test kibana Service with index defaults."""
@@ -131,5 +178,4 @@ class TestKibana:
             ],
         )
         common_kibana_cronjob_test(docs)
-        doc = docs[0]
-        assert {"runAsNonRoot": True} == doc["spec"]["template"]["spec"]["containers"][0]["securityContext"]
+        assert {"runAsNonRoot": True} == docs[0]["spec"]["template"]["spec"]["containers"][0]["securityContext"]
