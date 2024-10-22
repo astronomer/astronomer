@@ -99,6 +99,6 @@ class TestPrivateCaDaemonset:
         doc = docs[0]
         self.common_tests_daemonset(doc)
         spec = doc["spec"]["template"]["spec"]
-        
+
         assert len(spec["containers"]) == 1
         assert spec["containers"][0]["image"] == "snarks:boojums"
