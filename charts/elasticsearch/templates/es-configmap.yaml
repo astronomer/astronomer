@@ -49,7 +49,7 @@ data:
         - {{ template "elasticsearch.fullname" . }}-headless-discovery
 
     # Disable scripting for security.
-    {{ if .Values.es.useCustomtag -}}
+    {{ if .Values.exporter.es.useCustomtag -}}
     script.allowed_types: none
     {{- else -}}
     script.allowed_types: inline

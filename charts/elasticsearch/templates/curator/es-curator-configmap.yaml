@@ -45,7 +45,7 @@ data:
     ---
     # Remember, leave a key empty if there is no value.  None will be a string,
     # not a Python "NoneType"
-    {{ if .Values.es.useCustomtag -}}
+    {{ if .Values.exporter.es.useCustomtag -}}
     client:
       hosts:
         - {{ template "elasticsearch.fullname" . }}
