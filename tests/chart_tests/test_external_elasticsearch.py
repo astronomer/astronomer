@@ -597,7 +597,7 @@ class TestExternalElasticSearch:
 
     def test_external_elasticsearch_nginx_deployment_global_platformnodepool_overrides(self, kube_version):
         """Test that External ElasticSearch renders proper nodeSelector, affinity,
-        and tolerations with global config and nginx defaults"""
+        and tolerations with global config and nginx overrides."""
         values = {
             "global": {
                 "platformNodePool": global_platform_node_pool_config,
