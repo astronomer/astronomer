@@ -576,7 +576,7 @@ class TestElasticSearch:
         assert c_by_name["curator"]["securityContext"] == {"runAsNonRoot": True}
 
     def test_elasticsearch_curator_cronjob_subchart_overrides(self, kube_version):
-        """Test ElasticSearch Curator cron job with nodeSelector, affinity, tolerations and config defaults"""
+        """Test ElasticSearch Curator cron job with nodeSelector, affinity, tolerations and config overrides."""
         global_platform_node_pool_config["nodeSelector"] = {"role": "astroelasticsearch"}
         values = {
             "elasticsearch": {
