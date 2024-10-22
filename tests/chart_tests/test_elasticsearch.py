@@ -542,7 +542,7 @@ class TestElasticSearch:
         assert c_by_name["curator"]["securityContext"] == {}
 
     def test_elasticsearch_curator_cronjob_overrides(self, kube_version):
-        """Test ElasticSearch Curator cron job with nodeSelector, affinity, tolerations and config defaults"""
+        """Test ElasticSearch Curator cron job with nodeSelector, affinity, tolerations and config overrides."""
         values = {
             "elasticsearch": {
                 "curator": {
