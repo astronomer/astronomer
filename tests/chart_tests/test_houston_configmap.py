@@ -22,6 +22,7 @@ def common_test_cases(docs):
 
     assert prod["deployments"]["helm"]["airflow"]["useAstroSecurityManager"] is True
     assert prod["deployments"]["disableManageClusterScopedResources"] is False
+    assert prod["helm"]["tlsSecretName"] == "astronomer-tls"
     airflow_local_settings = prod["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
     scheduler_update_strategy = prod["deployments"]["helm"]["airflow"]["scheduler"]["strategy"]
     assert scheduler_update_strategy["type"] == "RollingUpdate"
@@ -627,3 +628,15 @@ def test_houston_configmap_with_disable_manage_clusterscopedresources_enabled():
     doc = docs[0]
     prod = yaml.safe_load(doc["data"]["production.yaml"])
     assert prod["deployments"]["disableManageClusterScopedResources"] is True
+
+
+def test_houston_configmap_with_tls_secretname_overrides():
+    """Validate the houston configmap and its embedded data with tls secretname overrides
+    ."""
+    docs = render_chart(
+        values={"global": {"tlsSecret": "astro-ssl-secret"}},
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    doc = docs[0]
+    prod = yaml.safe_load(doc["data"]["production.yaml"])
+    assert prod["helm"]["tlsSecretName"] == "astro-ssl-secret"
