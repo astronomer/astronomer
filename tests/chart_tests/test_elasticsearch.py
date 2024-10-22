@@ -503,8 +503,9 @@ class TestElasticSearch:
         )
         assert len(docs) == 1
         LS = yaml.safe_load(docs[0]["data"]["config.yml"])
-        assert "elasticsearch" in LS
-        assert "http://release-name-elasticsearch:9200" in LS["elasticsearch"]["client"]["hosts"]
+        assert "client" in LS
+        assert "release-name-elasticsearch" in LS["client"]["hosts"]
+        assert LS["client"]["port"] == 9200
 
     def test_elasticsearch_curator_config_overrides(self, kube_version):
         """Test ElasticSearch Curator IndexPattern with defaults"""
@@ -515,8 +516,9 @@ class TestElasticSearch:
         )
         assert len(docs) == 1
         LS = yaml.safe_load(docs[0]["data"]["config.yml"])
-        assert "elasticsearch" in LS
-        assert "https://release-name-elasticsearch:9200" in LS["elasticsearch"]["client"]["hosts"]
+        assert "client" in LS
+        assert "release-name-elasticsearch" in LS["client"]["hosts"]
+        assert LS["client"]["port"] == 9200
 
     def test_elasticsearch_curator_cronjob_defaults(self, kube_version):
         """Test ElasticSearch Curator cron job with defaults"""
@@ -612,3 +614,4 @@ class TestElasticSearch:
         for doc in docs:
             assert "persistentVolumeClaimRetentionPolicy" in doc["spec"]
             assert test_persistentVolumeClaimRetentionPolicy == doc["spec"]["persistentVolumeClaimRetentionPolicy"]
+
