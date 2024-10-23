@@ -1,66 +1,69 @@
 import pytest
 
-import tests.chart_tests as chart_tests
-from tests import supported_k8s_versions
+from tests import git_root_dir
+from tests.chart_tests.helm_template_generator import render_chart
 
 include_kind_list = ["Deployment", "DaemonSet", "StatefulSet", "ReplicaSet"]
-# TODO: these are the containers that lack readinessProbe and livenessProbe. We need to add probes if they
-#       make sense and then remove them from the list. See https://github.com/astronomer/issues/issues/6606
-#
-# ignore_list is the get_chart_containers() key with the k8s version stripped off. For example:
-# "1.30.0_release-name-houston-worker_houston" would be ignored with "release-name-houston-worker_houston"
-ignore_list = [
-    "release-name-alertmanager_alertmanager",
-    "release-name-containerd-ca-update_cert-copy-and-toml-update",
-    "release-name-elasticsearch-nginx_nginx",
-    "release-name-external-es-proxy_awsproxy",
-    "release-name-external-es-proxy_external-es-proxy",
-    "release-name-fluentd_fluentd",
-    "release-name-houston-worker_houston",
-    "release-name-kibana_kibana",
-    "release-name-kube-state_kube-state",
-    "release-name-nats_metrics",
-    "release-name-nginx-default-backend_default-backend",
-    "release-name-private-ca_cert-copy",
-    "release-name-stan_metrics",
-]
 
 
-def init_test_probes() -> dict:
-    """Return a dict of all containers in the chart for the given kubernetes version.
+pod_manager_data = {
+    "charts/alertmanager/templates/alertmanager-statefulset.yaml": {"foo": "bar"},
+    "charts/astronomer/templates/astro-ui/astro-ui-deployment.yaml": {"foo": "bar"},
+    "charts/astronomer/templates/cli-install/cli-install-deployment.yaml": {"foo": "bar"},
+    "charts/astronomer/templates/commander/commander-deployment.yaml": {"foo": "bar"},
+    "charts/astronomer/templates/houston/api/houston-deployment.yaml": {"foo": "bar"},
+    "charts/astronomer/templates/houston/cronjobs/houston-cleanup-deployments-cronjob.yaml": {"foo": "bar"},
+    "charts/astronomer/templates/houston/helm-hooks/houston-upgrade-deployments-job.yaml": {"foo": "bar"},
+    "charts/astronomer/templates/houston/worker/houston-worker-deployment.yaml": {"foo": "bar"},
+    "charts/astronomer/templates/registry/registry-statefulset.yaml": {"foo": "bar"},
+    "charts/elasticsearch/templates/client/es-client-deployment.yaml": {"foo": "bar"},
+    "charts/elasticsearch/templates/data/es-data-statefulset.yaml": {"foo": "bar"},
+    "charts/elasticsearch/templates/exporter/es-exporter-deployment.yaml": {"foo": "bar"},
+    "charts/elasticsearch/templates/master/es-master-statefulset.yaml": {"foo": "bar"},
+    "charts/elasticsearch/templates/nginx/nginx-es-deployment.yaml": {"foo": "bar"},
+    "charts/external-es-proxy/templates/external-es-proxy-deployment.yaml": {"foo": "bar"},
+    "charts/fluentd/templates/fluentd-daemonset.yaml": {"foo": "bar"},
+    "charts/grafana/templates/grafana-deployment.yaml": {"foo": "bar"},
+    "charts/kibana/templates/kibana-deployment.yaml": {"foo": "bar"},
+    "charts/kube-state/templates/kube-state-deployment.yaml": {"foo": "bar"},
+    "charts/nats/templates/statefulset.yaml": {"foo": "bar"},
+    "charts/nginx/templates/nginx-deployment-default.yaml": {"foo": "bar"},
+    "charts/nginx/templates/nginx-deployment.yaml": {"foo": "bar"},
+    "charts/pgbouncer/templates/pgbouncer-deployment.yaml": {"foo": "bar"},
+    "charts/postgresql/templates/statefulset-slaves.yaml": {"foo": "bar"},
+    "charts/postgresql/templates/statefulset.yaml": {"foo": "bar"},
+    "charts/prometheus/templates/prometheus-statefulset.yaml": {"foo": "bar"},
+    "charts/prometheus-blackbox-exporter/templates/deployment.yaml": {"foo": "bar"},
+    "charts/prometheus-node-exporter/templates/daemonset.yaml": {"foo": "bar"},
+    "charts/prometheus-postgres-exporter/templates/deployment.yaml": {"foo": "bar"},
+    "charts/stan/templates/statefulset.yaml": {"foo": "bar"},
+}
 
-    The keys for this dict are like <version>_<release-name>-<pod>_<container>
-    EG: 1.30.0_release-name-houston-worker_houston
-    """
-    chart_values = chart_tests.get_all_features()
 
-    return {
-        k: v
-        for k8s_version in supported_k8s_versions
-        for k, v in chart_tests.get_chart_containers(k8s_version, chart_values, include_kinds=include_kind_list).items()
-        if k not in [f"{k8s_version}_{i}" for i in ignore_list]
-    }
+def find_all_pod_manager_templates() -> list[str]:
+    """Return a sorted, unique list of all pod manager templates in the chart, relative to git_root_dir."""
 
-
-chart_containers = init_test_probes()
+    return sorted(
+        {
+            str(x.relative_to(git_root_dir))
+            for x in (git_root_dir / "charts").rglob("*")
+            if any(sub in x.name for sub in ("deployment", "statefulset", "replicaset", "daemonset"))
+        }
+    )
 
 
-@pytest.mark.parametrize("container", chart_containers.values(), ids=chart_containers.keys())
+def test_pod_manager_list(pod_manager_templates=find_all_pod_manager_templates(), pod_manager_list=pod_manager_data.keys()):
+    """Make sure we are not adding pod manager templates that are not being tested here."""
+    assert pod_manager_templates == sorted(pod_manager_list)
+
+
+@pytest.mark.parametrize("template,values", zip(pod_manager_data.keys(), pod_manager_data.values()), ids=pod_manager_data.keys())
 class TestProbes:
-    def test_container_readiness_probes_with_custom_values(self, container):
-        """Ensure all containers have the ability to customize readiness probes."""
-
-        if container["key"] in ignore_list:
-            pytest.skip(f"Info: Unsupported resource: {container['key']}")
-        elif not container.get("ports"):
-            pytest.skip(f"Info: No ports found in container {container['key']} so readinessProbe is not applicable.")
-        else:
-            assert "readinessProbe" in container
-
-    def test_container_liveness_probes_with_custom_values(self, container):
+    def test_template_probes_with_custom_values(self, template, values):
         """Ensure all containers have the ability to customize liveness probes."""
 
-        if container["key"] in ignore_list:
-            pytest.skip(f"Info: Unsupported resource: {container['key']}")
-        else:
+        docs = render_chart(show_only=template, values=values)
+        assert len(docs) == 1
+        for container in docs[0]["spec"]["template"]["spec"]["containers"]:
             assert "livenessProbe" in container
+            assert "readinessProbe" in container
