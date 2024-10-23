@@ -79,12 +79,8 @@ spec:
           ports:
             - containerPort: {{ .Values.ports.http }}
               name: alertmanager
-          readinessProbe:
-            httpGet:
-              path: {{ .Values.prefixURL }}/#/status
-              port: {{ .Values.ports.http }}
-            initialDelaySeconds: 30
-            timeoutSeconds: 30
+          readinessProbe: {{ toYaml .Values.readinessProbe | nindent 12 }}
+          livenessProbe: {{ toYaml .Values.livenessProbe | nindent 12 }}
           resources: {{ toYaml .Values.resources | nindent 12 }}
           volumeMounts:
             - name: config-volume
@@ -107,20 +103,8 @@ spec:
           - containerPort: {{ .Values.global.authSidecar.port }}
             name: auth-proxy
             protocol: TCP
-          readinessProbe:
-            httpGet:
-              path: /healthz
-              port: {{ .Values.global.authSidecar.port }}
-              scheme: HTTP
-            initialDelaySeconds: 10
-            periodSeconds: 10
-          livenessProbe:
-            httpGet:
-              path: /healthz
-              port: {{ .Values.global.authSidecar.port }}
-              scheme: HTTP
-            initialDelaySeconds: 10
-            periodSeconds: 10
+          readinessProbe: {{- tpl (toYaml .Values.readinessProbe) . | nindent 12 }}
+          livenessProbe: {{ tpl (toYaml .Values.livenessProbe) . | nindent 12 }}
           volumeMounts:
           - mountPath: /etc/nginx/conf.d/
             name: alertmanager-sidecar-conf
