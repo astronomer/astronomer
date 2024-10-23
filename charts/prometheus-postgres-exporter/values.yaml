@@ -29,6 +29,18 @@ resources:
     cpu: 10m
     memory: 128Mi
 
+livenessProbe:
+  tcpSocket:
+    port: 9187
+  initialDelaySeconds: 5
+  periodSeconds: 10
+
+readinessProbe:
+  tcpSocket:
+    port: 9187
+  initialDelaySeconds: 5
+  periodSeconds: 10
+
 rbac:
   # Specifies whether RBAC resources should be created
   create: true
