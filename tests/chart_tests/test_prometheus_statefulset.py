@@ -49,14 +49,14 @@ class TestPrometheusStatefulset:
         assert c_by_name["prometheus"]["readinessProbe"]["periodSeconds"] == 5
         assert c_by_name["prometheus"]["readinessProbe"]["failureThreshold"] == 3
         assert c_by_name["prometheus"]["readinessProbe"]["timeoutSeconds"] == 1
-        assert c_by_name["configmap-reloader"]["livenessProbe"]["initialDelaySeconds"] == 10
-        assert c_by_name["configmap-reloader"]["livenessProbe"]["periodSeconds"] == 5
-        assert c_by_name["configmap-reloader"]["livenessProbe"]["failureThreshold"] == 3
-        assert c_by_name["configmap-reloader"]["livenessProbe"]["timeoutSeconds"] == 1
-        assert c_by_name["configmap-reloader"]["readinessProbe"]["initialDelaySeconds"] == 10
-        assert c_by_name["configmap-reloader"]["readinessProbe"]["periodSeconds"] == 5
-        assert c_by_name["configmap-reloader"]["readinessProbe"]["failureThreshold"] == 3
-        assert c_by_name["configmap-reloader"]["readinessProbe"]["timeoutSeconds"] == 1
+        assert not c_by_name["configmap-reloader"]["livenessProbe"]["initialDelaySeconds"]
+        assert not c_by_name["configmap-reloader"]["livenessProbe"]["periodSeconds"]
+        assert not c_by_name["configmap-reloader"]["livenessProbe"]["failureThreshold"]
+        assert not c_by_name["configmap-reloader"]["livenessProbe"]["timeoutSeconds"]
+        assert not c_by_name["configmap-reloader"]["readinessProbe"]["initialDelaySeconds"]
+        assert not c_by_name["configmap-reloader"]["readinessProbe"]["periodSeconds"]
+        assert not c_by_name["configmap-reloader"]["readinessProbe"]["failureThreshold"]
+        assert not c_by_name["configmap-reloader"]["readinessProbe"]["timeoutSeconds"]
 
     def test_prometheus_sts_override_probes(self, kube_version):
         """Test override of probe values."""

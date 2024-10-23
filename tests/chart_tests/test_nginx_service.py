@@ -235,17 +235,17 @@ class TestNginx:
 
         nginx_lp = doc["spec"]["template"]["spec"]["containers"][0]["livenessProbe"]
         assert nginx_lp["httpGet"] == {"path": "/healthz", "port": 10254}
-        assert nginx_lp["initialDelaySeconds"] == 30
-        assert nginx_lp["periodSeconds"] == 15
-        assert nginx_lp["timeoutSeconds"] == 5
-        assert nginx_lp["failureThreshold"] == 5
+        assert not nginx_lp["initialDelaySeconds"]
+        assert not nginx_lp["periodSeconds"]
+        assert not nginx_lp["timeoutSeconds"]
+        assert not nginx_lp["failureThreshold"]
 
         nginx_rp = doc["spec"]["template"]["spec"]["containers"][0]["readinessProbe"]
         assert nginx_rp["httpGet"] == {"path": "/healthz", "port": 10254}
-        assert nginx_rp["initialDelaySeconds"] == 10
-        assert nginx_rp["periodSeconds"] == 15
-        assert nginx_rp["timeoutSeconds"] == 5
-        assert nginx_rp["failureThreshold"] == 3
+        assert not nginx_rp["initialDelaySeconds"]
+        assert not nginx_rp["periodSeconds"]
+        assert not nginx_rp["timeoutSeconds"]
+        assert not nginx_rp["failureThreshold"]
 
     def test_nginx_overrides(self):
         """Test nginx with some overrides."""

@@ -673,15 +673,15 @@ class TestElasticSearch:
 
         assert len(docs) == 1
         c_by_name = get_containers_by_name(docs[0])
-        assert c_by_name["es-data"]["livenessProbe"]["initialDelaySeconds"] == 10
-        assert c_by_name["es-data"]["livenessProbe"]["periodSeconds"] == 5
-        assert c_by_name["es-data"]["livenessProbe"]["timeoutSeconds"] == 1
-        assert c_by_name["es-data"]["livenessProbe"]["failureThreshold"] == 3
+        assert not c_by_name["es-data"]["livenessProbe"]["initialDelaySeconds"]
+        assert not c_by_name["es-data"]["livenessProbe"]["periodSeconds"]
+        assert not c_by_name["es-data"]["livenessProbe"]["timeoutSeconds"]
+        assert not c_by_name["es-data"]["livenessProbe"]["failureThreshold"]
         assert c_by_name["es-data"]["livenessProbe"]["tcpSocket"]["port"] == 9300
-        assert c_by_name["es-data"]["readinessProbe"]["initialDelaySeconds"] == 20
-        assert c_by_name["es-data"]["readinessProbe"]["periodSeconds"] == 10
-        assert c_by_name["es-data"]["readinessProbe"]["timeoutSeconds"] == 1
-        assert c_by_name["es-data"]["readinessProbe"]["failureThreshold"] == 3
+        assert not c_by_name["es-data"]["readinessProbe"]["initialDelaySeconds"]
+        assert not c_by_name["es-data"]["readinessProbe"]["periodSeconds"]
+        assert not c_by_name["es-data"]["readinessProbe"]["timeoutSeconds"]
+        assert not c_by_name["es-data"]["readinessProbe"]["failureThreshold"]
         assert c_by_name["es-data"]["readinessProbe"]["tcpSocket"]["port"] == 9399
 
     def test_es_data_probes_custom(self, kube_version):
