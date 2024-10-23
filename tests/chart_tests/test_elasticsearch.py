@@ -4,7 +4,6 @@ from tests import (
     get_containers_by_name,
     get_cronjob_containerspec_by_name,
     supported_k8s_versions,
-    global_platform_node_pool_config,
 )
 from tests.chart_tests.helm_template_generator import render_chart
 
@@ -541,7 +540,7 @@ class TestElasticSearch:
         ]
         assert c_by_name["curator"]["securityContext"] == {}
 
-    def test_elasticsearch_curator_cronjob_overrides(self, kube_version):
+    def test_elasticsearch_curator_cronjob_overrides(self, kube_version, global_platform_node_pool_config):
         """Test ElasticSearch Curator cron job with nodeSelector, affinity, tolerations and config overrides."""
         values = {
             "elasticsearch": {
@@ -575,7 +574,7 @@ class TestElasticSearch:
         ]
         assert c_by_name["curator"]["securityContext"] == {"runAsNonRoot": True}
 
-    def test_elasticsearch_curator_cronjob_subchart_overrides(self, kube_version):
+    def test_elasticsearch_curator_cronjob_subchart_overrides(self, kube_version, global_platform_node_pool_config):
         """Test ElasticSearch Curator cron job with nodeSelector, affinity, tolerations and config overrides."""
         global_platform_node_pool_config["nodeSelector"] = {"role": "astroelasticsearch"}
         values = {

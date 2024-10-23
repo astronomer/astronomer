@@ -1,6 +1,6 @@
 import pytest
 
-from tests import supported_k8s_versions, get_containers_by_name, global_platform_node_pool_config
+from tests import supported_k8s_versions, get_containers_by_name
 from tests.chart_tests.helm_template_generator import render_chart
 
 
@@ -105,7 +105,7 @@ class TestPrometheusBlackBoxExporterDeployment:
             "runAsUser": 1000,
         }
 
-    def test_prometheus_blackbox_exporter_deployment_global_platform_nodepool(self, kube_version):
+    def test_prometheus_blackbox_exporter_deployment_global_platform_nodepool(self, kube_version, global_platform_node_pool_config):
         """Test that blackbox exporter renders proper nodeSelector, affinity,
         and tolerations with global overrides"""
         values = {
@@ -124,7 +124,7 @@ class TestPrometheusBlackBoxExporterDeployment:
         assert len(spec["tolerations"]) > 0
         assert spec["tolerations"] == values["global"]["platformNodePool"]["tolerations"]
 
-    def test_prometheus_blackbox_exporter_defaults_with_subchart_overrides(self, kube_version):
+    def test_prometheus_blackbox_exporter_defaults_with_subchart_overrides(self, kube_version, global_platform_node_pool_config):
         """Test that blackbox exporter renders proper nodeSelector, affinity,
         and tolerations with sunchart overrides"""
         global_platform_node_pool_config["nodeSelector"] = {"role": "astro-prometheus-blackbox-exporter"}

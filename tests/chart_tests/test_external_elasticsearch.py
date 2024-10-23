@@ -5,7 +5,7 @@ import pytest
 import yaml
 import pathlib
 
-from tests import get_containers_by_name, supported_k8s_versions, global_platform_node_pool_config
+from tests import get_containers_by_name, supported_k8s_versions
 from tests.chart_tests.helm_template_generator import render_chart
 
 secret = base64.b64encode(b"sample-secret").decode()
@@ -595,7 +595,9 @@ class TestExternalElasticSearch:
         assert spec["affinity"] == {}
         assert spec["tolerations"] == []
 
-    def test_external_elasticsearch_nginx_deployment_global_platformnodepool_overrides(self, kube_version):
+    def test_external_elasticsearch_nginx_deployment_global_platformnodepool_overrides(
+        self, kube_version, global_platform_node_pool_config
+    ):
         """Test that External ElasticSearch renders proper nodeSelector, affinity,
         and tolerations with global config and nginx overrides."""
         values = {
@@ -622,7 +624,7 @@ class TestExternalElasticSearch:
         assert len(spec["tolerations"]) > 0
         assert spec["tolerations"] == values["global"]["platformNodePool"]["tolerations"]
 
-    def test_external_elasticsearch_nginx_deployment_with_subchart_overrides(self, kube_version):
+    def test_external_elasticsearch_nginx_deployment_with_subchart_overrides(self, kube_version, global_platform_node_pool_config):
         """Test that External ElasticSearch renders proper nodeSelector, affinity,
         and tolerations with global config and nginx overrides."""
         global_platform_node_pool_config["nodeSelector"] = {"role": "astroesproxy"}
