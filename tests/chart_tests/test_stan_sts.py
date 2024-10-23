@@ -1,6 +1,6 @@
 from tests.chart_tests.helm_template_generator import render_chart
 import pytest
-from tests import supported_k8s_versions, get_containers_by_name, global_platform_node_pool_config
+from tests import supported_k8s_versions, get_containers_by_name
 import re
 
 
@@ -94,7 +94,7 @@ class TestStanStatefulSet:
         assert c_by_name["stan"]["resources"]["requests"]["cpu"] == "123m"
         assert c_by_name["metrics"]["resources"]["requests"]["cpu"] == "234m"
 
-    def test_stan_statefulset_with_global_affinity_and_tolerations(self, kube_version):
+    def test_stan_statefulset_with_global_affinity_and_tolerations(self, kube_version, global_platform_node_pool_config):
         """Test that stan statefulset renders proper nodeSelector, affinity,
         and tolerations with global config."""
         values = {
@@ -117,7 +117,7 @@ class TestStanStatefulSet:
         assert len(spec["tolerations"]) > 0
         assert spec["tolerations"] == values["global"]["platformNodePool"]["tolerations"]
 
-    def test_stan_statefulset_with_affinity_and_tolerations(self, kube_version):
+    def test_stan_statefulset_with_affinity_and_tolerations(self, kube_version, global_platform_node_pool_config):
         """Test that stan statefulset renders proper nodeSelector, affinity,
         and tolerations."""
         global_platform_node_pool_config["nodeSelector"] = {"role": "astrostan"}

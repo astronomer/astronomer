@@ -1,6 +1,6 @@
 import pytest
 
-from tests import supported_k8s_versions, get_containers_by_name, global_platform_node_pool_config
+from tests import supported_k8s_versions, get_containers_by_name
 from tests.chart_tests.helm_template_generator import render_chart
 
 
@@ -53,7 +53,7 @@ class TestPrometheusPostgresExporter:
         assert spec["affinity"] == {}
         assert spec["tolerations"] == []
 
-    def test_prometheus_postgres_exporter_with_global_platform_nodepool(self, kube_version):
+    def test_prometheus_postgres_exporter_with_global_platform_nodepool(self, kube_version, global_platform_node_pool_config):
         """Test that postgres exporter renders proper nodeSelector, affinity,
         and tolerations with global values."""
         values = {
@@ -73,7 +73,7 @@ class TestPrometheusPostgresExporter:
         assert len(spec["tolerations"]) > 0
         assert spec["tolerations"] == values["global"]["platformNodePool"]["tolerations"]
 
-    def test_prometheus_postgres_exporter_defaults_with_subchart_overrides(self, kube_version):
+    def test_prometheus_postgres_exporter_defaults_with_subchart_overrides(self, kube_version, global_platform_node_pool_config):
         """Test that postgres exporter renders proper nodeSelector, affinity,
         and tolerations with subchart overrides."""
 

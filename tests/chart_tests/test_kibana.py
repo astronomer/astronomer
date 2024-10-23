@@ -1,6 +1,6 @@
 import pytest
 
-from tests import supported_k8s_versions, get_containers_by_name, global_platform_node_pool_config
+from tests import supported_k8s_versions, get_containers_by_name
 from tests.chart_tests.helm_template_generator import render_chart
 
 
@@ -60,7 +60,7 @@ class TestKibana:
         assert spec["tolerations"] == []
         assert "fluentd.*" in spec["containers"][0]["command"][2]
 
-    def test_kibana_index_defaults_with_global_overrides(self, kube_version):
+    def test_kibana_index_defaults_with_global_overrides(self, kube_version, global_platform_node_pool_config):
         """Test that kibana index cronjobs renders proper nodeSelector, affinity,
         and tolerations with global config and index defaults."""
         values = {
@@ -83,7 +83,7 @@ class TestKibana:
 
         assert "fluentd.*" in spec["containers"][0]["command"][2]
 
-    def test_kibana_index_defaults_with_subchart_overrides(self, kube_version):
+    def test_kibana_index_defaults_with_subchart_overrides(self, kube_version, global_platform_node_pool_config):
         """Test that kibana index cronjobs renders proper nodeSelector, affinity,
         and tolerations with global config and index defaults."""
         global_platform_node_pool_config["nodeSelector"] = {"role": "astrokibana"}
