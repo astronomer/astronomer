@@ -49,17 +49,8 @@ resources: {}
 #   cpu: 100m
 #   memory: 128Mi
 
-livenessProbe:
-  initialDelaySeconds: 30
-  periodSeconds: 15
-  timeoutSeconds: 5
-  failureThreshold: 5
-readinessProbe:
-  initialDelaySeconds: 10
-  periodSeconds: 15
-  timeoutSeconds: 5
-  failureThreshold: 3
-
+livenessProbe: {}
+readinessProbe: {}
 
 # Service type that Nginx can be. Default is LoadBalancer but "ClusterIP" and "NodePort" are both valid.
 serviceType: "LoadBalancer"

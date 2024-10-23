@@ -28,16 +28,8 @@ stan:
   #   cpu: 100m
   #   memory: 128Mi
 
-  livenessProbe:
-    initialDelaySeconds: 10
-    periodSeconds: 15
-    timeoutSeconds: 5
-    failureThreshold: 3
-  readinessProbe:
-    initialDelaySeconds: 10
-    periodSeconds: 15
-    timeoutSeconds: 5
-    failureThreshold: 3
+  livenessProbe: {}
+  readinessProbe: {}
 
   # Cluster name, generated into a name from the
   # release name by default.
