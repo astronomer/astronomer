@@ -96,6 +96,8 @@ class TestAstronomerCommander:
                 "namespace": "default",
             }
         ]
+
+        assert (cluster_role["rules"][2]["resources"][0]) != "namespaces"
         assert cluster_role_binding["kind"] == "ClusterRoleBinding"
         assert cluster_role_binding["roleRef"] == expected_role_ref
         assert cluster_role_binding["subjects"] == expected_subjects
@@ -367,11 +369,16 @@ class TestAstronomerCommander:
                     }
                 },
             },
-            show_only=["charts/astronomer/templates/commander/commander-deployment.yaml"],
+            show_only=[
+                "charts/astronomer/templates/commander/commander-deployment.yaml",
+                "charts/astronomer/templates/commander/commander-role.yaml",
+            ],
         )
 
-        assert len(docs) == 1
+        assert len(docs) == 2
         doc = docs[0]
+        cluster_role = docs[1]
+        assert (cluster_role["rules"][2]["resources"][0]) == "namespaces"
         assert doc["kind"] == "Deployment"
         assert doc["apiVersion"] == "apps/v1"
         assert doc["metadata"]["name"] == "release-name-commander"
