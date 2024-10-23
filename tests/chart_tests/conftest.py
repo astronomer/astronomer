@@ -70,3 +70,34 @@ def docker_client():
         client = docker.from_env()
         yield client
         client.close()
+
+
+@pytest.fixture(scope="function")
+def global_platform_node_pool_config():
+    yield {
+        "nodeSelector": {"role": "astro"},
+        "affinity": {
+            "nodeAffinity": {
+                "requiredDuringSchedulingIgnoredDuringExecution": {
+                    "nodeSelectorTerms": [
+                        {
+                            "matchExpressions": [
+                                {
+                                    "key": "astronomer.io/multi-tenant",
+                                    "operator": "In",
+                                    "values": ["false"],
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
+        "tolerations": [
+            {
+                "effect": "NoSchedule",
+                "key": "astronomer",
+                "operator": "Exists",
+            }
+        ],
+    }

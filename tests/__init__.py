@@ -10,33 +10,6 @@ metadata = yaml.safe_load((Path(git_root_dir) / "metadata.yaml").read_text())
 supported_k8s_versions = [".".join(x.split(".")[:-1] + ["0"]) for x in metadata["test_k8s_versions"]]
 k8s_version_too_old = f'1.{int(supported_k8s_versions[0].split(".")[1]) - 1!s}.0'
 k8s_version_too_new = f'1.{int(supported_k8s_versions[-1].split(".")[1]) + 1!s}.0'
-global_platform_node_pool_config = {
-    "nodeSelector": {"role": "astro"},
-    "affinity": {
-        "nodeAffinity": {
-            "requiredDuringSchedulingIgnoredDuringExecution": {
-                "nodeSelectorTerms": [
-                    {
-                        "matchExpressions": [
-                            {
-                                "key": "astronomer.io/multi-tenant",
-                                "operator": "In",
-                                "values": ["false"],
-                            }
-                        ]
-                    }
-                ]
-            }
-        }
-    },
-    "tolerations": [
-        {
-            "effect": "NoSchedule",
-            "key": "astronomer",
-            "operator": "Exists",
-        }
-    ],
-}
 
 
 def get_containers_by_name(doc, *, include_init_containers=False) -> dict:
