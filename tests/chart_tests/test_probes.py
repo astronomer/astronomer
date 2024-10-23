@@ -47,8 +47,8 @@ chart_containers = init_test_probes()
 
 @pytest.mark.parametrize("container", chart_containers.values(), ids=chart_containers.keys())
 class TestProbes:
-    def test_container_readiness_probes(self, container):
-        """Ensure all containers have liveness and readiness probes."""
+    def test_container_readiness_probes_with_custom_values(self, container):
+        """Ensure all containers have the ability to customize readiness probes."""
 
         if container["key"] in ignore_list:
             pytest.skip(f"Info: Unsupported resource: {container['key']}")
@@ -57,8 +57,8 @@ class TestProbes:
         else:
             assert "readinessProbe" in container
 
-    def test_container_liveness_probes(self, container):
-        """Ensure all containers have liveness and readiness probes."""
+    def test_container_liveness_probes_with_custom_values(self, container):
+        """Ensure all containers have the ability to customize liveness probes."""
 
         if container["key"] in ignore_list:
             pytest.skip(f"Info: Unsupported resource: {container['key']}")
