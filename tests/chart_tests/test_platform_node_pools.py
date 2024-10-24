@@ -8,6 +8,7 @@ ignore_list = ["postgresql", "cert-copy", "node-exporter", "cert-copy-and-toml-u
 
 
 def init_test_pod_spec():
+    """initialize with all default features and returns pod spec"""
     chart_values = chart_tests.get_all_features()
 
     kubernetes_objects = {
