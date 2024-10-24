@@ -49,6 +49,9 @@ resources: {}
 #   cpu: 100m
 #   memory: 128Mi
 
+livenessProbe: {}
+readinessProbe: {}
+
 # Service type that Nginx can be. Default is LoadBalancer but "ClusterIP" and "NodePort" are both valid.
 serviceType: "LoadBalancer"
 
@@ -114,3 +117,4 @@ allowSnippetAnnotations: true
 
 defaultBackend:
   resources: {}
+  readinessProbe: {}

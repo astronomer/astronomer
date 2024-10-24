@@ -24,6 +24,8 @@ resources:
    cpu: 100m
    memory: 256Mi
 
+readinessProbe: {}
+
 ports:
   scrape: 8080
   telemetry: 8081

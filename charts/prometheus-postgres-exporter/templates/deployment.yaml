@@ -93,18 +93,9 @@ spec:
             - name: {{ .Values.service.name }}
               containerPort: {{ .Values.service.targetPort }}
               protocol: TCP
-          livenessProbe:
-            tcpSocket:
-              port: {{ .Values.service.targetPort }}
-            initialDelaySeconds: 5
-            periodSeconds: 10
-          readinessProbe:
-            tcpSocket:
-              port: {{ .Values.service.targetPort }}
-            initialDelaySeconds: 5
-            periodSeconds: 10
-          resources:
-{{ toYaml .Values.resources | indent 12 }}
+          livenessProbe: {{ toYaml .Values.livenessProbe | nindent 12 }}
+          readinessProbe: {{ toYaml .Values.livenessProbe | nindent 12 }}
+          resources: {{ toYaml .Values.resources | nindent 12 }}
           volumeMounts:
             - name: queries
               mountPath: /etc/config.yaml

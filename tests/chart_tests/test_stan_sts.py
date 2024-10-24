@@ -18,23 +18,28 @@ class TestStanStatefulSet:
 
         assert len(docs) == 1
         doc = docs[0]
-        c_by_name = get_containers_by_name(doc, include_init_containers=True)
         assert doc["kind"] == "StatefulSet"
         assert doc["apiVersion"] == "apps/v1"
         assert doc["metadata"]["name"] == "release-name-stan"
         assert "persistentVolumeClaimRetentionPolicy" not in doc["spec"]
+
+        c_by_name = get_containers_by_name(doc, include_init_containers=True)
         assert c_by_name["metrics"]["image"].startswith("quay.io/astronomer/ap-nats-exporter:")
         assert c_by_name["stan"]["image"].startswith("quay.io/astronomer/ap-nats-streaming:")
-        assert c_by_name["stan"]["livenessProbe"] == {
-            "httpGet": {"path": "/streaming/serverz", "port": "monitor"},
-            "initialDelaySeconds": 10,
-            "timeoutSeconds": 5,
-        }
-        assert c_by_name["stan"]["readinessProbe"] == {
-            "httpGet": {"path": "/streaming/serverz", "port": "monitor"},
-            "initialDelaySeconds": 10,
-            "timeoutSeconds": 5,
-        }
+
+        stan_lp = c_by_name["stan"]["livenessProbe"]
+        assert stan_lp["httpGet"] == {"path": "/streaming/serverz", "port": "monitor"}
+        assert not stan_lp["initialDelaySeconds"]
+        assert not stan_lp["periodSeconds"]
+        assert not stan_lp["failureThreshold"]
+        assert not stan_lp["timeoutSeconds"]
+
+        stan_rp = c_by_name["stan"]["readinessProbe"]
+        assert stan_rp["httpGet"] == {"path": "/streaming/serverz", "port": "monitor"}
+        assert not stan_rp["initialDelaySeconds"]
+        assert not stan_rp["periodSeconds"]
+        assert not stan_rp["failureThreshold"]
+        assert not stan_rp["timeoutSeconds"]
 
         assert all(c["securityContext"] == {"runAsNonRoot": True} for c in c_by_name.values())
         spec = doc["spec"]["template"]["spec"]
@@ -217,7 +222,7 @@ class TestStanStatefulSet:
         assert doc["apiVersion"] == "v1"
         config = doc["data"]["stan.conf"]
         sd_match = re.search(r"sd:\s+(.*?)\n", config)
-        sd = sd_match.group(1)
+        sd = sd_match[1]
         assert sd == "true"
 
     def test_stan_configmap_with_logging_overrides(self, kube_version):
@@ -237,8 +242,8 @@ class TestStanStatefulSet:
         config = doc["data"]["stan.conf"]
         sd_match = re.search(r"sd:\s+(.*?)\n", config)
         sv_match = re.search(r"sv:\s+(.*?)\n", config)
-        sd = sd_match.group(1)
-        sv = sv_match.group(1)
+        sd = sd_match[1]
+        sv = sv_match[1]
         assert sd == "true"
         assert sv == "true"
 

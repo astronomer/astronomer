@@ -56,6 +56,8 @@ securityContext:
   runAsNonRoot: true
   runAsUser: 65534
 configMapReloader:
+  livenessProbe: {}
+  readinessProbe: {}
   resources: {}
     # limits:
     #   cpu: 100m
