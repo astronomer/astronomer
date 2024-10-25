@@ -24,7 +24,7 @@ class TestServiceAccounts:
         docs = [doc for doc in render_chart(kube_version=kube_version, values=values) if doc["kind"] in ["RoleBinding", "Role"]]
         assert not docs
 
-    def test_customSA(self, kube_version):
+    def test_serviceaccount_with_overrides(self, kube_version):
         "Test that if custom SA are added it gets created"
         values = {
             "astronomer": {
