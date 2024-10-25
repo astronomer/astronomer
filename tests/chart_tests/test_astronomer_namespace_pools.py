@@ -139,7 +139,7 @@ class TestAstronomerNamespacePools:
                     "features": {
                         "namespacePools": {
                             "enabled": True,
-                            "namespaces": {"create": True, "names": namespaces},
+                            "namespaces": {"create": False, "names": namespaces},
                         }
                     }
                 }
