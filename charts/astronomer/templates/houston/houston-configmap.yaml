@@ -71,7 +71,9 @@ data:
       {{- end }}
     # Airflow deployment configuration
     deployments:
-      disableManageClusterScopedResources: {{ .Values.global.disableManageClusterScopedResources }}
+      {{ if or .Values.global.disableManageClusterScopedResources (and .Values.global.features.namespacePools.enabled ( not .Values.global.features.namespacePools.namespaces.create ))}}
+      disableManageClusterScopedResources: true
+      {{ end }}
       fluentdIndexPrefix: {{ include "fluentd.IndexPattern" .}}
       enableHoustonInternalAuthorization: {{ include "houston.InternalAuthorization" . }}
       dagOnlyDeployment: {{ .Values.global.dagOnlyDeployment.enabled }}
