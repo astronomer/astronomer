@@ -37,17 +37,8 @@ serviceAccount:
   create: true
   name: ~
 
-# probe configurations for prometheus container
-livenessProbe:
-  initialDelaySeconds: 10
-  periodSeconds: 5
-  timeoutSeconds: 1
-  failureThreshold: 3
-readinessProbe:
-  initialDelaySeconds: 10
-  periodSeconds: 5
-  timeoutSeconds: 1
-  failureThreshold: 3
+livenessProbe: {}
+readinessProbe: {}
 
 podSecurityContext:
   fsGroup: 65534

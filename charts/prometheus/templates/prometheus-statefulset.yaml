@@ -139,10 +139,10 @@ spec:
             httpGet:
               path: /-/healthy
               port: {{ .Values.ports.http }}
-            initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
-            periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
-            failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
-            timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds }}
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 3
+            timeoutSeconds: 1
           {{- end }}
           {{- if .Values.readinessProbe }}
           readinessProbe: {{ tpl (toYaml .Values.readinessProbe) . | nindent 12 }}
@@ -151,10 +151,10 @@ spec:
             httpGet:
               path: /-/ready
               port: {{ .Values.ports.http }}
-            initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
-            periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
-            failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
-            timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 3
+            timeoutSeconds: 1
           {{- end }}
 {{- if eq .Values.global.openshiftEnabled false }}
       securityContext: {{ toYaml .Values.podSecurityContext| nindent 8 }}
