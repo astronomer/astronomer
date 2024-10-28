@@ -132,9 +132,9 @@ spec:
           ports:
             - name: prometheus-data
               containerPort: {{ .Values.ports.http }}
-          {{ if .Values.livenessProbe }}
+          {{- if .Values.livenessProbe }}
           livenessProbe: {{ tpl (toYaml .Values.livenessProbe) . | nindent 12 }}
-          {{ else }}
+          {{- else }}
           livenessProbe:
             httpGet:
               path: /-/healthy
@@ -144,9 +144,9 @@ spec:
             failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
             timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds }}
           {{- end }}
-          {{ if .Values.readinessProbe }}
+          {{- if .Values.readinessProbe }}
           readinessProbe: {{ tpl (toYaml .Values.readinessProbe) . | nindent 12 }}
-          {{ else }}
+          {{- else }}
           readinessProbe:
             httpGet:
               path: /-/ready
