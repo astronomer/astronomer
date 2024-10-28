@@ -79,8 +79,8 @@ spec:
           ports:
             - containerPort: {{ .Values.ports.http }}
               name: alertmanager
-          readinessProbe: {{ toYaml .Values.readinessProbe | nindent 12 }}
-          livenessProbe: {{ toYaml .Values.livenessProbe | nindent 12 }}
+          readinessProbe: {{ tpl (toYaml .Values.readinessProbe) . | nindent 12 }}
+          livenessProbe: {{ tpl (toYaml .Values.livenessProbe) . | nindent 12 }}
           resources: {{ toYaml .Values.resources | nindent 12 }}
           volumeMounts:
             - name: config-volume
@@ -103,8 +103,8 @@ spec:
           - containerPort: {{ .Values.global.authSidecar.port }}
             name: auth-proxy
             protocol: TCP
-          readinessProbe: {{- tpl (toYaml .Values.readinessProbe) . | nindent 12 }}
-          livenessProbe: {{ tpl (toYaml .Values.livenessProbe) . | nindent 12 }}
+          readinessProbe: {{ tpl (toYaml .Values.authProxy.readinessProbe) . | nindent 12 }}
+          livenessProbe: {{ tpl (toYaml .Values.authProxy.livenessProbe) . | nindent 12 }}
           volumeMounts:
           - mountPath: /etc/nginx/conf.d/
             name: alertmanager-sidecar-conf

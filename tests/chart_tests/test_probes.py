@@ -75,8 +75,13 @@ def test_template_probes_with_custom_values(template, values):
     assert len(docs) == 1
     for container in docs[0]["spec"]["template"]["spec"]["containers"]:
         assert (
-            container["livenessProbe",] == default_probes
+            container["livenessProbe"] == default_probes["livenessProbe"]
         ), f"livenessProbe not accurate in {template} container {container['name']}"
         assert (
-            container["readinessProbe"] == default_probes
+            container["readinessProbe"] == default_probes["readinessProbe"]
         ), f"readinessProbe not accurate in {template} container {container['name']}"
+
+
+@pytest.mark.parametrize("template,values", zip(pod_manager_data.keys(), pod_manager_data.values()), ids=pod_manager_data.keys())
+def test_probes_with_default_values(template):
+    """Ensure some templates have default probes."""
