@@ -117,22 +117,26 @@ spec:
           - name: NATS_URL
             value: nats://$(NATS_OPERATOR_SERVICE_ACCOUNT):$(NATS_OPERATOR_BOUND_TOKEN)@$(NATS_SERVICE)
           {{- end }}
+          {{ if .Values.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.livenessProbe) . | nindent 12 }}
+          {{ else }}
           livenessProbe:
             httpGet:
               path: /streaming/serverz
               port: monitor
-            initialDelaySeconds: {{ .Values.stan.livenessProbe.initialDelaySeconds }}
-            periodSeconds: {{ .Values.stan.livenessProbe.periodSeconds }}
-            timeoutSeconds: {{ .Values.stan.livenessProbe.timeoutSeconds }}
-            failureThreshold: {{ .Values.stan.livenessProbe.failureThreshold }}
+            initialDelaySeconds: 10
+            timeoutSeconds: 5
+          {{- end }}
+          {{ if .Values.readinessProbe }}
+          readinessProbe: {{ tpl (toYaml .Values.readinessProbe) . | nindent 12 }}
+          {{ else }}
           readinessProbe:
             httpGet:
               path: /streaming/serverz
               port: monitor
-            initialDelaySeconds: {{ .Values.stan.readinessProbe.initialDelaySeconds }}
-            periodSeconds: {{ .Values.stan.readinessProbe.periodSeconds }}
-            timeoutSeconds: {{ .Values.stan.readinessProbe.timeoutSeconds }}
-            failureThreshold: {{ .Values.stan.readinessProbe.failureThreshold }}
+            initialDelaySeconds: 10
+            timeoutSeconds: 5
+          {{- end }}
           ports:
           - containerPort: 8222
             name: monitor
@@ -157,6 +161,8 @@ spec:
           imagePullPolicy: {{ .Values.images.stan.pullPolicy }}
           securityContext: {{toYaml .Values.securityContext | nindent 12 }}
           resources: {{ toYaml .Values.exporter.resources | nindent 12 }}
+          livenessProbe: {{ tpl (toYaml .Values.exporter.livenessProbe) . | nindent 12 }}
+          readinessProbe: {{ tpl (toYaml .Values.exporter.readinessProbe) . | nindent 12 }}
           args:
           - -connz
           - -routez
