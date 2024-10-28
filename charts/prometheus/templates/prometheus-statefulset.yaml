@@ -61,6 +61,9 @@ spec:
           - containerPort: {{ .Values.global.authSidecar.port }}
             name: auth-proxy
             protocol: TCP
+          {{ if .Values.global.authSidecar.readinessProbe }}
+          readinessProbe: {{ tpl (toYaml .Values.global.authSidecar.readinessProbe) . | nindent 12 }}
+          {{ else }}
           readinessProbe:
             httpGet:
               path: /healthz
@@ -68,6 +71,10 @@ spec:
               scheme: HTTP
             initialDelaySeconds: 10
             periodSeconds: 10
+          {{- end }}
+          {{ if .Values.global.authSidecar.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.global.authSidecar.livenessProbe) . | nindent 12 }}
+          {{ else }}
           livenessProbe:
             httpGet:
               path: /healthz
@@ -75,6 +82,7 @@ spec:
               scheme: HTTP
             initialDelaySeconds: 10
             periodSeconds: 10
+          {{- end }}
           volumeMounts:
           - mountPath: /etc/nginx/conf.d/
             name: prometheus-sidecar-conf
@@ -87,30 +95,14 @@ spec:
           image: {{ include "configReloader.image" . }}
           imagePullPolicy: {{ .Values.images.prometheus.pullPolicy }}
           securityContext: {{ template "prometheus.securityContext" . }}
-          resources:
-{{ toYaml .Values.configMapReloader.resources | indent 12 }}
+          resources: {{ toYaml .Values.configMapReloader.resources | nindent 12 }}
+          livenessProbe: {{ tpl (toYaml .Values.configMapReloader.livenessProbe) . | nindent 12 }}
+          readinessProbe: {{ tpl (toYaml .Values.configMapReloader.readinessProbe) . | nindent 12 }}
           volumeMounts:
           - name: alert-volume
             mountPath: /etc/prometheus/alerts.d
           - name: prometheus-config-volume
             mountPath: /etc/prometheus/config
-          readinessProbe:
-            httpGet:
-              path: /-/ready
-              port: 9090
-            initialDelaySeconds: {{ .Values.configMapReloader.readinessProbe.initialDelaySeconds }}
-            periodSeconds: {{ .Values.configMapReloader.readinessProbe.periodSeconds }}
-            timeoutSeconds: {{ .Values.configMapReloader.readinessProbe.timeoutSeconds }}
-            failureThreshold: {{ .Values.configMapReloader.readinessProbe.failureThreshold }}
-          livenessProbe:
-            httpGet:
-              path: /-/healthy
-              port: 9090
-            initialDelaySeconds: {{ .Values.configMapReloader.livenessProbe.initialDelaySeconds }}
-            periodSeconds: {{ .Values.configMapReloader.livenessProbe.periodSeconds }}
-            timeoutSeconds: {{ .Values.configMapReloader.livenessProbe.timeoutSeconds }}
-            failureThreshold: {{ .Values.configMapReloader.livenessProbe.failureThreshold }}
-
 
         - name: prometheus
           image: {{ include "prometheus.image" . }}
@@ -140,6 +132,9 @@ spec:
           ports:
             - name: prometheus-data
               containerPort: {{ .Values.ports.http }}
+          {{ if .Values.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.livenessProbe) . | nindent 12 }}
+          {{ else }}
           livenessProbe:
             httpGet:
               path: /-/healthy
@@ -148,6 +143,10 @@ spec:
             periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
             failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
             timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds }}
+          {{- end }}
+          {{ if .Values.readinessProbe }}
+          readinessProbe: {{ tpl (toYaml .Values.readinessProbe) . | nindent 12 }}
+          {{ else }}
           readinessProbe:
             httpGet:
               path: /-/ready
@@ -156,6 +155,7 @@ spec:
             periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
             failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
             timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
+          {{- end }}
 {{- if eq .Values.global.openshiftEnabled false }}
       securityContext: {{ toYaml .Values.podSecurityContext| nindent 8 }}
 {{- end }}
