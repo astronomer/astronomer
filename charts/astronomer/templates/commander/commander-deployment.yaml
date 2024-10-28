@@ -75,17 +75,17 @@ spec:
             periodSeconds: 10
             successThreshold: 1
             timeoutSeconds: 5
-          {{- end}}
+          {{- end }}
           {{- if .Values.commander.readinessProbe }}
           readinessProbe: {{ tpl (toYaml .Values.commander.readinessProbe) . | nindent 12 }}
-          {{- else }}
+          {{- else}}
           readinessProbe:
             httpGet:
               path: /healthz
               port: {{ .Values.ports.commanderHTTP }}
             initialDelaySeconds: 10
             periodSeconds: 10
-          {{- end}}
+          {{- end }}
           env:
             {{- range $i, $config := .Values.commander.env }}
             - name: {{ $config.name }}
