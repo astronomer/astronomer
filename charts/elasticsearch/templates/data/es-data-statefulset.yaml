@@ -127,20 +127,16 @@ spec:
         - containerPort: {{ .Values.common.ports.transport }}
           name: transport
           protocol: TCP
-        readinessProbe:
-          tcpSocket:
-            port: {{ .Values.common.ports.readiness }}
-          initialDelaySeconds: {{ .Values.data.readinessProbe.initialDelaySeconds }}
-          periodSeconds: {{ .Values.data.readinessProbe.periodSeconds }}
-          timeoutSeconds: {{ .Values.data.readinessProbe.timeoutSeconds }}
-          failureThreshold: {{ .Values.data.readinessProbe.failureThreshold }}
+        readinessProbe: {{ tpl (toYaml .Values.data.readinessProbe) . | nindent 10 }}
+        {{- if .Values.data.livenessProbe }}
+        livenessProbe: {{ tpl (toYaml .Values.data.livenessProbe) . | nindent 10 }}
+        {{- else }}
         livenessProbe:
           tcpSocket:
             port: {{ .Values.common.ports.transport }}
-          initialDelaySeconds: {{ .Values.data.livenessProbe.initialDelaySeconds }}
-          periodSeconds: {{ .Values.data.livenessProbe.periodSeconds }}
-          timeoutSeconds: {{ .Values.data.livenessProbe.timeoutSeconds }}
-          failureThreshold: {{ .Values.data.livenessProbe.failureThreshold }}
+          initialDelaySeconds: 20
+          periodSeconds: 10
+        {{- end }}
         volumeMounts:
         - mountPath: /usr/share/elasticsearch/data
           name: data
