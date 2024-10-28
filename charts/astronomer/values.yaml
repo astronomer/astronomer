@@ -54,6 +54,12 @@ astroUI:
   #  requests:
   #   cpu: 100m
   #   memory: 128Mi
+  readinessProbe: {}
+  livenessProbe: {}
+
+cliInstall:
+  readinessProbe: {}
+  livenessProbe: {}
 
 houston:
   prismaConnectionLimit: 5

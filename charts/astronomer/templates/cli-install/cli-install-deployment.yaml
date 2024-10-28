@@ -39,10 +39,10 @@ spec:
         - name: cli-install
           image: {{ template "cliInstall.image" . }}
           imagePullPolicy: {{ .Values.images.cliInstall.pullPolicy }}
-          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
-          readinessProbe: {{ tpl (toYaml .Values.readinessProbe) . | nindent 12 }}
-          {{- if .Values.livenessProbe }}
-          readinessProbe: {{ tpl (toYaml .Values.livenessProbe) . | nindent 12 }}
+          securityContext: {{ toYaml .Values.securityContext | nindent 12 }}
+          readinessProbe: {{ tpl (toYaml .Values.cliInstall.readinessProbe) . | nindent 12 }}
+          {{- if .Values.cliInstall.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.cliInstall.livenessProbe) . | nindent 12 }}
           {{- else }}
           livenessProbe:
             httpGet:

@@ -21,7 +21,7 @@ pod_manager_data = {
         "global": {"authSidecar": default_probes},
     },
     "charts/astronomer/templates/astro-ui/astro-ui-deployment.yaml": {"astronomer": {"astroUI": default_probes}},
-    "charts/astronomer/templates/cli-install/cli-install-deployment.yaml": {"astronomer": {"cli-install": default_probes}},
+    "charts/astronomer/templates/cli-install/cli-install-deployment.yaml": {"astronomer": {"cliInstall": default_probes}},
     "charts/astronomer/templates/commander/commander-deployment.yaml": {"astronomer": {"commander": default_probes}},
     "charts/astronomer/templates/houston/api/houston-deployment.yaml": {"astronomer": {"houston": default_probes}},
     "charts/astronomer/templates/houston/worker/houston-worker-deployment.yaml": {
