@@ -299,6 +299,13 @@ class TestDefaultProbes:
     lp_data = zip(current_clp.keys(), current_clp.values(), expected_clp.values())
     lp_ids = current_clp.keys()
 
+    # If any other tests fail, this will not run, so they have to be commented out for this to actually show you where the problem is.
+    @pytest.mark.parametrize("current,expected", [(current_clp, expected_clp), (current_crp, expected_crp)])
+    def test_probe_lists(self, current, expected):
+        """Test the default livenessProbes for each container."""
+        set_difference = set(current.keys()) ^ set(expected.keys())
+        assert set_difference == {}, f"Containers not in both lists: {set_difference}"
+
     @pytest.mark.parametrize("container,current,expected", lp_data, ids=lp_ids)
     def test_individual_liveness_probes(self, container, current, expected):
         """Test the default livenessProbes for each container."""
