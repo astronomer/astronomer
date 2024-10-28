@@ -106,20 +106,28 @@ spec:
           ports:
             - name: houston-http
               containerPort: {{ .Values.ports.houstonHTTP }}
+          {{ if .Values.houston.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.houston.livenessProbe) $ | nindent 12 }}
+          {{- else }}
           livenessProbe:
             httpGet:
               path: /v1/healthz
               port: {{ .Values.ports.houstonHTTP }}
-            initialDelaySeconds: {{ .Values.houston.livenessProbe.initialDelaySeconds }}
-            periodSeconds: {{ .Values.houston.livenessProbe.periodSeconds }}
-            failureThreshold: {{ .Values.houston.livenessProbe.failureThreshold }}
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 10
+          {{- end }}
+          {{ if .Values.houston.readinessProbe }}
+          readinessProbe: {{ tpl (toYaml .Values.houston.readinessProbe) $ | nindent 12 }}
+          {{- else }}
           readinessProbe:
             httpGet:
               path: /v1/healthz
               port: {{ .Values.ports.houstonHTTP }}
-            initialDelaySeconds: {{ .Values.houston.readinessProbe.initialDelaySeconds }}
-            periodSeconds: {{ .Values.houston.readinessProbe.periodSeconds }}
-            failureThreshold: {{ .Values.houston.readinessProbe.failureThreshold }}
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 10
+          {{- end }}
           {{- if .Values.houston.command }}
           command:
             {{- toYaml .Values.houston.command | nindent 12 }}
