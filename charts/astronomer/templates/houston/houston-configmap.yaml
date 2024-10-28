@@ -71,7 +71,7 @@ data:
       {{- end }}
     # Airflow deployment configuration
     deployments:
-      {{ if or .Values.global.disableManageClusterScopedResources (and .Values.global.features.namespacePools.enabled ( not .Values.global.features.namespacePools.namespaces.create ))}}
+      {{ if or .Values.global.disableManageClusterScopedResources  .Values.global.features.namespacePools.enabled }}
       disableManageClusterScopedResources: true
       {{ end }}
       fluentdIndexPrefix: {{ include "fluentd.IndexPattern" .}}
