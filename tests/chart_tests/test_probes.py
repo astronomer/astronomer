@@ -17,7 +17,8 @@ default_probes = {
 
 pod_manager_data = {
     "charts/alertmanager/templates/alertmanager-statefulset.yaml": {
-        "alertmanager": {**default_probes, "authProxy": default_probes}
+        "alertmanager": default_probes,
+        "global": {"authSidecar": default_probes},
     },
     "charts/astronomer/templates/astro-ui/astro-ui-deployment.yaml": {"astronomer": {"astro-ui": default_probes}},
     "charts/astronomer/templates/cli-install/cli-install-deployment.yaml": {"astronomer": {"cli-install": default_probes}},
