@@ -7,7 +7,7 @@
 # 3. Create RoleBinding for each namespace in the namespacePool (+ astronomer namespace) if enabled
 {{- $namespacepoolsRBACresources:= and .Values.global.features.namespacePools.createRbac .Values.global.features.namespacePools.enabled }}
 {{- $useClusterRoles := and .Values.global.rbacEnabled .Values.global.clusterRoles (not .Values.global.features.namespacePools.enabled) }}
-{{- $shouldCreateResources := and .Values.global.rbacEnabled (or .Values.global.clusterRoles $namespacepoolsRBACresources) }}
+{{- $shouldCreateResources := and .Values.global.rbacEnabled (or (and .Values.global.clusterRoles (not .Values.global.features.namespacePools.enabled )) $namespacepoolsRBACresources) }}
 {{- $namespaces := .Values.global.features.namespacePools.namespaces.names }}
 {{- if $useClusterRoles }}
   {{- $namespaces = list .Release.Namespace}}
@@ -15,7 +15,7 @@
   {{- $namespaces = append $namespaces .Release.Namespace }}
 {{- end }}
 
-{{- if or (and $shouldCreateResources (not .Values.global.features.namespacePools.enabled) ) (and $namespacepoolsRBACresources .Values.global.rbacEnabled) }}
+{{- if $shouldCreateResources }}
 {{- range $i, $namespaceName := $namespaces -}}
 ---
 apiVersion: {{ template "apiVersion.rbac" . }}
