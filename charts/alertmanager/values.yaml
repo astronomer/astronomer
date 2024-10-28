@@ -29,32 +29,7 @@ replicas: 1
 
 dataDir: "/data"
 
-readinessProbe:
-  httpGet:
-    path: "/#/status"
-    port: 9093
-  initialDelaySeconds: 30
-  timeoutSeconds: 30
-
-livenessProbe: {}
-
-# This section is templated in order to allow us to embed helm values from elsewhere
-authProxy:
-  livenessProbe:
-    httpGet:
-      path: /healthz
-      port: "{{ .Values.global.authSidecar.port }}"
-      scheme: HTTP
-    initialDelaySeconds: 10
-    periodSeconds: 10
-  readinessProbe:
-    httpGet:
-      path: /healthz
-      port: "{{ .Values.global.authSidecar.port }}"
-      scheme: HTTP
-    initialDelaySeconds: 10
-    periodSeconds: 10
-
+prefixURL: ""
 
 persistence:
   enabled: true
