@@ -304,7 +304,7 @@ class TestDefaultProbes:
     def test_probe_lists(self, current, expected):
         """Test the default livenessProbes for each container."""
         set_difference = set(current.keys()) ^ set(expected.keys())
-        assert set_difference == {}, f"Containers not in both lists: {set_difference}"
+        assert set_difference == set(), f"Containers not in both lists: {set_difference}"
 
     @pytest.mark.parametrize("container,current,expected", lp_data, ids=lp_ids)
     def test_individual_liveness_probes(self, container, current, expected):
