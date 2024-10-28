@@ -40,24 +40,18 @@ spec:
           image: {{ template "cliInstall.image" . }}
           imagePullPolicy: {{ .Values.images.cliInstall.pullPolicy }}
           securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
+          readinessProbe: {{ tpl (toYaml .Values.readinessProbe) . | nindent 12 }}
+          {{- if .Values.livenessProbe }}
+          readinessProbe: {{ tpl (toYaml .Values.livenessProbe) . | nindent 12 }}
+          {{- else }}
           livenessProbe:
             httpGet:
               path: /healthz
               port: {{ .Values.ports.installHTTP }}
               scheme: HTTP
-            initialDelaySeconds: {{ .Values.install.livenessProbe.initialDelaySeconds }}
-            periodSeconds: {{ .Values.install.livenessProbe.periodSeconds }}
-            timeoutSeconds: {{ .Values.install.livenessProbe.timeoutSeconds }}
-            failureThreshold: {{ .Values.install.livenessProbe.failureThreshold }}
-          readinessProbe:
-            httpGet:
-              path: /healthz
-              port: {{ .Values.ports.installHTTP }}
-              scheme: HTTP
-            initialDelaySeconds: {{ .Values.install.readinessProbe.initialDelaySeconds }}
-            periodSeconds: {{ .Values.install.readinessProbe.periodSeconds }}
-            timeoutSeconds: {{ .Values.install.readinessProbe.timeoutSeconds }}
-            failureThreshold: {{ .Values.install.readinessProbe.failureThreshold }}
+            initialDelaySeconds: 30
+            timeoutSeconds: 5
+          {{- end }}
           ports:
             - containerPort: {{ .Values.ports.installHTTP }}
           resources: {{ toYaml .Values.install.resources | nindent 12 }}
