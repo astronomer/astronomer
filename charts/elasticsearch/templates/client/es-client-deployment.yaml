@@ -133,11 +133,16 @@ spec:
             path: /_cluster/health?local=true
             port: {{ .Values.common.ports.http }}
           initialDelaySeconds: 5
+        readinessProbe: {{ tpl (toYaml .Values.client.readinessProbe) . | nindent 12 }}
+        {{- if .Values.client.livenessProbe }}
+        livenessProbe: {{ tpl (toYaml .Values.client.livenessProbe) . | nindent 12 }}
+        {{- else }}
         livenessProbe:
           httpGet:
             path: /_cluster/health?local=true
             port: {{ .Values.common.ports.http }}
           initialDelaySeconds: 90
+        {{- end }}
         {{- if semverCompare "^1.16-0" .Capabilities.KubeVersion.Version }}
         # This feature is available in Kubernetes 1.16+
         startupProbe:
