@@ -209,6 +209,7 @@ class TestAstronomerNamespacePools:
         assert deployments_config["deployments"]["hardDeleteDeployment"]
         assert deployments_config["deployments"]["manualNamespaceNames"]
         assert deployments_config["deployments"]["preCreatedNamespaces"] == [{"name": namespace} for namespace in namespaces]
+        assert deployments_config["deployments"]["disableManageClusterScopedResources"] == True
 
         # test configuration when namespacePools is disabled -> should not add configuration parameters
         doc = render_chart(
