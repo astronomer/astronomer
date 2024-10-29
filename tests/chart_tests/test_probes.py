@@ -33,7 +33,10 @@ pod_manager_data = {
     "charts/elasticsearch/templates/exporter/es-exporter-deployment.yaml": {"elasticsearch": {"exporter": default_probes}},
     "charts/elasticsearch/templates/master/es-master-statefulset.yaml": {"elasticsearch": {"master": default_probes}},
     "charts/elasticsearch/templates/nginx/nginx-es-deployment.yaml": {"elasticsearch": {"nginx": default_probes}},
-    "charts/external-es-proxy/templates/external-es-proxy-deployment.yaml": {"external-es-proxy": default_probes},
+    "charts/external-es-proxy/templates/external-es-proxy-deployment.yaml": {
+        "external-es-proxy": default_probes,
+        "global": {"customLogging": {"enabled": True}},
+    },
     "charts/fluentd/templates/fluentd-daemonset.yaml": {"fluentd": default_probes},
     "charts/grafana/templates/grafana-deployment.yaml": {"grafana": default_probes},
     "charts/kibana/templates/kibana-deployment.yaml": {"kibana": default_probes},
