@@ -43,7 +43,10 @@ pod_manager_data = {
     },
     "charts/nginx/templates/nginx-deployment-default.yaml": {"nginx": {"defaultBackend": default_probes}},
     "charts/nginx/templates/nginx-deployment.yaml": {"nginx": default_probes},
-    "charts/pgbouncer/templates/pgbouncer-deployment.yaml": {"pgbouncer": default_probes},
+    "charts/pgbouncer/templates/pgbouncer-deployment.yaml": {
+        "pgbouncer": default_probes,
+        "global": {"pgbouncer": {"enabled": True}},
+    },
     "charts/postgresql/templates/statefulset-slaves.yaml": {"postgresql": default_probes, "global": {"postgresqlEnabled": True}},
     "charts/postgresql/templates/statefulset.yaml": {"postgresql": default_probes, "global": {"postgresqlEnabled": True}},
     "charts/prometheus/templates/prometheus-statefulset.yaml": {
