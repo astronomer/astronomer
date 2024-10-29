@@ -99,6 +99,9 @@ spec:
               containerPort: {{ .Values.ports.registryHTTP }}
             # - name: registry-scrape
             #   containerPort: {{ .Values.ports.registryScrape }}
+          {{- if .Values.registry.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.registry.livenessProbe) . | nindent 12 }}
+          {{- else }}
           livenessProbe:
             httpGet:
               path: /
@@ -106,6 +109,10 @@ spec:
             initialDelaySeconds: 10
             periodSeconds: 10
             timeoutSeconds: 5
+          {{- end }}
+          {{- if .Values.registry.readinessProbe }}
+          readinessProbe: {{ tpl (toYaml .Values.registry.readinessProbe) . | nindent 12 }}
+          {{- else }}
           readinessProbe:
             httpGet:
               path: /
@@ -113,6 +120,7 @@ spec:
             initialDelaySeconds: 10
             periodSeconds: 10
             timeoutSeconds: 5
+          {{- end }}
       volumes:
         - name: config
           configMap:
