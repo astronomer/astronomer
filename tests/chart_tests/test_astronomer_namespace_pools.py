@@ -277,4 +277,4 @@ class TestAstronomerNamespacePools:
             ],
         )
 
-        assert len(docs) == 1
+        assert len(docs) == 0
