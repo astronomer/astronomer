@@ -38,7 +38,9 @@ pod_manager_data = {
     "charts/grafana/templates/grafana-deployment.yaml": {"grafana": default_probes},
     "charts/kibana/templates/kibana-deployment.yaml": {"kibana": default_probes},
     "charts/kube-state/templates/kube-state-deployment.yaml": {"kube-state": default_probes},
-    "charts/nats/templates/statefulset.yaml": {"nats": default_probes},
+    "charts/nats/templates/statefulset.yaml": {
+        "nats": {"nats": default_probes, "reloader": default_probes, "exporter": {**default_probes, "enabled": True}}
+    },
     "charts/nginx/templates/nginx-deployment-default.yaml": {"nginx": default_probes},
     "charts/nginx/templates/nginx-deployment.yaml": {"nginx": default_probes},
     "charts/pgbouncer/templates/pgbouncer-deployment.yaml": {"pgbouncer": default_probes},
