@@ -42,6 +42,8 @@ stan:
   # In case of NATS not being embedded then
   # an URL for NATS is required.
   nats:
+    livenessProbe: {}
+    readinessProbe: {}
     port: 4222
     serviceRoleAuth:
       enabled: false

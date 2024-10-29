@@ -22,7 +22,7 @@ spec:
     matchLabels:
       app: {{ template "stan.name" . }}
 
-  replicas: {{ include "stan.replicaCount" .  | required ".Values.stan.replicas should be greater or equal to 3 in clustered mode" }}
+  replicas: {{ include "stan.replicaCount" . | required ".Values.stan.replicas should be greater or equal to 3 in clustered mode" }}
 
   # NATS Streaming service name
   serviceName: {{ template "stan.name" . }}
@@ -117,8 +117,8 @@ spec:
           - name: NATS_URL
             value: nats://$(NATS_OPERATOR_SERVICE_ACCOUNT):$(NATS_OPERATOR_BOUND_TOKEN)@$(NATS_SERVICE)
           {{- end }}
-          {{ if .Values.livenessProbe }}
-          livenessProbe: {{ tpl (toYaml .Values.livenessProbe) . | nindent 12 }}
+          {{ if .Values.stan.nats.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.stan.nats.livenessProbe) . | nindent 12 }}
           {{ else }}
           livenessProbe:
             httpGet:
@@ -127,8 +127,8 @@ spec:
             initialDelaySeconds: 10
             timeoutSeconds: 5
           {{- end }}
-          {{ if .Values.readinessProbe }}
-          readinessProbe: {{ tpl (toYaml .Values.readinessProbe) . | nindent 12 }}
+          {{ if .Values.stan.nats.readinessProbe }}
+          readinessProbe: {{ tpl (toYaml .Values.stan.nats.readinessProbe) . | nindent 12 }}
           {{ else }}
           readinessProbe:
             httpGet:

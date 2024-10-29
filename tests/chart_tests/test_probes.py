@@ -52,7 +52,7 @@ pod_manager_data = {
     "charts/prometheus-blackbox-exporter/templates/deployment.yaml": {"prometheus-blackbox-exporter": default_probes},
     "charts/prometheus-node-exporter/templates/daemonset.yaml": {"prometheus-node-exporter": default_probes},
     "charts/prometheus-postgres-exporter/templates/deployment.yaml": {"prometheus-postgres-exporter": default_probes},
-    "charts/stan/templates/statefulset.yaml": {"stan": default_probes},
+    "charts/stan/templates/statefulset.yaml": {"stan": {"stan": {"nats": {**default_probes}}, "exporter": default_probes}},
 }
 
 
