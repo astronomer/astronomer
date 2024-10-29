@@ -134,9 +134,14 @@ spec:
             path: /_cluster/health?local=true
             port: {{ .Values.common.ports.http }}
           initialDelaySeconds: 5
+        readinessProbe: {{ tpl (toYaml .Values.master.readinessProbe) . | nindent 12 }}
+        {{- if .Values.master.livenessProbe }}
+        livenessProbe: {{ tpl (toYaml .Values.master.livenessProbe) . | nindent 12 }}
+        {{- else }}
         livenessProbe:
           tcpSocket:
             port: {{ .Values.common.ports.transport }}
+        {{- end }}
         volumeMounts:
         - mountPath: /usr/share/elasticsearch/data
           name: data
