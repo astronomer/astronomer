@@ -75,8 +75,8 @@ spec:
               mountPath: /usr/local/openresty/nginx/conf/setenv.lua
               subPath: setenv.lua
 
-            {{- if .Values.global.customLogging.trustCaCerts  -}}
-            {{ $secretName := .Values.global.customLogging.trustCaCerts  }}
+            {{- if .Values.global.customLogging.trustCaCerts -}}
+            {{ $secretName := .Values.global.customLogging.trustCaCerts }}
             - name: trust-ca-certs
               mountPath: /etc/ssl/certs/{{ $secretName }}.pem
               subPath: {{ $secretName }}.pem
@@ -90,16 +90,15 @@ spec:
               protocol: TCP
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-{{- if  or .Values.global.customLogging.awsSecretName  .Values.global.customLogging.awsServiceAccountAnnotation  .Values.global.customLogging.awsIAMRole}}
+{{- if or .Values.global.customLogging.awsSecretName .Values.global.customLogging.awsServiceAccountAnnotation .Values.global.customLogging.awsIAMRole }}
         - name: awsproxy
           image: {{ template "awsesproxy.image" . }}
           command: ["/bin/sh","-c"]
           args: ["aws-es-proxy -listen :{{ .Values.service.awsproxy }}"]
-          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
+          securityContext: {{ toYaml .Values.securityContext | nindent 12 }}
           imagePullPolicy: {{ .Values.images.awsproxy.pullPolicy }}
-          # TODO: this container is not implemented or tested. We need to figure this out.
-          # livenessProbe: "what value is this supposed to be? .Values.global.awsesproxy.livenessProbe ?"
-          # readinessProbe: "what value is this supposed to be? .Values.global.awsesproxy.readinessProbe ?"
+          livenessProbe: {{ tpl (toYaml .Values.awsproxy.livenessProbe) . | nindent 12 }}
+          readinessProbe: {{ tpl (toYaml .Values.awsproxy.readinessProbe) . | nindent 12 }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           env:
@@ -143,8 +142,8 @@ spec:
             items:
               - key: setenv.lua
                 path: setenv.lua
-        {{- if .Values.global.customLogging.trustCaCerts  -}}
-        {{ $secretName := .Values.global.customLogging.trustCaCerts  }}
+        {{- if .Values.global.customLogging.trustCaCerts -}}
+        {{ $secretName := .Values.global.customLogging.trustCaCerts }}
         - name: trust-ca-certs
           secret:
             secretName: {{ $secretName }}

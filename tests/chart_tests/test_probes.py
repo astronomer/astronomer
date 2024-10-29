@@ -39,7 +39,13 @@ pod_manager_data = {
     },
     "charts/elasticsearch/templates/nginx/nginx-es-deployment.yaml": {"elasticsearch": {"nginx": default_probes}},
     "charts/external-es-proxy/templates/external-es-proxy-deployment.yaml": {
-        "external-es-proxy": default_probes,
+        "external-es-proxy": {**default_probes, "awsproxy": default_probes},
+        "global": {
+            "customLogging": {
+                "awsServiceAccountAnnotation": "yo imma let you finish but beyonce had the best annotation ever",
+                "enabled": True,
+            },
+        },
     },
     "charts/fluentd/templates/fluentd-daemonset.yaml": {"fluentd": default_probes},
     "charts/grafana/templates/grafana-deployment.yaml": {"grafana": default_probes},
