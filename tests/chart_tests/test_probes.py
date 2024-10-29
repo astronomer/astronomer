@@ -50,7 +50,15 @@ pod_manager_data = {
         "pgbouncer": default_probes,
         "global": {"pgbouncer": {"enabled": True}},
     },
-    "charts/postgresql/templates/statefulset-slaves.yaml": {"postgresql": default_probes, "global": {"postgresqlEnabled": True}},
+    "charts/postgresql/templates/statefulset-slaves.yaml": {
+        "postgresql": {
+            "postgresqlDatabase": "kitten_picture_db",
+            **default_probes,
+            "replication": {"enabled": True},
+            "metrics": {**default_probes, "enabled": True},
+        },
+        "global": {"postgresqlEnabled": True},
+    },
     "charts/postgresql/templates/statefulset.yaml": {"postgresql": default_probes, "global": {"postgresqlEnabled": True}},
     "charts/prometheus/templates/prometheus-statefulset.yaml": {
         "prometheus": {**default_probes, "configMapReloader": default_probes}
