@@ -39,15 +39,12 @@ spec:
         sidecar.istio.io/proxyMemory: "400Mi"
 {{- end }}
     spec:
-      nodeSelector:
-{{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
-      affinity:
-{{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 8 }}
-      tolerations:
-{{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
+      nodeSelector: {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
+      affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
+      tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolferations) | nindent 8 }}
       restartPolicy: Always
       serviceAccountName: {{ template "prometheus.serviceAccount" . }}
-{{- include "prometheus.imagePullSecrets" . | indent 6 }}
+      {{- include "prometheus.imagePullSecrets" . | nindent 6 }}
       containers:
         {{- if .Values.global.authSidecar.enabled  }}
         - name: auth-proxy
@@ -61,9 +58,9 @@ spec:
           - containerPort: {{ .Values.global.authSidecar.port }}
             name: auth-proxy
             protocol: TCP
-          {{ if .Values.global.authSidecar.readinessProbe }}
+          {{- if .Values.global.authSidecar.readinessProbe }} # TODO: This is a problem because authSidear is always defined for .Values.global.authSidecar.port
           readinessProbe: {{ tpl (toYaml .Values.global.authSidecar.readinessProbe) . | nindent 12 }}
-          {{ else }}
+          {{- else }}
           readinessProbe:
             httpGet:
               path: /healthz
@@ -72,9 +69,9 @@ spec:
             initialDelaySeconds: 10
             periodSeconds: 10
           {{- end }}
-          {{ if .Values.global.authSidecar.livenessProbe }}
+          {{-  if .Values.global.authSidecar.livenessProbe }}
           livenessProbe: {{ tpl (toYaml .Values.global.authSidecar.livenessProbe) . | nindent 12 }}
-          {{ else }}
+          {{- else }}
           livenessProbe:
             httpGet:
               path: /healthz
