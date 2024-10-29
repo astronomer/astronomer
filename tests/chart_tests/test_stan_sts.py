@@ -222,8 +222,7 @@ class TestStanStatefulSet:
         assert doc["apiVersion"] == "v1"
         config = doc["data"]["stan.conf"]
         sd_match = re.search(r"sd:\s+(.*?)\n", config)
-        sd = sd_match[1]
-        assert sd == "true"
+        assert sd_match[1] == "true"
 
     def test_stan_configmap_with_logging_overrides(self, kube_version):
         """Test that stan configmap with logging defaults."""
@@ -242,10 +241,8 @@ class TestStanStatefulSet:
         config = doc["data"]["stan.conf"]
         sd_match = re.search(r"sd:\s+(.*?)\n", config)
         sv_match = re.search(r"sv:\s+(.*?)\n", config)
-        sd = sd_match[1]
-        sv = sv_match[1]
-        assert sd == "true"
-        assert sv == "true"
+        assert sd_match[1] == "true"
+        assert sv_match[1] == "true"
 
     def test_stan_persistentVolumeClaimRetentionPolicy(self, kube_version):
         test_persistentVolumeClaimRetentionPolicy = {
