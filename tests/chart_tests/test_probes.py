@@ -18,7 +18,9 @@ default_probes = {
 pod_manager_data = {
     "charts/alertmanager/templates/alertmanager-statefulset.yaml": {
         "alertmanager": default_probes,
-        "global": {"authSidecar": default_probes},
+        "global": {
+            "authSidecar": {"enabled": True, **default_probes},
+        },
     },
     "charts/astronomer/templates/astro-ui/astro-ui-deployment.yaml": {"astronomer": {"astroUI": default_probes}},
     "charts/astronomer/templates/cli-install/cli-install-deployment.yaml": {"astronomer": {"cliInstall": default_probes}},
@@ -31,15 +33,20 @@ pod_manager_data = {
     "charts/elasticsearch/templates/client/es-client-deployment.yaml": {"elasticsearch": {"client": default_probes}},
     "charts/elasticsearch/templates/data/es-data-statefulset.yaml": {"elasticsearch": {"data": default_probes}},
     "charts/elasticsearch/templates/exporter/es-exporter-deployment.yaml": {"elasticsearch": {"exporter": default_probes}},
-    "charts/elasticsearch/templates/master/es-master-statefulset.yaml": {"elasticsearch": {"master": default_probes}},
+    "charts/elasticsearch/templates/master/es-master-statefulset.yaml": {
+        "elasticsearch": {"master": default_probes},
+        "global": {"authSidecar": {"enabled": True, **default_probes}},
+    },
     "charts/elasticsearch/templates/nginx/nginx-es-deployment.yaml": {"elasticsearch": {"nginx": default_probes}},
     "charts/external-es-proxy/templates/external-es-proxy-deployment.yaml": {
         "external-es-proxy": default_probes,
-        "global": {"customLogging": {"enabled": True}},
     },
     "charts/fluentd/templates/fluentd-daemonset.yaml": {"fluentd": default_probes},
     "charts/grafana/templates/grafana-deployment.yaml": {"grafana": default_probes},
-    "charts/kibana/templates/kibana-deployment.yaml": {"kibana": default_probes},
+    "charts/kibana/templates/kibana-deployment.yaml": {
+        "kibana": default_probes,
+        "global": {"authSidecar": {"enabled": True, **default_probes}},
+    },
     "charts/kube-state/templates/kube-state-deployment.yaml": {"kube-state": default_probes},
     "charts/nats/templates/statefulset.yaml": {
         "nats": {"nats": default_probes, "reloader": default_probes, "exporter": {**default_probes, "enabled": True}}
@@ -48,7 +55,9 @@ pod_manager_data = {
     "charts/nginx/templates/nginx-deployment.yaml": {"nginx": default_probes},
     "charts/pgbouncer/templates/pgbouncer-deployment.yaml": {
         "pgbouncer": default_probes,
-        "global": {"pgbouncer": {"enabled": True}},
+        "global": {
+            "pgbouncer": {"enabled": True},
+        },
     },
     "charts/postgresql/templates/statefulset-slaves.yaml": {
         "postgresql": {

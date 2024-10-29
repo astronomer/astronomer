@@ -40,7 +40,7 @@ spec:
         imagePullPolicy: {{ .Values.images.kibana.pullPolicy }}
         securityContext: {{ template "kibana.securityContext" . }}
         env:
-        {{- range $key, $value :=  .Values.env }}
+        {{- range $key, $value := .Values.env }}
         - name: {{ $key }}
           value: {{ $value | quote }}
         {{- end }}
@@ -61,7 +61,7 @@ spec:
         - containerPort: {{ .Values.ports.http }}
           name: kibana-ui
           protocol: TCP
-      {{- if .Values.global.authSidecar.enabled  }}
+      {{- if .Values.global.authSidecar.enabled }}
       - name: auth-proxy
         image: {{ include "authSidecar.image" . }}
         securityContext: {{ template "kibana.securityContext" . }}
@@ -73,6 +73,9 @@ spec:
         - containerPort: {{ .Values.global.authSidecar.port }}
           name: auth-proxy
           protocol: TCP
+        {{- if .Values.global.authSidecar.readinessProbe }}
+        readinessProbe: {{ tpl (toYaml .Values.global.authSidecar.readinessProbe) . | nindent 12 }}
+        {{- else }}
         readinessProbe:
           httpGet:
             path: /healthz
@@ -80,7 +83,7 @@ spec:
             scheme: HTTP
           initialDelaySeconds: 10
           periodSeconds: 10
-        readinessProbe: {{ tpl (toYaml .Values.global.authSidecar.readinessProbe) . | nindent 12 }}
+        {{- end }}
         {{- if .Values.global.authSidecar.livenessProbe }}
         livenessProbe: {{ tpl (toYaml .Values.global.authSidecar.livenessProbe) . | nindent 12 }}
         {{- else }}

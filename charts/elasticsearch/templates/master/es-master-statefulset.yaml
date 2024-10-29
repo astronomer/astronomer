@@ -121,12 +121,14 @@ spec:
         {{- end }}
         - name: node.roles
           value: "{{ template "elasticsearch.master.roles" . }}"
-        resources:
-{{ toYaml .Values.master.resources | indent 10 }}
+        resources: {{ toYaml .Values.master.resources | nindent 10 }}
         ports:
         - containerPort: {{ .Values.common.ports.transport }}
           name: transport
           protocol: TCP
+        {{- if .Values.master.readinessProbe }}
+        readinessProbe: {{ tpl (toYaml .Values.master.readinessProbe) . | nindent 12 }}
+        {{- else }}
         readinessProbe:
           httpGet:
             # local: If true, the request retrieves information from the local node only.
@@ -134,7 +136,7 @@ spec:
             path: /_cluster/health?local=true
             port: {{ .Values.common.ports.http }}
           initialDelaySeconds: 5
-        readinessProbe: {{ tpl (toYaml .Values.master.readinessProbe) . | nindent 12 }}
+        {{- end }}
         {{- if .Values.master.livenessProbe }}
         livenessProbe: {{ tpl (toYaml .Values.master.livenessProbe) . | nindent 12 }}
         {{- else }}
