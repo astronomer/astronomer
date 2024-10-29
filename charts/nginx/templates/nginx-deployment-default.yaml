@@ -41,6 +41,9 @@ spec:
           imagePullPolicy: {{ .Values.images.defaultBackend.pullPolicy }}
           securityContext: {{ toYaml .Values.securityContext | nindent 12 }}
           readinessProbe: {{ toYaml .Values.defaultBackend.readinessProbe | nindent 12 }}
+          {{ if .Values.defaultBackend.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.defaultBackend.livenessProbe) . | nindent 12 }}
+          {{ else }}
           livenessProbe:
             httpGet:
               path: /healthz
@@ -48,6 +51,7 @@ spec:
               scheme: HTTP
             initialDelaySeconds: 30
             timeoutSeconds: 5
+          {{- end }}
           resources: {{ toYaml .Values.defaultBackend.resources | nindent 12 }}
           ports:
             - containerPort: {{ .Values.ports.defaultBackendHTTP }}
