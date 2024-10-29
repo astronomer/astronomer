@@ -139,7 +139,7 @@ class TestAstronomerNamespacePools:
                     "features": {
                         "namespacePools": {
                             "enabled": True,
-                            "namespaces": {"create": True, "names": namespaces},
+                            "namespaces": {"create": False, "names": namespaces},
                         }
                     }
                 }
@@ -209,6 +209,7 @@ class TestAstronomerNamespacePools:
         assert deployments_config["deployments"]["hardDeleteDeployment"]
         assert deployments_config["deployments"]["manualNamespaceNames"]
         assert deployments_config["deployments"]["preCreatedNamespaces"] == [{"name": namespace} for namespace in namespaces]
+        assert deployments_config["deployments"]["disableManageClusterScopedResources"] is True
 
         # test configuration when namespacePools is disabled -> should not add configuration parameters
         doc = render_chart(
@@ -254,3 +255,26 @@ class TestAstronomerNamespacePools:
 
         expected_rule = f"key $.kubernetes.namespace_name\n    pattern ^({namespaces[0]}|{namespaces[1]})$"
         assert expected_rule in doc["data"]["output.conf"]
+
+    def test_astronomer_namespace_pools_create_rbac_mode_is_disabled(self, kube_version):
+        """Test that commander deployment rbac is generating roles and role binding on namespace pools mode."""
+
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "features": {
+                        "namespacePools": {
+                            "enabled": True,
+                            "createRbac": False,
+                        }
+                    }
+                }
+            },
+            show_only=[
+                "charts/astronomer/templates/commander/commander-role.yaml",
+                "charts/astronomer/templates/commander/commander-rolebinding.yaml",
+            ],
+        )
+
+        assert len(docs) == 0
