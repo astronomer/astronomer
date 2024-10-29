@@ -172,6 +172,7 @@ spec:
         ports:
         - name: postgresql
           containerPort: {{ template "postgresql.port" . }}
+        # TODO: should we bother with the postgres livenessProbe since it's not meant for production? This config is way different from everything else we have.
         {{- if .Values.livenessProbe.enabled }}
         livenessProbe:
           exec:
