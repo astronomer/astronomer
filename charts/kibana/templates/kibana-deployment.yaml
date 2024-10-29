@@ -55,6 +55,8 @@ spec:
           value: https://{{ template "kibana.name" . }}.{{ .Values.global.baseDomain }}
         {{- end }}
         resources: {{ toYaml .Values.resources | nindent 12 }}
+        readinessProbe: {{ tpl (toYaml .Values.readinessProbe) . | nindent 12 }}
+        livenessProbe: {{ tpl (toYaml .Values.livenessProbe) . | nindent 12 }}
         ports:
         - containerPort: {{ .Values.ports.http }}
           name: kibana-ui
@@ -78,6 +80,10 @@ spec:
             scheme: HTTP
           initialDelaySeconds: 10
           periodSeconds: 10
+        readinessProbe: {{ tpl (toYaml .Values.global.authSidecar.readinessProbe) . | nindent 12 }}
+        {{- if .Values.global.authSidecar.livenessProbe }}
+        livenessProbe: {{ tpl (toYaml .Values.global.authSidecar.livenessProbe) . | nindent 12 }}
+        {{- else }}
         livenessProbe:
           httpGet:
             path: /healthz
@@ -85,6 +91,7 @@ spec:
             scheme: HTTP
           initialDelaySeconds: 10
           periodSeconds: 10
+        {{- end }}
         volumeMounts:
         - mountPath: /etc/nginx/conf.d/
           name: kibana-sidecar-conf
