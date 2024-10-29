@@ -35,14 +35,11 @@ spec:
     {{- if .Values.priorityClassName }}
       priorityClassName: {{ .Values.priorityClassName }}
     {{- end }}
-      nodeSelector:
-{{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
-      affinity:
-{{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 8 }}
-      tolerations:
-{{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
+      nodeSelector: {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
+      affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
+      tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       serviceAccountName: {{ template "kube-state.serviceAccount" . }}
-{{- include "kube-state.imagePullSecrets" . | indent 6 }}
+      {{- include "kube-state.imagePullSecrets" . | nindent 6 }}
       containers:
       - name: kube-state
         args:
@@ -62,11 +59,14 @@ spec:
         - name: telemetry
           containerPort: {{ .Values.ports.telemetry }}
         readinessProbe: {{ tpl (toYaml .Values.readinessProbe) . | nindent 12 }}
+        {{ if .Values.livenessProbe }}
+        livenessProbe: {{ tpl (toYaml .Values.livenessProbe) . | nindent 12 }}
+        {{ else }}
         livenessProbe:
           httpGet:
             path: /healthz
             port: {{ .Values.ports.scrape }}
           initialDelaySeconds: 5
           timeoutSeconds: 5
-        resources:
-{{ toYaml .Values.resources | indent 12 }}
+        {{- end }}
+        resources: {{ toYaml .Values.resources | nindent 12 }}
