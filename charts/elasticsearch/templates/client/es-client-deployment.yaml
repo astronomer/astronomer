@@ -80,8 +80,7 @@ spec:
         command: ["sysctl", "-w", "vm.max_map_count={{ .Values.sysctlInitContainer.sysctlVmMaxMapCount}}"]
         securityContext:
           privileged: true
-        resources:
-{{ toYaml .Values.client.initResources | indent 10 }}
+        resources: {{ toYaml .Values.client.initResources | nindent 10 }}
   {{- end }}
       serviceAccountName: {{ template "elasticsearch.serviceAccount" . }}
       containers:
@@ -117,8 +116,7 @@ spec:
         {{- end }}
         - name: node.roles
           value: "{{ template "elasticsearch.client.roles" . }}"
-        resources:
-{{ toYaml .Values.client.resources | indent 10 }}
+        resources: {{ toYaml .Values.client.resources | nindent 10 }}
         ports:
         - containerPort: {{ .Values.common.ports.http }}
           name: http
@@ -126,6 +124,9 @@ spec:
         - containerPort: {{ .Values.common.ports.transport }}
           name: transport
           protocol: TCP
+        {{- if .Values.client.readinessProbe }}
+        readinessProbe: {{ tpl (toYaml .Values.client.readinessProbe) . | nindent 12 }}
+        {{- else }}
         readinessProbe:
           httpGet:
             # local: If true, the request retrieves information from the local node only.
@@ -133,7 +134,7 @@ spec:
             path: /_cluster/health?local=true
             port: {{ .Values.common.ports.http }}
           initialDelaySeconds: 5
-        readinessProbe: {{ tpl (toYaml .Values.client.readinessProbe) . | nindent 12 }}
+        {{- end }}
         {{- if .Values.client.livenessProbe }}
         livenessProbe: {{ tpl (toYaml .Values.client.livenessProbe) . | nindent 12 }}
         {{- else }}
