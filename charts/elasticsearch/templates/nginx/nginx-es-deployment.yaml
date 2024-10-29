@@ -57,18 +57,8 @@ spec:
           ports:
             - name: http
               containerPort: {{ .Values.common.ports.http }}
-          # livenessProbe:
-          #   httpGet:
-          #     path: /healthz
-          #     port: 8080
-          #   initialDelaySeconds: 10
-          #   periodSeconds: 10
-          # readinessProbe:
-          #   httpGet:
-          #     path: /healthz
-          #     port: 8080
-          #   initialDelaySeconds: 10
-          #   periodSeconds: 10
+          readinessProbe: {{ tpl (toYaml .Values.nginx.readinessProbe) . | nindent 12 }}
+          livenessProbe: {{ tpl (toYaml .Values.nginx.livenessProbe) . | nindent 12 }}
       volumes:
         - name: nginx-config-volume
           configMap:
