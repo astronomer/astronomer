@@ -9,7 +9,8 @@ CHARTS := astronomer nginx grafana prometheus alertmanager elasticsearch kibana 
 
 TEMPDIR := /tmp/astro-temp
 
-venv: unittest-requirements
+.PHONY: venv
+venv: .unittest-requirements
 unittest-requirements: .unittest-requirements ## Setup venv required for unit testing the Astronomer helm chart
 .unittest-requirements:
 	[ -d venv ] || { uv venv venv -p 3.11 --seed || virtualenv venv -p python3 ; }
