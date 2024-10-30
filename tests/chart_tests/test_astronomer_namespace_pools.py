@@ -277,7 +277,7 @@ class TestAstronomerNamespacePools:
                 "charts/kube-state/templates/kube-state-rolebinding.yaml",
                 "charts/kube-state/templates/kube-state-role.yaml",
                 "charts/astronomer/templates/config-syncer/config-syncer-role.yaml",
-                "charts/astronomer/templates/config-syncer/config-syncer-rolebinding.yaml"
+                "charts/astronomer/templates/config-syncer/config-syncer-rolebinding.yaml",
             ],
         )
 
