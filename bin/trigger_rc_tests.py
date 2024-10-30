@@ -10,7 +10,6 @@ import os
 import re
 import time
 from pathlib import Path
-from typing import Optional
 
 CHECK_PIPELINE_STATUES_TIMER_MIN = 5
 GITHUB_ORG = "astronomer"
@@ -22,7 +21,7 @@ parent_directory = Path(__file__).parent.parent
 circleci_directory = parent_directory / ".circleci"
 
 
-def run_workflow(circleci_token: str, parameters: Optional[dict] = None):
+def run_workflow(circleci_token: str, parameters: dict | None = None):
     circle_ci_conn = http.client.HTTPSConnection(CIRCLECI_URL, timeout=15)
     api_endpoint = f"/api/v2/project/github/{GITHUB_ORG}/{REPO}/pipeline"
 

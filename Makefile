@@ -9,9 +9,11 @@ CHARTS := astronomer nginx grafana prometheus alertmanager elasticsearch kibana 
 
 TEMPDIR := /tmp/astro-temp
 
+.PHONY: venv
+venv: .unittest-requirements
 unittest-requirements: .unittest-requirements ## Setup venv required for unit testing the Astronomer helm chart
 .unittest-requirements:
-	[ -d venv ] || virtualenv venv -p python3
+	[ -d venv ] || { uv venv venv -p 3.11 --seed || virtualenv venv -p python3 ; }
 	venv/bin/pip install -r requirements/chart-tests.txt
 	touch .unittest-requirements
 
@@ -42,7 +44,7 @@ build: ## Build the Astronomer helm chart
 
 .PHONY: update-requirements
 update-requirements: ## Update all requirements.txt files
-	for FILE in requirements/*.in ; do pip-compile --quiet --generate-hashes --allow-unsafe --upgrade $${FILE} ; done ;
+	for FILE in requirements/*.in ; do pip-compile --strip-extras --quiet --generate-hashes --allow-unsafe --upgrade $${FILE} ; done ;
 	-pre-commit run requirements-txt-fixer --all-files --show-diff-on-failure
 
 .PHONY: show-docker-images
