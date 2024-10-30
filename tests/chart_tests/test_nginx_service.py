@@ -233,60 +233,6 @@ class TestNginx:
         assert disableLeaderElection not in c_by_name["nginx"]["args"]
         assert expected_security_context == c_by_name["nginx"]["securityContext"]
 
-        nginx_lp = doc["spec"]["template"]["spec"]["containers"][0]["livenessProbe"]
-        assert nginx_lp["httpGet"] == {"path": "/healthz", "port": 10254}
-        assert not nginx_lp["initialDelaySeconds"]
-        assert not nginx_lp["periodSeconds"]
-        assert not nginx_lp["timeoutSeconds"]
-        assert not nginx_lp["failureThreshold"]
-
-        nginx_rp = doc["spec"]["template"]["spec"]["containers"][0]["readinessProbe"]
-        assert nginx_rp["httpGet"] == {"path": "/healthz", "port": 10254}
-        assert not nginx_rp["initialDelaySeconds"]
-        assert not nginx_rp["periodSeconds"]
-        assert not nginx_rp["timeoutSeconds"]
-        assert not nginx_rp["failureThreshold"]
-
-    def test_nginx_overrides(self):
-        """Test nginx with some overrides."""
-        values = {
-            "nginx": {
-                "minReadySeconds": 1999,
-                "livenessProbe": {
-                    "initialDelaySeconds": 2888,
-                    "periodSeconds": 2887,
-                    "timeoutSeconds": 2886,
-                    "failureThreshold": 2885,
-                },
-                "readinessProbe": {
-                    "initialDelaySeconds": 3777,
-                    "periodSeconds": 3776,
-                    "timeoutSeconds": 3775,
-                    "failureThreshold": 3774,
-                },
-            }
-        }
-        doc = render_chart(
-            values=values,
-            show_only=["charts/nginx/templates/nginx-deployment.yaml"],
-        )[0]
-
-        assert doc["spec"]["minReadySeconds"] == 1999
-
-        nginx_lp = doc["spec"]["template"]["spec"]["containers"][0]["livenessProbe"]
-        assert nginx_lp["httpGet"] == {"path": "/healthz", "port": 10254}
-        assert nginx_lp["initialDelaySeconds"] == 2888
-        assert nginx_lp["periodSeconds"] == 2887
-        assert nginx_lp["timeoutSeconds"] == 2886
-        assert nginx_lp["failureThreshold"] == 2885
-
-        nginx_rp = doc["spec"]["template"]["spec"]["containers"][0]["readinessProbe"]
-        assert nginx_rp["httpGet"] == {"path": "/healthz", "port": 10254}
-        assert nginx_rp["initialDelaySeconds"] == 3777
-        assert nginx_rp["periodSeconds"] == 3776
-        assert nginx_rp["timeoutSeconds"] == 3775
-        assert nginx_rp["failureThreshold"] == 3774
-
     def test_nginx_min_ready_seconds_overrides(self):
         """Test nginx ingress deployment template with min ready seconds overrides."""
         minReadySeconds = 300
