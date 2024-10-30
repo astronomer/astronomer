@@ -1,6 +1,5 @@
 import functools
 from pathlib import Path
-from typing import Optional
 
 import yaml
 
@@ -13,7 +12,7 @@ def get_all_features():
 
 
 def get_chart_containers(
-    k8s_version: str, chart_values: dict, exclude_kinds: Optional[list[str]] = None, include_kinds: Optional[list[str]] = None
+    k8s_version: str, chart_values: dict, exclude_kinds: list[str] | None = None, include_kinds: list[str] | None = None
 ) -> dict:
     """Return a dict of pod specs in the form of {k8s_version}_{release_name}-{pod_name}_{container_name}, with some additional metadata."""
 
