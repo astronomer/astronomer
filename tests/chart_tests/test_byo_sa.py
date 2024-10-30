@@ -59,6 +59,9 @@ class TestServiceAccounts:
                 "configSyncer": {"serviceAccount": {"create": "true", "name": "configsyncer-test"}},
                 "houston": {"serviceAccount": {"create": "true", "name": "houston-test"}},
             },
+            "kube-state": {
+                "serviceAccount": {"name": "kube-state-test"},
+            },
         }
         docs = render_chart(
             kube_version=kube_version,
@@ -67,11 +70,12 @@ class TestServiceAccounts:
                 "charts/astronomer/templates/commander/commander-rolebinding.yaml",
                 "charts/astronomer/templates/config-syncer/config-syncer-rolebinding.yaml",
                 "charts/astronomer/templates/houston/api/houston-bootstrap-rolebinding.yaml",
+                "charts/kube-state/templates/kube-state-rolebinding.yaml",
             ],
         )
 
-        assert len(docs) == 3
+        assert len(docs) == 4
 
-        expected_names = {"commander-test", "configsyncer-test", "houston-test"}
+        expected_names = {"commander-test", "configsyncer-test", "houston-test", "kube-state-test"}
         extracted_names = {doc["subjects"][0]["name"] for doc in docs if doc.get("subjects")}
         assert expected_names.issubset(extracted_names)
