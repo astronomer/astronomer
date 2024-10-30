@@ -2,7 +2,6 @@
 ## Houston Bootstrap Role Binding ##
 ####################################
 {{- if and .Values.global.rbacEnabled (and (not .Values.houston.backendSecretName) (not .Values.houston.backendConnection)) }}
-{{- $data := ( include "houston.bootstrapperServiceAccount" . )  -}}
 kind: RoleBinding
 apiVersion: {{ template "apiVersion.rbac" . }}
 metadata:
@@ -22,6 +21,6 @@ roleRef:
   name: {{ .Release.Name }}-houston-bootstrapper
 subjects:
   - kind: ServiceAccount
-    name: {{ $data }}
+    name: {{ template  "houston.bootstrapperServiceAccount" . }} 
     namespace: {{ .Release.Namespace }}
 {{- end }}
