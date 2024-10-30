@@ -29,17 +29,15 @@ class TestStanStatefulSet:
 
         stan_lp = c_by_name["stan"]["livenessProbe"]
         assert stan_lp["httpGet"] == {"path": "/streaming/serverz", "port": "monitor"}
-        assert not stan_lp["initialDelaySeconds"]
-        assert not stan_lp["periodSeconds"]
-        assert not stan_lp["failureThreshold"]
-        assert not stan_lp["timeoutSeconds"]
+        assert stan_lp["initialDelaySeconds"] == 10
+        assert stan_lp["timeoutSeconds"] == 5
 
         stan_rp = c_by_name["stan"]["readinessProbe"]
         assert stan_rp["httpGet"] == {"path": "/streaming/serverz", "port": "monitor"}
-        assert not stan_rp["initialDelaySeconds"]
-        assert not stan_rp["periodSeconds"]
-        assert not stan_rp["failureThreshold"]
-        assert not stan_rp["timeoutSeconds"]
+        assert stan_rp["initialDelaySeconds"] == 10
+        assert not stan_rp.get("periodSeconds")
+        assert not stan_rp.get("failureThreshold")
+        assert stan_rp["timeoutSeconds"] == 5
 
         assert all(c["securityContext"] == {"runAsNonRoot": True} for c in c_by_name.values())
         spec = doc["spec"]["template"]["spec"]
