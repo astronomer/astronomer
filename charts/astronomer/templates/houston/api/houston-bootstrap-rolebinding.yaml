@@ -21,6 +21,6 @@ roleRef:
   name: {{ .Release.Name }}-houston-bootstrapper
 subjects:
   - kind: ServiceAccount
-    name: {{ template  "houston.bootstrapperServiceAccount" . }}
+    name: {{ template "houston.bootstrapperServiceAccount" . }}
     namespace: {{ .Release.Namespace }}
 {{- end }}
