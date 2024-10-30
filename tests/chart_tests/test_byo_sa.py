@@ -45,7 +45,33 @@ class TestServiceAccounts:
             ],
         )
 
-        assert len(docs) == 4
+        assert len(docs) == 6
+
         expected_names = {"commander-test", "registry-test", "configsyncer-test", "houston-test"}
         extracted_names = {doc["metadata"]["name"] for doc in docs if "metadata" in doc and "name" in doc["metadata"]}
+        assert expected_names.issubset(extracted_names)
+
+    def test_serviceaccount_with_overrides_rolebinding(self, kube_version):
+        "Test that if custom SA are added it gets created"
+        values = {
+            "astronomer": {
+                "commander": {"serviceAccount": {"create": "true", "name": "commander-test"}},
+                "configSyncer": {"serviceAccount": {"create": "true", "name": "configsyncer-test"}},
+                "houston": {"serviceAccount": {"create": "true", "name": "houston-test"}},
+            },
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=[
+                "charts/astronomer/templates/commander/commander-rolebinding.yaml",
+                "charts/astronomer/templates/config-syncer/config-syncer-rolebinding.yaml",
+                "charts/astronomer/templates/houston/api/houston-bootstrap-rolebinding.yaml",
+            ],
+        )
+
+        assert len(docs) == 3
+
+        expected_names = {"commander-test", "configsyncer-test", "houston-test"}
+        extracted_names = {doc["subjects"][0]["name"] for doc in docs if "subjects" in doc and doc["subjects"]}
         assert expected_names.issubset(extracted_names)
