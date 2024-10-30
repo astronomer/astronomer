@@ -19,7 +19,7 @@ import subprocess
 import sys
 from functools import cache
 from tempfile import NamedTemporaryFile
-from typing import Any, Optional
+from typing import Any
 from pathlib import Path
 import os
 from tests import supported_k8s_versions
@@ -78,12 +78,12 @@ def validate_k8s_object(instance, kube_version=default_version):
 def render_chart(
     *,  # require keyword args
     name: str = "release-name",
-    values: Optional[dict] = None,
-    show_only: Optional[list] = None,
-    chart_dir: Optional[str] = None,
+    values: dict | None = None,
+    show_only: list | None = None,
+    chart_dir: str | None = None,
     kube_version: str = default_version,
     baseDomain: str = "example.com",
-    namespace: Optional[str] = None,
+    namespace: str | None = None,
     validate_objects: bool = True,
 ):
     """Render a helm chart into dictionaries.

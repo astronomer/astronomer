@@ -110,7 +110,7 @@ jobs:
 
   run_pre_commit:
     docker:
-      - image: quay.io/astronomer/ci-pre-commit:2024-09
+      - image: quay.io/astronomer/ci-pre-commit:2024-11
     steps:
       - checkout
       - run:
@@ -134,7 +134,7 @@ jobs:
 
   unittest-charts:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2024-09
+      - image: quay.io/astronomer/ci-helm-release:2024-11
     parallelism: 8
     resource_class: xlarge
     steps:
@@ -169,7 +169,7 @@ jobs:
 
   build-artifact:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2024-09
+      - image: quay.io/astronomer/ci-helm-release:2024-11
     parameters:
       qa_release:
         type: boolean
@@ -188,7 +188,7 @@ jobs:
 
   release-to-internal:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2024-09
+      - image: quay.io/astronomer/ci-helm-release:2024-11
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -227,7 +227,7 @@ jobs:
 
   release-to-public:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2024-09
+      - image: quay.io/astronomer/ci-helm-release:2024-11
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -302,20 +302,20 @@ jobs:
             helm template --kube-version=v1.30.4 -f values.yaml --set global.baseDomain=example.com . |
             kubent --cluster=false --helm3=false --filename -
           when: always
-  platform-1-31-0:
+  platform-1-31-1:
     machine:
       image: ubuntu-2204:2024.05.1
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.31.0
+      KUBE_VERSION: v1.31.1
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging"
       - run:
-          name: Check chart for k8s 1.31.0 compatibility with kubent
+          name: Check chart for k8s 1.31.1 compatibility with kubent
           command: |
             set -o pipefail
-            helm template --kube-version=v1.31.0 -f values.yaml --set global.baseDomain=example.com . |
+            helm template --kube-version=v1.31.1 -f values.yaml --set global.baseDomain=example.com . |
             kubent --cluster=false --helm3=false --filename -
           when: always
 
@@ -456,7 +456,7 @@ workflows:
             - approve-test-all-platforms
             - build-artifact
 
-      - platform-1-31-0:
+      - platform-1-31-1:
           requires:
             - build-artifact
       - approve-internal-release:
@@ -475,7 +475,7 @@ workflows:
           requires:
             - approve-internal-release
             - platform-1-27-16
-            - platform-1-31-0
+            - platform-1-31-1
       - approve-upgrade-test:
           type: approval
           filters:
