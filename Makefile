@@ -12,7 +12,7 @@ TEMPDIR := /tmp/astro-temp
 venv: unittest-requirements
 unittest-requirements: .unittest-requirements ## Setup venv required for unit testing the Astronomer helm chart
 .unittest-requirements:
-	[ -d venv ] || { uv venv venv -p 3.11 --seed || python3 -m venv venv ; }
+	[ -d venv ] || { uv venv venv -p 3.11 --seed || virtualenv venv -p python3 ; }
 	venv/bin/pip install -r requirements/chart-tests.txt
 	touch .unittest-requirements
 
