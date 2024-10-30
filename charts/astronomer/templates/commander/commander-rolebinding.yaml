@@ -9,6 +9,7 @@
 {{- $useClusterRoles := and .Values.global.rbacEnabled .Values.global.clusterRoles (not .Values.global.features.namespacePools.enabled) }}
 {{- $shouldCreateResources := and .Values.global.rbacEnabled (or (and .Values.global.clusterRoles (not .Values.global.features.namespacePools.enabled )) $namespacepoolsRBACresources) }}
 {{- $namespaces := .Values.global.features.namespacePools.namespaces.names }}
+{{- $data := ( include "commander.ServiceAccount" . )  -}}
 {{- if $useClusterRoles }}
   {{- $namespaces = list .Release.Namespace}}
 {{- else }}
@@ -35,7 +36,7 @@ roleRef:
   name: {{ $.Release.Name }}-commander
 subjects:
   - kind: ServiceAccount
-    name: {{ $.Release.Name }}-commander
+    name: {{ $data }}
     namespace: {{ $.Release.Namespace }}
 {{ end }}
 {{- end }}
@@ -58,6 +59,6 @@ roleRef:
   name: {{ $.Release.Name }}-commander
 subjects:
   - kind: ServiceAccount
-    name: {{ $.Release.Name }}-commander
+    name: {{ $data }}
     namespace: {{ $.Release.Namespace }}
 {{- end }}
