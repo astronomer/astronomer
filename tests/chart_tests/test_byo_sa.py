@@ -73,5 +73,5 @@ class TestServiceAccounts:
         assert len(docs) == 3
 
         expected_names = {"commander-test", "configsyncer-test", "houston-test"}
-        extracted_names = {doc["subjects"][0]["name"] for doc in docs if "subjects" in doc and doc["subjects"]}
+        extracted_names = {doc["subjects"][0]["name"] for doc in docs if doc.get("subjects")}
         assert expected_names.issubset(extracted_names)

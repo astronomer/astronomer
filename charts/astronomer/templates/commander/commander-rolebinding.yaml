@@ -59,6 +59,6 @@ roleRef:
   name: {{ $.Release.Name }}-commander
 subjects:
   - kind: ServiceAccount
-    name: {{ $data }}
+    name: {{ $commanderServiceAccountName }}
     namespace: {{ $.Release.Namespace }}
 {{- end }}
