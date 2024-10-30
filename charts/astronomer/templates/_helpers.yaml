@@ -147,7 +147,7 @@
 {{- if and .Values.configSyncer.serviceAccount.create .Values.global.rbacEnabled -}}
 {{ default (printf "%s-config-syncer" .Release.Name ) .Values.configSyncer.serviceAccount.name }}
 {{- else -}}
-    {{ default "default" .Values.commander.serviceAccount.name }}
+    {{ default "default" .Values.configSyncer.serviceAccount.name }}
 {{- end }}
 {{- end }}
 
