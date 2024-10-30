@@ -18,6 +18,6 @@ roleRef:
   name: {{ template "nginx.fullname" . }}
 subjects:
   - kind: ServiceAccount
-    name: {{ template "nginx.fullname" . }}
+    name: {{ template "nginx.serviceAccount" . }}
     namespace: {{ .Release.Namespace }}
 {{- end }}

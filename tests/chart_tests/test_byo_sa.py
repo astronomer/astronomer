@@ -62,6 +62,9 @@ class TestServiceAccounts:
             "kube-state": {
                 "serviceAccount": {"name": "kube-state-test"},
             },
+            "fluentd": {"serviceAccount": {"name": "fluentd-test"}},
+            "prometheus": {"serviceAccount": {"name": "prometheus-test"}},
+            "nginx": {"serviceAccount": {"name": "nginx-test"}},
         }
         docs = render_chart(
             kube_version=kube_version,
@@ -71,11 +74,22 @@ class TestServiceAccounts:
                 "charts/astronomer/templates/config-syncer/config-syncer-rolebinding.yaml",
                 "charts/astronomer/templates/houston/api/houston-bootstrap-rolebinding.yaml",
                 "charts/kube-state/templates/kube-state-rolebinding.yaml",
+                "charts/fluentd/templates/fluentd-clusterrolebinding.yaml",
+                "charts/prometheus/templates/prometheus-rolebinding.yaml",
+                "charts/nginx/templates/nginx-rolebinding.yaml",
             ],
         )
 
-        assert len(docs) == 4
+        assert len(docs) == 7
 
-        expected_names = {"commander-test", "configsyncer-test", "houston-test", "kube-state-test"}
+        expected_names = {
+            "commander-test",
+            "configsyncer-test",
+            "houston-test",
+            "kube-state-test",
+            "fluentd-test",
+            "prometheus-test",
+            "nginx-test",
+        }
         extracted_names = {doc["subjects"][0]["name"] for doc in docs if doc.get("subjects")}
         assert expected_names.issubset(extracted_names)
