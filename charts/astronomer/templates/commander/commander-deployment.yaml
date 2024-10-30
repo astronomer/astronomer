@@ -113,7 +113,7 @@ spec:
             - name: COMMANDER_MANUAL_NAMESPACE_NAMES
               value: "true"
             {{- end }}
-            {{- if .Values.global.disableManageClusterScopedResources -}}
+            {{- if .Values.global.disableManageClusterScopedResources }}
             - name: COMMANDER_MANAGE_NAMESPACE_RESOURCE
               value: "false"
             {{- end }}
