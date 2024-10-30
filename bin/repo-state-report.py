@@ -14,7 +14,7 @@ def get_repo_state() -> dict:
         "git_branch": subprocess.check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"]).decode("utf-8").strip(),
         "git_origin": subprocess.check_output(["git", "config", "--get", "remote.origin.url"]).decode("utf-8").strip(),
         "git_sha": subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("utf-8").strip(),
-        "build_date_iso8601": datetime.datetime.now(tz=datetime.timezone.utc).isoformat(),
+        "build_date_iso8601": datetime.datetime.now(tz=datetime.UTC).isoformat(),
     }
 
     for var in ["CIRCLE_BUILD_URL", "CIRCLE_BUILD_NUM", "CIRCLE_REPOSITORY_URL", "CIRCLE_SHA1", "CIRCLE_WORKFLOW_ID", "CIRCLE_JOB"]:
