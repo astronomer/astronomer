@@ -157,6 +157,7 @@ jobs:
           key: chart-test-venv-{{ checksum "/tmp/chart-tests-cache-key.txt" }}
           paths:
             - ~/.cache/uv
+            - ~/.local/share/uv
             - ~/project/venv
             - ~/project/.unittest-requirements
       - run:
