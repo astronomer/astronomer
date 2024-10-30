@@ -45,7 +45,7 @@ class TestServiceAccounts:
             ],
         )
 
-        assert len(docs) == 6
+        assert len(docs) == 4
 
         expected_names = {"commander-test", "registry-test", "configsyncer-test", "houston-test"}
         extracted_names = {doc["metadata"]["name"] for doc in docs if "metadata" in doc and "name" in doc["metadata"]}
