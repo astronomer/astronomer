@@ -133,8 +133,9 @@ jobs:
   unittest-charts:
     docker:
       - image: quay.io/astronomer/ci-helm-release:{{ ci_runner_version }}
-    parallelism: 8
-    resource_class: xlarge
+    # https://circleci.com/docs/using-docker/#x86
+    resource_class: medium
+    parallelism: 4
     steps:
       - setup_remote_docker:
           docker_layer_caching: true
