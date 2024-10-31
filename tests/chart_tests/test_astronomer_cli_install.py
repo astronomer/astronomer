@@ -29,7 +29,7 @@ class TestAstronomerCliInstall:
 
         assert c_by_name["cli-install"]["livenessProbe"]["initialDelaySeconds"] == 30
         assert c_by_name["cli-install"]["livenessProbe"]["timeoutSeconds"] == 5
-        assert c_by_name["cli-install"]["readinessProbe"] == {}
+        assert not c_by_name["cli-install"].get("readinessProbe")
 
     def test_astronomer_cli_install_disabled(self, kube_version):
         """Test that cli install service is disabled."""
