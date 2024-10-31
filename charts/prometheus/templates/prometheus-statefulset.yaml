@@ -58,7 +58,7 @@ spec:
           - containerPort: {{ .Values.global.authSidecar.port }}
             name: auth-proxy
             protocol: TCP
-          {{- if .Values.global.authSidecar.readinessProbe }} # TODO: This is a problem because authSidear is always defined for .Values.global.authSidecar.port
+          {{- if .Values.global.authSidecar.readinessProbe }}
           readinessProbe: {{ tpl (toYaml .Values.global.authSidecar.readinessProbe) . | nindent 12 }}
           {{- else }}
           readinessProbe:
