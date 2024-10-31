@@ -58,7 +58,9 @@ spec:
           containerPort: {{ .Values.ports.scrape }}
         - name: telemetry
           containerPort: {{ .Values.ports.telemetry }}
+        {{- if .Values.readinessProbe }}
         readinessProbe: {{ tpl (toYaml .Values.readinessProbe) . | nindent 12 }}
+        {{- end }}
         {{ if .Values.livenessProbe }}
         livenessProbe: {{ tpl (toYaml .Values.livenessProbe) . | nindent 12 }}
         {{ else }}

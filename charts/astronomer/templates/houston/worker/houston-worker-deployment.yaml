@@ -54,8 +54,12 @@ spec:
 {{ toYaml .Values.houston.resources | indent 12 }}
           env:
             {{- include "houston_environment" . | indent 12 }}
+          {{- if .Values.readinessProbe }}
           readinessProbe: {{ tpl (toYaml .Values.readinessProbe) . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.livenessProbe }}
           livenessProbe: {{ tpl (toYaml .Values.livenessProbe) . | nindent 12 }}
+          {{- end }}
         - name: houston-bootstrapper
           image: {{ template "dbBootstrapper.image" . }}
           imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
@@ -110,8 +114,12 @@ spec:
 {{- if .Values.houston.worker.volumeMounts }}
 {{- tpl (toYaml .Values.houston.worker.volumeMounts) $ | nindent 12 }}
 {{- end }}
+          {{- if .Values.houston.worker.readinessProbe }}
           readinessProbe: {{ tpl (toYaml .Values.houston.worker.readinessProbe) . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.houston.worker.livenessProbe }}
           livenessProbe: {{ tpl (toYaml .Values.houston.worker.livenessProbe) . | nindent 12 }}
+          {{- end }}
           env:
             - name: GRPC_VERBOSITY
               value: "INFO"

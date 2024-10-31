@@ -120,10 +120,6 @@ def test_template_probes_with_custom_values(template, values):
         ), f"readinessProbe not accurate in {template} container {container['name']}"
 
 
-# @pytest.mark.parametrize("template,values", zip(pod_manager_data.keys(), pod_manager_data.values()), ids=pod_manager_data.keys())
-# def test_probes_with_default_values(template):
-#     """Ensure some templates have default probes."""
-
 
 class TestDefaultProbes:
     """Test the default probes. This test is to ensure we keep the default probes during refactoring."""

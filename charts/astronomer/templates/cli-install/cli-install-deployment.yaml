@@ -40,7 +40,9 @@ spec:
           image: {{ template "cliInstall.image" . }}
           imagePullPolicy: {{ .Values.images.cliInstall.pullPolicy }}
           securityContext: {{ toYaml .Values.securityContext | nindent 12 }}
+          {{- if .Values.cliInstall.readinessProbe }}
           readinessProbe: {{ tpl (toYaml .Values.cliInstall.readinessProbe) . | nindent 12 }}
+          {{- end }}
           {{- if .Values.cliInstall.livenessProbe }}
           livenessProbe: {{ tpl (toYaml .Values.cliInstall.livenessProbe) . | nindent 12 }}
           {{- else }}

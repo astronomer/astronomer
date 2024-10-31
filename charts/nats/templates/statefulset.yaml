@@ -291,8 +291,12 @@ spec:
           - name: pid
             mountPath: /var/run/nats
         resources: {{ toYaml .Values.reloader.resources | nindent 10 }}
+        {{- if .Values.reloader.livenessProbe }}
         livenessProbe: {{ tpl (toYaml .Values.reloader.livenessProbe) . | nindent 10 }}
+        {{- end }}
+        {{- if .Values.reloader.readinessProbe }}
         readinessProbe: {{ tpl (toYaml .Values.reloader.readinessProbe) . | nindent 10 }}
+        {{- end }}
       {{ end }}
 
       ##############################
@@ -318,8 +322,12 @@ spec:
         - containerPort: 7777
           name: metrics
         resources: {{ toYaml .Values.exporter.resources | nindent 10 }}
+        {{- if .Values.exporter.livenessProbe }}
         livenessProbe: {{ tpl (toYaml .Values.exporter.livenessProbe) . | nindent 10 }}
+        {{- end }}
+        {{- if .Values.exporter.readinessProbe }}
         readinessProbe: {{ tpl (toYaml .Values.exporter.readinessProbe) . | nindent 10 }}
+        {{- end }}
       {{ end }}
 
   {{- if and ( or .Values.nats.jetstream.enabled .Values.global.nats.jetStream.enabled ) .Values.nats.jetstream.fileStorage.enabled (not .Values.nats.jetstream.fileStorage.existingClaim) }}

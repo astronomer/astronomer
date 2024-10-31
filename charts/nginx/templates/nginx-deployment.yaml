@@ -86,7 +86,9 @@ spec:
             initialDelaySeconds: 30
             timeoutSeconds: 5
           {{- end }}
+          {{- if .Values.readinessProbe }}
           readinessProbe: {{ tpl (toYaml .Values.readinessProbe) . | nindent 12 }}
+          {{- end }}
           env:
             - name: POD_NAME
               valueFrom:

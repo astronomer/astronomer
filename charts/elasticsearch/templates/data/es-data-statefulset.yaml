@@ -127,7 +127,9 @@ spec:
         - containerPort: {{ .Values.common.ports.transport }}
           name: transport
           protocol: TCP
+        {{- if .Values.data.readinessProbe }}
         readinessProbe: {{ tpl (toYaml .Values.data.readinessProbe) . | nindent 10 }}
+        {{- end }}
         {{- if .Values.data.livenessProbe }}
         livenessProbe: {{ tpl (toYaml .Values.data.livenessProbe) . | nindent 10 }}
         {{- else }}

@@ -55,8 +55,12 @@ spec:
           value: https://{{ template "kibana.name" . }}.{{ .Values.global.baseDomain }}
         {{- end }}
         resources: {{ toYaml .Values.resources | nindent 12 }}
+        {{- if .Values.readinessProbe }}
         readinessProbe: {{ tpl (toYaml .Values.readinessProbe) . | nindent 12 }}
+        {{- end }}
+        {{- if .Values.livenessProbe }}
         livenessProbe: {{ tpl (toYaml .Values.livenessProbe) . | nindent 12 }}
+        {{- end }}
         ports:
         - containerPort: {{ .Values.ports.http }}
           name: kibana-ui

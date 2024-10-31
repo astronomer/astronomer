@@ -69,7 +69,9 @@ spec:
           successThreshold: 1
           timeoutSeconds: 5
         {{- end }}
+        {{- if .Values.readinessProbe }}
         readinessProbe: {{ tpl (toYaml .Values.readinessProbe) . | nindent 12 }}
+        {{- end }}
         imagePullPolicy: {{ .Values.images.fluentd.pullPolicy }}
         env:
         - name: K8S_NODE_NAME

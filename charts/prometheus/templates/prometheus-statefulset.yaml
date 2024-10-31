@@ -93,8 +93,12 @@ spec:
           imagePullPolicy: {{ .Values.images.prometheus.pullPolicy }}
           securityContext: {{ template "prometheus.securityContext" . }}
           resources: {{ toYaml .Values.configMapReloader.resources | nindent 12 }}
+          {{- if .Values.configMapReloader.livenessProbe }}
           livenessProbe: {{ tpl (toYaml .Values.configMapReloader.livenessProbe) . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.configMapReloader.readinessProbe }}
           readinessProbe: {{ tpl (toYaml .Values.configMapReloader.readinessProbe) . | nindent 12 }}
+          {{- end }}
           volumeMounts:
           - name: alert-volume
             mountPath: /etc/prometheus/alerts.d
