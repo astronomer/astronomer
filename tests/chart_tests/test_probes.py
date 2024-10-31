@@ -25,9 +25,11 @@ pod_manager_data = {
     "charts/astronomer/templates/astro-ui/astro-ui-deployment.yaml": {"astronomer": {"astroUI": default_probes}},
     "charts/astronomer/templates/cli-install/cli-install-deployment.yaml": {"astronomer": {"cliInstall": default_probes}},
     "charts/astronomer/templates/commander/commander-deployment.yaml": {"astronomer": {"commander": default_probes}},
-    "charts/astronomer/templates/houston/api/houston-deployment.yaml": {"astronomer": {"houston": default_probes}},
-    "charts/astronomer/templates/houston/worker/houston-worker-deployment.yaml": {
-        "astronomer": {"houston": {"worker": default_probes}}
+    "charts/astronomer/templates/houston/api/houston-deployment.yaml": {"astronomer": {
+        "houston": {**default_probes, "waitForDB": default_probes, "bootstrapper": default_probes}},
+    },
+    "charts/astronomer/templates/houston/worker/houston-worker-deployment.yaml": {"astronomer": {
+        "houston": {"worker": default_probes, "waitForDB": default_probes, "bootstrapper": default_probes}},
     },
     "charts/astronomer/templates/registry/registry-statefulset.yaml": {"astronomer": {"registry": default_probes}},
     "charts/elasticsearch/templates/client/es-client-deployment.yaml": {"elasticsearch": {"client": default_probes}},
@@ -111,7 +113,10 @@ def test_template_probes_with_custom_values(template, values):
 
     docs = render_chart(show_only=template, values=values)
     assert len(docs) == 1
-    for container in docs[0]["spec"]["template"]["spec"]["containers"]:
+    for container in [
+            *docs[0]["spec"]["template"]["spec"]["containers"],
+            *docs[0]["spec"]["template"]["spec"].get("initContainers", [])
+        ]:
         assert (
             container["livenessProbe"] == default_probes["livenessProbe"]
         ), f"livenessProbe not accurate in {template} container {container['name']}"
