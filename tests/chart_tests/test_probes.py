@@ -32,12 +32,28 @@ pod_manager_data = {
         "houston": {"worker": default_probes, "waitForDB": default_probes, "bootstrapper": default_probes}},
     },
     "charts/astronomer/templates/registry/registry-statefulset.yaml": {"astronomer": {"registry": default_probes}},
-    "charts/elasticsearch/templates/client/es-client-deployment.yaml": {"elasticsearch": {"client": default_probes}},
-    "charts/elasticsearch/templates/data/es-data-statefulset.yaml": {"elasticsearch": {"data": default_probes}},
+    "charts/elasticsearch/templates/client/es-client-deployment.yaml": {
+        "elasticsearch": {
+            "client": default_probes,
+            "sysctlInitContainer": default_probes,
+    }},
+    "charts/elasticsearch/templates/data/es-data-statefulset.yaml": {
+        "elasticsearch": {
+            "data": default_probes,
+            "sysctlInitContainer": default_probes,
+            }
+        },
     "charts/elasticsearch/templates/exporter/es-exporter-deployment.yaml": {"elasticsearch": {"exporter": default_probes}},
     "charts/elasticsearch/templates/master/es-master-statefulset.yaml": {
-        "elasticsearch": {"master": default_probes},
-        "global": {"authSidecar": {"enabled": True, **default_probes}},
+        "elasticsearch": {
+            "master": default_probes,
+            "sysctlInitContainer": default_probes,
+            },
+        "global": {
+            "authSidecar": {
+                "enabled": True, **default_probes
+                }
+            },
     },
     "charts/elasticsearch/templates/nginx/nginx-es-deployment.yaml": {"elasticsearch": {"nginx": default_probes}},
     "charts/external-es-proxy/templates/external-es-proxy-deployment.yaml": {
