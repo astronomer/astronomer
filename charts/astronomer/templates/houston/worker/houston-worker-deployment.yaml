@@ -30,12 +30,9 @@ spec:
       annotations:
         checksum/houston-config: {{ include (print $.Template.BasePath "/houston/houston-configmap.yaml") . | sha256sum }}
     spec:
-      nodeSelector:
-{{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
-      affinity:
-{{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 8 }}
-      tolerations:
-{{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
+      nodeSelector: {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
+      affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
+      tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       restartPolicy: Always
       {{- if and (not .Values.houston.airflowBackendSecretName) (not .Values.houston.airflowBackendConnection) }}
       serviceAccountName: {{ template "houston.bootstrapperServiceAccount" . }}
@@ -50,8 +47,7 @@ spec:
           args:
             - "echo"
             - "DB ready"
-          resources:
-{{ toYaml .Values.houston.resources | indent 12 }}
+          resources: {{ toYaml .Values.houston.resources | nindent 12 }}
           env:
             {{- include "houston_environment" . | indent 12 }}
           {{- if .Values.readinessProbe }}

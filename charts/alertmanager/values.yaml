@@ -40,6 +40,14 @@ persistence:
 
 env: {}
 
+readinessProbe: {}
+  # httpGet:
+  #   path: {{ .Values.prefixURL }}/#/status
+  #   port: {{ .Values.ports.http }}
+  # initialDelaySeconds: 30
+  # timeoutSeconds: 30
+
+
 ports:
   http: 9093
 

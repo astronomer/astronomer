@@ -66,11 +66,17 @@ houston:
   replicas: 2
   # This only applies when replicas > 3
   maxUnavailable: 25%
-  livenessProbe:
+  livenessProbe: {}
+    # httpGet:
+    #   path: /v1/healthz
+    #   port: {{ .Values.ports.houstonHTTP }}
     # initialDelaySeconds: 30
     # periodSeconds: 10
     # failureThreshold: 10
-  readinessProbe:
+  readinessProbe: {}
+    # httpGet:
+    #   path: /v1/healthz
+    #   port: {{ .Values.ports.houstonHTTP }}
     # initialDelaySeconds: 30
     # periodSeconds: 10
     # failureThreshold: 10
@@ -145,6 +151,8 @@ houston:
   worker:
     enabled: true
     replicas: 2
+    readinessProbe: {}
+    livenessProbe: {}
 
   # Automatically upgrade Airflow deployments to the latest
   # version specified by Houston configuration.
@@ -366,6 +374,22 @@ commander:
     # requests:
     #  cpu: 100m
     #  memory: 128Mi
+  livenessProbe: {}
+    # failureThreshold: 5
+    # httpGet:
+    #   path: /healthz
+    #   port: {{ .Values.ports.commanderHTTP }}
+    #   scheme: HTTP
+    # initialDelaySeconds: 10
+    # periodSeconds: 10
+  readinessProbe: {}
+    # httpGet:
+    #   path: /healthz
+    #   port: {{ .Values.ports.commanderHTTP }}
+    # initialDelaySeconds: 10
+    # periodSeconds: 10
+
+
   airGapped:
     # Enable airgapped mode
     enabled: false
