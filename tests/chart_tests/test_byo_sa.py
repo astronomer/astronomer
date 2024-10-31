@@ -33,6 +33,9 @@ class TestServiceAccounts:
                 "configSyncer": {"serviceAccount": {"create": "true", "name": "configsyncer-test"}},
                 "houston": {"serviceAccount": {"create": "true", "name": "houston-test"}},
             },
+            "grafana": {
+                "serviceAccount": {"create": "true", "name": "grafana-test"}
+            }
         }
         docs = render_chart(
             kube_version=kube_version,
@@ -42,10 +45,11 @@ class TestServiceAccounts:
                 "charts/astronomer/templates/registry/registry-serviceaccount.yaml",
                 "charts/astronomer/templates/config-syncer/config-syncer-serviceaccount.yaml",
                 "charts/astronomer/templates/houston/api/houston-bootstrap-serviceaccount.yaml",
+                "charts/grafana/templates/grafana-bootstrap-serviceaccount.yaml"
             ],
         )
 
-        assert len(docs) == 4
-        expected_names = {"commander-test", "registry-test", "configsyncer-test", "houston-test"}
+        assert len(docs) == 5
+        expected_names = {"commander-test", "registry-test", "configsyncer-test", "houston-test", "grafana-test"}
         extracted_names = {doc["metadata"]["name"] for doc in docs if "metadata" in doc and "name" in doc["metadata"]}
         assert expected_names.issubset(extracted_names)
