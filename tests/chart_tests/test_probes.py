@@ -66,7 +66,9 @@ pod_manager_data = {
         },
     },
     "charts/fluentd/templates/fluentd-daemonset.yaml": {"fluentd": default_probes},
-    "charts/grafana/templates/grafana-deployment.yaml": {"grafana": default_probes},
+    "charts/grafana/templates/grafana-deployment.yaml": {
+        "grafana": {**default_probes, "waitForDB": default_probes, "bootstrapper": default_probes},
+        },
     "charts/kibana/templates/kibana-deployment.yaml": {
         "kibana": default_probes,
         "global": {"authSidecar": {"enabled": True, **default_probes}},

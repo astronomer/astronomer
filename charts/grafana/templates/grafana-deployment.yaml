@@ -27,12 +27,9 @@ spec:
         app: {{ template "grafana.name" . }}
         version: {{ .Chart.Version }}
     spec:
-      nodeSelector:
-{{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
-      affinity:
-{{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 8 }}
-      tolerations:
-{{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
+      nodeSelector: {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
+      affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
+      tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       restartPolicy: Always
       {{- if and (not .Values.backendSecretName) (not .Values.backendConnection) }}
       serviceAccountName: {{ template "grafana.bootstrapper.serviceaccount" . }}
@@ -49,6 +46,12 @@ spec:
           imagePullPolicy: IfNotPresent
           securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
           resources: {{ toYaml .Values.resources | nindent 12 }}
+          {{- if .Values.waitForDB.readinessProbe }}
+          readinessProbe: {{ tpl (toYaml .Values.waitForDB.readinessProbe) . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.waitForDB.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.waitForDB.livenessProbe) . | nindent 12 }}
+          {{- end }}
           env:
             - name: GF_DATABASE_URL
               valueFrom:
@@ -60,8 +63,13 @@ spec:
           image: {{ template "grafana.bootstrapper.image" . }}
           imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
           securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
-          resources:
-{{ toYaml .Values.resources | indent 12 }}
+          resources: {{ toYaml .Values.resources | nindent 12 }}
+          {{- if .Values.bootstrapper.readinessProbe }}
+          readinessProbe: {{ tpl (toYaml .Values.bootstrapper.readinessProbe) . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.bootstrapper.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.bootstrapper.livenessProbe) . | nindent 12 }}
+          {{- end }}
           env:
             - name: BOOTSTRAP_DB
               valueFrom:
@@ -113,7 +121,7 @@ spec:
           volumeMounts:
             - name: grafana-datasource-volume
               mountPath: /etc/grafana/provisioning/datasources
-            {{- $grafanadashboards :=  fromYaml (include "grafana.dashboards" .) }}
+            {{- $grafanadashboards := fromYaml (include "grafana.dashboards" .) }}
             {{- if $grafanadashboards }}
             {{- range $provider, $dashboards := $grafanadashboards }}
             {{- range $key, $value := $dashboards }}
@@ -191,7 +199,7 @@ spec:
             items:
               - key: datasource.yaml
                 path: datasource.yaml
-        {{- $grafanadashboards :=  fromYaml (include "grafana.dashboards" .) }}
+        {{- $grafanadashboards := fromYaml (include "grafana.dashboards" .) }}
         {{- if $grafanadashboards }}
           {{- range keys $grafanadashboards }}
         - name: dashboards-{{ . }}
