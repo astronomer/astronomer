@@ -14,7 +14,8 @@ def get_all_features():
 def get_chart_containers(
     k8s_version: str, chart_values: dict, exclude_kinds: list[str] | None = None, include_kinds: list[str] | None = None
 ) -> dict:
-    """Return a dict of pod specs in the form of {k8s_version}_{release_name}-{pod_name}_{container_name}, with some additional metadata."""
+    """Return a dict of pod container and initContainer specs in the form of
+    {k8s_version}_{release_name}-{pod_name}_{container_name}, with some additional metadata."""
 
     docs = render_chart(
         kube_version=k8s_version,
@@ -26,12 +27,13 @@ def get_chart_containers(
             "name": doc.get("metadata", {}).get("name"),
             "kind": doc.get("kind"),
             "containers": doc.get("spec", {}).get("template", {}).get("spec", {}).get("containers", []),
+            "initContainers": doc.get("spec", {}).get("template", {}).get("spec", {}).get("initContainers", []),
         }
         for doc in docs
         if "spec" in doc
         and "template" in doc["spec"]
         and "spec" in doc["spec"]["template"]
-        and "containers" in doc["spec"]["template"]["spec"]
+        and ("containers" in doc["spec"]["template"]["spec"] or "initContainers" in doc["spec"]["template"]["spec"])
     ]
 
     if exclude_kinds:
@@ -49,5 +51,5 @@ def get_chart_containers(
             "kind": spec["kind"],
         }
         for spec in specs
-        for container in spec["containers"]
+        for container in [*spec["containers"], *spec["initContainers"]]
     }
