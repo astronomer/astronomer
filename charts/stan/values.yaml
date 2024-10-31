@@ -19,6 +19,10 @@ images:
 init:
   resources: {}
 
+waitForNatsServer:
+  livenessProbe: {}
+  readinessProbe: {}
+
 stan:
   resources: {}
   #  limits:

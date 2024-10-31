@@ -104,7 +104,12 @@ pod_manager_data = {
         "prometheus-postgres-exporter": default_probes,
         "global": {"prometheusPostgresExporterEnabled": True},
     },
-    "charts/stan/templates/statefulset.yaml": {"stan": {"stan": {"nats": {**default_probes}}, "exporter": default_probes}},
+    "charts/stan/templates/statefulset.yaml": {
+        "stan": {
+            "stan": {"nats": default_probes},
+            "exporter": default_probes,
+            "waitForNatsServer": default_probes,}
+        },
 }
 
 

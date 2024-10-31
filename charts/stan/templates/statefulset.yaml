@@ -84,6 +84,12 @@ spec:
             - name: NATS__URL
               value: "nats://{{ .Release.Name }}-nats:4222"
           resources: {{ toYaml .Values.init.resources | nindent 12 }}
+          {{- if .Values.waitForNatsServer.readinessProbe }}
+          readinessProbe: {{ tpl (toYaml .Values.waitForNatsServer.readinessProbe) . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.waitForNatsServer.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.waitForNatsServer.livenessProbe) . | nindent 12 }}
+          {{- end }}
       containers:
         - name: stan
           image: {{ include "stan.image" . }}
