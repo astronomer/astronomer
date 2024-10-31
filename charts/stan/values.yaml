@@ -43,7 +43,18 @@ stan:
   # an URL for NATS is required.
   nats:
     livenessProbe: {}
+      # httpGet:
+      #   path: /streaming/serverz
+      #   port: monitor
+      # initialDelaySeconds: 10
+      # timeoutSeconds: 5
     readinessProbe: {}
+      # httpGet:
+      #   path: /streaming/serverz
+      #   port: monitor
+      # initialDelaySeconds: 10
+      # timeoutSeconds: 5
+
     port: 4222
     serviceRoleAuth:
       enabled: false

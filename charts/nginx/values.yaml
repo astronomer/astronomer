@@ -50,6 +50,11 @@ resources: {}
 #   memory: 128Mi
 
 livenessProbe: {}
+  # httpGet:
+  #   path: /healthz
+  #   port: {{ .Values.ports.healthz }}
+  # initialDelaySeconds: 30
+  # timeoutSeconds: 5
 readinessProbe: {}
 
 # Service type that Nginx can be. Default is LoadBalancer but "ClusterIP" and "NodePort" are both valid.

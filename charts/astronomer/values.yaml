@@ -345,6 +345,14 @@ houston:
     annotation: {}
   enableHoustonInternalAuthorization: false
 
+  bootstrapper:
+    readinessProbe: {}
+    livenessProbe: {}
+
+  waitForDB:
+    readinessProbe: {}
+    livenessProbe: {}
+
 configSyncer:
   enabled: true
   # If not provided, will generate a random hour and minutes to spread cronjob workloads.
@@ -422,6 +430,23 @@ registry:
   #  requests:
   #   cpu: 100m
   #   memory: 128Mi
+
+  livenessProbe: {}
+    # httpGet:
+    #   path: /
+    #   port: {{ .Values.ports.registryHTTP }}
+    # initialDelaySeconds: 10
+    # periodSeconds: 10
+    # timeoutSeconds: 5
+
+  readinessProbe: {}
+    # httpGet:
+    #   path: /
+    #   port: {{ .Values.ports.registryHTTP }}
+    # initialDelaySeconds: 10
+    # periodSeconds: 10
+    # timeoutSeconds: 5
+
   podSecurityContext:
     fsGroup: 1000
     runAsGroup: 1000

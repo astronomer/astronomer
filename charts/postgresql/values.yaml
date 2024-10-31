@@ -320,14 +320,28 @@ networkPolicy:
 
 ## Configure extra options for liveness and readiness probes
 ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes)
-livenessProbe:
+livenessProbe: {}
+  # exec:
+  #   command:
+  #   - sh
+  #   - -c
+  #  {{- if (include "postgresql.database" .) }}
+  #   - exec pg_isready -U {{ include "postgresql.username" . | quote }} -d {{ (include "postgresql.database" .) | quote }} -h 127.0.0.1 -p {{ template "postgresql.port" . }}
+  #  {{- else }}
+  #   - exec pg_isready -U {{ include "postgresql.username" . | quote }} -h 127.0.0.1 -p {{ template "postgresql.port" . }}
+  #  {{- end }}
   # initialDelaySeconds: 30
   # periodSeconds: 10
   # timeoutSeconds: 5
   # failureThreshold: 6
   # successThreshold: 1
-
-readinessProbe:
+readinessProbe: {}
+  # exec:
+  #   command:
+  #   - sh
+  #   - -c
+  #   - -e
+  #   {{- include "postgresql.readinessProbeCommand" . | nindent 12 }}
   # initialDelaySeconds: 5
   # periodSeconds: 10
   # timeoutSeconds: 5
@@ -364,15 +378,21 @@ metrics:
     runAsUser: 1001
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes)
   ## Configure extra options for liveness and readiness probes
-  livenessProbe:
+  livenessProbe: {}
+    # httpGet:
+    #   path: /
+    #   port: metrics
     # initialDelaySeconds: 5
     # periodSeconds: 10
     # timeoutSeconds: 5
     # failureThreshold: 6
     # successThreshold: 1
 
-  readinessProbe:
-    # initialDelaySeconds: 5
+  readinessProbe: {}
+    # httpGet:
+    #   path: /
+    #   port: metrics
+    # initialDelaySeconds: 6
     # periodSeconds: 10
     # timeoutSeconds: 5
     # failureThreshold: 6

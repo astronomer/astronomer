@@ -38,7 +38,21 @@ serviceAccount:
   name: ~
 
 livenessProbe: {}
+  # httpGet:
+  #   path: /-/healthy
+  #   port: {{ .Values.ports.http }}
+  # initialDelaySeconds: 10
+  # periodSeconds: 5
+  # failureThreshold: 3
+  # timeoutSeconds: 1
 readinessProbe: {}
+  # httpGet:
+  #   path: /-/ready
+  #   port: {{ .Values.ports.http }}
+  # initialDelaySeconds: 10
+  # periodSeconds: 5
+  # failureThreshold: 3
+  # timeoutSeconds: 1
 
 podSecurityContext:
   fsGroup: 65534

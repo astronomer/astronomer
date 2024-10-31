@@ -43,6 +43,20 @@ nats:
   #   cpu: 100m
   #   memory: 128Mi
 
+  livenessProbe: {}
+    # httpGet:
+    #   path: /
+    #   port: 8222
+    # initialDelaySeconds: 10
+    # timeoutSeconds: 5
+
+  readinessProbe: {}
+    # httpGet:
+    #   path: /
+    #   port: 8222
+    # initialDelaySeconds: 10
+    # timeoutSeconds: 5
+
   # Server settings.
   limits:
     maxConnections:
