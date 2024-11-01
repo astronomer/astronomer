@@ -50,7 +50,7 @@ grafana.{{ .Values.global.baseDomain }}
 {{- if and .Values.serviceAccount.create .Values.global.rbacEnabled -}}
 {{ default (printf "%s-grafana-bootstrapper" .Release.Name ) .Values.serviceAccount.name }}
 {{- else -}}
-    {{ default "default" .Values.serviceAccount.name }}
+{{ default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
 
