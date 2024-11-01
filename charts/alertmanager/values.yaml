@@ -47,7 +47,6 @@ readinessProbe: {}
   # initialDelaySeconds: 30
   # timeoutSeconds: 30
 
-
 ports:
   http: 9093
 

@@ -123,3 +123,4 @@ allowSnippetAnnotations: true
 defaultBackend:
   resources: {}
   readinessProbe: {}
+  livenessProbe: {}
