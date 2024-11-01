@@ -25,35 +25,32 @@ pod_manager_data = {
     "charts/astronomer/templates/astro-ui/astro-ui-deployment.yaml": {"astronomer": {"astroUI": default_probes}},
     "charts/astronomer/templates/cli-install/cli-install-deployment.yaml": {"astronomer": {"cliInstall": default_probes}},
     "charts/astronomer/templates/commander/commander-deployment.yaml": {"astronomer": {"commander": default_probes}},
-    "charts/astronomer/templates/houston/api/houston-deployment.yaml": {"astronomer": {
-        "houston": {**default_probes, "waitForDB": default_probes, "bootstrapper": default_probes}},
+    "charts/astronomer/templates/houston/api/houston-deployment.yaml": {
+        "astronomer": {"houston": {**default_probes, "waitForDB": default_probes, "bootstrapper": default_probes}},
     },
-    "charts/astronomer/templates/houston/worker/houston-worker-deployment.yaml": {"astronomer": {
-        "houston": {"worker": default_probes, "waitForDB": default_probes, "bootstrapper": default_probes}},
+    "charts/astronomer/templates/houston/worker/houston-worker-deployment.yaml": {
+        "astronomer": {"houston": {"worker": default_probes, "waitForDB": default_probes, "bootstrapper": default_probes}},
     },
     "charts/astronomer/templates/registry/registry-statefulset.yaml": {"astronomer": {"registry": default_probes}},
     "charts/elasticsearch/templates/client/es-client-deployment.yaml": {
         "elasticsearch": {
             "client": default_probes,
             "sysctlInitContainer": default_probes,
-    }},
+        }
+    },
     "charts/elasticsearch/templates/data/es-data-statefulset.yaml": {
         "elasticsearch": {
             "data": default_probes,
             "sysctlInitContainer": default_probes,
-            }
-        },
+        }
+    },
     "charts/elasticsearch/templates/exporter/es-exporter-deployment.yaml": {"elasticsearch": {"exporter": default_probes}},
     "charts/elasticsearch/templates/master/es-master-statefulset.yaml": {
         "elasticsearch": {
             "master": default_probes,
             "sysctlInitContainer": default_probes,
-            },
-        "global": {
-            "authSidecar": {
-                "enabled": True, **default_probes
-                }
-            },
+        },
+        "global": {"authSidecar": {"enabled": True, **default_probes}},
     },
     "charts/elasticsearch/templates/nginx/nginx-es-deployment.yaml": {"elasticsearch": {"nginx": default_probes}},
     "charts/external-es-proxy/templates/external-es-proxy-deployment.yaml": {
@@ -68,7 +65,7 @@ pod_manager_data = {
     "charts/fluentd/templates/fluentd-daemonset.yaml": {"fluentd": default_probes},
     "charts/grafana/templates/grafana-deployment.yaml": {
         "grafana": {**default_probes, "waitForDB": default_probes, "bootstrapper": default_probes},
-        },
+    },
     "charts/kibana/templates/kibana-deployment.yaml": {
         "kibana": default_probes,
         "global": {"authSidecar": {"enabled": True, **default_probes}},
@@ -108,8 +105,9 @@ pod_manager_data = {
         "stan": {
             "stan": {"nats": default_probes},
             "exporter": default_probes,
-            "waitForNatsServer": default_probes,}
-        },
+            "waitForNatsServer": default_probes,
+        }
+    },
 }
 
 
@@ -137,16 +135,15 @@ def test_template_probes_with_custom_values(template, values):
     docs = render_chart(show_only=template, values=values)
     assert len(docs) == 1
     for container in [
-            *docs[0]["spec"]["template"]["spec"]["containers"],
-            *docs[0]["spec"]["template"]["spec"].get("initContainers", [])
-        ]:
+        *docs[0]["spec"]["template"]["spec"]["containers"],
+        *docs[0]["spec"]["template"]["spec"].get("initContainers", []),
+    ]:
         assert (
             container["livenessProbe"] == default_probes["livenessProbe"]
         ), f"livenessProbe not accurate in {template} container {container['name']}"
         assert (
             container["readinessProbe"] == default_probes["readinessProbe"]
         ), f"readinessProbe not accurate in {template} container {container['name']}"
-
 
 
 class TestDefaultProbes:
