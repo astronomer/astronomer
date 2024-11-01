@@ -45,4 +45,3 @@ rules:
 {{ end }}
 {{- end }}
 {{- end }}
-{{- end }}
