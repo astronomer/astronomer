@@ -34,7 +34,7 @@ roleRef:
   name: {{ template "kube-state.fullname" $ }}
 subjects:
 - kind: ServiceAccount
-  name: {{ template "kube-state.fullname" $ }}
+  name: {{ template "kube-state.serviceAccount" $ }}
   namespace: {{ $.Release.Namespace }}
 {{ end }}
 {{- end }}
