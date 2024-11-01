@@ -68,6 +68,7 @@ class TestServiceAccounts:
             "fluentd": {"serviceAccount": {"name": "fluentd-test"}},
             "prometheus": {"serviceAccount": {"name": "prometheus-test"}},
             "nginx": {"serviceAccount": {"name": "nginx-test"}},
+            "grafana": {"serviceAccount": {"name": "grafana-test"}},
         }
         docs = render_chart(
             kube_version=kube_version,
@@ -80,10 +81,11 @@ class TestServiceAccounts:
                 "charts/fluentd/templates/fluentd-clusterrolebinding.yaml",
                 "charts/prometheus/templates/prometheus-rolebinding.yaml",
                 "charts/nginx/templates/nginx-rolebinding.yaml",
+                "charts/grafana/templates/grafana-bootstrap-rolebinding.yaml",
             ],
         )
 
-        assert len(docs) == 7
+        assert len(docs) == 8
 
         expected_names = {
             "commander-test",
@@ -93,6 +95,7 @@ class TestServiceAccounts:
             "fluentd-test",
             "prometheus-test",
             "nginx-test",
+            "grafana-test",
         }
         extracted_names = {doc["subjects"][0]["name"] for doc in docs if doc.get("subjects")}
         assert expected_names.issubset(extracted_names)
