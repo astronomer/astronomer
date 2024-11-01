@@ -280,7 +280,7 @@ class TestAstronomerConfigSyncer:
         assert len(docs) == 0
 
     def test_astronomer_config_syncer_and_global_rbac_enabled_with_sa_create_disabled(self, kube_version):
-        """Test that config syncer service account, rbac  is disabled when config syncer and global rbac is enabled."""
+        """Test that config syncer service account and rbac are disabled when config syncer and global rbac is enabled."""
 
         # First rbacEnabled set to true and namespacePools disabled, should create a ClusterRole and ClusterRoleBinding
         docs = render_chart(
