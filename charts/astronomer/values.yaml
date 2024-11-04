@@ -54,20 +54,32 @@ astroUI:
   #  requests:
   #   cpu: 100m
   #   memory: 128Mi
+  readinessProbe: {}
+  livenessProbe: {}
+
+cliInstall:
+  readinessProbe: {}
+  livenessProbe: {}
 
 houston:
   prismaConnectionLimit: 5
   replicas: 2
   # This only applies when replicas > 3
   maxUnavailable: 25%
-  livenessProbe:
-    initialDelaySeconds: 30
-    periodSeconds: 10
-    failureThreshold: 10
-  readinessProbe:
-    initialDelaySeconds: 30
-    periodSeconds: 10
-    failureThreshold: 10
+  livenessProbe: {}
+    # httpGet:
+    #   path: /v1/healthz
+    #   port: {{ .Values.ports.houstonHTTP }}
+    # initialDelaySeconds: 30
+    # periodSeconds: 10
+    # failureThreshold: 10
+  readinessProbe: {}
+    # httpGet:
+    #   path: /v1/healthz
+    #   port: {{ .Values.ports.houstonHTTP }}
+    # initialDelaySeconds: 30
+    # periodSeconds: 10
+    # failureThreshold: 10
 
   # Houston can regenerate its certificate authority on each 'helm upgrade'
   # or leave it alone. If this is set to 'true', then all users are logged
@@ -139,6 +151,8 @@ houston:
   worker:
     enabled: true
     replicas: 2
+    readinessProbe: {}
+    livenessProbe: {}
 
   # Automatically upgrade Airflow deployments to the latest
   # version specified by Houston configuration.
@@ -331,6 +345,14 @@ houston:
     annotation: {}
   enableHoustonInternalAuthorization: false
 
+  bootstrapper:
+    readinessProbe: {}
+    livenessProbe: {}
+
+  waitForDB:
+    readinessProbe: {}
+    livenessProbe: {}
+
 configSyncer:
   enabled: true
   # If not provided, will generate a random hour and minutes to spread cronjob workloads.
@@ -360,6 +382,22 @@ commander:
     # requests:
     #  cpu: 100m
     #  memory: 128Mi
+  livenessProbe: {}
+    # failureThreshold: 5
+    # httpGet:
+    #   path: /healthz
+    #   port: {{ .Values.ports.commanderHTTP }}
+    #   scheme: HTTP
+    # initialDelaySeconds: 10
+    # periodSeconds: 10
+  readinessProbe: {}
+    # httpGet:
+    #   path: /healthz
+    #   port: {{ .Values.ports.commanderHTTP }}
+    # initialDelaySeconds: 10
+    # periodSeconds: 10
+
+
   airGapped:
     # Enable airgapped mode
     enabled: false
@@ -392,6 +430,23 @@ registry:
   #  requests:
   #   cpu: 100m
   #   memory: 128Mi
+
+  livenessProbe: {}
+    # httpGet:
+    #   path: /
+    #   port: {{ .Values.ports.registryHTTP }}
+    # initialDelaySeconds: 10
+    # periodSeconds: 10
+    # timeoutSeconds: 5
+
+  readinessProbe: {}
+    # httpGet:
+    #   path: /
+    #   port: {{ .Values.ports.registryHTTP }}
+    # initialDelaySeconds: 10
+    # periodSeconds: 10
+    # timeoutSeconds: 5
+
   podSecurityContext:
     fsGroup: 1000
     runAsGroup: 1000

@@ -39,7 +39,13 @@ spec:
         - name: cli-install
           image: {{ template "cliInstall.image" . }}
           imagePullPolicy: {{ .Values.images.cliInstall.pullPolicy }}
-          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
+          securityContext: {{ toYaml .Values.securityContext | nindent 12 }}
+          {{- if .Values.cliInstall.readinessProbe }}
+          readinessProbe: {{ tpl (toYaml .Values.cliInstall.readinessProbe) . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.cliInstall.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.cliInstall.livenessProbe) . | nindent 12 }}
+          {{- else }}
           livenessProbe:
             httpGet:
               path: /healthz
@@ -47,6 +53,7 @@ spec:
               scheme: HTTP
             initialDelaySeconds: 30
             timeoutSeconds: 5
+          {{- end }}
           ports:
             - containerPort: {{ .Values.ports.installHTTP }}
           resources: {{ toYaml .Values.install.resources | nindent 12 }}

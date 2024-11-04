@@ -54,17 +54,24 @@ spec:
             - name: {{ $key | replace "-" "_" }}
               value: {{ $value | quote }}
             {{- end }}
-          resources:
-{{ toYaml .Values.resources | indent 12 }}
+          resources: {{ toYaml .Values.resources | nindent 12 }}
           ports:
             - name: pgbouncer
               containerPort: {{ .Values.internalPort }}
+          {{- if .Values.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.livenessProbe) . | nindent 12 }}
+          {{- else }}
           livenessProbe:
             tcpSocket:
               port: {{ .Values.internalPort }}
+          {{- end }}
+          {{- if .Values.readinessProbe }}
+          readinessProbe: {{ tpl (toYaml .Values.readinessProbe) . | nindent 12 }}
+          {{- else }}
           readinessProbe:
             tcpSocket:
               port: {{ .Values.internalPort }}
+          {{- end }}
           lifecycle:
             preStop:
               exec:

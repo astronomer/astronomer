@@ -22,7 +22,7 @@ spec:
     matchLabels:
       app: {{ template "stan.name" . }}
 
-  replicas: {{ include "stan.replicaCount" .  | required ".Values.stan.replicas should be greater or equal to 3 in clustered mode" }}
+  replicas: {{ include "stan.replicaCount" . | required ".Values.stan.replicas should be greater or equal to 3 in clustered mode" }}
 
   # NATS Streaming service name
   serviceName: {{ template "stan.name" . }}
@@ -56,12 +56,9 @@ spec:
       securityContext: {{ toYaml .Values.podSecurityContext| nindent 8 }}
 {{- end }}
       terminationGracePeriodSeconds: 90
-      nodeSelector:
-{{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
-      affinity:
-{{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 8 }}
-      tolerations:
-{{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
+      nodeSelector: {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
+      affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
+      tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       volumes:
       - configMap:
           name: {{ template "stan.name".  }}-config
@@ -86,8 +83,13 @@ spec:
           env:
             - name: NATS__URL
               value: "nats://{{ .Release.Name }}-nats:4222"
-          resources:
-{{ toYaml .Values.init.resources | indent 12 }}
+          resources: {{ toYaml .Values.init.resources | nindent 12 }}
+          {{- if .Values.waitForNatsServer.readinessProbe }}
+          readinessProbe: {{ tpl (toYaml .Values.waitForNatsServer.readinessProbe) . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.waitForNatsServer.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.waitForNatsServer.livenessProbe) . | nindent 12 }}
+          {{- end }}
       containers:
         - name: stan
           image: {{ include "stan.image" . }}
@@ -96,8 +98,7 @@ spec:
           args:
           - -sc
           - /etc/stan-config/stan.conf
-          resources:
-{{ toYaml .Values.stan.resources | indent 12 }}
+          resources: {{ toYaml .Values.stan.resources | nindent 12 }}
           env:
           - name: POD_NAME
             valueFrom:
@@ -122,18 +123,26 @@ spec:
           - name: NATS_URL
             value: nats://$(NATS_OPERATOR_SERVICE_ACCOUNT):$(NATS_OPERATOR_BOUND_TOKEN)@$(NATS_SERVICE)
           {{- end }}
+          {{ if .Values.stan.nats.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.stan.nats.livenessProbe) . | nindent 12 }}
+          {{ else }}
           livenessProbe:
             httpGet:
               path: /streaming/serverz
               port: monitor
             initialDelaySeconds: 10
             timeoutSeconds: 5
+          {{- end }}
+          {{ if .Values.stan.nats.readinessProbe }}
+          readinessProbe: {{ tpl (toYaml .Values.stan.nats.readinessProbe) . | nindent 12 }}
+          {{ else }}
           readinessProbe:
             httpGet:
               path: /streaming/serverz
               port: monitor
             initialDelaySeconds: 10
             timeoutSeconds: 5
+          {{- end }}
           ports:
           - containerPort: 8222
             name: monitor
@@ -158,6 +167,12 @@ spec:
           imagePullPolicy: {{ .Values.images.stan.pullPolicy }}
           securityContext: {{toYaml .Values.securityContext | nindent 12 }}
           resources: {{ toYaml .Values.exporter.resources | nindent 12 }}
+          {{- if .Values.exporter.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.exporter.livenessProbe) . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.exporter.readinessProbe }}
+          readinessProbe: {{ tpl (toYaml .Values.exporter.readinessProbe) . | nindent 12 }}
+          {{- end }}
           args:
           - -connz
           - -routez
