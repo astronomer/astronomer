@@ -50,7 +50,7 @@ class TestDagOnlyDeploy:
                         "enabled": True,
                         "repository": images.split(":")[0],
                         "tag": images.split(":")[1],
-                        "securityContext": {"fsGroup": 55555},
+                        "securityContexts": { "pod": { "fsGroup": 55555}},
                         "resources": resources,
                     }
                 }
@@ -69,7 +69,7 @@ class TestDagOnlyDeploy:
                     "tag": "my-custom-tag",
                 }
             },
-            "securityContext": {"fsGroup": 55555},
+            "securityContexts": { "pod": { "fsGroup": 55555}},
             "server": {"resources": resources},
             "client": {"resources": resources},
         }
@@ -128,7 +128,7 @@ class TestDagOnlyDeploy:
                 "global": {
                     "dagOnlyDeployment": {
                         "enabled": True,
-                        "securityContext": {"fsGroup": "auto"},
+                        "securityContexts": { "pod": { "fsGroup": "auto"}},
                     },
                 }
             },
@@ -139,7 +139,7 @@ class TestDagOnlyDeploy:
         prod = yaml.safe_load(doc["data"]["production.yaml"])
         assert prod["deployments"]["dagOnlyDeployment"] is True
 
-        assert {} == prod["deployments"]["dagDeploy"]["securityContext"]
+        assert {} == prod["deployments"]["dagDeploy"]["securityContexts"]
 
     def test_dagonlydeploy_config_enabled_with_persistence_retain(self, kube_version):
         """Test dagonlydeploy to validate persistence policy retain."""
