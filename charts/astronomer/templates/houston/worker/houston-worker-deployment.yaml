@@ -30,12 +30,9 @@ spec:
       annotations:
         checksum/houston-config: {{ include (print $.Template.BasePath "/houston/houston-configmap.yaml") . | sha256sum }}
     spec:
-      nodeSelector:
-{{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
-      affinity:
-{{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 8 }}
-      tolerations:
-{{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
+      nodeSelector: {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
+      affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
+      tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       restartPolicy: Always
       {{- if and (not .Values.houston.airflowBackendSecretName) (not .Values.houston.airflowBackendConnection) }}
       serviceAccountName: {{ template "houston.bootstrapperServiceAccount" . }}
@@ -44,21 +41,32 @@ spec:
         - name: wait-for-db
           image: {{ template "houston.image" . }}
           imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
-          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
+          securityContext: {{ toYaml .Values.securityContext | nindent 12 }}
           command:
             - "/houston/bin/entrypoint"
           args:
             - "echo"
             - "DB ready"
-          resources:
-{{ toYaml .Values.houston.resources | indent 12 }}
+          resources: {{ toYaml .Values.houston.resources | nindent 12 }}
           env:
             {{- include "houston_environment" . | indent 12 }}
+          {{- if .Values.houston.waitForDB.readinessProbe }}
+          readinessProbe: {{ tpl (toYaml .Values.houston.waitForDB.readinessProbe) . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.houston.waitForDB.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.houston.waitForDB.livenessProbe) . | nindent 12 }}
+          {{- end }}
         - name: houston-bootstrapper
           image: {{ template "dbBootstrapper.image" . }}
           imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
           securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
           resources: {{ toYaml .Values.houston.resources | nindent 12 }}
+          {{- if .Values.houston.bootstrapper.readinessProbe }}
+          readinessProbe: {{ tpl (toYaml .Values.houston.bootstrapper.readinessProbe) . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.houston.bootstrapper.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.houston.bootstrapper.livenessProbe) . | nindent 12 }}
+          {{- end }}
           env:
             - name: BOOTSTRAP_DB
               valueFrom:
@@ -108,6 +116,12 @@ spec:
 {{- if .Values.houston.worker.volumeMounts }}
 {{- tpl (toYaml .Values.houston.worker.volumeMounts) $ | nindent 12 }}
 {{- end }}
+          {{- if .Values.houston.worker.readinessProbe }}
+          readinessProbe: {{ tpl (toYaml .Values.houston.worker.readinessProbe) . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.houston.worker.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.houston.worker.livenessProbe) . | nindent 12 }}
+          {{- end }}
           env:
             - name: GRPC_VERBOSITY
               value: "INFO"

@@ -76,12 +76,19 @@ spec:
               containerPort: {{ .Values.ports.https }}
             - name: metrics
               containerPort: {{ .Values.ports.metrics }}
+          {{- if .Values.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.livenessProbe) . | nindent 12 }}
+          {{- else }}
           livenessProbe:
             httpGet:
               path: /healthz
               port: {{ .Values.ports.healthz }}
             initialDelaySeconds: 30
             timeoutSeconds: 5
+          {{- end }}
+          {{- if .Values.readinessProbe }}
+          readinessProbe: {{ tpl (toYaml .Values.readinessProbe) . | nindent 12 }}
+          {{- end }}
           env:
             - name: POD_NAME
               valueFrom:

@@ -172,7 +172,9 @@ spec:
         ports:
         - name: postgresql
           containerPort: {{ template "postgresql.port" . }}
-        {{- if .Values.livenessProbe.enabled }}
+        {{- if .Values.livenessProbe }}
+        livenessProbe: {{ tpl (toYaml .Values.livenessProbe) . | nindent 10 }}
+        {{- else }}
         livenessProbe:
           exec:
             command:
@@ -183,13 +185,15 @@ spec:
            {{- else }}
             - exec pg_isready -U {{ include "postgresql.username" . | quote }} -h 127.0.0.1 -p {{ template "postgresql.port" . }}
            {{- end }}
-          initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
-          periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
-          timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds }}
-          successThreshold: {{ .Values.livenessProbe.successThreshold }}
-          failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 6
+          successThreshold: 1
         {{- end }}
-        {{- if .Values.readinessProbe.enabled }}
+        {{- if .Values.readinessProbe }}
+        readinessProbe: {{ tpl (toYaml .Values.readinessProbe) . | nindent 10 }}
+        {{- else }}
         readinessProbe:
           exec:
             command:
@@ -197,11 +201,11 @@ spec:
             - -c
             - -e
             {{- include "postgresql.readinessProbeCommand" . | nindent 12 }}
-          initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
-          periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
-          timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
-          successThreshold: {{ .Values.readinessProbe.successThreshold }}
-          failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 6
+          successThreshold: 1
         {{- end }}
         volumeMounts:
         {{- if or (.Files.Glob "files/docker-entrypoint-initdb.d/*.{sh,sql,sql.gz}") .Values.initdbScriptsConfigMap .Values.initdbScripts }}
@@ -256,27 +260,29 @@ spec:
         {{- end }}
         - name: DATA_SOURCE_USER
           value: {{ template "postgresql.username" . }}
-        {{- if .Values.livenessProbe.enabled }}
+        {{- if .Values.metrics.livenessProbe }}
+        livenessProbe: {{ tpl (toYaml .Values.metrics.livenessProbe) . | nindent 10 }}
+        {{- else }}
         livenessProbe:
           httpGet:
             path: /
             port: metrics
-          initialDelaySeconds: {{ .Values.metrics.livenessProbe.initialDelaySeconds }}
-          periodSeconds: {{ .Values.metrics.livenessProbe.periodSeconds }}
-          timeoutSeconds: {{ .Values.metrics.livenessProbe.timeoutSeconds }}
-          successThreshold: {{ .Values.metrics.livenessProbe.successThreshold }}
-          failureThreshold: {{ .Values.metrics.livenessProbe.failureThreshold }}
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 6
+          successThreshold: 1
         {{- end }}
-        {{- if .Values.readinessProbe.enabled }}
+        {{- if .Values.metrics.readinessProbe }}
         readinessProbe:
           httpGet:
             path: /
             port: metrics
-          initialDelaySeconds: {{ .Values.metrics.readinessProbe.initialDelaySeconds }}
-          periodSeconds: {{ .Values.metrics.readinessProbe.periodSeconds }}
-          timeoutSeconds: {{ .Values.metrics.readinessProbe.timeoutSeconds }}
-          successThreshold: {{ .Values.metrics.readinessProbe.successThreshold }}
-          failureThreshold: {{ .Values.metrics.readinessProbe.failureThreshold }}
+          initialDelaySeconds: 6
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 6
+          successThreshold: 1
         {{- end }}
         volumeMounts:
         {{- if .Values.usePasswordFile }}

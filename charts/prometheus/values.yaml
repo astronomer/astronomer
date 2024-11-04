@@ -37,17 +37,22 @@ serviceAccount:
   create: true
   name: ~
 
-# probe configurations for prometheus container
-livenessProbe:
-  initialDelaySeconds: 10
-  periodSeconds: 5
-  timeoutSeconds: 1
-  failureThreshold: 3
-readinessProbe:
-  initialDelaySeconds: 10
-  periodSeconds: 5
-  timeoutSeconds: 1
-  failureThreshold: 3
+livenessProbe: {}
+  # httpGet:
+  #   path: /-/healthy
+  #   port: {{ .Values.ports.http }}
+  # initialDelaySeconds: 10
+  # periodSeconds: 5
+  # failureThreshold: 3
+  # timeoutSeconds: 1
+readinessProbe: {}
+  # httpGet:
+  #   path: /-/ready
+  #   port: {{ .Values.ports.http }}
+  # initialDelaySeconds: 10
+  # periodSeconds: 5
+  # failureThreshold: 3
+  # timeoutSeconds: 1
 
 podSecurityContext:
   fsGroup: 65534
@@ -56,6 +61,8 @@ securityContext:
   runAsNonRoot: true
   runAsUser: 65534
 configMapReloader:
+  livenessProbe: {}
+  readinessProbe: {}
   resources: {}
     # limits:
     #   cpu: 100m
