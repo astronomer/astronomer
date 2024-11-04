@@ -118,7 +118,7 @@ class TestDagOnlyDeploy:
         prod = yaml.safe_load(doc["data"]["production.yaml"])
         assert prod["deployments"]["dagOnlyDeployment"] is True
 
-        assert {} == prod["deployments"]["dagDeploy"]["securityContext"]
+        assert {} == prod["deployments"]["dagDeploy"]["securityContexts"]
 
     def test_dagonlydeploy_config_enabled_with_fsGroup_auto(self, kube_version):
         """Test dagonlydeploy with auto to validate fsGroup removal."""
