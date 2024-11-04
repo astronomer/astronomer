@@ -1,9 +1,10 @@
 ###############################################
 ## Kube State ClusterRoleBinding/RoleBinding ##
 ###############################################
+{{- $namespacepoolsRBACresources:= and .Values.global.features.namespacePools.createRbac .Values.global.features.namespacePools.enabled }}
 {{- $useRoles := or .Values.global.features.namespacePools.enabled .Values.global.singleNamespace }}
 {{- $useClusterRoles := and .Values.global.rbacEnabled .Values.global.clusterRoles (not $useRoles )}}
-{{- $shouldCreateResources := and .Values.global.rbacEnabled (or .Values.global.clusterRoles .Values.global.features.namespacePools.enabled) }}
+{{- $shouldCreateResources := and .Values.global.rbacEnabled (or (and .Values.global.clusterRoles (not .Values.global.features.namespacePools.enabled )) $namespacepoolsRBACresources) }}
 {{- if $shouldCreateResources }}
 {{- $namespaces := .Values.global.features.namespacePools.namespaces.names }}
 {{- if $useClusterRoles }}
@@ -33,7 +34,7 @@ roleRef:
   name: {{ template "kube-state.fullname" $ }}
 subjects:
 - kind: ServiceAccount
-  name: {{ template "kube-state.fullname" $ }}
+  name: {{ template "kube-state.serviceAccount" $ }}
   namespace: {{ $.Release.Namespace }}
 {{ end }}
 {{- end }}
