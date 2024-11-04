@@ -30,6 +30,16 @@ updateStrategy:
   rollingUpdate:
     maxUnavailable: 1
 
+livenessProbe: {}
+  # httpGet:
+  #   path: /
+  #   port: {{ .Values.service.port }}
+
+readinessProbe: {}
+  # httpGet:
+  #   path: /
+  #   port: {{ .Values.service.port }}
+
 resources:
   limits:
     cpu: 100m

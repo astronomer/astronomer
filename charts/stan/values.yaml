@@ -1,8 +1,6 @@
-##################################
-#                                #
-#  NATS Streaming Configuration  #
-#                                #
-##################################
+################################
+# NATS Streaming Configuration #
+################################
 images:
   init:
     repository: quay.io/astronomer/ap-init
@@ -21,6 +19,10 @@ images:
 init:
   resources: {}
 
+waitForNatsServer:
+  livenessProbe: {}
+  readinessProbe: {}
+
 stan:
   resources: {}
   #  limits:
@@ -29,6 +31,9 @@ stan:
   #  requests:
   #   cpu: 100m
   #   memory: 128Mi
+
+  livenessProbe: {}
+  readinessProbe: {}
 
   # Cluster name, generated into a name from the
   # release name by default.
@@ -41,6 +46,19 @@ stan:
   # In case of NATS not being embedded then
   # an URL for NATS is required.
   nats:
+    livenessProbe: {}
+      # httpGet:
+      #   path: /streaming/serverz
+      #   port: monitor
+      # initialDelaySeconds: 10
+      # timeoutSeconds: 5
+    readinessProbe: {}
+      # httpGet:
+      #   path: /streaming/serverz
+      #   port: monitor
+      # initialDelaySeconds: 10
+      # timeoutSeconds: 5
+
     port: 4222
     serviceRoleAuth:
       enabled: false

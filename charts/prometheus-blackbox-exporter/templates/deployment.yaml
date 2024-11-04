@@ -58,14 +58,22 @@ spec:
           ports:
             - containerPort: {{ .Values.service.port }}
               name: http
+          {{- if .Values.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.livenessProbe) . | nindent 12 }}
+          {{- else }}
           livenessProbe:
             httpGet:
               path: /health
               port: http
+          {{- end }}
+          {{- if .Values.readinessProbe }}
+          readinessProbe: {{ tpl (toYaml .Values.readinessProbe) . | nindent 12 }}
+          {{- else }}
           readinessProbe:
             httpGet:
               path: /health
               port: http
+          {{- end }}
           volumeMounts:
             - mountPath: /config
               name: config

@@ -40,6 +40,10 @@ securityContext:
   # readOnlyRootFilesystem: true
   # runAsUser: 1000
 
+awsproxy:
+  livenessProbe: {}
+  readinessProbe: {}
+
 service:
   type: ClusterIP
   securehttp: 9200

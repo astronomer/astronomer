@@ -201,7 +201,6 @@ class TestNginx:
     def test_nginx_backend_serviceaccount_defaults(self):
         """Test nginx ingress deployment service account defaults."""
         doc = render_chart(
-            values={},
             show_only=["charts/nginx/templates/nginx-default-backend-serviceaccount.yaml"],
         )[0]
 
@@ -210,7 +209,6 @@ class TestNginx:
     def test_nginx_defaults(self):
         """Test nginx ingress deployment template defaults."""
         doc = render_chart(
-            values={},
             show_only=["charts/nginx/templates/nginx-deployment.yaml"],
         )[0]
         expected_security_context = {

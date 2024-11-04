@@ -18,4 +18,7 @@ function get_debugging_info {
   done
   kubectl get events,secrets,svc,ds,sts,deployments,pods -A
   docker exec kind-control-plane crictl images
+  helm list -n "${namespace}" -o json |
+    jq -r '.[] | "\(.namespace) \(.name)"' |
+    xargs -t -L1 helm get values -o yaml -n
 }

@@ -50,6 +50,12 @@ spec:
             - "echo"
             - "DB ready"
           resources: {{ toYaml .Values.houston.resources | nindent 12 }}
+          {{- if .Values.houston.waitForDB.readinessProbe }}
+          readinessProbe: {{ tpl (toYaml .Values.houston.waitForDB.readinessProbe) . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.houston.waitForDB.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.houston.waitForDB.livenessProbe) . | nindent 12 }}
+          {{- end }}
           env:
             - name: DATABASE_URL
               valueFrom:
@@ -61,8 +67,13 @@ spec:
           image: {{ template "dbBootstrapper.image" . }}
           securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
           imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
-          resources:
-{{ toYaml .Values.houston.resources | indent 12 }}
+          resources: {{ toYaml .Values.houston.resources | nindent 12 }}
+          {{- if .Values.houston.bootstrapper.readinessProbe }}
+          readinessProbe: {{ tpl (toYaml .Values.houston.bootstrapper.readinessProbe) . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.houston.bootstrapper.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.houston.bootstrapper.livenessProbe) . | nindent 12 }}
+          {{- end }}
           env:
             - name: BOOTSTRAP_DB
               valueFrom:
@@ -106,20 +117,28 @@ spec:
           ports:
             - name: houston-http
               containerPort: {{ .Values.ports.houstonHTTP }}
+          {{ if .Values.houston.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.houston.livenessProbe) $ | nindent 12 }}
+          {{- else }}
           livenessProbe:
             httpGet:
               path: /v1/healthz
               port: {{ .Values.ports.houstonHTTP }}
-            initialDelaySeconds: {{ .Values.houston.livenessProbe.initialDelaySeconds }}
-            periodSeconds: {{ .Values.houston.livenessProbe.periodSeconds }}
-            failureThreshold: {{ .Values.houston.livenessProbe.failureThreshold }}
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 10
+          {{- end }}
+          {{ if .Values.houston.readinessProbe }}
+          readinessProbe: {{ tpl (toYaml .Values.houston.readinessProbe) $ | nindent 12 }}
+          {{- else }}
           readinessProbe:
             httpGet:
               path: /v1/healthz
               port: {{ .Values.ports.houstonHTTP }}
-            initialDelaySeconds: {{ .Values.houston.readinessProbe.initialDelaySeconds }}
-            periodSeconds: {{ .Values.houston.readinessProbe.periodSeconds }}
-            failureThreshold: {{ .Values.houston.readinessProbe.failureThreshold }}
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 10
+          {{- end }}
           {{- if .Values.houston.command }}
           command:
             {{- toYaml .Values.houston.command | nindent 12 }}

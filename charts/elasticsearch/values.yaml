@@ -67,6 +67,7 @@ common:
 
   ports:
     http: 9200
+    readiness: 9399
     transport: 9300
 
 # Client/ingest nodes can execute pre-processing pipelines, composed of
@@ -91,6 +92,19 @@ client:
   resources:
     requests:
       memory: 256Mi
+
+  livenessProbe: {}
+    # httpGet:
+    #   path: /_cluster/health?local=true
+    #   port: {{ .Values.common.ports.http }}
+    # initialDelaySeconds: 90
+  readinessProbe: {}
+    # httpGet:
+    #   # local: If true, the request retrieves information from the local node only.
+    #   # Defaults to false, which means information is retrieved from the master node.
+    #   path: /_cluster/health?local=true
+    #   port: {{ .Values.common.ports.http }}
+    # initialDelaySeconds: 5
 
   env:
     NODE_DATA: "false"
@@ -126,6 +140,13 @@ data:
   resources:
     requests:
       memory: 256Mi
+
+  livenessProbe: {}
+    # tcpSocket:
+    #   port: {{ .Values.common.ports.transport }}
+    # initialDelaySeconds: 20
+    # periodSeconds: 10
+  readinessProbe: {}
 
   env:
     NODE_DATA: "true"
@@ -172,6 +193,17 @@ master:
   resources:
     requests:
       memory: 256Mi
+
+  readinessProbe: {}
+    # httpGet:
+    #   # local: If true, the request retrieves information from the local node only.
+    #   # Defaults to false, which means information is retrieved from the master node.
+    #   path: /_cluster/health?local=true
+    #   port: {{ .Values.common.ports.http }}
+    # initialDelaySeconds: 5
+  livenessProbe: {}
+    # tcpSocket:
+    #   port: {{ .Values.common.ports.transport }}
 
   env:
     NODE_DATA: "false"
@@ -230,6 +262,19 @@ exporter:
   #   cpu: 100m
   #   memory: 128Mi
 
+  livenessProbe: {}
+    # httpGet:
+    #   path: /health
+    #   port: http
+    # initialDelaySeconds: 30
+    # timeoutSeconds: 10
+  readinessProbe: {}
+    # httpGet:
+    #   path: /health
+    #   port: http
+    # initialDelaySeconds: 10
+    # timeoutSeconds: 10
+
   service:
     type: ClusterIP
     httpPort: 9108
@@ -260,6 +305,8 @@ nginx:
 sysctlInitContainer:
   enabled: true
   sysctlVmMaxMapCount: 262144
+  livenessProbe: {}
+  readinessProbe: {}
 
 podSecurityContext:
   fsGroup: 1000

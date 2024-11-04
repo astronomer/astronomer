@@ -40,6 +40,19 @@ serviceAccount:
   # If not set and create is true, a name is generated using the fullname template
   name:
 
+livenessProbe: {}
+  # tcpSocket:
+  #   port: {{ .Values.service.targetPort }}
+  # initialDelaySeconds: 5
+  # periodSeconds: 10
+
+readinessProbe: {}
+  # tcpSocket:
+  #   port: {{ .Values.service.targetPort }}
+  # initialDelaySeconds: 5
+  # periodSeconds: 10
+
+
 podSecurityContext: {}
 securityContext:
   runAsNonRoot: true

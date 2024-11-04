@@ -133,11 +133,10 @@ jobs:
   unittest-charts:
     docker:
       - image: quay.io/astronomer/ci-helm-release:{{ ci_runner_version }}
-    parallelism: 8
-    resource_class: xlarge
+    # https://circleci.com/docs/using-docker/#x86
+    resource_class: large
+    parallelism: 4
     steps:
-      - setup_remote_docker:
-          docker_layer_caching: true
       - checkout
       - run:
           name: Create chart-tests-cache-key.txt
@@ -163,6 +162,7 @@ jobs:
           command: |
             mkdir test-results
             TEST_FILES=$(circleci tests glob "tests/chart_tests/test_*.py" | circleci tests split --split-by=timings)
+            echo "TEST_FILES=\"$TEST_FILES\""
             venv/bin/python -m pytest -v --junitxml=test-results/junit.xml -n auto $TEST_FILES
       - store_test_results:
           path: test-results
