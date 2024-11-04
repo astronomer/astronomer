@@ -300,7 +300,7 @@ class TestAstronomerConfigSyncer:
 
     def test_astronomer_config_syncer_and_global_rbac_enabled_with_namespace_pools_and_sa_create_disabled(self, kube_version):
         """Test that config syncer service account create is disabled when config syncer and global rbac is enabled."""
-        
+
         docs = render_chart(
             kube_version=kube_version,
             values={
