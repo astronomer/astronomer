@@ -101,3 +101,23 @@ class TestPrometheusStatefulset:
 
         assert "persistentVolumeClaimRetentionPolicy" in doc["spec"]
         assert test_persistentVolumeClaimRetentionPolicy == doc["spec"]["persistentVolumeClaimRetentionPolicy"]
+
+
+    def test_prometheus_service_account_overrides(self, kube_version):
+        """Test the prometheus do not render service account and rbac when global rbac is true and prometheus service account create is false."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "prometheus": {
+                    "serviceAccount": {
+                        "create": False,
+                    },
+                },
+            },
+            show_only=["charts/prometheus/templates/prometheus-statefulset.yaml",
+                       "charts/prometheus/templates/prometheus-role.yaml",
+                       "charts/prometheus/templates/prometheus-rolebinding.yaml"],
+        )
+
+        assert len(docs) == 1
+        assert "default" in docs[0]["spec"]["template"]["spec"]["serviceAccountName"]
