@@ -43,8 +43,8 @@ extraArgs:
 
 priorityClassName: ~
 
-extraNamespaceList:
-- rsh1
+# works only with namespace pools
+extraNamespaceList: []
 
 serviceAccount:
   # Specifies whether a ServiceAccount should be created
