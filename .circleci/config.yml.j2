@@ -108,7 +108,7 @@ jobs:
 
   release_bom:
     docker:
-      - image: cimg/python:3.12
+      - image: quay.io/astronomer/ci-helm-release:{{ ci_runner_version }}
     steps:
       - checkout
       - run:
