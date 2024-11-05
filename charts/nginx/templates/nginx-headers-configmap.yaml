@@ -19,7 +19,7 @@ data:
     frame-src 'self' ;
     img-src 'self' data: * ;
     script-src 'unsafe-inline' 'unsafe-eval' *.{{ .Values.global.baseDomain }} cdn.astronomer.io ;
-    style-src 'unsafe-inline' *.{{ .Values.global.baseDomain }} fonts.googleapis.com ;
+    style-src 'unsafe-inline' *.{{ .Values.global.baseDomain }} ;
     worker-src blob: ;
   Referrer-Policy: "same-origin"
   X-Frame-Options: "deny"
