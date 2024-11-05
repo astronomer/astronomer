@@ -29,6 +29,20 @@ resources:
   #   cpu: 100m
   #   memory: 128Mi
 
+readinessProbe: {}
+  # httpGet:
+  #   path: /api/health
+  #   port: {{ .Values.ports.http }}
+  # initialDelaySeconds: 10
+  # periodSeconds: 10
+
+livenessProbe: {}
+  # httpGet:
+  #   path: /api/health
+  #   port: {{ .Values.ports.http }}
+  # initialDelaySeconds: 10
+  # periodSeconds: 10
+
 env:
   # XPACK_GRAPH_ENABLED: "false"
   # XPACK_ML_ENABLED: "false"

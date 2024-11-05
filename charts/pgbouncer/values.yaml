@@ -52,6 +52,14 @@ resources:
     memory: 256Mi
     cpu: 250m
 
+readinessProbe: {}
+  # tcpSocket:
+  #   port: {{ .Values.internalPort }}
+
+livenessProbe: {}
+  # tcpSocket:
+  #   port: {{ .Values.internalPort }}
+
 # Mount additional volumes into pgbouncer.
 extraVolumes: []
 extraVolumeMounts: []

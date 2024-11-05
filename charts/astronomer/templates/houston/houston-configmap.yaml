@@ -163,8 +163,8 @@ data:
           dagServer:
             repository: {{ (splitList ":"  $dagOnlyDeployment ) | first  }}
             tag: {{ (splitList ":"  $dagOnlyDeployment ) | last  }}
-        {{- if .Values.global.dagOnlyDeployment.securityContext }}
-        securityContext: {{ template "dagOnlyDeployment.securityContext" . }}
+        {{- if .Values.global.dagOnlyDeployment.securityContexts }}
+        securityContexts: {{ template "dagOnlyDeployment.securityContexts" . }}
         {{- end }}
         {{- if .Values.global.dagOnlyDeployment.resources }}
         server:

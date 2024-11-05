@@ -77,6 +77,16 @@ extraSecretMounts: []
   #   readOnly: true
   #   defaultMode: 420
 
+livenessProbe: {}
+  # httpGet:
+  #   path: /health
+  #   port: http
+
+readinessProbe: {}
+  # httpGet:
+  #   path: /health
+  #   port: http
+
 # These are overridden by what is  in the global values file
 resources:
   requests:

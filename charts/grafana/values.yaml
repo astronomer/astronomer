@@ -9,7 +9,7 @@ tolerations: []
 images:
   grafana:
     repository: quay.io/astronomer/ap-grafana
-    tag: 10.4.6
+    tag: 10.4.10
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
@@ -78,3 +78,11 @@ extraEnvVars:
   #     secretKeyRef:
   #       name: grafana-smtp-secret
   #       key: smtp_password
+
+bootstrapper:
+  readinessProbe: {}
+  livenessProbe: {}
+
+waitForDB:
+  readinessProbe: {}
+  livenessProbe: {}
