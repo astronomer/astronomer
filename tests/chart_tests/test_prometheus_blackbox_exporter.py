@@ -4,6 +4,17 @@ from tests import supported_k8s_versions, get_containers_by_name
 from tests.chart_tests.helm_template_generator import render_chart
 
 
+def common_blackbox_exporter_tests(docs):
+    """Test common asserts for prometheus blackbox exporter."""
+    assert len(docs) == 1
+    doc = docs[0]
+    assert doc["kind"] == "Deployment"
+    assert doc["apiVersion"] == "apps/v1"
+    assert doc["metadata"]["name"] == "release-name-prometheus-blackbox-exporter"
+    assert doc["spec"]["selector"]["matchLabels"]["component"] == "blackbox-exporter"
+    assert doc["spec"]["template"]["metadata"]["labels"]["app"] == "prometheus-blackbox-exporter"
+
+
 @pytest.mark.parametrize(
     "kube_version",
     supported_k8s_versions,
@@ -36,17 +47,8 @@ class TestPrometheusBlackBoxExporterDeployment:
             show_only=["charts/prometheus-blackbox-exporter/templates/deployment.yaml"],
         )
 
-        assert len(docs) == 1
+        common_blackbox_exporter_tests(docs)
         doc = docs[0]
-        assert doc["kind"] == "Deployment"
-        assert doc["metadata"]["name"] == "release-name-prometheus-blackbox-exporter"
-        assert (
-            doc["spec"]["selector"]["matchLabels"]["component"] == "blackbox-exporter"
-        )
-        assert (
-            doc["spec"]["template"]["metadata"]["labels"]["app"]
-            == "prometheus-blackbox-exporter"
-        )
 
         c_by_name = get_containers_by_name(doc)
         assert c_by_name["blackbox-exporter"]["resources"] == {
@@ -59,11 +61,13 @@ class TestPrometheusBlackBoxExporterDeployment:
             "runAsNonRoot": True,
             "capabilities": {"drop": ["ALL"]},
         }
+        spec = doc["spec"]["template"]["spec"]
+        assert spec["nodeSelector"] == {}
+        assert spec["affinity"] == {}
+        assert spec["tolerations"] == []
 
-    def test_prometheus_blackbox_exporter_deployment_custom_resources(
-        self, kube_version
-    ):
-        doc = render_chart(
+    def test_prometheus_blackbox_exporter_deployment_custom_resources(self, kube_version):
+        docs = render_chart(
             kube_version=kube_version,
             values={
                 "prometheus-blackbox-exporter": {
@@ -74,31 +78,25 @@ class TestPrometheusBlackBoxExporterDeployment:
                 },
             },
             show_only=["charts/prometheus-blackbox-exporter/templates/deployment.yaml"],
-        )[0]
+        )
 
-        assert doc["kind"] == "Deployment"
-        assert doc["metadata"]["name"] == "release-name-prometheus-blackbox-exporter"
-
-        c_by_name = get_containers_by_name(doc)
+        common_blackbox_exporter_tests(docs)
+        c_by_name = get_containers_by_name(docs[0])
         assert c_by_name["blackbox-exporter"].get("resources") == {
             "limits": {"cpu": "777m", "memory": "999Mi"},
             "requests": {"cpu": "666m", "memory": "888Mi"},
         }
 
-    def test_prometheus_blackbox_exporter_deployment_custom_security_context(
-        self, kube_version
-    ):
-        doc = render_chart(
+    def test_prometheus_blackbox_exporter_deployment_custom_security_context(self, kube_version):
+        docs = render_chart(
             kube_version=kube_version,
             values={
-                "prometheus-blackbox-exporter": {
-                    "securityContext": {"runAsUser": 1000}
-                },
+                "prometheus-blackbox-exporter": {"securityContext": {"runAsUser": 1000}},
             },
             show_only=["charts/prometheus-blackbox-exporter/templates/deployment.yaml"],
-        )[0]
-
-        c_by_name = get_containers_by_name(doc)
+        )
+        common_blackbox_exporter_tests(docs)
+        c_by_name = get_containers_by_name(docs[0])
         assert c_by_name["blackbox-exporter"]["securityContext"] == {
             "allowPrivilegeEscalation": False,
             "capabilities": {"drop": ["ALL"]},
@@ -106,3 +104,39 @@ class TestPrometheusBlackBoxExporterDeployment:
             "runAsNonRoot": True,
             "runAsUser": 1000,
         }
+
+    def test_prometheus_blackbox_exporter_deployment_global_platform_nodepool(self, kube_version, global_platform_node_pool_config):
+        """Test that blackbox exporter renders proper nodeSelector, affinity,
+        and tolerations with global overrides"""
+        values = {
+            "global": {
+                "platformNodePool": global_platform_node_pool_config,
+            }
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=["charts/prometheus-blackbox-exporter/templates/deployment.yaml"],
+        )
+        common_blackbox_exporter_tests(docs)
+        spec = docs[0]["spec"]["template"]["spec"]
+        assert len(spec["nodeSelector"]) == 1
+        assert len(spec["tolerations"]) > 0
+        assert spec["tolerations"] == values["global"]["platformNodePool"]["tolerations"]
+
+    def test_prometheus_blackbox_exporter_defaults_with_subchart_overrides(self, kube_version, global_platform_node_pool_config):
+        """Test that blackbox exporter renders proper nodeSelector, affinity,
+        and tolerations with sunchart overrides"""
+        global_platform_node_pool_config["nodeSelector"] = {"role": "astro-prometheus-blackbox-exporter"}
+        values = {"prometheus-blackbox-exporter": global_platform_node_pool_config}
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=["charts/prometheus-blackbox-exporter/templates/deployment.yaml"],
+        )
+        spec = docs[0]["spec"]["template"]["spec"]
+        assert len(spec["nodeSelector"]) == 1
+        assert len(spec["affinity"]) == 1
+        assert len(spec["tolerations"]) > 0
+        assert spec["nodeSelector"] == values["prometheus-blackbox-exporter"]["nodeSelector"]
+        assert spec["tolerations"] == values["prometheus-blackbox-exporter"]["tolerations"]

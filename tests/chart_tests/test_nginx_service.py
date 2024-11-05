@@ -1,4 +1,5 @@
 from tests.chart_tests.helm_template_generator import render_chart
+from tests import get_containers_by_name
 import pytest
 
 
@@ -31,9 +32,7 @@ class TestNginx:
             ("ExternalName", "Local", True),
         ],
     )
-    def test_nginx_service_servicetype(
-        self, service_type, external_traffic_policy, preserve_source_ip
-    ):
+    def test_nginx_service_servicetype(self, service_type, external_traffic_policy, preserve_source_ip):
         """Verify that ClusterIP never has an externalTrafficPolicy, and other
         configurations are correct according to spec.
 
@@ -57,19 +56,12 @@ class TestNginx:
         """Deployment should contain the given ingress annotations when they
         are specified."""
         doc = render_chart(
-            values={
-                "nginx": {
-                    "ingressAnnotations": {"foo1": "foo", "foo2": "foo", "foo3": "foo"}
-                }
-            },
+            values={"nginx": {"ingressAnnotations": {"foo1": "foo", "foo2": "foo", "foo3": "foo"}}},
             show_only=["charts/nginx/templates/nginx-service.yaml"],
         )[0]
 
         expected_annotations = {"foo1": "foo", "foo2": "foo", "foo3": "foo"}
-        assert all(
-            doc["metadata"]["annotations"][x] == y
-            for x, y in expected_annotations.items()
-        )
+        assert all(doc["metadata"]["annotations"][x] == y for x, y in expected_annotations.items())
 
     def test_nginx_type_loadbalancer(self):
         """Deployment works with type LoadBalancer and some LB
@@ -179,13 +171,6 @@ class TestNginx:
         assert doc["spec"]["type"] == "ClusterIP"
         assert doc["spec"]["ports"][0]["port"] == 10254
 
-    def test_nginx_controller_electionID_defaults(self):
-        doc = render_chart(
-            show_only=["charts/nginx/templates/nginx-deployment.yaml"],
-        )[0]
-        electionId = "--election-id=ingress-controller-leader-release-name-nginx"
-        assert electionId in doc["spec"]["template"]["spec"]["containers"][0]["args"]
-
     def test_nginx_externalTrafficPolicy_defaults(self):
         doc = render_chart(
             show_only=["charts/nginx/templates/nginx-service.yaml"],
@@ -205,33 +190,116 @@ class TestNginx:
         )[0]
         assert doc["data"]["allow-snippet-annotations"] == "true"
 
-    def test_nginx_enableAnnotationValidations_defaults(self):
-        doc = render_chart(
-            show_only=["charts/nginx/templates/nginx-deployment.yaml"],
-        )[0]
-        annotationValidation = "--enable-annotation-validation"
-        assert (
-            annotationValidation
-            not in doc["spec"]["template"]["spec"]["containers"][0]["args"]
-        )
-
     def test_nginx_enableAnnotationValidations_overrides(self):
         doc = render_chart(
             values={"nginx": {"enableAnnotationValidations": True}},
             show_only=["charts/nginx/templates/nginx-deployment.yaml"],
         )[0]
         annotationValidation = "--enable-annotation-validation=true"
-        assert (
-            annotationValidation
-            in doc["spec"]["template"]["spec"]["containers"][0]["args"]
-        )
+        assert annotationValidation in doc["spec"]["template"]["spec"]["containers"][0]["args"]
 
     def test_nginx_backend_serviceaccount_defaults(self):
+        """Test nginx ingress deployment service account defaults."""
         doc = render_chart(
-            values={},
-            show_only=[
-                "charts/nginx/templates/nginx-default-backend-serviceaccount.yaml"
-            ],
+            show_only=["charts/nginx/templates/nginx-default-backend-serviceaccount.yaml"],
         )[0]
 
         assert "release-name-nginx-default-backend" == doc["metadata"]["name"]
+
+    def test_nginx_defaults(self):
+        """Test nginx ingress deployment template defaults."""
+        doc = render_chart(
+            show_only=["charts/nginx/templates/nginx-deployment.yaml"],
+        )[0]
+        expected_security_context = {
+            "runAsUser": 101,
+            "runAsNonRoot": True,
+            "capabilities": {"drop": ["ALL"]},
+            "allowPrivilegeEscalation": False,
+        }
+
+        electionTTL = "--election-ttl"
+        electionId = "--election-id=ingress-controller-leader-release-name-nginx"
+        topologyAwareRouting = "--enable-topology-aware-routing"
+        annotationValidation = "--enable-annotation-validation"
+        disableLeaderElection = "--disable-leader-election"
+
+        c_by_name = get_containers_by_name(doc)
+        assert doc["spec"]["minReadySeconds"] == 0
+        assert electionId in c_by_name["nginx"]["args"]
+        assert electionTTL not in c_by_name["nginx"]["args"]
+        assert topologyAwareRouting not in c_by_name["nginx"]["args"]
+        assert annotationValidation not in c_by_name["nginx"]["args"]
+        assert disableLeaderElection not in c_by_name["nginx"]["args"]
+        assert expected_security_context == c_by_name["nginx"]["securityContext"]
+
+    def test_nginx_min_ready_seconds_overrides(self):
+        """Test nginx ingress deployment template with min ready seconds overrides."""
+        minReadySeconds = 300
+        doc = render_chart(
+            values={"nginx": {"minReadySeconds": minReadySeconds}},
+            show_only=["charts/nginx/templates/nginx-deployment.yaml"],
+        )[0]
+
+        assert doc["spec"]["minReadySeconds"] == minReadySeconds
+
+    def test_nginx_election_ttl_overrides(self):
+        """Test nginx ingress deployment template with election ttl overrides."""
+        doc = render_chart(
+            values={"nginx": {"electionTTL": "30s"}},
+            show_only=["charts/nginx/templates/nginx-deployment.yaml"],
+        )[0]
+        electionTTL = "--election-ttl=30s"
+        c_by_name = get_containers_by_name(doc)
+        assert electionTTL in c_by_name["nginx"]["args"]
+
+    def test_nginx_topology_aware_routing_overrides(self):
+        """Test nginx ingress deployment template with topology aware routing overrides."""
+        doc = render_chart(
+            values={"nginx": {"enableTopologyAwareRouting": True}},
+            show_only=["charts/nginx/templates/nginx-deployment.yaml"],
+        )[0]
+        topologyAwareRouting = "--enable-topology-aware-routing=true"
+        c_by_name = get_containers_by_name(doc)
+        assert topologyAwareRouting in c_by_name["nginx"]["args"]
+
+    def test_nginx_disable_leader_election_overrides(self):
+        """Test nginx ingress deployment template with leader election overrides."""
+        doc = render_chart(
+            values={"nginx": {"disableLeaderElection": True}},
+            show_only=["charts/nginx/templates/nginx-deployment.yaml"],
+        )[0]
+        c_by_name = get_containers_by_name(doc)
+        disableLeaderElection = "--disable-leader-election=true"
+        assert disableLeaderElection in c_by_name["nginx"]["args"]
+
+    def test_nginx_security_context_overrides(self):
+        """Test nginx ingress deployment template with security context overrides."""
+
+        values = {
+            "nginx": {
+                "securityContext": {
+                    "runAsUser": 101,
+                    "runAsNonRoot": True,
+                    "capabilities": {
+                        "drop": ["ALL"],
+                        "add": ["NET_BIND_SERVICE"],
+                    },
+                    "allowPrivilegeEscalation": False,
+                }
+            }
+        }
+
+        doc = render_chart(
+            values=values,
+            show_only=["charts/nginx/templates/nginx-deployment.yaml"],
+        )[0]
+        expected_security_context = {
+            "runAsUser": 101,
+            "runAsNonRoot": True,
+            "capabilities": {"drop": ["ALL"], "add": ["NET_BIND_SERVICE"]},
+            "allowPrivilegeEscalation": False,
+        }
+
+        c_by_name = get_containers_by_name(doc)
+        assert expected_security_context == c_by_name["nginx"]["securityContext"]

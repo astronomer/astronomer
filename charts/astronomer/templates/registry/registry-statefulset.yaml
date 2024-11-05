@@ -1,6 +1,6 @@
-################################
-## Astronomer Registry StatefulSet
-#################################
+#####################################
+## Astronomer Registry StatefulSet ##
+#####################################
 {{- if .Values.global.baseDomain }}
 {{- if or .Values.registry.gcs.enabled .Values.registry.azure.enabled .Values.registry.s3.enabled }}
 kind: Deployment
@@ -45,9 +45,7 @@ spec:
       annotations:
         checksum/configmap: {{ include (print $.Template.BasePath "/registry/registry-configmap.yaml") . | sha256sum }}
     spec:
-{{- if .Values.registry.serviceAccount.create }}
       serviceAccountName: {{ template "registry.ServiceAccount" . }}
-{{- end }}
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
       affinity:
@@ -101,6 +99,9 @@ spec:
               containerPort: {{ .Values.ports.registryHTTP }}
             # - name: registry-scrape
             #   containerPort: {{ .Values.ports.registryScrape }}
+          {{- if .Values.registry.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.registry.livenessProbe) . | nindent 12 }}
+          {{- else }}
           livenessProbe:
             httpGet:
               path: /
@@ -108,6 +109,10 @@ spec:
             initialDelaySeconds: 10
             periodSeconds: 10
             timeoutSeconds: 5
+          {{- end }}
+          {{- if .Values.registry.readinessProbe }}
+          readinessProbe: {{ tpl (toYaml .Values.registry.readinessProbe) . | nindent 12 }}
+          {{- else }}
           readinessProbe:
             httpGet:
               path: /
@@ -115,6 +120,7 @@ spec:
             initialDelaySeconds: 10
             periodSeconds: 10
             timeoutSeconds: 5
+          {{- end }}
       volumes:
         - name: config
           configMap:

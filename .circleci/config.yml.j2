@@ -129,26 +129,14 @@ jobs:
       - run:
           name: Run pre-commit
           command: pre-commit run --all-files --show-diff-on-failure
-  lint:
-    docker:
-      - image: quay.io/astronomer/ap-build:0.2.3
-    steps:
-      - checkout
-      - run:
-          name: Install ci tools
-          command: ./bin/install-ci-tools 1
-      - run:
-          name: Lint the Astronomer chart
-          command: export PATH=/tmp/bin:$PATH make lint
 
   unittest-charts:
     docker:
       - image: quay.io/astronomer/ci-helm-release:{{ ci_runner_version }}
-    parallelism: 8
-    resource_class: xlarge
+    # https://circleci.com/docs/using-docker/#x86
+    resource_class: large
+    parallelism: 4
     steps:
-      - setup_remote_docker:
-          docker_layer_caching: true
       - checkout
       - run:
           name: Create chart-tests-cache-key.txt
@@ -165,6 +153,8 @@ jobs:
       - save_cache:
           key: chart-test-venv-{{ '{{' }} checksum "/tmp/chart-tests-cache-key.txt" }}
           paths:
+            - ~/.cache/uv
+            - ~/.local/share/uv
             - ~/project/venv
             - ~/project/.unittest-requirements
       - run:
@@ -172,13 +162,14 @@ jobs:
           command: |
             mkdir test-results
             TEST_FILES=$(circleci tests glob "tests/chart_tests/test_*.py" | circleci tests split --split-by=timings)
+            echo "TEST_FILES=\"$TEST_FILES\""
             venv/bin/python -m pytest -v --junitxml=test-results/junit.xml -n auto $TEST_FILES
       - store_test_results:
           path: test-results
 
   build-artifact:
     docker:
-      - image: quay.io/astronomer/ap-build:0.2.3
+      - image: quay.io/astronomer/ci-helm-release:{{ ci_runner_version }}
     parameters:
       qa_release:
         type: boolean
@@ -313,14 +304,12 @@ workflows:
         - not: << pipeline.parameters.scan-docker-images >>
         - not: << pipeline.parameters.qa-release >>
     jobs:
-      - lint
       - run_pre_commit
       - unittest-charts
       - check-commander-airflow-version
       - build-artifact:
           requires:
             - check-commander-airflow-version
-            - lint
             - run_pre_commit
             - unittest-charts
       - approve-test-all-platforms:
@@ -396,7 +385,6 @@ workflows:
         - << pipeline.parameters.qa-release >>
         - not: << pipeline.parameters.scan-docker-images >>
     jobs:
-      - lint
       - run_pre_commit
       - unittest-charts
       - check-commander-airflow-version
@@ -404,7 +392,6 @@ workflows:
           qa_release: true
           requires:
             - check-commander-airflow-version
-            - lint
             - run_pre_commit
             - unittest-charts
       - release-to-internal:

@@ -15,10 +15,7 @@ def init_test_svc_port_configs():
         docs,
     )
 
-    return {
-        f'{doc["chart"]}_{doc["component"]}_{doc["name"]}': doc["ports"]
-        for doc in svc_docs
-    }
+    return {f'{doc["chart"]}_{doc["component"]}_{doc["name"]}': doc["ports"] for doc in svc_docs}
 
 
 test_svc_port_configs_data = init_test_svc_port_configs()

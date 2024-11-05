@@ -1,6 +1,6 @@
-################################
-## Prometheus StatefulSet
-#################################
+############################
+## Prometheus StatefulSet ##
+############################
 kind: StatefulSet
 apiVersion: apps/v1
 metadata:
@@ -12,6 +12,9 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 spec:
+  {{- if and .Values.persistence.enabled .Values.persistence.persistentVolumeClaimRetentionPolicy }}
+  persistentVolumeClaimRetentionPolicy: {{- toYaml .Values.persistence.persistentVolumeClaimRetentionPolicy | nindent 4 }}
+  {{ end }}
   replicas: {{ .Values.replicas }}
   serviceName: {{ template "prometheus.fullname" . }}
   selector:
@@ -36,15 +39,12 @@ spec:
         sidecar.istio.io/proxyMemory: "400Mi"
 {{- end }}
     spec:
-      nodeSelector:
-{{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
-      affinity:
-{{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 8 }}
-      tolerations:
-{{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
+      nodeSelector: {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
+      affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
+      tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolferations) | nindent 8 }}
       restartPolicy: Always
-      serviceAccountName: {{ template "prometheus.fullname" . }}
-{{- include "prometheus.imagePullSecrets" . | indent 6 }}
+      serviceAccountName: {{ template "prometheus.serviceAccount" . }}
+      {{- include "prometheus.imagePullSecrets" . | nindent 6 }}
       containers:
         {{- if .Values.global.authSidecar.enabled  }}
         - name: auth-proxy
@@ -58,6 +58,9 @@ spec:
           - containerPort: {{ .Values.global.authSidecar.port }}
             name: auth-proxy
             protocol: TCP
+          {{- if .Values.global.authSidecar.readinessProbe }}
+          readinessProbe: {{ tpl (toYaml .Values.global.authSidecar.readinessProbe) . | nindent 12 }}
+          {{- else }}
           readinessProbe:
             httpGet:
               path: /healthz
@@ -65,6 +68,10 @@ spec:
               scheme: HTTP
             initialDelaySeconds: 10
             periodSeconds: 10
+          {{- end }}
+          {{-  if .Values.global.authSidecar.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.global.authSidecar.livenessProbe) . | nindent 12 }}
+          {{- else }}
           livenessProbe:
             httpGet:
               path: /healthz
@@ -72,6 +79,7 @@ spec:
               scheme: HTTP
             initialDelaySeconds: 10
             periodSeconds: 10
+          {{- end }}
           volumeMounts:
           - mountPath: /etc/nginx/conf.d/
             name: prometheus-sidecar-conf
@@ -84,8 +92,13 @@ spec:
           image: {{ include "configReloader.image" . }}
           imagePullPolicy: {{ .Values.images.prometheus.pullPolicy }}
           securityContext: {{ template "prometheus.securityContext" . }}
-          resources:
-{{ toYaml .Values.configMapReloader.resources | indent 12 }}
+          resources: {{ toYaml .Values.configMapReloader.resources | nindent 12 }}
+          {{- if .Values.configMapReloader.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.configMapReloader.livenessProbe) . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.configMapReloader.readinessProbe }}
+          readinessProbe: {{ tpl (toYaml .Values.configMapReloader.readinessProbe) . | nindent 12 }}
+          {{- end }}
           volumeMounts:
           - name: alert-volume
             mountPath: /etc/prometheus/alerts.d
@@ -120,22 +133,30 @@ spec:
           ports:
             - name: prometheus-data
               containerPort: {{ .Values.ports.http }}
+          {{- if .Values.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.livenessProbe) . | nindent 12 }}
+          {{- else }}
           livenessProbe:
             httpGet:
               path: /-/healthy
               port: {{ .Values.ports.http }}
-            initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
-            periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
-            failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
-            timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds }}
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 3
+            timeoutSeconds: 1
+          {{- end }}
+          {{- if .Values.readinessProbe }}
+          readinessProbe: {{ tpl (toYaml .Values.readinessProbe) . | nindent 12 }}
+          {{- else }}
           readinessProbe:
             httpGet:
               path: /-/ready
               port: {{ .Values.ports.http }}
-            initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
-            periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
-            failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
-            timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 3
+            timeoutSeconds: 1
+          {{- end }}
 {{- if eq .Values.global.openshiftEnabled false }}
       securityContext: {{ toYaml .Values.podSecurityContext| nindent 8 }}
 {{- end }}

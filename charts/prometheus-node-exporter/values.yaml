@@ -3,7 +3,7 @@
 # Declare variables to be passed into your templates.
 image:
   repository: quay.io/astronomer/ap-node-exporter
-  tag: 1.8.1
+  tag: 1.8.2
   pullPolicy: IfNotPresent
 
 service:
@@ -30,6 +30,16 @@ updateStrategy:
   rollingUpdate:
     maxUnavailable: 1
 
+livenessProbe: {}
+  # httpGet:
+  #   path: /
+  #   port: {{ .Values.service.port }}
+
+readinessProbe: {}
+  # httpGet:
+  #   path: /
+  #   port: {{ .Values.service.port }}
+
 resources:
   limits:
     cpu: 100m
@@ -43,7 +53,7 @@ serviceAccount:
   create: true
   # The name of the ServiceAccount to use.
   # If not set and create is true, a name is generated using the fullname template
-  name:
+  name: ~
   imagePullSecrets: []
 
 podSecurityContext:
@@ -53,10 +63,6 @@ podSecurityContext:
 
 securityContext:
    runAsNonRoot: true
-rbac:
-  ## If true, create & use RBAC resources
-  ##
-  create: true
 
 # for deployments that have node_exporter deployed outside of the cluster, list
 # their addresses here
@@ -133,3 +139,6 @@ sidecarVolumeMount: []
 ##  - name: collector-textfiles
 ##    mountPath: /run/prometheus
 ##    readOnly: false
+
+
+priorityClassName: ~

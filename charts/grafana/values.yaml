@@ -9,15 +9,22 @@ tolerations: []
 images:
   grafana:
     repository: quay.io/astronomer/ap-grafana
-    tag: 10.2.4
+    tag: 10.4.10
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
-    tag: 0.35.4
+    tag: 0.36.0
     pullPolicy: IfNotPresent
 
 securityContext:
   runAsNonRoot: true
+
+serviceAccount:
+  # Specifies whether a ServiceAccount should be created
+  create: true
+  # The name of the ServiceAccount to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ~
 
 backendSecretName: ~
 backendConnection:
@@ -71,3 +78,11 @@ extraEnvVars:
   #     secretKeyRef:
   #       name: grafana-smtp-secret
   #       key: smtp_password
+
+bootstrapper:
+  readinessProbe: {}
+  livenessProbe: {}
+
+waitForDB:
+  readinessProbe: {}
+  livenessProbe: {}

@@ -19,7 +19,7 @@ import subprocess
 import sys
 from functools import cache
 from tempfile import NamedTemporaryFile
-from typing import Any, Optional
+from typing import Any
 from pathlib import Path
 import os
 from tests import supported_k8s_versions
@@ -54,7 +54,7 @@ def get_schema_k8s(api_version, kind, kube_version=default_version):
     if not local_sp.exists():
         if not local_sp.parent.is_dir():
             local_sp.parent.mkdir()
-        request = requests.get(f"{BASE_URL_SPEC}/{schema_path}")
+        request = requests.get(f"{BASE_URL_SPEC}/{schema_path}", timeout=30)
         request.raise_for_status()
         local_sp.write_text(request.text)
 
@@ -71,21 +71,19 @@ def create_validator(api_version, kind, kube_version=default_version):
 
 def validate_k8s_object(instance, kube_version=default_version):
     """Validate the k8s object."""
-    validate = create_validator(
-        instance.get("apiVersion"), instance.get("kind"), kube_version=kube_version
-    )
+    validate = create_validator(instance.get("apiVersion"), instance.get("kind"), kube_version=kube_version)
     validate.validate(instance)
 
 
 def render_chart(
     *,  # require keyword args
     name: str = "release-name",
-    values: Optional[dict] = None,
-    show_only: Optional[list] = None,
-    chart_dir: Optional[str] = None,
+    values: dict | None = None,
+    show_only: list | None = None,
+    chart_dir: str | None = None,
     kube_version: str = default_version,
     baseDomain: str = "example.com",
-    namespace: Optional[str] = None,
+    namespace: str | None = None,
     validate_objects: bool = True,
 ):
     """Render a helm chart into dictionaries.
@@ -125,9 +123,7 @@ def render_chart(
             if DEBUG:
                 print("ERROR: subprocess.CalledProcessError:")
                 print(f"helm command: {' '.join(command)}")
-                print(
-                    f"Values file contents:\n{'-' * 21}\n{yaml.dump(values)}{'-' * 21}"
-                )
+                print(f"Values file contents:\n{'-' * 21}\n{yaml.dump(values)}{'-' * 21}")
                 print(f"{error.output=}\n{error.stderr=}")
 
                 if "could not find template" in error.stderr.decode("utf-8"):
@@ -152,10 +148,7 @@ def prepare_k8s_lookup_dict(k8s_objects) -> dict[tuple[str, str], dict[str, Any]
 
     The keys of the dict are the k8s object's kind and name
     """
-    return {
-        (k8s_object["kind"], k8s_object["metadata"]["name"]): k8s_object
-        for k8s_object in k8s_objects
-    }
+    return {(k8s_object["kind"], k8s_object["metadata"]["name"]): k8s_object for k8s_object in k8s_objects}
 
 
 def render_k8s_object(obj, type_to_render):

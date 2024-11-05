@@ -1,6 +1,6 @@
-################################
-## Prometheus Cluster Role Binding
-#################################
+#####################################
+## Prometheus Cluster Role Binding ##
+#####################################
 {{- $singleNamespace := .Values.global.singleNamespace }}
 {{- if .Values.global.rbacEnabled }}
 kind: {{ if $singleNamespace }}RoleBinding{{ else }}ClusterRoleBinding{{ end }}
@@ -19,6 +19,6 @@ roleRef:
   name: {{ template "prometheus.fullname" . }}
 subjects:
   - kind: ServiceAccount
-    name: {{ template "prometheus.fullname" . }}
+    name: {{ template "prometheus.serviceAccount" . }}
     namespace: {{ .Release.Namespace }}
 {{- end }}

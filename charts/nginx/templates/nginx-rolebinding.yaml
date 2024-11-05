@@ -1,6 +1,6 @@
-################################
-## NGINX RoleBinding/ClusterRoleBinding
-#################################
+##########################################
+## NGINX RoleBinding/ClusterRoleBinding ##
+##########################################
 {{- $singleNamespace := .Values.global.singleNamespace }}
 {{- if .Values.global.rbacEnabled }}
 kind: {{ if $singleNamespace }}RoleBinding{{ else }}ClusterRoleBinding{{ end }}
@@ -18,6 +18,6 @@ roleRef:
   name: {{ template "nginx.fullname" . }}
 subjects:
   - kind: ServiceAccount
-    name: {{ template "nginx.fullname" . }}
+    name: {{ template "nginx.serviceAccount" . }}
     namespace: {{ .Release.Namespace }}
 {{- end }}

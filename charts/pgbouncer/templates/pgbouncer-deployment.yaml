@@ -34,14 +34,11 @@ spec:
         {{ $key | replace "-" "_" }}: {{ $value | quote }}
         {{- end }}
     spec:
-      nodeSelector:
-{{ toYaml .Values.nodeSelector | indent 8 }}
-      affinity:
-{{ toYaml .Values.affinity | indent 8 }}
-      tolerations:
-{{ toYaml .Values.tolerations | indent 8 }}
+      nodeSelector: {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
+      affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
+      tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       restartPolicy: Always
-      serviceAccountName: {{ template "houston.bootstrapperServiceAccount" . }}
+      serviceAccountName: {{ template "pgbouncer.ServiceAccount" . }}
       containers:
         - name: pgbouncer
           image: {{ template "pgbouncer.image" . }}
@@ -57,17 +54,24 @@ spec:
             - name: {{ $key | replace "-" "_" }}
               value: {{ $value | quote }}
             {{- end }}
-          resources:
-{{ toYaml .Values.resources | indent 12 }}
+          resources: {{ toYaml .Values.resources | nindent 12 }}
           ports:
             - name: pgbouncer
               containerPort: {{ .Values.internalPort }}
+          {{- if .Values.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.livenessProbe) . | nindent 12 }}
+          {{- else }}
           livenessProbe:
             tcpSocket:
               port: {{ .Values.internalPort }}
+          {{- end }}
+          {{- if .Values.readinessProbe }}
+          readinessProbe: {{ tpl (toYaml .Values.readinessProbe) . | nindent 12 }}
+          {{- else }}
           readinessProbe:
             tcpSocket:
               port: {{ .Values.internalPort }}
+          {{- end }}
           lifecycle:
             preStop:
               exec:

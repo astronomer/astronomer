@@ -21,7 +21,7 @@ parent_directory = Path(__file__).parent.parent
 circleci_directory = parent_directory / ".circleci"
 
 
-def run_workflow(circleci_token: str, parameters: dict = None):
+def run_workflow(circleci_token: str, parameters: dict | None = None):
     circle_ci_conn = http.client.HTTPSConnection(CIRCLECI_URL, timeout=15)
     api_endpoint = f"/api/v2/project/github/{GITHUB_ORG}/{REPO}/pipeline"
 
@@ -32,9 +32,7 @@ def run_workflow(circleci_token: str, parameters: dict = None):
     if parameters is not None:
         payload["parameters"] = parameters
 
-    circle_ci_conn.request(
-        method="POST", url=api_endpoint, body=json.dumps(payload), headers=headers
-    )
+    circle_ci_conn.request(method="POST", url=api_endpoint, body=json.dumps(payload), headers=headers)
     resp = circle_ci_conn.getresponse().read().decode("utf-8")
     circle_ci_conn.close()
     return resp
@@ -64,9 +62,7 @@ def main(circleci_token: str, astro_path: str, branch: str):
             astro_version = file_name
 
     if astro_version is None:
-        print(
-            f"INFO: Skipping calling workflow as no valid version. Below files are found at path: {astro_path}."
-        )
+        print(f"INFO: Skipping calling workflow as no valid version. Below files are found at path: {astro_path}.")
         print(json.dumps(file_list))
         raise SystemExit(0)
 
@@ -84,17 +80,13 @@ def main(circleci_token: str, astro_path: str, branch: str):
     print(json.dumps(parameters, indent=1))
 
     # Run Workflow
-    run_workflow_resp = run_workflow(
-        circleci_token=circleci_token, parameters=parameters
-    )
+    run_workflow_resp = run_workflow(circleci_token=circleci_token, parameters=parameters)
 
     pipeline_id = json.loads(run_workflow_resp)["id"]
     pipeline_number = json.loads(run_workflow_resp)["number"]
 
     # Printing Info
-    print(
-        f"CircleCI JOB URL = https://app.circleci.com/pipelines/github/{GITHUB_ORG}/{REPO}/{pipeline_number}"
-    )
+    print(f"CircleCI JOB URL = https://app.circleci.com/pipelines/github/{GITHUB_ORG}/{REPO}/{pipeline_number}")
 
     print("INFO: Waiting until pipeline starts running. It will wait for 5 min.")
     pipeline_state = "pending"
@@ -102,9 +94,7 @@ def main(circleci_token: str, astro_path: str, branch: str):
 
     while "pending" == pipeline_state:
         time.sleep(10)
-        job_state_resp = get_job_state(
-            circleci_token=circleci_token, pipeline_id=pipeline_id
-        )
+        job_state_resp = get_job_state(circleci_token=circleci_token, pipeline_id=pipeline_id)
         pipeline_state = json.loads(job_state_resp)["items"][0]["status"]
         counter = counter + 1
 
@@ -114,8 +104,7 @@ def main(circleci_token: str, astro_path: str, branch: str):
     if "success" != pipeline_state and "running" != pipeline_state:
         print(f"Error: Failed to run pipeline. Last Status: {pipeline_state}")
         raise SystemError(1)
-    else:
-        raise SystemExit(0)
+    raise SystemExit(0)
 
 
 if __name__ == "__main__":

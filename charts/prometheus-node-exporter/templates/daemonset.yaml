@@ -10,8 +10,7 @@ spec:
       app: {{ template "prometheus-node-exporter.name" . }}
       release: {{ .Release.Name }}
   {{- if .Values.updateStrategy }}
-  updateStrategy:
-{{ toYaml .Values.updateStrategy | indent 4 }}
+  updateStrategy: {{ toYaml .Values.updateStrategy | nindent 4 }}
   {{- end }}
   template:
     metadata:
@@ -21,9 +20,10 @@ spec:
       {{- toYaml .Values.podAnnotations | nindent 8 }}
       {{- end }}
     spec:
-{{- if and .Values.rbac.create .Values.serviceAccount.create }}
+{{- if .Values.priorityClassName }}
+      priorityClassName:  {{ .Values.priorityClassName  }}
+{{ end }}
       serviceAccountName: {{ template "prometheus-node-exporter.serviceAccountName" . }}
-{{- end }}
 {{- if eq .Values.global.openshiftEnabled false }}
       securityContext: {{ toYaml .Values.podSecurityContext| nindent 8 }}
 {{- end }}
@@ -57,16 +57,23 @@ spec:
             - name: metrics
               containerPort: {{ .Values.service.targetPort }}
               protocol: TCP
+          {{- if .Values.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.livenessProbe) . | nindent 12 }}
+          {{- else }}
           livenessProbe:
             httpGet:
               path: /
               port: {{ .Values.service.port }}
+          {{- end }}
+          {{- if .Values.readinessProbe }}
+          readinessProbe: {{ tpl (toYaml .Values.readinessProbe) . | nindent 12 }}
+          {{- else }}
           readinessProbe:
             httpGet:
               path: /
               port: {{ .Values.service.port }}
-          resources:
-{{ toYaml .Values.resources | indent 12 }}
+          {{- end }}
+          resources: {{ toYaml .Values.resources | nindent 12 }}
           volumeMounts:
             - name: proc
               mountPath: /host/proc
@@ -111,16 +118,13 @@ spec:
       hostNetwork: {{ .Values.hostNetwork }}
       hostPID: true
 {{- if .Values.affinity }}
-      affinity:
-{{ toYaml .Values.affinity | indent 8 }}
+      affinity: {{ toYaml .Values.affinity | nindent 8 }}
 {{- end }}
 {{- if .Values.nodeSelector }}
-      nodeSelector:
-{{ toYaml .Values.nodeSelector | indent 8 }}
+      nodeSelector: {{ toYaml .Values.nodeSelector | nindent 8 }}
 {{- end }}
     {{- with .Values.tolerations }}
-      tolerations:
-{{ toYaml . | indent 8 }}
+      tolerations: {{ toYaml . | nindent 8 }}
     {{- end }}
       volumes:
         - name: proc

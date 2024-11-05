@@ -15,11 +15,15 @@ def common_houston_config_test_cases(docs):
     assert doc["metadata"]["name"] == "release-name-houston-config"
 
 
+default_resource = {"limits": {"cpu": "1000m", "memory": "1024Mi"}, "requests": {"cpu": "500m", "memory": "512Mi"}}
+
+
 @pytest.mark.parametrize(
     "kube_version",
     supported_k8s_versions,
 )
 class TestAuthSidecar:
+
     def test_authSidecar_alertmanager(self, kube_version):
         """Test Alertmanager Service with authSidecar."""
         docs = render_chart(
@@ -52,9 +56,45 @@ class TestAuthSidecar:
         } in jmespath.search("spec.ports", docs[2])
 
         assert "NetworkPolicy" == docs[3]["kind"]
-        assert [{"port": 8084, "protocol": "TCP"}] == jmespath.search(
-            "spec.ingress[*].ports[1]", docs[3]
+        assert [{"port": 8084, "protocol": "TCP"}] == jmespath.search("spec.ingress[*].ports[1]", docs[3])
+
+    def test_authSidecar_houston_with_custom_resources(self, kube_version):
+        """Test custom resources are applied on Houston"""
+        custom_resources = {
+            "limits": {"cpu": "999m", "memory": "888Mi"},
+            "requests": {"cpu": "777m", "memory": "666Mi"},
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "authSidecar": {
+                        "enabled": True,
+                        "repository": "someregistry.io/my-custom-image",
+                        "tag": "my-custom-tag",
+                        "resources": custom_resources,
+                    }
+                }
+            },
+            show_only=[
+                "charts/astronomer/templates/houston/houston-configmap.yaml",
+            ],
         )
+
+        common_houston_config_test_cases(docs)
+        prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
+
+        expected_output = {
+            "enabled": True,
+            "repository": "someregistry.io/my-custom-image",
+            "tag": "my-custom-tag",
+            "port": 8084,
+            "pullPolicy": "IfNotPresent",
+            "annotations": {},
+            "resources": custom_resources,
+        }
+
+        assert expected_output == prod["deployments"]["authSideCar"]
 
     def test_authSidecar_prometheus(self, kube_version):
         """Test Prometheus Service with authSidecar."""
@@ -88,9 +128,7 @@ class TestAuthSidecar:
         } in jmespath.search("spec.ports", docs[2])
 
         assert "NetworkPolicy" == docs[3]["kind"]
-        assert [{"port": 8084, "protocol": "TCP"}] == jmespath.search(
-            "spec.ingress[*].ports[1]", docs[3]
-        )
+        assert [{"port": 8084, "protocol": "TCP"}] == jmespath.search("spec.ingress[*].ports[1]", docs[3])
 
     def test_authSidecar_kibana(self, kube_version):
         """Test Kibana Service with authSidecar."""
@@ -124,16 +162,10 @@ class TestAuthSidecar:
         } in jmespath.search("spec.ports", docs[2])
 
         assert "NetworkPolicy" == docs[3]["kind"]
-        assert [
-            {
-                "namespaceSelector": {
-                    "matchLabels": {"network.openshift.io/policy-group": "ingress"}
-                }
-            }
-        ] == jmespath.search("spec.ingress[0].from", docs[3])
-        assert {"port": 8084, "protocol": "TCP"} in jmespath.search(
-            "spec.ingress[*].ports[0]", docs[3]
+        assert [{"namespaceSelector": {"matchLabels": {"network.openshift.io/policy-group": "ingress"}}}] == jmespath.search(
+            "spec.ingress[0].from", docs[3]
         )
+        assert {"port": 8084, "protocol": "TCP"} in jmespath.search("spec.ingress[*].ports[0]", docs[3])
 
     def test_authSidecar_houston_configmap_without_annotation(self, kube_version):
         """Test Houston Configmap with authSidecar."""
@@ -145,7 +177,7 @@ class TestAuthSidecar:
                         "enabled": True,
                         "repository": "someregistry.io/my-custom-image",
                         "tag": "my-custom-tag",
-                    }
+                    },
                 }
             },
             show_only=[
@@ -162,6 +194,7 @@ class TestAuthSidecar:
             "tag": "my-custom-tag",
             "port": 8084,
             "pullPolicy": "IfNotPresent",
+            "resources": default_resource,
             "annotations": {},
         }
         assert expected_output == prod["deployments"]["authSideCar"]
@@ -197,6 +230,7 @@ class TestAuthSidecar:
             "tag": "my-custom-tag",
             "port": 8084,
             "pullPolicy": "IfNotPresent",
+            "resources": default_resource,
             "annotations": {
                 "kubernetes.io/ingress.class": "astronomer-nginx",
                 "nginx.ingress.kubernetes.io/proxy-body-size": "1024m",
@@ -214,9 +248,7 @@ class TestAuthSidecar:
                         "enabled": True,
                         "repository": "someregistry.io/my-custom-image",
                         "tag": "my-custom-tag",
-                        "securityContext": {
-                            "runAsUser": 1000,
-                        },
+                        "securityContext": {"runAsUser": 1000},
                     },
                 }
             },
@@ -236,6 +268,7 @@ class TestAuthSidecar:
             "securityContext": {
                 "runAsUser": 1000,
             },
+            "resources": default_resource,
             "annotations": {},
         }
         assert expected_output == prod["deployments"]["authSideCar"]

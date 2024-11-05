@@ -12,7 +12,6 @@ def list_docker_images():
         "blackboxExporterEnabled": True,
         "postgresqlEnabled": True,
         "prometheusPostgresExporterEnabled": True,
-        "pspEnabled": True,
         "veleroEnabled": True,
     }
 

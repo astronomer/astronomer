@@ -29,18 +29,9 @@ spec:
 {{ toYaml .Values.podAnnotations | indent 8 }}
         {{- end }}
     spec:
-    {{- if .Values.nodeSelector }}
-      nodeSelector:
-{{ toYaml .Values.nodeSelector | indent 8 }}
-    {{- end }}
-    {{- if .Values.affinity }}
-      affinity:
-{{ toYaml .Values.affinity | indent 8 }}
-    {{- end }}
-    {{- if .Values.tolerations }}
-      tolerations:
-{{ toYaml .Values.tolerations | indent 6 }}
-    {{- end }}
+      nodeSelector: {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
+      affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
+      tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
 {{- include "prometheus-blackbox-exporter.imagePullSecrets" . | indent 6 }}
       restartPolicy: {{ .Values.restartPolicy }}
       {{- if .Values.priorityClassName }}
@@ -67,14 +58,22 @@ spec:
           ports:
             - containerPort: {{ .Values.service.port }}
               name: http
+          {{- if .Values.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.livenessProbe) . | nindent 12 }}
+          {{- else }}
           livenessProbe:
             httpGet:
               path: /health
               port: http
+          {{- end }}
+          {{- if .Values.readinessProbe }}
+          readinessProbe: {{ tpl (toYaml .Values.readinessProbe) . | nindent 12 }}
+          {{- else }}
           readinessProbe:
             httpGet:
               path: /health
               port: http
+          {{- end }}
           volumeMounts:
             - mountPath: /config
               name: config

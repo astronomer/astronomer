@@ -31,9 +31,7 @@ def validate_test_suite(test_suite: dict, file: PosixPath) -> None:
 
     for test in test_suite["tests"]:
         if "template" in test:
-            validate_template_file(
-                Path(file.parent.parent) / "templates" / test["template"]
-            )
+            validate_template_file(Path(file.parent.parent) / "templates" / test["template"])
 
 
 def validate_template_file(file: PosixPath) -> None:

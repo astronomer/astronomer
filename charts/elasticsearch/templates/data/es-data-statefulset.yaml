@@ -1,6 +1,6 @@
-################################
-## Elasticsearch Data StatefulSet
-#################################
+####################################
+## Elasticsearch Data StatefulSet ##
+####################################
 kind: StatefulSet
 apiVersion: apps/v1
 metadata:
@@ -13,6 +13,9 @@ metadata:
     heritage: {{ .Release.Service }}
     role: data
 spec:
+  {{- if and .Values.common.persistence.enabled .Values.common.persistence.persistentVolumeClaimRetentionPolicy }}
+  persistentVolumeClaimRetentionPolicy: {{- toYaml .Values.common.persistence.persistentVolumeClaimRetentionPolicy | nindent 4 }}
+  {{ end }}
   serviceName: {{ template "elasticsearch.fullname" . }}-data
   replicas: {{ .Values.data.replicas }}
   selector:
@@ -82,10 +85,15 @@ spec:
         command: ["sysctl", "-w", "vm.max_map_count={{ .Values.sysctlInitContainer.sysctlVmMaxMapCount}}"]
         securityContext:
           privileged: true
-        resources:
-{{ toYaml .Values.data.initResources | indent 10 }}
+        resources: {{ toYaml .Values.data.initResources | nindent 10 }}
+        {{- if .Values.sysctlInitContainer.livenessProbe }}
+        livenessProbe: {{ tpl (toYaml .Values.sysctlInitContainer.livenessProbe) . | nindent 12 }}
+        {{- end }}
+        {{- if .Values.sysctlInitContainer.readinessProbe }}
+        readinessProbe: {{ tpl (toYaml .Values.sysctlInitContainer.readinessProbe) . | nindent 12 }}
+        {{- end }}
       {{- end }}
-      serviceAccountName: {{ template "elasticsearch.fullname" . }}
+      serviceAccountName: {{ template "elasticsearch.serviceAccount" . }}
       containers:
       - name: es-data
         securityContext:
@@ -119,22 +127,23 @@ spec:
         {{- end }}
         - name: node.roles
           value: "{{ template "elasticsearch.data.roles" . }}"
-        resources:
-{{ toYaml .Values.data.resources | indent 10 }}
+        resources: {{ toYaml .Values.data.resources | nindent 10 }}
         ports:
         - containerPort: {{ .Values.common.ports.transport }}
           name: transport
           protocol: TCP
-        # readinessProbe:
-        #   httpGet:
-        #     path: /_cluster/health?local=true
-        #     port: {{ .Values.common.ports.http }}
-        #   initialDelaySeconds: 5
+        {{- if .Values.data.readinessProbe }}
+        readinessProbe: {{ tpl (toYaml .Values.data.readinessProbe) . | nindent 10 }}
+        {{- end }}
+        {{- if .Values.data.livenessProbe }}
+        livenessProbe: {{ tpl (toYaml .Values.data.livenessProbe) . | nindent 10 }}
+        {{- else }}
         livenessProbe:
           tcpSocket:
             port: {{ .Values.common.ports.transport }}
           initialDelaySeconds: 20
           periodSeconds: 10
+        {{- end }}
         volumeMounts:
         - mountPath: /usr/share/elasticsearch/data
           name: data

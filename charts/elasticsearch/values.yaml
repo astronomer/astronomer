@@ -10,29 +10,36 @@ tolerations: []
 images:
   es:
     repository: quay.io/astronomer/ap-elasticsearch
-    tag: 8.12.0
+    tag: 8.12.1
     pullPolicy: IfNotPresent
   init:
     repository: quay.io/astronomer/ap-base # needs root permissions for sysctl changes
-    tag: 3.18.6-2
+    tag: 3.18.9
     pullPolicy: IfNotPresent
   curator:
     repository: quay.io/astronomer/ap-curator
-    tag: 8.0.14-1
+    tag: 8.0.16-2
     pullPolicy: IfNotPresent
   exporter:
     repository: quay.io/astronomer/ap-elasticsearch-exporter
-    tag: 1.7.0
+    tag: 1.8.0
     pullPolicy: IfNotPresent
   nginx:
     repository: quay.io/astronomer/ap-nginx-es
-    tag: 1.25.5
+    tag: 1.27.1
     pullPolicy: IfNotPresent
 
 common:
   podAnnotations: {}
   serviceType: ClusterIP
   protocol: http
+
+  serviceAccount:
+    # Specifies whether a ServiceAccount should be created
+    create: true
+    # The name of the ServiceAccount to use.
+    # If not set and create is true, a name is generated using the fullname template
+    name: ~
 
   env:
     CLUSTER_NAME: "astronomer"
@@ -52,6 +59,7 @@ common:
   persistence:
     enabled: true
     annotations: {}
+    persistentVolumeClaimRetentionPolicy: ~
 
     # The PVC storage class that backs the persistent volume claims. On AWS
     # "gp2" would be appropriate.
@@ -59,6 +67,7 @@ common:
 
   ports:
     http: 9200
+    readiness: 9399
     transport: 9300
 
 # Client/ingest nodes can execute pre-processing pipelines, composed of
@@ -83,6 +92,19 @@ client:
   resources:
     requests:
       memory: 256Mi
+
+  livenessProbe: {}
+    # httpGet:
+    #   path: /_cluster/health?local=true
+    #   port: {{ .Values.common.ports.http }}
+    # initialDelaySeconds: 90
+  readinessProbe: {}
+    # httpGet:
+    #   # local: If true, the request retrieves information from the local node only.
+    #   # Defaults to false, which means information is retrieved from the master node.
+    #   path: /_cluster/health?local=true
+    #   port: {{ .Values.common.ports.http }}
+    # initialDelaySeconds: 5
 
   env:
     NODE_DATA: "false"
@@ -118,6 +140,13 @@ data:
   resources:
     requests:
       memory: 256Mi
+
+  livenessProbe: {}
+    # tcpSocket:
+    #   port: {{ .Values.common.ports.transport }}
+    # initialDelaySeconds: 20
+    # periodSeconds: 10
+  readinessProbe: {}
 
   env:
     NODE_DATA: "true"
@@ -165,6 +194,17 @@ master:
     requests:
       memory: 256Mi
 
+  readinessProbe: {}
+    # httpGet:
+    #   # local: If true, the request retrieves information from the local node only.
+    #   # Defaults to false, which means information is retrieved from the master node.
+    #   path: /_cluster/health?local=true
+    #   port: {{ .Values.common.ports.http }}
+    # initialDelaySeconds: 5
+  livenessProbe: {}
+    # tcpSocket:
+    #   port: {{ .Values.common.ports.transport }}
+
   env:
     NODE_DATA: "false"
     NODE_MASTER: "true"
@@ -189,6 +229,7 @@ curator:
   enabled: true
   schedule: "0 1 * * *"
   securityContext: {}
+  resources: {}
 
   # Allows modification of the default age-based filter. If you require more
   # sophisticated filtering, modify the action file specified in
@@ -221,6 +262,19 @@ exporter:
   #   cpu: 100m
   #   memory: 128Mi
 
+  livenessProbe: {}
+    # httpGet:
+    #   path: /health
+    #   port: http
+    # initialDelaySeconds: 30
+    # timeoutSeconds: 10
+  readinessProbe: {}
+    # httpGet:
+    #   path: /health
+    #   port: http
+    # initialDelaySeconds: 10
+    # timeoutSeconds: 10
+
   service:
     type: ClusterIP
     httpPort: 9108
@@ -251,6 +305,8 @@ nginx:
 sysctlInitContainer:
   enabled: true
   sysctlVmMaxMapCount: 262144
+  livenessProbe: {}
+  readinessProbe: {}
 
 podSecurityContext:
   fsGroup: 1000

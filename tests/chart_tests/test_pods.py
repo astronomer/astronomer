@@ -22,14 +22,11 @@ def init_test_pod_labels_configs():
     pod_docs = []
     for key, val in kubernetes_objects.items():
         pod_docs += jmespath.search(
-            "[?kind == `%s`].{name: metadata.name, kind: kind, chart: metadata.labels.chart, labels: %s}"
-            % (key, val),
+            "[?kind == `%s`].{name: metadata.name, kind: kind, chart: metadata.labels.chart, labels: %s}" % (key, val),
             docs,
         )
 
-    return {
-        f'{doc["chart"]}_{doc["kind"]}_{doc["name"]}': doc["labels"] for doc in pod_docs
-    }
+    return {f'{doc["chart"]}_{doc["kind"]}_{doc["name"]}': doc["labels"] for doc in pod_docs}
 
 
 test_pod_labels_configs_data = init_test_pod_labels_configs()

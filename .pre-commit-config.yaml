@@ -19,26 +19,25 @@ repos:
         files: '(config.yml|config.yml.j2|generate_circleci_config.py|yaml|tpl)$'
         pass_filenames: false
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.2.6
+    rev: v2.3.0
     hooks:
       - id: codespell
-        args: ["-L", "AKS,aks"]
+        args: ["-L", "AKS,aks,showIn"]
   - repo: https://github.com/Lucas-C/pre-commit-hooks
     rev: v1.5.5
     hooks:
       - id: remove-tabs
         exclude_types: [makefile, binary]
-  - repo: https://github.com/psf/black
-    rev: 24.4.2
-    hooks:
-      - id: black
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: "v0.4.4"
+    rev: "v0.7.1"
     hooks:
       - id: ruff
-        args: [--fix, --exit-non-zero-on-fix, --ignore, E501]
+        args:
+          - "--fix"
+          - "--exit-non-zero-on-fix"
+          # - "--unsafe-fixes"
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v5.0.0
     hooks:
       - id: check-case-conflict
       - id: check-json
@@ -57,6 +56,9 @@ repos:
         files: '^\.(git|helm)ignore$'
       - id: mixed-line-ending
         args: ["--fix=lf"]
+      - id: name-tests-test
+        args: ["--pytest-test-first"]
+        exclude: "^tests/chart_tests/helm_template_generator.py$"
       - id: requirements-txt-fixer
         args: [
             "requirements/chart-tests.in",

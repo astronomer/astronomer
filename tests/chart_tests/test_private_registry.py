@@ -12,7 +12,6 @@ def test_private_registry_repository_image_names_the_same_as_public_ones():
         "blackboxExporterEnabled": True,
         "postgresqlEnabled": True,
         "prometheusPostgresExporterEnabled": True,
-        "pspEnabled": True,
         "veleroEnabled": True,
     }
 
@@ -37,16 +36,12 @@ def test_private_registry_repository_image_names_the_same_as_public_ones():
         private_repo_images = jmespath.search(search_string, private_repo_doc)
         if public_repo_images is not None or private_repo_images is not None:
             assert len(public_repo_images) == len(private_repo_images)
-            for public_repo_image, private_repo_image in zip(
-                public_repo_images, private_repo_images
-            ):
+            for public_repo_image, private_repo_image in zip(public_repo_images, private_repo_images):
                 if public_repo_image != private_repo_image:
                     print(
                         f"image name differs when using a private repo named same as public - {public_repo_image} vs {private_repo_image}"
                     )
-                    differently_named_images.append(
-                        (public_repo_image, private_repo_image)
-                    )
+                    differently_named_images.append((public_repo_image, private_repo_image))
     assert not differently_named_images, differently_named_images
 
 
@@ -55,9 +50,7 @@ def test_private_registry_repository_overrides_work():
     specified."""
     repository = "bob-the-registry"
     docs = render_chart(
-        values={
-            "global": {"privateRegistry": {"enabled": True, "repository": repository}}
-        },
+        values={"global": {"privateRegistry": {"enabled": True, "repository": repository}}},
     )
     # there should be lots of image hits
     assert len(docs) > 50
@@ -67,9 +60,7 @@ def test_private_registry_repository_overrides_work():
         if doc_images is not None:
             for image in doc_images:
                 if not image.startswith(repository):
-                    print(
-                        f"{image} did not begin with specified repository - {repository}"
-                    )
+                    print(f"{image} did not begin with specified repository - {repository}")
                     differently_named_images.append(image)
     assert not differently_named_images, differently_named_images
 
@@ -102,20 +93,14 @@ def get_private_registry_docs_image_pull_secrets():
     searched_docs = []
     for key, val in kubernetes_objects.items():
         searched_docs += jmespath.search(
-            "[?kind == `%s`].{name: metadata.name, kind: kind, image_pull_secrets: %s}"
-            % (key, val),
+            "[?kind == `%s`].{name: metadata.name, kind: kind, image_pull_secrets: %s}" % (key, val),
             docs,
         )
 
-    return {
-        f'{doc["name"]}_{doc["kind"]}': doc["image_pull_secrets"]
-        for doc in searched_docs
-    }
+    return {f'{doc["name"]}_{doc["kind"]}': doc["image_pull_secrets"] for doc in searched_docs}
 
 
-private_registry_docs_image_pull_secrets = (
-    get_private_registry_docs_image_pull_secrets()
-)
+private_registry_docs_image_pull_secrets = get_private_registry_docs_image_pull_secrets()
 
 
 @pytest.mark.parametrize(

@@ -1,0 +1,57 @@
+# https://www.python.org/dev/peps/pep-0518/#file-format
+
+# https://docs.astral.sh/ruff/settings/
+[tool.ruff]
+line-length = 132
+target-version = "py311"
+
+[tool.ruff.lint]
+fixable = ["ALL"]
+
+# https://docs.astral.sh/ruff/rules/
+select = [
+  "ASYNC",
+#  "ARG",
+  "BLE",
+  "C",
+  "E",
+  "F",
+  "FLY",
+  "FURB",
+#  "I",
+#  "N",
+  "PERF",
+  "PGH",
+#  "PL",
+  "Q",
+  "R",
+  "RUF",
+  "S",
+  "UP",
+  "W",
+  "YTT",
+]
+ignore = [
+  "E501",
+  "RUF012",
+  "S311",
+  "S314",
+  "S602",
+  "S603",
+  "S607",
+  "S608",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = [
+  "S101",
+  "S105",
+  "S602",
+  ]
+"tests/functional_tests/test_network_security.py" = ["C901"]
+"tests/chart_tests/test_private_registry.py" = ["UP031"]
+"tests/chart_tests/test_pods.py" = ["UP031"]
+
+[tool.ruff.lint.mccabe]
+# TODO: reduce this
+max-complexity = 14

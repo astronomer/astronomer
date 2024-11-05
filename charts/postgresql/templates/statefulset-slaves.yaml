@@ -9,6 +9,9 @@ metadata:
     release: {{ .Release.Name | quote }}
     heritage: {{ .Release.Service | quote }}
 spec:
+  {{- if and .Values.persistence.enabled .Values.persistence.persistentVolumeClaimRetentionPolicy }}
+  persistentVolumeClaimRetentionPolicy: {{- toYaml .Values.persistence.persistentVolumeClaimRetentionPolicy | nindent 4 }}
+  {{ end }}
   serviceName: {{ template "postgresql.fullname" . }}-headless
   replicas: {{ .Values.replication.slaveReplicas }}
   selector:
@@ -138,7 +141,9 @@ spec:
         ports:
         - name: postgresql
           containerPort: {{ template "postgresql.port" . }}
-        {{- if .Values.livenessProbe.enabled }}
+        {{- if .Values.livenessProbe }}
+        livenessProbe: {{ tpl (toYaml .Values.livenessProbe) . | nindent 10 }}
+        {{- else }}
         livenessProbe:
           exec:
             command:
@@ -149,13 +154,15 @@ spec:
            {{- else }}
             - exec pg_isready -U {{ include "postgresql.username" . | quote }} -h 127.0.0.1 -p {{ template "postgresql.port" . }}
            {{- end }}
-          initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
-          periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
-          timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds }}
-          successThreshold: {{ .Values.livenessProbe.successThreshold }}
-          failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 6
+          successThreshold: 1
         {{- end }}
-        {{- if .Values.readinessProbe.enabled }}
+        {{- if .Values.readinessProbe }}
+        readinessProbe: {{ tpl (toYaml .Values.readinessProbe) . | nindent 10 }}
+        {{- else }}
         readinessProbe:
           exec:
             command:
@@ -163,11 +170,11 @@ spec:
             - -c
             - -e
             {{- include "postgresql.readinessProbeCommand" . | nindent 12 }}
-          initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
-          periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
-          timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
-          successThreshold: {{ .Values.readinessProbe.successThreshold }}
-          failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 6
+          successThreshold: 1
         {{- end }}
         volumeMounts:
         {{- if .Values.usePasswordFile }}

@@ -18,11 +18,11 @@ replicas: 1
 images:
   prometheus:
     repository: quay.io/astronomer/ap-prometheus
-    tag: 2.45.5
+    tag: 2.53.1
     pullPolicy: IfNotPresent
   configReloader:
     repository: quay.io/astronomer/ap-configmap-reloader
-    tag: 0.12.0
+    tag: 0.13.1
     pullPolicy: IfNotPresent
 
 resources: {}
@@ -33,17 +33,26 @@ resources: {}
 #   cpu: 100m
 #   memory: 128Mi
 
-# probe configurations for prometheus container
-livenessProbe:
-  initialDelaySeconds: 10
-  periodSeconds: 5
-  timeoutSeconds: 1
-  failureThreshold: 3
-readinessProbe:
-  initialDelaySeconds: 10
-  periodSeconds: 5
-  timeoutSeconds: 1
-  failureThreshold: 3
+serviceAccount:
+  create: true
+  name: ~
+
+livenessProbe: {}
+  # httpGet:
+  #   path: /-/healthy
+  #   port: {{ .Values.ports.http }}
+  # initialDelaySeconds: 10
+  # periodSeconds: 5
+  # failureThreshold: 3
+  # timeoutSeconds: 1
+readinessProbe: {}
+  # httpGet:
+  #   path: /-/ready
+  #   port: {{ .Values.ports.http }}
+  # initialDelaySeconds: 10
+  # periodSeconds: 5
+  # failureThreshold: 3
+  # timeoutSeconds: 1
 
 podSecurityContext:
   fsGroup: 65534
@@ -52,6 +61,8 @@ securityContext:
   runAsNonRoot: true
   runAsUser: 65534
 configMapReloader:
+  livenessProbe: {}
+  readinessProbe: {}
   resources: {}
     # limits:
     #   cpu: 100m
@@ -72,6 +83,7 @@ persistence:
   size: 100Gi
   storageClassName: ~
   annotations: {}
+  persistentVolumeClaimRetentionPolicy: ~
 
 ports:
   http: 9090

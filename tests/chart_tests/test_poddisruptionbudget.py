@@ -8,7 +8,6 @@ class TestHoustonPDB:
     def test_houston_pdb_cronjobs(self):
         """Test that pdbs do not touch houston cronjobs or workers."""
         templates = [
-            "charts/astronomer/templates/houston/cronjobs/houston-expire-deployments-cronjob.yaml",
             "charts/astronomer/templates/houston/cronjobs/houston-check-updates-cronjob.yaml",
             "charts/astronomer/templates/houston/cronjobs/houston-cleanup-deployments-cronjob.yaml",
         ]
@@ -16,44 +15,34 @@ class TestHoustonPDB:
         for show_only in templates:
             labels = render_chart(
                 show_only=[show_only],
-                values={
-                    "astronomer": {"houston": {"expireDeployments": {"enabled": True}}}
-                },
-            )[0]["spec"]["jobTemplate"]["spec"]["template"]["metadata"]["labels"]
-            assert (
-                labels["component"] != "houston"
-            ), f"ERROR: tempplate '{show_only}' matched houston"
+                values={},
+            )[0][
+                "spec"
+            ]["jobTemplate"][
+                "spec"
+            ]["template"][
+                "metadata"
+            ]["labels"]
+            assert labels["component"] != "houston", f"ERROR: tempplate '{show_only}' matched houston"
 
     def test_houston_pdb_workers(self):
         """Test that pdbs do not touch houston cronjobs or workers."""
-        template = (
-            "charts/astronomer/templates/houston/worker/houston-worker-deployment.yaml"
-        )
-        match_labels = render_chart(show_only=[template])[0]["spec"]["selector"][
-            "matchLabels"
-        ]
-        assert (
-            match_labels["component"] != "houston"
-        ), f"ERROR: tempplate '{template}' matched houston"
+        template = "charts/astronomer/templates/houston/worker/houston-worker-deployment.yaml"
+        match_labels = render_chart(show_only=[template])[0]["spec"]["selector"]["matchLabels"]
+        assert match_labels["component"] != "houston", f"ERROR: tempplate '{template}' matched houston"
 
     def test_houston_api_pdb_match_labels(self):
         # sourcery skip: class-extract-method
         """Houston pdb should have the right matchLabels."""
-        template = (
-            "charts/astronomer/templates/houston/api/houston-pod-disruption-budget.yaml"
-        )
-        match_labels = render_chart(show_only=[template])[0]["spec"]["selector"][
-            "matchLabels"
-        ]
+        template = "charts/astronomer/templates/houston/api/houston-pod-disruption-budget.yaml"
+        match_labels = render_chart(show_only=[template])[0]["spec"]["selector"]["matchLabels"]
         assert match_labels["tier"] == "astronomer"
         assert match_labels["component"] == "houston"
 
     def test_houston_api_pdb_deployment(self):
         """Houston pdb should have the right matchLabels."""
         template = "charts/astronomer/templates/houston/api/houston-deployment.yaml"
-        labels = render_chart(show_only=[template])[0]["spec"]["template"]["metadata"][
-            "labels"
-        ]
+        labels = render_chart(show_only=[template])[0]["spec"]["template"]["metadata"]["labels"]
         assert labels["tier"] == "astronomer"
         assert labels["component"] == "houston"
 
@@ -64,9 +53,7 @@ class TestHoustonPDB:
 )
 class TestPDB:
     show_only = [
-        str(path.relative_to(git_root_dir))
-        for path in git_root_dir.rglob("charts/**/*")
-        if "pod-disruption-budget" in str(path)
+        str(path.relative_to(git_root_dir)) for path in git_root_dir.rglob("charts/**/*") if "pod-disruption-budget" in str(path)
     ]
 
     def test_pod_disruption_budgets_default(self, kube_version):

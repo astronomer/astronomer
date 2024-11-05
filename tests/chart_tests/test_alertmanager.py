@@ -26,14 +26,13 @@ class TestAlertmanager:
         assert doc["apiVersion"] == "apps/v1"
         assert doc["metadata"]["name"] == "release-name-alertmanager"
         assert doc["spec"]["template"]["spec"]["securityContext"]["fsGroup"] == 65534
+        assert "persistentVolumeClaimRetentionPolicy" not in doc["spec"]
 
         # rfc1918 configs should be absent from default settings
         assert (
             any(
                 "--cluster.advertise-address=" in arg
-                for args in jmespath.search(
-                    "spec.template.spec.containers[*].args", doc
-                )
+                for args in jmespath.search("spec.template.spec.containers[*].args", doc)
                 for arg in args
             )
             is False
@@ -124,12 +123,8 @@ class TestAlertmanager:
 
         c_by_name = get_containers_by_name(doc, include_init_containers=False)
 
-        assert "webhook-alert-secret" in [
-            x["name"] for x in doc["spec"]["template"]["spec"]["volumes"]
-        ]
-        assert "webhook-alert-secret" in [
-            x["name"] for x in c_by_name["alertmanager"]["volumeMounts"]
-        ]
+        assert "webhook-alert-secret" in [x["name"] for x in doc["spec"]["template"]["spec"]["volumes"]]
+        assert "webhook-alert-secret" in [x["name"] for x in c_by_name["alertmanager"]["volumeMounts"]]
 
     def test_alertmanager_global_private_ca(self, kube_version):
         values = {
@@ -156,9 +151,7 @@ class TestAlertmanager:
                 "name": "config-volume",
                 "configMap": {
                     "name": "release-name-alertmanager",
-                    "items": [
-                        {"key": "alertmanager.yaml", "path": "alertmanager.yaml"}
-                    ],
+                    "items": [{"key": "alertmanager.yaml", "path": "alertmanager.yaml"}],
                 },
             },
             {
@@ -188,6 +181,24 @@ class TestAlertmanager:
 
         assert volumemounts == expected_volumemounts
         assert volumes == expected_volumes
-        assert {"name": "UPDATE_CA_CERTS", "value": "true"} in c_by_name[
-            "alertmanager"
-        ]["env"]
+        assert {"name": "UPDATE_CA_CERTS", "value": "true"} in c_by_name["alertmanager"]["env"]
+
+    def test_alertmanager_persistentVolumeClaimRetentionPolicy(self, kube_version):
+        test_persistentVolumeClaimRetentionPolicy = {
+            "whenDeleted": "Delete",
+            "whenScaled": "Retain",
+        }
+        doc = render_chart(
+            kube_version=kube_version,
+            values={
+                "alertmanager": {
+                    "persistence": {
+                        "persistentVolumeClaimRetentionPolicy": test_persistentVolumeClaimRetentionPolicy,
+                    },
+                },
+            },
+            show_only=["charts/alertmanager/templates/alertmanager-statefulset.yaml"],
+        )[0]
+
+        assert "persistentVolumeClaimRetentionPolicy" in doc["spec"]
+        assert test_persistentVolumeClaimRetentionPolicy == doc["spec"]["persistentVolumeClaimRetentionPolicy"]

@@ -1,6 +1,10 @@
-################################
-## Kube State Deployment
-#################################
+###########################
+## Kube State Deployment ##
+###########################
+{{- $useRoles := or .Values.global.features.namespacePools.enabled .Values.global.singleNamespace }}
+{{- $namespaces := .Values.global.features.namespacePools.namespaces.names }}
+{{- $namespaces = append $namespaces .Release.Namespace }}
+{{- $namespaceList := join "," $namespaces }}
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -28,20 +32,21 @@ spec:
         app: {{ template "kube-state.name" . }}
         version: {{ .Chart.Version }}
     spec:
-      nodeSelector:
-{{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
-      affinity:
-{{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 8 }}
-      tolerations:
-{{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
-      serviceAccountName: {{ template "kube-state.fullname" . }}
-{{- include "kube-state.imagePullSecrets" . | indent 6 }}
+    {{- if .Values.priorityClassName }}
+      priorityClassName: {{ .Values.priorityClassName }}
+    {{- end }}
+      nodeSelector: {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
+      affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
+      tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
+      serviceAccountName: {{ template "kube-state.serviceAccount" . }}
+      {{- include "kube-state.imagePullSecrets" . | nindent 6 }}
       containers:
       - name: kube-state
         args:
-      {{- if .Values.global.singleNamespace }}
-        - --namespaces={{ .Release.Namespace }}
+      {{- if $useRoles }}
+        - --namespaces={{ $namespaceList }}
       {{- end }}
+        - --resources={{ .Values.collectors | join "," }}
       {{- if .Values.extraArgs }}
           {{- .Values.extraArgs | toYaml | nindent 8 }}
       {{- end }}
@@ -53,11 +58,17 @@ spec:
           containerPort: {{ .Values.ports.scrape }}
         - name: telemetry
           containerPort: {{ .Values.ports.telemetry }}
+        {{- if .Values.readinessProbe }}
+        readinessProbe: {{ tpl (toYaml .Values.readinessProbe) . | nindent 12 }}
+        {{- end }}
+        {{ if .Values.livenessProbe }}
+        livenessProbe: {{ tpl (toYaml .Values.livenessProbe) . | nindent 12 }}
+        {{ else }}
         livenessProbe:
           httpGet:
             path: /healthz
             port: {{ .Values.ports.scrape }}
           initialDelaySeconds: 5
           timeoutSeconds: 5
-        resources:
-{{ toYaml .Values.resources | indent 12 }}
+        {{- end }}
+        resources: {{ toYaml .Values.resources | nindent 12 }}

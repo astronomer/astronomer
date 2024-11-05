@@ -9,16 +9,27 @@ tolerations: []
 images:
   nginx:
     repository: quay.io/astronomer/ap-nginx
-    tag: 1.9.6
+    tag: 1.11.2-1
     pullPolicy: IfNotPresent
   defaultBackend:
     repository: quay.io/astronomer/ap-default-backend
-    tag: 0.28.25
+    tag: 0.28.27
     pullPolicy: IfNotPresent
 
 securityContext:
   runAsUser: 101
   runAsNonRoot: true
+  capabilities:
+    drop:
+      - ALL
+  allowPrivilegeEscalation: false
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ~
 
 ingressClass: ~
 
@@ -28,6 +39,8 @@ replicasDefaultBackend: 2
 maxUnavailable: 25%
 maxUnavailableDefaultBackend: 25%
 
+minReadySeconds: 0
+
 resources: {}
 #  limits:
 #   cpu: 100m
@@ -35,6 +48,14 @@ resources: {}
 #  requests:
 #   cpu: 100m
 #   memory: 128Mi
+
+livenessProbe: {}
+  # httpGet:
+  #   path: /healthz
+  #   port: {{ .Values.ports.healthz }}
+  # initialDelaySeconds: 30
+  # timeoutSeconds: 5
+readinessProbe: {}
 
 # Service type that Nginx can be. Default is LoadBalancer but "ClusterIP" and "NodePort" are both valid.
 serviceType: "LoadBalancer"
@@ -85,6 +106,14 @@ electionId: ingress-controller-leader
 # Enables the annotation validation feature
 enableAnnotationValidations: false
 
+# This must be used together with service annotation service.kubernetes.io/topology-mode="auto"
+enableTopologyAwareRouting: false
+
+disableLeaderElection: false
+
+# -- Duration a leader election is valid before it's getting re-elected, e.g. `15s`, `10m` or `1h`. (Default: 30s)
+electionTTL: ""
+
 # -- This configuration defines if Ingress Controller should allow users to set
 # their own *-snippet annotations, otherwise this is forbidden / dropped
 # when users add those annotations.
@@ -93,3 +122,5 @@ allowSnippetAnnotations: true
 
 defaultBackend:
   resources: {}
+  readinessProbe: {}
+  livenessProbe: {}

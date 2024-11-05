@@ -3,7 +3,7 @@
 #############################
 image:
   repository: quay.io/astronomer/ap-pgbouncer-krb
-  tag: 1.17.0-11
+  tag: 1.17.0-14
   pullPolicy: IfNotPresent
 
 securityContext:
@@ -18,6 +18,15 @@ podDisruptionBudget:
 
 networkPolicies:
   enabled: true
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ~
 
 env: []
 
@@ -42,6 +51,14 @@ resources:
   limits:
     memory: 256Mi
     cpu: 250m
+
+readinessProbe: {}
+  # tcpSocket:
+  #   port: {{ .Values.internalPort }}
+
+livenessProbe: {}
+  # tcpSocket:
+  #   port: {{ .Values.internalPort }}
 
 # Mount additional volumes into pgbouncer.
 extraVolumes: []

@@ -1,6 +1,6 @@
-################################
-## Astronomer Houston ConfigMap
-#################################
+##################################
+## Astronomer Houston ConfigMap ##
+##################################
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -15,6 +15,11 @@ data:
   {{ if .Values.houston.airflowReleasesConfig }}
   airflow_releases.json: |
     {{ .Values.houston.airflowReleasesConfig | toJson }}
+  # These are system-specified config overrides.
+  {{- end }}
+  {{ if .Values.houston.RuntimeReleasesConfig }}
+  astro_runtime_releases.json: |
+    {{ .Values.houston.RuntimeReleasesConfig | toJson }}
   # These are system-specified config overrides.
   {{- end }}
   production.yaml: |
@@ -61,9 +66,12 @@ data:
       releaseNamespace: {{ .Release.Namespace }}
       releaseVersion: {{ .Chart.Version }}
       singleNamespace: {{ .Values.global.singleNamespace }}
-
+      {{- if .Values.global.tlsSecret }}
+      tlsSecretName: {{ .Values.global.tlsSecret }}
+      {{- end }}
     # Airflow deployment configuration
     deployments:
+      disableManageClusterScopedResources: {{ default false ( or .Values.global.disableManageClusterScopedResources  .Values.global.features.namespacePools.enabled ) }}
       fluentdIndexPrefix: {{ include "fluentd.IndexPattern" .}}
       enableHoustonInternalAuthorization: {{ include "houston.InternalAuthorization" . }}
       dagOnlyDeployment: {{ .Values.global.dagOnlyDeployment.enabled }}
@@ -114,6 +122,7 @@ data:
         {{- if .Values.global.authSidecar.securityContext}}
         securityContext: {{- .Values.global.authSidecar.securityContext | toYaml | nindent 10 }}
         {{- end }}
+        resources: {{- .Values.global.authSidecar.resources | toYaml | nindent 10 }}
         annotations: {
           {{- range $key, $value := .Values.global.extraAnnotations}}
           {{ $key }}: {{ $value | quote }},
@@ -154,14 +163,20 @@ data:
           dagServer:
             repository: {{ (splitList ":"  $dagOnlyDeployment ) | first  }}
             tag: {{ (splitList ":"  $dagOnlyDeployment ) | last  }}
-        {{- if .Values.global.dagOnlyDeployment.securityContext }}
-        securityContext: {{ template "dagOnlyDeployment.securityContext" . }}
+        {{- if .Values.global.dagOnlyDeployment.securityContexts }}
+        securityContexts: {{ template "dagOnlyDeployment.securityContexts" . }}
         {{- end }}
         {{- if .Values.global.dagOnlyDeployment.resources }}
         server:
           resources: {{- .Values.global.dagOnlyDeployment.resources | toYaml | nindent 12 }}
         client:
           resources: {{- .Values.global.dagOnlyDeployment.resources | toYaml | nindent 12 }}
+        {{- end }}
+        {{- if .Values.global.dagOnlyDeployment.persistence }}
+        persistence: {{- .Values.global.dagOnlyDeployment.persistence | toYaml | nindent 10 }}
+        {{- end }}
+        {{ if .Values.global.dagOnlyDeployment.serviceAccount }}
+        serviceAccount: {{- .Values.global.dagOnlyDeployment.serviceAccount | toYaml | nindent 10 }}
         {{- end }}
       {{- end }}
 
@@ -269,6 +284,11 @@ data:
                 ephemeral-storage: "2Gi"
               requests:
                 ephemeral-storage: "1Gi"
+
+            strategy:
+              type: RollingUpdate
+              rollingUpdate:
+                maxUnavailable: 1
 
           airflowLocalSettings: |
             # This pod mutation hook runs for all pods dynamically created by Airflow

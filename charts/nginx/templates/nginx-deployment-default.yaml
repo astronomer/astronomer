@@ -1,6 +1,6 @@
-################################
-## NGINX Default backend deployment
-#################################
+######################################
+## NGINX Default backend deployment ##
+######################################
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -27,17 +27,25 @@ spec:
         app: {{ template "nginx.name" . }}
         version: {{ .Chart.Version }}
     spec:
+      {{- if .Values.global.rbacEnabled }}
       serviceAccountName: {{ template "defaultBackend.fullname" . }}
+      {{- end}}
       nodeSelector: {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
       affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
       tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       terminationGracePeriodSeconds: 60
-{{- include "nginx.imagePullSecrets" . | indent 6 }}
+      {{- include "nginx.imagePullSecrets" . | nindent 6 }}
       containers:
         - name: default-backend
           image: {{ template "nginx.defaultBackend.image" . }}
           imagePullPolicy: {{ .Values.images.defaultBackend.pullPolicy }}
-          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
+          securityContext: {{ toYaml .Values.securityContext | nindent 12 }}
+          {{- if .Values.defaultBackend.readinessProbe }}
+          readinessProbe: {{ toYaml .Values.defaultBackend.readinessProbe | nindent 12 }}
+          {{- end }}
+          {{ if .Values.defaultBackend.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.defaultBackend.livenessProbe) . | nindent 12 }}
+          {{ else }}
           livenessProbe:
             httpGet:
               path: /healthz
@@ -45,6 +53,7 @@ spec:
               scheme: HTTP
             initialDelaySeconds: 30
             timeoutSeconds: 5
+          {{- end }}
           resources: {{ toYaml .Values.defaultBackend.resources | nindent 12 }}
           ports:
             - containerPort: {{ .Values.ports.defaultBackendHTTP }}

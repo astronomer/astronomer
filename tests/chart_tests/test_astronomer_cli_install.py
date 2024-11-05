@@ -1,6 +1,6 @@
 from tests.chart_tests.helm_template_generator import render_chart
 import pytest
-from tests import supported_k8s_versions
+from tests import get_containers_by_name, supported_k8s_versions
 import jmespath
 
 
@@ -10,8 +10,7 @@ import jmespath
 )
 class TestAstronomerCliInstall:
     def test_astronomer_cli_install_default(self, kube_version):
-        """Test that helm renders a good deployment template for
-        astronomer/cli-install."""
+        """Test that helm renders a good deployment template for astronomer/cli-install using default values."""
         docs = render_chart(
             kube_version=kube_version,
             show_only=[
@@ -25,6 +24,12 @@ class TestAstronomerCliInstall:
 
         assert len(docs) == 5
         assert "install.example.com" in jmespath.search("spec.rules[*].host", docs[4])
+
+        c_by_name = get_containers_by_name(docs[1])
+
+        assert c_by_name["cli-install"]["livenessProbe"]["initialDelaySeconds"] == 30
+        assert c_by_name["cli-install"]["livenessProbe"]["timeoutSeconds"] == 5
+        assert not c_by_name["cli-install"].get("readinessProbe")
 
     def test_astronomer_cli_install_disabled(self, kube_version):
         """Test that cli install service is disabled."""
@@ -47,9 +52,7 @@ class TestAstronomerCliInstall:
         docs = render_chart(
             kube_version=kube_version,
             values={"astronomer": {"install": {"cliEnabled": False}}},
-            show_only=[
-                "charts/astronomer/templates/cli-install/cli-install-ingress.yaml"
-            ],
+            show_only=["charts/astronomer/templates/cli-install/cli-install-ingress.yaml"],
         )
 
         assert len(docs) == 0

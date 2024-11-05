@@ -24,6 +24,14 @@ resources:
    cpu: 100m
    memory: 256Mi
 
+livenessProbe: {}
+#  httpGet:
+#    path: /healthz
+#    port: {{ .Values.ports.scrape }}
+#  initialDelaySeconds: 5
+#  timeoutSeconds: 5
+readinessProbe: {}
+
 ports:
   scrape: 8080
   telemetry: 8081
@@ -31,4 +39,43 @@ ports:
 replicas: 1
 
 extraArgs:
-- "--metric-labels-allowlist=namespaces=[*],pods=[*]"
+- "--metric-labels-allowlist=namespaces=[*],pods=[*],configmaps=[*]"
+
+priorityClassName: ~
+
+serviceAccount:
+  # Specifies whether a ServiceAccount should be created
+  create: true
+  # The name of the ServiceAccount to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ~
+
+collectors:
+  #- certificatesigningrequests
+  #- mutatingwebhookconfigurations
+  #- persistentvolumes
+  #- validatingwebhookconfigurations
+  #- volumeattachments
+  #- storageclasses
+  #- leases
+  #- nodes
+  #- endpoints
+  #- poddisruptionbudgets
+  - daemonsets
+  - namespaces
+  - configmaps
+  - cronjobs
+  - deployments
+  - horizontalpodautoscalers
+  - ingresses
+  - jobs
+  - limitranges
+  - networkpolicies
+  - persistentvolumeclaims
+  - pods
+  - replicasets
+  - replicationcontrollers
+  - resourcequotas
+  - secrets
+  - services
+  - statefulsets

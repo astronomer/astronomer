@@ -1,25 +1,27 @@
-##################################
-#                                #
-#  NATS Streaming Configuration  #
-#                                #
-##################################
+################################
+# NATS Streaming Configuration #
+################################
 images:
   init:
     repository: quay.io/astronomer/ap-init
-    tag: 3.18.6-2
+    tag: 3.18.9
     pullPolicy: IfNotPresent
   stan:
     repository: quay.io/astronomer/ap-nats-streaming
-    tag: 0.25.6-3
+    tag: 0.25.6-6
     pullPolicy: IfNotPresent
   exporter:
     repository: quay.io/astronomer/ap-nats-exporter
-    tag: 0.15.0
+    tag: 0.15.0-3
     pullPolicy: IfNotPresent
 
 
 init:
   resources: {}
+
+waitForNatsServer:
+  livenessProbe: {}
+  readinessProbe: {}
 
 stan:
   resources: {}
@@ -29,6 +31,9 @@ stan:
   #  requests:
   #   cpu: 100m
   #   memory: 128Mi
+
+  livenessProbe: {}
+  readinessProbe: {}
 
   # Cluster name, generated into a name from the
   # release name by default.
@@ -41,6 +46,19 @@ stan:
   # In case of NATS not being embedded then
   # an URL for NATS is required.
   nats:
+    livenessProbe: {}
+      # httpGet:
+      #   path: /streaming/serverz
+      #   port: monitor
+      # initialDelaySeconds: 10
+      # timeoutSeconds: 5
+    readinessProbe: {}
+      # httpGet:
+      #   path: /streaming/serverz
+      #   port: monitor
+      # initialDelaySeconds: 10
+      # timeoutSeconds: 5
+
     port: 4222
     serviceRoleAuth:
       enabled: false
@@ -183,3 +201,4 @@ exporter:
 # nats chart values.
 persistence:
   annotations: {}
+  persistentVolumeClaimRetentionPolicy: ~

@@ -1,6 +1,6 @@
-################################
-## Fluentd ClusterRole
-#################################
+#########################
+## Fluentd ClusterRole ##
+#########################
 {{- if .Values.global.rbacEnabled }}
 kind: ClusterRole
 apiVersion: {{ template "apiVersion.rbac" . }}

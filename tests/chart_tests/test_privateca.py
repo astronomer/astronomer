@@ -98,73 +98,7 @@ class TestPrivateCaDaemonset:
         assert len(docs) == 1
         doc = docs[0]
         self.common_tests_daemonset(doc)
-        assert len(docs[0]["spec"]["template"]["spec"]["containers"]) == 1
-        assert (
-            doc["spec"]["template"]["spec"]["containers"][0]["image"]
-            == "snarks:boojums"
-        )
+        spec = doc["spec"]["template"]["spec"]
 
-
-@pytest.mark.parametrize(
-    "kube_version",
-    supported_k8s_versions,
-)
-class TestPrivateCaPsp:
-    def test_privateca_psp_enabled_cacertaddtohost_disabled(self, kube_version):
-        """Test that there is nothing rendered when psp is enabled and
-        privateCaCertsAddToHost is disabled."""
-        with pytest.raises(CalledProcessError):
-            render_chart(
-                kube_version=kube_version,
-                show_only=["templates/trust-private-ca-on-all-nodes/psp.yaml"],
-                values={
-                    "global": {
-                        "pspEnabled": True,
-                        "privateCaCertsAddToHost": {
-                            "enabled": False,
-                        },
-                    }
-                },
-            )
-
-    def test_privateca_psp_disabled_cacertaddtohost_enabled(self, kube_version):
-        """Test that nothing is rendered when psp is disabled and
-        privateCaCertsAddToHost is enabled."""
-        with pytest.raises(CalledProcessError):
-            render_chart(
-                kube_version=kube_version,
-                show_only=["templates/trust-private-ca-on-all-nodes/psp.yaml"],
-                values={
-                    "global": {
-                        "pspEnabled": False,
-                        "privateCaCertsAddToHost": {
-                            "enabled": True,
-                        },
-                    }
-                },
-            )
-
-    def test_privateca_psp_enabled(self, kube_version):
-        """Test that psp is rendered when psp is enabled and
-        privateCaCertsAddToHost is enabled."""
-
-        _, minor, _ = (int(x) for x in kube_version.split("."))
-        if minor >= 25:
-            pytest.skip()
-        else:
-            docs = render_chart(
-                kube_version=kube_version,
-                show_only=["templates/trust-private-ca-on-all-nodes/psp.yaml"],
-                values={
-                    "global": {
-                        "pspEnabled": True,
-                        "privateCaCertsAddToHost": {
-                            "enabled": True,
-                        },
-                    }
-                },
-            )
-            assert all(x["kind"] == "PodSecurityPolicy" for x in docs)
-            assert len(docs) == 1
-            assert docs[0]["kind"] == "PodSecurityPolicy"
-            assert docs[0]["metadata"]["name"] == "release-name-private-ca"
+        assert len(spec["containers"]) == 1
+        assert spec["containers"][0]["image"] == "snarks:boojums"

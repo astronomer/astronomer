@@ -9,7 +9,7 @@ replicaCount: 2
 
 image:
   repository: quay.io/astronomer/ap-postgres-exporter
-  tag: 0.15.0-5
+  tag: 0.15.0-8
   pullPolicy: IfNotPresent
 
 
@@ -32,12 +32,26 @@ resources:
 rbac:
   # Specifies whether RBAC resources should be created
   create: true
+
 serviceAccount:
   # Specifies whether a ServiceAccount should be created
   create: true
   # The name of the ServiceAccount to use.
   # If not set and create is true, a name is generated using the fullname template
   name:
+
+livenessProbe: {}
+  # tcpSocket:
+  #   port: {{ .Values.service.targetPort }}
+  # initialDelaySeconds: 5
+  # periodSeconds: 10
+
+readinessProbe: {}
+  # tcpSocket:
+  #   port: {{ .Values.service.targetPort }}
+  # initialDelaySeconds: 5
+  # periodSeconds: 10
+
 
 podSecurityContext: {}
 securityContext:

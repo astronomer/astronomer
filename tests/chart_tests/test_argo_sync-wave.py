@@ -50,22 +50,8 @@ def test_argo_sync_wave():
 
     docs = render_argo_charts(argo_enabled=True)
     assert len(docs) == 26
-    assert (
-        len(
-            jmespath.search(
-                '[*].metadata.annotations."argocd.argoproj.io/sync-wave"', docs
-            )
-        )
-        == 26
-    )
+    assert len(jmespath.search('[*].metadata.annotations."argocd.argoproj.io/sync-wave"', docs)) == 26
 
     docs = render_argo_charts(argo_enabled=False)
     assert len(docs) == 26
-    assert (
-        len(
-            jmespath.search(
-                '[*].metadata.annotations."argocd.argoproj.io/sync-wave"', docs
-            )
-        )
-        == 0
-    )
+    assert len(jmespath.search('[*].metadata.annotations."argocd.argoproj.io/sync-wave"', docs)) == 0
