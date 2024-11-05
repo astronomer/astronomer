@@ -6,7 +6,10 @@
 {{- $useClusterRoles := and .Values.global.rbacEnabled .Values.global.clusterRoles (not $useRoles )}}
 {{- $shouldCreateResources := and .Values.global.rbacEnabled (or (and .Values.global.clusterRoles (not .Values.global.features.namespacePools.enabled )) $namespacepoolsRBACresources) }}
 {{- if $shouldCreateResources }}
-{{- $namespaces := .Values.global.features.namespacePools.namespaces.names }}
+{{- $namespaces :=  .Values.global.features.namespacePools.namespaces.names }}
+{{- if .Values.extraNamespaces  -}}
+{{- $namespaces = concat $namespaces .Values.extraNamespaces }}
+{{- end }}
 {{- if $useClusterRoles }}
   {{- $namespaces = list .Release.Namespace}}
 {{- else  }}
