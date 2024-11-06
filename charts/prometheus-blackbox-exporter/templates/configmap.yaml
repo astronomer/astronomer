@@ -1,4 +1,4 @@
-{{- if and (.Values.config) .Values.global.prometheusBlackboxExporterEnabled }}
+{{- if and (.Values.config) .Values.global.blackboxExporterEnabled }}
 apiVersion: v1
 kind: {{ if .Values.secretConfig -}} Secret {{- else -}} ConfigMap {{- end }}
 metadata:

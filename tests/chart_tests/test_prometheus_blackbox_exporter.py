@@ -23,7 +23,7 @@ class TestPrometheusBlackBoxExporterDeployment:
     def test_prometheus_blackbox_exporter_service_defaults(self, kube_version):
         values = {
             "global": {
-                "prometheusBlackboxExporterEnabled": True,
+                "blackboxExporterEnabled": True,
             }
         }
 
@@ -52,7 +52,7 @@ class TestPrometheusBlackBoxExporterDeployment:
 
         values = {
             "global": {
-                "prometheusBlackboxExporterEnabled": True,
+                "blackboxExporterEnabled": True,
             }
         }
 
@@ -92,7 +92,7 @@ class TestPrometheusBlackBoxExporterDeployment:
                     }
                 },
                 "global": {
-                "prometheusBlackboxExporterEnabled": True,
+                "blackboxExporterEnabled": True,
             }
             },
             show_only=["charts/prometheus-blackbox-exporter/templates/deployment.yaml"],
@@ -111,7 +111,7 @@ class TestPrometheusBlackBoxExporterDeployment:
             values={
                 "prometheus-blackbox-exporter": {"securityContext": {"runAsUser": 1000}},
                 "global": {
-                "prometheusBlackboxExporterEnabled": True,
+                "blackboxExporterEnabled": True,
             },
             },
             show_only=["charts/prometheus-blackbox-exporter/templates/deployment.yaml"],
@@ -132,7 +132,7 @@ class TestPrometheusBlackBoxExporterDeployment:
         values = {
             "global": {
                 "platformNodePool": global_platform_node_pool_config,
-                "prometheusBlackboxExporterEnabled": True,
+                "blackboxExporterEnabled": True,
             }
         }
         docs = render_chart(
@@ -152,7 +152,7 @@ class TestPrometheusBlackBoxExporterDeployment:
         global_platform_node_pool_config["nodeSelector"] = {"role": "astro-prometheus-blackbox-exporter"}
         values = {"prometheus-blackbox-exporter": global_platform_node_pool_config,
                   "global": {
-                "prometheusBlackboxExporterEnabled": True,
+                "blackboxExporterEnabled": True,
             },
             }
         docs = render_chart(
@@ -171,7 +171,7 @@ class TestPrometheusBlackBoxExporterDeployment:
         """Test that the prometheusBlackboxExporter.enabled flag controls resource creation."""
         values = {
             "global": {
-                "prometheusBlackboxExporterEnabled": True,
+                "blackboxExporterEnabled": True,
             }
         }
 

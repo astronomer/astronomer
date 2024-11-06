@@ -1,4 +1,4 @@
-{{- if .Values.global.prometheusBlackboxExporterEnabled }}
+{{- if .Values.global.blackboxExporterEnabled }}
 kind: Service
 apiVersion: v1
 metadata:

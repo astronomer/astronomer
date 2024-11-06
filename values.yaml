@@ -82,10 +82,9 @@ global:
   #nodeExporterEnabled: true
 
   prometheusPostgresExporterEnabled: false
-  prometheusBlackboxExporterEnabled: false
 
   # Enables blackbox exporter
-  #blackboxExporterEnabled: false
+  blackboxExporterEnabled: false
 
   # make fluentd to gather logs from all available namespaces
   manualNamespaceNamesEnabled: false
