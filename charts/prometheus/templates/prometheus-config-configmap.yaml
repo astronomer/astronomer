@@ -1,6 +1,8 @@
 #################################
 ## Prometheus Config ConfigMap ##
 #################################
+{{- $useClusterRoles := .Values.global.clusterRoles }}
+
 kind: ConfigMap
 apiVersion: v1
 metadata:
@@ -53,7 +55,9 @@ data:
       - job_name: prometheus
         static_configs:
           - targets: ["localhost:9090"]
-
+      
+      # TODO add a proper config flag option for disabling kubernetes-apiservers scraping instead of using useClusterRoles
+      {{- if $useClusterRoles }}
       - job_name: 'kubernetes-apiservers'
         kubernetes_sd_configs:
           - role: endpoints
@@ -66,7 +70,9 @@ data:
           - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
             action: keep
             regex: default;kubernetes;https
-
+      {{- end }}
+      # TODO add a proper config flag option for disabling core-dns scraping instead of using useClusterRoles
+      {{- if $useClusterRoles }}
       - job_name: core-dns
         kubernetes_sd_configs:
           - role: pod
@@ -80,7 +86,8 @@ data:
           - source_labels: [__meta_kubernetes_pod_container_port_number]
             action: keep
             regex: "^9153"
-
+      {{- end }}
+      {{- if $useClusterRoles }}
       - job_name: kube-dns
         kubernetes_sd_configs:
           - role: pod
@@ -94,7 +101,7 @@ data:
           - source_labels: [__meta_kubernetes_pod_container_port_number]
             action: keep
             regex: "^1005[45]"
-
+      {{- end }}
       - job_name: nginx
         kubernetes_sd_configs:
           - role: endpoints
@@ -132,7 +139,6 @@ data:
             regex: ([^:]+)(?::\d+)?;(\d+)
             replacement: $1:$2
             target_label: __address__
-
       # - job_name: registry
       #   kubernetes_sd_configs:
       #     - role: service
@@ -303,7 +309,8 @@ data:
             replacement: "$1"
             target_label: release
           {{- end}}
-
+      # TODO add a proper config flag option for disabling fluentd scraping instead of using useClusterRoles
+      {{- if and $useClusterRoles .Values.global.fluentdEnabled }}
       - job_name: fluentd
         scrape_interval: 30s
         kubernetes_sd_configs:
@@ -327,8 +334,9 @@ data:
           - source_labels: [__name__]
             regex: 'fluentd_tail_file_.*'
             action: drop
+      {{- end }}
 
-      {{- if .Values.global.nodeExporterEnabled }}
+      {{- if and $useClusterRoles .Values.global.nodeExporterEnabled }}
       - job_name: node-exporter
         scrape_interval: 30s
         kubernetes_sd_configs:
@@ -364,10 +372,19 @@ data:
         scrape_interval: 10s # Faster scrape to power dashboards
         kubernetes_sd_configs:
           - role: service
-          {{- if .Values.global.singleNamespace }}
+          {{- if or (not $useClusterRoles) .Values.global.singleNamespace }}
             namespaces:
               names:
+                {{- if not $useClusterRoles }}
+                # explicitly including each namespace in the pool
+                {{- range $i, $namespaceName := .Values.global.features.namespacePools.namespaces.names }}
+                - {{ $namespaceName }}
+                {{- end }}
+                {{- end }}
+                {{- if .Values.global.singleNamespace }}
+                # only the platform namespace since this is a single namespace deployment
                 - {{ .Release.Namespace }}
+                {{- end }}
           {{- end }}
         relabel_configs:
           - action: labelmap
@@ -425,8 +442,8 @@ data:
           - source_labels: [__name__]
             regex: 'airflow_dag_processing_last_duration_.*_sum'
             action: drop
-
-      {{- if not .Values.global.singleNamespace }}
+      # TODO add a proper config flag option for disabling kubernetes-nodes scraping instead of using useClusterRoles
+      {{- if and $useClusterRoles (not .Values.global.singleNamespace) }}
       - job_name: kubernetes-nodes
         scheme: https
         tls_config:
@@ -443,7 +460,9 @@ data:
             regex: (.+)
             target_label: __metrics_path__
             replacement: /api/v1/nodes/${1}/proxy/metrics
-
+      {{- end }}
+      # TODO add a proper config flag option for disabling cadvisor scraping instead of using useClusterRoles
+      {{- if and $useClusterRoles (not .Values.global.singleNamespace) }}
       - job_name: kubernetes-nodes-cadvisor
         scheme: https
         tls_config:

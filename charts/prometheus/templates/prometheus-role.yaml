@@ -1,9 +1,9 @@
-############################
-## Prometheus ClusterRole ##
-############################
+#################################
+## Prometheus Role/ClusterRole ##
+#################################
 {{- $singleNamespace := .Values.global.singleNamespace }}
-{{- if and .Values.global.rbacEnabled .Values.serviceAccount.create }}
-kind: {{ if $singleNamespace }}Role{{ else }}ClusterRole{{ end }}
+{{- if and .Values.global.rbacEnabled .Values.global.prometheus.rbac.role.create }}
+kind: {{ if or $singleNamespace (eq .Values.global.prometheus.rbac.role.kind "Role") }}Role{{ else }}ClusterRole{{ end }}
 apiVersion: {{ template "apiVersion.rbac" . }}
 metadata:
   name: {{ template "prometheus.fullname" . }}
@@ -21,14 +21,18 @@ rules:
       - "endpoints"
       - "pods"
       {{- if not $singleNamespace }}
+      {{- if eq .Values.global.prometheus.rbac.role.canGetNodes true }}
       - "nodes"
+      {{- end }}
+      {{- if eq .Values.global.prometheus.rbac.role.canGetNodeProxy true }}
       - "nodes/proxy"
+      {{- end }}
       {{- end }}
     verbs:
       - "get"
       - "list"
       - "watch"
-  {{- if not $singleNamespace }}
+  {{- if or ($singleNamespace) (eq .Values.global.prometheus.rbac.role.kind  "ClusterRole") }}
   - nonResourceURLs:
       - "/metrics"
     verbs:
