@@ -353,6 +353,7 @@ workflows:
                 - quay.io/astronomer/ap-auth-sidecar:1.27.1
                 - quay.io/astronomer/ap-awsesproxy:1.5.0-11
                 - quay.io/astronomer/ap-base:3.18.9
+                - quay.io/astronomer/ap-blackbox-exporter:0.25.0-3
                 - quay.io/astronomer/ap-cli-install:0.26.26
                 - quay.io/astronomer/ap-commander:0.36.7
                 - quay.io/astronomer/ap-configmap-reloader:0.13.1
@@ -391,6 +392,7 @@ workflows:
                 - quay.io/astronomer/ap-auth-sidecar:1.27.1
                 - quay.io/astronomer/ap-awsesproxy:1.5.0-11
                 - quay.io/astronomer/ap-base:3.18.9
+                - quay.io/astronomer/ap-blackbox-exporter:0.25.0-3
                 - quay.io/astronomer/ap-cli-install:0.26.26
                 - quay.io/astronomer/ap-commander:0.36.7
                 - quay.io/astronomer/ap-configmap-reloader:0.13.1
