@@ -21,7 +21,14 @@ def common_blackbox_exporter_tests(docs):
 )
 class TestPrometheusBlackBoxExporterDeployment:
     def test_prometheus_blackbox_exporter_service_defaults(self, kube_version):
+        values = {
+            "global": {
+                "prometheusBlackboxExporterEnabled": True,
+            }
+        }
+
         docs = render_chart(
+            values=values,
             kube_version=kube_version,
             show_only=["charts/prometheus-blackbox-exporter/templates/service.yaml"],
         )
@@ -42,7 +49,15 @@ class TestPrometheusBlackBoxExporterDeployment:
         ]
 
     def test_prometheus_blackbox_exporter_deployment_defaults(self, kube_version):
+
+        values = {
+            "global": {
+                "prometheusBlackboxExporterEnabled": True,
+            }
+        }
+
         docs = render_chart(
+            values=values,
             kube_version=kube_version,
             show_only=["charts/prometheus-blackbox-exporter/templates/deployment.yaml"],
         )
@@ -76,6 +91,9 @@ class TestPrometheusBlackBoxExporterDeployment:
                         "requests": {"cpu": "666m", "memory": "888Mi"},
                     }
                 },
+                "global": {
+                "prometheusBlackboxExporterEnabled": True,
+            }
             },
             show_only=["charts/prometheus-blackbox-exporter/templates/deployment.yaml"],
         )
@@ -92,6 +110,9 @@ class TestPrometheusBlackBoxExporterDeployment:
             kube_version=kube_version,
             values={
                 "prometheus-blackbox-exporter": {"securityContext": {"runAsUser": 1000}},
+                "global": {
+                "prometheusBlackboxExporterEnabled": True,
+            },
             },
             show_only=["charts/prometheus-blackbox-exporter/templates/deployment.yaml"],
         )
@@ -111,6 +132,7 @@ class TestPrometheusBlackBoxExporterDeployment:
         values = {
             "global": {
                 "platformNodePool": global_platform_node_pool_config,
+                "prometheusBlackboxExporterEnabled": True,
             }
         }
         docs = render_chart(
@@ -128,7 +150,11 @@ class TestPrometheusBlackBoxExporterDeployment:
         """Test that blackbox exporter renders proper nodeSelector, affinity,
         and tolerations with sunchart overrides"""
         global_platform_node_pool_config["nodeSelector"] = {"role": "astro-prometheus-blackbox-exporter"}
-        values = {"prometheus-blackbox-exporter": global_platform_node_pool_config}
+        values = {"prometheus-blackbox-exporter": global_platform_node_pool_config,
+                  "global": {
+                "prometheusBlackboxExporterEnabled": True,
+            },
+            }
         docs = render_chart(
             kube_version=kube_version,
             values=values,
@@ -140,3 +166,20 @@ class TestPrometheusBlackBoxExporterDeployment:
         assert len(spec["tolerations"]) > 0
         assert spec["nodeSelector"] == values["prometheus-blackbox-exporter"]["nodeSelector"]
         assert spec["tolerations"] == values["prometheus-blackbox-exporter"]["tolerations"]
+
+    def test_prometheus_blackbox_exporter_enabled_flag(self, kube_version):
+        """Test that the prometheusBlackboxExporter.enabled flag controls resource creation."""
+        values = {
+            "global": {
+                "prometheusBlackboxExporterEnabled": True,
+            }
+        }
+
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=["charts/prometheus-blackbox-exporter/templates/deployment.yaml", "charts/prometheus-blackbox-exporter/templates/configmap.yaml",
+                       "charts/prometheus-blackbox-exporter/templates/service.yaml" ],
+        )
+
+        assert len(docs) == 3

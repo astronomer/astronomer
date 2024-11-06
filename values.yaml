@@ -82,6 +82,7 @@ global:
   #nodeExporterEnabled: true
 
   prometheusPostgresExporterEnabled: false
+  prometheusBlackboxExporterEnabled: false
 
   # Enables blackbox exporter
   #blackboxExporterEnabled: false

@@ -1,3 +1,4 @@
+{{- if .Values.global.prometheusBlackboxExporterEnabled }}
 kind: Service
 apiVersion: v1
 metadata:
@@ -27,3 +28,4 @@ spec:
   selector:
     component: blackbox-exporter
     release: {{ .Release.Name }}
+{{- end }}
