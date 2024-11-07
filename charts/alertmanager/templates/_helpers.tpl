@@ -53,23 +53,25 @@ Return  the proper Storage Class
 {{/*
 Helm 2.11 supports the assignment of a value to a variable defined in a different scope,
 but Helm 2.9 and 2.10 does not support it, so we need to implement this if-else logic.
+This refactoring prioritizes persistence.storageClassName over global.storageClass.
 */}}
-{{- if .Values.global.storageClass -}}
-    {{- if (eq "-" .Values.global.storageClass) -}}
+{{- if .Values.persistence.storageClassName -}}
+    {{- if (eq "~" .Values.persistence.storageClassName) -}}
         {{- printf "storageClassName: \"\"" -}}
     {{- else }}
-        {{- printf "storageClassName: %s" .Values.global.storageClass -}}
+        {{- printf "storageClassName: %s" .Values.persistence.storageClassName -}}
     {{- end -}}
 {{- else -}}
-    {{- if .Values.persistence.storageClassName -}}
-          {{- if (eq "~" .Values.persistence.storageClassName) -}}
-              {{- printf "storageClassName: \"\"" -}}
-          {{- else }}
-              {{- printf "storageClassName: %s" .Values.persistence.storageClassName -}}
-          {{- end -}}
+    {{- if .Values.global.storageClass -}}
+        {{- if (eq "-" .Values.global.storageClass) -}}
+            {{- printf "storageClassName: \"\"" -}}
+        {{- else }}
+            {{- printf "storageClassName: %s" .Values.global.storageClass -}}
+        {{- end -}}
     {{- end -}}
 {{- end -}}
 {{- end -}}
+
 
 {{/*
 Return the proper Docker Image Registry Secret Names
