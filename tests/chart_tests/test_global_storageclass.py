@@ -30,3 +30,21 @@ def test_global_storageclass(supported_types, expected_output):
         expected_output in storageClassNames
         for storageClassNames in jmespath.search("[*].spec.volumeClaimTemplates[*].spec.storageClassName", docs)
     )
+
+def test_component_storageclass_precendence():
+    """Test component storageclass takes priority over global storageclass"""
+    values = {
+        "global"        : {"storageClass": "gp1"},
+        "alertmanager"  : {"persistence" : {"storageClassName": "gp2"}},
+        "elasticsearch" : {"common"      : {"persistence":{"storageClassName": "gp2"}}},
+        "prometheus"    : {"persistence" : {"storageClassName": "gp2"}},
+        "astronomer"    :  {"registry"   : {"persistence":{"storageClassName": "gp2"}}}
+    }
+    docs = render_chart(
+        values=values,
+        show_only=chart_files,
+    )
+
+    assert len(docs) == 5
+    assert all("gp2" in storageClassNames
+    for storageClassNames in jmespath.search("[*].spec.volumeClaimTemplates[*].spec.storageClassName", docs))
