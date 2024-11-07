@@ -67,18 +67,18 @@ Return  the proper Storage Class
 Refactored logic to prioritize component-specific persistence.storageClassName over global.storageClass
 */}}
 {{- if .Values.persistence.storageClassName -}}
-    {{- if (eq "~" .Values.persistence.storageClassName) -}}
+    {{- if (eq "-" .Values.persistence.storageClassName) -}}
         {{- printf "storageClassName: \"\"" -}}
     {{- else }}
         {{- printf "storageClassName: %s" .Values.persistence.storageClassName -}}
     {{- end -}}
 {{- else -}}
     {{- if .Values.global.storageClass -}}
-        {{- if (eq "-" .Values.global.storageClass) -}}
-            {{- printf "storageClassName: \"\"" -}}
-        {{- else }}
-            {{- printf "storageClassName: %s" .Values.global.storageClass -}}
-        {{- end -}}
+          {{- if (eq "~" .Values.global.storageClass) -}}
+              {{- printf "storageClassName: \"\"" -}}
+          {{- else }}
+              {{- printf "storageClassName: %s" .Values.global.storageClass -}}
+          {{- end -}}
     {{- end -}}
 {{- end -}}
 {{- end -}}
