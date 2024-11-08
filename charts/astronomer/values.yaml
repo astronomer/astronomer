@@ -420,6 +420,8 @@ commander:
   extraVolumes: []
 
 registry:
+  # flag to disable astronomer registry
+  enableInsecureReadingAndWriting: False
   # k8s secret name for registry to use to authenticate to houston when sending notifications
   authHeaderSecretName: ~
   replicas: 1

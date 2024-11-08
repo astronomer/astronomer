@@ -52,11 +52,15 @@ data:
       headers:
         X-Content-Type-Options: [nosniff]
     auth:
+      {{- if .Values.registry.enableInsecureReadingAndWriting }}
+      disabled: true # This disables authentication when the flag is set
+      {{- else }}
       token:
         realm: "https://houston.{{ .Values.global.baseDomain }}/v1/registry/authorization"
         service: {{ .Values.registry.auth.service | quote }}
         issuer: {{ .Values.registry.auth.issuer | quote }}
         rootcertbundle: /etc/docker/ssl/tls.crt
+      {{- end }}
     health:
       storagedriver:
         enabled: true
