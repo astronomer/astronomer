@@ -28,7 +28,7 @@ def test_global_storageclass(supported_types, expected_output):
 
     assert all(
         expected_output in storageClassNames
-        for storageClassNames in jmespath.search("[*].spec.volumeClaimTemplates[*].spec.storageClassName", docs)
+        for storageClassNames in jmespath.search("[].spec.volumeClaimTemplates[].spec.storageClassName", docs)
     )
 
 def test_component_storageclass_precendence():
