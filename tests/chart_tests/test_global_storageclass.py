@@ -47,4 +47,4 @@ def test_component_storageclass_precendence():
 
     assert len(docs) == 5
     assert all("gp2" in storageClassNames
-    for storageClassNames in jmespath.search("[*].spec.volumeClaimTemplates[*].spec.storageClassName", docs))
+    for storageClassNames in jmespath.search("[].spec.volumeClaimTemplates[].spec.storageClassName", docs))

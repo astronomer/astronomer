@@ -114,26 +114,7 @@ Elasticsearch NGINX variable definitions
 Return  the proper Storage Class
 */}}
 {{- define "elasticsearch.storageClass" -}}
-{{/*
-Helm 2.11 supports the assignment of a value to a variable defined in a different scope,
-but Helm 2.9 and 2.10 does not support it, so we need to implement this if-else logic.
-This version prioritizes component-specific common.persistence.storageClassName over global.storageClass.
-*/}}
-{{- if .Values.common.persistence.storageClassName -}}
-    {{- if (eq "-" .Values.common.persistence.storageClassName) -}}
-        {{- printf "storageClassName: \"\"" -}}
-    {{- else }}
-        {{- printf "storageClassName: %s" .Values.common.persistence.storageClassName -}}
-    {{- end -}}
-{{- else -}}
-    {{- if .Values.global.storageClass -}}
-        {{- if (eq "-" .Values.global.storageClass) -}}
-            {{- printf "storageClassName: \"\"" -}}
-        {{- else }}
-            {{- printf "storageClassName: %s" .Values.global.storageClass -}}
-        {{- end -}}
-    {{- end -}}
-{{- end -}}
+storageClassName: {{ or .Values.common.persistence.storageClassName .Values.global.storageClass | default "" }}
 {{- end -}}
 
 {{/*
