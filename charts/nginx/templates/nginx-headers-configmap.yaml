@@ -14,13 +14,13 @@ data:
   # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy
   Content-Security-Policy: >-
     default-src 'self' *.{{ .Values.global.baseDomain }} ;
-    connect-src *.{{ .Values.global.baseDomain }} wss://*.{{ .Values.global.baseDomain }} ;
+    connect-src *.{{ .Values.global.baseDomain }} wss://*.{{ .Values.global.baseDomain }} cdn.jsdelivr.net ;
     font-src *.{{ .Values.global.baseDomain }} cdn.astronomer.io fonts.gstatic.com data: ;
     frame-src 'self' ;
     img-src 'self' data: * ;
-    script-src 'unsafe-inline' 'unsafe-eval' *.{{ .Values.global.baseDomain }} cdn.astronomer.io ;
-    style-src 'unsafe-inline' *.{{ .Values.global.baseDomain }} ;
-    worker-src blob: ;
+    script-src 'unsafe-inline' 'unsafe-eval' *.{{ .Values.global.baseDomain }} cdn.astronomer.io fonts.googleapis.com cdn.jsdelivr.net ;
+    style-src 'unsafe-inline' *.{{ .Values.global.baseDomain }} cdn.jsdelivr.net fonts.googleapis.com ;
+    worker-src blob: *.{{ .Values.global.baseDomain }} ;
   Referrer-Policy: "same-origin"
   X-Frame-Options: "deny"
   X-XSS-Protection: "1; mode=block"
