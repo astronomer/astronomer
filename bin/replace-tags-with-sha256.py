@@ -232,7 +232,6 @@ def process_yaml(data, new_data):  # noqa: C901
 
 
 def main():
-
     # Read YAML content from stdin (you can also use a file)
     yaml_content = yaml.safe_load(sys.stdin)
 
