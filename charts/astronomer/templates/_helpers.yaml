@@ -143,6 +143,13 @@
 {{- end }}
 {{- end }}
 
+{{ define "install.ServiceAccount" -}}
+{{- if and .Values.install.serviceAccount.create .Values.global.rbacEnabled -}}
+{{ default (printf "%s-cli-install" .Release.Name ) .Values.install.serviceAccount.name }}
+{{- else -}}
+    {{ default "default" .Values.install.serviceAccount.name }}
+{{- end }}
+{{- end }}
 
 {{ define "houston.bootstrapperServiceAccount" -}}
 {{- if and .Values.houston.serviceAccount.create .Values.global.rbacEnabled -}}
