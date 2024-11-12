@@ -114,8 +114,9 @@ jobs:
       - run:
           name: Get current Version from the chart
           command: |
-            VERSION = $(awk '/^version: / {print $2}' Chart.yaml)
+            VERSION=$(awk '/^version: / {print $2}' Chart.yaml)
             VERSION=${VERSION#v}
+            pwd
             echo "VERSION=${VERSION}" >> $BASH_ENV
       - run:
           name: Install bom-generator
