@@ -1,6 +1,7 @@
 ######################################
 ## NGINX Default backend deployment ##
 ######################################
+{{ .Values.defaultBackend.enabled }}
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -57,3 +58,4 @@ spec:
           resources: {{ toYaml .Values.defaultBackend.resources | nindent 12 }}
           ports:
             - containerPort: {{ .Values.ports.defaultBackendHTTP }}
+{{ end }}

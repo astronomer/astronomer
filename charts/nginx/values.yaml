@@ -121,6 +121,7 @@ electionTTL: ""
 allowSnippetAnnotations: true
 
 defaultBackend:
+  enabled: true
   resources: {}
   readinessProbe: {}
   livenessProbe: {}
