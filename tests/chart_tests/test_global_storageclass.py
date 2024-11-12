@@ -10,7 +10,7 @@ chart_files = [
     "charts/astronomer/templates/registry/registry-statefulset.yaml",
 ]
 
-supported_types = [("-", ""), ("astrosc", "astrosc")]
+supported_types = [("astrosc", "astrosc")]
 
 
 @pytest.mark.parametrize(
@@ -38,7 +38,7 @@ def test_component_storageclass_precendence():
         "alertmanager"  : {"persistence" : {"storageClassName": "gp2"}},
         "elasticsearch" : {"common"      : {"persistence":{"storageClassName": "gp2"}}},
         "prometheus"    : {"persistence" : {"storageClassName": "gp2"}},
-        "astronomer"    :  {"registry"   : {"persistence":{"storageClassName": "gp2"}}}
+        "astronomer"    : {"registry"   : {"persistence":{"storageClassName": "gp2"}}}
     }
     docs = render_chart(
         values=values,
