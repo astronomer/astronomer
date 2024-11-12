@@ -100,3 +100,11 @@ imagePullSecrets:
 {{- end }}
 {{- end }}
 {{- end }}
+
+{{ define "alertmanager.serviceAccount" -}}
+{{- if and .Values.serviceAccount.create .Values.global.rbacEnabled -}}
+{{ default (printf "%s" (include "alertmanager.fullname" . )) .Values.serviceAccount.name }}
+{{- else -}}
+    {{ default "default" .Values.serviceAccount.name }}
+{{- end }}
+{{- end }}
