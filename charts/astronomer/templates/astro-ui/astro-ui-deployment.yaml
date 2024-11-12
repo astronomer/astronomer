@@ -27,6 +27,7 @@ spec:
         app: astro-ui
         version: {{ .Chart.Version }}
     spec:
+      serviceAccountName: {{ template "astroUI.serviceAccount" . }}
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
       affinity:
