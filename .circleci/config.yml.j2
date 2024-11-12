@@ -112,11 +112,8 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Get Version from Git Tag
-          command: |
-            VERSION=$(git describe --tags --abbrev=0)
-            VERSION=${VERSION#v}
-            echo "VERSION=${VERSION}" >> $BASH_ENV
+          name: Get Version from Circle Tag Env variable
+          command: echo $CIRCLE_TAG
       - run:
           name: Install bom-generator
           command: |
@@ -124,7 +121,7 @@ jobs:
       - run:
           name: Run Release BOM Script
           command: |
-            bin/release-bom -x ${VERSION}
+            bin/release-bom -x $CIRCLE_TAG
 
   run_pre_commit:
     docker:
