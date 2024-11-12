@@ -1,7 +1,7 @@
 ###################################
 ## NGINX Default backend service ##
 ###################################
-{{ .Values.defaultBackend.enabled }}
+{{- if .Values.defaultBackend.enabled }}
 kind: Service
 apiVersion: v1
 metadata:
