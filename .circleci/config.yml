@@ -115,7 +115,7 @@ jobs:
       - checkout
       - run:
           name: Get Version from Circle Tag Env variable
-          command: echo $CIRCLE_TAG
+          command: echo "$CIRCLE_TAG"
       - run:
           name: Install bom-generator
           command: |
@@ -123,7 +123,7 @@ jobs:
       - run:
           name: Run Release BOM Script
           command: |
-            bin/release-bom -x $CIRCLE_TAG
+            bin/release-bom -x "$CIRCLE_TAG"
 
   run_pre_commit:
     docker:
