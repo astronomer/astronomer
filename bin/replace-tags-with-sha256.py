@@ -4,7 +4,7 @@ r"""Replace image tags with SHA256 hashes in an astronomer/astronomer values fil
 USAGE:
     Use another script to collect all the values you want to shaify
 
-        bin/generate-all-values.py ~/astronomer --mount astronomer.houston.config.deployments.helm=~/airflow-chart > ~/all-values.yaml
+        bin/get-all-chart-default-values.py ~/astronomer --mount astronomer.houston.config.deployments.helm=~/airflow-chart > ~/all-values.yaml
 
     Run this script to replace the tags with sha256 hashes
 
@@ -13,12 +13,12 @@ USAGE:
 
     Check for tags without sha256
 
-        bin/generate-all-values.py ~/astronomer --mount astronomer.houston.config.deployments.helm=~/airflow-chart -f ~/sha-values.yaml --as-path |
+        bin/get-all-chart-default-values.py ~/astronomer --mount astronomer.houston.config.deployments.helm=~/airflow-chart -f ~/sha-values.yaml --as-path |
         grep '\.tag='
 
     Check for images without sha256
 
-        bin/generate-all-values.py ~/astronomer --mount astronomer.houston.config.deployments.helm=~/airflow-chart -f ~/sha-values.yaml --as-path |
+        bin/get-all-chart-default-values.py ~/astronomer --mount astronomer.houston.config.deployments.helm=~/airflow-chart -f ~/sha-values.yaml --as-path |
         grep '\.image=' |
         grep -v "sha256"
 """
