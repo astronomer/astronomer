@@ -242,7 +242,7 @@ jobs:
 
   platform-1-27-16:
     machine:
-      image: ubuntu-2204:2024.05.1
+      image: ubuntu-2204:2024.08.1
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.27.16
@@ -256,68 +256,68 @@ jobs:
             helm template --kube-version=v1.27.16 -f values.yaml --set global.baseDomain=example.com . |
             kubent --cluster=false --helm3=false --filename -
           when: always
-  platform-1-28-13:
+  platform-1-28-15:
     machine:
-      image: ubuntu-2204:2024.05.1
+      image: ubuntu-2204:2024.08.1
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.28.13
+      KUBE_VERSION: v1.28.15
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging"
       - run:
-          name: Check chart for k8s 1.28.13 compatibility with kubent
+          name: Check chart for k8s 1.28.15 compatibility with kubent
           command: |
             set -o pipefail
-            helm template --kube-version=v1.28.13 -f values.yaml --set global.baseDomain=example.com . |
+            helm template --kube-version=v1.28.15 -f values.yaml --set global.baseDomain=example.com . |
             kubent --cluster=false --helm3=false --filename -
           when: always
-  platform-1-29-8:
+  platform-1-29-10:
     machine:
-      image: ubuntu-2204:2024.05.1
+      image: ubuntu-2204:2024.08.1
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.29.8
+      KUBE_VERSION: v1.29.10
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging"
       - run:
-          name: Check chart for k8s 1.29.8 compatibility with kubent
+          name: Check chart for k8s 1.29.10 compatibility with kubent
           command: |
             set -o pipefail
-            helm template --kube-version=v1.29.8 -f values.yaml --set global.baseDomain=example.com . |
+            helm template --kube-version=v1.29.10 -f values.yaml --set global.baseDomain=example.com . |
             kubent --cluster=false --helm3=false --filename -
           when: always
-  platform-1-30-4:
+  platform-1-30-6:
     machine:
-      image: ubuntu-2204:2024.05.1
+      image: ubuntu-2204:2024.08.1
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.30.4
+      KUBE_VERSION: v1.30.6
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging"
       - run:
-          name: Check chart for k8s 1.30.4 compatibility with kubent
+          name: Check chart for k8s 1.30.6 compatibility with kubent
           command: |
             set -o pipefail
-            helm template --kube-version=v1.30.4 -f values.yaml --set global.baseDomain=example.com . |
+            helm template --kube-version=v1.30.6 -f values.yaml --set global.baseDomain=example.com . |
             kubent --cluster=false --helm3=false --filename -
           when: always
-  platform-1-31-1:
+  platform-1-31-2:
     machine:
-      image: ubuntu-2204:2024.05.1
+      image: ubuntu-2204:2024.08.1
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.31.1
+      KUBE_VERSION: v1.31.2
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging"
       - run:
-          name: Check chart for k8s 1.31.1 compatibility with kubent
+          name: Check chart for k8s 1.31.2 compatibility with kubent
           command: |
             set -o pipefail
-            helm template --kube-version=v1.31.1 -f values.yaml --set global.baseDomain=example.com . |
+            helm template --kube-version=v1.31.2 -f values.yaml --set global.baseDomain=example.com . |
             kubent --cluster=false --helm3=false --filename -
           when: always
 
@@ -443,22 +443,22 @@ workflows:
       - platform-1-27-16:
           requires:
             - build-artifact
-      - platform-1-28-13:
+      - platform-1-28-15:
           requires:
             - approve-test-all-platforms
             - build-artifact
 
-      - platform-1-29-8:
+      - platform-1-29-10:
           requires:
             - approve-test-all-platforms
             - build-artifact
 
-      - platform-1-30-4:
+      - platform-1-30-6:
           requires:
             - approve-test-all-platforms
             - build-artifact
 
-      - platform-1-31-1:
+      - platform-1-31-2:
           requires:
             - build-artifact
       - approve-internal-release:
@@ -477,7 +477,7 @@ workflows:
           requires:
             - approve-internal-release
             - platform-1-27-16
-            - platform-1-31-1
+            - platform-1-31-2
       - approve-upgrade-test:
           type: approval
           filters:
@@ -496,9 +496,9 @@ workflows:
           type: approval
           requires:
             - release-to-internal
-            - platform-1-28-13
-            - platform-1-29-8
-            - platform-1-30-4
+            - platform-1-28-15
+            - platform-1-29-10
+            - platform-1-30-6
           filters:
             branches:
               only:

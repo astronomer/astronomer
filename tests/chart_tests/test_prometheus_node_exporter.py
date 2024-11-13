@@ -9,7 +9,6 @@ from tests.chart_tests.helm_template_generator import render_chart
     supported_k8s_versions,
 )
 class TestPrometheusNodeExporterDaemonset:
-
     @staticmethod
     def node_exporter_common_tests(doc):
         """Test common for node exporter daemonsets."""

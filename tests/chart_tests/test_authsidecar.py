@@ -23,7 +23,6 @@ default_resource = {"limits": {"cpu": "1000m", "memory": "1024Mi"}, "requests": 
     supported_k8s_versions,
 )
 class TestAuthSidecar:
-
     def test_authSidecar_alertmanager(self, kube_version):
         """Test Alertmanager Service with authSidecar."""
         docs = render_chart(

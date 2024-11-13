@@ -24,9 +24,7 @@ class TestHoustonApiDeployment:
             "tier": "astronomer",
             "component": "houston",
             "release": "release-name",
-        } == doc["spec"][
-            "selector"
-        ]["matchLabels"]
+        } == doc["spec"]["selector"]["matchLabels"]
 
         assert doc["spec"]["template"]["metadata"]["labels"].get("app") == "houston"
         assert doc["spec"]["template"]["metadata"]["labels"].get("app") == "houston"

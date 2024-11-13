@@ -9,9 +9,7 @@ from tests.chart_tests.helm_template_generator import render_chart
     supported_k8s_versions,
 )
 class TestPrometheusPostgresExporter:
-
     def test_prometheus_postgres_exporter_service_enabled(self, kube_version):
-
         docs = render_chart(
             kube_version=kube_version,
             values={

@@ -212,9 +212,7 @@ class TestAstronomerConfigSyncer:
         assert {
             "runAsNonRoot": True,
             "allowPrivilegeEscalation": False,
-        } == job_container_by_name[
-            "config-syncer"
-        ]["securityContext"]
+        } == job_container_by_name["config-syncer"]["securityContext"]
 
     def test_astronomer_config_syncer_cronjob_namespace_pool_disabled(self, kube_version):
         """Test that when namespacePools is disabled, config-syncer cronjob is
