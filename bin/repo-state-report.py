@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Discover current git repository state and merge this information into metadata.yaml"""
 
-
 import datetime
 import subprocess
 import yaml
