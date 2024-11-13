@@ -11,7 +11,6 @@ import yaml
     supported_k8s_versions,
 )
 class TestFluentd:
-
     @staticmethod
     def fluentd_common_tests(doc):
         """Test common for fluentd daemonsets."""
@@ -336,9 +335,7 @@ class TestFluentd:
         assert {
             "name": "RUBY_GC_HEAP_OLDOBJECT_LIMIT_FACTOR",
             "value": "1",
-        } in c_by_name[
-            "fluentd"
-        ]["env"]
+        } in c_by_name["fluentd"]["env"]
 
     def test_fluentd_daemonset_probe(self, kube_version):
         docs = render_chart(

@@ -70,11 +70,7 @@ class TestStatefulSetsAnnotations:
             assert {
                 "annotation": "astro-test",
                 "astro.io/monitoring": "prom-sts",
-            } == doc["spec"][
-                "volumeClaimTemplates"
-            ][0][
-                "metadata"
-            ]["annotations"]
+            } == doc["spec"]["volumeClaimTemplates"][0]["metadata"]["annotations"]
 
     def test_registry_sts_with_overridden_annotations(self, kube_version):
         """Test registry sts for the volume claim templates annotations."""
@@ -101,11 +97,7 @@ class TestStatefulSetsAnnotations:
             assert {
                 "annotation": "registry-test",
                 "astro.io/registry": "registry-sts",
-            } == doc["spec"][
-                "volumeClaimTemplates"
-            ][0][
-                "metadata"
-            ]["annotations"]
+            } == doc["spec"]["volumeClaimTemplates"][0]["metadata"]["annotations"]
 
     def test_stan_sts_with_overridden_annotations(self, kube_version):
         """Test stan sts for the volume claim templates annotations."""

@@ -296,9 +296,7 @@ class TestExternalElasticSearch:
                 "namespaceSelector": {},
                 "podSelector": {"matchLabels": {"tier": "airflow", "component": "webserver"}},
             },
-        ] == doc[
-            "spec"
-        ]["ingress"][0]["from"]
+        ] == doc["spec"]["ingress"][0]["from"]
 
     def test_external_es_network_selector_with_logging_sidecar_enabled(self, kube_version):
         """Test External Elasticsearch Service with NetworkPolicy Defaults."""

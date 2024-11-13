@@ -110,9 +110,7 @@ class TestNatsJetstream:
             assert {
                 "name": "nats-jetstream-client-tls-volume",
                 "mountPath": f"{jetStreamCertPrefix}-client",
-            } in obj_by_name[item][
-                "spec"
-            ]["template"]["spec"]["containers"][0]["volumeMounts"]
+            } in obj_by_name[item]["spec"]["template"]["spec"]["containers"][0]["volumeMounts"]
             assert {
                 "name": "nats-jetstream-client-tls-volume",
                 "mountPath": "/usr/local/share/ca-certificates/release-name-jetstream-tls-certificate-client.crt",
