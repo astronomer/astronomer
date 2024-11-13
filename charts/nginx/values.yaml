@@ -124,3 +124,9 @@ defaultBackend:
   resources: {}
   readinessProbe: {}
   livenessProbe: {}
+
+cspPolicy:
+  cdnEnabled: true
+  connectsrc: "cdn.jsdelivr.net"
+  fontsrc: "fonts.gstatic.com"
+  scriptsrc: "fonts.googleapis.com cdn.jsdelivr.net"
