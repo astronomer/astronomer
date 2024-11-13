@@ -33,9 +33,7 @@ class TestServiceAccounts:
                 "configSyncer": {"serviceAccount": {"create": "true", "name": "configsyncer-test"}},
                 "houston": {"serviceAccount": {"create": "true", "name": "houston-test"}},
             },
-            "grafana": {
-                "serviceAccount": {"create": "true", "name": "grafana-test"}
-            }
+            "grafana": {"serviceAccount": {"create": "true", "name": "grafana-test"}},
         }
         docs = render_chart(
             kube_version=kube_version,
@@ -45,7 +43,7 @@ class TestServiceAccounts:
                 "charts/astronomer/templates/registry/registry-serviceaccount.yaml",
                 "charts/astronomer/templates/config-syncer/config-syncer-serviceaccount.yaml",
                 "charts/astronomer/templates/houston/api/houston-bootstrap-serviceaccount.yaml",
-                "charts/grafana/templates/grafana-bootstrap-serviceaccount.yaml"
+                "charts/grafana/templates/grafana-bootstrap-serviceaccount.yaml",
             ],
         )
 
