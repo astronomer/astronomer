@@ -93,3 +93,9 @@ allowSnippetAnnotations: true
 
 defaultBackend:
   resources: {}
+
+cspPolicy:
+  cdnEnabled: true
+  connectsrc: "cdn.jsdelivr.net"
+  fontsrc: "fonts.gstatic.com"
+  scriptsrc: "fonts.googleapis.com cdn.jsdelivr.net"
