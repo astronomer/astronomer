@@ -1,10 +1,10 @@
 #####################
 ## NGINX ConfigMap ##
 #####################
-{{- $contentsrc := eq .Values.csp "full" | ternary .Values.connectsrc "" }}
-{{- $fontsrc := eq .Values.csp "full" | ternary .Values.fontsrc "" }}
-{{- $scriptsrc := eq .Values.csp "full" | ternary .Values.scriptsrc "" }}
-{{- $stylesrc := eq .Values.csp "full" | ternary .Values.stylesrc "" }}
+{{- $contentsrc := eq .Values.cspPolicy.enabled true | ternary .Values.cspPolicy.connectsrc "" }}
+{{- $fontsrc := eq .Values.cspPolicy.enabled true | ternary .Values.cspPolicy.fontsrc "" }}
+{{- $scriptsrc := eq .Values.cspPolicy.enabled true | ternary .Values.cspPolicy.scriptsrc "" }}
+{{- $stylesrc := eq .Values.cspPolicy.enabled true | ternary .Values.cspPolicy.stylesrc "" }}
 kind: ConfigMap
 apiVersion: v1
 metadata:
@@ -23,7 +23,7 @@ data:
     frame-src 'self' ;
     img-src 'self' data: * ;
     script-src 'unsafe-inline' 'unsafe-eval' *.{{ .Values.global.baseDomain }} cdn.astronomer.io {{ $scriptsrc }} ;
-    style-src 'unsafe-inline' *.{{ .Values.global.baseDomain }} cdn.jsdelivr.net {{ $stylesrc }} ;
+    style-src 'unsafe-inline' *.{{ .Values.global.baseDomain }} {{ $stylesrc }} ;
     worker-src blob: *.{{ .Values.global.baseDomain }} ;
   Referrer-Policy: "same-origin"
   X-Frame-Options: "deny"

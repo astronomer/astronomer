@@ -125,8 +125,9 @@ defaultBackend:
   readinessProbe: {}
   livenessProbe: {}
 
-csp: "full"
-connectsrc: "cdn.jsdelivr.net"
-fontsrc: "fonts.gstatic.com"
-scriptsrc: "fonts.googleapis.com cdn.jsdelivr.net"
-stylesrc: "cdn.jsdelivr.net fonts.googleapis.com"
+cspPolicy:
+  enabled: true
+  connectsrc: "cdn.jsdelivr.net"
+  fontsrc: "fonts.gstatic.com"
+  scriptsrc: "fonts.googleapis.com cdn.jsdelivr.net"
+  stylesrc: "cdn.jsdelivr.net fonts.googleapis.com"
