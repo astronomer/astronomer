@@ -1,7 +1,7 @@
 #########################################################
 ## Astronomer Nginx Default Backend Pod Disruption Budget
 #########################################################
-{{- if and .Values.defaultBackend.enabled  .Values.global.podDisruptionBudgetsEnabled }}
+{{- if and .Values.defaultBackend.enabled .Values.global.podDisruptionBudgetsEnabled }}
 apiVersion: {{ include "apiVersion.PodDisruptionBudget" . }}
 kind: PodDisruptionBudget
 metadata:
