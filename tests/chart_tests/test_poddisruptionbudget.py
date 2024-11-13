@@ -17,13 +17,7 @@ class TestHoustonPDB:
             labels = render_chart(
                 show_only=[show_only],
                 values={},
-            )[0][
-                "spec"
-            ]["jobTemplate"][
-                "spec"
-            ]["template"][
-                "metadata"
-            ]["labels"]
+            )[0]["spec"]["jobTemplate"]["spec"]["template"]["metadata"]["labels"]
             assert labels["component"] != "houston", f"ERROR: tempplate '{show_only}' matched houston"
 
     def test_houston_pdb_workers(self):
