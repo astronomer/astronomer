@@ -19,6 +19,7 @@ component_paths = [
 templates_to_exclude = [
     "charts/prometheus-postgres-exporter/templates",
     "charts/prometheus-postgres-exporter/templates/secret.yaml",
+    "charts/alertmanager/templates/alertmanager-serviceaccount.yaml"
 ]
 
 show_only = [
