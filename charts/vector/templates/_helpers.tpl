@@ -78,3 +78,10 @@ imagePullSecrets:
 {{ .Values.vector.image.repository }}:{{ .Values.vector.image.tag }}
 {{- end }}
 {{- end }}
+
+{{/*
+Return the elasticsearch hostname
+*/}}
+{{- define "elasticsearch.host" -}}
+{{- printf "%s-%s" .Release.Name "elasticsearch" -}}
+{{- end -}}
