@@ -51,10 +51,8 @@ data:
       #     path: /metrics
       headers:
         X-Content-Type-Options: [nosniff]
+    {{- if not .Values.registry.enableInsecureAuth }}
     auth:
-      {{- if .Values.registry.enableInsecureReadingAndWriting }}
-      disabled: true # This disables authentication when the flag is set
-      {{- else }}
       token:
         realm: "https://houston.{{ .Values.global.baseDomain }}/v1/registry/authorization"
         service: {{ .Values.registry.auth.service | quote }}
