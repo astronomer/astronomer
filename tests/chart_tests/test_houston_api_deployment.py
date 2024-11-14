@@ -20,7 +20,7 @@ class TestHoustonApiDeployment:
         assert len(docs) == 1
         doc = docs[0]
         assert doc["kind"] == "Deployment"
-        assert "annotations" in doc["metadata"]
+        assert "annotations" not in doc["metadata"]
         assert {
             "tier": "astronomer",
             "component": "houston",
