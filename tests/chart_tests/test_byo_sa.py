@@ -35,18 +35,10 @@ class TestServiceAccounts:
                 "astroUI": {"serviceAccount": {"create": "true", "name": "astroui-test"}},
                 "install": {"serviceAccount": {"create": "true", "name": "cliinstall-test"}},
             },
-            "grafana": {
-                "serviceAccount": {"create": "true", "name": "grafana-test"}
-            },
-            "alertmanager": {
-                "serviceAccount": {"create": "true", "name": "alertmanager-test"}
-            },
-            "kibana": {
-                "serviceAccount": {"create": "true", "name": "kibana-test"}
-            },
-            "prometheus-blackbox-exporter": {
-                "serviceAccount": {"create": "true", "name": "blackbox-test"}
-            }
+            "grafana": {"serviceAccount": {"create": "true", "name": "grafana-test"}},
+            "alertmanager": {"serviceAccount": {"create": "true", "name": "alertmanager-test"}},
+            "kibana": {"serviceAccount": {"create": "true", "name": "kibana-test"}},
+            "prometheus-blackbox-exporter": {"serviceAccount": {"create": "true", "name": "blackbox-test"}},
         }
         docs = render_chart(
             kube_version=kube_version,
@@ -60,12 +52,22 @@ class TestServiceAccounts:
                 "charts/grafana/templates/grafana-bootstrap-serviceaccount.yaml",
                 "charts/alertmanager/templates/alertmanager-serviceaccount.yaml",
                 "charts/kibana/templates/kibana-serviceaccount.yaml",
-                "charts/prometheus-blackbox-exporter/templates/blackbox-serviceaccount.yaml"
+                "charts/prometheus-blackbox-exporter/templates/blackbox-serviceaccount.yaml",
             ],
         )
 
         assert len(docs) == 9
-        expected_names = {"commander-test", "registry-test", "configsyncer-test", "houston-test", "astroui-test", "grafana-test", "alertmanager-test", "kibana-test", "blackbox-test"}
+        expected_names = {
+            "commander-test",
+            "registry-test",
+            "configsyncer-test",
+            "houston-test",
+            "astroui-test",
+            "grafana-test",
+            "alertmanager-test",
+            "kibana-test",
+            "blackbox-test",
+        }
         extracted_names = {doc["metadata"]["name"] for doc in docs if "metadata" in doc and "name" in doc["metadata"]}
         assert expected_names.issubset(extracted_names)
 
