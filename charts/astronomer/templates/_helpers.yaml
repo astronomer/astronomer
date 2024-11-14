@@ -137,7 +137,7 @@
 
 {{ define "astroUI.ServiceAccount" -}}
 {{- if and .Values.astroUI.serviceAccount.create .Values.global.rbacEnabled -}}
-{{ default (printf "%s-astro-ui" .Release.Name ) .Values.astroUI.serviceAccount.name }}
+{{ default (printf "%s-astro-ui" .Release.Name) .Values.astroUI.serviceAccount.name }}
 {{- else -}}
     {{ default "default" .Values.astroUI.serviceAccount.name }}
 {{- end }}
