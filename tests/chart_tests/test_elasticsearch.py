@@ -215,9 +215,7 @@ class TestElasticSearch:
                 "namespaceSelector": {},
                 "podSelector": {"matchLabels": {"tier": "airflow", "component": "webserver"}},
             },
-        ] == doc[
-            "spec"
-        ]["ingress"][0]["from"]
+        ] == doc["spec"]["ingress"][0]["from"]
 
     def test_nginx_es_client_network_selector_with_logging_sidecar_enabled(self, kube_version):
         """Test Nginx ES Service with NetworkPolicies."""
