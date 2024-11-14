@@ -10,9 +10,8 @@ parametrization_data = (
     ("charts/astronomer/templates/registry/registry-statefulset.yaml", None),  # Registry should use direct access
 )
 
-@pytest.mark.parametrize(
-    "chart_file, expected_sc_name", parametrization_data, ids=[x[0] for x in parametrization_data]
-)
+
+@pytest.mark.parametrize("chart_file, expected_sc_name", parametrization_data, ids=[x[0] for x in parametrization_data])
 def test_global_storageclass(chart_file, expected_sc_name):
     """Test global storageclass feature of alertmanager statefulset template."""
     docs = render_chart(
@@ -32,7 +31,7 @@ def test_global_storageclass(chart_file, expected_sc_name):
         storage_class_name = statefulset_doc["storageClassName"]
     else:
         # Other charts have the storageClassName inside volumeClaimTemplates
-        storage_class_name = statefulset_doc["spec"]["volumeClaimTemplates"][0]['spec']['storageClassName']
+        storage_class_name = statefulset_doc["spec"]["volumeClaimTemplates"][0]["spec"]["storageClassName"]
 
     # Assert that the storageClassName matches the expected one
     assert storage_class_name == expected_sc_name
@@ -67,7 +66,7 @@ def test_component_storageclass_precendence():
             storage_class_name = statefulset_doc["storageClassName"]
         else:
             # Other charts have the storageClassName inside volumeClaimTemplates
-            storage_class_name = statefulset_doc["spec"]["volumeClaimTemplates"][0]['spec']['storageClassName']
+            storage_class_name = statefulset_doc["spec"]["volumeClaimTemplates"][0]["spec"]["storageClassName"]
 
         # Assert that "gp2" is in the storageClassName, indicating the component-specific storageClass overrides the global one
         assert "gp2" in storage_class_name
