@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """This script is used to create the circle config file so that we can stay
 DRY."""
+
 import subprocess
 from pathlib import Path
 import yaml
@@ -13,7 +14,7 @@ kube_versions = metadata["test_k8s_versions"]
 
 ap_build_tag = "0.3.0-4"  # https://quay.io/repository/astronomer/ap-build?tab=tags&tag=latest
 ci_runner_version = "2024-11"  # This should be the current YYYY-MM
-machine_image_version = "ubuntu-2204:2024.05.1"  # https://circleci.com/developer/machine/image/ubuntu-2204
+machine_image_version = "ubuntu-2204:2024.08.1"  # https://circleci.com/developer/machine/image/ubuntu-2204
 
 
 def list_docker_images():

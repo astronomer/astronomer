@@ -57,7 +57,7 @@ class TestServiceAccounts:
                 "charts/astronomer/templates/config-syncer/config-syncer-serviceaccount.yaml",
                 "charts/astronomer/templates/houston/api/houston-bootstrap-serviceaccount.yaml",
                 "charts/astronomer/templates/astro-ui/astro-ui-serviceaccount.yaml",
-                "charts/grafana/templates/grafana-bootstrap-serviceaccount.yaml",
+                "charts/grafana/templates/grafana-bootstrap-serviceaccount.yaml",,
                 "charts/alertmanager/templates/alertmanager-serviceaccount.yaml",
                 "charts/kibana/templates/kibana-serviceaccount.yaml",
                 "charts/prometheus-blackbox-exporter/templates/blackbox-serviceaccount.yaml"

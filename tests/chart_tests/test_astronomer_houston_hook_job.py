@@ -8,7 +8,6 @@ from tests.chart_tests.helm_template_generator import render_chart
     supported_k8s_versions,
 )
 class TestHoustonHookJob:
-
     def test_au_strategy_job_defaults(self, kube_version):
         """Test AU Strategy Job defaults."""
 
