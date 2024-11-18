@@ -30,6 +30,7 @@ spec:
       annotations:
         checksum/configmap: {{ include (print $.Template.BasePath "/cli-install/cli-install-configmap.yaml") . | sha256sum }}
     spec:
+      serviceAccountName: {{ template "install.ServiceAccount" . }}
       nodeSelector: {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
       affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
       tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
