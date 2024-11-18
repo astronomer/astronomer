@@ -50,5 +50,5 @@ class TestRegistryConfigmap:
             show_only=["charts/astronomer/templates/registry/registry-configmap.yaml"],
         )
         assert len(docs) == 1
-        data = docs[0]["data"]["config.yml"]
-        assert "auth:" not in data
+        config_yaml = yaml.safe_load(docs[0]["data"]["config.yml"])
+        assert not config_yaml.get("auth")
