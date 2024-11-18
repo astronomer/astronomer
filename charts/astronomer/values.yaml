@@ -56,6 +56,14 @@ astroUI:
   #   memory: 128Mi
   readinessProbe: {}
   livenessProbe: {}
+  serviceAccount:
+    # Specifies whether a service account should be created
+    create: false
+    # Annotations to add to the service account
+    annotations: {}
+    # The name of the service account to use.
+    # If not set and create is true, a name is generated using the fullname template
+    name: ""
 
 cliInstall:
   readinessProbe: {}
@@ -515,14 +523,22 @@ registry:
 
 install:
   cliEnabled: true
-  resources: {}
   cliVersion: 0.29
+  resources: {}
   #  limits:
   #   cpu: 100m
   #   memory: 128Mi
   #  requests:
   #   cpu: 100m
   #   memory: 128Mi
+  serviceAccount:
+    # Specifies whether a service account should be created
+    create: false
+    # Annotations to add to the service account
+    annotations: {}
+    # The name of the service account to use.
+    # If not set and create is true, a name is generated using the fullname template
+    name: ""
 
 e2eTest:
   env: []

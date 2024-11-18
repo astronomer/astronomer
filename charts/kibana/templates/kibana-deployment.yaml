@@ -27,6 +27,7 @@ spec:
         app: {{ template "kibana.name" . }}
         version: {{ .Chart.Version }}
     spec:
+      serviceAccountName: {{ template "kibana.ServiceAccount" . }}
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
       affinity:

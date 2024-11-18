@@ -43,6 +43,7 @@ spec:
         component: nats
         chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
     spec:
+      serviceAccountName: {{ template "nats.ServiceAccount" . }}
     {{- include "nats.imagePullSecrets" . | nindent 6 }}
 {{- if eq .Values.global.openshiftEnabled false }}
       securityContext: {{ toYaml .Values.podSecurityContext| nindent 8 }}

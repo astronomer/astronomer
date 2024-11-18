@@ -32,8 +32,15 @@ class TestServiceAccounts:
                 "registry": {"serviceAccount": {"create": "true", "name": "registry-test"}},
                 "configSyncer": {"serviceAccount": {"create": "true", "name": "configsyncer-test"}},
                 "houston": {"serviceAccount": {"create": "true", "name": "houston-test"}},
+                "astroUI": {"serviceAccount": {"create": "true", "name": "astroui-test"}},
+                "install": {"serviceAccount": {"create": "true", "name": "cliinstall-test"}},
             },
+            "nats": {"nats": {"serviceAccount": {"create": "true", "name": "nats-test"}}},
+            "stan": {"stan": {"serviceAccount": {"create": "true", "name": "stan-test"}}},
             "grafana": {"serviceAccount": {"create": "true", "name": "grafana-test"}},
+            "alertmanager": {"serviceAccount": {"create": "true", "name": "alertmanager-test"}},
+            "kibana": {"serviceAccount": {"create": "true", "name": "kibana-test"}},
+            "prometheus-blackbox-exporter": {"serviceAccount": {"create": "true", "name": "blackbox-test"}},
         }
         docs = render_chart(
             kube_version=kube_version,
@@ -43,12 +50,29 @@ class TestServiceAccounts:
                 "charts/astronomer/templates/registry/registry-serviceaccount.yaml",
                 "charts/astronomer/templates/config-syncer/config-syncer-serviceaccount.yaml",
                 "charts/astronomer/templates/houston/api/houston-bootstrap-serviceaccount.yaml",
+                "charts/astronomer/templates/astro-ui/astro-ui-serviceaccount.yaml",
+                "charts/astronomer/templates/cli-install/cli-install-serviceaccount.yaml",
+                "charts/nats/templates/nats-serviceaccount.yaml",
+                "charts/stan/templates/stan-serviceaccount.yaml",
                 "charts/grafana/templates/grafana-bootstrap-serviceaccount.yaml",
+                "charts/alertmanager/templates/alertmanager-serviceaccount.yaml",
+                "charts/kibana/templates/kibana-serviceaccount.yaml",
+                "charts/prometheus-blackbox-exporter/templates/blackbox-serviceaccount.yaml",
             ],
         )
 
-        assert len(docs) == 5
-        expected_names = {"commander-test", "registry-test", "configsyncer-test", "houston-test", "grafana-test"}
+        assert len(docs) == 12
+        expected_names = {
+            "commander-test",
+            "registry-test",
+            "configsyncer-test",
+            "houston-test",
+            "astroui-test",
+            "grafana-test",
+            "alertmanager-test",
+            "kibana-test",
+            "blackbox-test",
+        }
         extracted_names = {doc["metadata"]["name"] for doc in docs if "metadata" in doc and "name" in doc["metadata"]}
         assert expected_names.issubset(extracted_names)
 
