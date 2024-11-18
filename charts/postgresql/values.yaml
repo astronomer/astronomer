@@ -85,6 +85,8 @@ securityContext:
 ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
 serviceAccount:
   enabled: false
+  # Annotations to add to the service account
+  annotations: {}
   ## Name of an already existing service account. Setting this value disables the automatic service account creation.
   # name:
 
