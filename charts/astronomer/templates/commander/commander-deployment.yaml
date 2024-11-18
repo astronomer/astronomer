@@ -32,6 +32,9 @@ spec:
         version: {{ .Chart.Version }}
       annotations:
         checksum/airflow-chart-version: {{ .Values.airflowChartVersion | sha256sum }}
+{{- if .Values.commander.podAnnotations }}
+{{ toYaml .Values.commander.podAnnotations | indent 8 }}
+{{- end }}
     spec:
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}

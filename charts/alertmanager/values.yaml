@@ -105,3 +105,5 @@ extraVolumeMounts: []
 #  - name: webhook-alert-secret
 #    mountPath: "/var/webhook-alert-secret"
 #    readOnly: true
+
+podAnnotations: {}
