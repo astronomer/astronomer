@@ -15,7 +15,8 @@ vector:
   resources: ~
   livenessProbe: ~
   readinessProbe: ~
-  securityContext: ~
+
+logLevel: ~
 
 imagePullSecrets: []
 

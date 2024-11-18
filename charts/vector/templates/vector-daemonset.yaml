@@ -44,6 +44,8 @@ spec:
         securityContext: {{ toYaml .Values.vector.securityContext | nindent 10 }}
         imagePullPolicy: {{ .Values.vector.image.pullPolicy }}
         env:
+        - name: VECTOR_LOG
+          value: "{{ .Values.logLevel | default "info" }}"
         - name: ELASTICSEARCH_HOST
           value: {{ template "elasticsearch.host" . }}
         - name: ELASTICSEARCH_PORT
@@ -86,7 +88,7 @@ spec:
       {{- include "custom_ca_volumes" . | nindent 6 }}
       - name: varlogcontainers
         hostPath:
-          path: /var/log/containers
+          path: /var/log/containers/containers
       - name: varlibdockercontainers
         hostPath:
           path: /var/lib/docker/containers
