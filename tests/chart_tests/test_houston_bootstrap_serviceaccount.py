@@ -18,4 +18,4 @@ class TestHoustonBootstrapServiceAccount:
         doc = docs[0]
 
         assert doc["kind"] == "ServiceAccount"
-        assert "annotations" not in doc["metadata"]
+        assert "annotations" in doc["metadata"]

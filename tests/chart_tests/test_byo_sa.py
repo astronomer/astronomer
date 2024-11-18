@@ -35,6 +35,8 @@ class TestServiceAccounts:
                 "astroUI": {"serviceAccount": {"create": "true", "name": "astroui-test"}},
                 "install": {"serviceAccount": {"create": "true", "name": "cliinstall-test"}},
             },
+            "nats": {"nats": {"serviceAccount": {"create": "true", "name": "nats-test"}}},
+            "stan": {"stan": {"serviceAccount": {"create": "true", "name": "stan-test"}}},
             "grafana": {"serviceAccount": {"create": "true", "name": "grafana-test"}},
             "alertmanager": {"serviceAccount": {"create": "true", "name": "alertmanager-test"}},
             "kibana": {"serviceAccount": {"create": "true", "name": "kibana-test"}},
@@ -49,6 +51,9 @@ class TestServiceAccounts:
                 "charts/astronomer/templates/config-syncer/config-syncer-serviceaccount.yaml",
                 "charts/astronomer/templates/houston/api/houston-bootstrap-serviceaccount.yaml",
                 "charts/astronomer/templates/astro-ui/astro-ui-serviceaccount.yaml",
+                "charts/astronomer/templates/cli-install/cli-install-serviceaccount.yaml",
+                "charts/nats/templates/nats-serviceaccount.yaml",
+                "charts/stan/templates/stan-serviceaccount.yaml",
                 "charts/grafana/templates/grafana-bootstrap-serviceaccount.yaml",
                 "charts/alertmanager/templates/alertmanager-serviceaccount.yaml",
                 "charts/kibana/templates/kibana-serviceaccount.yaml",
@@ -56,7 +61,7 @@ class TestServiceAccounts:
             ],
         )
 
-        assert len(docs) == 9
+        assert len(docs) == 12
         expected_names = {
             "commander-test",
             "registry-test",
