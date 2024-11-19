@@ -241,6 +241,8 @@ global:
     #kubernetes.io/ingress.class: "default"
     #route.openshift.io/termination: "passthrough"
 
+  podAnnotations: {}
+
   # Enable values required for use with Microsoft Azure
   azure:
     enabled: false

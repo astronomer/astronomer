@@ -29,6 +29,9 @@ spec:
         version: {{ .Chart.Version }}
       annotations:
         checksum/configmap: {{ include (print $.Template.BasePath "/cli-install/cli-install-configmap.yaml") . | sha256sum }}
+{{- if .Values.global.podAnnotations }}
+{{ toYaml .Values.global.podAnnotations | indent 8 }}
+{{- end }}
 {{- if .Values.install.podAnnotations }}
 {{ toYaml .Values.install.podAnnotations | indent 8 }}
 {{- end }}
