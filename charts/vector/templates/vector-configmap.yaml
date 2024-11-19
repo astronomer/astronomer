@@ -26,7 +26,7 @@ data:
         #include:
         #  - "/var/log/containers/*.log"
         read_from: beginning
-        extra_label_selector:  "scheduler,webserver,worker,triggerer,git-sync-relay,dag-server,airflow-downgrade"
+        extra_label_selector: "component=scheduler,component=webserver,component=worker,component=triggerer,component=git-sync-relay,component=dag-server,component=airflow-downgrade"
     transforms:
       transform_airflow_logs:
         type: remap
