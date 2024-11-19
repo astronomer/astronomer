@@ -29,6 +29,9 @@ spec:
         version: {{ .Chart.Version }}
       annotations:
         checksum/houston-config: {{ include (print $.Template.BasePath "/houston/houston-configmap.yaml") . | sha256sum }}
+{{- if .Values.houston.podAnnotations }}
+{{ toYaml .Values.houston.podAnnotations | indent 8 }}
+{{- end }}
     spec:
       nodeSelector: {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
       affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}

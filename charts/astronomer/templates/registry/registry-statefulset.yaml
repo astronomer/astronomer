@@ -44,6 +44,9 @@ spec:
         version: {{ .Chart.Version }}
       annotations:
         checksum/configmap: {{ include (print $.Template.BasePath "/registry/registry-configmap.yaml") . | sha256sum }}
+{{- if .Values.registry.podAnnotations }}
+{{ toYaml .Values.registry.podAnnotations | indent 8 }}
+{{- end }}
     spec:
       serviceAccountName: {{ template "registry.ServiceAccount" . }}
       nodeSelector:

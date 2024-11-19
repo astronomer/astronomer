@@ -130,6 +130,8 @@ houston:
     # If not set and create is true, a name is generated using the fullname template
     name: ""
 
+  podAnnotations: {}
+
   env: []
 
   # For example
@@ -522,6 +524,8 @@ registry:
     disable: false
 
   logLevel: info
+
+  podAnnotations: {}
 
 install:
   cliEnabled: true
