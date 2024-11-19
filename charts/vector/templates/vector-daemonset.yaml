@@ -44,6 +44,10 @@ spec:
         securityContext: {{ toYaml .Values.vector.securityContext | nindent 10 }}
         imagePullPolicy: {{ .Values.vector.image.pullPolicy }}
         env:
+        - name: VECTOR_SELF_NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
         - name: VECTOR_LOG
           value: "{{ .Values.logLevel | default "info" }}"
         - name: ELASTICSEARCH_HOST

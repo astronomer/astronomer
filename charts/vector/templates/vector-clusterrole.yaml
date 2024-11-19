@@ -23,5 +23,11 @@ rules:
   - "get"
   - "watch"
   - "list"
+- apiGroups:
+  - ""
+  resources:
+  - "nodes"
+  verbs:
+  - "list"
 {{- end -}}
 {{- end -}}
