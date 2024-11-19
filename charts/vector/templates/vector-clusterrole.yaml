@@ -19,16 +19,9 @@ rules:
   resources:
   - "namespaces"
   - "pods"
-  verbs:
-  - "get"
-  - "watch"
-  - "list"
-- apiGroups:
-  - ""
-  resources:
   - "nodes"
   verbs:
-  - "list"
   - "watch"
+  - "list"
 {{- end -}}
 {{- end -}}

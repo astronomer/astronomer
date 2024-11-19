@@ -88,7 +88,7 @@ spec:
       {{- include "custom_ca_volumes" . | nindent 6 }}
       - name: varlogcontainers
         hostPath:
-          path: /var/log/containers/containers
+          path: /var/log/containers
       - name: varlibdockercontainers
         hostPath:
           path: /var/lib/docker/containers
