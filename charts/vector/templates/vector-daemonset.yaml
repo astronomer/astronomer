@@ -56,10 +56,6 @@ spec:
           value: {{ .Values.elasticsearch.port | quote }}
         - name: VECTOR_CONFIG_YAML
           value: "/etc/vector/config/vector-config.yaml"
-        - name: K8S_NODE_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: spec.nodeName
         - name: NAMESPACE
           value: {{ .Release.Namespace | quote }}
         - name: RELEASE
