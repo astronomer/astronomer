@@ -24,6 +24,14 @@ resources:
    cpu: 100m
    memory: 256Mi
 
+livenessProbe: {}
+#  httpGet:
+#    path: /healthz
+#    port: {{ .Values.ports.scrape }}
+#  initialDelaySeconds: 5
+#  timeoutSeconds: 5
+readinessProbe: {}
+
 ports:
   scrape: 8080
   telemetry: 8081
@@ -38,6 +46,8 @@ priorityClassName: ~
 serviceAccount:
   # Specifies whether a ServiceAccount should be created
   create: true
+  # Annotations to add to the service account
+  annotations: {}
   # The name of the ServiceAccount to use.
   # If not set and create is true, a name is generated using the fullname template
   name: ~

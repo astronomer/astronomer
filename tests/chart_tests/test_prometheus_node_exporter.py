@@ -9,7 +9,6 @@ from tests.chart_tests.helm_template_generator import render_chart
     supported_k8s_versions,
 )
 class TestPrometheusNodeExporterDaemonset:
-
     @staticmethod
     def node_exporter_common_tests(doc):
         """Test common for node exporter daemonsets."""
@@ -129,3 +128,19 @@ class TestPrometheusNodeExporterDaemonset:
         self.node_exporter_common_tests(doc)
         assert "priorityClassName" in doc["spec"]["template"]["spec"]
         assert "node-exporter-priority-pod" == doc["spec"]["template"]["spec"]["priorityClassName"]
+
+    def test_node_exporter_nodepool_config_overrides(self, kube_version, global_platform_node_pool_config):
+        """Test to validate node exporter with nodeSelector, affinity, tolerations configured."""
+        global_platform_node_pool_config["nodeSelector"] = {"role": "astro-node-exporter"}
+        values = {"prometheus-node-exporter": global_platform_node_pool_config}
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=["charts/prometheus-node-exporter/templates/daemonset.yaml"],
+        )
+        spec = docs[0]["spec"]["template"]["spec"]
+        assert len(spec["nodeSelector"]) == 1
+        assert len(spec["affinity"]) == 1
+        assert len(spec["tolerations"]) > 0
+        assert spec["nodeSelector"] == values["prometheus-node-exporter"]["nodeSelector"]
+        assert spec["tolerations"] == values["prometheus-node-exporter"]["tolerations"]

@@ -3,14 +3,14 @@
 # use another script to collect all the values you want to shaify
 
 # generate a file of all values
-# ./generate-all-values.py ~/astronomer --mount astronomer.houston.config.deployments.helm=~/airflow-chart > all-values.yaml
+# ./get-all-chart-default-values.py ~/astronomer --mount astronomer.houston.config.deployments.helm=~/airflow-chart > all-values.yaml
 # see all values as a path like you would pass into via --set on helm
-# ./generate-all-values.py ~/astronomer --mount astronomer.houston.config.deployments.helm=~/airflow-chart --as-path
+# ./get-all-chart-default-values.py ~/astronomer --mount astronomer.houston.config.deployments.helm=~/airflow-chart --as-path
 # or just the ones that end in tag=
-# ./generate-all-values.py ~/astronomer --mount astronomer.houston.config.deployments.helm=~/airflow-chart --as-path|grep 'tag='
+# ./get-all-chart-default-values.py ~/astronomer --mount astronomer.houston.config.deployments.helm=~/airflow-chart --as-path|grep 'tag='
 # or pass in some values to override from a candidate values.yaml you intend to use to make sure you got all the values you wanted to change
-# ./generate-all-values.py ~/astronomer --mount astronomer.houston.config.deployments.helm=~/airflow-chart -f ./my-values.yaml
-# ./generate-all-values.py ~/astronomer --mount astronomer.houston.config.deployments.helm=~/airflow-chart -f ./my-values.yaml --as-path
+# ./get-all-chart-default-values.py ~/astronomer --mount astronomer.houston.config.deployments.helm=~/airflow-chart -f ./my-values.yaml
+# ./get-all-chart-default-values.py ~/astronomer --mount astronomer.houston.config.deployments.helm=~/airflow-chart -f ./my-values.yaml --as-path
 
 import yaml
 import tempfile

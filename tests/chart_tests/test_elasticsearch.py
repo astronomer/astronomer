@@ -215,9 +215,7 @@ class TestElasticSearch:
                 "namespaceSelector": {},
                 "podSelector": {"matchLabels": {"tier": "airflow", "component": "webserver"}},
             },
-        ] == doc[
-            "spec"
-        ]["ingress"][0]["from"]
+        ] == doc["spec"]["ingress"][0]["from"]
 
     def test_nginx_es_client_network_selector_with_logging_sidecar_enabled(self, kube_version):
         """Test Nginx ES Service with NetworkPolicies."""
@@ -519,7 +517,7 @@ class TestElasticSearch:
         assert "https://release-name-elasticsearch:9200" in LS["elasticsearch"]["client"]["hosts"]
 
     def test_elasticsearch_curator_cronjob_defaults(self, kube_version):
-        """Test ElasticSearch Curator cron job with defaults"""
+        """Test ElasticSearch Curator cron job with nodeSelector, affinity, tolerations and config defaults"""
         docs = render_chart(
             kube_version=kube_version,
             values={},
@@ -530,24 +528,67 @@ class TestElasticSearch:
         assert docs[0]["kind"] == "CronJob"
         assert docs[0]["metadata"]["name"] == "release-name-elasticsearch-curator"
         assert docs[0]["spec"]["schedule"] == "0 1 * * *"
+        spec = docs[0]["spec"]["jobTemplate"]["spec"]["template"]["spec"]
+        assert spec["nodeSelector"] == {}
+        assert spec["affinity"] == {}
+        assert spec["tolerations"] == []
         assert c_by_name["curator"]["command"] == ["/bin/sh", "-c"]
         assert c_by_name["curator"]["args"] == [
             "sleep 5; /usr/bin/curator --config /etc/config/config.yml /etc/config/action_file.yml; exit_code=$?; wget --timeout=5 -O- --post-data='not=used' http://127.0.0.1:15020/quitquitquit; exit $exit_code;"
         ]
         assert c_by_name["curator"]["securityContext"] == {}
 
-    def test_elasticsearch_curator_cronjob_overrides(self, kube_version):
-        """Test ElasticSearch Curator cron job with defaults"""
-        docs = render_chart(
-            kube_version=kube_version,
-            values={
-                "elasticsearch": {
-                    "curator": {
-                        "schedule": "0 45 * * *",
-                        "securityContext": {"runAsNonRoot": True},
-                    }
+    def test_elasticsearch_curator_cronjob_overrides(self, kube_version, global_platform_node_pool_config):
+        """Test ElasticSearch Curator cron job with nodeSelector, affinity, tolerations and config overrides."""
+        values = {
+            "elasticsearch": {
+                "curator": {
+                    "schedule": "0 45 * * *",
+                    "securityContext": {"runAsNonRoot": True},
                 }
             },
+            "global": {
+                "platformNodePool": global_platform_node_pool_config,
+            },
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=["charts/elasticsearch/templates/curator/es-curator-cronjob.yaml"],
+        )
+        assert len(docs) == 1
+        assert docs[0]["kind"] == "CronJob"
+        assert docs[0]["metadata"]["name"] == "release-name-elasticsearch-curator"
+        assert docs[0]["spec"]["schedule"] == "0 45 * * *"
+        spec = docs[0]["spec"]["jobTemplate"]["spec"]["template"]["spec"]
+        assert spec["nodeSelector"]["role"] == "astro"
+        assert len(spec["affinity"]) == 1
+        assert len(spec["tolerations"]) > 0
+        assert spec["tolerations"] == values["global"]["platformNodePool"]["tolerations"]
+        c_by_name = get_cronjob_containerspec_by_name(docs[0])
+        assert c_by_name["curator"]["command"] == ["/bin/sh", "-c"]
+        assert c_by_name["curator"]["args"] == [
+            "sleep 5; /usr/bin/curator --config /etc/config/config.yml /etc/config/action_file.yml; exit_code=$?; wget --timeout=5 -O- --post-data='not=used' http://127.0.0.1:15020/quitquitquit; exit $exit_code;"
+        ]
+        assert c_by_name["curator"]["securityContext"] == {"runAsNonRoot": True}
+
+    def test_elasticsearch_curator_cronjob_subchart_overrides(self, kube_version, global_platform_node_pool_config):
+        """Test ElasticSearch Curator cron job with nodeSelector, affinity, tolerations and config overrides."""
+        global_platform_node_pool_config["nodeSelector"] = {"role": "astroelasticsearch"}
+        values = {
+            "elasticsearch": {
+                "curator": {
+                    "schedule": "0 45 * * *",
+                    "securityContext": {"runAsNonRoot": True},
+                },
+                "nodeSelector": global_platform_node_pool_config["nodeSelector"],
+                "affinity": global_platform_node_pool_config["affinity"],
+                "tolerations": global_platform_node_pool_config["tolerations"],
+            },
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
             show_only=["charts/elasticsearch/templates/curator/es-curator-cronjob.yaml"],
         )
         assert len(docs) == 1
@@ -555,6 +596,11 @@ class TestElasticSearch:
         assert docs[0]["kind"] == "CronJob"
         assert docs[0]["metadata"]["name"] == "release-name-elasticsearch-curator"
         assert docs[0]["spec"]["schedule"] == "0 45 * * *"
+        spec = docs[0]["spec"]["jobTemplate"]["spec"]["template"]["spec"]
+        assert spec["nodeSelector"]["role"] == "astroelasticsearch"
+        assert len(spec["affinity"]) == 1
+        assert len(spec["tolerations"]) > 0
+        assert spec["tolerations"] == values["elasticsearch"]["tolerations"]
         assert c_by_name["curator"]["command"] == ["/bin/sh", "-c"]
         assert c_by_name["curator"]["args"] == [
             "sleep 5; /usr/bin/curator --config /etc/config/config.yml /etc/config/action_file.yml; exit_code=$?; wget --timeout=5 -O- --post-data='not=used' http://127.0.0.1:15020/quitquitquit; exit $exit_code;"

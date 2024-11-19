@@ -41,6 +41,8 @@ global:
     # namespace pools: define k8s namespaces in which Astronomer will manage Airflow deployments
     namespacePools:
       enabled: false
+      # if createRbac is set to false then platform does not create roles and rolebinding.
+      createRbac: true
       namespaces:
         # if create is enabled, this helm chart will create the provided k8s namespaces
         create: false
@@ -127,9 +129,10 @@ global:
   dagOnlyDeployment:
     enabled: false
     repository: quay.io/astronomer/ap-dag-deploy
-    tag: 0.5.4
-    securityContext:
-      fsGroup: 50000
+    tag: 0.6.3
+    securityContexts:
+      pod:
+        fsGroup: 50000
     resources: {}
     persistence: {}
 

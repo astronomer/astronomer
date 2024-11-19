@@ -80,6 +80,13 @@ def test_nginx_ssl_cache(nginx):
     assert "ssl_session_cache shared:SSL:10m;" == nginx.check_output("cat nginx.conf | grep ssl_session_cache").replace("\t", "")
 
 
+def test_nginx_capabilities(nginx):
+    """Ensure nginx has no getcap capabilities"""
+    assert nginx.check_output("getcap /nginx-ingress-controller").replace("\t", "") == "/nginx-ingress-controller ="
+    assert nginx.check_output("getcap /usr/local/nginx/sbin/nginx").replace("\t", "") == "/usr/local/nginx/sbin/nginx ="
+    assert nginx.check_output("getcap /usr/bin/dumb-init").replace("\t", "") == "/usr/bin/dumb-init ="
+
+
 @pytest.mark.flaky(reruns=20, reruns_delay=10)
 def test_prometheus_targets(prometheus):
     """Ensure all Prometheus targets are healthy."""

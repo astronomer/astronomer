@@ -34,20 +34,30 @@ resources: {}
 #   memory: 128Mi
 
 serviceAccount:
-  create: true
-  name: ~
+    # Specifies whether a service account should be created
+    create: true
+    # Annotations to add to the service account
+    annotations: {}
+    # The name of the service account to use.
+    # If not set and create is true, a name is generated using the fullname template
+    name: ~
 
-# probe configurations for prometheus container
-livenessProbe:
-  initialDelaySeconds: 10
-  periodSeconds: 5
-  timeoutSeconds: 1
-  failureThreshold: 3
-readinessProbe:
-  initialDelaySeconds: 10
-  periodSeconds: 5
-  timeoutSeconds: 1
-  failureThreshold: 3
+livenessProbe: {}
+  # httpGet:
+  #   path: /-/healthy
+  #   port: {{ .Values.ports.http }}
+  # initialDelaySeconds: 10
+  # periodSeconds: 5
+  # failureThreshold: 3
+  # timeoutSeconds: 1
+readinessProbe: {}
+  # httpGet:
+  #   path: /-/ready
+  #   port: {{ .Values.ports.http }}
+  # initialDelaySeconds: 10
+  # periodSeconds: 5
+  # failureThreshold: 3
+  # timeoutSeconds: 1
 
 podSecurityContext:
   fsGroup: 65534
@@ -56,6 +66,8 @@ securityContext:
   runAsNonRoot: true
   runAsUser: 65534
 configMapReloader:
+  livenessProbe: {}
+  readinessProbe: {}
   resources: {}
     # limits:
     #   cpu: 100m

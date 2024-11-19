@@ -296,9 +296,7 @@ class TestExternalElasticSearch:
                 "namespaceSelector": {},
                 "podSelector": {"matchLabels": {"tier": "airflow", "component": "webserver"}},
             },
-        ] == doc[
-            "spec"
-        ]["ingress"][0]["from"]
+        ] == doc["spec"]["ingress"][0]["from"]
 
     def test_external_es_network_selector_with_logging_sidecar_enabled(self, kube_version):
         """Test External Elasticsearch Service with NetworkPolicy Defaults."""
@@ -569,3 +567,85 @@ class TestExternalElasticSearch:
         nginx_conf = pathlib.Path("tests/chart_tests/test_data/default-external-es-nginx.conf").read_text()
         assert doc["kind"] == "ConfigMap"
         assert nginx_conf in doc["data"]["nginx.conf"]
+
+    def test_external_elasticsearch_nginx_deployment_defaults(self, kube_version):
+        """Test that External ElasticSearch renders proper nodeSelector, affinity,
+        and tolerations with global and nginx defaults"""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "customLogging": {
+                        "enabled": True,
+                        "secret": secret,
+                        "host": "esdemo.example.com",
+                    }
+                }
+            },
+            show_only=[
+                "charts/external-es-proxy/templates/external-es-proxy-deployment.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+        spec = docs[0]["spec"]["template"]["spec"]
+        assert spec["nodeSelector"] == {}
+        assert spec["affinity"] == {}
+        assert spec["tolerations"] == []
+
+    def test_external_elasticsearch_nginx_deployment_global_platformnodepool_overrides(
+        self, kube_version, global_platform_node_pool_config
+    ):
+        """Test that External ElasticSearch renders proper nodeSelector, affinity,
+        and tolerations with global config and nginx overrides."""
+        values = {
+            "global": {
+                "platformNodePool": global_platform_node_pool_config,
+                "customLogging": {
+                    "enabled": True,
+                    "secret": secret,
+                    "host": "esdemo.example.com",
+                },
+            }
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=[
+                "charts/external-es-proxy/templates/external-es-proxy-deployment.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+        spec = docs[0]["spec"]["template"]["spec"]
+        assert len(spec["nodeSelector"]) == 1
+        assert len(spec["tolerations"]) > 0
+        assert spec["tolerations"] == values["global"]["platformNodePool"]["tolerations"]
+
+    def test_external_elasticsearch_nginx_deployment_with_subchart_overrides(self, kube_version, global_platform_node_pool_config):
+        """Test that External ElasticSearch renders proper nodeSelector, affinity,
+        and tolerations with global config and nginx overrides."""
+        global_platform_node_pool_config["nodeSelector"] = {"role": "astroesproxy"}
+        values = {
+            "global": {
+                "customLogging": {
+                    "enabled": True,
+                    "secret": secret,
+                    "host": "esdemo.example.com",
+                },
+            },
+            "external-es-proxy": global_platform_node_pool_config,
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=[
+                "charts/external-es-proxy/templates/external-es-proxy-deployment.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+        spec = docs[0]["spec"]["template"]["spec"]
+        assert len(spec["nodeSelector"]) == 1
+        assert len(spec["tolerations"]) > 0
+        assert spec["tolerations"] == values["external-es-proxy"]["tolerations"]

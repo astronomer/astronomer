@@ -35,40 +35,30 @@ spec:
 {{ toYaml .Values.nginx.podAnnotations | indent 8 }}
 {{- end }}
     spec:
-      nodeSelector:
-{{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
-      affinity:
-{{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 8 }}
-      tolerations:
-{{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
+      serviceAccountName: {{ template "elasticsearch.serviceAccount" . }}
+      nodeSelector: {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
+      affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
+      tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       restartPolicy: Always
 {{- include "elasticsearch.imagePullSecrets" . | indent 6 }}
       containers:
         - name: nginx
           image: {{ template "nginx-es.image" . }}
           imagePullPolicy: {{ .Values.images.nginx.pullPolicy }}
-          securityContext:
-{{ toYaml .Values.nginx.securityContext | indent 12 }}
-          resources:
-{{ toYaml .Values.nginx.resources | indent 12 }}
+          securityContext: {{ toYaml .Values.nginx.securityContext | nindent 12 }}
+          resources: {{ toYaml .Values.nginx.resources | nindent 12 }}
           volumeMounts:
             - name: nginx-config-volume
               mountPath: /etc/nginx
           ports:
             - name: http
               containerPort: {{ .Values.common.ports.http }}
-          # livenessProbe:
-          #   httpGet:
-          #     path: /healthz
-          #     port: 8080
-          #   initialDelaySeconds: 10
-          #   periodSeconds: 10
-          # readinessProbe:
-          #   httpGet:
-          #     path: /healthz
-          #     port: 8080
-          #   initialDelaySeconds: 10
-          #   periodSeconds: 10
+          {{- if .Values.nginx.readinessProbe }}
+          readinessProbe: {{ tpl (toYaml .Values.nginx.readinessProbe) . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.nginx.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.nginx.livenessProbe) . | nindent 12 }}
+          {{- end }}
       volumes:
         - name: nginx-config-volume
           configMap:

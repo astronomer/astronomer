@@ -1,6 +1,10 @@
 #####################
 ## NGINX ConfigMap ##
 #####################
+{{- $cspPolicyEnabled :=  .Values.cspPolicy.cdnEnabled }}
+{{- $connectsrc :=  eq $cspPolicyEnabled true | ternary .Values.cspPolicy.connectsrc "" }}
+{{- $fontsrc := eq $cspPolicyEnabled true| ternary .Values.cspPolicy.fontsrc "" }}
+{{- $scriptsrc := eq $cspPolicyEnabled true | ternary .Values.cspPolicy.scriptsrc "" }}
 kind: ConfigMap
 apiVersion: v1
 metadata:
@@ -11,8 +15,16 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 data:
-  # Policy was generated using https://report-uri.com/home/generate
-  Content-Security-Policy: "default-src 'self' *.{{ .Values.global.baseDomain }}; script-src 'unsafe-inline' 'unsafe-eval' *.{{ .Values.global.baseDomain }} cdn.jsdelivr.net cdn.astronomer.io cdn.metarouter.io cdn.segment.com www.google-analytics.com js.stripe.com widget.intercom.io js.intercomcdn.com cdn.lr-ingest.io; img-src 'self' data: *; connect-src *.{{ .Values.global.baseDomain }} wss://*.{{ .Values.global.baseDomain }} e.metarouter.io api.segment.com api.segment.io api-iam.intercom.io wss://nexus-websocket-a.intercom.io https://grafana.com/blog/news.xml; style-src 'unsafe-inline' *.{{ .Values.global.baseDomain }} cdn.jsdelivr.net fonts.googleapis.com; frame-src js.stripe.com; font-src *.{{ .Values.global.baseDomain }} cdn.astronomer.io fonts.gstatic.com js.intercomcdn.com data:; worker-src blob:"
+  # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy
+  Content-Security-Policy: >-
+    default-src 'self' *.{{ .Values.global.baseDomain }} ;
+    connect-src *.{{ .Values.global.baseDomain }} wss://*.{{ .Values.global.baseDomain }} {{ $connectsrc }} ;
+    font-src *.{{ .Values.global.baseDomain }} cdn.astronomer.io {{ $fontsrc }} data: ;
+    frame-src 'self' ;
+    img-src 'self' data: * ;
+    script-src 'unsafe-inline' 'unsafe-eval' *.{{ .Values.global.baseDomain }} cdn.astronomer.io {{ $scriptsrc }} ;
+    style-src 'unsafe-inline' *.{{ .Values.global.baseDomain }} {{ $scriptsrc }} ;
+    worker-src blob: *.{{ .Values.global.baseDomain }} ;
   Referrer-Policy: "same-origin"
   X-Frame-Options: "deny"
   X-XSS-Protection: "1; mode=block"

@@ -22,11 +22,15 @@ import pytest
 from filelock import FileLock
 
 from tests import git_root_dir
+import os
 
 
 @pytest.fixture(autouse=True, scope="session")
 def upgrade_helm(tmp_path_factory, worker_id):
     """Add stable helm repo, upgrade helm repos, and do helm dep upgrade."""
+
+    if bool(os.getenv("INTERNET_ACCESS", "1").strip().lower() in ("1", "on", "true", "y", "yes")) is False:
+        return
 
     def _upgrade_helm():
         try:
@@ -70,3 +74,34 @@ def docker_client():
         client = docker.from_env()
         yield client
         client.close()
+
+
+@pytest.fixture(scope="function")
+def global_platform_node_pool_config():
+    yield {
+        "nodeSelector": {"role": "astro"},
+        "affinity": {
+            "nodeAffinity": {
+                "requiredDuringSchedulingIgnoredDuringExecution": {
+                    "nodeSelectorTerms": [
+                        {
+                            "matchExpressions": [
+                                {
+                                    "key": "astronomer.io/multi-tenant",
+                                    "operator": "In",
+                                    "values": ["false"],
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
+        "tolerations": [
+            {
+                "effect": "NoSchedule",
+                "key": "astronomer",
+                "operator": "Exists",
+            }
+        ],
+    }

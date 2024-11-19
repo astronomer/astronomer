@@ -62,6 +62,9 @@ spec:
               containerPort: {{ .Values.ports.commanderHTTP }}
             - name: commander-grpc
               containerPort: {{ .Values.ports.commanderGRPC }}
+          {{- if .Values.commander.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.commander.livenessProbe) . | nindent 12 }}
+          {{- else }}
           livenessProbe:
             failureThreshold: 5
             httpGet:
@@ -72,12 +75,17 @@ spec:
             periodSeconds: 10
             successThreshold: 1
             timeoutSeconds: 5
+          {{- end }}
+          {{- if .Values.commander.readinessProbe }}
+          readinessProbe: {{ tpl (toYaml .Values.commander.readinessProbe) . | nindent 12 }}
+          {{- else}}
           readinessProbe:
             httpGet:
               path: /healthz
               port: {{ .Values.ports.commanderHTTP }}
             initialDelaySeconds: 10
             periodSeconds: 10
+          {{- end }}
           env:
             {{- range $i, $config := .Values.commander.env }}
             - name: {{ $config.name }}
@@ -97,15 +105,15 @@ spec:
             - name: COMMANDER_UPGRADE_TIMEOUT
               value: {{ .Values.commander.upgradeTimeout | quote }}
             {{- end }}
-            {{ if .Values.commander.airGapped.enabled }}
+            {{- if .Values.commander.airGapped.enabled }}
             - name: COMMANDER_AIRGAPPED
               value: "true"
             {{- end }}
-            {{ if .Values.global.features.namespacePools.enabled -}}
+            {{ if and .Values.global.features.namespacePools.enabled -}}
             - name: COMMANDER_MANUAL_NAMESPACE_NAMES
               value: "true"
             {{- end }}
-            {{ if .Values.global.disableManageClusterScopedResources -}}
+            {{- if .Values.global.disableManageClusterScopedResources }}
             - name: COMMANDER_MANAGE_NAMESPACE_RESOURCE
               value: "false"
             {{- end }}

@@ -27,6 +27,7 @@ spec:
         app: astro-ui
         version: {{ .Chart.Version }}
     spec:
+      serviceAccountName: {{ template "astroUI.ServiceAccount" . }}
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
       affinity:
@@ -53,18 +54,26 @@ spec:
           ports:
             - name: astro-ui-http
               containerPort: {{ .Values.ports.astroUIHTTP }}
+          {{- if .Values.astroUI.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.astroUI.livenessProbe) . | nindent 12 }}
+          {{- else}}
           livenessProbe:
             httpGet:
               path: /
               port: {{ .Values.ports.astroUIHTTP }}
             initialDelaySeconds: 10
             periodSeconds: 10
+          {{- end }}
+          {{- if .Values.astroUI.readinessProbe }}
+          readinessProbe: {{ tpl (toYaml .Values.astroUI.readinessProbe) . | nindent 12 }}
+          {{- else}}
           readinessProbe:
             httpGet:
               path: /
               port: {{ .Values.ports.astroUIHTTP }}
             initialDelaySeconds: 10
             periodSeconds: 10
+          {{- end }}
           env:
             {{- range $i, $config := .Values.astroUI.env }}
             - name: {{ $config.name }}

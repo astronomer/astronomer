@@ -212,9 +212,7 @@ class TestAstronomerConfigSyncer:
         assert {
             "runAsNonRoot": True,
             "allowPrivilegeEscalation": False,
-        } == job_container_by_name[
-            "config-syncer"
-        ]["securityContext"]
+        } == job_container_by_name["config-syncer"]["securityContext"]
 
     def test_astronomer_config_syncer_cronjob_namespace_pool_disabled(self, kube_version):
         """Test that when namespacePools is disabled, config-syncer cronjob is
@@ -241,6 +239,7 @@ class TestAstronomerConfigSyncer:
 
         assert "--target-namespaces" not in job_container_by_name["config-syncer"]["args"]
         assert ",".join(namespaces) not in job_container_by_name["config-syncer"]["args"]
+        assert "resources" in job_container_by_name["config-syncer"]
 
     @pytest.mark.parametrize("test_data", cron_test_data, ids=[x[0] for x in cron_test_data])
     def test_astronomer_config_syncer_cronjob_default_schedule(self, test_data, kube_version):
@@ -277,3 +276,41 @@ class TestAstronomerConfigSyncer:
         )
 
         assert len(docs) == 0
+
+    def test_astronomer_config_syncer_and_global_rbac_enabled_with_sa_create_disabled(self, kube_version):
+        """Test that config syncer service account create is disabled when config syncer and global rbac is enabled."""
+
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"rbacEnabled": True},
+                "astronomer": {"configSyncer": {"enabled": True, "serviceAccount": {"create": False}}},
+            },
+            show_only=[
+                "charts/astronomer/templates/config-syncer/config-syncer-cronjob.yaml",
+                "charts/astronomer/templates/config-syncer/config-syncer-role.yaml",
+                "charts/astronomer/templates/config-syncer/config-syncer-rolebinding.yaml",
+                "charts/astronomer/templates/config-syncer/config-syncer-serviceaccount.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+
+    def test_astronomer_config_syncer_and_global_rbac_enabled_with_namespace_pools_and_sa_create_disabled(self, kube_version):
+        """Test that config syncer service account create is disabled when config syncer and global rbac is enabled."""
+
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {"rbacEnabled": True, "features": {"namespacePools": {"enabled": True}}},
+                "astronomer": {"configSyncer": {"enabled": True, "serviceAccount": {"create": False}}},
+            },
+            show_only=[
+                "charts/astronomer/templates/config-syncer/config-syncer-cronjob.yaml",
+                "charts/astronomer/templates/config-syncer/config-syncer-role.yaml",
+                "charts/astronomer/templates/config-syncer/config-syncer-rolebinding.yaml",
+                "charts/astronomer/templates/config-syncer/config-syncer-serviceaccount.yaml",
+            ],
+        )
+
+        assert len(docs) == 1

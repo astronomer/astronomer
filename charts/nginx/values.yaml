@@ -9,7 +9,7 @@ tolerations: []
 images:
   nginx:
     repository: quay.io/astronomer/ap-nginx
-    tag: 1.11.2
+    tag: 1.11.2-1
     pullPolicy: IfNotPresent
   defaultBackend:
     repository: quay.io/astronomer/ap-default-backend
@@ -19,10 +19,16 @@ images:
 securityContext:
   runAsUser: 101
   runAsNonRoot: true
+  capabilities:
+    drop:
+      - ALL
+  allowPrivilegeEscalation: false
 
 serviceAccount:
   # Specifies whether a service account should be created
   create: true
+  # Annotations to add to the service account
+  annotations: {}
   # The name of the service account to use.
   # If not set and create is true, a name is generated using the fullname template
   name: ~
@@ -44,6 +50,14 @@ resources: {}
 #  requests:
 #   cpu: 100m
 #   memory: 128Mi
+
+livenessProbe: {}
+  # httpGet:
+  #   path: /healthz
+  #   port: {{ .Values.ports.healthz }}
+  # initialDelaySeconds: 30
+  # timeoutSeconds: 5
+readinessProbe: {}
 
 # Service type that Nginx can be. Default is LoadBalancer but "ClusterIP" and "NodePort" are both valid.
 serviceType: "LoadBalancer"
@@ -109,4 +123,13 @@ electionTTL: ""
 allowSnippetAnnotations: true
 
 defaultBackend:
+  enabled: true
   resources: {}
+  readinessProbe: {}
+  livenessProbe: {}
+
+cspPolicy:
+  cdnEnabled: true
+  connectsrc: "cdn.jsdelivr.net"
+  fontsrc: "fonts.gstatic.com"
+  scriptsrc: "fonts.googleapis.com cdn.jsdelivr.net"

@@ -29,11 +29,28 @@ resources:
   #   cpu: 100m
   #   memory: 128Mi
 
+readinessProbe: {}
+  # httpGet:
+  #   path: /api/health
+  #   port: {{ .Values.ports.http }}
+  # initialDelaySeconds: 10
+  # periodSeconds: 10
+
+livenessProbe: {}
+  # httpGet:
+  #   path: /api/health
+  #   port: {{ .Values.ports.http }}
+  # initialDelaySeconds: 10
+  # periodSeconds: 10
+
 env:
   # XPACK_GRAPH_ENABLED: "false"
   # XPACK_ML_ENABLED: "false"
   # XPACK_REPORTING_ENABLED: "false"
   # XPACK_SECURITY_ENABLED: "false"
+  TELEMETRY_ALLOW_CHANING_OPT_IN_STATUS: "false"
+  TELEMETRY_OPT_IN: "false"
+  TELEMETRY_ENABLED: "false"
 
 serviceType: ClusterIP
 
@@ -41,3 +58,12 @@ ports:
   http: 5601
 
 createDefaultIndex: true
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: false
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
