@@ -29,5 +29,6 @@ rules:
   - "nodes"
   verbs:
   - "list"
+  - "watch"
 {{- end -}}
 {{- end -}}
