@@ -26,7 +26,8 @@ data:
         #include:
         #  - "/var/log/containers/*.log"
         read_from: beginning
-        extra_label_selector: "component=scheduler,component=webserver,component=worker,component=triggerer,component=git-sync-relay,component=dag-server,component=airflow-downgrade"
+        extra_label_selector: "platform=astronomer"
+        #extra_label_selector: "component=scheduler,component=webserver,component=worker,component=triggerer,component=git-sync-relay,component=dag-server,component=airflow-downgrade"
     transforms:
       transform_airflow_logs:
         type: remap
@@ -142,7 +143,7 @@ data:
         compression: none
         endpoints: ["http://{{.Release.Name}}-elasticsearch:9200"]
         bulk:
-          index: "{{ include "logging.indexNamePrefix" . }}.${RELEASE:--}.{{ .Values.indexPattern }}"
+          index: "{{ include "logging.indexNamePrefix" . }}.{{ .release }}.{{ .Values.indexPattern }}"
           action: create
 
       # TODO: remove this debug "print" sink
