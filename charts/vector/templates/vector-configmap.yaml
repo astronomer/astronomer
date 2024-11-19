@@ -22,19 +22,21 @@ data:
     data_dir: "/tmp"
     sources:
       airflow_log_files:
-        type: file
-        include:
-          - "/var/log/containers/*.log"
+        type: kubernetes_logs
+        #include:
+        #  - "/var/log/containers/*.log"
         read_from: beginning
+        extra_label_selector: "platform=astronomer"
+        #extra_label_selector: "component=scheduler,component=webserver,component=worker,component=triggerer,component=git-sync-relay,component=dag-server,component=airflow-downgrade"
     transforms:
       transform_airflow_logs:
         type: remap
         inputs:
           - airflow_log_files
         source: |
-          .component = "${COMPONENT:--}"
-          .workspace = "${WORKSPACE:--}"
-          .release = "${RELEASE:--}"
+          .component = .kubernetes.pod_labels.component
+          .workspace = .kubernetes.pod_labels.workspace
+          .release = .kubernetes.pod_labels.release
           .date_nano = parse_timestamp!(.@timestamp, format: "%Y-%m-%dT%H:%M:%S.%f%Z")
 
       filter_common_logs:
@@ -43,7 +45,7 @@ data:
           - transform_airflow_logs
         condition:
           type: "vrl"
-          source: '!includes(["worker","scheduler"], .component)'
+          source: '!includes(["worker","scheduler"], .kubernetes.pod_labels.component)'
 
       filter_scheduler_logs:
         type: filter
@@ -51,7 +53,7 @@ data:
           - transform_airflow_logs
         condition:
           type: "vrl"
-          source: 'includes(["scheduler"], .component)'
+          source: 'includes(["scheduler"], .kubernetes.pod_labels.component)'
 
       filter_worker_logs:
         type: filter
@@ -59,7 +61,7 @@ data:
           - transform_airflow_logs
         condition:
           type: "vrl"
-          source: 'includes(["worker"], .component)'
+          source: 'includes(["worker"], .kubernetes.pod_labels.component)'
 
       filter_gitsyncrelay_logs:
         type: filter
@@ -67,7 +69,7 @@ data:
           - transform_airflow_logs
         condition:
           type: "vrl"
-          source: 'includes(["git-sync-relay"], .component)'
+          source: 'includes(["git-sync-relay"], .kubernetes.pod_labels.component)'
 
       filter_dagserver_logs:
         type: filter
@@ -75,7 +77,7 @@ data:
           - transform_airflow_logs
         condition:
           type: "vrl"
-          source: 'includes(["dag-server"], .component)'
+          source: 'includes(["dag-server"], .kubernetes.pod_labels.component)'
 
       filter_airflow_downgrade_logs:
         type: filter
@@ -83,7 +85,7 @@ data:
           - transform_airflow_logs
         condition:
           type: "vrl"
-          source: 'includes(["airflow-downgrade"], .component)'
+          source: 'includes(["airflow-downgrade"], .kubernetes.pod_labels.component)'
 
       transform_task_log:
         type: remap
@@ -99,21 +101,31 @@ data:
           }
           .offset = to_int(now()) * 1000000000 + to_unix_timestamp(now()) * 1000000
 
+      final_common_log:
+        type: remap
+        inputs:
+          - filter_common_logs
+        source: |
+          .component = .kubernetes.pod_labels.component
+          .workspace = .kubernetes.pod_labels.workspace
+          .release = .kubernetes.pod_labels.release
+          .date_nano = parse_timestamp!(.@timestamp, format: "%Y-%m-%dT%H:%M:%S.%f%Z")
+
       final_task_log:
         type: remap
         inputs:
           - transform_task_log
         source: |
-          .component = "${COMPONENT:--}"
-          .workspace = "${WORKSPACE:--}"
-          .release = "${RELEASE:--}"
+          .component = .kubernetes.pod_labels.component
+          .workspace = .kubernetes.pod_labels.workspace
+          .release = .kubernetes.pod_labels.release
           .date_nano = parse_timestamp!(.@timestamp, format: "%Y-%m-%dT%H:%M:%S.%f%Z")
 
       transform_remove_fields:
         type: remap
         inputs:
           - final_task_log
-          - filter_common_logs
+          - final_common_log
           - filter_gitsyncrelay_logs
           - filter_dagserver_logs
           - filter_airflow_downgrade_logs
@@ -131,7 +143,7 @@ data:
         compression: none
         endpoints: ["http://{{.Release.Name}}-elasticsearch:9200"]
         bulk:
-          index: "{{ include "logging.indexNamePrefix" . }}.${RELEASE:--}.{{ .Values.indexPattern }}"
+          index: "{{ include "logging.indexNamePrefix" . }}.{{ .release }}.{{ .Values.indexPattern }}"
           action: create
 
       # TODO: remove this debug "print" sink
