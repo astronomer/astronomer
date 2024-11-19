@@ -31,6 +31,10 @@ spec:
         release: {{ .Release.Name }}
         app: {{ template "kube-state.name" . }}
         version: {{ .Chart.Version }}
+{{- if .Values.podAnnotations }}
+      annotations:
+{{ toYaml .Values.podAnnotations | indent 8 }}
+{{- end }}
     spec:
     {{- if .Values.priorityClassName }}
       priorityClassName: {{ .Values.priorityClassName }}

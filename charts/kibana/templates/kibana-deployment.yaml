@@ -26,6 +26,10 @@ spec:
         release: {{ .Release.Name }}
         app: {{ template "kibana.name" . }}
         version: {{ .Chart.Version }}
+{{- if .Values.podAnnotations }}
+      annotations:
+{{ toYaml .Values.podAnnotations | indent 8 }}
+{{- end }}
     spec:
       serviceAccountName: {{ template "kibana.ServiceAccount" . }}
       nodeSelector:

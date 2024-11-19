@@ -33,6 +33,10 @@ spec:
         {{- range $key, $value :=  .Values.global.pgbouncer.extraLabels }}
         {{ $key | replace "-" "_" }}: {{ $value | quote }}
         {{- end }}
+{{- if .Values.podAnnotations }}
+      annotations:
+{{ toYaml .Values.podAnnotations | indent 8 }}
+{{- end }}
     spec:
       nodeSelector: {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
       affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}

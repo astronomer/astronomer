@@ -27,6 +27,10 @@ spec:
         release: {{ .Release.Name }}
         app: {{ template "nginx.name" . }}
         version: {{ .Chart.Version }}
+{{- if .Values.defaultBackend.podAnnotations }}
+      annotations:
+{{ toYaml .Values.defaultBackend.podAnnotations | indent 8 }}
+{{- end }}
     spec:
       {{- if .Values.global.rbacEnabled }}
       serviceAccountName: {{ template "defaultBackend.fullname" . }}
