@@ -144,6 +144,6 @@ data:
         compression: none
         endpoints: ["http://{{.Release.Name}}-elasticsearch:9200"]
         bulk:
-          index: "{{ include "logging.indexNamePrefix" . }}.{{ .release }}.{{ .Values.indexPattern }}"
+          index: "{{ include "logging.indexNamePrefix" . }}.{{ "{{" }} .release {{ "}}" }}.{{ .Values.indexPattern }}"
           action: create
 {{- end -}}
