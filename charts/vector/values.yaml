@@ -23,7 +23,8 @@ imagePullSecrets: []
 podAnnotations: {}
 podLabels: {}
 
-securityContext: {}  # pod level securityContext
+securityContext:  # pod level securityContext
+  runAsUser: 0
   # capabilities:
   #   drop:
   #   - ALL
@@ -32,10 +33,10 @@ securityContext: {}  # pod level securityContext
   # runAsUser: 1000
 
 serviceAccount:
-     # Specifies whether a service account should be created
-     create: true
-     # Annotations to add to the service account
-     annotations: ~
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: ~
 
 extraVolumes: []
 extraVolumeMounts: []
