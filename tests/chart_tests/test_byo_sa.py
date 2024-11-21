@@ -1,7 +1,19 @@
 import pytest
 
-from tests import supported_k8s_versions
+from tests import supported_k8s_versions, git_root_dir
 from tests.chart_tests.helm_template_generator import render_chart
+
+
+def find_all_pod_manager_templates() -> list[str]:
+    """Return a sorted, unique list of all pod manager templates in the chart, relative to git_root_dir."""
+
+    return sorted(
+        {
+            str(x.relative_to(git_root_dir))
+            for x in (git_root_dir / "charts").rglob("*")
+            if any(substr in x.name for substr in ("deployment", "statefulset", "replicaset", "daemonset", "job"))
+        }
+    )
 
 
 @pytest.mark.parametrize(
@@ -121,3 +133,7 @@ class TestServiceAccounts:
         }
         extracted_names = {doc["subjects"][0]["name"] for doc in docs if doc.get("subjects")}
         assert expected_names.issubset(extracted_names)
+
+    def test_custom_serviceaccount_names(self, kube_version):
+        """Test that custom service account names are rendered correctly."""
+        files = git_root_dir.glob("")
