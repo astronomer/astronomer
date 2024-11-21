@@ -86,8 +86,10 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /etc/docker/registry
+            {{- if not .Values.registry.enableInsecureAuth }}
             - name: certificate
               mountPath: /etc/docker/ssl
+            {{- end }}
             - name: data
               mountPath: /var/lib/registry
             {{- if and .Values.registry.gcs.enabled .Values.registry.gcs.useKeyfile }}
@@ -128,9 +130,11 @@ spec:
             items:
               - key: config.yml
                 path: config.yml
+        {{- if not .Values.registry.enableInsecureAuth }}
         - name: certificate
           secret:
             secretName: {{ .Values.global.tlsSecret }}
+        {{- end }}
         {{ include "custom_ca_volumes" . | indent 8  }}
         {{- if and .Values.registry.gcs.enabled .Values.registry.gcs.useKeyfile }}
         {{- include "registry.gcsVolume" . | indent 8 }}
