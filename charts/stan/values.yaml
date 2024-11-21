@@ -33,6 +33,9 @@ stan:
   #   memory: 128Mi
 
   serviceAccount:
+    # default value is true
+    # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+    automountServiceAccountToken: true
     # Specifies whether a ServiceAccount should be created
     create: false
     # Annotations to add to the service account
