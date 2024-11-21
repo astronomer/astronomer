@@ -18,7 +18,7 @@ replicas: 1
 images:
   prometheus:
     repository: quay.io/astronomer/ap-prometheus
-    tag: 2.53.1
+    tag: 2.53.3
     pullPolicy: IfNotPresent
   configReloader:
     repository: quay.io/astronomer/ap-configmap-reloader
@@ -36,6 +36,8 @@ resources: {}
 serviceAccount:
     # Specifies whether a service account should be created
     create: true
+    # Annotations to add to the service account
+    annotations: {}
     # The name of the service account to use.
     # If not set and create is true, a name is generated using the fullname template
     name: ~

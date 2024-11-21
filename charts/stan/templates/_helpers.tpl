@@ -81,3 +81,11 @@ imagePullSecrets:
   - name: {{ .Values.global.privateRegistry.secretName }}
 {{- end -}}
 {{- end -}}
+
+{{ define "stan.ServiceAccount" -}}
+{{- if and .Values.stan.serviceAccount.create .Values.global.rbacEnabled -}}
+{{ default (printf "%s" (include "stan.name" . )) .Values.stan.serviceAccount.name }}
+{{- else -}}
+    {{ default "default" .Values.stan.serviceAccount.name }}
+{{- end }}
+{{- end }}
