@@ -12,7 +12,7 @@ class TestPrometheusStatefulset:
 
     @staticmethod
     def prometheus_common_tests(doc):
-        """Test common for fluentd daemonsets."""
+        """Test common for prometheus statefulset."""
         assert doc["kind"] == "StatefulSet"
         assert doc["apiVersion"] == "apps/v1"
         assert doc["metadata"]["name"] == "release-name-prometheus"

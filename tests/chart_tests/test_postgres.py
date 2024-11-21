@@ -8,6 +8,15 @@ from tests import supported_k8s_versions, get_containers_by_name
     supported_k8s_versions,
 )
 class TestPostgresql:
+
+    @staticmethod
+    def postgresql_common_tests(doc):
+        """Test common for postgresql statefulset."""
+        assert doc["kind"] == "StatefulSet"
+        assert doc["apiVersion"] == "apps/v1"
+        assert doc["metadata"]["name"] == "release-name-postgresql"
+
+
     def test_postgresql_statefulset_defaults(self, kube_version):
         """Test postgresql statefulset is good with defaults."""
         docs = render_chart(
@@ -18,9 +27,7 @@ class TestPostgresql:
 
         assert len(docs) == 1
         doc = docs[0]
-        assert doc["kind"] == "StatefulSet"
-        assert doc["apiVersion"] == "apps/v1"
-        assert doc["metadata"]["name"] == "release-name-postgresql"
+        self.postgresql_common_tests(doc)
         assert "initContainers" not in doc["spec"]["template"]["spec"]
         assert "persistentVolumeClaimRetentionPolicy" not in doc["spec"]
 
@@ -41,9 +48,7 @@ class TestPostgresql:
 
         assert len(docs) == 1
         doc = docs[0]
-        assert doc["kind"] == "StatefulSet"
-        assert doc["apiVersion"] == "apps/v1"
-        assert doc["metadata"]["name"] == "release-name-postgresql"
+        self.postgresql_common_tests(doc)
         assert "initContainers" in doc["spec"]["template"]["spec"]
 
     def test_postgresql_statefulset_with_private_registry_enabled(self, kube_version):
