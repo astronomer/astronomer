@@ -41,18 +41,9 @@ spec:
       schedulerName: "{{ .Values.schedulerName }}"
       {{- end }}
 {{- include "postgresql.imagePullSecrets" . | indent 6 }}
-      {{- if .Values.slave.nodeSelector }}
-      nodeSelector:
-{{ toYaml .Values.slave.nodeSelector | indent 8 }}
-      {{- end }}
-      {{- if .Values.slave.affinity }}
-      affinity:
-{{ toYaml .Values.slave.affinity | indent 8 }}
-      {{- end }}
-      {{- if .Values.slave.tolerations }}
-      tolerations:
-{{ toYaml .Values.slave.tolerations | indent 8 }}
-      {{- end }}
+      nodeSelector: {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.slave.nodeSelector) | nindent 8 }}
+      affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.slave.affinity) | nindent 8 }}
+      tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.slave.tolerations) | nindent 8 }}
       {{- if .Values.terminationGracePeriodSeconds }}
       terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
       {{- end }}
