@@ -75,6 +75,7 @@ class TestServiceAccounts:
         }
         extracted_names = {doc["metadata"]["name"] for doc in docs if "metadata" in doc and "name" in doc["metadata"]}
         assert expected_names.issubset(extracted_names)
+        assert all(True == doc["automountServiceAccountToken"] for doc in docs if "automountServiceAccountToken" in doc)
 
     def test_serviceaccount_with_overrides_rolebinding(self, kube_version):
         "Test that if custom SA are added it gets created"

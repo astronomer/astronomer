@@ -19,3 +19,4 @@ class TestHoustonBootstrapServiceAccount:
 
         assert doc["kind"] == "ServiceAccount"
         assert "annotations" in doc["metadata"]
+        assert doc["automountServiceAccountToken"] == True
