@@ -3,7 +3,15 @@ name: Check PR description
 on:
   # https://docs.github.com/en/actions/writing-workflows/choosing-when-your-workflow-runs/events-that-trigger-workflows#pull_request
   pull_request:
-    types: [edited, labeled, opened, reopened, synchronize, unlabeled]
+    types:
+      - edited
+      - labeled
+      - opened
+      - reopened
+      - synchronize
+      - unlabeled
+    branches:
+      - master
 
 jobs:
   trigger-build:
