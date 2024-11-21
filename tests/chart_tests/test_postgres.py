@@ -171,3 +171,42 @@ class TestPostgresql:
         assert len(spec["affinity"]) == 1
         assert len(spec["tolerations"]) > 0
         assert spec["tolerations"] == values["postgresql"]["master"]["tolerations"]
+
+    def test_postgresql_platform_nodepool_subchart_overrides_with_ha(self, kube_version, global_platform_node_pool_config):
+        """Test Postgresql with nodeSelector, affinity, tolerations and subchart config overrides with ha."""
+        values = {
+            "global": {"postgresqlEnabled": True},
+            "postgresql": {
+                "replication": {
+                    "enabled": True,
+                },
+                "master": {
+                    "nodeSelector": {"role": "astromasterpostgresql"},
+                    "affinity": global_platform_node_pool_config["affinity"],
+                    "tolerations": global_platform_node_pool_config["tolerations"],
+                },
+                "slave": {
+                    "nodeSelector": {"role": "astroslavepostgresql"},
+                    "affinity": global_platform_node_pool_config["affinity"],
+                    "tolerations": global_platform_node_pool_config["tolerations"],
+                },
+            },
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=["charts/postgresql/templates/statefulset.yaml", "charts/postgresql/templates/statefulset-slaves.yaml"],
+        )
+
+        assert len(docs) == 2
+        spec = docs[0]["spec"]["template"]["spec"]
+        assert spec["nodeSelector"]["role"] == "astromasterpostgresql"
+        assert len(spec["affinity"]) == 1
+        assert len(spec["tolerations"]) > 0
+        assert spec["tolerations"] == values["postgresql"]["master"]["tolerations"]
+
+        spec = docs[1]["spec"]["template"]["spec"]
+        assert spec["nodeSelector"]["role"] == "astroslavepostgresql"
+        assert len(spec["affinity"]) == 1
+        assert len(spec["tolerations"]) > 0
+        assert spec["tolerations"] == values["postgresql"]["slave"]["tolerations"]
