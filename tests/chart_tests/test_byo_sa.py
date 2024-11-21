@@ -1,6 +1,7 @@
 import pytest
 
-from tests import supported_k8s_versions, git_root_dir
+from tests import supported_k8s_versions, git_root_dir, get_service_account_name_from_doc
+from tests.chart_tests import get_all_features
 from tests.chart_tests.helm_template_generator import render_chart
 
 
@@ -11,7 +12,7 @@ def find_all_pod_manager_templates() -> list[str]:
         {
             str(x.relative_to(git_root_dir))
             for x in (git_root_dir / "charts").rglob("*")
-            if any(substr in x.name for substr in ("deployment", "statefulset", "replicaset", "daemonset", "job"))
+            if any(substr in x.name for substr in ("deployment", "statefulset", "replicaset", "daemonset", "job")) and x.is_file()
         }
     )
 
@@ -134,6 +135,29 @@ class TestServiceAccounts:
         extracted_names = {doc["subjects"][0]["name"] for doc in docs if doc.get("subjects")}
         assert expected_names.issubset(extracted_names)
 
-    def test_custom_serviceaccount_names(self, kube_version):
-        """Test that custom service account names are rendered correctly."""
-        files = git_root_dir.glob("")
+
+@pytest.mark.parametrize(
+    "template_name",
+    find_all_pod_manager_templates(),
+)
+def test_custom_serviceaccount_names(template_name):
+    """Test that custom service account names are rendered correctly."""
+    pod_managers = [
+        "CronJob",
+        "DaemonSet",
+        "Deployment",
+        "Job",
+        "StatefulSet",
+    ]
+    values = get_all_features()
+    values.update(
+        {
+            "postgresql": {"replication": {"enabled": True}},
+        }
+    )
+    docs = render_chart(show_only=template_name, values=values)
+    pm_docs = [doc for doc in docs if doc["kind"] in pod_managers]
+    service_accounts = [get_service_account_name_from_doc(doc) for doc in pm_docs]
+    assert all(
+        sa_name.startswith("release-name-") for sa_name in service_accounts
+    ), f"Expected all service accounts to start with 'release-name-' but found {service_accounts} in {template_name}"
