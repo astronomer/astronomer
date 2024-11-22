@@ -9,8 +9,6 @@ def init_test_pod_annotation_configs():
     chart_values = chart_tests.get_all_features()
     chart_values["global"]["podAnnotations"] = {"app.cloud.io": "astronomer"}
 
-    print(chart_values)
-
     kubernetes_objects = {
         "StatefulSet": "spec.template.metadata.annotations",
         "Deployment": "spec.template.metadata.annotations",
