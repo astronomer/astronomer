@@ -12,24 +12,22 @@ k8s_version_too_old = f'1.{int(supported_k8s_versions[0].split(".")[1]) - 1!s}.0
 k8s_version_too_new = f'1.{int(supported_k8s_versions[-1].split(".")[1]) + 1!s}.0'
 
 
-def get_containers_by_name(doc, *, include_init_containers=False) -> dict:
+def get_containers_by_name(doc: dict, *, include_init_containers=False) -> dict:
     """Given a single doc, return all the containers by name.
 
-    doc must be a valid spec for a pod manager. (EG: ds, sts)
+    doc must be a valid spec for a pod manager. (EG: ds, sts, cronjob, etc.)
     """
 
-    c_by_name = {c["name"]: c for c in doc["spec"]["template"]["spec"]["containers"]}
+    if doc["kind"] in ["Deployment", "StatefulSet", "ReplicaSet", "DaemonSet", "Job"]:
+        containers = doc["spec"]["template"]["spec"].get("containers", [])
+        initContainers = doc["spec"]["template"]["spec"].get("initContainers", [])
+    elif doc["kind"] == "CronJob":
+        containers = doc["spec"]["jobTemplate"]["spec"]["template"]["spec"].get("containers", [])
+        initContainers = doc["spec"]["jobTemplate"]["spec"]["template"]["spec"].get("initContainers", [])
 
-    if include_init_containers and doc["spec"]["template"]["spec"].get("initContainers"):
-        c_by_name.update({c["name"]: c for c in doc["spec"]["template"]["spec"].get("initContainers")})
+    c_by_name = {c["name"]: c for c in containers}
+
+    if include_init_containers and initContainers:
+        c_by_name.update({c["name"]: c for c in initContainers})
 
     return c_by_name
-
-
-def get_cronjob_containerspec_by_name(doc) -> dict:
-    """Given a single doc, return all the containers by name.
-
-    doc must be a valid spec for a CronJob.
-    """
-
-    return {c["name"]: c for c in doc["spec"]["jobTemplate"]["spec"]["template"]["spec"]["containers"]}
