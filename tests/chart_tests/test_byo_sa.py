@@ -33,7 +33,6 @@ class TestServiceAccounts:
                 "configSyncer": {"serviceAccount": {"create": "true", "name": "configsyncer-test"}},
                 "houston": {"serviceAccount": {"create": "true", "name": "houston-test"}},
                 "astroUI": {"serviceAccount": {"create": "true", "name": "astroui-test"}},
-                "install": {"serviceAccount": {"create": "true", "name": "cliinstall-test"}},
             },
             "nats": {"nats": {"serviceAccount": {"create": "true", "name": "nats-test"}}},
             "stan": {"stan": {"serviceAccount": {"create": "true", "name": "stan-test"}}},
@@ -51,7 +50,6 @@ class TestServiceAccounts:
                 "charts/astronomer/templates/config-syncer/config-syncer-serviceaccount.yaml",
                 "charts/astronomer/templates/houston/api/houston-bootstrap-serviceaccount.yaml",
                 "charts/astronomer/templates/astro-ui/astro-ui-serviceaccount.yaml",
-                "charts/astronomer/templates/cli-install/cli-install-serviceaccount.yaml",
                 "charts/nats/templates/nats-serviceaccount.yaml",
                 "charts/stan/templates/stan-serviceaccount.yaml",
                 "charts/grafana/templates/grafana-bootstrap-serviceaccount.yaml",
@@ -61,7 +59,7 @@ class TestServiceAccounts:
             ],
         )
 
-        assert len(docs) == 12
+        assert len(docs) == 11
         expected_names = {
             "commander-test",
             "registry-test",
