@@ -50,7 +50,7 @@ rules:
 # Important to understand: https://kubernetes.io/docs/reference/access-authn-authz/rbac/#privilege-escalation-prevention-and-bootstrapping
 - apiGroups: ["rbac.authorization.k8s.io"]
   resources: ["roles"]
-  verbs: ["create", "delete", "deletecollection", "get", "list", "patch", "update", "watch", "escalate", "bind"]
+  verbs: ["create", "delete", "deletecollection", "get", "list", "patch", "update", "watch"]
 - apiGroups: [""]
   resources: ["persistentvolumeclaims"]
   verbs: ["create", "delete", "deletecollection", "get", "list", "update", "watch", "patch"]
