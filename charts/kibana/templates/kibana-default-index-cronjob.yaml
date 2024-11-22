@@ -40,7 +40,7 @@ spec:
       nodeSelector: {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 12 }}
       affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 12 }}
       tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 12 }}
-{{- include "kibana.imagePullSecrets" . | indent 8 }}
+{{- include "kibana.imagePullSecrets" . | indent 6 }}
       containers:
       - name: kibana-default-index
         image: {{ template "kibana.init.image" . }}
