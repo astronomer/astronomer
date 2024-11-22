@@ -1,16 +1,13 @@
 import jmespath
 import pytest
-import yaml
 
 import tests.chart_tests as chart_tests
 from tests.chart_tests.helm_template_generator import render_chart
 
 
 def init_test_pod_annotation_configs():
-
     chart_values = chart_tests.get_all_features()
     chart_values["global"]["podAnnotations"] = {"app.cloud.io": "astronomer"}
-
 
     print(chart_values)
 
@@ -28,7 +25,7 @@ def init_test_pod_annotation_configs():
     pod_docs = []
     for key, val in kubernetes_objects.items():
         pod_docs += jmespath.search(
-            "[?kind == `%s`].{name: metadata.name, kind: kind, chart: metadata.labels.chart, annotations: %s}" % (key, val),
+            f"[?kind == `{key}`].{{name: metadata.name, kind: kind, chart: metadata.labels.chart, annotations: {val}}}",
             docs,
         )
 
@@ -45,4 +42,4 @@ test_pod_annotations_configs_data = init_test_pod_annotation_configs()
 )
 def test_pod_labels_configs(pod_annotations):
     """Annotations check for definition."""
-    assert 'astronomer' ==  pod_annotations["app.cloud.io"]
+    assert "astronomer" == pod_annotations["app.cloud.io"]
