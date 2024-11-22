@@ -20,17 +20,22 @@ metadata:
     "helm.sh/hook-delete-policy": before-hook-creation
 spec:
   template:
-      metadata:
-        labels:
-          tier: logging
-          component: kibana-default-index
-          release: {{ .Release.Name }}
-          app: kibana-default-index
-          version: {{ .Chart.Version }}
-        {{- if .Values.global.istio.enabled }}
-        annotations:
-          sidecar.istio.io/inject: "false"
-        {{- end }}
+    metadata:
+      labels:
+        tier: logging
+        component: kibana-default-index
+        release: {{ .Release.Name }}
+        app: kibana-default-index
+        version: {{ .Chart.Version }}
+      {{- if or .Values.global.podAnnotations .Values.global.istio.enabled }}
+      annotations:
+      {{- if .Values.global.istio.enabled }}
+        sidecar.istio.io/inject: "false"
+      {{- end }}
+      {{- if .Values.global.podAnnotations }}
+{{ toYaml .Values.global.podAnnotations | indent 8 }}
+      {{- end }}
+      {{- end }}
       spec:
         nodeSelector: {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 12 }}
         affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 12 }}
