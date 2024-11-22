@@ -22,7 +22,7 @@ spec:
           annotations:
 {{- end }}
 {{- if .Values.global.podAnnotations }}
-{{ toYaml .Values.global.podAnnotations | indent 8 }}
+{{ toYaml .Values.global.podAnnotations | indent 12 }}
 {{- end }}
 {{- if .Values.common.podAnnotations }}
 {{ toYaml .Values.common.podAnnotations | indent 12 }}

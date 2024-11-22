@@ -31,7 +31,7 @@ spec:
 {{- if .Values.global.podAnnotations }}
 {{ toYaml .Values.global.podAnnotations | indent 8 }}
 {{- end }}
-{{- if .Values.global.podAnnotations }}
+{{- if .Values.podAnnotations }}
 {{ toYaml .Values.podAnnotations | indent 8 }}
 {{- end }}
 {{- end }}
