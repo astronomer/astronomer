@@ -18,8 +18,11 @@ spec:
     spec:
       template:
         metadata:
-{{- if or .Values.common.podAnnotations .Values.curator.podAnnotations }}
+{{- if or .Values.common.podAnnotations .Values.curator.podAnnotations .Values.global.podAnnotations  }}
           annotations:
+{{- end }}
+{{- if .Values.global.podAnnotations }}
+{{ toYaml .Values.global.podAnnotations | indent 12 }}
 {{- end }}
 {{- if .Values.common.podAnnotations }}
 {{ toYaml .Values.common.podAnnotations | indent 12 }}

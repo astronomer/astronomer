@@ -1,6 +1,6 @@
-#################################
-## Elasticsearch Proxy Deployment
-#################################
+####################################
+## Elasticsearch Proxy Deployment ##
+####################################
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -22,10 +22,6 @@ spec:
       release: {{ .Release.Name }}
   template:
     metadata:
-      {{- with .Values.podAnnotations }}
-      annotations:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
       labels:
         tier: external-logging
         component: {{ template "external-es-proxy.name" . }}
@@ -38,6 +34,12 @@ spec:
         {{- if .Values.global.customLogging.awsIAMRole }}
         iam.amazonaws.com/role: {{ .Values.global.customLogging.awsIAMRole }}
         {{- end }}
+{{- if .Values.global.podAnnotations }}
+{{ toYaml .Values.global.podAnnotations | indent 8 }}
+{{- end }}
+{{- if .Values.podAnnotations }}
+{{ toYaml .Values.podAnnotations | indent 8 }}
+{{- end }}
     spec:
       nodeSelector: {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 12 }}
       affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 12 }}

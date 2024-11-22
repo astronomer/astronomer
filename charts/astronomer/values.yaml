@@ -64,6 +64,7 @@ astroUI:
     # The name of the service account to use.
     # If not set and create is true, a name is generated using the fullname template
     name: ""
+  podAnnotations: {}
 
 cliInstall:
   readinessProbe: {}
@@ -128,6 +129,8 @@ houston:
     # The name of the service account to use.
     # If not set and create is true, a name is generated using the fullname template
     name: ""
+
+  podAnnotations: {}
 
   env: []
 
@@ -404,6 +407,7 @@ commander:
     #   port: {{ .Values.ports.commanderHTTP }}
     # initialDelaySeconds: 10
     # periodSeconds: 10
+  podAnnotations: {}
 
 
   airGapped:
@@ -523,6 +527,8 @@ registry:
 
   logLevel: info
 
+  podAnnotations: {}
+
 install:
   cliEnabled: true
   cliVersion: 0.29
@@ -541,6 +547,7 @@ install:
     # The name of the service account to use.
     # If not set and create is true, a name is generated using the fullname template
     name: ""
+  podAnnotations: {}
 
 e2eTest:
   env: []

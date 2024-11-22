@@ -29,12 +29,15 @@ spec:
 
   template:
     metadata:
-      {{- if or .Values.podAnnotations .Values.exporter.enabled }}
+      {{- if or .Values.global.podAnnotations .Values.podAnnotations .Values.exporter.enabled }}
       annotations:
       {{- if .Values.exporter.enabled }}
         prometheus.io/path: /metrics
         prometheus.io/port: "7777"
         prometheus.io/scrape: "true"
+      {{- end }}
+      {{- if .Values.global.podAnnotations }}
+{{ toYaml .Values.global.podAnnotations | indent 8 }}
       {{- end }}
       {{- range $key, $value := .Values.podAnnotations }}
         {{ $key }}: {{ $value | quote }}
