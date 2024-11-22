@@ -88,3 +88,5 @@ bootstrapper:
 waitForDB:
   readinessProbe: {}
   livenessProbe: {}
+
+podAnnotations: {}

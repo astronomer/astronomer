@@ -33,6 +33,8 @@ serviceAccount:
   # If not set and create is true, a name is generated using the fullname template
   name: ~
 
+podAnnotations: {}
+
 ingressClass: ~
 
 replicas: 2
@@ -127,6 +129,7 @@ defaultBackend:
   resources: {}
   readinessProbe: {}
   livenessProbe: {}
+  podAnnotations: {}
 
 cspPolicy:
   cdnEnabled: true
