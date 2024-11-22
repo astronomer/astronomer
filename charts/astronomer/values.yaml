@@ -57,7 +57,6 @@ astroUI:
   readinessProbe: {}
   livenessProbe: {}
   serviceAccount:
-    # default value is true
     # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
     automountServiceAccountToken: true
     # Specifies whether a service account should be created
@@ -124,7 +123,6 @@ houston:
   jwtSigningCertificateSecretName: ~
 
   serviceAccount:
-    # default value is true
     # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
     automountServiceAccountToken: true
     # Specifies whether a service account should be created
@@ -374,7 +372,6 @@ configSyncer:
   securityContext: {}
   resources: {}
   serviceAccount:
-    # default value is true
     # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
     automountServiceAccountToken: true
     # Specifies whether a service account should be created
@@ -421,7 +418,6 @@ commander:
   upgradeTimeout: 600
 
   serviceAccount:
-    # default value is true
     # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
     automountServiceAccountToken: true
     # Specifies whether a service account should be created
@@ -476,7 +472,6 @@ registry:
   extraEnv: []
 
   serviceAccount:
-    # default value is true
     # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
     automountServiceAccountToken: true
     # Specifies whether a service account should be created
@@ -549,7 +544,6 @@ install:
   #   cpu: 100m
   #   memory: 128Mi
   serviceAccount:
-    # default value is true
     # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
     automountServiceAccountToken: true
     # Specifies whether a service account should be created
