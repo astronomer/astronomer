@@ -23,7 +23,6 @@ pod_manager_data = {
         },
     },
     "charts/astronomer/templates/astro-ui/astro-ui-deployment.yaml": {"astronomer": {"astroUI": default_probes}},
-    "charts/astronomer/templates/cli-install/cli-install-deployment.yaml": {"astronomer": {"cliInstall": default_probes}},
     "charts/astronomer/templates/commander/commander-deployment.yaml": {"astronomer": {"commander": default_probes}},
     "charts/astronomer/templates/houston/api/houston-deployment.yaml": {
         "astronomer": {"houston": {**default_probes, "waitForDB": default_probes, "bootstrapper": default_probes}},
@@ -173,11 +172,6 @@ class TestDefaultProbes:
             "periodSeconds": 10,
         },
         "astro-ui_astro-ui": {"httpGet": {"path": "/", "port": 8080}, "initialDelaySeconds": 10, "periodSeconds": 10},
-        "cli-install_cli-install": {
-            "httpGet": {"path": "/healthz", "port": 8080, "scheme": "HTTP"},
-            "initialDelaySeconds": 30,
-            "timeoutSeconds": 5,
-        },
         "commander_commander": {
             "failureThreshold": 5,
             "httpGet": {"path": "/healthz", "port": 8880, "scheme": "HTTP"},

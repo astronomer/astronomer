@@ -49,14 +49,6 @@
 {{- end }}
 {{- end }}
 
-{{ define "cliInstall.image" -}}
-{{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/ap-cli-install:{{ .Values.images.cliInstall.tag }}
-{{- else -}}
-{{ .Values.images.cliInstall.repository }}:{{ .Values.images.cliInstall.tag }}
-{{- end }}
-{{- end }}
-
 {{ define "registry.docker.config" -}}
   {{- $domain := printf "registry.%v" .Values.global.baseDomain }}
   {{- $email := printf "admin@%v" .Values.global.baseDomain }}
@@ -140,14 +132,6 @@
 {{ default (printf "%s-astro-ui" .Release.Name) .Values.astroUI.serviceAccount.name }}
 {{- else -}}
     {{ default "default" .Values.astroUI.serviceAccount.name }}
-{{- end }}
-{{- end }}
-
-{{ define "install.ServiceAccount" -}}
-{{- if and .Values.install.serviceAccount.create .Values.global.rbacEnabled -}}
-{{ default (printf "%s-cli-install" .Release.Name) .Values.install.serviceAccount.name }}
-{{- else -}}
-    {{ default "default" .Values.install.serviceAccount.name }}
 {{- end }}
 {{- end }}
 

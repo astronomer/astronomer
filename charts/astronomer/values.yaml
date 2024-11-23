@@ -34,10 +34,6 @@ images:
     repository: quay.io/astronomer/ap-db-bootstrapper
     tag: 0.36.0
     pullPolicy: IfNotPresent
-  cliInstall:
-    repository: quay.io/astronomer/ap-cli-install
-    tag: 0.26.27
-    pullPolicy: IfNotPresent
 
 securityContext:
   runAsNonRoot: true
@@ -65,10 +61,6 @@ astroUI:
     # If not set and create is true, a name is generated using the fullname template
     name: ""
   podAnnotations: {}
-
-cliInstall:
-  readinessProbe: {}
-  livenessProbe: {}
 
 houston:
   prismaConnectionLimit: 5
@@ -529,30 +521,6 @@ registry:
 
   podAnnotations: {}
 
-install:
-  cliEnabled: true
-  cliVersion: 0.29
-  resources: {}
-  #  limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  #  requests:
-  #   cpu: 100m
-  #   memory: 128Mi
-  serviceAccount:
-    # Specifies whether a service account should be created
-    create: false
-    # Annotations to add to the service account
-    annotations: {}
-    # The name of the service account to use.
-    # If not set and create is true, a name is generated using the fullname template
-    name: ""
-  podAnnotations: {}
-
-e2eTest:
-  env: []
-  resources: {}
-
 ports:
   houstonHTTP: 8871
   commanderHTTP: 8880
@@ -560,4 +528,3 @@ ports:
   astroUIHTTP: 8080
   registryHTTP: 5000
   registryScrape: 5001
-  installHTTP: 8080
