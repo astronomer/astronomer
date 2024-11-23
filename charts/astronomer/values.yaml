@@ -57,6 +57,8 @@ astroUI:
   readinessProbe: {}
   livenessProbe: {}
   serviceAccount:
+    # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+    automountServiceAccountToken: true
     # Specifies whether a service account should be created
     create: false
     # Annotations to add to the service account
@@ -122,6 +124,8 @@ houston:
   jwtSigningCertificateSecretName: ~
 
   serviceAccount:
+    # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+    automountServiceAccountToken: true
     # Specifies whether a service account should be created
     create: true
     # Annotations to add to the service account
@@ -371,6 +375,8 @@ configSyncer:
   securityContext: {}
   resources: {}
   serviceAccount:
+    # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+    automountServiceAccountToken: true
     # Specifies whether a service account should be created
     create: true
     # Annotations to add to the service account
@@ -416,6 +422,8 @@ commander:
   upgradeTimeout: 600
 
   serviceAccount:
+    # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+    automountServiceAccountToken: true
     # Specifies whether a service account should be created
     create: true
     # Annotations to add to the service account
@@ -468,6 +476,8 @@ registry:
   extraEnv: []
 
   serviceAccount:
+    # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+    automountServiceAccountToken: true
     # Specifies whether a service account should be created
     create: false
     # Annotations to add to the service account
@@ -540,6 +550,8 @@ install:
   #   cpu: 100m
   #   memory: 128Mi
   serviceAccount:
+    # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+    automountServiceAccountToken: true
     # Specifies whether a service account should be created
     create: false
     # Annotations to add to the service account

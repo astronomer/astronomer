@@ -40,6 +40,8 @@ securityContext:
 # affinity: {}
 
 serviceAccount:
+  # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+  automountServiceAccountToken: true
   # Specifies whether a service account should be created
   create: false
   # The name of the service account to use.
