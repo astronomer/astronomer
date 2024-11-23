@@ -521,10 +521,6 @@ registry:
 
   podAnnotations: {}
 
-e2eTest:
-  env: []
-  resources: {}
-
 ports:
   houstonHTTP: 8871
   commanderHTTP: 8880
