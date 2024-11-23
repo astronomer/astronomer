@@ -101,7 +101,6 @@ astroHTTPTargets:
   commander: true
   houston: true
   registry: true
-  cliInstall: true
   grafana: true
   kibana: true
   elasticsearch: true
