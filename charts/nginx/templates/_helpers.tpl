@@ -55,7 +55,7 @@ Create chart name and version as used by the chart label.
 {{- end -}}
 {{- end -}}
 
-{{ define "nginx.ServiceAccount" -}}
+{{ define "nginx.serviceAccount" -}}
 {{- if and .Values.serviceAccount.create .Values.global.rbacEnabled -}}
 {{ default (printf "%s" (include "nginx.fullname" . )) .Values.serviceAccount.name }}
 {{- else -}}
@@ -77,7 +77,7 @@ imagePullSecrets:
 {{ printf "%s-default-backend" (include "nginx.fullname" .)}}
 {{- end -}}
 
-{{ define "defaultBackend.ServiceAccount" -}}
+{{ define "defaultBackend.serviceAccount" -}}
 {{- if and .Values.defaultBackend.serviceAccount.create .Values.global.rbacEnabled -}}
 {{ default (printf "%s" (include "defaultBackend.fullname" . )) .Values.defaultBackend.serviceAccount.name }}
 {{- else -}}
