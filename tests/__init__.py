@@ -31,3 +31,21 @@ def get_containers_by_name(doc: dict, *, include_init_containers=False) -> dict:
         c_by_name.update({c["name"]: c for c in initContainers})
 
     return c_by_name
+
+
+def get_service_account_name_from_doc(doc: dict, *, include_init_containers=False) -> dict:
+    """Return the serviceAccountName used by the pod manager."""
+
+    if doc["kind"] in ["Deployment", "StatefulSet", "ReplicaSet", "DaemonSet", "Job"]:
+        return doc["spec"]["template"]["spec"].get("serviceAccountName")
+    if doc["kind"] == "CronJob":
+        return doc["spec"]["jobTemplate"]["spec"]["template"]["spec"].get("serviceAccountName")
+    return None
+
+
+def dot_notation_to_dict(dotted_string, default_value=None):
+    """Return a dotted string for a nested dict structure where the deepest values is assigned to None or the given default."""
+    parts = dotted_string.partition(".")
+    if parts[2]:
+        return {parts[0]: dot_notation_to_dict(parts[2])}
+    return {parts[0]: default_value}

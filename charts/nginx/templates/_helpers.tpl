@@ -76,3 +76,11 @@ imagePullSecrets:
 {{- define "defaultBackend.fullname" -}}
 {{ printf "%s-default-backend" (include "nginx.fullname" .)}}
 {{- end -}}
+
+{{ define "defaultBackend.serviceAccount" -}}
+{{- if and .Values.defaultBackend.serviceAccount.create .Values.global.rbacEnabled -}}
+{{ default (printf "%s" (include "defaultBackend.fullname" . )) .Values.defaultBackend.serviceAccount.name }}
+{{- else -}}
+    {{ default "default" .Values.defaultBackend.serviceAccount.name }}
+{{- end }}
+{{- end }}
