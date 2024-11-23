@@ -41,7 +41,7 @@ spec:
 {{ toYaml .Values.podAnnotations | indent 8 }}
 {{- end }}
     spec:
-      serviceAccountName: {{ template "nginx.serviceAccount" . }}
+      serviceAccountName: {{ template "nginx.ServiceAccount" . }}
 {{- include "nginx.imagePullSecrets" . | indent 6 }}
       containers:
         - name: nginx
