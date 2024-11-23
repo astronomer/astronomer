@@ -1,6 +1,6 @@
 from tests.chart_tests.helm_template_generator import render_chart
 import pytest
-from tests import get_cronjob_containerspec_by_name, supported_k8s_versions
+from tests import get_containers_by_name, supported_k8s_versions
 
 cron_test_data = [
     ("development-angular-system-6091", 0, 5),
@@ -182,7 +182,7 @@ class TestAstronomerConfigSyncer:
                 "charts/astronomer/templates/config-syncer/config-syncer-cronjob.yaml",
             ],
         )[0]
-        job_container_by_name = get_cronjob_containerspec_by_name(doc)
+        job_container_by_name = get_containers_by_name(doc)
         assert "--target-namespaces" in job_container_by_name["config-syncer"]["args"]
         assert ",".join(namespaces) in job_container_by_name["config-syncer"]["args"]
         assert {"runAsNonRoot": True} == job_container_by_name["config-syncer"]["securityContext"]
@@ -207,7 +207,7 @@ class TestAstronomerConfigSyncer:
             ],
         )[0]
 
-        job_container_by_name = get_cronjob_containerspec_by_name(doc)
+        job_container_by_name = get_containers_by_name(doc)
 
         assert {
             "runAsNonRoot": True,
@@ -235,7 +235,7 @@ class TestAstronomerConfigSyncer:
             ],
         )[0]
 
-        job_container_by_name = get_cronjob_containerspec_by_name(doc)
+        job_container_by_name = get_containers_by_name(doc)
 
         assert "--target-namespaces" not in job_container_by_name["config-syncer"]["args"]
         assert ",".join(namespaces) not in job_container_by_name["config-syncer"]["args"]

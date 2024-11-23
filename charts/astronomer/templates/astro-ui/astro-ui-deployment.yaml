@@ -26,6 +26,13 @@ spec:
         release: {{ .Release.Name }}
         app: astro-ui
         version: {{ .Chart.Version }}
+      annotations:
+{{- if .Values.global.podAnnotations }}
+{{ toYaml .Values.global.podAnnotations | indent 8 }}
+{{- end }}
+{{- if .Values.astroUI.podAnnotations }}
+{{ toYaml .Values.astroUI.podAnnotations | indent 8 }}
+{{- end }}
     spec:
       serviceAccountName: {{ template "astroUI.ServiceAccount" . }}
       nodeSelector:

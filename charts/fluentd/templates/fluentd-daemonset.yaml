@@ -29,6 +29,12 @@ spec:
         checksum/config: {{ include (print $.Template.BasePath "/fluentd-configmap.yaml") . | sha256sum }}
         prometheus.io/scrape: "true"
         prometheus.io/port: {{ .Values.ports.promScrape | quote }}
+{{- if .Values.global.podAnnotations }}
+{{ toYaml .Values.global.podAnnotations | indent 8 }}
+{{- end }}
+{{- if .Values.podAnnotations }}
+{{ toYaml .Values.podAnnotations | indent 8 }}
+{{- end }}
     spec:
     {{- if .Values.priorityClassName }}
       priorityClassName:  {{ .Values.priorityClassName  }}

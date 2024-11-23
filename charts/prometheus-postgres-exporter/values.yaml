@@ -106,6 +106,8 @@ affinity: {}
 
 annotations: {}
 
+podannotations: {}
+
 podLabels: {}
 
 # Additional sidecar containers, e. g. for a database proxy, such as Google's cloudsql-proxy

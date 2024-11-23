@@ -33,6 +33,8 @@ resources: {}
 #   cpu: 100m
 #   memory: 128Mi
 
+podAnnotations: {}
+
 serviceAccount:
   # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
   automountServiceAccountToken: true

@@ -28,6 +28,9 @@ spec:
         version: {{ .Chart.Version }}
       annotations:
         checksum/configmap: {{ include (print $.Template.BasePath "/nginx/nginx-es-configmap.yaml") . | sha256sum }}
+{{- if .Values.global.podAnnotations }}
+{{ toYaml .Values.global.podAnnotations | indent 8 }}
+{{- end }}
 {{- if .Values.common.podAnnotations }}
 {{ toYaml .Values.common.podAnnotations | indent 8 }}
 {{- end }}
