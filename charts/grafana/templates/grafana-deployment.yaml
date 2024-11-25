@@ -41,7 +41,7 @@ spec:
       tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       restartPolicy: Always
       {{- if and (not .Values.backendSecretName) (not .Values.backendConnection) }}
-      serviceAccountName: {{ template "grafana.bootstrapper.serviceaccount" . }}
+      serviceAccountName: {{ template "grafana.bootstrapper.serviceAccountName" . }}
       {{- end }}
 {{- include "grafana.imagePullSecrets" . | indent 6 }}
       initContainers:

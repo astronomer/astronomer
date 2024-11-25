@@ -119,7 +119,7 @@
 {{ default (printf "%s-registry-auth" .Release.Name) .Values.registry.auth.secretName }}
 {{- end }}
 
-{{ define "registry.ServiceAccount" -}}
+{{ define "registry.serviceAccountName" -}}
 {{- if and .Values.registry.serviceAccount.create .Values.global.rbacEnabled -}}
 {{ default (printf "%s-registry" .Release.Name ) .Values.registry.serviceAccount.name }}
 {{- else -}}
@@ -127,7 +127,7 @@
 {{- end }}
 {{- end }}
 
-{{ define "astroUI.ServiceAccount" -}}
+{{ define "astroUI.serviceAccountName" -}}
 {{- if and .Values.astroUI.serviceAccount.create .Values.global.rbacEnabled -}}
 {{ default (printf "%s-astro-ui" .Release.Name) .Values.astroUI.serviceAccount.name }}
 {{- else -}}
@@ -135,7 +135,7 @@
 {{- end }}
 {{- end }}
 
-{{ define "houston.bootstrapperServiceAccount" -}}
+{{ define "houston.bootstrapperServiceAccountName" -}}
 {{- if and .Values.houston.serviceAccount.create .Values.global.rbacEnabled -}}
 {{ default (printf "%s-houston-bootstrapper" .Release.Name ) .Values.houston.serviceAccount.name }}
 {{- else -}}
@@ -143,7 +143,7 @@
 {{- end }}
 {{- end }}
 
-{{ define "configSyncer.ServiceAccount" -}}
+{{ define "configSyncer.serviceAccountName" -}}
 {{- if and .Values.configSyncer.serviceAccount.create .Values.global.rbacEnabled -}}
 {{ default (printf "%s-config-syncer" .Release.Name ) .Values.configSyncer.serviceAccount.name }}
 {{- else -}}
@@ -151,7 +151,7 @@
 {{- end }}
 {{- end }}
 
-{{ define "commander.ServiceAccount" -}}
+{{ define "commander.serviceAccountName" -}}
 {{- if and .Values.commander.serviceAccount.create .Values.global.rbacEnabled -}}
 {{ default (printf "%s-commander" .Release.Name ) .Values.commander.serviceAccount.name }}
 {{- else -}}
