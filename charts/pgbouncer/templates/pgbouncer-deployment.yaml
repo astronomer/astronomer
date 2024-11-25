@@ -47,7 +47,7 @@ spec:
       affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
       tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       restartPolicy: Always
-      serviceAccountName: {{ template "pgbouncer.ServiceAccount" . }}
+      serviceAccountName: {{ template "pgbouncer.serviceAccountName" . }}
       containers:
         - name: pgbouncer
           image: {{ template "pgbouncer.image" . }}

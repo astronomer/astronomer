@@ -49,7 +49,7 @@ spec:
       affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
       tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       restartPolicy: Always
-      serviceAccountName: {{ template "prometheus.serviceAccount" . }}
+      serviceAccountName: {{ template "prometheus.serviceAccountName" . }}
       {{- include "prometheus.imagePullSecrets" . | nindent 6 }}
       containers:
         {{- if .Values.global.authSidecar.enabled  }}

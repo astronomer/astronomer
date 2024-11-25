@@ -47,7 +47,7 @@ spec:
       nodeSelector: {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
       affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
       tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
-      serviceAccountName: {{ template "kube-state.serviceAccount" . }}
+      serviceAccountName: {{ template "kube-state.serviceAccountName" . }}
       {{- include "kube-state.imagePullSecrets" . | nindent 6 }}
       containers:
       - name: kube-state

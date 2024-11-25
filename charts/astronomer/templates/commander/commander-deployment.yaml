@@ -45,7 +45,7 @@ spec:
 {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 8 }}
       tolerations:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
-      serviceAccountName: {{ template "commander.ServiceAccount" . }}
+      serviceAccountName: {{ template "commander.serviceAccountName" . }}
       restartPolicy: Always
 {{- include "astronomer.imagePullSecrets" . | indent 6 }}
       containers:

@@ -49,7 +49,7 @@ imagePullSecrets:
 {{- end -}}
 {{- end -}}
 
-{{ define "kube-state.serviceAccount" -}}
+{{ define "kube-state.serviceAccountName" -}}
 {{- if and .Values.serviceAccount.create .Values.global.rbacEnabled -}}
 {{ default (printf "%s" (include "kube-state.fullname" . )) .Values.serviceAccount.name }}
 {{- else -}}

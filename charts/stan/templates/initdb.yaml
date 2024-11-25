@@ -16,6 +16,7 @@ spec:
       {{ toYaml . | indent 8 }}
       {{- end }}
     spec:
+      serviceAccountName: {{ template "stan.serviceAccountName" . }}
       terminationGracePeriodSeconds: 0
       restartPolicy: Never
       {{- if eq .Values.store.sql.driver "postgres" }}

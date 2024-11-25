@@ -37,7 +37,7 @@ spec:
 {{- end }}
 {{- end }}
     spec:
-      serviceAccountName: {{ template "defaultBackend.serviceAccount" . }}
+      serviceAccountName: {{ template "defaultBackend.serviceAccountName" . }}
       nodeSelector: {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
       affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
       tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}

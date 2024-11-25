@@ -37,7 +37,7 @@ spec:
       {{- end }}
       {{- end }}
     spec:
-      serviceAccountName: {{ template "kibana.ServiceAccount" . }}
+      serviceAccountName: {{ template "kibana.serviceAccountName" . }}
       nodeSelector: {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 12 }}
       affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 12 }}
       tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 12 }}

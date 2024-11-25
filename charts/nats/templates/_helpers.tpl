@@ -77,7 +77,7 @@ imagePullSecrets:
 {{- end -}}
 {{- end }}
 
-{{ define "nats.ServiceAccount" -}}
+{{ define "nats.serviceAccountName" -}}
 {{- if and .Values.nats.serviceAccount.create .Values.global.rbacEnabled -}}
 {{ default (printf "%s" (include "nats.name" . )) .Values.nats.serviceAccount.name }}
 {{- else -}}
