@@ -41,7 +41,7 @@ spec:
 {{ toYaml .Values.client.podAnnotations | indent 8 }}
 {{- end }}
     spec:
-      serviceAccountName: {{ template "elasticsearch.serviceAccount" . }}
+      serviceAccountName: {{ template "elasticsearch.serviceAccountName" . }}
 {{- if eq .Values.global.openshiftEnabled false }}
       securityContext: {{ toYaml .Values.podSecurityContext| nindent 8 }}
 {{- end }}
@@ -92,7 +92,7 @@ spec:
         readinessProbe: {{ tpl (toYaml .Values.sysctlInitContainer.readinessProbe) . | nindent 12 }}
         {{- end }}
   {{- end }}
-      serviceAccountName: {{ template "elasticsearch.serviceAccount" . }}
+      serviceAccountName: {{ template "elasticsearch.serviceAccountName" . }}
       containers:
       - name: es-client
         securityContext:

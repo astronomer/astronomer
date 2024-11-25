@@ -47,7 +47,7 @@ spec:
 {{ toYaml .Values.exporter.podAnnotations | indent 8 }}
 {{- end }}
     spec:
-      serviceAccountName: {{ template "elasticsearch.serviceAccount" . }}
+      serviceAccountName: {{ template "elasticsearch.serviceAccountName" . }}
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
       affinity:
