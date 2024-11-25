@@ -367,7 +367,7 @@ workflows:
                 - quay.io/astronomer/ap-houston-api:0.34.17
                 - quay.io/astronomer/ap-init:3.19.4
                 - quay.io/astronomer/ap-kibana:8.12.1
-                - quay.io/astronomer/ap-kube-state:2.10.1
+                - quay.io/astronomer/ap-kube-state:2.14.0
                 - quay.io/astronomer/ap-nats-exporter:0.15.0-3
                 - quay.io/astronomer/ap-nats-server:2.10.18-1
                 - quay.io/astronomer/ap-nats-streaming:0.25.6-6
@@ -406,7 +406,7 @@ workflows:
                 - quay.io/astronomer/ap-houston-api:0.34.17
                 - quay.io/astronomer/ap-init:3.19.4
                 - quay.io/astronomer/ap-kibana:8.12.1
-                - quay.io/astronomer/ap-kube-state:2.10.1
+                - quay.io/astronomer/ap-kube-state:2.14.0
                 - quay.io/astronomer/ap-nats-exporter:0.15.0-3
                 - quay.io/astronomer/ap-nats-server:2.10.18-1
                 - quay.io/astronomer/ap-nats-streaming:0.25.6-6
