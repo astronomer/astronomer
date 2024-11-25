@@ -17,6 +17,6 @@ roleRef:
   name: {{ template "grafana.fullname" . }}-bootstrapper
 subjects:
   - kind: ServiceAccount
-    name: {{ template "grafana.bootstrapper.serviceaccount" . }}
+    name: {{ template "grafana.bootstrapper.serviceAccountName" . }}
     namespace: {{ .Release.Namespace }}
 {{- end }}

@@ -51,7 +51,7 @@ spec:
 {{ toYaml .Values.registry.podAnnotations | indent 8 }}
 {{- end }}
     spec:
-      serviceAccountName: {{ template "registry.ServiceAccount" . }}
+      serviceAccountName: {{ template "registry.serviceAccountName" . }}
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
       affinity:

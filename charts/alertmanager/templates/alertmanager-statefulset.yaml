@@ -39,7 +39,7 @@ spec:
 {{ toYaml .Values.podAnnotations | indent 8 }}
 {{- end }}
     spec:
-      serviceAccountName: {{ template "alertmanager.ServiceAccount" . }}
+      serviceAccountName: {{ template "alertmanager.serviceAccountName" . }}
 {{- if eq .Values.global.openshiftEnabled false }}
       securityContext: {{ toYaml .Values.podSecurityContext| nindent 8 }}
 {{- end }}
