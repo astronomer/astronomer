@@ -56,9 +56,7 @@ spec:
       securityContext:
         fsGroup: {{ .Values.securityContext.fsGroup }}
       {{- end }}
-      {{- if .Values.serviceAccount.enabled }}
-      serviceAccountName: {{ default (include "postgresql.fullname" . ) .Values.serviceAccount.name}}
-      {{- end }}
+      serviceAccountName: {{ template "postgresql.serviceAccountName" . }}
       {{- if and .Values.volumePermissions.enabled .Values.persistence.enabled }}
       initContainers:
       - name: init-chmod-data
