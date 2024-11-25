@@ -17,6 +17,10 @@ global:
   privateCaCertsAddToHost:
     enabled: true
     addToContainerd: true
+astronomer:
+  houston:
+    cleanupAirflowDb:
+      enabled: true
 prometheus-node-exporter:
   rbac:
     create: true
