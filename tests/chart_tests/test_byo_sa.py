@@ -1,4 +1,5 @@
 import pytest
+from deepmerge import always_merger
 
 from tests import supported_k8s_versions, git_root_dir, get_service_account_name_from_doc
 from tests.chart_tests import get_all_features
@@ -155,10 +156,10 @@ class TestServiceAccounts:
 )
 def test_default_serviceaccount_names(template_name):
     """Test that default service account names are rendered correctly."""
-    values = get_all_features()
-    values["global"]["rbacEnabled"] = False
-    values["postgresql"]["replication"]["enabled"] = True
-    values["postgresql"]["serviceAccount"] = {"enabled": True}
+
+    default_serviceaccount_names_overrides = {"global": {"rbacEnabled": False}, "postgresql": {"serviceAccount": {"enabled": True}}}
+    values = always_merger.merge(get_all_features(), default_serviceaccount_names_overrides)
+
     docs = render_chart(show_only=template_name, values=values)
     pm_docs = [doc for doc in docs if doc["kind"] in pod_managers]
     service_accounts = [get_service_account_name_from_doc(doc) for doc in pm_docs]
@@ -168,29 +169,81 @@ def test_default_serviceaccount_names(template_name):
     ), f"Expected all service accounts to start with 'release-name-' but found {service_accounts} in {template_name}"
 
 
+custom_service_account_names = {
+    "charts/alertmanager/templates/alertmanager-statefulset.yaml": {
+        "alertmanager": {"serviceAccount": {"create": True, "name": "prothean"}}
+    },
+    "charts/astronomer/templates/astro-ui/astro-ui-deployment.yaml": {
+        "astronomer": {"astroUI": {"serviceAccount": {"create": True, "name": "prothean"}}}
+    },
+    "charts/astronomer/templates/commander/commander-deployment.yaml": {
+        "astronomer": {"commander": {"serviceAccount": {"create": True, "name": "prothean"}}}
+    },
+    "charts/astronomer/templates/config-syncer/config-syncer-cronjob.yaml": {
+        "astronomer": {"configSyncer": {"serviceAccount": {"create": True, "name": "prothean"}}}
+    },
+    "charts/astronomer/templates/houston/api/houston-deployment.yaml": {
+        "astronomer": {"houston": {"serviceAccount": {"create": True, "name": "prothean"}}}
+    },
+    "charts/astronomer/templates/houston/cronjobs/houston-check-airflow-version-updates-cronjob.yaml": {
+        "astronomer": {"houston": {"serviceAccount": {"create": True, "name": "prothean"}}}
+    },
+    "charts/astronomer/templates/houston/cronjobs/houston-check-updates-cronjob.yaml": {
+        "astronomer": {"houston": {"serviceAccount": {"create": True, "name": "prothean"}}}
+    },
+    "charts/astronomer/templates/houston/cronjobs/houston-cleanup-airflow-db-cronjob.yaml": {
+        "astronomer": {"houston": {"serviceAccount": {"create": True, "name": "prothean"}}}
+    },
+    "charts/astronomer/templates/houston/cronjobs/houston-cleanup-deploy-revisions-cronjob.yaml": {},
+    "charts/astronomer/templates/houston/cronjobs/houston-cleanup-deployments-cronjob.yaml": {},
+    "charts/astronomer/templates/houston/cronjobs/houston-cleanup-task-data-cronjob.yaml": {},
+    "charts/astronomer/templates/houston/helm-hooks/houston-au-strategy-job.yaml": {},
+    "charts/astronomer/templates/houston/helm-hooks/houston-db-migration-job.yaml": {},
+    "charts/astronomer/templates/houston/helm-hooks/houston-upgrade-deployments-job.yaml": {},
+    "charts/astronomer/templates/houston/worker/houston-worker-deployment.yaml": {},
+    "charts/astronomer/templates/registry/registry-statefulset.yaml": {"registry": {"serviceAccount": {"create": True}}},
+    "charts/elasticsearch/templates/client/es-client-deployment.yaml": {},
+    "charts/elasticsearch/templates/curator/es-curator-cronjob.yaml": {},
+    "charts/elasticsearch/templates/data/es-data-statefulset.yaml": {},
+    "charts/elasticsearch/templates/exporter/es-exporter-deployment.yaml": {},
+    "charts/elasticsearch/templates/master/es-master-statefulset.yaml": {},
+    "charts/elasticsearch/templates/nginx/nginx-es-deployment.yaml": {},
+    "charts/external-es-proxy/templates/external-es-proxy-deployment.yaml": {},
+    "charts/fluentd/templates/fluentd-daemonset.yaml": {},
+    "charts/grafana/templates/grafana-deployment.yaml": {},
+    "charts/kibana/templates/kibana-default-index-cronjob.yaml": {},
+    "charts/kibana/templates/kibana-deployment.yaml": {},
+    "charts/kube-state/templates/kube-state-deployment.yaml": {},
+    "charts/nats/templates/jetstream-job.yaml": {},
+    "charts/nats/templates/statefulset.yaml": {},
+    "charts/nginx/templates/nginx-deployment-default.yaml": {},
+    "charts/nginx/templates/nginx-deployment.yaml": {},
+    "charts/pgbouncer/templates/pgbouncer-deployment.yaml": {},
+    "charts/postgresql/templates/statefulset-slaves.yaml": {},
+    "charts/postgresql/templates/statefulset.yaml": {},
+    "charts/prometheus-blackbox-exporter/templates/deployment.yaml": {},
+    "charts/prometheus-node-exporter/templates/daemonset.yaml": {},
+    "charts/prometheus-postgres-exporter/templates/deployment.yaml": {},
+    "charts/prometheus/templates/prometheus-statefulset.yaml": {},
+    "charts/stan/templates/statefulset.yaml": {},
+}
+
+
 @pytest.mark.parametrize(
     "template_name",
     find_all_pod_manager_templates(),
 )
 def test_custom_serviceaccount_names(template_name):
     """Test that custom service account names are rendered correctly."""
-    pod_managers = [
-        "CronJob",
-        "DaemonSet",
-        "Deployment",
-        "Job",
-        "StatefulSet",
-    ]
-    values = get_all_features()
-    values.update(
-        {
-            "postgresql": {"replication": {"enabled": True}, "serviceAccount": {"enabled": True}},
-        }
-    )
+
+    values = always_merger.merge(get_all_features(), custom_service_account_names[template_name])
+    enable_pgsql_sa = {"postgresql": {"serviceAccount": {"enabled": True}}}
+    values = always_merger.merge(values, enable_pgsql_sa)
+
     docs = render_chart(show_only=template_name, values=values)
     pm_docs = [doc for doc in docs if doc["kind"] in pod_managers]
     service_accounts = [get_service_account_name_from_doc(doc) for doc in pm_docs]
     assert service_accounts
-    assert not any(
-        (sa_name.startswith("release-name-") or sa_name == "default") for sa_name in service_accounts
+    assert all(
+        sa_name == "prothean" for sa_name in service_accounts
     ), f"Expected all service accounts to start with 'release-name-' but found {service_accounts} in {template_name}"
