@@ -218,19 +218,37 @@ custom_service_account_names = {
     "charts/astronomer/templates/registry/registry-statefulset.yaml": {
         "astronomer": {"registry": {"serviceAccount": {"create": True, "name": "prothean"}}}
     },
-    "charts/elasticsearch/templates/client/es-client-deployment.yaml": {},
-    "charts/elasticsearch/templates/curator/es-curator-cronjob.yaml": {},
-    "charts/elasticsearch/templates/data/es-data-statefulset.yaml": {},
-    "charts/elasticsearch/templates/exporter/es-exporter-deployment.yaml": {},
-    "charts/elasticsearch/templates/master/es-master-statefulset.yaml": {},
-    "charts/elasticsearch/templates/nginx/nginx-es-deployment.yaml": {},
-    "charts/external-es-proxy/templates/external-es-proxy-deployment.yaml": {},
-    "charts/fluentd/templates/fluentd-daemonset.yaml": {},
-    "charts/grafana/templates/grafana-deployment.yaml": {},
-    "charts/kibana/templates/kibana-default-index-cronjob.yaml": {},
-    "charts/kibana/templates/kibana-deployment.yaml": {},
-    "charts/kube-state/templates/kube-state-deployment.yaml": {},
-    "charts/nats/templates/jetstream-job.yaml": {},
+    "charts/elasticsearch/templates/client/es-client-deployment.yaml": {
+        "elasticsearch": {"common": {"serviceAccount": {"create": True, "name": "prothean"}}}
+    },
+    "charts/elasticsearch/templates/curator/es-curator-cronjob.yaml": {
+        "elasticsearch": {"common": {"serviceAccount": {"create": True, "name": "prothean"}}}
+    },
+    "charts/elasticsearch/templates/data/es-data-statefulset.yaml": {
+        "elasticsearch": {"common": {"serviceAccount": {"create": True, "name": "prothean"}}}
+    },
+    "charts/elasticsearch/templates/exporter/es-exporter-deployment.yaml": {
+        "elasticsearch": {"common": {"serviceAccount": {"create": True, "name": "prothean"}}}
+    },
+    "charts/elasticsearch/templates/master/es-master-statefulset.yaml": {
+        "elasticsearch": {"common": {"serviceAccount": {"create": True, "name": "prothean"}}}
+    },
+    "charts/elasticsearch/templates/nginx/nginx-es-deployment.yaml": {
+        "elasticsearch": {"common": {"serviceAccount": {"create": True, "name": "prothean"}}}
+    },
+    "charts/external-es-proxy/templates/external-es-proxy-deployment.yaml": {
+        "external-es-proxy": {"serviceAccount": {"create": True, "name": "prothean"}}
+    },
+    "charts/fluentd/templates/fluentd-daemonset.yaml": {"fluentd": {"serviceAccount": {"create": True, "name": "prothean"}}},
+    "charts/grafana/templates/grafana-deployment.yaml": {"grafana": {"serviceAccount": {"create": True, "name": "prothean"}}},
+    "charts/kibana/templates/kibana-default-index-cronjob.yaml": {
+        "kibana": {"serviceAccount": {"create": True, "name": "prothean"}}
+    },
+    "charts/kibana/templates/kibana-deployment.yaml": {"kibana": {"serviceAccount": {"create": True, "name": "prothean"}}},
+    "charts/kube-state/templates/kube-state-deployment.yaml": {
+        "kube-state": {"serviceAccount": {"create": True, "name": "prothean"}}
+    },
+    "charts/nats/templates/jetstream-job.yaml": {"nats": {"nats": {"serviceAccount": {"create": True, "name": "prothean"}}}},
     "charts/nats/templates/statefulset.yaml": {},
     "charts/nginx/templates/nginx-deployment-default.yaml": {},
     "charts/nginx/templates/nginx-deployment.yaml": {},
