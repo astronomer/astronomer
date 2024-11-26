@@ -69,3 +69,4 @@ serviceAccount:
   name: ""
 
 podAnnotations: {}
+ingressAnnotations: {}
