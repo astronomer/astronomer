@@ -23,6 +23,15 @@ def find_all_pod_manager_templates() -> list[str]:
     )
 
 
+pod_managers = [
+    "CronJob",
+    "DaemonSet",
+    "Deployment",
+    "Job",
+    "StatefulSet",
+]
+
+
 @pytest.mark.parametrize(
     "kube_version",
     supported_k8s_versions,
@@ -146,19 +155,10 @@ class TestServiceAccounts:
 )
 def test_default_serviceaccount_names(template_name):
     """Test that default service account names are rendered correctly."""
-    pod_managers = [
-        "CronJob",
-        "DaemonSet",
-        "Deployment",
-        "Job",
-        "StatefulSet",
-    ]
     values = get_all_features()
-    values.update(
-        {
-            "postgresql": {"replication": {"enabled": True}, "serviceAccount": {"enabled": True}},
-        }
-    )
+    values["global"]["rbacEnabled"] = False
+    values["postgresql"]["replication"]["enabled"] = True
+    values["postgresql"]["serviceAccount"] = {"enabled": True}
     docs = render_chart(show_only=template_name, values=values)
     pm_docs = [doc for doc in docs if doc["kind"] in pod_managers]
     service_accounts = [get_service_account_name_from_doc(doc) for doc in pm_docs]

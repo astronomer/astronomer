@@ -2,7 +2,6 @@ global:
   authSidecar:
     enabled: true
   baseDomain: foo.com
-  #blackboxExporterEnabled: true
   customLogging:
     awsSecretName: dummy
     enabled: true
@@ -11,21 +10,25 @@ global:
   pgbouncer:
     enabled: true
   postgresqlEnabled: true
-  prometheusPostgresExporterEnabled: true
-  taskUsageMetricsEnabled: True
-  veleroEnabled: true
   privateCaCertsAddToHost:
-    enabled: true
     addToContainerd: true
+    enabled: true
+  prometheusPostgresExporterEnabled: true
+  rbacEnabled: true
+  taskUsageMetricsEnabled: true
+  veleroEnabled: true
 astronomer:
   houston:
     cleanupAirflowDb:
       enabled: true
-prometheus-node-exporter:
-  rbac:
-    create: true
-  endpoints:
-    - example.com
 nats:
   nats:
     createJetStreamJob: true
+postgresql:
+  replication:
+    enabled: true
+prometheus-node-exporter:
+  endpoints:
+  - example.com
+  rbac:
+    create: true
