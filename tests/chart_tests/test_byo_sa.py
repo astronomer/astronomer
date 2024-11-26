@@ -249,12 +249,14 @@ custom_service_account_names = {
         "kube-state": {"serviceAccount": {"create": True, "name": "prothean"}}
     },
     "charts/nats/templates/jetstream-job.yaml": {"nats": {"nats": {"serviceAccount": {"create": True, "name": "prothean"}}}},
-    "charts/nats/templates/statefulset.yaml": {},
-    "charts/nginx/templates/nginx-deployment-default.yaml": {},
-    "charts/nginx/templates/nginx-deployment.yaml": {},
-    "charts/pgbouncer/templates/pgbouncer-deployment.yaml": {},
-    "charts/postgresql/templates/statefulset-slaves.yaml": {},
-    "charts/postgresql/templates/statefulset.yaml": {},
+    "charts/nats/templates/statefulset.yaml": {"nats": {"nats": {"serviceAccount": {"create": True, "name": "prothean"}}}},
+    "charts/nginx/templates/nginx-deployment-default.yaml": {
+        "nginx": {"defaultBackend": {"serviceAccount": {"create": True, "name": "prothean"}}}
+    },
+    "charts/nginx/templates/nginx-deployment.yaml": {"nginx": {"serviceAccount": {"create": True, "name": "prothean"}}},
+    "charts/pgbouncer/templates/pgbouncer-deployment.yaml": {"pgbouncer": {"serviceAccount": {"create": True, "name": "prothean"}}},
+    "charts/postgresql/templates/statefulset-slaves.yaml": {"postgresql": {"serviceAccount": {"create": True, "name": "prothean"}}},
+    "charts/postgresql/templates/statefulset.yaml": {"postgresql": {"serviceAccount": {"create": True, "name": "prothean"}}},
     "charts/prometheus-blackbox-exporter/templates/deployment.yaml": {},
     "charts/prometheus-node-exporter/templates/daemonset.yaml": {},
     "charts/prometheus-postgres-exporter/templates/deployment.yaml": {},
