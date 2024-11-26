@@ -44,3 +44,4 @@ ports:
   http: 5601
 
 createDefaultIndex: true
+ingressAnnotations: {}

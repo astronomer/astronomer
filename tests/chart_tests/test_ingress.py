@@ -36,3 +36,15 @@ class TestIngress:
 
         assert doc["apiVersion"] == "networking.k8s.io/v1"
         assert doc["spec"]["rules"] == expected_rules_v1
+
+    def test_kibana_custom_ingress_annotation(self, kube_version):
+        """validate kibana to add custom ingress annotation to ingress objects"""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"kibana": {"ingressAnnotations": {"kubernetes.io/software-enable": "enabled"}}},
+            show_only=[
+                "charts/kibana/templates/ingress.yaml",
+            ],
+        )
+        assert len(docs) == 1
+        assert docs[0]["metadata"]["annotations"]["kubernetes.io/software-enable"] == "enabled"
