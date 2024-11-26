@@ -257,11 +257,19 @@ custom_service_account_names = {
     "charts/pgbouncer/templates/pgbouncer-deployment.yaml": {"pgbouncer": {"serviceAccount": {"create": True, "name": "prothean"}}},
     "charts/postgresql/templates/statefulset-slaves.yaml": {"postgresql": {"serviceAccount": {"create": True, "name": "prothean"}}},
     "charts/postgresql/templates/statefulset.yaml": {"postgresql": {"serviceAccount": {"create": True, "name": "prothean"}}},
-    "charts/prometheus-blackbox-exporter/templates/deployment.yaml": {},
-    "charts/prometheus-node-exporter/templates/daemonset.yaml": {},
-    "charts/prometheus-postgres-exporter/templates/deployment.yaml": {},
-    "charts/prometheus/templates/prometheus-statefulset.yaml": {},
-    "charts/stan/templates/statefulset.yaml": {},
+    "charts/prometheus-blackbox-exporter/templates/deployment.yaml": {
+        "prometheus-blackbox-exporter": {"serviceAccount": {"create": True, "name": "prothean"}}
+    },
+    "charts/prometheus-node-exporter/templates/daemonset.yaml": {
+        "prometheus-node-exporter": {"serviceAccount": {"create": True, "name": "prothean"}}
+    },
+    "charts/prometheus-postgres-exporter/templates/deployment.yaml": {
+        "prometheus-postgres-exporter": {"serviceAccount": {"create": True, "name": "prothean"}}
+    },
+    "charts/prometheus/templates/prometheus-statefulset.yaml": {
+        "prometheus": {"serviceAccount": {"create": True, "name": "prothean"}}
+    },
+    "charts/stan/templates/statefulset.yaml": {"stan": {"stan": {"serviceAccount": {"create": True, "name": "prothean"}}}},
 }
 
 
