@@ -35,6 +35,9 @@ spec:
         version: {{ .Chart.Version }}
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/es-configmap.yaml") . | sha256sum }}
+{{- if .Values.global.podAnnotations }}
+{{ toYaml .Values.global.podAnnotations | indent 8 }}
+{{- end }}
 {{- if .Values.common.podAnnotations }}
 {{ toYaml .Values.common.podAnnotations | indent 8 }}
 {{- end }}
@@ -92,7 +95,7 @@ spec:
         readinessProbe: {{ tpl (toYaml .Values.sysctlInitContainer.readinessProbe) . | nindent 12 }}
         {{- end }}
       {{- end }}
-      serviceAccountName: {{ template "elasticsearch.serviceAccount" . }}
+      serviceAccountName: {{ template "elasticsearch.serviceAccountName" . }}
       containers:
       - name: es-master
         securityContext:

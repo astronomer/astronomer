@@ -26,11 +26,6 @@ astronomer:
       repository: quay.io/astronomer/ap-db-bootstrapper
       tag: master
       pullPolicy: Always
-    cliInstall:
-      repository: quay.io/astronomer/ap-cli-install
-      tag: master
-      pullPolicy: Always
-
 
 
 #################################

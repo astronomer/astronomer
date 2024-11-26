@@ -29,13 +29,19 @@ spec:
         version: {{ .Chart.Version }}
       annotations:
         checksum/houston-config: {{ include (print $.Template.BasePath "/houston/houston-configmap.yaml") . | sha256sum }}
+{{- if .Values.global.podAnnotations }}
+{{ toYaml .Values.global.podAnnotations | indent 8 }}
+{{- end }}
+{{- if .Values.houston.podAnnotations }}
+{{ toYaml .Values.houston.podAnnotations | indent 8 }}
+{{- end }}
     spec:
       nodeSelector: {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
       affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
       tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       restartPolicy: Always
       {{- if and (not .Values.houston.airflowBackendSecretName) (not .Values.houston.airflowBackendConnection) }}
-      serviceAccountName: {{ template "houston.bootstrapperServiceAccount" . }}
+      serviceAccountName: {{ template "houston.bootstrapperServiceAccountName" . }}
 {{- include "astronomer.imagePullSecrets" . | indent 6 }}
       initContainers:
         - name: wait-for-db

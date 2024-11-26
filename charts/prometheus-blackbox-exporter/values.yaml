@@ -131,5 +131,3 @@ astroServices:
     enabled: true
   kibana:
     enabled: true
-  cliInstall:
-    enabled: true

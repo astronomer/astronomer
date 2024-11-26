@@ -33,6 +33,8 @@ resources: {}
 #   cpu: 100m
 #   memory: 128Mi
 
+podAnnotations: {}
+
 serviceAccount:
     # Specifies whether a service account should be created
     create: true
@@ -99,7 +101,6 @@ astroHTTPTargets:
   commander: true
   houston: true
   registry: true
-  cliInstall: true
   grafana: true
   kibana: true
   elasticsearch: true

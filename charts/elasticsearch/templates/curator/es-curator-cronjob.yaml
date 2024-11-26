@@ -18,8 +18,11 @@ spec:
     spec:
       template:
         metadata:
-{{- if or .Values.common.podAnnotations .Values.curator.podAnnotations }}
+{{- if or .Values.common.podAnnotations .Values.curator.podAnnotations .Values.global.podAnnotations  }}
           annotations:
+{{- end }}
+{{- if .Values.global.podAnnotations }}
+{{ toYaml .Values.global.podAnnotations | indent 12 }}
 {{- end }}
 {{- if .Values.common.podAnnotations }}
 {{ toYaml .Values.common.podAnnotations | indent 12 }}
@@ -36,7 +39,7 @@ spec:
             app: {{ template "elasticsearch.name" . }}-curator
             version: {{ .Chart.Version }}
         spec:
-          serviceAccountName: {{ template "elasticsearch.serviceAccount" . }}
+          serviceAccountName: {{ template "elasticsearch.serviceAccountName" . }}
           nodeSelector: {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 12 }}
           affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 12 }}
           tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 12 }}

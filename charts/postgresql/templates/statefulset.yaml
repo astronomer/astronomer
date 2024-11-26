@@ -42,10 +42,15 @@ spec:
 {{- with .Values.master.podLabels }}
 {{ toYaml . | indent 8 }}
 {{- end }}
-{{- with .Values.master.podAnnotations }}
+     {{- if or .Values.global.podAnnotations .Values.master.podAnnotations }}
       annotations:
+      {{- if .Values.global.podAnnotations }}
+{{ toYaml .Values.global.podAnnotations | indent 8 }}
+      {{- end }}
+      {{- with .Values.master.podAnnotations }}
 {{ toYaml . | indent 8 }}
-{{- end }}
+      {{- end }}
+      {{- end }}
     spec:
       {{- if .Values.schedulerName }}
       schedulerName: "{{ .Values.schedulerName }}"
@@ -61,9 +66,7 @@ spec:
       securityContext:
         fsGroup: {{ .Values.securityContext.fsGroup }}
       {{- end }}
-      {{- if .Values.serviceAccount.enabled }}
-      serviceAccountName: {{ default (include "postgresql.fullname" . ) .Values.serviceAccount.name }}
-      {{- end }}
+      serviceAccountName: {{ template "postgresql.serviceAccountName" . }}
       {{- if and .Values.volumePermissions.enabled .Values.persistence.enabled }}
       initContainers:
       - name: init-chmod-data
