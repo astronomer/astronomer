@@ -194,14 +194,30 @@ custom_service_account_names = {
     "charts/astronomer/templates/houston/cronjobs/houston-cleanup-airflow-db-cronjob.yaml": {
         "astronomer": {"houston": {"serviceAccount": {"create": True, "name": "prothean"}}}
     },
-    "charts/astronomer/templates/houston/cronjobs/houston-cleanup-deploy-revisions-cronjob.yaml": {},
-    "charts/astronomer/templates/houston/cronjobs/houston-cleanup-deployments-cronjob.yaml": {},
-    "charts/astronomer/templates/houston/cronjobs/houston-cleanup-task-data-cronjob.yaml": {},
-    "charts/astronomer/templates/houston/helm-hooks/houston-au-strategy-job.yaml": {},
-    "charts/astronomer/templates/houston/helm-hooks/houston-db-migration-job.yaml": {},
-    "charts/astronomer/templates/houston/helm-hooks/houston-upgrade-deployments-job.yaml": {},
-    "charts/astronomer/templates/houston/worker/houston-worker-deployment.yaml": {},
-    "charts/astronomer/templates/registry/registry-statefulset.yaml": {"registry": {"serviceAccount": {"create": True}}},
+    "charts/astronomer/templates/houston/cronjobs/houston-cleanup-deploy-revisions-cronjob.yaml": {
+        "astronomer": {"houston": {"serviceAccount": {"create": True, "name": "prothean"}}}
+    },
+    "charts/astronomer/templates/houston/cronjobs/houston-cleanup-deployments-cronjob.yaml": {
+        "astronomer": {"houston": {"serviceAccount": {"create": True, "name": "prothean"}}}
+    },
+    "charts/astronomer/templates/houston/cronjobs/houston-cleanup-task-data-cronjob.yaml": {
+        "astronomer": {"houston": {"serviceAccount": {"create": True, "name": "prothean"}}}
+    },
+    "charts/astronomer/templates/houston/helm-hooks/houston-au-strategy-job.yaml": {
+        "astronomer": {"houston": {"serviceAccount": {"create": True, "name": "prothean"}}}
+    },
+    "charts/astronomer/templates/houston/helm-hooks/houston-db-migration-job.yaml": {
+        "astronomer": {"houston": {"serviceAccount": {"create": True, "name": "prothean"}}}
+    },
+    "charts/astronomer/templates/houston/helm-hooks/houston-upgrade-deployments-job.yaml": {
+        "astronomer": {"houston": {"serviceAccount": {"create": True, "name": "prothean"}}}
+    },
+    "charts/astronomer/templates/houston/worker/houston-worker-deployment.yaml": {
+        "astronomer": {"houston": {"serviceAccount": {"create": True, "name": "prothean"}}}
+    },
+    "charts/astronomer/templates/registry/registry-statefulset.yaml": {
+        "astronomer": {"registry": {"serviceAccount": {"create": True, "name": "prothean"}}}
+    },
     "charts/elasticsearch/templates/client/es-client-deployment.yaml": {},
     "charts/elasticsearch/templates/curator/es-curator-cronjob.yaml": {},
     "charts/elasticsearch/templates/data/es-data-statefulset.yaml": {},
