@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC1090,SC1091
 set -eo pipefail
+
 BOM_GENERATOR_VERSION=v0.2.0
+
 help() {
   echo "Description:"
-  echo "    Generate and publish a BOM JSON file for the given version to the public release repository."
+  echo "    Generate and publish a BOM JSON file for the given version and update the index.html"
+  echo "    in the public release repository."
   echo
   echo "Usage:"
   echo "    ${0##*/} [-x] <version>"
@@ -32,6 +35,7 @@ bucket_path="gs://updates.astronomer.io/astronomer-software/releases"
 json_file_name="astronomer-${version}.json"
 local_json_file_path="${json_file_name}"
 max_age="300"
+index_file="index.html"
 
 # Step 1: Runs the Python extractor script to generate the BOM JSON file
 echo "Running the extractor script to generate ${json_file_name}..."
@@ -61,3 +65,67 @@ gsutil cp "${local_json_file_path}" "${bucket_path}"
 gsutil -h "Cache-Control: public, max-age=${max_age}" cp "${local_json_file_path}" "${bucket_path}"
 
 echo "Successfully published ${json_file_name} to ${repo_url}"
+
+# Step 5: Update index.html with the new version
+echo "Updating index.html with the new version..."
+
+gsutil cp "${bucket_path}/index.html" .
+
+if [ ! -f "$index_file" ]; then
+    echo "Error: Failed to download index.html!"
+    exit 1
+fi
+
+version_to_number() {
+    echo "$1" | awk -F. '{ printf("%d%03d%03d\n", $1, $2, $3); }'
+}
+
+
+get_version() {
+    echo "$1" | grep -o 'astronomer-[0-9]\+\.[0-9]\+\.[0-9]\+\.json' | sed 's/astronomer-\([0-9.]*\)\.json/\1/'
+}
+
+
+format_release_line() {
+    local version=$1
+    echo "    <li><a href=\"https://updates.astronomer.io/astronomer-software/releases/astronomer-${version}.json\">Release ${version}</a></li>"
+}
+
+NEW_VERSION_NUM=$(version_to_number "$version")
+
+TMP_FILE=$(mktemp)
+INSERTED=0
+
+while IFS= read -r line; do
+    if ! [[ $line =~ astronomer-[0-9]+\.[0-9]+\.[0-9]+\.json ]]; then
+        echo "$line" >> "$TMP_FILE"
+        continue
+    fi
+
+    CURRENT_VERSION=$(get_version "$line")
+    CURRENT_VERSION_NUM=$(version_to_number "$CURRENT_VERSION")
+
+    if [ $INSERTED -eq 0 ] && [ "$NEW_VERSION_NUM" -gt "$CURRENT_VERSION_NUM" ]; then
+        format_release_line "$version" >> "$TMP_FILE"
+        INSERTED=1
+    fi
+
+    echo "$line" >> "$TMP_FILE"
+done < "$index_file"
+
+if [ $INSERTED -eq 0 ]; then
+    format_release_line "$version" >> "$TMP_FILE"
+fi
+
+mv "$TMP_FILE" "$index_file"
+
+# Step 6: Upload the modified index.html back to GCS
+echo "Uploading modified index.html to GCS..."
+gsutil cp "$index_file" "${bucket_path}/index.html"
+
+# Step 7: Clean up local files
+rm -f "$index_file"
+rm -f "$local_json_file_path"
+rm -f /tmp/gcs_token.json
+
+echo "Successfully updated index.html with Release $version"
