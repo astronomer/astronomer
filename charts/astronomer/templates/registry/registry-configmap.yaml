@@ -51,12 +51,14 @@ data:
       #     path: /metrics
       headers:
         X-Content-Type-Options: [nosniff]
+    {{- if not .Values.registry.enableInsecureAuth }}
     auth:
       token:
         realm: "https://houston.{{ .Values.global.baseDomain }}/v1/registry/authorization"
         service: {{ .Values.registry.auth.service | quote }}
         issuer: {{ .Values.registry.auth.issuer | quote }}
         rootcertbundle: /etc/docker/ssl/tls.crt
+      {{- end }}
     health:
       storagedriver:
         enabled: true

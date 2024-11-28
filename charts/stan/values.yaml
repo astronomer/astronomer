@@ -4,7 +4,7 @@
 images:
   init:
     repository: quay.io/astronomer/ap-init
-    tag: 3.18.9
+    tag: 3.19.4
     pullPolicy: IfNotPresent
   stan:
     repository: quay.io/astronomer/ap-nats-streaming
@@ -31,6 +31,15 @@ stan:
   #  requests:
   #   cpu: 100m
   #   memory: 128Mi
+
+  serviceAccount:
+    # Specifies whether a ServiceAccount should be created
+    create: false
+    # Annotations to add to the service account
+    annotations: {}
+    # The name of the ServiceAccount to use.
+    # If not set and create is true, a name is generated using the fullname template
+    name: ~
 
   livenessProbe: {}
   readinessProbe: {}

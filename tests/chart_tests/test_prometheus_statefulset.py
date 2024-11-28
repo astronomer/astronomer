@@ -10,6 +10,13 @@ from tests import supported_k8s_versions, get_containers_by_name
 class TestPrometheusStatefulset:
     show_only = ["charts/prometheus/templates/prometheus-statefulset.yaml"]
 
+    @staticmethod
+    def prometheus_common_tests(doc):
+        """Test common for prometheus statefulset."""
+        assert doc["kind"] == "StatefulSet"
+        assert doc["apiVersion"] == "apps/v1"
+        assert doc["metadata"]["name"] == "release-name-prometheus"
+
     def test_prometheus_sts_defaults(self, kube_version):
         """Test the default behavior of the prometheus statefulset."""
         docs = render_chart(
@@ -19,9 +26,7 @@ class TestPrometheusStatefulset:
         assert len(docs) == 1
         doc = docs[0]
 
-        assert doc["kind"] == "StatefulSet"
-        assert doc["apiVersion"] == "apps/v1"
-        assert doc["metadata"]["name"] == "release-name-prometheus"
+        self.prometheus_common_tests(doc)
         assert len(doc["spec"]["template"]["spec"]["containers"]) == 2
 
         sc = doc["spec"]["template"]["spec"]["securityContext"]
@@ -102,7 +107,6 @@ class TestPrometheusStatefulset:
         assert "persistentVolumeClaimRetentionPolicy" in doc["spec"]
         assert test_persistentVolumeClaimRetentionPolicy == doc["spec"]["persistentVolumeClaimRetentionPolicy"]
 
-
     def test_prometheus_service_account_overrides(self, kube_version):
         """Test the prometheus do not render service account and rbac when global rbac is true and prometheus service account create is false."""
         docs = render_chart(
@@ -114,10 +118,59 @@ class TestPrometheusStatefulset:
                     },
                 },
             },
-            show_only=["charts/prometheus/templates/prometheus-statefulset.yaml",
-                       "charts/prometheus/templates/prometheus-role.yaml",
-                       "charts/prometheus/templates/prometheus-rolebinding.yaml"],
+            show_only=[
+                "charts/prometheus/templates/prometheus-statefulset.yaml",
+                "charts/prometheus/templates/prometheus-role.yaml",
+                "charts/prometheus/templates/prometheus-rolebinding.yaml",
+            ],
         )
 
         assert len(docs) == 1
         assert "default" in docs[0]["spec"]["template"]["spec"]["serviceAccountName"]
+
+    def test_prometheus_with_global_nodepool_config(self, kube_version, global_platform_node_pool_config):
+        """Test Prometheus with nodeSelector, affinity, tolerations and global config."""
+        values = {
+            "global": {
+                "platformNodePool": global_platform_node_pool_config,
+            }
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=[
+                "charts/prometheus/templates/prometheus-statefulset.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+        self.prometheus_common_tests(docs[0])
+        spec = docs[0]["spec"]["template"]["spec"]
+        assert spec["nodeSelector"]["role"] == "astro"
+        assert len(spec["affinity"]) == 1
+        assert len(spec["tolerations"]) > 0
+        assert spec["tolerations"] == values["global"]["platformNodePool"]["tolerations"]
+
+    def test_prometheus_platform_nodepool_subchart_overrides(self, kube_version, global_platform_node_pool_config):
+        """Test Prometheus with nodeSelector, affinity, tolerations and subchart config overrides."""
+        global_platform_node_pool_config["nodeSelector"] = {"role": "astroprometheus"}
+        values = {
+            "prometheus": {
+                "nodeSelector": global_platform_node_pool_config["nodeSelector"],
+                "affinity": global_platform_node_pool_config["affinity"],
+                "tolerations": global_platform_node_pool_config["tolerations"],
+            },
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=["charts/prometheus/templates/prometheus-statefulset.yaml"],
+        )
+
+        assert len(docs) == 1
+        self.prometheus_common_tests(docs[0])
+        spec = docs[0]["spec"]["template"]["spec"]
+        assert spec["nodeSelector"]["role"] == "astroprometheus"
+        assert len(spec["affinity"]) == 1
+        assert len(spec["tolerations"]) > 0
+        assert spec["tolerations"] == values["prometheus"]["tolerations"]

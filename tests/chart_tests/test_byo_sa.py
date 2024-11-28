@@ -1,7 +1,20 @@
 import pytest
 
-from tests import supported_k8s_versions
+from tests import supported_k8s_versions, git_root_dir, get_service_account_name_from_doc
+from tests.chart_tests import get_all_features
 from tests.chart_tests.helm_template_generator import render_chart
+
+
+def find_all_pod_manager_templates() -> list[str]:
+    """Return a sorted, unique list of all pod manager templates in the chart, relative to git_root_dir."""
+
+    return sorted(
+        {
+            str(x.relative_to(git_root_dir))
+            for x in (git_root_dir / "charts").rglob("*")
+            if any(substr in x.name for substr in ("deployment", "statefulset", "replicaset", "daemonset", "job")) and x.is_file()
+        }
+    )
 
 
 @pytest.mark.parametrize(
@@ -32,10 +45,14 @@ class TestServiceAccounts:
                 "registry": {"serviceAccount": {"create": "true", "name": "registry-test"}},
                 "configSyncer": {"serviceAccount": {"create": "true", "name": "configsyncer-test"}},
                 "houston": {"serviceAccount": {"create": "true", "name": "houston-test"}},
+                "astroUI": {"serviceAccount": {"create": "true", "name": "astroui-test"}},
             },
-            "grafana": {
-                "serviceAccount": {"create": "true", "name": "grafana-test"}
-            }
+            "nats": {"nats": {"serviceAccount": {"create": "true", "name": "nats-test"}}},
+            "stan": {"stan": {"serviceAccount": {"create": "true", "name": "stan-test"}}},
+            "grafana": {"serviceAccount": {"create": "true", "name": "grafana-test"}},
+            "alertmanager": {"serviceAccount": {"create": "true", "name": "alertmanager-test"}},
+            "kibana": {"serviceAccount": {"create": "true", "name": "kibana-test"}},
+            "prometheus-blackbox-exporter": {"serviceAccount": {"create": "true", "name": "blackbox-test"}},
         }
         docs = render_chart(
             kube_version=kube_version,
@@ -45,12 +62,28 @@ class TestServiceAccounts:
                 "charts/astronomer/templates/registry/registry-serviceaccount.yaml",
                 "charts/astronomer/templates/config-syncer/config-syncer-serviceaccount.yaml",
                 "charts/astronomer/templates/houston/api/houston-bootstrap-serviceaccount.yaml",
-                "charts/grafana/templates/grafana-bootstrap-serviceaccount.yaml"
+                "charts/astronomer/templates/astro-ui/astro-ui-serviceaccount.yaml",
+                "charts/nats/templates/nats-serviceaccount.yaml",
+                "charts/stan/templates/stan-serviceaccount.yaml",
+                "charts/grafana/templates/grafana-bootstrap-serviceaccount.yaml",
+                "charts/alertmanager/templates/alertmanager-serviceaccount.yaml",
+                "charts/kibana/templates/kibana-serviceaccount.yaml",
+                "charts/prometheus-blackbox-exporter/templates/blackbox-serviceaccount.yaml",
             ],
         )
 
-        assert len(docs) == 5
-        expected_names = {"commander-test", "registry-test", "configsyncer-test", "houston-test", "grafana-test"}
+        assert len(docs) == 11
+        expected_names = {
+            "commander-test",
+            "registry-test",
+            "configsyncer-test",
+            "houston-test",
+            "astroui-test",
+            "grafana-test",
+            "alertmanager-test",
+            "kibana-test",
+            "blackbox-test",
+        }
         extracted_names = {doc["metadata"]["name"] for doc in docs if "metadata" in doc and "name" in doc["metadata"]}
         assert expected_names.issubset(extracted_names)
 
@@ -99,3 +132,30 @@ class TestServiceAccounts:
         }
         extracted_names = {doc["subjects"][0]["name"] for doc in docs if doc.get("subjects")}
         assert expected_names.issubset(extracted_names)
+
+
+@pytest.mark.parametrize(
+    "template_name",
+    find_all_pod_manager_templates(),
+)
+def test_custom_serviceaccount_names(template_name):
+    """Test that custom service account names are rendered correctly."""
+    pod_managers = [
+        "CronJob",
+        "DaemonSet",
+        "Deployment",
+        "Job",
+        "StatefulSet",
+    ]
+    values = get_all_features()
+    values.update(
+        {
+            "postgresql": {"replication": {"enabled": True}, "serviceAccount": {"enabled": True}},
+        }
+    )
+    docs = render_chart(show_only=template_name, values=values)
+    pm_docs = [doc for doc in docs if doc["kind"] in pod_managers]
+    service_accounts = [get_service_account_name_from_doc(doc) for doc in pm_docs]
+    assert all(
+        (sa_name.startswith("release-name-") or sa_name == "default") for sa_name in service_accounts
+    ), f"Expected all service accounts to start with 'release-name-' but found {service_accounts} in {template_name}"

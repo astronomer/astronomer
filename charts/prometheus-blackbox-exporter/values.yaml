@@ -39,6 +39,13 @@ securityContext:
 # tolerations: {}
 # affinity: {}
 
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: false
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
 secretConfig: false
 config:
   modules:
@@ -123,6 +130,4 @@ astroServices:
   elasticsearch:
     enabled: true
   kibana:
-    enabled: true
-  cliInstall:
     enabled: true

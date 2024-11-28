@@ -29,6 +29,12 @@ spec:
         checksum/config: {{ include (print $.Template.BasePath "/fluentd-configmap.yaml") . | sha256sum }}
         prometheus.io/scrape: "true"
         prometheus.io/port: {{ .Values.ports.promScrape | quote }}
+{{- if .Values.global.podAnnotations }}
+{{ toYaml .Values.global.podAnnotations | indent 8 }}
+{{- end }}
+{{- if .Values.podAnnotations }}
+{{ toYaml .Values.podAnnotations | indent 8 }}
+{{- end }}
     spec:
     {{- if .Values.priorityClassName }}
       priorityClassName:  {{ .Values.priorityClassName  }}
@@ -36,7 +42,7 @@ spec:
       nodeSelector: {{ toYaml (.Values.nodeSelector) | nindent 8 }}
       affinity: {{ toYaml (.Values.affinity) | nindent 8 }}
       tolerations: {{ toYaml (.Values.tolerations) | nindent 8 }}
-      serviceAccountName: {{ template "fluentd.serviceAccount" . }}
+      serviceAccountName: {{ template "fluentd.serviceAccountName" . }}
 {{- include "fluentd.imagePullSecrets" . | indent 6 }}
       securityContext:
 {{ toYaml .Values.pod.securityContext | indent 8 }}

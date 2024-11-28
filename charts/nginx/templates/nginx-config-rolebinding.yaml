@@ -17,6 +17,6 @@ roleRef:
   name: {{ template "nginx.fullname" . }}-config
 subjects:
   - kind: ServiceAccount
-    name: {{ template "nginx.fullname" . }}
+    name: {{ template "nginx.serviceAccountName" . }}
     namespace: {{ .Release.Namespace }}
 {{- end }}

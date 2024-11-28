@@ -23,7 +23,6 @@ pod_manager_data = {
         },
     },
     "charts/astronomer/templates/astro-ui/astro-ui-deployment.yaml": {"astronomer": {"astroUI": default_probes}},
-    "charts/astronomer/templates/cli-install/cli-install-deployment.yaml": {"astronomer": {"cliInstall": default_probes}},
     "charts/astronomer/templates/commander/commander-deployment.yaml": {"astronomer": {"commander": default_probes}},
     "charts/astronomer/templates/houston/api/houston-deployment.yaml": {
         "astronomer": {"houston": {**default_probes, "waitForDB": default_probes, "bootstrapper": default_probes}},
@@ -166,6 +165,7 @@ class TestDefaultProbes:
     current_clp = {k: v["livenessProbe"] for k, v in containers.items() if v.get("livenessProbe")}
     current_crp = {k: v["readinessProbe"] for k, v in containers.items() if v.get("readinessProbe")}
 
+    # expected container liveness probes
     expected_clp = {
         "alertmanager_auth-proxy": {
             "httpGet": {"path": "/healthz", "port": 8084, "scheme": "HTTP"},
@@ -173,11 +173,6 @@ class TestDefaultProbes:
             "periodSeconds": 10,
         },
         "astro-ui_astro-ui": {"httpGet": {"path": "/", "port": 8080}, "initialDelaySeconds": 10, "periodSeconds": 10},
-        "cli-install_cli-install": {
-            "httpGet": {"path": "/healthz", "port": 8080, "scheme": "HTTP"},
-            "initialDelaySeconds": 30,
-            "timeoutSeconds": 5,
-        },
         "commander_commander": {
             "failureThreshold": 5,
             "httpGet": {"path": "/healthz", "port": 8880, "scheme": "HTTP"},
@@ -273,6 +268,7 @@ class TestDefaultProbes:
         "stan_stan": {"httpGet": {"path": "/streaming/serverz", "port": "monitor"}, "initialDelaySeconds": 10, "timeoutSeconds": 5},
     }
 
+    # expected container readiness probes
     expected_crp = {
         "alertmanager_alertmanager": {
             "httpGet": {"path": "/#/status", "port": 9093},
@@ -354,6 +350,7 @@ class TestDefaultProbes:
         "stan_stan": {"httpGet": {"path": "/streaming/serverz", "port": "monitor"}, "initialDelaySeconds": 10, "timeoutSeconds": 5},
     }
 
+    # liveness probe data and ids
     lp_data = zip(current_clp.keys(), current_clp.values(), expected_clp.values())
     lp_ids = current_clp.keys()
 
