@@ -132,7 +132,7 @@ class TestServiceAccounts:
         assert len(docs) == 0
 
     def test_serviceaccount_with_annotations(self, kube_version):
-        "Test that if SA create disabled"
+        "Test that if SA create enabled and supports user injected annotations"
 
         annotations = {"app.managedby": "astronomer"}
         values = {
