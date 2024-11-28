@@ -118,6 +118,7 @@ class TestServiceAccounts:
             "nginx": {"serviceAccount": {"create": False}, "defaultBackend": {"serviceAccount": {"create": False}}},
             "kube-state": {"serviceAccount": {"create": False}},
             "prometheus": {"serviceAccount": {"create": False}},
+            "elasticsearch": {"common":{"serviceAccount": {"create": False}}},
         }
         show_only = [
             str(path.relative_to(git_root_dir)) for path in git_root_dir.rglob("charts/**/*") if "serviceaccount" in str(path)
@@ -128,7 +129,7 @@ class TestServiceAccounts:
             show_only=show_only,
         )
 
-        assert len(docs) == 1
+        assert len(docs) == 0
 
     def test_serviceaccount_with_overrides_rolebinding(self, kube_version):
         "Test that if custom SA are added it gets created"
