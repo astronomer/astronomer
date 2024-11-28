@@ -92,9 +92,9 @@ class TestServiceAccounts:
         values = {
             "global": {
                 "postgresqlEnabled": True,
-                "customLogging": { "enabled": True},
+                "customLogging": {"enabled": True},
                 "prometheusPostgresExporterEnabled": True,
-                "pgbouncer": {"enabled" : True},
+                "pgbouncer": {"enabled": True},
             },
             "astronomer": {
                 "commander": {"serviceAccount": {"create": False}},
@@ -117,7 +117,7 @@ class TestServiceAccounts:
             "prometheus-node-exporter": {"serviceAccount": {"create": False}},
             "nginx": {"serviceAccount": {"create": False}, "defaultBackend": {"serviceAccount": {"create": False}}},
             "kube-state": {"serviceAccount": {"create": False}},
-            "prometheus": {"serviceAccount": {"create": False}}
+            "prometheus": {"serviceAccount": {"create": False}},
         }
         show_only = [
             str(path.relative_to(git_root_dir)) for path in git_root_dir.rglob("charts/**/*") if "serviceaccount" in str(path)
