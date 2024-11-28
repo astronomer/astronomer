@@ -90,39 +90,45 @@ class TestServiceAccounts:
     def test_serviceaccount_with_create_disabled(self, kube_version):
         "Test that if SA create disabled"
         values = {
-            "astronomer": {
-                "commander": {"serviceAccount": {"create": False, "name": "commander-test"}},
-                "registry": {"serviceAccount": {"create": False, "name": "registry-test"}},
-                "configSyncer": {"serviceAccount": {"create": False, "name": "configsyncer-test"}},
-                "houston": {"serviceAccount": {"create": False, "name": "houston-test"}},
-                "astroUI": {"serviceAccount": {"create": False, "name": "astroui-test"}},
+            "global": {
+                "postgresqlEnabled": True,
+                "customLogging": { "enabled": True},
+                "prometheusPostgresExporterEnabled": True,
+                "pgbouncer": {"enabled" : True},
             },
-            "nats": {"nats": {"serviceAccount": {"create": False, "name": "nats-test"}}},
-            "stan": {"stan": {"serviceAccount": {"create": False, "name": "stan-test"}}},
-            "grafana": {"serviceAccount": {"create": False, "name": "grafana-test"}},
-            "alertmanager": {"serviceAccount": {"create": False, "name": "alertmanager-test"}},
-            "kibana": {"serviceAccount": {"create": False, "name": "kibana-test"}},
-            "prometheus-blackbox-exporter": {"serviceAccount": {"create": False, "name": "blackbox-test"}},
+            "astronomer": {
+                "commander": {"serviceAccount": {"create": False}},
+                "registry": {"serviceAccount": {"create": False}},
+                "configSyncer": {"serviceAccount": {"create": False}},
+                "houston": {"serviceAccount": {"create": False}},
+                "astroUI": {"serviceAccount": {"create": False}},
+            },
+            "nats": {"nats": {"serviceAccount": {"create": False}}},
+            "stan": {"stan": {"serviceAccount": {"create": False}}},
+            "grafana": {"serviceAccount": {"create": False}},
+            "alertmanager": {"serviceAccount": {"create": False}},
+            "kibana": {"serviceAccount": {"create": False}},
+            "prometheus-blackbox-exporter": {"serviceAccount": {"create": False}},
+            "postgresql": {"serviceAccount": {"create": False}},
+            "external-es-proxy": {"serviceAccount": {"create": False}},
+            "prometheus-postgres-exporter": {"serviceAccount": {"create": False}},
+            "pgbouncer": {"serviceAccount": {"create": False}},
+            "fluentd": {"serviceAccount": {"create": False}},
+            "prometheus-node-exporter": {"serviceAccount": {"create": False}},
+            "nginx": {"serviceAccount": {"create": False}, "defaultBackend": {"serviceAccount": {"create": False}}},
+            "kube-state": {"serviceAccount": {"create": False}},
+            "prometheus": {"serviceAccount": {"create": False}}
         }
+        show_only = [
+            str(path.relative_to(git_root_dir)) for path in git_root_dir.rglob("charts/**/*") if "serviceaccount" in str(path)
+        ]
         docs = render_chart(
             kube_version=kube_version,
             values=values,
-            show_only=[
-                "charts/astronomer/templates/commander/commander-serviceaccount.yaml",
-                "charts/astronomer/templates/registry/registry-serviceaccount.yaml",
-                "charts/astronomer/templates/config-syncer/config-syncer-serviceaccount.yaml",
-                "charts/astronomer/templates/houston/api/houston-bootstrap-serviceaccount.yaml",
-                "charts/astronomer/templates/astro-ui/astro-ui-serviceaccount.yaml",
-                "charts/nats/templates/nats-serviceaccount.yaml",
-                "charts/stan/templates/stan-serviceaccount.yaml",
-                "charts/grafana/templates/grafana-bootstrap-serviceaccount.yaml",
-                "charts/alertmanager/templates/alertmanager-serviceaccount.yaml",
-                "charts/kibana/templates/kibana-serviceaccount.yaml",
-                "charts/prometheus-blackbox-exporter/templates/blackbox-serviceaccount.yaml",
-            ],
+            show_only=show_only,
         )
 
-        assert len(docs) == 0
+        assert len(docs) == 1
 
     def test_serviceaccount_with_overrides_rolebinding(self, kube_version):
         "Test that if custom SA are added it gets created"
