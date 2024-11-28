@@ -131,6 +131,55 @@ class TestServiceAccounts:
 
         assert len(docs) == 0
 
+    def test_serviceaccount_with_annotations(self, kube_version):
+        "Test that if SA create disabled"
+
+        annotations = {"app.managedby": "astronomer"}
+        values = {
+            "global": {
+                "postgresqlEnabled": True,
+                "customLogging": {"enabled": True},
+                "prometheusPostgresExporterEnabled": True,
+                "pgbouncer": {"enabled": True},
+            },
+            "astronomer": {
+                "commander": {"serviceAccount": {"create": True, "annotations": annotations}},
+                "registry": {"serviceAccount": {"create": True, "annotations": annotations}},
+                "configSyncer": {"serviceAccount": {"create": True, "annotations": annotations}},
+                "houston": {"serviceAccount": {"create": True, "annotations": annotations}},
+                "astroUI": {"serviceAccount": {"create": True, "annotations": annotations}},
+            },
+            "nats": {"nats": {"serviceAccount": {"create": True, "annotations": annotations}}},
+            "stan": {"stan": {"serviceAccount": {"create": True, "annotations": annotations}}},
+            "grafana": {"serviceAccount": {"create": True, "annotations": annotations}},
+            "alertmanager": {"serviceAccount": {"create": True, "annotations": annotations}},
+            "kibana": {"serviceAccount": {"create": True, "annotations": annotations}},
+            "prometheus-blackbox-exporter": {"serviceAccount": {"create": True, "annotations": annotations}},
+            "postgresql": {"serviceAccount": {"create": True, "annotations": annotations}},
+            "external-es-proxy": {"serviceAccount": {"create": True, "annotations": annotations}},
+            "prometheus-postgres-exporter": {"serviceAccount": {"create": True, "annotations": annotations}},
+            "pgbouncer": {"serviceAccount": {"create": True, "annotations": annotations}},
+            "fluentd": {"serviceAccount": {"create": True, "annotations": annotations}},
+            "prometheus-node-exporter": {"serviceAccount": {"create": True, "annotations": annotations}},
+            "nginx": {
+                "serviceAccount": {"create": True, "annotations": annotations},
+                "defaultBackend": {"serviceAccount": {"create": False, "annotations": annotations}},
+            },
+            "kube-state": {"serviceAccount": {"create": True, "annotations": annotations}},
+            "prometheus": {"serviceAccount": {"create": True, "annotations": annotations}},
+            "elasticsearch": {"common": {"serviceAccount": {"create": True, "annotations": annotations}}},
+        }
+        show_only = [
+            str(path.relative_to(git_root_dir)) for path in git_root_dir.rglob("charts/**/*") if "serviceaccount" in str(path)
+        ]
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=show_only,
+        )
+        service_account_annotations = [doc["metadata"]["annotations"] for doc in docs if doc["kind"] == "ServiceAccount"]
+        assert annotations in service_account_annotations
+
     def test_serviceaccount_with_overrides_rolebinding(self, kube_version):
         "Test that if custom SA are added it gets created"
         values = {
