@@ -396,9 +396,6 @@ workflows:
               tags:
                 only:
                   - '/^v\d+\.\d+\.\d+(-?(rc(\.\d+)?|alpha(\.\d+)?)?)?$/'
-              branches:
-                only:
-                  - 'fix-6117-adding-ci-job'
       - release-to-public:
           context:
             - gcp-astronomer-prod
