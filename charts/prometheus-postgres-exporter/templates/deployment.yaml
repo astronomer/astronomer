@@ -1,4 +1,7 @@
-{{- if .Values.global.prometheusPostgresExporterEnabled -}}
+########################################################
+## Prometheus Postgres Exporter Deployment ##
+########################################################
+{{- if .Values.global.prometheusPostgresExporterEnabled }}
 {{- if and .Values.config.datasource.passwordSecret .Values.config.datasource.password -}}
 {{ fail (printf "ERROR: only one of .Values.config.datasource.passwordSecret and .Values.config.datasource.password must be defined") }}
 {{- end -}}

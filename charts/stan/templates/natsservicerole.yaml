@@ -1,4 +1,6 @@
----
+#################
+## STAN Initdb ##
+#################
 {{- if not .Values.global.nats.jetStream.enabled }}
 {{- if .Values.stan.nats.serviceRoleAuth.enabled }}
 apiVersion: nats.io/v1alpha2

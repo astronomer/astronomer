@@ -1,6 +1,6 @@
-##############################################
-## Astronomer Prometheus Pod Disruption Budget
-##############################################
+########################################################
+## Prometheus Postgres Exporter Pod Disruption Budget ##
+########################################################
 {{- if .Values.global.podDisruptionBudgetsEnabled }}
 apiVersion: {{ include "apiVersion.PodDisruptionBudget" . }}
 kind: PodDisruptionBudget
