@@ -1,3 +1,6 @@
+##########################
+## Pgbouncer Deployment ##
+##########################
 {{- if .Values.global.pgbouncer.enabled }}
 kind: Deployment
 apiVersion: apps/v1
