@@ -1,6 +1,6 @@
-##############################
-## STAN Pod Disruption Budget
-##############################
+################################
+## STAN Pod Disruption Budget ##
+################################
 {{- if not .Values.global.nats.jetStream.enabled }}
 {{- if .Values.global.podDisruptionBudgetsEnabled }}
 apiVersion: {{ include "apiVersion.PodDisruptionBudget" . }}

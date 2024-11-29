@@ -1,3 +1,6 @@
+##############
+## Nats Box ##
+##############
 {{- if .Values.natsbox.enabled }}
 ---
 apiVersion: v1
