@@ -1,3 +1,6 @@
+##################################
+## Blackbox Exporter Deployment ##
+##################################
 {{- if (eq .Values.kind "Deployment") }}
 apiVersion: {{ template "apiVersion.Deployment" . }}
 kind: Deployment
