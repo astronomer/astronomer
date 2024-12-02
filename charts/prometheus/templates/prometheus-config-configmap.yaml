@@ -55,7 +55,7 @@ data:
       - job_name: prometheus
         static_configs:
           - targets: ["localhost:9090"]
-      
+
       # TODO add a proper config flag option for disabling kubernetes-apiservers scraping instead of using useClusterRoles
       {{- if $useClusterRoles }}
       - job_name: 'kubernetes-apiservers'
