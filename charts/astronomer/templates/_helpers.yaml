@@ -49,14 +49,6 @@
 {{- end }}
 {{- end }}
 
-{{ define "cliInstall.image" -}}
-{{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/ap-cli-install:{{ .Values.images.cliInstall.tag }}
-{{- else -}}
-{{ .Values.images.cliInstall.repository }}:{{ .Values.images.cliInstall.tag }}
-{{- end }}
-{{- end }}
-
 {{ define "registry.docker.config" -}}
   {{- $domain := printf "registry.%v" .Values.global.baseDomain }}
   {{- $email := printf "admin@%v" .Values.global.baseDomain }}
@@ -127,7 +119,7 @@
 {{ default (printf "%s-registry-auth" .Release.Name) .Values.registry.auth.secretName }}
 {{- end }}
 
-{{ define "registry.ServiceAccount" -}}
+{{ define "registry.serviceAccountName" -}}
 {{- if and .Values.registry.serviceAccount.create .Values.global.rbacEnabled -}}
 {{ default (printf "%s-registry" .Release.Name ) .Values.registry.serviceAccount.name }}
 {{- else -}}
@@ -135,7 +127,15 @@
 {{- end }}
 {{- end }}
 
-{{ define "houston.bootstrapperServiceAccount" -}}
+{{ define "astroUI.serviceAccountName" -}}
+{{- if and .Values.astroUI.serviceAccount.create .Values.global.rbacEnabled -}}
+{{ default (printf "%s-astro-ui" .Release.Name) .Values.astroUI.serviceAccount.name }}
+{{- else -}}
+    {{ default "default" .Values.astroUI.serviceAccount.name }}
+{{- end }}
+{{- end }}
+
+{{ define "houston.bootstrapperServiceAccountName" -}}
 {{- if and .Values.houston.serviceAccount.create .Values.global.rbacEnabled -}}
 {{ default (printf "%s-houston-bootstrapper" .Release.Name ) .Values.houston.serviceAccount.name }}
 {{- else -}}
@@ -143,7 +143,7 @@
 {{- end }}
 {{- end }}
 
-{{ define "configSyncer.ServiceAccount" -}}
+{{ define "configSyncer.serviceAccountName" -}}
 {{- if and .Values.configSyncer.serviceAccount.create .Values.global.rbacEnabled -}}
 {{ default (printf "%s-config-syncer" .Release.Name ) .Values.configSyncer.serviceAccount.name }}
 {{- else -}}
@@ -151,7 +151,7 @@
 {{- end }}
 {{- end }}
 
-{{ define "commander.ServiceAccount" -}}
+{{ define "commander.serviceAccountName" -}}
 {{- if and .Values.commander.serviceAccount.create .Values.global.rbacEnabled -}}
 {{ default (printf "%s-commander" .Release.Name ) .Values.commander.serviceAccount.name }}
 {{- else -}}
@@ -376,22 +376,9 @@ Return  the proper Storage Class
 {{/*
 Helm 2.11 supports the assignment of a value to a variable defined in a different scope,
 but Helm 2.9 and 2.10 does not support it, so we need to implement this if-else logic.
+This version prioritizes component-specific registry.persistence.storageClassName over global.storageClass.
 */}}
-{{- if .Values.global.storageClass -}}
-    {{- if (eq "-" .Values.global.storageClass) -}}
-        {{- printf "storageClassName: \"\"" -}}
-    {{- else }}
-        {{- printf "storageClassName: %s" .Values.global.storageClass -}}
-    {{- end -}}
-{{- else -}}
-    {{- if .Values.registry.persistence.storageClassName -}}
-          {{- if (eq "~" .Values.registry.persistence.storageClassName) -}}
-              {{- printf "storageClassName: \"\"" -}}
-          {{- else }}
-              {{- printf "storageClassName: %s" .Values.registry.persistence.storageClassName -}}
-          {{- end -}}
-    {{- end -}}
-{{- end -}}
+storageClassName: {{ or .Values.registry.persistence.storageClassName .Values.global.storageClass | default "" }}
 {{- end -}}
 
 {{- define "configSyncer.schedule" -}}

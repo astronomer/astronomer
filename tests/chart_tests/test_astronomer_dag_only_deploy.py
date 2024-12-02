@@ -50,9 +50,7 @@ class TestDagOnlyDeploy:
                         "enabled": True,
                         "repository": images.split(":")[0],
                         "tag": images.split(":")[1],
-                        "securityContexts": {
-                            "pod":        { "fsGroup": 55555},
-                            "container" : {"runAsUser": 12345}},
+                        "securityContexts": {"pod": {"fsGroup": 55555}, "container": {"runAsUser": 12345}},
                         "resources": resources,
                     }
                 }
@@ -71,9 +69,7 @@ class TestDagOnlyDeploy:
                     "tag": "my-custom-tag",
                 }
             },
-            "securityContexts": {
-                "pod":        { "fsGroup": 55555},
-                "container" : {"runAsUser": 12345}},
+            "securityContexts": {"pod": {"fsGroup": 55555}, "container": {"runAsUser": 12345}},
             "server": {"resources": resources},
             "client": {"resources": resources},
         }
@@ -132,7 +128,7 @@ class TestDagOnlyDeploy:
                 "global": {
                     "dagOnlyDeployment": {
                         "enabled": True,
-                        "securityContexts": { "pod": { "fsGroup": "auto"}},
+                        "securityContexts": {"pod": {"fsGroup": "auto"}},
                     },
                 }
             },

@@ -76,3 +76,11 @@ imagePullSecrets:
 {{- .Values.securityContext | toYaml | nindent 10 }}
 {{- end -}}
 {{- end }}
+
+{{ define "nats.serviceAccountName" -}}
+{{- if and .Values.nats.serviceAccount.create .Values.global.rbacEnabled -}}
+{{ default (printf "%s" (include "nats.name" . )) .Values.nats.serviceAccount.name }}
+{{- else -}}
+    {{ default "default" .Values.nats.serviceAccount.name }}
+{{- end }}
+{{- end }}

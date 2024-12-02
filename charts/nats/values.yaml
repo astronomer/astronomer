@@ -14,7 +14,7 @@ images:
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
-    tag: 0.36.0
+    tag: 0.36.2
     pullPolicy: IfNotPresent
 
 
@@ -24,7 +24,14 @@ nats:
   # In case both external access and advertise are enabled
   # then a service account would be required to be able to
   # gather the public ip from a node.
-  serviceAccount: "nats-server"
+  serviceAccount:
+    # Specifies whether a ServiceAccount should be created
+    create: false
+    # Annotations to add to the service account
+    annotations: {}
+    # The name of the ServiceAccount to use.
+    # If not set and create is true, a name is generated using the fullname template
+    name: ~
 
   # The number of connect attempts against discovered routes.
   connectRetries: 30

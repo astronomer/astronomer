@@ -1,4 +1,6 @@
----
+#######################
+## STAN Service Role ##
+#######################
 {{- if not .Values.global.nats.jetStream.enabled }}
 {{- if .Values.stan.nats.serviceRoleAuth.enabled }}
 apiVersion: nats.io/v1alpha2
@@ -15,10 +17,5 @@ spec:
   permissions:
     publish: [">"]
     subscribe: [">"]
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: nats-streaming
 {{- end }}
 {{- end }}

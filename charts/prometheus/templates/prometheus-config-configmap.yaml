@@ -609,9 +609,6 @@ data:
           {{- if .Values.astroHTTPTargets.registry}}
             - http://{{.Release.Name}}-registry.{{.Release.Namespace}}:5000
           {{- end }}
-          {{- if .Values.astroHTTPTargets.cliInstall}}
-            - http://{{.Release.Name}}-cli-install.{{.Release.Namespace}}
-          {{- end }}
           {{- if .Values.astroHTTPTargets.grafana}}
             - http://{{.Release.Name}}-grafana.{{.Release.Namespace}}:3000/api/health
           {{- end }}

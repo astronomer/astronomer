@@ -1,4 +1,6 @@
----
+######################
+## Nats StatefulSet ##
+######################
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -32,6 +34,9 @@ spec:
         prometheus.io/port: "7777"
         prometheus.io/scrape: "true"
       {{- end }}
+{{- if .Values.global.podAnnotations }}
+{{ toYaml .Values.global.podAnnotations | indent 8 }}
+{{- end }}
       {{- range $key, $value := .Values.podAnnotations }}
         {{ $key }}: {{ $value | quote }}
       {{- end }}
@@ -43,6 +48,7 @@ spec:
         component: nats
         chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
     spec:
+      serviceAccountName: {{ template "nats.serviceAccountName" . }}
     {{- include "nats.imagePullSecrets" . | nindent 6 }}
 {{- if eq .Values.global.openshiftEnabled false }}
       securityContext: {{ toYaml .Values.podSecurityContext| nindent 8 }}
