@@ -1,6 +1,6 @@
-########################################
-# Kibana default index helm hook
-########################################
+###################################
+# Kibana default index helm hook #
+##################################
 {{ if .Values.createDefaultIndex }}
 apiVersion: {{ include "apiVersion.batch.cronjob" . }}
 kind: Job
