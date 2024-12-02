@@ -1,4 +1,6 @@
----
+#################
+## STAN Initdb ##
+#################
 {{- if not .Values.global.nats.jetStream.enabled }}
 {{- if eq .Values.store.type "sql" }}
 {{- if .Values.store.sql.initdb.enabled }}
