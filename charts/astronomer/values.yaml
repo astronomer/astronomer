@@ -149,6 +149,10 @@ houston:
   config:
     nats:
       ackWait: 600000
+    deployments:
+      mode:
+        operator:
+          enabled: false
 
   # Worker to connect to NATS
   worker:
