@@ -101,7 +101,7 @@ houston:
     deployments:
       mode:
         operator:
-          enabled: {{ .Values.global.enableOperator }}
+          enabled: {{ .Values.global.operator.enabled }}
 {{- end -}}
 
 {{ define "houston.jwtCertificateDir" -}}
