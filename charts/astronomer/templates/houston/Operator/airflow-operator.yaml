@@ -1,4 +1,4 @@
-{{- if eq (include "operator.enabled" .) "true" }}
+{{- if eq (include "houston.operator.config" .) "true" }}
 apiVersion: airflow.apache.org/v1beta1
 kind: Airflow
 metadata:
