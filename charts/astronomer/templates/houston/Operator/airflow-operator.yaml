@@ -1,0 +1,13 @@
+{{- if eq (include "operator.enabled" .) "true" }}
+apiVersion: airflow.apache.org/v1beta1
+kind: Airflow
+metadata:
+  name: {{ .Release.Name }}-airflow
+spec:
+  executor: "CeleryExecutor"
+  image: quay.io/astronomer/astro-runtime:12.1.0
+  runtimeVersion: 12.1.0
+  inClusterPostgres: true
+  webserver:
+    createDefaultUser: true
+{{- end }}
