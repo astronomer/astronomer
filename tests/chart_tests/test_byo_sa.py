@@ -341,7 +341,9 @@ custom_service_account_names = {
     "charts/kube-state/templates/kube-state-deployment.yaml": {
         "kube-state": {"serviceAccount": {"create": True, "name": "prothean"}}
     },
-    "charts/nats/templates/jetstream-job.yaml": {"nats": {"nats": {"serviceAccount": {"create": True, "name": "prothean"}}}},
+    "charts/nats/templates/jetstream-job.yaml": {
+        "nats": {"nats": {"jetstream": {"serviceAccount": {"create": True, "name": "prothean"}}}}
+    },
     "charts/nats/templates/statefulset.yaml": {"nats": {"nats": {"serviceAccount": {"create": True, "name": "prothean"}}}},
     "charts/nginx/templates/nginx-deployment-default.yaml": {
         "nginx": {"defaultBackend": {"serviceAccount": {"create": True, "name": "prothean"}}}
@@ -383,4 +385,4 @@ def test_custom_serviceaccount_names(template_name):
     assert service_accounts
     assert all(
         sa_name == "prothean" for sa_name in service_accounts
-    ), f"Expected all service accounts to start with 'release-name-' but found {service_accounts} in {template_name}"
+    ), f"Expected all service accounts to be 'prothean' but found {service_accounts} in {template_name}"
