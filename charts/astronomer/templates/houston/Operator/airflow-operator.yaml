@@ -1,7 +1,7 @@
 #####################
 ## Airflow Operator ##
 #####################
-{{- if .Values.global.enableOperator }}
+{{- if .Values.global.operator.enabled }}
 apiVersion: airflow.apache.org/v1beta1
 kind: Airflow
 metadata:

@@ -36,7 +36,10 @@ global:
   networkPolicy:
     enabled: true
 
-  enableOperator: false
+  # Enables operator based deployments for Astronomer. 
+  operator:
+    enabled: false
+
   # Specific Astronomer features configuration
   features:
     # namespace pools: define k8s namespaces in which Astronomer will manage Airflow deployments

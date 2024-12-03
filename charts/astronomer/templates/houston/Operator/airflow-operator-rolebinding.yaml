@@ -1,7 +1,7 @@
 ##########################################
 ## Airflow Operator Cluster Rolebinding ##
 ##########################################
-{{- if .Values.global.enableOperator }}
+{{- if .Values.global.operator.enabled }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
