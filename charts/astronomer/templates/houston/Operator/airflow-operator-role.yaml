@@ -1,3 +1,7 @@
+###########################
+## Airflow Operator Role ##
+###########################
+{{- if .Values.global.enableOperator }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:

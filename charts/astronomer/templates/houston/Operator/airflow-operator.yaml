@@ -1,4 +1,7 @@
-{{- if eq (include "houston.operator.config" .) "true" }}
+#####################
+## Airflow Operator ##
+#####################
+{{- if .Values.global.enableOperator }}
 apiVersion: airflow.apache.org/v1beta1
 kind: Airflow
 metadata:
