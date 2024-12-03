@@ -95,15 +95,6 @@
 {{ default (printf "%s-houston-jwt-signing-certificate" .Release.Name) .Values.houston.jwtSigningCertificateSecretName }}
 {{- end }}
 
-{{ define "houston.operator.config"}}
-houston:
-  config:
-    deployments:
-      mode:
-        operator:
-          enabled: {{ .Values.global.enableOperator }}
-{{- end }}
-
 {{ define "houston.jwtCertificateDir" -}}
 /etc/houston/tls/self
 {{- end }}
