@@ -35,7 +35,7 @@ global:
   # level Network Policy
   networkPolicy:
     enabled: true
-  
+
   #Global flag to enable Operator based deployment
   operator:
     enabled: false
