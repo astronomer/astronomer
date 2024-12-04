@@ -515,14 +515,6 @@ workflows:
             branches:
               only:
                 - '/^release-0\.\d+$/'
-      - release_bom:
-          context:
-            - github-repo
-            - gcp-astronomer-prod
-          filters:
-              tags:
-                only:
-                  - '/^v\d+\.\d+\.\d+(-?(rc(\.\d+)?|alpha(\.\d+)?)?)?$/'
       - release-to-public:
           context:
             - gcp-astronomer-prod
@@ -533,6 +525,20 @@ workflows:
             branches:
               only:
                 - '/^release-0\.\d+$/'
+
+  release-bom-worflow:
+    tagged-build:
+      jobs:
+        - release_bom
+            filters:
+              tags:
+                only: '/^v\d+\.\d+\.\d+(-?(rc(\.\d+)?|alpha(\.\d+)?)?)?$/'
+            context:
+              - github-repo
+              - gcp-astronomer-prod
+            requires:
+              - release-to-public
+
 
   qa-build-and-release-helm-chart:
     when:
