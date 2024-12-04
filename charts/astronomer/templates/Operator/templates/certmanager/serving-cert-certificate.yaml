@@ -1,0 +1,15 @@
+{{ if and .Values.Operator.certManager.enabled (not .Values.Operator.webhooks.useCustomTlsCerts) -}}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: airflow-operator-serving-cert
+  namespace: '{{ .Release.Namespace }}'
+spec:
+  dnsNames:
+  - airflow-operator-webhook-service.{{ .Release.Namespace }}.svc
+  - airflow-operator-webhook-service.{{ .Release.Namespace }}.svc.cluster.local
+  issuerRef:
+    kind: Issuer
+    name: airflow-operator-selfsigned-issuer
+  secretName: webhook-server-cert
+{{- end }}
