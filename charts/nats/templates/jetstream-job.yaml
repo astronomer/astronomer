@@ -32,7 +32,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
 subjects:
 - kind: ServiceAccount
-  name: {{ .Release.Name }}-jetstream-sa
+  name: {{ template "nats.jetStream.serviceAccountName" . }}
   namespace: {{ .Release.Namespace }}
   apiGroup: ""
 roleRef:
@@ -46,7 +46,7 @@ metadata:
   annotations:
     "helm.sh/hook": "pre-install,pre-upgrade"
     "helm.sh/hook-weight": "3"
-  name: {{ .Release.Name }}-jetstream-sa
+  name: {{ template "nats.jetStream.serviceAccountName" . }}
   labels:
     tier: jetsream-migrator
     component: jetsream-migrator
