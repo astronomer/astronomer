@@ -401,9 +401,6 @@ workflows:
           context:
             - github-repo
             - gcp-astronomer-prod
-          requires:
-            - release-to-public
-
 
   qa-build-and-release-helm-chart:
     when:
