@@ -392,15 +392,16 @@ workflows:
               only:
                 - '/^release-0\.\d+$/'
 
-  release-bom-worflow:
-    jobs:
-      - release_bom:
-          filters:
-            tags:
-              only: /^v\d+\.\d+\.\d+(-?(rc(\.\d+)?|alpha(\.\d+)?)?)?$/
-          context:
-            - github-repo
-            - gcp-astronomer-prod
+  release-bom-workflow:
+    tagged-build:
+      jobs:
+        - release_bom:
+            filters:
+              tags:
+                only: /^v\d+\.\d+\.\d+(-?(rc(\.\d+)?|alpha(\.\d+)?)?)?$/
+            context:
+              - github-repo
+              - gcp-astronomer-prod
 
   qa-build-and-release-helm-chart:
     when:
