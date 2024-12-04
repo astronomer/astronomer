@@ -42,7 +42,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Step 1: Runs the Python extractor script to generate the BOM JSON file
 echo "Running the extractor script to generate ${json_file_name}..."
-uv tool run --from git+https://${GITHUB_TOKEN}@github.com/astronomer/astronomer-bom-generator.git bom-generator --version "${version}"
+uv tool run --from git+https://"${GITHUB_TOKEN}"@github.com/astronomer/astronomer-bom-generator.git"${BOM_GENERATOR_VERSION}" bom-generator --version "${version}"
 
 if [ ! -f "${local_json_file_path}" ]; then
   echo "ERROR: Failed to generate ${json_file_name}"
@@ -66,6 +66,6 @@ gsutil -h "Cache-Control: public, max-age=${max_age}" cp "${local_json_file_path
 
 # Step 5: Update index.html with the new version
 echo "Updating index.html file"
-gsutil cp index.html "${bucket_path}/index.html"
+gsutil cp "${index_file}" "${bucket_path}/index.html"
 
 echo "Successfully published ${json_file_name} to ${repo_url}"
