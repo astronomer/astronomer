@@ -42,7 +42,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Step 1: Runs the Python extractor script to generate the BOM JSON file
 echo "Running the extractor script to generate ${json_file_name}..."
-uv tool run --from git+https://"${GITHUB_TOKEN}"@github.com/astronomer/astronomer-bom-generator.git"${BOM_GENERATOR_VERSION}" bom-generator --version "${version}"
+pip install "git+https://${GITHUB_TOKEN}@github.com/astronomer/astronomer-bom-generator.git${BOM_GENERATOR_VERSION} bom-generator --version ${version}"
 
 if [ ! -f "${local_json_file_path}" ]; then
   echo "ERROR: Failed to generate ${json_file_name}"
