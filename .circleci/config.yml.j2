@@ -398,7 +398,7 @@ workflows:
         - release_bom
             filters:
               tags:
-                only: '/^v\d+\.\d+\.\d+(-?(rc(\.\d+)?|alpha(\.\d+)?)?)?$/'
+                only: /^v\d+\.\d+\.\d+(-?(rc(\.\d+)?|alpha(\.\d+)?)?)?$/
             context:
               - github-repo
               - gcp-astronomer-prod
