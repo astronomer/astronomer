@@ -529,7 +529,7 @@ workflows:
   release-bom-worflow:
     tagged-build:
       jobs:
-        - release_bom
+        - release_bom:
             filters:
               tags:
                 only: /^v\d+\.\d+\.\d+(-?(rc(\.\d+)?|alpha(\.\d+)?)?)?$/
