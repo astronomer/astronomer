@@ -114,20 +114,13 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Get current Version from the chart
-          command: |
-            VERSION=$(awk '/^version: / {print $2}' Chart.yaml)
-            VERSION=${VERSION#v}
-            pwd
-            echo "VERSION=${VERSION}" >> $BASH_ENV
-      - run:
           name: Install bom-generator
           command: |
             pip install git+https://${GITHUB_TOKEN}@github.com/astronomer/astronomer-bom-generator.git
       - run:
           name: Run Release BOM Script
           command: |
-            bin/release-bom -x ${VERSION}
+            bin/release-bom -x ${CIRCLE_TAG}
 
   run_pre_commit:
     docker:
