@@ -59,7 +59,7 @@ service:
 {{- if .Values.airgapped }}
 - --airgapped
 {{- end -}}
-{{- if .Values.openshift }}
+{{- if .Values.global.openshift }}
 - --openshift
 {{- end -}}
 {{- if .Values.kedaEnabled }}
