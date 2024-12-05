@@ -34,8 +34,14 @@ spec:
         {{- if .Values.global.istio.enabled }}
         sidecar.istio.io/inject: "false"
         {{- end }}
+{{- if .Values.global.podAnnotations }}
+{{ toYaml .Values.global.podAnnotations | indent 8 }}
+{{- end }}
+{{- if .Values.podAnnotations }}
+{{ toYaml .Values.podAnnotations | indent 8 }}
+{{- end }}
     spec:
-      serviceAccountName: {{ template "nginx.serviceAccount" . }}
+      serviceAccountName: {{ template "nginx.serviceAccountName" . }}
 {{- include "nginx.imagePullSecrets" . | indent 6 }}
       containers:
         - name: nginx

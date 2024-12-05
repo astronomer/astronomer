@@ -1,4 +1,7 @@
-{{- if and .Values.rbac.create .Values.global.rbacEnabled -}}
+################################################
+## Prometheus Postgres Exporter Role Binding  ##
+################################################
+{{- if and .Values.rbac.create .Values.global.rbacEnabled }}
 apiVersion: {{ template "apiVersion.rbac" . }}
 kind: RoleBinding
 metadata:

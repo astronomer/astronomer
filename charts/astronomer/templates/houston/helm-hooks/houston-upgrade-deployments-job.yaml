@@ -30,12 +30,17 @@ spec:
         release: {{ .Release.Name }}
         app: houston-upgrader
         version: {{ .Chart.Version }}
-      {{- if .Values.global.istio.enabled }}
+      {{- if or .Values.global.podAnnotations .Values.global.istio.enabled }}
       annotations:
-        sidecar.istio.io/inject: "false"
+        {{- if .Values.global.istio.enabled }}
+          sidecar.istio.io/inject: "false"
+        {{- end }}
+        {{- if .Values.global.podAnnotations }}
+{{ toYaml .Values.global.podAnnotations | indent 8 }}
+          {{- end }}
       {{- end }}
     spec:
-      serviceAccountName: {{ template "houston.bootstrapperServiceAccount" . }}
+      serviceAccountName: {{ template "houston.bootstrapperServiceAccountName" . }}
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
       affinity:

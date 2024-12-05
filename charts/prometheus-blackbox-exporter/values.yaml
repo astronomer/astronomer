@@ -1,7 +1,5 @@
 restartPolicy: Always
 
-kind: Deployment
-
 podDisruptionBudget: {}
   # maxUnavailable: 0
 
@@ -130,6 +128,4 @@ astroServices:
   elasticsearch:
     enabled: true
   kibana:
-    enabled: true
-  cliInstall:
     enabled: true

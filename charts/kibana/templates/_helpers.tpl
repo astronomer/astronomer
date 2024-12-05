@@ -72,7 +72,7 @@ imagePullSecrets:
 {{- end -}}
 {{- end }}
 
-{{ define "kibana.ServiceAccount" -}}
+{{ define "kibana.serviceAccountName" -}}
 {{- if and .Values.serviceAccount.create .Values.global.rbacEnabled -}}
 {{ default (printf "%s" (include "alertmanager.fullname" . )) .Values.serviceAccount.name }}
 {{- else -}}

@@ -32,6 +32,10 @@ spec:
         component: private-ca
         release: {{ .Release.Name }}
         version: {{ .Chart.Version }}
+      {{- if .Values.global.podAnnotations }}
+      annotations:
+{{ toYaml .Values.global.podAnnotations | indent 8 }}
+      {{- end }}
     spec:
       serviceAccountName: {{ .Release.Name }}-private-ca
 {{- include "certCopier.imagePullSecrets" . | indent 6 }}

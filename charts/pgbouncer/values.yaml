@@ -3,7 +3,7 @@
 #############################
 image:
   repository: quay.io/astronomer/ap-pgbouncer-krb
-  tag: 1.17.0-14
+  tag: 1.17.0-15
   pullPolicy: IfNotPresent
 
 securityContext:
@@ -29,6 +29,8 @@ serviceAccount:
   name: ~
 
 env: []
+
+podAnnotations: {}
 
 # Limit the resources to PgBouncer.
 # When you specify the resource request the k8s scheduler uses this information to decide which node to

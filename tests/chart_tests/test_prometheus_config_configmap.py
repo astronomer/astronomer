@@ -57,7 +57,6 @@ class TestPrometheusConfigConfigmap:
         targets = next(x["static_configs"][0]["targets"] for x in config_yaml["scrape_configs"] if x["job_name"] == "blackbox HTTP")
 
         target_checks = [
-            "http://foo-name-cli-install.bar-ns",
             "http://foo-name-commander.bar-ns:8880/healthz",
             "http://foo-name-elasticsearch.bar-ns:9200/_cluster/health?local=true",
             "http://foo-name-grafana.bar-ns:3000/api/health",

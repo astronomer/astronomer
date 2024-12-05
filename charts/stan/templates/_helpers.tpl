@@ -82,7 +82,7 @@ imagePullSecrets:
 {{- end -}}
 {{- end -}}
 
-{{ define "stan.ServiceAccount" -}}
+{{ define "stan.serviceAccountName" -}}
 {{- if and .Values.stan.serviceAccount.create .Values.global.rbacEnabled -}}
 {{ default (printf "%s" (include "stan.name" . )) .Values.stan.serviceAccount.name }}
 {{- else -}}

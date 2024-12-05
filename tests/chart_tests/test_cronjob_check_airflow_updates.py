@@ -1,6 +1,6 @@
 from tests.chart_tests.helm_template_generator import render_chart
 import pytest
-from tests import get_cronjob_containerspec_by_name, supported_k8s_versions
+from tests import get_containers_by_name, supported_k8s_versions
 
 
 default_houston_resource_spec = {"limits": {"cpu": "1000m", "memory": "2048Mi"}, "requests": {"cpu": "500m", "memory": "1024Mi"}}
@@ -20,7 +20,7 @@ class TestHoustonCronJobAirflowUpdates:
 
         assert len(docs) == 1
         doc = docs[0]
-        job_container_by_name = get_cronjob_containerspec_by_name(docs[0])
+        job_container_by_name = get_containers_by_name(docs[0])
 
         assert doc["kind"] == "CronJob"
         assert doc["spec"]["schedule"] == "57 * * * *"
@@ -46,7 +46,7 @@ class TestHoustonCronJobAirflowUpdates:
 
         assert len(docs) == 1
         doc = docs[0]
-        job_container_by_name = get_cronjob_containerspec_by_name(docs[0])
+        job_container_by_name = get_containers_by_name(docs[0])
 
         assert doc["kind"] == "CronJob"
         assert doc["spec"]["schedule"] == "57 * * * *"

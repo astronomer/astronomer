@@ -44,7 +44,7 @@ def test_argo_sync_wave():
                     "enableArgoCDAnnotation": argo_enabled,
                     "postgresqlEnabled": True,
                 },
-                "postgresql": {"serviceAccount": {"enabled": True}},
+                "postgresql": {"serviceAccount": {"create": True}},
             },
         )
 

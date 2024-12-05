@@ -33,14 +33,16 @@ resources: {}
 #   cpu: 100m
 #   memory: 128Mi
 
+podAnnotations: {}
+
 serviceAccount:
-    # Specifies whether a service account should be created
-    create: true
-    # Annotations to add to the service account
-    annotations: {}
-    # The name of the service account to use.
-    # If not set and create is true, a name is generated using the fullname template
-    name: ~
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ~
 
 livenessProbe: {}
   # httpGet:
@@ -99,7 +101,6 @@ astroHTTPTargets:
   commander: true
   houston: true
   registry: true
-  cliInstall: true
   grafana: true
   kibana: true
   elasticsearch: true

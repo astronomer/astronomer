@@ -303,3 +303,11 @@ Return  the proper Storage Class
 {{- define "postgresql.storageClass" -}}
 storageClassName: {{ or .Values.persistence.storageClass .Values.global.storageClass | default "" }}
 {{- end -}}
+
+{{ define "postgresql.serviceAccountName" -}}
+{{- if and .Values.serviceAccount.create .Values.global.rbacEnabled -}}
+{{ default (printf "%s" (include "postgresql.fullname" . )) .Values.serviceAccount.name }}
+{{- else -}}
+    {{ default "default" .Values.serviceAccount.name }}
+{{- end }}
+{{- end }}

@@ -1,4 +1,6 @@
----
+#################
+## STAN Initdb ##
+#################
 {{- if not .Values.global.nats.jetStream.enabled }}
 {{- if eq .Values.store.type "sql" }}
 {{- if .Values.store.sql.initdb.enabled }}
@@ -16,6 +18,7 @@ spec:
       {{ toYaml . | indent 8 }}
       {{- end }}
     spec:
+      serviceAccountName: {{ template "stan.serviceAccountName" . }}
       terminationGracePeriodSeconds: 0
       restartPolicy: Never
       {{- if eq .Values.store.sql.driver "postgres" }}

@@ -34,6 +34,9 @@ spec:
         version: {{ .Chart.Version }}
       annotations:
         checksum/configmap: {{ include (print $.Template.BasePath "/trust-private-ca-on-all-nodes/containerd-ca-update-script.yaml") . | sha256sum }}
+        {{- if .Values.global.podAnnotations }}
+{{ toYaml .Values.global.podAnnotations | indent 8 }}
+        {{- end }}
     spec:
     {{- if .Values.global.privateCaCertsAddToHost.priorityClassName }}
       priorityClassName: {{ .Values.global.privateCaCertsAddToHost.priorityClassName }}

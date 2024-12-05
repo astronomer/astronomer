@@ -32,8 +32,14 @@ spec:
         version: {{ .Chart.Version }}
       annotations:
         checksum/configmap: {{ include (print $.Template.BasePath "/alertmanager-configmap.yaml") . | sha256sum }}
+{{- if .Values.global.podAnnotations }}
+{{ toYaml .Values.global.podAnnotations | indent 8 }}
+{{- end }}
+{{- if .Values.podAnnotations }}
+{{ toYaml .Values.podAnnotations | indent 8 }}
+{{- end }}
     spec:
-      serviceAccountName: {{ template "alertmanager.ServiceAccount" . }}
+      serviceAccountName: {{ template "alertmanager.serviceAccountName" . }}
 {{- if eq .Values.global.openshiftEnabled false }}
       securityContext: {{ toYaml .Values.podSecurityContext| nindent 8 }}
 {{- end }}

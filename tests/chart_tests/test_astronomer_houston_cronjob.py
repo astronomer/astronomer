@@ -1,5 +1,5 @@
 import pytest
-from tests import get_cronjob_containerspec_by_name, supported_k8s_versions
+from tests import get_containers_by_name, supported_k8s_versions
 from tests.chart_tests.helm_template_generator import render_chart
 
 
@@ -16,7 +16,7 @@ class TestHoustonCronjobJob:
             show_only=["charts/astronomer/templates/houston/cronjobs/houston-cleanup-deployments-cronjob.yaml"],
         )
         assert len(docs) == 1
-        c_by_name = get_cronjob_containerspec_by_name(docs[0])
+        c_by_name = get_containers_by_name(docs[0])
         assert docs[0]["kind"] == "CronJob"
         assert docs[0]["metadata"]["name"] == "release-name-houston-cleanup-deployments"
         assert docs[0]["spec"]["schedule"] == "0 0 * * *"
@@ -51,7 +51,7 @@ class TestHoustonCronjobJob:
             show_only=["charts/astronomer/templates/houston/cronjobs/houston-cleanup-deployments-cronjob.yaml"],
         )
         assert len(docs) == 1
-        c_by_name = get_cronjob_containerspec_by_name(docs[0])
+        c_by_name = get_containers_by_name(docs[0])
         assert docs[0]["kind"] == "CronJob"
         assert docs[0]["metadata"]["name"] == "release-name-houston-cleanup-deployments"
         assert docs[0]["spec"]["schedule"] == "22 5 * * *"

@@ -9,7 +9,7 @@
 {{- $useClusterRoles := and .Values.global.rbacEnabled .Values.global.clusterRoles (not .Values.global.features.namespacePools.enabled) }}
 {{- $shouldCreateResources := and .Values.global.rbacEnabled (or (and .Values.global.clusterRoles (not .Values.global.features.namespacePools.enabled )) $namespacepoolsRBACresources) }}
 {{- $namespaces := .Values.global.features.namespacePools.namespaces.names }}
-{{- $commanderServiceAccountName := ( include "commander.ServiceAccount" . )  -}}
+{{- $commanderServiceAccountName := ( include "commander.serviceAccountName" . )  -}}
 {{- if $useClusterRoles }}
   {{- $namespaces = list .Release.Namespace}}
 {{- else }}

@@ -8,7 +8,7 @@ metadata:
   annotations:
     release.openshift.io/create-only: "true"
     "helm.sh/hook": "pre-install,pre-upgrade"
-  name: {{ template "registry.ServiceAccount" . }}-anyuid
+  name: {{ template "registry.serviceAccountName" . }}-anyuid
 priority: 10
 readOnlyRootFilesystem: false
 requiredDropCapabilities:
@@ -20,7 +20,7 @@ seLinuxContext:
 supplementalGroups:
   type: RunAsAny
 users:
-- system:serviceaccount:{{ .Release.Namespace }}:{{ template "registry.ServiceAccount" . }}
+- system:serviceaccount:{{ .Release.Namespace }}:{{ template "registry.serviceAccountName" . }}
 volumes:
 - configMap
 - downwardAPI
