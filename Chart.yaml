@@ -96,3 +96,5 @@ dependencies:
   # Airflow Operator
   - name: operator
     condition: global.operator.enabled
+    tags:
+      - airflow-operator
