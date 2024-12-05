@@ -369,7 +369,12 @@ data:
       {{- end }}
 
       - job_name: airflow
-        scrape_interval: 10s # Faster scrape to power dashboards
+        #scrape_interval: 10s # Faster scrape to power dashboards
+        {{- if not $useClusterRoles }}
+        file_sd_configs:
+          - files:
+            - /prometheusreloader/airflow/*.json
+        {{ else }}
         kubernetes_sd_configs:
           - role: service
           {{- if or (not $useClusterRoles) .Values.global.singleNamespace }}
@@ -400,6 +405,7 @@ data:
             regex: ([^:]+)(?::\d+)?;(\d+)
             replacement: $1:$2
             target_label: __address__
+        {{- end }}
         metric_relabel_configs:
           - source_labels: [instance]
             regex: "([-a-z0-9]*[a-z0-9])-.*?"
