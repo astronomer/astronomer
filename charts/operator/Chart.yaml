@@ -1,7 +1,6 @@
 apiVersion: v2
-name: airflow-operator
+name: operator
 description: Official Helm chart to deploy the Astronomer Airflow Operator in your K8s clusters
 type: application
-# both version and appVersion get automatically updated by a script in CI to use the right version for the release
 version: "0.1.0"
 appVersion: "0.1.0"

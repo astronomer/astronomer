@@ -1,4 +1,4 @@
-{{ if and .Values.Operator.certManager.enabled (not .Values.Operator.webhooks.useCustomTlsCerts) .Values.global.operator.enabled -}}
+{{ if and .Values.certManager.enabled (not .Values.webhooks.useCustomTlsCerts) .Values.global.operator.enabled -}}
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:

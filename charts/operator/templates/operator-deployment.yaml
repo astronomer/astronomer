@@ -5,7 +5,7 @@ metadata:
 spec:
   runtimeVersion: 4.0.2
   imagePullSecret: astrohub-image-pull-secret-v1
-  image: quay.io/astronomer/astro-runtime:4.0.2 
+  image: quay.io/astronomer/astro-runtime:4.0.2
   executor: CeleryExecutor
   env: []
   scheduler:
@@ -16,7 +16,7 @@ spec:
       spec:
         containers:
         - name: scheduler
-          resources: {} # resource spec for scheduler  and also  this will come as UI input or api 
+          resources: {} # resource spec for scheduler  and also  this will come as UI input or api
   webserver: # will go as hardcoded value from houston config/default.yaml
     webserverConfig: |
       import os
@@ -57,14 +57,14 @@ spec:
       spec:
         containers:
         - name: worker
-          resources: {} # resource spec for worker and also  this will come as UI input or api 
-        terminationGracePeriodSeconds: 600 # this will come as UI input or api 
+          resources: {} # resource spec for worker and also  this will come as UI input or api
+        terminationGracePeriodSeconds: 600 # this will come as UI input or api
   secrets:
-    metadataSecretName: metadata-connection # for db secrets we will be calling commander setSecret 
-    resultBackendSecretName: result-backend-connection # for db secrets we will be calling commander setSecret 
+    metadataSecretName: metadata-connection # for db secrets we will be calling commander setSecret
+    resultBackendSecretName: result-backend-connection # for db secrets we will be calling commander setSecret
   useDefaultWorker: false
   serviceAccountAnnotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::726093857670:role/AirflowS3Logs-ckt3779dp00000rvx94xucbx7 # for iam roles 
+    eks.amazonaws.com/role-arn: arn:aws:iam::726093857670:role/AirflowS3Logs-ckt3779dp00000rvx94xucbx7 # for iam roles
   logging:
     s3:
       enabled: true

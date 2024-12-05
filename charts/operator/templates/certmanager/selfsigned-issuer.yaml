@@ -1,4 +1,4 @@
-{{ if and .Values.Operator.certManager.enabled  .Values.global.operator.enabled }}
+{{ if and .Values.certManager.enabled  .Values.global.operator.enabled }}
 apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:

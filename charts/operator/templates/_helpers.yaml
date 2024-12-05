@@ -1,7 +1,7 @@
 {{ define "webhooks.clientConfig" -}}
 {{ printf "\n" }}
-{{- if ..Values.webhooks.useCustomTlsCerts -}}
-caBundle: "{{ ..Values.webhooks.caBundle | b64enc }}"
+{{- if .Values.webhooks.useCustomTlsCerts -}}
+caBundle: "{{ .Values.webhooks.caBundle | b64enc }}"
 {{ end -}}
 service:
   name: airflow-operator-webhook-service
@@ -17,7 +17,7 @@ service:
   configMap:
     name: {{ .Values.runtimeVersions.configMapName }}
 {{- end }}
-{{ if and .Values.certManager.enabled (not ..Values.webhooks.useCustomTlsCerts) -}}
+{{ if and .Values.certManager.enabled (not .Values.webhooks.useCustomTlsCerts) -}}
 - name: cert
   secret:
     defaultMode: 420
@@ -37,7 +37,7 @@ service:
   name: versions
   subPath: versions.json
 {{- end }}
-{{ if and .Values.certManager.enabled (not ..Values.webhooks.useCustomTlsCerts) -}}
+{{ if and .Values.certManager.enabled (not .Values.webhooks.useCustomTlsCerts) -}}
 - mountPath: /tmp/k8s-webhook-server/serving-certs
   name: cert
   readOnly: true
@@ -52,7 +52,7 @@ service:
 {{ printf "\n" -}}
 - --health-probe-bind-address=:8081
 - --leader-elect
-- --metrics-bind-address={{ if ..Values.manager.metrics.useSecuredEndpoint }}127.0.0.1{{ else }}0.0.0.0{{ end }}:8080
+- --metrics-bind-address={{ if .Values.manager.metrics.useSecuredEndpoint }}127.0.0.1{{ else }}0.0.0.0{{ end }}:8080
 {{- if gt (len .Values.airflowNamespaces) 0 }}
 - --namespaces={{ join "," .Values.airflowNamespaces }}
 {{- end -}}
@@ -73,12 +73,12 @@ service:
     - /manager
   env:
     - name: WEBHOOK_CERT_DIRECTORY
-      value: '{{- if ..Values.webhooks.useCustomTlsCerts -}}/tmp/custom-certs{{- else -}}{{- end -}}'
-{{- range $i, $config := ..Values.manager.env }}
+      value: '{{- if .Values.webhooks.useCustomTlsCerts -}}/tmp/custom-certs{{- else -}}{{- end -}}'
+{{- range $i, $config := .Values.manager.env }}
     - name: {{ $config.name }}
       value: {{ $config.value | quote }}
 {{- end }}
-  image: '{{..Values.manager.image.repository}}:{{..Values.manager.image.tag}}'
+  image: '{{.Values.manager.image.repository}}:{{.Values.manager.image.tag}}'
   livenessProbe:
     httpGet:
       path: /healthz
@@ -98,15 +98,15 @@ service:
     periodSeconds: 10
   resources:
     limits:
-      cpu: '{{ ..Values.manager.resources.limits.cpu }}'
-      memory: '{{ ..Values.manager.resources.limits.memory }}'
+      cpu: '{{ .Values.manager.resources.limits.cpu }}'
+      memory: '{{ .Values.manager.resources.limits.memory }}'
     requests:
-      cpu: '{{ ..Values.manager.resources.requests.cpu }}'
-      memory: '{{ ..Values.manager.resources.requests.memory }}'
+      cpu: '{{ .Values.manager.resources.requests.cpu }}'
+      memory: '{{ .Values.manager.resources.requests.memory }}'
   securityContext:
     allowPrivilegeEscalation: false
   volumeMounts: {{ include "manager.volumeMounts" . | indent 2 }}
-{{- if ..Values.manager.metrics.useSecuredEndpoint }}
+{{- if .Values.manager.metrics.useSecuredEndpoint }}
 - args:
     - --secure-listen-address=0.0.0.0:8443
     - --upstream=http://127.0.0.1:8080/
