@@ -1,3 +1,5 @@
+airflowNamespaces: []
+
 certManager:
     enabled: true
 
@@ -15,18 +17,18 @@ webhooks:
   caBundle: ""
   tlsCert: ""
   tlsKey: ""
-  manager:
-    metrics:
-      useSecuredEndpoint: true
-    imagePullSecrets: []
-    image:
-      repository: quay.io/astronomer/airflow-operator-controller
-      tag: 1.5.0
-    resources:
-      limits:
-        cpu: 600m
-        memory: 500Mi
-      requests:
-        cpu: 500m
-        memory: 250Mi
-    env: []
+manager:
+  metrics:
+    useSecuredEndpoint: true
+  imagePullSecrets: []
+  image:
+    repository: quay.io/astronomer/airflow-operator-controller
+    tag: 1.5.0
+  resources:
+    limits:
+      cpu: 600m
+      memory: 500Mi
+    requests:
+      cpu: 500m
+      memory: 250Mi
+  env: []
