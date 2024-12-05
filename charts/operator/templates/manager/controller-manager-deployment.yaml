@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    control-plane: controller-manager
+  name: airflow-operator-controller-manager
+  namespace: '{{ .Release.Namespace }}'
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      control-plane: controller-manager
+  template:
+    metadata:
+      labels:
+        control-plane: controller-manager
+    spec:
+      containers: {{ include "manager.containers" . | nindent 6 }}
+      imagePullSecrets: {{ toYaml .Values.manager.imagePullSecrets | nindent 8 }}
+      securityContext:
+        runAsNonRoot: true
+      serviceAccountName: airflow-operator-controller-manager
+      terminationGracePeriodSeconds: 10
+      volumes: {{ include "manager.volumes" . | indent 6 }}
