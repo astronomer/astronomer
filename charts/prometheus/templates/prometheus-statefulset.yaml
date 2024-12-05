@@ -111,6 +111,28 @@ spec:
           - name: prometheus-config-volume
             mountPath: /etc/prometheus/config
 
+        - name: filesd-reloader
+          image: {{ include "filesdReloader.image" . }}
+          imagePullPolicy: {{ .Values.images.filesdReloader.pullPolicy }}
+          resources: {{ toYaml .Values.configMapReloader.resources | nindent 12 }}
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: astronomer-bootstrap
+                  key: connection
+            - name: DATABASE_SCHEMA
+              value: "houston$default"
+            - name: DATABASE_TABLE_NAME
+              value: Deployment
+            - name: DATABASE_NAME
+              value: {{ .Release.Name }}_houston
+            - name: FILESD_FILE_PATH
+              value: /prometheusreloader/airflow
+          volumeMounts:
+          - mountPath: /prometheusreloader/airflow
+            name: filesd
+
         - name: prometheus
           image: {{ include "prometheus.image" . }}
           securityContext: {{ template "prometheus.securityContext" . }}
@@ -136,6 +158,8 @@ spec:
               mountPath: /etc/prometheus/alerts.d
             - name: data
               mountPath: {{ .Values.dataDir }}
+            - mountPath: /prometheusreloader/airflow
+              name: filesd
           ports:
             - name: prometheus-data
               containerPort: {{ .Values.ports.http }}
@@ -184,6 +208,8 @@ spec:
             items:
               - key: alerts
                 path: alerts.yaml
+        - name: filesd
+          emptyDir: {}
   {{- if not .Values.persistence.enabled }}
         - name: data
           emptyDir: {}

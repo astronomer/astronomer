@@ -24,6 +24,11 @@ images:
     repository: quay.io/astronomer/ap-configmap-reloader
     tag: 0.14.0
     pullPolicy: IfNotPresent
+  filesdReloader:
+    repository: core.harbor.astro-qa.link/astrocloud/sidecar
+    tag: v8
+    pullPolicy: IfNotPresent
+
 
 resources: {}
 #  limits:

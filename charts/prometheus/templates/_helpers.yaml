@@ -47,6 +47,10 @@ Create chart name and version as used by the chart label.
 {{- end }}
 {{- end }}
 
+{{ define "filesdReloader.image" -}}
+{{ .Values.images.filesdReloader.repository }}:{{ .Values.images.filesdReloader.tag }}
+{{- end }}
+
 {{ define "prometheus.init.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
 {{ .Values.global.privateRegistry.repository }}/ap-init:{{ .Values.images.init.tag }}
