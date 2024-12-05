@@ -1,3 +1,4 @@
+{{ if .Values.global.operator.enabled }}
 apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
 metadata:
@@ -22,3 +23,4 @@ webhooks:
     resources:
     - airflows
   sideEffects: None
+{{- end }}

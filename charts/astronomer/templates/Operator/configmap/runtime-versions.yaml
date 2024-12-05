@@ -1,4 +1,4 @@
-{{ if and .Values.Operator.airgapped .Values.Operator.runtimeVersions.configMapName .Values.Operator.runtimeVersions.versionsJson -}}
+{{ if and .Values.Operator.airgapped .Values.Operator.runtimeVersions.configMapName .Values.Operator.runtimeVersions.versionsJson .Values.global.operator.enabled -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:

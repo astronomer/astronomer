@@ -1,3 +1,4 @@
+{{ if .Values.global.operator.enabled }}
 apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingWebhookConfiguration
 metadata:
@@ -146,3 +147,4 @@ webhooks:
     resources:
     - webservers/scale
   sideEffects: None
+{{- end }}
