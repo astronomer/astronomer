@@ -3,7 +3,7 @@ kind: Service
 metadata:
   labels:
     control-plane: controller-manager
-  name: airflow-operator-controller-manager-metrics-service
+  name: {{ .Release.Name }}-airflow-operator-controller-manager-metrics-service
   namespace: '{{ .Release.Namespace }}'
 spec:
   ports:

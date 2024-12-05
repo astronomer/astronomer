@@ -2,7 +2,7 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: airflow-operator-serving-cert
+  name: {{ .Release.Name }}-airflow-operator-serving-cert
   namespace: '{{ .Release.Namespace }}'
 spec:
   dnsNames:

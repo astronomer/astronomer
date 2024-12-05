@@ -4,14 +4,14 @@ kind: ValidatingWebhookConfiguration
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: '{{ .Release.Namespace }}/airflow-operator-serving-cert'
-  name: airflow-operator-validating-webhook-configuration
+  name: {{ .Release.Name }}-airflow-operator-validating-webhook-configuration
 webhooks:
 - admissionReviewVersions:
   - v1
   - v1beta1
   clientConfig: {{ include "webhooks.clientConfig" (dict "path" "/validate-airflow-apache-org-v1beta1-airflow" "Values" .Values "Release" .Release) | indent 4 }}
   failurePolicy: Fail
-  name: vairflowv1beta1.kb.io
+  name: {{ .Release.Name }}-vairflowv1beta1.kb.io
   rules:
   - apiGroups:
     - airflow.apache.org

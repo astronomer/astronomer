@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   labels:
     control-plane: controller-manager
-  name: airflow-operator-controller-manager
+  name: {{ .Release.Name }}-airflow-operator-controller-manager
   namespace: '{{ .Release.Namespace }}'
 spec:
   replicas: 1
