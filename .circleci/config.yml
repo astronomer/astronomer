@@ -108,6 +108,20 @@ jobs:
           command: |
             ./twistcli images scan --address $CONSOLE_URL --user=$USER --password=$PASSWORD --details << parameters.docker_image >>
 
+  release_bom:
+    docker:
+      - image: quay.io/astronomer/ci-helm-release:2024-11
+    steps:
+      - checkout
+      - run:
+          name: Install bom-generator
+          command: |
+            pip install git+https://${GITHUB_TOKEN}@github.com/astronomer/astronomer-bom-generator.git
+      - run:
+          name: Run Release BOM Script
+          command: |
+            bin/release-bom -x ${CIRCLE_TAG}
+
   run_pre_commit:
     docker:
       - image: quay.io/astronomer/ci-pre-commit:2024-11
@@ -501,7 +515,6 @@ workflows:
             branches:
               only:
                 - '/^release-0\.\d+$/'
-
       - release-to-public:
           context:
             - gcp-astronomer-prod
@@ -512,6 +525,18 @@ workflows:
             branches:
               only:
                 - '/^release-0\.\d+$/'
+
+  release-bom-workflow:
+    jobs:
+      - release_bom:
+          filters:
+            tags:
+              only: /^v\d+\.\d+\.\d+(-?(rc(\.\d+)?|alpha(\.\d+)?)?)?$/
+            branches:
+              ignore: /.*/
+          context:
+            - github-repo
+            - gcp-astronomer-prod
 
   qa-build-and-release-helm-chart:
     when:
