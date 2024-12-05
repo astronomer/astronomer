@@ -92,3 +92,9 @@ dependencies:
   # external-es-proxy
   - name: external-es-proxy
     condition: global.customLogging.enabled
+
+  # Airflow Operator
+  - name: operator
+    condition: global.operator.enabled
+    tags:
+      - airflow-operator
