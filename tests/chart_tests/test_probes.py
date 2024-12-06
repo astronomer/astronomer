@@ -232,7 +232,15 @@ class TestDefaultProbes:
         },
         "nginx_nginx": {"httpGet": {"path": "/healthz", "port": 10254}, "initialDelaySeconds": 30, "timeoutSeconds": 5},
         "pgbouncer_pgbouncer": {"tcpSocket": {"port": 5432}},
-        "postgresql_release-name-postgresql": {
+        "postgresql-master_release-name-postgresql": {
+            "exec": {"command": ["sh", "-c", 'exec pg_isready -U "postgres" -h 127.0.0.1 -p 5432']},
+            "initialDelaySeconds": 30,
+            "periodSeconds": 10,
+            "timeoutSeconds": 5,
+            "successThreshold": 1,
+            "failureThreshold": 6,
+        },
+        "postgresql-slave_release-name-postgresql": {
             "exec": {"command": ["sh", "-c", 'exec pg_isready -U "postgres" -h 127.0.0.1 -p 5432']},
             "initialDelaySeconds": 30,
             "periodSeconds": 10,
@@ -314,7 +322,15 @@ class TestDefaultProbes:
         },
         "nats_nats": {"httpGet": {"path": "/", "port": 8222}, "initialDelaySeconds": 10, "timeoutSeconds": 5},
         "pgbouncer_pgbouncer": {"tcpSocket": {"port": 5432}},
-        "postgresql_release-name-postgresql": {
+        "postgresql-master_release-name-postgresql": {
+            "exec": {"command": ["sh", "-c", "-e", 'pg_isready -U "postgres" -h 127.0.0.1 -p 5432\n']},
+            "initialDelaySeconds": 5,
+            "periodSeconds": 10,
+            "timeoutSeconds": 5,
+            "successThreshold": 1,
+            "failureThreshold": 6,
+        },
+        "postgresql-slave_release-name-postgresql": {
             "exec": {"command": ["sh", "-c", "-e", 'pg_isready -U "postgres" -h 127.0.0.1 -p 5432\n']},
             "initialDelaySeconds": 5,
             "periodSeconds": 10,

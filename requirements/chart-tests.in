@@ -1,5 +1,5 @@
+deepmerge
 docker
-exceptiongroup # indirect, needed to satisfy hash requirement
 filelock
 jmespath
 jsonschema

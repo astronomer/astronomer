@@ -80,6 +80,10 @@ nats:
 
   jetstream:
     enabled: false
+    serviceAccount:
+      create: true
+      name: ~
+
 
     # Jetstream Domain
     domain:
