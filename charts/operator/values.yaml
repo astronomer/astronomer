@@ -1,5 +1,7 @@
 airflowNamespaces: []
 
+crd:
+  create: true
 certManager:
     enabled: true
 
