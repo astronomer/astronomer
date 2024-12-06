@@ -39,8 +39,6 @@ global:
   #Global flag to enable Operator based deployment
   operator:
     enabled: true
-    crd:
-      create: true
 
   # Specific Astronomer features configuration
   features:
