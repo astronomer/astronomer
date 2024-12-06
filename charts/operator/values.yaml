@@ -36,4 +36,5 @@ manager:
   env: []
 
 serviceAccount:
+  create: true
   name: ""
