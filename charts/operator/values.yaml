@@ -34,3 +34,6 @@ manager:
       cpu: 500m
       memory: 250Mi
   env: []
+
+serviceAccount:
+  name: ""

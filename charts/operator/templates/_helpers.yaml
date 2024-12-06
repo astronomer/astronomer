@@ -119,3 +119,11 @@ service:
       name: https
 {{- end -}}
 {{- end }}
+
+{{- define "operator.serviceAccountName" -}}
+{{- if .Values.operator.serviceAccount.create -}}
+    {{- default (printf "%s-airflow-operator-controller-manager" .Release.Name) .Values.operator.serviceAccount.name }}
+{{- else -}}
+    {{- default "default" .Values.operator.serviceAccount.name }}
+{{- end -}}
+{{- end -}}
