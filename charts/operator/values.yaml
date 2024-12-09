@@ -39,3 +39,17 @@ serviceAccount:
   create: true
   annotations: {}
   name: ""
+livenessProbe: {}
+  # httpGet:
+  #     path: /healthz
+  #     port: .Values.port.managerPort
+  # initialDelaySeconds: 15
+  # periodSeconds: 20
+readinessProbe: {}
+  # httpGet:
+  #     path: /readyz
+  #     port: .Values.port.managerPort
+  # initialDelaySeconds: 5
+  # periodSeconds: 10
+ports:
+  managerPort: 8081
