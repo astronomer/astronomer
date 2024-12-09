@@ -275,12 +275,12 @@ s3:
 - name: houston-config-volume
   mountPath: /houston/config/local-production.yaml
   subPath: local-production.yaml
-{{ if and .Values.houston.airflowReleasesConfig ( not .Values.houston.airflowReleasesConfig.configMapName ) }}
+{{ if and .Values.houston.airflowReleasesConfig ( not .Values.houston.airflowReleasesconfigMapName ) }}
 - name: houston-config-volume
   mountPath: /houston/airflow_releases.json
   subPath: airflow_releases.json
 {{- end }}
-{{ if and .Values.houston.RuntimeReleasesConfig ( not .Values.houston.RuntimeReleasesConfig.configMapName ) }}
+{{ if and .Values.houston.RuntimeReleasesConfig ( not .Values.houston.runtimeReleasesconfigMapName ) }}
 - name: houston-config-volume
   mountPath: /houston/astro_runtime_releases.json
   subPath: astro_runtime_releases.json
@@ -327,10 +327,15 @@ s3:
         path: production.yaml
       - key: local-production.yaml
         path: local-production.yaml
-      {{ if .Values.houston.airflowReleasesConfig }}
+      {{ if and .Values.houston.airflowReleasesConfig (not .Values.houston.airflowReleasesconfigMapName )}}
       - key: airflow_releases.json
         path: airflow_releases.json
       {{- end }}
+      {{ if and .Values.houston.RuntimeReleasesConfig (not .Values.houston.runtimeReleasesconfigMapName )}}
+      - key: astro_runtime_releases.json
+        path: astro_runtime_releases.json
+      {{- end }}
+
 - name: houston-jwt-key-volume
   secret:
     secretName: {{ template "houston.jwtKeySecret" . }}
@@ -348,15 +353,15 @@ s3:
   secret:
     secretName: {{ $secretName }}
 {{- end }}
-{{- if .Values.houston.RuntimeReleasesConfig.configMapName -}}
+{{- if .Values.houston.runtimeReleasesconfigMapName -}}
 - name: runtimeversions
   configMap:
-    name: {{ .Values.houston.RuntimeReleasesConfig.configMapName }}
+    name: {{ .Values.houston.runtimeReleasesconfigMapName }}
 {{- end }}
-{{- if .Values.houston.airflowReleasesConfig.configMapName -}}
+{{- if .Values.houston.airflowReleasesconfigMapName  -}}
 - name: certifiedversions
   configMap:
-    name: {{ .Values.houston.airflowReleasesConfig.configMapName }}
+    name: {{ .Values.houston.airflowReleasesconfigMapName  }}
 {{- end }}
 {{- end }}
 

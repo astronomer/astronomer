@@ -297,6 +297,7 @@ houston:
 
   # this option allows to override airflow releases config
   #
+  airflowReleasesconfigMapName: ~
   airflowReleasesConfig:
     configMapName: ~
     # example of usage:
@@ -329,6 +330,7 @@ houston:
     #   - 2.0.0-alpine3.10-onbuild
     #   channel: stable
 
+  runtimeReleasesconfigMapName: ~
   RuntimeReleasesConfig:
     configMapName: ~
     # example of usage:
