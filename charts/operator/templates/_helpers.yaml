@@ -79,26 +79,20 @@ service:
       value: {{ $config.value | quote }}
 {{- end }}
   image: '{{.Values.manager.image.repository}}:{{.Values.manager.image.tag}}'
-  resources:
-    limits:
-      cpu: '{{ .Values.manager.resources.limits.cpu }}'
-      memory: '{{ .Values.manager.resources.limits.memory }}'
-    requests:
-      cpu: '{{ .Values.manager.resources.requests.cpu }}'
-      memory: '{{ .Values.manager.resources.requests.memory }}'
+  resources: '{{ toYaml .Values.manager.resources | nindent 12 }}'
   securityContext:
     allowPrivilegeEscalation: false
   volumeMounts: {{ include "manager.volumeMounts" . | indent 2 }}
 {{- if .Values.manager.metrics.useSecuredEndpoint }}
 - args:
-    - --secure-listen-address=0.0.0.0:8443
-    - --upstream=http://127.0.0.1:8080/
+    - --secure-listen-address=0.0.0.0:{{ .Values.ports.managerContainerPort }}
+    - --upstream=http://127.0.0.1:{{ .Values.ports.managerUpstreamPort }}/
     - --logtostderr=true
     - --v=10
   image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
   name: kube-rbac-proxy
   ports:
-    - containerPort: 8443
+    - containerPort: '{{ .Values.ports.managerContainerPort }}'
       name: https
 {{- end -}}
 {{- end }}
