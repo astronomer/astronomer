@@ -79,7 +79,7 @@ service:
     - name: {{ $config.name }}
       value: {{ $config.value | quote }}
 {{- end }}
-  image: '{{.Values.manager.image.repository}}:{{.Values.manager.image.tag}}'
+  image: {{ include "operator.image" . }}
   resources: {{ toYaml .Values.manager.resources | nindent 12 }}
   securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
   volumeMounts: {{ include "manager.volumeMounts" . | indent 2 }}
@@ -89,7 +89,7 @@ service:
     - --upstream=http://127.0.0.1:{{ .Values.ports.managerUpstreamPort }}/
     - --logtostderr=true
     - --v=10
-  image: '{{- .Values.manager.metrics.image.repository }}:{{- .Values.manager.metrics.image.tag }}'
+  image: {{ include "kube-rbac-proxy.image" . }}
   name: kube-rbac-proxy
   ports:
     - containerPort: {{ .Values.ports.managerContainerPort }}
@@ -104,3 +104,20 @@ service:
     {{- default "default" .Values.serviceAccount.name }}
 {{- end -}}
 {{- end -}}
+
+
+{{ define "operator.image" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/airflow-operator-controller:{{ .Values.manager.image.tag }}
+{{- else -}}
+{{ .Values.manager.image.repository }}:{{ .Values.manager.image.tag }}
+{{- end }}
+{{- end }}
+
+{{ define "kube-rbac-proxy.image" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-kube-rbac-proxy:{{ .Values.manager.metrics.image.tag }}
+{{- else -}}
+{{ .Values.manager.metrics.image.repository }}:{{ .Values.manager.metrics.image.tag }}
+{{- end }}
+{{- end }}
