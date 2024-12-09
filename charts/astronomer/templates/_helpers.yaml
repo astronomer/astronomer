@@ -275,7 +275,7 @@ s3:
 - name: houston-config-volume
   mountPath: /houston/config/local-production.yaml
   subPath: local-production.yaml
-{{ if and .Values.houston.airflowReleasesConfig ( not .Values.houston.airflowReleasesconfigMapName ) }}
+{{ if and .Values.houston.airflowReleasesConfig ( not .Values.houston.airflowReleasesConfigMapName ) }}
 - name: houston-config-volume
   mountPath: /houston/airflow_releases.json
   subPath: airflow_releases.json
