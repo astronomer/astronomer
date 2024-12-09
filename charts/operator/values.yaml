@@ -1,9 +1,9 @@
 airflowNamespaces: []
 
 crd:
-  create: true
+  create: false
 certManager:
-    enabled: true
+  enabled: false
 
 runtimeVersions:
   configMapName: ""
