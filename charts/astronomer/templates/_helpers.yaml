@@ -306,12 +306,12 @@ s3:
   mountPath: /usr/local/share/ca-certificates/{{ $secretName }}.crt
   subPath: ca.crt
 {{- end }}
-{{- if .Values.houston.RuntimeReleasesConfig.configMapName -}}
+{{- if .Values.houston.runtimeReleasesconfigMapName -}}
 - mountPath: /houston/astro_runtime_releases.json
   name: runtimeversions
   subPath: astro_runtime_releases.json
 {{- end }}
-{{- if .Values.houston.airflowReleasesConfig.configMapName -}}
+{{- if .Values.houston.airflowReleasesconfigMapName -}}
 - mountPath: /houston/airflow_releases.json
   name: certifiedversions
   subPath: airflow_releases.json
