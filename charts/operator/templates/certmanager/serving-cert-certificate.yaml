@@ -6,8 +6,8 @@ metadata:
   namespace: '{{ .Release.Namespace }}'
 spec:
   dnsNames:
-  - airflow-operator-webhook-service.{{ .Release.Namespace }}.svc
-  - airflow-operator-webhook-service.{{ .Release.Namespace }}.svc.cluster.local
+  - {{ .Release.Name }}.airflow-operator-webhook-service.{{ .Release.Namespace }}.svc
+  - {{ .Release.Name }}.airflow-operator-webhook-service.{{ .Release.Namespace }}.svc.cluster.local
   issuerRef:
     kind: Issuer
     name: airflow-operator-selfsigned-issuer

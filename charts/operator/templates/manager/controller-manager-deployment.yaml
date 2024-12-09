@@ -19,6 +19,6 @@ spec:
       imagePullSecrets: {{ toYaml .Values.manager.imagePullSecrets | nindent 8 }}
       securityContext:
         runAsNonRoot: true
-      serviceAccountName: airflow-operator-controller-manager
+      serviceAccountName: {{ template "operator.serviceAccountName" . }}
       terminationGracePeriodSeconds: 10
       volumes: {{ include "manager.volumes" . | indent 6 }}
