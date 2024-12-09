@@ -22,6 +22,9 @@ webhooks:
 manager:
   metrics:
     useSecuredEndpoint: true
+    image:
+      repository: gcr.io/kubebuilder/kube-rbac-proxy
+      tag: v0.8.0
   imagePullSecrets: []
   image:
     repository: quay.io/astronomer/airflow-operator-controller
