@@ -15,20 +15,8 @@ spec:
       labels:
         control-plane: controller-manager
     spec:
-      containers: {{ include "manager.containers" . | nindent 6 }}
-        {{- if .Values.livenessProbe }}
-        livenessProbe: {{ tpl (toYaml .Values.livenessProbe) . | nindent 12 }}
-        {{- else }}
-        livenessProbe:
-          port: {{ .Values.managerPort }}
-        {{- end }}
-        {{- if .Values.readinessProbe }}
-        readinessProbe: {{ tpl (toYaml .Values.readinessProbe) . | nindent 12 }}
-        {{- else }}
-        readinessProbe:
-          port: {{ .Values.managerPort }}
-        {{- end }}
       imagePullSecrets: {{ toYaml .Values.manager.imagePullSecrets | nindent 8 }}
+      containers: {{ include "manager.containers" . | nindent 6 }}
       securityContext:
         runAsNonRoot: true
       serviceAccountName: {{ template "operator.serviceAccountName" . }}
