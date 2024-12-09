@@ -37,4 +37,5 @@ manager:
 
 serviceAccount:
   create: true
+  annotations: {}
   name: ""

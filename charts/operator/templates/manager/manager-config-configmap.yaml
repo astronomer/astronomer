@@ -4,16 +4,15 @@ metadata:
   name: {{ .Release.Name }}-airflow-operator-manager-config
   namespace: '{{ .Release.Namespace }}'
 data:
-  controller_manager_config.yaml: | 
+  controller_manager_config.yaml: |
     apiVersion: controller-runtime.sigs.k8s.io/v1alpha1
     kind: ControllerManagerConfig
     health:
       healthProbeBindAddress: :8081
     metrics:
       bindAddress: 127.0.0.1:8080
-    webhook:  
+    webhook:
       port: 9443
-    leaderElection:  
-      leaderElect: true  
+    leaderElection:
+      leaderElect: true
       resourceName: 3d2716b4.apache.org
-
