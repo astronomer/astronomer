@@ -80,8 +80,7 @@ service:
 {{- end }}
   image: '{{.Values.manager.image.repository}}:{{.Values.manager.image.tag}}'
   resources: '{{ toYaml .Values.manager.resources | nindent 12 }}'
-  securityContext:
-    allowPrivilegeEscalation: false
+  securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
   volumeMounts: {{ include "manager.volumeMounts" . | indent 2 }}
 {{- if .Values.manager.metrics.useSecuredEndpoint }}
 - args:

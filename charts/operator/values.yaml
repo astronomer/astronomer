@@ -51,6 +51,8 @@ readinessProbe: {}
   #     port: .Values.port.managerPort
   # initialDelaySeconds: 5
   # periodSeconds: 10
+securityContext:
+  allowPrivilegeEscalation: false
 ports:
   managerPort: 8081
   managerContainerPort: 8443
