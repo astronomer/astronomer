@@ -280,7 +280,7 @@ s3:
   mountPath: /houston/airflow_releases.json
   subPath: airflow_releases.json
 {{- end }}
-{{ if .Values.houston.RuntimeReleasesConfig }}
+{{ if .Values.houston.RuntimeReleasesConfig ( not .Values.houston.RuntimeReleasesConfig.configMapName ) }}
 - name: houston-config-volume
   mountPath: /houston/astro_runtime_releases.json
   subPath: astro_runtime_releases.json
@@ -305,6 +305,11 @@ s3:
 - name: nats-jetstream-client-tls-volume
   mountPath: /usr/local/share/ca-certificates/{{ $secretName }}.crt
   subPath: ca.crt
+{{- end }}
+{{- if .Values.RuntimeReleasesConfig.configMapName -}}
+- mountPath: /houston/astro_runtime_releases.json
+  name: runtimeversions
+  subPath: astro_runtime_releases.json
 {{- end }}
 {{- end }}
 
@@ -337,6 +342,11 @@ s3:
 - name: nats-jetstream-client-tls-volume
   secret:
     secretName: {{ $secretName }}
+{{- end }}
+{{- if .Values.RuntimeReleasesConfig.configMapName -}}
+- name: runtimeversions
+  configMap:
+    name: {{ .Values.RuntimeReleasesConfig.configMapName }}
 {{- end }}
 {{- end }}
 

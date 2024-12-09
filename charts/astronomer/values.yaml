@@ -298,6 +298,7 @@ houston:
   # this option allows to override airflow releases config
   #
   airflowReleasesConfig:
+    configMapName: ~
     # example of usage:
     # available_releases:
     # - version: 1.10.7-15
@@ -329,6 +330,7 @@ houston:
     #   channel: stable
 
   RuntimeReleasesConfig:
+    configMapName: ~
     # example of usage:
     # below are default mandatory fields
     # runtimeVersions:
