@@ -1,9 +1,0 @@
-{{ if and .Values.airgapped .Values.runtimeVersions.configMapName .Values.runtimeVersions.versionsJson .Values.global.operator.enabled -}}
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: {{ .Values.runtimeVersions.configMapName }}
-  namespace: '{{ .Release.Namespace }}'
-data:
-  versions.json: {{ .Values.runtimeVersions.versionsJson | toJson }}
-{{ end }}
