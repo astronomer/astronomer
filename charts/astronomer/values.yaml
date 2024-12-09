@@ -297,7 +297,7 @@ houston:
 
   # this option allows to override airflow releases config
   #
-  airflowReleasesconfigMapName: ~
+  airflowReleasesConfigMapName: ~
   airflowReleasesConfig:
     configMapName: ~
     # example of usage:
