@@ -1,0 +1,63 @@
+airflowNamespaces: []
+
+crd:
+  create: false
+certManager:
+  enabled: false
+
+runtimeVersions:
+  configMapName: ""
+  versionsJson: ""
+
+webhooks:
+  useCustomTlsCerts: false
+  # for each of the following properties, the full certificate/key/CABundle should be provided in the following way:
+  # caBundle: |
+  #  -----BEGIN CERTIFICATE-----
+  #  .......................
+  #  -----END CERTIFICATE-----
+  caBundle: ""
+  tlsCert: ""
+  tlsKey: ""
+manager:
+  replicas: 1
+  metrics:
+    useSecuredEndpoint: true
+    image:
+      repository: gcr.io/kubebuilder/kube-rbac-proxy
+      tag: v0.8.0
+  imagePullSecrets: []
+  image:
+    repository: quay.io/astronomer/airflow-operator-controller
+    tag: 1.5.0
+  resources:
+    limits:
+      cpu: 600m
+      memory: 500Mi
+    requests:
+      cpu: 500m
+      memory: 250Mi
+  env: []
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+livenessProbe: {}
+  # httpGet:
+  #     path: /healthz
+  #     port: .Values.port.managerPort
+  # initialDelaySeconds: 15
+  # periodSeconds: 20
+readinessProbe: {}
+  # httpGet:
+  #     path: /readyz
+  #     port: .Values.port.managerPort
+  # initialDelaySeconds: 5
+  # periodSeconds: 10
+securityContext:
+  allowPrivilegeEscalation: false
+ports:
+  managerPort: 8081
+  managerContainerPort: 8443
+  managerUpstreamPort: 8080
