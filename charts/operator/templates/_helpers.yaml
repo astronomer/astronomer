@@ -68,7 +68,8 @@ service:
 {{- end }}
 
 {{ define "manager.containers" -}}
-- args: {{ include "manager.args" . | indent 2 }}
+- name: manager
+  args: {{ include "manager.args" . | indent 2 }}
   command:
     - /manager
   env:
@@ -91,7 +92,7 @@ service:
   image: '{{- .Values.manager.metrics.image.repository }}:{{- .Values.manager.metrics.image.tag }}'
   name: kube-rbac-proxy
   ports:
-    - containerPort: '{{ .Values.ports.managerContainerPort }}'
+    - containerPort: {{ .Values.ports.managerContainerPort }}
       name: https
 {{- end -}}
 {{- end }}
