@@ -79,23 +79,6 @@ service:
       value: {{ $config.value | quote }}
 {{- end }}
   image: '{{.Values.manager.image.repository}}:{{.Values.manager.image.tag}}'
-  livenessProbe:
-    httpGet:
-      path: /healthz
-      port: 8081
-    initialDelaySeconds: 15
-    periodSeconds: 20
-  name: manager
-  ports:
-    - containerPort: 9443
-      name: webhook-server
-      protocol: TCP
-  readinessProbe:
-    httpGet:
-      path: /readyz
-      port: 8081
-    initialDelaySeconds: 5
-    periodSeconds: 10
   resources:
     limits:
       cpu: '{{ .Values.manager.resources.limits.cpu }}'
