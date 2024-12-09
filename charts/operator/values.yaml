@@ -20,6 +20,7 @@ webhooks:
   tlsCert: ""
   tlsKey: ""
 manager:
+  replicas: 1
   metrics:
     useSecuredEndpoint: true
     image:
