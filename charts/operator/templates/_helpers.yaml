@@ -84,13 +84,13 @@ service:
   securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
   volumeMounts: {{ include "manager.volumeMounts" . | indent 2 }}
 {{- if .Values.manager.metrics.useSecuredEndpoint }}
-- args:
+- name: kube-rbac-proxy
+  args:
     - --secure-listen-address=0.0.0.0:{{ .Values.ports.managerContainerPort }}
     - --upstream=http://127.0.0.1:{{ .Values.ports.managerUpstreamPort }}/
     - --logtostderr=true
     - --v=10
   image: {{ include "kube-rbac-proxy.image" . }}
-  name: kube-rbac-proxy
   ports:
     - containerPort: {{ .Values.ports.managerContainerPort }}
       name: https
