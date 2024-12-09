@@ -121,7 +121,7 @@ service:
 {{- end }}
 
 {{- define "operator.serviceAccountName" -}}
-{{- if .Values.serviceAccount.create -}}
+{{- if .Values.serviceAccount.create .Values.global.rbacEnabled -}}
     {{- default (printf "%s-airflow-operator-controller-manager" .Release.Name) .Values.serviceAccount.name }}
 {{- else -}}
     {{- default "default" .Values.serviceAccount.name }}
