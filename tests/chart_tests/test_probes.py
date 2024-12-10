@@ -271,7 +271,6 @@ class TestDefaultProbes:
 
     # expected container readiness probes
     expected_crp = {
-        "operator_operator": {"httpGet": {"path": "/readyz", "port": 8081}, "initialDelaySeconds": 5, "periodSeconds": 10},
         "alertmanager_alertmanager": {
             "httpGet": {"path": "/#/status", "port": 9093},
             "initialDelaySeconds": 30,
@@ -350,6 +349,7 @@ class TestDefaultProbes:
             "timeoutSeconds": 5,
         },
         "stan_stan": {"httpGet": {"path": "/streaming/serverz", "port": "monitor"}, "initialDelaySeconds": 10, "timeoutSeconds": 5},
+        "operator_operator": {"httpGet": {"path": "/readyz", "port": 8081}, "initialDelaySeconds": 5, "periodSeconds": 10},
     }
 
     # liveness probe data and ids
