@@ -2,7 +2,11 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
+    tier: operator
     control-plane: controller-manager
+    chart: {{ template "operator.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
   name: {{ .Release.Name }}-airflow-operator-controller-manager
   namespace: '{{ .Release.Namespace }}'
 spec:

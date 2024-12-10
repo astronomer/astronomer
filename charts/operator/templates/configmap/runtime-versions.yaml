@@ -4,6 +4,11 @@ kind: ConfigMap
 metadata:
   name: {{ .Values.runtimeVersions.configMapName }}
   namespace: '{{ .Release.Namespace }}'
+  labels:
+    tier: operator
+    chart: {{ template "operator.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
 data:
   versions.json: {{ .Values.runtimeVersions.versionsJson | toJson }}
 {{ end }}

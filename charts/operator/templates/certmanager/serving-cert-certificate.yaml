@@ -4,6 +4,11 @@ kind: Certificate
 metadata:
   name: {{ .Release.Name }}-airflow-operator-serving-cert
   namespace: '{{ .Release.Namespace }}'
+  labels:
+    tier: operator
+    chart: {{ template "operator.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
 spec:
   dnsNames:
   - {{ .Release.Name }}.airflow-operator-webhook-service.{{ .Release.Namespace }}.svc

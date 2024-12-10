@@ -3,6 +3,11 @@ kind: Service
 metadata:
   name: {{ .Release.Name }}-airflow-operator-webhook-service
   namespace: '{{ .Release.Namespace }}'
+  labels:
+    tier: operator
+    chart: {{ template "operator.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
 spec:
   ports:
   - port: 443
