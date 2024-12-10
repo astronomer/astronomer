@@ -87,13 +87,17 @@ service:
   livenessProbe: {{ tpl (toYaml .Values.livenessProbe) . | nindent 12 }}
   {{- else }}
   livenessProbe:
-    port: {{ .Values.ports.managerPort }}
+    httpGet:
+      path: /healthz
+      port: {{ .Values.ports.managerPort }}
   {{- end }}
   {{- if .Values.readinessProbe }}
   readinessProbe: {{ tpl (toYaml .Values.readinessProbe) . | nindent 12 }}
   {{- else }}
   readinessProbe:
-    port: {{ .Values.ports.managerPort }}
+    httpGet:
+      path: /readyz 
+      port: {{ .Values.ports.managerPort }}
   {{- end }}
 {{- if .Values.manager.metrics.useSecuredEndpoint }}
 - name: kube-rbac-proxy
