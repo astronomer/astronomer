@@ -4,7 +4,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: '{{ .Release.Namespace }}/airflow-operator-serving-cert'
-  name: {{ .Release.Name }}-webservers.airflow.apache.org
+  name: webservers.airflow.apache.org
 spec:
   conversion:
     strategy: Webhook

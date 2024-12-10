@@ -4,7 +4,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: '{{ .Release.Namespace }}/airflow-operator-serving-cert'
-  name: {{ .Release.Name }}-apiservers.airflow.apache.org
+  name: apiservers.airflow.apache.org
 spec:
   group: airflow.apache.org
   names:
