@@ -15,6 +15,6 @@ spec:
   - {{ .Release.Name }}-airflow-operator-webhook-service.{{ .Release.Namespace }}.svc.cluster.local
   issuerRef:
     kind: Issuer
-    name: airflow-operator-selfsigned-issuer
+    name: {{ .Release.Name }}-airflow-operator-selfsigned-issuer
   secretName: webhook-server-cert
 {{- end }}
