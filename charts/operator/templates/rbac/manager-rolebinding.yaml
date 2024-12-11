@@ -6,13 +6,19 @@ kind: RoleBinding
 metadata:
   name: airflow-operator-manager-rolebinding
   namespace: '{{ $namespaceName }}'
+  labels:
+    tier: operator
+    release: {{ .Release.Name }}
+    chart: {{ template "operator.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
   name: airflow-operator-manager-role
 subjects:
 - kind: ServiceAccount
-  name: airflow-operator-controller-manager
+  name: {{ template "operator.serviceAccountName" . }}
   namespace: '{{ $.Release.Namespace }}'
 {{- end }}
 {{- end }}

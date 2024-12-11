@@ -3,6 +3,12 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   name: airflow-operator-manager-role
+  labels:
+    tier: operator
+    release: {{ .Release.Name }}
+    chart: {{ template "operator.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
 rules:
 - apiGroups:
   - ''

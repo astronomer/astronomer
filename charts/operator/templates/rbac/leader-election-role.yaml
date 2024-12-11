@@ -4,6 +4,12 @@ kind: Role
 metadata:
   name: {{ .Release.Name }}-airflow-operator-leader-election-role
   namespace: '{{ .Release.Namespace }}'
+  labels:
+    tier: operator
+    release: {{ .Release.Name }}
+    chart: {{ template "operator.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
 rules:
 - apiGroups:
   - ''

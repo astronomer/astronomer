@@ -6,6 +6,12 @@ kind: Role
 metadata:
   name: airflow-operator-manager-role
   namespace: '{{ $namespaceName }}'
+  labels:
+    tier: operator
+    release: {{ .Release.Name }}
+    chart: {{ template "operator.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
 rules:
 - apiGroups:
   - ''
