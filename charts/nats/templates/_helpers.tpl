@@ -85,7 +85,7 @@ imagePullSecrets:
 {{- end }}
 {{- end }}
 
-{{ define "nats.jetStream.serviceAccountName" -}}
+{{ define "jetStream.serviceAccountName" -}}
 {{- if and .Values.nats.jetstream.serviceAccount.create .Values.global.rbacEnabled -}}
 {{ default (printf "%s-jetstream-sa" .Release.Name) .Values.nats.jetstream.serviceAccount.name }}
 {{- else -}}
