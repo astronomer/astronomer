@@ -22,7 +22,7 @@ webhooks:
 manager:
   replicas: 1
   metrics:
-    useSecuredEndpoint: true
+    useSecuredEndpoint: false
     image:
       repository: gcr.io/kubebuilder/kube-rbac-proxy
       tag: v0.8.0
