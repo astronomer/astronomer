@@ -8,7 +8,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     tier: operator
-    control-plane: controller-manager
+    component: controller-manager
     chart: {{ template "operator.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}

@@ -6,7 +6,7 @@ kind: Deployment
 metadata:
   labels:
     tier: operator
-    control-plane: controller-manager
+    component: controller-manager
     chart: {{ template "operator.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
@@ -16,11 +16,17 @@ spec:
   replicas: {{ .Values.manager.replicas }}
   selector:
     matchLabels:
-      control-plane: controller-manager
+      tier: operator
+      component: controller-manager
+      release: {{ .Release.Name }}
   template:
     metadata:
       labels:
-        control-plane: controller-manager
+        tier: operator
+        app: operator
+        component: controller-manager
+        release: {{ .Release.Name }}
+        version: {{ .Chart.Version }}
     spec:
       imagePullSecrets: {{ toYaml .Values.manager.imagePullSecrets | nindent 8 }}
       containers: {{ include "manager.containers" . | nindent 6 }}
