@@ -61,3 +61,5 @@ ports:
   managerPort: 8081
   managerContainerPort: 8443
   managerUpstreamPort: 8080
+
+podAnnotations: {}

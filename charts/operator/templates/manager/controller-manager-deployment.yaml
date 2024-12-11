@@ -27,6 +27,13 @@ spec:
         component: controller-manager
         release: {{ .Release.Name }}
         version: {{ .Chart.Version }}
+      annotations:
+{{- if .Values.global.podAnnotations }}
+{{ toYaml .Values.global.podAnnotations | indent 8 }}
+{{- end }}
+{{- if .Values.podAnnotations }}
+{{ toYaml .Values.podAnnotations | indent 8 }}
+{{- end }}
     spec:
       imagePullSecrets: {{ toYaml .Values.manager.imagePullSecrets | nindent 8 }}
       containers: {{ include "manager.containers" . | nindent 6 }}
