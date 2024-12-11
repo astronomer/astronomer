@@ -17,7 +17,7 @@ default_probes = {
 
 pod_manager_data = {
     "charts/operator/templates/manager/controller-manager-deployment.yaml": {
-        "operator": default_probes
+        "operator": default_probes,
     },
     "charts/alertmanager/templates/alertmanager-statefulset.yaml": {
         "alertmanager": default_probes,
@@ -170,6 +170,7 @@ class TestDefaultProbes:
 
     # expected container liveness probes
     expected_clp = {
+        "airflow-operator-controller-manager_manager": {"httpGet": {"path": "/healthz", "port": 8081}},
         "alertmanager_auth-proxy": {
             "httpGet": {"path": "/healthz", "port": 8084, "scheme": "HTTP"},
             "initialDelaySeconds": 10,
@@ -269,11 +270,11 @@ class TestDefaultProbes:
             "timeoutSeconds": 5,
         },
         "stan_stan": {"httpGet": {"path": "/streaming/serverz", "port": "monitor"}, "initialDelaySeconds": 10, "timeoutSeconds": 5},
-        "operator_operator": {"httpGet": {"path": "/healthz", "port": 8081}, "initialDelaySeconds": 15, "periodSeconds": 20},
     }
 
     # expected container readiness probes
     expected_crp = {
+        "airflow-operator-controller-manager_manager": {"httpGet": {"path": "/readyz", "port": 8081}},
         "alertmanager_alertmanager": {
             "httpGet": {"path": "/#/status", "port": 9093},
             "initialDelaySeconds": 30,
@@ -352,7 +353,6 @@ class TestDefaultProbes:
             "timeoutSeconds": 5,
         },
         "stan_stan": {"httpGet": {"path": "/streaming/serverz", "port": "monitor"}, "initialDelaySeconds": 10, "timeoutSeconds": 5},
-        "operator_operator": {"httpGet": {"path": "/readyz", "port": 8081}, "initialDelaySeconds": 5, "periodSeconds": 10},
     }
 
     # liveness probe data and ids
