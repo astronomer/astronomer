@@ -12,7 +12,7 @@ metadata:
     heritage: {{ .Release.Service }}
     release: {{ .Release.Name }}
 data:
-  nginx.conf: |-
+  nginx.conf: |
     worker_processes 1;
     pid /tmp/nginx.pid;
     events { worker_connections 1024; }
