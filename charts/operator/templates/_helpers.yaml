@@ -4,7 +4,7 @@
 caBundle: "{{ .Values.webhooks.caBundle | b64enc }}"
 {{ end -}}
 service:
-  name: airflow-operator-webhook-service
+  name: {{ .Release.Name }}-airflow-operator-webhook-service
   namespace: '{{ .Release.Namespace }}'
   path: '{{ .path }}'
 {{- end }}
