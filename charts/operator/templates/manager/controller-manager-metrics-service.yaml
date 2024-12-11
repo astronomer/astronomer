@@ -17,5 +17,7 @@ spec:
   - name: https
     port: 8443
     targetPort: https
+    appProtocol: http
+    protocol: TCP
   selector:
     component: controller-manager

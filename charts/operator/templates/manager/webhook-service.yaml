@@ -12,8 +12,14 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 spec:
-  ports:
-  - port: 443
-    targetPort: 9443
+  type: ClusterIP
   selector:
     component: controller-manager
+    tier: operator
+    release: {{ .Release.Name }}
+  ports:
+  - name: webhook-http
+    port: 443
+    protocol: TCP
+    targetPort: 9443
+    appProtocol: http
