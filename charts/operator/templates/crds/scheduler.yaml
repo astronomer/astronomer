@@ -1,0 +1,367 @@
+{{ if .Values.crd.create }}
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    cert-manager.io/inject-ca-from: '{{ .Release.Namespace }}/airflow-operator-serving-cert'
+  name: schedulers.airflow.apache.org
+spec:
+  conversion:
+    strategy: Webhook
+    webhook:
+      clientConfig: {{ include "webhooks.clientConfig" (dict "path" "/convert" "Values" .Values "Release" .Release) | indent 8 }}
+      conversionReviewVersions:
+      - v1
+  group: airflow.apache.org
+  names:
+    kind: Scheduler
+    listKind: SchedulerList
+    plural: schedulers
+    singular: scheduler
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .metadata.creationTimestamp
+      name: age
+      type: date
+    - jsonPath: .status.status
+      name: Status
+      type: string
+    - jsonPath: .status.readyReplicas
+      name: Ready
+      type: integer
+    - jsonPath: .spec.replicas
+      name: Desired
+      type: integer
+    name: v1beta1
+    schema:
+      openAPIV3Schema:
+        properties:
+          apiVersion:
+            type: string
+          kind:
+            type: string
+          metadata:
+            type: object
+          spec:
+            properties:
+              airflowLocalSettings:
+                properties:
+                  configMapName:
+                    type: string
+                  customPodMutationHook:
+                    default: ''
+                    type: string
+                  enableAstroPodMutationHook:
+                    default: false
+                    type: boolean
+                  externallyManaged:
+                    default: false
+                    type: boolean
+                  extra:
+                    default: ''
+                    type: string
+                type: object
+              airflowSecrets:
+                properties:
+                  fernetKeySecretName:
+                    default: ''
+                    type: string
+                  metadataSecretName:
+                    default: ''
+                    type: string
+                  pgbouncerConnectionSecretName:
+                    default: ''
+                    type: string
+                  redisConnectionSecretName:
+                    default: ''
+                    type: string
+                  redisPasswordSecretName:
+                    default: ''
+                    type: string
+                  resultBackendSecretName:
+                    default: ''
+                    type: string
+                  webserverSecretKeySecretName:
+                    default: ''
+                    type: string
+                type: object
+              antiAffinity:
+                enum:
+                - node
+                - zone
+                - none
+                type: string
+              customLabels:
+                additionalProperties:
+                  type: string
+                type: object
+              databaseSSLMode:
+                default: ''
+                type: string
+              databaseSSLSecretName:
+                default: ''
+                type: string
+              enableNetworkPolicies:
+                type: boolean
+              env:
+                items:
+                  properties:
+                    name:
+                      type: string
+                    value:
+                      type: string
+                    valueFrom:
+                      properties:
+                        configMapKeyRef:
+                          properties:
+                            key:
+                              type: string
+                            name:
+                              default: ''
+                              type: string
+                            optional:
+                              type: boolean
+                          required:
+                          - key
+                          type: object
+                          x-kubernetes-map-type: atomic
+                        fieldRef:
+                          properties:
+                            apiVersion:
+                              type: string
+                            fieldPath:
+                              type: string
+                          required:
+                          - fieldPath
+                          type: object
+                          x-kubernetes-map-type: atomic
+                        resourceFieldRef:
+                          properties:
+                            containerName:
+                              type: string
+                            divisor:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                              x-kubernetes-int-or-string: true
+                            resource:
+                              type: string
+                          required:
+                          - resource
+                          type: object
+                          x-kubernetes-map-type: atomic
+                        secretKeyRef:
+                          properties:
+                            key:
+                              type: string
+                            name:
+                              default: ''
+                              type: string
+                            optional:
+                              type: boolean
+                          required:
+                          - key
+                          type: object
+                          x-kubernetes-map-type: atomic
+                      type: object
+                  required:
+                  - name
+                  type: object
+                type: array
+              executionModes:
+                items:
+                  type: string
+                type: array
+              executor:
+                default: CeleryExecutor
+                enum:
+                - LocalExecutor
+                - CeleryExecutor
+                - KubernetesExecutor
+                - StellarExecutor
+                - AstroRuntimeExecutor
+                - AstroExecutor
+                type: string
+              extraNetworkPolicyRules:
+                type: object
+                x-kubernetes-preserve-unknown-fields: true
+              gid:
+                default: 50000
+                format: int64
+                type: integer
+              image:
+                type: string
+              imagePullSecret:
+                type: string
+              logRetentionDays:
+                default: 15
+                format: int32
+                type: integer
+              logServingPort:
+                default: 8793
+                format: int32
+                minimum: 0
+                type: integer
+              persistData:
+                default: false
+                type: boolean
+              pgbouncer:
+                type: boolean
+              podAnnotations:
+                additionalProperties:
+                  type: string
+                type: object
+              podTemplateConfigMapName:
+                type: string
+              podTemplateSpec:
+                type: object
+                x-kubernetes-preserve-unknown-fields: true
+              replicas:
+                default: 1
+                format: int32
+                minimum: 0
+                type: integer
+              runtimeVersion:
+                pattern: ^(0|[1-9]\d*)\.(0|[1-9]\d*)(-|\.)(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$
+                type: string
+              serviceAccountAnnotations:
+                additionalProperties:
+                  type: string
+                type: object
+              statsd:
+                properties:
+                  customLabels:
+                    additionalProperties:
+                      type: string
+                    type: object
+                  enableNetworkPolicies:
+                    type: boolean
+                  enabled:
+                    default: true
+                    type: boolean
+                  extraNetworkPolicyRules:
+                    type: object
+                    x-kubernetes-preserve-unknown-fields: true
+                  hostName:
+                    type: string
+                  image:
+                    type: string
+                  ingestPort:
+                    default: 9125
+                    format: int32
+                    type: integer
+                  nodeSelector:
+                    additionalProperties:
+                      type: string
+                    type: object
+                  podTemplateSpec:
+                    type: object
+                    x-kubernetes-preserve-unknown-fields: true
+                  replicas:
+                    default: 1
+                    format: int32
+                    minimum: 0
+                    type: integer
+                  resources:
+                    default:
+                      limits:
+                        cpu: 200m
+                        memory: 768Mi
+                      requests:
+                        cpu: 200m
+                        memory: 768Mi
+                    properties:
+                      claims:
+                        items:
+                          properties:
+                            name:
+                              type: string
+                            request:
+                              type: string
+                          required:
+                          - name
+                          type: object
+                        type: array
+                        x-kubernetes-list-map-keys:
+                        - name
+                        x-kubernetes-list-type: map
+                      limits:
+                        additionalProperties:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        type: object
+                      requests:
+                        additionalProperties:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        type: object
+                    type: object
+                  scrapePort:
+                    default: 9102
+                    format: int32
+                    type: integer
+                  tolerations:
+                    items:
+                      properties:
+                        effect:
+                          type: string
+                        key:
+                          type: string
+                        operator:
+                          type: string
+                        tolerationSeconds:
+                          format: int64
+                          type: integer
+                        value:
+                          type: string
+                      type: object
+                    type: array
+                type: object
+              uid:
+                default: 50000
+                format: int64
+                type: integer
+            type: object
+          status:
+            properties:
+              observedGeneration:
+                format: int64
+                type: integer
+              readyReplicas:
+                default: 0
+                format: int32
+                type: integer
+              reason:
+                type: string
+              replicas:
+                default: 0
+                format: int32
+                type: integer
+              selector:
+                default: app=airflow,component=scheduler
+                type: string
+              status:
+                type: string
+            required:
+            - readyReplicas
+            - replicas
+            - selector
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      scale:
+        labelSelectorPath: .status.selector
+        specReplicasPath: .spec.replicas
+        statusReplicasPath: .status.replicas
+      status: {}
+{{- end }}

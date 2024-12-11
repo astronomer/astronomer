@@ -266,6 +266,7 @@ class TestDefaultProbes:
             "timeoutSeconds": 5,
         },
         "stan_stan": {"httpGet": {"path": "/streaming/serverz", "port": "monitor"}, "initialDelaySeconds": 10, "timeoutSeconds": 5},
+        "operator_operator": {"httpGet": {"path": "/healthz", "port": 8081}, "initialDelaySeconds": 15, "periodSeconds": 20},
     }
 
     # expected container readiness probes
@@ -348,6 +349,7 @@ class TestDefaultProbes:
             "timeoutSeconds": 5,
         },
         "stan_stan": {"httpGet": {"path": "/streaming/serverz", "port": "monitor"}, "initialDelaySeconds": 10, "timeoutSeconds": 5},
+        "operator_operator": {"httpGet": {"path": "/readyz", "port": 8081}, "initialDelaySeconds": 5, "periodSeconds": 10},
     }
 
     # liveness probe data and ids
