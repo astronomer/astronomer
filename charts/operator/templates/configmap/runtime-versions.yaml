@@ -1,6 +1,6 @@
-######################
-# Operator ConfigMap #
-######################
+##############################
+# Runtime Version ConfigMap ##
+##############################
 {{ if and .Values.airgapped .Values.runtimeVersions.configMapName .Values.runtimeVersions.versionsJson .Values.global.operator.enabled -}}
 apiVersion: v1
 kind: ConfigMap

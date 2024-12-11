@@ -95,6 +95,7 @@ class TestServiceAccounts:
                 "customLogging": {"enabled": True},
                 "prometheusPostgresExporterEnabled": True,
                 "pgbouncer": {"enabled": True},
+                "operator": {"enabled": True},
             },
             "astronomer": {
                 "commander": {"serviceAccount": {"create": False}},
@@ -119,6 +120,7 @@ class TestServiceAccounts:
             "kube-state": {"serviceAccount": {"create": False}},
             "prometheus": {"serviceAccount": {"create": False}},
             "elasticsearch": {"common": {"serviceAccount": {"create": False}}},
+            "operator": {"serviceAccount": {"create": False}},
         }
         show_only = [
             str(path.relative_to(git_root_dir)) for path in git_root_dir.rglob("charts/**/*") if "serviceaccount" in str(path)
@@ -141,6 +143,7 @@ class TestServiceAccounts:
                 "customLogging": {"enabled": True},
                 "prometheusPostgresExporterEnabled": True,
                 "pgbouncer": {"enabled": True},
+                "operator": {"enabled": True},
             },
             "astronomer": {
                 "commander": {"serviceAccount": {"create": True, "annotations": annotations}},
@@ -168,6 +171,7 @@ class TestServiceAccounts:
             "kube-state": {"serviceAccount": {"create": True, "annotations": annotations}},
             "prometheus": {"serviceAccount": {"create": True, "annotations": annotations}},
             "elasticsearch": {"common": {"serviceAccount": {"create": True, "annotations": annotations}}},
+            "operator": {"serviceAccount": {"create": True,"annotations": annotations}},
         }
         show_only = [
             str(path.relative_to(git_root_dir)) for path in git_root_dir.rglob("charts/**/*") if "serviceaccount" in str(path)
