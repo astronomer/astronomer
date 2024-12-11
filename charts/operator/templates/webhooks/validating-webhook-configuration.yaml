@@ -132,7 +132,7 @@ webhooks:
   - v1
   clientConfig:
     service:
-      name: airflow-operator-webhook-service
+      name: {{ .Release.Name }}-airflow-operator-webhook-service
       namespace: airflow-operator-system
       path: /validate-airflow-apache-org-v1beta1-webserver-scale
   failurePolicy: Fail
