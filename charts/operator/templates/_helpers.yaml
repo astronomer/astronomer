@@ -96,7 +96,7 @@ service:
   {{- else }}
   readinessProbe:
     httpGet:
-      path: /readyz 
+      path: /readyz
       port: {{ .Values.ports.managerPort }}
   {{- end }}
 {{- if .Values.manager.metrics.useSecuredEndpoint }}
