@@ -1,4 +1,3 @@
-import functools
 from pathlib import Path
 
 import yaml
@@ -6,7 +5,6 @@ import yaml
 from tests.chart_tests.helm_template_generator import render_chart
 
 
-@functools.lru_cache
 def get_all_features():
     return yaml.safe_load((Path(__file__).parent.parent / "enable_all_features.yaml").read_text())
 
