@@ -92,6 +92,7 @@ def render_chart(
     """
     values = values or {}
     chart_dir = chart_dir or sys.path[0]
+    enable_all_features_path = os.path.join(chart_dir, "tests/enable_all_features.yaml")
     with NamedTemporaryFile(delete=not DEBUG) as tmp_file:  # export DEBUG=true to keep
         content = yaml.dump(values)
         tmp_file.write(content.encode())
@@ -105,6 +106,8 @@ def render_chart(
             chart_dir,
             "--set",
             f"global.baseDomain={baseDomain}",
+            "--values",
+            enable_all_features_path,
             "--values",
             tmp_file.name,
         ]
