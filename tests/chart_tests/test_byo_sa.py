@@ -267,6 +267,9 @@ def test_default_serviceaccount_names(template_name):
 
 
 custom_service_account_names = {
+    "charts/operator/templates/manager/controller-manager-deployment.yaml":{
+        "operator": {"serviceAccount": {"create": True, "name": "prothean"}}
+    },
     "charts/alertmanager/templates/alertmanager-statefulset.yaml": {
         "alertmanager": {"serviceAccount": {"create": True, "name": "prothean"}}
     },
