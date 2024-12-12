@@ -18,10 +18,8 @@ default_probes = {
 pod_manager_data = {
     "charts/operator/templates/manager/controller-manager-deployment.yaml": {
         "operator": default_probes,
-        "global":{
-            "operator": {
-                "enabled" : True
-            },
+        "global": {
+            "operator": {"enabled": True},
         },
     },
     "charts/alertmanager/templates/alertmanager-statefulset.yaml": {
