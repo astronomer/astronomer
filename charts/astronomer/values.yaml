@@ -299,7 +299,6 @@ houston:
   #
   airflowReleasesConfigMapName: ~
   airflowReleasesConfig:
-    configMapName: ~
     # example of usage:
     # available_releases:
     # - version: 1.10.7-15
@@ -331,8 +330,7 @@ houston:
     #   channel: stable
 
   runtimeReleasesConfigMapName: ~
-  RuntimeReleasesConfig:
-    configMapName: ~
+  runtimeReleasesConfig:
     # example of usage:
     # below are default mandatory fields
     # runtimeVersions:
