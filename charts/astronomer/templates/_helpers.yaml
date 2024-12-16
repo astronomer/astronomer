@@ -361,7 +361,7 @@ s3:
 {{- if .Values.houston.airflowReleasesConfigMapName }}
 - name: certifiedversions
   configMap:
-    name: {{ .Values.houston.airflowReleasesConfigMapName  }}
+    name: {{ .Values.houston.airflowReleasesConfigMapName }}
 {{- end }}
 {{- end }}
 
