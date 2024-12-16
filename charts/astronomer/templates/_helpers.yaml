@@ -358,7 +358,7 @@ s3:
   configMap:
     name: {{ .Values.houston.runtimeReleasesConfigMapName }}
 {{- end }}
-{{- if .Values.houston.airflowReleasesConfigMapName  }}
+{{- if .Values.houston.airflowReleasesConfigMapName }}
 - name: certifiedversions
   configMap:
     name: {{ .Values.houston.airflowReleasesConfigMapName  }}
