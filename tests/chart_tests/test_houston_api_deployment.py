@@ -249,13 +249,13 @@ class TestHoustonApiDeployment:
         assert {
             "name": "runtimeversions",
             "mountPath": "/houston/astro_runtime_releases.json",
-            "subPath": runtimeConfigmapName,
+            "subPath": "astro_runtime_releases.json",
         } in c_by_name["houston"]["volumeMounts"]
 
         assert {
             "name": "certifiedversions",
             "mountPath": "/houston/airflow_releases.json",
-            "subPath": certifiedConfigmapName,
+            "subPath": "airflow_releases.json",
         } in c_by_name["houston"]["volumeMounts"]
 
         assert {"configMap": {"name": runtimeConfigmapName}, "name": "runtimeversions"} in doc["spec"]["template"]["spec"][

@@ -311,7 +311,7 @@ s3:
   name: runtimeversions
   subPath: astro_runtime_releases.json
 {{- end }}
-{{- if .Values.houston.airflowReleasesConfigMapName -}}
+{{ if .Values.houston.airflowReleasesConfigMapName -}}
 - mountPath: /houston/airflow_releases.json
   name: certifiedversions
   subPath: airflow_releases.json
