@@ -280,7 +280,7 @@ s3:
   mountPath: /houston/airflow_releases.json
   subPath: airflow_releases.json
 {{- end }}
-{{ if and .Values.houston.RuntimeReleasesConfig ( not .Values.houston.runtimeReleasesconfigMapName ) }}
+{{ if and .Values.houston.runtimeReleasesConfig ( not .Values.houston.runtimeReleasesConfigMapName ) }}
 - name: houston-config-volume
   mountPath: /houston/astro_runtime_releases.json
   subPath: astro_runtime_releases.json
@@ -306,12 +306,12 @@ s3:
   mountPath: /usr/local/share/ca-certificates/{{ $secretName }}.crt
   subPath: ca.crt
 {{- end }}
-{{- if .Values.houston.runtimeReleasesconfigMapName -}}
+{{- if .Values.houston.runtimeReleasesConfigMapName -}}
 - mountPath: /houston/astro_runtime_releases.json
   name: runtimeversions
   subPath: astro_runtime_releases.json
 {{- end }}
-{{- if .Values.houston.airflowReleasesconfigMapName -}}
+{{- if .Values.houston.airflowReleasesConfigMapName -}}
 - mountPath: /houston/airflow_releases.json
   name: certifiedversions
   subPath: airflow_releases.json
@@ -353,15 +353,15 @@ s3:
   secret:
     secretName: {{ $secretName }}
 {{- end }}
-{{- if .Values.houston.runtimeReleasesconfigMapName -}}
+{{- if .Values.houston.runtimeReleasesConfigMapName }}
 - name: runtimeversions
   configMap:
-    name: {{ .Values.houston.runtimeReleasesconfigMapName }}
+    name: {{ .Values.houston.runtimeReleasesConfigMapName }}
 {{- end }}
-{{- if .Values.houston.airflowReleasesconfigMapName  -}}
+{{- if .Values.houston.airflowReleasesConfigMapName  }}
 - name: certifiedversions
   configMap:
-    name: {{ .Values.houston.airflowReleasesconfigMapName  }}
+    name: {{ .Values.houston.airflowReleasesConfigMapName  }}
 {{- end }}
 {{- end }}
 

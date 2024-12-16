@@ -218,3 +218,45 @@ class TestHoustonApiDeployment:
             "mountPath": "/houston/astro_runtime_releases.json",
             "subPath": "astro_runtime_releases.json",
         } in c_by_name["houston"]["volumeMounts"]
+
+    def test_houston_configmap_with_airflow_and_runtime_configmap_name_enabled(self, kube_version):
+        """Validate that houston configmap and its embedded data with runtime and airflow configmap name defined
+        ."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "astronomer": {
+                    "houston": {
+                        "runtimeReleasesConfigMapName": "runtime-certfied-json",
+                        "airflowReleasesConfigMapName": "certified-json",
+                    }
+                }
+            },
+            show_only=[
+                "charts/astronomer/templates/houston/houston-configmap.yaml",
+                "charts/astronomer/templates/houston/api/houston-deployment.yaml",
+            ],
+        )
+        doc = docs[0]
+        assert "astro_runtime_releases.json" not in doc["data"]
+        assert "airflow_releases.json" not in doc["data"]
+        doc = docs[1]
+        c_by_name = get_containers_by_name(doc, include_init_containers=False)
+        print(c_by_name["houston"]["volumeMounts"])
+        assert {
+            "name": "runtimeversions",
+            "mountPath": "/houston/astro_runtime_releases.json",
+            "subPath": "astro_runtime_releases.json",
+        } in c_by_name["houston"]["volumeMounts"]
+
+        assert {
+            "name": "certifiedversions",
+            "mountPath": "/houston/airflow_releases.json",
+            "subPath": "airflow_releases.json",
+        } in c_by_name["houston"]["volumeMounts"]
+
+        assert {"configMap": {"name": "runtime-certfied-json"}, "name": "runtimeversions"} in doc["spec"]["template"]["spec"][
+            "volumes"
+        ]
+
+        assert {"configMap": {"name": "certified-json"}, "name": "certifiedversions"} in doc["spec"]["template"]["spec"]["volumes"]
