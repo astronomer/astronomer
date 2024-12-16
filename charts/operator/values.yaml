@@ -5,6 +5,7 @@ crd:
 certManager:
   enabled: false
 
+postgresEnabled: false
 runtimeVersions:
   configMapName: ""
   versionsJson: ""
