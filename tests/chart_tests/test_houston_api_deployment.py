@@ -196,13 +196,13 @@ class TestHoustonApiDeployment:
             if "__HOST" in env.get("name") and env.get("value")
         )
 
-    def test_houston_configmap_with_RuntimeReleasesConfig_enabled(self, kube_version):
+    def test_houston_configmap_with_runtimeReleasesConfig_enabled(self, kube_version):
         """Validate the houston configmap and its embedded data with RuntimeReleasesConfig defined
         ."""
         runtime_releases_json = {"runtimeVersions": {"12.1.1": {"metadata": {"airflowVersion": "2.2.5", "channel": "stable"}}}}
         docs = render_chart(
             kube_version=kube_version,
-            values={"astronomer": {"houston": {"RuntimeReleasesConfig": runtime_releases_json}}},
+            values={"astronomer": {"houston": {"runtimeReleasesConfig": runtime_releases_json}}},
             show_only=[
                 "charts/astronomer/templates/houston/houston-configmap.yaml",
                 "charts/astronomer/templates/houston/api/houston-deployment.yaml",
@@ -222,13 +222,16 @@ class TestHoustonApiDeployment:
     def test_houston_configmap_with_airflow_and_runtime_configmap_name_enabled(self, kube_version):
         """Validate that houston configmap and its embedded data with runtime and airflow configmap name defined
         ."""
+        runtimeConfigmapName = "runtime-certfied-json"
+        certifiedConfigmapName = "certified-json"
+
         docs = render_chart(
             kube_version=kube_version,
             values={
                 "astronomer": {
                     "houston": {
-                        "runtimeReleasesConfigMapName": "runtime-certfied-json",
-                        "airflowReleasesConfigMapName": "certified-json",
+                        "runtimeReleasesConfigMapName": runtimeConfigmapName,
+                        "airflowReleasesConfigMapName": certifiedConfigmapName,
                     }
                 }
             },
@@ -246,17 +249,17 @@ class TestHoustonApiDeployment:
         assert {
             "name": "runtimeversions",
             "mountPath": "/houston/astro_runtime_releases.json",
-            "subPath": "astro_runtime_releases.json",
+            "subPath": runtimeConfigmapName,
         } in c_by_name["houston"]["volumeMounts"]
 
         assert {
             "name": "certifiedversions",
             "mountPath": "/houston/airflow_releases.json",
-            "subPath": "airflow_releases.json",
+            "subPath": certifiedConfigmapName,
         } in c_by_name["houston"]["volumeMounts"]
 
-        assert {"configMap": {"name": "runtime-certfied-json"}, "name": "runtimeversions"} in doc["spec"]["template"]["spec"][
+        assert {"configMap": {"name": runtimeConfigmapName}, "name": "runtimeversions"} in doc["spec"]["template"]["spec"][
             "volumes"
         ]
 
-        assert {"configMap": {"name": "certified-json"}, "name": "certifiedversions"} in doc["spec"]["template"]["spec"]["volumes"]
+        assert {"configMap": {"name": certifiedConfigmapName}, "name": "certifiedversions"} in doc["spec"]["template"]["spec"]["volumes"]
