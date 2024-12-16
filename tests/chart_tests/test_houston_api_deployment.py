@@ -262,4 +262,6 @@ class TestHoustonApiDeployment:
             "volumes"
         ]
 
-        assert {"configMap": {"name": certifiedConfigmapName}, "name": "certifiedversions"} in doc["spec"]["template"]["spec"]["volumes"]
+        assert {"configMap": {"name": certifiedConfigmapName}, "name": "certifiedversions"} in doc["spec"]["template"]["spec"][
+            "volumes"
+        ]
