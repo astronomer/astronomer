@@ -220,8 +220,7 @@ class TestHoustonApiDeployment:
         } in c_by_name["houston"]["volumeMounts"]
 
     def test_houston_configmap_with_airflow_and_runtime_configmap_name_enabled(self, kube_version):
-        """Validate that houston configmap and its embedded data with runtime and airflow configmap name defined
-        ."""
+        """Validate that houston configmap and its embedded data with runtime and airflow configmap name defined."""
         runtimeConfigmapName = "runtime-certfied-json"
         certifiedConfigmapName = "certified-json"
 
