@@ -11,11 +11,16 @@ class TestHoustonPDB:
             "charts/astronomer/templates/houston/cronjobs/houston-check-updates-cronjob.yaml",
             "charts/astronomer/templates/houston/cronjobs/houston-cleanup-deployments-cronjob.yaml",
         ]
-
         for show_only in templates:
             labels = render_chart(
                 show_only=[show_only],
-                values={},
+                values={
+                    "astronomer": {
+                        "houston": {
+                            "updateCheck": {"enabled": True }
+                            }
+                            }
+                },
             )[0]["spec"]["jobTemplate"]["spec"]["template"]["metadata"]["labels"]
             assert labels["component"] != "houston", f"ERROR: tempplate '{show_only}' matched houston"
 
