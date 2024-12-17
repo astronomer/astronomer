@@ -12,14 +12,14 @@ metadata:
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
 data:
-  {{ if .Values.houston.airflowReleasesConfig }}
+  {{ if and .Values.houston.airflowReleasesConfig ( not .Values.houston.airflowReleasesConfigMapName ) }}
   airflow_releases.json: |
     {{ .Values.houston.airflowReleasesConfig | toJson }}
   # These are system-specified config overrides.
   {{- end }}
-  {{ if .Values.houston.RuntimeReleasesConfig }}
+  {{ if and .Values.houston.runtimeReleasesConfig ( not .Values.houston.runtimeReleasesConfigMapName ) }}
   astro_runtime_releases.json: |
-    {{ .Values.houston.RuntimeReleasesConfig | toJson }}
+    {{ .Values.houston.runtimeReleasesConfig | toJson }}
   # These are system-specified config overrides.
   {{- end }}
   production.yaml: |
