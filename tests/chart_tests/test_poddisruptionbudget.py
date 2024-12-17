@@ -14,13 +14,7 @@ class TestHoustonPDB:
         for show_only in templates:
             labels = render_chart(
                 show_only=[show_only],
-                values={
-                    "astronomer": {
-                        "houston": {
-                            "updateCheck": {"enabled": True }
-                            }
-                            }
-                },
+                values={"astronomer": {"houston": {"updateCheck": {"enabled": True}}}},
             )[0]["spec"]["jobTemplate"]["spec"]["template"]["metadata"]["labels"]
             assert labels["component"] != "houston", f"ERROR: tempplate '{show_only}' matched houston"
 
