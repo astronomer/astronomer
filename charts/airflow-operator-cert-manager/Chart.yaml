@@ -1,0 +1,12 @@
+apiVersion: v2
+name: cert-manager
+version: 1.5.4
+description: A Helm chart for cert-manager
+type: application
+keywords:
+  - cert-manager
+  - kube-lego
+  - tls
+  - certificates
+sources:
+  - https://github.com/cert-manager/cert-manager

@@ -1,0 +1,23 @@
+cert-manager:
+  installCRDs: true
+  replicaCount: 1
+
+webhook:
+  enabled: true
+  
+controller:
+  enabled: true
+  
+cainjector:
+  enabled: true
+
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1001
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+extraArgs: []
+podAnnotations: {}
