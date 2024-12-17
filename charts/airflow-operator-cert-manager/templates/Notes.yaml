@@ -1,0 +1,17 @@
+# Cert-manager has been installed as a dependency for the Airflow Operator.
+
+# Resources installed:
+# - CRDs for certificate management
+# - cert-manager controller
+# - cert-manager webhook
+# - cert-manager cainjector
+
+# To verify the installation, run:
+# kubectl get pods -n cert-manager
+
+# The above should give output as:
+
+# NAME                                       READY   STATUS    RESTARTS       AGE
+# cert-manager-6bbd888fd8-zh9zv              1/1     Running   0              6d1h
+# cert-manager-cainjector-7bd87c7d4c-6j7j9   1/1     Running   1 (5d7h ago)   6d1h
+# cert-manager-webhook-6455d847bd-78nlf      1/1     Running   0              6d1h
