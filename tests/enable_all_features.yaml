@@ -21,6 +21,8 @@ astronomer:
   houston:
     cleanupAirflowDb:
       enabled: true
+    updateCheck:
+      enabled: true
 nats:
   nats:
     createJetStreamJob: true
