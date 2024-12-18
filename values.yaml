@@ -82,7 +82,12 @@ global:
   #nodeExporterEnabled: true
 
   prometheusPostgresExporterEnabled: false
-
+  prometheus:
+    rbac:
+      role:
+        create: true
+      roleBinding:
+        create: true
   # Enables blackbox exporter
   #blackboxExporterEnabled: false
 
@@ -470,6 +475,16 @@ prometheus:
       requests:
         cpu: 100m
         memory: 25Mi
+
+  filesdReloader:
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 500m
+        memory: 512Mi
+
 
 nats:
   nodeSelector:
