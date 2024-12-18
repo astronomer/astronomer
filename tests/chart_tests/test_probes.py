@@ -92,7 +92,7 @@ pod_manager_data = {
     },
     "charts/postgresql/templates/statefulset.yaml": {"postgresql": default_probes, "global": {"postgresqlEnabled": True}},
     "charts/prometheus/templates/prometheus-statefulset.yaml": {
-        "prometheus": {**default_probes, "configMapReloader": default_probes}
+        "prometheus": {**default_probes, "configMapReloader": default_probes, "filesdReloader": default_probes}
     },
     "charts/prometheus-blackbox-exporter/templates/deployment.yaml": {"prometheus-blackbox-exporter": default_probes},
     "charts/prometheus-node-exporter/templates/daemonset.yaml": {"prometheus-node-exporter": default_probes},
