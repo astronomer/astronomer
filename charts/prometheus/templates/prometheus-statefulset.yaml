@@ -110,11 +110,16 @@ spec:
             mountPath: /etc/prometheus/alerts.d
           - name: prometheus-config-volume
             mountPath: /etc/prometheus/config
-
         - name: filesd-reloader
           image: {{ include "filesdReloader.image" . }}
           imagePullPolicy: {{ .Values.images.filesdReloader.pullPolicy }}
-          resources: {{ toYaml .Values.configMapReloader.resources | nindent 12 }}
+          resources: {{ toYaml .Values.filesdReloader.resources | nindent 12 }}
+          {{- if .Values.filesdReloader.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.filesdReloader.livenessProbe) . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.filesdReloader.readinessProbe }}
+          readinessProbe: {{ tpl (toYaml .Values.filesdReloader.readinessProbe) . | nindent 12 }}
+          {{- end }}
           env:
             - name: DATABASE_URL
               valueFrom:
