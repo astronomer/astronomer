@@ -2,7 +2,8 @@
 ## Prometheus Role/ClusterRole ##
 #################################
 {{- $singleNamespace := .Values.global.singleNamespace }}
-{{- $useClusterRoles := and .Values.global.rbacEnabled .Values.global.clusterRoles }}
+{{- if and .Values.global.rbacEnabled .Values.serviceAccount.create }}
+{{- $useClusterRoles := and .Values.global.rbacEnabled .Values.global.clusterRoles .Values.serviceAccount.create }}
 kind: {{ if or $singleNamespace (not $useClusterRoles ) }}Role{{ else }}ClusterRole{{ end }}
 apiVersion: {{ template "apiVersion.rbac" . }}
 metadata:
@@ -34,3 +35,4 @@ rules:
     verbs:
       - "get"
   {{- end }}
+{{- end }}
