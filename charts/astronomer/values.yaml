@@ -249,7 +249,7 @@ houston:
   # This runs as a CronJob
   updateCheck:
     # Enable check updates CronJob
-    enabled: true
+    enabled: false
 
     # url for update service
     url: https://updates.astronomer.io/astronomer-platform
