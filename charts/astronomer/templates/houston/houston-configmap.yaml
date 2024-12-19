@@ -71,6 +71,9 @@ data:
       {{- end }}
     # Airflow deployment configuration
     deployments:
+      mode:
+        operator:
+          enabled: {{.Values.global.operator.enabled}}
       disableManageClusterScopedResources: {{ default false ( or .Values.global.disableManageClusterScopedResources  .Values.global.features.namespacePools.enabled ) }}
       fluentdIndexPrefix: {{ include "fluentd.IndexPattern" .}}
       enableHoustonInternalAuthorization: {{ include "houston.InternalAuthorization" . }}
