@@ -4,8 +4,8 @@ description: Official Helm chart to deploy the Astronomer Airflow Operator in yo
 type: application
 version: "0.1.0"
 appVersion: "0.1.0"
-# dependencies:
-#   - name: airflow-operator-cert-manager
-#     version: "1.5.4"
-#     repository: file://../airflow-operator-cert-manager
-#     condition: airflow-operator-cert-manager.enabled
+dependencies:
+  - name: airflow-operator-cert-manager
+    version: "1.5.4"
+    repository: file://../airflow-operator-cert-manager
+    condition: airflow-operator-cert-manager.enabled
