@@ -488,6 +488,7 @@ workflows:
             branches:
               only:
                 - '/^release-0\.\d+$/'
+                - 'fix-6822-operator'
           requires:
             - approve-internal-release
             - platform-1-27-16
