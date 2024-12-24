@@ -135,6 +135,8 @@ global:
         fsGroup: 50000
     resources: {}
     persistence: {}
+    readinessProbe: {}
+    livenessProbe: {}
 
   logging:
     indexNamePrefix: ~
@@ -165,6 +167,8 @@ global:
     pullPolicy: IfNotPresent
     port: 8084
     securityContext: {}
+    readinessProbe: {}
+    livenessProbe: {}
     default_nginx_settings: |
       internal;
       proxy_pass_request_body     off;
