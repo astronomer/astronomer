@@ -48,6 +48,7 @@ spec:
       tolerations:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       restartPolicy: Never
+{{- include "astronomer.imagePullSecrets" . | indent 6 }}
       serviceAccountName: {{ template "houston.bootstrapperServiceAccountName" . }}
       {{- if and (not .Values.houston.airflowBackendSecretName) (not .Values.houston.airflowBackendConnection) }}
       initContainers:
@@ -101,7 +102,6 @@ spec:
             - name: IN_CLUSTER
               value: "true"
       {{- end }}
-{{- include "astronomer.imagePullSecrets" . | indent 6 }}
       containers:
         - name: post-upgrade-job
           image: {{ template "houston.image" . }}
