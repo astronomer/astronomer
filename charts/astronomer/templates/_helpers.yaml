@@ -136,8 +136,8 @@
 {{- end }}
 
 {{ define "houston.bootstrapperServiceAccountName" -}}
-{{- if and .Values.houston.serviceAccount.create .Values.global.rbacEnabled (and (not .Values.houston.backendSecretName) (not .Values.houston.backendConnection)) }}
-{{ default (printf "%s-houston-bootstrapper" .Release.Name ) .Values.houston.serviceAccount.name }}
+{{- if and .Values.houston.serviceAccount.create .Values.global.rbacEnabled (not .Values.houston.backendSecretName) (not .Values.houston.backendConnection) }}
+{{- default (printf "%s-houston-bootstrapper" .Release.Name ) .Values.houston.serviceAccount.name }}
 {{- else -}}
     {{ default "default" .Values.houston.serviceAccount.name }}
 {{- end }}
