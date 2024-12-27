@@ -113,6 +113,28 @@ class TestHoustonHookJob:
         assert c_by_name["houston-bootstrapper"]["resources"] == overrides
         assert c_by_name["houston-db-migrations-job"]["resources"] == overrides
 
+    def test_db_migration_job_init_containers_disabled_with_custom_secret_name(self, kube_version):
+        """Test Upgrade Deployments Job Init Containers are disabled when custom secret name is passed."""
+
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "astronomer": {
+                    "houston": {
+                        "upgradeDeployments": {"enabled": True},
+                        "airflowBackendSecretName": "afwbackend",
+                        "backendSecretName": "houstonbackend",
+                    }
+                }
+            },
+            show_only=["charts/astronomer/templates/houston/helm-hooks/houston-db-migration-job.yaml"],
+        )
+
+        assert len(docs) == 1
+        spec = docs[0]["spec"]["template"]["spec"]
+        assert "initContainers" not in spec
+        assert "default" == spec["serviceAccountName"]
+
     def test_upgrade_deployments_init_containers_disabled_with_custom_secret_name(self, kube_version):
         """Test Upgrade Deployments Job Init Containers are disabled when custom secret name is passed."""
 
