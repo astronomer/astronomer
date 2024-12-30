@@ -18,6 +18,8 @@ global:
   taskUsageMetricsEnabled: true
   veleroEnabled: true
 astronomer:
+  configSyncer:
+    enabled: true
   houston:
     cleanupAirflowDb:
       enabled: true
