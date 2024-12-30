@@ -105,3 +105,16 @@ class TestGrafanaDeployment:
             "runAsNonRoot": True,
             "runAsUser": 467,
         }
+
+    def test_grafana_init_containers_disabled_with_custom_secret_name(self, kube_version):
+        """Test that the grafana deployment init containers disabled."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"grafana": {"backendSecretName": "grafanabackend"}},
+            show_only=[DEPLOYMENT_FILE],
+        )
+        assert len(docs) == 1
+        doc = docs[0]
+        c_by_name = get_containers_by_name(doc, include_init_containers=True)
+        assert "bootstrapper" not in c_by_name
+        assert "default" == doc["spec"]["template"]["spec"]["serviceAccountName"]
