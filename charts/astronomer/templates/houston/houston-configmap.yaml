@@ -182,6 +182,13 @@ data:
 
       # These values get passed directly into the airflow helm deployments
       helm:
+      {{- if .Values.global.extraAnnotations }}
+        extraIngressAnnotations: {
+            {{- range $key, $value := .Values.global.extraAnnotations }}
+            {{ $key }}: {{ $value | quote }},
+            {{- end }}
+          }
+      {{- end }}
       {{- if and .Values.global.ssl.enabled .Values.global.ssl.mode }}
         sslmode: {{ .Values.global.ssl.mode }}
       {{- end }}
