@@ -13,6 +13,9 @@ metadata:
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
   annotations:
+    {{- if .Values.global.extraAnnotations }}
+{{- toYaml .Values.global.extraAnnotations | nindent 4 }}
+    {{- end }}
     {{- if .Values.global.authSidecar.enabled  }}
     {{- range $key, $value := .Values.global.extraAnnotations}}
     {{ $key }}: {{ $value | quote }}

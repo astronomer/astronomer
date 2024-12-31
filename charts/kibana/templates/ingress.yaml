@@ -13,6 +13,9 @@ metadata:
     chart: {{ template "kibana.chart" . }}
     heritage: {{ .Release.Service }}
   annotations:
+    {{- if .Values.global.extraAnnotations }}
+{{- toYaml .Values.global.extraAnnotations | nindent 4 }}
+    {{- end }}
     {{- if .Values.global.authSidecar.enabled  }}
 {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- else }}
