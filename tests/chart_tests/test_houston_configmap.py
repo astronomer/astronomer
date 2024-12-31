@@ -657,16 +657,24 @@ def test_houston_configmap_with_authsidecar_liveness_probe():
             "global": {
                 "authSidecar": {
                     "enabled": True,
+                    "repository": "someregistry.io/my-custom-image",
+                    "tag": "my-custom-tag",
+                    "resources": {},
                     "livenessProbe": liveness_probe,
-                    "image": "quay.io/astronomer/ap-auth:0.22.3",
                 }
             }
         },
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
+    assert len(docs) > 0
+
+    # Parse the rendered configmap
     doc = docs[0]
     prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
-    assert prod_yaml["authSideCar"]["livenessProbe"] == liveness_probe
+
+    # Validate livenessProbe
+    assert "livenessProbe" in prod_yaml["deployments"]["authSideCar"]
+    assert prod_yaml["deployments"]["authSideCar"]["livenessProbe"] == liveness_probe
 
 
 def test_houston_configmap_with_authsidecar_readiness_probe():
@@ -691,9 +699,17 @@ def test_houston_configmap_with_authsidecar_readiness_probe():
         },
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
+
+    # Ensure the chart was rendered
+    assert len(docs) > 0
+
+    # Parse the rendered configmap
     doc = docs[0]
     prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
-    assert prod_yaml["authSideCar"]["readinessProbe"] == readiness_probe
+
+    # Validate readinessProbe
+    assert "readinessProbe" in prod_yaml["deployments"]["authSidecar"]
+    assert prod_yaml["deployments"]["authSidecar"]["readinessProbe"] == readiness_probe
 
 
 def test_houston_configmap_with_dagonlydeployment_liveness_probe():
@@ -718,9 +734,17 @@ def test_houston_configmap_with_dagonlydeployment_liveness_probe():
         },
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
+
+    # Ensure the chart was rendered
+    assert len(docs) > 0
+
+    # Parse the rendered configmap
     doc = docs[0]
     prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
-    assert prod_yaml["dagDeploy"]["livenessProbe"] == liveness_probe
+
+    # Validate livenessProbe
+    assert "livenessProbe" in prod_yaml["deployments"]["dagDeploy"]
+    assert prod_yaml["deployments"]["dagDeploy"]["livenessProbe"] == liveness_probe
 
 
 def test_houston_configmap_with_dagonlydeployment_readiness_probe():
@@ -745,9 +769,17 @@ def test_houston_configmap_with_dagonlydeployment_readiness_probe():
         },
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
+
+    # Ensure the chart was rendered
+    assert len(docs) > 0
+
+    # Parse the rendered configmap
     doc = docs[0]
     prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
-    assert prod_yaml["dagDeploy"]["readinessProbe"] == readiness_probe
+
+    # Validate readinessProbe
+    assert "readinessProbe" in prod_yaml["deployments"]["dagDeploy"]
+    assert prod_yaml["deployments"]["dagDeploy"]["readinessProbe"] == readiness_probe
 
 
 def test_houston_configmap_with_loggingsidecar_liveness_probe():
