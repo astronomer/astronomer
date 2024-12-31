@@ -151,6 +151,8 @@ global:
     indexPattern: ~
     extraEnv: []
     securityContext: {}
+    readinessProbe: {}
+    livenessProbe: {}
     resources: {}
     #  requests:
     #    cpu: "100m"
