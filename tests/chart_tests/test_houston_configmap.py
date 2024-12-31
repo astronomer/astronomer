@@ -701,8 +701,6 @@ def test_houston_configmap_with_authsidecar_readiness_probe():
         },
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
-
-    # Ensure the chart was rendered
     assert len(docs) > 0
 
     # Parse the rendered configmap
@@ -710,8 +708,8 @@ def test_houston_configmap_with_authsidecar_readiness_probe():
     prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
 
     # Validate readinessProbe
-    assert "readinessProbe" in prod_yaml["deployments"]["authSidecar"]
-    assert prod_yaml["deployments"]["authSidecar"]["readinessProbe"] == readiness_probe
+    assert "readinessProbe" in prod_yaml["deployments"]["authSideCar"]
+    assert prod_yaml["deployments"]["authSideCar"]["readinessProbe"] == readiness_probe
 
 
 def test_houston_configmap_with_dagonlydeployment_liveness_probe():
