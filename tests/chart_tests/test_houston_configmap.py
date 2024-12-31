@@ -692,8 +692,10 @@ def test_houston_configmap_with_authsidecar_readiness_probe():
             "global": {
                 "authSidecar": {
                     "enabled": True,
+                    "repository": "someregistry.io/my-custom-image",
+                    "tag": "my-custom-tag",
+                    "resources": {},
                     "readinessProbe": readiness_probe,
-                    "image": "quay.io/astronomer/ap-auth:0.22.3",
                 }
             }
         },
