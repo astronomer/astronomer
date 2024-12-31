@@ -642,7 +642,83 @@ def test_houston_configmap_with_tls_secretname_overrides():
     assert prod["helm"]["tlsSecretName"] == "astro-ssl-secret"
 
 
-def test_houston_configmap_with_loggingsidecar_with_liveness_probe():
+def test_houston_configmap_with_authsidecar_liveness_probe():
+    """Validate the authSidecar liveness probe in the Houston configmap."""
+    liveness_probe = {
+        "httpGet": {"path": "/auth-liveness", "port": 8080, "scheme": "HTTP"},
+        "initialDelaySeconds": 10,
+        "timeoutSeconds": 5,
+        "periodSeconds": 10,
+        "successThreshold": 1,
+        "failureThreshold": 3,
+    }
+    docs = render_chart(
+        values={"global": {"authSidecar": {"enabled": True, "livenessProbe": liveness_probe}}},
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    doc = docs[0]
+    prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
+    assert prod_yaml["authSideCar"]["livenessProbe"] == liveness_probe
+
+
+def test_houston_configmap_with_authsidecar_readiness_probe():
+    """Validate the authSidecar readiness probe in the Houston configmap."""
+    readiness_probe = {
+        "httpGet": {"path": "/auth-readiness", "port": 8080, "scheme": "HTTP"},
+        "initialDelaySeconds": 10,
+        "timeoutSeconds": 5,
+        "periodSeconds": 10,
+        "successThreshold": 1,
+        "failureThreshold": 3,
+    }
+    docs = render_chart(
+        values={"global": {"authSidecar": {"enabled": True, "readinessProbe": readiness_probe}}},
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    doc = docs[0]
+    prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
+    assert prod_yaml["authSideCar"]["readinessProbe"] == readiness_probe
+
+
+def test_houston_configmap_with_dagonlydeployment_liveness_probe():
+    """Validate the dagOnlyDeployment liveness probe in the Houston configmap."""
+    liveness_probe = {
+        "httpGet": {"path": "/dag-liveness", "port": 8081, "scheme": "HTTP"},
+        "initialDelaySeconds": 15,
+        "timeoutSeconds": 5,
+        "periodSeconds": 10,
+        "successThreshold": 1,
+        "failureThreshold": 3,
+    }
+    docs = render_chart(
+        values={"global": {"dagOnlyDeployment": {"enabled": True, "livenessProbe": liveness_probe}}},
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    doc = docs[0]
+    prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
+    assert prod_yaml["dagDeploy"]["livenessProbe"] == liveness_probe
+
+
+def test_houston_configmap_with_dagonlydeployment_readiness_probe():
+    """Validate the dagOnlyDeployment readiness probe in the Houston configmap."""
+    readiness_probe = {
+        "httpGet": {"path": "/dag-readiness", "port": 8081, "scheme": "HTTP"},
+        "initialDelaySeconds": 15,
+        "timeoutSeconds": 5,
+        "periodSeconds": 10,
+        "successThreshold": 1,
+        "failureThreshold": 3,
+    }
+    docs = render_chart(
+        values={"global": {"dagOnlyDeployment": {"enabled": True, "readinessProbe": readiness_probe}}},
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    doc = docs[0]
+    prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
+    assert prod_yaml["dagDeploy"]["readinessProbe"] == readiness_probe
+
+
+def test_houston_configmap_with_loggingsidecar_liveness_probe():
     """Validate the houston configmap with liveness probe configured."""
     liveness_probe = {
         "httpGet": {
@@ -682,7 +758,7 @@ def test_houston_configmap_with_loggingsidecar_with_liveness_probe():
     assert prod_yaml["deployments"]["loggingSidecar"]["livenessProbe"] == liveness_probe
 
 
-def test_houston_configmap_with_loggingsidecar_with_readiness_probe():
+def test_houston_configmap_with_loggingsidecar_readiness_probe():
     """Validate the houston configmap with readiness probe configured."""
     readiness_probe = {
         "httpGet": {
