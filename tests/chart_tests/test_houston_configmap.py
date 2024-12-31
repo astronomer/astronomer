@@ -653,7 +653,15 @@ def test_houston_configmap_with_authsidecar_liveness_probe():
         "failureThreshold": 3,
     }
     docs = render_chart(
-        values={"global": {"authSidecar": {"enabled": True, "livenessProbe": liveness_probe}}},
+        values={
+            "global": {
+                "authSidecar": {
+                    "enabled": True,
+                    "livenessProbe": liveness_probe,
+                    "image": "quay.io/astronomer/ap-auth:0.22.3",
+                }
+            }
+        },
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
     doc = docs[0]
@@ -672,7 +680,15 @@ def test_houston_configmap_with_authsidecar_readiness_probe():
         "failureThreshold": 3,
     }
     docs = render_chart(
-        values={"global": {"authSidecar": {"enabled": True, "readinessProbe": readiness_probe}}},
+        values={
+            "global": {
+                "authSidecar": {
+                    "enabled": True,
+                    "readinessProbe": readiness_probe,
+                    "image": "quay.io/astronomer/ap-auth:0.22.3",
+                }
+            }
+        },
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
     doc = docs[0]
@@ -691,7 +707,15 @@ def test_houston_configmap_with_dagonlydeployment_liveness_probe():
         "failureThreshold": 3,
     }
     docs = render_chart(
-        values={"global": {"dagOnlyDeployment": {"enabled": True, "livenessProbe": liveness_probe}}},
+        values={
+            "global": {
+                "dagOnlyDeployment": {
+                    "enabled": True,
+                    "livenessProbe": liveness_probe,
+                    "image": "quay.io/astronomer/ap-auth:0.22.3",
+                }
+            }
+        },
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
     doc = docs[0]
@@ -710,7 +734,15 @@ def test_houston_configmap_with_dagonlydeployment_readiness_probe():
         "failureThreshold": 3,
     }
     docs = render_chart(
-        values={"global": {"dagOnlyDeployment": {"enabled": True, "readinessProbe": readiness_probe}}},
+        values={
+            "global": {
+                "dagOnlyDeployment": {
+                    "enabled": True,
+                    "readinessProbe": readiness_probe,
+                    "image": "quay.io/astronomer/ap-auth:0.22.3",
+                }
+            }
+        },
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
     doc = docs[0]
