@@ -6,6 +6,8 @@ nodeSelector: {}
 affinity: {}
 tolerations: []
 
+replicas: 1
+
 images:
   grafana:
     repository: quay.io/astronomer/ap-grafana
