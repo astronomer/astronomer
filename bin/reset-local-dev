@@ -62,6 +62,7 @@ echo "Deploying Astronomer..."
 helm install -f "$CONFIG_FILE" \
   --timeout "${HELM_INSTALL_TIMEOUT:-800}s" \
   --namespace "${NAMESPACE}" astronomer \
+  --set global.mysql.enabled=false \
   --set global.postgresqlEnabled=true \
   "$GIT_ROOT"
 
