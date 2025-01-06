@@ -115,6 +115,6 @@ class TestGrafanaDeployment:
         )
         assert len(docs) == 1
         doc = docs[0]
-        c_by_name = get_containers_by_name(doc, include_init_containers=True)
-        assert "bootstrapper" not in c_by_name
-        assert "default" == doc["spec"]["template"]["spec"]["serviceAccountName"]
+        spec = doc["spec"]["template"]["spec"]
+        assert "initContainers" not in spec
+        assert "default" == spec["serviceAccountName"]
