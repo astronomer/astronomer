@@ -84,7 +84,7 @@
 {{- end }}
 
 {{ define "houston.airflowBackendSecret" -}}
-{{ default (printf "%s-houston-backend" .Release.Name) .Values.houston.airflowBackendSecretName }}
+{{ default (printf "%s" (include "houston.backendSecret" .)) .Values.houston.airflowBackendSecretName }}
 {{- end }}
 
 {{ define "houston.jwtKeySecret" -}}
