@@ -118,3 +118,8 @@ class TestGrafanaDeployment:
         spec = doc["spec"]["template"]["spec"]
         assert "initContainers" not in spec
         assert "default" == spec["serviceAccountName"]
+        c_by_name = get_containers_by_name(doc, include_init_containers=False)
+        assert {
+            "name": "GF_DATABASE_URL",
+            "valueFrom": {"secretKeyRef": {"name": "grafanabackend", "key": "connection"}},
+        } in c_by_name["grafana"]["env"]
