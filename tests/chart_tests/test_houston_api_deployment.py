@@ -244,7 +244,6 @@ class TestHoustonApiDeployment:
         assert "airflow_releases.json" not in doc["data"]
         doc = docs[1]
         c_by_name = get_containers_by_name(doc, include_init_containers=False)
-        print(c_by_name["houston"]["volumeMounts"])
         assert {
             "name": "runtimeversions",
             "mountPath": "/houston/astro_runtime_releases.json",
@@ -286,7 +285,7 @@ class TestHoustonApiDeployment:
         assert "initContainers" not in spec
         assert "default" == spec["serviceAccountName"]
         c_by_name = get_containers_by_name(docs[0], include_init_containers=True)
-        env_vars = {x["name"]: x.get("value") if "value" in x else x.get("valueFrom") for x in c_by_name["houston"]["env"]}
+        env_vars = {x["name"]: x.get("value", x.get("valueFrom")) for x in c_by_name["houston"]["env"]}
         assert env_vars["DATABASE__CONNECTION"] == {"secretKeyRef": {"name": "houstonbackend", "key": "connection"}}
         assert env_vars["DATABASE_URL"] == {"secretKeyRef": {"name": "houstonbackend", "key": "connection"}}
         assert env_vars["DEPLOYMENTS__DATABASE__CONNECTION"] == {"secretKeyRef": {"name": "houstonbackend", "key": "connection"}}
@@ -313,7 +312,7 @@ class TestHoustonApiDeployment:
         assert "initContainers" not in spec
         assert "default" == spec["serviceAccountName"]
         c_by_name = get_containers_by_name(docs[0], include_init_containers=True)
-        env_vars = {x["name"]: x.get("value") if "value" in x else x.get("valueFrom") for x in c_by_name["houston"]["env"]}
+        env_vars = {x["name"]: x.get("value", x.get("valueFrom")) for x in c_by_name["houston"]["env"]}
         assert env_vars["DATABASE__CONNECTION"] == {"secretKeyRef": {"name": "houstonbackend", "key": "connection"}}
         assert env_vars["DATABASE_URL"] == {"secretKeyRef": {"name": "houstonbackend", "key": "connection"}}
         assert env_vars["DEPLOYMENTS__DATABASE__CONNECTION"] == {"secretKeyRef": {"name": "afwbackend", "key": "connection"}}

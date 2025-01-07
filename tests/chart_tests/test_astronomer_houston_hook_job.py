@@ -135,7 +135,7 @@ class TestHoustonHookJob:
         assert "initContainers" not in spec
         assert "default" == spec["serviceAccountName"]
         c_by_name = get_containers_by_name(docs[0], include_init_containers=True)
-        env_vars = {x["name"]: x.get("value") if "value" in x else x.get("valueFrom") for x in c_by_name["post-upgrade-job"]["env"]}
+        env_vars = {x["name"]: x.get("value", x.get("valueFrom")) for x in c_by_name["post-upgrade-job"]["env"]}
         assert env_vars["DATABASE__CONNECTION"] == {"secretKeyRef": {"name": "houstonbackend", "key": "connection"}}
         assert env_vars["DATABASE_URL"] == {"secretKeyRef": {"name": "houstonbackend", "key": "connection"}}
         assert env_vars["DEPLOYMENTS__DATABASE__CONNECTION"] == {"secretKeyRef": {"name": "afwbackend", "key": "connection"}}
@@ -161,7 +161,7 @@ class TestHoustonHookJob:
         assert "initContainers" not in spec
         assert "default" == spec["serviceAccountName"]
         c_by_name = get_containers_by_name(docs[0], include_init_containers=True)
-        env_vars = {x["name"]: x.get("value") if "value" in x else x.get("valueFrom") for x in c_by_name["post-upgrade-job"]["env"]}
+        env_vars = {x["name"]: x.get("value", x.get("valueFrom")) for x in c_by_name["post-upgrade-job"]["env"]}
         assert env_vars["DATABASE__CONNECTION"] == {"secretKeyRef": {"name": "houstonbackend", "key": "connection"}}
         assert env_vars["DATABASE_URL"] == {"secretKeyRef": {"name": "houstonbackend", "key": "connection"}}
         assert env_vars["DEPLOYMENTS__DATABASE__CONNECTION"] == {"secretKeyRef": {"name": "houstonbackend", "key": "connection"}}
