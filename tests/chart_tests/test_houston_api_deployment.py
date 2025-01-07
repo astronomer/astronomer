@@ -291,7 +291,7 @@ class TestHoustonApiDeployment:
         assert env_vars["DEPLOYMENTS__DATABASE__CONNECTION"] == {"secretKeyRef": {"name": "houstonbackend", "key": "connection"}}
 
     def test_houston_deployments_containers_with_custom_secret_name(self, kube_version):
-        """Test houston Deployments Init Containers  disabled when custom houston secret name is passed."""
+        """Test houston Deployments Init Containers disabled when custom houston secret name is passed."""
 
         docs = render_chart(
             kube_version=kube_version,
