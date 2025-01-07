@@ -156,3 +156,16 @@ class TestHoustonHookJob:
         spec = docs[0]["spec"]["template"]["spec"]
         assert "initContainers" not in spec
         assert "default" == spec["serviceAccountName"]
+        c_by_name = get_containers_by_name(docs[0], include_init_containers=True)
+        assert {
+            "name": "DATABASE__CONNECTION",
+            "valueFrom": {"secretKeyRef": {"name": "houstonbackend", "key": "connection"}},
+        } in c_by_name["post-upgrade-job"]["env"]
+        assert {
+            "name": "DATABASE_URL",
+            "valueFrom": {"secretKeyRef": {"name": "houstonbackend", "key": "connection"}},
+        } in c_by_name["post-upgrade-job"]["env"]
+        assert {
+            "name": "DEPLOYMENTS__DATABASE__CONNECTION",
+            "valueFrom": {"secretKeyRef": {"name": "afwbackend", "key": "connection"}},
+        } in c_by_name["post-upgrade-job"]["env"]
