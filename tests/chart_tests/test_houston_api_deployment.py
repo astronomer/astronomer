@@ -264,3 +264,72 @@ class TestHoustonApiDeployment:
         assert {"configMap": {"name": certifiedConfigmapName}, "name": "certifiedversions"} in doc["spec"]["template"]["spec"][
             "volumes"
         ]
+
+    def test_houston_deployments_containers_with_custom_houston_secret_name(self, kube_version):
+        """Test Upgrade Deployments Job Init Containers are disabled when custom houston secret name is passed."""
+
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "astronomer": {
+                    "houston": {
+                        "upgradeDeployments": {"enabled": True},
+                        "backendSecretName": "houstonbackend",
+                    }
+                }
+            },
+            show_only=["charts/astronomer/templates/houston/api/houston-deployment.yaml"],
+        )
+
+        assert len(docs) == 1
+        spec = docs[0]["spec"]["template"]["spec"]
+        assert "initContainers" not in spec
+        assert "default" == spec["serviceAccountName"]
+        c_by_name = get_containers_by_name(docs[0], include_init_containers=True)
+        assert {
+            "name": "DATABASE__CONNECTION",
+            "valueFrom": {"secretKeyRef": {"name": "houstonbackend", "key": "connection"}},
+        } in c_by_name["houston"]["env"]
+        assert {
+            "name": "DATABASE_URL",
+            "valueFrom": {"secretKeyRef": {"name": "houstonbackend", "key": "connection"}},
+        } in c_by_name["houston"]["env"]
+        assert {
+            "name": "DEPLOYMENTS__DATABASE__CONNECTION",
+            "valueFrom": {"secretKeyRef": {"name": "houstonbackend", "key": "connection"}},
+        } in c_by_name["houston"]["env"]
+
+    def test_houston_deployments_containers_with_custom_secret_name(self, kube_version):
+        """Test houston Deployments Init Containers  disabled when custom houston secret name is passed."""
+
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "astronomer": {
+                    "houston": {
+                        "upgradeDeployments": {"enabled": True},
+                        "airflowBackendSecretName": "afwbackend",
+                        "backendSecretName": "houstonbackend",
+                    }
+                }
+            },
+            show_only=["charts/astronomer/templates/houston/api/houston-deployment.yaml"],
+        )
+
+        assert len(docs) == 1
+        spec = docs[0]["spec"]["template"]["spec"]
+        assert "initContainers" not in spec
+        assert "default" == spec["serviceAccountName"]
+        c_by_name = get_containers_by_name(docs[0], include_init_containers=True)
+        assert {
+            "name": "DATABASE__CONNECTION",
+            "valueFrom": {"secretKeyRef": {"name": "houstonbackend", "key": "connection"}},
+        } in c_by_name["houston"]["env"]
+        assert {
+            "name": "DATABASE_URL",
+            "valueFrom": {"secretKeyRef": {"name": "houstonbackend", "key": "connection"}},
+        } in c_by_name["houston"]["env"]
+        assert {
+            "name": "DEPLOYMENTS__DATABASE__CONNECTION",
+            "valueFrom": {"secretKeyRef": {"name": "afwbackend", "key": "connection"}},
+        } in c_by_name["houston"]["env"]
