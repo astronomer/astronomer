@@ -286,18 +286,10 @@ class TestHoustonApiDeployment:
         assert "initContainers" not in spec
         assert "default" == spec["serviceAccountName"]
         c_by_name = get_containers_by_name(docs[0], include_init_containers=True)
-        assert {
-            "name": "DATABASE__CONNECTION",
-            "valueFrom": {"secretKeyRef": {"name": "houstonbackend", "key": "connection"}},
-        } in c_by_name["houston"]["env"]
-        assert {
-            "name": "DATABASE_URL",
-            "valueFrom": {"secretKeyRef": {"name": "houstonbackend", "key": "connection"}},
-        } in c_by_name["houston"]["env"]
-        assert {
-            "name": "DEPLOYMENTS__DATABASE__CONNECTION",
-            "valueFrom": {"secretKeyRef": {"name": "houstonbackend", "key": "connection"}},
-        } in c_by_name["houston"]["env"]
+        env_vars = {x["name"]: x.get("value") if "value" in x else x.get("valueFrom") for x in c_by_name["houston"]["env"]}
+        assert env_vars["DATABASE__CONNECTION"] == {"secretKeyRef": {"name": "houstonbackend", "key": "connection"}}
+        assert env_vars["DATABASE_URL"] == {"secretKeyRef": {"name": "houstonbackend", "key": "connection"}}
+        assert env_vars["DEPLOYMENTS__DATABASE__CONNECTION"] == {"secretKeyRef": {"name": "houstonbackend", "key": "connection"}}
 
     def test_houston_deployments_containers_with_custom_secret_name(self, kube_version):
         """Test houston Deployments Init Containers  disabled when custom houston secret name is passed."""
@@ -321,15 +313,7 @@ class TestHoustonApiDeployment:
         assert "initContainers" not in spec
         assert "default" == spec["serviceAccountName"]
         c_by_name = get_containers_by_name(docs[0], include_init_containers=True)
-        assert {
-            "name": "DATABASE__CONNECTION",
-            "valueFrom": {"secretKeyRef": {"name": "houstonbackend", "key": "connection"}},
-        } in c_by_name["houston"]["env"]
-        assert {
-            "name": "DATABASE_URL",
-            "valueFrom": {"secretKeyRef": {"name": "houstonbackend", "key": "connection"}},
-        } in c_by_name["houston"]["env"]
-        assert {
-            "name": "DEPLOYMENTS__DATABASE__CONNECTION",
-            "valueFrom": {"secretKeyRef": {"name": "afwbackend", "key": "connection"}},
-        } in c_by_name["houston"]["env"]
+        env_vars = {x["name"]: x.get("value") if "value" in x else x.get("valueFrom") for x in c_by_name["houston"]["env"]}
+        assert env_vars["DATABASE__CONNECTION"] == {"secretKeyRef": {"name": "houstonbackend", "key": "connection"}}
+        assert env_vars["DATABASE_URL"] == {"secretKeyRef": {"name": "houstonbackend", "key": "connection"}}
+        assert env_vars["DEPLOYMENTS__DATABASE__CONNECTION"] == {"secretKeyRef": {"name": "afwbackend", "key": "connection"}}
