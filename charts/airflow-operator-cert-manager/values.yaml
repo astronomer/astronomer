@@ -1,23 +1,43 @@
-cert-manager:
-  installCRDs: true
-  replicaCount: 1
-
-webhook:
-  enabled: true
+namespace: cert-manager
 
 controller:
-  enabled: true
+  replicas: 1
+  image:
+    repository: quay.io/jetstack/cert-manager-controller
+    tag: v1.5.4
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
 
 cainjector:
   enabled: true
+  image:
+    repository: quay.io/jetstack/cert-manager-cainjector
+    tag: v1.5.4
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
 
-securityContext:
-  runAsNonRoot: true
-  runAsUser: 1001
-
-nodeSelector: {}
-tolerations: []
-affinity: {}
-
-extraArgs: []
-podAnnotations: {}
+webhook:
+  enabled: true
+  image:
+    repository: quay.io/jetstack/cert-manager-webhook
+    tag: v1.5.4
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
