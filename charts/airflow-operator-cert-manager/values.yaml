@@ -1,5 +1,7 @@
 namespace: cert-manager
 
+serviceAccount:
+  create: true
 controller:
   replicas: 1
   image:
