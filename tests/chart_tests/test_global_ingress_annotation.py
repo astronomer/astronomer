@@ -10,7 +10,7 @@ from pathlib import Path
 )
 class TestGlobabIngressAnnotation:
     def test_global_ingress_with_astronomer_ingress(self, kube_version):
-        """Test global ingress annotation for platform ingress ."""
+        """Test global ingress annotation for platform ingress."""
         docs = render_chart(
             kube_version=kube_version,
             values={"global": {"extraAnnotations": {"route.openshift.io/termination": "passthrough"}}},
