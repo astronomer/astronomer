@@ -1,0 +1,14 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: cert-manager-webhook-tls
+  namespace: cert-manager
+spec:
+  dnsNames:
+  - cert-manager-webhook
+  - cert-manager-webhook.cert-manager
+  - cert-manager-webhook.cert-manager.svc
+  issuerRef:
+    kind: Issuer
+    name: cert-manager-webhook-selfsigned
+  secretName: cert-manager-webhook-tls

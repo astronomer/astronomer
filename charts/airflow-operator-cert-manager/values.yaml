@@ -18,6 +18,7 @@ controller:
 
 cainjector:
   enabled: true
+  replicas: 1
   image:
     repository: quay.io/jetstack/cert-manager-cainjector
     tag: v1.5.4
@@ -32,10 +33,14 @@ cainjector:
 
 webhook:
   enabled: true
+  replicas: 1
   image:
     repository: quay.io/jetstack/cert-manager-webhook
     tag: v1.5.4
     pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 443
   resources:
     requests:
       cpu: 100m
