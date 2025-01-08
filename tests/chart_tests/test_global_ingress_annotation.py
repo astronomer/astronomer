@@ -10,7 +10,7 @@ from tests.chart_tests.helm_template_generator import render_chart
 )
 class TestGlobabIngressAnnotation:
     def test_global_ingress_with_astronomer_ingress(self, kube_version):
-        """Test Alertmanager Service with authSidecar."""
+        """Test global ingress annotation for platform ingress ."""
         docs = render_chart(
             kube_version=kube_version,
             values={"global": {"extraAnnotations": {"route.openshift.io/termination": "passthrough"}}},
@@ -27,3 +27,4 @@ class TestGlobabIngressAnnotation:
             assert doc["kind"] == "Ingress"
             assert doc["apiVersion"] == "networking.k8s.io/v1"
             assert "passthrough" in doc["metadata"]["annotations"]["route.openshift.io/termination"]
+            assert len(doc["metadata"]["annotations"]) >= 4
