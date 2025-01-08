@@ -112,3 +112,56 @@ class TestHoustonHookJob:
         assert c_by_name["wait-for-db"]["resources"] == overrides
         assert c_by_name["houston-bootstrapper"]["resources"] == overrides
         assert c_by_name["houston-db-migrations-job"]["resources"] == overrides
+
+    def test_upgrade_deployments_init_containers_disabled_with_custom_secret_name(self, kube_version):
+        """Test Upgrade Deployments Job Init Containers are disabled when custom secret name is passed."""
+
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "astronomer": {
+                    "houston": {
+                        "upgradeDeployments": {"enabled": True},
+                        "airflowBackendSecretName": "afwbackend",
+                        "backendSecretName": "houstonbackend",
+                    }
+                }
+            },
+            show_only=["charts/astronomer/templates/houston/helm-hooks/houston-upgrade-deployments-job.yaml"],
+        )
+
+        assert len(docs) == 1
+        spec = docs[0]["spec"]["template"]["spec"]
+        assert "initContainers" not in spec
+        assert "default" == spec["serviceAccountName"]
+        c_by_name = get_containers_by_name(docs[0], include_init_containers=True)
+        env_vars = {x["name"]: x.get("value", x.get("valueFrom")) for x in c_by_name["post-upgrade-job"]["env"]}
+        assert env_vars["DATABASE__CONNECTION"] == {"secretKeyRef": {"name": "houstonbackend", "key": "connection"}}
+        assert env_vars["DATABASE_URL"] == {"secretKeyRef": {"name": "houstonbackend", "key": "connection"}}
+        assert env_vars["DEPLOYMENTS__DATABASE__CONNECTION"] == {"secretKeyRef": {"name": "afwbackend", "key": "connection"}}
+
+    def test_upgrade_deployments_init_containers_disabled_with_custom_houston_secret_name(self, kube_version):
+        """Test Upgrade Deployments Job Init Containers are disabled when custom houston secret name is passed."""
+
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "astronomer": {
+                    "houston": {
+                        "upgradeDeployments": {"enabled": True},
+                        "backendSecretName": "houstonbackend",
+                    }
+                }
+            },
+            show_only=["charts/astronomer/templates/houston/helm-hooks/houston-upgrade-deployments-job.yaml"],
+        )
+
+        assert len(docs) == 1
+        spec = docs[0]["spec"]["template"]["spec"]
+        assert "initContainers" not in spec
+        assert "default" == spec["serviceAccountName"]
+        c_by_name = get_containers_by_name(docs[0], include_init_containers=True)
+        env_vars = {x["name"]: x.get("value", x.get("valueFrom")) for x in c_by_name["post-upgrade-job"]["env"]}
+        assert env_vars["DATABASE__CONNECTION"] == {"secretKeyRef": {"name": "houstonbackend", "key": "connection"}}
+        assert env_vars["DATABASE_URL"] == {"secretKeyRef": {"name": "houstonbackend", "key": "connection"}}
+        assert env_vars["DEPLOYMENTS__DATABASE__CONNECTION"] == {"secretKeyRef": {"name": "houstonbackend", "key": "connection"}}
