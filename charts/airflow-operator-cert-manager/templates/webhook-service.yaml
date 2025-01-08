@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: cert-manager-webhook
+  namespace: cert-manager
+  annotations:
+    "helm.sh/hook": "post-install,post-upgrade"
+    "helm.sh/hook-weight": "0"
+spec:
+  type: ClusterIP
+  ports:
+  - port: 443
+    targetPort: 10250
+  selector:
+    app: webhook

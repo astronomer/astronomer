@@ -1,0 +1,25 @@
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: cert-manager-webhook
+webhooks:
+  - name: webhook.cert-manager.io
+    admissionReviewVersions: ["v1"]
+    failurePolicy: Fail
+    sideEffects: None
+    timeoutSeconds: 10
+    namespaceSelector:
+      matchExpressions:
+        - key: cert-manager.io/disable-validation
+          operator: NotIn
+          values: ["true"]
+    rules:
+      - apiGroups: ["cert-manager.io"]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["certificates", "issuers", "clusterissuers", "certificaterequests"]
+    clientConfig:
+      service:
+        name: cert-manager-webhook
+        namespace: cert-manager
+        path: /validate
