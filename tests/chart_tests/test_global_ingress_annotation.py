@@ -19,10 +19,12 @@ class TestGlobabIngressAnnotation:
                 "charts/grafana/templates/ingress.yaml",
                 "charts/kibana/templates/ingress.yaml",
                 "charts/prometheus/templates/ingress.yaml",
+                "charts/astronomer/templates/ingress.yaml",
+                "charts/astronomer/templates/registry/registry-ingress.yaml",
             ],
         )
 
-        assert len(docs) == 4
+        assert len(docs) == 5
         for doc in docs:
             assert doc["kind"] == "Ingress"
             assert doc["apiVersion"] == "networking.k8s.io/v1"
