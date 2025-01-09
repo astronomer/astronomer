@@ -372,6 +372,11 @@ data:
         relabel_configs:
           - action: labelmap
             regex: __meta_kubernetes_service_label_(.+)
+          {{- if $.Values.global.operator.enabled }}
+          - source_labels: [__meta_kubernetes_service_label_astronomer_io_platform_release]
+            regex: ^astronomer$
+            action: keep
+          {{- end }}
           - source_labels: [__meta_kubernetes_service_annotation_astronomer_io_platform_release]
             action: keep
             regex: ^{{ .Release.Name }}$
