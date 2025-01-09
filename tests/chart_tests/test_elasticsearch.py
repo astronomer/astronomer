@@ -202,7 +202,7 @@ class TestElasticSearch:
             kube_version=kube_version,
             values={},
             show_only=[
-                "charts/elasticsearch/templates/nginx/nginx-es-ingress-networkpolicy.yaml",
+                "charts/elasticsearch/templates/nginx/nginx-es-networkpolicy.yaml",
             ],
         )
 
@@ -222,7 +222,7 @@ class TestElasticSearch:
             kube_version=kube_version,
             values={"global": {"loggingSidecar": {"enabled": True}}},
             show_only=[
-                "charts/elasticsearch/templates/nginx/nginx-es-ingress-networkpolicy.yaml",
+                "charts/elasticsearch/templates/nginx/nginx-es-networkpolicy.yaml",
             ],
         )
 
