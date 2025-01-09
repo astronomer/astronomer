@@ -35,6 +35,9 @@ metadata:
     argocd.argoproj.io/sync-wave: "-1"
   {{- end }}
 rules:
+- apiGroups: ["airflow.apache.org"]
+  resources: ["airflows"]
+  verbs: ["get", "list", "watch", "create", "update", “patch”, "delete"]
 - apiGroups: [""]
   resources: ["configmaps"]
   verbs: ["create", "delete", "deletecollection", "get", "list", "patch", "update", "watch"]
