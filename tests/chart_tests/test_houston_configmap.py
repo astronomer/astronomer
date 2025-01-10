@@ -854,3 +854,28 @@ class TestHoustonConfigmap:
         helm = prod_yaml["deployments"]["helm"]
         assert "ingress" in helm
         assert {"extraIngressAnnotations":{"route.openshift.io/termination": "passthrough"}} == helm["ingress"]
+
+    def test_houston_configmap_with_custom_airflow_ingress_annotation_disabled_with_authsidecar_disabled(self):
+        """Validate the houston configmap does not include airflow ingress annotation."""
+        docs = render_chart(
+            values={
+                "global": {
+                    "authSidecar":{"enabled": True},
+                    "extraAnnotations": {
+                        "route.openshift.io/termination": "passthrough"
+                    }
+                }
+            },
+            show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+        )
+
+        # Ensure the chart was rendered
+        assert len(docs) > 0
+
+        # Parse the rendered configmap
+        doc = docs[0]
+        prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
+
+        # Validate extra ingress annotation
+        helm = prod_yaml["deployments"]["helm"]
+        assert "ingress" not in helm
