@@ -50,7 +50,7 @@ data:
 
     # Configure targets to scrape
     scrape_configs:
-      {{ .if .Values.config.enableSelfScrape }}
+      {{ if .Values.config.enableSelfScrape }}
       - job_name: prometheus
         static_configs:
           - targets: ["localhost:9090"]
