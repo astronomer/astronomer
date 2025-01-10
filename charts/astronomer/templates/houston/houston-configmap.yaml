@@ -210,8 +210,7 @@ data:
 
       {{- if and .Values.global.extraAnnotations ( not .Values.global.authSidecar.enabled ) }}
         ingress:
-          extraIngressAnnotations:
-{{- toYaml .Values.global.extraAnnotations | nindent 12 }}
+          extraIngressAnnotations: {{- toYaml .Values.global.extraAnnotations | nindent 12 }}
       {{- end }}
 
       {{- if .Values.global.networkNSLabels }}
