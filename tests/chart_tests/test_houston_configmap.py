@@ -705,10 +705,7 @@ class TestHoustonConfigmap:
             show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
         )
 
-        # Ensure the chart was rendered
-        assert len(docs) > 0
-
-        # Parse the rendered configmap
+        assert len(docs) == 1
         doc = docs[0]
         prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
 
@@ -739,10 +736,7 @@ class TestHoustonConfigmap:
             show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
         )
 
-        # Ensure the chart was rendered
-        assert len(docs) > 0
-
-        # Parse the rendered configmap
+        assert len(docs) == 1
         doc = docs[0]
         prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
 
@@ -778,10 +772,7 @@ class TestHoustonConfigmap:
             show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
         )
 
-        # Ensure the chart was rendered
-        assert len(docs) > 0
-
-        # Parse the rendered configmap
+        assert len(docs) == 1
         doc = docs[0]
         prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
 
@@ -817,10 +808,7 @@ class TestHoustonConfigmap:
             show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
         )
 
-        # Ensure the chart was rendered
-        assert len(docs) > 0
-
-        # Parse the rendered configmap
+        assert len(docs) == 1
         doc = docs[0]
         prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
 
@@ -835,10 +823,7 @@ class TestHoustonConfigmap:
             show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
         )
 
-        # Ensure the chart was rendered
         assert len(docs) == 1
-
-        # Parse the rendered configmap
         doc = docs[0]
         prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
 
@@ -856,10 +841,7 @@ class TestHoustonConfigmap:
             show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
         )
 
-        # Ensure the chart was rendered
         assert len(docs) == 1
-
-        # Parse the rendered configmap
         doc = docs[0]
         prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
 
