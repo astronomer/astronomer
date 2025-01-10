@@ -4,45 +4,43 @@ import pytest
 import ast
 
 
-def common_test_cases(docs):
-    """Test some things that should apply to all cases."""
-    assert len(docs) == 1
-
-    doc = docs[0]
-
-    assert doc["kind"] == "ConfigMap"
-    assert doc["apiVersion"] == "v1"
-    assert doc["metadata"]["name"] == "release-name-houston-config"
-
-    local_prod = yaml.safe_load(doc["data"]["local-production.yaml"])
-
-    assert local_prod == {"nats": {"ackWait": 600000}}
-
-    prod = yaml.safe_load(doc["data"]["production.yaml"])
-
-    assert prod["deployments"]["helm"]["airflow"]["useAstroSecurityManager"] is True
-    assert prod["deployments"]["disableManageClusterScopedResources"] is False
-    assert prod["helm"]["tlsSecretName"] == "astronomer-tls"
-    airflow_local_settings = prod["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
-    scheduler_update_strategy = prod["deployments"]["helm"]["airflow"]["scheduler"]["strategy"]
-    assert scheduler_update_strategy["type"] == "RollingUpdate"
-    assert scheduler_update_strategy["rollingUpdate"]["maxUnavailable"] == 1
-    assert (
-        prod["deployments"]["helm"]["airflow"]["cleanup"]["schedule"]
-        == '{{- add 3 (regexFind ".$" (adler32sum .Release.Name)) -}}-59/15 * * * *'
-    )
-
-    # validate yaml-embedded python
-    ast.parse(airflow_local_settings.encode())
-
-
 class TestHoustonConfigmap:
+    @staticmethod
+    def common_test_cases(docs):
+        """Test some things that should apply to all cases."""
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["kind"] == "ConfigMap"
+        assert doc["apiVersion"] == "v1"
+        assert doc["metadata"]["name"] == "release-name-houston-config"
+
+        local_prod = yaml.safe_load(doc["data"]["local-production.yaml"])
+
+        assert local_prod == {"nats": {"ackWait": 600000}}
+
+        prod = yaml.safe_load(doc["data"]["production.yaml"])
+
+        assert prod["deployments"]["helm"]["airflow"]["useAstroSecurityManager"] is True
+        assert prod["deployments"]["disableManageClusterScopedResources"] is False
+        assert prod["helm"]["tlsSecretName"] == "astronomer-tls"
+        airflow_local_settings = prod["deployments"]["helm"]["airflow"]["airflowLocalSettings"]
+        scheduler_update_strategy = prod["deployments"]["helm"]["airflow"]["scheduler"]["strategy"]
+        assert scheduler_update_strategy["type"] == "RollingUpdate"
+        assert scheduler_update_strategy["rollingUpdate"]["maxUnavailable"] == 1
+        assert (
+            prod["deployments"]["helm"]["airflow"]["cleanup"]["schedule"]
+            == '{{- add 3 (regexFind ".$" (adler32sum .Release.Name)) -}}-59/15 * * * *'
+        )
+
+        # validate yaml-embedded python
+        ast.parse(airflow_local_settings.encode())
+
     def test_houston_configmap(self):
         """Validate the houston configmap and its embedded data."""
         docs = render_chart(
             show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
         )
-        common_test_cases(docs)
+        self.common_test_cases(docs)
         doc = docs[0]
         prod = yaml.safe_load(doc["data"]["production.yaml"])
         # Ensure airflow elasticsearch param is at correct location
@@ -82,7 +80,7 @@ class TestHoustonConfigmap:
             show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
         )
 
-        common_test_cases(docs)
+        self.common_test_cases(docs)
         doc = docs[0]
         prod = yaml.safe_load(doc["data"]["production.yaml"])
 
@@ -96,7 +94,7 @@ class TestHoustonConfigmap:
             show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
         )
 
-        common_test_cases(docs)
+        self.common_test_cases(docs)
         doc = docs[0]
         prod = yaml.safe_load(doc["data"]["production.yaml"])
 
@@ -110,7 +108,7 @@ class TestHoustonConfigmap:
             show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
         )
 
-        common_test_cases(docs)
+        self.common_test_cases(docs)
         doc = docs[0]
         prod = yaml.safe_load(doc["data"]["production.yaml"])
 
@@ -129,7 +127,7 @@ class TestHoustonConfigmap:
             show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
         )
 
-        common_test_cases(docs)
+        self.common_test_cases(docs)
         doc = docs[0]
         prod = yaml.safe_load(doc["data"]["production.yaml"])
         assert prod["deployments"]["helm"]["airflow"]["webserver"]["extraVolumeMounts"] == [
@@ -154,7 +152,7 @@ class TestHoustonConfigmap:
             show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
         )
 
-        common_test_cases(docs)
+        self.common_test_cases(docs)
         doc = docs[0]
         prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
         assert "extraVolumeMounts" not in prod_yaml["deployments"]["helm"]["airflow"]["webserver"]
@@ -169,7 +167,7 @@ class TestHoustonConfigmap:
             show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
         )
 
-        common_test_cases(docs)
+        self.common_test_cases(docs)
         doc = docs[0]
         prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
         assert "fluentd" in prod_yaml["deployments"].get("fluentdIndexPrefix")
@@ -182,7 +180,7 @@ class TestHoustonConfigmap:
             show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
         )
 
-        common_test_cases(docs)
+        self.common_test_cases(docs)
         doc = docs[0]
         prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
         assert "astronomer" in prod_yaml["deployments"].get("fluentdIndexPrefix")
@@ -203,7 +201,7 @@ class TestHoustonConfigmap:
             show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
         )
 
-        common_test_cases(docs)
+        self.common_test_cases(docs)
         doc = docs[0]
         prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
         log_cmd = 'log_cmd = " 1> >( tee -a /var/log/sidecar-log-consumer/out.log ) 2> >( tee -a /var/log/sidecar-log-consumer/err.log >&2 ) ; "'
@@ -234,7 +232,7 @@ class TestHoustonConfigmap:
             show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
         )
 
-        common_test_cases(docs)
+        self.common_test_cases(docs)
         doc = docs[0]
         prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
         log_cmd = 'log_cmd = " 1> >( tee -a /var/log/sidecar-log-consumer/out.log ) 2> >( tee -a /var/log/sidecar-log-consumer/err.log >&2 ) ; "'
@@ -266,7 +264,7 @@ class TestHoustonConfigmap:
             show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
         )
 
-        common_test_cases(docs)
+        self.common_test_cases(docs)
         doc = docs[0]
         prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
         log_cmd = 'log_cmd = " 1> >( tee -a /var/log/sidecar-log-consumer/out.log ) 2> >( tee -a /var/log/sidecar-log-consumer/err.log >&2 ) ; "'
@@ -300,7 +298,7 @@ class TestHoustonConfigmap:
             show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
         )
 
-        common_test_cases(docs)
+        self.common_test_cases(docs)
         doc = docs[0]
         prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
         log_cmd = 'log_cmd = " 1> >( tee -a /var/log/sidecar-log-consumer/out.log ) 2> >( tee -a /var/log/sidecar-log-consumer/err.log >&2 ) ; "'
@@ -333,7 +331,7 @@ class TestHoustonConfigmap:
             show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
         )
 
-        common_test_cases(docs)
+        self.common_test_cases(docs)
         doc = docs[0]
         prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
         log_cmd = 'log_cmd = " 1> >( tee -a /var/log/sidecar-log-consumer/out.log ) 2> >( tee -a /var/log/sidecar-log-consumer/err.log >&2 ) ; "'
@@ -384,7 +382,7 @@ class TestHoustonConfigmap:
             },
             show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
         )
-        common_test_cases(docs)
+        self.common_test_cases(docs)
         doc = docs[0]
         prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
         log_cmd = 'log_cmd = " 1> >( tee -a /var/log/sidecar-log-consumer/out.log ) 2> >( tee -a /var/log/sidecar-log-consumer/err.log >&2 ) ; "'
@@ -430,7 +428,7 @@ class TestHoustonConfigmap:
             },
             show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
         )
-        common_test_cases(docs)
+        self.common_test_cases(docs)
         doc = docs[0]
         prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
         log_cmd = 'log_cmd = " 1> >( tee -a /var/log/sidecar-log-consumer/out.log ) 2> >( tee -a /var/log/sidecar-log-consumer/err.log >&2 ) ; "'
@@ -470,7 +468,7 @@ class TestHoustonConfigmap:
             },
             show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
         )
-        common_test_cases(docs)
+        self.common_test_cases(docs)
         doc = docs[0]
         prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
         log_cmd = 'log_cmd = " 1> >( tee -a /var/log/sidecar-log-consumer/out.log ) 2> >( tee -a /var/log/sidecar-log-consumer/err.log >&2 ) ; "'
@@ -499,7 +497,7 @@ class TestHoustonConfigmap:
             },
             show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
         )
-        common_test_cases(docs)
+        self.common_test_cases(docs)
         doc = docs[0]
 
         prod = yaml.safe_load(doc["data"]["production.yaml"])
@@ -521,7 +519,7 @@ class TestHoustonConfigmap:
             },
             show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
         )
-        common_test_cases(docs)
+        self.common_test_cases(docs)
         doc = docs[0]
 
         prod = yaml.safe_load(doc["data"]["production.yaml"])
@@ -543,7 +541,7 @@ class TestHoustonConfigmap:
             },
             show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
         )
-        common_test_cases(docs)
+        self.common_test_cases(docs)
         doc = docs[0]
 
         prod = yaml.safe_load(doc["data"]["production.yaml"])
@@ -564,7 +562,7 @@ class TestHoustonConfigmap:
             },
             show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
         )
-        common_test_cases(docs)
+        self.common_test_cases(docs)
         doc = docs[0]
 
         prod = yaml.safe_load(doc["data"]["production.yaml"])
@@ -576,7 +574,7 @@ class TestHoustonConfigmap:
             values={},
             show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
         )
-        common_test_cases(docs)
+        self.common_test_cases(docs)
         doc = docs[0]
 
         prod = yaml.safe_load(doc["data"]["production.yaml"])
@@ -588,7 +586,7 @@ class TestHoustonConfigmap:
             values={"astronomer": {"houston": {"enableHoustonInternalAuthorization": True}}},
             show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
         )
-        common_test_cases(docs)
+        self.common_test_cases(docs)
         doc = docs[0]
 
         prod = yaml.safe_load(doc["data"]["production.yaml"])
@@ -833,18 +831,12 @@ class TestHoustonConfigmap:
     def test_houston_configmap_with_custom_airflow_ingress_annotation_with_authsidecar_disabled(self):
         """Validate the houston configmap with custom airflow ingress annotation."""
         docs = render_chart(
-            values={
-                "global": {
-                    "extraAnnotations": {
-                        "route.openshift.io/termination": "passthrough"
-                    }
-                }
-            },
+            values={"global": {"extraAnnotations": {"route.openshift.io/termination": "passthrough"}}},
             show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
         )
 
         # Ensure the chart was rendered
-        assert len(docs) > 0
+        assert len(docs) == 1
 
         # Parse the rendered configmap
         doc = docs[0]
@@ -853,24 +845,19 @@ class TestHoustonConfigmap:
         # Validate extra ingress annotation
         helm = prod_yaml["deployments"]["helm"]
         assert "ingress" in helm
-        assert {"extraIngressAnnotations":{"route.openshift.io/termination": "passthrough"}} == helm["ingress"]
+        assert {"extraIngressAnnotations": {"route.openshift.io/termination": "passthrough"}} == helm["ingress"]
 
     def test_houston_configmap_with_custom_airflow_ingress_annotation_disabled_with_authsidecar_disabled(self):
         """Validate the houston configmap does not include airflow ingress annotation."""
         docs = render_chart(
             values={
-                "global": {
-                    "authSidecar":{"enabled": True},
-                    "extraAnnotations": {
-                        "route.openshift.io/termination": "passthrough"
-                    }
-                }
+                "global": {"authSidecar": {"enabled": True}, "extraAnnotations": {"route.openshift.io/termination": "passthrough"}}
             },
             show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
         )
 
         # Ensure the chart was rendered
-        assert len(docs) > 0
+        assert len(docs) == 1
 
         # Parse the rendered configmap
         doc = docs[0]
