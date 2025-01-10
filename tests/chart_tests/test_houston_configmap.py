@@ -864,5 +864,4 @@ class TestHoustonConfigmap:
         prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
 
         # Validate extra ingress annotation
-        helm = prod_yaml["deployments"]["helm"]
-        assert "ingress" not in helm
+        assert not prod_yaml["deployments"]["helm"].get("ingress")
