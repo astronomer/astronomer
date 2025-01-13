@@ -211,6 +211,11 @@ data:
         sccEnabled: true
       {{- end }}
 
+      {{- if and .Values.global.extraAnnotations ( not .Values.global.authSidecar.enabled ) }}
+        ingress:
+          extraIngressAnnotations: {{- toYaml .Values.global.extraAnnotations | nindent 12 }}
+      {{- end }}
+
       {{- if .Values.global.networkNSLabels }}
         networkNSLabels: true
       {{- end }}
