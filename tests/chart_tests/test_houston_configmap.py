@@ -666,13 +666,9 @@ def test_houston_configmap_with_authsidecar_liveness_probe():
         },
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
-    assert len(docs) > 0
-
-    # Parse the rendered configmap
+    assert len(docs) == 1
     doc = docs[0]
     prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
-
-    # Validate livenessProbe
     assert "livenessProbe" in prod_yaml["deployments"]["authSideCar"]
     assert prod_yaml["deployments"]["authSideCar"]["livenessProbe"] == liveness_probe
 
@@ -701,13 +697,9 @@ def test_houston_configmap_with_authsidecar_readiness_probe():
         },
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
-    assert len(docs) > 0
-
-    # Parse the rendered configmap
+    assert len(docs) == 1
     doc = docs[0]
     prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
-
-    # Validate readinessProbe
     assert "readinessProbe" in prod_yaml["deployments"]["authSideCar"]
     assert prod_yaml["deployments"]["authSideCar"]["readinessProbe"] == readiness_probe
 
@@ -735,10 +727,7 @@ def test_houston_configmap_with_dagonlydeployment_liveness_probe():
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
 
-    # Ensure the chart was rendered
-    assert len(docs) > 0
-
-    # Parse the rendered configmap
+    assert len(docs) == 1
     doc = docs[0]
     prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
 
@@ -770,10 +759,7 @@ def test_houston_configmap_with_dagonlydeployment_readiness_probe():
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
 
-    # Ensure the chart was rendered
-    assert len(docs) > 0
-
-    # Parse the rendered configmap
+    assert len(docs) == 1
     doc = docs[0]
     prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
 
@@ -810,14 +796,9 @@ def test_houston_configmap_with_loggingsidecar_liveness_probe():
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
 
-    # Ensure the chart was rendered
-    assert len(docs) > 0
-
-    # Parse the rendered configmap
+    assert len(docs) == 1
     doc = docs[0]
     prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
-
-    # Validate livenessProbe
     assert "livenessProbe" in prod_yaml["deployments"]["loggingSidecar"]
     assert prod_yaml["deployments"]["loggingSidecar"]["livenessProbe"] == liveness_probe
 
@@ -850,13 +831,37 @@ def test_houston_configmap_with_loggingsidecar_readiness_probe():
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
 
-    # Ensure the chart was rendered
-    assert len(docs) > 0
-
-    # Parse the rendered configmap
+    assert len(docs) == 1
     doc = docs[0]
     prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
-
-    # Validate readinessProbe
     assert "readinessProbe" in prod_yaml["deployments"]["loggingSidecar"]
     assert prod_yaml["deployments"]["loggingSidecar"]["readinessProbe"] == readiness_probe
+
+
+def test_houston_configmap_with_custom_airflow_ingress_annotation_with_authsidecar_disabled():
+    """Validate the houston configmap with custom airflow ingress annotation."""
+    docs = render_chart(
+        values={"global": {"extraAnnotations": {"route.openshift.io/termination": "passthrough"}}},
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+
+    assert len(docs) == 1
+    doc = docs[0]
+    prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
+    helm = prod_yaml["deployments"]["helm"]
+    assert "ingress" in helm
+    assert {"extraIngressAnnotations": {"route.openshift.io/termination": "passthrough"}} == helm["ingress"]
+
+
+def test_houston_configmap_with_custom_airflow_ingress_annotation_disabled_with_authsidecar_disabled():
+    """Validate the houston configmap does not include airflow ingress annotation."""
+    docs = render_chart(
+        values={
+            "global": {"authSidecar": {"enabled": True}, "extraAnnotations": {"route.openshift.io/termination": "passthrough"}}
+        },
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    assert len(docs) == 1
+    doc = docs[0]
+    prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
+    assert not prod_yaml["deployments"]["helm"].get("ingress")
