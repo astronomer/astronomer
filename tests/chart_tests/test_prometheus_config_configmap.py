@@ -4,6 +4,11 @@ from tests import supported_k8s_versions
 import yaml
 import jmespath
 
+prometheus_job = {
+    "job_name": "prometheus",
+    "static_configs": [{"targets": ["localhost:9090"]}],
+}
+
 
 @pytest.mark.parametrize(
     "kube_version",
@@ -304,3 +309,25 @@ class TestPrometheusConfigConfigmap:
 
         assert static_job in scrape_configs, "Static job not found in rendered ConfigMap"
         assert kubernetes_job in scrape_configs, "Kubernetes job not found in rendered ConfigMap"
+
+    def test_prometheus_self_scrape_config_feature_defaults(self, kube_version):
+        doc = render_chart(
+            kube_version=kube_version,
+            show_only=self.show_only,
+            name="astronomer",
+            values={"prometheus": {"config": {"enableSelfScrape": True}}},
+        )[0]
+        scrape_configs = yaml.safe_load(doc["data"]["config"])["scrape_configs"]
+
+        assert prometheus_job in scrape_configs, "prometheus job not found in rendered ConfigMap"
+
+    def test_prometheus_self_scrape_config_feature_disabled(self, kube_version):
+        doc = render_chart(
+            kube_version=kube_version,
+            show_only=self.show_only,
+            name="astronomer",
+            values={"prometheus": {"config": {"enableSelfScrape": False}}},
+        )[0]
+        scrape_configs = yaml.safe_load(doc["data"]["config"])["scrape_configs"]
+
+        assert prometheus_job not in scrape_configs
