@@ -378,7 +378,7 @@ Helm 2.11 supports the assignment of a value to a variable defined in a differen
 but Helm 2.9 and 2.10 does not support it, so we need to implement this if-else logic.
 This version prioritizes component-specific registry.persistence.storageClassName over global.storageClass.
 */}}
-storageClassName: {{ or .Values.registry.persistence.storageClassName .Values.global.storageClass | default "" }}
+{{- printf "storageClassName: %s" (or .Values.registry.persistence.storageClassName .Values.global.storageClass | default "") | nindent 8 }}
 {{- end -}}
 
 {{- define "configSyncer.schedule" -}}
