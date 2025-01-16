@@ -19,21 +19,10 @@ def test_global_storageclass(chart_file, expected_sc_name):
         show_only=[chart_file],
     )
 
-    # Assert that one document is rendered
-    assert len(docs) == 1  # Expecting one document per chart file
-
-    # Since docs[0] is already a dictionary, we can directly access the fields
+    assert len(docs) == 1 
     statefulset_doc = docs[0]
+    storage_class_name = statefulset_doc["spec"]["volumeClaimTemplates"][0]["spec"]["storageClassName"]
 
-    # Determine if we're dealing with the registry chart or another chart
-    if chart_file == "charts/astronomer/templates/registry/registry-statefulset.yaml":
-        # Registry chart has the storageClassName directly in the statefulset
-        storage_class_name = statefulset_doc["storageClassName"]
-    else:
-        # Other charts have the storageClassName inside volumeClaimTemplates
-        storage_class_name = statefulset_doc["spec"]["volumeClaimTemplates"][0]["spec"]["storageClassName"]
-
-    # Assert that the storageClassName matches the expected one
     assert storage_class_name == expected_sc_name
 
 
