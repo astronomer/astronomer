@@ -161,6 +161,6 @@ spec:
         resources:
           requests:
             storage: {{ .Values.registry.persistence.size }}
-        {{ include "registry.storageClass" . }}
+        {{- include "registry.storageClass" . }}
   {{- end }}
 {{- end }}
