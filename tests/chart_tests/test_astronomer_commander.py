@@ -390,16 +390,16 @@ class TestAstronomerCommander:
                 "global": {
                     "operator": {"enabled": True},
                 },
-                },
+            },
             show_only=["charts/astronomer/templates/commander/commander-role.yaml"],
         )[0]
         expected_rule = {
-                'apiGroups': ['airflow.apache.org'],
-                'resources': ['airflows'],
-                'verbs': ['get', 'list', 'watch', 'create', 'update', "patch", 'delete']
-            }
-        assert any(rule == expected_rule for rule in doc['rules'])
-    
+            "apiGroups": ["airflow.apache.org"],
+            "resources": ["airflows"],
+            "verbs": ["get", "list", "watch", "create", "update", "patch", "delete"],
+        }
+        assert any(rule == expected_rule for rule in doc["rules"])
+
     def test_astronomer_commander_operator_permissions_disabled(self, kube_version):
         """Test template that helm renders when operator is enabled ."""
         doc = render_chart(
@@ -408,12 +408,12 @@ class TestAstronomerCommander:
                 "global": {
                     "operator": {"enabled": False},
                 },
-                },
+            },
             show_only=["charts/astronomer/templates/commander/commander-role.yaml"],
         )[0]
         expected_rule = {
-                'apiGroups': ['airflow.apache.org'],
-                'resources': ['airflows'],
-                'verbs': ['get', 'list', 'watch', 'create', 'update', "patch", 'delete']
-            }
-        assert not any(rule == expected_rule for rule in doc['rules'])
+            "apiGroups": ["airflow.apache.org"],
+            "resources": ["airflows"],
+            "verbs": ["get", "list", "watch", "create", "update", "patch", "delete"],
+        }
+        assert not any(rule == expected_rule for rule in doc["rules"])
