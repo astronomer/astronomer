@@ -38,7 +38,7 @@ rules:
 {{- if $.Values.global.operator.enabled }}
 - apiGroups: ["airflow.apache.org"]
   resources: ["airflows"]
-  verbs: ["get", "list", "watch", "create", "update", “patch”, "delete"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
 {{- end }}
 - apiGroups: [""]
   resources: ["configmaps"]
