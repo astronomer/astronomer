@@ -341,6 +341,7 @@ class TestPrometheusConfigConfigmap:
         )[0]
         assert '__meta_kubernetes_service_label_astronomer_io_platform_release' in doc['data']['config']
 
+    def test_prometheus_operator_integration_config_disabled(self, kube_version):
         doc = render_chart(
             kube_version=kube_version,
             show_only=self.show_only,
