@@ -19,7 +19,7 @@ def test_global_storageclass(chart_file, expected_sc_name):
         show_only=[chart_file],
     )
 
-    assert len(docs) == 1 
+    assert len(docs) == 1
     statefulset_doc = docs[0]
     storage_class_name = statefulset_doc["spec"]["volumeClaimTemplates"][0]["spec"]["storageClassName"]
 
