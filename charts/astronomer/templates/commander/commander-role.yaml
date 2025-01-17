@@ -109,7 +109,7 @@ rules:
   verbs: ["list", "watch", "create", "delete", "get"]
 - apiGroups: ["batch"]
   resources: ["cronjobs"]
-  verbs: ["create", "delete", "get", "list", "patch", "watch"]
+  verbs: ["create", "delete", "get", "list", "patch", "watch", "deletecollection"]
 - apiGroups: ["extensions"]
   resources: ["daemonsets", "replicasets"]
   verbs: ["list", "watch"]
