@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC1090,SC1091
-set -eo pipefail
+set -euo pipefail
 
 BOM_GENERATOR_VERSION=v0.6.0
 
@@ -37,10 +37,10 @@ json_file_name="astronomer-${version}.json"
 max_age="300"
 
 # Install bom-generator
-pip install "git+https://${GITHUB_TOKEN}@github.com/astronomer/astronomer-bom-generator.git${BOM_GENERATOR_VERSION}
+pip install "git+https://${GITHUB_TOKEN}@github.com/astronomer/astronomer-bom-generator.git${BOM_GENERATOR_VERSION}"
 
 # Generate bom file and indexes
-bom-generator --version ${version}"
+bom-generator --version "${version}"
 
 # Verify that we generated the desired bom file
 if [ ! -f "${json_file_name}" ]; then
