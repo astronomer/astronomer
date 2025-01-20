@@ -381,3 +381,39 @@ class TestAstronomerCommander:
         assert env_vars["COMMANDER_MANAGE_NAMESPACE_RESOURCE"] == "false"
         assert env_vars["COMMANDER_MANUAL_NAMESPACE_NAMES"] == "true"
         assert env_vars["COMMANDER_AIRGAPPED"] == "true"
+
+    def test_astronomer_commander_operator_permissions(self, kube_version):
+        """Test template that helm renders when operator is enabled ."""
+        doc = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "operator": {"enabled": True},
+                },
+            },
+            show_only=["charts/astronomer/templates/commander/commander-role.yaml"],
+        )[0]
+        expected_rule = {
+            "apiGroups": ["airflow.apache.org"],
+            "resources": ["airflows"],
+            "verbs": ["get", "list", "watch", "create", "update", "patch", "delete"],
+        }
+        assert any(rule == expected_rule for rule in doc["rules"])
+
+    def test_astronomer_commander_operator_permissions_disabled(self, kube_version):
+        """Test template that helm renders when operator is enabled ."""
+        doc = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "operator": {"enabled": False},
+                },
+            },
+            show_only=["charts/astronomer/templates/commander/commander-role.yaml"],
+        )[0]
+        expected_rule = {
+            "apiGroups": ["airflow.apache.org"],
+            "resources": ["airflows"],
+            "verbs": ["get", "list", "watch", "create", "update", "patch", "delete"],
+        }
+        assert not any(rule == expected_rule for rule in doc["rules"])

@@ -331,3 +331,21 @@ class TestPrometheusConfigConfigmap:
         scrape_configs = yaml.safe_load(doc["data"]["config"])["scrape_configs"]
 
         assert prometheus_job not in scrape_configs
+
+    def test_prometheus_operator_integration_config(self, kube_version):
+        doc = render_chart(
+            kube_version=kube_version,
+            show_only=self.show_only,
+            name="astronomer",
+            values={"global": {"operator": {"enabled": True}}},
+        )[0]
+        assert "__meta_kubernetes_service_label_astronomer_io_platform_release" in doc["data"]["config"]
+
+    def test_prometheus_operator_integration_config_disabled(self, kube_version):
+        doc = render_chart(
+            kube_version=kube_version,
+            show_only=self.show_only,
+            name="astronomer",
+            values={"global": {"operator": {"enabled": False}}},
+        )[0]
+        assert "__meta_kubernetes_service_label_astronomer_io_platform_release" not in doc["data"]["config"]
