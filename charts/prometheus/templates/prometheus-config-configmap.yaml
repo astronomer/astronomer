@@ -52,9 +52,11 @@ data:
 
     # Configure targets to scrape
     scrape_configs:
+      {{ if .Values.config.enableSelfScrape }}
       - job_name: prometheus
         static_configs:
           - targets: ["localhost:9090"]
+      {{ end }}
 
       # TODO add a proper config flag option for disabling kubernetes-apiservers scraping instead of using useClusterRoles
       {{- if $useClusterRoles }}
