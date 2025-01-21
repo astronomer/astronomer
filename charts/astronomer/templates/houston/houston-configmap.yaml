@@ -73,7 +73,7 @@ data:
     deployments:
       mode:
         operator:
-          enabled: {{.Values.global.airflow-operator.enabled}}
+          enabled: {{.Values.global.airflow_operator.enabled}}
       disableManageClusterScopedResources: {{ default false ( or .Values.global.disableManageClusterScopedResources  .Values.global.features.namespacePools.enabled ) }}
       fluentdIndexPrefix: {{ include "fluentd.IndexPattern" .}}
       enableHoustonInternalAuthorization: {{ include "houston.InternalAuthorization" . }}

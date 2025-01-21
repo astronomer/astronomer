@@ -1,7 +1,7 @@
 ###############################
 # Operator Self-Signed Issuer #
 ###############################
-{{ if and .Values.certManager.enabled  .Values.global.airflow-operator.enabled }}
+{{ if and .Values.certManager.enabled  .Values.global.airflow_operator.enabled }}
 apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:

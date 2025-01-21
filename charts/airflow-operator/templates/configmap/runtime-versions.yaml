@@ -1,7 +1,7 @@
 ##############################
 # Runtime Version ConfigMap ##
 ##############################
-{{ if and .Values.airgapped .Values.runtimeVersions.configMapName .Values.runtimeVersions.versionsJson .Values.global.airflow-operator.enabled -}}
+{{ if and .Values.airgapped .Values.runtimeVersions.configMapName .Values.runtimeVersions.versionsJson .Values.global.airflow_operator.enabled -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
