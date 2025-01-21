@@ -37,7 +37,7 @@ global:
     enabled: true
 
   #Global flag to enable Operator based deployment
-  operator:
+  airflow-operator:
     enabled: false
 
   # Specific Astronomer features configuration
