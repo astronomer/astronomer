@@ -3,6 +3,7 @@ from tests.chart_tests.helm_template_generator import render_chart
 import pytest
 import ast
 
+
 class TestHoustonConfigMap:
     def common_test_cases(self, docs):
         """Test some things that should apply to all cases."""
@@ -35,7 +36,6 @@ class TestHoustonConfigMap:
         # validate yaml-embedded python
         ast.parse(airflow_local_settings.encode())
 
-
     def test_houston_configmap(self):
         """Validate the houston configmap and its embedded data."""
         docs = render_chart(
@@ -54,7 +54,6 @@ class TestHoustonConfigMap:
             # Ensure sccEnabled is not defined by default
             assert prod["deployments"]["helm"]["sccEnabled"] is False
 
-
     def test_houston_configmap_with_namespaceFreeFormEntry_true(self):
         """Validate the houston configmap's embedded data with
         namespaceFreeFormEntry=True."""
@@ -66,7 +65,6 @@ class TestHoustonConfigMap:
         prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
         assert prod["deployments"]["namespaceFreeFormEntry"] is True
 
-
     def test_houston_configmap_with_namespaceFreeFormEntry_defaults(self):
         """Validate the houston configmap's embedded data with
         namespaceFreeFormEntry defaults."""
@@ -75,7 +73,6 @@ class TestHoustonConfigMap:
         )
         prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
         assert prod["deployments"]["namespaceFreeFormEntry"] is False
-
 
     def test_houston_configmap_with_customlogging_enabled(self):
         """Validate the houston configmap and its embedded data with
@@ -92,7 +89,6 @@ class TestHoustonConfigMap:
         assert "node" in prod["elasticsearch"]["client"]
         assert prod["elasticsearch"]["client"]["node"].startswith("http://") is True
 
-
     def test_houston_configmapwith_scc_enabled(self):
         """Validate the houston configmap and its embedded data with sscEnabled."""
         docs = render_chart(
@@ -105,7 +101,6 @@ class TestHoustonConfigMap:
         prod = yaml.safe_load(doc["data"]["production.yaml"])
 
         assert prod["deployments"]["helm"]["sccEnabled"] is True
-
 
     def test_houston_configmap_with_azure_enabled(self):
         """Validate the houston configmap and its embedded data with azure
@@ -125,7 +120,6 @@ class TestHoustonConfigMap:
         livenessProbe = prod["deployments"]["helm"]["airflow"]["webserver"]["livenessProbe"]
         assert livenessProbe["failureThreshold"] == 25
         assert livenessProbe["periodSeconds"] == 10
-
 
     def test_houston_configmap_with_config_syncer_enabled(self):
         """Validate the houston configmap and its embedded data with configSyncer
@@ -152,7 +146,6 @@ class TestHoustonConfigMap:
             }
         ]
 
-
     def test_houston_configmap_with_config_syncer_disabled(self):
         """Validate the houston configmap and its embedded data with configSyncer
         disabled."""
@@ -168,7 +161,6 @@ class TestHoustonConfigMap:
         assert "extraVolumes" not in prod_yaml["deployments"]["helm"]["airflow"]["webserver"]
         assert not prod_yaml["deployments"].get("loggingSidecar")
 
-
     def test_houston_configmap_with_fluentd_index_prefix_defaults(self):
         """Validate the houston configmap and its embedded data with configSyncer
         disabled."""
@@ -182,7 +174,6 @@ class TestHoustonConfigMap:
         prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
         assert "fluentd" in prod_yaml["deployments"].get("fluentdIndexPrefix")
 
-
     def test_houston_configmap_with_fluentd_index_prefix_overrides(self):
         """Validate the houston configmap and its embedded data with configSyncer
         disabled."""
@@ -195,7 +186,6 @@ class TestHoustonConfigMap:
         doc = docs[0]
         prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
         assert "astronomer" in prod_yaml["deployments"].get("fluentdIndexPrefix")
-
 
     def test_houston_configmap_with_loggingsidecar_enabled(self):
         """Validate the houston configmap and its embedded data with
@@ -225,7 +215,6 @@ class TestHoustonConfigMap:
             "customConfig": False,
         }
         assert "vector" in prod_yaml["deployments"]["loggingSidecar"]["image"]
-
 
     def test_houston_configmap_with_loggingsidecar_enabled_with_index_prefix_overrides(self):
         """Validate the houston configmap and its embedded data with
@@ -259,7 +248,6 @@ class TestHoustonConfigMap:
         }
         assert image in prod_yaml["deployments"]["loggingSidecar"]["image"]
 
-
     def test_houston_configmap_with_loggingsidecar_enabled_with_overrides(self):
         """Validate the houston configmap and its embedded data with
         loggingSidecar."""
@@ -290,7 +278,6 @@ class TestHoustonConfigMap:
             "customConfig": False,
         }
         assert "vector" in prod_yaml["deployments"]["loggingSidecar"]["image"]
-
 
     def test_houston_configmap_with_loggingsidecar_enabled_with_indexPattern(self):
         """Validate the houston configmap and its embedded data with
@@ -326,7 +313,6 @@ class TestHoustonConfigMap:
             "indexPattern": indexPattern,
         }
 
-
     def test_houston_configmap_with_loggingsidecar_customConfig_enabled(self):
         """Validate the houston configmap and its embedded data with loggingSidecar
         customConfig Enabled."""
@@ -359,7 +345,6 @@ class TestHoustonConfigMap:
             "customConfig": True,
         }
         assert "vector" in prod_yaml["deployments"]["loggingSidecar"]["image"]
-
 
     def test_houston_configmap_with_loggingsidecar_enabled_with_custom_env_overrides(self):
         """Validate the houston configmap and its embedded data with
@@ -423,7 +408,6 @@ class TestHoustonConfigMap:
 
         assert "vector" in prod_yaml["deployments"]["loggingSidecar"]["image"]
 
-
     def test_houston_configmap_with_loggingsidecar_enabled_with_resource_overrides(self):
         """Validate the houston configmap and its embedded data with
         loggingSidecar."""
@@ -464,7 +448,6 @@ class TestHoustonConfigMap:
 
         assert "vector" in prod_yaml["deployments"]["loggingSidecar"]["image"]
 
-
     def test_houston_configmap_with_loggingsidecar_enabled_with_securityContext_configured(self):
         """Validate the houston configmap and its embedded data with
         loggingSidecar."""
@@ -502,7 +485,6 @@ class TestHoustonConfigMap:
 
         assert "vector" in prod_yaml["deployments"]["loggingSidecar"]["image"]
 
-
     def test_houston_configmapwith_update_airflow_runtime_checks_enabled(self):
         """Validate the houston configmap and its embedded data with
         updateAirflowCheck and updateRuntimeCheck."""
@@ -525,7 +507,6 @@ class TestHoustonConfigMap:
         assert prod["updateAirflowCheckEnabled"] is True
         assert prod["updateRuntimeCheckEnabled"] is True
 
-
     def test_houston_configmapwith_update_airflow_runtime_checks_disabled(self):
         """Validate the houston configmap and its embedded data with
         updateAirflowCheck and updateRuntimeCheck."""
@@ -546,7 +527,6 @@ class TestHoustonConfigMap:
         prod = yaml.safe_load(doc["data"]["production.yaml"])
         assert prod["updateAirflowCheckEnabled"] is False
         assert prod["updateRuntimeCheckEnabled"] is False
-
 
     def test_houston_configmap_with_cleanup_airflow_db_enabled(self):
         """Validate the houston configmap and its embedded data with
@@ -569,7 +549,6 @@ class TestHoustonConfigMap:
         prod = yaml.safe_load(doc["data"]["production.yaml"])
         assert prod["deployments"]["cleanupAirflowDb"]["enabled"] is True
 
-
     def test_houston_configmap_with_cleanup_airflow_db_disabled(self):
         """Validate the houston configmap and its embedded data with
         cleanupAirflowDb."""
@@ -591,7 +570,6 @@ class TestHoustonConfigMap:
         prod = yaml.safe_load(doc["data"]["production.yaml"])
         assert prod["deployments"]["cleanupAirflowDb"]["enabled"] is False
 
-
     def test_houston_configmap_with_internal_authorization_flag_defaults(self):
         """Validate the houston configmap to internal authorization."""
         docs = render_chart(
@@ -603,7 +581,6 @@ class TestHoustonConfigMap:
 
         prod = yaml.safe_load(doc["data"]["production.yaml"])
         assert prod["deployments"]["enableHoustonInternalAuthorization"] is False
-
 
     def test_houston_configmap_with_internal_authorization_flag_enabled(self):
         """Validate the houston configmap to internal authorization."""
@@ -617,7 +594,6 @@ class TestHoustonConfigMap:
         prod = yaml.safe_load(doc["data"]["production.yaml"])
         assert prod["deployments"]["enableHoustonInternalAuthorization"] is True
 
-
     def test_houston_configmap_with_disable_manage_clusterscopedresources_enabled(self):
         """Validate the houston configmap and its embedded data with disable manage clusterscoped resources enabled
         ."""
@@ -629,7 +605,6 @@ class TestHoustonConfigMap:
         prod = yaml.safe_load(doc["data"]["production.yaml"])
         assert prod["deployments"]["disableManageClusterScopedResources"] is True
 
-
     def test_houston_configmap_with_tls_secretname_overrides(self):
         """Validate the houston configmap and its embedded data with tls secretname overrides
         ."""
@@ -640,7 +615,6 @@ class TestHoustonConfigMap:
         doc = docs[0]
         prod = yaml.safe_load(doc["data"]["production.yaml"])
         assert prod["helm"]["tlsSecretName"] == "astro-ssl-secret"
-
 
     def test_houston_configmap_with_authsidecar_liveness_probe(self):
         """Validate the authSidecar liveness probe in the Houston configmap."""
@@ -672,7 +646,6 @@ class TestHoustonConfigMap:
         assert "livenessProbe" in prod_yaml["deployments"]["authSideCar"]
         assert prod_yaml["deployments"]["authSideCar"]["livenessProbe"] == liveness_probe
 
-
     def test_houston_configmap_with_authsidecar_readiness_probe(self):
         """Validate the authSidecar readiness probe in the Houston configmap."""
         readiness_probe = {
@@ -702,7 +675,6 @@ class TestHoustonConfigMap:
         prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
         assert "readinessProbe" in prod_yaml["deployments"]["authSideCar"]
         assert prod_yaml["deployments"]["authSideCar"]["readinessProbe"] == readiness_probe
-
 
     def test_houston_configmap_with_dagonlydeployment_liveness_probe(self):
         """Validate the dagOnlyDeployment liveness probe in the Houston configmap."""
@@ -735,7 +707,6 @@ class TestHoustonConfigMap:
         assert "livenessProbe" in prod_yaml["deployments"]["dagDeploy"]
         assert prod_yaml["deployments"]["dagDeploy"]["livenessProbe"] == liveness_probe
 
-
     def test_houston_configmap_with_dagonlydeployment_readiness_probe(self):
         """Validate the dagOnlyDeployment readiness probe in the Houston configmap."""
         readiness_probe = {
@@ -766,7 +737,6 @@ class TestHoustonConfigMap:
         # Validate readinessProbe
         assert "readinessProbe" in prod_yaml["deployments"]["dagDeploy"]
         assert prod_yaml["deployments"]["dagDeploy"]["readinessProbe"] == readiness_probe
-
 
     def test_houston_configmap_with_loggingsidecar_liveness_probe(self):
         """Validate the houston configmap with liveness probe configured."""
@@ -802,7 +772,6 @@ class TestHoustonConfigMap:
         assert "livenessProbe" in prod_yaml["deployments"]["loggingSidecar"]
         assert prod_yaml["deployments"]["loggingSidecar"]["livenessProbe"] == liveness_probe
 
-
     def test_houston_configmap_with_loggingsidecar_readiness_probe(self):
         """Validate the houston configmap with readiness probe configured."""
         readiness_probe = {
@@ -837,7 +806,6 @@ class TestHoustonConfigMap:
         assert "readinessProbe" in prod_yaml["deployments"]["loggingSidecar"]
         assert prod_yaml["deployments"]["loggingSidecar"]["readinessProbe"] == readiness_probe
 
-
     def test_houston_configmap_with_custom_airflow_ingress_annotation_with_authsidecar_disabled(self):
         """Validate the houston configmap with custom airflow ingress annotation."""
         docs = render_chart(
@@ -851,7 +819,6 @@ class TestHoustonConfigMap:
         helm = prod_yaml["deployments"]["helm"]
         assert "ingress" in helm
         assert {"extraIngressAnnotations": {"route.openshift.io/termination": "passthrough"}} == helm["ingress"]
-
 
     def test_houston_configmap_with_custom_airflow_ingress_annotation_disabled_with_authsidecar_disabled(self):
         """Validate the houston configmap does not include airflow ingress annotation."""

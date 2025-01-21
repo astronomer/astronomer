@@ -4,6 +4,7 @@ import pytest
 import tests.chart_tests as chart_tests
 from tests.chart_tests.helm_template_generator import render_chart
 
+
 class TestPodAnnotationConfig:
     @staticmethod
     def init_test_pod_annotation_configs():

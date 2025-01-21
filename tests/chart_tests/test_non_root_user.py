@@ -8,6 +8,8 @@ ignore_list = [
     "elasticsearch-exporter_metrics-exporter",
     "elasticsearch-nginx_nginx",
 ]
+
+
 @pytest.mark.parametrize(
     "kube_version",
     supported_k8s_versions,
