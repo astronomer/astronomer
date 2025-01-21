@@ -94,7 +94,7 @@ dependencies:
     condition: global.customLogging.enabled
 
   # Airflow Operator
-  - name: operator
+  - name: airflow-operator
     condition: global.operator.enabled
     tags:
       - airflow-operator
