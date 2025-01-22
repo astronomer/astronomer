@@ -82,9 +82,8 @@ class TestAirflowOperator:
         )
 
         assert len(docs) == 1
-        expected_data = {'tls.crt': 'dGxzY2VydDEyMw==', 'tls.key': 'dGxza2V5MTIz'}
-        assert docs[0]['data'] == expected_data
-        
+        expected_data = {"tls.crt": "dGxzY2VydDEyMw==", "tls.key": "dGxza2V5MTIz"}
+        assert docs[0]["data"] == expected_data
 
     def test_airflow_operator_webhooks(self, kube_version):
         """""Test Airflow Operator Webhook tls""" ""
