@@ -33,7 +33,7 @@ class TestAirflowOperator:
         assert len(docs) == 2
     
     def test_airflow_operator_crd(self, kube_version):
-        """Test Airflow Operator crd"""
+        """Test Airflow Operator crd template"""
         docs = render_chart(
         kube_version=kube_version,
         values={"airflow-operator": {
@@ -51,7 +51,42 @@ class TestAirflowOperator:
                         },
                 },      
                     
-        show_only=["charts/airflow-operator/templates/crds/airflow.yaml",
+        show_only=[ "charts/airflow-operator/templates/crds/airflow.yaml",
+                    "charts/airflow-operator/templates/crds/allocator.yaml",
+                    "charts/airflow-operator/templates/crds/apiserver.yaml",
+                    "charts/airflow-operator/templates/crds/dagprocessor.yaml",
+                    "charts/airflow-operator/templates/crds/pgbouncer.yaml",
+                    "charts/airflow-operator/templates/crds/postgres.yaml",
+                    "charts/airflow-operator/templates/crds/rbac.yaml",
+                    "charts/airflow-operator/templates/crds/redis.yaml",
+                    "charts/airflow-operator/templates/crds/runner.yaml",
+                    "charts/airflow-operator/templates/crds/scheduler.yaml",
+                    "charts/airflow-operator/templates/crds/statsd.yaml",
+                    "charts/airflow-operator/templates/crds/triggerer.yaml",
+                    "charts/airflow-operator/templates/crds/webserver.yaml",
+                    "charts/airflow-operator/templates/crds/worker.yaml",
                 ],
-    )
+        )
+        assert len(docs) == 14
+    
+    def test_airflow_operator_webhook_tls(self, kube_version):
+        """""Test Webhook tls"""""
+        docs = render_chart(
+        kube_version=kube_version,
+        values={"airflow-operator": {
+                        "webhooks":{ 
+                            "useCustomTlsCerts": True,
+                            "caBundle": "abc123",
+                            "tlsCert": "tlscert123",
+                            "tlsKey": "tlskey123",
+                        },
+                        },
+                    "global":{
+                                "airflow_operator":{
+                                    "enabled": True
+                                },
+                        },
+                },      
+        show_only=[ "charts/airflow-operator/templates/secrets/webhooks-tls.yaml"]
+        )
         assert len(docs) == 1
