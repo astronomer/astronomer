@@ -1,0 +1,50 @@
+namespace: cert-manager
+
+serviceAccount:
+  create: true
+controller:
+  replicas: 1
+  image:
+    repository: quay.io/jetstack/cert-manager-controller
+    tag: v1.5.4
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+
+cainjector:
+  enabled: true
+  replicas: 1
+  image:
+    repository: quay.io/jetstack/cert-manager-cainjector
+    tag: v1.5.4
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+
+webhook:
+  enabled: true
+  replicas: 1
+  image:
+    repository: quay.io/jetstack/cert-manager-webhook
+    tag: v1.5.4
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 443
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi

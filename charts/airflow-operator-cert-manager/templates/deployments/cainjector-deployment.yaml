@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cert-manager-cainjector
+  namespace: cert-manager
+  labels:
+    app: cainjector
+spec:
+  replicas: {{ .Values.cainjector.replicas | default 1 }}
+  selector:
+    matchLabels:
+      app: cainjector
+  template:
+    metadata:
+      labels:
+        app: cainjector
+    spec:
+      serviceAccountName: cert-manager-cainjector
+      containers:
+        - name: cainjector
+          image: "{{ .Values.cainjector.image.repository }}:{{ .Values.cainjector.image.tag }}"
+          imagePullPolicy: {{ .Values.cainjector.image.pullPolicy | default "IfNotPresent" }}
+          args:
+          - --v=2
+          - --leader-election-namespace=kube-system
+          resources:
+            {{- toYaml .Values.cainjector.resources | nindent 12 }}

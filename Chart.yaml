@@ -92,3 +92,8 @@ dependencies:
   # external-es-proxy
   - name: external-es-proxy
     condition: global.customLogging.enabled
+
+  - name: cert-manager
+    version: "1.5.4"
+    repository: "file://charts/airflow-operator-cert-manager"
+    condition: global.cert-manager.enabled
