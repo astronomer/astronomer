@@ -32,3 +32,26 @@ class TestAirflowOperator:
         )
         assert len(docs) == 2
     
+    def test_airflow_operator_crd(self, kube_version):
+        """Test Airflow Operator crd"""
+        docs = render_chart(
+        kube_version=kube_version,
+        values={"airflow-operator": {
+                        "crd":
+                        { 
+                            "create": True
+                        },
+                        },
+                    "global":
+                        {
+                                "airflow_operator":
+                                {
+                                    "enabled": True
+                                },
+                        },
+                },      
+                    
+        show_only=["charts/airflow-operator/templates/crds/airflow.yaml",
+                ],
+    )
+        assert len(docs) == 2
