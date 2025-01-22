@@ -337,7 +337,7 @@ class TestPrometheusConfigConfigmap:
             kube_version=kube_version,
             show_only=self.show_only,
             name="astronomer",
-            values={"global": {"operator": {"enabled": True}}},
+            values={"global": {"airflow_operator": {"enabled": True}}},
         )[0]
         assert "__meta_kubernetes_service_label_astronomer_io_platform_release" in doc["data"]["config"]
 
@@ -346,6 +346,6 @@ class TestPrometheusConfigConfigmap:
             kube_version=kube_version,
             show_only=self.show_only,
             name="astronomer",
-            values={"global": {"operator": {"enabled": False}}},
+            values={"global": {"airflow_operator": {"enabled": False}}},
         )[0]
         assert "__meta_kubernetes_service_label_astronomer_io_platform_release" not in doc["data"]["config"]
