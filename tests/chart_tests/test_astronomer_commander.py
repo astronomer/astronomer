@@ -388,7 +388,7 @@ class TestAstronomerCommander:
             kube_version=kube_version,
             values={
                 "global": {
-                    "operator": {"enabled": True},
+                    "airflow_operator": {"enabled": True},
                 },
             },
             show_only=["charts/astronomer/templates/commander/commander-role.yaml"],
@@ -406,7 +406,7 @@ class TestAstronomerCommander:
             kube_version=kube_version,
             values={
                 "global": {
-                    "operator": {"enabled": False},
+                    "airflow_operator": {"enabled": False},
                 },
             },
             show_only=["charts/astronomer/templates/commander/commander-role.yaml"],
