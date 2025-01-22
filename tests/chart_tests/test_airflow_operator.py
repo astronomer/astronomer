@@ -69,8 +69,8 @@ class TestAirflowOperator:
         )
         assert len(docs) == 14
     
-    def test_airflow_operator_webhook_tls(self, kube_version):
-        """""Test Webhook tls"""""
+    def test_airflow_operator_secret(self, kube_version):
+        """""Test Airflow Operator Webhook tls"""""
         docs = render_chart(
         kube_version=kube_version,
         values={"airflow-operator": {
@@ -90,3 +90,21 @@ class TestAirflowOperator:
         show_only=[ "charts/airflow-operator/templates/secrets/webhooks-tls.yaml"]
         )
         assert len(docs) == 1
+        ## add more validations to add cabundle,tlscert,tlskey
+    
+    def test_airflow_operator_webhooks(self,kube_version):
+        """""Test Airflow Operator Webhook tls"""""
+        docs = render_chart(
+        kube_version=kube_version,
+        values={
+                "global":{
+                                "airflow_operator":{
+                                    "enabled": True
+                                },
+                        },
+                },      
+        show_only=[ "charts/airflow-operator/templates/webhooks/mutating-webhook-configuration.yaml",
+                    "charts/airflow-operator/templates/webhooks/validating-webhook-configuration.yaml",
+                    ],
+        )
+        assert len(docs) == 2
