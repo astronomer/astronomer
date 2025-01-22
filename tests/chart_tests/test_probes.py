@@ -16,6 +16,12 @@ default_probes = {
 }
 
 pod_manager_data = {
+    "charts/airflow-operator/templates/manager/controller-manager-deployment.yaml":{
+        "airflow-operator": default_probes,
+        "global": {
+            "airflow_operator": {"enabled": True},
+        },
+    },
     "charts/alertmanager/templates/alertmanager-statefulset.yaml": {
         "alertmanager": default_probes,
         "global": {
@@ -167,6 +173,7 @@ class TestDefaultProbes:
 
     # expected container liveness probes
     expected_clp = {
+        "airflow-operator-controller-manager_manager": {"httpGet": {"path": "/healthz", "port": 8081}},
         "alertmanager_auth-proxy": {
             "httpGet": {"path": "/healthz", "port": 8084, "scheme": "HTTP"},
             "initialDelaySeconds": 10,
@@ -278,6 +285,7 @@ class TestDefaultProbes:
 
     # expected container readiness probes
     expected_crp = {
+        "airflow-operator-controller-manager_manager": {"httpGet": {"path": "/readyz", "port": 8081}},
         "alertmanager_alertmanager": {
             "httpGet": {"path": "/#/status", "port": 9093},
             "initialDelaySeconds": 30,

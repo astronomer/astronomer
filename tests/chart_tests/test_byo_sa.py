@@ -136,7 +136,7 @@ class TestServiceAccounts:
             "kube-state": {"serviceAccount": {"create": False}},
             "prometheus": {"serviceAccount": {"create": False}},
             "elasticsearch": {"common": {"serviceAccount": {"create": False}}},
-            "airflow_operator": {"serviceAccount": {"create": False}},
+            "airflow-operator": {"serviceAccount": {"create": False}},
         }
         show_only = [
             str(path.relative_to(git_root_dir)) for path in git_root_dir.rglob("charts/**/*") if "serviceaccount" in str(path)
