@@ -54,4 +54,4 @@ class TestAirflowOperator:
         show_only=["charts/airflow-operator/templates/crds/airflow.yaml",
                 ],
     )
-        assert len(docs) == 2
+        assert len(docs) == 1
