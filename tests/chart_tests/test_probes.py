@@ -16,10 +16,10 @@ default_probes = {
 }
 
 pod_manager_data = {
-    "charts/operator/templates/manager/controller-manager-deployment.yaml": {
-        "operator": default_probes,
+    "charts/airflow-operator/templates/manager/controller-manager-deployment.yaml": {
+        "airflow-operator": default_probes,
         "global": {
-            "operator": {"enabled": True},
+            "airflow_operator": {"enabled": True},
         },
     },
     "charts/alertmanager/templates/alertmanager-statefulset.yaml": {

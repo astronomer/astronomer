@@ -9,6 +9,12 @@ prometheus_job = {
     "static_configs": [{"targets": ["localhost:9090"]}],
 }
 
+airflow_scrape_relabel_config = {
+    "source_labels": ["__meta_kubernetes_service_label_astronomer_io_platform_release"],
+    "action": "keep",
+    "regex": "^astronomer$",
+}
+
 
 @pytest.mark.parametrize(
     "kube_version",
@@ -339,7 +345,9 @@ class TestPrometheusConfigConfigmap:
             name="astronomer",
             values={"global": {"airflow_operator": {"enabled": True}}},
         )[0]
-        assert "__meta_kubernetes_service_label_astronomer_io_platform_release" in doc["data"]["config"]
+        scrape_configs = yaml.safe_load(doc["data"]["config"])["scrape_configs"]
+        airflow_scrape_config = [scrape for scrape in scrape_configs if scrape["job_name"] == "airflow"]
+        assert airflow_scrape_relabel_config in airflow_scrape_config[0]["relabel_configs"]
 
     def test_prometheus_operator_integration_config_disabled(self, kube_version):
         doc = render_chart(
@@ -348,4 +356,6 @@ class TestPrometheusConfigConfigmap:
             name="astronomer",
             values={"global": {"airflow_operator": {"enabled": False}}},
         )[0]
-        assert "__meta_kubernetes_service_label_astronomer_io_platform_release" not in doc["data"]["config"]
+        scrape_configs = yaml.safe_load(doc["data"]["config"])["scrape_configs"]
+        airflow_scrape_config = [scrape for scrape in scrape_configs if scrape["job_name"] == "airflow"]
+        assert airflow_scrape_relabel_config not in airflow_scrape_config[0]["relabel_configs"]
