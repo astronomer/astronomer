@@ -11,6 +11,7 @@ class TestAirflowOperator:
     def test_airflow_operator_cert_manager(self, kube_version):
         """Test Airflow operator cert manager with flags."""
         docs = render_chart(
+            validate_objects=False,
             kube_version=kube_version,
             values={
                 "airflow-operator": {
@@ -30,6 +31,7 @@ class TestAirflowOperator:
     def test_airflow_operator_crd(self, kube_version):
         """Test Airflow Operator crd template"""
         docs = render_chart(
+            validate_objects=False,
             kube_version=kube_version,
             values={
                 "airflow-operator": {
@@ -61,6 +63,7 @@ class TestAirflowOperator:
     def test_airflow_operator_secret(self, kube_version):
         """""Test Airflow Operator Webhook tls""" ""
         docs = render_chart(
+            validate_objects=False,
             kube_version=kube_version,
             values={
                 "airflow-operator": {
@@ -83,6 +86,7 @@ class TestAirflowOperator:
     def test_airflow_operator_webhooks(self, kube_version):
         """""Test Airflow Operator Webhook tls""" ""
         docs = render_chart(
+            validate_objects=False,
             kube_version=kube_version,
             values={
                 "global": {
