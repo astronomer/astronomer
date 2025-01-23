@@ -35,7 +35,7 @@ metadata:
     argocd.argoproj.io/sync-wave: "-1"
   {{- end }}
 rules:
-{{- if $.Values.global.airflow_operator.enabled }}
+{{- if $.Values.global.airflowOperator.enabled }}
 - apiGroups: ["airflow.apache.org"]
   resources: ["airflows"]
   verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]

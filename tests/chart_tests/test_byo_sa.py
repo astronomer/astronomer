@@ -111,7 +111,7 @@ class TestServiceAccounts:
                 "customLogging": {"enabled": True},
                 "prometheusPostgresExporterEnabled": True,
                 "pgbouncer": {"enabled": True},
-                "airflow_operator": {"enabled": True},
+                "airflowOperator": {"enabled": True},
             },
             "astronomer": {
                 "commander": {"serviceAccount": {"create": False}},
@@ -159,7 +159,7 @@ class TestServiceAccounts:
                 "customLogging": {"enabled": True},
                 "prometheusPostgresExporterEnabled": True,
                 "pgbouncer": {"enabled": True},
-                "airflow_operator": {"enabled": True},
+                "airflowOperator": {"enabled": True},
             },
             "astronomer": {
                 "commander": {"serviceAccount": {"create": True, "annotations": annotations}},
