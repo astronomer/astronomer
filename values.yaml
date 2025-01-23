@@ -137,8 +137,6 @@ global:
     client: {}
     resources: {}
     persistence: {}
-    readinessProbe: {}
-    livenessProbe: {}
 
   logging:
     indexNamePrefix: ~
