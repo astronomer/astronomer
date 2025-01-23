@@ -178,11 +178,25 @@ data:
         {{- if .Values.global.dagOnlyDeployment.securityContexts }}
         securityContexts: {{ template "dagOnlyDeployment.securityContexts" . }}
         {{- end }}
-        {{- if .Values.global.dagOnlyDeployment.resources }}
         server:
+        {{- if .Values.global.dagOnlyDeployment.resources }}
           resources: {{- .Values.global.dagOnlyDeployment.resources | toYaml | nindent 12 }}
+        {{- end }}
+        {{- if .Values.global.dagOnlyDeployment.server.livenessProbe }}
+          resources: {{- .Values.global.dagOnlyDeployment.server.livenessProbe | toYaml | nindent 12 }}
+        {{- end }}
+        {{- if .Values.global.dagOnlyDeployment.server.readinessProbe }}
+          resources: {{- .Values.global.dagOnlyDeployment.server.readinessProbe | toYaml | nindent 12 }}
+        {{- end }}
         client:
+        {{- if .Values.global.dagOnlyDeployment.resources }}
           resources: {{- .Values.global.dagOnlyDeployment.resources | toYaml | nindent 12 }}
+        {{- end }}
+        {{- if .Values.global.dagOnlyDeployment.client.livenessProbe }}
+          resources: {{- .Values.global.dagOnlyDeployment.client.livenessProbe | toYaml | nindent 12 }}
+        {{- end }}
+        {{- if .Values.global.dagOnlyDeployment.client.readinessProbe }}
+          resources: {{- .Values.global.dagOnlyDeployment.client.readinessProbe | toYaml | nindent 12 }}
         {{- end }}
         {{- if .Values.global.dagOnlyDeployment.persistence }}
         persistence: {{- .Values.global.dagOnlyDeployment.persistence | toYaml | nindent 10 }}
