@@ -719,7 +719,8 @@ def test_houston_configmap_with_dagonlydeployment_liveness_probe():
             "global": {
                 "dagOnlyDeployment": {
                     "enabled": True,
-                    "livenessProbe": liveness_probe,
+                    "server": {"livenessProbe": liveness_probe},
+                    "client": {"livenessProbe": liveness_probe},
                     "image": "quay.io/astronomer/ap-auth:0.22.3",
                 }
             }
@@ -731,9 +732,10 @@ def test_houston_configmap_with_dagonlydeployment_liveness_probe():
     doc = docs[0]
     prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
 
-    # Validate livenessProbe
-    assert "livenessProbe" in prod_yaml["deployments"]["dagDeploy"]
-    assert prod_yaml["deployments"]["dagDeploy"]["livenessProbe"] == liveness_probe
+    assert "livenessProbe" in prod_yaml["deployments"]["dagDeploy"]["server"]
+    assert "livenessProbe" in prod_yaml["deployments"]["dagDeploy"]["client"]
+    assert prod_yaml["deployments"]["dagDeploy"]["server"]["livenessProbe"] == liveness_probe
+    assert prod_yaml["deployments"]["dagDeploy"]["client"]["livenessProbe"] == liveness_probe
 
 
 def test_houston_configmap_with_dagonlydeployment_readiness_probe():
@@ -751,7 +753,8 @@ def test_houston_configmap_with_dagonlydeployment_readiness_probe():
             "global": {
                 "dagOnlyDeployment": {
                     "enabled": True,
-                    "readinessProbe": readiness_probe,
+                    "server": {"readinessProbe": readiness_probe},
+                    "client": {"readinessProbe": readiness_probe},
                     "image": "quay.io/astronomer/ap-auth:0.22.3",
                 }
             }
@@ -763,9 +766,10 @@ def test_houston_configmap_with_dagonlydeployment_readiness_probe():
     doc = docs[0]
     prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
 
-    # Validate readinessProbe
-    assert "readinessProbe" in prod_yaml["deployments"]["dagDeploy"]
-    assert prod_yaml["deployments"]["dagDeploy"]["readinessProbe"] == readiness_probe
+    assert "readinessProbe" in prod_yaml["deployments"]["dagDeploy"]["server"]
+    assert "readinessProbe" in prod_yaml["deployments"]["dagDeploy"]["client"]
+    assert prod_yaml["deployments"]["dagDeploy"]["server"]["readinessProbe"] == readiness_probe
+    assert prod_yaml["deployments"]["dagDeploy"]["client"]["readinessProbe"] == readiness_probe
 
 
 def test_houston_configmap_with_loggingsidecar_liveness_probe():
