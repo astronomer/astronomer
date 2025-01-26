@@ -15,7 +15,7 @@ metadata:
 spec:
   ports:
   - name: https
-    port: 8443
+    port: {{ .Values.ports.managerContainerPort }}
     targetPort: https
     appProtocol: http
     protocol: TCP
