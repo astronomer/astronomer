@@ -9,6 +9,8 @@ runtimeVersions:
   configMapName: ""
   versionsJson: ""
 
+securityContext:
+  runAsNonRoot: true
 webhooks:
   useCustomTlsCerts: false
   # for each of the following properties, the full certificate/key/CABundle should be provided in the following way:

@@ -43,8 +43,7 @@ spec:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       imagePullSecrets: {{ toYaml .Values.manager.imagePullSecrets | nindent 8 }}
       containers: {{ include "manager.containers" . | nindent 6 }}
-      securityContext:
-        runAsNonRoot: true
+      securityContext: {{ toYaml .Values.podSecurityContext| nindent 8 }}
       serviceAccountName: {{ template "operator.serviceAccountName" . }}
       terminationGracePeriodSeconds: 10
       volumes: {{ include "manager.volumes" . | indent 6 }}
