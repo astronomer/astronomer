@@ -45,5 +45,5 @@ spec:
       containers: {{ include "manager.containers" . | nindent 6 }}
       securityContext: {{ toYaml .Values.podSecurityContext| nindent 8 }}
       serviceAccountName: {{ template "operator.serviceAccountName" . }}
-      terminationGracePeriodSeconds: 10
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
       volumes: {{ include "manager.volumes" . | indent 6 }}

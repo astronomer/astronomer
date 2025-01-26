@@ -11,6 +11,8 @@ runtimeVersions:
 
 securityContext:
   runAsNonRoot: true
+
+terminationGracePeriodSeconds: 10
 webhooks:
   useCustomTlsCerts: false
   # for each of the following properties, the full certificate/key/CABundle should be provided in the following way:
