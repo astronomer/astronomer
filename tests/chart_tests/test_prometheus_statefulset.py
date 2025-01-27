@@ -174,3 +174,20 @@ class TestPrometheusStatefulset:
         assert len(spec["affinity"]) == 1
         assert len(spec["tolerations"]) > 0
         assert spec["tolerations"] == values["prometheus"]["tolerations"]
+
+    def test_prometheus_filesd_reloader_enabled(self, kube_version):
+        """Test Prometheus with filesd reloader enabled."""
+        values = {
+            "global": {"rbacEnabled": False, "clusterRoles": False},
+            "prometheus": {},
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=["charts/prometheus/templates/prometheus-statefulset.yaml"],
+        )
+
+        assert len(docs) == 1
+        self.prometheus_common_tests(docs[0])
+        c_by_name = get_containers_by_name(docs[0])
+        assert c_by_name["filesd-reloader"]["volumeMounts"] == [{"mountPath": "/prometheusreloader/airflow", "name": "filesd"}]
