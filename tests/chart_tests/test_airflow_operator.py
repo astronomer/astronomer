@@ -26,11 +26,13 @@ class TestAirflowOperator:
                 "charts/airflow-operator/templates/certmanager/serving-cert-certificate.yaml",
             ],
         )
-        assert len(docs) == 3
+        assert len(docs) == 2
         assert 'Issuer' == docs[0]['kind']
         assert 'Certificate' == docs[1]['kind']
         assert 'cert-manager.io/v1' == docs[0]['apiVersion']
         assert 'cert-manager.io/v1' == docs[1]['apiVersion']
+        assert 'release-name-airflow-operator-serving-cert' == docs[1]['metadata']['name']
+        assert 'release-name-airflow-operator-selfsigned-issuer' == docs[0]['metadata']['name']      
 
     def test_airflow_operator_crd(self, kube_version):
         """Test Airflow Operator crd template"""
@@ -63,6 +65,12 @@ class TestAirflowOperator:
             ],
         )
         assert len(docs) == 14
+        for i in range(len(docs)):
+            assert 'apiextensions.k8s.io/v1' == docs[i]['apiVersion']
+            assert 'CustomResourceDefinition' == docs[i]['kind']
+            assert 'cert-manager.io/inject-ca-from' in docs[i]['metadata']['annotations']
+            assert 'airflow.apache.org' in docs[i]['metadata']['name']
+
 
     def test_airflow_operator_secret(self, kube_version):
         """""Test Airflow Operator Webhook tls""" ""
