@@ -12,7 +12,7 @@ prometheus_job = {
 airflow_scrape_relabel_config = {
     "source_labels": ["__meta_kubernetes_service_label_astronomer_io_platform_release"],
     "action": "keep",
-    "regex": "^astronomer$",
+    "regex": "^\\s*astronomer\\s*$",
 }
 
 
@@ -343,7 +343,7 @@ class TestPrometheusConfigConfigmap:
             kube_version=kube_version,
             show_only=self.show_only,
             name="astronomer",
-            values={"global": {"airflow_operator": {"enabled": True}}},
+            values={"global": {"airflowOperator": {"enabled": True}}},
         )[0]
         scrape_configs = yaml.safe_load(doc["data"]["config"])["scrape_configs"]
         airflow_scrape_config = [scrape for scrape in scrape_configs if scrape["job_name"] == "airflow"]
@@ -354,7 +354,7 @@ class TestPrometheusConfigConfigmap:
             kube_version=kube_version,
             show_only=self.show_only,
             name="astronomer",
-            values={"global": {"airflow_operator": {"enabled": False}}},
+            values={"global": {"airflowOperator": {"enabled": False}}},
         )[0]
         scrape_configs = yaml.safe_load(doc["data"]["config"])["scrape_configs"]
         airflow_scrape_config = [scrape for scrape in scrape_configs if scrape["job_name"] == "airflow"]

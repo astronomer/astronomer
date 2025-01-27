@@ -1,5 +1,5 @@
 global:
-  airflow_operator:
+  airflowOperator:
     enabled: true
   authSidecar:
     enabled: true

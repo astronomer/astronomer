@@ -95,6 +95,6 @@ dependencies:
 
   # Airflow Operator
   - name: airflow-operator
-    condition: global.airflow_operator.enabled
+    condition: global.airflowOperator.enabled
     tags:
       - airflow-operator

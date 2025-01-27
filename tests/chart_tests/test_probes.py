@@ -19,7 +19,7 @@ pod_manager_data = {
     "charts/airflow-operator/templates/manager/controller-manager-deployment.yaml": {
         "airflow-operator": default_probes,
         "global": {
-            "airflow_operator": {"enabled": True},
+            "airflowOperator": {"enabled": True},
         },
     },
     "charts/alertmanager/templates/alertmanager-statefulset.yaml": {

@@ -73,7 +73,7 @@ data:
     deployments:
       mode:
         operator:
-          enabled: {{.Values.global.airflow_operator.enabled}}
+          enabled: {{.Values.global.airflowOperator.enabled}}
       disableManageClusterScopedResources: {{ default false ( or .Values.global.disableManageClusterScopedResources  .Values.global.features.namespacePools.enabled ) }}
       fluentdIndexPrefix: {{ include "fluentd.IndexPattern" .}}
       enableHoustonInternalAuthorization: {{ include "houston.InternalAuthorization" . }}
@@ -181,23 +181,31 @@ data:
         {{- if .Values.global.dagOnlyDeployment.securityContexts }}
         securityContexts: {{ template "dagOnlyDeployment.securityContexts" . }}
         {{- end }}
-        {{- if .Values.global.dagOnlyDeployment.resources }}
         server:
+        {{- if .Values.global.dagOnlyDeployment.resources }}
           resources: {{- .Values.global.dagOnlyDeployment.resources | toYaml | nindent 12 }}
+        {{- end }}
+        {{- if .Values.global.dagOnlyDeployment.server.livenessProbe }}
+          livenessProbe: {{- .Values.global.dagOnlyDeployment.server.livenessProbe | toYaml | nindent 12 }}
+        {{- end }}
+        {{- if .Values.global.dagOnlyDeployment.server.readinessProbe }}
+          readinessProbe: {{- .Values.global.dagOnlyDeployment.server.readinessProbe | toYaml | nindent 12 }}
+        {{- end }}
         client:
+        {{- if .Values.global.dagOnlyDeployment.resources }}
           resources: {{- .Values.global.dagOnlyDeployment.resources | toYaml | nindent 12 }}
+        {{- end }}
+        {{- if .Values.global.dagOnlyDeployment.client.livenessProbe }}
+          livenessProbe: {{- .Values.global.dagOnlyDeployment.client.livenessProbe | toYaml | nindent 12 }}
+        {{- end }}
+        {{- if .Values.global.dagOnlyDeployment.client.readinessProbe }}
+          readinessProbe: {{- .Values.global.dagOnlyDeployment.client.readinessProbe | toYaml | nindent 12 }}
         {{- end }}
         {{- if .Values.global.dagOnlyDeployment.persistence }}
         persistence: {{- .Values.global.dagOnlyDeployment.persistence | toYaml | nindent 10 }}
         {{- end }}
         {{ if .Values.global.dagOnlyDeployment.serviceAccount }}
         serviceAccount: {{- .Values.global.dagOnlyDeployment.serviceAccount | toYaml | nindent 10 }}
-        {{- end }}
-        {{- if .Values.global.dagOnlyDeployment.livenessProbe}}
-        livenessProbe: {{- .Values.global.dagOnlyDeployment.livenessProbe | toYaml | nindent 10 }}
-        {{- end }}
-        {{- if .Values.global.dagOnlyDeployment.readinessProbe}}
-        readinessProbe: {{- .Values.global.dagOnlyDeployment.readinessProbe | toYaml | nindent 10 }}
         {{- end }}
       {{- end }}
 

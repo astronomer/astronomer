@@ -37,7 +37,7 @@ global:
     enabled: true
 
   #Global flag to enable Operator based deployment
-  airflow_operator:
+  airflowOperator:
     enabled: false
 
   # Specific Astronomer features configuration
@@ -137,10 +137,10 @@ global:
     securityContexts:
       pod:
         fsGroup: 50000
+    server: {}
+    client: {}
     resources: {}
     persistence: {}
-    readinessProbe: {}
-    livenessProbe: {}
 
   logging:
     indexNamePrefix: ~
