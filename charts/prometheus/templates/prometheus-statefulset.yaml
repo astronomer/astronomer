@@ -217,8 +217,10 @@ spec:
             items:
               - key: alerts
                 path: alerts.yaml
+        {{ if not $useClusterRoles }}
         - name: filesd
           emptyDir: {}
+        {{- end }}
   {{- if not .Values.persistence.enabled }}
         - name: data
           emptyDir: {}
