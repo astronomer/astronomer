@@ -26,7 +26,11 @@ class TestAirflowOperator:
                 "charts/airflow-operator/templates/certmanager/serving-cert-certificate.yaml",
             ],
         )
-        assert len(docs) == 2
+        assert len(docs) == 3
+        assert 'Issuer' == docs[0]['kind']
+        assert 'Certificate' == docs[1]['kind']
+        assert 'cert-manager.io/v1' == docs[0]['apiVersion']
+        assert 'cert-manager.io/v1' == docs[1]['apiVersion']
 
     def test_airflow_operator_crd(self, kube_version):
         """Test Airflow Operator crd template"""
