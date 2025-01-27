@@ -27,12 +27,12 @@ class TestAirflowOperator:
             ],
         )
         assert len(docs) == 2
-        assert 'Issuer' == docs[0]['kind']
-        assert 'Certificate' == docs[1]['kind']
-        assert 'cert-manager.io/v1' == docs[0]['apiVersion']
-        assert 'cert-manager.io/v1' == docs[1]['apiVersion']
-        assert 'release-name-airflow-operator-serving-cert' == docs[1]['metadata']['name']
-        assert 'release-name-airflow-operator-selfsigned-issuer' == docs[0]['metadata']['name']      
+        assert "Issuer" == docs[0]["kind"]
+        assert "Certificate" == docs[1]["kind"]
+        assert "cert-manager.io/v1" == docs[0]["apiVersion"]
+        assert "cert-manager.io/v1" == docs[1]["apiVersion"]
+        assert "release-name-airflow-operator-serving-cert" == docs[1]["metadata"]["name"]
+        assert "release-name-airflow-operator-selfsigned-issuer" == docs[0]["metadata"]["name"]
 
     def test_airflow_operator_crd(self, kube_version):
         """Test Airflow Operator crd template"""
@@ -66,11 +66,10 @@ class TestAirflowOperator:
         )
         assert len(docs) == 14
         for i in range(len(docs)):
-            assert 'apiextensions.k8s.io/v1' == docs[i]['apiVersion']
-            assert 'CustomResourceDefinition' == docs[i]['kind']
-            assert 'cert-manager.io/inject-ca-from' in docs[i]['metadata']['annotations']
-            assert 'airflow.apache.org' in docs[i]['metadata']['name']
-
+            assert "apiextensions.k8s.io/v1" == docs[i]["apiVersion"]
+            assert "CustomResourceDefinition" == docs[i]["kind"]
+            assert "cert-manager.io/inject-ca-from" in docs[i]["metadata"]["annotations"]
+            assert "airflow.apache.org" in docs[i]["metadata"]["name"]
 
     def test_airflow_operator_secret(self, kube_version):
         """""Test Airflow Operator Webhook tls""" ""
@@ -94,10 +93,10 @@ class TestAirflowOperator:
         )
 
         assert len(docs) == 1
-        assert 'v1' in docs[0]['apiVersion']
-        assert 'Secret'in docs[0]['kind']
-        assert 'release-name-webhooks-tls-certs' in docs[0]['metadata']['name']
-        assert 'kubernetes.io/tls' in docs[0]['type']
+        assert "v1" in docs[0]["apiVersion"]
+        assert "Secret" in docs[0]["kind"]
+        assert "release-name-webhooks-tls-certs" in docs[0]["metadata"]["name"]
+        assert "kubernetes.io/tls" in docs[0]["type"]
         expected_data = {"tls.crt": "dGxzY2VydDEyMw==", "tls.key": "dGxza2V5MTIz"}
         assert docs[0]["data"] == expected_data
 
@@ -117,8 +116,8 @@ class TestAirflowOperator:
             ],
         )
         assert len(docs) == 2
-        assert 'admissionregistration.k8s.io/v1' == docs[0]['apiVersion']
-        assert 'MutatingWebhookConfiguration' == docs[0]['kind']
-        assert 'ValidatingWebhookConfiguration' == docs[1]['kind']
-        assert 'release-name-airflow-operator-mutating-webhook-configuration' == docs[0]['metadata']['name']
-        assert 'release-name-airflow-operator-validating-webhook-configuration' == docs[1]['metadata']['name']
+        assert "admissionregistration.k8s.io/v1" == docs[0]["apiVersion"]
+        assert "MutatingWebhookConfiguration" == docs[0]["kind"]
+        assert "ValidatingWebhookConfiguration" == docs[1]["kind"]
+        assert "release-name-airflow-operator-mutating-webhook-configuration" == docs[0]["metadata"]["name"]
+        assert "release-name-airflow-operator-validating-webhook-configuration" == docs[1]["metadata"]["name"]
