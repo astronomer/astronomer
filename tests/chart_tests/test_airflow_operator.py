@@ -117,3 +117,8 @@ class TestAirflowOperator:
             ],
         )
         assert len(docs) == 2
+        assert 'admissionregistration.k8s.io/v1' == docs[0]['apiVersion']
+        assert 'MutatingWebhookConfiguration' == docs[0]['kind']
+        assert 'ValidatingWebhookConfiguration' == docs[1]['kind']
+        assert 'release-name-airflow-operator-mutating-webhook-configuration' == docs[0]['metadata']['name']
+        assert 'release-name-airflow-operator-validating-webhook-configuration' == docs[1]['metadata']['name']
