@@ -18,7 +18,7 @@ class TestAirflowOperator:
                     "certManager": {"enabled": True},
                 },
                 "global": {
-                    "airflow_operator": {"enabled": True},
+                    "airflowOperator": {"enabled": True},
                 },
             },
             show_only=[
@@ -38,7 +38,7 @@ class TestAirflowOperator:
                     "crd": {"create": True},
                 },
                 "global": {
-                    "airflow_operator": {"enabled": True},
+                    "airflowOperator": {"enabled": True},
                 },
             },
             show_only=[
@@ -75,7 +75,7 @@ class TestAirflowOperator:
                     },
                 },
                 "global": {
-                    "airflow_operator": {"enabled": True},
+                    "airflowOperator": {"enabled": True},
                 },
             },
             show_only=["charts/airflow-operator/templates/secrets/webhooks-tls.yaml"],
@@ -92,7 +92,7 @@ class TestAirflowOperator:
             kube_version=kube_version,
             values={
                 "global": {
-                    "airflow_operator": {"enabled": True},
+                    "airflowOperator": {"enabled": True},
                 },
             },
             show_only=[
