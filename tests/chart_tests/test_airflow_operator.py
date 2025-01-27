@@ -94,6 +94,10 @@ class TestAirflowOperator:
         )
 
         assert len(docs) == 1
+        assert 'v1' in docs[0]['apiVersion']
+        assert 'Secret'in docs[0]['kind']
+        assert 'release-name-webhooks-tls-certs' in docs[0]['metadata']['name']
+        assert 'kubernetes.io/tls' in docs[0]['type']
         expected_data = {"tls.crt": "dGxzY2VydDEyMw==", "tls.key": "dGxza2V5MTIz"}
         assert docs[0]["data"] == expected_data
 
