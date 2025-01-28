@@ -23,10 +23,12 @@ class TestAirflowOperator:
                     "airflowOperator": {"enabled": True},
                 },
             },
-            show_only=[
-                "charts/airflow-operator/templates/certmanager/selfsigned-issuer.yaml",
-                "charts/airflow-operator/templates/certmanager/serving-cert-certificate.yaml",
-            ],
+            show_only=sorted(
+                [
+                    str(x.relative_to(git_root_dir))
+                    for x in Path(f"{git_root_dir}/charts/airflow-operator/templates/certmanager").glob("*")
+                ]
+            ),
         )
         assert len(docs) == 2
         assert "Issuer" == docs[0]["kind"]
@@ -99,10 +101,12 @@ class TestAirflowOperator:
                     "airflowOperator": {"enabled": True},
                 },
             },
-            show_only=[
-                "charts/airflow-operator/templates/webhooks/mutating-webhook-configuration.yaml",
-                "charts/airflow-operator/templates/webhooks/validating-webhook-configuration.yaml",
-            ],
+            show_only=sorted(
+                [
+                    str(x.relative_to(git_root_dir))
+                    for x in Path(f"{git_root_dir}/charts/airflow-operator/templates/webhooks").glob("*")
+                ]
+            ),
         )
         assert len(docs) == 2
         assert "admissionregistration.k8s.io/v1" == docs[0]["apiVersion"]
