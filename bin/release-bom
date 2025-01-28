@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC1090,SC1091
-set -eo pipefail
+set -euo pipefail
 
-BOM_GENERATOR_VERSION=v0.3.0
+BOM_GENERATOR_VERSION=v0.6.0
 
 help() {
   echo "Description:"
@@ -30,42 +30,32 @@ if [[ "${#@}" -eq 0 ]] ; then
 fi
 
 version="$1"
+shift
 repo_url="https://updates.astronomer.io/astronomer-software/releases"
 bucket_path="gs://updates.astronomer.io/astronomer-software/releases"
 json_file_name="astronomer-${version}.json"
-local_json_file_path="${json_file_name}"
 max_age="300"
-index_file="index.html"
 
-# Step 0: Installing uv package manager
-curl -LsSf https://astral.sh/uv/install.sh | sh
+# Install bom-generator
+pip install "git+https://${GITHUB_TOKEN}@github.com/astronomer/astronomer-bom-generator.git${BOM_GENERATOR_VERSION}"
 
-# Step 1: Runs the Python extractor script to generate the BOM JSON file
-echo "Running the extractor script to generate ${json_file_name}..."
-pip install "git+https://${GITHUB_TOKEN}@github.com/astronomer/astronomer-bom-generator.git${BOM_GENERATOR_VERSION} bom-generator --version ${version}"
+# Generate bom file and indexes
+bom-generator --version "${version}"
 
-if [ ! -f "${local_json_file_path}" ]; then
+# Verify that we generated the desired bom file
+if [ ! -f "${json_file_name}" ]; then
   echo "ERROR: Failed to generate ${json_file_name}"
   exit 1
 fi
 
-# Step 2: Authenticate with Google Cloud
-echo "${GCP_TOKEN}" > /tmp/gcs_token.json
-gcloud auth activate-service-account --key-file=/tmp/gcs_token.json
+gcloud auth activate-service-account --key-file=<(echo "${GCP_TOKEN}")
 
-# Step 3: Check if the file already exists in the destination
-if gsutil -q stat "${bucket_path}/${json_file_name}" ; then
-  echo "ABORT: destination file ${json_file_name} already exists. Did you forget to bump the version number?"
-  exit 1
-fi
-
-# Step 4: Upload the BOM JSON file to the public release repository
 echo "Uploading ${json_file_name} to ${bucket_path}..."
-gsutil cp "${local_json_file_path}" "${bucket_path}"
-gsutil -h "Cache-Control: public, max-age=${max_age}" cp "${local_json_file_path}" "${bucket_path}"
+gsutil -h "Cache-Control: public, max-age=${max_age}" cp "${json_file_name}" "${bucket_path}"
 
-# Step 5: Update index.html with the new version
-echo "Updating index.html file"
-gsutil cp "${index_file}" "${bucket_path}/index.html"
+echo "Updating index files"
+gsutil -h "Cache-Control: public, max-age=${max_age}" -m cp index.html index.json "${bucket_path}/"
 
-echo "Successfully published ${json_file_name} to ${repo_url}"
+echo "Successfully published new data to:
+  ${repo_url}/index.html
+  ${repo_url}/index.json"
