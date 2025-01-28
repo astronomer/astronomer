@@ -1,6 +1,8 @@
 from tests import supported_k8s_versions
 from tests.chart_tests.helm_template_generator import render_chart
 import pytest
+from tests import git_root_dir
+from pathlib import Path
 
 
 @pytest.mark.parametrize(
@@ -47,22 +49,9 @@ class TestAirflowOperator:
                     "airflowOperator": {"enabled": True},
                 },
             },
-            show_only=[
-                "charts/airflow-operator/templates/crds/airflow.yaml",
-                "charts/airflow-operator/templates/crds/allocator.yaml",
-                "charts/airflow-operator/templates/crds/apiserver.yaml",
-                "charts/airflow-operator/templates/crds/dagprocessor.yaml",
-                "charts/airflow-operator/templates/crds/pgbouncer.yaml",
-                "charts/airflow-operator/templates/crds/postgres.yaml",
-                "charts/airflow-operator/templates/crds/rbac.yaml",
-                "charts/airflow-operator/templates/crds/redis.yaml",
-                "charts/airflow-operator/templates/crds/runner.yaml",
-                "charts/airflow-operator/templates/crds/scheduler.yaml",
-                "charts/airflow-operator/templates/crds/statsd.yaml",
-                "charts/airflow-operator/templates/crds/triggerer.yaml",
-                "charts/airflow-operator/templates/crds/webserver.yaml",
-                "charts/airflow-operator/templates/crds/worker.yaml",
-            ],
+            show_only=sorted(
+                [str(x.relative_to(git_root_dir)) for x in Path(f"{git_root_dir}/charts/airflow-operator/templates/crds").glob("*")]
+            ),
         )
         assert len(docs) == 14
         for i in range(len(docs)):
