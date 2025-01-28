@@ -54,11 +54,11 @@ class TestAirflowOperator:
             ),
         )
         assert len(docs) == 14
-        for i in range(len(docs)):
-            assert "apiextensions.k8s.io/v1" == docs[i]["apiVersion"]
-            assert "CustomResourceDefinition" == docs[i]["kind"]
-            assert "cert-manager.io/inject-ca-from" in docs[i]["metadata"]["annotations"]
-            assert "airflow.apache.org" in docs[i]["metadata"]["name"]
+        for doc in docs:
+            assert "apiextensions.k8s.io/v1" == doc["apiVersion"]
+            assert "CustomResourceDefinition" == doc["kind"]
+            assert "cert-manager.io/inject-ca-from" in doc["metadata"]["annotations"]
+            assert "airflow.apache.org" in doc["metadata"]["name"]
 
     def test_airflow_operator_secret(self, kube_version):
         """""Test Airflow Operator Webhook tls""" ""
