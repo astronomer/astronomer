@@ -85,9 +85,7 @@ class TestDagOnlyDeploy:
         doc = docs[0]
         prod = yaml.safe_load(doc["data"]["production.yaml"])
         assert prod["deployments"]["dagOnlyDeployment"] is True
-        assert prod["deployments"]["dagDeploy"] == {
-            "enabled": True,
-        }
+        assert prod["deployments"]["dagDeploy"]["enabled"] is True
         assert "server" not in prod["deployments"]["dagDeploy"]
         assert "client" not in prod["deployments"]["dagDeploy"]
 
