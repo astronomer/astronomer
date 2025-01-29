@@ -74,6 +74,23 @@ class TestDagOnlyDeploy:
             "client": {"resources": resources},
         }
 
+    def test_dagonlydeploy_config_enabled_with_defaults(self, kube_version):
+        """Test dagonlydeploy Service defaults."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"dagOnlyDeployment": {"enabled": True}}},
+            show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+        )
+
+        doc = docs[0]
+        prod = yaml.safe_load(doc["data"]["production.yaml"])
+        assert prod["deployments"]["dagOnlyDeployment"] is True
+        assert prod["deployments"]["dagDeploy"] == {
+            "enabled": True,
+        }
+        assert "server" not in prod["deployments"]["dagDeploy"]
+        assert "client" not in prod["deployments"]["dagDeploy"]
+
     def test_dagonlydeploy_config_enabled_with_private_registry(self, kube_version):
         """Test dagonlydeploy with private registry."""
         private_registry = "private-registry.example.com"
@@ -193,3 +210,71 @@ class TestDagOnlyDeploy:
         prod = yaml.safe_load(doc["data"]["production.yaml"])
         assert prod["deployments"]["dagOnlyDeployment"] is True
         assert persistenceRetain == prod["deployments"]["dagDeploy"]["persistence"]
+
+    def test_houston_configmap_with_dagonlydeployment_liveness_probe(self, kube_version):
+        """Validate the dagOnlyDeployment liveness probe in the Houston configmap."""
+        liveness_probe = {
+            "httpGet": {"path": "/dag-liveness", "port": 8081, "scheme": "HTTP"},
+            "initialDelaySeconds": 15,
+            "timeoutSeconds": 5,
+            "periodSeconds": 10,
+            "successThreshold": 1,
+            "failureThreshold": 3,
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "dagOnlyDeployment": {
+                        "enabled": True,
+                        "server": {"livenessProbe": liveness_probe},
+                        "client": {"livenessProbe": liveness_probe},
+                        "image": "quay.io/astronomer/ap-auth:0.22.3",
+                    }
+                }
+            },
+            show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
+
+        assert "livenessProbe" in prod_yaml["deployments"]["dagDeploy"]["server"]
+        assert "livenessProbe" in prod_yaml["deployments"]["dagDeploy"]["client"]
+        assert prod_yaml["deployments"]["dagDeploy"]["server"]["livenessProbe"] == liveness_probe
+        assert prod_yaml["deployments"]["dagDeploy"]["client"]["livenessProbe"] == liveness_probe
+
+    def test_houston_configmap_with_dagonlydeployment_readiness_probe(self, kube_version):
+        """Validate the dagOnlyDeployment readiness probe in the Houston configmap."""
+        readiness_probe = {
+            "httpGet": {"path": "/dag-readiness", "port": 8081, "scheme": "HTTP"},
+            "initialDelaySeconds": 15,
+            "timeoutSeconds": 5,
+            "periodSeconds": 10,
+            "successThreshold": 1,
+            "failureThreshold": 3,
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "dagOnlyDeployment": {
+                        "enabled": True,
+                        "server": {"readinessProbe": readiness_probe},
+                        "client": {"readinessProbe": readiness_probe},
+                        "image": "quay.io/astronomer/ap-auth:0.22.3",
+                    }
+                }
+            },
+            show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
+
+        assert "readinessProbe" in prod_yaml["deployments"]["dagDeploy"]["server"]
+        assert "readinessProbe" in prod_yaml["deployments"]["dagDeploy"]["client"]
+        assert prod_yaml["deployments"]["dagDeploy"]["server"]["readinessProbe"] == readiness_probe
+        assert prod_yaml["deployments"]["dagDeploy"]["client"]["readinessProbe"] == readiness_probe
