@@ -209,8 +209,9 @@ class TestDagOnlyDeploy:
         assert prod["deployments"]["dagOnlyDeployment"] is True
         assert persistenceRetain == prod["deployments"]["dagDeploy"]["persistence"]
 
-    def test_houston_configmap_with_dagonlydeployment_liveness_probe(self, kube_version):
+    def test_houston_configmap_with_dagonlydeployment_probe(self, kube_version):
         """Validate the dagOnlyDeployment liveness and readiness probes in the Houston configmap."""
+        images = "someregistry.io/my-custom-image:my-custom-tag"
         liveness_probe = {
             "httpGet": {"path": "/dag-liveness", "port": 8081, "scheme": "HTTP"},
             "initialDelaySeconds": 15,
@@ -233,9 +234,10 @@ class TestDagOnlyDeploy:
                 "global": {
                     "dagOnlyDeployment": {
                         "enabled": True,
+                        "repository": images.split(":")[0],
+                        "tag": images.split(":")[1],
                         "server": {"livenessProbe": liveness_probe, "readinessProbe": readiness_probe},
                         "client": {"livenessProbe": liveness_probe, "readinessProbe": readiness_probe},
-                        "image": "quay.io/astronomer/ap-auth:0.22.3",
                     }
                 }
             },
@@ -246,6 +248,15 @@ class TestDagOnlyDeploy:
         doc = docs[0]
         prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
 
+        assert prod_yaml["deployments"]["dagDeploy"] == {
+            "enabled": True,
+            "images": {
+                "dagServer": {
+                    "repository": "someregistry.io/my-custom-image",
+                    "tag": "my-custom-tag",
+                }
+            },
+        }
         assert "livenessProbe" in prod_yaml["deployments"]["dagDeploy"]["server"]
         assert "livenessProbe" in prod_yaml["deployments"]["dagDeploy"]["client"]
         assert prod_yaml["deployments"]["dagDeploy"]["server"]["livenessProbe"] == liveness_probe
