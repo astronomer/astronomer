@@ -21,12 +21,12 @@ service:
 - name: cert
   secret:
     defaultMode: 420
-    secretName: webhook-server-cert
+    secretName: {{ .Values.webhooks.certSecretName }}
 {{- else -}}
 - name: custom-certs
   secret:
     defaultMode: 420
-    secretName: webhooks-tls-certs
+    secretName: {{ .Values.webhooks.customCertsSecretName }}
 {{- end -}}
 {{- end }}
 
