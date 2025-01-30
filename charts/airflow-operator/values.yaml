@@ -1,5 +1,3 @@
-airflowNamespaces: []
-
 crd:
   create: false
 certManager:

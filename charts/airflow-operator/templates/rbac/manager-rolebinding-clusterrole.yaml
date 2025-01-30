@@ -1,4 +1,3 @@
-{{- if eq (len .Values.airflowNamespaces) 0 -}}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:

@@ -1,11 +1,8 @@
-{{- if gt (len .Values.airflowNamespaces) 0 }}
-{{- range $i, $namespaceName := .Values.airflowNamespaces }}
----
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: airflow-operator-manager-role
-  namespace: '{{ $namespaceName }}'
+  namespace: '{{ .Release.Namespace }}'
   labels:
     tier: operator
     release: {{ .Release.Name }}
