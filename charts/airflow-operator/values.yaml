@@ -1,5 +1,3 @@
-airflowNamespaces: []
-
 crd:
   create: false
 certManager:
@@ -15,6 +13,8 @@ securityContext:
 terminationGracePeriodSeconds: 10
 webhooks:
   useCustomTlsCerts: false
+  certSecretName: "webhook-server-cert"
+  customCertsSecretName: "webhooks-tls-certs"
   # for each of the following properties, the full certificate/key/CABundle should be provided in the following way:
   # caBundle: |
   #  -----BEGIN CERTIFICATE-----

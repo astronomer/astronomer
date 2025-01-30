@@ -21,12 +21,12 @@ service:
 - name: cert
   secret:
     defaultMode: 420
-    secretName: webhook-server-cert
+    secretName: {{ .Values.webhooks.certSecretName }}
 {{- else -}}
 - name: custom-certs
   secret:
     defaultMode: 420
-    secretName: webhooks-tls-certs
+    secretName: {{ .Values.webhooks.customCertsSecretName }}
 {{- end -}}
 {{- end }}
 
@@ -50,16 +50,13 @@ service:
 
 {{ define "manager.args" -}}
 {{ printf "\n" -}}
-- --health-probe-bind-address=:8081
+- --health-probe-bind-address=:{{ .Values.ports.managerPort }}
 - --leader-elect
-- --metrics-bind-address={{ if .Values.manager.metrics.useSecuredEndpoint }}127.0.0.1{{ else }}0.0.0.0{{ end }}:8080
-{{- if gt (len .Values.airflowNamespaces) 0 }}
-- --namespaces={{ join "," .Values.airflowNamespaces }}
-{{- end -}}
+- --metrics-bind-address={{ if .Values.manager.metrics.useSecuredEndpoint }}127.0.0.1{{ else }}0.0.0.0{{ end }}:{{ .Values.ports.managerUpstreamPort }}
 {{- if .Values.airgapped }}
 - --airgapped
 {{- end -}}
-{{- if .Values.global.openshift }}
+{{- if .Values.global.openshiftEnabled }}
 - --openshift
 {{- end -}}
 {{- if .Values.kedaEnabled }}
@@ -146,4 +143,14 @@ Create chart name and version as used by the chart label.
 */}}
 {{- define "operator.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{/*
+Return the proper Docker Image Registry Secret Names
+*/}}
+{{- define "manager.imagePullSecrets" -}}
+{{- if .Values.manager.imagePullSecrets }}
+imagePullSecrets:
+{{ toYaml .Values.manager.imagePullSecrets | nindent 2 }}
+{{- end -}}
 {{- end -}}
