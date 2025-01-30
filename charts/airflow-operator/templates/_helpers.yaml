@@ -50,16 +50,16 @@ service:
 
 {{ define "manager.args" -}}
 {{ printf "\n" -}}
-- --health-probe-bind-address=:8081
+- --health-probe-bind-address=:{{ .Values.ports.managerPort }}
 - --leader-elect
-- --metrics-bind-address={{ if .Values.manager.metrics.useSecuredEndpoint }}127.0.0.1{{ else }}0.0.0.0{{ end }}:8080
+- --metrics-bind-address={{ if .Values.manager.metrics.useSecuredEndpoint }}127.0.0.1{{ else }}0.0.0.0{{ end }}:{{ .Values.ports.managerUpstreamPort }}
 {{- if gt (len .Values.airflowNamespaces) 0 }}
 - --namespaces={{ join "," .Values.airflowNamespaces }}
 {{- end -}}
 {{- if .Values.airgapped }}
 - --airgapped
 {{- end -}}
-{{- if .Values.global.openshift }}
+{{- if .Values.global.openshiftEnabled }}
 - --openshift
 {{- end -}}
 {{- if .Values.kedaEnabled }}
