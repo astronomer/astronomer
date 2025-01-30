@@ -210,9 +210,17 @@ class TestDagOnlyDeploy:
         assert persistenceRetain == prod["deployments"]["dagDeploy"]["persistence"]
 
     def test_houston_configmap_with_dagonlydeployment_liveness_probe(self, kube_version):
-        """Validate the dagOnlyDeployment liveness probe in the Houston configmap."""
+        """Validate the dagOnlyDeployment liveness and readiness probes in the Houston configmap."""
         liveness_probe = {
             "httpGet": {"path": "/dag-liveness", "port": 8081, "scheme": "HTTP"},
+            "initialDelaySeconds": 15,
+            "timeoutSeconds": 5,
+            "periodSeconds": 10,
+            "successThreshold": 1,
+            "failureThreshold": 3,
+        }
+        readiness_probe = {
+            "httpGet": {"path": "/dag-readiness", "port": 8081, "scheme": "HTTP"},
             "initialDelaySeconds": 15,
             "timeoutSeconds": 5,
             "periodSeconds": 10,
@@ -225,8 +233,8 @@ class TestDagOnlyDeploy:
                 "global": {
                     "dagOnlyDeployment": {
                         "enabled": True,
-                        "server": {"livenessProbe": liveness_probe},
-                        "client": {"livenessProbe": liveness_probe},
+                        "server": {"livenessProbe": liveness_probe, "readinessProbe": readiness_probe},
+                        "client": {"livenessProbe": liveness_probe, "readinessProbe": readiness_probe},
                         "image": "quay.io/astronomer/ap-auth:0.22.3",
                     }
                 }
@@ -242,36 +250,6 @@ class TestDagOnlyDeploy:
         assert "livenessProbe" in prod_yaml["deployments"]["dagDeploy"]["client"]
         assert prod_yaml["deployments"]["dagDeploy"]["server"]["livenessProbe"] == liveness_probe
         assert prod_yaml["deployments"]["dagDeploy"]["client"]["livenessProbe"] == liveness_probe
-
-    def test_houston_configmap_with_dagonlydeployment_readiness_probe(self, kube_version):
-        """Validate the dagOnlyDeployment readiness probe in the Houston configmap."""
-        readiness_probe = {
-            "httpGet": {"path": "/dag-readiness", "port": 8081, "scheme": "HTTP"},
-            "initialDelaySeconds": 15,
-            "timeoutSeconds": 5,
-            "periodSeconds": 10,
-            "successThreshold": 1,
-            "failureThreshold": 3,
-        }
-        docs = render_chart(
-            kube_version=kube_version,
-            values={
-                "global": {
-                    "dagOnlyDeployment": {
-                        "enabled": True,
-                        "server": {"readinessProbe": readiness_probe},
-                        "client": {"readinessProbe": readiness_probe},
-                        "image": "quay.io/astronomer/ap-auth:0.22.3",
-                    }
-                }
-            },
-            show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
-        )
-
-        assert len(docs) == 1
-        doc = docs[0]
-        prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
-
         assert "readinessProbe" in prod_yaml["deployments"]["dagDeploy"]["server"]
         assert "readinessProbe" in prod_yaml["deployments"]["dagDeploy"]["client"]
         assert prod_yaml["deployments"]["dagDeploy"]["server"]["readinessProbe"] == readiness_probe
