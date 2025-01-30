@@ -387,6 +387,7 @@ data:
                   # the file /var/log/sidecar-log-consumer/finished, which signals the sidecar log
                   # consumer to exit.
                   from textwrap import dedent
+                  import shlex
                   cmd_init = dedent(
                       r"""
                       echo '
@@ -417,7 +418,7 @@ data:
                       command_str = (
                           cmd_init
                           + " /entrypoint "
-                          + " ".join([str(arg) for arg in container.args])
+                          + shlex.join([str(arg) for arg in container.args])
                           + log_cmd
                       )
                       new_args.append(command_str)
