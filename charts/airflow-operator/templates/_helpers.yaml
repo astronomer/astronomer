@@ -147,3 +147,13 @@ Create chart name and version as used by the chart label.
 {{- define "operator.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
+
+{{/*
+Return the proper Docker Image Registry Secret Names
+*/}}
+{{- define "manager.imagePullSecrets" -}}
+{{- if .Values.manager.imagePullSecrets }}
+imagePullSecrets:
+{{ toYaml .Values.manager.imagePullSecrets | nindent 2 }}
+{{- end -}}
+{{- end -}}

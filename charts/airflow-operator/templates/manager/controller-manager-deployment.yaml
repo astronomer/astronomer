@@ -41,7 +41,7 @@ spec:
 {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 8 }}
       tolerations:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
-      imagePullSecrets: {{ toYaml .Values.manager.imagePullSecrets | nindent 8 }}
+      {{ include "manager.imagePullSecrets" . | nindent 8 }}
       containers: {{ include "manager.containers" . | nindent 6 }}
       securityContext: {{ toYaml .Values.podSecurityContext| nindent 8 }}
       serviceAccountName: {{ template "operator.serviceAccountName" . }}
