@@ -1,0 +1,17 @@
+###############################
+# Operator Self-Signed Issuer #
+###############################
+{{ if and .Values.certManager.enabled  .Values.global.airflowOperator.enabled }}
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: {{ .Release.Name }}-airflow-operator-selfsigned-issuer
+  namespace: '{{ .Release.Namespace }}'
+  labels:
+    tier: operator
+    chart: {{ template "operator.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  selfSigned: {}
+{{- end }}

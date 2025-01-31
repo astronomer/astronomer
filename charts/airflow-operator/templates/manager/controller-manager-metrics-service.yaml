@@ -1,0 +1,23 @@
+##############################
+## Airflow Operator Service ##
+##############################
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    tier: operator
+    component: controller-manager
+    chart: {{ template "operator.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  name: {{ .Release.Name }}-airflow-operator-controller-manager-metrics-service
+  namespace: '{{ .Release.Namespace }}'
+spec:
+  ports:
+  - name: https
+    port: {{ .Values.ports.managerContainerPort }}
+    targetPort: https
+    appProtocol: http
+    protocol: TCP
+  selector:
+    component: controller-manager
