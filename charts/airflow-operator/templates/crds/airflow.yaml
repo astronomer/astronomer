@@ -4,7 +4,8 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: '{{ .Release.Namespace }}/airflow-operator-serving-cert'
-  name: airflows.airflow.apache.org   ## Cannot have release-name added since CustomResourceDefinition.apiextensions.k8s.io "astronomer-airflows.airflow.apache.org" is invalid: metadata.name: Invalid value: "astronomer-airflows.airflow.apache.org": must be spec.names.plural+"."+spec.group
+  # name must be spec.names.plural+"."+spec.group https://github.com/kubernetes/kubernetes/blob/b4f902f037/staging/src/k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/validation/validation.go#L80
+  name: airflows.airflow.apache.org
 spec:
   conversion:
     strategy: Webhook
