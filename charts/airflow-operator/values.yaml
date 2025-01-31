@@ -70,7 +70,6 @@ ports:
   webhookServiceTargetPort: 9443
   webhookServicePort: 443
 
-
 podAnnotations: {}
 
 nodeSelector: {}
