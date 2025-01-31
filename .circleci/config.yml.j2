@@ -351,7 +351,6 @@ workflows:
             branches:
               only:
                 - '/^release-0\.\d+$/'
-                - 'fix-6822-operator'
           requires:
             - approve-internal-release
 {%- for version in [kube_versions[0], kube_versions[-1]] %}
