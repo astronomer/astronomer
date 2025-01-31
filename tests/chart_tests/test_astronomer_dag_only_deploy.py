@@ -247,7 +247,6 @@ class TestDagOnlyDeploy:
         assert len(docs) == 1
         doc = docs[0]
         prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
-
         assert prod_yaml["deployments"]["dagDeploy"] == {
             "enabled": True,
             "images": {
@@ -256,12 +255,7 @@ class TestDagOnlyDeploy:
                     "tag": "my-custom-tag",
                 }
             },
+            "securityContexts": {"pod": {"fsGroup": 50000}},
+            "server": {"readinessProbe": readiness_probe, "livenessProbe": liveness_probe},
+            "client": {"readinessProbe": readiness_probe, "livenessProbe": liveness_probe},
         }
-        assert "livenessProbe" in prod_yaml["deployments"]["dagDeploy"]["server"]
-        assert "livenessProbe" in prod_yaml["deployments"]["dagDeploy"]["client"]
-        assert prod_yaml["deployments"]["dagDeploy"]["server"]["livenessProbe"] == liveness_probe
-        assert prod_yaml["deployments"]["dagDeploy"]["client"]["livenessProbe"] == liveness_probe
-        assert "readinessProbe" in prod_yaml["deployments"]["dagDeploy"]["server"]
-        assert "readinessProbe" in prod_yaml["deployments"]["dagDeploy"]["client"]
-        assert prod_yaml["deployments"]["dagDeploy"]["server"]["readinessProbe"] == readiness_probe
-        assert prod_yaml["deployments"]["dagDeploy"]["client"]["readinessProbe"] == readiness_probe
