@@ -133,8 +133,12 @@ global:
     securityContexts:
       pod:
         fsGroup: 50000
-    server: {}
-    client: {}
+    server:
+      readinessProbe: {}
+      livenessProbe: {}
+    client:
+      readinessProbe: {}
+      livenessProbe: {}
     resources: {}
     persistence: {}
 
