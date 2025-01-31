@@ -181,6 +181,11 @@ data:
         {{- if .Values.global.dagOnlyDeployment.securityContexts }}
         securityContexts: {{ template "dagOnlyDeployment.securityContexts" . }}
         {{- end }}
+        {{- if or
+          .Values.global.dagOnlyDeployment.resources
+          .Values.global.dagOnlyDeployment.server.livenessProbe
+          .Values.global.dagOnlyDeployment.server.readinessProbe
+        }}
         server:
         {{- if .Values.global.dagOnlyDeployment.resources }}
           resources: {{- .Values.global.dagOnlyDeployment.resources | toYaml | nindent 12 }}
@@ -191,6 +196,12 @@ data:
         {{- if .Values.global.dagOnlyDeployment.server.readinessProbe }}
           readinessProbe: {{- .Values.global.dagOnlyDeployment.server.readinessProbe | toYaml | nindent 12 }}
         {{- end }}
+        {{- end }}
+        {{- if or
+          .Values.global.dagOnlyDeployment.resources
+          .Values.global.dagOnlyDeployment.client.livenessProbe
+          .Values.global.dagOnlyDeployment.client.readinessProbe
+        }}
         client:
         {{- if .Values.global.dagOnlyDeployment.resources }}
           resources: {{- .Values.global.dagOnlyDeployment.resources | toYaml | nindent 12 }}
@@ -200,6 +211,7 @@ data:
         {{- end }}
         {{- if .Values.global.dagOnlyDeployment.client.readinessProbe }}
           readinessProbe: {{- .Values.global.dagOnlyDeployment.client.readinessProbe | toYaml | nindent 12 }}
+        {{- end }}
         {{- end }}
         {{- if .Values.global.dagOnlyDeployment.persistence }}
         persistence: {{- .Values.global.dagOnlyDeployment.persistence | toYaml | nindent 10 }}
