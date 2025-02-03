@@ -12,6 +12,12 @@ k8s_version_too_old = f'1.{int(supported_k8s_versions[0].split(".")[1]) - 1!s}.0
 k8s_version_too_new = f'1.{int(supported_k8s_versions[-1].split(".")[1]) + 1!s}.0'
 
 
+def get_service_ports_by_name(doc):
+    """Given a single service doc, return all the ports by name."""
+
+    return {port_config["name"]: port_config for port_config in doc["spec"]["ports"]}
+
+
 def get_containers_by_name(doc: dict, *, include_init_containers=False) -> dict:
     """Given a single doc, return all the containers by name.
 
