@@ -23,6 +23,9 @@ data:
         {{- end }}
     node:
       processors: ${PROCESSORS:1}
+{{- with .Values.extraNodeConfigSnippet }}
+{{ toYaml . | nindent 6 }}
+{{- end }}
 
     network.host: 0.0.0.0
 
