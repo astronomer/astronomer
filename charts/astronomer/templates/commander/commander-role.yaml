@@ -106,7 +106,7 @@ rules:
   verbs: ["list", "watch"]
 - apiGroups: ["batch"]
   resources: ["jobs"]
-  verbs: ["list", "watch", "create", "delete", "get"]
+  verbs: ["list", "watch", "create", "delete", "get", "deletecollection"]
 - apiGroups: ["batch"]
   resources: ["cronjobs"]
   verbs: ["create", "delete", "get", "list", "patch", "watch", "deletecollection"]
