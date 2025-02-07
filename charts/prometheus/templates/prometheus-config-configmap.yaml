@@ -362,6 +362,37 @@ data:
             action: replace
       {{- end }}
 
+      {{- if .Values.global.airflowOperator.enabled }}
+      - job_name: airflow-operator
+        scrape_interval: 10s # Faster scrape to power dashboards
+        kubernetes_sd_configs:
+          - role: service
+          {{- if .Values.global.singleNamespace }}
+            namespaces:
+              names:
+                - {{ .Release.Namespace }}
+          {{- end }}
+        relabel_configs:
+          - action: labelmap
+            regex: __meta_kubernetes_service_label_(.+)
+          - source_labels: [__meta_kubernetes_service_label_astronomer_io_platform_release]
+            regex: ^{{ .Release.Name }}$
+          - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scrape]
+            action: keep
+            regex: true
+          - source_labels: [__address__, __meta_kubernetes_service_annotation_prometheus_io_port]
+            action: replace
+            regex: ([^:]+)(?::\d+)?;(\d+)
+            replacement: $1:$2
+            target_label: __address__
+        metric_relabel_configs:
+          - source_labels: [instance]
+            regex: "([-a-z0-9]*[a-z0-9])-.*?"
+            replacement: "$1"
+            target_label: deployment
+          {{- include "prometheus.airflowMetricsActionDrop" . | nindent 10 }}
+      {{- end }}
+
       - job_name: airflow
         scrape_interval: 10s # Faster scrape to power dashboards
         kubernetes_sd_configs:
@@ -374,11 +405,6 @@ data:
         relabel_configs:
           - action: labelmap
             regex: __meta_kubernetes_service_label_(.+)
-          {{- if .Values.global.airflowOperator.enabled }}
-          - source_labels: [__meta_kubernetes_service_label_astronomer_io_platform_release]
-            regex: ^\s*{{ .Release.Name }}\s*$
-            action: keep
-          {{- end }}
           - source_labels: [__meta_kubernetes_service_annotation_astronomer_io_platform_release]
             action: keep
             regex: ^{{ .Release.Name }}$
@@ -395,43 +421,7 @@ data:
             regex: "([-a-z0-9]*[a-z0-9])-.*?"
             replacement: "$1"
             target_label: deployment
-            # Drop metrics that are task or dag specific
-          - source_labels: [__name__]
-            regex: 'airflow_task_instance_created_.*'
-            action: drop
-          - source_labels: [__name__]
-            regex: 'airflow_task_removed_from_dag_.*'
-            action: drop
-          - source_labels: [__name__]
-            regex: 'airflow_task_restored_to_dag_.*'
-            action: drop
-          - source_labels: [__name__]
-            regex: 'airflow_dagrun_duration_success_.*'
-            action: drop
-          - source_labels: [__name__]
-            regex: 'airflow_dagrun_duration_failed_.*'
-            action: drop
-          - source_labels: [__name__]
-            regex: 'airflow_dagrun_dependency_check_.*_count'
-            action: drop
-          - source_labels: [__name__]
-            regex: 'airflow_dagrun_dependency_check_.*_sum'
-            action: drop
-          - source_labels: [__name__]
-            regex: 'airflow_dagrun_schedule_delay_.*'
-            action: drop
-          - source_labels: [__name__]
-            regex: 'airflow_dagrun_duration_success_.*'
-            action: drop
-          - source_labels: [__name__]
-            regex: 'airflow_dagrun_duration_failed_.*'
-            action: drop
-          - source_labels: [__name__]
-            regex: 'airflow_dag_processing_last_duration_.*_count'
-            action: drop
-          - source_labels: [__name__]
-            regex: 'airflow_dag_processing_last_duration_.*_sum'
-            action: drop
+          {{- include "prometheus.airflowMetricsActionDrop" . | nindent 10 }}
 
       {{- if not .Values.global.singleNamespace }}
       - job_name: kubernetes-nodes
