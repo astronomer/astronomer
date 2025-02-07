@@ -386,8 +386,12 @@ data:
             replacement: $1:$2
             target_label: __address__
         metric_relabel_configs:
+          - source_labels: [instance]
+            regex: "([-a-z0-9]*[a-z0-9])-.*?"
+            replacement: "$1"
+            target_label: deployment
           {{- include "prometheus.airflowMetricsActionDrop" . | nindent 10 }}
-        {{- end }}
+      {{- end }}
 
       - job_name: airflow
         scrape_interval: 10s # Faster scrape to power dashboards
@@ -413,6 +417,10 @@ data:
             replacement: $1:$2
             target_label: __address__
         metric_relabel_configs:
+          - source_labels: [instance]
+            regex: "([-a-z0-9]*[a-z0-9])-.*?"
+            replacement: "$1"
+            target_label: deployment
           {{- include "prometheus.airflowMetricsActionDrop" . | nindent 10 }}
 
       {{- if not .Values.global.singleNamespace }}

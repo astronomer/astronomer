@@ -85,10 +85,6 @@ imagePullSecrets:
 {{- end }}
 
 {{- define "prometheus.airflowMetricsActionDrop" }}
-- source_labels: [instance]
-  regex: "([-a-z0-9]*[a-z0-9])-.*?"
-  replacement: "$1"
-  target_label: deployment
 - source_labels: [__name__]
   regex: 'airflow_task_instance_created_.*'
   action: drop
