@@ -386,47 +386,7 @@ data:
             replacement: $1:$2
             target_label: __address__
         metric_relabel_configs:
-          - source_labels: [instance]
-            regex: "([-a-z0-9]*[a-z0-9])-.*?"
-            replacement: "$1"
-            target_label: deployment
-            # Drop metrics that are task or dag specific
-          - source_labels: [__name__]
-            regex: 'airflow_task_instance_created_.*'
-            action: drop
-          - source_labels: [__name__]
-            regex: 'airflow_task_removed_from_dag_.*'
-            action: drop
-          - source_labels: [__name__]
-            regex: 'airflow_task_restored_to_dag_.*'
-            action: drop
-          - source_labels: [__name__]
-            regex: 'airflow_dagrun_duration_success_.*'
-            action: drop
-          - source_labels: [__name__]
-            regex: 'airflow_dagrun_duration_failed_.*'
-            action: drop
-          - source_labels: [__name__]
-            regex: 'airflow_dagrun_dependency_check_.*_count'
-            action: drop
-          - source_labels: [__name__]
-            regex: 'airflow_dagrun_dependency_check_.*_sum'
-            action: drop
-          - source_labels: [__name__]
-            regex: 'airflow_dagrun_schedule_delay_.*'
-            action: drop
-          - source_labels: [__name__]
-            regex: 'airflow_dagrun_duration_success_.*'
-            action: drop
-          - source_labels: [__name__]
-            regex: 'airflow_dagrun_duration_failed_.*'
-            action: drop
-          - source_labels: [__name__]
-            regex: 'airflow_dag_processing_last_duration_.*_count'
-            action: drop
-          - source_labels: [__name__]
-            regex: 'airflow_dag_processing_last_duration_.*_sum'
-            action: drop
+          {{- include "prometheus.airflowMetricActionDrop" . | nindent 10 }}
         {{- end }}
 
       - job_name: airflow
@@ -453,47 +413,7 @@ data:
             replacement: $1:$2
             target_label: __address__
         metric_relabel_configs:
-          - source_labels: [instance]
-            regex: "([-a-z0-9]*[a-z0-9])-.*?"
-            replacement: "$1"
-            target_label: deployment
-            # Drop metrics that are task or dag specific
-          - source_labels: [__name__]
-            regex: 'airflow_task_instance_created_.*'
-            action: drop
-          - source_labels: [__name__]
-            regex: 'airflow_task_removed_from_dag_.*'
-            action: drop
-          - source_labels: [__name__]
-            regex: 'airflow_task_restored_to_dag_.*'
-            action: drop
-          - source_labels: [__name__]
-            regex: 'airflow_dagrun_duration_success_.*'
-            action: drop
-          - source_labels: [__name__]
-            regex: 'airflow_dagrun_duration_failed_.*'
-            action: drop
-          - source_labels: [__name__]
-            regex: 'airflow_dagrun_dependency_check_.*_count'
-            action: drop
-          - source_labels: [__name__]
-            regex: 'airflow_dagrun_dependency_check_.*_sum'
-            action: drop
-          - source_labels: [__name__]
-            regex: 'airflow_dagrun_schedule_delay_.*'
-            action: drop
-          - source_labels: [__name__]
-            regex: 'airflow_dagrun_duration_success_.*'
-            action: drop
-          - source_labels: [__name__]
-            regex: 'airflow_dagrun_duration_failed_.*'
-            action: drop
-          - source_labels: [__name__]
-            regex: 'airflow_dag_processing_last_duration_.*_count'
-            action: drop
-          - source_labels: [__name__]
-            regex: 'airflow_dag_processing_last_duration_.*_sum'
-            action: drop
+          {{- include "prometheus.airflowMetricActionDrop" . | nindent 10 }}
 
       {{- if not .Values.global.singleNamespace }}
       - job_name: kubernetes-nodes
