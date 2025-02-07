@@ -386,7 +386,7 @@ data:
             replacement: $1:$2
             target_label: __address__
         metric_relabel_configs:
-          {{- include "prometheus.airflowMetricActionDrop" . | nindent 10 }}
+          {{- include "prometheus.airflowMetricsActionDrop" . | nindent 10 }}
         {{- end }}
 
       - job_name: airflow
@@ -413,7 +413,7 @@ data:
             replacement: $1:$2
             target_label: __address__
         metric_relabel_configs:
-          {{- include "prometheus.airflowMetricActionDrop" . | nindent 10 }}
+          {{- include "prometheus.airflowMetricsActionDrop" . | nindent 10 }}
 
       {{- if not .Values.global.singleNamespace }}
       - job_name: kubernetes-nodes
