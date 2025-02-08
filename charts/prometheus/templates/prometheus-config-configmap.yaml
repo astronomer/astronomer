@@ -1,8 +1,7 @@
 #################################
 ## Prometheus Config ConfigMap ##
 #################################
-{{- $useClusterRoles := .Values.global.clusterRoles }}
-
+{{- $useClusterRoles := and .Values.global.rbacEnabled .Values.global.clusterRoles }}
 kind: ConfigMap
 apiVersion: v1
 metadata:
@@ -370,7 +369,7 @@ data:
             action: replace
       {{- end }}
 
-      {{- if and .Values.global.airflowOperator.enabled (not $useClusterRoles) }}
+      {{- if and $useClusterRoles .Values.global.airflowOperator.enabled   }}
       - job_name: airflow-operator
         scrape_interval: 10s # Faster scrape to power dashboards
         kubernetes_sd_configs:
