@@ -35,6 +35,11 @@ metadata:
     argocd.argoproj.io/sync-wave: "-1"
   {{- end }}
 rules:
+{{- if $.Values.global.airflowOperator.enabled }}
+- apiGroups: ["airflow.apache.org"]
+  resources: ["airflows"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+{{- end }}
 - apiGroups: [""]
   resources: ["configmaps"]
   verbs: ["create", "delete", "deletecollection", "get", "list", "patch", "update", "watch"]
@@ -101,10 +106,10 @@ rules:
   verbs: ["list", "watch"]
 - apiGroups: ["batch"]
   resources: ["jobs"]
-  verbs: ["list", "watch", "create", "delete", "get"]
+  verbs: ["list", "watch", "create", "delete", "get", "deletecollection"]
 - apiGroups: ["batch"]
   resources: ["cronjobs"]
-  verbs: ["create", "delete", "get", "list", "patch", "watch"]
+  verbs: ["create", "delete", "get", "list", "patch", "watch", "deletecollection"]
 - apiGroups: ["extensions"]
   resources: ["daemonsets", "replicasets"]
   verbs: ["list", "watch"]

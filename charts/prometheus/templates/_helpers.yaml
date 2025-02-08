@@ -91,3 +91,42 @@ imagePullSecrets:
 {{- .Values.securityContext | toYaml | nindent 12 }}
 {{- end -}}
 {{- end }}
+
+{{- define "prometheus.airflowMetricsActionDrop" }}
+- source_labels: [__name__]
+  regex: 'airflow_task_instance_created_.*'
+  action: drop
+- source_labels: [__name__]
+  regex: 'airflow_task_removed_from_dag_.*'
+  action: drop
+- source_labels: [__name__]
+  regex: 'airflow_task_restored_to_dag_.*'
+  action: drop
+- source_labels: [__name__]
+  regex: 'airflow_dagrun_duration_success_.*'
+  action: drop
+- source_labels: [__name__]
+  regex: 'airflow_dagrun_duration_failed_.*'
+  action: drop
+- source_labels: [__name__]
+  regex: 'airflow_dagrun_dependency_check_.*_count'
+  action: drop
+- source_labels: [__name__]
+  regex: 'airflow_dagrun_dependency_check_.*_sum'
+  action: drop
+- source_labels: [__name__]
+  regex: 'airflow_dagrun_schedule_delay_.*'
+  action: drop
+- source_labels: [__name__]
+  regex: 'airflow_dagrun_duration_success_.*'
+  action: drop
+- source_labels: [__name__]
+  regex: 'airflow_dagrun_duration_failed_.*'
+  action: drop
+- source_labels: [__name__]
+  regex: 'airflow_dag_processing_last_duration_.*_count'
+  action: drop
+- source_labels: [__name__]
+  regex: 'airflow_dag_processing_last_duration_.*_sum'
+  action: drop
+{{- end }}

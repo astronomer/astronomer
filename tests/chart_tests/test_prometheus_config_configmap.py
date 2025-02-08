@@ -9,6 +9,19 @@ prometheus_job = {
     "static_configs": [{"targets": ["localhost:9090"]}],
 }
 
+airflow_scrape_relabel_config = [
+    {"action": "labelmap", "regex": "__meta_kubernetes_service_label_(.+)"},
+    {"source_labels": ["__meta_kubernetes_service_label_astronomer_io_platform_release"], "regex": "^astronomer$"},
+    {"source_labels": ["__meta_kubernetes_service_annotation_prometheus_io_scrape"], "action": "keep", "regex": True},
+    {
+        "source_labels": ["__address__", "__meta_kubernetes_service_annotation_prometheus_io_port"],
+        "action": "replace",
+        "regex": "([^:]+)(?::\\d+)?;(\\d+)",
+        "replacement": "$1:$2",
+        "target_label": "__address__",
+    },
+]
+
 
 @pytest.mark.parametrize(
     "kube_version",
@@ -331,3 +344,28 @@ class TestPrometheusConfigConfigmap:
         scrape_configs = yaml.safe_load(doc["data"]["config"])["scrape_configs"]
 
         assert prometheus_job not in scrape_configs
+
+    def test_prometheus_operator_integration_config(self, kube_version):
+        doc = render_chart(
+            kube_version=kube_version,
+            show_only=self.show_only,
+            name="astronomer",
+            values={"global": {"airflowOperator": {"enabled": True}}},
+        )[0]
+        scrape_configs = yaml.safe_load(doc["data"]["config"])["scrape_configs"]
+        airflow_operator_scrape_config = [scrape for scrape in scrape_configs if scrape["job_name"] == "airflow-operator"]
+        for index in range(len(airflow_scrape_relabel_config)):
+            expected = airflow_scrape_relabel_config[index]
+            actual = airflow_operator_scrape_config[0]["relabel_configs"][index]
+            assert expected == actual
+
+    def test_prometheus_operator_integration_config_disabled(self, kube_version):
+        doc = render_chart(
+            kube_version=kube_version,
+            show_only=self.show_only,
+            name="astronomer",
+            values={"global": {"airflowOperator": {"enabled": False}}},
+        )[0]
+        scrape_configs = yaml.safe_load(doc["data"]["config"])["scrape_configs"]
+        airflow_scrape_config = [scrape for scrape in scrape_configs if scrape["job_name"] == "airflow-operator"]
+        assert len(airflow_scrape_config) == 0
