@@ -136,6 +136,9 @@ spec:
               value: {{ .Release.Name }}_houston
             - name: FILESD_FILE_PATH
               value: /prometheusreloader/airflow
+{{- if .Values.filesdReloader.extraEnv }}
+{{ toYaml .Values.filesdReloader.extraEnv | indent 12 }}
+{{- end }}
           volumeMounts:
           - mountPath: /prometheusreloader/airflow
             name: filesd

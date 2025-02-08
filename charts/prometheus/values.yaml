@@ -26,7 +26,7 @@ images:
     pullPolicy: IfNotPresent
   filesdReloader:
     repository: quay.io/astronomer/ap-kuiper-reloader
-    tag: 0.1.0
+    tag: 0.1.2
     pullPolicy: IfNotPresent
 
 
@@ -93,6 +93,7 @@ filesdReloader:
     # requests:
     #   cpu: 100m
     #   memory: 25Mi
+  extraEnv: []
 
 # Which directory prometheus data should be stored
 dataDir: "/prometheus"

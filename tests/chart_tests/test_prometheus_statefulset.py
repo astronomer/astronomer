@@ -191,3 +191,20 @@ class TestPrometheusStatefulset:
         self.prometheus_common_tests(docs[0])
         c_by_name = get_containers_by_name(docs[0])
         assert c_by_name["filesd-reloader"]["volumeMounts"] == [{"mountPath": "/prometheusreloader/airflow", "name": "filesd"}]
+
+    def test_prometheus_filesd_reloader_extraenv_enabled(self, kube_version):
+        """Test Prometheus with filesd reloader enabled with extraenv overrides."""
+        values = {
+            "global": {"rbacEnabled": False, "clusterRoles": False},
+            "prometheus": {"filesdReloader": {"extraEnv": [{"name": "CUSTOM_DATABASE_NAME", "values": "astrohouston"}]}},
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=["charts/prometheus/templates/prometheus-statefulset.yaml"],
+        )
+
+        assert len(docs) == 1
+        self.prometheus_common_tests(docs[0])
+        c_by_name = get_containers_by_name(docs[0])
+        assert {"name": "CUSTOM_DATABASE_NAME", "values": "astrohouston"} in c_by_name["filesd-reloader"]["env"]

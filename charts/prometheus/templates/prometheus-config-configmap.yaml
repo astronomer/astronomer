@@ -370,7 +370,7 @@ data:
             action: replace
       {{- end }}
 
-      {{- if .Values.global.airflowOperator.enabled }}
+      {{- if and .Values.global.airflowOperator.enabled (not $useClusterRoles) }}
       - job_name: airflow-operator
         scrape_interval: 10s # Faster scrape to power dashboards
         kubernetes_sd_configs:
