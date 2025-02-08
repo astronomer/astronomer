@@ -446,7 +446,8 @@ data:
             target_label: deployment
           {{- include "prometheus.airflowMetricsActionDrop" . | nindent 10 }}
 
-      {{- if not .Values.global.singleNamespace }}
+      # TODO add a proper config flag option for disabling kubernetes-nodes scraping instead of using useClusterRoles
+      {{- if and $useClusterRoles (not .Values.global.singleNamespace) }}
       - job_name: kubernetes-nodes
         scheme: https
         tls_config:
