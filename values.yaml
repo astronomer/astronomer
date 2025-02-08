@@ -86,12 +86,7 @@ global:
   #nodeExporterEnabled: true
 
   prometheusPostgresExporterEnabled: false
-  prometheus:
-    rbac:
-      role:
-        create: true
-      roleBinding:
-        create: true
+
   # Enables blackbox exporter
   #blackboxExporterEnabled: false
 
