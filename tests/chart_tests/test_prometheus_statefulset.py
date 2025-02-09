@@ -174,7 +174,7 @@ class TestPrometheusStatefulset:
     def test_prometheus_filesd_reloader_enabled(self, kube_version):
         """Test Prometheus with filesd reloader enabled."""
         values = {
-            "global": {"rbacEnabled": False, "clusterRoles": False},
+            "global": {"rbacEnabled": False},
             "prometheus": {},
         }
         docs = render_chart(
@@ -191,7 +191,7 @@ class TestPrometheusStatefulset:
     def test_prometheus_filesd_reloader_extraenv_enabled(self, kube_version):
         """Test Prometheus with filesd reloader enabled with extraenv overrides."""
         values = {
-            "global": {"rbacEnabled": False, "clusterRoles": False},
+            "global": {"rbacEnabled": False},
             "prometheus": {"filesdReloader": {"extraEnv": [{"name": "CUSTOM_DATABASE_NAME", "values": "astrohouston"}]}},
         }
         docs = render_chart(
@@ -223,7 +223,7 @@ class TestPrometheusStatefulset:
 
     def test_prometheus_cluster_role_overrides(self, kube_version):
         """Test Prometheus with role and rolebinding."""
-        values = {"global": {"rbacEnabled": False, "clusterRoles": False}}
+        values = {"global": {"rbacEnabled": True}, "prometheus": {"rbac": {"role": {"kind": "Role", "create": True}}}}
         docs = render_chart(
             kube_version=kube_version,
             values=values,

@@ -211,3 +211,8 @@ config:
     kubernetes_apiservers:
       tls_config:
         insecure_skip_verify: false
+
+rbac:
+  role:
+    kind: ClusterRole
+    create: true
