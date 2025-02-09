@@ -57,7 +57,6 @@ data:
           - targets: ["localhost:9090"]
       {{ end }}
 
-      # TODO add a proper config flag option for disabling kubernetes-apiservers scraping instead of using useClusterRoles
       {{- if $useClusterRoles }}
       - job_name: 'kubernetes-apiservers'
         kubernetes_sd_configs:
@@ -72,7 +71,7 @@ data:
             action: keep
             regex: default;kubernetes;https
       {{- end }}
-      # TODO add a proper config flag option for disabling core-dns scraping instead of using useClusterRoles
+
       {{- if $useClusterRoles }}
       - job_name: core-dns
         kubernetes_sd_configs:
@@ -310,7 +309,7 @@ data:
             replacement: "$1"
             target_label: release
           {{- end}}
-      # TODO add a proper config flag option for disabling fluentd scraping instead of using useClusterRoles
+
       {{- if and $useClusterRoles .Values.global.fluentdEnabled }}
       - job_name: fluentd
         scrape_interval: 30s
@@ -445,7 +444,6 @@ data:
             target_label: deployment
           {{- include "prometheus.airflowMetricsActionDrop" . | nindent 10 }}
 
-      # TODO add a proper config flag option for disabling kubernetes-nodes scraping instead of using useClusterRoles
       {{- if and $useClusterRoles (not .Values.global.singleNamespace) }}
       - job_name: kubernetes-nodes
         scheme: https
@@ -464,7 +462,7 @@ data:
             target_label: __metrics_path__
             replacement: /api/v1/nodes/${1}/proxy/metrics
       {{- end }}
-      # TODO add a proper config flag option for disabling cadvisor scraping instead of using useClusterRoles
+
       {{- if and $useClusterRoles (not .Values.global.singleNamespace) }}
       - job_name: kubernetes-nodes-cadvisor
         scheme: https
