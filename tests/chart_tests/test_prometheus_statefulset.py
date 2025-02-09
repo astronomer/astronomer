@@ -118,11 +118,7 @@ class TestPrometheusStatefulset:
                     },
                 },
             },
-            show_only=[
-                "charts/prometheus/templates/prometheus-statefulset.yaml",
-                "charts/prometheus/templates/prometheus-role.yaml",
-                "charts/prometheus/templates/prometheus-rolebinding.yaml",
-            ],
+            show_only=["charts/prometheus/templates/prometheus-statefulset.yaml"],
         )
 
         assert len(docs) == 1
