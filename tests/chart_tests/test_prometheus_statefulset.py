@@ -208,3 +208,35 @@ class TestPrometheusStatefulset:
         self.prometheus_common_tests(docs[0])
         c_by_name = get_containers_by_name(docs[0])
         assert {"name": "CUSTOM_DATABASE_NAME", "values": "astrohouston"} in c_by_name["filesd-reloader"]["env"]
+
+    def test_prometheus_cluster_role_defaults(self, kube_version):
+        """Test Prometheus with cluster role defaults."""
+        values = {}
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=[
+                "charts/prometheus/templates/prometheus-role.yaml",
+                "charts/prometheus/templates/prometheus-rolebinding.yaml",
+            ],
+        )
+
+        assert len(docs) == 2
+        assert docs[0]["kind"] == "ClusterRole"
+        assert docs[1]["kind"] == "ClusterRoleBinding"
+
+    def test_prometheus_cluster_role_overrides(self, kube_version):
+        """Test Prometheus with role and rolebinding."""
+        values = {"global": {"rbacEnabled": False, "clusterRoles": False}}
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=[
+                "charts/prometheus/templates/prometheus-role.yaml",
+                "charts/prometheus/templates/prometheus-rolebinding.yaml",
+            ],
+        )
+
+        assert len(docs) == 2
+        assert docs[0]["kind"] == "Role"
+        assert docs[1]["kind"] == "RoleBinding"

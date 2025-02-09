@@ -2,7 +2,6 @@
 ## Prometheus Cluster Role Binding / Role Binding ##
 ####################################################
 {{- $singleNamespace := .Values.global.singleNamespace }}
-{{- if and .Values.global.rbacEnabled .Values.serviceAccount.create }}
 {{- $useClusterRoles := and .Values.global.rbacEnabled .Values.global.clusterRoles }}
 kind: {{ if or $singleNamespace (not $useClusterRoles ) }}RoleBinding{{ else }}ClusterRoleBinding{{ end }}
 apiVersion: {{ template "apiVersion.rbac" . }}
@@ -22,4 +21,3 @@ subjects:
   - kind: ServiceAccount
     name: {{ template "prometheus.serviceAccountName" . }}
     namespace: {{ .Release.Namespace }}
-{{- end }}
