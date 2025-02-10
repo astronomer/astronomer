@@ -118,11 +118,7 @@ class TestPrometheusStatefulset:
                     },
                 },
             },
-            show_only=[
-                "charts/prometheus/templates/prometheus-statefulset.yaml",
-                "charts/prometheus/templates/prometheus-role.yaml",
-                "charts/prometheus/templates/prometheus-rolebinding.yaml",
-            ],
+            show_only=["charts/prometheus/templates/prometheus-statefulset.yaml"],
         )
 
         assert len(docs) == 1
@@ -174,3 +170,69 @@ class TestPrometheusStatefulset:
         assert len(spec["affinity"]) == 1
         assert len(spec["tolerations"]) > 0
         assert spec["tolerations"] == values["prometheus"]["tolerations"]
+
+    def test_prometheus_filesd_reloader_enabled(self, kube_version):
+        """Test Prometheus with filesd reloader enabled."""
+        values = {
+            "global": {"rbacEnabled": False},
+            "prometheus": {},
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=["charts/prometheus/templates/prometheus-statefulset.yaml"],
+        )
+
+        assert len(docs) == 1
+        self.prometheus_common_tests(docs[0])
+        c_by_name = get_containers_by_name(docs[0])
+        assert c_by_name["filesd-reloader"]["volumeMounts"] == [{"mountPath": "/prometheusreloader/airflow", "name": "filesd"}]
+
+    def test_prometheus_filesd_reloader_extraenv_enabled(self, kube_version):
+        """Test Prometheus with filesd reloader enabled with extraenv overrides."""
+        values = {
+            "global": {"rbacEnabled": False},
+            "prometheus": {"filesdReloader": {"extraEnv": [{"name": "CUSTOM_DATABASE_NAME", "values": "astrohouston"}]}},
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=["charts/prometheus/templates/prometheus-statefulset.yaml"],
+        )
+
+        assert len(docs) == 1
+        self.prometheus_common_tests(docs[0])
+        c_by_name = get_containers_by_name(docs[0])
+        assert {"name": "CUSTOM_DATABASE_NAME", "values": "astrohouston"} in c_by_name["filesd-reloader"]["env"]
+
+    def test_prometheus_cluster_role_defaults(self, kube_version):
+        """Test Prometheus with cluster role defaults."""
+        values = {}
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=[
+                "charts/prometheus/templates/prometheus-role.yaml",
+                "charts/prometheus/templates/prometheus-rolebinding.yaml",
+            ],
+        )
+
+        assert len(docs) == 2
+        assert docs[0]["kind"] == "ClusterRole"
+        assert docs[1]["kind"] == "ClusterRoleBinding"
+
+    def test_prometheus_cluster_role_overrides(self, kube_version):
+        """Test Prometheus with role and rolebinding."""
+        values = {"global": {"rbacEnabled": True}, "prometheus": {"rbac": {"role": {"kind": "Role", "create": True}}}}
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=[
+                "charts/prometheus/templates/prometheus-role.yaml",
+                "charts/prometheus/templates/prometheus-rolebinding.yaml",
+            ],
+        )
+
+        assert len(docs) == 2
+        assert docs[0]["kind"] == "Role"
+        assert docs[1]["kind"] == "RoleBinding"

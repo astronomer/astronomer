@@ -371,5 +371,18 @@ class TestPrometheusConfigConfigmap:
             values={"global": {"airflowOperator": {"enabled": False}}},
         )[0]
         scrape_configs = yaml.safe_load(doc["data"]["config"])["scrape_configs"]
-        airflow_scrape_config = [scrape for scrape in scrape_configs if scrape["job_name"] == "airflow-operator"]
-        assert len(airflow_scrape_config) == 0
+        airflow_operator_scrape_config = [scrape for scrape in scrape_configs if scrape["job_name"] == "airflow-operator"]
+        assert len(airflow_operator_scrape_config) == 0
+
+    def test_prometheus_operator_integration_config_disabled_with_no_cluster_role(self, kube_version):
+        doc = render_chart(
+            kube_version=kube_version,
+            show_only=self.show_only,
+            name="astronomer",
+            values={"global": {"airflowOperator": {"enabled": True}, "clusterRoles": False}},
+        )[0]
+        scrape_configs = yaml.safe_load(doc["data"]["config"])["scrape_configs"]
+        airflow_operator_scrape_config = [scrape for scrape in scrape_configs if scrape["job_name"] == "airflow-operator"]
+        assert len(airflow_operator_scrape_config) == 0
+        airflow_scrape_config = [scrape for scrape in scrape_configs if scrape["job_name"] == "airflow"]
+        assert len(airflow_scrape_config) == 1

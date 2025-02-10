@@ -485,6 +485,16 @@ prometheus:
         cpu: 100m
         memory: 25Mi
 
+  filesdReloader:
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 500m
+        memory: 512Mi
+
+
 nats:
   nodeSelector:
     <<: *platformNodeSelector

@@ -24,6 +24,11 @@ images:
     repository: quay.io/astronomer/ap-configmap-reloader
     tag: 0.14.0
     pullPolicy: IfNotPresent
+  filesdReloader:
+    repository: quay.io/astronomer/ap-kuiper-reloader
+    tag: 0.1.2
+    pullPolicy: IfNotPresent
+
 
 resources: {}
 #  limits:
@@ -77,6 +82,18 @@ configMapReloader:
     # requests:
     #   cpu: 100m
     #   memory: 25Mi
+
+filesdReloader:
+  livenessProbe: {}
+  readinessProbe: {}
+  resources: {}
+    # limits:
+    #   cpu: 100m
+    #   memory: 25Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 25Mi
+  extraEnv: []
 
 # Which directory prometheus data should be stored
 dataDir: "/prometheus"
@@ -194,3 +211,8 @@ config:
     kubernetes_apiservers:
       tls_config:
         insecure_skip_verify: false
+
+rbac:
+  role:
+    kind: ClusterRole
+    create: true

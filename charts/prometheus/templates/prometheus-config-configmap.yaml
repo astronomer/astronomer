@@ -1,6 +1,7 @@
 #################################
 ## Prometheus Config ConfigMap ##
 #################################
+{{- $useClusterRoles := and .Values.global.rbacEnabled .Values.global.clusterRoles (not (eq .Values.rbac.role.kind "Role") ) }}
 kind: ConfigMap
 apiVersion: v1
 metadata:
@@ -56,6 +57,7 @@ data:
           - targets: ["localhost:9090"]
       {{ end }}
 
+      {{- if $useClusterRoles }}
       - job_name: 'kubernetes-apiservers'
         kubernetes_sd_configs:
           - role: endpoints
@@ -68,7 +70,9 @@ data:
           - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
             action: keep
             regex: default;kubernetes;https
+      {{- end }}
 
+      {{- if $useClusterRoles }}
       - job_name: core-dns
         kubernetes_sd_configs:
           - role: pod
@@ -82,7 +86,8 @@ data:
           - source_labels: [__meta_kubernetes_pod_container_port_number]
             action: keep
             regex: "^9153"
-
+      {{- end }}
+      {{- if $useClusterRoles }}
       - job_name: kube-dns
         kubernetes_sd_configs:
           - role: pod
@@ -96,7 +101,7 @@ data:
           - source_labels: [__meta_kubernetes_pod_container_port_number]
             action: keep
             regex: "^1005[45]"
-
+      {{- end }}
       - job_name: nginx
         kubernetes_sd_configs:
           - role: endpoints
@@ -134,7 +139,6 @@ data:
             regex: ([^:]+)(?::\d+)?;(\d+)
             replacement: $1:$2
             target_label: __address__
-
       # - job_name: registry
       #   kubernetes_sd_configs:
       #     - role: service
@@ -306,6 +310,7 @@ data:
             target_label: release
           {{- end}}
 
+      {{- if and $useClusterRoles .Values.global.fluentdEnabled }}
       - job_name: fluentd
         scrape_interval: 30s
         kubernetes_sd_configs:
@@ -329,8 +334,9 @@ data:
           - source_labels: [__name__]
             regex: 'fluentd_tail_file_.*'
             action: drop
+      {{- end }}
 
-      {{- if .Values.global.nodeExporterEnabled }}
+      {{- if and $useClusterRoles .Values.global.nodeExporterEnabled }}
       - job_name: node-exporter
         scrape_interval: 30s
         kubernetes_sd_configs:
@@ -362,7 +368,7 @@ data:
             action: replace
       {{- end }}
 
-      {{- if .Values.global.airflowOperator.enabled }}
+      {{- if and $useClusterRoles .Values.global.airflowOperator.enabled   }}
       - job_name: airflow-operator
         scrape_interval: 10s # Faster scrape to power dashboards
         kubernetes_sd_configs:
@@ -395,13 +401,27 @@ data:
       {{- end }}
 
       - job_name: airflow
-        scrape_interval: 10s # Faster scrape to power dashboards
+        #scrape_interval: 10s # Faster scrape to power dashboards
+        {{- if not $useClusterRoles }}
+        file_sd_configs:
+          - files:
+            - /prometheusreloader/airflow/*.json
+        {{ else }}
         kubernetes_sd_configs:
           - role: service
-          {{- if .Values.global.singleNamespace }}
+          {{- if or (not $useClusterRoles) .Values.global.singleNamespace }}
             namespaces:
               names:
+                {{- if not $useClusterRoles }}
+                # explicitly including each namespace in the pool
+                {{- range $i, $namespaceName := .Values.global.features.namespacePools.namespaces.names }}
+                - {{ $namespaceName }}
+                {{- end }}
+                {{- end }}
+                {{- if .Values.global.singleNamespace }}
+                # only the platform namespace since this is a single namespace deployment
                 - {{ .Release.Namespace }}
+                {{- end }}
           {{- end }}
         relabel_configs:
           - action: labelmap
@@ -417,6 +437,7 @@ data:
             regex: ([^:]+)(?::\d+)?;(\d+)
             replacement: $1:$2
             target_label: __address__
+        {{- end }}
         metric_relabel_configs:
           - source_labels: [instance]
             regex: "([-a-z0-9]*[a-z0-9])-.*?"
@@ -424,7 +445,7 @@ data:
             target_label: deployment
           {{- include "prometheus.airflowMetricsActionDrop" . | nindent 10 }}
 
-      {{- if not .Values.global.singleNamespace }}
+      {{- if and $useClusterRoles (not .Values.global.singleNamespace) }}
       - job_name: kubernetes-nodes
         scheme: https
         tls_config:
@@ -441,7 +462,9 @@ data:
             regex: (.+)
             target_label: __metrics_path__
             replacement: /api/v1/nodes/${1}/proxy/metrics
+      {{- end }}
 
+      {{- if and $useClusterRoles (not .Values.global.singleNamespace) }}
       - job_name: kubernetes-nodes-cadvisor
         scheme: https
         tls_config:
