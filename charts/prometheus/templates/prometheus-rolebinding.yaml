@@ -6,7 +6,7 @@
 {{- $useClusterRoles := and .Values.global.rbacEnabled .Values.global.clusterRoles (not (eq .Values.rbac.role.kind "Role") ) }}
 {{- $shouldCreateResources := and .Values.global.rbacEnabled (or (and .Values.global.clusterRoles) $prometheusRBACresources) }}
 {{- if $shouldCreateResources }}
-kind: {{ if or $singleNamespace $prometheusRBACresources  }}Role{{ else }}ClusterRole{{ end }}
+kind: {{ if or $singleNamespace $prometheusRBACresources  }}RoleBinding{{ else }}ClusterRoleBinding{{ end }}
 apiVersion: {{ template "apiVersion.rbac" . }}
 metadata:
   name: {{ template "prometheus.fullname" . }}
