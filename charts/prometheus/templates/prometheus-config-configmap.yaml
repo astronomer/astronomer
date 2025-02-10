@@ -1,7 +1,7 @@
 #################################
 ## Prometheus Config ConfigMap ##
 #################################
-{{- $useClusterRoles := and .Values.global.rbacEnabled .Values.global.clusterRoles }}
+{{- $useClusterRoles := and .Values.global.rbacEnabled .Values.global.clusterRoles (not (eq .Values.rbac.role.kind "Role") ) }}
 kind: ConfigMap
 apiVersion: v1
 metadata:

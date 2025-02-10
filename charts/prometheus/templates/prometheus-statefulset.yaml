@@ -1,7 +1,7 @@
 ############################
 ## Prometheus StatefulSet ##
 ############################
-{{- $useClusterRoles := and .Values.global.rbacEnabled .Values.global.clusterRoles }}
+{{- $useClusterRoles := and .Values.global.rbacEnabled .Values.global.clusterRoles (not (eq .Values.rbac.role.kind "Role") ) }}
 kind: StatefulSet
 apiVersion: apps/v1
 metadata:

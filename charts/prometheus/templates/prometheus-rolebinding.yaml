@@ -2,8 +2,11 @@
 ## Prometheus Cluster Role Binding / Role Binding ##
 ####################################################
 {{- $singleNamespace := .Values.global.singleNamespace }}
-{{- if and .Values.global.rbacEnabled .Values.rbac.role.create }}
-kind: {{ if or $singleNamespace (eq .Values.rbac.role.kind "Role") }}RoleBinding{{ else }}ClusterRoleBinding{{ end }}
+{{- $prometheusRBACresources := and .Values.rbac.role.create (eq .Values.rbac.role.kind "Role") }}
+{{- $useClusterRoles := and .Values.global.rbacEnabled .Values.global.clusterRoles (not (eq .Values.rbac.role.kind "Role") ) }}
+{{- $shouldCreateResources := and .Values.global.rbacEnabled (or (and .Values.global.clusterRoles) $prometheusRBACresources) }}
+{{- if $shouldCreateResources }}
+kind: {{ if or $singleNamespace $prometheusRBACresources  }}Role{{ else }}ClusterRole{{ end }}
 apiVersion: {{ template "apiVersion.rbac" . }}
 metadata:
   name: {{ template "prometheus.fullname" . }}
@@ -15,10 +18,10 @@ metadata:
     heritage: {{ .Release.Service }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
-  kind: {{ if or $singleNamespace (eq .Values.rbac.role.kind "Role") }}Role{{ else }}ClusterRole{{ end }}
+  kind: {{ if or $singleNamespace $prometheusRBACresources }}Role{{ else }}ClusterRole{{ end }}
   name: {{ template "prometheus.fullname" . }}
 subjects:
   - kind: ServiceAccount
     name: {{ template "prometheus.serviceAccountName" . }}
     namespace: {{ .Release.Namespace }}
-{{ end }}
+{{- end }}
