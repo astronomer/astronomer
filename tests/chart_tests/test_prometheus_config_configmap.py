@@ -11,7 +11,11 @@ prometheus_job = {
 
 airflow_scrape_relabel_config = [
     {"action": "labelmap", "regex": "__meta_kubernetes_service_label_(.+)"},
-    {"source_labels": ["__meta_kubernetes_service_label_astronomer_io_platform_release"], "regex": "^astronomer$"},
+    {
+        "source_labels": ["__meta_kubernetes_service_label_astronomer_io_platform_release"],
+        "regex": "^astronomer$",
+        "action": "keep",
+    },
     {"source_labels": ["__meta_kubernetes_service_annotation_prometheus_io_scrape"], "action": "keep", "regex": True},
     {
         "source_labels": ["__address__", "__meta_kubernetes_service_annotation_prometheus_io_port"],
