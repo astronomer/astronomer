@@ -3,6 +3,8 @@ crd:
 certManager:
   enabled: false
 
+airgapped: false
+
 runtimeVersions:
   configMapName: ""
   versionsJson: ""
