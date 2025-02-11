@@ -116,24 +116,13 @@ class TestAirflowOperator:
         assert "release-name-airflow-operator-validating-webhook-configuration" == docs[1]["metadata"]["name"]
 
     def test_airflow_operator_runtimeversion(self, kube_version):
-        """""Test Airflow Operator runtimeversion"""""
-        random_json = {"versionsJson": {
-                                        "features": {
-                                            "triggerer": {
-                                            "introducedVersion": "4.0.0"
-                                            }
-                                        },
-                                        "runtimeVersions": {
-                                            "4.2.5": {
-                                            "metadata": {
-                                                "airflowVersion": "2.4.2",
-                                                "channel": "stable",
-                                                "releaseDate": "2023-01-15"
-                                            }
-                                            },
-                                        }
-                                        }
-                                        }
+        """""Test Airflow Operator runtimeversion""" ""
+        random_json = {
+            "runtimeVersions": {
+                "4.2.5": {"metadata": {"airflowVersion": "2.4.2", "channel": "stable", "releaseDate": "2023-01-15"}},
+                "5.0.0": {"metadata": {"airflowVersion": "2.5.0", "channel": "stable", "releaseDate": "2023-03-20"}},
+            }
+        }
         docs = render_chart(
             validate_objects=False,
             kube_version=kube_version,
@@ -141,16 +130,14 @@ class TestAirflowOperator:
                 "global": {
                     "airflowOperator": {"enabled": True},
                 },
-                "airflow-operator" :{
-                    "airgapped" : True,
-                    "runtimeVersions": random_json
-                                    },
-                },
-            show_only=["charts/airflow-operator/templates/configmap/runtime-versions.yaml"])
+                "airflow-operator": {"airgapped": True, "runtimeVersions": {"versionsJson": random_json}},
+            },
+            show_only=["charts/airflow-operator/templates/configmap/runtime-versions.yaml"],
+        )
         assert len(docs) == 1
         template = docs[0]
-        assert docs[0]['apiVersion'] == 'v1'
-        assert docs[0]['data'] == random_json
-        assert docs[0]['kind'] == "ConfigMap"
-        assert docs[0]['metadata']['name'] == "release-name-runtime-version-config"
-        
+        assert template["apiVersion"] == "v1"
+        assert template["data"]["versions.json"] == random_json
+        assert template["kind"] == "ConfigMap"
+        assert template["metadata"]["name"] == "release-name-runtime-version-config"
+        assert template["metadata"]["labels"]["tier"] == "operator"
