@@ -141,3 +141,28 @@ class TestAirflowOperator:
         assert template["kind"] == "ConfigMap"
         assert template["metadata"]["name"] == "release-name-runtime-version-config"
         assert template["metadata"]["labels"]["tier"] == "operator"
+
+    def test_airflow_operator_manager(self, kube_version):
+        """""Test Airflow Operator manager"""""
+        docs = render_chart(
+            validate_objects=False,
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "airflowOperator": {"enabled": True},
+                },
+            },
+            show_only=sorted(
+                [
+                    str(x.relative_to(git_root_dir))
+                    for x in Path(f"{git_root_dir}/charts/airflow-operator/templates/manager").glob("*")
+                ]
+            ),
+        )
+        assert len(docs) == 4
+        assert docs[0]["apiVersion"] == "apps/v1"
+        assert docs[0]["kind"] == "Deployment"
+        #assert all (template["metadata"]["labels"]["component"] == "controller-manager" for template in docs)
+        ##assert docs[0]["metadata"]["labels"]["component"] == 
+        assert all(doc["apiVersion"] == "v1" for doc in docs[1:4])
+        assert docs[1]["kind"] == "Service"
