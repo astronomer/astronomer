@@ -143,7 +143,7 @@ class TestAirflowOperator:
         assert template["metadata"]["labels"]["tier"] == "operator"
 
     def test_airflow_operator_manager(self, kube_version):
-        """""Test Airflow Operator manager"""""
+        """""Test Airflow Operator manager""" ""
         docs = render_chart(
             validate_objects=False,
             kube_version=kube_version,
@@ -162,7 +162,6 @@ class TestAirflowOperator:
         assert len(docs) == 4
         assert docs[0]["apiVersion"] == "apps/v1"
         assert docs[0]["kind"] == "Deployment"
-        #assert all (template["metadata"]["labels"]["component"] == "controller-manager" for template in docs)
-        ##assert docs[0]["metadata"]["labels"]["component"] == 
+        assert all(doc["metadata"]["labels"]["component"] == "controller-manager" for doc in docs[:3])
         assert all(doc["apiVersion"] == "v1" for doc in docs[1:4])
         assert docs[1]["kind"] == "Service"
