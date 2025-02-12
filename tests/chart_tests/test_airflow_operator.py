@@ -162,6 +162,12 @@ class TestAirflowOperator:
         assert len(docs) == 4
         assert docs[0]["apiVersion"] == "apps/v1"
         assert docs[0]["kind"] == "Deployment"
+        assert docs[0]["metadata"]["name"] == "release-name-airflow-operator-controller-manager"
         assert all(doc["metadata"]["labels"]["component"] == "controller-manager" for doc in docs[:3])
         assert all(doc["apiVersion"] == "v1" for doc in docs[1:4])
         assert docs[1]["kind"] == "Service"
+        assert docs[1]["metadata"]["name"] == "release-name-airflow-operator-controller-manager-metrics-service"
+        assert docs[2]["kind"] == "ConfigMap"
+        assert docs[2]["metadata"]["name"] == "release-name-airflow-operator-manager-config"
+        assert docs[3]["kind"] == "Service"
+        assert docs[3]["metadata"]["name"] == "release-name-airflow-operator-webhook-service"
