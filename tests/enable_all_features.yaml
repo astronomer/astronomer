@@ -25,6 +25,10 @@ astronomer:
       enabled: true
     updateCheck:
       enabled: true
+airflow-operator:
+  manager:
+    metrics:
+      useSecuredEndpoint: true
 nats:
   nats:
     createJetStreamJob: true

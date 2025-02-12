@@ -1,8 +1,7 @@
 {{ define "webhooks.clientConfig" -}}
-{{ printf "\n" }}
-{{- if .Values.webhooks.useCustomTlsCerts -}}
+{{- if .Values.webhooks.useCustomTlsCerts }}
 caBundle: "{{ .Values.webhooks.caBundle | b64enc }}"
-{{ end -}}
+{{- end }}
 service:
   name: {{ .Release.Name }}-airflow-operator-webhook-service
   namespace: '{{ .Release.Namespace }}'
