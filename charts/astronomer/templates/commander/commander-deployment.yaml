@@ -111,7 +111,7 @@ spec:
             - name: COMMANDER_UPGRADE_TIMEOUT
               value: {{ .Values.commander.upgradeTimeout | quote }}
             {{- end }}
-            {{- if .Values.commander.airGapped.enabled }}
+            {{- if or .Values.commander.airGapped.enabled .Values.global.airgappedMode -}}
             - name: COMMANDER_AIRGAPPED
               value: "true"
             {{- end }}
