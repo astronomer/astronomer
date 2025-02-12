@@ -135,12 +135,12 @@ class TestAirflowOperator:
             show_only=["charts/airflow-operator/templates/configmap/runtime-versions.yaml"],
         )
         assert len(docs) == 1
-        template = docs[0]
-        assert template["apiVersion"] == "v1"
-        assert template["data"]["versions.json"] == random_json
-        assert template["kind"] == "ConfigMap"
-        assert template["metadata"]["name"] == "release-name-runtime-version-config"
-        assert template["metadata"]["labels"]["tier"] == "operator"
+        doc = docs[0]
+        assert doc["apiVersion"] == "v1"
+        assert doc["data"]["versions.json"] == random_json
+        assert doc["kind"] == "ConfigMap"
+        assert doc["metadata"]["name"] == "release-name-runtime-version-config"
+        assert doc["metadata"]["labels"]["tier"] == "operator"
 
     def test_airflow_operator_manager(self, kube_version):
         """""Test Airflow Operator manager""" ""
