@@ -1,7 +1,7 @@
 ##################################
 ## Houston Update Check CronJob ##
 ##################################
-{{- if .Values.houston.updateRuntimeCheck.enabled }}
+{{- if and .Values.houston.updateRuntimeCheck.enabled (not .Values.global.airgappedMode )}}
 apiVersion: {{ include "apiVersion.batch.cronjob" . }}
 kind: CronJob
 metadata:
