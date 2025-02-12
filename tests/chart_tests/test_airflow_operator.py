@@ -117,7 +117,7 @@ class TestAirflowOperator:
 
     def test_airflow_operator_runtimeversion(self, kube_version):
         """""Test Airflow Operator runtimeversion""" ""
-        random_json = {
+        runtime_releases_json = {
             "runtimeVersions": {
                 "4.2.5": {"metadata": {"airflowVersion": "2.4.2", "channel": "stable", "releaseDate": "2023-01-15"}},
                 "5.0.0": {"metadata": {"airflowVersion": "2.5.0", "channel": "stable", "releaseDate": "2023-03-20"}},
