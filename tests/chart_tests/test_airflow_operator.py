@@ -137,7 +137,7 @@ class TestAirflowOperator:
         assert len(docs) == 1
         doc = docs[0]
         assert doc["apiVersion"] == "v1"
-        assert doc["data"]["versions.json"] == random_json
+        assert doc["data"]["versions.json"] == runtime_releases_json
         assert doc["kind"] == "ConfigMap"
         assert doc["metadata"]["name"] == "release-name-runtime-version-config"
         assert doc["metadata"]["labels"]["tier"] == "operator"
