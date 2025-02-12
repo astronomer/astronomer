@@ -130,7 +130,7 @@ class TestAirflowOperator:
                 "global": {
                     "airflowOperator": {"enabled": True},
                 },
-                "airflow-operator": {"airgapped": True, "runtimeVersions": {"versionsJson": random_json}},
+                "airflow-operator": {"airgapped": True, "runtimeVersions": {"versionsJson": runtime_releases_json}},
             },
             show_only=["charts/airflow-operator/templates/configmap/runtime-versions.yaml"],
         )
