@@ -128,7 +128,7 @@ spec:
                 secretKeyRef:
                   name: astronomer-bootstrap
                   key: connection
-            - name: DATABASE_SCHEMA
+            - name: DATABASE_SCHEMA_NAME
               value: "houston$default"
             - name: DATABASE_TABLE_NAME
               value: Deployment

@@ -186,6 +186,11 @@ class TestPrometheusStatefulset:
         assert len(docs) == 1
         self.prometheus_common_tests(docs[0])
         c_by_name = get_containers_by_name(docs[0])
+        env_vars = {x["name"]: x.get("value", x.get("valueFrom")) for x in c_by_name["filesd-reloader"]["env"]}
+        assert env_vars["DATABASE_SCHEMA_NAME"] == "houston$default"
+        assert env_vars["DATABASE_TABLE_NAME"] == "Deployment"
+        assert env_vars["DATABASE_NAME"] == "release-name_houston"
+        assert env_vars["FILESD_FILE_PATH"] == "/prometheusreloader/airflow"
         assert c_by_name["filesd-reloader"]["volumeMounts"] == [{"mountPath": "/prometheusreloader/airflow", "name": "filesd"}]
 
     def test_prometheus_filesd_reloader_extraenv_enabled(self, kube_version):
