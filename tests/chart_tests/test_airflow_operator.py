@@ -168,6 +168,6 @@ class TestAirflowOperator:
         assert docs[1]["kind"] == "Service"
         assert docs[1]["metadata"]["name"] == "release-name-aocm-metrics-service"
         assert docs[2]["kind"] == "ConfigMap"
-        assert docs[2]["metadata"]["name"] == "release-name-airflow-operator-manager-config"
+        assert docs[2]["metadata"]["name"] == "release-name-aom-config"
         assert docs[3]["kind"] == "Service"
         assert docs[3]["metadata"]["name"] == "release-name-airflow-operator-webhook-service"
