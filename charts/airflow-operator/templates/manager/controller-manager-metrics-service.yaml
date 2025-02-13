@@ -10,7 +10,7 @@ metadata:
     chart: {{ template "operator.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
-  name: {{ .Release.Name }}-airflow-operator-controller-manager-metrics-service
+  name: {{ .Release.Name }}-aocm-metrics-service
   namespace: '{{ .Release.Namespace }}'
 spec:
   ports:
