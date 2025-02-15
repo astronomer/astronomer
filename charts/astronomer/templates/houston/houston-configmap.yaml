@@ -12,11 +12,6 @@ metadata:
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
 data:
-  {{ if and .Values.houston.airflowReleasesConfig ( not .Values.houston.airflowReleasesConfigMapName ) }}
-  airflow_releases.json: |
-    {{ .Values.houston.airflowReleasesConfig | toJson }}
-  # These are system-specified config overrides.
-  {{- end }}
   {{ if and .Values.houston.runtimeReleasesConfig ( not .Values.houston.runtimeReleasesConfigMapName ) }}
   astro_runtime_releases.json: |
     {{ .Values.houston.runtimeReleasesConfig | toJson }}
@@ -586,7 +581,6 @@ data:
     prometheus:
       enabled: true
       host: {{ printf "%s-prometheus" .Release.Name }}
-    updateAirflowCheckEnabled: {{ .Values.houston.updateAirflowCheck.enabled }}
     updateRuntimeCheckEnabled: {{ .Values.houston.updateRuntimeCheck.enabled }}
 
   # These are any user-specified config overrides.
