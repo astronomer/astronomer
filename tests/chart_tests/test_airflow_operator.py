@@ -63,7 +63,7 @@ class TestAirflowOperator:
             assert "airflow.apache.org" in doc["metadata"]["name"]
 
     def test_airflow_operator_secret(self, kube_version):
-        """""Test Airflow Operator Webhook tls""" ""
+        """Test Airflow Operator Webhook tls"""
         docs = render_chart(
             validate_objects=False,
             kube_version=kube_version,
@@ -92,7 +92,7 @@ class TestAirflowOperator:
         assert docs[0]["data"] == expected_data
 
     def test_airflow_operator_webhooks(self, kube_version):
-        """""Test Airflow Operator Webhook tls""" ""
+        """Test Airflow Operator Webhook tls"""
         docs = render_chart(
             validate_objects=False,
             kube_version=kube_version,
@@ -142,8 +142,8 @@ class TestAirflowOperator:
         assert doc["metadata"]["name"] == "release-name-runtime-version-config"
         assert doc["metadata"]["labels"]["tier"] == "operator"
 
-    def test_airflow_operator_manager(self, kube_version):
-        """""Test Airflow Operator manager""" ""
+    def test_airflow_operator_manager_defaults(self, kube_version):
+        """Test Airflow Operator manager defaults"""
         docs = render_chart(
             validate_objects=False,
             kube_version=kube_version,
