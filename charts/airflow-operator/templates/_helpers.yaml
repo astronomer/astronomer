@@ -72,6 +72,8 @@ service:
   env:
     - name: WEBHOOK_CERT_DIRECTORY
       value: '{{- if .Values.webhooks.useCustomTlsCerts -}}/tmp/custom-certs{{- else -}}{{- end -}}'
+    - name: ALLOW_DEPRECATED_RUNTIME_VERSIONS
+      value: "true"
 {{- range $i, $config := .Values.manager.env }}
     - name: {{ $config.name }}
       value: {{ $config.value | quote }}
