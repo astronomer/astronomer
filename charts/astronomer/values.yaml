@@ -5,7 +5,7 @@
 # This version number controls the default Airflow chart version that will be installed
 # when creating a new deployment in the system. This is also used to ensure all
 # child airflow deployments are kept up to date and on the latest version.
-airflowChartVersion: 1.13.5
+airflowChartVersion: 1.13.6
 
 nodeSelector: {}
 affinity: {}
@@ -15,7 +15,7 @@ tolerations: []
 images:
   commander:
     repository: quay.io/astronomer/ap-commander
-    tag: 0.36.9
+    tag: 0.37.1
     pullPolicy: IfNotPresent
   registry:
     repository: quay.io/astronomer/ap-registry
@@ -24,11 +24,11 @@ images:
     # httpSecret: ~
   houston:
     repository: quay.io/astronomer/ap-houston-api
-    tag: 0.36.6
+    tag: 0.37.0
     pullPolicy: IfNotPresent
   astroUI:
     repository: quay.io/astronomer/ap-astro-ui
-    tag: 0.36.0
+    tag: 0.37.0
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
@@ -257,18 +257,6 @@ houston:
     # Default here is to run at midnight every night https://crontab.guru/#0_0_*_*_*
     schedule: "0 0 * * *"
 
-  # Check for Airflow Updates
-  # This runs as a CronJob
-  updateAirflowCheck:
-    # Enable check updates CronJob
-    enabled: true
-
-    # url for update service
-    url: https://updates.astronomer.io/astronomer-certified
-
-    # Run at minute 57 every hour https://crontab.guru/#57_*_*_*_*
-    schedule: "57 * * * *"
-
   # Check for Astronomer Runtime Updates
   # This runs as a CronJob
   updateRuntimeCheck:
@@ -294,40 +282,6 @@ houston:
   populateHourlyTaskAuditMetrics:
     # Run at minute 57 every hour https://crontab.guru/#57_*_*_*_*
     schedule: "57 * * * *"
-
-  # this option allows to override airflow releases config
-  #
-  airflowReleasesConfigMapName: ~
-  airflowReleasesConfig:
-    # example of usage:
-    # available_releases:
-    # - version: 1.10.7-15
-    #   level: bug_fix
-    #   url: https://github.com/astronomer/airflow/releases/tag/v1.10.7%2Bastro.15
-    #   release_date: '2020-09-22T15:52:00+00:00'
-    #   tags:
-    #   - 1.10.7-15-alpine3.10-onbuild
-    #   - 1.10.7-15-buster-onbuild
-    #   - 1.10.7-15-alpine3.10
-    #   - 1.10.7-15-buster
-    #   channel: stable
-    # - version: 1.10.12-1
-    #   level: new_feature
-    #   url: https://github.com/astronomer/airflow/releases/tag/v1.10.12%2Bastro.1
-    #   release_date: '2020-09-29T22:15:00+00:00'
-    #   tags:
-    #   - 1.10.12-1-alpine3.10-onbuild
-    #   - 1.10.12-1-buster-onbuild
-    #   - 1.10.12-1-alpine3.10
-    #   - 1.10.12-1-buster
-    #   channel: stable
-    # - version: 2.0.0
-    #   level: new_feature
-    #   url: https://github.com/astronomer/airflow/releases/tag/v1.10.12%2Bastro.1
-    #   release_date: '2020-09-29T22:15:00+00:00'
-    #   tags:
-    #   - 2.0.0-alpine3.10-onbuild
-    #   channel: stable
 
   runtimeReleasesConfigMapName: ~
   runtimeReleasesConfig:
