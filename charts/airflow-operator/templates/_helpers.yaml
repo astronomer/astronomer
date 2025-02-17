@@ -48,25 +48,8 @@ service:
 {{- end -}}
 {{- end }}
 
-{{ define "manager.args" -}}
-{{ printf "\n" -}}
-- --health-probe-bind-address=:{{ .Values.ports.managerPort }}
-- --leader-elect
-- --metrics-bind-address={{ if .Values.manager.metrics.useSecuredEndpoint }}127.0.0.1{{ else }}0.0.0.0{{ end }}:{{ .Values.ports.managerUpstreamPort }}
-{{- if .Values.airgapped }}
-- --airgapped
-{{- end -}}
-{{- if .Values.global.openshiftEnabled }}
-- --openshift
-{{- end -}}
-{{- if .Values.kedaEnabled }}
-- --keda
-{{- end -}}
-{{- end }}
-
 {{ define "manager.containers" -}}
 - name: manager
-  args: {{ include "manager.args" . | indent 2 }}
   command:
     - /manager
   env:
@@ -97,20 +80,6 @@ service:
       path: /readyz
       port: {{ .Values.ports.managerPort }}
   {{- end }}
-{{- if .Values.manager.metrics.useSecuredEndpoint }}
-- name: kube-rbac-proxy
-  args:
-    - --secure-listen-address=0.0.0.0:{{ .Values.ports.managerContainerPort }}
-    - --upstream=http://127.0.0.1:{{ .Values.ports.managerUpstreamPort }}/
-    - --logtostderr=true
-    - --v=10
-  image: {{ include "kube-rbac-proxy.image" . }}
-  imagePullPolicy: {{ .Values.manager.metrics.image.pullPolicy }}
-  resources: {{ toYaml .Values.manager.resources | nindent 4 }}
-  ports:
-    - containerPort: {{ .Values.ports.managerContainerPort }}
-      name: https
-{{- end -}}
 {{- end }}
 
 {{- define "operator.serviceAccountName" -}}
@@ -121,20 +90,11 @@ service:
 {{- end -}}
 {{- end -}}
 
-
 {{ define "operator.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
 {{ .Values.global.privateRegistry.repository }}/airflow-operator-controller:{{ .Values.manager.image.tag }}
 {{- else -}}
 {{ .Values.manager.image.repository }}:{{ .Values.manager.image.tag }}
-{{- end }}
-{{- end }}
-
-{{ define "kube-rbac-proxy.image" -}}
-{{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/ap-kube-rbac-proxy:{{ .Values.manager.metrics.image.tag }}
-{{- else -}}
-{{ .Values.manager.metrics.image.repository }}:{{ .Values.manager.metrics.image.tag }}
 {{- end }}
 {{- end }}
 
