@@ -16,7 +16,7 @@ spec:
   ports:
   - name: https
     port: {{ .Values.ports.managerContainerPort }}
-    targetPort: https
+    targetPort: {{ .Values.ports.managerUpstreamPort }}
     appProtocol: http
     protocol: TCP
   selector:
