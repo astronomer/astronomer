@@ -1,4 +1,4 @@
-from tests import supported_k8s_versions
+from tests import supported_k8s_versions, get_containers_by_name
 from tests.chart_tests.helm_template_generator import render_chart
 import pytest
 from tests import git_root_dir
@@ -171,3 +171,45 @@ class TestAirflowOperator:
         assert docs[2]["metadata"]["name"] == "release-name-aom-config"
         assert docs[3]["kind"] == "Service"
         assert docs[3]["metadata"]["name"] == "release-name-airflow-operator-webhook-service"
+
+    def test_airflow_operator_manager_metrics_enabled(self, kube_version):
+        """Test Airflow Operator manager with metrics endpoints enabled"""
+        docs = render_chart(
+            validate_objects=False,
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "airflowOperator": {"enabled": True},
+                },
+                "airflow-operator": {
+                    "manager": {
+                        "metrics": {
+                            "useSecuredEndpoint": True,
+                        }
+                    }
+                },
+            },
+            show_only=[
+                "charts/airflow-operator/templates/manager/controller-manager-deployment.yaml",
+                "charts/airflow-operator/templates/manager/controller-manager-metrics-service.yaml",
+            ],
+        )
+        assert len(docs) == 2
+        c_by_name = get_containers_by_name(docs[0], include_init_containers=False)
+        assert "manager" in c_by_name["manager"]["name"]
+        assert "--metrics-bind-address=127.0.0.1:8080" in c_by_name["manager"]["args"]
+        assert "kube-rbac-proxy" in c_by_name["kube-rbac-proxy"]["name"]
+        doc = docs[1]
+        assert doc["kind"] == "Service"
+        assert doc["metadata"]["name"] == "release-name-aocm-metrics-service"
+        assert doc["spec"]["selector"]["component"] == "controller-manager"
+        assert doc["spec"]["type"] == "ClusterIP"
+        assert doc["spec"]["ports"] == [
+            {
+                "port": 8443,
+                "targetPort": "https",
+                "protocol": "TCP",
+                "name": "https",
+                "appProtocol": "http",
+            }
+        ]

@@ -13,6 +13,7 @@ metadata:
   name: {{ .Release.Name }}-aocm-metrics-service
   namespace: '{{ .Release.Namespace }}'
 spec:
+  type: ClusterIP
   ports:
   - name: https
     port: {{ .Values.ports.managerContainerPort }}
