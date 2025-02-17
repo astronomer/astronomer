@@ -116,7 +116,7 @@ class TestAirflowOperator:
         assert "release-name-airflow-operator-validating-webhook-configuration" == docs[1]["metadata"]["name"]
 
     def test_airflow_operator_airgap(self, kube_version):
-        """""Test Airflow Operator airgapped mode"""""
+        """""Test Airflow Operator airgapped mode""" ""
         runtime_releases_json = {
             "runtimeVersions": {
                 "4.2.5": {"metadata": {"airflowVersion": "2.4.2", "channel": "stable", "releaseDate": "2023-01-15"}},
