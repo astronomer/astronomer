@@ -13,10 +13,11 @@ metadata:
   name: {{ .Release.Name }}-aocm-metrics-service
   namespace: '{{ .Release.Namespace }}'
 spec:
+  type: ClusterIP
   ports:
   - name: https
     port: {{ .Values.ports.managerContainerPort }}
-    targetPort: https
+    targetPort: {{ ternary "https" .Values.ports.managerUpstreamPort  .Values.manager.metrics.useSecuredEndpoint }}
     appProtocol: http
     protocol: TCP
   selector:
