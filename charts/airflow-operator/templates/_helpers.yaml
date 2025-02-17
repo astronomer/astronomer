@@ -48,8 +48,25 @@ service:
 {{- end -}}
 {{- end }}
 
+{{ define "manager.args" -}}
+{{ printf "\n" -}}
+- --health-probe-bind-address=:{{ .Values.ports.managerPort }}
+- --leader-elect
+- --metrics-bind-address=0.0.0.0:{{ .Values.ports.managerUpstreamPort }}
+{{- if .Values.airgapped }}
+- --airgapped
+{{- end -}}
+{{- if .Values.global.openshiftEnabled }}
+- --openshift
+{{- end -}}
+{{- if .Values.kedaEnabled }}
+- --keda
+{{- end -}}
+{{- end }}
+
 {{ define "manager.containers" -}}
 - name: manager
+  args: {{ include "manager.args" . | indent 2 }}
   command:
     - /manager
   env:
