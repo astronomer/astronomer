@@ -36,11 +36,6 @@ manager:
   replicas: 1
   metrics:
     enabled: false
-  imagePullSecrets: []
-  image:
-    repository: quay.io/astronomer/airflow-operator-controller
-    tag: 1.5.1
-    pullPolicy: IfNotPresent
   resources:
     limits:
       cpu: 600m
