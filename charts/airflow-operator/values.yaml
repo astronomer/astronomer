@@ -38,8 +38,7 @@ webhooks:
   tlsKey: ""
 manager:
   replicas: 1
-  metrics:
-    useSecuredEndpoint: false
+  metrics: {}
   imagePullSecrets: []
   image:
     repository: quay.io/astronomer/airflow-operator-controller

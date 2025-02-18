@@ -181,13 +181,6 @@ class TestAirflowOperator:
                 "global": {
                     "airflowOperator": {"enabled": True},
                 },
-                "airflow-operator": {
-                    "manager": {
-                        "metrics": {
-                            "useSecuredEndpoint": True,
-                        }
-                    }
-                },
             },
             show_only=[
                 "charts/airflow-operator/templates/manager/controller-manager-deployment.yaml",
