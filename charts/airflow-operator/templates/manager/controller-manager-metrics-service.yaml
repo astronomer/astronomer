@@ -1,7 +1,7 @@
 ######################################
 ## Airflow Operator Metrics Service ##
 ######################################
-{{ if .Values.metrics.enabled }}
+{{ if .Values.manager.metrics.enabled }}
 apiVersion: v1
 kind: Service
 metadata:
