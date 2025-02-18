@@ -11,7 +11,7 @@ metadata:
     chart: {{ template "operator.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
-    astronomer_io_platform_release: {{ .Release.Name }}
+    astronomer.io/platform-release: {{ .Release.Name }}
   annotations:
     prometheus.io/scrape: "true"
     prometheus.io/port: "{{ .Values.ports.managerContainerPort }}"
