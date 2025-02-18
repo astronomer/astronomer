@@ -79,7 +79,7 @@ service:
       value: {{ $config.value | quote }}
 {{- end }}
   image: {{ include "operator.image" . }}
-  imagePullPolicy: {{ .Values.manager.image.pullPolicy }}
+  imagePullPolicy: {{ .Values.images.manager.pullPolicy }}
   resources: {{ toYaml .Values.manager.resources | nindent 4 }}
   securityContext: {{ toYaml .Values.securityContext| nindent 4 }}
   volumeMounts: {{ include "manager.volumeMounts" . | indent 2 }}
@@ -107,7 +107,7 @@ service:
     - --logtostderr=true
     - --v=10
   image: {{ include "kube-rbac-proxy.image" . }}
-  imagePullPolicy: {{ .Values.manager.metrics.image.pullPolicy }}
+  imagePullPolicy: {{ .Values.images.metrics.pullPolicy }}
   resources: {{ toYaml .Values.manager.resources | nindent 4 }}
   ports:
     - containerPort: {{ .Values.ports.managerContainerPort }}
@@ -126,17 +126,17 @@ service:
 
 {{ define "operator.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/airflow-operator-controller:{{ .Values.manager.image.tag }}
+{{ .Values.global.privateRegistry.repository }}/airflow-operator-controller:{{ .Values.images.manager.tag }}
 {{- else -}}
-{{ .Values.manager.image.repository }}:{{ .Values.manager.image.tag }}
+{{ .Values.images.manager.repository }}:{{ .Values.images.manager.tag }}
 {{- end }}
 {{- end }}
 
 {{ define "kube-rbac-proxy.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/ap-kube-rbac-proxy:{{ .Values.manager.metrics.image.tag }}
+{{ .Values.global.privateRegistry.repository }}/ap-kube-rbac-proxy:{{ .Values.images.metrics.tag }}
 {{- else -}}
-{{ .Values.manager.metrics.image.repository }}:{{ .Values.manager.metrics.image.tag }}
+{{ .Values.images.metrics.repository }}:{{ .Values.images.metrics.tag }}
 {{- end }}
 {{- end }}
 
@@ -151,8 +151,8 @@ Create chart name and version as used by the chart label.
 Return the proper Docker Image Registry Secret Names
 */}}
 {{- define "manager.imagePullSecrets" -}}
-{{- if .Values.manager.imagePullSecrets }}
+{{- if and .Values.global.privateRegistry.enabled .Values.global.privateRegistry.secretName }}
 imagePullSecrets:
-{{ toYaml .Values.manager.imagePullSecrets | nindent 2 }}
+{{ toYaml .Values.global.privateRegistry.secretName  | nindent 2 }}
 {{- end -}}
 {{- end -}}

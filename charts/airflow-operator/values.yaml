@@ -1,3 +1,13 @@
+images:
+  manager:
+    repository: quay.io/astronomer/airflow-operator-controller
+    tag: 1.5.1
+    pullPolicy: IfNotPresent
+  metrics:
+    repository: gcr.io/kubebuilder/kube-rbac-proxy
+    tag: v0.8.0
+    pullPolicy: IfNotPresent
+
 crd:
   create: false
 certManager:
@@ -30,15 +40,6 @@ manager:
   replicas: 1
   metrics:
     useSecuredEndpoint: false
-    image:
-      repository: gcr.io/kubebuilder/kube-rbac-proxy
-      tag: v0.8.0
-      pullPolicy: IfNotPresent
-  imagePullSecrets: []
-  image:
-    repository: quay.io/astronomer/airflow-operator-controller
-    tag: 1.5.1
-    pullPolicy: IfNotPresent
   resources:
     limits:
       cpu: 600m
