@@ -52,7 +52,7 @@ service:
 {{ printf "\n" -}}
 - --health-probe-bind-address=:{{ .Values.ports.managerPort }}
 - --leader-elect
-- --metrics-bind-address=0.0.0.0:{{ .Values.ports.managerUpstreamPort }}
+- --metrics-bind-address=127.0.0.1:{{ .Values.ports.managerUpstreamPort }}
 {{- if .Values.airgapped }}
 - --airgapped
 {{- end -}}
