@@ -3,10 +3,6 @@ images:
     repository: quay.io/astronomer/airflow-operator-controller
     tag: 1.5.1
     pullPolicy: IfNotPresent
-  metrics:
-    repository: gcr.io/kubebuilder/kube-rbac-proxy
-    tag: v0.8.0
-    pullPolicy: IfNotPresent
 
 crd:
   create: false
@@ -39,7 +35,7 @@ webhooks:
 manager:
   replicas: 1
   metrics:
-    enabled: true
+    enabled: false
   imagePullSecrets: []
   image:
     repository: quay.io/astronomer/airflow-operator-controller
