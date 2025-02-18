@@ -1,6 +1,7 @@
-##############################
-## Airflow Operator Service ##
-##############################
+######################################
+## Airflow Operator Metrics Service ##
+######################################
+{{ if .Values.metrics.enabled }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -15,10 +16,11 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-  - name: https
+  - name: metrics
     port: {{ .Values.ports.managerContainerPort }}
-    targetPort: {{ ternary "https" .Values.ports.managerUpstreamPort  .Values.manager.metrics.enabled }}
+    targetPort: {{ .Values.ports.managerUpstreamPort }}
     appProtocol: http
     protocol: TCP
   selector:
     component: controller-manager
+{{- end }}
