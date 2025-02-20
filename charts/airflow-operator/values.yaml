@@ -1,7 +1,15 @@
+images:
+  manager:
+    repository: quay.io/astronomer/airflow-operator-controller
+    tag: 1.5.1
+    pullPolicy: IfNotPresent
+
 crd:
   create: false
 certManager:
   enabled: false
+
+airgapped: false
 
 runtimeVersions:
   configMapName: ""
@@ -9,6 +17,7 @@ runtimeVersions:
 
 securityContext:
   runAsNonRoot: true
+  allowPrivilegeEscalation: false
 
 terminationGracePeriodSeconds: 10
 webhooks:
@@ -26,16 +35,7 @@ webhooks:
 manager:
   replicas: 1
   metrics:
-    useSecuredEndpoint: false
-    image:
-      repository: gcr.io/kubebuilder/kube-rbac-proxy
-      tag: v0.8.0
-      pullPolicy: IfNotPresent
-  imagePullSecrets: []
-  image:
-    repository: quay.io/astronomer/airflow-operator-controller
-    tag: 1.5.1
-    pullPolicy: IfNotPresent
+    enabled: false
   resources:
     limits:
       cpu: 600m
@@ -61,8 +61,7 @@ readinessProbe: {}
   #     port: .Values.port.managerPort
   # initialDelaySeconds: 5
   # periodSeconds: 10
-securityContext:
-  allowPrivilegeEscalation: false
+
 ports:
   managerPort: 8081
   managerContainerPort: 8443

@@ -159,6 +159,7 @@ class TestDefaultProbes:
         containers = {}
         for k8s_version in supported_k8s_versions:
             k8s_version_containers = get_chart_containers(k8s_version, chart_values, [])
+            print(f"Containers before processing: {k8s_version_containers.keys()}")
             containers = {**containers, **k8s_version_containers}
         return dict(sorted(containers.items()))
 
@@ -168,16 +169,22 @@ class TestDefaultProbes:
         for k, v in chart_containers.items()
         if supported_k8s_versions[-1] in k
     }
+    print(f"Container keys after processing: {containers.keys()}")
     current_clp = {k: v["livenessProbe"] for k, v in containers.items() if v.get("livenessProbe")}
     current_crp = {k: v["readinessProbe"] for k, v in containers.items() if v.get("readinessProbe")}
 
     # expected container liveness probes
     expected_clp = {
-        "airflow-operator-controller-manager_manager": {"httpGet": {"path": "/healthz", "port": 8081}},
         "alertmanager_auth-proxy": {
             "httpGet": {"path": "/healthz", "port": 8084, "scheme": "HTTP"},
             "initialDelaySeconds": 10,
             "periodSeconds": 10,
+        },
+        "aocm_manager": {
+            "httpGet": {
+                "path": "/healthz",
+                "port": 8081,
+            }
         },
         "astro-ui_astro-ui": {"httpGet": {"path": "/", "port": 8080}, "initialDelaySeconds": 10, "periodSeconds": 10},
         "commander_commander": {
@@ -285,7 +292,6 @@ class TestDefaultProbes:
 
     # expected container readiness probes
     expected_crp = {
-        "airflow-operator-controller-manager_manager": {"httpGet": {"path": "/readyz", "port": 8081}},
         "alertmanager_alertmanager": {
             "httpGet": {"path": "/#/status", "port": 9093},
             "initialDelaySeconds": 30,
@@ -295,6 +301,12 @@ class TestDefaultProbes:
             "httpGet": {"path": "/healthz", "port": 8084, "scheme": "HTTP"},
             "initialDelaySeconds": 10,
             "periodSeconds": 10,
+        },
+        "aocm_manager": {
+            "httpGet": {
+                "path": "/readyz",
+                "port": 8081,
+            }
         },
         "astro-ui_astro-ui": {"httpGet": {"path": "/", "port": 8080}, "initialDelaySeconds": 10, "periodSeconds": 10},
         "commander_commander": {"httpGet": {"path": "/healthz", "port": 8880}, "initialDelaySeconds": 10, "periodSeconds": 10},

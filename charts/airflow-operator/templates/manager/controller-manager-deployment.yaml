@@ -10,7 +10,7 @@ metadata:
     chart: {{ template "operator.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
-  name: {{ .Release.Name }}-airflow-operator-controller-manager
+  name: {{ .Release.Name }}-aocm
   namespace: '{{ .Release.Namespace }}'
 spec:
   replicas: {{ .Values.manager.replicas }}
