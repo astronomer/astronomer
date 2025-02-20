@@ -151,6 +151,13 @@ class TestAirflowOperator:
                 "global": {
                     "airflowOperator": {"enabled": True},
                 },
+                "airflow-operator": {
+                    "manager": {
+                        "metrics": {
+                            "enabled": True,
+                        }
+                    }
+                },
             },
             show_only=sorted(
                 [
@@ -207,9 +214,9 @@ class TestAirflowOperator:
         assert doc["spec"]["ports"] == [
             {
                 "port": 8443,
-                "targetPort": "https",
+                "targetPort": 8080,
                 "protocol": "TCP",
-                "name": "https",
+                "name": "metrics",
                 "appProtocol": "http",
             }
         ]
