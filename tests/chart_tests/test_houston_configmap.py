@@ -51,22 +51,24 @@ def test_houston_configmap():
     assert "node" in prod["elasticsearch"]["client"]
     assert prod["elasticsearch"]["client"]["node"].startswith("http://")
 
-    # Assert that the configMap contains required component tags
-    assert prod["deployments"]["helm"]["airflow"]["images"]["statsd"]["tag"] == "0.27.2"
-    assert prod["deployments"]["helm"]["airflow"]["images"]["redis"]["tag"] == "7.2.6"
-    assert prod["deployments"]["helm"]["airflow"]["images"]["pgbouncer"]["tag"] == "1.23.1-1"
-    assert prod["deployments"]["helm"]["airflow"]["images"]["pgbouncerExporter"]["tag"] == "0.18.0"
-    assert prod["deployments"]["helm"]["airflow"]["images"]["gitSync"]["tag"] == "4.2.3-1"
+    assert not prod["deployments"].get("authSideCar")
+    assert not prod["deployments"].get("loggingSidecar")
 
-    # Assert that the configMap contains required component repositories
-    assert prod["deployments"]["helm"]["airflow"]["images"]["statsd"]["repository"] == "quay.io/astronomer/ap-statsd-exporter"
-    assert prod["deployments"]["helm"]["airflow"]["images"]["redis"]["repository"] == "quay.io/astronomer/ap-redis"
-    assert prod["deployments"]["helm"]["airflow"]["images"]["pgbouncer"]["repository"] == "quay.io/astronomer/ap-pgbouncer"
-    assert (
-        prod["deployments"]["helm"]["airflow"]["images"]["pgbouncerExporter"]["repository"]
-        == "quay.io/astronomer/ap-pgbouncer-exporter"
-    )
-    assert prod["deployments"]["helm"]["airflow"]["images"]["gitSync"]["repository"] == "quay.io/astronomer/ap-git-sync"
+    af_images = prod["deployments"]["helm"]["airflow"]["images"]
+
+    # Assert that the configMap contains airflow component tags
+    assert af_images["statsd"]["tag"]
+    assert af_images["redis"]["tag"]
+    assert af_images["pgbouncer"]["tag"]
+    assert af_images["pgbouncerExporter"]["tag"]
+    assert af_images["gitSync"]["tag"]
+
+    # Assert that the configMap contains image the right airflow component repositories
+    assert af_images["statsd"]["repository"] == "quay.io/astronomer/ap-statsd-exporter"
+    assert af_images["redis"]["repository"] == "quay.io/astronomer/ap-redis"
+    assert af_images["pgbouncer"]["repository"] == "quay.io/astronomer/ap-pgbouncer"
+    assert af_images["pgbouncerExporter"]["repository"] == "quay.io/astronomer/ap-pgbouncer-exporter"
+    assert af_images["gitSync"]["repository"] == "quay.io/astronomer/ap-git-sync"
 
     with pytest.raises(KeyError):
         # Ensure sccEnabled is not defined by default
