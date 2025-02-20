@@ -195,6 +195,23 @@ data:
       {{- end }}
 
         airflow:
+          images:
+            statsd:
+              repository: "{{ .Values.global.airflow.images.statsd.repository }}"
+              tag: "{{ .Values.global.airflow.images.statsd.tag }}"
+            redis:
+              repository: "{{ .Values.global.airflow.images.redis.repository }}"
+              tag: "{{ .Values.global.airflow.images.redis.tag }}"
+            pgbouncer:
+              repository: "{{ .Values.global.airflow.images.pgbouncer.repository }}"
+              tag: "{{ .Values.global.airflow.images.pgbouncer.tag }}"
+            pgbouncerExporter:
+              repository: "{{ .Values.global.airflow.images.pgbouncerExporter.repository }}"
+              tag: "{{ .Values.global.airflow.images.pgbouncerExporter.tag }}"
+            gitSync:
+              repository: "{{ .Values.global.airflow.images.gitSync.repository }}"
+              tag: "{{ .Values.global.airflow.images.gitSync.tag }}"
+
           useAstroSecurityManager: true
           {{- if .Values.global.networkPolicy.enabled }}
           networkPolicies:
