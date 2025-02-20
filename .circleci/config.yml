@@ -377,6 +377,7 @@ workflows:
                 - quay.io/astronomer/ap-elasticsearch-exporter:1.8.0
                 - quay.io/astronomer/ap-elasticsearch:8.12.2
                 - quay.io/astronomer/ap-fluentd:1.17.1
+                - quay.io/astronomer/ap-git-sync:4.2.3-1
                 - quay.io/astronomer/ap-grafana:10.4.15
                 - quay.io/astronomer/ap-houston-api:0.37.0
                 - quay.io/astronomer/ap-init:3.20.5
@@ -389,11 +390,15 @@ workflows:
                 - quay.io/astronomer/ap-nginx:1.11.3
                 - quay.io/astronomer/ap-node-exporter:1.8.2
                 - quay.io/astronomer/ap-openresty:1.27.1-1
+                - quay.io/astronomer/ap-pgbouncer-exporter:0.18.0
                 - quay.io/astronomer/ap-pgbouncer-krb:1.17.0-17
+                - quay.io/astronomer/ap-pgbouncer:1.23.1-1
                 - quay.io/astronomer/ap-postgres-exporter:0.16.0-2
                 - quay.io/astronomer/ap-postgresql:15.10.0-1
                 - quay.io/astronomer/ap-prometheus:2.53.3
+                - quay.io/astronomer/ap-redis:7.2.6
                 - quay.io/astronomer/ap-registry:3.20.5
+                - quay.io/astronomer/ap-statsd-exporter:0.27.2
                 - quay.io/astronomer/ap-vector:0.44.0-2
           context:
             - slack_team-software-infra-bot
@@ -416,6 +421,7 @@ workflows:
                 - quay.io/astronomer/ap-elasticsearch-exporter:1.8.0
                 - quay.io/astronomer/ap-elasticsearch:8.12.2
                 - quay.io/astronomer/ap-fluentd:1.17.1
+                - quay.io/astronomer/ap-git-sync:4.2.3-1
                 - quay.io/astronomer/ap-grafana:10.4.15
                 - quay.io/astronomer/ap-houston-api:0.37.0
                 - quay.io/astronomer/ap-init:3.20.5
@@ -428,11 +434,15 @@ workflows:
                 - quay.io/astronomer/ap-nginx:1.11.3
                 - quay.io/astronomer/ap-node-exporter:1.8.2
                 - quay.io/astronomer/ap-openresty:1.27.1-1
+                - quay.io/astronomer/ap-pgbouncer-exporter:0.18.0
                 - quay.io/astronomer/ap-pgbouncer-krb:1.17.0-17
+                - quay.io/astronomer/ap-pgbouncer:1.23.1-1
                 - quay.io/astronomer/ap-postgres-exporter:0.16.0-2
                 - quay.io/astronomer/ap-postgresql:15.10.0-1
                 - quay.io/astronomer/ap-prometheus:2.53.3
+                - quay.io/astronomer/ap-redis:7.2.6
                 - quay.io/astronomer/ap-registry:3.20.5
+                - quay.io/astronomer/ap-statsd-exporter:0.27.2
                 - quay.io/astronomer/ap-vector:0.44.0-2
           context:
             - twistcli
