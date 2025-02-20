@@ -52,7 +52,9 @@ service:
 {{ printf "\n" -}}
 - --health-probe-bind-address=:{{ .Values.ports.managerPort }}
 - --leader-elect
-- --metrics-bind-address={{ if .Values.manager.metrics.useSecuredEndpoint }}127.0.0.1{{ else }}0.0.0.0{{ end }}:{{ .Values.ports.managerUpstreamPort }}
+{{ if .Values.manager.metrics.enabled }}
+- --metrics-bind-address=127.0.0.1:{{ .Values.ports.managerUpstreamPort }}
+{{- end -}}
 {{- if .Values.airgapped }}
 - --airgapped
 {{- end -}}
@@ -99,20 +101,6 @@ service:
       path: /readyz
       port: {{ .Values.ports.managerPort }}
   {{- end }}
-{{- if .Values.manager.metrics.useSecuredEndpoint }}
-- name: kube-rbac-proxy
-  args:
-    - --secure-listen-address=0.0.0.0:{{ .Values.ports.managerContainerPort }}
-    - --upstream=http://127.0.0.1:{{ .Values.ports.managerUpstreamPort }}/
-    - --logtostderr=true
-    - --v=10
-  image: {{ include "kube-rbac-proxy.image" . }}
-  imagePullPolicy: {{ .Values.images.metrics.pullPolicy }}
-  resources: {{ toYaml .Values.manager.resources | nindent 4 }}
-  ports:
-    - containerPort: {{ .Values.ports.managerContainerPort }}
-      name: https
-{{- end -}}
 {{- end }}
 
 {{- define "operator.serviceAccountName" -}}
@@ -123,20 +111,11 @@ service:
 {{- end -}}
 {{- end -}}
 
-
 {{ define "operator.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
 {{ .Values.global.privateRegistry.repository }}/airflow-operator-controller:{{ .Values.images.manager.tag }}
 {{- else -}}
 {{ .Values.images.manager.repository }}:{{ .Values.images.manager.tag }}
-{{- end }}
-{{- end }}
-
-{{ define "kube-rbac-proxy.image" -}}
-{{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/ap-kube-rbac-proxy:{{ .Values.images.metrics.tag }}
-{{- else -}}
-{{ .Values.images.metrics.repository }}:{{ .Values.images.metrics.tag }}
 {{- end }}
 {{- end }}
 

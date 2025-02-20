@@ -151,6 +151,13 @@ class TestAirflowOperator:
                 "global": {
                     "airflowOperator": {"enabled": True},
                 },
+                "airflow-operator": {
+                    "manager": {
+                        "metrics": {
+                            "enabled": True,
+                        }
+                    }
+                },
             },
             show_only=sorted(
                 [
@@ -184,7 +191,7 @@ class TestAirflowOperator:
                 "airflow-operator": {
                     "manager": {
                         "metrics": {
-                            "useSecuredEndpoint": True,
+                            "enabled": True,
                         }
                     }
                 },
@@ -198,7 +205,7 @@ class TestAirflowOperator:
         c_by_name = get_containers_by_name(docs[0], include_init_containers=False)
         assert "manager" in c_by_name["manager"]["name"]
         assert "--metrics-bind-address=127.0.0.1:8080" in c_by_name["manager"]["args"]
-        assert "kube-rbac-proxy" in c_by_name["kube-rbac-proxy"]["name"]
+        assert "/manager" in c_by_name["manager"]["command"]
         doc = docs[1]
         assert doc["kind"] == "Service"
         assert doc["metadata"]["name"] == "release-name-aocm-metrics-service"
@@ -207,9 +214,9 @@ class TestAirflowOperator:
         assert doc["spec"]["ports"] == [
             {
                 "port": 8443,
-                "targetPort": "https",
+                "targetPort": 8080,
                 "protocol": "TCP",
-                "name": "https",
+                "name": "metrics",
                 "appProtocol": "http",
             }
         ]
