@@ -50,6 +50,26 @@ def test_houston_configmap():
     # Ensure elasticsearch client param is at the correct location and contains http://
     assert "node" in prod["elasticsearch"]["client"]
     assert prod["elasticsearch"]["client"]["node"].startswith("http://")
+
+    assert not prod["deployments"].get("authSideCar")
+    assert not prod["deployments"].get("loggingSidecar")
+
+    af_images = prod["deployments"]["helm"]["airflow"]["images"]
+
+    # Assert that the configMap contains airflow component tags
+    assert af_images["statsd"]["tag"]
+    assert af_images["redis"]["tag"]
+    assert af_images["pgbouncer"]["tag"]
+    assert af_images["pgbouncerExporter"]["tag"]
+    assert af_images["gitSync"]["tag"]
+
+    # Assert that the configMap contains image the right airflow component repositories
+    assert af_images["statsd"]["repository"] == "quay.io/astronomer/ap-statsd-exporter"
+    assert af_images["redis"]["repository"] == "quay.io/astronomer/ap-redis"
+    assert af_images["pgbouncer"]["repository"] == "quay.io/astronomer/ap-pgbouncer"
+    assert af_images["pgbouncerExporter"]["repository"] == "quay.io/astronomer/ap-pgbouncer-exporter"
+    assert af_images["gitSync"]["repository"] == "quay.io/astronomer/ap-git-sync"
+
     with pytest.raises(KeyError):
         # Ensure sccEnabled is not defined by default
         assert prod["deployments"]["helm"]["sccEnabled"] is False
