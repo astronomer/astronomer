@@ -16,22 +16,7 @@ def common_test_cases(docs):
 
     local_prod = yaml.safe_load(doc["data"]["local-production.yaml"])
 
-    assert local_prod == {
-        "nats": {"ackWait": 600000},
-        "deployments": {
-            "helm": {
-                "airflow": {
-                    "images": {
-                        "statsd": {"repository": "quay.io/astronomer/ap-statsd-exporter", "tag": "0.27.2"},
-                        "redis": {"repository": "quay.io/astronomer/ap-redis", "tag": "7.2.6"},
-                        "pgbouncer": {"repository": "quay.io/astronomer/ap-pgbouncer", "tag": "1.23.1-1"},
-                        "pgbouncerExporter": {"repository": "quay.io/astronomer/ap-pgbouncer-exporter", "tag": "0.18.0"},
-                        "gitSync": {"repository": "quay.io/astronomer/ap-git-sync", "tag": "4.2.3-1"},
-                    }
-                }
-            }
-        },
-    }
+    assert local_prod == {"nats": {"ackWait": 600000}}
 
     prod = yaml.safe_load(doc["data"]["production.yaml"])
 
