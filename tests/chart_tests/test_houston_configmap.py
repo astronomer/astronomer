@@ -16,7 +16,22 @@ def common_test_cases(docs):
 
     local_prod = yaml.safe_load(doc["data"]["local-production.yaml"])
 
-    assert local_prod == {"nats": {"ackWait": 600000}}
+    assert local_prod == {
+        "nats": {"ackWait": 600000},
+        "deployments": {
+            "helm": {
+                "airflow": {
+                    "images": {
+                        "statsd": {"repository": "quay.io/astronomer/ap-statsd-exporter", "tag": "0.27.2"},
+                        "redis": {"repository": "quay.io/astronomer/ap-redis", "tag": "7.2.6"},
+                        "pgbouncer": {"repository": "quay.io/astronomer/ap-pgbouncer", "tag": "1.23.1-1"},
+                        "pgbouncerExporter": {"repository": "quay.io/astronomer/ap-pgbouncer-exporter", "tag": "0.18.0"},
+                        "gitSync": {"repository": "quay.io/astronomer/ap-git-sync", "tag": "4.2.3-1"},
+                    }
+                }
+            }
+        },
+    }
 
     prod = yaml.safe_load(doc["data"]["production.yaml"])
 
@@ -50,6 +65,24 @@ def test_houston_configmap():
     # Ensure elasticsearch client param is at the correct location and contains http://
     assert "node" in prod["elasticsearch"]["client"]
     assert prod["elasticsearch"]["client"]["node"].startswith("http://")
+
+    # Assert that the configMap contains required component tags
+    assert prod["deployments"]["helm"]["airflow"]["images"]["statsd"]["tag"] == "0.27.2"
+    assert prod["deployments"]["helm"]["airflow"]["images"]["redis"]["tag"] == "7.2.6"
+    assert prod["deployments"]["helm"]["airflow"]["images"]["pgbouncer"]["tag"] == "1.23.1-1"
+    assert prod["deployments"]["helm"]["airflow"]["images"]["pgbouncerExporter"]["tag"] == "0.18.0"
+    assert prod["deployments"]["helm"]["airflow"]["images"]["gitSync"]["tag"] == "4.2.3-1"
+
+    # Assert that the configMap contains required component repositories
+    assert prod["deployments"]["helm"]["airflow"]["images"]["statsd"]["repository"] == "quay.io/astronomer/ap-statsd-exporter"
+    assert prod["deployments"]["helm"]["airflow"]["images"]["redis"]["repository"] == "quay.io/astronomer/ap-redis"
+    assert prod["deployments"]["helm"]["airflow"]["images"]["pgbouncer"]["repository"] == "quay.io/astronomer/ap-pgbouncer"
+    assert (
+        prod["deployments"]["helm"]["airflow"]["images"]["pgbouncerExporter"]["repository"]
+        == "quay.io/astronomer/ap-pgbouncer-exporter"
+    )
+    assert prod["deployments"]["helm"]["airflow"]["images"]["gitSync"]["repository"] == "quay.io/astronomer/ap-git-sync"
+
     with pytest.raises(KeyError):
         # Ensure sccEnabled is not defined by default
         assert prod["deployments"]["helm"]["sccEnabled"] is False

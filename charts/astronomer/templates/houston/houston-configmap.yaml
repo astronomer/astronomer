@@ -236,6 +236,22 @@ data:
       {{- end }}
 
         airflow:
+          images:
+            statsd:
+              repository: "{{ .Values.global.deployments.helm.airflow.images.statsd.repository }}"
+              tag: "{{ .Values.global.deployments.helm.airflow.images.statsd.tag }}"
+            redis:
+              repository: "{{ .Values.global.deployments.helm.airflow.images.redis.repository }}"
+              tag: "{{ .Values.global.deployments.helm.airflow.images.redis.tag }}"
+            pgbouncer:
+              repository: "{{ .Values.global.deployments.helm.airflow.images.pgbouncer.repository }}"
+              tag: "{{ .Values.global.deployments.helm.airflow.images.pgbouncer.tag }}"
+            pgbouncerExporter:
+              repository: "{{ .Values.global.deployments.helm.airflow.images.pgbouncerExporter.repository }}"
+              tag: "{{ .Values.global.deployments.helm.airflow.images.pgbouncerExporter.tag }}"
+            gitSync:
+              repository: "{{ .Values.global.deployments.helm.airflow.images.gitSync.repository }}"
+              tag: "{{ .Values.global.deployments.helm.airflow.images.gitSync.tag }}"
           useAstroSecurityManager: true
           {{- if .Values.global.networkPolicy.enabled }}
           networkPolicies:
