@@ -56,7 +56,7 @@ spec:
               "--older-than={{ .Values.houston.cleanupAirflowDb.olderThan }}",
               "--dry-run={{ .Values.houston.cleanupAirflowDb.dryRun }}",
               "--output-path={{ .Values.houston.cleanupAirflowDb.outputPath }}",
-              "--purge-archive={{ .Values.houston.cleanupAirflowDb.purgeArchive }}",
+              "--drop-archives={{ .Values.houston.cleanupAirflowDb.dropArchives }}",
               "--provider={{ .Values.houston.cleanupAirflowDb.provider }}",
               "--bucket-name={{ .Values.houston.cleanupAirflowDb.bucketName }}",
               "--provider-env-secret-name={{ .Values.houston.cleanupAirflowDb.providerEnvSecretName }}",
