@@ -23,9 +23,9 @@ spec:
         metadata:
           labels:
             tier: astronomer
-            component: houston
+            component: houston-cleanup
             release: {{ .Release.Name }}
-            app: houston
+            app: houston-cleanup
             version: {{ .Chart.Version }}
           {{- if .Values.global.istio.enabled }}
           annotations:
