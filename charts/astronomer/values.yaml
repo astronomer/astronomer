@@ -28,7 +28,7 @@ images:
     pullPolicy: IfNotPresent
   astroUI:
     repository: quay.io/astronomer/ap-astro-ui
-    tag: 0.37.0
+    tag: 0.37.1
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
@@ -201,7 +201,7 @@ houston:
     outputPath: "/tmp"
 
     # Delete archived tables
-    purgeArchive: true
+    dropArchives: true
 
     # Print out the deployments that should be cleaned up and skip actual cleanup
     dryRun: false
