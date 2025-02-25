@@ -100,6 +100,7 @@ class TestAirflowOperator:
                 "global": {
                     "airflowOperator": {"enabled": True},
                 },
+                "airflow-operator": {"webhooks": {"enabled": True}},
             },
             show_only=sorted(
                 [
@@ -156,7 +157,8 @@ class TestAirflowOperator:
                         "metrics": {
                             "enabled": True,
                         }
-                    }
+                    },
+                    "webhooks": {"enabled": True},
                 },
             },
             show_only=sorted(
