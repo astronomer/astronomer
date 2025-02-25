@@ -303,16 +303,16 @@ global:
     images:
       statsd:
         repository: quay.io/astronomer/ap-statsd-exporter
-        tag: 0.27.2
+        tag: 0.28.1
       redis:
         repository: quay.io/astronomer/ap-redis
         tag: 7.2.6
       pgbouncer:
         repository: quay.io/astronomer/ap-pgbouncer
-        tag: 1.23.1-1
+        tag: 1.23.1-4
       pgbouncerExporter:
         repository: quay.io/astronomer/ap-pgbouncer-exporter
-        tag: 0.18.0
+        tag: 0.18.0-2
       gitSync:
         repository: quay.io/astronomer/ap-git-sync
         tag: 4.2.3-1
