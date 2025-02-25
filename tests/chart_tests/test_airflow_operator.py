@@ -181,6 +181,27 @@ class TestAirflowOperator:
         assert docs[3]["kind"] == "Service"
         assert docs[3]["metadata"]["name"] == "release-name-airflow-operator-webhook-service"
 
+        docs = render_chart(
+            validate_objects=False,
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "airflowOperator": {"enabled": True},
+                },
+                "airflow-operator": {
+                    "webhooks": {"enabled": False},
+                },
+            },
+            show_only=sorted(
+                [
+                    str(x.relative_to(git_root_dir))
+                    for x in Path(f"{git_root_dir}/charts/airflow-operator/templates/manager").glob("*")
+                ]
+            ),
+        )
+        webhook_services = [doc for doc in docs if "webhook" in doc.get("metadata", {}).get("name", "")]
+        assert len(webhook_services) == 0
+
     def test_airflow_operator_manager_metrics_enabled(self, kube_version):
         """Test Airflow Operator manager with metrics endpoints enabled"""
         docs = render_chart(
