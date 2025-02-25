@@ -1,6 +1,7 @@
 ######################################
 ## Airflow Operator WebHook Service ##
 ######################################
+{{ if .Values.webhooks.enabled }}
 apiVersion: v1
 kind: Service
 metadata:
