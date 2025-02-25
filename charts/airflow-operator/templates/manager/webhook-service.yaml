@@ -24,3 +24,4 @@ spec:
     protocol: TCP
     targetPort: {{ .Values.ports.webhookServiceTargetPort}}
     appProtocol: http
+{{- end }}
