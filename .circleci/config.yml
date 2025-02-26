@@ -400,6 +400,9 @@ workflows:
                 - quay.io/astronomer/ap-registry:3.20.5
                 - quay.io/astronomer/ap-statsd-exporter:0.28.1
                 - quay.io/astronomer/ap-vector:0.44.0-2
+                - quay.io/jetstack/cert-manager-cainjector:v1.5.4
+                - quay.io/jetstack/cert-manager-controller:v1.5.4
+                - quay.io/jetstack/cert-manager-webhook:v1.5.4
           context:
             - slack_team-software-infra-bot
       - twistcli-scan-docker:
@@ -444,6 +447,9 @@ workflows:
                 - quay.io/astronomer/ap-registry:3.20.5
                 - quay.io/astronomer/ap-statsd-exporter:0.28.1
                 - quay.io/astronomer/ap-vector:0.44.0-2
+                - quay.io/jetstack/cert-manager-cainjector:v1.5.4
+                - quay.io/jetstack/cert-manager-controller:v1.5.4
+                - quay.io/jetstack/cert-manager-webhook:v1.5.4
           context:
             - twistcli
 

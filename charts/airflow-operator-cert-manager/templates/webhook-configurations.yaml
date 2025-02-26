@@ -11,8 +11,8 @@ webhooks:
     namespaceSelector:
       matchExpressions:
         - key: cert-manager.io/disable-validation
-          operator: NotIn
-          values: ["true"]
+          operator: "In"
+          values: ["false", ""]
     rules:
       - apiGroups: ["cert-manager.io"]
         apiVersions: ["v1"]
