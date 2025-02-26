@@ -1,0 +1,202 @@
+{{ if and .Values.global.airflowOperator.enabled }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: airflow-operator-manager-role
+  namespace: '{{ .Release.Namespace }}'
+  labels:
+    tier: operator
+    release: {{ .Release.Name }}
+    chart: {{ template "operator.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - configmaps
+  - events
+  - persistentvolumeclaims
+  - pods
+  - secrets
+  - serviceaccounts
+  - services
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ''
+  resources:
+  - pods/exec
+  verbs:
+  - create
+  - get
+- apiGroups:
+  - ''
+  resources:
+  - pods/log
+  verbs:
+  - get
+- apiGroups:
+  - airflow.apache.org
+  resources:
+  - airflows
+  - airflows/status
+  - allocators
+  - apiservers
+  - dagprocessors
+  - fernetsecrets
+  - pgbouncers
+  - postgres
+  - rbacs
+  - redis
+  - runners
+  - schedulers
+  - statsds
+  - triggerers
+  - webservers
+  - workers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - airflow.apache.org
+  resources:
+  - airflows/finalizers
+  - allocators/finalizers
+  - apiservers/finalizers
+  - dagprocessors/finalizers
+  - pgbouncers/finalizers
+  - postgres/finalizers
+  - rbacs/finalizers
+  - redis/finalizers
+  - runners/finalizers
+  - schedulers/finalizers
+  - statsds/finalizers
+  - triggerers/finalizers
+  - webservers/finalizers
+  - workers/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - airflow.apache.org
+  resources:
+  - allocators/status
+  - apiservers/status
+  - dagprocessors/status
+  - pgbouncers/status
+  - postgres/status
+  - rbacs/status
+  - redis/status
+  - runners/status
+  - schedulers/status
+  - statsds/status
+  - triggerers/status
+  - webservers/status
+  - workers/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  - services
+  - statefulsets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - batch
+  resources:
+  - jobs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - keda.sh
+  resources:
+  - scaledobjects
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - networking.k8s.io
+  resources:
+  - ingresses
+  - networkpolicies
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - policy
+  resources:
+  - poddisruptionbudgets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - rbac.authorization.k8s.io
+  resources:
+  - rolebindings
+  - roles
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+{{ if $.Values.certManager.enabled -}}
+- apiGroups:
+  - cert-manager.io
+  resources:
+  - certificates
+  - issuers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+{{ end -}}
+{{ end -}}

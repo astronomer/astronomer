@@ -1,0 +1,137 @@
+{{ define "webhooks.clientConfig" -}}
+{{ printf "\n" }}
+{{- if .Values.webhooks.useCustomTlsCerts -}}
+caBundle: "{{ .Values.webhooks.caBundle | b64enc }}"
+{{ end -}}
+service:
+  name: {{ .Release.Name }}-airflow-operator-webhook-service
+  namespace: '{{ .Release.Namespace }}'
+  path: '{{ .path }}'
+{{- end }}
+
+# Declaring volumes for the Operator manager deployment, either use Certmanager-provided
+{{ define "manager.volumes" -}}
+{{ printf "\n" -}}
+{{- if and .Values.airgapped .Values.runtimeVersions.configMapName -}}
+- name: versions
+  configMap:
+    name: {{ .Values.runtimeVersions.configMapName }}
+{{- end }}
+{{ if and .Values.certManager.enabled (not .Values.webhooks.useCustomTlsCerts) -}}
+- name: cert
+  secret:
+    defaultMode: 420
+    secretName: {{ .Values.webhooks.certSecretName }}
+{{- else -}}
+- name: custom-certs
+  secret:
+    defaultMode: 420
+    secretName: {{ .Values.webhooks.customCertsSecretName }}
+{{- end -}}
+{{- end }}
+
+{{ define "manager.volumeMounts" -}}
+{{ printf "\n" -}}
+{{- if and .Values.airgapped .Values.runtimeVersions.configMapName -}}
+- mountPath: /etc/config/astro-runtime/metadata/versions.json
+  name: versions
+  subPath: versions.json
+{{- end }}
+{{ if and .Values.certManager.enabled (not .Values.webhooks.useCustomTlsCerts) -}}
+- mountPath: /tmp/k8s-webhook-server/serving-certs
+  name: cert
+  readOnly: true
+{{- else -}}
+- mountPath: /tmp/custom-certs
+  name: custom-certs
+  readOnly: true
+{{- end -}}
+{{- end }}
+
+{{ define "manager.args" -}}
+{{ printf "\n" -}}
+- --health-probe-bind-address=:{{ .Values.ports.managerPort }}
+- --leader-elect
+{{ if .Values.manager.metrics.enabled }}
+- --metrics-bind-address=127.0.0.1:{{ .Values.ports.managerUpstreamPort }}
+{{- end -}}
+{{- if .Values.airgapped }}
+- --airgapped
+{{- end -}}
+{{- if .Values.global.openshiftEnabled }}
+- --openshift
+{{- end -}}
+{{- if .Values.kedaEnabled }}
+- --keda
+{{- end -}}
+{{- end }}
+
+{{ define "manager.containers" -}}
+- name: manager
+  args: {{ include "manager.args" . | indent 2 }}
+  command:
+    - /manager
+  env:
+    - name: WEBHOOK_CERT_DIRECTORY
+      value: '{{- if .Values.webhooks.useCustomTlsCerts -}}/tmp/custom-certs{{- else -}}{{- end -}}'
+    - name: ALLOW_DEPRECATED_RUNTIME_VERSIONS
+      value: "true"
+{{- range $i, $config := .Values.manager.env }}
+    - name: {{ $config.name }}
+      value: {{ $config.value | quote }}
+{{- end }}
+  image: {{ include "operator.image" . }}
+  imagePullPolicy: {{ .Values.images.manager.pullPolicy }}
+  resources: {{ toYaml .Values.manager.resources | nindent 4 }}
+  securityContext: {{ toYaml .Values.securityContext| nindent 4 }}
+  volumeMounts: {{ include "manager.volumeMounts" . | indent 2 }}
+  {{- if .Values.livenessProbe }}
+  livenessProbe: {{ tpl (toYaml .Values.livenessProbe) . | nindent 12 }}
+  {{- else }}
+  livenessProbe:
+    httpGet:
+      path: /healthz
+      port: {{ .Values.ports.managerPort }}
+  {{- end }}
+  {{- if .Values.readinessProbe }}
+  readinessProbe: {{ tpl (toYaml .Values.readinessProbe) . | nindent 12 }}
+  {{- else }}
+  readinessProbe:
+    httpGet:
+      path: /readyz
+      port: {{ .Values.ports.managerPort }}
+  {{- end }}
+{{- end }}
+
+{{- define "operator.serviceAccountName" -}}
+{{- if and .Values.serviceAccount.create .Values.global.rbacEnabled -}}
+    {{- default (printf "%s-aocm" .Release.Name) .Values.serviceAccount.name }}
+{{- else -}}
+    {{- default "default" .Values.serviceAccount.name }}
+{{- end -}}
+{{- end -}}
+
+{{ define "operator.image" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/airflow-operator-controller:{{ .Values.images.manager.tag }}
+{{- else -}}
+{{ .Values.images.manager.repository }}:{{ .Values.images.manager.tag }}
+{{- end }}
+{{- end }}
+
+{{/*
+Create chart name and version as used by the chart label.
+*/}}
+{{- define "operator.chart" -}}
+{{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{/*
+Return the proper Docker Image Registry Secret Names
+*/}}
+{{- define "manager.imagePullSecrets" -}}
+{{- if and .Values.global.privateRegistry.enabled .Values.global.privateRegistry.secretName }}
+imagePullSecrets:
+{{ toYaml .Values.global.privateRegistry.secretName  | nindent 2 }}
+{{- end -}}
+{{- end -}}

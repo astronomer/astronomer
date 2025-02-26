@@ -111,6 +111,7 @@ class TestServiceAccounts:
                 "customLogging": {"enabled": True},
                 "prometheusPostgresExporterEnabled": True,
                 "pgbouncer": {"enabled": True},
+                "airflowOperator": {"enabled": True},
             },
             "astronomer": {
                 "commander": {"serviceAccount": {"create": False}},
@@ -135,6 +136,7 @@ class TestServiceAccounts:
             "kube-state": {"serviceAccount": {"create": False}},
             "prometheus": {"serviceAccount": {"create": False}},
             "elasticsearch": {"common": {"serviceAccount": {"create": False}}},
+            "airflow-operator": {"serviceAccount": {"create": False}},
         }
         show_only = [
             str(path.relative_to(git_root_dir)) for path in git_root_dir.rglob("charts/**/*") if "serviceaccount" in str(path)
@@ -157,6 +159,7 @@ class TestServiceAccounts:
                 "customLogging": {"enabled": True},
                 "prometheusPostgresExporterEnabled": True,
                 "pgbouncer": {"enabled": True},
+                "airflowOperator": {"enabled": True},
             },
             "astronomer": {
                 "commander": {"serviceAccount": {"create": True, "annotations": annotations}},
@@ -184,6 +187,7 @@ class TestServiceAccounts:
             "kube-state": {"serviceAccount": {"create": True, "annotations": annotations}},
             "prometheus": {"serviceAccount": {"create": True, "annotations": annotations}},
             "elasticsearch": {"common": {"serviceAccount": {"create": True, "annotations": annotations}}},
+            "airflow-operator": {"serviceAccount": {"create": True, "annotations": annotations}},
         }
         show_only = [
             str(path.relative_to(git_root_dir)) for path in git_root_dir.rglob("charts/**/*") if "serviceaccount" in str(path)
@@ -263,6 +267,9 @@ def test_default_serviceaccount_names(template_name):
 
 
 custom_service_account_names = {
+    "charts/airflow-operator/templates/manager/controller-manager-deployment.yaml": {
+        "airflow-operator": {"serviceAccount": {"create": True, "name": "prothean"}}
+    },
     "charts/alertmanager/templates/alertmanager-statefulset.yaml": {
         "alertmanager": {"serviceAccount": {"create": True, "name": "prothean"}}
     },
@@ -276,9 +283,6 @@ custom_service_account_names = {
         "astronomer": {"configSyncer": {"serviceAccount": {"create": True, "name": "prothean"}}}
     },
     "charts/astronomer/templates/houston/api/houston-deployment.yaml": {
-        "astronomer": {"houston": {"serviceAccount": {"create": True, "name": "prothean"}}}
-    },
-    "charts/astronomer/templates/houston/cronjobs/houston-check-airflow-version-updates-cronjob.yaml": {
         "astronomer": {"houston": {"serviceAccount": {"create": True, "name": "prothean"}}}
     },
     "charts/astronomer/templates/houston/cronjobs/houston-check-updates-cronjob.yaml": {

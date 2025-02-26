@@ -50,6 +50,26 @@ def test_houston_configmap():
     # Ensure elasticsearch client param is at the correct location and contains http://
     assert "node" in prod["elasticsearch"]["client"]
     assert prod["elasticsearch"]["client"]["node"].startswith("http://")
+
+    assert not prod["deployments"].get("authSideCar")
+    assert not prod["deployments"].get("loggingSidecar")
+
+    af_images = prod["deployments"]["helm"]["airflow"]["images"]
+
+    # Assert that the configMap contains airflow component tags
+    assert af_images["statsd"]["tag"]
+    assert af_images["redis"]["tag"]
+    assert af_images["pgbouncer"]["tag"]
+    assert af_images["pgbouncerExporter"]["tag"]
+    assert af_images["gitSync"]["tag"]
+
+    # Assert that the configMap contains image the right airflow component repositories
+    assert af_images["statsd"]["repository"] == "quay.io/astronomer/ap-statsd-exporter"
+    assert af_images["redis"]["repository"] == "quay.io/astronomer/ap-redis"
+    assert af_images["pgbouncer"]["repository"] == "quay.io/astronomer/ap-pgbouncer"
+    assert af_images["pgbouncerExporter"]["repository"] == "quay.io/astronomer/ap-pgbouncer-exporter"
+    assert af_images["gitSync"]["repository"] == "quay.io/astronomer/ap-git-sync"
+
     with pytest.raises(KeyError):
         # Ensure sccEnabled is not defined by default
         assert prod["deployments"]["helm"]["sccEnabled"] is False
@@ -504,13 +524,11 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_securityContext_conf
 
 
 def test_houston_configmapwith_update_airflow_runtime_checks_enabled():
-    """Validate the houston configmap and its embedded data with
-    updateAirflowCheck and updateRuntimeCheck."""
+    """Validate the houston configmap and its embedded data with updateRuntimeCheck."""
     docs = render_chart(
         values={
             "astronomer": {
                 "houston": {
-                    "updateAirflowCheck": {"enabled": True},
                     "updateRuntimeCheck": {"enabled": True},
                 }
             }
@@ -521,19 +539,15 @@ def test_houston_configmapwith_update_airflow_runtime_checks_enabled():
     doc = docs[0]
 
     prod = yaml.safe_load(doc["data"]["production.yaml"])
-
-    assert prod["updateAirflowCheckEnabled"] is True
     assert prod["updateRuntimeCheckEnabled"] is True
 
 
 def test_houston_configmapwith_update_airflow_runtime_checks_disabled():
-    """Validate the houston configmap and its embedded data with
-    updateAirflowCheck and updateRuntimeCheck."""
+    """Validate the houston configmap and its embedded data with updateRuntimeCheck."""
     docs = render_chart(
         values={
             "astronomer": {
                 "houston": {
-                    "updateAirflowCheck": {"enabled": False},
                     "updateRuntimeCheck": {"enabled": False},
                 }
             }
@@ -544,7 +558,6 @@ def test_houston_configmapwith_update_airflow_runtime_checks_disabled():
     doc = docs[0]
 
     prod = yaml.safe_load(doc["data"]["production.yaml"])
-    assert prod["updateAirflowCheckEnabled"] is False
     assert prod["updateRuntimeCheckEnabled"] is False
 
 
@@ -702,70 +715,6 @@ def test_houston_configmap_with_authsidecar_readiness_probe():
     prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
     assert "readinessProbe" in prod_yaml["deployments"]["authSideCar"]
     assert prod_yaml["deployments"]["authSideCar"]["readinessProbe"] == readiness_probe
-
-
-def test_houston_configmap_with_dagonlydeployment_liveness_probe():
-    """Validate the dagOnlyDeployment liveness probe in the Houston configmap."""
-    liveness_probe = {
-        "httpGet": {"path": "/dag-liveness", "port": 8081, "scheme": "HTTP"},
-        "initialDelaySeconds": 15,
-        "timeoutSeconds": 5,
-        "periodSeconds": 10,
-        "successThreshold": 1,
-        "failureThreshold": 3,
-    }
-    docs = render_chart(
-        values={
-            "global": {
-                "dagOnlyDeployment": {
-                    "enabled": True,
-                    "livenessProbe": liveness_probe,
-                    "image": "quay.io/astronomer/ap-auth:0.22.3",
-                }
-            }
-        },
-        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
-    )
-
-    assert len(docs) == 1
-    doc = docs[0]
-    prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
-
-    # Validate livenessProbe
-    assert "livenessProbe" in prod_yaml["deployments"]["dagDeploy"]
-    assert prod_yaml["deployments"]["dagDeploy"]["livenessProbe"] == liveness_probe
-
-
-def test_houston_configmap_with_dagonlydeployment_readiness_probe():
-    """Validate the dagOnlyDeployment readiness probe in the Houston configmap."""
-    readiness_probe = {
-        "httpGet": {"path": "/dag-readiness", "port": 8081, "scheme": "HTTP"},
-        "initialDelaySeconds": 15,
-        "timeoutSeconds": 5,
-        "periodSeconds": 10,
-        "successThreshold": 1,
-        "failureThreshold": 3,
-    }
-    docs = render_chart(
-        values={
-            "global": {
-                "dagOnlyDeployment": {
-                    "enabled": True,
-                    "readinessProbe": readiness_probe,
-                    "image": "quay.io/astronomer/ap-auth:0.22.3",
-                }
-            }
-        },
-        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
-    )
-
-    assert len(docs) == 1
-    doc = docs[0]
-    prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
-
-    # Validate readinessProbe
-    assert "readinessProbe" in prod_yaml["deployments"]["dagDeploy"]
-    assert prod_yaml["deployments"]["dagDeploy"]["readinessProbe"] == readiness_probe
 
 
 def test_houston_configmap_with_loggingsidecar_liveness_probe():

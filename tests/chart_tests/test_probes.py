@@ -16,6 +16,12 @@ default_probes = {
 }
 
 pod_manager_data = {
+    "charts/airflow-operator/templates/manager/controller-manager-deployment.yaml": {
+        "airflow-operator": default_probes,
+        "global": {
+            "airflowOperator": {"enabled": True},
+        },
+    },
     "charts/alertmanager/templates/alertmanager-statefulset.yaml": {
         "alertmanager": default_probes,
         "global": {
@@ -92,7 +98,7 @@ pod_manager_data = {
     },
     "charts/postgresql/templates/statefulset.yaml": {"postgresql": default_probes, "global": {"postgresqlEnabled": True}},
     "charts/prometheus/templates/prometheus-statefulset.yaml": {
-        "prometheus": {**default_probes, "configMapReloader": default_probes}
+        "prometheus": {**default_probes, "configMapReloader": default_probes, "filesdReloader": default_probes}
     },
     "charts/prometheus-blackbox-exporter/templates/deployment.yaml": {"prometheus-blackbox-exporter": default_probes},
     "charts/prometheus-node-exporter/templates/daemonset.yaml": {"prometheus-node-exporter": default_probes},
@@ -153,6 +159,7 @@ class TestDefaultProbes:
         containers = {}
         for k8s_version in supported_k8s_versions:
             k8s_version_containers = get_chart_containers(k8s_version, chart_values, [])
+            print(f"Containers before processing: {k8s_version_containers.keys()}")
             containers = {**containers, **k8s_version_containers}
         return dict(sorted(containers.items()))
 
@@ -162,6 +169,7 @@ class TestDefaultProbes:
         for k, v in chart_containers.items()
         if supported_k8s_versions[-1] in k
     }
+    print(f"Container keys after processing: {containers.keys()}")
     current_clp = {k: v["livenessProbe"] for k, v in containers.items() if v.get("livenessProbe")}
     current_crp = {k: v["readinessProbe"] for k, v in containers.items() if v.get("readinessProbe")}
 
@@ -171,6 +179,12 @@ class TestDefaultProbes:
             "httpGet": {"path": "/healthz", "port": 8084, "scheme": "HTTP"},
             "initialDelaySeconds": 10,
             "periodSeconds": 10,
+        },
+        "aocm_manager": {
+            "httpGet": {
+                "path": "/healthz",
+                "port": 8081,
+            }
         },
         "astro-ui_astro-ui": {"httpGet": {"path": "/", "port": 8080}, "initialDelaySeconds": 10, "periodSeconds": 10},
         "commander_commander": {
@@ -287,6 +301,12 @@ class TestDefaultProbes:
             "httpGet": {"path": "/healthz", "port": 8084, "scheme": "HTTP"},
             "initialDelaySeconds": 10,
             "periodSeconds": 10,
+        },
+        "aocm_manager": {
+            "httpGet": {
+                "path": "/readyz",
+                "port": 8081,
+            }
         },
         "astro-ui_astro-ui": {"httpGet": {"path": "/", "port": 8080}, "initialDelaySeconds": 10, "periodSeconds": 10},
         "commander_commander": {"httpGet": {"path": "/healthz", "port": 8880}, "initialDelaySeconds": 10, "periodSeconds": 10},

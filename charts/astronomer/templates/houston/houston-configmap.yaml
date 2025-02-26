@@ -12,11 +12,6 @@ metadata:
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
 data:
-  {{ if and .Values.houston.airflowReleasesConfig ( not .Values.houston.airflowReleasesConfigMapName ) }}
-  airflow_releases.json: |
-    {{ .Values.houston.airflowReleasesConfig | toJson }}
-  # These are system-specified config overrides.
-  {{- end }}
   {{ if and .Values.houston.runtimeReleasesConfig ( not .Values.houston.runtimeReleasesConfigMapName ) }}
   astro_runtime_releases.json: |
     {{ .Values.houston.runtimeReleasesConfig | toJson }}
@@ -71,6 +66,9 @@ data:
       {{- end }}
     # Airflow deployment configuration
     deployments:
+      mode:
+        operator:
+          enabled: {{.Values.global.airflowOperator.enabled}}
       disableManageClusterScopedResources: {{ default false ( or .Values.global.disableManageClusterScopedResources  .Values.global.features.namespacePools.enabled ) }}
       fluentdIndexPrefix: {{ include "fluentd.IndexPattern" .}}
       enableHoustonInternalAuthorization: {{ include "houston.InternalAuthorization" . }}
@@ -178,23 +176,43 @@ data:
         {{- if .Values.global.dagOnlyDeployment.securityContexts }}
         securityContexts: {{ template "dagOnlyDeployment.securityContexts" . }}
         {{- end }}
-        {{- if .Values.global.dagOnlyDeployment.resources }}
+        {{- if or
+          .Values.global.dagOnlyDeployment.resources
+          .Values.global.dagOnlyDeployment.server.livenessProbe
+          .Values.global.dagOnlyDeployment.server.readinessProbe
+        }}
         server:
+        {{- if .Values.global.dagOnlyDeployment.resources }}
           resources: {{- .Values.global.dagOnlyDeployment.resources | toYaml | nindent 12 }}
+        {{- end }}
+        {{- if .Values.global.dagOnlyDeployment.server.livenessProbe }}
+          livenessProbe: {{- .Values.global.dagOnlyDeployment.server.livenessProbe | toYaml | nindent 12 }}
+        {{- end }}
+        {{- if .Values.global.dagOnlyDeployment.server.readinessProbe }}
+          readinessProbe: {{- .Values.global.dagOnlyDeployment.server.readinessProbe | toYaml | nindent 12 }}
+        {{- end }}
+        {{- end }}
+        {{- if or
+          .Values.global.dagOnlyDeployment.resources
+          .Values.global.dagOnlyDeployment.client.livenessProbe
+          .Values.global.dagOnlyDeployment.client.readinessProbe
+        }}
         client:
+        {{- if .Values.global.dagOnlyDeployment.resources }}
           resources: {{- .Values.global.dagOnlyDeployment.resources | toYaml | nindent 12 }}
+        {{- end }}
+        {{- if .Values.global.dagOnlyDeployment.client.livenessProbe }}
+          livenessProbe: {{- .Values.global.dagOnlyDeployment.client.livenessProbe | toYaml | nindent 12 }}
+        {{- end }}
+        {{- if .Values.global.dagOnlyDeployment.client.readinessProbe }}
+          readinessProbe: {{- .Values.global.dagOnlyDeployment.client.readinessProbe | toYaml | nindent 12 }}
+        {{- end }}
         {{- end }}
         {{- if .Values.global.dagOnlyDeployment.persistence }}
         persistence: {{- .Values.global.dagOnlyDeployment.persistence | toYaml | nindent 10 }}
         {{- end }}
         {{ if .Values.global.dagOnlyDeployment.serviceAccount }}
         serviceAccount: {{- .Values.global.dagOnlyDeployment.serviceAccount | toYaml | nindent 10 }}
-        {{- end }}
-        {{- if .Values.global.dagOnlyDeployment.livenessProbe}}
-        livenessProbe: {{- .Values.global.dagOnlyDeployment.livenessProbe | toYaml | nindent 10 }}
-        {{- end }}
-        {{- if .Values.global.dagOnlyDeployment.readinessProbe}}
-        readinessProbe: {{- .Values.global.dagOnlyDeployment.readinessProbe | toYaml | nindent 10 }}
         {{- end }}
       {{- end }}
 
@@ -218,6 +236,23 @@ data:
       {{- end }}
 
         airflow:
+          images:
+            statsd:
+              repository: "{{ .Values.global.airflow.images.statsd.repository }}"
+              tag: "{{ .Values.global.airflow.images.statsd.tag }}"
+            redis:
+              repository: "{{ .Values.global.airflow.images.redis.repository }}"
+              tag: "{{ .Values.global.airflow.images.redis.tag }}"
+            pgbouncer:
+              repository: "{{ .Values.global.airflow.images.pgbouncer.repository }}"
+              tag: "{{ .Values.global.airflow.images.pgbouncer.tag }}"
+            pgbouncerExporter:
+              repository: "{{ .Values.global.airflow.images.pgbouncerExporter.repository }}"
+              tag: "{{ .Values.global.airflow.images.pgbouncerExporter.tag }}"
+            gitSync:
+              repository: "{{ .Values.global.airflow.images.gitSync.repository }}"
+              tag: "{{ .Values.global.airflow.images.gitSync.tag }}"
+
           useAstroSecurityManager: true
           {{- if .Values.global.networkPolicy.enabled }}
           networkPolicies:
@@ -379,6 +414,7 @@ data:
                   # the file /var/log/sidecar-log-consumer/finished, which signals the sidecar log
                   # consumer to exit.
                   from textwrap import dedent
+                  import shlex
                   cmd_init = dedent(
                       r"""
                       echo '
@@ -409,7 +445,7 @@ data:
                       command_str = (
                           cmd_init
                           + " /entrypoint "
-                          + " ".join([str(arg) for arg in container.args])
+                          + shlex.join([str(arg) for arg in container.args])
                           + log_cmd
                       )
                       new_args.append(command_str)
@@ -562,7 +598,6 @@ data:
     prometheus:
       enabled: true
       host: {{ printf "%s-prometheus" .Release.Name }}
-    updateAirflowCheckEnabled: {{ .Values.houston.updateAirflowCheck.enabled }}
     updateRuntimeCheckEnabled: {{ .Values.houston.updateRuntimeCheck.enabled }}
 
   # These are any user-specified config overrides.

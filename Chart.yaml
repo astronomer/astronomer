@@ -1,7 +1,7 @@
 apiVersion: v2
 name: astronomer
-version: 0.36.0
-appVersion: 0.36.0
+version: 0.37.0-rc3
+appVersion: 0.37.0-rc3
 description: Helm chart to deploy the Astronomer Platform
 icon: https://www.astronomer.io/static/iconforLIGHTbackground.svg
 keywords:
@@ -93,7 +93,8 @@ dependencies:
   - name: external-es-proxy
     condition: global.customLogging.enabled
 
-  - name: cert-manager
-    version: "1.5.4"
-    repository: "file://charts/airflow-operator-cert-manager"
-    condition: global.cert-manager.enabled
+  # Airflow Operator
+  - name: airflow-operator
+    condition: global.airflowOperator.enabled
+    tags:
+      - airflow-operator

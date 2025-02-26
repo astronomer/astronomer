@@ -1,4 +1,6 @@
 global:
+  airflowOperator:
+    enabled: true
   authSidecar:
     enabled: true
   baseDomain: foo.com

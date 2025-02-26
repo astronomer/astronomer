@@ -28,7 +28,7 @@ global:
     containerdTolerations: []
     certCopier:
       repository: quay.io/astronomer/ap-base
-      tag: 3.18.9
+      tag: 3.20.5
       pullPolicy: IfNotPresent
     priorityClassName: ~
   # Global flag to enable to user to enable/disable Astronomer platform
@@ -37,10 +37,9 @@ global:
     enabled: true
 
   #Global flag to enable Operator based deployment
-  operator:
+  airflowOperator:
     enabled: false
-  cert-manager:
-    enabled: true
+
   # Specific Astronomer features configuration
   features:
     # namespace pools: define k8s namespaces in which Astronomer will manage Airflow deployments
@@ -138,10 +137,14 @@ global:
     securityContexts:
       pod:
         fsGroup: 50000
+    server:
+      readinessProbe: {}
+      livenessProbe: {}
+    client:
+      readinessProbe: {}
+      livenessProbe: {}
     resources: {}
     persistence: {}
-    readinessProbe: {}
-    livenessProbe: {}
 
   logging:
     indexNamePrefix: ~
@@ -151,7 +154,7 @@ global:
     enabled: false
     name: sidecar-log-consumer
     repository: quay.io/astronomer/ap-vector
-    tag: 0.42.0
+    tag: 0.44.0-2
     customConfig: false
     indexPattern: ~
     extraEnv: []
@@ -170,7 +173,7 @@ global:
   authSidecar:
     enabled: false
     repository: quay.io/astronomer/ap-auth-sidecar
-    tag: 1.27.2
+    tag: 1.27.3
     pullPolicy: IfNotPresent
     port: 8084
     securityContext: {}
@@ -295,6 +298,24 @@ global:
   # ServiceAccounts, ClusterRoles, RoleBindings, ClusterRoleBindings
   # https://github.com/argoproj/argo-cd/blob/master/docs/user-guide/sync-waves.md
   enableArgoCDAnnotation: false
+
+  airflow:
+    images:
+      statsd:
+        repository: quay.io/astronomer/ap-statsd-exporter
+        tag: 0.28.1
+      redis:
+        repository: quay.io/astronomer/ap-redis
+        tag: 7.2.6
+      pgbouncer:
+        repository: quay.io/astronomer/ap-pgbouncer
+        tag: 1.23.1-4
+      pgbouncerExporter:
+        repository: quay.io/astronomer/ap-pgbouncer-exporter
+        tag: 0.18.0-2
+      gitSync:
+        repository: quay.io/astronomer/ap-git-sync
+        tag: 4.2.3-1
 
   # For now we support only pgbouncer with gss api support
   pgbouncer:
@@ -481,6 +502,16 @@ prometheus:
       requests:
         cpu: 100m
         memory: 25Mi
+
+  filesdReloader:
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 500m
+        memory: 512Mi
+
 
 nats:
   nodeSelector:
