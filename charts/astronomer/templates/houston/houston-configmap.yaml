@@ -238,11 +238,11 @@ data:
         gitSyncRelay:
           images:
             gitDaemon:
-              repository: "quay.io/astronomer/ap-git-daemon"
-              tag: "3.20.5"
+              repository: {{ .Values.global.gitSyncRelay.images.gitDaemon.repository }}
+              tag: {{ .Values.global.gitSyncRelay.images.gitDaemon.tag }}
             gitSync:
-              repository: "quay.io/astronomer/ap-git-sync-relay"
-              tag: "0.1.9"
+              repository: {{ .Values.global.gitSyncRelay.images.gitSync.repository }}
+              tag: {{ .Values.global.gitSyncRelay.images.gitSync.tag }}
 
         airflow:
           images:
