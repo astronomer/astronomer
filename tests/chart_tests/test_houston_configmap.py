@@ -55,6 +55,7 @@ def test_houston_configmap():
     assert not prod["deployments"].get("loggingSidecar")
 
     af_images = prod["deployments"]["helm"]["airflow"]["images"]
+    git_sync_images = prod["deployments"]["helm"]["gitSyncRelay"]["images"]
 
     # Assert that the configMap contains airflow component tags
     assert af_images["statsd"]["tag"]
@@ -69,6 +70,8 @@ def test_houston_configmap():
     assert af_images["pgbouncer"]["repository"] == "quay.io/astronomer/ap-pgbouncer"
     assert af_images["pgbouncerExporter"]["repository"] == "quay.io/astronomer/ap-pgbouncer-exporter"
     assert af_images["gitSync"]["repository"] == "quay.io/astronomer/ap-git-sync"
+    assert git_sync_images["gitDaemon"]["repository"] == "quay.io/astronomer/ap-git-daemon"
+    assert git_sync_images["gitSync"]["repository"] == "quay.io/astronomer/ap-git-sync-relay"
 
     with pytest.raises(KeyError):
         # Ensure sccEnabled is not defined by default

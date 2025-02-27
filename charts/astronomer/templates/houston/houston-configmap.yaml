@@ -235,6 +235,15 @@ data:
         networkNSLabels: true
       {{- end }}
 
+        gitSyncRelay:
+          images:
+            gitDaemon:
+              repository: {{ .Values.global.gitSyncRelay.images.gitDaemon.repository }}
+              tag: {{ .Values.global.gitSyncRelay.images.gitDaemon.tag }}
+            gitSync:
+              repository: {{ .Values.global.gitSyncRelay.images.gitSync.repository }}
+              tag: {{ .Values.global.gitSyncRelay.images.gitSync.tag }}
+
         airflow:
           images:
             statsd:
