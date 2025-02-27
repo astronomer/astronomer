@@ -235,6 +235,15 @@ data:
         networkNSLabels: true
       {{- end }}
 
+        gitSyncRelay:
+          images:
+            gitDaemon:
+              repository: "quay.io/astronomer/ap-git-daemon"
+              tag: "3.20.5"
+            gitSync:
+              repository: "quay.io/astronomer/ap-git-sync-relay"
+              tag: "0.1.9"
+
         airflow:
           images:
             statsd:
