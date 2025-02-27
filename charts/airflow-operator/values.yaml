@@ -21,7 +21,6 @@ securityContext:
 
 terminationGracePeriodSeconds: 10
 webhooks:
-
   # Enables the webhook service for mutating and validating configurations.
   enabled: true
   useCustomTlsCerts: false
