@@ -21,7 +21,9 @@ securityContext:
 
 terminationGracePeriodSeconds: 10
 webhooks:
-  enabled: true      # to enable default webhook service and it's mutating and validating configurations.
+
+  # Enables the webhook service for mutating and validating configurations.
+  enabled: true
   useCustomTlsCerts: false
   certSecretName: "webhook-server-cert"
   customCertsSecretName: "webhooks-tls-certs"
