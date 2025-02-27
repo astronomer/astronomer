@@ -72,8 +72,10 @@ def get_images_from_houston_configmap(doc, args):
             "Houston configmap uses quay.io instead of private registry",
             file=sys.stderr,
         )
+    git_sync_images = houston_config["deployments"]["helm"]["gitSyncRelay"]["images"]
     af_images = houston_config["deployments"]["helm"]["airflow"]["images"]
     images.extend(f"{image['repository']}:{image['tag']}" for image in af_images.values())
+    images.extend(f"{image['repository']}:{image['tag']}" for image in git_sync_images.values())
     return images
 
 
