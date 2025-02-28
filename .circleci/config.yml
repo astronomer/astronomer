@@ -364,7 +364,7 @@ workflows:
               docker_image:
                 - quay.io/astronomer/airflow-operator-controller:1.5.2
                 - quay.io/astronomer/ap-alertmanager:0.27.0-5
-                - quay.io/astronomer/ap-astro-ui:0.37.3
+                - quay.io/astronomer/ap-astro-ui:0.37.4
                 - quay.io/astronomer/ap-auth-sidecar:1.27.3
                 - quay.io/astronomer/ap-awsesproxy:1.5.0-13
                 - quay.io/astronomer/ap-base:3.20.5
@@ -381,7 +381,7 @@ workflows:
                 - quay.io/astronomer/ap-git-sync-relay:0.1.9
                 - quay.io/astronomer/ap-git-sync:4.2.3-1
                 - quay.io/astronomer/ap-grafana:10.4.16
-                - quay.io/astronomer/ap-houston-api:0.37.7
+                - quay.io/astronomer/ap-houston-api:0.37.8
                 - quay.io/astronomer/ap-init:3.20.5
                 - quay.io/astronomer/ap-kibana:8.12.2
                 - quay.io/astronomer/ap-kube-state:2.15.0
@@ -410,7 +410,7 @@ workflows:
               docker_image:
                 - quay.io/astronomer/airflow-operator-controller:1.5.2
                 - quay.io/astronomer/ap-alertmanager:0.27.0-5
-                - quay.io/astronomer/ap-astro-ui:0.37.3
+                - quay.io/astronomer/ap-astro-ui:0.37.4
                 - quay.io/astronomer/ap-auth-sidecar:1.27.3
                 - quay.io/astronomer/ap-awsesproxy:1.5.0-13
                 - quay.io/astronomer/ap-base:3.20.5
@@ -427,7 +427,7 @@ workflows:
                 - quay.io/astronomer/ap-git-sync-relay:0.1.9
                 - quay.io/astronomer/ap-git-sync:4.2.3-1
                 - quay.io/astronomer/ap-grafana:10.4.16
-                - quay.io/astronomer/ap-houston-api:0.37.7
+                - quay.io/astronomer/ap-houston-api:0.37.8
                 - quay.io/astronomer/ap-init:3.20.5
                 - quay.io/astronomer/ap-kibana:8.12.2
                 - quay.io/astronomer/ap-kube-state:2.15.0
