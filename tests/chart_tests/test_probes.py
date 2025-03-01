@@ -143,12 +143,12 @@ def test_template_probes_with_custom_values(template, values):
         *docs[0]["spec"]["template"]["spec"]["containers"],
         *docs[0]["spec"]["template"]["spec"].get("initContainers", []),
     ]:
-        assert (
-            container["livenessProbe"] == default_probes["livenessProbe"]
-        ), f"livenessProbe not accurate in {template} container {container['name']}"
-        assert (
-            container["readinessProbe"] == default_probes["readinessProbe"]
-        ), f"readinessProbe not accurate in {template} container {container['name']}"
+        assert container["livenessProbe"] == default_probes["livenessProbe"], (
+            f"livenessProbe not accurate in {template} container {container['name']}"
+        )
+        assert container["readinessProbe"] == default_probes["readinessProbe"], (
+            f"readinessProbe not accurate in {template} container {container['name']}"
+        )
 
 
 class TestDefaultProbes:

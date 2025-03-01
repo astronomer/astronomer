@@ -27,7 +27,7 @@ def init_test_pod_annotation_configs():
             docs,
         )
 
-    return {f'{doc["chart"]}_{doc["kind"]}_{doc["name"]}': doc["annotations"] for doc in pod_docs}
+    return {f"{doc['chart']}_{doc['kind']}_{doc['name']}": doc["annotations"] for doc in pod_docs}
 
 
 test_pod_annotations_configs_data = init_test_pod_annotation_configs()

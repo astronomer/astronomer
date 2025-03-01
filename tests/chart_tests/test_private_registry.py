@@ -97,7 +97,7 @@ def get_private_registry_docs_image_pull_secrets():
             docs,
         )
 
-    return {f'{doc["name"]}_{doc["kind"]}': doc["image_pull_secrets"] for doc in searched_docs}
+    return {f"{doc['name']}_{doc['kind']}": doc["image_pull_secrets"] for doc in searched_docs}
 
 
 private_registry_docs_image_pull_secrets = get_private_registry_docs_image_pull_secrets()
