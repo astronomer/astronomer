@@ -37,7 +37,7 @@ json_file_name="astronomer-${version}.json"
 max_age="300"
 
 # Install bom-generator
-pip install "git+https://${GITHUB_TOKEN}@github.com/astronomer/astronomer-bom-generator.git${BOM_GENERATOR_VERSION}"
+pip install "git+https://${GITHUB_TOKEN}@github.com/astronomer/astronomer-bom-generator.git@${BOM_GENERATOR_VERSION}"
 
 # Generate bom file and indexes
 bom-generator --version "${version}"
