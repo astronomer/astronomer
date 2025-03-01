@@ -286,52 +286,52 @@ jobs:
             helm template --kube-version=v1.28.15 -f values.yaml --set global.baseDomain=example.com . |
             kubent --cluster=false --helm3=false --filename -
           when: always
-  platform-1-29-12:
+  platform-1-29-14:
     machine:
       image: ubuntu-2204:2024.11.1
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.29.12
+      KUBE_VERSION: v1.29.14
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging"
       - run:
-          name: Check chart for k8s 1.29.12 compatibility with kubent
+          name: Check chart for k8s 1.29.14 compatibility with kubent
           command: |
             set -o pipefail
-            helm template --kube-version=v1.29.12 -f values.yaml --set global.baseDomain=example.com . |
+            helm template --kube-version=v1.29.14 -f values.yaml --set global.baseDomain=example.com . |
             kubent --cluster=false --helm3=false --filename -
           when: always
-  platform-1-30-8:
+  platform-1-30-10:
     machine:
       image: ubuntu-2204:2024.11.1
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.30.8
+      KUBE_VERSION: v1.30.10
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging"
       - run:
-          name: Check chart for k8s 1.30.8 compatibility with kubent
+          name: Check chart for k8s 1.30.10 compatibility with kubent
           command: |
             set -o pipefail
-            helm template --kube-version=v1.30.8 -f values.yaml --set global.baseDomain=example.com . |
+            helm template --kube-version=v1.30.10 -f values.yaml --set global.baseDomain=example.com . |
             kubent --cluster=false --helm3=false --filename -
           when: always
-  platform-1-31-4:
+  platform-1-31-6:
     machine:
       image: ubuntu-2204:2024.11.1
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.31.4
+      KUBE_VERSION: v1.31.6
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging"
       - run:
-          name: Check chart for k8s 1.31.4 compatibility with kubent
+          name: Check chart for k8s 1.31.6 compatibility with kubent
           command: |
             set -o pipefail
-            helm template --kube-version=v1.31.4 -f values.yaml --set global.baseDomain=example.com . |
+            helm template --kube-version=v1.31.6 -f values.yaml --set global.baseDomain=example.com . |
             kubent --cluster=false --helm3=false --filename -
           when: always
 
@@ -476,17 +476,17 @@ workflows:
             - approve-test-all-platforms
             - build-artifact
 
-      - platform-1-29-12:
+      - platform-1-29-14:
           requires:
             - approve-test-all-platforms
             - build-artifact
 
-      - platform-1-30-8:
+      - platform-1-30-10:
           requires:
             - approve-test-all-platforms
             - build-artifact
 
-      - platform-1-31-4:
+      - platform-1-31-6:
           requires:
             - build-artifact
       - approve-internal-release:
@@ -505,7 +505,7 @@ workflows:
           requires:
             - approve-internal-release
             - platform-1-27-16
-            - platform-1-31-4
+            - platform-1-31-6
       - approve-upgrade-test:
           type: approval
           filters:
@@ -525,8 +525,8 @@ workflows:
           requires:
             - release-to-internal
             - platform-1-28-15
-            - platform-1-29-12
-            - platform-1-30-8
+            - platform-1-29-14
+            - platform-1-30-10
           filters:
             branches:
               only:
