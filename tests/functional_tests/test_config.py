@@ -35,16 +35,16 @@ def test_houston_config(houston_api):
     """Make assertions about Houston's configuration."""
     data = houston_api.check_output("echo \"config = require('config'); console.log(JSON.stringify(config))\" | node -")
     houston_config = json.loads(data)
-    assert (
-        "url" not in houston_config["nats"].keys()
-    ), f"Did not expect to find 'url' configured for 'nats'. Found:\n\n{houston_config['nats']}"
-    assert len(
-        houston_config["nats"]["servers"]
-    ), f"Expected to find 'servers' configured for 'nats'. Found:\n\n{houston_config['nats']}"
+    assert "url" not in houston_config["nats"].keys(), (
+        f"Did not expect to find 'url' configured for 'nats'. Found:\n\n{houston_config['nats']}"
+    )
+    assert len(houston_config["nats"]["servers"]), (
+        f"Expected to find 'servers' configured for 'nats'. Found:\n\n{houston_config['nats']}"
+    )
     for server in houston_config["nats"]:
-        assert (
-            "localhost" not in server
-        ), f"Expected not to find 'localhost' in the 'servers' configuration. Found:\n\n{houston_config['nats']}"
+        assert "localhost" not in server, (
+            f"Expected not to find 'localhost' in the 'servers' configuration. Found:\n\n{houston_config['nats']}"
+        )
 
 
 def test_houston_check_db_info(houston_api):
@@ -105,9 +105,9 @@ def test_core_dns_metrics_are_collected(prometheus):
 
     data = prometheus.check_output("wget --timeout=5 -qO- http://localhost:9090/api/v1/query?query=coredns_dns_requests_total")
     parsed = json.loads(data)
-    assert (
-        len(parsed["data"]["result"]) > 0
-    ), f"Expected to find a metric coredns_dns_requests_total, but we got this response:\n\n{parsed}"
+    assert len(parsed["data"]["result"]) > 0, (
+        f"Expected to find a metric coredns_dns_requests_total, but we got this response:\n\n{parsed}"
+    )
 
 
 def test_houston_metrics_are_collected(prometheus):
@@ -193,7 +193,7 @@ def test_houston_backend_secret_present_after_helm_upgrade_and_container_restart
     # Run the command twice to ensure the most recent change is a no-operation change
     command = f"helm upgrade --reuse-values --no-hooks -n '{namespace}' '{release_name}' {helm_chart_path}"
     for i in range(2):
-        print(f"Iteration {i+1}/2: {command}\n")
+        print(f"Iteration {i + 1}/2: {command}\n")
         print(check_output(command, shell=True).decode("utf8"))
 
     result = houston_api.check_output("env | grep DATABASE_URL")

@@ -44,7 +44,7 @@ build: ## Build the Astronomer helm chart
 
 .PHONY: update-requirements
 update-requirements: ## Update all requirements.txt files
-	for FILE in requirements/*.in ; do pip-compile --strip-extras --quiet --generate-hashes --allow-unsafe --upgrade $${FILE} ; done ;
+	for FILE in requirements/*.in ; do uv pip compile --quiet --generate-hashes --upgrade $${FILE} --output-file $${FILE%.in}.txt ; done ;
 	-pre-commit run requirements-txt-fixer --all-files --show-diff-on-failure
 
 .PHONY: show-docker-images

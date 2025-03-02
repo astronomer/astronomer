@@ -71,9 +71,9 @@ class TestPostgresql:
         for doc in docs:
             c_by_name = get_containers_by_name(doc=doc, include_init_containers=True)
             for name, container in c_by_name.items():
-                assert container["image"].startswith(
-                    repository
-                ), f"Container named '{name}' does not use registry '{repository}': {container}"
+                assert container["image"].startswith(repository), (
+                    f"Container named '{name}' does not use registry '{repository}': {container}"
+                )
 
     def test_postgresql_persistentVolumeClaimRetentionPolicy(self, kube_version):
         test_persistentVolumeClaimRetentionPolicy = {
