@@ -13,7 +13,7 @@ metadata = yaml.safe_load((git_root_dir / "metadata.yaml").read_text())
 kube_versions = metadata["test_k8s_versions"]
 
 ap_build_tag = "0.3.0-4"  # https://quay.io/repository/astronomer/ap-build?tab=tags&tag=latest
-ci_runner_version = "2025-01"  # This should be the current YYYY-MM
+ci_runner_version = "2025-03"  # This should be the current YYYY-MM
 machine_image_version = "ubuntu-2204:2024.11.1"  # https://circleci.com/developer/machine/image/ubuntu-2204
 
 
