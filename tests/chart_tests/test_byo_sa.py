@@ -261,9 +261,9 @@ def test_default_serviceaccount_names(template_name):
     pm_docs = [doc for doc in docs if doc["kind"] in pod_managers]
     service_accounts = [get_service_account_name_from_doc(doc) for doc in pm_docs]
     assert service_accounts
-    assert all(
-        (sa_name.startswith("release-name-") or sa_name == "default") for sa_name in service_accounts
-    ), f"Expected all service accounts to start with 'release-name-' but found {service_accounts} in {template_name}"
+    assert all((sa_name.startswith("release-name-") or sa_name == "default") for sa_name in service_accounts), (
+        f"Expected all service accounts to start with 'release-name-' but found {service_accounts} in {template_name}"
+    )
 
 
 custom_service_account_names = {
@@ -387,6 +387,6 @@ def test_custom_serviceaccount_names(template_name):
     pm_docs = [doc for doc in docs if doc["kind"] in pod_managers]
     service_accounts = [get_service_account_name_from_doc(doc) for doc in pm_docs]
     assert service_accounts
-    assert all(
-        sa_name == "prothean" for sa_name in service_accounts
-    ), f"Expected all service accounts to be 'prothean' but found {service_accounts} in {template_name}"
+    assert all(sa_name == "prothean" for sa_name in service_accounts), (
+        f"Expected all service accounts to be 'prothean' but found {service_accounts} in {template_name}"
+    )

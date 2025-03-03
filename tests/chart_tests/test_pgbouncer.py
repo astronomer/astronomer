@@ -92,6 +92,6 @@ class TestPGBouncerDeployment:
         assert doc["apiVersion"] == "apps/v1"
 
         for name, container in c_by_name.items():
-            assert container["image"].startswith(
-                private_registry
-            ), f"Container named '{name}' does not use registry '{private_registry}': {container}"
+            assert container["image"].startswith(private_registry), (
+                f"Container named '{name}' does not use registry '{private_registry}': {container}"
+            )
