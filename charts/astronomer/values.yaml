@@ -164,10 +164,6 @@ houston:
     replicas: 2
     readinessProbe: {}
     livenessProbe: {}
-    podSecurityContext:
-    fsGroup: 1000
-    runAsGroup: 1000
-    runAsUser: 1000
 
   # Automatically upgrade Airflow deployments to the latest
   # version specified by Houston configuration.

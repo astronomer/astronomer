@@ -49,7 +49,7 @@ spec:
           containers:
             - name: update-check
               image: {{ template "houston.image" . }}
-              securityContext: {{ toYaml .Values.securityContext | nindent 16 }}
+              securityContext: {{ toYaml .Values.houston.podSecurityContext | nindent 16 }}
               resources: {{ toYaml .Values.houston.resources | nindent 16 }}
               imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
               # If you supply only args for a Container, the default Entrypoint defined in the Docker image is run with the args that you supplied.
