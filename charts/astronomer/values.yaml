@@ -61,6 +61,10 @@ astroUI:
     # If not set and create is true, a name is generated using the fullname template
     name: ""
   podAnnotations: {}
+  podSecurityContext:
+    fsGroup: 1000
+    runAsGroup: 1000
+    runAsUser: 1000
 
 houston:
   prismaConnectionLimit: 5
@@ -124,6 +128,10 @@ houston:
 
   podAnnotations: {}
 
+  podSecurityContext:
+    fsGroup: 1000
+    runAsGroup: 1000
+    runAsUser: 1000
   env: []
 
   # For example
@@ -156,6 +164,10 @@ houston:
     replicas: 2
     readinessProbe: {}
     livenessProbe: {}
+    podSecurityContext:
+    fsGroup: 1000
+    runAsGroup: 1000
+    runAsUser: 1000
 
   # Automatically upgrade Airflow deployments to the latest
   # version specified by Houston configuration.
@@ -326,6 +338,10 @@ configSyncer:
     # The name of the service account to use.
     # If not set and create is true, a name is generated using the fullname template
     name: ""
+  podSecurityContext:
+    fsGroup: 1000
+    runAsGroup: 1000
+    runAsUser: 1000
 
 
 commander:
@@ -356,6 +372,10 @@ commander:
     # initialDelaySeconds: 10
     # periodSeconds: 10
   podAnnotations: {}
+  podSecurityContext:
+    fsGroup: 1000
+    runAsGroup: 1000
+    runAsUser: 1000
 
 
   airGapped:
