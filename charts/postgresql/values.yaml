@@ -81,6 +81,8 @@ securityContext:
   runAsUser: 1001
   runAsNonRoot: true
 
+podSecurityContext: {}
+
 ## Pod Service Account
 ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
 serviceAccount:
