@@ -14,7 +14,7 @@ images:
 
 securityContext:
   runAsNonRoot: true
-  
+
 podSecurityContext: {}
 
 env: {}

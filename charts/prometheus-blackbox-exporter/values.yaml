@@ -32,7 +32,7 @@ securityContext:
 # Add NET_RAW to enable ICMP
 #    add: ["NET_RAW"]
 
-podSecurityContext:{}
+podSecurityContext: {}
 # These are set in the global values.
 # nodeSelector: {}
 # tolerations: {}
