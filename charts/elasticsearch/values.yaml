@@ -232,6 +232,7 @@ curator:
   schedule: "0 1 * * *"
   securityContext: {}
   resources: {}
+  podSecurityContext: {}
 
   # Allows modification of the default age-based filter. If you require more
   # sophisticated filtering, modify the action file specified in
@@ -301,6 +302,7 @@ nginx:
   ingressClass: ~
   resources: {}
   securityContext: {}
+  podSecurityContext: {}
 
 # sysctl init container
 # Warning: sysctl changes affect the kernel, and thus, all containers running on the same node.
