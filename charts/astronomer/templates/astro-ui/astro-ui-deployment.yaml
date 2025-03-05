@@ -35,6 +35,7 @@ spec:
 {{- end }}
     spec:
       serviceAccountName: {{ template "astroUI.serviceAccountName" . }}
+      securityContext: {{ toYaml (.Values.astroUI.podSecurityContext)| nindent 8 }}
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
       affinity:
@@ -47,7 +48,6 @@ spec:
         - name: astro-ui
           image: {{- include "astroUI.image" . | indent 1 }}
           imagePullPolicy: {{ .Values.images.astroUI.pullPolicy }}
-          securityContext: {{ toYaml (.Values.astroUI.podSecurityContext)| nindent 12 }}
           resources:
 {{ toYaml .Values.astroUI.resources | indent 12 }}
           {{- if .Values.astroUI.command }}

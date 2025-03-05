@@ -41,6 +41,7 @@ spec:
     spec:
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
+      securityContext: {{ toYaml .Values.commander.podSecurityContext| nindent 8 }}
       affinity:
 {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 8 }}
       tolerations:
@@ -52,7 +53,6 @@ spec:
         - name: commander
           image: {{ template "commander.image" . }}
           imagePullPolicy: {{ .Values.images.commander.pullPolicy }}
-          securityContext: {{ toYaml .Values.commander.podSecurityContext| nindent 12 }}
           resources:
 {{ toYaml .Values.commander.resources | indent 12 }}
           {{- if .Values.commander.command }}
