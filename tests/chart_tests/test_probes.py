@@ -16,6 +16,12 @@ default_probes = {
 }
 
 pod_manager_data = {
+    "charts/airflow-operator/templates/manager/controller-manager-deployment.yaml": {
+        "airflow-operator": default_probes,
+        "global": {
+            "airflowOperator": {"enabled": True},
+        },
+    },
     "charts/alertmanager/templates/alertmanager-statefulset.yaml": {
         "alertmanager": default_probes,
         "global": {
@@ -23,7 +29,6 @@ pod_manager_data = {
         },
     },
     "charts/astronomer/templates/astro-ui/astro-ui-deployment.yaml": {"astronomer": {"astroUI": default_probes}},
-    "charts/astronomer/templates/cli-install/cli-install-deployment.yaml": {"astronomer": {"cliInstall": default_probes}},
     "charts/astronomer/templates/commander/commander-deployment.yaml": {"astronomer": {"commander": default_probes}},
     "charts/astronomer/templates/houston/api/houston-deployment.yaml": {
         "astronomer": {"houston": {**default_probes, "waitForDB": default_probes, "bootstrapper": default_probes}},
@@ -93,7 +98,7 @@ pod_manager_data = {
     },
     "charts/postgresql/templates/statefulset.yaml": {"postgresql": default_probes, "global": {"postgresqlEnabled": True}},
     "charts/prometheus/templates/prometheus-statefulset.yaml": {
-        "prometheus": {**default_probes, "configMapReloader": default_probes}
+        "prometheus": {**default_probes, "configMapReloader": default_probes, "filesdReloader": default_probes}
     },
     "charts/prometheus-blackbox-exporter/templates/deployment.yaml": {"prometheus-blackbox-exporter": default_probes},
     "charts/prometheus-node-exporter/templates/daemonset.yaml": {"prometheus-node-exporter": default_probes},
@@ -138,12 +143,12 @@ def test_template_probes_with_custom_values(template, values):
         *docs[0]["spec"]["template"]["spec"]["containers"],
         *docs[0]["spec"]["template"]["spec"].get("initContainers", []),
     ]:
-        assert (
-            container["livenessProbe"] == default_probes["livenessProbe"]
-        ), f"livenessProbe not accurate in {template} container {container['name']}"
-        assert (
-            container["readinessProbe"] == default_probes["readinessProbe"]
-        ), f"readinessProbe not accurate in {template} container {container['name']}"
+        assert container["livenessProbe"] == default_probes["livenessProbe"], (
+            f"livenessProbe not accurate in {template} container {container['name']}"
+        )
+        assert container["readinessProbe"] == default_probes["readinessProbe"], (
+            f"readinessProbe not accurate in {template} container {container['name']}"
+        )
 
 
 class TestDefaultProbes:
@@ -154,6 +159,7 @@ class TestDefaultProbes:
         containers = {}
         for k8s_version in supported_k8s_versions:
             k8s_version_containers = get_chart_containers(k8s_version, chart_values, [])
+            print(f"Containers before processing: {k8s_version_containers.keys()}")
             containers = {**containers, **k8s_version_containers}
         return dict(sorted(containers.items()))
 
@@ -163,21 +169,24 @@ class TestDefaultProbes:
         for k, v in chart_containers.items()
         if supported_k8s_versions[-1] in k
     }
+    print(f"Container keys after processing: {containers.keys()}")
     current_clp = {k: v["livenessProbe"] for k, v in containers.items() if v.get("livenessProbe")}
     current_crp = {k: v["readinessProbe"] for k, v in containers.items() if v.get("readinessProbe")}
 
+    # expected container liveness probes
     expected_clp = {
         "alertmanager_auth-proxy": {
             "httpGet": {"path": "/healthz", "port": 8084, "scheme": "HTTP"},
             "initialDelaySeconds": 10,
             "periodSeconds": 10,
         },
-        "astro-ui_astro-ui": {"httpGet": {"path": "/", "port": 8080}, "initialDelaySeconds": 10, "periodSeconds": 10},
-        "cli-install_cli-install": {
-            "httpGet": {"path": "/healthz", "port": 8080, "scheme": "HTTP"},
-            "initialDelaySeconds": 30,
-            "timeoutSeconds": 5,
+        "aocm_manager": {
+            "httpGet": {
+                "path": "/healthz",
+                "port": 8081,
+            }
         },
+        "astro-ui_astro-ui": {"httpGet": {"path": "/", "port": 8080}, "initialDelaySeconds": 10, "periodSeconds": 10},
         "commander_commander": {
             "failureThreshold": 5,
             "httpGet": {"path": "/healthz", "port": 8880, "scheme": "HTTP"},
@@ -237,7 +246,15 @@ class TestDefaultProbes:
         },
         "nginx_nginx": {"httpGet": {"path": "/healthz", "port": 10254}, "initialDelaySeconds": 30, "timeoutSeconds": 5},
         "pgbouncer_pgbouncer": {"tcpSocket": {"port": 5432}},
-        "postgresql_release-name-postgresql": {
+        "postgresql-master_release-name-postgresql": {
+            "exec": {"command": ["sh", "-c", 'exec pg_isready -U "postgres" -h 127.0.0.1 -p 5432']},
+            "initialDelaySeconds": 30,
+            "periodSeconds": 10,
+            "timeoutSeconds": 5,
+            "successThreshold": 1,
+            "failureThreshold": 6,
+        },
+        "postgresql-slave_release-name-postgresql": {
             "exec": {"command": ["sh", "-c", 'exec pg_isready -U "postgres" -h 127.0.0.1 -p 5432']},
             "initialDelaySeconds": 30,
             "periodSeconds": 10,
@@ -273,6 +290,7 @@ class TestDefaultProbes:
         "stan_stan": {"httpGet": {"path": "/streaming/serverz", "port": "monitor"}, "initialDelaySeconds": 10, "timeoutSeconds": 5},
     }
 
+    # expected container readiness probes
     expected_crp = {
         "alertmanager_alertmanager": {
             "httpGet": {"path": "/#/status", "port": 9093},
@@ -283,6 +301,12 @@ class TestDefaultProbes:
             "httpGet": {"path": "/healthz", "port": 8084, "scheme": "HTTP"},
             "initialDelaySeconds": 10,
             "periodSeconds": 10,
+        },
+        "aocm_manager": {
+            "httpGet": {
+                "path": "/readyz",
+                "port": 8081,
+            }
         },
         "astro-ui_astro-ui": {"httpGet": {"path": "/", "port": 8080}, "initialDelaySeconds": 10, "periodSeconds": 10},
         "commander_commander": {"httpGet": {"path": "/healthz", "port": 8880}, "initialDelaySeconds": 10, "periodSeconds": 10},
@@ -318,7 +342,15 @@ class TestDefaultProbes:
         },
         "nats_nats": {"httpGet": {"path": "/", "port": 8222}, "initialDelaySeconds": 10, "timeoutSeconds": 5},
         "pgbouncer_pgbouncer": {"tcpSocket": {"port": 5432}},
-        "postgresql_release-name-postgresql": {
+        "postgresql-master_release-name-postgresql": {
+            "exec": {"command": ["sh", "-c", "-e", 'pg_isready -U "postgres" -h 127.0.0.1 -p 5432\n']},
+            "initialDelaySeconds": 5,
+            "periodSeconds": 10,
+            "timeoutSeconds": 5,
+            "successThreshold": 1,
+            "failureThreshold": 6,
+        },
+        "postgresql-slave_release-name-postgresql": {
             "exec": {"command": ["sh", "-c", "-e", 'pg_isready -U "postgres" -h 127.0.0.1 -p 5432\n']},
             "initialDelaySeconds": 5,
             "periodSeconds": 10,
@@ -354,6 +386,7 @@ class TestDefaultProbes:
         "stan_stan": {"httpGet": {"path": "/streaming/serverz", "port": "monitor"}, "initialDelaySeconds": 10, "timeoutSeconds": 5},
     }
 
+    # liveness probe data and ids
     lp_data = zip(current_clp.keys(), current_clp.values(), expected_clp.values())
     lp_ids = current_clp.keys()
 

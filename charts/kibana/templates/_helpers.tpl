@@ -71,3 +71,11 @@ imagePullSecrets:
 {{- .Values.securityContext | toYaml | nindent 12 }}
 {{- end -}}
 {{- end }}
+
+{{ define "kibana.serviceAccountName" -}}
+{{- if and .Values.serviceAccount.create .Values.global.rbacEnabled -}}
+{{ default (printf "%s" (include "alertmanager.fullname" . )) .Values.serviceAccount.name }}
+{{- else -}}
+    {{ default "default" .Values.serviceAccount.name }}
+{{- end }}
+{{- end }}

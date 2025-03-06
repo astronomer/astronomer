@@ -303,3 +303,22 @@ class TestNginx:
 
         c_by_name = get_containers_by_name(doc)
         assert expected_security_context == c_by_name["nginx"]["securityContext"]
+
+    def test_nginx_backend_overrides(self):
+        """Test nginx default backend disabled."""
+        docs = render_chart(
+            values={
+                "nginx": {
+                    "defaultBackend": {"enabled": False},
+                }
+            },
+            show_only=[
+                "charts/nginx/templates/nginx-default-backend-networkpolicy.yaml",
+                "charts/nginx/templates/nginx-default-backend-pod-disruption-budget.yaml",
+                "charts/nginx/templates/nginx-default-backend-serviceaccount.yaml",
+                "charts/nginx/templates/nginx-deployment-default.yaml",
+                "charts/nginx/templates/nginx-service-default.yaml",
+            ],
+        )
+
+        assert len(docs) == 0

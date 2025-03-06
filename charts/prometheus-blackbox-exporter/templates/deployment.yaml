@@ -1,4 +1,6 @@
-{{- if (eq .Values.kind "Deployment") }}
+##################################
+## Blackbox Exporter Deployment ##
+##################################
 apiVersion: {{ template "apiVersion.Deployment" . }}
 kind: Deployment
 metadata:
@@ -25,10 +27,14 @@ spec:
         version: {{ .Chart.Version }}
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        {{- if .Values.global.podAnnotations }}
+{{ toYaml .Values.global.podAnnotations | indent 8 }}
+        {{- end }}
         {{- if .Values.podAnnotations }}
 {{ toYaml .Values.podAnnotations | indent 8 }}
         {{- end }}
     spec:
+      serviceAccountName: {{ template "prometheus-blackbox-exporter.serviceAccountName" . }}
       nodeSelector: {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
       affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
       tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
@@ -110,4 +116,3 @@ spec:
             secretName: {{ .secretName }}
             defaultMode: {{ .defaultMode }}
       {{- end }}
-{{- end }}

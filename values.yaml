@@ -28,13 +28,17 @@ global:
     containerdTolerations: []
     certCopier:
       repository: quay.io/astronomer/ap-base
-      tag: 3.18.9
+      tag: 3.20.5
       pullPolicy: IfNotPresent
     priorityClassName: ~
   # Global flag to enable to user to enable/disable Astronomer platform
   # level Network Policy
   networkPolicy:
     enabled: true
+
+  #Global flag to enable Operator based deployment
+  airflowOperator:
+    enabled: false
 
   # Specific Astronomer features configuration
   features:
@@ -133,6 +137,12 @@ global:
     securityContexts:
       pod:
         fsGroup: 50000
+    server:
+      readinessProbe: {}
+      livenessProbe: {}
+    client:
+      readinessProbe: {}
+      livenessProbe: {}
     resources: {}
     persistence: {}
 
@@ -144,11 +154,13 @@ global:
     enabled: false
     name: sidecar-log-consumer
     repository: quay.io/astronomer/ap-vector
-    tag: 0.40.2-1
+    tag: 0.44.0-2
     customConfig: false
     indexPattern: ~
     extraEnv: []
     securityContext: {}
+    readinessProbe: {}
+    livenessProbe: {}
     resources: {}
     #  requests:
     #    cpu: "100m"
@@ -161,10 +173,12 @@ global:
   authSidecar:
     enabled: false
     repository: quay.io/astronomer/ap-auth-sidecar
-    tag: 1.27.1
+    tag: 1.27.3
     pullPolicy: IfNotPresent
     port: 8084
     securityContext: {}
+    readinessProbe: {}
+    livenessProbe: {}
     default_nginx_settings: |
       internal;
       proxy_pass_request_body     off;
@@ -241,14 +255,16 @@ global:
     #kubernetes.io/ingress.class: "default"
     #route.openshift.io/termination: "passthrough"
 
+  podAnnotations: {}
+
   # Enable values required for use with Microsoft Azure
   azure:
     enabled: false
 
   # Set nodeSelector, affinity, and tolerations values for platform and deployment related pods.
   # This allows for separation of platform and airflow pods between kubernetes node pools.
-  # Pods in the platformNodePool include alertmanager, cli-install, commander, houston, kube-replicator, astro-ui,
-  # registry, es-client, es-data, es-exporter, es-master, nginx-es, grafana, kibana, kube-state, nginx, nginx-default, prometheus.
+  # Pods in the platformNodePool include alertmanager, commander, houston, kube-replicator, astro-ui,registry,
+  # es-client, es-data, es-exporter, es-master, nginx-es, grafana, kibana, kube-state, nginx, nginx-default, prometheus.
   # nodeSelector, affinity, and tolerations values for airflow deployment pods are assigned via houston config.
   # See more information on pod / node assignment here: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
   platformNodePool:
@@ -282,6 +298,32 @@ global:
   # ServiceAccounts, ClusterRoles, RoleBindings, ClusterRoleBindings
   # https://github.com/argoproj/argo-cd/blob/master/docs/user-guide/sync-waves.md
   enableArgoCDAnnotation: false
+
+  airflow:
+    images:
+      statsd:
+        repository: quay.io/astronomer/ap-statsd-exporter
+        tag: 0.28.1
+      redis:
+        repository: quay.io/astronomer/ap-redis
+        tag: 7.2.6
+      pgbouncer:
+        repository: quay.io/astronomer/ap-pgbouncer
+        tag: 1.23.1-4
+      pgbouncerExporter:
+        repository: quay.io/astronomer/ap-pgbouncer-exporter
+        tag: 0.18.0-2
+      gitSync:
+        repository: quay.io/astronomer/ap-git-sync
+        tag: 4.2.3-1
+  gitSyncRelay:
+    images:
+      gitDaemon:
+        repository: "quay.io/astronomer/ap-git-daemon"
+        tag: "3.20.5"
+      gitSync:
+        repository: "quay.io/astronomer/ap-git-sync-relay"
+        tag: "0.1.9"
 
   # For now we support only pgbouncer with gss api support
   pgbouncer:
@@ -469,6 +511,16 @@ prometheus:
         cpu: 100m
         memory: 25Mi
 
+  filesdReloader:
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 500m
+        memory: 512Mi
+
+
 nats:
   nodeSelector:
     <<: *platformNodeSelector
@@ -538,8 +590,6 @@ prometheus-blackbox-exporter:
     elasticsearch:
       enabled: true
     kibana:
-      enabled: true
-    cliInstall:
       enabled: true
 
 #################################

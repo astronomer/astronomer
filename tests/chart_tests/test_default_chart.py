@@ -52,7 +52,7 @@ class TestAllCronJobs:
 
         for doc in cronjobs:
             name_len = len(doc["metadata"]["name"])
-            assert name_len <= 52, f'{doc["metadata"]["name"]} is too long at {name_len} characters'
+            assert name_len <= 52, f"{doc['metadata']['name']} is too long at {name_len} characters"
 
 
 class TestAllPodSpecContainers:
@@ -131,9 +131,9 @@ class TestAllPodSpecContainers:
             assert (
                 container["image"].split("/")[-1:] == self.pod_manager_containers_public[pod_container]["image"].split("/")[-1:]
             ), f"The spec for '{pod_container}' does not use the same image for public and private registry configurations."
-            assert container["image"].startswith(
-                self.private_repo
-            ), f"The spec for '{pod_container}' does not use the privateRegistry repo '{self.private_repo}': {container}"
+            assert container["image"].startswith(self.private_repo), (
+                f"The spec for '{pod_container}' does not use the privateRegistry repo '{self.private_repo}': {container}"
+            )
 
 
 @pytest.mark.skip("See issue https://github.com/astronomer/issues/issues/5227 for details about when to reenabling this.")

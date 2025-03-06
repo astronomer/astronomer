@@ -26,7 +26,7 @@ def init_test_pod_labels_configs():
             docs,
         )
 
-    return {f'{doc["chart"]}_{doc["kind"]}_{doc["name"]}': doc["labels"] for doc in pod_docs}
+    return {f"{doc['chart']}_{doc['kind']}_{doc['name']}": doc["labels"] for doc in pod_docs}
 
 
 test_pod_labels_configs_data = init_test_pod_labels_configs()

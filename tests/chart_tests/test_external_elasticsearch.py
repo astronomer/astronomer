@@ -296,9 +296,7 @@ class TestExternalElasticSearch:
                 "namespaceSelector": {},
                 "podSelector": {"matchLabels": {"tier": "airflow", "component": "webserver"}},
             },
-        ] == doc[
-            "spec"
-        ]["ingress"][0]["from"]
+        ] == doc["spec"]["ingress"][0]["from"]
 
     def test_external_es_network_selector_with_logging_sidecar_enabled(self, kube_version):
         """Test External Elasticsearch Service with NetworkPolicy Defaults."""
@@ -514,9 +512,9 @@ class TestExternalElasticSearch:
         assert doc["kind"] == "Deployment"
         assert doc["apiVersion"] == "apps/v1"
         for name, container in c_by_name.items():
-            assert container["image"].startswith(
-                private_registry
-            ), f"Container named '{name}' does not use registry '{private_registry}': {container}"
+            assert container["image"].startswith(private_registry), (
+                f"Container named '{name}' does not use registry '{private_registry}': {container}"
+            )
 
     def test_externalelasticsearch_with_extraenv(self, kube_version):
         """Test External ElasticSearch with custom env passed from

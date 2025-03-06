@@ -1,0 +1,27 @@
+######################################
+## Airflow Operator WebHook Service ##
+######################################
+{{ if .Values.webhooks.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-airflow-operator-webhook-service
+  namespace: '{{ .Release.Namespace }}'
+  labels:
+    tier: operator
+    chart: {{ template "operator.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  type: ClusterIP
+  selector:
+    component: controller-manager
+    tier: operator
+    release: {{ .Release.Name }}
+  ports:
+  - name: webhook-http
+    port: {{ .Values.ports.webhookServicePort}}
+    protocol: TCP
+    targetPort: {{ .Values.ports.webhookServiceTargetPort}}
+    appProtocol: http
+{{- end }}

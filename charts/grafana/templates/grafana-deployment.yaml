@@ -12,7 +12,7 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 spec:
-  replicas: 1
+  replicas: {{ .Values.replicas }}
   selector:
     matchLabels:
       tier: monitoring
@@ -26,15 +26,23 @@ spec:
         release: {{ .Release.Name }}
         app: {{ template "grafana.name" . }}
         version: {{ .Chart.Version }}
+{{- if or .Values.global.podAnnotations .Values.podAnnotations }}
+      annotations:
+{{- if .Values.global.podAnnotations }}
+{{ toYaml .Values.global.podAnnotations | indent 8 }}
+{{- end }}
+{{- if .Values.podAnnotations }}
+{{ toYaml .Values.podAnnotations | indent 8 }}
+{{- end }}
+{{- end }}
     spec:
       nodeSelector: {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
       affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
       tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       restartPolicy: Always
-      {{- if and (not .Values.backendSecretName) (not .Values.backendConnection) }}
-      serviceAccountName: {{ template "grafana.bootstrapper.serviceaccount" . }}
-      {{- end }}
+      serviceAccountName: {{ template "grafana.bootstrapper.serviceAccountName" . }}
 {{- include "grafana.imagePullSecrets" . | indent 6 }}
+    {{- if and (not .Values.backendSecretName) (not .Values.backendConnection) }}
       initContainers:
         - name: wait-for-db
           command:
@@ -58,7 +66,6 @@ spec:
                 secretKeyRef:
                   name: astronomer-bootstrap
                   key: connection
-      {{- if and (not .Values.backendSecretName) (not .Values.backendConnection) }}
         - name: bootstrapper
           image: {{ template "grafana.bootstrapper.image" . }}
           imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}

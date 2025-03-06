@@ -25,9 +25,7 @@ class TestHoustonApiDeployment:
             "tier": "astronomer",
             "component": "houston",
             "release": "release-name",
-        } == doc["spec"][
-            "selector"
-        ]["matchLabels"]
+        } == doc["spec"]["selector"]["matchLabels"]
 
         assert doc["spec"]["template"]["metadata"]["labels"].get("app") == "houston"
         assert doc["spec"]["template"]["metadata"]["labels"].get("app") == "houston"
@@ -97,14 +95,7 @@ class TestHoustonApiDeployment:
     def test_houston_api_deployment_with_updates_url_enabled(self, kube_version):
         docs = render_chart(
             kube_version=kube_version,
-            values={
-                "astronomer": {
-                    "houston": {
-                        "updateRuntimeCheck": {"enabled": True},
-                        "updateAirflowCheck": {"enabled": True},
-                    }
-                }
-            },
+            values={"astronomer": {"houston": {"updateRuntimeCheck": {"enabled": True}}}},
             show_only=["charts/astronomer/templates/houston/api/houston-deployment.yaml"],
         )
 
@@ -119,25 +110,13 @@ class TestHoustonApiDeployment:
         }
         assert expected_runtime_env in houston_env
 
-        expected_airflow_env = {
-            "name": "HOUSTON_SCRIPT_UPDATE_SERVICE_URL",
-            "value": "https://updates.astronomer.io/astronomer-certified",
-        }
-
-        assert expected_airflow_env in houston_env
-
     def test_houston_api_deployment_with_updates_url_overrides(self, kube_version):
         CUSTOM_RUNTIME_URL = "https://test.me.io/astronomer-runtime"
-        CUSTOM_CERTIFIED_URL = "https://test.me.io/astronomer-certified"
         docs = render_chart(
             kube_version=kube_version,
             values={
                 "astronomer": {
                     "houston": {
-                        "updateAirflowCheck": {
-                            "enabled": True,
-                            "url": CUSTOM_CERTIFIED_URL,
-                        },
                         "updateRuntimeCheck": {
                             "enabled": True,
                             "url": CUSTOM_RUNTIME_URL,
@@ -159,13 +138,6 @@ class TestHoustonApiDeployment:
             "value": CUSTOM_RUNTIME_URL,
         }
         assert expected_runtime_env in houston_env
-
-        expected_airflow_env = {
-            "name": "HOUSTON_SCRIPT_UPDATE_SERVICE_URL",
-            "value": CUSTOM_CERTIFIED_URL,
-        }
-
-        assert expected_airflow_env in houston_env
 
     def test_houston_api_deployment_passing_in_base_houston_host_in_env(self, kube_version):
         docs = render_chart(
@@ -198,13 +170,13 @@ class TestHoustonApiDeployment:
             if "__HOST" in env.get("name") and env.get("value")
         )
 
-    def test_houston_configmap_with_RuntimeReleasesConfig_enabled(self, kube_version):
+    def test_houston_configmap_with_runtimeReleasesConfig_enabled(self, kube_version):
         """Validate the houston configmap and its embedded data with RuntimeReleasesConfig defined
         ."""
         runtime_releases_json = {"runtimeVersions": {"12.1.1": {"metadata": {"airflowVersion": "2.2.5", "channel": "stable"}}}}
         docs = render_chart(
             kube_version=kube_version,
-            values={"astronomer": {"houston": {"RuntimeReleasesConfig": runtime_releases_json}}},
+            values={"astronomer": {"houston": {"runtimeReleasesConfig": runtime_releases_json}}},
             show_only=[
                 "charts/astronomer/templates/houston/houston-configmap.yaml",
                 "charts/astronomer/templates/houston/api/houston-deployment.yaml",
@@ -220,3 +192,89 @@ class TestHoustonApiDeployment:
             "mountPath": "/houston/astro_runtime_releases.json",
             "subPath": "astro_runtime_releases.json",
         } in c_by_name["houston"]["volumeMounts"]
+
+    def test_houston_configmap_with_airflow_and_runtime_configmap_name_enabled(self, kube_version):
+        """Validate that houston configmap and its embedded data with runtime and airflow configmap name defined."""
+        runtimeConfigmapName = "runtime-certfied-json"
+
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "astronomer": {
+                    "houston": {
+                        "runtimeReleasesConfigMapName": runtimeConfigmapName,
+                    }
+                }
+            },
+            show_only=[
+                "charts/astronomer/templates/houston/houston-configmap.yaml",
+                "charts/astronomer/templates/houston/api/houston-deployment.yaml",
+            ],
+        )
+        doc = docs[0]
+        assert "astro_runtime_releases.json" not in doc["data"]
+        assert "airflow_releases.json" not in doc["data"]
+        doc = docs[1]
+        c_by_name = get_containers_by_name(doc, include_init_containers=False)
+        assert {
+            "name": "runtimeversions",
+            "mountPath": "/houston/astro_runtime_releases.json",
+            "subPath": "astro_runtime_releases.json",
+        } in c_by_name["houston"]["volumeMounts"]
+
+        assert {"configMap": {"name": runtimeConfigmapName}, "name": "runtimeversions"} in doc["spec"]["template"]["spec"][
+            "volumes"
+        ]
+
+    def test_houston_deployments_containers_with_custom_houston_secret_name(self, kube_version):
+        """Test Upgrade Deployments Job Init Containers are disabled when custom houston secret name is passed."""
+
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "astronomer": {
+                    "houston": {
+                        "upgradeDeployments": {"enabled": True},
+                        "backendSecretName": "houstonbackend",
+                    }
+                }
+            },
+            show_only=["charts/astronomer/templates/houston/api/houston-deployment.yaml"],
+        )
+
+        assert len(docs) == 1
+        spec = docs[0]["spec"]["template"]["spec"]
+        assert "initContainers" not in spec
+        assert "default" == spec["serviceAccountName"]
+        c_by_name = get_containers_by_name(docs[0], include_init_containers=True)
+        env_vars = {x["name"]: x.get("value", x.get("valueFrom")) for x in c_by_name["houston"]["env"]}
+        assert env_vars["DATABASE__CONNECTION"] == {"secretKeyRef": {"name": "houstonbackend", "key": "connection"}}
+        assert env_vars["DATABASE_URL"] == {"secretKeyRef": {"name": "houstonbackend", "key": "connection"}}
+        assert env_vars["DEPLOYMENTS__DATABASE__CONNECTION"] == {"secretKeyRef": {"name": "houstonbackend", "key": "connection"}}
+
+    def test_houston_deployments_containers_with_custom_secret_name(self, kube_version):
+        """Test houston Deployments Init Containers disabled when custom houston secret name is passed."""
+
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "astronomer": {
+                    "houston": {
+                        "upgradeDeployments": {"enabled": True},
+                        "airflowBackendSecretName": "afwbackend",
+                        "backendSecretName": "houstonbackend",
+                    }
+                }
+            },
+            show_only=["charts/astronomer/templates/houston/api/houston-deployment.yaml"],
+        )
+
+        assert len(docs) == 1
+        spec = docs[0]["spec"]["template"]["spec"]
+        assert "initContainers" not in spec
+        assert "default" == spec["serviceAccountName"]
+        c_by_name = get_containers_by_name(docs[0], include_init_containers=True)
+        env_vars = {x["name"]: x.get("value", x.get("valueFrom")) for x in c_by_name["houston"]["env"]}
+        assert env_vars["DATABASE__CONNECTION"] == {"secretKeyRef": {"name": "houstonbackend", "key": "connection"}}
+        assert env_vars["DATABASE_URL"] == {"secretKeyRef": {"name": "houstonbackend", "key": "connection"}}
+        assert env_vars["DEPLOYMENTS__DATABASE__CONNECTION"] == {"secretKeyRef": {"name": "afwbackend", "key": "connection"}}

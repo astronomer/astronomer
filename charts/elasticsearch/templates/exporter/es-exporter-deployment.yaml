@@ -34,8 +34,11 @@ spec:
         role: exporter
         app: {{ template "elasticsearch.name" . }}-exporter
         version: {{ .Chart.Version }}
-{{- if or .Values.common.podAnnotations .Values.exporter.podAnnotations }}
+{{- if or .Values.common.podAnnotations .Values.exporter.podAnnotations .Values.global.podAnnotations }}
       annotations:
+{{- end }}
+{{- if .Values.global.podAnnotations }}
+{{ toYaml .Values.global.podAnnotations | indent 8 }}
 {{- end }}
 {{- if .Values.common.podAnnotations }}
 {{ toYaml .Values.common.podAnnotations | indent 8 }}
@@ -44,6 +47,7 @@ spec:
 {{ toYaml .Values.exporter.podAnnotations | indent 8 }}
 {{- end }}
     spec:
+      serviceAccountName: {{ template "elasticsearch.serviceAccountName" . }}
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
       affinity:

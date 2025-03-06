@@ -33,7 +33,7 @@ def default_spec_parser(doc, args):
         print(f"Processing {doc['kind']} {doc['metadata']['name']}", file=sys.stderr)
 
     if args.private_registry and "quay.io" in yaml.dump(item_containers):
-        print(f'{doc["kind"]} {doc["metadata"]["name"].removeprefix("release-name-")} uses quay.io instead of private registry')
+        print(f"{doc['kind']} {doc['metadata']['name'].removeprefix('release-name-')} uses quay.io instead of private registry")
         if args.verbose:
             print(json.dumps(doc["spec"]["template"]["spec"]), file=sys.stderr)
 
@@ -49,7 +49,7 @@ def job_template_spec_parser(doc, args):
     item_containers = get_containers_from_spec(doc["spec"]["jobTemplate"]["spec"]["template"]["spec"])
 
     if args.private_registry and "quay.io" in yaml.dump(item_containers):
-        print(f'{doc["kind"]} {doc["metadata"]["name"].removeprefix("release-name-")} uses quay.io instead of private registry')
+        print(f"{doc['kind']} {doc['metadata']['name'].removeprefix('release-name-')} uses quay.io instead of private registry")
         if args.verbose:
             print(
                 json.dumps(doc["spec"]["jobTemplate"]["spec"]["template"]["spec"]),
@@ -64,14 +64,18 @@ def get_images_from_houston_configmap(doc, args):
     houston_config = yaml.safe_load(doc["data"]["production.yaml"])
     keepers = ("authSideCar", "loggingSidecar")
     items = {k: v for k, v in houston_config["deployments"].items() if k in keepers}
-    auth_sidecar_image = f'{items["authSideCar"]["repository"]}:{items["authSideCar"]["tag"]}'
-    logging_sidecar_image = f'{items["loggingSidecar"]["image"]}'
-    images = (auth_sidecar_image, logging_sidecar_image)
+    auth_sidecar_image = f"{items['authSideCar']['repository']}:{items['authSideCar']['tag']}"
+    logging_sidecar_image = f"{items['loggingSidecar']['image']}"
+    images = [auth_sidecar_image, logging_sidecar_image]
     if args.verbose and any("quay.io" in x for x in images):
         print(
             "Houston configmap uses quay.io instead of private registry",
             file=sys.stderr,
         )
+    git_sync_images = houston_config["deployments"]["helm"]["gitSyncRelay"]["images"]
+    af_images = houston_config["deployments"]["helm"]["airflow"]["images"]
+    images.extend(f"{image['repository']}:{image['tag']}" for image in af_images.values())
+    images.extend(f"{image['repository']}:{image['tag']}" for image in git_sync_images.values())
     return images
 
 
@@ -85,7 +89,7 @@ def helm_template(args):
     command = "helm template . --set forceIncompatibleKubernetes=true -f tests/enable_all_features.yaml"
     if args.private_registry:
         command += (
-            " --set global.privateRegistry.repository=example.com/the-private-registry" " --set global.privateRegistry.enabled=True"
+            " --set global.privateRegistry.repository=example.com/the-private-registry --set global.privateRegistry.enabled=True"
         )
 
     if args.verbose:

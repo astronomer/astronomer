@@ -50,6 +50,29 @@ def test_houston_configmap():
     # Ensure elasticsearch client param is at the correct location and contains http://
     assert "node" in prod["elasticsearch"]["client"]
     assert prod["elasticsearch"]["client"]["node"].startswith("http://")
+
+    assert not prod["deployments"].get("authSideCar")
+    assert not prod["deployments"].get("loggingSidecar")
+
+    af_images = prod["deployments"]["helm"]["airflow"]["images"]
+    git_sync_images = prod["deployments"]["helm"]["gitSyncRelay"]["images"]
+
+    # Assert that the configMap contains airflow component tags
+    assert af_images["statsd"]["tag"]
+    assert af_images["redis"]["tag"]
+    assert af_images["pgbouncer"]["tag"]
+    assert af_images["pgbouncerExporter"]["tag"]
+    assert af_images["gitSync"]["tag"]
+
+    # Assert that the configMap contains image the right airflow component repositories
+    assert af_images["statsd"]["repository"] == "quay.io/astronomer/ap-statsd-exporter"
+    assert af_images["redis"]["repository"] == "quay.io/astronomer/ap-redis"
+    assert af_images["pgbouncer"]["repository"] == "quay.io/astronomer/ap-pgbouncer"
+    assert af_images["pgbouncerExporter"]["repository"] == "quay.io/astronomer/ap-pgbouncer-exporter"
+    assert af_images["gitSync"]["repository"] == "quay.io/astronomer/ap-git-sync"
+    assert git_sync_images["gitDaemon"]["repository"] == "quay.io/astronomer/ap-git-daemon"
+    assert git_sync_images["gitSync"]["repository"] == "quay.io/astronomer/ap-git-sync-relay"
+
     with pytest.raises(KeyError):
         # Ensure sccEnabled is not defined by default
         assert prod["deployments"]["helm"]["sccEnabled"] is False
@@ -504,13 +527,11 @@ def test_houston_configmap_with_loggingsidecar_enabled_with_securityContext_conf
 
 
 def test_houston_configmapwith_update_airflow_runtime_checks_enabled():
-    """Validate the houston configmap and its embedded data with
-    updateAirflowCheck and updateRuntimeCheck."""
+    """Validate the houston configmap and its embedded data with updateRuntimeCheck."""
     docs = render_chart(
         values={
             "astronomer": {
                 "houston": {
-                    "updateAirflowCheck": {"enabled": True},
                     "updateRuntimeCheck": {"enabled": True},
                 }
             }
@@ -521,19 +542,15 @@ def test_houston_configmapwith_update_airflow_runtime_checks_enabled():
     doc = docs[0]
 
     prod = yaml.safe_load(doc["data"]["production.yaml"])
-
-    assert prod["updateAirflowCheckEnabled"] is True
     assert prod["updateRuntimeCheckEnabled"] is True
 
 
 def test_houston_configmapwith_update_airflow_runtime_checks_disabled():
-    """Validate the houston configmap and its embedded data with
-    updateAirflowCheck and updateRuntimeCheck."""
+    """Validate the houston configmap and its embedded data with updateRuntimeCheck."""
     docs = render_chart(
         values={
             "astronomer": {
                 "houston": {
-                    "updateAirflowCheck": {"enabled": False},
                     "updateRuntimeCheck": {"enabled": False},
                 }
             }
@@ -544,7 +561,6 @@ def test_houston_configmapwith_update_airflow_runtime_checks_disabled():
     doc = docs[0]
 
     prod = yaml.safe_load(doc["data"]["production.yaml"])
-    assert prod["updateAirflowCheckEnabled"] is False
     assert prod["updateRuntimeCheckEnabled"] is False
 
 
@@ -640,3 +656,164 @@ def test_houston_configmap_with_tls_secretname_overrides():
     doc = docs[0]
     prod = yaml.safe_load(doc["data"]["production.yaml"])
     assert prod["helm"]["tlsSecretName"] == "astro-ssl-secret"
+
+
+def test_houston_configmap_with_authsidecar_liveness_probe():
+    """Validate the authSidecar liveness probe in the Houston configmap."""
+    liveness_probe = {
+        "httpGet": {"path": "/auth-liveness", "port": 8080, "scheme": "HTTP"},
+        "initialDelaySeconds": 10,
+        "timeoutSeconds": 5,
+        "periodSeconds": 10,
+        "successThreshold": 1,
+        "failureThreshold": 3,
+    }
+    docs = render_chart(
+        values={
+            "global": {
+                "authSidecar": {
+                    "enabled": True,
+                    "repository": "someregistry.io/my-custom-image",
+                    "tag": "my-custom-tag",
+                    "resources": {},
+                    "livenessProbe": liveness_probe,
+                }
+            }
+        },
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    assert len(docs) == 1
+    doc = docs[0]
+    prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
+    assert "livenessProbe" in prod_yaml["deployments"]["authSideCar"]
+    assert prod_yaml["deployments"]["authSideCar"]["livenessProbe"] == liveness_probe
+
+
+def test_houston_configmap_with_authsidecar_readiness_probe():
+    """Validate the authSidecar readiness probe in the Houston configmap."""
+    readiness_probe = {
+        "httpGet": {"path": "/auth-readiness", "port": 8080, "scheme": "HTTP"},
+        "initialDelaySeconds": 10,
+        "timeoutSeconds": 5,
+        "periodSeconds": 10,
+        "successThreshold": 1,
+        "failureThreshold": 3,
+    }
+    docs = render_chart(
+        values={
+            "global": {
+                "authSidecar": {
+                    "enabled": True,
+                    "repository": "someregistry.io/my-custom-image",
+                    "tag": "my-custom-tag",
+                    "resources": {},
+                    "readinessProbe": readiness_probe,
+                }
+            }
+        },
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    assert len(docs) == 1
+    doc = docs[0]
+    prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
+    assert "readinessProbe" in prod_yaml["deployments"]["authSideCar"]
+    assert prod_yaml["deployments"]["authSideCar"]["readinessProbe"] == readiness_probe
+
+
+def test_houston_configmap_with_loggingsidecar_liveness_probe():
+    """Validate the houston configmap with liveness probe configured."""
+    liveness_probe = {
+        "httpGet": {
+            "path": "/healthz",
+            "port": 8080,
+            "scheme": "HTTP",
+        },
+        "initialDelaySeconds": 15,
+        "timeoutSeconds": 30,
+        "periodSeconds": 5,
+        "successThreshold": 1,
+        "failureThreshold": 20,
+    }
+
+    docs = render_chart(
+        values={
+            "global": {
+                "loggingSidecar": {
+                    "enabled": True,
+                    "name": "sidecar-log-test",
+                    "livenessProbe": liveness_probe,
+                }
+            }
+        },
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+
+    assert len(docs) == 1
+    doc = docs[0]
+    prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
+    assert "livenessProbe" in prod_yaml["deployments"]["loggingSidecar"]
+    assert prod_yaml["deployments"]["loggingSidecar"]["livenessProbe"] == liveness_probe
+
+
+def test_houston_configmap_with_loggingsidecar_readiness_probe():
+    """Validate the houston configmap with readiness probe configured."""
+    readiness_probe = {
+        "httpGet": {
+            "path": "/healthz",
+            "port": 8080,
+            "scheme": "HTTP",
+        },
+        "initialDelaySeconds": 15,
+        "timeoutSeconds": 30,
+        "periodSeconds": 5,
+        "successThreshold": 1,
+        "failureThreshold": 20,
+    }
+
+    docs = render_chart(
+        values={
+            "global": {
+                "loggingSidecar": {
+                    "enabled": True,
+                    "name": "sidecar-log-test",
+                    "readinessProbe": readiness_probe,
+                }
+            }
+        },
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+
+    assert len(docs) == 1
+    doc = docs[0]
+    prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
+    assert "readinessProbe" in prod_yaml["deployments"]["loggingSidecar"]
+    assert prod_yaml["deployments"]["loggingSidecar"]["readinessProbe"] == readiness_probe
+
+
+def test_houston_configmap_with_custom_airflow_ingress_annotation_with_authsidecar_disabled():
+    """Validate the houston configmap with custom airflow ingress annotation."""
+    docs = render_chart(
+        values={"global": {"extraAnnotations": {"route.openshift.io/termination": "passthrough"}}},
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+
+    assert len(docs) == 1
+    doc = docs[0]
+    prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
+    helm = prod_yaml["deployments"]["helm"]
+    assert "ingress" in helm
+    assert {"extraIngressAnnotations": {"route.openshift.io/termination": "passthrough"}} == helm["ingress"]
+
+
+def test_houston_configmap_with_custom_airflow_ingress_annotation_disabled_with_authsidecar_disabled():
+    """Validate the houston configmap does not include airflow ingress annotation."""
+    docs = render_chart(
+        values={
+            "global": {"authSidecar": {"enabled": True}, "extraAnnotations": {"route.openshift.io/termination": "passthrough"}}
+        },
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    assert len(docs) == 1
+    doc = docs[0]
+    prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
+    assert not prod_yaml["deployments"]["helm"].get("ingress")

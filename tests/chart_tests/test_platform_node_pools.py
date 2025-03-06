@@ -29,7 +29,7 @@ def init_test_pod_spec():
             docs,
         )
 
-    return {f'{doc["chart"]}_{doc["kind"]}_{doc["name"]}': doc["spec"] for doc in pod_docs}
+    return {f"{doc['chart']}_{doc['kind']}_{doc['name']}": doc["spec"] for doc in pod_docs}
 
 
 test_pod_resources_configs_data = init_test_pod_spec()

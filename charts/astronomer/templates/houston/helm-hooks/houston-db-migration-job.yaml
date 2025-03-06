@@ -25,9 +25,14 @@ spec:
         release: {{ .Release.Name }}
         app: houston-db-migrations
         version: {{ .Chart.Version }}
-      {{- if .Values.global.istio.enabled }}
+      {{- if or .Values.global.podAnnotations .Values.global.istio.enabled }}
       annotations:
-        sidecar.istio.io/inject: "false"
+        {{- if .Values.global.istio.enabled }}
+          sidecar.istio.io/inject: "false"
+        {{- end }}
+        {{- if .Values.global.podAnnotations }}
+{{ toYaml .Values.global.podAnnotations | indent 8 }}
+          {{- end }}
       {{- end }}
     spec:
       nodeSelector:
@@ -37,8 +42,8 @@ spec:
       tolerations:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       restartPolicy: Never
-      {{- if and (not .Values.houston.airflowBackendSecretName) (not .Values.houston.airflowBackendConnection) }}
-      serviceAccountName: {{ template "houston.bootstrapperServiceAccount" . }}
+      serviceAccountName: {{ template "houston.bootstrapperServiceAccountName" . }}
+      {{- if and (not .Values.houston.airflowBackendSecretName) (not .Values.houston.airflowBackendConnection) (not .Values.houston.backendSecretName) (not .Values.houston.backendConnection) }}
       initContainers:
         - name: wait-for-db
           image: {{ template "houston.image" . }}

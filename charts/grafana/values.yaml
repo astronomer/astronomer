@@ -6,14 +6,16 @@ nodeSelector: {}
 affinity: {}
 tolerations: []
 
+replicas: 1
+
 images:
   grafana:
     repository: quay.io/astronomer/ap-grafana
-    tag: 10.4.10
+    tag: 10.4.16
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
-    tag: 0.36.0
+    tag: 0.37.0
     pullPolicy: IfNotPresent
 
 securityContext:
@@ -22,6 +24,8 @@ securityContext:
 serviceAccount:
   # Specifies whether a ServiceAccount should be created
   create: true
+  # Annotations to add to the service account
+  annotations: {}
   # The name of the ServiceAccount to use.
   # If not set and create is true, a name is generated using the fullname template
   name: ~
@@ -86,3 +90,5 @@ bootstrapper:
 waitForDB:
   readinessProbe: {}
   livenessProbe: {}
+
+podAnnotations: {}

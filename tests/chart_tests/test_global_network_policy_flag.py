@@ -20,14 +20,13 @@ show_only = [
     "charts/astronomer/templates/houston/worker/houston-worker-networkpolicy.yaml",
     "charts/astronomer/templates/registry/registry-networkpolicy.yaml",
     "charts/astronomer/templates/astro-ui/astro-ui-networkpolicy.yaml",
-    "charts/astronomer/templates/cli-install/cli-install-networkpolicy.yaml",
     "charts/nginx/templates/nginx-metrics-networkpolicy.yaml",
     "charts/nginx/templates/nginx-networkpolicy.yaml",
     "charts/nginx/templates/nginx-default-backend-networkpolicy.yaml",
     "charts/prometheus/templates/prometheus-networkpolicy.yaml",
     "charts/kube-state/templates/kube-state-networkpolicy.yaml",
     "charts/elasticsearch/templates/master/es-master-networkpolicy.yaml",
-    "charts/elasticsearch/templates/nginx/nginx-es-ingress-networkpolicy.yaml",
+    "charts/elasticsearch/templates/nginx/nginx-es-networkpolicy.yaml",
     "charts/elasticsearch/templates/exporter/es-exporter-networkpolicy.yaml",
     "charts/elasticsearch/templates/data/es-data-networkpolicy.yaml",
     "charts/elasticsearch/templates/client/es-client-networkpolicy.yaml",
@@ -50,7 +49,7 @@ def test_networkpolicy_disabled():
     assert not [x for x in docs if x["kind"] == "NetworkPolicy"]
 
 
-@pytest.mark.parametrize("np_enabled, num_of_docs", [(True, 32), (False, 0)])
+@pytest.mark.parametrize("np_enabled, num_of_docs", [(True, 30), (False, 0)])
 def test_networkpolicy_enabled(np_enabled, num_of_docs):
     """Test some things that should apply to all cases."""
     docs = render_chart(

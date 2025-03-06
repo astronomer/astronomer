@@ -5,7 +5,7 @@
 # This version number controls the default Airflow chart version that will be installed
 # when creating a new deployment in the system. This is also used to ensure all
 # child airflow deployments are kept up to date and on the latest version.
-airflowChartVersion: 1.13.4
+airflowChartVersion: 1.14.0
 
 nodeSelector: {}
 affinity: {}
@@ -15,28 +15,24 @@ tolerations: []
 images:
   commander:
     repository: quay.io/astronomer/ap-commander
-    tag: 0.36.7
+    tag: 0.37.4
     pullPolicy: IfNotPresent
   registry:
     repository: quay.io/astronomer/ap-registry
-    tag: 3.18.9
+    tag: 3.20.5
     pullPolicy: IfNotPresent
     # httpSecret: ~
   houston:
     repository: quay.io/astronomer/ap-houston-api
-    tag: 0.36.5
+    tag: 0.37.9
     pullPolicy: IfNotPresent
   astroUI:
     repository: quay.io/astronomer/ap-astro-ui
-    tag: 0.36.0
+    tag: 0.37.4
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
-    tag: 0.36.0
-    pullPolicy: IfNotPresent
-  cliInstall:
-    repository: quay.io/astronomer/ap-cli-install
-    tag: 0.26.26
+    tag: 0.37.0
     pullPolicy: IfNotPresent
 
 securityContext:
@@ -56,10 +52,15 @@ astroUI:
   #   memory: 128Mi
   readinessProbe: {}
   livenessProbe: {}
-
-cliInstall:
-  readinessProbe: {}
-  livenessProbe: {}
+  serviceAccount:
+    # Specifies whether a service account should be created
+    create: false
+    # Annotations to add to the service account
+    annotations: {}
+    # The name of the service account to use.
+    # If not set and create is true, a name is generated using the fullname template
+    name: ""
+  podAnnotations: {}
 
 houston:
   prismaConnectionLimit: 5
@@ -120,6 +121,8 @@ houston:
     # The name of the service account to use.
     # If not set and create is true, a name is generated using the fullname template
     name: ""
+
+  podAnnotations: {}
 
   env: []
 
@@ -198,7 +201,7 @@ houston:
     outputPath: "/tmp"
 
     # Delete archived tables
-    purgeArchive: true
+    dropArchives: true
 
     # Print out the deployments that should be cleaned up and skip actual cleanup
     dryRun: false
@@ -246,25 +249,13 @@ houston:
   # This runs as a CronJob
   updateCheck:
     # Enable check updates CronJob
-    enabled: true
+    enabled: false
 
     # url for update service
     url: https://updates.astronomer.io/astronomer-platform
 
     # Default here is to run at midnight every night https://crontab.guru/#0_0_*_*_*
     schedule: "0 0 * * *"
-
-  # Check for Airflow Updates
-  # This runs as a CronJob
-  updateAirflowCheck:
-    # Enable check updates CronJob
-    enabled: true
-
-    # url for update service
-    url: https://updates.astronomer.io/astronomer-certified
-
-    # Run at minute 57 every hour https://crontab.guru/#57_*_*_*_*
-    schedule: "57 * * * *"
 
   # Check for Astronomer Runtime Updates
   # This runs as a CronJob
@@ -292,40 +283,8 @@ houston:
     # Run at minute 57 every hour https://crontab.guru/#57_*_*_*_*
     schedule: "57 * * * *"
 
-  # this option allows to override airflow releases config
-  #
-  airflowReleasesConfig:
-    # example of usage:
-    # available_releases:
-    # - version: 1.10.7-15
-    #   level: bug_fix
-    #   url: https://github.com/astronomer/airflow/releases/tag/v1.10.7%2Bastro.15
-    #   release_date: '2020-09-22T15:52:00+00:00'
-    #   tags:
-    #   - 1.10.7-15-alpine3.10-onbuild
-    #   - 1.10.7-15-buster-onbuild
-    #   - 1.10.7-15-alpine3.10
-    #   - 1.10.7-15-buster
-    #   channel: stable
-    # - version: 1.10.12-1
-    #   level: new_feature
-    #   url: https://github.com/astronomer/airflow/releases/tag/v1.10.12%2Bastro.1
-    #   release_date: '2020-09-29T22:15:00+00:00'
-    #   tags:
-    #   - 1.10.12-1-alpine3.10-onbuild
-    #   - 1.10.12-1-buster-onbuild
-    #   - 1.10.12-1-alpine3.10
-    #   - 1.10.12-1-buster
-    #   channel: stable
-    # - version: 2.0.0
-    #   level: new_feature
-    #   url: https://github.com/astronomer/airflow/releases/tag/v1.10.12%2Bastro.1
-    #   release_date: '2020-09-29T22:15:00+00:00'
-    #   tags:
-    #   - 2.0.0-alpine3.10-onbuild
-    #   channel: stable
-
-  RuntimeReleasesConfig:
+  runtimeReleasesConfigMapName: ~
+  runtimeReleasesConfig:
     # example of usage:
     # below are default mandatory fields
     # runtimeVersions:
@@ -396,6 +355,7 @@ commander:
     #   port: {{ .Values.ports.commanderHTTP }}
     # initialDelaySeconds: 10
     # periodSeconds: 10
+  podAnnotations: {}
 
 
   airGapped:
@@ -420,6 +380,8 @@ commander:
   extraVolumes: []
 
 registry:
+  # flag to bypass secure (tls) authentication to astronomer registry
+  enableInsecureAuth: False
   # k8s secret name for registry to use to authenticate to houston when sending notifications
   authHeaderSecretName: ~
   replicas: 1
@@ -513,20 +475,7 @@ registry:
 
   logLevel: info
 
-install:
-  cliEnabled: true
-  resources: {}
-  cliVersion: 0.29
-  #  limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  #  requests:
-  #   cpu: 100m
-  #   memory: 128Mi
-
-e2eTest:
-  env: []
-  resources: {}
+  podAnnotations: {}
 
 ports:
   houstonHTTP: 8871
@@ -535,4 +484,3 @@ ports:
   astroUIHTTP: 8080
   registryHTTP: 5000
   registryScrape: 5001
-  installHTTP: 8080

@@ -1,0 +1,49 @@
+#################################
+## Airflow Operator Deployment ##
+#################################
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    tier: operator
+    component: controller-manager
+    chart: {{ template "operator.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  name: {{ .Release.Name }}-aocm
+  namespace: '{{ .Release.Namespace }}'
+spec:
+  replicas: {{ .Values.manager.replicas }}
+  selector:
+    matchLabels:
+      tier: operator
+      component: controller-manager
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        tier: operator
+        app: operator
+        component: controller-manager
+        release: {{ .Release.Name }}
+        version: {{ .Chart.Version }}
+      annotations:
+{{- if .Values.global.podAnnotations }}
+{{ toYaml .Values.global.podAnnotations | indent 8 }}
+{{- end }}
+{{- if .Values.podAnnotations }}
+{{ toYaml .Values.podAnnotations | indent 8 }}
+{{- end }}
+    spec:
+      nodeSelector:
+{{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
+      affinity:
+{{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 8 }}
+      tolerations:
+{{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
+      {{ include "manager.imagePullSecrets" . | nindent 8 }}
+      containers: {{ include "manager.containers" . | nindent 6 }}
+      securityContext: {{ toYaml .Values.podSecurityContext| nindent 8 }}
+      serviceAccountName: {{ template "operator.serviceAccountName" . }}
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      volumes: {{ include "manager.volumes" . | indent 6 }}

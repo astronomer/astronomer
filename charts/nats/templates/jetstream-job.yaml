@@ -32,7 +32,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
 subjects:
 - kind: ServiceAccount
-  name: {{ .Release.Name }}-jetstream-sa
+  name: {{ template "jetStream.serviceAccountName" . }}
   namespace: {{ .Release.Namespace }}
   apiGroup: ""
 roleRef:
@@ -46,7 +46,7 @@ metadata:
   annotations:
     "helm.sh/hook": "pre-install,pre-upgrade"
     "helm.sh/hook-weight": "3"
-  name: {{ .Release.Name }}-jetstream-sa
+  name: {{ template "jetStream.serviceAccountName" . }}
   labels:
     tier: jetsream-migrator
     component: jetsream-migrator
@@ -75,13 +75,18 @@ spec:
         component: jetsream-migrator
         version: {{ .Chart.Version }}
         release: {{ .Release.Name }}
-      {{- if .Values.global.istio.enabled }}
+      {{- if or .Values.global.podAnnotations .Values.global.istio.enabled }}
       annotations:
+      {{- if .Values.global.istio.enabled }}
         sidecar.istio.io/inject: "false"
+      {{- end }}
+      {{- if .Values.global.podAnnotations }}
+{{ toYaml .Values.global.podAnnotations | indent 8 }}
+      {{- end }}
       {{- end }}
     spec:
       restartPolicy: Never
-      serviceAccountName: {{ .Release.Name }}-jetstream-sa
+      serviceAccountName: {{ template "jetStream.serviceAccountName" . }}
       nodeSelector: {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
       affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
       tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}

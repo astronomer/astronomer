@@ -10,7 +10,7 @@
 {{- $useClusterRoles := and .Values.global.rbacEnabled (not .Values.global.features.namespacePools.enabled)}}
 {{- $namespaces := .Values.global.features.namespacePools.namespaces.names }}
 {{- $shouldCreateResources := and .Values.global.rbacEnabled (or (and .Values.global.clusterRoles (not .Values.global.features.namespacePools.enabled )) $namespacepoolsRBACresources) }}
-{{- $configSyncerServiceAccountName := ( include "configSyncer.ServiceAccount" . )  -}}
+{{- $configSyncerServiceAccountName := ( include "configSyncer.serviceAccountName" . )  -}}
 {{- if $useClusterRoles }}
   {{- $namespaces = list .Release.Namespace}}
 {{- else }}
