@@ -28,7 +28,7 @@ global:
     containerdTolerations: []
     certCopier:
       repository: quay.io/astronomer/ap-base
-      tag: 3.20.5
+      tag: 3.21.3-1
       pullPolicy: IfNotPresent
     priorityClassName: ~
   # Global flag to enable to user to enable/disable Astronomer platform
@@ -161,7 +161,7 @@ global:
   authSidecar:
     enabled: false
     repository: quay.io/astronomer/ap-auth-sidecar
-    tag: 1.27.3
+    tag: 1.27.4
     pullPolicy: IfNotPresent
     port: 8084
     securityContext: {}
