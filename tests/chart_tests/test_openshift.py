@@ -89,7 +89,7 @@ class TestOpenshift:
         airflowConfig = prod["deployments"]["helm"]["airflow"]
 
         for component in airflow_components_list:
-            assert {"runAsNonRoot": False} == airflowConfig[component]["securityContexts"]["pod"]
+            assert {"runAsNonRoot": True} == airflowConfig[component]["securityContexts"]["pod"]
 
         for component in non_airflow_components_list:
             assert {"runAsNonRoot": True} == airflowConfig[component]["securityContexts"]["pod"]
