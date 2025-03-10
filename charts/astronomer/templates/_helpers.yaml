@@ -9,6 +9,14 @@
   {{ $globals | toJson | print }}
 {{- end }}
 
+{{ define "defaultXcomISidecarImage" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/alpine:3.12
+{{- else -}}
+{{ .Values.images.xcom.repository}}:{{ .Values.images.xcom.tag }}
+{{- end }}
+{{- end }}
+
 {{ define "commander.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
 {{ .Values.global.privateRegistry.repository }}/ap-commander:{{ .Values.images.commander.tag }}
