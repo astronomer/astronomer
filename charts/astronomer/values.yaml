@@ -34,7 +34,7 @@ images:
     repository: quay.io/astronomer/ap-db-bootstrapper
     tag: 0.37.1
     pullPolicy: IfNotPresent
-  xcom:
+  xcomm:
     repository: quay.io/astronomer/ap-db-bootstrapper
     tag: 0.37.1
     pullPolicy: IfNotPresent

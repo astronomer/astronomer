@@ -11,9 +11,9 @@
 
 {{ define "defaultXcomISidecarImage" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/alpine:3.12
+{{ .Values.global.privateRegistry.repository }}/ap-alpine:{{ .Values.images.xcomm.tag }}
 {{- else -}}
-{{ .Values.images.xcom.repository}}:{{ .Values.images.xcom.tag }}
+{{ .Values.images.xcomm.repository}}:{{ .Values.images.xcomm.tag }}
 {{- end }}
 {{- end }}
 
