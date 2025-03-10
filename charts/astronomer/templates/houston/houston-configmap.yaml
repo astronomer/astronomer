@@ -218,6 +218,7 @@ data:
 
       # These values get passed directly into the airflow helm deployments
       helm:
+
       {{- if and .Values.global.ssl.enabled .Values.global.ssl.mode }}
         sslmode: {{ .Values.global.ssl.mode }}
       {{- end }}
@@ -225,7 +226,7 @@ data:
         # If security context constraints are enabled, enable SCCs for airflow-chart
         sccEnabled: true
       {{- end }}
-
+      ## xcom validation
       {{- if and .Values.global.extraAnnotations ( not .Values.global.authSidecar.enabled ) }}
         ingress:
           extraIngressAnnotations: {{- toYaml .Values.global.extraAnnotations | nindent 12 }}
@@ -366,6 +367,7 @@ data:
             # This function is responsible for two things. It assigns labels to disambiguate
             # between KPO and K8s executor pods. Also, it handles writing the entrypoint for
             # K8s executor pods. Why we do this second part, you can read below.
+            from airflow.providers.cncf.kubernetes.utils.xcom_sidecar import PodDefaults
             from airflow.configuration import conf
             from airflow.version import version
             xcom_sidecar_image = f"{{ template "defaultXcomISidecarImage" }}"
