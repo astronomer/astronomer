@@ -316,6 +316,9 @@ global:
       gitSync:
         repository: quay.io/astronomer/ap-git-sync
         tag: 4.2.3-1
+      xcomm:
+        repository: quay.io/astronomer/ap-alpine
+        tag: 3.21.3
   gitSyncRelay:
     images:
       gitDaemon:

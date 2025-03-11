@@ -34,10 +34,6 @@ images:
     repository: quay.io/astronomer/ap-db-bootstrapper
     tag: 0.37.1
     pullPolicy: IfNotPresent
-  xcomm:
-    repository: quay.io/astronomer/ap-alpine
-    tag: 3.21.3
-    pullPolicy: IfNotPresent
 
 
 securityContext:
