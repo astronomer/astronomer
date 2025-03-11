@@ -22,7 +22,7 @@ repos:
     rev: v2.4.1
     hooks:
       - id: codespell
-        args: ["-L", "AKS,aks,showIn"]
+        args: ["-L", "AKS,aks,showIn,NotIn"]
   - repo: https://github.com/Lucas-C/pre-commit-hooks
     rev: v1.5.5
     hooks:
