@@ -1,5 +1,5 @@
 {
-  "description": "Namespace provides a scope for Names. Use of multiple namespaces is optional.",
+  "description": "ClusterRoleBinding references a ClusterRole, but not contain it.  It can reference a ClusterRole in the global namespace, and adds who information via Subject.",
   "properties": {
     "apiVersion": {
       "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -8,7 +8,7 @@
         "null"
       ],
       "enum": [
-        "v1"
+        "rbac.authorization.k8s.io/v1"
       ]
     },
     "kind": {
@@ -18,7 +18,7 @@
         "null"
       ],
       "enum": [
-        "Namespace"
+        "ClusterRoleBinding"
       ]
     },
     "metadata": {
@@ -73,6 +73,7 @@
             "array",
             "null"
           ],
+          "x-kubernetes-list-type": "set",
           "x-kubernetes-patch-strategy": "merge"
         },
         "generateName": {
@@ -167,7 +168,8 @@
           "type": [
             "array",
             "null"
-          ]
+          ],
+          "x-kubernetes-list-type": "atomic"
         },
         "name": {
           "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
@@ -235,6 +237,10 @@
             "array",
             "null"
           ],
+          "x-kubernetes-list-map-keys": [
+            "uid"
+          ],
+          "x-kubernetes-list-type": "map",
           "x-kubernetes-patch-merge-key": "uid",
           "x-kubernetes-patch-strategy": "merge"
         },
@@ -265,100 +271,86 @@
         "null"
       ]
     },
-    "spec": {
-      "description": "NamespaceSpec describes the attributes on a Namespace.",
+    "roleRef": {
+      "description": "RoleRef contains information that points to the role being used",
       "properties": {
-        "finalizers": {
-          "description": "Finalizers is an opaque list of values that must be empty to permanently remove object from storage. More info: https://kubernetes.io/docs/tasks/administer-cluster/namespaces/",
-          "items": {
+        "apiGroup": {
+          "description": "APIGroup is the group for the resource being referenced",
+          "type": "string"
+        },
+        "kind": {
+          "description": "Kind is the type of resource being referenced",
+          "type": "string"
+        },
+        "name": {
+          "description": "Name is the name of resource being referenced",
+          "type": "string"
+        }
+      },
+      "required": [
+        "apiGroup",
+        "kind",
+        "name"
+      ],
+      "type": [
+        "object",
+        "null"
+      ],
+      "x-kubernetes-map-type": "atomic"
+    },
+    "subjects": {
+      "description": "Subjects holds references to the objects the role applies to.",
+      "items": {
+        "description": "Subject contains a reference to the object or user identities a role binding applies to.  This can either hold a direct API object reference, or a value for non-objects such as user and group names.",
+        "properties": {
+          "apiGroup": {
+            "description": "APIGroup holds the API group of the referenced subject. Defaults to \"\" for ServiceAccount subjects. Defaults to \"rbac.authorization.k8s.io\" for User and Group subjects.",
             "type": [
               "string",
               "null"
             ]
           },
-          "type": [
-            "array",
-            "null"
-          ]
-        }
-      },
-      "type": [
-        "object",
-        "null"
-      ]
-    },
-    "status": {
-      "description": "NamespaceStatus is information about the current status of a Namespace.",
-      "properties": {
-        "conditions": {
-          "description": "Represents the latest available observations of a namespace's current state.",
-          "items": {
-            "description": "NamespaceCondition contains details about state of namespace.",
-            "properties": {
-              "lastTransitionTime": {
-                "description": "Time is a wrapper around time.Time which supports correct marshaling to YAML and JSON.  Wrappers are provided for many of the factory methods that the time package offers.",
-                "format": "date-time",
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "message": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "reason": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "status": {
-                "description": "Status of the condition, one of True, False, Unknown.",
-                "type": "string"
-              },
-              "type": {
-                "description": "Type of namespace controller condition.",
-                "type": "string"
-              }
-            },
-            "required": [
-              "type",
-              "status"
-            ],
+          "kind": {
+            "description": "Kind of object being referenced. Values defined by this API group are \"User\", \"Group\", and \"ServiceAccount\". If the Authorizer does not recognized the kind value, the Authorizer should report an error.",
+            "type": "string"
+          },
+          "name": {
+            "description": "Name of the object being referenced.",
+            "type": "string"
+          },
+          "namespace": {
+            "description": "Namespace of the referenced object.  If the object kind is non-namespace, such as \"User\" or \"Group\", and this value is not empty the Authorizer should report an error.",
             "type": [
-              "object",
+              "string",
               "null"
             ]
-          },
-          "type": [
-            "array",
-            "null"
-          ],
-          "x-kubernetes-patch-merge-key": "type",
-          "x-kubernetes-patch-strategy": "merge"
+          }
         },
-        "phase": {
-          "description": "Phase is the current lifecycle phase of the namespace. More info: https://kubernetes.io/docs/tasks/administer-cluster/namespaces/",
-          "type": [
-            "string",
-            "null"
-          ]
-        }
+        "required": [
+          "kind",
+          "name"
+        ],
+        "type": [
+          "object",
+          "null"
+        ],
+        "x-kubernetes-map-type": "atomic"
       },
       "type": [
-        "object",
+        "array",
         "null"
-      ]
+      ],
+      "x-kubernetes-list-type": "atomic"
     }
   },
+  "required": [
+    "roleRef"
+  ],
   "type": "object",
   "x-kubernetes-group-version-kind": [
     {
-      "group": "",
-      "kind": "Namespace",
+      "group": "rbac.authorization.k8s.io",
+      "kind": "ClusterRoleBinding",
       "version": "v1"
     }
   ],
