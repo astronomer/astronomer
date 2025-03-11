@@ -1,5 +1,5 @@
 {
-  "description": "Role is a namespaced, logical grouping of PolicyRules that can be referenced as a unit by a RoleBinding.",
+  "description": "ConfigMap holds configuration data for pods to consume.",
   "properties": {
     "apiVersion": {
       "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -8,7 +8,41 @@
         "null"
       ],
       "enum": [
-        "rbac.authorization.k8s.io/v1"
+        "v1"
+      ]
+    },
+    "binaryData": {
+      "additionalProperties": {
+        "format": "byte",
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "description": "BinaryData contains the binary data. Each key must consist of alphanumeric characters, '-', '_' or '.'. BinaryData can contain byte sequences that are not in the UTF-8 range. The keys stored in BinaryData must not overlap with the ones in the Data field, this is enforced during validation process. Using this field will require 1.10+ apiserver and kubelet.",
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "data": {
+      "additionalProperties": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "description": "Data contains the configuration data. Each key must consist of alphanumeric characters, '-', '_' or '.'. Values with non-UTF-8 byte sequences must use the BinaryData field. The keys stored in Data must not overlap with the keys in the BinaryData field, this is enforced during validation process.",
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "immutable": {
+      "description": "Immutable, if set to true, ensures that data stored in the ConfigMap cannot be updated (only object metadata can be modified). If not set to true, the field can be modified at any time. Defaulted to nil.",
+      "type": [
+        "boolean",
+        "null"
       ]
     },
     "kind": {
@@ -18,7 +52,7 @@
         "null"
       ],
       "enum": [
-        "Role"
+        "ConfigMap"
       ]
     },
     "metadata": {
@@ -73,6 +107,7 @@
             "array",
             "null"
           ],
+          "x-kubernetes-list-type": "set",
           "x-kubernetes-patch-strategy": "merge"
         },
         "generateName": {
@@ -167,7 +202,8 @@
           "type": [
             "array",
             "null"
-          ]
+          ],
+          "x-kubernetes-list-type": "atomic"
         },
         "name": {
           "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
@@ -235,6 +271,10 @@
             "array",
             "null"
           ],
+          "x-kubernetes-list-map-keys": [
+            "uid"
+          ],
+          "x-kubernetes-list-type": "map",
           "x-kubernetes-patch-merge-key": "uid",
           "x-kubernetes-patch-strategy": "merge"
         },
@@ -264,94 +304,13 @@
         "object",
         "null"
       ]
-    },
-    "rules": {
-      "description": "Rules holds all the PolicyRules for this Role",
-      "items": {
-        "description": "PolicyRule holds information that describes a policy rule, but does not contain information about who the rule applies to or which namespace the rule applies to.",
-        "properties": {
-          "apiGroups": {
-            "description": "APIGroups is the name of the APIGroup that contains the resources.  If multiple API groups are specified, any action requested against one of the enumerated resources in any API group will be allowed. \"\" represents the core API group and \"*\" represents all API groups.",
-            "items": {
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "type": [
-              "array",
-              "null"
-            ]
-          },
-          "nonResourceURLs": {
-            "description": "NonResourceURLs is a set of partial urls that a user should have access to.  *s are allowed, but only as the full, final step in the path Since non-resource URLs are not namespaced, this field is only applicable for ClusterRoles referenced from a ClusterRoleBinding. Rules can either apply to API resources (such as \"pods\" or \"secrets\") or non-resource URL paths (such as \"/api\"),  but not both.",
-            "items": {
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "type": [
-              "array",
-              "null"
-            ]
-          },
-          "resourceNames": {
-            "description": "ResourceNames is an optional white list of names that the rule applies to.  An empty set means that everything is allowed.",
-            "items": {
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "type": [
-              "array",
-              "null"
-            ]
-          },
-          "resources": {
-            "description": "Resources is a list of resources this rule applies to. '*' represents all resources.",
-            "items": {
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "type": [
-              "array",
-              "null"
-            ]
-          },
-          "verbs": {
-            "description": "Verbs is a list of Verbs that apply to ALL the ResourceKinds contained in this rule. '*' represents all verbs.",
-            "items": {
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "type": "array"
-          }
-        },
-        "required": [
-          "verbs"
-        ],
-        "type": [
-          "object",
-          "null"
-        ]
-      },
-      "type": [
-        "array",
-        "null"
-      ]
     }
   },
   "type": "object",
   "x-kubernetes-group-version-kind": [
     {
-      "group": "rbac.authorization.k8s.io",
-      "kind": "Role",
+      "group": "",
+      "kind": "ConfigMap",
       "version": "v1"
     }
   ],
