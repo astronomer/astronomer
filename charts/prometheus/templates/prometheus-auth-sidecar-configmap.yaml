@@ -25,8 +25,8 @@ data:
       server_tokens off;
 
       location  = /auth {
-        proxy_set_header Host houston.{{ .Values.global.baseDomain }};
-        proxy_pass  https://houston.{{ .Values.global.baseDomain }}/v1/authorization;
+        proxy_set_header Host {{ include "houston.authSidecar.internalauthurl" . }}
+        proxy_pass {{ include "houston.authSidecar.internalauthurl" . -}}
         {{ .Values.global.default_nginx_settings }}
 {{.Values.global.authSidecar.default_nginx_settings | indent 8  }}
       }
