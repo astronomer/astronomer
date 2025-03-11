@@ -36,8 +36,8 @@ def common_test_cases(docs):
     ast.parse(airflow_local_settings.encode())
 
 
-def test_houston_configmap():
-    """Validate the houston configmap and its embedded data."""
+def test_houston_configmap_defaults():
+    """Validate the houston configmap and its default embedded data."""
     docs = render_chart(
         show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
     )
@@ -57,14 +57,12 @@ def test_houston_configmap():
     af_images = prod["deployments"]["helm"]["airflow"]["images"]
     git_sync_images = prod["deployments"]["helm"]["gitSyncRelay"]["images"]
 
-    # Assert that the configMap contains airflow component tags
     assert af_images["statsd"]["tag"]
     assert af_images["redis"]["tag"]
     assert af_images["pgbouncer"]["tag"]
     assert af_images["pgbouncerExporter"]["tag"]
     assert af_images["gitSync"]["tag"]
 
-    # Assert that the configMap contains image the right airflow component repositories
     assert af_images["statsd"]["repository"] == "quay.io/astronomer/ap-statsd-exporter"
     assert af_images["redis"]["repository"] == "quay.io/astronomer/ap-redis"
     assert af_images["pgbouncer"]["repository"] == "quay.io/astronomer/ap-pgbouncer"
@@ -76,6 +74,57 @@ def test_houston_configmap():
     with pytest.raises(KeyError):
         # Ensure sccEnabled is not defined by default
         assert prod["deployments"]["helm"]["sccEnabled"] is False
+
+
+def test_houston_configmap_with_custom_images():
+    """Validate the houston configmap contains images that are customized through helm values."""
+    values = {
+        "global": {
+            "airflow": {
+                "images": {
+                    "gitSync": {"repository": "custom-registry/example/ap-git-sync", "tag": "git-sync-999"},
+                    "pgbouncer": {"repository": "custom-registry/example/ap-pgbouncer", "tag": "pgbouncer-999"},
+                    "pgbouncerExporter": {
+                        "repository": "custom-registry/example/ap-pgbouncer-exporter",
+                        "tag": "pgbouncer-exporter-999",
+                    },
+                    "redis": {"repository": "custom-registry/example/ap-redis", "tag": "redis-999"},
+                    "statsd": {"repository": "custom-registry/example/ap-statsd-exporter", "tag": "statsd-999"},
+                }
+            },
+            "gitSyncRelay": {
+                "images": {
+                    "gitDaemon": {"repository": "custom-registry/example/ap-git-daemon", "tag": "git-daemon-999"},
+                    "gitSync": {"repository": "custom-registry/example/ap-git-sync-relay", "tag": "git-sync-999"},
+                }
+            },
+        }
+    }
+
+    docs = render_chart(values=values, show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"])
+
+    common_test_cases(docs)
+    doc = docs[0]
+    prod = yaml.safe_load(doc["data"]["production.yaml"])
+
+    af_images = prod["deployments"]["helm"]["airflow"]["images"]
+    git_sync_images = prod["deployments"]["helm"]["gitSyncRelay"]["images"]
+
+    assert af_images["statsd"]["tag"] == "statsd-999"
+    assert af_images["redis"]["tag"] == "redis-999"
+    assert af_images["pgbouncer"]["tag"] == "pgbouncer-999"
+    assert af_images["pgbouncerExporter"]["tag"] == "pgbouncer-exporter-999"
+    assert af_images["gitSync"]["tag"] == "git-sync-999"
+    assert git_sync_images["gitDaemon"]["tag"] == "git-daemon-999"
+    assert git_sync_images["gitSync"]["tag"] == "git-sync-999"
+
+    assert af_images["statsd"]["repository"] == "custom-registry/example/ap-statsd-exporter"
+    assert af_images["redis"]["repository"] == "custom-registry/example/ap-redis"
+    assert af_images["pgbouncer"]["repository"] == "custom-registry/example/ap-pgbouncer"
+    assert af_images["pgbouncerExporter"]["repository"] == "custom-registry/example/ap-pgbouncer-exporter"
+    assert af_images["gitSync"]["repository"] == "custom-registry/example/ap-git-sync"
+    assert git_sync_images["gitDaemon"]["repository"] == "custom-registry/example/ap-git-daemon"
+    assert git_sync_images["gitSync"]["repository"] == "custom-registry/example/ap-git-sync-relay"
 
 
 def test_houston_configmap_with_namespaceFreeFormEntry_true():
