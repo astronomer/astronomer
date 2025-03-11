@@ -9,7 +9,7 @@
   {{ $globals | toJson | print }}
 {{- end }}
 
-{{ define "defaultXcomISidecarImage" -}}
+{{ define "defaultXcomSidecarImage" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
 {{ .Values.global.privateRegistry.repository }}/ap-alpine:{{ .Values.global.airflow.images.xcomm.tag }}
 {{- else -}}
