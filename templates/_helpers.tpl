@@ -19,6 +19,13 @@ nginx.ingress.kubernetes.io/auth-url: https://houston.{{ .Values.global.baseDoma
 {{- end }}
 {{- end }}
 
+{{ define "houston.authSidecar.internalauthurl" -}}
+{{ if .Values.global.enableHoustonInternalAuthorization -}}
+http://{{ .Release.Name }}-houston.{{ .Release.Namespace }}.svc.cluster.local:8871/v1/authorization ;
+{{ else -}}
+https://houston.{{ .Values.global.baseDomain }}/v1/authorization ;
+{{- end -}}
+{{- end }}
 
 {{ define "containerd.configToml" -}}
 {{- .Values.global.privateCaCertsAddToHost.containerdConfigToml -}}
