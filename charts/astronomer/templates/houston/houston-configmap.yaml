@@ -369,7 +369,7 @@ data:
             from airflow.providers.cncf.kubernetes.utils.xcom_sidecar import PodDefaults
             from airflow.configuration import conf
             from airflow.version import version
-            xcom_sidecar_image = "{{ template "defaultXcomISidecarImage" . }}"
+            xcom_sidecar_image = "{{ template "defaultXcomSidecarImage" . }}"
             PodDefaults.SIDECAR_CONTAINER.image = xcom_sidecar_image
             def pod_mutation_hook_deprecated(pod):
               from airflow.contrib.kubernetes.pod import Pod

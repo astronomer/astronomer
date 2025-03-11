@@ -11,9 +11,9 @@
 
 {{ define "defaultXcomSidecarImage" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/ap-alpine:{{ .Values.global.airflow.images.xcomm.tag }}
+{{ .Values.global.privateRegistry.repository }}/ap-alpine:{{ .Values.global.airflow.images.xcom.tag }}
 {{- else -}}
-{{ .Values.global.airflow.images.xcomm.repository}}:{{ .Values.global.airflow.images.xcomm.tag }}
+{{ .Values.global.airflow.images.xcom.repository}}:{{ .Values.global.airflow.images.xcom.tag }}
 {{- end }}
 {{- end }}
 
