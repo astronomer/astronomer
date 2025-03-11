@@ -1,5 +1,5 @@
 {
-  "description": "Role is a namespaced, logical grouping of PolicyRules that can be referenced as a unit by a RoleBinding.",
+  "description": "RoleBinding references a role, but does not contain it.  It can reference a Role in the same namespace or a ClusterRole in the global namespace. It adds who information via Subjects and namespace information by which namespace it exists in.  RoleBindings in a given namespace only have effect in that namespace.",
   "properties": {
     "apiVersion": {
       "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -18,7 +18,7 @@
         "null"
       ],
       "enum": [
-        "Role"
+        "RoleBinding"
       ]
     },
     "metadata": {
@@ -73,6 +73,7 @@
             "array",
             "null"
           ],
+          "x-kubernetes-list-type": "set",
           "x-kubernetes-patch-strategy": "merge"
         },
         "generateName": {
@@ -167,7 +168,8 @@
           "type": [
             "array",
             "null"
-          ]
+          ],
+          "x-kubernetes-list-type": "atomic"
         },
         "name": {
           "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
@@ -235,6 +237,10 @@
             "array",
             "null"
           ],
+          "x-kubernetes-list-map-keys": [
+            "uid"
+          ],
+          "x-kubernetes-list-type": "map",
           "x-kubernetes-patch-merge-key": "uid",
           "x-kubernetes-patch-strategy": "merge"
         },
@@ -265,93 +271,86 @@
         "null"
       ]
     },
-    "rules": {
-      "description": "Rules holds all the PolicyRules for this Role",
+    "roleRef": {
+      "description": "RoleRef contains information that points to the role being used",
+      "properties": {
+        "apiGroup": {
+          "description": "APIGroup is the group for the resource being referenced",
+          "type": "string"
+        },
+        "kind": {
+          "description": "Kind is the type of resource being referenced",
+          "type": "string"
+        },
+        "name": {
+          "description": "Name is the name of resource being referenced",
+          "type": "string"
+        }
+      },
+      "required": [
+        "apiGroup",
+        "kind",
+        "name"
+      ],
+      "type": [
+        "object",
+        "null"
+      ],
+      "x-kubernetes-map-type": "atomic"
+    },
+    "subjects": {
+      "description": "Subjects holds references to the objects the role applies to.",
       "items": {
-        "description": "PolicyRule holds information that describes a policy rule, but does not contain information about who the rule applies to or which namespace the rule applies to.",
+        "description": "Subject contains a reference to the object or user identities a role binding applies to.  This can either hold a direct API object reference, or a value for non-objects such as user and group names.",
         "properties": {
-          "apiGroups": {
-            "description": "APIGroups is the name of the APIGroup that contains the resources.  If multiple API groups are specified, any action requested against one of the enumerated resources in any API group will be allowed. \"\" represents the core API group and \"*\" represents all API groups.",
-            "items": {
-              "type": [
-                "string",
-                "null"
-              ]
-            },
+          "apiGroup": {
+            "description": "APIGroup holds the API group of the referenced subject. Defaults to \"\" for ServiceAccount subjects. Defaults to \"rbac.authorization.k8s.io\" for User and Group subjects.",
             "type": [
-              "array",
+              "string",
               "null"
             ]
           },
-          "nonResourceURLs": {
-            "description": "NonResourceURLs is a set of partial urls that a user should have access to.  *s are allowed, but only as the full, final step in the path Since non-resource URLs are not namespaced, this field is only applicable for ClusterRoles referenced from a ClusterRoleBinding. Rules can either apply to API resources (such as \"pods\" or \"secrets\") or non-resource URL paths (such as \"/api\"),  but not both.",
-            "items": {
-              "type": [
-                "string",
-                "null"
-              ]
-            },
+          "kind": {
+            "description": "Kind of object being referenced. Values defined by this API group are \"User\", \"Group\", and \"ServiceAccount\". If the Authorizer does not recognized the kind value, the Authorizer should report an error.",
+            "type": "string"
+          },
+          "name": {
+            "description": "Name of the object being referenced.",
+            "type": "string"
+          },
+          "namespace": {
+            "description": "Namespace of the referenced object.  If the object kind is non-namespace, such as \"User\" or \"Group\", and this value is not empty the Authorizer should report an error.",
             "type": [
-              "array",
+              "string",
               "null"
             ]
-          },
-          "resourceNames": {
-            "description": "ResourceNames is an optional white list of names that the rule applies to.  An empty set means that everything is allowed.",
-            "items": {
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "type": [
-              "array",
-              "null"
-            ]
-          },
-          "resources": {
-            "description": "Resources is a list of resources this rule applies to. '*' represents all resources.",
-            "items": {
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "type": [
-              "array",
-              "null"
-            ]
-          },
-          "verbs": {
-            "description": "Verbs is a list of Verbs that apply to ALL the ResourceKinds contained in this rule. '*' represents all verbs.",
-            "items": {
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "type": "array"
           }
         },
         "required": [
-          "verbs"
+          "kind",
+          "name"
         ],
         "type": [
           "object",
           "null"
-        ]
+        ],
+        "x-kubernetes-map-type": "atomic"
       },
       "type": [
         "array",
         "null"
-      ]
+      ],
+      "x-kubernetes-list-type": "atomic"
     }
   },
+  "required": [
+    "roleRef"
+  ],
   "type": "object",
   "x-kubernetes-group-version-kind": [
     {
       "group": "rbac.authorization.k8s.io",
-      "kind": "Role",
+      "kind": "RoleBinding",
       "version": "v1"
     }
   ],
