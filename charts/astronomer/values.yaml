@@ -39,6 +39,7 @@ images:
     tag: 0.26.27
     pullPolicy: IfNotPresent
 
+
 securityContext:
   runAsNonRoot: true
 
