@@ -1,6 +1,89 @@
 {
-  "description": "Endpoints is a collection of endpoints that implement the actual service. Example:\n\n\t Name: \"mysvc\",\n\t Subsets: [\n\t   {\n\t     Addresses: [{\"ip\": \"10.10.1.1\"}, {\"ip\": \"10.10.2.2\"}],\n\t     Ports: [{\"name\": \"a\", \"port\": 8675}, {\"name\": \"b\", \"port\": 309}]\n\t   },\n\t   {\n\t     Addresses: [{\"ip\": \"10.10.3.3\"}],\n\t     Ports: [{\"name\": \"a\", \"port\": 93}, {\"name\": \"b\", \"port\": 76}]\n\t   },\n\t]",
+  "description": "ClusterRole is a cluster level, logical grouping of PolicyRules that can be referenced as a unit by a RoleBinding or ClusterRoleBinding.",
   "properties": {
+    "aggregationRule": {
+      "description": "AggregationRule describes how to locate ClusterRoles to aggregate into the ClusterRole",
+      "properties": {
+        "clusterRoleSelectors": {
+          "description": "ClusterRoleSelectors holds a list of selectors which will be used to find ClusterRoles and create the rules. If any of the selectors match, then the ClusterRole's permissions will be added",
+          "items": {
+            "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
+            "properties": {
+              "matchExpressions": {
+                "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
+                "items": {
+                  "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
+                  "properties": {
+                    "key": {
+                      "description": "key is the label key that the selector applies to.",
+                      "type": "string"
+                    },
+                    "operator": {
+                      "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
+                      "type": "string"
+                    },
+                    "values": {
+                      "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
+                      "items": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "type": [
+                        "array",
+                        "null"
+                      ],
+                      "x-kubernetes-list-type": "atomic"
+                    }
+                  },
+                  "required": [
+                    "key",
+                    "operator"
+                  ],
+                  "type": [
+                    "object",
+                    "null"
+                  ]
+                },
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "x-kubernetes-list-type": "atomic"
+              },
+              "matchLabels": {
+                "additionalProperties": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
+                "type": [
+                  "object",
+                  "null"
+                ]
+              }
+            },
+            "type": [
+              "object",
+              "null"
+            ],
+            "x-kubernetes-map-type": "atomic"
+          },
+          "type": [
+            "array",
+            "null"
+          ],
+          "x-kubernetes-list-type": "atomic"
+        }
+      },
+      "type": [
+        "object",
+        "null"
+      ]
+    },
     "apiVersion": {
       "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
       "type": [
@@ -8,7 +91,7 @@
         "null"
       ],
       "enum": [
-        "v1"
+        "rbac.authorization.k8s.io/v1"
       ]
     },
     "kind": {
@@ -18,7 +101,7 @@
         "null"
       ],
       "enum": [
-        "Endpoints"
+        "ClusterRole"
       ]
     },
     "metadata": {
@@ -73,6 +156,7 @@
             "array",
             "null"
           ],
+          "x-kubernetes-list-type": "set",
           "x-kubernetes-patch-strategy": "merge"
         },
         "generateName": {
@@ -167,7 +251,8 @@
           "type": [
             "array",
             "null"
-          ]
+          ],
+          "x-kubernetes-list-type": "atomic"
         },
         "name": {
           "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
@@ -235,6 +320,10 @@
             "array",
             "null"
           ],
+          "x-kubernetes-list-map-keys": [
+            "uid"
+          ],
+          "x-kubernetes-list-type": "map",
           "x-kubernetes-patch-merge-key": "uid",
           "x-kubernetes-patch-strategy": "merge"
         },
@@ -265,252 +354,82 @@
         "null"
       ]
     },
-    "subsets": {
-      "description": "The set of all endpoints is the union of all subsets. Addresses are placed into subsets according to the IPs they share. A single address with multiple ports, some of which are ready and some of which are not (because they come from different containers) will result in the address being displayed in different subsets for the different ports. No address will appear in both Addresses and NotReadyAddresses in the same subset. Sets of addresses and ports that comprise a service.",
+    "rules": {
+      "description": "Rules holds all the PolicyRules for this ClusterRole",
       "items": {
-        "description": "EndpointSubset is a group of addresses with a common set of ports. The expanded set of endpoints is the Cartesian product of Addresses x Ports. For example, given:\n\n\t{\n\t  Addresses: [{\"ip\": \"10.10.1.1\"}, {\"ip\": \"10.10.2.2\"}],\n\t  Ports:     [{\"name\": \"a\", \"port\": 8675}, {\"name\": \"b\", \"port\": 309}]\n\t}\n\nThe resulting set of endpoints can be viewed as:\n\n\ta: [ 10.10.1.1:8675, 10.10.2.2:8675 ],\n\tb: [ 10.10.1.1:309, 10.10.2.2:309 ]",
+        "description": "PolicyRule holds information that describes a policy rule, but does not contain information about who the rule applies to or which namespace the rule applies to.",
         "properties": {
-          "addresses": {
-            "description": "IP addresses which offer the related ports that are marked as ready. These endpoints should be considered safe for load balancers and clients to utilize.",
+          "apiGroups": {
+            "description": "APIGroups is the name of the APIGroup that contains the resources.  If multiple API groups are specified, any action requested against one of the enumerated resources in any API group will be allowed. \"\" represents the core API group and \"*\" represents all API groups.",
             "items": {
-              "description": "EndpointAddress is a tuple that describes single IP address.",
-              "properties": {
-                "hostname": {
-                  "description": "The Hostname of this endpoint",
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "ip": {
-                  "description": "The IP of this endpoint. May not be loopback (127.0.0.0/8 or ::1), link-local (169.254.0.0/16 or fe80::/10), or link-local multicast (224.0.0.0/24 or ff02::/16).",
-                  "type": "string"
-                },
-                "nodeName": {
-                  "description": "Optional: Node hosting this endpoint. This can be used to determine endpoints local to a node.",
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "targetRef": {
-                  "description": "ObjectReference contains enough information to let you inspect or modify the referred object.",
-                  "properties": {
-                    "apiVersion": {
-                      "description": "API version of the referent.",
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "fieldPath": {
-                      "description": "If referring to a piece of an object instead of an entire object, this string should contain a valid JSON/Go field access statement, such as desiredState.manifest.containers[2]. For example, if the object reference is to a container within a pod, this would take on a value like: \"spec.containers{name}\" (where \"name\" refers to the name of the container that triggered the event) or if no container name is specified \"spec.containers[2]\" (container with index 2 in this pod). This syntax is chosen only to have some well-defined way of referencing a part of an object.",
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "kind": {
-                      "description": "Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "name": {
-                      "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "namespace": {
-                      "description": "Namespace of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/",
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "resourceVersion": {
-                      "description": "Specific resourceVersion to which this reference is made, if any. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency",
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "uid": {
-                      "description": "UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids",
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    }
-                  },
-                  "type": [
-                    "object",
-                    "null"
-                  ],
-                  "x-kubernetes-map-type": "atomic"
-                }
-              },
-              "required": [
-                "ip"
-              ],
               "type": [
-                "object",
+                "string",
                 "null"
-              ],
-              "x-kubernetes-map-type": "atomic"
+              ]
             },
             "type": [
               "array",
               "null"
-            ]
+            ],
+            "x-kubernetes-list-type": "atomic"
           },
-          "notReadyAddresses": {
-            "description": "IP addresses which offer the related ports but are not currently marked as ready because they have not yet finished starting, have recently failed a readiness check, or have recently failed a liveness check.",
+          "nonResourceURLs": {
+            "description": "NonResourceURLs is a set of partial urls that a user should have access to.  *s are allowed, but only as the full, final step in the path Since non-resource URLs are not namespaced, this field is only applicable for ClusterRoles referenced from a ClusterRoleBinding. Rules can either apply to API resources (such as \"pods\" or \"secrets\") or non-resource URL paths (such as \"/api\"),  but not both.",
             "items": {
-              "description": "EndpointAddress is a tuple that describes single IP address.",
-              "properties": {
-                "hostname": {
-                  "description": "The Hostname of this endpoint",
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "ip": {
-                  "description": "The IP of this endpoint. May not be loopback (127.0.0.0/8 or ::1), link-local (169.254.0.0/16 or fe80::/10), or link-local multicast (224.0.0.0/24 or ff02::/16).",
-                  "type": "string"
-                },
-                "nodeName": {
-                  "description": "Optional: Node hosting this endpoint. This can be used to determine endpoints local to a node.",
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "targetRef": {
-                  "description": "ObjectReference contains enough information to let you inspect or modify the referred object.",
-                  "properties": {
-                    "apiVersion": {
-                      "description": "API version of the referent.",
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "fieldPath": {
-                      "description": "If referring to a piece of an object instead of an entire object, this string should contain a valid JSON/Go field access statement, such as desiredState.manifest.containers[2]. For example, if the object reference is to a container within a pod, this would take on a value like: \"spec.containers{name}\" (where \"name\" refers to the name of the container that triggered the event) or if no container name is specified \"spec.containers[2]\" (container with index 2 in this pod). This syntax is chosen only to have some well-defined way of referencing a part of an object.",
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "kind": {
-                      "description": "Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "name": {
-                      "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "namespace": {
-                      "description": "Namespace of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/",
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "resourceVersion": {
-                      "description": "Specific resourceVersion to which this reference is made, if any. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency",
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "uid": {
-                      "description": "UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids",
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    }
-                  },
-                  "type": [
-                    "object",
-                    "null"
-                  ],
-                  "x-kubernetes-map-type": "atomic"
-                }
-              },
-              "required": [
-                "ip"
-              ],
               "type": [
-                "object",
+                "string",
                 "null"
-              ],
-              "x-kubernetes-map-type": "atomic"
+              ]
             },
             "type": [
               "array",
               "null"
-            ]
+            ],
+            "x-kubernetes-list-type": "atomic"
           },
-          "ports": {
-            "description": "Port numbers available on the related IP addresses.",
+          "resourceNames": {
+            "description": "ResourceNames is an optional white list of names that the rule applies to.  An empty set means that everything is allowed.",
             "items": {
-              "description": "EndpointPort is a tuple that describes a single port.",
-              "properties": {
-                "appProtocol": {
-                  "description": "The application protocol for this port. This is used as a hint for implementations to offer richer behavior for protocols that they understand. This field follows standard Kubernetes label syntax. Valid values are either:\n\n* Un-prefixed protocol names - reserved for IANA standard service names (as per RFC-6335 and https://www.iana.org/assignments/service-names).\n\n* Kubernetes-defined prefixed names:\n  * 'kubernetes.io/h2c' - HTTP/2 over cleartext as described in https://www.rfc-editor.org/rfc/rfc7540\n  * 'kubernetes.io/ws'  - WebSocket over cleartext as described in https://www.rfc-editor.org/rfc/rfc6455\n  * 'kubernetes.io/wss' - WebSocket over TLS as described in https://www.rfc-editor.org/rfc/rfc6455\n\n* Other protocols should use implementation-defined prefixed names such as mycompany.com/my-custom-protocol.",
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "name": {
-                  "description": "The name of this port.  This must match the 'name' field in the corresponding ServicePort. Must be a DNS_LABEL. Optional only if one port is defined.",
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "port": {
-                  "description": "The port number of the endpoint.",
-                  "format": "int32",
-                  "type": "integer"
-                },
-                "protocol": {
-                  "description": "The IP protocol for this port. Must be UDP, TCP, or SCTP. Default is TCP.",
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                }
-              },
-              "required": [
-                "port"
-              ],
               "type": [
-                "object",
+                "string",
                 "null"
-              ],
-              "x-kubernetes-map-type": "atomic"
+              ]
             },
             "type": [
               "array",
               "null"
-            ]
+            ],
+            "x-kubernetes-list-type": "atomic"
+          },
+          "resources": {
+            "description": "Resources is a list of resources this rule applies to. '*' represents all resources.",
+            "items": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "type": [
+              "array",
+              "null"
+            ],
+            "x-kubernetes-list-type": "atomic"
+          },
+          "verbs": {
+            "description": "Verbs is a list of Verbs that apply to ALL the ResourceKinds contained in this rule. '*' represents all verbs.",
+            "items": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "type": "array",
+            "x-kubernetes-list-type": "atomic"
           }
         },
+        "required": [
+          "verbs"
+        ],
         "type": [
           "object",
           "null"
@@ -519,14 +438,15 @@
       "type": [
         "array",
         "null"
-      ]
+      ],
+      "x-kubernetes-list-type": "atomic"
     }
   },
   "type": "object",
   "x-kubernetes-group-version-kind": [
     {
-      "group": "",
-      "kind": "Endpoints",
+      "group": "rbac.authorization.k8s.io",
+      "kind": "ClusterRole",
       "version": "v1"
     }
   ],
