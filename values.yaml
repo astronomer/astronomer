@@ -306,11 +306,11 @@ global:
   gitSyncRelay:
     images:
       gitDaemon:
-        repository: "quay.io/astronomer/ap-git-daemon"
-        tag: "3.20.5"
+        repository: quay.io/astronomer/ap-git-daemon
+        tag: 3.20.5
       gitSync:
-        repository: "quay.io/astronomer/ap-git-sync-relay"
-        tag: "0.1.9"
+        repository: quay.io/astronomer/ap-git-sync-relay
+        tag: 0.0.3-9
 
   # For now we support only pgbouncer with gss api support
   pgbouncer:

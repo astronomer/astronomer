@@ -378,7 +378,7 @@ workflows:
                 - quay.io/astronomer/ap-elasticsearch:8.15.5
                 - quay.io/astronomer/ap-fluentd:1.17.1
                 - quay.io/astronomer/ap-git-daemon:3.20.5
-                - quay.io/astronomer/ap-git-sync-relay:0.1.9
+                - quay.io/astronomer/ap-git-sync-relay:0.0.3-9
                 - quay.io/astronomer/ap-git-sync:4.2.3-1
                 - quay.io/astronomer/ap-grafana:10.4.16
                 - quay.io/astronomer/ap-houston-api:0.36.14
@@ -424,7 +424,7 @@ workflows:
                 - quay.io/astronomer/ap-elasticsearch:8.15.5
                 - quay.io/astronomer/ap-fluentd:1.17.1
                 - quay.io/astronomer/ap-git-daemon:3.20.5
-                - quay.io/astronomer/ap-git-sync-relay:0.1.9
+                - quay.io/astronomer/ap-git-sync-relay:0.0.3-9
                 - quay.io/astronomer/ap-git-sync:4.2.3-1
                 - quay.io/astronomer/ap-grafana:10.4.16
                 - quay.io/astronomer/ap-houston-api:0.36.14
