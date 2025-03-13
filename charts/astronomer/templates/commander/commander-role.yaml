@@ -163,7 +163,7 @@ rules:
 {{- if and $useClusterRoles $.Values.global.sccEnabled }}
 - apiGroups: ["security.openshift.io"]
   resources: ["securitycontextconstraints"]
-  verbs: ["create", "delete", "list", "watch"]
+  verbs: ["create", "delete", "get", "patch", "list", "watch"]
 {{ end }}
 {{ end }}
 {{- end }}
@@ -188,5 +188,5 @@ metadata:
 rules:
 - apiGroups: ["security.openshift.io"]
   resources: ["securitycontextconstraints"]
-  verbs: ["create", "delete", "list", "watch"]
+  verbs: ["create", "delete", "get", "patch", "list", "watch"]
 {{- end }}
