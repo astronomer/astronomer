@@ -154,7 +154,7 @@ global:
     enabled: false
     name: sidecar-log-consumer
     repository: quay.io/astronomer/ap-vector
-    tag: 0.44.0-2
+    tag: 0.45.0
     customConfig: false
     indexPattern: ~
     extraEnv: []
@@ -316,6 +316,9 @@ global:
       gitSync:
         repository: quay.io/astronomer/ap-git-sync
         tag: 4.2.3-1
+      xcom:
+        repository: quay.io/astronomer/ap-alpine
+        tag: 3.21.3
   gitSyncRelay:
     images:
       gitDaemon:
