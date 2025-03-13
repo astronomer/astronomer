@@ -246,7 +246,7 @@ class TestAstronomerCommander:
         expected_rule = {
             "apiGroups": ["security.openshift.io"],
             "resources": ["securitycontextconstraints"],
-            "verbs": ["create", "delete", "list", "watch"],
+            "verbs": ["create", "delete", "get", "patch", "list", "watch"],
         }
         assert cluster_role["kind"] == "ClusterRole"
         assert cluster_role["rules"] == [expected_rule]
@@ -316,7 +316,7 @@ class TestAstronomerCommander:
         expected_rule = {
             "apiGroups": ["security.openshift.io"],
             "resources": ["securitycontextconstraints"],
-            "verbs": ["create", "delete", "list", "watch"],
+            "verbs": ["create", "delete", "get", "patch", "list", "watch"],
         }
         cluster_role = docs[0]
 
