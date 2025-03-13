@@ -17,7 +17,7 @@ show_only = [
 commander_expected_result = {
     "apiGroups": ["security.openshift.io"],
     "resources": ["securitycontextconstraints"],
-    "verbs": ["create", "delete", "list", "watch"],
+    "verbs": ["create", "delete", "get", "patch", "list", "watch"],
 }
 
 
