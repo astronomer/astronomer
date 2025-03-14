@@ -232,6 +232,13 @@ data:
           # Enabled network polices to restrict the way pods can communicate.
             enabled: true
           {{ end }}
+          {{- if .Values.global.openshiftEnabled }}
+          dags:
+              gitSync:
+                securityContexts:
+                  container:
+                    runAsNonRoot: true
+          {{ end }}
           # Enable FlowerUI flag by default
           flower:
             enabled: true
