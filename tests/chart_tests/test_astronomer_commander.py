@@ -262,7 +262,7 @@ class TestAstronomerCommander:
         # Role Bindings
         expected_subject = {
             "kind": "ServiceAccount",
-            "name": "release-name-commander-scc",
+            "name": "release-name-commander",
             "namespace": "default",
         }
 
@@ -270,7 +270,7 @@ class TestAstronomerCommander:
         expected_cluster_role = {
             "apiGroup": "rbac.authorization.k8s.io",
             "kind": "ClusterRole",
-            "name": "release-name-commander-scc",
+            "name": "release-name-commander",
         }
 
         assert cluster_role_binding["roleRef"] == expected_cluster_role
