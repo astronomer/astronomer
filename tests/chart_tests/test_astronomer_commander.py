@@ -262,7 +262,7 @@ class TestAstronomerCommander:
         # Role Bindings
         expected_subject = {
             "kind": "ServiceAccount",
-            "name": "release-name-commander",
+            "name": "release-name-commander-scc",
             "namespace": "default",
         }
 
