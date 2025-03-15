@@ -183,7 +183,7 @@ rules:
 kind: ClusterRole
 apiVersion: {{ template "apiVersion.rbac" . }}
 metadata:
-  name: {{ $.Release.Name }}-commander
+  name: {{ $.Release.Name }}-commander-scc
   labels:
     tier: houston
     release: {{ $.Release.Name }}
