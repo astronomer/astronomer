@@ -270,7 +270,7 @@ class TestAstronomerCommander:
         expected_cluster_role = {
             "apiGroup": "rbac.authorization.k8s.io",
             "kind": "ClusterRole",
-            "name": "release-name-commander",
+            "name": "release-name-commander-scc",
         }
 
         assert cluster_role_binding["roleRef"] == expected_cluster_role
