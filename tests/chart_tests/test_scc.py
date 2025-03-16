@@ -42,7 +42,7 @@ class TestScc:
 
         assert len(docs) == 2
         assert commander_expected_result not in docs[0]["rules"]
-        assert houston_values["deployments"]["helm"].get("sccEnabled") is None
+        assert houston_values["deployments"]["helm"].get("sccEnabled") is False
 
     def test_scc_enabled(self, kube_version):
         """Test all things scc related when scc is disabled."""

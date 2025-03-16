@@ -1,6 +1,5 @@
 import yaml
 from tests.chart_tests.helm_template_generator import render_chart
-import pytest
 import ast
 
 
@@ -70,10 +69,7 @@ def test_houston_configmap_defaults():
     assert af_images["gitSync"]["repository"] == "quay.io/astronomer/ap-git-sync"
     assert git_sync_images["gitDaemon"]["repository"] == "quay.io/astronomer/ap-git-daemon"
     assert git_sync_images["gitSync"]["repository"] == "quay.io/astronomer/ap-git-sync-relay"
-
-    with pytest.raises(KeyError):
-        # Ensure sccEnabled is not defined by default
-        assert prod["deployments"]["helm"]["sccEnabled"] is False
+    assert prod["deployments"]["helm"]["sccEnabled"] is False
 
 
 def test_houston_configmap_with_custom_images():
@@ -191,8 +187,7 @@ def test_houston_configmap_with_azure_enabled():
     doc = docs[0]
     prod = yaml.safe_load(doc["data"]["production.yaml"])
 
-    with pytest.raises(KeyError):
-        assert prod["deployments"]["helm"]["sccEnabled"] is False
+    assert prod["deployments"]["helm"]["sccEnabled"] is False
 
     livenessProbe = prod["deployments"]["helm"]["airflow"]["webserver"]["livenessProbe"]
     assert livenessProbe["failureThreshold"] == 25
