@@ -222,10 +222,10 @@ data:
       {{- if and .Values.global.ssl.enabled .Values.global.ssl.mode }}
         sslmode: {{ .Values.global.ssl.mode }}
       {{- end }}
-      {{- if .Values.global.sccEnabled }}
+
         # If security context constraints are enabled, enable SCCs for airflow-chart
-        sccEnabled: true
-      {{- end }}
+        sccEnabled: {{ .Values.global.sccEnabled }}
+      
       {{- if and .Values.global.extraAnnotations ( not .Values.global.authSidecar.enabled ) }}
         ingress:
           extraIngressAnnotations: {{- toYaml .Values.global.extraAnnotations | nindent 12 }}
