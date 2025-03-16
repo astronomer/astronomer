@@ -225,7 +225,6 @@ data:
 
         # If security context constraints are enabled, enable SCCs for airflow-chart
         sccEnabled: {{ .Values.global.sccEnabled }}
-      
       {{- if and .Values.global.extraAnnotations ( not .Values.global.authSidecar.enabled ) }}
         ingress:
           extraIngressAnnotations: {{- toYaml .Values.global.extraAnnotations | nindent 12 }}
