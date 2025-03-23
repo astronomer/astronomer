@@ -92,7 +92,6 @@ spec:
         readinessProbe: {{ tpl (toYaml .Values.sysctlInitContainer.readinessProbe) . | nindent 12 }}
         {{- end }}
   {{- end }}
-      serviceAccountName: {{ template "elasticsearch.serviceAccountName" . }}
       containers:
       - name: es-client
         securityContext:
