@@ -1,6 +1,7 @@
 #####################################
 ## Astronomer Commander Deployment ##
 #####################################
+{{- if .Values.commander.enabled }}
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -134,3 +135,4 @@ spec:
 {{- if .Values.commander.extraVolumes }}
 {{- tpl (toYaml .Values.commander.extraVolumes) $ | nindent 8 }}
 {{- end }}
+{{ end }}

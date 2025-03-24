@@ -1,6 +1,7 @@
 #####################################
 ## Astronomer Registry StatefulSet ##
 #####################################
+{{ if .Values.registry.enabled }}
 {{- if .Values.global.baseDomain }}
 {{- if or .Values.registry.gcs.enabled .Values.registry.azure.enabled .Values.registry.s3.enabled }}
 kind: Deployment
@@ -163,4 +164,5 @@ spec:
             storage: {{ .Values.registry.persistence.size }}
         {{- include "registry.storageClass" . }}
   {{- end }}
+{{- end }}
 {{- end }}

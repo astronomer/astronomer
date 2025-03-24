@@ -2,6 +2,9 @@
 ## Astronomer global configuration
 ##################################
 global:
+  # Dataplane Configuration
+  dataplane: 
+    enabled: true
   # Base domain for all subdomains exposed through ingress
   baseDomain: ~
 
@@ -359,6 +362,9 @@ tags:
 
   # NATS Streaming
   stan: true
+
+  # Dataplane
+  dataplane: true
 
 #################################
 ## Astronomer configuration

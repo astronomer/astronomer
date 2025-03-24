@@ -1,6 +1,7 @@
 ########################################
 ## Houston Populate Daily Task Metrics CronJob
 ########################################
+{{- if .Values.houston.enabled }}
 {{- if .Values.global.taskUsageMetricsEnabled }}
 apiVersion: {{ include "apiVersion.batch.cronjob" . }}
 kind: CronJob
@@ -61,4 +62,5 @@ spec:
           volumes:
             {{- include "houston_volumes" . | indent 12 }}
             {{- include "custom_ca_volumes" . | indent 12 }}
+{{- end }}
 {{- end }}

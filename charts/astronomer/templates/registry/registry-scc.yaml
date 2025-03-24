@@ -1,6 +1,7 @@
 #################################
 ### Astronomer Registry Scc   ###
 #################################
+{{ if .Values.registry.enabled }}
 {{- if and .Values.registry.serviceAccount.create .Values.registry.serviceAccount.sccEnabled }}
 apiVersion: security.openshift.io/v1
 kind: SecurityContextConstraints
@@ -39,4 +40,5 @@ allowHostPorts: false
 allowPrivilegeEscalation: false
 allowPrivilegedContainer: false
 allowedCapabilities: null
+{{- end }}
 {{- end }}

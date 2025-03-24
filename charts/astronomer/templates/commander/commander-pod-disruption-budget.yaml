@@ -1,6 +1,7 @@
 #############################################
 ## Astronomer Commander Pod Disruption Budget
 #############################################
+{{- if .Values.commander.enabled }}
 {{- if .Values.global.podDisruptionBudgetsEnabled }}
 apiVersion: {{ include "apiVersion.PodDisruptionBudget" . }}
 kind: PodDisruptionBudget
@@ -18,3 +19,4 @@ spec:
       tier: astronomer
       release: {{ .Release.Name }}
 {{- end }}
+{{ end }}

@@ -10,6 +10,7 @@
 {{- $shouldCreateResources := and .Values.global.rbacEnabled (or (and .Values.global.clusterRoles (not .Values.global.features.namespacePools.enabled )) $namespacepoolsRBACresources) }}
 {{- $namespaces := .Values.global.features.namespacePools.namespaces.names }}
 {{- $commanderServiceAccountName := ( include "commander.serviceAccountName" . )  -}}
+{{- if .Values.commander.enabled }}
 {{- if $useClusterRoles }}
   {{- $namespaces = list .Release.Namespace}}
 {{- else }}
@@ -40,9 +41,10 @@ subjects:
     namespace: {{ $.Release.Namespace }}
 {{ end }}
 {{- end }}
-
+{{ end }}
 # If user runs Openshift and uses the namespace pools feature, we need to provide
 # cluster level permissions to manage some Openshift resources.
+{{- if .Values.commander.enabled }}
 {{- if and .Values.global.rbacEnabled .Values.global.sccEnabled (not $useClusterRoles) }}
 ---
 apiVersion: {{ template "apiVersion.rbac" . }}
@@ -61,4 +63,5 @@ subjects:
   - kind: ServiceAccount
     name: {{ $commanderServiceAccountName }}
     namespace: {{ $.Release.Namespace }}
+{{- end }}
 {{- end }}

@@ -1,6 +1,7 @@
 #######################################
 ## Airflow Post Deployment Upgrade Hook
 #######################################
+{{- if .Values.houston.enabled }}
 {{- if .Values.houston.upgradeDeployments.enabled }}
 apiVersion: {{ include "apiVersion.batch" . }}
 kind: Job
@@ -123,4 +124,5 @@ spec:
       volumes:
         {{- include "houston_volumes" . | indent 8 }}
         {{- include "custom_ca_volumes" . | indent 8 }}
+{{- end }}
 {{- end }}

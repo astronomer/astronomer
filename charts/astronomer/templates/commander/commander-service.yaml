@@ -1,6 +1,7 @@
 ##################################
 ## Astronomer Commander Service ##
 ##################################
+{{- if .Values.commander.enabled }}
 kind: Service
 apiVersion: v1
 metadata:
@@ -32,3 +33,4 @@ spec:
       port: {{ .Values.ports.commanderGRPC }}
       targetPort: {{ .Values.ports.commanderGRPC }}
       appProtocol: grpc
+{{- end }}
