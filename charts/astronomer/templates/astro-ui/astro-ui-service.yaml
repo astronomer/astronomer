@@ -1,6 +1,7 @@
 ###########################
 ## Astronomer UI Service ##
 ###########################
+{{- if .Values.astroUI.enabled }}
 kind: Service
 apiVersion: v1
 metadata:
@@ -23,3 +24,4 @@ spec:
       port: {{ .Values.ports.astroUIHTTP }}
       targetPort: {{ .Values.ports.astroUIHTTP }}
       appProtocol: http
+{{- end }}

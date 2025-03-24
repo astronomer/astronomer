@@ -1,6 +1,7 @@
 #################################
 ## Astronomer astro ui Ingress ##
 #################################
+{{- if .Values.astroUI.enabled }}
 {{- if and .Values.global.baseDomain .Values.global.enablePerHostIngress  }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
@@ -129,5 +130,6 @@ spec:
               name: {{ .Release.Name }}-astro-ui
               port:
                 name: astro-ui-http
+{{- end }}
 {{- end }}
 {{- end }}

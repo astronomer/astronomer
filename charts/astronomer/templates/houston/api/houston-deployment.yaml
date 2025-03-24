@@ -1,6 +1,7 @@
 ###################################
 ## Astronomer Houston Deployment ##
 ###################################
+{{- if .Values.houston.enabled }}
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -181,3 +182,4 @@ spec:
 {{- end }}
         {{- include "houston_volumes" . | indent 8 }}
         {{- include "custom_ca_volumes" . | indent 8 }}
+{{- end }}
