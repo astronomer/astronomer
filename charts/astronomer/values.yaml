@@ -24,7 +24,7 @@ images:
     # httpSecret: ~
   houston:
     repository: quay.io/astronomer/ap-houston-api
-    tag: 0.37.9
+    tag: feat-cpdp-testing
     pullPolicy: IfNotPresent
   astroUI:
     repository: quay.io/astronomer/ap-astro-ui
@@ -330,6 +330,7 @@ configSyncer:
 
 
 commander:
+  enabled: true
   replicas: 2
   env: []
   # This only applies when replicas > 3
