@@ -1,6 +1,7 @@
 #################################
 ## Astronomer Registry Service ##
 #################################
+{{ if .Values.registry.enabled }}
 {{- if .Values.global.baseDomain }}
 kind: Service
 apiVersion: v1
@@ -36,4 +37,5 @@ spec:
     #   protocol: TCP
     #   port: {{ .Values.ports.registryScrape }}
     #   targetPort: {{ .Values.ports.registryScrape }}
+{{- end }}
 {{- end }}
