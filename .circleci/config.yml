@@ -384,7 +384,7 @@ workflows:
                 - quay.io/astronomer/ap-prometheus:2.53.4
                 - quay.io/astronomer/ap-redis:7.4.2
                 - quay.io/astronomer/ap-registry:3.21.3-2
-                - quay.io/astronomer/ap-statsd-exporter:0.28.1
+                - quay.io/astronomer/ap-statsd-exporter:0.28.0-2
                 - quay.io/astronomer/ap-vector:0.45.0-2
           context:
             - slack_team-software-infra-bot
@@ -430,7 +430,7 @@ workflows:
                 - quay.io/astronomer/ap-prometheus:2.53.4
                 - quay.io/astronomer/ap-redis:7.4.2
                 - quay.io/astronomer/ap-registry:3.21.3-2
-                - quay.io/astronomer/ap-statsd-exporter:0.28.1
+                - quay.io/astronomer/ap-statsd-exporter:0.28.0-2
                 - quay.io/astronomer/ap-vector:0.45.0-2
           context:
             - twistcli
