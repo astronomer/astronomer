@@ -201,7 +201,7 @@ class TestDefaultProbes:
         },
         "elasticsearch-data_es-data": {"tcpSocket": {"port": 9300}, "initialDelaySeconds": 20, "periodSeconds": 10},
         "elasticsearch-exporter_metrics-exporter": {
-            "httpGet": {"path": "/health", "port": "http"},
+            "httpGet": {"path": "/healthz", "port": "http"},
             "initialDelaySeconds": 30,
             "timeoutSeconds": 10,
         },
@@ -315,7 +315,7 @@ class TestDefaultProbes:
             "initialDelaySeconds": 5,
         },
         "elasticsearch-exporter_metrics-exporter": {
-            "httpGet": {"path": "/health", "port": "http"},
+            "httpGet": {"path": "/healthz", "port": "http"},
             "initialDelaySeconds": 10,
             "timeoutSeconds": 10,
         },
