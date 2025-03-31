@@ -287,7 +287,7 @@ global:
     images:
       statsd:
         repository: quay.io/astronomer/ap-statsd-exporter
-        tag: 0.28.1
+        tag: 0.28.0-2
       redis:
         repository: quay.io/astronomer/ap-redis
         tag: 7.2.6
@@ -299,7 +299,7 @@ global:
         tag: 0.18.0-3
       gitSync:
         repository: quay.io/astronomer/ap-git-sync
-        tag: 4.2.3-3
+        tag: 4.2.4
       xcom:
         repository: quay.io/astronomer/ap-alpine
         tag: 3.21.3
