@@ -16,6 +16,9 @@ spec:
   {{- if and .Values.persistence.enabled .Values.persistence.persistentVolumeClaimRetentionPolicy }}
   persistentVolumeClaimRetentionPolicy: {{- toYaml .Values.persistence.persistentVolumeClaimRetentionPolicy | nindent 4 }}
   {{ end }}
+  {{- if .Values.priorityClassName }}
+  priorityClassName:  {{ .Values.priorityClassName  }}
+  {{ end }}
   replicas: {{ .Values.replicas }}
   serviceName: {{ template "prometheus.fullname" . }}
   selector:
