@@ -216,3 +216,5 @@ rbac:
   role:
     kind: ClusterRole
     create: true
+
+priorityClassName: ~
