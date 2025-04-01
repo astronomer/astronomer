@@ -242,3 +242,17 @@ class TestPrometheusStatefulset:
         assert len(docs) == 2
         assert docs[0]["kind"] == "Role"
         assert docs[1]["kind"] == "RoleBinding"
+
+    def test_prometheus_priorityclass_overrides(self, kube_version):
+        """Test to validate prometheus with priority class configured."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"prometheus": {"priorityClassName": "prometheus-priority-pod"}},
+            show_only=["charts/prometheus/templates/prometheus-statefulset.yaml"],
+        )
+        assert len(docs) == 1
+        doc = docs[0]
+        self.fluentd_common_tests(doc)
+        spec = doc["spec"]["template"]["spec"]
+        assert "priorityClassName" in spec
+        assert "prometheus-priority-pod" == spec["priorityClassName"]
