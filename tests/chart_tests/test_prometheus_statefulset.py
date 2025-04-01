@@ -252,7 +252,7 @@ class TestPrometheusStatefulset:
         )
         assert len(docs) == 1
         doc = docs[0]
-        self.fluentd_common_tests(doc)
+        self.prometheus_common_tests(docs[0])
         spec = doc["spec"]["template"]["spec"]
         assert "priorityClassName" in spec
         assert "prometheus-priority-pod" == spec["priorityClassName"]
