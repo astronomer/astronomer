@@ -16,9 +16,6 @@ spec:
   {{- if and .Values.persistence.enabled .Values.persistence.persistentVolumeClaimRetentionPolicy }}
   persistentVolumeClaimRetentionPolicy: {{- toYaml .Values.persistence.persistentVolumeClaimRetentionPolicy | nindent 4 }}
   {{ end }}
-  {{- if .Values.priorityClassName }}
-  priorityClassName:  {{ .Values.priorityClassName  }}
-  {{ end }}
   replicas: {{ .Values.replicas }}
   serviceName: {{ template "prometheus.fullname" . }}
   selector:
@@ -49,6 +46,9 @@ spec:
 {{ toYaml .Values.podAnnotations | indent 8 }}
 {{- end }}
     spec:
+      {{- if .Values.priorityClassName }}
+      priorityClassName:  {{ .Values.priorityClassName  }}
+      {{ end }}
       nodeSelector: {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
       affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
       tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}

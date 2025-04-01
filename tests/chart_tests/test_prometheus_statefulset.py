@@ -54,6 +54,7 @@ class TestPrometheusStatefulset:
         assert c_by_name["prometheus"]["readinessProbe"]["periodSeconds"] == 5
         assert c_by_name["prometheus"]["readinessProbe"]["failureThreshold"] == 3
         assert c_by_name["prometheus"]["readinessProbe"]["timeoutSeconds"] == 1
+        assert "priorityClassName" not in doc["spec"]["template"]["spec"]
 
     def test_prometheus_with_extraFlags(self, kube_version):
         docs = render_chart(
