@@ -179,6 +179,7 @@ global:
     securityContext: {}
     readinessProbe: {}
     livenessProbe: {}
+    ingressAllowedNamespaces: []
     default_nginx_settings: |
       internal;
       proxy_pass_request_body     off;

@@ -161,7 +161,92 @@ class TestAuthSidecar:
         } in jmespath.search("spec.ports", docs[2])
 
         assert "NetworkPolicy" == docs[3]["kind"]
-        assert [{"namespaceSelector": {"matchLabels": {"network.openshift.io/policy-group": "ingress"}}}] == jmespath.search(
+        assert [
+            {"namespaceSelector": {"matchLabels": {"network.openshift.io/policy-group": "ingress"}}},
+            {"namespaceSelector": {"matchLabels": {"config.astronomer.io/allow-authsidecar-traffic": "true"}}},
+            ] == jmespath.search(
+            "spec.ingress[0].from", docs[3]
+        )
+        assert {"port": 8084, "protocol": "TCP"} in jmespath.search("spec.ingress[*].ports[0]", docs[3])
+
+    def test_authSidecar_kibana_with_ingress_allowed_namespaces(self, kube_version):
+        """Test Kibana Service with authSidecar and allow some traffic namespaces."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"authSidecar": {"enabled": True, "ingressAllowedNamespaces": ["astro", "ingress-namespace"]}}},
+            show_only=[
+                "charts/kibana/templates/kibana-deployment.yaml",
+                "charts/kibana/templates/kibana-auth-sidecar-configmap.yaml",
+                "charts/kibana/templates/kibana-service.yaml",
+                "charts/kibana/templates/kibana-networkpolicy.yaml",
+                "charts/kibana/templates/ingress.yaml",
+            ],
+        )
+
+        assert len(docs) == 5
+        doc = docs[0]
+        assert doc["kind"] == "Deployment"
+        assert doc["apiVersion"] == "apps/v1"
+        assert doc["metadata"]["name"] == "release-name-kibana"
+        assert "auth-proxy" == doc["spec"]["template"]["spec"]["containers"][1]["name"]
+
+        assert "Service" == jmespath.search("kind", docs[2])
+        assert "release-name-kibana" == jmespath.search("metadata.name", docs[2])
+        assert "ClusterIP" == jmespath.search("spec.type", docs[2])
+        assert {
+            "name": "auth-proxy",
+            "protocol": "TCP",
+            "port": 8084,
+            "appProtocol": "tcp",
+        } in jmespath.search("spec.ports", docs[2])
+
+        assert "NetworkPolicy" == docs[3]["kind"]
+        assert [
+            {"namespaceSelector": {"matchLabels": {"network.openshift.io/policy-group": "ingress"}}},
+            {"namespaceSelector": {"matchLabels": {"config.astronomer.io/allow-authsidecar-traffic": "true"}}},
+            {"namespaceSelector": {"matchLabels": {"kubernetes.io/metadata.name": "astro"}}},
+            {"namespaceSelector": {"matchLabels": {"kubernetes.io/metadata.name": "ingress-namespace"}}},
+            ] == jmespath.search(
+            "spec.ingress[0].from", docs[3]
+        )
+        assert {"port": 8084, "protocol": "TCP"} in jmespath.search("spec.ingress[*].ports[0]", docs[3])
+
+    def test_authSidecar_kibana_with_ingress_allowed_namespaces_empty(self, kube_version):
+        """Test Kibana Service with authSidecar and set no values in ingressAllowedNamespaces."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"authSidecar": {"enabled": True, "ingressAllowedNamespaces": []}}},
+            show_only=[
+                "charts/kibana/templates/kibana-deployment.yaml",
+                "charts/kibana/templates/kibana-auth-sidecar-configmap.yaml",
+                "charts/kibana/templates/kibana-service.yaml",
+                "charts/kibana/templates/kibana-networkpolicy.yaml",
+                "charts/kibana/templates/ingress.yaml",
+            ],
+        )
+
+        assert len(docs) == 5
+        doc = docs[0]
+        assert doc["kind"] == "Deployment"
+        assert doc["apiVersion"] == "apps/v1"
+        assert doc["metadata"]["name"] == "release-name-kibana"
+        assert "auth-proxy" == doc["spec"]["template"]["spec"]["containers"][1]["name"]
+
+        assert "Service" == jmespath.search("kind", docs[2])
+        assert "release-name-kibana" == jmespath.search("metadata.name", docs[2])
+        assert "ClusterIP" == jmespath.search("spec.type", docs[2])
+        assert {
+            "name": "auth-proxy",
+            "protocol": "TCP",
+            "port": 8084,
+            "appProtocol": "tcp",
+        } in jmespath.search("spec.ports", docs[2])
+
+        assert "NetworkPolicy" == docs[3]["kind"]
+        assert [
+            {"namespaceSelector": {"matchLabels": {"network.openshift.io/policy-group": "ingress"}}},
+            {"namespaceSelector": {"matchLabels": {"config.astronomer.io/allow-authsidecar-traffic": "true"}}},
+            ] == jmespath.search(
             "spec.ingress[0].from", docs[3]
         )
         assert {"port": 8084, "protocol": "TCP"} in jmespath.search("spec.ingress[*].ports[0]", docs[3])

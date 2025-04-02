@@ -31,6 +31,14 @@ spec:
     - namespaceSelector:
         matchLabels:
           network.openshift.io/policy-group: ingress
+    - namespaceSelector:
+        matchLabels:
+          config.astronomer.io/allow-authsidecar-traffic: "true"
+    {{- range .Values.global.authSidecar.ingressAllowedNamespaces }}
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: {{ . }}
+    {{- end }}
     {{- else }}
     - podSelector:
         matchLabels:
