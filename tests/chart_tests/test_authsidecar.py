@@ -164,9 +164,7 @@ class TestAuthSidecar:
         assert [
             {"namespaceSelector": {"matchLabels": {"network.openshift.io/policy-group": "ingress"}}},
             {"namespaceSelector": {"matchLabels": {"config.astronomer.io/allow-authsidecar-traffic": "true"}}},
-            ] == jmespath.search(
-            "spec.ingress[0].from", docs[3]
-        )
+        ] == jmespath.search("spec.ingress[0].from", docs[3])
         assert {"port": 8084, "protocol": "TCP"} in jmespath.search("spec.ingress[*].ports[0]", docs[3])
 
     def test_authSidecar_kibana_with_ingress_allowed_namespaces(self, kube_version):
@@ -206,9 +204,7 @@ class TestAuthSidecar:
             {"namespaceSelector": {"matchLabels": {"config.astronomer.io/allow-authsidecar-traffic": "true"}}},
             {"namespaceSelector": {"matchLabels": {"kubernetes.io/metadata.name": "astro"}}},
             {"namespaceSelector": {"matchLabels": {"kubernetes.io/metadata.name": "ingress-namespace"}}},
-            ] == jmespath.search(
-            "spec.ingress[0].from", docs[3]
-        )
+        ] == jmespath.search("spec.ingress[0].from", docs[3])
         assert {"port": 8084, "protocol": "TCP"} in jmespath.search("spec.ingress[*].ports[0]", docs[3])
 
     def test_authSidecar_kibana_with_ingress_allowed_namespaces_empty(self, kube_version):
@@ -246,9 +242,7 @@ class TestAuthSidecar:
         assert [
             {"namespaceSelector": {"matchLabels": {"network.openshift.io/policy-group": "ingress"}}},
             {"namespaceSelector": {"matchLabels": {"config.astronomer.io/allow-authsidecar-traffic": "true"}}},
-            ] == jmespath.search(
-            "spec.ingress[0].from", docs[3]
-        )
+        ] == jmespath.search("spec.ingress[0].from", docs[3])
         assert {"port": 8084, "protocol": "TCP"} in jmespath.search("spec.ingress[*].ports[0]", docs[3])
 
     def test_authSidecar_houston_configmap_without_annotation(self, kube_version):
@@ -377,13 +371,13 @@ class TestAuthSidecar:
 
         for doc in docs:
             assert "NetworkPolicy" == doc["kind"]
-            namespaceSelectors = jmespath.search(
-                "spec.ingress[0].from", doc
-            )
+            namespaceSelectors = jmespath.search("spec.ingress[0].from", doc)
             assert {"namespaceSelector": {"matchLabels": {"network.openshift.io/policy-group": "ingress"}}} in namespaceSelectors
-            assert {"namespaceSelector": {"matchLabels": {"config.astronomer.io/allow-authsidecar-traffic": "true"}}} in namespaceSelectors
-    
-    def test_authSidecar_kibana_with_ingress_allowed_namespaces(self, kube_version):
+            assert {
+                "namespaceSelector": {"matchLabels": {"config.astronomer.io/allow-authsidecar-traffic": "true"}}
+            } in namespaceSelectors
+
+    def test_authSidecar_all_services_with_ingress_allowed_namespaces(self, kube_version):
         """Test All Services with authSidecar and allow some traffic namespaces."""
         docs = render_chart(
             kube_version=kube_version,
@@ -403,10 +397,12 @@ class TestAuthSidecar:
 
         for doc in docs:
             assert "NetworkPolicy" == doc["kind"]
-            namespaceSelectors = jmespath.search(
-                "spec.ingress[0].from", doc
-            )
+            namespaceSelectors = jmespath.search("spec.ingress[0].from", doc)
             assert {"namespaceSelector": {"matchLabels": {"network.openshift.io/policy-group": "ingress"}}} in namespaceSelectors
-            assert {"namespaceSelector": {"matchLabels": {"config.astronomer.io/allow-authsidecar-traffic": "true"}}} in namespaceSelectors
+            assert {
+                "namespaceSelector": {"matchLabels": {"config.astronomer.io/allow-authsidecar-traffic": "true"}}
+            } in namespaceSelectors
             assert {"namespaceSelector": {"matchLabels": {"kubernetes.io/metadata.name": "astro"}}} in namespaceSelectors
-            assert {"namespaceSelector": {"matchLabels": {"kubernetes.io/metadata.name": "ingress-namespace"}}} in namespaceSelectors
+            assert {
+                "namespaceSelector": {"matchLabels": {"kubernetes.io/metadata.name": "ingress-namespace"}}
+            } in namespaceSelectors
