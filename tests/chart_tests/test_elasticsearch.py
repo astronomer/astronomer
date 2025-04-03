@@ -658,7 +658,6 @@ class TestElasticSearch:
             assert "persistentVolumeClaimRetentionPolicy" in doc["spec"]
             assert test_persistentVolumeClaimRetentionPolicy == doc["spec"]["persistentVolumeClaimRetentionPolicy"]
 
-
     def test_astronomer_registry_statefulset_with_scc_disabled(self, kube_version):
         """Test that helm renders scc template for astronomer
         elasticsearch with SA disabled."""
