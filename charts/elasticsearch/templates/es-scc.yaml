@@ -1,6 +1,6 @@
-#################################
-### Astronomer Registry Scc   ###
-#################################
+####################################
+### Astronomer Elasticsearch Scc ###
+####################################
 {{- if and .Values.common.serviceAccount.create .Values.common.serviceAccount.sccEnabled .Values.global.sccEnabled }}
 apiVersion: security.openshift.io/v1
 kind: SecurityContextConstraints
