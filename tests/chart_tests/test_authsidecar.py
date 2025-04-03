@@ -163,7 +163,7 @@ class TestAuthSidecar:
         assert "NetworkPolicy" == docs[3]["kind"]
         assert [
             {"namespaceSelector": {"matchLabels": {"network.openshift.io/policy-group": "ingress"}}},
-            {"namespaceSelector": {"matchLabels": {"config.astronomer.io/allow-authsidecar-traffic": "true"}}},
+            {"namespaceSelector": {"matchLabels": {"app.astronomer.io/allow-authsidecar-traffic": "true"}}},
         ] == jmespath.search("spec.ingress[0].from", docs[3])
         assert {"port": 8084, "protocol": "TCP"} in jmespath.search("spec.ingress[*].ports[0]", docs[3])
 
@@ -201,9 +201,14 @@ class TestAuthSidecar:
         assert "NetworkPolicy" == docs[3]["kind"]
         assert [
             {"namespaceSelector": {"matchLabels": {"network.openshift.io/policy-group": "ingress"}}},
-            {"namespaceSelector": {"matchLabels": {"config.astronomer.io/allow-authsidecar-traffic": "true"}}},
-            {"namespaceSelector": {"matchLabels": {"kubernetes.io/metadata.name": "astro"}}},
-            {"namespaceSelector": {"matchLabels": {"kubernetes.io/metadata.name": "ingress-namespace"}}},
+            {"namespaceSelector": {"matchLabels": {"app.astronomer.io/allow-authsidecar-traffic": "true"}}},
+            {
+                "namespaceSelector": {
+                    "matchExpressions": [
+                        {"key": "kubernetes.io/metadata.name", "operator": "In", "values": ["astro", "ingress-namespace"]}
+                    ]
+                }
+            },
         ] == jmespath.search("spec.ingress[0].from", docs[3])
         assert {"port": 8084, "protocol": "TCP"} in jmespath.search("spec.ingress[*].ports[0]", docs[3])
 
@@ -241,7 +246,7 @@ class TestAuthSidecar:
         assert "NetworkPolicy" == docs[3]["kind"]
         assert [
             {"namespaceSelector": {"matchLabels": {"network.openshift.io/policy-group": "ingress"}}},
-            {"namespaceSelector": {"matchLabels": {"config.astronomer.io/allow-authsidecar-traffic": "true"}}},
+            {"namespaceSelector": {"matchLabels": {"app.astronomer.io/allow-authsidecar-traffic": "true"}}},
         ] == jmespath.search("spec.ingress[0].from", docs[3])
         assert {"port": 8084, "protocol": "TCP"} in jmespath.search("spec.ingress[*].ports[0]", docs[3])
 
@@ -374,7 +379,7 @@ class TestAuthSidecar:
             namespaceSelectors = jmespath.search("spec.ingress[0].from", doc)
             assert {"namespaceSelector": {"matchLabels": {"network.openshift.io/policy-group": "ingress"}}} in namespaceSelectors
             assert {
-                "namespaceSelector": {"matchLabels": {"config.astronomer.io/allow-authsidecar-traffic": "true"}}
+                "namespaceSelector": {"matchLabels": {"app.astronomer.io/allow-authsidecar-traffic": "true"}}
             } in namespaceSelectors
 
     def test_authSidecar_all_services_with_ingress_allowed_namespaces(self, kube_version):
@@ -400,9 +405,12 @@ class TestAuthSidecar:
             namespaceSelectors = jmespath.search("spec.ingress[0].from", doc)
             assert {"namespaceSelector": {"matchLabels": {"network.openshift.io/policy-group": "ingress"}}} in namespaceSelectors
             assert {
-                "namespaceSelector": {"matchLabels": {"config.astronomer.io/allow-authsidecar-traffic": "true"}}
+                "namespaceSelector": {"matchLabels": {"app.astronomer.io/allow-authsidecar-traffic": "true"}}
             } in namespaceSelectors
-            assert {"namespaceSelector": {"matchLabels": {"kubernetes.io/metadata.name": "astro"}}} in namespaceSelectors
             assert {
-                "namespaceSelector": {"matchLabels": {"kubernetes.io/metadata.name": "ingress-namespace"}}
+                "namespaceSelector": {
+                    "matchExpressions": [
+                        {"key": "kubernetes.io/metadata.name", "operator": "In", "values": ["astro", "ingress-namespace"]}
+                    ]
+                }
             } in namespaceSelectors
