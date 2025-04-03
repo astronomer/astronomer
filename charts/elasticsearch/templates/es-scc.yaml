@@ -1,0 +1,42 @@
+####################################
+### Astronomer Elasticsearch Scc ###
+####################################
+{{- if and .Values.common.serviceAccount.create .Values.common.serviceAccount.sccEnabled .Values.global.sccEnabled }}
+apiVersion: security.openshift.io/v1
+kind: SecurityContextConstraints
+metadata:
+  annotations:
+    release.openshift.io/create-only: "true"
+    "helm.sh/hook": "pre-install,pre-upgrade"
+  name: {{ template "elasticsearch.serviceAccountName" . }}-anyuid
+priority: 10
+readOnlyRootFilesystem: false
+requiredDropCapabilities:
+- MKNOD
+runAsUser:
+  type: RunAsAny
+seLinuxContext:
+  type: MustRunAs
+supplementalGroups:
+  type: RunAsAny
+users:
+- system:serviceaccount:{{ .Release.Namespace }}:{{ template "elasticsearch.serviceAccountName" . }}
+volumes:
+- configMap
+- downwardAPI
+- emptyDir
+- persistentVolumeClaim
+- projected
+- secret
+defaultAddCapabilities: null
+fsGroup:
+  type: RunAsAny
+allowHostDirVolumePlugin: false
+allowHostIPC: false
+allowHostNetwork: false
+allowHostPID: false
+allowHostPorts: false
+allowPrivilegeEscalation: false
+allowPrivilegedContainer: false
+allowedCapabilities: null
+{{- end }}

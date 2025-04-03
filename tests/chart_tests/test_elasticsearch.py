@@ -657,3 +657,31 @@ class TestElasticSearch:
         for doc in docs:
             assert "persistentVolumeClaimRetentionPolicy" in doc["spec"]
             assert test_persistentVolumeClaimRetentionPolicy == doc["spec"]["persistentVolumeClaimRetentionPolicy"]
+
+    def test_elasticsearch_statefulset_with_scc_disabled(self, kube_version):
+        """Test that helm renders scc template for astronomer
+        elasticsearch with SA disabled."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={},
+            show_only=[
+                "charts/elasticsearch/templates/es-scc.yaml",
+            ],
+        )
+        assert len(docs) == 0
+
+    def test_elasticsearch_statefulset_with_scc_enabled(self, kube_version):
+        """Test that helm renders scc template for astronomer
+        elasticsearch with SA disabled."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"sccEnabled": True}},
+            show_only=[
+                "charts/elasticsearch/templates/es-scc.yaml",
+            ],
+        )
+        assert len(docs) == 1
+        assert docs[0]["kind"] == "SecurityContextConstraints"
+        assert docs[0]["apiVersion"] == "security.openshift.io/v1"
+        assert docs[0]["metadata"]["name"] == "release-name-elasticsearch-anyuid"
+        assert docs[0]["users"] == ["system:serviceaccount:default:release-name-elasticsearch"]
