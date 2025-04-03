@@ -684,4 +684,4 @@ class TestElasticSearch:
         assert docs[0]["kind"] == "SecurityContextConstraints"
         assert docs[0]["apiVersion"] == "security.openshift.io/v1"
         assert docs[0]["metadata"]["name"] == "release-name-elasticsearch-anyuid"
-        assert docs[0]["users"]  == ["system:serviceaccount:astronomer:release-name-elasticsearch"]
+        assert docs[0]["users"] == ["system:serviceaccount:astronomer:release-name-elasticsearch"]
