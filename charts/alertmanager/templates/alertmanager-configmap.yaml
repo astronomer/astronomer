@@ -1,6 +1,7 @@
 ############################
 ## Alertmanager ConfigMap ##
 ############################
+{{- if .Values.global.controlplane.enabled }}
 kind: ConfigMap
 apiVersion: v1
 metadata:
@@ -62,3 +63,4 @@ data:
 {{ if .Values.customReceiver }}
 {{ toYaml .Values.customReceiver | trim | indent 4 }}
 {{ end }}
+{{- end }}

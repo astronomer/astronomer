@@ -1,6 +1,7 @@
 ##############################
 ## Alertmanager StatefulSet ##
 ##############################
+{{- if .Values.global.controlplane.enabled }}
 kind: StatefulSet
 apiVersion: apps/v1
 metadata:
@@ -181,3 +182,4 @@ spec:
             storage: {{ .Values.persistence.size }}
         {{ include "alertmanager.storageClass" . }}
   {{- end }}
+{{- end }}
