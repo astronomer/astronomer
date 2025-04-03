@@ -657,3 +657,16 @@ class TestElasticSearch:
         for doc in docs:
             assert "persistentVolumeClaimRetentionPolicy" in doc["spec"]
             assert test_persistentVolumeClaimRetentionPolicy == doc["spec"]["persistentVolumeClaimRetentionPolicy"]
+
+
+    def test_astronomer_registry_statefulset_with_scc_disabled(self, kube_version):
+        """Test that helm renders scc template for astronomer
+        elasticsearch with SA disabled."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={},
+            show_only=[
+                "charts/elasticsearch/templates/es-scc.yaml",
+            ],
+        )
+        assert len(docs) == 0
