@@ -1,6 +1,7 @@
 ##############################
 ## Astronomer UI Deployment ##
 ##############################
+{{- if .Values.global.controlplane.enabled}}
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -102,4 +103,5 @@ spec:
       volumes:
 {{- if .Values.astroUI.extraVolumes }}
 {{- tpl (toYaml .Values.astroUI.extraVolumes) $ | nindent 8 }}
+{{- end }}
 {{- end }}
