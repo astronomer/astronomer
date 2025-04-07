@@ -1,6 +1,7 @@
 #####################################
 ## Astronomer Commander Deployment ##
 #####################################
+{{- if .Values.global.dataplane.enabled }}
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -133,4 +134,5 @@ spec:
       volumes:
 {{- if .Values.commander.extraVolumes }}
 {{- tpl (toYaml .Values.commander.extraVolumes) $ | nindent 8 }}
+{{- end }}
 {{- end }}
