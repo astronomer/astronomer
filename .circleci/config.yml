@@ -474,6 +474,7 @@ workflows:
             branches:
               only:
                 - '/^release-0\.\d+$/'
+                - issue_7060
       - release-to-internal:
           context:
             - gcp-astronomer-prod
