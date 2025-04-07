@@ -1,7 +1,7 @@
 #################################
 ## Astronomer Registry Ingress ##
 #################################
-{{- if and .Values.global.baseDomain .Values.global.enablePerHostIngress  }}
+{{- if and .Values.global.baseDomain .Values.global.enablePerHostIngress .Values.global.controlplane.enabled }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:

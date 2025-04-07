@@ -1,7 +1,7 @@
 #################################
 ## Astronomer Registry Service ##
 #################################
-{{- if .Values.global.baseDomain }}
+{{- if and .Values.global.baseDomain .Values.global.controlplane.enabled }}
 kind: Service
 apiVersion: v1
 metadata:

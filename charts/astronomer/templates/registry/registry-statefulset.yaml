@@ -1,7 +1,7 @@
 #####################################
 ## Astronomer Registry StatefulSet ##
 #####################################
-{{- if .Values.global.baseDomain }}
+{{- if and .Values.global.baseDomain .Values.global.controlplane.enabled }}
 {{- if or .Values.registry.gcs.enabled .Values.registry.azure.enabled .Values.registry.s3.enabled }}
 kind: Deployment
 apiVersion: apps/v1
