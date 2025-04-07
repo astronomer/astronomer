@@ -1,6 +1,7 @@
 #################################
 ## Prometheus Role/ClusterRole ##
 #################################
+{{- if .Values.global.dataplane.enabled }}
 {{- $singleNamespace := .Values.global.singleNamespace }}
 {{- $prometheusRBACresources := and .Values.rbac.role.create (eq .Values.rbac.role.kind "Role") }}
 {{- $useClusterRoles := and .Values.global.rbacEnabled .Values.global.clusterRoles (not (eq .Values.rbac.role.kind "Role") ) }}
@@ -37,4 +38,5 @@ rules:
     verbs:
       - "get"
   {{- end }}
+{{- end }}
 {{- end }}

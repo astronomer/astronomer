@@ -41,6 +41,7 @@ spec:
 ## Prometheus Service
 ## load balancing between all pods
 #################################
+{{- if .Values.global.dataplane.enabled }}
 kind: Service
 apiVersion: v1
 metadata:
@@ -70,3 +71,4 @@ spec:
       port: {{ .Values.global.authSidecar.port }}
       appProtocol: tcp
     {{- end}}
+{{- end }}

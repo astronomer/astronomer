@@ -1,7 +1,7 @@
 ########################
 ## Prometheus Ingress ##
 ########################
-{{- if .Values.global.baseDomain }}
+{{- if and .Values.global.baseDomain .Values.global.dataplane.enabled }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:
