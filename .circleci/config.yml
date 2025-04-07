@@ -482,6 +482,7 @@ workflows:
             branches:
               only:
                 - '/^release-0\.\d+$/'
+                - issue_7060
           requires:
             - approve-internal-release
             - platform-1-29-14
