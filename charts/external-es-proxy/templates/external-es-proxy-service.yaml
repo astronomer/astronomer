@@ -1,6 +1,7 @@
 #################################
 ## Elasticsearch Proxy Service ##
 #################################
+{{- if .Values.global.controlplane.enabled}}
 apiVersion: v1
 kind: Service
 metadata:
@@ -26,3 +27,4 @@ spec:
     tier: external-logging
     component: {{ template "external-es-proxy.name" . }}
     release: {{ .Release.Name }}
+{{- end }}

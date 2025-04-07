@@ -1,6 +1,7 @@
 ####################################
 ## Elasticsearch Proxy Deployment ##
 ####################################
+{{- if .Values.global.controlplane.enabled}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -163,3 +164,4 @@ spec:
           secret:
             secretName: {{ .Values.global.customLogging.awsSecretName }}
         {{- end}}
+{{- end }}

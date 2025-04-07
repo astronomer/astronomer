@@ -1,6 +1,7 @@
 ###################################
 ## Elasticsearch Proxy ConfigMap ##
 ###################################
+{{- if .Values.global.controlplane.enabled}}
 kind: ConfigMap
 apiVersion: v1
 metadata:
@@ -21,3 +22,4 @@ data:
         local api_key = os.getenv("ES_SECRET_NAME")
         return ngx.req.set_header("Authorization", string.format("Basic %s", ngx.encode_base64(api_key)))
     end
+{{- end }}
