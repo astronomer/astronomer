@@ -23,8 +23,6 @@ def check_requirements():
         print("Error: cosign is not installed. Please install it first.")
         print("Visit https://github.com/sigstore/cosign for installation instructions.")
         sys.exit(1)
-
-    # Check for Python dependencies
     try:
         import importlib.util
 
@@ -44,7 +42,6 @@ def write_key_file(env_var_name, file_path):
     if not encoded_key:
         print(f"Error: Environment variable {env_var_name} not found.")
         sys.exit(1)
-
     try:
         decoded_key = base64.b64decode(encoded_key)
         with open(file_path, "wb") as key_file:
@@ -56,35 +53,59 @@ def write_key_file(env_var_name, file_path):
         sys.exit(1)
 
 
+def docker_image_exists(repository, tag):
+    """Check if an image exists in Docker Hub."""
+    if "quay.io/astronomer/" in repository:
+        # Convert quay.io repository to Docker Hub format
+        dockerhub_repo = repository.replace("quay.io/astronomer/", "astronomerinc/")
+        # Check if the image exists on Docker Hub
+        try:
+            # Use Docker Hub API to check if the image exists
+            dockerhub_api_url = f"https://hub.docker.com/v2/repositories/{dockerhub_repo}/tags/{tag}"
+            response = requests.head(dockerhub_api_url, timeout=100)
+            return response.status_code == 200
+        except requests.RequestException:
+            return False
+    return False
+
+
 def sign_image(repo, tag, sha, key_path, password=None):
     """Sign a container image with cosign."""
     full_image = f"{repo}:{tag}"
     digest_reference = f"{full_image}@sha256:{sha}"
 
     print(f"Signing image: {full_image} with SHA: {sha}")
-
-    try:
-        subprocess.run(
-            ["cosign", "verify", "--insecure-ignore-tlog", "--key", f"{key_path}.pub", digest_reference],
-            check=True,
-            capture_output=True,
-        )
-        print(f"Image already signed: {full_image}")
-        return
-    except subprocess.CalledProcessError:
-        pass  # Image is not yet signed
-
     env = os.environ.copy()
     if password:
         env["COSIGN_PASSWORD"] = password
-
-    sign_cmd = ["cosign", "sign", "--key", key_path, digest_reference]
-    try:
-        subprocess.run(sign_cmd, env=env, check=True)
-        print(f"✓ Signed {full_image}")
-    except subprocess.CalledProcessError as e:
-        print(f"Error signing {full_image}: {e}")
-        sys.exit(1)
+    repositories_to_sign = [repo]
+    # Checking if the Docker Hub version exists
+    if "quay.io/astronomer/" in repo and docker_image_exists(repo, tag):
+        # Replace quay.io with Docker Hub repository
+        dockerhub_repo = repo.replace("quay.io/astronomer/", "astronomerinc/")
+        repositories_to_sign.append(dockerhub_repo)
+        print(f"Found matching Docker Hub image: {dockerhub_repo}:{tag}")
+    for repository in repositories_to_sign:
+        full_image = f"{repository}:{tag}"
+        digest_reference = f"{full_image}@sha256:{sha}"
+        try:
+            subprocess.run(
+                ["cosign", "verify", "--insecure-ignore-tlog", "--key", f"{key_path}.pub", digest_reference],
+                check=True,
+                capture_output=True,
+            )
+            print(f"Image already signed: {full_image}")
+            continue  # Skip if already signed
+        except subprocess.CalledProcessError:
+            pass  # Image is not yet signed
+        sign_cmd = ["cosign", "sign", "--key", key_path, digest_reference]
+        try:
+            subprocess.run(sign_cmd, env=env, check=True)
+            print(f"✓ Signed {full_image}")
+        except subprocess.CalledProcessError as e:
+            print(f"Error signing {full_image}: {e}")
+            # Continue with other images instead of exiting
+            continue
 
 
 def main():
@@ -94,12 +115,11 @@ def main():
 
     check_requirements()
 
-    # Create temporary directory for key files
+    # Creating temporary directory for key files
     with tempfile.TemporaryDirectory() as temp_dir:
         private_key_path = os.path.join(temp_dir, "cosign.key")
         public_key_path = os.path.join(temp_dir, "cosign.key.pub")
 
-        # Write keys to temporary files
         print("Writing private key to temporary file...")
         write_key_file("COSIGN_PRIVATE_KEY", private_key_path)
 
@@ -129,8 +149,8 @@ def main():
         json_url = f"https://updates.astronomer.io/astronomer-software/releases/astronomer-{version}.json"
         try:
             print(f"Fetching data from {json_url}...")
-            response = requests.get(json_url, timeout=30)  # Added 30-second timeout
-            response.raise_for_status()  # Raise exception for HTTP errors
+            response = requests.get(json_url, timeout=100)
+            response.raise_for_status()
             data = response.json()
             print("Successfully fetched data from URL")
         except (requests.RequestException, json.JSONDecodeError) as e:
