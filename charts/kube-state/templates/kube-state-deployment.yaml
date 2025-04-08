@@ -1,6 +1,7 @@
 ###########################
 ## Kube State Deployment ##
 ###########################
+{{- if .Values.global.dataplane.enabled }}
 {{- $useRoles := or .Values.global.features.namespacePools.enabled .Values.global.singleNamespace }}
 {{- $namespaces := .Values.global.features.namespacePools.namespaces.names }}
 {{- $namespaces = append $namespaces .Release.Namespace }}
@@ -81,3 +82,4 @@ spec:
           timeoutSeconds: 5
         {{- end }}
         resources: {{ toYaml .Values.resources | nindent 12 }}
+{{- end }}

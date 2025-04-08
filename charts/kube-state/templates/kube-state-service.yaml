@@ -1,6 +1,7 @@
 ########################
 ## Kube State Service ##
 ########################
+{{- if .Values.global.dataplane.enabled }}
 kind: Service
 apiVersion: v1
 metadata:
@@ -31,3 +32,4 @@ spec:
     tier: {{ template "kube-state.name" . }}
     component: kube-state
     release: {{ .Release.Name }}
+{{- end }}
