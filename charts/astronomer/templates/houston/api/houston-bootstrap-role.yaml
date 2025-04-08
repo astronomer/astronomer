@@ -1,7 +1,7 @@
 ############################
 ## Houston Bootstrap Role ##
 ############################
-{{- if and .Values.global.rbacEnabled (and (not .Values.houston.backendSecretName) (not .Values.houston.backendConnection)) }}
+{{- if and .Values.global.rbacEnabled .Values.global.controlplane.enabled (and (not .Values.houston.backendSecretName) (not .Values.houston.backendConnection)) }}
 kind: Role
 apiVersion: {{ template "apiVersion.rbac" . }}
 metadata:

@@ -1,7 +1,7 @@
 #####################
 ## Houston Ingress ##
 #####################
-{{- if .Values.global.baseDomain }}
+{{- if and .Values.global.baseDomain .Values.global.controlplane.enabled }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:

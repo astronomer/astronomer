@@ -1,7 +1,7 @@
 ###############################################
 ## Houston Cleanup Deploy Revisions CronJob
 ###############################################
-{{- if .Values.houston.cleanupDeployRevisions.enabled }}
+{{- if and .Values.houston.cleanupDeployRevisions.enabled .Values.global.controlplane.enabled }}
 apiVersion: {{ include "apiVersion.batch.cronjob" . }}
 kind: CronJob
 metadata:

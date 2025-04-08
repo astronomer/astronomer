@@ -1,7 +1,7 @@
 ########################################
 ## Houston Populate Daily Task Metrics CronJob
 ########################################
-{{- if .Values.global.taskUsageMetricsEnabled }}
+{{- if and .Values.global.taskUsageMetricsEnabled .Values.global.controlplane.enabled }}
 apiVersion: {{ include "apiVersion.batch.cronjob" . }}
 kind: CronJob
 metadata:

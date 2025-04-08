@@ -1,7 +1,7 @@
 ################################
 ## Houston Airflow Db Cleanup CronJob
 ################################
-{{- if .Values.houston.cleanupAirflowDb.enabled }}
+{{- if and .Values.houston.cleanupAirflowDb.enabled .Values.global.controlplane.enabled }}
 apiVersion: {{ include "apiVersion.batch.cronjob" . }}
 kind: CronJob
 metadata:

@@ -1,6 +1,7 @@
 ##################################
 ## Astronomer Houston ConfigMap ##
 ##################################
+{{- if .Values.global.controlplane.enabled }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -621,3 +622,4 @@ data:
   # These are any user-specified config overrides.
   local-production.yaml: |
 {{ toYaml .Values.houston.config | indent 4 }}
+{{- end }}
