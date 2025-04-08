@@ -53,22 +53,6 @@ def write_key_file(env_var_name, file_path):
         sys.exit(1)
 
 
-def docker_image_exists(repository, tag):
-    """Check if an image exists in Docker Hub."""
-    if "quay.io/astronomer/" in repository:
-        # Convert quay.io repository to Docker Hub format
-        dockerhub_repo = repository.replace("quay.io/astronomer/", "astronomerinc/")
-        # Check if the image exists on Docker Hub
-        try:
-            # Use Docker Hub API to check if the image exists
-            dockerhub_api_url = f"https://hub.docker.com/v2/repositories/{dockerhub_repo}/tags/{tag}"
-            response = requests.head(dockerhub_api_url, timeout=100)
-            return response.status_code == 200
-        except requests.RequestException:
-            return False
-    return False
-
-
 def sign_image(repo, tag, sha, key_path, password=None):
     """Sign a container image with cosign."""
     full_image = f"{repo}:{tag}"
@@ -78,34 +62,24 @@ def sign_image(repo, tag, sha, key_path, password=None):
     env = os.environ.copy()
     if password:
         env["COSIGN_PASSWORD"] = password
-    repositories_to_sign = [repo]
-    # Checking if the Docker Hub version exists
-    if "quay.io/astronomer/" in repo and docker_image_exists(repo, tag):
-        # Replace quay.io with Docker Hub repository
-        dockerhub_repo = repo.replace("quay.io/astronomer/", "astronomerinc/")
-        repositories_to_sign.append(dockerhub_repo)
-        print(f"Found matching Docker Hub image: {dockerhub_repo}:{tag}")
-    for repository in repositories_to_sign:
-        full_image = f"{repository}:{tag}"
-        digest_reference = f"{full_image}@sha256:{sha}"
-        try:
-            subprocess.run(
-                ["cosign", "verify", "--insecure-ignore-tlog", "--key", f"{key_path}.pub", digest_reference],
-                check=True,
-                capture_output=True,
-            )
-            print(f"Image already signed: {full_image}")
-            continue  # Skip if already signed
-        except subprocess.CalledProcessError:
-            pass  # Image is not yet signed
-        sign_cmd = ["cosign", "sign", "--key", key_path, digest_reference]
-        try:
-            subprocess.run(sign_cmd, env=env, check=True)
-            print(f"✓ Signed {full_image}")
-        except subprocess.CalledProcessError as e:
-            print(f"Error signing {full_image}: {e}")
-            # Continue with other images instead of exiting
-            continue
+
+    try:
+        subprocess.run(
+            ["cosign", "verify", "--insecure-ignore-tlog", "--key", f"{key_path}.pub", digest_reference],
+            check=True,
+            capture_output=True,
+        )
+        print(f"Image already signed: {full_image}")
+        return  # Skip if already signed
+    except subprocess.CalledProcessError:
+        pass  # Image is not yet signed
+
+    sign_cmd = ["cosign", "sign", "--key", key_path, digest_reference]
+    try:
+        subprocess.run(sign_cmd, env=env, check=True)
+        print(f"✓ Signed {full_image}")
+    except subprocess.CalledProcessError as e:
+        print(f"Error signing {full_image}: {e}")
 
 
 def main():
