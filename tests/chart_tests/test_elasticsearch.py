@@ -285,7 +285,7 @@ class TestElasticSearch:
         """Test that custom max body size is properly set."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"elasticsearch": {"nginx": {"maxBodySize": "200M"}}},
+            values={"elasticsearch": {"nginx": {"maxBodySize": "123456789M"}}},
             show_only=[
                 "charts/elasticsearch/templates/nginx/nginx-es-configmap.yaml",
             ],
@@ -294,7 +294,7 @@ class TestElasticSearch:
         assert len(docs) == 1
         doc = docs[0]
         nginx_config = " ".join(doc["data"]["nginx.conf"].split())
-        assert "client_max_body_size 200M" in nginx_config
+        assert "client_max_body_size 123456789M" in nginx_config
 
     def test_elastic_nginx_config_pattern_defaults_and_index_prefix_overrides(self, kube_version):
         """Test External Elasticsearch Service Index Pattern Search with index prefix overrides."""
