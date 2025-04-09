@@ -285,7 +285,7 @@ class TestElasticSearch:
         """Test that custom max body size is properly set."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"elasticsearch": {"nginx": {"proxy": {"maxBodySize": "200M"}}}},
+            values={"elasticsearch": {"nginx": {"maxBodySize": "200M"}}},
             show_only=[
                 "charts/elasticsearch/templates/nginx/nginx-es-configmap.yaml",
             ],

@@ -302,8 +302,7 @@ nginx:
   ingressClass: ~
   resources: {}
   securityContext: {}
-  proxy:
-    maxBodySize: "100M"
+  maxBodySize: "100M"
 
 # sysctl init container
 # Warning: sysctl changes affect the kernel, and thus, all containers running on the same node.
