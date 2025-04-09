@@ -61,7 +61,6 @@ spec:
           args:
             - "echo"
             - "DB ready"
-          resources: {{ toYaml .Values.houston.resources | nindent 12 }}
           env:
             - name: DATABASE_URL
               valueFrom:
