@@ -55,8 +55,6 @@ spec:
           args:
             - "echo"
             - "DB ready"
-          resources:
-{{ toYaml .Values.houston.resources | indent 12 }}
           env:
             - name: DATABASE_URL
               valueFrom:
