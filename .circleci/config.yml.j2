@@ -9,6 +9,7 @@ executors:
 orbs:
   slack: circleci/slack@4.10.1
   python: circleci/python@2.1.1
+  cosign: cpanato/cosign-orb@2.0.0
 
 parameters:
   scan-docker-images:
@@ -25,6 +26,44 @@ parameters:
     description: "This will trigger QA release workflow."
 
 jobs:
+  sign-released-image:
+    executor: docker-executor
+    steps:
+      - checkout
+      - setup_remote_docker:
+          docker_layer_caching: true
+          version: docker23
+      - cosign/install:
+          version: "2.2.2"
+      - run:
+          name: Login to docker registry
+          command: |
+            echo "$DOCKER_PASSWORD" | docker login --username $DOCKER_USERNAME --password-stdin docker.io
+            echo "$QUAY_PASSWORD" | docker login --username $QUAY_USERNAME --password-stdin quay.io
+      - run:
+          name: Set image tag to sign
+          command: |
+            set -xe
+            # Only sign tagged releases or specific QA releases
+            # For regular release job
+            if [ -n "$NEXT_TAG" ]; then
+              echo "export IMAGE_TAG=$NEXT_TAG" >> $BASH_ENV
+            # For custom QA release job
+            elif [ -n "$IMG_TAG" ]; then
+              echo "export IMAGE_TAG=$IMG_TAG" >> $BASH_ENV
+            else
+              echo "No specific release tag found, skipping image signing"
+              exit 0
+            fi
+      - run:
+          name: Install Python dependencies
+          command: pip install requests
+      - run:
+          name: Sign Docker images with cosign
+          command: |
+            # Execute the signing script with version from environment
+            python bin/sign-images.py --version "${IMAGE_TAG}"
+
   trivy-scan-docker:
     docker:
       - image: cimg/base:current-22.04
@@ -291,6 +330,18 @@ workflows:
         - << pipeline.parameters.scan-docker-images >>
         - not: << pipeline.parameters.qa-release >>
     jobs:
+      - sign-released-image:
+          name: sign-release-image
+          context:
+            - quay.io
+            - docker.io
+            - software-cosign-keys
+          requires:
+            - release
+          filters:
+            branches:
+              only:
+                - '/^release-0\.\d+$/'
       - trivy-scan-docker:
           report_url: << pipeline.parameters.scan-docker-images-report-url >>
           slack_notify: false
@@ -387,6 +438,18 @@ workflows:
             - github-repo
           requires:
             - approve-public-release
+          filters:
+            branches:
+              only:
+                - '/^release-0\.\d+$/'
+      - sign-released-image:
+          name: sign-release-image
+          context:
+            - quay.io
+            - docker.io
+            - software-cosign-keys
+          requires:
+            - release-to-public
           filters:
             branches:
               only:
