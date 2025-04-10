@@ -416,7 +416,7 @@ workflows:
                 - quay.io/astronomer/ap-git-sync-relay:0.1.11
                 - quay.io/astronomer/ap-git-sync:4.2.4
                 - quay.io/astronomer/ap-grafana:10.4.17
-                - quay.io/astronomer/ap-houston-api:0.37.10
+                - quay.io/astronomer/ap-houston-api:0.37.11
                 - quay.io/astronomer/ap-init:3.21.3-2
                 - quay.io/astronomer/ap-kibana:8.15.5
                 - quay.io/astronomer/ap-kube-state:2.15.0
@@ -434,7 +434,7 @@ workflows:
                 - quay.io/astronomer/ap-postgresql:16.6.0
                 - quay.io/astronomer/ap-prometheus:2.53.4
                 - quay.io/astronomer/ap-redis:7.4.2-1
-                - quay.io/astronomer/ap-registry:3.21.3-2
+                - quay.io/astronomer/ap-registry:3.0.0
                 - quay.io/astronomer/ap-statsd-exporter:0.28.0-2
                 - quay.io/astronomer/ap-vector:0.45.0-2
           context:
@@ -462,7 +462,7 @@ workflows:
                 - quay.io/astronomer/ap-git-sync-relay:0.1.11
                 - quay.io/astronomer/ap-git-sync:4.2.4
                 - quay.io/astronomer/ap-grafana:10.4.17
-                - quay.io/astronomer/ap-houston-api:0.37.10
+                - quay.io/astronomer/ap-houston-api:0.37.11
                 - quay.io/astronomer/ap-init:3.21.3-2
                 - quay.io/astronomer/ap-kibana:8.15.5
                 - quay.io/astronomer/ap-kube-state:2.15.0
@@ -480,7 +480,7 @@ workflows:
                 - quay.io/astronomer/ap-postgresql:16.6.0
                 - quay.io/astronomer/ap-prometheus:2.53.4
                 - quay.io/astronomer/ap-redis:7.4.2-1
-                - quay.io/astronomer/ap-registry:3.21.3-2
+                - quay.io/astronomer/ap-registry:3.0.0
                 - quay.io/astronomer/ap-statsd-exporter:0.28.0-2
                 - quay.io/astronomer/ap-vector:0.45.0-2
           context:
