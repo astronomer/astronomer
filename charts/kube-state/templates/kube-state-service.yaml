@@ -12,6 +12,7 @@ metadata:
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
+    plane: dataplane
   annotations:
     prometheus.io/scrape: "true"
     prometheus.io/port: {{ .Values.ports.scrape | quote }}

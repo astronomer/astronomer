@@ -17,6 +17,7 @@ metadata:
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
+    plane: dataplane
 spec:
   replicas: {{ .Values.replicas }}
   selector:
