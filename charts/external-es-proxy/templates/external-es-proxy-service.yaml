@@ -12,6 +12,7 @@ metadata:
     chart: {{ template "external-es-proxy.chart" . }}
     heritage: {{ .Release.Service }}
     release: {{ .Release.Name }}
+    plane: controlplane
 spec:
   type: {{ .Values.service.type }}
   ports:
