@@ -12,6 +12,7 @@ metadata:
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
+    plane: controlplane
 data:
   {{ if and .Values.houston.runtimeReleasesConfig ( not .Values.houston.runtimeReleasesConfigMapName ) }}
   astro_runtime_releases.json: |

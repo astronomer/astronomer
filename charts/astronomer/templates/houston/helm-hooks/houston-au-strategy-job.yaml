@@ -12,6 +12,7 @@ metadata:
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+    plane: controlplane
   annotations:
     # This is what defines this resource as a hook. Without this line, the
     # job is considered part of the release.

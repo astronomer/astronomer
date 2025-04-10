@@ -12,6 +12,7 @@ metadata:
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+    plane: controlplane
 spec:
   schedule: {{ .Values.houston.cleanupTaskUsageData.schedule }}
   concurrencyPolicy: Forbid

@@ -12,6 +12,7 @@ metadata:
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
+    plane: controlplane
 spec:
   replicas: {{ .Values.houston.worker.replicas }}
   selector:
