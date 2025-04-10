@@ -330,18 +330,6 @@ workflows:
         - << pipeline.parameters.scan-docker-images >>
         - not: << pipeline.parameters.qa-release >>
     jobs:
-      - sign-released-image:
-          name: sign-release-image
-          context:
-            - quay.io
-            - docker.io
-            - software-cosign-keys
-          requires:
-            - release
-          filters:
-            branches:
-              only:
-                - '/^release-0\.\d+$/'
       - trivy-scan-docker:
           report_url: << pipeline.parameters.scan-docker-images-report-url >>
           slack_notify: false
