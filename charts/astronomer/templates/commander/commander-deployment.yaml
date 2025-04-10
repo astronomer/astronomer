@@ -9,6 +9,7 @@ metadata:
   labels:
     component: commander
     tier: astronomer
+    plane: dataplane
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
