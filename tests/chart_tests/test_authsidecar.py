@@ -1,4 +1,3 @@
-import jmespath
 import pytest
 import yaml
 
@@ -55,7 +54,7 @@ class TestAuthSidecar:
         } in docs[2]["spec"]["ports"]
 
         assert "NetworkPolicy" == docs[3]["kind"]
-        assert [{"port": 8084, "protocol": "TCP"}] == jmespath.search("spec.ingress[*].ports[1]", docs[3])
+        assert any(x["ports"][1] == {"protocol": "TCP", "port": 8084} for x in docs[3]["spec"]["ingress"])
 
     def test_authSidecar_houston_with_custom_resources(self, kube_version):
         """Test custom resources are applied on Houston"""
@@ -128,7 +127,7 @@ class TestAuthSidecar:
         } in docs[2]["spec"]["ports"]
 
         assert "NetworkPolicy" == docs[3]["kind"]
-        assert [{"port": 8084, "protocol": "TCP"}] == jmespath.search("spec.ingress[*].ports[1]", docs[3])
+        assert any(x["ports"][1] == {"protocol": "TCP", "port": 8084} for x in docs[3]["spec"]["ingress"])
 
     def test_authSidecar_kibana(self, kube_version):
         """Test Kibana Service with authSidecar."""
@@ -165,7 +164,7 @@ class TestAuthSidecar:
         assert [
             {"namespaceSelector": {"matchLabels": {"network.openshift.io/policy-group": "ingress"}}},
         ] == docs[3]["spec"]["ingress"][0]["from"]
-        assert {"port": 8084, "protocol": "TCP"} in jmespath.search("spec.ingress[*].ports[0]", docs[3])
+        assert any(x["ports"][0] == {"protocol": "TCP", "port": 8084} for x in docs[3]["spec"]["ingress"])
 
     def test_authSidecar_kibana_with_ingress_allowed_namespaces(self, kube_version):
         """Test Kibana Service with authSidecar and allow some traffic namespaces."""
@@ -209,7 +208,7 @@ class TestAuthSidecar:
                 }
             },
         ] == docs[3]["spec"]["ingress"][0]["from"]
-        assert {"port": 8084, "protocol": "TCP"} in jmespath.search("spec.ingress[*].ports[0]", docs[3])
+        assert any(x["ports"][0] == {"protocol": "TCP", "port": 8084} for x in docs[3]["spec"]["ingress"])
 
     def test_authSidecar_kibana_with_ingress_allowed_namespaces_empty(self, kube_version):
         """Test Kibana Service with authSidecar and set no values in ingressAllowedNamespaces."""
@@ -246,7 +245,7 @@ class TestAuthSidecar:
         assert [
             {"namespaceSelector": {"matchLabels": {"network.openshift.io/policy-group": "ingress"}}},
         ] == docs[3]["spec"]["ingress"][0]["from"]
-        assert {"port": 8084, "protocol": "TCP"} in jmespath.search("spec.ingress[*].ports[0]", docs[3])
+        assert any(x["ports"][0] == {"protocol": "TCP", "port": 8084} for x in docs[3]["spec"]["ingress"])
 
     def test_authSidecar_houston_configmap_without_annotation(self, kube_version):
         """Test Houston Configmap with authSidecar."""
