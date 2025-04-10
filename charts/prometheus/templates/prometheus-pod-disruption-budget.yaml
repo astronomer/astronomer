@@ -1,7 +1,7 @@
 #################################################
 ## Astronomer Prometheus Pod Disruption Budget ##
 #################################################
-{{- if and .Values.global.podDisruptionBudgetsEnabled .Values.global.dataplane.enabled }}
+{{- if .Values.global.podDisruptionBudgetsEnabled }}
 apiVersion: {{ include "apiVersion.PodDisruptionBudget" . }}
 kind: PodDisruptionBudget
 metadata:

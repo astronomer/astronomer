@@ -10,7 +10,7 @@
 #   Things that are actionable and should be taken care of but do not need to wake someone up
 # Critical - goes to slack prod alerts channel and pager duty
 # Things that would impact uptime or customer experience and are worth waking up in the middle of the night
-{{- if .Values.global.dataplane.enabled }}
+
 kind: ConfigMap
 apiVersion: v1
 metadata:
@@ -1559,4 +1559,3 @@ data:
             summary: {{ printf "%q" "PostgreSQL high number of slow on {{ $labels.cluster }} for database {{ $labels.datname }} " }}
             description: {{ printf "%q" "PostgreSQL high number of slow queries {{ $labels.cluster }} for database {{ $labels.datname }} with a value of {{ $value }} " }}
       {{- end }}
-{{- end }}

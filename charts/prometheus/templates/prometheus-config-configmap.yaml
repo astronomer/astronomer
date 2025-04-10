@@ -1,7 +1,6 @@
 #################################
 ## Prometheus Config ConfigMap ##
 #################################
-{{- if .Values.global.dataplane.enabled }}
 {{- $useClusterRoles := and .Values.global.rbacEnabled .Values.global.clusterRoles (not (eq .Values.rbac.role.kind "Role") ) }}
 kind: ConfigMap
 apiVersion: v1
@@ -746,4 +745,3 @@ data:
     {{- with .Values.additionalScrapeJobs }}
     {{- toYaml . | nindent 6 }}
     {{- end }}
-{{- end }}
