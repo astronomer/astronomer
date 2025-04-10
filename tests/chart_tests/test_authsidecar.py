@@ -86,6 +86,7 @@ class TestAuthSidecar:
         expected_output = {
             "enabled": True,
             "repository": "someregistry.io/my-custom-image",
+            "ingressAllowedNamespaces": [],
             "tag": "my-custom-tag",
             "port": 8084,
             "pullPolicy": "IfNotPresent",
@@ -274,6 +275,7 @@ class TestAuthSidecar:
         expected_output = {
             "enabled": True,
             "repository": "someregistry.io/my-custom-image",
+            "ingressAllowedNamespaces": [],
             "tag": "my-custom-tag",
             "port": 8084,
             "pullPolicy": "IfNotPresent",
@@ -310,6 +312,7 @@ class TestAuthSidecar:
         expected_output = {
             "enabled": True,
             "repository": "someregistry.io/my-custom-image",
+            "ingressAllowedNamespaces": [],
             "tag": "my-custom-tag",
             "port": 8084,
             "pullPolicy": "IfNotPresent",
@@ -344,6 +347,44 @@ class TestAuthSidecar:
         prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
         expected_output = {
             "enabled": True,
+            "ingressAllowedNamespaces": [],
+            "repository": "someregistry.io/my-custom-image",
+            "tag": "my-custom-tag",
+            "port": 8084,
+            "pullPolicy": "IfNotPresent",
+            "securityContext": {
+                "runAsUser": 1000,
+            },
+            "resources": default_resource,
+            "annotations": {},
+        }
+        assert expected_output == prod["deployments"]["authSideCar"]
+
+    def test_authSidecar_houston_configmap_with_ingress_allowed_namespace(self, kube_version):
+        """Test Houston Configmap with authSidecar ingressAllowedNamespaces."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "authSidecar": {
+                        "enabled": True,
+                        "ingressAllowedNamespaces": ["astronomer", "ingress"],
+                        "repository": "someregistry.io/my-custom-image",
+                        "tag": "my-custom-tag",
+                        "securityContext": {"runAsUser": 1000},
+                    },
+                }
+            },
+            show_only=[
+                "charts/astronomer/templates/houston/houston-configmap.yaml",
+            ],
+        )
+
+        common_houston_config_test_cases(docs)
+        prod = yaml.safe_load(docs[0]["data"]["production.yaml"])
+        expected_output = {
+            "enabled": True,
+            "ingressAllowedNamespaces": ["astronomer", "ingress"],
             "repository": "someregistry.io/my-custom-image",
             "tag": "my-custom-tag",
             "port": 8084,
@@ -383,7 +424,9 @@ class TestAuthSidecar:
             } in namespaceSelectors
 
     def test_authSidecar_all_services_with_ingress_allowed_namespaces(self, kube_version):
-        """Test All Services with authSidecar and allow some traffic namespaces."""
+        """Test All Services with authSidecar and allow some traffic namespaces.
+        Only include networkpolicies that have the network.openshift.io/policy-group: ingress label"""
+
         docs = render_chart(
             kube_version=kube_version,
             values={"global": {"authSidecar": {"enabled": True, "ingressAllowedNamespaces": ["astro", "ingress-namespace"]}}},
