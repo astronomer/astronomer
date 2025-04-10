@@ -26,9 +26,6 @@ spec:
     - namespaceSelector:
         matchLabels:
           network.openshift.io/policy-group: ingress
-    - namespaceSelector:
-        matchLabels:
-          app.astronomer.io/allow-authsidecar-traffic: "true"
     {{- if .Values.global.authSidecar.ingressAllowedNamespaces }}
     - namespaceSelector:
         matchExpressions:

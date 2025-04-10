@@ -164,7 +164,6 @@ class TestAuthSidecar:
         assert "NetworkPolicy" == docs[3]["kind"]
         assert [
             {"namespaceSelector": {"matchLabels": {"network.openshift.io/policy-group": "ingress"}}},
-            {"namespaceSelector": {"matchLabels": {"app.astronomer.io/allow-authsidecar-traffic": "true"}}},
         ] == docs[3]["spec"]["ingress"][0]["from"]
         assert {"port": 8084, "protocol": "TCP"} in jmespath.search("spec.ingress[*].ports[0]", docs[3])
 
@@ -202,7 +201,6 @@ class TestAuthSidecar:
         assert "NetworkPolicy" == docs[3]["kind"]
         assert [
             {"namespaceSelector": {"matchLabels": {"network.openshift.io/policy-group": "ingress"}}},
-            {"namespaceSelector": {"matchLabels": {"app.astronomer.io/allow-authsidecar-traffic": "true"}}},
             {
                 "namespaceSelector": {
                     "matchExpressions": [
@@ -247,7 +245,6 @@ class TestAuthSidecar:
         assert "NetworkPolicy" == docs[3]["kind"]
         assert [
             {"namespaceSelector": {"matchLabels": {"network.openshift.io/policy-group": "ingress"}}},
-            {"namespaceSelector": {"matchLabels": {"app.astronomer.io/allow-authsidecar-traffic": "true"}}},
         ] == docs[3]["spec"]["ingress"][0]["from"]
         assert {"port": 8084, "protocol": "TCP"} in jmespath.search("spec.ingress[*].ports[0]", docs[3])
 
@@ -420,9 +417,6 @@ class TestAuthSidecar:
             assert "NetworkPolicy" == doc["kind"]
             namespaceSelectors = doc["spec"]["ingress"][0]["from"]
             assert {"namespaceSelector": {"matchLabels": {"network.openshift.io/policy-group": "ingress"}}} in namespaceSelectors
-            assert {
-                "namespaceSelector": {"matchLabels": {"app.astronomer.io/allow-authsidecar-traffic": "true"}}
-            } in namespaceSelectors
 
     def test_authSidecar_all_services_with_ingress_allowed_namespaces(self, kube_version):
         """Test All Services with authSidecar and allow some traffic namespaces.
@@ -448,9 +442,6 @@ class TestAuthSidecar:
             assert "NetworkPolicy" == doc["kind"]
             namespaceSelectors = doc["spec"]["ingress"][0]["from"]
             assert {"namespaceSelector": {"matchLabels": {"network.openshift.io/policy-group": "ingress"}}} in namespaceSelectors
-            assert {
-                "namespaceSelector": {"matchLabels": {"app.astronomer.io/allow-authsidecar-traffic": "true"}}
-            } in namespaceSelectors
             assert {
                 "namespaceSelector": {
                     "matchExpressions": [
