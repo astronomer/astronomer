@@ -861,3 +861,39 @@ def test_houston_configmap_with_custom_airflow_ingress_annotation_disabled_with_
     doc = docs[0]
     prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
     assert not prod_yaml["deployments"]["helm"].get("ingress")
+
+
+def test_houston_configmap_with_authsidecar_ingress_allowed_namespaces_undefined():
+    """Validate the houston configmap should have empty array for ingressAllowedNamespaces."""
+    docs = render_chart(
+        values={"global": {"authSidecar": {"enabled": True}}},
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    assert len(docs) == 1
+    doc = docs[0]
+    prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
+    assert prod_yaml["deployments"]["authSideCar"].get("ingressAllowedNamespaces") == []
+
+
+def test_houston_configmap_with_authsidecar_ingress_allowed_namespaces_is_empty():
+    """Validate the houston configmap should have empty array for ingressAllowedNamespaces."""
+    docs = render_chart(
+        values={"global": {"authSidecar": {"enabled": True, "ingressAllowedNamespaces": []}}},
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    assert len(docs) == 1
+    doc = docs[0]
+    prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
+    assert prod_yaml["deployments"]["authSideCar"].get("ingressAllowedNamespaces") == []
+
+
+def test_houston_configmap_with_authsidecar_ingress_allowed_namespaces():
+    """Validate the houston configmap should have values in ingressAllowedNamespaces."""
+    docs = render_chart(
+        values={"global": {"authSidecar": {"enabled": True, "ingressAllowedNamespaces": ["astronomer", "ingress-namespace"]}}},
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    assert len(docs) == 1
+    doc = docs[0]
+    prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
+    assert prod_yaml["deployments"]["authSideCar"].get("ingressAllowedNamespaces") == ["astronomer", "ingress-namespace"]
