@@ -13,7 +13,7 @@
   {{- $namespaces = append $namespaces .Release.Namespace }}
 {{- end }}
 
-{{- range $i, $namespaceName := $namespaces -}}
+{{- range $i, $namespaceName := $namespaces }}
 ---
 apiVersion: {{ template "apiVersion.rbac" . }}
 kind: {{ if $useClusterRoles }}ClusterRoleBinding{{ else }}RoleBinding{{ end }}
