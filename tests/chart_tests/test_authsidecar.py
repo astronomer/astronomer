@@ -44,15 +44,15 @@ class TestAuthSidecar:
         assert doc["metadata"]["name"] == "release-name-alertmanager"
         assert doc["spec"]["template"]["spec"]["containers"][1]["name"] == "auth-proxy"
 
-        assert jmespath.search("kind", docs[2]) == "Service"
-        assert jmespath.search("metadata.name", docs[2]) == "release-name-alertmanager"
-        assert jmespath.search("spec.type", docs[2]) == "ClusterIP"
+        assert "Service" == docs[2]["kind"]
+        assert "release-name-alertmanager" == docs[2]["metadata"]["name"]
+        assert "ClusterIP" == docs[2]["spec"]["type"]
         assert {
             "name": "auth-proxy",
             "protocol": "TCP",
             "port": 8084,
             "appProtocol": "tcp",
-        } in jmespath.search("spec.ports", docs[2])
+        } in docs[2]["spec"]["ports"]
 
         assert "NetworkPolicy" == docs[3]["kind"]
         assert [{"port": 8084, "protocol": "TCP"}] == jmespath.search("spec.ingress[*].ports[1]", docs[3])
@@ -117,15 +117,15 @@ class TestAuthSidecar:
         assert doc["metadata"]["name"] == "release-name-prometheus"
         assert "auth-proxy" == doc["spec"]["template"]["spec"]["containers"][0]["name"]
 
-        assert "Service" == jmespath.search("kind", docs[2])
-        assert "release-name-prometheus" == jmespath.search("metadata.name", docs[2])
-        assert "ClusterIP" == jmespath.search("spec.type", docs[2])
+        assert "Service" == docs[2]["kind"]
+        assert "release-name-prometheus" == docs[2]["metadata"]["name"]
+        assert "ClusterIP" == docs[2]["spec"]["type"]
         assert {
             "name": "auth-proxy",
             "protocol": "TCP",
             "port": 8084,
             "appProtocol": "tcp",
-        } in jmespath.search("spec.ports", docs[2])
+        } in docs[2]["spec"]["ports"]
 
         assert "NetworkPolicy" == docs[3]["kind"]
         assert [{"port": 8084, "protocol": "TCP"}] == jmespath.search("spec.ingress[*].ports[1]", docs[3])
@@ -151,21 +151,21 @@ class TestAuthSidecar:
         assert doc["metadata"]["name"] == "release-name-kibana"
         assert "auth-proxy" == doc["spec"]["template"]["spec"]["containers"][1]["name"]
 
-        assert "Service" == jmespath.search("kind", docs[2])
-        assert "release-name-kibana" == jmespath.search("metadata.name", docs[2])
-        assert "ClusterIP" == jmespath.search("spec.type", docs[2])
+        assert "Service" == docs[2]["kind"]
+        assert "release-name-kibana" == docs[2]["metadata"]["name"]
+        assert "ClusterIP" == docs[2]["spec"]["type"]
         assert {
             "name": "auth-proxy",
             "protocol": "TCP",
             "port": 8084,
             "appProtocol": "tcp",
-        } in jmespath.search("spec.ports", docs[2])
+        } in docs[2]["spec"]["ports"]
 
         assert "NetworkPolicy" == docs[3]["kind"]
         assert [
             {"namespaceSelector": {"matchLabels": {"network.openshift.io/policy-group": "ingress"}}},
             {"namespaceSelector": {"matchLabels": {"app.astronomer.io/allow-authsidecar-traffic": "true"}}},
-        ] == jmespath.search("spec.ingress[0].from", docs[3])
+        ] == docs[3]["spec"]["ingress"][0]["from"]
         assert {"port": 8084, "protocol": "TCP"} in jmespath.search("spec.ingress[*].ports[0]", docs[3])
 
     def test_authSidecar_kibana_with_ingress_allowed_namespaces(self, kube_version):
@@ -189,15 +189,15 @@ class TestAuthSidecar:
         assert doc["metadata"]["name"] == "release-name-kibana"
         assert "auth-proxy" == doc["spec"]["template"]["spec"]["containers"][1]["name"]
 
-        assert "Service" == jmespath.search("kind", docs[2])
-        assert "release-name-kibana" == jmespath.search("metadata.name", docs[2])
-        assert "ClusterIP" == jmespath.search("spec.type", docs[2])
+        assert "Service" == docs[2]["kind"]
+        assert "release-name-kibana" == docs[2]["metadata"]["name"]
+        assert "ClusterIP" == docs[2]["spec"]["type"]
         assert {
             "name": "auth-proxy",
             "protocol": "TCP",
             "port": 8084,
             "appProtocol": "tcp",
-        } in jmespath.search("spec.ports", docs[2])
+        } in docs[2]["spec"]["ports"]
 
         assert "NetworkPolicy" == docs[3]["kind"]
         assert [
@@ -210,7 +210,7 @@ class TestAuthSidecar:
                     ]
                 }
             },
-        ] == jmespath.search("spec.ingress[0].from", docs[3])
+        ] == docs[3]["spec"]["ingress"][0]["from"]
         assert {"port": 8084, "protocol": "TCP"} in jmespath.search("spec.ingress[*].ports[0]", docs[3])
 
     def test_authSidecar_kibana_with_ingress_allowed_namespaces_empty(self, kube_version):
@@ -234,21 +234,21 @@ class TestAuthSidecar:
         assert doc["metadata"]["name"] == "release-name-kibana"
         assert "auth-proxy" == doc["spec"]["template"]["spec"]["containers"][1]["name"]
 
-        assert "Service" == jmespath.search("kind", docs[2])
-        assert "release-name-kibana" == jmespath.search("metadata.name", docs[2])
-        assert "ClusterIP" == jmespath.search("spec.type", docs[2])
+        assert "Service" == docs[2]["kind"]
+        assert "release-name-kibana" == docs[2]["metadata"]["name"]
+        assert "ClusterIP" == docs[2]["spec"]["type"]
         assert {
             "name": "auth-proxy",
             "protocol": "TCP",
             "port": 8084,
             "appProtocol": "tcp",
-        } in jmespath.search("spec.ports", docs[2])
+        } in docs[2]["spec"]["ports"]
 
         assert "NetworkPolicy" == docs[3]["kind"]
         assert [
             {"namespaceSelector": {"matchLabels": {"network.openshift.io/policy-group": "ingress"}}},
             {"namespaceSelector": {"matchLabels": {"app.astronomer.io/allow-authsidecar-traffic": "true"}}},
-        ] == jmespath.search("spec.ingress[0].from", docs[3])
+        ] == docs[3]["spec"]["ingress"][0]["from"]
         assert {"port": 8084, "protocol": "TCP"} in jmespath.search("spec.ingress[*].ports[0]", docs[3])
 
     def test_authSidecar_houston_configmap_without_annotation(self, kube_version):
@@ -398,7 +398,8 @@ class TestAuthSidecar:
         assert expected_output == prod["deployments"]["authSideCar"]
 
     def test_authSidecar_with_ingress_allowed_namespaces_empty(self, kube_version):
-        """Test All Services with authSidecar and set no values in ingressAllowedNamespaces."""
+        """Test All Services with authSidecar and set no values in ingressAllowedNamespaces.
+        Only include networkpolicies that have the network.openshift.io/policy-group: ingress label."""
         docs = render_chart(
             kube_version=kube_version,
             values={"global": {"authSidecar": {"enabled": True, "ingressAllowedNamespaces": []}}},
@@ -417,7 +418,7 @@ class TestAuthSidecar:
 
         for doc in docs:
             assert "NetworkPolicy" == doc["kind"]
-            namespaceSelectors = jmespath.search("spec.ingress[0].from", doc)
+            namespaceSelectors = doc["spec"]["ingress"][0]["from"]
             assert {"namespaceSelector": {"matchLabels": {"network.openshift.io/policy-group": "ingress"}}} in namespaceSelectors
             assert {
                 "namespaceSelector": {"matchLabels": {"app.astronomer.io/allow-authsidecar-traffic": "true"}}
@@ -445,7 +446,7 @@ class TestAuthSidecar:
 
         for doc in docs:
             assert "NetworkPolicy" == doc["kind"]
-            namespaceSelectors = jmespath.search("spec.ingress[0].from", doc)
+            namespaceSelectors = doc["spec"]["ingress"][0]["from"]
             assert {"namespaceSelector": {"matchLabels": {"network.openshift.io/policy-group": "ingress"}}} in namespaceSelectors
             assert {
                 "namespaceSelector": {"matchLabels": {"app.astronomer.io/allow-authsidecar-traffic": "true"}}
