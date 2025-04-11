@@ -115,6 +115,7 @@ data:
       {{- $authSidecar := include "authSidecar.image" . }}
       authSideCar:
         enabled: true
+        ingressAllowedNamespaces: {{ default (list) .Values.global.authSidecar.ingressAllowedNamespaces | toJson }}
         repository: {{ (splitList ":"  $authSidecar ) | first  }}
         tag: {{ (splitList ":"  $authSidecar ) | last  }}
         port: {{ .Values.global.authSidecar.port }}
