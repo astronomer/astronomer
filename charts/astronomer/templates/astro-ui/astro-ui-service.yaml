@@ -1,7 +1,7 @@
 ###########################
 ## Astronomer UI Service ##
 ###########################
-{{- if .Values.global.controlplane.enabled}}
+{{- if .Values.global.controlplane.enabled }}
 kind: Service
 apiVersion: v1
 metadata:
