@@ -18,11 +18,6 @@
 {{- include "blackbox.registryNetPol" . }}
 {{- end}}
 
-{{- if .Values.astroServices.grafana.enabled }}
----
-{{- include "blackbox.grafanaNetPol" . }}
-{{- end}}
-
 {{- if .Values.astroServices.elasticsearch.enabled }}
 ---
 {{- include "blackbox.esClientNetPol" . }}

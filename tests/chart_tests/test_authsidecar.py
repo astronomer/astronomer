@@ -404,13 +404,12 @@ class TestAuthSidecar:
                 "charts/astronomer/templates/astro-ui/astro-ui-networkpolicy.yaml",
                 "charts/astronomer/templates/houston/api/houston-networkpolicy.yaml",
                 "charts/astronomer/templates/registry/registry-networkpolicy.yaml",
-                "charts/grafana/templates/grafana-networkpolicy.yaml",
                 "charts/kibana/templates/kibana-networkpolicy.yaml",
                 "charts/prometheus/templates/prometheus-networkpolicy.yaml",
             ],
         )
 
-        assert len(docs) == 7
+        assert len(docs) == 6
 
         for doc in docs:
             assert "NetworkPolicy" == doc["kind"]
@@ -429,13 +428,12 @@ class TestAuthSidecar:
                 "charts/astronomer/templates/astro-ui/astro-ui-networkpolicy.yaml",
                 "charts/astronomer/templates/houston/api/houston-networkpolicy.yaml",
                 "charts/astronomer/templates/registry/registry-networkpolicy.yaml",
-                "charts/grafana/templates/grafana-networkpolicy.yaml",
                 "charts/kibana/templates/kibana-networkpolicy.yaml",
                 "charts/prometheus/templates/prometheus-networkpolicy.yaml",
             ],
         )
 
-        assert len(docs) == 7
+        assert len(docs) == 6
 
         for doc in docs:
             assert "NetworkPolicy" == doc["kind"]

@@ -68,9 +68,6 @@ pod_manager_data = {
         },
     },
     "charts/fluentd/templates/fluentd-daemonset.yaml": {"fluentd": default_probes},
-    "charts/grafana/templates/grafana-deployment.yaml": {
-        "grafana": {**default_probes, "waitForDB": default_probes, "bootstrapper": default_probes},
-    },
     "charts/kibana/templates/kibana-deployment.yaml": {
         "kibana": default_probes,
         "global": {"authSidecar": {"enabled": True, **default_probes}},
@@ -220,12 +217,6 @@ class TestDefaultProbes:
             "successThreshold": 1,
             "timeoutSeconds": 5,
         },
-        "grafana_auth-proxy": {
-            "httpGet": {"path": "/healthz", "port": 8084, "scheme": "HTTP"},
-            "initialDelaySeconds": 10,
-            "periodSeconds": 10,
-        },
-        "grafana_grafana": {"httpGet": {"path": "/api/health", "port": 3000}, "initialDelaySeconds": 10, "periodSeconds": 10},
         "houston_houston": {
             "httpGet": {"path": "/v1/healthz", "port": 8871},
             "initialDelaySeconds": 30,
@@ -323,12 +314,6 @@ class TestDefaultProbes:
             "httpGet": {"path": "/_cluster/health?local=true", "port": 9200},
             "initialDelaySeconds": 5,
         },
-        "grafana_auth-proxy": {
-            "httpGet": {"path": "/healthz", "port": 8084, "scheme": "HTTP"},
-            "initialDelaySeconds": 10,
-            "periodSeconds": 10,
-        },
-        "grafana_grafana": {"httpGet": {"path": "/api/health", "port": 3000}, "initialDelaySeconds": 10, "periodSeconds": 10},
         "houston_houston": {
             "httpGet": {"path": "/v1/healthz", "port": 8871},
             "initialDelaySeconds": 30,

@@ -12,7 +12,6 @@ show_only = [
     "charts/fluentd/templates/fluentd-networkpolicy.yaml",
     "charts/kibana/templates/kibana-networkpolicy.yaml",
     "charts/alertmanager/templates/alertmanager-networkpolicy.yaml",
-    "charts/grafana/templates/grafana-networkpolicy.yaml",
     "charts/stan/templates/stan-networkpolicy.yaml",
     "charts/nats/templates/networkpolicy.yaml",
     "charts/astronomer/templates/commander/commander-networkpolicy.yaml",
@@ -49,7 +48,7 @@ def test_networkpolicy_disabled():
     assert not [x for x in docs if x["kind"] == "NetworkPolicy"]
 
 
-@pytest.mark.parametrize("np_enabled, num_of_docs", [(True, 30), (False, 0)])
+@pytest.mark.parametrize("np_enabled, num_of_docs", [(True, 28), (False, 0)])
 def test_networkpolicy_enabled(np_enabled, num_of_docs):
     """Test some things that should apply to all cases."""
     docs = render_chart(

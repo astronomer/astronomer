@@ -25,10 +25,6 @@ dependencies:
     condition: global.alertmanagerEnabled
     tags:
       - monitoring
-  - name: grafana
-    condition: global.grafanaEnabled
-    tags:
-      - monitoring
   - name: kube-state
     condition: global.kubeStateEnabled
     tags:

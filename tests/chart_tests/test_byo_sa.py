@@ -65,7 +65,6 @@ class TestServiceAccounts:
             },
             "nats": {"nats": {"serviceAccount": {"create": "true", "name": "nats-test"}}},
             "stan": {"stan": {"serviceAccount": {"create": "true", "name": "stan-test"}}},
-            "grafana": {"serviceAccount": {"create": "true", "name": "grafana-test"}},
             "alertmanager": {"serviceAccount": {"create": "true", "name": "alertmanager-test"}},
             "kibana": {"serviceAccount": {"create": "true", "name": "kibana-test"}},
             "prometheus-blackbox-exporter": {"serviceAccount": {"create": "true", "name": "blackbox-test"}},
@@ -81,21 +80,19 @@ class TestServiceAccounts:
                 "charts/astronomer/templates/astro-ui/astro-ui-serviceaccount.yaml",
                 "charts/nats/templates/nats-serviceaccount.yaml",
                 "charts/stan/templates/stan-serviceaccount.yaml",
-                "charts/grafana/templates/grafana-bootstrap-serviceaccount.yaml",
                 "charts/alertmanager/templates/alertmanager-serviceaccount.yaml",
                 "charts/kibana/templates/kibana-serviceaccount.yaml",
                 "charts/prometheus-blackbox-exporter/templates/blackbox-serviceaccount.yaml",
             ],
         )
 
-        assert len(docs) == 11
+        assert len(docs) == 10
         expected_names = {
             "commander-test",
             "registry-test",
             "configsyncer-test",
             "houston-test",
             "astroui-test",
-            "grafana-test",
             "alertmanager-test",
             "kibana-test",
             "blackbox-test",
@@ -122,7 +119,6 @@ class TestServiceAccounts:
             },
             "nats": {"nats": {"serviceAccount": {"create": False}}},
             "stan": {"stan": {"serviceAccount": {"create": False}}},
-            "grafana": {"serviceAccount": {"create": False}},
             "alertmanager": {"serviceAccount": {"create": False}},
             "kibana": {"serviceAccount": {"create": False}},
             "prometheus-blackbox-exporter": {"serviceAccount": {"create": False}},
@@ -170,7 +166,6 @@ class TestServiceAccounts:
             },
             "nats": {"nats": {"serviceAccount": {"create": True, "annotations": annotations}}},
             "stan": {"stan": {"serviceAccount": {"create": True, "annotations": annotations}}},
-            "grafana": {"serviceAccount": {"create": True, "annotations": annotations}},
             "alertmanager": {"serviceAccount": {"create": True, "annotations": annotations}},
             "kibana": {"serviceAccount": {"create": True, "annotations": annotations}},
             "prometheus-blackbox-exporter": {"serviceAccount": {"create": True, "annotations": annotations}},
@@ -214,7 +209,6 @@ class TestServiceAccounts:
             "fluentd": {"serviceAccount": {"name": "fluentd-test"}},
             "prometheus": {"serviceAccount": {"name": "prometheus-test"}},
             "nginx": {"serviceAccount": {"name": "nginx-test"}},
-            "grafana": {"serviceAccount": {"name": "grafana-test"}},
         }
         docs = render_chart(
             kube_version=kube_version,
@@ -227,11 +221,10 @@ class TestServiceAccounts:
                 "charts/fluentd/templates/fluentd-clusterrolebinding.yaml",
                 "charts/prometheus/templates/prometheus-rolebinding.yaml",
                 "charts/nginx/templates/nginx-rolebinding.yaml",
-                "charts/grafana/templates/grafana-bootstrap-rolebinding.yaml",
             ],
         )
 
-        assert len(docs) == 8
+        assert len(docs) == 7
 
         expected_names = {
             "commander-test",
@@ -241,7 +234,6 @@ class TestServiceAccounts:
             "fluentd-test",
             "prometheus-test",
             "nginx-test",
-            "grafana-test",
         }
         extracted_names = {doc["subjects"][0]["name"] for doc in docs if doc.get("subjects")}
         assert expected_names.issubset(extracted_names)
@@ -337,7 +329,6 @@ custom_service_account_names = {
         "external-es-proxy": {"serviceAccount": {"create": True, "name": "prothean"}}
     },
     "charts/fluentd/templates/fluentd-daemonset.yaml": {"fluentd": {"serviceAccount": {"create": True, "name": "prothean"}}},
-    "charts/grafana/templates/grafana-deployment.yaml": {"grafana": {"serviceAccount": {"create": True, "name": "prothean"}}},
     "charts/kibana/templates/kibana-default-index-cronjob.yaml": {
         "kibana": {"serviceAccount": {"create": True, "name": "prothean"}}
     },

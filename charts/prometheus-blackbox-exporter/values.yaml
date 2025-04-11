@@ -123,8 +123,6 @@ astroServices:
     enabled: true
   registry:
     enabled: true
-  grafana:
-    enabled: true
   elasticsearch:
     enabled: true
   kibana:

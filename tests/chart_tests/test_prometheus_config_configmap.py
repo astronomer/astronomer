@@ -81,7 +81,6 @@ class TestPrometheusConfigConfigmap:
         target_checks = [
             "http://foo-name-commander.bar-ns:8880/healthz",
             "http://foo-name-elasticsearch.bar-ns:9200/_cluster/health?local=true",
-            "http://foo-name-grafana.bar-ns:3000/api/health",
             "http://foo-name-houston.bar-ns:8871/v1/healthz",
             "http://foo-name-kibana.bar-ns:5601",
             "http://foo-name-registry.bar-ns:5000",

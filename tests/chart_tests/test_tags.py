@@ -7,7 +7,6 @@ from pathlib import Path
 
 component_paths = [
     "charts/alertmanager/templates",
-    "charts/grafana/templates",
     "charts/kube-state/templates",
     "charts/prometheus-blackbox-exporter/templates",
     "charts/prometheus-node-exporter/templates",
