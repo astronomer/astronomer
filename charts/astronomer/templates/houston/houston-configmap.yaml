@@ -113,6 +113,7 @@ data:
       {{- $authSidecar := include "authSidecar.image" . }}
       authSideCar:
         enabled: true
+        ingressAllowedNamespaces: {{ default (list) .Values.global.authSidecar.ingressAllowedNamespaces | toJson }}
         repository: {{ (splitList ":"  $authSidecar ) | first  }}
         tag: {{ (splitList ":"  $authSidecar ) | last  }}
         port: {{ .Values.global.authSidecar.port }}
@@ -222,10 +223,9 @@ data:
       {{- if and .Values.global.ssl.enabled .Values.global.ssl.mode }}
         sslmode: {{ .Values.global.ssl.mode }}
       {{- end }}
-      {{- if .Values.global.sccEnabled }}
+
         # If security context constraints are enabled, enable SCCs for airflow-chart
-        sccEnabled: true
-      {{- end }}
+        sccEnabled: {{ .Values.global.sccEnabled }}
       {{- if and .Values.global.extraAnnotations ( not .Values.global.authSidecar.enabled ) }}
         ingress:
           extraIngressAnnotations: {{- toYaml .Values.global.extraAnnotations | nindent 12 }}
@@ -267,6 +267,13 @@ data:
           networkPolicies:
           # Enabled network polices to restrict the way pods can communicate.
             enabled: true
+          {{ end }}
+          {{- if .Values.global.openshiftEnabled }}
+          dags:
+              gitSync:
+                securityContexts:
+                  container:
+                    runAsNonRoot: true
           {{ end }}
           # Enable FlowerUI flag by default
           flower:

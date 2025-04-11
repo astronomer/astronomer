@@ -4,15 +4,15 @@
 images:
   init:
     repository: quay.io/astronomer/ap-init
-    tag: 3.20.5
+    tag: 3.21.3-2
     pullPolicy: IfNotPresent
   stan:
     repository: quay.io/astronomer/ap-nats-streaming
-    tag: 0.25.6-8
+    tag: 0.25.6-10
     pullPolicy: IfNotPresent
   exporter:
     repository: quay.io/astronomer/ap-nats-exporter
-    tag: 0.15.0-5
+    tag: 0.16.0-1
     pullPolicy: IfNotPresent
 
 

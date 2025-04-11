@@ -93,3 +93,6 @@ class TestOpenshift:
 
         for component in non_airflow_components_list:
             assert {"runAsNonRoot": True} == airflowConfig[component]["securityContexts"]["pod"]
+
+        gitSyncConfig = airflowConfig["dags"]["gitSync"]
+        assert {"runAsNonRoot": True} == gitSyncConfig["securityContexts"]["container"]

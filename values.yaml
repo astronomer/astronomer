@@ -28,7 +28,7 @@ global:
     containerdTolerations: []
     certCopier:
       repository: quay.io/astronomer/ap-base
-      tag: 3.21.3-1
+      tag: 3.21.3-2
       pullPolicy: IfNotPresent
     priorityClassName: ~
   # Global flag to enable to user to enable/disable Astronomer platform
@@ -133,7 +133,7 @@ global:
   dagOnlyDeployment:
     enabled: false
     repository: quay.io/astronomer/ap-dag-deploy
-    tag: 0.6.3
+    tag: 0.6.5
     securityContexts:
       pod:
         fsGroup: 50000
@@ -154,7 +154,7 @@ global:
     enabled: false
     name: sidecar-log-consumer
     repository: quay.io/astronomer/ap-vector
-    tag: 0.45.0
+    tag: 0.45.0-2
     customConfig: false
     indexPattern: ~
     extraEnv: []
@@ -173,12 +173,13 @@ global:
   authSidecar:
     enabled: false
     repository: quay.io/astronomer/ap-auth-sidecar
-    tag: 1.27.4
+    tag: 1.27.4-3
     pullPolicy: IfNotPresent
     port: 8084
     securityContext: {}
     readinessProbe: {}
     livenessProbe: {}
+    ingressAllowedNamespaces: []
     default_nginx_settings: |
       internal;
       proxy_pass_request_body     off;
@@ -303,30 +304,30 @@ global:
     images:
       statsd:
         repository: quay.io/astronomer/ap-statsd-exporter
-        tag: 0.28.1
+        tag: 0.28.0-2
       redis:
         repository: quay.io/astronomer/ap-redis
-        tag: 7.2.6
+        tag: 7.4.2-1
       pgbouncer:
         repository: quay.io/astronomer/ap-pgbouncer
-        tag: 1.23.1-4
+        tag: 1.24.0-2
       pgbouncerExporter:
         repository: quay.io/astronomer/ap-pgbouncer-exporter
-        tag: 0.18.0-2
+        tag: 0.18.0-4
       gitSync:
         repository: quay.io/astronomer/ap-git-sync
-        tag: 4.2.3-1
+        tag: 4.2.4
       xcom:
         repository: quay.io/astronomer/ap-alpine
-        tag: 3.21.3
+        tag: 3.21.3-2
   gitSyncRelay:
     images:
       gitDaemon:
-        repository: "quay.io/astronomer/ap-git-daemon"
-        tag: "3.20.5"
+        repository: quay.io/astronomer/ap-git-daemon
+        tag: 3.21.3-2
       gitSync:
-        repository: "quay.io/astronomer/ap-git-sync-relay"
-        tag: "0.1.9"
+        repository: quay.io/astronomer/ap-git-sync-relay
+        tag: 0.1.11
 
   # For now we support only pgbouncer with gss api support
   pgbouncer:

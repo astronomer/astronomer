@@ -279,6 +279,22 @@ class TestElasticSearch:
                 "location ~ ^/ { deny all; } } }",
             ]
         )
+        assert "client_max_body_size 100M" in nginx_config
+
+    def test_elastic_nginx_config_custom_max_body_size(self, kube_version):
+        """Test that custom max body size is properly set."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"elasticsearch": {"nginx": {"maxBodySize": "123456789M"}}},
+            show_only=[
+                "charts/elasticsearch/templates/nginx/nginx-es-configmap.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        nginx_config = " ".join(doc["data"]["nginx.conf"].split())
+        assert "client_max_body_size 123456789M" in nginx_config
 
     def test_elastic_nginx_config_pattern_defaults_and_index_prefix_overrides(self, kube_version):
         """Test External Elasticsearch Service Index Pattern Search with index prefix overrides."""
@@ -657,3 +673,31 @@ class TestElasticSearch:
         for doc in docs:
             assert "persistentVolumeClaimRetentionPolicy" in doc["spec"]
             assert test_persistentVolumeClaimRetentionPolicy == doc["spec"]["persistentVolumeClaimRetentionPolicy"]
+
+    def test_elasticsearch_statefulset_with_scc_disabled(self, kube_version):
+        """Test that helm renders scc template for astronomer
+        elasticsearch with SA disabled."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={},
+            show_only=[
+                "charts/elasticsearch/templates/es-scc.yaml",
+            ],
+        )
+        assert len(docs) == 0
+
+    def test_elasticsearch_statefulset_with_scc_enabled(self, kube_version):
+        """Test that helm renders scc template for astronomer
+        elasticsearch with SA disabled."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"sccEnabled": True}},
+            show_only=[
+                "charts/elasticsearch/templates/es-scc.yaml",
+            ],
+        )
+        assert len(docs) == 1
+        assert docs[0]["kind"] == "SecurityContextConstraints"
+        assert docs[0]["apiVersion"] == "security.openshift.io/v1"
+        assert docs[0]["metadata"]["name"] == "release-name-elasticsearch-anyuid"
+        assert docs[0]["users"] == ["system:serviceaccount:default:release-name-elasticsearch"]

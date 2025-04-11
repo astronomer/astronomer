@@ -246,7 +246,7 @@ class TestAstronomerCommander:
         expected_rule = {
             "apiGroups": ["security.openshift.io"],
             "resources": ["securitycontextconstraints"],
-            "verbs": ["create", "delete", "list", "watch"],
+            "verbs": ["create", "delete", "get", "patch", "list", "watch"],
         }
         assert cluster_role["kind"] == "ClusterRole"
         assert cluster_role["rules"] == [expected_rule]
@@ -267,13 +267,13 @@ class TestAstronomerCommander:
         }
 
         cluster_role_binding = docs[3]
-        expected_cluster_role = {
+        expected_scc_cluster_role = {
             "apiGroup": "rbac.authorization.k8s.io",
             "kind": "ClusterRole",
-            "name": "release-name-commander",
+            "name": "release-name-commander-scc",
         }
 
-        assert cluster_role_binding["roleRef"] == expected_cluster_role
+        assert cluster_role_binding["roleRef"] == expected_scc_cluster_role
 
         for i in range(4, 6):
             role_binding = docs[i]
@@ -316,7 +316,7 @@ class TestAstronomerCommander:
         expected_rule = {
             "apiGroups": ["security.openshift.io"],
             "resources": ["securitycontextconstraints"],
-            "verbs": ["create", "delete", "list", "watch"],
+            "verbs": ["create", "delete", "get", "patch", "list", "watch"],
         }
         cluster_role = docs[0]
 
