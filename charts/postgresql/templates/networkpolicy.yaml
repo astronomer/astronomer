@@ -31,10 +31,6 @@ spec:
           matchLabels:
             release: {{ .Release.Name }}
             tier: astronomer
-      - podSelector:
-          matchLabels:
-            release: {{ .Release.Name }}
-            component: grafana
       {{- if .Values.global.networkNSLabels  }}
       - namespaceSelector:
           matchLabels:

@@ -611,9 +611,6 @@ data:
           {{- if .Values.astroHTTPTargets.registry}}
             - http://{{.Release.Name}}-registry.{{.Release.Namespace}}:5000
           {{- end }}
-          {{- if .Values.astroHTTPTargets.grafana}}
-            - http://{{.Release.Name}}-grafana.{{.Release.Namespace}}:3000/api/health
-          {{- end }}
           {{- if .Values.astroHTTPTargets.kibana}}
             - http://{{.Release.Name}}-kibana.{{.Release.Namespace}}:5601
           {{- end }}

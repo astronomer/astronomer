@@ -12,7 +12,6 @@ show_only = [
     "charts/fluentd/templates/fluentd-networkpolicy.yaml",
     "charts/kibana/templates/kibana-networkpolicy.yaml",
     "charts/alertmanager/templates/alertmanager-networkpolicy.yaml",
-    "charts/grafana/templates/grafana-networkpolicy.yaml",
     "charts/stan/templates/stan-networkpolicy.yaml",
     "charts/nats/templates/networkpolicy.yaml",
     "charts/astronomer/templates/commander/commander-networkpolicy.yaml",
