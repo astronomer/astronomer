@@ -1,6 +1,7 @@
 ##################
 ## Nats Service ##
 ##################
+{{- if .Values.global.controlplane.enabled}}
 apiVersion: v1
 kind: Service
 metadata:
@@ -17,6 +18,7 @@ metadata:
   labels:
     app: {{ template "nats.name" . }}
     chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    plane: controlplane
 spec:
   selector:
     tier: astronomer
@@ -46,3 +48,4 @@ spec:
   - name: gateways
     port: 7522
     appProtocol: tcp
+{{- end }}

@@ -1,6 +1,7 @@
 #####################################
 ## Astronomer Commander Deployment ##
 #####################################
+{{- if .Values.global.dataplane.enabled }}
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -8,6 +9,7 @@ metadata:
   labels:
     component: commander
     tier: astronomer
+    plane: dataplane
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
@@ -133,4 +135,5 @@ spec:
       volumes:
 {{- if .Values.commander.extraVolumes }}
 {{- tpl (toYaml .Values.commander.extraVolumes) $ | nindent 8 }}
+{{- end }}
 {{- end }}

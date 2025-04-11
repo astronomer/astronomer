@@ -1,7 +1,7 @@
 #############################################
 ## Astronomer Commander Pod Disruption Budget
 #############################################
-{{- if .Values.global.podDisruptionBudgetsEnabled }}
+{{- if and .Values.global.podDisruptionBudgetsEnabled .Values.global.dataplane.enabled }}
 apiVersion: {{ include "apiVersion.PodDisruptionBudget" . }}
 kind: PodDisruptionBudget
 metadata:

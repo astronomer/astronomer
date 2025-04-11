@@ -1,6 +1,7 @@
 ####################################
 ## Elasticsearch Proxy Deployment ##
 ####################################
+{{- if .Values.global.controlplane.enabled}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -11,6 +12,7 @@ metadata:
     chart: {{ template "external-es-proxy.chart" . }}
     heritage: {{ .Release.Service }}
     release: {{ .Release.Name }}
+    plane: controlplane
 spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
@@ -163,3 +165,4 @@ spec:
           secret:
             secretName: {{ .Values.global.customLogging.awsSecretName }}
         {{- end}}
+{{- end }}

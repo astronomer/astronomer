@@ -1,7 +1,7 @@
 ######################################
 ## Alertmanager auth sidecar ConfigMap
 ######################################
-{{- if .Values.global.authSidecar.enabled }}
+{{- if and .Values.global.authSidecar.enabled .Values.global.controlplane.enabled }}
 kind: ConfigMap
 apiVersion: v1
 metadata:
@@ -12,6 +12,7 @@ metadata:
     chart: {{ template "alertmanager.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+    plane: controlplane
 data:
   default.conf: |
     upstream astro-alertmanager {

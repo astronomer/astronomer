@@ -1,7 +1,7 @@
 ########################################################
 ## Astronomer Platform Namespace label configure Hook ##
 ########################################################
-{{- if .Values.nats.createJetStreamJob -}}
+{{- if and .Values.nats.createJetStreamJob .Values.global.controlplane.enabled -}}
 {{- if or .Values.nats.jetstream.enabled .Values.global.nats.jetStream.enabled .Values.global.stan.enabled }}
 ---
 kind: Role
@@ -51,6 +51,7 @@ metadata:
     tier: jetsream-migrator
     component: jetsream-migrator
     release: {{ .Release.Name }}
+    plane: controlplane
 ---
 apiVersion: batch/v1
 kind: Job
@@ -66,6 +67,7 @@ metadata:
     version: {{ .Chart.Version }}
     component: jetsream-migrator
     release: {{ .Release.Name }}
+    plane: controlplane
 spec:
   template:
     metadata:

@@ -1,6 +1,7 @@
 ##################################
 ## Astronomer Commander Service ##
 ##################################
+{{- if .Values.global.dataplane.enabled }}
 kind: Service
 apiVersion: v1
 metadata:
@@ -11,6 +12,7 @@ metadata:
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
+    plane: dataplane
   {{ if .Values.global.enableArgoCDAnnotation }}
   annotations:
     argocd.argoproj.io/sync-wave: "-1"
@@ -32,3 +34,4 @@ spec:
       port: {{ .Values.ports.commanderGRPC }}
       targetPort: {{ .Values.ports.commanderGRPC }}
       appProtocol: grpc
+{{- end }}
