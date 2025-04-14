@@ -10,18 +10,17 @@ from tests.chart_tests.helm_template_generator import render_chart
 )
 class TestHoustonInternalAuthorization:
     def test_ingress_with_authorization_defaults(self, kube_version):
-        """Test Alertmanager Service with authSidecar."""
+        """Test ingress objects that have authSidecar with default values."""
         docs = render_chart(
             kube_version=kube_version,
             values={},
             show_only=[
-                "charts/alertmanager/templates/ingress.yaml",
                 "charts/kibana/templates/ingress.yaml",
                 "charts/prometheus/templates/ingress.yaml",
             ],
         )
 
-        assert len(docs) == 3
+        assert len(docs) == 2
         for doc in docs:
             assert doc["kind"] == "Ingress"
             assert doc["apiVersion"] == "networking.k8s.io/v1"
@@ -31,18 +30,17 @@ class TestHoustonInternalAuthorization:
             )
 
     def test_ingress_with_internal_authorization(self, kube_version):
-        """Test Alertmanager Service with authSidecar."""
+        """Test ingress objects that have authSidecar with Houston internal authorization enabled."""
         docs = render_chart(
             kube_version=kube_version,
             values={"global": {"enableHoustonInternalAuthorization": True}},
             show_only=[
-                "charts/alertmanager/templates/ingress.yaml",
                 "charts/kibana/templates/ingress.yaml",
                 "charts/prometheus/templates/ingress.yaml",
             ],
         )
 
-        assert len(docs) == 3
+        assert len(docs) == 2
         for doc in docs:
             assert doc["kind"] == "Ingress"
             assert doc["apiVersion"] == "networking.k8s.io/v1"

@@ -23,32 +23,6 @@ data:
     # https://prometheus.io/docs/prometheus/latest/configuration/configuration/#remote_write
     {{ if .Values.remote_write }}remote_write: {{ .Values.remote_write | toYaml | nindent 6 }}{{ end }}
 
-    # Configure Alertmanager
-    alerting:
-      alertmanagers:
-        - kubernetes_sd_configs:
-            - role: pod
-              namespaces:
-                names:
-                  - {{ .Release.Namespace }}
-          tls_config:
-            ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-          bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
-          relabel_configs:
-          - source_labels: [__meta_kubernetes_pod_label_component]
-            regex: alertmanager
-            action: keep
-          - source_labels: [__meta_kubernetes_namespace]
-            regex: {{ .Release.Namespace }}
-            action: keep
-          - source_labels: [__meta_kubernetes_pod_container_port_name]
-            regex: alertmanager
-            action: keep
-
-    # Configure built in alerting rules
-    rule_files:
-      - "/etc/prometheus/alerts.d/*.yaml"
-
     # Configure targets to scrape
     scrape_configs:
       {{ if .Values.config.enableSelfScrape }}

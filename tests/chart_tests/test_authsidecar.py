@@ -22,40 +22,6 @@ default_resource = {"limits": {"cpu": "1000m", "memory": "1024Mi"}, "requests": 
     supported_k8s_versions,
 )
 class TestAuthSidecar:
-    def test_authSidecar_alertmanager(self, kube_version):
-        """Test Alertmanager Service with authSidecar."""
-        docs = render_chart(
-            kube_version=kube_version,
-            values={"global": {"authSidecar": {"enabled": True}}},
-            show_only=[
-                "charts/alertmanager/templates/alertmanager-statefulset.yaml",
-                "charts/alertmanager/templates/alertmanager-auth-sidecar-configmap.yaml",
-                "charts/alertmanager/templates/alertmanager-service.yaml",
-                "charts/alertmanager/templates/alertmanager-networkpolicy.yaml",
-                "charts/alertmanager/templates/ingress.yaml",
-            ],
-        )
-
-        assert len(docs) == 5
-        doc = docs[0]
-        assert doc["kind"] == "StatefulSet"
-        assert doc["apiVersion"] == "apps/v1"
-        assert doc["metadata"]["name"] == "release-name-alertmanager"
-        assert doc["spec"]["template"]["spec"]["containers"][1]["name"] == "auth-proxy"
-
-        assert "Service" == docs[2]["kind"]
-        assert "release-name-alertmanager" == docs[2]["metadata"]["name"]
-        assert "ClusterIP" == docs[2]["spec"]["type"]
-        assert {
-            "name": "auth-proxy",
-            "protocol": "TCP",
-            "port": 8084,
-            "appProtocol": "tcp",
-        } in docs[2]["spec"]["ports"]
-
-        assert "NetworkPolicy" == docs[3]["kind"]
-        assert any(x["ports"][1] == {"protocol": "TCP", "port": 8084} for x in docs[3]["spec"]["ingress"])
-
     def test_authSidecar_houston_with_custom_resources(self, kube_version):
         """Test custom resources are applied on Houston"""
         custom_resources = {
@@ -400,7 +366,6 @@ class TestAuthSidecar:
             kube_version=kube_version,
             values={"global": {"authSidecar": {"enabled": True, "ingressAllowedNamespaces": []}}},
             show_only=[
-                "charts/alertmanager/templates/alertmanager-networkpolicy.yaml",
                 "charts/astronomer/templates/astro-ui/astro-ui-networkpolicy.yaml",
                 "charts/astronomer/templates/houston/api/houston-networkpolicy.yaml",
                 "charts/astronomer/templates/registry/registry-networkpolicy.yaml",
@@ -409,7 +374,7 @@ class TestAuthSidecar:
             ],
         )
 
-        assert len(docs) == 6
+        assert len(docs) == 5
 
         for doc in docs:
             assert "NetworkPolicy" == doc["kind"]
@@ -424,7 +389,6 @@ class TestAuthSidecar:
             kube_version=kube_version,
             values={"global": {"authSidecar": {"enabled": True, "ingressAllowedNamespaces": ["astro", "ingress-namespace"]}}},
             show_only=[
-                "charts/alertmanager/templates/alertmanager-networkpolicy.yaml",
                 "charts/astronomer/templates/astro-ui/astro-ui-networkpolicy.yaml",
                 "charts/astronomer/templates/houston/api/houston-networkpolicy.yaml",
                 "charts/astronomer/templates/registry/registry-networkpolicy.yaml",
@@ -433,7 +397,7 @@ class TestAuthSidecar:
             ],
         )
 
-        assert len(docs) == 6
+        assert len(docs) == 5
 
         for doc in docs:
             assert "NetworkPolicy" == doc["kind"]

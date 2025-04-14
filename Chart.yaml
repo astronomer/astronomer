@@ -21,10 +21,6 @@ dependencies:
       - platform
 
   # Monitoring stack
-  - name: alertmanager
-    condition: global.alertmanagerEnabled
-    tags:
-      - monitoring
   - name: kube-state
     condition: global.kubeStateEnabled
     tags:

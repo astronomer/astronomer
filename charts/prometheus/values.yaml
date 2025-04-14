@@ -145,33 +145,6 @@ tcpProbe:
 # Enable prometheus lifecycle api
 enableLifecycle: true
 
-# This section allows you to disable parts of the default set of alerts. Use
-# this in combination with additionalAlerts if you want prometheus to only
-# use the alerts you have configured.
-defaultAlerts:
-  airflow:
-    enabled: true
-  platform:
-    enabled: true
-
-additionalAlerts:
-  # Additional rules appended to the default 'platform' alert group
-  # Provide as a block string in yaml list form
-  platform: ~
-  # Additional rules appended to the default 'airflow' alert group
-  # Provide as a block string in yaml list form
-  airflow: ~
-# Example:
-# airflow: |
-#   - alert: MyExampleAlert
-#     # If greater than 10% task failure
-#     expr: 100 * sum(increase(airflow_ti_failures[30m])) /  (sum(increase(airflow_ti_failures[30m])) + sum(increase(airflow_ti_successes[30m]))) > 10
-#     for: 15m
-#     labels:
-#       tier: airflow
-#     annotations:
-#       summary: "The Astronomer Helm release {{ .Release.Name }} is failing task instances {{ printf \"%.2f\" $value }}% of the time over the past 30 minutes"
-#       description: Task instances failing above threshold
 additionalScrapeJobs: {}
 # Example:
 # additionalScrapeJobs:

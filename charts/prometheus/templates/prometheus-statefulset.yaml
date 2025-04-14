@@ -97,7 +97,6 @@ spec:
         - name: configmap-reloader
           args:
             - --webhook-url=http://localhost:9090/-/reload
-            - --volume-dir=/etc/prometheus/alerts.d
             - --volume-dir=/etc/prometheus/config
           image: {{ include "configReloader.image" . }}
           imagePullPolicy: {{ .Values.images.prometheus.pullPolicy }}
@@ -110,8 +109,6 @@ spec:
           readinessProbe: {{ tpl (toYaml .Values.configMapReloader.readinessProbe) . | nindent 12 }}
           {{- end }}
           volumeMounts:
-          - name: alert-volume
-            mountPath: /etc/prometheus/alerts.d
           - name: prometheus-config-volume
             mountPath: /etc/prometheus/config
         {{ if not $useClusterRoles }}
@@ -167,8 +164,6 @@ spec:
           volumeMounts:
             - name: prometheus-config-volume
               mountPath: /etc/prometheus/config
-            - name: alert-volume
-              mountPath: /etc/prometheus/alerts.d
             - name: data
               mountPath: {{ .Values.dataDir }}
             {{ if not $useClusterRoles }}
@@ -217,12 +212,6 @@ spec:
             items:
               - key: config
                 path: prometheus.yaml
-        - name: alert-volume
-          configMap:
-            name: {{ template "prometheus.fullname" . }}-alerts
-            items:
-              - key: alerts
-                path: alerts.yaml
         {{ if not $useClusterRoles }}
         - name: filesd
           emptyDir: {}

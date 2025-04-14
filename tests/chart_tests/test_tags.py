@@ -6,7 +6,6 @@ from pathlib import Path
 
 
 component_paths = [
-    "charts/alertmanager/templates",
     "charts/kube-state/templates",
     "charts/prometheus-blackbox-exporter/templates",
     "charts/prometheus-node-exporter/templates",
@@ -18,7 +17,6 @@ component_paths = [
 templates_to_exclude = [
     "charts/prometheus-postgres-exporter/templates",
     "charts/prometheus-postgres-exporter/templates/secret.yaml",
-    "charts/alertmanager/templates/alertmanager-serviceaccount.yaml",
     "charts/prometheus-blackbox-exporter/templates/blackbox-serviceaccount.yaml",
 ]
 

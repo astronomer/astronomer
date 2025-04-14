@@ -35,14 +35,12 @@ class TestPrometheusStatefulset:
         c_by_name = get_containers_by_name(doc)
         assert c_by_name["configmap-reloader"]["image"].startswith("quay.io/astronomer/ap-configmap-reloader:")
         assert c_by_name["configmap-reloader"]["volumeMounts"] == [
-            {"mountPath": "/etc/prometheus/alerts.d", "name": "alert-volume"},
             {"mountPath": "/etc/prometheus/config", "name": "prometheus-config-volume"},
         ]
         assert c_by_name["prometheus"]["image"].startswith("quay.io/astronomer/ap-prometheus:")
         assert c_by_name["prometheus"]["ports"] == [{"containerPort": 9090, "name": "prometheus-data"}]
         assert c_by_name["prometheus"]["volumeMounts"] == [
             {"mountPath": "/etc/prometheus/config", "name": "prometheus-config-volume"},
-            {"mountPath": "/etc/prometheus/alerts.d", "name": "alert-volume"},
             {"mountPath": "/prometheus", "name": "data"},
         ]
         assert "persistentVolumeClaimRetentionPolicy" not in doc["spec"]

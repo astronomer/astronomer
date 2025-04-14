@@ -22,12 +22,6 @@ pod_manager_data = {
             "airflowOperator": {"enabled": True},
         },
     },
-    "charts/alertmanager/templates/alertmanager-statefulset.yaml": {
-        "alertmanager": default_probes,
-        "global": {
-            "authSidecar": {"enabled": True, **default_probes},
-        },
-    },
     "charts/astronomer/templates/astro-ui/astro-ui-deployment.yaml": {"astronomer": {"astroUI": default_probes}},
     "charts/astronomer/templates/commander/commander-deployment.yaml": {"astronomer": {"commander": default_probes}},
     "charts/astronomer/templates/houston/api/houston-deployment.yaml": {
@@ -172,11 +166,6 @@ class TestDefaultProbes:
 
     # expected container liveness probes
     expected_clp = {
-        "alertmanager_auth-proxy": {
-            "httpGet": {"path": "/healthz", "port": 8084, "scheme": "HTTP"},
-            "initialDelaySeconds": 10,
-            "periodSeconds": 10,
-        },
         "aocm_manager": {
             "httpGet": {
                 "path": "/healthz",
@@ -283,16 +272,6 @@ class TestDefaultProbes:
 
     # expected container readiness probes
     expected_crp = {
-        "alertmanager_alertmanager": {
-            "httpGet": {"path": "/#/status", "port": 9093},
-            "initialDelaySeconds": 30,
-            "timeoutSeconds": 30,
-        },
-        "alertmanager_auth-proxy": {
-            "httpGet": {"path": "/healthz", "port": 8084, "scheme": "HTTP"},
-            "initialDelaySeconds": 10,
-            "periodSeconds": 10,
-        },
         "aocm_manager": {
             "httpGet": {
                 "path": "/readyz",

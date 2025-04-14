@@ -11,7 +11,6 @@ show_only = [
     # 'charts/prometheus-postgres-exporter/templates/networkpolicy.yaml',
     "charts/fluentd/templates/fluentd-networkpolicy.yaml",
     "charts/kibana/templates/kibana-networkpolicy.yaml",
-    "charts/alertmanager/templates/alertmanager-networkpolicy.yaml",
     "charts/stan/templates/stan-networkpolicy.yaml",
     "charts/nats/templates/networkpolicy.yaml",
     "charts/astronomer/templates/commander/commander-networkpolicy.yaml",
@@ -48,7 +47,7 @@ def test_networkpolicy_disabled():
     assert not [x for x in docs if x["kind"] == "NetworkPolicy"]
 
 
-@pytest.mark.parametrize("np_enabled, num_of_docs", [(True, 28), (False, 0)])
+@pytest.mark.parametrize("np_enabled, num_of_docs", [(True, 27), (False, 0)])
 def test_networkpolicy_enabled(np_enabled, num_of_docs):
     """Test some things that should apply to all cases."""
     docs = render_chart(
@@ -83,5 +82,5 @@ def test_networkpolicy_dag_deploy_enabled(kube_version):
     assert len(docs) == 1
 
     components = [x["podSelector"]["matchLabels"].get("component") for x in docs[0]["spec"]["ingress"][0]["from"]]
-    assert len(components) == 8
+    assert len(components) == 7
     assert "dag-server" in components

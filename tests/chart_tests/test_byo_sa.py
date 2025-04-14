@@ -65,7 +65,6 @@ class TestServiceAccounts:
             },
             "nats": {"nats": {"serviceAccount": {"create": "true", "name": "nats-test"}}},
             "stan": {"stan": {"serviceAccount": {"create": "true", "name": "stan-test"}}},
-            "alertmanager": {"serviceAccount": {"create": "true", "name": "alertmanager-test"}},
             "kibana": {"serviceAccount": {"create": "true", "name": "kibana-test"}},
             "prometheus-blackbox-exporter": {"serviceAccount": {"create": "true", "name": "blackbox-test"}},
         }
@@ -80,20 +79,18 @@ class TestServiceAccounts:
                 "charts/astronomer/templates/astro-ui/astro-ui-serviceaccount.yaml",
                 "charts/nats/templates/nats-serviceaccount.yaml",
                 "charts/stan/templates/stan-serviceaccount.yaml",
-                "charts/alertmanager/templates/alertmanager-serviceaccount.yaml",
                 "charts/kibana/templates/kibana-serviceaccount.yaml",
                 "charts/prometheus-blackbox-exporter/templates/blackbox-serviceaccount.yaml",
             ],
         )
 
-        assert len(docs) == 10
+        assert len(docs) == 9
         expected_names = {
             "commander-test",
             "registry-test",
             "configsyncer-test",
             "houston-test",
             "astroui-test",
-            "alertmanager-test",
             "kibana-test",
             "blackbox-test",
         }
@@ -119,7 +116,6 @@ class TestServiceAccounts:
             },
             "nats": {"nats": {"serviceAccount": {"create": False}}},
             "stan": {"stan": {"serviceAccount": {"create": False}}},
-            "alertmanager": {"serviceAccount": {"create": False}},
             "kibana": {"serviceAccount": {"create": False}},
             "prometheus-blackbox-exporter": {"serviceAccount": {"create": False}},
             "postgresql": {"serviceAccount": {"create": False}},
@@ -166,7 +162,6 @@ class TestServiceAccounts:
             },
             "nats": {"nats": {"serviceAccount": {"create": True, "annotations": annotations}}},
             "stan": {"stan": {"serviceAccount": {"create": True, "annotations": annotations}}},
-            "alertmanager": {"serviceAccount": {"create": True, "annotations": annotations}},
             "kibana": {"serviceAccount": {"create": True, "annotations": annotations}},
             "prometheus-blackbox-exporter": {"serviceAccount": {"create": True, "annotations": annotations}},
             "postgresql": {"serviceAccount": {"create": True, "annotations": annotations}},
@@ -261,9 +256,6 @@ def test_default_serviceaccount_names(template_name):
 custom_service_account_names = {
     "charts/airflow-operator/templates/manager/controller-manager-deployment.yaml": {
         "airflow-operator": {"serviceAccount": {"create": True, "name": "prothean"}}
-    },
-    "charts/alertmanager/templates/alertmanager-statefulset.yaml": {
-        "alertmanager": {"serviceAccount": {"create": True, "name": "prothean"}}
     },
     "charts/astronomer/templates/astro-ui/astro-ui-deployment.yaml": {
         "astronomer": {"astroUI": {"serviceAccount": {"create": True, "name": "prothean"}}}
