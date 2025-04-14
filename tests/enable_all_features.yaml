@@ -31,8 +31,3 @@ nats:
 postgresql:
   replication:
     enabled: true
-prometheus-node-exporter:
-  endpoints:
-  - example.com
-  rbac:
-    create: true

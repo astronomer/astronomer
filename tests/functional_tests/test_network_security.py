@@ -222,8 +222,6 @@ def test_network(core_v1_client):
         "service/kubernetes",
         "service/astronomer-nginx",
         "pod/astronomer-nginx",
-        "service/astronomer-prometheus-node-exporter",
-        "pod/astronomer-prometheus-node-exporter",
     ]
     for finding in scan_result.findings:
         allowed = any(allow in finding.name for allow in allow_list)

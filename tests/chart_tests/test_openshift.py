@@ -10,7 +10,6 @@ show_only = [
     "charts/elasticsearch/templates/client/es-client-deployment.yaml",
     "charts/elasticsearch/templates/data/es-data-statefulset.yaml",
     "charts/elasticsearch/templates/master/es-master-statefulset.yaml",
-    "charts/prometheus-node-exporter/templates/daemonset.yaml",
     "charts/nats/templates/statefulset.yaml",
     "charts/stan/templates/statefulset.yaml",
 ]
@@ -48,7 +47,7 @@ class TestOpenshift:
             show_only=show_only,
         )
 
-        assert len(docs) == 7
+        assert len(docs) == 6
         for doc in docs:
             assert "securityContext" not in doc["spec"]["template"]["spec"]
 

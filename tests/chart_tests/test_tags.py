@@ -8,7 +8,6 @@ from pathlib import Path
 component_paths = [
     "charts/kube-state/templates",
     "charts/prometheus-blackbox-exporter/templates",
-    "charts/prometheus-node-exporter/templates",
     "charts/prometheus/templates",
 ]
 
