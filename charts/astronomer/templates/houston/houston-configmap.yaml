@@ -336,7 +336,6 @@ data:
             safeToEvict: true
 
           scheduler:
-
             {{ if .Values.global.openshiftEnabled }}
             securityContexts:
               pod:
@@ -363,6 +362,13 @@ data:
               type: RollingUpdate
               rollingUpdate:
                 maxUnavailable: 1
+
+          dagProcessor:
+            {{ if .Values.global.openshiftEnabled }}
+            securityContexts:
+              pod:
+                runAsNonRoot: true
+            {{ end  }}
 
           airflowLocalSettings: |
             # This pod mutation hook runs for all pods dynamically created by Airflow
