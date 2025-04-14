@@ -82,7 +82,6 @@ class TestPrometheusConfigConfigmap:
             "http://foo-name-commander.bar-ns:8880/healthz",
             "http://foo-name-elasticsearch.bar-ns:9200/_cluster/health?local=true",
             "http://foo-name-houston.bar-ns:8871/v1/healthz",
-            "http://foo-name-kibana.bar-ns:5601",
             "http://foo-name-registry.bar-ns:5000",
             "https://app.example.com",
             "https://houston.example.com/v1/healthz",

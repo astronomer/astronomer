@@ -76,22 +76,10 @@ class TestIngress:
     def test_single_ingress_per_host(self, kube_version):
         default_docs = render_chart(values={"global": {"enablePerHostIngress": True}})
         ingresses = [doc for doc in default_docs if doc["kind"].lower() == "Ingress".lower()]
-        assert len(ingresses) == 6
+        assert len(ingresses) == 5
         assert all(len(doc["spec"]["rules"]) == 1 for doc in ingresses)
         assert all(len(doc["spec"]["tls"][0]["hosts"]) == 1 for doc in ingresses)
         assert all(doc["apiVersion"] == "networking.k8s.io/v1" for doc in ingresses)
         assert all(doc["kind"] == "Ingress" for doc in ingresses)
         assert all(doc["metadata"]["annotations"]["kubernetes.io/ingress.class"] == "release-name-nginx" for doc in ingresses)
         assert all(doc["metadata"]["annotations"]["kubernetes.io/tls-acme"] == "false" for doc in ingresses)
-
-    def test_kibana_custom_ingress_annotation(self, kube_version):
-        """validate kibana to add custom ingress annotation to ingress objects"""
-        docs = render_chart(
-            kube_version=kube_version,
-            values={"kibana": {"ingressAnnotations": {"kubernetes.io/software-enable": "enabled"}}},
-            show_only=[
-                "charts/kibana/templates/ingress.yaml",
-            ],
-        )
-        assert len(docs) == 1
-        assert docs[0]["metadata"]["annotations"]["kubernetes.io/software-enable"] == "enabled"

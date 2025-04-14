@@ -13,11 +13,9 @@ You can access the platform at:
 
 {{- $monitoringEnabled := hasKey .Values.tags "monitoring" | ternary .Values.tags.monitoring true }}
 
-{{- $kibanaEnabled := hasKey .Values.global "kibanaEnabled" | ternary .Values.global.kibanaEnabled true }}
 {{- $loggingEnabled := hasKey .Values.tags "logging" | ternary .Values.tags.logging true }}
 
 - Astronomer dashboard:        {{ if and $astronomerEnabled $platformEnabled }}https://app.{{ .Values.global.baseDomain }}{{ else }}Disabled{{ end }}
-- Kibana dashboard:            {{ if and $kibanaEnabled $loggingEnabled }}https://kibana.{{ .Values.global.baseDomain }}{{ else }}Disabled{{ end }}
 
 Now that you've installed the platform, you are ready to get started and create your first airflow deployment.
 

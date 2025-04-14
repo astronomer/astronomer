@@ -15,12 +15,11 @@ class TestHoustonInternalAuthorization:
             kube_version=kube_version,
             values={},
             show_only=[
-                "charts/kibana/templates/ingress.yaml",
                 "charts/prometheus/templates/ingress.yaml",
             ],
         )
 
-        assert len(docs) == 2
+        assert len(docs) == 1
         for doc in docs:
             assert doc["kind"] == "Ingress"
             assert doc["apiVersion"] == "networking.k8s.io/v1"
@@ -35,12 +34,11 @@ class TestHoustonInternalAuthorization:
             kube_version=kube_version,
             values={"global": {"enableHoustonInternalAuthorization": True}},
             show_only=[
-                "charts/kibana/templates/ingress.yaml",
                 "charts/prometheus/templates/ingress.yaml",
             ],
         )
 
-        assert len(docs) == 2
+        assert len(docs) == 1
         for doc in docs:
             assert doc["kind"] == "Ingress"
             assert doc["apiVersion"] == "networking.k8s.io/v1"

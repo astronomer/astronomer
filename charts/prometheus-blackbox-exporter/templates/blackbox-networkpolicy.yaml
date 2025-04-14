@@ -23,11 +23,6 @@
 {{- include "blackbox.esClientNetPol" . }}
 {{- end}}
 
-{{- if .Values.astroServices.kibana.enabled }}
----
-{{- include "blackbox.kibanaNetPol" . }}
-{{- end}}
-
 ---
 # This one is unconditionally enabled because blackbox exporter is
 # only useful when Prometheus is enabled.
