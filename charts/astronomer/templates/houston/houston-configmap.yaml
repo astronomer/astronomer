@@ -336,7 +336,6 @@ data:
             safeToEvict: true
 
           scheduler:
-
             {{ if .Values.global.openshiftEnabled }}
             securityContexts:
               pod:
@@ -365,7 +364,6 @@ data:
                 maxUnavailable: 1
 
           dagProcessor:
-
             {{ if .Values.global.openshiftEnabled }}
             securityContexts:
               pod:
