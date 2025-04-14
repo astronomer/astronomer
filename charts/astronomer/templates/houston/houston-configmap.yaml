@@ -364,6 +364,14 @@ data:
               rollingUpdate:
                 maxUnavailable: 1
 
+          dagProcessor:
+
+            {{ if .Values.global.openshiftEnabled }}
+            securityContexts:
+              pod:
+                runAsNonRoot: true
+            {{ end  }}
+
           airflowLocalSettings: |
             # This pod mutation hook runs for all pods dynamically created by Airflow
             # in Kubernetes (K8s). This includes K8s executor Airflow-workers, which is
