@@ -513,7 +513,7 @@ data:
             securityContexts:
               pod:
                 runAsNonRoot: true
-                
+
           # dagProcessor settings
           dagProcessor:
             securityContexts:
