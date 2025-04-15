@@ -345,7 +345,7 @@ class TestExternalElasticSearch:
             {
                 "namespaceSelector": {},
                 "podSelector": {"matchLabels": {"component": "git-sync-relay", "tier": "airflow"}},
-            }
+            },
         ] == doc["spec"]["ingress"][0]["from"]
 
     def test_external_es_index_pattern_defaults(self, kube_version):
