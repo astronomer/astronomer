@@ -250,6 +250,10 @@ class TestElasticSearch:
                 "namespaceSelector": {},
                 "podSelector": {"matchLabels": {"component": "git-sync-relay", "tier": "airflow"}},
             },
+            {
+                "namespaceSelector": {},
+                "podSelector": {"matchLabels": {"component": "dag-processor", "tier": "airflow"}},
+            }
         ] == doc["spec"]["ingress"][0]["from"]
 
     def test_elastic_nginx_config_pattern_defaults(self, kube_version):
