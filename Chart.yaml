@@ -25,10 +25,6 @@ dependencies:
     condition: global.kubeStateEnabled
     tags:
       - monitoring
-  - name: prometheus-blackbox-exporter
-    condition: global.blackboxExporterEnabled
-    tags:
-      - monitoring
   - name: prometheus-postgres-exporter
     condition: global.prometheusPostgresExporterEnabled
     tags:
