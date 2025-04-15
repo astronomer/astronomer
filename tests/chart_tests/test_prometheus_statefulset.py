@@ -66,7 +66,6 @@ class TestPrometheusStatefulset:
         )
         assert len(docs) == 1
         c_by_name = get_containers_by_name(docs[0])
-        print(c_by_name["prometheus"]["args"])
         assert "--log.level=debug" in c_by_name["prometheus"]["args"]
 
     def test_prometheus_with_multiple_extraFlags(self, kube_version):
@@ -84,7 +83,6 @@ class TestPrometheusStatefulset:
         )
         assert len(docs) == 1
         c_by_name = get_containers_by_name(docs[0])
-        print(c_by_name["prometheus"]["args"])
         assert "--enable-feature=remote-write-receiver" in c_by_name["prometheus"]["args"]
         assert "--enable-feature=agent" in c_by_name["prometheus"]["args"]
 
