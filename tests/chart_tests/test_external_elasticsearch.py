@@ -346,6 +346,30 @@ class TestExternalElasticSearch:
                 "namespaceSelector": {},
                 "podSelector": {"matchLabels": {"component": "git-sync-relay", "tier": "airflow"}},
             },
+            {
+                "namespaceSelector": {},
+                "podSelector": {"matchLabels": {"component": "dag-server", "tier": "airflow"}},
+            },
+            {
+                "namespaceSelector": {},
+                "podSelector": {"matchLabels": {"component": "airflow-downgrade", "tier": "airflow"}},
+            },
+            {
+                "namespaceSelector": {},
+                "podSelector": {"matchLabels": {"component": "metacleanup", "tier": "airflow"}},
+            },
+            {
+                "namespaceSelector": {},
+                "podSelector": {"matchLabels": {"component": "dag-server", "tier": "airflow"}},
+            },
+            {
+                "namespaceSelector": {},
+                "podSelector": {"matchLabels": {"component": "airflow-downgrade", "tier": "airflow"}},
+            },
+            {
+                "namespaceSelector": {},
+                "podSelector": {"matchLabels": {"component": "metacleanup", "tier": "airflow"}},
+            }
         ] == doc["spec"]["ingress"][0]["from"]
 
     def test_external_es_index_pattern_defaults(self, kube_version):
