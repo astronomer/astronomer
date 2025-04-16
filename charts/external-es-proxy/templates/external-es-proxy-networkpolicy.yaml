@@ -30,11 +30,6 @@ spec:
     {{- if .Values.global.loggingSidecar.enabled }}
     - namespaceSelector: {}
       podSelector:
-        matchLabels:
-          component: scheduler
-          tier: airflow
-    - namespaceSelector: {}
-      podSelector:
         matchExpressions:
         - key: component
           operator: In
