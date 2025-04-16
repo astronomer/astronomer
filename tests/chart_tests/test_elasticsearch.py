@@ -265,19 +265,7 @@ class TestElasticSearch:
             {
                 "namespaceSelector": {},
                 "podSelector": {"matchLabels": {"component": "metacleanup", "tier": "airflow"}},
-            },
-            {
-                "namespaceSelector": {},
-                "podSelector": {"matchLabels": {"component": "dag-server", "tier": "airflow"}},
-            },
-            {
-                "namespaceSelector": {},
-                "podSelector": {"matchLabels": {"component": "airflow-downgrade", "tier": "airflow"}},
-            },
-            {
-                "namespaceSelector": {},
-                "podSelector": {"matchLabels": {"component": "metacleanup", "tier": "airflow"}},
-            },
+            }
         ] == doc["spec"]["ingress"][0]["from"]
 
     def test_elastic_nginx_config_pattern_defaults(self, kube_version):
