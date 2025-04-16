@@ -54,6 +54,21 @@ spec:
         matchLabels:
           component: git-sync-relay
           tier: airflow
+    - namespaceSelector: {}
+      podSelector:
+        matchLabels:
+          component: dag-server
+          tier: airflow
+    - namespaceSelector: {}
+      podSelector:
+        matchLabels:
+          component: airflow-downgrade
+          tier: airflow
+    - namespaceSelector: {}
+      podSelector:
+        matchLabels:
+          component: metacleanup
+          tier: airflow
     {{- end }}
     ports:
     - protocol: TCP
