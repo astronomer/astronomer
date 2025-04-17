@@ -39,7 +39,7 @@ class TestHoustonApiDeployment:
             "component": "houston",
             "release": "release-name",
             "app": "houston",
-            "plane": "controlplane"
+            "plane": "controlplane",
         } == {x: labels[x] for x in labels if x != "version"}
 
         c_by_name = get_containers_by_name(doc, include_init_containers=True)
