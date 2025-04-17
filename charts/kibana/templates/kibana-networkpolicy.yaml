@@ -1,0 +1,62 @@
+################################
+## Kibana NetworkPolicy       ##
+################################
+{{- if .Values.global.networkPolicy.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ .Release.Name }}-kibana-policy
+  labels:
+    tier: logging
+    component: kibana-policy
+    release: {{ .Release.Name }}
+    chart: {{ template "kibana.chart" . }}
+    heritage: {{ .Release.Service }}
+spec:
+  podSelector:
+    matchLabels:
+      tier: logging
+      component: {{ template "kibana.name" . }}
+      release: {{ .Release.Name }}
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    {{- if .Values.global.authSidecar.enabled  }}
+    - namespaceSelector:
+        matchLabels:
+          network.openshift.io/policy-group: ingress
+    {{- if .Values.global.authSidecar.ingressAllowedNamespaces }}
+    - namespaceSelector:
+        matchExpressions:
+        - key: kubernetes.io/metadata.name
+          operator: In
+          values: {{ .Values.global.authSidecar.ingressAllowedNamespaces | toJson }}
+    {{- end }}
+    {{- else }}
+    - podSelector:
+        matchLabels:
+          tier: nginx
+          component: ingress-controller
+          release: {{ .Release.Name }}
+    {{- end }}
+    ports:
+    {{- if .Values.global.authSidecar.enabled  }}
+    - protocol: TCP
+      port: {{ .Values.global.authSidecar.port }}
+    {{- else }}
+    - protocol: TCP
+      port: {{ .Values.ports.http }}
+    {{- end}}
+{{ if .Values.createDefaultIndex }}
+  - from:
+    - podSelector:
+        matchLabels:
+          component: kibana-default-index
+          release: {{ .Release.Name }}
+          tier: logging
+    ports:
+    - protocol: TCP
+      port: {{ .Values.ports.http }}
+    {{- end}}
+{{- end}}

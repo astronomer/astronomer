@@ -118,6 +118,7 @@ astroHTTPTargets:
   commander: true
   houston: true
   registry: true
+  kibana: true
   elasticsearch: true
 
 # additional HTTP endpoints to use as targets

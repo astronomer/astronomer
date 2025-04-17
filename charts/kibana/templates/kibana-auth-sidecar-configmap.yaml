@@ -1,0 +1,47 @@
+###################################
+## Kibana auth sidecar ConfigMap ##
+###################################
+{{- if .Values.global.authSidecar.enabled  }}
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: {{ template "kibana.fullname" . }}-nginx-conf
+  labels:
+    tier: logging
+    component: {{ template "kibana.name" . }}
+    chart: {{ template "kibana.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+data:
+  default.conf: |
+    upstream astro-kibana {
+      server localhost:{{ .Values.ports.http }} ;
+    }
+    server {
+      server_name {{ template "kibana.url" . }} ;
+      listen {{ .Values.global.authSidecar.port }}  ;
+
+      # Disable Nginx Server version
+      server_tokens off;
+
+      location  = /auth {
+        proxy_set_header Host houston.{{ .Values.global.baseDomain }};
+        proxy_pass  https://houston.{{ .Values.global.baseDomain }}/v1/authorization;
+{{ .Values.global.authSidecar.default_nginx_settings  |  indent 8 }}
+      }
+      location @401_auth_error {
+        internal;
+        add_header Set-Cookie $auth_cookie;
+        return 302 https://app.{{ .Values.global.baseDomain }}/login?rd=https://$http_host$request_uri;
+      }
+      location / {
+        # Custom headers to proxied server
+        proxy_set_header  Host  {{ template "kibana.url" . }};
+        proxy_pass http://astro-kibana;
+{{ .Values.global.authSidecar.default_nginx_settings_location  |  indent 8 }}
+      }
+      location /healthz {
+        return 200;
+      }
+    }
+{{- end }}

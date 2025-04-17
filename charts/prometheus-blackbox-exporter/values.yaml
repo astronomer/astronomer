@@ -125,3 +125,5 @@ astroServices:
     enabled: true
   elasticsearch:
     enabled: true
+  kibana:
+    enabled: true

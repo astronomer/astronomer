@@ -116,6 +116,17 @@ elasticsearch:
 
 
 #################################
+## Kibana configuration
+#################################
+kibana:
+  # Configure resources
+  resources:
+    requests:
+      cpu: "0m"
+      memory: "0Mi"
+
+
+#################################
 ## Fluentd configuration
 #################################
 fluentd:
