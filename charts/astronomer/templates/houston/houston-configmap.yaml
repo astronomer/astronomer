@@ -365,12 +365,6 @@ data:
               rollingUpdate:
                 maxUnavailable: 1
 
-          dagProcessor:
-            {{ if .Values.global.openshiftEnabled }}
-            securityContexts:
-              pod:
-                runAsNonRoot: true
-            {{ end  }}
 
           airflowLocalSettings: |
             # This pod mutation hook runs for all pods dynamically created by Airflow
@@ -518,6 +512,12 @@ data:
 
           # migrateDatabaseJob  settings
           migrateDatabaseJob:
+            securityContexts:
+              pod:
+                runAsNonRoot: true
+
+          # dagProcessor settings
+          dagProcessor:
             securityContexts:
               pod:
                 runAsNonRoot: true
