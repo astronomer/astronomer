@@ -336,7 +336,6 @@ data:
             safeToEvict: true
 
           scheduler:
-
             {{ if .Values.global.openshiftEnabled }}
             securityContexts:
               pod:
@@ -363,6 +362,7 @@ data:
               type: RollingUpdate
               rollingUpdate:
                 maxUnavailable: 1
+
 
           airflowLocalSettings: |
             # This pod mutation hook runs for all pods dynamically created by Airflow
@@ -510,6 +510,12 @@ data:
 
           # migrateDatabaseJob  settings
           migrateDatabaseJob:
+            securityContexts:
+              pod:
+                runAsNonRoot: true
+
+          # dagProcessor settings
+          dagProcessor:
             securityContexts:
               pod:
                 runAsNonRoot: true
