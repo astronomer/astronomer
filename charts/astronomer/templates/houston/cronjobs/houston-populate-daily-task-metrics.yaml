@@ -28,6 +28,7 @@ spec:
             release: {{ .Release.Name }}
             app: houston-populate-daily-task-metrics
             version: {{ .Chart.Version }}
+            plane: controlplane
           {{- if or .Values.global.podAnnotations .Values.global.istio.enabled }}
           annotations:
           {{- if .Values.global.istio.enabled }}

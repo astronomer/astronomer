@@ -32,6 +32,7 @@ spec:
         release: {{ .Release.Name }}
         app: {{ template "alertmanager.name" . }}
         version: {{ .Chart.Version }}
+        plane: controlplane
       annotations:
         checksum/configmap: {{ include (print $.Template.BasePath "/alertmanager-configmap.yaml") . | sha256sum }}
 {{- if .Values.global.podAnnotations }}

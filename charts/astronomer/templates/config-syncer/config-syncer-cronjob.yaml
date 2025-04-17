@@ -28,6 +28,7 @@ spec:
             release: {{ .Release.Name }}
             app: config-syncer
             version: {{ .Chart.Version }}
+            plane: dataplane
           {{- if or .Values.global.podAnnotations .Values.global.istio.enabled }}
           annotations:
           {{- if .Values.global.istio.enabled }}

@@ -28,6 +28,7 @@ spec:
         release: {{ .Release.Name }}
         app: astro-ui
         version: {{ .Chart.Version }}
+        plane: controlplane
       annotations:
 {{- if .Values.global.podAnnotations }}
 {{ toYaml .Values.global.podAnnotations | indent 8 }}

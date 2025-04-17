@@ -31,6 +31,7 @@ spec:
         release: {{ .Release.Name }}
         app: houston-upgrader
         version: {{ .Chart.Version }}
+        plane: controlplane
       {{- if or .Values.global.podAnnotations .Values.global.istio.enabled }}
       annotations:
         {{- if .Values.global.istio.enabled }}

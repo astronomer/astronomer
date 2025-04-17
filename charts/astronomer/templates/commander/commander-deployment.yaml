@@ -32,6 +32,7 @@ spec:
         release: {{ .Release.Name }}
         app: commander
         version: {{ .Chart.Version }}
+        plane: dataplane
       annotations:
         checksum/airflow-chart-version: {{ .Values.airflowChartVersion | sha256sum }}
 {{- if .Values.global.podAnnotations }}

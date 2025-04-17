@@ -28,6 +28,7 @@ spec:
         release: {{ .Release.Name }}
         app: houston-worker
         version: {{ .Chart.Version }}
+        plane: controlplane
       annotations:
         checksum/houston-config: {{ include (print $.Template.BasePath "/houston/houston-configmap.yaml") . | sha256sum }}
 {{- if .Values.global.podAnnotations }}
