@@ -33,6 +33,7 @@ spec:
         release: {{ .Release.Name }}
         app: {{ template "kube-state.name" . }}
         version: {{ .Chart.Version }}
+        plane: dataplane
 {{- if or .Values.global.podAnnotations .Values.podAnnotations }}
       annotations:
 {{- if .Values.global.podAnnotations }}
