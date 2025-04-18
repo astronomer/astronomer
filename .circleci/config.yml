@@ -39,7 +39,7 @@ jobs:
       - setup_remote_docker:
           docker_layer_caching: true
       - kubectl/install
-      - install-helm-on-cluster
+      - helm/install-helm-on-cluster
       - run:
           name: Install mkcert and kind
           command: |
