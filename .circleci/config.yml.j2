@@ -42,7 +42,8 @@ jobs:
             # Install mkcert
             curl -JLO "https://github.com/FiloSottile/mkcert/releases/download/v1.4.4/mkcert-v1.4.4-linux-amd64"
             chmod +x mkcert-v1.4.4-linux-amd64
-            mv mkcert-v1.4.4-linux-amd64 /usr/local/bin/mkcert
+            cp mkcert-v1.4.4-linux-amd64 $HOME/bin/mkcert
+            echo "mkcert installed to: $HOME/bin/mkcert"
 
             # Verify mkcert is in PATH
             which mkcert
