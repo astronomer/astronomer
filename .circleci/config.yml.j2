@@ -10,6 +10,9 @@ orbs:
   slack: circleci/slack@4.10.1
   python: circleci/python@2.1.1
   cosign: cpanato/cosign-orb@2.0.0
+  helm: externalreality/helm-orb@0.0.3
+  kubectl: aztechian/kubectl@0.0.1
+  kind: joenash/kind@0.1.0
 
 parameters:
   scan-docker-images:
@@ -34,20 +37,12 @@ jobs:
       - checkout
       - setup_remote_docker:
           docker_layer_caching: true
+      - kubectl/install
+      - helm/install
+      - kind/install
       - run:
-          name: Install dependencies
+          name: Install mkcert
           command: |
-            # Install kubectl
-            curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-            install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
-            kubectl version --client
-
-            # Install Kind
-            curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.20.0/kind-linux-amd64
-            chmod +x ./kind
-            mv ./kind /usr/local/bin/kind
-            kind version
-
             # Install mkcert
             curl -JLO "https://github.com/FiloSottile/mkcert/releases/download/v1.4.4/mkcert-v1.4.4-linux-amd64"
             chmod +x mkcert-v1.4.4-linux-amd64
@@ -55,12 +50,6 @@ jobs:
 
             # Verify mkcert is in PATH
             which mkcert
-
-            # Install Helm
-            curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
-            chmod 700 get_helm.sh
-            ./get_helm.sh
-            helm version
 
             make unittest-requirements
             pip install --upgrade pip
@@ -74,7 +63,7 @@ jobs:
           name: Run Integration Tests
           command: |
             make unittest-requirements
-            python3 integration_tests/check_pods.py
+            python3 integration_tests/test_check_pods.py
 
   sign-released-image:
     executor: docker-executor
