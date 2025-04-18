@@ -25,8 +25,8 @@ class TestAstronomerCpDpFeature:
         dp_resources = self.filter_charts_by_component(charts, "dataplane")
         assert len(dp_resources) == 0
 
-    def test_astronomer_dp_feature_flag(self, kube_version):
-        """Test that helm renders templates for astronomer DP features."""
+    def test_astronomer_dp_only(self, kube_version):
+        """Test that helm renders the correct templates when only the dataplane is enabled."""
         charts = render_chart(
             kube_version=kube_version,
             values={"global": {"controlplane": {"enabled": False}, "dataplane": {"enabled": True}}},
