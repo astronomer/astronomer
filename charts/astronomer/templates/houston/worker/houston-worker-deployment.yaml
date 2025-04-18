@@ -1,7 +1,7 @@
 ####################
 ## Houston Worker ##
 ####################
-{{- if .Values.houston.worker.enabled }}
+{{- if and .Values.houston.worker.enabled .Values.global.controlplane.enabled }}
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -12,6 +12,7 @@ metadata:
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
+    plane: controlplane
 spec:
   replicas: {{ .Values.houston.worker.replicas }}
   selector:
@@ -27,6 +28,7 @@ spec:
         release: {{ .Release.Name }}
         app: houston-worker
         version: {{ .Chart.Version }}
+        plane: controlplane
       annotations:
         checksum/houston-config: {{ include (print $.Template.BasePath "/houston/houston-configmap.yaml") . | sha256sum }}
 {{- if .Values.global.podAnnotations }}

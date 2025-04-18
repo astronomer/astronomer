@@ -1,6 +1,7 @@
 ######################
 ## Nats StatefulSet ##
 ######################
+{{- if .Values.global.controlplane.enabled}}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -8,6 +9,7 @@ metadata:
   labels:
     app: {{ template "nats.name" . }}
     chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    plane: controlplane
   {{ if .Values.global.enableArgoCDAnnotation }}
   annotations:
     argocd.argoproj.io/sync-wave: "-1"
@@ -363,3 +365,4 @@ spec:
         storageClassName: {{ .Values.nats.jetstream.fileStorage.storageClassName | quote }}
         {{- end }}
   {{- end }}
+{{- end }}

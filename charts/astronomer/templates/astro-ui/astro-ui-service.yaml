@@ -1,6 +1,7 @@
 ###########################
 ## Astronomer UI Service ##
 ###########################
+{{- if .Values.global.controlplane.enabled }}
 kind: Service
 apiVersion: v1
 metadata:
@@ -11,6 +12,7 @@ metadata:
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
+    plane: controlplane
 spec:
   type: ClusterIP
   selector:
@@ -23,3 +25,4 @@ spec:
       port: {{ .Values.ports.astroUIHTTP }}
       targetPort: {{ .Values.ports.astroUIHTTP }}
       appProtocol: http
+{{- end }}

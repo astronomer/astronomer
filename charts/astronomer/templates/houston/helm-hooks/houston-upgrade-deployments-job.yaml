@@ -1,7 +1,7 @@
 #######################################
 ## Airflow Post Deployment Upgrade Hook
 #######################################
-{{- if .Values.houston.upgradeDeployments.enabled }}
+{{- if and .Values.houston.upgradeDeployments.enabled .Values.global.controlplane.enabled }}
 apiVersion: {{ include "apiVersion.batch" . }}
 kind: Job
 metadata:
@@ -12,6 +12,7 @@ metadata:
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+    plane: controlplane
   annotations:
     # This is what defines this resource as a hook. Without this line, the
     # job is considered part of the release.
@@ -30,6 +31,7 @@ spec:
         release: {{ .Release.Name }}
         app: houston-upgrader
         version: {{ .Chart.Version }}
+        plane: controlplane
       {{- if or .Values.global.podAnnotations .Values.global.istio.enabled }}
       annotations:
         {{- if .Values.global.istio.enabled }}
