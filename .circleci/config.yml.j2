@@ -10,7 +10,6 @@ orbs:
   slack: circleci/slack@4.10.1
   python: circleci/python@2.1.1
   cosign: cpanato/cosign-orb@2.0.0
-  helm: externalreality/helm-orb@0.0.3
   kubectl: aztechian/kubectl@0.0.1
 
 parameters:
@@ -51,6 +50,11 @@ jobs:
             mkdir -p $HOME/bin
             echo 'export PATH=$HOME/bin:$PATH' >> $BASH_ENV
             source $BASH_ENV
+
+            # Install helm
+            curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+            chmod 700 get_helm.sh
+            HELM_INSTALL_DIR=$HOME/bin ./get_helm.sh
 
             curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.20.0/kind-linux-amd64
             chmod +x ./kind
