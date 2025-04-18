@@ -14,7 +14,6 @@ orbs:
   cosign: cpanato/cosign-orb@2.0.0
   helm: externalreality/helm-orb@0.0.3
   kubectl: aztechian/kubectl@0.0.1
-  kind: joenash/kind@0.1.0
 
 parameters:
   scan-docker-images:
@@ -41,7 +40,6 @@ jobs:
           docker_layer_caching: true
       - kubectl/install
       - helm/install
-      - kind/install
       - run:
           name: Install mkcert and kind
           command: |
