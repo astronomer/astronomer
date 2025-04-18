@@ -1,7 +1,7 @@
 ##############
 ## Nats Box ##
 ##############
-{{- if .Values.natsbox.enabled }}
+{{- if and .Values.natsbox.enabled .Values.global.controlplane.enabled}}
 ---
 apiVersion: v1
 kind: Pod
@@ -11,6 +11,7 @@ metadata:
     app: {{ template "nats.name" . }}-box
     chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
     version: {{ .Chart.Version }}
+    plane: controlplane
 spec:
 {{- include "nats.imagePullSecrets" . | indent 2 }}
   volumes:

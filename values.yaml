@@ -8,6 +8,10 @@ global:
   # Name of secret containing TLS certificate
   tlsSecret: astronomer-tls
 
+  dataplane:
+    enabled: true
+  controlplane:
+    enabled: true
   # List of secrets containing private CA certificates
   privateCaCerts: []
   # Most users with private CA will already have their node

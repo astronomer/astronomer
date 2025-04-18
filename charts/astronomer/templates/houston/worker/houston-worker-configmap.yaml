@@ -1,6 +1,7 @@
 ######################################
 ## Astronomer Houston Worker ConfigMap
 ######################################
+{{- if .Values.global.controlplane.enabled }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -11,8 +12,10 @@ metadata:
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
+    plane: controlplane
 data:
   # These are system-specified config overrides.
   production.yaml: |
     commander:
       enabled: false
+{{- end }}

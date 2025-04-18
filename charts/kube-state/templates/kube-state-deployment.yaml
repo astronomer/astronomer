@@ -1,6 +1,7 @@
 ###########################
 ## Kube State Deployment ##
 ###########################
+{{- if .Values.global.dataplane.enabled }}
 {{- $useRoles := or .Values.global.features.namespacePools.enabled .Values.global.singleNamespace }}
 {{- $namespaces := .Values.global.features.namespacePools.namespaces.names }}
 {{- $namespaces = append $namespaces .Release.Namespace }}
@@ -16,6 +17,7 @@ metadata:
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
+    plane: dataplane
 spec:
   replicas: {{ .Values.replicas }}
   selector:
@@ -31,6 +33,7 @@ spec:
         release: {{ .Release.Name }}
         app: {{ template "kube-state.name" . }}
         version: {{ .Chart.Version }}
+        plane: dataplane
 {{- if or .Values.global.podAnnotations .Values.podAnnotations }}
       annotations:
 {{- if .Values.global.podAnnotations }}
@@ -81,3 +84,4 @@ spec:
           timeoutSeconds: 5
         {{- end }}
         resources: {{ toYaml .Values.resources | nindent 12 }}
+{{- end }}
