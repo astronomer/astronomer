@@ -13,8 +13,8 @@ class TestAstronomerCpDpFeature:
     def filter_charts_by_component(charts, component):
         return [chart for chart in charts if chart.get("metadata", {}).get("labels", {}).get("plane") == component]
 
-    def test_astronomer_cp_feature_flag(self, kube_version):
-        """Test that helm renders templates only for astronomer CP features."""
+    def test_astronomer_cp_only(self, kube_version):
+        """Test that helm renders the correct templates when only the controlplane is enabled."""
         charts = render_chart(
             kube_version=kube_version,
             values={"global": {"controlplane": {"enabled": True}, "dataplane": {"enabled": False}}},
