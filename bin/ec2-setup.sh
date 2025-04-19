@@ -11,9 +11,9 @@ sudo yum install python3 -y
 
 # Install Docker (often needed for integration tests)
 sudo amazon-linux-extras install docker -y
-systemctl start docker
-systemctl enable docker
-usermod -a -G docker ec2-user
+sudo systemctl start docker
+sudo systemctl enable docker
+sudo usermod -a -G docker ec2-user && newgrp docker
 
 # Install kubectl
 curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
