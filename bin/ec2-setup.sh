@@ -4,6 +4,8 @@
 # Update system packages
 yum update -y
 
+yum install -y git
+
 # Install Python 3.11 (if needed beyond the CircleCI image)
 amazon-linux-extras install python3.11 -y
 
