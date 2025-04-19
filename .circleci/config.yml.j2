@@ -42,10 +42,10 @@ jobs:
 
             # Launch instance and store instance ID
             INSTANCE_ID=$(aws ec2 run-instances \
-              --image-id ami-0c55b159cbfafe1f0 \
+              --image-id ami-003cca70c423dcf75 \
               --instance-type t2.medium \
-              --key-name my-ec2-key \
-              --security-group-ids sg-xxxxxxxx \
+              --key-name functional-test \
+              --security-group-ids sg-0fb3e3a8475fc4314 \
               --user-data bin/ec2-setup.sh \
               --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=circleci-integration-test}]' \
               --query 'Instances[0].InstanceId' \
