@@ -32,51 +32,63 @@ jobs:
   integration-test:
     docker:
       - image: cimg/python:3.11
-    resource_class: medium
+    context: qa-aws-software
     steps:
       - checkout
-      - setup_remote_docker:
-          docker_layer_caching: true
-      - kubectl/install
+      - aws-cli/setup:
+          profile-name: default
       - run:
-          name: Install mkcert and kind
+          name: Launch EC2 instance and set up testing environment
           command: |
-            # Install mkcert
-            curl -JLO "https://github.com/FiloSottile/mkcert/releases/download/v1.4.4/mkcert-v1.4.4-linux-amd64"
-            chmod +x mkcert-v1.4.4-linux-amd64
-            cp mkcert-v1.4.4-linux-amd64 $HOME/bin/mkcert
-            echo "mkcert installed to: $HOME/bin/mkcert"
+            # Create EC2 instance using environment variables from context
+            echo "Creating EC2 instance using AWS credentials from qa-aws-software context..."
 
-            # Verify mkcert is in PATH
-            which mkcert
-            mkdir -p $HOME/bin
-            echo 'export PATH=$HOME/bin:$PATH' >> $BASH_ENV
-            source $BASH_ENV
+            # Launch instance and store instance ID
+            INSTANCE_ID=$(aws ec2 run-instances \
+              --image-id ami-0c55b159cbfafe1f0 \  # Amazon Linux 2 AMI (adjust as needed)
+              --instance-type t2.medium \
+              --key-name my-ec2-key \  # Make sure this key pair exists in your AWS account
+              --security-group-ids sg-xxxxxxxx \  # Replace with your security group ID
+              --user-data file://ec2-setup.sh \  # We'll create this file for setup
+              --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=circleci-integration-test}]' \
+              --query 'Instances[0].InstanceId' \
+              --output text)
 
-            # Install helm
-            curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
-            chmod 700 get_helm.sh
-            HELM_INSTALL_DIR=$HOME/bin ./get_helm.sh
+            echo "EC2 instance $INSTANCE_ID created. Waiting for it to be ready..."
 
-            curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.20.0/kind-linux-amd64
-            chmod +x ./kind
-            mv ./kind $HOME/bin/
-            kind version
+            # Wait for instance to be running
+            aws ec2 wait instance-running --instance-ids $INSTANCE_ID
 
-            make unittest-requirements
-            pip install --upgrade pip
+            # Get public IP address
+            PUBLIC_IP=$(aws ec2 describe-instances \
+              --instance-ids $INSTANCE_ID \
+              --query 'Reservations[0].Instances[0].PublicIpAddress' \
+              --output text)
+
+            echo "Instance is running at $PUBLIC_IP. Waiting for setup to complete..."
+
+            # Wait for instance setup to complete (give it a few minutes)
+            sleep 180
+
+            # Store instance details for other steps
+            echo "export EC2_INSTANCE_ID=$INSTANCE_ID" >> $BASH_ENV
+            echo "export EC2_PUBLIC_IP=$PUBLIC_IP" >> $BASH_ENV
 
       - run:
-          name: Reset Local Dev Environment
+          name: Run integration tests on EC2 instance
           command: |
-            ./bin/reset-local-dev
-
+            # SSH into the instance and run tests
+            ssh -o StrictHostKeyChecking=no -i my-ec2-key.pem ec2-user@$EC2_PUBLIC_IP << EOF
+              git clone https://github.com/your-repo.git
+              cd your-repo
+              python3 integration_tests/test_check_pods.py
+              EOF
       - run:
-          name: Run Integration Tests
+          name: Cleanup EC2 instance
           command: |
-            make unittest-requirements
-            python3 integration_tests/test_check_pods.py
-
+            # Terminate instance after tests
+            aws ec2 terminate-instances --instance-ids $EC2_INSTANCE_ID
+          when: always
   sign-released-image:
     executor: docker-executor
     steps:
