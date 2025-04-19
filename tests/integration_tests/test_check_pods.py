@@ -16,7 +16,7 @@ def check_all_pods_running():
         namespace = pod["metadata"]["namespace"]
 
         phase = pod["status"]["phase"]
-        is_valid_state = phase in ["Running", "Completed"]
+        is_valid_state = phase in ["Running", "Completed", "Succeeded"]
 
         container_statuses = pod["status"].get("containerStatuses", [])
         all_containers_ready = all(status.get("ready", False) for status in container_statuses)
