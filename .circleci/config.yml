@@ -44,11 +44,11 @@ jobs:
 
             # Launch instance and store instance ID
             INSTANCE_ID=$(aws ec2 run-instances \
-              --image-id ami-0c55b159cbfafe1f0 \  # Amazon Linux 2 AMI (adjust as needed)
+              --image-id ami-0c55b159cbfafe1f0 \
               --instance-type t2.medium \
-              --key-name my-ec2-key \  # Make sure this key pair exists in your AWS account
-              --security-group-ids sg-xxxxxxxx \  # Replace with your security group ID
-              --user-data file://ec2-setup.sh \  # We'll create this file for setup
+              --key-name my-ec2-key \
+              --security-group-ids sg-xxxxxxxx \
+              --user-data bin/ec2-setup.sh \
               --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=circleci-integration-test}]' \
               --query 'Instances[0].InstanceId' \
               --output text)
@@ -77,7 +77,7 @@ jobs:
           name: Run integration tests on EC2 instance
           command: |
             # SSH into the instance and run tests
-            ssh -o StrictHostKeyChecking=no -i my-ec2-key.pem ec2-user@$EC2_PUBLIC_IP << EOF
+            ssh -o StrictHostKeyChecking=no -i my-ec2-key.pem ec2-user@$EC2_PUBLIC_IP \<< EOF
               git clone https://github.com/your-repo.git
               cd your-repo
               python3 integration_tests/test_check_pods.py
