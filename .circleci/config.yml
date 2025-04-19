@@ -102,12 +102,12 @@ jobs:
               cd ${CIRCLE_PROJECT_REPONAME}
               python3 tests/integration_tests/test_check_pods.py
             EOF
-      - run:
-          name: Cleanup EC2 instance
-          command: |
-            # Terminate instance after tests
-            aws ec2 terminate-instances --instance-ids $EC2_INSTANCE_ID
-          when: always
+      #- run:
+      #    name: Cleanup EC2 instance
+      #    command: |
+      #      # Terminate instance after tests
+      #      aws ec2 terminate-instances --instance-ids $EC2_INSTANCE_ID
+      #    when: always
   sign-released-image:
     executor: docker-executor
     steps:
