@@ -44,7 +44,7 @@ jobs:
 
             # Launch instance and store instance ID
             INSTANCE_ID=$(aws ec2 run-instances \
-              --image-id ami-000310cdeb7c036f3 \
+              --image-id ami-0a38b8c18f189761a \
               --instance-type t2.medium \
               --key-name functional-test \
               --security-group-ids sg-903f3e8f \
