@@ -72,12 +72,16 @@ jobs:
             # Store instance details for other steps
             echo "export EC2_INSTANCE_ID=$INSTANCE_ID" >> $BASH_ENV
             echo "export EC2_PUBLIC_IP=$PUBLIC_IP" >> $BASH_ENV
-
+      - run:
+          name: Setup SSH key
+          command: |
+            echo $EC2_KEY_BASE64 | base64 -d > functional-test.pem
+            chmod 400 functional-test.pem
       - run:
           name: Run integration tests on EC2 instance
           command: |
             # SSH into the instance and run tests
-            ssh -o StrictHostKeyChecking=no -i my-ec2-key.pem ec2-user@$EC2_PUBLIC_IP \<< EOF
+            ssh -o StrictHostKeyChecking=no -i functional-test.pem ec2-user@$EC2_PUBLIC_IP \<< EOF
               git clone https://github.com/your-repo.git
               cd your-repo
               python3 integration_tests/test_check_pods.py
