@@ -85,7 +85,6 @@ jobs:
               git clone -b ${CIRCLE_BRANCH} https://github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}.git
               cd ${CIRCLE_PROJECT_REPONAME}
               bin/ec2-setup.sh
-              sleep 60
               bin/reset-local-dev
               sleep 100
             EOF
@@ -94,7 +93,7 @@ jobs:
           command: |
             ssh -o StrictHostKeyChecking=no -i functional-test.pem ec2-user@$EC2_PUBLIC_IP \<< EOF
               cd ${CIRCLE_PROJECT_REPONAME}
-              python3 integration_tests/test_check_pods.py
+              python3 tests/integration_tests/test_check_pods.py
             EOF
       - run:
           name: Cleanup EC2 instance
