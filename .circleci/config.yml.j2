@@ -10,7 +10,7 @@ orbs:
   slack: circleci/slack@4.10.1
   python: circleci/python@2.1.1
   cosign: cpanato/cosign-orb@2.0.0
-  kubectl: aztechian/kubectl@0.0.1
+  aws-cli: circleci/aws-cli@3.1.0
 
 parameters:
   scan-docker-images:
@@ -384,7 +384,7 @@ workflows:
   version: 2.1
   integration-test:
     jobs:
-      - integration-test
+      - integration-test:
           context: qa-aws-software
   # This workflow is triggered by https://app.circleci.com/settings/project/github/astronomer/astronomer/triggers
   scan-docker-images:
