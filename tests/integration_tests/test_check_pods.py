@@ -16,12 +16,13 @@ def check_all_pods_running():
         namespace = pod["metadata"]["namespace"]
 
         phase = pod["status"]["phase"]
+        is_valid_state = phase in ["Running", "Completed"]
 
         container_statuses = pod["status"].get("containerStatuses", [])
         all_containers_ready = all(status.get("ready", False) for status in container_statuses)
 
         status_msg = f"Pod: {namespace}/{pod_name} - Phase: {phase}"
-        if phase != "Running" or not all_containers_ready:
+        if not is_valid_state or (phase == "Running" and not all_containers_ready):
             all_running = False
             print(f"{status_msg} - Not all containers ready")
         else:
