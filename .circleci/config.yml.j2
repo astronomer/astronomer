@@ -30,7 +30,6 @@ jobs:
   integration-test:
     docker:
       - image: cimg/python:3.11
-    context: qa-aws-software
     steps:
       - checkout
       - aws-cli/setup:
@@ -386,6 +385,7 @@ workflows:
   integration-test:
     jobs:
       - integration-test
+          context: qa-aws-software
   # This workflow is triggered by https://app.circleci.com/settings/project/github/astronomer/astronomer/triggers
   scan-docker-images:
     when:
