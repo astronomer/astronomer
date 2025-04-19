@@ -87,6 +87,7 @@ jobs:
               git clone -b ${CIRCLE_BRANCH} https://github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}.git
               cd ${CIRCLE_PROJECT_REPONAME}
               bin/ec2-setup.sh
+              sleep 60
               bin/reset-local-dev
               sleep 100
             EOF
