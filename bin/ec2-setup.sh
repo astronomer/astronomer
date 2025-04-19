@@ -4,8 +4,6 @@
 # Update system packages
 sudo yum update -y
 
-sudo yum install -y git
-
 # Install Python 3.11 (if needed beyond the CircleCI image)
 sudo yum install python3 -y
 
