@@ -85,9 +85,12 @@ jobs:
               git clone -b ${CIRCLE_BRANCH} https://github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}.git
               cd ${CIRCLE_PROJECT_REPONAME}
               bin/ec2-setup.sh
-              sleep 60
+      - run:
+          name: Deploy Astronomer
+          command: |
+            ssh -o StrictHostKeyChecking=no -i functional-test.pem ec2-user@$EC2_PUBLIC_IP \<< EOF
+              cd ${CIRCLE_PROJECT_REPONAME}
               bin/reset-local-dev
-              sleep 100
             EOF
       - run:
           name: Run integration tests
