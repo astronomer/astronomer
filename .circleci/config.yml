@@ -78,14 +78,22 @@ jobs:
             echo $EC2_KEY_BASE64 | base64 -d > functional-test.pem
             chmod 400 functional-test.pem
       - run:
-          name: Run integration tests on EC2 instance
+          name: SSH onto EC2 instance
           command: |
-            # SSH into the instance and run tests
+            # SSH into the instance
             ssh -o StrictHostKeyChecking=no -i functional-test.pem ec2-user@$EC2_PUBLIC_IP \<< EOF
-              git clone https://github.com/your-repo.git
-              cd your-repo
-              python3 integration_tests/test_check_pods.py
-              EOF
+              git clone -b ${CIRCLE_BRANCH} https://github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}.git
+              cd ${CIRCLE_PROJECT_REPONAME}
+            EOF
+      - run:
+          name: Setup Astronomer local development environment
+          command: |
+            bin/reset-local-dev
+            sleep 100
+      - run:
+          name: Run integration tests
+          command: |
+            python3 integration_tests/test_check_pods.py
       - run:
           name: Cleanup EC2 instance
           command: |
