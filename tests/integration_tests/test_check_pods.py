@@ -5,7 +5,7 @@ import sys
 
 
 def check_all_pods_running():
-    result = subprocess.run(["kubectl", "get", "pods", "-n", "astronomer-o", "json"], capture_output=True, text=True)
+    result = subprocess.run(["kubectl", "get", "pods", "-n", "astronomer", "json"], capture_output=True, text=True)
     if result.returncode != 0:
         print(f"Error getting pods: {result.stderr}")
         return False
