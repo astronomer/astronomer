@@ -48,6 +48,7 @@ jobs:
               --instance-type t3.xlarge \
               --key-name functional-test \
               --security-group-ids sg-903f3e8f \
+              --block-device-mappings "DeviceName=/dev/xvda,Ebs={VolumeSize=80,VolumeType=gp3}" \
               --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=circleci-integration-test}]' \
               --query 'Instances[0].InstanceId' \
               --output text)
