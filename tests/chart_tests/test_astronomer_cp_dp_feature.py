@@ -3,6 +3,19 @@ import pytest
 from tests import supported_k8s_versions
 from tests.chart_tests.helm_template_generator import render_chart
 
+# Some Values would be added later to these maps
+# "astronomer-jetstream": "dataplane",
+# "astronomer-prometheus": "controlplane",
+COMPONENT_PLANE_MAP = {
+    "astronomer-houston": "controlplane",
+    "astronomer-nginx": "controlplane",
+    "astronomer-astro-ui": "controlplane",
+    "astronomer-elasticsearch": "controlplane",
+    "astronomer-commander": "dataplane",
+    "astronomer-registry": "dataplane",
+    "astronomer-prometheus": "dataplane",
+}
+
 
 @pytest.mark.parametrize(
     "kube_version",
@@ -12,6 +25,19 @@ class TestAstronomerCpDpFeature:
     @staticmethod
     def filter_charts_by_component(charts, component):
         return [chart for chart in charts if chart.get("metadata", {}).get("labels", {}).get("plane") == component]
+
+    @staticmethod
+    def get_component_name(chart):
+        """Extract component name from chart metadata."""
+        return chart.get("metadata", {}).get("labels", {}).get("component")
+
+    @staticmethod
+    def get_chart_identifier(chart):
+        """Get a readable identifier for a chart for error messages."""
+        kind = chart.get("kind", "Unknown")
+        name = chart.get("metadata", {}).get("name", "unnamed")
+        namespace = chart.get("metadata", {}).get("namespace", "default")
+        return f"{kind}/{namespace}/{name}"
 
     def test_astronomer_cp_only(self, kube_version):
         """Test that helm renders the correct templates when only the controlplane is enabled."""
@@ -60,3 +86,27 @@ class TestAstronomerCpDpFeature:
 
         dp_resources = self.filter_charts_by_component(charts, "dataplane")
         assert len(dp_resources) == 0
+
+    def test_components_have_correct_plane_labels(self, kube_version):
+        """Test that all components have the correct plane labels according to the component map."""
+        charts = render_chart(
+            kube_version=kube_version,
+            values={"global": {"controlplane": {"enabled": True}, "dataplane": {"enabled": True}}},
+        )
+        component_charts = [chart for chart in charts if self.get_component_name(chart)]
+
+        for chart in component_charts:
+            component_name = self.get_component_name(chart)
+            chart_identifier = self.get_chart_identifier(chart)
+
+            if component_name not in COMPONENT_PLANE_MAP:
+                continue
+            expected_plane = COMPONENT_PLANE_MAP[component_name]
+            actual_plane = chart.get("metadata", {}).get("labels", {}).get("plane")
+
+            assert actual_plane == expected_plane, (
+                f"Component '{component_name}' ({chart_identifier}) has incorrect plane label. "
+                f"Expected: '{expected_plane}', Actual: '{actual_plane}'"
+            )
+        
+    
