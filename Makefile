@@ -31,12 +31,12 @@ test: validate-commander-airflow-version unittest-charts
 
 .PHONY: clean
 clean: ## Clean build and test artifacts
-	rm -rf ${TEMPDIR}
-	rm -f .unittest-requirements
-	rm -rf venv
-	rm -rf .pytest_cache
-	rm -rf test-results
-	find . -name __pycache__ -exec rm -rf {} \+
+	rm -rfv ${TEMPDIR}
+	rm -fv .unittest-requirements
+	rm -rfv venv
+	rm -rfv .pytest_cache
+	rm -rfv test-results
+	find . -name __pycache__ -exec rm -rfv {} \+
 
 .PHONY: build
 build: ## Build the Astronomer helm chart
