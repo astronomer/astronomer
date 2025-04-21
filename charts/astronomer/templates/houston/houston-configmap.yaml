@@ -1,6 +1,7 @@
 ##################################
 ## Astronomer Houston ConfigMap ##
 ##################################
+{{- if .Values.global.controlplane.enabled }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -11,6 +12,7 @@ metadata:
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
+    plane: controlplane
 data:
   {{ if and .Values.houston.runtimeReleasesConfig ( not .Values.houston.runtimeReleasesConfigMapName ) }}
   astro_runtime_releases.json: |
@@ -336,7 +338,6 @@ data:
             safeToEvict: true
 
           scheduler:
-
             {{ if .Values.global.openshiftEnabled }}
             securityContexts:
               pod:
@@ -363,6 +364,7 @@ data:
               type: RollingUpdate
               rollingUpdate:
                 maxUnavailable: 1
+
 
           airflowLocalSettings: |
             # This pod mutation hook runs for all pods dynamically created by Airflow
@@ -514,6 +516,12 @@ data:
               pod:
                 runAsNonRoot: true
 
+          # dagProcessor settings
+          dagProcessor:
+            securityContexts:
+              pod:
+                runAsNonRoot: true
+
           {{ end }}
 
           # Pgbouncer settings
@@ -622,3 +630,4 @@ data:
   # These are any user-specified config overrides.
   local-production.yaml: |
 {{ toYaml .Values.houston.config | indent 4 }}
+{{- end }}

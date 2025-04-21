@@ -1,6 +1,7 @@
 ############################
 ## Alertmanager ConfigMap ##
 ############################
+{{- if .Values.global.controlplane.enabled }}
 kind: ConfigMap
 apiVersion: v1
 metadata:
@@ -11,6 +12,7 @@ metadata:
     chart: {{ template "alertmanager.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+    plane: controlplane
 data:
   alertmanager.yaml: |-
     route:
@@ -62,3 +64,4 @@ data:
 {{ if .Values.customReceiver }}
 {{ toYaml .Values.customReceiver | trim | indent 4 }}
 {{ end }}
+{{- end }}
