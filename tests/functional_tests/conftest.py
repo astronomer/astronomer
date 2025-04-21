@@ -5,15 +5,57 @@ from os import getenv
 import docker
 import pytest
 import testinfra
+from pytest import capsys
+
 
 from . import get_core_v1_client
 
+
+# Add an argument `--cluster` to pytest command line options that specifies if we should test with a single or multi-cluster setup.
+def pytest_addoption(parser):
+    parser.addoption(
+        "--cluster",
+        action="store",
+        default="single",
+        help="Specify which Kubernetes cluster setup to use: 'single' or 'multi'",
+    )
+
+
+# Abstract the --cluster option as a fixture
+@pytest.fixture(scope="session")
+def cluster_setup(request):
+    cluster = request.config.getoption("--cluster")
+    if cluster == "single-cluster":
+        return "single-cluster"
+    if cluster == "multi-cluster":
+        return "multi-cluster"
+    pytest.fail(f"Invalid cluster setup specified: {cluster}")
+
+
+# Create a fixture that can be used to specify tests that should run only for single cluster setup
+@pytest.fixture
+def skip_for_single_cluster(cluster_setup):
+    """Use this fixture to skip tests that should not run in single-cluster setup."""
+    if cluster_setup == "single-cluster":
+        pytest.skip("Skipping test for single-cluster")
+
+
+# Create a fixture that can be used to specify tests that should run only for multi cluster setup
+@pytest.fixture
+def skip_for_multi_cluster(cluster_setup):
+    """Use this fixture to skip tests that should not run in multi-cluster setup."""
+    if cluster_setup == "multi-cluster":
+        pytest.skip("Skipping test for multi-cluster")
+
+
 if not (namespace := getenv("NAMESPACE")):
-    print("NAMESPACE env var is not present, using 'astronomer' namespace")
+    with capsys.disabled():
+        print("NAMESPACE env var is not present, using 'astronomer' namespace")
     namespace = "astronomer"
 
 if not (release_name := getenv("RELEASE_NAME")):
-    print("RELEASE_NAME env var is not present, assuming 'astronomer' is the release name")
+    with capsys.disabled():
+        print("RELEASE_NAME env var is not present, assuming 'astronomer' is the release name")
     release_name = "astronomer"
 
 

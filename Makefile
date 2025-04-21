@@ -9,14 +9,28 @@ CHARTS := astronomer nginx grafana prometheus alertmanager elasticsearch kibana 
 
 TEMPDIR := /tmp/astro-temp
 
+.PHONY: venv-functional
+venv-functional: .functional-requirements
+functional-requirements: .functional-requirements ## Setup venv required for unit testing the Astronomer helm chart
+.functional-requirements:
+	[ -d venv ] || { uv venv venv -p 3.11 --seed || virtualenv venv -p python3 ; }
+	venv/bin/pip install -r requirements/functionl-tests.txt
+	touch .functional-requirements
+
 .PHONY: venv
-venv: .unittest-requirements
+venv-unit: .unittest-requirements
 unittest-requirements: .unittest-requirements ## Setup venv required for unit testing the Astronomer helm chart
 .unittest-requirements:
 	[ -d venv ] || { uv venv venv -p 3.11 --seed || virtualenv venv -p python3 ; }
 	venv/bin/pip install -r requirements/chart-tests.txt
 	touch .unittest-requirements
 
+.PHONY: test-functional
+test-functional: ## Run functional tests on the Astronomer helm chart
+	venv/bin/python -m pytest -v --junitxml=test-results/junit.xml -n auto tests/functional_tests
+
+.PHONY: test-unit
+test-unit: .unittest-charts ## Run unit tests
 .PHONY: unittest-charts
 unittest-charts: .unittest-requirements ## Unittest the Astronomer helm chart
 	# Protip: you can modify pytest behavior like: make unittest-charts PYTEST_ADDOPTS='-v --maxfail=1 --pdb -k "prometheus and 1.20"'
