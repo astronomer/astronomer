@@ -108,5 +108,34 @@ class TestAstronomerCpDpFeature:
                 f"Component '{component_name}' ({chart_identifier}) has incorrect plane label. "
                 f"Expected: '{expected_plane}', Actual: '{actual_plane}'"
             )
-        
-    
+
+    def test_no_components_with_incorrect_plane_labels(self, kube_version):
+        """Test that there are no components with plane labels that don't match the component map."""
+        charts = render_chart(
+            kube_version=kube_version,
+            values={"global": {"controlplane": {"enabled": True}, "dataplane": {"enabled": True}}},
+        )
+
+        cp_resources = self.filter_charts_by_component(charts, "controlplane")
+        assert len(cp_resources) > 0
+        dp_resources = self.filter_charts_by_component(charts, "dataplane")
+        assert len(dp_resources) > 0
+
+        labeled_resources = [
+            chart
+            for chart in charts
+            if chart.get("metadata", {}).get("labels", {}).get("component")
+            and chart.get("metadata", {}).get("labels", {}).get("plane")
+        ]
+
+        for resource in labeled_resources:
+            component = resource.get("metadata", {}).get("labels", {}).get("component")
+            actual_plane = resource.get("metadata", {}).get("labels", {}).get("plane")
+            chart_identifier = self.get_chart_identifier(resource)
+
+            if component in COMPONENT_PLANE_MAP:
+                expected_plane = COMPONENT_PLANE_MAP[component]
+                assert actual_plane == expected_plane, (
+                    f"Resource {chart_identifier} (component: {component}) has incorrect plane label. "
+                    f"Expected: '{expected_plane}', Got: '{actual_plane}'"
+                )
