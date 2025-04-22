@@ -5,7 +5,6 @@ from os import getenv
 import docker
 import pytest
 import testinfra
-from pytest import capsys
 
 
 from . import get_core_v1_client
@@ -49,13 +48,11 @@ def skip_for_multi_cluster(cluster_setup):
 
 
 if not (namespace := getenv("NAMESPACE")):
-    with capsys.disabled():
-        print("NAMESPACE env var is not present, using 'astronomer' namespace")
+    print("NAMESPACE env var is not present, using 'astronomer' namespace")
     namespace = "astronomer"
 
 if not (release_name := getenv("RELEASE_NAME")):
-    with capsys.disabled():
-        print("RELEASE_NAME env var is not present, assuming 'astronomer' is the release name")
+    print("RELEASE_NAME env var is not present, assuming 'astronomer' is the release name")
     release_name = "astronomer"
 
 
