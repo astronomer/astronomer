@@ -9,24 +9,28 @@ CHARTS := astronomer nginx grafana prometheus alertmanager elasticsearch kibana 
 
 TEMPDIR := /tmp/astro-temp
 
+# functional-requirements is deprecated
+.PHONY: functional-requirements
+functional-requirements: .functional-requirements
 .PHONY: venv-functional
-venv-functional: .functional-requirements
-functional-requirements: .functional-requirements ## Setup venv required for unit testing the Astronomer helm chart
-.functional-requirements:
+venv-functional: .venv-functional  ## Setup venv required for unit testing the Astronomer helm chart
+.venv-functional:
 	[ -d venv ] || { uv venv venv -p 3.11 --seed || virtualenv venv -p python3 ; }
-	venv/bin/pip install -r requirements/functionl-tests.txt
-	touch .functional-requirements
+	venv/bin/pip install -r requirements/functional-tests.txt
+	touch $@
 
-.PHONY: venv
-venv-unit: .unittest-requirements
-unittest-requirements: .unittest-requirements ## Setup venv required for unit testing the Astronomer helm chart
-.unittest-requirements:
+# unittest-requirements is deprecated
+.PHONY: unittest-requirements
+unittest-requirements: .venv-unit
+.PHONY: venv-unit
+venv-unit: .venv-unit  ## Setup venv required for unit testing the Astronomer helm chart
+.venv-unit:
 	[ -d venv ] || { uv venv venv -p 3.11 --seed || virtualenv venv -p python3 ; }
 	venv/bin/pip install -r requirements/chart-tests.txt
-	touch .unittest-requirements
+	touch $@
 
 .PHONY: test-functional
-test-functional: ## Run functional tests on the Astronomer helm chart
+test-functional: venv-functional ## Run functional tests on the Astronomer helm chart
 	venv/bin/python -m pytest -v --junitxml=test-results/junit.xml -n auto tests/functional_tests
 
 .PHONY: test-unit
@@ -48,6 +52,7 @@ clean: ## Clean build and test artifacts
 	rm -rfv ${TEMPDIR}
 	rm -fv .unittest-requirements
 	rm -rfv venv
+	rm -rfv .venv*
 	rm -rfv .pytest_cache
 	rm -rfv test-results
 	find . -name __pycache__ -exec rm -rfv {} \+
