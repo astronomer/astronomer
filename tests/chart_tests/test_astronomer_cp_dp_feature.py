@@ -41,59 +41,59 @@ class TestAstronomerCpDpFeature:
 
     def test_astronomer_cp_only(self, kube_version):
         """Test that helm renders the correct templates when only the controlplane is enabled."""
-        charts = render_chart(
+        docs = render_chart(
             kube_version=kube_version,
             values={"global": {"controlplane": {"enabled": True}, "dataplane": {"enabled": False}}},
         )
-        cp_resources = self.filter_charts_by_component(charts, "controlplane")
+        cp_resources = self.filter_charts_by_component(docs, "controlplane")
         assert len(cp_resources) > 0
 
-        dp_resources = self.filter_charts_by_component(charts, "dataplane")
+        dp_resources = self.filter_charts_by_component(docs, "dataplane")
         assert len(dp_resources) == 0
 
     def test_astronomer_dp_only(self, kube_version):
         """Test that helm renders the correct templates when only the dataplane is enabled."""
-        charts = render_chart(
+        docs = render_chart(
             kube_version=kube_version,
             values={"global": {"controlplane": {"enabled": False}, "dataplane": {"enabled": True}}},
         )
-        cp_resources = self.filter_charts_by_component(charts, "controlplane")
+        cp_resources = self.filter_charts_by_component(docs, "controlplane")
         assert len(cp_resources) == 0
 
-        dp_resources = self.filter_charts_by_component(charts, "dataplane")
+        dp_resources = self.filter_charts_by_component(docs, "dataplane")
         assert len(dp_resources) > 0
 
     def test_astronomer_both_cp_dp_enabled(self, kube_version):
         """Test when both CP and DP features are enabled."""
-        charts = render_chart(
+        docs = render_chart(
             kube_version=kube_version,
             values={"global": {"controlplane": {"enabled": True}, "dataplane": {"enabled": True}}},
         )
-        cp_resources = self.filter_charts_by_component(charts, "controlplane")
+        cp_resources = self.filter_charts_by_component(docs, "controlplane")
         assert len(cp_resources) > 0
 
-        dp_resources = self.filter_charts_by_component(charts, "dataplane")
+        dp_resources = self.filter_charts_by_component(docs, "dataplane")
         assert len(dp_resources) > 0
 
     def test_astronomer_both_cp_dp_disabled(self, kube_version):
         """Test when both CP and DP features are disabled."""
-        charts = render_chart(
+        docs = render_chart(
             kube_version=kube_version,
             values={"global": {"controlplane": {"enabled": False}, "dataplane": {"enabled": False}}},
         )
-        cp_resources = self.filter_charts_by_component(charts, "controlplane")
+        cp_resources = self.filter_charts_by_component(docs, "controlplane")
         assert len(cp_resources) == 0
 
-        dp_resources = self.filter_charts_by_component(charts, "dataplane")
+        dp_resources = self.filter_charts_by_component(docs, "dataplane")
         assert len(dp_resources) == 0
 
     def test_components_have_correct_plane_labels(self, kube_version):
         """Test that all components have the correct plane labels according to the component map."""
-        charts = render_chart(
+        docs = render_chart(
             kube_version=kube_version,
             values={"global": {"controlplane": {"enabled": True}, "dataplane": {"enabled": True}}},
         )
-        component_charts = [chart for chart in charts if self.get_component_name(chart)]
+        component_charts = [doc for doc in docs if self.get_component_name(doc)]
 
         for chart in component_charts:
             component_name = self.get_component_name(chart)
@@ -111,21 +111,21 @@ class TestAstronomerCpDpFeature:
 
     def test_no_components_with_incorrect_plane_labels(self, kube_version):
         """Test that there are no components with plane labels that don't match the component map."""
-        charts = render_chart(
+        docs = render_chart(
             kube_version=kube_version,
             values={"global": {"controlplane": {"enabled": True}, "dataplane": {"enabled": True}}},
         )
 
-        cp_resources = self.filter_charts_by_component(charts, "controlplane")
+        cp_resources = self.filter_charts_by_component(docs, "controlplane")
         assert len(cp_resources) > 0
-        dp_resources = self.filter_charts_by_component(charts, "dataplane")
+        dp_resources = self.filter_charts_by_component(docs, "dataplane")
         assert len(dp_resources) > 0
 
         labeled_resources = [
-            chart
-            for chart in charts
-            if chart.get("metadata", {}).get("labels", {}).get("component")
-            and chart.get("metadata", {}).get("labels", {}).get("plane")
+            doc
+            for doc in docs
+            if doc.get("metadata", {}).get("labels", {}).get("component")
+            and doc.get("metadata", {}).get("labels", {}).get("plane")
         ]
 
         for resource in labeled_resources:
