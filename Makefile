@@ -50,11 +50,12 @@ test: validate-commander-airflow-version unittest-charts
 .PHONY: clean
 clean: ## Clean build and test artifacts
 	rm -rfv ${TEMPDIR}
-	rm -fv .unittest-requirements
-	rm -rfv venv
-	rm -rfv .venv*
+	rm -rfv .unittest-requirements
 	rm -rfv .pytest_cache
+	rm -rfv .ruff_cache
+	rm -rfv .venv*
 	rm -rfv test-results
+	rm -rfv venv
 	find . -name __pycache__ -exec rm -rfv {} \+
 
 .PHONY: build
