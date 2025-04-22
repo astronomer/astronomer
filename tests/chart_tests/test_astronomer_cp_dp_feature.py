@@ -3,9 +3,7 @@ import pytest
 from tests import supported_k8s_versions
 from tests.chart_tests.helm_template_generator import render_chart
 
-# Some Values would be added later to these maps
-# "astronomer-jetstream": "dataplane",
-# "astronomer-prometheus": "controlplane",
+
 COMPONENT_PLANE_MAP = {
     "astronomer-houston": "controlplane",
     "astronomer-nginx": "controlplane",
@@ -13,7 +11,8 @@ COMPONENT_PLANE_MAP = {
     "astronomer-elasticsearch": "controlplane",
     "astronomer-commander": "dataplane",
     "astronomer-registry": "dataplane",
-    "astronomer-prometheus": "dataplane",
+    "astronomer-prometheus": "controlplane",
+    "astronomer-prometheus": "dataplane"
 }
 def filter_charts_by_component(charts, component):
     return [chart for chart in charts if chart.get("metadata", {}).get("labels", {}).get("plane") == component]
