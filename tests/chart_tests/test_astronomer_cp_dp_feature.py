@@ -14,18 +14,18 @@ COMPONENT_PLANE_MAP = {
     "astronomer-prometheus": "controlplane",
     "astronomer-prometheus": "dataplane"
 }
-def filter_charts_by_component(charts, component):
-    return [chart for chart in charts if chart.get("metadata", {}).get("labels", {}).get("plane") == component]
+def filter_charts_by_component(docs, component):
+    return [doc for doc in docs if doc.get("metadata", {}).get("labels", {}).get("plane") == component]
 
-def get_component_name(chart):
+def get_component_name(doc):
     """Extract component name from chart metadata."""
-    return chart.get("metadata", {}).get("labels", {}).get("component")
+    return doc.get("metadata", {}).get("labels", {}).get("component")
 
-def get_chart_identifier(chart):
+def get_chart_identifier(doc):
     """Get a readable identifier for a chart for error messages."""
-    kind = chart.get("kind", "Unknown")
-    name = chart.get("metadata", {}).get("name", "unnamed")
-    namespace = chart.get("metadata", {}).get("namespace", "default")
+    kind = doc.get("kind", "Unknown")
+    name = doc.get("metadata", {}).get("name", "unnamed")
+    namespace = doc.get("metadata", {}).get("namespace", "default")
     return f"{kind}/{namespace}/{name}"
 
 @pytest.mark.parametrize(
