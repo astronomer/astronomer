@@ -4,21 +4,23 @@
 kind: Deployment
 apiVersion: apps/v1
 metadata:
-  name: {{ template "nginx.fullname" . }}
+  name: {{ template "nginx.fullname" . }}{{ if .Values.plane }}-{{ .Values.plane }}{{ end }}
   labels:
     tier: {{ template "nginx.name" . }}
     component: ingress-controller
     chart: {{ template "nginx.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+    plane: {{ .Values.plane | default "control" }}
 spec:
-  replicas: {{ .Values.replicas }}
+  replicas: {{ if eq (.Values.plane | default "control") "data" }}{{ .Values.dataPlane.replicas | default .Values.replicas }}{{ else }}{{ .Values.replicas }}{{ end }}
   minReadySeconds: {{ .Values.minReadySeconds }}
   selector:
     matchLabels:
       tier: {{ template "nginx.name" . }}
       component: ingress-controller
       release: {{ .Release.Name }}
+      plane: {{ .Values.plane | default "control" }}
   template:
     metadata:
       labels:
@@ -27,6 +29,7 @@ spec:
         release: {{ .Release.Name }}
         app: {{ template "nginx.name" . }}
         version: {{ .Chart.Version }}
+        plane: {{ .Values.plane | default "control" }}
       annotations:
         traffic.sidecar.istio.io/includeInboundPorts: ""
         checksum/configmap: {{ include (print $.Template.BasePath "/nginx-configmap.yaml") . | sha256sum }}
