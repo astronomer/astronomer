@@ -31,7 +31,7 @@ venv-unit: .venv-unit  ## Setup venv required for unit testing the Astronomer he
 
 .PHONY: test-functional
 test-functional: venv-functional ## Run functional tests on the Astronomer helm chart
-	venv/bin/python -m pytest -v --junitxml=test-results/junit.xml -n auto tests/functional_tests
+	venv/bin/python -m pytest -v --junitxml=test-results/junit.xml tests/functional_tests
 
 .PHONY: test-unit
 test-unit: .unittest-charts ## Run unit tests
