@@ -15,40 +15,35 @@ COMPONENT_PLANE_MAP = {
     "astronomer-registry": "dataplane",
     "astronomer-prometheus": "dataplane",
 }
+def filter_charts_by_component(charts, component):
+    return [chart for chart in charts if chart.get("metadata", {}).get("labels", {}).get("plane") == component]
 
+def get_component_name(chart):
+    """Extract component name from chart metadata."""
+    return chart.get("metadata", {}).get("labels", {}).get("component")
+
+def get_chart_identifier(chart):
+    """Get a readable identifier for a chart for error messages."""
+    kind = chart.get("kind", "Unknown")
+    name = chart.get("metadata", {}).get("name", "unnamed")
+    namespace = chart.get("metadata", {}).get("namespace", "default")
+    return f"{kind}/{namespace}/{name}"
 
 @pytest.mark.parametrize(
     "kube_version",
     supported_k8s_versions,
 )
 class TestAstronomerCpDpFeature:
-    @staticmethod
-    def filter_charts_by_component(charts, component):
-        return [chart for chart in charts if chart.get("metadata", {}).get("labels", {}).get("plane") == component]
-
-    @staticmethod
-    def get_component_name(chart):
-        """Extract component name from chart metadata."""
-        return chart.get("metadata", {}).get("labels", {}).get("component")
-
-    @staticmethod
-    def get_chart_identifier(chart):
-        """Get a readable identifier for a chart for error messages."""
-        kind = chart.get("kind", "Unknown")
-        name = chart.get("metadata", {}).get("name", "unnamed")
-        namespace = chart.get("metadata", {}).get("namespace", "default")
-        return f"{kind}/{namespace}/{name}"
-
     def test_astronomer_cp_only(self, kube_version):
         """Test that helm renders the correct templates when only the controlplane is enabled."""
         docs = render_chart(
             kube_version=kube_version,
             values={"global": {"controlplane": {"enabled": True}, "dataplane": {"enabled": False}}},
         )
-        cp_resources = self.filter_charts_by_component(docs, "controlplane")
+        cp_resources = filter_charts_by_component(docs, "controlplane")
         assert len(cp_resources) > 0
 
-        dp_resources = self.filter_charts_by_component(docs, "dataplane")
+        dp_resources = filter_charts_by_component(docs, "dataplane")
         assert len(dp_resources) == 0
 
     def test_astronomer_dp_only(self, kube_version):
@@ -57,10 +52,10 @@ class TestAstronomerCpDpFeature:
             kube_version=kube_version,
             values={"global": {"controlplane": {"enabled": False}, "dataplane": {"enabled": True}}},
         )
-        cp_resources = self.filter_charts_by_component(docs, "controlplane")
+        cp_resources = filter_charts_by_component(docs, "controlplane")
         assert len(cp_resources) == 0
 
-        dp_resources = self.filter_charts_by_component(docs, "dataplane")
+        dp_resources = filter_charts_by_component(docs, "dataplane")
         assert len(dp_resources) > 0
 
     def test_astronomer_both_cp_dp_enabled(self, kube_version):
@@ -69,10 +64,10 @@ class TestAstronomerCpDpFeature:
             kube_version=kube_version,
             values={"global": {"controlplane": {"enabled": True}, "dataplane": {"enabled": True}}},
         )
-        cp_resources = self.filter_charts_by_component(docs, "controlplane")
+        cp_resources = filter_charts_by_component(docs, "controlplane")
         assert len(cp_resources) > 0
 
-        dp_resources = self.filter_charts_by_component(docs, "dataplane")
+        dp_resources = filter_charts_by_component(docs, "dataplane")
         assert len(dp_resources) > 0
 
     def test_astronomer_both_cp_dp_disabled(self, kube_version):
@@ -81,10 +76,10 @@ class TestAstronomerCpDpFeature:
             kube_version=kube_version,
             values={"global": {"controlplane": {"enabled": False}, "dataplane": {"enabled": False}}},
         )
-        cp_resources = self.filter_charts_by_component(docs, "controlplane")
+        cp_resources = filter_charts_by_component(docs, "controlplane")
         assert len(cp_resources) == 0
 
-        dp_resources = self.filter_charts_by_component(docs, "dataplane")
+        dp_resources = filter_charts_by_component(docs, "dataplane")
         assert len(dp_resources) == 0
 
     def test_components_have_correct_plane_labels(self, kube_version):
@@ -93,11 +88,11 @@ class TestAstronomerCpDpFeature:
             kube_version=kube_version,
             values={"global": {"controlplane": {"enabled": True}, "dataplane": {"enabled": True}}},
         )
-        component_charts = [doc for doc in docs if self.get_component_name(doc)]
+        component_charts = [doc for doc in docs if get_component_name(doc)]
 
         for chart in component_charts:
-            component_name = self.get_component_name(chart)
-            chart_identifier = self.get_chart_identifier(chart)
+            component_name = get_component_name(chart)
+            chart_identifier = get_chart_identifier(chart)
 
             if component_name not in COMPONENT_PLANE_MAP:
                 continue
@@ -116,9 +111,9 @@ class TestAstronomerCpDpFeature:
             values={"global": {"controlplane": {"enabled": True}, "dataplane": {"enabled": True}}},
         )
 
-        cp_resources = self.filter_charts_by_component(docs, "controlplane")
+        cp_resources = filter_charts_by_component(docs, "controlplane")
         assert len(cp_resources) > 0
-        dp_resources = self.filter_charts_by_component(docs, "dataplane")
+        dp_resources = filter_charts_by_component(docs, "dataplane")
         assert len(dp_resources) > 0
 
         labeled_resources = [
@@ -131,7 +126,7 @@ class TestAstronomerCpDpFeature:
         for resource in labeled_resources:
             component = resource.get("metadata", {}).get("labels", {}).get("component")
             actual_plane = resource.get("metadata", {}).get("labels", {}).get("plane")
-            chart_identifier = self.get_chart_identifier(resource)
+            chart_identifier = get_chart_identifier(resource)
 
             if component in COMPONENT_PLANE_MAP:
                 expected_plane = COMPONENT_PLANE_MAP[component]
