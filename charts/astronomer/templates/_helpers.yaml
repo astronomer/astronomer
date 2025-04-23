@@ -466,3 +466,16 @@ tlsEnabled: false
 {{ toYaml .Values.securityContext | indent 16 }}
 {{- end }}
 {{- end }}
+
+{{- define "commander_volume_mounts" }}
+- name: commander-config
+  mountPath: /app/config/metadata.yaml
+  subPath: metadata.yaml
+  readOnly: true
+{{- end }}
+
+{{- define "commander_volumes" }}
+- name: commander-config
+  configMap:
+    name: {{ .Release.Name }}-commander-config
+{{- end }}
