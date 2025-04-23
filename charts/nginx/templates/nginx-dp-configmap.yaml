@@ -1,10 +1,11 @@
 #####################
 ## NGINX ConfigMap ##
 #####################
+{{- if .Values.global.dataplane.enabled }}
 kind: ConfigMap
 apiVersion: v1
 metadata:
-  name: {{ template "nginx.fullname" . }}-ingress-controller
+  name: {{ template "nginx.fullname" . }}-ingress-dp-controller
   labels:
     tier: {{ template "nginx.name" . }}
     chart: {{ template "nginx.chart" . }}
@@ -30,3 +31,4 @@ data:
     "$request_length", "responseSize": "$upstream_response_length", "userAgent": "$http_user_agent",
     "remoteIp": "$remote_addr", "referer": "$http_referer", "latency": "$upstream_response_time
     s", "protocol":"$server_protocol"}}'
+{{- end }}
