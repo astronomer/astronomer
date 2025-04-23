@@ -52,7 +52,7 @@ spec:
   {{- end }}
   selector:
     tier: {{ template "nginx.name" . }}
-    component: ingress-controller
+    component: ingress-dp-controller
     release: {{ .Release.Name }}
   ports:
     - port: 80
