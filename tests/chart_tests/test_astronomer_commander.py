@@ -33,6 +33,7 @@ class TestAstronomerCommander:
         metadata_mount = next((vm for vm in volume_mounts if vm["name"] == "commander-config"), None)
         assert metadata_mount is not None
         assert metadata_mount["readOnly"] == True
+        assert metadata_mount["mountPath"] == "opt/airflow/metadata.yaml"
 
     def test_astronomer_commander_deployment_upgrade_timeout(self, kube_version):
         """Test that helm renders a good deployment template for
@@ -421,3 +422,17 @@ class TestAstronomerCommander:
             "verbs": ["get", "list", "watch", "create", "update", "patch", "delete"],
         }
         assert not any(rule == expected_rule for rule in doc["rules"])
+
+    def test_astronomer_commander_config(self, kube_version):
+        """Test that helm renders correct configmap template for commander metadata."""
+        docs = render_chart(
+        kube_version=kube_version,
+        show_only=["charts/astronomer/templates/commander/commander-config.yaml"],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["kind"] == "ConfigMap"
+        assert doc["apiVersion"] == "v1"
+        assert doc["metadata"]["name"] == "release-name-commander-config"
+        assert "metadata.yaml" in doc["data"]
