@@ -130,6 +130,9 @@ spec:
 {{- if .Values.commander.volumeMounts }}
 {{- tpl (toYaml .Values.commander.volumeMounts) $ | nindent 12 }}
 {{- end }}
+              - name: commander-config
+                mountPath: /opt/airflow/metadata
+                readOnly: true
 {{- if .Values.commander.extraContainers }}
 {{- tpl (toYaml .Values.commander.extraContainers) $ | nindent 8 }}
 {{- end }}
