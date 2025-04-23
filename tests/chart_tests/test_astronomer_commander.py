@@ -29,6 +29,10 @@ class TestAstronomerCommander:
         env_vars = {x["name"]: x["value"] for x in c_by_name["commander"]["env"]}
         assert env_vars["COMMANDER_UPGRADE_TIMEOUT"] == "600"
         assert "COMMANDER_MANAGE_NAMESPACE_RESOURCE" not in env_vars
+        volume_mounts = c_by_name["commander"]["volumeMounts"]
+        metadata_mount = next((vm for vm in volume_mounts if vm["name"] == "commander-config"), None)
+        assert metadata_mount is not None
+        assert metadata_mount["readOnly"] == True
 
     def test_astronomer_commander_deployment_upgrade_timeout(self, kube_version):
         """Test that helm renders a good deployment template for
