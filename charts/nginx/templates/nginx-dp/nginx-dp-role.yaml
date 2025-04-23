@@ -1,12 +1,13 @@
 ############################
 ## NGINX Role/ClusterRole ##
 ############################
+{{- if .Values.global.dataplane.enabled }}
 {{- $singleNamespace := .Values.global.singleNamespace }}
 {{- if .Values.global.rbacEnabled }}
 kind: {{ if $singleNamespace }}Role{{ else }}ClusterRole{{ end }}
 apiVersion: {{ template "apiVersion.rbac" . }}
 metadata:
-  name: {{ template "nginx.fullname" . }}
+  name: {{ template "nginx.fullname" . }}-dp
   labels:
     tier: {{ template "nginx.name" . }}
     chart: {{ template "nginx.chart" . }}
@@ -89,4 +90,5 @@ rules:
     verbs:
       - update
   {{- end }}
+{{- end }}
 {{- end }}
