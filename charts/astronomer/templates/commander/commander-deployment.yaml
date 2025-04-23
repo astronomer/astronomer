@@ -137,4 +137,7 @@ spec:
 {{- if .Values.commander.extraVolumes }}
 {{- tpl (toYaml .Values.commander.extraVolumes) $ | nindent 8 }}
 {{- end }}
+        - name: commander-config
+          configMap:
+            name: {{ .Release.Name }}-commander-config
 {{- end }}

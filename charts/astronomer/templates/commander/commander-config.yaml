@@ -1,0 +1,19 @@
+{{- if .Values.global.dataplane.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-commander-config
+  labels:
+    component: commander
+    tier: astronomer
+    plane: dataplane
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+data:
+  metadata.yaml: |
+    dataplane_id: xxxxxxx
+    commander_url: ""
+    kubernetes_version: ""
+    dataplane_url: ""
+{{- end }}
