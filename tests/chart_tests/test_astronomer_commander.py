@@ -32,7 +32,7 @@ class TestAstronomerCommander:
         volume_mounts = c_by_name["commander"]["volumeMounts"]
         metadata_mount = next((vm for vm in volume_mounts if vm["name"] == "commander-config"), None)
         assert metadata_mount is not None
-        assert metadata_mount["readOnly"] == True
+        assert metadata_mount["readOnly"] is True
         assert metadata_mount["mountPath"] == "opt/airflow/metadata.yaml"
 
     def test_astronomer_commander_deployment_upgrade_timeout(self, kube_version):
@@ -426,8 +426,8 @@ class TestAstronomerCommander:
     def test_astronomer_commander_config(self, kube_version):
         """Test that helm renders correct configmap template for commander metadata."""
         docs = render_chart(
-        kube_version=kube_version,
-        show_only=["charts/astronomer/templates/commander/commander-config.yaml"],
+            kube_version=kube_version,
+            show_only=["charts/astronomer/templates/commander/commander-config.yaml"],
         )
 
         assert len(docs) == 1
