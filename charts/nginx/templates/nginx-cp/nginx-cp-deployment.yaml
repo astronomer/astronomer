@@ -30,7 +30,7 @@ spec:
         version: {{ .Chart.Version }}
       annotations:
         traffic.sidecar.istio.io/includeInboundPorts: ""
-        checksum/configmap: {{ include (print $.Template.BasePath "/nginx-cp-configmap.yaml") . | sha256sum }}
+        checksum/configmap: {{ include (print $.Template.BasePath "/nginx-cp/nginx-cp-configmap.yaml") . | sha256sum }}
         checksum/headers-configmap: {{ include (print $.Template.BasePath "/nginx-headers-configmap.yaml") . | sha256sum }}
         {{- if .Values.global.istio.enabled }}
         sidecar.istio.io/inject: "false"
