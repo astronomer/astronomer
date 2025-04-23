@@ -24,6 +24,7 @@ airflow_components_list = [
     "triggerer",
     "migrateDatabaseJob",
     "cleanup",
+    "dagProcessor",
 ]
 
 

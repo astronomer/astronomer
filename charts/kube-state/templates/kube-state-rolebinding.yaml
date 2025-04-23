@@ -1,6 +1,7 @@
 ###############################################
 ## Kube State ClusterRoleBinding/RoleBinding ##
 ###############################################
+{{- if .Values.global.dataplane.enabled }}
 {{- $namespacepoolsRBACresources:= and .Values.global.features.namespacePools.createRbac .Values.global.features.namespacePools.enabled }}
 {{- $useRoles := or .Values.global.features.namespacePools.enabled .Values.global.singleNamespace }}
 {{- $useClusterRoles := and .Values.global.rbacEnabled .Values.global.clusterRoles (not $useRoles )}}
@@ -28,6 +29,7 @@ metadata:
     chart: {{ $.Chart.Name }}-{{ $.Chart.Version }}
     release: {{ $.Release.Name }}
     heritage: {{ $.Release.Service }}
+    plane: dataplane
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: {{ if $useClusterRoles }}ClusterRole{{ else }}Role{{ end }}
@@ -37,4 +39,5 @@ subjects:
   name: {{ template "kube-state.serviceAccountName" $ }}
   namespace: {{ $.Release.Namespace }}
 {{ end }}
+{{- end }}
 {{- end }}

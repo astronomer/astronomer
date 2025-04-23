@@ -230,25 +230,28 @@ class TestElasticSearch:
         doc = docs[0]
         assert "NetworkPolicy" == doc["kind"]
         assert [
+            {"namespaceSelector": {}, "podSelector": {"matchLabels": {"tier": "airflow", "component": "webserver"}}},
             {
                 "namespaceSelector": {},
-                "podSelector": {"matchLabels": {"tier": "airflow", "component": "webserver"}},
-            },
-            {
-                "namespaceSelector": {},
-                "podSelector": {"matchLabels": {"component": "scheduler", "tier": "airflow"}},
-            },
-            {
-                "namespaceSelector": {},
-                "podSelector": {"matchLabels": {"component": "worker", "tier": "airflow"}},
-            },
-            {
-                "namespaceSelector": {},
-                "podSelector": {"matchLabels": {"component": "triggerer", "tier": "airflow"}},
-            },
-            {
-                "namespaceSelector": {},
-                "podSelector": {"matchLabels": {"component": "git-sync-relay", "tier": "airflow"}},
+                "podSelector": {
+                    "matchExpressions": [
+                        {
+                            "key": "component",
+                            "operator": "In",
+                            "values": [
+                                "dag-server",
+                                "metacleanup",
+                                "airflow-downgrade",
+                                "git-sync-relay",
+                                "dag-processor",
+                                "triggerer",
+                                "worker",
+                                "scheduler",
+                            ],
+                        }
+                    ],
+                    "matchLabels": {"tier": "airflow"},
+                },
             },
         ] == doc["spec"]["ingress"][0]["from"]
 
