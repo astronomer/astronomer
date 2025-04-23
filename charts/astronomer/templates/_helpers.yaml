@@ -469,7 +469,7 @@ tlsEnabled: false
 
 {{- define "commander_volume_mounts" }}
 - name: commander-config
-  mountPath: /app/config/metadata.yaml
+  mountPath: opt/airflow/metadata.yaml
   subPath: metadata.yaml
   readOnly: true
 {{- end }}
