@@ -1,16 +1,18 @@
 ###################
 ## NGINX Service ##
 ###################
+{{- if .Values.global.dataplane.enabled }}
 kind: Service
 apiVersion: v1
 metadata:
-  name: {{ template "nginx.fullname" . }}
+  name: {{ template "nginx.fullname" . }}-dp
   labels:
     tier: {{ template "nginx.name" . }}
-    component: ingress-controller
+    component: ingress-dp-controller
     chart: {{ template "nginx.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+    plane: dataplane
   annotations:
 {{- if .Values.ingressAnnotations -}}
 {{ range $key, $value := .Values.ingressAnnotations }}
@@ -69,3 +71,4 @@ spec:
       nodePort: {{ .Values.httpsNodePort }}
       {{- end }}
       appProtocol: https
+{{- end }}
