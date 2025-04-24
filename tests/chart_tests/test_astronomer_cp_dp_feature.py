@@ -21,8 +21,8 @@ def get_component_name(doc):
     """Extract component name from chart metadata."""
     return doc.get("metadata", {}).get("labels", {}).get("component")
 
-def get_chart_identifier(doc):
-    """Get a readable identifier for a chart for error messages."""
+def create_doc_identifier(doc):
+    """Create a unique identifier for a k8s doc."""
     kind = doc.get("kind", "Unknown")
     name = doc.get("metadata", {}).get("name", "unnamed")
     namespace = doc.get("metadata", {}).get("namespace", "default")
