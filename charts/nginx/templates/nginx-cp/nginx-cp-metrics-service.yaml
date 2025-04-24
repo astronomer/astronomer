@@ -5,7 +5,7 @@
 kind: Service
 apiVersion: v1
 metadata:
-  name: {{ template "nginx.fullname" . }}-metrics
+  name: {{ template "nginx.fullname" . }}-cp-metrics
   labels:
     tier: {{ template "nginx.name" . }}
     component: ingress-cp-controller
