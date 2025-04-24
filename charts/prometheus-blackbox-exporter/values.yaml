@@ -12,7 +12,7 @@ strategy:
 
 image:
   repository: quay.io/astronomer/ap-blackbox-exporter
-  tag: 0.25.0-7
+  tag: 0.25.0-8
   pullPolicy: IfNotPresent
 
   ## Optionally specify an array of imagePullSecrets.
