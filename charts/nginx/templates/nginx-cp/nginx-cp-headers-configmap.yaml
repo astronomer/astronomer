@@ -1,6 +1,6 @@
-#####################
-## NGINX ConfigMap ##
-#####################
+###################################
+## NGINX Control Plane ConfigMap ##
+###################################
 {{- if .Values.global.controlplane.enabled }}
 {{- $cspPolicyEnabled :=  .Values.cspPolicy.cdnEnabled }}
 {{- $connectsrc :=  eq $cspPolicyEnabled true | ternary .Values.cspPolicy.connectsrc "" }}

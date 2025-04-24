@@ -1,6 +1,6 @@
-#################################################
-## Nginx controller metrics pods NetworkPolicy ##
-#################################################
+############################################################
+## Nginx Data Plane controller metrics pods NetworkPolicy ##
+############################################################
 {{- if and .Values.global.networkPolicy.enabled .Values.global.dataplane.enabled }}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy

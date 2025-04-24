@@ -1,6 +1,6 @@
-###########################
-## NGINX Metrics service ##
-###########################
+#########################################
+## NGINX Control Plane Metrics service ##
+#########################################
 {{- if .Values.global.controlplane.enabled }}
 kind: Service
 apiVersion: v1

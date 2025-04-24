@@ -1,6 +1,6 @@
-###########################
-## NGINX Metrics service ##
-###########################
+######################################
+## NGINX Data Plane Metrics service ##
+######################################
 {{- if .Values.global.dataplane.enabled }}
 kind: Service
 apiVersion: v1
