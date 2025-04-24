@@ -12,7 +12,7 @@ metadata:
     heritage: {{ .Release.Service }}
 data:
   metadata.yaml: |
-    dataplane_id: ""
+    dataplane_id: {{ randAlphaNum 8 | quote }}
     commander_url: ""
     kubernetes_version: ""
     dataplane_url: ""
