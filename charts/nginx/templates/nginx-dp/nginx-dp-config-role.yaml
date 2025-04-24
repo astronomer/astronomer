@@ -1,7 +1,7 @@
 #######################
 ## NGINX Config Role ##
 #######################
-{{- if .Values.global.rbacEnabled }}
+{{- if and .Values.global.rbacEnabled .Values.global.dataplane.enabled}}
 kind: Role
 apiVersion: {{ template "apiVersion.rbac" . }}
 metadata:
@@ -11,6 +11,7 @@ metadata:
     chart: {{ template "nginx.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+    plane: dataplane
 rules:
   - apiGroups:
       - ""
