@@ -10,6 +10,7 @@
 .idea/
 .python-version
 .unittest-requirements
+.venv*
 .vscode/
 /secrets
 /venv/
