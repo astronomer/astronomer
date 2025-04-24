@@ -5,7 +5,7 @@
 kind: Deployment
 apiVersion: apps/v1
 metadata:
-  name: {{ template "nginx.fullname" . }}
+  name: {{ template "nginx.fullname" . }}-dp
   labels:
     tier: {{ template "nginx.name" . }}
     component: ingress-dp-controller
