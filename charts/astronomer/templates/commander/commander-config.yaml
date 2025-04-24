@@ -12,8 +12,10 @@ metadata:
     heritage: {{ .Release.Service }}
 data:
   metadata.yaml: |
-    dataplane_id: xxxxxxx
+    dataplane_id: ""
     commander_url: ""
     kubernetes_version: ""
     dataplane_url: ""
+    commander_version: ""
+    helm_chart_version: ""
 {{- end }}
