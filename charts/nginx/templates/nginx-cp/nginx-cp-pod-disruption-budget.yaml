@@ -1,11 +1,11 @@
 ############################################
 ## Astronomer Nginx Pod Disruption Budget ##
 ############################################
-{{- if .Values.global.podDisruptionBudgetsEnabled }}
+{{- if and .Values.global.podDisruptionBudgetsEnabled .Values.global.controlplane.enabled}}
 apiVersion: {{ include "apiVersion.PodDisruptionBudget" . }}
 kind: PodDisruptionBudget
 metadata:
-  name: {{ .Release.Name }}-nginx-pdb
+  name: {{ .Release.Name }}-nginx-cp-pdb
 spec:
   {{- if lt ( .Values.replicas | int ) 4 }}
   maxUnavailable: 1
@@ -15,6 +15,6 @@ spec:
   selector:
     matchLabels:
       tier: {{ template "nginx.name" . }}
-      component: ingress-controller
+      component: ingress-cp-controller
       release: {{ .Release.Name }}
 {{- end }}
