@@ -183,7 +183,7 @@ jobs:
           name: Run pre-commit
           command: pre-commit run --all-files --show-diff-on-failure
 
-  unittest-charts:
+  test-unit:
     docker:
       - image: quay.io/astronomer/ci-helm-release:{{ ci_runner_version }}
     # https://circleci.com/docs/using-docker/#x86
@@ -202,14 +202,14 @@ jobs:
       - run:
           name: Create venv
           command: |
-            make unittest-requirements
+            make venv-unit
       - save_cache:
           key: chart-test-venv-{{ '{{' }} checksum "/tmp/chart-tests-cache-key.txt" }}
           paths:
             - ~/.cache/uv
             - ~/.local/share/uv
             - ~/project/venv
-            - ~/project/.unittest-requirements
+            - ~/project/.venv-unit
       - run:
           name: unittest the Astronomer chart
           command: |
@@ -358,13 +358,13 @@ workflows:
         - not: << pipeline.parameters.qa-release >>
     jobs:
       - run_pre_commit
-      - unittest-charts
+      - test-unit
       - check-commander-airflow-version
       - build-artifact:
           requires:
             - check-commander-airflow-version
             - run_pre_commit
-            - unittest-charts
+            - test-unit
       - approve-test-all-platforms:
           type: approval
 {% for version in kube_versions %}{% if version in [kube_versions[0], kube_versions[-1]] %}
@@ -462,14 +462,14 @@ workflows:
         - not: << pipeline.parameters.scan-docker-images >>
     jobs:
       - run_pre_commit
-      - unittest-charts
+      - test-unit
       - check-commander-airflow-version
       - build-artifact:
           qa_release: true
           requires:
             - check-commander-airflow-version
             - run_pre_commit
-            - unittest-charts
+            - test-unit
       - release-to-internal:
           context:
             - gcp-astronomer-prod
