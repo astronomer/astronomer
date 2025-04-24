@@ -1,6 +1,6 @@
-##########################################
-## NGINX RoleBinding/ClusterRoleBinding ##
-##########################################
+#####################################################
+## NGINX Data Plane RoleBinding/ClusterRoleBinding ##
+#####################################################
 {{- if .Values.global.dataplane.enabled }}
 {{- $singleNamespace := .Values.global.singleNamespace }}
 {{- if .Values.global.rbacEnabled }}

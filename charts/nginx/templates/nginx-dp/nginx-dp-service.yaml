@@ -1,6 +1,6 @@
-###################
-## NGINX Service ##
-###################
+##############################
+## NGINX Data Plane Service ##
+##############################
 {{- if .Values.global.dataplane.enabled }}
 kind: Service
 apiVersion: v1

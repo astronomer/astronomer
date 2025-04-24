@@ -1,6 +1,6 @@
-#####################
-## NGINX ConfigMap ##
-#####################
+################################
+## NGINX Data Plane ConfigMap ##
+################################
 {{- if .Values.global.dataplane.enabled }}
 kind: ConfigMap
 apiVersion: v1
