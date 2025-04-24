@@ -1,6 +1,6 @@
-######################
-## NGINX Deployment ##
-######################
+####################################
+## NGINX Control Plane Deployment ##
+####################################
 {{- if .Values.global.controlplane.enabled }}
 kind: Deployment
 apiVersion: apps/v1

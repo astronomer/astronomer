@@ -1,6 +1,6 @@
-###################
-## NGINX Service ##
-###################
+#################################
+## NGINX Control Plane Service ##
+#################################
 {{- if .Values.global.controlplane.enabled }}
 kind: Service
 apiVersion: v1

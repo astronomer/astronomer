@@ -1,6 +1,6 @@
-##########################################
-## NGINX RoleBinding/ClusterRoleBinding ##
-##########################################
+########################################################
+## NGINX Control Plane RoleBinding/ClusterRoleBinding ##
+########################################################
 {{- if .Values.global.controlplane.enabled }}
 {{- $singleNamespace := .Values.global.singleNamespace }}
 {{- if .Values.global.rbacEnabled }}

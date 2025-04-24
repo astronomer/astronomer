@@ -1,6 +1,6 @@
-#####################
-## NGINX ConfigMap ##
-#####################
+###################################
+## NGINX Control Plane ConfigMap ##
+###################################
 {{- if .Values.global.controlplane.enabled }}
 kind: ConfigMap
 apiVersion: v1

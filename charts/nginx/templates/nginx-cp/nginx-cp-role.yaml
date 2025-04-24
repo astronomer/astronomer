@@ -1,6 +1,6 @@
-############################
-## NGINX Role/ClusterRole ##
-############################
+##########################################
+## NGINX Control Plane Role/ClusterRole ##
+##########################################
 {{- if .Values.global.controlplane.enabled }}
 {{- $singleNamespace := .Values.global.singleNamespace }}
 {{- if .Values.global.rbacEnabled }}
