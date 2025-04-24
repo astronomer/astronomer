@@ -14,7 +14,7 @@ COMPONENT_PLANE_MAP = {
     "astronomer-prometheus": "controlplane",
     "astronomer-prometheus": "dataplane"
 }
-def filter_charts_by_component(docs, component):
+def filter_docs_by_component(docs, component):
     return [doc for doc in docs if doc.get("metadata", {}).get("labels", {}).get("plane") == component]
 
 def get_component_name(doc):
