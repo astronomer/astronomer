@@ -27,6 +27,7 @@ rules:
     verbs:
       - list
       - watch
+      - get
   {{- if not $singleNamespace }}
   - apiGroups:
       - ""
