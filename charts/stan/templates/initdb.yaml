@@ -3,7 +3,7 @@
 #################
 {{- if not .Values.global.nats.jetStream.enabled }}
 {{- if eq .Values.store.type "sql" }}
-{{- if and .Values.store.sql.initdb.enabled .Values.global.dataplane.enabled }}
+{{- if and .Values.store.sql.initdb.enabled .Values.global.controlplane.enabled }}
 apiVersion: batch/v1
 kind: Job
 metadata:
