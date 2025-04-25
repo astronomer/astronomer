@@ -52,7 +52,7 @@ spec:
           resources:
 {{ toYaml .Values.resources | indent 12 }}
           args:
-            - /nginx-ingress-dp-controller
+            - /nginx-ingress-controller
             - --default-backend-service={{ .Release.Namespace }}/{{ template "nginx.fullname" . }}-default-backend
             - --configmap={{ .Release.Namespace }}/{{ template "nginx.fullname" . }}-ingress-dp-controller
             - --ingress-class={{ template "nginx.ingress.class" . }}
