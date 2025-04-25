@@ -253,7 +253,8 @@ class TestNatsStatefulSet:
                 "charts/nats/templates/jetstream-job-scc.yaml",
                 "charts/nats/templates/statefulset.yaml",
             ],
-            values={ "global": {"controlplane": {"enabled": False}},
+            values={
+                "global": {"controlplane": {"enabled": False}},
             },
         )
         assert len(docs) == 0
