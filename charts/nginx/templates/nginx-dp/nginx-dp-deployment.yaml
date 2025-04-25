@@ -73,7 +73,7 @@ spec:
             - --enable-topology-aware-routing=true
             {{- end }}
             - --election-id={{ .Values.electionId }}-{{ template "nginx.fullname" . }}
-            - --publish-service={{ .Release.Namespace }}/{{ template "nginx.fullname" . }}
+            - --publish-service={{ .Release.Namespace }}/{{ template "nginx.fullname" . }}-dp
             - --http-port={{ .Values.ports.http }}
             - --https-port={{ .Values.ports.https }}
           ports:
