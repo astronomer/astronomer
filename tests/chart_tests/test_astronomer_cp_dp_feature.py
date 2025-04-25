@@ -10,16 +10,19 @@ COMPONENT_PLANE_MAP = {
     "astronomer-astro-ui": "controlplane",
     "astronomer-elasticsearch": "controlplane",
     "astronomer-commander": "dataplane",
-    "astronomer-registry": "dataplane",
+    "astronomer-registry": "controlplane",
     "astronomer-prometheus": "controlplane",
-    "astronomer-prometheus": "dataplane"
 }
+
+
 def filter_docs_by_component(docs, component):
     return [doc for doc in docs if doc.get("metadata", {}).get("labels", {}).get("plane") == component]
+
 
 def get_component_name(doc):
     """Extract component name from chart metadata."""
     return doc.get("metadata", {}).get("labels", {}).get("component")
+
 
 def create_doc_identifier(doc):
     """Create a unique identifier for a k8s doc."""
@@ -27,6 +30,7 @@ def create_doc_identifier(doc):
     name = doc.get("metadata", {}).get("name", "unnamed")
     namespace = doc.get("metadata", {}).get("namespace", "default")
     return f"{kind}/{namespace}/{name}"
+
 
 @pytest.mark.parametrize(
     "kube_version",
@@ -39,10 +43,10 @@ class TestAstronomerCpDpFeature:
             kube_version=kube_version,
             values={"global": {"controlplane": {"enabled": True}, "dataplane": {"enabled": False}}},
         )
-        cp_resources = filter_charts_by_component(docs, "controlplane")
+        cp_resources = filter_docs_by_component(docs, "controlplane")
         assert len(cp_resources) > 0
 
-        dp_resources = filter_charts_by_component(docs, "dataplane")
+        dp_resources = filter_docs_by_component(docs, "dataplane")
         assert len(dp_resources) == 0
 
     def test_astronomer_dp_only(self, kube_version):
@@ -51,10 +55,10 @@ class TestAstronomerCpDpFeature:
             kube_version=kube_version,
             values={"global": {"controlplane": {"enabled": False}, "dataplane": {"enabled": True}}},
         )
-        cp_resources = filter_charts_by_component(docs, "controlplane")
+        cp_resources = filter_docs_by_component(docs, "controlplane")
         assert len(cp_resources) == 0
 
-        dp_resources = filter_charts_by_component(docs, "dataplane")
+        dp_resources = filter_docs_by_component(docs, "dataplane")
         assert len(dp_resources) > 0
 
     def test_astronomer_both_cp_dp_enabled(self, kube_version):
@@ -63,10 +67,10 @@ class TestAstronomerCpDpFeature:
             kube_version=kube_version,
             values={"global": {"controlplane": {"enabled": True}, "dataplane": {"enabled": True}}},
         )
-        cp_resources = filter_charts_by_component(docs, "controlplane")
+        cp_resources = filter_docs_by_component(docs, "controlplane")
         assert len(cp_resources) > 0
 
-        dp_resources = filter_charts_by_component(docs, "dataplane")
+        dp_resources = filter_docs_by_component(docs, "dataplane")
         assert len(dp_resources) > 0
 
     def test_astronomer_both_cp_dp_disabled(self, kube_version):
@@ -75,10 +79,10 @@ class TestAstronomerCpDpFeature:
             kube_version=kube_version,
             values={"global": {"controlplane": {"enabled": False}, "dataplane": {"enabled": False}}},
         )
-        cp_resources = filter_charts_by_component(docs, "controlplane")
+        cp_resources = filter_docs_by_component(docs, "controlplane")
         assert len(cp_resources) == 0
 
-        dp_resources = filter_charts_by_component(docs, "dataplane")
+        dp_resources = filter_docs_by_component(docs, "dataplane")
         assert len(dp_resources) == 0
 
     def test_components_have_correct_plane_labels(self, kube_version):
@@ -91,7 +95,7 @@ class TestAstronomerCpDpFeature:
 
         for chart in component_charts:
             component_name = get_component_name(chart)
-            chart_identifier = get_chart_identifier(chart)
+            chart_identifier = create_doc_identifier(chart)
 
             if component_name not in COMPONENT_PLANE_MAP:
                 continue
@@ -110,22 +114,21 @@ class TestAstronomerCpDpFeature:
             values={"global": {"controlplane": {"enabled": True}, "dataplane": {"enabled": True}}},
         )
 
-        cp_resources = filter_charts_by_component(docs, "controlplane")
+        cp_resources = filter_docs_by_component(docs, "controlplane")
         assert len(cp_resources) > 0
-        dp_resources = filter_charts_by_component(docs, "dataplane")
+        dp_resources = filter_docs_by_component(docs, "dataplane")
         assert len(dp_resources) > 0
 
         labeled_resources = [
             doc
             for doc in docs
-            if doc.get("metadata", {}).get("labels", {}).get("component")
-            and doc.get("metadata", {}).get("labels", {}).get("plane")
+            if doc.get("metadata", {}).get("labels", {}).get("component") and doc.get("metadata", {}).get("labels", {}).get("plane")
         ]
 
         for resource in labeled_resources:
             component = resource.get("metadata", {}).get("labels", {}).get("component")
             actual_plane = resource.get("metadata", {}).get("labels", {}).get("plane")
-            chart_identifier = get_chart_identifier(resource)
+            chart_identifier = create_doc_identifier(resource)
 
             if component in COMPONENT_PLANE_MAP:
                 expected_plane = COMPONENT_PLANE_MAP[component]
