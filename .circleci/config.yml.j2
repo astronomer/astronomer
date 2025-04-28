@@ -162,6 +162,7 @@ jobs:
   run_pre_commit:
     docker:
       - image: quay.io/astronomer/ci-pre-commit:{{ ci_runner_version }}
+    resource_class: small
     steps:
       - checkout
       - run:
