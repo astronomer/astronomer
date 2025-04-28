@@ -11,7 +11,7 @@ TEMPDIR := /tmp/astro-temp
 
 # functional-requirements is deprecated
 .PHONY: functional-requirements
-functional-requirements: .functional-requirements
+functional-requirements: .venv-functional
 .PHONY: venv-functional
 venv-functional: .venv-functional  ## Setup venv required for unit testing the Astronomer helm chart
 .venv-functional:
@@ -33,10 +33,11 @@ venv-unit: .venv-unit  ## Setup venv required for unit testing the Astronomer he
 test-functional: venv-functional ## Run functional tests on the Astronomer helm chart
 	venv/bin/python -m pytest -v --junitxml=test-results/junit.xml tests/functional_tests
 
-.PHONY: test-unit
-test-unit: .unittest-charts ## Run unit tests
+# unittest-charts is deprecated
 .PHONY: unittest-charts
-unittest-charts: .unittest-requirements ## Unittest the Astronomer helm chart
+unittest-charts: test-unit
+.PHONY: test-unit
+test-unit: venv-unit ## Run unit tests
 	# Protip: you can modify pytest behavior like: make unittest-charts PYTEST_ADDOPTS='-v --maxfail=1 --pdb -k "prometheus and 1.20"'
 	venv/bin/python -m pytest -v --junitxml=test-results/junit.xml -n auto tests/chart_tests
 
@@ -45,7 +46,8 @@ validate-commander-airflow-version: ## Validate that airflowChartVersion is the 
 	bin/validate_commander_airflow_version
 
 .PHONY: test
-test: validate-commander-airflow-version unittest-charts
+test: validate-commander-airflow-version test-unit test-functional ## Run all tests
+	@echo "All tests passed"
 
 .PHONY: clean
 clean: ## Clean build and test artifacts
