@@ -12,6 +12,7 @@ metadata:
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
+    plane: dataplane
 spec:
   podSelector:
     matchLabels:
@@ -27,11 +28,11 @@ spec:
   - from:
     - podSelector:
         matchLabels:
-          plane: control
+          plane: controlplane
           component: ingress-controller
     - podSelector:
         matchLabels:
-          plane: control
+          plane: controlplane
           component: houston
     ports:
     - protocol: TCP
