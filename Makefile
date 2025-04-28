@@ -37,7 +37,7 @@ test-functional: venv-functional ## Run functional tests on the Astronomer helm 
 .PHONY: unittest-charts
 unittest-charts: test-unit
 .PHONY: test-unit
-test-unit: ## Run unit tests
+test-unit: venv-unit ## Run unit tests
 	# Protip: you can modify pytest behavior like: make unittest-charts PYTEST_ADDOPTS='-v --maxfail=1 --pdb -k "prometheus and 1.20"'
 	venv/bin/python -m pytest -v --junitxml=test-results/junit.xml -n auto tests/chart_tests
 
