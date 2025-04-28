@@ -29,7 +29,7 @@ repos:
       - id: remove-tabs
         exclude_types: [makefile, binary]
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: "v0.9.9"
+    rev: "v0.11.7"
     hooks:
       - id: ruff
         args:
@@ -74,7 +74,7 @@ repos:
     hooks:
       - id: shellcheck
   - repo: https://github.com/astronomer/pre-commit-hooks
-    rev: 8b2d969bd549cd7c9454cc8bb54eec5b35c2e5e6
+    rev: 976b58ba36fcd3313fed6d5a7abc228cec64f994
     hooks:
       - id: CVE-2017-18342
       - id: remove-unicode-zero-width-non-breaking-spaces
