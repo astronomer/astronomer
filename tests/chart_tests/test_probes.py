@@ -231,12 +231,12 @@ class TestDefaultProbes:
         },
         "kube-state_kube-state": {"httpGet": {"path": "/healthz", "port": 8080}, "initialDelaySeconds": 5, "timeoutSeconds": 5},
         "nats_nats": {"httpGet": {"path": "/", "port": 8222}, "initialDelaySeconds": 10, "timeoutSeconds": 5},
+        "nginx-cp_nginx": {"httpGet": {"path": "/healthz", "port": 10254}, "initialDelaySeconds": 30, "timeoutSeconds": 5},
         "nginx-default-backend_default-backend": {
             "httpGet": {"path": "/healthz", "port": 8080, "scheme": "HTTP"},
             "initialDelaySeconds": 30,
             "timeoutSeconds": 5,
         },
-        "nginx-cp_nginx": {"httpGet": {"path": "/healthz", "port": 10254}, "initialDelaySeconds": 30, "timeoutSeconds": 5},
         "nginx-dp_nginx": {"httpGet": {"path": "/healthz", "port": 10254}, "initialDelaySeconds": 30, "timeoutSeconds": 5},
         "pgbouncer_pgbouncer": {"tcpSocket": {"port": 5432}},
         "postgresql-master_release-name-postgresql": {
