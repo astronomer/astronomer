@@ -10,6 +10,7 @@ global:
 
   dataplane:
     enabled: true
+    baseDomain: ~
   controlplane:
     enabled: true
   # List of secrets containing private CA certificates
