@@ -1,6 +1,6 @@
-#####################
-## Houston Ingress ##
-#####################
+############################
+## Commander GRPC Ingress ##
+############################
 {{- if and .Values.global.dataplane.baseDomain .Values.global.dataplane.enabled }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
