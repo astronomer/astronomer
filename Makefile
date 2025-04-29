@@ -11,7 +11,7 @@ TEMPDIR := /tmp/astro-temp
 
 # functional-requirements is deprecated
 .PHONY: functional-requirements
-functional-requirements: .functional-requirements
+functional-requirements: .venv-functional
 .PHONY: venv-functional
 venv-functional: .venv-functional  ## Setup venv required for unit testing the Astronomer helm chart
 .venv-functional:

@@ -196,6 +196,21 @@ class TestNatsJetstream:
 
         assert len(docs) == 0
 
+    def test_jetstream_job_disable_dataplane_flag(self, kube_version):
+        """Test that jetstream job is disabled when dataplane is disabled."""
+        values = {
+            "global": {"controlplane": {"enabled": False}},
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=[
+                "charts/nats/templates/jetstream-job.yaml",
+            ],
+        )
+
+        assert len(docs) == 0
+
 
 @pytest.mark.parametrize(
     "scc_enabled,create_jetstream_job,jetstream_enabled,global_jetstream_enabled,stan_enabled,expected_docs",
