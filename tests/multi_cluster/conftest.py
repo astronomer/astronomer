@@ -34,8 +34,28 @@ def create_kind_cluster():
 
 @pytest.fixture(scope="session")
 def cp_cluster(create_kind_cluster):
-    """Fixture to create and provide the 'cp' KIND cluster."""
-    yield from create_kind_cluster("cp")
+    """Fixture to create and provide the 'cp' KIND cluster with Helm initialization."""
+    # Create the 'cp' KIND cluster and get the kubeconfig
+    kubeconfig = create_kind_cluster("cp")
+
+    # Run the Helm install command
+    # TODO: make this work like bin/install-platform
+    try:
+        subprocess.run(
+            [
+                "helm",
+                "install",
+                "my-release",
+                "my-chart-repo/my-chart",
+                "--kubeconfig",
+                kubeconfig,
+            ],
+            check=True,
+        )
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError(f"Failed to run Helm install: {e}") from e
+
+    yield kubeconfig
 
 
 @pytest.fixture(scope="session")
