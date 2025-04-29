@@ -6,16 +6,17 @@ import pytest
 class TestNginx:
     def test_nginx_service_basics(self):
         docs = render_chart(
-            show_only=["charts/nginx/templates/nginx-service.yaml"],
+            show_only=["charts/nginx/templates/nginx-cp/nginx-cp-service.yaml",
+                       "charts/nginx/templates/nginx-dp/nginx-dp-service.yaml"],
         )
 
-        assert len(docs) == 1
+        assert len(docs) == 2
 
         doc = docs[0]
 
         assert doc["kind"] == "Service"
         assert doc["apiVersion"] == "v1"
-        assert doc["metadata"]["name"] == "release-name-nginx"
+        assert doc["metadata"]["name"] == "release-name-nginx-cp"
         assert "loadBalancerIP" not in doc["spec"]
         assert "loadBalancerSourceRanges" not in doc["spec"]
 
@@ -47,7 +48,8 @@ class TestNginx:
         }
         doc = render_chart(
             values=values,
-            show_only=["charts/nginx/templates/nginx-service.yaml"],
+            show_only=["charts/nginx/templates/nginx-cp/nginx-cp-service.yaml",
+                       "charts/nginx/templates/nginx-dp/nginx-dp-service.yaml"],
         )[0]
         assert doc["spec"]["type"] == service_type
         assert doc["spec"].get("externalTrafficPolicy") == external_traffic_policy
@@ -57,7 +59,8 @@ class TestNginx:
         are specified."""
         doc = render_chart(
             values={"nginx": {"ingressAnnotations": {"foo1": "foo", "foo2": "foo", "foo3": "foo"}}},
-            show_only=["charts/nginx/templates/nginx-service.yaml"],
+            show_only=["charts/nginx/templates/nginx-cp/nginx-cp-service.yaml",
+                       "charts/nginx/templates/nginx-dp/nginx-dp-service.yaml"],
         )[0]
 
         expected_annotations = {"foo1": "foo", "foo2": "foo", "foo3": "foo"}
@@ -78,7 +81,8 @@ class TestNginx:
                     ],
                 }
             },
-            show_only=["charts/nginx/templates/nginx-service.yaml"],
+            show_only=["charts/nginx/templates/nginx-cp/nginx-cp-service.yaml",
+                       "charts/nginx/templates/nginx-dp/nginx-dp-service.yaml"],
         )[0]
 
         assert doc["spec"]["type"] == "LoadBalancer"
@@ -92,7 +96,8 @@ class TestNginx:
     def test_nginx_type_clusterip(self):
         doc = render_chart(
             values={"nginx": {"serviceType": "ClusterIP"}},
-            show_only=["charts/nginx/templates/nginx-service.yaml"],
+            show_only=["charts/nginx/templates/nginx-cp/nginx-cp-service.yaml",
+                       "charts/nginx/templates/nginx-dp/nginx-dp-service.yaml"],
         )[0]
 
         assert doc["spec"]["type"] == "ClusterIP"
@@ -100,10 +105,11 @@ class TestNginx:
     def test_nginx_type_nodeport(self):  # sourcery skip: class-extract-method
         docs = render_chart(
             values={"nginx": {"serviceType": "NodePort"}},
-            show_only=["charts/nginx/templates/nginx-service.yaml"],
+            show_only=["charts/nginx/templates/nginx-cp/nginx-cp-service.yaml",
+                       "charts/nginx/templates/nginx-dp/nginx-dp-service.yaml"],
         )
 
-        assert len(docs) == 1
+        assert len(docs) == 2
         doc = docs[0]
         assert doc["spec"]["type"] == "NodePort"
 
@@ -118,7 +124,8 @@ class TestNginx:
                     "metricsNodePort": metricsNodePort,
                 }
             },
-            show_only=["charts/nginx/templates/nginx-service.yaml"],
+            show_only=["charts/nginx/templates/nginx-cp/nginx-cp-service.yaml",
+                       "charts/nginx/templates/nginx-dp/nginx-dp-service.yaml"],
         )[0]
 
         ports = doc["spec"]["ports"]
@@ -132,7 +139,8 @@ class TestNginx:
                     "httpsNodePort": None,
                 }
             },
-            show_only=["charts/nginx/templates/nginx-service.yaml"],
+            show_only=["charts/nginx/templates/nginx-cp/nginx-cp-service.yaml",
+                       "charts/nginx/templates/nginx-dp/nginx-dp-service.yaml"],
         )[0]
 
         assert doc["spec"]["type"] == "NodePort"
@@ -147,7 +155,8 @@ class TestNginx:
                     "httpsNodePort": httpsNodePort,
                 }
             },
-            show_only=["charts/nginx/templates/nginx-service.yaml"],
+            show_only=["charts/nginx/templates/nginx-cp/nginx-cp-service.yaml",
+                       "charts/nginx/templates/nginx-dp/nginx-dp-service.yaml"],
         )[0]
 
         ports = doc["spec"]["ports"]
@@ -158,7 +167,8 @@ class TestNginx:
     def test_nginx_enabled_externalips(self):
         doc = render_chart(
             values={"nginx": {"externalIPs": "1.2.3.4"}},
-            show_only=["charts/nginx/templates/nginx-service.yaml"],
+            show_only=["charts/nginx/templates/nginx-cp/nginx-cp-service.yaml",
+                       "charts/nginx/templates/nginx-dp/nginx-dp-service.yaml"],
         )[0]
 
         assert len(doc["spec"]["externalIPs"]) > 0
@@ -166,34 +176,39 @@ class TestNginx:
 
     def test_nginx_metrics_service_type(self):
         doc = render_chart(
-            show_only=["charts/nginx/templates/nginx-metrics-service.yaml"],
+            show_only=["charts/nginx/templates/nginx-cp/nginx-cp-metrics-service.yaml",
+                       "charts/nginx/templates/nginx-dp/nginx-dp-metrics-service.yaml"],
         )[0]
         assert doc["spec"]["type"] == "ClusterIP"
         assert doc["spec"]["ports"][0]["port"] == 10254
 
     def test_nginx_externalTrafficPolicy_defaults(self):
         doc = render_chart(
-            show_only=["charts/nginx/templates/nginx-service.yaml"],
+            show_only=["charts/nginx/templates/nginx-cp/nginx-cp-service.yaml",
+                       "charts/nginx/templates/nginx-dp/nginx-dp-service.yaml"],
         )[0]
         assert "Cluster" == doc["spec"]["externalTrafficPolicy"]
 
     def test_nginx_externalTrafficPolicy_overrides(self):
         doc = render_chart(
             values={"nginx": {"preserveSourceIP": True}},
-            show_only=["charts/nginx/templates/nginx-service.yaml"],
+            show_only=["charts/nginx/templates/nginx-cp/nginx-cp-service.yaml",
+                       "charts/nginx/templates/nginx-dp/nginx-dp-service.yaml"],
         )[0]
         assert "Local" == doc["spec"]["externalTrafficPolicy"]
 
     def test_nginx_allowSnippetAnnotations_defaults(self):
         doc = render_chart(
-            show_only=["charts/nginx/templates/nginx-configmap.yaml"],
+            show_only=["charts/nginx/templates/nginx-cp/nginx-cp-configmap.yaml",
+                       "charts/nginx/templates/nginx-dp/nginx-dp-configmap.yaml"],
         )[0]
         assert doc["data"]["allow-snippet-annotations"] == "true"
 
     def test_nginx_enableAnnotationValidations_overrides(self):
         doc = render_chart(
             values={"nginx": {"enableAnnotationValidations": True}},
-            show_only=["charts/nginx/templates/nginx-deployment.yaml"],
+            show_only=["charts/nginx/templates/nginx-cp/nginx-cp-deployment.yaml",
+                       "charts/nginx/templates/nginx-dp/nginx-dp-deployment.yaml"],
         )[0]
         annotationValidation = "--enable-annotation-validation=true"
         assert annotationValidation in doc["spec"]["template"]["spec"]["containers"][0]["args"]
@@ -209,7 +224,8 @@ class TestNginx:
     def test_nginx_defaults(self):
         """Test nginx ingress deployment template defaults."""
         doc = render_chart(
-            show_only=["charts/nginx/templates/nginx-deployment.yaml"],
+            show_only=["charts/nginx/templates/nginx-cp/nginx-cp-deployment.yaml",
+                       "charts/nginx/templates/nginx-dp/nginx-dp-deployment.yaml"],
         )[0]
         expected_security_context = {
             "runAsUser": 101,
@@ -238,7 +254,8 @@ class TestNginx:
         minReadySeconds = 300
         doc = render_chart(
             values={"nginx": {"minReadySeconds": minReadySeconds}},
-            show_only=["charts/nginx/templates/nginx-deployment.yaml"],
+            show_only=["charts/nginx/templates/nginx-cp/nginx-cp-deployment.yaml",
+                       "charts/nginx/templates/nginx-dp/nginx-dp-deployment.yaml"],
         )[0]
 
         assert doc["spec"]["minReadySeconds"] == minReadySeconds
@@ -247,7 +264,8 @@ class TestNginx:
         """Test nginx ingress deployment template with election ttl overrides."""
         doc = render_chart(
             values={"nginx": {"electionTTL": "30s"}},
-            show_only=["charts/nginx/templates/nginx-deployment.yaml"],
+            show_only=["charts/nginx/templates/nginx-cp/nginx-cp-deployment.yaml",
+                       "charts/nginx/templates/nginx-dp/nginx-dp-deployment.yaml"],
         )[0]
         electionTTL = "--election-ttl=30s"
         c_by_name = get_containers_by_name(doc)
@@ -257,7 +275,8 @@ class TestNginx:
         """Test nginx ingress deployment template with topology aware routing overrides."""
         doc = render_chart(
             values={"nginx": {"enableTopologyAwareRouting": True}},
-            show_only=["charts/nginx/templates/nginx-deployment.yaml"],
+            show_only=["charts/nginx/templates/nginx-cp/nginx-cp-deployment.yaml",
+                       "charts/nginx/templates/nginx-dp/nginx-dp-deployment.yaml"],
         )[0]
         topologyAwareRouting = "--enable-topology-aware-routing=true"
         c_by_name = get_containers_by_name(doc)
@@ -267,7 +286,8 @@ class TestNginx:
         """Test nginx ingress deployment template with leader election overrides."""
         doc = render_chart(
             values={"nginx": {"disableLeaderElection": True}},
-            show_only=["charts/nginx/templates/nginx-deployment.yaml"],
+            show_only=["charts/nginx/templates/nginx-cp/nginx-cp-deployment.yaml",
+                       "charts/nginx/templates/nginx-dp/nginx-dp-deployment.yaml"],
         )[0]
         c_by_name = get_containers_by_name(doc)
         disableLeaderElection = "--disable-leader-election=true"
@@ -292,7 +312,8 @@ class TestNginx:
 
         doc = render_chart(
             values=values,
-            show_only=["charts/nginx/templates/nginx-deployment.yaml"],
+            show_only=["charts/nginx/templates/nginx-cp/nginx-cp-deployment.yaml",
+                       "charts/nginx/templates/nginx-dp/nginx-dp-deployment.yaml"],
         )[0]
         expected_security_context = {
             "runAsUser": 101,
