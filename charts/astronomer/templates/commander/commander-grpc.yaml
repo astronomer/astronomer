@@ -5,9 +5,9 @@
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:
-  name: {{ .Release.Name }}-commander-metadata-ingress
+  name: {{ .Release.Name }}-commander-grpc-ingress
   labels:
-    component: metadata-ingress
+    component: grpc-ingress
     tier: astronomer
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
@@ -20,6 +20,8 @@ metadata:
     {{- if .Values.global.extraAnnotations }}
 {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- end }}
+    nginx.ingress.kubernetes.io/backend-protocol: "GRPC"
+    nginx.ingress.kubernetes.io/enable-http2: "true"
     kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
     kubernetes.io/tls-acme: {{ eq .Values.global.acme true | quote }}
     nginx.ingress.kubernetes.io/custom-http-errors: "404"
@@ -43,24 +45,24 @@ spec:
   {{- end }}
   {{ if semverCompare "< 1.19-0" .Capabilities.KubeVersion.Version -}}
   rules:
-  - host: houston.{{ .Values.global.baseDomain }}
+  - host: commandergrpc.{{ .Values.global.dataplane.baseDomain }}
     http:
       paths:
         - path: /
           backend:
             serviceName: {{ .Release.Name }}-commander
-            servicePort: commander-http
+            servicePort: commander-grpc
   {{ else -}}
   rules:
-  - host: {{ .Values.global.dataplane.baseDomain }}
+  - host: commandergrpc.{{ .Values.global.dataplane.baseDomain }}
     http:
       paths:
-        - path: /metadata
+        - path: /
           pathType: Prefix
           backend:
             service:
               name: {{ .Release.Name }}-commander
               port:
-                name: commander-http
+                name: commander-grpc
   {{- end -}}
 {{- end }}

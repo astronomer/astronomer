@@ -1,0 +1,66 @@
+#####################
+## Houston Ingress ##
+#####################
+{{- if and .Values.global.dataplane.baseDomain .Values.global.dataplane.enabled }}
+kind: Ingress
+apiVersion: {{ template "apiVersion.Ingress" . }}
+metadata:
+  name: {{ .Release.Name }}-commander-metadata-ingress
+  labels:
+    component: metadata-ingress
+    tier: astronomer
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+    plane: dataplane
+  annotations:
+    {{- if .Values.global.authSidecar.enabled  }}
+{{- toYaml .Values.global.extraAnnotations | nindent 4 }}
+    {{- else }}
+    {{- if .Values.global.extraAnnotations }}
+{{- toYaml .Values.global.extraAnnotations | nindent 4 }}
+    {{- end }}
+    kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
+    kubernetes.io/tls-acme: {{ eq .Values.global.acme true | quote }}
+    nginx.ingress.kubernetes.io/custom-http-errors: "404"
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
+    {{- end }}
+
+    {{- if .Values.commander.ingress.annotation  }}
+    {{- toYaml .Values.commander.ingress.annotation  | nindent 4  }}
+    {{- end }}
+spec:
+  {{- if or .Values.global.tlsSecret .Values.global.acme }}
+  tls:
+  {{- if .Values.global.acme }}
+    - secretName: commander-tls
+  {{- end }}
+  {{- if .Values.global.tlsSecret }}
+    - secretName: {{ .Values.global.tlsSecret }}
+  {{- end }}
+      hosts:
+        - houston.{{ .Values.global.dataplane.baseDomain }}
+  {{- end }}
+  {{ if semverCompare "< 1.19-0" .Capabilities.KubeVersion.Version -}}
+  rules:
+  - host: {{ .Values.global.dataplane.baseDomain }}
+    http:
+      paths:
+        - path: /
+          backend:
+            serviceName: {{ .Release.Name }}-commander
+            servicePort: commander-http
+  {{ else -}}
+  rules:
+  - host: {{ .Values.global.dataplane.baseDomain }}
+    http:
+      paths:
+        - path: /metadata
+          pathType: Prefix
+          backend:
+            service:
+              name: {{ .Release.Name }}-commander
+              port:
+                name: commander-http
+  {{- end -}}
+{{- end }}
