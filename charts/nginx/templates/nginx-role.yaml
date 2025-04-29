@@ -1,9 +1,8 @@
 ############################
 ## NGINX Role/ClusterRole ##
 ############################
-{{- $singleNamespace := .Values.global.singleNamespace }}
 {{- if .Values.global.rbacEnabled }}
-kind: {{ if $singleNamespace }}Role{{ else }}ClusterRole{{ end }}
+kind: ClusterRole
 apiVersion: {{ template "apiVersion.rbac" . }}
 metadata:
   name: {{ template "nginx.fullname" . }}
@@ -20,20 +19,16 @@ rules:
       - pods
       - secrets
       - configmaps
-      {{- if not $singleNamespace }}
       - nodes
-      {{- end }}
     verbs:
       - list
       - watch
-  {{- if not $singleNamespace }}
   - apiGroups:
       - ""
     resources:
       - nodes
     verbs:
       - get
-  {{- end }}
   - apiGroups:
       - ""
     resources:
@@ -68,7 +63,6 @@ rules:
       - list
       - watch
       - get
-  {{- if not $singleNamespace }}
   - apiGroups:
       - ""
     resources:
@@ -88,5 +82,4 @@ rules:
       - ingresses/status
     verbs:
       - update
-  {{- end }}
 {{- end }}
