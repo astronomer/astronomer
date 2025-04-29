@@ -29,6 +29,7 @@ spec:
         release: {{ .Release.Name }}
         app: {{ template "nginx.name" . }}
         version: {{ .Chart.Version }}
+        plane: controlplane
       annotations:
         traffic.sidecar.istio.io/includeInboundPorts: ""
         checksum/configmap: {{ include (print $.Template.BasePath "/nginx-cp/nginx-cp-configmap.yaml") . | sha256sum }}

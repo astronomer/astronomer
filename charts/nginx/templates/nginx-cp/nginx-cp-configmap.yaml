@@ -11,6 +11,7 @@ metadata:
     chart: {{ template "nginx.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+    plane: controlplane
 data:
   allow-snippet-annotations: "{{ .Values.allowSnippetAnnotations }}"
   add-headers: {{ .Release.Namespace }}/{{ template "nginx.fullname" . }}-ingress-controller-headers

@@ -13,6 +13,7 @@ metadata:
     chart: {{ template "nginx.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+    plane: controlplane
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: {{ if $singleNamespace }}Role{{ else }}ClusterRole{{ end }}
