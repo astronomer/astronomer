@@ -12,7 +12,6 @@ def list_docker_images():
         "blackboxExporterEnabled": True,
         "postgresqlEnabled": True,
         "prometheusPostgresExporterEnabled": True,
-        "veleroEnabled": True,
     }
 
     public_repo_docs = render_chart(values={"global": extra_globals})
