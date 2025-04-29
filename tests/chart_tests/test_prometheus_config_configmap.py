@@ -67,7 +67,6 @@ class TestPrometheusConfigConfigmap:
             values={
                 "global": {
                     "blackboxExporterEnabled": True,
-                    "veleroEnabled": True,
                     "prometheusPostgresExporterEnabled": True,
                     "nodeExporterEnabled": True,
                 },

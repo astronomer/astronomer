@@ -158,25 +158,6 @@ data:
       #       replacement: $1:$2
       #       target_label: __address__
 
-      {{- if .Values.global.veleroEnabled }}
-      - job_name: velero
-        scrape_interval: 30s
-        kubernetes_sd_configs:
-          - role: service
-            namespaces:
-              names:
-                - velero
-        relabel_configs:
-          - source_labels: [__meta_kubernetes_service_name]
-            action: keep
-            regex: "velero"
-          - source_labels: [__address__]
-            action: replace
-            regex: ([^:]+)(?::\d+)?;(\d+)
-            replacement: $1:$2
-            target_label: __address__
-      {{- end }}
-
       {{- if .Values.global.prometheusPostgresExporterEnabled }}
       - job_name: postgresql-exporter
         scrape_interval: 60s

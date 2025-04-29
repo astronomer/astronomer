@@ -79,9 +79,6 @@ global:
     enabled: false
     rootNamespace: "istio-config"
 
-  # Enables necessary components for Velero (Velero, Prometheus Alerts)
-  veleroEnabled: false
-
   # Enable default postgresql database.
   # This is not recommended for production.
   postgresqlEnabled: false
