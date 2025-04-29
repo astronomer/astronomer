@@ -244,3 +244,17 @@ class TestNatsStatefulSet:
         assert len(docs) == 1
         doc = docs[0]
         assert "sampleannotation" in doc["spec"]["template"]["metadata"]["annotations"]["app.test.io"]
+
+    def test_nats_disable_with_dataplane_flag(self, kube_version):
+        """Test that nats statefulset is not rendered when dataplane is enabled."""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=[
+                "charts/nats/templates/jetstream-job-scc.yaml",
+                "charts/nats/templates/statefulset.yaml",
+            ],
+            values={
+                "global": {"controlplane": {"enabled": False}},
+            },
+        )
+        assert len(docs) == 0
