@@ -17,7 +17,7 @@ class TestNginx:
         for doc in docs:
             assert doc["kind"] == "Service"
             assert doc["apiVersion"] == "v1"
-            assert doc["metadata"]["name"] in  expected_names
+            assert doc["metadata"]["name"] in expected_names
             assert "loadBalancerIP" not in doc["spec"]
             assert "loadBalancerSourceRanges" not in doc["spec"]
 
