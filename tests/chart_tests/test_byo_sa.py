@@ -221,7 +221,7 @@ class TestServiceAccounts:
                 "charts/fluentd/templates/fluentd-clusterrolebinding.yaml",
                 "charts/prometheus/templates/prometheus-rolebinding.yaml",
                 "charts/nginx/templates/nginx-cp/nginx-cp-rolebinding.yaml",
-                "charts/nginx/templates/nginx-dp/nginx-dp-rolebinding.yaml"
+                "charts/nginx/templates/nginx-dp/nginx-dp-rolebinding.yaml",
             ],
         )
 
@@ -256,10 +256,9 @@ def test_default_serviceaccount_names(template_name):
     service_accounts = [get_service_account_name_from_doc(doc) for doc in pm_docs]
     assert service_accounts
     allowed_prefixes = ["release-name-", "default", "default-"]
-    assert all(any(sa_name.startswith(prefix) or sa_name == prefix for prefix in allowed_prefixes) 
-           for sa_name in service_accounts), (
-        f"Expected all service accounts to start with 'release-name-' but found {service_accounts} in {template_name}"
-    )
+    assert all(
+        any(sa_name.startswith(prefix) or sa_name == prefix for prefix in allowed_prefixes) for sa_name in service_accounts
+    ), f"Expected all service accounts to start with 'release-name-' but found {service_accounts} in {template_name}"
 
 
 custom_service_account_names = {
@@ -347,12 +346,8 @@ custom_service_account_names = {
     "charts/nginx/templates/nginx-deployment-default.yaml": {
         "nginx": {"defaultBackend": {"serviceAccount": {"create": True, "name": "prothean"}}}
     },
-    "charts/nginx/templates/nginx-cp/nginx-cp-deployment.yaml": {
-    "nginx":  {"serviceAccount": {"create": True, "name": "prothean"}}
-    },
-    "charts/nginx/templates/nginx-dp/nginx-dp-deployment.yaml": {
-    "nginx": {"serviceAccount": {"create": True, "name": "prothean"}}
-    },
+    "charts/nginx/templates/nginx-cp/nginx-cp-deployment.yaml": {"nginx": {"serviceAccount": {"create": True, "name": "prothean"}}},
+    "charts/nginx/templates/nginx-dp/nginx-dp-deployment.yaml": {"nginx": {"serviceAccount": {"create": True, "name": "prothean"}}},
     "charts/pgbouncer/templates/pgbouncer-deployment.yaml": {"pgbouncer": {"serviceAccount": {"create": True, "name": "prothean"}}},
     "charts/postgresql/templates/statefulset-slaves.yaml": {"postgresql": {"serviceAccount": {"create": True, "name": "prothean"}}},
     "charts/postgresql/templates/statefulset.yaml": {"postgresql": {"serviceAccount": {"create": True, "name": "prothean"}}},
