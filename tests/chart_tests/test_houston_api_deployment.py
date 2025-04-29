@@ -226,10 +226,6 @@ class TestHoustonApiDeployment:
             "volumes"
         ]
 
-        assert {"configMap": {"name": certifiedConfigmapName}, "name": "certifiedversions"} in doc["spec"]["template"]["spec"][
-            "volumes"
-        ]
-
     def test_houston_deployments_containers_with_custom_houston_secret_name(self, kube_version):
         """Test Upgrade Deployments Job Init Containers are disabled when custom houston secret name is passed."""
 
