@@ -12,7 +12,6 @@ git_root_dir = next(iter([x for x in Path(__file__).resolve().parents if (x / ".
 metadata = yaml.safe_load((git_root_dir / "metadata.yaml").read_text())
 kube_versions = metadata["test_k8s_versions"]
 
-ap_build_tag = "24.04.1"  # https://quay.io/repository/astronomer/ap-build?tab=tags&tag=latest
 ci_runner_version = "2025-05"  # This should be the current YYYY-MM
 machine_image_version = "ubuntu-2204:2024.11.1"  # https://circleci.com/developer/machine/image/ubuntu-2204
 
@@ -39,7 +38,6 @@ def main():
     templated_file_content = config_file_template_path.read_text()
     template = Template(templated_file_content)
     config = template.render(
-        ap_build_tag=ap_build_tag,
         ci_runner_version=ci_runner_version,
         docker_images=docker_images,
         kube_versions=kube_versions,
