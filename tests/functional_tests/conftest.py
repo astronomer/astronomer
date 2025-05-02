@@ -25,7 +25,7 @@ def nginx(core_v1_client):
     https://testinfra.readthedocs.io/en/latest/examples.html#test-docker-images
     """
 
-    pod = get_pod_by_label_selector(core_v1_client, "component=cp-ingress-controller")
+    pod = get_pod_by_label_selector(core_v1_client, "component=dp-ingress-controller")
     yield testinfra.get_host(f"kubectl://{pod}?container=nginx&namespace={namespace}")
 
 
