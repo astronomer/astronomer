@@ -116,7 +116,7 @@ def helm_install(kubeconfig, values=f"{git_root_dir}/configs/local-dev.yaml"):
         f"--values={values}",
         f"--kubeconfig={kubeconfig}",
         "--wait",
-        "--timeout=600",
+        "--timeout=5m0s",
     ]
 
     subprocess.run(
