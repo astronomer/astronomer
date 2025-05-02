@@ -2,7 +2,10 @@ import os
 import tempfile
 import subprocess
 import pytest
+from tests import git_root_dir
 from kubernetes import client, config
+import time
+from kubernetes.client.exceptions import ApiException
 
 
 def run_command(command):
@@ -13,6 +16,45 @@ def run_command(command):
     return result.stdout.strip()
 
 
+def wait_for_pods_ready(kubeconfig_file, timeout=300):
+    """
+    Waits until all pods in the cluster are in the `1/1 Running` state.
+
+    :param kubeconfig_file: Path to the kubeconfig file.
+    :param timeout: Maximum time (in seconds) to wait for all pods to be ready.
+    :raises RuntimeError: If not all pods are ready within the timeout.
+    """
+    config.load_kube_config(config_file=kubeconfig_file)
+    v1 = client.CoreV1Api()
+
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        try:
+            pods = v1.list_pod_for_all_namespaces().items
+        except ApiException as e:
+            print(f"Error fetching pod information: {e}")
+            time.sleep(5)
+            continue
+
+        all_ready = True
+        for pod in pods:
+            for container_status in pod.status.container_statuses or []:
+                if not container_status.ready:
+                    all_ready = False
+                    break
+            if not all_ready:
+                break
+
+        if all_ready:
+            print("All pods are in the '1/1 Running' state.")
+            return
+
+        print("Waiting for all pods to reach 'Running' state...")
+        time.sleep(5)
+
+    raise RuntimeError("Timed out waiting for all pods to reach 'Running' state.")
+
+
 @pytest.fixture(scope="session")
 def create_kind_cluster():
     """Fixture to create and destroy a KIND cluster."""
@@ -21,12 +63,19 @@ def create_kind_cluster():
         kubeconfig_file = tempfile.NamedTemporaryFile(delete=False)
         kubeconfig_file.close()
         try:
-            # Create a KIND cluster
-            run_command(f"kind create cluster --name {cluster_name} --kubeconfig {kubeconfig_file.name}")
+            cmd = f"kind create cluster --name {cluster_name} --kubeconfig {kubeconfig_file.name}"
+            print(f"Creating KIND cluster with command: {cmd}")
+            run_command(cmd)
+
+            # Wait until all pods are ready
+            print("Waiting for all pods to become ready...")
+            wait_for_pods_ready(kubeconfig_file.name)
+
             yield kubeconfig_file.name
         finally:
-            # Cleanup the KIND cluster
-            run_command(f"kind delete cluster --name {cluster_name}")
+            cmd = f"kind delete cluster --name {cluster_name}"
+            print(f"Deleting KIND cluster with command: {cmd}")
+            run_command(cmd)
             os.unlink(kubeconfig_file.name)
 
     return _create_cluster
@@ -36,20 +85,25 @@ def create_kind_cluster():
 def cp_cluster(create_kind_cluster):
     """Fixture to create and provide the 'cp' KIND cluster with Helm initialization."""
     # Create the 'cp' KIND cluster and get the kubeconfig
-    kubeconfig = create_kind_cluster("cp")
+    # TODO: make this return a string, and somehow not complete the generator
+    kubeconfig = next(create_kind_cluster("cp"))
 
     # Run the Helm install command
-    # TODO: make this work like bin/install-platform
+    # TODO: make this use the kubeconfig
+    helm_install_command = [
+        "helm",
+        "install",
+        f"--kubeconfig={kubeconfig}",
+        "astronomer",
+        "--namespace",
+        "astronomer",
+        str(git_root_dir),
+        f"--values={git_root_dir}/configs/local-dev.yaml",
+    ]
+
     try:
         subprocess.run(
-            [
-                "helm",
-                "install",
-                "my-release",
-                "my-chart-repo/my-chart",
-                "--kubeconfig",
-                kubeconfig,
-            ],
+            helm_install_command,
             check=True,
         )
     except subprocess.CalledProcessError as e:
