@@ -15,6 +15,6 @@ spec:
   selector:
     matchLabels:
       tier: {{ template "nginx.name" . }}
-      component: ingress-dp-controller
+      component: dp-ingress-controller
       release: {{ .Release.Name }}
 {{- end }}
