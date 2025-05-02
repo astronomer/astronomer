@@ -55,73 +55,113 @@ def wait_for_pods_ready(kubeconfig_file, timeout=300):
     raise RuntimeError("Timed out waiting for all pods to reach 'Running' state.")
 
 
-@pytest.fixture(scope="session")
-def create_kind_cluster():
-    """Fixture to create and destroy a KIND cluster."""
+def create_kind_cluster(cluster_name):
+    """
+    Create a KIND cluster and return its kubeconfig file path.
 
-    def _create_cluster(cluster_name):
-        kubeconfig_file = tempfile.NamedTemporaryFile(delete=False)
-        kubeconfig_file.close()
-        try:
-            cmd = f"kind create cluster --name {cluster_name} --kubeconfig {kubeconfig_file.name}"
-            print(f"Creating KIND cluster with command: {cmd}")
-            run_command(cmd)
+    :param cluster_name: Name of the KIND cluster.
+    :return: Full path to the kubeconfig file.
+    """
+    kubeconfig_file = tempfile.NamedTemporaryFile(delete=False)
+    kubeconfig_file.close()
 
-            # Wait until all pods are ready
-            print("Waiting for all pods to become ready...")
-            wait_for_pods_ready(kubeconfig_file.name)
+    try:
+        cmd = f"kind create cluster --name {cluster_name} --kubeconfig {kubeconfig_file.name}"
+        print(f"Creating KIND cluster with command: {cmd}")
+        run_command(cmd)
 
-            yield kubeconfig_file.name
-        finally:
-            cmd = f"kind delete cluster --name {cluster_name}"
-            print(f"Deleting KIND cluster with command: {cmd}")
-            run_command(cmd)
-            os.unlink(kubeconfig_file.name)
+        # Wait until all pods are ready
+        print("Waiting for all pods to become ready...")
+        wait_for_pods_ready(kubeconfig_file.name)
 
-    return _create_cluster
+        return kubeconfig_file.name
+    except Exception:
+        # Cleanup if cluster creation fails
+        cmd = f"kind delete cluster --name {cluster_name}"
+        print(f"Cleaning up after failed cluster creation with command: {cmd}")
+        run_command(cmd)
+        os.unlink(kubeconfig_file.name)
+        raise
 
 
-@pytest.fixture(scope="session")
-def cp_cluster(create_kind_cluster):
-    """Fixture to create and provide the 'cp' KIND cluster with Helm initialization."""
-    # Create the 'cp' KIND cluster and get the kubeconfig
-    # TODO: make this return a string, and somehow not complete the generator
-    kubeconfig = next(create_kind_cluster("cp"))
+def delete_kind_cluster(cluster_name, kubeconfig_file):
+    """
+    Delete a KIND cluster and clean up its kubeconfig file.
 
-    # Run the Helm install command
-    # TODO: make this use the kubeconfig
+    :param cluster_name: Name of the KIND cluster.
+    :param kubeconfig_file: Path to the kubeconfig file.
+    """
+    try:
+        cmd = f"kind delete cluster --name {cluster_name}"
+        print(f"Deleting KIND cluster with command: {cmd}")
+        run_command(cmd)
+    finally:
+        os.unlink(kubeconfig_file)
+
+
+def helm_install(kubeconfig, values=f"{git_root_dir}/configs/local-dev.yaml"):
+    """
+    Install a Helm chart using the provided kubeconfig and values file.
+
+    :param kubeconfig: Path to the kubeconfig file.
+    :param values: Path to the Helm values file.
+    """
     helm_install_command = [
         "helm",
         "install",
-        f"--kubeconfig={kubeconfig}",
         "astronomer",
-        "--namespace",
-        "astronomer",
+        "--create-namespace",
+        "--namespace=astronomer",
         str(git_root_dir),
-        f"--values={git_root_dir}/configs/local-dev.yaml",
+        f"--values={values}",
+        f"--kubeconfig={kubeconfig}",
+        "--wait",
+        "--timeout=600",
     ]
 
+    subprocess.run(
+        helm_install_command,
+        check=True,
+    )
+
+
+@pytest.fixture(scope="session")
+def cp_cluster():
+    """Fixture to create and provide the 'cp' KIND cluster with Helm initialization."""
+    cluster_name = "cp"
+    kubeconfig_file = create_kind_cluster(cluster_name)
+
     try:
-        subprocess.run(
-            helm_install_command,
-            check=True,
-        )
-    except subprocess.CalledProcessError as e:
-        raise RuntimeError(f"Failed to run Helm install: {e}") from e
-
-    yield kubeconfig
+        helm_install(kubeconfig=kubeconfig_file)
+        yield kubeconfig_file
+    finally:
+        delete_kind_cluster(cluster_name, kubeconfig_file)
 
 
 @pytest.fixture(scope="session")
-def dp_cluster(create_kind_cluster):
+def dp_cluster():
     """Fixture to create and provide the 'dp' KIND cluster."""
-    yield from create_kind_cluster("dp")
+    cluster_name = "dp"
+    kubeconfig_file = create_kind_cluster(cluster_name)
+
+    try:
+        helm_install(kubeconfig=kubeconfig_file)
+        yield kubeconfig_file
+    finally:
+        delete_kind_cluster(cluster_name, kubeconfig_file)
 
 
 @pytest.fixture(scope="session")
-def cpdp_cluster(create_kind_cluster):
+def cpdp_cluster():
     """Fixture to create a KIND cluster to hold both the cp and dp roles."""
-    yield from create_kind_cluster("cpdp")
+    cluster_name = "cpdp"
+    kubeconfig_file = create_kind_cluster(cluster_name)
+
+    try:
+        helm_install(kubeconfig=kubeconfig_file)
+        yield kubeconfig_file
+    finally:
+        delete_kind_cluster(cluster_name, kubeconfig_file)
 
 
 @pytest.fixture(scope="session")
