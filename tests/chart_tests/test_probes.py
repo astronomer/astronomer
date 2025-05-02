@@ -77,8 +77,8 @@ pod_manager_data = {
         "nats": {"nats": default_probes, "reloader": default_probes, "exporter": {**default_probes, "enabled": True}}
     },
     "charts/nginx/templates/nginx-deployment-default.yaml": {"nginx": {"defaultBackend": default_probes}},
-    "charts/nginx/templates/nginx-cp/nginx-cp-deployment.yaml": {"nginx": default_probes},
-    "charts/nginx/templates/nginx-dp/nginx-dp-deployment.yaml": {"nginx": default_probes},
+    "charts/nginx/templates/controlplane/nginx-cp-deployment.yaml": {"nginx": default_probes},
+    "charts/nginx/templates/dataplane/nginx-dp-deployment.yaml": {"nginx": default_probes},
     "charts/pgbouncer/templates/pgbouncer-deployment.yaml": {
         "pgbouncer": default_probes,
         "global": {

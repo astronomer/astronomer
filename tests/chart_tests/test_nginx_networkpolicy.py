@@ -5,10 +5,10 @@ class TestNginxNetworkPolicy:
     def test_nginx_networkpolicy_basics(self):
         docs = render_chart(
             show_only=[
-                "charts/nginx/templates/nginx-cp/nginx-cp-metrics-networkpolicy.yaml",
-                "charts/nginx/templates/nginx-cp/nginx-cp-networkpolicy.yaml",
-                "charts/nginx/templates/nginx-dp/nginx-dp-metrics-networkpolicy.yaml",
-                "charts/nginx/templates/nginx-dp/nginx-dp-networkpolicy.yaml",
+                "charts/nginx/templates/controlplane/nginx-cp-metrics-networkpolicy.yaml",
+                "charts/nginx/templates/controlplane/nginx-cp-networkpolicy.yaml",
+                "charts/nginx/templates/dataplane/nginx-dp-metrics-networkpolicy.yaml",
+                "charts/nginx/templates/dataplane/nginx-dp-networkpolicy.yaml",
             ],
         )
         assert len(docs) == 4
