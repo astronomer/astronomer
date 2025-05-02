@@ -18,7 +18,7 @@ def run_command(command):
 
 def wait_for_pods_ready(kubeconfig_file, timeout=300):
     """
-    Waits until all pods in the cluster are in the `1/1 Running` state.
+    Waits until all pods in the cluster are in the 'Running' state.
 
     :param kubeconfig_file: Path to the kubeconfig file.
     :param timeout: Maximum time (in seconds) to wait for all pods to be ready.
@@ -46,7 +46,7 @@ def wait_for_pods_ready(kubeconfig_file, timeout=300):
                 break
 
         if all_ready:
-            print("All pods are in the '1/1 Running' state.")
+            print("All pods are in the 'Running' state.")
             return
 
         print("Waiting for all pods to reach 'Running' state...")
