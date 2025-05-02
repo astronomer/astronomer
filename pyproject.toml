@@ -55,3 +55,8 @@ ignore = [
 [tool.ruff.lint.mccabe]
 # TODO: reduce this
 max-complexity = 14
+
+[tool.pytest.ini_options]
+markers = [
+  "valid_for: Show which cluster setup a test is valid for. TODO: change this"
+]
