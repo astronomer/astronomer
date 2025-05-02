@@ -1,9 +1,8 @@
-##########################################
-## NGINX RoleBinding/ClusterRoleBinding ##
-##########################################
-{{- $singleNamespace := .Values.global.singleNamespace }}
+##############################
+## NGINX ClusterRoleBinding ##
+##############################
 {{- if .Values.global.rbacEnabled }}
-kind: {{ if $singleNamespace }}RoleBinding{{ else }}ClusterRoleBinding{{ end }}
+kind: ClusterRoleBinding
 apiVersion: {{ template "apiVersion.rbac" . }}
 metadata:
   name: {{ template "nginx.fullname" . }}
@@ -14,7 +13,7 @@ metadata:
     heritage: {{ .Release.Service }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
-  kind: {{ if $singleNamespace }}Role{{ else }}ClusterRole{{ end }}
+  kind: ClusterRole
   name: {{ template "nginx.fullname" . }}
 subjects:
   - kind: ServiceAccount

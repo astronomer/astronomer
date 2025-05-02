@@ -1,12 +1,11 @@
 #################################
 ## Prometheus Role/ClusterRole ##
 #################################
-{{- $singleNamespace := .Values.global.singleNamespace }}
 {{- $prometheusRBACresources := and .Values.rbac.role.create (eq .Values.rbac.role.kind "Role") }}
 {{- $useClusterRoles := and .Values.global.rbacEnabled .Values.global.clusterRoles (not (eq .Values.rbac.role.kind "Role") ) }}
 {{- $shouldCreateResources := and .Values.global.rbacEnabled (or (and .Values.global.clusterRoles) $prometheusRBACresources) }}
 {{- if $shouldCreateResources }}
-kind: {{ if or $singleNamespace $prometheusRBACresources  }}Role{{ else }}ClusterRole{{ end }}
+kind: {{ if $prometheusRBACresources }}Role{{ else }}ClusterRole{{ end }}
 apiVersion: {{ template "apiVersion.rbac" . }}
 metadata:
   name: {{ template "prometheus.fullname" . }}
@@ -23,7 +22,7 @@ rules:
       - "services"
       - "endpoints"
       - "pods"
-      {{- if or ($singleNamespace) (eq .Values.rbac.role.kind  "ClusterRole") }}
+      {{- if eq .Values.rbac.role.kind "ClusterRole" }}
       - "nodes"
       - "nodes/proxy"
       {{- end }}
@@ -31,7 +30,7 @@ rules:
       - "get"
       - "list"
       - "watch"
-  {{- if or ($singleNamespace) (eq .Values.rbac.role.kind  "ClusterRole") }}
+  {{- if eq .Values.rbac.role.kind "ClusterRole" }}
   - nonResourceURLs:
       - "/metrics"
     verbs:
