@@ -22,8 +22,8 @@ class TestNginxNetworkPolicy:
         disabled_values = {"global": {"controlplane": {"enabled": False}, "dataplane": {"enabled": True}}}
         docs = render_chart(
             show_only=[
-                "charts/nginx/templates/nginx-cp/nginx-cp-networkpolicy.yaml",
-                "charts/nginx/templates/nginx-dp/nginx-dp-networkpolicy.yaml",
+                "charts/nginx/templates/controlplane/nginx-cp-networkpolicy.yaml",
+                "charts/nginx/templates/dataplane/nginx-dp-networkpolicy.yaml",
             ],
             values=disabled_values,
         )
@@ -33,8 +33,8 @@ class TestNginxNetworkPolicy:
         disabled_values = {"global": {"controlplane": {"enabled": True}, "dataplane": {"enabled": False}}}
         docs = render_chart(
             show_only=[
-                "charts/nginx/templates/nginx-cp/nginx-cp-networkpolicy.yaml",
-                "charts/nginx/templates/nginx-dp/nginx-dp-networkpolicy.yaml",
+                "charts/nginx/templates/controlplane/nginx-cp-networkpolicy.yaml",
+                "charts/nginx/templates/dataplane/nginx-dp-networkpolicy.yaml",
             ],
             values=disabled_values,
         )
@@ -44,8 +44,8 @@ class TestNginxNetworkPolicy:
         disabled_values = {"global": {"controlplane": {"enabled": False}, "dataplane": {"enabled": False}}}
         docs = render_chart(
             show_only=[
-                "charts/nginx/templates/nginx-cp/nginx-cp-networkpolicy.yaml",
-                "charts/nginx/templates/nginx-dp/nginx-dp-networkpolicy.yaml",
+                "charts/nginx/templates/controlplane/nginx-cp-networkpolicy.yaml",
+                "charts/nginx/templates/dataplane/nginx-dp-networkpolicy.yaml",
             ],
             values=disabled_values,
         )
