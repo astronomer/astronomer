@@ -346,8 +346,12 @@ custom_service_account_names = {
     "charts/nginx/templates/nginx-deployment-default.yaml": {
         "nginx": {"defaultBackend": {"serviceAccount": {"create": True, "name": "prothean"}}}
     },
-    "charts/nginx/templates/controlplane/nginx-cp-deployment.yaml": {"nginx": {"serviceAccount": {"create": True, "name": "prothean"}}},
-    "charts/nginx/templates/dataplane/nginx-dp-deployment.yaml": {"nginx": {"serviceAccount": {"create": True, "name": "prothean"}}},
+    "charts/nginx/templates/controlplane/nginx-cp-deployment.yaml": {
+        "nginx": {"serviceAccount": {"create": True, "name": "prothean"}}
+    },
+    "charts/nginx/templates/dataplane/nginx-dp-deployment.yaml": {
+        "nginx": {"serviceAccount": {"create": True, "name": "prothean"}}
+    },
     "charts/pgbouncer/templates/pgbouncer-deployment.yaml": {"pgbouncer": {"serviceAccount": {"create": True, "name": "prothean"}}},
     "charts/postgresql/templates/statefulset-slaves.yaml": {"postgresql": {"serviceAccount": {"create": True, "name": "prothean"}}},
     "charts/postgresql/templates/statefulset.yaml": {"postgresql": {"serviceAccount": {"create": True, "name": "prothean"}}},
