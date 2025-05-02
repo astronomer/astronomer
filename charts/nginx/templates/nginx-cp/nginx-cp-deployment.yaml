@@ -37,12 +37,12 @@ spec:
         {{- if .Values.global.istio.enabled }}
         sidecar.istio.io/inject: "false"
         {{- end }}
-{{- if .Values.global.podAnnotations }}
-{{ toYaml .Values.global.podAnnotations | indent 8 }}
-{{- end }}
-{{- if .Values.podAnnotations }}
-{{ toYaml .Values.podAnnotations | indent 8 }}
-{{- end }}
+        {{- if .Values.global.podAnnotations }}
+        {{- toYaml .Values.global.podAnnotations | nindent 8 }}
+        {{- end }}
+        {{- if .Values.podAnnotations }}
+        {{- toYaml .Values.podAnnotations | nindent 8 }}
+        {{- end }}
     spec:
       serviceAccountName: {{ template "nginx.serviceAccountName" . }}-cp
 {{- include "nginx.imagePullSecrets" . | indent 6 }}
