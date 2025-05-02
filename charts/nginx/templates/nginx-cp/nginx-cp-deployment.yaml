@@ -8,7 +8,7 @@ metadata:
   name: {{ template "nginx.fullname" . }}-cp
   labels:
     tier: {{ template "nginx.name" . }}
-    component: ingress-cp-controller
+    component: cp-ingress-controller
     chart: {{ template "nginx.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
@@ -19,13 +19,13 @@ spec:
   selector:
     matchLabels:
       tier: {{ template "nginx.name" . }}
-      component: ingress-cp-controller
+      component: cp-ingress-controller
       release: {{ .Release.Name }}
   template:
     metadata:
       labels:
         tier: {{ template "nginx.name" . }}
-        component: ingress-cp-controller
+        component: cp-ingress-controller
         release: {{ .Release.Name }}
         app: {{ template "nginx.name" . }}
         version: {{ .Chart.Version }}
@@ -56,7 +56,7 @@ spec:
           args:
             - /nginx-ingress-controller
             - --default-backend-service={{ .Release.Namespace }}/{{ template "nginx.fullname" . }}-default-backend
-            - --configmap={{ .Release.Namespace }}/{{ template "nginx.fullname" . }}-ingress-cp-controller
+            - --configmap={{ .Release.Namespace }}/{{ template "nginx.fullname" . }}-cp-ingress-controller
             - --ingress-class={{ template "nginx.ingress.class" . }}
             - --default-ssl-certificate={{ .Release.Namespace }}/{{ .Values.global.tlsSecret }}
             {{- if .Values.global.singleNamespace }}
@@ -117,7 +117,7 @@ spec:
               labelSelector:
                 matchLabels:
                   tier: {{ template "nginx.name" . }}
-                  component: ingress-cp-controller
+                  component: cp-ingress-controller
                   release: {{ .Release.Name }}
     {{- else if eq .Values.antiAffinity "soft" }}
         podAntiAffinity:
@@ -128,7 +128,7 @@ spec:
               labelSelector:
                 matchLabels:
                   tier: {{ template "nginx.name" . }}
-                  component: ingress-cp-controller
+                  component: cp-ingress-controller
                   release: {{ .Release.Name }}
     {{- if .Values.global.platformNodePool.affinity }}
 {{ toYaml .Values.global.platformNodePool.affinity | indent 8 }}

@@ -8,7 +8,7 @@ metadata:
   name: {{ template "nginx.fullname" . }}-cp
   labels:
     tier: {{ template "nginx.name" . }}
-    component: ingress-cp-controller
+    component: cp-ingress-controller
     chart: {{ template "nginx.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
@@ -52,7 +52,7 @@ spec:
   {{- end }}
   selector:
     tier: {{ template "nginx.name" . }}
-    component: ingress-cp-controller
+    component: cp-ingress-controller
     release: {{ .Release.Name }}
   ports:
     - port: 80

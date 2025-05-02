@@ -16,7 +16,7 @@ metadata:
 spec:
   podSelector:
     matchLabels:
-      component: ingress-cp-controller
+      component: cp-ingress-controller
       tier: nginx
       release: {{ .Release.Name }}
   policyTypes:
