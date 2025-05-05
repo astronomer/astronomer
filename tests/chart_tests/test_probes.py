@@ -193,6 +193,8 @@ class TestDefaultProbes:
             "successThreshold": 1,
             "timeoutSeconds": 5,
         },
+        "cp-nginx_nginx": {"httpGet": {"path": "/healthz", "port": 10254}, "initialDelaySeconds": 30, "timeoutSeconds": 5},
+        "dp-nginx_nginx": {"httpGet": {"path": "/healthz", "port": 10254}, "initialDelaySeconds": 30, "timeoutSeconds": 5},
         "elasticsearch-client_es-client": {
             "httpGet": {"path": "/_cluster/health?local=true", "port": 9200},
             "initialDelaySeconds": 90,
@@ -231,13 +233,11 @@ class TestDefaultProbes:
         },
         "kube-state_kube-state": {"httpGet": {"path": "/healthz", "port": 8080}, "initialDelaySeconds": 5, "timeoutSeconds": 5},
         "nats_nats": {"httpGet": {"path": "/", "port": 8222}, "initialDelaySeconds": 10, "timeoutSeconds": 5},
-        "cp-nginx_nginx": {"httpGet": {"path": "/healthz", "port": 10254}, "initialDelaySeconds": 30, "timeoutSeconds": 5},
         "nginx-default-backend_default-backend": {
             "httpGet": {"path": "/healthz", "port": 8080, "scheme": "HTTP"},
             "initialDelaySeconds": 30,
             "timeoutSeconds": 5,
         },
-        "dp-nginx_nginx": {"httpGet": {"path": "/healthz", "port": 10254}, "initialDelaySeconds": 30, "timeoutSeconds": 5},
         "pgbouncer_pgbouncer": {"tcpSocket": {"port": 5432}},
         "postgresql-master_release-name-postgresql": {
             "exec": {"command": ["sh", "-c", 'exec pg_isready -U "postgres" -h 127.0.0.1 -p 5432']},
