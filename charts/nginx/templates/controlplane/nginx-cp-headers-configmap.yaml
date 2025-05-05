@@ -9,7 +9,7 @@
 kind: ConfigMap
 apiVersion: v1
 metadata:
-  name: {{ template "nginx.fullname" . }}-cp-ingress-controller-headers
+  name: {{ .Release.Name }}-cp-{{ template "nginx.name" . }}-ingress-controller-headers
   labels:
     tier: {{ template "nginx.name" . }}
     chart: {{ template "nginx.chart" . }}

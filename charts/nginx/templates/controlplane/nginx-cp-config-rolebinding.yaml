@@ -5,7 +5,7 @@
 kind: RoleBinding
 apiVersion: {{ template "apiVersion.rbac" . }}
 metadata:
-  name: {{ template "nginx.fullname" . }}-cp-config
+  name: {{ .Release.Name }}-cp-{{ template "nginx.name" . }}-config
   labels:
     tier: {{ template "nginx.name" . }}
     chart: {{ template "nginx.chart" . }}
@@ -15,7 +15,7 @@ metadata:
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: {{ template "nginx.fullname" . }}-cp-config
+  name: {{ .Release.Name }}-cp-{{ template "nginx.name" . }}-config
 subjects:
   - kind: ServiceAccount
     name: {{ template "nginx.serviceAccountName" . }}

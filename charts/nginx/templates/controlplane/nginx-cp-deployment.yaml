@@ -5,7 +5,7 @@
 kind: Deployment
 apiVersion: apps/v1
 metadata:
-  name: {{ template "nginx.fullname" . }}-cp
+  name: {{ .Release.Name }}-cp-{{ template "nginx.name" . }}
   labels:
     tier: {{ template "nginx.name" . }}
     component: cp-ingress-controller
@@ -56,7 +56,7 @@ spec:
           args:
             - /nginx-ingress-controller
             - --default-backend-service={{ .Release.Namespace }}/{{ template "nginx.fullname" . }}-default-backend
-            - --configmap={{ .Release.Namespace }}/{{ template "nginx.fullname" . }}-cp-ingress-controller
+            - --configmap={{ .Release.Namespace }}/{{ .Release.Name }}-cp-{{ template "nginx.name" . }}-ingress-controller
             - --ingress-class={{ template "nginx.ingress.class" . }}
             - --default-ssl-certificate={{ .Release.Namespace }}/{{ .Values.global.tlsSecret }}
             {{- if .Values.global.singleNamespace }}
@@ -75,7 +75,7 @@ spec:
             - --enable-topology-aware-routing=true
             {{- end }}
             - --election-id={{ .Values.electionId }}-{{ template "nginx.fullname" . }}
-            - --publish-service={{ .Release.Namespace }}/{{ template "nginx.fullname" . }}-cp
+            - --publish-service={{ .Release.Namespace }}/{{ .Release.Name }}-cp-{{ template "nginx.name" . }}
             - --http-port={{ .Values.ports.http }}
             - --https-port={{ .Values.ports.https }}
           ports:

@@ -5,7 +5,7 @@
 kind: Service
 apiVersion: v1
 metadata:
-  name: {{ template "nginx.fullname" . }}-cp
+  name: {{ .Release.Name }}-cp-{{ template "nginx.name" . }}
   labels:
     tier: {{ template "nginx.name" . }}
     component: cp-ingress-controller
