@@ -1,17 +1,19 @@
-############################
-## NGINX Role/ClusterRole ##
-############################
+##########################################
+## NGINX Control Plane Role/ClusterRole ##
+##########################################
+{{- if .Values.global.controlplane.enabled }}
 {{- $singleNamespace := .Values.global.singleNamespace }}
 {{- if .Values.global.rbacEnabled }}
 kind: {{ if $singleNamespace }}Role{{ else }}ClusterRole{{ end }}
 apiVersion: {{ template "apiVersion.rbac" . }}
 metadata:
-  name: {{ template "nginx.fullname" . }}
+  name: {{ .Release.Name }}-cp-{{ template "nginx.name" . }}
   labels:
     tier: {{ template "nginx.name" . }}
     chart: {{ template "nginx.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+    plane: controlplane
 rules:
   - apiGroups:
       - ""
@@ -26,6 +28,7 @@ rules:
     verbs:
       - list
       - watch
+      - get
   {{- if not $singleNamespace }}
   - apiGroups:
       - ""
@@ -89,4 +92,17 @@ rules:
     verbs:
       - update
   {{- end }}
+  - apiGroups:
+      - coordination.k8s.io
+    resources:
+      - leases
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+{{- end }}
 {{- end }}

@@ -1,16 +1,18 @@
-###################
-## NGINX Service ##
-###################
+#################################
+## NGINX Control Plane Service ##
+#################################
+{{- if .Values.global.controlplane.enabled }}
 kind: Service
 apiVersion: v1
 metadata:
-  name: {{ template "nginx.fullname" . }}
+  name: {{ .Release.Name }}-cp-{{ template "nginx.name" . }}
   labels:
     tier: {{ template "nginx.name" . }}
-    component: ingress-controller
+    component: cp-ingress-controller
     chart: {{ template "nginx.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+    plane: controlplane
   annotations:
 {{- if .Values.ingressAnnotations -}}
 {{ range $key, $value := .Values.ingressAnnotations }}
@@ -50,7 +52,7 @@ spec:
   {{- end }}
   selector:
     tier: {{ template "nginx.name" . }}
-    component: ingress-controller
+    component: cp-ingress-controller
     release: {{ .Release.Name }}
   ports:
     - port: 80
@@ -69,3 +71,4 @@ spec:
       nodePort: {{ .Values.httpsNodePort }}
       {{- end }}
       appProtocol: https
+{{- end }}

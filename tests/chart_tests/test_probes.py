@@ -77,7 +77,8 @@ pod_manager_data = {
         "nats": {"nats": default_probes, "reloader": default_probes, "exporter": {**default_probes, "enabled": True}}
     },
     "charts/nginx/templates/nginx-deployment-default.yaml": {"nginx": {"defaultBackend": default_probes}},
-    "charts/nginx/templates/nginx-deployment.yaml": {"nginx": default_probes},
+    "charts/nginx/templates/controlplane/nginx-cp-deployment.yaml": {"nginx": default_probes},
+    "charts/nginx/templates/dataplane/nginx-dp-deployment.yaml": {"nginx": default_probes},
     "charts/pgbouncer/templates/pgbouncer-deployment.yaml": {
         "pgbouncer": default_probes,
         "global": {
@@ -192,6 +193,8 @@ class TestDefaultProbes:
             "successThreshold": 1,
             "timeoutSeconds": 5,
         },
+        "cp-nginx_nginx": {"httpGet": {"path": "/healthz", "port": 10254}, "initialDelaySeconds": 30, "timeoutSeconds": 5},
+        "dp-nginx_nginx": {"httpGet": {"path": "/healthz", "port": 10254}, "initialDelaySeconds": 30, "timeoutSeconds": 5},
         "elasticsearch-client_es-client": {
             "httpGet": {"path": "/_cluster/health?local=true", "port": 9200},
             "initialDelaySeconds": 90,
@@ -235,7 +238,6 @@ class TestDefaultProbes:
             "initialDelaySeconds": 30,
             "timeoutSeconds": 5,
         },
-        "nginx_nginx": {"httpGet": {"path": "/healthz", "port": 10254}, "initialDelaySeconds": 30, "timeoutSeconds": 5},
         "pgbouncer_pgbouncer": {"tcpSocket": {"port": 5432}},
         "postgresql-master_release-name-postgresql": {
             "exec": {"command": ["sh", "-c", 'exec pg_isready -U "postgres" -h 127.0.0.1 -p 5432']},
