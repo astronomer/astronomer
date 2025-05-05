@@ -256,9 +256,9 @@ def test_default_serviceaccount_names(template_name):
     service_accounts = [get_service_account_name_from_doc(doc) for doc in pm_docs]
     assert service_accounts
     allowed_prefixes = ["release-name-", "default"]
-    assert all(
-        any(sa_name.startswith(prefix) for prefix in allowed_prefixes) for sa_name in service_accounts
-    ), f"Expected all service accounts to start with a standard prefix but found {service_accounts} in {template_name}"
+    assert all(any(sa_name.startswith(prefix) for prefix in allowed_prefixes) for sa_name in service_accounts), (
+        f"Expected all service accounts to start with a standard prefix but found {service_accounts} in {template_name}"
+    )
 
 
 custom_service_account_names = {
