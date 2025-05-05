@@ -5,7 +5,7 @@
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: {{ .Release.Name }}-nginx-dp-metrics-policy
+  name: {{ .Release.Name }}-dp-nginx-metrics-policy
   labels:
     tier: astronomer
     component: nginx-metrics

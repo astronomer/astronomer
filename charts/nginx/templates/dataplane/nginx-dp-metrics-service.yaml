@@ -5,7 +5,7 @@
 kind: Service
 apiVersion: v1
 metadata:
-  name: {{ template "nginx.fullname" . }}-dp-metrics
+  name: {{ .Release.Name }}-dp-{{ template "nginx.name" . }}-metrics
   labels:
     tier: {{ template "nginx.name" . }}
     component: dp-ingress-controller

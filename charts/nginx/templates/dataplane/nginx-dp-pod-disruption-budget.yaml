@@ -5,7 +5,7 @@
 apiVersion: {{ include "apiVersion.PodDisruptionBudget" . }}
 kind: PodDisruptionBudget
 metadata:
-  name: {{ .Release.Name }}-nginx-dp-pdb
+  name: {{ .Release.Name }}-dp-nginx-pdb
 spec:
   {{- if lt ( .Values.replicas | int ) 4 }}
   maxUnavailable: 1
