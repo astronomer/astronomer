@@ -98,7 +98,6 @@ pod_manager_data = {
         "prometheus": {**default_probes, "configMapReloader": default_probes, "filesdReloader": default_probes}
     },
     "charts/prometheus-blackbox-exporter/templates/deployment.yaml": {"prometheus-blackbox-exporter": default_probes},
-    "charts/prometheus-node-exporter/templates/daemonset.yaml": {"prometheus-node-exporter": default_probes},
     "charts/prometheus-postgres-exporter/templates/deployment.yaml": {
         "prometheus-postgres-exporter": default_probes,
         "global": {"prometheusPostgresExporterEnabled": True},
@@ -254,7 +253,6 @@ class TestDefaultProbes:
             "failureThreshold": 6,
         },
         "prometheus-blackbox-exporter_blackbox-exporter": {"httpGet": {"path": "/health", "port": "http"}},
-        "prometheus-node-exporter_node-exporter": {"httpGet": {"path": "/", "port": 9100}},
         "prometheus-postgres-exporter_prometheus-postgres-exporter": {
             "tcpSocket": {"port": 9187},
             "initialDelaySeconds": 5,
@@ -344,7 +342,6 @@ class TestDefaultProbes:
             "failureThreshold": 6,
         },
         "prometheus-blackbox-exporter_blackbox-exporter": {"httpGet": {"path": "/health", "port": "http"}},
-        "prometheus-node-exporter_node-exporter": {"httpGet": {"path": "/", "port": 9100}},
         "prometheus-postgres-exporter_prometheus-postgres-exporter": {
             "tcpSocket": {"port": 9187},
             "initialDelaySeconds": 5,
