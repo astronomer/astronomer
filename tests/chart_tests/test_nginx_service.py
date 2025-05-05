@@ -13,7 +13,7 @@ class TestNginx:
         )
 
         assert len(docs) == 2
-        expected_names = ["release-name-nginx-cp", "release-name-nginx-dp"]
+        expected_names = ["release-name-cp-nginx", "release-name-dp-nginx"]
         for doc in docs:
             assert doc["kind"] == "Service"
             assert doc["apiVersion"] == "v1"
