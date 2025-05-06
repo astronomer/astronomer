@@ -1,6 +1,7 @@
 ##################################
 ## Elasticsearch Master Service ##
 ##################################
+{{- if .Values.global.controlplane.enabled }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -25,3 +26,4 @@ spec:
     port: {{ .Values.common.ports.transport }}
     protocol: TCP
     appProtocol: tcp
+{{- end }}

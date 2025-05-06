@@ -1,6 +1,7 @@
 ######################################
 ## Elasticsearch Master StatefulSet ##
 ######################################
+{{- if .Values.global.controlplane.enabled }}
 kind: StatefulSet
 apiVersion: apps/v1
 metadata:
@@ -181,3 +182,4 @@ spec:
           storage: {{ .Values.master.persistence.size }}
       {{ include "elasticsearch.storageClass" . }}
   {{- end }}
+{{- end }}

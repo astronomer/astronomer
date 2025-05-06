@@ -1,6 +1,7 @@
 #######################################
 ## Elasticsearch Exporter Deployment ##
 #######################################
+{{- if .Values.global.controlplane.enabled}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -97,3 +98,4 @@ spec:
             initialDelaySeconds: 10
             timeoutSeconds: 10
           {{- end }}
+{{- end }}

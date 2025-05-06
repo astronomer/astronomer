@@ -1,6 +1,7 @@
 ####################################
 ## Elasticsearch Exporter Service ##
 ####################################
+{{- if .Values.global.controlplane.enabled}}
 kind: Service
 apiVersion: v1
 metadata:
@@ -27,3 +28,4 @@ spec:
     component: {{ template "elasticsearch.name" . }}-exporter
     release: {{ .Release.Name }}
     role: exporter
+{{- end }}
