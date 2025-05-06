@@ -12,6 +12,7 @@ metadata:
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"
     role: master
+    plane: controlplane
 spec:
   {{- if and .Values.common.persistence.enabled .Values.common.persistence.persistentVolumeClaimRetentionPolicy }}
   persistentVolumeClaimRetentionPolicy: {{- toYaml .Values.common.persistence.persistentVolumeClaimRetentionPolicy | nindent 4 }}

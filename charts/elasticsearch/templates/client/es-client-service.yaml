@@ -12,6 +12,7 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
     role: client
+    plane: controlplane
 spec:
   type: {{ .Values.common.serviceType }}
   selector:
