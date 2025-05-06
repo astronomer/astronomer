@@ -1,6 +1,7 @@
 #################################
 ## NGINX Elasticsearch Service ##
 #################################
+{{- if .Values.global.controlplane.enabled }}
 kind: Service
 apiVersion: v1
 metadata:
@@ -23,3 +24,4 @@ spec:
       protocol: TCP
       name: http
       appProtocol: http
+{{- end }}

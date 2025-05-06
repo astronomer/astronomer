@@ -1,7 +1,7 @@
 #######################
 ## Curator ConfigMap ##
 #######################
-{{- if .Values.curator.enabled }}
+{{- if and .Values.curator.enabled .Values.global.controlplane.enabled }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -12,6 +12,7 @@ metadata:
     chart: {{ template "elasticsearch.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+    plane: controlplane
 data:
   action_file.yml: |-
     ---

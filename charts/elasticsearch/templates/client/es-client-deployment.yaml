@@ -1,6 +1,7 @@
 #####################################
 ## Elasticsearch Client Deployment ##
 #####################################
+{{- if .Values.global.controlplane.enabled}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -12,6 +13,7 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
     role: client
+    plane: controlplane
 spec:
   replicas: {{ .Values.client.replicas }}
   selector:
@@ -172,3 +174,4 @@ spec:
       - name: config
         configMap:
           name: {{ template "elasticsearch.fullname" . }}-config
+{{- end }}

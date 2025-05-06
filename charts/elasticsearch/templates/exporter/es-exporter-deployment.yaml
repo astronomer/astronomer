@@ -1,6 +1,7 @@
 #######################################
 ## Elasticsearch Exporter Deployment ##
 #######################################
+{{- if .Values.global.controlplane.enabled}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -12,6 +13,7 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
     role: exporter
+    plane: controlplane
 spec:
   replicas: {{ .Values.exporter.replicas }}
   selector:
@@ -96,3 +98,4 @@ spec:
             initialDelaySeconds: 10
             timeoutSeconds: 10
           {{- end }}
+{{- end }}
