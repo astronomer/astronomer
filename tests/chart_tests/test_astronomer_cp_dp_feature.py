@@ -35,7 +35,7 @@ def create_doc_identifier(doc):
 class TestAstronomerCpDpFeature:
     def test_astronomer_cp_only(self, kube_version):
         """Test that helm renders the correct templates when only the controlplane is enabled."""
-        
+
         docs = render_chart(
             kube_version=kube_version,
             values={"global": {"controlplane": {"enabled": True}, "dataplane": {"enabled": False}}},
@@ -54,7 +54,7 @@ class TestAstronomerCpDpFeature:
 
     def test_astronomer_dp_only(self, kube_version):
         """Test that helm renders the correct templates when only the dataplane is enabled."""
-        
+
         docs = render_chart(
             kube_version=kube_version,
             values={"global": {"controlplane": {"enabled": False}, "dataplane": {"enabled": True}}},
@@ -73,7 +73,7 @@ class TestAstronomerCpDpFeature:
 
     def test_astronomer_both_cp_dp_enabled(self, kube_version):
         """Test when both Controlplane and Dataplane features are enabled."""
-        
+
         docs = render_chart(
             kube_version=kube_version,
             values={"global": {"controlplane": {"enabled": True}, "dataplane": {"enabled": True}}},
@@ -86,7 +86,7 @@ class TestAstronomerCpDpFeature:
 
     def test_astronomer_both_cp_dp_disabled(self, kube_version):
         """Test when both CP and DP features are disabled."""
-        
+
         docs = render_chart(
             kube_version=kube_version,
             values={"global": {"controlplane": {"enabled": False}, "dataplane": {"enabled": False}}},
@@ -99,7 +99,7 @@ class TestAstronomerCpDpFeature:
 
     def test_components_have_correct_plane_labels(self, kube_version):
         """Test that all components have the correct plane labels according to the component map."""
-        
+
         docs = render_chart(
             kube_version=kube_version,
             values={"global": {"controlplane": {"enabled": True}, "dataplane": {"enabled": True}}},
@@ -127,7 +127,7 @@ class TestAstronomerCpDpFeature:
 
     def test_no_components_with_incorrect_plane_labels(self, kube_version):
         """Test that there are no components with plane labels that don't match the component map."""
-        
+
         docs = render_chart(
             kube_version=kube_version,
             values={"global": {"controlplane": {"enabled": True}, "dataplane": {"enabled": True}}},
@@ -178,8 +178,7 @@ class TestAstronomerCpDpFeature:
             assert component in cp_only_component_names, f"CP component '{component}' not found when only CP is enabled"
 
         dp_only_components = [
-            component for component in PLANE_COMPONENT_MAP["dataplane"] 
-            if component not in PLANE_COMPONENT_MAP["controlplane"]
+            component for component in PLANE_COMPONENT_MAP["dataplane"] if component not in PLANE_COMPONENT_MAP["controlplane"]
         ]
         for component in dp_only_components:
             assert component not in cp_only_component_names, f"DP-only component '{component}' found when only CP is enabled"
@@ -194,8 +193,7 @@ class TestAstronomerCpDpFeature:
         for component in PLANE_COMPONENT_MAP["dataplane"]:
             assert component in dp_only_component_names, f"DP component '{component}' not found when only DP is enabled"
         cp_only_components = [
-            component for component in PLANE_COMPONENT_MAP["controlplane"] 
-            if component not in PLANE_COMPONENT_MAP["dataplane"]
+            component for component in PLANE_COMPONENT_MAP["controlplane"] if component not in PLANE_COMPONENT_MAP["dataplane"]
         ]
         for component in cp_only_components:
             assert component not in dp_only_component_names, f"CP-only component '{component}' found when only DP is enabled"
@@ -204,14 +202,10 @@ class TestAstronomerCpDpFeature:
             values={"global": {"controlplane": {"enabled": True}, "dataplane": {"enabled": True}}},
         )
         for component in multi_plane_components:
-            planes_with_component = [
-                plane for plane, components in PLANE_COMPONENT_MAP.items()
-                if component in components
-            ]
+            planes_with_component = [plane for plane, components in PLANE_COMPONENT_MAP.items() if component in components]
             occurrences = sum(1 for doc in both_enabled_docs if get_component_name(doc) == component)
 
             expected_count = len(planes_with_component)
             assert occurrences == expected_count, (
-                f"Component '{component}' should appear {expected_count} times "
-                f"(once per plane) but appears {occurrences} times"
+                f"Component '{component}' should appear {expected_count} times (once per plane) but appears {occurrences} times"
             )
