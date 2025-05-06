@@ -714,10 +714,7 @@ class TestElasticSearch:
 
         for subdir in doc_dir.iterdir():
             if subdir.is_dir():
-                yaml_files = [
-                    str(x.relative_to(git_root_dir))
-                    for x in subdir.glob("*.yaml")
-                ]
+                yaml_files = [str(x.relative_to(git_root_dir)) for x in subdir.glob("*.yaml")]
                 all_docs.extend(yaml_files)
         for doc in all_docs:
             docs = render_chart(
