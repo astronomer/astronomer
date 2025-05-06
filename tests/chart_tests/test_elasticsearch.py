@@ -5,6 +5,8 @@ from tests import (
     supported_k8s_versions,
 )
 from tests.chart_tests.helm_template_generator import render_chart
+from tests import git_root_dir
+from pathlib import Path
 
 
 @pytest.mark.parametrize(
@@ -704,3 +706,23 @@ class TestElasticSearch:
         assert docs[0]["apiVersion"] == "security.openshift.io/v1"
         assert docs[0]["metadata"]["name"] == "release-name-elasticsearch-anyuid"
         assert docs[0]["users"] == ["system:serviceaccount:default:release-name-elasticsearch"]
+
+    def test_elasticsearch_without_controlplane_flag_disabled(self, kube_version):
+        """Test that helm renders the no templates when controlplane is disabled."""
+        doc_dir = Path(f"{git_root_dir}/charts/elasticsearch/templates")
+        all_docs = []
+
+        for subdir in doc_dir.iterdir():
+            if subdir.is_dir():
+                yaml_files = [
+                    str(x.relative_to(git_root_dir))
+                    for x in subdir.glob("*.yaml")
+                ]
+                all_docs.extend(yaml_files)
+        for doc in all_docs:
+            docs = render_chart(
+                kube_version=kube_version,
+                values={"global": {"controlplane": {"enabled": False}}},
+                show_only=[doc],
+            )
+            assert len(docs) == 0, f"Document {doc} was rendered when controlplane is disabled"
