@@ -61,7 +61,7 @@ def skip_for_multi_cluster(cluster_setup):
 def nginx(core_v1_client):
     """This is the host fixture for testinfra."""
 
-    pod = get_pod_by_label_selector(core_v1_client, "component=ingress-controller")
+    pod = get_pod_by_label_selector(core_v1_client, "component=dp-ingress-controller")
     yield testinfra.get_host(f"kubectl://{pod}?container=nginx&namespace={namespace}")
 
 

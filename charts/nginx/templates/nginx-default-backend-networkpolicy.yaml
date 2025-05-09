@@ -25,7 +25,12 @@ spec:
     - podSelector:
         matchLabels:
           tier: {{ template "nginx.name" . }}
-          component: ingress-controller
+          component: cp-ingress-controller
+          release: {{ .Release.Name }}
+    - podSelector:
+        matchLabels:
+          tier: {{ template "nginx.name" . }}
+          component: dp-ingress-controller
           release: {{ .Release.Name }}
     ports:
     - protocol: TCP

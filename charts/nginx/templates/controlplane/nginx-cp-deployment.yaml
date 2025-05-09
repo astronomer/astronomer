@@ -1,47 +1,50 @@
-######################
-## NGINX Deployment ##
-######################
+####################################
+## NGINX Control Plane Deployment ##
+####################################
+{{- if .Values.global.controlplane.enabled }}
 kind: Deployment
 apiVersion: apps/v1
 metadata:
-  name: {{ template "nginx.fullname" . }}
+  name: {{ .Release.Name }}-cp-{{ template "nginx.name" . }}
   labels:
     tier: {{ template "nginx.name" . }}
-    component: ingress-controller
+    component: cp-ingress-controller
     chart: {{ template "nginx.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+    plane: controlplane
 spec:
   replicas: {{ .Values.replicas }}
   minReadySeconds: {{ .Values.minReadySeconds }}
   selector:
     matchLabels:
       tier: {{ template "nginx.name" . }}
-      component: ingress-controller
+      component: cp-ingress-controller
       release: {{ .Release.Name }}
   template:
     metadata:
       labels:
         tier: {{ template "nginx.name" . }}
-        component: ingress-controller
+        component: cp-ingress-controller
         release: {{ .Release.Name }}
         app: {{ template "nginx.name" . }}
         version: {{ .Chart.Version }}
+        plane: controlplane
       annotations:
         traffic.sidecar.istio.io/includeInboundPorts: ""
-        checksum/configmap: {{ include (print $.Template.BasePath "/nginx-configmap.yaml") . | sha256sum }}
-        checksum/headers-configmap: {{ include (print $.Template.BasePath "/nginx-headers-configmap.yaml") . | sha256sum }}
+        checksum/configmap: {{ include (print $.Template.BasePath "/controlplane/nginx-cp-configmap.yaml") . | sha256sum }}
+        checksum/headers-configmap: {{ include (print $.Template.BasePath "/controlplane/nginx-cp-headers-configmap.yaml") . | sha256sum }}
         {{- if .Values.global.istio.enabled }}
         sidecar.istio.io/inject: "false"
         {{- end }}
-{{- if .Values.global.podAnnotations }}
-{{ toYaml .Values.global.podAnnotations | indent 8 }}
-{{- end }}
-{{- if .Values.podAnnotations }}
-{{ toYaml .Values.podAnnotations | indent 8 }}
-{{- end }}
+        {{- if .Values.global.podAnnotations }}
+        {{- toYaml .Values.global.podAnnotations | nindent 8 }}
+        {{- end }}
+        {{- if .Values.podAnnotations }}
+        {{- toYaml .Values.podAnnotations | nindent 8 }}
+        {{- end }}
     spec:
-      serviceAccountName: {{ template "nginx.serviceAccountName" . }}
+      serviceAccountName: {{ template "nginx.serviceAccountName" . }}-cp
 {{- include "nginx.imagePullSecrets" . | indent 6 }}
       containers:
         - name: nginx
@@ -53,7 +56,7 @@ spec:
           args:
             - /nginx-ingress-controller
             - --default-backend-service={{ .Release.Namespace }}/{{ template "nginx.fullname" . }}-default-backend
-            - --configmap={{ .Release.Namespace }}/{{ template "nginx.fullname" . }}-ingress-controller
+            - --configmap={{ .Release.Namespace }}/{{ .Release.Name }}-cp-{{ template "nginx.name" . }}-ingress-controller
             - --ingress-class={{ template "nginx.ingress.class" . }}
             - --default-ssl-certificate={{ .Release.Namespace }}/{{ .Values.global.tlsSecret }}
             {{- if .Values.global.singleNamespace }}
@@ -72,7 +75,7 @@ spec:
             - --enable-topology-aware-routing=true
             {{- end }}
             - --election-id={{ .Values.electionId }}-{{ template "nginx.fullname" . }}
-            - --publish-service={{ .Release.Namespace }}/{{ template "nginx.fullname" . }}
+            - --publish-service={{ .Release.Namespace }}/{{ .Release.Name }}-cp-{{ template "nginx.name" . }}
             - --http-port={{ .Values.ports.http }}
             - --https-port={{ .Values.ports.https }}
           ports:
@@ -114,7 +117,7 @@ spec:
               labelSelector:
                 matchLabels:
                   tier: {{ template "nginx.name" . }}
-                  component: ingress-controller
+                  component: cp-ingress-controller
                   release: {{ .Release.Name }}
     {{- else if eq .Values.antiAffinity "soft" }}
         podAntiAffinity:
@@ -125,7 +128,7 @@ spec:
               labelSelector:
                 matchLabels:
                   tier: {{ template "nginx.name" . }}
-                  component: ingress-controller
+                  component: cp-ingress-controller
                   release: {{ .Release.Name }}
     {{- if .Values.global.platformNodePool.affinity }}
 {{ toYaml .Values.global.platformNodePool.affinity | indent 8 }}
@@ -133,3 +136,4 @@ spec:
       tolerations:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
     {{- end }}
+{{- end }}
