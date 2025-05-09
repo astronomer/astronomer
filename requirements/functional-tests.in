@@ -3,6 +3,7 @@ GitPython
 kubernetes
 pytest
 pytest-pretty
+pytest-profiling
 pytest-rerunfailures
 pytest-testinfra
 PyYAML
