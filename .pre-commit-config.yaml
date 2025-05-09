@@ -59,7 +59,7 @@ repos:
         args: ["--fix=lf"]
       - id: name-tests-test
         args: ["--pytest-test-first"]
-        exclude: "^tests/chart_tests/helm_template_generator.py$"
+        exclude: "^tests/(chart_tests/helm_template_generator.py|utils/.*)$"
       - id: requirements-txt-fixer
         args: [
             "requirements/chart-tests.in",
