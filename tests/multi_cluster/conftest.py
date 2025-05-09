@@ -115,11 +115,10 @@ def control(request) -> Iterable[str]:
     :param request: Pytest request object for accessing test metadata.
     :yield: Path to the kubeconfig file for the 'control' cluster.
     """
-    if request.node.name == "test_control.py":
-        kubeconfig_file = create_kind_cluster("control")
-        helm_install(kubeconfig=kubeconfig_file)
-        yield kubeconfig_file
-        delete_kind_cluster("control", kubeconfig_file)
+    kubeconfig_file = create_kind_cluster("control")
+    helm_install(kubeconfig=kubeconfig_file)
+    yield kubeconfig_file
+    delete_kind_cluster("control", kubeconfig_file)
 
 
 @pytest.fixture(scope="session")
@@ -130,11 +129,10 @@ def data(request) -> Iterable[str]:
     :param request: Pytest request object for accessing test metadata.
     :yield: Path to the kubeconfig file for the 'data' cluster.
     """
-    if request.node.name == "test_data.py":
-        kubeconfig_file = create_kind_cluster("data")
-        helm_install(kubeconfig=kubeconfig_file)
-        yield kubeconfig_file
-        delete_kind_cluster("data", kubeconfig_file)
+    kubeconfig_file = create_kind_cluster("data")
+    helm_install(kubeconfig=kubeconfig_file)
+    yield kubeconfig_file
+    delete_kind_cluster("data", kubeconfig_file)
 
 
 @pytest.fixture(scope="session")
@@ -145,11 +143,10 @@ def unified(request) -> Iterable[str]:
     :param request: Pytest request object for accessing test metadata.
     :yield: Path to the kubeconfig file for the 'unified' cluster.
     """
-    if request.node.name == "test_unified.py":
-        kubeconfig_file = create_kind_cluster("unified")
-        helm_install(kubeconfig=kubeconfig_file)
-        yield kubeconfig_file
-        delete_kind_cluster("unified", kubeconfig_file)
+    kubeconfig_file = create_kind_cluster("unified")
+    helm_install(kubeconfig=kubeconfig_file)
+    yield kubeconfig_file
+    delete_kind_cluster("unified", kubeconfig_file)
 
 
 def helm_install(kubeconfig: str, values: str = f"{git_root_dir}/configs/local-dev.yaml") -> None:
