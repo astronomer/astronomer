@@ -33,9 +33,17 @@ venv-unit: .venv-unit  ## Setup venv required for unit testing the Astronomer he
 test-functional: venv-functional ## Run functional tests on the Astronomer helm chart
 	venv/bin/python -m pytest -v --junitxml=test-results/junit.xml tests/functional_tests
 
-.PHONY: test-multi-cluster-functional
-test-multi-cluster-functional: venv-functional ## Run multi-cluster functional tests on the Astronomer helm chart
-	venv/bin/python -m pytest -sv --junitxml=test-results/junit.xml tests/multi_cluster
+.PHONY: test-functional-control
+test-functional-control: venv-functional ## Runfunctional tests on the control installation scenario
+	venv/bin/python -m pytest -sv --junitxml=test-results/junit.xml tests/multi_cluster/control
+
+.PHONY: test-functional-data
+test-functional-data: venv-functional ## Runfunctional tests on the data installation scenario
+	venv/bin/python -m pytest -sv --junitxml=test-results/junit.xml tests/multi_cluster/data
+
+.PHONY: test-functional-unified
+test-functional-unified: venv-functional ## Runfunctional tests on the unified installation scenario
+	venv/bin/python -m pytest -sv --junitxml=test-results/junit.xml tests/multi_cluster/unified
 
 # unittest-charts is deprecated
 .PHONY: unittest-charts
