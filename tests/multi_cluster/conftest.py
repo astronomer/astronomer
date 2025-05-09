@@ -5,18 +5,25 @@ import pytest
 from tests import git_root_dir
 from kubernetes import client, config
 import time
+from collections.abc import Iterable
 from kubernetes.client.exceptions import ApiException
 
 
-def run_command(command):
-    """Run a shell command and capture its output."""
+def run_command(command: str) -> str:
+    """
+    Run a shell command and capture its output.
+
+    :param command: The shell command to execute.
+    :return: The standard output from the command.
+    :raises RuntimeError: If the command fails.
+    """
     result = subprocess.run(command, shell=True, text=True, capture_output=True)
     if result.returncode != 0:
         raise RuntimeError(f"Command failed: {command}\n{result.stderr}")
     return result.stdout.strip()
 
 
-def wait_for_pods_ready(kubeconfig_file, timeout=300):
+def wait_for_pods_ready(kubeconfig_file: str, timeout: int = 300) -> None:
     """
     Waits until all pods in the cluster are in the 'Running' state.
 
@@ -55,12 +62,13 @@ def wait_for_pods_ready(kubeconfig_file, timeout=300):
     raise RuntimeError("Timed out waiting for all pods to reach 'Running' state.")
 
 
-def create_kind_cluster(cluster_name):
+def create_kind_cluster(cluster_name: str) -> str:
     """
     Create a KIND cluster and return its kubeconfig file path.
 
-    :param cluster_name: Name of the KIND cluster.
+    :param cluster_name: Name of the KIND cluster to create.
     :return: Full path to the kubeconfig file.
+    :raises RuntimeError: If the cluster creation fails.
     """
     kubeconfig_file = tempfile.NamedTemporaryFile(delete=False)
     kubeconfig_file.close()
@@ -84,12 +92,12 @@ def create_kind_cluster(cluster_name):
         raise
 
 
-def delete_kind_cluster(cluster_name, kubeconfig_file):
+def delete_kind_cluster(cluster_name: str, kubeconfig_file: str) -> None:
     """
     Delete a KIND cluster and clean up its kubeconfig file.
 
-    :param cluster_name: Name of the KIND cluster.
-    :param kubeconfig_file: Path to the kubeconfig file.
+    :param cluster_name: Name of the KIND cluster to delete.
+    :param kubeconfig_file: Path to the kubeconfig file to clean up.
     """
     try:
         cmd = f"kind delete cluster --name {cluster_name}"
@@ -100,8 +108,13 @@ def delete_kind_cluster(cluster_name, kubeconfig_file):
 
 
 @pytest.fixture(scope="session")
-def control(request):
-    """Fixture for the 'control' cluster."""
+def control(request) -> Iterable[str]:
+    """
+    Fixture for the 'control' cluster.
+
+    :param request: Pytest request object for accessing test metadata.
+    :yield: Path to the kubeconfig file for the 'control' cluster.
+    """
     if request.node.name == "test_control.py":
         kubeconfig_file = create_kind_cluster("control")
         helm_install(kubeconfig=kubeconfig_file)
@@ -110,8 +123,13 @@ def control(request):
 
 
 @pytest.fixture(scope="session")
-def data(request):
-    """Fixture for the 'data' cluster."""
+def data(request) -> Iterable[str]:
+    """
+    Fixture for the 'data' cluster.
+
+    :param request: Pytest request object for accessing test metadata.
+    :yield: Path to the kubeconfig file for the 'data' cluster.
+    """
     if request.node.name == "test_data.py":
         kubeconfig_file = create_kind_cluster("data")
         helm_install(kubeconfig=kubeconfig_file)
@@ -120,8 +138,13 @@ def data(request):
 
 
 @pytest.fixture(scope="session")
-def unified(request):
-    """Fixture for the 'unified' cluster."""
+def unified(request) -> Iterable[str]:
+    """
+    Fixture for the 'unified' cluster.
+
+    :param request: Pytest request object for accessing test metadata.
+    :yield: Path to the kubeconfig file for the 'unified' cluster.
+    """
     if request.node.name == "test_unified.py":
         kubeconfig_file = create_kind_cluster("unified")
         helm_install(kubeconfig=kubeconfig_file)
@@ -129,7 +152,7 @@ def unified(request):
         delete_kind_cluster("unified", kubeconfig_file)
 
 
-def helm_install(kubeconfig, values=f"{git_root_dir}/configs/local-dev.yaml"):
+def helm_install(kubeconfig: str, values: str = f"{git_root_dir}/configs/local-dev.yaml") -> None:
     """
     Install a Helm chart using the provided kubeconfig and values file.
 
@@ -156,9 +179,13 @@ def helm_install(kubeconfig, values=f"{git_root_dir}/configs/local-dev.yaml"):
 
 
 @pytest.fixture(scope="function")
-def kubernetes_client(request, clusters):
+def kubernetes_client(request, clusters) -> client.CoreV1Api:
     """
     Provide a Kubernetes client for the resolved target cluster.
+
+    :param request: Pytest request object for accessing test metadata.
+    :param clusters: Dictionary of cluster names and their kubeconfig file paths.
+    :return: A Kubernetes CoreV1Api client for the target cluster.
     """
     cluster_name = request.param
     kubeconfig_path = clusters[cluster_name]
