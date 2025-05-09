@@ -99,6 +99,36 @@ def delete_kind_cluster(cluster_name, kubeconfig_file):
         os.unlink(kubeconfig_file)
 
 
+@pytest.fixture(scope="session")
+def control(request):
+    """Fixture for the 'control' cluster."""
+    if request.node.name == "test_control.py":
+        kubeconfig_file = create_kind_cluster("control")
+        helm_install(kubeconfig=kubeconfig_file)
+        yield kubeconfig_file
+        delete_kind_cluster("control", kubeconfig_file)
+
+
+@pytest.fixture(scope="session")
+def data(request):
+    """Fixture for the 'data' cluster."""
+    if request.node.name == "test_data.py":
+        kubeconfig_file = create_kind_cluster("data")
+        helm_install(kubeconfig=kubeconfig_file)
+        yield kubeconfig_file
+        delete_kind_cluster("data", kubeconfig_file)
+
+
+@pytest.fixture(scope="session")
+def unified(request):
+    """Fixture for the 'unified' cluster."""
+    if request.node.name == "test_unified.py":
+        kubeconfig_file = create_kind_cluster("unified")
+        helm_install(kubeconfig=kubeconfig_file)
+        yield kubeconfig_file
+        delete_kind_cluster("unified", kubeconfig_file)
+
+
 def helm_install(kubeconfig, values=f"{git_root_dir}/configs/local-dev.yaml"):
     """
     Install a Helm chart using the provided kubeconfig and values file.
@@ -125,53 +155,6 @@ def helm_install(kubeconfig, values=f"{git_root_dir}/configs/local-dev.yaml"):
     )
 
 
-@pytest.fixture(scope="session")
-def cp_cluster():
-    """Fixture to create and provide the 'cp' KIND cluster with Helm initialization."""
-    cluster_name = "cp"
-    kubeconfig_file = create_kind_cluster(cluster_name)
-
-    try:
-        helm_install(kubeconfig=kubeconfig_file)
-        yield kubeconfig_file
-    finally:
-        delete_kind_cluster(cluster_name, kubeconfig_file)
-
-
-@pytest.fixture(scope="session")
-def dp_cluster():
-    """Fixture to create and provide the 'dp' KIND cluster."""
-    cluster_name = "dp"
-    kubeconfig_file = create_kind_cluster(cluster_name)
-
-    try:
-        helm_install(kubeconfig=kubeconfig_file)
-        yield kubeconfig_file
-    finally:
-        delete_kind_cluster(cluster_name, kubeconfig_file)
-
-
-@pytest.fixture(scope="session")
-def cpdp_cluster():
-    """Fixture to create a KIND cluster to hold both the cp and dp roles."""
-    cluster_name = "cpdp"
-    kubeconfig_file = create_kind_cluster(cluster_name)
-
-    try:
-        helm_install(kubeconfig=kubeconfig_file)
-        yield kubeconfig_file
-    finally:
-        delete_kind_cluster(cluster_name, kubeconfig_file)
-
-
-@pytest.fixture(scope="session")
-def clusters(cpdp_cluster, cp_cluster, dp_cluster):
-    """
-    Provide a dictionary of available clusters.
-    """
-    return {"cpdp": cpdp_cluster, "cp": cp_cluster, "dp": dp_cluster}
-
-
 @pytest.fixture(scope="function")
 def kubernetes_client(request, clusters):
     """
@@ -181,22 +164,3 @@ def kubernetes_client(request, clusters):
     kubeconfig_path = clusters[cluster_name]
     config.load_kube_config(config_file=kubeconfig_path)
     return client.CoreV1Api()
-
-
-def pytest_generate_tests(metafunc):
-    """
-    Dynamically parameterize tests based on the 'valid_for' marker.
-    """
-    # Check if 'kubernetes_client' and 'current_cluster' need to be parameterized
-    if "kubernetes_client" in metafunc.fixturenames and "current_cluster" in metafunc.fixturenames:
-        # Collect all clusters the test is valid for
-        valid_clusters = []
-        for marker in metafunc.definition.iter_markers(name="valid_for"):
-            valid_clusters.extend(marker.args)
-
-        # Pass the clusters as parameterized arguments to the test
-        metafunc.parametrize(
-            "kubernetes_client, current_cluster",
-            [(cluster, cluster) for cluster in valid_clusters],
-            indirect=["kubernetes_client"],
-        )
