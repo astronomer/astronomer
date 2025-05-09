@@ -8,6 +8,7 @@
 *.tmp
 *.tmproj
 *~
+.*_cache
 .bzr/
 .bzrignore
 .DS_Store
@@ -37,5 +38,7 @@
 /tests
 /tiller-rbac
 /values.schema.json.example
-/venv
 __pycache__
+prof
+test-results
+venv*
