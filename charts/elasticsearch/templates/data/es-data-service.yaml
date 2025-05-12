@@ -1,7 +1,7 @@
 ################################
 ## Elasticsearch Data Service ##
 ################################
-{{- if .Values.data.persistence.enabled }}
+{{- if and .Values.data.persistence.enabled .Values.global.controlplane.enabled }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -13,6 +13,7 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
     role: data
+    plane: controlplane
 spec:
   ports:
   - port: {{ .Values.common.ports.transport }}

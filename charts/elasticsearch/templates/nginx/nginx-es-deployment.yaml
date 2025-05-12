@@ -1,6 +1,7 @@
 ####################################
 ## NGINX Elasticsearch Deployment ##
 ####################################
+{{- if .Values.global.controlplane.enabled }}
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -69,3 +70,4 @@ spec:
             items:
               - key: nginx.conf
                 path: nginx.conf
+{{- end }}
