@@ -5,9 +5,9 @@
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:
-  name: {{ .Release.Name }}-commander-grpc-ingress
+  name: {{ .Release.Name }}-commander-api-ingress
   labels:
-    component: grpc-ingress
+    component: api-ingress
     tier: astronomer
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
@@ -45,7 +45,7 @@ spec:
   {{- end }}
   {{ if semverCompare "< 1.19-0" .Capabilities.KubeVersion.Version -}}
   rules:
-  - host: commandergrpc.{{ .Values.global.dataplane.baseDomain }}
+  - host: commanderapi.{{ .Values.global.dataplane.baseDomain }}
     http:
       paths:
         - path: /
@@ -54,7 +54,7 @@ spec:
             servicePort: commander-grpc
   {{ else -}}
   rules:
-  - host: commandergrpc.{{ .Values.global.dataplane.baseDomain }}
+  - host: commanderapi.{{ .Values.global.dataplane.baseDomain }}
     http:
       paths:
         - path: /
