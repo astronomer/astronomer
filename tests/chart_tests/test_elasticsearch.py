@@ -6,7 +6,6 @@ from tests import (
 )
 from tests.chart_tests.helm_template_generator import render_chart
 from tests import git_root_dir
-from pathlib import Path
 
 
 @pytest.mark.parametrize(
@@ -707,19 +706,16 @@ class TestElasticSearch:
         assert docs[0]["metadata"]["name"] == "release-name-elasticsearch-anyuid"
         assert docs[0]["users"] == ["system:serviceaccount:default:release-name-elasticsearch"]
 
-    def test_elasticsearch_without_controlplane_flag_disabled(self, kube_version):
-        """Test that helm renders the no templates when controlplane is disabled."""
-        doc_dir = Path(f"{git_root_dir}/charts/elasticsearch/templates")
-        all_docs = []
+    es_component_templates = [
+        str(path.relative_to(git_root_dir)) for path in list(git_root_dir.glob("charts/elasticsearch/templates/*/*.yaml"))
+    ]
 
-        for subdir in doc_dir.iterdir():
-            if subdir.is_dir():
-                yaml_files = [str(x.relative_to(git_root_dir)) for x in subdir.glob("*.yaml")]
-                all_docs.extend(yaml_files)
-        for doc in all_docs:
-            docs = render_chart(
-                kube_version=kube_version,
-                values={"global": {"controlplane": {"enabled": False}}},
-                show_only=[doc],
-            )
-            assert len(docs) == 0, f"Document {doc} was rendered when controlplane is disabled"
+    @pytest.mark.parametrize("doc", es_component_templates)
+    def test_elasticsearch_without_controlplane_flag_disabled(self, kube_version, doc):
+        """Test that helm renders no templates when controlplane is disabled."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"controlplane": {"enabled": False}}},
+            show_only=[doc],
+        )
+        assert len(docs) == 0, f"Document {doc} was rendered when controlplane is disabled"
