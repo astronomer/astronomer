@@ -26,8 +26,8 @@ class TestGlobabIngressAnnotation:
     @pytest.mark.parametrize(
         "enable_per_host_ingress",
         [
-            pytest.param(True, id="enable_per_host_ingress"),
-            pytest.param(False, id="disable_per_host_ingress"),
+            pytest.param(True, id="per_host_ingress_enabled"),
+            pytest.param(False, id="per_host_ingress_disabled"),
         ],
     )
     @pytest.mark.parametrize(
