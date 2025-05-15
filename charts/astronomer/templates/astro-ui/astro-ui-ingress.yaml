@@ -80,7 +80,6 @@ metadata:
       if ($host = '{{ .Values.global.baseDomain }}' ) {
         rewrite ^ https://app.{{ .Values.global.baseDomain }}$request_uri permanent;
       }
-    {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- end }}
 spec:
   {{- if or .Values.global.tlsSecret .Values.global.acme }}
