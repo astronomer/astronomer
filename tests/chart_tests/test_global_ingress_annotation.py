@@ -30,7 +30,14 @@ class TestGlobabIngressAnnotation:
             pytest.param(False, id="disable_per_host_ingress"),
         ],
     )
-    def test_global_ingress_per_host_ingress(self, kube_version, enable_per_host_ingress):
+    @pytest.mark.parametrize(
+        "auth_sidecar_enabled",
+        [
+            pytest.param(True, id="auth_sidecar_enabled"),
+            pytest.param(False, id="auth_sidecar_disabled"),
+        ],
+    )
+    def test_global_ingress_per_host_ingress(self, kube_version, enable_per_host_ingress, auth_sidecar_enabled):
         """Test global ingress annotation for platform ingress."""
         docs = render_chart(
             kube_version=kube_version,
@@ -38,6 +45,7 @@ class TestGlobabIngressAnnotation:
                 "global": {
                     "extraAnnotations": {"kubernetes.io/ingress.allow-http": "false"},
                     "enablePerHostIngress": enable_per_host_ingress,
+                    "authSidecar": {"enabled": auth_sidecar_enabled},
                 },
             },
         )
