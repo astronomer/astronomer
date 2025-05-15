@@ -42,30 +42,6 @@ spec:
         - registry.{{ .Values.global.baseDomain }}
         - install.{{ .Values.global.baseDomain }}
   {{- end }}
-  {{ if semverCompare "< 1.19-0" .Capabilities.KubeVersion.Version -}}
-  rules:
-  - host: {{ .Values.global.baseDomain }}
-    http:
-      paths:
-        - path: /
-          backend:
-            serviceName: {{ .Release.Name }}-astro-ui
-            servicePort: astro-ui-http
-  - host: app.{{ .Values.global.baseDomain }}
-    http:
-      paths:
-        - path: /
-          backend:
-            serviceName: {{ .Release.Name }}-astro-ui
-            servicePort: astro-ui-http
-  - host: registry.{{ .Values.global.baseDomain }}
-    http:
-      paths:
-        - path: /
-          backend:
-            serviceName: {{ .Release.Name }}-registry
-            servicePort: registry-http
-  {{ else -}}
   rules:
   - host: {{ .Values.global.baseDomain }}
     http:
@@ -97,5 +73,4 @@ spec:
               name: {{ .Release.Name }}-registry
               port:
                 name: registry-http
-  {{- end -}}
 {{- end }}

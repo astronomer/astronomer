@@ -47,24 +47,14 @@ spec:
       http:
         paths:
           - path: /
-            {{ if semverCompare "<1.19-0" .Capabilities.KubeVersion.Version -}}
-            backend:
-              serviceName: {{ template "kibana.fullname" . }}
-              {{- if .Values.global.authSidecar.enabled  }}
-              servicePort: auth-proxy
-              {{- else }}
-              servicePort: kibana-ui
-              {{- end }}
-            {{- else -}}
             pathType: Prefix
             backend:
               service:
                 name: {{ template "kibana.fullname" . }}
                 port:
-                  {{- if .Values.global.authSidecar.enabled  }}
+                  {{- if .Values.global.authSidecar.enabled }}
                   name: auth-proxy
                   {{- else }}
                   name: kibana-ui
                   {{- end }}
-            {{- end -}}
 {{- end }}

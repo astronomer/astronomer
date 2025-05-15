@@ -35,16 +35,6 @@ spec:
       hosts:
         - registry.{{ .Values.global.baseDomain }}
   {{- end }}
-  {{ if semverCompare "< 1.19-0" .Capabilities.KubeVersion.Version -}}
-  rules:
-  - host: registry.{{ .Values.global.baseDomain }}
-    http:
-      paths:
-        - path: /
-          backend:
-            serviceName: {{ .Release.Name }}-registry
-            servicePort: registry-http
-  {{ else -}}
   rules:
   - host: registry.{{ .Values.global.baseDomain }}
     http:
@@ -56,5 +46,4 @@ spec:
               name: {{ .Release.Name }}-registry
               port:
                 name: registry-http
-  {{- end -}}
 {{- end }}
