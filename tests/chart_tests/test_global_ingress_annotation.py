@@ -43,9 +43,9 @@ class TestGlobabIngressAnnotation:
             kube_version=kube_version,
             values={
                 "global": {
-                    "extraAnnotations": {"kubernetes.io/ingress.allow-http": "false"},
-                    "enablePerHostIngress": enable_per_host_ingress,
                     "authSidecar": {"enabled": auth_sidecar_enabled},
+                    "enablePerHostIngress": enable_per_host_ingress,
+                    "extraAnnotations": {"kubernetes.io/ingress.allow-http": "false"},
                 },
             },
         )
