@@ -8,6 +8,9 @@ global:
   # Name of secret containing TLS certificate
   tlsSecret: astronomer-tls
 
+  plane:
+    mode: "unified"  # one of: control, data, unified
+  
   dataplane:
     enabled: true
   controlplane:

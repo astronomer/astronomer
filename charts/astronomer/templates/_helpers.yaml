@@ -466,3 +466,15 @@ tlsEnabled: false
 {{ toYaml .Values.securityContext | indent 16 }}
 {{- end }}
 {{- end }}
+
+{{- define "astronomer.isControlPlane" -}}
+{{- if or (eq .Values.global.plane.mode "unified") (eq .Values.global.plane.mode "control") -}}
+1
+{{- end -}}
+{{- end -}}
+
+{{- define "astronomer.isDataPlane" -}}
+{{- if or (eq .Values.global.plane.mode "unified") (eq .Values.global.plane.mode "data") -}}
+1
+{{- end -}}
+{{- end -}}

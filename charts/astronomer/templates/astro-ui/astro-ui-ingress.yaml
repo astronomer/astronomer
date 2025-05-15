@@ -1,7 +1,7 @@
 #################################
 ## Astronomer astro ui Ingress ##
 #################################
-{{- if and .Values.global.baseDomain .Values.global.enablePerHostIngress .Values.global.controlplane.enabled }}
+{{- if and .Values.global.baseDomain .Values.global.enablePerHostIngress (include "astronomer.isControlPlane" .) }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:
