@@ -70,6 +70,9 @@ metadata:
     {{- if .Values.global.authSidecar.enabled  }}
       {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- else }}
+    {{- if .Values.global.extraAnnotations }}
+{{- toYaml .Values.global.extraAnnotations | nindent 4 }}
+    {{- end }}
     kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
     kubernetes.io/tls-acme: {{ eq .Values.global.acme true | quote }}
     nginx.ingress.kubernetes.io/custom-http-errors: "404"
@@ -77,6 +80,7 @@ metadata:
       if ($host = '{{ .Values.global.baseDomain }}' ) {
         rewrite ^ https://app.{{ .Values.global.baseDomain }}$request_uri permanent;
       }
+    {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- end }}
 spec:
   {{- if or .Values.global.tlsSecret .Values.global.acme }}
