@@ -9,7 +9,6 @@ from tests.chart_tests.helm_template_generator import render_chart
 def list_docker_images():
     extra_globals = {
         "global.baseDomain": "foo.com",
-        "blackboxExporterEnabled": True,
         "postgresqlEnabled": True,
         "prometheusPostgresExporterEnabled": True,
     }
