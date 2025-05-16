@@ -258,6 +258,9 @@ houston:
     # Default here is to run at midnight every night https://crontab.guru/#0_0_*_*_*
     schedule: "0 0 * * *"
 
+    readinessProbe: {}
+    livenessProbe: {}
+
   # Check for Astronomer Runtime Updates
   # This runs as a CronJob
   updateRuntimeCheck:
