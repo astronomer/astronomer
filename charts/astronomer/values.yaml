@@ -345,6 +345,10 @@ houston:
     readinessProbe: {}
     livenessProbe: {}
 
+  taskUsageMetrics: 
+    readinessProbe: {}
+    livenessProbe: {}
+
 configSyncer:
   enabled: true
   # If not provided, will generate a random hour and minutes to spread cronjob workloads.
