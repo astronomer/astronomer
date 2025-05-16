@@ -242,6 +242,9 @@ curator:
     unit: "days"
     unit_count: 10
 
+  livenessProbe: {}
+  readinessProbe: {}
+
 exporter:
   podAnnotations: {}
   # Number of exporter instances
