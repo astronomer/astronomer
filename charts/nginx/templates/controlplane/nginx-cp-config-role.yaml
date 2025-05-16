@@ -1,16 +1,17 @@
-#######################
-## NGINX Config Role ##
-#######################
-{{- if .Values.global.rbacEnabled }}
+#####################################
+## NGINX Control Plane Config Role ##
+#####################################
+{{- if and .Values.global.rbacEnabled .Values.global.controlplane.enabled}}
 kind: Role
 apiVersion: {{ template "apiVersion.rbac" . }}
 metadata:
-  name: {{ template "nginx.fullname" . }}-config
+  name: {{ .Release.Name }}-cp-{{ template "nginx.name" . }}-config
   labels:
     tier: {{ template "nginx.name" . }}
     chart: {{ template "nginx.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+    plane: controlplane
 rules:
   - apiGroups:
       - ""

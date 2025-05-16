@@ -1,7 +1,7 @@
 #####################
 ## Curator CronJob ##
 #####################
-{{- if .Values.curator.enabled }}
+{{- if and .Values.curator.enabled .Values.global.controlplane.enabled }}
 apiVersion: {{ include "apiVersion.batch.cronjob" . }}
 kind: CronJob
 metadata:
@@ -12,6 +12,7 @@ metadata:
     chart: {{ template "elasticsearch.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+    plane: controlplane
 spec:
   schedule: {{ .Values.curator.schedule }}
   jobTemplate:

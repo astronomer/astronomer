@@ -1,7 +1,7 @@
 ########################################################
 ## Astronomer Elasticsearch Master Pod Disruption Budget
 ########################################################
-{{- if .Values.global.podDisruptionBudgetsEnabled }}
+{{- if and .Values.global.podDisruptionBudgetsEnabled .Values.global.controlplane.enabled }}
 apiVersion: {{ include "apiVersion.PodDisruptionBudget" . }}
 kind: PodDisruptionBudget
 metadata:

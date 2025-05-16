@@ -1,0 +1,24 @@
+#########################################
+## NGINX Data Plane ClusterRoleBinding ##
+#########################################
+{{- if .Values.global.dataplane.enabled }}
+{{- if .Values.global.rbacEnabled }}
+kind: ClusterRoleBinding
+apiVersion: {{ template "apiVersion.rbac" . }}
+metadata:
+  name: {{ .Release.Name }}-dp-{{ template "nginx.name" . }}
+  labels:
+    tier: {{ template "nginx.name" . }}
+    chart: {{ template "nginx.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ .Release.Name }}-dp-{{ template "nginx.name" . }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ template "nginx.serviceAccountName" . }}-dp
+    namespace: {{ .Release.Namespace }}
+{{- end }}
+{{- end }}

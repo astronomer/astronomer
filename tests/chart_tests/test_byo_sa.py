@@ -220,11 +220,12 @@ class TestServiceAccounts:
                 "charts/kube-state/templates/kube-state-rolebinding.yaml",
                 "charts/fluentd/templates/fluentd-clusterrolebinding.yaml",
                 "charts/prometheus/templates/prometheus-rolebinding.yaml",
-                "charts/nginx/templates/nginx-rolebinding.yaml",
+                "charts/nginx/templates/controlplane/nginx-cp-rolebinding.yaml",
+                "charts/nginx/templates/dataplane/nginx-dp-rolebinding.yaml",
             ],
         )
 
-        assert len(docs) == 7
+        assert len(docs) == 8
 
         expected_names = {
             "commander-test",
@@ -233,7 +234,8 @@ class TestServiceAccounts:
             "kube-state-test",
             "fluentd-test",
             "prometheus-test",
-            "nginx-test",
+            "nginx-test-cp",
+            "nginx-test-dp",
         }
         extracted_names = {doc["subjects"][0]["name"] for doc in docs if doc.get("subjects")}
         assert expected_names.issubset(extracted_names)
@@ -253,8 +255,9 @@ def test_default_serviceaccount_names(template_name):
     pm_docs = [doc for doc in docs if doc["kind"] in pod_managers]
     service_accounts = [get_service_account_name_from_doc(doc) for doc in pm_docs]
     assert service_accounts
-    assert all((sa_name.startswith("release-name-") or sa_name == "default") for sa_name in service_accounts), (
-        f"Expected all service accounts to start with 'release-name-' but found {service_accounts} in {template_name}"
+    allowed_prefixes = ["release-name-", "default"]
+    assert all(any(sa_name.startswith(prefix) for prefix in allowed_prefixes) for sa_name in service_accounts), (
+        f"Expected all service accounts to start with a standard prefix but found {service_accounts} in {template_name}"
     )
 
 
@@ -343,7 +346,12 @@ custom_service_account_names = {
     "charts/nginx/templates/nginx-deployment-default.yaml": {
         "nginx": {"defaultBackend": {"serviceAccount": {"create": True, "name": "prothean"}}}
     },
-    "charts/nginx/templates/nginx-deployment.yaml": {"nginx": {"serviceAccount": {"create": True, "name": "prothean"}}},
+    "charts/nginx/templates/controlplane/nginx-cp-deployment.yaml": {
+        "nginx": {"serviceAccount": {"create": True, "name": "prothean"}}
+    },
+    "charts/nginx/templates/dataplane/nginx-dp-deployment.yaml": {
+        "nginx": {"serviceAccount": {"create": True, "name": "prothean"}}
+    },
     "charts/pgbouncer/templates/pgbouncer-deployment.yaml": {"pgbouncer": {"serviceAccount": {"create": True, "name": "prothean"}}},
     "charts/postgresql/templates/statefulset-slaves.yaml": {"postgresql": {"serviceAccount": {"create": True, "name": "prothean"}}},
     "charts/postgresql/templates/statefulset.yaml": {"postgresql": {"serviceAccount": {"create": True, "name": "prothean"}}},
@@ -378,6 +386,7 @@ def test_custom_serviceaccount_names(template_name):
     pm_docs = [doc for doc in docs if doc["kind"] in pod_managers]
     service_accounts = [get_service_account_name_from_doc(doc) for doc in pm_docs]
     assert service_accounts
-    assert all(sa_name == "prothean" for sa_name in service_accounts), (
+    valid_sa_names = {"prothean", "prothean-cp", "prothean-dp"}
+    assert all(sa_name in valid_sa_names for sa_name in service_accounts), (
         f"Expected all service accounts to be 'prothean' but found {service_accounts} in {template_name}"
     )

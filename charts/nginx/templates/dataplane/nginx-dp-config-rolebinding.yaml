@@ -1,20 +1,21 @@
-###############################
-## NGINX Config Role Binding ##
-###############################
-{{- if .Values.global.rbacEnabled }}
+##########################################
+## NGINX Data Plane Config Role Binding ##
+##########################################
+{{- if and .Values.global.rbacEnabled .Values.global.dataplane.enabled }}
 kind: RoleBinding
 apiVersion: {{ template "apiVersion.rbac" . }}
 metadata:
-  name: {{ template "nginx.fullname" . }}-config
+  name: {{ .Release.Name }}-dp-{{ template "nginx.name" . }}-config
   labels:
     tier: {{ template "nginx.name" . }}
     chart: {{ template "nginx.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+    plane: dataplane
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: {{ template "nginx.fullname" . }}-config
+  name: {{ .Release.Name }}-dp-{{ template "nginx.name" . }}-config
 subjects:
   - kind: ServiceAccount
     name: {{ template "nginx.serviceAccountName" . }}

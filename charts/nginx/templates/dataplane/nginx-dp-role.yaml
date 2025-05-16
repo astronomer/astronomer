@@ -1,11 +1,12 @@
-############################
-## NGINX Role/ClusterRole ##
-############################
+##################################
+## NGINX Data Plane ClusterRole ##
+##################################
+{{- if .Values.global.dataplane.enabled }}
 {{- if .Values.global.rbacEnabled }}
 kind: ClusterRole
 apiVersion: {{ template "apiVersion.rbac" . }}
 metadata:
-  name: {{ template "nginx.fullname" . }}
+  name: {{ .Release.Name }}-dp-{{ template "nginx.name" . }}
   labels:
     tier: {{ template "nginx.name" . }}
     chart: {{ template "nginx.chart" . }}
@@ -23,6 +24,7 @@ rules:
     verbs:
       - list
       - watch
+      - get
   - apiGroups:
       - ""
     resources:
@@ -82,4 +84,17 @@ rules:
       - ingresses/status
     verbs:
       - update
+  - apiGroups:
+      - coordination.k8s.io
+    resources:
+      - leases
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+{{- end }}
 {{- end }}

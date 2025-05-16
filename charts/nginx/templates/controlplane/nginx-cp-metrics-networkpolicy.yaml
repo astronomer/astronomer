@@ -1,26 +1,24 @@
-#######################################
-## Elasticsearch Exporter NetworkPolicy
-#######################################
+###############################################################
+## Nginx Control Plane controller metrics pods NetworkPolicy ##
+###############################################################
 {{- if and .Values.global.networkPolicy.enabled .Values.global.controlplane.enabled }}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: {{ template "elasticsearch.fullname" . }}-exporter-policy
+  name: {{ .Release.Name }}-cp-nginx-metrics-policy
   labels:
-    tier: logging
-    component: {{ template "elasticsearch.name" . }}-exporter-policy
-    chart: {{ template "elasticsearch.chart" . }}
+    tier: astronomer
+    component: nginx-metrics
     release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
-    role: exporter
     plane: controlplane
 spec:
   podSelector:
     matchLabels:
-      tier: logging
-      component: {{ template "elasticsearch.name" . }}-exporter
+      component: cp-ingress-controller
+      tier: nginx
       release: {{ .Release.Name }}
-      role: exporter
   policyTypes:
   - Ingress
   ingress:
@@ -32,5 +30,5 @@ spec:
           release: {{ .Release.Name }}
     ports:
     - protocol: TCP
-      port: {{ .Values.exporter.service.httpPort }}
+      port: {{ .Values.ports.metrics }}
 {{- end }}
