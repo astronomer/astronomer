@@ -59,5 +59,12 @@ spec:
             echo "Creating Kibana Index Pattern"
             curl --retry 10 --retry-delay 30 --retry-all-errors -XPOST -H 'Content-Type: application/json' -H 'kbn-xsrf: astronomer' --data '{"attributes":{"title":"{{ template "logging.indexNamePrefix" . }}.*","timeFieldName":"@timestamp"}}' http://{{ .Release.Name }}-kibana:5601/api/saved_objects/index-pattern/{{ template "logging.indexNamePrefix" . }}.*?overwrite=false
           fi
+        {{- if .Values.defaultIndexJob.readinessProbe }}
+        readinessProbe: {{ tpl (toYaml .Values.defaultIndexJob.readinessProbe) . | nindent 12 }}
+        {{- end }}
+        {{- if .Values.defaultIndexJob.livenessProbe }}
+        livenessProbe: {{ tpl (toYaml .Values.defaultIndexJob.livenessProbe) . | nindent 12 }}
+        {{- end }}
+
       restartPolicy: Never
 {{ end }}

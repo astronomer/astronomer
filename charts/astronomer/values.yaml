@@ -186,6 +186,9 @@ houston:
     # Only run on deployments marked as canary
     canary: false
 
+    readinessProbe: {}
+    livenessProbe: {}
+
   # Cleanup airflow db data
   # This runs as a CronJob
   cleanupAirflowDb:
@@ -219,6 +222,9 @@ houston:
     # Run cleanup on specific table or list of tables in a comma separated format
     tables: ""
 
+    readinessProbe: {}
+    livenessProbe: {}
+
   # Cleanup task usage data and task audit data in Houston
   # This runs as a CronJob
   cleanupTaskUsageData:
@@ -234,6 +240,9 @@ houston:
     # Only run on deployments marked as canary
     canary: false
 
+    readinessProbe: {}
+    livenessProbe: {}
+
   # Cleanup task usage data and task audit data in Houston
   # This runs as a CronJob
   cleanupDeployRevisions:
@@ -245,6 +254,9 @@ houston:
 
     # Cleanup deploy revisions older than this many days
     olderThan: 90
+
+    readinessProbe: {}
+    livenessProbe: {}
 
   # Check for Astronomer Platform Updates
   # This runs as a CronJob
@@ -258,6 +270,9 @@ houston:
     # Default here is to run at midnight every night https://crontab.guru/#0_0_*_*_*
     schedule: "0 0 * * *"
 
+    readinessProbe: {}
+    livenessProbe: {}
+
   # Check for Astronomer Runtime Updates
   # This runs as a CronJob
   updateRuntimeCheck:
@@ -270,6 +285,9 @@ houston:
     # Default here is to run at 00:43 every night https://crontab.guru/#43_0_*_*_*
     schedule: "43 0 * * *"
 
+    readinessProbe: {}
+    livenessProbe: {}
+
   # Populate daily task usage data
   # This runs as a CronJob
 
@@ -280,9 +298,15 @@ houston:
     # Print out the aggregated daily task usage data that should be inserted and skip actual insertion
     dryRun: false
 
+    readinessProbe: {}
+    livenessProbe: {}
+
   populateHourlyTaskAuditMetrics:
     # Run at minute 57 every hour https://crontab.guru/#57_*_*_*_*
     schedule: "57 * * * *"
+
+    readinessProbe: {}
+    livenessProbe: {}
 
   runtimeReleasesConfigMapName: ~
   runtimeReleasesConfig:
@@ -305,11 +329,23 @@ houston:
     annotation: {}
   enableHoustonInternalAuthorization: false
 
+  updateResourceStrategy:
+    readinessProbe: {}
+    livenessProbe: {}
+
+  dbMigration:
+    readinessProbe: {}
+    livenessProbe: {}
+
   bootstrapper:
     readinessProbe: {}
     livenessProbe: {}
 
   waitForDB:
+    readinessProbe: {}
+    livenessProbe: {}
+
+  taskUsageMetrics:
     readinessProbe: {}
     livenessProbe: {}
 
@@ -327,6 +363,8 @@ configSyncer:
     # The name of the service account to use.
     # If not set and create is true, a name is generated using the fullname template
     name: ""
+  readinessProbe: {}
+  livenessProbe: {}
 
 
 commander:
