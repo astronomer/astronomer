@@ -186,6 +186,9 @@ houston:
     # Only run on deployments marked as canary
     canary: false
 
+    readinessProbe: {}
+    livenessProbe: {}
+
   # Cleanup airflow db data
   # This runs as a CronJob
   cleanupAirflowDb:
@@ -219,6 +222,9 @@ houston:
     # Run cleanup on specific table or list of tables in a comma separated format
     tables: ""
 
+    readinessProbe: {}
+    livenessProbe: {}
+
   # Cleanup task usage data and task audit data in Houston
   # This runs as a CronJob
   cleanupTaskUsageData:
@@ -234,6 +240,9 @@ houston:
     # Only run on deployments marked as canary
     canary: false
 
+    readinessProbe: {}
+    livenessProbe: {}
+
   # Cleanup task usage data and task audit data in Houston
   # This runs as a CronJob
   cleanupDeployRevisions:
@@ -245,6 +254,9 @@ houston:
 
     # Cleanup deploy revisions older than this many days
     olderThan: 90
+
+    readinessProbe: {}
+    livenessProbe: {}
 
   # Check for Astronomer Platform Updates
   # This runs as a CronJob
@@ -316,6 +328,14 @@ houston:
   ingress:
     annotation: {}
   enableHoustonInternalAuthorization: false
+
+  updateResourceStrategy: 
+    readinessProbe: {}
+    livenessProbe: {}
+    
+  dbMigration:
+    readinessProbe: {}
+    livenessProbe: {}
 
   bootstrapper:
     readinessProbe: {}

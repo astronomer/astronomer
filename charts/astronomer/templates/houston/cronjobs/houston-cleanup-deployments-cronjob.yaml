@@ -59,6 +59,12 @@ spec:
                 {{- include "custom_ca_volume_mounts" . | indent 16 }}
               env:
                 {{- include "houston_environment" . | indent 16 }}
+              {{- if .Values.houston.cleanupDeployments.readinessProbe }}
+              readinessProbe: {{ tpl (toYaml .Values.houston.cleanupDeployments.readinessProbe) . | nindent 12 }}
+              {{- end }}
+              {{- if .Values.houston.cleanupDeployments.livenessProbe }}
+              livenessProbe: {{ tpl (toYaml .Values.houston.cleanupDeployments.livenessProbe) . | nindent 12 }}
+              {{- end }}
           volumes:
             {{- include "houston_volumes" . | indent 12 }}
             {{- include "custom_ca_volumes" . | indent 12 }}
