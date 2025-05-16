@@ -22,3 +22,36 @@ class TestGlobabIngressAnnotation:
             assert doc["apiVersion"] == "networking.k8s.io/v1"
             assert "passthrough" in doc["metadata"]["annotations"]["route.openshift.io/termination"]
             assert len(doc["metadata"]["annotations"]) >= 4
+
+    @pytest.mark.parametrize(
+        "enable_per_host_ingress",
+        [
+            pytest.param(True, id="per_host_ingress_enabled"),
+            pytest.param(False, id="per_host_ingress_disabled"),
+        ],
+    )
+    @pytest.mark.parametrize(
+        "auth_sidecar_enabled",
+        [
+            pytest.param(True, id="auth_sidecar_enabled"),
+            pytest.param(False, id="auth_sidecar_disabled"),
+        ],
+    )
+    def test_global_ingress_per_host_ingress(self, kube_version, enable_per_host_ingress, auth_sidecar_enabled):
+        """Test global ingress annotation for platform ingress."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "authSidecar": {"enabled": auth_sidecar_enabled},
+                    "enablePerHostIngress": enable_per_host_ingress,
+                    "extraAnnotations": {"kubernetes.io/ingress.allow-http": "false"},
+                },
+            },
+        )
+
+        ingresses = [doc for doc in docs if doc["kind"] == "Ingress"]
+
+        for doc in ingresses:
+            assert doc["apiVersion"] == "networking.k8s.io/v1"
+            assert doc["metadata"]["annotations"]["kubernetes.io/ingress.allow-http"] == "false"

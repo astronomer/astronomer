@@ -28,4 +28,5 @@ repository
 server.key
 temp.sh
 test-*
+test-results/junit.xml
 upgrade_test_config.yaml
