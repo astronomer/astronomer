@@ -41,17 +41,60 @@ astronomer:
       exec:
         command:
         - /bin/true
+  configSyncer:
+    livenessProbe:
+      exec:
+        command:
+        - /bin/true
+    readinessProbe:
+      exec:
+        command:
+        - /bin/true
   houston:
     bootstrapper:
       livenessProbe:
         exec:
           command:
           - /bin/true
+      readinessProbe:
+        exec:
+          command:
+          - /bin/true
+    cleanupAirflowDb:
+      livenessProbe:
+        exec:
+          command:
           - /bin/true
       readinessProbe:
         exec:
           command:
           - /bin/true
+    cleanupDeployRevisions:
+      livenessProbe:
+        exec:
+          command:
+          - /bin/true
+      readinessProbe:
+        exec:
+          command:
+          - /bin/true
+    cleanupDeployments:
+      livenessProbe:
+        exec:
+          command:
+          - /bin/true
+      readinessProbe:
+        exec:
+          command:
+          - /bin/true
+    dbMigration:
+      livenessProbe:
+        exec:
+          command:
+          - /bin/true
+      readinessProbe:
+        exec:
+          command:
           - /bin/true
     livenessProbe:
       exec:
@@ -61,16 +104,59 @@ astronomer:
       exec:
         command:
         - /bin/true
-    waitForDB:
+    taskUsageMetrics:
       livenessProbe:
         exec:
           command:
-          - /bin/true
           - /bin/true
       readinessProbe:
         exec:
           command:
           - /bin/true
+    updateCheck:
+      livenessProbe:
+        exec:
+          command:
+          - /bin/true
+      readinessProbe:
+        exec:
+          command:
+          - /bin/true
+    updateResourceStrategy:
+      livenessProbe:
+        exec:
+          command:
+          - /bin/true
+      readinessProbe:
+        exec:
+          command:
+          - /bin/true
+    updateRuntimeCheck:
+      livenessProbe:
+        exec:
+          command:
+          - /bin/true
+      readinessProbe:
+        exec:
+          command:
+          - /bin/true
+    upgradeDeployments:
+      livenessProbe:
+        exec:
+          command:
+          - /bin/true
+      readinessProbe:
+        exec:
+          command:
+          - /bin/true
+    waitForDB:
+      livenessProbe:
+        exec:
+          command:
+          - /bin/true
+      readinessProbe:
+        exec:
+          command:
           - /bin/true
     worker:
       livenessProbe:
@@ -92,6 +178,15 @@ astronomer:
         - /bin/true
 elasticsearch:
   client:
+    livenessProbe:
+      exec:
+        command:
+        - /bin/true
+    readinessProbe:
+      exec:
+        command:
+        - /bin/true
+  curator:
     livenessProbe:
       exec:
         command:
@@ -141,13 +236,9 @@ elasticsearch:
       exec:
         command:
         - /bin/true
-        - /bin/true
-        - /bin/true
     readinessProbe:
       exec:
         command:
-        - /bin/true
-        - /bin/true
         - /bin/true
 external-es-proxy:
   awsproxy:
@@ -185,13 +276,9 @@ global:
       exec:
         command:
         - /bin/true
-        - /bin/true
-        - /bin/true
     readinessProbe:
       exec:
         command:
-        - /bin/true
-        - /bin/true
         - /bin/true
   customLogging:
     awsServiceAccountAnnotation: "yo imma let you finish but beyonce had the best annotation ever"
@@ -228,6 +315,15 @@ grafana:
         command:
         - /bin/true
 kibana:
+  defaultIndexJob:
+    livenessProbe:
+      exec:
+        command:
+        - /bin/true
+    readinessProbe:
+      exec:
+        command:
+        - /bin/true
   livenessProbe:
     exec:
       command:
@@ -306,7 +402,6 @@ postgresql:
     exec:
       command:
       - /bin/true
-      - /bin/true
   metrics:
     enabled: true
     livenessProbe:
@@ -321,7 +416,6 @@ postgresql:
   readinessProbe:
     exec:
       command:
-      - /bin/true
       - /bin/true
   replication:
     enabled: true
