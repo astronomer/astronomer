@@ -297,38 +297,6 @@ data:
             action: drop
       {{- end }}
 
-      {{- if and $useClusterRoles .Values.global.nodeExporterEnabled }}
-      - job_name: node-exporter
-        scrape_interval: 30s
-        kubernetes_sd_configs:
-          - role: pod
-            namespaces:
-              names:
-                - {{ .Release.Namespace }}
-        relabel_configs:
-          - source_labels: [__meta_kubernetes_pod_name]
-            action: keep
-            regex: "^{{ .Release.Name }}-prometheus-node-exporter-.*"
-          - source_labels: [__meta_kubernetes_namespace]
-            separator: ;
-            regex: (.*)
-            target_label: namespace
-            replacement: $1
-            action: replace
-          - source_labels: [__meta_kubernetes_pod_name]
-            separator: ;
-            regex: (.*)
-            target_label: pod
-            replacement: $1
-            action: replace
-          - source_labels: [__meta_kubernetes_pod_node_name]
-            separator: ;
-            regex: (.*)
-            target_label: instance
-            replacement: $1
-            action: replace
-      {{- end }}
-
       {{- if and $useClusterRoles .Values.global.airflowOperator.enabled   }}
       - job_name: airflow-operator
         scrape_interval: 10s # Faster scrape to power dashboards

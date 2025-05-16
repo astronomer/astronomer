@@ -9,7 +9,6 @@ component_paths = [
     "charts/alertmanager/templates",
     "charts/kube-state/templates",
     "charts/prometheus-blackbox-exporter/templates",
-    "charts/prometheus-node-exporter/templates",
     "charts/prometheus/templates",
 ]
 
