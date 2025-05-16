@@ -73,7 +73,7 @@ class TestPrometheusPostgresExporter:
         docs = render_chart(
             kube_version=kube_version,
             values=values,
-            show_only=["charts/prometheus-blackbox-exporter/templates/deployment.yaml"],
+            show_only=["charts/prometheus-postgres-exporter/templates/deployment.yaml"],
         )
         assert len(docs) == 1
         spec = docs[0]["spec"]["template"]["spec"]

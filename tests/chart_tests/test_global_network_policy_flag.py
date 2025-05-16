@@ -32,7 +32,6 @@ show_only = [
     "charts/elasticsearch/templates/data/es-data-networkpolicy.yaml",
     "charts/elasticsearch/templates/client/es-client-networkpolicy.yaml",
     "templates/default-deny-network-policy/networkpolicy.yaml",
-    "charts/prometheus-blackbox-exporter/templates/blackbox-networkpolicy.yaml",
 ]
 
 
@@ -50,7 +49,7 @@ def test_networkpolicy_disabled():
     assert not [x for x in docs if x["kind"] == "NetworkPolicy"]
 
 
-@pytest.mark.parametrize("np_enabled, num_of_docs", [(True, 30), (False, 0)])
+@pytest.mark.parametrize("np_enabled, num_of_docs", [(True, 24), (False, 0)])
 def test_networkpolicy_enabled(np_enabled, num_of_docs):
     """Test some things that should apply to all cases."""
     docs = render_chart(

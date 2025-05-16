@@ -85,9 +85,6 @@ global:
 
   prometheusPostgresExporterEnabled: false
 
-  # Enables blackbox exporter
-  #blackboxExporterEnabled: false
-
   # make fluentd to gather logs from all available namespaces
   manualNamespaceNamesEnabled: false
 
@@ -523,34 +520,6 @@ stan:
       limits:
         cpu: "250m"
         memory: "100Mi"
-
-#################################
-## Blackbox Exporter configuration
-#################################
-prometheus-blackbox-exporter:
-  # Configure resources
-  resources:
-    requests:
-      cpu: "50m"
-      memory: "70Mi"
-    limits:
-      cpu: "100m"
-      memory: "200Mi"
-
-  # define what astronomer platform services will be checked
-  # for up/down status. Enable this will also include
-  # the required network policies
-  astroServices:
-    commander:
-      enabled: true
-    houston:
-      enabled: true
-    registry:
-      enabled: true
-    elasticsearch:
-      enabled: true
-    kibana:
-      enabled: true
 
 #################################
 ## Elasticsearch configuration

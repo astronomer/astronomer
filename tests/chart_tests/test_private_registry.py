@@ -9,7 +9,6 @@ def test_private_registry_repository_image_names_the_same_as_public_ones():
     breaks pull-through caching proxies in use by various customers."""
 
     extra_globals = {
-        "blackboxExporterEnabled": True,
         "postgresqlEnabled": True,
         "prometheusPostgresExporterEnabled": True,
     }
