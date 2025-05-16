@@ -58,10 +58,10 @@ spec:
               env:
                 {{- include "houston_environment" . | indent 16 }}
               {{- if .Values.houston.taskUsageMetrics.readinessProbe }}
-              readinessProbe: {{ tpl (toYaml .Values.houston.taskUsageMetrics.readinessProbe) . | nindent 12 }}
+              readinessProbe: {{ tpl (toYaml .Values.houston.taskUsageMetrics.readinessProbe) . | nindent 16 }}
               {{- end }}
               {{- if .Values.houston.taskUsageMetrics.livenessProbe }}
-              livenessProbe: {{ tpl (toYaml .Values.houston.taskUsageMetrics.livenessProbe) . | nindent 12 }}
+              livenessProbe: {{ tpl (toYaml .Values.houston.taskUsageMetrics.livenessProbe) . | nindent 16 }}
               {{- end }}
           volumes:
             {{- include "houston_volumes" . | indent 12 }}

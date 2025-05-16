@@ -329,10 +329,10 @@ houston:
     annotation: {}
   enableHoustonInternalAuthorization: false
 
-  updateResourceStrategy: 
+  updateResourceStrategy:
     readinessProbe: {}
     livenessProbe: {}
-    
+
   dbMigration:
     readinessProbe: {}
     livenessProbe: {}
@@ -345,7 +345,7 @@ houston:
     readinessProbe: {}
     livenessProbe: {}
 
-  taskUsageMetrics: 
+  taskUsageMetrics:
     readinessProbe: {}
     livenessProbe: {}
 

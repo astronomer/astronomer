@@ -62,9 +62,9 @@ spec:
               - "{{ join "," .Values.global.features.namespacePools.namespaces.names }}"
               {{- end }}
               {{- if .Values.configSyncer.readinessProbe }}
-              readinessProbe: {{ tpl (toYaml .Values.configSyncer.readinessProbe) . | nindent 12 }}
+              readinessProbe: {{ tpl (toYaml .Values.configSyncer.readinessProbe) . | nindent 16 }}
               {{- end }}
               {{- if .Values.configSyncer.livenessProbe }}
-              livenessProbe: {{ tpl (toYaml .Values.configSyncer.livenessProbe) . | nindent 12 }}
+              livenessProbe: {{ tpl (toYaml .Values.configSyncer.livenessProbe) . | nindent 16 }}
               {{- end }}
 {{- end }}
