@@ -55,6 +55,12 @@ spec:
             volumeMounts:
               - name: config-volume
                 mountPath: /etc/config
+            {{- if .Values.curator.readinessProbe }}
+            readinessProbe: {{ tpl (toYaml .Values.curator.readinessProbe) . | nindent 16 }}
+            {{- end }}
+            {{- if .Values.curator.livenessProbe }}
+            livenessProbe: {{ tpl (toYaml .Values.curator.livenessProbe) . | nindent 16 }}
+            {{- end }}
           volumes:
             - name: config-volume
               configMap:

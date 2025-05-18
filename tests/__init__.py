@@ -24,12 +24,15 @@ def get_containers_by_name(doc: dict, *, include_init_containers=False) -> dict:
     doc must be a valid spec for a pod manager. (EG: ds, sts, cronjob, etc.)
     """
 
-    if doc["kind"] in ["Deployment", "StatefulSet", "ReplicaSet", "DaemonSet", "Job"]:
-        containers = doc["spec"]["template"]["spec"].get("containers", [])
-        initContainers = doc["spec"]["template"]["spec"].get("initContainers", [])
-    elif doc["kind"] == "CronJob":
-        containers = doc["spec"]["jobTemplate"]["spec"]["template"]["spec"].get("containers", [])
-        initContainers = doc["spec"]["jobTemplate"]["spec"]["template"]["spec"].get("initContainers", [])
+    match doc["kind"]:
+        case "Deployment" | "StatefulSet" | "ReplicaSet" | "DaemonSet" | "Job":
+            containers = doc["spec"]["template"]["spec"].get("containers", [])
+            initContainers = doc["spec"]["template"]["spec"].get("initContainers", [])
+        case "CronJob":
+            containers = doc["spec"]["jobTemplate"]["spec"]["template"]["spec"].get("containers", [])
+            initContainers = doc["spec"]["jobTemplate"]["spec"]["template"]["spec"].get("initContainers", [])
+        case _:
+            raise ValueError(f"Unhandled kind: {doc['kind']}")
 
     c_by_name = {c["name"]: c for c in containers}
 
