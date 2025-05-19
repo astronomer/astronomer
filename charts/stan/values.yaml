@@ -174,9 +174,6 @@ store:
     #
     source: ""
 
-      # Client to use to init the db.
-      image: postgres:11
-
     dbName: postgres
     dbUser: postgres
     dbPassword: stan
