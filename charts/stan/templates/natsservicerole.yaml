@@ -20,3 +20,4 @@ spec:
     subscribe: [">"]
 {{- end }}
 {{- end }}
+{{- end }}
