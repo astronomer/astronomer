@@ -41,7 +41,7 @@ class TestNginxNetworkPolicy:
         assert len(docs) == 1, f"Expected 1 document, got {len(docs)}"
         assert "release-name-cp-nginx-policy" in docs[0]["metadata"]["name"]
 
-        disabled_values = {"global": {"controlplane": {"enabled": False}, "dataplane": {"enabled": False}}}
+        disabled_values = {"global": {"plane": {"mode": "RandomValue"}}}
         docs = render_chart(
             show_only=[
                 "charts/nginx/templates/controlplane/nginx-cp-networkpolicy.yaml",
