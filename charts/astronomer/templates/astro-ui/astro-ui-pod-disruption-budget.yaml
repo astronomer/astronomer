@@ -1,7 +1,7 @@
 #########################################
 ## Astronomer UI Pod Disruption Budget ##
 #########################################
-{{- if and .Values.global.podDisruptionBudgetsEnabled (include "astronomer.isControlPlane" .) }}
+{{- if and .Values.global.podDisruptionBudgetsEnabled .Values.global.controlplane.enabled }}
 apiVersion: {{ include "apiVersion.PodDisruptionBudget" . }}
 kind: PodDisruptionBudget
 metadata:
