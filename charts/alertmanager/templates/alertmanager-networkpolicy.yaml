@@ -55,3 +55,4 @@ spec:
       port: {{ .Values.global.authSidecar.port }}
     {{- end }}
 {{- end }}
+{{- end }}
