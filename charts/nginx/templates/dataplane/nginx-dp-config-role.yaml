@@ -1,7 +1,8 @@
 ##################################
 ## NGINX Data Plane Config Role ##
 ##################################
-{{- if and .Values.global.rbacEnabled .Values.global.dataplane.enabled}}
+{{- if and .Values.global.rbacEnabled }}
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 kind: Role
 apiVersion: {{ template "apiVersion.rbac" . }}
 metadata:
@@ -67,4 +68,5 @@ rules:
     verbs:
       - create
       - patch
+{{- end }}
 {{- end }}
