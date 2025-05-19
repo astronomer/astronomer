@@ -1,7 +1,8 @@
 ####################################
 ## Houston Bootstrap Role Binding ##
 ####################################
-{{- if and .Values.global.rbacEnabled .Values.global.controlplane.enabled (and (not .Values.houston.backendSecretName) (not .Values.houston.backendConnection)) }}
+{{- if and .Values.global.rbacEnabled  (and (not .Values.houston.backendSecretName) (not .Values.houston.backendConnection)) }}
+{{ if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 kind: RoleBinding
 apiVersion: {{ template "apiVersion.rbac" . }}
 metadata:
@@ -24,4 +25,5 @@ subjects:
   - kind: ServiceAccount
     name: {{ template "houston.bootstrapperServiceAccountName" . }}
     namespace: {{ .Release.Namespace }}
+{{- end }}
 {{- end }}
