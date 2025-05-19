@@ -1,7 +1,7 @@
 ###################################
 ## Astronomer Houston Deployment ##
 ###################################
-{{ if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 kind: Deployment
 apiVersion: apps/v1
 metadata:

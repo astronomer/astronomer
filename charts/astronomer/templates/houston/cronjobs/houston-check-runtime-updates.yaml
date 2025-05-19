@@ -1,7 +1,8 @@
 ##################################
 ## Houston Update Check CronJob ##
 ##################################
-{{- if and .Values.houston.updateRuntimeCheck.enabled .Values.global.controlplane.enabled }}
+{{- if and .Values.houston.updateRuntimeCheck.enabled }}
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 apiVersion: {{ include "apiVersion.batch.cronjob" . }}
 kind: CronJob
 metadata:
@@ -64,4 +65,5 @@ spec:
           volumes:
             {{- include "houston_volumes" . | indent 12 }}
             {{- include "custom_ca_volumes" . | indent 12 }}
+{{- end }}
 {{- end }}
