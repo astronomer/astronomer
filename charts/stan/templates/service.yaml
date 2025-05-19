@@ -31,4 +31,3 @@ spec:
     appProtocol: http
 {{- end }}
 {{- end }}
-{{- end }}
