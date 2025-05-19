@@ -181,7 +181,6 @@ data:
             target_label: __address__
       {{- end }}
 
-
       - job_name: kube-state
         scrape_interval: 10s # Faster scrape to power dashboards
         kubernetes_sd_configs:
@@ -202,7 +201,6 @@ data:
             replacement: $1:$2
             target_label: __address__
 
-          {{- if not .Values.global.singleNamespace }}
             # This allows us to collect all the metrics we want in the cloud environment
             # does not limit to just the astronomer release namespace
           - source_labels: [__meta_kubernetes_endpoint_address_target_kind, __meta_kubernetes_endpoint_address_target_name]
@@ -272,24 +270,6 @@ data:
             replacement: "$1"
             target_label: release
           {{- end }}
-        {{- else}}
-        # this drops node metrics that we want in the cloud, but maybe shouldn't be scraping
-        # if we are in a shared cluster in enterprise
-        metric_relabel_configs:
-          # Only keep metrics that start with platforms namespace (includes airflow children)
-          - action: keep
-            source_labels: [namespace]
-            regex: "^{{ .Release.Namespace }}.*"
-          - source_labels: [deployment]
-            regex: "([-a-z0-9]*[a-z0-9])-.*?"
-            replacement: "$1"
-            target_label: release
-          # Required for single-namespace mode
-          - source_labels: [pod]
-            regex: "([-a-z0-9]*[a-z0-9])-.*?"
-            replacement: "$1"
-            target_label: release
-          {{- end}}
 
       {{- if and $useClusterRoles .Values.global.fluentdEnabled }}
       - job_name: fluentd
@@ -354,11 +334,6 @@ data:
         scrape_interval: 10s # Faster scrape to power dashboards
         kubernetes_sd_configs:
           - role: service
-          {{- if .Values.global.singleNamespace }}
-            namespaces:
-              names:
-                - {{ .Release.Namespace }}
-          {{- end }}
         relabel_configs:
           - action: labelmap
             regex: __meta_kubernetes_service_label_(.+)
@@ -390,7 +365,7 @@ data:
         {{ else }}
         kubernetes_sd_configs:
           - role: service
-          {{- if or (not $useClusterRoles) .Values.global.singleNamespace }}
+          {{- if not $useClusterRoles }}
             namespaces:
               names:
                 {{- if not $useClusterRoles }}
@@ -398,10 +373,6 @@ data:
                 {{- range $i, $namespaceName := .Values.global.features.namespacePools.namespaces.names }}
                 - {{ $namespaceName }}
                 {{- end }}
-                {{- end }}
-                {{- if .Values.global.singleNamespace }}
-                # only the platform namespace since this is a single namespace deployment
-                - {{ .Release.Namespace }}
                 {{- end }}
           {{- end }}
         relabel_configs:
@@ -426,7 +397,7 @@ data:
             target_label: deployment
           {{- include "prometheus.airflowMetricsActionDrop" . | nindent 10 }}
 
-      {{- if and $useClusterRoles (not .Values.global.singleNamespace) }}
+      {{- if $useClusterRoles }}
       - job_name: kubernetes-nodes
         scheme: https
         tls_config:
@@ -445,7 +416,7 @@ data:
             replacement: /api/v1/nodes/${1}/proxy/metrics
       {{- end }}
 
-      {{- if and $useClusterRoles (not .Values.global.singleNamespace) }}
+      {{- if $useClusterRoles }}
       - job_name: kubernetes-nodes-cadvisor
         scheme: https
         tls_config:

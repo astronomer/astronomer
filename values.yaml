@@ -67,9 +67,6 @@ global:
   # URL to the Astronomer helm repo
   helmRepo: "https://helm.astronomer.io"
 
-  # Single namespace mode
-  singleNamespace: false
-
   # Use cluster roles
   clusterRoles: true
 

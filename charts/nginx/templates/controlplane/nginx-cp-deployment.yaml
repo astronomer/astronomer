@@ -59,9 +59,6 @@ spec:
             - --configmap={{ .Release.Namespace }}/{{ .Release.Name }}-cp-{{ template "nginx.name" . }}-ingress-controller
             - --ingress-class={{ template "nginx.ingress.class" . }}
             - --default-ssl-certificate={{ .Release.Namespace }}/{{ .Values.global.tlsSecret }}
-            {{- if .Values.global.singleNamespace }}
-            - --watch-namespace={{ .Release.Namespace }}
-            {{- end }}
             {{- if .Values.enableAnnotationValidations }}
             - --enable-annotation-validation=true
             {{- end }}
