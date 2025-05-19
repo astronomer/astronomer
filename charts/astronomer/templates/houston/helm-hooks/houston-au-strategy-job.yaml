@@ -1,7 +1,7 @@
 #####################################
 ## Resource Strategy Migration Job ##
 #####################################
-{{- if .Values.global.controlplane.enabled }}
+{{ if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 apiVersion: {{ include "apiVersion.batch" . }}
 kind: Job
 metadata:

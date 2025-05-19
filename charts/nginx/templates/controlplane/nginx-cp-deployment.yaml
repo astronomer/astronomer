@@ -1,7 +1,7 @@
 ####################################
 ## NGINX Control Plane Deployment ##
 ####################################
-{{- if .Values.global.controlplane.enabled }}
+{{ if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 kind: Deployment
 apiVersion: apps/v1
 metadata:

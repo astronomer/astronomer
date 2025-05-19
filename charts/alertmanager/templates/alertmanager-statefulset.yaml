@@ -1,7 +1,7 @@
 ##############################
 ## Alertmanager StatefulSet ##
 ##############################
-{{- if .Values.global.controlplane.enabled }}
+{{ if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 kind: StatefulSet
 apiVersion: apps/v1
 metadata:

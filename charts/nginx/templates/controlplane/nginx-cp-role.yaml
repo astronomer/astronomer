@@ -1,7 +1,7 @@
 ##########################################
 ## NGINX Control Plane Role/ClusterRole ##
 ##########################################
-{{- if .Values.global.controlplane.enabled }}
+{{ if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 {{- $singleNamespace := .Values.global.singleNamespace }}
 {{- if .Values.global.rbacEnabled }}
 kind: {{ if $singleNamespace }}Role{{ else }}ClusterRole{{ end }}

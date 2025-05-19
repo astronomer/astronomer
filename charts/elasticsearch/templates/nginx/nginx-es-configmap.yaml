@@ -1,7 +1,7 @@
 ###################################
 ## NGINX Elasticsearch ConfigMap ##
 ###################################
-{{- if .Values.global.controlplane.enabled }}
+{{ if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 kind: ConfigMap
 apiVersion: v1
 metadata:
