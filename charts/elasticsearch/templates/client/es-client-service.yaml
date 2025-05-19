@@ -1,7 +1,7 @@
 ##################################
 ## Elasticsearch Client Service ##
 ##################################
-{{- if .Values.global.controlplane.enabled}}
+{{ if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 apiVersion: v1
 kind: Service
 metadata:
