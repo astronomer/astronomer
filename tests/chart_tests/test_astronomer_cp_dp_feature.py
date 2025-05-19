@@ -14,7 +14,7 @@ class TestAstronomerCpDpFeature:
         return [chart for chart in charts if chart.get("metadata", {}).get("labels", {}).get("plane") == component]
 
     def test_astronomer_cp_only(self, kube_version):
-        """Test that helm renders the correct templates when only the control is enabled."""
+        """Test that helm renders the correct templates when only the control mode is enabled."""
         charts = render_chart(
             kube_version=kube_version,
             values={"global": {"plane": {"mode": "control"}}},
@@ -26,7 +26,7 @@ class TestAstronomerCpDpFeature:
         assert len(dp_resources) == 0
 
     def test_astronomer_dp_only(self, kube_version):
-        """Test that helm renders the correct templates when only the data is enabled."""
+        """Test that helm renders the correct templates when only the data mode is enabled."""
         charts = render_chart(
             kube_version=kube_version,
             values={"global": {"plane": {"mode": "data"}}},
