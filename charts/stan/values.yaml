@@ -174,10 +174,6 @@ store:
     #
     source: ""
 
-    # Initialize the database.
-    initdb:
-      enabled: false
-
       # Client to use to init the db.
       image: postgres:11
 
