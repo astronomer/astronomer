@@ -66,3 +66,4 @@ spec:
     - protocol: TCP
       port: {{ .Values.service.http }}
 {{- end }}
+{{- end }}

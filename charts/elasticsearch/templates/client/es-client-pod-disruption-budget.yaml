@@ -20,3 +20,4 @@ spec:
       release: {{ .Release.Name }}
       role: client
 {{- end }}
+{{- end }}
