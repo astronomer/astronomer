@@ -1,7 +1,8 @@
 ######################################
 ## Alertmanager auth sidecar ConfigMap
 ######################################
-{{- if and .Values.global.authSidecar.enabled .Values.global.controlplane.enabled }}
+{{- if and .Values.global.authSidecar.enabled }}
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 kind: ConfigMap
 apiVersion: v1
 metadata:
