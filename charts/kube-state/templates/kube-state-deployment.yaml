@@ -1,7 +1,7 @@
 ###########################
 ## Kube State Deployment ##
 ###########################
-{{- if .Values.global.dataplane.enabled }}
+ {{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 {{- $useRoles := or .Values.global.features.namespacePools.enabled .Values.global.singleNamespace }}
 {{- $namespaces := .Values.global.features.namespacePools.namespaces.names }}
 {{- $namespaces = append $namespaces .Release.Namespace }}
