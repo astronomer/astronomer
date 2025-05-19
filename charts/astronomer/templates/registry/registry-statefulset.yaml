@@ -18,7 +18,7 @@ metadata:
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
-    plane: controlplane
+    plane: {{ .Values.global.plane.mode }}
   {{ if .Values.global.enableArgoCDAnnotation }}
   annotations:
     argocd.argoproj.io/sync-wave: "-1"
@@ -44,7 +44,7 @@ spec:
         release: {{ .Release.Name }}
         app: registry
         version: {{ .Chart.Version }}
-        plane: controlplane
+        plane: {{ .Values.global.plane.mode }}
       annotations:
         checksum/configmap: {{ include (print $.Template.BasePath "/registry/registry-configmap.yaml") . | sha256sum }}
 {{- if .Values.global.podAnnotations }}

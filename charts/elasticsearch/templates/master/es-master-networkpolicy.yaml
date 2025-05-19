@@ -13,7 +13,7 @@ metadata:
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
-    plane: controlplane
+    plane: {{ .Values.global.plane.mode }}
 spec:
   podSelector:
     matchLabels:

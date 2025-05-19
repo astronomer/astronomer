@@ -12,7 +12,7 @@ metadata:
     chart: {{ template "nginx.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
-    plane: controlplane
+    plane: {{ .Values.global.plane.mode }}
 spec:
   replicas: {{ .Values.replicas }}
   minReadySeconds: {{ .Values.minReadySeconds }}
@@ -29,7 +29,7 @@ spec:
         release: {{ .Release.Name }}
         app: {{ template "nginx.name" . }}
         version: {{ .Chart.Version }}
-        plane: controlplane
+        plane: {{ .Values.global.plane.mode }}
       annotations:
         traffic.sidecar.istio.io/includeInboundPorts: ""
         checksum/configmap: {{ include (print $.Template.BasePath "/controlplane/nginx-cp-configmap.yaml") . | sha256sum }}

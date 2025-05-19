@@ -12,7 +12,7 @@ metadata:
     chart: {{ template "alertmanager.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
-    plane: controlplane
+    plane: {{ .Values.global.plane.mode }}
 data:
   alertmanager.yaml: |-
     route:

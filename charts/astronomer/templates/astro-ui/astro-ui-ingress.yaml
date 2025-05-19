@@ -13,7 +13,7 @@ metadata:
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
-    plane: controlplane
+    plane: {{ .Values.global.plane.mode }}
   annotations:
     {{- if .Values.global.authSidecar.enabled  }}
 {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
@@ -86,7 +86,7 @@ metadata:
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
-    plane: controlplane
+    plane: {{ .Values.global.plane.mode }}
   annotations:
     {{- if .Values.global.authSidecar.enabled  }}
 {{- toYaml .Values.global.extraAnnotations | nindent 4 }}

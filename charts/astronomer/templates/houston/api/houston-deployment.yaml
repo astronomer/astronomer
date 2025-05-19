@@ -12,7 +12,7 @@ metadata:
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
-    plane: controlplane
+    plane: {{ .Values.global.plane.mode }}
 spec:
   replicas: {{ .Values.houston.replicas }}
   selector:
@@ -28,7 +28,7 @@ spec:
         release: {{ .Release.Name }}
         app: houston
         version: {{ .Chart.Version }}
-        plane: controlplane
+        plane: {{ .Values.global.plane.mode }}
       annotations:
         checksum/houston-config: {{ include (print $.Template.BasePath "/houston/houston-configmap.yaml") . | sha256sum }}
         checksum/houston-backend-secret: {{ include (print $.Template.BasePath "/houston/api/houston-backend-secret.yaml") . | sha256sum }}

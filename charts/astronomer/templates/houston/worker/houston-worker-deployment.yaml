@@ -13,7 +13,7 @@ metadata:
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
-    plane: controlplane
+    plane: {{ .Values.global.plane.mode }}
 spec:
   replicas: {{ .Values.houston.worker.replicas }}
   selector:
@@ -29,7 +29,7 @@ spec:
         release: {{ .Release.Name }}
         app: houston-worker
         version: {{ .Chart.Version }}
-        plane: controlplane
+        plane: {{ .Values.global.plane.mode }}
       annotations:
         checksum/houston-config: {{ include (print $.Template.BasePath "/houston/houston-configmap.yaml") . | sha256sum }}
 {{- if .Values.global.podAnnotations }}

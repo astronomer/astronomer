@@ -52,7 +52,7 @@ metadata:
     tier: jetsream-migrator
     component: jetsream-migrator
     release: {{ .Release.Name }}
-    plane: controlplane
+    plane: {{ .Values.global.plane.mode }}
 ---
 apiVersion: batch/v1
 kind: Job
@@ -68,7 +68,7 @@ metadata:
     version: {{ .Chart.Version }}
     component: jetsream-migrator
     release: {{ .Release.Name }}
-    plane: controlplane
+    plane: {{ .Values.global.plane.mode }}
 spec:
   template:
     metadata:
@@ -78,7 +78,7 @@ spec:
         component: jetsream-migrator
         version: {{ .Chart.Version }}
         release: {{ .Release.Name }}
-        plane: controlplane
+        plane: {{ .Values.global.plane.mode }}
       {{- if or .Values.global.podAnnotations .Values.global.istio.enabled }}
       annotations:
       {{- if .Values.global.istio.enabled }}

@@ -13,7 +13,7 @@ metadata:
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"
     role: master
-    plane: controlplane
+    plane: {{ .Values.global.plane.mode }}
 spec:
   clusterIP: None
   publishNotReadyAddresses: true

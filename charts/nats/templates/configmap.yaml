@@ -9,7 +9,7 @@ metadata:
   labels:
     app: {{ template "nats.name" . }}
     chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
-    plane: controlplane
+    plane: {{ .Values.global.plane.mode }}
   {{ if .Values.global.enableArgoCDAnnotation }}
   annotations:
     argocd.argoproj.io/sync-wave: "-1"

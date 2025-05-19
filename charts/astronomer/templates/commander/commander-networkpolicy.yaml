@@ -10,7 +10,7 @@ metadata:
   labels:
     tier: astronomer
     component: commander-policy
-    plane: dataplane
+    plane: {{ .Values.global.plane.mode }}
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}

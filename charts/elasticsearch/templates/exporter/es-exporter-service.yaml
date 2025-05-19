@@ -13,7 +13,7 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
     role: exporter
-    plane: controlplane
+    plane: {{ .Values.global.plane.mode }}
   annotations:
     prometheus.io/scrape: "true"
     prometheus.io/port: {{ .Values.exporter.service.httpPort | quote }}

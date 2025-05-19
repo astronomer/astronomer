@@ -17,7 +17,7 @@ metadata:
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
-    plane: dataplane
+    plane: {{ .Values.global.plane.mode }}
 spec:
   replicas: {{ .Values.replicas }}
   selector:
@@ -33,7 +33,7 @@ spec:
         release: {{ .Release.Name }}
         app: {{ template "kube-state.name" . }}
         version: {{ .Chart.Version }}
-        plane: dataplane
+        plane: {{ .Values.global.plane.mode }}
 {{- if or .Values.global.podAnnotations .Values.podAnnotations }}
       annotations:
 {{- if .Values.global.podAnnotations }}

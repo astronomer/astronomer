@@ -12,7 +12,7 @@ metadata:
     component: nats-policy
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
-    plane: controlplane
+    plane: {{ .Values.global.plane.mode }}
   {{ if .Values.global.enableArgoCDAnnotation }}
   annotations:
     argocd.argoproj.io/sync-wave: "-1"

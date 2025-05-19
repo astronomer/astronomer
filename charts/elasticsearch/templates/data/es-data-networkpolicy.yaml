@@ -14,7 +14,7 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
     role: data
-    plane: controlplane
+    plane: {{ .Values.global.plane.mode }}
 spec:
   podSelector:
     matchLabels:

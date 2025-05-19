@@ -13,7 +13,7 @@ metadata:
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
-    plane: controlplane
+    plane: {{ .Values.global.plane.mode }}
 spec:
   schedule: {{ include "configSyncer.schedule" .}}
   # The cron job does not allow concurrent runs; if it is time for a new job run and the previous job run hasn't finished yet, the cron job skips the new job run
@@ -29,7 +29,7 @@ spec:
             release: {{ .Release.Name }}
             app: config-syncer
             version: {{ .Chart.Version }}
-            plane: dataplane
+            plane: {{ .Values.global.plane.mode }}
           {{- if or .Values.global.podAnnotations .Values.global.istio.enabled }}
           annotations:
           {{- if .Values.global.istio.enabled }}

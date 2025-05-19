@@ -187,7 +187,7 @@ metadata:
   name: {{ $.Release.Name }}-commander-scc
   labels:
     tier: houston
-    plane: dataplane
+    plane: {{ .Values.global.plane.mode }}
     release: {{ $.Release.Name }}
     chart: "{{ $.Chart.Name }}-{{ $.Chart.Version }}"
     heritage: {{ $.Release.Service }}
