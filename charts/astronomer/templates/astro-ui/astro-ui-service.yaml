@@ -1,7 +1,7 @@
 ###########################
 ## Astronomer UI Service ##
 ###########################
-{{ if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 kind: Service
 apiVersion: v1
 metadata:
