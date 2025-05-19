@@ -11,10 +11,6 @@ global:
   plane:
     mode: "unified"  # one of: control, data, unified
 
-  dataplane:
-    enabled: true
-  controlplane:
-    enabled: true
   # List of secrets containing private CA certificates
   privateCaCerts: []
   # Most users with private CA will already have their node
