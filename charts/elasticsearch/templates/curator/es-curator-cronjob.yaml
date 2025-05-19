@@ -1,7 +1,8 @@
 #####################
 ## Curator CronJob ##
 #####################
-{{- if and .Values.curator.enabled .Values.global.controlplane.enabled }}
+{{- if and .Values.curator.enabled }}
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 apiVersion: {{ include "apiVersion.batch.cronjob" . }}
 kind: CronJob
 metadata:
@@ -61,4 +62,5 @@ spec:
               configMap:
                 name: {{ template "elasticsearch.fullname" . }}-curator-config
           restartPolicy: OnFailure
+{{- end }}
 {{- end }}

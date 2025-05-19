@@ -1,7 +1,8 @@
 #######################
 ## Curator ConfigMap ##
 #######################
-{{- if and .Values.curator.enabled .Values.global.controlplane.enabled }}
+{{- if and .Values.curator.enabled }}
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -63,3 +64,4 @@ data:
       logformat: default
       blacklist: ['elasticsearch', 'urllib3']
   {{- end }}
+{{- end }}
