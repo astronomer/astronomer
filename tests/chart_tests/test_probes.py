@@ -1,7 +1,7 @@
 import pytest
 
-from tests import git_root_dir, supported_k8s_versions, get_containers_by_name
-from tests.chart_tests.helm_template_generator import render_chart
+from tests.utils import git_root_dir, supported_k8s_versions, get_containers_by_name
+from tests.utils.chart import render_chart
 from tests.chart_tests import get_all_features, get_chart_containers
 import yaml
 

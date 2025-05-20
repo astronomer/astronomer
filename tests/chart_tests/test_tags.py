@@ -1,4 +1,4 @@
-from tests.chart_tests.helm_template_generator import render_chart
+from tests.utils.chart import render_chart
 import pytest
 import tests.chart_tests as chart_tests
 import subprocess

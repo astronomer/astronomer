@@ -2,8 +2,8 @@ import pytest
 import jmespath
 import yaml
 
-from tests import supported_k8s_versions
-from tests.chart_tests.helm_template_generator import render_chart
+from tests.utils import supported_k8s_versions
+from tests.utils.chart import render_chart
 
 show_only = [
     "charts/alertmanager/templates/alertmanager-statefulset.yaml",

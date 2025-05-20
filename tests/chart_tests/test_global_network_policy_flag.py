@@ -1,7 +1,7 @@
 import pytest
 
-from tests.chart_tests.helm_template_generator import render_chart
-from tests import supported_k8s_versions
+from tests.utils.chart import render_chart
+from tests.utils import supported_k8s_versions
 
 # External-es-proxy and prometheus-postgres-exporter are set false by default,
 # needs additional work on creating test cases for future

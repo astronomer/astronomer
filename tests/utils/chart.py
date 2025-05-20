@@ -19,7 +19,6 @@ import json
 import os
 import shlex
 import subprocess
-import sys
 from functools import cache
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -30,7 +29,7 @@ import requests
 import yaml
 from kubernetes.client.api_client import ApiClient
 
-from tests import supported_k8s_versions
+from tests.utils import supported_k8s_versions
 
 api_client = ApiClient()
 
@@ -90,7 +89,7 @@ def render_chart(
 ):
     """Render a helm chart into dictionaries."""
     values = values or {}
-    chart_dir = chart_dir or sys.path[0]
+    chart_dir = chart_dir or str(git_root_dir)
     with NamedTemporaryFile(delete=not DEBUG) as tmp_file:  # export DEBUG=true to keep
         content = yaml.dump(values)
         tmp_file.write(content.encode())

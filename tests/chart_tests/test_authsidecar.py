@@ -1,8 +1,8 @@
 import pytest
 import yaml
 
-from tests import supported_k8s_versions
-from tests.chart_tests.helm_template_generator import render_chart
+from tests.utils import supported_k8s_versions
+from tests.utils.chart import render_chart
 
 
 def common_houston_config_test_cases(docs):

@@ -36,6 +36,7 @@ repos:
           - "--fix"
           - "--exit-non-zero-on-fix"
           # - "--unsafe-fixes"
+          - "--unsafe-fixes"
       - id: ruff-format
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
@@ -59,7 +60,7 @@ repos:
         args: ["--fix=lf"]
       - id: name-tests-test
         args: ["--pytest-test-first"]
-        exclude: "^tests/(chart_tests/helm_template_generator.py|utils/.*)$"
+        exclude: "^tests/utils/.*$"
       - id: requirements-txt-fixer
         args: [
             "requirements/chart-tests.in",

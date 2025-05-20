@@ -21,7 +21,7 @@ import docker
 import pytest
 from filelock import FileLock
 
-from tests import git_root_dir
+from tests.utils import git_root_dir
 import os
 
 

@@ -68,9 +68,9 @@ With that data, we can begin coming up with assertions to make. We will create a
 We create a new file, `tests/chart_tests/test_ingress_example.py`, with the following content:
 
 ```python
-from tests.chart_tests.helm_template_generator import render_chart
+from tests.utils.chart import render_chart
 import pytest
-from tests import supported_k8s_versions
+from tests.utils import supported_k8s_versions
 ```
 
 The `render_chart` function does exactly what you would think, and lets us specify which version of kubernetes we want to use, and what templates we want to render so we can make assertions against them.
@@ -164,9 +164,9 @@ Results (3.45s):
 Let's write a new test where testing the kubernetes version would be important. In our chart, we use the Ingress v1 syntax starting with kubernetes 1.19, but v1beta1 with anything before 1.19. We will once again extend the function that we originally started, doing additional assertions depending on what version of kubernetes we are testing against. We can inspect the data produced for different versions of kubernetes by substituting `--kube-version=1.18.0` in our original command with `--kube-version=1.19.0`, allowing us to easily see what kind of assertions we can make for the various kubernetes versions. Here is the full content of our test file:
 
 ```python
-from tests.chart_tests.helm_template_generator import render_chart
+from tests.utils.chart import render_chart
 import pytest
-from tests import supported_k8s_versions
+from tests.utils import supported_k8s_versions
 
 
 @pytest.mark.parametrize(

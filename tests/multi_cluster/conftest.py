@@ -2,7 +2,7 @@ import os
 import tempfile
 import subprocess
 import pytest
-from tests import git_root_dir
+from tests.utils import git_root_dir
 from kubernetes import client, config
 import time
 from collections.abc import Iterable
