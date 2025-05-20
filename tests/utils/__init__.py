@@ -2,15 +2,7 @@ from pathlib import Path
 
 import yaml
 
-# The top-level path of this repository
-git_root_dir = [x for x in Path(__file__).resolve().parents if (x / ".git").is_dir()][-1]
-
-metadata = yaml.safe_load((Path(git_root_dir) / "metadata.yaml").read_text())
-# replace all patch versions with 0 so we end up with ['a.b.0', 'x.y.0']
-supported_k8s_versions = [".".join(x.split(".")[:-1] + ["0"]) for x in metadata["test_k8s_versions"]]
-k8s_version_too_old = f"1.{int(supported_k8s_versions[0].split('.')[1]) - 1!s}.0"
-k8s_version_too_new = f"1.{int(supported_k8s_versions[-1].split('.')[1]) + 1!s}.0"
-kubectl_version = supported_k8s_versions[-2]  # one version old https://kubernetes.io/releases/version-skew-policy/#kubectl
+from tests.utils.chart import render_chart
 
 
 def get_service_ports_by_name(doc):
@@ -64,3 +56,55 @@ def dot_notation_to_dict(dotted_string, default_value=None):
     if parts[2]:
         return {parts[0]: dot_notation_to_dict(parts[2], default_value=default_value)}
     return {parts[0]: default_value}
+
+
+def get_all_features():
+    return yaml.safe_load((Path(__file__).parent.parent / "enable_all_features.yaml").read_text())
+
+
+def get_chart_containers(
+    k8s_version: str,
+    chart_values: dict,
+    *,  # force the remaining arguments to be keyword-only
+    exclude_kinds: list[str] | None = None,
+    include_kinds: list[str] | None = None,
+) -> dict:
+    """Return a dict of pod container and initContainer specs in the form of
+    {k8s_version}_{release_name}-{pod_name}_{container_name}, with some additional metadata."""
+
+    docs = render_chart(
+        kube_version=k8s_version,
+        values=chart_values,
+    )
+
+    specs = [
+        {
+            "name": doc.get("metadata", {}).get("name"),
+            "kind": doc.get("kind"),
+            "containers": doc.get("spec", {}).get("template", {}).get("spec", {}).get("containers", []),
+            "initContainers": doc.get("spec", {}).get("template", {}).get("spec", {}).get("initContainers", []),
+        }
+        for doc in docs
+        if "spec" in doc
+        and "template" in doc["spec"]
+        and "spec" in doc["spec"]["template"]
+        and ("containers" in doc["spec"]["template"]["spec"] or "initContainers" in doc["spec"]["template"]["spec"])
+    ]
+
+    if exclude_kinds:
+        exclude_kinds = [kind.lower() for kind in exclude_kinds]
+        specs = [spec for spec in specs if spec["kind"].lower() not in exclude_kinds]
+
+    if include_kinds:
+        include_kinds = [kind.lower() for kind in include_kinds]
+        specs = [spec for spec in specs if spec["kind"].lower() in include_kinds]
+
+    return {
+        f"{k8s_version}_{spec['name']}_{container['name']}": {
+            **container,
+            "key": f"{k8s_version}_{spec['name']}_{container['name']}",
+            "kind": spec["kind"],
+        }
+        for spec in specs
+        for container in [*spec["containers"], *spec["initContainers"]]
+    }

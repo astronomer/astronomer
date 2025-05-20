@@ -7,9 +7,7 @@ import docker
 import pytest
 import testinfra
 
-
 from . import get_core_v1_client
-
 
 if not (namespace := getenv("NAMESPACE")):
     print("NAMESPACE env var is not present, using 'astronomer' namespace")

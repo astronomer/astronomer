@@ -3,7 +3,7 @@ import sys
 import xml.etree.ElementTree as xml_parser
 from contextlib import contextmanager
 from os import getenv
-from time import sleep, time, strftime
+from time import sleep, strftime, time
 
 import testinfra
 from kubernetes import client, config

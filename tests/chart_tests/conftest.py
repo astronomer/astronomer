@@ -15,14 +15,14 @@
 # specific language governing permissions and limitations
 # under the License.
 
+import os
 import subprocess
 
 import docker
 import pytest
 from filelock import FileLock
 
-from tests.utils import git_root_dir
-import os
+from tests import git_root_dir
 
 
 @pytest.fixture(autouse=True, scope="session")

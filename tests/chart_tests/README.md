@@ -70,7 +70,7 @@ We create a new file, `tests/chart_tests/test_ingress_example.py`, with the foll
 ```python
 from tests.utils.chart import render_chart
 import pytest
-from tests.utils import supported_k8s_versions
+from tests import supported_k8s_versions
 ```
 
 The `render_chart` function does exactly what you would think, and lets us specify which version of kubernetes we want to use, and what templates we want to render so we can make assertions against them.
@@ -166,7 +166,7 @@ Let's write a new test where testing the kubernetes version would be important. 
 ```python
 from tests.utils.chart import render_chart
 import pytest
-from tests.utils import supported_k8s_versions
+from tests import supported_k8s_versions
 
 
 @pytest.mark.parametrize(

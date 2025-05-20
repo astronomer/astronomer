@@ -6,15 +6,16 @@ Tools are installed into a per-user directory under ~/.local/share/astronomer-so
 Downloaded archives are cached in ~/.cache/astronomer-software"""
 
 import os
-import sys
-import shutil
-import tarfile
 import platform
+import shutil
+import sys
+import tarfile
 from pathlib import Path
-import yaml
-from tests.utils import git_root_dir
 
 import requests
+import yaml
+
+from tests import git_root_dir
 
 KIND_VERSION = "0.27.0"
 HELM_VERSION = "3.18.0"

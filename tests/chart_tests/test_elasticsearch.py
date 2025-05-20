@@ -1,11 +1,11 @@
 import pytest
 import yaml
+
+from tests import git_root_dir, supported_k8s_versions
 from tests.utils import (
     get_containers_by_name,
-    supported_k8s_versions,
 )
 from tests.utils.chart import render_chart
-from tests.utils import git_root_dir
 
 
 @pytest.mark.parametrize(

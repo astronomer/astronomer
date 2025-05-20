@@ -1,6 +1,8 @@
-import yaml
-from tests.utils.chart import render_chart
 import ast
+
+import yaml
+
+from tests.utils.chart import render_chart
 
 
 def common_test_cases(docs):

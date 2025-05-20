@@ -1,12 +1,14 @@
 import os
-import tempfile
 import subprocess
-import pytest
-from tests.utils import git_root_dir
-from kubernetes import client, config
+import tempfile
 import time
 from collections.abc import Iterable
+
+import pytest
+from kubernetes import client, config
 from kubernetes.client.exceptions import ApiException
+
+from tests import git_root_dir
 
 
 def run_command(command: str) -> str:
