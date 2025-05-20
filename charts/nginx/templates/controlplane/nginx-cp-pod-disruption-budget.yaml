@@ -2,7 +2,7 @@
 ## Astronomer Control Plane  Nginx Pod Disruption Budget ##
 ###########################################################
 {{- if and .Values.global.podDisruptionBudgetsEnabled }}
-{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+{{- if eq .Values.global.plane.mode "control" }}
 apiVersion: {{ include "apiVersion.PodDisruptionBudget" . }}
 kind: PodDisruptionBudget
 metadata:

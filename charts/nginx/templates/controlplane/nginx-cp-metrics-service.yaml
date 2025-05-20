@@ -1,7 +1,7 @@
 #########################################
 ## NGINX Control Plane Metrics service ##
 #########################################
-{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+{{- if eq .Values.global.plane.mode "control" }}
 kind: Service
 apiVersion: v1
 metadata:
