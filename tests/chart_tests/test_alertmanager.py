@@ -4,7 +4,8 @@ import jmespath
 import pytest
 import yaml
 
-from tests.utils import get_containers_by_name, supported_k8s_versions
+from tests import supported_k8s_versions
+from tests.utils import get_containers_by_name
 from tests.utils.chart import render_chart
 
 

@@ -1,9 +1,11 @@
-import yaml
-from tests.utils.chart import render_chart
-from tests.utils import supported_k8s_versions
 import re
-import pytest
 from textwrap import dedent
+
+import pytest
+import yaml
+
+from tests import supported_k8s_versions
+from tests.utils.chart import render_chart
 
 
 @pytest.mark.parametrize(

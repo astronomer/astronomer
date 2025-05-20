@@ -29,7 +29,7 @@ import requests
 import yaml
 from kubernetes.client.api_client import ApiClient
 
-from tests.utils import supported_k8s_versions
+from tests import supported_k8s_versions
 
 api_client = ApiClient()
 

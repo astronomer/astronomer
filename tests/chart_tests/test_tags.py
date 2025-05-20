@@ -1,9 +1,10 @@
-from tests.utils.chart import render_chart
-import pytest
-import tests.chart_tests as chart_tests
 import subprocess
 from pathlib import Path
 
+import pytest
+
+from tests.utils import get_all_features
+from tests.utils.chart import render_chart
 
 component_paths = [
     "charts/alertmanager/templates",
@@ -27,7 +28,7 @@ show_only = [
     if not y.name.startswith("_") and str(y) not in templates_to_exclude
 ]
 
-chart_values = chart_tests.get_all_features()
+chart_values = get_all_features()
 
 
 @pytest.mark.parametrize("template", show_only)

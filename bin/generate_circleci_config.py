@@ -4,8 +4,8 @@ DRY."""
 
 import subprocess
 from pathlib import Path
-import yaml
 
+import yaml
 from jinja2 import Template
 
 git_root_dir = next(iter([x for x in Path(__file__).resolve().parents if (x / ".git").is_dir()]), None)

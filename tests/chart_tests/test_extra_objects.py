@@ -2,8 +2,8 @@ import json
 
 import pytest
 
+from tests import supported_k8s_versions
 from tests.utils.chart import render_chart
-from tests.utils import supported_k8s_versions
 
 
 @pytest.mark.parametrize("kube_version", supported_k8s_versions)

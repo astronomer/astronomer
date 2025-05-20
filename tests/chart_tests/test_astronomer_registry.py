@@ -1,7 +1,8 @@
-from tests.utils.chart import render_chart
-import pytest
-from tests.utils import supported_k8s_versions
 import jmespath
+import pytest
+
+from tests import supported_k8s_versions
+from tests.utils.chart import render_chart
 
 
 @pytest.mark.parametrize(

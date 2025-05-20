@@ -1,6 +1,7 @@
-from tests.utils.chart import render_chart
-from tests.utils import get_containers_by_name
 import pytest
+
+from tests.utils import get_containers_by_name
+from tests.utils.chart import render_chart
 
 
 class TestNginx:
