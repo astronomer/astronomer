@@ -1,7 +1,7 @@
 #################################
 ## Kube State Role/ClusterRole ##
 #################################
- {{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 {{- $namespacepoolsRBACresources:= and .Values.global.features.namespacePools.createRbac .Values.global.features.namespacePools.enabled }}
 {{- $useRoles := .Values.global.features.namespacePools.enabled }}
 {{- $useClusterRoles := and .Values.global.rbacEnabled .Values.global.clusterRoles (not $useRoles )}}
