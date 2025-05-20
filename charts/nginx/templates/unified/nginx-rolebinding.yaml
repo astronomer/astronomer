@@ -1,7 +1,7 @@
 #####################################################
 ## NGINX Data Plane RoleBinding/ClusterRoleBinding ##
 #####################################################
- {{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
+{{- if eq .Values.global.plane.mode "unified" }}
 {{- $singleNamespace := .Values.global.singleNamespace }}
 {{- if .Values.global.rbacEnabled }}
 kind: ClusterRoleBinding
