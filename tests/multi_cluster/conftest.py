@@ -1,14 +1,20 @@
 import os
 import subprocess
-import tempfile
 import time
 from collections.abc import Iterable
+from pathlib import Path
 
 import pytest
 from kubernetes import client, config
 from kubernetes.client.exceptions import ApiException
 
 from tests import git_root_dir
+from tests.utils.cert import cert_file, create_certificates, key_file
+from tests.utils.install_ci_tools import install_all_tools
+
+kind_file = Path.home() / ".local" / "share" / "astronomer-software" / "bin" / "kind"
+helm_file = Path.home() / ".local" / "share" / "astronomer-software" / "bin" / "helm"
+kubeconfig_dir = Path.home() / ".local" / "share" / "astronomer-software" / "kubeconfig"
 
 
 def run_command(command: str) -> str:
@@ -72,25 +78,28 @@ def create_kind_cluster(cluster_name: str) -> str:
     :return: Full path to the kubeconfig file.
     :raises RuntimeError: If the cluster creation fails.
     """
-    kubeconfig_file = tempfile.NamedTemporaryFile(delete=False)
-    kubeconfig_file.close()
+    kubeconfig_file = kubeconfig_dir / f"{cluster_name}"
+    if not kubeconfig_file.parent.exists():
+        kubeconfig_file.parent.mkdir(parents=True, exist_ok=True)
+    kubeconfig_file.unlink(missing_ok=True)
+    install_all_tools()
 
     try:
-        cmd = f"kind create cluster --name {cluster_name} --kubeconfig {kubeconfig_file.name}"
+        cmd = f"{kind_file} create cluster --name {cluster_name} --kubeconfig {kubeconfig_file}"
         print(f"Creating KIND cluster with command: {cmd}")
         run_command(cmd)
 
         # Wait until all pods are ready
         print("Waiting for all pods to become ready...")
-        wait_for_pods_ready(kubeconfig_file.name)
+        wait_for_pods_ready(str(kubeconfig_file))
 
-        return kubeconfig_file.name
+        return str(kubeconfig_file)
     except Exception:
         # Cleanup if cluster creation fails
-        cmd = f"kind delete cluster --name {cluster_name}"
+        cmd = f"{kind_file} delete cluster --name {cluster_name}"
         print(f"Cleaning up after failed cluster creation with command: {cmd}")
         run_command(cmd)
-        os.unlink(kubeconfig_file.name)
+        os.unlink(str(kubeconfig_file))
         raise
 
 
@@ -102,7 +111,7 @@ def delete_kind_cluster(cluster_name: str, kubeconfig_file: str) -> None:
     :param kubeconfig_file: Path to the kubeconfig file to clean up.
     """
     try:
-        cmd = f"kind delete cluster --name {cluster_name}"
+        cmd = f"{kind_file} delete cluster --name {cluster_name}"
         print(f"Deleting KIND cluster with command: {cmd}")
         run_command(cmd)
     finally:
@@ -118,6 +127,8 @@ def control(request) -> Iterable[str]:
     :yield: Path to the kubeconfig file for the 'control' cluster.
     """
     kubeconfig_file = create_kind_cluster("control")
+    create_namespace(kubeconfig_file)
+    create_tls_secret(kubeconfig_file)
     helm_install(kubeconfig=kubeconfig_file)
     yield kubeconfig_file
     delete_kind_cluster("control", kubeconfig_file)
@@ -132,6 +143,8 @@ def data(request) -> Iterable[str]:
     :yield: Path to the kubeconfig file for the 'data' cluster.
     """
     kubeconfig_file = create_kind_cluster("data")
+    create_namespace(kubeconfig_file)
+    create_tls_secret(kubeconfig_file)
     helm_install(kubeconfig=kubeconfig_file)
     yield kubeconfig_file
     delete_kind_cluster("data", kubeconfig_file)
@@ -146,6 +159,8 @@ def unified(request) -> Iterable[str]:
     :yield: Path to the kubeconfig file for the 'unified' cluster.
     """
     kubeconfig_file = create_kind_cluster("unified")
+    create_namespace(kubeconfig_file)
+    create_tls_secret(kubeconfig_file)
     helm_install(kubeconfig=kubeconfig_file)
     yield kubeconfig_file
     delete_kind_cluster("unified", kubeconfig_file)
@@ -159,7 +174,7 @@ def helm_install(kubeconfig: str, values: str = f"{git_root_dir}/configs/local-d
     :param values: Path to the Helm values file.
     """
     helm_install_command = [
-        "helm",
+        helm_file,
         "install",
         "astronomer",
         "--create-namespace",
@@ -187,6 +202,56 @@ def kubernetes_client(request, clusters) -> client.CoreV1Api:
     :return: A Kubernetes CoreV1Api client for the target cluster.
     """
     cluster_name = request.param
-    kubeconfig_path = clusters[cluster_name]
-    config.load_kube_config(config_file=kubeconfig_path)
+    kubeconfig_file = clusters[cluster_name]
+    config.load_kube_config(config_file=kubeconfig_file)
     return client.CoreV1Api()
+
+
+def create_namespace(kubeconfig_file, namespace="astronomer") -> None:
+    """Create the given namespace."""
+    if not Path(kubeconfig_file).exists():
+        raise FileNotFoundError(f"Kubeconfig file not found at {kubeconfig_file}")
+
+    cmd = [
+        "kubectl",
+        "--kubeconfig",
+        str(kubeconfig_file),
+        "create",
+        "namespace",
+        namespace,
+    ]
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    if result.returncode == 0:
+        return
+    if "AlreadyExists" in result.stderr:
+        return
+    raise RuntimeError(f"Failed to create namespace {namespace}: {result.stderr}")
+
+
+def create_tls_secret(kubeconfig_file) -> None:
+    """Create a TLS secret in the KIND cluster using self-signed certificates."""
+    if not Path(kubeconfig_file).exists():
+        raise FileNotFoundError(f"Kubeconfig file not found at {kubeconfig_file}")
+
+    create_certificates()
+
+    secret_name = "astronomer-tls"
+    namespace = "astronomer"
+    cmd = [
+        "kubectl",
+        "--kubeconfig",
+        str(kubeconfig_file),
+        "-n",
+        namespace,
+        "create",
+        "secret",
+        "tls",
+        secret_name,
+        "--cert",
+        str(cert_file),
+        "--key",
+        str(key_file),
+    ]
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    if result.returncode != 0:
+        raise RuntimeError(f"Failed to create secret {secret_name} in namespace {namespace}: {result.stderr}")
