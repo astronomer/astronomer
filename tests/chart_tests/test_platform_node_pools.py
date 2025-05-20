@@ -2,7 +2,7 @@ import jmespath
 import pytest
 
 import tests.chart_tests as chart_tests
-from tests.chart_tests.helm_template_generator import render_chart
+from tests.utils.chart import render_chart
 
 ignore_list = ["postgresql", "cert-copy", "node-exporter", "cert-copy-and-toml-update"]
 

@@ -1,7 +1,7 @@
 import pytest
 
 import tests.chart_tests as chart_tests
-from tests import supported_k8s_versions
+from tests.utils import supported_k8s_versions
 
 ignore_list = [
     "fluentd_fluentd",

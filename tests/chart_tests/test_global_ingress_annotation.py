@@ -1,6 +1,6 @@
 import pytest
-from tests import supported_k8s_versions, git_root_dir
-from tests.chart_tests.helm_template_generator import render_chart
+from tests.utils import supported_k8s_versions, git_root_dir
+from tests.utils.chart import render_chart
 from pathlib import Path
 
 

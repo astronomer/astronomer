@@ -3,8 +3,8 @@ import re
 import pytest
 
 import tests.chart_tests as chart_tests
-from tests import get_containers_by_name, k8s_version_too_old, k8s_version_too_new
-from tests.chart_tests.helm_template_generator import render_chart
+from tests.utils import get_containers_by_name, k8s_version_too_old, k8s_version_too_new
+from tests.utils.chart import render_chart
 
 annotation_validator = re.compile("^([^/]+/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$")
 pod_managers = ["Deployment", "StatefulSet", "DaemonSet"]
