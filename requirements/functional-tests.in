@@ -1,6 +1,7 @@
 cryptography
 docker
 GitPython
+jsonschema
 kubernetes
 pytest
 pytest-pretty
