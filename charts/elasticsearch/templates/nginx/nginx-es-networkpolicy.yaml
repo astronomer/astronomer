@@ -1,7 +1,8 @@
 ####################################
 ## Elasticsearch NGiNX NetworkPolicy
 ####################################
-{{- if and .Values.global.networkPolicy.enabled .Values.global.controlplane.enabled }}
+{{- if and .Values.global.networkPolicy.enabled }}
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -49,4 +50,5 @@ spec:
     ports:
     - protocol: TCP
       port: {{ .Values.common.ports.http }}
+{{- end }}
 {{- end }}

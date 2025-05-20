@@ -1,7 +1,7 @@
 #################################
 ## Elasticsearch Proxy Service ##
 #################################
-{{- if .Values.global.controlplane.enabled}}
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -12,7 +12,7 @@ metadata:
     chart: {{ template "external-es-proxy.chart" . }}
     heritage: {{ .Release.Service }}
     release: {{ .Release.Name }}
-    plane: controlplane
+    plane: {{ .Values.global.plane.mode }}
 spec:
   type: {{ .Values.service.type }}
   ports:

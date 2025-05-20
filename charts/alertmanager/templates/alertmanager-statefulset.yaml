@@ -1,7 +1,7 @@
 ##############################
 ## Alertmanager StatefulSet ##
 ##############################
-{{- if .Values.global.controlplane.enabled }}
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 kind: StatefulSet
 apiVersion: apps/v1
 metadata:
@@ -12,7 +12,7 @@ metadata:
     chart: {{ template "alertmanager.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
-    plane: controlplane
+    plane: {{ .Values.global.plane.mode }}
 spec:
   {{- if and .Values.persistence.enabled .Values.persistence.persistentVolumeClaimRetentionPolicy }}
   persistentVolumeClaimRetentionPolicy: {{- toYaml .Values.persistence.persistentVolumeClaimRetentionPolicy | nindent 4 }}
@@ -32,7 +32,7 @@ spec:
         release: {{ .Release.Name }}
         app: {{ template "alertmanager.name" . }}
         version: {{ .Chart.Version }}
-        plane: controlplane
+        plane: {{ .Values.global.plane.mode }}
       annotations:
         checksum/configmap: {{ include (print $.Template.BasePath "/alertmanager-configmap.yaml") . | sha256sum }}
 {{- if .Values.global.podAnnotations }}

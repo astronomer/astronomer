@@ -1,7 +1,8 @@
 #####################
 ## Houston Ingress ##
 #####################
-{{- if and .Values.global.baseDomain .Values.global.controlplane.enabled }}
+{{- if and .Values.global.baseDomain }}
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:
@@ -12,7 +13,7 @@ metadata:
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
-    plane: controlplane
+    plane: {{ .Values.global.plane.mode }}
   annotations:
     {{- if .Values.global.authSidecar.enabled  }}
 {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
@@ -68,4 +69,5 @@ spec:
               port:
                 name: houston-http
   {{- end -}}
+{{- end }}
 {{- end }}

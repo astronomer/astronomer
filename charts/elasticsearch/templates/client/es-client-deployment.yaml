@@ -1,7 +1,7 @@
 #####################################
 ## Elasticsearch Client Deployment ##
 #####################################
-{{- if .Values.global.controlplane.enabled}}
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -13,7 +13,7 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
     role: client
-    plane: controlplane
+    plane: {{ .Values.global.plane.mode }}
 spec:
   replicas: {{ .Values.client.replicas }}
   selector:

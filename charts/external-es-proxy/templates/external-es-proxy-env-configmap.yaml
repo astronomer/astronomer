@@ -1,7 +1,7 @@
 ###################################
 ## Elasticsearch Proxy ConfigMap ##
 ###################################
-{{- if .Values.global.controlplane.enabled}}
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 kind: ConfigMap
 apiVersion: v1
 metadata:
@@ -12,7 +12,7 @@ metadata:
     chart: {{ template "external-es-proxy.chart" . }}
     heritage: {{ .Release.Service }}
     release: {{ .Release.Name }}
-    plane: controlplane
+    plane: {{ .Values.global.plane.mode }}
 data:
   setenv.lua: |-
     -- check if  variable is defined
