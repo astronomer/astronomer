@@ -48,7 +48,7 @@ spec:
         - name: wait-for-db
           image: {{ template "houston.image" . }}
           imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
-          securityContext: {{ toYaml .Values.houston.podSecurityContext | nindent 12 }}
+          securityContext: {{ toYaml .Values.securityContext | nindent 12 }}
           command:
             - "/houston/bin/entrypoint"
           args:
@@ -66,7 +66,7 @@ spec:
         - name: houston-bootstrapper
           image: {{ template "dbBootstrapper.image" . }}
           imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
-          securityContext: {{ toYaml .Values.houston.podSecurityContext| nindent 12 }}
+          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
           resources: {{ toYaml .Values.houston.resources | nindent 12 }}
           {{- if .Values.houston.bootstrapper.readinessProbe }}
           readinessProbe: {{ tpl (toYaml .Values.houston.bootstrapper.readinessProbe) . | nindent 12 }}
