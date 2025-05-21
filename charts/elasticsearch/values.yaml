@@ -232,7 +232,6 @@ curator:
   schedule: "0 1 * * *"
   securityContext: {}
   resources: {}
-  podSecurityContext: {}
 
   # Allows modification of the default age-based filter. If you require more
   # sophisticated filtering, modify the action file specified in
