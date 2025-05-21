@@ -50,7 +50,6 @@ spec:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       restartPolicy: Never
 {{- include "astronomer.imagePullSecrets" . | indent 6 }}
-      serviceAccountName: {{ template "houston.bootstrapperServiceAccountName" . }}
       {{- if and (not .Values.houston.airflowBackendSecretName) (not .Values.houston.airflowBackendConnection) (not .Values.houston.backendSecretName) (not .Values.houston.backendConnection) }}
       initContainers:
         - name: wait-for-db
@@ -63,7 +62,6 @@ spec:
           args:
             - "echo"
             - "DB ready"
-          resources: {{ toYaml .Values.houston.resources | nindent 12 }}
           env:
             - name: DATABASE_URL
               valueFrom:
@@ -121,6 +119,12 @@ spec:
                   name: {{ template "houston.backendSecret" . }}
                   key: connection
             {{- include "houston_environment" . | indent 12 }}
+          {{- if .Values.houston.upgradeDeployments.readinessProbe }}
+          readinessProbe: {{ tpl (toYaml .Values.houston.upgradeDeployments.readinessProbe) . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.houston.upgradeDeployments.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.houston.upgradeDeployments.livenessProbe) . | nindent 12 }}
+          {{- end }}
       volumes:
         {{- include "houston_volumes" . | indent 8 }}
         {{- include "custom_ca_volumes" . | indent 8 }}

@@ -113,6 +113,7 @@ data:
       {{- $authSidecar := include "authSidecar.image" . }}
       authSideCar:
         enabled: true
+        ingressAllowedNamespaces: {{ default (list) .Values.global.authSidecar.ingressAllowedNamespaces | toJson }}
         repository: {{ (splitList ":"  $authSidecar ) | first  }}
         tag: {{ (splitList ":"  $authSidecar ) | last  }}
         port: {{ .Values.global.authSidecar.port }}
@@ -218,14 +219,13 @@ data:
 
       # These values get passed directly into the airflow helm deployments
       helm:
+
       {{- if and .Values.global.ssl.enabled .Values.global.ssl.mode }}
         sslmode: {{ .Values.global.ssl.mode }}
       {{- end }}
-      {{- if .Values.global.sccEnabled }}
-        # If security context constraints are enabled, enable SCCs for airflow-chart
-        sccEnabled: true
-      {{- end }}
 
+        # If security context constraints are enabled, enable SCCs for airflow-chart
+        sccEnabled: {{ .Values.global.sccEnabled }}
       {{- if and .Values.global.extraAnnotations ( not .Values.global.authSidecar.enabled ) }}
         ingress:
           extraIngressAnnotations: {{- toYaml .Values.global.extraAnnotations | nindent 12 }}
@@ -268,13 +268,20 @@ data:
           # Enabled network polices to restrict the way pods can communicate.
             enabled: true
           {{ end }}
+          {{- if .Values.global.openshiftEnabled }}
+          dags:
+              gitSync:
+                securityContexts:
+                  container:
+                    runAsNonRoot: true
+          {{ end }}
           # Enable FlowerUI flag by default
           flower:
             enabled: true
             {{ if .Values.global.openshiftEnabled }}
             securityContexts:
               pod:
-                runAsNonRoot: false
+                runAsNonRoot: true
             {{ end }}
           webserver:
             {{ if .Values.configSyncer.enabled }}
@@ -292,7 +299,7 @@ data:
             {{ if .Values.global.openshiftEnabled }}
             securityContexts:
               pod:
-                runAsNonRoot: false
+                runAsNonRoot: true
             {{ end  }}
             resources:
               limits:
@@ -317,7 +324,7 @@ data:
             {{ if .Values.global.openshiftEnabled }}
             securityContexts:
               pod:
-                runAsNonRoot: false
+                runAsNonRoot: true
             {{ end  }}
             resources:
               limits:
@@ -329,11 +336,10 @@ data:
             safeToEvict: true
 
           scheduler:
-
             {{ if .Values.global.openshiftEnabled }}
             securityContexts:
               pod:
-                runAsNonRoot: false
+                runAsNonRoot: true
             {{ end  }}
 
             podDisruptionBudget:
@@ -357,6 +363,7 @@ data:
               rollingUpdate:
                 maxUnavailable: 1
 
+
           airflowLocalSettings: |
             # This pod mutation hook runs for all pods dynamically created by Airflow
             # in Kubernetes (K8s). This includes K8s executor Airflow-workers, which is
@@ -366,8 +373,11 @@ data:
             # This function is responsible for two things. It assigns labels to disambiguate
             # between KPO and K8s executor pods. Also, it handles writing the entrypoint for
             # K8s executor pods. Why we do this second part, you can read below.
+            from airflow.providers.cncf.kubernetes.utils.xcom_sidecar import PodDefaults
             from airflow.configuration import conf
             from airflow.version import version
+            xcom_sidecar_image = "{{ template "defaultXcomSidecarImage" . }}"
+            PodDefaults.SIDECAR_CONTAINER.image = xcom_sidecar_image
             def pod_mutation_hook_deprecated(pod):
               from airflow.contrib.kubernetes.pod import Pod
               extra_labels = {
@@ -482,7 +492,7 @@ data:
             {{ if .Values.global.openshiftEnabled }}
             securityContexts:
               pod:
-                runAsNonRoot: false
+                runAsNonRoot: true
             {{ end }}
 
           {{ if .Values.global.openshiftEnabled }}
@@ -496,13 +506,19 @@ data:
           triggerer:
             securityContexts:
               pod:
-                runAsNonRoot: false
+                runAsNonRoot: true
 
           # migrateDatabaseJob  settings
           migrateDatabaseJob:
             securityContexts:
               pod:
-                runAsNonRoot: false
+                runAsNonRoot: true
+
+          # dagProcessor settings
+          dagProcessor:
+            securityContexts:
+              pod:
+                runAsNonRoot: true
 
           {{ end }}
 
@@ -557,7 +573,7 @@ data:
             {{ if .Values.global.openshiftEnabled }}
             securityContexts:
               pod:
-                runAsNonRoot: false
+                runAsNonRoot: true
             {{ end  }}
       {{- end }}
 

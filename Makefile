@@ -9,16 +9,35 @@ CHARTS := astronomer nginx grafana prometheus alertmanager elasticsearch kibana 
 
 TEMPDIR := /tmp/astro-temp
 
-.PHONY: venv
-venv: .unittest-requirements
-unittest-requirements: .unittest-requirements ## Setup venv required for unit testing the Astronomer helm chart
-.unittest-requirements:
+# functional-requirements is deprecated
+.PHONY: functional-requirements
+functional-requirements: .venv-functional
+.PHONY: venv-functional
+venv-functional: .venv-functional  ## Setup venv required for unit testing the Astronomer helm chart
+.venv-functional:
+	[ -d venv ] || { uv venv venv -p 3.11 --seed || virtualenv venv -p python3 ; }
+	venv/bin/pip install -r requirements/functional-tests.txt
+	touch $@
+
+# unittest-requirements is deprecated
+.PHONY: unittest-requirements
+unittest-requirements: .venv-unit
+.PHONY: venv-unit
+venv-unit: .venv-unit  ## Setup venv required for unit testing the Astronomer helm chart
+.venv-unit:
 	[ -d venv ] || { uv venv venv -p 3.11 --seed || virtualenv venv -p python3 ; }
 	venv/bin/pip install -r requirements/chart-tests.txt
-	touch .unittest-requirements
+	touch $@
 
+.PHONY: test-functional
+test-functional: venv-functional ## Run functional tests on the Astronomer helm chart
+	venv/bin/python -m pytest -v --junitxml=test-results/junit.xml tests/functional_tests
+
+# unittest-charts is deprecated
 .PHONY: unittest-charts
-unittest-charts: .unittest-requirements ## Unittest the Astronomer helm chart
+unittest-charts: test-unit
+.PHONY: test-unit
+test-unit: venv-unit ## Run unit tests
 	# Protip: you can modify pytest behavior like: make unittest-charts PYTEST_ADDOPTS='-v --maxfail=1 --pdb -k "prometheus and 1.20"'
 	venv/bin/python -m pytest -v --junitxml=test-results/junit.xml -n auto tests/chart_tests
 
@@ -27,16 +46,19 @@ validate-commander-airflow-version: ## Validate that airflowChartVersion is the 
 	bin/validate_commander_airflow_version
 
 .PHONY: test
-test: validate-commander-airflow-version unittest-charts
+test: validate-commander-airflow-version test-unit test-functional ## Run all tests
+	@echo "All tests passed"
 
 .PHONY: clean
 clean: ## Clean build and test artifacts
-	rm -rf ${TEMPDIR}
-	rm -f .unittest-requirements
-	rm -rf venv
-	rm -rf .pytest_cache
-	rm -rf test-results
-	find . -name __pycache__ -exec rm -rf {} \+
+	rm -rfv ${TEMPDIR}
+	rm -rfv .unittest-requirements
+	rm -rfv .pytest_cache
+	rm -rfv .ruff_cache
+	rm -rfv .venv*
+	rm -rfv test-results
+	rm -rfv venv
+	find . -name __pycache__ -exec rm -rfv {} \+
 
 .PHONY: build
 build: ## Build the Astronomer helm chart

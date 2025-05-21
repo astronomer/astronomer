@@ -17,7 +17,7 @@
 {{- end }}
 
 {{- if $shouldCreateResources }}
-{{- range $i, $namespaceName := $namespaces -}}
+{{- range $i, $namespaceName := $namespaces }}
 ---
 apiVersion: {{ template "apiVersion.rbac" . }}
 kind: {{ if $useClusterRoles }}ClusterRoleBinding{{ else }}RoleBinding{{ end }}
@@ -48,7 +48,7 @@ subjects:
 apiVersion: {{ template "apiVersion.rbac" . }}
 kind: ClusterRoleBinding
 metadata:
-  name: {{ $.Release.Name }}-commander
+  name: {{ $.Release.Name }}-commander-scc
   {{- if $.Values.global.enableArgoCDAnnotation }}
   annotations:
     argocd.argoproj.io/sync-wave: "-1"
@@ -56,7 +56,7 @@ metadata:
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: {{ $.Release.Name }}-commander
+  name: {{ $.Release.Name }}-commander-scc
 subjects:
   - kind: ServiceAccount
     name: {{ $commanderServiceAccountName }}

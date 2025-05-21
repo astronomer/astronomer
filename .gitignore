@@ -10,6 +10,7 @@
 .idea/
 .python-version
 .unittest-requirements
+.venv*
 .vscode/
 /secrets
 /venv/
@@ -27,4 +28,5 @@ repository
 server.key
 temp.sh
 test-*
+test-results/junit.xml
 upgrade_test_config.yaml

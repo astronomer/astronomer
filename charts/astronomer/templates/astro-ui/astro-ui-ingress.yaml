@@ -39,23 +39,6 @@ spec:
       hosts:
         - app.{{ .Values.global.baseDomain }}
   {{- end }}
-  {{ if semverCompare "< 1.19-0" .Capabilities.KubeVersion.Version -}}
-  rules:
-  - host: {{ .Values.global.baseDomain }}
-    http:
-      paths:
-        - path: /
-          backend:
-            serviceName: {{ .Release.Name }}-astro-ui
-            servicePort: astro-ui-http
-  - host: app.{{ .Values.global.baseDomain }}
-    http:
-      paths:
-        - path: /
-          backend:
-            serviceName: {{ .Release.Name }}-astro-ui
-            servicePort: astro-ui-http
-  {{ else -}}
   rules:
   - host: app.{{ .Values.global.baseDomain }}
     http:
@@ -67,7 +50,6 @@ spec:
               name: {{ .Release.Name }}-astro-ui
               port:
                 name: astro-ui-http
-  {{- end -}}
 {{- end }}
 ---
 ###############################
@@ -86,8 +68,11 @@ metadata:
     heritage: {{ .Release.Service }}
   annotations:
     {{- if .Values.global.authSidecar.enabled  }}
-{{- toYaml .Values.global.extraAnnotations | nindent 4 }}
+      {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- else }}
+    {{- if .Values.global.extraAnnotations }}
+{{- toYaml .Values.global.extraAnnotations | nindent 4 }}
+    {{- end }}
     kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
     kubernetes.io/tls-acme: {{ eq .Values.global.acme true | quote }}
     nginx.ingress.kubernetes.io/custom-http-errors: "404"
@@ -108,16 +93,6 @@ spec:
       hosts:
         - {{ .Values.global.baseDomain }}
   {{- end }}
-  {{ if semverCompare "< 1.19-0" .Capabilities.KubeVersion.Version -}}
-  rules:
-  - host: {{ .Values.global.baseDomain }}
-    http:
-      paths:
-        - path: /
-          backend:
-            serviceName: {{ .Release.Name }}-astro-ui
-            servicePort: astro-ui-http
-  {{ else -}}
   rules:
   - host: {{ .Values.global.baseDomain }}
     http:
@@ -129,5 +104,4 @@ spec:
               name: {{ .Release.Name }}-astro-ui
               port:
                 name: astro-ui-http
-{{- end }}
 {{- end }}

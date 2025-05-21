@@ -20,6 +20,7 @@ data:
 
     http {
       access_log /dev/stdout;
+      client_max_body_size {{ .Values.nginx.maxBodySize }};
 
       upstream elasticsearch {
         server {{ .Release.Name }}-elasticsearch.{{ .Release.Namespace }}:{{ .Values.common.ports.http }};

@@ -138,6 +138,21 @@ class TestRegistryStatefulset:
         )
         assert len(docs) == 0
 
+    def test_astronomer_registry_statefulset_with_scc_enabled(self, kube_version):
+        """Test that helm renders scc template for astronomer registry."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"astronomer": {"registry": {"serviceAccount": {"create": True, "sccEnabled": True}}}},
+            show_only=[
+                "charts/astronomer/templates/registry/registry-scc.yaml",
+            ],
+        )
+        assert len(docs) == 1
+        assert docs[0]["kind"] == "SecurityContextConstraints"
+        assert docs[0]["apiVersion"] == "security.openshift.io/v1"
+        assert docs[0]["metadata"]["name"] == "release-name-registry-anyuid"
+        assert docs[0]["users"] == ["system:serviceaccount:default:release-name-registry"]
+
     @pytest.mark.skip(reason="This test needs rework")
     def test_astronomer_registry_statefulset_with_podSecurityContext_disabled(self, kube_version):
         """Test that helm renders statefulset template for astronomer

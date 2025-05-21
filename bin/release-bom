@@ -2,7 +2,7 @@
 # shellcheck disable=SC1090,SC1091
 set -euo pipefail
 
-BOM_GENERATOR_VERSION=v0.6.0
+BOM_GENERATOR_VERSION=v0.8.0
 
 help() {
   echo "Description:"
@@ -29,7 +29,7 @@ if [[ "${#@}" -eq 0 ]] ; then
   exit 1
 fi
 
-version="$1"
+version="${1#v}"
 shift
 repo_url="https://updates.astronomer.io/astronomer-software/releases"
 bucket_path="gs://updates.astronomer.io/astronomer-software/releases"
