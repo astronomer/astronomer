@@ -159,7 +159,7 @@ def find_all_pod_manager_templates() -> list[str]:
 
 @pytest.mark.parametrize("template", list(pod_manager_data.keys()))
 def test_template_supports_podsecuritycontext(template):
-    """Ensure each pod manager template has support for podSecurityContext."""
+    """Test to Ensure each pod manager template has support for podSecurityContext."""
     values = pod_manager_data[template]
 
     docs = render_chart(show_only=template, values=values)
