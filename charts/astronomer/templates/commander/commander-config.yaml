@@ -12,10 +12,12 @@ metadata:
     heritage: {{ .Release.Service }}
 data:
   metadata.yaml: |
-    dataplane_id: {{ randAlphaNum 8 | quote }}
-    commander_url: ""
-    kubernetes_version: ""
-    dataplane_url: ""
-    commander_version: ""
-    helm_chart_version: ""
+    "dataplaneChartVersion": {{ env "COMMANDER_DATAPLANE_CHART_VERSION" | default "" | quote }}
+    "cloudProvider": {{ env "COMMANDER_CLOUD_PROVIDER" | default "" | quote }}
+    "commanderVersion": {{ env "COMMANDER_VERSION" | default "" | quote }}
+    "commanderUrl": {{ env "COMMANDER_URL" | default "" | quote }}
+    "dataplaneUrl": {{ env "COMMANDER_DATAPLANE_URL" | default "" | quote }}
+    "dataplaneId": {{ env "COMMANDER_DATAPLANE_ID" | default (randAlphaNum 8) | quote }}
+    "region": {{ env "COMMANDER_REGION" | default "" | quote }}
+    "baseDomain": {{ env "COMMANDER_BASE_DOMAIN" | default "" | quote }}
 {{- end }}
