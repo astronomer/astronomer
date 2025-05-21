@@ -29,10 +29,6 @@ dependencies:
     condition: global.kubeStateEnabled
     tags:
       - monitoring
-  - name: prometheus-node-exporter
-    condition: global.nodeExporterEnabled
-    tags:
-      - monitoring
   - name: prometheus-postgres-exporter
     condition: global.prometheusPostgresExporterEnabled
     tags:
