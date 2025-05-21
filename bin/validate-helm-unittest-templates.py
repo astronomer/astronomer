@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Validate that all referenced templates in helm unittest files exist."""
 
-from pathlib import Path, PosixPath
-import yaml
 import sys
+from pathlib import Path, PosixPath
 
+import yaml
 
 this_script = Path(__file__)
 git_root = this_script.resolve().parent.parent

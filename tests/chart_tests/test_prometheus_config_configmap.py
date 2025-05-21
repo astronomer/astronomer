@@ -1,8 +1,9 @@
-from tests.chart_tests.helm_template_generator import render_chart
-import pytest
-from tests import supported_k8s_versions
-import yaml
 import jmespath
+import pytest
+import yaml
+
+from tests import supported_k8s_versions
+from tests.utils.chart import render_chart
 
 prometheus_job = {
     "job_name": "prometheus",

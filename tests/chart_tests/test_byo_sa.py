@@ -1,9 +1,9 @@
 import pytest
 from deepmerge import always_merger
 
-from tests import supported_k8s_versions, git_root_dir, get_service_account_name_from_doc
-from tests.chart_tests import get_all_features
-from tests.chart_tests.helm_template_generator import render_chart
+from tests import git_root_dir, supported_k8s_versions
+from tests.utils import get_all_features, get_service_account_name_from_doc
+from tests.utils.chart import render_chart
 
 
 def find_all_pod_manager_templates() -> list[str]:
