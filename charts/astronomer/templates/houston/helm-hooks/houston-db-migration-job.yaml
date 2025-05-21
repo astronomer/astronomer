@@ -43,6 +43,7 @@ spec:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       restartPolicy: Never
       serviceAccountName: {{ template "houston.bootstrapperServiceAccountName" . }}
+      securityContext: {{ toYaml .Values.houston.podSecurityContext | nindent 12 }}
       {{- if and (not .Values.houston.airflowBackendSecretName) (not .Values.houston.airflowBackendConnection) (not .Values.houston.backendSecretName) (not .Values.houston.backendConnection) }}
       initContainers:
         - name: wait-for-db
@@ -67,7 +68,7 @@ spec:
         - name: houston-bootstrapper
           image: {{ template "dbBootstrapper.image" . }}
           imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
-          securityContext: {{ toYaml .Values.houston.podSecurityContext | nindent 12 }}
+          securityContext: {{ toYaml .Values.securityContext | nindent 12 }}
           resources: {{ toYaml .Values.houston.resources | nindent 12 }}
           env:
             - name: BOOTSTRAP_DB
