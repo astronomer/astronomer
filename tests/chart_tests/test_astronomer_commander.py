@@ -30,6 +30,15 @@ class TestAstronomerCommander:
         assert env_vars["COMMANDER_UPGRADE_TIMEOUT"] == "600"
         assert "COMMANDER_MANAGE_NAMESPACE_RESOURCE" not in env_vars
 
+        assert "COMMANDER_DATAPLANE_CHART_VERSION" in env_vars
+        assert "COMMANDER_CLOUD_PROVIDER" in env_vars
+        assert "COMMANDER_VERSION" in env_vars
+        assert "COMMANDER_URL" in env_vars
+        assert "COMMANDER_DATAPLANE_URL" in env_vars
+        assert "COMMANDER_DATAPLANE_ID" in env_vars
+        assert "COMMANDER_REGION" in env_vars
+        assert "COMMANDER_BASE_DOMAIN" in env_vars
+
     def test_astronomer_commander_deployment_upgrade_timeout(self, kube_version):
         """Test that helm renders a good deployment template for
         astronomer/commander.
