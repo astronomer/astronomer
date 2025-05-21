@@ -1,0 +1,23 @@
+{{- if .Values.global.dataplane.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-commander-config
+  labels:
+    component: commander
+    tier: astronomer
+    plane: dataplane
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+data:
+  metadata.yaml: |
+    "dataplaneChartVersion": {{ env "COMMANDER_DATAPLANE_CHART_VERSION" | default "" | quote }}
+    "cloudProvider": {{ env "COMMANDER_CLOUD_PROVIDER" | default "" | quote }}
+    "commanderVersion": {{ env "COMMANDER_VERSION" | default "" | quote }}
+    "commanderUrl": {{ env "COMMANDER_URL" | default "" | quote }}
+    "dataplaneUrl": {{ env "COMMANDER_DATAPLANE_URL" | default "" | quote }}
+    "dataplaneId": {{ env "COMMANDER_DATAPLANE_ID" | default (randAlphaNum 8) | quote }}
+    "region": {{ env "COMMANDER_REGION" | default "" | quote }}
+    "baseDomain": {{ env "COMMANDER_BASE_DOMAIN" | default "" | quote }}
+{{- end }}
