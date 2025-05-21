@@ -64,8 +64,6 @@ nats:
     # initialDelaySeconds: 10
     # timeoutSeconds: 5
 
-  podSecurityContext: {}
-
   # Server settings.
   limits:
     maxConnections:
