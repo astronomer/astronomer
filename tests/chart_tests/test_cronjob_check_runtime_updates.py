@@ -1,6 +1,8 @@
-from tests.chart_tests.helm_template_generator import render_chart
 import pytest
-from tests import get_containers_by_name, supported_k8s_versions
+
+from tests import supported_k8s_versions
+from tests.utils import get_containers_by_name
+from tests.utils.chart import render_chart
 
 default_houston_resource_spec = {"limits": {"cpu": "1000m", "memory": "2048Mi"}, "requests": {"cpu": "500m", "memory": "1024Mi"}}
 

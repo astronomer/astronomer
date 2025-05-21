@@ -3,15 +3,16 @@
 Script to sign all container images in the Astronomer release JSON using cosign.
 """
 
+import argparse
+import base64
+import getpass
 import json
 import os
 import subprocess
 import sys
-import getpass
-import requests
-import base64
-import argparse
 import tempfile
+
+import requests
 
 
 def check_requirements():

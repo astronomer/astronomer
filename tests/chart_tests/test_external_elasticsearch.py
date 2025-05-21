@@ -1,12 +1,13 @@
 import base64
+import pathlib
 
 import jmespath
 import pytest
 import yaml
-import pathlib
 
-from tests import get_containers_by_name, supported_k8s_versions
-from tests.chart_tests.helm_template_generator import render_chart
+from tests import supported_k8s_versions
+from tests.utils import get_containers_by_name
+from tests.utils.chart import render_chart
 
 secret = base64.b64encode(b"sample-secret").decode()
 

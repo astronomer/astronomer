@@ -2,9 +2,10 @@
 """Discover current git repository state and merge this information into metadata.yaml"""
 
 import datetime
-import subprocess
-import yaml
 import os
+import subprocess
+
+import yaml
 
 
 def get_repo_state() -> dict:
