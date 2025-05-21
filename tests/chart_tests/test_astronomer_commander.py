@@ -40,6 +40,8 @@ class TestAstronomerCommander:
         assert "COMMANDER_DATAPLANE_ID" in env_vars
         assert "COMMANDER_REGION" in env_vars
         assert "COMMANDER_BASE_DOMAIN" in env_vars
+        assert "COMMANDER_DATAPLANE_MODE" in env_vars
+        assert "COMMANDER_HOUSTON_AUTHORIZATION_URL" in env_vars
 
     def test_astronomer_commander_deployment_upgrade_timeout(self, kube_version):
         """Test that helm renders a good deployment template for
