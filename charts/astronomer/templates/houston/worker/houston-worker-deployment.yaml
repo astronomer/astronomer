@@ -104,7 +104,7 @@ spec:
         - name: houston
           image: {{ template "houston.image" . }}
           imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
-          securityContext: {{ toYaml (.Values.houston.podSecurityContext)| nindent 12 }}
+          securityContext: {{ toYaml (.Values.houston.podSecurityContext) | nindent 12 }}
           {{- if .Values.houston.worker.command }}
           command:
             {{- toYaml .Values.houston.worker.command | nindent 12 }}
