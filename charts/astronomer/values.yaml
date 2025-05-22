@@ -381,7 +381,6 @@ configSyncer:
   livenessProbe: {}
 
 
-
 commander:
   replicas: 2
   env: []
