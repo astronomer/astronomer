@@ -13,10 +13,9 @@ from tests.chart_tests.helm_template_generator import render_chart
 class TestGlobalPodLabels:
     """Test class for global pod labels functionality across different Kubernetes versions."""
 
-
     KUBERNETES_POD_OBJECTS = {
         "StatefulSet": "spec.template.metadata.labels",
-        "Deployment": "spec.template.metadata.labels", 
+        "Deployment": "spec.template.metadata.labels",
         "CronJob": "spec.jobTemplate.spec.template.metadata.labels",
         "Job": "spec.template.metadata.labels",
         "DaemonSet": "spec.template.metadata.labels",
@@ -25,7 +24,7 @@ class TestGlobalPodLabels:
 
     def _get_nested_value(self, obj, path):
         """Helper to get nested dictionary value using dot notation path."""
-        keys = path.split('.')
+        keys = path.split(".")
         current = obj
         try:
             for key in keys:
@@ -40,10 +39,10 @@ class TestGlobalPodLabels:
 
         for doc in docs:
             # Skip documents without required metadata
-            if not isinstance(doc, dict) or 'kind' not in doc or 'metadata' not in doc:
+            if not isinstance(doc, dict) or "kind" not in doc or "metadata" not in doc:
                 continue
 
-            kind = doc['kind']
+            kind = doc["kind"]
 
             if kind not in self.KUBERNETES_POD_OBJECTS:
                 continue
@@ -53,30 +52,20 @@ class TestGlobalPodLabels:
             if pod_labels is None:
                 continue
 
-            metadata = doc.get('metadata', {})
-            name = metadata.get('name', 'unknown')
-            chart = metadata.get('labels', {}).get('chart', 'None')
+            metadata = doc.get("metadata", {})
+            name = metadata.get("name", "unknown")
+            chart = metadata.get("labels", {}).get("chart", "None")
 
-            pod_docs.append({
-                'name': name,
-                'kind': kind,
-                'chart': chart,
-                'labels': pod_labels
-            })
+            pod_docs.append({"name": name, "kind": kind, "chart": chart, "labels": pod_labels})
 
         return {f"{doc['chart']}_{doc['kind']}_{doc['name']}": doc["labels"] for doc in pod_docs}
-
 
     def init_test_global_pod_labels(self, kube_version):
         """Initialize test data for global pod labels functionality."""
         # Test with global pod labels configured
         chart_values = chart_tests.get_all_features()
         chart_values["global"] = {
-            "podLabels": {
-                "gatekeeper.policy": "approved",
-                "security.level": "high",
-                "cost-center": "engineering"
-            }
+            "podLabels": {"gatekeeper.policy": "approved", "security.level": "high", "cost-center": "engineering"}
         }
 
         docs = render_chart(values=chart_values, kube_version=kube_version)
@@ -111,37 +100,31 @@ class TestGlobalPodLabels:
     def test_global_pod_labels_do_not_affect_non_pod_resources(self, kube_version):
         """Test that global pod labels are not applied to non-pod resources."""
         chart_values = chart_tests.get_all_features()
-        chart_values["global"] = {
-            "podLabels": {
-                "should-not-appear": "on-services-or-configmaps"
-            }
-        }
+        chart_values["global"] = {"podLabels": {"should-not-appear": "on-services-or-configmaps"}}
 
         docs = render_chart(values=chart_values, kube_version=kube_version)
 
         services = jmespath.search("[?kind == `Service`]", docs)
         for service in services:
             service_labels = service.get("metadata", {}).get("labels", {})
-            assert "should-not-appear" not in service_labels, f"Pod labels should not appear on Service {service['metadata']['name']}"
+            assert "should-not-appear" not in service_labels, (
+                f"Pod labels should not appear on Service {service['metadata']['name']}"
+            )
 
         configmaps = jmespath.search("[?kind == `ConfigMap`]", docs)
         for cm in configmaps:
             cm_labels = cm.get("metadata", {}).get("labels", {})
             assert "should-not-appear" not in cm_labels, f"Pod labels should not appear on ConfigMap {cm['metadata']['name']}"
 
-        secrets = jmespath.search("[?kind == `Secret`]", docs) 
+        secrets = jmespath.search("[?kind == `Secret`]", docs)
         for secret in secrets:
             secret_labels = secret.get("metadata", {}).get("labels", {})
             assert "should-not-appear" not in secret_labels, f"Pod labels should not appear on Secret {secret['metadata']['name']}"
 
     def test_global_pod_labels_merge_with_existing_labels(self, kube_version):
         """Test that global pod labels merge correctly with existing component labels."""
-        chart_values = chart_tests.get_all_features() 
-        chart_values["global"] = {
-            "podLabels": {
-                "global-label": "global-value"
-            }
-        }
+        chart_values = chart_tests.get_all_features()
+        chart_values["global"] = {"podLabels": {"global-label": "global-value"}}
 
         docs = render_chart(values=chart_values, kube_version=kube_version)
 
