@@ -38,7 +38,6 @@ class TestGlobalPodLabels:
         pod_docs = []
 
         for doc in docs:
-            # Skip documents without required metadata
             if not isinstance(doc, dict) or "kind" not in doc or "metadata" not in doc:
                 continue
 
@@ -62,7 +61,6 @@ class TestGlobalPodLabels:
 
     def init_test_global_pod_labels(self, kube_version):
         """Initialize test data for global pod labels functionality."""
-        # Test with global pod labels configured
         chart_values = chart_tests.get_all_features()
         chart_values["global"] = {
             "podLabels": {"gatekeeper.policy": "approved", "security.level": "high", "cost-center": "engineering"}
