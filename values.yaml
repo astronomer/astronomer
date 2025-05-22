@@ -5,6 +5,10 @@ global:
   # Base domain for all subdomains exposed through ingress
   baseDomain: ~
 
+  # To implement configurable pod labels across all pods in the Astronomer chart
+  podLabels:
+    gatekeeper.policy: "approved"
+
   # Name of secret containing TLS certificate
   tlsSecret: astronomer-tls
 
