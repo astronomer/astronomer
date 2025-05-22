@@ -41,7 +41,7 @@ spec:
     spec:
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
-      securityContext: {{ toYaml .Values.commander.podSecurityContext| nindent 8 }}
+      securityContext: {{ toYaml .Values.commander.podSecurityContext | nindent 8 }}
       affinity:
 {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 8 }}
       tolerations:
