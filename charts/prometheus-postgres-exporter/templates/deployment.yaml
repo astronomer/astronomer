@@ -28,6 +28,7 @@ spec:
         version: {{ .Chart.Version }}
         release: {{ .Release.Name }}
         component: prometheus-postgres-exporter
+        {{- include "global.podLabels" . | nindent 8 }}
 {{- if .Values.podLabels }}
 {{ toYaml .Values.podLabels | trim | indent 8 }}
 {{- end }}

@@ -31,6 +31,7 @@ spec:
         role: slave
         tier: astronomer
         version: {{ .Chart.Version }}
+        {{- include "global.podLabels" . | nindent 8 }}
 {{- with .Values.slave.podLabels }}
 {{ toYaml . | indent 8 }}
 {{- end }}

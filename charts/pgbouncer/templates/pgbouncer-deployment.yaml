@@ -32,6 +32,7 @@ spec:
         release: {{ .Release.Name }}
         component: pgbouncer
         version: {{ .Chart.Version }}
+        {{- include "global.podLabels" . | nindent 8 }}
         tier: astronomer
         {{- range $key, $value :=  .Values.global.pgbouncer.extraLabels }}
         {{ $key | replace "-" "_" }}: {{ $value | quote }}
