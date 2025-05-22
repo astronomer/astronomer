@@ -6,8 +6,7 @@ global:
   baseDomain: ~
 
   # To implement configurable pod labels across all pods in the Astronomer chart
-  podLabels:
-    gatekeeper.policy: "approved"
+  podLabels: {}
 
   # Name of secret containing TLS certificate
   tlsSecret: astronomer-tls
