@@ -34,6 +34,7 @@ spec:
         role: exporter
         app: {{ template "elasticsearch.name" . }}-exporter
         version: {{ .Chart.Version }}
+        {{- include "global.podLabels" . | nindent 8 }}
 {{- if or .Values.common.podAnnotations .Values.exporter.podAnnotations .Values.global.podAnnotations }}
       annotations:
 {{- end }}
