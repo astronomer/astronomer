@@ -128,7 +128,7 @@ class TestPrometheusAlertConfigmap:
         )
 
         groups = yaml.safe_load(docs[0]["data"]["alerts"])["groups"]
-        assert len(groups) == 22
+        assert len(groups) == 16
         assert [x["rules"] for x in groups if x["name"] == section] == [[]]
         assert len([x["rules"] for x in groups if x["name"] != section]) == 21
 
@@ -159,7 +159,7 @@ class TestPrometheusAlertConfigmap:
         )
 
         groups = yaml.safe_load(docs[0]["data"]["alerts"])["groups"]
-        assert len(groups) == 22
+        assert len(groups) == 16
         assert [x["rules"] for x in groups if x["name"] == section] == [
             [{"alert": "some-happy-alert", "expr": "sum(all-happiness)"}]
         ]
