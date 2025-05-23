@@ -33,6 +33,7 @@ spec:
         app: {{ template "alertmanager.name" . }}
         version: {{ .Chart.Version }}
         plane: {{ .Values.global.plane.mode }}
+        {{- include "global.podLabels" . | nindent 8 }}
       annotations:
         checksum/configmap: {{ include (print $.Template.BasePath "/alertmanager-configmap.yaml") . | sha256sum }}
 {{- if .Values.global.podAnnotations }}

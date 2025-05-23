@@ -65,3 +65,9 @@ imagePullSecrets:
   - name: {{ .Values.global.privateRegistry.secretName }}
 {{- end -}}
 {{- end -}}
+
+{{- define "global.podLabels" -}}
+{{- if .Values.global.podLabels }}
+{{- toYaml .Values.global.podLabels }}
+{{- end }}
+{{- end }}

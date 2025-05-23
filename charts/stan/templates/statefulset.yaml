@@ -50,6 +50,7 @@ spec:
         release: {{ .Release.Name }}
         component: stan
         chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+        {{- include "global.podLabels" . | nindent 8 }}
     spec:
       serviceAccountName: {{ template "stan.serviceAccountName" . }}
 {{- include "stan.imagePullSecrets" . | indent 6 }}

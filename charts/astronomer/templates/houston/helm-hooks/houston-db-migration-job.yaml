@@ -28,6 +28,7 @@ spec:
         app: houston-db-migrations
         version: {{ .Chart.Version }}
         plane: {{ .Values.global.plane.mode }}
+        {{- include "global.podLabels" . | nindent 8 }}
       {{- if or .Values.global.podAnnotations .Values.global.istio.enabled }}
       annotations:
         {{- if .Values.global.istio.enabled }}
