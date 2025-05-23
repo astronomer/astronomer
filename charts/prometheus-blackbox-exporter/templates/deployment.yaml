@@ -25,6 +25,7 @@ spec:
         tier: monitoring
         app: {{ template "prometheus-blackbox-exporter.name" . }}
         version: {{ .Chart.Version }}
+        {{- include "global.podLabels" . | nindent 8 }}
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
         {{- if .Values.global.podAnnotations }}

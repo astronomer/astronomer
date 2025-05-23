@@ -42,6 +42,7 @@ spec:
         release: {{ .Release.Name }}
         app: registry
         version: {{ .Chart.Version }}
+        {{- include "global.podLabels" . | nindent 8 }}
       annotations:
         checksum/configmap: {{ include (print $.Template.BasePath "/registry/registry-configmap.yaml") . | sha256sum }}
 {{- if .Values.global.podAnnotations }}

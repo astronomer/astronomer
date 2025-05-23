@@ -18,6 +18,7 @@ spec:
   template:
     metadata:
       labels: {{ include "prometheus-node-exporter.labels" . | indent 8 }}
+      {{- include "global.podLabels" . | nindent 8 }}
       {{- if or  .Values.global.podAnnotations .Values.podAnnotations }}
       annotations:
       {{- if .Values.global.podAnnotations }}

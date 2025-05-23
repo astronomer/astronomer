@@ -27,6 +27,7 @@ spec:
         release: {{ .Release.Name }}
         app: {{ template "nginx.name" . }}
         version: {{ .Chart.Version }}
+        {{- include "global.podLabels" . | nindent 8 }}
 {{- if or .Values.global.podAnnotations .Values.defaultBackend.podAnnotations }}
       annotations:
 {{- if .Values.global.podAnnotations }}
