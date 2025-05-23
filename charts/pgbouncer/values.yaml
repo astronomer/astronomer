@@ -9,6 +9,8 @@ image:
 securityContext:
   runAsNonRoot: true
 
+podSecurityContext: {}
+
 internalPort: 5432
 servicePort: 5432
 

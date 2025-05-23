@@ -16,6 +16,8 @@ securityContext:
   runAsNonRoot: true
   runAsUser: 1000
 
+podSecurityContext: {}
+
 clusterName: "astronomer"
 
 replicas: 1

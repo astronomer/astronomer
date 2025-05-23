@@ -41,6 +41,7 @@ spec:
             {{- include "global.podLabels" . | nindent 12 }}
         spec:
           serviceAccountName: {{ template "elasticsearch.serviceAccountName" . }}
+          securityContext: {{ toYaml .Values.curator.podSecurityContext | nindent 12 }}
           nodeSelector: {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 12 }}
           affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 12 }}
           tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 12 }}

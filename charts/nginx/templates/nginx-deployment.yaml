@@ -43,6 +43,7 @@ spec:
 {{- end }}
     spec:
       serviceAccountName: {{ template "nginx.serviceAccountName" . }}
+      securityContext: {{ toYaml .Values.podSecurityContext | nindent 8 }}
 {{- include "nginx.imagePullSecrets" . | indent 6 }}
       containers:
         - name: nginx
