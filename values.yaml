@@ -329,6 +329,14 @@ global:
     extraLabels: []
       # do-funky-injection: maybe
 
+  # Enable default mysql database.
+  # This is not recommended for production.
+  mysql:
+    enabled: false
+    servicePort: "3306"
+    username: "root"
+    password: "root"
+
 #################################
 ## Default tagged groups enabled
 #################################
