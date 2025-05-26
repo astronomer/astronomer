@@ -6,9 +6,9 @@ from tests.chart_tests.helm_template_generator import render_chart
 include_kind_list = ["Deployment", "DaemonSet", "StatefulSet", "ReplicaSet"]
 
 default_podsecuritycontext = {
-    "fsGroup": 1000,
-    "runAsGroup": 1000,
-    "runAsUser": 1000,
+    "fsGroup": 9999,
+    "runAsGroup": 9998,
+    "runAsUser": 7788,
 }
 
 pod_manager_data = {
