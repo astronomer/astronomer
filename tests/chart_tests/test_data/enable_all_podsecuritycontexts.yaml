@@ -1,0 +1,225 @@
+# This file should enable and customize every available podSecurityContext. This serves as
+# a way to test that every podSecurityContext is customizable, and as a document about how to configure every podSecurityContext.
+# In order to test every available podSecurityContext, this should also enable every available feature.
+
+airflow-operator:
+  podSecurityContext:
+    fsGroup: 9999
+    runAsGroup: 9998
+    runAsUser: 7788
+
+alertmanager:
+  podSecurityContext:
+    fsGroup: 9999
+    runAsGroup: 9998
+    runAsUser: 7788
+
+astronomer:
+  astroUI:
+    podSecurityContext:
+      fsGroup: 9999
+      runAsGroup: 9998
+      runAsUser: 7788
+  commander:
+    podSecurityContext:
+      fsGroup: 9999
+      runAsGroup: 9998
+      runAsUser: 7788
+  houston:
+    podSecurityContext:
+      fsGroup: 9999
+      runAsGroup: 9998
+      runAsUser: 7788
+    waitForDB:
+      podSecurityContext:
+        fsGroup: 9999
+        runAsGroup: 9998
+        runAsUser: 7788
+    bootstrapper:
+      podSecurityContext:
+        fsGroup: 9999
+        runAsGroup: 9998
+        runAsUser: 7788
+    worker:
+      podSecurityContext:
+        fsGroup: 9999
+        runAsGroup: 9998
+        runAsUser: 7788
+  registry:
+    podSecurityContext:
+      fsGroup: 9999
+      runAsGroup: 9998
+      runAsUser: 7788
+
+elasticsearch:
+  podSecurityContext:
+    fsGroup: 9999
+    runAsGroup: 9998
+    runAsUser: 7788
+  exporter:
+    podSecurityContext:
+      fsGroup: 9999
+      runAsGroup: 9998
+      runAsUser: 7788
+  nginx:
+    podSecurityContext:
+      fsGroup: 9999
+      runAsGroup: 9998
+      runAsUser: 7788
+
+external-es-proxy:
+  podSecurityContext:
+    fsGroup: 9999
+    runAsGroup: 9998
+    runAsUser: 7788
+
+fluentd:
+  pod:
+    securityContext:
+      fsGroup: 9999
+      runAsGroup: 9998
+      runAsUser: 7788
+
+grafana:
+  podSecurityContext:
+    fsGroup: 9999
+    runAsGroup: 9998
+    runAsUser: 7788
+  waitForDB:
+    podSecurityContext:
+      fsGroup: 9999
+      runAsGroup: 9998
+      runAsUser: 7788
+  bootstrapper:
+    podSecurityContext:
+      fsGroup: 9999
+      runAsGroup: 9998
+      runAsUser: 7788
+
+kibana:
+  podSecurityContext:
+    fsGroup: 9999
+    runAsGroup: 9998
+    runAsUser: 7788
+
+kube-state:
+  podSecurityContext:
+    fsGroup: 9999
+    runAsGroup: 9998
+    runAsUser: 7788
+
+nats:
+  podSecurityContext:
+    fsGroup: 9999
+    runAsGroup: 9998
+    runAsUser: 7788
+  reloader:
+    podSecurityContext:
+      fsGroup: 9999
+      runAsGroup: 9998
+      runAsUser: 7788
+  exporter:
+    enabled: true
+    podSecurityContext:
+      fsGroup: 9999
+      runAsGroup: 9998
+      runAsUser: 7788
+
+nginx:
+  podSecurityContext:
+    fsGroup: 9999
+    runAsGroup: 9998
+    runAsUser: 7788
+  defaultBackend:
+    podSecurityContext:
+      fsGroup: 9999
+      runAsGroup: 9998
+      runAsUser: 7788
+
+pgbouncer:
+  podSecurityContext:
+    fsGroup: 9999
+    runAsGroup: 9998
+    runAsUser: 7788
+
+postgresql:
+  securityContext:
+    fsGroup: 9999
+    runAsGroup: 9998
+    runAsUser: 7788
+  podSecurityContext:
+    fsGroup: 9999
+    runAsGroup: 9998
+    runAsUser: 7788
+  replication:
+    enabled: true
+
+prometheus:
+  podSecurityContext:
+    fsGroup: 9999
+    runAsGroup: 9998
+    runAsUser: 7788
+  configMapReloader:
+    podSecurityContext:
+      fsGroup: 9999
+      runAsGroup: 9998
+      runAsUser: 7788
+  filesdReloader:
+    podSecurityContext:
+      fsGroup: 9999
+      runAsGroup: 9998
+      runAsUser: 7788
+
+prometheus-blackbox-exporter:
+  podSecurityContext:
+    fsGroup: 9999
+    runAsGroup: 9998
+    runAsUser: 7788
+
+prometheus-node-exporter:
+  podSecurityContext:
+    fsGroup: 9999
+    runAsGroup: 9998
+    runAsUser: 7788
+
+prometheus-postgres-exporter:
+  podSecurityContext:
+    fsGroup: 9999
+    runAsGroup: 9998
+    runAsUser: 7788
+
+stan:
+  podSecurityContext:
+    fsGroup: 9999
+    runAsGroup: 9998
+    runAsUser: 7788
+  stan:
+    nats:
+      podSecurityContext:
+        fsGroup: 9999
+        runAsGroup: 9998
+        runAsUser: 7788
+  exporter:
+    podSecurityContext:
+      fsGroup: 9999
+      runAsGroup: 9998
+      runAsUser: 7788
+  waitForNatsServer:
+    podSecurityContext:
+      fsGroup: 9999
+      runAsGroup: 9998
+      runAsUser: 7788
+
+global:
+  airflowOperator:
+    enabled: true
+  authSidecar:
+    enabled: true
+  customLogging:
+    awsServiceAccountAnnotation: "aws-annotation-value"
+    enabled: true
+  pgbouncer:
+    enabled: true
+  postgresqlEnabled: true
+  prometheusPostgresExporterEnabled: true
+  openshiftEnabled: false
