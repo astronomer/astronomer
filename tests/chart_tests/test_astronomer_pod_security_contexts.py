@@ -12,7 +12,6 @@ default_podsecuritycontext = {
     "runAsUser": 7788,
 }
 
-# Load test data from YAML file
 enable_all_podsecuritycontexts = yaml.safe_load(
     ((git_root_dir) / "tests" / "chart_tests" / "test_data" / "enable_all_podsecuritycontexts.yaml").read_text()
 )
@@ -51,18 +50,13 @@ class TestPodSecurityContext:
 
         assert security_context is not None, f"No securityContext found in {doc_name}"
 
-        # Check that at least fsGroup is set (minimum requirement)
         assert "fsGroup" in security_context, f"fsGroup not found in securityContext for {doc_name}"
 
-        # For most charts, we expect our custom values
         for key, value in default_podsecuritycontext.items():
             actual_value = security_context.get(key)
 
-            # Some charts might not support all fields or have different defaults
-            # Log the discrepancy but only fail if the field is completely missing when expected
             if actual_value != value:
                 print(f"WARNING: {doc_name} - Expected {key}={value}, got {actual_value}")
 
-            # Only assert on fsGroup for now, as it's the most commonly supported field
             if key == "fsGroup":
                 assert actual_value == value, f"Expected {key}={value} in securityContext, got {actual_value} for {doc_name}"
