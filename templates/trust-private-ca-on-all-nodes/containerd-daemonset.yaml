@@ -38,6 +38,7 @@ spec:
 {{ toYaml .Values.global.podAnnotations | indent 8 }}
         {{- end }}
     spec:
+      serviceAccountName: "default"
     {{- if .Values.global.privateCaCertsAddToHost.priorityClassName }}
       priorityClassName: {{ .Values.global.privateCaCertsAddToHost.priorityClassName }}
     {{- end }}
