@@ -36,9 +36,9 @@ spec:
 {{ toYaml .Values.houston.podAnnotations | indent 8 }}
 {{- end }}
     spec:
+      securityContext: {{ toYaml .Values.houston.podSecurityContext | nindent 8 }}
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
-      securityContext: {{ toYaml .Values.houston.podSecurityContext | nindent 8 }}
       affinity:
 {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 8 }}
       tolerations:
