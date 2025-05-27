@@ -35,11 +35,11 @@ spec:
     - secretName: {{ .Values.global.tlsSecret }}
   {{- end }}
       hosts:
-        - registry.{{ .Values.global.baseDomain }}
+        - registry.{{ .Values.global.baseDomain }}{{ .Values.global.plane.domainSuffix }}
   {{- end }}
   {{ if semverCompare "< 1.19-0" .Capabilities.KubeVersion.Version -}}
   rules:
-  - host: registry.{{ .Values.global.baseDomain }}
+  - host: registry.{{ .Values.global.baseDomain }}{{ .Values.global.plane.domainSuffix }}
     http:
       paths:
         - path: /
@@ -48,7 +48,7 @@ spec:
             servicePort: registry-http
   {{ else -}}
   rules:
-  - host: registry.{{ .Values.global.baseDomain }}
+  - host: registry.{{ .Values.global.baseDomain }}{{ .Values.global.plane.domainSuffix }}
     http:
       paths:
         - path: /
