@@ -41,23 +41,28 @@ spec:
       hosts:
         - app.{{ .Values.global.baseDomain }}{{ .Values.global.plane.domainSuffix }}
   {{- end }}
+  {{ if semverCompare "< 1.19-0" .Capabilities.KubeVersion.Version -}}
   rules:
   - host: app.{{ .Values.global.baseDomain }}{{ .Values.global.plane.domainSuffix }}
     http:
       paths:
         - path: /
-          {{ if semverCompare "< 1.19-0" .Capabilities.KubeVersion.Version -}}
           backend:
             serviceName: {{ .Release.Name }}-astro-ui
             servicePort: astro-ui-http
-          {{ else -}}
+  {{ else -}}
+  rules:
+  - host: app.{{ .Values.global.baseDomain }}{{ .Values.global.plane.domainSuffix }}
+    http:
+      paths:
+        - path: /
           pathType: Prefix
           backend:
             service:
               name: {{ .Release.Name }}-astro-ui
               port:
                 name: astro-ui-http
-          {{- end -}}
+  {{- end -}}
 {{- end }}
 {{- end }}
 ---
