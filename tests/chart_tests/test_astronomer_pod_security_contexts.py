@@ -38,12 +38,11 @@ def get_pod_spec_from_doc(doc):
 
     if kind in ["Deployment", "DaemonSet", "StatefulSet", "ReplicaSet"]:
         return doc.get("spec", {}).get("template", {}).get("spec", {})
-    elif kind == "Job":
+    if kind == "Job":
         return doc.get("spec", {}).get("template", {}).get("spec", {})
-    elif kind == "CronJob":
+    if kind == "CronJob":
         return doc.get("spec", {}).get("jobTemplate", {}).get("spec", {}).get("template", {}).get("spec", {})
-    else:
-        return {}
+    return {}
 
 
 class TestSecurityContexts:
@@ -70,7 +69,6 @@ class TestSecurityContexts:
 
         assert pod_security_context is not None, f"No securityContext found in {doc_kind}/{doc_name}"
 
-
         for key, value in default_podsecuritycontext.items():
             actual_value = pod_security_context.get(key)
 
@@ -78,7 +76,9 @@ class TestSecurityContexts:
                 print(f"WARNING: {doc_kind}/{doc_name} - Expected {key}={value}, got {actual_value}")
 
             if key == "fsGroup":
-                assert actual_value == value, f"Expected {key}={value} in securityContext, got {actual_value} for {doc_kind}/{doc_name}"
+                assert actual_value == value, (
+                    f"Expected {key}={value} in securityContext, got {actual_value} for {doc_kind}/{doc_name}"
+                )
 
     @pytest.mark.parametrize("doc", filtered_docs)
     def test_template_supports_containersecuritycontext(self, doc):
@@ -101,14 +101,17 @@ class TestSecurityContexts:
                 print(f"No securityContext found in container '{container_name}' of {doc_kind}/{doc_name}")
                 print(f"Container keys: {container.keys()}")
 
-            assert container_security_context is not None, f"No securityContext found in container '{container_name}' of {doc_kind}/{doc_name}"
+            assert container_security_context is not None, (
+                f"No securityContext found in container '{container_name}' of {doc_kind}/{doc_name}"
+            )
 
             for key, expected_value in default_containersecuritycontext.items():
                 actual_value = container_security_context.get(key)
 
                 if actual_value != expected_value:
-                    print(f"WARNING: {doc_kind}/{doc_name} container '{container_name}' - Expected {key}={expected_value}, got {actual_value}")
-
+                    print(
+                        f"WARNING: {doc_kind}/{doc_name} container '{container_name}' - Expected {key}={expected_value}, got {actual_value}"
+                    )
 
     @pytest.mark.parametrize("doc", filtered_docs)
     def test_all_containers_have_security_context(self, doc):
@@ -128,4 +131,6 @@ class TestSecurityContexts:
             container_name = container.get("name", f"container-{i}")
             container_security_context = container.get("securityContext")
 
-            assert container_security_context is not None, f"Container '{container_name}' in {doc_kind}/{doc_name} must have a securityContext"
+            assert container_security_context is not None, (
+                f"Container '{container_name}' in {doc_kind}/{doc_name} must have a securityContext"
+            )
