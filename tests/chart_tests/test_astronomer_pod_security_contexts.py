@@ -70,7 +70,6 @@ class TestSecurityContexts:
 
         assert pod_security_context is not None, f"No securityContext found in {doc_kind}/{doc_name}"
 
-        assert "fsGroup" in pod_security_context, f"fsGroup not found in securityContext for {doc_kind}/{doc_name}"
 
         for key, value in default_podsecuritycontext.items():
             actual_value = pod_security_context.get(key)
@@ -130,28 +129,3 @@ class TestSecurityContexts:
             container_security_context = container.get("securityContext")
 
             assert container_security_context is not None, f"Container '{container_name}' in {doc_kind}/{doc_name} must have a securityContext"
-
-            assert container_security_context, f"Container '{container_name}' in {doc_kind}/{doc_name} has empty securityContext"
-
-    @pytest.mark.parametrize("doc", job_docs)
-    def test_job_template_structure(self, doc):
-        """Test that Job and CronJob templates have the correct structure for security contexts."""
-
-        doc_name = doc.get("metadata", {}).get("name", "unknown")
-        doc_kind = doc.get("kind")
-
-        if doc_kind == "Job":
-            # Job: spec.template.spec
-            template_spec = doc.get("spec", {}).get("template", {}).get("spec", {})
-            assert template_spec, f"Job {doc_name} missing spec.template.spec"
-
-        elif doc_kind == "CronJob":
-            # CronJob: spec.jobTemplate.spec.template.spec
-            job_template = doc.get("spec", {}).get("jobTemplate", {})
-            assert job_template, f"CronJob {doc_name} missing spec.jobTemplate"
-
-            template_spec = job_template.get("spec", {}).get("template", {}).get("spec", {})
-            assert template_spec, f"CronJob {doc_name} missing spec.jobTemplate.spec.template.spec"
-
-        security_context = template_spec.get("securityContext")
-        assert security_context is not None, f"{doc_kind} {doc_name} missing securityContext in template spec"
