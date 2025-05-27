@@ -79,13 +79,7 @@ global:
   # This is not recommended for production.
   postgresqlEnabled: false
 
-  # Enables a node exporter DaemonSet for node-level metrics
-  #nodeExporterEnabled: true
-
   prometheusPostgresExporterEnabled: false
-
-  # Enables blackbox exporter
-  #blackboxExporterEnabled: false
 
   # make fluentd to gather logs from all available namespaces
   manualNamespaceNamesEnabled: false
@@ -110,9 +104,6 @@ global:
 
   # Enable security context constraints required for OpenShift
   sccEnabled: false
-
-  # Enabled nodeexporter security context constraints required for OpenShift
-  nodeExporterSccEnabled: false
 
   # Enables namespace labels for network policies
   networkNSLabels: false
@@ -522,34 +513,6 @@ stan:
       limits:
         cpu: "250m"
         memory: "100Mi"
-
-#################################
-## Blackbox Exporter configuration
-#################################
-prometheus-blackbox-exporter:
-  # Configure resources
-  resources:
-    requests:
-      cpu: "50m"
-      memory: "70Mi"
-    limits:
-      cpu: "100m"
-      memory: "200Mi"
-
-  # define what astronomer platform services will be checked
-  # for up/down status. Enable this will also include
-  # the required network policies
-  astroServices:
-    commander:
-      enabled: true
-    houston:
-      enabled: true
-    registry:
-      enabled: true
-    elasticsearch:
-      enabled: true
-    kibana:
-      enabled: true
 
 #################################
 ## Elasticsearch configuration

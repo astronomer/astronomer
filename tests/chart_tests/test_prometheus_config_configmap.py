@@ -1,8 +1,9 @@
-from tests.chart_tests.helm_template_generator import render_chart
-import pytest
-from tests import supported_k8s_versions
-import yaml
 import jmespath
+import pytest
+import yaml
+
+from tests import supported_k8s_versions
+from tests.utils.chart import render_chart
 
 prometheus_job = {
     "job_name": "prometheus",
@@ -57,8 +58,7 @@ class TestPrometheusConfigConfigmap:
         ] == [False]
 
     def test_prometheus_config_configmap_with_different_name_and_ns(self, kube_version):
-        """Validate the prometheus config configmap does not conflate
-        deployment name and namespace."""
+        """Validate the prometheus config configmap does not conflate deployment name and namespace."""
         doc = render_chart(
             name="foo-name",
             namespace="bar-ns",
@@ -66,29 +66,31 @@ class TestPrometheusConfigConfigmap:
             show_only=self.show_only,
             values={
                 "global": {
-                    "blackboxExporterEnabled": True,
                     "prometheusPostgresExporterEnabled": True,
-                    "nodeExporterEnabled": True,
                 },
-                "tcpProbe": {"enabled": True},
             },
         )[0]
 
         config_yaml = yaml.safe_load(doc["data"]["config"])
-        targets = next(x["static_configs"][0]["targets"] for x in config_yaml["scrape_configs"] if x["job_name"] == "blackbox HTTP")
+        all_scrape_config_namespaces = {
+            ns_name
+            for x in config_yaml["scrape_configs"]
+            for y in x.get("kubernetes_sd_configs", [])
+            for ns_name in y.get("namespaces", {}).get("names", [])
+        }
 
-        target_checks = [
-            "http://foo-name-commander.bar-ns:8880/healthz",
-            "http://foo-name-elasticsearch.bar-ns:9200/_cluster/health?local=true",
-            "http://foo-name-houston.bar-ns:8871/v1/healthz",
-            "http://foo-name-kibana.bar-ns:5601",
-            "http://foo-name-registry.bar-ns:5000",
-            "https://app.example.com",
-            "https://houston.example.com/v1/healthz",
-            "https://install.example.com",
-            "https://registry.example.com",
-        ]
-        assert all(x in targets for x in target_checks)
+        assert "bar-ns" in all_scrape_config_namespaces
+        assert "foo-name" not in all_scrape_config_namespaces
+
+        all_scrape_config_regexes = {
+            y.get("regex", "") for x in config_yaml["scrape_configs"] for y in x.get("relabel_configs", [])
+        }
+
+        # These assertions only work because we know that namespaces do not show up in our configured regexes.
+        assert "bar-ns" not in all_scrape_config_regexes
+        assert any("foo-name-houston" in str(regex) for regex in all_scrape_config_regexes)
+        assert any("foo-name-nginx" in str(regex) for regex in all_scrape_config_regexes)
+        assert any("foo-name-postgresql-exporter" in str(regex) for regex in all_scrape_config_regexes)
 
     def test_prometheus_config_configmap_external_labels(self, kube_version):
         """Prometheus should have an external_labels section in config.yaml
@@ -141,45 +143,6 @@ class TestPrometheusConfigConfigmap:
                 ],
             }
         ]
-
-    def test_prometheus_config_configmap_with_node_exporter(self, kube_version):
-        """Validate the prometheus config configmap has the node-exporter
-        enabled with params."""
-        doc = render_chart(
-            name="foo-name",
-            namespace="bar-ns",
-            kube_version=kube_version,
-            show_only=self.show_only,
-            values={
-                "global": {
-                    "nodeExporterEnabled": True,
-                },
-            },
-        )[0]
-
-        nodeExporterConfigs = [
-            x for x in yaml.safe_load(doc["data"]["config"])["scrape_configs"] if x["job_name"] == "node-exporter"
-        ]
-        assert nodeExporterConfigs[0]["job_name"] == "node-exporter"
-
-    def test_prometheus_config_configmap_without_node_exporter(self, kube_version):
-        """Validate the prometheus config configmap does not have node-exporter
-        when it is not enabled."""
-        doc = render_chart(
-            name="foo-name",
-            namespace="bar-ns",
-            kube_version=kube_version,
-            show_only=self.show_only,
-            values={
-                "global": {
-                    "nodeExporterEnabled": False,
-                },
-            },
-        )[0]
-
-        config_yaml = yaml.safe_load(doc["data"]["config"])
-        job_names = [x["job_name"] for x in config_yaml["scrape_configs"]]
-        assert "node-exporter" not in job_names
 
     def test_prometheus_config_release_relabel(self, kube_version):
         """Prometheus should have a regex for release name."""

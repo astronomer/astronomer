@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """Show a list of docker images that are deployed by the astronomer platform."""
 
-import subprocess
-from pathlib import Path
-import yaml
 import argparse
-import sys
 import json
-
+import subprocess
+import sys
 from collections import defaultdict
+from pathlib import Path
+
+import yaml
 
 
 def get_containers_from_spec(spec):

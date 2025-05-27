@@ -1,5 +1,6 @@
-from tests.chart_tests.helm_template_generator import render_chart
 import pytest
+
+from tests.utils.chart import render_chart
 
 # Test data structure with chart files and expected storage class names
 parametrization_data = (

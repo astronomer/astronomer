@@ -8,7 +8,7 @@ running pods so we can inspect the run-time environment.
 import json
 import time
 from os import getenv
-from subprocess import check_output, Popen, PIPE
+from subprocess import PIPE, Popen, check_output
 
 import pytest
 import testinfra

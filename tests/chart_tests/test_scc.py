@@ -2,11 +2,11 @@
 # contents of that file are not included in the k8s schema we use for validating
 # k8s manifests. See https://github.com/astronomer/issues/issues/3887
 
-from tests.chart_tests.helm_template_generator import render_chart
 import pytest
-from tests import supported_k8s_versions
 import yaml
 
+from tests import supported_k8s_versions
+from tests.utils.chart import render_chart
 
 show_only = [
     "charts/astronomer/templates/commander/commander-role.yaml",
