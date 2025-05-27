@@ -25,8 +25,8 @@ metadata:
     kubernetes.io/tls-acme: {{ eq .Values.global.acme true | quote }}
     nginx.ingress.kubernetes.io/custom-http-errors: "404"
     nginx.ingress.kubernetes.io/configuration-snippet: |
-      if ($host = '{{ .Values.global.baseDomain }}' ) {
-        rewrite ^ https://app.{{ .Values.global.baseDomain }}$request_uri permanent;
+      if ($host = '{{ .Values.global.baseDomain }}{{ .Values.global.plane.domainSuffix }}' ) {
+        rewrite ^ https://app.{{ .Values.global.baseDomain }}{{ .Values.global.plane.domainSuffix }}$request_uri permanent;
       }
     {{- end }}
 spec:
@@ -39,37 +39,26 @@ spec:
     - secretName: {{ .Values.global.tlsSecret }}
   {{- end }}
       hosts:
-        - app.{{ .Values.global.baseDomain }}
+        - app.{{ .Values.global.baseDomain }}{{ .Values.global.plane.domainSuffix }}
   {{- end }}
-  {{ if semverCompare "< 1.19-0" .Capabilities.KubeVersion.Version -}}
   rules:
-  - host: {{ .Values.global.baseDomain }}
+  - host: app.{{ .Values.global.baseDomain }}{{ .Values.global.plane.domainSuffix }}
     http:
       paths:
         - path: /
+          {{ if semverCompare "< 1.19-0" .Capabilities.KubeVersion.Version -}}
           backend:
             serviceName: {{ .Release.Name }}-astro-ui
             servicePort: astro-ui-http
-  - host: app.{{ .Values.global.baseDomain }}
-    http:
-      paths:
-        - path: /
-          backend:
-            serviceName: {{ .Release.Name }}-astro-ui
-            servicePort: astro-ui-http
-  {{ else -}}
-  rules:
-  - host: app.{{ .Values.global.baseDomain }}
-    http:
-      paths:
-        - path: /
+          {{ else -}}
           pathType: Prefix
           backend:
             service:
               name: {{ .Release.Name }}-astro-ui
               port:
                 name: astro-ui-http
-  {{- end -}}
+          {{- end -}}
+{{- end }}
 {{- end }}
 ---
 ###############################
