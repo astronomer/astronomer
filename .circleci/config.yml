@@ -397,13 +397,13 @@ workflows:
                 - quay.io/astronomer/ap-configmap-reloader:0.14.0
                 - quay.io/astronomer/ap-curator:8.0.21-1
                 - quay.io/astronomer/ap-db-bootstrapper:0.37.3
-                - quay.io/astronomer/ap-default-backend:0.28.30
+                - quay.io/astronomer/ap-default-backend:0.28.31
                 - quay.io/astronomer/ap-elasticsearch-exporter:1.9.0
                 - quay.io/astronomer/ap-elasticsearch:8.15.5
                 - quay.io/astronomer/ap-fluentd:1.17.1
                 - quay.io/astronomer/ap-git-daemon:3.21.3-3
                 - quay.io/astronomer/ap-git-sync-relay:0.1.11
-                - quay.io/astronomer/ap-git-sync:4.4.0-1
+                - quay.io/astronomer/ap-git-sync:4.4.1
                 - quay.io/astronomer/ap-grafana:10.4.18
                 - quay.io/astronomer/ap-houston-api:0.37.23
                 - quay.io/astronomer/ap-init:3.21.3-3
@@ -443,13 +443,13 @@ workflows:
                 - quay.io/astronomer/ap-configmap-reloader:0.14.0
                 - quay.io/astronomer/ap-curator:8.0.21-1
                 - quay.io/astronomer/ap-db-bootstrapper:0.37.3
-                - quay.io/astronomer/ap-default-backend:0.28.30
+                - quay.io/astronomer/ap-default-backend:0.28.31
                 - quay.io/astronomer/ap-elasticsearch-exporter:1.9.0
                 - quay.io/astronomer/ap-elasticsearch:8.15.5
                 - quay.io/astronomer/ap-fluentd:1.17.1
                 - quay.io/astronomer/ap-git-daemon:3.21.3-3
                 - quay.io/astronomer/ap-git-sync-relay:0.1.11
-                - quay.io/astronomer/ap-git-sync:4.4.0-1
+                - quay.io/astronomer/ap-git-sync:4.4.1
                 - quay.io/astronomer/ap-grafana:10.4.18
                 - quay.io/astronomer/ap-houston-api:0.37.23
                 - quay.io/astronomer/ap-init:3.21.3-3
