@@ -12,6 +12,7 @@ metadata:
     release: {{ .Release.Name }}
     chart: {{ template "kibana.chart" . }}
     heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
   annotations:
     {{- if .Values.global.authSidecar.enabled  }}
 {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
@@ -22,7 +23,7 @@ metadata:
     kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
     kubernetes.io/tls-acme: {{ eq .Values.global.acme true | quote }}
     {{- include "houston.internalauthurl" . | indent 4 }}
-    nginx.ingress.kubernetes.io/auth-signin: https://app.{{ .Values.global.baseDomain }}/login
+    nginx.ingress.kubernetes.io/auth-signin: https://app.{{ .Values.global.baseDomain }}{{ .Values.global.plane.domainSuffix }}/login
     nginx.ingress.kubernetes.io/auth-response-headers: authorization, username, email
     nginx.ingress.kubernetes.io/configuration-snippet: |
       more_set_headers "Content-Security-Policy: script-src 'self'";
