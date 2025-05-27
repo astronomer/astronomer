@@ -10,7 +10,7 @@ global:
 
   plane:
     mode: "unified"  # one of: control, data, unified
-
+    domainSuffix: ""    # cluster-id
   # List of secrets containing private CA certificates
   privateCaCerts: []
   # Most users with private CA will already have their node
