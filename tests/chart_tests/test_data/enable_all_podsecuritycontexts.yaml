@@ -50,6 +50,11 @@ astronomer:
       fsGroup: 9999
       runAsGroup: 9998
       runAsUser: 7788
+  configSyncer:
+    podSecurityContext:
+      fsGroup: 9999
+      runAsGroup: 9998
+      runAsUser: 7788
 
 elasticsearch:
   podSecurityContext:
@@ -66,6 +71,14 @@ elasticsearch:
       fsGroup: 9999
       runAsGroup: 9998
       runAsUser: 7788
+  curator:
+    enabled: true 
+    podSecurityContext:
+      fsGroup: 9999
+      runAsGroup: 9998
+      runAsUser: 7788
+    securityContext:  
+      runAsNonRoot: true
 
 external-es-proxy:
   podSecurityContext:
