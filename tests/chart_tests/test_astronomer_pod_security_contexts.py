@@ -41,19 +41,19 @@ class TestPodSecurityContext:
         assert doc.get("kind") in include_kind_list, f"Unexpected document kind: {doc.get('kind')}"
 
         pod_spec = doc.get("spec", {}).get("template", {}).get("spec", {})
-        security_context = pod_spec.get("securityContext")
+        pod_security_context = pod_spec.get("securityContext")
         doc_name = doc.get("metadata", {}).get("name", "unknown")
 
-        if not security_context:
+        if not pod_security_context:
             print(f"No securityContext found in {doc_name}")
             print(f"Pod spec keys: {pod_spec.keys()}")
 
-        assert security_context is not None, f"No securityContext found in {doc_name}"
+        assert pod_security_context is not None, f"No securityContext found in {doc_name}"
 
-        assert "fsGroup" in security_context, f"fsGroup not found in securityContext for {doc_name}"
+        assert "fsGroup" in pod_security_context, f"fsGroup not found in securityContext for {doc_name}"
 
         for key, value in default_podsecuritycontext.items():
-            actual_value = security_context.get(key)
+            actual_value = pod_security_context.get(key)
 
             if actual_value != value:
                 print(f"WARNING: {doc_name} - Expected {key}={value}, got {actual_value}")
