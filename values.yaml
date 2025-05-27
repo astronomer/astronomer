@@ -319,7 +319,7 @@ global:
         tag: 0.19.0-1
       gitSync:
         repository: quay.io/astronomer/ap-git-sync
-        tag: 4.4.0-1
+        tag: 4.4.1
       xcom:
         repository: quay.io/astronomer/ap-alpine
         tag: 3.21.3-2
