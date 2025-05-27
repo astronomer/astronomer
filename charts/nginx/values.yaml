@@ -16,6 +16,7 @@ images:
     tag: 0.28.31
     pullPolicy: IfNotPresent
 
+podSecurityContext: {}
 securityContext:
   runAsUser: 101
   runAsNonRoot: true
@@ -130,6 +131,7 @@ defaultBackend:
   readinessProbe: {}
   livenessProbe: {}
   podAnnotations: {}
+  podSecurityContext: {}
   serviceAccount:
     # Specifies whether a service account should be created
     create: true

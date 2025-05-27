@@ -62,6 +62,7 @@ astroUI:
     # If not set and create is true, a name is generated using the fullname template
     name: ""
   podAnnotations: {}
+  podSecurityContext: {}
 
 houston:
   prismaConnectionLimit: 5
@@ -125,6 +126,7 @@ houston:
 
   podAnnotations: {}
 
+  podSecurityContext: {}
   env: []
 
   # For example
@@ -363,6 +365,9 @@ configSyncer:
     # The name of the service account to use.
     # If not set and create is true, a name is generated using the fullname template
     name: ""
+
+  podSecurityContext: {}
+
   readinessProbe: {}
   livenessProbe: {}
 
@@ -395,6 +400,7 @@ commander:
     # initialDelaySeconds: 10
     # periodSeconds: 10
   podAnnotations: {}
+  podSecurityContext: {}
 
 
   airGapped:
@@ -448,10 +454,7 @@ registry:
     # periodSeconds: 10
     # timeoutSeconds: 5
 
-  podSecurityContext:
-    fsGroup: 1000
-    runAsGroup: 1000
-    runAsUser: 1000
+  podSecurityContext: {}
   extraEnv: []
 
   serviceAccount:

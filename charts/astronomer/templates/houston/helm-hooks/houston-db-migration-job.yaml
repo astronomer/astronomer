@@ -44,6 +44,7 @@ spec:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       restartPolicy: Never
       serviceAccountName: {{ template "houston.bootstrapperServiceAccountName" . }}
+      securityContext: {{ toYaml .Values.houston.podSecurityContext | nindent 12 }}
       {{- if and (not .Values.houston.airflowBackendSecretName) (not .Values.houston.airflowBackendConnection) (not .Values.houston.backendSecretName) (not .Values.houston.backendConnection) }}
       initContainers:
         - name: wait-for-db

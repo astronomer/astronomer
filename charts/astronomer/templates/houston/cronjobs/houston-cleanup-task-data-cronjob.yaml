@@ -38,6 +38,7 @@ spec:
           {{- end }}
         spec:
           serviceAccountName: {{ template "houston.bootstrapperServiceAccountName" . }}
+          securityContext: {{ toYaml .Values.houston.podSecurityContext | nindent 12 }}
           nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 12 }}
           affinity:

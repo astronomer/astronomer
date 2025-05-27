@@ -36,6 +36,7 @@ spec:
 {{- end }}
     spec:
       serviceAccountName: {{ template "astroUI.serviceAccountName" . }}
+      securityContext: {{ toYaml (.Values.astroUI.podSecurityContext) | nindent 8 }}
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
       affinity:

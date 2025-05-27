@@ -21,6 +21,7 @@ images:
 securityContext:
   runAsNonRoot: true
 
+podSecurityContext: {}
 serviceAccount:
   # Specifies whether a ServiceAccount should be created
   create: true
