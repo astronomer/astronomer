@@ -1,0 +1,14 @@
+{
+  "name": "Astronomer \"Software\" dev container",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "settings": {},
+  "extensions": [
+    "charliermarsh.ruff",
+    "ms-python.python",
+    "ms-python.vscode-pylancea",
+    "ms-vscode.makefile-tools",
+    "ms-vscode-remote.remote-containers"
+  ]
+}
