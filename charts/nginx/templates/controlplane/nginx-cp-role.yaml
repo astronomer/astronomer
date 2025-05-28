@@ -1,7 +1,8 @@
-#####################################
-## NGINX Control Plane ClusterRole ##
-#####################################
-{{- if .Values.global.controlplane.enabled }}
+##########################################
+## NGINX Control Plane Role/ClusterRole ##
+##########################################
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+{{- $singleNamespace := .Values.global.singleNamespace }}
 {{- if .Values.global.rbacEnabled }}
 kind: ClusterRole
 apiVersion: {{ template "apiVersion.rbac" . }}
@@ -12,7 +13,7 @@ metadata:
     chart: {{ template "nginx.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
-    plane: controlplane
+    plane: {{ .Values.global.plane.mode }}
 rules:
   - apiGroups:
       - ""

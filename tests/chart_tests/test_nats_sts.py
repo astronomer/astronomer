@@ -256,7 +256,7 @@ class TestNatsStatefulSet:
                 "charts/nats/templates/statefulset.yaml",
             ],
             values={
-                "global": {"controlplane": {"enabled": False}},
+                "global": {"plane": {"mode": "data"}},
             },
         )
         assert len(docs) == 0

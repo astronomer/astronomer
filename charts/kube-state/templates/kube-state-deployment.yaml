@@ -1,8 +1,8 @@
 ###########################
 ## Kube State Deployment ##
 ###########################
-{{- if .Values.global.dataplane.enabled }}
-{{- $useRoles := .Values.global.features.namespacePools.enabled }}
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
+{{- $useRoles := or .Values.global.features.namespacePools.enabled .Values.global.singleNamespace }}
 {{- $namespaces := .Values.global.features.namespacePools.namespaces.names }}
 {{- $namespaces = append $namespaces .Release.Namespace }}
 {{- $namespaceList := join "," $namespaces }}
@@ -17,7 +17,7 @@ metadata:
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
-    plane: dataplane
+    plane: {{ .Values.global.plane.mode }}
 spec:
   replicas: {{ .Values.replicas }}
   selector:
@@ -33,7 +33,7 @@ spec:
         release: {{ .Release.Name }}
         app: {{ template "kube-state.name" . }}
         version: {{ .Chart.Version }}
-        plane: dataplane
+        plane: {{ .Values.global.plane.mode }}
 {{- if or .Values.global.podAnnotations .Values.podAnnotations }}
       annotations:
 {{- if .Values.global.podAnnotations }}

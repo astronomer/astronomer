@@ -1,7 +1,7 @@
 ###################################
 ## NGINX Control Plane ConfigMap ##
 ###################################
-{{- if .Values.global.controlplane.enabled }}
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 {{- $cspPolicyEnabled :=  .Values.cspPolicy.cdnEnabled }}
 {{- $connectsrc :=  eq $cspPolicyEnabled true | ternary .Values.cspPolicy.connectsrc "" }}
 {{- $fontsrc := eq $cspPolicyEnabled true| ternary .Values.cspPolicy.fontsrc "" }}
@@ -15,7 +15,7 @@ metadata:
     chart: {{ template "nginx.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
-    plane: controlplane
+    plane: {{ .Values.global.plane.mode }}
 data:
   # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy
   Content-Security-Policy: >-
