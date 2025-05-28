@@ -418,6 +418,14 @@ commander:
   # Add extra volumes to your commander deployment.
   extraVolumes: []
 
+  # Values for Dataplane Metadata
+  dataplaneChartVersion: ""
+  cloudProvider: ""
+  commanderUrl: ""
+  dataplaneUrl: ""
+  dataplaneId: ""
+  region: ""
+
 registry:
   # flag to bypass secure (tls) authentication to astronomer registry
   enableInsecureAuth: False

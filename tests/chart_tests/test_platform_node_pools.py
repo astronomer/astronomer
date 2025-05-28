@@ -4,7 +4,7 @@ import pytest
 from tests.utils import get_all_features
 from tests.utils.chart import render_chart
 
-ignore_list = ["postgresql", "cert-copy", "node-exporter", "cert-copy-and-toml-update"]
+ignore_list = ["postgresql", "cert-copy", "cert-copy-and-toml-update"]
 
 
 def init_test_pod_spec():
