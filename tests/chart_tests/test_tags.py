@@ -9,7 +9,6 @@ from tests.utils.chart import render_chart
 component_paths = [
     "charts/alertmanager/templates",
     "charts/kube-state/templates",
-    "charts/prometheus-node-exporter/templates",
     "charts/prometheus/templates",
 ]
 
