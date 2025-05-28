@@ -1,0 +1,11 @@
+---
+description: Astronomer helm chart base rules
+globs:
+alwaysApply: true
+---
+
+- Always write code that will be easy to refactor.
+- Always write code that will be easy for an LLM to refactor.
+- All edits should pass pre-commit checks.
+- Variables that have the same semantic meaning should be named the same across different files, functions, classes, templates.
+- YAML enbedded shell code more than 5 lines should be broken out into a standalone script that lives in bin and is configured with environment variables.
