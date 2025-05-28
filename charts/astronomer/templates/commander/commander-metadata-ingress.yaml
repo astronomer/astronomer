@@ -39,7 +39,7 @@ spec:
     - secretName: {{ .Values.global.tlsSecret }}
   {{- end }}
       hosts:
-        - houston.{{ .Values.global.dataplane.baseDomain }}
+        - {{ .Values.global.dataplane.baseDomain }}
   {{- end }}
   {{ if semverCompare "< 1.19-0" .Capabilities.KubeVersion.Version -}}
   rules:

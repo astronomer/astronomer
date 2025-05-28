@@ -41,11 +41,11 @@ spec:
     - secretName: {{ .Values.global.tlsSecret }}
   {{- end }}
       hosts:
-        - houston.{{ .Values.global.baseDomain }}
+        - commander.{{ .Values.global.baseDomain }}
   {{- end }}
   {{ if semverCompare "< 1.19-0" .Capabilities.KubeVersion.Version -}}
   rules:
-  - host: commanderapi.{{ .Values.global.dataplane.baseDomain }}
+  - host: commander.{{ .Values.global.dataplane.baseDomain }}
     http:
       paths:
         - path: /
@@ -54,7 +54,7 @@ spec:
             servicePort: commander-grpc
   {{ else -}}
   rules:
-  - host: commanderapi.{{ .Values.global.dataplane.baseDomain }}
+  - host: commander.{{ .Values.global.dataplane.baseDomain }}
     http:
       paths:
         - path: /
