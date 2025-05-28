@@ -3,6 +3,18 @@ exclude: '(venv|\.vscode|tests/k8s_schema|tests/chart_tests/test_data)' # regex
 repos:
   - repo: local
     hooks:
+      - id: ensure-rolebinding-without-dash
+        language: pygrep
+        name: "Ensure we're using 'rolebinding' and not 'role-binding'"
+        entry: "role-binding"
+        pass_filenames: true
+        exclude: "^.pre-commit-config.yaml$"
+      - id: ensure-liveness-not-liveliness
+        language: pygrep
+        name: "Ensure we're using 'liveness' and not 'liveliness'"
+        entry: "liveliness"
+        pass_filenames: true
+        exclude: "^.pre-commit-config.yaml$"
       - id: check-image-tags
         language: python
         additional_dependencies: ["jinja2", "PyYAML"]
