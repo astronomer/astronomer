@@ -5,11 +5,11 @@ tolerations: []
 images:
   kibana:
     repository: quay.io/astronomer/ap-kibana
-    tag: 8.17.6
+    tag: 8.18.0
     pullPolicy: IfNotPresent
   init:
     repository: quay.io/astronomer/ap-init
-    tag: 3.21.3-3
+    tag: 3.21.3-4
     pullPolicy: IfNotPresent
 
 securityContext:
