@@ -10,10 +10,10 @@ Our old functional tests were not meant to test this variety of installation sce
 
 ## Things to know about this test setup
 
-- All downloaded tools are stored in `~/.local/share/astronomer-software/bin`
-- All generated kind configs are stored in `~/.local/share/astronomer-software/kubeconfig`
-- All generated certificates are stored in `~/.local/share/astronomer-software/certs`
-- There is one directory per test scenario: `tests/multi_cluster/unified`, `tests/multi_cluster/control`, `tests/multi_cluster/data`
+- All downloaded tools are stored in `~/.local/share/astronomer-software/bin`, which means we have one cached, consistent location to store tools with known versions that does not conflict with tools installed elsewhere in the OS.
+- All generated kind configs are stored in `~/.local/share/astronomer-software/kubeconfig` which means we have one consistent location for kubeconfigs for each installation scenario that can be configured in developer tools, making it easier to debug the kind clusters used in testing.
+- All generated certificates are stored in `~/.local/share/astronomer-software/certs`. These certificates are automatically recreated during test setup if they will expire within 4 weeks.
+- There is one test directory per scenario: `tests/multi_cluster/unified`, `tests/multi_cluster/control`, `tests/multi_cluster/data`.
 - Common functions are stored in `tests/utils`
 - Common configurations and fixtuers are in `tests/multi_cluster/conftest.py`
 - Per-scenario configs and fixtures are in `tests/multi_cluster/<scenario/conftest.py`
