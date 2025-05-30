@@ -151,9 +151,7 @@ def create_kind_cluster(cluster_name: str) -> str:
 
 def setup_common_cluster_configs(kubeconfig_file):
     """Perform steps that are common to all installation scenarios."""
-    create_astronomer_tls_certificates()
     create_astronomer_tls_secret(kubeconfig_file)
-    create_astronomer_private_ca_certificates()
     create_private_ca_secret(kubeconfig_file)
 
 
