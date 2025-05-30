@@ -18,6 +18,8 @@ from tests.utils.cert import (
 )
 from tests.utils.install_ci_tools import install_all_tools
 
+DEBUG = os.getenv("DEBUG", "").lower() in ["yes", "true", "1"]
+
 kind_file = Path.home() / ".local" / "share" / "astronomer-software" / "bin" / "kind"
 helm_file = Path.home() / ".local" / "share" / "astronomer-software" / "bin" / "helm"
 kubeconfig_dir = Path.home() / ".local" / "share" / "astronomer-software" / "kubeconfig"
@@ -200,6 +202,8 @@ def helm_install(kubeconfig: str, values: str = f"{git_root_dir}/configs/local-d
         "--wait",
         "--timeout=15m0s",
     ]
+    if DEBUG:
+        helm_install_command.append("--debug")
 
     subprocess.run(
         helm_install_command,
@@ -234,6 +238,8 @@ def create_namespace(kubeconfig_file, namespace="astronomer") -> None:
         "namespace",
         namespace,
     ]
+    if DEBUG:
+        cmd.append("-v=9")
     result = subprocess.run(cmd, capture_output=True, text=True)
     if result.returncode == 0:
         return
@@ -262,6 +268,8 @@ def create_astronomer_tls_secret(kubeconfig_file) -> None:
         f"--cert={astronomer_tls_cert_file}",
         f"--key={astronomer_tls_key_file}",
     ]
+    if DEBUG:
+        cmd.append("-v=9")
     result = subprocess.run(cmd, capture_output=True, text=True)
     if result.returncode != 0:
         raise RuntimeError(f"Failed to create secret {secret_name} in namespace {namespace}: {result.stderr}")
@@ -285,6 +293,8 @@ def create_private_ca_secret(kubeconfig_file) -> None:
         "private-ca",
         f"--from-file={astronomer_private_ca_cert_file}",
     ]
+    if DEBUG:
+        cmd.append("-v=9")
     result = subprocess.run(cmd, capture_output=True, text=True)
     if result.returncode != 0:
         raise RuntimeError(f"Failed to create secret private-ca in namespace {namespace}: {result.stderr}")

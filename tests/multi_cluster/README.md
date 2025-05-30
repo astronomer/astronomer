@@ -17,3 +17,4 @@ Our old functional tests were not meant to test this variety of installation sce
 - Common functions are stored in `tests/utils`
 - Common configurations and fixtuers are in `tests/multi_cluster/conftest.py`
 - Per-scenario configs and fixtures are in `tests/multi_cluster/<scenario/conftest.py`
+- `export DEBUG=1` will enable additional logging, `helm install --debug`, and `kubectl -v=9` output.
