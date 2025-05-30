@@ -9,7 +9,13 @@ from kubernetes import client, config
 from kubernetes.client.exceptions import ApiException
 
 from tests import git_root_dir
-from tests.utils.cert import cert_file, create_certificates, key_file
+from tests.utils.cert import (
+    astronomer_private_ca_cert_file,
+    astronomer_tls_cert_file,
+    astronomer_tls_key_file,
+    create_astronomer_private_ca_certificates,
+    create_astronomer_tls_certificates,
+)
 from tests.utils.install_ci_tools import install_all_tools
 
 kind_file = Path.home() / ".local" / "share" / "astronomer-software" / "bin" / "kind"
@@ -128,7 +134,10 @@ def control(request) -> Iterable[str]:
     """
     kubeconfig_file = create_kind_cluster("control")
     create_namespace(kubeconfig_file)
-    create_tls_secret(kubeconfig_file)
+    create_astronomer_tls_certificates()
+    create_astronomer_tls_secret(kubeconfig_file)
+    create_astronomer_private_ca_certificates()
+    create_private_ca_secret(kubeconfig_file)
     helm_install(kubeconfig=kubeconfig_file)
     yield kubeconfig_file
     delete_kind_cluster("control", kubeconfig_file)
@@ -144,7 +153,10 @@ def data(request) -> Iterable[str]:
     """
     kubeconfig_file = create_kind_cluster("data")
     create_namespace(kubeconfig_file)
-    create_tls_secret(kubeconfig_file)
+    create_astronomer_tls_certificates()
+    create_astronomer_tls_secret(kubeconfig_file)
+    create_astronomer_private_ca_certificates()
+    create_private_ca_secret(kubeconfig_file)
     helm_install(kubeconfig=kubeconfig_file)
     yield kubeconfig_file
     delete_kind_cluster("data", kubeconfig_file)
@@ -160,7 +172,10 @@ def unified(request) -> Iterable[str]:
     """
     kubeconfig_file = create_kind_cluster("unified")
     create_namespace(kubeconfig_file)
-    create_tls_secret(kubeconfig_file)
+    create_astronomer_tls_certificates()
+    create_astronomer_tls_secret(kubeconfig_file)
+    create_astronomer_private_ca_certificates()
+    create_private_ca_secret(kubeconfig_file)
     helm_install(kubeconfig=kubeconfig_file)
     yield kubeconfig_file
     delete_kind_cluster("unified", kubeconfig_file)
@@ -183,7 +198,7 @@ def helm_install(kubeconfig: str, values: str = f"{git_root_dir}/configs/local-d
         f"--values={values}",
         f"--kubeconfig={kubeconfig}",
         "--wait",
-        "--timeout=5m0s",
+        "--timeout=15m0s",
     ]
 
     subprocess.run(
@@ -214,8 +229,7 @@ def create_namespace(kubeconfig_file, namespace="astronomer") -> None:
 
     cmd = [
         "kubectl",
-        "--kubeconfig",
-        str(kubeconfig_file),
+        f"--kubeconfig={kubeconfig_file}",
         "create",
         "namespace",
         namespace,
@@ -228,30 +242,185 @@ def create_namespace(kubeconfig_file, namespace="astronomer") -> None:
     raise RuntimeError(f"Failed to create namespace {namespace}: {result.stderr}")
 
 
-def create_tls_secret(kubeconfig_file) -> None:
-    """Create a TLS secret in the KIND cluster using self-signed certificates."""
+def create_astronomer_tls_secret(kubeconfig_file) -> None:
+    """Create the astronomer-tls secret in the KIND cluster using self-signed certificates."""
     if not Path(kubeconfig_file).exists():
         raise FileNotFoundError(f"Kubeconfig file not found at {kubeconfig_file}")
 
-    create_certificates()
+    create_astronomer_tls_certificates()
 
     secret_name = "astronomer-tls"
     namespace = "astronomer"
     cmd = [
         "kubectl",
-        "--kubeconfig",
-        str(kubeconfig_file),
-        "-n",
-        namespace,
+        f"--kubeconfig={kubeconfig_file}",
+        f"--namespace={namespace}",
         "create",
         "secret",
         "tls",
         secret_name,
-        "--cert",
-        str(cert_file),
-        "--key",
-        str(key_file),
+        f"--cert={astronomer_tls_cert_file}",
+        f"--key={astronomer_tls_key_file}",
     ]
     result = subprocess.run(cmd, capture_output=True, text=True)
     if result.returncode != 0:
         raise RuntimeError(f"Failed to create secret {secret_name} in namespace {namespace}: {result.stderr}")
+
+
+def create_private_ca_secret(kubeconfig_file) -> None:
+    """Create the private-ca secret in the KIND cluster using self-signed certificates."""
+    if not Path(kubeconfig_file).exists():
+        raise FileNotFoundError(f"Kubeconfig file not found at {kubeconfig_file}")
+
+    create_astronomer_private_ca_certificates()
+
+    namespace = "astronomer"
+    cmd = [
+        "kubectl",
+        f"--kubeconfig={kubeconfig_file}",
+        f"--namespace={namespace}",
+        "create",
+        "secret",
+        "generic",
+        "private-ca",
+        f"--from-file={astronomer_private_ca_cert_file}",
+    ]
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    if result.returncode != 0:
+        raise RuntimeError(f"Failed to create secret private-ca in namespace {namespace}: {result.stderr}")
+
+
+def check_pod_health(v1: client.CoreV1Api, namespace: str = "astronomer") -> tuple[bool, str]:
+    """
+    Check the health of all pods in the given namespace.
+
+    Args:
+        v1: Kubernetes CoreV1Api client
+        namespace: Namespace to check pods
+
+    Returns:
+        tuple: (is_healthy, message)
+    """
+    try:
+        pods = v1.list_namespaced_pod(namespace=namespace)
+        unhealthy_pods = []
+
+        for pod in pods.items:
+            if pod.status.phase not in ["Running", "Succeeded"]:
+                unhealthy_pods.append(f"{pod.metadata.name} (Phase: {pod.status.phase})")
+                continue
+
+            # Check container statuses
+            for container in pod.status.container_statuses or []:
+                if not container.ready:
+                    restart_count = container.restart_count
+                    state = next(iter(container.state.to_dict().keys()))
+                    unhealthy_pods.append(
+                        f"{pod.metadata.name}/{container.name} (Not Ready, State: {state}, Restarts: {restart_count})"
+                    )
+
+        if unhealthy_pods:
+            return False, f"Unhealthy pods found: {', '.join(unhealthy_pods)}"
+        return True, "All pods are healthy"
+
+    except Exception as e:  # noqa: BLE001
+        return False, f"Failed to check pod health: {e}"
+
+
+def check_service_health(v1: client.CoreV1Api, namespace: str = "astronomer") -> tuple[bool, str]:
+    """
+    Check if all services have endpoints.
+
+    Args:
+        v1: Kubernetes CoreV1Api client
+        namespace: Namespace to check services in
+
+    Returns:
+        tuple: (is_healthy, message)
+    """
+    try:
+        services = v1.list_namespaced_service(namespace=namespace)
+        endpoints = v1.list_namespaced_endpoints(namespace=namespace)
+
+        services_without_endpoints = []
+        for svc in services.items:
+            # Skip headless services and kubernetes service
+            if svc.spec.cluster_ip == "None" or svc.metadata.name == "kubernetes":
+                continue
+
+            has_endpoints = any(ep.metadata.name == svc.metadata.name and ep.subsets for ep in endpoints.items)
+            if not has_endpoints:
+                services_without_endpoints.append(svc.metadata.name)
+
+        if services_without_endpoints:
+            return False, f"Services without endpoints: {', '.join(services_without_endpoints)}"
+        return True, "All services have endpoints"
+
+    except Exception as e:  # noqa: BLE001
+        return False, f"Failed to check service health: {e}"
+
+
+def check_deployment_health(apps_v1: client.AppsV1Api, namespace: str = "astronomer") -> tuple[bool, str]:
+    """
+    Check if all deployments are at desired replica count.
+
+    Args:
+        apps_v1: Kubernetes AppsV1Api client
+        namespace: Namespace to check deployments in
+
+    Returns:
+        tuple: (is_healthy, message)
+    """
+    try:
+        deployments = apps_v1.list_namespaced_deployment(namespace=namespace)
+        unhealthy_deployments = []
+
+        unhealthy_deployments.extend(
+            f"{deployment.metadata.name} (Ready: {deployment.status.ready_replicas or 0}/{deployment.spec.replicas})"
+            for deployment in deployments.items
+            if deployment.status.ready_replicas != deployment.spec.replicas
+        )
+        if unhealthy_deployments:
+            return False, f"Unhealthy deployments found: {', '.join(unhealthy_deployments)}"
+        return True, "All deployments are healthy"
+
+    except Exception as e:  # noqa: BLE001
+        return False, f"Failed to check deployment health: {e}"
+
+
+@pytest.fixture
+def health_check(request):
+    """
+    Fixture to check the health of the cluster.
+
+    Usage:
+        def test_something(health_check):
+            is_healthy, message = health_check()
+            assert is_healthy, message
+    """
+
+    def _check_health(namespace: str = "astronomer") -> tuple[bool, str]:
+        # Load the kubeconfig from the appropriate cluster fixture
+        cluster_name = request.fixturename  # This will be 'unified', 'control', or 'data'
+        kubeconfig_file = request.getfixturevalue(cluster_name)
+
+        config.load_kube_config(config_file=kubeconfig_file)
+        v1 = client.CoreV1Api()
+        apps_v1 = client.AppsV1Api()
+
+        # Run all health checks
+        pod_healthy, pod_msg = check_pod_health(v1, namespace)
+        if not pod_healthy:
+            return pod_healthy, pod_msg
+
+        svc_healthy, svc_msg = check_service_health(v1, namespace)
+        if not svc_healthy:
+            return svc_healthy, svc_msg
+
+        dep_healthy, dep_msg = check_deployment_health(apps_v1, namespace)
+        if not dep_healthy:
+            return dep_healthy, dep_msg
+
+        return True, "All components are healthy"
+
+    return _check_health
