@@ -96,6 +96,10 @@ def create_astronomer_tls_certificates():
     # Clean up old certificates
     cleanup_old_certificates(cert_dir)
 
+    if astronomer_tls_key_file.exists() and astronomer_tls_cert_file.exists():
+        print("Using existing astronomer-tls certificates")
+        return
+
     # Install the mkcert CA, then generate a wildcard cert and key.
     subprocess.run(["mkcert", "-install"], check=True)
     subprocess.run(
@@ -109,6 +113,8 @@ def create_astronomer_tls_certificates():
     # Error checking
     if not astronomer_tls_cert_file.exists():
         raise FileNotFoundError(f"Certificate file not found: {astronomer_tls_cert_file}")
+    if not astronomer_tls_key_file.exists():
+        raise FileNotFoundError(f"Key file not found: {astronomer_tls_key_file}")
     if not ca_root_pem.exists():
         raise FileNotFoundError(f"CA root PEM file not found: {ca_root_pem}")
 
@@ -144,6 +150,10 @@ def create_astronomer_private_ca_certificates():
     # Clean up old certificates
     cleanup_old_certificates(cert_dir)
 
+    if astronomer_private_ca_key_file.exists() and astronomer_private_ca_cert_file.exists():
+        print("Using existing astronomer-private-ca certificates")
+        return
+
     # Generate the private CA certificate and key.
     subprocess.run(
         [
@@ -158,6 +168,8 @@ def create_astronomer_private_ca_certificates():
     # Error checking
     if not astronomer_private_ca_cert_file.exists():
         raise FileNotFoundError(f"Certificate file not found: {astronomer_private_ca_cert_file}")
+    if not astronomer_private_ca_key_file.exists():
+        raise FileNotFoundError(f"Key file not found: {astronomer_private_ca_key_file}")
     if not ca_root_pem.exists():
         raise FileNotFoundError(f"CA root PEM file not found: {ca_root_pem}")
 

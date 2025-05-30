@@ -1,4 +1,5 @@
 import os
+import shlex
 import subprocess
 import time
 from collections.abc import Iterable
@@ -8,7 +9,7 @@ import pytest
 from kubernetes import client, config
 from kubernetes.client.exceptions import ApiException
 
-from tests import git_root_dir
+from tests import git_root_dir, kubectl_version
 from tests.utils.cert import (
     astronomer_private_ca_cert_file,
     astronomer_tls_cert_file,
@@ -25,7 +26,7 @@ helm_file = Path.home() / ".local" / "share" / "astronomer-software" / "bin" / "
 kubeconfig_dir = Path.home() / ".local" / "share" / "astronomer-software" / "kubeconfig"
 
 
-def run_command(command: str) -> str:
+def run_command(command: str | list) -> str:
     """
     Run a shell command and capture its output.
 
@@ -33,6 +34,11 @@ def run_command(command: str) -> str:
     :return: The standard output from the command.
     :raises RuntimeError: If the command fails.
     """
+
+    if isinstance(command, list):
+        command = shlex.join(str(x) for x in command)
+    else:
+        command = str(command)
     result = subprocess.run(command, shell=True, text=True, capture_output=True)
     if result.returncode != 0:
         raise RuntimeError(f"Command failed: {command}\n{result.stderr}")
@@ -93,22 +99,62 @@ def create_kind_cluster(cluster_name: str) -> str:
     install_all_tools()
 
     try:
-        cmd = f"{kind_file} create cluster --name {cluster_name} --kubeconfig {kubeconfig_file}"
-        print(f"Creating KIND cluster with command: {cmd}")
+        cmd = [
+            f"{kind_file}",
+            "create",
+            "cluster",
+            f"--name={cluster_name}",
+            f"--kubeconfig={kubeconfig_file}",
+            f"--config={git_root_dir}/bin/kind/calico-config.yaml",
+        ]
+        print(f"Creating KIND cluster with command: {shlex.join(cmd)}")
         run_command(cmd)
 
         # Wait until all pods are ready
         print("Waiting for all pods to become ready...")
         wait_for_pods_ready(str(kubeconfig_file))
 
+        # Apply calico configuration
+        # kubectl apply -f "bin/kind/calico-crds-${KUBE_VERSION%.*}.yaml"
+        cmd = [
+            "kubectl",
+            f"--kubeconfig={kubeconfig_file}",
+            "--namespace=kube-system",
+            "apply",
+            f"--filename={git_root_dir}/bin/kind/calico-crds-v{kubectl_version.removesuffix('.0')}.yaml",
+        ]
+        print(f"Applying Calico configuration with command: {shlex.join(cmd)}")
+        run_command(cmd)
+
+        # Configure Calico to ignore loose reverse path filtering
+        cmd = [
+            "kubectl",
+            f"--kubeconfig={kubeconfig_file}",
+            "--namespace=kube-system",
+            "set",
+            "env",
+            "daemonset/calico-node",
+            "FELIX_IGNORELOOSERPF=true",
+        ]
+        print(f"Configuring Calico with command: {shlex.join(cmd)}")
+        run_command(cmd)
+
         return str(kubeconfig_file)
     except Exception:
         # Cleanup if cluster creation fails
-        cmd = f"{kind_file} delete cluster --name {cluster_name}"
-        print(f"Cleaning up after failed cluster creation with command: {cmd}")
+        cmd = [f"{kind_file}", "delete", "cluster", f"--name={cluster_name}"]
+        print(f"Cleaning up after failed cluster creation with command: {shlex.join(cmd)}")
         run_command(cmd)
-        os.unlink(str(kubeconfig_file))
+        kubeconfig_file.unlink(missing_ok=True)
         raise
+
+
+def setup_common_cluster_configs(kubeconfig_file):
+    """Perform steps that are common to all installation scenarios."""
+    create_astronomer_tls_certificates()
+    create_astronomer_tls_secret(kubeconfig_file)
+    create_astronomer_private_ca_certificates()
+    create_private_ca_secret(kubeconfig_file)
 
 
 def delete_kind_cluster(cluster_name: str, kubeconfig_file: str) -> None:
@@ -120,10 +166,10 @@ def delete_kind_cluster(cluster_name: str, kubeconfig_file: str) -> None:
     """
     try:
         cmd = f"{kind_file} delete cluster --name {cluster_name}"
-        print(f"Deleting KIND cluster with command: {cmd}")
+        print(f"Deleting KIND cluster with command: {shlex.join(cmd)}")
         run_command(cmd)
     finally:
-        os.unlink(kubeconfig_file)
+        kubeconfig_file.unlink(missing_ok=True)
 
 
 @pytest.fixture(scope="session")
@@ -136,10 +182,7 @@ def control(request) -> Iterable[str]:
     """
     kubeconfig_file = create_kind_cluster("control")
     create_namespace(kubeconfig_file)
-    create_astronomer_tls_certificates()
-    create_astronomer_tls_secret(kubeconfig_file)
-    create_astronomer_private_ca_certificates()
-    create_private_ca_secret(kubeconfig_file)
+    setup_common_cluster_configs(kubeconfig_file)
     helm_install(kubeconfig=kubeconfig_file)
     yield kubeconfig_file
     delete_kind_cluster("control", kubeconfig_file)
@@ -155,10 +198,7 @@ def data(request) -> Iterable[str]:
     """
     kubeconfig_file = create_kind_cluster("data")
     create_namespace(kubeconfig_file)
-    create_astronomer_tls_certificates()
-    create_astronomer_tls_secret(kubeconfig_file)
-    create_astronomer_private_ca_certificates()
-    create_private_ca_secret(kubeconfig_file)
+    setup_common_cluster_configs(kubeconfig_file)
     helm_install(kubeconfig=kubeconfig_file)
     yield kubeconfig_file
     delete_kind_cluster("data", kubeconfig_file)
@@ -174,10 +214,7 @@ def unified(request) -> Iterable[str]:
     """
     kubeconfig_file = create_kind_cluster("unified")
     create_namespace(kubeconfig_file)
-    create_astronomer_tls_certificates()
-    create_astronomer_tls_secret(kubeconfig_file)
-    create_astronomer_private_ca_certificates()
-    create_private_ca_secret(kubeconfig_file)
+    setup_common_cluster_configs(kubeconfig_file)
     helm_install(kubeconfig=kubeconfig_file)
     yield kubeconfig_file
     delete_kind_cluster("unified", kubeconfig_file)
@@ -205,10 +242,7 @@ def helm_install(kubeconfig: str, values: str = f"{git_root_dir}/configs/local-d
     if DEBUG:
         helm_install_command.append("--debug")
 
-    subprocess.run(
-        helm_install_command,
-        check=True,
-    )
+    run_command(helm_install_command)
 
 
 @pytest.fixture(scope="function")
