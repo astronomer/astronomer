@@ -86,12 +86,6 @@ spec:
         securityContext:
           privileged: true
         resources: {{ toYaml .Values.client.initResources | nindent 10 }}
-        {{- if .Values.sysctlInitContainer.livenessProbe }}
-        livenessProbe: {{ tpl (toYaml .Values.sysctlInitContainer.livenessProbe) . | nindent 12 }}
-        {{- end }}
-        {{- if .Values.sysctlInitContainer.readinessProbe }}
-        readinessProbe: {{ tpl (toYaml .Values.sysctlInitContainer.readinessProbe) . | nindent 12 }}
-        {{- end }}
   {{- end }}
       containers:
       - name: es-client
