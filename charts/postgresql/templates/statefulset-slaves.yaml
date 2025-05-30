@@ -58,8 +58,9 @@ spec:
       {{- if .Values.securityContext.enabled }}
       securityContext:
         fsGroup: {{ .Values.securityContext.fsGroup }}
-      securityContext:
-        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+        {{- if .Values.podSecurityContext }}
+        {{- toYaml (omit .Values.podSecurityContext "fsGroup") | nindent 4 }}
+        {{- end }}
       {{- end }}
       serviceAccountName: {{ template "postgresql.serviceAccountName" . }}
       {{- if and .Values.volumePermissions.enabled .Values.persistence.enabled }}
