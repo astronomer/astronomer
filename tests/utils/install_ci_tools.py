@@ -7,6 +7,7 @@ Downloaded archives are cached in ~/.cache/astronomer-software"""
 
 import os
 import shutil
+import subprocess
 import tarfile
 from pathlib import Path
 
@@ -15,8 +16,9 @@ import requests
 from tests import kubectl_version
 from tests.utils.os_arch import detect_os_arch
 
-HELM_VERSION = "3.18.0"  # https://github.com/helm/helm/releases
-KIND_VERSION = "0.27.0"  # https://github.com/kubernetes-sigs/kind/releases
+# TODO: reinstall tool if the version on the filesystem is different.
+HELM_VERSION = "3.18.1"  # https://github.com/helm/helm/releases
+KIND_VERSION = "0.29.0"  # https://github.com/kubernetes-sigs/kind/releases
 KUBECTL_VERSION = kubectl_version
 MKCERT_VERSION = "1.4.4"  # https://github.com/FiloSottile/mkcert/tags
 
@@ -41,10 +43,15 @@ def download(url, dest, mode="wb"):
 
 
 def install_helm():
+    """Ensure that the desired version of helm is installed."""
     dest = BIN_DIR / "helm"
     if dest.exists():
-        print("helm already installed.")
-        return
+        # Check the installed version
+        installed_version = subprocess.run(["helm", "version", "--short"], capture_output=True, text=True)
+        if HELM_VERSION in installed_version:
+            print("helm already installed.")
+            return
+        dest.unlink()
     tgz = CACHE_DIR / f"helm-v{HELM_VERSION}-{OS}-{ARCH}.tar.gz"
     # https://github.com/helm/helm/releases
     # ['linux', 'darwin'], ['amd64', 'arm64']
@@ -59,10 +66,15 @@ def install_helm():
 
 
 def install_kind():
+    """Ensure that the desired version of kind is installed."""
     dest = BIN_DIR / "kind"
     if dest.exists():
-        print("kind already installed.")
-        return
+        # Check the installed version
+        installed_version = subprocess.run(["kind", "version"], capture_output=True, text=True)
+        if KIND_VERSION in installed_version.stdout:
+            print("kind already installed.")
+            return
+        dest.unlink()
     # https://github.com/kubernetes-sigs/kind/releases
     # ['linux', 'darwin'], ['amd64', 'arm64']
     url = f"https://github.com/kubernetes-sigs/kind/releases/download/v{KIND_VERSION}/kind-{OS}-{ARCH}"
@@ -70,20 +82,30 @@ def install_kind():
 
 
 def install_kubectl():
+    """Ensure that the desired version of kubectl is installed."""
     dest = BIN_DIR / "kubectl"
     if dest.exists():
-        print("kubectl already installed.")
-        return
+        # Check the installed version
+        installed_version = subprocess.run(["kubectl", "version", "--client", "--short"], capture_output=True, text=True)
+        if kubectl_version in installed_version.stdout:
+            print("kubectl already installed.")
+            return
+        dest.unlink()
     # ['linux', 'darwin'], ['amd64', 'arm64']
     url = f"https://storage.googleapis.com/kubernetes-release/release/v{KUBECTL_VERSION}/bin/{OS}/amd64/kubectl"
     download(url, dest)
 
 
 def install_mkcert():
+    """Ensure that the desired version of mkcert is installed."""
     dest = BIN_DIR / "mkcert"
     if dest.exists():
-        print("mkcert already installed.")
-        return
+        # Check the installed version
+        installed_version = subprocess.run(["mkcert", "--version"], capture_output=True, text=True)
+        if MKCERT_VERSION in installed_version.stdout:
+            print("mkcert already installed.")
+            return
+        dest.unlink()
     # ['linux', 'darwin'], ['amd64', 'arm64']
     url = f"https://github.com/FiloSottile/mkcert/releases/download/v{MKCERT_VERSION}/mkcert-v{MKCERT_VERSION}-{OS}-{ARCH}"
     download(url, dest)

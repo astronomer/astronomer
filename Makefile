@@ -71,6 +71,7 @@ clean: ## Clean build and test artifacts
 	rm -rfv test-results
 	rm -rfv venv
 	find . -name __pycache__ -exec rm -rfv {} \+
+	rm -rfv ~/.local/share/astronomer-software
 
 .PHONY: build
 build: ## Build the Astronomer helm chart
@@ -88,3 +89,10 @@ show-docker-images: ## Show all docker images and versions used in the helm char
 .PHONY: show-docker-images-with-private-registry
 show-docker-images-with-private-registry: ## Show all docker images and versions used in the helm chart with a privateRegistry set
 	@bin/show-docker-images.py --private-registry --with-houston
+
+.PHONY: show-downloaded-tool-versions
+show-downloaded-tool-versions: ## Show the versions of tools that were downloaded by multi-cluster test setup
+	-~/.local/share/astronomer-software/bin/helm version --short
+	-~/.local/share/astronomer-software/bin/kind version
+	-~/.local/share/astronomer-software/bin/kubectl version --client
+	-~/.local/share/astronomer-software/bin/mkcert --version

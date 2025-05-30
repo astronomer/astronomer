@@ -106,6 +106,7 @@ def create_kind_cluster(cluster_name: str) -> str:
             f"--name={cluster_name}",
             f"--kubeconfig={kubeconfig_file}",
             f"--config={git_root_dir}/bin/kind/calico-config.yaml",
+            f"--image=kindest/node:v{kubectl_version}",
         ]
         print(f"Creating KIND cluster with command: {shlex.join(cmd)}")
         run_command(cmd)
