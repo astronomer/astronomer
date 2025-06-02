@@ -18,6 +18,13 @@ repos:
         entry: bin/generate_circleci_config.py
         files: '(config.yml|config.yml.j2|generate_circleci_config.py|yaml|tpl)$'
         pass_filenames: false
+      - id: generate-probe-data
+        language: python
+        additional_dependencies: ["PyYAML"]
+        name: Ensure we have up-to-date default probe test data files
+        entry: bin/generate_default_probes_yaml.py
+        files: '(generate_default_probes_yaml.py|yaml|tpl)$'
+        pass_filenames: false
   - repo: https://github.com/codespell-project/codespell
     rev: v2.4.1
     hooks:

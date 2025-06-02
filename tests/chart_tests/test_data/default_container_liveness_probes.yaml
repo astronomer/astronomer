@@ -1,4 +1,5 @@
 # Each key here is a pod_container.
+
 alertmanager_auth-proxy:
   httpGet:
     path: /healthz
