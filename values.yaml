@@ -172,10 +172,6 @@ global:
     #    cpu: "100m"
     #    memory: "386Mi"
 
-  certgenerator:
-    repository: quay.io/astronomer/ap-certgenerator
-    tag: 0.1.8
-
   # Deploy auth sidecar to use openshift native features
   authSidecar:
     enabled: false
@@ -335,6 +331,9 @@ global:
       gitSync:
         repository: quay.io/astronomer/ap-git-sync-relay
         tag: 0.1.11
+  certgenerator:
+    repository: quay.io/astronomer/ap-certgenerator
+    tag: 0.1.8
 
   # For now we support only pgbouncer with gss api support
   pgbouncer:
