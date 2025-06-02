@@ -234,7 +234,11 @@ data:
       {{- if .Values.global.networkNSLabels }}
         networkNSLabels: true
       {{- end }}
-
+        astronomer:
+          images:
+            certgenerator:
+              repository: "{{ .Values.global.certgenerator.repository }}"
+              tag: "{{ .Values.global.certgenerator.tag }}"
         gitSyncRelay:
           images:
             gitDaemon:
@@ -261,9 +265,6 @@ data:
             gitSync:
               repository: "{{ .Values.global.airflow.images.gitSync.repository }}"
               tag: "{{ .Values.global.airflow.images.gitSync.tag }}"
-            certgenerator:
-              repository: "{{ .Values.global.certgenerator.repository }}"
-              tag: "{{ .Values.global.certgenerator.tag }}"
 
           useAstroSecurityManager: true
           {{- if .Values.global.networkPolicy.enabled }}
