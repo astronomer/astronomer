@@ -323,6 +323,9 @@ global:
       xcom:
         repository: quay.io/astronomer/ap-alpine
         tag: 3.21.3-2
+      certgenerator:
+        repository: quay.io/astronomer/ap-certgenerator
+        tag: 0.1.8
   gitSyncRelay:
     images:
       gitDaemon:

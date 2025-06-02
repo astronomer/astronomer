@@ -261,6 +261,9 @@ data:
             gitSync:
               repository: "{{ .Values.global.airflow.images.gitSync.repository }}"
               tag: "{{ .Values.global.airflow.images.gitSync.tag }}"
+            certgenerator:
+              repository: "{{ .Values.global.airflow.images.certgenerator.repository }}"
+              tag: "{{ .Values.global.airflow.images.certgenerator.tag }}"
 
           useAstroSecurityManager: true
           {{- if .Values.global.networkPolicy.enabled }}
