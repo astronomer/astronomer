@@ -122,7 +122,7 @@ def create_kind_cluster(cluster_name: str) -> str:
             f"--kubeconfig={kubeconfig_file}",
             "--namespace=kube-system",
             "apply",
-            f"--filename={git_root_dir}/bin/kind/calico-crds-v{kubectl_version.removesuffix('.0')}.yaml",
+            f"--filename={git_root_dir}/bin/kind/calico-crds-v{kubectl_version.rpartition('.')[0]}.yaml",
         ]
         print(f"Applying Calico configuration with command: {shlex.join(cmd)}")
         run_command(cmd)

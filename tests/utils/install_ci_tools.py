@@ -16,10 +16,9 @@ import requests
 from tests import kubectl_version
 from tests.utils.os_arch import detect_os_arch
 
-# TODO: reinstall tool if the version on the filesystem is different.
+# TODO: move these versions to metadata.yaml
 HELM_VERSION = "3.18.1"  # https://github.com/helm/helm/releases
 KIND_VERSION = "0.29.0"  # https://github.com/kubernetes-sigs/kind/releases
-KUBECTL_VERSION = kubectl_version
 MKCERT_VERSION = "1.4.4"  # https://github.com/FiloSottile/mkcert/tags
 
 OS, ARCH = detect_os_arch()
@@ -48,7 +47,7 @@ def install_helm():
     if dest.exists():
         # Check the installed version
         installed_version = subprocess.run(["helm", "version", "--short"], capture_output=True, text=True)
-        if HELM_VERSION in installed_version:
+        if HELM_VERSION in installed_version.stdout:
             print("helm already installed.")
             return
         dest.unlink()
@@ -92,7 +91,7 @@ def install_kubectl():
             return
         dest.unlink()
     # ['linux', 'darwin'], ['amd64', 'arm64']
-    url = f"https://storage.googleapis.com/kubernetes-release/release/v{KUBECTL_VERSION}/bin/{OS}/amd64/kubectl"
+    url = f"https://dl.k8s.io/release/v{kubectl_version}/bin/{OS}/{ARCH}/kubectl"
     download(url, dest)
 
 
