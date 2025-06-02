@@ -241,7 +241,7 @@ def helm_install(kubeconfig: str, values: str = f"{git_root_dir}/configs/local-d
         f"--values={values}",
         f"--kubeconfig={kubeconfig}",
         "--wait",
-        "--timeout=15m0s",
+        "--timeout=10m0s",
     ]
     if DEBUG:
         helm_install_command.append("--debug")

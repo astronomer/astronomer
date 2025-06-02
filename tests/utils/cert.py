@@ -88,10 +88,7 @@ def create_astronomer_tls_certificates():
     development and testing, and because it makes this whole process easy.
     """
 
-    domain = "localtest.me"  # localtest.me resolves to 127.0.0.1 using any DNS server
-
-    # Verify mkcert is installed
-    install_mkcert()
+    domain = "localtest.me"  # localtest.me and *.localtest.me resolve to 127.0.0.1 using any DNS server
 
     # Clean up old certificates
     cleanup_old_certificates(cert_dir)
