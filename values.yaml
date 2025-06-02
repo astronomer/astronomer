@@ -332,8 +332,9 @@ global:
         repository: quay.io/astronomer/ap-git-sync-relay
         tag: 0.1.11
   certgenerator:
-    repository: quay.io/astronomer/ap-certgenerator
-    tag: 0.1.8
+    images:
+      repository: quay.io/astronomer/ap-certgenerator
+      tag: 0.1.8
 
   # For now we support only pgbouncer with gss api support
   pgbouncer:

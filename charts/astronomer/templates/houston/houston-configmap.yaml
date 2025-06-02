@@ -237,8 +237,8 @@ data:
         astronomer:
           images:
             certgenerator:
-              repository: "{{ .Values.global.certgenerator.repository }}"
-              tag: "{{ .Values.global.certgenerator.tag }}"
+              repository: "{{ .Values.global.certgenerator.images.repository }}"
+              tag: "{{ .Values.global.certgenerator.images.tag }}"
         gitSyncRelay:
           images:
             gitDaemon:
