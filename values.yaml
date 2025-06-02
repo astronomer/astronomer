@@ -171,7 +171,7 @@ global:
     #  limits:
     #    cpu: "100m"
     #    memory: "386Mi"
-  
+
   certgenerator:
     repository: quay.io/astronomer/ap-certgenerator
     tag: 0.1.8
