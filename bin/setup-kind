@@ -23,6 +23,14 @@ for executable in mkcert kind helm kubectl docker; do
   fi
 done
 
+(
+  set -x ;
+  helm version --short
+  kind version
+  kubectl version --client
+  mkcert --version
+)
+
 echo "Generating SSL keys..."
 if "${GIT_ROOT}/bin/generate_ssl_keys" ; then
   echo "Installed TLS secrets to /tmp/fullchain.pem and /tmp/privkey.pem"
