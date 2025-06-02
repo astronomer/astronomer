@@ -3,7 +3,7 @@ import shlex
 import subprocess
 import time
 from collections.abc import Iterable
-from pathlib import Path
+from pathlib import Path, PosixPath
 
 import pytest
 from kubernetes import client, config
@@ -90,7 +90,7 @@ def wait_for_pods_ready(kubeconfig_file: str, timeout: int = 300) -> None:
     raise RuntimeError("Timed out waiting for all pods to reach 'Running' state.")
 
 
-def create_kind_cluster(cluster_name: str) -> str:
+def create_kind_cluster(cluster_name: str) -> PosixPath:
     """
     Create a KIND cluster and return its kubeconfig file path.
 
@@ -144,7 +144,7 @@ def create_kind_cluster(cluster_name: str) -> str:
         print(f"Configuring Calico with command: {shlex.join(cmd)}")
         run_command(cmd)
 
-        return str(kubeconfig_file)
+        return kubeconfig_file
     except Exception:
         # Cleanup if cluster creation fails
         cmd = [f"{kind_exe}", "delete", "cluster", f"--name={cluster_name}"]
@@ -160,7 +160,7 @@ def setup_common_cluster_configs(kubeconfig_file):
     create_private_ca_secret(kubeconfig_file)
 
 
-def delete_kind_cluster(cluster_name: str, kubeconfig_file: str) -> None:
+def delete_kind_cluster(cluster_name: str, kubeconfig_file: PosixPath) -> None:
     """
     Delete a KIND cluster and clean up its kubeconfig file.
 
@@ -168,7 +168,12 @@ def delete_kind_cluster(cluster_name: str, kubeconfig_file: str) -> None:
     :param kubeconfig_file: Path to the kubeconfig file to clean up.
     """
     try:
-        cmd = f"{kind_exe} delete cluster --name {cluster_name}"
+        cmd = [
+            f"{kind_exe}",
+            "delete",
+            "cluster",
+            f"--name={cluster_name}",
+        ]
         print(f"Deleting KIND cluster with command: {shlex.join(cmd)}")
         run_command(cmd)
     finally:
@@ -239,7 +244,7 @@ def helm_install(kubeconfig: str, values: str = f"{git_root_dir}/configs/local-d
         str(git_root_dir),
         f"--values={values}",
         f"--kubeconfig={kubeconfig}",
-        "--timeout=10m0s",
+        "--timeout=15m0s",
     ]
     if DEBUG:
         helm_install_command.append("--debug")
