@@ -393,21 +393,21 @@ workflows:
                 - quay.io/astronomer/ap-awsesproxy:1.5.0-17
                 - quay.io/astronomer/ap-base:3.21.3-4
                 - quay.io/astronomer/ap-blackbox-exporter:0.25.0-9
-                - quay.io/astronomer/ap-commander:0.37.12
+                - quay.io/astronomer/ap-commander:0.37.13
                 - quay.io/astronomer/ap-configmap-reloader:0.15.0
                 - quay.io/astronomer/ap-curator:8.0.21-2
                 - quay.io/astronomer/ap-db-bootstrapper:0.37.4
                 - quay.io/astronomer/ap-default-backend:0.28.31
                 - quay.io/astronomer/ap-elasticsearch-exporter:1.9.0
-                - quay.io/astronomer/ap-elasticsearch:8.18.0
-                - quay.io/astronomer/ap-fluentd:1.17.1-1
+                - quay.io/astronomer/ap-elasticsearch:8.18.2
+                - quay.io/astronomer/ap-fluentd:1.18.0
                 - quay.io/astronomer/ap-git-daemon:3.21.3-3
                 - quay.io/astronomer/ap-git-sync-relay:0.1.11
                 - quay.io/astronomer/ap-git-sync:4.4.0-1
                 - quay.io/astronomer/ap-grafana:10.4.19
                 - quay.io/astronomer/ap-houston-api:0.37.27
                 - quay.io/astronomer/ap-init:3.21.3-4
-                - quay.io/astronomer/ap-kibana:8.18.0
+                - quay.io/astronomer/ap-kibana:8.18.2
                 - quay.io/astronomer/ap-kube-state:2.15.0-1
                 - quay.io/astronomer/ap-nats-exporter:0.16.0-4
                 - quay.io/astronomer/ap-nats-server:2.10.19-3
@@ -439,21 +439,21 @@ workflows:
                 - quay.io/astronomer/ap-awsesproxy:1.5.0-17
                 - quay.io/astronomer/ap-base:3.21.3-4
                 - quay.io/astronomer/ap-blackbox-exporter:0.25.0-9
-                - quay.io/astronomer/ap-commander:0.37.12
+                - quay.io/astronomer/ap-commander:0.37.13
                 - quay.io/astronomer/ap-configmap-reloader:0.15.0
                 - quay.io/astronomer/ap-curator:8.0.21-2
                 - quay.io/astronomer/ap-db-bootstrapper:0.37.4
                 - quay.io/astronomer/ap-default-backend:0.28.31
                 - quay.io/astronomer/ap-elasticsearch-exporter:1.9.0
-                - quay.io/astronomer/ap-elasticsearch:8.18.0
-                - quay.io/astronomer/ap-fluentd:1.17.1-1
+                - quay.io/astronomer/ap-elasticsearch:8.18.2
+                - quay.io/astronomer/ap-fluentd:1.18.0
                 - quay.io/astronomer/ap-git-daemon:3.21.3-3
                 - quay.io/astronomer/ap-git-sync-relay:0.1.11
                 - quay.io/astronomer/ap-git-sync:4.4.0-1
                 - quay.io/astronomer/ap-grafana:10.4.19
                 - quay.io/astronomer/ap-houston-api:0.37.27
                 - quay.io/astronomer/ap-init:3.21.3-4
-                - quay.io/astronomer/ap-kibana:8.18.0
+                - quay.io/astronomer/ap-kibana:8.18.2
                 - quay.io/astronomer/ap-kube-state:2.15.0-1
                 - quay.io/astronomer/ap-nats-exporter:0.16.0-4
                 - quay.io/astronomer/ap-nats-server:2.10.19-3
