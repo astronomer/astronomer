@@ -21,9 +21,15 @@ from tests.utils.install_ci_tools import install_all_tools
 
 DEBUG = os.getenv("DEBUG", "").lower() in ["yes", "true", "1"]
 
-kind_file = Path.home() / ".local" / "share" / "astronomer-software" / "bin" / "kind"
-helm_file = Path.home() / ".local" / "share" / "astronomer-software" / "bin" / "helm"
-kubeconfig_dir = Path.home() / ".local" / "share" / "astronomer-software" / "kubeconfig"
+
+astronomer_software_dir = Path.home() / ".local" / "share" / "astronomer-software"
+(astronomer_software_dir / "bin").mkdir(parents=True, exist_ok=True)
+(astronomer_software_dir / "kubeconfig").mkdir(parents=True, exist_ok=True)
+(astronomer_software_dir / "certs").mkdir(parents=True, exist_ok=True)
+
+kind_exe = astronomer_software_dir / "bin" / "kind"
+helm_exe = astronomer_software_dir / "bin" / "helm"
+kubeconfig_dir = astronomer_software_dir / "kubeconfig"
 
 
 def run_command(command: str | list) -> str:
@@ -93,14 +99,13 @@ def create_kind_cluster(cluster_name: str) -> str:
     :raises RuntimeError: If the cluster creation fails.
     """
     kubeconfig_file = kubeconfig_dir / f"{cluster_name}"
-    if not kubeconfig_file.parent.exists():
-        kubeconfig_file.parent.mkdir(parents=True, exist_ok=True)
+    kubeconfig_file.parent.mkdir(parents=True, exist_ok=True)
     kubeconfig_file.unlink(missing_ok=True)
     install_all_tools()
 
     try:
         cmd = [
-            f"{kind_file}",
+            f"{kind_exe}",
             "create",
             "cluster",
             f"--name={cluster_name}",
@@ -143,7 +148,7 @@ def create_kind_cluster(cluster_name: str) -> str:
         return str(kubeconfig_file)
     except Exception:
         # Cleanup if cluster creation fails
-        cmd = [f"{kind_file}", "delete", "cluster", f"--name={cluster_name}"]
+        cmd = [f"{kind_exe}", "delete", "cluster", f"--name={cluster_name}"]
         print(f"Cleaning up after failed cluster creation with command: {shlex.join(cmd)}")
         run_command(cmd)
         kubeconfig_file.unlink(missing_ok=True)
@@ -164,7 +169,7 @@ def delete_kind_cluster(cluster_name: str, kubeconfig_file: str) -> None:
     :param kubeconfig_file: Path to the kubeconfig file to clean up.
     """
     try:
-        cmd = f"{kind_file} delete cluster --name {cluster_name}"
+        cmd = f"{kind_exe} delete cluster --name {cluster_name}"
         print(f"Deleting KIND cluster with command: {shlex.join(cmd)}")
         run_command(cmd)
     finally:
@@ -227,7 +232,7 @@ def helm_install(kubeconfig: str, values: str = f"{git_root_dir}/configs/local-d
     :param values: Path to the Helm values file.
     """
     helm_install_command = [
-        helm_file,
+        helm_exe,
         "install",
         "astronomer",
         "--create-namespace",
