@@ -393,7 +393,6 @@ workflows:
                 - quay.io/astronomer/ap-awsesproxy:1.5.0-17
                 - quay.io/astronomer/ap-base:3.21.3-4
                 - quay.io/astronomer/ap-blackbox-exporter:0.25.0-9
-
                 - quay.io/astronomer/ap-certgenerator:0.1.8
                 - quay.io/astronomer/ap-commander:0.37.13
                 - quay.io/astronomer/ap-configmap-reloader:0.15.0
