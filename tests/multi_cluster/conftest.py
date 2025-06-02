@@ -121,7 +121,6 @@ def create_kind_cluster(cluster_name: str) -> str:
         wait_for_pods_ready(str(kubeconfig_file))
 
         # Apply calico configuration
-        # kubectl apply -f "bin/kind/calico-crds-${KUBE_VERSION%.*}.yaml"
         cmd = [
             "kubectl",
             f"--kubeconfig={kubeconfig_file}",
@@ -240,7 +239,6 @@ def helm_install(kubeconfig: str, values: str = f"{git_root_dir}/configs/local-d
         str(git_root_dir),
         f"--values={values}",
         f"--kubeconfig={kubeconfig}",
-        "--wait",
         "--timeout=10m0s",
     ]
     if DEBUG:
