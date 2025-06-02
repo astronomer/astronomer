@@ -3,7 +3,12 @@
 
 This script runs `helm template` on the current chart with all features enabled,
 and extracts the liveness and readiness probes from the generated Kubernetes manifests.
-The output is saved in the `tests/chart_tests/test_data/` directory."""
+The output is saved in the `tests/chart_tests/test_data/` directory.
+
+This specifically does *NOT* have a pre-commit hook attached to it because that would
+cause it to "fix" any probes that were broken during development. This should only be run
+when you know for sure that there are default probes changes that need to be tested.
+"""
 
 from pathlib import Path
 import subprocess
