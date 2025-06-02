@@ -94,6 +94,12 @@ def test_houston_configmap_with_custom_images():
                     "gitSync": {"repository": "custom-registry/example/ap-git-sync-relay", "tag": "git-sync-999"},
                 }
             },
+            "certgenerator": {
+                "images": {
+                    "repository": "custom-registry/example/ap-certgenerator",
+                    "tag": "cert-generator-999",
+                }
+            },
         }
     }
 
@@ -105,6 +111,7 @@ def test_houston_configmap_with_custom_images():
 
     af_images = prod["deployments"]["helm"]["airflow"]["images"]
     git_sync_images = prod["deployments"]["helm"]["gitSyncRelay"]["images"]
+    cert_generator_images = prod["deployments"]["helm"]["astronomer"]["images"]
 
     assert af_images["statsd"]["tag"] == "statsd-999"
     assert af_images["redis"]["tag"] == "redis-999"
@@ -113,6 +120,7 @@ def test_houston_configmap_with_custom_images():
     assert af_images["gitSync"]["tag"] == "git-sync-999"
     assert git_sync_images["gitDaemon"]["tag"] == "git-daemon-999"
     assert git_sync_images["gitSync"]["tag"] == "git-sync-999"
+    assert cert_generator_images["certgenerator"]["tag"] == "cert-generator-999"
 
     assert af_images["statsd"]["repository"] == "custom-registry/example/ap-statsd-exporter"
     assert af_images["redis"]["repository"] == "custom-registry/example/ap-redis"
@@ -121,6 +129,7 @@ def test_houston_configmap_with_custom_images():
     assert af_images["gitSync"]["repository"] == "custom-registry/example/ap-git-sync"
     assert git_sync_images["gitDaemon"]["repository"] == "custom-registry/example/ap-git-daemon"
     assert git_sync_images["gitSync"]["repository"] == "custom-registry/example/ap-git-sync-relay"
+    assert cert_generator_images["certgenerator"]["repository"] == "custom-registry/example/ap-certgenerator"
 
 
 def test_houston_configmap_with_namespaceFreeFormEntry_true():

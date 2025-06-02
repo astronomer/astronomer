@@ -73,9 +73,11 @@ def get_images_from_houston_configmap(doc, args):
             file=sys.stderr,
         )
     git_sync_images = houston_config["deployments"]["helm"]["gitSyncRelay"]["images"]
+    cert_generator_images = houston_config["deployments"]["helm"]["astronomer"]["images"]
     af_images = houston_config["deployments"]["helm"]["airflow"]["images"]
     images.extend(f"{image['repository']}:{image['tag']}" for image in af_images.values())
     images.extend(f"{image['repository']}:{image['tag']}" for image in git_sync_images.values())
+    images.extend(f"{image['repository']}:{image['tag']}" for image in cert_generator_images.values())
     return images
 
 
