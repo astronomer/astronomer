@@ -222,7 +222,7 @@ def test_cve_2021_44228_es_master(es_master):
     assert "-Dlog4j2.formatMsgNoLookups=true" in es_master.check_output("/usr/share/elasticsearch/jdk/bin/jps -lv")
 
 
-def test_kibana_index_pod():
+def test_kibana_default_index_pod():
     """Check kibana index pod completed successfully"""
     command = ["kubectl -n astronomer logs -f  -lcomponent=kibana-default-index"]
     pod_output = Popen(command, shell=True, stdout=PIPE, stderr=PIPE)
