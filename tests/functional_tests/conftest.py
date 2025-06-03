@@ -18,46 +18,9 @@ if not (release_name := getenv("RELEASE_NAME")):
     release_name = "astronomer"
 
 
-# Add an argument `--cluster` to pytest command line options that specifies if we should test with a single or multi-cluster setup.
-def pytest_addoption(parser):
-    parser.addoption(
-        "--cluster",
-        action="store",
-        default="single",
-        help="Specify which Kubernetes cluster setup to use: 'single' or 'multi'",
-    )
-
-
-# Abstract the --cluster option as a fixture
-@pytest.fixture(scope="session")
-def cluster_setup(request):
-    cluster = request.config.getoption("--cluster")
-    if cluster == "single-cluster":
-        return "single-cluster"
-    if cluster == "multi-cluster":
-        return "multi-cluster"
-    pytest.fail(f"Invalid cluster setup specified: {cluster}")
-
-
-# Create a fixture that can be used to specify tests that should run only for single cluster setup
-@pytest.fixture
-def skip_for_single_cluster(cluster_setup):
-    """Use this fixture to skip tests that should not run in single-cluster setup."""
-    if cluster_setup == "single-cluster":
-        pytest.skip("Skipping test for single-cluster")
-
-
-# Create a fixture that can be used to specify tests that should run only for multi cluster setup
-@pytest.fixture
-def skip_for_multi_cluster(cluster_setup):
-    """Use this fixture to skip tests that should not run in multi-cluster setup."""
-    if cluster_setup == "multi-cluster":
-        pytest.skip("Skipping test for multi-cluster")
-
-
 @pytest.fixture(scope="function")
 def nginx(core_v1_client):
-    """This is the host fixture for testinfra."""
+    """Fixture for accessing the nginx pod."""
 
     pod = get_pod_by_label_selector(core_v1_client, "component=dp-ingress-controller")
     yield testinfra.get_host(f"kubectl://{pod}?container=nginx&namespace={namespace}")
@@ -65,7 +28,7 @@ def nginx(core_v1_client):
 
 @pytest.fixture(scope="function")
 def houston_api(core_v1_client):
-    """This is the host fixture for testinfra."""
+    """Fixture for accessing the houston-api pod."""
 
     pod = get_pod_by_label_selector(core_v1_client, "component=houston")
     yield testinfra.get_host(f"kubectl://{pod}?container=houston&namespace={namespace}")
@@ -73,7 +36,7 @@ def houston_api(core_v1_client):
 
 @pytest.fixture(scope="function")
 def prometheus():
-    """This is the host fixture for testinfra."""
+    """Fixture for accessing the prometheus pod."""
 
     pod = f"{release_name}-prometheus-0"
     yield testinfra.get_host(f"kubectl://{pod}?container=prometheus&namespace={namespace}")
@@ -81,25 +44,28 @@ def prometheus():
 
 @pytest.fixture(scope="function")
 def es_master():
+    """Fixture for accessing the es-master pod."""
     pod = f"{release_name}-elasticsearch-master-0"
     yield testinfra.get_host(f"kubectl://{pod}?container=es-master&namespace={namespace}")
 
 
 @pytest.fixture(scope="function")
 def es_data():
+    """Fixture for accessing the es-data pod."""
     pod = f"{release_name}-elasticsearch-data-0"
     yield testinfra.get_host(f"kubectl://{pod}?container=es-data&namespace={namespace}")
 
 
 @pytest.fixture(scope="function")
 def es_client(core_v1_client):
+    """Fixture for accessing the es-client pod."""
     pod = get_pod_by_label_selector(core_v1_client, "component=elasticsearch,role=client")
     yield testinfra.get_host(f"kubectl://{pod}?container=es-client&namespace={namespace}")
 
 
 @pytest.fixture(scope="session")
 def docker_client():
-    """This is a text fixture for the docker client, should it be needed in a test."""
+    """Fixture for accessing the Docker client."""
     docker_client = docker.from_env()
     yield docker_client
     docker_client.close()
@@ -107,7 +73,7 @@ def docker_client():
 
 @pytest.fixture(scope="session")
 def core_v1_client(in_cluster=False):
-    """Return a kubernetes client.
+    """Fixture for accessing the Kubernetes CoreV1Api client.
 
     By default, use kube-config. If running in a pod, specify in_cluster=True to use k8s service account.
     """
@@ -139,9 +105,3 @@ def get_pod_running_containers(pod_namespace=namespace):
                 containers[key] = container
 
     return containers
-
-
-@pytest.fixture(scope="function")
-def kibana_index_pod_client(core_v1_client):
-    pod = get_pod_by_label_selector(core_v1_client, "component=kibana-default-index,tier=logging")
-    yield testinfra.get_host(f"kubectl://{pod}?container=kibana-default-index&namespace={namespace}")
