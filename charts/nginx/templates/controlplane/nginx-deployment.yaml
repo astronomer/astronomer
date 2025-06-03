@@ -33,7 +33,7 @@ spec:
       annotations:
         traffic.sidecar.istio.io/includeInboundPorts: ""
         checksum/configmap: {{ include (print $.Template.BasePath "/controlplane/nginx-configmap.yaml") . | sha256sum }}
-        checksum/headers-configmap: {{ include (print $.Template.BasePath "/controlplane/nginx-cp-headers-configmap.yaml") . | sha256sum }}
+        checksum/headers-configmap: {{ include (print $.Template.BasePath "/controlplane/nginx-headers-configmap.yaml") . | sha256sum }}
         {{- if .Values.global.istio.enabled }}
         sidecar.istio.io/inject: "false"
         {{- end }}
