@@ -7,11 +7,9 @@ class TestNginxNetworkPolicy:
             show_only=[
                 "charts/nginx/templates/controlplane/nginx-metrics-networkpolicy.yaml",
                 "charts/nginx/templates/controlplane/nginx-networkpolicy.yaml",
-                "charts/nginx/templates/dataplane/nginx-dp-metrics-networkpolicy.yaml",
-                "charts/nginx/templates/dataplane/nginx-dp-networkpolicy.yaml",
             ],
         )
-        assert len(docs) == 4
+        assert len(docs) == 2
         for doc in docs:
             assert doc["kind"] == "NetworkPolicy"
             assert doc["apiVersion"] == "networking.k8s.io/v1"

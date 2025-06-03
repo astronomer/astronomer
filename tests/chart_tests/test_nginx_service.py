@@ -9,12 +9,26 @@ class TestNginx:
         docs = render_chart(
             show_only=[
                 "charts/nginx/templates/controlplane/nginx-service.yaml",
-                "charts/nginx/templates/dataplane/nginx-dp-service.yaml",
             ],
         )
 
-        assert len(docs) == 2
-        expected_names = ["release-name-cp-nginx", "release-name-dp-nginx"]
+        assert len(docs) == 1
+        expected_names = ["release-name-cp-nginx"]
+        for doc in docs:
+            assert doc["kind"] == "Service"
+            assert doc["apiVersion"] == "v1"
+            assert doc["metadata"]["name"] in expected_names
+            assert "loadBalancerIP" not in doc["spec"]
+            assert "loadBalancerSourceRanges" not in doc["spec"]
+
+        docs = render_chart(
+            show_only=[
+                "charts/nginx/templates/dataplane/nginx-dp-service.yaml",
+            ],
+            values={ "global": { "plane": { "mode": "data" } } },
+        )
+        assert len(docs) == 1
+        expected_names = ["release-name-dp-nginx"]
         for doc in docs:
             assert doc["kind"] == "Service"
             assert doc["apiVersion"] == "v1"
@@ -118,13 +132,33 @@ class TestNginx:
             values={"nginx": {"serviceType": "NodePort"}},
             show_only=[
                 "charts/nginx/templates/controlplane/nginx-service.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+        for doc in docs:
+            assert doc["spec"]["type"] == "NodePort"
+
+        docs = render_chart(
+            values={"nginx":
+                    {
+                        "serviceType": "NodePort"
+                        },
+                        "global": {
+                            "plane": {
+                                "mode": "data"
+                            }
+                        }
+            },
+            show_only=[
                 "charts/nginx/templates/dataplane/nginx-dp-service.yaml",
             ],
         )
 
-        assert len(docs) == 2
+        assert len(docs) == 1
         for doc in docs:
             assert doc["spec"]["type"] == "NodePort"
+
 
     def test_nginx_type_loadbalancer_omits_nodeports(self):
         httpNodePort, httpsNodePort, metricsNodePort = [30401, 30402, 30403]
