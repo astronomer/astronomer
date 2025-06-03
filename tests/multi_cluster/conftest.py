@@ -6,6 +6,7 @@ from collections.abc import Iterable
 from pathlib import Path, PosixPath
 
 import pytest
+import testinfra
 from kubernetes import client, config
 from kubernetes.client.exceptions import ApiException
 
@@ -253,7 +254,7 @@ def helm_install(kubeconfig: str, values: str = f"{git_root_dir}/configs/local-d
 
 
 @pytest.fixture(scope="function")
-def kubernetes_client(request, clusters) -> client.CoreV1Api:
+def k8s_core_v1_client(request, clusters) -> client.CoreV1Api:
     """
     Provide a Kubernetes client for the resolved target cluster.
 
@@ -475,3 +476,9 @@ def health_check(request):
         return True, "All components are healthy"
 
     return _check_health
+
+
+def get_k8s_container_handle(*, pod_type, container, namespace, release_name):
+    """Get a kubernetes container handle for a specific pod type and container."""
+    pod = f"{release_name}-{pod_type}-0"
+    return testinfra.get_host(f"kubectl://{pod}?container={container}&namespace={namespace}")
