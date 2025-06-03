@@ -230,7 +230,7 @@ class TestNginx:
     def test_nginx_allowSnippetAnnotations_defaults(self):
         docs = render_chart(
             show_only=[
-                "charts/nginx/templates/controlplane/nginx-cp-configmap.yaml",
+                "charts/nginx/templates/controlplane/nginx-configmap.yaml",
                 "charts/nginx/templates/dataplane/nginx-dp-configmap.yaml",
             ],
         )
