@@ -213,7 +213,7 @@ class TestServiceAccounts:
                 "charts/kube-state/templates/kube-state-rolebinding.yaml",
                 "charts/fluentd/templates/fluentd-clusterrolebinding.yaml",
                 "charts/prometheus/templates/prometheus-rolebinding.yaml",
-                "charts/nginx/templates/controlplane/nginx-cp-rolebinding.yaml",
+                "charts/nginx/templates/controlplane/nginx-rolebinding.yaml",
                 "charts/nginx/templates/dataplane/nginx-dp-rolebinding.yaml",
             ],
         )
@@ -339,7 +339,7 @@ custom_service_account_names = {
     "charts/nginx/templates/nginx-deployment-default.yaml": {
         "nginx": {"defaultBackend": {"serviceAccount": {"create": True, "name": "prothean"}}}
     },
-    "charts/nginx/templates/controlplane/nginx-cp-deployment.yaml": {
+    "charts/nginx/templates/controlplane/nginx-deployment.yaml": {
         "nginx": {"serviceAccount": {"create": True, "name": "prothean"}}
     },
     "charts/nginx/templates/dataplane/nginx-dp-deployment.yaml": {
