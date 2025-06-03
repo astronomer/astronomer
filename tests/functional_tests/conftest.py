@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # Many of these fixtures are based on https://testinfra.readthedocs.io/en/latest/examples.html#test-docker-images
 
 from os import getenv

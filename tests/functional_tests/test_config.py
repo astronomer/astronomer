@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """This file is for system testing the Astronomer Helm chart.
 
 Many of these tests use pytest fixtures that use testinfra to exec into
