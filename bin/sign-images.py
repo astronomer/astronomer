@@ -75,7 +75,7 @@ def sign_image(repo, tag, sha, key_path, password=None):
     except subprocess.CalledProcessError:
         pass  # Image is not yet signed
 
-    sign_cmd = ["cosign", "sign", "--key", key_path, digest_reference]
+    sign_cmd = ["cosign", "sign", "--yes", "--key", key_path, digest_reference]
     try:
         subprocess.run(sign_cmd, env=env, check=True)
         print(f"✓ Signed {full_image}")
@@ -138,7 +138,9 @@ def main():
             except (FileNotFoundError, json.JSONDecodeError):
                 print(f"Error: Could not find or parse local file {json_file}")
                 sys.exit(1)
-
+        subprocess.run(
+            ["docker", "login", "quay.io", "-u", os.environ["QUAY_USERNAME"], "-p", os.environ["QUAY_PASSWORD"]], check=True
+        )
         print("Signing Astronomer images...")
         for image_data in data["astronomer"]["images"].values():
             sign_image(image_data["repository"], image_data["tag"], image_data["sha256"], private_key_path, password)
