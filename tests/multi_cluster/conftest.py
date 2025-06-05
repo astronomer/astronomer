@@ -99,6 +99,7 @@ def create_kind_cluster(cluster_name: str) -> PosixPath:
     :return: Full path to the kubeconfig file.
     :raises RuntimeError: If the cluster creation fails.
     """
+    # TODO: make kind load any containers that are found in the local docker cache (network optimization)
     kubeconfig_file = kubeconfig_dir / f"{cluster_name}"
     kubeconfig_file.parent.mkdir(parents=True, exist_ok=True)
     kubeconfig_file.unlink(missing_ok=True)
@@ -192,7 +193,13 @@ def control(request) -> Iterable[str]:
     kubeconfig_file = create_kind_cluster("control")
     create_namespace(kubeconfig_file)
     setup_common_cluster_configs(kubeconfig_file)
-    helm_install(kubeconfig=kubeconfig_file)
+    helm_install(
+        kubeconfig=kubeconfig_file,
+        values=[
+            f"{git_root_dir}/configs/local-dev.yaml",
+            f"{git_root_dir}/tests/data_files/scenario-controlplane.yaml",
+        ],
+    )
     yield kubeconfig_file
     delete_kind_cluster("control", kubeconfig_file)
 
@@ -208,7 +215,13 @@ def data(request) -> Iterable[str]:
     kubeconfig_file = create_kind_cluster("data")
     create_namespace(kubeconfig_file)
     setup_common_cluster_configs(kubeconfig_file)
-    helm_install(kubeconfig=kubeconfig_file)
+    helm_install(
+        kubeconfig=kubeconfig_file,
+        values=[
+            f"{git_root_dir}/configs/local-dev.yaml",
+            f"{git_root_dir}/tests/data_files/scenario-dataplane.yaml",
+        ],
+    )
     yield kubeconfig_file
     delete_kind_cluster("data", kubeconfig_file)
 
@@ -224,17 +237,23 @@ def unified(request) -> Iterable[str]:
     kubeconfig_file = create_kind_cluster("unified")
     create_namespace(kubeconfig_file)
     setup_common_cluster_configs(kubeconfig_file)
-    helm_install(kubeconfig=kubeconfig_file)
+    helm_install(
+        kubeconfig=kubeconfig_file,
+        values=[
+            f"{git_root_dir}/configs/local-dev.yaml",
+            f"{git_root_dir}/tests/data_files/scenario-unified.yaml",
+        ],
+    )
     yield kubeconfig_file
     delete_kind_cluster("unified", kubeconfig_file)
 
 
-def helm_install(kubeconfig: str, values: str = f"{git_root_dir}/configs/local-dev.yaml") -> None:
+def helm_install(kubeconfig: str, values: str | list[str] = f"{git_root_dir}/configs/local-dev.yaml") -> None:
     """
     Install a Helm chart using the provided kubeconfig and values file.
 
     :param kubeconfig: Path to the kubeconfig file.
-    :param values: Path to the Helm values file.
+    :param values: Path to the Helm values file or a list of values files.
     """
     helm_install_command = [
         helm_exe,
@@ -243,10 +262,19 @@ def helm_install(kubeconfig: str, values: str = f"{git_root_dir}/configs/local-d
         "--create-namespace",
         "--namespace=astronomer",
         str(git_root_dir),
-        f"--values={values}",
         f"--kubeconfig={kubeconfig}",
         "--timeout=15m0s",
     ]
+
+    if isinstance(values, str):
+        values = [values]
+
+    for value in values:
+        if isinstance(value, str) and Path(value).exists():
+            helm_install_command.append(f"--values={value}")
+        else:
+            raise ValueError(f"Invalid values file: {value}")
+
     if DEBUG:
         helm_install_command.append("--debug")
 
