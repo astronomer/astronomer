@@ -1,0 +1,9 @@
+# Configuration file that sets the helm chart into control plane mode.
+
+global:
+  plane:
+    mode: control
+
+  # This usage is deprecated, use `global.plane.mode` instead.
+  controlplane:
+    enabled: true
