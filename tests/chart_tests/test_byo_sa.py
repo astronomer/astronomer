@@ -380,6 +380,9 @@ def test_custom_serviceaccount_names(template_name):
 
     values = always_merger.merge(get_all_features(), custom_service_account_names[template_name])
     enable_pgsql_sa = {"postgresql": {"serviceAccount": {"enabled": True}}}
+    if "nginx-dp-deployment" in template_name:
+        plane_config = {"global": {"plane": {"mode": "data"}}}
+        values = always_merger.merge(values, plane_config)
     values = always_merger.merge(values, enable_pgsql_sa)
 
     docs = render_chart(show_only=template_name, values=values)
