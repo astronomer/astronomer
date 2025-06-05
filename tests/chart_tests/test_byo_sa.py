@@ -188,7 +188,7 @@ class TestServiceAccounts:
         service_account_annotations = [doc["metadata"]["annotations"] for doc in docs if doc["kind"] == "ServiceAccount"]
         assert annotations in service_account_annotations
 
-    def test_serviceaccount_with_overrides_rolebinding(self, kube_version):
+    def test_serviceaccount_with_overrides_rolebinding_controlplane(self, kube_version):
         "Test that if custom SA are added it gets created"
         values = {
             "astronomer": {
@@ -213,12 +213,11 @@ class TestServiceAccounts:
                 "charts/kube-state/templates/kube-state-rolebinding.yaml",
                 "charts/fluentd/templates/fluentd-clusterrolebinding.yaml",
                 "charts/prometheus/templates/prometheus-rolebinding.yaml",
-                "charts/nginx/templates/controlplane/nginx-rolebinding.yaml",
-                "charts/nginx/templates/dataplane/nginx-dp-rolebinding.yaml",
+                "charts/nginx/templates/controlplane/nginx-rolebinding.yaml"
             ],
         )
 
-        assert len(docs) == 8
+        assert len(docs) == 7
 
         expected_names = {
             "commander-test",
@@ -227,11 +226,23 @@ class TestServiceAccounts:
             "kube-state-test",
             "fluentd-test",
             "prometheus-test",
-            "nginx-test-cp",
-            "nginx-test-dp",
+            "nginx-test-cp"
         }
         extracted_names = {doc["subjects"][0]["name"] for doc in docs if doc.get("subjects")}
         assert expected_names.issubset(extracted_names)
+
+    def test_serviceaccount_with_overrides_rolebinding_dataplane(self, kube_version):
+        "Test rolebindings for components that only use dataplane mode"
+        values = {
+            "global": {"plane": {"mode": "data"}},
+            "nginx": {"serviceAccount": {"name": "nginx-test"}},
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=["charts/nginx/templates/dataplane/nginx-dp-rolebinding.yaml"],
+        )
+        assert len(docs) == 1
 
 
 @pytest.mark.parametrize(
