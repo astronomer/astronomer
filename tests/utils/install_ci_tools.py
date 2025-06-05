@@ -85,7 +85,7 @@ def install_kubectl():
     dest = BIN_DIR / "kubectl"
     if dest.exists():
         # Check the installed version
-        installed_version = subprocess.run(["kubectl", "version", "--client", "--short"], capture_output=True, text=True)
+        installed_version = subprocess.run(["kubectl", "version", "--client"], capture_output=True, text=True)
         if kubectl_version in installed_version.stdout:
             print("kubectl already installed.")
             return
