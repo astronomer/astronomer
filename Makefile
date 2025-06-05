@@ -72,6 +72,10 @@ clean: ## Clean build and test artifacts
 	rm -rfv venv
 	find . -name __pycache__ -exec rm -rfv {} \+
 	rm -rfv ~/.local/share/astronomer-software
+	kind delete cluster -n control
+	kind delete cluster -n data
+	kind delete cluster -n kind
+	kind delete cluster -n unified
 
 .PHONY: build
 build: ## Build the Astronomer helm chart
