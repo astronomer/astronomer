@@ -149,13 +149,14 @@ jobs:
 
   release_bom:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2025-05
+      - image: quay.io/astronomer/ci-helm-release:2025-06
     steps:
       - checkout
       - run:
           name: Install bom-generator
           command: |
-            pip install git+https://${GITHUB_TOKEN}@github.com/astronomer/astronomer-bom-generator.git
+            # https://github.com/astronomer/astronomer-bom-generator/releases
+            pip install "git+https://${GITHUB_TOKEN}@github.com/astronomer/astronomer-bom-generator.git@0.9.0"
       - run:
           name: Run Release BOM Script
           command: |
@@ -163,7 +164,7 @@ jobs:
 
   run_pre_commit:
     docker:
-      - image: quay.io/astronomer/ci-pre-commit:2025-05
+      - image: quay.io/astronomer/ci-pre-commit:2025-06
     resource_class: small
     steps:
       - checkout
@@ -188,7 +189,7 @@ jobs:
 
   test-unit:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2025-05
+      - image: quay.io/astronomer/ci-helm-release:2025-06
     # https://circleci.com/docs/using-docker/#x86
     resource_class: large
     parallelism: 4
@@ -225,7 +226,7 @@ jobs:
 
   build-artifact:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2025-05
+      - image: quay.io/astronomer/ci-helm-release:2025-06
     parameters:
       qa_release:
         type: boolean
@@ -244,7 +245,7 @@ jobs:
 
   release-to-internal:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2025-05
+      - image: quay.io/astronomer/ci-helm-release:2025-06
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -283,7 +284,7 @@ jobs:
 
   release-to-public:
     docker:
-      - image: quay.io/astronomer/ci-helm-release:2025-05
+      - image: quay.io/astronomer/ci-helm-release:2025-06
     steps:
       - attach_workspace:
           at: /tmp/workspace
