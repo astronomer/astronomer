@@ -213,7 +213,7 @@ class TestServiceAccounts:
                 "charts/kube-state/templates/kube-state-rolebinding.yaml",
                 "charts/fluentd/templates/fluentd-clusterrolebinding.yaml",
                 "charts/prometheus/templates/prometheus-rolebinding.yaml",
-                "charts/nginx/templates/controlplane/nginx-rolebinding.yaml"
+                "charts/nginx/templates/controlplane/nginx-rolebinding.yaml",
             ],
         )
 
@@ -226,7 +226,7 @@ class TestServiceAccounts:
             "kube-state-test",
             "fluentd-test",
             "prometheus-test",
-            "nginx-test-cp"
+            "nginx-test-cp",
         }
         extracted_names = {doc["subjects"][0]["name"] for doc in docs if doc.get("subjects")}
         assert expected_names.issubset(extracted_names)

@@ -25,7 +25,7 @@ class TestNginx:
             show_only=[
                 "charts/nginx/templates/dataplane/nginx-dp-service.yaml",
             ],
-            values={ "global": { "plane": { "mode": "data" } } },
+            values={"global": {"plane": {"mode": "data"}}},
         )
         assert len(docs) == 1
         expected_names = ["release-name-dp-nginx"]
@@ -140,16 +140,7 @@ class TestNginx:
             assert doc["spec"]["type"] == "NodePort"
 
         docs = render_chart(
-            values={"nginx":
-                    {
-                        "serviceType": "NodePort"
-                        },
-                        "global": {
-                            "plane": {
-                                "mode": "data"
-                            }
-                        }
-            },
+            values={"nginx": {"serviceType": "NodePort"}, "global": {"plane": {"mode": "data"}}},
             show_only=[
                 "charts/nginx/templates/dataplane/nginx-dp-service.yaml",
             ],
@@ -158,7 +149,6 @@ class TestNginx:
         assert len(docs) == 1
         for doc in docs:
             assert doc["spec"]["type"] == "NodePort"
-
 
     def test_nginx_type_loadbalancer_omits_nodeports(self):
         httpNodePort, httpsNodePort, metricsNodePort = [30401, 30402, 30403]
