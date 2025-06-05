@@ -10,4 +10,5 @@ chart_metadata = yaml.safe_load((Path(git_root_dir) / "metadata.yaml").read_text
 supported_k8s_versions = [".".join(x.split(".")[:-1] + ["0"]) for x in chart_metadata["test_k8s_versions"]]
 k8s_version_too_old = f"1.{int(supported_k8s_versions[0].split('.')[1]) - 1!s}.0"
 k8s_version_too_new = f"1.{int(supported_k8s_versions[-1].split('.')[1]) + 1!s}.0"
-kubectl_version = supported_k8s_versions[-2]  # one version old https://kubernetes.io/releases/version-skew-policy/#kubectl
+# kubectl is one version old https://kubernetes.io/releases/version-skew-policy/#kubectl
+kubectl_version = chart_metadata["test_k8s_versions"][-2]

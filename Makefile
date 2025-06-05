@@ -33,6 +33,18 @@ venv-unit: .venv-unit  ## Setup venv required for unit testing the Astronomer he
 test-functional: venv-functional ## Run functional tests on the Astronomer helm chart
 	venv/bin/python -m pytest -v --junitxml=test-results/junit.xml tests/functional_tests
 
+.PHONY: test-functional-control
+test-functional-control: venv-functional ## Run functional tests on the control installation scenario
+	venv/bin/python -m pytest -sv --junitxml=test-results/junit.xml tests/multi_cluster/control
+
+.PHONY: test-functional-data
+test-functional-data: venv-functional ## Run functional tests on the data installation scenario
+	venv/bin/python -m pytest -sv --junitxml=test-results/junit.xml tests/multi_cluster/data
+
+.PHONY: test-functional-unified
+test-functional-unified: venv-functional ## Run functional tests on the unified installation scenario
+	venv/bin/python -m pytest -sv --junitxml=test-results/junit.xml tests/multi_cluster/unified
+
 # unittest-charts is deprecated
 .PHONY: unittest-charts
 unittest-charts: test-unit
@@ -59,6 +71,11 @@ clean: ## Clean build and test artifacts
 	rm -rfv test-results
 	rm -rfv venv
 	find . -name __pycache__ -exec rm -rfv {} \+
+	rm -rfv ~/.local/share/astronomer-software
+	kind delete cluster -n control
+	kind delete cluster -n data
+	kind delete cluster -n kind
+	kind delete cluster -n unified
 
 .PHONY: build
 build: ## Build the Astronomer helm chart
@@ -66,7 +83,7 @@ build: ## Build the Astronomer helm chart
 
 .PHONY: update-requirements
 update-requirements: ## Update all requirements.txt files
-	for FILE in requirements/*.in ; do uv pip compile --quiet --generate-hashes --upgrade $${FILE} --output-file $${FILE%.in}.txt ; done ;
+	for FILE in requirements/*.in ; do uv pip compile --quiet --upgrade $${FILE} --output-file $${FILE%.in}.txt ; done ;
 	-pre-commit run requirements-txt-fixer --all-files --show-diff-on-failure
 
 .PHONY: show-docker-images
@@ -76,3 +93,10 @@ show-docker-images: ## Show all docker images and versions used in the helm char
 .PHONY: show-docker-images-with-private-registry
 show-docker-images-with-private-registry: ## Show all docker images and versions used in the helm chart with a privateRegistry set
 	@bin/show-docker-images.py --private-registry --with-houston
+
+.PHONY: show-downloaded-tool-versions
+show-downloaded-tool-versions: ## Show the versions of tools that were downloaded by multi-cluster test setup
+	-~/.local/share/astronomer-software/bin/helm version --short
+	-~/.local/share/astronomer-software/bin/kind version
+	-~/.local/share/astronomer-software/bin/kubectl version --client
+	-~/.local/share/astronomer-software/bin/mkcert --version

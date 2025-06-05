@@ -2,7 +2,7 @@
 # shellcheck disable=SC1090
 set -euo pipefail
 
-export KUBE_VERSION="${KUBE_VERSION:-v1.30.6}"
+export KUBE_VERSION="${KUBE_VERSION:-v1.31.6}"
 
 # The path to the working directory - the root of the repo
 GIT_ROOT="$(git -C "${0%/*}" rev-parse --show-toplevel)"
@@ -22,6 +22,14 @@ for executable in mkcert kind helm kubectl docker; do
     exit 1
   fi
 done
+
+(
+  set -x ;
+  helm version --short
+  kind version
+  kubectl version --client
+  mkcert --version
+)
 
 echo "Generating SSL keys..."
 if "${GIT_ROOT}/bin/generate_ssl_keys" ; then
