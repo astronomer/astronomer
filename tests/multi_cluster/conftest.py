@@ -440,44 +440,6 @@ def check_deployment_health(apps_v1: client.AppsV1Api, namespace: str = "astrono
         return False, f"Failed to check deployment health: {e}"
 
 
-@pytest.fixture
-def health_check(request):
-    """
-    Fixture to check the health of the cluster.
-
-    Usage:
-        def test_something(health_check):
-            is_healthy, message = health_check()
-            assert is_healthy, message
-    """
-
-    def _check_health(namespace: str = "astronomer") -> tuple[bool, str]:
-        # Load the kubeconfig from the appropriate cluster fixture
-        cluster_name = request.fixturename  # This will be 'unified', 'control', or 'data'
-        kubeconfig_file = request.getfixturevalue(cluster_name)
-
-        config.load_kube_config(config_file=kubeconfig_file)
-        v1 = client.CoreV1Api()
-        apps_v1 = client.AppsV1Api()
-
-        # Run all health checks
-        pod_healthy, pod_msg = check_pod_health(v1, namespace)
-        if not pod_healthy:
-            return pod_healthy, pod_msg
-
-        svc_healthy, svc_msg = check_service_health(v1, namespace)
-        if not svc_healthy:
-            return svc_healthy, svc_msg
-
-        dep_healthy, dep_msg = check_deployment_health(apps_v1, namespace)
-        if not dep_healthy:
-            return dep_healthy, dep_msg
-
-        return True, "All components are healthy"
-
-    return _check_health
-
-
 def get_k8s_container_handle(*, pod_type, container, namespace, release_name):
     """Get a kubernetes container handle for a specific pod type and container."""
     pod = f"{release_name}-{pod_type}-0"
