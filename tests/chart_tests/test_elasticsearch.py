@@ -715,7 +715,7 @@ class TestElasticSearch:
         """Test that helm renders no templates when controlplane is disabled."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"controlplane": {"enabled": False}}},
+            values={"global": {"plane": {"mode": "data"}}},
             show_only=[doc],
         )
         assert len(docs) == 0, f"Document {doc} was rendered when controlplane is disabled"
