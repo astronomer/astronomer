@@ -5,13 +5,11 @@ class TestNginxNetworkPolicy:
     def test_nginx_networkpolicy_basics(self):
         docs = render_chart(
             show_only=[
-                "charts/nginx/templates/controlplane/nginx-cp-metrics-networkpolicy.yaml",
-                "charts/nginx/templates/controlplane/nginx-cp-networkpolicy.yaml",
-                "charts/nginx/templates/dataplane/nginx-dp-metrics-networkpolicy.yaml",
-                "charts/nginx/templates/dataplane/nginx-dp-networkpolicy.yaml",
+                "charts/nginx/templates/controlplane/nginx-metrics-networkpolicy.yaml",
+                "charts/nginx/templates/controlplane/nginx-networkpolicy.yaml",
             ],
         )
-        assert len(docs) == 4
+        assert len(docs) == 2
         for doc in docs:
             assert doc["kind"] == "NetworkPolicy"
             assert doc["apiVersion"] == "networking.k8s.io/v1"
@@ -22,7 +20,7 @@ class TestNginxNetworkPolicy:
         disabled_values = {"global": {"plane": {"mode": "data"}}}
         docs = render_chart(
             show_only=[
-                "charts/nginx/templates/controlplane/nginx-cp-networkpolicy.yaml",
+                "charts/nginx/templates/controlplane/nginx-networkpolicy.yaml",
                 "charts/nginx/templates/dataplane/nginx-dp-networkpolicy.yaml",
             ],
             values=disabled_values,
@@ -33,7 +31,7 @@ class TestNginxNetworkPolicy:
         disabled_values = {"global": {"plane": {"mode": "control"}}}
         docs = render_chart(
             show_only=[
-                "charts/nginx/templates/controlplane/nginx-cp-networkpolicy.yaml",
+                "charts/nginx/templates/controlplane/nginx-networkpolicy.yaml",
                 "charts/nginx/templates/dataplane/nginx-dp-networkpolicy.yaml",
             ],
             values=disabled_values,
@@ -44,7 +42,7 @@ class TestNginxNetworkPolicy:
         disabled_values = {"global": {"plane": {"mode": "RandomValue"}}}
         docs = render_chart(
             show_only=[
-                "charts/nginx/templates/controlplane/nginx-cp-networkpolicy.yaml",
+                "charts/nginx/templates/controlplane/nginx-networkpolicy.yaml",
                 "charts/nginx/templates/dataplane/nginx-dp-networkpolicy.yaml",
             ],
             values=disabled_values,

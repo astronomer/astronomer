@@ -8,13 +8,27 @@ class TestNginx:
     def test_nginx_service_basics(self):
         docs = render_chart(
             show_only=[
-                "charts/nginx/templates/controlplane/nginx-cp-service.yaml",
-                "charts/nginx/templates/dataplane/nginx-dp-service.yaml",
+                "charts/nginx/templates/controlplane/nginx-service.yaml",
             ],
         )
 
-        assert len(docs) == 2
-        expected_names = ["release-name-cp-nginx", "release-name-dp-nginx"]
+        assert len(docs) == 1
+        expected_names = ["release-name-cp-nginx"]
+        for doc in docs:
+            assert doc["kind"] == "Service"
+            assert doc["apiVersion"] == "v1"
+            assert doc["metadata"]["name"] in expected_names
+            assert "loadBalancerIP" not in doc["spec"]
+            assert "loadBalancerSourceRanges" not in doc["spec"]
+
+        docs = render_chart(
+            show_only=[
+                "charts/nginx/templates/dataplane/nginx-dp-service.yaml",
+            ],
+            values={"global": {"plane": {"mode": "data"}}},
+        )
+        assert len(docs) == 1
+        expected_names = ["release-name-dp-nginx"]
         for doc in docs:
             assert doc["kind"] == "Service"
             assert doc["apiVersion"] == "v1"
@@ -51,7 +65,7 @@ class TestNginx:
         docs = render_chart(
             values=values,
             show_only=[
-                "charts/nginx/templates/controlplane/nginx-cp-service.yaml",
+                "charts/nginx/templates/controlplane/nginx-service.yaml",
                 "charts/nginx/templates/dataplane/nginx-dp-service.yaml",
             ],
         )
@@ -65,7 +79,7 @@ class TestNginx:
         docs = render_chart(
             values={"nginx": {"ingressAnnotations": {"foo1": "foo", "foo2": "foo", "foo3": "foo"}}},
             show_only=[
-                "charts/nginx/templates/controlplane/nginx-cp-service.yaml",
+                "charts/nginx/templates/controlplane/nginx-service.yaml",
                 "charts/nginx/templates/dataplane/nginx-dp-service.yaml",
             ],
         )
@@ -89,7 +103,7 @@ class TestNginx:
                 }
             },
             show_only=[
-                "charts/nginx/templates/controlplane/nginx-cp-service.yaml",
+                "charts/nginx/templates/controlplane/nginx-service.yaml",
                 "charts/nginx/templates/dataplane/nginx-dp-service.yaml",
             ],
         )
@@ -106,7 +120,7 @@ class TestNginx:
         docs = render_chart(
             values={"nginx": {"serviceType": "ClusterIP"}},
             show_only=[
-                "charts/nginx/templates/controlplane/nginx-cp-service.yaml",
+                "charts/nginx/templates/controlplane/nginx-service.yaml",
                 "charts/nginx/templates/dataplane/nginx-dp-service.yaml",
             ],
         )
@@ -117,12 +131,22 @@ class TestNginx:
         docs = render_chart(
             values={"nginx": {"serviceType": "NodePort"}},
             show_only=[
-                "charts/nginx/templates/controlplane/nginx-cp-service.yaml",
+                "charts/nginx/templates/controlplane/nginx-service.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+        for doc in docs:
+            assert doc["spec"]["type"] == "NodePort"
+
+        docs = render_chart(
+            values={"nginx": {"serviceType": "NodePort"}, "global": {"plane": {"mode": "data"}}},
+            show_only=[
                 "charts/nginx/templates/dataplane/nginx-dp-service.yaml",
             ],
         )
 
-        assert len(docs) == 2
+        assert len(docs) == 1
         for doc in docs:
             assert doc["spec"]["type"] == "NodePort"
 
@@ -138,7 +162,7 @@ class TestNginx:
                 }
             },
             show_only=[
-                "charts/nginx/templates/controlplane/nginx-cp-service.yaml",
+                "charts/nginx/templates/controlplane/nginx-service.yaml",
                 "charts/nginx/templates/dataplane/nginx-dp-service.yaml",
             ],
         )
@@ -155,7 +179,7 @@ class TestNginx:
                 }
             },
             show_only=[
-                "charts/nginx/templates/controlplane/nginx-cp-service.yaml",
+                "charts/nginx/templates/controlplane/nginx-service.yaml",
                 "charts/nginx/templates/dataplane/nginx-dp-service.yaml",
             ],
         )
@@ -173,7 +197,7 @@ class TestNginx:
                 }
             },
             show_only=[
-                "charts/nginx/templates/controlplane/nginx-cp-service.yaml",
+                "charts/nginx/templates/controlplane/nginx-service.yaml",
                 "charts/nginx/templates/dataplane/nginx-dp-service.yaml",
             ],
         )
@@ -187,7 +211,7 @@ class TestNginx:
         docs = render_chart(
             values={"nginx": {"externalIPs": "1.2.3.4"}},
             show_only=[
-                "charts/nginx/templates/controlplane/nginx-cp-service.yaml",
+                "charts/nginx/templates/controlplane/nginx-service.yaml",
                 "charts/nginx/templates/dataplane/nginx-dp-service.yaml",
             ],
         )
@@ -198,7 +222,7 @@ class TestNginx:
     def test_nginx_metrics_service_type(self):
         docs = render_chart(
             show_only=[
-                "charts/nginx/templates/controlplane/nginx-cp-metrics-service.yaml",
+                "charts/nginx/templates/controlplane/nginx-metrics-service.yaml",
                 "charts/nginx/templates/dataplane/nginx-dp-metrics-service.yaml",
             ],
         )
@@ -209,7 +233,7 @@ class TestNginx:
     def test_nginx_externalTrafficPolicy_defaults(self):
         docs = render_chart(
             show_only=[
-                "charts/nginx/templates/controlplane/nginx-cp-service.yaml",
+                "charts/nginx/templates/controlplane/nginx-service.yaml",
                 "charts/nginx/templates/dataplane/nginx-dp-service.yaml",
             ],
         )
@@ -220,7 +244,7 @@ class TestNginx:
         docs = render_chart(
             values={"nginx": {"preserveSourceIP": True}},
             show_only=[
-                "charts/nginx/templates/controlplane/nginx-cp-service.yaml",
+                "charts/nginx/templates/controlplane/nginx-service.yaml",
                 "charts/nginx/templates/dataplane/nginx-dp-service.yaml",
             ],
         )
@@ -230,7 +254,7 @@ class TestNginx:
     def test_nginx_allowSnippetAnnotations_defaults(self):
         docs = render_chart(
             show_only=[
-                "charts/nginx/templates/controlplane/nginx-cp-configmap.yaml",
+                "charts/nginx/templates/controlplane/nginx-configmap.yaml",
                 "charts/nginx/templates/dataplane/nginx-dp-configmap.yaml",
             ],
         )
@@ -241,7 +265,7 @@ class TestNginx:
         docs = render_chart(
             values={"nginx": {"enableAnnotationValidations": True}},
             show_only=[
-                "charts/nginx/templates/controlplane/nginx-cp-deployment.yaml",
+                "charts/nginx/templates/controlplane/nginx-deployment.yaml",
                 "charts/nginx/templates/dataplane/nginx-dp-deployment.yaml",
             ],
         )
@@ -261,7 +285,7 @@ class TestNginx:
         """Test nginx ingress deployment template defaults."""
         docs = render_chart(
             show_only=[
-                "charts/nginx/templates/controlplane/nginx-cp-deployment.yaml",
+                "charts/nginx/templates/controlplane/nginx-deployment.yaml",
                 "charts/nginx/templates/dataplane/nginx-dp-deployment.yaml",
             ],
         )
@@ -294,7 +318,7 @@ class TestNginx:
         docs = render_chart(
             values={"nginx": {"minReadySeconds": minReadySeconds}},
             show_only=[
-                "charts/nginx/templates/controlplane/nginx-cp-deployment.yaml",
+                "charts/nginx/templates/controlplane/nginx-deployment.yaml",
                 "charts/nginx/templates/dataplane/nginx-dp-deployment.yaml",
             ],
         )
@@ -306,7 +330,7 @@ class TestNginx:
         docs = render_chart(
             values={"nginx": {"electionTTL": "30s"}},
             show_only=[
-                "charts/nginx/templates/controlplane/nginx-cp-deployment.yaml",
+                "charts/nginx/templates/controlplane/nginx-deployment.yaml",
                 "charts/nginx/templates/dataplane/nginx-dp-deployment.yaml",
             ],
         )
@@ -320,7 +344,7 @@ class TestNginx:
         docs = render_chart(
             values={"nginx": {"enableTopologyAwareRouting": True}},
             show_only=[
-                "charts/nginx/templates/controlplane/nginx-cp-deployment.yaml",
+                "charts/nginx/templates/controlplane/nginx-deployment.yaml",
                 "charts/nginx/templates/dataplane/nginx-dp-deployment.yaml",
             ],
         )
@@ -334,7 +358,7 @@ class TestNginx:
         docs = render_chart(
             values={"nginx": {"disableLeaderElection": True}},
             show_only=[
-                "charts/nginx/templates/controlplane/nginx-cp-deployment.yaml",
+                "charts/nginx/templates/controlplane/nginx-deployment.yaml",
                 "charts/nginx/templates/dataplane/nginx-dp-deployment.yaml",
             ],
         )
@@ -363,7 +387,7 @@ class TestNginx:
         docs = render_chart(
             values=values,
             show_only=[
-                "charts/nginx/templates/controlplane/nginx-cp-deployment.yaml",
+                "charts/nginx/templates/controlplane/nginx-deployment.yaml",
                 "charts/nginx/templates/dataplane/nginx-dp-deployment.yaml",
             ],
         )
