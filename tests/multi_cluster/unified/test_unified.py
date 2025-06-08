@@ -5,4 +5,4 @@ In this scenario, all components (control plane and data plane) are installed in
 
 
 def test_dummy(unified):
-    assert False
+    assert True

@@ -7,6 +7,7 @@ from pathlib import Path, PosixPath
 
 import pytest
 import testinfra
+import yaml
 from kubernetes import client, config
 from kubernetes.client.exceptions import ApiException
 
@@ -191,6 +192,7 @@ def control(request) -> Iterable[str]:
     :yield: Path to the kubeconfig file for the 'control' cluster.
     """
     kubeconfig_file = create_kind_cluster("control")
+    kind_load_docker_images(cluster="control")
     create_namespace(kubeconfig_file)
     setup_common_cluster_configs(kubeconfig_file)
     helm_install(
@@ -213,6 +215,7 @@ def data(request) -> Iterable[str]:
     :yield: Path to the kubeconfig file for the 'data' cluster.
     """
     kubeconfig_file = create_kind_cluster("data")
+    kind_load_docker_images(cluster="data")
     create_namespace(kubeconfig_file)
     setup_common_cluster_configs(kubeconfig_file)
     helm_install(
@@ -235,6 +238,7 @@ def unified(request) -> Iterable[str]:
     :yield: Path to the kubeconfig file for the 'unified' cluster.
     """
     kubeconfig_file = create_kind_cluster("unified")
+    kind_load_docker_images(cluster="unified")
     create_namespace(kubeconfig_file)
     setup_common_cluster_configs(kubeconfig_file)
     helm_install(
@@ -282,29 +286,27 @@ def helm_install(kubeconfig: str, values: str | list[str] = f"{git_root_dir}/con
 
 
 @pytest.fixture(scope="function")
-def k8s_core_v1_client(request) -> client.CoreV1Api:
+def k8s_core_v1_client(cluster_name) -> client.CoreV1Api:
     """
     Provide a Kubernetes core/v1 client for the resolved target cluster.
 
     :param request: Pytest request object for accessing test metadata.
     :return: A Kubernetes CoreV1Api client for the target cluster.
     """
-    cluster_name = request.param
-    kubeconfig_file = kubeconfig_dir / f"{cluster_name}"
+    kubeconfig_file = str(kubeconfig_dir / f"{cluster_name}")
     config.load_kube_config(config_file=kubeconfig_file)
     return client.CoreV1Api()
 
 
 @pytest.fixture(scope="function")
-def k8s_apps_v1_client(request) -> client.AppsV1Api:
+def k8s_apps_v1_client(cluster_name) -> client.AppsV1Api:
     """
     Provide a Kubernetes apps/v1 client for the resolved target cluster.
 
     :param request: Pytest request object for accessing test metadata.
     :return: A Kubernetes AppsV1Api client for the target cluster.
     """
-    cluster_name = request.param
-    kubeconfig_file = kubeconfig_dir / f"{cluster_name}"
+    kubeconfig_file = str(kubeconfig_dir / f"{cluster_name}")
     config.load_kube_config(config_file=kubeconfig_file)
     return client.AppsV1Api()
 
@@ -485,3 +487,83 @@ def get_k8s_container_handle(*, pod_type, container, namespace, release_name):
     """Get a kubernetes container handle for a specific pod type and container."""
     pod = f"{release_name}-{pod_type}-0"
     return testinfra.get_host(f"kubectl://{pod}?container={container}&namespace={namespace}")
+
+
+def kind_load_docker_images(cluster: str) -> None:
+    """
+    Load any available docker images into a KIND cluster.
+
+    For any images found in CircleCI config are also found in in the local Docker cache, load images into the KIND cluster
+    instead of downloading them from the Docker registry. This is really only useful for local development and testing, as
+    it avoids repeatedly downloading the same images.
+
+    # TODO: make a script that auto-downloads these images into the docker registry so this optimizatino is easier to use.
+
+    :param cluster: Name of the KIND cluster to load images into.
+    """
+
+    circleci_config = yaml.safe_load((git_root_dir / ".circleci" / "config.yml").read_text())
+    image_list = circleci_config["workflows"]["scan-docker-images"]["jobs"][1]["twistcli-scan-docker"]["matrix"]["parameters"][
+        "docker_image"
+    ]
+
+    image_allow_list = {
+        "unified": [
+            "ap-alertmanager",
+            "ap-astro-ui",
+            "ap-commander",
+            "ap-curator",
+            "ap-db-bootstrapper",
+            "ap-default-backend",
+            "ap-houston-api",
+            "ap-init",
+            "ap-nats-exporter",
+            "ap-nats-server",
+            "ap-nats-streaming",
+            "ap-nginx",
+            "ap-nginx-es",
+            "ap-postgres-exporter",
+            "ap-postgresql",
+            "ap-registry",
+        ],
+        "control": [
+            "ap-alertmanager",
+            "ap-astro-ui",
+            "ap-curator",
+            "ap-db-bootstrapper",
+            "ap-default-backend",
+            "ap-elasticsearch-exporter",
+            "ap-elasticsearch",
+            "ap-houston-api",
+            "ap-nats-exporter",
+            "ap-nginx-es",
+            "ap-nginx",
+            "ap-postgres-exporter",
+            "ap-postgresql",
+            "ap-prometheus",
+        ],
+        "data": [
+            "ap-commander",
+            "ap-fluentd",
+            "ap-init",
+            "ap-nats-server",
+            "ap-nats-streaming",
+            "ap-prometheus",
+            "ap-registry",
+        ],
+    }
+
+    cmd = ["docker", "image", "ls", "--format", "{{.Repository}}:{{.Tag}}"]
+    print(f"Listing local Docker images with command: {shlex.join(cmd)}")
+    local_docker_images = run_command(cmd).splitlines()
+
+    images_to_load = [
+        local_image
+        for allow_entry in image_allow_list.get(cluster, [])
+        for local_image in local_docker_images
+        if allow_entry in local_image and local_image in image_list
+    ]
+
+    cmd = [f"{kind_exe}", "load", "docker-image", "--name", cluster, *images_to_load]
+    print(f"Loading Docker images into KIND cluster with command: {shlex.join(cmd)}")
+    run_command(cmd)
