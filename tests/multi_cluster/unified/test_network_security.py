@@ -366,7 +366,7 @@ class KubernetesNetworkChecker:
         return result
 
 
-def test_network(core_v1_client):
+def test_network(k8s_core_v1_client, unified):
     """
     Main test function that performs network security validation on a Kubernetes cluster.
 
@@ -377,14 +377,14 @@ def test_network(core_v1_client):
     4. Validates that only allowed services have open ports
 
     Args:
-        core_v1_client: Kubernetes CoreV1Api client for cluster operations
+        k8s_core_v1_client: Kubernetes CoreV1Api client for cluster operations
 
     Raises:
         Exception: If any non-allowlisted services are found with open ports
     """
     # Create namespace for scanning operations (ignore if already exists)
     try:
-        core_v1_client.create_namespace(client.V1Namespace(metadata=client.V1ObjectMeta(name="astronomer-scan-test")))
+        k8s_core_v1_client.create_namespace(client.V1Namespace(metadata=client.V1ObjectMeta(name="astronomer-scan-test")))
     except Exception as e:
         if "already exists" not in str(e):
             raise e

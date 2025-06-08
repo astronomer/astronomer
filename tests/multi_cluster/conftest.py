@@ -282,31 +282,29 @@ def helm_install(kubeconfig: str, values: str | list[str] = f"{git_root_dir}/con
 
 
 @pytest.fixture(scope="function")
-def k8s_core_v1_client(request, clusters) -> client.CoreV1Api:
+def k8s_core_v1_client(request) -> client.CoreV1Api:
     """
     Provide a Kubernetes core/v1 client for the resolved target cluster.
 
     :param request: Pytest request object for accessing test metadata.
-    :param clusters: Dictionary of cluster names and their kubeconfig file paths.
     :return: A Kubernetes CoreV1Api client for the target cluster.
     """
     cluster_name = request.param
-    kubeconfig_file = clusters[cluster_name]
+    kubeconfig_file = kubeconfig_dir / f"{cluster_name}"
     config.load_kube_config(config_file=kubeconfig_file)
     return client.CoreV1Api()
 
 
 @pytest.fixture(scope="function")
-def k8s_apps_v1_client(request, clusters) -> client.AppsV1Api:
+def k8s_apps_v1_client(request) -> client.AppsV1Api:
     """
     Provide a Kubernetes apps/v1 client for the resolved target cluster.
 
     :param request: Pytest request object for accessing test metadata.
-    :param clusters: Dictionary of cluster names and their kubeconfig file paths.
     :return: A Kubernetes AppsV1Api client for the target cluster.
     """
     cluster_name = request.param
-    kubeconfig_file = clusters[cluster_name]
+    kubeconfig_file = kubeconfig_dir / f"{cluster_name}"
     config.load_kube_config(config_file=kubeconfig_file)
     return client.AppsV1Api()
 
