@@ -1,7 +1,7 @@
 #########################################
 ## NGINX Control Plane Metrics service ##
 #########################################
-{{- if .Values.global.controlplane.enabled }}
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 kind: Service
 apiVersion: v1
 metadata:
@@ -12,7 +12,7 @@ metadata:
     chart: {{ template "nginx.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
-    plane: controlplane
+    plane: {{ .Values.global.plane.mode }}
 spec:
   type: ClusterIP
   selector:

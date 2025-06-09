@@ -1,7 +1,7 @@
 #####################################
 ## Astronomer Commander Deployment ##
 #####################################
-{{- if .Values.global.dataplane.enabled }}
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -9,7 +9,7 @@ metadata:
   labels:
     component: commander
     tier: astronomer
-    plane: dataplane
+    plane: {{ .Values.global.plane.mode }}
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
@@ -32,7 +32,7 @@ spec:
         release: {{ .Release.Name }}
         app: commander
         version: {{ .Chart.Version }}
-        plane: dataplane
+        plane: {{ .Values.global.plane.mode }}
       annotations:
         checksum/airflow-chart-version: {{ .Values.airflowChartVersion | sha256sum }}
 {{- if .Values.global.podAnnotations }}

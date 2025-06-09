@@ -21,7 +21,7 @@ if not (release_name := getenv("RELEASE_NAME")):
 def nginx(core_v1_client):
     """Fixture for accessing the nginx pod."""
 
-    pod = get_pod_by_label_selector(core_v1_client, "component=dp-ingress-controller")
+    pod = get_pod_by_label_selector(core_v1_client, "component=cp-ingress-controller")
     yield testinfra.get_host(f"kubectl://{pod}?container=nginx&namespace={namespace}")
 
 

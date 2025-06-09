@@ -188,7 +188,7 @@ class TestServiceAccounts:
         service_account_annotations = [doc["metadata"]["annotations"] for doc in docs if doc["kind"] == "ServiceAccount"]
         assert annotations in service_account_annotations
 
-    def test_serviceaccount_with_overrides_rolebinding(self, kube_version):
+    def test_serviceaccount_with_overrides_rolebinding_controlplane(self, kube_version):
         "Test that if custom SA are added it gets created"
         values = {
             "astronomer": {
@@ -213,12 +213,11 @@ class TestServiceAccounts:
                 "charts/kube-state/templates/kube-state-rolebinding.yaml",
                 "charts/fluentd/templates/fluentd-clusterrolebinding.yaml",
                 "charts/prometheus/templates/prometheus-rolebinding.yaml",
-                "charts/nginx/templates/controlplane/nginx-cp-rolebinding.yaml",
-                "charts/nginx/templates/dataplane/nginx-dp-rolebinding.yaml",
+                "charts/nginx/templates/controlplane/nginx-rolebinding.yaml",
             ],
         )
 
-        assert len(docs) == 8
+        assert len(docs) == 7
 
         expected_names = {
             "commander-test",
@@ -228,10 +227,22 @@ class TestServiceAccounts:
             "fluentd-test",
             "prometheus-test",
             "nginx-test-cp",
-            "nginx-test-dp",
         }
         extracted_names = {doc["subjects"][0]["name"] for doc in docs if doc.get("subjects")}
         assert expected_names.issubset(extracted_names)
+
+    def test_serviceaccount_with_overrides_rolebinding_dataplane(self, kube_version):
+        "Test rolebindings for components that only use dataplane mode"
+        values = {
+            "global": {"plane": {"mode": "data"}},
+            "nginx": {"serviceAccount": {"name": "nginx-test"}},
+        }
+        docs = render_chart(
+            kube_version=kube_version,
+            values=values,
+            show_only=["charts/nginx/templates/dataplane/nginx-dp-rolebinding.yaml"],
+        )
+        assert len(docs) == 1
 
 
 @pytest.mark.parametrize(
@@ -242,6 +253,8 @@ def test_default_serviceaccount_names(template_name):
     """Test that default service account names are rendered correctly."""
 
     default_serviceaccount_names_overrides = {"global": {"rbacEnabled": False}, "postgresql": {"serviceAccount": {"enabled": True}}}
+    if "nginx-dp-deployment" in template_name:
+        default_serviceaccount_names_overrides["global"]["plane"] = {"mode": "data"}
     values = always_merger.merge(get_all_features(), default_serviceaccount_names_overrides)
 
     docs = render_chart(show_only=template_name, values=values)
@@ -339,7 +352,7 @@ custom_service_account_names = {
     "charts/nginx/templates/nginx-deployment-default.yaml": {
         "nginx": {"defaultBackend": {"serviceAccount": {"create": True, "name": "prothean"}}}
     },
-    "charts/nginx/templates/controlplane/nginx-cp-deployment.yaml": {
+    "charts/nginx/templates/controlplane/nginx-deployment.yaml": {
         "nginx": {"serviceAccount": {"create": True, "name": "prothean"}}
     },
     "charts/nginx/templates/dataplane/nginx-dp-deployment.yaml": {
@@ -367,6 +380,9 @@ def test_custom_serviceaccount_names(template_name):
 
     values = always_merger.merge(get_all_features(), custom_service_account_names[template_name])
     enable_pgsql_sa = {"postgresql": {"serviceAccount": {"enabled": True}}}
+    if "nginx-dp-deployment" in template_name:
+        plane_config = {"global": {"plane": {"mode": "data"}}}
+        values = always_merger.merge(values, plane_config)
     values = always_merger.merge(values, enable_pgsql_sa)
 
     docs = render_chart(show_only=template_name, values=values)

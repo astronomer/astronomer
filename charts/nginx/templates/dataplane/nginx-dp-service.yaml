@@ -1,7 +1,7 @@
 ##############################
 ## NGINX Data Plane Service ##
 ##############################
-{{- if .Values.global.dataplane.enabled }}
+{{- if eq .Values.global.plane.mode "data" }}
 kind: Service
 apiVersion: v1
 metadata:
@@ -12,7 +12,7 @@ metadata:
     chart: {{ template "nginx.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
-    plane: dataplane
+    plane: {{ .Values.global.plane.mode }}
   annotations:
 {{- if .Values.ingressAnnotations -}}
 {{ range $key, $value := .Values.ingressAnnotations }}

@@ -1,7 +1,8 @@
-#########################################
-## NGINX Data Plane ClusterRoleBinding ##
-#########################################
-{{- if .Values.global.dataplane.enabled }}
+#####################################################
+## NGINX Data Plane RoleBinding/ClusterRoleBinding ##
+#####################################################
+{{- if eq .Values.global.plane.mode "data" }}
+{{- $singleNamespace := .Values.global.singleNamespace }}
 {{- if .Values.global.rbacEnabled }}
 kind: ClusterRoleBinding
 apiVersion: {{ template "apiVersion.rbac" . }}

@@ -1,7 +1,7 @@
 ################################
 ## NGINX Data Plane ConfigMap ##
 ################################
-{{- if .Values.global.dataplane.enabled }}
+{{- if eq .Values.global.plane.mode "data" }}
 kind: ConfigMap
 apiVersion: v1
 metadata:
@@ -13,7 +13,7 @@ metadata:
     heritage: {{ .Release.Service }}
 data:
   allow-snippet-annotations: "{{ .Values.allowSnippetAnnotations }}"
-  add-headers: {{ .Release.Namespace }}/{{ template "nginx.fullname" . }}-ingress-controller-headers
+  add-headers: {{ .Release.Namespace }}/{{ .Release.Name }}-dp-{{ template "nginx.name" . }}-ingress-controller-headers
   proxy-add-original-uri-header: "true"
   proxy-connect-timeout: {{ .Values.proxyConnectTimeout | quote }}
   proxy-read-timeout: {{ .Values.proxyReadTimeout | quote }}

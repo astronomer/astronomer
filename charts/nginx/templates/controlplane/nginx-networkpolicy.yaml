@@ -1,7 +1,8 @@
 ##################################################
 ## Control Plane Nginx controller NetworkPolicy ##
 ##################################################
-{{- if and .Values.global.networkPolicy.enabled .Values.global.controlplane.enabled }}
+{{- if and .Values.global.networkPolicy.enabled }}
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -12,7 +13,7 @@ metadata:
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
-    plane: controlplane
+    plane: {{ .Values.global.plane.mode }}
 spec:
   podSelector:
     matchLabels:
@@ -39,15 +40,16 @@ spec:
     # Allow traffic to Data Plane components
     - podSelector:
         matchLabels:
-          plane: dataplane
+          plane: {{ .Values.global.plane.mode }}
           component: webserver
     - podSelector:
         matchLabels:
-          plane: dataplane
+          plane: {{ .Values.global.plane.mode }}
           component: ingress-controller
     ports:
     - protocol: TCP
       port: 80
     - protocol: TCP
       port: 443
+{{- end }}
 {{- end }}

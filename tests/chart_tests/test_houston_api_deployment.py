@@ -32,7 +32,7 @@ class TestHoustonApiDeployment:
         assert doc["spec"]["template"]["metadata"]["labels"].get("app") == "houston"
         assert doc["spec"]["template"]["metadata"]["labels"].get("tier") == "astronomer"
         assert doc["spec"]["template"]["metadata"]["labels"].get("release") == "release-name"
-        assert doc["spec"]["template"]["metadata"]["labels"].get("plane") == "controlplane"
+        assert doc["spec"]["template"]["metadata"]["labels"].get("plane") == "unified"
 
         labels = doc["spec"]["template"]["metadata"]["labels"]
         assert {
@@ -40,7 +40,7 @@ class TestHoustonApiDeployment:
             "component": "houston",
             "release": "release-name",
             "app": "houston",
-            "plane": "controlplane",
+            "plane": "unified",
         } == {x: labels[x] for x in labels if x != "version"}
 
         c_by_name = get_containers_by_name(doc, include_init_containers=True)

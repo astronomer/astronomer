@@ -1,7 +1,8 @@
 ###############################
 ## NGINX Config Role Binding ##
 ###############################
-{{- if and .Values.global.rbacEnabled .Values.global.controlplane.enabled }}
+{{- if and .Values.global.rbacEnabled }}
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 kind: RoleBinding
 apiVersion: {{ template "apiVersion.rbac" . }}
 metadata:
@@ -11,7 +12,7 @@ metadata:
     chart: {{ template "nginx.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
-    plane: controlplane
+    plane: {{ .Values.global.plane.mode }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -20,4 +21,5 @@ subjects:
   - kind: ServiceAccount
     name: {{ template "nginx.serviceAccountName" . }}
     namespace: {{ .Release.Namespace }}
+{{- end }}
 {{- end }}

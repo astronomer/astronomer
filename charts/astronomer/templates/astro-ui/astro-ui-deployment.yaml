@@ -1,7 +1,7 @@
 ##############################
 ## Astronomer UI Deployment ##
 ##############################
-{{- if .Values.global.controlplane.enabled}}
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -12,7 +12,7 @@ metadata:
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
-    plane: controlplane
+    plane: {{ .Values.global.plane.mode }}
 spec:
   replicas: {{ .Values.astroUI.replicas }}
   selector:
@@ -28,7 +28,7 @@ spec:
         release: {{ .Release.Name }}
         app: astro-ui
         version: {{ .Chart.Version }}
-        plane: controlplane
+        plane: {{ .Values.global.plane.mode }}
       annotations:
 {{- if .Values.global.podAnnotations }}
 {{ toYaml .Values.global.podAnnotations | indent 8 }}
