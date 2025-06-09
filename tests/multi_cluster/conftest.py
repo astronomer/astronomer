@@ -2,7 +2,6 @@ import os
 import shlex
 import subprocess
 import time
-from collections.abc import Iterable
 from pathlib import Path, PosixPath
 
 import pytest
@@ -181,75 +180,6 @@ def delete_kind_cluster(cluster_name: str, kubeconfig_file: PosixPath) -> None:
         run_command(cmd)
     finally:
         kubeconfig_file.unlink(missing_ok=True)
-
-
-@pytest.fixture(scope="session")
-def control(request) -> Iterable[str]:
-    """
-    Fixture for the 'control' cluster.
-
-    :param request: Pytest request object for accessing test metadata.
-    :yield: Path to the kubeconfig file for the 'control' cluster.
-    """
-    kubeconfig_file = create_kind_cluster("control")
-    kind_load_docker_images(cluster="control")
-    create_namespace(kubeconfig_file)
-    setup_common_cluster_configs(kubeconfig_file)
-    helm_install(
-        kubeconfig=kubeconfig_file,
-        values=[
-            f"{git_root_dir}/configs/local-dev.yaml",
-            f"{git_root_dir}/tests/data_files/scenario-controlplane.yaml",
-        ],
-    )
-    yield kubeconfig_file
-    delete_kind_cluster("control", kubeconfig_file)
-
-
-@pytest.fixture(scope="session")
-def data(request) -> Iterable[str]:
-    """
-    Fixture for the 'data' cluster.
-
-    :param request: Pytest request object for accessing test metadata.
-    :yield: Path to the kubeconfig file for the 'data' cluster.
-    """
-    kubeconfig_file = create_kind_cluster("data")
-    kind_load_docker_images(cluster="data")
-    create_namespace(kubeconfig_file)
-    setup_common_cluster_configs(kubeconfig_file)
-    helm_install(
-        kubeconfig=kubeconfig_file,
-        values=[
-            f"{git_root_dir}/configs/local-dev.yaml",
-            f"{git_root_dir}/tests/data_files/scenario-dataplane.yaml",
-        ],
-    )
-    yield kubeconfig_file
-    delete_kind_cluster("data", kubeconfig_file)
-
-
-@pytest.fixture(scope="session")
-def unified(request) -> Iterable[str]:
-    """
-    Fixture for the 'unified' cluster.
-
-    :param request: Pytest request object for accessing test metadata.
-    :yield: Path to the kubeconfig file for the 'unified' cluster.
-    """
-    kubeconfig_file = create_kind_cluster("unified")
-    kind_load_docker_images(cluster="unified")
-    create_namespace(kubeconfig_file)
-    setup_common_cluster_configs(kubeconfig_file)
-    helm_install(
-        kubeconfig=kubeconfig_file,
-        values=[
-            f"{git_root_dir}/configs/local-dev.yaml",
-            f"{git_root_dir}/tests/data_files/scenario-unified.yaml",
-        ],
-    )
-    yield kubeconfig_file
-    delete_kind_cluster("unified", kubeconfig_file)
 
 
 def helm_install(kubeconfig: str, values: str | list[str] = f"{git_root_dir}/configs/local-dev.yaml") -> None:
@@ -567,6 +497,7 @@ def kind_load_docker_images(cluster: str) -> None:
     if not images_to_load:
         print(f"No images found to load for cluster '{cluster}'.")
         return
-    cmd = [f"{kind_exe}", "load", "docker-image", "--name", cluster, *images_to_load]
-    print(f"Loading Docker images into KIND cluster with command: {shlex.join(cmd)}")
-    run_command(cmd)
+    for image in images_to_load:
+        cmd = [f"{kind_exe}", "load", "docker-image", "--name", cluster, image]
+        print(f"Loading Docker images into KIND cluster with command: {shlex.join(cmd)}")
+        run_command(cmd)
