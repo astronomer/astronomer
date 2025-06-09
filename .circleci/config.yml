@@ -303,30 +303,30 @@ jobs:
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging"
-  platform-1-30-10:
+  platform-1-30-13:
     machine:
       image: ubuntu-2204:2024.11.1
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.30.10
+      KUBE_VERSION: v1.30.13
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging"
-  platform-1-31-6:
+  platform-1-31-9:
     machine:
       image: ubuntu-2204:2024.11.1
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.31.6
+      KUBE_VERSION: v1.31.9
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging"
-  platform-1-32-2:
+  platform-1-32-5:
     machine:
       image: ubuntu-2204:2024.11.1
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.32.2
+      KUBE_VERSION: v1.32.5
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging"
@@ -461,17 +461,17 @@ workflows:
       - platform-1-29-14:
           requires:
             - build-artifact
-      - platform-1-30-10:
+      - platform-1-30-13:
           requires:
             - approve-test-all-platforms
             - build-artifact
 
-      - platform-1-31-6:
+      - platform-1-31-9:
           requires:
             - approve-test-all-platforms
             - build-artifact
 
-      - platform-1-32-2:
+      - platform-1-32-5:
           requires:
             - build-artifact
       - approve-internal-release:
@@ -490,7 +490,7 @@ workflows:
           requires:
             - approve-internal-release
             - platform-1-29-14
-            - platform-1-32-2
+            - platform-1-32-5
       - approve-upgrade-test:
           type: approval
           filters:
@@ -509,8 +509,8 @@ workflows:
           type: approval
           requires:
             - release-to-internal
-            - platform-1-30-10
-            - platform-1-31-6
+            - platform-1-30-13
+            - platform-1-31-9
           filters:
             branches:
               only:
