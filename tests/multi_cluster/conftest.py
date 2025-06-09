@@ -564,6 +564,9 @@ def kind_load_docker_images(cluster: str) -> None:
         if allow_entry in local_image and local_image in image_list
     ]
 
+    if not images_to_load:
+        print(f"No images found to load for cluster '{cluster}'.")
+        return
     cmd = [f"{kind_exe}", "load", "docker-image", "--name", cluster, *images_to_load]
     print(f"Loading Docker images into KIND cluster with command: {shlex.join(cmd)}")
     run_command(cmd)
