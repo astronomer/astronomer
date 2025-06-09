@@ -9,6 +9,7 @@ global:
   # The mode can be one of: control, data, unified
   # - control: The Astronomer platform will run in control plane mode, where it is responsible for platform management, orchestration, and user interfaces
   # - data: The Astronomer platform will run in data plane mode, where it is responsible for executing and monitoring Airflow workloads.
+  # - unified: The Astronomer platform will run with both the data plane and control plane in the same cluster and namespace. This is the behavior found in Astronomer 0.x.
   plane:
     mode: "unified"  # one of: control, data, unified
     domainSuffix: ""    # cluster-id
