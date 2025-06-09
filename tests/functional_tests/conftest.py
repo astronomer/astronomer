@@ -87,7 +87,7 @@ def get_pod_by_label_selector(core_v1_client, label_selector, pod_namespace=name
     return pods[0].metadata.name
 
 
-def get_pod_running_containers(pod_namespace=namespace):
+def get_pod_running_containers(pod_namespace=namespace, kubeconfig=None):
     """Return the containers from pods found."""
     pods = get_core_v1_client().list_namespaced_pod(pod_namespace).items
 
