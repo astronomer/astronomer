@@ -1,8 +1,8 @@
 import pytest
 
 from tests import supported_k8s_versions
-from tests.utils import get_containers_by_name
 from tests.utils.chart import render_chart
+
 
 @pytest.mark.parametrize(
     "kube_version",
@@ -31,7 +31,7 @@ class TestAstronomerCommanderIngress:
         assert annotations["kubernetes.io/ingress.class"] == "release-name-nginx"
         assert annotations["nginx.ingress.kubernetes.io/custom-http-errors"] == "404"
         assert annotations["nginx.ingress.kubernetes.io/proxy-buffer-size"] == "16k"
-    
+
     def test_astronomer_commander_grpc_ingress_unified_mode(self, kube_version):
         """Test that helm renders GRPC ingress template for unified plane mode."""
         docs = render_chart(
@@ -59,13 +59,7 @@ class TestAstronomerCommanderIngress:
         """Test that helm renders GRPC ingress with TLS configuration when tlsSecret is provided."""
         docs = render_chart(
             kube_version=kube_version,
-            values={
-                "global": {
-                    "plane": {"mode": "data"},
-                    "tlsSecret": "my-tls-secret",
-                    "baseDomain": "example.com"
-                }
-            },
+            values={"global": {"plane": {"mode": "data"}, "tlsSecret": "my-tls-secret", "baseDomain": "example.com"}},
             show_only=["charts/astronomer/templates/commander/commander-grpc-ingress.yaml"],
         )
 
@@ -79,13 +73,7 @@ class TestAstronomerCommanderIngress:
         """Test that helm renders GRPC ingress with ACME TLS configuration."""
         docs = render_chart(
             kube_version=kube_version,
-            values={
-                "global": {
-                    "plane": {"mode": "data"},
-                    "acme": True,
-                    "baseDomain": "example.com"
-                }
-            },
+            values={"global": {"plane": {"mode": "data"}, "acme": True, "baseDomain": "example.com"}},
             show_only=["charts/astronomer/templates/commander/commander-grpc-ingress.yaml"],
         )
 
@@ -97,16 +85,12 @@ class TestAstronomerCommanderIngress:
 
     def test_astronomer_commander_grpc_ingress_with_custom_annotations(self, kube_version):
         """Test that helm renders GRPC ingress with custom annotations."""
-        custom_annotations = {
-            "nginx.ingress.kubernetes.io/rate-limit": "100",
-            "custom.annotation/test": "value"
-        }
+        custom_annotations = {"nginx.ingress.kubernetes.io/rate-limit": "100", "custom.annotation/test": "value"}
         docs = render_chart(
             kube_version=kube_version,
             values={
                 "global": {"plane": {"mode": "data"}},
-                "astronomer": {
-                "commander": {"ingress": {"annotation": custom_annotations}}}
+                "astronomer": {"commander": {"ingress": {"annotation": custom_annotations}}},
             },
             show_only=["charts/astronomer/templates/commander/commander-grpc-ingress.yaml"],
         )
@@ -122,13 +106,7 @@ class TestAstronomerCommanderIngress:
         extra_annotations = {"auth.sidecar/enabled": "true"}
         docs = render_chart(
             kube_version=kube_version,
-            values={
-                "global": {
-                    "plane": {"mode": "data"},
-                    "authSidecar": {"enabled": True},
-                    "extraAnnotations": extra_annotations
-                }
-            },
+            values={"global": {"plane": {"mode": "data"}, "authSidecar": {"enabled": True}, "extraAnnotations": extra_annotations}},
             show_only=["charts/astronomer/templates/commander/commander-grpc-ingress.yaml"],
         )
 
@@ -150,14 +128,12 @@ class TestAstronomerCommanderIngress:
         doc = docs[0]
 
         if kube_version >= "1.19.0":
-
             backend = doc["spec"]["rules"][0]["http"]["paths"][0]["backend"]
             assert "service" in backend
             assert backend["service"]["name"] == "release-name-commander"
             assert backend["service"]["port"]["name"] == "commander-grpc"
             assert doc["spec"]["rules"][0]["http"]["paths"][0]["pathType"] == "Prefix"
         else:
-
             backend = doc["spec"]["rules"][0]["http"]["paths"][0]["backend"]
             assert backend["serviceName"] == "release-name-commander"
             assert backend["servicePort"] == "commander-grpc"
@@ -210,12 +186,7 @@ class TestAstronomerCommanderIngress:
         """Test that helm renders metadata ingress with TLS configuration when tlsSecret is provided."""
         docs = render_chart(
             kube_version=kube_version,
-            values={
-                "global": {
-                    "plane": {"mode": "data"},
-                    "tlsSecret": "my-tls-secret"
-                }
-            },
+            values={"global": {"plane": {"mode": "data"}, "tlsSecret": "my-tls-secret"}},
             show_only=["charts/astronomer/templates/commander/commander-metadata-ingress.yaml"],
         )
 
@@ -228,12 +199,7 @@ class TestAstronomerCommanderIngress:
         """Test that helm renders metadata ingress with ACME TLS configuration."""
         docs = render_chart(
             kube_version=kube_version,
-            values={
-                "global": {
-                    "plane": {"mode": "data"},
-                    "acme": True
-                }
-            },
+            values={"global": {"plane": {"mode": "data"}, "acme": True}},
             show_only=["charts/astronomer/templates/commander/commander-metadata-ingress.yaml"],
         )
 
@@ -245,15 +211,12 @@ class TestAstronomerCommanderIngress:
 
     def test_astronomer_commander_metadata_ingress_with_custom_annotations(self, kube_version):
         """Test that helm renders metadata ingress with custom annotations."""
-        custom_annotations = {
-            "nginx.ingress.kubernetes.io/rate-limit": "200",
-            "custom.metadata/test": "metadata-value"
-        }
+        custom_annotations = {"nginx.ingress.kubernetes.io/rate-limit": "200", "custom.metadata/test": "metadata-value"}
         docs = render_chart(
             kube_version=kube_version,
             values={
                 "global": {"plane": {"mode": "data"}},
-                "commander": {"ingress": {"annotation": custom_annotations}}
+                "astronomer": {"commander": {"ingress": {"annotation": custom_annotations}}},
             },
             show_only=["charts/astronomer/templates/commander/commander-metadata-ingress.yaml"],
         )
@@ -269,13 +232,7 @@ class TestAstronomerCommanderIngress:
         extra_annotations = {"auth.sidecar/metadata": "true"}
         docs = render_chart(
             kube_version=kube_version,
-            values={
-                "global": {
-                    "plane": {"mode": "data"},
-                    "authSidecar": {"enabled": True},
-                    "extraAnnotations": extra_annotations
-                }
-            },
+            values={"global": {"plane": {"mode": "data"}, "authSidecar": {"enabled": True}, "extraAnnotations": extra_annotations}},
             show_only=["charts/astronomer/templates/commander/commander-metadata-ingress.yaml"],
         )
 
@@ -298,7 +255,6 @@ class TestAstronomerCommanderIngress:
         doc = docs[0]
 
         if kube_version >= "1.19.0":
-
             backend = doc["spec"]["rules"][0]["http"]["paths"][0]["backend"]
             assert "service" in backend
             assert backend["service"]["name"] == "release-name-commander"
@@ -306,7 +262,6 @@ class TestAstronomerCommanderIngress:
             assert doc["spec"]["rules"][0]["http"]["paths"][0]["pathType"] == "Prefix"
             assert doc["spec"]["rules"][0]["http"]["paths"][0]["path"] == "/metadata"
         else:
-
             backend = doc["spec"]["rules"][0]["http"]["paths"][0]["backend"]
             assert backend["serviceName"] == "release-name-commander"
             assert backend["servicePort"] == "commander-http"
@@ -319,7 +274,7 @@ class TestAstronomerCommanderIngress:
             values={"global": {"plane": {"mode": "data"}}},
             show_only=[
                 "charts/astronomer/templates/commander/commander-grpc-ingress.yaml",
-                "charts/astronomer/templates/commander/commander-metadata-ingress.yaml"
+                "charts/astronomer/templates/commander/commander-metadata-ingress.yaml",
             ],
         )
 
