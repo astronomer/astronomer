@@ -500,4 +500,8 @@ def kind_load_docker_images(cluster: str) -> None:
     for image in images_to_load:
         cmd = [f"{kind_exe}", "load", "docker-image", "--name", cluster, image]
         print(f"Loading Docker images into KIND cluster with command: {shlex.join(cmd)}")
-        run_command(cmd)
+        try:
+            run_command(cmd)
+        except RuntimeError as e:
+            print(f"Failed to load image '{image}' into KIND cluster '{cluster}': {e}")
+            continue
