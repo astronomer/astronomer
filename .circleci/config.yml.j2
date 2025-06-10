@@ -34,7 +34,7 @@ jobs:
           docker_layer_caching: true
           version: docker23
       - cosign/install:
-          version: "v2.5.0"
+          version: "v2.5.0"    #https://github.com/sigstore/cosign/releases
       - run:
           name: Login to docker registry
           command: |
