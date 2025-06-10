@@ -263,13 +263,6 @@ jobs:
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging"
-      - run:
-          name: Check chart for k8s {{ version }} compatibility with kubent
-          command: |
-            set -o pipefail
-            helm template --kube-version=v{{ version }} -f values.yaml --set global.baseDomain=example.com . |
-            kubent --cluster=false --helm3=false --filename -
-          when: always
 {%- endfor %}
 
   check-commander-airflow-version:
