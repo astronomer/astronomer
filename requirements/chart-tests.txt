@@ -13,15 +13,17 @@ certifi==2025.4.26
 charset-normalizer==3.4.2
     # via requests
 deepmerge==2.0
-    # via -r requirements/chart-tests.in
+    # via -r chart-tests.in
 docker==7.1.0
-    # via -r requirements/chart-tests.in
+    # via -r chart-tests.in
 durationpy==0.10
     # via kubernetes
+exceptiongroup==1.3.0
+    # via pytest
 execnet==2.1.1
     # via pytest-xdist
 filelock==3.18.0
-    # via -r requirements/chart-tests.in
+    # via -r chart-tests.in
 google-auth==2.40.1
     # via kubernetes
 gprof2dot==2025.4.14
@@ -31,13 +33,13 @@ idna==3.10
 iniconfig==2.1.0
     # via pytest
 jmespath==1.0.1
-    # via -r requirements/chart-tests.in
+    # via -r chart-tests.in
 jsonschema==4.23.0
-    # via -r requirements/chart-tests.in
+    # via -r chart-tests.in
 jsonschema-specifications==2025.4.1
     # via jsonschema
 kubernetes==32.0.1
-    # via -r requirements/chart-tests.in
+    # via -r chart-tests.in
 markdown-it-py==3.0.0
     # via rich
 mdurl==0.1.2
@@ -64,7 +66,7 @@ pygments==2.19.1
     # via rich
 pytest==8.3.5
     # via
-    #   -r requirements/chart-tests.in
+    #   -r chart-tests.in
     #   pytest-forked
     #   pytest-pretty
     #   pytest-profiling
@@ -72,30 +74,30 @@ pytest==8.3.5
     #   pytest-testinfra
     #   pytest-xdist
 pytest-forked==1.6.0
-    # via -r requirements/chart-tests.in
+    # via -r chart-tests.in
 pytest-pretty==1.2.0
-    # via -r requirements/chart-tests.in
+    # via -r chart-tests.in
 pytest-profiling==1.8.1
-    # via -r requirements/chart-tests.in
+    # via -r chart-tests.in
 pytest-rerunfailures==15.1
-    # via -r requirements/chart-tests.in
+    # via -r chart-tests.in
 pytest-testinfra==10.2.2
-    # via -r requirements/chart-tests.in
+    # via -r chart-tests.in
 pytest-xdist==3.6.1
-    # via -r requirements/chart-tests.in
+    # via -r chart-tests.in
 python-dateutil==2.9.0.post0
     # via kubernetes
 pyyaml==6.0.2
     # via
-    #   -r requirements/chart-tests.in
+    #   -r chart-tests.in
     #   kubernetes
 referencing==0.36.2
     # via
     #   jsonschema
     #   jsonschema-specifications
-requests==2.32.3
+requests==2.32.4
     # via
-    #   -r requirements/chart-tests.in
+    #   -r chart-tests.in
     #   docker
     #   kubernetes
     #   requests-oauthlib
@@ -114,8 +116,15 @@ six==1.17.0
     #   kubernetes
     #   pytest-profiling
     #   python-dateutil
+tomli==2.2.1
+    # via pytest
 typing-extensions==4.13.2
-    # via -r requirements/chart-tests.in
+    # via
+    #   -r chart-tests.in
+    #   deepmerge
+    #   exceptiongroup
+    #   referencing
+    #   rich
 urllib3==2.4.0
     # via
     #   docker

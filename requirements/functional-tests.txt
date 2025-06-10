@@ -15,15 +15,17 @@ cffi==1.17.1
 charset-normalizer==3.4.2
     # via requests
 cryptography==45.0.2
-    # via -r requirements/functional-tests.in
+    # via -r functional-tests.in
 docker==7.1.0
-    # via -r requirements/functional-tests.in
+    # via -r functional-tests.in
 durationpy==0.10
     # via kubernetes
+exceptiongroup==1.3.0
+    # via pytest
 gitdb==4.0.12
     # via gitpython
 gitpython==3.1.44
-    # via -r requirements/functional-tests.in
+    # via -r functional-tests.in
 google-auth==2.40.1
     # via kubernetes
 gprof2dot==2025.4.14
@@ -33,11 +35,11 @@ idna==3.10
 iniconfig==2.1.0
     # via pytest
 jsonschema==4.23.0
-    # via -r requirements/functional-tests.in
+    # via -r functional-tests.in
 jsonschema-specifications==2025.4.1
     # via jsonschema
 kubernetes==32.0.1
-    # via -r requirements/functional-tests.in
+    # via -r functional-tests.in
 markdown-it-py==3.0.0
     # via rich
 mdurl==0.1.2
@@ -64,30 +66,30 @@ pygments==2.19.1
     # via rich
 pytest==8.3.5
     # via
-    #   -r requirements/functional-tests.in
+    #   -r functional-tests.in
     #   pytest-pretty
     #   pytest-profiling
     #   pytest-rerunfailures
     #   pytest-testinfra
 pytest-pretty==1.2.0
-    # via -r requirements/functional-tests.in
+    # via -r functional-tests.in
 pytest-profiling==1.8.1
-    # via -r requirements/functional-tests.in
+    # via -r functional-tests.in
 pytest-rerunfailures==15.1
-    # via -r requirements/functional-tests.in
+    # via -r functional-tests.in
 pytest-testinfra==10.2.2
-    # via -r requirements/functional-tests.in
+    # via -r functional-tests.in
 python-dateutil==2.9.0.post0
     # via kubernetes
 pyyaml==6.0.2
     # via
-    #   -r requirements/functional-tests.in
+    #   -r functional-tests.in
     #   kubernetes
 referencing==0.36.2
     # via
     #   jsonschema
     #   jsonschema-specifications
-requests==2.32.3
+requests==2.32.4
     # via
     #   docker
     #   kubernetes
@@ -109,6 +111,13 @@ six==1.17.0
     #   python-dateutil
 smmap==5.0.2
     # via gitdb
+tomli==2.2.1
+    # via pytest
+typing-extensions==4.14.0
+    # via
+    #   exceptiongroup
+    #   referencing
+    #   rich
 urllib3==2.4.0
     # via
     #   docker
