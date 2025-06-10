@@ -105,7 +105,8 @@ class TestAstronomerCommanderIngress:
             kube_version=kube_version,
             values={
                 "global": {"plane": {"mode": "data"}},
-                "commander": {"ingress": {"annotation": custom_annotations}}
+                "astronomer": {
+                "commander": {"ingress": {"annotation": custom_annotations}}}
             },
             show_only=["charts/astronomer/templates/commander/commander-grpc-ingress.yaml"],
         )
