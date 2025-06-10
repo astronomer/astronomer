@@ -66,7 +66,7 @@ def sign_image(repo, tag, sha, key_path, password=None):
 
     try:
         subprocess.run(
-            ["cosign", "verify", "--insecure-ignore-tlog", "--key", f"{key_path}.pub", digest_reference],
+            ["cosign", "verify", "--key", f"{key_path}.pub", "--insecure-ignore-tlog", digest_reference],
             check=True,
             capture_output=True,
         )
@@ -75,7 +75,7 @@ def sign_image(repo, tag, sha, key_path, password=None):
     except subprocess.CalledProcessError:
         pass  # Image is not yet signed
 
-    sign_cmd = ["cosign", "sign", "--key", key_path, digest_reference]
+    sign_cmd = ["cosign", "sign", "--key", key_path, "--tlog-upload=false", digest_reference]
     try:
         subprocess.run(sign_cmd, env=env, check=True)
         print(f"✓ Signed {full_image}")
@@ -138,7 +138,6 @@ def main():
             except (FileNotFoundError, json.JSONDecodeError):
                 print(f"Error: Could not find or parse local file {json_file}")
                 sys.exit(1)
-
         print("Signing Astronomer images...")
         for image_data in data["astronomer"]["images"].values():
             sign_image(image_data["repository"], image_data["tag"], image_data["sha256"], private_key_path, password)
