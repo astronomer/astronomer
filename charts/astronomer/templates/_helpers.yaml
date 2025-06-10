@@ -209,6 +209,8 @@ s3:
 {{- end }}
 
 {{- define "houston_environment" }}
+- name: COMMANDER_WAIT_ENABLED
+  value: {{ if eq .Values.global.plane.mode "unified" }}"true"{{ else }}"false"{{ end }}
 {{- /* Dynamically created envs */ -}}
 {{- range $i, $config := .Values.houston.env }}
 - name: {{ $config.name }}
