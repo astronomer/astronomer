@@ -399,6 +399,7 @@ commander:
   # Add custom annotation for commander ingress
   ingress:
     annotation: {}
+      #nginx.ingress.kubernetes.io/rate-limit: "100"
 
   airGapped:
     # Enable airgapped mode
