@@ -45,7 +45,7 @@ spec:
   {{- end }}
   {{ if semverCompare "< 1.19-0" .Capabilities.KubeVersion.Version -}}
   rules:
-  - host: commander.{{ .Values.global.plane.domainSuffix }}
+  - host: commander.{{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}
     http:
       paths:
         - path: /
@@ -54,7 +54,7 @@ spec:
             servicePort: commander-grpc
   {{ else -}}
   rules:
-  - host: commander.{{ .Values.global.plane.domainSuffix }}
+  - host: commander.{{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}
     http:
       paths:
         - path: /

@@ -40,11 +40,11 @@ spec:
     - secretName: {{ .Values.global.tlsSecret }}
   {{- end }}
       hosts:
-        - commander.{{ .Values.global.plane.domainSuffix }}
+        - commander.{{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}
   {{- end }}
   {{ if semverCompare "< 1.19-0" .Capabilities.KubeVersion.Version -}}
   rules:
-  - host: commander.{{ .Values.global.plane.domainSuffix }}
+  - host: commander.{{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}
     http:
       paths:
         - path: /
@@ -53,7 +53,7 @@ spec:
             servicePort: commander-http
   {{ else -}}
   rules:
-  - host: commander.{{ .Values.global.plane.domainSuffix }}
+  - host: commander.{{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}
     http:
       paths:
         - path: /metadata
