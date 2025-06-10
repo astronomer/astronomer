@@ -71,9 +71,7 @@ spec:
                 secretKeyRef:
                   name: astronomer-bootstrap
                   key: connection
-            - name: COMMANDER_WAIT_ENABLED
-              value: {{ if eq .Values.global.plane.mode "unified" }}"true"{{ else }}"false"{{ end }}
-            {{- include "houston_environment" . | indent 12 }}
+           {{- include "houston_environment" . | indent 12 }}
         - name: houston-bootstrapper
           image: {{ template "dbBootstrapper.image" . }}
           securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
@@ -159,8 +157,6 @@ spec:
             {{- toYaml .Values.houston.apiArgs | nindent 12 }}
           {{- end }}
           env:
-            - name: COMMANDER_WAIT_ENABLED
-              value: {{ if eq .Values.global.plane.mode "unified" }}"true"{{ else }}"false"{{ end }}
             {{- include "houston_environment" . | indent 12 }}
             - name: GRPC_VERBOSITY
               value: "INFO"
