@@ -1,13 +1,13 @@
 import pytest
+
 from tests import supported_k8s_versions
 from tests.utils.chart import render_chart
+
 
 @pytest.mark.parametrize(
     "kube_version",
     supported_k8s_versions,
-
 )
-
 class TestAstronomerCommanderIngress:
     def test_astronomer_commander_grpc_ingress_default(self, kube_version):
         """Test that helm renders a correct GRPC ingress template for astronomer/commander in data plane mode."""
@@ -67,8 +67,6 @@ class TestAstronomerCommanderIngress:
         annotations = doc["metadata"]["annotations"]
         assert annotations["nginx.ingress.kubernetes.io/rate-limit"] == "100"
         assert annotations["custom.annotation/test"] == "value"
-
-
 
     def test_astronomer_commander_metadata_ingress_default(self, kube_version):
         """Test that helm renders a good metadata ingress template for astronomer/commander in data plane mode."""
