@@ -19,6 +19,7 @@ from tests.utils.cert import (
     create_astronomer_tls_certificates,
 )
 from tests.utils.install_ci_tools import install_all_tools
+from tests.utils.k8s import get_pod_by_label_selector
 
 DEBUG = os.getenv("DEBUG", "").lower() in ["yes", "true", "1"]
 
@@ -260,7 +261,7 @@ def create_namespace(kubeconfig_file, namespace="astronomer") -> None:
         return
     if "AlreadyExists" in result.stderr:
         return
-    raise RuntimeError(f"Failed to create namespace {namespace}: {result.stderr}")
+    raise RuntimeError(f"Failed to create namespace astronomer: {result.stderr}")
 
 
 def create_astronomer_tls_secret(kubeconfig_file) -> None:
@@ -271,11 +272,10 @@ def create_astronomer_tls_secret(kubeconfig_file) -> None:
     create_astronomer_tls_certificates()
 
     secret_name = "astronomer-tls"
-    namespace = "astronomer"
     cmd = [
         "kubectl",
         f"--kubeconfig={kubeconfig_file}",
-        f"--namespace={namespace}",
+        "--namespace=astronomer",
         "create",
         "secret",
         "tls",
@@ -287,7 +287,7 @@ def create_astronomer_tls_secret(kubeconfig_file) -> None:
         cmd.append("-v=9")
     result = subprocess.run(cmd, capture_output=True, text=True)
     if result.returncode != 0:
-        raise RuntimeError(f"Failed to create secret {secret_name} in namespace {namespace}: {result.stderr}")
+        raise RuntimeError(f"Failed to create secret {secret_name} in namespace astronomer: {result.stderr}")
 
 
 def create_private_ca_secret(kubeconfig_file) -> None:
@@ -297,11 +297,10 @@ def create_private_ca_secret(kubeconfig_file) -> None:
 
     create_astronomer_private_ca_certificates()
 
-    namespace = "astronomer"
     cmd = [
         "kubectl",
         f"--kubeconfig={kubeconfig_file}",
-        f"--namespace={namespace}",
+        "--namespace=astronomer",
         "create",
         "secret",
         "generic",
@@ -312,7 +311,7 @@ def create_private_ca_secret(kubeconfig_file) -> None:
         cmd.append("-v=9")
     result = subprocess.run(cmd, capture_output=True, text=True)
     if result.returncode != 0:
-        raise RuntimeError(f"Failed to create secret private-ca in namespace {namespace}: {result.stderr}")
+        raise RuntimeError(f"Failed to create secret private-ca in namespace astronomer: {result.stderr}")
 
 
 def check_pod_health(v1: client.CoreV1Api, namespace: str = "astronomer") -> tuple[bool, str]:
@@ -413,12 +412,6 @@ def check_deployment_health(apps_v1: client.AppsV1Api, namespace: str = "astrono
         return False, f"Failed to check deployment health: {e}"
 
 
-def get_k8s_container_handle(*, pod_type, container, namespace, release_name):
-    """Get a kubernetes container handle for a specific pod type and container."""
-    pod = f"{release_name}-{pod_type}-0"
-    return testinfra.get_host(f"kubectl://{pod}?container={container}&namespace={namespace}")
-
-
 def kind_load_docker_images(cluster: str) -> None:
     """
     Load any available docker images into a KIND cluster.
@@ -505,3 +498,58 @@ def kind_load_docker_images(cluster: str) -> None:
         except RuntimeError as e:
             print(f"Failed to load image '{image}' into KIND cluster '{cluster}': {e}")
             continue
+
+
+@pytest.fixture(scope="function")
+def nginx(core_v1_client, cluster_name):
+    """Fixture for accessing the nginx pod."""
+
+    pod = get_pod_by_label_selector(core_v1_client, "component=dp-ingress-controller")
+    yield testinfra.get_host(f"kubectl://{pod}?container=nginx&namespace=astronomer", kubeconfig=str(kubeconfig_dir / cluster_name))
+
+
+@pytest.fixture(scope="function")
+def houston_api(core_v1_client, cluster_name):
+    """Fixture for accessing the houston-api pod."""
+
+    pod = get_pod_by_label_selector(core_v1_client, "component=houston")
+    yield testinfra.get_host(
+        f"kubectl://{pod}?container=houston&namespace=astronomer", kubeconfig=str(kubeconfig_dir / cluster_name)
+    )
+
+
+@pytest.fixture(scope="function")
+def prometheus(cluster_name):
+    """Fixture for accessing the prometheus pod."""
+
+    pod = "astronomer-prometheus-0"
+    yield testinfra.get_host(
+        f"kubectl://{pod}?container=prometheus&namespace=astronomer", kubeconfig=str(kubeconfig_dir / cluster_name)
+    )
+
+
+@pytest.fixture(scope="function")
+def es_master(cluster_name):
+    """Fixture for accessing the es-master pod."""
+    pod = "astronomer-elasticsearch-master-0"
+    yield testinfra.get_host(
+        f"kubectl://{pod}?container=es-master&namespace=astronomer", kubeconfig=str(kubeconfig_dir / cluster_name)
+    )
+
+
+@pytest.fixture(scope="function")
+def es_data(cluster_name):
+    """Fixture for accessing the es-data pod."""
+    pod = "astronomer-elasticsearch-data-0"
+    yield testinfra.get_host(
+        f"kubectl://{pod}?container=es-data&namespace=astronomer", kubeconfig=str(kubeconfig_dir / cluster_name)
+    )
+
+
+@pytest.fixture(scope="function")
+def es_client(core_v1_client, cluster_name):
+    """Fixture for accessing the es-client pod."""
+    pod = get_pod_by_label_selector(core_v1_client, "component=elasticsearch,role=client")
+    yield testinfra.get_host(
+        f"kubectl://{pod}?container=es-client&namespace=astronomer", kubeconfig=str(kubeconfig_dir / cluster_name)
+    )

@@ -1,4 +1,4 @@
-# Configuration file that sets the helm chart into data plane mode.
+# Helm values for data scenario tests.
 
 global:
   plane:
@@ -7,3 +7,15 @@ global:
   # This usage is deprecated, use `global.plane.mode` instead.
   dataplane:
     enabled: true
+
+  postgresqlEnabled: true
+
+tags:
+  # logging: true
+  # monitoring: true
+  platform: true
+
+astronomer:
+  houston:
+    upgradeDeployments:
+      enabled: true

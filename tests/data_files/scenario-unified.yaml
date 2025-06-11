@@ -3,3 +3,16 @@
 global:
   plane:
     mode: unified
+
+
+  postgresqlEnabled: true
+
+tags:
+  # logging: true
+  # monitoring: true
+  platform: true
+
+astronomer:
+  houston:
+    upgradeDeployments:
+      enabled: true

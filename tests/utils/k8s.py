@@ -40,3 +40,11 @@ def get_pod_running_containers(namespace, kubeconfig=None):
                 containers[key] = container
 
     return containers
+
+
+def get_pod_by_label_selector(label_selector, pod_namespace, kubeconfig) -> str:
+    """Return the name of a pod found by label selector."""
+    k8s_core_v1_client = get_core_v1_client(kubeconfig=kubeconfig)
+    pods = k8s_core_v1_client.list_namespaced_pod(pod_namespace, label_selector=label_selector).items
+    assert len(pods) > 0, f"Expected to find at least one pod with labels '{label_selector}'"
+    return pods[0].metadata.name
