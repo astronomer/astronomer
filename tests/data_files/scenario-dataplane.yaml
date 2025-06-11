@@ -11,8 +11,8 @@ global:
   postgresqlEnabled: true
 
 tags:
-  # logging: true
-  # monitoring: true
+  logging: true
+  monitoring: true
   platform: true
 
 astronomer:

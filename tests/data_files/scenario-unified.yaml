@@ -4,12 +4,11 @@ global:
   plane:
     mode: unified
 
-
   postgresqlEnabled: true
 
 tags:
-  # logging: true
-  # monitoring: true
+  logging: true
+  monitoring: true
   platform: true
 
 astronomer:
