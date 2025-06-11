@@ -5,6 +5,15 @@ from tests.utils import get_containers_by_name
 from tests.utils.chart import render_chart
 
 
+def get_env_value(env_var):
+    """Helper function to get the value of an environment variable."""
+    if "value" in env_var:
+        return env_var["value"]
+    if "valueFrom" in env_var:
+        return env_var["valueFrom"]
+    return None
+
+
 @pytest.mark.parametrize(
     "kube_version",
     supported_k8s_versions,
@@ -28,7 +37,7 @@ class TestAstronomerCommander:
         assert c_by_name["commander"]["image"].startswith("quay.io/astronomer/ap-commander:")
         assert c_by_name["commander"]["resources"]["limits"]["memory"] == "2Gi"
         assert c_by_name["commander"]["resources"]["requests"]["memory"] == "1Gi"
-        env_vars = {x["name"]: x["value"] for x in c_by_name["commander"]["env"]}
+        env_vars = {x["name"]: get_env_value(x) for x in c_by_name["commander"]["env"]}
         assert env_vars["COMMANDER_UPGRADE_TIMEOUT"] == "600"
         assert "COMMANDER_MANAGE_NAMESPACE_RESOURCE" not in env_vars
 
@@ -63,7 +72,7 @@ class TestAstronomerCommander:
         assert len(c_by_name) == 1
         assert c_by_name["commander"]["image"].startswith("quay.io/astronomer/ap-commander:")
 
-        env_vars = {x["name"]: x["value"] for x in c_by_name["commander"]["env"]}
+        env_vars = {x["name"]: get_env_value(x) for x in c_by_name["commander"]["env"]}
         assert env_vars["COMMANDER_UPGRADE_TIMEOUT"] == "997"
 
     def test_astronomer_commander_rbac_cluster_role_enabled(self, kube_version):
@@ -359,7 +368,7 @@ class TestAstronomerCommander:
         assert doc["apiVersion"] == "apps/v1"
         assert doc["metadata"]["name"] == "release-name-commander"
         c_by_name = get_containers_by_name(doc)
-        env_vars = {x["name"]: x["value"] for x in c_by_name["commander"]["env"]}
+        env_vars = {x["name"]: get_env_value(x) for x in c_by_name["commander"]["env"]}
         assert env_vars["COMMANDER_MANAGE_NAMESPACE_RESOURCE"] == "false"
 
     def test_astronomer_commander_clusterscopedresources_overrides_with_custom_flags(self, kube_version):
@@ -388,7 +397,7 @@ class TestAstronomerCommander:
         assert doc["apiVersion"] == "apps/v1"
         assert doc["metadata"]["name"] == "release-name-commander"
         c_by_name = get_containers_by_name(doc)
-        env_vars = {x["name"]: x["value"] for x in c_by_name["commander"]["env"]}
+        env_vars = {x["name"]: get_env_value(x) for x in c_by_name["commander"]["env"]}
         assert env_vars["COMMANDER_HELM_DEBUG"] == "true"
         assert env_vars["COMMANDER_MANAGE_NAMESPACE_RESOURCE"] == "false"
         assert env_vars["COMMANDER_MANUAL_NAMESPACE_NAMES"] == "true"
