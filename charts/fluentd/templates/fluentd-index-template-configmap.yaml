@@ -1,6 +1,7 @@
 #############################
 ## Fluentd Index ConfigMap ##
 #############################
+{{- if (eq .Values.global.logging.collector "fluentd") }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -25,3 +26,4 @@ data:
         }
       }
     }
+{{- end -}}

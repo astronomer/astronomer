@@ -1,6 +1,7 @@
 #########################
 ## Fluentd ClusterRole ##
 #########################
+{{- if (eq .Values.global.logging.collector "fluentd") }}
 {{- if .Values.global.rbacEnabled }}
 kind: ClusterRole
 apiVersion: {{ template "apiVersion.rbac" . }}
@@ -22,4 +23,5 @@ rules:
   - "get"
   - "watch"
   - "list"
+{{- end -}}
 {{- end -}}
