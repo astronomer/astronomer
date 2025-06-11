@@ -86,7 +86,7 @@ def render_chart(
     baseDomain: str = "example.com",
     namespace: str | None = None,
     validate_objects: bool = True,
-):
+) -> list | None:
     """Render a helm chart into dictionaries."""
     values = values or {}
     chart_dir = chart_dir or str(git_root_dir)
