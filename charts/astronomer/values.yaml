@@ -422,7 +422,6 @@ commander:
   dataplaneChartVersion: ""
   cloudProvider: ""
   commanderUrl: ""
-  dataplaneUrl: ""
   dataplaneId: ""
   region: ""
 
