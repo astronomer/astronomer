@@ -301,7 +301,7 @@ jobs:
     steps:
       - run:
           name: "Test scenario: unified"
-          run: make test-scenario-unified
+          command: make test-scenario-unified
   platform-{{ version | replace(".", "-") }}:
     machine:
       image: {{ machine_image_version }}

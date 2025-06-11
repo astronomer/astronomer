@@ -303,7 +303,7 @@ jobs:
     steps:
       - run:
           name: "Test scenario: unified"
-          run: make test-scenario-unified
+          command: make test-scenario-unified
   platform-1-29-14:
     machine:
       image: ubuntu-2204:2024.11.1
@@ -322,7 +322,7 @@ jobs:
     steps:
       - run:
           name: "Test scenario: unified"
-          run: make test-scenario-unified
+          command: make test-scenario-unified
   platform-1-30-13:
     machine:
       image: ubuntu-2204:2024.11.1
@@ -341,7 +341,7 @@ jobs:
     steps:
       - run:
           name: "Test scenario: unified"
-          run: make test-scenario-unified
+          command: make test-scenario-unified
   platform-1-31-9:
     machine:
       image: ubuntu-2204:2024.11.1
@@ -360,7 +360,7 @@ jobs:
     steps:
       - run:
           name: "Test scenario: unified"
-          run: make test-scenario-unified
+          command: make test-scenario-unified
   platform-1-32-5:
     machine:
       image: ubuntu-2204:2024.11.1
