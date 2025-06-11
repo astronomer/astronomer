@@ -7,7 +7,7 @@ running pods so we can inspect the run-time environment.
 import json
 import time
 from os import getenv
-from subprocess import PIPE, Popen, check_output
+from subprocess import check_output
 
 import pytest
 import testinfra
@@ -222,9 +222,19 @@ def test_cve_2021_44228_es_master(unified, es_master):
     assert "-Dlog4j2.formatMsgNoLookups=true" in es_master.check_output("/usr/share/elasticsearch/jdk/bin/jps -lv")
 
 
-def test_kibana_default_index_pod(unified):
+def test_kibana_default_index_pod(unified, k8s_core_v1_client):
     """Check kibana index pod completed successfully"""
-    command = ["kubectl -n astronomer logs -f -lcomponent=kibana-default-index"]
-    pod_output = Popen(command, shell=True, stdout=PIPE, stderr=PIPE)
-    stdout, stderr = pod_output.communicate()
-    assert "fluentd.*" in stdout.decode("utf-8")
+    try:
+        # Get pods with the kibana-default-index component label
+        pods = k8s_core_v1_client.list_namespaced_pod(namespace="astronomer", label_selector="component=kibana-default-index")
+
+        assert len(pods.items) > 0, "No kibana-default-index pods found"
+
+        # Get logs from the first pod (there should typically be only one)
+        pod_name = pods.items[0].metadata.name
+        logs = k8s_core_v1_client.read_namespaced_pod_log(name=pod_name, namespace="astronomer")
+
+        assert "fluentd.*" in logs, f"Expected 'fluentd.*' pattern in kibana logs, but got: {logs}"
+
+    except ApiException as e:
+        raise AssertionError(f"Failed to check kibana-default-index pod logs: {e}")
