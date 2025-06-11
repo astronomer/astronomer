@@ -26,7 +26,6 @@ metadata:
     nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
     nginx.ingress.kubernetes.io/rewrite-target: /metadata
     {{- end }}
-
     {{- if .Values.commander.ingress.annotation  }}
     {{- toYaml .Values.commander.ingress.annotation  | nindent 4  }}
     {{- end }}

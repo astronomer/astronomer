@@ -27,7 +27,6 @@ metadata:
     nginx.ingress.kubernetes.io/custom-http-errors: "404"
     nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
     {{- end }}
-
     {{- if .Values.commander.ingress.annotation  }}
     {{- toYaml .Values.commander.ingress.annotation  | nindent 4  }}
     {{- end }}
