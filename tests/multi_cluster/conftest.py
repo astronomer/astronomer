@@ -503,53 +503,46 @@ def kind_load_docker_images(cluster: str) -> None:
 @pytest.fixture(scope="function")
 def nginx(k8s_core_v1_client, cluster_name):
     """Fixture for accessing the nginx pod."""
-
-    pod = get_pod_by_label_selector(k8s_core_v1_client, "component=dp-ingress-controller")
-    yield testinfra.get_host(f"kubectl://{pod}?container=nginx&namespace=astronomer", kubeconfig=str(kubeconfig_dir / cluster_name))
+    kubeconfig_file = str(kubeconfig_dir / cluster_name)
+    pod = get_pod_by_label_selector(k8s_core_v1_client, "component=dp-ingress-controller", kubeconfig_file)
+    yield testinfra.get_host(f"kubectl://{pod}?container=nginx&namespace=astronomer", kubeconfig=kubeconfig_file)
 
 
 @pytest.fixture(scope="function")
 def houston_api(k8s_core_v1_client, cluster_name):
     """Fixture for accessing the houston-api pod."""
-
-    pod = get_pod_by_label_selector(k8s_core_v1_client, "component=houston")
-    yield testinfra.get_host(
-        f"kubectl://{pod}?container=houston&namespace=astronomer", kubeconfig=str(kubeconfig_dir / cluster_name)
-    )
+    kubeconfig_file = str(kubeconfig_dir / cluster_name)
+    pod = get_pod_by_label_selector(k8s_core_v1_client, "component=houston", kubeconfig_file)
+    yield testinfra.get_host(f"kubectl://{pod}?container=houston&namespace=astronomer", kubeconfig=kubeconfig_file)
 
 
 @pytest.fixture(scope="function")
 def prometheus(cluster_name):
     """Fixture for accessing the prometheus pod."""
-
+    kubeconfig_file = str(kubeconfig_dir / cluster_name)
     pod = "astronomer-prometheus-0"
-    yield testinfra.get_host(
-        f"kubectl://{pod}?container=prometheus&namespace=astronomer", kubeconfig=str(kubeconfig_dir / cluster_name)
-    )
+    yield testinfra.get_host(f"kubectl://{pod}?container=prometheus&namespace=astronomer", kubeconfig=kubeconfig_file)
 
 
 @pytest.fixture(scope="function")
 def es_master(cluster_name):
     """Fixture for accessing the es-master pod."""
+    kubeconfig_file = str(kubeconfig_dir / cluster_name)
     pod = "astronomer-elasticsearch-master-0"
-    yield testinfra.get_host(
-        f"kubectl://{pod}?container=es-master&namespace=astronomer", kubeconfig=str(kubeconfig_dir / cluster_name)
-    )
+    yield testinfra.get_host(f"kubectl://{pod}?container=es-master&namespace=astronomer", kubeconfig=kubeconfig_file)
 
 
 @pytest.fixture(scope="function")
 def es_data(cluster_name):
     """Fixture for accessing the es-data pod."""
+    kubeconfig_file = str(kubeconfig_dir / cluster_name)
     pod = "astronomer-elasticsearch-data-0"
-    yield testinfra.get_host(
-        f"kubectl://{pod}?container=es-data&namespace=astronomer", kubeconfig=str(kubeconfig_dir / cluster_name)
-    )
+    yield testinfra.get_host(f"kubectl://{pod}?container=es-data&namespace=astronomer", kubeconfig=kubeconfig_file)
 
 
 @pytest.fixture(scope="function")
 def es_client(k8s_core_v1_client, cluster_name):
     """Fixture for accessing the es-client pod."""
-    pod = get_pod_by_label_selector(k8s_core_v1_client, "component=elasticsearch,role=client")
-    yield testinfra.get_host(
-        f"kubectl://{pod}?container=es-client&namespace=astronomer", kubeconfig=str(kubeconfig_dir / cluster_name)
-    )
+    kubeconfig_file = str(kubeconfig_dir / cluster_name)
+    pod = get_pod_by_label_selector(k8s_core_v1_client, "component=elasticsearch,role=client", kubeconfig_file)
+    yield testinfra.get_host(f"kubectl://{pod}?container=es-client&namespace=astronomer", kubeconfig=kubeconfig_file)

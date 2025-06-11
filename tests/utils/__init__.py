@@ -108,10 +108,3 @@ def get_chart_containers(
         for spec in specs
         for container in [*spec["containers"], *spec["initContainers"]]
     }
-
-
-def get_pod_by_label_selector(core_v1_client, label_selector, pod_namespace) -> str:
-    """Return the name of a pod found by label selector."""
-    pods = core_v1_client.list_namespaced_pod(pod_namespace, label_selector=label_selector).items
-    assert len(pods) > 0, f"Expected to find at least one pod with labels '{label_selector}'"
-    return pods[0].metadata.name
