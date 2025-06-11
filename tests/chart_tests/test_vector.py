@@ -1,9 +1,11 @@
-from tests.chart_tests.helm_template_generator import render_chart
-import pytest
-from tests import supported_k8s_versions, get_containers_by_name
-import jmespath
-import yaml
 from pathlib import Path
+
+import jmespath
+import pytest
+import yaml
+
+from tests import get_containers_by_name, supported_k8s_versions
+from tests.chart_tests.helm_template_generator import render_chart
 
 all_templates = list(Path("charts/vector/templates").glob("*.yaml"))
 
@@ -13,7 +15,6 @@ all_templates = list(Path("charts/vector/templates").glob("*.yaml"))
     supported_k8s_versions,
 )
 class TestVector:
-
     @staticmethod
     def vector_common_tests(doc):
         """Test common for vector daemonsets."""
@@ -373,9 +374,7 @@ class TestVector:
         assert {
             "name": "RUBY_GC_HEAP_OLDOBJECT_LIMIT_FACTOR",
             "value": "1",
-        } in c_by_name[
-            "vector"
-        ]["env"]
+        } in c_by_name["vector"]["env"]
 
     def test_vector_daemonset_probe(self, kube_version):
         """Test the default probes for the vector daemonset."""
