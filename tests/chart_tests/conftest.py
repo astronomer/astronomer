@@ -15,6 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
+import os
 import subprocess
 
 import docker
@@ -22,7 +23,6 @@ import pytest
 from filelock import FileLock
 
 from tests import git_root_dir
-import os
 
 
 @pytest.fixture(autouse=True, scope="session")

@@ -1,12 +1,13 @@
 import base64
+import pathlib
 
 import jmespath
 import pytest
 import yaml
-import pathlib
 
-from tests import get_containers_by_name, supported_k8s_versions
-from tests.chart_tests.helm_template_generator import render_chart
+from tests import supported_k8s_versions
+from tests.utils import get_containers_by_name
+from tests.utils.chart import render_chart
 
 secret = base64.b64encode(b"sample-secret").decode()
 
@@ -322,25 +323,28 @@ class TestExternalElasticSearch:
         doc = docs[0]
         assert doc["kind"] == "NetworkPolicy"
         assert [
+            {"namespaceSelector": {}, "podSelector": {"matchLabels": {"tier": "airflow", "component": "webserver"}}},
             {
                 "namespaceSelector": {},
-                "podSelector": {"matchLabels": {"tier": "airflow", "component": "webserver"}},
-            },
-            {
-                "namespaceSelector": {},
-                "podSelector": {"matchLabels": {"component": "scheduler", "tier": "airflow"}},
-            },
-            {
-                "namespaceSelector": {},
-                "podSelector": {"matchLabels": {"component": "worker", "tier": "airflow"}},
-            },
-            {
-                "namespaceSelector": {},
-                "podSelector": {"matchLabels": {"component": "triggerer", "tier": "airflow"}},
-            },
-            {
-                "namespaceSelector": {},
-                "podSelector": {"matchLabels": {"component": "git-sync-relay", "tier": "airflow"}},
+                "podSelector": {
+                    "matchExpressions": [
+                        {
+                            "key": "component",
+                            "operator": "In",
+                            "values": [
+                                "dag-server",
+                                "metacleanup",
+                                "airflow-downgrade",
+                                "git-sync-relay",
+                                "dag-processor",
+                                "triggerer",
+                                "worker",
+                                "scheduler",
+                            ],
+                        }
+                    ],
+                    "matchLabels": {"tier": "airflow"},
+                },
             },
         ] == doc["spec"]["ingress"][0]["from"]
 
@@ -512,9 +516,9 @@ class TestExternalElasticSearch:
         assert doc["kind"] == "Deployment"
         assert doc["apiVersion"] == "apps/v1"
         for name, container in c_by_name.items():
-            assert container["image"].startswith(
-                private_registry
-            ), f"Container named '{name}' does not use registry '{private_registry}': {container}"
+            assert container["image"].startswith(private_registry), (
+                f"Container named '{name}' does not use registry '{private_registry}': {container}"
+            )
 
     def test_externalelasticsearch_with_extraenv(self, kube_version):
         """Test External ElasticSearch with custom env passed from

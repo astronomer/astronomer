@@ -1,6 +1,7 @@
 ################################
 ## Astronomer Houston Service ##
 ################################
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 kind: Service
 apiVersion: v1
 metadata:
@@ -11,6 +12,7 @@ metadata:
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
 spec:
   type: ClusterIP
   selector:
@@ -23,3 +25,4 @@ spec:
       port: {{ .Values.ports.houstonHTTP }}
       targetPort: {{ .Values.ports.houstonHTTP }}
       appProtocol: http
+{{- end }}

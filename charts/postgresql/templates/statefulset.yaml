@@ -32,37 +32,33 @@ spec:
       name: {{ template "postgresql.fullname" . }}
       labels:
         app: {{ template "postgresql.name" . }}
-        version: {{ .Chart.Version }}
         chart: {{ template "postgresql.chart" . }}
-        release: {{ .Release.Name | quote }}
+        component: postgresql
         heritage: {{ .Release.Service | quote }}
+        release: {{ .Release.Name | quote }}
         role: master
         tier: astronomer
-        component: postgresql
+        version: {{ .Chart.Version }}
 {{- with .Values.master.podLabels }}
 {{ toYaml . | indent 8 }}
 {{- end }}
-{{- with .Values.master.podAnnotations }}
+     {{- if or .Values.global.podAnnotations .Values.master.podAnnotations }}
       annotations:
+      {{- if .Values.global.podAnnotations }}
+{{ toYaml .Values.global.podAnnotations | indent 8 }}
+      {{- end }}
+      {{- with .Values.master.podAnnotations }}
 {{ toYaml . | indent 8 }}
-{{- end }}
+      {{- end }}
+      {{- end }}
     spec:
       {{- if .Values.schedulerName }}
       schedulerName: "{{ .Values.schedulerName }}"
       {{- end }}
 {{- include "postgresql.imagePullSecrets" . | indent 6 }}
-      {{- if .Values.master.nodeSelector }}
-      nodeSelector:
-{{ toYaml .Values.master.nodeSelector | indent 8 }}
-      {{- end }}
-      {{- if .Values.master.affinity }}
-      affinity:
-{{ toYaml .Values.master.affinity | indent 8 }}
-      {{- end }}
-      {{- if .Values.master.tolerations }}
-      tolerations:
-{{ toYaml .Values.master.tolerations | indent 8 }}
-      {{- end }}
+      nodeSelector: {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.master.nodeSelector) | nindent 8 }}
+      affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.master.affinity) | nindent 8 }}
+      tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.master.tolerations) | nindent 8 }}
       {{- if .Values.terminationGracePeriodSeconds }}
       terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
       {{- end }}
@@ -70,9 +66,7 @@ spec:
       securityContext:
         fsGroup: {{ .Values.securityContext.fsGroup }}
       {{- end }}
-      {{- if .Values.serviceAccount.enabled }}
-      serviceAccountName: {{ default (include "postgresql.fullname" . ) .Values.serviceAccount.name }}
-      {{- end }}
+      serviceAccountName: {{ template "postgresql.serviceAccountName" . }}
       {{- if and .Values.volumePermissions.enabled .Values.persistence.enabled }}
       initContainers:
       - name: init-chmod-data

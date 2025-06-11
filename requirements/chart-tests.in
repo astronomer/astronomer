@@ -1,5 +1,5 @@
+deepmerge
 docker
-exceptiongroup # indirect, needed to satisfy hash requirement
 filelock
 jmespath
 jsonschema
@@ -13,3 +13,4 @@ pytest-testinfra
 pytest-xdist
 PyYAML
 requests
+typing-extensions # transient

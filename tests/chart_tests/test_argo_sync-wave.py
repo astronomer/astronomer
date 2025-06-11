@@ -1,5 +1,6 @@
-from tests.chart_tests.helm_template_generator import render_chart
 import jmespath
+
+from tests.utils.chart import render_chart
 
 show_only = [
     "charts/astronomer/templates/commander/commander-deployment.yaml",
@@ -44,7 +45,7 @@ def test_argo_sync_wave():
                     "enableArgoCDAnnotation": argo_enabled,
                     "postgresqlEnabled": True,
                 },
-                "postgresql": {"serviceAccount": {"enabled": True}},
+                "postgresql": {"serviceAccount": {"create": True}},
             },
         )
 

@@ -1,16 +1,14 @@
-from tests.chart_tests.helm_template_generator import render_chart
-import pytest
-import tests.chart_tests as chart_tests
 import subprocess
 from pathlib import Path
 
+import pytest
+
+from tests.utils import get_all_features
+from tests.utils.chart import render_chart
 
 component_paths = [
     "charts/alertmanager/templates",
-    "charts/grafana/templates",
     "charts/kube-state/templates",
-    "charts/prometheus-blackbox-exporter/templates",
-    "charts/prometheus-node-exporter/templates",
     "charts/prometheus/templates",
 ]
 
@@ -20,7 +18,6 @@ templates_to_exclude = [
     "charts/prometheus-postgres-exporter/templates",
     "charts/prometheus-postgres-exporter/templates/secret.yaml",
     "charts/alertmanager/templates/alertmanager-serviceaccount.yaml",
-    "charts/prometheus-blackbox-exporter/templates/blackbox-serviceaccount.yaml",
 ]
 
 show_only = [
@@ -30,7 +27,7 @@ show_only = [
     if not y.name.startswith("_") and str(y) not in templates_to_exclude
 ]
 
-chart_values = chart_tests.get_all_features()
+chart_values = get_all_features()
 
 
 @pytest.mark.parametrize("template", show_only)

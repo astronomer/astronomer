@@ -1,0 +1,48 @@
+name: Check PR description
+
+on:
+  # https://docs.github.com/en/actions/writing-workflows/choosing-when-your-workflow-runs/events-that-trigger-workflows#pull_request
+  pull_request:
+    types:
+      - edited
+      - labeled
+      - opened
+      - reopened
+      - synchronize
+      - unlabeled
+    branches:
+      - master
+
+jobs:
+  trigger-build:
+    # https://docs.github.com/en/actions/writing-workflows/choosing-where-your-workflow-runs/choosing-the-runner-for-a-job
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR description
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+          KTLO: ${{ contains(github.event.pull_request.labels.*.name, 'ktlo') }}
+        run: |
+          errors=0
+
+          if [[ "${PR_BODY}" == *"Do not merge"* ]] ; then
+            echo "PR description contains 'Do not merge'"
+            ((errors += 1))
+          fi
+
+          if [[ "${PR_BODY}" == *"Yet to update"* ]] ; then
+            echo "PR description contains 'Yet to update'"
+            ((errors += 1))
+          fi
+
+          if [[ "${KTLO}" != "true" ]] && [[ "${PR_BODY}" != *"astronomer/issues"* ]] ; then
+            echo "PR description does not contain an issue link"
+            ((errors += 1))
+          fi
+
+          if [[ "${#PR_BODY}" -lt 20 ]] ; then
+            echo "PR description is too short"
+            ((errors += 1))
+          fi
+
+          exit "$errors"

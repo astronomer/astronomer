@@ -1,6 +1,7 @@
 ####################################
 ## Elasticsearch Data StatefulSet ##
 ####################################
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 kind: StatefulSet
 apiVersion: apps/v1
 metadata:
@@ -12,6 +13,7 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
     role: data
+    plane: {{ .Values.global.plane.mode }}
 spec:
   {{- if and .Values.common.persistence.enabled .Values.common.persistence.persistentVolumeClaimRetentionPolicy }}
   persistentVolumeClaimRetentionPolicy: {{- toYaml .Values.common.persistence.persistentVolumeClaimRetentionPolicy | nindent 4 }}
@@ -35,6 +37,9 @@ spec:
         version: {{ .Chart.Version }}
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/es-configmap.yaml") . | sha256sum }}
+{{- if .Values.global.podAnnotations }}
+{{ toYaml .Values.global.podAnnotations | indent 8 }}
+{{- end }}
 {{- if .Values.common.podAnnotations }}
 {{ toYaml .Values.common.podAnnotations | indent 8 }}
 {{- end }}
@@ -93,7 +98,7 @@ spec:
         readinessProbe: {{ tpl (toYaml .Values.sysctlInitContainer.readinessProbe) . | nindent 12 }}
         {{- end }}
       {{- end }}
-      serviceAccountName: {{ template "elasticsearch.serviceAccount" . }}
+      serviceAccountName: {{ template "elasticsearch.serviceAccountName" . }}
       containers:
       - name: es-data
         securityContext:
@@ -172,3 +177,4 @@ spec:
           storage: {{ .Values.data.persistence.size }}
       {{ include "elasticsearch.storageClass" . }}
   {{- end }}
+{{- end }}

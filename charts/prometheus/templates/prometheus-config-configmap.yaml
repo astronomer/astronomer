@@ -1,6 +1,7 @@
 #################################
 ## Prometheus Config ConfigMap ##
 #################################
+{{- $useClusterRoles := and .Values.global.rbacEnabled .Values.global.clusterRoles (not (eq .Values.rbac.role.kind "Role") ) }}
 kind: ConfigMap
 apiVersion: v1
 metadata:
@@ -50,10 +51,13 @@ data:
 
     # Configure targets to scrape
     scrape_configs:
+      {{ if .Values.config.enableSelfScrape }}
       - job_name: prometheus
         static_configs:
           - targets: ["localhost:9090"]
+      {{ end }}
 
+      {{- if $useClusterRoles }}
       - job_name: 'kubernetes-apiservers'
         kubernetes_sd_configs:
           - role: endpoints
@@ -66,7 +70,9 @@ data:
           - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
             action: keep
             regex: default;kubernetes;https
+      {{- end }}
 
+      {{- if $useClusterRoles }}
       - job_name: core-dns
         kubernetes_sd_configs:
           - role: pod
@@ -80,7 +86,8 @@ data:
           - source_labels: [__meta_kubernetes_pod_container_port_number]
             action: keep
             regex: "^9153"
-
+      {{- end }}
+      {{- if $useClusterRoles }}
       - job_name: kube-dns
         kubernetes_sd_configs:
           - role: pod
@@ -94,7 +101,7 @@ data:
           - source_labels: [__meta_kubernetes_pod_container_port_number]
             action: keep
             regex: "^1005[45]"
-
+      {{- end }}
       - job_name: nginx
         kubernetes_sd_configs:
           - role: endpoints
@@ -132,7 +139,6 @@ data:
             regex: ([^:]+)(?::\d+)?;(\d+)
             replacement: $1:$2
             target_label: __address__
-
       # - job_name: registry
       #   kubernetes_sd_configs:
       #     - role: service
@@ -151,25 +157,6 @@ data:
       #       regex: ([^:]+)(?::\d+)?;(\d+)
       #       replacement: $1:$2
       #       target_label: __address__
-
-      {{- if .Values.global.veleroEnabled }}
-      - job_name: velero
-        scrape_interval: 30s
-        kubernetes_sd_configs:
-          - role: service
-            namespaces:
-              names:
-                - velero
-        relabel_configs:
-          - source_labels: [__meta_kubernetes_service_name]
-            action: keep
-            regex: "velero"
-          - source_labels: [__address__]
-            action: replace
-            regex: ([^:]+)(?::\d+)?;(\d+)
-            replacement: $1:$2
-            target_label: __address__
-      {{- end }}
 
       {{- if .Values.global.prometheusPostgresExporterEnabled }}
       - job_name: postgresql-exporter
@@ -194,7 +181,6 @@ data:
             target_label: __address__
       {{- end }}
 
-
       - job_name: kube-state
         scrape_interval: 10s # Faster scrape to power dashboards
         kubernetes_sd_configs:
@@ -215,7 +201,6 @@ data:
             replacement: $1:$2
             target_label: __address__
 
-          {{- if not .Values.global.singleNamespace }}
             # This allows us to collect all the metrics we want in the cloud environment
             # does not limit to just the astronomer release namespace
           - source_labels: [__meta_kubernetes_endpoint_address_target_kind, __meta_kubernetes_endpoint_address_target_name]
@@ -285,25 +270,8 @@ data:
             replacement: "$1"
             target_label: release
           {{- end }}
-        {{- else}}
-        # this drops node metrics that we want in the cloud, but maybe shouldn't be scraping
-        # if we are in a shared cluster in enterprise
-        metric_relabel_configs:
-          # Only keep metrics that start with platforms namespace (includes airflow children)
-          - action: keep
-            source_labels: [namespace]
-            regex: "^{{ .Release.Namespace }}.*"
-          - source_labels: [deployment]
-            regex: "([-a-z0-9]*[a-z0-9])-.*?"
-            replacement: "$1"
-            target_label: release
-          # Required for single-namespace mode
-          - source_labels: [pod]
-            regex: "([-a-z0-9]*[a-z0-9])-.*?"
-            replacement: "$1"
-            target_label: release
-          {{- end}}
 
+      {{- if and $useClusterRoles .Values.global.fluentdEnabled }}
       - job_name: fluentd
         scrape_interval: 30s
         kubernetes_sd_configs:
@@ -327,47 +295,53 @@ data:
           - source_labels: [__name__]
             regex: 'fluentd_tail_file_.*'
             action: drop
-
-      {{- if .Values.global.nodeExporterEnabled }}
-      - job_name: node-exporter
-        scrape_interval: 30s
-        kubernetes_sd_configs:
-          - role: pod
-            namespaces:
-              names:
-                - {{ .Release.Namespace }}
-        relabel_configs:
-          - source_labels: [__meta_kubernetes_pod_name]
-            action: keep
-            regex: "^{{ .Release.Name }}-prometheus-node-exporter-.*"
-          - source_labels: [__meta_kubernetes_namespace]
-            separator: ;
-            regex: (.*)
-            target_label: namespace
-            replacement: $1
-            action: replace
-          - source_labels: [__meta_kubernetes_pod_name]
-            separator: ;
-            regex: (.*)
-            target_label: pod
-            replacement: $1
-            action: replace
-          - source_labels: [__meta_kubernetes_pod_node_name]
-            separator: ;
-            regex: (.*)
-            target_label: instance
-            replacement: $1
-            action: replace
       {{- end }}
 
-      - job_name: airflow
+      {{- if and $useClusterRoles .Values.global.airflowOperator.enabled   }}
+      - job_name: airflow-operator
         scrape_interval: 10s # Faster scrape to power dashboards
         kubernetes_sd_configs:
           - role: service
-          {{- if .Values.global.singleNamespace }}
+        relabel_configs:
+          - action: labelmap
+            regex: __meta_kubernetes_service_label_(.+)
+          - source_labels: [__meta_kubernetes_service_label_astronomer_io_platform_release]
+            regex: ^{{ .Release.Name }}$
+            action: keep
+          - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scrape]
+            action: keep
+            regex: true
+          - source_labels: [__address__, __meta_kubernetes_service_annotation_prometheus_io_port]
+            action: replace
+            regex: ([^:]+)(?::\d+)?;(\d+)
+            replacement: $1:$2
+            target_label: __address__
+        metric_relabel_configs:
+          - source_labels: [instance]
+            regex: "([-a-z0-9]*[a-z0-9])-.*?"
+            replacement: "$1"
+            target_label: deployment
+          {{- include "prometheus.airflowMetricsActionDrop" . | nindent 10 }}
+      {{- end }}
+
+      - job_name: airflow
+        #scrape_interval: 10s # Faster scrape to power dashboards
+        {{- if not $useClusterRoles }}
+        file_sd_configs:
+          - files:
+            - /prometheusreloader/airflow/*.json
+        {{ else }}
+        kubernetes_sd_configs:
+          - role: service
+          {{- if not $useClusterRoles }}
             namespaces:
               names:
-                - {{ .Release.Namespace }}
+                {{- if not $useClusterRoles }}
+                # explicitly including each namespace in the pool
+                {{- range $i, $namespaceName := .Values.global.features.namespacePools.namespaces.names }}
+                - {{ $namespaceName }}
+                {{- end }}
+                {{- end }}
           {{- end }}
         relabel_configs:
           - action: labelmap
@@ -383,50 +357,15 @@ data:
             regex: ([^:]+)(?::\d+)?;(\d+)
             replacement: $1:$2
             target_label: __address__
+        {{- end }}
         metric_relabel_configs:
           - source_labels: [instance]
             regex: "([-a-z0-9]*[a-z0-9])-.*?"
             replacement: "$1"
             target_label: deployment
-            # Drop metrics that are task or dag specific
-          - source_labels: [__name__]
-            regex: 'airflow_task_instance_created_.*'
-            action: drop
-          - source_labels: [__name__]
-            regex: 'airflow_task_removed_from_dag_.*'
-            action: drop
-          - source_labels: [__name__]
-            regex: 'airflow_task_restored_to_dag_.*'
-            action: drop
-          - source_labels: [__name__]
-            regex: 'airflow_dagrun_duration_success_.*'
-            action: drop
-          - source_labels: [__name__]
-            regex: 'airflow_dagrun_duration_failed_.*'
-            action: drop
-          - source_labels: [__name__]
-            regex: 'airflow_dagrun_dependency_check_.*_count'
-            action: drop
-          - source_labels: [__name__]
-            regex: 'airflow_dagrun_dependency_check_.*_sum'
-            action: drop
-          - source_labels: [__name__]
-            regex: 'airflow_dagrun_schedule_delay_.*'
-            action: drop
-          - source_labels: [__name__]
-            regex: 'airflow_dagrun_duration_success_.*'
-            action: drop
-          - source_labels: [__name__]
-            regex: 'airflow_dagrun_duration_failed_.*'
-            action: drop
-          - source_labels: [__name__]
-            regex: 'airflow_dag_processing_last_duration_.*_count'
-            action: drop
-          - source_labels: [__name__]
-            regex: 'airflow_dag_processing_last_duration_.*_sum'
-            action: drop
+          {{- include "prometheus.airflowMetricsActionDrop" . | nindent 10 }}
 
-      {{- if not .Values.global.singleNamespace }}
+      {{- if $useClusterRoles }}
       - job_name: kubernetes-nodes
         scheme: https
         tls_config:
@@ -443,7 +382,9 @@ data:
             regex: (.+)
             target_label: __metrics_path__
             replacement: /api/v1/nodes/${1}/proxy/metrics
+      {{- end }}
 
+      {{- if $useClusterRoles }}
       - job_name: kubernetes-nodes-cadvisor
         scheme: https
         tls_config:
@@ -568,102 +509,7 @@ data:
             regex: "^container_network_.*;(.*)-(.*)-([0-9]+)$"
             replacement: "$3"
             target_label: component_instance
-
       {{- end }}
-
-
-      {{- if .Values.global.blackboxExporterEnabled }}
-      # Will probe the endpoints listed under targets looking for a 2XX HTTP response
-      - job_name: 'blackbox HTTP'
-        metrics_path: /probe
-        params:
-          module: [http_2xx]  # Look for a HTTP 200 response.
-        # TODO: change this static config to be driving by service annotations. This works for now
-        static_configs:
-          - targets:
-          {{- if .Values.astroHTTPTargets.commander}}
-            - http://{{.Release.Name}}-commander.{{.Release.Namespace}}:8880/healthz
-          {{- end }}
-          {{- if .Values.astroHTTPTargets.houston}}
-            - http://{{.Release.Name}}-houston.{{.Release.Namespace}}:8871/v1/healthz
-          {{- end }}
-          {{- if .Values.astroHTTPTargets.registry}}
-            - http://{{.Release.Name}}-registry.{{.Release.Namespace}}:5000
-          {{- end }}
-          {{- if .Values.astroHTTPTargets.cliInstall}}
-            - http://{{.Release.Name}}-cli-install.{{.Release.Namespace}}
-          {{- end }}
-          {{- if .Values.astroHTTPTargets.grafana}}
-            - http://{{.Release.Name}}-grafana.{{.Release.Namespace}}:3000/api/health
-          {{- end }}
-          {{- if .Values.astroHTTPTargets.kibana}}
-            - http://{{.Release.Name}}-kibana.{{.Release.Namespace}}:5601
-          {{- end }}
-          {{- if .Values.astroHTTPTargets.elasticsearch}}
-            - http://{{.Release.Name}}-elasticsearch.{{.Release.Namespace}}:9200/_cluster/health?local=true
-          {{- end }}
-
-
-            {{- if .Values.global.baseDomain }}
-            - https://app.{{ .Values.global.baseDomain }}
-            - https://houston.{{ .Values.global.baseDomain }}/v1/healthz
-            - https://registry.{{ .Values.global.baseDomain }}
-            - https://install.{{ .Values.global.baseDomain }}
-            {{- end}}
-          {{- range .Values.httpTargets }}
-            - {{ . }}
-          {{- end }}
-        relabel_configs:
-          - source_labels: [__address__]
-            target_label: __param_target
-          - source_labels: [__param_target]
-            target_label: instance
-          - target_label: __address__
-            replacement: {{.Release.Name}}-prometheus-blackbox-exporter.{{.Release.Namespace}}:9115  # The blackbox exporter's real hostname:port.
-
-
-      {{- if .Values.tcpProbe.enabled}}
-      # Only testing for ability to open a TCP connection.
-      - job_name: 'blackbox TCP'
-        metrics_path: /probe
-        params:
-          module: [tcp_connect]  # Try tcp handshake on a port
-        static_configs:
-          - targets:
-            {{- if .Values.tcpProbe.probePGProxy}}
-            - pg-sqlproxy-gcloud-sqlproxy.{{.Release.Namespace}}:5432
-            {{- end }}
-            {{- if .Values.tcpProbe.probeTiller}}
-            - tiller-deploy.kube-system:44134 # TCP Probe
-            {{- end }}
-        relabel_configs:
-          - source_labels: [__address__]
-            target_label: __param_target
-          - source_labels: [__param_target]
-            target_label: instance
-          - target_label: __address__
-            replacement: {{.Release.Name}}-prometheus-blackbox-exporter.{{.Release.Namespace}}:9115  # The blackbox exporter's real hostname:port.
-        {{- end }}
-
-      # Tests that DNS in cluster is working.
-      # target should be your cluster DNS service IP
-      - job_name: 'blackbox DNS'
-        metrics_path: /probe
-        params:
-          module: [dns_int]
-        static_configs:
-          - targets:
-            {{- range .Values.dnsTargets }}
-            - {{ . }}
-            {{- end }}
-        relabel_configs:
-          - source_labels: [__address__]
-            target_label: __param_target
-          - source_labels: [__param_target]
-            target_label: instance
-          - target_label: __address__
-            replacement: {{.Release.Name}}-prometheus-blackbox-exporter.{{.Release.Namespace}}:9115
-        {{- end }}
 
       - job_name: houston-api
         metrics_path: /v1/metrics

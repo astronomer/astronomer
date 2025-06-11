@@ -1,8 +1,11 @@
+cryptography
 docker
 GitPython
+jsonschema
 kubernetes
 pytest
 pytest-pretty
+pytest-profiling
 pytest-rerunfailures
 pytest-testinfra
 PyYAML

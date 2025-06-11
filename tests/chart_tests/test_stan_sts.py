@@ -1,7 +1,10 @@
-from tests.chart_tests.helm_template_generator import render_chart
-import pytest
-from tests import supported_k8s_versions, get_containers_by_name
 import re
+
+import pytest
+
+from tests import supported_k8s_versions
+from tests.utils import get_containers_by_name
+from tests.utils.chart import render_chart
 
 
 @pytest.mark.parametrize(
@@ -202,9 +205,9 @@ class TestStanStatefulSet:
         assert doc["apiVersion"] == "apps/v1"
 
         for name, container in c_by_name.items():
-            assert container["image"].startswith(
-                private_registry
-            ), f"Container named '{name}' does not use registry '{private_registry}': {container}"
+            assert container["image"].startswith(private_registry), (
+                f"Container named '{name}' does not use registry '{private_registry}': {container}"
+            )
 
     def test_stan_configmap_with_logging_defaults(self, kube_version):
         """Test that stan configmap with logging defaults."""

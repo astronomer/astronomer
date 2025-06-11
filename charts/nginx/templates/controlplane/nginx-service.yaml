@@ -1,0 +1,74 @@
+#################################
+## NGINX Control Plane Service ##
+#################################
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ .Release.Name }}-cp-{{ template "nginx.name" . }}
+  labels:
+    tier: {{ template "nginx.name" . }}
+    component: cp-ingress-controller
+    chart: {{ template "nginx.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
+  annotations:
+{{- if .Values.ingressAnnotations -}}
+{{ range $key, $value := .Values.ingressAnnotations }}
+    {{ $key }}: {{ $value }}
+{{- end -}}
+{{- end -}}
+    {{- if .Values.privateLoadBalancer }}
+    # This annotation is detected by EKS to indicate that
+    # it should provision a private ("internal") load balancer
+    service.beta.kubernetes.io/aws-load-balancer-internal: "true"
+    cloud.google.com/load-balancer-type: "Internal"
+    service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+    service.kubernetes.io/ibm-load-balancer-cloud-provider-ip-type: "private"
+    {{- end }}
+
+    # Metrics annotations
+    prometheus.io/scrape: "true"
+    prometheus.io/port: {{ .Values.ports.metrics | quote }}
+spec:
+  type: {{ .Values.serviceType }}
+  {{- if .Values.externalIPs }}
+  externalIPs:
+    - {{ .Values.externalIPs }}
+  {{- end }}
+  {{- if .Values.loadBalancerIP }}
+  loadBalancerIP: {{ .Values.loadBalancerIP }}
+  {{- end }}
+  {{- if .Values.loadBalancerSourceRanges }}
+  loadBalancerSourceRanges: {{ .Values.loadBalancerSourceRanges | toJson }}
+  {{- end }}
+  {{- if not (eq .Values.serviceType "ClusterIP") }}
+  {{- if (.Values.preserveSourceIP) }}
+  externalTrafficPolicy: "Local"
+  {{- else }}
+  externalTrafficPolicy: "Cluster"
+  {{- end }}
+  {{- end }}
+  selector:
+    tier: {{ template "nginx.name" . }}
+    component: cp-ingress-controller
+    release: {{ .Release.Name }}
+  ports:
+    - port: 80
+      targetPort: {{ .Values.ports.http }}
+      protocol: TCP
+      name: http
+      {{- if and (eq .Values.serviceType "NodePort") .Values.httpNodePort }}
+      nodePort: {{ .Values.httpNodePort }}
+      {{- end }}
+      appProtocol: http
+    - port: 443
+      targetPort: {{ .Values.ports.https }}
+      protocol: TCP
+      name: https
+      {{- if and (eq .Values.serviceType "NodePort") .Values.httpsNodePort }}
+      nodePort: {{ .Values.httpsNodePort }}
+      {{- end }}
+      appProtocol: https
+{{- end }}

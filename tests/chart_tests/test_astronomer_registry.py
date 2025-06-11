@@ -1,7 +1,8 @@
-from tests.chart_tests.helm_template_generator import render_chart
-import pytest
-from tests import supported_k8s_versions
 import jmespath
+import pytest
+
+from tests import supported_k8s_versions
+from tests.utils.chart import render_chart
 
 
 @pytest.mark.parametrize(
@@ -138,6 +139,21 @@ class TestRegistryStatefulset:
         )
         assert len(docs) == 0
 
+    def test_astronomer_registry_statefulset_with_scc_enabled(self, kube_version):
+        """Test that helm renders scc template for astronomer registry."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"astronomer": {"registry": {"serviceAccount": {"create": True, "sccEnabled": True}}}},
+            show_only=[
+                "charts/astronomer/templates/registry/registry-scc.yaml",
+            ],
+        )
+        assert len(docs) == 1
+        assert docs[0]["kind"] == "SecurityContextConstraints"
+        assert docs[0]["apiVersion"] == "security.openshift.io/v1"
+        assert docs[0]["metadata"]["name"] == "release-name-registry-anyuid"
+        assert docs[0]["users"] == ["system:serviceaccount:default:release-name-registry"]
+
     @pytest.mark.skip(reason="This test needs rework")
     def test_astronomer_registry_statefulset_with_podSecurityContext_disabled(self, kube_version):
         """Test that helm renders statefulset template for astronomer
@@ -151,3 +167,14 @@ class TestRegistryStatefulset:
         )
         assert len(docs) == 1
         assert "securityContext" not in docs[0]["spec"]["template"]["spec"]
+
+    def test_registry_statefulset_without_ssl_cert_mount(self, kube_version):
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"astronomer": {"registry": {"enableInsecureAuth": True}}},
+            show_only=["charts/astronomer/templates/registry/registry-statefulset.yaml"],
+        )
+        not_expected_volume_mount = [{"mountPath": "/etc/docker/ssl", "name": "certificate"}]
+        assert docs[0]["kind"] == "StatefulSet"
+        assert len(docs[0]["spec"]["template"]["spec"]["volumes"]) == 1
+        assert docs[0]["spec"]["template"]["spec"]["containers"][0]["volumeMounts"][1] != not_expected_volume_mount

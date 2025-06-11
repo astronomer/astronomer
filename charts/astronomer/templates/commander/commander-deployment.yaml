@@ -1,6 +1,7 @@
 #####################################
 ## Astronomer Commander Deployment ##
 #####################################
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -8,6 +9,7 @@ metadata:
   labels:
     component: commander
     tier: astronomer
+    plane: {{ .Values.global.plane.mode }}
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
@@ -30,8 +32,15 @@ spec:
         release: {{ .Release.Name }}
         app: commander
         version: {{ .Chart.Version }}
+        plane: {{ .Values.global.plane.mode }}
       annotations:
         checksum/airflow-chart-version: {{ .Values.airflowChartVersion | sha256sum }}
+{{- if .Values.global.podAnnotations }}
+{{ toYaml .Values.global.podAnnotations | indent 8 }}
+{{- end }}
+{{- if .Values.commander.podAnnotations }}
+{{ toYaml .Values.commander.podAnnotations | indent 8 }}
+{{- end }}
     spec:
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
@@ -39,7 +48,7 @@ spec:
 {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 8 }}
       tolerations:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
-      serviceAccountName: {{ template "commander.ServiceAccount" . }}
+      serviceAccountName: {{ template "commander.serviceAccountName" . }}
       restartPolicy: Always
 {{- include "astronomer.imagePullSecrets" . | indent 6 }}
       containers:
@@ -117,6 +126,26 @@ spec:
             - name: COMMANDER_MANAGE_NAMESPACE_RESOURCE
               value: "false"
             {{- end }}
+            - name: COMMANDER_AIRFLOW_CHART_VERSION
+              value: {{ .Values.airflowChartVersion | default "" | quote }}
+            - name: COMMANDER_DATAPLANE_CHART_VERSION
+              value: {{ .Values.commander.dataplaneChartVersion | default "" | quote }}
+            - name: COMMANDER_CLOUD_PROVIDER
+              value: {{ .Values.commander.cloudProvider | default "" | quote }}
+            - name: COMMANDER_REGION
+              value: {{ .Values.commander.region | default "" | quote }}
+            - name: COMMANDER_VERSION
+              value: {{ .Values.images.commander.tag | default "" | quote }}
+            - name: COMMANDER_DATAPLANE_URL
+              value: {{ .Values.commander.dataplaneUrl | default "" | quote }}
+            - name: COMMANDER_DATAPLANE_ID
+              value: {{ .Values.commander.dataplaneId | default (randAlphaNum 8) | quote }}
+            - name: COMMANDER_BASE_DOMAIN
+              value: {{ .Values.global.baseDomain | default "" | quote }}
+            - name: COMMANDER_DATAPLANE_MODE
+              value: {{ .Values.global.dataplane.enabled | default false | quote }}
+            - name: COMMANDER_HOUSTON_AUTHORIZATION_URL
+              value: {{ .Values.commander.houstonAuthorizationUrl | default "" | quote }}
           volumeMounts:
 {{- if .Values.commander.volumeMounts }}
 {{- tpl (toYaml .Values.commander.volumeMounts) $ | nindent 12 }}
@@ -127,4 +156,5 @@ spec:
       volumes:
 {{- if .Values.commander.extraVolumes }}
 {{- tpl (toYaml .Values.commander.extraVolumes) $ | nindent 8 }}
+{{- end }}
 {{- end }}

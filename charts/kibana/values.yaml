@@ -5,11 +5,11 @@ tolerations: []
 images:
   kibana:
     repository: quay.io/astronomer/ap-kibana
-    tag: 8.12.1
+    tag: 8.15.5
     pullPolicy: IfNotPresent
   init:
     repository: quay.io/astronomer/ap-init
-    tag: 3.18.9
+    tag: 3.21.3-3
     pullPolicy: IfNotPresent
 
 securityContext:
@@ -67,3 +67,10 @@ serviceAccount:
   # The name of the service account to use.
   # If not set and create is true, a name is generated using the fullname template
   name: ""
+
+podAnnotations: {}
+ingressAnnotations: {}
+
+defaultIndexJob:
+  livenessProbe: {}
+  readinessProbe: {}

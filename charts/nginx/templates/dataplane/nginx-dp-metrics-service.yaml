@@ -1,0 +1,31 @@
+######################################
+## NGINX Data Plane Metrics service ##
+######################################
+{{- if eq .Values.global.plane.mode "data" }}
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ .Release.Name }}-dp-{{ template "nginx.name" . }}-metrics
+  labels:
+    tier: {{ template "nginx.name" . }}
+    component: dp-ingress-controller
+    chart: {{ template "nginx.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
+spec:
+  type: ClusterIP
+  selector:
+    tier: {{ template "nginx.name" . }}
+    component: dp-ingress-controller
+    release: {{ .Release.Name }}
+  ports:
+    - port: {{ .Values.ports.metrics }}
+      targetPort: {{ .Values.ports.metrics }}
+      protocol: TCP
+      appProtocol: tcp
+      name: nginx-metrics
+      {{- if and (eq .Values.serviceType "NodePort") .Values.metricsNodePort }}
+      nodePort: {{ .Values.metricsNodePort }}
+      {{- end }}
+{{- end }}

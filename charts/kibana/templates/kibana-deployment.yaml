@@ -26,8 +26,17 @@ spec:
         release: {{ .Release.Name }}
         app: {{ template "kibana.name" . }}
         version: {{ .Chart.Version }}
+{{- if or .Values.global.podAnnotations .Values.podAnnotations }}
+      annotations:
+{{- if .Values.global.podAnnotations }}
+{{ toYaml .Values.global.podAnnotations | indent 8 }}
+{{- end }}
+{{- if .Values.podAnnotations }}
+{{ toYaml .Values.podAnnotations | indent 8 }}
+{{- end }}
+{{- end }}
     spec:
-      serviceAccountName: {{ template "kibana.ServiceAccount" . }}
+      serviceAccountName: {{ template "kibana.serviceAccountName" . }}
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
       affinity:

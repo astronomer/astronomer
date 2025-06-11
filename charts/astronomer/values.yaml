@@ -5,7 +5,7 @@
 # This version number controls the default Airflow chart version that will be installed
 # when creating a new deployment in the system. This is also used to ensure all
 # child airflow deployments are kept up to date and on the latest version.
-airflowChartVersion: 1.13.5
+airflowChartVersion: 1.14.5
 
 nodeSelector: {}
 affinity: {}
@@ -15,29 +15,26 @@ tolerations: []
 images:
   commander:
     repository: quay.io/astronomer/ap-commander
-    tag: 0.36.8
+    tag: 0.37.10
     pullPolicy: IfNotPresent
   registry:
     repository: quay.io/astronomer/ap-registry
-    tag: 3.18.9
+    tag: 3.0.0-1
     pullPolicy: IfNotPresent
     # httpSecret: ~
   houston:
     repository: quay.io/astronomer/ap-houston-api
-    tag: 0.36.6
+    tag: 0.37.19
     pullPolicy: IfNotPresent
   astroUI:
     repository: quay.io/astronomer/ap-astro-ui
-    tag: 0.36.0
+    tag: 0.37.11
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
-    tag: 0.36.0
+    tag: 0.37.3
     pullPolicy: IfNotPresent
-  cliInstall:
-    repository: quay.io/astronomer/ap-cli-install
-    tag: 0.26.27
-    pullPolicy: IfNotPresent
+
 
 securityContext:
   runAsNonRoot: true
@@ -64,10 +61,7 @@ astroUI:
     # The name of the service account to use.
     # If not set and create is true, a name is generated using the fullname template
     name: ""
-
-cliInstall:
-  readinessProbe: {}
-  livenessProbe: {}
+  podAnnotations: {}
 
 houston:
   prismaConnectionLimit: 5
@@ -128,6 +122,8 @@ houston:
     # The name of the service account to use.
     # If not set and create is true, a name is generated using the fullname template
     name: ""
+
+  podAnnotations: {}
 
   env: []
 
@@ -190,6 +186,9 @@ houston:
     # Only run on deployments marked as canary
     canary: false
 
+    readinessProbe: {}
+    livenessProbe: {}
+
   # Cleanup airflow db data
   # This runs as a CronJob
   cleanupAirflowDb:
@@ -206,7 +205,7 @@ houston:
     outputPath: "/tmp"
 
     # Delete archived tables
-    purgeArchive: true
+    dropArchives: true
 
     # Print out the deployments that should be cleaned up and skip actual cleanup
     dryRun: false
@@ -223,6 +222,9 @@ houston:
     # Run cleanup on specific table or list of tables in a comma separated format
     tables: ""
 
+    readinessProbe: {}
+    livenessProbe: {}
+
   # Cleanup task usage data and task audit data in Houston
   # This runs as a CronJob
   cleanupTaskUsageData:
@@ -238,6 +240,9 @@ houston:
     # Only run on deployments marked as canary
     canary: false
 
+    readinessProbe: {}
+    livenessProbe: {}
+
   # Cleanup task usage data and task audit data in Houston
   # This runs as a CronJob
   cleanupDeployRevisions:
@@ -250,11 +255,14 @@ houston:
     # Cleanup deploy revisions older than this many days
     olderThan: 90
 
+    readinessProbe: {}
+    livenessProbe: {}
+
   # Check for Astronomer Platform Updates
   # This runs as a CronJob
   updateCheck:
     # Enable check updates CronJob
-    enabled: true
+    enabled: false
 
     # url for update service
     url: https://updates.astronomer.io/astronomer-platform
@@ -262,17 +270,8 @@ houston:
     # Default here is to run at midnight every night https://crontab.guru/#0_0_*_*_*
     schedule: "0 0 * * *"
 
-  # Check for Airflow Updates
-  # This runs as a CronJob
-  updateAirflowCheck:
-    # Enable check updates CronJob
-    enabled: true
-
-    # url for update service
-    url: https://updates.astronomer.io/astronomer-certified
-
-    # Run at minute 57 every hour https://crontab.guru/#57_*_*_*_*
-    schedule: "57 * * * *"
+    readinessProbe: {}
+    livenessProbe: {}
 
   # Check for Astronomer Runtime Updates
   # This runs as a CronJob
@@ -286,6 +285,9 @@ houston:
     # Default here is to run at 00:43 every night https://crontab.guru/#43_0_*_*_*
     schedule: "43 0 * * *"
 
+    readinessProbe: {}
+    livenessProbe: {}
+
   # Populate daily task usage data
   # This runs as a CronJob
 
@@ -296,44 +298,18 @@ houston:
     # Print out the aggregated daily task usage data that should be inserted and skip actual insertion
     dryRun: false
 
+    readinessProbe: {}
+    livenessProbe: {}
+
   populateHourlyTaskAuditMetrics:
     # Run at minute 57 every hour https://crontab.guru/#57_*_*_*_*
     schedule: "57 * * * *"
 
-  # this option allows to override airflow releases config
-  #
-  airflowReleasesConfig:
-    # example of usage:
-    # available_releases:
-    # - version: 1.10.7-15
-    #   level: bug_fix
-    #   url: https://github.com/astronomer/airflow/releases/tag/v1.10.7%2Bastro.15
-    #   release_date: '2020-09-22T15:52:00+00:00'
-    #   tags:
-    #   - 1.10.7-15-alpine3.10-onbuild
-    #   - 1.10.7-15-buster-onbuild
-    #   - 1.10.7-15-alpine3.10
-    #   - 1.10.7-15-buster
-    #   channel: stable
-    # - version: 1.10.12-1
-    #   level: new_feature
-    #   url: https://github.com/astronomer/airflow/releases/tag/v1.10.12%2Bastro.1
-    #   release_date: '2020-09-29T22:15:00+00:00'
-    #   tags:
-    #   - 1.10.12-1-alpine3.10-onbuild
-    #   - 1.10.12-1-buster-onbuild
-    #   - 1.10.12-1-alpine3.10
-    #   - 1.10.12-1-buster
-    #   channel: stable
-    # - version: 2.0.0
-    #   level: new_feature
-    #   url: https://github.com/astronomer/airflow/releases/tag/v1.10.12%2Bastro.1
-    #   release_date: '2020-09-29T22:15:00+00:00'
-    #   tags:
-    #   - 2.0.0-alpine3.10-onbuild
-    #   channel: stable
+    readinessProbe: {}
+    livenessProbe: {}
 
-  RuntimeReleasesConfig:
+  runtimeReleasesConfigMapName: ~
+  runtimeReleasesConfig:
     # example of usage:
     # below are default mandatory fields
     # runtimeVersions:
@@ -353,11 +329,23 @@ houston:
     annotation: {}
   enableHoustonInternalAuthorization: false
 
+  updateResourceStrategy:
+    readinessProbe: {}
+    livenessProbe: {}
+
+  dbMigration:
+    readinessProbe: {}
+    livenessProbe: {}
+
   bootstrapper:
     readinessProbe: {}
     livenessProbe: {}
 
   waitForDB:
+    readinessProbe: {}
+    livenessProbe: {}
+
+  taskUsageMetrics:
     readinessProbe: {}
     livenessProbe: {}
 
@@ -375,6 +363,8 @@ configSyncer:
     # The name of the service account to use.
     # If not set and create is true, a name is generated using the fullname template
     name: ""
+  readinessProbe: {}
+  livenessProbe: {}
 
 
 commander:
@@ -404,6 +394,7 @@ commander:
     #   port: {{ .Values.ports.commanderHTTP }}
     # initialDelaySeconds: 10
     # periodSeconds: 10
+  podAnnotations: {}
 
 
   airGapped:
@@ -427,7 +418,17 @@ commander:
   # Add extra volumes to your commander deployment.
   extraVolumes: []
 
+  # Values for Dataplane Metadata
+  dataplaneChartVersion: ""
+  cloudProvider: ""
+  commanderUrl: ""
+  dataplaneUrl: ""
+  dataplaneId: ""
+  region: ""
+
 registry:
+  # flag to bypass secure (tls) authentication to astronomer registry
+  enableInsecureAuth: False
   # k8s secret name for registry to use to authenticate to houston when sending notifications
   authHeaderSecretName: ~
   replicas: 1
@@ -521,28 +522,7 @@ registry:
 
   logLevel: info
 
-install:
-  cliEnabled: true
-  cliVersion: 0.29
-  resources: {}
-  #  limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  #  requests:
-  #   cpu: 100m
-  #   memory: 128Mi
-  serviceAccount:
-    # Specifies whether a service account should be created
-    create: false
-    # Annotations to add to the service account
-    annotations: {}
-    # The name of the service account to use.
-    # If not set and create is true, a name is generated using the fullname template
-    name: ""
-
-e2eTest:
-  env: []
-  resources: {}
+  podAnnotations: {}
 
 ports:
   houstonHTTP: 8871
@@ -551,4 +531,3 @@ ports:
   astroUIHTTP: 8080
   registryHTTP: 5000
   registryScrape: 5001
-  installHTTP: 8080

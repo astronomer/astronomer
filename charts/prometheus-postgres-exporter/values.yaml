@@ -9,7 +9,7 @@ replicaCount: 2
 
 image:
   repository: quay.io/astronomer/ap-postgres-exporter
-  tag: 0.15.0-8
+  tag: 0.17.1-1
   pullPolicy: IfNotPresent
 
 
@@ -103,6 +103,8 @@ tolerations: []
 affinity: {}
 
 annotations: {}
+
+podannotations: {}
 
 podLabels: {}
 

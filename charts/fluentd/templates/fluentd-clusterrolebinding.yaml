@@ -19,7 +19,7 @@ roleRef:
   name: {{ template "fluentd.fullname" . }}
 subjects:
 - kind: ServiceAccount
-  name: {{ template "fluentd.serviceAccount" . }}
+  name: {{ template "fluentd.serviceAccountName" . }}
   namespace: {{ .Release.Namespace }}
 {{- end -}}
 {{- end -}}

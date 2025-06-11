@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 from os import getenv
 from pathlib import Path
 from subprocess import check_output

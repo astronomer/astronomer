@@ -1,4 +1,8 @@
-{{- if .Values.natsbox.enabled }}
+##############
+## Nats Box ##
+##############
+{{- if and .Values.natsbox.enabled }}
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 ---
 apiVersion: v1
 kind: Pod
@@ -8,6 +12,7 @@ metadata:
     app: {{ template "nats.name" . }}-box
     chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
     version: {{ .Chart.Version }}
+    plane: {{ .Values.global.plane.mode }}
 spec:
 {{- include "nats.imagePullSecrets" . | indent 2 }}
   volumes:
@@ -64,4 +69,5 @@ spec:
     - name: {{ $secretName }}-clients-volume
       mountPath: /etc/nats-certs/clients/{{ $secretName }}
     {{- end }}
+{{- end }}
 {{- end }}

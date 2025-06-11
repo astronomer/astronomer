@@ -1,12 +1,12 @@
 import jmespath
 import pytest
 
-import tests.chart_tests as chart_tests
-from tests.chart_tests.helm_template_generator import render_chart
+from tests.utils import get_all_features
+from tests.utils.chart import render_chart
 
 
 def init_test_pod_resources():
-    chart_values = chart_tests.get_all_features()
+    chart_values = get_all_features()
 
     kubernetes_objects = {
         "StatefulSet": "spec.template.spec.containers",
@@ -26,7 +26,7 @@ def init_test_pod_resources():
             docs,
         )
 
-    return {f'{doc["chart"]}_{doc["kind"]}_{doc["name"]}': doc["container"] for doc in pod_docs}
+    return {f"{doc['chart']}_{doc['kind']}_{doc['name']}": doc["container"] for doc in pod_docs}
 
 
 test_pod_resources_configs_data = init_test_pod_resources()

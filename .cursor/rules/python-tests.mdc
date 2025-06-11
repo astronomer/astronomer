@@ -1,0 +1,14 @@
+---
+description:
+globs: **/*.py
+alwaysApply: false
+---
+- All python code should have type hints.
+- All python functions should have docstrings that explain what the function does.
+- Python could should try to use the stdlib if possible.
+- All date operations should be TZ aware, and should output iso8601 compatible utc unless specified otherwise.
+- Use match ... case instead of if ... elif.
+- Be specific about which exceptions are being caught.
+- Use pathlib for all filesystem operations.
+- Use requests for all http operations, and always specify an http request timeout.
+-

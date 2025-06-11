@@ -1,6 +1,7 @@
 #####################################
 ## Resource Strategy Migration Job ##
 #####################################
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 apiVersion: {{ include "apiVersion.batch" . }}
 kind: Job
 metadata:
@@ -11,6 +12,7 @@ metadata:
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
   annotations:
     # This is what defines this resource as a hook. Without this line, the
     # job is considered part of the release.
@@ -30,12 +32,18 @@ spec:
         release: {{ .Release.Name }}
         app: houston-update-resource-strategy
         version: {{ .Chart.Version }}
-      {{- if .Values.global.istio.enabled }}
+        plane: {{ .Values.global.plane.mode }}
+      {{- if or .Values.global.podAnnotations .Values.global.istio.enabled }}
       annotations:
-        sidecar.istio.io/inject: "false"
+        {{- if .Values.global.istio.enabled }}
+          sidecar.istio.io/inject: "false"
+        {{- end }}
+        {{- if .Values.global.podAnnotations }}
+{{ toYaml .Values.global.podAnnotations | indent 8 }}
+        {{- end }}
       {{- end }}
     spec:
-      serviceAccountName: {{ template "houston.bootstrapperServiceAccount" . }}
+      serviceAccountName: {{ template "houston.bootstrapperServiceAccountName" . }}
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
       affinity:
@@ -63,6 +71,13 @@ spec:
                   name: {{ template "houston.backendSecret" . }}
                   key: connection
             {{- include "houston_environment" . | indent 12 }}
+          {{- if .Values.houston.updateResourceStrategy.readinessProbe }}
+          readinessProbe: {{ tpl (toYaml .Values.houston.updateResourceStrategy.readinessProbe) . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.houston.updateResourceStrategy.livenessProbe }}
+          livenessProbe: {{ tpl (toYaml .Values.houston.updateResourceStrategy.livenessProbe) . | nindent 12 }}
+          {{- end }}
       volumes:
         {{- include "houston_volumes" . | indent 8 }}
         {{- include "custom_ca_volumes" . | indent 8 }}
+{{- end }}

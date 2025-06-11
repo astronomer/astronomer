@@ -1,6 +1,8 @@
-from tests.chart_tests.helm_template_generator import render_chart
 import pytest
-from tests import supported_k8s_versions, get_containers_by_name
+
+from tests import supported_k8s_versions
+from tests.utils import get_containers_by_name
+from tests.utils.chart import render_chart
 
 
 @pytest.mark.parametrize(
@@ -29,6 +31,16 @@ class TestAstronomerCommander:
         env_vars = {x["name"]: x["value"] for x in c_by_name["commander"]["env"]}
         assert env_vars["COMMANDER_UPGRADE_TIMEOUT"] == "600"
         assert "COMMANDER_MANAGE_NAMESPACE_RESOURCE" not in env_vars
+
+        assert "COMMANDER_DATAPLANE_CHART_VERSION" in env_vars
+        assert "COMMANDER_CLOUD_PROVIDER" in env_vars
+        assert "COMMANDER_VERSION" in env_vars
+        assert "COMMANDER_DATAPLANE_URL" in env_vars
+        assert "COMMANDER_DATAPLANE_ID" in env_vars
+        assert "COMMANDER_REGION" in env_vars
+        assert "COMMANDER_BASE_DOMAIN" in env_vars
+        assert "COMMANDER_DATAPLANE_MODE" in env_vars
+        assert "COMMANDER_HOUSTON_AUTHORIZATION_URL" in env_vars
 
     def test_astronomer_commander_deployment_upgrade_timeout(self, kube_version):
         """Test that helm renders a good deployment template for
@@ -246,7 +258,7 @@ class TestAstronomerCommander:
         expected_rule = {
             "apiGroups": ["security.openshift.io"],
             "resources": ["securitycontextconstraints"],
-            "verbs": ["create", "delete", "list", "watch"],
+            "verbs": ["create", "delete", "get", "patch", "list", "watch"],
         }
         assert cluster_role["kind"] == "ClusterRole"
         assert cluster_role["rules"] == [expected_rule]
@@ -267,13 +279,13 @@ class TestAstronomerCommander:
         }
 
         cluster_role_binding = docs[3]
-        expected_cluster_role = {
+        expected_scc_cluster_role = {
             "apiGroup": "rbac.authorization.k8s.io",
             "kind": "ClusterRole",
-            "name": "release-name-commander",
+            "name": "release-name-commander-scc",
         }
 
-        assert cluster_role_binding["roleRef"] == expected_cluster_role
+        assert cluster_role_binding["roleRef"] == expected_scc_cluster_role
 
         for i in range(4, 6):
             role_binding = docs[i]
@@ -316,7 +328,7 @@ class TestAstronomerCommander:
         expected_rule = {
             "apiGroups": ["security.openshift.io"],
             "resources": ["securitycontextconstraints"],
-            "verbs": ["create", "delete", "list", "watch"],
+            "verbs": ["create", "delete", "get", "patch", "list", "watch"],
         }
         cluster_role = docs[0]
 
@@ -381,3 +393,39 @@ class TestAstronomerCommander:
         assert env_vars["COMMANDER_MANAGE_NAMESPACE_RESOURCE"] == "false"
         assert env_vars["COMMANDER_MANUAL_NAMESPACE_NAMES"] == "true"
         assert env_vars["COMMANDER_AIRGAPPED"] == "true"
+
+    def test_astronomer_commander_operator_permissions(self, kube_version):
+        """Test template that helm renders when operator is enabled ."""
+        doc = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "airflowOperator": {"enabled": True},
+                },
+            },
+            show_only=["charts/astronomer/templates/commander/commander-role.yaml"],
+        )[0]
+        expected_rule = {
+            "apiGroups": ["airflow.apache.org"],
+            "resources": ["airflows"],
+            "verbs": ["get", "list", "watch", "create", "update", "patch", "delete"],
+        }
+        assert any(rule == expected_rule for rule in doc["rules"])
+
+    def test_astronomer_commander_operator_permissions_disabled(self, kube_version):
+        """Test template that helm renders when operator is enabled ."""
+        doc = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "airflowOperator": {"enabled": False},
+                },
+            },
+            show_only=["charts/astronomer/templates/commander/commander-role.yaml"],
+        )[0]
+        expected_rule = {
+            "apiGroups": ["airflow.apache.org"],
+            "resources": ["airflows"],
+            "verbs": ["get", "list", "watch", "create", "update", "patch", "delete"],
+        }
+        assert not any(rule == expected_rule for rule in doc["rules"])

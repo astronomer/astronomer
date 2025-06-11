@@ -1,7 +1,9 @@
-from tests.chart_tests.helm_template_generator import render_chart
 import pytest
 import yaml
-from tests import get_cronjob_containerspec_by_name, supported_k8s_versions
+
+from tests import supported_k8s_versions
+from tests.utils import get_containers_by_name
+from tests.utils.chart import render_chart
 
 
 @pytest.mark.parametrize(
@@ -35,7 +37,7 @@ class TestAstronomerHoustonAirflowDbCleanupCronjob:
         )
 
         assert len(docs) == 1
-        job_container_by_name = get_cronjob_containerspec_by_name(docs[0])
+        job_container_by_name = get_containers_by_name(docs[0])
         assert docs[0]["kind"] == "CronJob"
         assert docs[0]["metadata"]["name"] == "release-name-houston-cleanup-airflow-db-data"
         assert docs[0]["spec"]["schedule"] == "23 5 * * *"
@@ -56,7 +58,7 @@ class TestAstronomerHoustonAirflowDbCleanupCronjob:
         )
 
         assert len(docs) == 1
-        job_container_by_name = get_cronjob_containerspec_by_name(docs[0])
+        job_container_by_name = get_containers_by_name(docs[0])
         assert docs[0]["kind"] == "CronJob"
         assert docs[0]["metadata"]["name"] == "release-name-houston-cleanup-airflow-db-data"
         assert docs[0]["spec"]["schedule"] == "22 5 * * *"

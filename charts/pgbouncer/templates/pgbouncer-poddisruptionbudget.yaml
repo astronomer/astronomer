@@ -1,5 +1,5 @@
 ###################################
-## Pgbouncer PodDisruptionBudget ##
+## Pgbouncer Pod Disruption Budget ##
 ###################################
 {{- if and .Values.global.pgbouncer.enabled .Values.podDisruptionBudget.enabled }}
 kind: PodDisruptionBudget

@@ -50,26 +50,9 @@ alertmanager.{{ .Values.global.baseDomain }}
 Return  the proper Storage Class
 */}}
 {{- define "alertmanager.storageClass" -}}
-{{/*
-Helm 2.11 supports the assignment of a value to a variable defined in a different scope,
-but Helm 2.9 and 2.10 does not support it, so we need to implement this if-else logic.
-*/}}
-{{- if .Values.global.storageClass -}}
-    {{- if (eq "-" .Values.global.storageClass) -}}
-        {{- printf "storageClassName: \"\"" -}}
-    {{- else }}
-        {{- printf "storageClassName: %s" .Values.global.storageClass -}}
-    {{- end -}}
-{{- else -}}
-    {{- if .Values.persistence.storageClassName -}}
-          {{- if (eq "~" .Values.persistence.storageClassName) -}}
-              {{- printf "storageClassName: \"\"" -}}
-          {{- else }}
-              {{- printf "storageClassName: %s" .Values.persistence.storageClassName -}}
-          {{- end -}}
-    {{- end -}}
+storageClassName: {{ or .Values.persistence.storageClassName .Values.global.storageClass | default "" }}
 {{- end -}}
-{{- end -}}
+
 
 {{/*
 Return the proper Docker Image Registry Secret Names
@@ -101,7 +84,7 @@ imagePullSecrets:
 {{- end }}
 {{- end }}
 
-{{ define "alertmanager.ServiceAccount" -}}
+{{ define "alertmanager.serviceAccountName" -}}
 {{- if and .Values.serviceAccount.create .Values.global.rbacEnabled -}}
 {{ default (printf "%s" (include "alertmanager.fullname" . )) .Values.serviceAccount.name }}
 {{- else -}}

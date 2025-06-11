@@ -1,7 +1,8 @@
 #####################
 ## Houston Ingress ##
 #####################
-{{- if .Values.global.baseDomain }}
+{{- if and .Values.global.baseDomain }}
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:
@@ -12,12 +13,14 @@ metadata:
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
   annotations:
     {{- if .Values.global.authSidecar.enabled  }}
-    {{- range $key, $value := .Values.global.extraAnnotations}}
-    {{ $key }}: {{ $value | quote }}
-    {{- end }}
+{{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- else }}
+    {{- if .Values.global.extraAnnotations }}
+{{- toYaml .Values.global.extraAnnotations | nindent 4 }}
+    {{- end }}
     kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
     kubernetes.io/tls-acme: {{ eq .Values.global.acme true | quote }}
     nginx.ingress.kubernetes.io/custom-http-errors: "404"
@@ -66,4 +69,5 @@ spec:
               port:
                 name: houston-http
   {{- end -}}
+{{- end }}
 {{- end }}

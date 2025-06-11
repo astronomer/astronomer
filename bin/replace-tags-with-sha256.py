@@ -24,6 +24,7 @@ USAGE:
 """
 
 import sys
+
 import requests
 import yaml
 

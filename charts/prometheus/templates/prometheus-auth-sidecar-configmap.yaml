@@ -1,6 +1,6 @@
-####################################
-## Prometheus auth sidecar ConfigMap
-####################################
+#######################################
+## Prometheus auth sidecar ConfigMap ##
+#######################################
 {{- if .Values.global.authSidecar.enabled }}
 kind: ConfigMap
 apiVersion: v1

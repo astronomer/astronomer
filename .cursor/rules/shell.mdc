@@ -1,0 +1,9 @@
+---
+description:
+globs: **/*.sh
+alwaysApply: false
+---
+- All shell scripts should have help text that tells how to invoke them, what each argument is, and an example of each argument.
+- Shell scripts with `#!/bin/sh` should be compatible with busybox, and use the busybox command set if possible.
+- Shell scripts with `#!/usr/bin/env bash` or `#!/usr/bin/bash` should be compatible with bash >=5.0
+- All shell scripts should pass shellcheck

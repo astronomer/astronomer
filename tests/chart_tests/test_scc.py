@@ -2,11 +2,11 @@
 # contents of that file are not included in the k8s schema we use for validating
 # k8s manifests. See https://github.com/astronomer/issues/issues/3887
 
-from tests.chart_tests.helm_template_generator import render_chart
 import pytest
-from tests import supported_k8s_versions
 import yaml
 
+from tests import supported_k8s_versions
+from tests.utils.chart import render_chart
 
 show_only = [
     "charts/astronomer/templates/commander/commander-role.yaml",
@@ -17,7 +17,7 @@ show_only = [
 commander_expected_result = {
     "apiGroups": ["security.openshift.io"],
     "resources": ["securitycontextconstraints"],
-    "verbs": ["create", "delete", "list", "watch"],
+    "verbs": ["create", "delete", "get", "patch", "list", "watch"],
 }
 
 
@@ -42,7 +42,7 @@ class TestScc:
 
         assert len(docs) == 2
         assert commander_expected_result not in docs[0]["rules"]
-        assert houston_values["deployments"]["helm"].get("sccEnabled") is None
+        assert houston_values["deployments"]["helm"].get("sccEnabled") is False
 
     def test_scc_enabled(self, kube_version):
         """Test all things scc related when scc is disabled."""

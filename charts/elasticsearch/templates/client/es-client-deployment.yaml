@@ -1,6 +1,7 @@
 #####################################
 ## Elasticsearch Client Deployment ##
 #####################################
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -12,6 +13,7 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
     role: client
+    plane: {{ .Values.global.plane.mode }}
 spec:
   replicas: {{ .Values.client.replicas }}
   selector:
@@ -31,6 +33,9 @@ spec:
         version: {{ .Chart.Version }}
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/es-configmap.yaml") . | sha256sum }}
+{{- if .Values.global.podAnnotations }}
+{{ toYaml .Values.global.podAnnotations | indent 8 }}
+{{- end }}
 {{- if .Values.common.podAnnotations }}
 {{ toYaml .Values.common.podAnnotations | indent 8 }}
 {{- end }}
@@ -38,7 +43,7 @@ spec:
 {{ toYaml .Values.client.podAnnotations | indent 8 }}
 {{- end }}
     spec:
-      serviceAccountName: {{ template "elasticsearch.serviceAccount" . }}
+      serviceAccountName: {{ template "elasticsearch.serviceAccountName" . }}
 {{- if eq .Values.global.openshiftEnabled false }}
       securityContext: {{ toYaml .Values.podSecurityContext| nindent 8 }}
 {{- end }}
@@ -89,7 +94,6 @@ spec:
         readinessProbe: {{ tpl (toYaml .Values.sysctlInitContainer.readinessProbe) . | nindent 12 }}
         {{- end }}
   {{- end }}
-      serviceAccountName: {{ template "elasticsearch.serviceAccount" . }}
       containers:
       - name: es-client
         securityContext:
@@ -170,3 +174,4 @@ spec:
       - name: config
         configMap:
           name: {{ template "elasticsearch.fullname" . }}-config
+{{- end }}

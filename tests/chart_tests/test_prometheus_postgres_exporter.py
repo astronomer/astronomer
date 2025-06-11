@@ -1,7 +1,8 @@
 import pytest
 
-from tests import supported_k8s_versions, get_containers_by_name
-from tests.chart_tests.helm_template_generator import render_chart
+from tests import supported_k8s_versions
+from tests.utils import get_containers_by_name
+from tests.utils.chart import render_chart
 
 
 @pytest.mark.parametrize(
@@ -73,7 +74,7 @@ class TestPrometheusPostgresExporter:
         docs = render_chart(
             kube_version=kube_version,
             values=values,
-            show_only=["charts/prometheus-blackbox-exporter/templates/deployment.yaml"],
+            show_only=["charts/prometheus-postgres-exporter/templates/deployment.yaml"],
         )
         assert len(docs) == 1
         spec = docs[0]["spec"]["template"]["spec"]

@@ -1,7 +1,8 @@
 #####################
 ## Curator CronJob ##
 #####################
-{{- if .Values.curator.enabled }}
+{{- if and .Values.curator.enabled }}
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 apiVersion: {{ include "apiVersion.batch.cronjob" . }}
 kind: CronJob
 metadata:
@@ -12,14 +13,18 @@ metadata:
     chart: {{ template "elasticsearch.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
 spec:
   schedule: {{ .Values.curator.schedule }}
   jobTemplate:
     spec:
       template:
         metadata:
-{{- if or .Values.common.podAnnotations .Values.curator.podAnnotations }}
+{{- if or .Values.common.podAnnotations .Values.curator.podAnnotations .Values.global.podAnnotations  }}
           annotations:
+{{- end }}
+{{- if .Values.global.podAnnotations }}
+{{ toYaml .Values.global.podAnnotations | indent 12 }}
 {{- end }}
 {{- if .Values.common.podAnnotations }}
 {{ toYaml .Values.common.podAnnotations | indent 12 }}
@@ -36,7 +41,7 @@ spec:
             app: {{ template "elasticsearch.name" . }}-curator
             version: {{ .Chart.Version }}
         spec:
-          serviceAccountName: {{ template "elasticsearch.serviceAccount" . }}
+          serviceAccountName: {{ template "elasticsearch.serviceAccountName" . }}
           nodeSelector: {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 12 }}
           affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 12 }}
           tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 12 }}
@@ -52,9 +57,16 @@ spec:
             volumeMounts:
               - name: config-volume
                 mountPath: /etc/config
+            {{- if .Values.curator.readinessProbe }}
+            readinessProbe: {{ tpl (toYaml .Values.curator.readinessProbe) . | nindent 16 }}
+            {{- end }}
+            {{- if .Values.curator.livenessProbe }}
+            livenessProbe: {{ tpl (toYaml .Values.curator.livenessProbe) . | nindent 16 }}
+            {{- end }}
           volumes:
             - name: config-volume
               configMap:
                 name: {{ template "elasticsearch.fullname" . }}-curator-config
           restartPolicy: OnFailure
+{{- end }}
 {{- end }}

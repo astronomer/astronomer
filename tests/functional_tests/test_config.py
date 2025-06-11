@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """This file is for system testing the Astronomer Helm chart.
 
 Many of these tests use pytest fixtures that use testinfra to exec into
@@ -8,7 +7,7 @@ running pods so we can inspect the run-time environment.
 import json
 import time
 from os import getenv
-from subprocess import check_output, Popen, PIPE
+from subprocess import PIPE, Popen, check_output
 
 import pytest
 import testinfra
@@ -35,16 +34,16 @@ def test_houston_config(houston_api):
     """Make assertions about Houston's configuration."""
     data = houston_api.check_output("echo \"config = require('config'); console.log(JSON.stringify(config))\" | node -")
     houston_config = json.loads(data)
-    assert (
-        "url" not in houston_config["nats"].keys()
-    ), f"Did not expect to find 'url' configured for 'nats'. Found:\n\n{houston_config['nats']}"
-    assert len(
-        houston_config["nats"]["servers"]
-    ), f"Expected to find 'servers' configured for 'nats'. Found:\n\n{houston_config['nats']}"
+    assert "url" not in houston_config["nats"].keys(), (
+        f"Did not expect to find 'url' configured for 'nats'. Found:\n\n{houston_config['nats']}"
+    )
+    assert len(houston_config["nats"]["servers"]), (
+        f"Expected to find 'servers' configured for 'nats'. Found:\n\n{houston_config['nats']}"
+    )
     for server in houston_config["nats"]:
-        assert (
-            "localhost" not in server
-        ), f"Expected not to find 'localhost' in the 'servers' configuration. Found:\n\n{houston_config['nats']}"
+        assert "localhost" not in server, (
+            f"Expected not to find 'localhost' in the 'servers' configuration. Found:\n\n{houston_config['nats']}"
+        )
 
 
 def test_houston_check_db_info(houston_api):
@@ -55,16 +54,6 @@ def test_houston_check_db_info(houston_api):
 
     houston_db_info = houston_api.check_output("env | grep DATABASE_URL")
     assert f"{release_name}_houston" in houston_db_info
-
-
-def test_grafana_check_db_info(grafana):
-    """Make assertions about Houston's configuration."""
-    if not (release_name := getenv("RELEASE_NAME")):
-        print("No release_name env var, using release_name=astronomer")
-        release_name = "astronomer"
-
-    grafana_db_info = grafana.check_output("env | grep GF_DATABASE_URL")
-    assert f"{release_name}_grafana" in grafana_db_info
 
 
 def test_houston_can_reach_prometheus(houston_api):
@@ -105,9 +94,9 @@ def test_core_dns_metrics_are_collected(prometheus):
 
     data = prometheus.check_output("wget --timeout=5 -qO- http://localhost:9090/api/v1/query?query=coredns_dns_requests_total")
     parsed = json.loads(data)
-    assert (
-        len(parsed["data"]["result"]) > 0
-    ), f"Expected to find a metric coredns_dns_requests_total, but we got this response:\n\n{parsed}"
+    assert len(parsed["data"]["result"]) > 0, (
+        f"Expected to find a metric coredns_dns_requests_total, but we got this response:\n\n{parsed}"
+    )
 
 
 def test_houston_metrics_are_collected(prometheus):
@@ -193,7 +182,7 @@ def test_houston_backend_secret_present_after_helm_upgrade_and_container_restart
     # Run the command twice to ensure the most recent change is a no-operation change
     command = f"helm upgrade --reuse-values --no-hooks -n '{namespace}' '{release_name}' {helm_chart_path}"
     for i in range(2):
-        print(f"Iteration {i+1}/2: {command}\n")
+        print(f"Iteration {i + 1}/2: {command}\n")
         print(check_output(command, shell=True).decode("utf8"))
 
     result = houston_api.check_output("env | grep DATABASE_URL")
@@ -233,7 +222,7 @@ def test_cve_2021_44228_es_master(es_master):
     assert "-Dlog4j2.formatMsgNoLookups=true" in es_master.check_output("/usr/share/elasticsearch/jdk/bin/jps -lv")
 
 
-def test_kibana_index_pod(kibana_index_pod_client):
+def test_kibana_default_index_pod():
     """Check kibana index pod completed successfully"""
     command = ["kubectl -n astronomer logs -f  -lcomponent=kibana-default-index"]
     pod_output = Popen(command, shell=True, stdout=PIPE, stderr=PIPE)

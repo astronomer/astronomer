@@ -1,11 +1,11 @@
 import pytest
 import yaml
-from tests import (
+
+from tests import git_root_dir, supported_k8s_versions
+from tests.utils import (
     get_containers_by_name,
-    get_cronjob_containerspec_by_name,
-    supported_k8s_versions,
 )
-from tests.chart_tests.helm_template_generator import render_chart
+from tests.utils.chart import render_chart
 
 
 @pytest.mark.parametrize(
@@ -203,7 +203,7 @@ class TestElasticSearch:
             kube_version=kube_version,
             values={},
             show_only=[
-                "charts/elasticsearch/templates/nginx/nginx-es-ingress-networkpolicy.yaml",
+                "charts/elasticsearch/templates/nginx/nginx-es-networkpolicy.yaml",
             ],
         )
 
@@ -223,7 +223,7 @@ class TestElasticSearch:
             kube_version=kube_version,
             values={"global": {"loggingSidecar": {"enabled": True}}},
             show_only=[
-                "charts/elasticsearch/templates/nginx/nginx-es-ingress-networkpolicy.yaml",
+                "charts/elasticsearch/templates/nginx/nginx-es-networkpolicy.yaml",
             ],
         )
 
@@ -231,25 +231,28 @@ class TestElasticSearch:
         doc = docs[0]
         assert "NetworkPolicy" == doc["kind"]
         assert [
+            {"namespaceSelector": {}, "podSelector": {"matchLabels": {"tier": "airflow", "component": "webserver"}}},
             {
                 "namespaceSelector": {},
-                "podSelector": {"matchLabels": {"tier": "airflow", "component": "webserver"}},
-            },
-            {
-                "namespaceSelector": {},
-                "podSelector": {"matchLabels": {"component": "scheduler", "tier": "airflow"}},
-            },
-            {
-                "namespaceSelector": {},
-                "podSelector": {"matchLabels": {"component": "worker", "tier": "airflow"}},
-            },
-            {
-                "namespaceSelector": {},
-                "podSelector": {"matchLabels": {"component": "triggerer", "tier": "airflow"}},
-            },
-            {
-                "namespaceSelector": {},
-                "podSelector": {"matchLabels": {"component": "git-sync-relay", "tier": "airflow"}},
+                "podSelector": {
+                    "matchExpressions": [
+                        {
+                            "key": "component",
+                            "operator": "In",
+                            "values": [
+                                "dag-server",
+                                "metacleanup",
+                                "airflow-downgrade",
+                                "git-sync-relay",
+                                "dag-processor",
+                                "triggerer",
+                                "worker",
+                                "scheduler",
+                            ],
+                        }
+                    ],
+                    "matchLabels": {"tier": "airflow"},
+                },
             },
         ] == doc["spec"]["ingress"][0]["from"]
 
@@ -280,6 +283,22 @@ class TestElasticSearch:
                 "location ~ ^/ { deny all; } } }",
             ]
         )
+        assert "client_max_body_size 100M" in nginx_config
+
+    def test_elastic_nginx_config_custom_max_body_size(self, kube_version):
+        """Test that custom max body size is properly set."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"elasticsearch": {"nginx": {"maxBodySize": "123456789M"}}},
+            show_only=[
+                "charts/elasticsearch/templates/nginx/nginx-es-configmap.yaml",
+            ],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        nginx_config = " ".join(doc["data"]["nginx.conf"].split())
+        assert "client_max_body_size 123456789M" in nginx_config
 
     def test_elastic_nginx_config_pattern_defaults_and_index_prefix_overrides(self, kube_version):
         """Test External Elasticsearch Service Index Pattern Search with index prefix overrides."""
@@ -524,7 +543,7 @@ class TestElasticSearch:
             show_only=["charts/elasticsearch/templates/curator/es-curator-cronjob.yaml"],
         )
         assert len(docs) == 1
-        c_by_name = get_cronjob_containerspec_by_name(docs[0])
+        c_by_name = get_containers_by_name(docs[0])
         assert docs[0]["kind"] == "CronJob"
         assert docs[0]["metadata"]["name"] == "release-name-elasticsearch-curator"
         assert docs[0]["spec"]["schedule"] == "0 1 * * *"
@@ -565,7 +584,7 @@ class TestElasticSearch:
         assert len(spec["affinity"]) == 1
         assert len(spec["tolerations"]) > 0
         assert spec["tolerations"] == values["global"]["platformNodePool"]["tolerations"]
-        c_by_name = get_cronjob_containerspec_by_name(docs[0])
+        c_by_name = get_containers_by_name(docs[0])
         assert c_by_name["curator"]["command"] == ["/bin/sh", "-c"]
         assert c_by_name["curator"]["args"] == [
             "sleep 5; /usr/bin/curator --config /etc/config/config.yml /etc/config/action_file.yml; exit_code=$?; wget --timeout=5 -O- --post-data='not=used' http://127.0.0.1:15020/quitquitquit; exit $exit_code;"
@@ -592,7 +611,7 @@ class TestElasticSearch:
             show_only=["charts/elasticsearch/templates/curator/es-curator-cronjob.yaml"],
         )
         assert len(docs) == 1
-        c_by_name = get_cronjob_containerspec_by_name(docs[0])
+        c_by_name = get_containers_by_name(docs[0])
         assert docs[0]["kind"] == "CronJob"
         assert docs[0]["metadata"]["name"] == "release-name-elasticsearch-curator"
         assert docs[0]["spec"]["schedule"] == "0 45 * * *"
@@ -658,3 +677,45 @@ class TestElasticSearch:
         for doc in docs:
             assert "persistentVolumeClaimRetentionPolicy" in doc["spec"]
             assert test_persistentVolumeClaimRetentionPolicy == doc["spec"]["persistentVolumeClaimRetentionPolicy"]
+
+    def test_elasticsearch_statefulset_with_scc_disabled(self, kube_version):
+        """Test that helm renders scc template for astronomer
+        elasticsearch with SA disabled."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={},
+            show_only=[
+                "charts/elasticsearch/templates/es-scc.yaml",
+            ],
+        )
+        assert len(docs) == 0
+
+    def test_elasticsearch_statefulset_with_scc_enabled(self, kube_version):
+        """Test that helm renders scc template for astronomer
+        elasticsearch with SA disabled."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"sccEnabled": True}},
+            show_only=[
+                "charts/elasticsearch/templates/es-scc.yaml",
+            ],
+        )
+        assert len(docs) == 1
+        assert docs[0]["kind"] == "SecurityContextConstraints"
+        assert docs[0]["apiVersion"] == "security.openshift.io/v1"
+        assert docs[0]["metadata"]["name"] == "release-name-elasticsearch-anyuid"
+        assert docs[0]["users"] == ["system:serviceaccount:default:release-name-elasticsearch"]
+
+    es_component_templates = [
+        str(path.relative_to(git_root_dir)) for path in list(git_root_dir.glob("charts/elasticsearch/templates/*/*.yaml"))
+    ]
+
+    @pytest.mark.parametrize("doc", es_component_templates)
+    def test_elasticsearch_without_controlplane_flag_disabled(self, kube_version, doc):
+        """Test that helm renders no templates when controlplane is disabled."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"plane": {"mode": "data"}}},
+            show_only=[doc],
+        )
+        assert len(docs) == 0, f"Document {doc} was rendered when controlplane is disabled"

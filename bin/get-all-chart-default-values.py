@@ -12,13 +12,14 @@
 # ./get-all-chart-default-values.py ~/astronomer --mount astronomer.houston.config.deployments.helm=~/airflow-chart -f ./my-values.yaml
 # ./get-all-chart-default-values.py ~/astronomer --mount astronomer.houston.config.deployments.helm=~/airflow-chart -f ./my-values.yaml --as-path
 
-import yaml
-import tempfile
 import argparse
 import shutil
-import requests
-from deepmerge import always_merger
+import tempfile
 from pathlib import Path
+
+import requests
+import yaml
+from deepmerge import always_merger
 
 
 # Function to load YAML file
