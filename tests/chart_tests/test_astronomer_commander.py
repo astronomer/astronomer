@@ -22,8 +22,28 @@ class TestAstronomerCommander:
     def test_astronomer_commander_deployment_default(self, kube_version):
         """Test that helm renders a good deployment template for
         astronomer/commander."""
+        values = {
+            "astronomer": {
+                "airflowChartVersion": "11.5.10",
+                "commander": {
+                    "dataplaneChartVersion": "0.38.0",
+                    "cloudProvider": "aws",
+                    "commanderUrl": "example.com",
+                    "dataplaneId": "custom-dp-123",
+                    "region": "us-west-2",
+                    "houstonAuthorizationUrl": "https://houston.example.com/auth",
+                },
+                "images": {
+                "commander": {
+                    "tag": "0.38.5"
+                }
+            },
+            },
+            "global": {"baseDomain": "astronomer.example.com", "plane": {"mode": "data"}},
+        }
         docs = render_chart(
             kube_version=kube_version,
+            values=values,
             show_only=["charts/astronomer/templates/commander/commander-deployment.yaml"],
         )
 
@@ -41,15 +61,16 @@ class TestAstronomerCommander:
         assert env_vars["COMMANDER_UPGRADE_TIMEOUT"] == "600"
         assert "COMMANDER_MANAGE_NAMESPACE_RESOURCE" not in env_vars
 
-        assert "COMMANDER_DATAPLANE_CHART_VERSION" in env_vars
-        assert "COMMANDER_CLOUD_PROVIDER" in env_vars
-        assert "COMMANDER_VERSION" in env_vars
+        assert env_vars["COMMANDER_AIRFLOW_CHART_VERSION"] == "11.5.10"
+        assert env_vars["COMMANDER_DATAPLANE_CHART_VERSION"] == "0.38.0"
+        assert env_vars["COMMANDER_CLOUD_PROVIDER"] == "aws"
+        assert env_vars["COMMANDER_VERSION"] == "0.38.5"
         assert "COMMANDER_DATAPLANE_DATABASE_URL" in env_vars
-        assert "COMMANDER_DATAPLANE_ID" in env_vars
-        assert "COMMANDER_REGION" in env_vars
-        assert "COMMANDER_BASE_DOMAIN" in env_vars
-        assert "COMMANDER_DATAPLANE_MODE" in env_vars
-        assert "COMMANDER_HOUSTON_AUTHORIZATION_URL" in env_vars
+        assert env_vars["COMMANDER_DATAPLANE_ID"] == "custom-dp-123"
+        assert env_vars["COMMANDER_REGION"] == "us-west-2"
+        assert env_vars["COMMANDER_BASE_DOMAIN"] == "example.com"
+        assert env_vars["COMMANDER_DATAPLANE_MODE"] == "data"
+        assert env_vars["COMMANDER_HOUSTON_AUTHORIZATION_URL"] == "https://houston.example.com/auth"
 
     def test_astronomer_commander_deployment_upgrade_timeout(self, kube_version):
         """Test that helm renders a good deployment template for
