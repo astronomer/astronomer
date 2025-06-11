@@ -143,7 +143,7 @@ spec:
             - name: COMMANDER_BASE_DOMAIN
               value: {{ .Values.global.baseDomain | default "" | quote }}
             - name: COMMANDER_DATAPLANE_MODE
-              value: {{ .Values.global.dataplane.enabled | default false | quote }}
+              value: {{ .Values.global.plane.mode | quote }}
             - name: COMMANDER_HOUSTON_AUTHORIZATION_URL
               value: {{ .Values.commander.houstonAuthorizationUrl | default "" | quote }}
           volumeMounts:
