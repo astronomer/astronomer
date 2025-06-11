@@ -501,18 +501,18 @@ def kind_load_docker_images(cluster: str) -> None:
 
 
 @pytest.fixture(scope="function")
-def nginx(core_v1_client, cluster_name):
+def nginx(k8s_core_v1_client, cluster_name):
     """Fixture for accessing the nginx pod."""
 
-    pod = get_pod_by_label_selector(core_v1_client, "component=dp-ingress-controller")
+    pod = get_pod_by_label_selector(k8s_core_v1_client, "component=dp-ingress-controller")
     yield testinfra.get_host(f"kubectl://{pod}?container=nginx&namespace=astronomer", kubeconfig=str(kubeconfig_dir / cluster_name))
 
 
 @pytest.fixture(scope="function")
-def houston_api(core_v1_client, cluster_name):
+def houston_api(k8s_core_v1_client, cluster_name):
     """Fixture for accessing the houston-api pod."""
 
-    pod = get_pod_by_label_selector(core_v1_client, "component=houston")
+    pod = get_pod_by_label_selector(k8s_core_v1_client, "component=houston")
     yield testinfra.get_host(
         f"kubectl://{pod}?container=houston&namespace=astronomer", kubeconfig=str(kubeconfig_dir / cluster_name)
     )
@@ -547,9 +547,9 @@ def es_data(cluster_name):
 
 
 @pytest.fixture(scope="function")
-def es_client(core_v1_client, cluster_name):
+def es_client(k8s_core_v1_client, cluster_name):
     """Fixture for accessing the es-client pod."""
-    pod = get_pod_by_label_selector(core_v1_client, "component=elasticsearch,role=client")
+    pod = get_pod_by_label_selector(k8s_core_v1_client, "component=elasticsearch,role=client")
     yield testinfra.get_host(
         f"kubectl://{pod}?container=es-client&namespace=astronomer", kubeconfig=str(kubeconfig_dir / cluster_name)
     )
