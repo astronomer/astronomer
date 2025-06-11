@@ -71,7 +71,7 @@ spec:
                 secretKeyRef:
                   name: astronomer-bootstrap
                   key: connection
-            {{- include "houston_environment" . | indent 12 }}
+           {{- include "houston_environment" . | indent 12 }}
         - name: houston-bootstrapper
           image: {{ template "dbBootstrapper.image" . }}
           securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
