@@ -492,4 +492,3 @@ tlsEnabled: false
 {{ toYaml .Values.securityContext | indent 16 }}
 {{- end }}
 {{- end }}
-
