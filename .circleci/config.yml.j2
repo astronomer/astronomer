@@ -299,6 +299,12 @@ jobs:
     environment:
       KUBE_VERSION: v{{ version }}
     steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - add_ssh_keys:
+          fingerprints:
+            - "fb:bd:3c:2f:ef:af:e9:5b:fe:33:0e:e1:01:80:9f:cf"
       - run:
           name: "Test scenario: unified"
           command: make test-functional-unified
@@ -309,8 +315,20 @@ jobs:
     environment:
       KUBE_VERSION: v{{ version }}
     steps:
-      - helm-install:
-          astronomer-tags: "platform postgresql monitoring logging"
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - add_ssh_keys:
+          fingerprints:
+            - "fb:bd:3c:2f:ef:af:e9:5b:fe:33:0e:e1:01:80:9f:cf"
+      - run:
+          name: Install Astronomer chart
+          command: |
+            echo 'export PATH="/tmp/bin:/tmp/google-cloud-sdk/bin:$PATH"' >> "$HOME/.bashrc"
+            set -xe
+            HELM_CHART_PATH='/tmp/workspace/astronomer-*.tgz' bin/run-ci platform postgresql monitoring logging
+      - store_test_results:
+          path: test-results
 {%- endfor %}
 
   check-commander-airflow-version:
@@ -578,28 +596,6 @@ commands:
           root: .
           paths:
             - "./<< parameters.image_name >>.tar"
-
-  helm-install:
-    description: "Install Helm chart from artifact"
-    parameters:
-      astronomer-tags:
-        type: string
-        default: "platform"
-    steps:
-      - attach_workspace:
-          at: /tmp/workspace
-      - checkout
-      - add_ssh_keys:
-          fingerprints:
-            - "fb:bd:3c:2f:ef:af:e9:5b:fe:33:0e:e1:01:80:9f:cf"
-      - run:
-          name: Install Astronomer chart
-          command: |
-            echo 'export PATH="/tmp/bin:/tmp/google-cloud-sdk/bin:$PATH"' >> "$HOME/.bashrc"
-            set -xe
-            HELM_CHART_PATH='/tmp/workspace/astronomer-*.tgz' bin/run-ci << parameters.astronomer-tags >>
-      - store_test_results:
-          path: test-results
 
   publish-github-release:
     description: "Create a release on GitHub"

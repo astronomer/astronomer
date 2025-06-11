@@ -301,6 +301,12 @@ jobs:
     environment:
       KUBE_VERSION: v1.29.14
     steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - add_ssh_keys:
+          fingerprints:
+            - "fb:bd:3c:2f:ef:af:e9:5b:fe:33:0e:e1:01:80:9f:cf"
       - run:
           name: "Test scenario: unified"
           command: make test-functional-unified
@@ -311,8 +317,20 @@ jobs:
     environment:
       KUBE_VERSION: v1.29.14
     steps:
-      - helm-install:
-          astronomer-tags: "platform postgresql monitoring logging"
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - add_ssh_keys:
+          fingerprints:
+            - "fb:bd:3c:2f:ef:af:e9:5b:fe:33:0e:e1:01:80:9f:cf"
+      - run:
+          name: Install Astronomer chart
+          command: |
+            echo 'export PATH="/tmp/bin:/tmp/google-cloud-sdk/bin:$PATH"' >> "$HOME/.bashrc"
+            set -xe
+            HELM_CHART_PATH='/tmp/workspace/astronomer-*.tgz' bin/run-ci platform postgresql monitoring logging
+      - store_test_results:
+          path: test-results
   scenario-unified-1-30-13:
     machine:
       image: ubuntu-2204:2024.11.1
@@ -320,6 +338,12 @@ jobs:
     environment:
       KUBE_VERSION: v1.30.13
     steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - add_ssh_keys:
+          fingerprints:
+            - "fb:bd:3c:2f:ef:af:e9:5b:fe:33:0e:e1:01:80:9f:cf"
       - run:
           name: "Test scenario: unified"
           command: make test-functional-unified
@@ -330,8 +354,20 @@ jobs:
     environment:
       KUBE_VERSION: v1.30.13
     steps:
-      - helm-install:
-          astronomer-tags: "platform postgresql monitoring logging"
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - add_ssh_keys:
+          fingerprints:
+            - "fb:bd:3c:2f:ef:af:e9:5b:fe:33:0e:e1:01:80:9f:cf"
+      - run:
+          name: Install Astronomer chart
+          command: |
+            echo 'export PATH="/tmp/bin:/tmp/google-cloud-sdk/bin:$PATH"' >> "$HOME/.bashrc"
+            set -xe
+            HELM_CHART_PATH='/tmp/workspace/astronomer-*.tgz' bin/run-ci platform postgresql monitoring logging
+      - store_test_results:
+          path: test-results
   scenario-unified-1-31-9:
     machine:
       image: ubuntu-2204:2024.11.1
@@ -339,6 +375,12 @@ jobs:
     environment:
       KUBE_VERSION: v1.31.9
     steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - add_ssh_keys:
+          fingerprints:
+            - "fb:bd:3c:2f:ef:af:e9:5b:fe:33:0e:e1:01:80:9f:cf"
       - run:
           name: "Test scenario: unified"
           command: make test-functional-unified
@@ -349,8 +391,20 @@ jobs:
     environment:
       KUBE_VERSION: v1.31.9
     steps:
-      - helm-install:
-          astronomer-tags: "platform postgresql monitoring logging"
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - add_ssh_keys:
+          fingerprints:
+            - "fb:bd:3c:2f:ef:af:e9:5b:fe:33:0e:e1:01:80:9f:cf"
+      - run:
+          name: Install Astronomer chart
+          command: |
+            echo 'export PATH="/tmp/bin:/tmp/google-cloud-sdk/bin:$PATH"' >> "$HOME/.bashrc"
+            set -xe
+            HELM_CHART_PATH='/tmp/workspace/astronomer-*.tgz' bin/run-ci platform postgresql monitoring logging
+      - store_test_results:
+          path: test-results
   scenario-unified-1-32-5:
     machine:
       image: ubuntu-2204:2024.11.1
@@ -358,6 +412,12 @@ jobs:
     environment:
       KUBE_VERSION: v1.32.5
     steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - add_ssh_keys:
+          fingerprints:
+            - "fb:bd:3c:2f:ef:af:e9:5b:fe:33:0e:e1:01:80:9f:cf"
       - run:
           name: "Test scenario: unified"
           command: make test-functional-unified
@@ -368,8 +428,20 @@ jobs:
     environment:
       KUBE_VERSION: v1.32.5
     steps:
-      - helm-install:
-          astronomer-tags: "platform postgresql monitoring logging"
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - add_ssh_keys:
+          fingerprints:
+            - "fb:bd:3c:2f:ef:af:e9:5b:fe:33:0e:e1:01:80:9f:cf"
+      - run:
+          name: Install Astronomer chart
+          command: |
+            echo 'export PATH="/tmp/bin:/tmp/google-cloud-sdk/bin:$PATH"' >> "$HOME/.bashrc"
+            set -xe
+            HELM_CHART_PATH='/tmp/workspace/astronomer-*.tgz' bin/run-ci platform postgresql monitoring logging
+      - store_test_results:
+          path: test-results
 
   check-commander-airflow-version:
     docker:
@@ -712,28 +784,6 @@ commands:
           root: .
           paths:
             - "./<< parameters.image_name >>.tar"
-
-  helm-install:
-    description: "Install Helm chart from artifact"
-    parameters:
-      astronomer-tags:
-        type: string
-        default: "platform"
-    steps:
-      - attach_workspace:
-          at: /tmp/workspace
-      - checkout
-      - add_ssh_keys:
-          fingerprints:
-            - "fb:bd:3c:2f:ef:af:e9:5b:fe:33:0e:e1:01:80:9f:cf"
-      - run:
-          name: Install Astronomer chart
-          command: |
-            echo 'export PATH="/tmp/bin:/tmp/google-cloud-sdk/bin:$PATH"' >> "$HOME/.bashrc"
-            set -xe
-            HELM_CHART_PATH='/tmp/workspace/astronomer-*.tgz' bin/run-ci << parameters.astronomer-tags >>
-      - store_test_results:
-          path: test-results
 
   publish-github-release:
     description: "Create a release on GitHub"
