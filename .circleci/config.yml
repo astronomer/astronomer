@@ -294,6 +294,16 @@ jobs:
             bin/release-helm-chart -p /tmp/workspace/astronomer-*.tgz
       - publish-github-release
 
+  scenario-unified-1-29-14:
+    machine:
+      image: ubuntu-2204:2024.11.1
+      resource_class: xlarge
+    environment:
+      KUBE_VERSION: v1.29.14
+    steps:
+      - run:
+          name: "Test scenario: unified"
+          run: make test-scenario-unified
   platform-1-29-14:
     machine:
       image: ubuntu-2204:2024.11.1
@@ -303,6 +313,16 @@ jobs:
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging"
+  scenario-unified-1-30-13:
+    machine:
+      image: ubuntu-2204:2024.11.1
+      resource_class: xlarge
+    environment:
+      KUBE_VERSION: v1.30.13
+    steps:
+      - run:
+          name: "Test scenario: unified"
+          run: make test-scenario-unified
   platform-1-30-13:
     machine:
       image: ubuntu-2204:2024.11.1
@@ -312,6 +332,16 @@ jobs:
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging"
+  scenario-unified-1-31-9:
+    machine:
+      image: ubuntu-2204:2024.11.1
+      resource_class: xlarge
+    environment:
+      KUBE_VERSION: v1.31.9
+    steps:
+      - run:
+          name: "Test scenario: unified"
+          run: make test-scenario-unified
   platform-1-31-9:
     machine:
       image: ubuntu-2204:2024.11.1
@@ -321,6 +351,16 @@ jobs:
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging"
+  scenario-unified-1-32-5:
+    machine:
+      image: ubuntu-2204:2024.11.1
+      resource_class: xlarge
+    environment:
+      KUBE_VERSION: v1.32.5
+    steps:
+      - run:
+          name: "Test scenario: unified"
+          run: make test-scenario-unified
   platform-1-32-5:
     machine:
       image: ubuntu-2204:2024.11.1
@@ -458,6 +498,9 @@ workflows:
       - approve-test-all-platforms:
           type: approval
 
+      - scenario-unified-1-29-14:
+          requires:
+            - build-artifact
       - platform-1-29-14:
           requires:
             - build-artifact
@@ -471,6 +514,9 @@ workflows:
             - approve-test-all-platforms
             - build-artifact
 
+      - scenario-unified-1-32-5:
+          requires:
+            - build-artifact
       - platform-1-32-5:
           requires:
             - build-artifact
