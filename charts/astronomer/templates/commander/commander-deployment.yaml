@@ -126,29 +126,7 @@ spec:
             - name: COMMANDER_MANAGE_NAMESPACE_RESOURCE
               value: "false"
             {{- end }}
-            - name: COMMANDER_AIRFLOW_CHART_VERSION
-              value: {{ .Values.airflowChartVersion | default "" | quote }}
-            - name: COMMANDER_DATAPLANE_CHART_VERSION
-              value: {{ .Values.commander.dataplaneChartVersion | default "" | quote }}
-            - name: COMMANDER_CLOUD_PROVIDER
-              value: {{ .Values.commander.cloudProvider | default "" | quote }}
-            - name: COMMANDER_REGION
-              value: {{ .Values.commander.region | default "" | quote }}
-            - name: COMMANDER_VERSION
-              value: {{ .Values.images.commander.tag | default "" | quote }}
-            - name: COMMANDER_DATAPLANE_DATABASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: bootstrap-secret
-                  key: dataplane-database-url
-            - name: COMMANDER_DATAPLANE_ID
-              value: {{ .Values.commander.dataplaneId | default (randAlphaNum 8) | quote }}
-            - name: COMMANDER_BASE_DOMAIN
-              value: {{ .Values.global.baseDomain | default "" | quote }}
-            - name: COMMANDER_DATAPLANE_MODE
-              value: {{ if eq .Values.global.plane.mode "data" }}"true"{{ else }}"false"{{ end }}
-            - name: COMMANDER_HOUSTON_AUTHORIZATION_URL
-              value: {{ .Values.commander.houstonAuthorizationUrl | default "" | quote }}
+            {{- include "commander_metadataEnv" . | nindent 12 }}
           volumeMounts:
 {{- if .Values.commander.volumeMounts }}
 {{- tpl (toYaml .Values.commander.volumeMounts) $ | nindent 12 }}
