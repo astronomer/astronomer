@@ -504,7 +504,7 @@ def kind_load_docker_images(cluster: str) -> None:
 def nginx(k8s_core_v1_client, cluster_name):
     """Fixture for accessing the nginx pod."""
     kubeconfig_file = str(kubeconfig_dir / cluster_name)
-    pod = get_pod_by_label_selector(k8s_core_v1_client, "component=dp-ingress-controller", kubeconfig_file)
+    pod = get_pod_by_label_selector("astronomer", "component=dp-ingress-controller", kubeconfig_file)
     yield testinfra.get_host(f"kubectl://{pod}?container=nginx&namespace=astronomer", kubeconfig=kubeconfig_file)
 
 
@@ -512,7 +512,7 @@ def nginx(k8s_core_v1_client, cluster_name):
 def houston_api(k8s_core_v1_client, cluster_name):
     """Fixture for accessing the houston-api pod."""
     kubeconfig_file = str(kubeconfig_dir / cluster_name)
-    pod = get_pod_by_label_selector(k8s_core_v1_client, "component=houston", kubeconfig_file)
+    pod = get_pod_by_label_selector("astronomer", "component=houston", kubeconfig_file)
     yield testinfra.get_host(f"kubectl://{pod}?container=houston&namespace=astronomer", kubeconfig=kubeconfig_file)
 
 
@@ -544,5 +544,5 @@ def es_data(cluster_name):
 def es_client(k8s_core_v1_client, cluster_name):
     """Fixture for accessing the es-client pod."""
     kubeconfig_file = str(kubeconfig_dir / cluster_name)
-    pod = get_pod_by_label_selector(k8s_core_v1_client, "component=elasticsearch,role=client", kubeconfig_file)
+    pod = get_pod_by_label_selector("astronomer", "component=elasticsearch,role=client", kubeconfig_file)
     yield testinfra.get_host(f"kubectl://{pod}?container=es-client&namespace=astronomer", kubeconfig=kubeconfig_file)
