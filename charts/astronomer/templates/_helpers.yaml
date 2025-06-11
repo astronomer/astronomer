@@ -269,7 +269,7 @@ s3:
   value: {{ .Values.houston.updateRuntimeCheck.url }}
 {{- end }}
 - name: COMMANDER_WAIT_ENABLED
-  value: "false"
+  value: {{ if eq .Values.global.plane.mode "unified" }}"true"{{ else }}"false"{{ end }}
 
 {{- end }}
 
