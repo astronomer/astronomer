@@ -33,11 +33,7 @@ class TestAstronomerCommander:
                     "region": "us-west-2",
                     "houstonAuthorizationUrl": "https://houston.example.com/auth",
                 },
-                "images": {
-                "commander": {
-                    "tag": "0.38.5"
-                }
-            },
+                "images": {"commander": {"tag": "0.38.5"}},
             },
             "global": {"baseDomain": "astronomer.example.com", "plane": {"mode": "data"}},
         }
