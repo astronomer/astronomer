@@ -43,16 +43,6 @@ spec:
       hosts:
         - commander.{{ .Values.global.baseDomain }}
   {{- end }}
-  {{ if semverCompare "< 1.19-0" .Capabilities.KubeVersion.Version -}}
-  rules:
-  - host: commander.{{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}
-    http:
-      paths:
-        - path: /
-          backend:
-            serviceName: {{ .Release.Name }}-commander
-            servicePort: commander-grpc
-  {{ else -}}
   rules:
   - host: commander.{{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}
     http:
@@ -64,5 +54,4 @@ spec:
               name: {{ .Release.Name }}-commander
               port:
                 name: commander-grpc
-  {{- end -}}
 {{- end }}
