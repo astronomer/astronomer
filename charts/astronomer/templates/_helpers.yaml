@@ -264,13 +264,12 @@ s3:
   value: {{ template "houston.nats.servers" . }}
 - name: NATS__CLUSTER_ID
   value: {{ .Release.Name }}-stan
+- name: COMMANDER_WAIT_ENABLED
+  value: {{ if eq .Values.global.plane.mode "unified" }}"true"{{ else }}"false"{{ end }}
 {{- if .Values.houston.updateRuntimeCheck.enabled }}
 - name: HOUSTON_SCRIPT_UPDATE_RUNTIME_SERVICE_URL
   value: {{ .Values.houston.updateRuntimeCheck.url }}
 {{- end }}
-- name: COMMANDER_WAIT_ENABLED
-  value: {{ if eq .Values.global.plane.mode "unified" }}"true"{{ else }}"false"{{ end }}
-
 {{- end }}
 
 {{- define "houston_volume_mounts" }}
