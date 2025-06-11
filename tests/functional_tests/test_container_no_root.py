@@ -8,7 +8,7 @@ container_ignore_list = [
     "kube-state",
     "houston",
     "fluentd",
- ]
+]
 
 container_list = get_pod_running_containers()
 
