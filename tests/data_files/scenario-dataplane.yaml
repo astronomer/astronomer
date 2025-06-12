@@ -3,19 +3,9 @@
 global:
   plane:
     mode: data
-
-  # This usage is deprecated, use `global.plane.mode` instead.
-  dataplane:
-    enabled: true
-
   postgresqlEnabled: true
 
 tags:
   logging: true
   monitoring: true
   platform: true
-
-astronomer:
-  houston:
-    upgradeDeployments:
-      enabled: true

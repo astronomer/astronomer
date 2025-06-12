@@ -3,11 +3,6 @@
 global:
   plane:
     mode: control
-
-  # This usage is deprecated, use `global.plane.mode` instead.
-  controlplane:
-    enabled: true
-
   postgresqlEnabled: true
 
 tags:
