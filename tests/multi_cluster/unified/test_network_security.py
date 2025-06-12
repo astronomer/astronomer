@@ -22,6 +22,8 @@ from time import sleep, strftime, time
 import testinfra
 from kubernetes import client, config
 
+from tests.utils.k8s import kubeconfig_unified
+
 # Configure logging based on DEBUG environment variable
 if getenv("DEBUG"):
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
@@ -157,7 +159,7 @@ class KubernetesNetworkChecker:
         Loads the kubeconfig and sets up the Kubernetes API client for
         discovering cluster resources.
         """
-        config.load_kube_config()
+        config.load_kube_config(config_file=str(kubeconfig_unified))
         self.targets = []
         self.v1 = client.CoreV1Api()
 
@@ -251,7 +253,8 @@ class KubernetesNetworkChecker:
 
             # Create testinfra fixture for executing commands in the pod
             test_fixture = testinfra.get_host(
-                f"kubectl://{pod.metadata.name}?" + f"container={v1container.name}&namespace={namespace}"
+                f"kubectl://{pod.metadata.name}?" + f"container={v1container.name}&namespace={namespace}",
+                kubeconfig=str(kubeconfig_unified),
             )
 
             # Install nmap in the scanning pod
@@ -366,7 +369,7 @@ class KubernetesNetworkChecker:
         return result
 
 
-def test_network(k8s_core_v1_client, unified):
+def test_network_security(k8s_core_v1_client, unified):
     """
     Main test function that performs network security validation on a Kubernetes cluster.
 
