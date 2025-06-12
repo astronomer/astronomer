@@ -19,19 +19,12 @@ venv-functional: .venv-functional  ## Setup venv required for unit testing the A
 	venv/bin/pip install -r requirements/functional-tests.txt
 	touch $@
 
-# unittest-requirements is deprecated
-.PHONY: unittest-requirements
-unittest-requirements: .venv-unit
 .PHONY: venv-unit
 venv-unit: .venv-unit  ## Setup venv required for unit testing the Astronomer helm chart
 .venv-unit:
 	[ -d venv ] || { uv venv venv -p 3.11 --seed || virtualenv venv -p python3 ; }
 	venv/bin/pip install -r requirements/chart-tests.txt
 	touch $@
-
-.PHONY: test-functional
-test-functional: venv-functional ## Run functional tests on the Astronomer helm chart
-	venv/bin/python -m pytest -v --junitxml=test-results/junit.xml tests/functional_tests
 
 .PHONY: test-functional-control
 test-functional-control: venv-functional ## Run functional tests on the control installation scenario
