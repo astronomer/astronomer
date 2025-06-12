@@ -269,26 +269,34 @@ class KubernetesNetworkChecker:
             logging.info(f"Cleaning up network-scanner pod from namespace {namespace}")
             self.v1.delete_namespaced_pod(v1pod.metadata.name, namespace)
 
-    def scan_all_targets(self):
+    def _collect_scan_parameters(self) -> tuple[list[int], set[str]]:
         """
-        Perform network scans on all discovered targets using nmap.
-
-        Creates a temporary scanning pod and uses nmap to scan all target IP addresses
-        for open ports. Parses the nmap XML output to identify which ports are open
-        on each target.
+        Extract unique ports and IP addresses from all scan targets.
 
         Returns:
-            ScanResult: Object containing all findings from the network scan
+            tuple: (all_ports, all_ips) where all_ports is a list of unique port numbers
+                  and all_ips is a set of unique IP addresses to scan
         """
-        # Collect all unique ports and IP addresses from targets
         all_ports = set()
         for target in self.targets:
             for port in target.ports:
                 all_ports.add(port)
-        all_ports = list(all_ports)
+        all_ports_list = list(all_ports)
         all_ips = {target.ip_address for target in self.targets}
 
-        # Note: nmap scans all ports on all hosts since it doesn't support per-target port lists
+        return all_ports_list, all_ips
+
+    def _execute_nmap_scan(self, all_ports: list[int], all_ips: set[str]) -> str:
+        """
+        Execute nmap scan against target IPs and ports using scanning pod.
+
+        Args:
+            all_ports: List of port numbers to scan
+            all_ips: Set of IP addresses to scan
+
+        Returns:
+            str: Raw XML output from nmap scan
+        """
         with self._scanning_pod() as scanner:
             scanner.check_output("whoami")  # Verify scanner pod is working
 
@@ -311,42 +319,65 @@ class KubernetesNetworkChecker:
             logging.info(f"Command took {duration} seconds")
 
             # Retrieve scan results
-            result = scanner.check_output("cat /scan-results.xml")
+            return scanner.check_output("cat /scan-results.xml")
 
-        # Parse nmap XML output to extract open ports
-        root = xml_parser.fromstring(result)
+    def _parse_nmap_results(self, xml_result: str) -> dict[str, list[int]]:
+        """
+        Parse nmap XML output to extract open ports by IP address.
+
+        Args:
+            xml_result: Raw XML output from nmap scan
+
+        Returns:
+            dict: Mapping of IP addresses to lists of open port numbers
+        """
+        root = xml_parser.fromstring(xml_result)
         open_ports = {}
 
         for child in root:
-            if child.tag == "host":
-                ip_address = None
+            if child.tag != "host":
+                continue
 
-                for grandchild in child:
-                    # Extract IP address from the host entry
-                    if grandchild.tag == "address":
-                        ip_address = grandchild.attrib["addr"]
+            ip_address = None
 
-                    # Process port scan results
-                    if grandchild.tag == "ports":
-                        for port in grandchild:
-                            is_open = False
+            for grandchild in child:
+                # Extract IP address from the host entry
+                if grandchild.tag == "address":
+                    ip_address = grandchild.attrib["addr"]
 
-                            # Check if port is in 'open' state
-                            for state in port:
-                                if state.tag != "state":
-                                    continue
-                                is_open = state.attrib["state"] == "open"
+                # Process port scan results
+                elif grandchild.tag == "ports":
+                    for port in grandchild:
+                        is_open = False
 
-                            # Record open ports by IP address
-                            if is_open:
-                                if ip_address not in open_ports:
-                                    open_ports[ip_address] = []
-                                open_ports[ip_address].append(int(port.attrib["portid"]))
+                        # Check if port is in 'open' state
+                        for state in port:
+                            if state.tag != "state":
+                                continue
+                            is_open = state.attrib["state"] == "open"
 
-        # Create scan findings from open ports
+                        # Record open ports by IP address
+                        if is_open and ip_address:
+                            if ip_address not in open_ports:
+                                open_ports[ip_address] = []
+                            open_ports[ip_address].append(int(port.attrib["portid"]))
+
+        return open_ports
+
+    def _create_scan_findings(self, open_ports: dict[str, list[int]]) -> ScanResult:
+        """
+        Convert open ports data into ScanFinding objects.
+
+        Args:
+            open_ports: Mapping of IP addresses to lists of open port numbers
+
+        Returns:
+            ScanResult: Object containing all findings from the network scan
+        """
         result = ScanResult()
-        for address, value in open_ports.items():
-            if not open_ports[address]:
+
+        for address, ports in open_ports.items():
+            if not ports:
                 continue
 
             scan_finding = ScanFinding()
@@ -360,13 +391,36 @@ class KubernetesNetworkChecker:
                     break
 
             # Add all open ports to the finding
-            for port in value:
+            for port in ports:
                 scan_finding.add_port(port)
                 print(f"  {port}")
 
             result.add_finding(scan_finding)
 
         return result
+
+    def scan_all_targets(self) -> ScanResult:
+        """
+        Perform network scans on all discovered targets using nmap.
+
+        Creates a temporary scanning pod and uses nmap to scan all target IP addresses
+        for open ports. Parses the nmap XML output to identify which ports are open
+        on each target.
+
+        Returns:
+            ScanResult: Object containing all findings from the network scan
+        """
+        # Collect all unique ports and IP addresses from targets
+        all_ports, all_ips = self._collect_scan_parameters()
+
+        # Note: nmap scans all ports on all hosts since it doesn't support per-target port lists
+        xml_result = self._execute_nmap_scan(all_ports, all_ips)
+
+        # Parse nmap XML output to extract open ports
+        open_ports = self._parse_nmap_results(xml_result)
+
+        # Create scan findings from open ports
+        return self._create_scan_findings(open_ports)
 
 
 def test_network_security(k8s_core_v1_client, unified):
