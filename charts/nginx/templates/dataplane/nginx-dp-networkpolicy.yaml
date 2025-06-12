@@ -1,7 +1,8 @@
 ###############################################
 ## Data Plane Nginx controller NetworkPolicy ##
 ###############################################
-{{- if and .Values.global.networkPolicy.enabled .Values.global.dataplane.enabled }}
+{{- if and .Values.global.networkPolicy.enabled }}
+{{- if eq .Values.global.plane.mode "data" }}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -12,7 +13,7 @@ metadata:
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
-    plane: dataplane
+    plane: {{ .Values.global.plane.mode }}
 spec:
   podSelector:
     matchLabels:
@@ -28,11 +29,11 @@ spec:
   - from:
     - podSelector:
         matchLabels:
-          plane: controlplane
+          plane: {{ .Values.global.plane.mode }}
           component: ingress-controller
     - podSelector:
         matchLabels:
-          plane: controlplane
+          plane: {{ .Values.global.plane.mode }}
           component: houston
     ports:
     - protocol: TCP
@@ -57,4 +58,5 @@ spec:
           plane: data
     ports:
     - protocol: TCP  # Allowing all ports for internal communication
+{{- end }}
 {{- end }}

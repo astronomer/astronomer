@@ -1,7 +1,7 @@
 #################################
 ## NGINX Data Plane Deployment ##
 #################################
-{{- if .Values.global.dataplane.enabled }}
+{{- if eq .Values.global.plane.mode "data" }}
 kind: Deployment
 apiVersion: apps/v1
 metadata:

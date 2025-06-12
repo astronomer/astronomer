@@ -1,7 +1,7 @@
 ######################################
 ## Elasticsearch Master StatefulSet ##
 ######################################
-{{- if .Values.global.controlplane.enabled }}
+{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 kind: StatefulSet
 apiVersion: apps/v1
 metadata:
@@ -13,7 +13,7 @@ metadata:
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"
     role: master
-    plane: controlplane
+    plane: {{ .Values.global.plane.mode }}
 spec:
   {{- if and .Values.common.persistence.enabled .Values.common.persistence.persistentVolumeClaimRetentionPolicy }}
   persistentVolumeClaimRetentionPolicy: {{- toYaml .Values.common.persistence.persistentVolumeClaimRetentionPolicy | nindent 4 }}
