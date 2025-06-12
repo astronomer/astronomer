@@ -1,7 +1,7 @@
 ############################
 ## Commander GRPC Ingress ##
 ############################
-{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
+{{- if eq .Values.global.plane.mode "data" }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:
@@ -40,7 +40,7 @@ spec:
     - secretName: {{ .Values.global.tlsSecret }}
   {{- end }}
       hosts:
-        - commander.{{ .Values.global.baseDomain }}
+        - commander.{{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}
   {{- end }}
   rules:
   - host: commander.{{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}
