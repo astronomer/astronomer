@@ -419,7 +419,6 @@ commander:
   extraVolumes: []
 
   # Values for Dataplane Metadata
-  dataplaneChartVersion: ""
   cloudProvider: ""
   commanderUrl: ""
   dataplaneId: ""
