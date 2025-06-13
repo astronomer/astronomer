@@ -96,8 +96,8 @@ spec:
             - name: config
               mountPath: /etc/docker/registry
             {{- if not .Values.registry.enableInsecureAuth }}
-            - name: certificate
-              mountPath: /etc/docker/ssl
+            - name: jwks-certificate
+              mountPath: /etc/docker/jwks
             {{- end }}
             - name: data
               mountPath: /var/lib/registry
