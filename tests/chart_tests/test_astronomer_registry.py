@@ -178,3 +178,39 @@ class TestRegistryStatefulset:
         assert docs[0]["kind"] == "StatefulSet"
         assert len(docs[0]["spec"]["template"]["spec"]["volumes"]) == 1
         assert docs[0]["spec"]["template"]["spec"]["containers"][0]["volumeMounts"][1] != not_expected_volume_mount
+
+    def test_astronomer_registry_statefulset_enabled_for_data_and_unified_mode(self, kube_version):
+        """Test that helm renders registry statefulset when global.plane.mode is 'data' or 'unified'."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"plane": {"mode": "data"}}},
+            show_only=["charts/astronomer/templates/registry/registry-statefulset.yaml"],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["kind"] == "StatefulSet"
+        assert doc["apiVersion"] == "apps/v1"
+        assert doc["metadata"]["name"] == "release-name-registry"
+
+        docs = render_chart(
+        kube_version=kube_version,
+        values={"global": {"plane": {"mode": "unified"}}},
+        show_only=["charts/astronomer/templates/registry/registry-statefulset.yaml"],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["kind"] == "StatefulSet"
+        assert doc["apiVersion"] == "apps/v1"
+        assert doc["metadata"]["name"] == "release-name-registry"
+
+    def test_astronomer_registry_statefulset_disabled_for_control_mode(self, kube_version):
+        """Test that helm does not render registry statefulset when global.plane.mode is 'control'."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"plane": {"mode": "control"}}},
+            show_only=["charts/astronomer/templates/registry/registry-statefulset.yaml"],
+        )
+
+        assert len(docs) == 0
