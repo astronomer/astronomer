@@ -19,19 +19,12 @@ venv-functional: .venv-functional  ## Setup venv required for unit testing the A
 	venv/bin/pip install -r requirements/functional-tests.txt
 	touch $@
 
-# unittest-requirements is deprecated
-.PHONY: unittest-requirements
-unittest-requirements: .venv-unit
 .PHONY: venv-unit
 venv-unit: .venv-unit  ## Setup venv required for unit testing the Astronomer helm chart
 .venv-unit:
 	[ -d venv ] || { uv venv venv -p 3.11 --seed || virtualenv venv -p python3 ; }
 	venv/bin/pip install -r requirements/chart-tests.txt
 	touch $@
-
-.PHONY: test-functional
-test-functional: venv-functional ## Run functional tests on the Astronomer helm chart
-	venv/bin/python -m pytest -v --junitxml=test-results/junit.xml tests/functional_tests
 
 .PHONY: test-functional-control
 test-functional-control: venv-functional ## Run functional tests on the control installation scenario
@@ -95,8 +88,11 @@ show-docker-images-with-private-registry: ## Show all docker images and versions
 	@bin/show-docker-images.py --private-registry --with-houston
 
 .PHONY: show-downloaded-tool-versions
-show-downloaded-tool-versions: ## Show the versions of tools that were downloaded by multi-cluster test setup
+show-test-helper-tool-versions: ## Show the versions of helper tools that were downloaded during testing
 	-~/.local/share/astronomer-software/bin/helm version --short
 	-~/.local/share/astronomer-software/bin/kind version
 	-~/.local/share/astronomer-software/bin/kubectl version --client
 	-~/.local/share/astronomer-software/bin/mkcert --version
+
+show-test-helper-files: ## Show all the test helper files downloaded and created during testing
+	@find ~/.local/share/astronomer-software/ -type f | sort

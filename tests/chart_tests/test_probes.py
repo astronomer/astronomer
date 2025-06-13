@@ -76,6 +76,7 @@ class TestDefaultProbes:
             "timeoutSeconds": 5,
         },
         "cp-nginx_nginx": {"httpGet": {"path": "/healthz", "port": 10254}, "initialDelaySeconds": 30, "timeoutSeconds": 5},
+        "dp-nginx_nginx": {"httpGet": {"path": "/healthz", "port": 10254}, "initialDelaySeconds": 30, "timeoutSeconds": 5},
         "elasticsearch-client_es-client": {
             "httpGet": {"path": "/_cluster/health?local=true", "port": 9200},
             "initialDelaySeconds": 90,

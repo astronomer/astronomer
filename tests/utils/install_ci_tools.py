@@ -13,13 +13,12 @@ from pathlib import Path
 
 import requests
 
-from tests import kubectl_version
+from tests import chart_metadata, kubectl_version
 from tests.utils.os_arch import detect_os_arch
 
-# TODO: move these versions to metadata.yaml
-HELM_VERSION = "3.18.2"  # https://github.com/helm/helm/releases
-KIND_VERSION = "0.29.0"  # https://github.com/kubernetes-sigs/kind/releases
-MKCERT_VERSION = "1.4.4"  # https://github.com/FiloSottile/mkcert/tags
+HELM_VERSION = chart_metadata["tools"]["helm"]["version"]
+KIND_VERSION = chart_metadata["tools"]["kind"]["version"]
+MKCERT_VERSION = chart_metadata["tools"]["mkcert"]["version"]
 
 OS, ARCH = detect_os_arch()
 
@@ -85,7 +84,7 @@ def install_kubectl():
     dest = BIN_DIR / "kubectl"
     if dest.exists():
         # Check the installed version
-        installed_version = subprocess.run(["kubectl", "version", "--client", "--short"], capture_output=True, text=True)
+        installed_version = subprocess.run(["kubectl", "version", "--client"], capture_output=True, text=True)
         if kubectl_version in installed_version.stdout:
             print("kubectl already installed.")
             return

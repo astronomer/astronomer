@@ -2,11 +2,11 @@ import os
 import shlex
 import subprocess
 import time
-from collections.abc import Iterable
 from pathlib import Path, PosixPath
 
 import pytest
 import testinfra
+import yaml
 from kubernetes import client, config
 from kubernetes.client.exceptions import ApiException
 
@@ -19,6 +19,7 @@ from tests.utils.cert import (
     create_astronomer_tls_certificates,
 )
 from tests.utils.install_ci_tools import install_all_tools
+from tests.utils.k8s import get_pod_by_label_selector
 
 DEBUG = os.getenv("DEBUG", "").lower() in ["yes", "true", "1"]
 
@@ -99,6 +100,7 @@ def create_kind_cluster(cluster_name: str) -> PosixPath:
     :return: Full path to the kubeconfig file.
     :raises RuntimeError: If the cluster creation fails.
     """
+    # TODO: make kind load any containers that are found in the local docker cache (network optimization)
     kubeconfig_file = kubeconfig_dir / f"{cluster_name}"
     kubeconfig_file.parent.mkdir(parents=True, exist_ok=True)
     kubeconfig_file.unlink(missing_ok=True)
@@ -181,60 +183,12 @@ def delete_kind_cluster(cluster_name: str, kubeconfig_file: PosixPath) -> None:
         kubeconfig_file.unlink(missing_ok=True)
 
 
-@pytest.fixture(scope="session")
-def control(request) -> Iterable[str]:
-    """
-    Fixture for the 'control' cluster.
-
-    :param request: Pytest request object for accessing test metadata.
-    :yield: Path to the kubeconfig file for the 'control' cluster.
-    """
-    kubeconfig_file = create_kind_cluster("control")
-    create_namespace(kubeconfig_file)
-    setup_common_cluster_configs(kubeconfig_file)
-    helm_install(kubeconfig=kubeconfig_file)
-    yield kubeconfig_file
-    delete_kind_cluster("control", kubeconfig_file)
-
-
-@pytest.fixture(scope="session")
-def data(request) -> Iterable[str]:
-    """
-    Fixture for the 'data' cluster.
-
-    :param request: Pytest request object for accessing test metadata.
-    :yield: Path to the kubeconfig file for the 'data' cluster.
-    """
-    kubeconfig_file = create_kind_cluster("data")
-    create_namespace(kubeconfig_file)
-    setup_common_cluster_configs(kubeconfig_file)
-    helm_install(kubeconfig=kubeconfig_file)
-    yield kubeconfig_file
-    delete_kind_cluster("data", kubeconfig_file)
-
-
-@pytest.fixture(scope="session")
-def unified(request) -> Iterable[str]:
-    """
-    Fixture for the 'unified' cluster.
-
-    :param request: Pytest request object for accessing test metadata.
-    :yield: Path to the kubeconfig file for the 'unified' cluster.
-    """
-    kubeconfig_file = create_kind_cluster("unified")
-    create_namespace(kubeconfig_file)
-    setup_common_cluster_configs(kubeconfig_file)
-    helm_install(kubeconfig=kubeconfig_file)
-    yield kubeconfig_file
-    delete_kind_cluster("unified", kubeconfig_file)
-
-
-def helm_install(kubeconfig: str, values: str = f"{git_root_dir}/configs/local-dev.yaml") -> None:
+def helm_install(kubeconfig: str, values: str | list[str] = f"{git_root_dir}/configs/local-dev.yaml") -> None:
     """
     Install a Helm chart using the provided kubeconfig and values file.
 
     :param kubeconfig: Path to the kubeconfig file.
-    :param values: Path to the Helm values file.
+    :param values: Path to the Helm values file or a list of values files.
     """
     helm_install_command = [
         helm_exe,
@@ -243,10 +197,19 @@ def helm_install(kubeconfig: str, values: str = f"{git_root_dir}/configs/local-d
         "--create-namespace",
         "--namespace=astronomer",
         str(git_root_dir),
-        f"--values={values}",
         f"--kubeconfig={kubeconfig}",
         "--timeout=15m0s",
     ]
+
+    if isinstance(values, str):
+        values = [values]
+
+    for value in values:
+        if isinstance(value, str) and Path(value).exists():
+            helm_install_command.append(f"--values={value}")
+        else:
+            raise ValueError(f"Invalid values file: {value}")
+
     if DEBUG:
         helm_install_command.append("--debug")
 
@@ -254,18 +217,29 @@ def helm_install(kubeconfig: str, values: str = f"{git_root_dir}/configs/local-d
 
 
 @pytest.fixture(scope="function")
-def k8s_core_v1_client(request, clusters) -> client.CoreV1Api:
+def k8s_core_v1_client(cluster_name) -> client.CoreV1Api:
     """
-    Provide a Kubernetes client for the resolved target cluster.
+    Provide a Kubernetes core/v1 client for the resolved target cluster.
 
     :param request: Pytest request object for accessing test metadata.
-    :param clusters: Dictionary of cluster names and their kubeconfig file paths.
     :return: A Kubernetes CoreV1Api client for the target cluster.
     """
-    cluster_name = request.param
-    kubeconfig_file = clusters[cluster_name]
+    kubeconfig_file = str(kubeconfig_dir / f"{cluster_name}")
     config.load_kube_config(config_file=kubeconfig_file)
     return client.CoreV1Api()
+
+
+@pytest.fixture(scope="function")
+def k8s_apps_v1_client(cluster_name) -> client.AppsV1Api:
+    """
+    Provide a Kubernetes apps/v1 client for the resolved target cluster.
+
+    :param request: Pytest request object for accessing test metadata.
+    :return: A Kubernetes AppsV1Api client for the target cluster.
+    """
+    kubeconfig_file = str(kubeconfig_dir / f"{cluster_name}")
+    config.load_kube_config(config_file=kubeconfig_file)
+    return client.AppsV1Api()
 
 
 def create_namespace(kubeconfig_file, namespace="astronomer") -> None:
@@ -287,7 +261,7 @@ def create_namespace(kubeconfig_file, namespace="astronomer") -> None:
         return
     if "AlreadyExists" in result.stderr:
         return
-    raise RuntimeError(f"Failed to create namespace {namespace}: {result.stderr}")
+    raise RuntimeError(f"Failed to create namespace astronomer: {result.stderr}")
 
 
 def create_astronomer_tls_secret(kubeconfig_file) -> None:
@@ -298,11 +272,10 @@ def create_astronomer_tls_secret(kubeconfig_file) -> None:
     create_astronomer_tls_certificates()
 
     secret_name = "astronomer-tls"
-    namespace = "astronomer"
     cmd = [
         "kubectl",
         f"--kubeconfig={kubeconfig_file}",
-        f"--namespace={namespace}",
+        "--namespace=astronomer",
         "create",
         "secret",
         "tls",
@@ -314,7 +287,7 @@ def create_astronomer_tls_secret(kubeconfig_file) -> None:
         cmd.append("-v=9")
     result = subprocess.run(cmd, capture_output=True, text=True)
     if result.returncode != 0:
-        raise RuntimeError(f"Failed to create secret {secret_name} in namespace {namespace}: {result.stderr}")
+        raise RuntimeError(f"Failed to create secret {secret_name} in namespace astronomer: {result.stderr}")
 
 
 def create_private_ca_secret(kubeconfig_file) -> None:
@@ -324,11 +297,10 @@ def create_private_ca_secret(kubeconfig_file) -> None:
 
     create_astronomer_private_ca_certificates()
 
-    namespace = "astronomer"
     cmd = [
         "kubectl",
         f"--kubeconfig={kubeconfig_file}",
-        f"--namespace={namespace}",
+        "--namespace=astronomer",
         "create",
         "secret",
         "generic",
@@ -339,7 +311,7 @@ def create_private_ca_secret(kubeconfig_file) -> None:
         cmd.append("-v=9")
     result = subprocess.run(cmd, capture_output=True, text=True)
     if result.returncode != 0:
-        raise RuntimeError(f"Failed to create secret private-ca in namespace {namespace}: {result.stderr}")
+        raise RuntimeError(f"Failed to create secret private-ca in namespace astronomer: {result.stderr}")
 
 
 def check_pod_health(v1: client.CoreV1Api, namespace: str = "astronomer") -> tuple[bool, str]:
@@ -440,7 +412,137 @@ def check_deployment_health(apps_v1: client.AppsV1Api, namespace: str = "astrono
         return False, f"Failed to check deployment health: {e}"
 
 
-def get_k8s_container_handle(*, pod_type, container, namespace, release_name):
-    """Get a kubernetes container handle for a specific pod type and container."""
-    pod = f"{release_name}-{pod_type}-0"
-    return testinfra.get_host(f"kubectl://{pod}?container={container}&namespace={namespace}")
+def kind_load_docker_images(cluster: str) -> None:
+    """
+    Load any available docker images into a KIND cluster.
+
+    For any images found in CircleCI config are also found in in the local Docker cache, load images into the KIND cluster
+    instead of downloading them from the Docker registry. This is really only useful for local development and testing, as
+    it avoids repeatedly downloading the same images.
+
+    # TODO: make a script that auto-downloads these images into the docker registry so this optimizatino is easier to use.
+
+    :param cluster: Name of the KIND cluster to load images into.
+    """
+
+    circleci_config = yaml.safe_load((git_root_dir / ".circleci" / "config.yml").read_text())
+    image_list = circleci_config["workflows"]["scan-docker-images"]["jobs"][1]["twistcli-scan-docker"]["matrix"]["parameters"][
+        "docker_image"
+    ]
+
+    image_allow_list = {
+        "unified": [
+            "ap-alertmanager",
+            "ap-astro-ui",
+            "ap-commander",
+            "ap-curator",
+            "ap-db-bootstrapper",
+            "ap-default-backend",
+            "ap-houston-api",
+            "ap-init",
+            "ap-nats-exporter",
+            "ap-nats-server",
+            "ap-nats-streaming",
+            "ap-nginx",
+            "ap-nginx-es",
+            "ap-postgres-exporter",
+            "ap-postgresql",
+            "ap-registry",
+        ],
+        "control": [
+            "ap-alertmanager",
+            "ap-astro-ui",
+            "ap-curator",
+            "ap-db-bootstrapper",
+            "ap-default-backend",
+            "ap-elasticsearch-exporter",
+            "ap-elasticsearch",
+            "ap-houston-api",
+            "ap-nats-exporter",
+            "ap-nginx-es",
+            "ap-nginx",
+            "ap-postgres-exporter",
+            "ap-postgresql",
+            "ap-prometheus",
+        ],
+        "data": [
+            "ap-commander",
+            "ap-fluentd",
+            "ap-init",
+            "ap-nats-server",
+            "ap-nats-streaming",
+            "ap-prometheus",
+            "ap-registry",
+        ],
+    }
+
+    cmd = ["docker", "image", "ls", "--format", "{{.Repository}}:{{.Tag}}"]
+    print(f"Listing local Docker images with command: {shlex.join(cmd)}")
+    local_docker_images = run_command(cmd).splitlines()
+
+    images_to_load = [
+        local_image
+        for allow_entry in image_allow_list.get(cluster, [])
+        for local_image in local_docker_images
+        if allow_entry in local_image and local_image in image_list
+    ]
+
+    if not images_to_load:
+        print(f"No images found to load for cluster '{cluster}'.")
+        return
+    for image in images_to_load:
+        cmd = [f"{kind_exe}", "load", "docker-image", "--name", cluster, image]
+        print(f"Loading Docker images into KIND cluster with command: {shlex.join(cmd)}")
+        try:
+            run_command(cmd)
+        except RuntimeError as e:
+            print(f"Failed to load image '{image}' into KIND cluster '{cluster}': {e}")
+            continue
+
+
+@pytest.fixture(scope="function")
+def nginx(k8s_core_v1_client, cluster_name):
+    """Fixture for accessing the nginx pod."""
+    kubeconfig_file = str(kubeconfig_dir / cluster_name)
+    pod = get_pod_by_label_selector("astronomer", "component=dp-ingress-controller", kubeconfig_file)
+    yield testinfra.get_host(f"kubectl://{pod}?container=nginx&namespace=astronomer", kubeconfig=kubeconfig_file)
+
+
+@pytest.fixture(scope="function")
+def houston_api(k8s_core_v1_client, cluster_name):
+    """Fixture for accessing the houston-api pod."""
+    kubeconfig_file = str(kubeconfig_dir / cluster_name)
+    pod = get_pod_by_label_selector("astronomer", "component=houston", kubeconfig_file)
+    yield testinfra.get_host(f"kubectl://{pod}?container=houston&namespace=astronomer", kubeconfig=kubeconfig_file)
+
+
+@pytest.fixture(scope="function")
+def prometheus(cluster_name):
+    """Fixture for accessing the prometheus pod."""
+    kubeconfig_file = str(kubeconfig_dir / cluster_name)
+    pod = "astronomer-prometheus-0"
+    yield testinfra.get_host(f"kubectl://{pod}?container=prometheus&namespace=astronomer", kubeconfig=kubeconfig_file)
+
+
+@pytest.fixture(scope="function")
+def es_master(cluster_name):
+    """Fixture for accessing the es-master pod."""
+    kubeconfig_file = str(kubeconfig_dir / cluster_name)
+    pod = "astronomer-elasticsearch-master-0"
+    yield testinfra.get_host(f"kubectl://{pod}?container=es-master&namespace=astronomer", kubeconfig=kubeconfig_file)
+
+
+@pytest.fixture(scope="function")
+def es_data(cluster_name):
+    """Fixture for accessing the es-data pod."""
+    kubeconfig_file = str(kubeconfig_dir / cluster_name)
+    pod = "astronomer-elasticsearch-data-0"
+    yield testinfra.get_host(f"kubectl://{pod}?container=es-data&namespace=astronomer", kubeconfig=kubeconfig_file)
+
+
+@pytest.fixture(scope="function")
+def es_client(k8s_core_v1_client, cluster_name):
+    """Fixture for accessing the es-client pod."""
+    kubeconfig_file = str(kubeconfig_dir / cluster_name)
+    pod = get_pod_by_label_selector("astronomer", "component=elasticsearch,role=client", kubeconfig_file)
+    yield testinfra.get_host(f"kubectl://{pod}?container=es-client&namespace=astronomer", kubeconfig=kubeconfig_file)
