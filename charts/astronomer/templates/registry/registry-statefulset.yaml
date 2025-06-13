@@ -140,15 +140,10 @@ spec:
               - key: config.yml
                 path: config.yml
         {{- if eq .Values.global.plane.mode "data"}}
+        {{- if not .Values.registry.enableInsecureAuth }}
         - name: jwks-certificate
           secret:
             secretName: {{ include "houston.jwtCertificateSecret" . }}
-        {{- end }}
-        {{- if eq .Values.global.plane.mode "unified"}}
-        {{- if not .Values.registry.enableInsecureAuth }}
-        - name: certificate
-          secret:
-            secretName: {{ .Values.global.tlsSecret }}
         {{- end }}
         {{- end }}
         {{ include "custom_ca_volumes" . | indent 8  }}
