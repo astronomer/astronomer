@@ -1,5 +1,6 @@
-import pytest
 from pathlib import Path
+
+import pytest
 
 from tests import git_root_dir, supported_k8s_versions
 from tests.utils import get_containers_by_name
@@ -335,9 +336,9 @@ class TestAstronomerConfigSyncer:
     def test_astronomer_config_syncer_rbac_enabled_for_unified_and_data_mode(self, kube_version):
         """Test that helm renders config-syncer cronjob when global.plane.mode is 'data' or 'unified'."""
         docs = render_chart(
-        kube_version=kube_version,
-        values={"global": {"plane": {"mode": "unified"}}},
-        show_only=["charts/astronomer/templates/config-syncer/config-syncer-cronjob.yaml"],
+            kube_version=kube_version,
+            values={"global": {"plane": {"mode": "unified"}}},
+            show_only=["charts/astronomer/templates/config-syncer/config-syncer-cronjob.yaml"],
         )
         assert len(docs) == 1
         doc = docs[0]
@@ -346,9 +347,9 @@ class TestAstronomerConfigSyncer:
         assert doc["metadata"]["name"] == "release-name-config-syncer"
 
         docs = render_chart(
-        kube_version=kube_version,
-        values={"global": {"plane": {"mode": "data"}}},
-        show_only=["charts/astronomer/templates/config-syncer/config-syncer-cronjob.yaml"],
+            kube_version=kube_version,
+            values={"global": {"plane": {"mode": "data"}}},
+            show_only=["charts/astronomer/templates/config-syncer/config-syncer-cronjob.yaml"],
         )
 
         assert len(docs) == 1
