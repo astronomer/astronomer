@@ -1,6 +1,7 @@
+from pathlib import Path
+
 import jmespath
 import pytest
-from pathlib import Path
 
 from tests import git_root_dir, supported_k8s_versions
 from tests.utils.chart import render_chart
@@ -195,9 +196,9 @@ class TestRegistryStatefulset:
         assert doc["metadata"]["name"] == "release-name-registry"
 
         docs = render_chart(
-        kube_version=kube_version,
-        values={"global": {"plane": {"mode": "unified"}}},
-        show_only=["charts/astronomer/templates/registry/registry-statefulset.yaml"],
+            kube_version=kube_version,
+            values={"global": {"plane": {"mode": "unified"}}},
+            show_only=["charts/astronomer/templates/registry/registry-statefulset.yaml"],
         )
 
         assert len(docs) == 1
@@ -212,10 +213,7 @@ class TestRegistryStatefulset:
             kube_version=kube_version,
             values={"global": {"plane": {"mode": "control"}}},
             show_only=sorted(
-                [
-                    str(x.relative_to(git_root_dir))
-                    for x in Path(f"{git_root_dir}/charts/astronomer/templates/registry").glob("*")
-                ]
+                [str(x.relative_to(git_root_dir)) for x in Path(f"{git_root_dir}/charts/astronomer/templates/registry").glob("*")]
             ),
         )
 
