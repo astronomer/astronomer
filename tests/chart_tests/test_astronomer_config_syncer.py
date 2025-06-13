@@ -328,7 +328,10 @@ class TestAstronomerConfigSyncer:
                 "astronomer": {"configSyncer": {"enabled": True}},
             },
             show_only=sorted(
-                [str(x.relative_to(git_root_dir)) for x in Path(f"{git_root_dir}/charts/astronomer/templates/config-syncer").glob("*")]
+                [
+                    str(x.relative_to(git_root_dir))
+                    for x in Path(f"{git_root_dir}/charts/astronomer/templates/config-syncer").glob("*")
+                ]
             ),
         )
         assert len(docs) == 0
