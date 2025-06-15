@@ -101,7 +101,7 @@ def wait_for_healthy_pods(ignore_substrings: list[str] | None = None, max_wait_t
                 "pods",
                 "--namespace=astronomer",
                 "-o",
-                'custom-columns="NAME:.metadata.name,STATUS:.status.phase"',
+                "custom-columns=NAME:.metadata.name,STATUS:.status.phase",
             ]
         )
         lines = output.splitlines()[1:]  # Skip the header line
