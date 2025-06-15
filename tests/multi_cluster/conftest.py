@@ -501,8 +501,16 @@ def kind_load_docker_images(cluster: str) -> None:
 
 
 @pytest.fixture(scope="function")
-def nginx(k8s_core_v1_client, cluster_name):
-    """Fixture for accessing the nginx pod."""
+def cp_nginx(k8s_core_v1_client, cluster_name):
+    """Fixture for accessing the cp-nginx pod."""
+    kubeconfig_file = str(kubeconfig_dir / cluster_name)
+    pod = get_pod_by_label_selector("astronomer", "component=cp-ingress-controller", kubeconfig_file)
+    yield testinfra.get_host(f"kubectl://{pod}?container=nginx&namespace=astronomer", kubeconfig=kubeconfig_file)
+
+
+@pytest.fixture(scope="function")
+def dp_nginx(k8s_core_v1_client, cluster_name):
+    """Fixture for accessing the dp-nginx pod."""
     kubeconfig_file = str(kubeconfig_dir / cluster_name)
     pod = get_pod_by_label_selector("astronomer", "component=dp-ingress-controller", kubeconfig_file)
     yield testinfra.get_host(f"kubectl://{pod}?container=nginx&namespace=astronomer", kubeconfig=kubeconfig_file)

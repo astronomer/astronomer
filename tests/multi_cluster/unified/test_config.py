@@ -60,20 +60,20 @@ def test_houston_can_reach_prometheus(unified, houston_api):
     assert houston_api.check_output("wget --timeout=5 -qO- http://astronomer-prometheus.astronomer.svc.cluster.local:9090/targets")
 
 
-def test_nginx_can_reach_default_backend(unified, nginx):
-    assert nginx.check_output("curl -s --max-time 1 http://astronomer-nginx-default-backend:8080")
+def test_nginx_can_reach_default_backend(unified, cp_nginx):
+    assert cp_nginx.check_output("curl -s --max-time 1 http://astronomer-nginx-default-backend:8080")
 
 
-def test_nginx_ssl_cache(unified, nginx):
+def test_nginx_ssl_cache(unified, cp_nginx):
     """Ensure nginx default ssl cache size is 10m."""
-    assert "ssl_session_cache shared:SSL:10m;" == nginx.check_output("cat nginx.conf | grep ssl_session_cache").replace("\t", "")
+    assert "ssl_session_cache shared:SSL:10m;" == cp_nginx.check_output("cat nginx.conf | grep ssl_session_cache").replace("\t", "")
 
 
-def test_nginx_capabilities(unified, nginx):
+def test_nginx_capabilities(unified, cp_nginx):
     """Ensure nginx has no getcap capabilities"""
-    assert nginx.check_output("getcap /nginx-ingress-controller").replace("\t", "") == "/nginx-ingress-controller ="
-    assert nginx.check_output("getcap /usr/local/nginx/sbin/nginx").replace("\t", "") == "/usr/local/nginx/sbin/nginx ="
-    assert nginx.check_output("getcap /usr/bin/dumb-init").replace("\t", "") == "/usr/bin/dumb-init ="
+    assert cp_nginx.check_output("getcap /nginx-ingress-controller").replace("\t", "") == "/nginx-ingress-controller ="
+    assert cp_nginx.check_output("getcap /usr/local/nginx/sbin/nginx").replace("\t", "") == "/usr/local/nginx/sbin/nginx ="
+    assert cp_nginx.check_output("getcap /usr/bin/dumb-init").replace("\t", "") == "/usr/bin/dumb-init ="
 
 
 @pytest.mark.flaky(reruns=20, reruns_delay=10)
