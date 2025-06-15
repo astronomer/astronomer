@@ -86,7 +86,7 @@ def wait_for_healthy_pods(ignore_substrings: list[str] | None = None, max_wait_t
     """
     Wait for all pods in the 'astronomer' namespace to be in a healthy state.
     """
-    print("Waiting for pods to be healthy...")
+    print("Waiting for pods in the 'astronomer' namespace to be healthy...")
     end_time = time.time() + max_wait_time
 
     while True:
@@ -113,7 +113,7 @@ def wait_for_healthy_pods(ignore_substrings: list[str] | None = None, max_wait_t
                 if ignore_substrings and any(substring in name for substring in ignore_substrings):
                     continue
         if not unhealthy_pods:
-            print("All pods are healthy.")
+            print("All pods in the 'astronomer' namespace are healthy.")
             return
         print(f"Unhealthy pods: {', '.join(unhealthy_pods)}")
         time.sleep(5)

@@ -6,8 +6,8 @@ help: ## Print Makefile help.
 
 # List of charts to build
 CHARTS := astronomer nginx prometheus alertmanager elasticsearch kibana fluentd kube-state postgresql
-
 TEMPDIR := /tmp/astro-temp
+PATH := ${HOME}/.local/share/astronomer-software/bin:$(PATH)
 
 # functional-requirements is deprecated
 .PHONY: functional-requirements
