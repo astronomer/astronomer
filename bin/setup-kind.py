@@ -26,8 +26,8 @@ PREREQUISITES = """You MUST set your environment variable TEST_SCENARIO to one o
 
 GIT_ROOT_DIR = next(iter([x for x in Path(__file__).resolve().parents if (x / ".git").is_dir()]), None)
 HELPER_BIN_DIR = Path.home() / ".local" / "share" / "astronomer-software" / "bin"
-KIND_EXE = HELPER_BIN_DIR / "kind"
-KUBECTL_EXE = HELPER_BIN_DIR / "kubectl"
+KIND_EXE = str(HELPER_BIN_DIR / "kind")
+KUBECTL_EXE = str(HELPER_BIN_DIR / "kubectl")
 CHART_METADATA = yaml.safe_load((Path(GIT_ROOT_DIR) / "metadata.yaml").read_text())
 KUBECTL_VERSION = CHART_METADATA["test_k8s_versions"][-2]
 if not all([(TEST_SCENARIO := os.getenv("TEST_SCENARIO")), TEST_SCENARIO in ["unified", "data", "control"]]):

@@ -14,7 +14,7 @@ PREREQUISITES = """You MUST set your environment variable TEST_SCENARIO to one o
 """
 
 GIT_ROOT_DIR = next(iter([x for x in Path(__file__).resolve().parents if (x / ".git").is_dir()]), None)
-HELM_EXE = Path.home() / ".local" / "share" / "astronomer-software" / "bin" / "helm"
+HELM_EXE = str(Path.home() / ".local" / "share" / "astronomer-software" / "bin" / "helm")
 HELM_INSTALL_TIMEOUT = os.getenv("HELM_INSTALL_TIMEOUT", "10m0s")
 if not all([(TEST_SCENARIO := os.getenv("TEST_SCENARIO")), TEST_SCENARIO in ["unified", "data", "control"]]):
     print("ERROR: TEST_SCENARIO environment variable is not set!", file=sys.stderr)

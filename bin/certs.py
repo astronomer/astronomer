@@ -16,7 +16,7 @@ astronomer_tls_cert_file = cert_dir / "astronomer-tls.pem"
 astronomer_tls_key_file = cert_dir / "astronomer-tls.key"
 astronomer_private_ca_cert_file = cert_dir / "astronomer-private-ca.pem"
 astronomer_private_ca_key_file = cert_dir / "astronomer-private-ca.key"
-MKCERT_EXE = Path.home() / ".local" / "share" / "astronomer-software" / "bin" / "mkcert"
+MKCERT_EXE = str(Path.home() / ".local" / "share" / "astronomer-software" / "bin" / "mkcert")
 
 
 def validate_certificate(cert_path):
