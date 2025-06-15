@@ -120,7 +120,7 @@ def wait_for_healthy_pods(ignore_substrings: list[str] | None = None, max_wait_t
         print(f"Unhealthy pods: {', '.join(unhealthy_pods)}")
         time.sleep(5)
 
-        print(f"Retrying... {end_time - time.time()} seconds left until timeout.")
+        print(f"Retrying... {int(end_time - time.time())} seconds left until timeout.")
 
 
 if __name__ == "__main__":
