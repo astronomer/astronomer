@@ -13,3 +13,6 @@ BIN_DIR="${GIT_ROOT_DIR}/bin"
 
 # Create a KIND cluster and configure it for testing
 "${BIN_DIR}/setup-kind.py"
+
+# Install helm chart
+"${BIN_DIR}/helm-install.py"
