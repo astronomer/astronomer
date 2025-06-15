@@ -423,7 +423,7 @@ class KubernetesNetworkChecker:
         return self._create_scan_findings(open_ports)
 
 
-def test_network_security(k8s_core_v1_client, unified):
+def test_network_security(k8s_core_v1_client):
     """
     Main test function that performs network security validation on a Kubernetes cluster.
 
