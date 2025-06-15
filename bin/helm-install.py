@@ -5,6 +5,7 @@ import os
 import shlex
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 PREREQUISITES = """You MUST set your environment variable TEST_SCENARIO to one of the following values:
@@ -81,9 +82,49 @@ def helm_install(values: str | list[str] = f"{GIT_ROOT_DIR}/configs/local-dev.ya
     run_command(helm_install_command)
 
 
+def wait_for_healthy_pods(ignore_substrings: list[str] | None = None, max_wait_time=90) -> None:
+    """
+    Wait for all pods in the 'astronomer' namespace to be in a healthy state.
+    """
+    print("Waiting for pods to be healthy...")
+    end_time = time.time() + max_wait_time
+
+    while True:
+        if time.time() >= end_time:
+            raise RuntimeError("Timeout waiting for pods to become healthy.")
+        output = run_command(
+            [
+                "kubectl",
+                "--kubeconfig",
+                KUBECONFIG_FILE,
+                "get",
+                "pods",
+                "--namespace=astronomer",
+                "-o",
+                'custom-columns="NAME:.metadata.name,STATUS:.status.phase"',
+            ]
+        )
+        lines = output.splitlines()[1:]  # Skip the header line
+        unhealthy_pods = []
+        for line in lines:
+            name, status = line.split()
+            if status not in ["Running", "Succeeded"]:
+                unhealthy_pods.append(name)
+                if ignore_substrings and any(substring in name for substring in ignore_substrings):
+                    continue
+        if not unhealthy_pods:
+            print("All pods are healthy.")
+            return
+        print(f"Unhealthy pods: {', '.join(unhealthy_pods)}")
+        time.sleep(5)
+
+        print(f"Retrying... {end_time - time.time()} seconds left until timeout.")
+
+
 if __name__ == "__main__":
     values = [
         f"{GIT_ROOT_DIR}/configs/local-dev.yaml",
         f"{GIT_ROOT_DIR}/tests/data_files/scenario-{TEST_SCENARIO}.yaml",
     ]
     helm_install(values=values)
+    wait_for_healthy_pods()
