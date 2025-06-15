@@ -72,11 +72,15 @@ def cleanup_old_certificates(cert_dir=cert_dir):
                     if cert.not_valid_after_utc <= four_weeks:
                         # Delete both cert and key if expired or expiring within 4 weeks
                         cert_file.unlink(missing_ok=True)
+                        print(f"Removed expiring certificate: {cert_file}")
                         key_file.unlink(missing_ok=True)
+                        print(f"Removed corresponding key file: {key_file}")
             except Exception:  # noqa: BLE001
                 # If we can't read/parse the cert, remove it to be safe
                 cert_file.unlink(missing_ok=True)
+                print(f"Removed invalid certificate: {cert_file}")
                 key_file.unlink(missing_ok=True)
+                print(f"Removed corresponding key file: {key_file}")
 
     # Create directory if it was deleted
     cert_dir.mkdir(parents=True, exist_ok=True)
@@ -189,7 +193,6 @@ def main():
     match args.command:
         case "cleanup":
             cleanup_old_certificates(cert_dir)
-            print("Cleanup complete.")
         case "generate-tls":
             create_astronomer_tls_certificates()
         case "generate-private-ca":
