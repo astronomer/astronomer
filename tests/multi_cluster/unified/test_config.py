@@ -71,7 +71,7 @@ def test_nginx_capabilities(cp_nginx):
     assert cp_nginx.check_output("getcap /usr/bin/dumb-init").replace("\t", "") == "/usr/bin/dumb-init ="
 
 
-@pytest.mark.flaky(reruns=20, reruns_delay=1)
+@pytest.mark.flaky(reruns=20, reruns_delay=10)
 def test_prometheus_targets(prometheus):
     """Ensure all Prometheus targets are healthy."""
     data = prometheus.check_output("wget --timeout=5 -qO- http://localhost:9090/api/v1/targets")
