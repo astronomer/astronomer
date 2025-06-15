@@ -94,5 +94,10 @@ show-test-helper-tool-versions: ## Show the versions of helper tools that were d
 	-~/.local/share/astronomer-software/bin/kubectl version --client
 	-~/.local/share/astronomer-software/bin/mkcert --version
 
+.PHONY: show-test-helper-files
 show-test-helper-files: ## Show all the test helper files downloaded and created during testing
 	@find ~/.local/share/astronomer-software/ -type f | sort
+
+.PHONY: cache-docker-images
+cache-docker-images: ## Cache all docker images used in the base helm chart
+	bin/show-docker-images.py --no-enable-all-features | cut -w -f2 | xargs -t -r -n1 docker pull
