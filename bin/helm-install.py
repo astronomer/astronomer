@@ -62,6 +62,7 @@ def helm_install(values: str | list[str] = f"{GIT_ROOT_DIR}/configs/local-dev.ya
         HELM_EXE,
         "install",
         "astronomer",
+        "--debug",
         "--create-namespace",
         "--namespace=astronomer",
         str(GIT_ROOT_DIR),
@@ -77,9 +78,6 @@ def helm_install(values: str | list[str] = f"{GIT_ROOT_DIR}/configs/local-dev.ya
             helm_install_command.append(f"--values={value}")
         else:
             raise ValueError(f"Invalid values file: {value}")
-
-    if DEBUG:
-        helm_install_command.append("--debug")
 
     run_command(helm_install_command)
 
