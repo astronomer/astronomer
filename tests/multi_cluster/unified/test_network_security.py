@@ -22,7 +22,7 @@ from time import sleep, strftime, time
 import testinfra
 from kubernetes import client, config
 
-from tests.utils.k8s import kubeconfig_unified
+from tests.utils.k8s import KUBECONFIG_UNIFIED
 
 # Configure logging based on DEBUG environment variable
 if getenv("DEBUG"):
@@ -159,7 +159,7 @@ class KubernetesNetworkChecker:
         Loads the kubeconfig and sets up the Kubernetes API client for
         discovering cluster resources.
         """
-        config.load_kube_config(config_file=str(kubeconfig_unified))
+        config.load_kube_config(config_file=str(KUBECONFIG_UNIFIED))
         self.targets = []
         self.v1 = client.CoreV1Api()
 
@@ -254,7 +254,7 @@ class KubernetesNetworkChecker:
             # Create testinfra fixture for executing commands in the pod
             test_fixture = testinfra.get_host(
                 f"kubectl://{pod.metadata.name}?" + f"container={v1container.name}&namespace={namespace}",
-                kubeconfig=str(kubeconfig_unified),
+                kubeconfig=str(KUBECONFIG_UNIFIED),
             )
 
             # Install nmap in the scanning pod

@@ -2,10 +2,10 @@ from pathlib import Path
 
 from kubernetes import client, config
 
-astronomer_software_dir = Path.home() / ".local" / "share" / "astronomer-software"
-kubeconfig_control = astronomer_software_dir / "kubeconfig" / "control"
-kubeconfig_data = astronomer_software_dir / "kubeconfig" / "data"
-kubeconfig_unified = astronomer_software_dir / "kubeconfig" / "unified"
+ASTRONOMER_SOFTWARE_DIR = Path.home() / ".local" / "share" / "astronomer-software"
+KUBECONFIG_CONTROL = str(ASTRONOMER_SOFTWARE_DIR / "kubeconfig" / "control")
+KUBECONFIG_DATA = str(ASTRONOMER_SOFTWARE_DIR / "kubeconfig" / "data")
+KUBECONFIG_UNIFIED = str(ASTRONOMER_SOFTWARE_DIR / "kubeconfig" / "unified")
 
 
 def get_core_v1_client(in_cluster=False, kubeconfig=None):

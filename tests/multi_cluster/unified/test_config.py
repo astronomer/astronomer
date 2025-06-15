@@ -1,9 +1,3 @@
-"""This file is for system testing the Astronomer Helm chart.
-
-Many of these tests use pytest fixtures that use testinfra to exec into
-running pods so we can inspect the run-time environment.
-"""
-
 import json
 import time
 from os import getenv
@@ -15,22 +9,23 @@ import yaml
 from kubernetes.client.rest import ApiException
 
 
-def test_default_disabled(unified, k8s_core_v1_client):
+def test_ensure_not_running(k8s_core_v1_client):
+    """Ensure that the listed pods are not running."""
     pods = k8s_core_v1_client.list_namespaced_pod("astronomer")
-    default_disabled = ["prometheus-postgres-exporter"]
+    should_not_be_running = ["prometheus-postgres-exporter"]
     for pod in pods.items:
-        for feature in default_disabled:
+        for feature in should_not_be_running:
             if feature in pod.metadata.name:
-                raise Exception(f"Expected '{feature}' to be disabled")
+                raise ValueError(f"Expected '{feature}' to be disabled")
 
 
-def test_prometheus_user(unified, prometheus):
+def test_prometheus_user(prometheus):
     """Ensure user is 'nobody'."""
     user = prometheus.check_output("whoami")
     assert user == "nobody", f"Expected prometheus to be running as 'nobody', not '{user}'"
 
 
-def test_houston_config(unified, houston_api):
+def test_houston_config(houston_api):
     """Make assertions about Houston's configuration."""
     data = houston_api.check_output("echo \"config = require('config'); console.log(JSON.stringify(config))\" | node -")
     houston_config = json.loads(data)
@@ -46,7 +41,7 @@ def test_houston_config(unified, houston_api):
         )
 
 
-def test_houston_check_db_info(unified, houston_api):
+def test_houston_check_db_info(houston_api):
     """Make assertions about Houston's configuration."""
     if not (release_name := getenv("RELEASE_NAME")):
         print("No release_name env var, using release_name=astronomer")
@@ -56,20 +51,20 @@ def test_houston_check_db_info(unified, houston_api):
     assert f"{release_name}_houston" in houston_db_info
 
 
-def test_houston_can_reach_prometheus(unified, houston_api):
+def test_houston_can_reach_prometheus(houston_api):
     assert houston_api.check_output("wget --timeout=5 -qO- http://astronomer-prometheus.astronomer.svc.cluster.local:9090/targets")
 
 
-def test_nginx_can_reach_default_backend(unified, cp_nginx):
+def test_nginx_can_reach_default_backend(cp_nginx):
     assert cp_nginx.check_output("curl -s --max-time 1 http://astronomer-nginx-default-backend:8080")
 
 
-def test_nginx_ssl_cache(unified, cp_nginx):
+def test_nginx_ssl_cache(cp_nginx):
     """Ensure nginx default ssl cache size is 10m."""
     assert "ssl_session_cache shared:SSL:10m;" == cp_nginx.check_output("cat nginx.conf | grep ssl_session_cache").replace("\t", "")
 
 
-def test_nginx_capabilities(unified, cp_nginx):
+def test_nginx_capabilities(cp_nginx):
     """Ensure nginx has no getcap capabilities"""
     assert cp_nginx.check_output("getcap /nginx-ingress-controller").replace("\t", "") == "/nginx-ingress-controller ="
     assert cp_nginx.check_output("getcap /usr/local/nginx/sbin/nginx").replace("\t", "") == "/usr/local/nginx/sbin/nginx ="
@@ -77,7 +72,7 @@ def test_nginx_capabilities(unified, cp_nginx):
 
 
 @pytest.mark.flaky(reruns=20, reruns_delay=10)
-def test_prometheus_targets(unified, prometheus):
+def test_prometheus_targets(prometheus):
     """Ensure all Prometheus targets are healthy."""
     data = prometheus.check_output("wget --timeout=5 -qO- http://localhost:9090/api/v1/targets")
     targets = json.loads(data)["data"]["activeTargets"]
@@ -89,7 +84,7 @@ def test_prometheus_targets(unified, prometheus):
         )
 
 
-def test_core_dns_metrics_are_collected(unified, prometheus):
+def test_core_dns_metrics_are_collected(prometheus):
     """Ensure CoreDNS metrics are collected."""
 
     data = prometheus.check_output("wget --timeout=5 -qO- http://localhost:9090/api/v1/query?query=coredns_dns_requests_total")
@@ -99,14 +94,14 @@ def test_core_dns_metrics_are_collected(unified, prometheus):
     )
 
 
-def test_houston_metrics_are_collected(unified, prometheus):
+def test_houston_metrics_are_collected(prometheus):
     """Ensure Houston metrics are collected and prefixed with 'houston_'."""
     data = prometheus.check_output("wget --timeout=5 -qO- http://localhost:9090/api/v1/query?query=houston_up")
     parsed = json.loads(data)
     assert len(parsed["data"]["result"]) > 0, f"Expected to find a metric houston_up, but we got this response:\n\n{parsed}"
 
 
-def test_prometheus_config_reloader_works(unified, prometheus, k8s_core_v1_client):
+def test_prometheus_config_reloader_works(prometheus, k8s_core_v1_client):
     """Ensure that Prometheus reloads its config when the cofigMap is updated
     and the reloader sidecar triggers the reload."""
     # define new value we'll use for the config change
@@ -160,7 +155,7 @@ def test_prometheus_config_reloader_works(unified, prometheus, k8s_core_v1_clien
     not getenv("HELM_CHART_PATH"),
     reason="This test only works with HELM_CHART_PATH set to the path of the chart to be tested",
 )
-def test_houston_backend_secret_present_after_helm_upgrade_and_container_restart(unified, houston_api, k8s_core_v1_client):
+def test_houston_backend_secret_present_after_helm_upgrade_and_container_restart(houston_api, k8s_core_v1_client):
     """Test when helm upgrade occurs without Houston pods restarting that a
     Houston container restart will not miss the Houston connection backend
     secret.
@@ -204,25 +199,25 @@ def test_houston_backend_secret_present_after_helm_upgrade_and_container_restart
     assert "postgres" in result, "Expected to find DB connection string after Houston restart"
 
 
-def test_cve_2021_44228_es_client(unified, es_client):
+def test_cve_2021_44228_es_client(es_client):
     """Ensure the running es process has -Dlog4j2.formatMsgNoLookups=true
     configured."""
     assert "-Dlog4j2.formatMsgNoLookups=true" in es_client.check_output("/usr/share/elasticsearch/jdk/bin/jps -lv")
 
 
-def test_cve_2021_44228_es_data(unified, es_data):
+def test_cve_2021_44228_es_data(es_data):
     """Ensure the running es process has -Dlog4j2.formatMsgNoLookups=true
     configured."""
     assert "-Dlog4j2.formatMsgNoLookups=true" in es_data.check_output("/usr/share/elasticsearch/jdk/bin/jps -lv")
 
 
-def test_cve_2021_44228_es_master(unified, es_master):
+def test_cve_2021_44228_es_master(es_master):
     """Ensure the running es process has -Dlog4j2.formatMsgNoLookups=true
     configured."""
     assert "-Dlog4j2.formatMsgNoLookups=true" in es_master.check_output("/usr/share/elasticsearch/jdk/bin/jps -lv")
 
 
-def test_kibana_default_index_pod(unified, k8s_core_v1_client):
+def test_kibana_default_index_pod(k8s_core_v1_client):
     """Check kibana index pod completed successfully"""
     try:
         # Get pods with the kibana-default-index component label
