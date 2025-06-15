@@ -66,7 +66,7 @@ jobs:
 
   trivy-scan-docker:
     docker:
-      - image: cimg/base:current-22.04
+      - image: cimg/base:current-24.04
     shell: /usr/bin/bash
     parameters:
       docker_image:
@@ -123,7 +123,7 @@ jobs:
 
   twistcli-scan-docker:
     docker:
-      - image: cimg/base:current-22.04
+      - image: cimg/base:current-24.04
     shell: /usr/bin/bash
     parameters:
       docker_image:
@@ -307,14 +307,17 @@ jobs:
             - "fb:bd:3c:2f:ef:af:e9:5b:fe:33:0e:e1:01:80:9f:cf"
       - run:
           name: "Test scenario: unified"
-          command: make test-functional-unified
+          command: |
+            pip install --user yaml
+            make test-functional-unified
       - store_test_results:
           path: test-results
 {%- endfor %}
 
   check-commander-airflow-version:
     docker:
-      - image: cimg/base:current-22.04
+      # https://circleci.com/developer/images/image/cimg/base
+      - image: cimg/base:current-24.04
     steps:
       - checkout
       - setup_remote_docker:
