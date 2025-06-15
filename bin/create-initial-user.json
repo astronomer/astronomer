@@ -1,5 +1,0 @@
-{
-  "operationName": "createUser",
-  "variables": {},
-  "query": "mutation createUser { createUser(email:\"__USER__\", password: \"__PASS__\", duration:360000) { user { id emails { address } } token { value payload { uuid } } isAdmin } }"
-}

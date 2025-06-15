@@ -113,7 +113,7 @@ def create_kind_cluster(cluster_name: str) -> PosixPath:
             "cluster",
             f"--name={cluster_name}",
             f"--kubeconfig={kubeconfig_file}",
-            f"--config={git_root_dir}/bin/kind/calico-config.yaml",
+            f"--config={git_root_dir}/tests/kind/calico-config.yaml",
             f"--image=kindest/node:v{kubectl_version}",
         ]
         print(f"Creating KIND cluster with command: {shlex.join(cmd)}")
@@ -129,7 +129,7 @@ def create_kind_cluster(cluster_name: str) -> PosixPath:
             f"--kubeconfig={kubeconfig_file}",
             "--namespace=kube-system",
             "apply",
-            f"--filename={git_root_dir}/bin/kind/calico-crds-v{kubectl_version.rpartition('.')[0]}.yaml",
+            f"--filename={git_root_dir}/tests/kind/calico-crds-v{kubectl_version.rpartition('.')[0]}.yaml",
         ]
         print(f"Applying Calico configuration with command: {shlex.join(cmd)}")
         run_command(cmd)

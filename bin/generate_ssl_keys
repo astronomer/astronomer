@@ -1,7 +1,0 @@
-#!/usr/bin/env bash
-set -euo pipefail
-
-# https://github.com/FiloSottile/mkcert
-mkcert -install
-mkcert -cert-file /tmp/fullchain.pem -key-file /tmp/privkey.pem localtest.me "*.localtest.me"
-cat "$(mkcert -CAROOT)/rootCA.pem" >> /tmp/fullchain.pem

@@ -90,7 +90,7 @@ show-docker-images-with-private-registry: ## Show all docker images and versions
 .PHONY: show-downloaded-tool-versions
 show-test-helper-tool-versions: ## Show the versions of helper tools that were downloaded during testing
 	-~/.local/share/astronomer-software/bin/helm version --short
-	-~/.local/share/astronomer-software/bin/kind version
+	-~/.local/share/astronomer-software/tests/kind version
 	-~/.local/share/astronomer-software/bin/kubectl version --client
 	-~/.local/share/astronomer-software/bin/mkcert --version
 

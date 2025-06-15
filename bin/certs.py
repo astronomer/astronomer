@@ -1,3 +1,7 @@
+#!/usr/bin/env python3
+"""Create and validate certificates for Astronomer Software functional tests."""
+
+import argparse
 import shutil
 import subprocess
 from datetime import UTC, datetime, timedelta
@@ -5,8 +9,6 @@ from pathlib import Path
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
-
-from tests.utils.install_ci_tools import install_mkcert
 
 cert_dir = Path.home() / ".local" / "share" / "astronomer-software" / "certs"
 astronomer_tls_cert_file = cert_dir / "astronomer-tls.pem"
@@ -90,9 +92,6 @@ def create_astronomer_tls_certificates():
 
     domain = "localtest.me"  # localtest.me and *.localtest.me resolve to 127.0.0.1 using any DNS server
 
-    # Clean up old certificates
-    cleanup_old_certificates(cert_dir)
-
     if astronomer_tls_key_file.exists() and astronomer_tls_cert_file.exists():
         print("Using existing astronomer-tls certificates")
         return
@@ -141,9 +140,6 @@ def create_astronomer_private_ca_certificates():
     ca_root = subprocess.check_output(["mkcert", "-CAROOT"], text=True).strip()
     ca_root_pem = Path(ca_root) / "rootCA.pem"
 
-    # Verify mkcert is installed
-    install_mkcert()
-
     # Clean up old certificates
     cleanup_old_certificates(cert_dir)
 
@@ -176,3 +172,36 @@ def create_astronomer_private_ca_certificates():
         raise RuntimeError(f"Generated certificate is invalid: {message}")
 
     print(f"Certificate and key generated:\n  Cert: {astronomer_private_ca_cert_file}\n  Key: {astronomer_private_ca_key_file}")
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Astronomer Software Certificate Manager using mkcert")
+    subparsers = parser.add_subparsers(dest="command", required=True, help="Action to perform")
+
+    subparsers.add_parser("cleanup", help="Remove expiring certificates")
+    subparsers.add_parser("generate-tls", help="Create astronomer-tls certificates")
+    subparsers.add_parser("generate-private-ca", help="Create astronomer-private-ca certificates")
+    validate_parser = subparsers.add_parser("validate", help="Validate a certificate")
+    validate_parser.add_argument("cert_path", type=str, help="Path to the certificate file")
+
+    args = parser.parse_args()
+
+    match args.command:
+        case "cleanup":
+            cleanup_old_certificates(cert_dir)
+            print("Cleanup complete.")
+        case "generate-tls":
+            create_astronomer_tls_certificates()
+        case "generate-private-ca":
+            create_astronomer_private_ca_certificates()
+        case "validate":
+            path = Path(args.cert_path)
+            is_valid, message = validate_certificate(path)
+            print(message)
+            raise SystemExit(0 if is_valid else 1)
+        case _:
+            parser.print_help()
+
+
+if __name__ == "__main__":
+    main()
