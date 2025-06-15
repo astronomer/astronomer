@@ -178,10 +178,6 @@ def create_kind_cluster() -> None:
             else:
                 raise RuntimeError(f"Failed to create KIND cluster: {e}") from e
 
-        # Wait until all pods are ready
-        print("Waiting for all pods to become ready...")
-        wait_for_pods_ready()
-
         # Apply calico configuration
         cmd = [
             KUBECTL_EXE,
@@ -205,6 +201,10 @@ def create_kind_cluster() -> None:
         ]
         print(f"Configuring Calico with command: {shlex.join(cmd)}")
         run_command(cmd)
+
+        # Wait until all pods are ready
+        print("Waiting for all pods to become ready...")
+        wait_for_pods_ready()
 
     except Exception:
         # Cleanup if cluster creation fails
