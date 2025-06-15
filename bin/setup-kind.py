@@ -344,31 +344,40 @@ def wait_for_pods_ready(timeout: int = 300) -> None:
     raise RuntimeError("Timed out waiting for all pods to reach 'Running' state.")
 
 
-def check_kube_system_health(apps_v1: client.AppsV1Api) -> tuple[bool, str]:
+def check_kube_system_health(apps_v1: client.AppsV1Api, max_wait_seconds: int = 60) -> tuple[bool, str]:
     """
-    Check if all deployments in the kube-system namespace are at desired replica count.
+    Check if all deployments in the kube-system namespace are at desired replica count, retrying up to max_wait_seconds.
 
     Args:
         apps_v1: Kubernetes AppsV1Api client
+        max_wait_seconds: Maximum total time to wait for healthy deployments (default 60 seconds)
 
     Returns:
         tuple: (is_healthy, message)
     """
-    try:
-        deployments = apps_v1.list_namespaced_deployment(namespace="kube-system")
-        unhealthy_deployments = []
+    start_time = time.monotonic()
+    interval = 2  # seconds between checks
 
-        unhealthy_deployments.extend(
-            f"{deployment.metadata.name} (Ready: {deployment.status.ready_replicas or 0}/{deployment.spec.replicas})"
-            for deployment in deployments.items
-            if deployment.status.ready_replicas != deployment.spec.replicas
-        )
-        if unhealthy_deployments:
-            return False, f"Unhealthy deployments found: {', '.join(unhealthy_deployments)}"
-        return True, f"All kube-system deployments in {TEST_SCENARIO} cluster are healthy."
+    while True:
+        try:
+            deployments = apps_v1.list_namespaced_deployment(namespace="kube-system")
+            unhealthy_deployments = [
+                f"{deployment.metadata.name} (Ready: {deployment.status.ready_replicas or 0}/{deployment.spec.replicas})"
+                for deployment in deployments.items
+                if deployment.status.ready_replicas != deployment.spec.replicas
+            ]
+            if not unhealthy_deployments:
+                return True, f"All kube-system deployments in {TEST_SCENARIO} cluster are healthy."
+            last_error = None
+        except Exception as e:  # noqa: BLE001
+            last_error = e
 
-    except Exception as e:  # noqa: BLE001
-        return False, f"Failed to check deployment health in {TEST_SCENARIO} cluster: {e}"
+        elapsed = time.monotonic() - start_time
+        if elapsed >= max_wait_seconds:
+            if last_error:
+                return False, f"Failed to check deployment health in {TEST_SCENARIO} cluster: {last_error}"
+            return False, f"Unhealthy deployments found after {int(elapsed)}s: {', '.join(unhealthy_deployments)}"
+        time.sleep(interval)
 
 
 if __name__ == "__main__":
