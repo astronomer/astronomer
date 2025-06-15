@@ -93,6 +93,6 @@ repos:
       - id: remove-unicode-zero-width-non-breaking-spaces
       - id: remove-unicode-zero-width-space
       - id: replace-en-dashes
-        exclude: 'bin/kind/.*'
+        exclude: 'tests/kind/.*'
       - id: replace-greek-question-mark
       - id: replace-unicode-non-breaking-spaces

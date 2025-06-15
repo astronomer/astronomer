@@ -68,7 +68,7 @@ jobs:
 
   trivy-scan-docker:
     docker:
-      - image: cimg/base:current-22.04
+      - image: cimg/base:current-24.04
     shell: /usr/bin/bash
     parameters:
       docker_image:
@@ -125,7 +125,7 @@ jobs:
 
   twistcli-scan-docker:
     docker:
-      - image: cimg/base:current-22.04
+      - image: cimg/base:current-24.04
     shell: /usr/bin/bash
     parameters:
       docker_image:
@@ -235,7 +235,7 @@ jobs:
       - run:
           name: Package the Astronomer chart
           command: |
-            source ./bin/install-ci-tools 1
+            bin/install-ci-tools.py
             bin/build-helm-chart.sh << parameters.qa_release >>
       - persist_to_workspace:
           root: "."
@@ -294,74 +294,87 @@ jobs:
             bin/release-helm-chart -p /tmp/workspace/astronomer-*.tgz
       - publish-github-release
 
-  platform-1-29-14:
+  scenario-unified-1-29-14:
     machine:
       image: ubuntu-2204:2024.11.1
       resource_class: xlarge
     environment:
       KUBE_VERSION: v1.29.14
     steps:
-      - helm-install:
-          astronomer-tags: "platform postgresql monitoring logging"
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - add_ssh_keys:
+          fingerprints:
+            - "fb:bd:3c:2f:ef:af:e9:5b:fe:33:0e:e1:01:80:9f:cf"
       - run:
-          name: Check chart for k8s 1.29.14 compatibility with kubent
+          name: "Test scenario: unified"
           command: |
-            set -o pipefail
-            helm template --kube-version=v1.29.14 -f values.yaml --set global.baseDomain=example.com . |
-            kubent --cluster=false --helm3=false --filename -
-          when: always
-  platform-1-30-10:
+            make test-functional-unified
+      - store_test_results:
+          path: test-results
+  scenario-unified-1-30-13:
     machine:
       image: ubuntu-2204:2024.11.1
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.30.10
+      KUBE_VERSION: v1.30.13
     steps:
-      - helm-install:
-          astronomer-tags: "platform postgresql monitoring logging"
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - add_ssh_keys:
+          fingerprints:
+            - "fb:bd:3c:2f:ef:af:e9:5b:fe:33:0e:e1:01:80:9f:cf"
       - run:
-          name: Check chart for k8s 1.30.10 compatibility with kubent
+          name: "Test scenario: unified"
           command: |
-            set -o pipefail
-            helm template --kube-version=v1.30.10 -f values.yaml --set global.baseDomain=example.com . |
-            kubent --cluster=false --helm3=false --filename -
-          when: always
-  platform-1-31-6:
+            make test-functional-unified
+      - store_test_results:
+          path: test-results
+  scenario-unified-1-31-9:
     machine:
       image: ubuntu-2204:2024.11.1
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.31.6
+      KUBE_VERSION: v1.31.9
     steps:
-      - helm-install:
-          astronomer-tags: "platform postgresql monitoring logging"
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - add_ssh_keys:
+          fingerprints:
+            - "fb:bd:3c:2f:ef:af:e9:5b:fe:33:0e:e1:01:80:9f:cf"
       - run:
-          name: Check chart for k8s 1.31.6 compatibility with kubent
+          name: "Test scenario: unified"
           command: |
-            set -o pipefail
-            helm template --kube-version=v1.31.6 -f values.yaml --set global.baseDomain=example.com . |
-            kubent --cluster=false --helm3=false --filename -
-          when: always
-  platform-1-32-2:
+            make test-functional-unified
+      - store_test_results:
+          path: test-results
+  scenario-unified-1-32-5:
     machine:
       image: ubuntu-2204:2024.11.1
       resource_class: xlarge
     environment:
-      KUBE_VERSION: v1.32.2
+      KUBE_VERSION: v1.32.5
     steps:
-      - helm-install:
-          astronomer-tags: "platform postgresql monitoring logging"
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - add_ssh_keys:
+          fingerprints:
+            - "fb:bd:3c:2f:ef:af:e9:5b:fe:33:0e:e1:01:80:9f:cf"
       - run:
-          name: Check chart for k8s 1.32.2 compatibility with kubent
+          name: "Test scenario: unified"
           command: |
-            set -o pipefail
-            helm template --kube-version=v1.32.2 -f values.yaml --set global.baseDomain=example.com . |
-            kubent --cluster=false --helm3=false --filename -
-          when: always
+            make test-functional-unified
+      - store_test_results:
+          path: test-results
 
   check-commander-airflow-version:
     docker:
-      - image: cimg/base:current-22.04
+      # https://circleci.com/developer/images/image/cimg/base
+      - image: cimg/base:current-24.04
     steps:
       - checkout
       - setup_remote_docker:
@@ -486,20 +499,20 @@ workflows:
       - approve-test-all-platforms:
           type: approval
 
-      - platform-1-29-14:
+      - scenario-unified-1-29-14:
           requires:
             - build-artifact
-      - platform-1-30-10:
+      - scenario-unified-1-30-13:
           requires:
+            - build-artifact
             - approve-test-all-platforms
-            - build-artifact
 
-      - platform-1-31-6:
+      - scenario-unified-1-31-9:
           requires:
-            - approve-test-all-platforms
             - build-artifact
+            - approve-test-all-platforms
 
-      - platform-1-32-2:
+      - scenario-unified-1-32-5:
           requires:
             - build-artifact
       - approve-internal-release:
@@ -517,8 +530,8 @@ workflows:
                 - '/^release-0\.\d+$/'
           requires:
             - approve-internal-release
-            - platform-1-29-14
-            - platform-1-32-2
+            - scenario-unified-1-29-14
+            - scenario-unified-1-32-5
       - approve-upgrade-test:
           type: approval
           filters:
@@ -537,8 +550,8 @@ workflows:
           type: approval
           requires:
             - release-to-internal
-            - platform-1-30-10
-            - platform-1-31-6
+            - scenario-unified-1-30-13
+            - scenario-unified-1-31-9
           filters:
             branches:
               only:
@@ -694,28 +707,6 @@ commands:
           root: .
           paths:
             - "./<< parameters.image_name >>.tar"
-
-  helm-install:
-    description: "Install Helm chart from artifact"
-    parameters:
-      astronomer-tags:
-        type: string
-        default: "platform"
-    steps:
-      - attach_workspace:
-          at: /tmp/workspace
-      - checkout
-      - add_ssh_keys:
-          fingerprints:
-            - "fb:bd:3c:2f:ef:af:e9:5b:fe:33:0e:e1:01:80:9f:cf"
-      - run:
-          name: Install Astronomer chart
-          command: |
-            echo 'export PATH="/tmp/bin:/tmp/google-cloud-sdk/bin:$PATH"' >> "$HOME/.bashrc"
-            set -xe
-            HELM_CHART_PATH='/tmp/workspace/astronomer-*.tgz' bin/run-ci << parameters.astronomer-tags >>
-      - store_test_results:
-          path: test-results
 
   publish-github-release:
     description: "Create a release on GitHub"

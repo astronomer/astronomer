@@ -6,8 +6,8 @@ help: ## Print Makefile help.
 
 # List of charts to build
 CHARTS := astronomer nginx prometheus alertmanager elasticsearch kibana fluentd kube-state postgresql
-
 TEMPDIR := /tmp/astro-temp
+PATH := ${HOME}/.local/share/astronomer-software/bin:$(PATH)
 
 # functional-requirements is deprecated
 .PHONY: functional-requirements
@@ -19,9 +19,6 @@ venv-functional: .venv-functional  ## Setup venv required for unit testing the A
 	venv/bin/pip install -r requirements/functional-tests.txt
 	touch $@
 
-# unittest-requirements is deprecated
-.PHONY: unittest-requirements
-unittest-requirements: .venv-unit
 .PHONY: venv-unit
 venv-unit: .venv-unit  ## Setup venv required for unit testing the Astronomer helm chart
 .venv-unit:
@@ -29,21 +26,23 @@ venv-unit: .venv-unit  ## Setup venv required for unit testing the Astronomer he
 	venv/bin/pip install -r requirements/chart-tests.txt
 	touch $@
 
-.PHONY: test-functional
-test-functional: venv-functional ## Run functional tests on the Astronomer helm chart
-	venv/bin/python -m pytest -v --junitxml=test-results/junit.xml tests/functional_tests
-
 .PHONY: test-functional-control
+test-functional-control: export TEST_SCENARIO=control
 test-functional-control: venv-functional ## Run functional tests on the control installation scenario
-	venv/bin/python -m pytest -sv --junitxml=test-results/junit.xml tests/multi_cluster/control
+	bin/reset-local-dev
+	venv/bin/python -m pytest -sv --junitxml=test-results/junit.xml tests/multi_cluster/$${TEST_SCENARIO}
 
 .PHONY: test-functional-data
+test-functional-data: export TEST_SCENARIO=data
 test-functional-data: venv-functional ## Run functional tests on the data installation scenario
-	venv/bin/python -m pytest -sv --junitxml=test-results/junit.xml tests/multi_cluster/data
+	bin/reset-local-dev
+	venv/bin/python -m pytest -sv --junitxml=test-results/junit.xml tests/multi_cluster/$${TEST_SCENARIO}
 
 .PHONY: test-functional-unified
+test-functional-unified: export TEST_SCENARIO=unified
 test-functional-unified: venv-functional ## Run functional tests on the unified installation scenario
-	venv/bin/python -m pytest -sv --junitxml=test-results/junit.xml tests/multi_cluster/unified
+	bin/reset-local-dev
+	venv/bin/python -m pytest -sv --junitxml=test-results/junit.xml tests/multi_cluster/$${TEST_SCENARIO}
 
 # unittest-charts is deprecated
 .PHONY: unittest-charts
@@ -95,8 +94,16 @@ show-docker-images-with-private-registry: ## Show all docker images and versions
 	@bin/show-docker-images.py --private-registry --with-houston
 
 .PHONY: show-downloaded-tool-versions
-show-downloaded-tool-versions: ## Show the versions of tools that were downloaded by multi-cluster test setup
+show-test-helper-tool-versions: ## Show the versions of helper tools that were downloaded during testing
 	-~/.local/share/astronomer-software/bin/helm version --short
-	-~/.local/share/astronomer-software/bin/kind version
+	-~/.local/share/astronomer-software/tests/kind version
 	-~/.local/share/astronomer-software/bin/kubectl version --client
 	-~/.local/share/astronomer-software/bin/mkcert --version
+
+.PHONY: show-test-helper-files
+show-test-helper-files: ## Show all the test helper files downloaded and created during testing
+	@find ~/.local/share/astronomer-software/ -type f | sort
+
+.PHONY: cache-docker-images
+cache-docker-images: ## Cache all docker images used in the base helm chart
+	bin/show-docker-images.py --no-enable-all-features | cut -w -f2 | xargs -t -r -n1 docker pull

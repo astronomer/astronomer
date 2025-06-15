@@ -98,36 +98,6 @@ kubectl edit deployment -n astronomer <your deployment>
 bin/reset-local-dev -K 1.28.6
 ```
 
-#### Locally test HA configurations
-
-You need a powerful computer to run the HA testing locally. 28 GB or more of memory should be available to Docker.
-
-Environment variables:
-
-- USE_HA: when set, will deploy using HA configurations
-- CORDON_NODE: when set, will cordon this node after kind create cluster
-- MULTI_NODE: when set, will deploy kind with two worker nodes
-
-Scripts:
-
-- Use bin/run-ci to start the cluster
-- Modify / use bin/drain.sh to test draining
-
-Example:
-
-```sh
-export USE_HA=1
-export CORDON_NODE=kind-worker
-export MULTI_NODE=1
-bin/run-ci
-```
-
-After the platform is up, then do
-
-```sh
-bin/drain.sh
-```
-
 #### How to upgrade airflow chart json schema
 
 Every time we upgrade the airflow chart we will also need to update the json schema file with the list of acceptable top level params (eventually this will be fixed on the OSS side but for now this needs to be a manual step https://github.com/astronomer/issues/issues/3774). Additionally the json schema url will need to be updated to something of the form https://raw.githubusercontent.com/apache/airflow/helm-chart/1.x.x/chart/values.schema.json. This param is found in astronomer/values.schema.json at the astronomer.houston.config.deployments.helm.airflow.$ref parameter
@@ -148,7 +118,7 @@ The values output by this command will need to be inserted manually into astrono
 We include k8s schema files and calico CRD manifests in this repo to aid in testing, but their inclusion makes grepping for code a bit difficult in some cases. You can exclude those files from your `git grep`` results if you use the following syntax:
 
 ```sh
-git grep .Values.global. -- ':!tests/k8s_schema' ':!bin/kind'
+git grep .Values.global. -- ':!tests/k8s_schema' ':!tests/kind'
 ```
 
 The `--` ends the `git` command arguments and indicates that the rest of the arguments are filenames or `pathspecs`. `pathspecs` begin with a colon. `:!tests/k8s_schema` is a pathspec that instructs git to exclude the directory `tests/k8s_schema`.

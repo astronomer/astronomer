@@ -86,7 +86,9 @@ def helm_template(args):
         None,
     )
 
-    command = "helm template . --set forceIncompatibleKubernetes=true -f tests/enable_all_features.yaml"
+    command = "helm template . --set forceIncompatibleKubernetes=true"
+    if args.enable_all_features:
+        command += " -f tests/enable_all_features.yaml"
     if args.private_registry:
         command += (
             " --set global.privateRegistry.repository=example.com/the-private-registry --set global.privateRegistry.enabled=True"
@@ -120,6 +122,13 @@ def main():
         action="store_true",
         help="only check for multiple tags for the same image, do not print the images",
     )
+    parser.add_argument(
+        "--no-enable-all-features",
+        dest="enable_all_features",
+        action="store_false",
+        help="Disable enable-all-features",
+    )
+
     args = parser.parse_args()
 
     docs = helm_template(args)

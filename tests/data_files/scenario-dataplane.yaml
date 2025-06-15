@@ -1,0 +1,11 @@
+# Helm values for data scenario tests.
+
+global:
+  plane:
+    mode: data
+  postgresqlEnabled: true
+
+tags:
+  logging: true
+  monitoring: true
+  platform: true
