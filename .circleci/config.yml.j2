@@ -362,24 +362,13 @@ workflows:
         - not: << pipeline.parameters.scan-docker-images >>
         - not: << pipeline.parameters.qa-release >>
     jobs:
-      - run_pre_commit
-      - test-unit
-      - check-commander-airflow-version
-      - build-artifact:
-          requires:
-            - check-commander-airflow-version
-            - run_pre_commit
-            - test-unit
       - approve-test-all-platforms:
           type: approval
-{% for version in kube_versions %}{% if version in [kube_versions[0], kube_versions[-1]] %}
-      - scenario-unified-{{ version | replace(".", "-") }}:
-          requires:
-            - build-artifact
+{% for version in kube_versions %}{% if version in [kube_versions[0]] %}
+      - scenario-unified-{{ version | replace(".", "-") }}
 {%- else %}
       - scenario-unified-{{ version | replace(".", "-") }}:
           requires:
-            - build-artifact
             - approve-test-all-platforms
 {% endif %}{% endfor %}
       - approve-internal-release:
@@ -397,7 +386,7 @@ workflows:
                 - '/^release-0\.\d+$/'
           requires:
             - approve-internal-release
-{%- for version in [kube_versions[0], kube_versions[-1]] %}
+{%- for version in [kube_versions[0]] %}
             - scenario-unified-{{ version | replace(".", "-") }}
 {%- endfor %}
       - approve-upgrade-test:

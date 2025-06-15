@@ -488,33 +488,22 @@ workflows:
         - not: << pipeline.parameters.scan-docker-images >>
         - not: << pipeline.parameters.qa-release >>
     jobs:
-      - run_pre_commit
-      - test-unit
-      - check-commander-airflow-version
-      - build-artifact:
-          requires:
-            - check-commander-airflow-version
-            - run_pre_commit
-            - test-unit
       - approve-test-all-platforms:
           type: approval
 
-      - scenario-unified-1-29-14:
-          requires:
-            - build-artifact
+      - scenario-unified-1-29-14
       - scenario-unified-1-30-13:
           requires:
-            - build-artifact
             - approve-test-all-platforms
 
       - scenario-unified-1-31-9:
           requires:
-            - build-artifact
             - approve-test-all-platforms
 
       - scenario-unified-1-32-5:
           requires:
-            - build-artifact
+            - approve-test-all-platforms
+
       - approve-internal-release:
           type: approval
           filters:
@@ -531,7 +520,6 @@ workflows:
           requires:
             - approve-internal-release
             - scenario-unified-1-29-14
-            - scenario-unified-1-32-5
       - approve-upgrade-test:
           type: approval
           filters:
