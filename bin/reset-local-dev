@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
+# This is used in local dev, and in CI. Usage of this script requires exporting the
+# TEST_SCENARIO env var to data, unified, or control.
 
 GIT_ROOT_DIR="$(git rev-parse --show-toplevel)"
 BIN_DIR="${GIT_ROOT_DIR}/bin"
+
+# Use the venv if it exists
+[[ -f venv/bin/activate ]] && { venv/bin/activate ; }
 
 # Download helper tools to ~/.local/share/astronomer-software/bin
 "${BIN_DIR}/install-ci-tools.py"

@@ -30,7 +30,7 @@ venv-unit: .venv-unit  ## Setup venv required for unit testing the Astronomer he
 test-functional-control: export TEST_SCENARIO=control
 test-functional-control: venv-functional ## Run functional tests on the control installation scenario
 	export TEST_SCENARIO=control
-	venv/bin/python bin/setup-kind.py
+	venv/bin/python bin/reset-local-dev
 	venv/bin/python -m pytest -sv --junitxml=test-results/junit.xml tests/multi_cluster/$${TEST_SCENARIO}
 
 .PHONY: test-functional-data

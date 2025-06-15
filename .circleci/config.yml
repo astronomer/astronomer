@@ -309,7 +309,8 @@ jobs:
             - "fb:bd:3c:2f:ef:af:e9:5b:fe:33:0e:e1:01:80:9f:cf"
       - run:
           name: "Test scenario: unified"
-          command: make test-functional-unified
+          command: |
+            make test-functional-unified
       - store_test_results:
           path: test-results
   scenario-unified-1-30-13:
@@ -327,7 +328,8 @@ jobs:
             - "fb:bd:3c:2f:ef:af:e9:5b:fe:33:0e:e1:01:80:9f:cf"
       - run:
           name: "Test scenario: unified"
-          command: make test-functional-unified
+          command: |
+            make test-functional-unified
       - store_test_results:
           path: test-results
   scenario-unified-1-31-9:
@@ -345,7 +347,8 @@ jobs:
             - "fb:bd:3c:2f:ef:af:e9:5b:fe:33:0e:e1:01:80:9f:cf"
       - run:
           name: "Test scenario: unified"
-          command: make test-functional-unified
+          command: |
+            make test-functional-unified
       - store_test_results:
           path: test-results
   scenario-unified-1-32-5:
@@ -363,7 +366,8 @@ jobs:
             - "fb:bd:3c:2f:ef:af:e9:5b:fe:33:0e:e1:01:80:9f:cf"
       - run:
           name: "Test scenario: unified"
-          command: make test-functional-unified
+          command: |
+            make test-functional-unified
       - store_test_results:
           path: test-results
 
