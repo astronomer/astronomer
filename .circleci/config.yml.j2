@@ -307,9 +307,7 @@ jobs:
             - "fb:bd:3c:2f:ef:af:e9:5b:fe:33:0e:e1:01:80:9f:cf"
       - run:
           name: "Test scenario: unified"
-          command: |
-            pip install --user yaml
-            make test-functional-unified
+          command: make test-functional-unified
       - store_test_results:
           path: test-results
 {%- endfor %}
