@@ -184,7 +184,7 @@ def create_kind_cluster() -> None:
 
         # Apply calico configuration
         cmd = [
-            KUBECTL_EXE,
+            "kubectl",
             f"--kubeconfig={KUBECONFIG_FILE}",
             "--namespace=kube-system",
             "apply",
@@ -195,7 +195,7 @@ def create_kind_cluster() -> None:
 
         # Configure Calico to ignore loose reverse path filtering
         cmd = [
-            KUBECTL_EXE,
+            "kubectl",
             f"--kubeconfig={KUBECONFIG_FILE}",
             "--namespace=kube-system",
             "set",
@@ -220,15 +220,13 @@ def create_namespace(namespace: str = "astronomer") -> None:
     Create the given namespace.
 
     Args:
-        KUBECONFIG_FILE: Path to the kubeconfig file.
         namespace: Name of the namespace to create.
 
     Raises:
-        FileNotFoundError: If the kubeconfig file doesn't exist.
         RuntimeError: If namespace creation fails.
     """
     cmd = [
-        KUBECTL_EXE,
+        "kubectl",
         f"--kubeconfig={KUBECONFIG_FILE}",
         "create",
         "namespace",
@@ -248,17 +246,13 @@ def create_astronomer_tls_secret() -> None:
     """
     Create the astronomer-tls secret in the KIND cluster using self-signed certificates.
 
-    Args:
-        KUBECONFIG_FILE: Path to the kubeconfig file.
-
     Raises:
-        FileNotFoundError: If the kubeconfig file doesn't exist.
         RuntimeError: If secret creation fails.
     """
 
     secret_name = "astronomer-tls"  # noqa: S105
     cmd = [
-        KUBECTL_EXE,
+        "kubectl",
         f"--kubeconfig={KUBECONFIG_FILE}",
         "--namespace=astronomer",
         "create",
@@ -278,9 +272,6 @@ def create_astronomer_tls_secret() -> None:
 def setup_common_cluster_configs() -> None:
     """
     Perform steps that are common to all installation scenarios.
-
-    Args:
-        KUBECONFIG_FILE: Path to the kubeconfig file.
     """
     create_namespace()
     create_astronomer_tls_secret()
@@ -296,7 +287,7 @@ def create_private_ca_secret() -> None:
     """
 
     cmd = [
-        KUBECTL_EXE,
+        "kubectl",
         f"--kubeconfig={KUBECONFIG_FILE}",
         "--namespace=astronomer",
         "create",
