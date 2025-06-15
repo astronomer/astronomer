@@ -11,6 +11,7 @@ from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 
 cert_dir = Path.home() / ".local" / "share" / "astronomer-software" / "certs"
+cert_dir.mkdir(parents=True, exist_ok=True)
 astronomer_tls_cert_file = cert_dir / "astronomer-tls.pem"
 astronomer_tls_key_file = cert_dir / "astronomer-tls.key"
 astronomer_private_ca_cert_file = cert_dir / "astronomer-private-ca.pem"

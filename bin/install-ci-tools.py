@@ -11,14 +11,14 @@ from pathlib import Path
 import requests
 import yaml
 
-git_root_dir = next(iter([x for x in Path(__file__).resolve().parents if (x / ".git").is_dir()]), None)
-chart_metadata = yaml.safe_load((Path(git_root_dir) / "metadata.yaml").read_text())
-kubectl_version = chart_metadata["test_k8s_versions"][-2]
+GIT_ROOT_DIR = next(iter([x for x in Path(__file__).resolve().parents if (x / ".git").is_dir()]), None)
+CHART_METADATA = yaml.safe_load((Path(GIT_ROOT_DIR) / "metadata.yaml").read_text())
+KUBECTL_VERSION = CHART_METADATA["test_k8s_versions"][-2]
 
 
-HELM_VERSION = chart_metadata["tools"]["helm"]["version"]
-KIND_VERSION = chart_metadata["tools"]["kind"]["version"]
-MKCERT_VERSION = chart_metadata["tools"]["mkcert"]["version"]
+HELM_VERSION = CHART_METADATA["tools"]["helm"]["version"]
+KIND_VERSION = CHART_METADATA["tools"]["kind"]["version"]
+MKCERT_VERSION = CHART_METADATA["tools"]["mkcert"]["version"]
 
 HELPER_DIR = Path.home() / ".local" / "share" / "astronomer-software"
 CACHE_DIR = Path.home() / ".cache" / "astronomer-software"
@@ -108,12 +108,12 @@ def install_kubectl():
     if dest.exists():
         # Check the installed version
         installed_version = subprocess.run(["kubectl", "version", "--client"], capture_output=True, text=True)
-        if kubectl_version in installed_version.stdout:
+        if KUBECTL_VERSION in installed_version.stdout:
             print("kubectl already installed.")
             return
         dest.unlink()
     # ['linux', 'darwin'], ['amd64', 'arm64']
-    url = f"https://dl.k8s.io/release/v{kubectl_version}/bin/{OS}/{ARCH}/kubectl"
+    url = f"https://dl.k8s.io/release/v{KUBECTL_VERSION}/bin/{OS}/{ARCH}/kubectl"
     download(url, dest)
 
 

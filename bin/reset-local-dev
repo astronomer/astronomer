@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+GIT_ROOT_DIR="$(git rev-parse --show-toplevel)"
+BIN_DIR="${GIT_ROOT_DIR}/bin"
+
+# Download helper tools to ~/.local/share/astronomer-software/bin
+"${BIN_DIR}/install-ci-tools.py"
+
+# Generate certificates in ~/.local/share/astronomer-software/certs
+"${BIN_DIR}/certs.py" cleanup
+"${BIN_DIR}/certs.py" generate-tls
+"${BIN_DIR}/certs.py" generate-private-ca
+
+# Create a KIND cluster and configure it for testing
+"${BIN_DIR}/setup-kind.py"
