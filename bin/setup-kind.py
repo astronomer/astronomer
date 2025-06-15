@@ -396,3 +396,5 @@ if __name__ == "__main__":
         raise SystemExit(1)
     else:
         print(message)
+
+    print(f"KIND cluster '{TEST_SCENARIO}' setup completed successfully.")
