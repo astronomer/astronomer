@@ -184,7 +184,7 @@ def create_kind_cluster() -> None:
 
         # Apply calico configuration
         cmd = [
-            "kubectl",
+            KUBECTL_EXE,
             f"--kubeconfig={KUBECONFIG_FILE}",
             "--namespace=kube-system",
             "apply",
@@ -195,7 +195,7 @@ def create_kind_cluster() -> None:
 
         # Configure Calico to ignore loose reverse path filtering
         cmd = [
-            "kubectl",
+            KUBECTL_EXE,
             f"--kubeconfig={KUBECONFIG_FILE}",
             "--namespace=kube-system",
             "set",
@@ -226,7 +226,7 @@ def create_namespace(namespace: str = "astronomer") -> None:
         RuntimeError: If namespace creation fails.
     """
     cmd = [
-        "kubectl",
+        KUBECTL_EXE,
         f"--kubeconfig={KUBECONFIG_FILE}",
         "create",
         "namespace",
@@ -252,7 +252,7 @@ def create_astronomer_tls_secret() -> None:
 
     secret_name = "astronomer-tls"  # noqa: S105
     cmd = [
-        "kubectl",
+        KUBECTL_EXE,
         f"--kubeconfig={KUBECONFIG_FILE}",
         "--namespace=astronomer",
         "create",
@@ -287,7 +287,7 @@ def create_private_ca_secret() -> None:
     """
 
     cmd = [
-        "kubectl",
+        KUBECTL_EXE,
         f"--kubeconfig={KUBECONFIG_FILE}",
         "--namespace=astronomer",
         "create",
