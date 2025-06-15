@@ -64,7 +64,7 @@ def houston_api(k8s_core_v1_client):
 
 
 @pytest.fixture(scope="function")
-def prometheus(TEST_SCENARIO):
+def prometheus():
     """Fixture for accessing the prometheus pod."""
     kubeconfig_file = str(KUBECONFIG_DIR / TEST_SCENARIO)
     pod = "astronomer-prometheus-0"
@@ -72,7 +72,7 @@ def prometheus(TEST_SCENARIO):
 
 
 @pytest.fixture(scope="function")
-def es_master(TEST_SCENARIO):
+def es_master():
     """Fixture for accessing the es-master pod."""
     kubeconfig_file = str(KUBECONFIG_DIR / TEST_SCENARIO)
     pod = "astronomer-elasticsearch-master-0"
@@ -80,7 +80,7 @@ def es_master(TEST_SCENARIO):
 
 
 @pytest.fixture(scope="function")
-def es_data(TEST_SCENARIO):
+def es_data():
     """Fixture for accessing the es-data pod."""
     kubeconfig_file = str(KUBECONFIG_DIR / TEST_SCENARIO)
     pod = "astronomer-elasticsearch-data-0"
