@@ -16,6 +16,7 @@ astronomer_tls_cert_file = cert_dir / "astronomer-tls.pem"
 astronomer_tls_key_file = cert_dir / "astronomer-tls.key"
 astronomer_private_ca_cert_file = cert_dir / "astronomer-private-ca.pem"
 astronomer_private_ca_key_file = cert_dir / "astronomer-private-ca.key"
+MKCERT_EXE = Path.home() / ".local" / "share" / "astronomer-software" / "bin" / "mkcert"
 
 
 def validate_certificate(cert_path):
@@ -102,13 +103,13 @@ def create_astronomer_tls_certificates():
         return
 
     # Install the mkcert CA, then generate a wildcard cert and key.
-    subprocess.run(["mkcert", "-install"], check=True)
+    subprocess.run([MKCERT_EXE, "-install"], check=True)
     subprocess.run(
-        ["mkcert", f"-cert-file={astronomer_tls_cert_file}", f"-key-file={astronomer_tls_key_file}", domain, f"*.{domain}"],
+        [MKCERT_EXE, f"-cert-file={astronomer_tls_cert_file}", f"-key-file={astronomer_tls_key_file}", domain, f"*.{domain}"],
         check=True,
     )
 
-    ca_root = subprocess.check_output(["mkcert", "-CAROOT"], text=True).strip()
+    ca_root = subprocess.check_output([MKCERT_EXE, "-CAROOT"], text=True).strip()
     ca_root_pem = Path(ca_root) / "rootCA.pem"
 
     # Error checking
@@ -142,7 +143,7 @@ def create_astronomer_private_ca_certificates():
     cert_dir = Path.home() / ".local" / "share" / "astronomer-software" / "certs"
     astronomer_private_ca_cert_file = cert_dir / "astronomer-private-ca.pem"
     astronomer_private_ca_key_file = cert_dir / "astronomer-private-ca.key"
-    ca_root = subprocess.check_output(["mkcert", "-CAROOT"], text=True).strip()
+    ca_root = subprocess.check_output([MKCERT_EXE, "-CAROOT"], text=True).strip()
     ca_root_pem = Path(ca_root) / "rootCA.pem"
 
     # Clean up old certificates
@@ -155,7 +156,7 @@ def create_astronomer_private_ca_certificates():
     # Generate the private CA certificate and key.
     subprocess.run(
         [
-            "mkcert",
+            MKCERT_EXE,
             f"-cert-file={astronomer_private_ca_cert_file}",
             f"-key-file={astronomer_private_ca_key_file}",
             "server.example.org",
