@@ -235,7 +235,7 @@ jobs:
       - run:
           name: Package the Astronomer chart
           command: |
-            source ./bin/install-ci-tools 1
+            bin/install-ci-tools.py
             bin/build-helm-chart.sh << parameters.qa_release >>
       - persist_to_workspace:
           root: "."
