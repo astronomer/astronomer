@@ -1,33 +1,56 @@
 #!/usr/bin/env python3
-"""Functions to install various tools used in CI/CD pipelines.
-
-Tools are installed into a per-user directory under ~/.local/share/astronomer-software/bin
-
-Downloaded archives are cached in ~/.cache/astronomer-software"""
+"""Install various tools used in CI/CD pipelines."""
 
 import os
+import platform
 import shutil
 import subprocess
 import tarfile
 from pathlib import Path
 
 import requests
+import yaml
 
-from tests import chart_metadata, kubectl_version
-from tests.utils.os_arch import detect_os_arch
+git_root_dir = next(iter([x for x in Path(__file__).resolve().parents if (x / ".git").is_dir()]), None)
+chart_metadata = yaml.safe_load((Path(git_root_dir) / "metadata.yaml").read_text())
+kubectl_version = chart_metadata["test_k8s_versions"][-2]
+
 
 HELM_VERSION = chart_metadata["tools"]["helm"]["version"]
 KIND_VERSION = chart_metadata["tools"]["kind"]["version"]
 MKCERT_VERSION = chart_metadata["tools"]["mkcert"]["version"]
 
-OS, ARCH = detect_os_arch()
-
-BASE_DIR = Path.home() / ".local" / "share" / "astronomer-software"
+HELPER_DIR = Path.home() / ".local" / "share" / "astronomer-software"
 CACHE_DIR = Path.home() / ".cache" / "astronomer-software"
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
-BIN_DIR = BASE_DIR / "bin"
+BIN_DIR = HELPER_DIR / "bin"
 BIN_DIR.mkdir(parents=True, exist_ok=True)
 os.environ["PATH"] = f"{BIN_DIR}:{os.environ['PATH']}"
+
+
+def detect_os_arch():
+    # Normalize OS name
+    os_map = {
+        "linux": "linux",
+        "darwin": "darwin",
+        "windows": "windows",  # Add if you want to support Windows
+    }
+    system = platform.system().lower()
+    os_name = os_map.get(system)
+    if os_name is None:
+        raise RuntimeError(f"Unsupported OS: {system}")
+
+    # Normalize architecture
+    arch_map = {"x86_64": "amd64", "amd64": "amd64", "aarch64": "arm64", "arm64": "arm64"}
+    machine = platform.machine().lower()
+    arch = arch_map.get(machine)
+    if arch is None:
+        raise RuntimeError(f"Unsupported architecture: {machine}")
+
+    return os_name, arch
+
+
+OS, ARCH = detect_os_arch()
 
 
 def download(url, dest, mode="wb"):
