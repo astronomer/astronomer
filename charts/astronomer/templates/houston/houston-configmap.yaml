@@ -234,7 +234,11 @@ data:
       {{- if .Values.global.networkNSLabels }}
         networkNSLabels: true
       {{- end }}
-
+        astronomer:
+          images:
+            certgenerator:
+              repository: "{{ .Values.global.certgenerator.images.repository }}"
+              tag: "{{ .Values.global.certgenerator.images.tag }}"
         gitSyncRelay:
           images:
             gitDaemon:
