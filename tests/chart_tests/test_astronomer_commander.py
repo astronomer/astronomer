@@ -24,7 +24,7 @@ class TestAstronomerCommander:
         astronomer/commander."""
         values = {
             "astronomer": {
-                "airflowChartVersion": "11.5.10",
+                "airflowChartVersion": "99.88.77",
                 "commander": {
                     "cloudProvider": "aws",
                     "commanderUrl": "example.com",
