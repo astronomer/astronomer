@@ -37,10 +37,7 @@ class TestAstronomerCommanderIngress:
             values={"global": {"plane": {"mode": "unified"}}},
             show_only=["charts/astronomer/templates/commander/commander-grpc-ingress.yaml"],
         )
-        assert len(docs) == 1
-        doc = docs[0]
-        assert doc["kind"] == "Ingress"
-        assert doc["metadata"]["labels"]["plane"] == "unified"
+        assert len(docs) == 0
 
     def test_astronomer_commander_grpc_ingress_control_plane_mode(self, kube_version):
         """Test that helm does not render GRPC ingress template for control plane mode."""
@@ -95,9 +92,7 @@ class TestAstronomerCommanderIngress:
             values={"global": {"plane": {"mode": "unified"}}},
             show_only=["charts/astronomer/templates/commander/commander-metadata-ingress.yaml"],
         )
-        assert len(docs) == 1
-        doc = docs[0]
-        assert doc["kind"] == "Ingress"
+        assert len(docs) == 0
 
     def test_astronomer_commander_metadata_ingress_control_plane_mode(self, kube_version):
         """Test that helm does not render metadata ingress template for control plane mode."""
