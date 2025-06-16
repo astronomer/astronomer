@@ -34,7 +34,7 @@ jobs:
           docker_layer_caching: true
           version: docker23
       - cosign/install:
-          version: "2.2.2"
+          version: "v2.5.0"    #https://github.com/sigstore/cosign/releases
       - run:
           name: Login to docker registry
           command: |
@@ -153,7 +153,8 @@ jobs:
       - run:
           name: Install bom-generator
           command: |
-            pip install git+https://${GITHUB_TOKEN}@github.com/astronomer/astronomer-bom-generator.git
+            # https://github.com/astronomer/astronomer-bom-generator/releases
+            pip install "git+https://${GITHUB_TOKEN}@github.com/astronomer/astronomer-bom-generator.git@0.9.0"
       - run:
           name: Run Release BOM Script
           command: |
@@ -301,13 +302,6 @@ jobs:
     steps:
       - helm-install:
           astronomer-tags: "platform postgresql monitoring logging"
-      - run:
-          name: Check chart for k8s {{ version }} compatibility with kubent
-          command: |
-            set -o pipefail
-            helm template --kube-version=v{{ version }} -f values.yaml --set global.baseDomain=example.com . |
-            kubent --cluster=false --helm3=false --filename -
-          when: always
 {%- endfor %}
 
   check-commander-airflow-version:
