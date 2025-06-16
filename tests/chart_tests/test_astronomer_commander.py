@@ -56,10 +56,10 @@ class TestAstronomerCommander:
         assert env_vars["COMMANDER_UPGRADE_TIMEOUT"] == "600"
         assert "COMMANDER_MANAGE_NAMESPACE_RESOURCE" not in env_vars
 
-        assert env_vars["COMMANDER_AIRFLOW_CHART_VERSION"] == "11.5.10"
+        assert env_vars["COMMANDER_AIRFLOW_CHART_VERSION"] == "99.88.77"
         assert env_vars["COMMANDER_DATAPLANE_CHART_VERSION"] != ""
         assert env_vars["COMMANDER_CLOUD_PROVIDER"] == "aws"
-        assert env_vars["COMMANDER_VERSION"] == "0.38.5"
+        assert env_vars["COMMANDER_VERSION"] == "88.77.66"
         assert "COMMANDER_DATAPLANE_DATABASE_URL" in env_vars
         assert env_vars["COMMANDER_DATAPLANE_ID"] == "custom-dp-123"
         assert env_vars["COMMANDER_REGION"] == "us-west-2"
