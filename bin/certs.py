@@ -1,3 +1,7 @@
+#!/usr/bin/env python3
+"""Create and validate certificates for Astronomer Software functional tests."""
+
+import argparse
 import shutil
 import subprocess
 from datetime import UTC, datetime, timedelta
@@ -6,13 +10,13 @@ from pathlib import Path
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 
-from tests.utils.install_ci_tools import install_mkcert
-
 cert_dir = Path.home() / ".local" / "share" / "astronomer-software" / "certs"
+cert_dir.mkdir(parents=True, exist_ok=True)
 astronomer_tls_cert_file = cert_dir / "astronomer-tls.pem"
 astronomer_tls_key_file = cert_dir / "astronomer-tls.key"
 astronomer_private_ca_cert_file = cert_dir / "astronomer-private-ca.pem"
 astronomer_private_ca_key_file = cert_dir / "astronomer-private-ca.key"
+MKCERT_EXE = str(Path.home() / ".local" / "share" / "astronomer-software" / "bin" / "mkcert")
 
 
 def validate_certificate(cert_path):
@@ -70,11 +74,15 @@ def cleanup_old_certificates(cert_dir=cert_dir):
                     if cert.not_valid_after_utc <= four_weeks:
                         # Delete both cert and key if expired or expiring within 4 weeks
                         cert_file.unlink(missing_ok=True)
+                        print(f"Removed expiring certificate: {cert_file}")
                         key_file.unlink(missing_ok=True)
+                        print(f"Removed corresponding key file: {key_file}")
             except Exception:  # noqa: BLE001
                 # If we can't read/parse the cert, remove it to be safe
                 cert_file.unlink(missing_ok=True)
+                print(f"Removed invalid certificate: {cert_file}")
                 key_file.unlink(missing_ok=True)
+                print(f"Removed corresponding key file: {key_file}")
 
     # Create directory if it was deleted
     cert_dir.mkdir(parents=True, exist_ok=True)
@@ -90,21 +98,18 @@ def create_astronomer_tls_certificates():
 
     domain = "localtest.me"  # localtest.me and *.localtest.me resolve to 127.0.0.1 using any DNS server
 
-    # Clean up old certificates
-    cleanup_old_certificates(cert_dir)
-
     if astronomer_tls_key_file.exists() and astronomer_tls_cert_file.exists():
         print("Using existing astronomer-tls certificates")
         return
 
     # Install the mkcert CA, then generate a wildcard cert and key.
-    subprocess.run(["mkcert", "-install"], check=True)
+    subprocess.run([MKCERT_EXE, "-install"], check=True)
     subprocess.run(
-        ["mkcert", f"-cert-file={astronomer_tls_cert_file}", f"-key-file={astronomer_tls_key_file}", domain, f"*.{domain}"],
+        [MKCERT_EXE, f"-cert-file={astronomer_tls_cert_file}", f"-key-file={astronomer_tls_key_file}", domain, f"*.{domain}"],
         check=True,
     )
 
-    ca_root = subprocess.check_output(["mkcert", "-CAROOT"], text=True).strip()
+    ca_root = subprocess.check_output([MKCERT_EXE, "-CAROOT"], text=True).strip()
     ca_root_pem = Path(ca_root) / "rootCA.pem"
 
     # Error checking
@@ -138,11 +143,8 @@ def create_astronomer_private_ca_certificates():
     cert_dir = Path.home() / ".local" / "share" / "astronomer-software" / "certs"
     astronomer_private_ca_cert_file = cert_dir / "astronomer-private-ca.pem"
     astronomer_private_ca_key_file = cert_dir / "astronomer-private-ca.key"
-    ca_root = subprocess.check_output(["mkcert", "-CAROOT"], text=True).strip()
+    ca_root = subprocess.check_output([MKCERT_EXE, "-CAROOT"], text=True).strip()
     ca_root_pem = Path(ca_root) / "rootCA.pem"
-
-    # Verify mkcert is installed
-    install_mkcert()
 
     # Clean up old certificates
     cleanup_old_certificates(cert_dir)
@@ -154,7 +156,7 @@ def create_astronomer_private_ca_certificates():
     # Generate the private CA certificate and key.
     subprocess.run(
         [
-            "mkcert",
+            MKCERT_EXE,
             f"-cert-file={astronomer_private_ca_cert_file}",
             f"-key-file={astronomer_private_ca_key_file}",
             "server.example.org",
@@ -176,3 +178,35 @@ def create_astronomer_private_ca_certificates():
         raise RuntimeError(f"Generated certificate is invalid: {message}")
 
     print(f"Certificate and key generated:\n  Cert: {astronomer_private_ca_cert_file}\n  Key: {astronomer_private_ca_key_file}")
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Astronomer Software Certificate Manager using mkcert")
+    subparsers = parser.add_subparsers(dest="command", required=True, help="Action to perform")
+
+    subparsers.add_parser("cleanup", help="Remove expiring certificates")
+    subparsers.add_parser("generate-tls", help="Create astronomer-tls certificates")
+    subparsers.add_parser("generate-private-ca", help="Create astronomer-private-ca certificates")
+    validate_parser = subparsers.add_parser("validate", help="Validate a certificate")
+    validate_parser.add_argument("cert_path", type=str, help="Path to the certificate file")
+
+    args = parser.parse_args()
+
+    match args.command:
+        case "cleanup":
+            cleanup_old_certificates(cert_dir)
+        case "generate-tls":
+            create_astronomer_tls_certificates()
+        case "generate-private-ca":
+            create_astronomer_private_ca_certificates()
+        case "validate":
+            path = Path(args.cert_path)
+            is_valid, message = validate_certificate(path)
+            print(message)
+            raise SystemExit(0 if is_valid else 1)
+        case _:
+            parser.print_help()
+
+
+if __name__ == "__main__":
+    main()

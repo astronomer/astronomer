@@ -1,19 +1,18 @@
-#################################
-## Astronomer Registry Ingress ##
-#################################
-{{- if and .Values.global.baseDomain .Values.global.enablePerHostIngress }}
-{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
+################################
+## Commander Metadata Ingress ##
+################################
+{{- if eq .Values.global.plane.mode "data" }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:
-  name: {{ .Release.Name }}-registry-ingress
+  name: {{ .Release.Name }}-commander-metadata-ingress
   labels:
-    component: registry-ingress
+    component: metadata-ingress
     tier: astronomer
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
-    plane: {{ .Values.global.plane.mode }}
+    plane: dataplane
   annotations:
     {{- if .Values.global.authSidecar.enabled  }}
 {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
@@ -24,29 +23,33 @@ metadata:
     kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
     kubernetes.io/tls-acme: {{ eq .Values.global.acme true | quote }}
     nginx.ingress.kubernetes.io/custom-http-errors: "404"
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
+    nginx.ingress.kubernetes.io/rewrite-target: /metadata
+    {{- end }}
+    {{- if .Values.commander.ingress.annotation  }}
+    {{- toYaml .Values.commander.ingress.annotation  | nindent 4  }}
     {{- end }}
 spec:
   {{- if or .Values.global.tlsSecret .Values.global.acme }}
   tls:
   {{- if .Values.global.acme }}
-    - secretName: astronomer-public-tls
+    - secretName: astronomer-tls
   {{- end }}
   {{- if .Values.global.tlsSecret }}
     - secretName: {{ .Values.global.tlsSecret }}
   {{- end }}
       hosts:
-        - {{ if eq .Values.global.plane.mode "data" }}registry.{{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}{{ else }}registry.{{ .Values.global.baseDomain }}{{ end }}
+        - {{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}
   {{- end }}
   rules:
-  - host: {{ if eq .Values.global.plane.mode "data" }}registry.{{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}{{ else }}registry.{{ .Values.global.baseDomain }}{{ end }}
+  - host: {{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}
     http:
       paths:
-        - path: /
+        - path: /metadata
           pathType: Prefix
           backend:
             service:
-              name: {{ .Release.Name }}-registry
+              name: {{ .Release.Name }}-commander
               port:
-                name: registry-http
-{{- end }}
+                name: commander-http
 {{- end }}

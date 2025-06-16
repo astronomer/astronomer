@@ -53,7 +53,7 @@ class TestRegistryStatefulset:
         assert doc["kind"] == "Deployment"
         assert doc["apiVersion"] == "apps/v1"
         assert doc["metadata"]["name"] == "release-name-registry"
-        assert doc["spec"]["template"]["spec"]["volumes"][2]["name"] == "gcs-keyfile"
+        assert doc["spec"]["template"]["spec"]["volumes"][1]["name"] == "gcs-keyfile"
         assert doc["spec"]["template"]["spec"]["containers"][0]["volumeMounts"][3]["name"] == "gcs-keyfile"
 
     def test_registry_sts_with_registry_persistence_enabled(self, kube_version):

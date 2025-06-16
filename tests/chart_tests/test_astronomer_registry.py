@@ -1,7 +1,9 @@
+from pathlib import Path
+
 import jmespath
 import pytest
 
-from tests import supported_k8s_versions
+from tests import git_root_dir, supported_k8s_versions
 from tests.utils.chart import render_chart
 
 
@@ -178,3 +180,30 @@ class TestRegistryStatefulset:
         assert docs[0]["kind"] == "StatefulSet"
         assert len(docs[0]["spec"]["template"]["spec"]["volumes"]) == 1
         assert docs[0]["spec"]["template"]["spec"]["containers"][0]["volumeMounts"][1] != not_expected_volume_mount
+
+    @pytest.mark.parametrize("mode", ["data", "unified"])
+    def test_astronomer_registry_statefulset_enabled_for_data_and_unified_mode(self, kube_version, mode):
+        """Test that helm renders registry statefulset when global.plane.mode is 'data' or 'unified'."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"plane": {"mode": mode}}},
+            show_only=["charts/astronomer/templates/registry/registry-statefulset.yaml"],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["kind"] == "StatefulSet"
+        assert doc["apiVersion"] == "apps/v1"
+        assert doc["metadata"]["name"] == "release-name-registry"
+
+    def test_astronomer_registry_statefulset_disabled_for_control_mode(self, kube_version):
+        """Test that helm does not render registry statefulset when global.plane.mode is 'control'."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"plane": {"mode": "control"}}},
+            show_only=sorted(
+                [str(x.relative_to(git_root_dir)) for x in Path(f"{git_root_dir}/charts/astronomer/templates/registry").glob("*")]
+            ),
+        )
+
+        assert len(docs) == 0

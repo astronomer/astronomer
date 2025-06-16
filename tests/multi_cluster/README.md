@@ -2,11 +2,11 @@
 
 Astronomer "Software" version 1.0 introduces an optional separation of the control plane out from the data plane, allowing an app that was previously expected to run inside of a single cluster to run in N clusters, where there is 1 Control Plane and >=1 Data Planes. These two planes may be colocated inside of the same cluster. This presents us with three installation helm scenarios:
 
-- Unified: both control and data plane exist in the same cluster
-- Control: install only the control plane components into the cluster
-- Data: install only the data plane components into the cluster
+- unified: both control and data plane exist in the same cluster
+- control: install only the control plane components into the cluster
+- data: install only the data plane components into the cluster
 
-Our old functional tests were not meant to test this variety of installation scenarios, therefore this `multi_cluster` test directory was created with a new functional test framework that can be used to test these three scenarios.
+When running these tests, you **MUST** `export TEST_SCENARIO` with one of the above values. (EG: `export TEST_SCENARIO=unified`)
 
 ## Things to know about this test setup
 
