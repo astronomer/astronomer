@@ -1,0 +1,100 @@
+###########################################################################
+# Vector DaemonSet
+###########################################################################
+{{- if (eq .Values.global.logging.collector "vector") }}
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ include "vector.fullname" . }}
+  labels:
+    tier: logging
+    component: {{ template "vector.name" . }}
+    chart: {{ template "vector.chart" . }}
+    heritage: {{ .Release.Service }}
+    release: {{ .Release.Name }}
+
+spec:
+  selector:
+    matchLabels:
+      tier: logging
+      component: {{ template "vector.name" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        tier: logging
+        component: {{ template "vector.name" . }}
+        release: {{ .Release.Name }}
+        app: {{ template "vector.name" . }}
+        version: {{ .Chart.Version }}
+    spec:
+      terminationGracePeriodSeconds: 30
+    {{- if .Values.priorityClassName }}
+      priorityClassName:  {{ .Values.priorityClassName  }}
+    {{ end }}
+      nodeSelector: {{ toYaml (.Values.nodeSelector) | nindent 8 }}
+      affinity: {{ toYaml (.Values.affinity) | nindent 8 }}
+      tolerations: {{ toYaml (.Values.tolerations) | nindent 8 }}
+      serviceAccountName: {{ template "vector.fullname" . }}
+      {{- include "vector.imagePullSecrets" . | nindent 6 }}
+      securityContext: {{ toYaml .Values.securityContext | nindent 8 }}
+      containers:
+      - name: vector
+        image: {{ template "vector.image" . }}
+        securityContext: {{ toYaml .Values.vector.securityContext | nindent 10 }}
+        imagePullPolicy: {{ .Values.vector.image.pullPolicy }}
+        env:
+        - name: VECTOR_SELF_NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: VECTOR_SELF_POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: VECTOR_SELF_POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: VECTOR_LOG
+          value: "{{ .Values.logLevel | default "info" }}"
+        - name: ELASTICSEARCH_HOST
+          value: {{ template "elasticsearch.host" . }}
+        - name: ELASTICSEARCH_PORT
+          value: {{ .Values.elasticsearch.port | quote }}
+        - name: VECTOR_CONFIG_YAML
+          value: "/etc/vector/config/vector-config.yaml"
+        - name: NAMESPACE
+          value: {{ .Release.Namespace | quote }}
+        - name: RELEASE
+          value: {{ .Release.Name | quote }}
+        {{- range $key, $value :=  .Values.extraEnv }}
+        - name: {{ $key }}
+          value: {{ $value | quote }}
+        {{- end }}
+
+        volumeMounts:
+        {{- if .Values.additionalVolumeMounts }}
+        {{- toYaml .Values.additionalVolumeMounts | nindent 8 }}
+        {{- end }}
+        {{- include "custom_ca_volume_mounts" . | nindent 8 }}
+        - name: varlog
+          mountPath: /var/log/
+          readOnly: true
+        - name: config-volume-{{ template "vector.fullname" . }}
+          mountPath: /etc/vector/config
+          readOnly: true
+        resources: {{ toYaml .Values.vector.resources | nindent 12 }}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      {{- if .Values.additionalVolumes }}
+      {{- toYaml .Values.additionalVolumes | nindent 6 }}
+      {{- end }}
+      {{- include "custom_ca_volumes" . | nindent 6 }}
+      - name: varlog
+        hostPath:
+          path: /var/log/
+      - name: config-volume-{{ template "vector.fullname" . }}
+        configMap:
+          name: {{ template "vector.fullname" . }}
+{{- end -}}

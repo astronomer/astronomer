@@ -1,0 +1,149 @@
+###########################################################################
+# Vector ConfigMap
+###########################################################################
+{{- if (eq .Values.global.logging.collector "vector") }}
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: {{ include "vector.fullname" . }}
+  labels:
+    tier: logging
+    component: {{ template "vector.name" . }}
+    chart: {{ template "vector.chart" . }}
+    heritage: {{ .Release.Service }}
+    release: {{ .Release.Name }}
+
+data:
+  vector-config.yaml: |
+    log_schema:
+      timestamp_key : "@timestamp"
+    # TODO: revisit this data_dir and see if we can use something better. Sharing a dir with the bare metal machine will allow us to
+    #       persist the checkpoint between pod restarts so we don't have to re-read the logs from the beginning.
+    data_dir: "/tmp"
+    sources:
+      airflow_log_files:
+        type: kubernetes_logs
+        #include:
+        #  - "/var/log/containers/*.log"
+        read_from: beginning
+        auto_partial_merge: true
+        extra_label_selector: "platform=astronomer"
+        #extra_label_selector: "component=scheduler,component=webserver,component=worker,component=triggerer,component=git-sync-relay,component=dag-server,component=airflow-downgrade"
+    transforms:
+      transform_airflow_logs:
+        type: remap
+        inputs:
+          - airflow_log_files
+        source: |
+          .component = .kubernetes.pod_labels.component
+          .workspace = .kubernetes.pod_labels.workspace
+          .release   = .kubernetes.pod_labels.release
+          .date_nano = parse_timestamp!(.@timestamp, format: "%Y-%m-%dT%H:%M:%S.%f%Z")
+
+      filter_common_logs:
+        type: filter
+        inputs:
+          - transform_airflow_logs
+        condition:
+          type: "vrl"
+          source: '!includes(["worker","scheduler"], .kubernetes.pod_labels.component)'
+
+      filter_scheduler_logs:
+        type: filter
+        inputs:
+          - transform_airflow_logs
+        condition:
+          type: "vrl"
+          source: 'includes(["scheduler"], .kubernetes.pod_labels.component)'
+
+      filter_worker_logs:
+        type: filter
+        inputs:
+          - transform_airflow_logs
+        condition:
+          type: "vrl"
+          source: 'includes(["worker"], .kubernetes.pod_labels.component)'
+
+      filter_gitsyncrelay_logs:
+        type: filter
+        inputs:
+          - transform_airflow_logs
+        condition:
+          type: "vrl"
+          source: 'includes(["git-sync-relay"], .kubernetes.pod_labels.component)'
+
+      filter_dagserver_logs:
+        type: filter
+        inputs:
+          - transform_airflow_logs
+        condition:
+          type: "vrl"
+          source: 'includes(["dag-server"], .kubernetes.pod_labels.component)'
+
+      filter_airflow_downgrade_logs:
+        type: filter
+        inputs:
+          - transform_airflow_logs
+        condition:
+          type: "vrl"
+          source: 'includes(["airflow-downgrade"], .kubernetes.pod_labels.component)'
+
+      transform_task_log:
+        type: remap
+        inputs:
+          - filter_worker_logs
+          - filter_scheduler_logs
+        source: |-
+          . = parse_json(.message) ?? .
+          .@timestamp = parse_timestamp(.timestamp, "%Y-%m-%dT%H:%M:%S%Z") ?? now()
+          .check_log_id = exists(.log_id)
+          if .check_log_id != true {
+          .log_id = join!([to_string!(.dag_id), to_string!(.task_id), to_string!(.execution_date), to_string!(.try_number)], "_")
+          }
+          .offset = to_int(now()) * 1000000000 + to_unix_timestamp(now()) * 1000000
+
+      #final_common_log:
+      #  type: remap
+      #  inputs:
+      #    - filter_common_logs
+      #  source: |
+      #    .component = .kubernetes.pod_labels.component
+      #    .workspace = .kubernetes.pod_labels.workspace
+      #    .release = .kubernetes.pod_labels.release
+      #    .date_nano = parse_timestamp!(.@timestamp, format: "%Y-%m-%dT%H:%M:%S.%f%Z")
+
+      final_task_log:
+        type: remap
+        inputs:
+          - transform_task_log
+        source: |
+          .component = .kubernetes.pod_labels.component
+          .workspace = .kubernetes.pod_labels.workspace
+          .release = .kubernetes.pod_labels.release
+          .date_nano = parse_timestamp!(.@timestamp, format: "%Y-%m-%dT%H:%M:%S.%f%Z")
+
+      transform_remove_fields:
+        type: remap
+        inputs:
+          - final_task_log
+          - filter_common_logs
+          - filter_gitsyncrelay_logs
+          - filter_dagserver_logs
+          - filter_airflow_downgrade_logs
+        source: |
+          del(.kubernetes)
+          del(.file)
+
+    sinks:
+      # https://vector.dev/docs/reference/configuration/sinks/elasticsearch/
+      elasticserach:
+        type: elasticsearch
+        inputs:
+          - transform_remove_fields
+        mode: bulk
+        compression: none
+        endpoints: ["http://{{.Release.Name}}-elasticsearch:9200"]
+        bulk:
+          index: "{{ include "logging.indexNamePrefix" . }}.{{ "{{" }} .release {{ "}}" }}.{{ .Values.indexPattern }}"
+          action: create
+{{- end -}}
