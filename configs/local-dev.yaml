@@ -16,6 +16,9 @@ tags:
 global:
   # Base domain for all subdomains exposed through ingress
   baseDomain: localtest.me
+  # Mode of the plane, can be 'data', 'unified' or 'local'
+  plane:
+    domainSuffix: "local"
 
   # Name of secret containing TLS certificate
   tlsSecret: astronomer-tls
