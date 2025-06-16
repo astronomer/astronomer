@@ -34,7 +34,7 @@ class TestAstronomerCommander:
                 },
                 "images": {"commander": {"tag": "88.77.66"}},
             },
-            "global": {"baseDomain": "astronomer.example.com", "plane": {"mode": "data"}},
+            "global": {"baseDomain": "astronomer.example.com", "plane": {"mode": "data", "domainSuffix":"domain"}},
         }
         docs = render_chart(
             kube_version=kube_version,
@@ -63,7 +63,7 @@ class TestAstronomerCommander:
         assert "COMMANDER_DATAPLANE_DATABASE_URL" in env_vars
         assert env_vars["COMMANDER_DATAPLANE_ID"] == "custom-dp-123"
         assert env_vars["COMMANDER_REGION"] == "us-west-2"
-        assert env_vars["COMMANDER_BASE_DOMAIN"] == "example.com"
+        assert env_vars["COMMANDER_BASE_DOMAIN"] == "domain.example.com"
         assert env_vars["COMMANDER_DATAPLANE_MODE"] == "data"
         assert env_vars["COMMANDER_HOUSTON_JWKS_URL"] == "https://houston.example.com/auth"
 
