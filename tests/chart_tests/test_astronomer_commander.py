@@ -34,7 +34,7 @@ class TestAstronomerCommander:
                 },
                 "images": {"commander": {"tag": "88.77.66"}},
             },
-            "global": {"baseDomain": "astronomer.example.com", "plane": {"mode": "data", "domainSuffix":"domain"}},
+            "global": {"baseDomain": "astronomer.example.com", "plane": {"mode": "data", "domainSuffix": "domain"}},
         }
         docs = render_chart(
             kube_version=kube_version,
