@@ -9,7 +9,7 @@ BIN_DIR="${GIT_ROOT_DIR}/bin"
 # shellcheck disable=SC1091
 [[ -f venv/bin/activate ]] && { . venv/bin/activate ; }
 
-set -x
+set -ex
 
 # Download helper tools to ~/.local/share/astronomer-software/bin
 "${BIN_DIR}/install-ci-tools.py"
