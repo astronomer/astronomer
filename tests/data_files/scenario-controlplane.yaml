@@ -1,0 +1,16 @@
+# Helm values for control scenario tests.
+
+global:
+  plane:
+    mode: control
+  postgresqlEnabled: true
+
+tags:
+  logging: true
+  monitoring: true
+  platform: true
+
+astronomer:
+  houston:
+    upgradeDeployments:
+      enabled: true

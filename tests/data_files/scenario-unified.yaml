@@ -1,0 +1,17 @@
+# Configuration file that sets the helm chart into unified (legacy) mode.
+
+global:
+  plane:
+    mode: unified
+
+  postgresqlEnabled: true
+
+tags:
+  logging: true
+  monitoring: true
+  platform: true
+
+astronomer:
+  houston:
+    upgradeDeployments:
+      enabled: true

@@ -62,11 +62,11 @@ if gsutil -q stat "gs://${target_repo}/${helm_chart_path##*/}" ; then
 fi
 
 pre-flight-setup() {
-  # Set script_path to the path of this script
-  script_path="${0%/*}"
+  # Install helper tools into ~/.local/share/astronomer-software/bin
+  bin/install-ci-tools.py
 
-  # we need to source this file because it modifies PATH
-  source "$script_path/install-ci-tools"
+  # Use helper bin path
+  export PATH="${HOME}/.local/share/astronomer-software/bin:${PATH}"
 
   set -e
 
