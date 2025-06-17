@@ -181,7 +181,7 @@
 - name: COMMANDER_DATAPLANE_DATABASE_URL
   valueFrom:
     secretKeyRef:
-      name: bootstrap-secret
+      name: astronomer-bootstrap
       key: connection
 - name: COMMANDER_DATAPLANE_ID
   value: {{ .Values.commander.dataplaneId | quote }}
