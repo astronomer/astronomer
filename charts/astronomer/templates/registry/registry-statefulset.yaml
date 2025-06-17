@@ -139,12 +139,10 @@ spec:
             items:
               - key: config.yml
                 path: config.yml
-        {{- if eq .Values.global.plane.mode "data"}}
         {{- if not .Values.registry.enableInsecureAuth }}
         - name: jwks-certificate
           secret:
             secretName: {{ include "houston.jwtCertificateSecret" . }}
-        {{- end }}
         {{- end }}
         {{ include "custom_ca_volumes" . | indent 8  }}
         {{- if and .Values.registry.gcs.enabled .Values.registry.gcs.useKeyfile }}
