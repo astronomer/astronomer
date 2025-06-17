@@ -425,7 +425,6 @@ commander:
   # Values for Dataplane Metadata
   cloudProvider: ""
   commanderUrl: ""
-  dataplaneId: ""
   region: ""
 
 registry:
