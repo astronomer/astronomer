@@ -27,7 +27,6 @@ class TestAstronomerCommander:
                 "airflowChartVersion": "99.88.77",
                 "commander": {
                     "cloudProvider": "aws",
-                    "commanderUrl": "example.com",
                     "region": "us-west-2",
                     "houstonAuthorizationUrl": "https://houston.example.com/auth",
                 },
