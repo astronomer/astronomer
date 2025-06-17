@@ -188,7 +188,7 @@
 - name: COMMANDER_BASE_DOMAIN
   value: {{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}
 - name: COMMANDER_DATAPLANE_MODE
-  value: {{ .Values.global.plane.mode | quote }}
+  value: {{ .Values.global.plane.domainSuffix }}
 - name: COMMANDER_HOUSTON_JWKS_URL
   value: {{ .Values.commander.houstonAuthorizationUrl | default "" | quote }}
 {{- end }}
