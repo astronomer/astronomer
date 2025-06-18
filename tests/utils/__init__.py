@@ -4,6 +4,7 @@ import yaml
 
 from tests.utils.chart import render_chart
 
+
 def get_env_vars_dict(container_env):
     """
     Convert container environment variables list to a dictionary.
@@ -13,6 +14,7 @@ def get_env_vars_dict(container_env):
         Dictionary mapping env var names to their values or valueFrom references
     """
     return {x["name"]: x["value"] if x.get("value") else x["valueFrom"] for x in container_env}
+
 
 def get_service_ports_by_name(doc):
     """Given a single service doc, return all the ports by name."""
