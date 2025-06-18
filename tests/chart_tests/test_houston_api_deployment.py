@@ -3,7 +3,7 @@ import pytest
 import yaml
 
 from tests import supported_k8s_versions
-from tests.utils import get_containers_by_name
+from tests.utils import get_containers_by_name, get_env_vars_dict
 from tests.utils.chart import render_chart
 
 
@@ -50,12 +50,12 @@ class TestHoustonApiDeployment:
         houston_env = c_by_name["houston"]["env"]
         deployments_database_connection_env = next(x for x in houston_env if x["name"] == "DEPLOYMENTS__DATABASE__CONNECTION")
         assert deployments_database_connection_env is not None
-        env_vars = {x["name"]: x["value"] if x.get("value") else x["valueFrom"] for x in c_by_name["houston"]["env"]}
+        env_vars = get_env_vars_dict(c_by_name["houston"]["env"])
         assert env_vars["DEPLOYMENTS__DATABASE__CONNECTION"]["secretKeyRef"]
         assert env_vars["COMMANDER_WAIT_ENABLED"] == "true"
         assert env_vars["REGISTRY_WAIT_ENABLED"] == "true"
 
-        env_vars = {x["name"]: x["value"] if x.get("value") else x["valueFrom"] for x in c_by_name["wait-for-db"]["env"]}
+        env_vars = get_env_vars_dict(c_by_name["wait-for-db"]["env"])
         assert env_vars["COMMANDER_WAIT_ENABLED"] == "true"
         assert env_vars["REGISTRY_WAIT_ENABLED"] == "true"
 
@@ -72,11 +72,11 @@ class TestHoustonApiDeployment:
 
         c_by_name = get_containers_by_name(doc, include_init_containers=True)
 
-        env_vars = {x["name"]: x["value"] if x.get("value") else x["valueFrom"] for x in c_by_name["houston"]["env"]}
+        env_vars = get_env_vars_dict(c_by_name["houston"]["env"])
         assert env_vars["COMMANDER_WAIT_ENABLED"] == "false"
         assert env_vars["REGISTRY_WAIT_ENABLED"] == "false"
 
-        env_vars = {x["name"]: x["value"] if x.get("value") else x["valueFrom"] for x in c_by_name["wait-for-db"]["env"]}
+        env_vars = get_env_vars_dict(c_by_name["wait-for-db"]["env"])
         assert env_vars["COMMANDER_WAIT_ENABLED"] == "false"
         assert env_vars["REGISTRY_WAIT_ENABLED"] == "false"
 
