@@ -181,10 +181,10 @@
 - name: COMMANDER_DATAPLANE_DATABASE_URL
   valueFrom:
     secretKeyRef:
-      name: bootstrap-secret
+      name: astronomer-bootstrap
       key: connection
 - name: COMMANDER_DATAPLANE_ID
-  value: {{ .Values.commander.dataplaneId | quote }}
+  value: {{ .Values.global.plane.domainSuffix }}
 - name: COMMANDER_BASE_DOMAIN
   value: {{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}
 - name: COMMANDER_DATAPLANE_MODE
@@ -291,6 +291,8 @@ s3:
 - name: NATS__CLUSTER_ID
   value: {{ .Release.Name }}-stan
 - name: COMMANDER_WAIT_ENABLED
+  value: {{ if eq .Values.global.plane.mode "unified" }}"true"{{ else }}"false"{{ end }}
+- name: REGISTRY_WAIT_ENABLED
   value: {{ if eq .Values.global.plane.mode "unified" }}"true"{{ else }}"false"{{ end }}
 {{- if .Values.houston.updateRuntimeCheck.enabled }}
 - name: HOUSTON_SCRIPT_UPDATE_RUNTIME_SERVICE_URL
