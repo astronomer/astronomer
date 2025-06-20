@@ -213,15 +213,6 @@ elasticsearch:
       exec:
         command:
         - /bin/true
-  sysctlInitContainer:
-    livenessProbe:
-      exec:
-        command:
-        - /bin/true
-    readinessProbe:
-      exec:
-        command:
-        - /bin/true
 external-es-proxy:
   awsproxy:
     livenessProbe:
@@ -457,12 +448,3 @@ stan:
         exec:
           command:
           - /bin/true
-  waitForNatsServer:
-    livenessProbe:
-      exec:
-        command:
-        - /bin/true
-    readinessProbe:
-      exec:
-        command:
-        - /bin/true
