@@ -56,12 +56,6 @@ spec:
           imagePullPolicy: IfNotPresent
           securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
           resources: {{ toYaml .Values.resources | nindent 12 }}
-          {{- if .Values.waitForDB.readinessProbe }}
-          readinessProbe: {{ tpl (toYaml .Values.waitForDB.readinessProbe) . | nindent 12 }}
-          {{- end }}
-          {{- if .Values.waitForDB.livenessProbe }}
-          livenessProbe: {{ tpl (toYaml .Values.waitForDB.livenessProbe) . | nindent 12 }}
-          {{- end }}
           env:
             - name: GF_DATABASE_URL
               valueFrom:
