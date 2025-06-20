@@ -84,8 +84,4 @@ extraEnvVars:
   #       name: grafana-smtp-secret
   #       key: smtp_password
 
-bootstrapper:
-
-waitForDB:
-
 podAnnotations: {}

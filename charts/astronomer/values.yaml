@@ -339,10 +339,6 @@ houston:
     readinessProbe: {}
     livenessProbe: {}
 
-  bootstrapper:
-
-  waitForDB:
-
   taskUsageMetrics:
     readinessProbe: {}
     livenessProbe: {}
