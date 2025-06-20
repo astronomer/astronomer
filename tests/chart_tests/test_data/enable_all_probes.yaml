@@ -51,15 +51,6 @@ astronomer:
         command:
         - /bin/true
   houston:
-    bootstrapper:
-      livenessProbe:
-        exec:
-          command:
-          - /bin/true
-      readinessProbe:
-        exec:
-          command:
-          - /bin/true
     cleanupAirflowDb:
       livenessProbe:
         exec:
@@ -141,15 +132,6 @@ astronomer:
           command:
           - /bin/true
     upgradeDeployments:
-      livenessProbe:
-        exec:
-          command:
-          - /bin/true
-      readinessProbe:
-        exec:
-          command:
-          - /bin/true
-    waitForDB:
       livenessProbe:
         exec:
           command:
@@ -288,15 +270,6 @@ global:
   postgresqlEnabled: true
   prometheusPostgresExporterEnabled: true
 grafana:
-  bootstrapper:
-    livenessProbe:
-      exec:
-        command:
-        - /bin/true
-    readinessProbe:
-      exec:
-        command:
-        - /bin/true
   livenessProbe:
     exec:
       command:
@@ -305,15 +278,6 @@ grafana:
     exec:
       command:
       - /bin/true
-  waitForDB:
-    livenessProbe:
-      exec:
-        command:
-        - /bin/true
-    readinessProbe:
-      exec:
-        command:
-        - /bin/true
 kibana:
   defaultIndexJob:
     livenessProbe:
