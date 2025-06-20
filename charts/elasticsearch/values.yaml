@@ -314,8 +314,6 @@ nginx:
 sysctlInitContainer:
   enabled: true
   sysctlVmMaxMapCount: 262144
-  livenessProbe: {}
-  readinessProbe: {}
 
 podSecurityContext:
   fsGroup: 1000
