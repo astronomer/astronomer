@@ -85,11 +85,7 @@ extraEnvVars:
   #       key: smtp_password
 
 bootstrapper:
-  readinessProbe: {}
-  livenessProbe: {}
 
 waitForDB:
-  readinessProbe: {}
-  livenessProbe: {}
 
 podAnnotations: {}
