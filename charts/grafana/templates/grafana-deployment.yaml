@@ -67,12 +67,6 @@ spec:
           imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
           securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
           resources: {{ toYaml .Values.resources | nindent 12 }}
-          {{- if .Values.bootstrapper.readinessProbe }}
-          readinessProbe: {{ tpl (toYaml .Values.bootstrapper.readinessProbe) . | nindent 12 }}
-          {{- end }}
-          {{- if .Values.bootstrapper.livenessProbe }}
-          livenessProbe: {{ tpl (toYaml .Values.bootstrapper.livenessProbe) . | nindent 12 }}
-          {{- end }}
           env:
             - name: BOOTSTRAP_DB
               valueFrom:
