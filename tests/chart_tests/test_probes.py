@@ -37,12 +37,9 @@ class TestCustomProbes:
         init_containers = template_spec.get("initContainers", [])
 
         for init_container in init_containers:
-            container_name = init_container.get("name", "unnamed")
-
+            container_name = init_container.get("name")
             assert "livenessProbe" not in init_container, f"Init container '{container_name}' should not have livenessProbe"
-
             assert "readinessProbe" not in init_container, f"Init container '{container_name}' should not have readinessProbe"
-
             assert "startupProbe" not in init_container, f"Init container '{container_name}' should not have startupProbe"
 
 
