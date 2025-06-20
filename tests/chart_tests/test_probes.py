@@ -32,7 +32,8 @@ class TestCustomProbes:
     def test_init_containers_have_no_probes(self, doc):
         """Ensure init containers do not have liveness or readiness probes."""
 
-        spec = doc.get("spec", {})
+        if not (spec := doc.get("spec", {})):
+            pytest.skip("doc has no .spec")
         template_spec = spec.get("template", {}).get("spec", {}) if "template" in spec else spec
         init_containers = template_spec.get("initContainers", [])
 
