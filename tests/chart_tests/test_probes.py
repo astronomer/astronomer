@@ -26,6 +26,25 @@ class TestCustomProbes:
             assert container["livenessProbe"] != {}
             assert container["readinessProbe"] != {}
 
+    filtered_docs = [doc for doc in docs if doc["kind"] in include_kind_list]
+
+    @pytest.mark.parametrize("doc", filtered_docs)
+    def test_init_containers_have_no_probes(self, doc):
+        """Ensure init containers do not have liveness or readiness probes."""
+
+        spec = doc.get("spec", {})
+        template_spec = spec.get("template", {}).get("spec", {}) if "template" in spec else spec
+        init_containers = template_spec.get("initContainers", [])
+
+        for init_container in init_containers:
+            container_name = init_container.get("name", "unnamed")
+
+            assert "livenessProbe" not in init_container, f"Init container '{container_name}' should not have livenessProbe"
+
+            assert "readinessProbe" not in init_container, f"Init container '{container_name}' should not have readinessProbe"
+
+            assert "startupProbe" not in init_container, f"Init container '{container_name}' should not have startupProbe"
+
 
 class TestDefaultProbes:
     """Test the default probes. This test is to ensure we keep the default probes during refactoring."""
