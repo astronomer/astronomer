@@ -83,7 +83,6 @@ class Test_Registry_Configmap:
                     "houston": {
                         "eventUrl": "/v1/authorization"
                     },
-                    "registry": {}
                 }
             },
             show_only=["charts/astronomer/templates/registry/registry-configmap.yaml"],
@@ -110,7 +109,3 @@ class Test_Registry_Configmap:
         assert houston_endpoint is not None
         actual_url = houston_endpoint["url"].strip()
         assert actual_url == "https://houston.example.com/v1/authorization"
-
-    
-
-
