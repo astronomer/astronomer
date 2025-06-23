@@ -14,9 +14,9 @@ customize_all_probes = yaml.safe_load(
 
 class TestCustomProbes:
     docs = render_chart(values=customize_all_probes)
-    filtered_docs = [get_containers_by_name(doc) for doc in docs if doc["kind"] in include_kind_list]
+    filtered_containers = [get_containers_by_name(doc) for doc in docs if doc["kind"] in include_kind_list]
 
-    @pytest.mark.parametrize("doc", filtered_docs)
+    @pytest.mark.parametrize("doc", filtered_containers)
     def test_template_probes_with_custom_values(self, doc):
         """Ensure all containers have the ability to customize liveness probes."""
 
