@@ -51,15 +51,6 @@ astronomer:
         command:
         - /bin/true
   houston:
-    bootstrapper:
-      livenessProbe:
-        exec:
-          command:
-          - /bin/true
-      readinessProbe:
-        exec:
-          command:
-          - /bin/true
     cleanupAirflowDb:
       livenessProbe:
         exec:
@@ -149,15 +140,6 @@ astronomer:
         exec:
           command:
           - /bin/true
-    waitForDB:
-      livenessProbe:
-        exec:
-          command:
-          - /bin/true
-      readinessProbe:
-        exec:
-          command:
-          - /bin/true
     worker:
       livenessProbe:
         exec:
@@ -231,15 +213,6 @@ elasticsearch:
       exec:
         command:
         - /bin/true
-  sysctlInitContainer:
-    livenessProbe:
-      exec:
-        command:
-        - /bin/true
-    readinessProbe:
-      exec:
-        command:
-        - /bin/true
 external-es-proxy:
   awsproxy:
     livenessProbe:
@@ -288,15 +261,6 @@ global:
   postgresqlEnabled: true
   prometheusPostgresExporterEnabled: true
 grafana:
-  bootstrapper:
-    livenessProbe:
-      exec:
-        command:
-        - /bin/true
-    readinessProbe:
-      exec:
-        command:
-        - /bin/true
   livenessProbe:
     exec:
       command:
@@ -305,15 +269,6 @@ grafana:
     exec:
       command:
       - /bin/true
-  waitForDB:
-    livenessProbe:
-      exec:
-        command:
-        - /bin/true
-    readinessProbe:
-      exec:
-        command:
-        - /bin/true
 kibana:
   defaultIndexJob:
     livenessProbe:
@@ -493,12 +448,3 @@ stan:
         exec:
           command:
           - /bin/true
-  waitForNatsServer:
-    livenessProbe:
-      exec:
-        command:
-        - /bin/true
-    readinessProbe:
-      exec:
-        command:
-        - /bin/true

@@ -14,9 +14,9 @@ customize_all_probes = yaml.safe_load(
 
 class TestCustomProbes:
     docs = render_chart(values=customize_all_probes)
-    filtered_docs = [get_containers_by_name(doc) for doc in docs if doc["kind"] in include_kind_list]
+    filtered_containers = [get_containers_by_name(doc) for doc in docs if doc["kind"] in include_kind_list]
 
-    @pytest.mark.parametrize("doc", filtered_docs)
+    @pytest.mark.parametrize("doc", filtered_containers)
     def test_template_probes_with_custom_values(self, doc):
         """Ensure all containers have the ability to customize liveness probes."""
 
@@ -25,6 +25,23 @@ class TestCustomProbes:
             assert "readinessProbe" in container
             assert container["livenessProbe"] != {}
             assert container["readinessProbe"] != {}
+
+    filtered_docs = [doc for doc in docs if doc["kind"] in include_kind_list]
+
+    @pytest.mark.parametrize("doc", filtered_docs)
+    def test_init_containers_have_no_probes(self, doc):
+        """Ensure init containers do not have liveness or readiness probes."""
+
+        if not (spec := doc.get("spec", {})):
+            pytest.skip("doc has no .spec")
+        template_spec = spec.get("template", {}).get("spec", {}) if "template" in spec else spec
+        init_containers = template_spec.get("initContainers", [])
+
+        for init_container in init_containers:
+            container_name = init_container.get("name")
+            assert "livenessProbe" not in init_container, f"Init container '{container_name}' should not have livenessProbe"
+            assert "readinessProbe" not in init_container, f"Init container '{container_name}' should not have readinessProbe"
+            assert "startupProbe" not in init_container, f"Init container '{container_name}' should not have startupProbe"
 
 
 class TestDefaultProbes:
