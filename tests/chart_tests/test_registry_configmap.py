@@ -67,3 +67,50 @@ class Test_Registry_Configmap:
         assert doc["apiVersion"] == "v1"
         assert doc["metadata"]["name"] == "release-name-registry"
         assert yaml.safe_load(doc["data"]["config.yml"])["log"]["level"] == "debug"
+
+    def test_registry_configmap_with_houston_event_url(self, kube_version):
+        """Test that helm renders registry-configmap with correct Houston event URL for notifications."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "baseDomain": "astronomer.example.com",
+                    "plane": {
+                        "mode": "data"
+                    }
+                },
+                "astronomer": {
+                    "houston": {
+                        "eventUrl": "/v1/authorization"
+                    },
+                    "registry": {}
+                }
+            },
+            show_only=["charts/astronomer/templates/registry/registry-configmap.yaml"],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["kind"] == "ConfigMap"
+        assert doc["apiVersion"] == "v1"
+        assert doc["metadata"]["name"] == "release-name-registry"
+
+        config = yaml.safe_load(doc["data"]["config.yml"])
+
+        assert "notifications" in config
+        assert "endpoints" in config["notifications"]
+        assert len(config["notifications"]["endpoints"]) > 0
+
+        houston_endpoint = None
+        for endpoint in config["notifications"]["endpoints"]:
+            if endpoint["name"] == "houston":
+                houston_endpoint = endpoint
+                break
+
+        assert houston_endpoint is not None
+        actual_url = houston_endpoint["url"].strip()
+        assert actual_url == "https://houston.example.com/v1/authorization"
+
+    
+
+
