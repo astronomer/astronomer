@@ -73,17 +73,10 @@ class Test_Registry_Configmap:
         docs = render_chart(
             kube_version=kube_version,
             values={
-                "global": {
-                    "baseDomain": "astronomer.example.com",
-                    "plane": {
-                        "mode": "data"
-                    }
-                },
+                "global": {"baseDomain": "astronomer.example.com", "plane": {"mode": "data"}},
                 "astronomer": {
-                    "houston": {
-                        "eventUrl": "/v1/authorization"
-                    },
-                }
+                    "houston": {"eventUrl": "/v1/authorization"},
+                },
             },
             show_only=["charts/astronomer/templates/registry/registry-configmap.yaml"],
         )
