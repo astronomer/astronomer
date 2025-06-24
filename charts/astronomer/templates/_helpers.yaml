@@ -499,7 +499,7 @@ tlsEnabled: false
 {{- define "houston.eventsUrl" -}}
 {{- if (eq .Values.global.plane.mode "data") }}
 https://houston.{{ .Values.global.baseDomain }}/v1/authorization
-{{- else }}
+{{- else -}}
 http://{{ .Release.Name }}-houston:{{ .Values.ports.houstonHTTP }}/v1/registry/events
 {{- end }}
 {{- end -}}
