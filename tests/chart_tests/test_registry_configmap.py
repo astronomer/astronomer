@@ -93,12 +93,8 @@ class Test_Registry_Configmap:
         assert "endpoints" in config["notifications"]
         assert len(config["notifications"]["endpoints"]) > 0
 
-        houston_endpoint = None
-        for endpoint in config["notifications"]["endpoints"]:
-            if endpoint["name"] == "houston":
-                houston_endpoint = endpoint
-                break
-
-        assert houston_endpoint is not None
-        actual_url = houston_endpoint["url"].strip()
-        assert actual_url == "https://houston.example.com/v1/authorization"
+        houston_endpoint = next(
+            (endpoint for endpoint in config["notifications"]["endpoints"] if endpoint["name"] == "houston"),
+            None,
+        )
+        assert houston_endpoint == "https://houston.example.com/v1/authorization"
