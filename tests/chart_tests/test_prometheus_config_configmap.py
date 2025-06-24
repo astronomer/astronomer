@@ -98,7 +98,7 @@ class TestPrometheusConfigConfigmap:
         doc = render_chart(
             kube_version=kube_version,
             show_only=self.show_only,
-            values={"prometheus": {"external_labels": {"external_labels_key_1": "external_labels_value_1"}}},
+            values={"global":{"plane":{"domainSuffix":"abc01"}},"prometheus": {"external_labels": {"release": "release-name","clusterid": "abc01","external_labels_key_1": "external_labels_value_1"}}},
         )[0]
 
         config_yaml = yaml.safe_load(doc["data"]["config"])
