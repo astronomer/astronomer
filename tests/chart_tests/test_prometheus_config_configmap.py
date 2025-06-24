@@ -102,7 +102,11 @@ class TestPrometheusConfigConfigmap:
         )[0]
 
         config_yaml = yaml.safe_load(doc["data"]["config"])
-        assert config_yaml["global"]["external_labels"] == {"external_labels_key_1": "external_labels_value_1"}
+        assert config_yaml["global"]["external_labels"] == {
+            "release": "release-name",
+            "clusterid": "abc01", 
+            "external_labels_key_1": "external_labels_value_1"
+}
 
     def test_promethesu_config_configmap_remote_write(self, kube_version):
         """Prometheus should have a remote_write section in config.yaml when
