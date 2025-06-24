@@ -95,11 +95,7 @@ class TestPrometheusConfigConfigmap:
     def test_prometheus_config_configmap_external_labels(self, kube_version):
         """Prometheus should have an external_labels section in config.yaml
         when external_labels is specified in helm values."""
-        expected_labels = {
-            "release": "release-name",
-            "clusterid": "abc01", 
-            "external_labels_key_1": "external_labels_value_1"
-        }
+        expected_labels = {"release": "release-name", "clusterid": "abc01", "external_labels_key_1": "external_labels_value_1"}
         doc = render_chart(
             kube_version=kube_version,
             show_only=self.show_only,
