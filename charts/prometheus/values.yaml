@@ -178,9 +178,7 @@ additionalScrapeJobs: {}
 # external_labels: {}
 
 federation:
-  externalLabels:
-    release: {{ .Release.Name }}
-    clusterid: {{ .Values.global.plane.domainSuffix }}
+  externalLabels: {}
 
 extraFlags: []
 #- "--log.level=debug"
