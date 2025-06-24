@@ -62,8 +62,10 @@ class TestGlobalPodLabels:
     def init_test_global_pod_labels(self, kube_version):
         """Initialize test data for global pod labels functionality."""
         chart_values = chart_tests.get_all_features()
-        chart_values["global"] = {
-            "podLabels": {"gatekeeper.policy": "approved", "security.level": "high", "cost-center": "engineering"}
+        chart_values["global"]["podLabels"] = {
+            "fake_label_1": "fake_value_1",
+            "fake_label_2": "fake_value_2",
+            "cost-center": "engineering",
         }
 
         docs = render_chart(values=chart_values, kube_version=kube_version)
@@ -82,11 +84,11 @@ class TestGlobalPodLabels:
         for resource_name, pod_labels in test_data.items():
             assert pod_labels is not None, f"Pod labels should not be None for {resource_name}"
 
-            assert "gatekeeper.policy" in pod_labels, f"gatekeeper.policy missing in {resource_name}"
-            assert pod_labels["gatekeeper.policy"] == "approved", f"gatekeeper.policy value incorrect in {resource_name}"
+            assert "fake_label_1" in pod_labels, f"fake_label_1 missing in {resource_name}"
+            assert pod_labels["fake_label_1"] == "fake_value_1", f"fake_label_1 value incorrect in {resource_name}"
 
-            assert "security.level" in pod_labels, f"security.level missing in {resource_name}"
-            assert pod_labels["security.level"] == "high", f"security.level value incorrect in {resource_name}"
+            assert "fake_label_2" in pod_labels, f"fake_label_2 missing in {resource_name}"
+            assert pod_labels["fake_label_2"] == "fake_value_2", f"fake_label_2 value incorrect in {resource_name}"
 
             assert "cost-center" in pod_labels, f"cost-center missing in {resource_name}"
             assert pod_labels["cost-center"] == "engineering", f"cost-center value incorrect in {resource_name}"
