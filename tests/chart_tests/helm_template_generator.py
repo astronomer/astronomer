@@ -87,7 +87,7 @@ def render_chart(
     baseDomain: str = "example.com",
     namespace: str | None = None,
     validate_objects: bool = True,
-):
+) -> list:
     """Render a helm chart into dictionaries."""
     values = values or {}
     chart_dir = chart_dir or sys.path[0]
@@ -119,9 +119,9 @@ def render_chart(
             print(f"helm command:\n  {shlex.join(command)}")
 
         try:
-            manifests = subprocess.check_output(command, stderr=subprocess.PIPE)
+            manifests = subprocess.check_output(command, stderr=subprocess.PIPE).decode("utf-8")
             if not manifests:
-                return None
+                return []
         except subprocess.CalledProcessError as error:
             if DEBUG:
                 print("ERROR: subprocess.CalledProcessError:")
