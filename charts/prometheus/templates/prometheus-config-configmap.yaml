@@ -18,9 +18,13 @@ data:
     global:
       scrape_interval: 30s
       evaluation_interval: 30s
-      {{ if .Values.external_labels }}external_labels: {{ .Values.external_labels | toYaml | nindent 8 }}{{ end }}
-
-      {{- if and .Values.federation.externalLabels (or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified")) }}
+      external_labels:
+        release: {{ .Release.Name }}
+        clusterid: {{ .Values.global.plane.domainSuffix }}
+        {{- if .Values.external_labels }}
+        {{- toYaml .Values.external_labels | nindent 8 }}
+        {{- end }}
+        {{- if and .Values.federation.externalLabels (or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified")) }}
         {{- toYaml .Values.federation.externalLabels | nindent 8 }}
         {{- end }}
 
