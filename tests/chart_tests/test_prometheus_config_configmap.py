@@ -98,15 +98,24 @@ class TestPrometheusConfigConfigmap:
         doc = render_chart(
             kube_version=kube_version,
             show_only=self.show_only,
-            values={"global":{"plane":{"domainSuffix":"abc01"}},"prometheus": {"external_labels": {"release": "release-name","clusterid": "abc01","external_labels_key_1": "external_labels_value_1"}}},
+            values={
+                "global": {"plane": {"domainSuffix": "abc01"}},
+                "prometheus": {
+                    "external_labels": {
+                        "release": "release-name",
+                        "clusterid": "abc01",
+                        "external_labels_key_1": "external_labels_value_1",
+                    }
+                },
+            },
         )[0]
 
         config_yaml = yaml.safe_load(doc["data"]["config"])
         assert config_yaml["global"]["external_labels"] == {
             "release": "release-name",
-            "clusterid": "abc01", 
-            "external_labels_key_1": "external_labels_value_1"
-}
+            "clusterid": "abc01",
+            "external_labels_key_1": "external_labels_value_1",
+        }
 
     def test_promethesu_config_configmap_remote_write(self, kube_version):
         """Prometheus should have a remote_write section in config.yaml when
