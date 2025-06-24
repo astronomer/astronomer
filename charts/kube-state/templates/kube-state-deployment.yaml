@@ -5,6 +5,9 @@
 {{- $useRoles := or .Values.global.features.namespacePools.enabled .Values.global.singleNamespace }}
 {{- $namespaces := .Values.global.features.namespacePools.namespaces.names }}
 {{- $namespaces = append $namespaces .Release.Namespace }}
+{{- if .Values.extraNamespaceList  -}}
+{{- $namespaces = concat $namespaces .Values.extraNamespaceList }}
+{{- end }}
 {{- $namespaceList := join "," $namespaces }}
 kind: Deployment
 apiVersion: apps/v1
