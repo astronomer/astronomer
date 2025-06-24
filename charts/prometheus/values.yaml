@@ -177,6 +177,11 @@ additionalScrapeJobs: {}
 # https://prometheus.io/docs/prometheus/latest/configuration/configuration/#remote_write
 # external_labels: {}
 
+federation:
+  externalLabels:
+    release: {{ .Release.Name }}
+    clusterid: {{ .Values.global.plane.domainSuffix }}
+
 extraFlags: []
 #- "--log.level=debug"
 
