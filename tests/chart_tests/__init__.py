@@ -1,12 +1,11 @@
-from pathlib import Path
-
 import yaml
 
 from tests.chart_tests.helm_template_generator import render_chart
+from tests import git_root_dir
 
 
 def get_all_features():
-    return yaml.safe_load((Path(__file__).parent.parent / "enable_all_features.yaml").read_text())
+    return yaml.safe_load((git_root_dir / "tests" / "enable_all_features.yaml").read_text())
 
 
 def get_chart_containers(

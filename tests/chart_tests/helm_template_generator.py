@@ -30,12 +30,11 @@ import requests
 import yaml
 from kubernetes.client.api_client import ApiClient
 
-from tests import supported_k8s_versions
+from tests import supported_k8s_versions, git_root_dir
 
 api_client = ApiClient()
 
 BASE_URL_SPEC = "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/refs/heads/master"
-git_root_dir = [x for x in Path(__file__).resolve().parents if (x / ".git").is_dir()][-1]
 DEBUG = os.getenv("DEBUG", "").lower() in ["yes", "true", "1"]
 default_version = supported_k8s_versions[-1]
 
@@ -87,7 +86,7 @@ def render_chart(
     baseDomain: str = "example.com",
     namespace: str | None = None,
     validate_objects: bool = True,
-):
+) -> list:
     """Render a helm chart into dictionaries."""
     values = values or {}
     chart_dir = chart_dir or sys.path[0]
@@ -119,9 +118,9 @@ def render_chart(
             print(f"helm command:\n  {shlex.join(command)}")
 
         try:
-            manifests = subprocess.check_output(command, stderr=subprocess.PIPE)
+            manifests = subprocess.check_output(command, stderr=subprocess.PIPE).decode("utf-8")
             if not manifests:
-                return None
+                return []
         except subprocess.CalledProcessError as error:
             if DEBUG:
                 print("ERROR: subprocess.CalledProcessError:")

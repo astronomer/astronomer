@@ -32,6 +32,7 @@ spec:
         component: containerd-private-ca
         release: {{ .Release.Name }}
         version: {{ .Chart.Version }}
+        {{- include "global.podLabels" . | nindent 8 }}
       annotations:
         checksum/configmap: {{ include (print $.Template.BasePath "/trust-private-ca-on-all-nodes/containerd-ca-update-script.yaml") . | sha256sum }}
         {{- if .Values.global.podAnnotations }}
