@@ -100,21 +100,12 @@ class TestGlobalPodLabels:
         chart_values["global"]["podLabels"] = {"should-not-appear": "on-services-or-configmaps"}
 
         docs = render_chart(values=chart_values, kube_version=kube_version)
-        docs_by_kind = {doc["kind"]: doc for doc in docs if "kind" in doc}
 
-        for service in docs_by_kind.get("Service", []):
-            service_labels = service.get("metadata", {}).get("labels", {})
-            assert "should-not-appear" not in service_labels, (
-                f"Pod labels should not appear on Service {service['metadata']['name']}"
-            )
-
-        for cm in docs_by_kind.get("ConfigMap", []):
-            cm_labels = cm.get("metadata", {}).get("labels", {})
-            assert "should-not-appear" not in cm_labels, f"Pod labels should not appear on ConfigMap {cm['metadata']['name']}"
-
-        for secret in docs_by_kind.get("Secret", []):
-            secret_labels = secret.get("metadata", {}).get("labels", {})
-            assert "should-not-appear" not in secret_labels, f"Pod labels should not appear on Secret {secret['metadata']['name']}"
+        for doc in docs:
+            kind = doc.get("kind")
+            if kind in {"Service", "ConfigMap", "Secret"}:
+                labels = doc.get("metadata", {}).get("labels", {})
+                assert "should-not-appear" not in labels, f"Pod labels should not appear on {kind} {doc['metadata']['name']}"
 
     def test_global_pod_labels_merge_with_existing_labels(self, kube_version: str):
         """Test that global pod labels merge correctly with existing component labels."""
