@@ -28,7 +28,8 @@ spec:
 
   template:
     metadata:
-
+      {{- if or .Values.global.podAnnotations .Values.podAnnotations }}
+      annotations:
       {{- if .Values.global.podAnnotations }}
 {{ toYaml .Values.global.podAnnotations | indent 8 }}
       {{- end }}
@@ -135,8 +136,6 @@ spec:
           ports:
           - containerPort: 8222
             name: monitor
-          - containerPort: 7777
-            name: metrics
           volumeMounts:
           - name: config-volume
             mountPath: /etc/stan-config
