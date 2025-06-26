@@ -24,7 +24,6 @@ class TestStanStatefulSet:
         assert "persistentVolumeClaimRetentionPolicy" not in doc["spec"]
 
         c_by_name = get_containers_by_name(doc, include_init_containers=True)
-        assert c_by_name["metrics"]["image"].startswith("quay.io/astronomer/ap-nats-exporter:")
         assert c_by_name["stan"]["image"].startswith("quay.io/astronomer/ap-nats-streaming:")
 
         stan_lp = c_by_name["stan"]["livenessProbe"]
@@ -67,7 +66,7 @@ class TestStanStatefulSet:
 
         assert len(docs) == 1
         c_by_name = get_containers_by_name(docs[0], include_init_containers=True)
-        assert len(c_by_name) == 3
+        assert len(c_by_name) == 2
         assert all(c["securityContext"] == securityContextResponse for c in c_by_name.values())
 
     def test_stan_statefulset_with_metrics_and_resources(self, kube_version):
@@ -88,9 +87,8 @@ class TestStanStatefulSet:
 
         assert len(docs) == 1
         c_by_name = get_containers_by_name(docs[0])
-        assert len(c_by_name) == 2
+        assert len(c_by_name) == 1
         assert c_by_name["stan"]["resources"]["requests"]["cpu"] == "123m"
-        assert c_by_name["metrics"]["resources"]["requests"]["cpu"] == "234m"
 
     def test_stan_statefulset_with_global_affinity_and_tolerations(self, kube_version, global_platform_node_pool_config):
         """Test that stan statefulset renders proper nodeSelector, affinity,
