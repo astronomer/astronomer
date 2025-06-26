@@ -89,7 +89,6 @@ class TestStanStatefulSet:
         c_by_name = get_containers_by_name(docs[0])
         assert len(c_by_name) == 1
         assert c_by_name["stan"]["resources"]["requests"]["cpu"] == "123m"
-        assert c_by_name["metrics"]["resources"]["requests"]["cpu"] == "234m"
 
     def test_stan_statefulset_with_global_affinity_and_tolerations(self, kube_version, global_platform_node_pool_config):
         """Test that stan statefulset renders proper nodeSelector, affinity,
