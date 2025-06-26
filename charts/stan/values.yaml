@@ -10,10 +10,6 @@ images:
     repository: quay.io/astronomer/ap-nats-streaming
     tag: 0.25.6-14
     pullPolicy: IfNotPresent
-  exporter:
-    repository: quay.io/astronomer/ap-nats-exporter
-    tag: 0.16.0-5
-    pullPolicy: IfNotPresent
 
 
 init:
@@ -187,20 +183,6 @@ store:
     dbHost: ""
     dbPort: 5432
 
-#######################################
-#                                     #
-# Prometheus Exporter configuration   #
-#                                     #
-#######################################
-exporter:
-  enabled: true
-  resources:
-    limits:
-     cpu: 100m
-     memory: 128Mi
-    requests:
-     cpu: 50m
-     memory: 80Mi
 ##################################
 #                                #
 #  Embedded NATS Configuration   #

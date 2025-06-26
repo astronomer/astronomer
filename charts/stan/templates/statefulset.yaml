@@ -28,13 +28,7 @@ spec:
 
   template:
     metadata:
-      {{- if or .Values.global.podAnnotations .Values.podAnnotations .Values.exporter.enabled }}
-      annotations:
-      {{- if .Values.exporter.enabled }}
-        prometheus.io/path: /metrics
-        prometheus.io/port: "7777"
-        prometheus.io/scrape: "true"
-      {{- end }}
+
       {{- if .Values.global.podAnnotations }}
 {{ toYaml .Values.global.podAnnotations | indent 8 }}
       {{- end }}
@@ -156,30 +150,6 @@ spec:
           - name: stan-client-tls-volume
             mountPath: /etc/nats/certs
           {{- end }}
-        {{ if .Values.exporter.enabled }}
-        - name: metrics
-          image: {{ template "stan-exporter.image" . }}
-          imagePullPolicy: {{ .Values.images.stan.pullPolicy }}
-          securityContext: {{toYaml .Values.securityContext | nindent 12 }}
-          resources: {{ toYaml .Values.exporter.resources | nindent 12 }}
-          {{- if .Values.exporter.livenessProbe }}
-          livenessProbe: {{ tpl (toYaml .Values.exporter.livenessProbe) . | nindent 12 }}
-          {{- end }}
-          {{- if .Values.exporter.readinessProbe }}
-          readinessProbe: {{ tpl (toYaml .Values.exporter.readinessProbe) . | nindent 12 }}
-          {{- end }}
-          args:
-          - -connz
-          - -routez
-          - -subz
-          - -varz
-          - -channelz
-          - -serverz
-          - http://localhost:8222/
-          ports:
-          - containerPort: 7777
-            name: metrics
-        {{ end }}
   {{- if eq .Values.store.type "file" }}
   {{- if .Values.store.volume.enabled }}
   volumeClaimTemplates:
