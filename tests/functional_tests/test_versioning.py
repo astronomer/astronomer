@@ -1,15 +1,12 @@
 #!/usr/bin/env python3
 
 from os import getenv
-from pathlib import Path
 from subprocess import check_output
 
 import yaml
 from packaging.version import parse as semver
 from pytest import mark
-
-# The top-level path of this repository
-git_root_dir = Path(check_output(["git", "rev-parse", "--show-toplevel"]).decode("utf-8").rstrip())
+from tests import git_root_dir
 
 
 def test_astro_sub_chart_version_match():
