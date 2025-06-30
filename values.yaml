@@ -330,7 +330,7 @@ global:
         tag: 3.21.3-3
       gitSync:
         repository: quay.io/astronomer/ap-git-sync-relay
-        tag: 0.0.3-14
+        tag: 0.1.1
   certgenerator:
     images:
       repository: quay.io/astronomer/ap-certgenerator
