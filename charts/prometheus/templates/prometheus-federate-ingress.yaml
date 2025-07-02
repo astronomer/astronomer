@@ -1,7 +1,6 @@
 ########################################
-## Prometheus Federate-Only Ingress ##
+## Prometheus Federate Ingress ##
 ########################################
-{{- if .Values.global.baseDomain }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:
@@ -49,4 +48,3 @@ spec:
                 name: {{ template "prometheus.fullname" . }}
                 port:
                   name: prometheus-data
-{{- end }}
