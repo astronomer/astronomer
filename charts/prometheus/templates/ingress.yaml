@@ -25,7 +25,7 @@ metadata:
     {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
     nginx.ingress.kubernetes.io/auth-signin: https://app.{{ .Values.global.baseDomain }}/login
     {{- end }}
-    {{- if .Values.global.plane.mode "data" }}
+    {{- if eq .Values.global.plane.mode "data" }}
     nginx.ingress.kubernetes.io/auth-signin: https://app.{{ .Values.global.plane.domainSuffix}}.{{ .Values.global.baseDomain }}/login
     {{- end }}
     nginx.ingress.kubernetes.io/auth-response-headers: authorization, username, email
