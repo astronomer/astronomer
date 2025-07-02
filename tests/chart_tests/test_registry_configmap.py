@@ -89,9 +89,7 @@ class Test_Registry_Configmap:
 
         config = yaml.safe_load(doc["data"]["config.yml"])
 
-        assert "notifications" in config
-        assert "endpoints" in config["notifications"]
-        assert len(config["notifications"]["endpoints"]) > 0
+        assert config.get("notifications", {}).get("endpoints", [])
 
         houston_endpoint = next(
             (endpoint for endpoint in config["notifications"]["endpoints"] if endpoint["name"] == "houston"),
