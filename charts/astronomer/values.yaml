@@ -269,9 +269,8 @@ houston:
 
     # Cleanup deploy revisions older than this many days
     olderThan: 90
-
-    readinessProbe: { }
-    livenessProbe: { }
+    readinessProbe: {}
+    livenessProbe: {}
 
   # Check for Astronomer Platform Updates
   # This runs as a CronJob

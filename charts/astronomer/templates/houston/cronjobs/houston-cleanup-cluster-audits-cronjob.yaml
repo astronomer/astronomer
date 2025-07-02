@@ -9,7 +9,7 @@ metadata:
   name: {{ .Release.Name }}-houston-cleanup-cluster-audits
   labels:
     tier: astronomer
-    component: houston-cleanup
+    component: houston-cleanup-cluster-audits
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
@@ -25,9 +25,9 @@ spec:
         metadata:
           labels:
             tier: astronomer
-            component: houston-cleanup
+            component: houston-cleanup-cluster-audits
             release: {{ .Release.Name }}
-            app: houston-cleanup
+            app: houston-cleanup-cluster-audits
             version: {{ .Chart.Version }}
             plane: {{ .Values.global.plane.mode }}
           {{- if or .Values.global.podAnnotations .Values.global.istio.enabled }}

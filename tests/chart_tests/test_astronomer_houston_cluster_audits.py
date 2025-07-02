@@ -29,12 +29,15 @@ class TestAstronomerHoustonClusterAuditsCronJobs:
         )
 
         assert len(docs) == 1
-        assert docs[0]["kind"] == "CronJob"
-        assert docs[0]["metadata"]["name"] == "release-name-houston-cleanup-cluster-audits"
-        assert docs[0]["metadata"]["labels"]["component"] == "houston-cleanup"
-        spec = docs[0]["spec"]["jobTemplate"]["spec"]["template"]
-        assert spec["metadata"]["labels"]["component"] == "houston-cleanup"
-        assert docs[0]["spec"]["schedule"] == "49 23 * * *"
+
+        doc = docs[0]
+        assert doc["kind"] == "CronJob"
+        assert doc["metadata"]["name"] == "release-name-houston-cleanup-cluster-audits"
+        assert doc["metadata"]["labels"]["component"] == "houston-cleanup-cluster-audits"
+        spec = doc["spec"]["jobTemplate"]["spec"]["template"]
+        assert spec["metadata"]["labels"]["component"] == "houston-cleanup-cluster-audits"
+        assert spec["metadata"]["labels"]["app"] == "houston-cleanup-cluster-audits"
+        assert doc["spec"]["schedule"] == "49 23 * * *"
         assert spec["spec"]["containers"][0]["securityContext"] == {"runAsNonRoot": True}
 
     def test_astronomer_cleanup_cluster_audits_cron_custom_schedule(self, kube_version):
@@ -56,6 +59,8 @@ class TestAstronomerHoustonClusterAuditsCronJobs:
         )
 
         assert len(docs) == 1
-        assert docs[0]["kind"] == "CronJob"
-        assert docs[0]["metadata"]["name"] == "release-name-houston-cleanup-cluster-audits"
-        assert docs[0]["spec"]["schedule"] == "1 2 3 4 5"
+
+        doc = docs[0]
+        assert doc["kind"] == "CronJob"
+        assert doc["metadata"]["name"] == "release-name-houston-cleanup-cluster-audits"
+        assert doc["spec"]["schedule"] == "1 2 3 4 5"
