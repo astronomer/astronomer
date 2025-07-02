@@ -66,6 +66,9 @@ data:
       tlsSecretName: {{ .Values.global.tlsSecret }}
       {{- end }}
     # Airflow deployment configuration
+    clusters:
+      audit:
+        retentionDays: {{ .Values.houston.cleanupClusterAudits.olderThan}}
     deployments:
       mode:
         operator:
