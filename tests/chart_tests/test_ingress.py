@@ -108,20 +108,14 @@ class TestIngress:
 
         assert len(docs) == 2
 
-        federate_ingress = next(
-            (doc for doc in docs if "federate-ingress" in doc["metadata"]["name"]),
-            None
-        )
+        federate_ingress = next((doc for doc in docs if "federate-ingress" in doc["metadata"]["name"]), None)
         assert federate_ingress is not None
 
         assert federate_ingress["kind"] == "Ingress"
         assert federate_ingress["apiVersion"] == "networking.k8s.io/v1"
 
         annotations = federate_ingress["metadata"]["annotations"]
-        auth_annotations = [
-            "nginx.ingress.kubernetes.io/auth-signin",
-            "nginx.ingress.kubernetes.io/auth-response-headers"
-        ]
+        auth_annotations = ["nginx.ingress.kubernetes.io/auth-signin", "nginx.ingress.kubernetes.io/auth-response-headers"]
         for auth_annotation in auth_annotations:
             assert auth_annotation not in annotations
 
