@@ -48,7 +48,7 @@ class TestAstronomerHoustonClusterAuditsCronJobs:
                     "houston": {
                         "cleanupClusterAudits": {
                             "enabled": True,
-                            "schedule": "1 2 3 4 5",
+                            "schedule": "1 2 3 * ?",
                         }
                     },
                 }
@@ -63,4 +63,4 @@ class TestAstronomerHoustonClusterAuditsCronJobs:
         doc = docs[0]
         assert doc["kind"] == "CronJob"
         assert doc["metadata"]["name"] == "release-name-houston-cleanup-cluster-audits"
-        assert doc["spec"]["schedule"] == "1 2 3 4 5"
+        assert doc["spec"]["schedule"] == "1 2 3 * ?"
