@@ -78,6 +78,15 @@ astronomer:
         exec:
           command:
           - /bin/true
+    cleanupClusterAudits:
+      livenessProbe:
+        exec:
+          command:
+            - /bin/true
+      readinessProbe:
+        exec:
+          command:
+            - /bin/true
     cleanupDeployments:
       livenessProbe:
         exec:
