@@ -1,6 +1,7 @@
 ########################################
 ## Prometheus Federate Ingress ##
 ########################################
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:
@@ -48,3 +49,4 @@ spec:
                 name: {{ template "prometheus.fullname" . }}
                 port:
                   name: prometheus-data
+{{- end }}
