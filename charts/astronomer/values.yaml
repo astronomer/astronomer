@@ -258,6 +258,21 @@ houston:
     readinessProbe: {}
     livenessProbe: {}
 
+  # Cleanup cluster audits in Houston
+  # This runs as a CronJob
+  cleanupClusterAudits:
+    # Enable cleanup CronJob
+    enabled: true
+
+    # Run at 23:49 every night
+    schedule: "49 23 * * *"  # https://crontab.guru/#49_23_*_*_*
+
+    # Cleanup deploy revisions older than this many days
+    olderThan: 90
+
+    readinessProbe: { }
+    livenessProbe: { }
+
   # Check for Astronomer Platform Updates
   # This runs as a CronJob
   updateCheck:
