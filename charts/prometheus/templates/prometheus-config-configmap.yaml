@@ -79,6 +79,9 @@ data:
             labels:
               federation: 'data-planes'
       {{- end }}
+
+      
+
       {{- if .Values.global.prometheusPostgresExporterEnabled }}
       - job_name: postgresql-exporter
         scrape_interval: 60s
@@ -210,6 +213,8 @@ data:
             replacement: "$1"
             target_label: release
           {{- end }}
+
+
       {{- if and $useClusterRoles .Values.global.airflowOperator.enabled   }}
       - job_name: airflow-operator
         scrape_interval: 10s # Faster scrape to power dashboards
@@ -277,6 +282,31 @@ data:
             replacement: "$1"
             target_label: deployment
           {{- include "prometheus.airflowMetricsActionDrop" . | nindent 10 }}
+
+
+      - job_name: houston-api
+        metrics_path: /v1/metrics
+        kubernetes_sd_configs:
+          - role: endpoints
+            namespaces:
+              names:
+                - {{ .Release.Namespace }}
+        # Prefix all houston metrics with 'houston_'
+        metric_relabel_configs:
+          - source_labels: [__name__]
+            target_label: __name__
+            replacement: "houston_${1}"
+        # Select only ready endpoints for collecting houston metrics
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_service_name]
+            action: keep
+            regex: "^{{ .Release.Name }}-houston"
+          - source_labels: [__meta_kubernetes_endpoint_ready]
+            action: keep
+            regex: "^true"
+
+      # REMOVED: nats_server job (excluded as per requirements)
+      # REMOVED: stan_server job (excluded as per requirements)
 
     {{- with .Values.additionalScrapeJobs }}
     {{- toYaml . | nindent 6 }}
