@@ -118,9 +118,9 @@ def render_chart(
             print(f"helm command:\n  {shlex.join(command)}")
 
         try:
-            manifests = subprocess.check_output(command, stderr=subprocess.PIPE)
+            manifests = subprocess.check_output(command, stderr=subprocess.PIPE).decode("utf-8")
             if not manifests:
-                return None
+                return []
         except subprocess.CalledProcessError as error:
             if DEBUG:
                 print("ERROR: subprocess.CalledProcessError:")
