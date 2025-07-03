@@ -80,7 +80,7 @@ data:
               federation: 'data-planes'
       {{- end }}
 
-      
+
 
       {{- if .Values.global.prometheusPostgresExporterEnabled }}
       - job_name: postgresql-exporter
