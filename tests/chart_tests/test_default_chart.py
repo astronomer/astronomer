@@ -80,12 +80,18 @@ class TestAllPodSpecContainers:
         ids=[f"{x['kind']}/{x['metadata']['name']}" for x in pod_manager_docs],
     )
     def test_default_chart_with_basedomain(self, doc):
-        """Test that each container in each pod spec renders and has some
-        required fields."""
+        """Test that each container in each pod spec renders and has some required fields."""
         c_by_name = get_containers_by_name(doc, include_init_containers=True)
         for name, container in c_by_name.items():
             assert container["image"], f"container {name} does not have an image: {doc}"
             assert container["imagePullPolicy"] == "IfNotPresent"
+
+            # We can expand this as we work through https://github.com/astronomer/issues/issues/7394
+            read_only_root_containers = [
+                "commander",
+            ]
+            if any(x in name for x in read_only_root_containers):
+                assert container["securityContext"].get("readOnlyRootFilesystem")
 
             resources = c_by_name[name]["resources"]
             assert "cpu" in resources.get("limits")
@@ -118,8 +124,8 @@ class TestAllPodSpecContainers:
         pod_manager_docs_private,
         ids=pod_manager_docs_private_ids,
     )
-    def test_all_default_charts_with_private_registry(self, doc):
-        """Test that each chart uses the privateRegistry.
+    def test_all_default_container_with_private_registry(self, doc):
+        """Test that each container uses the privateRegistry.
 
         This only finds default images, not the many which are hidden
         behind feature flags.
