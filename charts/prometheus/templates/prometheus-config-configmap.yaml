@@ -94,7 +94,7 @@ data:
             action: keep
             regex: default;kubernetes;https
       {{- end }}
-      
+
       - job_name: nginx
         kubernetes_sd_configs:
           - role: endpoints
