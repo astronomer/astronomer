@@ -276,7 +276,7 @@ data:
             regex: "([-a-z0-9]*[a-z0-9])-.*?"
             replacement: "$1"
             target_label: deployment
-          {{- include "prometheus.airflowMetricsActionDrop" . | nindent 10 }}  
+          {{- include "prometheus.airflowMetricsActionDrop" . | nindent 10 }}
 
     {{- with .Values.additionalScrapeJobs }}
     {{- toYaml . | nindent 6 }}
