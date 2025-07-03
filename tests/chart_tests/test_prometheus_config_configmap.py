@@ -208,6 +208,7 @@ class TestPrometheusConfigConfigmap:
             for x in list(config_yaml["scrape_configs"])
             if x["job_name"] == "kubernetes-apiservers"
         ] == [True]
+
     def test_prometheus_config_release_relabel_with_pre_created_namespace(self, kube_version):
         """Prometheus should have a regex for release name when namespacePools
         namespace is enabled."""
