@@ -90,8 +90,6 @@ def wait_for_healthy_pods(ignore_substrings: list[str] | None = None, max_wait_t
     end_time = time.time() + max_wait_time
 
     while True:
-        if time.time() >= end_time:
-            raise RuntimeError("Timeout waiting for pods to become healthy.")
         output = run_command(
             [
                 KUBECTL_EXE,
@@ -104,6 +102,10 @@ def wait_for_healthy_pods(ignore_substrings: list[str] | None = None, max_wait_t
                 "custom-columns=NAME:.metadata.name,STATUS:.status.phase",
             ]
         )
+        if time.time() >= end_time:
+            err = "Timeout waiting for pods to become healthy."
+            print(output)
+            raise RuntimeError(err)
         lines = output.splitlines()[1:]  # Skip the header line
         unhealthy_pods = []
         for line in lines:
