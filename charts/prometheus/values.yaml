@@ -177,6 +177,9 @@ additionalScrapeJobs: {}
 # https://prometheus.io/docs/prometheus/latest/configuration/configuration/#remote_write
 # external_labels: {}
 
+federation:
+  externalLabels: {}
+
 extraFlags: []
 #- "--log.level=debug"
 
