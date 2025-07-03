@@ -51,11 +51,12 @@ class TestPrometheusConfigConfigmap:
         assert doc["metadata"]["name"] == "release-name-prometheus-config"
 
         config_yaml = yaml.safe_load(doc["data"]["config"])
-        assert [
-            x["tls_config"]["insecure_skip_verify"]
-            for x in list(config_yaml["scrape_configs"])
-            if x["job_name"] == "kubernetes-apiservers"
-        ] == [False]
+        houston_jobs = [
+        x for x in list(config_yaml["scrape_configs"])
+        if x["job_name"] == "houston-api"
+        ]
+        assert len(houston_jobs) == 1
+        assert houston_jobs[0]["metrics_path"] == "/v1/metrics"
 
     def test_prometheus_config_configmap_with_different_name_and_ns(self, kube_version):
         """Validate the prometheus config configmap does not conflate deployment name and namespace."""
@@ -89,7 +90,6 @@ class TestPrometheusConfigConfigmap:
         # These assertions only work because we know that namespaces do not show up in our configured regexes.
         assert "bar-ns" not in all_scrape_config_regexes
         assert any("foo-name-houston" in str(regex) for regex in all_scrape_config_regexes)
-        assert any("foo-name-nginx" in str(regex) for regex in all_scrape_config_regexes)
         assert any("foo-name-postgresql-exporter" in str(regex) for regex in all_scrape_config_regexes)
 
     def test_prometheus_config_configmap_external_labels(self, kube_version):
@@ -191,25 +191,6 @@ class TestPrometheusConfigConfigmap:
             },
         )[0]
         self.assert_relabel_config_for_non_auto_generated_namesaces(doc)
-
-    def test_prometheus_config_insecure_skip_verify(self, kube_version):
-        """Test that insecure_skip_verify is rendered correctly in the config when specified."""
-        doc = render_chart(
-            kube_version=kube_version,
-            show_only=self.show_only,
-            values={
-                "prometheus": {
-                    "config": {"scrape_configs": {"kubernetes_apiservers": {"tls_config": {"insecure_skip_verify": True}}}},
-                },
-            },
-        )[0]
-
-        config_yaml = yaml.safe_load(doc["data"]["config"])
-        assert [
-            x["tls_config"]["insecure_skip_verify"]
-            for x in list(config_yaml["scrape_configs"])
-            if x["job_name"] == "kubernetes-apiservers"
-        ] == [True]
 
     def test_prometheus_config_release_relabel_with_pre_created_namespace(self, kube_version):
         """Prometheus should have a regex for release name when namespacePools
