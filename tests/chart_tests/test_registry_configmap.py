@@ -95,4 +95,4 @@ class Test_Registry_Configmap:
             (endpoint for endpoint in config["notifications"]["endpoints"] if endpoint["name"] == "houston"),
             None,
         )
-        assert houston_endpoint["url"] == "https://houston.example.com/v1/authorization"
+        assert houston_endpoint["url"] == "https://houston.example.com/v1/registry/events"
