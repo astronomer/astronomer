@@ -210,22 +210,6 @@ data:
             action: labeldrop
           - regex: 'label_kubernetes_pod_operator'
             action: labeldrop
-          # Drop excluded Kubernetes resource metrics
-          - source_labels: [__name__]
-            regex: 'kube_replicationcontroller.*'
-            action: drop
-          - source_labels: [__name__]
-            regex: 'kube_replicaset.*'
-            action: drop
-          - source_labels: [__name__]
-            regex: 'kube_networkpolicy.*'
-            action: drop
-          - source_labels: [__name__]
-            regex: 'kube_horizontalpodautoscaler.*'
-            action: drop
-          - source_labels: [__name__]
-            regex: 'kube_ingress.*'
-            action: drop
           - source_labels: [__name__]
             regex: 'kube_node_.*'
             action: drop
@@ -245,6 +229,7 @@ data:
             replacement: "$1"
             target_label: release
           {{- end }}
+
 
       {{- if and $useClusterRoles .Values.global.airflowOperator.enabled   }}
       - job_name: airflow-operator
@@ -314,6 +299,9 @@ data:
             target_label: deployment
           {{- include "prometheus.airflowMetricsActionDrop" . | nindent 10 }}
 
+      # REMOVED: kubernetes-nodes job (excluded as per requirements)
+      # REMOVED: kubernetes-nodes-cadvisor job (excluded as per requirements)
+
       - job_name: houston-api
         metrics_path: /v1/metrics
         kubernetes_sd_configs:
@@ -334,6 +322,7 @@ data:
           - source_labels: [__meta_kubernetes_endpoint_ready]
             action: keep
             regex: "^true"
+
 
     {{- with .Values.additionalScrapeJobs }}
     {{- toYaml . | nindent 6 }}
