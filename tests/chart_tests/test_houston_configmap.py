@@ -899,3 +899,24 @@ def test_houston_configmap_with_authsidecar_ingress_allowed_namespaces():
     doc = docs[0]
     prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
     assert prod_yaml["deployments"]["authSideCar"].get("ingressAllowedNamespaces") == ["astronomer", "ingress-namespace"]
+
+
+def test_houston_configmap_with_plane_mode():
+    """Validate the houston configmap should have values in plane mode."""
+    docs = render_chart(
+        values={"global": {"plane": {"mode": "control"}}},
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    assert len(docs) == 1
+    doc = docs[0]
+    prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
+    assert prod_yaml["plane"]["mode"] == "control"
+
+    docs = render_chart(
+        values={"global": {"plane": {"mode": "unified"}}},
+        show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+    )
+    assert len(docs) == 1
+    doc = docs[0]
+    prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
+    assert prod_yaml["plane"]["mode"] == "unified"
