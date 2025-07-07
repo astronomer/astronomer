@@ -7,7 +7,7 @@ BIN_DIR="${GIT_ROOT_DIR}/bin"
 
 # Use the venv if it exists
 # shellcheck disable=SC1091
-[[ -f venv/bin/activate ]] && { . venv/bin/activate ; }
+[[ -f .venv/bin/activate ]] && { . venv/bin/activate ; }
 
 set -ex
 

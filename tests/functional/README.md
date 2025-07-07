@@ -18,3 +18,5 @@ When running these tests, you **MUST** `export TEST_SCENARIO` with one of the ab
 - Common configurations and fixtuers are in `tests/functional/conftest.py`
 - Per-scenario configs and fixtures are in `tests/functional/<scenario/conftest.py`
 - `export DEBUG=1` will enable additional logging, `helm install --debug`, and `kubectl -v=9` output.
+
+## Local testing

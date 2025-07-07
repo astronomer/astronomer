@@ -75,10 +75,8 @@ repos:
         exclude: "^tests/utils/.*$"
       - id: requirements-txt-fixer
         args: [
-            "requirements/chart-tests.in",
-            "requirements/chart-tests.txt",
-            "requirements/functional-tests.in",
-            "requirements/functional-tests.txt",
+            "tests/requirements.in",
+            "tests/requirements.txt",
           ]
       - id: sort-simple-yaml
       - id: trailing-whitespace
