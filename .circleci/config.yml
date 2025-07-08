@@ -117,7 +117,7 @@ jobs:
           name: Install bom-generator
           command: |
             # https://github.com/astronomer/astronomer-bom-generator/releases
-            pip install "git+https://${GITHUB_TOKEN}@github.com/astronomer/astronomer-bom-generator.git@0.9.0"
+            pip install "git+https://${GITHUB_TOKEN}@github.com/astronomer/astronomer-bom-generator.git@v0.9.0"
       - run:
           name: Run Release BOM Script
           command: |
