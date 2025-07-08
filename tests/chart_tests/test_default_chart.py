@@ -86,13 +86,6 @@ class TestAllPodSpecContainers:
             assert container["image"], f"container {name} does not have an image: {doc}"
             assert container["imagePullPolicy"] == "IfNotPresent"
 
-            # We can expand this as we work through https://github.com/astronomer/issues/issues/7394
-            read_only_root_containers = [
-                "commander",
-            ]
-            if any(x in name for x in read_only_root_containers):
-                assert container["securityContext"].get("readOnlyRootFilesystem")
-
             resources = c_by_name[name]["resources"]
             assert "cpu" in resources.get("limits")
             assert "memory" in resources.get("limits")

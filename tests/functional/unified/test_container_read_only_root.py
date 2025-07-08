@@ -7,6 +7,7 @@ from kubernetes import client, config
 
 # This should contain a list of pod name substrings that have been completed in ticket
 # https://github.com/astronomer/issues/issues/7394
+# This should match tests/chart_tests/test_container_read_only_root.py
 read_only_root_pods = [
     "commander",
 ]
@@ -32,7 +33,7 @@ def get_all_containers() -> list[testinfra.host.Host]:
     return results
 
 
-class TestAllContainers:
+class TestAllContainersReadOnlyRoot:
     all_containers = get_all_containers()
     all_containers_ids = [
         str(container).removeprefix("<testinfra.host.Host kubectl://astronomer-").removesuffix(">") for container in all_containers
@@ -49,6 +50,7 @@ class TestAllContainers:
         if [x in str(container) for x in read_only_root_pods]:
             assert container.run("test ! -w /").rc == 0, f"Root volume is writable in {container}"
         else:
+            # This assertion ensures that this test is updated whenever we change the readOnlyRootFilesystem property
             assert container.run("test -w /", timeout=5).rc == 1, (
                 f"Root volume is not writable in {container}, which is unexpected."
             )
