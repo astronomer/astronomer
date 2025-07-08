@@ -303,7 +303,7 @@ jobs:
       - attach_workspace:
           at: /tmp/workspace
       - checkout
-      - install_uv:
+      - run:
           name: Install uv
           command: curl -fsSL https://astral.sh/uv/install.sh | sh
       - add_ssh_keys:
@@ -328,7 +328,7 @@ jobs:
       - attach_workspace:
           at: /tmp/workspace
       - checkout
-      - install_uv:
+      - run:
           name: Install uv
           command: curl -fsSL https://astral.sh/uv/install.sh | sh
       - add_ssh_keys:
@@ -353,7 +353,7 @@ jobs:
       - attach_workspace:
           at: /tmp/workspace
       - checkout
-      - install_uv:
+      - run:
           name: Install uv
           command: curl -fsSL https://astral.sh/uv/install.sh | sh
       - add_ssh_keys:
@@ -378,7 +378,7 @@ jobs:
       - attach_workspace:
           at: /tmp/workspace
       - checkout
-      - install_uv:
+      - run:
           name: Install uv
           command: curl -fsSL https://astral.sh/uv/install.sh | sh
       - add_ssh_keys:
