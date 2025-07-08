@@ -124,7 +124,7 @@ class TestAllPodSpecContainers:
         pod_manager_docs_private,
         ids=pod_manager_docs_private_ids,
     )
-    def test_all_default_container_with_private_registry(self, doc):
+    def test_all_default_containers_with_private_registry(self, doc):
         """Test that each container uses the privateRegistry.
 
         This only finds default images, not the many which are hidden
