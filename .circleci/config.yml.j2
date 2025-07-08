@@ -193,7 +193,7 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Create requirements-cache-key.txt
+          name: Create venv-cache-key.txt
           command: |
             cp tests/requirements.txt /tmp/requirements-cache-key.txt
             python --version --version | sed 's/^/# /' >> /tmp/requirements-cache-key.txt
@@ -209,7 +209,6 @@ jobs:
           paths:
             - ~/.cache/uv
             - ~/.local/share/uv
-            - ~/project/venv
             - ~/project/.venv
       - run:
           name: unittest the Astronomer chart
@@ -302,6 +301,9 @@ jobs:
       - attach_workspace:
           at: /tmp/workspace
       - checkout
+      - install_uv:
+          name: Install uv
+          command: curl -fsSL https://astral.sh/uv/install.sh | sh
       - add_ssh_keys:
           fingerprints:
             - "fb:bd:3c:2f:ef:af:e9:5b:fe:33:0e:e1:01:80:9f:cf"
