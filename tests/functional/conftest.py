@@ -87,16 +87,17 @@ def es_data():
     yield testinfra.get_host(f"kubectl://{pod}?container=es-data&namespace=astronomer", kubeconfig=kubeconfig_file)
 
 
-@pytest.fixture(scope="session")
-def all_containers(k8s_core_v1_client):
+@pytest.fixture(scope="function")
+def all_containers(k8s_core_v1_client) -> list[testinfra.host.Host]:
     kubeconfig_file = str(KUBECONFIG_DIR / TEST_SCENARIO)
     all_pods = k8s_core_v1_client.list_namespaced_pod(namespace="astronomer").items
     results = []
     for pod in all_pods:
-        for container in pod.spec.containers:
-            results.extend(
-                testinfra.get_host(
-                    f"kubectl://{pod.metadata.name}?container={container.name}&namespace=astronomer", kubeconfig=kubeconfig_file
-                )
+        results.extend(
+            testinfra.get_host(
+                f"kubectl://{pod.metadata.name}?container={container.name}&namespace=astronomer",
+                kubeconfig=kubeconfig_file,
             )
+            for container in pod.spec.containers
+        )
     return results
