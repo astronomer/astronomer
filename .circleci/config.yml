@@ -304,14 +304,16 @@ jobs:
           at: /tmp/workspace
       - checkout
       - run:
-          name: Install uv
-          command: curl -fsSL https://astral.sh/uv/install.sh | sh
-      - add_ssh_keys:
-          fingerprints:
-            - "fb:bd:3c:2f:ef:af:e9:5b:fe:33:0e:e1:01:80:9f:cf"
+          name: Create venv-cache-key.txt
+          command: |
+            cp tests/requirements.txt /tmp/requirements-cache-key.txt
+            python --version --version | sed 's/^/# /' >> /tmp/requirements-cache-key.txt
       - restore_cache:
           keys:
             - test-venv-{{ checksum "/tmp/requirements-cache-key.txt" }}
+      - run:
+          name: Install uv
+          command: curl -fsSL https://astral.sh/uv/install.sh | sh
       - run:
           name: "Test scenario: unified"
           command: |
@@ -329,14 +331,16 @@ jobs:
           at: /tmp/workspace
       - checkout
       - run:
-          name: Install uv
-          command: curl -fsSL https://astral.sh/uv/install.sh | sh
-      - add_ssh_keys:
-          fingerprints:
-            - "fb:bd:3c:2f:ef:af:e9:5b:fe:33:0e:e1:01:80:9f:cf"
+          name: Create venv-cache-key.txt
+          command: |
+            cp tests/requirements.txt /tmp/requirements-cache-key.txt
+            python --version --version | sed 's/^/# /' >> /tmp/requirements-cache-key.txt
       - restore_cache:
           keys:
             - test-venv-{{ checksum "/tmp/requirements-cache-key.txt" }}
+      - run:
+          name: Install uv
+          command: curl -fsSL https://astral.sh/uv/install.sh | sh
       - run:
           name: "Test scenario: unified"
           command: |
@@ -354,14 +358,16 @@ jobs:
           at: /tmp/workspace
       - checkout
       - run:
-          name: Install uv
-          command: curl -fsSL https://astral.sh/uv/install.sh | sh
-      - add_ssh_keys:
-          fingerprints:
-            - "fb:bd:3c:2f:ef:af:e9:5b:fe:33:0e:e1:01:80:9f:cf"
+          name: Create venv-cache-key.txt
+          command: |
+            cp tests/requirements.txt /tmp/requirements-cache-key.txt
+            python --version --version | sed 's/^/# /' >> /tmp/requirements-cache-key.txt
       - restore_cache:
           keys:
             - test-venv-{{ checksum "/tmp/requirements-cache-key.txt" }}
+      - run:
+          name: Install uv
+          command: curl -fsSL https://astral.sh/uv/install.sh | sh
       - run:
           name: "Test scenario: unified"
           command: |
@@ -379,14 +385,16 @@ jobs:
           at: /tmp/workspace
       - checkout
       - run:
-          name: Install uv
-          command: curl -fsSL https://astral.sh/uv/install.sh | sh
-      - add_ssh_keys:
-          fingerprints:
-            - "fb:bd:3c:2f:ef:af:e9:5b:fe:33:0e:e1:01:80:9f:cf"
+          name: Create venv-cache-key.txt
+          command: |
+            cp tests/requirements.txt /tmp/requirements-cache-key.txt
+            python --version --version | sed 's/^/# /' >> /tmp/requirements-cache-key.txt
       - restore_cache:
           keys:
             - test-venv-{{ checksum "/tmp/requirements-cache-key.txt" }}
+      - run:
+          name: Install uv
+          command: curl -fsSL https://astral.sh/uv/install.sh | sh
       - run:
           name: "Test scenario: unified"
           command: |
