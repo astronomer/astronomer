@@ -20,3 +20,8 @@ When running these tests, you **MUST** `export TEST_SCENARIO` with one of the ab
 - `export DEBUG=1` will enable additional logging, `helm install --debug`, and `kubectl -v=9` output.
 
 ## Local testing
+
+1. Run `export TEST_SCENARIO=unified` or whatever scenario you intend to test.
+1. Run `bin/reset-local-dev` to set up the local test environment, including downloading tools to `~/.local/share/astronomer-software/bin`, creating certs in `~/.local/share/astronomer-software/certs` if needed, storing kubeconfigs in `~/.local/share/astronomer-software/kubeconfig`, launching a kind cluster, and installing the helm chart.
+3. Run `.venv/bin/pytest tests/functional/${TEST_SCENARIO}` to run functional tests for your chosen scenario. This will not automatically tear down the cluster after running, so you can run the tests repeatedly while iterating on changes.
+4. Run `make show-test-helper-files` to show files that may be helpful while developing, such as the path to the kubeconfig for your chosen test scenario.
