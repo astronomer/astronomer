@@ -128,8 +128,6 @@ six==1.17.0
     #   python-dateutil
 smmap==5.0.2
     # via gitdb
-typing-extensions==4.14.1
-    # via -r tests/requirements.in
 urllib3==2.5.0
     # via
     #   docker
