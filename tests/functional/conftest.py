@@ -87,41 +87,16 @@ def es_data():
     yield testinfra.get_host(f"kubectl://{pod}?container=es-data&namespace=astronomer", kubeconfig=kubeconfig_file)
 
 
-@pytest.fixture(scope="function")
-def es_client(k8s_core_v1_client):
-    """Fixture for accessing the es-client pod."""
+@pytest.fixture(scope="session")
+def all_containers(k8s_core_v1_client):
     kubeconfig_file = str(KUBECONFIG_DIR / TEST_SCENARIO)
-    pod = get_pod_by_label_selector("astronomer", "component=elasticsearch,role=client", kubeconfig_file)
-    yield testinfra.get_host(f"kubectl://{pod}?container=es-client&namespace=astronomer", kubeconfig=kubeconfig_file)
-
-
-@pytest.fixture
-def all_containers(k8s_core_v1_client, test_namespace):
-    pods = k8s_core_v1_client.list_namespaced_pod(namespace=test_namespace).items
-    containers = []
-    for pod in pods:
-        containers.extend(
-            {
-                "pod_name": pod.metadata.name,
-                "container_name": container.name,
-                "namespace": test_namespace,
-            }
-            for container in pod.spec.containers
-        )
-    return containers
-
-
-@pytest.fixture(params=lambda all_containers: all_containers)
-def container_host(request):
-    """
-    Yields a testinfra Host object for each container in the namespace.
-    """
-    container_info = request.param
-    pod_name = container_info["pod_name"]
-    container_name = container_info["container_name"]
-    namespace = container_info["namespace"]
-
-    # You can use testinfra's kubectl connection backend:
-    # Syntax: kubectl://container_name?pod=pod_name&namespace=namespace
-    host_str = f"kubectl://{container_name}?pod={pod_name}&namespace={namespace}"
-    return testinfra.get_host(host_str)
+    all_pods = k8s_core_v1_client.list_namespaced_pod(namespace="astronomer").items
+    results = []
+    for pod in all_pods:
+        for container in pod.spec.containers:
+            results.extend(
+                testinfra.get_host(
+                    f"kubectl://{pod.metadata.name}?container={container.name}&namespace=astronomer", kubeconfig=kubeconfig_file
+                )
+            )
+    return results
