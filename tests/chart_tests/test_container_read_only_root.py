@@ -13,6 +13,7 @@ pod_managers = ["Deployment", "StatefulSet", "DaemonSet"]
 # This should match tests/functional/unified/test_container_read_only_root.py
 read_only_root_pods = [
     "commander",
+    "metrics-exporter",
 ]
 
 
@@ -26,12 +27,12 @@ class TestAllContainersReadOnlyRoot:
         pod_manager_docs,
         ids=[f"{x['kind']}/{x['metadata']['name']}" for x in pod_manager_docs],
     )
-    def test_all_containers_have_read_only_root(self, doc):
-        """Test that every container matches our expected configs for ticket ."""
+    def test_all_containers_have_read_only_root(self, doc, request):
+        """Test that every container matches our expected configs for ticket https://github.com/astronomer/issues/issues/7394."""
         c_by_name = get_containers_by_name(doc, include_init_containers=True)
         for name, container in c_by_name.items():
             if any(x in name for x in read_only_root_pods):
                 assert container["securityContext"].get("readOnlyRootFilesystem")
             else:
                 # This assertion ensures that this test is updated whenever we change this property
-                assert not container["securityContext"].get("readOnlyRootFilesystem")
+                assert not container.get("securityContext", {}).get("readOnlyRootFilesystem")
