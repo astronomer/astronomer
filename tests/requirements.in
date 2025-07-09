@@ -2,7 +2,6 @@ cryptography
 deepmerge
 docker
 filelock
-GitPython
 jmespath
 jsonschema
 kubernetes

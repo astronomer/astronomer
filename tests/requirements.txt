@@ -26,10 +26,6 @@ execnet==2.1.1
     # via pytest-xdist
 filelock==3.18.0
     # via -r tests/requirements.in
-gitdb==4.0.12
-    # via gitpython
-gitpython==3.1.44
-    # via -r tests/requirements.in
 google-auth==2.40.3
     # via kubernetes
 gprof2dot==2025.4.14
@@ -126,8 +122,6 @@ six==1.17.0
     #   kubernetes
     #   pytest-profiling
     #   python-dateutil
-smmap==5.0.2
-    # via gitdb
 typing-extensions==4.14.1
     # via referencing
 urllib3==2.5.0
