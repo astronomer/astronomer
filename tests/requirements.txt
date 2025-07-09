@@ -6,7 +6,7 @@ attrs==25.3.0
     #   referencing
 cachetools==5.5.2
     # via google-auth
-certifi==2025.6.15
+certifi==2025.7.9
     # via
     #   kubernetes
     #   requests
@@ -128,6 +128,8 @@ six==1.17.0
     #   python-dateutil
 smmap==5.0.2
     # via gitdb
+typing-extensions==4.14.1
+    # via referencing
 urllib3==2.5.0
     # via
     #   docker
