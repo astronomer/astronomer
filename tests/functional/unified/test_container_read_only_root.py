@@ -47,10 +47,10 @@ class TestAllContainersReadOnlyRoot:
         if not container.exists("test"):
             # Container probably is not running, but in any case it cannot be tested.
             return
-        if [x in str(container) for x in read_only_root_pods]:
-            assert container.run("test ! -w /").rc == 0, f"Root volume is writable in {container}"
+        if any(x in str(container) for x in read_only_root_pods):
+            assert container.run("test -w /", timeout=5).rc == 1, f"Root volume is writable in {container}"
         else:
             # This assertion ensures that this test is updated whenever we change the readOnlyRootFilesystem property
-            assert container.run("test -w /", timeout=5).rc == 1, (
+            assert container.run("test -w /", timeout=5).rc == 0, (
                 f"Root volume is not writable in {container}, which is unexpected."
             )
