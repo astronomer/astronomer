@@ -20,7 +20,9 @@ data:
       evaluation_interval: 30s
       external_labels:
         release: {{ .Release.Name }}
+        {{- if eq .Values.global.plane.mode "data" }}
         clusterid: {{ .Values.global.plane.domainSuffix }}
+        {{- end }}
         {{- if .Values.external_labels }}
         {{- toYaml .Values.external_labels | nindent 8 }}
         {{- end }}
@@ -73,11 +75,13 @@ data:
         params:
           'match[]':
             - '{job=~"astronomer-kube-state|airflow"}'
-        static_configs:
-          - targets:
-              #### Need to check how to add targets..
-            labels:
-              federation: 'data-planes'
+        file_sd_configs:
+          - files:
+              - '/etc/prometheus/federation/targets/*.yml'
+              - '/etc/prometheus/federation/targets/*.yaml'
+            refresh_interval: 30s
+        labels:
+          federation: 'data-planes'
       {{- end }}
 
       {{- if $useClusterRoles }}

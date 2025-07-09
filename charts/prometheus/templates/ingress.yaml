@@ -13,7 +13,7 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
   annotations:
-    {{- if .Values.global.authSidecar.enabled  }}
+    {{- if .Values.global.authSidecar.enabled }}
 {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- else }}
     {{- if .Values.global.extraAnnotations }}
@@ -24,8 +24,9 @@ metadata:
     {{- include "houston.internalauthurl" . | nindent 4 }}
     {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
     nginx.ingress.kubernetes.io/auth-signin: https://app.{{ .Values.global.baseDomain }}/login
-    {{- else if eq .Values.global.plane.mode "data" }}
-    nginx.ingress.kubernetes.io/auth-signin: https://app.{{ .Values.global.plane.domainSuffix}}.{{ .Values.global.baseDomain }}/login
+    {{- end }}
+    {{- if eq .Values.global.plane.mode "data" }}
+    nginx.ingress.kubernetes.io/auth-signin: https://app.{{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}/login
     {{- end }}
     nginx.ingress.kubernetes.io/auth-response-headers: authorization, username, email
     {{- end }}
@@ -46,24 +47,14 @@ spec:
       http:
         paths:
           - path: /
-            {{ if semverCompare "<1.19-0" .Capabilities.KubeVersion.Version -}}
-            backend:
-              serviceName: {{ template "prometheus.fullname" . }}
-              {{- if .Values.global.authSidecar.enabled  }}
-              servicePort: auth-proxy
-              {{- else }}
-              servicePort: prometheus-data
-              {{- end }}
-            {{- else -}}
             pathType: Prefix
             backend:
               service:
                 name: {{ template "prometheus.fullname" . }}
                 port:
-                  {{- if .Values.global.authSidecar.enabled  }}
+                  {{- if .Values.global.authSidecar.enabled }}
                   name: auth-proxy
                   {{- else }}
                   name: prometheus-data
                   {{- end }}
-            {{- end -}}
 {{- end }}
