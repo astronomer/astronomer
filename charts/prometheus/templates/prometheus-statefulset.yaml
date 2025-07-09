@@ -60,7 +60,6 @@ spec:
         - name: auth-proxy
           image: {{ include "authSidecar.image" . }}
           securityContext:
-            readOnlyRootFilesystem: true
             {{ template "prometheus.securityContext" . }}
           imagePullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
           {{- if .Values.global.authSidecar.resources }}
