@@ -55,6 +55,8 @@ data:
       {{- include "jetstreamTLS" . | indent 6 }}
     {{ end }}
 
+    plane:
+      mode: {{ .Values.global.plane.mode }}
 
     helm:
       baseDomain: {{ .Values.global.baseDomain }}
