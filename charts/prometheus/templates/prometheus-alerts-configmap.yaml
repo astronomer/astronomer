@@ -28,7 +28,7 @@ data:
         rules:
         {{- if and (not .Values.additionalAlerts.airflow) (not .Values.defaultAlerts.airflow.enabled) }}
           []
-        {{ end }}
+        {{- end }}
         {{- if .Values.additionalAlerts.airflow }}
         {{- tpl .Values.additionalAlerts.airflow $ | nindent 8 }}
         {{- end }}
@@ -45,7 +45,6 @@ data:
           annotations:
             summary: {{ printf "%q" "{{ $labels.release }} deployment is unhealthy" }}
             description: {{ printf "%q" "The {{ $labels.release }} deployment is not completely available." }}
-
 
         # This alert depends on the scheduler_heartbeat metric being a counter.
         # The type filter here was introduced in 0.7.0, so we don't trigger alerts for
@@ -74,6 +73,7 @@ data:
           annotations:
             summary: {{ printf "%q" "{{ $labels.release }} is near its pod quota" }}
             description: {{ printf "%q" "{{ $labels.release }} has been using over 95% of its pod quota for over 10 minutes." }}
+
         - alert: AirflowTasksPendingIncreasing
           expr: (max_over_time(airflow_scheduler_tasks_pending[5m]) - max_over_time(airflow_scheduler_tasks_pending[5m] offset 5m)) > 0
           for: 30m
@@ -139,6 +139,112 @@ data:
             summary: "Half or more of schedulers do not have a heartbeat"
             description: {{ printf "%q" "{{ $value }} }} schedulers do not have a heartbeat in the last five minutes" }}
         {{- end }}
+
+      - name: k8s-recording.rules
+        rules:
+        - expr: |
+            sum by (namespace) (
+                sum by (namespace, pod) (
+                    max by (namespace, pod, container) (
+                        kube_pod_container_resource_requests{job="{{.Release.Name}}-kube-state", resource="memory",unit="byte"}
+                    ) * on(namespace, pod) group_left() max by (namespace, pod) (
+                        kube_pod_status_phase{phase=~"Pending|Running"} == 1
+                    )
+                )
+            )
+          record: namespace:kube_pod_container_resource_requests_memory_bytes:sum
+        - expr: |
+            sum by (namespace) (
+                sum by (namespace, pod) (
+                    max by (namespace, pod, container) (
+                        kube_pod_container_resource_requests{job="{{.Release.Name}}-kube-state", resource="cpu", unit="core"}
+                    ) * on(namespace, pod) group_left() max by (namespace, pod) (
+                      kube_pod_status_phase{phase=~"Pending|Running"} == 1
+                    )
+                )
+            )
+          record: namespace:kube_pod_container_resource_requests_cpu_cores:sum
+        - expr: |
+            sum(
+              label_replace(
+                label_replace(
+                  kube_pod_owner{job="{{.Release.Name}}-kube-state", owner_kind="ReplicaSet"},
+                  "replicaset", "$1", "owner_name", "(.*)"
+                ) * on(replicaset, namespace) group_left(owner_name) kube_replicaset_owner{job="{{.Release.Name}}-kube-state"},
+                "workload", "$1", "owner_name", "(.*)"
+              )
+            ) by (cluster, namespace, workload, pod)
+          labels:
+            workload_type: deployment
+          record: mixin_pod_workload
+        - expr: |
+            sum(
+              label_replace(
+                kube_pod_owner{job="{{.Release.Name}}-kube-state", owner_kind="DaemonSet"},
+                "workload", "$1", "owner_name", "(.*)"
+              )
+            ) by (cluster, namespace, workload, pod)
+          labels:
+            workload_type: daemonset
+          record: mixin_pod_workload
+        - expr: |
+            sum(
+              label_replace(
+                kube_pod_owner{job="{{.Release.Name}}-kube-state", owner_kind="StatefulSet"},
+                "workload", "$1", "owner_name", "(.*)"
+              )
+            ) by (cluster, namespace, workload, pod)
+          labels:
+            workload_type: statefulset
+          record: mixin_pod_workload
+
+      - name: kube-scheduler-recording.rules
+        rules:
+        - expr: |
+            histogram_quantile(0.99, sum(rate(scheduler_e2e_scheduling_duration_seconds_bucket{job="kube-scheduler"}[5m])) without(instance, pod))
+          labels:
+            quantile: "0.99"
+          record: cluster_quantile:scheduler_e2e_scheduling_duration_seconds:histogram_quantile
+        - expr: |
+            histogram_quantile(0.99, sum(rate(scheduler_scheduling_algorithm_duration_seconds_bucket{job="kube-scheduler"}[5m])) without(instance, pod))
+          labels:
+            quantile: "0.99"
+          record: cluster_quantile:scheduler_scheduling_algorithm_duration_seconds:histogram_quantile
+        - expr: |
+            histogram_quantile(0.99, sum(rate(scheduler_binding_duration_seconds_bucket{job="kube-scheduler"}[5m])) without(instance, pod))
+          labels:
+            quantile: "0.99"
+          record: cluster_quantile:scheduler_binding_duration_seconds:histogram_quantile
+        - expr: |
+            histogram_quantile(0.9, sum(rate(scheduler_e2e_scheduling_duration_seconds_bucket{job="kube-scheduler"}[5m])) without(instance, pod))
+          labels:
+            quantile: "0.9"
+          record: cluster_quantile:scheduler_e2e_scheduling_duration_seconds:histogram_quantile
+        - expr: |
+            histogram_quantile(0.9, sum(rate(scheduler_scheduling_algorithm_duration_seconds_bucket{job="kube-scheduler"}[5m])) without(instance, pod))
+          labels:
+            quantile: "0.9"
+          record: cluster_quantile:scheduler_scheduling_algorithm_duration_seconds:histogram_quantile
+        - expr: |
+            histogram_quantile(0.9, sum(rate(scheduler_binding_duration_seconds_bucket{job="kube-scheduler"}[5m])) without(instance, pod))
+          labels:
+            quantile: "0.9"
+          record: cluster_quantile:scheduler_binding_duration_seconds:histogram_quantile
+        - expr: |
+            histogram_quantile(0.5, sum(rate(scheduler_e2e_scheduling_duration_seconds_bucket{job="kube-scheduler"}[5m])) without(instance, pod))
+          labels:
+            quantile: "0.5"
+          record: cluster_quantile:scheduler_e2e_scheduling_duration_seconds:histogram_quantile
+        - expr: |
+            histogram_quantile(0.5, sum(rate(scheduler_scheduling_algorithm_duration_seconds_bucket{job="kube-scheduler"}[5m])) without(instance, pod))
+          labels:
+            quantile: "0.5"
+          record: cluster_quantile:scheduler_scheduling_algorithm_duration_seconds:histogram_quantile
+        - expr: |
+            histogram_quantile(0.5, sum(rate(scheduler_binding_duration_seconds_bucket{job="kube-scheduler"}[5m])) without(instance, pod))
+          labels:
+            quantile: "0.5"
+          record: cluster_quantile:scheduler_binding_duration_seconds:histogram_quantile
 
       - name: kube-prometheus-general-recording.rules
         rules:
@@ -448,7 +554,7 @@ data:
             severity: warning
             tier: platform
 
-        - name: kubernetes-storage
+      - name: kubernetes-storage
         rules:
         - alert: KubePersistentVolumeErrors
           annotations:
