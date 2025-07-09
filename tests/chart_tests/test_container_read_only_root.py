@@ -14,6 +14,7 @@ pod_managers = ["Deployment", "StatefulSet", "DaemonSet"]
 read_only_root_pods = [
     "commander",
     "metrics-exporter",
+    "prometheus",
 ]
 
 
