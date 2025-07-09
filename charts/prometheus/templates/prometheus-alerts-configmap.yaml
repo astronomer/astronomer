@@ -140,7 +140,7 @@ data:
             description: {{ printf "%q" "{{ $value }} }} schedulers do not have a heartbeat in the last five minutes" }}
         {{- end }}
 
-            - name: kube-prometheus-general-recording.rules
+      - name: kube-prometheus-general-recording.rules
         rules:
         - expr: count without(instance, pod, node) (up == 1)
           record: count:up1
@@ -448,10 +448,9 @@ data:
             severity: warning
             tier: platform
 
-
-      - name: kubernetes-storage
+        - name: kubernetes-storage
         rules:
-                - alert: KubePersistentVolumeErrors
+        - alert: KubePersistentVolumeErrors
           annotations:
             description: The persistent volume {{`{{ $labels.persistentvolume }}`}} has status {{`{{
               $labels.phase }}`}}.
