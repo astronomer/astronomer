@@ -318,9 +318,6 @@ data:
             target_label: deployment
           {{- include "prometheus.airflowMetricsActionDrop" . | nindent 10 }}
 
-      # REMOVED: kubernetes-nodes job (excluded as per requirements)
-      # REMOVED: kubernetes-nodes-cadvisor job (excluded as per requirements)
-
       - job_name: houston-api
         metrics_path: /v1/metrics
         kubernetes_sd_configs:
