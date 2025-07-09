@@ -73,11 +73,13 @@ data:
         params:
           'match[]':
             - '{job=~"astronomer-kube-state|airflow"}'
-        static_configs:
-          - targets:
-              #### Need to check how to add targets..
-            labels:
-              federation: 'data-planes'
+        file_sd_configs:
+          - files:
+              - '/etc/prometheus/federation/targets/*.yml'
+              - '/etc/prometheus/federation/targets/*.yaml'
+            refresh_interval: 30s
+        labels:
+          federation: 'data-planes'
       {{- end }}
 
       {{- if $useClusterRoles }}
