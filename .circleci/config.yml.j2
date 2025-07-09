@@ -388,6 +388,8 @@ workflows:
             branches:
               only:
                 - '/^release-0\.\d+$/'
+                - enable-master-branch-chart-publish
+                - master
       - release-to-internal:
           context:
             - gcp-astronomer-prod
