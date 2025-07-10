@@ -51,11 +51,9 @@ class TestPrometheusConfigConfigmap:
         assert doc["metadata"]["name"] == "release-name-prometheus-config"
 
         config_yaml = yaml.safe_load(doc["data"]["config"])
-        assert [
-            x["tls_config"]["insecure_skip_verify"]
-            for x in list(config_yaml["scrape_configs"])
-            if x["job_name"] == "kubernetes-apiservers"
-        ] == [False]
+        houston_jobs = [x for x in config_yaml["scrape_configs"] if x["job_name"] == "houston-api"]
+        assert len(houston_jobs) == 1
+        assert houston_jobs[0]["metrics_path"] == "/v1/metrics"
 
     def test_prometheus_config_configmap_with_different_name_and_ns(self, kube_version):
         """Validate the prometheus config configmap does not conflate deployment name and namespace."""
