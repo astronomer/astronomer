@@ -13,6 +13,7 @@ metadata:
     heritage: {{ .Release.Service }}
   annotations:
     {{ if .Values.global.enableArgoCDAnnotation }}
+    argocd.argoproj.io/hook: PreSync
     argocd.argoproj.io/sync-wave: "-1"
     {{- end }}
 data:
