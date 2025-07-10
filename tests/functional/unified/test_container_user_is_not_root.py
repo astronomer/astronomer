@@ -10,7 +10,7 @@ container_ignore_list = [
 ]
 
 
-def test_container_non_root():
+def test_container_user_is_not_root():
     container_list = get_pod_running_containers(kubeconfig=KUBECONFIG_UNIFIED, namespace="astronomer")
     for container in container_list.values():
         if container["_name"] in container_ignore_list:

@@ -58,8 +58,7 @@ def download(url, dest, mode="wb"):
     resp = requests.get(url, stream=True, timeout=30)
     resp.raise_for_status()
     with open(dest, mode) as f:
-        for chunk in resp.iter_content(chunk_size=8192):
-            f.write(chunk)
+        f.writelines(resp.iter_content(chunk_size=8192))
     os.chmod(dest, 0o700)
 
 

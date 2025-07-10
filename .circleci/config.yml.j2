@@ -193,31 +193,30 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Create chart-tests-cache-key.txt
+          name: Create venv-cache-key.txt
           command: |
-            cp requirements/chart-tests.txt /tmp/chart-tests-cache-key.txt
-            python --version --version | sed 's/^/# /' >> /tmp/chart-tests-cache-key.txt
+            cp tests/requirements.txt /tmp/requirements-cache-key.txt
+            python --version --version | sed 's/^/# /' >> /tmp/requirements-cache-key.txt
       - restore_cache:
           keys:
-            - chart-test-venv-{{ '{{' }} checksum "/tmp/chart-tests-cache-key.txt" }}
+            - test-venv-{{ '{{' }} checksum "/tmp/requirements-cache-key.txt" }}
       - run:
           name: Create venv
           command: |
-            make venv-unit
+            make venv
       - save_cache:
-          key: chart-test-venv-{{ '{{' }} checksum "/tmp/chart-tests-cache-key.txt" }}
+          key: test-venv-{{ '{{' }} checksum "/tmp/requirements-cache-key.txt" }}
           paths:
             - ~/.cache/uv
             - ~/.local/share/uv
-            - ~/project/venv
-            - ~/project/.venv-unit
+            - ~/project/.venv
       - run:
           name: unittest the Astronomer chart
           command: |
             mkdir test-results
             TEST_FILES=$(circleci tests glob "tests/chart_tests/test_*.py" | circleci tests split --split-by=timings)
             echo "TEST_FILES=\"$TEST_FILES\""
-            venv/bin/python -m pytest -v --junitxml=test-results/junit.xml -n auto $TEST_FILES
+            .venv/bin/python -m pytest -v --junitxml=test-results/junit.xml -n auto $TEST_FILES
       - store_test_results:
           path: test-results
 
@@ -302,9 +301,17 @@ jobs:
       - attach_workspace:
           at: /tmp/workspace
       - checkout
-      - add_ssh_keys:
-          fingerprints:
-            - "fb:bd:3c:2f:ef:af:e9:5b:fe:33:0e:e1:01:80:9f:cf"
+      - run:
+          name: Create venv-cache-key.txt
+          command: |
+            cp tests/requirements.txt /tmp/requirements-cache-key.txt
+            python --version --version | sed 's/^/# /' >> /tmp/requirements-cache-key.txt
+      - restore_cache:
+          keys:
+            - test-venv-{{ '{{' }} checksum "/tmp/requirements-cache-key.txt" }}
+      - run:
+          name: Install uv
+          command: curl -fsSL https://astral.sh/uv/install.sh | sh
       - run:
           name: "Test scenario: unified"
           command: |

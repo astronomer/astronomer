@@ -6,8 +6,10 @@ GIT_ROOT_DIR="$(git rev-parse --show-toplevel)"
 BIN_DIR="${GIT_ROOT_DIR}/bin"
 
 # Use the venv if it exists
+[[ -f .venv/bin/activate ]] || { echo "ABORT: .venv does not exist!" ; exit 1 ; }
+
 # shellcheck disable=SC1091
-[[ -f venv/bin/activate ]] && { . venv/bin/activate ; }
+. .venv/bin/activate
 
 set -ex
 
