@@ -489,6 +489,7 @@ workflows:
             branches:
               only:
                 - '/^release-0\.\d+$/'
+                - feat/fix-argocd-deployment
       - release-to-internal:
           context:
             - gcp-astronomer-prod
@@ -496,6 +497,7 @@ workflows:
             branches:
               only:
                 - '/^release-0\.\d+$/'
+                - feat/fix-argocd-deployment
           requires:
             - approve-internal-release
             - platform-1-29-14

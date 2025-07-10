@@ -11,6 +11,10 @@ metadata:
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
+  annotations:
+    {{ if .Values.global.enableArgoCDAnnotation }}
+    argocd.argoproj.io/sync-wave: "-1"
+    {{- end }}
 data:
   {{ if and .Values.houston.runtimeReleasesConfig ( not .Values.houston.runtimeReleasesConfigMapName ) }}
   astro_runtime_releases.json: |
