@@ -258,7 +258,7 @@ s3:
 - name: JWT__CERT_PATH
   value: {{ template "houston.jwtCertificateDir" . }}
 - name: JWT__REGISTRY__CERT_PATH
-  value: {{ template "houston.jwtRegistryCertificatePath" . }}
+  value: {{ template "houston.jwtCertificateDir" . }}
 - name: JWT__REGISTRY__ISSUER
   value: {{ .Values.registry.auth.issuer }}
 - name: JWT__REGISTRY__SERVICE
