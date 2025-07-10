@@ -18,7 +18,17 @@ data:
     global:
       scrape_interval: 30s
       evaluation_interval: 30s
-      {{ if .Values.external_labels }}external_labels: {{ .Values.external_labels | toYaml | nindent 8 }}{{ end }}
+      external_labels:
+        release: {{ .Release.Name }}
+        {{- if eq .Values.global.plane.mode "data" }}
+        clusterid: {{ .Values.global.plane.domainSuffix }}
+        {{- end }}
+        {{- if .Values.external_labels }}
+        {{- toYaml .Values.external_labels | nindent 8 }}
+        {{- end }}
+        {{- if and .Values.federation.externalLabels (or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified")) }}
+        {{- toYaml .Values.federation.externalLabels | nindent 8 }}
+        {{- end }}
 
     # https://prometheus.io/docs/prometheus/latest/configuration/configuration/#remote_write
     {{ if .Values.remote_write }}remote_write: {{ .Values.remote_write | toYaml | nindent 6 }}{{ end }}
@@ -56,6 +66,23 @@ data:
         static_configs:
           - targets: ["localhost:9090"]
       {{ end }}
+      {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+      - job_name: 'federated-dataplanes'
+        honor_labels: true
+        metrics_path: '/federate'
+        scheme: https
+        scrape_interval: 1m
+        params:
+          'match[]':
+            - '{job=~"astronomer-kube-state|airflow"}'
+        file_sd_configs:
+          - files:
+              - '/etc/prometheus/federation/targets/*.yml'
+              - '/etc/prometheus/federation/targets/*.yaml'
+            refresh_interval: 30s
+        labels:
+          federation: 'data-planes'
+      {{- end }}
 
       {{- if $useClusterRoles }}
       - job_name: 'kubernetes-apiservers'
