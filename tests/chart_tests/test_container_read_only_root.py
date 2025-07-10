@@ -12,6 +12,7 @@ pod_managers = ["Deployment", "StatefulSet", "DaemonSet"]
 # https://github.com/astronomer/issues/issues/7394
 # This should match tests/functional/unified/test_container_read_only_root.py
 read_only_root_pods = [
+    "alertmanager",
     "commander",
     "configmap-reloader",
     "metrics-exporter",
