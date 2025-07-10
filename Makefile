@@ -9,48 +9,37 @@ CHARTS := astronomer nginx prometheus alertmanager elasticsearch kibana fluentd 
 TEMPDIR := /tmp/astro-temp
 PATH := ${HOME}/.local/share/astronomer-software/bin:$(PATH)
 
-# functional-requirements is deprecated
-.PHONY: functional-requirements
-functional-requirements: .venv-functional
-.PHONY: venv-functional
-venv-functional: .venv-functional  ## Setup venv required for unit testing the Astronomer helm chart
-.venv-functional:
-	[ -d venv ] || { uv venv venv -p 3.11 --seed || virtualenv venv -p python3 ; }
-	venv/bin/pip install -r requirements/functional-tests.txt
-	touch $@
-
-.PHONY: venv-unit
-venv-unit: .venv-unit  ## Setup venv required for unit testing the Astronomer helm chart
-.venv-unit:
-	[ -d venv ] || { uv venv venv -p 3.11 --seed || virtualenv venv -p python3 ; }
-	venv/bin/pip install -r requirements/chart-tests.txt
-	touch $@
+.PHONY: venv
+venv: .venv  ## Setup venv required for testing
+.venv:
+	[ -d .venv ] || { uv venv -p 3.12 --seed || python3 -m venv .venv -p python3 ; }
+	.venv/bin/pip install -r tests/requirements.txt
 
 .PHONY: test-functional-control
 test-functional-control: export TEST_SCENARIO=control
-test-functional-control: venv-functional ## Run functional tests on the control installation scenario
+test-functional-control: venv ## Run functional tests on the control installation scenario
 	bin/reset-local-dev
-	venv/bin/python -m pytest -sv --junitxml=test-results/junit.xml tests/multi_cluster/$${TEST_SCENARIO}
+	.venv/bin/python -m pytest -sv --junitxml=test-results/junit.xml tests/functional/$${TEST_SCENARIO}
 
 .PHONY: test-functional-data
 test-functional-data: export TEST_SCENARIO=data
-test-functional-data: venv-functional ## Run functional tests on the data installation scenario
+test-functional-data: venv ## Run functional tests on the data installation scenario
 	bin/reset-local-dev
-	venv/bin/python -m pytest -sv --junitxml=test-results/junit.xml tests/multi_cluster/$${TEST_SCENARIO}
+	.venv/bin/python -m pytest -sv --junitxml=test-results/junit.xml tests/functional/$${TEST_SCENARIO}
 
 .PHONY: test-functional-unified
 test-functional-unified: export TEST_SCENARIO=unified
-test-functional-unified: venv-functional ## Run functional tests on the unified installation scenario
+test-functional-unified: venv ## Run functional tests on the unified installation scenario
 	bin/reset-local-dev
-	venv/bin/python -m pytest -sv --junitxml=test-results/junit.xml tests/multi_cluster/$${TEST_SCENARIO}
+	.venv/bin/python -m pytest -sv --junitxml=test-results/junit.xml tests/functional/$${TEST_SCENARIO}
 
 # unittest-charts is deprecated
 .PHONY: unittest-charts
 unittest-charts: test-unit
 .PHONY: test-unit
-test-unit: venv-unit ## Run unit tests
+test-unit: venv ## Run unit tests
 	# Protip: you can modify pytest behavior like: make unittest-charts PYTEST_ADDOPTS='-v --maxfail=1 --pdb -k "prometheus and 1.20"'
-	venv/bin/python -m pytest -v --junitxml=test-results/junit.xml -n auto tests/chart_tests
+	.venv/bin/python -m pytest -v --junitxml=test-results/junit.xml -n auto tests/chart_tests
 
 .PHONY: validate-commander-airflow-version
 validate-commander-airflow-version: ## Validate that airflowChartVersion is the same in astronomer configs and the commander docker image
@@ -66,9 +55,8 @@ clean: ## Clean build and test artifacts
 	rm -rfv .unittest-requirements
 	rm -rfv .pytest_cache
 	rm -rfv .ruff_cache
-	rm -rfv .venv*
+	rm -rfv .venv
 	rm -rfv test-results
-	rm -rfv venv
 	find . -name __pycache__ -exec rm -rfv {} \+
 	rm -rfv ~/.local/share/astronomer-software
 	kind delete cluster -n control
@@ -82,7 +70,7 @@ build: ## Build the Astronomer helm chart
 
 .PHONY: update-requirements
 update-requirements: ## Update all requirements.txt files
-	for FILE in requirements/*.in ; do uv pip compile --quiet --upgrade $${FILE} --output-file $${FILE%.in}.txt ; done ;
+	uv pip compile --quiet --upgrade tests/requirements.in --output-file tests/requirements.txt
 	-pre-commit run requirements-txt-fixer --all-files --show-diff-on-failure
 
 .PHONY: show-docker-images

@@ -41,7 +41,7 @@ repos:
       - id: remove-tabs
         exclude_types: [makefile, binary]
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: "v0.11.7"
+    rev: "v0.12.2"
     hooks:
       - id: ruff
         args:
@@ -75,10 +75,8 @@ repos:
         exclude: "^tests/utils/.*$"
       - id: requirements-txt-fixer
         args: [
-            "requirements/chart-tests.in",
-            "requirements/chart-tests.txt",
-            "requirements/functional-tests.in",
-            "requirements/functional-tests.txt",
+            "tests/requirements.in",
+            "tests/requirements.txt",
           ]
       - id: sort-simple-yaml
       - id: trailing-whitespace
@@ -87,7 +85,7 @@ repos:
     hooks:
       - id: shellcheck
   - repo: https://github.com/astronomer/pre-commit-hooks
-    rev: 976b58ba36fcd3313fed6d5a7abc228cec64f994
+    rev: 37614dad793bbbdea699c63c8b341ce1e2bf855a
     hooks:
       - id: CVE-2017-18342
       - id: remove-unicode-zero-width-non-breaking-spaces

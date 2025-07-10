@@ -88,8 +88,16 @@ def es_data():
 
 
 @pytest.fixture(scope="function")
-def es_client(k8s_core_v1_client):
-    """Fixture for accessing the es-client pod."""
+def all_containers(k8s_core_v1_client) -> list[testinfra.host.Host]:
     kubeconfig_file = str(KUBECONFIG_DIR / TEST_SCENARIO)
-    pod = get_pod_by_label_selector("astronomer", "component=elasticsearch,role=client", kubeconfig_file)
-    yield testinfra.get_host(f"kubectl://{pod}?container=es-client&namespace=astronomer", kubeconfig=kubeconfig_file)
+    all_pods = k8s_core_v1_client.list_namespaced_pod(namespace="astronomer").items
+    results = []
+    for pod in all_pods:
+        results.extend(
+            testinfra.get_host(
+                f"kubectl://{pod.metadata.name}?container={container.name}&namespace=astronomer",
+                kubeconfig=kubeconfig_file,
+            )
+            for container in pod.spec.containers
+        )
+    return results
