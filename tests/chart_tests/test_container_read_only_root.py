@@ -13,7 +13,9 @@ pod_managers = ["Deployment", "StatefulSet", "DaemonSet"]
 # This should match tests/functional/unified/test_container_read_only_root.py
 read_only_root_pods = [
     "commander",
+    "configmap-reloader",
     "metrics-exporter",
+    "prometheus",
 ]
 
 
