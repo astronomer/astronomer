@@ -1,0 +1,27 @@
+#################################################
+## Registry JWKS Secret Hooks Job ConfigMap    ##
+#################################################
+{{- if eq .Values.global.plane.mode "data" }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-registry-jwks-hook-config
+  labels:
+    tier: astronomer  
+    component: registry-jwks-hook-config
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
+data:
+  fetch-jwks.sh: |-
+    #!/bin/bash
+    set -e
+    echo "Starting JWT certificate fetcher for registry authentication..."
+    CONTROL_PLANE_ENDPOINT="${CONTROL_PLANE_ENDPOINT}"
+    SECRET_NAME="registry-jwt-secret"
+    NAMESPACE="${NAMESPACE}"
+    SOURCE_SECRET_NAME="{{ template "houston.jwtCertificateSecret" . }}"
+    SOURCE_NAMESPACE="{{ .Release.Namespace }}"
+    RETRY_ATTEMPTS={{ .Values.registry.jwksHook.retryAttempts | default 2 }}
+    RETRY_DELAY={{ .Values.registry.jwksHook.retryDelay | default 10 }}
