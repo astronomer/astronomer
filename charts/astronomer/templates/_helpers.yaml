@@ -151,6 +151,14 @@
 {{- end }}
 {{- end }}
 
+{{ define "registry.jwksServiceAccountName" -}}
+{{- if and .Values.registry.serviceAccount.create .Values.global.rbacEnabled -}}
+{{ default (printf "%s-registry-jwks-hook-sa" .Release.Name ) .Values.registry.serviceAccount.name }}
+{{- else -}}
+    {{ default "default" .Values.registry.serviceAccount.name }}
+{{- end }}
+{{- end }}
+
 {{ define "configSyncer.serviceAccountName" -}}
 {{- if and .Values.configSyncer.serviceAccount.create .Values.global.rbacEnabled -}}
 {{ default (printf "%s-config-syncer" .Release.Name ) .Values.configSyncer.serviceAccount.name }}
