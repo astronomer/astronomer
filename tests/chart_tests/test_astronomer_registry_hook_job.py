@@ -80,12 +80,7 @@ class TestRegistryJWKSHookJob:
         docs = render_chart(
             kube_version=kube_version,
             values={"global": {"plane": {"mode": "control"}}},
-            show_only=sorted(
-                [
-                    str(x.relative_to(git_root_dir))
-                    for x in Path(f"{git_root_dir}/charts/astronomer/templates/registry/jwks-hooks").glob("*")
-                ]
-            ),
+            show_only=["charts/astronomer/templates/registry/jwks-hooks/registry-jwks-hooks.yaml"],
         )
 
         assert len(docs) == 0
