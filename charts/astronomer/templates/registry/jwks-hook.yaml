@@ -1,5 +1,5 @@
 ########################################
-## Registry JWKS Secret Creation Job ##
+## Registry JWKS Secret Hooks Job     ##
 ########################################
 {{- if eq .Values.global.plane.mode "data" }}
 apiVersion: {{ include "apiVersion.batch" . }}
@@ -15,6 +15,7 @@ metadata:
     plane: {{ .Values.global.plane.mode }}
   annotations:
     "helm.sh/hook": pre-install,pre-upgrade
+    "astronomer.io/commander-sync": "platform-release={{ .Release.Name }}"
     "helm.sh/hook-weight": "-10"
     "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
 spec:
