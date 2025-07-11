@@ -539,6 +539,10 @@ registry:
 
   podAnnotations: {}
 
+  jwksHook:
+    retryAttempts: 2
+    retryDelay: 10
+
 ports:
   houstonHTTP: 8871
   commanderHTTP: 8880
