@@ -7,7 +7,7 @@ kind: ConfigMap
 metadata:
   name: {{ .Release.Name }}-registry-jwks-hook-config
   labels:
-    tier: astronomer  
+    tier: astronomer
     component: registry-jwks-hook-config
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: {{ .Release.Name }}
@@ -17,4 +17,3 @@ data:
   fetch-jwks.py: |-
     {{ .Files.Get "../../bin/registry-jwks.py" | indent 4 }}
 {{- end }}
-
