@@ -41,7 +41,7 @@ spec:
         {{- end }}
       {{- end }}
     spec:
-      serviceAccountName: {{ template "registry.serviceAccountName" . }} 
+      serviceAccountName: {{ template "registry.serviceAccountName" . }}
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
       affinity:
@@ -74,4 +74,4 @@ spec:
             name: {{ .Release.Name }}-registry-jwks-script
             defaultMode: 0755
       {{- include "custom_ca_volume" . | indent 8 }}
-          
+{{- end }}
