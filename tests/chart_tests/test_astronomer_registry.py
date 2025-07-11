@@ -198,10 +198,11 @@ class TestRegistryStatefulset:
 
     def test_astronomer_registry_statefulset_disabled_for_control_mode(self, kube_version):
         """Test that helm does not render registry statefulset when global.plane.mode is 'control'."""
-        registry_files = []
-        for x in Path(f"{git_root_dir}/charts/astronomer/templates/registry").glob("*"):
-            if x.is_file():
-                registry_files.append(str(x.relative_to(git_root_dir)))
+        registry_files = [
+        str(x.relative_to(git_root_dir)) 
+        for x in Path(f"{git_root_dir}/charts/astronomer/templates/registry").glob("*")
+        if x.is_file()
+        ]
 
         docs = render_chart(
             kube_version=kube_version,
