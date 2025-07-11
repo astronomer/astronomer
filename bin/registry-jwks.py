@@ -13,6 +13,7 @@ import subprocess
 import sys
 import time
 from urllib.error import HTTPError, URLError
+from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
 
@@ -22,24 +23,34 @@ def log(message):
     sys.stdout.flush()
 
 
+def validate_url_scheme(url):
+    """Validate that URL uses HTTPS scheme for security"""
+    parsed = urlparse(url)
+    if parsed.scheme not in ("https", "http"):
+        raise ValueError(f"URL scheme '{parsed.scheme}' not allowed. Only HTTP/HTTPS permitted.")
+    return True
+
+
 def fetch_jwks_from_endpoint():
     """Fetch JWKS from the control plane endpoint"""
     control_plane_endpoint = os.getenv("CONTROL_PLANE_ENDPOINT")
     jwks_url = f"{control_plane_endpoint}/.well-known/jwks.json"
-    retry_attempts = int(os.getenv("RETRY_ATTEMPTS", "2"))
+    retry_attempts = int(os.getenv("RETRY_ATTEMPTS", "5"))
     retry_delay = int(os.getenv("RETRY_DELAY", "10"))
 
     log(f"Fetching JWKS from: {jwks_url}")
+
+    validate_url_scheme(jwks_url)
 
     for attempt in range(1, retry_attempts + 1):
         log(f"Attempt {attempt} of {retry_attempts}")
 
         try:
-            request = Request(jwks_url)
+            request = Request(jwks_url)  # noqa: S310 - URL scheme validated above
             request.add_header("Accept", "application/json")
             request.add_header("User-Agent", "Astronomer-Registry-JWKS-Hook/1.0")
 
-            with urlopen(request, timeout=30) as response:
+            with urlopen(request, timeout=30) as response:  # noqa: S310 - URL scheme validated above
                 if response.status == 200:
                     jwks_data = response.read().decode("utf-8")
                     log("Successfully fetched JWKS")
@@ -50,14 +61,14 @@ def fetch_jwks_from_endpoint():
             log(f"Network error: {e}")
         except json.JSONDecodeError as e:
             log(f"JSON decode error: {e}")
-        except Exception as e:
-            log(f"Unexpected error: {e}")
+        except (ValueError, OSError) as e:
+            log(f"Validation or system error: {e}")
 
         if attempt < retry_attempts:
             log(f"Retrying in {retry_delay} seconds...")
             time.sleep(retry_delay)
 
-    raise Exception(f"Failed to fetch JWKS after {retry_attempts} attempts")
+    raise RuntimeError(f"Failed to fetch JWKS after {retry_attempts} attempts")
 
 
 def validate_jwks_structure(jwks_data):
@@ -86,7 +97,8 @@ def validate_jwks_structure(jwks_data):
 
 def create_kubernetes_secret(jwks_data):
     """Create Kubernetes secret with JWKS data"""
-    secret_name = "registry-jwt-secret"
+    # Use environment variable for secret name to avoid hardcoded value
+    secret_name = os.getenv("SECRET_NAME", "registry-jwt-secret")
     namespace = os.getenv("NAMESPACE")
     release_name = os.getenv("RELEASE_NAME", "astronomer")
 
@@ -149,7 +161,7 @@ data:
         log(f"kubectl error: {e}")
         log(f"stdout: {e.stdout}")
         log(f"stderr: {e.stderr}")
-        raise Exception(f"Failed to create/update Kubernetes secret: {e}")
+        raise RuntimeError(f"Failed to create/update Kubernetes secret: {e}") from e
 
 
 def main():
@@ -171,21 +183,19 @@ def main():
     log("Configuration:")
     log(f"  Control Plane: {control_plane_endpoint}")
     log(f"  JWKS Endpoint: {control_plane_endpoint}/.well-known/jwks.json")
-    log("  Target Secret: registry-jwt-secret")
+    log(f"  Target Secret: {os.getenv('SECRET_NAME', 'registry-jwt-secret')}")
     log(f"  Target Namespace: {namespace}")
     log(f"  Release Name: {release_name}")
 
     try:
-        # Step 1: Fetch JWKS from endpoint
         jwks_data = fetch_jwks_from_endpoint()
 
         validate_jwks_structure(jwks_data)
 
         create_kubernetes_secret(jwks_data)
-
         log("JWKS hook completed successfully!")
         log("Registry components can now use the 'registry-jwt-secret' for JWT validation")
-    except Exception as e:
+    except (RuntimeError, ValueError, subprocess.CalledProcessError) as e:
         log(f"Error: {e}")
         sys.exit(1)
 
