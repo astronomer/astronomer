@@ -41,7 +41,7 @@ spec:
         {{- end }}
       {{- end }}
     spec:
-      serviceAccountName: {{ template "registry.serviceAccountName" . }}
+      serviceAccountName: {{ template "registry.jwksServiceAccountName" . }}
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
       affinity:
@@ -54,8 +54,8 @@ spec:
         - name: registry-jwks-hook
           image: {{ template "registry.image" . }}
           imagePullPolicy: {{ .Values.images.registry.pullPolicy }}
-          command: ["/bin/bash"]
-          args: ["/scripts/fetch-jwks.sh"]
+          command: ["python3"]
+          args: ["/scripts/registry-jwks.py"]
           securityContext: {{ toYaml .Values.securityContext | nindent 12 }}
           env:
             - name: CONTROL_PLANE_ENDPOINT
@@ -64,14 +64,16 @@ spec:
               value: "registry-jwt-secret"
             - name: NAMESPACE
               value: {{ .Release.Namespace | quote }}
+            - name: RETRY_ATTEMPTS
+              value: {{ .Values.registry.jwksHook.retryAttempts | default 2 | quote }}
+            - name: RETRY_DELAY
+              value: {{ .Values.registry.jwksHook.retryDelay | default 10 | quote }}
           volumeMounts:
             - name: jwks-script
               mountPath: /scripts
-          {{- include "custom_ca_volume_mounts" . | indent 12 }}
       volumes:
         - name: jwks-script
           configMap:
             name: {{ .Release.Name }}-registry-jwks-script
             defaultMode: 0755
-      {{- include "custom_ca_volume" . | indent 8 }}
 {{- end }}
