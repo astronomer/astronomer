@@ -1,0 +1,32 @@
+#############################
+## Registry JWKS Hook Role ##
+#############################
+{{- if .Values.global.rbacEnabled }}
+{{- if eq .Values.global.plane.mode "data" }}
+kind: Role
+apiVersion: {{ template "apiVersion.rbac" . }}
+metadata:
+  name: {{ .Release.Name }}-registry-jwks-role
+  labels:
+    tier: astronomer
+    component: registry
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
+  {{ if .Values.global.enableArgoCDAnnotation }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+  {{- end }}
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    verbs:
+      - list
+      - get
+      - create
+      - patch
+{{- end }}
+{{- end }}
