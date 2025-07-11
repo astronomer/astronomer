@@ -1,0 +1,76 @@
+########################################
+## Registry JWKS Secret Creation Job ##
+########################################
+{{- if eq .Values.global.plane.mode "data" }}
+apiVersion: {{ include "apiVersion.batch" . }}
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-registry-jwks-hook
+  labels:
+    tier: astronomer
+    component: registry-jwks-hook
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-10"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  completions: 1
+  parallelism: 1
+  backoffLimit: 1
+  template:
+    metadata:
+      labels:
+        tier: astronomer
+        component: registry-jwks-hook
+        release: {{ .Release.Name }}
+        app: registry-jwks-hook
+        version: {{ .Chart.Version }}
+        plane: {{ .Values.global.plane.mode }}
+      {{- if or .Values.global.podAnnotations .Values.global.istio.enabled }}
+      annotations:
+        {{- if .Values.global.istio.enabled }}
+          sidecar.istio.io/inject: "false"
+        {{- end }}
+        {{- if .Values.global.podAnnotations }}
+{{ toYaml .Values.global.podAnnotations | indent 8 }}
+        {{- end }}
+      {{- end }}
+    spec:
+      serviceAccountName: {{ template "registry.serviceAccountName" . }} 
+      nodeSelector:
+{{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
+      affinity:
+{{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 8 }}
+      tolerations:
+{{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
+      restartPolicy: Never
+{{- include "astronomer.imagePullSecrets" . | indent 6 }}
+      containers:
+        - name: registry-jwks-hook
+          image: {{ template "registry.image" . }}
+          imagePullPolicy: {{ .Values.images.registry.pullPolicy }}
+          command: ["/bin/bash"]
+          args: ["/scripts/fetch-jwks.sh"]
+          securityContext: {{ toYaml .Values.securityContext | nindent 12 }}
+          env:
+            - name: CONTROL_PLANE_ENDPOINT
+              value: "https://{{ .Values.global.baseDomain }}"
+            - name: SECRET_NAME
+              value: "registry-jwt-secret"
+            - name: NAMESPACE
+              value: {{ .Release.Namespace | quote }}
+          volumeMounts:
+            - name: jwks-script
+              mountPath: /scripts
+          {{- include "custom_ca_volume_mounts" . | indent 12 }}
+      volumes:
+        - name: jwks-script
+          configMap:
+            name: {{ .Release.Name }}-registry-jwks-script
+            defaultMode: 0755
+      {{- include "custom_ca_volume" . | indent 8 }}
+          
