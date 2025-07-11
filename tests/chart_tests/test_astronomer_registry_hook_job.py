@@ -1,22 +1,23 @@
-import pytest
 from pathlib import Path
-from tests import supported_k8s_versions, git_root_dir
+
+import pytest
+
+from tests import git_root_dir, supported_k8s_versions
 from tests.utils import get_containers_by_name
 from tests.utils.chart import render_chart
 
+
 @pytest.mark.parametrize(
-    "kube_version", 
+    "kube_version",
     supported_k8s_versions,
 )
-
 class TestRegistryJWKSHookJob:
     def test_jwks_hook_job_defaults_data_plane(self, kube_version):
         """Test JWKS Hook Job defaults on data plane."""
 
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"plane": {"mode": "data"}},
-                    "astronomer": {"registry": {"serviceAccount": {"create": True}}}},
+            values={"global": {"plane": {"mode": "data"}}, "astronomer": {"registry": {"serviceAccount": {"create": True}}}},
             show_only=sorted(
                 [
                     str(x.relative_to(git_root_dir))
@@ -74,17 +75,17 @@ class TestRegistryJWKSHookJob:
         assert "fetch-jwks.py" in configmap_doc["data"]
 
     def test_jwks_hook_job_disabled_control_plane(self, kube_version):
-            """Test JWKS Hook Job is not rendered on control plane."""
+        """Test JWKS Hook Job is not rendered on control plane."""
 
-            docs = render_chart(
-                kube_version=kube_version,
-                values={"global": {"plane": {"mode": "control"}}},
-                show_only=sorted(
-                    [
-                        str(x.relative_to(git_root_dir))
-                        for x in Path(f"{git_root_dir}/charts/astronomer/templates/registry/jwks-hooks").glob("*")
-                    ]
-                ),
-            )
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"plane": {"mode": "control"}}},
+            show_only=sorted(
+                [
+                    str(x.relative_to(git_root_dir))
+                    for x in Path(f"{git_root_dir}/charts/astronomer/templates/registry/jwks-hooks").glob("*")
+                ]
+            ),
+        )
 
-            assert len(docs) == 0
+        assert len(docs) == 0
