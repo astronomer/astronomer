@@ -77,10 +77,11 @@ data:
             - '{job=~"astronomer-kube-state|airflow"}'
         file_sd_configs:
           - files:
-              - '/etc/prometheus/federation/targets/*.yaml'
+            - '/etc/prometheus/federation/targets/*.yaml'
             refresh_interval: 30s
-        labels:
-          federation: 'data-planes'
+        relabel_configs:
+          - target_label: federation
+            replacement: data-planes
       {{- end }}
 
       {{- if $useClusterRoles }}
