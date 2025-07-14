@@ -151,11 +151,11 @@
 {{- end }}
 {{- end }}
 
-{{ define "registry.jwksServiceAccountName" -}}
-{{- if and .Values.registry.serviceAccount.create .Values.global.rbacEnabled -}}
-{{ default (printf "%s-registry-jwks-hook-sa" .Release.Name ) .Values.registry.serviceAccount.name }}
+{{ define "commander.jwksServiceAccountName" -}}
+{{- if and .Values.commander.serviceAccount.create .Values.global.rbacEnabled -}}
+{{ default (printf "%s-commander-jwks-hook-sa" .Release.Name ) .Values.commander.serviceAccount.name }}
 {{- else -}}
-    {{ default "default" .Values.registry.serviceAccount.name }}
+    {{ default "default" .Values.commander.serviceAccount.name }}
 {{- end }}
 {{- end }}
 
