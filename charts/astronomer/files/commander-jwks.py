@@ -8,6 +8,7 @@ and creates a Kubernetes secret for registry authentication.
 
 import base64
 import json
+import logging
 import os
 import subprocess
 import sys
@@ -17,10 +18,23 @@ from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
 
-def log(message):
-    """Log with timestamp and prefix"""
-    print(f"[JWKS-HOOK] {message}")
-    sys.stdout.flush()
+def setup_logger():
+    """Setup logger with timestamp and prefix"""
+    logger = logging.getLogger("JWKS-HOOK")
+    logger.setLevel(logging.INFO)
+
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setLevel(logging.INFO)
+
+    formatter = logging.Formatter("[JWKS-HOOK] %(message)s")
+    handler.setFormatter(formatter)
+
+    logger.addHandler(handler)
+
+    return logger
+
+
+logger = setup_logger()
 
 
 def validate_url_scheme(url):
@@ -38,12 +52,12 @@ def fetch_jwks_from_endpoint(endpoint):
     retry_attempts = int(os.getenv("RETRY_ATTEMPTS", "5"))
     retry_delay = int(os.getenv("RETRY_DELAY", "10"))
 
-    log(f"Fetching JWKS from: {jwks_url}")
+    logger.info(f"Fetching JWKS from: {jwks_url}")
 
     validate_url_scheme(jwks_url)
 
     for attempt in range(1, retry_attempts + 1):
-        log(f"Attempt {attempt} of {retry_attempts}")
+        logger.info(f"Attempt {attempt} of {retry_attempts}")
 
         try:
             request = Request(jwks_url)  # noqa: S310 - URL scheme validated above
@@ -53,19 +67,19 @@ def fetch_jwks_from_endpoint(endpoint):
             with urlopen(request, timeout=30) as response:  # noqa: S310 - URL scheme validated above
                 if response.status == 200:
                     jwks_data = response.read().decode("utf-8")
-                    log("Successfully fetched JWKS")
+                    logger.info("Successfully fetched JWKS")
                     return json.loads(jwks_data)
-                log(f"HTTP {response.status}: {response.reason}")
+                logger.warning(f"HTTP {response.status}: {response.reason}")
 
         except (URLError, HTTPError) as e:
-            log(f"Network error: {e}")
+            logger.error(f"Network error: {e}")
         except json.JSONDecodeError as e:
-            log(f"JSON decode error: {e}")
+            logger.error(f"JSON decode error: {e}")
         except (ValueError, OSError) as e:
-            log(f"Validation or system error: {e}")
+            logger.error(f"Validation or system error: {e}")
 
         if attempt < retry_attempts:
-            log(f"Retrying in {retry_delay} seconds...")
+            logger.info(f"Retrying in {retry_delay} seconds...")
             time.sleep(retry_delay)
 
     raise RuntimeError(f"Failed to fetch JWKS after {retry_attempts} attempts")
@@ -91,7 +105,7 @@ def validate_jwks_structure(jwks_data):
             if field not in key:
                 raise ValueError(f"Key {i} missing required field: {field}")
 
-    log(f"JWKS validation successful - found {len(jwks_data['keys'])} keys")
+    logger.info(f"JWKS validation successful - found {len(jwks_data['keys'])} keys")
     return True
 
 
@@ -101,7 +115,7 @@ def create_kubernetes_secret(jwks_data):
     namespace = os.getenv("NAMESPACE")
     release_name = os.getenv("RELEASE_NAME", "astronomer")
 
-    log(f"Creating secret '{secret_name}' in namespace '{namespace}'")
+    logger.info(f"Creating secret '{secret_name}' in namespace '{namespace}'")
 
     jwks_json = json.dumps(jwks_data, indent=2)
 
@@ -113,10 +127,10 @@ def create_kubernetes_secret(jwks_data):
         secret_exists = result.returncode == 0
 
         if secret_exists:
-            log(f"Secret '{secret_name}' already exists, updating...")
+            logger.info(f"Secret '{secret_name}' already exists, updating...")
             action = "apply"
         else:
-            log(f"Creating new secret '{secret_name}'...")
+            logger.info(f"Creating new secret '{secret_name}'...")
             action = "apply"
 
         secret_yaml = f"""apiVersion: v1
@@ -142,7 +156,7 @@ data:
 
         subprocess.run(["kubectl", action, "-f", "-"], input=secret_yaml, text=True, capture_output=True, check=True)
 
-        log(f"Secret '{secret_name}' {action}d successfully")
+        logger.info(f"Secret '{secret_name}' {action}d successfully")
 
         verify_result = subprocess.run(
             ["kubectl", "get", "secret", secret_name, "-n", namespace, "-o", "jsonpath={.metadata.labels.component}"],
@@ -152,39 +166,39 @@ data:
         )
 
         if verify_result.stdout.strip() == "commander-jwks-hook":
-            log("Secret verification successful")
+            logger.info("Secret verification successful")
         else:
-            log("Warning: Secret verification failed")
+            logger.warning("Warning: Secret verification failed")
 
     except subprocess.CalledProcessError as e:
-        log(f"kubectl error: {e}")
-        log(f"stdout: {e.stdout}")
-        log(f"stderr: {e.stderr}")
+        logger.error(f"kubectl error: {e}")
+        logger.error(f"stdout: {e.stdout}")
+        logger.error(f"stderr: {e.stderr}")
         raise RuntimeError(f"Failed to create/update Kubernetes secret: {e}") from e
 
 
 def main():
     """Main function"""
-    log("Starting JWKS fetcher for registry authentication...")
+    logger.info("Starting JWKS fetcher for registry authentication...")
 
     control_plane_endpoint = os.getenv("CONTROL_PLANE_ENDPOINT")
     namespace = os.getenv("NAMESPACE")
     release_name = os.getenv("RELEASE_NAME", "astronomer")
 
     if not control_plane_endpoint:
-        log("Error: CONTROL_PLANE_ENDPOINT environment variable not set")
+        logger.error("Error: CONTROL_PLANE_ENDPOINT environment variable not set")
         sys.exit(1)
 
     if not namespace:
-        log("Error: NAMESPACE environment variable not set")
+        logger.error("Error: NAMESPACE environment variable not set")
         sys.exit(1)
 
-    log("Configuration:")
-    log(f"  Control Plane: {control_plane_endpoint}")
-    log(f"  JWKS Endpoint: {control_plane_endpoint}/.well-known/jwks.json")
-    log(f"  Target Secret: {os.getenv('SECRET_NAME', 'registry-jwt-secret')}")
-    log(f"  Target Namespace: {namespace}")
-    log(f"  Release Name: {release_name}")
+    logger.info("Configuration:")
+    logger.info(f"  Control Plane: {control_plane_endpoint}")
+    logger.info(f"  JWKS Endpoint: {control_plane_endpoint}/.well-known/jwks.json")
+    logger.info(f"  Target Secret: {os.getenv('SECRET_NAME', 'registry-jwt-secret')}")
+    logger.info(f"  Target Namespace: {namespace}")
+    logger.info(f"  Release Name: {release_name}")
 
     try:
         jwks_data = fetch_jwks_from_endpoint(endpoint=control_plane_endpoint)
@@ -192,10 +206,10 @@ def main():
         validate_jwks_structure(jwks_data)
 
         create_kubernetes_secret(jwks_data)
-        log("JWKS hook completed successfully!")
-        log("Registry components can now use the 'registry-jwt-secret' for JWT validation")
+        logger.info("JWKS hook completed successfully!")
+        logger.info("Registry components can now use the 'registry-jwt-secret' for JWT validation")
     except (RuntimeError, ValueError, subprocess.CalledProcessError) as e:
-        log(f"Error: {e}")
+        logger.error(f"Error: {e}")
         sys.exit(1)
 
 
