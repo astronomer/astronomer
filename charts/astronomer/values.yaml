@@ -440,6 +440,9 @@ commander:
   cloudProvider: ""
   commanderUrl: ""
   region: ""
+  jwksHook:
+    retryAttempts: 2
+    retryDelay: 10
 
 registry:
   # flag to bypass secure (tls) authentication to astronomer registry
@@ -538,10 +541,6 @@ registry:
   logLevel: info
 
   podAnnotations: {}
-
-  jwksHook:
-    retryAttempts: 2
-    retryDelay: 10
 
 ports:
   houstonHTTP: 8871
