@@ -79,8 +79,10 @@ data:
           - files:
               - '/etc/prometheus/federation/targets/*.yaml'
             refresh_interval: 30s
-        labels:
-          federation: 'data-planes'
+        relabel_configs:
+          - target_label: federation
+            replacement: data-planes
+          metrics_path: /federate
       {{- end }}
 
       {{- if $useClusterRoles }}
