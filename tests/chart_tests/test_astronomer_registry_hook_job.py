@@ -27,16 +27,19 @@ class TestRegistryJWKSHookJob:
         )
 
         for doc in docs:
-            if doc["kind"] == "Job":
-                job_doc = doc
-            elif doc["kind"] == "ServiceAccount":
-                sa_doc = doc
-            elif doc["kind"] == "Role":
-                role_doc = doc
-            elif doc["kind"] == "RoleBinding":
-                rolebinding_doc = doc
-            elif doc["kind"] == "ConfigMap":
-                configmap_doc = doc
+            match doc["kind"]:
+                case "Job":
+                    job_doc = doc
+                case "ServiceAccount":
+                    sa_doc = doc
+                case "Role":
+                    role_doc = doc
+                case "RoleBinding":
+                    rolebinding_doc = doc
+                case "ConfigMap":
+                    configmap_doc = doc
+                case _:
+                    print(f'Unhandled kind {doc["kind"]}')
 
         assert len(docs) == 5
         assert job_doc["metadata"]["name"] == "release-name-registry-jwks-hook"
