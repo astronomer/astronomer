@@ -86,7 +86,7 @@ def validate_jwks_structure(jwks_data):
         raise ValueError("JWKS 'keys' array cannot be empty")
 
     for i, key in enumerate(jwks_data["keys"]):
-        required_fields = ["kty", "kid"]  # Key type and Key ID are essential
+        required_fields = ["kty", "kid"]
         for field in required_fields:
             if field not in key:
                 raise ValueError(f"Key {i} missing required field: {field}")
@@ -97,7 +97,6 @@ def validate_jwks_structure(jwks_data):
 
 def create_kubernetes_secret(jwks_data):
     """Create Kubernetes secret with JWKS data"""
-    # Use environment variable for secret name to avoid hardcoded value
     secret_name = os.getenv("SECRET_NAME", "registry-jwt-secret")
     namespace = os.getenv("NAMESPACE")
     release_name = os.getenv("RELEASE_NAME", "astronomer")
