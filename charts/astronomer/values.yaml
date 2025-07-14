@@ -5,7 +5,7 @@
 # This version number controls the default Airflow chart version that will be installed
 # when creating a new deployment in the system. This is also used to ensure all
 # child airflow deployments are kept up to date and on the latest version.
-airflowChartVersion: 1.14.5
+airflowChartVersion: 1.15.5
 
 nodeSelector: {}
 affinity: {}
@@ -15,7 +15,7 @@ tolerations: []
 images:
   commander:
     repository: quay.io/astronomer/ap-commander
-    tag: 0.37.10
+    tag: 0.37.19
     pullPolicy: IfNotPresent
   registry:
     repository: quay.io/astronomer/ap-registry
@@ -24,15 +24,15 @@ images:
     # httpSecret: ~
   houston:
     repository: quay.io/astronomer/ap-houston-api
-    tag: 0.37.19
+    tag: 0.37.37
     pullPolicy: IfNotPresent
   astroUI:
     repository: quay.io/astronomer/ap-astro-ui
-    tag: 0.37.11
+    tag: 0.37.12
     pullPolicy: IfNotPresent
   dbBootstrapper:
     repository: quay.io/astronomer/ap-db-bootstrapper
-    tag: 0.37.3
+    tag: 0.37.4
     pullPolicy: IfNotPresent
 
 
@@ -258,6 +258,20 @@ houston:
     readinessProbe: {}
     livenessProbe: {}
 
+  # Cleanup cluster audits in Houston
+  # This runs as a CronJob
+  cleanupClusterAudits:
+    # Enable cleanup CronJob
+    enabled: true
+
+    # Run at 23:49 every night
+    schedule: "49 23 * * *"  # https://crontab.guru/#49_23_*_*_*
+
+    # Cleanup deploy revisions older than this many days
+    olderThan: 90
+    readinessProbe: {}
+    livenessProbe: {}
+
   # Check for Astronomer Platform Updates
   # This runs as a CronJob
   updateCheck:
@@ -425,7 +439,6 @@ commander:
   # Values for Dataplane Metadata
   cloudProvider: ""
   commanderUrl: ""
-  dataplaneId: ""
   region: ""
 
 registry:

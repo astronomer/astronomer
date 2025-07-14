@@ -97,7 +97,7 @@ spec:
               mountPath: /etc/docker/registry
             {{- if not .Values.registry.enableInsecureAuth }}
             - name: jwks-certificate
-              mountPath: /etc/docker/jwks
+              mountPath: /etc/docker/ssl
             {{- end }}
             - name: data
               mountPath: /var/lib/registry
@@ -108,8 +108,6 @@ spec:
           ports:
             - name: registry-http
               containerPort: {{ .Values.ports.registryHTTP }}
-            # - name: registry-scrape
-            #   containerPort: {{ .Values.ports.registryScrape }}
           {{- if .Values.registry.livenessProbe }}
           livenessProbe: {{ tpl (toYaml .Values.registry.livenessProbe) . | nindent 12 }}
           {{- else }}
@@ -139,12 +137,10 @@ spec:
             items:
               - key: config.yml
                 path: config.yml
-        {{- if eq .Values.global.plane.mode "data"}}
         {{- if not .Values.registry.enableInsecureAuth }}
         - name: jwks-certificate
           secret:
             secretName: {{ include "houston.jwtCertificateSecret" . }}
-        {{- end }}
         {{- end }}
         {{ include "custom_ca_volumes" . | indent 8  }}
         {{- if and .Values.registry.gcs.enabled .Values.registry.gcs.useKeyfile }}

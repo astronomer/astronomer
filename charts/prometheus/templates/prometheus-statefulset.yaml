@@ -59,7 +59,8 @@ spec:
         {{- if .Values.global.authSidecar.enabled  }}
         - name: auth-proxy
           image: {{ include "authSidecar.image" . }}
-          securityContext: {{ template "prometheus.securityContext" . }}
+          securityContext:
+            {{ template "prometheus.securityContext" . }}
           imagePullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
           {{- if .Values.global.authSidecar.resources }}
           resources: {{- toYaml .Values.global.authSidecar.resources | nindent 12 }}
@@ -101,7 +102,9 @@ spec:
             - --volume-dir=/etc/prometheus/config
           image: {{ include "configReloader.image" . }}
           imagePullPolicy: {{ .Values.images.prometheus.pullPolicy }}
-          securityContext: {{ template "prometheus.securityContext" . }}
+          securityContext:
+            readOnlyRootFilesystem: true
+            {{ template "prometheus.securityContext" . }}
           resources: {{ toYaml .Values.configMapReloader.resources | nindent 12 }}
           {{- if .Values.configMapReloader.livenessProbe }}
           livenessProbe: {{ tpl (toYaml .Values.configMapReloader.livenessProbe) . | nindent 12 }}
@@ -148,7 +151,9 @@ spec:
         {{- end }}
         - name: prometheus
           image: {{ include "prometheus.image" . }}
-          securityContext: {{ template "prometheus.securityContext" . }}
+          securityContext:
+            readOnlyRootFilesystem: true
+            {{ template "prometheus.securityContext" . }}
           imagePullPolicy: {{ .Values.images.prometheus.pullPolicy }}
           resources: {{ toYaml .Values.resources | nindent 12 }}
           args:
