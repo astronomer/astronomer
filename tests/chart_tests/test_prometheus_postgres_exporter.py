@@ -56,7 +56,10 @@ class TestPrometheusPostgresExporter:
             "periodSeconds": 10,
             "tcpSocket": {"port": 9187},
         }
-        assert c_by_name["prometheus-postgres-exporter"]["securityContext"] == {"runAsNonRoot": True}
+        assert c_by_name["prometheus-postgres-exporter"]["securityContext"] == {
+            "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
+        }
         spec = docs[1]["spec"]["template"]["spec"]
         assert spec["nodeSelector"] == {}
         assert spec["affinity"] == {}
