@@ -34,7 +34,7 @@ def validate_url_scheme(url):
 def fetch_jwks_from_endpoint():
     """Fetch JWKS from the control plane endpoint"""
     control_plane_endpoint = os.getenv("CONTROL_PLANE_ENDPOINT")
-    jwks_url = f"{control_plane_endpoint}/.well-known/jwks.json"
+    jwks_url = f"{control_plane_endpoint}/v1/.well-known/jwks.json"
     retry_attempts = int(os.getenv("RETRY_ATTEMPTS", "5"))
     retry_delay = int(os.getenv("RETRY_DELAY", "10"))
 
