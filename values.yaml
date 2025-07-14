@@ -142,6 +142,7 @@ global:
 
   logging:
     indexNamePrefix: ~
+    collector: "fluentd"  # Must be fluentd or vector
 
   # Sidecar Logging
   loggingSidecar:
@@ -344,7 +345,7 @@ tags:
   # Enable monitoring stack (prometheus, kube-state)
   monitoring: true
 
-  # Enable logging stack (elasticsearch, fluentd, kibana)
+  # Enable logging stack (elasticsearch, fluentd/vector, kibana)
   logging: true
 
   # NATS Streaming
@@ -411,7 +412,6 @@ astronomer:
 ## Nginx configuration
 #################################
 nginx:
-  # Configure resources
   resources:
     requests:
       cpu: "500m"
@@ -446,12 +446,10 @@ prometheus:
   # Data retention
   retention: 15d
 
-  # Persistence configuration
   persistence:
     enabled: true
     size: "150Gi"
 
-  # Configure resources
   resources:
     requests:
       cpu: "1000m"
@@ -623,7 +621,6 @@ elasticsearch:
 ## Kibana configuration
 #################################
 kibana:
-  # Configure resources
   resources:
     requests:
       cpu: "250m"
@@ -636,7 +633,6 @@ kibana:
 ## Fluentd configuration
 #################################
 fluentd:
-  # Configure resources
   resources:
     requests:
       cpu: "250m"
@@ -646,10 +642,22 @@ fluentd:
       memory: "1024Mi"
 
 #################################
+## Vector configuration
+#################################
+vector:    # pod
+  vector:  # container
+    resources:
+      requests:
+        cpu: "250m"
+        memory: "512Mi"
+      limits:
+        cpu: "1000m"
+        memory: "1024Mi"
+
+#################################
 ## Kube State configuration
 #################################
 kube-state:
-  # Configure resources
   resources:
     requests:
       cpu: "250m"
