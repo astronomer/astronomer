@@ -15,5 +15,5 @@ metadata:
     plane: {{ .Values.global.plane.mode }}
 data:
   fetch-jwks.py: |-
-    {{ .Files.Get "../../bin/commander-jwks.py" | indent 4 }}
+    {{ .Files.Get "../../../files/commander-jwks.py" | indent 4 }}
 {{- end }}
