@@ -258,7 +258,7 @@ s3:
 - name: JWT__CERT_PATH
   value: {{ template "houston.jwtCertificateDir" . }}
 - name: JWT__REGISTRY__CERT_PATH
-  value: {{ template "houston.jwtRegistryCertificatePath" . }}
+  value: {{ template "houston.jwtCertificateDir" . }}
 - name: JWT__REGISTRY__ISSUER
   value: {{ .Values.registry.auth.issuer }}
 - name: JWT__REGISTRY__SERVICE
@@ -318,13 +318,6 @@ s3:
 - name: houston-jwt-certificate-volume
   mountPath: {{ template "houston.jwtCertificatePath" . }}
   subPath: tls.crt
-{{ if .Values.global.tlsSecret }}
-- name: registry-tls-volume
-  mountPath: {{ template "houston.jwtRegistryCertificatePath" . }}
-- name: registry-tls-volume
-  mountPath: {{ template "houston.tlsRegistryCertificatePath" . }}
-  subPath: tls.crt
-{{- end }}
 {{ if and  .Values.global.nats.jetStream.enabled  .Values.global.nats.jetStream.tls  }}
 {{ $secretName :=  printf "%s-client" (include "nats.jestreamTLSSecret" . ) }}
 - name: nats-jetstream-client-tls-volume
@@ -360,11 +353,6 @@ s3:
 - name: houston-jwt-certificate-volume
   secret:
     secretName: {{ template "houston.jwtCertificateSecret" . }}
-{{ if .Values.global.tlsSecret }}
-- name: registry-tls-volume
-  secret:
-    secretName: {{ .Values.global.tlsSecret }}
-{{- end }}
 {{- if and  .Values.global.nats.jetStream.enabled  .Values.global.nats.jetStream.tls  }}
 {{ $secretName :=  printf "%s-client" (include "nats.jestreamTLSSecret" . ) }}
 - name: nats-jetstream-client-tls-volume

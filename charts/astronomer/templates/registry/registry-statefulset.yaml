@@ -108,8 +108,6 @@ spec:
           ports:
             - name: registry-http
               containerPort: {{ .Values.ports.registryHTTP }}
-            # - name: registry-scrape
-            #   containerPort: {{ .Values.ports.registryScrape }}
           {{- if .Values.registry.livenessProbe }}
           livenessProbe: {{ tpl (toYaml .Values.registry.livenessProbe) . | nindent 12 }}
           {{- else }}
