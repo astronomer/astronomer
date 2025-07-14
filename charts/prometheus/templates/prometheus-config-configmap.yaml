@@ -77,7 +77,6 @@ data:
             - '{job=~"astronomer-kube-state|airflow"}'
         file_sd_configs:
           - files:
-              - '/etc/prometheus/federation/targets/*.yml'
               - '/etc/prometheus/federation/targets/*.yaml'
             refresh_interval: 30s
         labels:
