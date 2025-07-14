@@ -102,7 +102,7 @@ def validate_jwks_structure(jwks_data):
     return True
 
 
-def create_kubernetes_secret(jwks_data):
+def create_kubernetes_secret(jwks_data, endpoint):
     """Create Kubernetes secret with JWKS data"""
     secret_name = os.getenv("SECRET_NAME", "commander-jwt-secret")
     namespace = os.getenv("NAMESPACE")
@@ -140,7 +140,7 @@ metadata:
     app.kubernetes.io/component: registry-jwks
   annotations:
     astronomer.io/commander-sync: "platform-release={release_name}"
-    astronomer.io/jwks-source: "{os.getenv("CONTROL_PLANE_ENDPOINT")}/v1/.well-known/jwks.json"
+    astronomer.io/jwks-source: "{endpoint}/v1/.well-known/jwks.json"
     astronomer.io/jwks-fetched-at: "{time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}"
 type: Opaque
 data:
@@ -194,11 +194,11 @@ def main():
     logger.info(f"  Release Name: {release_name}")
 
     try:
-        jwks_data = fetch_jwks_from_endpoint(endpoint=control_plane_endpoint)
+        jwks_data = fetch_jwks_from_endpoint(control_plane_endpoint)
 
         validate_jwks_structure(jwks_data)
 
-        create_kubernetes_secret(jwks_data)
+        create_kubernetes_secret(jwks_data, control_plane_endpoint)
         logger.info("JWKS hook completed successfully!")
         logger.info("Registry components can now use the 'commander-jwt-secret' for JWT validation")
     except (RuntimeError, ValueError, subprocess.CalledProcessError) as e:
