@@ -39,7 +39,7 @@ class TestRegistryJWKSHookJob:
                 case "ConfigMap":
                     configmap_doc = doc
                 case _:
-                    print(f'Unhandled kind {doc["kind"]}')
+                    print(f"Unhandled kind {doc['kind']}")
 
         assert len(docs) == 5
         assert job_doc["metadata"]["name"] == "release-name-registry-jwks-hook"
