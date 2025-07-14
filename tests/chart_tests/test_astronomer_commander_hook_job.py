@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 
 from tests import git_root_dir, supported_k8s_versions
-from tests.utils import get_containers_by_name
+from tests.utils import get_containers_by_name, get_env_vars_dict
 from tests.utils.chart import render_chart
 
 
@@ -60,7 +60,7 @@ class TestCommanderJWKSHookJob:
         assert container["command"] == ["python3"]
         assert container["args"] == ["/scripts/commander-jwks.py"]
 
-        env_vars = {x["name"]: x["value"] for x in container["env"]}
+        env_vars = get_env_vars_dict(container["env"])
         assert env_vars["CONTROL_PLANE_ENDPOINT"] == "https://example.com"
         assert env_vars["SECRET_NAME"] == "commander-jwt-secret"
         assert env_vars["RETRY_ATTEMPTS"] == "2"
