@@ -909,7 +909,7 @@ data:
           annotations:
             summary: {{ printf "%q" "Fluentd buffer queue length is {{ $value }} For {{ $labels.host }} " }}
             description: "Check on Elastic Search client and try restarting Fluentd pods"
-            
+
         - alert: ElasticSeachUnassignedShards
           expr: elasticsearch_cluster_health_unassigned_shards > 0
           for: 10m
