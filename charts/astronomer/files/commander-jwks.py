@@ -102,14 +102,10 @@ def validate_jwks_structure(jwks_data):
     return True
 
 
-def create_kubernetes_secret(jwks_data, endpoint):
+def create_kubernetes_secret(jwks_data, endpoint, namespace, release_name, secret_name):
     """Create Kubernetes secret with JWKS data"""
-    secret_name = os.getenv("SECRET_NAME", "commander-jwt-secret")
-    namespace = os.getenv("NAMESPACE")
-    release_name = os.getenv("RELEASE_NAME", "astronomer")
 
     logger.info(f"Creating secret '{secret_name}' in namespace '{namespace}'")
-
     jwks_json = json.dumps(jwks_data, indent=2)
 
     try:
@@ -133,11 +129,11 @@ metadata:
   namespace: {namespace}
   labels:
     tier: astronomer
-    component: registry
+    component: commander
     release: {release_name}
-    app.kubernetes.io/name: registry-jwks
+    app.kubernetes.io/name: commander-jwks
     app.kubernetes.io/instance: {release_name}
-    app.kubernetes.io/component: registry-jwks
+    app.kubernetes.io/component: commander-jwks
   annotations:
     astronomer.io/commander-sync: "platform-release={release_name}"
     astronomer.io/jwks-source: "{endpoint}/v1/.well-known/jwks.json"
@@ -177,6 +173,7 @@ def main():
     control_plane_endpoint = os.getenv("CONTROL_PLANE_ENDPOINT")
     namespace = os.getenv("NAMESPACE")
     release_name = os.getenv("RELEASE_NAME", "astronomer")
+    secret_name = os.getenv("SECRET_NAME", f"{release_name}-commander-jwt-secret")
 
     if not control_plane_endpoint:
         logger.error("Error: CONTROL_PLANE_ENDPOINT environment variable not set")
@@ -189,7 +186,7 @@ def main():
     logger.info("Configuration:")
     logger.info(f"  Control Plane: {control_plane_endpoint}")
     logger.info(f"  JWKS Endpoint: {control_plane_endpoint}/v1/.well-known/jwks.json")
-    logger.info(f"  Target Secret: {os.getenv('SECRET_NAME', 'commander-jwt-secret')}")
+    logger.info(f"  Target Secret: {secret_name}")
     logger.info(f"  Target Namespace: {namespace}")
     logger.info(f"  Release Name: {release_name}")
 
@@ -198,7 +195,7 @@ def main():
 
         validate_jwks_structure(jwks_data)
 
-        create_kubernetes_secret(jwks_data, control_plane_endpoint)
+        create_kubernetes_secret(jwks_data, control_plane_endpoint, namespace, release_name, secret_name)
         logger.info("JWKS hook completed successfully!")
         logger.info("Registry components can now use the 'commander-jwt-secret' for JWT validation")
     except (RuntimeError, ValueError, subprocess.CalledProcessError) as e:
