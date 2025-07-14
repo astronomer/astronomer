@@ -137,7 +137,7 @@ metadata:
     astronomer.io/jwks-fetched-at: "{time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}"
 type: Opaque
 data:
-  jwks.json: {base64.b64encode(jwks_json.encode("utf-8")).decode("ascii")}
+  tls.crt: {base64.b64encode(jwks_json.encode("utf-8")).decode("ascii")}
 """
 
         subprocess.run(["kubectl", action, "-f", "-"], input=secret_yaml, text=True, capture_output=True, check=True)
