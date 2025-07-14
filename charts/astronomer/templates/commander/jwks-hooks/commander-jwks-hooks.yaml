@@ -1,14 +1,14 @@
 ########################################
-## Registry JWKS Secret Hooks Job     ##
+## commander JWKS Secret Hooks Job     ##
 ########################################
 {{- if eq .Values.global.plane.mode "data" }}
 apiVersion: {{ include "apiVersion.batch" . }}
 kind: Job
 metadata:
-  name: {{ .Release.Name }}-registry-jwks-hook
+  name: {{ .Release.Name }}-commander-jwks-hook
   labels:
     tier: astronomer
-    component: registry-jwks-hook
+    component: commander-jwks-hook
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
@@ -26,9 +26,9 @@ spec:
     metadata:
       labels:
         tier: astronomer
-        component: registry-jwks-hook
+        component: commander-jwks-hook
         release: {{ .Release.Name }}
-        app: registry-jwks-hook
+        app: commander-jwks-hook
         version: {{ .Chart.Version }}
         plane: {{ .Values.global.plane.mode }}
       {{- if or .Values.global.podAnnotations .Values.global.istio.enabled }}
@@ -41,7 +41,7 @@ spec:
         {{- end }}
       {{- end }}
     spec:
-      serviceAccountName: {{ template "registry.jwksServiceAccountName" . }}
+      serviceAccountName: {{ template "commander.jwksServiceAccountName" . }}
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
       affinity:
@@ -51,29 +51,29 @@ spec:
       restartPolicy: Never
 {{- include "astronomer.imagePullSecrets" . | indent 6 }}
       containers:
-        - name: registry-jwks-hook
-          image: {{ template "registry.image" . }}
-          imagePullPolicy: {{ .Values.images.registry.pullPolicy }}
+        - name: commander-jwks-hook
+          image: {{ template "commander.image" . }}
+          imagePullPolicy: {{ .Values.images.commander.pullPolicy }}
           command: ["python3"]
-          args: ["/scripts/registry-jwks.py"]
+          args: ["/scripts/commander-jwks.py"]
           securityContext: {{ toYaml .Values.securityContext | nindent 12 }}
           env:
             - name: CONTROL_PLANE_ENDPOINT
               value: "https://{{ .Values.global.baseDomain }}"
             - name: SECRET_NAME
-              value: "registry-jwt-secret"
+              value: "commander-jwt-secret"
             - name: NAMESPACE
               value: {{ .Release.Namespace | quote }}
             - name: RETRY_ATTEMPTS
-              value: {{ .Values.registry.jwksHook.retryAttempts | default 2 | quote }}
+              value: {{ .Values.commander.jwksHook.retryAttempts | default 2 | quote }}
             - name: RETRY_DELAY
-              value: {{ .Values.registry.jwksHook.retryDelay | default 10 | quote }}
+              value: {{ .Values.commander.jwksHook.retryDelay | default 10 | quote }}
           volumeMounts:
             - name: jwks-script
               mountPath: /scripts
       volumes:
         - name: jwks-script
           configMap:
-            name: {{ .Release.Name }}-registry-jwks-script
+            name: {{ .Release.Name }}-commander-jwks-script
             defaultMode: 0755
 {{- end }}

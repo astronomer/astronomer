@@ -1,19 +1,19 @@
 #################################################
-## Registry JWKS Secret Hooks Job ConfigMap    ##
+## commander JWKS Secret Hooks Job ConfigMap    ##
 #################################################
 {{- if eq .Values.global.plane.mode "data" }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Release.Name }}-registry-jwks-hook-config
+  name: {{ .Release.Name }}-commander-jwks-hook-config
   labels:
     tier: astronomer
-    component: registry-jwks-hook-config
+    component: commander-jwks-hook-config
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
     plane: {{ .Values.global.plane.mode }}
 data:
   fetch-jwks.py: |-
-    {{ .Files.Get "../../bin/registry-jwks.py" | indent 4 }}
+    {{ .Files.Get "../../bin/commander-jwks.py" | indent 4 }}
 {{- end }}

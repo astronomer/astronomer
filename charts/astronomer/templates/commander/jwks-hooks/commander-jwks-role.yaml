@@ -1,15 +1,15 @@
 #############################
-## Registry JWKS Hook Role ##
+## commander JWKS Hook Role ##
 #############################
 {{- if .Values.global.rbacEnabled }}
 {{- if eq .Values.global.plane.mode "data" }}
 kind: Role
 apiVersion: {{ template "apiVersion.rbac" . }}
 metadata:
-  name: {{ .Release.Name }}-registry-jwks-role
+  name: {{ .Release.Name }}-commander-jwks-role
   labels:
     tier: astronomer
-    component: registry
+    component: commander
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
