@@ -52,8 +52,8 @@ spec:
 {{- include "astronomer.imagePullSecrets" . | indent 6 }}
       containers:
         - name: commander-jwks-hook
-          image: {{ template "commander.image" . }}
-          imagePullPolicy: {{ .Values.images.commander.pullPolicy }}
+          image: {{ template "dbBootstrapper.image" . }}
+          imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
           command: ["python3"]
           args: ["/scripts/commander-jwks.py"]
           securityContext: {{ toYaml .Values.securityContext | nindent 12 }}
