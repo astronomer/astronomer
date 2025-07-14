@@ -61,7 +61,7 @@ spec:
             - name: CONTROL_PLANE_ENDPOINT
               value: "https://{{ .Values.global.baseDomain }}"
             - name: SECRET_NAME
-              value: "commander-jwt-secret"
+              value: "{{ .Release.Name }}-astronomer-houston-jwt-signing-certificate"
             - name: NAMESPACE
               value: {{ .Release.Namespace | quote }}
             - name: RETRY_ATTEMPTS
