@@ -1,5 +1,5 @@
 #################################################
-## commander JWKS Secret Hooks Job ConfigMap    ##
+## Commander JWKS Secret Hooks Job ConfigMap    ##
 #################################################
 {{- if eq .Values.global.plane.mode "data" }}
 apiVersion: v1

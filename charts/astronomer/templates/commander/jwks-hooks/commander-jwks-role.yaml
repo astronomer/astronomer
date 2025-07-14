@@ -1,5 +1,5 @@
 #############################
-## commander JWKS Hook Role ##
+## Commander JWKS Hook Role ##
 #############################
 {{- if .Values.global.rbacEnabled }}
 {{- if eq .Values.global.plane.mode "data" }}

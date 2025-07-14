@@ -1,5 +1,5 @@
 ########################################
-## commander JWKS Secret Hooks Job     ##
+## Commander JWKS Secret Hooks Job     ##
 ########################################
 {{- if eq .Values.global.plane.mode "data" }}
 apiVersion: {{ include "apiVersion.batch" . }}
