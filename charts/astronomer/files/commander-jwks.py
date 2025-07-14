@@ -31,9 +31,9 @@ def validate_url_scheme(url):
     return True
 
 
-def fetch_jwks_from_endpoint():
+def fetch_jwks_from_endpoint(endpoint):
     """Fetch JWKS from the control plane endpoint"""
-    control_plane_endpoint = os.getenv("CONTROL_PLANE_ENDPOINT")
+    control_plane_endpoint = endpoint
     jwks_url = f"{control_plane_endpoint}/v1/.well-known/jwks.json"
     retry_attempts = int(os.getenv("RETRY_ATTEMPTS", "5"))
     retry_delay = int(os.getenv("RETRY_DELAY", "10"))
@@ -187,7 +187,7 @@ def main():
     log(f"  Release Name: {release_name}")
 
     try:
-        jwks_data = fetch_jwks_from_endpoint()
+        jwks_data = fetch_jwks_from_endpoint(endpoint=control_plane_endpoint)
 
         validate_jwks_structure(jwks_data)
 
