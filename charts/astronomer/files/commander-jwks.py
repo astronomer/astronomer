@@ -133,7 +133,7 @@ metadata:
     app.kubernetes.io/component: registry-jwks
   annotations:
     astronomer.io/commander-sync: "platform-release={release_name}"
-    astronomer.io/jwks-source: "{os.getenv("CONTROL_PLANE_ENDPOINT")}/.well-known/jwks.json"
+    astronomer.io/jwks-source: "{os.getenv("CONTROL_PLANE_ENDPOINT")}/v1/.well-known/jwks.json"
     astronomer.io/jwks-fetched-at: "{time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}"
 type: Opaque
 data:
