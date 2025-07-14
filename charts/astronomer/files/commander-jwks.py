@@ -151,7 +151,7 @@ data:
             check=True,
         )
 
-        if verify_result.stdout.strip() == "registry":
+        if verify_result.stdout.strip() == "commander-jwks-hook":
             log("Secret verification successful")
         else:
             log("Warning: Secret verification failed")
