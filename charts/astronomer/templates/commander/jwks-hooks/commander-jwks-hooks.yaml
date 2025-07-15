@@ -16,7 +16,7 @@ metadata:
   annotations:
     "helm.sh/hook": pre-install,pre-upgrade
     "astronomer.io/commander-sync": "platform-release={{ .Release.Name }}"
-    "helm.sh/hook-weight": "-10"
+    "helm.sh/hook-weight": "-1"
     "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
 spec:
   completions: 1
@@ -74,6 +74,6 @@ spec:
       volumes:
         - name: jwks-script
           configMap:
-            name: {{ .Release.Name }}-commander-jwks-script
+            name: {{ .Release.Name }}-commander-jwks-hook-config
             defaultMode: 0755
 {{- end }}
