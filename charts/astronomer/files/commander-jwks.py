@@ -160,11 +160,12 @@ data:
         logger.error(f"stderr: {e.stderr}")
         raise RuntimeError(f"Failed to create/update Kubernetes secret: {e}") from e
 
+
 def get_base64_pem_from_jwks(jwks_data):
-    #cert_b64 = jwks_data["keys"][0]["x5c"][0]
     cert_b64 = jwks_data["x5c"][0]
     pem = "-----BEGIN CERTIFICATE-----\n" + "\n".join(textwrap.wrap(cert_b64, 64)) + "\n-----END CERTIFICATE-----\n"
     return base64.b64encode(pem.encode()).decode()
+
 
 def main():
     """Main function"""
