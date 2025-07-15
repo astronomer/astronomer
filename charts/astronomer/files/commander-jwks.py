@@ -12,6 +12,7 @@ import logging
 import os
 import subprocess
 import sys
+import textwrap
 import time
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse
@@ -106,7 +107,7 @@ def create_kubernetes_secret(jwks_data, endpoint, namespace, release_name, secre
     """Create Kubernetes secret with JWKS data"""
 
     logger.info(f"Creating secret '{secret_name}' in namespace '{namespace}'")
-    jwks_json = json.dumps(jwks_data, indent=2)
+    # jwks_json = json.dumps(jwks_data, indent=2)
 
     try:
         result = subprocess.run(
@@ -135,7 +136,7 @@ metadata:
     astronomer.io/jwks-fetched-at: "{time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}"
 type: Opaque
 data:
-  tls.crt: {base64.b64encode(jwks_json.encode("utf-8")).decode("ascii")}
+  tls.crt: {jwks_data}
 """
 
         subprocess.run(["kubectl", action, "-f", "-"], input=secret_yaml, text=True, capture_output=True, check=True)
@@ -187,10 +188,15 @@ def main():
 
     try:
         jwks_data = fetch_jwks_from_endpoint(control_plane_endpoint)
-
+        cert_b64 = jwks_data["x5c"][0]
+        # cert_der = base64.b64decode(cert_b64)
+        pem_lines = textwrap.wrap(cert_b64, 64)
+        pem_cert = "-----BEGIN CERTIFICATE-----\n" + "\n".join(pem_lines) + "\n-----END CERTIFICATE-----"
+        print(pem_cert)
+        dd = base64.b64encode(pem_cert.encode()).decode()
         validate_jwks_structure(jwks_data)
 
-        create_kubernetes_secret(jwks_data, control_plane_endpoint, namespace, release_name, secret_name)
+        create_kubernetes_secret(dd, control_plane_endpoint, namespace, release_name, secret_name)
         logger.info("JWKS hook completed successfully!")
         logger.info("Registry components can now use the 'commander-jwt-secret' for JWT validation")
     except (RuntimeError, ValueError, subprocess.CalledProcessError) as e:
