@@ -44,7 +44,7 @@ class TestCommanderJWKSHookJob:
         assert len(docs) == 5
         assert job_doc["metadata"]["name"] == "release-name-commander-jwks-hook"
         assert job_doc["metadata"]["annotations"]["helm.sh/hook"] == "pre-install,pre-upgrade"
-        assert job_doc["metadata"]["annotations"]["helm.sh/hook-weight"] == "-10"
+        assert job_doc["metadata"]["annotations"]["helm.sh/hook-weight"] == "-1"
         assert job_doc["metadata"]["annotations"]["helm.sh/hook-delete-policy"] == "before-hook-creation,hook-succeeded"
 
         annotations = job_doc["metadata"]["annotations"]
@@ -61,8 +61,8 @@ class TestCommanderJWKSHookJob:
         assert container["args"] == ["/scripts/commander-jwks.py"]
 
         env_vars = get_env_vars_dict(container["env"])
-        assert env_vars["CONTROL_PLANE_ENDPOINT"] == "https://example.com"
-        assert env_vars["SECRET_NAME"] == "commander-jwt-secret"
+        assert env_vars["CONTROL_PLANE_ENDPOINT"] == "https://houston.example.com"
+        assert env_vars["SECRET_NAME"] == "release-name-houston-jwt-signing-certificate"
         assert env_vars["RETRY_ATTEMPTS"] == "2"
         assert env_vars["RETRY_DELAY"] == "10"
 
