@@ -75,7 +75,7 @@ class TestCommanderJWKSHookJob:
         assert rolebinding_doc["roleRef"]["name"] == "release-name-commander-jwks-role"
 
         assert configmap_doc["metadata"]["name"] == "release-name-commander-jwks-hook-config"
-        assert "fetch-jwks.py" in configmap_doc["data"]
+        assert "commander-jwks.py" in configmap_doc["data"]
 
     def test_jwks_hook_job_disabled_control_plane(self, kube_version):
         """Test JWKS Hook Job is not rendered on control plane."""
