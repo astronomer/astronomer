@@ -49,7 +49,7 @@ class TestCommanderJWKSHookJob:
 
         annotations = job_doc["metadata"]["annotations"]
         assert annotations["helm.sh/hook"] == "pre-install,pre-upgrade"
-        assert annotations["helm.sh/hook-weight"] == "-10"
+        assert annotations["helm.sh/hook-weight"] == "-1"
         assert annotations["helm.sh/hook-delete-policy"] == "before-hook-creation,hook-succeeded"
         assert annotations["astronomer.io/commander-sync"] == "platform-release=release-name"
 
