@@ -114,13 +114,8 @@ def create_kubernetes_secret(jwks_data, endpoint, namespace, release_name, secre
         )
 
         secret_exists = result.returncode == 0
-
-        if secret_exists:
-            logger.info(f"Secret '{secret_name}' already exists, updating...")
-            action = "apply"
-        else:
-            logger.info(f"Creating new secret '{secret_name}'...")
-            action = "apply"
+        action = "update" if secret_exists else "create"
+        logger.info(f"{'Updating' if secret_exists else 'Creating'} secret '{secret_name}'")
 
         secret_yaml = f"""apiVersion: v1
 kind: Secret
