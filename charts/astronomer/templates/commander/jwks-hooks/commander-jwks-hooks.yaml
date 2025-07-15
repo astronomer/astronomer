@@ -59,7 +59,7 @@ spec:
           securityContext: {{ toYaml .Values.securityContext | nindent 12 }}
           env:
             - name: CONTROL_PLANE_ENDPOINT
-              value: "https://{{ .Values.global.baseDomain }}"
+              value: "https://houston.{{ .Values.global.baseDomain }}"
             - name: SECRET_NAME
               value: "{{ .Release.Name }}-astronomer-houston-jwt-signing-certificate"
             - name: NAMESPACE
