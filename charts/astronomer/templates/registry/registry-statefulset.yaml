@@ -19,7 +19,7 @@ metadata:
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
     plane: {{ .Values.global.plane.mode }}
-  
+
   annotations:
     checksum/jwks-secret: {{ printf "%s-commander-jwt-secret" .Release.Name | sha256sum }}
   {{ if .Values.global.enableArgoCDAnnotation }}
