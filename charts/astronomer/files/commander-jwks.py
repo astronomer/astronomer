@@ -107,7 +107,6 @@ def create_kubernetes_secret(jwks_data, endpoint, namespace, release_name, secre
     """Create Kubernetes secret with JWKS data"""
 
     logger.info(f"Creating secret '{secret_name}' in namespace '{namespace}'")
-    # jwks_json = json.dumps(jwks_data, indent=2)
 
     try:
         result = subprocess.run(
@@ -115,7 +114,7 @@ def create_kubernetes_secret(jwks_data, endpoint, namespace, release_name, secre
         )
 
         secret_exists = result.returncode == 0
-        action = "update" if secret_exists else "create"
+        action = "apply" if secret_exists else "create"
         logger.info(f"{'Updating' if secret_exists else 'Creating'} secret '{secret_name}'")
 
         secret_yaml = f"""apiVersion: v1
@@ -125,7 +124,7 @@ metadata:
   namespace: {namespace}
   labels:
     tier: astronomer
-    component: commander
+    component: commander-jwks-hook
     release: {release_name}
     app.kubernetes.io/name: commander-jwks
     app.kubernetes.io/instance: {release_name}
@@ -189,10 +188,8 @@ def main():
     try:
         jwks_data = fetch_jwks_from_endpoint(control_plane_endpoint)
         cert_b64 = jwks_data["x5c"][0]
-        # cert_der = base64.b64decode(cert_b64)
         pem_lines = textwrap.wrap(cert_b64, 64)
         pem_cert = "-----BEGIN CERTIFICATE-----\n" + "\n".join(pem_lines) + "\n-----END CERTIFICATE-----"
-        print(pem_cert)
         dd = base64.b64encode(pem_cert.encode()).decode()
         validate_jwks_structure(jwks_data)
 
