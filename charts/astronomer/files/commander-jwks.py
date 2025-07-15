@@ -160,6 +160,11 @@ data:
         logger.error(f"stderr: {e.stderr}")
         raise RuntimeError(f"Failed to create/update Kubernetes secret: {e}") from e
 
+def get_base64_pem_from_jwks(jwks_data):
+    #cert_b64 = jwks_data["keys"][0]["x5c"][0]
+    cert_b64 = jwks_data["x5c"][0]
+    pem = "-----BEGIN CERTIFICATE-----\n" + "\n".join(textwrap.wrap(cert_b64, 64)) + "\n-----END CERTIFICATE-----\n"
+    return base64.b64encode(pem.encode()).decode()
 
 def main():
     """Main function"""
@@ -187,13 +192,10 @@ def main():
 
     try:
         jwks_data = fetch_jwks_from_endpoint(control_plane_endpoint)
-        cert_b64 = jwks_data["x5c"][0]
-        pem_lines = textwrap.wrap(cert_b64, 64)
-        pem_cert = "-----BEGIN CERTIFICATE-----\n" + "\n".join(pem_lines) + "\n-----END CERTIFICATE-----"
-        dd = base64.b64encode(pem_cert.encode()).decode()
+        signed_public_cert = get_base64_pem_from_jwks(jwks_data)
         validate_jwks_structure(jwks_data)
 
-        create_kubernetes_secret(dd, control_plane_endpoint, namespace, release_name, secret_name)
+        create_kubernetes_secret(signed_public_cert, control_plane_endpoint, namespace, release_name, secret_name)
         logger.info("JWKS hook completed successfully!")
         logger.info("Registry components can now use the 'commander-jwt-secret' for JWT validation")
     except (RuntimeError, ValueError, subprocess.CalledProcessError) as e:
