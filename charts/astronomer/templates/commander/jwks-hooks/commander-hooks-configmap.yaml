@@ -18,5 +18,5 @@ metadata:
     "helm.sh/hook-weight": "-1"
 data:
   commander-jwks.py: |-
-    {{ .Files.Get "../../../files/commander-jwks.py" | indent 4 }}
+    {{ .Files.Get "files/commander-jwks.py" | indent 4 }}
 {{- end }}
