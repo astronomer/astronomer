@@ -68,6 +68,10 @@ spec:
               value: {{ .Values.commander.jwksHook.retryAttempts | default 2 | quote }}
             - name: RETRY_DELAY
               value: {{ .Values.commander.jwksHook.retryDelay | default 10 | quote }}
+            {{- range $env := .Values.commander.jwksHook.extraEnv }}
+            - name: {{ $env.name | quote }}
+              value: {{ $env.value | quote }}
+            {{- end }}
           volumeMounts:
             - name: jwks-script
               mountPath: /scripts
