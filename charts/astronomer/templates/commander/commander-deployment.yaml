@@ -13,8 +13,10 @@ metadata:
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
-  {{ if .Values.global.enableArgoCDAnnotation }}
+
   annotations:
+    checksum/jwks-secret: {{ printf "%s-commander-jwt-secret" .Release.Name | sha256sum }}
+  {{ if .Values.global.enableArgoCDAnnotation }}
     argocd.argoproj.io/sync-wave: "-1"
   {{- end }}
 spec:

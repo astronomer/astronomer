@@ -440,6 +440,10 @@ commander:
   cloudProvider: ""
   commanderUrl: ""
   region: ""
+  jwksHook:
+    retryAttempts: 2
+    retryDelay: 10
+    extraEnv: []
 
 registry:
   # flag to bypass secure (tls) authentication to astronomer registry

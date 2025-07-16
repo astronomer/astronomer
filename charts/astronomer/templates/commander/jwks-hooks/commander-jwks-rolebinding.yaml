@@ -1,0 +1,32 @@
+#####################################
+## Commander JWKS Hook Role Binding ##
+#####################################
+{{- if .Values.global.rbacEnabled }}
+{{- if eq .Values.global.plane.mode "data" }}
+kind: RoleBinding
+apiVersion: {{ template "apiVersion.rbac" . }}
+metadata:
+  name: {{ .Release.Name }}-commander-jwks-binding
+  labels:
+    tier: astronomer
+    component: commander
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+    plane: {{ .Values.global.plane.mode }}
+  annotations:
+    "helm.sh/hook": "pre-install,pre-upgrade"
+    "helm.sh/hook-weight": "-2"
+  {{ if .Values.global.enableArgoCDAnnotation }}
+    argocd.argoproj.io/sync-wave: "-1"
+  {{- end }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ .Release.Name }}-commander-jwks-role
+subjects:
+  - kind: ServiceAccount
+    name: {{ template "commander.jwksServiceAccountName" . }}
+    namespace: {{ .Release.Namespace }}
+{{- end }}
+{{- end }}
