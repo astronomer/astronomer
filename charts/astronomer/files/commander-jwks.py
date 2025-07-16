@@ -46,12 +46,10 @@ def validate_url_scheme(url):
     return True
 
 
-def fetch_jwks_from_endpoint(endpoint):
+def fetch_jwks_from_endpoint(endpoint,retry_attempts, retry_delay):
     """Fetch JWKS from the control plane endpoint"""
     control_plane_endpoint = endpoint
     jwks_url = f"{control_plane_endpoint}/v1/.well-known/jwks.json"
-    retry_attempts = int(os.getenv("RETRY_ATTEMPTS", "5"))
-    retry_delay = int(os.getenv("RETRY_DELAY", "10"))
 
     logger.info(f"Fetching JWKS from: {jwks_url}")
 
@@ -175,6 +173,9 @@ def main():
     namespace = os.getenv("NAMESPACE")
     release_name = os.getenv("RELEASE_NAME", "astronomer")
     secret_name = os.getenv("SECRET_NAME", f"{release_name}-commander-jwt-secret")
+    retry_attempts = int(os.getenv("RETRY_ATTEMPTS", "5"))
+    retry_delay = int(os.getenv("RETRY_DELAY", "10"))
+
 
     if not control_plane_endpoint:
         logger.error("Error: CONTROL_PLANE_ENDPOINT environment variable not set")
@@ -192,7 +193,7 @@ def main():
     logger.info(f"  Release Name: {release_name}")
 
     try:
-        jwks_data = fetch_jwks_from_endpoint(control_plane_endpoint)
+        jwks_data = fetch_jwks_from_endpoint(control_plane_endpoint,retry_attempts,retry_delay)
         signed_public_cert = get_base64_pem_from_jwks(jwks_data)
         validate_jwks_structure(jwks_data)
 
