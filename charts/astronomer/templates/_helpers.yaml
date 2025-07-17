@@ -193,7 +193,7 @@
       key: connection
 - name: COMMANDER_HEALTH_STATUS
   value: HEALTHY
-- name: COMMANDER_HEALTH
+- name: COMMANDER_STATUS
   value: HEALTHY
 - name: COMMANDER_DATAPLANE_ID
   value: {{ .Values.global.plane.domainSuffix }}
