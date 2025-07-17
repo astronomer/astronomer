@@ -25,10 +25,7 @@ class TestAstronomerCommander:
         values = {
             "astronomer": {
                 "airflowChartVersion": "99.88.77",
-                "commander": {
-                    "cloudProvider": "aws",
-                    "region": "us-west-2"
-                },
+                "commander": {"cloudProvider": "aws", "region": "us-west-2"},
                 "images": {"commander": {"tag": "88.77.66"}},
             },
             "global": {"baseDomain": "astronomer.example.com", "plane": {"mode": "data", "domainSuffix": "custom-dp-123"}},
