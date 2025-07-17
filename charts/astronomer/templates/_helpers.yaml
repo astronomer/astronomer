@@ -191,9 +191,15 @@
     secretKeyRef:
       name: astronomer-bootstrap
       key: connection
+- name: COMMANDER_HEALTH_STATUS
+  value: HEALTHY
+- name: COMMANDER_HEALTH
+  value: HEALTHY
 - name: COMMANDER_DATAPLANE_ID
   value: {{ .Values.global.plane.domainSuffix }}
 - name: COMMANDER_BASE_DOMAIN
+  value: {{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}
+- name: COMMANDER_DATAPLANE_URL
   value: {{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}
 - name: COMMANDER_DATAPLANE_MODE
   value: {{ .Values.global.plane.mode | quote }}
