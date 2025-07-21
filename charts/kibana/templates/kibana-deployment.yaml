@@ -77,7 +77,10 @@ spec:
             - containerPort: {{ .Values.ports.http }}
               name: kibana-ui
               protocol: TCP
-        {{- if .Values.global.authSidecar.enabled }}
+          volumeMounts:
+            - mountPath: /usr/share/kibana/data
+              name: kibana-data
+      {{- if .Values.global.authSidecar.enabled }}
         - name: auth-proxy
           image: {{ include "authSidecar.image" . }}
           securityContext: {{ template "kibana.securityContext" . }}
@@ -114,7 +117,11 @@ spec:
           volumeMounts:
             - mountPath: /etc/nginx/conf.d/
               name: kibana-sidecar-conf
+      {{- end }}
       volumes:
+        - name: kibana-data
+          emptyDir: {}
+      {{- if .Values.global.authSidecar.enabled }}
         - name: kibana-sidecar-conf
           configMap:
             name: {{ template "kibana.fullname" . }}-nginx-conf
