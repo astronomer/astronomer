@@ -44,6 +44,10 @@ class TestKibana:
         assert env_vars["TELEMETRY_OPT_IN"] == "false"
         assert env_vars["TELEMETRY_ENABLED"] == "false"
 
+        assert doc["spec"]["template"]["spec"]["volumes"] == [{"emptyDir": {}, "name": "kibana-data"}]
+        assert c_by_name["kibana"]["volumeMounts"] == [{"mountPath": "/usr/share/kibana/data", "name": "kibana-data"}]
+        assert c_by_name["kibana"]["securityContext"].get("readOnlyRootFilesystem")
+
     def test_kibana_index_defaults(self, kube_version):
         """Test that kibana index cronjobs renders proper nodeSelector, affinity,
         and tolerations with global config and index defaults."""
