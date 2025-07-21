@@ -48,7 +48,9 @@ spec:
         - name: kibana
           image: {{ template "kibana.image" . }}
           imagePullPolicy: {{ .Values.images.kibana.pullPolicy }}
-          securityContext: {{ template "kibana.securityContext" . }}
+          securityContext:
+            readOnlyRootFilesystem: true
+            {{ template "kibana.securityContext" . }}
           env:
           {{- range $key, $value := .Values.env }}
             - name: {{ $key }}

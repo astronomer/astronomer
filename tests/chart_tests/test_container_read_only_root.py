@@ -15,6 +15,7 @@ read_only_root_pods = [
     "alertmanager",
     "commander",
     "configmap-reloader",
+    "kibana",
     "metrics-exporter",
     "prometheus",
 ]
