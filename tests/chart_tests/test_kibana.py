@@ -171,7 +171,11 @@ class TestKibana:
             ],
         )
         common_kibana_cronjob_test(docs)
-        assert {"runAsNonRoot": True, "runAsUser": 1000} == docs[0]["spec"]["template"]["spec"]["containers"][0]["securityContext"]
+        assert docs[0]["spec"]["template"]["spec"]["containers"][0]["securityContext"] == {
+            "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
+            "runAsUser": 1000,
+        }
 
     def test_kibana_index_securitycontext_with_openshiftEnabled(self, kube_version):
         """Test kibana Service with index defaults."""
@@ -183,4 +187,7 @@ class TestKibana:
             ],
         )
         common_kibana_cronjob_test(docs)
-        assert {"runAsNonRoot": True} == docs[0]["spec"]["template"]["spec"]["containers"][0]["securityContext"]
+        assert docs[0]["spec"]["template"]["spec"]["containers"][0]["securityContext"] == {
+            "runAsNonRoot": True,
+            "readOnlyRootFilesystem": True,
+        }
