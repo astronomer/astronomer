@@ -180,8 +180,10 @@ additionalScrapeJobs: {}
 federation:
   externalLabels: {}
 
-extraFlags: []
+extraFlags:
+- "--enable-feature=auto-config-reload"
 #- "--log.level=debug"
+
 
 # Amost mirror the prometheus config data structure for values we want to customize.
 # Convert lists to dicts for more explicit assignment.
