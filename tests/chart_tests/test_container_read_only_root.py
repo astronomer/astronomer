@@ -16,6 +16,7 @@ read_only_root_pods = [
     "commander",
     "configmap-reloader",
     "kibana",
+    "kube-state",
     "metrics-exporter",
     "prometheus",
 ]
