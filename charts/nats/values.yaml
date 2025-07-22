@@ -256,13 +256,6 @@ gateway:
   #   cert: "tls.crt"
   #   key: "tls.key"
 
-# NATS Box
-#
-# https://github.com/nats-io/nats-box
-#
-natsbox:
-  enabled: false
-
 # The NATS config reloader image to use.
 reloader:
   enabled: false
