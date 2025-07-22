@@ -6,7 +6,7 @@ from tests.utils import get_all_features, get_containers_by_name
 from tests.utils.chart import render_chart
 
 annotation_validator = re.compile("^([^/]+/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$")
-pod_managers = ["Deployment", "StatefulSet", "DaemonSet"]
+pod_managers = ["Deployment", "StatefulSet", "DaemonSet", "CronJob", "Job"]
 
 # This should contain a list of pod name substrings that have been completed in ticket
 # https://github.com/astronomer/issues/issues/7394
@@ -15,6 +15,8 @@ read_only_root_pods = [
     "alertmanager",
     "commander",
     "configmap-reloader",
+    "kibana",
+    "kube-state",
     "metrics-exporter",
     "prometheus",
 ]
