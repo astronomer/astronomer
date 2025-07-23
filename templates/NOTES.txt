@@ -23,7 +23,7 @@ The control plane is responsible for platform management, orchestration, and use
 {{- else if eq $planeMode "data" }}
 You can access the data plane at:
 {{- if $domainSuffix }}
-- Astronomer dashboard:        {{ if and $astronomerEnabled $platformEnabled }}https://app.{{ $domainSuffix }}.{{ .Values.global.baseDomain }}{{ else }}Disabled{{ end }}
+- Astronomer dashboard:        {{ if and $astronomerEnabled $platformEnabled }}https://{{ $domainSuffix }}.{{ .Values.global.baseDomain }}{{ else }}Disabled{{ end }}
 {{- else }}
 - Astronomer dashboard:        {{ if and $astronomerEnabled $platformEnabled }}https://app.{{ .Values.global.baseDomain }}{{ else }}Disabled{{ end }}
 {{- end }}
