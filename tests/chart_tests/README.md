@@ -36,7 +36,6 @@ metadata:
     heritage: Helm
   annotations:
     kubernetes.io/ingress.class: "release-name-nginx"
-    kubernetes.io/tls-acme: "false"
     nginx.ingress.kubernetes.io/custom-http-errors: "404"
     nginx.ingress.kubernetes.io/configuration-snippet: |
       if ($host = 'example.com' ) {
