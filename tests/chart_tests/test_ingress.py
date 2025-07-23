@@ -22,14 +22,16 @@ class TestIngress:
 
         doc = docs[0]
 
-        assert len(doc["metadata"]["annotations"]) >= 4
+        assert len(doc["metadata"]["annotations"]) == 3
 
-        doc["spec"]["rules"] == json.loads(
+        assert doc["spec"]["rules"] == json.loads(
             """
-        [{"host":"example.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":{"service":{"name":"release-name-astro-ui","port":{"name":"astro-ui-http"}}}}]}},
-        {"host":"app.example.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":{"service":{"name":"release-name-astro-ui","port":{"name":"astro-ui-http"}}}}]}},
-        {"host":"registry.example.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":{"service":{"name":"release-name-registry","port":{"name":"registry-http"}}}}]}}]
-        """
+            [{"host":"example.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":{"service":{"name":
+            "release-name-astro-ui","port":{"name":"astro-ui-http"}}}}]}},{"host":"app.example.com","http":{"paths":[{"path":"/",
+            "pathType":"Prefix","backend":{"service":{"name":"release-name-astro-ui","port":{"name":"astro-ui-http"}}}}]}},{"host":
+            "registry.example.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":{"service":{"name":
+            "release-name-registry","port":{"name":"registry-http"}}}}]}}]
+            """
         )
 
     def test_astro_ui_per_host_ingress(self, kube_version):
@@ -44,17 +46,15 @@ class TestIngress:
         assert len(docs) == 2
         assert docs[0]["spec"]["rules"] == json.loads(
             """
-        [
-            {"host":"app.example.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":{"service":{"name":"release-name-astro-ui","port":{"name":"astro-ui-http"}}}}]}}
-        ]
-        """
+            [{"host":"app.example.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":
+            {"service":{"name":"release-name-astro-ui","port":{"name":"astro-ui-http"}}}}]}}]
+            """
         )
         assert docs[1]["spec"]["rules"] == json.loads(
             """
-        [
-            {"host":"example.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":{"service":{"name":"release-name-astro-ui","port":{"name":"astro-ui-http"}}}}]}}
-        ]
-        """
+            [{"host":"example.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":
+            {"service":{"name":"release-name-astro-ui","port":{"name":"astro-ui-http"}}}}]}}]
+            """
         )
 
     def test_registry_per_host_ingress(self, kube_version):
@@ -69,9 +69,9 @@ class TestIngress:
         assert len(docs) == 1
         expected_rules_v1 = json.loads(
             """
-        [
-        {"host":"registry.example.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":{"service":{"name":"release-name-registry","port":{"name":"registry-http"}}}}]}}]
-        """
+            [{"host":"registry.example.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":
+            {"service":{"name":"release-name-registry","port":{"name":"registry-http"}}}}]}}]
+            """
         )
         assert docs[0]["spec"]["rules"] == expected_rules_v1
 
