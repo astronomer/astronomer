@@ -70,7 +70,7 @@ imagePullSecrets:
 
 {{- define "nats.securityContext" -}}
 {{- if or (eq ( toString ( .Values.securityContext.runAsUser )) "auto") ( .Values.global.openshiftEnabled ) }}
-{{- omit  .Values.securityContext "runAsUser" | toYaml | nindent 10 }}
+{{- omit .Values.securityContext "runAsUser" | toYaml | nindent 10 }}
 {{- else }}
 {{- .Values.securityContext | toYaml | nindent 10 }}
 {{- end -}}
@@ -81,7 +81,7 @@ imagePullSecrets:
 {{- if and .Values.nats.serviceAccount.create .Values.global.rbacEnabled -}}
 {{ default (printf "%s" (include "nats.name" . )) .Values.nats.serviceAccount.name }}
 {{- else -}}
-    {{ default "default" .Values.nats.serviceAccount.name }}
+{{ default "default" .Values.nats.serviceAccount.name }}
 {{- end }}
 {{- end }}
 
@@ -89,6 +89,6 @@ imagePullSecrets:
 {{- if and .Values.nats.jetstream.serviceAccount.create .Values.global.rbacEnabled -}}
 {{ default (printf "%s-jetstream-sa" .Release.Name) .Values.nats.jetstream.serviceAccount.name }}
 {{- else -}}
-    {{ default "default" .Values.nats.jetstream.serviceAccount.name }}
+{{ default "default" .Values.nats.jetstream.serviceAccount.name }}
 {{- end }}
 {{- end }}
