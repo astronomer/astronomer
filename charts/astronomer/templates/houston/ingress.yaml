@@ -23,7 +23,7 @@ metadata:
     {{- end }}
     kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
     nginx.ingress.kubernetes.io/custom-http-errors: "404"
-    {{- if eq .Values.global.plane.mode "data" }} 
+    {{- if eq .Values.global.plane.mode "data" }}
     nginx.ingress.kubernetes.io/configuration-snippet: |
       location ~ ^/v1/(alerts|elasticsearch|metrics) {
         deny all;
