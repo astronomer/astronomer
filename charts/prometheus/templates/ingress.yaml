@@ -22,12 +22,7 @@ metadata:
     kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
     kubernetes.io/tls-acme: {{ eq .Values.global.acme true | quote }}
     {{- include "houston.internalauthurl" . | nindent 4 }}
-    {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
     nginx.ingress.kubernetes.io/auth-signin: https://app.{{ .Values.global.baseDomain }}/login
-    {{- end }}
-    {{- if eq .Values.global.plane.mode "data" }}
-    nginx.ingress.kubernetes.io/auth-signin: https://app.{{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}/login
-    {{- end }}
     nginx.ingress.kubernetes.io/auth-response-headers: authorization, username, email
     {{- end }}
 spec:
