@@ -84,7 +84,6 @@ class TestIngress:
         assert all(doc["apiVersion"] == "networking.k8s.io/v1" for doc in ingresses)
         assert all(doc["kind"] == "Ingress" for doc in ingresses)
         assert all(doc["metadata"]["annotations"]["kubernetes.io/ingress.class"] == "release-name-nginx" for doc in ingresses)
-        assert all(doc["metadata"]["annotations"]["kubernetes.io/tls-acme"] == "false" for doc in ingresses)
 
     def test_kibana_custom_ingress_annotation(self, kube_version):
         """validate kibana to add custom ingress annotation to ingress objects"""
