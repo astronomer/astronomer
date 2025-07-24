@@ -1,0 +1,52 @@
+########################################
+## Prometheus Federate Ingress ##
+########################################
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
+kind: Ingress
+apiVersion: {{ template "apiVersion.Ingress" . }}
+metadata:
+  name: {{ template "prometheus.fullname" . }}-federate-ingress
+  labels:
+    tier: prometheus-networking
+    component: prometheus-federate-ingress
+    chart: {{ template "prometheus.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  annotations:
+    kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
+    kubernetes.io/tls-acme: {{ eq .Values.global.acme true | quote }}
+
+    # nginx.ingress.kubernetes.io/rate-limit-rpm: "60"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+
+    {{- if .Values.global.extraAnnotations }}
+    {{- range $key, $value := .Values.global.extraAnnotations }}
+    {{- if not (or (contains "auth-" $key) (contains "oauth" $key)) }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+    {{- end }}
+    {{- end }}
+spec:
+  {{- if or .Values.global.tlsSecret .Values.global.acme }}
+  tls:
+  {{- if .Values.global.acme }}
+    - secretName: prometheus-federate-tls
+  {{- end }}
+  {{- if .Values.global.tlsSecret }}
+    - secretName: {{ .Values.global.tlsSecret }}
+  {{- end }}
+      hosts:
+        - {{ template "prometheus.url" . }}
+  {{- end }}
+  rules:
+    - host: {{ template "prometheus.url" . }}
+      http:
+        paths:
+          - path: /federate
+            pathType: Exact
+            backend:
+              service:
+                name: {{ template "prometheus.fullname" . }}
+                port:
+                  name: prometheus-data
+{{- end }}
