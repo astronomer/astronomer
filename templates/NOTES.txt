@@ -45,14 +45,8 @@ Now that you've installed the data plane, it's ready to execute and monitor Airf
 Now that you've installed the platform, you are ready to get started and create your first airflow deployment.
 {{- end }}
 
-Download the CLI:
-{{- if and (eq $planeMode "data") $domainSuffix }}
-    curl -sSL https://install.{{ $domainSuffix }}.{{ .Values.global.baseDomain }} | sudo bash
-{{- else }}
-    curl -sSL https://install.{{ .Values.global.baseDomain }} | sudo bash
-{{- end }}
 
-We have guides available at https://docs.astronomer.io/learn and are always available to help.
+We have guides available at https://www.astronomer.io/docs/learn/ and are always available to help.
 {{- else }}
 To see dashboard URLs here, provide baseDomain in your config.
 {{- end }}
