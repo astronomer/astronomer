@@ -19,7 +19,6 @@ metadata:
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
     plane: {{ .Values.global.plane.mode }}
-
   annotations:
     checksum/jwks-secret: {{ printf "%s-commander-jwt-secret" .Release.Name | sha256sum }}
   {{ if .Values.global.enableArgoCDAnnotation }}
@@ -32,7 +31,7 @@ spec:
       component: registry
       tier: astronomer
       release: {{ .Release.Name }}
-{{- if and (not .Values.registry.gcs.enabled) (not .Values.registry.azure.enabled) (not .Values.registry.s3.enabled)}}
+{{- if and (not .Values.registry.gcs.enabled) (not .Values.registry.azure.enabled) (not .Values.registry.s3.enabled) }}
   serviceName: {{ .Release.Name }}-registry
 {{- end }}
   template:
@@ -70,7 +69,7 @@ spec:
 {{- include "astronomer.imagePullSecrets" . | indent 6 }}
       containers:
         - name: registry
-          image: {{ template  "registry.image" . }}
+          image: {{ template "registry.image" . }}
           securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
           imagePullPolicy: {{ .Values.images.registry.pullPolicy }}
           env:
@@ -106,7 +105,7 @@ spec:
             {{- if and .Values.registry.gcs.enabled .Values.registry.gcs.useKeyfile }}
             {{- include "registry.gcsVolumeMount" . | indent 12 }}
             {{- end }}
-            {{- include "custom_ca_volume_mounts" . | indent 12  }}
+            {{- include "custom_ca_volume_mounts" . | indent 12 }}
           ports:
             - name: registry-http
               containerPort: {{ .Values.ports.registryHTTP }}
@@ -144,11 +143,11 @@ spec:
           secret:
             secretName: {{ include "houston.jwtCertificateSecret" . }}
         {{- end }}
-        {{ include "custom_ca_volumes" . | indent 8  }}
+        {{ include "custom_ca_volumes" . | indent 8 }}
         {{- if and .Values.registry.gcs.enabled .Values.registry.gcs.useKeyfile }}
         {{- include "registry.gcsVolume" . | indent 8 }}
         {{- end }}
-  {{- if or (not .Values.registry.persistence.enabled) (.Values.registry.gcs.enabled) (.Values.registry.azure.enabled) (.Values.registry.s3.enabled)}}
+  {{- if or (not .Values.registry.persistence.enabled) (.Values.registry.gcs.enabled) (.Values.registry.azure.enabled) (.Values.registry.s3.enabled) }}
         - name: data
           emptyDir: {}
   {{- else }}
