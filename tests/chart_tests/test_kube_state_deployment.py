@@ -122,7 +122,7 @@ class TestKubeStateDeployment:
             assert role["metadata"]["namespace"] == roles_namespace_pools_list[i - 5]
 
     def test_kube_state_default_collectors(self, kube_version):
-        collector_resource_args = "--resources=daemonsets,namespaces,configmaps,cronjobs,deployments,horizontalpodautoscalers,ingresses,jobs,limitranges,networkpolicies,persistentvolumeclaims,pods,replicasets,replicationcontrollers,resourcequotas,secrets,services,statefulsets"
+        collector_resource_args = "--resources=daemonsets,namespaces,configmaps,cronjobs,deployments,ingresses,jobs,limitranges,persistentvolumeclaims,pods,resourcequotas,secrets,services,statefulsets"
         docs = render_chart(
             kube_version=kube_version,
             values={},
@@ -132,7 +132,7 @@ class TestKubeStateDeployment:
             ],
         )
         c_by_name = get_containers_by_name(docs[1])
-        assert len(docs[0]["rules"]) == 18
+        assert len(docs[0]["rules"]) == 14
         assert c_by_name["kube-state"]["args"][0] == collector_resource_args
 
     def test_kube_state_specific_collector_enabled(self, kube_version):
