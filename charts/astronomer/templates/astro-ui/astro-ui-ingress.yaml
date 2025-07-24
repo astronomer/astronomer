@@ -22,7 +22,6 @@ metadata:
 {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- end }}
     kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
-    kubernetes.io/tls-acme: {{ eq .Values.global.acme true | quote }}
     nginx.ingress.kubernetes.io/custom-http-errors: "404"
     nginx.ingress.kubernetes.io/configuration-snippet: |
       if ($host = '{{ .Values.global.baseDomain }}' ) {
@@ -30,34 +29,12 @@ metadata:
       }
     {{- end }}
 spec:
-  {{- if or .Values.global.tlsSecret .Values.global.acme }}
+  {{- if or .Values.global.tlsSecret }}
   tls:
-  {{- if .Values.global.acme }}
-    - secretName: astronomer-public-tls
-  {{- end }}
-  {{- if .Values.global.tlsSecret }}
     - secretName: {{ .Values.global.tlsSecret }}
-  {{- end }}
       hosts:
         - app.{{ .Values.global.baseDomain }}
   {{- end }}
-  {{ if semverCompare "< 1.19-0" .Capabilities.KubeVersion.Version -}}
-  rules:
-  - host: {{ .Values.global.baseDomain }}
-    http:
-      paths:
-        - path: /
-          backend:
-            serviceName: {{ .Release.Name }}-astro-ui
-            servicePort: astro-ui-http
-  - host: app.{{ .Values.global.baseDomain }}
-    http:
-      paths:
-        - path: /
-          backend:
-            serviceName: {{ .Release.Name }}-astro-ui
-            servicePort: astro-ui-http
-  {{ else -}}
   rules:
   - host: app.{{ .Values.global.baseDomain }}
     http:
@@ -69,7 +46,6 @@ spec:
               name: {{ .Release.Name }}-astro-ui
               port:
                 name: astro-ui-http
-  {{- end -}}
 {{- end }}
 ---
 ###############################
@@ -92,7 +68,6 @@ metadata:
 {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- else }}
     kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
-    kubernetes.io/tls-acme: {{ eq .Values.global.acme true | quote }}
     nginx.ingress.kubernetes.io/custom-http-errors: "404"
     nginx.ingress.kubernetes.io/configuration-snippet: |
       if ($host = '{{ .Values.global.baseDomain }}' ) {
@@ -100,27 +75,12 @@ metadata:
       }
     {{- end }}
 spec:
-  {{- if or .Values.global.tlsSecret .Values.global.acme }}
+  {{- if or .Values.global.tlsSecret }}
   tls:
-  {{- if .Values.global.acme }}
-    - secretName: astronomer-public-tls
-  {{- end }}
-  {{- if .Values.global.tlsSecret }}
     - secretName: {{ .Values.global.tlsSecret }}
-  {{- end }}
       hosts:
         - {{ .Values.global.baseDomain }}
   {{- end }}
-  {{ if semverCompare "< 1.19-0" .Capabilities.KubeVersion.Version -}}
-  rules:
-  - host: {{ .Values.global.baseDomain }}
-    http:
-      paths:
-        - path: /
-          backend:
-            serviceName: {{ .Release.Name }}-astro-ui
-            servicePort: astro-ui-http
-  {{ else -}}
   rules:
   - host: {{ .Values.global.baseDomain }}
     http:
@@ -132,6 +92,5 @@ spec:
               name: {{ .Release.Name }}-astro-ui
               port:
                 name: astro-ui-http
-{{- end }}
 {{- end }}
 {{- end }}

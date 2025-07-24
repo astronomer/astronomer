@@ -31,7 +31,11 @@ class TestNatsJetstream:
         assert prod["nats"] == {"jetStreamEnabled": True, "tlsEnabled": False}
         nats_cm = docs[2]["data"]["nats.conf"]
         assert "jetstream" in nats_cm
-        assert {"runAsUser": 1000, "runAsNonRoot": True} == docs[1]["spec"]["template"]["spec"]["containers"][0]["securityContext"]
+        assert docs[1]["spec"]["template"]["spec"]["containers"][0]["securityContext"] == {
+            "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
+            "runAsUser": 1000,
+        }
 
     def test_nats_statefulset_with_jetstream_and_tls(self, kube_version):
         """Test jetstream config with nodeSelector, affinity, and tolerations defaults."""
