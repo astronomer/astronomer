@@ -29,6 +29,10 @@ kibana:
 nats:
   nats:
     createJetStreamJob: true
+    reloader:
+      enabled: true
+    exporter:
+      enabled: true
 postgresql:
   replication:
     enabled: true
