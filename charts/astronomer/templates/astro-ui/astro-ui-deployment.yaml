@@ -50,7 +50,9 @@ spec:
         - name: astro-ui
           image: {{- include "astroUI.image" . | indent 1 }}
           imagePullPolicy: {{ .Values.images.astroUI.pullPolicy }}
-          securityContext: {{ toYaml (.Values.securityContext)| nindent 12 }}
+          securityContext:
+            readOnlyRootFilesystem: true
+            {{- toYaml (.Values.securityContext) | nindent 12 }}
           resources:
 {{ toYaml .Values.astroUI.resources | indent 12 }}
           {{- if .Values.astroUI.command }}
@@ -66,7 +68,7 @@ spec:
               containerPort: {{ .Values.ports.astroUIHTTP }}
           {{- if .Values.astroUI.livenessProbe }}
           livenessProbe: {{ tpl (toYaml .Values.astroUI.livenessProbe) . | nindent 12 }}
-          {{- else}}
+          {{- else }}
           livenessProbe:
             httpGet:
               path: /
@@ -76,7 +78,7 @@ spec:
           {{- end }}
           {{- if .Values.astroUI.readinessProbe }}
           readinessProbe: {{ tpl (toYaml .Values.astroUI.readinessProbe) . | nindent 12 }}
-          {{- else}}
+          {{- else }}
           readinessProbe:
             httpGet:
               path: /
