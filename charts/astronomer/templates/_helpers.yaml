@@ -180,9 +180,9 @@
 - name: COMMANDER_DATAPLANE_CHART_VERSION
   value: "{{ .Chart.Version }}"
 - name: COMMANDER_CLOUD_PROVIDER
-  value: {{ .Values.commander.cloudProvider | default "locallocal" | quote }}
+  value: {{ .Values.commander.cloudProvider | default "local" | quote }}
 - name: COMMANDER_REGION
-  value: {{ .Values.commander.region | default "locallocal" | quote }}
+  value: {{ .Values.commander.region | default "local" | quote }}
 - name: COMMANDER_VERSION
   value: {{ .Values.images.commander.tag | quote }}
 - name: COMMANDER_DATAPLANE_DATABASE_URL
