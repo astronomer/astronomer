@@ -483,6 +483,33 @@ tlsEnabled: false
 {{- end -}}
 {{- end }}
 
+{{/*
+Generic helper to get conforming repository and tag with private registry support.
+Returns an object with .repository and .tag fields.
+Usage: {{ $image := include "conforming-repotag" (dict "global" .Values.global "imageConfig" .Values.global.dagOnlyDeployment "defaultImageName" "ap-dag-deploy") | fromYaml }}
+       repository: {{ $image.repository }}
+       tag: {{ $image.tag }}
+*/}}
+{{- define "conforming-repotag" -}}
+{{- $defaultRegistryPrefix := include "defaultRegistryPrefix" . -}}
+{{- $defaultRepo := printf "%s/%s" $defaultRegistryPrefix .defaultImageName -}}
+{{- $tag := .imageConfig.tag | default "latest" -}}
+{{- $configRepo := .imageConfig.repository | default "" -}}
+{{- if and $configRepo (ne $configRepo $defaultRepo) -}}
+{{/* Custom repository provided (different from default) - use it as-is */}}
+repository: {{ $configRepo }}
+tag: {{ $tag }}
+{{- else if .global.privateRegistry.enabled -}}
+{{/* Using default repository with private registry enabled */}}
+repository: {{ printf "%s/%s" .global.privateRegistry.repository .defaultImageName }}
+tag: {{ $tag }}
+{{- else -}}
+{{/* Use default or configured repository */}}
+repository: {{ $configRepo | default $defaultRepo }}
+tag: {{ $tag }}
+{{- end -}}
+{{- end }}
+
 {{- define "configSyncer.securityContext" -}}
 {{- if .Values.configSyncer.securityContext }}
 {{ toYaml .Values.configSyncer.securityContext | indent 16 }}
