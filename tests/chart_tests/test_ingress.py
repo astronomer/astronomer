@@ -78,7 +78,7 @@ class TestIngress:
     def test_single_ingress_per_host(self, kube_version):
         default_docs = render_chart(values={"global": {"enablePerHostIngress": True}})
         ingresses = [doc for doc in default_docs if doc["kind"].lower() == "Ingress".lower()]
-        assert len(ingresses) == 7
+        assert len(ingresses) == 8
         assert all(len(doc["spec"]["rules"]) == 1 for doc in ingresses)
         assert all(len(doc["spec"]["tls"][0]["hosts"]) == 1 for doc in ingresses)
         assert all(doc["apiVersion"] == "networking.k8s.io/v1" for doc in ingresses)
@@ -96,3 +96,34 @@ class TestIngress:
         )
         assert len(docs) == 1
         assert docs[0]["metadata"]["annotations"]["kubernetes.io/software-enable"] == "enabled"
+
+    def test_prometheus_federate_ingress(self, kube_version):
+        """Test prometheus federate ingress configuration"""
+        docs = render_chart(
+            kube_version=kube_version,
+            show_only=["charts/prometheus/templates/ingress.yaml", "charts/prometheus/templates/prometheus-federate-ingress.yaml"],
+            values={"global": {"baseDomain": "example.com"}},
+        )
+
+        assert len(docs) == 2
+
+        federate_ingress = next((doc for doc in docs if "federate-ingress" in doc["metadata"]["name"]), None)
+        assert federate_ingress is not None
+
+        assert federate_ingress["kind"] == "Ingress"
+        assert federate_ingress["apiVersion"] == "networking.k8s.io/v1"
+
+        annotations = federate_ingress["metadata"]["annotations"]
+        auth_annotations = ["nginx.ingress.kubernetes.io/auth-signin", "nginx.ingress.kubernetes.io/auth-response-headers"]
+        for auth_annotation in auth_annotations:
+            assert auth_annotation not in annotations
+
+        rules = federate_ingress["spec"]["rules"]
+        assert len(rules) == 1
+        paths = rules[0]["http"]["paths"]
+        assert len(paths) == 1
+        assert paths[0]["path"] == "/federate"
+        assert paths[0]["pathType"] == "Exact"
+
+        backend = paths[0]["backend"]
+        assert backend["service"]["port"]["name"] == "prometheus-data"
