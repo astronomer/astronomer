@@ -3,7 +3,7 @@
 ##########################
 {{- if and .Values.global.baseDomain }}
 {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
-kind: Ingress
+kind: IngressClass
 apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:
   name: {{ template "alertmanager.fullname" . }}-ingress
@@ -21,12 +21,12 @@ metadata:
     {{- if .Values.global.extraAnnotations }}
 {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- end }}
-    kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
     {{ include "houston.internalauthurl" . | indent 4 }}
     nginx.ingress.kubernetes.io/auth-signin: https://app.{{ .Values.global.baseDomain }}/login
     nginx.ingress.kubernetes.io/auth-response-headers: authorization, username, email
     {{- end }}
 spec:
+  ingressClassName: {{ .Values.global.ingress.className | default (printf "%s-nginx" .Release.Name) }}
   {{- if or .Values.global.tlsSecret }}
   tls:
     - secretName: {{ .Values.global.tlsSecret }}
