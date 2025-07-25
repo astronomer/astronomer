@@ -30,7 +30,7 @@ You can access the data plane at:
 The data plane is responsible for executing and monitoring Airflow workloads.
 
 {{- else if eq $planeMode "unified" }}
-You can access the control plane at:
+You can access the cluster at:
 - Astronomer dashboard:        {{ if and $astronomerEnabled $platformEnabled }}https://app.{{ .Values.global.baseDomain }}{{ else }}Disabled{{ end }}
 - Kibana dashboard:            {{ if and $kibanaEnabled $loggingEnabled }}https://kibana.{{ .Values.global.baseDomain }}{{ else }}Disabled{{ end }}
 
