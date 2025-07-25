@@ -552,6 +552,8 @@ workflows:
             branches:
               only:
                 - '/^release-0\.\d+$/'
+                - enable-master-branch-chart-publish
+                - master
       - release-to-internal:
           context:
             - gcp-astronomer-prod
@@ -559,6 +561,8 @@ workflows:
             branches:
               only:
                 - '/^release-0\.\d+$/'
+                - enable-master-branch-chart-publish
+                - master
           requires:
             - approve-internal-release
             - scenario-unified-1-29-14
