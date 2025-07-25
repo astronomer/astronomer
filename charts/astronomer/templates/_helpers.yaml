@@ -203,7 +203,7 @@
 - name: COMMANDER_DATAPLANE_MODE
   value: {{ .Values.global.plane.mode | quote }}
 - name: COMMANDER_HOUSTON_JWKS_ENDPOINT
-  value: "https://houston.{{ .Values.global.baseDomain }}/v1/.well-known/jwks.json"
+  value: "https://houston.{{ .Values.global.baseDomain }}"
 {{- end }}
 
 {{- define "registry.gcsVolume" }}
