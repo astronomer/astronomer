@@ -99,12 +99,12 @@ def helm_install(values: str | list[str] = f"{GIT_ROOT_DIR}/configs/local-dev.ya
         HELM_EXE,
         "install",
         "astronomer",
-        "--debug",
+        str(GIT_ROOT_DIR),
         "--create-namespace",
         "--namespace=astronomer",
-        str(GIT_ROOT_DIR),
-        f"--kubeconfig={KUBECONFIG_FILE}",
         f"--timeout={HELM_INSTALL_TIMEOUT}",
+        f"--kubeconfig={KUBECONFIG_FILE}",
+        "--debug",
     ]
 
     if isinstance(values, str):
@@ -119,7 +119,25 @@ def helm_install(values: str | list[str] = f"{GIT_ROOT_DIR}/configs/local-dev.ya
 
     debug_print(f"Final Helm command: {shlex.join(helm_install_command)}")
 
-    run_command(helm_install_command)
+    try:
+        run_command(helm_install_command)
+    except RuntimeError as e:
+        debug_print(f"Helm install failed: {e}")
+        print("Current astronomer namespace pod status:")
+        subprocess.run(
+            [
+                KUBECTL_EXE,
+                f"--kubeconfig={KUBECONFIG_FILE}",
+                "--namespace=astronomer",
+                "get",
+                "pods",
+                "-o",
+                "wide",
+            ],
+            text=True,
+        )
+        print("Helm install failed. Please check the logs above for details.", file=sys.stderr)
+        raise
 
     debug_print("Helm install completed successfully")
 
@@ -141,11 +159,10 @@ def wait_for_healthy_pods(ignore_substrings: list[str] | None = None, max_wait_t
         output = run_command(
             [
                 KUBECTL_EXE,
-                "--kubeconfig",
-                KUBECONFIG_FILE,
+                f"--kubeconfig={KUBECONFIG_FILE}",
+                "--namespace=astronomer",
                 "get",
                 "pods",
-                "--namespace=astronomer",
                 "-o",
                 "custom-columns=NAME:.metadata.name,STATUS:.status.phase",
             ]
