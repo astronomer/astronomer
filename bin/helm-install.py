@@ -2,6 +2,7 @@
 """Install the current chart into the given cluster."""
 
 import argparse
+import datetime
 import os
 import shlex
 import subprocess
@@ -52,39 +53,6 @@ def debug_print(message: str) -> None:
         print(f"DEBUG: {message}")
 
 
-def run_command(command: str | list) -> str:
-    """
-    Run a shell command and capture its output.
-
-    Args:
-        command: The shell command to execute.
-
-    Returns:
-        The standard output from the command.
-
-    Raises:
-        RuntimeError: If the command fails.
-    """
-    if isinstance(command, list):
-        command = shlex.join(str(x) for x in command)
-    else:
-        command = str(command)
-
-    debug_print(f"Executing command: {command}")
-
-    result = subprocess.run(command, shell=True, text=True, capture_output=True)
-
-    debug_print(f"Command exit code: {result.returncode}")
-    if stdout := result.stdout.strip():
-        debug_print(f"Command stdout: {stdout}")
-    if stderr := result.stderr.strip():
-        debug_print(f"Command stderr: {stderr}")
-
-    if result.returncode != 0:
-        raise RuntimeError(f"Command failed: {command}\n{result.stderr}")
-    return result.stdout.strip()
-
-
 def helm_install(values: str | list[str] = f"{GIT_ROOT_DIR}/configs/local-dev.yaml") -> None:
     """
     Install a Helm chart using the provided kubeconfig and values file.
@@ -120,7 +88,7 @@ def helm_install(values: str | list[str] = f"{GIT_ROOT_DIR}/configs/local-dev.ya
     debug_print(f"Final Helm command: {shlex.join(helm_install_command)}")
 
     try:
-        run_command(helm_install_command)
+        subprocess.run(helm_install_command)
     except RuntimeError as e:
         debug_print(f"Helm install failed: {e}")
         print("Current astronomer namespace pod status:")
@@ -156,7 +124,7 @@ def wait_for_healthy_pods(ignore_substrings: list[str] | None = None, max_wait_t
     while True:
         debug_print(f"Checking pod status... {int(end_time - time.time())}s remaining")
 
-        output = run_command(
+        output = subprocess.run(
             [
                 KUBECTL_EXE,
                 f"--kubeconfig={KUBECONFIG_FILE}",
@@ -165,7 +133,10 @@ def wait_for_healthy_pods(ignore_substrings: list[str] | None = None, max_wait_t
                 "pods",
                 "-o",
                 "custom-columns=NAME:.metadata.name,STATUS:.status.phase",
-            ]
+            ],
+            capture_output=True,
+            text=True,
+            check=True,
         )
         if time.time() >= end_time:
             err = "Timeout waiting for pods to become healthy."
@@ -185,9 +156,10 @@ def wait_for_healthy_pods(ignore_substrings: list[str] | None = None, max_wait_t
             print("All pods in the 'astronomer' namespace are healthy.")
             return
 
-        debug_print(f"Found {len(unhealthy_pods)} unhealthy pods")
-
-        print(f"Unhealthy pods: {', '.join(unhealthy_pods)}")
+        print(
+            datetime.datetime.now(datetime.UTC).isoformat(),
+            f"Found {len(unhealthy_pods)} unhealthy pods: {', '.join(unhealthy_pods)}",
+        )
         time.sleep(5)
 
         print(f"Retrying... {int(end_time - time.time())} seconds left until timeout.")
