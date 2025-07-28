@@ -28,11 +28,20 @@ class TestRegistryStatefulset:
         assert any(
             "quay.io/astronomer/ap-registry:" in item for item in jmespath.search("spec.template.spec.containers[*].image", doc)
         )
-        assert docs[0]["spec"]["template"]["spec"]["securityContext"] == {
+        assert doc["spec"]["template"]["spec"]["securityContext"] == {
             "fsGroup": 1000,
             "runAsGroup": 1000,
             "runAsUser": 1000,
         }
+        assert {"emptyDir": {}, "name": "etc_ssl_certs"} in doc["spec"]["template"]["spec"]["volumes"]
+        assert {
+            "mountPath": "/etc/ssl/certs_copy",
+            "name": "etc_ssl_certs",
+        } in doc["spec"]["template"]["spec"]["initContainers"][0]["volumeMounts"]
+        assert {
+            "mountPath": "/etc/ssl/certs",
+            "name": "etc_ssl_certs",
+        } in doc["spec"]["template"]["spec"]["containers"][0]["volumeMounts"]
 
     def test_astronomer_registry_statefulset_with_custom_env(self, kube_version):
         """Test that helm renders statefulset template for astronomer

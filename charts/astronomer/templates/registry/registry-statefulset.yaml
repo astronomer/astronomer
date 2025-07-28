@@ -68,6 +68,29 @@ spec:
       securityContext: {{ toYaml .Values.registry.podSecurityContext| nindent 8 }}
 {{- end }}
 {{- include "astronomer.imagePullSecrets" . | indent 6 }}
+      initContainers:
+        - name: etc_ssl_certs_copier
+          volumeMounts:
+            - name: etc_ssl_certs
+              mountPath: /etc/ssl/certs_copy
+          image: {{ template "registry.image" . }}
+          imagePullPolicy: {{ .Values.images.registry.pullPolicy }}
+          command:
+            - sh
+            - -c
+            - |
+              if [ -d /etc/ssl/certs ]; then
+                cp -r /etc/ssl/certs/* /etc/ssl/certs_copy/
+              else
+                echo "No /etc/ssl/certs directory found, skipping copy."
+              fi
+          securityContext:
+            readOnlyRootFilesystem: true
+            {{ toYaml .Values.securityContext| nindent 12 }}
+          env:
+          {{- if .Values.registry.extraEnv }}
+            {{- toYaml .Values.registry.extraEnv | nindent 10 }}
+          {{- end }}
       containers:
         - name: registry
           image: {{ template "registry.image" . }}
@@ -91,12 +114,14 @@ spec:
           - name: UPDATE_CA_CERTS
             value: "true"
           {{- end }}
-{{- if .Values.registry.extraEnv }}
-{{ toYaml .Values.registry.extraEnv | indent 10 }}
-{{- end }}
+          {{- if .Values.registry.extraEnv }}
+            {{- toYaml .Values.registry.extraEnv | nindent 10 }}
+          {{- end }}
           resources:
-{{ toYaml .Values.registry.resources | indent 12 }}
+            {{- toYaml .Values.registry.resources | nindent 12 }}
           volumeMounts:
+            - name: etc_ssl_certs
+              mountPath: /etc/ssl/certs
             - name: config
               mountPath: /etc/docker/registry
             {{- if not .Values.registry.enableInsecureAuth }}
@@ -135,6 +160,8 @@ spec:
             timeoutSeconds: 5
           {{- end }}
       volumes:
+        - name: etc_ssl_certs
+          emptyDir: {}
         - name: config
           configMap:
             name: {{ .Release.Name }}-registry
