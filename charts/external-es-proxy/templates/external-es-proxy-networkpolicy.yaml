@@ -2,7 +2,7 @@
 ## Elasticsearch Proxy NetworkPolicy ##
 #######################################
 {{- if and .Values.global.networkPolicy.enabled }}
-{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
