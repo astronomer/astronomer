@@ -1,12 +1,12 @@
 ########################################
 ## Elasticsearch Logging Ingress ##
 ########################################
-#{{- if .Values.global.customLogging.enabled }}
-#{{- if (eq .Values.global.plane.mode "data") }}
+{{- if .Values.global.customLogging.enabled }}
+{{- if eq .Values.global.plane.mode "data" }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:
-  name: {{ template "elasticsearch.fullname" . }}-elasticsearch-ingress
+  name: {{ template "elasticsearch.fullname" . }}-ingress
   labels:
     tier: elasticsearch-networking
     component: elasticsearch-logging-ingress
@@ -46,6 +46,6 @@ spec:
               service:
                 name: {{ .Release.Name }}-elasticsearch
                 port:
-                  name: {{ .Values.common.ports.http }}
+                  number: {{ .Values.common.ports.http }}
 {{- end }}
 {{- end }}
