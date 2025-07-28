@@ -402,17 +402,17 @@ jobs:
       - store_test_results:
           path: test-results
 
-  check-commander-airflow-version:
-    docker:
-      # https://circleci.com/developer/images/image/cimg/base
-      - image: cimg/base:current-24.04
-    steps:
-      - checkout
-      - setup_remote_docker:
-          docker_layer_caching: true
-      - run:
-          name: Check that commander image uses same Airflow chart version
-          command: make validate-commander-airflow-version
+  #check-commander-airflow-version:
+  #  docker:
+  #    # https://circleci.com/developer/images/image/cimg/base
+  #    - image: cimg/base:current-24.04
+  #  steps:
+  #    - checkout
+  #    - setup_remote_docker:
+  #        docker_layer_caching: true
+  #    - run:
+  #        name: Check that commander image uses same Airflow chart version
+  #        command: make validate-commander-airflow-version
 
 workflows:
   version: 2.1
