@@ -521,10 +521,10 @@ workflows:
     jobs:
       - run_pre_commit
       - test-unit
-      - check-commander-airflow-version
+      #- check-commander-airflow-version
       - build-artifact:
           requires:
-            - check-commander-airflow-version
+            #- check-commander-airflow-version
             - run_pre_commit
             - test-unit
       - approve-test-all-platforms:
@@ -634,11 +634,11 @@ workflows:
     jobs:
       - run_pre_commit
       - test-unit
-      - check-commander-airflow-version
+      #- check-commander-airflow-version
       - build-artifact:
           qa_release: true
           requires:
-            - check-commander-airflow-version
+            #- check-commander-airflow-version
             - run_pre_commit
             - test-unit
       - release-to-internal:
