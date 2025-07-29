@@ -22,8 +22,15 @@ class TestIngress:
         doc = docs[0]
 
         annotations = jmespath.search("metadata.annotations", doc)
+        assert "kubernetes.io/ingress.class" not in annotations
+
+        ingress_class_name = jmespath.search("spec.ingressClassName", doc)
+        assert ingress_class_name == "release-name-nginx"
+
         assert len(annotations) > 1
-        assert annotations["kubernetes.io/ingress.class"] == "release-name-nginx"
+
+        assert "nginx.ingress.kubernetes.io/auth-signin" in annotations
+        assert annotations["nginx.ingress.kubernetes.io/auth-signin"] == "https://app.example.com/login"
 
         _, minor, _ = (int(x) for x in kube_version.split("."))
 
