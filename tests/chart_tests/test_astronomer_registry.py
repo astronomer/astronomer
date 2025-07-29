@@ -65,8 +65,8 @@ class TestRegistryStatefulset:
         assert doc["apiVersion"] == "apps/v1"
         assert doc["metadata"]["name"] == "release-name-registry"
         assert extra_env in doc["spec"]["template"]["spec"]["containers"][0]["env"]
-        assert doc["containers"][0]["image"] == "some-custom-repository:1.2.3-sunshine"
-        assert doc["initContainers"][0]["image"] == "some-custom-ap-base:987.654.321"
+        assert doc["spec"]["template"]["spec"]["containers"][0]["image"] == "some-custom-repository:1.2.3-sunshine"
+        assert doc["spec"]["template"]["spec"]["initContainers"][0]["image"] == "some-custom-ap-base:987.654.321"
 
     def test_astronomer_registry_statefulset_with_serviceaccount_enabled_defaults(self, kube_version):
         """Test that helm renders statefulset and serviceAccount template for astronomer
