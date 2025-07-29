@@ -18,7 +18,7 @@ class TestAstronomerCommanderIngress:
         )
         assert len(docs) == 1
         doc = docs[0]
-        assert doc["kind"] == "Ingress"
+        assert doc["kind"] == "IngressClass"
         assert doc["metadata"]["name"] == "release-name-commander-api-ingress"
         assert doc["metadata"]["labels"]["component"] == "api-ingress"
         assert doc["metadata"]["labels"]["plane"] == "data"
@@ -77,7 +77,7 @@ class TestAstronomerCommanderIngress:
         )
         assert len(docs) == 1
         doc = docs[0]
-        assert doc["kind"] == "Ingress"
+        assert doc["kind"] == "IngressClass"
         assert doc["metadata"]["name"] == "release-name-commander-metadata-ingress"
         assert doc["metadata"]["labels"]["component"] == "metadata-ingress"
         assert doc["metadata"]["labels"]["plane"] == "dataplane"

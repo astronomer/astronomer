@@ -20,7 +20,7 @@ class TestGlobabIngressAnnotation:
         )
         assert len(docs) == 7
         for doc in docs:
-            assert doc["kind"] == "Ingress"
+            assert doc["kind"] == "IngressClass"
             assert doc["apiVersion"] == "networking.k8s.io/v1"
             assert "passthrough" in doc["metadata"]["annotations"]["route.openshift.io/termination"]
             assert len(doc["metadata"]["annotations"]) >= 4

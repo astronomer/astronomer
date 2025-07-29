@@ -23,7 +23,7 @@ class TestHoustonInternalAuthorization:
 
         assert len(docs) == 3
         for doc in docs:
-            assert doc["kind"] == "Ingress"
+            assert doc["kind"] == "IngressClass"
             assert doc["apiVersion"] == "networking.k8s.io/v1"
             assert (
                 "https://houston.example.com/v1/authorization"
@@ -44,7 +44,7 @@ class TestHoustonInternalAuthorization:
 
         assert len(docs) == 3
         for doc in docs:
-            assert doc["kind"] == "Ingress"
+            assert doc["kind"] == "IngressClass"
             assert doc["apiVersion"] == "networking.k8s.io/v1"
             assert (
                 "http://release-name-houston.default.svc.cluster.local:8871/v1/authorization"
