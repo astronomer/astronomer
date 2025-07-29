@@ -1,18 +1,15 @@
 ###############################
 ## alertmanager IngressClass ##
 ###############################
-{{- if and .Values.global.baseDomain }}
 {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
 apiVersion: networking.k8s.io/v1
 kind: IngressClass
 metadata:
   name: {{ .Values.global.ingress.className | default (printf "%s-nginx" .Release.Name) }}
   labels:
-    chart: {{ include "astronomer.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
     plane: {{ .Values.global.plane.mode }}
 spec:
   controller: k8s.io/ingress-nginx
-{{- end }}
 {{- end }}
