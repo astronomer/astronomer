@@ -23,10 +23,13 @@ class TestAstronomerCommanderIngress:
         assert doc["metadata"]["labels"]["component"] == "api-ingress"
         assert doc["metadata"]["labels"]["plane"] == "data"
 
+        assert doc["spec"]["ingressClassName"] == "release-name-nginx"
+
         annotations = doc["metadata"]["annotations"]
+        assert "kubernetes.io/ingress.class" not in annotations
+
         assert annotations["nginx.ingress.kubernetes.io/backend-protocol"] == "GRPC"
         assert annotations["nginx.ingress.kubernetes.io/enable-http2"] == "true"
-        assert annotations["kubernetes.io/ingress.class"] == "release-name-nginx"
         assert annotations["nginx.ingress.kubernetes.io/custom-http-errors"] == "404"
         assert annotations["nginx.ingress.kubernetes.io/proxy-buffer-size"] == "16k"
 
@@ -79,8 +82,11 @@ class TestAstronomerCommanderIngress:
         assert doc["metadata"]["labels"]["component"] == "metadata-ingress"
         assert doc["metadata"]["labels"]["plane"] == "dataplane"
 
+        assert doc["spec"]["ingressClassName"] == "release-name-nginx"
+
         annotations = doc["metadata"]["annotations"]
-        assert annotations["kubernetes.io/ingress.class"] == "release-name-nginx"
+
+        assert "kubernetes.io/ingress.class" not in annotations
         assert annotations["nginx.ingress.kubernetes.io/custom-http-errors"] == "404"
         assert annotations["nginx.ingress.kubernetes.io/proxy-buffer-size"] == "16k"
         assert annotations["nginx.ingress.kubernetes.io/rewrite-target"] == "/metadata"
