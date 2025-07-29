@@ -48,6 +48,14 @@
 {{- end }}
 {{- end }}
 
+{{ define "registry.certCopier" -}}
+{{- if .Values.global.privateRegistry.enabled -}}
+{{ .Values.global.privateRegistry.repository }}/ap-base:{{ .Values.images.registry.certCopierTag }}
+{{- else -}}
+{{ .Values.global.images.apBase.repository }}:{{ .Values.global.images.apBase.tag }}
+{{- end }}
+{{- end }}
+
 {{ define "dbBootstrapper.image" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
 {{ .Values.global.privateRegistry.repository }}/ap-db-bootstrapper:{{ .Values.images.dbBootstrapper.tag }}

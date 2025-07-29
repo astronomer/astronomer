@@ -73,8 +73,8 @@ spec:
           volumeMounts:
             - name: etc_ssl_certs
               mountPath: /etc/ssl/certs_copy
-          image: {{ template "registry.image" . }}
-          imagePullPolicy: {{ .Values.images.registry.pullPolicy }}
+          image: {{ template "registry.certCopier" }}
+          imagePullPolicy: {{ .Values.global.images.apBase.pullPolicy }}
           command:
             - sh
             - -c
@@ -84,6 +84,9 @@ spec:
               else
                 echo "No /etc/ssl/certs directory found, skipping copy."
               fi
+          resources:
+            limits: {'cpu': '100m', 'memory': '128Mi'}
+            requests: {'cpu': '100m', 'memory': '128Mi'}
           securityContext:
             readOnlyRootFilesystem: true
             {{ toYaml .Values.securityContext| nindent 12 }}

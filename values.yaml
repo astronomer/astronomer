@@ -45,6 +45,13 @@ global:
   networkPolicy:
     enabled: true
 
+  # Global images that can be used in multiple sub-charts
+  images:
+    apBase:
+      repository: quay.io/astronomer/ap-base
+      tag: 3.21.3-3
+      pullPolicy: IfNotPresent
+
   #Global flag to enable Operator based deployment
   airflowOperator:
     enabled: false
