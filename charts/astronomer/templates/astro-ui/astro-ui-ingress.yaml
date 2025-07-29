@@ -67,6 +67,7 @@ spec:
               port:
                 name: astro-ui-http
 {{- end }}
+{{- end }}
 ---
 ###############################
 ## Astronomer Common Ingress ##
