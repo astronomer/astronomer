@@ -50,7 +50,7 @@
 
 {{ define "registry.certCopier" -}}
 {{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/ap-base:{{ .Values.images.registry.certCopierTag }}
+{{ .Values.global.privateRegistry.repository }}/ap-base:{{ .Values.global.images.apBase.tag }}
 {{- else -}}
 {{ .Values.global.images.apBase.repository }}:{{ .Values.global.images.apBase.tag }}
 {{- end }}
