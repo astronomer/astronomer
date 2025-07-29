@@ -19,10 +19,8 @@ metadata:
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
     plane: {{ .Values.global.plane.mode }}
-
-  annotations:
-    checksum/jwks-secret: {{ printf "%s-commander-jwt-secret" .Release.Name | sha256sum }}
   {{ if .Values.global.enableArgoCDAnnotation }}
+  annotations:
     argocd.argoproj.io/sync-wave: "-1"
   {{- end }}
 spec:
@@ -49,6 +47,7 @@ spec:
         plane: {{ .Values.global.plane.mode }}
       annotations:
         checksum/configmap: {{ include (print $.Template.BasePath "/registry/registry-configmap.yaml") . | sha256sum }}
+        checksum/jwks-secret: {{ include (print $.Template.BasePath "/registry-auth-secret.yaml") . | sha256sum }}
 {{- if .Values.global.podAnnotations }}
 {{ toYaml .Values.global.podAnnotations | indent 8 }}
 {{- end }}
