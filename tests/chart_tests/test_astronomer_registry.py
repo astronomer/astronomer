@@ -49,7 +49,7 @@ class TestRegistryStatefulset:
         values = {
             "astronomer": {
                 "registry": {"extraEnv": [extra_env]},
-                "images": {"registry": {"repository": "some-custom-registry", "tag": "1.2.3"}},
+                "images": {"registry": {"repository": "some-custom-repository", "tag": "1.2.3-sunshine"}},
             },
             "global": {"images": {"apBase": {"repository": "some-custom-ap-base", "tag": "987.654.321"}}},
         }
@@ -65,7 +65,7 @@ class TestRegistryStatefulset:
         assert doc["apiVersion"] == "apps/v1"
         assert doc["metadata"]["name"] == "release-name-registry"
         assert extra_env in doc["spec"]["template"]["spec"]["containers"][0]["env"]
-        assert docs["containers"][0]["image"] == "some-custom-registry:1.2.3"
+        assert docs["containers"][0]["image"] == "some-custom-repository:1.2.3-sunshine"
         assert docs["initContainers"][0]["image"] == "some-custom-ap-base:987.654.321"
 
     def test_astronomer_registry_statefulset_with_serviceaccount_enabled_defaults(self, kube_version):
