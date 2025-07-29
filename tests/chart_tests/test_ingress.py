@@ -16,7 +16,7 @@ class TestIngress:
         docs = render_chart(
             kube_version=kube_version,
             show_only=["charts/astronomer/templates/ingress.yaml"],
-            values={"global": {"baseDomain": "example.com"}}
+            values={"global": {"baseDomain": "example.com"}},
         )
 
         assert len(docs) == 1
@@ -44,12 +44,7 @@ class TestIngress:
     def test_astro_ui_per_host_ingress(self, kube_version):
         docs = render_chart(
             kube_version=kube_version,
-            values={
-                "global": {
-                    "enablePerHostIngress": True,
-                    "baseDomain": "example.com"
-                }
-            },
+            values={"global": {"enablePerHostIngress": True, "baseDomain": "example.com"}},
             show_only=[
                 "charts/astronomer/templates/astro-ui/astro-ui-ingress.yaml",
                 "charts/astronomer/templates/ingress.yaml",
@@ -77,12 +72,7 @@ class TestIngress:
     def test_registry_per_host_ingress(self, kube_version):
         docs = render_chart(
             kube_version=kube_version,
-            values={
-                "global": {
-                    "enablePerHostIngress": True,
-                    "baseDomain": "example.com"
-                }
-            },
+            values={"global": {"enablePerHostIngress": True, "baseDomain": "example.com"}},
             show_only=[
                 "charts/astronomer/templates/registry/registry-ingress.yaml",
                 "charts/astronomer/templates/ingress.yaml",
@@ -102,14 +92,7 @@ class TestIngress:
         assert docs[0]["spec"]["rules"] == expected_rules_v1
 
     def test_single_ingress_per_host(self, kube_version):
-        default_docs = render_chart(
-            values={
-                "global": {
-                    "enablePerHostIngress": True,
-                    "baseDomain": "example.com"
-                }
-            }
-        )
+        default_docs = render_chart(values={"global": {"enablePerHostIngress": True, "baseDomain": "example.com"}})
         ingresses = [doc for doc in default_docs if doc["kind"].lower() == "Ingress".lower()]
         assert len(ingresses) == 8
         assert all(len(doc["spec"]["rules"]) == 1 for doc in ingresses)
@@ -126,7 +109,7 @@ class TestIngress:
             kube_version=kube_version,
             values={
                 "global": {"baseDomain": "example.com"},
-                "kibana": {"ingressAnnotations": {"kubernetes.io/software-enable": "enabled"}}
+                "kibana": {"ingressAnnotations": {"kubernetes.io/software-enable": "enabled"}},
             },
             show_only=[
                 "charts/kibana/templates/ingress.yaml",
@@ -179,12 +162,7 @@ class TestIngress:
         docs = render_chart(
             kube_version=kube_version,
             show_only=["charts/astronomer/templates/ingress.yaml"],
-            values={
-                "global": {
-                    "baseDomain": "example.com",
-                    "ingress": {"className": "custom-nginx"}
-                }
-            }
+            values={"global": {"baseDomain": "example.com", "ingress": {"className": "custom-nginx"}}},
         )
 
         assert len(docs) == 1
@@ -198,12 +176,7 @@ class TestIngress:
         docs = render_chart(
             kube_version=kube_version,
             show_only=["charts/astronomer/templates/ingress.yaml"],
-            values={
-                "global": {
-                    "baseDomain": "example.com",
-                    "authSidecar": {"enabled": True}
-                }
-            }
+            values={"global": {"baseDomain": "example.com", "authSidecar": {"enabled": True}}},
         )
 
         assert len(docs) == 1
@@ -215,7 +188,7 @@ class TestIngress:
         assert "kubernetes.io/ingress.class" not in annotations
         nginx_config_annotations = [
             "nginx.ingress.kubernetes.io/custom-http-errors",
-            "nginx.ingress.kubernetes.io/configuration-snippet"
+            "nginx.ingress.kubernetes.io/configuration-snippet",
         ]
         for annotation in nginx_config_annotations:
             assert annotation not in annotations

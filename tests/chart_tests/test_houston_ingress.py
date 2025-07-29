@@ -15,7 +15,7 @@ class TestIngress:
         docs = render_chart(
             kube_version=kube_version,
             show_only=["charts/astronomer/templates/houston/ingress.yaml"],
-            values={"global": {"baseDomain": "test.local"}}
+            values={"global": {"baseDomain": "test.local"}},
         )
 
         assert len(docs) == 1
@@ -52,7 +52,7 @@ class TestIngress:
         docs = render_chart(
             kube_version=kube_version,
             show_only=["charts/astronomer/templates/houston/ingress.yaml"],
-            values={"global": {"baseDomain": "test.local"}}
+            values={"global": {"baseDomain": "test.local"}},
         )
         assert len(docs) == 1
         doc = docs[0]
@@ -81,7 +81,7 @@ class TestIngress:
             kube_version=kube_version,
             values={
                 "global": {"baseDomain": "test.local"},
-                "astronomer": {"houston": {"ingress": {"annotation": custom_annotations}}}
+                "astronomer": {"houston": {"ingress": {"annotation": custom_annotations}}},
             },
             show_only=["charts/astronomer/templates/houston/ingress.yaml"],
         )
@@ -102,12 +102,7 @@ class TestIngress:
         docs = render_chart(
             kube_version=kube_version,
             show_only=["charts/astronomer/templates/houston/ingress.yaml"],
-            values={
-                "global": {
-                    "baseDomain": "test.local",
-                    "authSidecar": {"enabled": True}
-                }
-            }
+            values={"global": {"baseDomain": "test.local", "authSidecar": {"enabled": True}}},
         )
         assert len(docs) == 1
         doc = docs[0]
@@ -125,12 +120,7 @@ class TestIngress:
         docs = render_chart(
             kube_version=kube_version,
             show_only=["charts/astronomer/templates/houston/ingress.yaml"],
-            values={
-                "global": {
-                    "baseDomain": "test.local",
-                    "ingress": {"className": "custom-nginx"}
-                }
-            }
+            values={"global": {"baseDomain": "test.local", "ingress": {"className": "custom-nginx"}}},
         )
         assert len(docs) == 1
         doc = docs[0]
