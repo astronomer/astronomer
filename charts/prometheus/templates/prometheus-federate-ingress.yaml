@@ -13,20 +13,26 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
   annotations:
-    kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
     kubernetes.io/tls-acme: {{ eq .Values.global.acme true | quote }}
-
-    # nginx.ingress.kubernetes.io/rate-limit-rpm: "60"
     nginx.ingress.kubernetes.io/use-regex: "true"
+    # nginx.ingress.kubernetes.io/rate-limit-rpm: "60"
 
     {{- if .Values.global.extraAnnotations }}
+    {{- /* Filter extraAnnotations to exclude deprecated ingress.class and auth-related annotations */ -}}
+    {{- $filteredAnnotations := dict -}}
     {{- range $key, $value := .Values.global.extraAnnotations }}
-    {{- if not (or (contains "auth-" $key) (contains "oauth" $key)) }}
+    {{- if not (or (eq $key "kubernetes.io/ingress.class") (contains "auth-" $key) (contains "oauth" $key)) }}
+      {{- $_ := set $filteredAnnotations $key $value -}}
+    {{- end }}
+    {{- end }}
+    {{- if $filteredAnnotations }}
+    {{- range $key, $value := $filteredAnnotations }}
     {{ $key }}: {{ $value | quote }}
     {{- end }}
     {{- end }}
     {{- end }}
 spec:
+  ingressClassName: {{ .Values.global.ingress.className | default (printf "%s-nginx" .Release.Name) }}
   {{- if or .Values.global.tlsSecret .Values.global.acme }}
   tls:
   {{- if .Values.global.acme }}
