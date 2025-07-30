@@ -54,6 +54,28 @@ spec:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       restartPolicy: Always
 {{- include "alertmanager.imagePullSecrets" . | indent 6 }}
+      initContainers:
+        - name: etc_ssl_copier
+          image: {{ template "alertmanager.image" . }}
+          imagePullPolicy: {{ .Values.images.alertmanager.pullPolicy }}
+          securityContext:
+            readOnlyRootFilesystem: true
+            {{ toYaml .Values.securityContext| nindent 12 }}
+          command:
+            - sh
+            - -c
+            - |
+              if [ -d /etc/ssl/certs ]; then
+                cp -r /etc/ssl/certs/* /etc/ssl/certs_copy/
+              else
+                echo "No /etc/ssl/certs directory found, skipping copy."
+              fi
+          resources:
+            limits: {'cpu': '100m', 'memory': '128Mi'}
+            requests: {'cpu': '100m', 'memory': '128Mi'}
+          volumeMounts:
+            - name: etc_ssl_certs
+              mountPath: /etc/ssl/certs_copy
       containers:
         - name: alertmanager
           image: {{ template "alertmanager.image" . }}
@@ -106,6 +128,8 @@ spec:
           {{- end }}
           resources: {{ toYaml .Values.resources | nindent 12 }}
           volumeMounts:
+            - name: etc_ssl_certs
+              mountPath: /etc/ssl/certs
             - name: config-volume
               mountPath: /etc/config
             - name: data
@@ -153,6 +177,8 @@ spec:
             name: alertmanager-sidecar-conf
         {{- end }}
       volumes:
+        - name: etc_ssl_certs
+          emptyDir: {}
         {{- if .Values.global.authSidecar.enabled }}
         - name: alertmanager-sidecar-conf
           configMap:
