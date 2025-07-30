@@ -64,7 +64,7 @@ spec:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       restartPolicy: Always
 {{- if eq .Values.global.openshiftEnabled false }}
-      securityContext: {{ toYaml .Values.registry.podSecurityContext| nindent 8 }}
+      securityContext: {{ toYaml .Values.registry.podSecurityContext | nindent 8 }}
 {{- end }}
 {{- include "astronomer.imagePullSecrets" . | indent 6 }}
       initContainers:
@@ -88,36 +88,36 @@ spec:
             requests: {'cpu': '100m', 'memory': '128Mi'}
           securityContext:
             readOnlyRootFilesystem: true
-            {{ toYaml .Values.securityContext| nindent 12 }}
+            {{ toYaml .Values.securityContext | nindent 12 }}
           env:
           {{- if .Values.registry.extraEnv }}
-            {{- toYaml .Values.registry.extraEnv | nindent 10 }}
+            {{- toYaml .Values.registry.extraEnv | nindent 12 }}
           {{- end }}
       containers:
         - name: registry
           image: {{ template "registry.image" . }}
           securityContext:
             readOnlyRootFilesystem: true
-            {{ toYaml .Values.securityContext| nindent 12 }}
+            {{ toYaml .Values.securityContext | nindent 12 }}
           imagePullPolicy: {{ .Values.images.registry.pullPolicy }}
           env:
-          - name: REGISTRY_NOTIFICATIONS_ENDPOINTS_0_HEADERS
-            valueFrom:
-              secretKeyRef:
-                name: {{ template "registry.authHeaderSecret" . }}
-                key: authHeaders
-          - name: REGISTRY_HTTP_SECRET
-            {{- if .Values.registry.httpSecret }}
-            value: {{ .Values.registry.httpSecret }}
-            {{- else }}
-            value: {{ randAlphaNum 32 }}
-            {{- end }}
+            - name: REGISTRY_NOTIFICATIONS_ENDPOINTS_0_HEADERS
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "registry.authHeaderSecret" . }}
+                  key: authHeaders
+            - name: REGISTRY_HTTP_SECRET
+              {{- if .Values.registry.httpSecret }}
+              value: {{ .Values.registry.httpSecret }}
+              {{- else }}
+              value: {{ randAlphaNum 32 }}
+              {{- end }}
           {{- if .Values.global.privateCaCerts }}
-          - name: UPDATE_CA_CERTS
-            value: "true"
+            - name: UPDATE_CA_CERTS
+              value: "true"
           {{- end }}
           {{- if .Values.registry.extraEnv }}
-            {{- toYaml .Values.registry.extraEnv | nindent 10 }}
+            {{- toYaml .Values.registry.extraEnv | nindent 12 }}
           {{- end }}
           resources:
             {{- toYaml .Values.registry.resources | nindent 12 }}
@@ -170,25 +170,24 @@ spec:
             items:
               - key: config.yml
                 path: config.yml
-        {{- if not .Values.registry.enableInsecureAuth }}
+      {{- if not .Values.registry.enableInsecureAuth }}
         - name: jwks-certificate
           secret:
             secretName: {{ include "houston.jwtCertificateSecret" . }}
-        {{- end }}
-        {{ include "custom_ca_volumes" . | indent 8 }}
-        {{- if and .Values.registry.gcs.enabled .Values.registry.gcs.useKeyfile }}
-        {{- include "registry.gcsVolume" . | indent 8 }}
-        {{- end }}
-  {{- if or (not .Values.registry.persistence.enabled) (.Values.registry.gcs.enabled) (.Values.registry.azure.enabled) (.Values.registry.s3.enabled) }}
+      {{- end }}
+        {{- include "custom_ca_volumes" . | nindent 8 }}
+      {{- if and .Values.registry.gcs.enabled .Values.registry.gcs.useKeyfile }}
+        {{- include "registry.gcsVolume" . | nindent 8 }}
+      {{- end }}
+{{- if or (not .Values.registry.persistence.enabled) (.Values.registry.gcs.enabled) (.Values.registry.azure.enabled) (.Values.registry.s3.enabled) }}
         - name: data
           emptyDir: {}
-  {{- else }}
+{{- else }}
   volumeClaimTemplates:
     - metadata:
         name: data
         {{- if .Values.registry.persistence.annotations }}
-        annotations:
-          {{- toYaml .Values.registry.persistence.annotations | nindent 10 }}
+        annotations: {{- toYaml .Values.registry.persistence.annotations | nindent 10 }}
         {{- end }}
       spec:
         accessModes: ["ReadWriteOnce"]
@@ -196,6 +195,6 @@ spec:
           requests:
             storage: {{ .Values.registry.persistence.size }}
         {{- include "registry.storageClass" . }}
-  {{- end }}
+{{- end }}
 {{- end }}
 {{- end }}
