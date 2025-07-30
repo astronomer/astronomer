@@ -20,14 +20,16 @@ class TestHoustonInternalAuthorization:
                 "charts/prometheus/templates/ingress.yaml",
             ],
         )
+        ingress_docs = [doc for doc in docs if doc["kind"] == "Ingress"]
 
-        assert len(docs) == 3
-        for doc in docs:
-            assert doc["kind"] == "IngressClass"
+        assert len(ingress_docs) == 3
+        for doc in ingress_docs:
+            assert doc["kind"] == "Ingress"
             assert doc["apiVersion"] == "networking.k8s.io/v1"
+            annotations = doc["metadata"]["annotations"]
             assert (
                 "https://houston.example.com/v1/authorization"
-                in doc["metadata"]["annotations"]["nginx.ingress.kubernetes.io/auth-url"]
+                in annotations["nginx.ingress.kubernetes.io/auth-url"]
             )
 
     def test_ingress_with_internal_authorization(self, kube_version):
