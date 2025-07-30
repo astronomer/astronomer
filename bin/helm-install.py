@@ -3,6 +3,7 @@
 
 import argparse
 import datetime
+import json
 import os
 import shlex
 import subprocess
@@ -51,6 +52,47 @@ def debug_print(message: str) -> None:
     """
     if DEBUG:
         print(f"DEBUG: {message}")
+
+
+def print_failing_pod_logs(namespace: str = "astronomer", tail: int = 100):
+    """
+    Print logs from all containers in failing states, excluding those where logs are not possible.
+    :param namespace: Namespace to check (default: 'astronomer')
+    :param tail: Number of log lines to show per container
+    """
+    exclude_reasons = {
+        "ContainerCreating",
+        "CreateContainerConfigError",
+        "CreateContainerError",
+        "ErrImagePull",
+        "ImagePullBackOff",
+        "InvalidImageName",
+        "PodInitializing",
+    }
+    get_pods_cmd = [KUBECTL_EXE, "get", "pods", "-n", namespace, "-o", "json"]
+    try:
+        pods_json = subprocess.check_output(get_pods_cmd)
+    except subprocess.CalledProcessError as e:
+        print(f"Failed to get pods: {e}")
+        return
+    pods = json.loads(pods_json)
+    for pod in pods.get("items", []):
+        pod_name = pod["metadata"]["name"]
+        for cs in pod.get("status", {}).get("containerStatuses", []):
+            state = cs.get("state", {})
+            if waiting := state.get("waiting"):
+                reason = waiting.get("reason")
+                if reason in exclude_reasons:
+                    continue
+                container_name = cs["name"]
+                print(f"=== {pod_name}/{container_name} ({reason}) ===")
+                logs_cmd = [KUBECTL_EXE, "logs", "-n", namespace, pod_name, "-c", container_name, f"--tail={tail}"]
+                try:
+                    logs = subprocess.check_output(logs_cmd, stderr=subprocess.STDOUT)
+                    print(logs.decode())
+                except subprocess.CalledProcessError as e:
+                    print(f"Error getting logs: {e.output.decode()}")
+                print()
 
 
 def helm_install(values: str | list[str] = f"{GIT_ROOT_DIR}/configs/local-dev.yaml") -> None:
@@ -104,6 +146,7 @@ def helm_install(values: str | list[str] = f"{GIT_ROOT_DIR}/configs/local-dev.ya
             ],
             text=True,
         )
+        print_failing_pod_logs()
         print("Helm install failed. Please check the logs above for details.", file=sys.stderr)
         raise
 
