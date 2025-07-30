@@ -72,8 +72,8 @@ spec:
           volumeMounts:
             - name: etc_ssl_certs
               mountPath: /etc/ssl/certs_copy
-          image: {{ template "registry.certCopier" . }}
-          imagePullPolicy: {{ .Values.global.images.apBase.pullPolicy }}
+          image: {{ template "registry.image" . }}
+          imagePullPolicy: {{ .Values.images.registry.pullPolicy }}
           command:
             - sh
             - -c

@@ -51,7 +51,6 @@ class TestRegistryStatefulset:
                 "registry": {"extraEnv": [extra_env]},
                 "images": {"registry": {"repository": "some-custom-repository", "tag": "1.2.3-sunshine"}},
             },
-            "global": {"images": {"apBase": {"repository": "some-custom-ap-base", "tag": "987.654.321"}}},
         }
         docs = render_chart(
             kube_version=kube_version,
@@ -65,8 +64,11 @@ class TestRegistryStatefulset:
         assert doc["apiVersion"] == "apps/v1"
         assert doc["metadata"]["name"] == "release-name-registry"
         assert extra_env in doc["spec"]["template"]["spec"]["containers"][0]["env"]
-        assert doc["spec"]["template"]["spec"]["containers"][0]["image"] == "some-custom-repository:1.2.3-sunshine"
-        assert doc["spec"]["template"]["spec"]["initContainers"][0]["image"] == "some-custom-ap-base:987.654.321"
+        assert (
+            "some-custom-repository:1.2.3-sunshine"
+            == doc["spec"]["template"]["spec"]["containers"][0]["image"]
+            == doc["spec"]["template"]["spec"]["initContainers"][0]["image"]
+        )
 
     def test_astronomer_registry_statefulset_with_serviceaccount_enabled_defaults(self, kube_version):
         """Test that helm renders statefulset and serviceAccount template for astronomer
