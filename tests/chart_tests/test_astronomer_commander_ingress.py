@@ -17,7 +17,7 @@ class TestAstronomerCommanderIngress:
             show_only=["charts/astronomer/templates/commander/commander-grpc-ingress.yaml"],
         )
         assert len(docs) == 1
-        ingress_docs = [doc for doc in docs if doc["kind"] == "Ingress"]
+        [doc for doc in docs if doc["kind"] == "Ingress"]
 
         doc = docs[0]
         assert doc["kind"] == "Ingress"

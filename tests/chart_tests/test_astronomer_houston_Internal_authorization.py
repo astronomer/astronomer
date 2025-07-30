@@ -27,10 +27,7 @@ class TestHoustonInternalAuthorization:
             assert doc["kind"] == "Ingress"
             assert doc["apiVersion"] == "networking.k8s.io/v1"
             annotations = doc["metadata"]["annotations"]
-            assert (
-                "https://houston.example.com/v1/authorization"
-                in annotations["nginx.ingress.kubernetes.io/auth-url"]
-            )
+            assert "https://houston.example.com/v1/authorization" in annotations["nginx.ingress.kubernetes.io/auth-url"]
 
     def test_ingress_with_internal_authorization(self, kube_version):
         """Test Alertmanager Service with authSidecar."""
