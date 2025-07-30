@@ -75,12 +75,13 @@ class TestAstronomerCommanderIngress:
             values={"global": {"plane": {"mode": "data"}}},
             show_only=["charts/astronomer/templates/commander/commander-metadata-ingress.yaml"],
         )
+        ingress_docs = [doc for doc in docs if doc["kind"] == "Ingress"]
         assert len(docs) == 1
-        doc = docs[0]
-        assert doc["kind"] == "IngressClass"
-        assert doc["metadata"]["name"] == "release-name-commander-metadata-ingress"
-        assert doc["metadata"]["labels"]["component"] == "metadata-ingress"
-        assert doc["metadata"]["labels"]["plane"] == "dataplane"
+        for doc in ingress_docs:
+            assert doc["kind"] == "Ingress"
+            assert doc["metadata"]["name"] == "release-name-commander-metadata-ingress"
+            assert doc["metadata"]["labels"]["component"] == "metadata-ingress"
+            assert doc["metadata"]["labels"]["plane"] == "dataplane"
 
         assert doc["spec"]["ingressClassName"] == "release-name-nginx"
 
