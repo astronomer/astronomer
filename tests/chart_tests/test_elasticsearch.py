@@ -711,11 +711,11 @@ class TestElasticSearch:
     ]
 
     @pytest.mark.parametrize("doc", es_component_templates)
-    def test_elasticsearch_without_controlplane_flag_disabled(self, kube_version, doc):
-        """Test that helm renders no templates when controlplane is disabled."""
+    def test_elasticsearch_without_dataplane_flag_disabled(self, kube_version, doc):
+        """Test that helm renders no templates when dataplane is disabled."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"plane": {"mode": "data"}}},
+            values={"global": {"plane": {"mode": "control"}}},
             show_only=[doc],
         )
         assert len(docs) == 0, f"Document {doc} was rendered when controlplane is disabled"
