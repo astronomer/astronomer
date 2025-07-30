@@ -88,8 +88,8 @@ def helm_install(values: str | list[str] = f"{GIT_ROOT_DIR}/configs/local-dev.ya
     debug_print(f"Final Helm command: {shlex.join(helm_install_command)}")
 
     try:
-        subprocess.run(helm_install_command)
-    except RuntimeError as e:
+        subprocess.run(helm_install_command, check=True)
+    except (RuntimeError, subprocess.CalledProcessError) as e:
         debug_print(f"Helm install failed: {e}")
         print("Current astronomer namespace pod status:")
         subprocess.run(
