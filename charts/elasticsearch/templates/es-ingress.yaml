@@ -27,9 +27,6 @@ metadata:
 spec:
   {{- if or .Values.global.tlsSecret .Values.global.acme }}
   tls:
-  {{- if .Values.global.acme }}
-    - secretName: elasticsearch-logging-tls
-  {{- end }}
   {{- if .Values.global.tlsSecret }}
     - secretName: {{ .Values.global.tlsSecret }}
   {{- end }}
