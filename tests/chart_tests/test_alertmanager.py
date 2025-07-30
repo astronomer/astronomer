@@ -156,6 +156,7 @@ class TestAlertmanager:
         volumes = doc["spec"]["template"]["spec"]["volumes"]
 
         expected_volumes = [
+            {"name": "etc_ssl_certs", "emptyDir": {}},
             {
                 "name": "config-volume",
                 "configMap": {
@@ -163,17 +164,12 @@ class TestAlertmanager:
                     "items": [{"key": "alertmanager.yaml", "path": "alertmanager.yaml"}],
                 },
             },
-            {
-                "name": "private-ca-cert-foo",
-                "secret": {"secretName": "private-ca-cert-foo"},
-            },
-            {
-                "name": "private-ca-cert-bar",
-                "secret": {"secretName": "private-ca-cert-bar"},
-            },
+            {"name": "private-ca-cert-foo", "secret": {"secretName": "private-ca-cert-foo"}},
+            {"name": "private-ca-cert-bar", "secret": {"secretName": "private-ca-cert-bar"}},
         ]
 
         expected_volumemounts = [
+            {"name": "etc_ssl_certs", "mountPath": "/etc/ssl/certs"},
             {"name": "config-volume", "mountPath": "/etc/config"},
             {"name": "data", "mountPath": "/data"},
             {
