@@ -142,7 +142,7 @@ def wait_for_healthy_pods(ignore_substrings: list[str] | None = None, max_wait_t
             err = "Timeout waiting for pods to become healthy."
             print(output)
             raise RuntimeError(err)
-        lines = output.splitlines()[1:]  # Skip the header line
+        lines = output.stdout.splitlines()[1:]  # Skip the header line
         unhealthy_pods = []
         for line in lines:
             name, status = line.split()
