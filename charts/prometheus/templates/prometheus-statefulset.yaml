@@ -120,6 +120,8 @@ spec:
         - name: filesd-reloader
           image: {{ include "filesdReloader.image" . }}
           imagePullPolicy: {{ .Values.images.filesdReloader.pullPolicy }}
+          securityContext:
+            readOnlyRootFilesystem: true
           resources: {{ toYaml .Values.filesdReloader.resources | nindent 12 }}
           {{- if .Values.filesdReloader.livenessProbe }}
           livenessProbe: {{ tpl (toYaml .Values.filesdReloader.livenessProbe) . | nindent 12 }}
