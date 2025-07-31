@@ -77,7 +77,7 @@ data:
             - '{job=~"astronomer-kube-state|airflow"}'
         file_sd_configs:
           - files:
-            - /prometheusreloader/airflow/airflow.json
+            - /prometheusreloader/airflow/clusters.json
             refresh_interval: 60s
         relabel_configs:
           - target_label: federation
@@ -286,7 +286,7 @@ data:
         {{- if not $useClusterRoles }}
         file_sd_configs:
           - files:
-            - /prometheusreloader/airflow/*.json
+            - /prometheusreloader/airflow/airflow.json
         {{ else }}
         kubernetes_sd_configs:
           - role: service
