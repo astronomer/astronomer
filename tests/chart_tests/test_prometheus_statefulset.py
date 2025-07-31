@@ -46,6 +46,7 @@ class TestPrometheusStatefulset:
             {"mountPath": "/etc/prometheus/config", "name": "prometheus-config-volume"},
             {"mountPath": "/etc/prometheus/alerts.d", "name": "alert-volume"},
             {"mountPath": "/prometheus", "name": "data"},
+            {"mountPath": "/prometheusreloader/airflow", "name": "filesd"},
         ]
         assert "persistentVolumeClaimRetentionPolicy" not in doc["spec"]
         assert c_by_name["prometheus"]["livenessProbe"]["initialDelaySeconds"] == 10
@@ -57,6 +58,9 @@ class TestPrometheusStatefulset:
         assert c_by_name["prometheus"]["readinessProbe"]["failureThreshold"] == 3
         assert c_by_name["prometheus"]["readinessProbe"]["timeoutSeconds"] == 1
         assert "priorityClassName" not in doc["spec"]["template"]["spec"]
+
+        assert c_by_name["filesd-reloader"]["image"].startswith("quay.io/astronomer/ap-kuiper-reloader:")
+        assert c_by_name["filesd-reloader"]["volumeMounts"] == [{"mountPath": "/prometheusreloader/airflow", "name": "filesd"}]
 
     def test_prometheus_with_extraFlags(self, kube_version):
         docs = render_chart(
