@@ -120,6 +120,8 @@ spec:
         - name: filesd-reloader
           image: {{ include "filesdReloader.image" . }}
           imagePullPolicy: {{ .Values.images.filesdReloader.pullPolicy }}
+          securityContext:
+            readOnlyRootFilesystem: true
           resources: {{ toYaml .Values.filesdReloader.resources | nindent 12 }}
           {{- if .Values.filesdReloader.livenessProbe }}
           livenessProbe: {{ tpl (toYaml .Values.filesdReloader.livenessProbe) . | nindent 12 }}
@@ -141,6 +143,12 @@ spec:
               value: {{ .Release.Name }}_houston
             - name: FILESD_FILE_PATH
               value: /prometheusreloader/airflow
+            {{- if not $useClusterRoles }}
+            - name: ENABLE_DEPLOYMENT_SCRAPING
+              value: "False"
+            {{- end }}
+            - name: ENABLE_CLUSTER_SCRAPING
+              value: "True"
 {{- if .Values.filesdReloader.extraEnv }}
 {{ toYaml .Values.filesdReloader.extraEnv | indent 12 }}
 {{- end }}
