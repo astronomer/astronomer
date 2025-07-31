@@ -135,8 +135,8 @@ spec:
                   key: connection
             - name: DATABASE_SCHEMA_NAME
               value: "houston$default"
-            - name: DATABASE_TABLE_NAME
-              value: Deployment
+            - name: ENABLE_CLUSTER_SCRAPING
+              value: "true"
             - name: DATABASE_NAME
               value: {{ .Release.Name }}_houston
             - name: FILESD_FILE_PATH
