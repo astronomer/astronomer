@@ -721,15 +721,29 @@ class TestElasticSearch:
         assert len(docs) == 0, f"Document {doc} was rendered when controlplane is disabled"
 
     def test_elasticsearch_ingress_default(self, kube_version):
-        """Test that helm renders a correct Elasticsearch ingress template in data plane mode """
+        """Test that helm renders a correct Elasticsearch ingress template in data plane mode"""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"plane": {"mode": "data"}}},
+            show_only=["charts/elasticsearch/templates/es-ingress.yaml"],
+        )
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["kind"] == "Ingress"
+        assert doc["metadata"]["name"] == "release-name-elasticsearch-ingress"
+        assert doc["metadata"]["labels"]["component"] == "elasticsearch-logging-ingress"
+        assert doc["metadata"]["labels"]["tier"] == "elasticsearch-networking"
+        assert doc["metadata"]["labels"]["plane"] == "data"
+
+    def test_elasticsearch_ingress_disabled_when_data_mode_is_disabled(self, kube_version):
+        """Test that helm does not render Elasticsearch ingress when datamode disabled."""
         docs = render_chart(
             kube_version=kube_version,
             values={
                 "global": {
-                    "plane": {"mode": "data"}
+                    "plane": {"mode": "control"},
                 }
             },
             show_only=["charts/elasticsearch/templates/es-ingress.yaml"],
         )
-        assert len(docs) == 1
-        
+        assert len(docs) == 0
