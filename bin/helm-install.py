@@ -61,8 +61,7 @@ def date_print(*args):
 
 def print_failing_pod_logs(tail: int = 100):
     """
-    Print logs from all containers in failing states, excluding those where logs are not possible.
-    :param namespace: Namespace to check (default: 'astronomer')
+    Print logs from all containers in failing states, including initContainers, excluding those where logs are not possible.
     :param tail: Number of log lines to show per container
     """
     date_print("Failing pod logs are shown below:")
@@ -92,7 +91,8 @@ def print_failing_pod_logs(tail: int = 100):
     pods = json.loads(pods_json)
     for pod in pods.get("items", []):
         pod_name = pod["metadata"]["name"]
-        for cs in pod.get("status", {}).get("containerStatuses", []):
+        all_statuses = pod.get("status", {}).get("containerStatuses", []) + pod.get("status", {}).get("initContainerStatuses", [])
+        for cs in all_statuses:
             state = cs.get("state", {})
             if waiting := state.get("waiting"):
                 reason = waiting.get("reason")
