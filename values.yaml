@@ -14,6 +14,13 @@ global:
     mode: "unified"  # one of: control, data, unified
     domainSuffix: ""    # cluster-id
 
+  ingress:
+    enabled: true
+    className: ~  # Name of the ingress class to use for all ingresses created by this chart
+    # This will default to "{{ .Release.Name }}-nginx"
+    # If you want to use a specific ingress class, set it here.
+    # If you want to use the default ingress class, leave it empty.
+
   # Name of secret containing TLS certificate
   tlsSecret: astronomer-tls
 
