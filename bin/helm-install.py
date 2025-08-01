@@ -95,6 +95,20 @@ def print_failing_pod_logs(namespace: str = "astronomer", tail: int = 100):
                 print()
 
 
+def run_and_monitor_subprocess(command: list, monitor_function: callable, interval: int = 30):
+    """
+    Runs command in background and calls monitor_function() every `interval` seconds
+    until the process completes.
+    """
+    proc = subprocess.Popen(command)
+    try:
+        while proc.poll() is None:
+            monitor_function()
+            time.sleep(interval)
+    finally:
+        proc.wait()
+
+
 def helm_install(values: str | list[str] = f"{GIT_ROOT_DIR}/configs/local-dev.yaml") -> None:
     """
     Install a Helm chart using the provided kubeconfig and values file.
@@ -130,6 +144,7 @@ def helm_install(values: str | list[str] = f"{GIT_ROOT_DIR}/configs/local-dev.ya
     debug_print(f"Final Helm command: {shlex.join(helm_install_command)}")
 
     try:
+        run_and_monitor_subprocess(helm_install_command, print_failing_pod_logs, interval=30)
         subprocess.run(helm_install_command, check=True)
     except (RuntimeError, subprocess.CalledProcessError) as e:
         debug_print(f"Helm install failed: {e}")
