@@ -142,7 +142,6 @@ def helm_install(values: str | list[str] = f"{GIT_ROOT_DIR}/configs/local-dev.ya
         "--namespace=astronomer",
         f"--timeout={HELM_INSTALL_TIMEOUT}",
         f"--kubeconfig={KUBECONFIG_FILE}",
-        "--debug",
     ]
 
     if isinstance(values, str):

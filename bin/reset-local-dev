@@ -25,4 +25,4 @@ set -ex
 "${BIN_DIR}/setup-kind.py"
 
 # Install helm chart
-"${BIN_DIR}/helm-install.py" --debug
+"${BIN_DIR}/helm-install.py"
