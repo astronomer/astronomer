@@ -1,7 +1,6 @@
 ########################################
 ## Elasticsearch Logging Ingress ##
 ########################################
-{{- if .Values.global.customLogging.enabled }}
 {{- if eq .Values.global.plane.mode "data" }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
@@ -44,5 +43,4 @@ spec:
                 name: {{ .Release.Name }}-elasticsearch
                 port:
                   number: {{ .Values.common.ports.http }}
-{{- end }}
 {{- end }}
