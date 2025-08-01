@@ -25,11 +25,7 @@ class TestAstronomerCommander:
         values = {
             "astronomer": {
                 "airflowChartVersion": "99.88.77",
-                "commander": {
-                    "cloudProvider": "aws",
-                    "region": "us-west-2",
-                    "houstonAuthorizationUrl": "https://houston.example.com/auth",
-                },
+                "commander": {"cloudProvider": "aws", "region": "us-west-2"},
                 "images": {"commander": {"tag": "88.77.66"}},
             },
             "global": {"baseDomain": "astronomer.example.com", "plane": {"mode": "data", "domainSuffix": "custom-dp-123"}},
@@ -63,7 +59,7 @@ class TestAstronomerCommander:
         assert env_vars["COMMANDER_REGION"] == "us-west-2"
         assert env_vars["COMMANDER_BASE_DOMAIN"] == "custom-dp-123.example.com"
         assert env_vars["COMMANDER_DATAPLANE_MODE"] == "data"
-        assert env_vars["COMMANDER_HOUSTON_JWKS_ENDPOINT"] == "https://houston.example.com/auth"
+        assert env_vars["COMMANDER_HOUSTON_JWKS_ENDPOINT"] == "https://houston.example.com"
 
     def test_astronomer_commander_deployment_upgrade_timeout(self, kube_version):
         """Test that helm renders a good deployment template for
