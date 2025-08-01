@@ -158,7 +158,6 @@ def helm_install(values: str | list[str] = f"{GIT_ROOT_DIR}/configs/local-dev.ya
 
     try:
         run_and_monitor_subprocess(helm_install_command, print_failing_pod_logs, interval=30)
-        subprocess.run(helm_install_command, check=True)
     except (RuntimeError, subprocess.CalledProcessError) as e:
         debug_print(f"Helm install failed: {e}")
         print("Current astronomer namespace pod status:")
