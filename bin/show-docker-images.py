@@ -27,10 +27,10 @@ def print_results(items):
 def default_spec_parser(doc, args):
     """Parse and report on Deployments, StatefulSets, and DaemonSets."""
 
-    item_containers = get_containers_from_spec(doc["spec"]["template"]["spec"])
-
     if args.verbose:
         print(f"Processing {doc['kind']} {doc['metadata']['name']}", file=sys.stderr)
+
+    item_containers = get_containers_from_spec(doc["spec"]["template"]["spec"])
 
     if args.private_registry and "quay.io" in yaml.dump(item_containers):
         print(f"{doc['kind']} {doc['metadata']['name'].removeprefix('release-name-')} uses quay.io instead of private registry")
