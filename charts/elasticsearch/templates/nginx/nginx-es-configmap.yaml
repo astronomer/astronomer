@@ -1,7 +1,7 @@
 ###################################
 ## NGINX Elasticsearch ConfigMap ##
 ###################################
-{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 kind: ConfigMap
 apiVersion: v1
 metadata:
@@ -57,7 +57,7 @@ data:
 
         location = /auth {
           internal;
-          proxy_pass http://{{ .Release.Name }}-houston.{{ .Release.Namespace }}:8871/v1/elasticsearch;
+          proxy_pass https://houston.{{ .Values.global.baseDomain }}/v1/elasticsearch;
           proxy_set_header Content-Length "";
           proxy_set_header X-Original-URI $request_uri;
         }
