@@ -33,14 +33,14 @@ class TestRegistryStatefulset:
             "runAsGroup": 1000,
             "runAsUser": 1000,
         }
-        assert {"emptyDir": {}, "name": "etc_ssl_certs"} in doc["spec"]["template"]["spec"]["volumes"]
+        assert {"emptyDir": {}, "name": "etc-ssl-certs"} in doc["spec"]["template"]["spec"]["volumes"]
         assert {
             "mountPath": "/etc/ssl/certs_copy",
-            "name": "etc_ssl_certs",
+            "name": "etc-ssl-certs",
         } in doc["spec"]["template"]["spec"]["initContainers"][0]["volumeMounts"]
         assert {
             "mountPath": "/etc/ssl/certs",
-            "name": "etc_ssl_certs",
+            "name": "etc-ssl-certs",
         } in doc["spec"]["template"]["spec"]["containers"][0]["volumeMounts"]
 
     def test_astronomer_registry_statefulset_with_custom_env_and_images(self, kube_version):

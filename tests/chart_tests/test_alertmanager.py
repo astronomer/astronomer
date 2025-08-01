@@ -28,11 +28,11 @@ class TestAlertmanager:
         assert doc["metadata"]["name"] == "release-name-alertmanager"
         assert doc["spec"]["template"]["spec"]["securityContext"]["fsGroup"] == 65534
         assert "persistentVolumeClaimRetentionPolicy" not in doc["spec"]
-        assert {"emptyDir": {}, "name": "etc_ssl_certs"} in doc["spec"]["template"]["spec"]["volumes"]
-        assert {"mountPath": "/etc/ssl/certs_copy", "name": "etc_ssl_certs"} in doc["spec"]["template"]["spec"]["initContainers"][
+        assert {"emptyDir": {}, "name": "etc-ssl-certs"} in doc["spec"]["template"]["spec"]["volumes"]
+        assert {"mountPath": "/etc/ssl/certs_copy", "name": "etc-ssl-certs"} in doc["spec"]["template"]["spec"]["initContainers"][
             0
         ]["volumeMounts"]
-        assert {"mountPath": "/etc/ssl/certs", "name": "etc_ssl_certs"} in doc["spec"]["template"]["spec"]["containers"][0][
+        assert {"mountPath": "/etc/ssl/certs", "name": "etc-ssl-certs"} in doc["spec"]["template"]["spec"]["containers"][0][
             "volumeMounts"
         ]
         assert (
@@ -156,7 +156,7 @@ class TestAlertmanager:
         volumes = doc["spec"]["template"]["spec"]["volumes"]
 
         expected_volumes = [
-            {"name": "etc_ssl_certs", "emptyDir": {}},
+            {"name": "etc-ssl-certs", "emptyDir": {}},
             {
                 "name": "config-volume",
                 "configMap": {
@@ -169,7 +169,7 @@ class TestAlertmanager:
         ]
 
         expected_volumemounts = [
-            {"name": "etc_ssl_certs", "mountPath": "/etc/ssl/certs"},
+            {"name": "etc-ssl-certs", "mountPath": "/etc/ssl/certs"},
             {"name": "config-volume", "mountPath": "/etc/config"},
             {"name": "data", "mountPath": "/data"},
             {

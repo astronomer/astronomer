@@ -68,9 +68,9 @@ spec:
 {{- end }}
 {{- include "astronomer.imagePullSecrets" . | indent 6 }}
       initContainers:
-        - name: etc_ssl_certs_copier
+        - name: etc-ssl-certs-copier
           volumeMounts:
-            - name: etc_ssl_certs
+            - name: etc-ssl-certs
               mountPath: /etc/ssl/certs_copy
           image: {{ template "registry.image" . }}
           imagePullPolicy: {{ .Values.images.registry.pullPolicy }}
@@ -122,7 +122,7 @@ spec:
           resources:
             {{- toYaml .Values.registry.resources | nindent 12 }}
           volumeMounts:
-            - name: etc_ssl_certs
+            - name: etc-ssl-certs
               mountPath: /etc/ssl/certs
             - name: config
               mountPath: /etc/docker/registry
@@ -162,7 +162,7 @@ spec:
             timeoutSeconds: 5
           {{- end }}
       volumes:
-        - name: etc_ssl_certs
+        - name: etc-ssl-certs
           emptyDir: {}
         - name: config
           configMap:

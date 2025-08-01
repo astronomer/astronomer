@@ -55,7 +55,7 @@ spec:
       restartPolicy: Always
 {{- include "alertmanager.imagePullSecrets" . | indent 6 }}
       initContainers:
-        - name: etc_ssl_copier
+        - name: etc-ssl-certs-copier
           image: {{ template "alertmanager.image" . }}
           imagePullPolicy: {{ .Values.images.alertmanager.pullPolicy }}
           securityContext:
@@ -74,7 +74,7 @@ spec:
             limits: {'cpu': '100m', 'memory': '128Mi'}
             requests: {'cpu': '100m', 'memory': '128Mi'}
           volumeMounts:
-            - name: etc_ssl_certs
+            - name: etc-ssl-certs
               mountPath: /etc/ssl/certs_copy
       containers:
         - name: alertmanager
@@ -128,7 +128,7 @@ spec:
           {{- end }}
           resources: {{ toYaml .Values.resources | nindent 12 }}
           volumeMounts:
-            - name: etc_ssl_certs
+            - name: etc-ssl-certs
               mountPath: /etc/ssl/certs
             - name: config-volume
               mountPath: /etc/config
@@ -177,7 +177,7 @@ spec:
             name: alertmanager-sidecar-conf
         {{- end }}
       volumes:
-        - name: etc_ssl_certs
+        - name: etc-ssl-certs
           emptyDir: {}
         {{- if .Values.global.authSidecar.enabled }}
         - name: alertmanager-sidecar-conf

@@ -56,14 +56,14 @@ class TestRegistryStatefulset:
         assert sorted(x["name"] for x in doc["spec"]["template"]["spec"]["volumes"]) == [
             "config",
             "data",
-            "etc_ssl_certs",
+            "etc-ssl-certs",
             "gcs-keyfile",
             "jwks-certificate",
         ]
         assert sorted(x["name"] for x in doc["spec"]["template"]["spec"]["containers"][0]["volumeMounts"]) == [
             "config",
             "data",
-            "etc_ssl_certs",
+            "etc-ssl-certs",
             "gcs-keyfile",
             "jwks-certificate",
         ]
