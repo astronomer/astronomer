@@ -54,19 +54,26 @@ def debug_print(message: str) -> None:
         print(f"DEBUG: {message}")
 
 
+def date_print(*args):
+    """print() with a TZ aware iso8601 date prefixed."""
+    print(datetime.datetime.now(datetime.UTC).isoformat(), *args)
+
+
 def print_failing_pod_logs(tail: int = 100):
     """
     Print logs from all containers in failing states, excluding those where logs are not possible.
     :param namespace: Namespace to check (default: 'astronomer')
     :param tail: Number of log lines to show per container
     """
+    date_print("Failing pod logs are shown below:")
     exclude_reasons = {
         "ContainerCreating",
-        "CreateContainerConfigError",
-        "CreateContainerError",
-        "ErrImagePull",
-        "ImagePullBackOff",
-        "InvalidImageName",
+        # "CreateContainerConfigError",
+        # "CreateContainerError",
+        # "ErrImagePull",
+        # "ImageInspectError",
+        # "ImagePullBackOff",
+        # "InvalidImageName",
         "PodInitializing",
     }
     get_pods_cmd = [
@@ -221,10 +228,7 @@ def wait_for_healthy_pods(ignore_substrings: list[str] | None = None, max_wait_t
             print("All pods in the 'astronomer' namespace are healthy.")
             return
 
-        print(
-            datetime.datetime.now(datetime.UTC).isoformat(),
-            f"Found {len(unhealthy_pods)} unhealthy pods: {', '.join(unhealthy_pods)}",
-        )
+        date_print(f"Found {len(unhealthy_pods)} unhealthy pods: {', '.join(unhealthy_pods)}")
         time.sleep(5)
 
         print(f"Retrying... {int(end_time - time.time())} seconds left until timeout.")
