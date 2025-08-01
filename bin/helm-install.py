@@ -54,7 +54,7 @@ def debug_print(message: str) -> None:
         print(f"DEBUG: {message}")
 
 
-def print_failing_pod_logs(namespace: str = "astronomer", tail: int = 100):
+def print_failing_pod_logs(tail: int = 100):
     """
     Print logs from all containers in failing states, excluding those where logs are not possible.
     :param namespace: Namespace to check (default: 'astronomer')
@@ -69,7 +69,14 @@ def print_failing_pod_logs(namespace: str = "astronomer", tail: int = 100):
         "InvalidImageName",
         "PodInitializing",
     }
-    get_pods_cmd = [KUBECTL_EXE, "get", "pods", "-n", namespace, "-o", "json"]
+    get_pods_cmd = [
+        KUBECTL_EXE,
+        f"--kubeconfig={KUBECONFIG_FILE}",
+        "get",
+        "pods",
+        "--namespace=astronomer",
+        "--output=json",
+    ]
     try:
         pods_json = subprocess.check_output(get_pods_cmd)
     except subprocess.CalledProcessError as e:
@@ -86,7 +93,7 @@ def print_failing_pod_logs(namespace: str = "astronomer", tail: int = 100):
                     continue
                 container_name = cs["name"]
                 print(f"=== {pod_name}/{container_name} ({reason}) ===")
-                logs_cmd = [KUBECTL_EXE, "logs", "-n", namespace, pod_name, "-c", container_name, f"--tail={tail}"]
+                logs_cmd = [KUBECTL_EXE, "logs", "--namespace=astronomer", pod_name, "-c", container_name, f"--tail={tail}"]
                 try:
                     logs = subprocess.check_output(logs_cmd, stderr=subprocess.STDOUT)
                     print(logs.decode())
