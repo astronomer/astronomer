@@ -711,14 +711,25 @@ class TestElasticSearch:
     ]
 
     @pytest.mark.parametrize("doc", es_component_templates)
-    def test_elasticsearch_templates_render_in_data_and_unified_mode(self, kube_version, doc):
+    @pytest.mark.parametrize(
+    "plane_mode,should_render", 
+    [
+        ("data", True),
+        ("unified", True), 
+        ("control", False)
+    ]
+    )
+    def test_elasticsearch_templates_render_in_data_and_unified_mode(self, kube_version, doc, plane_mode, should_render):
         """Test that elasticsearch templates are not rendered in control or unified plane modes."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"plane": {"mode": "control"}}},
+            values={"global": {"plane": {"mode": plane_mode}}},
             show_only=[doc],
         )
-        assert len(docs) == 0, f"Document {doc} was rendered when control mode is set"
+        if should_render:
+            assert len(docs) == 1, f"Document {doc} should render in {plane_mode} mode"
+        else:
+            assert len(docs) == 0, f"Document {doc} should not render in {plane_mode} mode"
 
     def test_elasticsearch_ingress_default(self, kube_version):
         """Test that helm renders a correct Elasticsearch ingress template in data plane mode"""
