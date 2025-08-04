@@ -711,11 +711,44 @@ class TestElasticSearch:
     ]
 
     @pytest.mark.parametrize("doc", es_component_templates)
-    def test_elasticsearch_without_controlplane_flag_disabled(self, kube_version, doc):
-        """Test that helm renders no templates when controlplane is disabled."""
+    @pytest.mark.parametrize("plane_mode,should_render", [("data", True), ("unified", True), ("control", False)])
+    def test_elasticsearch_templates_render_in_data_and_unified_mode(self, kube_version, doc, plane_mode, should_render):
+        """Test that elasticsearch templates are not rendered in control or unified plane modes."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={"global": {"plane": {"mode": plane_mode}}, "elasticsearch": {"data": {"persistence": {"enabled": True}}}},
+            show_only=[doc],
+        )
+        if should_render:
+            assert len(docs) == 1, f"Document {doc} should render in {plane_mode} mode"
+        else:
+            assert len(docs) == 0, f"Document {doc} should not render in {plane_mode} mode"
+
+    def test_elasticsearch_ingress_default(self, kube_version):
+        """Test that helm renders a correct Elasticsearch ingress template in data plane mode"""
         docs = render_chart(
             kube_version=kube_version,
             values={"global": {"plane": {"mode": "data"}}},
-            show_only=[doc],
+            show_only=["charts/elasticsearch/templates/es-ingress.yaml"],
         )
-        assert len(docs) == 0, f"Document {doc} was rendered when controlplane is disabled"
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc["kind"] == "Ingress"
+        assert doc["metadata"]["name"] == "release-name-elasticsearch-ingress"
+        assert doc["metadata"]["labels"]["component"] == "elasticsearch-logging-ingress"
+        assert doc["metadata"]["labels"]["tier"] == "elasticsearch-networking"
+        assert doc["metadata"]["labels"]["plane"] == "data"
+
+    @pytest.mark.parametrize("plane_mode", ["control", "unified"])
+    def test_elasticsearch_ingress_disabled_when_data_mode_is_disabled(self, kube_version, plane_mode):
+        """Test that helm does not render Elasticsearch ingress in control plane mode."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "plane": {"mode": plane_mode},
+                }
+            },
+            show_only=["charts/elasticsearch/templates/es-ingress.yaml"],
+        )
+        assert len(docs) == 0
