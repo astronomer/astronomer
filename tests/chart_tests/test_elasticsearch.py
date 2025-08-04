@@ -711,7 +711,7 @@ class TestElasticSearch:
     ]
 
     @pytest.mark.parametrize("doc", es_component_templates)
-    def test_elasticsearch_templates_only_render_in_data_and_unified_mode(self, kube_version, doc):
+    def test_elasticsearch_templates_render_in_data_and_unified_mode(self, kube_version, doc):
         """Test that elasticsearch templates are not rendered in control or unified plane modes."""
         docs = render_chart(
             kube_version=kube_version,
