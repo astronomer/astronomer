@@ -1,6 +1,7 @@
 #############################
 ## Fluentd Index ConfigMap ##
 #############################
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -25,3 +26,4 @@ data:
         }
       }
     }
+{{- end -}}
