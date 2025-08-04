@@ -723,7 +723,8 @@ class TestElasticSearch:
         """Test that elasticsearch templates are not rendered in control or unified plane modes."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"plane": {"mode": plane_mode}}},
+            values={"global": {"plane": {"mode": plane_mode}},
+                    "elasticsearch": {"data": {"persistence": {"enabled": True}}}},
             show_only=[doc],
         )
         if should_render:
