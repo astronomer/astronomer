@@ -30,7 +30,6 @@ spec:
   {{- end }}
       hosts:
         - {{ template "elasticsearch.url" . }}
-  {{- end }}
   rules:
     - host: {{ template "elasticsearch.url" . }}
       http:
