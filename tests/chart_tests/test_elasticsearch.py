@@ -711,14 +711,14 @@ class TestElasticSearch:
     ]
 
     @pytest.mark.parametrize("doc", es_component_templates)
-    def test_elasticsearch_without_dataplane_flag_disabled(self, kube_version, doc):
-        """Test that helm renders no templates when dataplane is disabled."""
+    def test_elasticsearch_templates_only_render_in_data_and_unified_mode(self, kube_version, doc):
+        """Test that elasticsearch templates are not rendered in control or unified plane modes."""
         docs = render_chart(
             kube_version=kube_version,
             values={"global": {"plane": {"mode": "control"}}},
             show_only=[doc],
         )
-        assert len(docs) == 0, f"Document {doc} was rendered when controlplane is disabled"
+        assert len(docs) == 0, f"Document {doc} was rendered when control mode is set"
 
     def test_elasticsearch_ingress_default(self, kube_version):
         """Test that helm renders a correct Elasticsearch ingress template in data plane mode"""
