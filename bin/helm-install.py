@@ -160,24 +160,29 @@ def helm_install(values: str | list[str] = f"{GIT_ROOT_DIR}/configs/local-dev.ya
         run_and_monitor_subprocess(helm_install_command, print_failing_pod_logs, interval=30)
     except (RuntimeError, subprocess.CalledProcessError) as e:
         debug_print(f"Helm install failed: {e}")
-        print("Current astronomer namespace pod status:")
-        subprocess.run(
-            [
-                KUBECTL_EXE,
-                f"--kubeconfig={KUBECONFIG_FILE}",
-                "--namespace=astronomer",
-                "get",
-                "pods",
-                "-o",
-                "wide",
-            ],
-            text=True,
-        )
+        show_pod_status()
         print_failing_pod_logs()
         print("Helm install failed. Please check the logs above for details.", file=sys.stderr)
         raise
 
     debug_print("Helm install completed successfully")
+
+
+def show_pod_status() -> None:
+    """Print the status of all pods in the specified namespace."""
+    print("Current astronomer namespace pod status:")
+    subprocess.run(
+        [
+            KUBECTL_EXE,
+            f"--kubeconfig={KUBECONFIG_FILE}",
+            "--namespace=astronomer",
+            "get",
+            "pods",
+            "-o",
+            "wide",
+        ],
+        text=True,
+    )
 
 
 def wait_for_healthy_pods(ignore_substrings: list[str] | None = None, max_wait_time=90) -> None:
@@ -224,6 +229,7 @@ def wait_for_healthy_pods(ignore_substrings: list[str] | None = None, max_wait_t
         if not unhealthy_pods:
             debug_print("All pods are healthy, exiting wait loop")
             print("All pods in the 'astronomer' namespace are healthy.")
+            show_pod_status()
             return
 
         date_print(f"Found {len(unhealthy_pods)} unhealthy pods: {', '.join(unhealthy_pods)}")
