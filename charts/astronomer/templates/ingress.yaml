@@ -13,13 +13,30 @@ metadata:
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
   annotations:
-    {{- if .Values.global.authSidecar.enabled  }}
-{{- toYaml .Values.global.extraAnnotations | nindent 4 }}
+    {{- if .Values.global.authSidecar.enabled }}
+    {{- if .Values.global.extraAnnotations }}
+    {{- $filteredAnnotations := dict -}}
+    {{- range $key, $value := .Values.global.extraAnnotations -}}
+      {{- if ne $key "kubernetes.io/ingress.class" -}}
+        {{- $_ := set $filteredAnnotations $key $value -}}
+      {{- end -}}
+    {{- end -}}
+    {{- if $filteredAnnotations }}
+{{- toYaml $filteredAnnotations | nindent 4 }}
+    {{- end }}
+    {{- end }}
     {{- else }}
     {{- if .Values.global.extraAnnotations }}
-{{- toYaml .Values.global.extraAnnotations | nindent 4 }}
+    {{- $filteredAnnotations := dict -}}
+    {{- range $key, $value := .Values.global.extraAnnotations -}}
+      {{- if ne $key "kubernetes.io/ingress.class" -}}
+        {{- $_ := set $filteredAnnotations $key $value -}}
+      {{- end -}}
+    {{- end -}}
+    {{- if $filteredAnnotations }}
+{{- toYaml $filteredAnnotations | nindent 4 }}
     {{- end }}
-    kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
+    {{- end }}
     nginx.ingress.kubernetes.io/custom-http-errors: "404"
     nginx.ingress.kubernetes.io/configuration-snippet: |
       if ($host = '{{ .Values.global.baseDomain }}' ) {
@@ -27,6 +44,7 @@ metadata:
       }
     {{- end }}
 spec:
+  ingressClassName: {{ .Values.global.ingress.className | default (printf "%s-nginx" .Release.Name) }}
   {{- if or .Values.global.tlsSecret }}
   tls:
     - secretName: {{ .Values.global.tlsSecret }}

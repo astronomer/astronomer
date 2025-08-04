@@ -14,17 +14,37 @@ metadata:
     heritage: {{ .Release.Service }}
   annotations:
     {{- if .Values.global.authSidecar.enabled }}
-{{- toYaml .Values.global.extraAnnotations | nindent 4 }}
-    {{- else }}
+    {{- /* When authSidecar is enabled, only use extraAnnotations (filtered) */ -}}
     {{- if .Values.global.extraAnnotations }}
-{{- toYaml .Values.global.extraAnnotations | nindent 4 }}
+    {{- $filteredAnnotations := dict -}}
+    {{- range $key, $value := .Values.global.extraAnnotations -}}
+      {{- if ne $key "kubernetes.io/ingress.class" -}}
+        {{- $_ := set $filteredAnnotations $key $value -}}
+      {{- end -}}
+    {{- end -}}
+    {{- if $filteredAnnotations }}
+{{- toYaml $filteredAnnotations | nindent 4 }}
     {{- end }}
-    kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
+    {{- end }}
+    {{- else }}
+    {{- /* When authSidecar is disabled, add auth annotations plus filtered extraAnnotations */ -}}
+    {{- if .Values.global.extraAnnotations }}
+    {{- $filteredAnnotations := dict -}}
+    {{- range $key, $value := .Values.global.extraAnnotations -}}
+      {{- if ne $key "kubernetes.io/ingress.class" -}}
+        {{- $_ := set $filteredAnnotations $key $value -}}
+      {{- end -}}
+    {{- end -}}
+    {{- if $filteredAnnotations }}
+{{- toYaml $filteredAnnotations | nindent 4 }}
+    {{- end }}
+    {{- end }}
     {{- include "houston.internalauthurl" . | nindent 4 }}
     nginx.ingress.kubernetes.io/auth-signin: https://app.{{ .Values.global.baseDomain }}/login
     nginx.ingress.kubernetes.io/auth-response-headers: authorization, username, email
     {{- end }}
 spec:
+  ingressClassName: {{ .Values.global.ingress.className | default (printf "%s-nginx" .Release.Name) }}
   {{- if or .Values.global.tlsSecret }}
   tls:
     - secretName: {{ .Values.global.tlsSecret }}
