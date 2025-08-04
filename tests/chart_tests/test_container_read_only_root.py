@@ -22,6 +22,7 @@ read_only_root_pods = [
     "kube-state",
     "nats",
     "prometheus",
+    "registry",
 ]
 
 
