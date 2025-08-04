@@ -24,9 +24,8 @@ metadata:
     nginx.ingress.kubernetes.io/use-regex: "true"
 
 spec:
-  {{- if or .Values.global.tlsSecret .Values.global.acme }}
-  tls:
   {{- if .Values.global.tlsSecret }}
+  tls:
     - secretName: {{ .Values.global.tlsSecret }}
   {{- end }}
       hosts:
