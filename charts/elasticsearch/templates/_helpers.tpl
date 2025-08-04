@@ -159,3 +159,7 @@ imagePullSecrets:
 {{- .Values.securityContext | toYaml | nindent 10 }}
 {{- end -}}
 {{- end }}
+
+{{- define "elasticsearch.url" -}}
+elasticsearch.{{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}
+{{- end -}}
