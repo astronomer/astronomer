@@ -711,20 +711,12 @@ class TestElasticSearch:
     ]
 
     @pytest.mark.parametrize("doc", es_component_templates)
-    @pytest.mark.parametrize(
-    "plane_mode,should_render", 
-    [
-        ("data", True),
-        ("unified", True), 
-        ("control", False)
-    ]
-    )
+    @pytest.mark.parametrize("plane_mode,should_render", [("data", True), ("unified", True), ("control", False)])
     def test_elasticsearch_templates_render_in_data_and_unified_mode(self, kube_version, doc, plane_mode, should_render):
         """Test that elasticsearch templates are not rendered in control or unified plane modes."""
         docs = render_chart(
             kube_version=kube_version,
-            values={"global": {"plane": {"mode": plane_mode}},
-                    "elasticsearch": {"data": {"persistence": {"enabled": True}}}},
+            values={"global": {"plane": {"mode": plane_mode}}, "elasticsearch": {"data": {"persistence": {"enabled": True}}}},
             show_only=[doc],
         )
         if should_render:
