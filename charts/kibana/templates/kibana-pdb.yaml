@@ -2,6 +2,7 @@
 ## Kibana Pod Disruption Budget ##
 ##################################
 {{- if .Values.global.podDisruptionBudgetsEnabled }}
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 apiVersion: {{ include "apiVersion.PodDisruptionBudget" . }}
 kind: PodDisruptionBudget
 metadata:
@@ -13,4 +14,5 @@ spec:
       tier: logging
       component: {{ template "kibana.name" . }}
       release: {{ .Release.Name }}
+{{- end }}
 {{- end }}
