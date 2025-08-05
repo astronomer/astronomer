@@ -134,7 +134,7 @@ spec:
                   key: connection
             - name: DATABASE_SCHEMA_NAME
               value: "houston$default"
-            - name: DATABASE_TABLE_NAME
+            - name: DEPLOYMENT_TABLE_NAME
               value: Deployment
             - name: DATABASE_NAME
               value: {{ .Release.Name }}_houston
