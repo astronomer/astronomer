@@ -157,7 +157,7 @@ global:
     enabled: false
     name: sidecar-log-consumer
     repository: quay.io/astronomer/ap-vector
-    tag: 0.47.0
+    tag: 0.47.0-3
     customConfig: false
     indexPattern: ~
     extraEnv: []
@@ -334,7 +334,7 @@ global:
   certgenerator:
     images:
       repository: quay.io/astronomer/ap-certgenerator
-      tag: 0.1.11
+      tag: 0.1.12
 
   # For now we support only pgbouncer with gss api support
   pgbouncer:
