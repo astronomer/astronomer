@@ -309,23 +309,40 @@ def test_nginx_defaults():
         "runAsNonRoot": True,
         "capabilities": {"drop": ["ALL"]},
         "allowPrivilegeEscalation": False,
+        "readOnlyRootFilesystem": True,
     }
 
-    electionTTL = "--election-ttl"
-    electionId = "--election-id=ingress-controller-leader-release-name-nginx"
-    topologyAwareRouting = "--enable-topology-aware-routing"
-    annotationValidation = "--enable-annotation-validation"
-    disableLeaderElection = "--disable-leader-election"
+    forbidden_args = [
+        "--election-ttl",
+        "--enable-topology-aware-routing",
+        "--enable-annotation-validation",
+        "--disable-leader-election",
+    ]
 
     for doc in docs:
-        c_by_name = get_containers_by_name(doc)
         assert doc["spec"]["minReadySeconds"] == 0
-        assert electionId in c_by_name["nginx"]["args"]
-        assert electionTTL not in c_by_name["nginx"]["args"]
-        assert topologyAwareRouting not in c_by_name["nginx"]["args"]
-        assert annotationValidation not in c_by_name["nginx"]["args"]
-        assert disableLeaderElection not in c_by_name["nginx"]["args"]
+        c_by_name = get_containers_by_name(doc, include_init_containers=True)
+        assert len(c_by_name) == 2
         assert expected_security_context == c_by_name["nginx"]["securityContext"]
+        assert "--election-id=ingress-controller-leader-release-name-nginx" in c_by_name["nginx"]["args"]
+        for arg in forbidden_args:
+            assert arg not in c_by_name["nginx"]["args"]
+
+    assert doc["spec"]["template"]["spec"]["volumes"] == [
+        {"name": "tmp", "emptyDir": {}},
+        {"name": "etc-ingress-controller", "emptyDir": {}},
+        {"name": "etc-nginx", "emptyDir": {}},
+    ]
+    assert c_by_name["etc-nginx-copier"]["securityContext"]["readOnlyRootFilesystem"]
+    assert c_by_name["etc-nginx-copier"]["volumeMounts"] == [
+        {"name": "etc-nginx", "mountPath": "/etc/nginx_copy"},
+    ]
+    assert c_by_name["nginx"]["securityContext"]["readOnlyRootFilesystem"]
+    assert c_by_name["nginx"]["volumeMounts"] == [
+        {"name": "tmp", "mountPath": "/tmp"},  # noqa: S108
+        {"name": "etc-ingress-controller", "mountPath": "/etc/ingress-controller"},
+        {"name": "etc-nginx", "mountPath": "/etc/nginx"},
+    ]
 
 
 def test_nginx_min_ready_seconds_overrides():
@@ -416,6 +433,7 @@ def test_nginx_security_context_overrides():
         "runAsNonRoot": True,
         "capabilities": {"drop": ["ALL"], "add": ["NET_BIND_SERVICE"]},
         "allowPrivilegeEscalation": False,
+        "readOnlyRootFilesystem": True,
     }
     for doc in docs:
         c_by_name = get_containers_by_name(doc)
