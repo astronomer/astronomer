@@ -190,7 +190,9 @@ class TestPrometheusStatefulset:
         assert env_vars["DEPLOYMENT_TABLE_NAME"] == "Deployment"
         assert env_vars["DATABASE_NAME"] == "release-name_houston"
         assert env_vars["FILESD_FILE_PATH"] == "/prometheusreloader/airflow"
+        assert env_vars["ENABLE_DEPLOYMENT_SCRAPING"] == "true"
         assert c_by_name["filesd-reloader"]["volumeMounts"] == [{"mountPath": "/prometheusreloader/airflow", "name": "filesd"}]
+        
 
     def test_prometheus_filesd_reloader_extraenv_enabled(self, kube_version):
         """Test Prometheus with filesd reloader enabled with extraenv overrides."""
