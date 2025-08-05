@@ -319,28 +319,34 @@ def test_nginx_defaults():
         "--disable-leader-election",
     ]
 
-    for doc in docs:
-        assert doc["kind"] == "Deployment"
-        assert doc["apiVersion"] == "apps/v1"
-        assert doc["spec"]["minReadySeconds"] == 0
-        c_by_name = get_containers_by_name(doc, include_init_containers=True)
-        assert len(c_by_name) == 2
-        assert expected_security_context == c_by_name["nginx"]["securityContext"]
-        assert "--election-id=ingress-controller-leader-release-name-nginx" in c_by_name["nginx"]["args"]
-        for arg in forbidden_args:
-            assert arg not in c_by_name["nginx"]["args"]
-        assert doc["image"].startswith("quay.io/astronomer/ap-nginx:")
-        assert doc["spec"]["template"]["spec"]["volumes"] == [
-            {"name": "tmp", "emptyDir": {}},
-            {"name": "etc-ingress-controller", "emptyDir": {}},
-            {"name": "etc-nginx", "emptyDir": {}},
-        ]
+    assert len(docs) == 1
+    doc = docs[0]
+    assert doc["kind"] == "Deployment"
+    assert doc["apiVersion"] == "apps/v1"
+    assert doc["spec"]["minReadySeconds"] == 0
+    assert doc["spec"]["template"]["spec"]["volumes"] == [
+        {"name": "tmp", "emptyDir": {}},
+        {"name": "etc-ingress-controller", "emptyDir": {}},
+        {"name": "etc-nginx", "emptyDir": {}},
+    ]
 
+    c_by_name = get_containers_by_name(doc, include_init_containers=True)
+    assert len(c_by_name) == 2
+
+    assert c_by_name["etc-nginx-copier"]["image"].startswith("quay.io/astronomer/ap-nginx:")
     assert c_by_name["etc-nginx-copier"]["securityContext"]["readOnlyRootFilesystem"]
     assert c_by_name["etc-nginx-copier"]["volumeMounts"] == [
         {"name": "etc-nginx", "mountPath": "/etc/nginx_copy"},
     ]
-    assert c_by_name["nginx"]["securityContext"]["readOnlyRootFilesystem"]
+
+    assert c_by_name["nginx"]["image"] == c_by_name["etc-nginx-copier"]["image"]
+    assert c_by_name["nginx"]["securityContext"] == c_by_name["etc-nginx-copier"]["securityContext"]
+
+    assert c_by_name["nginx"]["securityContext"] == expected_security_context
+    assert c_by_name["nginx"]["image"].startswith("quay.io/astronomer/ap-nginx:")
+    assert "--election-id=ingress-controller-leader-release-name-nginx" in c_by_name["nginx"]["args"]
+    for arg in forbidden_args:
+        assert arg not in c_by_name["nginx"]["args"]
     assert c_by_name["nginx"]["volumeMounts"] == [
         {"name": "tmp", "mountPath": "/tmp"},  # noqa: S108
         {"name": "etc-ingress-controller", "mountPath": "/etc/ingress-controller"},
