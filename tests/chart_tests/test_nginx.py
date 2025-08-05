@@ -320,6 +320,8 @@ def test_nginx_defaults():
     ]
 
     for doc in docs:
+        assert doc["kind"] == "Deployment"
+        assert doc["apiVersion"] == "apps/v1"
         assert doc["spec"]["minReadySeconds"] == 0
         c_by_name = get_containers_by_name(doc, include_init_containers=True)
         assert len(c_by_name) == 2
@@ -327,12 +329,13 @@ def test_nginx_defaults():
         assert "--election-id=ingress-controller-leader-release-name-nginx" in c_by_name["nginx"]["args"]
         for arg in forbidden_args:
             assert arg not in c_by_name["nginx"]["args"]
+        assert doc["image"].startswith("quay.io/astronomer/ap-nginx:")
+        assert doc["spec"]["template"]["spec"]["volumes"] == [
+            {"name": "tmp", "emptyDir": {}},
+            {"name": "etc-ingress-controller", "emptyDir": {}},
+            {"name": "etc-nginx", "emptyDir": {}},
+        ]
 
-    assert doc["spec"]["template"]["spec"]["volumes"] == [
-        {"name": "tmp", "emptyDir": {}},
-        {"name": "etc-ingress-controller", "emptyDir": {}},
-        {"name": "etc-nginx", "emptyDir": {}},
-    ]
     assert c_by_name["etc-nginx-copier"]["securityContext"]["readOnlyRootFilesystem"]
     assert c_by_name["etc-nginx-copier"]["volumeMounts"] == [
         {"name": "etc-nginx", "mountPath": "/etc/nginx_copy"},
@@ -438,6 +441,25 @@ def test_nginx_security_context_overrides():
     for doc in docs:
         c_by_name = get_containers_by_name(doc)
         assert expected_security_context == c_by_name["nginx"]["securityContext"]
+
+
+def test_nginx_default_backend_default():
+    """Test nginx default backend with defaults."""
+    docs = render_chart(
+        show_only=[
+            "charts/nginx/templates/nginx-deployment-default.yaml",
+        ]
+    )
+    assert len(docs) == 1
+    doc = docs[0]
+    assert doc["kind"] == "Deployment"
+    assert doc["apiVersion"] == "apps/v1"
+    assert doc["spec"]["template"]["spec"]["volumes"] == [{"name": "tmp", "emptyDir": {}}]
+    assert len(doc["spec"]["template"]["spec"]["containers"]) == 1
+    container = doc["spec"]["template"]["spec"]["containers"][0]
+    assert container["image"].startswith("quay.io/astronomer/ap-default-backend:")
+    assert container["imagePullPolicy"] == "IfNotPresent"
+    assert container["volumeMounts"] == [{"name": "tmp", "mountPath": "/tmp"}]  # noqa: S108
 
 
 def test_nginx_backend_overrides():
