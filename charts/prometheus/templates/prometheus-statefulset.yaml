@@ -134,12 +134,14 @@ spec:
                   key: connection
             - name: DATABASE_SCHEMA_NAME
               value: "houston$default"
-            - name: DATABASE_TABLE_NAME
+            - name: DEPLOYMENT_TABLE_NAME
               value: Deployment
             - name: DATABASE_NAME
               value: {{ .Release.Name }}_houston
             - name: FILESD_FILE_PATH
               value: /prometheusreloader/airflow
+            - name: ENABLE_DEPLOYMENT_SCRAPING
+              value: "true"
 {{- if .Values.filesdReloader.extraEnv }}
 {{ toYaml .Values.filesdReloader.extraEnv | indent 12 }}
 {{- end }}
