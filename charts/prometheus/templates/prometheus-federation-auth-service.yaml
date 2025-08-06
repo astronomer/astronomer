@@ -35,7 +35,7 @@ data:
                 return
             end
 
-            -- Generate federation token with salt (same as teammate suggested)
+            -- Generate federation token with salt
             local sha256 = resty_sha256:new()
             sha256:update(registry_token)
             sha256:update("prometheus-federation-salt-2025")
@@ -63,7 +63,7 @@ data:
                         ngx.exit(401)
                     end
 
-                    -- Extract token (support multiple formats as teammate suggested)
+                    -- Extract token
                     local provided_token = auth_header:match("^Bearer%s+(.+)$") or
                                           auth_header:match("^%[(.+)%]$") or
                                           auth_header
@@ -75,7 +75,7 @@ data:
                         ngx.exit(401)
                     end
 
-                    -- Validate against federation token (with extra SHA as teammate suggested)
+                    -- Validate against federation token
                     if provided_token ~= federation_auth_token then
                         ngx.log(ngx.WARN, "Federation auth failed for token prefix: ",
                                 string.sub(provided_token, 1, 8))
