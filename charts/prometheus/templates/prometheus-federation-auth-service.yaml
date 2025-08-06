@@ -142,9 +142,9 @@ spec:
       {{- end }}
       containers:
       - name: federation-auth
-        image: {{ .Values.global.authSidecar.image | default "openresty/openresty:1.21.4.1-alpine" }}
+        image: {{ template "authSidecar.image" . }}
         ports:
-        - containerPort: {{ .Values.global.authSidecar.port | default 80 }}
+        - containerPort: {{ .Values.global.authSidecar.port }}
           name: http
         env:
         - name: REGISTRY_AUTH_TOKEN
