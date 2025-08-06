@@ -22,82 +22,82 @@ data:
     http {
         lua_package_path "/usr/local/openresty/lualib/?.lua;;";
         lua_shared_dict federation_auth_cache 10m;
-        
+
         env REGISTRY_AUTH_TOKEN;
-        
+
         init_by_lua_block {
             local resty_sha256 = require "resty.sha256"
             local str = require "resty.string"
-            
+
             local registry_token = os.getenv("REGISTRY_AUTH_TOKEN") or ""
             if registry_token == "" then
                 ngx.log(ngx.ERR, "REGISTRY_AUTH_TOKEN environment variable not set")
                 return
             end
-            
+
             -- Generate federation token with salt (same as teammate suggested)
             local sha256 = resty_sha256:new()
             sha256:update(registry_token)
             sha256:update("prometheus-federation-salt-2025")
             federation_auth_token = str.to_hex(sha256:final())
-            
+
             ngx.log(ngx.INFO, "Federation auth initialized for release: {{ .Release.Name }}")
         }
-        
+
         server {
             listen {{ .Values.global.authSidecar.port | default 80 }};
             server_name _;
-            
+
             # Disable Nginx Server version (following existing pattern)
             server_tokens off;
-            
+
             # Auth endpoint for ingress controller
             location /auth {
                 access_by_lua_block {
                     local auth_header = ngx.var.http_authorization
-                    
+
                     if not auth_header then
                         ngx.log(ngx.WARN, "Federation auth: Missing Authorization header")
                         ngx.status = 401
                         ngx.header["X-Auth-Error"] = "Missing Authorization header"
                         ngx.exit(401)
                     end
-                    
+
                     -- Extract token (support multiple formats as teammate suggested)
-                    local provided_token = auth_header:match("^Bearer%s+(.+)$") or 
+                    local provided_token = auth_header:match("^Bearer%s+(.+)$") or
                                           auth_header:match("^%[(.+)%]$") or
                                           auth_header
-                    
+
                     if not provided_token then
                         ngx.log(ngx.WARN, "Federation auth: Invalid Authorization format")
                         ngx.status = 401
                         ngx.header["X-Auth-Error"] = "Invalid Authorization format"
                         ngx.exit(401)
                     end
-                    
+
                     -- Validate against federation token (with extra SHA as teammate suggested)
                     if provided_token ~= federation_auth_token then
-                        ngx.log(ngx.WARN, "Federation auth failed for token prefix: ", 
+                        ngx.log(ngx.WARN, "Federation auth failed for token prefix: ",
                                 string.sub(provided_token, 1, 8))
                         ngx.status = 403
                         ngx.header["X-Auth-Error"] = "Invalid federation token"
                         ngx.exit(403)
                     end
-                    
+
                     -- Set response headers for ingress (following Astronomer patterns)
                     ngx.header["X-Auth-User"] = "federation-client"
                     ngx.header["X-Auth-Token-Prefix"] = string.sub(provided_token, 1, 8)
-                    
+
                     ngx.log(ngx.INFO, "Federation auth successful")
                     ngx.status = 200
                 }
             }
-            
+
             # Health check endpoint
             location /healthz {
                 return 200 "OK";
             }
-            
+
             # Default nginx settings (following existing pattern)
             {{ .Values.global.default_nginx_settings | default "" }}
             {{- if .Values.global.authSidecar.default_nginx_settings }}
@@ -119,7 +119,7 @@ metadata:
     heritage: {{ .Release.Service }}
     plane: {{ .Values.global.plane.mode }}
 spec:
-  replicas: {{ .Values.prometheus.federate.auth.replicas | default 2 }}
+  replicas: {{ .Values.federation.auth.replicas | default 2 }}
   selector:
     matchLabels:
       component: {{ template "prometheus.name" . }}-federation-auth
@@ -134,9 +134,11 @@ spec:
     spec:
       {{- if .Values.global.platformNodePool }}
       nodeSelector:
-        astronomer.io/node-pool: {{ .Values.global.platformNodePool.nodePool.name | quote }}
+{{ toYaml .Values.global.platformNodePool.nodeSelector | indent 8 }}
+      affinity:
+{{ toYaml .Values.global.platformNodePool.affinity | indent 8 }}
       tolerations:
-{{ toYaml .Values.global.platformNodePool.nodePool.tolerations | indent 8 }}
+{{ toYaml .Values.global.platformNodePool.tolerations | indent 8 }}
       {{- end }}
       containers:
       - name: federation-auth
@@ -167,7 +169,7 @@ spec:
           initialDelaySeconds: 5
           periodSeconds: 10
         resources:
-{{ toYaml (.Values.prometheus.federate.auth.resources | default .Values.global.authSidecar.resources) | indent 10 }}
+{{ toYaml (.Values.federation.auth.resources | default .Values.global.authSidecar.resources) | indent 10 }}
         {{- if .Values.global.authSidecar.securityContext }}
         securityContext:
 {{ toYaml .Values.global.authSidecar.securityContext | indent 10 }}
