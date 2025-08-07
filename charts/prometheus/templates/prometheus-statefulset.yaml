@@ -168,12 +168,14 @@ spec:
             name: filesd
         - name: prometheus
           image: {{ include "prometheus.image" . }}
+          {{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
           env:
             - name: FEDERATION_AUTH_TOKEN
               valueFrom:
                 secretKeyRef:
                   name: {{ template "prometheus.federationAuthSecret" . }}
                   key: token
+          {{- end }}
           securityContext:
             readOnlyRootFilesystem: true
             {{ template "prometheus.securityContext" . }}
