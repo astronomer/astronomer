@@ -56,6 +56,15 @@ spec:
       serviceAccountName: {{ template "prometheus.serviceAccountName" . }}
       {{- include "prometheus.imagePullSecrets" . | nindent 6 }}
       containers:
+        - name: nginx-auth-sidecar
+          image: {{ template "authSidecar.image" . }}
+          env:
+          - name: REGISTRY_AUTH_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: astronomer-bootstrap
+                key: registry_auth_token
+
         {{- if .Values.global.authSidecar.enabled  }}
         - name: auth-proxy
           image: {{ include "authSidecar.image" . }}
