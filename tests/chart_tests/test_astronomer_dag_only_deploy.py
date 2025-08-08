@@ -260,3 +260,41 @@ class TestDagOnlyDeploy:
             "server": {"readinessProbe": readiness_probe, "livenessProbe": liveness_probe},
             "client": {"readinessProbe": readiness_probe, "livenessProbe": liveness_probe},
         }
+
+    def test_houston_configmap_with_dagonlydeployment_scheduling(self, kube_version, global_platform_node_pool_config):
+        """Validate the dagOnlyDeployment taints,tolleration and node selector in the Houston configmap."""
+        docs = render_chart(
+            kube_version=kube_version,
+            values={
+                "global": {
+                    "dagOnlyDeployment": {
+                        "enabled": True,
+                        "server": {
+                            "nodeSelector": global_platform_node_pool_config["nodeSelector"],
+                            "affinity": global_platform_node_pool_config["affinity"],
+                            "tolerations": global_platform_node_pool_config["tolerations"],
+                        },
+                    }
+                }
+            },
+            show_only=["charts/astronomer/templates/houston/houston-configmap.yaml"],
+        )
+
+        assert len(docs) == 1
+        doc = docs[0]
+        prod_yaml = yaml.safe_load(doc["data"]["production.yaml"])
+        assert prod_yaml["deployments"]["dagDeploy"] == {
+            "enabled": True,
+            "images": {
+                "dagServer": {
+                    "repository": "someregistry.io/my-custom-image",
+                    "tag": "my-custom-tag",
+                }
+            },
+            "securityContexts": {"pod": {"fsGroup": 50000}},
+            "server": {
+                "nodeSelector": global_platform_node_pool_config["nodeSelector"],
+                "affinity": global_platform_node_pool_config["affinity"],
+                "tolerations": global_platform_node_pool_config["tolerations"],
+            },
+        }
