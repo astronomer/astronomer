@@ -202,6 +202,7 @@ spec:
   - name: http
     port: {{ .Values.global.authSidecar.port | default 80 }}
     targetPort: {{ .Values.global.authSidecar.port | default 80 }}
+    appProtocol: tcp
   type: ClusterIP
 
 {{- end }}
