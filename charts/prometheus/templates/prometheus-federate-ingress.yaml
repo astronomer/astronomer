@@ -38,6 +38,7 @@ spec:
       http:
         paths:
           - path: /federate
+            pathType: Exact
             backend:
               service:
                 name: {{ template "prometheus.fullname" . }}
