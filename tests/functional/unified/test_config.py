@@ -61,7 +61,7 @@ def test_nginx_can_reach_default_backend(cp_nginx):
 
 def test_nginx_ssl_cache(cp_nginx):
     """Ensure nginx default ssl cache size is 10m."""
-    assert "ssl_session_cache shared:SSL:10m;" == cp_nginx.check_output("cat nginx.conf | grep ssl_session_cache").replace("\t", "")
+    assert "ssl_session_cache shared:SSL:10m;" == cp_nginx.check_output("grep ssl_session_cache nginx.conf").replace("\t", "")
 
 
 def test_nginx_capabilities(cp_nginx):

@@ -14,7 +14,10 @@ pod_managers = ["Deployment", "StatefulSet", "DaemonSet", "CronJob", "Job"]
 read_only_root_pods = [
     "alertmanager",
     "commander",
+    "cp-nginx",
     "configmap-reloader",
+    "default-backend",
+    "dp-nginx",
     "elasticsearch-exporter",
     "jetstream",
     "kibana",

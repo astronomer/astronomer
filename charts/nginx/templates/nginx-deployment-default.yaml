@@ -47,7 +47,9 @@ spec:
         - name: default-backend
           image: {{ template "nginx.defaultBackend.image" . }}
           imagePullPolicy: {{ .Values.images.defaultBackend.pullPolicy }}
-          securityContext: {{ toYaml .Values.securityContext | nindent 12 }}
+          securityContext:
+            readOnlyRootFilesystem: true
+            {{ toYaml .Values.securityContext | nindent 12 }}
           {{- if .Values.defaultBackend.readinessProbe }}
           readinessProbe: {{ toYaml .Values.defaultBackend.readinessProbe | nindent 12 }}
           {{- end }}
@@ -65,4 +67,10 @@ spec:
           resources: {{ toYaml .Values.defaultBackend.resources | nindent 12 }}
           ports:
             - containerPort: {{ .Values.ports.defaultBackendHTTP }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
 {{ end }}
