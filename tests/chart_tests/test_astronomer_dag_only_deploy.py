@@ -262,7 +262,7 @@ class TestDagOnlyDeploy:
         }
 
     def test_houston_configmap_with_dagonlydeployment_scheduling(self, kube_version, global_platform_node_pool_config):
-        """Validate the dagOnlyDeployment taints,tolleration and node selector in the Houston configmap."""
+        """Validate the dagOnlyDeployment taints, toleration, and node selector in the Houston configmap."""
         images = "someregistry.io/my-custom-image:my-custom-tag"
         docs = render_chart(
             kube_version=kube_version,
