@@ -325,7 +325,7 @@ def test_nginx_defaults():
     assert doc["apiVersion"] == "apps/v1"
     assert doc["spec"]["minReadySeconds"] == 0
     assert doc["spec"]["template"]["spec"]["volumes"] == [
-        {"name": "tmp", "emptyDir": {}},
+        {"name": "tmp-volume", "emptyDir": {}},
         {"name": "etc-ingress-controller", "emptyDir": {}},
         {"name": "etc-nginx", "emptyDir": {}},
     ]
@@ -348,7 +348,7 @@ def test_nginx_defaults():
     for arg in forbidden_args:
         assert arg not in c_by_name["nginx"]["args"]
     assert c_by_name["nginx"]["volumeMounts"] == [
-        {"name": "tmp", "mountPath": "/tmp"},  # noqa: S108
+        {"name": "tmp-volume", "mountPath": "/tmp"},  # noqa: S108
         {"name": "etc-ingress-controller", "mountPath": "/etc/ingress-controller"},
         {"name": "etc-nginx", "mountPath": "/etc/nginx"},
     ]
@@ -460,12 +460,12 @@ def test_nginx_default_backend_default():
     doc = docs[0]
     assert doc["kind"] == "Deployment"
     assert doc["apiVersion"] == "apps/v1"
-    assert doc["spec"]["template"]["spec"]["volumes"] == [{"name": "tmp", "emptyDir": {}}]
+    assert doc["spec"]["template"]["spec"]["volumes"] == [{"name": "tmp-volume", "emptyDir": {}}]
     assert len(doc["spec"]["template"]["spec"]["containers"]) == 1
     container = doc["spec"]["template"]["spec"]["containers"][0]
     assert container["image"].startswith("quay.io/astronomer/ap-default-backend:")
     assert container["imagePullPolicy"] == "IfNotPresent"
-    assert container["volumeMounts"] == [{"name": "tmp", "mountPath": "/tmp"}]  # noqa: S108
+    assert container["volumeMounts"] == [{"name": "tmp-volume", "mountPath": "/tmp"}]  # noqa: S108
 
 
 def test_nginx_backend_overrides():
