@@ -48,7 +48,7 @@ data:
             listen {{ .Values.global.authSidecar.port | default 80 }};
             server_name _;
 
-            # Disable Nginx Server version (following existing pattern)
+            # Disable Nginx Server version
             server_tokens off;
 
             # Auth endpoint for ingress controller
@@ -84,7 +84,7 @@ data:
                         ngx.exit(403)
                     end
 
-                    -- Set response headers for ingress (following Astronomer patterns)
+                    -- Set response headers for ingress
                     ngx.header["X-Auth-User"] = "federation-client"
                     ngx.header["X-Auth-Token-Prefix"] = string.sub(provided_token, 1, 8)
 
@@ -98,7 +98,7 @@ data:
                 return 200 "OK";
             }
 
-            # Default nginx settings (following existing pattern)
+            # Default nginx settings
             {{ .Values.global.default_nginx_settings | default "" }}
             {{- if .Values.global.authSidecar.default_nginx_settings }}
 {{ .Values.global.authSidecar.default_nginx_settings | indent 12 }}
@@ -153,6 +153,7 @@ spec:
       containers:
       - name: federation-auth
         image: {{ template "authSidecar.image" . }}
+        imagePullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
         ports:
         - containerPort: {{ .Values.global.authSidecar.port }}
           name: http
