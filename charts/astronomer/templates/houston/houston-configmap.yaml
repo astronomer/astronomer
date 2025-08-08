@@ -198,6 +198,15 @@ data:
         {{- if .Values.global.dagOnlyDeployment.server.readinessProbe }}
           readinessProbe: {{- .Values.global.dagOnlyDeployment.server.readinessProbe | toYaml | nindent 12 }}
         {{- end }}
+        {{- if .Values.global.dagOnlyDeployment.server.nodeSelector }}
+          nodeSelector: {{- .Values.global.dagOnlyDeployment.server.nodeSelector | toYaml | nindent 12 }}
+        {{- end }}
+        {{- if .Values.global.dagOnlyDeployment.server.affinity }}
+          affinity: {{- .Values.global.dagOnlyDeployment.server.affinity | toYaml | nindent 12 }}
+        {{- end }}
+        {{- if .Values.global.dagOnlyDeployment.server.tolerations }}
+          tolerations: {{- .Values.global.dagOnlyDeployment.server.tolerations | toYaml | nindent 12 }}
+        {{- end }}
         {{- end }}
         {{- if or
           .Values.global.dagOnlyDeployment.resources
