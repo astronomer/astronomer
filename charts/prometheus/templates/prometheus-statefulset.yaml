@@ -64,6 +64,7 @@ spec:
               secretKeyRef:
                 name: astronomer-bootstrap
                 key: registry_auth_token
+          resources: {{ toYaml .Values.federation.auth.resources | indent 4 }}
 
         {{- if .Values.global.authSidecar.enabled  }}
         - name: auth-proxy
