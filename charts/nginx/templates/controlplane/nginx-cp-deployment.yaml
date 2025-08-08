@@ -58,10 +58,12 @@ spec:
             - /bin/sh
             - -c
             - |
-              cp -r /etc/nginx/* /etc/nginx_copy
+              cp -r /etc/nginx/* /etc/nginx_copy ; mkdir /tmp/nginx ;
           volumeMounts:
             - name: etc-nginx
               mountPath: /etc/nginx_copy
+            - name: tmp
+              mountPath: /tmp
       containers:
         - name: nginx
           securityContext:
