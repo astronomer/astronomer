@@ -134,6 +134,9 @@ global:
     server:
       readinessProbe: {}
       livenessProbe: {}
+      nodeSelector: {}
+      affinity: {}
+      tolerations: []
     client:
       readinessProbe: {}
       livenessProbe: {}
