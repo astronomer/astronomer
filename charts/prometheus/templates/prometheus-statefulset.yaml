@@ -65,6 +65,18 @@ spec:
                 name: astronomer-bootstrap
                 key: registry_auth_token
           resources: {{ toYaml .Values.federation.auth.resources | indent 4 }}
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.global.authSidecar.port }}
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.global.authSidecar.port }}
+              scheme: HTTP
 
         {{- if .Values.global.authSidecar.enabled  }}
         - name: auth-proxy
