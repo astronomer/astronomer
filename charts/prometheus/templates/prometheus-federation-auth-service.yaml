@@ -140,6 +140,7 @@ spec:
       tolerations:
 {{ toYaml .Values.global.platformNodePool.tolerations | indent 8 }}
       {{- end }}
+      {{- include "prometheus.imagePullSecrets" . | nindent 6 }}
       containers:
       - name: federation-auth
         image: {{ template "authSidecar.image" . }}
