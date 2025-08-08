@@ -136,7 +136,7 @@ class TestDefaultProbes:
             "successThreshold": 1,
             "failureThreshold": 6,
         },
-        "prometheus-federation-auth":{
+        "prometheus-federation-auth": {
             "httpGet": {"path": "/healthz", "port": 8084, "scheme": "HTTP"},
             "initialDelaySeconds": 10,
             "periodSeconds": 10,
@@ -229,7 +229,7 @@ class TestDefaultProbes:
             "successThreshold": 1,
             "failureThreshold": 6,
         },
-        "prometheus-federation-auth":{
+        "prometheus-federation-auth": {
             "httpGet": {"path": "/healthz", "port": 8084, "scheme": "HTTP"},
             "initialDelaySeconds": 10,
             "periodSeconds": 10,

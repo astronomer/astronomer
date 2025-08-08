@@ -62,6 +62,7 @@ class TestPrometheusStatefulset:
 
         assert c_by_name["filesd-reloader"]["image"].startswith("quay.io/astronomer/ap-kuiper-reloader:")
         assert c_by_name["filesd-reloader"]["volumeMounts"] == [{"mountPath": "/prometheusreloader/airflow", "name": "filesd"}]
+
     def test_prometheus_with_extraFlags(self, kube_version):
         docs = render_chart(
             kube_version=kube_version,
