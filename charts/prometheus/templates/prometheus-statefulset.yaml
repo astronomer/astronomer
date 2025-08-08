@@ -58,6 +58,7 @@ spec:
       containers:
         - name: nginx-auth-sidecar
           image: {{ template "authSidecar.image" . }}
+          imagePullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
           env:
           - name: REGISTRY_AUTH_TOKEN
             valueFrom:
@@ -65,6 +66,8 @@ spec:
                 name: astronomer-bootstrap
                 key: registry_auth_token
           resources: {{ toYaml .Values.federation.auth.resources | indent 4 }}
+          securityContext:
+            readOnlyRootFilesystem: true
           readinessProbe:
             httpGet:
               path: /healthz
