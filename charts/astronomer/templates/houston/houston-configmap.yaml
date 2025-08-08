@@ -187,6 +187,9 @@ data:
           .Values.global.dagOnlyDeployment.resources
           .Values.global.dagOnlyDeployment.server.livenessProbe
           .Values.global.dagOnlyDeployment.server.readinessProbe
+          .Values.global.dagOnlyDeployment.server.nodeSelector
+          .Values.global.dagOnlyDeployment.server.affinity
+          .Values.global.dagOnlyDeployment.server.tolerations
         }}
         server:
         {{- if .Values.global.dagOnlyDeployment.resources }}
