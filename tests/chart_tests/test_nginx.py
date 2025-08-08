@@ -337,6 +337,7 @@ def test_nginx_defaults():
     assert c_by_name["etc-nginx-copier"]["securityContext"]["readOnlyRootFilesystem"]
     assert c_by_name["etc-nginx-copier"]["volumeMounts"] == [
         {"name": "etc-nginx", "mountPath": "/etc/nginx_copy"},
+        {"name": "tmp", "mountPath": "/tmp"},  # noqa: S108
     ]
 
     assert c_by_name["nginx"]["image"] == c_by_name["etc-nginx-copier"]["image"]
