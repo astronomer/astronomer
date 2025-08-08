@@ -29,7 +29,7 @@ class TestPrometheusStatefulset:
         doc = docs[0]
 
         self.prometheus_common_tests(doc)
-        assert len(doc["spec"]["template"]["spec"]["containers"]) == 3
+        assert len(doc["spec"]["template"]["spec"]["containers"]) == 4
 
         sc = doc["spec"]["template"]["spec"]["securityContext"]
         assert sc["fsGroup"] == 65534
@@ -43,6 +43,7 @@ class TestPrometheusStatefulset:
         assert c_by_name["prometheus"]["image"].startswith("quay.io/astronomer/ap-prometheus:")
         assert c_by_name["prometheus"]["ports"] == [{"containerPort": 9090, "name": "prometheus-data"}]
         assert c_by_name["prometheus"]["volumeMounts"] == [
+            {"mountPath": "/etc/prometheus/federation-auth", "name": "federation-auth", "readOnly": True},
             {"mountPath": "/etc/prometheus/config", "name": "prometheus-config-volume"},
             {"mountPath": "/etc/prometheus/alerts.d", "name": "alert-volume"},
             {"mountPath": "/prometheus", "name": "data"},
@@ -61,7 +62,6 @@ class TestPrometheusStatefulset:
 
         assert c_by_name["filesd-reloader"]["image"].startswith("quay.io/astronomer/ap-kuiper-reloader:")
         assert c_by_name["filesd-reloader"]["volumeMounts"] == [{"mountPath": "/prometheusreloader/airflow", "name": "filesd"}]
-
     def test_prometheus_with_extraFlags(self, kube_version):
         docs = render_chart(
             kube_version=kube_version,
