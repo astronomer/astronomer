@@ -13,28 +13,23 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
   annotations:
-    kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
-    kubernetes.io/tls-acme: {{ eq .Values.global.acme true | quote }}
-
-    # nginx.ingress.kubernetes.io/rate-limit-rpm: "60"
-    nginx.ingress.kubernetes.io/use-regex: "true"
-
+    {{- if .Values.global.authSidecar.enabled }}
+    {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
+    {{- else }}
     {{- if .Values.global.extraAnnotations }}
-    {{- range $key, $value := .Values.global.extraAnnotations }}
-    {{- if not (or (contains "auth-" $key) (contains "oauth" $key)) }}
-    {{ $key }}: {{ $value | quote }}
+    {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- end }}
+    kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
     {{- end }}
+    {{- if .Values.federation.ingress.annotations }}
+    {{- toYaml .Values.federation.ingress.annotations | nindent 4 }}
     {{- end }}
 spec:
-  {{- if or .Values.global.tlsSecret .Values.global.acme }}
-  tls:
-  {{- if .Values.global.acme }}
-    - secretName: prometheus-federate-tls
-  {{- end }}
   {{- if .Values.global.tlsSecret }}
+  tls:
     - secretName: {{ .Values.global.tlsSecret }}
-  {{- end }}
       hosts:
         - {{ template "prometheus.url" . }}
   {{- end }}
