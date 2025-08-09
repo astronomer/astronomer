@@ -28,6 +28,8 @@ import jsonschema
 import requests
 import yaml
 from kubernetes.client.api_client import ApiClient
+from yamllint import linter
+from yamllint.config import YamlLintConfig
 
 from tests import supported_k8s_versions
 
@@ -76,6 +78,41 @@ def validate_k8s_object(instance, kube_version=default_version):
     validate.validate(instance)
 
 
+def check_yaml(manifests: str):
+    """Lint the rendered YAML manifests."""
+
+    # Disable a bunch of rules that are not as important. We can re-enable whenever we want to improve the quality of our raw  yaml.
+    conf_yaml = """
+    extends: default
+    rules:
+      brackets: false
+      colons: false
+      commas: false
+      comments-indentation: disable
+      indentation: false
+      line-length: disable
+      trailing-spaces: disable
+    """
+
+    # Default rules, or customize as needed
+    conf = YamlLintConfig(conf_yaml)
+    if problems := list(linter.run(manifests, conf)):
+        lines = manifests.splitlines()
+        for problem in problems:
+            print(problem)
+            start = max(problem.line - 10, 0)
+            end = min(problem.line + 1, len(lines))
+            for i in range(start, end):
+                indicator = ">>" if i == problem.line - 1 else "  "
+                print(f"{indicator} {i + 1}: {lines[i]}")
+            print("-" * 40)
+
+        return False
+
+    print("YAML is valid and style-compliant!")
+    return True
+
+
 def render_chart(
     *,  # require keyword args
     name: str = "release-name",
@@ -86,6 +123,7 @@ def render_chart(
     baseDomain: str = "example.com",
     namespace: str | None = None,
     validate_objects: bool = True,
+    lint_yaml: bool = True,
 ):
     """Render a helm chart into dictionaries."""
     values = values or {}
@@ -136,6 +174,8 @@ def render_chart(
                         + shlex.join(command)
                     )
             raise
+        if lint_yaml:
+            check_yaml(manifests)
         return load_and_validate_k8s_manifests(manifests, validate_objects=validate_objects, kube_version=kube_version)
 
 
