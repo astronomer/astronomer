@@ -75,8 +75,7 @@ spec:
     {{- if .Values.global.platformNodePool.affinity }}
 {{ toYaml .Values.global.platformNodePool.affinity | indent 8 }}
     {{- end }}
-      tolerations:
-{{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
+      tolerations: {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
 {{- include "elasticsearch.imagePullSecrets" . | indent 6 }}
       initContainers:
       {{- if (.Values.sysctlInitContainer.enabled) }}
@@ -85,6 +84,7 @@ spec:
         imagePullPolicy: {{ .Values.images.init.pullPolicy }}
         command: ["sysctl", "-w", "vm.max_map_count={{ .Values.sysctlInitContainer.sysctlVmMaxMapCount}}"]
         securityContext:
+          readOnlyRootFilesystem: true
           privileged: true
         resources: {{- toYaml .Values.client.initResources | nindent 10 }}
         {{- if .Values.sysctlInitContainer.livenessProbe }}
@@ -97,8 +97,9 @@ spec:
       containers:
       - name: es-client
         securityContext:
+          readOnlyRootFilesystem: true
         {{- if .Values.client.securityContext }}
-{{ toYaml .Values.client.securityContext | indent 10 }}
+          {{- toYaml .Values.client.securityContext | nindent 10 }}
         {{- else }}
 {{- template "elasticsearch.securityContext" . }}
         {{- end }}

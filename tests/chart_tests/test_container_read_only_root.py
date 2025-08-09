@@ -18,6 +18,7 @@ read_only_root_pods = [
     "configmap-reloader",
     "default-backend",
     "dp-nginx",
+    "elasticsearch-client",
     "elasticsearch-exporter",
     "jetstream",
     "kibana",

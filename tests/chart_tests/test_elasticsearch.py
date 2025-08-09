@@ -28,21 +28,23 @@ class TestElasticSearch:
         vm_max_map_count = "vm.max_map_count=262144"
         assert len(docs) == 3
 
+        master_doc, data_doc, client_doc = docs
+
         # elasticsearch master
-        assert docs[0]["kind"] == "StatefulSet"
-        esm_containers = get_containers_by_name(docs[0], include_init_containers=True)
+        assert master_doc["kind"] == "StatefulSet"
+        esm_containers = get_containers_by_name(master_doc, include_init_containers=True)
         assert vm_max_map_count in esm_containers["sysctl"]["command"]
-        assert "persistentVolumeClaimRetentionPolicy" not in docs[0]["spec"]
+        assert "persistentVolumeClaimRetentionPolicy" not in master_doc["spec"]
 
         # elasticsearch data
-        assert docs[1]["kind"] == "StatefulSet"
-        esd_containers = get_containers_by_name(docs[1], include_init_containers=True)
+        assert data_doc["kind"] == "StatefulSet"
+        esd_containers = get_containers_by_name(data_doc, include_init_containers=True)
         assert vm_max_map_count in esd_containers["sysctl"]["command"]
-        assert "persistentVolumeClaimRetentionPolicy" not in docs[1]["spec"]
+        assert "persistentVolumeClaimRetentionPolicy" not in data_doc["spec"]
 
         # elasticsearch client
-        assert docs[2]["kind"] == "Deployment"
-        esc_containers = get_containers_by_name(docs[1], include_init_containers=True)
+        assert client_doc["kind"] == "Deployment"
+        esc_containers = get_containers_by_name(client_doc, include_init_containers=True)
         assert vm_max_map_count in esc_containers["sysctl"]["command"]
 
     def test_elasticsearch_with_sysctl_disabled(self, kube_version):
