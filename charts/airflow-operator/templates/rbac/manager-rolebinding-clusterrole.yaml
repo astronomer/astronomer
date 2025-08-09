@@ -7,7 +7,6 @@ metadata:
     tier: operator
     release: {{ .Release.Name }}
     chart: {{ template "operator.chart" . }}
-    release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
