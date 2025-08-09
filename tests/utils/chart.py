@@ -78,7 +78,7 @@ def validate_k8s_object(instance, kube_version=default_version):
     validate.validate(instance)
 
 
-def check_yaml(manifests: str):
+def check_yaml(manifests: str, lines_before: int = 10, lines_after: int = 10):
     """Lint the rendered YAML manifests."""
 
     # Disable a bunch of rules that are not as important. We can re-enable whenever we want to improve the quality of our raw  yaml.
@@ -94,14 +94,21 @@ def check_yaml(manifests: str):
       trailing-spaces: disable
     """
 
-    # Default rules, or customize as needed
     conf = YamlLintConfig(conf_yaml)
     if problems := list(linter.run(manifests, conf)):
         lines = manifests.splitlines()
+        header_info = [
+            (idx, line.removeprefix("# Source: astronomer/")) for idx, line in enumerate(lines) if line.startswith("# Source:")
+        ]
         for problem in problems:
+            header_line = next(
+                (header for idx, header in reversed(header_info) if idx < problem.line - 1),
+                "(unknown)",
+            )
+            print(f"\nProblem document source: {header_line}")
             print(problem)
-            start = max(problem.line - 10, 0)
-            end = min(problem.line + 1, len(lines))
+            start = max(problem.line - lines_before, 0)
+            end = min(problem.line + lines_after, len(lines))
             for i in range(start, end):
                 indicator = ">>" if i == problem.line - 1 else "  "
                 print(f"{indicator} {i + 1}: {lines[i]}")
@@ -109,7 +116,6 @@ def check_yaml(manifests: str):
 
         return False
 
-    print("YAML is valid and style-compliant!")
     return True
 
 
