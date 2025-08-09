@@ -258,7 +258,6 @@ exporter:
     capabilities:
       drop:
       - ALL
-    readOnlyRootFilesystem: true
 
   resources: {}
   # requests:
