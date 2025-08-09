@@ -128,7 +128,7 @@ def render_chart(
     baseDomain: str = "example.com",
     namespace: str | None = None,
     validate_objects: bool = True,
-    lint_yaml: bool = True,
+    lint_yaml: bool = False,
 ):
     """Render a helm chart into dictionaries."""
     values = values or {}
