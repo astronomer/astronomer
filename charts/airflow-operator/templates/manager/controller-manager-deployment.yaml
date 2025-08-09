@@ -42,8 +42,8 @@ spec:
       tolerations:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       {{ include "manager.imagePullSecrets" . | nindent 8 }}
-      containers: {{ include "manager.containers" . | nindent 6 }}
-      securityContext: {{ toYaml .Values.podSecurityContext| nindent 8 }}
+      containers: {{- include "manager.containers" . | nindent 8 }}
+      securityContext: {{- toYaml .Values.podSecurityContext | nindent 8 }}
       serviceAccountName: {{ template "operator.serviceAccountName" . }}
       terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
-      volumes: {{ include "manager.volumes" . | indent 6 }}
+      volumes: {{- include "manager.volumes" . | nindent 8 }}

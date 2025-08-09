@@ -85,11 +85,10 @@ def check_yaml(manifests: str, lines_before: int = 10, lines_after: int = 10):
     conf_yaml = """
     extends: default
     rules:
-      brackets: false
-      colons: false
-      commas: false
       comments-indentation: disable
-      indentation: false
+      indentation:
+        spaces: 2
+        indent-sequences: whatever
       line-length: disable
       trailing-spaces: disable
     """
