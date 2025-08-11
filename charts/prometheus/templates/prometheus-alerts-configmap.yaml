@@ -34,7 +34,7 @@ data:
         {{- end }}
         {{- if .Values.defaultAlerts.airflow.enabled }}
         - alert: AirflowDeploymentUnhealthy
-          expr: sum by(release) (kube_pod_container_status_running{container=~".*(scheduler|scheduler-gc|webserver|worker|statsd|pgbouncer|metrics-exporter|redis|flower|triggerer)"}) - count by(release) (kube_pod_container_status_running{container=~".*(scheduler|scheduler-gc|webserver|worker|statsd|pgbouncer|metrics-exporter|redis|flower|triggerer)"}) < 0
+          expr: sum by(release) (kube_pod_container_status_running{container=~".*(scheduler|scheduler-gc|webserver|api-server|worker|statsd|pgbouncer|metrics-exporter|redis|flower|triggerer)"}) - count by(release) (kube_pod_container_status_running{container=~".*(scheduler|scheduler-gc|webserver|worker|statsd|pgbouncer|metrics-exporter|redis|flower|triggerer)"}) < 0
           for: 15m # Rough number but should be enough to clear deployments with a reasonable amount of workers
           labels:
             tier: airflow
