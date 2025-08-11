@@ -321,7 +321,7 @@ data:
             replacement: "$1"
             target_label: deployment
           {{- include "prometheus.airflowMetricsActionDrop" . | nindent 10 }}
-          
+
       - job_name: airflow-api-server
         kubernetes_sd_configs:
           - role: service
@@ -355,7 +355,7 @@ data:
             replacement: "$1"
             target_label: deployment
           {{- include "prometheus.airflowMetricsActionDrop" . | nindent 4 }}
-    
+
       - job_name: houston-api
         metrics_path: /v1/metrics
         kubernetes_sd_configs:
