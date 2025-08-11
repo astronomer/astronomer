@@ -186,7 +186,6 @@ federation:
   ingress:
     annotations: {}
 
-
 extraFlags:
 - "--enable-feature=auto-config-reload"
 #- "--log.level=debug"
