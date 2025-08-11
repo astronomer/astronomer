@@ -184,8 +184,7 @@ spec:
         resources:
 {{ toYaml (.Values.federation.auth.resources | default .Values.global.authSidecar.resources) | indent 10 }}
         {{- if .Values.global.authSidecar.securityContext }}
-        securityContext:
-{{ toYaml .Values.global.authSidecar.securityContext | indent 10 }}
+        securityContext: {{- toYaml .Values.global.authSidecar.securityContext | nindent 10 }}
         {{- end }}
       volumes:
       - name: config
