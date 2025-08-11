@@ -82,11 +82,11 @@ service:
 {{- end }}
   image: {{ include "operator.image" . }}
   imagePullPolicy: {{ .Values.images.manager.pullPolicy }}
-  resources: {{ toYaml .Values.manager.resources | nindent 4 }}
-  securityContext: {{ toYaml .Values.securityContext| nindent 4 }}
-  volumeMounts: {{ include "manager.volumeMounts" . | indent 2 }}
+  resources: {{- toYaml .Values.manager.resources | nindent 4 }}
+  securityContext: {{- toYaml .Values.securityContext | nindent 4 }}
+  volumeMounts: {{- include "manager.volumeMounts" . | nindent 2 }}
   {{- if .Values.livenessProbe }}
-  livenessProbe: {{ tpl (toYaml .Values.livenessProbe) . | nindent 12 }}
+  livenessProbe: {{ tpl (toYaml .Values.livenessProbe) . | nindent 4 }}
   {{- else }}
   livenessProbe:
     httpGet:
@@ -94,7 +94,7 @@ service:
       port: {{ .Values.ports.managerPort }}
   {{- end }}
   {{- if .Values.readinessProbe }}
-  readinessProbe: {{ tpl (toYaml .Values.readinessProbe) . | nindent 12 }}
+  readinessProbe: {{- tpl (toYaml .Values.readinessProbe) . | nindent 4 }}
   {{- else }}
   readinessProbe:
     httpGet:

@@ -27,7 +27,7 @@ metadata:
     tier: monitoring
     component: {{ $.Chart.Name }}
     chart: {{ $.Chart.Name }}-{{ $.Chart.Version }}
-    release:  {{ $.Release.Name }}
+    release: {{ $.Release.Name }}
     heritage: {{ $.Release.Service }}
     plane: {{ $.Values.global.plane.mode }}
 rules:

@@ -68,7 +68,7 @@ rules:
   verbs: ["create", "get"]
 - apiGroups: [""]
   resources: ["pods/log"]
-  verbs: ["get" , "list"]
+  verbs: ["get", "list"]
 - apiGroups: [""]
   resources: ["endpoints"]
   verbs: ["create", "delete", "get", "list", "update", "watch"]
@@ -101,7 +101,7 @@ rules:
   verbs: ["create", "delete", "get", "patch"]
 - apiGroups: ["apps"]
   resources: ["deployments"]
-  verbs: ["create", "delete", "get", "patch","update"]
+  verbs: ["create", "delete", "get", "patch", "update"]
 - apiGroups: ["autoscaling"]
   resources: ["horizontalpodautoscalers"]
   verbs: ["list", "watch"]
@@ -173,8 +173,8 @@ rules:
 - apiGroups: ["security.openshift.io"]
   resources: ["securitycontextconstraints"]
   verbs: ["create", "delete", "get", "patch", "list", "watch"]
-{{ end }}
-{{ end }}
+{{- end }}
+{{- end }}
 {{- end }}
 
 # If users run Openshift, and are using namespace pools, we also need to provide commander
