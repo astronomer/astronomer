@@ -235,7 +235,7 @@ class TestDefaultProbes:
         "prometheus-federation-auth_federation-auth": {
             "httpGet": {"path": "/healthz", "port": 8084},
             "initialDelaySeconds": 5,
-            "periodSeconds": 30,
+            "periodSeconds": 10,
         },
         "prometheus-postgres-exporter_prometheus-postgres-exporter": {
             "tcpSocket": {"port": 9187},
@@ -249,6 +249,8 @@ class TestDefaultProbes:
         },
         "prometheus_nginx-auth-sidecar": {
             "httpGet": {"path": "/healthz", "port": 8084, "scheme": "HTTP"},
+            "initialDelaySeconds": 10,
+            "periodSeconds": 10,
         },
         "prometheus_prometheus": {
             "httpGet": {"path": "/-/ready", "port": 9090},
