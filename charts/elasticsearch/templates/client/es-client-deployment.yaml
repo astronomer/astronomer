@@ -82,9 +82,8 @@ spec:
         image: {{ template "init.image" . }}
         command:
         - bash
-        - c
-        - |
-          cp -r /usr/share/elasticsearch/config/* /usr/share/elasticsearch/config_copy
+        - -xc
+        - cp -vr /usr/share/elasticsearch/config/* /usr/share/elasticsearch/config_copy
         imagePullPolicy: {{ .Values.images.init.pullPolicy }}
         resources: {{- toYaml .Values.client.initResources | nindent 10 }}
         securityContext:
