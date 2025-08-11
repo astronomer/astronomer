@@ -3,7 +3,7 @@
 # https://docs.astral.sh/ruff/settings/
 [tool.ruff]
 line-length = 132
-target-version = "py312"
+target-version = "py313"
 
 [tool.ruff.lint]
 fixable = ["ALL"]

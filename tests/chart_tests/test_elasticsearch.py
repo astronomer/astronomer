@@ -18,6 +18,7 @@ class TestElasticSearch:
         docs = render_chart(
             kube_version=kube_version,
             show_only=[
+                "charts/elasticsearch/templates/curator/es-curator-cronjob.yaml",
                 "charts/elasticsearch/templates/client/es-client-deployment.yaml",
                 "charts/elasticsearch/templates/data/es-data-statefulset.yaml",
                 "charts/elasticsearch/templates/master/es-master-statefulset.yaml",
@@ -26,9 +27,30 @@ class TestElasticSearch:
         )
 
         vm_max_map_count = "vm.max_map_count=262144"
-        assert len(docs) == 4
+        assert len(docs) == 5
 
-        client_doc, data_doc, master_doc, nginx_doc = docs
+        curator_doc, client_doc, data_doc, master_doc, nginx_doc = docs
+
+        # elasticsearch curator
+        assert curator_doc["kind"] == "CronJob"
+        assert curator_doc["metadata"]["name"] == "release-name-elasticsearch-curator"
+        assert curator_doc["spec"]["schedule"] == "0 1 * * *"
+
+        curator_pod = curator_doc["spec"]["jobTemplate"]["spec"]["template"]["spec"]
+        assert not curator_pod.get("nodeSelector")
+        assert not curator_pod.get("affinity")
+        assert not curator_pod.get("tolerations")
+
+        curator_containers = get_containers_by_name(curator_doc, include_init_containers=True)
+        assert len(curator_containers) == 1
+
+        curator_container = curator_containers["curator"]
+        assert curator_container.get("volumeMounts") == [{"name": "config-volume", "mountPath": "/etc/config"}]
+        assert curator_container["command"] == ["/bin/sh", "-c"]
+        assert curator_container["args"] == [
+            "sleep 5; /usr/bin/curator --config /etc/config/config.yml /etc/config/action_file.yml; exit_code=$?; wget --timeout=5 -O- --post-data='not=used' http://127.0.0.1:15020/quitquitquit; exit $exit_code;"
+        ]
+        assert not curator_container["securityContext"]
 
         # elasticsearch master
         assert master_doc["kind"] == "StatefulSet"
@@ -70,6 +92,7 @@ class TestElasticSearch:
         assert len(esn_containers) == 1
         assert esn_containers["nginx"]["volumeMounts"] == [
             {"name": "tmp", "mountPath": "/tmp"},
+            {"name": "var-cache-nginx", "mountPath": "/var/cache/nginx"},
             {"name": "nginx-config-volume", "mountPath": "/etc/nginx"},
         ]
 
@@ -562,28 +585,6 @@ class TestElasticSearch:
         LS = yaml.safe_load(docs[0]["data"]["config.yml"])
         assert "elasticsearch" in LS
         assert "https://release-name-elasticsearch:9200" in LS["elasticsearch"]["client"]["hosts"]
-
-    def test_elasticsearch_curator_cronjob_defaults(self, kube_version):
-        """Test ElasticSearch Curator cron job with nodeSelector, affinity, tolerations and config defaults"""
-        docs = render_chart(
-            kube_version=kube_version,
-            values={},
-            show_only=["charts/elasticsearch/templates/curator/es-curator-cronjob.yaml"],
-        )
-        assert len(docs) == 1
-        c_by_name = get_containers_by_name(docs[0])
-        assert docs[0]["kind"] == "CronJob"
-        assert docs[0]["metadata"]["name"] == "release-name-elasticsearch-curator"
-        assert docs[0]["spec"]["schedule"] == "0 1 * * *"
-        spec = docs[0]["spec"]["jobTemplate"]["spec"]["template"]["spec"]
-        assert spec["nodeSelector"] == {}
-        assert spec["affinity"] == {}
-        assert spec["tolerations"] == []
-        assert c_by_name["curator"]["command"] == ["/bin/sh", "-c"]
-        assert c_by_name["curator"]["args"] == [
-            "sleep 5; /usr/bin/curator --config /etc/config/config.yml /etc/config/action_file.yml; exit_code=$?; wget --timeout=5 -O- --post-data='not=used' http://127.0.0.1:15020/quitquitquit; exit $exit_code;"
-        ]
-        assert c_by_name["curator"]["securityContext"] == {}
 
     def test_elasticsearch_curator_cronjob_overrides(self, kube_version, global_platform_node_pool_config):
         """Test ElasticSearch Curator cron job with nodeSelector, affinity, tolerations and config overrides."""
