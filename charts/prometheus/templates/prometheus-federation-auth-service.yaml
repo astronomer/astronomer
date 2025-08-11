@@ -101,7 +101,7 @@ data:
             # Default nginx settings
             {{ .Values.global.default_nginx_settings | default "" }}
             {{- if .Values.global.authSidecar.default_nginx_settings }}
-{{ .Values.global.authSidecar.default_nginx_settings | indent 12 }}
+            {{- .Values.global.authSidecar.default_nginx_settings | nindent 12 }}
             {{- end }}
         }
     }
