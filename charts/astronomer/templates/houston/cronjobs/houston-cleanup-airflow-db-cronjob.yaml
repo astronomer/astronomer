@@ -55,15 +55,17 @@ spec:
               imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
               securityContext: {{ toYaml .Values.securityContext | nindent 16 }}
               resources: {{ toYaml .Values.houston.resources | nindent 16 }}
-              args: ["yarn", "cleanup-airflow-db-data", "--",
-              "--older-than={{ .Values.houston.cleanupAirflowDb.olderThan }}",
-              "--dry-run={{ .Values.houston.cleanupAirflowDb.dryRun }}",
-              "--output-path={{ .Values.houston.cleanupAirflowDb.outputPath }}",
-              "--drop-archives={{ .Values.houston.cleanupAirflowDb.dropArchives }}",
-              "--provider={{ .Values.houston.cleanupAirflowDb.provider }}",
-              "--bucket-name={{ .Values.houston.cleanupAirflowDb.bucketName }}",
-              "--provider-env-secret-name={{ .Values.houston.cleanupAirflowDb.providerEnvSecretName }}",
-              "--tables={{ .Values.houston.cleanupAirflowDb.tables }}"]
+              args: [
+                "yarn", "cleanup-airflow-db-data", "--",
+                "--older-than={{ .Values.houston.cleanupAirflowDb.olderThan }}",
+                "--dry-run={{ .Values.houston.cleanupAirflowDb.dryRun }}",
+                "--output-path={{ .Values.houston.cleanupAirflowDb.outputPath }}",
+                "--drop-archives={{ .Values.houston.cleanupAirflowDb.dropArchives }}",
+                "--provider={{ .Values.houston.cleanupAirflowDb.provider }}",
+                "--bucket-name={{ .Values.houston.cleanupAirflowDb.bucketName }}",
+                "--provider-env-secret-name={{ .Values.houston.cleanupAirflowDb.providerEnvSecretName }}",
+                "--tables={{ .Values.houston.cleanupAirflowDb.tables }}"
+              ]
               volumeMounts:
                 {{- include "houston_volume_mounts" . | indent 16 }}
                 {{- include "custom_ca_volume_mounts" . | indent 16 }}

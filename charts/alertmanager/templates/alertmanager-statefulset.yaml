@@ -206,7 +206,7 @@ spec:
           {{- toYaml .Values.persistence.annotations | nindent 10 }}
         {{- end }}
       spec:
-        accessModes: [ "ReadWriteOnce" ]
+        accessModes: ["ReadWriteOnce"]
         resources:
           requests:
             storage: {{ .Values.persistence.size }}

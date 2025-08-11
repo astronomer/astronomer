@@ -28,6 +28,8 @@ import jsonschema
 import requests
 import yaml
 from kubernetes.client.api_client import ApiClient
+from yamllint import linter
+from yamllint.config import YamlLintConfig
 
 from tests import supported_k8s_versions
 
@@ -76,6 +78,46 @@ def validate_k8s_object(instance, kube_version=default_version):
     validate.validate(instance)
 
 
+def check_yaml(manifests: str, lines_before: int = 10, lines_after: int = 10):
+    """Lint the rendered YAML manifests."""
+
+    # Disable a bunch of rules that are not as important. We can re-enable whenever we want to improve the quality of our raw  yaml.
+    conf_yaml = """
+    extends: default
+    rules:
+      comments-indentation: disable
+      indentation:
+        spaces: 2
+        indent-sequences: whatever
+      line-length: disable
+      trailing-spaces: disable
+    """
+
+    conf = YamlLintConfig(conf_yaml)
+    if problems := list(linter.run(manifests, conf)):
+        lines = manifests.splitlines()
+        header_info = [
+            (idx, line.removeprefix("# Source: astronomer/")) for idx, line in enumerate(lines) if line.startswith("# Source:")
+        ]
+        for problem in problems:
+            header_line = next(
+                (header for idx, header in reversed(header_info) if idx < problem.line - 1),
+                "(unknown)",
+            )
+            print(f"\nProblem document source: {header_line}")
+            print(problem)
+            start = max(problem.line - lines_before, 0)
+            end = min(problem.line + lines_after, len(lines))
+            for i in range(start, end):
+                indicator = ">>" if i == problem.line - 1 else "  "
+                print(f"{indicator} {i + 1}: {lines[i]}")
+            print("-" * 40)
+
+        return False
+
+    return True
+
+
 def render_chart(
     *,  # require keyword args
     name: str = "release-name",
@@ -86,6 +128,7 @@ def render_chart(
     baseDomain: str = "example.com",
     namespace: str | None = None,
     validate_objects: bool = True,
+    lint_yaml: bool = False,
 ):
     """Render a helm chart into dictionaries."""
     values = values or {}
@@ -136,6 +179,8 @@ def render_chart(
                         + shlex.join(command)
                     )
             raise
+        if lint_yaml:
+            check_yaml(manifests)
         return load_and_validate_k8s_manifests(manifests, validate_objects=validate_objects, kube_version=kube_version)
 
 
