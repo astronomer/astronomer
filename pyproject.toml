@@ -48,6 +48,9 @@ ignore = [
   "S105",
   "S602",
   ]
+"tests/chart_tests/*" = [
+  "S108",
+  ]
 "tests/functional_tests/test_network_security.py" = ["C901"]
 "tests/chart_tests/test_private_registry.py" = ["UP031"]
 "tests/chart_tests/test_pods.py" = ["UP031"]

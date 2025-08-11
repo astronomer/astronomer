@@ -52,6 +52,8 @@ spec:
           securityContext: {{ toYaml .Values.nginx.securityContext | nindent 12 }}
           resources: {{ toYaml .Values.nginx.resources | nindent 12 }}
           volumeMounts:
+            - name: tmp
+              mountPath: /tmp
             - name: nginx-config-volume
               mountPath: /etc/nginx
           ports:
@@ -64,6 +66,8 @@ spec:
           livenessProbe: {{ tpl (toYaml .Values.nginx.livenessProbe) . | nindent 12 }}
           {{- end }}
       volumes:
+        - name: tmp
+          emptyDir: {}
         - name: nginx-config-volume
           configMap:
             name: {{ .Release.Name }}-nginx-es

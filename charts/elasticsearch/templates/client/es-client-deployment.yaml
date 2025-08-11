@@ -156,8 +156,6 @@ spec:
             port: {{ .Values.common.ports.http }}
           initialDelaySeconds: 90
         {{- end }}
-        {{- if semverCompare "^1.16-0" .Capabilities.KubeVersion.Version }}
-        # This feature is available in Kubernetes 1.16+
         startupProbe:
           httpGet:
             # without local=true, we are waiting for this pod's
@@ -166,12 +164,15 @@ spec:
             port: {{ .Values.common.ports.http }}
           failureThreshold: 30
           periodSeconds: 10
-        {{- end }}
         volumeMounts:
-        - mountPath: /usr/share/elasticsearch/config/elasticsearch.yml
-          name: config
+        - name: tmp
+          mountPath: /tmp
+        - name: config
+          mountPath: /usr/share/elasticsearch/config/elasticsearch.yml
           subPath: elasticsearch.yml
       volumes:
+      - name: tmp
+        emptyDir: {}
       - name: config
         configMap:
           name: {{ template "elasticsearch.fullname" . }}-config

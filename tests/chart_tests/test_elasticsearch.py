@@ -13,39 +13,65 @@ from tests.utils.chart import render_chart
     supported_k8s_versions,
 )
 class TestElasticSearch:
-    def test_elasticsearch_with_sysctl_defaults(self, kube_version):
-        """Test ElasticSearch with sysctl config/values.yaml."""
+    def test_elasticsearch_defaults(self, kube_version):
+        """Test ElasticSearch default behaviors."""
         docs = render_chart(
             kube_version=kube_version,
-            values={},
             show_only=[
-                "charts/elasticsearch/templates/master/es-master-statefulset.yaml",
-                "charts/elasticsearch/templates/data/es-data-statefulset.yaml",
                 "charts/elasticsearch/templates/client/es-client-deployment.yaml",
+                "charts/elasticsearch/templates/data/es-data-statefulset.yaml",
+                "charts/elasticsearch/templates/master/es-master-statefulset.yaml",
+                "charts/elasticsearch/templates/nginx/nginx-es-deployment.yaml",
             ],
         )
 
         vm_max_map_count = "vm.max_map_count=262144"
-        assert len(docs) == 3
+        assert len(docs) == 4
 
-        master_doc, data_doc, client_doc = docs
+        client_doc, data_doc, master_doc, nginx_doc = docs
 
         # elasticsearch master
         assert master_doc["kind"] == "StatefulSet"
         esm_containers = get_containers_by_name(master_doc, include_init_containers=True)
+        assert len(esm_containers) == 2
         assert vm_max_map_count in esm_containers["sysctl"]["command"]
         assert "persistentVolumeClaimRetentionPolicy" not in master_doc["spec"]
+        assert esm_containers["es-master"]["volumeMounts"] == [
+            {"name": "tmp", "mountPath": "/tmp"},
+            {"mountPath": "/usr/share/elasticsearch/data", "name": "data"},
+            {"mountPath": "/usr/share/elasticsearch/config/elasticsearch.yml", "name": "config", "subPath": "elasticsearch.yml"},
+        ]
 
         # elasticsearch data
         assert data_doc["kind"] == "StatefulSet"
         esd_containers = get_containers_by_name(data_doc, include_init_containers=True)
+        assert len(esd_containers) == 2
         assert vm_max_map_count in esd_containers["sysctl"]["command"]
         assert "persistentVolumeClaimRetentionPolicy" not in data_doc["spec"]
+        assert esd_containers["es-data"]["volumeMounts"] == [
+            {"name": "tmp", "mountPath": "/tmp"},
+            {"mountPath": "/usr/share/elasticsearch/data", "name": "data"},
+            {"mountPath": "/usr/share/elasticsearch/config/elasticsearch.yml", "name": "config", "subPath": "elasticsearch.yml"},
+        ]
 
         # elasticsearch client
         assert client_doc["kind"] == "Deployment"
         esc_containers = get_containers_by_name(client_doc, include_init_containers=True)
+        assert len(esc_containers) == 2
         assert vm_max_map_count in esc_containers["sysctl"]["command"]
+        assert esc_containers["es-client"]["volumeMounts"] == [
+            {"name": "tmp", "mountPath": "/tmp"},
+            {"name": "config", "mountPath": "/usr/share/elasticsearch/config/elasticsearch.yml", "subPath": "elasticsearch.yml"},
+        ]
+
+        # elasticsearch nginx
+        assert nginx_doc["kind"] == "Deployment"
+        esn_containers = get_containers_by_name(nginx_doc, include_init_containers=True)
+        assert len(esn_containers) == 1
+        assert esn_containers["nginx"]["volumeMounts"] == [
+            {"name": "tmp", "mountPath": "/tmp"},
+            {"name": "nginx-config-volume", "mountPath": "/etc/nginx"},
+        ]
 
     def test_elasticsearch_with_sysctl_disabled(self, kube_version):
         """Test ElasticSearch master, data and client with sysctl
