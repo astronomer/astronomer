@@ -92,6 +92,9 @@ class TestElasticSearch:
             {"name": "es-config-dir", "mountPath": "/usr/share/elasticsearch/config_copy"},
         ]
 
+        assert esc_containers["es-config-dir-copier"]["image"] == esc_containers["es-client"]["image"]
+        assert esc_containers["es-client"]["image"].startswith("quay.io/astronomer/ap-elasticsearch:")
+
         # elasticsearch nginx
         assert nginx_doc["kind"] == "Deployment"
         esn_containers = get_containers_by_name(nginx_doc, include_init_containers=True)

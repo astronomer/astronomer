@@ -79,7 +79,7 @@ spec:
 {{- include "elasticsearch.imagePullSecrets" . | indent 6 }}
       initContainers:
       - name: es-config-dir-copier
-        image: {{ template "init.image" . }}
+        image: {{ template "elasticsearch.image" . }}
         command:
         - bash
         - -xc
