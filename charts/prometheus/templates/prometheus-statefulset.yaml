@@ -65,7 +65,7 @@ spec:
               secretKeyRef:
                 name: astronomer-bootstrap
                 key: registry_auth_token
-          resources: {{ toYaml .Values.federation.auth.resources | indent 4 }}
+          resources: {{ toYaml .Values.federation.auth.resources | default .Values.global.authSidecar.resources) | indent 4 }}
           securityContext:
             readOnlyRootFilesystem: true
           readinessProbe:
