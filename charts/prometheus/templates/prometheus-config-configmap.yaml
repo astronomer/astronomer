@@ -354,7 +354,7 @@ data:
             regex: "([-a-z0-9]*[a-z0-9])-.*?"
             replacement: "$1"
             target_label: deployment
-          {{- include "prometheus.airflowMetricsActionDrop" . | nindent 4 }}
+          {{- include "prometheus.airflowMetricsActionDrop" . | nindent 10 }}
 
       - job_name: houston-api
         metrics_path: /v1/metrics
