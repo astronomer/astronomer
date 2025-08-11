@@ -192,7 +192,7 @@ spec:
         configMap:
           name: {{ template "prometheus.fullname" . }}-federation-auth-config
       {{- if .Values.global.authSidecar.podSecurityContext }}
-      securityContext:
+      securityContext: {{- toYaml .Values.global.authSidecar.podSecurityContext | nindent 8 }}
 {{ toYaml .Values.global.authSidecar.podSecurityContext | indent 8 }}
       {{- end }}
 
