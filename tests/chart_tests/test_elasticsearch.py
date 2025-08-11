@@ -88,6 +88,10 @@ class TestElasticSearch:
             {"name": "es-client-logs", "mountPath": "/usr/share/elasticsearch/logs"},
         ]
 
+        assert esc_containers["es-config-dir-copier"]["volumeMounts"] == [
+            {"name": "es-config-dir", "mountPath": "/usr/share/elasticsearch/config_copy"},
+        ]
+
         # elasticsearch nginx
         assert nginx_doc["kind"] == "Deployment"
         esn_containers = get_containers_by_name(nginx_doc, include_init_containers=True)

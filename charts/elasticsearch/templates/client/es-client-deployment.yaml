@@ -78,7 +78,7 @@ spec:
       tolerations: {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
 {{- include "elasticsearch.imagePullSecrets" . | indent 6 }}
       initContainers:
-      - name: config-dir-copier
+      - name: es-config-dir-copier
         image: {{ template "init.image" . }}
         command:
         - bash
@@ -90,7 +90,7 @@ spec:
         securityContext:
           readOnlyRootFilesystem: true
         volumeMounts:
-          - name: etc-config-dir
+          - name: es-config-dir
             mountPath: /usr/share/elasticsearch/config_copy
       {{- if (.Values.sysctlInitContainer.enabled) }}
       - name: sysctl
