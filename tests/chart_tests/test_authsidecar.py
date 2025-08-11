@@ -114,7 +114,7 @@ class TestAuthSidecar:
         assert doc["kind"] == "StatefulSet"
         assert doc["apiVersion"] == "apps/v1"
         assert doc["metadata"]["name"] == "release-name-prometheus"
-        assert "auth-proxy" == doc["spec"]["template"]["spec"]["containers"][0]["name"]
+        assert "nginx-auth-sidecar" == doc["spec"]["template"]["spec"]["containers"][0]["name"]
 
         assert "Service" == docs[2]["kind"]
         assert "release-name-prometheus" == docs[2]["metadata"]["name"]
@@ -148,7 +148,7 @@ class TestAuthSidecar:
         assert doc["kind"] == "Deployment"
         assert doc["apiVersion"] == "apps/v1"
         assert doc["metadata"]["name"] == "release-name-kibana"
-        assert "nginx-auth-proxy" == doc["spec"]["template"]["spec"]["containers"][1]["name"]
+        assert "auth-proxy" == doc["spec"]["template"]["spec"]["containers"][1]["name"]
 
         assert "Service" == docs[2]["kind"]
         assert "release-name-kibana" == docs[2]["metadata"]["name"]
