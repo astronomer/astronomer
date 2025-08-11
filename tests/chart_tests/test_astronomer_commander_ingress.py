@@ -17,16 +17,21 @@ class TestAstronomerCommanderIngress:
             show_only=["charts/astronomer/templates/commander/commander-grpc-ingress.yaml"],
         )
         assert len(docs) == 1
+        [doc for doc in docs if doc["kind"] == "Ingress"]
+
         doc = docs[0]
         assert doc["kind"] == "Ingress"
         assert doc["metadata"]["name"] == "release-name-commander-api-ingress"
         assert doc["metadata"]["labels"]["component"] == "api-ingress"
         assert doc["metadata"]["labels"]["plane"] == "data"
 
+        assert doc["spec"]["ingressClassName"] == "release-name-nginx"
+
         annotations = doc["metadata"]["annotations"]
+        assert "kubernetes.io/ingress.class" not in annotations
+
         assert annotations["nginx.ingress.kubernetes.io/backend-protocol"] == "GRPC"
         assert annotations["nginx.ingress.kubernetes.io/enable-http2"] == "true"
-        assert annotations["kubernetes.io/ingress.class"] == "release-name-nginx"
         assert annotations["nginx.ingress.kubernetes.io/custom-http-errors"] == "404"
         assert annotations["nginx.ingress.kubernetes.io/proxy-buffer-size"] == "16k"
 
@@ -72,15 +77,19 @@ class TestAstronomerCommanderIngress:
             values={"global": {"plane": {"mode": "data"}}},
             show_only=["charts/astronomer/templates/commander/commander-metadata-ingress.yaml"],
         )
+        ingress_docs = [doc for doc in docs if doc["kind"] == "Ingress"]
         assert len(docs) == 1
-        doc = docs[0]
-        assert doc["kind"] == "Ingress"
-        assert doc["metadata"]["name"] == "release-name-commander-metadata-ingress"
-        assert doc["metadata"]["labels"]["component"] == "metadata-ingress"
-        assert doc["metadata"]["labels"]["plane"] == "dataplane"
+        for doc in ingress_docs:
+            assert doc["kind"] == "Ingress"
+            assert doc["metadata"]["name"] == "release-name-commander-metadata-ingress"
+            assert doc["metadata"]["labels"]["component"] == "metadata-ingress"
+            assert doc["metadata"]["labels"]["plane"] == "dataplane"
+
+        assert doc["spec"]["ingressClassName"] == "release-name-nginx"
 
         annotations = doc["metadata"]["annotations"]
-        assert annotations["kubernetes.io/ingress.class"] == "release-name-nginx"
+
+        assert "kubernetes.io/ingress.class" not in annotations
         assert annotations["nginx.ingress.kubernetes.io/custom-http-errors"] == "404"
         assert annotations["nginx.ingress.kubernetes.io/proxy-buffer-size"] == "16k"
         assert annotations["nginx.ingress.kubernetes.io/rewrite-target"] == "/metadata"
