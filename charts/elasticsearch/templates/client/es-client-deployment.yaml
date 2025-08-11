@@ -117,7 +117,7 @@ spec:
         - name: DISCOVERY_SERVICE
           value: {{ template "elasticsearch.fullname" . }}-headless-discovery
         - name: "ES_JAVA_OPTS"
-          value: "-Xms{{ .Values.client.heapMemory }} -Xmx{{ .Values.client.heapMemory }} -Dlog4j2.formatMsgNoLookups=true"
+          value: "-Djava.io.tmpdir=/tmp -Xms{{ .Values.client.heapMemory }} -Xmx{{ .Values.client.heapMemory }} -Dlog4j2.formatMsgNoLookups=true"
         {{- range $key, $value :=  .Values.common.env }}
         - name: {{ $key | upper | replace "-" "_" }}
           value: {{ $value | quote }}
@@ -170,8 +170,12 @@ spec:
         - name: config
           mountPath: /usr/share/elasticsearch/config/elasticsearch.yml
           subPath: elasticsearch.yml
+        - name: es-client-logs
+          mountPath: /usr/share/elasticsearch/logs
       volumes:
       - name: tmp
+        emptyDir: {}
+      - name: es-client-logs
         emptyDir: {}
       - name: config
         configMap:

@@ -84,6 +84,7 @@ class TestElasticSearch:
         assert esc_containers["es-client"]["volumeMounts"] == [
             {"name": "tmp", "mountPath": "/tmp"},
             {"name": "config", "mountPath": "/usr/share/elasticsearch/config/elasticsearch.yml", "subPath": "elasticsearch.yml"},
+            {"name": "es-client-logs", "mountPath": "/usr/share/elasticsearch/logs"},
         ]
 
         # elasticsearch nginx
