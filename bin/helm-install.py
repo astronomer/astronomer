@@ -180,7 +180,7 @@ def helm_install(values: str | list[str] = f"{GIT_ROOT_DIR}/configs/local-dev.ya
 def show_pod_status() -> None:
     """Print the status of all pods in the specified namespace."""
     print("Current astronomer namespace pod status:")
-    subprocess.run(
+    pod_status = subprocess.check_output(
         [
             KUBECTL_EXE,
             f"--kubeconfig={KUBECONFIG_FILE}",
@@ -192,6 +192,7 @@ def show_pod_status() -> None:
         ],
         text=True,
     )
+    print(pod_status.decode())
 
 
 def wait_for_healthy_pods(ignore_substrings: list[str] | None = None, max_wait_time=90) -> None:
