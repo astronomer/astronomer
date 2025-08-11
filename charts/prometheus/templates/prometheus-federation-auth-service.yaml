@@ -142,12 +142,9 @@ spec:
       {{- end }}
     spec:
       {{- if .Values.global.platformNodePool }}
-      nodeSelector:
-{{ toYaml .Values.global.platformNodePool.nodeSelector | indent 8 }}
-      affinity:
-{{ toYaml .Values.global.platformNodePool.affinity | indent 8 }}
-      tolerations:
-{{ toYaml .Values.global.platformNodePool.tolerations | indent 8 }}
+      nodeSelector: {{- toYaml .Values.global.platformNodePool.nodeSelector | nindent 8 }}
+      affinity: {{- toYaml .Values.global.platformNodePool.affinity | nindent 8 }}
+      tolerations: {{- toYaml .Values.global.platformNodePool.tolerations | nindent 8 }}
       {{- end }}
       {{- include "prometheus.imagePullSecrets" . | nindent 6 }}
       containers:
