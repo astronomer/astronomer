@@ -192,7 +192,7 @@ def show_pod_status() -> None:
         ],
         text=True,
     )
-    print(pod_status.decode())
+    print(pod_status)
 
 
 def wait_for_healthy_pods(ignore_substrings: list[str] | None = None, max_wait_time=90) -> None:
@@ -202,10 +202,8 @@ def wait_for_healthy_pods(ignore_substrings: list[str] | None = None, max_wait_t
     debug_print(f"Starting pod health check with max wait time: {max_wait_time}s")
     if ignore_substrings:
         debug_print(f"Ignoring pods containing: {ignore_substrings}")
-
     print("Waiting for pods in the 'astronomer' namespace to be healthy...")
     end_time = time.time() + max_wait_time
-
     while True:
         debug_print(f"Checking pod status... {int(end_time - time.time())}s remaining")
 
@@ -241,7 +239,6 @@ def wait_for_healthy_pods(ignore_substrings: list[str] | None = None, max_wait_t
             print("All pods in the 'astronomer' namespace are healthy.")
             show_pod_status()
             return
-
         date_print(f"Found {len(unhealthy_pods)} unhealthy pods: {', '.join(unhealthy_pods)}")
         time.sleep(5)
 
