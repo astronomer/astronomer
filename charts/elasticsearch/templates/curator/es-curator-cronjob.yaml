@@ -22,15 +22,15 @@ spec:
         metadata:
 {{- if or .Values.common.podAnnotations .Values.curator.podAnnotations .Values.global.podAnnotations  }}
           annotations:
-{{- end }}
-{{- if .Values.global.podAnnotations }}
-{{ toYaml .Values.global.podAnnotations | indent 12 }}
-{{- end }}
-{{- if .Values.common.podAnnotations }}
-{{ toYaml .Values.common.podAnnotations | indent 12 }}
-{{- end }}
-{{- if .Values.curator.podAnnotations }}
-{{ toYaml .Values.curator.podAnnotations | indent 12 }}
+          {{- if .Values.global.podAnnotations }}
+          {{- toYaml .Values.global.podAnnotations | nindent 12 }}
+          {{- end }}
+          {{- if .Values.common.podAnnotations }}
+          {{- toYaml .Values.common.podAnnotations | nindent 12 }}
+          {{- end }}
+          {{- if .Values.curator.podAnnotations }}
+          {{- toYaml .Values.curator.podAnnotations | nindent 12 }}
+          {{- end }}
 {{- end }}
           labels:
             tier: logging
@@ -42,9 +42,9 @@ spec:
             version: {{ .Chart.Version }}
         spec:
           serviceAccountName: {{ template "elasticsearch.serviceAccountName" . }}
-          nodeSelector: {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 12 }}
-          affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 12 }}
-          tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 12 }}
+          nodeSelector: {{- toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 12 }}
+          affinity: {{- toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 12 }}
+          tolerations: {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 12 }}
 {{- include "elasticsearch.imagePullSecrets" . | indent 10 }}
           containers:
           - name: curator
@@ -58,10 +58,10 @@ spec:
               - name: config-volume
                 mountPath: /etc/config
             {{- if .Values.curator.readinessProbe }}
-            readinessProbe: {{ tpl (toYaml .Values.curator.readinessProbe) . | nindent 14 }}
+            readinessProbe: {{- tpl (toYaml .Values.curator.readinessProbe) . | nindent 14 }}
             {{- end }}
             {{- if .Values.curator.livenessProbe }}
-            livenessProbe: {{ tpl (toYaml .Values.curator.livenessProbe) . | nindent 14 }}
+            livenessProbe: {{- tpl (toYaml .Values.curator.livenessProbe) . | nindent 14 }}
             {{- end }}
           volumes:
             - name: config-volume

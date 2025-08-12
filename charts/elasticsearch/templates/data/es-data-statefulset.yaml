@@ -150,12 +150,16 @@ spec:
           periodSeconds: 10
         {{- end }}
         volumeMounts:
-        - mountPath: /usr/share/elasticsearch/data
-          name: data
-        - mountPath: /usr/share/elasticsearch/config/elasticsearch.yml
-          name: config
+        - mountPath: /tmp
+          name: tmp
+        - name: data
+          mountPath: /usr/share/elasticsearch/data
+        - name: config
+          mountPath: /usr/share/elasticsearch/config/elasticsearch.yml
           subPath: elasticsearch.yml
       volumes:
+      - name: tmp
+        emptyDir: {}
       - name: config
         configMap:
           name: {{ template "elasticsearch.fullname" . }}-config

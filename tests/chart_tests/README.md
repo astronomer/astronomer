@@ -92,7 +92,7 @@ To run python tests, it's best to use a virtual environment. From the root of th
 
 ```
 $ make venv
-[ -d .venv ] || { uv venv -p 3.12 --seed || virtualenv .venv -p python3 ; }
+[ -d .venv ] || { uv venv -p 3.13 --seed || virtualenv .venv -p python3 ; }
 Using CPython 3.12.8
 Creating virtual environment with seed packages at: .venv
  + pip==25.1.1
