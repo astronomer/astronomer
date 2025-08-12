@@ -33,19 +33,16 @@ spec:
       annotations:
         checksum/houston-config: {{ include (print $.Template.BasePath "/houston/houston-configmap.yaml") . | sha256sum }}
         checksum/houston-backend-secret: {{ include (print $.Template.BasePath "/houston/api/houston-backend-secret.yaml") . | sha256sum }}
-{{- if .Values.global.podAnnotations }}
-{{ toYaml .Values.global.podAnnotations | indent 8 }}
-{{- end }}
-{{- if .Values.houston.podAnnotations }}
-{{ toYaml .Values.houston.podAnnotations | indent 8 }}
-{{- end }}
+        {{- if .Values.global.podAnnotations }}
+        {{- toYaml .Values.global.podAnnotations | nindent 8 }}
+        {{- end }}
+        {{- if .Values.houston.podAnnotations }}
+        {{- toYaml .Values.houston.podAnnotations | nindent 8 }}
+        {{- end }}
     spec:
-      nodeSelector:
-{{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
-      affinity:
-{{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | indent 8 }}
-      tolerations:
-{{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
+      nodeSelector: {{- toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
+      affinity: {{- toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
+      tolerations: {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       restartPolicy: Always
       serviceAccountName: {{ template "houston.bootstrapperServiceAccountName" . }}
       {{- if and (not .Values.houston.airflowBackendSecretName) (not .Values.houston.airflowBackendConnection) (not .Values.houston.backendSecretName) (not .Values.houston.backendConnection) }}
@@ -53,15 +50,17 @@ spec:
         - name: wait-for-db
           image: {{ template "houston.image" . }}
           imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
-          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
+          securityContext:
+            readOnlyRootFilesystem: true
+            {{- toYaml .Values.securityContext| nindent 12 }}
           command:
             - "/houston/bin/entrypoint"
           args:
             - "echo"
             - "DB ready"
-          resources: {{ toYaml .Values.houston.resources | nindent 12 }}
+          resources: {{- toYaml .Values.houston.resources | nindent 12 }}
           {{- if .Values.houston.waitForDB.readinessProbe }}
-          readinessProbe: {{ tpl (toYaml .Values.houston.waitForDB.readinessProbe) . | nindent 12 }}
+          readinessProbe: {{- tpl (toYaml .Values.houston.waitForDB.readinessProbe) . | nindent 12 }}
           {{- end }}
           {{- if .Values.houston.waitForDB.livenessProbe }}
           livenessProbe: {{ tpl (toYaml .Values.houston.waitForDB.livenessProbe) . | nindent 12 }}
@@ -75,14 +74,16 @@ spec:
            {{- include "houston_environment" . | indent 12 }}
         - name: houston-bootstrapper
           image: {{ template "dbBootstrapper.image" . }}
-          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
+          securityContext:
+            readOnlyRootFilesystem: true
+            {{- toYaml .Values.securityContext| nindent 12 }}
           imagePullPolicy: {{ .Values.images.dbBootstrapper.pullPolicy }}
-          resources: {{ toYaml .Values.houston.resources | nindent 12 }}
+          resources: {{- toYaml .Values.houston.resources | nindent 12 }}
           {{- if .Values.houston.bootstrapper.readinessProbe }}
-          readinessProbe: {{ tpl (toYaml .Values.houston.bootstrapper.readinessProbe) . | nindent 12 }}
+          readinessProbe: {{- tpl (toYaml .Values.houston.bootstrapper.readinessProbe) . | nindent 12 }}
           {{- end }}
           {{- if .Values.houston.bootstrapper.livenessProbe }}
-          livenessProbe: {{ tpl (toYaml .Values.houston.bootstrapper.livenessProbe) . | nindent 12 }}
+          livenessProbe: {{- tpl (toYaml .Values.houston.bootstrapper.livenessProbe) . | nindent 12 }}
           {{- end }}
           env:
             - name: BOOTSTRAP_DB
@@ -90,15 +91,14 @@ spec:
                 secretKeyRef:
                   name: astronomer-bootstrap
                   key: connection
-            # we need to hardcode it to be able to upgrade from prisma1 to prisma2
             - name: SCHEMA_NAME
               value: "houston$default"
-            {{ if .Values.global.ssl.enabled }}
+            {{- if .Values.global.ssl.enabled }}
             - name: SSLMODE
               value: {{ .Values.global.ssl.mode }}
             {{- end }}
+            {{- if .Values.houston.prismaConnectionLimit }}
             # Connection Limit for Prisma Connection Pool: https://www.prisma.io/docs/concepts/components/prisma-client/deployment#database-connection-limit
-            {{ if .Values.houston.prismaConnectionLimit }}
             - name: PRISMA_CONNECTION_LIMIT
               value: {{ .Values.houston.prismaConnectionLimit | quote }}
             {{- end }}
@@ -111,23 +111,25 @@ spec:
             - name: IN_CLUSTER
               value: "true"
       {{- end }}
-{{- include "astronomer.imagePullSecrets" . | indent 6 }}
+      {{- include "astronomer.imagePullSecrets" . | nindent 6 }}
       containers:
         - name: houston
           image: {{ template "houston.image" . }}
           imagePullPolicy: {{ .Values.images.houston.pullPolicy }}
-          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
-          resources: {{ toYaml .Values.houston.resources | nindent 12 }}
+          securityContext:
+            readOnlyRootFilesystem: true
+            {{- toYaml .Values.securityContext| nindent 12 }}
+          resources: {{- toYaml .Values.houston.resources | nindent 12 }}
           volumeMounts:
             {{- include "houston_volume_mounts" . | indent 12 }}
             {{- include "custom_ca_volume_mounts" . | indent 12 }}
-{{- if .Values.houston.volumeMounts }}
-{{- tpl (toYaml .Values.houston.volumeMounts) $ | nindent 12 }}
-{{- end }}
+            {{- if .Values.houston.volumeMounts }}
+            {{- tpl (toYaml .Values.houston.volumeMounts) $ | nindent 12 }}
+            {{- end }}
           ports:
             - name: houston-http
               containerPort: {{ .Values.ports.houstonHTTP }}
-          {{ if .Values.houston.livenessProbe }}
+          {{- if .Values.houston.livenessProbe }}
           livenessProbe: {{ tpl (toYaml .Values.houston.livenessProbe) $ | nindent 12 }}
           {{- else }}
           livenessProbe:
@@ -138,8 +140,8 @@ spec:
             periodSeconds: 10
             failureThreshold: 10
           {{- end }}
-          {{ if .Values.houston.readinessProbe }}
-          readinessProbe: {{ tpl (toYaml .Values.houston.readinessProbe) $ | nindent 12 }}
+          {{- if .Values.houston.readinessProbe }}
+          readinessProbe: {{- tpl (toYaml .Values.houston.readinessProbe) $ | nindent 12 }}
           {{- else }}
           readinessProbe:
             httpGet:
@@ -150,12 +152,10 @@ spec:
             failureThreshold: 10
           {{- end }}
           {{- if .Values.houston.command }}
-          command:
-            {{- toYaml .Values.houston.command | nindent 12 }}
+          command: {{- toYaml .Values.houston.command | nindent 12 }}
           {{- end }}
           {{- if .Values.houston.apiArgs }}
-          args:
-            {{- toYaml .Values.houston.apiArgs | nindent 12 }}
+          args: {{- toYaml .Values.houston.apiArgs | nindent 12 }}
           {{- end }}
           env:
             {{- include "houston_environment" . | indent 12 }}
@@ -176,13 +176,13 @@ spec:
                 secretKeyRef:
                   name: {{ template "registry.authHeaderSecret" . }}
                   key: token
-{{- if .Values.houston.extraContainers }}
-{{- tpl (toYaml .Values.houston.extraContainers) $ | nindent 8 }}
-{{- end }}
+          {{- if .Values.houston.extraContainers }}
+          {{- tpl (toYaml .Values.houston.extraContainers) $ | nindent 8 }}
+          {{- end }}
       volumes:
-{{- if .Values.houston.extraVolumes }}
-{{ tpl (toYaml .Values.houston.extraVolumes) $ | indent 8 }}
-{{- end }}
-        {{- include "houston_volumes" . | indent 8 }}
-        {{- include "custom_ca_volumes" . | indent 8 }}
-{{- end }}
+      {{- if .Values.houston.extraVolumes }}
+      {{- tpl (toYaml .Values.houston.extraVolumes) $ | nindent 8 }}
+      {{- end }}
+              {{- include "houston_volumes" . | nindent 8 }}
+              {{- include "custom_ca_volumes" . | indent 8 }}
+      {{- end }}
