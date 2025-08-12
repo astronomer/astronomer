@@ -121,30 +121,6 @@ jobs:
           paths:
             - /tmp/workspace/trivy-cache
 
-  twistcli-scan-docker:
-    docker:
-      - image: cimg/base:current-24.04
-    shell: /usr/bin/bash
-    parameters:
-      docker_image:
-        type: string
-    steps:
-      - setup_remote_docker:
-          docker_layer_caching: true
-      - run: set -euo pipefail
-      - run:
-          name: Pull Docker image
-          command: docker pull << parameters.docker_image >>
-      - run:
-          name: Install twistcli
-          command: |
-            curl -k -u $USER:$PASSWORD --output twistcli $CONSOLE_URL"/api/v1/util/twistcli"
-            chmod +x twistcli
-      - run:
-          name: scan image
-          command: |
-            ./twistcli images scan --address $CONSOLE_URL --user=$USER --password=$PASSWORD --details << parameters.docker_image >>
-
   release_bom:
     docker:
       - image: quay.io/astronomer/ci-helm-release:{{ ci_runner_version }}
@@ -353,15 +329,6 @@ workflows:
 {%- endfor %}
           context:
             - slack_team-software-infra-bot
-      - twistcli-scan-docker:
-          matrix:
-            parameters:
-              docker_image:
-{%- for image in docker_images %}
-                - {{ image }}
-{%- endfor %}
-          context:
-            - twistcli
 
   build-and-release-helm-chart:
     when:
