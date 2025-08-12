@@ -83,6 +83,7 @@ class TestElasticSearch:
         assert vm_max_map_count in esc_containers["sysctl"]["command"]
         assert esc_containers["es-client"]["volumeMounts"] == [
             {"name": "es-config-dir", "mountPath": "/usr/share/elasticsearch/config"},
+            {"name": "es-data", "mountPath": "/usr/share/elasticsearch/data"},
             {"name": "tmp", "mountPath": "/tmp"},
             {"name": "config", "mountPath": "/usr/share/elasticsearch/config/elasticsearch.yml", "subPath": "elasticsearch.yml"},
             {"name": "es-client-logs", "mountPath": "/usr/share/elasticsearch/logs"},

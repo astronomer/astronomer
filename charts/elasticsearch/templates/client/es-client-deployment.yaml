@@ -180,6 +180,8 @@ spec:
         volumeMounts:
         - name: es-config-dir
           mountPath: /usr/share/elasticsearch/config
+        - name: es-data
+          mountPath: /usr/share/elasticsearch/data
         - name: tmp
           mountPath: /tmp
         - name: config
@@ -189,6 +191,8 @@ spec:
           mountPath: /usr/share/elasticsearch/logs
       volumes:
       - name: es-config-dir
+        emptyDir: {}
+      - name: es-data
         emptyDir: {}
       - name: tmp
         emptyDir: {}
