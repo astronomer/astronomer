@@ -63,7 +63,7 @@ spec:
           - name: REGISTRY_AUTH_TOKEN
             valueFrom:
               secretKeyRef:
-                name: astronomer-bootstrap
+                name: {{ template "registry.authHeaderSecret" . }}
                 key: registry_auth_token
           resources: {{ toYaml (.Values.federation.auth.resources | default .Values.global.authSidecar.resources) | nindent 12 }}
           securityContext:
