@@ -49,11 +49,11 @@ data:
       github:
         enabled: true
 
-    {{- if  .Values.global.nats.jetStream.enabled }}
+    {{- if .Values.global.nats.jetStream.enabled }}
     nats:
-      jetStreamEnabled: {{ .Values.global.nats.jetStream.enabled  }}
-      {{- include "jetstreamTLS" . | indent 6 }}
-    {{ end }}
+      jetStreamEnabled: {{ .Values.global.nats.jetStream.enabled }}
+      {{- include "jetstreamTLS" . | nindent 6 }}
+    {{- end }}
 
     plane:
       mode: {{ .Values.global.plane.mode }}
@@ -75,7 +75,7 @@ data:
       mode:
         operator:
           enabled: {{.Values.global.airflowOperator.enabled}}
-      disableManageClusterScopedResources: {{ default false ( or .Values.global.disableManageClusterScopedResources  .Values.global.features.namespacePools.enabled ) }}
+      disableManageClusterScopedResources: {{ default false ( or .Values.global.disableManageClusterScopedResources .Values.global.features.namespacePools.enabled ) }}
       fluentdIndexPrefix: {{ include "fluentd.IndexPattern" .}}
       enableHoustonInternalAuthorization: {{ include "houston.InternalAuthorization" . }}
       dagOnlyDeployment: {{ .Values.global.dagOnlyDeployment.enabled }}
@@ -112,7 +112,7 @@ data:
       {{- range $i, $namespaceName := .Values.global.features.namespacePools.namespaces.names }}
         - name: {{ $namespaceName }}
       {{- end }}
-      {{ end }}
+      {{- end }}
 
       {{- if .Values.global.authSidecar.enabled }}
       # enables nginx auth sidecar for airflow deployments
@@ -120,8 +120,8 @@ data:
       authSideCar:
         enabled: true
         ingressAllowedNamespaces: {{ default (list) .Values.global.authSidecar.ingressAllowedNamespaces | toJson }}
-        repository: {{ (splitList ":"  $authSidecar ) | first  }}
-        tag: {{ (splitList ":"  $authSidecar ) | last  }}
+        repository: {{ (splitList ":" $authSidecar ) | first }}
+        tag: {{ (splitList ":" $authSidecar ) | last }}
         port: {{ .Values.global.authSidecar.port }}
         pullPolicy: {{ .Values.global.authSidecar.pullPolicy }}
         {{- if .Values.global.authSidecar.securityContext}}
@@ -178,8 +178,8 @@ data:
         enabled: {{ .Values.global.dagOnlyDeployment.enabled }}
         images:
           dagServer:
-            repository: {{ (splitList ":"  $dagOnlyDeployment ) | first  }}
-            tag: {{ (splitList ":"  $dagOnlyDeployment ) | last  }}
+            repository: {{ (splitList ":" $dagOnlyDeployment ) | first }}
+            tag: {{ (splitList ":" $dagOnlyDeployment ) | last }}
         {{- if .Values.global.dagOnlyDeployment.securityContexts }}
         securityContexts: {{ template "dagOnlyDeployment.securityContexts" . }}
         {{- end }}
@@ -313,12 +313,12 @@ data:
                   # This is the name of the secret that gets copied from the platform namespace
                   # to the airflow namespaces.
                   secretName: {{ template "houston.jwtCertificateSecret" . }}
-            {{ end  }}
+            {{ end }}
             {{ if .Values.global.openshiftEnabled }}
             securityContexts:
               pod:
                 runAsNonRoot: true
-            {{ end  }}
+            {{ end }}
             resources:
               limits:
                 # XXX: There is an alert configured to trigger when ephemeral storage reaches
@@ -343,7 +343,7 @@ data:
             securityContexts:
               pod:
                 runAsNonRoot: true
-            {{ end  }}
+            {{ end }}
             resources:
               limits:
                 ephemeral-storage: "2Gi"
@@ -354,11 +354,11 @@ data:
             safeToEvict: true
 
           scheduler:
-            {{ if .Values.global.openshiftEnabled }}
+            {{- if .Values.global.openshiftEnabled }}
             securityContexts:
               pod:
                 runAsNonRoot: true
-            {{ end  }}
+            {{- end }}
 
             podDisruptionBudget:
               enabled: false
@@ -526,7 +526,7 @@ data:
               pod:
                 runAsNonRoot: true
 
-          # migrateDatabaseJob  settings
+          # migrateDatabaseJob settings
           migrateDatabaseJob:
             securityContexts:
               pod:
@@ -587,11 +587,11 @@ data:
             args: []
             serviceAccount:
               create: true
-            {{ if .Values.global.openshiftEnabled }}
+            {{- if .Values.global.openshiftEnabled }}
             securityContexts:
               pod:
                 runAsNonRoot: true
-            {{ end  }}
+            {{- end }}
 
           # Disable the postgres subchart. The platform pass credentials down
           # from the platform configuration.
