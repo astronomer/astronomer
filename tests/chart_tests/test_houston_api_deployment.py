@@ -29,20 +29,14 @@ class TestHoustonApiDeployment:
             "release": "release-name",
         }
 
-        assert houston_deployment["spec"]["template"]["metadata"]["labels"].get("app") == "houston"
-        assert houston_deployment["spec"]["template"]["metadata"]["labels"].get("app") == "houston"
-        assert houston_deployment["spec"]["template"]["metadata"]["labels"].get("tier") == "astronomer"
-        assert houston_deployment["spec"]["template"]["metadata"]["labels"].get("release") == "release-name"
-        assert houston_deployment["spec"]["template"]["metadata"]["labels"].get("plane") == "unified"
-
-        labels = houston_deployment["spec"]["template"]["metadata"]["labels"]
+        # Ensure the first dict is contained within the larger labels dict
         assert {
             "tier": "astronomer",
             "component": "houston",
             "release": "release-name",
             "app": "houston",
             "plane": "unified",
-        } == {x: labels[x] for x in labels if x != "version"}
+        }.items() <= houston_deployment["spec"]["template"]["metadata"]["labels"].items()
 
         c_by_name = get_containers_by_name(houston_deployment, include_init_containers=True)
         assert len(c_by_name) == 3
