@@ -325,7 +325,7 @@ global:
         tag: 4.4.1-2
       xcom:
         repository: quay.io/astronomer/ap-alpine
-        tag: 3.21.3-2
+        tag: 3.22.1
   gitSyncRelay:
     images:
       gitDaemon:
@@ -333,7 +333,7 @@ global:
         tag: 3.21.3-3
       gitSync:
         repository: quay.io/astronomer/ap-git-sync-relay
-        tag: 0.1.1
+        tag: 0.2.1
   certgenerator:
     images:
       repository: quay.io/astronomer/ap-certgenerator
