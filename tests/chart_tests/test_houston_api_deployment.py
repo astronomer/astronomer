@@ -42,22 +42,24 @@ class TestHoustonApiDeployment:
         assert len(c_by_name) == 3
         houston_container, wait_for_db_container, houston_bootstrapper_container = c_by_name.values()
 
+        assert houston_bootstrapper_container["securityContext"]["readOnlyRootFilesystem"]
         assert houston_bootstrapper_container["image"].startswith("quay.io/astronomer/ap-db-bootstrapper:")
         assert houston_container["image"].startswith("quay.io/astronomer/ap-houston-api:")
         assert wait_for_db_container["image"].startswith("quay.io/astronomer/ap-houston-api:")
 
-        houston_container_env = houston_container["env"]
-        deployments_database_connection_env = next(
-            x for x in houston_container_env if x["name"] == "DEPLOYMENTS__DATABASE__CONNECTION"
-        )
-        assert deployments_database_connection_env is not None
-        env_vars = get_env_vars_dict(houston_container["env"])
-        assert env_vars["DEPLOYMENTS__DATABASE__CONNECTION"]["secretKeyRef"]
-        assert env_vars["COMMANDER_WAIT_ENABLED"] == "true"
-        assert env_vars["REGISTRY_WAIT_ENABLED"] == "true"
-        env_vars = get_env_vars_dict(wait_for_db_container["env"])
-        assert env_vars["COMMANDER_WAIT_ENABLED"] == "true"
-        assert env_vars["REGISTRY_WAIT_ENABLED"] == "true"
+        assert houston_container["securityContext"]["readOnlyRootFilesystem"]
+        houston_container_env = get_env_vars_dict(houston_container["env"])
+        assert houston_container_env["DEPLOYMENTS__DATABASE__CONNECTION"]["secretKeyRef"]
+        assert houston_container_env["COMMANDER_WAIT_ENABLED"] == "true"
+        assert houston_container_env["REGISTRY_WAIT_ENABLED"] == "true"
+        assert houston_container_env["DEPLOYMENTS__DATABASE__CONNECTION"] == {
+            "secretKeyRef": {"key": "connection", "name": "release-name-houston-backend"}
+        }
+
+        assert wait_for_db_container["securityContext"]["readOnlyRootFilesystem"]
+        wait_for_db_container_env = get_env_vars_dict(wait_for_db_container["env"])
+        assert wait_for_db_container_env["COMMANDER_WAIT_ENABLED"] == "true"
+        assert wait_for_db_container_env["REGISTRY_WAIT_ENABLED"] == "true"
 
     def test_houston_api_deployment_control_mode(self, kube_version):
         docs = render_chart(
