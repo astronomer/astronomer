@@ -146,8 +146,6 @@ spec:
               mountPath: /tmp
             - name: home-houston
               mountPath: /home/houston
-            - name: houston-node-modules
-              mountPath: /houston/node_modules
             {{- include "houston_volume_mounts" . | indent 12 }}
             {{- include "custom_ca_volume_mounts" . | indent 12 }}
             {{- if .Values.houston.volumeMounts }}
@@ -208,6 +206,10 @@ spec:
           {{- end }}
       volumes:
         - name: etc-ssl-certs
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
+        - name: home-houston
           emptyDir: {}
       {{- if .Values.houston.extraVolumes }}
       {{- tpl (toYaml .Values.houston.extraVolumes) $ | nindent 8 }}
