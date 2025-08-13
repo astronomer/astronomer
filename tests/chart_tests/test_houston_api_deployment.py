@@ -20,22 +20,22 @@ class TestHoustonApiDeployment:
         )
 
         assert len(docs) == 1
-        doc = docs[0]
-        assert doc["kind"] == "Deployment"
-        assert "annotations" not in doc["metadata"]
-        assert {
+        houston_deployment = docs[0]
+        assert houston_deployment["kind"] == "Deployment"
+        assert "annotations" not in houston_deployment["metadata"]
+        assert houston_deployment["spec"]["selector"]["matchLabels"] == {
             "tier": "astronomer",
             "component": "houston",
             "release": "release-name",
-        } == doc["spec"]["selector"]["matchLabels"]
+        }
 
-        assert doc["spec"]["template"]["metadata"]["labels"].get("app") == "houston"
-        assert doc["spec"]["template"]["metadata"]["labels"].get("app") == "houston"
-        assert doc["spec"]["template"]["metadata"]["labels"].get("tier") == "astronomer"
-        assert doc["spec"]["template"]["metadata"]["labels"].get("release") == "release-name"
-        assert doc["spec"]["template"]["metadata"]["labels"].get("plane") == "unified"
+        assert houston_deployment["spec"]["template"]["metadata"]["labels"].get("app") == "houston"
+        assert houston_deployment["spec"]["template"]["metadata"]["labels"].get("app") == "houston"
+        assert houston_deployment["spec"]["template"]["metadata"]["labels"].get("tier") == "astronomer"
+        assert houston_deployment["spec"]["template"]["metadata"]["labels"].get("release") == "release-name"
+        assert houston_deployment["spec"]["template"]["metadata"]["labels"].get("plane") == "unified"
 
-        labels = doc["spec"]["template"]["metadata"]["labels"]
+        labels = houston_deployment["spec"]["template"]["metadata"]["labels"]
         assert {
             "tier": "astronomer",
             "component": "houston",
@@ -44,19 +44,22 @@ class TestHoustonApiDeployment:
             "plane": "unified",
         } == {x: labels[x] for x in labels if x != "version"}
 
-        c_by_name = get_containers_by_name(doc, include_init_containers=True)
-        assert c_by_name["houston-bootstrapper"]["image"].startswith("quay.io/astronomer/ap-db-bootstrapper:")
-        assert c_by_name["houston"]["image"].startswith("quay.io/astronomer/ap-houston-api:")
-        assert c_by_name["wait-for-db"]["image"].startswith("quay.io/astronomer/ap-houston-api:")
-        houston_env = c_by_name["houston"]["env"]
+        c_by_name = get_containers_by_name(houston_deployment, include_init_containers=True)
+        assert len(c_by_name) == 3
+        houston_container, wait_for_db_container, houston_bootstrapper_container = c_by_name.values()
+
+        assert houston_bootstrapper_container["image"].startswith("quay.io/astronomer/ap-db-bootstrapper:")
+        assert houston_container["image"].startswith("quay.io/astronomer/ap-houston-api:")
+        assert wait_for_db_container["image"].startswith("quay.io/astronomer/ap-houston-api:")
+        houston_env = houston_container["env"]
         deployments_database_connection_env = next(x for x in houston_env if x["name"] == "DEPLOYMENTS__DATABASE__CONNECTION")
         assert deployments_database_connection_env is not None
-        env_vars = get_env_vars_dict(c_by_name["houston"]["env"])
+        env_vars = get_env_vars_dict(houston_container["env"])
         assert env_vars["DEPLOYMENTS__DATABASE__CONNECTION"]["secretKeyRef"]
         assert env_vars["COMMANDER_WAIT_ENABLED"] == "true"
         assert env_vars["REGISTRY_WAIT_ENABLED"] == "true"
 
-        env_vars = get_env_vars_dict(c_by_name["wait-for-db"]["env"])
+        env_vars = get_env_vars_dict(wait_for_db_container["env"])
         assert env_vars["COMMANDER_WAIT_ENABLED"] == "true"
         assert env_vars["REGISTRY_WAIT_ENABLED"] == "true"
 
