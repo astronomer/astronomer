@@ -1,6 +1,7 @@
 #######################
 ## Fluentd ConfigMap ##
 #######################
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -247,3 +248,4 @@ data:
 {{ .Values.extraLogStores | indent 6}}
       {{- end }}
     </match>
+{{- end -}}

@@ -162,9 +162,9 @@ spec:
         - containerPort: 7777
           name: metrics
         command:
-         - "nats-server"
-         - "--config"
-         - "/etc/nats-config/nats.conf"
+        - "nats-server"
+        - "--config"
+        - "/etc/nats-config/nats.conf"
 
         # Required to be able to define an environment variable
         # that refers to other environment variables.  This env var
@@ -319,7 +319,6 @@ spec:
       - name: metrics
         image: {{ template "nats-exporter.image" . }}
         imagePullPolicy: {{ .Values.images.exporter.pullPolicy }}
-        securityContext: {{ template "nats.securityContext" . }}
         args:
           - -connz
           - -routez

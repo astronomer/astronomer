@@ -4,7 +4,7 @@ executors:
     environment:
       GIT_ORG: astronomer
     docker:
-      - image: cimg/python:3.12
+      - image: cimg/python:3.13
 
 orbs:
   slack: circleci/slack@4.10.1
@@ -120,30 +120,6 @@ jobs:
           {% raw %}key: trivy-cache-{{ checksum "date" }}{% endraw %}
           paths:
             - /tmp/workspace/trivy-cache
-
-  twistcli-scan-docker:
-    docker:
-      - image: cimg/base:current-24.04
-    shell: /usr/bin/bash
-    parameters:
-      docker_image:
-        type: string
-    steps:
-      - setup_remote_docker:
-          docker_layer_caching: true
-      - run: set -euo pipefail
-      - run:
-          name: Pull Docker image
-          command: docker pull << parameters.docker_image >>
-      - run:
-          name: Install twistcli
-          command: |
-            curl -k -u $USER:$PASSWORD --output twistcli $CONSOLE_URL"/api/v1/util/twistcli"
-            chmod +x twistcli
-      - run:
-          name: scan image
-          command: |
-            ./twistcli images scan --address $CONSOLE_URL --user=$USER --password=$PASSWORD --details << parameters.docker_image >>
 
   release_bom:
     docker:
@@ -353,15 +329,6 @@ workflows:
 {%- endfor %}
           context:
             - slack_team-software-infra-bot
-      - twistcli-scan-docker:
-          matrix:
-            parameters:
-              docker_image:
-{%- for image in docker_images %}
-                - {{ image }}
-{%- endfor %}
-          context:
-            - twistcli
 
   build-and-release-helm-chart:
     when:

@@ -1,6 +1,7 @@
 ####################
 ## Kibana Service ##
 ####################
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -29,3 +30,4 @@ spec:
     port: {{ .Values.global.authSidecar.port }}
     appProtocol: tcp
   {{- end}}
+{{- end }}
