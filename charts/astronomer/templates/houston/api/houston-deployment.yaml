@@ -91,6 +91,9 @@ spec:
                   name: astronomer-bootstrap
                   key: connection
            {{- include "houston_environment" . | indent 12 }}
+          volumeMounts:
+            - name: etc-ssl-certs
+              mountPath: /etc/ssl/certs
         - name: houston-bootstrapper
           image: {{ template "dbBootstrapper.image" . }}
           securityContext:
