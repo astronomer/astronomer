@@ -74,7 +74,7 @@ def kind_load_docker_images(cluster: str) -> None:
         cluster: Name of the KIND cluster to load images into.
     """
     circleci_config = yaml.safe_load((GIT_ROOT_DIR / ".circleci" / "config.yml").read_text())
-    image_list = circleci_config["workflows"]["scan-docker-images"]["jobs"][1]["twistcli-scan-docker"]["matrix"]["parameters"][
+    image_list = circleci_config["workflows"]["scan-docker-images"]["jobs"][0]["trivy-scan-docker"]["matrix"]["parameters"][
         "docker_image"
     ]
 

@@ -59,7 +59,7 @@ def date_print(*args):
     print(datetime.datetime.now(datetime.UTC).isoformat(), *args)
 
 
-def print_failing_pod_logs(tail: int = 100):
+def show_failing_pod_logs(tail: int = 100):
     """
     Print logs from all containers in failing states, including initContainers, excluding those where logs are not possible.
     :param tail: Number of log lines to show per container
@@ -100,7 +100,16 @@ def print_failing_pod_logs(tail: int = 100):
                     continue
                 container_name = cs["name"]
                 print(f"=== {pod_name}/{container_name} ({reason}) ===")
-                logs_cmd = [KUBECTL_EXE, "logs", "--namespace=astronomer", pod_name, "-c", container_name, f"--tail={tail}"]
+                logs_cmd = [
+                    KUBECTL_EXE,
+                    f"--kubeconfig={KUBECONFIG_FILE}",
+                    "logs",
+                    "--namespace=astronomer",
+                    pod_name,
+                    "-c",
+                    container_name,
+                    f"--tail={tail}",
+                ]
                 try:
                     logs = subprocess.check_output(logs_cmd, stderr=subprocess.STDOUT)
                     print(logs.decode())
@@ -157,11 +166,11 @@ def helm_install(values: str | list[str] = f"{GIT_ROOT_DIR}/configs/local-dev.ya
     debug_print(f"Final Helm command: {shlex.join(helm_install_command)}")
 
     try:
-        run_and_monitor_subprocess(helm_install_command, print_failing_pod_logs, interval=30)
+        run_and_monitor_subprocess(helm_install_command, show_failing_pod_logs, interval=30)
     except (RuntimeError, subprocess.CalledProcessError) as e:
         debug_print(f"Helm install failed: {e}")
         show_pod_status()
-        print_failing_pod_logs()
+        show_failing_pod_logs()
         print("Helm install failed. Please check the logs above for details.", file=sys.stderr)
         raise
 
@@ -171,7 +180,7 @@ def helm_install(values: str | list[str] = f"{GIT_ROOT_DIR}/configs/local-dev.ya
 def show_pod_status() -> None:
     """Print the status of all pods in the specified namespace."""
     print("Current astronomer namespace pod status:")
-    subprocess.run(
+    pod_status = subprocess.check_output(
         [
             KUBECTL_EXE,
             f"--kubeconfig={KUBECONFIG_FILE}",
@@ -183,6 +192,7 @@ def show_pod_status() -> None:
         ],
         text=True,
     )
+    print(pod_status)
 
 
 def wait_for_healthy_pods(ignore_substrings: list[str] | None = None, max_wait_time=90) -> None:
@@ -192,10 +202,8 @@ def wait_for_healthy_pods(ignore_substrings: list[str] | None = None, max_wait_t
     debug_print(f"Starting pod health check with max wait time: {max_wait_time}s")
     if ignore_substrings:
         debug_print(f"Ignoring pods containing: {ignore_substrings}")
-
     print("Waiting for pods in the 'astronomer' namespace to be healthy...")
     end_time = time.time() + max_wait_time
-
     while True:
         debug_print(f"Checking pod status... {int(end_time - time.time())}s remaining")
 
@@ -231,7 +239,6 @@ def wait_for_healthy_pods(ignore_substrings: list[str] | None = None, max_wait_t
             print("All pods in the 'astronomer' namespace are healthy.")
             show_pod_status()
             return
-
         date_print(f"Found {len(unhealthy_pods)} unhealthy pods: {', '.join(unhealthy_pods)}")
         time.sleep(5)
 

@@ -29,41 +29,49 @@ spec:
         version: {{ .Chart.Version }}
       annotations:
         checksum/configmap: {{ include (print $.Template.BasePath "/nginx/nginx-es-configmap.yaml") . | sha256sum }}
-{{- if .Values.global.podAnnotations }}
-{{ toYaml .Values.global.podAnnotations | indent 8 }}
-{{- end }}
-{{- if .Values.common.podAnnotations }}
-{{ toYaml .Values.common.podAnnotations | indent 8 }}
-{{- end }}
-{{- if .Values.nginx.podAnnotations }}
-{{ toYaml .Values.nginx.podAnnotations | indent 8 }}
-{{- end }}
+        {{- if .Values.global.podAnnotations }}
+        {{- toYaml .Values.global.podAnnotations | nindent 8 }}
+        {{- end }}
+        {{- if .Values.common.podAnnotations }}
+        {{- toYaml .Values.common.podAnnotations | nindent 8 }}
+        {{- end }}
+        {{- if .Values.nginx.podAnnotations }}
+        {{- toYaml .Values.nginx.podAnnotations | nindent 8 }}
+        {{- end }}
     spec:
       serviceAccountName: {{ template "elasticsearch.serviceAccountName" . }}
-      nodeSelector: {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
-      affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
-      tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
+      nodeSelector: {{- toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
+      affinity: {{- toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
+      tolerations: {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       restartPolicy: Always
 {{- include "elasticsearch.imagePullSecrets" . | indent 6 }}
       containers:
         - name: nginx
           image: {{ template "nginx-es.image" . }}
           imagePullPolicy: {{ .Values.images.nginx.pullPolicy }}
-          securityContext: {{ toYaml .Values.nginx.securityContext | nindent 12 }}
-          resources: {{ toYaml .Values.nginx.resources | nindent 12 }}
+          securityContext: {{- toYaml .Values.nginx.securityContext | nindent 12 }}
+          resources: {{- toYaml .Values.nginx.resources | nindent 12 }}
           volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: var-cache-nginx
+              mountPath: /var/cache/nginx
             - name: nginx-config-volume
               mountPath: /etc/nginx
           ports:
             - name: http
               containerPort: {{ .Values.common.ports.http }}
           {{- if .Values.nginx.readinessProbe }}
-          readinessProbe: {{ tpl (toYaml .Values.nginx.readinessProbe) . | nindent 12 }}
+          readinessProbe: {{- tpl (toYaml .Values.nginx.readinessProbe) . | nindent 12 }}
           {{- end }}
           {{- if .Values.nginx.livenessProbe }}
-          livenessProbe: {{ tpl (toYaml .Values.nginx.livenessProbe) . | nindent 12 }}
+          livenessProbe: {{- tpl (toYaml .Values.nginx.livenessProbe) . | nindent 12 }}
           {{- end }}
       volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: var-cache-nginx
+          emptyDir: {}
         - name: nginx-config-volume
           configMap:
             name: {{ .Release.Name }}-nginx-es

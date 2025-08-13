@@ -32,8 +32,8 @@ spec:
         plane: {{ .Values.global.plane.mode }}
       annotations:
         traffic.sidecar.istio.io/includeInboundPorts: ""
-        checksum/configmap: {{ include (print $.Template.BasePath "/controlplane/nginx-configmap.yaml") . | sha256sum }}
-        checksum/headers-configmap: {{ include (print $.Template.BasePath "/controlplane/nginx-headers-configmap.yaml") . | sha256sum }}
+        checksum/configmap: {{ include (print $.Template.BasePath "/controlplane/nginx-cp-configmap.yaml") . | sha256sum }}
+        checksum/headers-configmap: {{ include (print $.Template.BasePath "/controlplane/nginx-cp-headers-configmap.yaml") . | sha256sum }}
         {{- if .Values.global.istio.enabled }}
         sidecar.istio.io/inject: "false"
         {{- end }}
@@ -45,14 +45,37 @@ spec:
         {{- end }}
     spec:
       serviceAccountName: {{ template "nginx.serviceAccountName" . }}-cp
-{{- include "nginx.imagePullSecrets" . | indent 6 }}
-      containers:
-        - name: nginx
-          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
+      {{- include "nginx.imagePullSecrets" . | nindent 6 }}
+      initContainers:
+        - name: etc-nginx-copier
           image: {{ template "nginx.image" . }}
           imagePullPolicy: {{ .Values.images.nginx.pullPolicy }}
-          resources:
-{{ toYaml .Values.resources | indent 12 }}
+          securityContext:
+            readOnlyRootFilesystem: true
+            {{ toYaml .Values.securityContext| nindent 12 }}
+          resources: {{ toYaml .Values.resources | nindent 12 }}
+          command:
+            - /bin/sh
+            - -c
+            - |
+              cp -r /etc/nginx/* /etc/nginx_copy
+              mkdir /tmp/nginx
+              mkdir /etc/ingress-controller/auth /etc/ingress-controller/geoip /etc/ingress-controller/ssl /etc/ingress-controller/telemetry
+          volumeMounts:
+            - name: etc-nginx
+              mountPath: /etc/nginx_copy
+            - name: tmp
+              mountPath: /tmp
+            - name: etc-ingress-controller
+              mountPath: /etc/ingress-controller
+      containers:
+        - name: nginx
+          securityContext:
+            readOnlyRootFilesystem: true
+            {{ toYaml .Values.securityContext | nindent 12 }}
+          image: {{ template "nginx.image" . }}
+          imagePullPolicy: {{ .Values.images.nginx.pullPolicy }}
+          resources: {{ toYaml .Values.resources | nindent 12 }}
           args:
             - /nginx-ingress-controller
             - --default-backend-service={{ .Release.Namespace }}/{{ template "nginx.fullname" . }}-default-backend
@@ -104,6 +127,13 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: etc-ingress-controller
+              mountPath: /etc/ingress-controller
+            - name: etc-nginx
+              mountPath: /etc/nginx
       nodeSelector:
 {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | indent 8 }}
       affinity:
@@ -133,4 +163,11 @@ spec:
       tolerations:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
     {{- end }}
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: etc-ingress-controller
+          emptyDir: {}
+        - name: etc-nginx
+          emptyDir: {}
 {{- end }}
