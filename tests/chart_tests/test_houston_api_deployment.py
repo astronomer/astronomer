@@ -39,8 +39,12 @@ class TestHoustonApiDeployment:
         }.items() <= houston_deployment["spec"]["template"]["metadata"]["labels"].items()
 
         c_by_name = get_containers_by_name(houston_deployment, include_init_containers=True)
-        assert len(c_by_name) == 3
-        houston_container, wait_for_db_container, houston_bootstrapper_container = c_by_name.values()
+        assert len(c_by_name) == 4
+        houston_container, etc_ssl_certs_copier_container, wait_for_db_container, houston_bootstrapper_container = (
+            c_by_name.values()
+        )
+
+        assert etc_ssl_certs_copier_container["securityContext"]["readOnlyRootFilesystem"]
 
         assert houston_bootstrapper_container["securityContext"]["readOnlyRootFilesystem"]
         assert houston_bootstrapper_container["image"].startswith("quay.io/astronomer/ap-db-bootstrapper:")
