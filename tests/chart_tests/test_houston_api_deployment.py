@@ -12,7 +12,8 @@ from tests.utils.chart import render_chart
     supported_k8s_versions,
 )
 class TestHoustonApiDeployment:
-    def test_houston_api_deployment(self, kube_version):
+    def test_houston_api_deployment_defaults(self, kube_version):
+        """Test the default configuration of the Houston API deployment."""
         docs = render_chart(
             kube_version=kube_version,
             show_only=["charts/astronomer/templates/houston/api/houston-deployment.yaml"],
