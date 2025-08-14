@@ -322,40 +322,6 @@ data:
             target_label: deployment
           {{- include "prometheus.airflowMetricsActionDrop" . | nindent 10 }}
 
-      - job_name: airflow-api-server
-        kubernetes_sd_configs:
-          - role: service
-        relabel_configs:
-          - action: labelmap
-            regex: __meta_kubernetes_service_label_(.+)
-          - source_labels: [__meta_kubernetes_service_annotation_astronomer_io_platform_release]
-            action: keep
-            regex: ^{{ .Release.Name }}$
-          - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scrape]
-            action: keep
-            regex: true
-          # Target api-server component specifically
-          - source_labels: [__meta_kubernetes_service_label_component]
-            regex: "api-server"
-            action: keep
-          # Only scrape from api-server for Airflow 3.0+
-          - source_labels: [__meta_kubernetes_service_label_airflow_version]
-            regex: "3\\..*"
-            action: keep
-          - source_labels: [__address__, __meta_kubernetes_service_annotation_prometheus_io_port]
-            action: replace
-            regex: ([^:]+)(?::\d+)?;(\d+)
-            replacement: $1:$2
-            target_label: __address__
-          - source_labels: [__meta_kubernetes_service_label_airflow_version]
-            target_label: airflow_version
-        metric_relabel_configs:
-          - source_labels: [instance]
-            regex: "([-a-z0-9]*[a-z0-9])-.*?"
-            replacement: "$1"
-            target_label: deployment
-          {{- include "prometheus.airflowMetricsActionDrop" . | nindent 10 }}
-
       - job_name: houston-api
         metrics_path: /v1/metrics
         kubernetes_sd_configs:
