@@ -29,7 +29,8 @@ KIND_EXE = str(HELPER_BIN_DIR / "kind")
 KUBECTL_EXE = str(HELPER_BIN_DIR / "kubectl")
 CHART_METADATA = yaml.safe_load((Path(GIT_ROOT_DIR) / "metadata.yaml").read_text())
 KUBECTL_VERSION = CHART_METADATA["test_k8s_versions"][-2]
-if not all([(TEST_SCENARIO := os.getenv("TEST_SCENARIO")), TEST_SCENARIO in ["unified", "data", "control"]]):
+
+if (TEST_SCENARIO := os.getenv("TEST_SCENARIO", "")) not in ["unified", "data", "control"]:
     print("ERROR: TEST_SCENARIO environment variable is not set!", file=sys.stderr)
     print(PREREQUISITES, file=sys.stderr)
     raise SystemExit(1)
