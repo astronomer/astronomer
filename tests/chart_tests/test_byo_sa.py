@@ -66,7 +66,6 @@ class TestServiceAccounts:
             "nats": {"nats": {"serviceAccount": {"create": "true", "name": "nats-test"}}},
             "stan": {"stan": {"serviceAccount": {"create": "true", "name": "stan-test"}}},
             "alertmanager": {"serviceAccount": {"create": "true", "name": "alertmanager-test"}},
-            "kibana": {"serviceAccount": {"create": "true", "name": "kibana-test"}},
         }
         docs = render_chart(
             kube_version=kube_version,
@@ -80,11 +79,10 @@ class TestServiceAccounts:
                 "charts/nats/templates/nats-serviceaccount.yaml",
                 "charts/stan/templates/stan-serviceaccount.yaml",
                 "charts/alertmanager/templates/alertmanager-serviceaccount.yaml",
-                "charts/kibana/templates/kibana-serviceaccount.yaml",
             ],
         )
 
-        assert len(docs) == 9
+        assert len(docs) == 8
         expected_names = {
             "commander-test",
             "registry-test",
@@ -92,7 +90,6 @@ class TestServiceAccounts:
             "houston-test",
             "astroui-test",
             "alertmanager-test",
-            "kibana-test",
         }
         extracted_names = {doc["metadata"]["name"] for doc in docs if "metadata" in doc and "name" in doc["metadata"]}
         assert expected_names.issubset(extracted_names)
@@ -117,7 +114,6 @@ class TestServiceAccounts:
             "nats": {"nats": {"serviceAccount": {"create": False}}},
             "stan": {"stan": {"serviceAccount": {"create": False}}},
             "alertmanager": {"serviceAccount": {"create": False}},
-            "kibana": {"serviceAccount": {"create": False}},
             "postgresql": {"serviceAccount": {"create": False}},
             "external-es-proxy": {"serviceAccount": {"create": False}},
             "prometheus-postgres-exporter": {"serviceAccount": {"create": False}},
@@ -162,7 +158,6 @@ class TestServiceAccounts:
             "nats": {"nats": {"serviceAccount": {"create": True, "annotations": annotations}}},
             "stan": {"stan": {"serviceAccount": {"create": True, "annotations": annotations}}},
             "alertmanager": {"serviceAccount": {"create": True, "annotations": annotations}},
-            "kibana": {"serviceAccount": {"create": True, "annotations": annotations}},
             "postgresql": {"serviceAccount": {"create": True, "annotations": annotations}},
             "external-es-proxy": {"serviceAccount": {"create": True, "annotations": annotations}},
             "prometheus-postgres-exporter": {"serviceAccount": {"create": True, "annotations": annotations}},
@@ -341,10 +336,6 @@ custom_service_account_names = {
         "external-es-proxy": {"serviceAccount": {"create": True, "name": "prothean"}}
     },
     "charts/fluentd/templates/fluentd-daemonset.yaml": {"fluentd": {"serviceAccount": {"create": True, "name": "prothean"}}},
-    "charts/kibana/templates/kibana-default-index-cronjob.yaml": {
-        "kibana": {"serviceAccount": {"create": True, "name": "prothean"}}
-    },
-    "charts/kibana/templates/kibana-deployment.yaml": {"kibana": {"serviceAccount": {"create": True, "name": "prothean"}}},
     "charts/kube-state/templates/kube-state-deployment.yaml": {
         "kube-state": {"serviceAccount": {"create": True, "name": "prothean"}}
     },

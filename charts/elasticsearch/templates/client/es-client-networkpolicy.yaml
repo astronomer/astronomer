@@ -39,11 +39,6 @@ spec:
     - podSelector:
         matchLabels:
           tier: logging
-          component: kibana
-          release: {{ .Release.Name }}
-    - podSelector:
-        matchLabels:
-          tier: logging
           component: {{ template "elasticsearch.name" . }}
           release: {{ .Release.Name }}
     - podSelector:
