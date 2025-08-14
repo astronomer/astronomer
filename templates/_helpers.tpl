@@ -20,16 +20,12 @@ nginx.ingress.kubernetes.io/auth-url: https://houston.{{ .Values.global.baseDoma
 {{- end }}
 
 
-{{ define "containerd.configToml" -}}
-{{- .Values.global.privateCaCertsAddToHost.containerdConfigToml -}}
+{{- define "defaultRegistryPrefix" -}}
+quay.io/astronomer
 {{- end }}
 
-{{ define "dagOnlyDeployment.image" -}}
-{{- if .Values.global.privateRegistry.enabled -}}
-{{ .Values.global.privateRegistry.repository }}/ap-dag-deploy:{{ .Values.global.dagOnlyDeployment.tag }}
-{{- else -}}
-{{ .Values.global.dagOnlyDeployment.repository }}:{{ .Values.global.dagOnlyDeployment.tag }}
-{{- end }}
+{{ define "containerd.configToml" -}}
+{{- .Values.global.privateCaCertsAddToHost.containerdConfigToml -}}
 {{- end }}
 
 {{ define "authSidecar.image" -}}
