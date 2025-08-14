@@ -337,7 +337,7 @@ def test_nginx_defaults():
     assert c_by_name["etc-nginx-copier"]["securityContext"]["readOnlyRootFilesystem"]
     assert c_by_name["etc-nginx-copier"]["volumeMounts"] == [
         {"name": "etc-nginx", "mountPath": "/etc/nginx_copy"},
-        {"name": "tmp", "mountPath": "/tmp"},  # noqa: S108
+        {"name": "tmp", "mountPath": "/tmp"},
         {"name": "etc-ingress-controller", "mountPath": "/etc/ingress-controller"},
     ]
 
@@ -350,7 +350,7 @@ def test_nginx_defaults():
     for arg in forbidden_args:
         assert arg not in c_by_name["nginx"]["args"]
     assert c_by_name["nginx"]["volumeMounts"] == [
-        {"name": "tmp", "mountPath": "/tmp"},  # noqa: S108
+        {"name": "tmp", "mountPath": "/tmp"},
         {"name": "etc-ingress-controller", "mountPath": "/etc/ingress-controller"},
         {"name": "etc-nginx", "mountPath": "/etc/nginx"},
     ]
@@ -467,7 +467,7 @@ def test_nginx_default_backend_default():
     container = doc["spec"]["template"]["spec"]["containers"][0]
     assert container["image"].startswith("quay.io/astronomer/ap-default-backend:")
     assert container["imagePullPolicy"] == "IfNotPresent"
-    assert container["volumeMounts"] == [{"name": "tmp", "mountPath": "/tmp"}]  # noqa: S108
+    assert container["volumeMounts"] == [{"name": "tmp", "mountPath": "/tmp"}]
 
 
 def test_nginx_backend_overrides():

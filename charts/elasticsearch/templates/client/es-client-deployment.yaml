@@ -75,16 +75,29 @@ spec:
     {{- if .Values.global.platformNodePool.affinity }}
 {{ toYaml .Values.global.platformNodePool.affinity | indent 8 }}
     {{- end }}
-      tolerations:
-{{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
+      tolerations: {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
 {{- include "elasticsearch.imagePullSecrets" . | indent 6 }}
       initContainers:
+      - name: es-config-dir-copier
+        image: {{ template "elasticsearch.image" . }}
+        command:
+        - bash
+        - -xc
+        - cp -vr /usr/share/elasticsearch/config/* /usr/share/elasticsearch/config_copy
+        imagePullPolicy: {{ .Values.images.init.pullPolicy }}
+        resources: {{- toYaml .Values.client.initResources | nindent 10 }}
+        securityContext:
+          readOnlyRootFilesystem: true
+        volumeMounts:
+          - name: es-config-dir
+            mountPath: /usr/share/elasticsearch/config_copy
       {{- if (.Values.sysctlInitContainer.enabled) }}
       - name: sysctl
         image: {{ template "init.image" . }}
         imagePullPolicy: {{ .Values.images.init.pullPolicy }}
         command: ["sysctl", "-w", "vm.max_map_count={{ .Values.sysctlInitContainer.sysctlVmMaxMapCount}}"]
         securityContext:
+          readOnlyRootFilesystem: true
           privileged: true
         resources: {{- toYaml .Values.client.initResources | nindent 10 }}
         {{- if .Values.sysctlInitContainer.livenessProbe }}
@@ -97,8 +110,9 @@ spec:
       containers:
       - name: es-client
         securityContext:
+          readOnlyRootFilesystem: true
         {{- if .Values.client.securityContext }}
-{{ toYaml .Values.client.securityContext | indent 10 }}
+          {{- toYaml .Values.client.securityContext | nindent 10 }}
         {{- else }}
 {{- template "elasticsearch.securityContext" . }}
         {{- end }}
@@ -155,8 +169,6 @@ spec:
             port: {{ .Values.common.ports.http }}
           initialDelaySeconds: 90
         {{- end }}
-        {{- if semverCompare "^1.16-0" .Capabilities.KubeVersion.Version }}
-        # This feature is available in Kubernetes 1.16+
         startupProbe:
           httpGet:
             # without local=true, we are waiting for this pod's
@@ -165,12 +177,27 @@ spec:
             port: {{ .Values.common.ports.http }}
           failureThreshold: 30
           periodSeconds: 10
-        {{- end }}
         volumeMounts:
-        - mountPath: /usr/share/elasticsearch/config/elasticsearch.yml
-          name: config
+        - name: es-config-dir
+          mountPath: /usr/share/elasticsearch/config
+        - name: es-data
+          mountPath: /usr/share/elasticsearch/data
+        - name: tmp
+          mountPath: /tmp
+        - name: config
+          mountPath: /usr/share/elasticsearch/config/elasticsearch.yml
           subPath: elasticsearch.yml
+        - name: es-client-logs
+          mountPath: /usr/share/elasticsearch/logs
       volumes:
+      - name: es-config-dir
+        emptyDir: {}
+      - name: es-data
+        emptyDir: {}
+      - name: tmp
+        emptyDir: {}
+      - name: es-client-logs
+        emptyDir: {}
       - name: config
         configMap:
           name: {{ template "elasticsearch.fullname" . }}-config
