@@ -155,12 +155,16 @@ spec:
             port: {{ .Values.common.ports.transport }}
         {{- end }}
         volumeMounts:
-        - mountPath: /usr/share/elasticsearch/data
-          name: data
-        - mountPath: /usr/share/elasticsearch/config/elasticsearch.yml
-          name: config
+        - name: tmp
+          mountPath: /tmp
+        - name: data
+          mountPath: /usr/share/elasticsearch/data
+        - name: config
+          mountPath: /usr/share/elasticsearch/config/elasticsearch.yml
           subPath: elasticsearch.yml
       volumes:
+      - name: tmp
+        emptyDir: {}
       - name: config
         configMap:
           name: {{ template "elasticsearch.fullname" . }}-config
