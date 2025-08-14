@@ -118,7 +118,6 @@ astroHTTPTargets:
   commander: true
   houston: true
   registry: true
-  kibana: true
   elasticsearch: true
 
 # Enable prometheus lifecycle api
