@@ -399,7 +399,12 @@ data:
               from airflow.providers.cncf.kubernetes.utils.xcom_sidecar import PodDefaults
               PodDefaults.SIDECAR_CONTAINER.image = xcom_sidecar_image
             except ImportError:
-              warnings.warn("Airflow Providers CNCF not found")
+              warnings.warn(
+                "Airflow CNCF Provider not installed by default.
+                This will bypass custom images for xcom defaults to alpine.
+                refer https://airflow.apache.org/docs/apache-airflow-providers-cncf-kubernetes/stable/index.html
+                to install the provider.
+                )
             def pod_mutation_hook_deprecated(pod):
               from airflow.contrib.kubernetes.pod import Pod
               extra_labels = {
