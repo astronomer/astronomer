@@ -3,6 +3,7 @@
 ################################
 {{- if (eq .Values.global.logging.collector "fluentd") }}
 {{- if .Values.global.rbacEnabled }}
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 kind: ClusterRoleBinding
 apiVersion: {{ template "apiVersion.rbac" . }}
 metadata:
@@ -21,5 +22,6 @@ subjects:
 - kind: ServiceAccount
   name: {{ template "fluentd.serviceAccountName" . }}
   namespace: {{ .Release.Namespace }}
+{{- end -}}
 {{- end -}}
 {{- end -}}

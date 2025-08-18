@@ -74,7 +74,7 @@ def kind_load_docker_images(cluster: str) -> None:
         cluster: Name of the KIND cluster to load images into.
     """
     circleci_config = yaml.safe_load((GIT_ROOT_DIR / ".circleci" / "config.yml").read_text())
-    image_list = circleci_config["workflows"]["scan-docker-images"]["jobs"][1]["twistcli-scan-docker"]["matrix"]["parameters"][
+    image_list = circleci_config["workflows"]["scan-docker-images"]["jobs"][0]["trivy-scan-docker"]["matrix"]["parameters"][
         "docker_image"
     ]
 
@@ -159,7 +159,7 @@ def create_kind_cluster() -> None:
     Path(KUBECONFIG_FILE).unlink(missing_ok=True)
 
     try:
-        cmd = [
+        create_cluster_cmd = [
             f"{KIND_EXE}",
             "create",
             "cluster",
@@ -168,9 +168,9 @@ def create_kind_cluster() -> None:
             f"--config={GIT_ROOT_DIR}/tests/kind/calico-config.yaml",
             f"--image=kindest/node:v{KUBECTL_VERSION}",
         ]
-        print(f"Creating KIND cluster with command: {shlex.join(cmd)}")
+        print(f"Creating KIND cluster with command: {shlex.join(create_cluster_cmd)}")
         try:
-            run_command(cmd)
+            run_command(create_cluster_cmd)
         except RuntimeError as e:
             if "already exist for a cluster" in str(e):
                 print(f"ABORT: Cluster '{TEST_SCENARIO}' already exists.", file=sys.stderr)
@@ -178,18 +178,18 @@ def create_kind_cluster() -> None:
                 raise RuntimeError(f"Failed to create KIND cluster: {e}") from e
 
         # Apply calico configuration
-        cmd = [
+        configure_calico_command = [
             KUBECTL_EXE,
             f"--kubeconfig={KUBECONFIG_FILE}",
             "--namespace=kube-system",
             "apply",
             f"--filename={GIT_ROOT_DIR}/tests/kind/calico-crds-v{KUBECTL_VERSION.rpartition('.')[0]}.yaml",
         ]
-        print(f"Applying Calico configuration with command: {shlex.join(cmd)}")
-        run_command(cmd)
+        print(f"Applying Calico configuration with command: {shlex.join(configure_calico_command)}")
+        run_command(configure_calico_command)
 
         # Configure Calico to ignore loose reverse path filtering
-        cmd = [
+        ignore_lrpf_command = [
             KUBECTL_EXE,
             f"--kubeconfig={KUBECONFIG_FILE}",
             "--namespace=kube-system",
@@ -198,8 +198,8 @@ def create_kind_cluster() -> None:
             "daemonset/calico-node",
             "FELIX_IGNORELOOSERPF=true",
         ]
-        print(f"Configuring Calico with command: {shlex.join(cmd)}")
-        run_command(cmd)
+        print(f"Configuring Calico with command: {shlex.join(ignore_lrpf_command)}")
+        run_command(ignore_lrpf_command)
 
         # Wait until all pods are ready
         print("Waiting for all pods to become ready...")
@@ -207,9 +207,9 @@ def create_kind_cluster() -> None:
 
     except Exception:
         # Cleanup if cluster creation fails
-        cmd = [f"{KIND_EXE}", "delete", "cluster", f"--name={TEST_SCENARIO}"]
-        print(f"Cleaning up after failed cluster creation with command: {shlex.join(cmd)}")
-        run_command(cmd)
+        delete_cluster_cmd = [f"{KIND_EXE}", "delete", "cluster", f"--name={TEST_SCENARIO}"]
+        print(f"Cleaning up after failed cluster creation with command: {shlex.join(delete_cluster_cmd)}")
+        run_command(delete_cluster_cmd)
         Path(KUBECONFIG_FILE).unlink(missing_ok=True)
         raise
 

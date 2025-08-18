@@ -63,20 +63,20 @@ collectors:
   #- nodes
   #- endpoints
   #- poddisruptionbudgets
+  #- replicasets
+  #- replicationcontrollers
+  #- networkpolicies
+  #- horizontalpodautoscalers
   - daemonsets
   - namespaces
   - configmaps
   - cronjobs
   - deployments
-  - horizontalpodautoscalers
   - ingresses
   - jobs
   - limitranges
-  - networkpolicies
   - persistentvolumeclaims
   - pods
-  - replicasets
-  - replicationcontrollers
   - resourcequotas
   - secrets
   - services

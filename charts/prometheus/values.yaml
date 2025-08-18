@@ -26,7 +26,7 @@ images:
     pullPolicy: IfNotPresent
   filesdReloader:
     repository: quay.io/astronomer/ap-kuiper-reloader
-    tag: 0.1.5
+    tag: 0.1.7
     pullPolicy: IfNotPresent
 
 
@@ -177,8 +177,13 @@ additionalScrapeJobs: {}
 # https://prometheus.io/docs/prometheus/latest/configuration/configuration/#remote_write
 # external_labels: {}
 
-extraFlags: []
+federation:
+  externalLabels: {}
+
+extraFlags:
+- "--enable-feature=auto-config-reload"
 #- "--log.level=debug"
+
 
 # Amost mirror the prometheus config data structure for values we want to customize.
 # Convert lists to dicts for more explicit assignment.

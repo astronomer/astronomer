@@ -22,13 +22,20 @@ metadata:
 {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- end }}
     kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
-    kubernetes.io/tls-acme: {{ eq .Values.global.acme true | quote }}
     nginx.ingress.kubernetes.io/custom-http-errors: "404"
+    {{- if eq .Values.global.plane.mode "unified" }}
     nginx.ingress.kubernetes.io/configuration-snippet: |
       location ~ ^/v1/(registry\/events|alerts|elasticsearch|metrics) {
         deny all;
         return 403;
       }
+    {{- else }}
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      location ~ ^/v1/(alerts|elasticsearch|metrics) {
+        deny all;
+        return 403;
+      }
+    {{- end }}
     nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
     {{- end }}
 
@@ -36,27 +43,12 @@ metadata:
     {{- toYaml .Values.houston.ingress.annotation  | nindent 4  }}
     {{- end }}
 spec:
-  {{- if or .Values.global.tlsSecret .Values.global.acme }}
+  {{- if or .Values.global.tlsSecret }}
   tls:
-  {{- if .Values.global.acme }}
-    - secretName: houston-tls
-  {{- end }}
-  {{- if .Values.global.tlsSecret }}
     - secretName: {{ .Values.global.tlsSecret }}
-  {{- end }}
       hosts:
         - houston.{{ .Values.global.baseDomain }}
   {{- end }}
-  {{ if semverCompare "< 1.19-0" .Capabilities.KubeVersion.Version -}}
-  rules:
-  - host: houston.{{ .Values.global.baseDomain }}
-    http:
-      paths:
-        - path: /
-          backend:
-            serviceName: {{ .Release.Name }}-houston
-            servicePort: houston-http
-  {{ else -}}
   rules:
   - host: houston.{{ .Values.global.baseDomain }}
     http:
@@ -68,6 +60,5 @@ spec:
               name: {{ .Release.Name }}-houston
               port:
                 name: houston-http
-  {{- end -}}
 {{- end }}
 {{- end }}

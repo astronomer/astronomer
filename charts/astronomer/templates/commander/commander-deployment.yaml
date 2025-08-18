@@ -13,8 +13,10 @@ metadata:
     release: {{ .Release.Name }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
-  {{ if .Values.global.enableArgoCDAnnotation }}
+
   annotations:
+    checksum/jwks-secret: {{ printf "%s-commander-jwt-secret" .Release.Name | sha256sum }}
+  {{ if .Values.global.enableArgoCDAnnotation }}
     argocd.argoproj.io/sync-wave: "-1"
   {{- end }}
 spec:
@@ -133,6 +135,9 @@ spec:
             - name: commander-home
               mountPath: /home/commander
               subPath: home
+            - mountPath: /app/metadata.yaml
+              name: metadata
+              subPath: metadata.yaml
           {{- if .Values.commander.volumeMounts }}
           {{- tpl (toYaml .Values.commander.volumeMounts) $ | nindent 12 }}
           {{- end }}
@@ -142,6 +147,9 @@ spec:
       volumes:
         - name: commander-home
           emptyDir: {}
+        - configMap:
+            name: {{ .Release.Name }}-commander-metadata
+          name: metadata
       {{- if .Values.commander.extraVolumes }}
       {{- tpl (toYaml .Values.commander.extraVolumes) $ | nindent 8 }}
       {{- end }}

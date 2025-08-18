@@ -187,6 +187,9 @@ data:
           .Values.global.dagOnlyDeployment.resources
           .Values.global.dagOnlyDeployment.server.livenessProbe
           .Values.global.dagOnlyDeployment.server.readinessProbe
+          .Values.global.dagOnlyDeployment.server.nodeSelector
+          .Values.global.dagOnlyDeployment.server.affinity
+          .Values.global.dagOnlyDeployment.server.tolerations
         }}
         server:
         {{- if .Values.global.dagOnlyDeployment.resources }}
@@ -197,6 +200,15 @@ data:
         {{- end }}
         {{- if .Values.global.dagOnlyDeployment.server.readinessProbe }}
           readinessProbe: {{- .Values.global.dagOnlyDeployment.server.readinessProbe | toYaml | nindent 12 }}
+        {{- end }}
+        {{- if .Values.global.dagOnlyDeployment.server.nodeSelector }}
+          nodeSelector: {{- .Values.global.dagOnlyDeployment.server.nodeSelector | toYaml | nindent 12 }}
+        {{- end }}
+        {{- if .Values.global.dagOnlyDeployment.server.affinity }}
+          affinity: {{- .Values.global.dagOnlyDeployment.server.affinity | toYaml | nindent 12 }}
+        {{- end }}
+        {{- if .Values.global.dagOnlyDeployment.server.tolerations }}
+          tolerations: {{- .Values.global.dagOnlyDeployment.server.tolerations | toYaml | nindent 12 }}
         {{- end }}
         {{- end }}
         {{- if or
@@ -590,7 +602,7 @@ data:
           elasticsearch:
             enabled: true
             connection:
-              host: {{ printf "%s-external-es-proxy.%s" .Release.Name .Release.Namespace }}
+              host: elasticsearch.{{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}
               port: 9200
 
     elasticsearch:

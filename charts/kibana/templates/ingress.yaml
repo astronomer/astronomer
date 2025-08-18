@@ -2,6 +2,7 @@
 ## Kibana Ingress ##
 ####################
 {{- if .Values.global.baseDomain }}
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 kind: Ingress
 apiVersion: {{ template "apiVersion.Ingress" . }}
 metadata:
@@ -20,7 +21,6 @@ metadata:
 {{- toYaml .Values.global.extraAnnotations | nindent 4 }}
     {{- end }}
     kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
-    kubernetes.io/tls-acme: {{ eq .Values.global.acme true | quote }}
     {{- include "houston.internalauthurl" . | indent 4 }}
     nginx.ingress.kubernetes.io/auth-signin: https://app.{{ .Values.global.baseDomain }}/login
     nginx.ingress.kubernetes.io/auth-response-headers: authorization, username, email
@@ -31,14 +31,9 @@ metadata:
 {{- toYaml .Values.ingressAnnotations| nindent 4 }}
     {{- end }}
 spec:
-  {{- if or .Values.global.tlsSecret .Values.global.acme }}
+  {{- if or .Values.global.tlsSecret }}
   tls:
-  {{- if .Values.global.acme }}
-    - secretName: kibana-tls
-  {{- end }}
-  {{- if .Values.global.tlsSecret }}
     - secretName: {{ .Values.global.tlsSecret }}
-  {{- end }}
       hosts:
         - {{- include "kibana.url" . | indent 1 }}
   {{- end }}
@@ -47,15 +42,6 @@ spec:
       http:
         paths:
           - path: /
-            {{ if semverCompare "<1.19-0" .Capabilities.KubeVersion.Version -}}
-            backend:
-              serviceName: {{ template "kibana.fullname" . }}
-              {{- if .Values.global.authSidecar.enabled  }}
-              servicePort: auth-proxy
-              {{- else }}
-              servicePort: kibana-ui
-              {{- end }}
-            {{- else -}}
             pathType: Prefix
             backend:
               service:
@@ -66,5 +52,5 @@ spec:
                   {{- else }}
                   name: kibana-ui
                   {{- end }}
-            {{- end -}}
+{{- end }}
 {{- end }}

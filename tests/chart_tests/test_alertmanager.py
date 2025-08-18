@@ -28,24 +28,32 @@ class TestAlertmanager:
         assert doc["metadata"]["name"] == "release-name-alertmanager"
         assert doc["spec"]["template"]["spec"]["securityContext"]["fsGroup"] == 65534
         assert "persistentVolumeClaimRetentionPolicy" not in doc["spec"]
+        assert {"emptyDir": {}, "name": "etc-ssl-certs"} in doc["spec"]["template"]["spec"]["volumes"]
+        assert {"mountPath": "/etc/ssl/certs_copy", "name": "etc-ssl-certs"} in doc["spec"]["template"]["spec"]["initContainers"][
+            0
+        ]["volumeMounts"]
+        assert {"mountPath": "/etc/ssl/certs", "name": "etc-ssl-certs"} in doc["spec"]["template"]["spec"]["containers"][0][
+            "volumeMounts"
+        ]
+        assert (
+            doc["spec"]["template"]["spec"]["initContainers"][0]["image"]
+            == doc["spec"]["template"]["spec"]["containers"][0]["image"]
+        )
 
         # rfc1918 configs should be absent from default settings
-        assert (
-            any(
-                "--cluster.advertise-address=" in arg
-                for args in jmespath.search("spec.template.spec.containers[*].args", doc)
-                for arg in args
-            )
-            is False
+        assert all(
+            "--cluster.advertise-address=" not in arg
+            for args in jmespath.search("spec.template.spec.containers[*].args", doc)
+            for arg in args
         )
-        assert [
+        assert not [
             value
             for item in jmespath.search(
                 "spec.template.spec.containers[*].env[?name == 'POD_IP'].valueFrom.fieldRef.fieldPath",
                 doc,
             )
             for value in item
-        ] == []
+        ]
 
     def test_alertmanager_rfc1918(self, kube_version):
         """Test rfc1918 features of alertmanager template."""
@@ -148,6 +156,7 @@ class TestAlertmanager:
         volumes = doc["spec"]["template"]["spec"]["volumes"]
 
         expected_volumes = [
+            {"name": "etc-ssl-certs", "emptyDir": {}},
             {
                 "name": "config-volume",
                 "configMap": {
@@ -155,17 +164,12 @@ class TestAlertmanager:
                     "items": [{"key": "alertmanager.yaml", "path": "alertmanager.yaml"}],
                 },
             },
-            {
-                "name": "private-ca-cert-foo",
-                "secret": {"secretName": "private-ca-cert-foo"},
-            },
-            {
-                "name": "private-ca-cert-bar",
-                "secret": {"secretName": "private-ca-cert-bar"},
-            },
+            {"name": "private-ca-cert-foo", "secret": {"secretName": "private-ca-cert-foo"}},
+            {"name": "private-ca-cert-bar", "secret": {"secretName": "private-ca-cert-bar"}},
         ]
 
         expected_volumemounts = [
+            {"name": "etc-ssl-certs", "mountPath": "/etc/ssl/certs"},
             {"name": "config-volume", "mountPath": "/etc/config"},
             {"name": "data", "mountPath": "/data"},
             {

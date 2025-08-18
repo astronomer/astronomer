@@ -30,7 +30,7 @@ spec:
       component: registry
       tier: astronomer
       release: {{ .Release.Name }}
-{{- if and (not .Values.registry.gcs.enabled) (not .Values.registry.azure.enabled) (not .Values.registry.s3.enabled)}}
+{{- if and (not .Values.registry.gcs.enabled) (not .Values.registry.azure.enabled) (not .Values.registry.s3.enabled) }}
   serviceName: {{ .Release.Name }}-registry
 {{- end }}
   template:
@@ -47,6 +47,7 @@ spec:
         plane: {{ .Values.global.plane.mode }}
       annotations:
         checksum/configmap: {{ include (print $.Template.BasePath "/registry/registry-configmap.yaml") . | sha256sum }}
+        checksum/jwks-secret: {{ include (print $.Template.BasePath "/registry-auth-secret.yaml") . | sha256sum }}
 {{- if .Values.global.podAnnotations }}
 {{ toYaml .Values.global.podAnnotations | indent 8 }}
 {{- end }}
@@ -63,36 +64,66 @@ spec:
 {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | indent 8 }}
       restartPolicy: Always
 {{- if eq .Values.global.openshiftEnabled false }}
-      securityContext: {{ toYaml .Values.registry.podSecurityContext| nindent 8 }}
+      securityContext: {{ toYaml .Values.registry.podSecurityContext | nindent 8 }}
 {{- end }}
 {{- include "astronomer.imagePullSecrets" . | indent 6 }}
+      initContainers:
+        - name: etc-ssl-certs-copier
+          volumeMounts:
+            - name: etc-ssl-certs
+              mountPath: /etc/ssl/certs_copy
+          image: {{ template "registry.image" . }}
+          imagePullPolicy: {{ .Values.images.registry.pullPolicy }}
+          command:
+            - sh
+            - -c
+            - |
+              if [ -d /etc/ssl/certs ]; then
+                cp -r /etc/ssl/certs/* /etc/ssl/certs_copy/
+              else
+                echo "No /etc/ssl/certs directory found, skipping copy."
+              fi
+          resources:
+            limits: {'cpu': '100m', 'memory': '128Mi'}
+            requests: {'cpu': '100m', 'memory': '128Mi'}
+          securityContext:
+            readOnlyRootFilesystem: true
+            {{ toYaml .Values.securityContext | nindent 12 }}
+          env:
+          {{- if .Values.registry.extraEnv }}
+            {{- toYaml .Values.registry.extraEnv | nindent 12 }}
+          {{- end }}
       containers:
         - name: registry
-          image: {{ template  "registry.image" . }}
-          securityContext: {{ toYaml .Values.securityContext| nindent 12 }}
+          image: {{ template "registry.image" . }}
+          securityContext:
+            readOnlyRootFilesystem: true
+            {{ toYaml .Values.securityContext | nindent 12 }}
           imagePullPolicy: {{ .Values.images.registry.pullPolicy }}
           env:
-          - name: REGISTRY_NOTIFICATIONS_ENDPOINTS_0_HEADERS
-            valueFrom:
-              secretKeyRef:
-                name: {{ template "registry.authHeaderSecret" . }}
-                key: authHeaders
-          - name: REGISTRY_HTTP_SECRET
-            {{- if .Values.registry.httpSecret }}
-            value: {{ .Values.registry.httpSecret }}
-            {{- else }}
-            value: {{ randAlphaNum 32 }}
-            {{- end }}
+            - name: REGISTRY_NOTIFICATIONS_ENDPOINTS_0_HEADERS
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "registry.authHeaderSecret" . }}
+                  key: authHeaders
+            - name: REGISTRY_HTTP_SECRET
+              {{- if .Values.registry.httpSecret }}
+              value: {{ .Values.registry.httpSecret }}
+              {{- else }}
+              value: {{ randAlphaNum 32 }}
+              {{- end }}
           {{- if .Values.global.privateCaCerts }}
-          - name: UPDATE_CA_CERTS
-            value: "true"
+            - name: UPDATE_CA_CERTS
+              value: "true"
           {{- end }}
-{{- if .Values.registry.extraEnv }}
-{{ toYaml .Values.registry.extraEnv | indent 10 }}
-{{- end }}
+          {{- if .Values.registry.extraEnv }}
+            {{- toYaml .Values.registry.extraEnv | nindent 12 }}
+          {{- end }}
           resources:
-{{ toYaml .Values.registry.resources | indent 12 }}
+            {{- toYaml .Values.registry.resources | nindent 12 }}
           volumeMounts:
+            - name: etc-ssl-certs
+              mountPath: /etc/ssl/certs
             - name: config
               mountPath: /etc/docker/registry
             {{- if not .Values.registry.enableInsecureAuth }}
@@ -104,7 +135,7 @@ spec:
             {{- if and .Values.registry.gcs.enabled .Values.registry.gcs.useKeyfile }}
             {{- include "registry.gcsVolumeMount" . | indent 12 }}
             {{- end }}
-            {{- include "custom_ca_volume_mounts" . | indent 12  }}
+            {{- include "custom_ca_volume_mounts" . | indent 12 }}
           ports:
             - name: registry-http
               containerPort: {{ .Values.ports.registryHTTP }}
@@ -131,31 +162,32 @@ spec:
             timeoutSeconds: 5
           {{- end }}
       volumes:
+        - name: etc-ssl-certs
+          emptyDir: {}
         - name: config
           configMap:
             name: {{ .Release.Name }}-registry
             items:
               - key: config.yml
                 path: config.yml
-        {{- if not .Values.registry.enableInsecureAuth }}
+      {{- if not .Values.registry.enableInsecureAuth }}
         - name: jwks-certificate
           secret:
             secretName: {{ include "houston.jwtCertificateSecret" . }}
-        {{- end }}
-        {{ include "custom_ca_volumes" . | indent 8  }}
-        {{- if and .Values.registry.gcs.enabled .Values.registry.gcs.useKeyfile }}
-        {{- include "registry.gcsVolume" . | indent 8 }}
-        {{- end }}
-  {{- if or (not .Values.registry.persistence.enabled) (.Values.registry.gcs.enabled) (.Values.registry.azure.enabled) (.Values.registry.s3.enabled)}}
+      {{- end }}
+        {{- include "custom_ca_volumes" . | nindent 8 }}
+      {{- if and .Values.registry.gcs.enabled .Values.registry.gcs.useKeyfile }}
+        {{- include "registry.gcsVolume" . | nindent 8 }}
+      {{- end }}
+{{- if or (not .Values.registry.persistence.enabled) (.Values.registry.gcs.enabled) (.Values.registry.azure.enabled) (.Values.registry.s3.enabled) }}
         - name: data
           emptyDir: {}
-  {{- else }}
+{{- else }}
   volumeClaimTemplates:
     - metadata:
         name: data
         {{- if .Values.registry.persistence.annotations }}
-        annotations:
-          {{- toYaml .Values.registry.persistence.annotations | nindent 10 }}
+        annotations: {{- toYaml .Values.registry.persistence.annotations | nindent 10 }}
         {{- end }}
       spec:
         accessModes: ["ReadWriteOnce"]
@@ -163,6 +195,6 @@ spec:
           requests:
             storage: {{ .Values.registry.persistence.size }}
         {{- include "registry.storageClass" . }}
-  {{- end }}
+{{- end }}
 {{- end }}
 {{- end }}

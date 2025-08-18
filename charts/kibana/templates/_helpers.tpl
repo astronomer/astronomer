@@ -35,7 +35,11 @@ Create chart name and version as used by the chart label.
 Create kibana url.
 */}}
 {{ define "kibana.url" -}}
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") -}}
+kibana.{{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}
+{{- else -}}
 kibana.{{ .Values.global.baseDomain }}
+{{- end }}
 {{- end }}
 
 {{ define "kibana.image" -}}
@@ -66,7 +70,7 @@ imagePullSecrets:
 
 {{- define "kibana.securityContext" -}}
 {{- if or (eq ( toString ( .Values.securityContext.runAsUser )) "auto") ( .Values.global.openshiftEnabled ) }}
-{{- omit  .Values.securityContext "runAsUser" | toYaml | nindent 12 }}
+{{- omit .Values.securityContext "runAsUser" | toYaml | nindent 12 }}
 {{- else }}
 {{- .Values.securityContext | toYaml | nindent 12 }}
 {{- end -}}
@@ -74,8 +78,8 @@ imagePullSecrets:
 
 {{ define "kibana.serviceAccountName" -}}
 {{- if and .Values.serviceAccount.create .Values.global.rbacEnabled -}}
-{{ default (printf "%s" (include "alertmanager.fullname" . )) .Values.serviceAccount.name }}
+{{- default (printf "%s" (include "alertmanager.fullname" . )) .Values.serviceAccount.name }}
 {{- else -}}
-    {{ default "default" .Values.serviceAccount.name }}
+{{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}

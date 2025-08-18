@@ -48,25 +48,24 @@ spec:
 {{- include "astronomer.imagePullSecrets" . | indent 6 }}
       containers:
         - name: astro-ui
-          image: {{- include "astroUI.image" . | indent 1 }}
+          image: {{ include "astroUI.image" . }}
           imagePullPolicy: {{ .Values.images.astroUI.pullPolicy }}
-          securityContext: {{ toYaml (.Values.securityContext)| nindent 12 }}
-          resources:
-{{ toYaml .Values.astroUI.resources | indent 12 }}
+          securityContext:
+            readOnlyRootFilesystem: true
+            {{- toYaml (.Values.securityContext) | nindent 12 }}
+          resources: {{- toYaml .Values.astroUI.resources | nindent 12 }}
           {{- if .Values.astroUI.command }}
-          command:
-            {{- toYaml .Values.astroUI.command | nindent 12 }}
+          command: {{- toYaml .Values.astroUI.command | nindent 12 }}
           {{- end }}
           {{- if .Values.astroUI.args }}
-          args:
-            {{- toYaml .Values.astroUI.args | nindent 12 }}
+          args: {{- toYaml .Values.astroUI.args | nindent 12 }}
           {{- end }}
           ports:
             - name: astro-ui-http
               containerPort: {{ .Values.ports.astroUIHTTP }}
           {{- if .Values.astroUI.livenessProbe }}
           livenessProbe: {{ tpl (toYaml .Values.astroUI.livenessProbe) . | nindent 12 }}
-          {{- else}}
+          {{- else }}
           livenessProbe:
             httpGet:
               path: /
@@ -76,7 +75,7 @@ spec:
           {{- end }}
           {{- if .Values.astroUI.readinessProbe }}
           readinessProbe: {{ tpl (toYaml .Values.astroUI.readinessProbe) . | nindent 12 }}
-          {{- else}}
+          {{- else }}
           readinessProbe:
             httpGet:
               path: /
@@ -96,6 +95,8 @@ spec:
               value: "wss://houston.{{ .Values.global.baseDomain }}/ws"
             {{- end }}
           volumeMounts:
+          - name: tmp
+            mountPath: /tmp
 {{- if .Values.astroUI.volumeMounts }}
 {{- tpl (toYaml .Values.astroUI.volumeMounts) $ | nindent 12 }}
 {{- end }}
@@ -103,6 +104,8 @@ spec:
 {{- tpl (toYaml .Values.astroUI.extraContainers) $ | nindent 8 }}
 {{- end }}
       volumes:
+        - name: tmp
+          emptyDir: {}
 {{- if .Values.astroUI.extraVolumes }}
 {{- tpl (toYaml .Values.astroUI.extraVolumes) $ | nindent 8 }}
 {{- end }}

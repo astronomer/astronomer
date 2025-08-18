@@ -28,13 +28,13 @@ data:
         rules:
         {{- if and (not .Values.additionalAlerts.airflow) (not .Values.defaultAlerts.airflow.enabled) }}
           []
-        {{ end }}
+        {{- end }}
         {{- if .Values.additionalAlerts.airflow }}
         {{- tpl .Values.additionalAlerts.airflow $ | nindent 8 }}
         {{- end }}
         {{- if .Values.defaultAlerts.airflow.enabled }}
         - alert: AirflowDeploymentUnhealthy
-          expr: sum by(release) (kube_pod_container_status_running{container=~".*(scheduler|scheduler-gc|webserver|worker|statsd|pgbouncer|metrics-exporter|redis|flower|triggerer)"}) - count by(release) (kube_pod_container_status_running{container=~".*(scheduler|scheduler-gc|webserver|worker|statsd|pgbouncer|metrics-exporter|redis|flower|triggerer)"}) < 0
+          expr: sum by(release) (kube_pod_container_status_running{container=~".*(scheduler|scheduler-gc|webserver|api-server|worker|statsd|pgbouncer|metrics-exporter|redis|flower|triggerer)"}) - count by(release) (kube_pod_container_status_running{container=~".*(scheduler|scheduler-gc|webserver|worker|statsd|pgbouncer|metrics-exporter|redis|flower|triggerer)"}) < 0
           for: 15m # Rough number but should be enough to clear deployments with a reasonable amount of workers
           labels:
             tier: airflow
@@ -45,7 +45,6 @@ data:
           annotations:
             summary: {{ printf "%q" "{{ $labels.release }} deployment is unhealthy" }}
             description: {{ printf "%q" "The {{ $labels.release }} deployment is not completely available." }}
-
 
         # This alert depends on the scheduler_heartbeat metric being a counter.
         # The type filter here was introduced in 0.7.0, so we don't trigger alerts for
@@ -75,18 +74,6 @@ data:
             summary: {{ printf "%q" "{{ $labels.release }} is near its pod quota" }}
             description: {{ printf "%q" "{{ $labels.release }} has been using over 95% of its pod quota for over 10 minutes." }}
 
-        - alert: AirflowEphemeralStorageLimit
-          expr: (container_fs_usage_bytes{pod_name=~".*(scheduler|webserver|worker).*"}) >= 8500000000
-          for: 10m
-          labels:
-            tier: airflow
-            component: {{ printf "%q" "{{ $labels.component_name }}" }}
-            workspace: {{ printf "%q" "{{ $labels.workspace }}" }}
-            deployment: {{ printf "%q" "{{ $labels.deployment }}" }}
-          annotations:
-            summary: {{ printf "%q" "{{ $labels.deployment }} {{ $labels.component_name }} is experiencing high ephemeral storage usage" }}
-            description: {{ printf "%q" "{{ $labels.deployment }} {{ $labels.component_name }} has been using >=8.5GB of its ephemeral storage for over 10 minutes." }}
-
         - alert: AirflowTasksPendingIncreasing
           expr: (max_over_time(airflow_scheduler_tasks_pending[5m]) - max_over_time(airflow_scheduler_tasks_pending[5m] offset 5m)) > 0
           for: 30m
@@ -97,34 +84,6 @@ data:
           annotations:
             summary: {{ printf "%q" "{{ $labels.deployment }} is creating tasks faster than it's clearing them." }}
             description: {{ printf "%q" "{{ $labels.deployment }}: the number of pending tasks has been increasing for 30 minutes" }}
-
-        - alert: ContainerMemoryNearTheLimitInDeployment
-          expr: |
-            (container_memory_working_set_bytes{container=~".*(scheduler|scheduler-gc|webserver|worker|statsd|pgbouncer|metrics-exporter|redis|flower|triggerer)", container_name!~"POD|istio-proxy"} /
-            container_spec_memory_limit_bytes{container=~".*(scheduler|scheduler-gc|webserver|worker|statsd|pgbouncer|metrics-exporter|redis|flower|triggerer)", container_name!~"POD|istio-proxy"}) * 100 > 95 < +Inf
-          for: 1h
-          labels:
-            tier: airflow
-            component: container
-            workspace: {{ printf "%q" "{{ $labels.workspace }}" }}
-            deployment: {{ printf "%q" "{{ $labels.deployment }}" }}
-            severity: warning
-          annotations:
-            summary: "A container is using more than 95% of the memory limit"
-            description: {{ printf "%q" "container {{ $labels.container }} in pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is using {{ printf \"%.2f\" $value }}% of available memory." }}
-
-        - alert: CpuThrottlingInDeployment
-          expr: 100 * (increase(container_cpu_cfs_throttled_periods_total{namespace!="{{ .Release.Name }}", container_name!~".*worker.*|()"}[5m]) / increase(container_cpu_cfs_periods_total{namespace!="{{ .Release.Name }}", namespace != "kube-system", container_name!~".*worker.*|()"}[5m])) > 75
-          for: 5m
-          labels:
-            silence: cre
-            #tier: airflow
-            workspace: {{ printf "%q" "{{ $labels.workspace }}" }}
-            deployment: {{ printf "%q" "{{ $labels.deployment }}" }}
-            severity: warning
-          annotations:
-            summary: {{ printf "%q" "{{ $labels.pod_name }} ({{ $labels.container_name }}) in namespace {{ $labels.namespace }} is getting throttled {{ $value }}% of the time" }}
-            description: "In the past 5 minutes, one or more components in the deployment are experiencing CPU throttling."
         {{- end }}
 
       - name: platform
@@ -184,33 +143,6 @@ data:
       - name: k8s-recording.rules
         rules:
         - expr: |
-            sum(rate(container_cpu_usage_seconds_total{job="kubernetes-nodes-cadvisor", image!="", container!="POD"}[5m])) by (namespace)
-          record: namespace:container_cpu_usage_seconds_total:sum_rate
-        - expr: |
-            sum by (cluster, namespace, pod, container) (
-              rate(container_cpu_usage_seconds_total{job="kubernetes-nodes-cadvisor", image!="", container!="POD"}[5m])
-            ) * on (cluster, namespace, pod) group_left(node) max by(cluster, namespace, pod, node) (kube_pod_info)
-          record: node_namespace_pod_container:container_cpu_usage_seconds_total:sum_rate
-        - expr: |
-            container_memory_working_set_bytes{job="kubernetes-nodes-cadvisor", image!=""}
-            * on (namespace, pod) group_left(node) max by(namespace, pod, node) (kube_pod_info)
-          record: node_namespace_pod_container:container_memory_working_set_bytes
-        - expr: |
-            container_memory_rss{job="kubernetes-nodes-cadvisor", image!=""}
-            * on (namespace, pod) group_left(node) max by(namespace, pod, node) (kube_pod_info)
-          record: node_namespace_pod_container:container_memory_rss
-        - expr: |
-            container_memory_cache{job="kubernetes-nodes-cadvisor", image!=""}
-            * on (namespace, pod) group_left(node) max by(namespace, pod, node) (kube_pod_info)
-          record: node_namespace_pod_container:container_memory_cache
-        - expr: |
-            container_memory_swap{job="kubernetes-nodes-cadvisor", image!=""}
-            * on (namespace, pod) group_left(node) max by(namespace, pod, node) (kube_pod_info)
-          record: node_namespace_pod_container:container_memory_swap
-        - expr: |
-            sum(container_memory_usage_bytes{job="kubernetes-nodes-cadvisor", image!="", container!="POD"}) by (namespace)
-          record: namespace:container_memory_usage_bytes:sum
-        - expr: |
             sum by (namespace) (
                 sum by (namespace, pod) (
                     max by (namespace, pod, container) (
@@ -265,6 +197,7 @@ data:
           labels:
             workload_type: statefulset
           record: mixin_pod_workload
+
       - name: kube-scheduler-recording.rules
         rules:
         - expr: |
@@ -312,12 +245,14 @@ data:
           labels:
             quantile: "0.5"
           record: cluster_quantile:scheduler_binding_duration_seconds:histogram_quantile
+
       - name: kube-prometheus-general-recording.rules
         rules:
         - expr: count without(instance, pod, node) (up == 1)
           record: count:up1
         - expr: count without(instance, pod, node) (up == 0)
           record: count:up0
+
       - name: kube-state-metrics
         rules:
         - alert: KubeStateMetricsListErrors
@@ -586,42 +521,9 @@ data:
           labels:
             severity: warning
             tier: platform
+
       - name: kubernetes-resources
         rules:
-        - alert: KubeCPUOvercommit
-          annotations:
-            description: Cluster has overcommitted CPU resource requests for Pods and cannot
-              tolerate node failure.
-            runbook_url:
-            summary: Cluster CPU resources are overcommitted
-          expr: |
-            sum(namespace:kube_pod_container_resource_requests_cpu_cores:sum)
-              /
-            sum(kube_node_status_allocatable{resource="cpu", unit="core"})
-              >
-            (count(kube_node_status_allocatable{resource="cpu", unit="core"})-1) / count(kube_node_status_allocatable{resource="cpu", unit="core"})
-          for: 5m
-          labels:
-            severity: warning
-            tier: platform
-        - alert: KubeMemOvercommit
-          annotations:
-            description: Cluster has overcommitted memory resource requests for Pods and cannot
-              tolerate node failure.
-            runbook_url:
-            summary: Cluster Memory resources are overcommitted
-          expr: |
-            sum(namespace:kube_pod_container_resource_requests_memory_bytes:sum)
-              /
-            sum(kube_node_status_allocatable{resource="memory",unit="byte"})
-              >
-            (count(kube_node_status_allocatable{resource="memory",unit="byte"})-1)
-              /
-            count(kube_node_status_allocatable{resource="memory",unit="byte"})
-          for: 5m
-          labels:
-            severity: warning
-            tier: platform
         - alert: KubeCPUOvercommit
           annotations:
             description: Cluster has overcommitted CPU resource requests for Namespaces.
@@ -651,74 +553,9 @@ data:
           labels:
             severity: warning
             tier: platform
-        - alert: CPUThrottlingHigh
-          annotations:
-            description: '{{`{{ $value | humanizePercentage }}`}} throttling of CPU in namespace
-              {{`{{ $labels.namespace }}`}} for container {{`{{ $labels.container }}`}} in pod {{`{{
-              $labels.pod }}`}}.'
-            summary: 'CPU Throttling high in pod {{`{{$labels.pod }}`}}'
-            runbook_url:
-          expr: |
-            sum(increase(container_cpu_cfs_throttled_periods_total{container!="", namespace!~"{{ .Release.Namespace }}", namespace != "kube-system"}[5m])) by (container, pod, namespace)
-              /
-            sum(increase(container_cpu_cfs_periods_total{container!="", namespace!~"{{ .Release.Namespace }}", namespace != "kube-system"}[5m])) by (container, pod, namespace)
-              > ( 51 / 100 )
-          for: 15m
-          labels:
-            silence: cre
-            severity: warning
-            #tier: platform
-
-        - alert: ContainerMemoryNearTheLimit
-          expr: |
-            (container_memory_working_set_bytes{namespace="{{ .Release.Namespace }}", container_name!="POD"} /
-            container_spec_memory_limit_bytes{namespace="{{ .Release.Namespace }}", container_name!="POD"}) * 100 > 95 < +Inf
-          for: 1h
-          labels:
-            tier: platform
-            component: container
-            severity: warning
-          annotations:
-            summary: "A container in the platform namespace uses more than 95% of the memory limit"
-            description: {{ printf "%q" "{{ $labels.container }} in {{ $labels.pod }} is using {{ printf \"%.2f\" $value }}% of available memory." }}
 
       - name: kubernetes-storage
         rules:
-        - alert: KubePersistentVolumeUsageCritical
-          annotations:
-            description: The PersistentVolume claimed by {{`{{ $labels.persistentvolumeclaim
-              }}`}} in Namespace {{`{{ $labels.namespace }}`}} is only {{`{{ $value | humanizePercentage
-              }}`}} free.
-            runbook_url:
-            summary: '{{`{{ $labels.persistentvolumeclaim}}`}} Is running out of storage capacity'
-          expr: |
-            kubelet_volume_stats_available_bytes{job="kubernetes-nodes"}
-              /
-            kubelet_volume_stats_capacity_bytes{job="kubernetes-nodes"}
-              < 0.03
-          for: 1m
-          labels:
-            severity: critical
-            tier: platform
-        - alert: KubePersistentVolumeFullInFourDays
-          annotations:
-            description: Based on recent sampling, the PersistentVolume claimed by {{`{{ $labels.persistentvolumeclaim
-              }}`}} in Namespace {{`{{ $labels.namespace }}`}} is expected to fill up within four
-              days. Currently {{`{{ $value | humanizePercentage }}`}} is available.
-            runbook_url:
-            summary: '{{`{{ $labels.persistentvolumeclaim}}`}} Will fill up in 4 days'
-          expr: |
-            (
-              kubelet_volume_stats_available_bytes{job="kubernetes-nodes"}
-                /
-              kubelet_volume_stats_capacity_bytes{job="kubernetes-nodes"}
-            ) < 0.15
-            and
-            predict_linear(kubelet_volume_stats_available_bytes{job="kubernetes-nodes"}[6h], 4 * 24 * 3600) < 0
-          for: 1h
-          labels:
-            severity: high
-            tier: platform
         - alert: KubePersistentVolumeErrors
           annotations:
             description: The persistent volume {{`{{ $labels.persistentvolume }}`}} has status {{`{{
@@ -731,6 +568,7 @@ data:
           labels:
             severity: critical
             tier: platform
+
       - name: kubernetes-system
         rules:
         - alert: KubeVersionMismatch
@@ -793,6 +631,7 @@ data:
           labels:
             severity: warning
             tier: platform
+
       - name: prometheus
         rules:
         - alert: PrometheusBadConfig
@@ -952,6 +791,7 @@ data:
           labels:
             severity: warning
             tier: platform
+
       - name: alertmanager.rules
         rules:
         - alert: AlertmanagerConfigInconsistent
@@ -988,6 +828,7 @@ data:
           labels:
             severity: critical
             tier: platform
+
       - name: general.rules
         rules:
         - alert: TargetDown
@@ -1013,6 +854,7 @@ data:
           labels:
             severity: none
             tier: none
+
       - name: Ingress
         rules:
         - alert: NginxIngressHighAvgLatency

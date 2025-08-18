@@ -1,7 +1,6 @@
 {{ define "helm.globals" -}}
   {{- $globals := dict -}}
   {{- $_ := set $globals "baseDomain" (default "" .Values.global.baseDomain) -}}
-  {{- $_ := set $globals "acme" (.Values.global.acme) -}}
   {{- $_ := set $globals "rbacEnabled" .Values.global.rbacEnabled -}}
   {{- $_ := set $globals "releaseName" (print .Release.Name | toString) -}}
   {{- $_ := set $globals "releaseNamespace" (print .Release.Namespace | toString) -}}
@@ -151,6 +150,14 @@
 {{- end }}
 {{- end }}
 
+{{ define "commander.jwksServiceAccountName" -}}
+{{- if and .Values.commander.serviceAccount.create .Values.global.rbacEnabled -}}
+{{ default (printf "%s-commander-jwks-hook-sa" .Release.Name ) .Values.commander.serviceAccount.name }}
+{{- else -}}
+    {{ default "default" .Values.commander.serviceAccount.name }}
+{{- end }}
+{{- end }}
+
 {{ define "configSyncer.serviceAccountName" -}}
 {{- if and .Values.configSyncer.serviceAccount.create .Values.global.rbacEnabled -}}
 {{ default (printf "%s-config-syncer" .Release.Name ) .Values.configSyncer.serviceAccount.name }}
@@ -173,9 +180,9 @@
 - name: COMMANDER_DATAPLANE_CHART_VERSION
   value: "{{ .Chart.Version }}"
 - name: COMMANDER_CLOUD_PROVIDER
-  value: {{ .Values.commander.cloudProvider | default "" | quote }}
+  value: {{ .Values.commander.cloudProvider | default "local" | quote }}
 - name: COMMANDER_REGION
-  value: {{ .Values.commander.region | default "" | quote }}
+  value: {{ .Values.commander.region | default "local" | quote }}
 - name: COMMANDER_VERSION
   value: {{ .Values.images.commander.tag | quote }}
 - name: COMMANDER_DATAPLANE_DATABASE_URL
@@ -189,8 +196,8 @@
   value: {{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}
 - name: COMMANDER_DATAPLANE_MODE
   value: {{ .Values.global.plane.mode | quote }}
-- name: COMMANDER_HOUSTON_JWKS_URL
-  value: {{ .Values.commander.houstonAuthorizationUrl | default "" | quote }}
+- name: COMMANDER_HOUSTON_JWKS_ENDPOINT
+  value: "https://houston.{{ .Values.global.baseDomain }}"
 {{- end }}
 
 {{- define "registry.gcsVolume" }}

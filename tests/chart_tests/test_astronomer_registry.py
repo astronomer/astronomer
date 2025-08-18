@@ -28,19 +28,33 @@ class TestRegistryStatefulset:
         assert any(
             "quay.io/astronomer/ap-registry:" in item for item in jmespath.search("spec.template.spec.containers[*].image", doc)
         )
-        assert docs[0]["spec"]["template"]["spec"]["securityContext"] == {
+        assert doc["spec"]["template"]["spec"]["securityContext"] == {
             "fsGroup": 1000,
             "runAsGroup": 1000,
             "runAsUser": 1000,
         }
+        assert {"emptyDir": {}, "name": "etc-ssl-certs"} in doc["spec"]["template"]["spec"]["volumes"]
+        assert {
+            "mountPath": "/etc/ssl/certs_copy",
+            "name": "etc-ssl-certs",
+        } in doc["spec"]["template"]["spec"]["initContainers"][0]["volumeMounts"]
+        assert {
+            "mountPath": "/etc/ssl/certs",
+            "name": "etc-ssl-certs",
+        } in doc["spec"]["template"]["spec"]["containers"][0]["volumeMounts"]
 
-    def test_astronomer_registry_statefulset_with_custom_env(self, kube_version):
-        """Test that helm renders statefulset template for astronomer
-        registry with custom env values."""
+    def test_astronomer_registry_statefulset_with_custom_env_and_images(self, kube_version):
+        """Test that helm renders statefulset template for astronomer registry with custom env values and images."""
         extra_env = {"name": "TEST_ENV_VAR_876", "value": "test"}
+        values = {
+            "astronomer": {
+                "registry": {"extraEnv": [extra_env]},
+                "images": {"registry": {"repository": "some-custom-repository", "tag": "1.2.3-sunshine"}},
+            },
+        }
         docs = render_chart(
             kube_version=kube_version,
-            values={"astronomer": {"registry": {"extraEnv": [extra_env]}}},
+            values=values,
             show_only=["charts/astronomer/templates/registry/registry-statefulset.yaml"],
         )
 
@@ -50,6 +64,11 @@ class TestRegistryStatefulset:
         assert doc["apiVersion"] == "apps/v1"
         assert doc["metadata"]["name"] == "release-name-registry"
         assert extra_env in doc["spec"]["template"]["spec"]["containers"][0]["env"]
+        assert (
+            "some-custom-repository:1.2.3-sunshine"
+            == doc["spec"]["template"]["spec"]["containers"][0]["image"]
+            == doc["spec"]["template"]["spec"]["initContainers"][0]["image"]
+        )
 
     def test_astronomer_registry_statefulset_with_serviceaccount_enabled_defaults(self, kube_version):
         """Test that helm renders statefulset and serviceAccount template for astronomer
@@ -178,7 +197,7 @@ class TestRegistryStatefulset:
         )
         not_expected_volume_mount = [{"mountPath": "/etc/docker/ssl", "name": "certificate"}]
         assert docs[0]["kind"] == "StatefulSet"
-        assert len(docs[0]["spec"]["template"]["spec"]["volumes"]) == 1
+        assert len(docs[0]["spec"]["template"]["spec"]["volumes"]) == 2
         assert docs[0]["spec"]["template"]["spec"]["containers"][0]["volumeMounts"][1] != not_expected_volume_mount
 
     @pytest.mark.parametrize("mode", ["data", "unified"])
@@ -198,12 +217,16 @@ class TestRegistryStatefulset:
 
     def test_astronomer_registry_statefulset_disabled_for_control_mode(self, kube_version):
         """Test that helm does not render registry statefulset when global.plane.mode is 'control'."""
+        registry_files = [
+            str(x.relative_to(git_root_dir))
+            for x in Path(f"{git_root_dir}/charts/astronomer/templates/registry").glob("*")
+            if x.is_file()
+        ]
+
         docs = render_chart(
             kube_version=kube_version,
             values={"global": {"plane": {"mode": "control"}}},
-            show_only=sorted(
-                [str(x.relative_to(git_root_dir)) for x in Path(f"{git_root_dir}/charts/astronomer/templates/registry").glob("*")]
-            ),
+            show_only=sorted(registry_files),
         )
 
         assert len(docs) == 0

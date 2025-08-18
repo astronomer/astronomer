@@ -44,6 +44,10 @@ class TestKibana:
         assert env_vars["TELEMETRY_OPT_IN"] == "false"
         assert env_vars["TELEMETRY_ENABLED"] == "false"
 
+        assert doc["spec"]["template"]["spec"]["volumes"] == [{"emptyDir": {}, "name": "kibana-data"}]
+        assert c_by_name["kibana"]["volumeMounts"] == [{"mountPath": "/usr/share/kibana/data", "name": "kibana-data"}]
+        assert c_by_name["kibana"]["securityContext"].get("readOnlyRootFilesystem")
+
     def test_kibana_index_defaults(self, kube_version):
         """Test that kibana index cronjobs renders proper nodeSelector, affinity,
         and tolerations with global config and index defaults."""
@@ -167,7 +171,11 @@ class TestKibana:
             ],
         )
         common_kibana_cronjob_test(docs)
-        assert {"runAsNonRoot": True, "runAsUser": 1000} == docs[0]["spec"]["template"]["spec"]["containers"][0]["securityContext"]
+        assert docs[0]["spec"]["template"]["spec"]["containers"][0]["securityContext"] == {
+            "readOnlyRootFilesystem": True,
+            "runAsNonRoot": True,
+            "runAsUser": 1000,
+        }
 
     def test_kibana_index_securitycontext_with_openshiftEnabled(self, kube_version):
         """Test kibana Service with index defaults."""
@@ -179,4 +187,7 @@ class TestKibana:
             ],
         )
         common_kibana_cronjob_test(docs)
-        assert {"runAsNonRoot": True} == docs[0]["spec"]["template"]["spec"]["containers"][0]["securityContext"]
+        assert docs[0]["spec"]["template"]["spec"]["containers"][0]["securityContext"] == {
+            "runAsNonRoot": True,
+            "readOnlyRootFilesystem": True,
+        }

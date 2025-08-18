@@ -29,7 +29,7 @@ from tests import git_root_dir
 def upgrade_helm(tmp_path_factory, worker_id):
     """Add stable helm repo, upgrade helm repos, and do helm dep upgrade."""
 
-    if bool(os.getenv("INTERNET_ACCESS", "1").strip().lower() in ("1", "on", "true", "y", "yes")) is False:
+    if os.getenv("INTERNET_ACCESS", "1").strip().lower() in ("1", "on", "true", "y", "yes"):
         return
 
     def _upgrade_helm():

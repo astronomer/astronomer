@@ -1,7 +1,7 @@
 ####################################
 ## Elasticsearch Proxy Deployment ##
 ####################################
-{{- if or (eq .Values.global.plane.mode "control") (eq .Values.global.plane.mode "unified") }}
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -44,12 +44,11 @@ spec:
 {{ toYaml .Values.podAnnotations | indent 8 }}
 {{- end }}
     spec:
-      nodeSelector: {{ toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 12 }}
-      affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 12 }}
-      tolerations: {{ toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 12 }}
+      nodeSelector: {{- toYaml (default .Values.global.platformNodePool.nodeSelector .Values.nodeSelector) | nindent 8 }}
+      affinity: {{ toYaml (default .Values.global.platformNodePool.affinity .Values.affinity) | nindent 8 }}
+      tolerations: {{- toYaml (default .Values.global.platformNodePool.tolerations .Values.tolerations) | nindent 8 }}
       serviceAccountName: {{ include "external-es-proxy.serviceAccountName" . }}
-      securityContext:
-        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      securityContext: {{- toYaml .Values.podSecurityContext | nindent 8 }}
 {{- include "external-es-proxy.imagePullSecrets" . | indent 6 }}
       containers:
         - name: {{ .Chart.Name }}
@@ -102,7 +101,7 @@ spec:
 {{- if or .Values.global.customLogging.awsSecretName .Values.global.customLogging.awsServiceAccountAnnotation .Values.global.customLogging.awsIAMRole }}
         - name: awsproxy
           image: {{ template "awsesproxy.image" . }}
-          command: ["/bin/sh","-c"]
+          command: ["/bin/sh", "-c"]
           args: ["aws-es-proxy -listen :{{ .Values.service.awsproxy }}"]
           securityContext: {{ toYaml .Values.securityContext | nindent 12 }}
           imagePullPolicy: {{ .Values.images.awsproxy.pullPolicy }}

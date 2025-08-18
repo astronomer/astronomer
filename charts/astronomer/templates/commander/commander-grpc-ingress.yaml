@@ -23,7 +23,6 @@ metadata:
     nginx.ingress.kubernetes.io/backend-protocol: "GRPC"
     nginx.ingress.kubernetes.io/enable-http2: "true"
     kubernetes.io/ingress.class: "{{ .Release.Name }}-nginx"
-    kubernetes.io/tls-acme: {{ eq .Values.global.acme true | quote }}
     nginx.ingress.kubernetes.io/custom-http-errors: "404"
     nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
     {{- end }}
@@ -31,14 +30,9 @@ metadata:
     {{- toYaml .Values.commander.ingress.annotation  | nindent 4  }}
     {{- end }}
 spec:
-  {{- if or .Values.global.tlsSecret .Values.global.acme }}
+  {{- if or .Values.global.tlsSecret }}
   tls:
-  {{- if .Values.global.acme }}
-    - secretName: houston-tls
-  {{- end }}
-  {{- if .Values.global.tlsSecret }}
     - secretName: {{ .Values.global.tlsSecret }}
-  {{- end }}
       hosts:
         - commander.{{ .Values.global.plane.domainSuffix }}.{{ .Values.global.baseDomain }}
   {{- end }}

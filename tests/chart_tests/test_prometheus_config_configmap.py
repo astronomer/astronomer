@@ -51,11 +51,9 @@ class TestPrometheusConfigConfigmap:
         assert doc["metadata"]["name"] == "release-name-prometheus-config"
 
         config_yaml = yaml.safe_load(doc["data"]["config"])
-        assert [
-            x["tls_config"]["insecure_skip_verify"]
-            for x in list(config_yaml["scrape_configs"])
-            if x["job_name"] == "kubernetes-apiservers"
-        ] == [False]
+        houston_jobs = [x for x in config_yaml["scrape_configs"] if x["job_name"] == "houston-api"]
+        assert len(houston_jobs) == 1
+        assert houston_jobs[0]["metrics_path"] == "/v1/metrics"
 
     def test_prometheus_config_configmap_with_different_name_and_ns(self, kube_version):
         """Validate the prometheus config configmap does not conflate deployment name and namespace."""
@@ -95,14 +93,20 @@ class TestPrometheusConfigConfigmap:
     def test_prometheus_config_configmap_external_labels(self, kube_version):
         """Prometheus should have an external_labels section in config.yaml
         when external_labels is specified in helm values."""
+        expected_labels = {"release": "release-name", "clusterid": "abc01", "external_labels_key_1": "external_labels_value_1"}
         doc = render_chart(
             kube_version=kube_version,
             show_only=self.show_only,
-            values={"prometheus": {"external_labels": {"external_labels_key_1": "external_labels_value_1"}}},
+            values={
+                "global": {"plane": {"domainSuffix": "abc01"}},
+                "prometheus": {
+                    "external_labels": expected_labels,
+                },
+            },
         )[0]
 
         config_yaml = yaml.safe_load(doc["data"]["config"])
-        assert config_yaml["global"]["external_labels"] == {"external_labels_key_1": "external_labels_value_1"}
+        assert config_yaml["global"]["external_labels"] == expected_labels
 
     def test_promethesu_config_configmap_remote_write(self, kube_version):
         """Prometheus should have a remote_write section in config.yaml when
@@ -245,7 +249,7 @@ class TestPrometheusConfigConfigmap:
         assert len(metric_relabel_config_search_result) == 2
         assert (
             metric_relabel_config_search_result[0]["regex"]
-            == "(.*?)(?:-webserver.*|-scheduler.*|-worker.*|-cleanup.*|-pgbouncer.*|-statsd.*|-triggerer.*|-run-airflow-migrations.*|-git-sync-relay.*)?$"
+            == "(.*?)(?:-webserver.*|-api-server.*|-scheduler.*|-worker.*|-cleanup.*|-pgbouncer.*|-statsd.*|-triggerer.*|-run-airflow-migrations.*|-git-sync-relay.*)?$"
         )
         assert metric_relabel_config_search_result[0]["source_labels"] == ["pod"]
         assert metric_relabel_config_search_result[0]["replacement"] == "$1"

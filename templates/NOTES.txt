@@ -1,34 +1,52 @@
 Thank you for installing Astronomer!
-
 Your release is named {{ .Release.Name }}.
 
+{{- $planeMode := .Values.global.plane.mode }}
+{{- $domainSuffix := .Values.global.plane.domainsuffix }}
+Astronomer has been installed in {{ $planeMode }} plane mode.
+
 {{- if .Values.global.baseDomain }}
-
 The platform components may take a few minutes to spin up.
-
-You can access the platform at:
 
 {{- $astronomerEnabled := hasKey .Values.global "astronomerEnabled" | ternary .Values.global.astronomerEnabled true }}
 {{- $platformEnabled := hasKey .Values.tags "platform" | ternary .Values.tags.platform true }}
-
 {{- $monitoringEnabled := hasKey .Values.tags "monitoring" | ternary .Values.tags.monitoring true }}
-
 {{- $kibanaEnabled := hasKey .Values.global "kibanaEnabled" | ternary .Values.global.kibanaEnabled true }}
 {{- $loggingEnabled := hasKey .Values.tags "logging" | ternary .Values.tags.logging true }}
 
+{{- if eq $planeMode "control" }}
+You can access the control plane at:
 - Astronomer dashboard:        {{ if and $astronomerEnabled $platformEnabled }}https://app.{{ .Values.global.baseDomain }}{{ else }}Disabled{{ end }}
 - Kibana dashboard:            {{ if and $kibanaEnabled $loggingEnabled }}https://kibana.{{ .Values.global.baseDomain }}{{ else }}Disabled{{ end }}
 
-Now that you've installed the platform, you are ready to get started and create your first airflow deployment.
+The control plane is responsible for platform management, orchestration, and user interfaces.
 
-Download the CLI:
+{{- else if eq $planeMode "data" }}
+{{- if $domainSuffix }}
+You can access the data plane at:
+- Astronomer dashboard:        {{ if and $astronomerEnabled $platformEnabled }}https://{{ $domainSuffix }}.{{ .Values.global.baseDomain }}{{ else }}Disabled{{ end }}
+{{- end }}
 
-    curl -sSL https://install.{{ .Values.global.baseDomain }} | sudo bash
+The data plane is responsible for executing and monitoring Airflow workloads.
 
-We have guides available at https://docs.astronomer.io/learn and are always available to help.
+{{- else if eq $planeMode "unified" }}
+You can access the cluster at:
+- Astronomer dashboard:        {{ if and $astronomerEnabled $platformEnabled }}https://app.{{ .Values.global.baseDomain }}{{ else }}Disabled{{ end }}
+- Kibana dashboard:            {{ if and $kibanaEnabled $loggingEnabled }}https://kibana.{{ .Values.global.baseDomain }}{{ else }}Disabled{{ end }}
 
+The unified mode runs both the data plane and control plane in the same cluster and namespace.
+{{- end }}
+
+{{- if eq $planeMode "control" }}
+Now that you've installed the control plane, you can manage and orchestrate your Airflow deployments.
+{{- else if eq $planeMode "data" }}
+Now that you've installed the data plane, it's ready to execute and monitor Airflow workloads assigned to it.
 {{- else }}
+Now that you've installed the platform, you are ready to get started and create your first airflow deployment.
+{{- end }}
 
+
+We have guides available at https://www.astronomer.io/docs/learn/ and are always available to help.
+{{- else }}
 To see dashboard URLs here, provide baseDomain in your config.
-
 {{- end }}

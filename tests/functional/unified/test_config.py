@@ -61,7 +61,7 @@ def test_nginx_can_reach_default_backend(cp_nginx):
 
 def test_nginx_ssl_cache(cp_nginx):
     """Ensure nginx default ssl cache size is 10m."""
-    assert "ssl_session_cache shared:SSL:10m;" == cp_nginx.check_output("cat nginx.conf | grep ssl_session_cache").replace("\t", "")
+    assert "ssl_session_cache shared:SSL:10m;" == cp_nginx.check_output("grep ssl_session_cache nginx.conf").replace("\t", "")
 
 
 def test_nginx_capabilities(cp_nginx):
@@ -82,16 +82,6 @@ def test_prometheus_targets(prometheus):
             + 'Please check the "targets" view in the Prometheus UI'
             + f" Target data from the one that is not up:\n\n{target}"
         )
-
-
-def test_core_dns_metrics_are_collected(prometheus):
-    """Ensure CoreDNS metrics are collected."""
-
-    data = prometheus.check_output("wget --timeout=5 -qO- http://localhost:9090/api/v1/query?query=coredns_dns_requests_total")
-    parsed = json.loads(data)
-    assert len(parsed["data"]["result"]) > 0, (
-        f"Expected to find a metric coredns_dns_requests_total, but we got this response:\n\n{parsed}"
-    )
 
 
 def test_houston_metrics_are_collected(prometheus):

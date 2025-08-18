@@ -3,6 +3,7 @@
 #########################
 {{- if (eq .Values.global.logging.collector "fluentd") }}
 {{- if .Values.global.rbacEnabled }}
+{{- if or (eq .Values.global.plane.mode "data") (eq .Values.global.plane.mode "unified") }}
 kind: ClusterRole
 apiVersion: {{ template "apiVersion.rbac" . }}
 metadata:
@@ -23,5 +24,6 @@ rules:
   - "get"
   - "watch"
   - "list"
+{{- end -}}
 {{- end -}}
 {{- end -}}

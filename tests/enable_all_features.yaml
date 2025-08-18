@@ -24,9 +24,15 @@ astronomer:
       enabled: true
     updateCheck:
       enabled: true
+kibana:
+  createDefaultIndex: true
 nats:
   nats:
     createJetStreamJob: true
+    reloader:
+      enabled: true
+    exporter:
+      enabled: true
 postgresql:
   replication:
     enabled: true

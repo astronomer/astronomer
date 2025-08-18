@@ -8,7 +8,6 @@ metadata:
     tier: operator
     release: {{ .Release.Name }}
     chart: {{ template "operator.chart" . }}
-    release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 rules:
 - apiGroups:

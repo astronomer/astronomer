@@ -134,6 +134,9 @@ global:
     server:
       readinessProbe: {}
       livenessProbe: {}
+      nodeSelector: {}
+      affinity: {}
+      tolerations: []
     client:
       readinessProbe: {}
       livenessProbe: {}
@@ -149,7 +152,7 @@ global:
     enabled: false
     name: sidecar-log-consumer
     repository: quay.io/astronomer/ap-vector
-    tag: 0.46.1
+    tag: 0.47.0-4
     customConfig: false
     indexPattern: ~
     extraEnv: []
