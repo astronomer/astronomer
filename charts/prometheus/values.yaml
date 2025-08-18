@@ -189,7 +189,7 @@ extraFlags:
 # Convert lists to dicts for more explicit assignment.
 # Convert dashes to underscores for golang compatibility.
 config:
-  enableSelfScrape: true
+  enableSelfScrape: false
   scrape_configs:
     kubernetes_apiservers:
       tls_config:
