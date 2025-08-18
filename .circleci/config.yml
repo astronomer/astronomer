@@ -425,7 +425,6 @@ workflows:
                 - quay.io/astronomer/ap-git-sync:4.4.0-1
                 - quay.io/astronomer/ap-houston-api:1.0.0
                 - quay.io/astronomer/ap-init:3.21.3-3
-                - quay.io/astronomer/ap-kibana:8.15.5
                 - quay.io/astronomer/ap-kube-state:2.15.0
                 - quay.io/astronomer/ap-kuiper-reloader:0.1.7
                 - quay.io/astronomer/ap-nats-exporter:0.16.0-2
