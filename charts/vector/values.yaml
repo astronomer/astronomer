@@ -7,7 +7,8 @@ tolerations: []
 podSecurityContext: {}
 
 vector:
-  securityContext: {}
+  securityContext:
+    runAsUser: 0
   image:
     repository: quay.io/astronomer/ap-vector
     tag: 0.40.2-1
@@ -23,14 +24,6 @@ imagePullSecrets: []
 podAnnotations: {}
 podLabels: {}
 
-securityContext:  # pod level securityContext
-  runAsUser: 0
-  # capabilities:
-  #   drop:
-  #   - ALL
-  # readOnlyRootFilesystem: true
-  # runAsNonRoot: true
-  # runAsUser: 1000
 
 serviceAccount:
   # Specifies whether a service account should be created

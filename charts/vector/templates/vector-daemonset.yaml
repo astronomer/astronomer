@@ -37,11 +37,13 @@ spec:
       tolerations: {{ toYaml (.Values.tolerations) | nindent 8 }}
       serviceAccountName: {{ template "vector.fullname" . }}
       {{- include "vector.imagePullSecrets" . | nindent 6 }}
-      securityContext: {{ toYaml .Values.securityContext | nindent 8 }}
+      securityContext: {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
       - name: vector
         image: {{ template "vector.image" . }}
-        securityContext: {{ toYaml .Values.vector.securityContext | nindent 10 }}
+        securityContext:
+          readOnlyRootFilesystem: true
+          {{- toYaml .Values.vector.securityContext | nindent 10 }}
         imagePullPolicy: {{ .Values.vector.image.pullPolicy }}
         env:
         - name: VECTOR_SELF_NODE_NAME

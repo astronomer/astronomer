@@ -5,8 +5,8 @@ import pytest
 import yaml
 
 from tests import supported_k8s_versions
-from tests.chart_tests.helm_template_generator import render_chart
 from tests.utils import get_containers_by_name
+from tests.utils.chart import render_chart
 
 all_templates = list(Path("charts/vector/templates").glob("*.yaml"))
 
@@ -45,7 +45,10 @@ class TestVector:
     @pytest.mark.skip("TODO: revisit this.")
     def test_vector_daemonset_private_ca_certificates(self, kube_version):
         """Test that helm renders a volume mount for private ca certificates for vector daemonset when private-ca-certificates are enabled."""
-        values = {"global": {"logging": {"collector": "vector"}}, "privateCaCerts": ["private-root-ca"]}
+        values = {
+            "global": {"logging": {"collector": "vector"}},
+            "privateCaCerts": ["private-root-ca"],
+        }
         docs = render_chart(
             kube_version=kube_version,
             values=values,
@@ -202,7 +205,10 @@ class TestVector:
     def test_vector_pod_securityContextOverride(self, kube_version):
         """Test that helm renders a container securityContext when securityContext is enabled."""
 
-        values = {"global": {"logging": {"collector": "vector"}}, "vector": {"securityContext": {"runAsUser": 9999}}}
+        values = {
+            "global": {"logging": {"collector": "vector"}},
+            "vector": {"securityContext": {"runAsUser": 9999}},
+        }
 
         docs = render_chart(
             kube_version=kube_version,
@@ -225,7 +231,10 @@ class TestVector:
             "seLinuxOptions": {"type": "roflbomb"},
         }
 
-        values = {"global": {"logging": {"collector": "vector"}}, "vector": {"vector": {"securityContext": sc}}}
+        values = {
+            "global": {"logging": {"collector": "vector"}},
+            "vector": {"vector": {"securityContext": sc}},
+        }
 
         docs = render_chart(
             kube_version=kube_version,
@@ -238,7 +247,7 @@ class TestVector:
 
         assert c_by_name["vector"]["securityContext"] == sc
 
-    def test_vector_securityContext_empty_by_default(self, kube_version):
+    def test_vector_securityContext_default(self, kube_version):
         """Test that no securityContext is present by default on pod or container."""
 
         values = {"global": {"logging": {"collector": "vector"}}}
@@ -249,7 +258,8 @@ class TestVector:
             show_only=["charts/vector/templates/vector-daemonset.yaml"],
         )
 
-        container_search_result = jmespath.search(
+        # TODO: remove jmespath
+        jmespath.search(
             "spec.template.spec.containers[?name == 'vector']",
             docs[0],
         )
@@ -257,10 +267,10 @@ class TestVector:
             "spec.template.spec",
             docs[0],
         )
-        # the securityContext should be present but empty by default
-        assert not pod_search_result["securityContext"].keys()
-        # the securityContext should be present but empty by default
-        assert not container_search_result[0]["securityContext"].keys()
+        assert not pod_search_result["securityContext"] == {
+            "runAsUser": 0,
+            "readOnlyRootFilesystem": True,
+        }
 
     @pytest.mark.skip("TODO: revisit this test to see if we need this kind of thing with vector.")
     def test_vector_index_defaults(self, kube_version):
@@ -340,7 +350,10 @@ class TestVector:
     def test_vector_priorityclass_overrides(self, kube_version):
         """Test to validate vector with priority class configured."""
 
-        values = {"global": {"logging": {"collector": "vector"}}, "vector": {"priorityClassName": "vector-priority-pod"}}
+        values = {
+            "global": {"logging": {"collector": "vector"}},
+            "vector": {"priorityClassName": "vector-priority-pod"},
+        }
 
         docs = render_chart(
             kube_version=kube_version,
