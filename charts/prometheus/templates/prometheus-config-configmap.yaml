@@ -78,7 +78,7 @@ data:
         file_sd_configs:
           - files:
             - /prometheusreloader/airflow/clusters.json
-            refresh_interval: 60s
+            refresh_interval: 5s
         relabel_configs:
           - target_label: federation
             replacement: data-planes
