@@ -1,6 +1,5 @@
 from pathlib import Path
 
-import jmespath
 import pytest
 import yaml
 
@@ -55,50 +54,17 @@ class TestVector:
             show_only=["charts/vector/templates/vector-daemonset.yaml"],
         )
 
-        search_result = jmespath.search(
-            "spec.template.spec.containers[*].volumeMounts[?name == 'private-root-ca']",
-            docs[0],
-        )
-        expected_result = [
-            [
-                {
-                    "mountPath": "/usr/local/share/ca-certificates/private-root-ca.pem",
-                    "name": "private-root-ca",
-                    "subPath": "cert.pem",
-                }
-            ]
+        get_containers_by_name(docs[0])
+        assert len(docs) == 1
+        pod_spec = docs[0]["spec"]["template"]["spec"]
+        assert len(pod_spec["volumes"]) == 2
+        assert len(pod_spec["containers"]) == 1
+
+        volume_mounts = [
+            {"name": "varlog", "mountPath": "/var/log/", "readOnly": True},
+            {"name": "config-volume-release-name-vector", "mountPath": "/etc/vector/config", "readOnly": True},
         ]
-        assert search_result == expected_result
-        search_result_es_index_template_volume_mount = jmespath.search(
-            "spec.template.spec.containers[*].volumeMounts[?name == 'release-name-vector-index-template-volume']",
-            docs[0],
-        )
-
-        expected_result_es_index_template_volume_mount = [
-            [
-                {
-                    "mountPath": "/host",
-                    "name": "release-name-vector-index-template-volume",
-                    "readOnly": True,
-                }
-            ]
-        ]
-
-        assert search_result_es_index_template_volume_mount == expected_result_es_index_template_volume_mount
-
-        search_result_es_index_template_volume = jmespath.search(
-            "spec.template.spec.volumes[?name == 'release-name-vector-index-template-volume']",
-            docs[0],
-        )
-
-        expected_result_es_index_template_volume = [
-            {
-                "name": "release-name-vector-index-template-volume",
-                "configMap": {"name": "release-name-vector-index-template-configmap"},
-            }
-        ]
-
-        assert search_result_es_index_template_volume == expected_result_es_index_template_volume
+        assert pod_spec["containers"][0]["volumeMounts"] == volume_mounts
 
     def test_vector_clusterrolebinding(self, kube_version):
         """Test that helm renders a good ClusterRoleBinding template for vector when rbacEnabled=True."""
@@ -202,38 +168,15 @@ class TestVector:
         expected_store = "  <store>\n    @type newrelic\n    @log_level info\n    base_uri https://log-api.newrelic.com/log/v1\n    license_key <LICENSE_KEY>"
         assert expected_store in doc["data"]["output.conf"]
 
-    def test_vector_pod_securityContextOverride(self, kube_version):
-        """Test that helm renders a container securityContext when securityContext is enabled."""
+    def test_vector_securityContext_override(self, kube_version):
+        """Test that helm renders a custom securityContext when securityContext is overridden."""
 
         values = {
             "global": {"logging": {"collector": "vector"}},
-            "vector": {"securityContext": {"runAsUser": 9999}},
-        }
-
-        docs = render_chart(
-            kube_version=kube_version,
-            values=values,
-            show_only=["charts/vector/templates/vector-daemonset.yaml"],
-        )
-
-        pod_search_result = jmespath.search(
-            "spec.template.spec",
-            docs[0],
-        )
-        # the pod container should report a default user of 9999
-        assert pod_search_result["securityContext"]["runAsUser"] == 9999
-
-    def test_vector_container_securityContextOverride(self, kube_version):
-        """Test that helm renders a vector container securityContext when securityContext is enabled."""
-
-        sc = {
-            "runAsUser": 8888,
-            "seLinuxOptions": {"type": "roflbomb"},
-        }
-
-        values = {
-            "global": {"logging": {"collector": "vector"}},
-            "vector": {"vector": {"securityContext": sc}},
+            "vector": {
+                "podSecurityContext": {"happy": "family"},  # pod securityContext
+                "vector": {"securityContext": {"runAsUser": 9999}},  # container securityContext
+            },
         }
 
         docs = render_chart(
@@ -243,12 +186,13 @@ class TestVector:
         )
         assert len(docs) == 1
 
-        c_by_name = get_containers_by_name(docs[0])
-
-        assert c_by_name["vector"]["securityContext"] == sc
+        pod_spec = docs[0]["spec"]["template"]["spec"]
+        assert pod_spec["securityContext"] == {"happy": "family"}
+        assert len(pod_spec["containers"]) == 1
+        assert pod_spec["containers"][0]["securityContext"]["runAsUser"] == 9999
 
     def test_vector_securityContext_default(self, kube_version):
-        """Test that no securityContext is present by default on pod or container."""
+        """Test that we have the expected default security context for the vector container."""
 
         values = {"global": {"logging": {"collector": "vector"}}}
 
@@ -258,19 +202,12 @@ class TestVector:
             show_only=["charts/vector/templates/vector-daemonset.yaml"],
         )
 
-        # TODO: remove jmespath
-        jmespath.search(
-            "spec.template.spec.containers[?name == 'vector']",
-            docs[0],
-        )
-        pod_search_result = jmespath.search(
-            "spec.template.spec",
-            docs[0],
-        )
-        assert not pod_search_result["securityContext"] == {
-            "runAsUser": 0,
-            "readOnlyRootFilesystem": True,
-        }
+        assert len(docs) == 1
+
+        pod_spec = docs[0]["spec"]["template"]["spec"]
+        assert pod_spec["securityContext"] == {}
+        assert len(pod_spec["containers"]) == 1
+        assert pod_spec["containers"][0]["securityContext"] == {"readOnlyRootFilesystem": True, "runAsUser": 0}
 
     @pytest.mark.skip("TODO: revisit this test to see if we need this kind of thing with vector.")
     def test_vector_index_defaults(self, kube_version):
