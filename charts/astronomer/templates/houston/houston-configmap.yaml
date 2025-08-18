@@ -401,7 +401,7 @@ data:
             except ImportError:
               warnings.warn(
                 "Airflow CNCF Provider not installed by default.
-                This will bypass custom images for xcom defaults to alpine.
+                This will bypass custom images for xcom and defaults to alpine.
                 refer https://airflow.apache.org/docs/apache-airflow-providers-cncf-kubernetes/stable/index.html
                 to install the provider.
                 )
