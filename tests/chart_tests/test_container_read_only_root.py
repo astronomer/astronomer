@@ -13,6 +13,7 @@ pod_managers = ["Deployment", "StatefulSet", "DaemonSet", "CronJob", "Job"]
 # This should match tests/functional/unified/test_container_read_only_root.py
 read_only_root_pods = [
     "alertmanager",
+    "astro-ui",
     "commander",
     "configmap-reloader",
     "cp-nginx",
