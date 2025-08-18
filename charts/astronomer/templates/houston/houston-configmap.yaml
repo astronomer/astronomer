@@ -391,11 +391,15 @@ data:
             # This function is responsible for two things. It assigns labels to disambiguate
             # between KPO and K8s executor pods. Also, it handles writing the entrypoint for
             # K8s executor pods. Why we do this second part, you can read below.
-            from airflow.providers.cncf.kubernetes.utils.xcom_sidecar import PodDefaults
             from airflow.configuration import conf
             from airflow.version import version
             xcom_sidecar_image = "{{ template "defaultXcomSidecarImage" . }}"
-            PodDefaults.SIDECAR_CONTAINER.image = xcom_sidecar_image
+            try:
+              from airflow.providers.cncf.kubernetes.utils.xcom_sidecar import PodDefaults
+              PodDefaults.SIDECAR_CONTAINER.image = xcom_sidecar_image
+            except ImportError:
+              # Fallback for k8s providers &lt; 1.2.0, or in case it moves in the future
+              xcom_sidecar_image = "{{ template "defaultXcomSidecarImage" . }}"
             def pod_mutation_hook_deprecated(pod):
               from airflow.contrib.kubernetes.pod import Pod
               extra_labels = {
