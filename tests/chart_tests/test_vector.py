@@ -4,8 +4,9 @@ import jmespath
 import pytest
 import yaml
 
-from tests import get_containers_by_name, supported_k8s_versions
+from tests import supported_k8s_versions
 from tests.chart_tests.helm_template_generator import render_chart
+from tests.utils import get_containers_by_name
 
 all_templates = list(Path("charts/vector/templates").glob("*.yaml"))
 
