@@ -61,7 +61,7 @@ Each time you run the script, the platform will be fully reset to the current he
 
 Modify the "tags:" in configs/local-dev.yaml
 - platform: core Astronomer components
-- logging (large impact on RAM use): ElasticSearch, Kibana, Fluentd (aka 'EFK' stack)
+- logging (large impact on RAM use): ElasticSearch, Fluentd
 - monitoring: Prometheus
 
 #### Load a Docker image into KinD's nodes (so it's available for pods)
