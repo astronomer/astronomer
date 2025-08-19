@@ -275,7 +275,7 @@ class TestAstronomerNamespacePools:
                                 "enabled": True,
                                 "namespaces": {"create": True, "names": namespaces},
                             }
-                        }
+                        },
                     }
                 },
                 show_only=["charts/vector/templates/vector-configmap.yaml"],
