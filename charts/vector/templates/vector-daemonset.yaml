@@ -46,6 +46,12 @@ spec:
           {{- end }}
         image: {{ template "vector.image" . }}
         imagePullPolicy: {{ .Values.vector.image.pullPolicy }}
+        {{- if .Values.vector.livenessProbe }}
+        livenessProbe: {{ tpl (toYaml .Values.vector.livenessProbe) . | nindent 10 }}
+        {{- end }}
+        {{- if .Values.readinessProbe }}
+        readinessProbe: {{ tpl (toYaml .Values.readinessProbe) . | nindent 10 }}
+        {{- end }}
         env:
         - name: VECTOR_SELF_NODE_NAME
           valueFrom:
