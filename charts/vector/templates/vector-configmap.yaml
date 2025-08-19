@@ -25,11 +25,8 @@ data:
         type: kubernetes_logs
         read_from: beginning
         auto_partial_merge: true
-        # Remove extra_label_selector to collect all logs like Fluentd does
-        # extra_label_selector: "platform=astronomer"
 
     transforms:
-      # Step 1: Filter by namespace labels (like Fluentd does)
       filter_by_namespace:
         type: filter
         inputs:
@@ -38,18 +35,14 @@ data:
           type: "vrl"
           source: |
             {{- if and .Values.global.features.namespacePools.enabled (gt (len .Values.global.features.namespacePools.namespaces.names) 0) }}
-            # Multi-namespace support
             namespaces = [{{ range $i, $ns := .Values.global.features.namespacePools.namespaces.names }}{{ if $i }}, {{ end }}"{{ $ns }}"{{ end }}]
             includes(namespaces, .kubernetes.pod_namespace)
             {{- else if or .Values.global.manualNamespaceNamesEnabled .Values.global.disableManageClusterScopedResources }}
-            # Manual namespace mode - accept all valid namespace names
             match(.kubernetes.pod_namespace, r'^[a-z0-9]([-a-z0-9]*[a-z0-9])?$')
             {{- else }}
-            # Standard mode - filter by namespace platform label
             .kubernetes.namespace_labels.platform == "{{ .Release.Name }}"
             {{- end }}
 
-      # Step 2: Filter by component (exactly like Fluentd)
       filter_by_component:
         type: filter
         inputs:
@@ -60,7 +53,6 @@ data:
             component = .kubernetes.pod_labels.component
             includes(["scheduler", "webserver", "api-server", "worker", "triggerer", "git-sync-relay", "dag-server", "airflow-downgrade", "meta-cleanup", "dag-processor"], component)
 
-      # Step 3: Transform and enrich logs
       transform_airflow_logs:
         type: remap
         inputs:
@@ -69,9 +61,8 @@ data:
           .component = .kubernetes.pod_labels.component
           .workspace = .kubernetes.pod_labels.workspace
           .release = .kubernetes.pod_labels.release || "{{ .Release.Name }}"
-          .date_nano = parse_timestamp!(.@timestamp, format: "%Y-%m-%dT%H:%M:%S.%f%Z")
+          .namespace = .kubernetes.pod_namespace
 
-      # Step 4: Parse JSON messages
       parse_json_messages:
         type: remap
         inputs:
@@ -79,12 +70,11 @@ data:
         source: |
           if is_string(.message) {
             parsed = parse_json(.message) ?? {}
-            if is_object(parsed) && length(parsed) > 0 {
+            if is_object(parsed) {
               . = merge!(., parsed)
             }
           }
 
-      # Step 5: Determine log type and add metadata
       categorize_logs:
         type: remap
         inputs:
@@ -102,7 +92,6 @@ data:
             .log_type = "system"
           }
 
-      # Step 6: Final cleanup
       transform_remove_fields:
         type: remap
         inputs:
