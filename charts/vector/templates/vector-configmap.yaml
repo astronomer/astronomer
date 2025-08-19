@@ -107,7 +107,7 @@ data:
           - transform_remove_fields
         mode: bulk
         compression: none
-        endpoints: ["http://{{ .Release.Name }}-elasticsearch:9200"]
+        endpoints: ["http://{{ .Release.Name }}-elasticsearch-client:9200"]
         api_version: "v7"
         healthcheck:
           enabled: true
