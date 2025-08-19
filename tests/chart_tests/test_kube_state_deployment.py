@@ -135,9 +135,7 @@ class TestKubeStateDeployment:
                         }
                     }
                 },
-                "kube-state": {
-                    "extraNamespaceList": ["afw-1", "afw-2"]
-                }
+                "kube-state": {"extraNamespaceList": ["afw-1", "afw-2"]},
             },
             namespace="test_namespace",
             show_only=[
